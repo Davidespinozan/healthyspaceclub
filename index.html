@@ -316,6 +316,12 @@ nav.scrolled .logo img { height:44px; }
   width:6px; height:6px; border-radius:50%; background:var(--forest);
 }
 
+/* Badge centered above grid */
+.hero-badge-center {
+  grid-column:1 / -1; display:flex; justify-content:center; margin-bottom:20px;
+}
+.hero-badge-center .badge { margin-bottom:0; }
+
 /* Badge */
 .badge {
   display:inline-flex; align-items:center; gap:8px;
@@ -325,6 +331,12 @@ nav.scrolled .logo img { height:44px; }
   backdrop-filter:blur(10px);
 }
 .badge::before { content:''; width:7px; height:7px; background:var(--amber); border-radius:50%; animation:pulse 2.5s infinite; box-shadow:0 0 12px rgba(191,160,101,.4); }
+
+/* Hero identity tagline */
+.hero-tagline {
+  font-size:.7rem; font-weight:700; letter-spacing:.28em; text-transform:uppercase;
+  color:var(--amber); margin-bottom:14px;
+}
 
 /* Hero typography */
 h1 {
@@ -1364,20 +1376,16 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
     <div class="hero-orb hero-orb-2"></div>
     <div class="hero-orb hero-orb-3"></div>
     <div class="hero-inner">
+      <div class="hero-badge-center">
+        <div class="badge">3 en 1 · Nutrición · Entreno · Mente</div>
+      </div>
       <div class="hero-content">
-        <div class="badge">Club Digital de Bienestar</div>
+        <div class="hero-tagline">Club Digital Wellness</div>
         <h1>Tu coach, nutriólogo<br>y entrenador <em>en uno.</em></h1>
         <p class="hero-sub">El único lugar donde construyes hábitos de vida reales — videos por ejercicio, recetas paso a paso y mentalidad, todo sistematizado para ti.</p>
         <div class="hero-btns">
           <button class="btn-p" onclick="openPay('Anual','$197','12 meses de acceso completo')">Comenzar ahora →</button>
           <a class="btn-g" href="#s-pillars">Ver qué incluye ↓</a>
-        </div>
-        <div class="hero-trust">
-          <div class="hero-trust-stat"><div class="hero-trust-num">500+</div><div class="hero-trust-lbl">Miembros activos</div></div>
-          <div class="hero-trust-div"></div>
-          <div class="hero-trust-stat"><div class="hero-trust-num">3 en 1</div><div class="hero-trust-lbl">Nutrición · Entreno · Mente</div></div>
-          <div class="hero-trust-div"></div>
-          <div class="hero-trust-stat"><div class="hero-trust-num">4.9★</div><div class="hero-trust-lbl">Satisfacción</div></div>
         </div>
       </div>
       <div class="hero-img">
