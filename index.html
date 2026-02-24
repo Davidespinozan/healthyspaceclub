@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Healthy Space Club</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
 <style>
 /* ═══════════════════════════════════
    RESET & TOKENS
@@ -113,14 +114,12 @@ nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 300;
   padding: 0 60px; height:76px;
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-  background: rgba(30,51,48,.6); backdrop-filter: blur(40px) saturate(1.8);
-  -webkit-backdrop-filter: blur(40px) saturate(1.8);
-  border-bottom: 1px solid rgba(191,160,101,.06);
+  background: #2E4A42;
+  border-bottom: none;
   transition: all .4s cubic-bezier(.23,1,.32,1);
 }
 nav.scrolled {
-  background: rgba(30,51,48,.92);
-  box-shadow: 0 8px 40px rgba(0,0,0,.15);
+  background: #1e3330;
   height: 64px;
 }
 .logo { display:flex; align-items:center; justify-content:center; }
@@ -805,6 +804,12 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
 .pay-lbl { font-size:.66rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--txt2); margin-bottom:7px; }
 .pay-inp { width:100%; background:var(--sky); border:1.5px solid rgba(46,74,66,.18); border-radius:12px; padding:13px 15px; font-family:'DM Sans',sans-serif; font-size:.93rem; color:var(--txt); outline:none; transition:border-color .2s; margin-bottom:13px; min-height:44px; }
 .pay-inp:focus { border-color:var(--sage); background:white; }
+/* Stripe card element container */
+.stripe-element {
+  padding:14px 15px; min-height:48px; display:flex; align-items:center;
+}
+.stripe-element.StripeElement--focus { border-color:var(--sage); background:white; }
+.stripe-element.StripeElement--invalid { border-color:#e74c3c; }
 .pay-row { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
 .pay-secure { display:flex; align-items:center; gap:7px; font-size:.7rem; color:var(--txt2); margin-bottom:16px; }
 .pay-secure::before { content:'🔒'; }
@@ -1420,21 +1425,18 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
     <div class="pg">
       <div class="pillar reveal reveal-delay-1">
         <div class="pill-num">01</div>
-        <span class="pi">🥗</span>
         <h3>Nutrición</h3>
         <p>Recetas semanales en video paso a paso, planes de comida y listas de compras. Sabes exactamente qué cocinar cada día.</p>
         <span class="ptag">Reemplaza al Nutriólogo</span>
       </div>
       <div class="pillar reveal reveal-delay-2">
         <div class="pill-num">02</div>
-        <span class="pi">💪</span>
         <h3>Entrenamiento</h3>
         <p>Videos por ejercicio con técnica en pasos y progresión semanal. Como tener un entrenador personal contigo siempre.</p>
         <span class="ptag">Reemplaza al Entrenador</span>
       </div>
       <div class="pillar reveal reveal-delay-3">
         <div class="pill-num">03</div>
-        <span class="pi">🧠</span>
         <h3>Mentalidad</h3>
         <p>Módulos de mindfulness, gestión de estrés y las bases psicológicas del cambio. El método Healthy Space en acción.</p>
         <span class="ptag">Reemplaza al Coach</span>
@@ -1540,7 +1542,7 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
 </div><!-- /landing -->
 
 <!-- ════════════════════════
-     PAYMENT MODAL
+     PAYMENT MODAL (Stripe Elements)
 ════════════════════════ -->
 <div class="ov" id="pay-ov" onclick="if(event.target===this)closePay()">
   <div class="pay-box">
@@ -1556,22 +1558,24 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
         <div class="pay-lbl">Nombre completo</div>
         <input class="pay-inp" type="text" placeholder="Tu nombre" id="pay-name-i" autocomplete="name">
         <div class="pay-lbl">Correo electrónico</div>
-        <input class="pay-inp" type="email" placeholder="tu@correo.com" autocomplete="email">
-        <div class="pay-lbl">Número de tarjeta</div>
-        <input class="pay-inp" type="text" inputmode="numeric" placeholder="1234 5678 9012 3456" maxlength="19" oninput="let v=this.value.replace(/\D/g,'').slice(0,16);this.value=v.replace(/(.{4})/g,'$1 ').trim()" autocomplete="cc-number">
-        <div class="pay-row">
-          <div><div class="pay-lbl">Vencimiento</div><input class="pay-inp" type="text" inputmode="numeric" placeholder="MM/AA" maxlength="5" autocomplete="cc-exp"></div>
-          <div><div class="pay-lbl">CVV</div><input class="pay-inp" type="text" inputmode="numeric" placeholder="···" maxlength="3" autocomplete="cc-csc"></div>
-        </div>
+        <input class="pay-inp" type="email" placeholder="tu@correo.com" id="pay-email-i" autocomplete="email">
+        <div class="pay-lbl">Información de pago</div>
+        <div id="stripe-card-element" class="pay-inp stripe-element"></div>
+        <div id="stripe-errors" style="color:#e74c3c;font-size:.75rem;margin:-6px 0 10px;min-height:18px;"></div>
         <div class="pay-secure">Pago seguro · Stripe · SSL</div>
-        <button class="btn-pay" onclick="doPay()">✓ Completar pago <span id="pay-a">$197</span></button>
-        <p class="pay-demo">— Demo visual · sin cobro real —</p>
+        <button class="btn-pay" id="btn-stripe-pay" onclick="doStripePay()">
+          <span id="btn-pay-text">✓ Completar pago <span id="pay-a">$197</span></span>
+          <span id="btn-pay-loading" style="display:none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" style="animation:spin .8s linear infinite;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="32" stroke-linecap="round"/></svg>
+            Procesando…
+          </span>
+        </button>
       </div>
     </div>
     <div id="pp" style="display:none;text-align:center;padding:52px 28px">
-      <div class="spinner"></div>
-      <h4 style="font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--forest);margin-bottom:7px">Procesando tu pago…</h4>
-      <p style="font-size:.82rem;color:var(--txt2)">Esto solo tarda un momento</p>
+      <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#3a8a5c,#2d6b48);color:white;font-size:1.6rem;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">✓</div>
+      <h4 style="font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--forest);margin-bottom:7px">¡Pago exitoso!</h4>
+      <p style="font-size:.82rem;color:var(--txt2)">Bienvenid@ al Club. Preparando tu cuenta…</p>
     </div>
   </div>
 </div>
@@ -1997,24 +2001,115 @@ function goTo(id) {
   window.scrollTo(0, 0);
 }
 
+/* ═══════ STRIPE SETUP ═══════ */
+// ⚠️ REEMPLAZA con tu Stripe Publishable Key (pk_live_... o pk_test_...)
+const STRIPE_PK = 'pk_test_XXXXXXXXXXXXXXXXXXXXXXXX';
+const stripe = Stripe(STRIPE_PK);
+const elements = stripe.elements({
+  fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500' }]
+});
+
+const cardElement = elements.create('card', {
+  style: {
+    base: {
+      fontFamily: '"DM Sans", sans-serif',
+      fontSize: '15px',
+      color: '#1e3330',
+      '::placeholder': { color: 'rgba(30,51,48,.35)' },
+    },
+    invalid: { color: '#e74c3c' },
+  },
+  hidePostalCode: true,
+});
+cardElement.mount('#stripe-card-element');
+
+cardElement.on('change', (event) => {
+  const errEl = document.getElementById('stripe-errors');
+  errEl.textContent = event.error ? event.error.message : '';
+});
+
 /* ═══════ PAYMENT ═══════ */
+let currentPlan = 'anual';
+
 function openPay(plan, price, period) {
+  currentPlan = plan.toLowerCase();
   document.getElementById('pp-n').textContent = 'Plan ' + plan;
   document.getElementById('pp-p').textContent = price + ' · ' + period;
   document.getElementById('pay-a').textContent = price;
   document.getElementById('pay-ov').classList.add('open');
+  // Reset state
+  document.getElementById('pf').style.display = 'block';
+  document.getElementById('pp').style.display = 'none';
+  document.getElementById('btn-pay-text').style.display = '';
+  document.getElementById('btn-pay-loading').style.display = 'none';
+  document.getElementById('btn-stripe-pay').disabled = false;
+  document.getElementById('stripe-errors').textContent = '';
 }
 function closePay() { document.getElementById('pay-ov').classList.remove('open'); }
-function doPay() {
-  document.getElementById('pf').style.display = 'none';
-  document.getElementById('pp').style.display = 'block';
-  setTimeout(() => {
-    closePay();
-    document.getElementById('pf').style.display = 'block';
-    document.getElementById('pp').style.display = 'none';
-    // After payment → create account
-    openSignup();
-  }, 2400);
+
+async function doStripePay() {
+  const name = document.getElementById('pay-name-i').value.trim();
+  const email = document.getElementById('pay-email-i').value.trim();
+
+  if (!name || !email) {
+    document.getElementById('stripe-errors').textContent = 'Por favor completa tu nombre y correo.';
+    return;
+  }
+
+  // Show loading
+  const btn = document.getElementById('btn-stripe-pay');
+  btn.disabled = true;
+  document.getElementById('btn-pay-text').style.display = 'none';
+  document.getElementById('btn-pay-loading').style.display = 'inline-flex';
+  document.getElementById('stripe-errors').textContent = '';
+
+  try {
+    // 1. Call backend to create PaymentIntent or Subscription
+    const res = await fetch('/.netlify/functions/create-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: currentPlan, email, name }),
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // 2. Confirm payment with Stripe
+    const { error, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
+      payment_method: {
+        card: cardElement,
+        billing_details: { name, email },
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    // 3. Payment successful!
+    document.getElementById('pf').style.display = 'none';
+    document.getElementById('pp').style.display = 'block';
+
+    // Store payment info for signup flow
+    window._paymentName = name;
+    window._paymentEmail = email;
+    window._isNewUser = true;
+
+    setTimeout(() => {
+      closePay();
+      document.getElementById('pf').style.display = 'block';
+      document.getElementById('pp').style.display = 'none';
+      // Open signup to create account
+      openSignup();
+    }, 2200);
+
+  } catch (err) {
+    // Show error
+    document.getElementById('stripe-errors').textContent = err.message || 'Error procesando el pago. Intenta de nuevo.';
+    btn.disabled = false;
+    document.getElementById('btn-pay-text').style.display = '';
+    document.getElementById('btn-pay-loading').style.display = 'none';
+  }
 }
 
 /* ═══════ ONBOARDING ═══════ */
