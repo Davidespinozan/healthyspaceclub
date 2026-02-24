@@ -8,776 +8,792 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --soil: #3d2b1f; --moss: #4a6741; --sage: #7a9e6e; --fern: #a8c49a;
-  --cream: #f5f0e8; --sand: #e8ddc8; --warm-white: #faf8f4;
-  --terracotta: #c06b3a; --gold: #b8933a; --sidebar-w: 255px;
+  /* Paleta luminosa y viva */
+  --forest: #2d5a27;
+  --moss: #4a8c3f;
+  --sage: #6db860;
+  --mint: #a8e09e;
+  --lime: #d4f0ce;
+  --cream: #fffdf7;
+  --sand: #fff8ec;
+  --warm: #fef5e4;
+  --amber: #f59e2a;
+  --terra: #e8621a;
+  --rust: #c94a10;
+  --gold: #f0b429;
+  --sky: #e8f5e0;
+  --text: #1e3018;
+  --text2: rgba(30,48,24,.6);
+  --border: rgba(30,48,24,.08);
+  --sw: 258px;
 }
 html { scroll-behavior: smooth; }
-body { font-family: 'DM Sans', sans-serif; background: var(--warm-white); color: var(--soil); overflow-x: hidden; }
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); overflow-x: hidden; }
 
-/* ═══════════════════════ SCREENS ═══════════════════════ */
+/* ════════ SCREENS ════════ */
 .screen { display: none; }
 .screen.active { display: block; }
 #screen-landing { display: block; }
 
-/* ═══════════════════════ LANDING ═══════════════════════ */
+/* ════════════════════════════════════
+   LANDING
+════════════════════════════════════ */
 nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  padding: 20px 48px;
-  display: flex; justify-content: space-between; align-items: center;
-  background: rgba(250,248,244,0.88); backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(61,43,31,0.07);
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  padding: 18px 52px; display: flex; justify-content: space-between; align-items: center;
+  background: rgba(255,253,247,.92); backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(109,184,96,.15);
 }
-.logo { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 800; color: var(--soil); }
-.logo span { color: var(--moss); }
+.logo { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 800; color: var(--forest); }
+.logo span { color: var(--sage); }
 .nav-links { display: flex; gap: 28px; align-items: center; }
-.nav-links a { font-size: 0.84rem; font-weight: 500; color: var(--soil); text-decoration: none; opacity: 0.55; transition: opacity .2s; }
+.nav-links a { font-size: .85rem; font-weight: 500; color: var(--text); text-decoration: none; opacity: .6; transition: opacity .2s; }
 .nav-links a:hover { opacity: 1; }
-.nav-cta { background: var(--soil) !important; color: var(--cream) !important; opacity: 1 !important; padding: 10px 22px; border-radius: 50px; cursor: pointer; }
-.nav-cta:hover { background: var(--moss) !important; }
+.nav-cta { background: var(--sage) !important; color: white !important; opacity: 1 !important; padding: 10px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 14px rgba(109,184,96,.35); transition: all .2s !important; }
+.nav-cta:hover { background: var(--moss) !important; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(109,184,96,.4) !important; }
 
 /* HERO */
-.hero { min-height: 100vh; display: flex; align-items: center; padding: 120px 48px 80px; position: relative; overflow: hidden; }
-.hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 60% 80% at 80% 50%, rgba(74,103,65,.11) 0%, transparent 70%), radial-gradient(ellipse 40% 60% at 10% 80%, rgba(168,196,154,.13) 0%, transparent 60%), var(--warm-white); }
-.blob { position: absolute; border-radius: 50%; filter: blur(70px); pointer-events: none; }
-.blob-1 { width: 520px; height: 520px; background: rgba(74,103,65,.07); right: -80px; top: 40px; }
-.blob-2 { width: 320px; height: 320px; background: rgba(192,107,58,.05); left: 22%; bottom: 8%; }
+.hero {
+  min-height: 100vh; display: flex; align-items: center;
+  padding: 120px 52px 80px; position: relative; overflow: hidden;
+  background: linear-gradient(160deg, #f0faea 0%, #fffdf7 45%, #fff8ec 100%);
+}
+.hero-blob { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+.hb1 { width: 600px; height: 600px; background: rgba(109,184,96,.14); right: -100px; top: -50px; }
+.hb2 { width: 400px; height: 400px; background: rgba(245,158,42,.1); left: 15%; bottom: 0; }
+.hb3 { width: 250px; height: 250px; background: rgba(109,184,96,.1); left: -50px; top: 30%; }
 .hero-content { position: relative; max-width: 660px; animation: fadeUp .9s ease both; }
-.hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(74,103,65,.1); border: 1px solid rgba(74,103,65,.2); color: var(--moss); font-size: .75rem; font-weight: 600; padding: 6px 14px; border-radius: 50px; margin-bottom: 28px; letter-spacing: .06em; text-transform: uppercase; }
-.hero-badge::before { content:''; width:6px; height:6px; background:var(--sage); border-radius:50%; animation: blink 2s infinite; }
-h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.8rem,5.5vw,5rem); font-weight: 800; line-height: 1.06; letter-spacing: -.03em; margin-bottom: 22px; }
-h1 em { font-style: italic; color: var(--moss); }
-.hero-sub { font-size: 1.1rem; line-height: 1.72; color: rgba(61,43,31,.62); max-width: 500px; margin-bottom: 42px; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(109,184,96,.15); border: 1px solid rgba(109,184,96,.3);
+  color: var(--moss); font-size: .73rem; font-weight: 700; padding: 6px 16px;
+  border-radius: 50px; margin-bottom: 28px; letter-spacing: .07em; text-transform: uppercase;
+}
+.hero-badge::before { content:''; width:7px; height:7px; background:var(--sage); border-radius:50%; animation:blink 2s infinite; }
+h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.8rem,5.5vw,5rem); font-weight: 800; line-height: 1.06; letter-spacing: -.03em; margin-bottom: 22px; color: var(--forest); }
+h1 em { font-style: italic; color: var(--sage); }
+.hero-sub { font-size: 1.1rem; line-height: 1.72; color: var(--text2); max-width: 500px; margin-bottom: 42px; }
 .hero-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-.btn-primary { background: var(--soil); color: var(--cream); padding: 15px 34px; border-radius: 50px; font-family: 'DM Sans', sans-serif; font-size: .93rem; font-weight: 600; border: none; cursor: pointer; transition: all .25s; }
-.btn-primary:hover { background: var(--moss); transform: translateY(-2px); box-shadow: 0 12px 30px rgba(74,103,65,.25); }
-.btn-ghost { color: var(--soil); font-size: .87rem; font-weight: 500; text-decoration: none; opacity: .55; transition: opacity .2s; }
+.btn-primary { background: var(--sage); color: white; padding: 16px 36px; border-radius: 50px; font-family: 'DM Sans', sans-serif; font-size: .95rem; font-weight: 700; border: none; cursor: pointer; transition: all .25s; box-shadow: 0 8px 24px rgba(109,184,96,.35); }
+.btn-primary:hover { background: var(--moss); transform: translateY(-2px); box-shadow: 0 14px 32px rgba(109,184,96,.4); }
+.btn-ghost { color: var(--forest); font-size: .88rem; font-weight: 500; text-decoration: none; opacity: .55; transition: opacity .2s; }
 .btn-ghost:hover { opacity: 1; }
-.hero-floats { position: absolute; right: 56px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 16px; animation: fadeUp 1.1s ease both; }
-.float-card { background: rgba(255,255,255,.75); border: 1px solid rgba(61,43,31,.08); backdrop-filter: blur(10px); border-radius: 16px; padding: 18px 26px; text-align: center; }
-.float-num { font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 800; color: var(--moss); line-height: 1; }
-.float-label { font-size: .72rem; color: rgba(61,43,31,.5); margin-top: 3px; font-weight: 500; }
+.hero-floats { position: absolute; right: 56px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 14px; animation: fadeUp 1.1s ease both; }
+.float-card { background: white; border: 1px solid rgba(109,184,96,.18); border-radius: 18px; padding: 18px 26px; text-align: center; box-shadow: 0 8px 32px rgba(30,48,24,.07); }
+.float-num { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 800; color: var(--moss); line-height: 1; }
+.float-label { font-size: .7rem; color: var(--text2); margin-top: 3px; font-weight: 500; }
 
 /* PILLARS */
-.pillars { padding: 90px 48px; background: var(--soil); position: relative; overflow: hidden; }
-.pillars::before { content:''; position:absolute; inset:0; background: radial-gradient(ellipse at 70% 50%, rgba(74,103,65,.25) 0%, transparent 60%); }
-.sec-label { font-size: .72rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 14px; }
-.pillars .sec-label { color: var(--sage); position: relative; }
-.pillars h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.9rem,3.5vw,3rem); font-weight: 700; color: var(--cream); margin-bottom: 14px; max-width: 480px; line-height: 1.18; position: relative; }
-.pillars-sub { color: rgba(245,240,232,.5); font-size: .95rem; max-width: 460px; line-height: 1.65; margin-bottom: 56px; position: relative; }
-.pillars-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; position: relative; }
-.pillar { background: rgba(255,255,255,.04); border: 1px solid rgba(245,240,232,.07); padding: 40px 32px; transition: all .3s; }
-.pillar:hover { background: rgba(255,255,255,.07); border-color: rgba(122,158,110,.3); }
-.pillar-icon { font-size: 1.9rem; margin-bottom: 18px; display: block; }
-.pillar h3 { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--cream); margin-bottom: 10px; font-weight: 600; }
-.pillar p { color: rgba(245,240,232,.48); font-size: .87rem; line-height: 1.65; }
-.pillar-tag { display: inline-block; margin-top: 18px; font-size: .68rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--sage); border: 1px solid rgba(122,158,110,.28); padding: 4px 12px; border-radius: 50px; }
+.pillars { padding: 90px 52px; background: var(--forest); position: relative; overflow: hidden; }
+.pillars::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 65% 40%, rgba(109,184,96,.2) 0%, transparent 65%); }
+.sec-label { font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 14px; }
+.pillars .sec-label { color: var(--mint); position: relative; }
+.pillars h2 { font-family:'Playfair Display',serif; font-size:clamp(2rem,3.5vw,3rem); font-weight:700; color:white; margin-bottom:12px; max-width:500px; line-height:1.18; position:relative; }
+.pillars-sub { color:rgba(255,255,255,.45); font-size:.95rem; max-width:460px; line-height:1.65; margin-bottom:56px; position:relative; }
+.pillars-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; position:relative; }
+.pillar { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:20px; padding:36px 28px; transition:all .3s; }
+.pillar:hover { background:rgba(255,255,255,.1); border-color:rgba(109,184,96,.4); transform:translateY(-4px); box-shadow:0 16px 40px rgba(0,0,0,.15); }
+.pillar-icon { font-size:2rem; margin-bottom:16px; display:block; }
+.pillar h3 { font-family:'Playfair Display',serif; font-size:1.3rem; color:white; margin-bottom:10px; font-weight:600; }
+.pillar p { color:rgba(255,255,255,.5); font-size:.87rem; line-height:1.65; }
+.pillar-tag { display:inline-block; margin-top:16px; font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--mint); border:1px solid rgba(168,224,158,.25); padding:4px 12px; border-radius:50px; }
 
 /* HOW */
-.how { padding: 90px 48px; background: var(--cream); }
+.how { padding: 90px 52px; background: white; }
 .how .sec-label { color: var(--moss); }
-.how h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.9rem,3.5vw,2.8rem); color: var(--soil); margin-bottom: 52px; font-weight: 700; }
-.steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 28px; position: relative; }
-.steps::before { content:''; position:absolute; top:27px; left:10%; right:10%; height:1px; background: linear-gradient(to right, transparent, var(--sage), transparent); }
-.step { text-align: center; }
-.step-num { width: 54px; height: 54px; border-radius: 50%; background: var(--moss); color: var(--cream); font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; position: relative; z-index: 1; }
-.step h4 { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--soil); margin-bottom: 8px; font-weight: 600; }
-.step p { font-size: .82rem; color: rgba(61,43,31,.55); line-height: 1.6; }
+.how h2 { font-family:'Playfair Display',serif; font-size:clamp(1.9rem,3.5vw,2.8rem); color:var(--forest); margin-bottom:52px; font-weight:700; }
+.steps { display:grid; grid-template-columns:repeat(4,1fr); gap:28px; position:relative; }
+.steps::before { content:''; position:absolute; top:27px; left:10%; right:10%; height:1px; background:linear-gradient(to right, transparent, var(--mint), transparent); }
+.step { text-align:center; }
+.step-num { width:54px; height:54px; border-radius:50%; background:linear-gradient(135deg,var(--sage),var(--moss)); color:white; font-family:'Playfair Display',serif; font-size:1.15rem; font-weight:700; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; position:relative; z-index:1; box-shadow:0 8px 20px rgba(109,184,96,.35); }
+.step h4 { font-family:'Playfair Display',serif; font-size:1.05rem; color:var(--forest); margin-bottom:8px; font-weight:600; }
+.step p { font-size:.82rem; color:var(--text2); line-height:1.6; }
 
 /* PRICING */
-.pricing { padding: 90px 48px; background: var(--warm-white); text-align: center; }
+.pricing { padding: 90px 52px; background: var(--sky); text-align:center; }
 .pricing .sec-label { color: var(--moss); }
-.pricing h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.9rem,3.5vw,2.8rem); color: var(--soil); margin-bottom: 10px; font-weight: 700; }
-.pricing-sub { color: rgba(61,43,31,.52); font-size: .95rem; margin-bottom: 52px; }
-.pricing-cards { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; max-width: 760px; margin: 0 auto; }
-.price-card { background: white; border: 1.5px solid rgba(61,43,31,.09); border-radius: 22px; padding: 38px 32px; text-align: left; position: relative; transition: all .3s; }
-.price-card:hover { border-color: var(--moss); box-shadow: 0 20px 50px rgba(74,103,65,.1); transform: translateY(-4px); }
-.price-card.featured { background: var(--soil); border-color: var(--soil); color: var(--cream); }
-.price-badge { position: absolute; top:-12px; left:50%; transform:translateX(-50%); background: var(--terracotta); color: white; font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 4px 14px; border-radius: 50px; white-space: nowrap; }
-.price-name { font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; opacity: .5; margin-bottom: 14px; }
-.price-amount { font-family: 'Playfair Display', serif; font-size: 2.9rem; font-weight: 800; line-height: 1; margin-bottom: 6px; }
-.price-amount sup { font-size: 1rem; font-weight: 400; opacity: .6; vertical-align: super; }
-.price-period { font-size: .8rem; opacity: .45; margin-bottom: 26px; }
-.price-features { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 9px; }
-.price-features li { font-size: .86rem; display: flex; align-items: flex-start; gap: 9px; opacity: .78; }
-.price-features li::before { content:'✓'; color: var(--sage); font-weight: 700; flex-shrink: 0; }
-.price-card.featured .price-features li::before { color: var(--fern); }
-.btn-join { width:100%; padding:13px; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:600; border:1.5px solid var(--soil); background:transparent; color:var(--soil); cursor:pointer; transition:all .25s; }
-.btn-join:hover { background:var(--soil); color:var(--cream); }
-.price-card.featured .btn-join { background:var(--sage); border-color:var(--sage); color:white; }
-.price-card.featured .btn-join:hover { background:var(--fern); border-color:var(--fern); }
+.pricing h2 { font-family:'Playfair Display',serif; font-size:clamp(1.9rem,3.5vw,2.8rem); color:var(--forest); margin-bottom:10px; font-weight:700; }
+.pricing-sub { color:var(--text2); font-size:.95rem; margin-bottom:52px; }
+.pricing-cards { display:grid; grid-template-columns:repeat(2,1fr); gap:22px; max-width:780px; margin:0 auto; }
+.price-card { background:white; border:2px solid rgba(109,184,96,.12); border-radius:24px; padding:40px 34px; text-align:left; position:relative; transition:all .3s; box-shadow:0 4px 20px rgba(30,48,24,.05); }
+.price-card:hover { border-color:var(--sage); box-shadow:0 20px 50px rgba(109,184,96,.15); transform:translateY(-5px); }
+.price-card.featured { background:var(--forest); border-color:var(--forest); }
+.price-badge { position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,var(--amber),var(--terra)); color:white; font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:5px 16px; border-radius:50px; white-space:nowrap; box-shadow:0 4px 12px rgba(232,98,26,.3); }
+.price-name { font-size:.74rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; opacity:.5; margin-bottom:14px; }
+.price-amount { font-family:'Playfair Display',serif; font-size:3rem; font-weight:800; line-height:1; margin-bottom:6px; color:var(--forest); }
+.price-card.featured .price-amount { color:white; }
+.price-period { font-size:.8rem; opacity:.45; margin-bottom:26px; }
+.price-features { list-style:none; margin-bottom:28px; display:flex; flex-direction:column; gap:9px; }
+.price-features li { font-size:.86rem; display:flex; align-items:flex-start; gap:9px; opacity:.78; }
+.price-features li::before { content:'✓'; color:var(--sage); font-weight:700; flex-shrink:0; }
+.price-card.featured .price-features li { color:rgba(255,255,255,.8); }
+.price-card.featured .price-features li::before { color:var(--mint); }
+.btn-join { width:100%; padding:14px; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:700; border:2px solid var(--sage); background:transparent; color:var(--sage); cursor:pointer; transition:all .25s; }
+.btn-join:hover { background:var(--sage); color:white; }
+.price-card.featured .btn-join { background:var(--sage); border-color:var(--sage); color:white; box-shadow:0 8px 20px rgba(109,184,96,.35); }
+.price-card.featured .btn-join:hover { background:var(--mint); border-color:var(--mint); color:var(--forest); }
 
 /* TESTIMONIALS */
-.testi { padding: 80px 48px; background: var(--sand); }
-.testi .sec-label { color: var(--moss); }
-.testi h2 { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3vw,2.4rem); color:var(--soil); font-weight:700; margin-bottom: 44px; }
-.testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
-.testi-card { background: white; border-radius: 18px; padding: 28px; border: 1px solid rgba(61,43,31,.07); }
-.testi-stars { color: var(--gold); font-size: .85rem; margin-bottom: 14px; letter-spacing: 2px; }
-.testi-text { font-size: .88rem; line-height: 1.68; color: rgba(61,43,31,.7); margin-bottom: 20px; font-style: italic; }
-.testi-author { display: flex; align-items: center; gap: 12px; }
-.testi-avatar { width:38px; height:38px; border-radius:50%; background:var(--moss); display:flex; align-items:center; justify-content:center; font-size:.9rem; }
-.testi-name { font-size:.83rem; font-weight:600; color:var(--soil); }
-.testi-meta { font-size:.72rem; color:rgba(61,43,31,.4); margin-top:2px; }
+.testi { padding:80px 52px; background:white; }
+.testi .sec-label { color:var(--moss); }
+.testi h2 { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3vw,2.5rem); color:var(--forest); font-weight:700; margin-bottom:44px; }
+.testi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+.testi-card { background:var(--sky); border:1px solid rgba(109,184,96,.15); border-radius:20px; padding:28px; transition:all .25s; }
+.testi-card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(109,184,96,.12); }
+.testi-stars { color:var(--amber); font-size:.9rem; margin-bottom:14px; letter-spacing:3px; }
+.testi-text { font-size:.88rem; line-height:1.7; color:var(--text2); margin-bottom:20px; font-style:italic; }
+.testi-author { display:flex; align-items:center; gap:12px; }
+.testi-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--sage),var(--moss)); display:flex; align-items:center; justify-content:center; font-size:.9rem; }
+.testi-name { font-size:.83rem; font-weight:700; color:var(--forest); }
+.testi-meta { font-size:.72rem; color:var(--text2); margin-top:2px; }
 
 /* FAQ */
-.faq { padding: 80px 48px; background: var(--warm-white); max-width: 720px; margin: 0 auto; }
-.faq .sec-label { color: var(--moss); }
-.faq h2 { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3vw,2.4rem); color:var(--soil); font-weight:700; margin-bottom: 36px; }
-.faq-item { border-bottom: 1px solid rgba(61,43,31,.09); padding: 20px 0; cursor: pointer; }
-.faq-q { font-size:.93rem; font-weight:600; color:var(--soil); display:flex; justify-content:space-between; align-items:center; gap:16px; }
-.faq-arrow { color:var(--moss); transition:transform .3s; font-size:.8rem; flex-shrink:0; }
-.faq-a { font-size:.87rem; color:rgba(61,43,31,.6); line-height:1.68; max-height:0; overflow:hidden; transition:max-height .3s ease, padding .3s; }
+.faq-wrap { padding:80px 52px; background:var(--warm); }
+.faq-inner { max-width:720px; margin:0 auto; }
+.faq-inner .sec-label { color:var(--moss); }
+.faq-inner h2 { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3vw,2.4rem); color:var(--forest); font-weight:700; margin-bottom:36px; }
+.faq-item { border-bottom:1px solid rgba(30,48,24,.09); padding:20px 0; cursor:pointer; }
+.faq-q { font-size:.93rem; font-weight:600; color:var(--forest); display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.faq-arrow { color:var(--sage); transition:transform .3s; font-size:.8rem; flex-shrink:0; }
+.faq-a { font-size:.87rem; color:var(--text2); line-height:1.68; max-height:0; overflow:hidden; transition:max-height .3s, padding .3s; }
 .faq-item.open .faq-a { max-height:200px; padding-top:12px; }
 .faq-item.open .faq-arrow { transform:rotate(180deg); }
 
-/* FOOTER */
-footer { background:var(--soil); padding:40px 48px; display:flex; justify-content:space-between; align-items:center; }
-footer .logo { color:var(--cream); }
-footer p { color:rgba(245,240,232,.3); font-size:.8rem; }
+footer { background:var(--forest); padding:40px 52px; display:flex; justify-content:space-between; align-items:center; }
+footer .logo { color:white; }
+footer .logo span { color:var(--mint); }
+footer p { color:rgba(255,255,255,.3); font-size:.8rem; }
 
-/* ═══════════════════════ PAYMENT MODAL ═══════════════════════ */
-.overlay { position:fixed; inset:0; background:rgba(61,43,31,.65); backdrop-filter:blur(10px); z-index:500; display:none; align-items:center; justify-content:center; padding:20px; }
+/* ════════════════════════════════════
+   PAYMENT MODAL
+════════════════════════════════════ */
+.overlay { position:fixed; inset:0; background:rgba(20,36,16,.65); backdrop-filter:blur(12px); z-index:500; display:none; align-items:center; justify-content:center; padding:20px; }
 .overlay.open { display:flex; }
-.pay-modal { background:var(--warm-white); border-radius:28px; width:100%; max-width:440px; overflow:hidden; animation:popUp .35s cubic-bezier(.34,1.56,.64,1) both; }
-.pay-header { background:var(--soil); padding:28px 32px; position:relative; }
-.pay-close { position:absolute; top:16px; right:16px; background:rgba(255,255,255,.1); border:none; color:var(--cream); width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:.9rem; display:flex; align-items:center; justify-content:center; }
-.pay-close:hover { background:rgba(255,255,255,.2); }
-.pay-plan-label { font-size:.68rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--sage); margin-bottom:6px; }
-.pay-plan-name { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; color:var(--cream); margin-bottom:4px; }
-.pay-plan-price { font-size:.88rem; color:rgba(245,240,232,.5); }
-.pay-features-mini { display:flex; gap:12px; margin-top:16px; flex-wrap:wrap; }
-.pay-feat { font-size:.7rem; background:rgba(122,158,110,.2); color:var(--fern); padding:4px 10px; border-radius:50px; font-weight:600; }
+.pay-modal { background:white; border-radius:28px; width:100%; max-width:440px; overflow:hidden; animation:popUp .35s cubic-bezier(.34,1.56,.64,1) both; box-shadow:0 40px 80px rgba(0,0,0,.2); }
+.pay-header { background:linear-gradient(135deg,var(--forest),var(--moss)); padding:28px 32px; position:relative; }
+.pay-close { position:absolute; top:16px; right:16px; background:rgba(255,255,255,.15); border:none; color:white; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:.9rem; display:flex; align-items:center; justify-content:center; transition:background .2s; }
+.pay-close:hover { background:rgba(255,255,255,.25); }
+.pay-plan-label { font-size:.68rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--mint); margin-bottom:6px; }
+.pay-plan-name { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; color:white; margin-bottom:4px; }
+.pay-plan-price { font-size:.88rem; color:rgba(255,255,255,.55); }
+.pay-feats { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.pay-feat { font-size:.68rem; background:rgba(255,255,255,.15); color:rgba(255,255,255,.9); padding:4px 10px; border-radius:50px; font-weight:600; }
 .pay-body { padding:28px 32px; }
-.pay-label { font-size:.7rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:rgba(61,43,31,.45); margin-bottom:8px; }
-.pay-input { width:100%; background:white; border:1.5px solid rgba(61,43,31,.12); border-radius:12px; padding:13px 16px; font-family:'DM Sans',sans-serif; font-size:.93rem; color:var(--soil); outline:none; transition:border-color .2s; margin-bottom:16px; }
-.pay-input:focus { border-color:var(--moss); }
+.pay-lbl { font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(30,48,24,.42); margin-bottom:8px; }
+.pay-input { width:100%; background:var(--sky); border:1.5px solid rgba(109,184,96,.2); border-radius:12px; padding:13px 16px; font-family:'DM Sans',sans-serif; font-size:.93rem; color:var(--text); outline:none; transition:border-color .2s; margin-bottom:14px; }
+.pay-input:focus { border-color:var(--sage); background:white; }
 .pay-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.pay-secure { display:flex; align-items:center; gap:8px; font-size:.74rem; color:rgba(61,43,31,.4); margin-bottom:20px; }
+.pay-secure { display:flex; align-items:center; gap:8px; font-size:.72rem; color:var(--text2); margin-bottom:18px; }
 .pay-secure::before { content:'🔒'; }
-.btn-pay { width:100%; padding:16px; background:var(--moss); color:white; border:none; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.98rem; font-weight:700; cursor:pointer; transition:all .25s; display:flex; align-items:center; justify-content:center; gap:8px; }
-.btn-pay:hover { background:var(--soil); transform:translateY(-2px); box-shadow:0 12px 30px rgba(61,43,31,.2); }
-.pay-demo-note { text-align:center; margin-top:14px; font-size:.72rem; color:rgba(61,43,31,.35); }
+.btn-pay { width:100%; padding:16px; background:linear-gradient(135deg,var(--sage),var(--moss)); color:white; border:none; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.98rem; font-weight:700; cursor:pointer; transition:all .25s; box-shadow:0 8px 24px rgba(109,184,96,.35); display:flex; align-items:center; justify-content:center; gap:8px; }
+.btn-pay:hover { transform:translateY(-2px); box-shadow:0 14px 32px rgba(109,184,96,.45); }
+.pay-demo-note { text-align:center; margin-top:12px; font-size:.7rem; color:var(--text2); opacity:.5; }
+.spinner { width:46px; height:46px; border:3px solid rgba(109,184,96,.2); border-top-color:var(--sage); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 20px; }
 
-/* Processing state */
-.pay-processing { display:none; text-align:center; padding:40px 32px; }
-.spinner { width:48px; height:48px; border:3px solid rgba(74,103,65,.2); border-top-color:var(--moss); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 20px; }
-.pay-processing h4 { font-family:'Playfair Display',serif; font-size:1.3rem; color:var(--soil); margin-bottom:8px; }
-.pay-processing p { font-size:.85rem; color:rgba(61,43,31,.5); }
-
-/* ═══════════════════════ ONBOARDING SCREEN ═══════════════════════ */
-#screen-onboarding { min-height:100vh; background:var(--soil); display:none; }
+/* ════════════════════════════════════
+   ONBOARDING
+════════════════════════════════════ */
+#screen-onboarding {
+  min-height:100vh;
+  background: linear-gradient(160deg, #1e3018 0%, #2d5a27 50%, #1a3d14 100%);
+  display:none;
+}
 #screen-onboarding.active { display:flex; align-items:center; justify-content:center; padding:40px 24px; }
-.ob-wrap { width:100%; max-width:580px; }
-.ob-logo { font-family:'Playfair Display',serif; font-size:1rem; font-weight:800; color:var(--cream); text-align:center; margin-bottom:40px; }
-.ob-logo span { color:var(--sage); }
-.ob-progress-bar { background:rgba(255,255,255,.1); border-radius:50px; height:4px; margin-bottom:48px; overflow:hidden; }
-.ob-fill { height:100%; background:linear-gradient(to right, var(--sage), var(--fern)); border-radius:50px; transition:width .5s ease; }
+.ob-wrap { width:100%; max-width:600px; }
+.ob-logo { font-family:'Playfair Display',serif; font-size:1rem; font-weight:800; color:white; text-align:center; margin-bottom:40px; }
+.ob-logo span { color:var(--mint); }
+.ob-bar { background:rgba(255,255,255,.12); border-radius:50px; height:4px; margin-bottom:48px; overflow:hidden; }
+.ob-fill { height:100%; background:linear-gradient(to right,var(--sage),var(--mint)); border-radius:50px; transition:width .5s ease; }
 .ob-step { display:none; animation:fadeUp .45s ease both; }
 .ob-step.active { display:block; }
-.ob-step-num { font-size:.68rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--sage); margin-bottom:14px; }
-.ob-q { font-family:'Playfair Display',serif; font-size:1.9rem; font-weight:700; color:var(--cream); margin-bottom:8px; line-height:1.2; }
-.ob-hint { font-size:.87rem; color:rgba(245,240,232,.42); margin-bottom:32px; line-height:1.55; }
-.ob-opts { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:32px; }
-.ob-opt { background:rgba(255,255,255,.05); border:1.5px solid rgba(245,240,232,.1); border-radius:16px; padding:18px 16px; cursor:pointer; transition:all .2s; display:flex; align-items:flex-start; gap:12px; }
-.ob-opt:hover { background:rgba(255,255,255,.08); border-color:rgba(122,158,110,.35); }
-.ob-opt.sel { background:rgba(74,103,65,.3); border-color:var(--sage); }
+.ob-snum { font-size:.68rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--mint); margin-bottom:14px; opacity:.8; }
+.ob-q { font-family:'Playfair Display',serif; font-size:2rem; font-weight:700; color:white; margin-bottom:8px; line-height:1.2; }
+.ob-hint { font-size:.87rem; color:rgba(255,255,255,.42); margin-bottom:32px; line-height:1.55; }
+.ob-opts { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px; }
+.ob-opt { background:rgba(255,255,255,.07); border:1.5px solid rgba(255,255,255,.12); border-radius:18px; padding:18px 16px; cursor:pointer; transition:all .2s; display:flex; align-items:flex-start; gap:12px; }
+.ob-opt:hover { background:rgba(109,184,96,.15); border-color:rgba(109,184,96,.4); }
+.ob-opt.sel { background:rgba(109,184,96,.25); border-color:var(--sage); box-shadow:0 0 0 2px rgba(109,184,96,.2); }
 .ob-emoji { font-size:1.35rem; flex-shrink:0; margin-top:1px; }
-.ob-opt h5 { color:var(--cream); font-size:.88rem; font-weight:600; margin-bottom:3px; }
-.ob-opt p { color:rgba(245,240,232,.38); font-size:.75rem; line-height:1.4; }
-.ob-input { width:100%; background:rgba(255,255,255,.06); border:1.5px solid rgba(245,240,232,.13); border-radius:14px; padding:15px 18px; font-family:'DM Sans',sans-serif; font-size:1rem; color:var(--cream); outline:none; transition:border-color .2s; margin-bottom:28px; }
-.ob-input::placeholder { color:rgba(245,240,232,.28); }
-.ob-input:focus { border-color:var(--sage); }
-.time-big { font-family:'Playfair Display',serif; font-size:3.5rem; font-weight:800; color:var(--cream); text-align:center; margin-bottom:18px; }
-.time-big span { font-family:'DM Sans',sans-serif; font-size:1rem; font-weight:400; color:rgba(245,240,232,.38); }
-input[type=range] { width:100%; appearance:none; height:4px; background:rgba(255,255,255,.15); border-radius:2px; outline:none; cursor:pointer; margin-bottom:28px; }
-input[type=range]::-webkit-slider-thumb { appearance:none; width:22px; height:22px; background:var(--sage); border-radius:50%; transition:transform .15s; }
+.ob-opt h5 { color:white; font-size:.88rem; font-weight:600; margin-bottom:3px; }
+.ob-opt p { color:rgba(255,255,255,.38); font-size:.75rem; line-height:1.4; }
+.ob-input { width:100%; background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.15); border-radius:14px; padding:15px 18px; font-family:'DM Sans',sans-serif; font-size:1rem; color:white; outline:none; transition:all .2s; margin-bottom:28px; }
+.ob-input::placeholder { color:rgba(255,255,255,.28); }
+.ob-input:focus { border-color:var(--sage); background:rgba(255,255,255,.12); }
+.time-big { font-family:'Playfair Display',serif; font-size:4rem; font-weight:800; color:white; text-align:center; margin-bottom:16px; }
+.time-big span { font-family:'DM Sans',sans-serif; font-size:1.1rem; font-weight:400; color:rgba(255,255,255,.4); }
+input[type=range] { width:100%; appearance:none; height:5px; background:rgba(255,255,255,.18); border-radius:3px; outline:none; cursor:pointer; margin-bottom:32px; }
+input[type=range]::-webkit-slider-thumb { appearance:none; width:24px; height:24px; background:var(--sage); border-radius:50%; box-shadow:0 4px 12px rgba(109,184,96,.5); transition:transform .15s; }
 input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
-.btn-ob-next { width:100%; background:var(--sage); color:var(--soil); padding:16px; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.96rem; font-weight:700; border:none; cursor:pointer; transition:all .25s; }
-.btn-ob-next:hover { background:var(--fern); transform:translateY(-2px); }
-.btn-ob-next:disabled { opacity:.3; cursor:not-allowed; transform:none; }
+.btn-ob { width:100%; background:linear-gradient(135deg,var(--sage),var(--moss)); color:white; padding:17px; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.97rem; font-weight:700; border:none; cursor:pointer; transition:all .25s; box-shadow:0 8px 24px rgba(109,184,96,.4); }
+.btn-ob:hover { transform:translateY(-2px); box-shadow:0 14px 32px rgba(109,184,96,.5); }
+.btn-ob:disabled { opacity:.3; cursor:not-allowed; transform:none; box-shadow:none; }
 
-/* ═══════════════════════ DASHBOARD ═══════════════════════ */
+/* ════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════ */
 #screen-dashboard { display:none; }
 #screen-dashboard.active { display:flex; height:100vh; overflow:hidden; }
 
 /* SIDEBAR */
-.sidebar { width:var(--sidebar-w); min-height:100vh; background:var(--soil); display:flex; flex-direction:column; flex-shrink:0; overflow-y:auto; }
-.sb-logo { padding:26px 22px 18px; border-bottom:1px solid rgba(245,240,232,.07); }
-.sb-logo-text { font-family:'Playfair Display',serif; font-size:.95rem; font-weight:800; color:var(--cream); }
-.sb-logo-text span { color:var(--sage); }
-.sb-logo-sub { font-size:.64rem; color:rgba(245,240,232,.3); margin-top:2px; letter-spacing:.06em; text-transform:uppercase; }
-.user-card { margin:14px; background:rgba(255,255,255,.05); border:1px solid rgba(245,240,232,.07); border-radius:14px; padding:13px 15px; display:flex; align-items:center; gap:11px; }
-.avatar { width:34px; height:34px; background:var(--moss); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.85rem; flex-shrink:0; }
-.u-name { font-size:.8rem; font-weight:600; color:var(--cream); }
-.u-meta { font-size:.65rem; color:rgba(245,240,232,.32); margin-top:1px; }
-.sb-nav { padding:6px 10px; }
-.sb-section-label { font-size:.6rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:rgba(245,240,232,.22); padding:8px 12px 5px; }
-.sb-item { display:flex; align-items:center; gap:9px; padding:9px 12px; border-radius:10px; cursor:pointer; transition:all .2s; margin-bottom:2px; }
-.sb-item:hover { background:rgba(255,255,255,.06); }
-.sb-item.active { background:var(--moss); }
+.sidebar {
+  width:var(--sw); min-height:100vh; flex-shrink:0; overflow-y:auto;
+  background: linear-gradient(180deg, var(--forest) 0%, #1a3d14 100%);
+  display:flex; flex-direction:column;
+}
+.sb-logo { padding:24px 20px 18px; border-bottom:1px solid rgba(255,255,255,.07); }
+.sb-logo-text { font-family:'Playfair Display',serif; font-size:.95rem; font-weight:800; color:white; }
+.sb-logo-text span { color:var(--mint); }
+.sb-logo-sub { font-size:.62rem; color:rgba(255,255,255,.28); margin-top:2px; letter-spacing:.07em; text-transform:uppercase; }
+.user-card { margin:14px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:13px 15px; display:flex; align-items:center; gap:11px; }
+.ava { width:36px; height:36px; background:linear-gradient(135deg,var(--sage),var(--moss)); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.85rem; flex-shrink:0; }
+.u-name { font-size:.8rem; font-weight:700; color:white; }
+.u-meta { font-size:.64rem; color:rgba(255,255,255,.32); margin-top:1px; }
+.sb-nav { padding:6px 10px; flex:1; }
+.sb-sec { font-size:.6rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.22); padding:10px 12px 5px; }
+.sb-item { display:flex; align-items:center; gap:9px; padding:10px 12px; border-radius:12px; cursor:pointer; transition:all .2s; margin-bottom:2px; }
+.sb-item:hover { background:rgba(255,255,255,.08); }
+.sb-item.active { background:rgba(109,184,96,.25); border:1px solid rgba(109,184,96,.3); }
 .sb-icon { font-size:.95rem; width:19px; text-align:center; flex-shrink:0; }
-.sb-label { font-size:.82rem; font-weight:500; color:rgba(245,240,232,.55); }
-.sb-item.active .sb-label, .sb-item:hover .sb-label { color:var(--cream); }
-.sb-badge { margin-left:auto; background:var(--terracotta); color:white; font-size:.58rem; font-weight:700; padding:2px 7px; border-radius:50px; }
-.sb-bottom { margin-top:auto; padding:14px; border-top:1px solid rgba(245,240,232,.06); }
-.streak-card { background:rgba(74,103,65,.2); border:1px solid rgba(122,158,110,.18); border-radius:12px; padding:13px; text-align:center; }
-.streak-num { font-family:'Playfair Display',serif; font-size:1.7rem; font-weight:800; color:var(--fern); }
-.streak-sub { font-size:.68rem; color:rgba(245,240,232,.38); margin-top:2px; }
+.sb-label { font-size:.82rem; font-weight:500; color:rgba(255,255,255,.52); }
+.sb-item.active .sb-label, .sb-item:hover .sb-label { color:white; }
+.sb-badge { margin-left:auto; background:var(--terra); color:white; font-size:.58rem; font-weight:700; padding:2px 7px; border-radius:50px; }
+.sb-bottom { padding:14px; border-top:1px solid rgba(255,255,255,.06); }
+.streak-card { background:rgba(109,184,96,.2); border:1px solid rgba(109,184,96,.25); border-radius:12px; padding:13px; text-align:center; }
+.streak-num { font-family:'Playfair Display',serif; font-size:1.7rem; font-weight:800; color:var(--mint); }
+.streak-sub { font-size:.66rem; color:rgba(255,255,255,.38); margin-top:2px; }
 
-/* MAIN CONTENT */
-.dash-main { flex:1; height:100vh; overflow-y:auto; background:var(--warm-white); }
-.topbar { position:sticky; top:0; z-index:50; background:rgba(250,248,244,.92); backdrop-filter:blur(12px); border-bottom:1px solid rgba(61,43,31,.07); padding:0 36px; height:62px; display:flex; align-items:center; justify-content:space-between; }
-.topbar-title { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:700; }
-.week-chip { background:rgba(74,103,65,.1); color:var(--moss); font-size:.72rem; font-weight:600; padding:5px 13px; border-radius:50px; }
+/* MAIN */
+.dash-main { flex:1; height:100vh; overflow-y:auto; background:var(--cream); }
+.topbar { position:sticky; top:0; z-index:50; background:rgba(255,253,247,.94); backdrop-filter:blur(14px); border-bottom:1px solid rgba(109,184,96,.1); padding:0 36px; height:62px; display:flex; align-items:center; justify-content:space-between; }
+.topbar-title { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:700; color:var(--forest); }
+.week-chip { background:rgba(109,184,96,.12); color:var(--moss); font-size:.72rem; font-weight:700; padding:5px 14px; border-radius:50px; border:1px solid rgba(109,184,96,.2); }
 .page { display:none; padding:36px; animation:fadeIn .4s ease; }
 .page.active { display:block; }
 
 /* Welcome hero */
-.w-hero { background:linear-gradient(135deg, var(--soil) 0%, #261a0e 100%); border-radius:22px; padding:44px; position:relative; overflow:hidden; margin-bottom:28px; }
-.w-hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 80% 50%, rgba(74,103,65,.28) 0%, transparent 60%); }
-.w-tag { font-size:.68rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--sage); margin-bottom:14px; position:relative; }
-.w-hero h1 { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3.5vw,2.7rem); font-weight:800; color:var(--cream); line-height:1.1; margin-bottom:14px; position:relative; }
-.w-hero h1 em { color:var(--fern); font-style:italic; }
-.w-hero p { color:rgba(245,240,232,.5); font-size:.93rem; line-height:1.7; max-width:480px; position:relative; }
-.w-deco { position:absolute; right:44px; top:50%; transform:translateY(-50%); font-size:7rem; opacity:.07; pointer-events:none; }
+.w-hero { background:linear-gradient(135deg,var(--forest) 0%,#1a4a14 100%); border-radius:24px; padding:44px; position:relative; overflow:hidden; margin-bottom:28px; box-shadow:0 20px 60px rgba(30,48,24,.2); }
+.w-hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 80% 40%, rgba(109,184,96,.25) 0%, transparent 65%); }
+.w-tag { font-size:.68rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--mint); margin-bottom:14px; position:relative; }
+.w-hero h1 { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3.2vw,2.6rem); font-weight:800; color:white; line-height:1.1; margin-bottom:12px; position:relative; }
+.w-hero h1 em { color:var(--mint); font-style:italic; }
+.w-hero p { color:rgba(255,255,255,.5); font-size:.92rem; line-height:1.7; max-width:480px; position:relative; }
+.w-deco { position:absolute; right:44px; top:50%; transform:translateY(-50%); font-size:8rem; opacity:.06; pointer-events:none; }
 
-/* Quick stats */
-.q-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
-.q-stat { background:white; border:1px solid rgba(61,43,31,.08); border-radius:14px; padding:18px; transition:all .2s; }
-.q-stat:hover { border-color:var(--sage); box-shadow:0 8px 24px rgba(74,103,65,.08); }
-.q-icon { font-size:1.3rem; margin-bottom:8px; }
-.q-val { font-family:'Playfair Display',serif; font-size:1.65rem; font-weight:800; color:var(--soil); line-height:1; }
-.q-sub { font-size:.7rem; color:rgba(61,43,31,.45); margin-top:3px; font-weight:500; }
+/* Stats */
+.q-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px; }
+.q-stat { background:white; border:1px solid rgba(109,184,96,.12); border-radius:16px; padding:18px; transition:all .2s; box-shadow:0 2px 12px rgba(30,48,24,.04); }
+.q-stat:hover { border-color:var(--sage); box-shadow:0 8px 24px rgba(109,184,96,.12); transform:translateY(-2px); }
+.q-icon { font-size:1.4rem; margin-bottom:8px; }
+.q-val { font-family:'Playfair Display',serif; font-size:1.65rem; font-weight:800; color:var(--forest); line-height:1; }
+.q-sub { font-size:.7rem; color:var(--text2); margin-top:3px; font-weight:500; }
 
-/* Week + Habits grid */
-.mid-grid { display:grid; grid-template-columns:1.4fr 1fr; gap:18px; margin-bottom:28px; }
-.card { background:white; border:1px solid rgba(61,43,31,.08); border-radius:18px; padding:26px; }
+/* Mid grid */
+.mid-grid { display:grid; grid-template-columns:1.4fr 1fr; gap:18px; margin-bottom:26px; }
+.card { background:white; border:1px solid rgba(109,184,96,.1); border-radius:18px; padding:24px; box-shadow:0 2px 12px rgba(30,48,24,.04); }
 .card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
-.card-title { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:var(--soil); }
-.card-link { font-size:.75rem; color:var(--moss); font-weight:500; cursor:pointer; }
+.card-title { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:var(--forest); }
+.card-link { font-size:.75rem; color:var(--sage); font-weight:600; cursor:pointer; }
 .card-link:hover { text-decoration:underline; }
-.days-row { display:flex; gap:7px; margin-bottom:18px; }
-.d-pill { flex:1; aspect-ratio:1; border-radius:10px; background:rgba(61,43,31,.05); display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:.62rem; color:rgba(61,43,31,.38); font-weight:600; cursor:pointer; transition:all .2s; }
-.d-pill.done { background:var(--moss); color:white; }
-.d-pill.today { background:var(--terracotta); color:white; }
-.d-pill:hover { transform:scale(1.06); }
-.habit-list { display:flex; flex-direction:column; gap:9px; }
-.habit-item { display:flex; align-items:center; gap:11px; padding:11px 13px; background:rgba(61,43,31,.03); border-radius:11px; cursor:pointer; transition:background .2s; }
-.habit-item:hover { background:rgba(74,103,65,.08); }
-.h-check { width:20px; height:20px; border-radius:50%; border:2px solid rgba(61,43,31,.18); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.65rem; transition:all .2s; }
-.h-check.done { background:var(--moss); border-color:var(--moss); color:white; }
-.h-name { font-size:.85rem; font-weight:500; }
-.h-name.done { text-decoration:line-through; opacity:.38; }
+.days-row { display:flex; gap:6px; margin-bottom:16px; }
+.d-pill { flex:1; aspect-ratio:1; border-radius:10px; background:rgba(30,48,24,.05); display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:.6rem; color:var(--text2); font-weight:700; cursor:pointer; transition:all .2s; }
+.d-pill.done { background:var(--sage); color:white; }
+.d-pill.today { background:var(--terra); color:white; box-shadow:0 4px 12px rgba(232,98,26,.3); }
+.d-pill:hover { transform:scale(1.08); }
+.habit-list { display:flex; flex-direction:column; gap:8px; }
+.habit-item { display:flex; align-items:center; gap:11px; padding:10px 13px; background:var(--sky); border-radius:12px; cursor:pointer; transition:all .2s; }
+.habit-item:hover { background:rgba(109,184,96,.12); }
+.h-check { width:20px; height:20px; border-radius:50%; border:2px solid rgba(30,48,24,.18); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.65rem; transition:all .2s; }
+.h-check.done { background:var(--sage); border-color:var(--sage); color:white; }
+.h-name { font-size:.84rem; font-weight:500; color:var(--forest); }
+.h-name.done { text-decoration:line-through; opacity:.4; }
 
-/* Meal grid */
-.meal-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:22px; }
-.meal-card { background:white; border:1px solid rgba(61,43,31,.08); border-radius:14px; padding:18px; cursor:pointer; transition:all .2s; }
-.meal-card:hover { border-color:var(--sage); transform:translateY(-2px); box-shadow:0 8px 24px rgba(74,103,65,.09); }
-.meal-time { font-size:.65rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--sage); margin-bottom:7px; }
-.meal-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:600; color:var(--soil); margin-bottom:5px; }
-.meal-desc { font-size:.78rem; color:rgba(61,43,31,.52); line-height:1.5; }
-.meal-macros { display:flex; gap:10px; margin-top:12px; padding-top:12px; border-top:1px solid rgba(61,43,31,.05); }
-.meal-mac { font-size:.69rem; color:rgba(61,43,31,.42); font-weight:500; }
-.macros-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
-.macro-box { background:white; border:1px solid rgba(61,43,31,.08); border-radius:14px; padding:18px; text-align:center; }
-.macro-val { font-family:'Playfair Display',serif; font-size:1.75rem; font-weight:800; color:var(--soil); }
-.macro-unit { font-size:.7rem; opacity:.5; }
-.macro-label { font-size:.72rem; color:rgba(61,43,31,.48); margin-top:4px; font-weight:500; }
-.macro-bar { height:4px; border-radius:2px; margin-top:10px; background:rgba(61,43,31,.07); overflow:hidden; }
-.macro-fill { height:100%; border-radius:2px; }
-
-/* Recipes */
+/* ─── RECIPE CARDS ─── */
 .recipes-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
-.recipe-card { background:white; border:1px solid rgba(61,43,31,.08); border-radius:18px; overflow:hidden; cursor:pointer; transition:all .25s; }
-.recipe-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(61,43,31,.09); }
-.r-img { height:140px; display:flex; align-items:center; justify-content:center; font-size:3.5rem; position:relative; }
-.r-tag { position:absolute; top:10px; right:10px; background:rgba(61,43,31,.7); color:white; font-size:.62rem; font-weight:600; padding:3px 9px; border-radius:50px; }
+.recipe-card { background:white; border:1px solid rgba(109,184,96,.1); border-radius:20px; overflow:hidden; cursor:pointer; transition:all .28s; box-shadow:0 2px 12px rgba(30,48,24,.05); }
+.recipe-card:hover { transform:translateY(-5px); box-shadow:0 20px 48px rgba(109,184,96,.16); border-color:rgba(109,184,96,.3); }
+.r-img { height:150px; display:flex; align-items:center; justify-content:center; font-size:4rem; position:relative; }
+.r-play { position:absolute; bottom:10px; right:10px; width:36px; height:36px; background:rgba(255,255,255,.9); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.9rem; box-shadow:0 4px 12px rgba(0,0,0,.15); transition:transform .2s; }
+.recipe-card:hover .r-play { transform:scale(1.15); }
+.r-tag { position:absolute; top:10px; left:10px; background:rgba(30,48,24,.75); color:white; font-size:.62rem; font-weight:700; padding:3px 10px; border-radius:50px; }
 .r-body { padding:18px; }
-.r-name { font-family:'Playfair Display',serif; font-size:.97rem; font-weight:700; color:var(--soil); margin-bottom:5px; }
-.r-desc { font-size:.77rem; color:rgba(61,43,31,.48); line-height:1.5; margin-bottom:12px; }
+.r-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:var(--forest); margin-bottom:5px; }
+.r-desc { font-size:.78rem; color:var(--text2); line-height:1.5; margin-bottom:12px; }
 .r-meta { display:flex; gap:10px; }
-.r-meta span { font-size:.69rem; color:rgba(61,43,31,.38); }
+.r-meta span { font-size:.68rem; color:var(--text2); }
+.r-steps-count { margin-top:10px; font-size:.72rem; font-weight:600; color:var(--sage); display:flex; align-items:center; gap:4px; }
 
-/* Training */
+/* ─── EXERCISE CARDS (grid para entrenamiento) ─── */
+.ex-cards-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
+.ex-card { background:white; border:1px solid rgba(109,184,96,.1); border-radius:16px; overflow:hidden; cursor:pointer; transition:all .25s; box-shadow:0 2px 10px rgba(30,48,24,.04); }
+.ex-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(109,184,96,.14); border-color:rgba(109,184,96,.3); }
+.ex-card-img { height:110px; display:flex; align-items:center; justify-content:center; font-size:3rem; position:relative; }
+.ex-play { position:absolute; bottom:8px; right:8px; width:32px; height:32px; background:rgba(255,255,255,.92); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.8rem; box-shadow:0 3px 10px rgba(0,0,0,.12); transition:transform .2s; }
+.ex-card:hover .ex-play { transform:scale(1.15); }
+.ex-card-body { padding:14px; }
+.ex-card-name { font-weight:700; font-size:.9rem; color:var(--forest); margin-bottom:4px; }
+.ex-card-meta { display:flex; gap:8px; margin-bottom:8px; }
+.ex-chip { font-size:.65rem; font-weight:700; padding:2px 8px; border-radius:50px; }
+.ec-sets { background:rgba(109,184,96,.12); color:var(--moss); }
+.ec-reps { background:rgba(245,158,42,.12); color:#b07010; }
+.ec-rest { background:rgba(30,48,24,.07); color:var(--text2); }
+.ex-card-desc { font-size:.75rem; color:var(--text2); line-height:1.45; }
+
+/* Training split header */
 .split-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
-.split-card { background:var(--soil); border-radius:18px; padding:26px 22px; color:var(--cream); position:relative; overflow:hidden; cursor:pointer; transition:transform .2s; }
+.split-card { border-radius:18px; padding:24px 20px; position:relative; overflow:hidden; cursor:pointer; transition:transform .2s; }
 .split-card:hover { transform:translateY(-3px); }
-.split-card::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 80% 20%, rgba(122,158,110,.18), transparent 60%); }
-.sp-label { font-size:.64rem; letter-spacing:.12em; text-transform:uppercase; color:var(--sage); margin-bottom:7px; position:relative; }
-.sp-name { font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:700; margin-bottom:5px; position:relative; }
-.sp-desc { font-size:.77rem; color:rgba(245,240,232,.42); position:relative; margin-bottom:14px; }
-.sp-tag { background:rgba(122,158,110,.18); border:1px solid rgba(122,158,110,.28); color:var(--fern); font-size:.65rem; font-weight:600; padding:3px 10px; border-radius:50px; position:relative; }
-.ex-table { background:white; border:1px solid rgba(61,43,31,.08); border-radius:18px; overflow:hidden; margin-bottom:22px; }
-.ex-head { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; padding:13px 22px; background:rgba(61,43,31,.03); border-bottom:1px solid rgba(61,43,31,.06); font-size:.67rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(61,43,31,.38); }
-.ex-row { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; padding:14px 22px; border-bottom:1px solid rgba(61,43,31,.04); align-items:center; cursor:pointer; transition:background .15s; }
-.ex-row:last-child { border-bottom:none; }
-.ex-row:hover { background:rgba(74,103,65,.04); }
-.ex-name { font-size:.87rem; font-weight:500; color:var(--soil); display:flex; align-items:center; gap:9px; }
-.ex-emoji { font-size:1rem; }
-.ex-val { font-size:.82rem; color:rgba(61,43,31,.52); }
-.ex-sets { font-size:.82rem; color:var(--moss); font-weight:700; }
+.split-card.a { background:linear-gradient(135deg,#1e3a18,#2d5a27); }
+.split-card.b { background:linear-gradient(135deg,#1a3d30,#2a5a44); }
+.split-card.c { background:linear-gradient(135deg,#3d2a10,#5a4020); }
+.split-card::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 80% 20%, rgba(255,255,255,.08), transparent 60%); }
+.sp-label { font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; color:var(--mint); margin-bottom:6px; position:relative; opacity:.8; }
+.sp-name { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:700; color:white; margin-bottom:4px; position:relative; }
+.sp-desc { font-size:.75rem; color:rgba(255,255,255,.45); position:relative; margin-bottom:12px; }
+.sp-tag { background:rgba(255,255,255,.12); color:rgba(255,255,255,.75); font-size:.63rem; font-weight:700; padding:3px 10px; border-radius:50px; position:relative; }
+
+/* Macros */
+.macros-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
+.macro-box { background:white; border:1px solid rgba(109,184,96,.1); border-radius:16px; padding:18px; text-align:center; box-shadow:0 2px 10px rgba(30,48,24,.04); }
+.macro-val { font-family:'Playfair Display',serif; font-size:1.75rem; font-weight:800; color:var(--forest); }
+.macro-unit { font-size:.7rem; opacity:.5; }
+.macro-label { font-size:.72rem; color:var(--text2); margin-top:4px; font-weight:500; }
+.macro-bar { height:5px; border-radius:3px; margin-top:12px; background:rgba(30,48,24,.07); overflow:hidden; }
+.macro-fill { height:100%; border-radius:3px; }
+
+/* Meal cards */
+.meal-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:22px; }
+.meal-card { background:white; border:1px solid rgba(109,184,96,.1); border-radius:16px; padding:18px; cursor:pointer; transition:all .22s; box-shadow:0 2px 10px rgba(30,48,24,.04); }
+.meal-card:hover { border-color:var(--sage); transform:translateY(-3px); box-shadow:0 10px 28px rgba(109,184,96,.12); }
+.meal-time { font-size:.63rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--sage); margin-bottom:7px; }
+.meal-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:var(--forest); margin-bottom:5px; }
+.meal-desc { font-size:.78rem; color:var(--text2); line-height:1.5; }
+.meal-macros { display:flex; gap:10px; margin-top:12px; padding-top:12px; border-top:1px solid rgba(30,48,24,.06); }
+.meal-mac { font-size:.68rem; color:var(--text2); font-weight:500; }
 
 /* Routines */
-.week-row { display:grid; grid-template-columns:repeat(7,1fr); gap:10px; margin-bottom:24px; }
-.w-day { background:white; border:1.5px solid rgba(61,43,31,.08); border-radius:13px; padding:14px 8px; text-align:center; cursor:pointer; transition:all .2s; }
-.w-day:hover { border-color:var(--sage); }
-.w-day.active { background:var(--moss); border-color:var(--moss); }
-.w-day.rest { background:rgba(61,43,31,.03); cursor:default; }
-.wd-name { font-size:.62rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(61,43,31,.38); margin-bottom:7px; }
-.w-day.active .wd-name { color:rgba(245,240,232,.55); }
-.wd-icon { font-size:1.1rem; margin-bottom:5px; }
-.wd-type { font-size:.75rem; font-weight:600; color:var(--soil); }
-.w-day.active .wd-type { color:var(--cream); }
-.w-day.rest .wd-type { color:rgba(61,43,31,.28); }
+.week-row { display:grid; grid-template-columns:repeat(7,1fr); gap:10px; margin-bottom:22px; }
+.w-day { background:white; border:2px solid rgba(109,184,96,.1); border-radius:14px; padding:14px 8px; text-align:center; cursor:pointer; transition:all .2s; box-shadow:0 2px 8px rgba(30,48,24,.04); }
+.w-day:hover:not(.rest) { border-color:var(--sage); transform:translateY(-2px); }
+.w-day.active { background:linear-gradient(135deg,var(--sage),var(--moss)); border-color:var(--sage); box-shadow:0 8px 20px rgba(109,184,96,.35); }
+.w-day.rest { background:rgba(30,48,24,.03); border-style:dashed; cursor:default; }
+.wd-name { font-size:.6rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text2); margin-bottom:6px; }
+.w-day.active .wd-name { color:rgba(255,255,255,.7); }
+.wd-icon { font-size:1.15rem; margin-bottom:5px; }
+.wd-type { font-size:.74rem; font-weight:700; color:var(--forest); }
+.w-day.active .wd-type { color:white; }
+.w-day.rest .wd-type { color:rgba(30,48,24,.28); }
 
 /* Growth */
 .growth-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:22px; }
-.g-card { border-radius:18px; overflow:hidden; cursor:pointer; transition:all .25s; position:relative; }
-.g-card:hover { transform:translateY(-4px); box-shadow:0 20px 50px rgba(61,43,31,.14); }
-.g-card.book { background:linear-gradient(135deg, #241508 0%, #3d2b1f 100%); }
-.g-card.notion { background:linear-gradient(135deg, #111 0%, #2a2a2a 100%); }
+.g-card { border-radius:20px; overflow:hidden; cursor:pointer; transition:all .25s; position:relative; box-shadow:0 8px 32px rgba(0,0,0,.1); }
+.g-card:hover { transform:translateY(-5px); box-shadow:0 24px 56px rgba(0,0,0,.18); }
+.g-card.book { background:linear-gradient(135deg,#1a1008 0%,#3d2a10 100%); }
+.g-card.notion { background:linear-gradient(135deg,#111 0%,#222 100%); }
 .g-inner { padding:32px; }
-.g-icon { font-size:2.8rem; margin-bottom:18px; }
-.g-label { font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; margin-bottom:8px; }
-.g-card.book .g-label { color:var(--gold); }
-.g-card.notion .g-label { color:#888; }
-.g-title { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:800; color:var(--cream); margin-bottom:10px; line-height:1.2; }
-.g-desc { font-size:.84rem; color:rgba(245,240,232,.42); line-height:1.65; margin-bottom:24px; }
+.g-icon { font-size:3rem; margin-bottom:18px; }
+.g-lbl { font-size:.63rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; margin-bottom:8px; }
+.g-card.book .g-lbl { color:var(--gold); }
+.g-card.notion .g-lbl { color:#888; }
+.g-title { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:800; color:white; margin-bottom:10px; line-height:1.2; }
+.g-desc { font-size:.84rem; color:rgba(255,255,255,.42); line-height:1.65; margin-bottom:24px; }
 .g-btn { display:inline-flex; align-items:center; gap:7px; padding:11px 22px; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:700; border:none; cursor:pointer; transition:all .2s; }
 .g-card.book .g-btn { background:var(--gold); color:#1a0e00; }
-.g-card.book .g-btn:hover { background:#d4aa4a; }
+.g-card.book .g-btn:hover { background:#f0c040; }
 .g-card.notion .g-btn { background:white; color:#111; }
 .g-card.notion .g-btn:hover { background:#eee; }
-.g-deco { position:absolute; bottom:-16px; right:-16px; font-size:9rem; opacity:.04; pointer-events:none; }
-.chapters { background:white; border:1px solid rgba(61,43,31,.08); border-radius:18px; overflow:hidden; }
-.ch-head { padding:18px 22px; border-bottom:1px solid rgba(61,43,31,.06); display:flex; align-items:center; justify-content:space-between; }
-.ch-head h3 { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; }
-.ch-item { display:flex; align-items:center; gap:14px; padding:14px 22px; border-bottom:1px solid rgba(61,43,31,.04); cursor:pointer; transition:background .15s; }
+.g-deco { position:absolute; bottom:-20px; right:-20px; font-size:9rem; opacity:.04; pointer-events:none; }
+.chapters { background:white; border:1px solid rgba(109,184,96,.1); border-radius:18px; overflow:hidden; box-shadow:0 2px 12px rgba(30,48,24,.04); }
+.ch-head { padding:18px 22px; border-bottom:1px solid rgba(30,48,24,.06); display:flex; align-items:center; justify-content:space-between; }
+.ch-head h3 { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:var(--forest); }
+.ch-item { display:flex; align-items:center; gap:14px; padding:14px 22px; border-bottom:1px solid rgba(30,48,24,.04); cursor:pointer; transition:background .15s; }
 .ch-item:last-child { border-bottom:none; }
-.ch-item:hover { background:rgba(74,103,65,.04); }
-.ch-num { width:30px; height:30px; border-radius:8px; background:rgba(61,43,31,.06); display:flex; align-items:center; justify-content:center; font-size:.74rem; font-weight:700; color:rgba(61,43,31,.45); flex-shrink:0; }
-.ch-num.done { background:var(--moss); color:white; }
-.ch-title { font-size:.85rem; font-weight:500; color:var(--soil); }
-.ch-sub { font-size:.72rem; color:rgba(61,43,31,.38); margin-top:2px; }
-.ch-icon { margin-left:auto; font-size:.75rem; color:var(--sage); }
+.ch-item:hover { background:var(--sky); }
+.ch-num { width:30px; height:30px; border-radius:8px; background:rgba(30,48,24,.07); display:flex; align-items:center; justify-content:center; font-size:.74rem; font-weight:700; color:var(--text2); flex-shrink:0; }
+.ch-num.done { background:var(--sage); color:white; }
+.ch-title { font-size:.85rem; font-weight:600; color:var(--forest); }
+.ch-sub { font-size:.72rem; color:var(--text2); margin-top:2px; }
+.ch-icon { margin-left:auto; font-size:.8rem; color:var(--sage); }
+.sec-hero { background:white; border:1px solid rgba(109,184,96,.1); border-radius:18px; padding:26px 30px; margin-bottom:22px; display:flex; align-items:center; gap:24px; box-shadow:0 2px 12px rgba(30,48,24,.04); }
+.sec-hero-icon { font-size:3.2rem; flex-shrink:0; }
+.sec-hero h2 { font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:700; color:var(--forest); margin-bottom:6px; }
+.sec-hero p { color:var(--text2); font-size:.88rem; line-height:1.6; }
 
-/* Section hero */
-.sec-hero { background:white; border:1px solid rgba(61,43,31,.08); border-radius:18px; padding:28px 32px; margin-bottom:22px; display:flex; align-items:center; gap:28px; }
-.sec-hero-icon { font-size:3.5rem; flex-shrink:0; }
-.sec-hero h2 { font-family:'Playfair Display',serif; font-size:1.65rem; font-weight:700; color:var(--soil); margin-bottom:6px; }
-.sec-hero p { color:rgba(61,43,31,.58); font-size:.88rem; line-height:1.6; }
+/* ════════════════════════════════════
+   VIDEO / STEP MODAL
+════════════════════════════════════ */
+.vid-modal-ov { position:fixed; inset:0; background:rgba(15,30,12,.8); backdrop-filter:blur(14px); z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; }
+.vid-modal-ov.open { display:flex; }
+.vid-modal { background:white; border-radius:28px; width:100%; max-width:680px; overflow:hidden; animation:popUp .35s cubic-bezier(.34,1.56,.64,1) both; box-shadow:0 50px 100px rgba(0,0,0,.35); max-height:90vh; overflow-y:auto; }
 
-/* Generic modal */
-.modal-ov { position:fixed; inset:0; background:rgba(61,43,31,.6); backdrop-filter:blur(8px); z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; }
+/* Video player area */
+.vid-player { background:#111; aspect-ratio:16/9; position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; }
+.vid-emoji-bg { font-size:5rem; opacity:.15; position:absolute; }
+.vid-play-btn { width:68px; height:68px; background:rgba(109,184,96,.9); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; position:relative; z-index:1; transition:all .25s; box-shadow:0 8px 24px rgba(109,184,96,.5); }
+.vid-player:hover .vid-play-btn { transform:scale(1.1); background:var(--sage); }
+.vid-label { position:absolute; bottom:14px; left:14px; background:rgba(0,0,0,.6); color:white; font-size:.72rem; font-weight:600; padding:4px 12px; border-radius:50px; }
+.vid-step-badge { position:absolute; top:14px; right:14px; background:var(--sage); color:white; font-size:.7rem; font-weight:700; padding:4px 12px; border-radius:50px; }
+
+/* Modal body */
+.vid-body { padding:26px 28px; }
+.vid-title { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:var(--forest); margin-bottom:6px; }
+.vid-subtitle { font-size:.85rem; color:var(--text2); line-height:1.55; margin-bottom:22px; }
+
+/* Steps timeline */
+.steps-timeline { margin-bottom:24px; }
+.steps-timeline h5 { font-size:.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text2); margin-bottom:14px; }
+.step-timeline-item { display:flex; gap:14px; margin-bottom:14px; cursor:pointer; padding:10px 12px; border-radius:12px; transition:all .2s; border:1px solid transparent; }
+.step-timeline-item:hover { background:var(--sky); }
+.step-timeline-item.active-step { background:rgba(109,184,96,.1); border-color:rgba(109,184,96,.25); }
+.step-dot-col { display:flex; flex-direction:column; align-items:center; gap:0; flex-shrink:0; padding-top:2px; }
+.step-dot { width:28px; height:28px; border-radius:50%; background:rgba(30,48,24,.08); display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:800; color:var(--text2); flex-shrink:0; transition:all .2s; }
+.step-timeline-item.active-step .step-dot { background:var(--sage); color:white; box-shadow:0 4px 12px rgba(109,184,96,.4); }
+.step-dot-line { width:2px; flex:1; background:rgba(30,48,24,.08); margin-top:4px; min-height:24px; }
+.step-content h6 { font-size:.88rem; font-weight:700; color:var(--forest); margin-bottom:3px; }
+.step-content p { font-size:.8rem; color:var(--text2); line-height:1.5; }
+.step-content .s-tip { font-size:.75rem; color:var(--moss); font-weight:600; margin-top:5px; display:flex; align-items:center; gap:5px; }
+
+/* Modal nav */
+.vid-nav { display:flex; gap:10px; padding:0 28px 26px; }
+.btn-vid-prev { flex:1; padding:12px; border:2px solid rgba(109,184,96,.25); background:transparent; color:var(--moss); border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.88rem; font-weight:600; cursor:pointer; transition:all .2s; }
+.btn-vid-prev:hover { background:var(--sky); }
+.btn-vid-next { flex:2; padding:12px; background:linear-gradient(135deg,var(--sage),var(--moss)); color:white; border:none; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:700; cursor:pointer; transition:all .25s; box-shadow:0 6px 20px rgba(109,184,96,.35); }
+.btn-vid-next:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(109,184,96,.45); }
+.vid-close { position:absolute; top:14px; right:14px; background:rgba(0,0,0,.45); border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:.9rem; display:flex; align-items:center; justify-content:center; z-index:10; transition:background .2s; }
+.vid-close:hover { background:rgba(0,0,0,.65); }
+.vid-player { position:relative; }
+
+/* Generic content modal */
+.modal-ov { position:fixed; inset:0; background:rgba(15,30,12,.7); backdrop-filter:blur(10px); z-index:900; display:none; align-items:center; justify-content:center; padding:20px; }
 .modal-ov.open { display:flex; }
-.modal-box { background:var(--warm-white); border-radius:22px; padding:36px; max-width:460px; width:100%; position:relative; animation:fadeIn .3s ease; }
-.modal-x { position:absolute; top:18px; right:18px; background:rgba(61,43,31,.07); border:none; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:.85rem; display:flex; align-items:center; justify-content:center; }
-.modal-x:hover { background:rgba(61,43,31,.13); }
+.modal-box { background:white; border-radius:22px; padding:36px; max-width:460px; width:100%; position:relative; animation:popUp .3s cubic-bezier(.34,1.56,.64,1) both; }
+.modal-x { position:absolute; top:16px; right:16px; background:rgba(30,48,24,.07); border:none; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:.85rem; display:flex; align-items:center; justify-content:center; }
+.modal-x:hover { background:rgba(30,48,24,.12); }
 .modal-icon { font-size:2.8rem; margin-bottom:14px; }
-.modal-box h3 { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:var(--soil); margin-bottom:8px; }
-.modal-box p { color:rgba(61,43,31,.58); font-size:.87rem; line-height:1.65; margin-bottom:22px; }
-.modal-ingr { background:rgba(61,43,31,.04); border-radius:11px; padding:14px; margin-bottom:18px; }
-.modal-ingr h5 { font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:rgba(61,43,31,.45); margin-bottom:9px; }
-.modal-ingr ul { list-style:none; display:flex; flex-direction:column; gap:5px; }
-.modal-ingr li { font-size:.83rem; color:var(--soil); display:flex; align-items:center; gap:7px; }
-.modal-ingr li::before { content:'·'; color:var(--sage); font-size:1.1rem; }
-.btn-modal { width:100%; padding:13px; background:var(--soil); color:var(--cream); border:none; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:700; cursor:pointer; transition:background .2s; }
-.btn-modal:hover { background:var(--moss); }
+.modal-box h3 { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:var(--forest); margin-bottom:8px; }
+.modal-box p { color:var(--text2); font-size:.87rem; line-height:1.65; margin-bottom:20px; }
+.modal-ingr { background:var(--sky); border-radius:12px; padding:14px; margin-bottom:18px; }
+.modal-ingr h5 { font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text2); margin-bottom:10px; }
+.modal-ingr ul { list-style:none; display:flex; flex-direction:column; gap:6px; }
+.modal-ingr li { font-size:.83rem; color:var(--forest); display:flex; align-items:center; gap:8px; }
+.modal-ingr li::before { content:'·'; color:var(--sage); font-size:1.3rem; }
+.btn-modal { width:100%; padding:13px; background:linear-gradient(135deg,var(--sage),var(--moss)); color:white; border:none; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.9rem; font-weight:700; cursor:pointer; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:rgba(61,43,31,.13); border-radius:3px; }
+::-webkit-scrollbar-thumb { background:rgba(109,184,96,.25); border-radius:3px; }
 
 /* Animations */
-@keyframes fadeUp { from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)} }
 @keyframes fadeIn { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
 @keyframes popUp { from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)} }
 @keyframes spin { to{transform:rotate(360deg)} }
 @keyframes blink { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)} }
 
-/* Responsive */
 @media(max-width:900px){
   nav{padding:16px 22px;}
   .hero{padding:100px 22px 60px;}
   .hero-floats{display:none;}
-  .pillars,.how,.pricing,.testi,.faq{padding:60px 22px;}
-  footer{padding:32px 22px;flex-direction:column;gap:12px;text-align:center;}
+  .pillars,.how,.pricing,.testi,.faq-wrap{padding:60px 22px;}
+  footer{padding:30px 22px;flex-direction:column;gap:12px;text-align:center;}
   .pillars-grid{grid-template-columns:1fr;}
   .steps{grid-template-columns:1fr 1fr;}
   .steps::before{display:none;}
   .pricing-cards,.testi-grid{grid-template-columns:1fr;}
-  .sidebar{width:220px;}
+  .sidebar{width:210px;}
   .q-stats{grid-template-columns:1fr 1fr;}
   .mid-grid{grid-template-columns:1fr;}
-  .recipes-grid,.split-grid,.growth-grid{grid-template-columns:1fr 1fr;}
+  .recipes-grid,.split-grid,.growth-grid,.ex-cards-grid{grid-template-columns:1fr 1fr;}
   .week-row{grid-template-columns:repeat(4,1fr);}
   .page{padding:22px;}
-}
-@media(max-width:600px){
-  h1{font-size:2.4rem;}
-  .ob-opts{grid-template-columns:1fr;}
-  .split-grid,.growth-grid,.recipes-grid,.meal-grid,.macros-row{grid-template-columns:1fr;}
-  .q-stats{grid-template-columns:1fr 1fr;}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════ -->
-<!-- SCREEN 1: LANDING                       -->
-<!-- ═══════════════════════════════════════ -->
+<!-- ════════════════════════════════════
+     LANDING
+════════════════════════════════════ -->
 <div class="screen active" id="screen-landing">
-
-  <!-- NAV -->
   <nav>
     <div class="logo">Healthy <span>Space</span> Club</div>
     <div class="nav-links">
-      <a href="#pillars">El Club</a>
-      <a href="#how">Cómo funciona</a>
-      <a href="#pricing">Planes</a>
-      <a onclick="openPayModal('Anual','$197 usd','12 meses de acceso completo')" class="nav-cta" style="cursor:pointer">Únete al Club</a>
+      <a href="#sec-pillars">El Club</a>
+      <a href="#sec-how">Cómo funciona</a>
+      <a href="#sec-pricing">Planes</a>
+      <a onclick="openPay('Anual','$197 usd','12 meses de acceso completo')" class="nav-cta">Únete al Club</a>
     </div>
   </nav>
 
-  <!-- HERO -->
   <section class="hero">
-    <div class="hero-bg"></div>
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
+    <div class="hero-blob hb1"></div><div class="hero-blob hb2"></div><div class="hero-blob hb3"></div>
     <div class="hero-content">
       <div class="hero-badge">Club Digital de Bienestar</div>
       <h1>Tu coach, nutriólogo<br>y entrenador <em>en uno.</em></h1>
-      <p class="hero-sub">Healthy Space Club es el único lugar donde construyes hábitos de vida reales — con rutinas de entrenamiento, guías de nutrición y mentalidad, todo sistematizado para ti.</p>
+      <p class="hero-sub">Healthy Space Club es el único lugar donde construyes hábitos de vida reales — con videos por ejercicio, recetas en pasos y mentalidad, todo sistematizado para ti.</p>
       <div class="hero-actions">
-        <button class="btn-primary" onclick="openPayModal('Anual','$197 usd','12 meses de acceso completo')">Comenzar ahora →</button>
-        <a class="btn-ghost" href="#pillars">Ver qué incluye ↓</a>
+        <button class="btn-primary" onclick="openPay('Anual','$197 usd','12 meses de acceso completo')">Comenzar ahora →</button>
+        <a class="btn-ghost" href="#sec-pillars">Ver qué incluye ↓</a>
       </div>
     </div>
     <div class="hero-floats">
       <div class="float-card"><div class="float-num">3 en 1</div><div class="float-label">Coach · Nutrición · Entreno</div></div>
+      <div class="float-card"><div class="float-num">🎬</div><div class="float-label">Videos por ejercicio</div></div>
       <div class="float-card"><div class="float-num">∞</div><div class="float-label">Hábitos que duran</div></div>
-      <div class="float-card"><div class="float-num">1 lugar</div><div class="float-label">Todo centralizado</div></div>
     </div>
   </section>
 
-  <!-- PILLARS -->
-  <section class="pillars" id="pillars">
+  <section class="pillars" id="sec-pillars">
     <div class="sec-label">Los tres pilares</div>
     <h2>Todo lo que necesitas para transformarte</h2>
-    <p class="pillars-sub">Diseñado para reemplazar a los profesionales individuales con sistemas que funcionan sin que tengas que pensar.</p>
+    <p class="pillars-sub">Diseñado para reemplazar coaches, nutriólogos y entrenadores individuales con un sistema que funciona.</p>
     <div class="pillars-grid">
-      <div class="pillar"><span class="pillar-icon">🥗</span><h3>Nutrición</h3><p>Recetas semanales, planes de comida personalizados, listas de compras y guías de preparación. Sabes exactamente qué cocinar cada día.</p><span class="pillar-tag">Reemplaza al Nutriólogo</span></div>
-      <div class="pillar"><span class="pillar-icon">💪</span><h3>Entrenamiento</h3><p>Rutinas progresivas para todos los niveles, con o sin gimnasio. Seguimiento de tu avance y ajuste de intensidad semana a semana.</p><span class="pillar-tag">Reemplaza al Entrenador</span></div>
-      <div class="pillar"><span class="pillar-icon">🧠</span><h3>Mentalidad</h3><p>Herramientas para construir y sostener hábitos. Módulos de mindfulness, gestión de estrés y las bases psicológicas del cambio real.</p><span class="pillar-tag">Reemplaza al Coach</span></div>
+      <div class="pillar"><span class="pillar-icon">🥗</span><h3>Nutrición</h3><p>Recetas semanales en video paso a paso, planes de comida y listas de compras. Sabes exactamente qué cocinar cada día.</p><span class="pillar-tag">Reemplaza al Nutriólogo</span></div>
+      <div class="pillar"><span class="pillar-icon">💪</span><h3>Entrenamiento</h3><p>Videos por ejercicio con descripción, técnica en pasos y progresión semanal. Como tener un entrenador personal contigo.</p><span class="pillar-tag">Reemplaza al Entrenador</span></div>
+      <div class="pillar"><span class="pillar-icon">🧠</span><h3>Mentalidad</h3><p>Módulos de mindfulness, gestión de estrés y las bases psicológicas del cambio. El método Healthy Space en acción.</p><span class="pillar-tag">Reemplaza al Coach</span></div>
     </div>
   </section>
 
-  <!-- HOW -->
-  <section class="how" id="how">
+  <section class="how" id="sec-how">
     <div class="sec-label">El proceso</div>
     <h2>Simple, sostenible, sistematizado.</h2>
     <div class="steps">
-      <div class="step"><div class="step-num">1</div><h4>Te unes al Club</h4><p>Acceso inmediato a toda la plataforma en un solo lugar.</p></div>
-      <div class="step"><div class="step-num">2</div><h4>Tu perfil de hábitos</h4><p>Un onboarding que personaliza tu experiencia desde el primer día.</p></div>
-      <div class="step"><div class="step-num">3</div><h4>Recibe tu plan</h4><p>Rutinas, recetas y módulos adaptados a tus objetivos.</p></div>
-      <div class="step"><div class="step-num">4</div><h4>Construyes el hábito</h4><p>El sistema hace el trabajo pesado. Tú solo apareces.</p></div>
+      <div class="step"><div class="step-num">1</div><h4>Te unes al Club</h4><p>Acceso inmediato a toda la plataforma.</p></div>
+      <div class="step"><div class="step-num">2</div><h4>Tu perfil de hábitos</h4><p>Onboarding que personaliza tu experiencia.</p></div>
+      <div class="step"><div class="step-num">3</div><h4>Videos + Plan</h4><p>Ejercicios y recetas en pasos con video.</p></div>
+      <div class="step"><div class="step-num">4</div><h4>Construyes el hábito</h4><p>El sistema hace el trabajo pesado. Tú apareces.</p></div>
     </div>
   </section>
 
-  <!-- PRICING -->
-  <section class="pricing" id="pricing">
+  <section class="pricing" id="sec-pricing">
     <div class="sec-label">Membresía</div>
     <h2>Elige cómo quieres entrar</h2>
     <p class="pricing-sub">Sin contratos. Sin compromisos eternos. Solo resultados.</p>
     <div class="pricing-cards">
       <div class="price-card">
         <div class="price-name">Mensual</div>
-        <div class="price-amount"><sup>$</sup>29 <span style="font-size:.9rem;font-weight:400;opacity:.45">usd</span></div>
+        <div class="price-amount">$29 <span style="font-size:.85rem;font-weight:400;opacity:.45">usd</span></div>
         <div class="price-period">por mes · cancela cuando quieras</div>
         <ul class="price-features">
           <li>Acceso completo a los 3 pilares</li>
-          <li>Plan de nutrición semanal</li>
-          <li>Rutinas de entrenamiento</li>
+          <li>Videos por ejercicio con pasos</li>
+          <li>Recetas semanales en video</li>
+          <li>Plan de nutrición actualizado</li>
           <li>Módulos de hábitos y mentalidad</li>
-          <li>Recetas semanales actualizadas</li>
         </ul>
-        <button class="btn-join" onclick="openPayModal('Mensual','$29 usd/mes','Membresía mensual · cancela cuando quieras')">Comenzar →</button>
+        <button class="btn-join" onclick="openPay('Mensual','$29 usd/mes','Membresía mensual · cancela cuando quieras')">Comenzar →</button>
       </div>
       <div class="price-card featured">
         <div class="price-badge">⭐ Más popular</div>
         <div class="price-name">Anual</div>
-        <div class="price-amount"><sup>$</sup>197 <span style="font-size:.9rem;font-weight:400;opacity:.45">usd</span></div>
+        <div class="price-amount" style="color:white">$197 <span style="font-size:.85rem;font-weight:400;opacity:.45">usd</span></div>
         <div class="price-period">pago único · 12 meses completos</div>
         <ul class="price-features">
           <li>Todo lo del plan mensual</li>
           <li>Libro: Healthy Space Method</li>
           <li>Notion: Control de Vida</li>
-          <li>Acceso anticipado a contenido nuevo</li>
+          <li>Acceso anticipado a contenido</li>
           <li>Comunidad privada del Club</li>
         </ul>
-        <button class="btn-join" onclick="openPayModal('Anual','$197 usd','12 meses de acceso completo')">Comenzar con descuento →</button>
+        <button class="btn-join" onclick="openPay('Anual','$197 usd','12 meses de acceso completo')">Comenzar con descuento →</button>
       </div>
     </div>
   </section>
 
-  <!-- TESTIMONIALS -->
   <section class="testi">
     <div class="sec-label">Resultados reales</div>
     <h2>Lo que dicen los miembros</h2>
     <div class="testi-grid">
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"Llevaba años buscando algo que uniera todo en un solo lugar. El Club lo tiene todo — no necesito buscar recetas en YouTube ni coaches en Instagram. Está todo ahí."</p>
-        <div class="testi-author"><div class="testi-avatar">👩</div><div><div class="testi-name">María G.</div><div class="testi-meta">Miembro desde hace 3 meses</div></div></div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"El Healthy Space Method cambió completamente mi relación con los hábitos. Ya no dependo de la fuerza de voluntad. Tengo un sistema."</p>
-        <div class="testi-author"><div class="testi-avatar">👨</div><div><div class="testi-name">Carlos M.</div><div class="testi-meta">Miembro desde hace 6 meses</div></div></div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"Bajé 8 kg siguiendo el plan de alimentación y las rutinas. Lo mejor es que no siento que estoy a dieta. Como bien, entreno bien y me siento increíble."</p>
-        <div class="testi-author"><div class="testi-avatar">👩</div><div><div class="testi-name">Sofía R.</div><div class="testi-meta">Miembro desde hace 4 meses</div></div></div>
-      </div>
+      <div class="testi-card"><div class="testi-stars">★★★★★</div><p class="testi-text">"Los videos por ejercicio me cambiaron la vida. Ya no tengo excusa de 'no saber cómo hacerlo'. Cada movimiento está explicado paso a paso."</p><div class="testi-author"><div class="testi-avatar">👩</div><div><div class="testi-name">María G.</div><div class="testi-meta">Miembro desde hace 3 meses</div></div></div></div>
+      <div class="testi-card"><div class="testi-stars">★★★★★</div><p class="testi-text">"El Healthy Space Method cambió mi relación con los hábitos. Ya no dependo de la fuerza de voluntad. Tengo un sistema que funciona solo."</p><div class="testi-author"><div class="testi-avatar">👨</div><div><div class="testi-name">Carlos M.</div><div class="testi-meta">Miembro desde hace 6 meses</div></div></div></div>
+      <div class="testi-card"><div class="testi-stars">★★★★★</div><p class="testi-text">"Las recetas en video son increíbles. Fáciles, deliciosas y ya vienen calculadas con los macros. Bajé 8 kg sin sentir que estaba a dieta."</p><div class="testi-author"><div class="testi-avatar">👩</div><div><div class="testi-name">Sofía R.</div><div class="testi-meta">Miembro desde hace 4 meses</div></div></div></div>
     </div>
   </section>
 
-  <!-- FAQ -->
-  <div class="faq">
-    <div class="sec-label">Preguntas frecuentes</div>
-    <h2>Todo lo que necesitas saber</h2>
-    <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">¿Necesito experiencia previa para unirme? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Para nada. El Club tiene contenido para todos los niveles — desde principiantes absolutos hasta personas activas que quieren optimizar su rutina.</div>
-    </div>
-    <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">¿Necesito ir al gimnasio? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">No. Tenemos rutinas para gym, para casa y para quienes solo tienen 20 minutos al día. El plan se adapta a ti, no al revés.</div>
-    </div>
-    <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">¿Qué incluye exactamente el plan anual? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Acceso completo a las 5 secciones del Club (alimentación, recetas, entrenamiento, rutinas y crecimiento), el libro Healthy Space Method, la plantilla Notion de Control de Vida, y actualizaciones de contenido durante 12 meses.</div>
-    </div>
-    <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">¿Puedo cancelar cuando quiera? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">El plan mensual se puede cancelar en cualquier momento desde tu perfil. El plan anual es un pago único por 12 meses de acceso.</div>
-    </div>
-    <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">¿El contenido se actualiza? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Sí. Las recetas semanales se renuevan cada semana, las rutinas progresan mes a mes y continuamente añadimos nuevos módulos de crecimiento.</div>
+  <div class="faq-wrap">
+    <div class="faq-inner">
+      <div class="sec-label">Preguntas frecuentes</div>
+      <h2>Todo lo que necesitas saber</h2>
+      <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">¿Los videos incluyen todas las recetas y ejercicios? <span class="faq-arrow">▼</span></div><div class="faq-a">Sí. Cada ejercicio tiene su propio video con instrucciones paso a paso. Las recetas también cuentan con video de preparación dividido por etapas para que puedas seguirlo fácilmente.</div></div>
+      <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">¿Necesito experiencia previa? <span class="faq-arrow">▼</span></div><div class="faq-a">No. El Club tiene contenido para todos los niveles. Los videos explican la técnica desde cero para que cualquier persona pueda seguirlos.</div></div>
+      <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">¿Necesito ir al gimnasio? <span class="faq-arrow">▼</span></div><div class="faq-a">No. Tenemos rutinas y videos para gym, para casa y para quienes solo tienen 20 minutos al día.</div></div>
+      <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">¿El contenido se actualiza? <span class="faq-arrow">▼</span></div><div class="faq-a">Sí. Las recetas semanales se renuevan cada semana con nuevos videos, las rutinas progresan mes a mes y continuamos añadiendo módulos de crecimiento.</div></div>
+      <div class="faq-item" onclick="this.classList.toggle('open')"><div class="faq-q">¿Puedo cancelar cuando quiera? <span class="faq-arrow">▼</span></div><div class="faq-a">El plan mensual se puede cancelar en cualquier momento. El plan anual es un pago único por 12 meses de acceso completo.</div></div>
     </div>
   </div>
 
-  <!-- FOOTER -->
   <footer>
-    <div class="logo" style="color:var(--cream)">Healthy <span>Space</span> Club</div>
+    <div class="logo">Healthy <span>Space</span> Club</div>
     <p>© 2025 Healthy Space Club · Todos los derechos reservados</p>
   </footer>
+</div>
 
-</div><!-- /screen-landing -->
-
-<!-- ═══════════════════════════════════════ -->
-<!-- PAYMENT MODAL                           -->
-<!-- ═══════════════════════════════════════ -->
-<div class="overlay" id="pay-overlay" onclick="closePayIfBg(event)">
+<!-- ════════════════════════════════════
+     PAYMENT MODAL
+════════════════════════════════════ -->
+<div class="overlay" id="pay-ov" onclick="if(event.target===this)closePay()">
   <div class="pay-modal">
-
-    <!-- Default form view -->
-    <div id="pay-form-view">
+    <div id="pay-form">
       <div class="pay-header">
-        <button class="pay-close" onclick="closePayModal()">✕</button>
+        <button class="pay-close" onclick="closePay()">✕</button>
         <div class="pay-plan-label">Membresía seleccionada</div>
-        <div class="pay-plan-name" id="pay-plan-name">Plan Anual</div>
-        <div class="pay-plan-price" id="pay-plan-price">$197 usd · 12 meses de acceso completo</div>
-        <div class="pay-features-mini">
-          <span class="pay-feat">✓ Nutrición</span>
-          <span class="pay-feat">✓ Entrenamiento</span>
-          <span class="pay-feat">✓ Mentalidad</span>
-        </div>
+        <div class="pay-plan-name" id="pp-name">Plan Anual</div>
+        <div class="pay-plan-price" id="pp-price">$197 usd · 12 meses de acceso completo</div>
+        <div class="pay-feats"><span class="pay-feat">🎬 Videos</span><span class="pay-feat">🥗 Nutrición</span><span class="pay-feat">💪 Entreno</span><span class="pay-feat">🧠 Mentalidad</span></div>
       </div>
       <div class="pay-body">
-        <div class="pay-label">Nombre completo</div>
-        <input class="pay-input" type="text" placeholder="Tu nombre" id="pay-name">
-        <div class="pay-label">Correo electrónico</div>
-        <input class="pay-input" type="email" placeholder="tu@correo.com" id="pay-email">
-        <div class="pay-label">Número de tarjeta</div>
-        <input class="pay-input" type="text" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this)">
+        <div class="pay-lbl">Nombre completo</div>
+        <input class="pay-input" type="text" placeholder="Tu nombre" id="pay-name-i">
+        <div class="pay-lbl">Correo electrónico</div>
+        <input class="pay-input" type="email" placeholder="tu@correo.com">
+        <div class="pay-lbl">Número de tarjeta</div>
+        <input class="pay-input" type="text" placeholder="1234 5678 9012 3456" maxlength="19" oninput="let v=this.value.replace(/\D/g,'').substring(0,16);this.value=v.replace(/(.{4})/g,'$1 ').trim()">
         <div class="pay-row">
-          <div>
-            <div class="pay-label">Vencimiento</div>
-            <input class="pay-input" type="text" placeholder="MM / AA" maxlength="7">
-          </div>
-          <div>
-            <div class="pay-label">CVV</div>
-            <input class="pay-input" type="text" placeholder="···" maxlength="3">
-          </div>
+          <div><div class="pay-lbl">Vencimiento</div><input class="pay-input" type="text" placeholder="MM / AA" maxlength="7"></div>
+          <div><div class="pay-lbl">CVV</div><input class="pay-input" type="text" placeholder="···" maxlength="3"></div>
         </div>
         <div class="pay-secure">Pago seguro · Stripe · Encriptación SSL</div>
-        <button class="btn-pay" onclick="processPayment()">
-          <span>Completar pago</span> <span id="pay-amount-btn">$197</span>
-        </button>
+        <button class="btn-pay" onclick="doPay()">✓ Completar pago <span id="pay-amt">$197</span></button>
         <p class="pay-demo-note">— Demo visual · sin cobro real —</p>
       </div>
     </div>
-
-    <!-- Processing view -->
-    <div id="pay-processing-view" style="display:none;text-align:center;padding:48px 32px;">
+    <div id="pay-proc" style="display:none;text-align:center;padding:56px 32px">
       <div class="spinner"></div>
-      <h4 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--soil);margin-bottom:8px;">Procesando tu pago…</h4>
-      <p style="font-size:.85rem;color:rgba(61,43,31,.48);">Esto solo tarda un momento</p>
+      <h4 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--forest);margin-bottom:8px">Procesando tu pago…</h4>
+      <p style="font-size:.84rem;color:var(--text2)">Esto solo tarda un momento</p>
     </div>
-
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════ -->
-<!-- SCREEN 2: ONBOARDING                    -->
-<!-- ═══════════════════════════════════════ -->
+<!-- ════════════════════════════════════
+     ONBOARDING
+════════════════════════════════════ -->
 <div class="screen" id="screen-onboarding">
   <div class="ob-wrap">
     <div class="ob-logo">Healthy <span>Space</span> Club</div>
-    <div class="ob-progress-bar"><div class="ob-fill" id="ob-fill" style="width:0%"></div></div>
-
-    <!-- STEP 1 -->
+    <div class="ob-bar"><div class="ob-fill" id="ob-fill" style="width:0%"></div></div>
     <div class="ob-step active" id="ob-1">
-      <div class="ob-step-num">Paso 1 de 5</div>
+      <div class="ob-snum">Paso 1 de 5</div>
       <div class="ob-q">¿Cómo te llamamos?</div>
       <div class="ob-hint">El nombre con el que te saludaremos dentro del Club cada día.</div>
-      <input class="ob-input" type="text" id="ob-name" placeholder="Tu nombre o apodo..." oninput="checkOb1()">
-      <button class="btn-ob-next" id="btn-ob-1" onclick="obNext(1)" disabled>Continuar →</button>
+      <input class="ob-input" type="text" id="ob-name" placeholder="Tu nombre o apodo..." oninput="document.getElementById('btn-ob1').disabled=this.value.trim().length<2">
+      <button class="btn-ob" id="btn-ob1" onclick="obGo(1)" disabled>Continuar →</button>
     </div>
-
-    <!-- STEP 2 -->
     <div class="ob-step" id="ob-2">
-      <div class="ob-step-num">Paso 2 de 5</div>
+      <div class="ob-snum">Paso 2 de 5</div>
       <div class="ob-q">¿Cuál es tu objetivo principal?</div>
-      <div class="ob-hint">El Club personalizará tu plan y contenido en torno a esto.</div>
+      <div class="ob-hint">El Club personalizará tu plan en torno a esto.</div>
       <div class="ob-opts">
-        <div class="ob-opt" onclick="selectOb(this,'goal')"><span class="ob-emoji">⚡</span><div><h5>Más energía y vitalidad</h5><p>Despertar bien, rendir más</p></div></div>
-        <div class="ob-opt" onclick="selectOb(this,'goal')"><span class="ob-emoji">🏋️</span><div><h5>Ganar músculo y fuerza</h5><p>Cambio corporal progresivo</p></div></div>
-        <div class="ob-opt" onclick="selectOb(this,'goal')"><span class="ob-emoji">🌿</span><div><h5>Adoptar hábitos saludables</h5><p>Rutinas que pueda sostener</p></div></div>
-        <div class="ob-opt" onclick="selectOb(this,'goal')"><span class="ob-emoji">🧘</span><div><h5>Reducir estrés y ansiedad</h5><p>Calma y equilibrio mental</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'goal','btn-ob2')"><span class="ob-emoji">⚡</span><div><h5>Más energía y vitalidad</h5><p>Despertar bien, rendir más</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'goal','btn-ob2')"><span class="ob-emoji">🏋️</span><div><h5>Ganar músculo y fuerza</h5><p>Cambio corporal progresivo</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'goal','btn-ob2')"><span class="ob-emoji">🌿</span><div><h5>Adoptar hábitos saludables</h5><p>Rutinas que pueda sostener</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'goal','btn-ob2')"><span class="ob-emoji">🧘</span><div><h5>Reducir estrés y ansiedad</h5><p>Calma y equilibrio mental</p></div></div>
       </div>
-      <button class="btn-ob-next" id="btn-ob-2" onclick="obNext(2)" disabled>Continuar →</button>
+      <button class="btn-ob" id="btn-ob2" onclick="obGo(2)" disabled>Continuar →</button>
     </div>
-
-    <!-- STEP 3 -->
     <div class="ob-step" id="ob-3">
-      <div class="ob-step-num">Paso 3 de 5</div>
+      <div class="ob-snum">Paso 3 de 5</div>
       <div class="ob-q">¿Cuál es tu punto de partida?</div>
-      <div class="ob-hint">Sin juicios — esto nos ayuda a calibrar tus rutinas desde el día uno.</div>
+      <div class="ob-hint">Sin juicios — esto calibra tus rutinas desde el día uno.</div>
       <div class="ob-opts">
-        <div class="ob-opt" onclick="selectOb(this,'level')"><span class="ob-emoji">🌱</span><div><h5>Soy principiante</h5><p>Quiero empezar desde cero bien</p></div></div>
-        <div class="ob-opt" onclick="selectOb(this,'level')"><span class="ob-emoji">🏃</span><div><h5>Tengo algo de base</h5><p>He intentado antes, quiero orden</p></div></div>
-        <div class="ob-opt" onclick="selectOb(this,'level')"><span class="ob-emoji">💪</span><div><h5>Soy activo/a regularmente</h5><p>Busco optimizar y sistematizar</p></div></div>
-        <div class="ob-opt" onclick="selectOb(this,'level')"><span class="ob-emoji">🏆</span><div><h5>Nivel avanzado</h5><p>Llevar todo al siguiente nivel</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'level','btn-ob3')"><span class="ob-emoji">🌱</span><div><h5>Soy principiante</h5><p>Empezar desde cero bien</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'level','btn-ob3')"><span class="ob-emoji">🏃</span><div><h5>Tengo algo de base</h5><p>He intentado antes, quiero orden</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'level','btn-ob3')"><span class="ob-emoji">💪</span><div><h5>Soy activo/a regularmente</h5><p>Optimizar y sistematizar</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'level','btn-ob3')"><span class="ob-emoji">🏆</span><div><h5>Nivel avanzado</h5><p>Llevar todo al siguiente nivel</p></div></div>
       </div>
-      <button class="btn-ob-next" id="btn-ob-3" onclick="obNext(3)" disabled>Continuar →</button>
+      <button class="btn-ob" id="btn-ob3" onclick="obGo(3)" disabled>Continuar →</button>
     </div>
-
-    <!-- STEP 4 -->
     <div class="ob-step" id="ob-4">
-      <div class="ob-step-num">Paso 4 de 5</div>
-      <div class="ob-q">¿Cuánto tiempo al día puedes dedicarle?</div>
-      <div class="ob-hint">Construiremos tu plan dentro de ese margen real, no del ideal.</div>
-      <div class="time-big" id="ob-time-display">30 <span>min/día</span></div>
-      <input type="range" min="10" max="90" value="30" step="5" oninput="updateObTime(this.value)" style="margin-bottom:32px">
-      <button class="btn-ob-next" onclick="obNext(4)">Continuar →</button>
+      <div class="ob-snum">Paso 4 de 5</div>
+      <div class="ob-q">¿Cuánto tiempo al día tienes?</div>
+      <div class="ob-hint">Construiremos tu plan dentro de ese margen real.</div>
+      <div class="time-big" id="ob-time">30 <span>min/día</span></div>
+      <input type="range" min="10" max="90" value="30" step="5" oninput="document.getElementById('ob-time').innerHTML=this.value+' <span>min/día</span>'">
+      <button class="btn-ob" onclick="obGo(4)">Continuar →</button>
     </div>
-
-    <!-- STEP 5 -->
     <div class="ob-step" id="ob-5">
-      <div class="ob-step-num">Paso 5 de 5</div>
+      <div class="ob-snum">Paso 5 de 5</div>
       <div class="ob-q">¿Cuál es tu mayor reto hoy?</div>
       <div class="ob-hint">El Club pondrá énfasis en esto desde el primer día.</div>
       <div class="ob-opts">
-        <div class="ob-opt" onclick="selectOb(this,'challenge')"><span class="ob-emoji">🍕</span><div><h5>La alimentación</h5><p>No sé qué ni cómo comer bien</p></div></div>
-        <div class="ob-opt" onclick="selectOb(this,'challenge')"><span class="ob-emoji">😴</span><div><h5>La constancia</h5><p>Empiezo y no termino</p></div></div>
-        <div class="ob-opt" onclick="selectOb(this,'challenge')"><span class="ob-emoji">⏰</span><div><h5>El tiempo</h5><p>Mi agenda no da mucho espacio</p></div></div>
-        <div class="ob-opt" onclick="selectOb(this,'challenge')"><span class="ob-emoji">🧠</span><div><h5>La mentalidad</h5><p>Me saboteo a mí mismo/a</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'challenge','btn-ob5')"><span class="ob-emoji">🍕</span><div><h5>La alimentación</h5><p>No sé qué ni cómo comer bien</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'challenge','btn-ob5')"><span class="ob-emoji">😴</span><div><h5>La constancia</h5><p>Empiezo y no termino</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'challenge','btn-ob5')"><span class="ob-emoji">⏰</span><div><h5>El tiempo</h5><p>Mi agenda no da mucho espacio</p></div></div>
+        <div class="ob-opt" onclick="selOb(this,'challenge','btn-ob5')"><span class="ob-emoji">🧠</span><div><h5>La mentalidad</h5><p>Me saboteo a mí mismo/a</p></div></div>
       </div>
-      <button class="btn-ob-next" id="btn-ob-5" onclick="finishOb()" disabled>Entrar al Club ✦</button>
+      <button class="btn-ob" id="btn-ob5" onclick="finishOb()" disabled>Entrar al Club ✦</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════ -->
-<!-- SCREEN 3: DASHBOARD                     -->
-<!-- ═══════════════════════════════════════ -->
+<!-- ════════════════════════════════════
+     DASHBOARD
+════════════════════════════════════ -->
 <div class="screen" id="screen-dashboard">
-
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sb-logo">
       <div class="sb-logo-text">Healthy <span>Space</span> Club</div>
       <div class="sb-logo-sub">Mi Espacio</div>
     </div>
     <div class="user-card">
-      <div class="avatar">🌿</div>
-      <div><div class="u-name" id="sb-user-name">Bienvenid@</div><div class="u-meta">Semana 1 · Miembro</div></div>
+      <div class="ava">🌿</div>
+      <div><div class="u-name" id="sb-name">Bienvenid@</div><div class="u-meta">Semana 1 · Miembro</div></div>
     </div>
     <div class="sb-nav">
-      <div class="sb-section-label">Principal</div>
-      <div class="sb-item active" onclick="showDash('bienvenida',this)"><span class="sb-icon">🏠</span><span class="sb-label">Mi Espacio</span></div>
-      <div class="sb-section-label" style="margin-top:6px">Nutrición</div>
-      <div class="sb-item" onclick="showDash('alimentacion',this)"><span class="sb-icon">🥗</span><span class="sb-label">Plan de Alimentación</span></div>
-      <div class="sb-item" onclick="showDash('recetas',this)"><span class="sb-icon">📖</span><span class="sb-label">Recetas Semanales</span></div>
-      <div class="sb-section-label" style="margin-top:6px">Movimiento</div>
-      <div class="sb-item" onclick="showDash('entrenamiento',this)"><span class="sb-icon">💪</span><span class="sb-label">Plan de Entrenamiento</span></div>
-      <div class="sb-item" onclick="showDash('rutinas',this)"><span class="sb-icon">🗓️</span><span class="sb-label">Rutinas Semanales</span><span class="sb-badge">HOY</span></div>
-      <div class="sb-section-label" style="margin-top:6px">Crecimiento</div>
-      <div class="sb-item" onclick="showDash('crecimiento',this)"><span class="sb-icon">🌱</span><span class="sb-label">Plan de Crecimiento</span></div>
+      <div class="sb-sec">Principal</div>
+      <div class="sb-item active" onclick="showPage('bienvenida',this)"><span class="sb-icon">🏠</span><span class="sb-label">Mi Espacio</span></div>
+      <div class="sb-sec">Nutrición</div>
+      <div class="sb-item" onclick="showPage('alimentacion',this)"><span class="sb-icon">🥗</span><span class="sb-label">Plan de Alimentación</span></div>
+      <div class="sb-item" onclick="showPage('recetas',this)"><span class="sb-icon">🎬</span><span class="sb-label">Recetas en Video</span></div>
+      <div class="sb-sec">Movimiento</div>
+      <div class="sb-item" onclick="showPage('entrenamiento',this)"><span class="sb-icon">💪</span><span class="sb-label">Plan de Entrenamiento</span></div>
+      <div class="sb-item" onclick="showPage('rutinas',this)"><span class="sb-icon">🗓️</span><span class="sb-label">Rutinas Semanales</span><span class="sb-badge">HOY</span></div>
+      <div class="sb-sec">Crecimiento</div>
+      <div class="sb-item" onclick="showPage('crecimiento',this)"><span class="sb-icon">🌱</span><span class="sb-label">Plan de Crecimiento</span></div>
     </div>
     <div class="sb-bottom">
       <div class="streak-card"><div class="streak-num">🔥 1</div><div class="streak-sub">día de racha · ¡sigue así!</div></div>
     </div>
   </aside>
 
-  <!-- MAIN -->
   <main class="dash-main">
     <div class="topbar">
-      <div class="topbar-title" id="dash-page-title">Mi Espacio</div>
+      <div class="topbar-title" id="page-title">Mi Espacio</div>
       <div class="week-chip">Semana 1 · Tu primer día 🌿</div>
     </div>
 
-    <!-- PAGE: BIENVENIDA -->
+    <!-- BIENVENIDA -->
     <div class="page active" id="dp-bienvenida">
       <div class="w-hero">
         <div class="w-tag">✦ Tu espacio personal de bienestar</div>
         <h1>Hola, <em id="hero-name">campeón/a</em>.<br>Bienvenid@ al Club.</h1>
-        <p>Este es tu centro de operaciones. Todo lo que necesitas para transformar tu salud está aquí, sistematizado y listo para ti.</p>
+        <p>Este es tu centro de operaciones. Videos por ejercicio, recetas en pasos, y tu plan de hábitos — todo en un solo lugar.</p>
         <div class="w-deco">🌿</div>
       </div>
       <div class="q-stats">
         <div class="q-stat"><div class="q-icon">🥗</div><div class="q-val">3/4</div><div class="q-sub">Comidas de hoy</div></div>
-        <div class="q-stat"><div class="q-icon">💪</div><div class="q-val">0/3</div><div class="q-sub">Sesiones esta semana</div></div>
+        <div class="q-stat"><div class="q-icon">🎬</div><div class="q-val">0/6</div><div class="q-sub">Videos vistos hoy</div></div>
         <div class="q-stat"><div class="q-icon">💧</div><div class="q-val">1.2L</div><div class="q-sub">Agua hoy</div></div>
         <div class="q-stat"><div class="q-icon">🧠</div><div class="q-val">Cap. 1</div><div class="q-sub">HSM por comenzar</div></div>
       </div>
       <div class="mid-grid">
         <div class="card">
-          <div class="card-head"><div class="card-title">Esta semana</div><span class="card-link" onclick="showDash('rutinas',document.querySelectorAll('.sb-item')[4])">Ver todo →</span></div>
+          <div class="card-head"><div class="card-title">Esta semana</div><span class="card-link" onclick="showPage('rutinas',document.querySelectorAll('.sb-item')[4])">Ver todo →</span></div>
           <div class="days-row">
-            <div class="d-pill today"><span>L</span><span style="font-size:.75em;margin-top:1px">HOY</span></div>
-            <div class="d-pill"><span>M</span></div>
-            <div class="d-pill"><span>X</span></div>
-            <div class="d-pill"><span>J</span></div>
-            <div class="d-pill"><span>V</span></div>
-            <div class="d-pill"><span>S</span></div>
-            <div class="d-pill"><span>D</span></div>
+            <div class="d-pill today"><span>L</span><span style="font-size:.7em;margin-top:1px">HOY</span></div>
+            <div class="d-pill"><span>M</span></div><div class="d-pill"><span>X</span></div>
+            <div class="d-pill"><span>J</span></div><div class="d-pill"><span>V</span></div>
+            <div class="d-pill"><span>S</span></div><div class="d-pill"><span>D</span></div>
           </div>
-          <div style="font-size:.8rem;color:rgba(61,43,31,.52);margin-bottom:16px;">Hoy: <strong style="color:var(--soil)">Tren Superior · 40 min</strong></div>
-          <button class="btn-modal" onclick="showDash('entrenamiento',document.querySelectorAll('.sb-item')[3])" style="border-radius:12px;padding:12px;background:var(--soil);color:var(--cream);border:none;font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;width:100%;transition:background .2s" onmouseover="this.style.background='var(--moss)'" onmouseout="this.style.background='var(--soil)'">Ver rutina de hoy →</button>
+          <div style="font-size:.8rem;color:var(--text2);margin-bottom:16px">Hoy: <strong style="color:var(--forest)">Tren Superior · 40 min · 6 videos</strong></div>
+          <button onclick="showPage('entrenamiento',document.querySelectorAll('.sb-item')[3])" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--sage),var(--moss));color:white;border:none;border-radius:50px;font-family:inherit;font-size:.88rem;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(109,184,96,.35)">Ver rutina de hoy 🎬</button>
         </div>
         <div class="card">
           <div class="card-head"><div class="card-title">Hábitos de hoy</div></div>
           <div class="habit-list">
             <div class="habit-item" onclick="toggleH(this)"><div class="h-check"></div><span class="h-name">Desayuno saludable</span></div>
-            <div class="habit-item" onclick="toggleH(this)"><div class="h-check"></div><span class="h-name">10 min de meditación</span></div>
-            <div class="habit-item" onclick="toggleH(this)"><div class="h-check"></div><span class="h-name">Entrenamiento del día</span></div>
+            <div class="habit-item" onclick="toggleH(this)"><div class="h-check"></div><span class="h-name">Ver video de entrenamiento</span></div>
+            <div class="habit-item" onclick="toggleH(this)"><div class="h-check"></div><span class="h-name">Completar rutina del día</span></div>
             <div class="habit-item" onclick="toggleH(this)"><div class="h-check"></div><span class="h-name">2L de agua</span></div>
             <div class="habit-item" onclick="toggleH(this)"><div class="h-check"></div><span class="h-name">Leer HSM 15 min</span></div>
           </div>
@@ -785,59 +801,138 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
       </div>
     </div>
 
-    <!-- PAGE: ALIMENTACION -->
+    <!-- ALIMENTACIÓN -->
     <div class="page" id="dp-alimentacion">
-      <div class="sec-hero"><div class="sec-hero-icon">🥗</div><div><h2>Plan de Alimentación</h2><p>Tu plan calórico y de macros está calculado para tu objetivo. Cada semana actualizamos el menú con recetas fáciles y deliciosas.</p></div></div>
+      <div class="sec-hero"><div class="sec-hero-icon">🥗</div><div><h2>Plan de Alimentación</h2><p>Tu plan calórico y macros calculado para tu objetivo. Las recetas de esta semana están disponibles en video paso a paso.</p></div></div>
       <div class="macros-row">
-        <div class="macro-box"><div class="macro-val">1,850 <span class="macro-unit">kcal</span></div><div class="macro-label">Calorías objetivo</div><div class="macro-bar"><div class="macro-fill" style="width:78%;background:var(--terracotta)"></div></div></div>
-        <div class="macro-box"><div class="macro-val">140g <span class="macro-unit">prot</span></div><div class="macro-label">Proteína diaria</div><div class="macro-bar"><div class="macro-fill" style="width:65%;background:var(--moss)"></div></div></div>
+        <div class="macro-box"><div class="macro-val">1,850 <span class="macro-unit">kcal</span></div><div class="macro-label">Calorías objetivo</div><div class="macro-bar"><div class="macro-fill" style="width:78%;background:var(--terra)"></div></div></div>
+        <div class="macro-box"><div class="macro-val">140g <span class="macro-unit">prot</span></div><div class="macro-label">Proteína diaria</div><div class="macro-bar"><div class="macro-fill" style="width:65%;background:var(--sage)"></div></div></div>
         <div class="macro-box"><div class="macro-val">60g <span class="macro-unit">grasas</span></div><div class="macro-label">Grasas saludables</div><div class="macro-bar"><div class="macro-fill" style="width:55%;background:var(--gold)"></div></div></div>
       </div>
-      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--soil);margin-bottom:14px;">Menú de hoy</div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--forest);margin-bottom:14px">Menú de hoy — haz clic para ver el video de la receta 🎬</div>
       <div class="meal-grid">
-        <div class="meal-card" onclick="openModal('Avena proteica','Desayuno completo con energía sostenida. Alto en fibra y proteína vegetal.','🥣',['80g avena en hojuelas','200ml leche de avena','1 scoop proteína vainilla','Puñado de frutos rojos','1 cda miel cruda'])"><div class="meal-time">☀️ Desayuno · 7:00 am</div><div class="meal-name">Avena proteica con frutos rojos</div><div class="meal-desc">Energía sostenida, alta en fibra y proteína</div><div class="meal-macros"><span class="meal-mac">450 kcal</span><span class="meal-mac">·</span><span class="meal-mac">32g prot</span><span class="meal-mac">·</span><span class="meal-mac">10 min</span></div></div>
-        <div class="meal-card" onclick="openModal('Snack media mañana','Opciones rápidas y nutritivas para mantener tu energía entre comidas.','🍎',['1 manzana mediana','30g nueces o almendras','1 vaso agua con limón'])"><div class="meal-time">🍎 Snack · 10:30 am</div><div class="meal-name">Snack de media mañana</div><div class="meal-desc">Fruta + puñado de frutos secos</div><div class="meal-macros"><span class="meal-mac">180 kcal</span><span class="meal-mac">·</span><span class="meal-mac">6g prot</span><span class="meal-mac">·</span><span class="meal-mac">2 min</span></div></div>
-        <div class="meal-card" onclick="openModal('Bowl de pollo y arroz integral','El clásico fitness elevado con especias y grasas buenas para un plato completo.','🍚',['150g pechuga de pollo','150g arroz integral cocido','1/2 aguacate','Brócoli al vapor','Aceite de oliva + limón'])"><div class="meal-time">🍽️ Comida · 1:30 pm</div><div class="meal-name">Bowl de pollo y arroz integral</div><div class="meal-desc">Proteína magra, carbos de calidad y grasas buenas</div><div class="meal-macros"><span class="meal-mac">580 kcal</span><span class="meal-mac">·</span><span class="meal-mac">52g prot</span><span class="meal-mac">·</span><span class="meal-mac">25 min</span></div></div>
-        <div class="meal-card" onclick="openModal('Salmón al horno con vegetales','Cena alta en omega-3 y micronutrientes, baja en carbos para recuperación nocturna.','🐟',['180g salmón fresco','Espárragos al horno','Ensalada verde','Aceite de oliva y ajo','Limón y hierbas frescas'])"><div class="meal-time">🌙 Cena · 7:00 pm</div><div class="meal-name">Salmón al horno con vegetales</div><div class="meal-desc">Alto en omega-3, ligero y saciante</div><div class="meal-macros"><span class="meal-mac">420 kcal</span><span class="meal-mac">·</span><span class="meal-mac">42g prot</span><span class="meal-mac">·</span><span class="meal-mac">20 min</span></div></div>
+        <div class="meal-card" onclick="openVidModal('recipe','Avena proteica con frutos rojos','Desayuno completo con energía sostenida. Alto en fibra y proteína vegetal.',['Calienta la leche de avena a fuego medio sin que hierva.','Agrega la avena y mezcla durante 3-4 minutos hasta espesar.','Incorpora la proteína en polvo y mezcla bien.','Sirve y agrega los frutos rojos encima.','Termina con un hilo de miel cruda y sirve caliente.'],'🥣',['80g avena','200ml leche avena','1 scoop proteína','Frutos rojos','Miel cruda'],'450 kcal · 32g proteína · 10 min')">
+          <div class="meal-time">☀️ Desayuno · 7:00 am</div>
+          <div class="meal-name">Avena proteica con frutos rojos</div>
+          <div class="meal-desc">Energía sostenida, alta en fibra y proteína</div>
+          <div class="meal-macros"><span class="meal-mac">450 kcal</span><span class="meal-mac">·</span><span class="meal-mac">32g prot</span><span class="meal-mac">·</span><span class="meal-mac">🎬 Ver receta</span></div>
+        </div>
+        <div class="meal-card" onclick="openVidModal('recipe','Bowl de pollo y arroz integral','El clásico fitness elevado. Proteína magra, carbos de calidad y grasas buenas.',['Cocina el arroz integral según instrucciones (20 min).','Salpimienta el pollo y cocínalo en sartén con aceite a fuego medio-alto.','Córtalo en tiras una vez listo.','Monta el bowl: arroz + pollo + aguacate en rodajas.','Agrega el brócoli al vapor y termina con limón.'],'🍚',['150g pechuga pollo','150g arroz integral','1/2 aguacate','Brócoli al vapor','Aceite oliva + limón'],'580 kcal · 52g proteína · 25 min')">
+          <div class="meal-time">🍽️ Comida · 1:30 pm</div>
+          <div class="meal-name">Bowl de pollo y arroz integral</div>
+          <div class="meal-desc">Proteína magra, carbos de calidad y grasas buenas</div>
+          <div class="meal-macros"><span class="meal-mac">580 kcal</span><span class="meal-mac">·</span><span class="meal-mac">52g prot</span><span class="meal-mac">·</span><span class="meal-mac">🎬 Ver receta</span></div>
+        </div>
+        <div class="meal-card" onclick="openVidModal('recipe','Tortilla de claras y espinacas','Alta en proteína, baja en calorías. Lista en 8 minutos.',['Bate las claras con sal y pimienta en un tazón.','Saltea los champiñones y espinaca en aceite de oliva 2 min.','Agrega la mezcla de claras sobre las verduras.','Cocina a fuego medio-bajo tapado por 3 min.','Dobla con cuidado y sirve.'],'🍳',['4 claras huevo','1 huevo entero','Espinaca fresca','Champiñones','Aceite de oliva'],'210 kcal · 28g proteína · 8 min')">
+          <div class="meal-time">🌙 Cena · 7:00 pm</div>
+          <div class="meal-name">Tortilla de claras y espinacas</div>
+          <div class="meal-desc">Alta en proteína, baja en calorías, lista en 8 min</div>
+          <div class="meal-macros"><span class="meal-mac">210 kcal</span><span class="meal-mac">·</span><span class="meal-mac">28g prot</span><span class="meal-mac">·</span><span class="meal-mac">🎬 Ver receta</span></div>
+        </div>
+        <div class="meal-card" onclick="openVidModal('recipe','Smoothie verde detox','Alcaliniza tu cuerpo con micronutrientes y enzimas en 2 minutos.',['Congela el mango la noche anterior.','Agrega todos los ingredientes a la licuadora.','Licúa 60 segundos a velocidad alta.','Prueba y ajusta con más limón si lo prefieres.','Sirve inmediatamente para conservar enzimas.'],'🥤',['1 mango congelado','Espinacas baby','200ml agua de coco','1 cm jengibre','Jugo de limón'],'180 kcal · verde · 2 min')">
+          <div class="meal-time">🍎 Snack · 10:30 am</div>
+          <div class="meal-name">Smoothie verde detox</div>
+          <div class="meal-desc">Micronutrientes y energía en 2 minutos</div>
+          <div class="meal-macros"><span class="meal-mac">180 kcal</span><span class="meal-mac">·</span><span class="meal-mac">Alcalino</span><span class="meal-mac">·</span><span class="meal-mac">🎬 Ver receta</span></div>
+        </div>
       </div>
     </div>
 
-    <!-- PAGE: RECETAS -->
+    <!-- RECETAS EN VIDEO -->
     <div class="page" id="dp-recetas">
-      <div class="sec-hero"><div class="sec-hero-icon">📖</div><div><h2>Recetas Semanales</h2><p>Recetas seleccionadas para esta semana: rápidas, deliciosas y alineadas a tu plan calórico.</p></div></div>
+      <div class="sec-hero"><div class="sec-hero-icon">🎬</div><div><h2>Recetas en Video</h2><p>Cada receta tiene su video paso a paso. Haz clic en cualquiera para ver la preparación completa dividida por etapas.</p></div></div>
       <div class="recipes-grid">
-        <div class="recipe-card" onclick="openModal('Avena proteica con frutos rojos','Desayuno reconfortante y completo. La avena aporta fibra soluble que mantiene tu energía estable durante horas.','🥣',['80g avena en hojuelas','200ml leche de avena','1 scoop proteína vainilla','Puñado de frutos del bosque','1 cda miel cruda'])"><div class="r-img" style="background:rgba(184,147,58,.08)">🥣<div class="r-tag">Desayuno</div></div><div class="r-body"><div class="r-name">Avena proteica con frutos rojos</div><div class="r-desc">Alto en fibra y proteína · energía sostenida</div><div class="r-meta"><span>⏱ 10 min</span><span>🔥 450 kcal</span><span>💪 32g</span></div></div></div>
-        <div class="recipe-card" onclick="openModal('Ensalada mediterránea de atún','Ligera, proteica y lista en 5 minutos. Perfecta para cuando no tienes tiempo pero quieres comer bien.','🥗',['1 lata atún en agua','Mix de lechugas','10 tomates cherry','Aceitunas negras','Aceite de oliva + limón'])"><div class="r-img" style="background:rgba(74,103,65,.08)">🥗<div class="r-tag">Comida</div></div><div class="r-body"><div class="r-name">Ensalada mediterránea de atún</div><div class="r-desc">Lista en 5 min, llena, nutritiva</div><div class="r-meta"><span>⏱ 5 min</span><span>🔥 320 kcal</span><span>💪 38g</span></div></div></div>
-        <div class="recipe-card" onclick="openModal('Tortilla de claras y espinacas','La proteína perfecta para cualquier momento del día. Versátil, rápida y deliciosa.','🍳',['4 claras de huevo','1 huevo entero','Espinaca fresca','Champiñones laminados','Sal, pimienta y aceite de oliva'])"><div class="r-img" style="background:rgba(192,107,58,.08)">🍳<div class="r-tag">Cena</div></div><div class="r-body"><div class="r-name">Tortilla de claras y espinacas</div><div class="r-desc">Alta proteína, baja en calorías</div><div class="r-meta"><span>⏱ 8 min</span><span>🔥 210 kcal</span><span>💪 28g</span></div></div></div>
-        <div class="recipe-card" onclick="openModal('Pasta integral con pesto y pollo','El plato de recuperación post-entreno definitivo. Carbohidratos de calidad y proteína magra.','🍝',['120g pasta integral','150g pechuga de pollo','2 cdas pesto casero','Tomates cherry','Parmesano light'])"><div class="r-img" style="background:rgba(122,158,110,.08)">🍝<div class="r-tag">Post-entreno</div></div><div class="r-body"><div class="r-name">Pasta integral con pesto y pollo</div><div class="r-desc">El post-entreno perfecto</div><div class="r-meta"><span>⏱ 20 min</span><span>🔥 620 kcal</span><span>💪 48g</span></div></div></div>
-        <div class="recipe-card" onclick="openModal('Smoothie verde detox','Empieza el día alcalinizando tu cuerpo. Lleno de micronutrientes, enzimas y fibra.','🥤',['1 mango congelado','Puñado espinacas baby','200ml agua de coco','1 cm jengibre fresco','Jugo de 1/2 limón'])"><div class="r-img" style="background:rgba(74,103,65,.1)">🥤<div class="r-tag">Snack</div></div><div class="r-body"><div class="r-name">Smoothie verde detox</div><div class="r-desc">Micronutrientes y energía en 2 min</div><div class="r-meta"><span>⏱ 2 min</span><span>🔥 180 kcal</span><span>💚 Alcalino</span></div></div></div>
-        <div class="recipe-card" onclick="openModal('Bowl de salmón y quinoa','Plato completo rico en omega-3 y aminoácidos esenciales. Cuida tu corazón y tus músculos.','🐟',['150g salmón fresco','100g quinoa cocida','1/2 aguacate','Pepino y zanahoria rallada','Salsa de soya + sésamo'])"><div class="r-img" style="background:rgba(61,43,31,.06)">🐟<div class="r-tag">Comida</div></div><div class="r-body"><div class="r-name">Bowl de salmón y quinoa</div><div class="r-desc">Omega-3, proteína completa y sabor increíble</div><div class="r-meta"><span>⏱ 25 min</span><span>🔥 520 kcal</span><span>💪 44g</span></div></div></div>
+        <div class="recipe-card" onclick="openVidModal('recipe','Avena proteica con frutos rojos','Desayuno reconfortante. La avena aporta fibra soluble que mantiene tu energía estable durante horas.',['Calienta la leche de avena a fuego medio sin que hierva.','Agrega la avena y mezcla 3-4 minutos hasta espesar.','Incorpora la proteína en polvo y mezcla bien.','Sirve y agrega los frutos rojos encima.','Termina con un hilo de miel cruda y sirve caliente.'],'🥣',['80g avena','200ml leche avena','1 scoop proteína vainilla','Puñado frutos rojos','1 cda miel cruda'],'450 kcal · 32g proteína')">
+          <div class="r-img" style="background:linear-gradient(135deg,#fff8ec,#fef3d4)">🥣<div class="r-play">▶</div><div class="r-tag">Desayuno</div></div>
+          <div class="r-body"><div class="r-name">Avena proteica con frutos rojos</div><div class="r-desc">Alto en fibra y proteína · energía sostenida</div><div class="r-meta"><span>⏱ 10 min</span><span>🔥 450 kcal</span><span>💪 32g</span></div><div class="r-steps-count">🎬 5 pasos en video</div></div>
+        </div>
+        <div class="recipe-card" onclick="openVidModal('recipe','Ensalada mediterránea de atún','Ligera, proteica y lista en 5 minutos. El almuerzo rápido perfecto.',['Escurre bien el atún de la lata.','En un bowl grande mezcla las lechugas y el atún.','Agrega los tomates cherry cortados a la mitad.','Incorpora las aceitunas negras.','Aliña con aceite de oliva, limón y orégano al gusto.'],'🥗',['1 lata atún agua','Mix lechugas','10 tomates cherry','Aceitunas negras','Aceite oliva + limón'],'320 kcal · 38g proteína')">
+          <div class="r-img" style="background:linear-gradient(135deg,#f0faea,#e0f5d4)">🥗<div class="r-play">▶</div><div class="r-tag">Comida</div></div>
+          <div class="r-body"><div class="r-name">Ensalada mediterránea de atún</div><div class="r-desc">Lista en 5 min · llena · nutritiva</div><div class="r-meta"><span>⏱ 5 min</span><span>🔥 320 kcal</span><span>💪 38g</span></div><div class="r-steps-count">🎬 5 pasos en video</div></div>
+        </div>
+        <div class="recipe-card" onclick="openVidModal('recipe','Pasta integral con pesto y pollo','El post-entreno perfecto. Carbohidratos de calidad y proteína magra en un solo plato.',['Cocina la pasta integral al dente según instrucciones.','En paralelo, cocina el pollo en sartén hasta dorar.','Córtalo en cubos pequeños.','Mezcla la pasta escurrida con el pesto casero.','Agrega el pollo, los tomates cherry y el parmesano.'],'🍝',['120g pasta integral','150g pechuga pollo','2 cdas pesto','Tomates cherry','Parmesano light'],'620 kcal · 48g proteína')">
+          <div class="r-img" style="background:linear-gradient(135deg,#fff0e0,#ffe4c4)">🍝<div class="r-play">▶</div><div class="r-tag">Post-entreno</div></div>
+          <div class="r-body"><div class="r-name">Pasta integral con pesto y pollo</div><div class="r-desc">El post-entreno perfecto</div><div class="r-meta"><span>⏱ 20 min</span><span>🔥 620 kcal</span><span>💪 48g</span></div><div class="r-steps-count">🎬 5 pasos en video</div></div>
+        </div>
+        <div class="recipe-card" onclick="openVidModal('recipe','Salmón al horno con espárragos','Rico en omega-3. La cena perfecta para recuperación y sueño reparador.',['Precalienta el horno a 200°C.','Coloca el salmón en una bandeja con papel. Salpimienta.','Agrega los espárragos alrededor con aceite de oliva.','Añade ajo laminado y rodajas de limón encima.','Hornea 18-20 minutos. Sirve con ensalada verde.'],'🐟',['180g salmón fresco','Espárragos','Aceite de oliva','Ajo + limón','Hierbas frescas'],'420 kcal · 42g proteína')">
+          <div class="r-img" style="background:linear-gradient(135deg,#e8f4ff,#d4ecff)">🐟<div class="r-play">▶</div><div class="r-tag">Cena</div></div>
+          <div class="r-body"><div class="r-name">Salmón al horno con espárragos</div><div class="r-desc">Omega-3 · ligero · recuperación nocturna</div><div class="r-meta"><span>⏱ 25 min</span><span>🔥 420 kcal</span><span>💪 42g</span></div><div class="r-steps-count">🎬 5 pasos en video</div></div>
+        </div>
+        <div class="recipe-card" onclick="openVidModal('recipe','Bowl de salmón y quinoa','Proteína completa, omega-3 y carbohidratos de calidad en un solo bowl fresco.',['Cocina la quinoa 15 min con el doble de agua.','Sella el salmón en sartén 3 min por lado.','Deja reposar 2 minutos y desmenuza.','Monta el bowl: quinoa + salmón + aguacate + pepino.','Aliña con salsa de soya, sésamo y unas gotas de limón.'],'🐠',['150g salmón','100g quinoa cocida','1/2 aguacate','Pepino + zanahoria','Soya + sésamo'],'520 kcal · 44g proteína')">
+          <div class="r-img" style="background:linear-gradient(135deg,#e8fff0,#d0fae0)">🐠<div class="r-play">▶</div><div class="r-tag">Comida</div></div>
+          <div class="r-body"><div class="r-name">Bowl de salmón y quinoa</div><div class="r-desc">Omega-3 · proteína completa · sabor increíble</div><div class="r-meta"><span>⏱ 20 min</span><span>🔥 520 kcal</span><span>💪 44g</span></div><div class="r-steps-count">🎬 5 pasos en video</div></div>
+        </div>
+        <div class="recipe-card" onclick="openVidModal('recipe','Smoothie verde detox','Alcaliniza tu cuerpo. Lleno de micronutrientes, enzimas y fibra. Listo en 2 minutos.',['Congela el mango la noche anterior.','Agrega todos los ingredientes a la licuadora.','Licúa 60 segundos a velocidad alta.','Prueba y ajusta con más limón si prefieres.','Sirve inmediatamente para conservar enzimas.'],'🥤',['1 mango congelado','Espinacas baby','200ml agua de coco','1 cm jengibre','Jugo de limón'],'180 kcal · verde · 2 min')">
+          <div class="r-img" style="background:linear-gradient(135deg,#eafff0,#ccf5d8)">🥤<div class="r-play">▶</div><div class="r-tag">Snack</div></div>
+          <div class="r-body"><div class="r-name">Smoothie verde detox</div><div class="r-desc">Micronutrientes y energía en 2 min</div><div class="r-meta"><span>⏱ 2 min</span><span>🔥 180 kcal</span><span>💚 Alcalino</span></div><div class="r-steps-count">🎬 5 pasos en video</div></div>
+        </div>
       </div>
     </div>
 
-    <!-- PAGE: ENTRENAMIENTO -->
+    <!-- ENTRENAMIENTO -->
     <div class="page" id="dp-entrenamiento">
-      <div class="sec-hero"><div class="sec-hero-icon">💪</div><div><h2>Plan de Entrenamiento</h2><p>Tu programa de 3 días a la semana está diseñado para maximizar resultados con el tiempo que tienes. Progresivo, claro y sin excusas.</p></div></div>
+      <div class="sec-hero"><div class="sec-hero-icon">💪</div><div><h2>Plan de Entrenamiento</h2><p>3 días a la semana. Cada ejercicio tiene su propio video con técnica, pasos y consejos. Haz clic en cualquier ejercicio para verlo.</p></div></div>
       <div class="split-grid">
-        <div class="split-card"><div class="sp-label">Día A · Lunes</div><div class="sp-name">Tren Superior</div><div class="sp-desc">Pecho, hombros, tríceps y core</div><div class="sp-tag">40 min · 6 ejercicios</div></div>
-        <div class="split-card" style="background:linear-gradient(135deg,#253d1c,#3a5a2e)"><div class="sp-label">Día B · Miércoles</div><div class="sp-name">Tren Inferior</div><div class="sp-desc">Cuádriceps, femoral, glúteo y core</div><div class="sp-tag">45 min · 6 ejercicios</div></div>
-        <div class="split-card" style="background:linear-gradient(135deg,#3d1e10,#5a2e18)"><div class="sp-label">Día C · Viernes</div><div class="sp-name">Full Body + Cardio</div><div class="sp-desc">Cuerpo completo con finisher cardiovascular</div><div class="sp-tag">50 min · 7 ejercicios</div></div>
+        <div class="split-card a"><div class="sp-label">Día A · Lunes</div><div class="sp-name">Tren Superior</div><div class="sp-desc">Pecho, hombros, tríceps y core</div><div class="sp-tag">🎬 6 videos · 40 min</div></div>
+        <div class="split-card b"><div class="sp-label">Día B · Miércoles</div><div class="sp-name">Tren Inferior</div><div class="sp-desc">Cuádriceps, femoral, glúteo y core</div><div class="sp-tag">🎬 6 videos · 45 min</div></div>
+        <div class="split-card c"><div class="sp-label">Día C · Viernes</div><div class="sp-name">Full Body + Cardio</div><div class="sp-desc">Cuerpo completo con finisher</div><div class="sp-tag">🎬 7 videos · 50 min</div></div>
       </div>
-      <div class="ex-table">
-        <div style="padding:18px 22px;border-bottom:1px solid rgba(61,43,31,.06);font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;">Día A — Tren Superior · <span style="color:var(--moss);font-family:'DM Sans',sans-serif;font-size:.87rem;font-weight:500">Semana 1</span></div>
-        <div class="ex-head"><span>Ejercicio</span><span>Series</span><span>Reps</span><span>Descanso</span></div>
-        <div class="ex-row"><div class="ex-name"><span class="ex-emoji">🏋️</span>Press de banca</div><div class="ex-sets">4</div><div class="ex-val">10-12</div><div class="ex-val">90s</div></div>
-        <div class="ex-row"><div class="ex-name"><span class="ex-emoji">🤸</span>Press militar</div><div class="ex-sets">3</div><div class="ex-val">10</div><div class="ex-val">75s</div></div>
-        <div class="ex-row"><div class="ex-name"><span class="ex-emoji">💪</span>Aperturas con mancuernas</div><div class="ex-sets">3</div><div class="ex-val">12-15</div><div class="ex-val">60s</div></div>
-        <div class="ex-row"><div class="ex-name"><span class="ex-emoji">🔁</span>Extensiones de tríceps</div><div class="ex-sets">3</div><div class="ex-val">12</div><div class="ex-val">60s</div></div>
-        <div class="ex-row"><div class="ex-name"><span class="ex-emoji">⬆️</span>Elevaciones laterales</div><div class="ex-sets">4</div><div class="ex-val">15</div><div class="ex-val">45s</div></div>
-        <div class="ex-row"><div class="ex-name"><span class="ex-emoji">🧘</span>Plancha frontal</div><div class="ex-sets">3</div><div class="ex-val">45s</div><div class="ex-val">45s</div></div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--forest);margin-bottom:14px">Día A — Tren Superior · haz clic en cada ejercicio para ver el video 🎬</div>
+      <div class="ex-cards-grid">
+        <div class="ex-card" onclick="openVidModal('exercise','Press de Banca','El ejercicio rey del tren superior. Activa pecho, hombros y tríceps en un solo movimiento compuesto.',['Ajusta el banco plano y agarra la barra a la anchura de hombros.','Saca la barra con control y sostenla sobre el pecho.','Baja lentamente en 3 segundos hasta que el pecho la toque casi.','Empuja con fuerza hasta extender completamente los codos.','Repite sin bloquear los codos arriba para mantener tensión.'],'🏋️',null,'4 series · 10-12 reps · 90s descanso')">
+          <div class="ex-card-img" style="background:linear-gradient(135deg,#f0faea,#e0f5d4)">🏋️<div class="ex-play">▶</div></div>
+          <div class="ex-card-body">
+            <div class="ex-card-name">Press de Banca</div>
+            <div class="ex-card-meta"><span class="ex-chip ec-sets">4 series</span><span class="ex-chip ec-reps">10-12 reps</span><span class="ex-chip ec-rest">90s</span></div>
+            <div class="ex-card-desc">Pecho, hombros anteriores y tríceps.</div>
+          </div>
+        </div>
+        <div class="ex-card" onclick="openVidModal('exercise','Press Militar','Ejercicio fundamental para hombros. Fuerza, estabilidad y desarrollo completo del deltoides.',['De pie o sentado, agarra la barra a la anchura de hombros.','Posiciona la barra a la altura de la clavícula.','Empuja hacia arriba en línea recta hasta extender los brazos.','Baja con control en 2-3 segundos hasta el punto inicial.','Mantén el abdomen apretado durante todo el movimiento.'],'🤸',null,'3 series · 10 reps · 75s descanso')">
+          <div class="ex-card-img" style="background:linear-gradient(135deg,#fff8ec,#fef3d4)">🤸<div class="ex-play">▶</div></div>
+          <div class="ex-card-body">
+            <div class="ex-card-name">Press Militar</div>
+            <div class="ex-card-meta"><span class="ex-chip ec-sets">3 series</span><span class="ex-chip ec-reps">10 reps</span><span class="ex-chip ec-rest">75s</span></div>
+            <div class="ex-card-desc">Deltoides anterior, medio y tríceps.</div>
+          </div>
+        </div>
+        <div class="ex-card" onclick="openVidModal('exercise','Aperturas con Mancuernas','Aísla el pecho para mayor definición y amplitud. La clave está en el control.',['Acuéstate en banco plano con una mancuerna en cada mano.','Extiende los brazos arriba con palmas enfrentadas.','Abre los brazos en arco amplio bajando a los lados.','Siente el estiramiento del pecho en la parte baja.','Regresa en arco sin cerrar los codos completamente.'],'💪',null,'3 series · 12-15 reps · 60s descanso')">
+          <div class="ex-card-img" style="background:linear-gradient(135deg,#eafff0,#d0fae0)">💪<div class="ex-play">▶</div></div>
+          <div class="ex-card-body">
+            <div class="ex-card-name">Aperturas con Mancuernas</div>
+            <div class="ex-card-meta"><span class="ex-chip ec-sets">3 series</span><span class="ex-chip ec-reps">12-15 reps</span><span class="ex-chip ec-rest">60s</span></div>
+            <div class="ex-card-desc">Pecho mayor y menor, estiramiento profundo.</div>
+          </div>
+        </div>
+        <div class="ex-card" onclick="openVidModal('exercise','Extensiones de Tríceps','Aísla completamente el tríceps para mayor volumen en la parte trasera del brazo.',['Sujeta una mancuerna o barra EZ por encima de la cabeza.','Flexiona los codos bajando el peso por detrás de la nuca.','Mantén los codos fijos y pegados a la cabeza.','Extiende los brazos completamente hacia arriba.','Baja con control sin que los codos se abran.'],'🔁',null,'3 series · 12 reps · 60s descanso')">
+          <div class="ex-card-img" style="background:linear-gradient(135deg,#fff0f0,#ffe0e0)">🔁<div class="ex-play">▶</div></div>
+          <div class="ex-card-body">
+            <div class="ex-card-name">Extensiones de Tríceps</div>
+            <div class="ex-card-meta"><span class="ex-chip ec-sets">3 series</span><span class="ex-chip ec-reps">12 reps</span><span class="ex-chip ec-rest">60s</span></div>
+            <div class="ex-card-desc">Tríceps (cabeza larga y lateral).</div>
+          </div>
+        </div>
+        <div class="ex-card" onclick="openVidModal('exercise','Elevaciones Laterales','El secreto de los hombros anchos. Movimiento de aislamiento para el deltoides medio.',['De pie, mancuernas a los lados con palmas hacia adentro.','Levanta los brazos lateralmente hasta la altura del hombro.','Inclina levemente las mancuernas como si vacieras agua.','Mantén 1 segundo arriba con contracción.','Baja con control en 3 segundos. No uses impulso.'],'⬆️',null,'4 series · 15 reps · 45s descanso')">
+          <div class="ex-card-img" style="background:linear-gradient(135deg,#f8f0ff,#ead4ff)">⬆️<div class="ex-play">▶</div></div>
+          <div class="ex-card-body">
+            <div class="ex-card-name">Elevaciones Laterales</div>
+            <div class="ex-card-meta"><span class="ex-chip ec-sets">4 series</span><span class="ex-chip ec-reps">15 reps</span><span class="ex-chip ec-rest">45s</span></div>
+            <div class="ex-card-desc">Deltoides medio — da anchura al hombro.</div>
+          </div>
+        </div>
+        <div class="ex-card" onclick="openVidModal('exercise','Plancha Frontal','El ejercicio de core más completo. Activa abdomen, lumbar, glúteos y hombros simultáneamente.',['Apóyate en antebrazos y puntas de los pies.','Cuerpo recto como una tabla — no subas la cadera.','Aprieta el abdomen fuerte, como si te fueran a golpear.','Mantén la respiración constante y controlada.','Aguanta 45 segundos sin perder la posición.'],'🧘',null,'3 series · 45s · 45s descanso')">
+          <div class="ex-card-img" style="background:linear-gradient(135deg,#e8f5e0,#ccecb8)">🧘<div class="ex-play">▶</div></div>
+          <div class="ex-card-body">
+            <div class="ex-card-name">Plancha Frontal</div>
+            <div class="ex-card-meta"><span class="ex-chip ec-sets">3 series</span><span class="ex-chip ec-reps">45s</span><span class="ex-chip ec-rest">45s</span></div>
+            <div class="ex-card-desc">Core completo: abdomen, lumbar y glúteos.</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- PAGE: RUTINAS -->
+    <!-- RUTINAS -->
     <div class="page" id="dp-rutinas">
-      <div class="sec-hero"><div class="sec-hero-icon">🗓️</div><div><h2>Rutinas Semanales</h2><p>Tu semana estructurada de movimiento. Cada día tiene un propósito — los días de descanso también son parte del plan.</p></div></div>
+      <div class="sec-hero"><div class="sec-hero-icon">🗓️</div><div><h2>Rutinas Semanales</h2><p>Tu semana estructurada. Cada día de entreno tiene sus videos. Los días de descanso también son parte del plan.</p></div></div>
       <div class="week-row">
         <div class="w-day active"><div class="wd-name">Lun</div><div class="wd-icon">🏋️</div><div class="wd-type">Superior</div></div>
         <div class="w-day rest"><div class="wd-name">Mar</div><div class="wd-icon">🌿</div><div class="wd-type">Descanso</div></div>
@@ -848,152 +943,138 @@ input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.2); }
         <div class="w-day rest"><div class="wd-name">Dom</div><div class="wd-icon">😴</div><div class="wd-type">Recupera</div></div>
       </div>
       <div class="card">
-        <div class="card-head"><div class="card-title">🏋️ Lunes — Tren Superior</div><span style="font-size:.78rem;color:var(--moss);font-weight:600;">HOY</span></div>
-        <div class="ex-table" style="border:none;border-radius:0;margin:0">
-          <div class="ex-head"><span>Ejercicio</span><span>Series</span><span>Reps</span><span>Descanso</span></div>
-          <div class="ex-row"><div class="ex-name"><span class="ex-emoji">🏋️</span>Press de banca</div><div class="ex-sets">4</div><div class="ex-val">10-12</div><div class="ex-val">90s</div></div>
-          <div class="ex-row"><div class="ex-name"><span class="ex-emoji">🤸</span>Press militar</div><div class="ex-sets">3</div><div class="ex-val">10</div><div class="ex-val">75s</div></div>
-          <div class="ex-row"><div class="ex-name"><span class="ex-emoji">💪</span>Aperturas con mancuernas</div><div class="ex-sets">3</div><div class="ex-val">12-15</div><div class="ex-val">60s</div></div>
-          <div class="ex-row"><div class="ex-name"><span class="ex-emoji">🔁</span>Extensiones de tríceps</div><div class="ex-sets">3</div><div class="ex-val">12</div><div class="ex-val">60s</div></div>
-          <div class="ex-row"><div class="ex-name"><span class="ex-emoji">⬆️</span>Elevaciones laterales</div><div class="ex-sets">4</div><div class="ex-val">15</div><div class="ex-val">45s</div></div>
-          <div class="ex-row"><div class="ex-name"><span class="ex-emoji">🧘</span>Plancha frontal</div><div class="ex-sets">3</div><div class="ex-val">45s</div><div class="ex-val">45s</div></div>
+        <div class="card-head"><div class="card-title">🏋️ Lunes — Tren Superior <span style="font-size:.75rem;color:var(--sage);font-weight:600;margin-left:8px">· HOY</span></div></div>
+        <div class="ex-cards-grid" style="margin-top:8px">
+          <div class="ex-card" onclick="openVidModal('exercise','Press de Banca','El ejercicio rey del tren superior. Activa pecho, hombros y tríceps.',['Ajusta el banco plano y agarra la barra a la anchura de hombros.','Saca la barra con control y sostenla sobre el pecho.','Baja lentamente 3 segundos hasta casi tocar el pecho.','Empuja con fuerza hasta extender completamente los codos.','Repite sin bloquear los codos arriba.'],'🏋️',null,'4 series · 10-12 reps')"><div class="ex-card-img" style="background:linear-gradient(135deg,#f0faea,#e0f5d4)">🏋️<div class="ex-play">▶</div></div><div class="ex-card-body"><div class="ex-card-name">Press de Banca</div><div class="ex-card-meta"><span class="ex-chip ec-sets">4×10-12</span><span class="ex-chip ec-rest">90s</span></div><div class="ex-card-desc">Pecho, hombros y tríceps.</div></div></div>
+          <div class="ex-card" onclick="openVidModal('exercise','Press Militar','Fundamental para hombros con fuerza y estabilidad completa.',['De pie, agarra la barra a la anchura de hombros.','Posiciona la barra a la altura de la clavícula.','Empuja hacia arriba en línea recta.','Baja con control 2-3 segundos.','Mantén el abdomen apretado siempre.'],'🤸',null,'3 series · 10 reps')"><div class="ex-card-img" style="background:linear-gradient(135deg,#fff8ec,#fef3d4)">🤸<div class="ex-play">▶</div></div><div class="ex-card-body"><div class="ex-card-name">Press Militar</div><div class="ex-card-meta"><span class="ex-chip ec-sets">3×10</span><span class="ex-chip ec-rest">75s</span></div><div class="ex-card-desc">Deltoides y tríceps.</div></div></div>
+          <div class="ex-card" onclick="openVidModal('exercise','Plancha Frontal','Core completo. Abdomen, lumbar y glúteos en un solo ejercicio.',['Apóyate en antebrazos y pies.','Cuerpo recto — no subas la cadera.','Aprieta el abdomen fuerte.','Respira constante y controlado.','Aguanta 45 segundos sin perder forma.'],'🧘',null,'3 series · 45s')"><div class="ex-card-img" style="background:linear-gradient(135deg,#e8f5e0,#ccecb8)">🧘<div class="ex-play">▶</div></div><div class="ex-card-body"><div class="ex-card-name">Plancha Frontal</div><div class="ex-card-meta"><span class="ex-chip ec-sets">3×45s</span><span class="ex-chip ec-rest">45s</span></div><div class="ex-card-desc">Core completo.</div></div></div>
         </div>
       </div>
     </div>
 
-    <!-- PAGE: CRECIMIENTO -->
+    <!-- CRECIMIENTO -->
     <div class="page" id="dp-crecimiento">
-      <div class="sec-hero"><div class="sec-hero-icon">🌱</div><div><h2>Plan de Crecimiento Personal</h2><p>El bienestar verdadero va más allá del cuerpo. Aquí encontrarás las herramientas para transformar también tu mente y tus hábitos.</p></div></div>
+      <div class="sec-hero"><div class="sec-hero-icon">🌱</div><div><h2>Plan de Crecimiento Personal</h2><p>El bienestar verdadero va más allá del cuerpo. Aquí están las herramientas para transformar también tu mente y tus hábitos.</p></div></div>
       <div class="growth-grid">
-        <div class="g-card book" onclick="openModal('Healthy Space Method','El método completo detrás del club. Principios de alimentación, movimiento y mentalidad para crear hábitos que duran toda la vida — no solo 30 días.','📗',['Cap. 1: La raíz del hábito','Cap. 2: Sistema sobre voluntad','Cap. 3: Comer sin obsesionarse','Cap. 4: Movimiento como medicina','+ 4 capítulos más disponibles'])"><div class="g-inner"><div class="g-icon">📗</div><div class="g-label">Libro Exclusivo del Club</div><div class="g-title">Healthy Space Method</div><div class="g-desc">El método completo detrás del club. Aprende los principios que rigen la alimentación, el movimiento y la mentalidad para crear hábitos que duran toda la vida.</div><button class="g-btn" onclick="event.stopPropagation()">Leer el libro →</button></div><div class="g-deco">📗</div></div>
-        <div class="g-card notion"><div class="g-inner"><div class="g-icon">📋</div><div class="g-label">Sistema de control personal</div><div class="g-title">Control de Vida</div><div class="g-desc">Tu plantilla Notion personalizada para llevar el control de hábitos, metas, seguimiento de peso, diario de entrenamiento y planificación semanal.</div><button class="g-btn">Abrir en Notion →</button></div><div class="g-deco">📋</div></div>
+        <div class="g-card book"><div class="g-inner"><div class="g-icon">📗</div><div class="g-lbl">Libro Exclusivo del Club</div><div class="g-title">Healthy Space Method</div><div class="g-desc">El método completo detrás del club. Los principios de alimentación, movimiento y mentalidad para crear hábitos que duran toda la vida — no solo 30 días.</div><button class="g-btn">Leer el libro →</button></div><div class="g-deco">📗</div></div>
+        <div class="g-card notion"><div class="g-inner"><div class="g-icon">📋</div><div class="g-lbl">Sistema de control personal</div><div class="g-title">Control de Vida</div><div class="g-desc">Tu plantilla Notion para llevar el control de hábitos, metas, seguimiento de peso, diario de entrenamiento y planificación semanal. Todo en un lugar.</div><button class="g-btn">Abrir en Notion →</button></div><div class="g-deco">📋</div></div>
       </div>
       <div class="chapters">
-        <div class="ch-head"><h3>Healthy Space Method — Capítulos</h3><span style="font-size:.75rem;color:var(--moss);font-weight:600">0 / 8 completados</span></div>
+        <div class="ch-head"><h3>Healthy Space Method — Capítulos</h3><span style="font-size:.75rem;color:var(--sage);font-weight:700">0 / 8 completados</span></div>
         <div class="ch-item"><div class="ch-num">1</div><div><div class="ch-title">La raíz del hábito: por qué seguimos fallando</div><div class="ch-sub">Introducción · 18 min de lectura</div></div><div class="ch-icon">→</div></div>
-        <div class="ch-item"><div class="ch-num">2</div><div><div class="ch-title">El sistema sobre la fuerza de voluntad</div><div class="ch-sub">Mentalidad · 22 min de lectura</div></div><div class="ch-icon">🔒</div></div>
-        <div class="ch-item"><div class="ch-num">3</div><div><div class="ch-title">Comer bien sin obsesionarse: el enfoque HSM</div><div class="ch-sub">Nutrición · 25 min de lectura</div></div><div class="ch-icon">🔒</div></div>
-        <div class="ch-item"><div class="ch-num">4</div><div><div class="ch-title">Movimiento como medicina: el mínimo efectivo</div><div class="ch-sub">Entrenamiento · 20 min de lectura</div></div><div class="ch-icon">🔒</div></div>
-        <div class="ch-item"><div class="ch-num">5</div><div><div class="ch-title">Sueño, estrés y recuperación</div><div class="ch-sub">Bienestar · 19 min de lectura</div></div><div class="ch-icon">🔒</div></div>
-        <div class="ch-item"><div class="ch-num">6</div><div><div class="ch-title">El entorno que te hace triunfar o fallar</div><div class="ch-sub">Diseño de vida · 21 min de lectura</div></div><div class="ch-icon">🔒</div></div>
-        <div class="ch-item"><div class="ch-num">7</div><div><div class="ch-title">Relaciones, identidad y cambio sostenible</div><div class="ch-sub">Psicología · 24 min de lectura</div></div><div class="ch-icon">🔒</div></div>
-        <div class="ch-item"><div class="ch-num">8</div><div><div class="ch-title">Tu versión 2.0: el plan de los próximos 90 días</div><div class="ch-sub">Plan de acción · 30 min de lectura</div></div><div class="ch-icon">🔒</div></div>
+        <div class="ch-item"><div class="ch-num">2</div><div><div class="ch-title">El sistema sobre la fuerza de voluntad</div><div class="ch-sub">Mentalidad · 22 min</div></div><div class="ch-icon">🔒</div></div>
+        <div class="ch-item"><div class="ch-num">3</div><div><div class="ch-title">Comer bien sin obsesionarse: el enfoque HSM</div><div class="ch-sub">Nutrición · 25 min</div></div><div class="ch-icon">🔒</div></div>
+        <div class="ch-item"><div class="ch-num">4</div><div><div class="ch-title">Movimiento como medicina: el mínimo efectivo</div><div class="ch-sub">Entrenamiento · 20 min</div></div><div class="ch-icon">🔒</div></div>
+        <div class="ch-item"><div class="ch-num">5</div><div><div class="ch-title">Sueño, estrés y recuperación</div><div class="ch-sub">Bienestar · 19 min</div></div><div class="ch-icon">🔒</div></div>
+        <div class="ch-item"><div class="ch-num">6</div><div><div class="ch-title">El entorno que te hace triunfar o fallar</div><div class="ch-sub">Diseño de vida · 21 min</div></div><div class="ch-icon">🔒</div></div>
+        <div class="ch-item"><div class="ch-num">7</div><div><div class="ch-title">Relaciones, identidad y cambio sostenible</div><div class="ch-sub">Psicología · 24 min</div></div><div class="ch-icon">🔒</div></div>
+        <div class="ch-item"><div class="ch-num">8</div><div><div class="ch-title">Tu versión 2.0: el plan de los próximos 90 días</div><div class="ch-sub">Plan de acción · 30 min</div></div><div class="ch-icon">🔒</div></div>
       </div>
     </div>
-
   </main>
-</div><!-- /screen-dashboard -->
+</div>
 
-<!-- GENERIC MODAL -->
-<div class="modal-ov" id="gen-modal" onclick="closeModalIfBg(event)">
-  <div class="modal-box">
-    <button class="modal-x" onclick="document.getElementById('gen-modal').classList.remove('open')">✕</button>
-    <div class="modal-icon" id="m-icon"></div>
-    <h3 id="m-title"></h3>
-    <p id="m-desc"></p>
-    <div class="modal-ingr"><h5>Ingredientes</h5><ul id="m-ingr"></ul></div>
-    <button class="btn-modal" onclick="document.getElementById('gen-modal').classList.remove('open')">Añadir al plan de hoy ✓</button>
+<!-- ════════════════════════════════════
+     VIDEO / STEP MODAL
+════════════════════════════════════ -->
+<div class="vid-modal-ov" id="vid-ov" onclick="if(event.target===this)closeVid()">
+  <div class="vid-modal">
+    <div class="vid-player" id="vid-player" onclick="togglePlay()">
+      <div class="vid-emoji-bg" id="vid-bg-emoji">🏋️</div>
+      <div class="vid-play-btn" id="vid-play-btn">▶</div>
+      <div class="vid-label" id="vid-label">Video del ejercicio</div>
+      <div class="vid-step-badge" id="vid-step-badge">Paso 1 / 5</div>
+      <button class="vid-close" onclick="event.stopPropagation();closeVid()">✕</button>
+    </div>
+    <div class="vid-body">
+      <div class="vid-title" id="vid-title">Nombre</div>
+      <div class="vid-subtitle" id="vid-subtitle">Descripción</div>
+      <div class="steps-timeline">
+        <h5 id="vid-steps-label">Pasos de preparación</h5>
+        <div id="vid-steps-list"></div>
+      </div>
+    </div>
+    <div class="vid-nav">
+      <button class="btn-vid-prev" id="btn-prev" onclick="vidNav(-1)">← Anterior</button>
+      <button class="btn-vid-next" id="btn-next" onclick="vidNav(1)">Siguiente paso →</button>
+    </div>
   </div>
 </div>
 
 <script>
-// ─── STATE ───
+// ══ STATE ══
 let userName = '';
 let obStep = 1;
-const obTotal = 5;
+let vidSteps = [];
+let vidCurrentStep = 0;
+let vidType = 'exercise';
+let playing = false;
 
-// ─── SCREEN SWITCH ───
+// ══ SCREEN ══
 function goTo(id) {
   document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
   const el = document.getElementById('screen-' + id);
-  el.style.display = id === 'dashboard' ? 'flex' : (id === 'onboarding' ? 'flex' : 'block');
-  el.classList.add('active');
-  window.scrollTo(0, 0);
+  if (id === 'dashboard') { el.style.display = 'flex'; }
+  else if (id === 'onboarding') { el.style.display = 'flex'; }
+  else { el.style.display = 'block'; }
+  setTimeout(() => el.classList.add('active'), 10);
+  window.scrollTo(0,0);
 }
 
-// ─── PAYMENT MODAL ───
-function openPayModal(plan, price, period) {
-  document.getElementById('pay-plan-name').textContent = 'Plan ' + plan;
-  document.getElementById('pay-plan-price').textContent = price + ' · ' + period;
-  document.getElementById('pay-amount-btn').textContent = price.split(' ')[0];
-  document.getElementById('pay-overlay').classList.add('open');
+// ══ PAYMENT ══
+function openPay(plan, price, period) {
+  document.getElementById('pp-name').textContent = 'Plan ' + plan;
+  document.getElementById('pp-price').textContent = price + ' · ' + period;
+  document.getElementById('pay-amt').textContent = price.split(' ')[0];
+  document.getElementById('pay-ov').classList.add('open');
 }
-function closePayModal() { document.getElementById('pay-overlay').classList.remove('open'); }
-function closePayIfBg(e) { if (e.target === document.getElementById('pay-overlay')) closePayModal(); }
-
-function formatCard(el) {
-  let v = el.value.replace(/\D/g,'').substring(0,16);
-  el.value = v.replace(/(.{4})/g,'$1 ').trim();
-}
-
-function processPayment() {
-  const name = document.getElementById('pay-name').value.trim();
-  userName = name || 'Campeón/a';
-  document.getElementById('pay-form-view').style.display = 'none';
-  document.getElementById('pay-processing-view').style.display = 'block';
+function closePay() { document.getElementById('pay-ov').classList.remove('open'); }
+function doPay() {
+  userName = document.getElementById('pay-name-i').value.trim() || 'Campeón/a';
+  document.getElementById('pay-form').style.display = 'none';
+  document.getElementById('pay-proc').style.display = 'block';
   setTimeout(() => {
-    closePayModal();
-    document.getElementById('pay-form-view').style.display = 'block';
-    document.getElementById('pay-processing-view').style.display = 'none';
+    closePay();
+    document.getElementById('pay-form').style.display = 'block';
+    document.getElementById('pay-proc').style.display = 'none';
     goTo('onboarding');
-    updateObProgress();
-  }, 2200);
+    updateObFill();
+  }, 2400);
 }
 
-// ─── FAQ ───
-function toggleFaq(el) { el.classList.toggle('open'); }
-
-// ─── ONBOARDING ───
-function updateObProgress() {
-  document.getElementById('ob-fill').style.width = (((obStep - 1) / obTotal) * 100) + '%';
+// ══ ONBOARDING ══
+function updateObFill() {
+  document.getElementById('ob-fill').style.width = (((obStep - 1) / 5) * 100) + '%';
 }
-
-function checkOb1() {
-  const v = document.getElementById('ob-name').value.trim();
-  document.getElementById('btn-ob-1').disabled = v.length < 2;
-}
-
-function selectOb(el, group) {
+function selOb(el, group, btnId) {
   el.closest('.ob-opts').querySelectorAll('.ob-opt').forEach(o => o.classList.remove('sel'));
   el.classList.add('sel');
-  const map = { goal: 2, level: 3, challenge: 5 };
-  if (map[group]) document.getElementById('btn-ob-' + map[group]).disabled = false;
+  document.getElementById(btnId).disabled = false;
 }
-
-function obNext(n) {
+function obGo(n) {
   if (n === 1) userName = document.getElementById('ob-name').value.trim() || 'Campeón/a';
   document.getElementById('ob-' + n).classList.remove('active');
   obStep = n + 1;
   document.getElementById('ob-' + obStep).classList.add('active');
-  updateObProgress();
-  document.querySelector('.ob-wrap').scrollIntoView({ behavior: 'smooth' });
+  updateObFill();
 }
-
-function updateObTime(v) {
-  document.getElementById('ob-time-display').innerHTML = v + ' <span>min/día</span>';
-}
-
 function finishOb() {
   document.getElementById('ob-fill').style.width = '100%';
-  setTimeout(() => {
-    document.getElementById('sb-user-name').textContent = userName;
-    document.getElementById('hero-name').textContent = userName;
-    goTo('dashboard');
-  }, 400);
+  document.getElementById('sb-name').textContent = userName;
+  document.getElementById('hero-name').textContent = userName;
+  setTimeout(() => goTo('dashboard'), 400);
 }
 
-// ─── DASHBOARD NAV ───
-const pageTitles = { bienvenida:'Mi Espacio', alimentacion:'Plan de Alimentación', recetas:'Recetas Semanales', entrenamiento:'Plan de Entrenamiento', rutinas:'Rutinas Semanales', crecimiento:'Plan de Crecimiento' };
-function showDash(id, navEl) {
+// ══ DASHBOARD ══
+const ptitles = { bienvenida:'Mi Espacio', alimentacion:'Plan de Alimentación', recetas:'Recetas en Video', entrenamiento:'Plan de Entrenamiento', rutinas:'Rutinas Semanales', crecimiento:'Plan de Crecimiento' };
+function showPage(id, nav) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sb-item').forEach(n => n.classList.remove('active'));
   document.getElementById('dp-' + id).classList.add('active');
-  if (navEl) navEl.classList.add('active');
-  document.getElementById('dash-page-title').textContent = pageTitles[id];
+  if (nav) nav.classList.add('active');
+  document.getElementById('page-title').textContent = ptitles[id];
   document.querySelector('.dash-main').scrollTo({ top:0, behavior:'smooth' });
 }
-
-// ─── HABITS ───
 function toggleH(el) {
   const c = el.querySelector('.h-check');
   const n = el.querySelector('.h-name');
@@ -1002,15 +1083,106 @@ function toggleH(el) {
   c.textContent = c.classList.contains('done') ? '✓' : '';
 }
 
-// ─── GENERIC MODAL ───
-function openModal(title, desc, icon, ingr) {
-  document.getElementById('m-title').textContent = title;
-  document.getElementById('m-desc').textContent = desc;
-  document.getElementById('m-icon').textContent = icon;
-  document.getElementById('m-ingr').innerHTML = ingr.map(i => `<li>${i}</li>`).join('');
-  document.getElementById('gen-modal').classList.add('open');
+// ══ VIDEO MODAL ══
+// type: 'exercise' | 'recipe'
+// steps: array of strings
+// extras: for recipe = ingredients array; for exercise = null
+function openVidModal(type, title, desc, steps, emoji, ingredients, meta) {
+  vidType = type;
+  vidSteps = steps;
+  vidCurrentStep = 0;
+  playing = false;
+
+  document.getElementById('vid-title').textContent = title;
+  document.getElementById('vid-subtitle').textContent = desc;
+  document.getElementById('vid-bg-emoji').textContent = emoji;
+  document.getElementById('vid-play-btn').textContent = '▶';
+  document.getElementById('vid-label').textContent = type === 'recipe' ? '🎬 Video de receta' : '🎬 Video del ejercicio';
+  document.getElementById('vid-steps-label').textContent = type === 'recipe' ? 'Pasos de preparación' : 'Técnica paso a paso';
+
+  renderVidSteps();
+  renderVidNav();
+
+  document.getElementById('vid-ov').classList.add('open');
 }
-function closeModalIfBg(e) { if (e.target === document.getElementById('gen-modal')) document.getElementById('gen-modal').classList.remove('open'); }
+
+function renderVidSteps() {
+  const container = document.getElementById('vid-steps-list');
+  container.innerHTML = '';
+  vidSteps.forEach((step, i) => {
+    const isActive = i === vidCurrentStep;
+    const isLast = i === vidSteps.length - 1;
+    const div = document.createElement('div');
+    div.className = 'step-timeline-item' + (isActive ? ' active-step' : '');
+    div.onclick = () => { vidCurrentStep = i; renderVidSteps(); renderVidNav(); updateVidBadge(); };
+    div.innerHTML = `
+      <div class="step-dot-col">
+        <div class="step-dot">${i + 1}</div>
+        ${!isLast ? '<div class="step-dot-line"></div>' : ''}
+      </div>
+      <div class="step-content">
+        <h6>${vidType === 'recipe' ? 'Paso ' + (i+1) : 'Paso ' + (i+1)}</h6>
+        <p>${step}</p>
+        ${isActive ? `<div class="s-tip">▶ ${vidType === 'recipe' ? 'Reproduciendo este paso' : 'Enfócate en este movimiento'}</div>` : ''}
+      </div>`;
+    container.appendChild(div);
+  });
+  updateVidBadge();
+}
+
+function updateVidBadge() {
+  document.getElementById('vid-step-badge').textContent = `Paso ${vidCurrentStep + 1} / ${vidSteps.length}`;
+}
+
+function renderVidNav() {
+  const isFirst = vidCurrentStep === 0;
+  const isLast = vidCurrentStep === vidSteps.length - 1;
+  document.getElementById('btn-prev').disabled = isFirst;
+  document.getElementById('btn-prev').style.opacity = isFirst ? '.35' : '1';
+  document.getElementById('btn-next').textContent = isLast
+    ? (vidType === 'recipe' ? '✓ Receta completada' : '✓ Ejercicio completado')
+    : 'Siguiente paso →';
+  document.getElementById('btn-next').style.background = isLast
+    ? 'linear-gradient(135deg,#e8621a,#c94a10)'
+    : 'linear-gradient(135deg,var(--sage),var(--moss))';
+}
+
+function vidNav(dir) {
+  const next = vidCurrentStep + dir;
+  if (next < 0 || next >= vidSteps.length) {
+    if (dir === 1) closeVid(); // last step → close
+    return;
+  }
+  vidCurrentStep = next;
+  playing = false;
+  document.getElementById('vid-play-btn').textContent = '▶';
+  renderVidSteps();
+  renderVidNav();
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('vid-play-btn').textContent = playing ? '⏸' : '▶';
+  if (playing) {
+    // Auto-advance after 3s to simulate video
+    setTimeout(() => {
+      if (playing) {
+        playing = false;
+        document.getElementById('vid-play-btn').textContent = '▶';
+        if (vidCurrentStep < vidSteps.length - 1) {
+          vidCurrentStep++;
+          renderVidSteps();
+          renderVidNav();
+        }
+      }
+    }, 3000);
+  }
+}
+
+function closeVid() {
+  playing = false;
+  document.getElementById('vid-ov').classList.remove('open');
+}
 </script>
 </body>
 </html>
