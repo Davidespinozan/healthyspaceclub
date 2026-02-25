@@ -642,10 +642,13 @@ h1 em::after {
   50% { box-shadow:0 8px 40px rgba(191,160,101,.25); border-color:rgba(191,160,101,.3); }
 }
 .pill-id-hint {
-  margin-top:24px; display:flex; justify-content:center;
+  margin-top:24px; display:flex; align-items:center; justify-content:center; gap:6px;
   color:var(--amber); opacity:.5;
   transition:all .4s cubic-bezier(.23,1,.32,1);
   animation:hintBounce 1.8s ease-in-out infinite;
+}
+.pill-id-hint-text {
+  font-size:.7rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
 }
 .pill-identity-btn:hover .pill-id-hint { opacity:1; }
 .pill-identity-btn.active .pill-id-hint svg { transform:rotate(180deg); }
@@ -1590,7 +1593,6 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
     <div class="pg">
       <!-- Club Identity -->
       <div class="pill-identity pill-identity-btn reveal" id="pillIdentityBtn" onclick="togglePillars()" role="button" tabindex="0">
-        <div class="pill-id-label">El Sistema</div>
         <div class="pill-id-logo">
           <img src="https://res.cloudinary.com/dp9l5i19b/image/upload/v1771971266/logo_ohaica.png" alt="Healthy Space">
           <span class="pill-id-logo-club">Club</span>
@@ -1605,6 +1607,7 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
         </div>
         <p class="pill-id-sub">Un solo espacio. Tres pilares. Todo integrado.</p>
         <div class="pill-id-hint">
+          <span class="pill-id-hint-text">Ver más</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
@@ -1612,22 +1615,22 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
         <div class="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/v1772042278/mealprep_wfczav.webp" alt="Nutrición"></div>
         <div class="pill-num">01</div>
         <h3>Nutrición</h3>
-        <p>Recetas semanales en video paso a paso, planes de comida y listas de compras. Sabes exactamente qué cocinar cada día.</p>
-        <span class="ptag">Reemplaza al Nutriólogo</span>
+        <p>Recetas en video paso a paso, planes de comida semanales y listas de compras listas para usar. Sin adivinar, sin improvisar — sabes exactamente qué cocinar cada día.</p>
+        <span class="ptag">Tu nutriólogo en el bolsillo</span>
       </div>
       <div class="pillar pillar-gold pillar-hidden reveal reveal-delay-2">
         <div class="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/v1772042621/workout_s1mccg.webp" alt="Entrenamiento"></div>
         <div class="pill-num">02</div>
         <h3>Entrenamiento</h3>
-        <p>Videos por ejercicio con técnica en pasos y progresión semanal. Como tener un entrenador personal contigo siempre.</p>
-        <span class="ptag">Reemplaza al Entrenador</span>
+        <p>Rutinas con video por ejercicio, técnica detallada y progresión semanal. Como tener un entrenador personal que se adapta a ti — sin horarios, sin excusas.</p>
+        <span class="ptag">Tu entrenador personal 24/7</span>
       </div>
       <div class="pillar pillar-gold pillar-hidden reveal reveal-delay-3">
         <div class="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/v1772045449/hpm_johgyu.webp" alt="Mentalidad"></div>
         <div class="pill-num">03</div>
         <h3>Mentalidad</h3>
-        <p>Módulos de mindfulness, gestión de estrés y las bases psicológicas del cambio. El método Healthy Space en acción.</p>
-        <span class="ptag">Reemplaza al Coach</span>
+        <p>El Healthy Space Method: módulos de mindset, gestión de estrés y las bases psicológicas del cambio real. Porque el cuerpo cambia cuando la mente lidera.</p>
+        <span class="ptag">Tu coach de crecimiento</span>
       </div>
     </div>
   </section>
@@ -2601,6 +2604,7 @@ function closeMobileMenu() {
 /* ═══════ PARALLAX HERO ORBS ═══════ */
 
 /* ═══════ TOGGLE PILLARS POP-OUT ═══════ */
+let pillarsOpened = false;
 function togglePillars() {
   const pillars = document.querySelectorAll('.pillar-gold');
   const btn = document.getElementById('pillIdentityBtn');
@@ -2609,14 +2613,21 @@ function togglePillars() {
   if (isShowing) {
     pillars.forEach(p => p.classList.remove('pillar-show'));
     btn.classList.remove('active');
+    document.querySelector('.pill-id-hint-text').textContent = 'Ver más';
   } else {
     pillars.forEach(p => p.classList.add('pillar-show'));
     btn.classList.add('active');
+    document.querySelector('.pill-id-hint-text').textContent = 'Ocultar';
+    pillarsOpened = true;
     setTimeout(() => {
       pillars[0].scrollIntoView({ behavior:'smooth', block:'center' });
     }, 350);
   }
 }
+// Auto-open after 5 seconds if not clicked
+setTimeout(() => {
+  if (!pillarsOpened) togglePillars();
+}, 5000);
 // Allow keyboard activation
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.activeElement?.id === 'pillIdentityBtn') togglePillars();
