@@ -794,7 +794,8 @@ h1 em::after {
   .lifestyle-img-side { height:360px; }
   .pricing-wrapper { grid-template-columns:1fr; gap:30px; }
   .pricing-img-side { min-height:250px; border-radius:18px; }
-  .lifestyle-text-side { padding:48px 24px 56px; }
+  .lifestyle-text-side { padding:48px 24px 56px; align-items:center; text-align:center; }
+  .lifestyle-text-side .how-steps-inline { text-align:left; }
 }
 
 /* Pricing — premium cards */
@@ -1674,7 +1675,7 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
   <section class="pillars" id="s-pillars">
     <div class="pill-grid-bg"></div>
     <div class="sec-lbl reveal">Los tres pilares</div>
-    <h2 class="reveal">Todo lo que necesitas<br>para <em>transformarte</em></h2>
+    <h2 class="reveal">Todo lo que<br>necesitas para<br><em>transformarte</em></h2>
     <p class="sub reveal">Reemplaza coaches, nutriólogos y entrenadores individuales con un sistema de bolsillo.</p>
     <div class="pg">
       <!-- Club Identity -->
@@ -2204,15 +2205,17 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
       <div class="bn-item on" id="bn-bienvenida" onclick="nav('bienvenida',null)">
         <div class="bn-icon">🏠</div><div class="bn-lbl">Inicio</div>
       </div>
+      <div class="bn-item" id="bn-alimentacion" onclick="nav('alimentacion',null)">
+        <div class="bn-icon">🥗</div><div class="bn-lbl">Nutrición</div>
+      </div>
       <div class="bn-item" id="bn-recetas" onclick="nav('recetas',null)">
         <div class="bn-icon">🎬</div><div class="bn-lbl">Recetas</div>
       </div>
       <div class="bn-item" id="bn-entrenamiento" onclick="nav('entrenamiento',null)">
         <div class="bn-icon">💪</div><div class="bn-lbl">Entreno</div>
-        <div class="bn-dot"></div>
       </div>
-      <div class="bn-item" id="bn-alimentacion" onclick="nav('alimentacion',null)">
-        <div class="bn-icon">🥗</div><div class="bn-lbl">Nutrición</div>
+      <div class="bn-item" id="bn-rutinas" onclick="nav('rutinas',null)">
+        <div class="bn-icon">🗓️</div><div class="bn-lbl">Rutinas</div>
       </div>
       <div class="bn-item" id="bn-crecimiento" onclick="nav('crecimiento',null)">
         <div class="bn-icon">🌱</div><div class="bn-lbl">Crecer</div>
