@@ -1204,8 +1204,55 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
 
 /* Meal cards */
 .meals { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:20px; }
-.meal { background:white; border:1px solid rgba(46,74,66,.09); border-radius:15px; padding:16px; cursor:pointer; transition:all .22s; box-shadow:var(--shadow); min-height:44px; }
+.meal { background:white; border:1px solid rgba(46,74,66,.09); border-radius:15px; padding:16px; transition:all .22s; box-shadow:var(--shadow); min-height:44px; }
 .meal:hover { border-color:var(--sage); transform:translateY(-2px); box-shadow:var(--shadow-md); }
+
+/* Day Selector */
+.day-selector { margin-bottom:24px; }
+.day-selector-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.day-selector-header h3 { font-family:'Montserrat',sans-serif; font-size:1.1rem; font-weight:700; color:var(--forest); }
+.day-selector-count { font-size:.75rem; color:var(--txt2); font-weight:600; }
+.day-grid {
+  display:flex; flex-direction:column; gap:16px;
+}
+.day-section-label {
+  font-family:'Montserrat',sans-serif; font-size:.78rem; font-weight:700;
+  letter-spacing:.08em; color:var(--sage); margin-bottom:8px;
+}
+.day-section-grid {
+  display:grid; grid-template-columns:repeat(7,1fr); gap:8px;
+}
+.day-btn {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  background:white; border:1.5px solid rgba(46,74,66,.09); border-radius:12px;
+  font-family:'Montserrat',sans-serif; font-size:.82rem; font-weight:700; color:var(--forest);
+  cursor:pointer; transition:all .25s cubic-bezier(.23,1,.32,1);
+  box-shadow:var(--shadow); position:relative;
+}
+.day-btn:hover { border-color:var(--amber); transform:translateY(-3px); box-shadow:var(--shadow-md); background:rgba(191,160,101,.06); }
+.day-btn.active { background:var(--forest); color:white; border-color:var(--forest); box-shadow:0 6px 20px rgba(46,74,66,.25); }
+
+/* Day Detail */
+.day-detail-header { display:flex; align-items:center; gap:16px; margin-bottom:20px; }
+.day-back {
+  background:none; border:1.5px solid var(--bdr); border-radius:10px; padding:8px 16px;
+  font-family:'Montserrat',sans-serif; font-size:.78rem; font-weight:600; color:var(--forest);
+  cursor:pointer; transition:all .2s;
+}
+.day-back:hover { border-color:var(--amber); background:rgba(191,160,101,.06); }
+.day-detail-header h3 { font-family:'Montserrat',sans-serif; font-size:1.1rem; font-weight:700; color:var(--forest); }
+
+/* Meal portions */
+.meal-portions { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.portion {
+  font-size:.68rem; font-weight:600; color:var(--sage); background:rgba(61,99,89,.06);
+  padding:4px 10px; border-radius:8px; letter-spacing:.02em;
+}
+
+@media (max-width:768px) {
+  .day-section-grid { grid-template-columns:repeat(7,1fr); gap:6px; }
+  .day-btn { font-size:.72rem; border-radius:10px; }
+}
 .meal-time { font-size:.61rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--sage); margin-bottom:6px; }
 .meal-name { font-family:'Montserrat',sans-serif; font-size:.97rem; font-weight:700; color:var(--forest); margin-bottom:4px; }
 .meal-desc { font-size:.76rem; color:var(--txt2); line-height:1.5; }
@@ -1404,23 +1451,29 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
   .badge { padding:7px 14px; font-size:.52rem; margin-bottom:0; }
   .hero-tagline { margin-bottom:8px; }
 
-  /* Landing hero — image BELOW text */
-  .hero { padding:74px 22px 32px !important; min-height:0 !important; align-items:flex-start !important; display:block !important; }
-  .hero-inner { grid-template-columns:1fr; gap:28px; }
-  .hero-img { order:2; }
-  .hero-content { order:1; }
-  .hero-img img { height:260px; border-radius:20px; object-fit:cover; width:100%; }
-  .hero-img::before { display:none; }
-  .hero-img::after { display:none; }
+  /* Landing hero — fullscreen background image on mobile */
+  .hero { padding:0 !important; min-height:100dvh !important; align-items:stretch !important; display:flex !important; position:relative; background:var(--forest) !important; }
+  .hero::before, .hero::after { display:none !important; }
+  .hero-inner { grid-template-columns:1fr; gap:0; position:relative; z-index:2; display:flex !important; flex-direction:column; justify-content:flex-end; min-height:100dvh; padding:0 22px 36px; }
+  .hero-img { position:absolute !important; inset:0; width:100%; height:100%; order:0; z-index:0; }
+  .hero-img img { width:100%; height:100%; object-fit:cover; object-position:center top; border-radius:0 !important; position:absolute; inset:0; }
+  .hero-img::before { content:''; position:absolute; inset:0; z-index:1; background:linear-gradient(to top, rgba(20,40,35,.92) 0%, rgba(20,40,35,.7) 35%, rgba(20,40,35,.25) 65%, rgba(20,40,35,.10) 100%) !important; display:block !important; border-radius:0 !important; width:100% !important; height:100% !important; top:0 !important; left:0 !important; }
+  .hero-img::after { display:none !important; }
+  .hero-content { order:1; position:relative; z-index:3; }
+  .hero-content h1, .hero-content .hero-sub, .hero-content .hero-tagline, .hero-content .badge { color:#fff !important; text-shadow:0 2px 12px rgba(0,0,0,.3); }
+  .hero-content h1 em { color:var(--amber) !important; }
+  .hero-content .hero-sub { color:rgba(255,255,255,.85) !important; }
+  .hero-content .hero-tagline { color:rgba(255,255,255,.7) !important; }
   .hero-float-card { display:none; }
   .hero-img-dots { display:none; }
   .hero-orb { display:none; }
   .hero-trust { gap:14px; flex-wrap:wrap; }
-  .hero-trust-num { font-size:1rem; }
-  .hero-trust-lbl { font-size:.55rem; }
+  .hero-trust-num { font-size:1rem; color:#fff !important; }
+  .hero-trust-lbl { font-size:.55rem; color:rgba(255,255,255,.65) !important; }
+  .hero-trust-div { background:rgba(255,255,255,.15) !important; }
   h1 { font-size:2.2rem; }
   .hero-sub { font-size:.92rem; margin-bottom:32px; }
-  .badge { font-size:.55rem; padding:8px 16px; margin-bottom:20px; }
+  .badge { font-size:.55rem; padding:8px 16px; margin-bottom:20px; background:rgba(255,255,255,.1) !important; border-color:rgba(191,160,101,.4) !important; }
   .btn-p { padding:14px 32px; font-size:.84rem; }
 
   /* Landing sections */
@@ -1549,7 +1602,7 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
         </div>
       </div>
       <div class="hero-img">
-        <img src="https://res.cloudinary.com/dp9l5i19b/image/upload/v1771973920/imagen2_ne3j1j.webp" alt="Healthy lifestyle">
+        <img src="https://res.cloudinary.com/dp9l5i19b/image/upload/v1772050428/hero_pghcvy.webp" alt="Healthy Space Club">
         <div class="hero-float-card hfc-1">
           <span class="hfc-icon">🥗</span>
           <div><span class="hfc-t">Plan Nutricional</span><span class="hfc-s">Actualizado semanalmente</span></div>
@@ -1615,21 +1668,21 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
         <div class="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/v1772042278/mealprep_wfczav.webp" alt="Nutrición"></div>
         <div class="pill-num">01</div>
         <h3>Nutrición</h3>
-        <p>Recetas en video paso a paso, planes de comida semanales y listas de compras listas para usar. Sin adivinar, sin improvisar — sabes exactamente qué cocinar cada día.</p>
+        <p>Una membresía donde la nutrición se vuelve simple: plan personalizado, recetas y ritmo. Sostenible, repetible, real.</p>
         <span class="ptag">Tu nutriólogo en el bolsillo</span>
       </div>
       <div class="pillar pillar-gold pillar-hidden reveal reveal-delay-2">
         <div class="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/v1772042621/workout_s1mccg.webp" alt="Entrenamiento"></div>
         <div class="pill-num">02</div>
         <h3>Entrenamiento</h3>
-        <p>Rutinas con video por ejercicio, técnica detallada y progresión semanal. Como tener un entrenador personal que se adapta a ti — sin horarios, sin excusas.</p>
+        <p>La ruta oficial del Club: fuerza + condición + movilidad. Tú eliges nivel y tiempo — el sistema te da estructura para mejorar semana a semana.</p>
         <span class="ptag">Tu entrenador personal 24/7</span>
       </div>
       <div class="pillar pillar-gold pillar-hidden reveal reveal-delay-3">
         <div class="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/v1772045449/hpm_johgyu.webp" alt="Mentalidad"></div>
         <div class="pill-num">03</div>
         <h3>Mentalidad</h3>
-        <p>El Healthy Space Method: módulos de mindset, gestión de estrés y las bases psicológicas del cambio real. Porque el cuerpo cambia cuando la mente lidera.</p>
+        <p>Healthy Space Method + Control de Vida (Notion). Identidad, propósito y metas — con un sistema para planear, ejecutar y sostener hábitos.</p>
         <span class="ptag">Tu coach de crecimiento</span>
       </div>
     </div>
@@ -1651,7 +1704,7 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
   <section class="lifestyle-banner">
     <div class="lifestyle-inner">
       <div class="lifestyle-img-side">
-        <img src="https://res.cloudinary.com/dp9l5i19b/image/upload/v1771973926/imagen10_ti14gp.webp" alt="Healthy Space lifestyle">
+        <img src="https://res.cloudinary.com/dp9l5i19b/image/upload/v1771973920/imagen2_ne3j1j.webp" alt="Healthy Space lifestyle">
       </div>
       <div class="lifestyle-text-side">
         <div class="lifestyle-tag">✦ El método que funciona</div>
@@ -2026,17 +2079,29 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
 
     <!-- PAGE: ALIMENTACIÓN -->
     <div class="page" id="dp-alimentacion">
-      <div class="sec-hero"><div class="sh-icon">🥗</div><div><h2>Plan de Alimentación</h2><p>Tu plan calórico y macros calculado para tu objetivo. Haz clic en cada comida para ver el video de la receta.</p></div></div>
+      <div class="sec-hero"><div class="sh-icon">🥗</div><div><h2>Plan de Alimentación</h2><p>28 días completos de dieta. Elige tu día y sigue las porciones exactas para tu objetivo.</p></div></div>
       <div class="macros">
         <div class="macro"><div class="macro-v">1,850 <span class="macro-u">kcal</span></div><div class="macro-l">Calorías objetivo</div><div class="macro-bar"><div class="macro-fill" style="width:78%;background:var(--terra)"></div></div></div>
         <div class="macro"><div class="macro-v">140g <span class="macro-u">prot</span></div><div class="macro-l">Proteína diaria</div><div class="macro-bar"><div class="macro-fill" style="width:65%;background:var(--sage)"></div></div></div>
         <div class="macro"><div class="macro-v">60g <span class="macro-u">grasas</span></div><div class="macro-l">Grasas saludables</div><div class="macro-bar"><div class="macro-fill" style="width:55%;background:var(--gold)"></div></div></div>
       </div>
-      <div class="meals">
-        <div class="meal" onclick="openVid('recipe','Avena proteica con frutos rojos','Desayuno completo. Alto en fibra y proteína vegetal.',['Calienta la leche de avena a fuego medio sin que hierva.','Agrega la avena y mezcla 3-4 minutos hasta espesar.','Incorpora la proteína en polvo y mezcla bien.','Sirve y agrega los frutos rojos encima.','Termina con un hilo de miel cruda y sirve caliente.'],'🥣')"><div class="meal-time">☀️ Desayuno · 7:00 am</div><div class="meal-name">Avena proteica con frutos rojos</div><div class="meal-desc">Energía sostenida · alta en fibra y proteína</div><div class="meal-meta"><span class="mm">450 kcal</span><span class="mm">·</span><span class="mm">32g prot</span><span class="mm">·</span><span class="mm">🎬 Ver receta</span></div></div>
-        <div class="meal" onclick="openVid('recipe','Bowl de pollo y arroz integral','Proteína magra, carbos de calidad y grasas buenas.',['Cocina el arroz integral 20 min con el doble de agua.','Salpimienta el pollo y cocínalo en sartén a fuego medio-alto.','Córtalo en tiras cuando esté listo.','Monta el bowl: arroz + pollo + aguacate en rodajas.','Agrega brócoli al vapor y termina con limón.'],'🍚')"><div class="meal-time">🍽️ Comida · 1:30 pm</div><div class="meal-name">Bowl de pollo y arroz integral</div><div class="meal-desc">Proteína magra · carbos de calidad · grasas buenas</div><div class="meal-meta"><span class="mm">580 kcal</span><span class="mm">·</span><span class="mm">52g prot</span><span class="mm">·</span><span class="mm">🎬 Ver receta</span></div></div>
-        <div class="meal" onclick="openVid('recipe','Tortilla de claras y espinacas','Alta en proteína, baja en calorías. Lista en 8 minutos.',['Bate las claras con sal y pimienta en un tazón.','Saltea los champiñones y espinaca en aceite 2 min.','Agrega las claras sobre las verduras en la sartén.','Cocina a fuego medio-bajo tapado 3 min.','Dobla con cuidado y sirve caliente.'],'🍳')"><div class="meal-time">🌙 Cena · 7:00 pm</div><div class="meal-name">Tortilla de claras y espinacas</div><div class="meal-desc">Alta proteína · baja en calorías · 8 min</div><div class="meal-meta"><span class="mm">210 kcal</span><span class="mm">·</span><span class="mm">28g prot</span><span class="mm">·</span><span class="mm">🎬 Ver receta</span></div></div>
-        <div class="meal" onclick="openVid('recipe','Smoothie verde detox','Alcaliniza tu cuerpo con micronutrientes y enzimas.',['Congela el mango la noche anterior.','Agrega todos los ingredientes a la licuadora.','Licúa 60 segundos a velocidad alta.','Prueba y ajusta con más limón si prefieres.','Sirve inmediatamente para conservar enzimas.'],'🥤')"><div class="meal-time">🍎 Snack · 10:30 am</div><div class="meal-name">Smoothie verde detox</div><div class="meal-desc">Micronutrientes y energía en 2 minutos</div><div class="meal-meta"><span class="mm">180 kcal</span><span class="mm">·</span><span class="mm">Alcalino</span><span class="mm">·</span><span class="mm">🎬 Ver receta</span></div></div>
+
+      <!-- Day Selector -->
+      <div class="day-selector">
+        <div class="day-selector-header">
+          <h3>Elige tu día</h3>
+          <span class="day-selector-count" id="dayCount">Día 1 de 28</span>
+        </div>
+        <div class="day-grid" id="dayGrid"></div>
+      </div>
+
+      <!-- Day Detail -->
+      <div class="day-detail" id="dayDetail" style="display:none;">
+        <div class="day-detail-header">
+          <button class="day-back" onclick="closeDayDetail()">← Volver</button>
+          <h3 id="dayTitle">Día 1</h3>
+        </div>
+        <div class="meals" id="dayMeals"></div>
       </div>
     </div>
 
@@ -2601,7 +2666,228 @@ function closeMobileMenu() {
   if (menu) { menu.classList.remove('open'); btn.classList.remove('open'); document.body.style.overflow = ''; }
 }
 
-/* ═══════ PARALLAX HERO ORBS ═══════ */
+/* ═══════ 50-DAY MEAL PLAN SYSTEM ═══════ */
+const mealPlanData = [
+{day:1,theme:'🇲🇽 Mexicana',meals:[
+{time:'☀️ Desayuno',name:'Chilaquiles Ligeros',desc:'Salsa verde casera · totopos horneados',portions:['Salsa verde hecha en casa','1 tz totopos horneados','2 pz de huevo','60 g queso panela o fresco','2/3 pz de aguacate']},
+{time:'🍽️ Comida',name:'Alambre de Pollo',desc:'Proteína + arroz + verduras',portions:['200 g pechuga de pollo salpimentada','Pimientos, brócoli, chile y cebolla','30 g queso oaxaca o mozzarella','2 tz arroz cocido']},
+{time:'🌙 Cena',name:'Ceviche de Panela',desc:'Ligero · fresco · proteico',portions:['150 g queso panela','Chile, cebolla morada, pepino','1/3 pz de aguacate','Jugo de limón, sal y salsa soya','1 tz totopos horneados']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['2 reb pan + 1 cda crema de cacahuate + 2 tz mango','2 tz yogur natural sin azúcar + ½ plátano + ½ tz granola sin azúcar + ½ tz avena']}
+]},
+{day:2,theme:'🇲🇽 Mexicana',meals:[
+{time:'☀️ Desayuno',name:'Omelette',desc:'Alto en proteína · con pan integral',portions:['4 huevos','¾ tz claras de huevo','4 reb pechuga de pavo','Espinaca + chile, tomate y cebolla','4 reb pan integral + 1 tz frutos rojos']},
+{time:'🍽️ Comida',name:'Caldo de Pollo',desc:'Reconfortante · con arroz',portions:['200 g pechuga de pollo cocida','Caldo con verduras (chayote, zanahoria, calabaza, ejote)','3 tz arroz blanco cocido','Limón y hierbas al gusto']},
+{time:'🌙 Cena',name:'Molletes',desc:'Frijoles + queso + pico de gallo',portions:['3 reb pan integral','⅓ tz frijoles cocidos machacados sin grasa','100 g queso panela o fresco','Pico de gallo (chile, tomate, cebolla, limón + sal)']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['½ tz yogur natural sin azúcar + 1 manzana picada + ½ plátano','10 g semillas (8-9 pz ej. cacahuates naturales)']}
+]},
+{day:3,theme:'🇲🇽 Mexicana',meals:[
+{time:'☀️ Desayuno',name:'Machaca con Nopales',desc:'Tradicional · con tortillas',portions:['40 g machaca de res','1 taza claras de huevo','Nopales en tiras, tomate + cebolla + chile + cilantro','4 tortillas de maíz','½ aguacate','1 naranja']},
+{time:'🍽️ Comida',name:'Tacos de Pescado',desc:'Ligero · fresco · con salsa verde',portions:['160 g filete pescado blanco (tilapia)','4 tortillas de maíz','Repollo rallado o lechuga, pepino','Aderezo del recetario','Salsa verde o pico de gallo, limón']},
+{time:'🌙 Cena',name:'Enfrijoladas',desc:'Con queso panela y calabacita',portions:['4 tortillas de maíz','⅓ tz de frijol','120 g queso panela o fresco','Calabacita salteada con cebolla','Salsa de tu preferencia']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['Sandwich: 6 reb pechuga de pavo + 2 reb pan integral + lechuga y tomate + 1 cda mayonesa','2 tz sandía picada + 1 tz jicama']}
+]},
+{day:4,theme:'🇲🇽 Mexicana',meals:[
+{time:'☀️ Desayuno',name:'Huevos Rancheros',desc:'Clásico mexicano · con frijoles',portions:['6 huevos','⅔ taza frijoles cocidos','Nopal picado','1 tortilla de maíz','½ pz aguacate','Salsa libre (tomate, cebolla, chile, cilantro)']},
+{time:'🍽️ Comida',name:'Tinga de Pollo',desc:'Deshebrada · con arroz',portions:['230 g pechuga de pollo deshebrada','3 tz arroz blanco cocido','Lechuga + tomate + cebolla','2 cdas salsa chipotle','Limón']},
+{time:'🌙 Cena',name:'Quesadillas con Champiñones',desc:'Ligeras · con caldo',portions:['2 tortillas de maíz','150 g queso panela o fresco','Champiñones con cebolla','Salsa verde','1 taza caldo de verduras']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 tz papaya + 10 g semillas (almendras)','10 g semillas (pistaches) + 1 tz zanahoria picada']}
+]},
+{day:5,theme:'🇲🇽 Mexicana',meals:[
+{time:'☀️ Desayuno',name:'Molletes con Huevo',desc:'Pan integral + frijoles + huevo',portions:['4 reb pan integral','⅔ tz frijoles machacados sin grasa','2 huevo + ½ tz claras','60 g queso panela o fresco','Pico de gallo libre, limón y sal']},
+{time:'🍽️ Comida',name:'Asado de Res',desc:'Con papa y verduras',portions:['200 g carne de res','1 pz papa, 2 pz tomate, ½ cebolla, 1 ajo','Lechuga, zanahoria, pepino, cebolla curtida','30 g queso panela + ⅓ aguacate']},
+{time:'🌙 Cena',name:'Ceviche de Atún',desc:'Fresco · con pan tostado',portions:['2 latas atún en agua','Pepino + tomate + cebolla y cilantro','⅓ pz aguacate','Jugo de limón, sal','1 cdita aceite oliva + 4 reb pan integral tostado']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['2 tz de uvas','3 tz de palomitas naturales']}
+]},
+{day:6,theme:'🇲🇽 Mexicana',meals:[
+{time:'☀️ Desayuno',name:'Bowl de Amaranto',desc:'Yogur + fruta + semillas',portions:['1 tz yogur natural sin azúcar','2 cda amaranto natural inflado','¼ tz granola natural sin azúcar','¼ tz mango, ¼ tz papaya, ¼ tz piña','1 cda miel','10 g semillas mixtas + 4 pz huevo revuelto']},
+{time:'🍽️ Comida',name:'Carne Molida con Verduras y Arroz',desc:'Completo · con queso',portions:['230 g carne molida magra de res','3 tz arroz cocido','Calabacita + pimiento + zanahoria salteadas','60 g queso panela o oaxaca','Sal, ajo y hierbas']},
+{time:'🌙 Cena',name:'Tacos de Camarón',desc:'Frescos · con salsa',portions:['180 g camarón limpio','4 tortillas de maíz','Jugo de limón + pizca de sal','Lechuga rallada, pepino, tomate, cilantro, cebolla','Salsa de tu preferencia']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['Rollitos de jamón: 6 rollitos de pechuga de pavo con limón y salsa soya','10 g semillas (almendras) + 1 plátano']}
+]},
+{day:7,theme:'🇲🇽 Mexicana',meals:[
+{time:'☀️ Desayuno',name:'Calabacitas',desc:'Con huevo y pan integral',portions:['Calabacita en cubos, tomate, cebolla y chile','3 huevo + ½ taza claras','4 reb pan integral','Sal, pimienta y orégano al gusto']},
+{time:'🍽️ Comida',name:'Bistec de Res',desc:'Con salsa de tomate y arroz',portions:['200 g bistec de res salpimentado','Salsa de tomate hecha en casa','2 tz arroz cocido']},
+{time:'🌙 Cena',name:'Ensalada Cremosa de Atún',desc:'Con papa y pan',portions:['2 latas atún en agua','2 papa cocida','Lechuga picada, pepino y zanahoria rallada','1 cdita mayonesa light + 1 cda yogurt natural + limón','4 reb pan integral']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 pz de pera','15 g semillas (cacahuates naturales)']}
+]},
+{day:8,theme:'🇯🇵 Japonesa',meals:[
+{time:'☀️ Desayuno',name:'Yogurt Coco-Mango',desc:'Tropical · con amaranto',portions:['1 tz yogurt natural sin azúcar','1 taza mango en cubos','½ pz plátano','2 cdas coco rallado natural sin azúcar','2 cda amaranto inflado','1 cdita miel']},
+{time:'🍽️ Comida',name:'Pollo Teriyaki',desc:'Con arroz y edamames',portions:['200 g pechuga de pollo','2 tz arroz cocido','Brócoli, zanahoria, calabacita o pimiento','Salsa teriyaki ligera casera','½ taza edamames cocidos']},
+{time:'🌙 Cena',name:'Fideos con Verdura',desc:'Con tofu o pollo',portions:['2 tz fideos cocidos','180 g tofu firme (o 180 g pollo)','Pimientos + champiñones + zanahoria + chile cayenna','Salsa soya ligera, jengibre y limón']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['½ taza edamames cocidos + sal o soya baja en sodio','1 tz camote al horno + 1 cda miel']}
+]},
+{day:9,theme:'🇯🇵 Japonesa',meals:[
+{time:'☀️ Desayuno',name:'Bowl',desc:'Huevos + queso de cabra + blueberries',portions:['4 huevos cocidos','30 g queso fresco de cabra','Espinaca fresca','⅓ pz de aguacate','⅓ tz de blueberries','4 pz pan integral tostado']},
+{time:'🍽️ Comida',name:'Poké Bowl',desc:'Arroz + proteína + aguacate',portions:['2 tz arroz cocido','200 g pechuga de pollo o pescado blanco','Pepino + zanahoria','30 g queso crema','⅓ aguacate','Salsa soya baja en sodio + naranja + limón']},
+{time:'🌙 Cena',name:'Sopa Miso',desc:'Caldo + tofu + fideos',portions:['1 tz caldo de miso natural','200 g tofu o pechuga de pollo','Espinaca + champiñones + cebolla','2 tz fideos cocidos']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['10 g semillas (almendras) + 1 plátano','1 tz de fresas']}
+]},
+{day:10,theme:'🇯🇵 Japonesa',meals:[
+{time:'☀️ Desayuno',name:'Avena con Manzana',desc:'Con leche y huevos',portions:['1 tz avena + agua','2 tz leche','1 cda miel + canela en polvo','1 manzana','1 cda semillas mixtas','5 huevos revueltos']},
+{time:'🍽️ Comida',name:'Ramen Ligero',desc:'Fideos + pollo + huevo',portions:['3 tz fideos cocidos','200 g pollo o tofu firme','Espinaca, brócoli y champiñones','2 huevo cocido','Caldo ligero (sal, salsa soya, chile cayena)']},
+{time:'🌙 Cena',name:'Dumpling Rolls',desc:'Carne en hojas de lechuga',portions:['200 g carne molida de res o pavo','Zanahoria, champiñones y cebollín','4 hojas grandes de lechuga','1 cda de ajonjolí','Aderezo chipotle + salsa soya','1 tz quinoa cocida']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['3 reb pan integral + 2 cdas crema cacahuate + 2 pz pera','2 pz camote al horno + 1 cda miel']}
+]},
+{day:11,theme:'🇯🇵 Japonesa',meals:[
+{time:'☀️ Desayuno',name:'Pancakes de Camote',desc:'Con yogur y miel',portions:['2 tz puré de camote','1 huevo + ¼ tz claras','1 tz avena molida','Canela y vainilla','¼ tz yogur natural + 1 cdta miel','2 pz de huevos']},
+{time:'🍽️ Comida',name:'Salmón al Limón',desc:'Con papa y espárragos',portions:['180 g salmón al sartén','1 cdita mantequilla + ajo + limón','1 pz de papa','Espárragos salteados','1 tz arroz cocido']},
+{time:'🌙 Cena',name:'Crema de Calabacín',desc:'Con queso mozzarella y pan',portions:['1 taza calabacita cocida','¼ taza cebolla picada','½ taza leche baja en grasa + 1 taza caldo de verduras','120 g queso mozzarella rallado','3 reb pan integral tostado']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 tz sandía + 1 tz pepino picado','2 reb pan + 1 cda crema de cacahuate + 1 plátano']}
+]},
+{day:12,theme:'🇯🇵 Japonesa',meals:[
+{time:'☀️ Desayuno',name:'Rice Pudding Japonés',desc:'Arroz con leche + huevos',portions:['Arroz cocido con agua primero','1 taza leche (descremada o vegetal)','Canela, vainilla y pizca de sal a fuego bajo','2 tz de arroz','3 pz de huevo']},
+{time:'🍽️ Comida',name:'Bowl de Camote',desc:'Pollo + quinoa + aguacate',portions:['180 g pollo o pescado cocido','1 pz camote al sartén en cubos','1 ½ tz quinoa','Espinaca y lechuga picada','⅓ pz aguacate','Aderezo del recetario']},
+{time:'🌙 Cena',name:'Croquetas de Papa',desc:'Con pollo desmenuzado',portions:['1 tz papa cocida y triturada','200 g pollo desmenuzado','Calabacita y cebolla rallada','1 tz harina de avena','1 pz huevo revuelto + sal','1 cda aceite de aguacate']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['½ taza edamames cocidos, sal o soya','1 tz frutos rojos + ½ plátano']}
+]},
+{day:13,theme:'🇯🇵 Japonesa',meals:[
+{time:'☀️ Desayuno',name:'Smoothie de Plátano',desc:'Con espinaca y semillas',portions:['1 pz plátano','1 tz espinaca fresca','1 tz leche','1 cda semillas mixtas (10 g)','Agua y hielos','2 pz de huevos']},
+{time:'🍽️ Comida',name:'Pollo con Verduras',desc:'Estilo asiático con papa',portions:['180 g pechuga de pollo','Brócoli, zanahoria, calabacita y pimientos','Salsa soya + ajo + limón + chile cayenna','2 pz papa al horno o cocida']},
+{time:'🌙 Cena',name:'Brochetas Yakitori',desc:'Con salsa teriyaki y arroz',portions:['180 g carne','Pimientos de colores','Salsa teriyaki casera','2 tz arroz cocido']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 taza pepino en rodajas con vinagre de arroz + ajonjolí','1 taza yogurt natural + ½ cdita matcha + 2 reb pan integral + 1 cdita miel']}
+]},
+{day:14,theme:'🇯🇵 Japonesa',meals:[
+{time:'☀️ Desayuno',name:'Toast de Huevo',desc:'Con aguacate y yogur',portions:['3 reb pan integral','¼ pz aguacate','Espinaca y champiñones','3 huevo + ½ taza claras','¾ taza yogurt natural sin azúcar','½ taza frutos rojos + 1 cdita miel']},
+{time:'🍽️ Comida',name:'Bowl de Camarón',desc:'Con arroz y brócoli',portions:['200 g camarones con mantequilla, ajo, paprika','Brócoli salteado','Salsa soya + limón','2 tz arroz cocido']},
+{time:'🌙 Cena',name:'Gohan de Salmón y Espinaca',desc:'Arroz + salmón + aguacate',portions:['200 g salmón a la plancha con salsa teriyaki','2 tz arroz cocido','⅓ pz aguacate','Pepino + zanahoria','Salsa soya + limón + naranja','1 cdita ajonjolí']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['2 taza de uvas','2 reb pan integral + 1 cdita crema de cacahuate']}
+]},
+{day:15,theme:'🇮🇹 Italiana',meals:[
+{time:'☀️ Desayuno',name:'Ricotta Toast Durazno',desc:'Pan integral + ricotta + fruta',portions:['4 reb pan integral','½ tz ricotta light','1 pz durazno','1 cdita miel','1 cdita semillas (chía o girasol)']},
+{time:'🍽️ Comida',name:'Ensalada Griega',desc:'Pollo + garbanzos + arroz',portions:['180 g pechuga de pollo a la plancha','1 tz garbanzos cocidos','Espinaca + lechuga + tomate cherry + pepino','2 cdita queso parmesano','1 cdita aceite de oliva, limón, orégano','2 tz arroz cocido']},
+{time:'🌙 Cena',name:'Minestrone Ligera',desc:'Sopa de verduras con pasta',portions:['Caldo de verduras','2 tz pasta','Calabacita, zanahoria, apio, tomate','90 g pechuga de pollo','1 tz frijoles o lentejas cocidos','Hierbas italianas']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 taza zanahoria baby con limón','10 g semillas (almendras) + 1 plátano']}
+]},
+{day:16,theme:'🇮🇹 Italiana',meals:[
+{time:'☀️ Desayuno',name:'Huevos Mediterráneos',desc:'Con pan integral y aguacate',portions:['5 pz huevo + ½ taza claras','Tomate cherry, cebolla y espinaca','3 reb pan integral, ¼ aguacate','1 cdita queso feta o panela','Orégano, albahaca, pimienta']},
+{time:'🍽️ Comida',name:'Filete de Pescado',desc:'Con mantequilla, arroz y espárragos',portions:['200 g filete de pescado blanco','1 cdita mantequilla + ajo + limón','3 tz arroz cocido','Espárragos y zanahoria salteados']},
+{time:'🌙 Cena',name:'Puré de Camote',desc:'Con pollo y brócoli',portions:['1 tz camote cocido y triturado','200 g pechuga de pollo','1 tz brócoli cocido','Especias: romero, sal, ajo en polvo']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 tz papaya + 1 plátano + 15 g semillas (nueces)','Papas al horno: 2 papas, 1 cda aceite oliva, paprika, orégano, ajo, sal y pimienta']}
+]},
+{day:17,theme:'🇮🇹 Italiana',meals:[
+{time:'☀️ Desayuno',name:'Toast',desc:'Aguacate + huevo + tomate',portions:['2 reb pan integral','⅓ pz aguacate','Rodajas de tomate','3 pz huevo estrellado','Sal, limón, pimienta','1 pz kiwi']},
+{time:'🍽️ Comida',name:'Bowl de Atún',desc:'Con arroz, garbanzos y verduras',portions:['2 lata atún en agua','3 taza arroz cocido','½ tz garbanzos cocidos','Espinaca, tomate, pepino, cebolla morada','2 cdas elotito amarillo','Limón, sal, pimienta, salsa soya']},
+{time:'🌙 Cena',name:'Pimientos Rellenos',desc:'Carne de res con papa',portions:['200 g carne de res magra salpimentada','Cebollita + 1 pz papa + zanahoria','2 pz pimientos','½ tz arroz cocido','½ pz aguacate con sal y limón']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['2 tz uvas + 10 g semillas (almendras)','½ taza yogurt natural, 1 cdita miel, 1 cdita nuez picada, canela y vainilla']}
+]},
+{day:18,theme:'🇮🇹 Italiana',meals:[
+{time:'☀️ Desayuno',name:'Bowl de Durazno',desc:'Yogur + avena + fruta',portions:['1 ½ taza yogurt natural sin azúcar','1 tz durazno asado con 1 cda miel','1 tz avena','1 cdita semillas mixtas','Canela y vainilla','3 reb pan integral tostado']},
+{time:'🍽️ Comida',name:'Lasaña de Calabacín',desc:'Carne molida + calabacita + queso',portions:['180 g carne molida de res magra','¼ taza puré de tomate natural','Champiñones y brócoli','1 taza calabacita en láminas','30 g queso ricotta o mozzarella light']},
+{time:'🌙 Cena',name:'Wrap de Pollo',desc:'Con hummus y verduras',portions:['2 pz tortilla integral','150 g pechuga de pollo','2 cdita hummus','Lechuga, tomate, cebollita morada','2 pz papa al horno']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 taza pepino + 1 taza zanahoria baby + 1 cdita crema de girasol o tahini','2 tz de melón']}
+]},
+{day:19,theme:'🇮🇹 Italiana',meals:[
+{time:'☀️ Desayuno',name:'Smoothie de Frutos Rojos',desc:'Yogur + avena + chía',portions:['½ taza yogurt natural sin azúcar','1 tz leche','½ taza frutos rojos','2 cdas avena natural','1 cdita miel + 1 cdita chía','2 pz huevo revuelto + 4 pz pan tostado']},
+{time:'🍽️ Comida',name:'Bowl de Garbanzo',desc:'Quinoa + pollo + garbanzos',portions:['1 taza quinoa cocida','Tomate cherry, col morada, zanahoria, espinaca','1 taza garbanzos cocidos','180 g pechuga de pollo','Aderezo: aceite oliva, mostaza, miel, limón, paprika']},
+{time:'🌙 Cena',name:'Bowl Balanceado con Pollo',desc:'Pan + requesón + manzana',portions:['4 reb pan integral tostado','30 g requesón o ricotta','1 pz huevo + 60 g pechuga de pollo','Lechuga o espinaca','1 pz manzana','⅓ aguacate']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['10 g semillas (almendras) + 1 cdita arándanos deshidratados','1 pz manzana + 10 g semillas (almendras)']}
+]},
+{day:20,theme:'🇮🇹 Italiana',meals:[
+{time:'☀️ Desayuno',name:'Toast de Pera y Maní',desc:'Pan integral + yogur + fruta',portions:['3 reb pan integral','1 cdita crema de cacahuate natural','1 pera en láminas','1 taza yogurt griego sin azúcar','½ cdita miel + canela','3 pz de huevo']},
+{time:'🍽️ Comida',name:'Pasta con Verduras',desc:'Con pollo y parmesano',portions:['2 tz pasta cocida en salsa de tomate','200 g pechuga de pollo','Tomate cherry y brócoli','Ajo, albahaca y orégano','1 cdita parmesano rallado']},
+{time:'🌙 Cena',name:'Pan Pizza',desc:'Pan pita + jamón + queso',portions:['2 pan pita','8 reb jamón de pechuga de pavo','¼ tz salsa de tomate casera','90 g queso mozzarella light','Champiñones, tomate cherry y albahaca']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 taza pepino + 1 taza sandía + 5 g semillas (pistaches)','1 camote + ½ tz cottage + 1 cda pistachos + 1 cda semillas de calabaza + 1 cda miel + 1 cda chía + canela']}
+]},
+{day:21,theme:'🇮🇹 Italiana',meals:[
+{time:'☀️ Desayuno',name:'Ricotta Toast',desc:'Con fresas y semillas',portions:['4 reb pan integral','6 cda ricotta light','1 tz fresas picadas','1 cdita miel','2 cdita semillas (chía o girasol)']},
+{time:'🍽️ Comida',name:'Pollo al Romero',desc:'Con papa y verduras',portions:['180 g pechuga de pollo','2 papas cocida','Espinaca, tomate cherry y pepino','Romero, ajo, limón y pimienta']},
+{time:'🌙 Cena',name:'Ensalada Caprese',desc:'Quinoa + pollo + mozzarella',portions:['150 g pechuga de pollo a la plancha','1 ½ taza quinoa cocida','Tomate cherry, pepino y cebolla morada','¼ taza mozzarella light','Albahaca fresca y vinagre balsámico']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 tz garbanzo cocido + ½ tz pepino + limón, sal, pimienta','1 taza yogurt natural + 1 cdita almendras + limón + canela + 1 pera + 2 cda crema de cacahuate']}
+]},
+{day:22,theme:'🇺🇸 Americana',meals:[
+{time:'☀️ Desayuno',name:'Lemon Overnight Oats',desc:'Preparar la noche anterior',portions:['1 taza avena + ½ tz yogurt natural + 1 tz leche','1 cdita semillas de chía','Ralladura y jugo de limón','1 cdita miel o stevia','1 tz frutos rojos','3 pz huevo revuelto']},
+{time:'🍽️ Comida',name:'Hamburguesa Ligera',desc:'Carne magra + pan integral',portions:['150 g carne molida magra','2 reb pan integral','⅓ pz aguacate','30 g queso fresco o mozzarella','Lechuga, tomate, cebolla, pepino','1 ½ taza camote al horno o papa']},
+{time:'🌙 Cena',name:'Carne Asada con Ensalada de Aguacate',desc:'Con plátano macho y arroz',portions:['150 g carne molida magra salpimentada','½ pz plátano macho asado + 1 cdita miel','Ensalada: ½ aguacate + pepino + tomate cherry + cilantro + aceite oliva + limón','¾ tz arroz cocido']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 plátano + 2 cda crema de cacahuate + 4 rice cake','2 pz pan tostado con 1 cda mermelada sin azúcar']}
+]},
+{day:23,theme:'🇺🇸 Americana',meals:[
+{time:'☀️ Desayuno',name:'Bagel de Salmón',desc:'Ligero · con queso crema',portions:['½ bagel integral','40 g salmón ahumado o pollo a la plancha','1 cdita queso crema light','Tomate y pepino en rodajas','Limón, eneldo y pimienta']},
+{time:'🍽️ Comida',name:'Chicken Bowl',desc:'Arroz + frijoles + aguacate',portions:['150 g pechuga de pollo a la plancha','2 tz arroz cocido','½ tz frijoles','¼ pz aguacate','Lechuga + pico de gallo + 1 cda elotito','Limón y sal de mar']},
+{time:'🌙 Cena',name:'Papa Rellena al Horno',desc:'Con carne y queso',portions:['150 g carne molida magra salpimentada','1 ½ pz papa cocida o al horno','30 g queso mozzarella','Pico de gallo','Aderezo chipotle']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['2 pz naranja + 10 g semillas (pistaches)','¾ taza yogur natural + 1 taza fresas + 1 cda crema de cacahuate']}
+]},
+{day:24,theme:'🇺🇸 Americana',meals:[
+{time:'☀️ Desayuno',name:'Toast de Huevo',desc:'Pan integral + claras + aguacate',portions:['2 reb pan integral','¾ taza claras de huevo + 1 huevo entero','¼ pieza aguacate','Rodajas de tomate + espinaca fresca','Limón, sal y pimienta']},
+{time:'🍽️ Comida',name:'Ensalada Cobb',desc:'Pavo + huevo + aguacate',portions:['150 g pechuga de pavo o pollo a la plancha','1 huevo cocido','Espinaca + lechuga + tomate cherry + 2 cdas elote','¼ aguacate + 30 g queso panela o feta','Aderezo del recetario']},
+{time:'🌙 Cena',name:'Chicken Honey Mustard Bowl',desc:'Pollo + arroz + frijoles',portions:['150 g pechuga de pollo','2 tz arroz cocido + ½ tz elote + ½ tz frijoles','1 cdita honey mustard (miel + mostaza Dijon + vinagre de manzana)','Cebolla morada + pimiento + cilantro + limón']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 tz papaya + ½ plátano + ½ tz yogurt + ½ tz granola sin azúcar','2 rice cake + 1 cdita crema de almendra + 1 tz moras + ½ plátano']}
+]},
+{day:25,theme:'🇺🇸 Americana',meals:[
+{time:'☀️ Desayuno',name:'Desayuno Americano',desc:'Hot cakes fit + huevo + jamón',portions:['Hot cakes: ½ taza avena molida + ½ taza claras + vainilla y canela','Topping: ½ taza fresas o frutos rojos','1 cdita miel','2 huevo + 2 reb jamón de pavo asado']},
+{time:'🍽️ Comida',name:'Salmón con Quinoa Bowl',desc:'Aguacate + verduras frescas',portions:['150 g salmón a la plancha salpimentada','2 taza quinoa cocida','½ aguacate','Pepino, cebolla morada, pimientos, tomate cherry','Limón, sal y ajonjolí']},
+{time:'🌙 Cena',name:'Chicken Tenders Fit',desc:'Empanizados con avena · horneados',portions:['120 g pechuga en tiras empanizadas con ½ tz avena molida + huevo','Espinaca + lechuga + pepino + tomate + cebolla morada','Aderezo del recetario','½ tz arroz cocido']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['2 pz pan tostado + 1 cda mermelada sin azúcar','1 tz piña + 1 tz melón']}
+]},
+{day:26,theme:'🇺🇸 Americana',meals:[
+{time:'☀️ Desayuno',name:'Wrap',desc:'Huevo + jamón + aguacate',portions:['2 tortillas integral','1 huevo + ½ taza claras','2 reb jamón de pechuga de pavo','⅓ aguacate','Espinaca y tomate cherry','1 mandarina']},
+{time:'🍽️ Comida',name:'Chicken Caesar Bowl',desc:'Pollo + lechuga + parmesano',portions:['180 g pechuga de pollo a la plancha','Lechuga + espinaca','2 cdas parmesano rallado','2 pz papa picada','Aderezo del recetario']},
+{time:'🌙 Cena',name:'Sandwich de Atún',desc:'Con aguacate y camote',portions:['1 lata atún en agua + 1 cda mayonesa + limón','Pepino, cebolla morada, lechuga, espinaca','4 reb pan integral (2 sandwiches)','⅓ aguacate','1 tz papas de camote horneadas']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 tz mango + 1 tz fresas + 1 cda crema de cacahuate','1 cda mezcla de nueces y semillas + 2 cda pasas o arándanos deshidratados']}
+]},
+{day:27,theme:'🇺🇸 Americana',meals:[
+{time:'☀️ Desayuno',name:'Smoothie de Plátano',desc:'Cacao + crema de cacahuate',portions:['½ tz yogur natural sin azúcar','1 tz leche','½ plátano','2 cditas cacao sin azúcar','1 cdita crema de cacahuate','2 cdas avena + 1 cdita miel']},
+{time:'🍽️ Comida',name:'Shrimp Bowl',desc:'Camarones + arroz + aguacate',portions:['150 g camarones con mantequilla, sal, pimienta y paprika','2 tz arroz cocido','⅓ aguacate','Tomate cherry + 2 cdas elotito + cebolla morada','Limón, soya baja en sodio']},
+{time:'🌙 Cena',name:'Sandwich de Guacamole',desc:'Pollo + aguacate + pan integral',portions:['2 rebanadas pan integral','1 cdita mayonesa light','150 g pechuga de pollo cocida','¼ aguacate','Lechuga + tomate + pepino']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['2 pz kiwi + 10 g semillas (almendras)','2 rice cake + 1 cdita crema de cacahuate + ½ pera']}
+]},
+{day:28,theme:'🇺🇸 Americana',meals:[
+{time:'☀️ Desayuno',name:'Apple Crumble Avena Horneada',desc:'Avena + manzana al horno',portions:['1 tz avena','Canela, vainilla y pizca de sal','1 cdita mantequilla','1 manzana en cubos + canela + 1 cdita miel, hornea todo']},
+{time:'🍽️ Comida',name:'Tacos Tex Mex',desc:'Carne molida + queso + pico de gallo',portions:['3 tortillas de maíz','150 g carne molida magra','30 g queso rallado','Pico de gallo y lechuga','Tip: freidora de aire para crujientes']},
+{time:'🌙 Cena',name:'Mac & Cheese Ligero',desc:'Pasta + pollo + salsa de verduras',portions:['Salsa: pimiento + cebolla + ½ zanahoria + 30 g manchego + 30 g mozzarella + 2 cdas yogurt griego + 2 cdas queso crema','2 tz pasta cocida','120 g pechuga de pollo desmenuzada']},
+{time:'🍎 Snack AM y PM',name:'Snacks del día',desc:'Repartir AM y PM',portions:['1 taza pepino + zanahoria baby + 2 cdas hummus','10 g semillas (pistaches) + 1 plátano']}
+]}
+];
+
+
+function renderDayGrid() {
+  const grid = document.getElementById('dayGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const themes = [{label:'🇲🇽 Mexicana',days:[1,7]},{label:'🇯🇵 Japonesa',days:[8,14]},{label:'🇮🇹 Italiana',days:[15,21]},{label:'🇺🇸 Americana',days:[22,28]}];
+  themes.forEach(t => {
+    const section = document.createElement('div');
+    section.className = 'day-section';
+    section.innerHTML = '<div class="day-section-label">' + t.label + '</div><div class="day-section-grid"></div>';
+    const sg = section.querySelector('.day-section-grid');
+    for (let i = t.days[0]; i <= t.days[1]; i++) {
+      const btn = document.createElement('div');
+      btn.className = 'day-btn';
+      btn.textContent = i;
+      btn.onclick = () => openDay(i);
+      sg.appendChild(btn);
+    }
+    grid.appendChild(section);
+  });
+}
+
+function openDay(dayNum) {
+  const data = mealPlanData.find(d => d.day === dayNum);
+  if (!data) return;
+  
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.toggle('active', parseInt(b.textContent) === dayNum));
+  document.getElementById('dayCount').textContent = 'Día ' + dayNum + ' de 28';
+  document.getElementById('dayTitle').textContent = 'Día ' + dayNum + ' — ' + (data.theme || '');
+  
+  const container = document.getElementById('dayMeals');
+  container.innerHTML = data.meals.map(m => `
+    <div class="meal">
+      <div class="meal-time">${m.time}</div>
+      <div class="meal-name">${m.name}</div>
+      <div class="meal-desc">${m.desc}</div>
+      <div class="meal-portions">${m.portions.map(p => '<span class="portion">' + p + '</span>').join('')}</div>
+    </div>
+  `).join('');
+  
+  document.querySelector('.day-selector').style.display = 'none';
+  document.getElementById('dayDetail').style.display = 'block';
+}
+
+function closeDayDetail() {
+  document.querySelector('.day-selector').style.display = 'block';
+  document.getElementById('dayDetail').style.display = 'none';
+}
+
+renderDayGrid();
 
 /* ═══════ TOGGLE PILLARS POP-OUT ═══════ */
 let pillarsOpened = false;
