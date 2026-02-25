@@ -2075,8 +2075,34 @@ async function doStripePay() {
   document.getElementById('btn-pay-loading').style.display = 'inline-flex';
   document.getElementById('stripe-errors').textContent = '';
 
+  // ══════════════════════════════════════════════════
+  //  DEMO MODE: si Stripe no está configurado, simula el pago
+  //  Cuando conectes Stripe, cambia DEMO_MODE a false
+  // ══════════════════════════════════════════════════
+  const DEMO_MODE = true;
+
+  if (DEMO_MODE) {
+    setTimeout(() => {
+      document.getElementById('pf').style.display = 'none';
+      document.getElementById('pp').style.display = 'block';
+      window._paymentName = name;
+      window._paymentEmail = email;
+      window._isNewUser = true;
+      setTimeout(() => {
+        closePay();
+        document.getElementById('pf').style.display = 'block';
+        document.getElementById('pp').style.display = 'none';
+        btn.disabled = false;
+        document.getElementById('btn-pay-text').style.display = '';
+        document.getElementById('btn-pay-loading').style.display = 'none';
+        openSignup();
+      }, 2000);
+    }, 1500);
+    return;
+  }
+
+  // ── STRIPE REAL (se activa cuando DEMO_MODE = false) ──
   try {
-    // 1. Call backend to create PaymentIntent or Subscription
     const res = await fetch('/.netlify/functions/create-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2086,7 +2112,6 @@ async function doStripePay() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    // 2. Confirm payment with Stripe
     const { error, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
       payment_method: {
         card: cardElement,
@@ -2094,15 +2119,10 @@ async function doStripePay() {
       },
     });
 
-    if (error) {
-      throw new Error(error.message);
-    }
+    if (error) throw new Error(error.message);
 
-    // 3. Payment successful!
     document.getElementById('pf').style.display = 'none';
     document.getElementById('pp').style.display = 'block';
-
-    // Store payment info for signup flow
     window._paymentName = name;
     window._paymentEmail = email;
     window._isNewUser = true;
@@ -2111,12 +2131,10 @@ async function doStripePay() {
       closePay();
       document.getElementById('pf').style.display = 'block';
       document.getElementById('pp').style.display = 'none';
-      // Open signup to create account
       openSignup();
     }, 2200);
 
   } catch (err) {
-    // Show error
     document.getElementById('stripe-errors').textContent = err.message || 'Error procesando el pago. Intenta de nuevo.';
     btn.disabled = false;
     document.getElementById('btn-pay-text').style.display = '';
