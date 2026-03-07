@@ -1,16 +1,40 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAppStore } from './store';
+import { supabase } from './lib/supabase';
 import LandingScreen from './screens/LandingScreen';
+import LoginScreen from './screens/LoginScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import LifeSystemScreen from './screens/LifeSystemScreen';
 import PaymentModal from './components/modals/PaymentModal';
-import LoginModal from './components/modals/LoginModal';
 import SignupModal from './components/modals/SignupModal';
 import VideoModal from './components/modals/VideoModal';
 
 export default function App() {
-  const { currentScreen, activeModal } = useAppStore();
+  const { currentScreen, activeModal, goTo, setUserName, startDate } = useAppStore();
+
+  // ── Supabase auth state listener ────────────────────────
+  useEffect(() => {
+    // Check existing session on load
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session && (currentScreen === 'landing' || currentScreen === 'login')) {
+        const name = data.session.user.email?.split('@')[0] ?? '';
+        setUserName(name.charAt(0).toUpperCase() + name.slice(1));
+        goTo(startDate ? 'dashboard' : 'onboarding');
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        const name = session.user.email?.split('@')[0] ?? '';
+        setUserName(name.charAt(0).toUpperCase() + name.slice(1));
+        goTo(startDate ? 'dashboard' : 'onboarding');
+      }
+      if (event === 'SIGNED_OUT') goTo('landing');
+    });
+    return () => subscription.unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Reading progress bar ────────────────────────────────
   const [progress, setProgress] = useState(0);
@@ -80,6 +104,11 @@ export default function App() {
           <LandingScreen />
         </div>
       )}
+      {currentScreen === 'login' && (
+        <div id="scr-login" className={`screen active ${fadeClass}`}>
+          <LoginScreen />
+        </div>
+      )}
       {currentScreen === 'onboarding' && (
         <div id="scr-onboarding" className={`screen active ${fadeClass}`}>
           <OnboardingScreen />
@@ -98,7 +127,7 @@ export default function App() {
 
       {/* Modals */}
       {activeModal === 'pay' && <PaymentModal />}
-      {activeModal === 'login' && <LoginModal />}
+
       {activeModal === 'signup' && <SignupModal />}
       {activeModal === 'video' && <VideoModal />}
     </>

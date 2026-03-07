@@ -166,8 +166,9 @@ export const useAppStore = create<AppState>()(
   welcomeVidClosed: false,
   setWelcomeVidClosed: (closed) => set({ welcomeVidClosed: closed }),
 
-  // Logout — also clears LifeSystem localStorage
+  // Logout — signs out of Supabase and clears all local state
   logout: () => {
+    import('../lib/supabase').then(({ supabase }) => supabase.auth.signOut());
     localStorage.removeItem('hsc-life-system-v2');
     set({
       currentScreen: 'landing',

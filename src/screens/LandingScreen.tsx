@@ -35,7 +35,7 @@ function MagneticBtn({ children, className, onClick, style }: {
 }
 
 export default function LandingScreen() {
-  const { openPay, openModal, mobileMenuOpen, toggleMobileMenu, pillarsOpen, togglePillars } = useAppStore();
+  const { openPay, goTo, mobileMenuOpen, toggleMobileMenu, pillarsOpen, togglePillars } = useAppStore();
   const [vidPlaying, setVidPlaying] = useState(false);
   const playerRef = useRef<HTMLDivElement>(null);
 
@@ -88,7 +88,7 @@ export default function LandingScreen() {
       {/* NAV */}
       <nav id="landing-nav" className="landing-nav">
         <div className="nav-left">
-          <span className="nav-login" onClick={() => openModal('login')}>Iniciar sesión</span>
+          <span className="nav-login" onClick={() => goTo('login')}>Iniciar sesión</span>
         </div>
         <div className="logo">
           <img src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1771971266/logo_ohaica.png" alt="Healthy Space Club" />
@@ -111,7 +111,7 @@ export default function LandingScreen() {
           <a href="#s-pillars" onClick={toggleMobileMenu}>El Club</a>
           <a href="#s-how" onClick={toggleMobileMenu}>Cómo funciona</a>
           <a href="#s-pricing" onClick={toggleMobileMenu}>Planes</a>
-          <span className="mob-menu-login" onClick={() => { toggleMobileMenu(); openModal('login'); }}>Iniciar sesión</span>
+          <span className="mob-menu-login" onClick={() => { toggleMobileMenu(); goTo('login'); }}>Iniciar sesión</span>
           <button className="mob-menu-cta" onClick={() => { toggleMobileMenu(); openPay('Anual','$197','12 meses de acceso completo'); }}>Únete al Club →</button>
         </div>
       </div>

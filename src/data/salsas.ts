@@ -1,0 +1,389 @@
+/* ─── Salsas y Aderezos ─── */
+
+export interface SalsaRecipe {
+  name: string;
+  type: 'salsa' | 'aderezo';
+  spiceLevel: 0 | 1 | 2 | 3; // 0=none, 1=mild, 2=medium, 3=hot
+  portion: string;
+  ingredients: string[];
+  steps: string[];
+}
+
+export const salsasData: SalsaRecipe[] = [
+  /* ── SALSAS ── */
+  {
+    name: 'Salsa de Tomate Natural',
+    type: 'salsa',
+    spiceLevel: 1,
+    portion: 'Su consumo es libre.',
+    ingredients: [
+      '2 pz de jitomates',
+      '¼ pz de cebolla blanca',
+      '½ pz de chile serrano',
+      'Sal, pimienta y orégano',
+    ],
+    steps: [
+      'Cocer tomates, chile y cebolla en una olla pequeña durante 8 minutos.',
+      'Licuar verduras con un chorrito de agua hasta lograr consistencia de salsa.',
+      'Hervir nuevamente la salsa para incorporar sabores y sazonar con sal, pimienta y orégano.',
+    ],
+  },
+  {
+    name: 'Salsa Ranchera',
+    type: 'salsa',
+    spiceLevel: 1,
+    portion: 'Su consumo es libre.',
+    ingredients: [
+      '2 pz de jitomates',
+      '3 pz de tomatillo verde',
+      '1 pz de ajo',
+      '½ pz de chile guajillo',
+      '¼ pz de cebolla',
+    ],
+    steps: [
+      'Tatemar en un sartén todos los ingredientes.',
+      'Licuar con sal y un chorrito de agua.',
+    ],
+  },
+  {
+    name: 'Salsa Roja de Chile de Árbol',
+    type: 'salsa',
+    spiceLevel: 3,
+    portion: 'Su consumo es libre.',
+    ingredients: [
+      '10 pz de chile de árbol',
+      '¼ pz de cebolla',
+      '1 diente de ajo',
+      '2 pz de jitomates',
+      '1 cdta de aceite',
+    ],
+    steps: [
+      'Tatemar ingredientes en un sartén con 1 cdta de aceite.',
+      '¡Que no se quemen! para que no se amargue la salsa.',
+      'Licuar con un chorrito de agua y sal.',
+    ],
+  },
+  {
+    name: 'Salsa Verde Casera',
+    type: 'salsa',
+    spiceLevel: 1,
+    portion: 'Su consumo es libre.',
+    ingredients: [
+      '5 pz de tomatillos verdes',
+      '¼ pz de cebolla blanca',
+      '½ pz de chile serrano',
+      '6 ramitas de cilantro',
+      'Sal al gusto',
+    ],
+    steps: [
+      'Tatemar ingredientes en un sartén con 1 cdta de aceite.',
+      '¡Que no se quemen! para que no se amargue la salsa.',
+      'Licuar con un chorrito de agua y sal.',
+    ],
+  },
+  {
+    name: 'Salsa de Aguacate y Cilantro',
+    type: 'salsa',
+    spiceLevel: 0,
+    portion: '3 cucharadas = 1 porción de grasa.',
+    ingredients: [
+      '1 pz de aguacate',
+      'Un puño grande de cilantro',
+      'El jugo de 1 limón',
+      '1 diente de ajo',
+      '1 rodaja de cebolla',
+      'Sal y pimienta',
+    ],
+    steps: [
+      'Licuar todo y servir.',
+    ],
+  },
+  {
+    name: 'Salsa de Chile Morita',
+    type: 'salsa',
+    spiceLevel: 2,
+    portion: '3 cucharadas = 1 porción de grasa.',
+    ingredients: [
+      '8 pz de tomatillos verdes',
+      '3 pz de chiles morita',
+      '1 pz de jitomate',
+      '2 dientes de ajo',
+      'Sal y orégano',
+    ],
+    steps: [
+      'Tostar los tomatillos, jitomate y chiles morita en un sartén.',
+      'Licuar con un chorrito de agua, sal y orégano.',
+    ],
+  },
+  {
+    name: 'Chile Habanero y Mango',
+    type: 'salsa',
+    spiceLevel: 3,
+    portion: '3 cucharadas como libre.',
+    ingredients: [
+      '2 pz de mango',
+      '1 ó 2 chiles habaneros tatemados',
+      '1 diente de ajo',
+      '2 cdtas de salsa Maggi',
+      'Sal al gusto',
+    ],
+    steps: [
+      'Licuar todos los ingredientes frescos.',
+    ],
+  },
+  {
+    name: 'Salsa Pesto',
+    type: 'salsa',
+    spiceLevel: 0,
+    portion: '2 cucharadas = 1 porción de grasa.',
+    ingredients: [
+      '1 diente de ajo',
+      'Un puño de albahaca',
+      '2 cdas de piñones',
+      '40 gr de queso parmesano',
+      '4 cdas de aceite de oliva',
+      'Sal',
+    ],
+    steps: [
+      'Licuar todos los ingredientes frescos.',
+    ],
+  },
+  {
+    name: 'Salsa de Chile Guajillo',
+    type: 'salsa',
+    spiceLevel: 2,
+    portion: 'Su consumo es libre.',
+    ingredients: [
+      '3 pz de chiles guajillo',
+      '2 pz de tomate saladet',
+      '¼ tz de puré de tomate',
+      '¼ pz de cebolla',
+      '1 tz de caldo de pollo',
+    ],
+    steps: [
+      'Poner a cocer los chiles guajillos sin semillas y sin tallo.',
+      'Asar los tomates en un comal hasta que estén negritos y blandos.',
+      'Escurrir los chiles y licuarlos a velocidad alta con el caldo de pollo.',
+      'Agregar el tomate, puré de tomate, cebolla, sal, orégano y comino al gusto.',
+    ],
+  },
+  {
+    name: 'Salsa al Pastor',
+    type: 'salsa',
+    spiceLevel: 2,
+    portion: 'Su consumo es libre.',
+    ingredients: [
+      '1 pz de chile pasilla',
+      '1 pz de chile guajillo',
+      '1 diente de ajo pelado',
+      '⅓ paq. (35 gr) de pasta de achiote',
+      '¼ tz de vinagre blanco',
+      'Comino, clavo, sal',
+    ],
+    steps: [
+      'Hervir en agua los chiles y el diente de ajo por 6 minutos.',
+      'Retirar del agua y licuar chiles, el diente de ajo, un chorrito de agua y el resto de los ingredientes.',
+    ],
+  },
+  {
+    name: 'Salsa Buffalo',
+    type: 'salsa',
+    spiceLevel: 2,
+    portion: 'Su consumo es libre.',
+    ingredients: [
+      '3 cdas de puré de tomate',
+      '1 cda de vinagre de manzana',
+      '½ cdta de ajo en polvo',
+      '2 cdas de salsa de soya o inglesa',
+      '1 cda de agua',
+      '2 cdas de salsa sriracha',
+      '2 cdas de salsa tabasco',
+      'Una pizca de sal',
+    ],
+    steps: [
+      'En un bowl mezclar todos los ingredientes.',
+    ],
+  },
+  {
+    name: 'Salsa Teriyaki',
+    type: 'salsa',
+    spiceLevel: 0,
+    portion: 'Su consumo es libre.',
+    ingredients: [
+      '¼ tz de agua',
+      '3 cdtas de salsa soya baja en sodio',
+      '1 cda de miel maple sin azúcar',
+      '1 sobre de edulcorante sin calorías',
+      '1 cdta de vinagre de arroz',
+      '¼ cdta de ajo en polvo',
+      '1 pizca de jengibre',
+      '1 cdta de aceite de ajonjolí',
+      '1 cdta de maicena',
+    ],
+    steps: [
+      'En un sartén agregar todos los ingredientes y mezclar a fuego medio.',
+      'Apagar fuego y agregar maicena una vez que se enfríe, para darle buena consistencia.',
+    ],
+  },
+
+  /* ── ADEREZOS ── */
+  {
+    name: 'Aderezo de Queso Parmesano',
+    type: 'aderezo',
+    spiceLevel: 0,
+    portion: 'Su consumo equivale a 1 porción de grasa.',
+    ingredients: [
+      '2 cdas de yogurt griego',
+      '1 cdta de mayonesa',
+      '1 cdta de aceite de oliva',
+      '1 cdta de mostaza dijon',
+      'El jugo de ½ limón',
+      '1 diente de ajo picadito',
+      '½ cdta de vinagre balsámico',
+      '2 cdtas de queso parmesano en polvo',
+      'Sal al gusto',
+      '1-2 cdas de agua',
+    ],
+    steps: [
+      'Mezclar todos los ingredientes.',
+    ],
+  },
+  {
+    name: 'Chipotle Fit',
+    type: 'aderezo',
+    spiceLevel: 2,
+    portion: 'Su consumo equivale a 0.5 porción de grasa.',
+    ingredients: [
+      '1 cda de yogurt griego sin azúcar ó jocoque',
+      '1 cdta de mayonesa light',
+      '1 cda de chipotle',
+      '1 cda de sriracha',
+      '1 cda de salsa soya Kikkoman',
+    ],
+    steps: [
+      'Mezclar todos los ingredientes en un bowl.',
+    ],
+  },
+  {
+    name: 'Aderezo Cremoso de Cilantro',
+    type: 'aderezo',
+    spiceLevel: 0,
+    portion: 'Su consumo equivale a 1 porción de grasa.',
+    ingredients: [
+      '2 cdas de yogurt griego sin azúcar',
+      '1 cda de mayonesa',
+      'Un chorrito de agua',
+      '1 puño de cilantro',
+      'Una pizca de sal, pimienta y ajo en polvo',
+      'El jugo de ½ limón',
+    ],
+    steps: [
+      'Licuar todos los ingredientes ¡y listo!',
+    ],
+  },
+  {
+    name: 'Aderezo Thai',
+    type: 'aderezo',
+    spiceLevel: 1,
+    portion: 'Su consumo equivale a 1.5 porciones de grasa.',
+    ingredients: [
+      '1 cda de crema de maní natural',
+      '½ cdta de aceite de ajonjolí o aceite de oliva',
+      '½ cdta de vinagre de arroz',
+      '1 cda de salsa de soya',
+      '1 cda de miel de abeja',
+      'Ajo en polvo',
+    ],
+    steps: [
+      'En un bowl mezclar todos los ingredientes con una cuchara.',
+    ],
+  },
+  {
+    name: 'Aderezo César',
+    type: 'aderezo',
+    spiceLevel: 0,
+    portion: 'Su consumo equivale a 1 porción de grasa.',
+    ingredients: [
+      '12 cdas de yogurt griego sin azúcar',
+      '1 cda de mayonesa light',
+      '2 cdtas de queso parmesano en polvo',
+      'Gotitas de limón real amarillo',
+      '½ cdta de mostaza Dijon',
+      'Ajo en polvo',
+      'Sal al gusto',
+      '2 cdas de agua',
+    ],
+    steps: [
+      'Mezclar todos los ingredientes.',
+    ],
+  },
+  {
+    name: 'Aderezo Ranch',
+    type: 'aderezo',
+    spiceLevel: 0,
+    portion: 'Su consumo equivale a 1 porción de grasa.',
+    ingredients: [
+      '2 cdas de yogurt griego sin azúcar',
+      '1 cda de mayonesa light',
+      'El jugo de 1 limón',
+      'Cebollín y cilantro finamente picado',
+      '1 cdta de vinagre blanco',
+      'Ajo en polvo',
+      'Sal',
+    ],
+    steps: [
+      'Mezclar todos los ingredientes.',
+    ],
+  },
+  {
+    name: 'Vinagreta Balsámica',
+    type: 'aderezo',
+    spiceLevel: 0,
+    portion: 'Su consumo equivale a 1 porción de grasa.',
+    ingredients: [
+      '1 cdta de aceite de oliva',
+      '1 cdta de vinagre balsámico',
+      '½ cdta de mostaza dijon',
+      'Sal y pimienta',
+    ],
+    steps: [
+      'Mezclar todos los ingredientes.',
+    ],
+  },
+  {
+    name: 'Chimichurri de Aguacate',
+    type: 'aderezo',
+    spiceLevel: 0,
+    portion: '2 cucharadas = 1 porción de grasa.',
+    ingredients: [
+      '¼ tz de aceite de oliva',
+      '1 diente de ajo finamente picado',
+      '3 cdas de perejil picado',
+      'El jugo de ½ limón',
+      'Sal y pimienta',
+      '1 cda de orégano',
+      '½ pz de aguacate en cubos',
+    ],
+    steps: [
+      'Mezclar todos los ingredientes.',
+    ],
+  },
+  {
+    name: 'Tzatziki',
+    type: 'aderezo',
+    spiceLevel: 0,
+    portion: 'Su consumo equivale a 1 porción de grasa.',
+    ingredients: [
+      '12 cdas de yogurt griego sin azúcar',
+      '¼ pz de pepino picado sin semillas',
+      '1 cdta de aceite de oliva',
+      'Gotitas de limón',
+      'Hierbabuena, eneldo o menta picada',
+      '¼ pz de ajo finamente picado',
+      'Sal y pimienta',
+    ],
+    steps: [
+      'Mezclar todos los ingredientes.',
+    ],
+  },
+];
