@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAppStore } from './store';
-import { supabase } from './lib/supabase';
+// import { supabase } from './lib/supabase'; // activar con Supabase
 import LandingScreen from './screens/LandingScreen';
 import LoginScreen from './screens/LoginScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -11,11 +11,12 @@ import SignupModal from './components/modals/SignupModal';
 import VideoModal from './components/modals/VideoModal';
 
 export default function App() {
-  const { currentScreen, activeModal, goTo, setUserName, startDate } = useAppStore();
+  const { currentScreen, activeModal } = useAppStore();
 
-  // ── Supabase auth state listener ────────────────────────
+  // ── Supabase auth state listener (activar cuando Supabase esté configurado) ──
+  // TODO: descomentar cuando .env.local tenga las credenciales reales
+  /*
   useEffect(() => {
-    // Check existing session on load
     supabase.auth.getSession().then(({ data }) => {
       if (data.session && (currentScreen === 'landing' || currentScreen === 'login')) {
         const name = data.session.user.email?.split('@')[0] ?? '';
@@ -23,7 +24,6 @@ export default function App() {
         goTo(startDate ? 'dashboard' : 'onboarding');
       }
     });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         const name = session.user.email?.split('@')[0] ?? '';
@@ -35,6 +35,7 @@ export default function App() {
     return () => subscription.unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  */
 
   // ── Reading progress bar ────────────────────────────────
   const [progress, setProgress] = useState(0);
