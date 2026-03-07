@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
+import { Home, Leaf, Video, Dumbbell, Calendar, Sprout, BookOpen, ClipboardList, User, LogOut, ChevronUp, ChevronDown, Menu, Play, X, Camera } from 'lucide-react';
 import { useAppStore } from '../store';
 import { mealPlanData, cuisineThemes } from '../data/mealPlan';
-import { exercises } from '../data/exercises';
 import { recipes } from '../data/recipes';
+import FoodGuide from '../components/FoodGuide';
+import { FoodEquivalentsIntro, FoodEquivalentsList } from '../components/FoodEquivalents';
+import SalsasAderezos from '../components/SalsasAderezos';
+import { ClipboardIcon, QuestionIcon, ScaleIcon, CartIcon, JarIcon } from '../components/NutriIcons';
+import Rutinas from '../components/Rutinas';
 
 export default function DashboardScreen() {
   const {
@@ -22,10 +27,12 @@ export default function DashboardScreen() {
   const [selectedCuisine, setSelectedCuisine] = useState(0);
   const [welcomeVidPlaying, setWelcomeVidPlaying] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [nutriTab, setNutriTab] = useState<'menu' | 'plan' | 'que-equiv' | 'lista-equiv' | 'guia' | 'salsas'>('menu');
 
   function navTo(page: string) {
     setDashPage(page as any);
     setMobileSidebarOpen(false);
+    if (page === 'alimentacion') setNutriTab('menu');
   }
 
   // ── Week progression ──
@@ -36,10 +43,6 @@ export default function DashboardScreen() {
     const diff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     return Math.min(Math.max(1, Math.floor(diff / 7) + 1), 12);
   })();
-
-  const today = new Date();
-  const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  const todayDow = today.getDay();
 
   // Calculate streak from startDate
   const streakDays = (() => {
@@ -67,12 +70,12 @@ export default function DashboardScreen() {
           <div className="sb-logo-s">Mi Espacio</div>
         </div>
         <div className={`user-pill${profileOpen ? ' open' : ''}`} onClick={() => setProfileOpen(o => !o)}>
-          <div className="ava">🌿</div>
+          <div className="ava"><User size={16} strokeWidth={1.8} /></div>
           <div style={{ flex: 1 }}>
             <div className="u-name">{userName || 'Bienvenid@'}</div>
             <div className="u-sub">Semana {currentWeek} · Miembro</div>
           </div>
-          <div className="u-chevron">{profileOpen ? '▲' : '▼'}</div>
+          <div className="u-chevron">{profileOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}</div>
         </div>
         {profileOpen && (
           <div className="profile-panel">
@@ -91,32 +94,31 @@ export default function DashboardScreen() {
         <div className="sb-nav">
           <div className="sb-sec">Principal</div>
           <div className={`sb-item${dashPage === 'bienvenida' ? ' on' : ''}`} onClick={() => navTo('bienvenida')}>
-            <span className="sb-icon">🏠</span><span className="sb-label">Mi Espacio</span>
+            <span className="sb-icon"><Home size={16} strokeWidth={1.8} /></span><span className="sb-label">Mi Espacio</span>
           </div>
           <div className="sb-sec">Nutrición</div>
           <div className={`sb-item${dashPage === 'alimentacion' ? ' on' : ''}`} onClick={() => navTo('alimentacion')}>
-            <span className="sb-icon">🥗</span><span className="sb-label">Plan de Alimentación</span>
+            <span className="sb-icon"><Leaf size={16} strokeWidth={1.8} /></span><span className="sb-label">Plan de Alimentación</span>
           </div>
           <div className={`sb-item${dashPage === 'recetas' ? ' on' : ''}`} onClick={() => navTo('recetas')}>
-            <span className="sb-icon">🎬</span><span className="sb-label">Recetas en Video</span>
+            <span className="sb-icon"><Video size={16} strokeWidth={1.8} /></span><span className="sb-label">Recetas en Video</span>
           </div>
           <div className="sb-sec">Movimiento</div>
           <div className={`sb-item${dashPage === 'entrenamiento' ? ' on' : ''}`} onClick={() => navTo('entrenamiento')}>
-            <span className="sb-icon">💪</span><span className="sb-label">Plan de Entrenamiento</span>
+            <span className="sb-icon"><Dumbbell size={16} strokeWidth={1.8} /></span><span className="sb-label">Plan de Entrenamiento</span>
           </div>
           <div className={`sb-item${dashPage === 'rutinas' ? ' on' : ''}`} onClick={() => navTo('rutinas')}>
-            <span className="sb-icon">🗓️</span><span className="sb-label">Rutinas Semanales</span>
-            <span className="sb-badge">HOY</span>
+            <span className="sb-icon"><Calendar size={16} strokeWidth={1.8} /></span><span className="sb-label">Rutinas Semanales</span>
           </div>
           <div className="sb-sec">Crecimiento</div>
           <div className={`sb-item${dashPage === 'plan-crecimiento' ? ' on' : ''}`} onClick={() => navTo('plan-crecimiento')}>
-            <span className="sb-icon">🌱</span><span className="sb-label">Plan de Crecimiento</span>
+            <span className="sb-icon"><Sprout size={16} strokeWidth={1.8} /></span><span className="sb-label">Plan de Crecimiento</span>
           </div>
           <div className={`sb-item${dashPage === 'crecimiento' ? ' on' : ''}`} onClick={() => navTo('crecimiento')}>
-            <span className="sb-icon">📗</span><span className="sb-label">Healthy Space Method</span>
+            <span className="sb-icon"><BookOpen size={16} strokeWidth={1.8} /></span><span className="sb-label">Healthy Space Method</span>
           </div>
           <div className="sb-item" onClick={() => { setMobileSidebarOpen(false); goTo('lifesystem'); }}>
-            <span className="sb-icon">📋</span><span className="sb-label">Control de Vida</span>
+            <span className="sb-icon"><ClipboardList size={16} strokeWidth={1.8} /></span><span className="sb-label">Control de Vida</span>
           </div>
         </div>
         <div className="sb-bottom">
@@ -125,7 +127,7 @@ export default function DashboardScreen() {
             <div className="streak-s">{streakDays === 1 ? 'día' : 'días'} de racha · ¡sigue así!</div>
           </div>
           <div className="sb-logout" onClick={logout}>
-            <span>🚪</span><span>Cerrar sesión</span>
+            <LogOut size={15} /><span>Cerrar sesión</span>
           </div>
         </div>
       </aside>
@@ -133,9 +135,9 @@ export default function DashboardScreen() {
       {/* MAIN */}
       <main className="dash-main">
         <div className="topbar">
-          <button className="mob-menu-btn" onClick={() => setMobileSidebarOpen(true)}>☰</button>
+          <button className="mob-menu-btn" onClick={() => setMobileSidebarOpen(true)}><Menu size={18} /></button>
           <div className="topbar-title">{pageTitles[dashPage] || 'Mi Espacio'}</div>
-          <div className="week-chip">Semana {currentWeek} 🌿</div>
+          <div className="week-chip">Semana {currentWeek}</div>
         </div>
 
         {/* ── BIENVENIDA ── */}
@@ -144,7 +146,6 @@ export default function DashboardScreen() {
             <div className="w-tag">✦ Tu espacio personal de bienestar</div>
             <h2>Hola, <em>{userName || 'campeón/a'}</em>.<br />Bienvenid@ al Club.</h2>
             <p>Videos por ejercicio, recetas en pasos y tu plan de hábitos — todo en un solo lugar, en tu celular o computadora.</p>
-            <div className="w-deco">🌿</div>
           </div>
 
           {/* Welcome Video */}
@@ -152,13 +153,13 @@ export default function DashboardScreen() {
             <div className="welcome-vid">
               <div className="welcome-vid-header">
                 <div className="welcome-vid-left">
-                  <span className="welcome-vid-icon">🎬</span>
+                  <span className="welcome-vid-icon"><Play size={15} strokeWidth={2} /></span>
                   <div>
                     <div className="welcome-vid-title">Video de bienvenida</div>
                     <div className="welcome-vid-sub">Un mensaje para ti antes de empezar</div>
                   </div>
                 </div>
-                <button className="welcome-vid-close" onClick={() => setWelcomeVidClosed(true)} title="Cerrar">✕</button>
+                <button className="welcome-vid-close" onClick={() => setWelcomeVidClosed(true)} title="Cerrar"><X size={13} /></button>
               </div>
               <div className="welcome-vid-player" onClick={() => setWelcomeVidPlaying(true)}>
                 {!welcomeVidPlaying ? (
@@ -197,81 +198,128 @@ export default function DashboardScreen() {
 
         {/* ── ALIMENTACIÓN ── */}
         <div className={`page${dashPage === 'alimentacion' ? ' on' : ''}`}>
-          <div className="sec-hero">
-            <div className="sh-icon">🥗</div>
-            <div><h2>Plan de Alimentación</h2><p>Tu plan nutricional personalizado a tu requerimiento y estilo de vida. Elige el día y sigue las porciones.</p></div>
-          </div>
-          <SecVid title="Cómo usar tu plan de alimentación" sub="Aprende a leer porciones, tiempos y variantes" duration="2:15" />
-          {selectedDay == null ? (
-            <div className="day-selector">
-              <div className="day-selector-header">
-                <h3>Elige tu día</h3>
-                <span className="day-selector-count">Días {activeCuisine.days[0]}–{activeCuisine.days[1]}</span>
+
+          {/* Section Menu */}
+          {nutriTab === 'menu' && (
+            <>
+              <div className="sec-hero">
+                <div className="sh-icon"><Leaf size={24} strokeWidth={1.5} /></div>
+                <div><h2>Nutrición</h2><p>Tu plan nutricional, guía de alimentos y equivalentes — todo en un solo lugar.</p></div>
               </div>
-              <div className="cuisine-tabs">
-                {cuisineThemes.map((c, i) => (
-                  <div
-                    key={i}
-                    className={`cuisine-tab${selectedCuisine === i ? ' active' : ''}`}
-                    onClick={() => { setSelectedCuisine(i); setSelectedDay(null); }}
-                  >
-                    <img src={c.flag} alt={c.label} />
-                    <span>{c.label}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="cuisine-days">
-                {filteredDays.map((d) => (
-                  <button
-                    key={d.day}
-                    className="day-btn"
-                    onClick={() => setSelectedDay(mealPlanData.findIndex(x => x.day === d.day))}
-                  >
-                    Opción {d.day}
+              <div className="nutri-menu">
+                {([
+                  { id: 'plan' as const, icon: <ClipboardIcon />, title: 'Plan Alimenticio', desc: 'Tu plan diario personalizado con porciones y tiempos.' },
+                  { id: 'que-equiv' as const, icon: <QuestionIcon />, title: '¿Qué son los Equivalentes?', desc: 'Aprende a intercambiar alimentos sin perder balance.' },
+                  { id: 'lista-equiv' as const, icon: <ScaleIcon />, title: 'Lista de Equivalentes', desc: 'Tabla de intercambio entre grupos de alimentos.' },
+                  { id: 'guia' as const, icon: <CartIcon />, title: 'Guía de Alimentos', desc: 'Cómo elegir los mejores productos en el supermercado.' },
+                  { id: 'salsas' as const, icon: <JarIcon />, title: 'Salsas y Aderezos', desc: '21 recetas caseras limpias para acompañar tus comidas.' },
+                ]).map(item => (
+                  <button key={item.id} className="nutri-card" onClick={() => setNutriTab(item.id)}>
+                    <span className="nc-icon">{item.icon}</span>
+                    <div className="nc-text">
+                      <span className="nc-title">{item.title}</span>
+                      <span className="nc-desc">{item.desc}</span>
+                    </div>
+                    <span className="nc-arrow">›</span>
                   </button>
                 ))}
               </div>
-            </div>
-          ) : (
-            <div className="day-detail">
-              <div className="day-detail-header">
-                <button className="day-back" onClick={() => setSelectedDay(null)}>← Volver</button>
-                <h3>Opción {dayPlan?.day} — {activeCuisine.label}</h3>
-              </div>
-              <div className="meals">
-                {dayPlan?.meals.map((meal, i) => (
-                  meal.img ? (
-                    <div key={i} className="meal meal-has-img">
-                      <div className="meal-img"><img src={meal.img} alt={meal.name} /></div>
-                      <div className="meal-body">
-                        <div className="meal-time">{meal.time}</div>
-                        <div className="meal-name">{meal.name}</div>
-                        <div className="meal-desc">{meal.desc}</div>
-                        <div className="meal-portions">
-                          {meal.portions.map((p, j) => <span key={j} className="portion">{p}</span>)}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div key={i} className="meal">
-                      <div className="meal-time">{meal.time}</div>
-                      <div className="meal-name">{meal.name}</div>
-                      <div className="meal-desc">{meal.desc}</div>
-                      <div className="meal-portions">
-                        {meal.portions.map((p, j) => <span key={j} className="portion">{p}</span>)}
-                      </div>
-                    </div>
-                  )
-                ))}
-              </div>
-            </div>
+            </>
           )}
+
+          {/* Back button when inside a sub-section */}
+          {nutriTab !== 'menu' && (
+            <button className="nutri-back" onClick={() => setNutriTab('menu')}>← Volver a Nutrición</button>
+          )}
+
+          {/* Sub-section: Plan de Alimentación */}
+          {nutriTab === 'plan' && (
+            <>
+              <SecVid title="Cómo usar tu plan de alimentación" sub="Aprende a leer porciones, tiempos y variantes" duration="2:15" />
+              {selectedDay == null ? (
+                <div className="day-selector">
+                  <div className="day-selector-header">
+                    <h3>Elige tu día</h3>
+                    <span className="day-selector-count">Días {activeCuisine.days[0]}–{activeCuisine.days[1]}</span>
+                  </div>
+                  <div className="cuisine-tabs">
+                    {cuisineThemes.map((c, i) => (
+                      <div
+                        key={i}
+                        className={`cuisine-tab${selectedCuisine === i ? ' active' : ''}`}
+                        onClick={() => { setSelectedCuisine(i); setSelectedDay(null); }}
+                      >
+                        <img src={c.flag} alt={c.label} />
+                        <span>{c.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="cuisine-days">
+                    {filteredDays.map((d) => (
+                      <button
+                        key={d.day}
+                        className="day-btn"
+                        onClick={() => setSelectedDay(mealPlanData.findIndex(x => x.day === d.day))}
+                      >
+                        Opción {d.day}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="day-detail">
+                  <div className="day-detail-header">
+                    <button className="day-back" onClick={() => setSelectedDay(null)}>← Volver</button>
+                    <h3>Opción {dayPlan?.day} — {activeCuisine.label}</h3>
+                  </div>
+                  <div className="meals">
+                    {dayPlan?.meals.map((meal, i) => (
+                      meal.img ? (
+                        <div key={i} className="meal meal-has-img">
+                          <div className="meal-img"><img src={meal.img} alt={meal.name} /></div>
+                          <div className="meal-body">
+                            <div className="meal-time">{meal.time}</div>
+                            <div className="meal-name">{meal.name}</div>
+                            <div className="meal-desc">{meal.desc}</div>
+                            <div className="meal-portions">
+                              {meal.portions.map((p, j) => <span key={j} className="portion">{p}</span>)}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div key={i} className="meal">
+                          <div className="meal-time">{meal.time}</div>
+                          <div className="meal-name">{meal.name}</div>
+                          <div className="meal-desc">{meal.desc}</div>
+                          <div className="meal-portions">
+                            {meal.portions.map((p, j) => <span key={j} className="portion">{p}</span>)}
+                          </div>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Sub-section: Guía de Alimentos */}
+          {nutriTab === 'guia' && <FoodGuide />}
+
+          {/* Sub-section: Qué son los Equivalentes */}
+          {nutriTab === 'que-equiv' && <FoodEquivalentsIntro />}
+
+          {/* Sub-section: Lista de Equivalentes */}
+          {nutriTab === 'lista-equiv' && <FoodEquivalentsList />}
+
+          {/* Sub-section: Salsas y Aderezos */}
+          {nutriTab === 'salsas' && <SalsasAderezos />}
         </div>
 
         {/* ── RECETAS ── */}
         <div className={`page${dashPage === 'recetas' ? ' on' : ''}`}>
           <div className="sec-hero">
-            <div className="sh-icon">🎬</div>
+            <div className="sh-icon"><Video size={24} strokeWidth={1.5} /></div>
             <div><h2>Recetas en Video</h2><p>Subimos nuevas recetas 3 veces por semana. Cada una con su video dividido en pasos para seguirla fácil desde tu celular.</p></div>
           </div>
           <div className="recipes">
@@ -293,7 +341,7 @@ export default function DashboardScreen() {
                     <span>🔥 {r.kcal}</span>
                     <span>💪 {r.protein}</span>
                   </div>
-                  <div className="rb-steps">🎬 5 pasos en video</div>
+                  <div className="rb-steps">🎬 {r.steps.length} pasos en video</div>
                 </div>
               </div>
             ))}
@@ -303,7 +351,7 @@ export default function DashboardScreen() {
         {/* ── ENTRENAMIENTO ── */}
         <div className={`page${dashPage === 'entrenamiento' ? ' on' : ''}`}>
           <div className="sec-hero">
-            <div className="sh-icon">💪</div>
+            <div className="sh-icon"><Dumbbell size={24} strokeWidth={1.5} /></div>
             <div>
               <h2>Plan de Entrenamiento</h2>
               <p>La ruta oficial del Club: 6 sesiones semanales + 1 día de descanso. Estructura progresiva para mejorar semana a semana.</p>
@@ -436,53 +484,10 @@ export default function DashboardScreen() {
         {/* ── RUTINAS ── */}
         <div className={`page${dashPage === 'rutinas' ? ' on' : ''}`}>
           <div className="sec-hero">
-            <div className="sh-icon">🗓️</div>
-            <div><h2>Rutinas Semanales</h2><p>Publicamos nuevas rutinas 3 veces por semana. El stack inicial incluye la ruta oficial grabada del Club para que puedas empezar hoy.</p></div>
+            <div className="sh-icon"><Calendar size={24} strokeWidth={1.5} /></div>
+            <div><h2>Rutinas Semanales</h2><p>Tu programa de 7 días: Lower, Upper, Power Vinyasa y descanso activo. Cada día con ejercicios, series y notas detalladas.</p></div>
           </div>
-          <div className="week-r">
-            {[
-              { n: 'Lun', i: '🏋️', t: 'Superior', dow: 1 },
-              { n: 'Mar', i: '🌿', t: 'Descanso', dow: 2, rest: true },
-              { n: 'Mié', i: '🦵', t: 'Inferior', dow: 3 },
-              { n: 'Jue', i: '🚶', t: 'Caminata', dow: 4, rest: true },
-              { n: 'Vie', i: '⚡', t: 'Full Body', dow: 5 },
-              { n: 'Sáb', i: '🏃', t: 'Cardio', dow: 6, rest: true },
-              { n: 'Dom', i: '😴', t: 'Recupera', dow: 0, rest: true },
-            ].map((d, i) => (
-              <div key={i} className={`wday${d.dow === todayDow ? ' on' : ''}${d.rest ? ' rest' : ''}`}>
-                <div className="wd-n">{d.n}</div>
-                <div className="wd-i">{d.i}</div>
-                <div className="wd-t">{d.t}</div>
-              </div>
-            ))}
-          </div>
-          <div className="card">
-            <div className="card-head">
-              <div className="card-title">
-                {todayDow === 1 || todayDow === 4 ? '🏋️' : todayDow === 3 ? '🦵' : todayDow === 5 ? '⚡' : '🌿'}{' '}
-                {dayNames[todayDow]} — {todayDow === 1 || todayDow === 4 ? 'Tren Superior' : todayDow === 3 ? 'Tren Inferior' : todayDow === 5 ? 'Full Body' : 'Descanso'}
-                {' '}<span style={{ fontSize: '.72rem', color: 'var(--sage)', marginLeft: '6px', fontWeight: 600 }}>HOY</span>
-              </div>
-            </div>
-            <div className="excards" style={{ marginTop: '8px' }}>
-              {(todayDow === 1 || todayDow === 4
-                ? [exercises[0], exercises[1], exercises[3], exercises[4], exercises[5]] // Upper: Press Banca, Press Militar, Ext Tríceps, Elev Lat, Plancha
-                : todayDow === 3
-                ? [exercises[6], exercises[7], exercises[8], exercises[9], exercises[10]] // Lower: Sentadilla, Peso Muerto, Prensa, Ext Cuádriceps, Curl Femoral
-                : todayDow === 5
-                ? [exercises[0], exercises[6], exercises[2], exercises[11], exercises[5]] // Full: Press Banca, Sentadilla, Aperturas, Hip Thrust, Plancha
-                : [] // Rest day — no exercises
-              ).filter(Boolean).map((ex, i) => (
-                <div key={i} className="excard" onClick={() => openVideo('exercise', ex.name, ex.desc, ex.emoji, ex.steps)}>
-                  <div className="ex-img" style={{ background: ex.bg }}>{ex.emoji}<div className="ex-play">▶</div></div>
-                  <div className="ex-body">
-                    <div className="ex-name">{ex.name}</div>
-                    <div className="ex-chips"><span className="chip cs">{ex.category}×{ex.difficulty}</span><span className="chip cd">{ex.duration}</span></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <Rutinas />
         </div>
 
         {/* ── CRECIMIENTO ── */}
@@ -554,7 +559,7 @@ function ProgressPhotos() {
   return (
     <div className="prog-photos">
       <div className="prog-head">
-        <div className="prog-title">📸 Fotos de progreso</div>
+        <div className="prog-title"><Camera size={15} strokeWidth={2} /> Fotos de progreso</div>
         <label className="prog-add-btn">
           + Agregar
           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
@@ -591,7 +596,7 @@ function SecVid({ title, sub, duration, videoId }: { title: string; sub: string;
   return (
     <div className="sec-vid">
       <div className="sec-vid-header">
-        <span className="sec-vid-icon">🎬</span>
+        <span className="sec-vid-icon"><Play size={15} strokeWidth={2} /></span>
         <div>
           <div className="sec-vid-title">{title}</div>
           <div className="sec-vid-sub">{sub}</div>
@@ -623,7 +628,7 @@ function PlanCrecimientoPage() {
   return (
     <div className={`page${dashPage === 'plan-crecimiento' ? ' on' : ''}`}>
       <div className="sec-hero">
-        <div className="sh-icon">🌱</div>
+        <div className="sh-icon"><Sprout size={24} strokeWidth={1.5} /></div>
         <div>
           <h2>Plan de Crecimiento</h2>
           <p>Tu crecimiento personal dentro del Club se divide en dos pilares: el método que transforma tu mentalidad y el sistema que organiza tu vida.</p>
@@ -632,13 +637,13 @@ function PlanCrecimientoPage() {
       <SecVid title="Qué es el Plan de Crecimiento" sub="Cómo los dos pilares trabajan juntos para transformarte" duration="2:45" />
       <div className="pcr-grid">
         <div className="pcr-card" onClick={() => setDashPage('crecimiento')}>
-          <div className="pcr-icon">📗</div>
+          <div className="pcr-icon"><BookOpen size={28} strokeWidth={1.5} /></div>
           <div className="pcr-title">Healthy Space Method</div>
           <div className="pcr-desc">El libro y metodología del Club. Mentalidad, hábitos, nutrición y movimiento — los principios que hacen que el cambio sea permanente.</div>
           <div className="pcr-link">Explorar →</div>
         </div>
         <div className="pcr-card" onClick={() => goTo('lifesystem')}>
-          <div className="pcr-icon">📋</div>
+          <div className="pcr-icon"><ClipboardList size={28} strokeWidth={1.5} /></div>
           <div className="pcr-title">Control de Vida</div>
           <div className="pcr-desc">Tu sistema de seguimiento semanal: hábitos, metas, reflexiones y progreso. La herramienta para que nada se te escape.</div>
           <div className="pcr-link">Abrir →</div>
@@ -655,25 +660,24 @@ function CrecimientoPage() {
   return (
     <div className={`page${dashPage === 'crecimiento' ? ' on' : ''}`}>
       <div className="sec-hero">
-        <div className="sh-icon">📗</div>
+        <div className="sh-icon"><BookOpen size={24} strokeWidth={1.5} /></div>
         <div>
           <h2>Healthy Space Method</h2>
           <p>El libro y metodología del Club: los principios de alimentación, movimiento y mentalidad para crear hábitos que duran toda la vida.</p>
         </div>
       </div>
-      <SecVid title="Bienvenido al Healthy Space Method" sub="Qué es, cómo funciona y por dónde empezar" duration="2:45" />
       {/* HSM VIEW */}
       <>
           <div className="growth">
             <div className="gcard book">
               <div className="gi">
-                <div className="g-icon">📗</div>
+                <div className="g-icon"><BookOpen size={28} strokeWidth={1.5} /></div>
                 <div className="g-lbl">Libro Exclusivo del Club</div>
                 <div className="g-title">Healthy Space Method</div>
                 <div className="g-desc">Los principios de alimentación, movimiento y mentalidad para crear hábitos que duran toda la vida — no solo 30 días.</div>
                 <button className="g-btn">Leer el libro →</button>
               </div>
-              <div className="g-deco">📗</div>
+              <div className="g-deco"><BookOpen size={48} strokeWidth={1} /></div>
             </div>
           </div>
           <div className="chapters">
