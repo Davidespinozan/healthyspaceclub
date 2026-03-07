@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 
+const SUPABASE_CONFIGURED = import.meta.env.VITE_SUPABASE_URL &&
+  !import.meta.env.VITE_SUPABASE_URL.includes('placeholder');
+
 export default function LoginScreen() {
-  const goTo = useAppStore(s => s.goTo);
+  const { goTo, setUserName } = useAppStore(s => ({ goTo: s.goTo, setUserName: s.setUserName }));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,6 +16,16 @@ export default function LoginScreen() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    if (!SUPABASE_CONFIGURED) {
+      // Supabase not configured yet — bypass auth and go straight to dashboard
+      const name = email.split('@')[0];
+      setUserName(name.charAt(0).toUpperCase() + name.slice(1));
+      goTo('dashboard');
+      return;
+    }
+
+    const { supabase } = await import('../lib/supabase');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError('Correo o contraseña incorrectos. Intenta de nuevo.');
@@ -24,7 +36,9 @@ export default function LoginScreen() {
 
   async function handleReset() {
     if (!email) { setError('Escribe tu correo primero.'); return; }
+    if (!SUPABASE_CONFIGURED) { setResetSent(true); return; }
     setLoading(true);
+    const { supabase } = await import('../lib/supabase');
     await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
