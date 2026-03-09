@@ -125,8 +125,9 @@ export default function LandingScreen() {
         <div className="hero-inner">
           <div className="hero-content">
             <div className="badge">3 en 1 · Nutrición · Entreno · Mente</div>
-            <h1>Tu sistema de<br /><em>transformación.</em></h1>
-            <p className="hero-sub">Coach, nutriólogo y entrenador — todo en tu bolsillo.</p>
+            <p className="hero-tagline">Club Digital Wellness</p>
+            <h1>Tu coach, nutriólogo y<br />entrenador <em>en uno.</em></h1>
+            <p className="hero-sub">Un sistema real para quienes les gusta vivir bien.</p>
             <div className="hero-btns">
               <MagneticBtn className="btn-p" onClick={() => openPay('Pro Anual','$1,699','12 meses · Plan Pro')}>Comenzar ahora →</MagneticBtn>
               <a className="btn-g" href="#s-pillars">Ver qué incluye ↓</a>

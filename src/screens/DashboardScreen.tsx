@@ -85,7 +85,7 @@ export default function DashboardScreen() {
     mobileSidebarOpen, setMobileSidebarOpen,
     openVideo,
     goTo, obData, startDate, mealPlanKey, tdee, planGoal,
-    userPlan, trialEndsAt,
+    userPlan, trialEndsAt, openPay,
   } = useAppStore();
 
   const [bannerDismissed, setBannerDismissed] = useState(false);
