@@ -39,6 +39,7 @@ export default function LandingScreen() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
   const [vidPlaying, setVidPlaying] = useState(false);
   const playerRef = useRef<HTMLDivElement>(null);
+  const pillarsAutoOpened = useRef(false);
 
   // ── Parallax ──────────────────────────────────────────────
   const heroImgRef = useRef<HTMLImageElement>(null);
@@ -69,6 +70,24 @@ export default function LandingScreen() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [togglePillars]);
+
+  // ── Auto-open pillars when section scrolls into view ──────
+  useEffect(() => {
+    const section = document.getElementById('s-pillars');
+    if (!section) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !pillarsAutoOpened.current && !pillarsOpen) {
+          pillarsAutoOpened.current = true;
+          togglePillars();
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.35 }
+    );
+    obs.observe(section);
+    return () => obs.disconnect();
+  }, [pillarsOpen, togglePillars]);
 
   function playShowcaseVid() {
     if (vidPlaying) return;
@@ -218,12 +237,12 @@ export default function LandingScreen() {
             </div>
             <p className="pill-id-sub">Un solo espacio. Tres pilares. Todo integrado.</p>
             <div className="pill-id-hint">
-              <span className="pill-id-hint-text">Ver más</span>
+              <span className="pill-id-hint-text">{pillarsOpen ? 'Ocultar' : 'Ver más'}</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
             </div>
           </div>
 
-          <div className={`pillar pillar-gold reveal reveal-delay-1${pillarsOpen ? '' : ' pillar-hidden'}`}>
+          <div className={`pillar pillar-gold pillar-hidden reveal reveal-delay-1${pillarsOpen ? ' pillar-show' : ''}`}>
             <div className="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1772042278/mealprep_wfczav.webp" alt="Nutrición" /></div>
             <div className="pill-num">01</div>
             <h3>Nutrición</h3>
@@ -231,7 +250,7 @@ export default function LandingScreen() {
             <span className="ptag">Tu nutriólogo en el bolsillo</span>
           </div>
 
-          <div className={`pillar pillar-gold reveal reveal-delay-2${pillarsOpen ? '' : ' pillar-hidden'}`}>
+          <div className={`pillar pillar-gold pillar-hidden reveal reveal-delay-2${pillarsOpen ? ' pillar-show' : ''}`}>
             <div className="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1772042621/workout_s1mccg.webp" alt="Entrenamiento" /></div>
             <div className="pill-num">02</div>
             <h3>Entrenamiento</h3>
@@ -239,7 +258,7 @@ export default function LandingScreen() {
             <span className="ptag">Tu entrenador personal 24/7</span>
           </div>
 
-          <div className={`pillar pillar-gold reveal reveal-delay-3${pillarsOpen ? '' : ' pillar-hidden'}`}>
+          <div className={`pillar pillar-gold pillar-hidden reveal reveal-delay-3${pillarsOpen ? ' pillar-show' : ''}`}>
             <div className="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1772045449/hpm_johgyu.webp" alt="Mentalidad" /></div>
             <div className="pill-num">03</div>
             <h3>Mentalidad</h3>
