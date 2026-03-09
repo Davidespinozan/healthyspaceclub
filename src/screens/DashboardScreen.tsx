@@ -21,6 +21,7 @@ import TodayStats from '../components/TodayStats';
 import FoodLog from '../components/FoodLog';
 import AICoach from '../components/AICoach';
 import WeeklyInsight from '../components/WeeklyInsight';
+import AppleHealthCard from '../components/AppleHealthCard';
 
 // ── Mapa de palabras clave de porciones → receta del recetario ──────────────
 const SALSA_REF_MAP: [string, string][] = [
@@ -226,6 +227,9 @@ export default function DashboardScreen() {
 
           {/* Saludo contextual */}
           <DailyGreeting userName={userName} streakDays={streakDays} currentWeek={currentWeek} />
+
+          {/* Apple Health */}
+          <AppleHealthCard />
 
           {/* Resumen del día */}
           <TodayStats />

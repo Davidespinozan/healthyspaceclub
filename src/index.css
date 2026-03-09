@@ -3452,3 +3452,22 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
    WORKOUT LOGGER — AI tip
 ═══════════════════════════════════ */
 .wl-ai-tip { background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px 12px; font-size:.78rem; color:#1e40af; line-height:1.45; margin-bottom:8px; }
+
+/* ═══════════════════════════════════
+   APPLE HEALTH CARD
+═══════════════════════════════════ */
+.ah-card { background:white; border:1px solid var(--bdr); border-radius:var(--r); padding:16px; margin-bottom:16px; }
+.ah-card-connect { border-color:#fecaca; background:#fff5f5; }
+.ah-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.ah-icon { font-size:1.4rem; }
+.ah-title { font-size:.88rem; font-weight:700; color:var(--forest); }
+.ah-sub { font-size:.72rem; color:var(--sage); margin-top:2px; }
+.ah-connect-btn { width:100%; background:#ef4444; color:white; border:none; border-radius:12px; padding:12px; font-size:.85rem; font-weight:600; cursor:pointer; }
+.ah-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px; }
+.ah-metric { background:var(--cream); border-radius:10px; padding:10px; text-align:center; }
+.ah-metric-label { font-size:.68rem; color:var(--sage); margin-bottom:4px; font-weight:600; }
+.ah-metric-val { font-size:1.25rem; font-weight:800; color:var(--forest); }
+.ah-metric-sub { font-size:.62rem; color:var(--sage); margin-top:2px; }
+.ah-pbar { height:4px; background:var(--sand); border-radius:2px; overflow:hidden; margin-top:6px; }
+.ah-pfill { height:100%; border-radius:2px; transition:width .5s ease; }
+.ah-badge { background:#dcfce7; color:#166534; border-radius:8px; padding:8px 12px; font-size:.75rem; font-weight:600; text-align:center; }
