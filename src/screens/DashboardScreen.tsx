@@ -1,33 +1,96 @@
-import { useState, useEffect } from 'react';
-import { Home, Leaf, Video, Dumbbell, Calendar, Sprout, BookOpen, ClipboardList, User, LogOut, ChevronUp, ChevronDown, Menu, Play, X, Camera } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Home, Leaf, Video, Dumbbell, Calendar, Sprout, BookOpen, ClipboardList, User, LogOut, ChevronUp, ChevronDown, Menu, Play, X, Camera, ShoppingCart } from 'lucide-react';
 import { useAppStore } from '../store';
-import { mealPlanData, cuisineThemes } from '../data/mealPlan';
+import { mealPlans, cuisineThemesMap } from '../data/mealPlan';
+import { calcMealKcal, calcDayKcal, formatPortion } from '../utils/kcalCalc';
+import { scalePlan } from '../utils/scalePlan';
 import { recipes } from '../data/recipes';
 import FoodGuide from '../components/FoodGuide';
 import { FoodEquivalentsIntro, FoodEquivalentsList } from '../components/FoodEquivalents';
 import SalsasAderezos from '../components/SalsasAderezos';
 import { ClipboardIcon, QuestionIcon, ScaleIcon, CartIcon, JarIcon } from '../components/NutriIcons';
 import Rutinas from '../components/Rutinas';
+import { salsasData, type SalsaRecipe } from '../data/salsas';
+import HabitTracker from '../components/HabitTracker';
+import WeightTracker from '../components/WeightTracker';
+import ShoppingList from '../components/ShoppingList';
+import MealCheckoff from '../components/MealCheckoff';
+
+// ── Mapa de palabras clave de porciones → receta del recetario ──────────────
+const SALSA_REF_MAP: [string, string][] = [
+  // sorted longest-first so we match the most specific pattern first
+  ['salsa de tomate hecha',         'Salsa de Tomate Natural'],
+  ['salsa de tomate casera',        'Salsa de Tomate Natural'],
+  ['salsa de tomate natural',       'Salsa de Tomate Natural'],
+  ['salsa de tomate',               'Salsa de Tomate Natural'],
+  ['salsa verde hecha',             'Salsa Verde Casera'],
+  ['salsa verde casera',            'Salsa Verde Casera'],
+  ['salsa verde',                   'Salsa Verde Casera'],
+  ['salsa ranchera',                'Salsa Ranchera'],
+  ['salsa roja de chile',           'Salsa Roja de Chile de Árbol'],
+  ['salsa roja',                    'Salsa Roja de Chile de Árbol'],
+  ['salsa teriyaki ligera casera',  'Salsa Teriyaki'],
+  ['salsa teriyaki casera',         'Salsa Teriyaki'],
+  ['salsa teriyaki',                'Salsa Teriyaki'],
+  ['salsa pesto',                   'Salsa Pesto'],
+  ['pesto',                         'Salsa Pesto'],
+  ['salsa al pastor',               'Salsa al Pastor'],
+  ['salsa buffalo',                 'Salsa Buffalo'],
+  ['salsa de chile guajillo',       'Salsa de Chile Guajillo'],
+  ['salsa guajillo',                'Salsa de Chile Guajillo'],
+  ['salsa de chile morita',         'Salsa de Chile Morita'],
+  ['chile habanero y mango',        'Chile Habanero y Mango'],
+  ['salsa de aguacate y cilantro',  'Salsa de Aguacate y Cilantro'],
+  ['salsa de aguacate',             'Salsa de Aguacate y Cilantro'],
+  ['aderezo del recetario',         'Aderezo del recetario'],
+  ['aderezo chipotle',              'Chipotle Fit'],
+  ['chipotle fit',                  'Chipotle Fit'],
+  ['salsa chipotle',                'Chipotle Fit'],
+  ['aderezo thai',                  'Aderezo Thai'],
+  ['aderezo césar',                 'Aderezo César'],
+  ['aderezo cesar',                 'Aderezo César'],
+  ['aderezo ranch',                 'Aderezo Ranch'],
+  ['aderezo parmesano',             'Aderezo de Queso Parmesano'],
+  ['aderezo cremoso de cilantro',   'Aderezo Cremoso de Cilantro'],
+  ['vinagreta balsámica',           'Vinagreta Balsámica'],
+  ['vinagreta balsamica',           'Vinagreta Balsámica'],
+  ['vinagreta',                     'Vinagreta Balsámica'],
+  ['chimichurri de aguacate',       'Chimichurri de Aguacate'],
+  ['chimichurri',                   'Chimichurri de Aguacate'],
+  ['tzatziki',                      'Tzatziki'],
+  ['salsa de tu preferencia',       'Salsa del recetario'],
+];
+
+function getSalsaRef(portionText: string): SalsaRecipe | { name: string; isFree: boolean; portionKcal: number } | null {
+  const lower = portionText.toLowerCase();
+  const match = SALSA_REF_MAP.find(([key]) => lower.includes(key));
+  if (!match) return null;
+  const recipeName = match[1];
+  if (recipeName === 'Aderezo del recetario') return { name: 'Aderezo del recetario', isFree: false, portionKcal: 45 };
+  if (recipeName === 'Salsa del recetario')   return { name: 'Salsa del recetario',   isFree: true,  portionKcal: 20 };
+  return salsasData.find(s => s.name === recipeName) ?? null;
+}
 
 export default function DashboardScreen() {
   const {
     dashPage, setDashPage, userName, logout,
     mobileSidebarOpen, setMobileSidebarOpen,
     openVideo, welcomeVidClosed, setWelcomeVidClosed,
-    goTo, obData, startDate,
+    goTo, obData, startDate, mealPlanKey, tdee, planGoal,
   } = useAppStore();
 
   const pageTitles: Record<string, string> = {
     bienvenida: 'Mi Espacio', alimentacion: 'Plan de Alimentación',
     recetas: 'Recetas en Video', entrenamiento: 'Plan de Entrenamiento',
     rutinas: 'Rutinas Semanales', crecimiento: 'Plan de Crecimiento',
+    'plan-crecimiento': 'Plan de Crecimiento',
   };
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedCuisine, setSelectedCuisine] = useState(0);
   const [welcomeVidPlaying, setWelcomeVidPlaying] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [nutriTab, setNutriTab] = useState<'menu' | 'plan' | 'que-equiv' | 'lista-equiv' | 'guia' | 'salsas'>('menu');
+  const [nutriTab, setNutriTab] = useState<'menu' | 'plan' | 'que-equiv' | 'lista-equiv' | 'guia' | 'salsas' | 'shopping'>('menu');
 
   function navTo(page: string) {
     setDashPage(page as any);
@@ -39,6 +102,7 @@ export default function DashboardScreen() {
   const currentWeek = (() => {
     if (!startDate) return 1;
     const start = new Date(startDate);
+    if (isNaN(start.getTime())) return 1;
     const now = new Date();
     const diff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     return Math.min(Math.max(1, Math.floor(diff / 7) + 1), 12);
@@ -48,13 +112,23 @@ export default function DashboardScreen() {
   const streakDays = (() => {
     if (!startDate) return 1;
     const start = new Date(startDate);
+    if (isNaN(start.getTime())) return 1;
     const now = new Date();
     return Math.max(1, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
   })();
 
-  const dayPlan = selectedDay != null ? mealPlanData[selectedDay] : null;
-  const activeCuisine = cuisineThemes[selectedCuisine];
-  const filteredDays = mealPlanData.filter(d => d.day >= activeCuisine.days[0] && d.day <= activeCuisine.days[1]);
+  const userPlan = mealPlans[mealPlanKey] ?? mealPlans['planA'];
+
+  // Escala las porciones al objetivo calórico exacto del usuario
+  const scaledPlan = useMemo(
+    () => planGoal > 0 ? scalePlan(userPlan, planGoal) : userPlan,
+    [userPlan, planGoal],
+  );
+
+  const activeThemes = cuisineThemesMap[mealPlanKey] ?? cuisineThemesMap['planA'];
+  const dayPlan = selectedDay != null ? scaledPlan[selectedDay] : null;
+  const activeCuisine = activeThemes[selectedCuisine];
+  const filteredDays = scaledPlan.filter(d => d.day >= activeCuisine.days[0] && d.day <= activeCuisine.days[1]);
 
   return (
     <>
@@ -88,6 +162,8 @@ export default function DashboardScreen() {
               <div className="pp-row"><span className="pp-lbl">Estatura</span><span className="pp-val">{obData.estatura ? `${obData.estatura} cm` : '—'}</span></div>
               <div className="pp-row"><span className="pp-lbl">Actividad</span><span className="pp-val">{String(obData.activity || '—')}</span></div>
               <div className="pp-row"><span className="pp-lbl">Objetivo</span><span className="pp-val">{String(obData.goal || '—')}</span></div>
+              {planGoal > 0 && <div className="pp-row"><span className="pp-lbl">🔥 Meta calórica</span><span className="pp-val pp-kcal">{planGoal.toLocaleString()} kcal/día</span></div>}
+              {tdee > 0 && <div className="pp-row"><span className="pp-lbl">TDEE</span><span className="pp-val pp-val-sm">{tdee.toLocaleString()} kcal mantenimiento</span></div>}
             </div>
           </div>
         )}
@@ -189,8 +265,16 @@ export default function DashboardScreen() {
               <div className="mipf-row"><span className="mipf-lbl">Estatura</span><span className="mipf-val">{obData.estatura ? `${obData.estatura} cm` : '—'}</span></div>
               <div className="mipf-row"><span className="mipf-lbl">Actividad</span><span className="mipf-val">{String(obData.activity || '—')}</span></div>
               <div className="mipf-row"><span className="mipf-lbl">Objetivo</span><span className="mipf-val">{String(obData.goal || '—')}</span></div>
+              {planGoal > 0 && <div className="mipf-row"><span className="mipf-lbl">🔥 Meta calórica</span><span className="mipf-val mipf-kcal">{planGoal.toLocaleString()} kcal/día</span></div>}
+              {tdee > 0 && <div className="mipf-row"><span className="mipf-lbl">TDEE</span><span className="mipf-val mipf-sm">{tdee.toLocaleString()} kcal mantenimiento</span></div>}
             </div>
           </div>
+
+          {/* Hábitos diarios */}
+          <HabitTracker />
+
+          {/* Progreso de peso */}
+          <WeightTracker />
 
           {/* Fotos de progreso */}
           <ProgressPhotos />
@@ -213,6 +297,7 @@ export default function DashboardScreen() {
                   { id: 'lista-equiv' as const, icon: <ScaleIcon />, title: 'Lista de Equivalentes', desc: 'Tabla de intercambio entre grupos de alimentos.' },
                   { id: 'guia' as const, icon: <CartIcon />, title: 'Guía de Alimentos', desc: 'Cómo elegir los mejores productos en el supermercado.' },
                   { id: 'salsas' as const, icon: <JarIcon />, title: 'Salsas y Aderezos', desc: '21 recetas caseras limpias para acompañar tus comidas.' },
+                  { id: 'shopping' as const, icon: <ShoppingCart size={18} />, title: 'Lista del Súper', desc: 'Tu lista de compras generada automáticamente desde tu plan.' },
                 ]).map(item => (
                   <button key={item.id} className="nutri-card" onClick={() => setNutriTab(item.id)}>
                     <span className="nc-icon">{item.icon}</span>
@@ -236,6 +321,16 @@ export default function DashboardScreen() {
           {nutriTab === 'plan' && (
             <>
               <SecVid title="Cómo usar tu plan de alimentación" sub="Aprende a leer porciones, tiempos y variantes" duration="2:15" />
+              {/* Objetivo calórico personalizado */}
+              {planGoal > 0 && (
+                <div className="plan-goal-banner">
+                  <span className="pgb-icon">🔥</span>
+                  <div>
+                    <div className="pgb-title">Tu plan personalizado: <strong>{planGoal.toLocaleString()} kcal/día</strong></div>
+                    <div className="pgb-sub">TDEE {tdee.toLocaleString()} kcal · Porciones ajustadas automáticamente a tu objetivo</div>
+                  </div>
+                </div>
+              )}
               {selectedDay == null ? (
                 <div className="day-selector">
                   <div className="day-selector-header">
@@ -243,7 +338,7 @@ export default function DashboardScreen() {
                     <span className="day-selector-count">Días {activeCuisine.days[0]}–{activeCuisine.days[1]}</span>
                   </div>
                   <div className="cuisine-tabs">
-                    {cuisineThemes.map((c, i) => (
+                    {activeThemes.map((c, i) => (
                       <div
                         key={i}
                         className={`cuisine-tab${selectedCuisine === i ? ' active' : ''}`}
@@ -259,7 +354,7 @@ export default function DashboardScreen() {
                       <button
                         key={d.day}
                         className="day-btn"
-                        onClick={() => setSelectedDay(mealPlanData.findIndex(x => x.day === d.day))}
+                        onClick={() => setSelectedDay(scaledPlan.findIndex(x => x.day === d.day))}
                       >
                         Opción {d.day}
                       </button>
@@ -270,33 +365,61 @@ export default function DashboardScreen() {
                 <div className="day-detail">
                   <div className="day-detail-header">
                     <button className="day-back" onClick={() => setSelectedDay(null)}>← Volver</button>
-                    <h3>Opción {dayPlan?.day} — {activeCuisine.label}</h3>
+                    <div className="day-detail-title">
+                      <h3>Opción {dayPlan?.day} — {activeCuisine.label}</h3>
+                      {dayPlan && (
+                        <span className="day-kcal-badge">
+                          {calcDayKcal(dayPlan.meals)} kcal totales
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="meals">
-                    {dayPlan?.meals.map((meal, i) => (
-                      meal.img ? (
+                    {dayPlan?.meals.map((meal, i) => {
+                      const mealKcal = calcMealKcal(meal.portions);
+                      const mealDayKey = `${new Date().toISOString().split('T')[0]}-${mealPlanKey}-${dayPlan.day}`;
+                      const renderPortion = (p: string, _j: number) => {
+                        const sRef = getSalsaRef(p);
+                        return (
+                          <>
+                            {formatPortion(p)}
+                            {sRef && (
+                              <button
+                                className="portion-salsa-link"
+                                onClick={() => setNutriTab('salsas')}
+                                title={sRef.isFree ? 'Receta libre — sin costo calórico' : `~${sRef.portionKcal} kcal por porción`}
+                              >
+                                🫙 Ver receta
+                              </button>
+                            )}
+                          </>
+                        );
+                      };
+                      return meal.img ? (
                         <div key={i} className="meal meal-has-img">
                           <div className="meal-img"><img src={meal.img} alt={meal.name} /></div>
                           <div className="meal-body">
-                            <div className="meal-time">{meal.time}</div>
+                            <div className="meal-time-row">
+                              <span className="meal-time">{meal.time}</span>
+                              {mealKcal > 0 && <span className="meal-kcal">{mealKcal} kcal</span>}
+                            </div>
                             <div className="meal-name">{meal.name}</div>
                             <div className="meal-desc">{meal.desc}</div>
-                            <div className="meal-portions">
-                              {meal.portions.map((p, j) => <span key={j} className="portion">{p}</span>)}
-                            </div>
+                            <MealCheckoff dayKey={mealDayKey} portions={meal.portions} mealIndex={i} renderPortion={renderPortion} />
                           </div>
                         </div>
                       ) : (
                         <div key={i} className="meal">
-                          <div className="meal-time">{meal.time}</div>
+                          <div className="meal-time-row">
+                            <span className="meal-time">{meal.time}</span>
+                            {mealKcal > 0 && <span className="meal-kcal">{mealKcal} kcal</span>}
+                          </div>
                           <div className="meal-name">{meal.name}</div>
                           <div className="meal-desc">{meal.desc}</div>
-                          <div className="meal-portions">
-                            {meal.portions.map((p, j) => <span key={j} className="portion">{p}</span>)}
-                          </div>
+                          <MealCheckoff dayKey={mealDayKey} portions={meal.portions} mealIndex={i} renderPortion={renderPortion} />
                         </div>
-                      )
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -314,6 +437,15 @@ export default function DashboardScreen() {
 
           {/* Sub-section: Salsas y Aderezos */}
           {nutriTab === 'salsas' && <SalsasAderezos />}
+
+          {/* Sub-section: Lista del Súper */}
+          {nutriTab === 'shopping' && (
+            <ShoppingList
+              plan={scaledPlan}
+              cuisineRange={activeCuisine.days}
+              cuisineLabel={activeCuisine.label}
+            />
+          )}
         </div>
 
         {/* ── RECETAS ── */}

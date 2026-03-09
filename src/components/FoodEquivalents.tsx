@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   foodGroupSymbols,
   equivalentDefinition,
@@ -5,6 +6,7 @@ import {
   equivalentExample,
   foodGroupExchanges,
   exchangeNote,
+  smeGroups,
 } from '../data/foodEquivalents';
 
 /* ── Tab 2: Qué son los Alimentos Equivalentes ── */
@@ -75,6 +77,76 @@ export function FoodEquivalentsIntro() {
 }
 
 /* ── Tab 3: Lista de Alimentos Equivalentes ── */
+
+/* SME accordion */
+function SmeEquivalentsList() {
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const toggle = (key: string) =>
+    setOpen(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
+
+  return (
+    <div className="sme-section">
+      <h4 className="sme-title">Sistema Mexicano de Equivalentes — 4ª Edición</h4>
+      <p className="sme-subtitle">
+        Cada grupo muestra las calorías y macronutrimentos por <strong>1 equivalente</strong>. Toca un subgrupo para ver los alimentos con sus porciones exactas.
+      </p>
+
+      {smeGroups.map(group => {
+        const single = group.subgroups.length === 1;
+        return (
+          <div key={group.id} className="sme-group" style={{ borderColor: group.color + '55' }}>
+            {/* Group header */}
+            <div className="sme-group-header" style={{ background: group.color + '18' }}>
+              <span className="sme-group-icon">{group.icon}</span>
+              <span className="sme-group-name" style={{ color: group.color }}>{group.label}</span>
+            </div>
+
+            {/* Note */}
+            <p className="sme-group-note">{group.note}</p>
+
+            {group.subgroups.map((sub, si) => {
+              const key = `${group.id}-${si}`;
+              const isOpen = open.has(key) || single;
+              return (
+                <div key={key} className="sme-sub">
+                  {/* Subgroup header / macro row */}
+                  <button
+                    className="sme-sub-btn"
+                    onClick={() => !single && toggle(key)}
+                    style={{ cursor: single ? 'default' : 'pointer' }}
+                  >
+                    {!single && <span className="sme-sub-name">{sub.name}</span>}
+                    <div className="sme-macros">
+                      {!single && <span className="sme-sub-label">{sub.name} —</span>}
+                      <span className="sme-macro kcal">{sub.kcal} kcal</span>
+                      <span className="sme-macro cho">HC {sub.cho}g</span>
+                      <span className="sme-macro prot">Prot {sub.prot}g</span>
+                      <span className="sme-macro fat">Grasa {sub.fat}g</span>
+                    </div>
+                    {!single && <span className="sme-sub-toggle">{isOpen ? '▲' : '▼'}</span>}
+                  </button>
+
+                  {/* Food list */}
+                  {isOpen && (
+                    <div className="sme-foods">
+                      {sub.foods.map(f => (
+                        <div key={f.name} className="sme-food-row">
+                          <span className="sme-food-name">{f.name}</span>
+                          <span className="sme-food-amt">{f.amount}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function FoodEquivalentsList() {
   return (
     <div className="feq-wrap">
@@ -106,6 +178,9 @@ export function FoodEquivalentsList() {
           ))}
         </div>
       </div>
+
+      {/* SME 4ª Edición full food list */}
+      <SmeEquivalentsList />
     </div>
   );
 }

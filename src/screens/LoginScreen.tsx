@@ -5,7 +5,8 @@ const SUPABASE_CONFIGURED = import.meta.env.VITE_SUPABASE_URL &&
   !import.meta.env.VITE_SUPABASE_URL.includes('placeholder');
 
 export default function LoginScreen() {
-  const { goTo, setUserName } = useAppStore(s => ({ goTo: s.goTo, setUserName: s.setUserName }));
+  const goTo = useAppStore(s => s.goTo);
+  const setUserName = useAppStore(s => s.setUserName);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

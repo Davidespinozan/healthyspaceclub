@@ -5,6 +5,10 @@ export interface SalsaRecipe {
   type: 'salsa' | 'aderezo';
   spiceLevel: 0 | 1 | 2 | 3; // 0=none, 1=mild, 2=medium, 3=hot
   portion: string;
+  /** Approximate kcal for a standard serving (2-3 tbsp or the described portion) */
+  portionKcal: number;
+  /** true when plan counts it as free (≤20 kcal / serving) */
+  isFree: boolean;
   ingredients: string[];
   steps: string[];
 }
@@ -16,6 +20,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 1,
     portion: 'Su consumo es libre.',
+    portionKcal: 15,
+    isFree: true,
     ingredients: [
       '2 pz de jitomates',
       '¼ pz de cebolla blanca',
@@ -33,6 +39,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 1,
     portion: 'Su consumo es libre.',
+    portionKcal: 18,
+    isFree: true,
     ingredients: [
       '2 pz de jitomates',
       '3 pz de tomatillo verde',
@@ -50,6 +58,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 3,
     portion: 'Su consumo es libre.',
+    portionKcal: 20,
+    isFree: true,
     ingredients: [
       '10 pz de chile de árbol',
       '¼ pz de cebolla',
@@ -68,6 +78,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 1,
     portion: 'Su consumo es libre.',
+    portionKcal: 15,
+    isFree: true,
     ingredients: [
       '5 pz de tomatillos verdes',
       '¼ pz de cebolla blanca',
@@ -86,6 +98,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 0,
     portion: '3 cucharadas = 1 porción de grasa.',
+    portionKcal: 45,
+    isFree: false,
     ingredients: [
       '1 pz de aguacate',
       'Un puño grande de cilantro',
@@ -103,6 +117,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 2,
     portion: '3 cucharadas = 1 porción de grasa.',
+    portionKcal: 22,
+    isFree: false,
     ingredients: [
       '8 pz de tomatillos verdes',
       '3 pz de chiles morita',
@@ -120,6 +136,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 3,
     portion: '3 cucharadas como libre.',
+    portionKcal: 30,
+    isFree: true,
     ingredients: [
       '2 pz de mango',
       '1 ó 2 chiles habaneros tatemados',
@@ -136,6 +154,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 0,
     portion: '2 cucharadas = 1 porción de grasa.',
+    portionKcal: 80,
+    isFree: false,
     ingredients: [
       '1 diente de ajo',
       'Un puño de albahaca',
@@ -153,6 +173,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 2,
     portion: 'Su consumo es libre.',
+    portionKcal: 18,
+    isFree: true,
     ingredients: [
       '3 pz de chiles guajillo',
       '2 pz de tomate saladet',
@@ -172,6 +194,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 2,
     portion: 'Su consumo es libre.',
+    portionKcal: 20,
+    isFree: true,
     ingredients: [
       '1 pz de chile pasilla',
       '1 pz de chile guajillo',
@@ -190,6 +214,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 2,
     portion: 'Su consumo es libre.',
+    portionKcal: 20,
+    isFree: true,
     ingredients: [
       '3 cdas de puré de tomate',
       '1 cda de vinagre de manzana',
@@ -209,6 +235,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'salsa',
     spiceLevel: 0,
     portion: 'Su consumo es libre.',
+    portionKcal: 25,
+    isFree: true,
     ingredients: [
       '¼ tz de agua',
       '3 cdtas de salsa soya baja en sodio',
@@ -232,6 +260,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'aderezo',
     spiceLevel: 0,
     portion: 'Su consumo equivale a 1 porción de grasa.',
+    portionKcal: 45,
+    isFree: false,
     ingredients: [
       '2 cdas de yogurt griego',
       '1 cdta de mayonesa',
@@ -253,6 +283,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'aderezo',
     spiceLevel: 2,
     portion: 'Su consumo equivale a 0.5 porción de grasa.',
+    portionKcal: 22,
+    isFree: false,
     ingredients: [
       '1 cda de yogurt griego sin azúcar ó jocoque',
       '1 cdta de mayonesa light',
@@ -269,6 +301,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'aderezo',
     spiceLevel: 0,
     portion: 'Su consumo equivale a 1 porción de grasa.',
+    portionKcal: 40,
+    isFree: false,
     ingredients: [
       '2 cdas de yogurt griego sin azúcar',
       '1 cda de mayonesa',
@@ -286,6 +320,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'aderezo',
     spiceLevel: 1,
     portion: 'Su consumo equivale a 1.5 porciones de grasa.',
+    portionKcal: 75,
+    isFree: false,
     ingredients: [
       '1 cda de crema de maní natural',
       '½ cdta de aceite de ajonjolí o aceite de oliva',
@@ -303,6 +339,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'aderezo',
     spiceLevel: 0,
     portion: 'Su consumo equivale a 1 porción de grasa.',
+    portionKcal: 50,
+    isFree: false,
     ingredients: [
       '12 cdas de yogurt griego sin azúcar',
       '1 cda de mayonesa light',
@@ -322,6 +360,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'aderezo',
     spiceLevel: 0,
     portion: 'Su consumo equivale a 1 porción de grasa.',
+    portionKcal: 42,
+    isFree: false,
     ingredients: [
       '2 cdas de yogurt griego sin azúcar',
       '1 cda de mayonesa light',
@@ -340,6 +380,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'aderezo',
     spiceLevel: 0,
     portion: 'Su consumo equivale a 1 porción de grasa.',
+    portionKcal: 48,
+    isFree: false,
     ingredients: [
       '1 cdta de aceite de oliva',
       '1 cdta de vinagre balsámico',
@@ -355,6 +397,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'aderezo',
     spiceLevel: 0,
     portion: '2 cucharadas = 1 porción de grasa.',
+    portionKcal: 70,
+    isFree: false,
     ingredients: [
       '¼ tz de aceite de oliva',
       '1 diente de ajo finamente picado',
@@ -373,6 +417,8 @@ export const salsasData: SalsaRecipe[] = [
     type: 'aderezo',
     spiceLevel: 0,
     portion: 'Su consumo equivale a 1 porción de grasa.',
+    portionKcal: 38,
+    isFree: false,
     ingredients: [
       '12 cdas de yogurt griego sin azúcar',
       '¼ pz de pepino picado sin semillas',

@@ -115,8 +115,8 @@ export default function App() {
           <OnboardingScreen />
         </div>
       )}
-      {(currentScreen === 'dashboard' || currentScreen === 'lifesystem') && (
-        <div id="scr-dashboard" className={`screen${currentScreen === 'dashboard' ? ` active ${fadeClass}` : ''}`}>
+      {currentScreen === 'dashboard' && (
+        <div id="scr-dashboard" className={`screen active ${fadeClass}`}>
           <DashboardScreen />
         </div>
       )}

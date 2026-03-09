@@ -18,6 +18,10 @@ export default function SalsasAderezos() {
       <div className="sa-intro">
         <h3>Salsas y Aderezos</h3>
         <p>Recetas caseras limpias para acompañar tus comidas. Sin ultraprocesados, fáciles y rápidas.</p>
+        <div className="sa-note">
+          <span className="sa-note-icon">📍</span>
+          <span>Encontrarás estas recetas referenciadas en tu <strong>Plan de Alimentación</strong> cuando el platillo incluye salsa o aderezo. Las marcadas como <strong>Libre</strong> no cuentan en tus kcal del día; el resto equivale a la porción de grasa indicada.</span>
+        </div>
       </div>
 
       {/* Filters */}
@@ -64,7 +68,10 @@ function RecipeCard({ recipe, isOpen, onToggle }: { recipe: SalsaRecipe; isOpen:
           <span className="sa-card-name">{recipe.name}</span>
           <div className="sa-card-meta">
             <span className="sa-spice">{spiceLabels[recipe.spiceLevel]}</span>
-            {recipe.portion.includes('libre') && <span className="sa-badge-free">Libre</span>}
+            {recipe.isFree
+              ? <span className="sa-badge-free">Libre</span>
+              : <span className="sa-badge-kcal">{recipe.portionKcal} kcal / porción</span>
+            }
           </div>
         </div>
         <span className="sa-card-arrow">{isOpen ? '▾' : '▸'}</span>

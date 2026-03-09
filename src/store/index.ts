@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep } from '../types';
+import { calcTDEE, assignPlan } from '../utils/tdee';
 
 interface PayInfo {
   plan: string;
@@ -61,13 +62,31 @@ interface AppState {
   mobileMenuOpen: boolean;
   toggleMobileMenu: () => void;
 
-  // Dashboard habits
+  // Dashboard habits — date-keyed history
   habits: Record<string, boolean>;
+  habitHistory: Record<string, Record<string, boolean>>; // { '2026-03-09': { agua: true, ... } }
   toggleHabit: (id: string) => void;
+
+  // Weight log
+  weightLog: { date: string; kg: number }[];
+  addWeight: (kg: number) => void;
+  removeWeight: (date: string) => void;
+
+  // Meal check-off (tracks which meals the user actually ate)
+  mealChecks: Record<string, boolean>; // { '2026-03-09-planA-1-0': true }
+  toggleMealCheck: (key: string) => void;
 
   // Welcome video closed
   welcomeVidClosed: boolean;
   setWelcomeVidClosed: (closed: boolean) => void;
+
+  // Meal plan assignment (admin-set, never shown as calories to the user)
+  mealPlanKey: string;
+  setMealPlanKey: (key: string) => void;
+
+  // Calculated nutrition targets
+  tdee: number;        // kcal/day maintenance
+  planGoal: number;    // kcal/day target (tdee ± adjustment)
 
   // Logout
   logout: () => void;
@@ -94,7 +113,32 @@ export const useAppStore = create<AppState>()(
   finishOnboarding: () => {
     const { obData, setUserName } = get();
     if (obData.name) setUserName(String(obData.name));
-    set({ currentScreen: 'dashboard', obStep: 1, startDate: new Date().toISOString().split('T')[0], activeModal: null });
+
+    // Calcular TDEE y asignar plan automáticamente (síncrono)
+    const sexo      = String(obData.sex      || 'Hombre');
+    const pesoKg    = Number(obData.peso     || 70);
+    const estatura  = Number(obData.estatura || 170);
+    const edad      = Number(obData.edad     || 28);
+    const activity  = String(obData.activity || 'Moderada');
+    const goal      = String(obData.goal     || '');
+
+    const tdee       = calcTDEE(sexo, pesoKg, estatura, edad, activity);
+    const planKey    = assignPlan(tdee, goal);
+
+    let planGoal = tdee;
+    if      (goal === 'Bajar grasa corporal') planGoal = Math.round(tdee * 0.80);
+    else if (goal === 'Recomponer')           planGoal = Math.round(tdee * 0.95);
+    else if (goal === 'Subir masa muscular')  planGoal = Math.round(tdee * 1.10);
+
+    set({
+      mealPlanKey: planKey,
+      tdee,
+      planGoal,
+      currentScreen: 'dashboard',
+      obStep: 1,
+      startDate: new Date().toISOString().split('T')[0],
+      activeModal: null,
+    });
   },
 
   // Dashboard
@@ -150,21 +194,51 @@ export const useAppStore = create<AppState>()(
   toggleMobileMenu: () =>
     set((state) => ({ mobileMenuOpen: !state.mobileMenuOpen })),
 
-  // Habits
+  // Habits — persist today's state into history on toggle
   habits: {
     agua: false,
     frutas: false,
     ejercicio: false,
     sueno: false,
   },
+  habitHistory: {},
   toggleHabit: (id) =>
-    set((state) => ({
-      habits: { ...state.habits, [id]: !state.habits[id] },
-    })),
+    set((state) => {
+      const today = new Date().toISOString().split('T')[0];
+      const updated = { ...state.habits, [id]: !state.habits[id] };
+      return {
+        habits: updated,
+        habitHistory: { ...state.habitHistory, [today]: updated },
+      };
+    }),
+
+  // Weight log
+  weightLog: [],
+  addWeight: (kg) =>
+    set((state) => {
+      const today = new Date().toISOString().split('T')[0];
+      const filtered = state.weightLog.filter(e => e.date !== today);
+      return { weightLog: [...filtered, { date: today, kg }].sort((a, b) => a.date.localeCompare(b.date)) };
+    }),
+  removeWeight: (date) =>
+    set((state) => ({ weightLog: state.weightLog.filter(e => e.date !== date) })),
+
+  // Meal check-off
+  mealChecks: {},
+  toggleMealCheck: (key) =>
+    set((state) => ({ mealChecks: { ...state.mealChecks, [key]: !state.mealChecks[key] } })),
 
   // Welcome video
   welcomeVidClosed: false,
   setWelcomeVidClosed: (closed) => set({ welcomeVidClosed: closed }),
+
+  // Meal plan assignment
+  mealPlanKey: 'planA',
+  setMealPlanKey: (key) => set({ mealPlanKey: key }),
+
+  // Nutrition targets (calculated after onboarding)
+  tdee: 0,
+  planGoal: 0,
 
   // Logout — signs out of Supabase and clears all local state
   logout: () => {
@@ -183,7 +257,13 @@ export const useAppStore = create<AppState>()(
       mobileSidebarOpen: false,
       mobileMenuOpen: false,
       habits: { agua: false, frutas: false, ejercicio: false, sueno: false },
+      habitHistory: {},
+      weightLog: [],
+      mealChecks: {},
       welcomeVidClosed: false,
+      mealPlanKey: 'planA',
+      tdee: 0,
+      planGoal: 0,
     });
   },
 }),
@@ -194,7 +274,13 @@ export const useAppStore = create<AppState>()(
     obData: state.obData,
     startDate: state.startDate,
     habits: state.habits,
+    habitHistory: state.habitHistory,
+    weightLog: state.weightLog,
+    mealChecks: state.mealChecks,
     welcomeVidClosed: state.welcomeVidClosed,
+    mealPlanKey: state.mealPlanKey,
+    tdee: state.tdee,
+    planGoal: state.planGoal,
     currentScreen: state.currentScreen === 'landing' ? 'landing' : state.currentScreen,
   }),
 }
