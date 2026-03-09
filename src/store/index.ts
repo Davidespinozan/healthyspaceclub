@@ -98,6 +98,12 @@ interface AppState {
   addFoodLog: (entry: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' }) => void;
   removeFoodLog: (id: string) => void;
 
+  // Plan / Trial
+  userPlan: 'none' | 'trial' | 'basico' | 'pro' | 'elite';
+  trialEndsAt: string | null;
+  selectPlan: (plan: 'basico' | 'pro' | 'elite') => void;
+  startTrial: (plan: 'basico' | 'pro' | 'elite') => void;
+
   // Logout
   logout: () => void;
 }
@@ -273,6 +279,15 @@ export const useAppStore = create<AppState>()(
   removeFoodLog: (id) =>
     set((state) => ({ foodLog: state.foodLog.filter(e => e.id !== id) })),
 
+  // Plan / Trial
+  userPlan: 'none',
+  trialEndsAt: null,
+  startTrial: (plan) => {
+    const endsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    set({ userPlan: plan, trialEndsAt: endsAt });
+  },
+  selectPlan: (plan) => set({ userPlan: plan, trialEndsAt: null }),
+
   // Logout — signs out of Supabase and clears all local state
   logout: () => {
     import('../lib/supabase').then(({ supabase }) => supabase.auth.signOut());
@@ -299,6 +314,8 @@ export const useAppStore = create<AppState>()(
       planGoal: 0,
       workoutLog: [],
       foodLog: [],
+      userPlan: 'none',
+      trialEndsAt: null,
     });
   },
 }),
@@ -319,6 +336,8 @@ export const useAppStore = create<AppState>()(
     workoutLog: state.workoutLog,
     foodLog: state.foodLog,
     currentScreen: state.currentScreen === 'landing' ? 'landing' : state.currentScreen,
+    userPlan: state.userPlan,
+    trialEndsAt: state.trialEndsAt,
   }),
 }
   )

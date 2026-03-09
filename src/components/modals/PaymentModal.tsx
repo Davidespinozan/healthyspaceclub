@@ -26,8 +26,11 @@ export default function PaymentModal() {
           <div>
             <div className="pay-plan-lbl">Plan seleccionado</div>
             <div className="pay-plan-name">{payInfo.plan}</div>
-            <div className="pay-plan-price">{payInfo.price} / {payInfo.period}</div>
+            <div className="pay-plan-price">{payInfo.price} MXN</div>
+            <div className="pay-plan-period">{payInfo.period}</div>
             <div className="pay-feats">
+              {payInfo.plan.includes('Elite') && <span className="pf">🤖 AI Coach</span>}
+              {(payInfo.plan.includes('Pro') || payInfo.plan.includes('Elite')) && <span className="pf">📊 Macros</span>}
               <span className="pf">🎬 Videos</span>
               <span className="pf">🥗 28 Días</span>
               <span className="pf">💪 Rutinas</span>

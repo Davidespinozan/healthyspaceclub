@@ -22,6 +22,7 @@ import FoodLog from '../components/FoodLog';
 import AICoach from '../components/AICoach';
 import WeeklyInsight from '../components/WeeklyInsight';
 import AppleHealthCard from '../components/AppleHealthCard';
+import UpgradePrompt from '../components/UpgradePrompt';
 
 // ── Mapa de palabras clave de porciones → receta del recetario ──────────────
 const SALSA_REF_MAP: [string, string][] = [
@@ -84,7 +85,16 @@ export default function DashboardScreen() {
     mobileSidebarOpen, setMobileSidebarOpen,
     openVideo,
     goTo, obData, startDate, mealPlanKey, tdee, planGoal,
+    userPlan, trialEndsAt,
   } = useAppStore();
+
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  const trialDaysLeft = (() => {
+    if (!trialEndsAt) return 0;
+    const diff = new Date(trialEndsAt).getTime() - Date.now();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  })();
 
   const pageTitles: Record<string, string> = {
     bienvenida: 'Mi Espacio', alimentacion: 'Plan de Alimentación',
@@ -123,12 +133,12 @@ export default function DashboardScreen() {
     return Math.max(1, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
   })();
 
-  const userPlan = mealPlans[mealPlanKey] ?? mealPlans['planA'];
+  const activeMealPlan = mealPlans[mealPlanKey] ?? mealPlans['planA'];
 
   // Escala las porciones al objetivo calórico exacto del usuario
   const scaledPlan = useMemo(
-    () => planGoal > 0 ? scalePlan(userPlan, planGoal) : userPlan,
-    [userPlan, planGoal],
+    () => planGoal > 0 ? scalePlan(activeMealPlan, planGoal) : activeMealPlan,
+    [activeMealPlan, planGoal],
   );
 
   const activeThemes = cuisineThemesMap[mealPlanKey] ?? cuisineThemesMap['planA'];
@@ -216,6 +226,27 @@ export default function DashboardScreen() {
 
       {/* MAIN */}
       <main className="dash-main">
+        {/* ── TRIAL / ACTIVATION BANNER ── */}
+        {!bannerDismissed && (userPlan === 'trial' || userPlan === 'none') && (
+          <div className="trial-banner">
+            <span className="trial-banner-text">
+              {userPlan === 'trial'
+                ? `⏳ Tu prueba gratuita termina en ${trialDaysLeft} día${trialDaysLeft !== 1 ? 's' : ''}`
+                : '🔓 Activa tu membresía para acceso completo'}
+            </span>
+            {userPlan === 'trial' ? (
+              <button className="trial-banner-cta" onClick={() => openPay('Pro Mensual', '$199', 'Membresía mensual · Plan Pro')}>
+                Suscribirte ahora
+              </button>
+            ) : (
+              <button className="trial-banner-cta" onClick={() => goTo('landing')}>
+                Ver planes
+              </button>
+            )}
+            <button className="trial-banner-close" onClick={() => setBannerDismissed(true)}>✕</button>
+          </div>
+        )}
+
         <div className="topbar">
           <button className="mob-menu-btn" onClick={() => setMobileSidebarOpen(true)}><Menu size={18} /></button>
           <div className="topbar-title">{pageTitles[dashPage] || 'Mi Espacio'}</div>
@@ -244,7 +275,9 @@ export default function DashboardScreen() {
           <WeightTracker />
 
           {/* Análisis semanal IA */}
-          <WeeklyInsight />
+          <UpgradePrompt requiredPlan="elite" featureName="Análisis Semanal IA">
+            <WeeklyInsight />
+          </UpgradePrompt>
 
           {/* Fotos de progreso */}
           <ProgressPhotos />
