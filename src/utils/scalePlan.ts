@@ -42,8 +42,16 @@ function bestFrac(frac: number): { sym: string; dist: number } {
   return best;
 }
 
-function displayAmt(n: number, unit: string): string {
+// Ingredientes que solo existen en unidades enteras (no puedes usar ⅔ de huevo)
+const WHOLE_ONLY_RE = /\b(huevos?|claras de huevo)\b/i;
+
+function displayAmt(n: number, unit: string, ingredient?: string): string {
   if (n <= 0) return '0';
+
+  // Huevos → siempre enteros (mínimo 1)
+  if (ingredient && WHOLE_ONLY_RE.test(ingredient)) {
+    return String(Math.max(1, Math.round(n)));
+  }
 
   // Gramos → múltiplos de 5 (≥20g) o entero (<20g), mínimo 1
   if (unit === 'g') {
@@ -112,7 +120,7 @@ function scaleSingle(raw: string, factor: number): string {
     const qty  = parseAmt(m[1]);
     const unit = NORM_UNIT[m[2].toLowerCase()] ?? m[2];
     const rest = m[3].trim();
-    if (qty > 0) return `${displayAmt(qty * factor, unit)} ${unit} ${rest}`;
+    if (qty > 0) return `${displayAmt(qty * factor, unit, rest)} ${unit} ${rest}`;
   }
 
   // {cantidad} {ingrediente} — unidad implícita pz
@@ -122,7 +130,7 @@ function scaleSingle(raw: string, factor: number): string {
     const rest = m2[2].trim();
     // Evitar re-parsear si "rest" empieza con una unidad (doble-match)
     if (qty > 0 && !/^(g|tz|pz|cda|cdita|reb)\b/i.test(rest)) {
-      return `${displayAmt(qty * factor, 'pz')} ${rest}`;
+      return `${displayAmt(qty * factor, 'pz', rest)} ${rest}`;
     }
   }
 

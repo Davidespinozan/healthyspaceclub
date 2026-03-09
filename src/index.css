@@ -3003,3 +3003,288 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
 .mc-text { font-size:.82rem; color:var(--forest); display:flex; flex-wrap:wrap; align-items:center; gap:4px; }
 .mc-text.done { text-decoration:line-through; }
 .mc-complete { font-size:.7rem; color:var(--sage); font-weight:600; margin-top:4px; text-align:center; opacity:.7; }
+
+/* ═══════════════════════════════════
+   MACRO TRACKER
+═══════════════════════════════════ */
+.macro-tracker { background:white; border-radius:var(--r); padding:20px; border:1px solid rgba(46,74,66,.08); }
+.macro-title { font-weight:700; font-size:.95rem; color:var(--forest); }
+.macro-sub { font-size:.73rem; color:var(--sage); margin-top:2px; margin-bottom:14px; }
+.macro-bars { display:flex; flex-direction:column; gap:14px; }
+.macro-bar-row {}
+.macro-bar-label { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+.macro-bar-emoji { font-size:.85rem; }
+.macro-bar-name { font-size:.78rem; font-weight:600; color:var(--forest); }
+.macro-bar-val { margin-left:auto; font-size:.72rem; color:var(--sage); font-weight:500; font-variant-numeric:tabular-nums; }
+.macro-bar-track { height:10px; background:rgba(46,74,66,.06); border-radius:5px; overflow:hidden; }
+.macro-bar-fill { height:100%; border-radius:5px; transition:width .5s ease; min-width:2px; }
+.macro-totals { margin-top:12px; text-align:center; }
+.macro-total-item { font-size:.73rem; color:var(--sage); font-weight:600; }
+
+/* ═══════════════════════════════════
+   WORKOUT LOGGER
+═══════════════════════════════════ */
+.workout-logger { background:white; border-radius:var(--r); padding:20px; border:1px solid rgba(46,74,66,.08); }
+.wl-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.wl-title { font-weight:700; font-size:.95rem; color:var(--forest); }
+.wl-add-btn { background:var(--forest); color:white; border:none; border-radius:8px; padding:6px 14px; font-size:.75rem; font-weight:600; cursor:pointer; }
+.wl-add-btn:hover { opacity:.9; }
+
+/* chart */
+.wl-chart { margin-bottom:16px; }
+.wl-chart-label { font-size:.68rem; color:var(--sage); margin-bottom:6px; font-weight:500; }
+.wl-chart-bars { display:flex; align-items:flex-end; gap:4px; height:60px; }
+.wl-chart-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; height:100%; justify-content:flex-end; }
+.wl-chart-bar { width:100%; background:var(--sage); border-radius:3px 3px 0 0; min-height:3px; transition:height .3s ease; }
+.wl-chart-day { font-size:.55rem; color:var(--sage); white-space:nowrap; }
+
+/* today */
+.wl-today { margin-bottom:14px; }
+.wl-today-head { display:flex; justify-content:space-between; align-items:center; font-size:.78rem; color:var(--forest); font-weight:600; margin-bottom:8px; }
+.wl-vol { font-size:.7rem; color:var(--sage); font-weight:500; }
+.wl-entry { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(46,74,66,.05); }
+.wl-entry:last-child { border-bottom:none; }
+.wl-entry-name { font-size:.8rem; color:var(--forest); font-weight:600; min-width:80px; }
+.wl-entry-sets { display:flex; flex-wrap:wrap; gap:4px; flex:1; }
+.wl-set-chip { background:rgba(46,74,66,.06); padding:2px 8px; border-radius:6px; font-size:.68rem; color:var(--forest); font-variant-numeric:tabular-nums; }
+.wl-entry-del { background:none; border:none; color:var(--sage); cursor:pointer; font-size:.7rem; padding:4px; opacity:.6; }
+.wl-entry-del:hover { opacity:1; color:#d04040; }
+
+/* empty */
+.wl-empty { text-align:center; padding:20px 10px; color:var(--sage); font-size:.82rem; }
+.wl-empty-icon { font-size:1.5rem; margin-bottom:4px; }
+.wl-empty-hint { font-size:.7rem; opacity:.7; margin-top:2px; }
+
+/* form */
+.wl-form { border-top:1px solid rgba(46,74,66,.08); padding-top:14px; }
+.wl-input { width:100%; padding:8px 12px; border:1.5px solid rgba(46,74,66,.15); border-radius:8px; font-size:.82rem; color:var(--forest); outline:none; box-sizing:border-box; }
+.wl-input:focus { border-color:var(--sage); }
+.wl-sets { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+.wl-set-row { display:flex; align-items:center; gap:6px; }
+.wl-set-num { font-size:.7rem; color:var(--sage); font-weight:600; width:38px; flex-shrink:0; }
+.wl-set-input { width:60px; padding:5px 8px; border:1.5px solid rgba(46,74,66,.15); border-radius:6px; font-size:.78rem; text-align:center; color:var(--forest); outline:none; }
+.wl-set-input:focus { border-color:var(--sage); }
+.wl-set-x { font-size:.7rem; color:var(--sage); }
+.wl-set-unit { font-size:.68rem; color:var(--sage); }
+.wl-set-del { background:none; border:none; color:var(--sage); cursor:pointer; font-size:.65rem; opacity:.5; padding:2px 4px; }
+.wl-set-del:hover { opacity:1; color:#d04040; }
+.wl-form-actions { display:flex; gap:8px; margin-top:12px; }
+.wl-btn-set { background:rgba(46,74,66,.06); border:none; border-radius:8px; padding:6px 14px; font-size:.75rem; font-weight:600; color:var(--forest); cursor:pointer; }
+.wl-btn-set:hover { background:rgba(46,74,66,.12); }
+.wl-btn-save { background:var(--forest); color:white; border:none; border-radius:8px; padding:6px 18px; font-size:.75rem; font-weight:600; cursor:pointer; margin-left:auto; }
+.wl-btn-save:hover { opacity:.9; }
+.wl-btn-save:disabled { opacity:.4; cursor:not-allowed; }
+
+/* ═══════════════════════════════════
+   PROGRESS PHOTOS — COMPARE MODE
+═══════════════════════════════════ */
+.prog-head-actions { display:flex; gap:6px; align-items:center; }
+.prog-compare-btn { background:rgba(46,74,66,.06); border:none; border-radius:8px; padding:5px 12px; font-size:.72rem; font-weight:600; color:var(--forest); cursor:pointer; }
+.prog-compare-btn:hover { background:rgba(46,74,66,.12); }
+.prog-compare-btn.active { background:var(--forest); color:white; }
+.prog-compare { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; margin-bottom:16px; padding:12px; background:rgba(46,74,66,.03); border-radius:12px; }
+.prog-compare-slot { text-align:center; }
+.prog-compare-img { width:100%; max-height:200px; object-fit:cover; border-radius:10px; }
+.prog-compare-date { font-size:.68rem; color:var(--sage); margin-top:4px; }
+.prog-compare-vs { font-weight:800; font-size:.85rem; color:var(--sage); opacity:.5; }
+.prog-compare-placeholder { padding:40px 12px; border:2px dashed rgba(46,74,66,.15); border-radius:10px; font-size:.75rem; color:var(--sage); opacity:.6; }
+.prog-compare-hint { text-align:center; font-size:.75rem; color:var(--sage); margin-bottom:12px; opacity:.7; }
+.prog-item.prog-selected { outline:3px solid var(--sage); outline-offset:-3px; }
+.prog-check { position:absolute; top:6px; left:6px; width:22px; height:22px; border-radius:50%; background:var(--sage); color:white; display:flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:700; }
+.prog-item { position:relative; }
+
+/* ═══════════════════════════════════
+   SWAP BUTTON (ingredient swap)
+═══════════════════════════════════ */
+.swap-wrapper { position:relative; display:inline-flex; }
+.swap-btn { background:none; border:none; cursor:pointer; font-size:.75rem; padding:0 3px; opacity:.5; transition:opacity .15s; }
+.swap-btn:hover { opacity:1; }
+.swap-popup { position:absolute; left:0; top:100%; z-index:50; background:white; border:1px solid rgba(46,74,66,.12); border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,.1); padding:10px 12px; min-width:200px; max-width:280px; }
+.swap-popup-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:.75rem; font-weight:600; color:var(--forest); }
+.swap-popup-close { background:none; border:none; cursor:pointer; font-size:.7rem; color:var(--sage); padding:2px; }
+.swap-popup-empty { font-size:.73rem; color:var(--sage); padding:4px 0; }
+.swap-popup-list { display:flex; flex-direction:column; gap:6px; }
+.swap-popup-item { padding:4px 0; border-bottom:1px solid rgba(46,74,66,.05); }
+.swap-popup-item:last-of-type { border-bottom:none; }
+.swap-item-name { font-size:.78rem; font-weight:600; color:var(--forest); }
+.swap-item-amount { font-size:.68rem; color:var(--sage); }
+
+/* ═══════════════════════════════════
+   TODAY STATS
+═══════════════════════════════════ */
+.today-stats { background:var(--forest); border-radius:var(--r); padding:18px; margin-bottom:16px; }
+.ts-title { font-size:.8rem; font-weight:600; color:rgba(255,255,255,.6); text-transform:uppercase; letter-spacing:.06em; margin-bottom:14px; }
+.ts-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ts-card { background:rgba(255,255,255,.07); border-radius:12px; padding:14px 12px; }
+
+/* Calorías */
+.ts-kcal { display:flex; align-items:center; gap:12px; }
+.ts-ring { width:88px; height:88px; flex-shrink:0; }
+.ts-kcal-info { display:flex; flex-direction:column; gap:3px; }
+.ts-kcal-label { font-size:.78rem; font-weight:700; color:white; }
+.ts-kcal-goal { font-size:.68rem; color:rgba(255,255,255,.5); }
+.ts-kcal-remaining { font-size:.7rem; color:rgba(255,255,255,.75); margin-top:2px; }
+
+/* Macros */
+.ts-macros { display:flex; flex-direction:column; gap:8px; }
+.ts-macros-title { font-size:.72rem; font-weight:600; color:rgba(255,255,255,.6); margin-bottom:2px; }
+.ts-macro-row { display:flex; align-items:center; gap:7px; }
+.ts-macro-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.ts-macro-lbl { font-size:.72rem; color:rgba(255,255,255,.7); flex:1; }
+.ts-macro-val { font-size:.75rem; font-weight:700; color:white; }
+
+/* Hábitos */
+.ts-habits { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:6px; }
+.ts-habits-score { font-size:1.8rem; font-weight:800; color:white; line-height:1; }
+.ts-habits-label { font-size:.7rem; color:rgba(255,255,255,.55); }
+.ts-habits-dots { display:flex; gap:6px; margin-top:4px; }
+.ts-habit-dot { font-size:1.1rem; opacity:.35; transition:opacity .2s; }
+.ts-habit-dot.done { opacity:1; }
+
+/* Gym */
+.ts-gym { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:4px; }
+.ts-gym-vol { font-size:1.4rem; font-weight:800; color:white; line-height:1; }
+.ts-gym-unit { font-size:.68rem; color:rgba(255,255,255,.5); }
+.ts-gym-sets { font-size:.72rem; color:rgba(255,255,255,.7); margin-top:4px; }
+
+/* ═══════════════════════════════════
+   FOOD LOG
+═══════════════════════════════════ */
+.food-log { background:white; border:1px solid var(--bdr); border-radius:var(--r); padding:18px; margin-bottom:16px; }
+.fl-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.fl-title { font-size:.95rem; font-weight:700; color:var(--forest); }
+.fl-add-btn { background:var(--forest); color:white; border:none; border-radius:8px; padding:6px 14px; font-size:.78rem; font-weight:600; cursor:pointer; }
+
+/* Progress bar */
+.fl-progress { margin-bottom:12px; }
+.fl-progress-row { display:flex; justify-content:space-between; font-size:.73rem; color:var(--sage); margin-bottom:5px; }
+.fl-progress-pct { font-weight:700; color:var(--forest); }
+.fl-progress-track { height:6px; background:var(--sand); border-radius:3px; overflow:hidden; }
+.fl-progress-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+
+/* Macro chips */
+.fl-macros { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.fl-macro-chip { font-size:.7rem; font-weight:600; padding:4px 10px; border-radius:20px; }
+.fl-prot  { background:#fee2e2; color:#b91c1c; }
+.fl-carbs { background:#fef3c7; color:#92400e; }
+.fl-fat   { background:#dbeafe; color:#1d4ed8; }
+
+/* Form */
+.fl-form { background:var(--cream); border-radius:12px; padding:14px; margin-bottom:12px; display:flex; flex-direction:column; gap:10px; }
+.fl-textarea { width:100%; border:1px solid var(--bdr); border-radius:8px; padding:10px 12px; font-size:.82rem; color:var(--forest); background:white; resize:none; font-family:inherit; }
+.fl-textarea:focus { outline:none; border-color:var(--sage); }
+.fl-error { font-size:.75rem; color:#ef4444; background:#fee2e2; border-radius:6px; padding:6px 10px; }
+.fl-form-actions { display:flex; gap:8px; }
+.fl-btn-ai { flex:1; background:var(--forest); color:white; border:none; border-radius:8px; padding:9px 14px; font-size:.8rem; font-weight:600; cursor:pointer; }
+.fl-btn-ai:disabled { opacity:.5; cursor:not-allowed; }
+.fl-btn-manual { background:white; color:var(--forest); border:1px solid var(--bdr); border-radius:8px; padding:9px 14px; font-size:.8rem; font-weight:600; cursor:pointer; }
+.fl-btn-manual:disabled { opacity:.5; cursor:not-allowed; }
+.fl-ai-hint { font-size:.68rem; color:var(--sage); text-align:center; }
+
+/* Empty state */
+.fl-empty { text-align:center; padding:20px; color:var(--sage); font-size:.85rem; }
+.fl-empty-icon { font-size:2rem; margin-bottom:8px; }
+.fl-empty-hint { font-size:.73rem; margin-top:4px; opacity:.7; }
+
+/* Entries */
+.fl-entries { display:flex; flex-direction:column; gap:8px; }
+.fl-entry { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:10px; background:var(--cream); border-radius:10px; }
+.fl-entry-left { display:flex; align-items:flex-start; gap:8px; flex:1; min-width:0; }
+.fl-entry-source { font-size:1rem; flex-shrink:0; }
+.fl-entry-desc { font-size:.82rem; font-weight:600; color:var(--forest); margin-bottom:3px; word-break:break-word; }
+.fl-entry-macros { font-size:.7rem; color:var(--sage); }
+.fl-entry-del { background:none; border:none; cursor:pointer; color:var(--sage); font-size:.75rem; padding:2px 5px; flex-shrink:0; opacity:.6; }
+.fl-entry-del:hover { opacity:1; color:#ef4444; }
+
+/* ═══════════════════════════════════
+   WORKOUT LOGGER — progressive overload
+═══════════════════════════════════ */
+.wl-suggestion { background:#ecfdf5; border:1px solid #6ee7b7; border-radius:8px; padding:8px 12px; font-size:.78rem; color:#065f46; margin-top:4px; }
+.swap-popup-note { font-size:.62rem; color:var(--sage); opacity:.7; margin-top:6px; font-style:italic; }
+
+/* ═══════════════════════════════════
+   DAILY GREETING
+═══════════════════════════════════ */
+.daily-greeting { padding:20px 0 8px; }
+.dg-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.dg-date { font-size:.78rem; color:var(--sage); font-weight:500; }
+.dg-chips { display:flex; gap:6px; }
+.dg-chip { font-size:.7rem; font-weight:600; background:var(--sand); color:var(--forest); border-radius:20px; padding:3px 10px; }
+.dg-chip-fire { background:#fef3c7; color:#92400e; }
+.dg-hello { font-size:1.55rem; font-weight:700; color:var(--forest); line-height:1.2; margin-bottom:6px; }
+.dg-hello strong { color:var(--sage); }
+.dg-motivation { font-size:.83rem; color:var(--sage); line-height:1.5; padding-bottom:4px; }
+
+/* ═══════════════════════════════════
+   HABIT TRACKER — rediseño UX
+═══════════════════════════════════ */
+.ht-card { background:white; border:1px solid var(--bdr); border-radius:var(--r); padding:18px; margin-bottom:16px; transition:border-color .3s; }
+.ht-card.ht-all-done { border-color:#22c55e; background:#f0fdf4; }
+.ht-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
+.ht-title { font-size:.95rem; font-weight:700; color:var(--forest); }
+.ht-sub { font-size:.75rem; color:var(--sage); margin-top:2px; }
+.ht-streak-badge { background:#fef3c7; color:#92400e; font-size:.75rem; font-weight:700; border-radius:20px; padding:4px 12px; white-space:nowrap; }
+
+/* Celebración */
+.ht-celebrate { background:#dcfce7; border:1px solid #86efac; border-radius:10px; padding:10px 14px; margin-bottom:12px; text-align:center; animation:ht-pop .4s cubic-bezier(.34,1.56,.64,1); }
+.ht-celebrate-text { font-size:.85rem; font-weight:700; color:#166534; }
+@keyframes ht-pop { from { transform:scale(.92); opacity:0; } to { transform:scale(1); opacity:1; } }
+
+/* Grid de hábitos */
+.ht-habits-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.ht-habit-btn { background:var(--cream); border:2px solid var(--sand); border-radius:14px; padding:14px 10px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:5px; transition:all .2s cubic-bezier(.34,1.56,.64,1); position:relative; }
+.ht-habit-btn:active { transform:scale(.95); }
+.ht-habit-btn.done { background:#f0fdf4; border-color:#22c55e; }
+.ht-habit-btn.done .ht-btn-label { color:#166534; }
+.ht-btn-check { position:absolute; top:8px; right:10px; font-size:.7rem; font-weight:700; color:#22c55e; min-width:14px; }
+.ht-btn-emoji { font-size:1.6rem; }
+.ht-btn-label { font-size:.82rem; font-weight:700; color:var(--forest); }
+.ht-btn-sub { font-size:.68rem; color:var(--sage); text-align:center; }
+
+/* Barra */
+.ht-pbar-wrap { margin-bottom:14px; }
+.ht-pbar { height:6px; background:var(--sand); border-radius:3px; overflow:hidden; }
+.ht-pfill { height:100%; background:#22c55e; border-radius:3px; transition:width .5s ease; }
+
+/* Heatmap */
+.ht-week { }
+.ht-week-label { font-size:.7rem; color:var(--sage); margin-bottom:8px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+.ht-heatmap { display:flex; gap:6px; }
+.ht-hm-col { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+.ht-hm-cell { width:100%; aspect-ratio:1; border-radius:4px; background:var(--sand); transition:background .2s; }
+.ht-hm-cell.lv1 { background:#bbf7d0; }
+.ht-hm-cell.lv2 { background:#4ade80; }
+.ht-hm-cell.lv3 { background:#16a34a; }
+.ht-hm-cell.lv4 { background:#166534; }
+.ht-hm-day { font-size:.62rem; color:var(--sage); }
+
+/* ═══════════════════════════════════
+   FOOD LOG — rediseño UX
+═══════════════════════════════════ */
+.food-log { background:white; border:1px solid var(--bdr); border-radius:var(--r); padding:18px; margin-bottom:16px; }
+.fl-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.fl-title { font-size:.95rem; font-weight:700; color:var(--forest); }
+.fl-subtitle { font-size:.73rem; color:var(--sage); margin-top:2px; }
+.fl-add-btn { background:var(--forest); color:white; border:none; border-radius:8px; padding:6px 14px; font-size:.78rem; font-weight:600; cursor:pointer; white-space:nowrap; }
+.fl-progress-track { height:5px; background:var(--sand); border-radius:3px; overflow:hidden; margin-bottom:12px; }
+.fl-progress-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+.fl-form { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.fl-textarea { width:100%; border:1px solid var(--bdr); border-radius:10px; padding:12px; font-size:.84rem; color:var(--forest); background:var(--cream); resize:none; font-family:inherit; }
+.fl-textarea:focus { outline:none; border-color:var(--sage); background:white; }
+.fl-btn-submit { background:var(--forest); color:white; border:none; border-radius:10px; padding:11px; font-size:.85rem; font-weight:600; cursor:pointer; }
+.fl-btn-submit:disabled { opacity:.5; cursor:not-allowed; }
+.fl-empty { text-align:center; padding:14px 0; color:var(--sage); font-size:.82rem; }
+.fl-entries { display:flex; flex-direction:column; gap:8px; }
+.fl-entry { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:10px; background:var(--cream); border-radius:10px; }
+.fl-entry-left { display:flex; align-items:flex-start; gap:8px; flex:1; min-width:0; }
+.fl-entry-source { font-size:1rem; flex-shrink:0; }
+.fl-entry-desc { font-size:.82rem; font-weight:600; color:var(--forest); margin-bottom:2px; word-break:break-word; }
+.fl-entry-macros { font-size:.7rem; color:var(--sage); }
+.fl-entry-del { background:none; border:none; cursor:pointer; color:var(--sage); font-size:.8rem; padding:2px 4px; opacity:.5; flex-shrink:0; }
+.fl-entry-del:hover { opacity:1; color:#ef4444; }
+.fl-macros-total { display:flex; gap:12px; justify-content:center; padding:10px 0 2px; font-size:.78rem; font-weight:600; color:var(--sage); border-top:1px solid var(--bdr); margin-top:4px; }
+
+/* ═══════════════════════════════════
+   BOTTOM NAV — 4 items
+═══════════════════════════════════ */
+.bn-inner { grid-template-columns: repeat(4, 1fr); }

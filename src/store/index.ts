@@ -88,6 +88,16 @@ interface AppState {
   tdee: number;        // kcal/day maintenance
   planGoal: number;    // kcal/day target (tdee ± adjustment)
 
+  // Workout log
+  workoutLog: { date: string; exercise: string; sets: { reps: number; kg: number }[] }[];
+  addWorkoutEntry: (exercise: string, sets: { reps: number; kg: number }[]) => void;
+  removeWorkoutEntry: (date: string, exercise: string) => void;
+
+  // Food log (manual + AI)
+  foodLog: { id: string; date: string; desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' }[];
+  addFoodLog: (entry: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' }) => void;
+  removeFoodLog: (id: string) => void;
+
   // Logout
   logout: () => void;
 }
@@ -240,6 +250,29 @@ export const useAppStore = create<AppState>()(
   tdee: 0,
   planGoal: 0,
 
+  // Workout log
+  workoutLog: [],
+  addWorkoutEntry: (exercise, sets) =>
+    set((state) => {
+      const today = new Date().toISOString().split('T')[0];
+      return { workoutLog: [...state.workoutLog, { date: today, exercise, sets }] };
+    }),
+  removeWorkoutEntry: (date, exercise) =>
+    set((state) => ({
+      workoutLog: state.workoutLog.filter(e => !(e.date === date && e.exercise === exercise)),
+    })),
+
+  // Food log
+  foodLog: [],
+  addFoodLog: (entry) =>
+    set((state) => {
+      const today = new Date().toISOString().split('T')[0];
+      const id = `${today}-${Date.now()}`;
+      return { foodLog: [...state.foodLog, { id, date: today, ...entry }] };
+    }),
+  removeFoodLog: (id) =>
+    set((state) => ({ foodLog: state.foodLog.filter(e => e.id !== id) })),
+
   // Logout — signs out of Supabase and clears all local state
   logout: () => {
     import('../lib/supabase').then(({ supabase }) => supabase.auth.signOut());
@@ -264,6 +297,8 @@ export const useAppStore = create<AppState>()(
       mealPlanKey: 'planA',
       tdee: 0,
       planGoal: 0,
+      workoutLog: [],
+      foodLog: [],
     });
   },
 }),
@@ -281,6 +316,8 @@ export const useAppStore = create<AppState>()(
     mealPlanKey: state.mealPlanKey,
     tdee: state.tdee,
     planGoal: state.planGoal,
+    workoutLog: state.workoutLog,
+    foodLog: state.foodLog,
     currentScreen: state.currentScreen === 'landing' ? 'landing' : state.currentScreen,
   }),
 }

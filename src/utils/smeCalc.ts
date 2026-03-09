@@ -90,6 +90,9 @@ function smeKey(name: string): string {
 // ── Tipo de entrada compatible con NutrientEntry de nutritionDB ──────────
 export interface SmeNutrientEntry {
   kcal: number;         // kcal por 100 g
+  prot: number;         // g proteína por 100 g
+  cho:  number;         // g carbohidratos por 100 g
+  fat:  number;         // g grasa por 100 g
   units?: {
     tz?:    number;     // g por taza
     pz?:    number;     // g por pieza
@@ -110,10 +113,14 @@ export const smeNutritionDB: Record<string, SmeNutrientEntry> = (() => {
         const grams = parseGrams(food.amount);
         if (!grams || grams === 0) continue;  // sin dato de gramos → omitir
 
-        const kcalPer100g = Math.round((sub.kcal / grams) * 1000) / 10;
+        const factor = 100 / grams;
+        const kcalPer100g = Math.round(sub.kcal * factor * 10) / 10;
+        const protPer100g = Math.round(sub.prot * factor * 10) / 10;
+        const choPer100g  = Math.round(sub.cho  * factor * 10) / 10;
+        const fatPer100g  = Math.round(sub.fat  * factor * 10) / 10;
         const { type, qty } = parseUnit(food.amount);
 
-        const entry: SmeNutrientEntry = { kcal: kcalPer100g };
+        const entry: SmeNutrientEntry = { kcal: kcalPer100g, prot: protPer100g, cho: choPer100g, fat: fatPer100g };
         if (type && qty > 0) {
           const gPerUnit = Math.round((grams / qty) * 10) / 10;
           entry.units = { [type]: gPerUnit };

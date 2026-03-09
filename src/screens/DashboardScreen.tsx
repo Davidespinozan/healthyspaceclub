@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Home, Leaf, Video, Dumbbell, Calendar, Sprout, BookOpen, ClipboardList, User, LogOut, ChevronUp, ChevronDown, Menu, Play, X, Camera, ShoppingCart } from 'lucide-react';
+import { Home, Leaf, Video, Dumbbell, Calendar, Sprout, BookOpen, ClipboardList, User, LogOut, ChevronUp, ChevronDown, Menu, Play, Camera } from 'lucide-react';
 import { useAppStore } from '../store';
 import { mealPlans, cuisineThemesMap } from '../data/mealPlan';
 import { calcMealKcal, calcDayKcal, formatPortion } from '../utils/kcalCalc';
@@ -13,8 +13,12 @@ import Rutinas from '../components/Rutinas';
 import { salsasData, type SalsaRecipe } from '../data/salsas';
 import HabitTracker from '../components/HabitTracker';
 import WeightTracker from '../components/WeightTracker';
-import ShoppingList from '../components/ShoppingList';
 import MealCheckoff from '../components/MealCheckoff';
+import MacroTracker from '../components/MacroTracker';
+import WorkoutLogger from '../components/WorkoutLogger';
+import SwapButton from '../components/SwapButton';
+import TodayStats from '../components/TodayStats';
+import FoodLog from '../components/FoodLog';
 
 // ── Mapa de palabras clave de porciones → receta del recetario ──────────────
 const SALSA_REF_MAP: [string, string][] = [
@@ -75,7 +79,7 @@ export default function DashboardScreen() {
   const {
     dashPage, setDashPage, userName, logout,
     mobileSidebarOpen, setMobileSidebarOpen,
-    openVideo, welcomeVidClosed, setWelcomeVidClosed,
+    openVideo,
     goTo, obData, startDate, mealPlanKey, tdee, planGoal,
   } = useAppStore();
 
@@ -88,9 +92,8 @@ export default function DashboardScreen() {
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedCuisine, setSelectedCuisine] = useState(0);
-  const [welcomeVidPlaying, setWelcomeVidPlaying] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [nutriTab, setNutriTab] = useState<'menu' | 'plan' | 'que-equiv' | 'lista-equiv' | 'guia' | 'salsas' | 'shopping'>('menu');
+  const [nutriTab, setNutriTab] = useState<'menu' | 'plan' | 'que-equiv' | 'lista-equiv' | 'guia' | 'salsas'>('menu');
 
   function navTo(page: string) {
     setDashPage(page as any);
@@ -218,60 +221,18 @@ export default function DashboardScreen() {
 
         {/* ── BIENVENIDA ── */}
         <div className={`page${dashPage === 'bienvenida' ? ' on' : ''}`}>
-          <div className="w-hero">
-            <div className="w-tag">✦ Tu espacio personal de bienestar</div>
-            <h2>Hola, <em>{userName || 'campeón/a'}</em>.<br />Bienvenid@ al Club.</h2>
-            <p>Videos por ejercicio, recetas en pasos y tu plan de hábitos — todo en un solo lugar, en tu celular o computadora.</p>
-          </div>
 
-          {/* Welcome Video */}
-          {!welcomeVidClosed && (
-            <div className="welcome-vid">
-              <div className="welcome-vid-header">
-                <div className="welcome-vid-left">
-                  <span className="welcome-vid-icon"><Play size={15} strokeWidth={2} /></span>
-                  <div>
-                    <div className="welcome-vid-title">Video de bienvenida</div>
-                    <div className="welcome-vid-sub">Un mensaje para ti antes de empezar</div>
-                  </div>
-                </div>
-                <button className="welcome-vid-close" onClick={() => setWelcomeVidClosed(true)} title="Cerrar"><X size={13} /></button>
-              </div>
-              <div className="welcome-vid-player" onClick={() => setWelcomeVidPlaying(true)}>
-                {!welcomeVidPlaying ? (
-                  <div className="welcome-vid-thumb">
-                    <div className="welcome-vid-overlay" />
-                    <div className="welcome-vid-play">▶</div>
-                    <div className="welcome-vid-duration">2:30</div>
-                  </div>
-                ) : (
-                  <div className="welcome-vid-iframe">
-                    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" allow="autoplay; fullscreen" allowFullScreen title="Bienvenida" />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Saludo contextual */}
+          <DailyGreeting userName={userName} streakDays={streakDays} currentWeek={currentWeek} />
 
-          {/* Perfil */}
-          <div className="mi-profile">
-            <div className="mi-profile-title">Tu perfil</div>
-            <div className="mi-profile-grid">
-              <div className="mipf-row"><span className="mipf-lbl">Nombre</span><span className="mipf-val">{String(obData.name || userName || '—')}</span></div>
-              <div className="mipf-row"><span className="mipf-lbl">Email</span><span className="mipf-val mipf-sm">{String(obData.email || '—')}</span></div>
-              <div className="mipf-row"><span className="mipf-lbl">Sexo</span><span className="mipf-val">{String(obData.sex || '—')}</span></div>
-              <div className="mipf-row"><span className="mipf-lbl">Edad</span><span className="mipf-val">{obData.edad ? `${obData.edad} años` : '—'}</span></div>
-              <div className="mipf-row"><span className="mipf-lbl">Peso</span><span className="mipf-val">{obData.peso ? `${obData.peso} kg` : '—'}</span></div>
-              <div className="mipf-row"><span className="mipf-lbl">Estatura</span><span className="mipf-val">{obData.estatura ? `${obData.estatura} cm` : '—'}</span></div>
-              <div className="mipf-row"><span className="mipf-lbl">Actividad</span><span className="mipf-val">{String(obData.activity || '—')}</span></div>
-              <div className="mipf-row"><span className="mipf-lbl">Objetivo</span><span className="mipf-val">{String(obData.goal || '—')}</span></div>
-              {planGoal > 0 && <div className="mipf-row"><span className="mipf-lbl">🔥 Meta calórica</span><span className="mipf-val mipf-kcal">{planGoal.toLocaleString()} kcal/día</span></div>}
-              {tdee > 0 && <div className="mipf-row"><span className="mipf-lbl">TDEE</span><span className="mipf-val mipf-sm">{tdee.toLocaleString()} kcal mantenimiento</span></div>}
-            </div>
-          </div>
+          {/* Resumen del día */}
+          <TodayStats />
 
           {/* Hábitos diarios */}
           <HabitTracker />
+
+          {/* Log de comida */}
+          <FoodLog />
 
           {/* Progreso de peso */}
           <WeightTracker />
@@ -297,7 +258,6 @@ export default function DashboardScreen() {
                   { id: 'lista-equiv' as const, icon: <ScaleIcon />, title: 'Lista de Equivalentes', desc: 'Tabla de intercambio entre grupos de alimentos.' },
                   { id: 'guia' as const, icon: <CartIcon />, title: 'Guía de Alimentos', desc: 'Cómo elegir los mejores productos en el supermercado.' },
                   { id: 'salsas' as const, icon: <JarIcon />, title: 'Salsas y Aderezos', desc: '21 recetas caseras limpias para acompañar tus comidas.' },
-                  { id: 'shopping' as const, icon: <ShoppingCart size={18} />, title: 'Lista del Súper', desc: 'Tu lista de compras generada automáticamente desde tu plan.' },
                 ]).map(item => (
                   <button key={item.id} className="nutri-card" onClick={() => setNutriTab(item.id)}>
                     <span className="nc-icon">{item.icon}</span>
@@ -331,6 +291,7 @@ export default function DashboardScreen() {
                   </div>
                 </div>
               )}
+              <MacroTracker />
               {selectedDay == null ? (
                 <div className="day-selector">
                   <div className="day-selector-header">
@@ -392,6 +353,7 @@ export default function DashboardScreen() {
                                 🫙 Ver receta
                               </button>
                             )}
+                            <SwapButton portionText={p} />
                           </>
                         );
                       };
@@ -437,15 +399,6 @@ export default function DashboardScreen() {
 
           {/* Sub-section: Salsas y Aderezos */}
           {nutriTab === 'salsas' && <SalsasAderezos />}
-
-          {/* Sub-section: Lista del Súper */}
-          {nutriTab === 'shopping' && (
-            <ShoppingList
-              plan={scaledPlan}
-              cuisineRange={activeCuisine.days}
-              cuisineLabel={activeCuisine.label}
-            />
-          )}
         </div>
 
         {/* ── RECETAS ── */}
@@ -490,6 +443,9 @@ export default function DashboardScreen() {
             </div>
           </div>
           <SecVid title="Cómo funciona tu plan de entrenamiento" sub="La ruta oficial, etiquetas y reglas explicadas" duration="3:00" />
+
+          {/* Workout Logger */}
+          <WorkoutLogger />
 
           {/* How it works: video + pdf */}
           <div className="ep-how">
@@ -632,12 +588,10 @@ export default function DashboardScreen() {
       <nav className="bottom-nav">
         <div className="bn-inner">
           {[
-            { id: 'bienvenida', icon: '🏠', lbl: 'Inicio' },
-            { id: 'alimentacion', icon: '🥗', lbl: 'Nutrición' },
-            { id: 'recetas', icon: '🎬', lbl: 'Recetas' },
+            { id: 'bienvenida',    icon: '🏠', lbl: 'Inicio' },
+            { id: 'alimentacion',  icon: '🥗', lbl: 'Nutrición' },
             { id: 'entrenamiento', icon: '💪', lbl: 'Entreno' },
-            { id: 'rutinas', icon: '🗓️', lbl: 'Rutinas' },
-            { id: 'crecimiento', icon: '🌱', lbl: 'Crecer' },
+            { id: 'plan-crecimiento', icon: '🌱', lbl: 'Crecer' },
           ].map(item => (
             <div key={item.id} className={`bn-item${dashPage === item.id ? ' on' : ''}`} onClick={() => navTo(item.id)}>
               <div className="bn-icon">{item.icon}</div>
@@ -657,6 +611,9 @@ type PhotoEntry = { id: string; date: string; dataUrl: string };
 function ProgressPhotos() {
   const [photos, setPhotos] = useState<PhotoEntry[]>([]);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareA, setCompareA] = useState<string | null>(null);
+  const [compareB, setCompareB] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('hsc-progress-photos');
@@ -686,17 +643,71 @@ function ProgressPhotos() {
       localStorage.setItem('hsc-progress-photos', JSON.stringify(updated));
       return updated;
     });
+    if (compareA === id) setCompareA(null);
+    if (compareB === id) setCompareB(null);
   }
+
+  function handleSelect(id: string) {
+    if (!compareMode) { setLightbox(photos.find(p => p.id === id)?.dataUrl ?? null); return; }
+    if (!compareA) { setCompareA(id); return; }
+    if (compareA === id) { setCompareA(null); return; }
+    if (!compareB) { setCompareB(id); return; }
+    if (compareB === id) { setCompareB(null); return; }
+    // Both set, replace B
+    setCompareB(id);
+  }
+
+  function exitCompare() {
+    setCompareMode(false); setCompareA(null); setCompareB(null);
+  }
+
+  const photoA = photos.find(p => p.id === compareA);
+  const photoB = photos.find(p => p.id === compareB);
 
   return (
     <div className="prog-photos">
       <div className="prog-head">
         <div className="prog-title"><Camera size={15} strokeWidth={2} /> Fotos de progreso</div>
-        <label className="prog-add-btn">
-          + Agregar
-          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
-        </label>
+        <div className="prog-head-actions">
+          {photos.length >= 2 && (
+            <button className={`prog-compare-btn${compareMode ? ' active' : ''}`} onClick={() => compareMode ? exitCompare() : setCompareMode(true)}>
+              {compareMode ? '✕ Salir' : '⚖️ Comparar'}
+            </button>
+          )}
+          <label className="prog-add-btn">
+            + Agregar
+            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
+          </label>
+        </div>
       </div>
+
+      {/* Compare view */}
+      {compareMode && (photoA || photoB) && (
+        <div className="prog-compare">
+          <div className="prog-compare-slot">
+            {photoA ? (
+              <>
+                <img src={photoA.dataUrl} alt="Antes" className="prog-compare-img" />
+                <div className="prog-compare-date">{photoA.date}</div>
+              </>
+            ) : <div className="prog-compare-placeholder">Elige foto 1</div>}
+          </div>
+          <div className="prog-compare-vs">VS</div>
+          <div className="prog-compare-slot">
+            {photoB ? (
+              <>
+                <img src={photoB.dataUrl} alt="Después" className="prog-compare-img" />
+                <div className="prog-compare-date">{photoB.date}</div>
+              </>
+            ) : <div className="prog-compare-placeholder">Elige foto 2</div>}
+          </div>
+        </div>
+      )}
+
+      {compareMode && !photoA && !photoB && (
+        <div className="prog-compare-hint">Toca 2 fotos para compararlas lado a lado.</div>
+      )}
+
       {photos.length === 0 ? (
         <div className="prog-empty">
           <div className="prog-empty-icon">📷</div>
@@ -706,10 +717,17 @@ function ProgressPhotos() {
       ) : (
         <div className="prog-grid">
           {photos.map(p => (
-            <div key={p.id} className="prog-item">
-              <img src={p.dataUrl} alt={p.date} className="prog-img" onClick={() => setLightbox(p.dataUrl)} />
+            <div
+              key={p.id}
+              className={`prog-item${compareMode && (compareA === p.id || compareB === p.id) ? ' prog-selected' : ''}`}
+              onClick={() => handleSelect(p.id)}
+            >
+              <img src={p.dataUrl} alt={p.date} className="prog-img" />
               <div className="prog-date">{p.date}</div>
-              <button className="prog-del" onClick={() => deletePhoto(p.id)}>✕</button>
+              {!compareMode && <button className="prog-del" onClick={(e) => { e.stopPropagation(); deletePhoto(p.id); }}>✕</button>}
+              {compareMode && (compareA === p.id || compareB === p.id) && (
+                <div className="prog-check">✓</div>
+              )}
             </div>
           ))}
         </div>
@@ -835,6 +853,41 @@ function CrecimientoPage() {
             ))}
           </div>
         </>
+    </div>
+  );
+}
+
+/* ─────────────────────── Daily Greeting ─────────────────────── */
+function DailyGreeting({ userName, streakDays, currentWeek }: { userName: string; streakDays: number; currentWeek: number }) {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Buenos días' : hour < 18 ? 'Buenas tardes' : 'Buenas noches';
+  const emoji = hour < 12 ? '☀️' : hour < 18 ? '🌤️' : '🌙';
+
+  const today = new Date();
+  const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const dateStr = `${dayNames[today.getDay()]} ${today.getDate()} de ${monthNames[today.getMonth()]}`;
+
+  const motivations = [
+    'Cada día que actúas, te acercas más a tu mejor versión.',
+    'La constancia gana. Hoy cuenta.',
+    'No necesitas ser perfecto, solo consistente.',
+    'Un hábito a la vez. Un día a la vez.',
+    'Tu cuerpo recuerda lo que tu mente olvida.',
+  ];
+  const motivation = motivations[today.getDate() % motivations.length];
+
+  return (
+    <div className="daily-greeting">
+      <div className="dg-top">
+        <div className="dg-date">{emoji} {dateStr}</div>
+        <div className="dg-chips">
+          <span className="dg-chip">Semana {currentWeek}</span>
+          {streakDays > 0 && <span className="dg-chip dg-chip-fire">🔥 {streakDays} días</span>}
+        </div>
+      </div>
+      <h2 className="dg-hello">{greeting}, <strong>{userName || 'campeón/a'}</strong></h2>
+      <p className="dg-motivation">{motivation}</p>
     </div>
   );
 }

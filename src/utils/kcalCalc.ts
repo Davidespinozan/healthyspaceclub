@@ -1,5 +1,5 @@
 import { nutritionDB } from '../data/nutritionDB';
-import { smeNutritionDB, stripAccents } from './smeCalc';
+import { smeNutritionDB, stripAccents, type SmeNutrientEntry } from './smeCalc';
 
 // ── Conversión de fracciones ───────────────────────────────────────────────
 const FRACTIONS: Record<string, number> = {
@@ -257,4 +257,118 @@ export function formatPortion(raw: string): string {
     .replace(new RegExp(`${_AMT}\\s+(?:cditas?|cucharaditas?)\\b`, 'g'), (_, n) => `${n} ${_pl(n, 'cucharadita', 'cucharaditas')}`)
     // lata / latas → lata(s)
     .replace(new RegExp(`${_AMT}\\s+latas?\\b`, 'g'),               (_, n) => `${n} ${_pl(n, 'lata', 'latas')}`);
+}
+
+// ── Macronutrientes ─────────────────────────────────────────────────────
+export interface Macros { prot: number; carbs: number; fat: number }
+
+const ZERO_MACROS: Macros = { prot: 0, carbs: 0, fat: 0 };
+
+// Busca entrada SME con macros para un texto de ingrediente
+function findSmeEntry(text: string): SmeNutrientEntry | null {
+  const noAccent = stripAccents(text);
+  for (const key of Object.keys(smeNutritionDB).sort((a, b) => b.length - a.length)) {
+    if (noAccent.includes(key)) return smeNutritionDB[key];
+  }
+  return null;
+}
+
+// Calcula macros de gramos dada una entrada SME
+function macrosFromGrams(entry: SmeNutrientEntry, grams: number): Macros {
+  return {
+    prot:  Math.round(entry.prot * grams) / 100,
+    carbs: Math.round(entry.cho  * grams) / 100,
+    fat:   Math.round(entry.fat  * grams) / 100,
+  };
+}
+
+// Calcula macros de un ingrediente sin cantidad (bare)
+function calcBareMacros(text: string): Macros {
+  const cleaned = cleanIngredient(text);
+  const entry = findSmeEntry(cleaned) ?? findSmeEntry(text);
+  if (!entry) return ZERO_MACROS;
+  if (entry.units?.cda) return macrosFromGrams(entry, entry.units.cda * 3);
+  if (entry.units?.tz)  return macrosFromGrams(entry, entry.units.tz * 0.5);
+  if (entry.units?.pz)  return macrosFromGrams(entry, entry.units.pz);
+  return macrosFromGrams(entry, 30);
+}
+
+// Calcula macros de un string de porción (misma lógica que calcPortionKcal)
+export function calcPortionMacros(raw: string): Macros {
+  const s = normalize(raw);
+
+  // Nivel 1a: {cantidad} {unidad} {ingrediente}
+  const m = s.match(RE_AMT_UNIT_ING);
+  if (m && !m[3].includes(',')) {
+    const amount = parseAmount(m[1]);
+    const unit = m[2] as 'g' | 'tz' | 'pz' | 'cda' | 'cdita' | 'reb' | 'lata';
+    const ingredient = cleanIngredient(m[3]);
+    const entry = findSmeEntry(ingredient) ?? findSmeEntry(m[3]);
+    if (entry) {
+      let grams = 0;
+      if (unit === 'g') grams = amount;
+      else if (entry.units?.[unit] !== undefined) grams = amount * entry.units[unit]!;
+      else if (DEFAULT_UNIT_G[unit] !== undefined) grams = amount * DEFAULT_UNIT_G[unit];
+      if (grams > 0) return macrosFromGrams(entry, grams);
+    }
+  }
+
+  // Nivel 1b: {cantidad} {ingrediente}
+  const m2 = s.match(RE_AMT_ING);
+  if (m2) {
+    const amount = parseAmount(m2[1]);
+    const rawIng = m2[2];
+    const oIdx = rawIng.search(/\s+o\s+/);
+    if (oIdx >= 0) {
+      const a = calcPortionMacros(`${m2[1]} ${rawIng.slice(0, oIdx)}`);
+      if (a.prot + a.carbs + a.fat > 0) return a;
+      return calcPortionMacros(`${m2[1]} ${rawIng.slice(oIdx).replace(/^\s+o\s+/, '')}`);
+    }
+    if (!rawIng.includes(',')) {
+      const ingredient = cleanIngredient(rawIng);
+      const entry = findSmeEntry(ingredient) ?? findSmeEntry(rawIng);
+      if (entry?.units?.pz) return macrosFromGrams(entry, amount * entry.units.pz);
+      if (entry?.units?.tz) return macrosFromGrams(entry, amount * 20);
+    }
+  }
+
+  // Nivel 3: "A o B"
+  const oMatch = s.match(/^(.+?)\s+o\s+(.+)$/);
+  if (oMatch) {
+    const a = calcPortionMacros(oMatch[1]);
+    if (a.prot + a.carbs + a.fat > 0) return a;
+    return calcPortionMacros(oMatch[2]);
+  }
+
+  // Nivel 4: lista por comas / "y"
+  if (s.includes(',') || /\s+y\s+/.test(s)) {
+    const parts = s.split(/[,]\s*|\s+y\s+/).map(p => p.trim()).filter(p => p.length > 2);
+    return parts.reduce<Macros>((acc, p) => {
+      const pm = p.includes(',') ? calcBareMacros(p) : calcPortionMacros(p);
+      return { prot: acc.prot + pm.prot, carbs: acc.carbs + pm.carbs, fat: acc.fat + pm.fat };
+    }, { ...ZERO_MACROS });
+  }
+
+  return calcBareMacros(s);
+}
+
+// Calcula macros de una comida (array de porciones)
+export function calcMealMacros(portions: string[]): Macros {
+  return portions.reduce<Macros>((acc, p) => {
+    const cleaned = p.replace(/^[^:]+:\s*/, '');
+    const subItems = cleaned.split(/\s+\+\s+/);
+    for (const sub of subItems) {
+      const m = calcPortionMacros(sub);
+      acc.prot += m.prot; acc.carbs += m.carbs; acc.fat += m.fat;
+    }
+    return acc;
+  }, { ...ZERO_MACROS });
+}
+
+// Calcula macros del día completo
+export function calcDayMacros(meals: { portions: string[] }[]): Macros {
+  return meals.reduce<Macros>((acc, m) => {
+    const mm = calcMealMacros(m.portions);
+    return { prot: acc.prot + mm.prot, carbs: acc.carbs + mm.carbs, fat: acc.fat + mm.fat };
+  }, { ...ZERO_MACROS });
 }
