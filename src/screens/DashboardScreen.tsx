@@ -19,6 +19,8 @@ import WorkoutLogger from '../components/WorkoutLogger';
 import SwapButton from '../components/SwapButton';
 import TodayStats from '../components/TodayStats';
 import FoodLog from '../components/FoodLog';
+import AICoach from '../components/AICoach';
+import WeeklyInsight from '../components/WeeklyInsight';
 
 // ── Mapa de palabras clave de porciones → receta del recetario ──────────────
 const SALSA_REF_MAP: [string, string][] = [
@@ -236,6 +238,9 @@ export default function DashboardScreen() {
 
           {/* Progreso de peso */}
           <WeightTracker />
+
+          {/* Análisis semanal IA */}
+          <WeeklyInsight />
 
           {/* Fotos de progreso */}
           <ProgressPhotos />
@@ -600,6 +605,8 @@ export default function DashboardScreen() {
           ))}
         </div>
       </nav>
+
+      <AICoach />
     </>
   );
 }

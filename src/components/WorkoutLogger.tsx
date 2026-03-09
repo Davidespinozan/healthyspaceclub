@@ -1,5 +1,27 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../store';
+
+const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
+
+async function fetchExerciseTip(exercise: string): Promise<string> {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 120,
+      messages: [{ role: 'user', content: `Da UN tip de técnica breve (máx 2 frases) para "${exercise}" en español casual mexicano. Solo el tip, sin intro.` }],
+    }),
+  });
+  if (!res.ok) throw new Error('api');
+  const data = await res.json();
+  return data.content?.[0]?.text ?? '';
+}
 
 interface SetEntry { reps: number; kg: number }
 
@@ -33,6 +55,19 @@ export default function WorkoutLogger() {
   const [exercise, setExercise] = useState('');
   const [sets, setSets] = useState<SetEntry[]>([{ reps: 10, kg: 0 }]);
   const [showForm, setShowForm] = useState(false);
+  const [aiTip, setAiTip] = useState('');
+
+  // Fetch AI technique tip when exercise name is typed (debounced)
+  useEffect(() => {
+    if (!API_KEY || exercise.trim().length < 3) { setAiTip(''); return; }
+    const timer = setTimeout(async () => {
+      try {
+        const tip = await fetchExerciseTip(exercise.trim());
+        setAiTip(tip);
+      } catch { setAiTip(''); }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [exercise]);
 
   const today = new Date().toISOString().split('T')[0];
   const todayEntries = useMemo(
@@ -146,6 +181,9 @@ export default function WorkoutLogger() {
           />
           {suggestion && (
             <div className="wl-suggestion">{suggestion}</div>
+          )}
+          {aiTip && (
+            <div className="wl-ai-tip">✨ {aiTip}</div>
           )}
           <div className="wl-sets">
             {sets.map((s, i) => (
