@@ -3294,7 +3294,7 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
 ═══════════════════════════════════ */
 .aic-fab {
   position: fixed;
-  bottom: calc(var(--bnav) + 16px);
+  bottom: calc(var(--bnav) + env(safe-area-inset-bottom, 0px) + 16px);
   right: 16px;
   width: 52px;
   height: 52px;
@@ -3316,7 +3316,7 @@ input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28
 
 .aic-panel {
   position: fixed;
-  bottom: calc(var(--bnav) + 76px);
+  bottom: calc(var(--bnav) + env(safe-area-inset-bottom, 0px) + 76px);
   right: 12px;
   width: min(360px, calc(100vw - 24px));
   height: min(520px, calc(100dvh - var(--bnav) - 100px));
