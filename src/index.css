@@ -36,6 +36,9 @@
 
 html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; height: 100%; }
 
+/* Prevent iOS auto-zoom on input focus (requires font-size >= 16px) */
+input, textarea, select { font-size: 16px !important; }
+
 /* Prevent mobile keyboard from resizing the viewport */
 @supports (height: 100dvh) {
   html, body { height: 100%; overflow: auto; }
