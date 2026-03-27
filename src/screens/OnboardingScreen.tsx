@@ -5,7 +5,7 @@ import { useAppStore } from '../store';
 const TOTAL_STEPS = 8;
 
 export default function OnboardingScreen() {
-  const { setObData, finishOnboarding } = useAppStore();
+  const { setObData, finishOnboardingCalc, finishOnboarding } = useAppStore();
 
   const [step, setStep] = useState(1);
   const [dir, setDir] = useState<'next' | 'prev'>('next');
@@ -59,8 +59,10 @@ export default function OnboardingScreen() {
     const timers = processingTexts.map((_, i) =>
       setTimeout(() => setProcessingLine(i + 1), (i + 1) * 800)
     );
-    // After all lines shown, advance to step 8
+    // After all lines shown, calculate TDEE and advance to step 8
     const finalTimer = setTimeout(() => {
+      // Trigger TDEE calculation NOW so step 8 can read the result
+      finishOnboardingCalc();
       setDir('next');
       setAnimKey(k => k + 1);
       setStep(8);

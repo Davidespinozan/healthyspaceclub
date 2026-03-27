@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAppStore } from '../store';
 import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
-import { calcDayKcal } from '../utils/kcalCalc';
+import { calcDayKcal, calcMealKcal } from '../utils/kcalCalc';
 import WeeklyReview from './WeeklyReview';
 import NightCheckIn from './NightCheckIn';
 
@@ -65,7 +65,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     userName, planGoal, mealPlanKey, shoppingDay,
     mealChecks, toggleMealCheck,
     dailyWorkout, dailyWorkoutChecked, toggleDailyWorkoutCheck,
-    growthData, lastActiveDate, saveDailyCheckIn,
+    growthData,
     weeklyPlan, lastWeeklyReview,
     streakCount, obData,
     dailyBriefing, setDailyBriefing,
@@ -85,14 +85,16 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const hour = new Date().getHours();
 
   const nightDone = nightCheckIn?.date === today && nightCheckIn?.completed;
-  const [showNight, setShowNight] = useState(() => new Date().getHours() >= 20 && !(nightCheckIn?.date === new Date().toISOString().split('T')[0] && nightCheckIn?.completed));
-  const momento = hour < 12 ? 'Momento mañana' : hour < 18 ? 'Momento tarde' : 'Momento noche';
+  const [showNight, setShowNight] = useState(() => {
+    const h = new Date().getHours();
+    const isNight = h >= 19 || h < 5;
+    return isNight && !(nightCheckIn?.date === new Date().toISOString().split('T')[0] && nightCheckIn?.completed);
+  });
+  const momento = (hour >= 5 && hour < 12) ? 'Momento mañana' : (hour >= 12 && hour < 19) ? 'Momento tarde' : 'Momento noche';
   const firstName = userName?.split(' ')[0] || '';
 
-  // Update streak on visit
-  useEffect(() => {
-    if (lastActiveDate !== today) saveDailyCheckIn({ feeling: '', sleep: '' });
-  }, []);
+  // Note: streak is updated when user explicitly does check-in (setDailyCheckin),
+  // NOT automatically on page visit. saveDailyCheckIn is only for legacy compatibility.
 
   // Milestone
   const MILESTONES = [3, 7, 14, 21, 30, 60, 90];
@@ -127,10 +129,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const workoutToday = dailyWorkout?.date === today ? dailyWorkout.plan as unknown as WorkoutPlan : null;
   const workoutExCount = workoutToday?.exercises?.length ?? 0;
   const workoutChecked = dailyWorkoutChecked.length;
+  const todayHSMDone = dailyHSMResponses.some(r => r.date === today);
 
-  // Progress
-  const totalItems = todayMeals.length + workoutExCount;
-  const doneItems = checkedMeals + workoutChecked;
+  // Progress: meals + workout exercises + 1 for HSM reto
+  const totalItems = (weeklyPlan ? todayMeals.length : 0) + workoutExCount + 1; // +1 for HSM
+  const doneItems = (weeklyPlan ? checkedMeals : 0) + workoutChecked + (todayHSMDone ? 1 : 0);
   const dayPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
 
   // Briefing
@@ -157,7 +160,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
   // HSM daily question
   const hsmStep = HSM_STEPS[activeHSMDimension] ?? HSM_STEPS[0];
-  const todayHSMDone = dailyHSMResponses.some(r => r.date === today);
 
   function handleHSMSubmit() {
     if (!hsmInput.trim()) return;
@@ -266,7 +268,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   <div className="th-item-title">{emoji} {meal.name}</div>
                   <div className="th-item-sub">{meal.time}</div>
                 </div>
-                <div className="th-item-kcal">{totalMealKcal > 0 ? `${Math.round(totalMealKcal / todayMeals.length)}` : ''}</div>
+                <div className="th-item-kcal">{meal.portions ? `${calcMealKcal(meal.portions)}` : ''}</div>
               </div>
             );
           }) : (

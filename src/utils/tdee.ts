@@ -28,12 +28,11 @@ export function calcTDEE(
 // ── Asigna el plan calórico según objetivo y TDEE ─────────────────────────
 // planA ~3000, planB ~2500, planC ~2000, planD ~1500
 export function assignPlan(tdee: number, goal: string): string {
-  // Ajuste por objetivo
+  // Ajuste por objetivo (same logic as store finishOnboarding)
   let target = tdee;
-  if      (goal === 'Bajar grasa corporal') target = tdee * 0.80;
-  else if (goal === 'Recomponer')           target = tdee * 0.95;
-  else if (goal === 'Subir masa muscular')  target = tdee * 1.10;
-  // else mantener peso → target = tdee
+  if      (goal === 'Bajar grasa corporal' || goal === 'Bajar de peso') target = tdee - 500;
+  else if (goal === 'Subir masa muscular' || goal === 'Ganar músculo') target = tdee + 300;
+  // Más energía, Bienestar integral, Recomponer → maintenance
 
   if (target >= 2750) return 'planA';   // ~3000
   if (target >= 2250) return 'planB';   // ~2500

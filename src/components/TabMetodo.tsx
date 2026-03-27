@@ -26,7 +26,7 @@ const LS_PANELS = [
 export default function TabMetodo({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
     streakCount, dailyHSMResponses,
-    activeHSMDimension, setActiveHSMDimension, growthCompleted, startDate,
+    activeHSMDimension, setActiveHSMDimension, growthCompleted,
   } = useAppStore();
 
   // Weekly check-in analysis for "Claridad mental"
@@ -38,15 +38,11 @@ export default function TabMetodo({ onNav }: { onNav: (page: DashPage) => void }
   // HSM responses this week
   const weekHSMCount = dailyHSMResponses.filter(r => r.date >= weekAgo).length;
 
-  // Unlock logic: Identidad from day 1, then 1 per 7 active days
-  const currentWeek = (() => {
-    if (!startDate) return 1;
-    const start = new Date(startDate);
-    if (isNaN(start.getTime())) return 1;
-    const diff = Math.floor((Date.now() - start.getTime()) / (1000 * 60 * 60 * 24));
-    return Math.max(1, Math.floor(diff / 7) + 1);
-  })();
-  const maxUnlocked = Math.min(currentWeek, 10);
+  // Unlock logic: Identidad always available, then 1 per 7 active usage days
+  const { hsmUnlockDays } = useAppStore();
+  const activeDayCount = hsmUnlockDays.length;
+  // Identidad (0) = day 1, Vocación (1) = 7 days, Propósito (2) = 14 days, etc.
+  const maxUnlocked = Math.min(1 + Math.floor(activeDayCount / 7), 10);
 
   function getDimStatus(i: number): 'activa' | 'pronto' | 'bloqueada' {
     if (i < maxUnlocked) return i === activeHSMDimension ? 'activa' : 'activa';

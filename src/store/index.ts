@@ -24,7 +24,8 @@ interface AppState {
   obData: Record<string, string | number>;
   setObStep: (step: number) => void;
   setObData: (key: string, value: string | number) => void;
-  finishOnboarding: () => void;
+  finishOnboardingCalc: () => void; // calculates TDEE + assigns plan without navigating
+  finishOnboarding: () => void;     // navigates to dashboard
 
   // Dashboard
   dashPage: DashPage;
@@ -215,11 +216,11 @@ export const useAppStore = create<AppState>()(
   setObStep: (step) => set({ obStep: step }),
   setObData: (key, value) =>
     set((state) => ({ obData: { ...state.obData, [key]: value } })),
-  finishOnboarding: () => {
+  // Calculate TDEE + assign plan WITHOUT navigating (called during processing step)
+  finishOnboardingCalc: () => {
     const { obData, setUserName } = get();
     if (obData.name) setUserName(String(obData.name));
 
-    // Calcular TDEE y asignar plan automáticamente (síncrono)
     const sexo      = String(obData.sex      || 'Hombre');
     const pesoKg    = Number(obData.peso     || 70);
     const estatura  = Number(obData.estatura || 170);
@@ -231,23 +232,27 @@ export const useAppStore = create<AppState>()(
     const planKey    = assignPlan(tdee, goal);
 
     let planGoal = tdee;
-    if      (goal === 'Bajar grasa corporal' || goal === 'Bajar de peso') planGoal = Math.round(tdee * 0.80);
-    else if (goal === 'Recomponer' || goal === 'Más energía' || goal === 'Bienestar integral') planGoal = Math.round(tdee * 0.95);
-    else if (goal === 'Subir masa muscular' || goal === 'Ganar músculo') planGoal = Math.round(tdee * 1.10);
+    if      (goal === 'Bajar grasa corporal' || goal === 'Bajar de peso') planGoal = tdee - 500;
+    else if (goal === 'Subir masa muscular' || goal === 'Ganar músculo') planGoal = tdee + 300;
 
-    // Auto-start 7-day trial with full access
     const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
     set({
       mealPlanKey: planKey,
       tdee,
       planGoal,
-      currentScreen: 'dashboard',
-      obStep: 1,
       startDate: new Date().toISOString().split('T')[0],
-      activeModal: null,
       userPlan: 'pro',
       trialEndsAt,
+    });
+  },
+
+  // Navigate to dashboard (called when user taps "Entrar a mi espacio")
+  finishOnboarding: () => {
+    set({
+      currentScreen: 'dashboard',
+      obStep: 1,
+      activeModal: null,
     });
   },
 
@@ -471,12 +476,28 @@ export const useAppStore = create<AppState>()(
   },
   selectPlan: (plan) => set({ userPlan: plan, trialEndsAt: null }),
 
-  // Daily energy check-in (Hoy tab)
+  // Daily energy check-in (Hoy tab) — also updates streak
   dailyCheckin: null,
   dailyCheckinDate: '',
   setDailyCheckin: (val) => {
     const today = new Date().toISOString().split('T')[0];
-    set({ dailyCheckin: val, dailyCheckinDate: today });
+    const { lastActiveDate, streakCount, hsmUnlockDays, startDate } = get();
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const newStreak = lastActiveDate === today
+      ? streakCount
+      : lastActiveDate === yesterday
+        ? streakCount + 1
+        : 1;
+    // Track active day for HSM unlock
+    const dayIndex = startDate ? Math.floor((Date.now() - new Date(startDate).getTime()) / 86400000) : 0;
+    const updatedUnlockDays = hsmUnlockDays.includes(dayIndex) ? hsmUnlockDays : [...hsmUnlockDays, dayIndex];
+    set({
+      dailyCheckin: val,
+      dailyCheckinDate: today,
+      lastActiveDate: today,
+      streakCount: newStreak,
+      hsmUnlockDays: updatedUnlockDays,
+    });
   },
 
   // Daily HSM micro-responses
@@ -508,11 +529,22 @@ export const useAppStore = create<AppState>()(
   setActiveHSMDimension: (n) => set({ activeHSMDimension: n }),
   hsmUnlockDays: [],
 
-  // Night check-in
+  // Night check-in — also maintains streak for the day
   nightCheckIn: null,
   saveNightCheckIn: (data) => {
     const today = new Date().toISOString().split('T')[0];
-    set({ nightCheckIn: { date: today, ...data, completed: true } });
+    const { lastActiveDate, streakCount } = get();
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const newStreak = lastActiveDate === today
+      ? streakCount
+      : lastActiveDate === yesterday
+        ? streakCount + 1
+        : 1;
+    set({
+      nightCheckIn: { date: today, ...data, completed: true },
+      lastActiveDate: today,
+      streakCount: newStreak,
+    });
   },
 
   // Logout — signs out of Supabase and clears all local state
