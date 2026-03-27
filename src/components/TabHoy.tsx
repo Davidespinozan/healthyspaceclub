@@ -41,13 +41,7 @@ async function generateBriefing(params: {
   firstName: string; streak: number; checkedMeals: number;
   totalMeals: number; hasWorkout: boolean; goal: string;
 }): Promise<string> {
-  const prompt = `Eres un coach de vida. Escribe exactamente 2 oraciones para ${params.firstName || 'el usuario'}.
-ESTADO HOY:
-- Racha: ${params.streak} días consecutivos
-- Comidas marcadas hoy: ${params.checkedMeals}/${params.totalMeals}
-- Entrenamiento: ${params.hasWorkout ? 'programado para hoy' : 'sin rutina generada aún'}
-- Objetivo: ${params.goal || 'mejorar salud'}
-Reglas: Sin saludo. Sin emojis. Directo al punto. Oración 1 = dónde está parado hoy. Oración 2 = qué debe hacer ahora mismo.`;
+  const prompt = `Escribe UNA sola frase corta y motivadora para ${params.firstName || 'alguien'} que lleva ${params.streak} días de racha y quiere ${params.goal || 'mejorar su salud'}. Máximo 12 palabras. Sin saludo. Sin emojis. Directo. Ejemplo: "Hoy es otro voto a favor de quien quieres ser."`;
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -87,7 +81,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const nightDone = nightCheckIn?.date === today && nightCheckIn?.completed;
   const [showNight, setShowNight] = useState(() => {
     const h = new Date().getHours();
-    const isNight = h >= 19 || h < 5;
+    const isNight = h >= 20 && h <= 23; // only 8pm-midnight, not early morning
     return isNight && !(nightCheckIn?.date === new Date().toISOString().split('T')[0] && nightCheckIn?.completed);
   });
   const momento = (hour >= 5 && hour < 12) ? 'Momento mañana' : (hour >= 12 && hour < 19) ? 'Momento tarde' : 'Momento noche';
