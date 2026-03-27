@@ -176,7 +176,22 @@ interface AppState {
   // Active HSM dimension + unlock tracking
   activeHSMDimension: number;
   setActiveHSMDimension: (n: number) => void;
-  hsmUnlockDays: number[]; // day indices (from startDate) when user was active
+  hsmUnlockDays: number[];
+
+  // Night check-in
+  nightCheckIn: {
+    date: string;
+    energia: string;
+    cumplimiento: string;
+    valores: string;
+    reflexion: string;
+    intencionManana: string;
+    completed: boolean;
+  } | null;
+  saveNightCheckIn: (data: {
+    energia: string; cumplimiento: string; valores: string;
+    reflexion: string; intencionManana: string;
+  }) => void;
 
   // Logout
   logout: () => void;
@@ -493,6 +508,13 @@ export const useAppStore = create<AppState>()(
   setActiveHSMDimension: (n) => set({ activeHSMDimension: n }),
   hsmUnlockDays: [],
 
+  // Night check-in
+  nightCheckIn: null,
+  saveNightCheckIn: (data) => {
+    const today = new Date().toISOString().split('T')[0];
+    set({ nightCheckIn: { date: today, ...data, completed: true } });
+  },
+
   // Logout — signs out of Supabase and clears all local state
   logout: () => {
     import('../lib/supabase').then(({ supabase }) => supabase.auth.signOut());
@@ -541,6 +563,7 @@ export const useAppStore = create<AppState>()(
       coachChatDate: '',
       activeHSMDimension: 0,
       hsmUnlockDays: [],
+      nightCheckIn: null,
     });
   },
 }),
@@ -584,6 +607,7 @@ export const useAppStore = create<AppState>()(
     coachChatDate: state.coachChatDate,
     activeHSMDimension: state.activeHSMDimension,
     hsmUnlockDays: state.hsmUnlockDays,
+    nightCheckIn: state.nightCheckIn,
   }),
 }
   )

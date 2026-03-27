@@ -4,6 +4,7 @@ import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { calcDayKcal } from '../utils/kcalCalc';
 import WeeklyReview from './WeeklyReview';
+import NightCheckIn from './NightCheckIn';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
@@ -71,6 +72,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     dailyCheckin, dailyCheckinDate, setDailyCheckin,
     activeHSMDimension, dailyHSMResponses, addHSMResponse,
     lastStreakMilestone, setLastStreakMilestone,
+    nightCheckIn,
   } = useAppStore();
 
   const isSunday = new Date().getDay() === 0;
@@ -81,6 +83,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
   const today = new Date().toISOString().split('T')[0];
   const hour = new Date().getHours();
+
+  const nightDone = nightCheckIn?.date === today && nightCheckIn?.completed;
+  const [showNight, setShowNight] = useState(() => new Date().getHours() >= 20 && !(nightCheckIn?.date === new Date().toISOString().split('T')[0] && nightCheckIn?.completed));
   const momento = hour < 12 ? 'Momento mañana' : hour < 18 ? 'Momento tarde' : 'Momento noche';
   const firstName = userName?.split(' ')[0] || '';
 
@@ -141,10 +146,14 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // Check-in already done today?
   const checkinDone = dailyCheckinDate === today && dailyCheckin !== null;
 
-  // Intention (puedo from identity module, or rotating quote)
-  const puedoText = (growthData[0] as Record<string, string>)?.puedo;
+  // Intention: yesterday's night check-in intention > puedo > rotating quote
+  const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  const yesterdayIntention = nightCheckIn?.date === yesterdayStr ? nightCheckIn.intencionManana : '';
+  const puedoText = (growthData[0] as Record<string, string>)?.decl_0;
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const quoteOfDay = FALLBACK_QUOTES[dayOfYear % FALLBACK_QUOTES.length];
+  const intentionText = yesterdayIntention || puedoText || quoteOfDay.text;
+  const intentionSource = yesterdayIntention ? 'Tu intención de anoche' : puedoText ? 'Tu declaración PUEDO' : quoteOfDay.source;
 
   // HSM daily question
   const hsmStep = HSM_STEPS[activeHSMDimension] ?? HSM_STEPS[0];
@@ -162,6 +171,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
   return (
     <div className="th-wrap">
+      {/* Night check-in */}
+      {showNight && <NightCheckIn onClose={() => setShowNight(false)} />}
+
       {/* Sunday review */}
       {showReview && <WeeklyReview onClose={() => setShowReview(false)} onPlanNextWeek={() => onNav('alimentacion')} />}
 
@@ -181,7 +193,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       <div className="th-header">
         <div className="th-header-top">
           <div className="th-greeting">{firstName ? `Hola, ${firstName}` : 'Hola'}</div>
-          <div className="th-momento-pill">{momento}</div>
+          <div
+            className="th-momento-pill"
+            onClick={() => { if (momento === 'Momento noche' && !nightDone) setShowNight(true); }}
+            style={momento === 'Momento noche' && !nightDone ? { cursor: 'pointer' } : undefined}
+          >{momento}</div>
         </div>
         {dailyBriefing?.message && <p className="th-briefing">{dailyBriefing.message}</p>}
       </div>
@@ -216,8 +232,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       {/* ── Intention card (dark) ── */}
       <div className="th-intention">
         <div className="th-intention-label">Tu intención hoy</div>
-        <div className="th-intention-text">{puedoText || quoteOfDay.text}</div>
-        <div className="th-intention-source">{puedoText ? 'Tu declaración PUEDO' : quoteOfDay.source}</div>
+        <div className="th-intention-text">{intentionText}</div>
+        <div className="th-intention-source">{intentionSource}</div>
       </div>
 
       {/* ── Day progress ── */}
