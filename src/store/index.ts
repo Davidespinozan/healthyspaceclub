@@ -216,9 +216,9 @@ export const useAppStore = create<AppState>()(
     const planKey    = assignPlan(tdee, goal);
 
     let planGoal = tdee;
-    if      (goal === 'Bajar grasa corporal') planGoal = Math.round(tdee * 0.80);
-    else if (goal === 'Recomponer')           planGoal = Math.round(tdee * 0.95);
-    else if (goal === 'Subir masa muscular')  planGoal = Math.round(tdee * 1.10);
+    if      (goal === 'Bajar grasa corporal' || goal === 'Bajar de peso') planGoal = Math.round(tdee * 0.80);
+    else if (goal === 'Recomponer' || goal === 'Más energía' || goal === 'Bienestar integral') planGoal = Math.round(tdee * 0.95);
+    else if (goal === 'Subir masa muscular' || goal === 'Ganar músculo') planGoal = Math.round(tdee * 1.10);
 
     // Auto-start 7-day trial with full access
     const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();

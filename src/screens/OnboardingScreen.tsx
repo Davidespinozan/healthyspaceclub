@@ -1,117 +1,291 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { useAppStore } from '../store';
 
-export default function OnboardingScreen() {
-  const { obStep, setObStep, setObData, finishOnboarding } = useAppStore();
+const TOTAL_STEPS = 8;
 
+export default function OnboardingScreen() {
+  const { setObData, finishOnboarding } = useAppStore();
+
+  const [step, setStep] = useState(1);
+  const [dir, setDir] = useState<'next' | 'prev'>('next');
+  const [animKey, setAnimKey] = useState(0);
+
+  // Form state
   const [name, setName] = useState('');
   const [sex, setSex] = useState('');
   const [goal, setGoal] = useState('');
+  const [edad, setEdad] = useState('');
+  const [peso, setPeso] = useState('');
+  const [estatura, setEstatura] = useState('');
   const [activity, setActivity] = useState('');
 
-  const totalSteps = 4;
-  const progress = ((obStep - 1) / totalSteps) * 100;
+  // Processing animation
+  const [processingLine, setProcessingLine] = useState(0);
+  const processingTexts = [
+    'Calculando tu metabolismo...',
+    'Diseñando tu plan de nutrición...',
+    'Preparando tu coach personal...',
+    'Activando el Healthy Space Method...',
+  ];
+
+  function goNext() {
+    setDir('next');
+    setAnimKey(k => k + 1);
+    setStep(s => s + 1);
+  }
 
   function goBack() {
-    if (obStep > 1) setObStep(obStep - 1);
+    setDir('prev');
+    setAnimKey(k => k + 1);
+    setStep(s => s - 1);
   }
 
-  function goNext(step: number) {
-    setObStep(obStep + 1);
-    if (step === 1) setObData('name', name);
-    if (step === 2) setObData('sex', sex);
-    if (step === 3) setObData('goal', goal);
-  }
+  // Step 7: processing animation + save to store
+  useEffect(() => {
+    if (step !== 7) return;
 
-  function finish() {
+    // Save all data to store
+    setObData('name', name);
+    setObData('sex', sex);
+    setObData('goal', goal);
+    setObData('edad', Number(edad) || 28);
+    setObData('peso', Number(peso) || 70);
+    setObData('estatura', Number(estatura) || 170);
     setObData('activity', activity);
-    // Use sensible defaults for peso/estatura/edad — user can refine later in profile
-    setObData('peso', 70);
-    setObData('estatura', 170);
-    setObData('edad', 28);
+
+    // Animate processing lines
+    setProcessingLine(0);
+    const timers = processingTexts.map((_, i) =>
+      setTimeout(() => setProcessingLine(i + 1), (i + 1) * 800)
+    );
+    // After all lines shown, advance to step 8
+    const finalTimer = setTimeout(() => {
+      setDir('next');
+      setAnimKey(k => k + 1);
+      setStep(8);
+    }, processingTexts.length * 800 + 700);
+
+    return () => { timers.forEach(clearTimeout); clearTimeout(finalTimer); };
+  }, [step]);
+
+  function handleFinish() {
     finishOnboarding();
   }
 
+  // Progress bar (steps 2-7, not shown on 1 and 8)
+  const showProgress = step >= 2 && step <= 7;
+  const progressPct = showProgress ? ((step - 1) / (TOTAL_STEPS - 2)) * 100 : 0;
+
+  // Can go back?
+  const showBack = step >= 2 && step <= 6;
+
+  // Goal label for result screen
+  const goalLabels: Record<string, string> = {
+    'Ganar músculo': 'Ganancia muscular',
+    'Bajar de peso': 'Pérdida de grasa',
+    'Más energía': 'Más energía diaria',
+    'Bienestar integral': 'Bienestar integral',
+  };
+
   return (
-    <div className="ob">
-      <div className="ob-logo">
-        <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" style={{ height: '72px', width: 'auto' }} />
-      </div>
-      <div className="ob-bar">
-        <div className="ob-fill" style={{ width: `${progress}%` }} />
-      </div>
+    <div className="onb">
+      {/* Progress bar */}
+      {showProgress && (
+        <div className="onb-progress">
+          <div className="onb-progress-fill" style={{ width: `${progressPct}%` }} />
+        </div>
+      )}
 
-      {/* Step 1 — Name */}
-      <div className={`ob-step${obStep === 1 ? ' on' : ''}`}>
-        <div className="ob-snum">Paso 1 de {totalSteps}</div>
-        <div className="ob-q">¿Cuál es tu nombre?</div>
-        <div className="ob-hint">Con este nombre te saludaremos cada día.</div>
-        <input
-          className="ob-inp" type="text" placeholder="Tu nombre..."
-          autoComplete="name" value={name}
-          onChange={e => setName(e.target.value)}
-        />
-        <button className="btn-ob" onClick={() => goNext(1)} disabled={name.trim().length < 2}>Continuar</button>
-      </div>
+      {/* Back button */}
+      {showBack && (
+        <button className="onb-back" onClick={goBack}>
+          <ChevronLeft size={20} strokeWidth={2} />
+        </button>
+      )}
 
-      {/* Step 2 — Sex */}
-      <div className={`ob-step${obStep === 2 ? ' on' : ''}`}>
-        <div className="ob-snum">Paso 2 de {totalSteps}</div>
-        <div className="ob-q">¿Cuál es tu sexo biológico?</div>
-        <div className="ob-hint">Esto calibra tus macros y requerimientos calóricos.</div>
-        <div className="ob-opts">
-          <div className={`ob-opt${sex === 'Hombre' ? ' sel' : ''}`} onClick={() => setSex('Hombre')}>
-            <span className="ob-em">🙋‍♂️</span><div><h5>Hombre</h5></div>
-          </div>
-          <div className={`ob-opt${sex === 'Mujer' ? ' sel' : ''}`} onClick={() => setSex('Mujer')}>
-            <span className="ob-em">🙋‍♀️</span><div><h5>Mujer</h5></div>
+      {/* ── Step 1: Bienvenida ── */}
+      {step === 1 && (
+        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
+          <div className="onb-center">
+            <div className="onb-brand">Healthy Space</div>
+            <div className="onb-brand-sub">Tu coach de vida, nutrición y crecimiento personal</div>
+            <button className="onb-btn-gold" onClick={goNext}>Comenzar mi proceso</button>
           </div>
         </div>
-        <button className="btn-ob" onClick={() => goNext(2)} disabled={!sex}>Continuar</button>
-        <button className="btn-ob-back" onClick={goBack}>← Anterior</button>
-      </div>
+      )}
 
-      {/* Step 3 — Goal */}
-      <div className={`ob-step${obStep === 3 ? ' on' : ''}`}>
-        <div className="ob-snum">Paso 3 de {totalSteps}</div>
-        <div className="ob-q">¿Cuál es tu objetivo?</div>
-        <div className="ob-hint">Tu plan de nutrición y entrenamiento se personaliza en torno a esto.</div>
-        <div className="ob-opts">
-          {[
-            { id: 'Bajar grasa corporal', em: '🔥', title: 'Bajar grasa', desc: 'Definir y reducir porcentaje graso' },
-            { id: 'Recomponer', em: '⚡', title: 'Recomponer', desc: 'Perder grasa y ganar músculo' },
-            { id: 'Subir masa muscular', em: '💪', title: 'Subir masa', desc: 'Ganar volumen y fuerza' },
-          ].map(o => (
-            <div key={o.id} className={`ob-opt${goal === o.id ? ' sel' : ''}`} onClick={() => setGoal(o.id)}>
-              <span className="ob-em">{o.em}</span><div><h5>{o.title}</h5><p>{o.desc}</p></div>
-            </div>
-          ))}
+      {/* ── Step 2: Nombre ── */}
+      {step === 2 && (
+        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
+          <div className="onb-center">
+            <h2 className="onb-question">¿Cómo te llamas?</h2>
+            <p className="onb-hint">Así te va a llamar tu coach</p>
+            <input
+              className="onb-input-big"
+              type="text"
+              placeholder="Tu nombre"
+              autoComplete="name"
+              autoFocus
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && name.trim().length >= 2 && goNext()}
+            />
+            <button className="onb-btn-dark" onClick={goNext} disabled={name.trim().length < 2}>
+              Continuar
+            </button>
+          </div>
         </div>
-        <button className="btn-ob" onClick={() => goNext(3)} disabled={!goal}>Continuar</button>
-        <button className="btn-ob-back" onClick={goBack}>← Anterior</button>
-      </div>
+      )}
 
-      {/* Step 4 — Activity */}
-      <div className={`ob-step${obStep === 4 ? ' on' : ''}`}>
-        <div className="ob-snum">Paso 4 de {totalSteps}</div>
-        <div className="ob-q">¿Cuál es tu nivel de actividad?</div>
-        <div className="ob-hint">Esto ajusta tus calorías y rutinas.</div>
-        <div className="ob-opts ob-opts-single">
-          {[
-            { id: 'Sedentaria', em: '🛋️', title: 'Sedentaria', desc: 'Poco o nada de ejercicio' },
-            { id: 'Ligera', em: '🚶', title: 'Ligera', desc: 'Ejercicio 1-2 días' },
-            { id: 'Moderada', em: '🏋️', title: 'Moderada', desc: 'Ejercicio 3-5 días' },
-            { id: 'Alta', em: '⚡', title: 'Alta', desc: 'Ejercicio intenso 6-7 días' },
-            { id: 'Atleta', em: '🏆', title: 'Atleta', desc: 'Entreno dos veces al día' },
-          ].map(o => (
-            <div key={o.id} className={`ob-opt${activity === o.id ? ' sel' : ''}`} onClick={() => setActivity(o.id)}>
-              <span className="ob-em">{o.em}</span><div><h5>{o.title}</h5><p>{o.desc}</p></div>
+      {/* ── Step 3: Sexo ── */}
+      {step === 3 && (
+        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
+          <div className="onb-center">
+            <h2 className="onb-question">¿Cuál es tu sexo biológico?</h2>
+            <div className="onb-cards-row">
+              {(['Hombre', 'Mujer'] as const).map(s => (
+                <div
+                  key={s}
+                  className={`onb-card-select${sex === s ? ' selected' : ''}`}
+                  onClick={() => { setSex(s); setTimeout(goNext, 200); }}
+                >
+                  <span className="onb-card-emoji">{s === 'Hombre' ? '🙋‍♂️' : '🙋‍♀️'}</span>
+                  <span className="onb-card-label">{s}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
-        <button className="btn-ob" onClick={finish} disabled={!activity}>Entrar al Club</button>
-        <button className="btn-ob-back" onClick={goBack}>← Anterior</button>
-      </div>
+      )}
+
+      {/* ── Step 4: Objetivo ── */}
+      {step === 4 && (
+        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
+          <div className="onb-center">
+            <h2 className="onb-question">¿Qué quieres lograr?</h2>
+            <div className="onb-cards-col">
+              {[
+                { id: 'Ganar músculo', emoji: '💪', desc: 'Construir fuerza y masa muscular' },
+                { id: 'Bajar de peso', emoji: '🔥', desc: 'Perder grasa de forma sostenible' },
+                { id: 'Más energía', emoji: '⚡', desc: 'Sentirme mejor cada día' },
+                { id: 'Bienestar integral', emoji: '🧘', desc: 'Cuerpo, mente y propósito' },
+              ].map(o => (
+                <div
+                  key={o.id}
+                  className={`onb-card-option${goal === o.id ? ' selected' : ''}`}
+                  onClick={() => { setGoal(o.id); setTimeout(goNext, 200); }}
+                >
+                  <span className="onb-card-emoji">{o.emoji}</span>
+                  <div>
+                    <div className="onb-card-title">{o.id}</div>
+                    <div className="onb-card-desc">{o.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 5: Datos físicos ── */}
+      {step === 5 && (
+        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
+          <div className="onb-center">
+            <h2 className="onb-question">Tus datos para personalizar todo</h2>
+            <p className="onb-hint">Calculamos tu metabolismo exacto con estos datos</p>
+            <div className="onb-inputs-group">
+              <div className="onb-input-field">
+                <label>Edad</label>
+                <input type="number" inputMode="numeric" placeholder="28" value={edad} onChange={e => setEdad(e.target.value)} />
+              </div>
+              <div className="onb-input-field">
+                <label>Peso (kg)</label>
+                <input type="number" inputMode="decimal" placeholder="70" value={peso} onChange={e => setPeso(e.target.value)} />
+              </div>
+              <div className="onb-input-field">
+                <label>Altura (cm)</label>
+                <input type="number" inputMode="numeric" placeholder="170" value={estatura} onChange={e => setEstatura(e.target.value)} />
+              </div>
+            </div>
+            <button
+              className="onb-btn-dark"
+              onClick={goNext}
+              disabled={!edad || !peso || !estatura}
+            >
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 6: Actividad ── */}
+      {step === 6 && (
+        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
+          <div className="onb-center">
+            <h2 className="onb-question">¿Qué tan activo eres normalmente?</h2>
+            <div className="onb-cards-col">
+              {[
+                { id: 'Sedentaria', emoji: '🛋', desc: 'Trabajo de escritorio, poco movimiento' },
+                { id: 'Ligera', emoji: '🚶', desc: 'Camino algo, actividad ocasional' },
+                { id: 'Moderada', emoji: '🏃', desc: 'Ejercicio 3-4 veces por semana' },
+                { id: 'Alta', emoji: '🏋', desc: 'Entreno intenso casi todos los días' },
+              ].map(o => (
+                <div
+                  key={o.id}
+                  className={`onb-card-option${activity === o.id ? ' selected' : ''}`}
+                  onClick={() => { setActivity(o.id); setTimeout(goNext, 200); }}
+                >
+                  <span className="onb-card-emoji">{o.emoji}</span>
+                  <div>
+                    <div className="onb-card-title">{o.id}</div>
+                    <div className="onb-card-desc">{o.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 7: Processing ── */}
+      {step === 7 && (
+        <div key={animKey} className="onb-slide onb-dark">
+          <div className="onb-center">
+            <div className="onb-processing">
+              {processingTexts.map((text, i) => (
+                <div
+                  key={i}
+                  className={`onb-proc-line${i < processingLine ? ' visible' : ''}`}
+                >
+                  {text}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 8: Profile ready ── */}
+      {step === 8 && (
+        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
+          <div className="onb-center">
+            <h2 className="onb-result-title">Todo listo, {name.split(' ')[0]}</h2>
+            <div className="onb-result-card">
+              <div className="onb-result-kcal">
+                {useAppStore.getState().planGoal > 0
+                  ? useAppStore.getState().planGoal.toLocaleString()
+                  : '—'} <span>kcal/día</span>
+              </div>
+              <div className="onb-result-plan">{goalLabels[goal] || goal}</div>
+              <div className="onb-result-coach">Tu coach ya te conoce</div>
+            </div>
+            <button className="onb-btn-gold" onClick={handleFinish}>
+              Entrar a mi espacio
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
