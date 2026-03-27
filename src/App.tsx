@@ -5,7 +5,7 @@ import LandingScreen from './screens/LandingScreen';
 import LoginScreen from './screens/LoginScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import DashboardScreen from './screens/DashboardScreen';
-import LifeSystemScreen from './screens/LifeSystemScreen';
+// LifeSystemScreen now accessed only via DashboardScreen inline
 import PaymentModal from './components/modals/PaymentModal';
 import SignupModal from './components/modals/SignupModal';
 import VideoModal from './components/modals/VideoModal';
@@ -120,11 +120,7 @@ export default function App() {
           <DashboardScreen />
         </div>
       )}
-      {currentScreen === 'lifesystem' && (
-        <div id="scr-lifesystem" className={`screen active ${fadeClass}`}>
-          <LifeSystemScreen />
-        </div>
-      )}
+      {/* LifeSystemScreen now only accessible inline via DashboardScreen */}
 
       {/* Modals */}
       {activeModal === 'pay' && <PaymentModal />}

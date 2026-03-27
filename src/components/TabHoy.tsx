@@ -253,9 +253,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           {/* ── Meals ── */}
           <div className="th-section-label">
             <span>Alimentación</span>
-            <span className="th-section-meta">{checkedMeals}/{todayMeals.length} · {planGoal > 0 ? planGoal.toLocaleString() : totalMealKcal} kcal</span>
+            {weeklyPlan && <span className="th-section-meta">{checkedMeals}/{todayMeals.length} · {planGoal > 0 ? planGoal.toLocaleString() : totalMealKcal} kcal</span>}
           </div>
-          {todayMeals.map((meal, i) => {
+          {weeklyPlan ? todayMeals.map((meal, i) => {
             const key = mealKey(i);
             const done = !!mealChecks[key];
             const emoji = MEAL_EMOJI[meal.time] ?? '🥗';
@@ -269,7 +269,15 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 <div className="th-item-kcal">{totalMealKcal > 0 ? `${Math.round(totalMealKcal / todayMeals.length)}` : ''}</div>
               </div>
             );
-          })}
+          }) : (
+            <div className="th-item th-item-cta" onClick={() => onNav('alimentacion')}>
+              <div className="th-item-check">🥗</div>
+              <div className="th-item-body">
+                <div className="th-item-title">Genera tu plan de nutrición</div>
+                <div className="th-item-sub">Tu nutricionista IA lo personaliza para ti</div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div>

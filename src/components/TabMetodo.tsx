@@ -26,7 +26,7 @@ const LS_PANELS = [
 export default function TabMetodo({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
     streakCount, dailyHSMResponses,
-    activeHSMDimension, growthCompleted, startDate,
+    activeHSMDimension, setActiveHSMDimension, growthCompleted, startDate,
   } = useAppStore();
 
   // Weekly check-in analysis for "Claridad mental"
@@ -90,7 +90,7 @@ export default function TabMetodo({ onNav }: { onNav: (page: DashPage) => void }
             <div
               key={i}
               className={`tm-dim${status === 'activa' ? ' tm-dim-active' : ''}${status === 'bloqueada' ? ' tm-dim-locked' : ''}`}
-              onClick={() => status !== 'bloqueada' && onNav('hsm')}
+              onClick={() => { if (status !== 'bloqueada') { setActiveHSMDimension(i); onNav('hsm'); } }}
             >
               <div className="tm-dim-left">
                 <span className="tm-dim-emoji">{step.emoji}</span>

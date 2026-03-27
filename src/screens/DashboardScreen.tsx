@@ -22,7 +22,7 @@ const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
 ];
 
 export default function DashboardScreen() {
-  const { dashPage, setDashPage, checkTrialExpiry } = useAppStore();
+  const { dashPage, setDashPage, checkTrialExpiry, activeHSMDimension } = useAppStore();
 
   useEffect(() => { checkTrialExpiry(); }, []);
 
@@ -68,7 +68,7 @@ export default function DashboardScreen() {
         {dashPage === 'hsm' && (
           <div className="sub-page tab-content">
             <button className="sub-back" onClick={() => navTo('metodo')}>← Volver</button>
-            <GrowthPlan visible={true} />
+            <GrowthPlan visible={true} initialModule={activeHSMDimension} />
           </div>
         )}
         {dashPage === 'lifesystem' && (
@@ -86,7 +86,9 @@ export default function DashboardScreen() {
         </div>
         {TABS.map(tab => {
           const Icon = tab.icon;
-          const active = dashPage === tab.id || (isSubPage && tab.id === 'hoy' && ['alimentacion', 'entrenamiento'].includes(dashPage));
+          const active = dashPage === tab.id
+            || (isSubPage && tab.id === 'hoy' && ['alimentacion', 'entrenamiento'].includes(dashPage))
+            || (isSubPage && tab.id === 'metodo' && ['hsm', 'lifesystem'].includes(dashPage));
           return (
             <div
               key={tab.id}

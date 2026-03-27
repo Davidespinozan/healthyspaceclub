@@ -285,8 +285,8 @@ const MODULES: Record<number, ModuleDef> = {
 /*  MAIN COMPONENT                                               */
 /* ══════════════════════════════════════════════════════════════ */
 
-export default function GrowthPlan({ visible }: { visible: boolean }) {
-  const [activeModule, setActiveModule] = useState<number | null>(null);
+export default function GrowthPlan({ visible, initialModule }: { visible: boolean; initialModule?: number }) {
+  const [activeModule, setActiveModule] = useState<number | null>(initialModule ?? null);
   const growthCompleted = useAppStore(s => s.growthCompleted);
 
   if (!visible) return null;
