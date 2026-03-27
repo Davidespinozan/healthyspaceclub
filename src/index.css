@@ -5182,7 +5182,10 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 /* ══════════════════════════════════════════════════════════════
    SHARED: Dark hero headers + tab content padding
 ══════════════════════════════════════════════════════════════ */
-.tab-content { padding: 24px 20px 32px; max-width: 600px; margin: 0 auto; width: 100%; }
+.tab-content {
+  padding: 24px 20px 32px; max-width: 600px; margin: 0 auto; width: 100%;
+  display: flex; flex-direction: column; gap: 20px;
+}
 /* dark-hero removed — each tab uses its own header class */
 
 /* ══════════════════════════════════════════════════════════════
