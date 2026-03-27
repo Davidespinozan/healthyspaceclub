@@ -71,7 +71,7 @@ export default function WeeklyInsight() {
       // Entrenamientos esta semana
       const gymDays = new Set(workoutLog.filter(e => last7.includes(e.date)).map(e => e.date)).size;
 
-      const prompt = `Eres coach de salud mexicano. Analiza la semana de ${userName || 'el usuario'} y da un resumen motivador en 3-4 oraciones en español casual mexicano.
+      const prompt = `Eres el coach personal de Healthy Space Club. Analiza la semana de ${userName || 'el usuario'} y da un resumen motivador en 3-4 oraciones en español casual.
 
 DATOS DE LA SEMANA:
 - Meta calórica: ${planGoal} kcal/día, Promedio registrado: ${avgKcal} kcal/día

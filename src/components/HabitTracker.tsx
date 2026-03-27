@@ -25,12 +25,17 @@ function last7Days(): string[] {
 const DAY_NAMES = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
 export default function HabitTracker() {
-  const habits = useAppStore(s => s.habits);
+  const habitsRaw = useAppStore(s => s.habits);
+  const habitsDate = useAppStore(s => s.habitsDate);
   const habitHistory = useAppStore(s => s.habitHistory);
   const toggleHabit = useAppStore(s => s.toggleHabit);
   const [justCompleted, setJustCompleted] = useState(false);
 
   const today = todayKey();
+  // If stored habits belong to a previous day, treat them as all-false
+  const habits = habitsDate === today
+    ? habitsRaw
+    : { agua: false, frutas: false, ejercicio: false, sueno: false };
   const days = last7Days();
   const todayDone = Object.values(habits).filter(Boolean).length;
   const allDone = todayDone === HABITS.length;

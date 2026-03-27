@@ -111,7 +111,7 @@ export default function LandingScreen() {
           <span className="nav-login" onClick={() => goTo('login')}>Iniciar sesión</span>
         </div>
         <div className="logo">
-          <img src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1771971266/logo_ohaica.png" alt="Healthy Space Club" />
+          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" />
           <span className="logo-club">CLUB</span>
         </div>
         <div className="nav-links">
@@ -170,7 +170,7 @@ export default function LandingScreen() {
           </div>
           <div className="hero-img">
             <img
-              src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1772050428/hero_pghcvy.webp"
+              src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero_pghcvy.webp"
               alt="Healthy Space Club"
               ref={heroImgRef}
               style={{ willChange: 'transform', transform: 'scale(1.04)' }}
@@ -226,7 +226,7 @@ export default function LandingScreen() {
             tabIndex={0}
           >
             <div className="pill-id-logo">
-              <img src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1771971266/logo_ohaica.png" alt="Healthy Space" />
+              <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space" />
               <span className="pill-id-logo-club">Club</span>
             </div>
             <div className="pill-id-divider" />
@@ -243,7 +243,7 @@ export default function LandingScreen() {
           </div>
 
           <div className={`pillar pillar-gold pillar-hidden reveal reveal-delay-1${pillarsOpen ? ' pillar-show' : ''}`}>
-            <div className="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1772042278/mealprep_wfczav.webp" alt="Nutrición" /></div>
+            <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp" alt="Nutrición" /></div>
             <div className="pill-num">01</div>
             <h3>Nutrición</h3>
             <p>Una membresía donde la nutrición se vuelve simple: plan personalizado, recetas y ritmo. Sostenible, repetible, real.</p>
@@ -251,7 +251,7 @@ export default function LandingScreen() {
           </div>
 
           <div className={`pillar pillar-gold pillar-hidden reveal reveal-delay-2${pillarsOpen ? ' pillar-show' : ''}`}>
-            <div className="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1772042621/workout_s1mccg.webp" alt="Entrenamiento" /></div>
+            <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/workout_s1mccg.webp" alt="Entrenamiento" /></div>
             <div className="pill-num">02</div>
             <h3>Entrenamiento</h3>
             <p>La ruta oficial del Club: fuerza + condición + movilidad. Tú eliges nivel y tiempo — el sistema te da estructura para mejorar semana a semana.</p>
@@ -259,7 +259,7 @@ export default function LandingScreen() {
           </div>
 
           <div className={`pillar pillar-gold pillar-hidden reveal reveal-delay-3${pillarsOpen ? ' pillar-show' : ''}`}>
-            <div className="pillar-img"><img src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1772045449/hpm_johgyu.webp" alt="Mentalidad" /></div>
+            <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hpm_johgyu.webp" alt="Mentalidad" /></div>
             <div className="pill-num">03</div>
             <h3>Mentalidad</h3>
             <p>Healthy Space Method + Control de Vida (Notion). Identidad, propósito y metas — con un sistema para planear, ejecutar y sostener hábitos.</p>
@@ -272,7 +272,7 @@ export default function LandingScreen() {
       <section className="lifestyle-banner" id="s-how">
         <div className="lifestyle-inner">
           <div className="lifestyle-img-side">
-            <img src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1771973920/imagen2_ne3j1j.webp" alt="Healthy Space lifestyle" />
+            <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/imagen2_ne3j1j.webp" alt="Healthy Space lifestyle" />
           </div>
           <div className="lifestyle-text-side">
             <h2>Simple, sostenible, <em>sistematizado.</em></h2>
@@ -394,7 +394,7 @@ export default function LandingScreen() {
       {/* FOOTER */}
       <footer>
         <div className="logo">
-          <img src="https://res.cloudinary.com/dp9l5i19b/image/upload/f_auto,q_auto/v1771971266/logo_ohaica.png" alt="Healthy Space Club" />
+          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" />
         </div>
         <p>© 2025 Healthy Space Club · Todos los derechos reservados</p>
       </footer>

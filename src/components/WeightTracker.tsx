@@ -107,7 +107,11 @@ export default function WeightTracker() {
       </div>
 
       {sorted.length === 0 && (
-        <p className="wt-empty">Registra tu peso diario para ver tu progreso.</p>
+        <div className="wt-empty-state">
+          <div className="wt-empty-icon">⚖️</div>
+          <div className="wt-empty-title">Empieza a rastrear tu peso</div>
+          <div className="wt-empty-hint">Registra tu peso regularmente para visualizar tu progreso con una gráfica.</div>
+        </div>
       )}
     </div>
   );

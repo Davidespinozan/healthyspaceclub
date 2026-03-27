@@ -32,7 +32,7 @@ export default function PaymentModal() {
               {payInfo.plan.includes('Elite') && <span className="pf">🤖 AI Coach</span>}
               {(payInfo.plan.includes('Pro') || payInfo.plan.includes('Elite')) && <span className="pf">📊 Macros</span>}
               <span className="pf">🎬 Videos</span>
-              <span className="pf">🥗 28 Días</span>
+              <span className="pf">🥗 4 Cocinas</span>
               <span className="pf">💪 Rutinas</span>
             </div>
           </div>

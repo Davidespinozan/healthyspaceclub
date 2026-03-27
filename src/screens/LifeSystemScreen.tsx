@@ -74,20 +74,53 @@ const ICON_MAP: Record<LSPanel, string> = {
 /* ══════════════════════════════════════════════════════════════════
    MAIN SCREEN
 ══════════════════════════════════════════════════════════════════ */
-export default function LifeSystemScreen() {
+export default function LifeSystemScreen({ inline }: { inline?: boolean }) {
   const goTo = useAppStore(s => s.goTo);
   const { activePanel, setActivePanel } = useLifeSystemStore();
 
+  /* ── Inline mode: no separate sidebar, horizontal tab bar ── */
+  if (inline) {
+    return (
+      <div className="ls-inline">
+        {/* Horizontal tab strip */}
+        <div className="ls-tab-bar">
+          {NAV_ITEMS.map(item => (
+            <button
+              key={item.id}
+              className={`ls-tab${activePanel === item.id ? ' on' : ''}`}
+              onClick={() => setActivePanel(item.id)}
+            >
+              <span className="ls-tab-icon">{['⊞','📅','✓','☀','📊','💰','🧭','↻','✦'][NAV_ITEMS.indexOf(item)]}</span>
+              <span className="ls-tab-label">{item.label}</span>
+            </button>
+          ))}
+        </div>
+        {/* Panel content */}
+        <div className="ls-inline-main">
+          <PanelDash    active={activePanel === 'dash'}      onNav={setActivePanel} />
+          <PanelTiempo  active={activePanel === 'time'}      />
+          <PanelExec    active={activePanel === 'exec'}      />
+          <PanelDiario  active={activePanel === 'daily'}     />
+          <PanelMedir   active={activePanel === 'measure'}   />
+          <PanelDinero  active={activePanel === 'money'}     />
+          <PanelDecisiones active={activePanel === 'decisions'} />
+          <PanelReview  active={activePanel === 'review'}    />
+          <PanelJournal active={activePanel === 'journal'}   />
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Standalone mode (legacy, kept for compatibility) ── */
   const groups: Record<string, typeof NAV_ITEMS> = {};
   for (const item of NAV_ITEMS) {
-    const g = item.group ?? '__'; 
+    const g = item.group ?? '__';
     if (!groups[g]) groups[g] = [];
     groups[g].push(item);
   }
 
   return (
     <>
-      {/* Sidebar */}
       <div className="ls-sidebar">
         <div className="ls-sb-brand">
           <div className="ls-sb-logo">Healthy Space Club</div>
@@ -121,8 +154,6 @@ export default function LifeSystemScreen() {
           Auto guardado
         </div>
       </div>
-
-      {/* Main */}
       <div className="ls-main">
         <PanelDash    active={activePanel === 'dash'}      onNav={setActivePanel} />
         <PanelTiempo  active={activePanel === 'time'}      />

@@ -9,7 +9,7 @@ interface Message {
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
 function buildSystemPrompt(store: ReturnType<typeof useAppStore.getState>): string {
-  const { userName, obData, tdee, planGoal, startDate, habits, weightLog, foodLog, workoutLog } = store;
+  const { userName, obData, tdee, planGoal, habits, weightLog, foodLog, workoutLog } = store;
 
   const today = new Date().toISOString().split('T')[0];
   const todayFood = foodLog.filter(e => e.date === today);
@@ -28,25 +28,38 @@ function buildSystemPrompt(store: ReturnType<typeof useAppStore.getState>): stri
     `${e.date} — ${e.exercise}: ${e.sets.map(s => `${s.reps}×${s.kg}kg`).join(', ')}`
   ).join('\n') || 'Sin registros';
 
-  const weeksInProgram = startDate
-    ? Math.floor((Date.now() - new Date(startDate).getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1
-    : 1;
+  return `Eres el coach personal de Healthy Space Club (HSC), una plataforma de salud integral. Eres amable, motivador, directo y usas lenguaje casual (sin groserías). Te adaptas al idioma y contexto del usuario.
 
-  return `Eres el coach de nutrición y fitness de Healthy Space Club, una app de salud enfocada en el mercado mexicano. Eres amable, motivador, directo y usas lenguaje casual mexicano (sin groserías). Conoces el Sistema Mexicano de Equivalentes (SME).
+HSC tiene 3 secciones que debes dominar por completo:
+
+1. NUTRICIÓN 🥗
+   - El plan de alimentación es un catálogo de opciones balanceadas calóricamente de 4 cocinas del mundo: Mexicana, Japonesa, Italiana y Americana. No hay días fijos ni semanas — el usuario elige libremente cualquier platillo según su antojo y sus calorías del día.
+   - Incluye recetario de salsas y aderezos, guía de alimentos para el súper.
+   - Si el usuario no tiene un ingrediente o no le gusta, puedes sugerirle sustituciones equivalentes (mismo grupo alimenticio, misma cantidad calórica) para que no rompa su plan.
+   - El usuario registra sus comidas y el sistema calcula macros en tiempo real.
+
+2. ENTRENAMIENTO 💪
+   - Rutinas de ejercicio estructuradas con videos de YouTube.
+   - Registro de entrenamientos por ejercicio, series, repeticiones y peso.
+   - El usuario lleva historial de progresión de cargas.
+
+3. CRECIMIENTO PERSONAL 🌱
+   - Sistema de vida (Life System) con 8 áreas: Tiempo, Ejecución, Sistema Diario, Medir, Dinero, Decisiones, Revisión y Journal.
+   - Hábitos diarios, metas, reflexiones profundas y seguimiento de productividad.
+   - Está diseñado para construir disciplina y claridad mental, no solo hábitos físicos.
 
 DATOS DEL USUARIO:
 - Nombre: ${userName || 'el usuario'}
 - Sexo: ${obData.sex || '?'}, Edad: ${obData.edad || '?'} años
 - Peso actual: ${obData.peso || '?'} kg, Estatura: ${obData.estatura || '?'} cm
-- Actividad: ${obData.activity || '?'}, Meta: ${obData.goal || '?'}
+- Nivel de actividad: ${obData.activity || '?'}, Meta: ${obData.goal || '?'}
 - TDEE: ${tdee} kcal/día, Meta calórica: ${planGoal} kcal/día
-- Semana en el programa: ${weeksInProgram}
 
 HOY (${today}):
 - Calorías registradas: ${todayKcal} / ${planGoal} kcal
 - Macros: ${todayProt}g proteína, ${todayCarbs}g carbs, ${todayFat}g grasa
 - Hábitos completados: ${habitsDone}/4
-- Alimentos: ${todayFood.map(e => e.desc).join(', ') || 'Ninguno registrado'}
+- Alimentos registrados: ${todayFood.map(e => e.desc).join(', ') || 'Ninguno'}
 
 PESO RECIENTE: ${weightTrend}
 
@@ -54,11 +67,13 @@ ENTRENAMIENTOS RECIENTES:
 ${workoutSummary}
 
 INSTRUCCIONES:
-- Responde en español mexicano, máximo 3-4 oraciones a menos que el usuario pida más detalle
-- Sé específico con los datos del usuario, no genérico
-- Si preguntan de comida, usa porciones mexicanas
-- Si preguntan de ejercicio, considera su historial
-- Anima siempre al final con algo breve y real`;
+- Responde en español, máximo 3-4 oraciones a menos que pidan más detalle
+- Sé específico con los datos del usuario, nunca genérico
+- Cubre cualquier tema de las 3 secciones: nutrición, entrenamiento o crecimiento personal
+- Cuando hablen de comida, recuerda que el plan tiene 4 cocinas y el usuario puede elegir cualquier opción
+- Cuando hablen de entrenamiento, considera su historial de workouts
+- Cuando hablen de metas, hábitos o vida, conecta con el área de Crecimiento Personal
+- Siempre termina con algo breve que motive a la acción`;
 }
 
 async function askCoach(messages: Message[], systemPrompt: string): Promise<string> {
@@ -84,9 +99,9 @@ async function askCoach(messages: Message[], systemPrompt: string): Promise<stri
 
 const SUGGESTIONS = [
   '¿Cómo voy hoy?',
-  '¿Qué debería comer?',
-  '¿Cuánta proteína necesito?',
+  '¿Qué cocina me recomiendas?',
   '¿Cómo mejorar mi entreno?',
+  'Ayúdame con mis hábitos',
 ];
 
 export default function AICoach() {

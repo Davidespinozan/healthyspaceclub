@@ -6,8 +6,13 @@ import { useAppStore } from '../store';
  * Muestra: calorías del food log, macros, hábitos completados y volumen de gym.
  */
 export default function TodayStats() {
-  const { foodLog, planGoal, habits, workoutLog } = useAppStore();
+  const { foodLog, planGoal, habits: habitsRaw, habitsDate, workoutLog } = useAppStore();
   const today = new Date().toISOString().split('T')[0];
+
+  // If stored habits belong to a previous day, treat as all-false
+  const habits = habitsDate === today
+    ? habitsRaw
+    : { agua: false, frutas: false, ejercicio: false, sueno: false };
 
   const todayFood = useMemo(() => foodLog.filter(e => e.date === today), [foodLog, today]);
   const todayWorkout = useMemo(() => workoutLog.filter(e => e.date === today), [workoutLog, today]);
@@ -24,11 +29,7 @@ export default function TodayStats() {
     { id: 'sueno',     emoji: '😴', label: 'Sueño' },
   ];
   const habitsDone = habitList.filter(h => habits[h.id]).length;
-
-  const gymVolume = todayWorkout.reduce(
-    (sum, e) => sum + e.sets.reduce((s, st) => s + st.reps * st.kg, 0),
-    0,
-  );
+  const hasAnyActivity = kcalTotal > 0 || todayWorkout.length > 0 || habitsDone > 0;
 
   // Anillo SVG de calorías
   const goal = planGoal || 2000;
@@ -37,6 +38,19 @@ export default function TodayStats() {
   const circ = 2 * Math.PI * R;
   const dashOffset = circ * (1 - pct);
   const ringColor = pct >= 1 ? '#ef4444' : pct >= 0.8 ? '#f59e0b' : '#22c55e';
+
+  if (!hasAnyActivity) {
+    return (
+      <div className="today-stats ts-empty-state">
+        <div className="ts-title">📅 Resumen de hoy</div>
+        <div className="ts-empty">
+          <div className="ts-empty-icon">🌱</div>
+          <div className="ts-empty-text">Tu día apenas comienza</div>
+          <div className="ts-empty-hint">Registra comidas, entrena o completa un hábito para ver tu progreso aquí.</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="today-stats">
@@ -100,13 +114,19 @@ export default function TodayStats() {
 
         {/* Gym */}
         <div className="ts-card ts-gym">
-          <div className="ts-gym-vol">{gymVolume > 0 ? gymVolume.toLocaleString() : '—'}</div>
-          <div className="ts-gym-unit">{gymVolume > 0 ? 'kg vol.' : 'Sin entreno'}</div>
-          <div className="ts-gym-sets">
-            {todayWorkout.length > 0
-              ? `${todayWorkout.length} ejercicio${todayWorkout.length > 1 ? 's' : ''}`
-              : '💪 ¡A moverse!'}
-          </div>
+          {todayWorkout.length > 0 ? (
+            <>
+              <div className="ts-gym-emoji">{todayWorkout[0].exercise === 'Lower + Core' ? '🦵' : todayWorkout[0].exercise === 'Upper + Core' ? '💪' : todayWorkout[0].exercise === 'Condición' ? '⚡' : todayWorkout[0].exercise === 'Descanso activo' ? '🌿' : '✅'}</div>
+              <div className="ts-gym-type">{todayWorkout[0].exercise}</div>
+              <div className="ts-gym-sets">Sesión registrada</div>
+            </>
+          ) : (
+            <>
+              <div className="ts-gym-vol">—</div>
+              <div className="ts-gym-unit">Sin entreno</div>
+              <div className="ts-gym-sets">💪 ¡A moverse!</div>
+            </>
+          )}
         </div>
       </div>
     </div>

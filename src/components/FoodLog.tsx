@@ -91,7 +91,10 @@ export default function FoodLog() {
       {/* Entries */}
       {todayEntries.length === 0 && !showForm ? (
         <div className="fl-empty">
-          <span>Toca "+ Agregar" para registrar lo que comiste</span>
+          <div className="fl-empty-icon">🍽️</div>
+          <div className="fl-empty-title">Sin registros hoy</div>
+          <div className="fl-empty-hint">Lleva la cuenta de lo que comes y mantén el control de tus calorías sin adivinar.</div>
+          <button className="fl-empty-cta" onClick={() => setShowForm(true)}>+ Agregar comida</button>
         </div>
       ) : (
         <div className="fl-entries">
