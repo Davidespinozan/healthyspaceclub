@@ -1,5 +1,7 @@
 import { useAppStore } from '../store';
+import { useLifeSystemStore } from '../store/lifeSystemStore';
 import type { DashPage } from '../types';
+import type { LSPanel } from '../types/lifeSystem';
 
 const HSM_STEPS = [
   { emoji: '🧠', title: 'Identidad',            sub: 'Soy, Sé, Tengo, Puedo' },
@@ -14,7 +16,7 @@ const HSM_STEPS = [
   { emoji: '🚀', title: 'Evolución Constante',   sub: 'Nunca terminas' },
 ];
 
-const LS_PANELS = [
+const LS_PANELS: { id: LSPanel; label: string; icon: string }[] = [
   { id: 'time',  label: 'Tiempo',    icon: '📅' },
   { id: 'exec',  label: 'Ejecución', icon: '✓' },
   { id: 'daily', label: 'Sistema Diario', icon: '☀' },
@@ -28,6 +30,8 @@ export default function TabMetodo({ onNav }: { onNav: (page: DashPage) => void }
     streakCount, dailyHSMResponses,
     activeHSMDimension, setActiveHSMDimension, growthCompleted,
   } = useAppStore();
+
+  const { setActivePanel } = useLifeSystemStore();
 
   // Weekly check-in analysis for "Claridad mental"
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
@@ -107,7 +111,7 @@ export default function TabMetodo({ onNav }: { onNav: (page: DashPage) => void }
       <div className="tm-section-title">Control de Vida</div>
       <div className="tm-ls-grid">
         {LS_PANELS.map(p => (
-          <div key={p.id} className="tm-ls-card" onClick={() => onNav('lifesystem')}>
+          <div key={p.id} className="tm-ls-card" onClick={() => { setActivePanel(p.id); onNav('lifesystem'); }}>
             <span className="tm-ls-icon">{p.icon}</span>
             <span className="tm-ls-label">{p.label}</span>
           </div>

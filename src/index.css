@@ -5425,6 +5425,22 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .tt-profile-val { font-size: .82rem; font-weight: 600; color: var(--txt); }
 .tt-profile-kcal { color: var(--amber); }
 
+/* Workout history */
+.tt-history { display: flex; flex-direction: column; gap: 6px; }
+.tt-history-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--card);
+  border: 1px solid var(--sand); border-radius: 12px;
+  font-size: .8rem;
+}
+.tt-history-date { font-size: .7rem; color: var(--txt2); font-weight: 600; min-width: 72px; }
+.tt-history-exercise { font-weight: 700; color: var(--txt); flex: 1; }
+.tt-history-sets { display: flex; gap: 6px; flex-wrap: wrap; }
+.tt-history-set {
+  font-size: .68rem; font-weight: 600; color: var(--moss);
+  background: var(--warm); padding: 2px 6px; border-radius: 6px;
+}
+
 .tt-logout {
   width: 100%; padding: 14px; border-radius: 12px;
   border: 1px solid rgba(200,60,60,.2); background: rgba(200,60,60,.04);

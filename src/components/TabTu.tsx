@@ -1,11 +1,18 @@
 import { useAppStore } from '../store';
+import { useLifeSystemStore } from '../store/lifeSystemStore';
 import type { DashPage } from '../types';
 
 export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
     userName, obData, tdee, planGoal, streakCount, startDate,
-    foodLog, logout,
+    foodLog, workoutLog, logout,
   } = useAppStore();
+  const { setActivePanel } = useLifeSystemStore();
+
+  function navLS(panel: 'time' | 'journal' | 'dash') {
+    setActivePanel(panel);
+    onNav('lifesystem');
+  }
 
   const today = new Date().toISOString().split('T')[0];
   const todayKcal = Math.round(foodLog.filter(e => e.date === today).reduce((s, e) => s + e.kcal, 0));
@@ -65,26 +72,39 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
             <div className="tt-card-sub">Personalizada según tu energía</div>
           </div>
         </div>
-        <div className="tt-card" onClick={() => onNav('entrenamiento')}>
-          <div className="tt-card-icon-wrap"><span>📊</span></div>
-          <div>
-            <div className="tt-card-title">Historial</div>
-            <div className="tt-card-sub">Tu progresión de cargas</div>
-          </div>
-        </div>
       </div>
+
+      {/* Historial de entrenamientos */}
+      {workoutLog.length > 0 && (
+        <>
+          <div className="tt-section-title">Historial de entreno</div>
+          <div className="tt-history">
+            {[...workoutLog].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10).map((entry, i) => (
+              <div key={i} className="tt-history-item">
+                <div className="tt-history-date">{entry.date}</div>
+                <div className="tt-history-exercise">{entry.exercise}</div>
+                <div className="tt-history-sets">
+                  {entry.sets.map((s, si) => (
+                    <span key={si} className="tt-history-set">{s.reps}×{s.kg}kg</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Control de vida */}
       <div className="tt-section-title">Control de vida</div>
       <div className="tt-cards">
-        <div className="tt-card" onClick={() => onNav('lifesystem')}>
+        <div className="tt-card" onClick={() => navLS('time')}>
           <div className="tt-card-icon-wrap"><span>📅</span></div>
           <div>
             <div className="tt-card-title">Time blocking</div>
             <div className="tt-card-sub">Organiza tu día por bloques</div>
           </div>
         </div>
-        <div className="tt-card" onClick={() => onNav('lifesystem')}>
+        <div className="tt-card" onClick={() => navLS('journal')}>
           <div className="tt-card-icon-wrap"><span>✦</span></div>
           <div>
             <div className="tt-card-title">Journal</div>
