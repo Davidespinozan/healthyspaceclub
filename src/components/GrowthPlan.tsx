@@ -1,22 +1,290 @@
 import { useState } from 'react';
-import { ChevronLeft, Lock, CheckCircle2, ArrowRight } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
 
 /* ── Step definitions ─────────────────────────────────────────── */
 const HSM_STEPS = [
-  { emoji: '🧠', title: 'Identidad',            sub: 'Soy, Sé, Tengo, Puedo' },
-  { emoji: '✨', title: 'Vocación',              sub: 'Qué te llama y para qué sirves' },
-  { emoji: '🎯', title: 'Propósito',             sub: 'Para qué estás aquí' },
-  { emoji: '📍', title: 'Metas',                 sub: 'Hacia dónde vas' },
-  { emoji: '⚡', title: 'Disciplina',            sub: 'Cómo llegas ahí' },
-  { emoji: '💪', title: 'Cuerpo',                sub: 'Nutrición y entrenamiento' },
-  { emoji: '🌱', title: 'Entorno y Relaciones',  sub: 'Con quién y dónde estás' },
-  { emoji: '🧘', title: 'Control Emocional',     sub: 'Ansiedad, impulsos, estrés' },
-  { emoji: '🔥', title: 'Resiliencia',           sub: 'Cómo te levantas' },
-  { emoji: '🚀', title: 'Evolución Constante',   sub: 'Nunca terminas' },
+  { emoji: '🧠', title: 'Identidad',            sub: 'Soy · Sé · Tengo · Puedo', desc: 'Tu identidad es la base de todo. Sin conocer quién eres, cualquier meta se construye sobre arena.' },
+  { emoji: '✨', title: 'Vocación',              sub: 'Lo que amas · Sabes · El mundo necesita', desc: 'Descubrir para qué sirves cambia cómo vives cada día.' },
+  { emoji: '🎯', title: 'Propósito',             sub: 'Tu por qué', desc: 'El propósito es el por qué detrás de todo lo que haces.' },
+  { emoji: '📍', title: 'Metas',                 sub: '90 días · 1 año · 5 años', desc: 'Las metas claras son un mapa. Sin mapa es fácil perderse aunque te esfuerces mucho.' },
+  { emoji: '⚡', title: 'Disciplina',            sub: 'Hábitos · Patrones', desc: 'La motivación es pasajera. La disciplina es lo que realmente te lleva ahí.' },
+  { emoji: '💪', title: 'Cuerpo',                sub: 'Nutrición · Movimiento · Descanso', desc: 'Tu cuerpo es el vehículo de todo lo que quieres lograr.' },
+  { emoji: '🌱', title: 'Entorno y Relaciones',  sub: 'Círculo · Espacio · Límites', desc: 'Las personas con las que te rodeas determinan quién te conviertes.' },
+  { emoji: '🧘', title: 'Control Emocional',     sub: 'Patrones · Detonadores · Herramientas', desc: 'Dominar tus emociones no es reprimirlas — es elegir cómo respondes.' },
+  { emoji: '🔥', title: 'Resiliencia',           sub: 'Caídas · Aprendizajes · Apoyo', desc: 'No se trata de no caer — se trata de cómo te levantas.' },
+  { emoji: '🚀', title: 'Evolución Constante',   sub: 'Aprendizaje · Versión futura · Legado', desc: 'La persona que eras ayer es el piso, no el techo.' },
 ];
 
-/* ── Main router ─────────────────────────────────────────────── */
+/* ── Types ─────────────────────────────────────────────────────── */
+type FieldDef = { key: string; placeholder: string; type?: 'input' | 'textarea' | 'date' | 'select'; options?: string[] };
+type SectionDef = { title: string; fields: FieldDef[]; layout?: 'col' | 'row' | 'grid2' | 'grid3' };
+type ModuleDef = { sections: SectionDef[]; declaration: { label: string; placeholder: string; special?: 'carta' }; canCompleteMin?: number };
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  MODULE DEFINITIONS                                           */
+/* ══════════════════════════════════════════════════════════════ */
+
+const MODULES: Record<number, ModuleDef> = {
+  0: { // IDENTIDAD
+    sections: [
+      { title: 'SÉ', layout: 'col', fields: [
+        { key: 'se_0', placeholder: '¿Qué sabes hacer mejor que la mayoría?' },
+        { key: 'se_1', placeholder: '¿Qué habilidad desarrollaste con esfuerzo?' },
+        { key: 'se_2', placeholder: '¿Qué experiencia te marcó?' },
+        { key: 'se_3', placeholder: '¿En qué tema eres referencia?' },
+        { key: 'se_4', placeholder: '¿Qué talento natural tienes?' },
+      ]},
+      { title: 'SOY', layout: 'col', fields: [
+        { key: 'soy_0', placeholder: '¿Qué te apasiona genuinamente?' },
+        { key: 'soy_1', placeholder: '¿Cuál es tu sueño más grande?' },
+        { key: 'soy_2', placeholder: '¿Qué aspiras a ser?' },
+        { key: 'soy_3', placeholder: '¿Cuál es tu principio más importante?' },
+        { key: 'soy_4', placeholder: '¿Qué valoras más en la vida?' },
+        { key: 'soy_5', placeholder: '¿Qué creencia te limita?' },
+        { key: 'soy_6', placeholder: '¿Cuál es tu mayor miedo?' },
+      ]},
+      { title: 'TENGO', layout: 'col', fields: [
+        { key: 'tengo_0', placeholder: '¿Qué logro o título tienes?' },
+        { key: 'tengo_1', placeholder: '¿Cuál es tu activo más valioso?' },
+        { key: 'tengo_2', placeholder: '¿Qué herramienta usas diario?' },
+        { key: 'tengo_3', placeholder: '¿A quién conoces que te puede ayudar?' },
+        { key: 'tengo_4', placeholder: '¿Qué recurso tienes disponible ahora?' },
+      ]},
+      { title: 'FODA PERSONAL', layout: 'col', fields: [
+        { key: 'foda_f', placeholder: 'Ej: Soy disciplinado, tengo habilidades de comunicación...', type: 'textarea' },
+        { key: 'foda_d', placeholder: 'Ej: Me cuesta delegar, procrastino bajo presión...', type: 'textarea' },
+        { key: 'foda_o', placeholder: 'Ej: Crecimiento del mercado digital, contactos en mi industria...', type: 'textarea' },
+        { key: 'foda_a', placeholder: 'Ej: Inestabilidad económica, competencia creciente...', type: 'textarea' },
+      ]},
+    ],
+    declaration: { label: 'PUEDO', placeholder: 'Yo puedo...' },
+    canCompleteMin: 5,
+  },
+
+  1: { // VOCACIÓN
+    sections: [
+      { title: 'LO QUE AMO', layout: 'col', fields: [
+        { key: 'amo_0', placeholder: '¿Qué actividades te llenan de energía?' },
+        { key: 'amo_1', placeholder: '¿Qué harías aunque no te pagaran?' },
+        { key: 'amo_2', placeholder: '¿Qué te hace perder la noción del tiempo?' },
+        { key: 'amo_3', placeholder: '¿Qué temas estudiarías gratis?' },
+        { key: 'amo_4', placeholder: '¿Cuándo te has sentido más vivo?' },
+      ]},
+      { title: 'LO QUE SÉ HACER', layout: 'col', fields: [
+        { key: 'saber_0', placeholder: '¿Cuáles son tus habilidades naturales?' },
+        { key: 'saber_1', placeholder: '¿En qué te piden ayuda constantemente?' },
+        { key: 'saber_2', placeholder: '¿Qué haces mejor que la mayoría?' },
+        { key: 'saber_3', placeholder: '¿De qué logro te sientes más orgulloso?' },
+        { key: 'saber_4', placeholder: '¿Qué habilidad has desarrollado con esfuerzo?' },
+      ]},
+      { title: 'LO QUE EL MUNDO NECESITA', layout: 'col', fields: [
+        { key: 'mundo_0', placeholder: '¿Qué problema del mundo te indigna?' },
+        { key: 'mundo_1', placeholder: '¿A quién quieres ayudar?' },
+        { key: 'mundo_2', placeholder: '¿Qué cambio quieres ver en tu entorno?' },
+        { key: 'mundo_3', placeholder: '¿Cómo puedes contribuir con lo que tienes?' },
+        { key: 'mundo_4', placeholder: '¿Qué falta en tu comunidad o industria?' },
+      ]},
+    ],
+    declaration: { label: 'MI VOCACIÓN', placeholder: 'Mi vocación es...' },
+    canCompleteMin: 3,
+  },
+
+  2: { // PROPÓSITO
+    sections: [
+      { title: 'REFLEXIÓN PROFUNDA', layout: 'col', fields: [
+        { key: 'prop_0', placeholder: '¿Cuándo te has sentido más pleno y realizado en tu vida?', type: 'textarea' },
+        { key: 'prop_1', placeholder: '¿Qué impacto quieres tener en la vida de otras personas?', type: 'textarea' },
+        { key: 'prop_2', placeholder: '¿Cómo quieres que te recuerden?' },
+        { key: 'prop_3', placeholder: '¿Qué harías si supieras que no puedes fallar?', type: 'textarea' },
+      ]},
+      { title: 'MIS VALORES', layout: 'col', fields: [
+        { key: 'val_0', placeholder: 'Valor más importante' },
+        { key: 'val_1', placeholder: 'Segundo valor' },
+        { key: 'val_2', placeholder: 'Tercer valor' },
+      ]},
+    ],
+    declaration: { label: 'MI PROPÓSITO', placeholder: 'Mi propósito es...' },
+    canCompleteMin: 3,
+  },
+
+  3: { // METAS
+    sections: [
+      { title: 'META 90 DÍAS', layout: 'col', fields: [
+        { key: 'm90_que', placeholder: '¿Qué quieres lograr exactamente?' },
+        { key: 'm90_como', placeholder: '¿Cómo sabrás que lo lograste?' },
+        { key: 'm90_cuando', placeholder: '¿Para cuándo?', type: 'date' },
+        { key: 'm90_porque', placeholder: '¿Por qué es importante para ti?' },
+      ]},
+      { title: 'META 1 AÑO', layout: 'col', fields: [
+        { key: 'm1a_que', placeholder: '¿Qué quieres lograr exactamente?' },
+        { key: 'm1a_como', placeholder: '¿Cómo sabrás que lo lograste?' },
+        { key: 'm1a_cuando', placeholder: '¿Para cuándo?', type: 'date' },
+        { key: 'm1a_porque', placeholder: '¿Por qué es importante para ti?' },
+      ]},
+      { title: 'META 5 AÑOS', layout: 'col', fields: [
+        { key: 'm5a_que', placeholder: '¿Qué quieres lograr exactamente?' },
+        { key: 'm5a_como', placeholder: '¿Cómo sabrás que lo lograste?' },
+        { key: 'm5a_cuando', placeholder: '¿Para cuándo?', type: 'date' },
+        { key: 'm5a_porque', placeholder: '¿Por qué es importante para ti?' },
+      ]},
+    ],
+    declaration: { label: 'MI COMPROMISO', placeholder: 'Me comprometo a...' },
+    canCompleteMin: 3,
+  },
+
+  4: { // DISCIPLINA
+    sections: [
+      { title: 'MIS HÁBITOS DE ÉXITO', layout: 'col', fields: [
+        { key: 'hab_0', placeholder: '¿Cuál es el hábito?' },
+        { key: 'hab_0f', placeholder: 'Diario / Semanal', type: 'select', options: ['Diario', 'Semanal'] },
+        { key: 'hab_0h', placeholder: '¿A qué hora?' },
+        { key: 'hab_1', placeholder: '¿Cuál es el hábito?' },
+        { key: 'hab_1f', placeholder: 'Diario / Semanal', type: 'select', options: ['Diario', 'Semanal'] },
+        { key: 'hab_1h', placeholder: '¿A qué hora?' },
+        { key: 'hab_2', placeholder: '¿Cuál es el hábito?' },
+        { key: 'hab_2f', placeholder: 'Diario / Semanal', type: 'select', options: ['Diario', 'Semanal'] },
+        { key: 'hab_2h', placeholder: '¿A qué hora?' },
+      ]},
+      { title: 'MIS PATRONES A ROMPER', layout: 'col', fields: [
+        { key: 'pat_0', placeholder: '¿Cuál es el mal hábito?' },
+        { key: 'pat_0t', placeholder: '¿Qué lo dispara?' },
+        { key: 'pat_0r', placeholder: '¿Con qué lo reemplazas?' },
+        { key: 'pat_1', placeholder: '¿Cuál es el mal hábito?' },
+        { key: 'pat_1t', placeholder: '¿Qué lo dispara?' },
+        { key: 'pat_1r', placeholder: '¿Con qué lo reemplazas?' },
+      ]},
+    ],
+    declaration: { label: 'MI COMPROMISO DE DISCIPLINA', placeholder: 'Mi compromiso de disciplina es...' },
+    canCompleteMin: 3,
+  },
+
+  5: { // CUERPO
+    sections: [
+      { title: 'MI RELACIÓN CON EL CUERPO', layout: 'col', fields: [
+        { key: 'cuerpo_0', placeholder: '¿Cómo describirías tu relación actual con tu cuerpo?', type: 'textarea' },
+        { key: 'cuerpo_1', placeholder: '¿Qué es lo que más valoras de tu cuerpo?' },
+        { key: 'cuerpo_2', placeholder: '¿Qué quieres cambiar o mejorar?' },
+        { key: 'cuerpo_3', placeholder: '¿Cómo te sientes cuando te cuidas bien?' },
+      ]},
+      { title: 'MI ESTILO DE VIDA IDEAL', layout: 'col', fields: [
+        { key: 'ideal_0', placeholder: '¿Qué come la versión de ti que quieres ser?' },
+        { key: 'ideal_1', placeholder: '¿Cómo se mueve y ejercita?' },
+        { key: 'ideal_2', placeholder: '¿Cómo duerme y descansa?' },
+        { key: 'ideal_3', placeholder: '¿Cómo maneja el estrés físico?' },
+      ]},
+      { title: 'MIS COMPROMISOS FÍSICOS', layout: 'col', fields: [
+        { key: 'comp_0', placeholder: 'Compromiso físico 1' },
+        { key: 'comp_1', placeholder: 'Compromiso físico 2' },
+        { key: 'comp_2', placeholder: 'Compromiso físico 3' },
+      ]},
+    ],
+    declaration: { label: 'MI CUERPO MERECE', placeholder: 'Mi cuerpo merece...' },
+    canCompleteMin: 3,
+  },
+
+  6: { // ENTORNO Y RELACIONES
+    sections: [
+      { title: 'MI CÍRCULO', layout: 'col', fields: [
+        { key: 'energia_0', placeholder: 'Persona que me da energía 1' },
+        { key: 'energia_1', placeholder: 'Persona que me da energía 2' },
+        { key: 'energia_2', placeholder: 'Persona que me da energía 3' },
+        { key: 'quita_0', placeholder: 'Persona que me la quita 1' },
+        { key: 'quita_1', placeholder: 'Persona que me la quita 2' },
+        { key: 'quita_2', placeholder: 'Persona que me la quita 3' },
+        { key: 'fort_0', placeholder: 'Relación que necesito fortalecer 1' },
+        { key: 'fort_1', placeholder: 'Relación que necesito fortalecer 2' },
+      ]},
+      { title: 'MI ENTORNO FÍSICO', layout: 'col', fields: [
+        { key: 'espacio_0', placeholder: '¿Cómo es tu espacio de trabajo actual?' },
+        { key: 'espacio_1', placeholder: '¿Cómo sería tu espacio ideal?' },
+        { key: 'espacio_2', placeholder: '¿Qué cambio puedes hacer esta semana?' },
+      ]},
+      { title: 'MIS LÍMITES', layout: 'col', fields: [
+        { key: 'lim_0', placeholder: 'Límite que necesito establecer 1' },
+        { key: 'lim_1', placeholder: 'Límite que necesito establecer 2' },
+        { key: 'lim_2', placeholder: 'Límite que necesito establecer 3' },
+      ]},
+    ],
+    declaration: { label: 'ME RODEO DE', placeholder: 'Me rodeo de...' },
+    canCompleteMin: 3,
+  },
+
+  7: { // CONTROL EMOCIONAL
+    sections: [
+      { title: 'MIS PATRONES EMOCIONALES', layout: 'col', fields: [
+        { key: 'emo_0', placeholder: '¿Qué emoción aparece más seguido en ti?' },
+        { key: 'emo_1', placeholder: '¿Qué la dispara normalmente?' },
+        { key: 'emo_2', placeholder: '¿Cómo reaccionas cuando aparece?' },
+        { key: 'emo_3', placeholder: '¿Cómo quieres responder en su lugar?' },
+      ]},
+      { title: 'MIS DETONADORES', layout: 'col', fields: [
+        { key: 'det_0', placeholder: 'Situación que me saca de control' },
+        { key: 'det_0r', placeholder: '¿Qué pasa después?' },
+        { key: 'det_1', placeholder: 'Otra situación' },
+        { key: 'det_1r', placeholder: '¿Qué pasa después?' },
+      ]},
+      { title: 'MIS HERRAMIENTAS', layout: 'col', fields: [
+        { key: 'herr_0', placeholder: '¿Qué te ayuda a calmarte?' },
+        { key: 'herr_1', placeholder: '¿Cómo practicas la conciencia del momento?' },
+        { key: 'herr_2', placeholder: '¿Cómo procesas las emociones difíciles?' },
+      ]},
+    ],
+    declaration: { label: 'CUANDO SIENTO ALGO DIFÍCIL', placeholder: 'Cuando siento algo difícil, elijo...' },
+    canCompleteMin: 3,
+  },
+
+  8: { // RESILIENCIA
+    sections: [
+      { title: 'MIS CAÍDAS Y APRENDIZAJES', layout: 'col', fields: [
+        { key: 'caida_0', placeholder: '¿Cuál ha sido el obstáculo más grande que has superado?', type: 'textarea' },
+        { key: 'caida_1', placeholder: '¿Qué aprendiste de esa experiencia?', type: 'textarea' },
+        { key: 'caida_2', placeholder: '¿Cómo te cambió como persona?', type: 'textarea' },
+      ]},
+      { title: 'MI MENTALIDAD ANTE LOS RETOS', layout: 'col', fields: [
+        { key: 'ment_0', placeholder: '¿Cómo reaccionas normalmente cuando algo sale mal?' },
+        { key: 'ment_1', placeholder: '¿Cómo quieres reaccionar?' },
+        { key: 'ment_2', placeholder: '¿Qué te dice tu voz interna en esos momentos?' },
+      ]},
+      { title: 'MI RED DE APOYO', layout: 'col', fields: [
+        { key: 'red_0', placeholder: '¿Quién es?' },
+        { key: 'red_0t', placeholder: '¿Qué tipo de apoyo te da?' },
+        { key: 'red_1', placeholder: '¿Quién es?' },
+        { key: 'red_1t', placeholder: '¿Qué tipo de apoyo te da?' },
+      ]},
+    ],
+    declaration: { label: 'CUANDO ENFRENTO ADVERSIDAD', placeholder: 'Cuando enfrento adversidad...' },
+    canCompleteMin: 3,
+  },
+
+  9: { // EVOLUCIÓN CONSTANTE
+    sections: [
+      { title: 'MI APRENDIZAJE CONTINUO', layout: 'col', fields: [
+        { key: 'apr_0', placeholder: '¿Qué estás aprendiendo ahora mismo?' },
+        { key: 'apr_1', placeholder: '¿Qué quieres aprender este año?' },
+        { key: 'apr_2', placeholder: '¿Cómo aprendes mejor?' },
+      ]},
+      { title: 'MI VERSIÓN FUTURA', layout: 'col', fields: [
+        { key: 'fut_0', placeholder: '¿Cómo es la mejor versión de ti físicamente en 3 años?', type: 'textarea' },
+        { key: 'fut_1', placeholder: '¿Cómo es mentalmente y emocionalmente?', type: 'textarea' },
+        { key: 'fut_2', placeholder: '¿Cómo es profesionalmente?', type: 'textarea' },
+        { key: 'fut_3', placeholder: '¿Cómo son sus relaciones?', type: 'textarea' },
+      ]},
+      { title: 'MI LEGADO', layout: 'col', fields: [
+        { key: 'leg_0', placeholder: '¿Qué quieres haber construido al final de tu vida?' },
+        { key: 'leg_1', placeholder: '¿Qué quieres que digan de ti?' },
+        { key: 'leg_2', placeholder: '¿Qué le dejarías a las personas que amas?' },
+      ]},
+    ],
+    declaration: { label: 'CARTA A MI YO FUTURO', placeholder: 'Querido yo del futuro...', special: 'carta' },
+    canCompleteMin: 3,
+  },
+};
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  MAIN COMPONENT                                               */
+/* ══════════════════════════════════════════════════════════════ */
+
 export default function GrowthPlan({ visible }: { visible: boolean }) {
   const [activeModule, setActiveModule] = useState<number | null>(null);
   const growthCompleted = useAppStore(s => s.growthCompleted);
@@ -24,51 +292,29 @@ export default function GrowthPlan({ visible }: { visible: boolean }) {
   if (!visible) return null;
 
   if (activeModule !== null) {
-    return (
-      <ModuleDetail
-        index={activeModule}
-        onBack={() => setActiveModule(null)}
-      />
-    );
+    return <ModuleView index={activeModule} onBack={() => setActiveModule(null)} />;
   }
 
   return <HSMOverview growthCompleted={growthCompleted} onSelect={setActiveModule} />;
 }
 
-/* ── Overview: 10 locked steps ───────────────────────────────── */
-function HSMOverview({
-  growthCompleted,
-  onSelect,
-}: {
-  growthCompleted: boolean[];
-  onSelect: (i: number) => void;
-}) {
+/* ── Overview ─────────────────────────────────────────────────── */
+function HSMOverview({ growthCompleted, onSelect }: { growthCompleted: boolean[]; onSelect: (i: number) => void }) {
   const completedCount = growthCompleted.filter(Boolean).length;
-
   return (
     <div className="hsm-wrap">
       <div className="hsm-hero">
         <div className="hsm-hero-badge">Plan de Crecimiento</div>
         <h2 className="hsm-hero-title">Tu proceso de transformación</h2>
-        <p className="hsm-hero-sub">
-          Diez pasos que tienes que recorrer en orden. No hay atajos — cada paso construye el siguiente.
-        </p>
-        <div className="hsm-progress-bar-wrap">
-          <div className="hsm-progress-bar" style={{ width: `${(completedCount / 10) * 100}%` }} />
-        </div>
+        <p className="hsm-hero-sub">Diez pasos que tienes que recorrer en orden. No hay atajos — cada paso construye el siguiente.</p>
+        <div className="hsm-progress-bar-wrap"><div className="hsm-progress-bar" style={{ width: `${(completedCount / 10) * 100}%` }} /></div>
         <div className="hsm-progress-label">{completedCount} / 10 completados</div>
       </div>
-
       <div className="hsm-steps">
         {HSM_STEPS.map((step, i) => {
           const done = growthCompleted[i];
-          const unlocked = true;
           return (
-            <div
-              key={i}
-              className={`hsm-step${done ? ' hsm-step-done' : ''}${!unlocked ? ' hsm-step-locked' : ''}`}
-              onClick={() => unlocked && onSelect(i)}
-            >
+            <div key={i} className={`hsm-step${done ? ' hsm-step-done' : ''}`} onClick={() => onSelect(i)}>
               <div className="hsm-step-num">{done ? <CheckCircle2 size={18} strokeWidth={2} /> : i + 1}</div>
               <div className="hsm-step-emoji">{step.emoji}</div>
               <div className="hsm-step-body">
@@ -76,7 +322,7 @@ function HSMOverview({
                 <div className="hsm-step-sub">{step.sub}</div>
               </div>
               <div className="hsm-step-action">
-                {!unlocked ? <Lock size={16} strokeWidth={1.8} /> : done ? <span className="hsm-done-chip">Completo</span> : <ArrowRight size={16} strokeWidth={1.8} />}
+                {done ? <span className="hsm-done-chip">Completo</span> : <ArrowRight size={16} strokeWidth={1.8} />}
               </div>
             </div>
           );
@@ -86,250 +332,158 @@ function HSMOverview({
   );
 }
 
-/* ── Module detail router ─────────────────────────────────────── */
-function ModuleDetail({ index, onBack }: { index: number; onBack: () => void }) {
+/* ── Generic Module View ──────────────────────────────────────── */
+function ModuleView({ index, onBack }: { index: number; onBack: () => void }) {
   const step = HSM_STEPS[index];
-  return (
-    <div className="hsm-module">
-      <button className="hsm-back" onClick={onBack}>
-        <ChevronLeft size={16} /> Volver al método
-      </button>
-      <div className="hsm-module-header">
-        <span className="hsm-module-emoji">{step.emoji}</span>
-        <div>
-          <div className="hsm-module-num">Módulo {index + 1}</div>
-          <h2 className="hsm-module-title">{step.title}</h2>
-          <p className="hsm-module-sub">{step.sub}</p>
-        </div>
-      </div>
-      {index === 0 && <IdentidadModule onComplete={onBack} />}
-      {index !== 0 && <ComingSoon />}
-    </div>
-  );
-}
-
-/* ── Coming soon placeholder ─────────────────────────────────── */
-function ComingSoon() {
-  return (
-    <div className="hsm-coming">
-      <div className="hsm-coming-icon">🔨</div>
-      <div className="hsm-coming-title">Próximamente</div>
-      <p className="hsm-coming-sub">Este módulo está siendo desarrollado. Completa Identidad primero para continuar tu proceso.</p>
-    </div>
-  );
-}
-
-/* ── Módulo 1: Identidad ─────────────────────────────────────── */
-function IdentidadModule({ onComplete }: { onComplete: () => void }) {
-  const [plantilla, setPlantilla] = useState<1 | 2>(1);
+  const moduleDef = MODULES[index];
   const growthData = useAppStore(s => s.growthData);
   const saveGrowthData = useAppStore(s => s.saveGrowthData);
   const completeGrowthStep = useAppStore(s => s.completeGrowthStep);
   const growthCompleted = useAppStore(s => s.growthCompleted);
-  const isCompleted = growthCompleted[0];
+  const isCompleted = growthCompleted[index];
+  const [started, setStarted] = useState(isCompleted);
 
-  const saved = growthData[0] ?? {};
-
-  // Plantilla 1 fields
-  const seFields = ['Conocimiento 1', 'Conocimiento 2', 'Habilidad 1', 'Habilidad 2', 'Experiencia clave'];
-  const soyFields = ['Pasión principal', 'Sueño más grande', 'Aspiración', 'Principio central', 'Valor más importante', 'Creencia limitante', 'Mayor miedo'];
-  const tengoFields = ['Título / logro', 'Activo más valioso', 'Herramienta clave', 'Contacto importante', 'Recurso disponible'];
-
-  // Plantilla 2 fields
-  const fodaFields = {
-    fortalezas: 'Fortalezas',
-    debilidades: 'Debilidades',
-    oportunidades: 'Oportunidades',
-    amenazas: 'Amenazas',
-  };
+  const saved: Record<string, string> = (growthData[index] as Record<string, string>) ?? {};
 
   function handleField(key: string, val: string) {
-    saveGrowthData(0, { [key]: val });
+    saveGrowthData(index, { [key]: val });
   }
 
-  const canComplete = (() => {
-    const filled = seFields.concat(soyFields).concat(tengoFields)
-      .filter(f => (saved[`se_${f}`] || saved[`soy_${f}`] || saved[`tengo_${f}`] || '').trim().length > 0);
-    const fodaFilled = Object.keys(fodaFields).filter(k => (saved[`foda_${k}`] || '').trim().length > 0);
-    return filled.length >= 3 && fodaFilled.length >= 2;
-  })();
+  // Count filled fields
+  const allKeys = moduleDef.sections.flatMap(s => s.fields.map(f => f.key));
+  const filledCount = allKeys.filter(k => (saved[k] ?? '').trim().length > 0).length;
+  const declarationKey = `decl_${index}`;
+  const declarationVal = saved[declarationKey] ?? '';
+  const canComplete = filledCount >= (moduleDef.canCompleteMin ?? 3) && declarationVal.trim().length > 0;
 
   function handleComplete() {
-    completeGrowthStep(0);
-    onComplete();
+    completeGrowthStep(index);
+    onBack();
   }
 
-  if (isCompleted) {
-    return <IdentidadSummary data={saved} onReview={() => setPlantilla(1)} />;
-  }
-
-  return (
-    <div className="idn-wrap">
-      {/* Plantilla tabs */}
-      <div className="idn-tabs">
-        <button className={`idn-tab${plantilla === 1 ? ' on' : ''}`} onClick={() => setPlantilla(1)}>
-          Plantilla 1 — Análisis de Identidad
-        </button>
-        <button className={`idn-tab${plantilla === 2 ? ' on' : ''}`} onClick={() => setPlantilla(2)}>
-          Plantilla 2 — FODA Personal
-        </button>
-      </div>
-
-      {plantilla === 1 && (
-        <>
-          <div className="idn-intro">
-            <strong>Objetivo:</strong> Descubrir tu potencial para emprender con propósito.
-            <br />Llena cada bloque con ideas reales sobre ti. Mientras más profundo vayas, más claridad tendrás.
-          </div>
-
-          <div className="idn-grid3">
-            {/* SÉ */}
-            <div className="idn-block">
-              <div className="idn-block-title">SÉ</div>
-              <div className="idn-block-sub">Conocimientos · Habilidades · Experiencias · Talentos · Intereses</div>
-              {seFields.map(f => (
-                <input
-                  key={f}
-                  className="idn-input"
-                  placeholder={f}
-                  value={saved[`se_${f}`] ?? ''}
-                  onChange={e => handleField(`se_${f}`, e.target.value)}
-                />
-              ))}
+  // Completed summary
+  if (isCompleted && !started) {
+    return (
+      <div className="hsm-module">
+        <button className="hsm-back" onClick={onBack}><ChevronLeft size={16} /> Volver al método</button>
+        <div className="gm-summary">
+          <div className="gm-summary-icon">{step.emoji}</div>
+          <h3 className="gm-summary-title">Módulo {step.title} completado</h3>
+          {declarationVal && (
+            <div className="gm-summary-decl">
+              <div className="gm-summary-decl-label">{moduleDef.declaration.label}</div>
+              <p>{declarationVal}</p>
             </div>
-
-            {/* SOY */}
-            <div className="idn-block idn-block-center">
-              <div className="idn-block-title">SOY</div>
-              <div className="idn-block-sub">Pasiones · Sueños · Aspiraciones · Principios · Valores · Creencias · Miedos</div>
-              {soyFields.map(f => (
-                <input
-                  key={f}
-                  className="idn-input"
-                  placeholder={f}
-                  value={saved[`soy_${f}`] ?? ''}
-                  onChange={e => handleField(`soy_${f}`, e.target.value)}
-                />
-              ))}
-            </div>
-
-            {/* TENGO */}
-            <div className="idn-block">
-              <div className="idn-block-title">TENGO</div>
-              <div className="idn-block-sub">Títulos · Activos · Propiedades · Herramientas · Equipos · Contactos · Recursos</div>
-              {tengoFields.map(f => (
-                <input
-                  key={f}
-                  className="idn-input"
-                  placeholder={f}
-                  value={saved[`tengo_${f}`] ?? ''}
-                  onChange={e => handleField(`tengo_${f}`, e.target.value)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* PUEDO */}
-          <div className="idn-puedo">
-            <div className="idn-puedo-title">= PUEDO</div>
-            <p className="idn-puedo-desc">
-              Al integrar lo que Soy, Sé y Tengo, puedo transformarme en una versión más elevada de mí. Esto implica salir de mi zona de confort, romper las barreras de una identidad fija y actuar con significado y propósito.
-            </p>
-            <textarea
-              className="idn-puedo-input"
-              placeholder="Escribe tu declaración PUEDO personal aquí..."
-              value={saved['puedo'] ?? ''}
-              onChange={e => handleField('puedo', e.target.value)}
-            />
-          </div>
-
-          <div className="idn-nav">
-            <button className="idn-btn-next" onClick={() => setPlantilla(2)}>
-              Continuar a Plantilla 2 →
-            </button>
-          </div>
-        </>
-      )}
-
-      {plantilla === 2 && (
-        <>
-          <div className="idn-intro">
-            <strong>Objetivo:</strong> Detectar tus ventajas y riesgos para emprender con claridad.
-            <br />Llena cada cuadrante con elementos reales de tu vida.
-          </div>
-
-          <div className="idn-foda-grid">
-            <div className="idn-foda-block idn-foda-f">
-              <div className="idn-foda-title">FORTALEZAS</div>
-              <div className="idn-foda-sub">Factores internos que te dan ventaja — habilidades, actitudes, conocimientos, experiencia.</div>
-              <textarea
-                className="idn-foda-textarea"
-                placeholder="Una por línea..."
-                value={saved['foda_fortalezas'] ?? ''}
-                onChange={e => handleField('foda_fortalezas', e.target.value)}
-              />
-            </div>
-            <div className="idn-foda-block idn-foda-d">
-              <div className="idn-foda-title">DEBILIDADES</div>
-              <div className="idn-foda-sub">Limitaciones internas que pueden frenarte — hábitos, carencias, miedos, falta de habilidades clave.</div>
-              <textarea
-                className="idn-foda-textarea"
-                placeholder="Una por línea..."
-                value={saved['foda_debilidades'] ?? ''}
-                onChange={e => handleField('foda_debilidades', e.target.value)}
-              />
-            </div>
-            <div className="idn-foda-block idn-foda-o">
-              <div className="idn-foda-title">OPORTUNIDADES</div>
-              <div className="idn-foda-sub">Factores externos que puedes aprovechar — tendencias, contactos, recursos disponibles.</div>
-              <textarea
-                className="idn-foda-textarea"
-                placeholder="Una por línea..."
-                value={saved['foda_oportunidades'] ?? ''}
-                onChange={e => handleField('foda_oportunidades', e.target.value)}
-              />
-            </div>
-            <div className="idn-foda-block idn-foda-a">
-              <div className="idn-foda-title">AMENAZAS</div>
-              <div className="idn-foda-sub">Riesgos externos que pudieran afectar tu avance — entorno, economía, responsabilidades, inseguridad.</div>
-              <textarea
-                className="idn-foda-textarea"
-                placeholder="Una por línea..."
-                value={saved['foda_amenazas'] ?? ''}
-                onChange={e => handleField('foda_amenazas', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="idn-nav">
-            <button className="idn-btn-back" onClick={() => setPlantilla(1)}>← Volver a Plantilla 1</button>
-            <button
-              className={`idn-btn-complete${canComplete ? '' : ' disabled'}`}
-              onClick={canComplete ? handleComplete : undefined}
-              title={!canComplete ? 'Completa más campos para continuar' : ''}
-            >
-              ✓ Completar módulo Identidad
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-/* ── Identidad summary (after completion) ────────────────────── */
-function IdentidadSummary({ data, onReview }: { data: Record<string, string>; onReview: () => void }) {
-  return (
-    <div className="idn-summary">
-      <div className="idn-summary-icon">✅</div>
-      <h3 className="idn-summary-title">Módulo Identidad completado</h3>
-      {data['puedo'] && (
-        <div className="idn-summary-puedo">
-          <div className="idn-summary-puedo-label">Tu declaración PUEDO</div>
-          <p>{data['puedo']}</p>
+          )}
+          <button className="gm-btn-review" onClick={() => setStarted(true)}>Revisar mis respuestas</button>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="hsm-module">
+      <button className="hsm-back" onClick={onBack}><ChevronLeft size={16} /> Volver al método</button>
+
+      {/* Intro card (if not started yet and not completed) */}
+      {!started && !isCompleted ? (
+        <div className="gm-intro">
+          <div className="gm-intro-sub">{step.sub}</div>
+          <div className="gm-intro-title">{step.emoji} {step.title}</div>
+          <p className="gm-intro-desc">{step.desc}</p>
+          <button className="gm-intro-btn" onClick={() => setStarted(true)}>Comenzar</button>
+        </div>
+      ) : (
+        <>
+          {/* Module header */}
+          <div className="hsm-module-header">
+            <span className="hsm-module-emoji">{step.emoji}</span>
+            <div>
+              <div className="hsm-module-num">Módulo {index + 1}</div>
+              <h2 className="hsm-module-title">{step.title}</h2>
+            </div>
+          </div>
+
+          {/* Sections */}
+          {moduleDef.sections.map((section, si) => (
+            <div key={si} className="gm-section">
+              <div className="gm-section-title">{section.title}</div>
+              <div className="gm-section-card">
+                {section.fields.map(field => (
+                  <div key={field.key} className="gm-field">
+                    {field.type === 'textarea' ? (
+                      <textarea
+                        className="gm-textarea"
+                        placeholder={field.placeholder}
+                        value={saved[field.key] ?? ''}
+                        onChange={e => handleField(field.key, e.target.value)}
+                      />
+                    ) : field.type === 'date' ? (
+                      <input
+                        className="gm-input"
+                        type="date"
+                        placeholder={field.placeholder}
+                        value={saved[field.key] ?? ''}
+                        onChange={e => handleField(field.key, e.target.value)}
+                      />
+                    ) : field.type === 'select' ? (
+                      <select
+                        className="gm-input"
+                        value={saved[field.key] ?? ''}
+                        onChange={e => handleField(field.key, e.target.value)}
+                      >
+                        <option value="">{field.placeholder}</option>
+                        {field.options?.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    ) : (
+                      <input
+                        className="gm-input"
+                        type="text"
+                        placeholder={field.placeholder}
+                        value={saved[field.key] ?? ''}
+                        onChange={e => handleField(field.key, e.target.value)}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* Declaration */}
+          {moduleDef.declaration.special === 'carta' ? (
+            <div className="gm-carta">
+              <div className="gm-carta-label">{moduleDef.declaration.label}</div>
+              <p className="gm-carta-desc">Esta es la declaración más importante del método. Escríbele a quien quieres ser.</p>
+              <textarea
+                className="gm-carta-input"
+                placeholder={moduleDef.declaration.placeholder}
+                value={declarationVal}
+                onChange={e => handleField(declarationKey, e.target.value)}
+              />
+            </div>
+          ) : (
+            <div className="gm-declaration">
+              <div className="gm-declaration-label">{moduleDef.declaration.label}</div>
+              {index === 0 && <p className="gm-declaration-desc">Combinando todo lo anterior, esta es la versión de ti que puede emerger:</p>}
+              <textarea
+                className="gm-declaration-input"
+                placeholder={moduleDef.declaration.placeholder}
+                value={declarationVal}
+                onChange={e => handleField(declarationKey, e.target.value)}
+              />
+            </div>
+          )}
+
+          {/* Complete button */}
+          <button
+            className={`gm-btn-complete${canComplete ? '' : ' disabled'}`}
+            onClick={canComplete ? handleComplete : undefined}
+          >
+            Completar módulo {step.title}
+          </button>
+        </>
       )}
-      <button className="idn-btn-back" onClick={onReview}>Revisar mis respuestas</button>
     </div>
   );
 }
