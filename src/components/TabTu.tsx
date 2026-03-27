@@ -44,71 +44,76 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
 
       <div className="tab-content">
       {/* Nutrición */}
-      <div className="tt-section-title">Nutrición</div>
-      <div className="tt-cards">
-        <div className="tt-card" onClick={() => onNav('alimentacion')}>
-          <div className="tt-card-icon-wrap"><span>🥗</span></div>
-          <div>
-            <div className="tt-card-title">Plan semanal</div>
-            <div className="tt-card-sub">Genera o revisa tu plan de comidas</div>
+      <div className="tt-section">
+        <div className="tt-section-title">Nutrición</div>
+        <div className="tt-cards">
+          <div className="tt-card" onClick={() => onNav('alimentacion')}>
+            <div className="tt-card-icon-wrap"><span>🥗</span></div>
+            <div>
+              <div className="tt-card-title">Plan semanal</div>
+              <div className="tt-card-sub">Genera o revisa tu plan de comidas</div>
+            </div>
           </div>
-        </div>
-        <div className="tt-card" onClick={() => onNav('alimentacion')}>
-          <div className="tt-card-icon-wrap"><span>🛒</span></div>
-          <div>
-            <div className="tt-card-title">Lista del súper</div>
-            <div className="tt-card-sub">Ingredientes de la semana</div>
+          <div className="tt-card" onClick={() => onNav('alimentacion')}>
+            <div className="tt-card-icon-wrap"><span>🛒</span></div>
+            <div>
+              <div className="tt-card-title">Lista del súper</div>
+              <div className="tt-card-sub">Ingredientes de la semana</div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Entrenamiento */}
-      <div className="tt-section-title">Entrenamiento</div>
-      <div className="tt-cards">
-        <div className="tt-card" onClick={() => onNav('entrenamiento')}>
-          <div className="tt-card-icon-wrap"><span>💪</span></div>
-          <div>
-            <div className="tt-card-title">Generar rutina de hoy</div>
-            <div className="tt-card-sub">Personalizada según tu energía</div>
+      <div className="tt-section">
+        <div className="tt-section-title">Entrenamiento</div>
+        <div className="tt-cards">
+          <div className="tt-card" onClick={() => onNav('entrenamiento')}>
+            <div className="tt-card-icon-wrap"><span>💪</span></div>
+            <div>
+              <div className="tt-card-title">Generar rutina de hoy</div>
+              <div className="tt-card-sub">Personalizada según tu energía</div>
+            </div>
           </div>
         </div>
+        {/* Historial */}
+        {workoutLog.length > 0 && (
+          <>
+            <div className="tt-section-title" style={{ marginTop: 12 }}>Historial de entreno</div>
+            <div className="tt-history">
+              {[...workoutLog].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10).map((entry, i) => (
+                <div key={i} className="tt-history-item">
+                  <div className="tt-history-date">{entry.date}</div>
+                  <div className="tt-history-exercise">{entry.exercise}</div>
+                  <div className="tt-history-sets">
+                    {entry.sets.map((s, si) => (
+                      <span key={si} className="tt-history-set">{s.reps}×{s.kg}kg</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Historial de entrenamientos */}
-      {workoutLog.length > 0 && (
-        <>
-          <div className="tt-section-title">Historial de entreno</div>
-          <div className="tt-history">
-            {[...workoutLog].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10).map((entry, i) => (
-              <div key={i} className="tt-history-item">
-                <div className="tt-history-date">{entry.date}</div>
-                <div className="tt-history-exercise">{entry.exercise}</div>
-                <div className="tt-history-sets">
-                  {entry.sets.map((s, si) => (
-                    <span key={si} className="tt-history-set">{s.reps}×{s.kg}kg</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
       {/* Control de vida */}
-      <div className="tt-section-title">Control de vida</div>
-      <div className="tt-cards">
-        <div className="tt-card" onClick={() => navLS('time')}>
-          <div className="tt-card-icon-wrap"><span>📅</span></div>
-          <div>
-            <div className="tt-card-title">Time blocking</div>
-            <div className="tt-card-sub">Organiza tu día por bloques</div>
+      <div className="tt-section">
+        <div className="tt-section-title">Control de vida</div>
+        <div className="tt-cards">
+          <div className="tt-card" onClick={() => navLS('time')}>
+            <div className="tt-card-icon-wrap"><span>📅</span></div>
+            <div>
+              <div className="tt-card-title">Time blocking</div>
+              <div className="tt-card-sub">Organiza tu día por bloques</div>
+            </div>
           </div>
-        </div>
-        <div className="tt-card" onClick={() => navLS('journal')}>
-          <div className="tt-card-icon-wrap"><span>✦</span></div>
-          <div>
-            <div className="tt-card-title">Journal</div>
-            <div className="tt-card-sub">Reflexiones y notas diarias</div>
+          <div className="tt-card" onClick={() => navLS('journal')}>
+            <div className="tt-card-icon-wrap"><span>✦</span></div>
+            <div>
+              <div className="tt-card-title">Journal</div>
+              <div className="tt-card-sub">Reflexiones y notas diarias</div>
+            </div>
           </div>
         </div>
       </div>
