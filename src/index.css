@@ -4348,12 +4348,13 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   background: white;
   border: 1.5px solid var(--border);
   border-radius: 20px;
-  padding: 32px 24px 24px;
+  padding: 28px 16px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
   box-shadow: 0 8px 32px rgba(0,0,0,.06);
+  overflow: hidden;
 }
 
 .dtr-q-emoji { font-size: 2.4rem; }
@@ -4378,21 +4379,23 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
+  gap: 10px;
+  padding: 14px 16px;
   background: var(--card);
   border: 0.5px solid rgba(0,0,0,.08);
   border-radius: 14px;
   cursor: pointer;
   transition: all .18s;
   text-align: left;
+  min-width: 0;
+  overflow: hidden;
 }
 .dtr-option:hover {
   border-color: var(--forest);
   transform: translateX(3px);
 }
 .dtr-opt-icon  { font-size: 1.3rem; flex-shrink: 0; }
-.dtr-opt-label { flex: 1; font-size: .9rem; font-weight: 600; color: var(--forest); }
+.dtr-opt-label { flex: 1; font-size: .88rem; font-weight: 600; color: var(--forest); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dtr-opt-arrow { color: var(--amber); flex-shrink: 0; }
 
 /* Day selector specific styling */
@@ -4647,7 +4650,10 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   gap: 8px !important;
+  width: 100% !important;
+  overflow: hidden;
 }
+.dtr-options-grid .dtr-option { min-width: 0; padding: 12px 12px; }
 .dtr-options-grid .dtr-option:last-child { grid-column: 1 / -1; }
 
 /* Selected state for multi options */
