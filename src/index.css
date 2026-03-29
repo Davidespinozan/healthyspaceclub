@@ -4380,21 +4380,20 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
-  background: var(--bg2);
-  border: 1.5px solid var(--border);
+  background: var(--card);
+  border: 0.5px solid rgba(0,0,0,.08);
   border-radius: 14px;
   cursor: pointer;
   transition: all .18s;
   text-align: left;
 }
 .dtr-option:hover {
-  background: #f0f7f2;
   border-color: var(--forest);
   transform: translateX(3px);
 }
 .dtr-opt-icon  { font-size: 1.3rem; flex-shrink: 0; }
-.dtr-opt-label { flex: 1; font-size: .9rem; font-weight: 600; color: var(--txt1); }
-.dtr-opt-arrow { color: var(--txt2); flex-shrink: 0; }
+.dtr-opt-label { flex: 1; font-size: .9rem; font-weight: 600; color: var(--forest); }
+.dtr-opt-arrow { color: var(--amber); flex-shrink: 0; }
 
 /* Day selector specific styling */
 .dtr-option-day { border: 0.5px solid rgba(0,0,0,.08); }
@@ -4649,25 +4648,28 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   grid-template-columns: 1fr 1fr !important;
   gap: 8px !important;
 }
+.dtr-options-grid .dtr-option:last-child { grid-column: 1 / -1; }
 
 /* Selected state for multi options */
 .dtr-option-selected {
-  border-color: var(--green) !important;
-  background: color-mix(in srgb, var(--green) 12%, transparent) !important;
-  color: var(--green) !important;
+  border-color: var(--amber) !important;
+  border-width: 0.5px !important;
+  background: var(--forest) !important;
 }
+.dtr-option-selected .dtr-opt-label { color: var(--amber) !important; }
+.dtr-option-selected .dtr-opt-icon { filter: none; }
 .dtr-opt-check {
   margin-left: auto;
   font-size: .75rem; font-weight: 700;
-  color: var(--green); min-width: 16px; text-align: right;
+  color: var(--amber); min-width: 16px; text-align: right;
 }
 
 /* Confirm multi-select button */
 .dtr-confirm-multi {
   display: block; width: 100%;
-  margin-top: 12px; padding: 13px;
-  background: var(--green); color: #fff;
-  border: none; border-radius: 12px;
+  margin-top: 12px; padding: 14px;
+  background: var(--forest); color: #fff;
+  border: 1.5px solid var(--amber); border-radius: 12px;
   font-size: .92rem; font-weight: 700; cursor: pointer;
   transition: opacity .18s;
 }
@@ -4685,7 +4687,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   transition: all .18s;
 }
 .wnp-tab.on {
-  border-color: var(--green); background: var(--green); color: #fff;
+  border-color: var(--forest); background: var(--forest); color: #fff;
 }
 
 /* Day tabs */
