@@ -195,6 +195,20 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             style={momento === 'Momento noche' && !nightDone ? { cursor: 'pointer' } : undefined}
           >{momento}</div>
         </div>
+        {/* Weekly streak dots */}
+        <div className="th-streak-bar">
+          <span className="th-streak-num">{streakCount}</span>
+          <div className="th-streak-dots">
+            {Array.from({ length: 7 }, (_, i) => {
+              const dayDate = new Date();
+              dayDate.setDate(dayDate.getDate() - (6 - i));
+              const dayStr = dayDate.toISOString().split('T')[0];
+              const isActive = useAppStore.getState().lastActiveDate === dayStr ||
+                (i === 6 && checkinDone);
+              return <div key={i} className={`th-streak-dot${isActive ? ' active' : ''}`} />;
+            })}
+          </div>
+        </div>
         {dailyBriefing?.message && <p className="th-briefing">{dailyBriefing.message}</p>}
       </div>
 
@@ -227,7 +241,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
       {/* ── Intention card (dark) ── */}
       <div className="th-intention">
-        <div className="th-intention-label">Tu intención hoy</div>
+        <div className="th-intention-label"><span className="th-intention-dot" /> Intención del día</div>
         <div className="th-intention-text">{intentionText}</div>
         <div className="th-intention-source">{intentionSource}</div>
       </div>
@@ -267,11 +281,12 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             );
           }) : (
             <div className="th-item th-item-cta" onClick={() => onNav('alimentacion')}>
-              <div className="th-item-check">🥗</div>
+              <div className="th-cta-icon">🥗</div>
               <div className="th-item-body">
                 <div className="th-item-title">Genera tu plan de nutrición</div>
                 <div className="th-item-sub">Tu nutricionista IA lo personaliza para ti</div>
               </div>
+              <span className="th-cta-arrow">›</span>
             </div>
           )}
         </div>
@@ -300,11 +315,12 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             </>
           ) : (
             <div className="th-item th-item-cta" onClick={() => onNav('entrenamiento')}>
-              <div className="th-item-check">💪</div>
+              <div className="th-cta-icon">💪</div>
               <div className="th-item-body">
                 <div className="th-item-title">Genera tu rutina de hoy</div>
                 <div className="th-item-sub">Tu coach la personaliza según cómo te sientes</div>
               </div>
+              <span className="th-cta-arrow">›</span>
             </div>
           )}
         </div>
