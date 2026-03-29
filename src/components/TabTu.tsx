@@ -5,7 +5,7 @@ import type { DashPage } from '../types';
 export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
     userName, obData, tdee, planGoal, streakCount, startDate,
-    foodLog, workoutLog, logout,
+    foodLog, workoutLog, hsmUnlockDays, logout,
   } = useAppStore();
   const { setActivePanel } = useLifeSystemStore();
 
@@ -43,6 +43,41 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
       </div>
 
       <div className="tab-content">
+      {/* Adherence calendar */}
+      {startDate && (
+        <div className="tt-section">
+          <div className="tt-section-title">Tu actividad</div>
+          <div className="tt-calendar">
+            {(() => {
+              const cells = [];
+              const now = new Date();
+              // Show last 28 days (4 weeks)
+              for (let i = 27; i >= 0; i--) {
+                const d = new Date(now);
+                d.setDate(d.getDate() - i);
+                const dayStr = d.toISOString().split('T')[0];
+                const startD = new Date(startDate);
+                const dayIndex = Math.floor((d.getTime() - startD.getTime()) / 86400000);
+                const isActive = hsmUnlockDays.includes(dayIndex);
+                const isToday = i === 0;
+                cells.push(
+                  <div
+                    key={i}
+                    className={`tt-cal-cell${isActive ? ' active' : ''}${isToday ? ' today' : ''}`}
+                    title={dayStr}
+                  />
+                );
+              }
+              return cells;
+            })()}
+          </div>
+          <div className="tt-cal-legend">
+            <span>{hsmUnlockDays.length} días activos</span>
+            <div className="tt-cal-legend-dots"><div className="tt-cal-cell small" /><span>Inactivo</span><div className="tt-cal-cell small active" /><span>Activo</span></div>
+          </div>
+        </div>
+      )}
+
       {/* Nutrición */}
       <div className="tt-section">
         <div className="tt-section-title">Nutrición</div>

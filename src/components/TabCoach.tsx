@@ -156,13 +156,26 @@ async function askCoach(
 }
 
 export default function TabCoach() {
-  const { userName, coachChatHistory, coachChatDate, addCoachMessage } = useAppStore();
+  const { userName, coachChatHistory, coachChatDate, addCoachMessage,
+    foodLog, dailyWorkout, streakCount, dailyCheckin, planGoal } = useAppStore();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const today = new Date().toISOString().split('T')[0];
   const messages = coachChatDate === today ? coachChatHistory : [];
+
+  // Contextual welcome
+  const todayKcal = foodLog.filter(e => e.date === today).reduce((s, e) => s + e.kcal, 0);
+  const hasWorkout = dailyWorkout?.date === today;
+  const welcomeMsg = (() => {
+    const name = userName?.split(' ')[0] || '';
+    if (streakCount >= 7) return `${name}, llevas ${streakCount} días de racha. ¿Cómo te ayudo a mantenerla?`;
+    if (todayKcal > 0 && planGoal > 0) return `${name}, llevas ${todayKcal} de ${planGoal} kcal hoy. ¿Qué necesitas?`;
+    if (hasWorkout) return `${name}, ya tienes rutina lista hoy. ¿Dudas sobre algún ejercicio?`;
+    if (dailyCheckin === 'cansado') return `${name}, hoy amaneciste cansado. ¿Te ayudo a ajustar el día?`;
+    return `¡Hola${name ? `, ${name}` : ''}! Soy tu coach. ¿En qué te ayudo hoy?`;
+  })();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -221,9 +234,7 @@ export default function TabCoach() {
       {/* Messages */}
       <div className="tc-messages">
         {messages.length === 0 && (
-          <div className="tc-welcome">
-            ¡Hola{userName ? `, ${userName}` : ''}! Soy tu coach. ¿En qué te ayudo hoy?
-          </div>
+          <div className="tc-welcome">{welcomeMsg}</div>
         )}
         {messages.map((m, i) => (
           <div key={i} className={`tc-msg ${m.role === 'user' ? 'tc-msg-user' : 'tc-msg-ai'}`}>

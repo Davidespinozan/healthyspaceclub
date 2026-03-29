@@ -209,7 +209,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             })}
           </div>
         </div>
-        {dailyBriefing?.message && <p className="th-briefing">{dailyBriefing.message}</p>}
+        {dailyBriefing?.date === today && dailyBriefing?.message
+          ? <p className="th-briefing">{dailyBriefing.message}</p>
+          : API_KEY && <div className="th-briefing-skeleton"><div className="th-skeleton-line" /><div className="th-skeleton-line short" /></div>
+        }
       </div>
 
       {/* ── Padded content ── */}
@@ -247,14 +250,15 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       </div>
 
       {/* ── Day progress ── */}
-      <div className="th-card">
+      <div className={`th-card${dayPct >= 100 ? ' th-card-complete' : ''}`}>
         <div className="th-progress-header">
-          <span className="th-progress-title">Tu día</span>
+          <span className="th-progress-title">{dayPct >= 100 ? '¡Día completado!' : 'Tu día'}</span>
           <span className="th-progress-count">{doneItems}/{totalItems}</span>
         </div>
         <div className="th-bar-wrap">
           <div className="th-bar" style={{ width: `${dayPct}%` }} />
         </div>
+        {dayPct >= 100 && <div className="th-confetti">✦ ✦ ✦</div>}
       </div>
 
       {/* ── Meals + Workout (2-col on wide desktop) ── */}

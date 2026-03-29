@@ -5150,6 +5150,8 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 ══════════════════════════════════════════════════════════════ */
 .app-shell { display: flex; flex-direction: column; min-height: 100vh; background: var(--cream); }
 .app-main { flex: 1; padding: 0 0 76px; }
+.app-main > * { animation: tabFadeIn .18s ease; }
+@keyframes tabFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ── Bottom Nav ── */
 .bnav {
@@ -5199,7 +5201,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .th-two-col { display: flex; flex-direction: column; gap: 28px; }
 .th-two-col > div { display: flex; flex-direction: column; gap: 10px; }
 
-.th-header { background: var(--forest); padding: 24px 20px 18px; color: var(--cream); }
+.th-header { background: linear-gradient(160deg, #1e3330 0%, #2E4A42 100%); padding: 24px 20px 18px; color: var(--cream); }
 .th-header-top { display: flex; justify-content: space-between; align-items: center; }
 .th-greeting { font-size: 1.15rem; font-weight: 700; }
 .th-momento-pill {
@@ -5223,6 +5225,13 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .th-streak-dot.active { background: var(--amber); }
 
 .th-briefing { margin-top: 12px; font-size: .82rem; color: rgba(246,242,234,.7); line-height: 1.5; font-style: italic; }
+.th-briefing-skeleton { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.th-skeleton-line {
+  height: 10px; border-radius: 5px; background: rgba(246,242,234,.1);
+  animation: skeletonPulse 1.2s ease infinite;
+}
+.th-skeleton-line.short { width: 60%; }
+@keyframes skeletonPulse { 0%,100% { opacity: .3; } 50% { opacity: .7; } }
 
 /* Check-in */
 .th-card { background: var(--card); border-radius: 12px; padding: 18px; border: 1px solid var(--sand); }
@@ -5260,6 +5269,15 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .th-bar-wrap { background: var(--sand); border-radius: 20px; height: 6px; overflow: hidden; }
 .th-bar { height: 100%; background: var(--forest); border-radius: 20px; transition: width .4s; min-width: 2px; }
 
+.th-card-complete { border-color: var(--amber); background: rgba(191,160,101,.04); }
+.th-card-complete .th-progress-title { color: var(--amber); }
+.th-card-complete .th-bar { background: var(--amber); }
+.th-confetti {
+  text-align: center; margin-top: 8px; font-size: .8rem; letter-spacing: 8px;
+  color: var(--amber); animation: confettiFade 1.5s ease infinite;
+}
+@keyframes confettiFade { 0%,100% { opacity: .4; } 50% { opacity: 1; } }
+
 /* Section labels */
 .th-section-label {
   display: flex; justify-content: space-between; align-items: center;
@@ -5288,7 +5306,8 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   display: flex; align-items: center; justify-content: center;
   font-size: .7rem; font-weight: 800; color: var(--card); flex-shrink: 0; transition: all .15s;
 }
-.th-item-check.checked { background: var(--forest); border-color: var(--forest); }
+.th-item-check.checked { background: var(--forest); border-color: var(--forest); animation: checkPop .3s cubic-bezier(.34,1.56,.64,1); }
+@keyframes checkPop { 0% { transform: scale(.7); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 .th-item-body { flex: 1; min-width: 0; }
 .th-item-title { font-size: .84rem; font-weight: 600; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .th-item-sub { font-size: .7rem; color: var(--txt2); margin-top: 1px; }
@@ -5475,6 +5494,24 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .tt-profile-lbl { font-size: .78rem; color: var(--txt2); }
 .tt-profile-val { font-size: .82rem; font-weight: 600; color: var(--txt); }
 .tt-profile-kcal { color: var(--amber); }
+
+/* Adherence calendar */
+.tt-calendar {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+  padding: 4px 0;
+}
+.tt-cal-cell {
+  aspect-ratio: 1; border-radius: 4px;
+  background: var(--sand); transition: background .2s;
+}
+.tt-cal-cell.active { background: var(--amber); }
+.tt-cal-cell.today { outline: 2px solid var(--forest); outline-offset: 1px; }
+.tt-cal-cell.small { width: 10px; height: 10px; aspect-ratio: auto; }
+.tt-cal-legend {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: .72rem; color: var(--txt2); margin-top: 6px;
+}
+.tt-cal-legend-dots { display: flex; align-items: center; gap: 6px; }
 
 /* Workout history */
 .tt-history { display: flex; flex-direction: column; gap: 6px; }
