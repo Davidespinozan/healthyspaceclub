@@ -295,13 +295,12 @@ export default function WeeklyNutritionPlanner() {
             {DAY_NAMES_FULL.map((name, i) => (
               <button
                 key={i}
-                className="dtr-option"
+                className="dtr-option dtr-option-day"
                 onClick={() => {
                   setShoppingDay(i);
                   setPhase('questions');
                 }}
               >
-                <span className="dtr-opt-icon">{DAY_NAMES[i]}</span>
                 <span className="dtr-opt-label">{name}</span>
                 <ChevronRight size={14} className="dtr-opt-arrow" />
               </button>
