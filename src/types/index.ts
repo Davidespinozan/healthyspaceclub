@@ -57,7 +57,7 @@ export interface Recipe {
 
 export type ScreenType = 'landing' | 'login' | 'onboarding' | 'dashboard';
 export type ModalType = 'pay' | 'login' | 'signup' | 'video' | null;
-export type DashPage = 'hoy' | 'coach' | 'metodo' | 'tu' | 'alimentacion' | 'recetas' | 'entrenamiento' | 'rutinas' | 'hsm' | 'lifesystem';
+export type DashPage = 'hoy' | 'coach' | 'metodo' | 'club' | 'tu' | 'alimentacion' | 'recetas' | 'entrenamiento' | 'rutinas' | 'hsm' | 'lifesystem' | 'huella';
 export type VideoType = 'exercise' | 'recipe' | 'welcome';
 
 export interface VideoState {

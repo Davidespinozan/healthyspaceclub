@@ -211,6 +211,20 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         </div>
       </div>
 
+      {/* Mi Huella */}
+      <div className="tt-section">
+        <div className="tt-section-title">Mi Huella</div>
+        <div className="tt-cards">
+          <div className="tt-card" onClick={() => onNav('huella')}>
+            <div className="tt-card-icon-wrap"><span>🔥</span></div>
+            <div>
+              <div className="tt-card-title">Mi perfil público</div>
+              <div className="tt-card-sub">Foto, bio y stats del Club</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Perfil */}
       <div className="tt-section-title">Perfil</div>
       <div className="tt-profile">

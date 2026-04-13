@@ -1,12 +1,14 @@
 import { useEffect } from 'react';
-import { Home, MessageCircle, Brain, User } from 'lucide-react';
+import { Home, MessageCircle, Brain, Flame, User } from 'lucide-react';
 import { useAppStore } from '../store';
 import type { DashPage } from '../types';
 
 import TabHoy from '../components/TabHoy';
 import TabCoach from '../components/TabCoach';
 import TabMetodo from '../components/TabMetodo';
+import TabClub from '../components/TabClub';
 import TabTu from '../components/TabTu';
+import MiHuella from '../components/MiHuella';
 
 import WeeklyNutritionPlanner from '../components/WeeklyNutritionPlanner';
 import DailyTrainer from '../components/DailyTrainer';
@@ -17,6 +19,7 @@ import { Leaf, Dumbbell } from 'lucide-react';
 const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
   { id: 'hoy',    icon: Home,          label: 'Hoy' },
   { id: 'coach',  icon: MessageCircle, label: 'Coach' },
+  { id: 'club',   icon: Flame,         label: 'Club' },
   { id: 'metodo', icon: Brain,         label: 'Método' },
   { id: 'tu',     icon: User,          label: 'Tú' },
 ];
@@ -31,20 +34,19 @@ export default function DashboardScreen() {
     window.scrollTo(0, 0);
   }
 
-  // Is this a main tab or a sub-page?
-  const isSubPage = !['hoy', 'coach', 'metodo', 'tu'].includes(dashPage);
+  const isSubPage = !['hoy', 'coach', 'club', 'metodo', 'tu'].includes(dashPage);
 
   return (
     <div className="app-shell">
-      {/* ── Main content area ── */}
       <main className="app-main">
         {/* Main tabs */}
         {dashPage === 'hoy' && <TabHoy onNav={(p) => navTo(p as DashPage)} />}
         {dashPage === 'coach' && <TabCoach />}
+        {dashPage === 'club' && <TabClub onNav={navTo} />}
         {dashPage === 'metodo' && <TabMetodo onNav={navTo} />}
         {dashPage === 'tu' && <TabTu onNav={navTo} />}
 
-        {/* Sub-pages (navigated from tabs) */}
+        {/* Sub-pages */}
         {dashPage === 'alimentacion' && (
           <div className="sub-page tab-content">
             <button className="sub-back" onClick={() => navTo('hoy')}>← Volver</button>
@@ -77,9 +79,14 @@ export default function DashboardScreen() {
             <LifeSystemScreen inline />
           </div>
         )}
+        {dashPage === 'huella' && (
+          <div className="sub-page tab-content">
+            <MiHuella onBack={() => navTo('tu')} />
+          </div>
+        )}
       </main>
 
-      {/* ── Navigation (bottom on mobile, side on desktop) ── */}
+      {/* Navigation */}
       <nav className="bnav">
         <div className="bnav-brand">
           <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="HSC" className="bnav-logo" />
@@ -88,14 +95,15 @@ export default function DashboardScreen() {
           const Icon = tab.icon;
           const active = dashPage === tab.id
             || (isSubPage && tab.id === 'hoy' && ['alimentacion', 'entrenamiento'].includes(dashPage))
-            || (isSubPage && tab.id === 'metodo' && ['hsm', 'lifesystem'].includes(dashPage));
+            || (isSubPage && tab.id === 'metodo' && ['hsm', 'lifesystem'].includes(dashPage))
+            || (isSubPage && tab.id === 'tu' && dashPage === 'huella');
           return (
             <div
               key={tab.id}
               className={`bnav-item${active ? ' active' : ''}`}
               onClick={() => navTo(tab.id)}
             >
-              <Icon size={22} strokeWidth={active ? 2 : 1.5} />
+              <Icon size={20} strokeWidth={active ? 2 : 1.5} />
               <span className="bnav-label">{tab.label}</span>
               {active && <div className="bnav-dot" />}
             </div>
