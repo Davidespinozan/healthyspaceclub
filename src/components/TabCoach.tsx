@@ -32,7 +32,7 @@ function buildSystemPrompt(store: ReturnType<typeof useAppStore.getState>): stri
   const HSM_DIMS = ['Identidad','Vocación','Propósito','Metas','Disciplina','Cuerpo','Entorno y Relaciones','Control Emocional','Resiliencia','Evolución Constante'];
   const energyMap: Record<string, string> = { energia: 'Con energía', regular: 'Regular', cansado: 'Cansado' };
   const todayHSMs = dailyHSMResponses.filter(r => r.date === today);
-  const recentHSMs = dailyHSMResponses.slice(-10); // last 10 responses for context
+  const recentHSMs = dailyHSMResponses.slice(-30); // last 30 responses for deep context
   const workoutDone = dailyWorkout?.date === today;
 
   return `Eres el coach personal de ${userName || 'el usuario'}, entrenado en el Healthy Space Method (HSM) — una filosofía de transformación integral creada por David Espinoza que trabaja 10 dimensiones de vida de forma simultánea y continua.

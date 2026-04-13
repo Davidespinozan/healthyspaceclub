@@ -1,12 +1,27 @@
+import { useMemo } from 'react';
 import { useAppStore } from '../store';
 import { useLifeSystemStore } from '../store/lifeSystemStore';
 import type { DashPage } from '../types';
 
+const RADAR_DIMS = ['Identidad','Vocación','Propósito','Metas','Disciplina','Cuerpo','Entorno y Relaciones','Control Emocional','Resiliencia','Evolución'];
+const RADAR_SHORT = ['Identidad','Vocación','Propósito','Metas','Disciplina','Cuerpo','Entorno','Emocional','Resiliencia','Evolución'];
+
 export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
     userName, obData, tdee, planGoal, streakCount, startDate,
-    foodLog, workoutLog, hsmUnlockDays, logout,
+    foodLog, workoutLog, hsmUnlockDays, dailyHSMResponses, logout,
   } = useAppStore();
+
+  // Radar chart data: count responses per dimension in last 30 days
+  const radarData = useMemo(() => {
+    const cutoff = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
+    const recent = dailyHSMResponses.filter(r => r.date >= cutoff);
+    return RADAR_DIMS.map((dim, i) => {
+      const count = recent.filter(r => r.dimension === dim).length;
+      const maxExpected = 12; // ~3 times per dimension in 30 days
+      return { label: RADAR_SHORT[i], value: Math.min(count / maxExpected, 1) };
+    });
+  }, [dailyHSMResponses]);
   const { setActivePanel } = useLifeSystemStore();
 
   function navLS(panel: 'time' | 'journal' | 'dash') {
@@ -74,6 +89,49 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
           <div className="tt-cal-legend">
             <span>{hsmUnlockDays.length} días activos</span>
             <div className="tt-cal-legend-dots"><div className="tt-cal-cell small" /><span>Inactivo</span><div className="tt-cal-cell small active" /><span>Activo</span></div>
+          </div>
+        </div>
+      )}
+
+      {/* Radar chart */}
+      {dailyHSMResponses.length > 0 && (
+        <div className="tt-section">
+          <div className="tt-section-title">Tus dimensiones</div>
+          <div className="tt-radar-wrap">
+            <svg viewBox="0 0 300 300" className="tt-radar-svg">
+              {/* Grid rings */}
+              {[0.25, 0.5, 0.75, 1].map(r => (
+                <polygon key={r} className="tt-radar-ring" points={
+                  Array.from({ length: 10 }, (_, i) => {
+                    const angle = (Math.PI * 2 * i / 10) - Math.PI / 2;
+                    const x = 150 + Math.cos(angle) * 120 * r;
+                    const y = 150 + Math.sin(angle) * 120 * r;
+                    return `${x},${y}`;
+                  }).join(' ')
+                } />
+              ))}
+              {/* Data polygon */}
+              <polygon className="tt-radar-data" points={
+                radarData.map((d, i) => {
+                  const angle = (Math.PI * 2 * i / 10) - Math.PI / 2;
+                  const v = Math.max(d.value, 0.05);
+                  const x = 150 + Math.cos(angle) * 120 * v;
+                  const y = 150 + Math.sin(angle) * 120 * v;
+                  return `${x},${y}`;
+                }).join(' ')
+              } />
+              {/* Labels */}
+              {radarData.map((d, i) => {
+                const angle = (Math.PI * 2 * i / 10) - Math.PI / 2;
+                const x = 150 + Math.cos(angle) * 145;
+                const y = 150 + Math.sin(angle) * 145;
+                return (
+                  <text key={i} x={x} y={y} className="tt-radar-label" textAnchor="middle" dominantBaseline="middle">
+                    {d.label}
+                  </text>
+                );
+              })}
+            </svg>
           </div>
         </div>
       )}

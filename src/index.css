@@ -5364,6 +5364,27 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   font-size: .82rem; font-weight: 600; color: var(--terra);
 }
 
+/* AI-generated question card */
+.th-hsm-ai { border-left-color: var(--forest); background: rgba(30,51,48,.02); }
+.th-hsm-ai .th-hsm-label { color: var(--forest); }
+
+/* Daily review */
+.th-review {
+  background: var(--forest); border-radius: 12px; padding: 18px;
+  border-left: 3px solid var(--amber);
+}
+.th-review-label {
+  font-size: .7rem; font-weight: 700; color: var(--amber);
+  text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px;
+}
+.th-review-text {
+  font-size: .84rem; color: var(--cream); line-height: 1.6;
+  font-style: italic; margin: 0;
+}
+.th-review-weekly { border-left-color: var(--cream); }
+.th-review-weekly .th-review-label { color: var(--cream); }
+.th-review-weekly .th-review-text { font-style: normal; }
+
 /* ══════════════════════════════════════════════════════════════
    TAB COACH
 ══════════════════════════════════════════════════════════════ */
@@ -5525,6 +5546,16 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   font-size: .72rem; color: var(--txt2); margin-top: 6px;
 }
 .tt-cal-legend-dots { display: flex; align-items: center; gap: 6px; }
+
+/* Radar chart */
+.tt-radar-wrap { display: flex; justify-content: center; padding: 8px 0; }
+.tt-radar-svg { width: 100%; max-width: 280px; height: auto; }
+.tt-radar-ring { fill: none; stroke: var(--sand); stroke-width: 0.5; }
+.tt-radar-data {
+  fill: rgba(191,160,101,.2); stroke: var(--amber); stroke-width: 2;
+  stroke-linejoin: round; transition: all .4s ease;
+}
+.tt-radar-label { font-size: 9px; fill: var(--txt2); font-weight: 600; }
 
 /* Workout history */
 .tt-history { display: flex; flex-direction: column; gap: 6px; }

@@ -242,9 +242,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const workoutChecked = dailyWorkoutChecked.length;
   const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
 
-  // Progress: meals + workout exercises + 3 HSM questions
-  const totalItems = (weeklyPlan ? todayMeals.length : 0) + workoutExCount + 3;
-  const doneItems = (weeklyPlan ? checkedMeals : 0) + workoutChecked + Math.min(todayHSMAnswered, 3);
+  // Progress: meals + workout exercises + 5 HSM questions
+  const totalItems = (weeklyPlan ? todayMeals.length : 0) + workoutExCount + 5;
+  const doneItems = (weeklyPlan ? checkedMeals : 0) + workoutChecked + Math.min(todayHSMAnswered, 5);
   const dayPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
 
   // Briefing
@@ -269,15 +269,73 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const intentionText = yesterdayIntention || puedoText || quoteOfDay.text;
   const intentionSource = yesterdayIntention ? 'Tu intención de anoche' : puedoText ? 'Tu declaración PUEDO' : quoteOfDay.source;
 
-  // HSM daily questions — 3 per day, rotating dimensions + questions within each
+  // HSM daily questions — 5 per day (4 fixed rotating + 1 AI-generated)
   const todayDayIndex = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-  const todayHSMSlot = (todayDayIndex % 4); // 4-day cycle for dimension rotation
-  const todayDimensions = [
-    getDailyQuestion((todayHSMSlot * 3) % 10, todayDayIndex),
-    getDailyQuestion((todayHSMSlot * 3 + 1) % 10, todayDayIndex),
-    getDailyQuestion((todayHSMSlot * 3 + 2) % 10, todayDayIndex),
+  const todayHSMSlot = (todayDayIndex % 3); // 3-day cycle → covers all 10 dims in 2-3 days
+  const fixedDimensions = [
+    getDailyQuestion((todayHSMSlot * 4) % 10, todayDayIndex),
+    getDailyQuestion((todayHSMSlot * 4 + 1) % 10, todayDayIndex),
+    getDailyQuestion((todayHSMSlot * 4 + 2) % 10, todayDayIndex),
+    getDailyQuestion((todayHSMSlot * 4 + 3) % 10, todayDayIndex),
   ];
+
+  // 5th question: AI-generated based on last 7 days
+  const [aiQuestion, setAiQuestion] = useState<{ emoji: string; title: string; q: string } | null>(null);
+  const [dailyReview, setDailyReview] = useState<string | null>(null);
   const [hsmInputs, setHsmInputs] = useState<Record<string, string>>({});
+
+  const last7Responses = dailyHSMResponses.filter(r => {
+    const d = new Date(r.date);
+    return d.getTime() > Date.now() - 7 * 86400000;
+  });
+  const todayResponses = dailyHSMResponses.filter(r => r.date === today);
+
+  // Generate AI question based on recent patterns
+  useEffect(() => {
+    if (!API_KEY || aiQuestion) return;
+    if (last7Responses.length < 3) {
+      // Not enough data yet — use a random dimension not in today's fixed set
+      const usedTitles = fixedDimensions.map(d => d.title);
+      const unused = HSM_BANK.filter(d => !usedTitles.includes(d.title));
+      const pick = unused[todayDayIndex % unused.length];
+      const qIdx = (todayDayIndex * 7) % pick.questions.length;
+      setAiQuestion({ emoji: pick.emoji, title: pick.title, q: pick.questions[qIdx] });
+      return;
+    }
+    const recentSummary = last7Responses.slice(-10).map(r => `${r.dimension}: "${r.response}"`).join('\n');
+    const prompt = `Basándote en estas reflexiones recientes de un usuario del Healthy Space Method:
+
+${recentSummary}
+
+Genera UNA pregunta de reflexión profunda y específica para hoy. La pregunta debe:
+- Conectar con algo concreto que el usuario escribió
+- Ser de la dimensión que menos ha explorado esta semana
+- Empezar con "¿"
+- Máximo 15 palabras
+
+Responde SOLO la pregunta, nada más.`;
+
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 60, messages: [{ role: 'user', content: prompt }] }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        const q = data.content?.[0]?.text?.trim() ?? '';
+        if (q) {
+          // Find least-answered dimension this week
+          const dimCounts: Record<string, number> = {};
+          HSM_BANK.forEach(d => { dimCounts[d.title] = 0; });
+          last7Responses.forEach(r => { dimCounts[r.dimension] = (dimCounts[r.dimension] ?? 0) + 1; });
+          const leastDim = HSM_BANK.reduce((a, b) => (dimCounts[a.title] ?? 0) <= (dimCounts[b.title] ?? 0) ? a : b);
+          setAiQuestion({ emoji: '🤖', title: leastDim.title, q });
+        }
+      })
+      .catch(() => {});
+  }, [today]);
+
+  const todayDimensions = aiQuestion ? [...fixedDimensions, aiQuestion] : fixedDimensions;
 
   function handleHSMSubmit(dim: { emoji: string; title: string; q: string }) {
     const val = hsmInputs[dim.title] ?? '';
@@ -285,6 +343,65 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     addHSMResponse({ dimension: dim.title, question: dim.q, response: val.trim() });
     setHsmInputs(prev => ({ ...prev, [dim.title]: '' }));
   }
+
+  // Generate daily review when all 5 are answered
+  const allAnswered = todayDimensions.length > 0 && todayDimensions.every(d => todayResponses.some(r => r.dimension === d.title));
+  useEffect(() => {
+    if (!allAnswered || dailyReview || !API_KEY) return;
+    const todaySummary = todayResponses.map(r => `${r.dimension}: "${r.response}"`).join('\n');
+    const reviewPrompt = `El usuario respondió estas reflexiones hoy:
+
+${todaySummary}
+
+Escribe una observación de 2-3 líneas. Debe:
+- Referenciar algo CONCRETO de lo que escribió (cita una palabra o frase)
+- Conectar dos respuestas entre sí si hay relación
+- Terminar con una observación que invite a la acción mañana
+- En español, tono de coach cercano. Sin emojis.`;
+
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 200, messages: [{ role: 'user', content: reviewPrompt }] }),
+    })
+      .then(r => r.json())
+      .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyReview(t); })
+      .catch(() => {});
+  }, [allAnswered]);
+
+  // Weekly HSM review (Sundays)
+  const [weeklyHSMReview, setWeeklyHSMReview] = useState<string | null>(null);
+  useEffect(() => {
+    if (!isSunday || !API_KEY || weeklyHSMReview) return;
+    if (last7Responses.length < 5) return; // not enough data
+    const weekSummary = last7Responses.map(r => `[${r.date}] ${r.dimension}: "${r.response}"`).join('\n');
+    const dimCounts: Record<string, number> = {};
+    last7Responses.forEach(r => { dimCounts[r.dimension] = (dimCounts[r.dimension] ?? 0) + 1; });
+    const dimList = Object.entries(dimCounts).sort((a, b) => b[1] - a[1]).map(([d, c]) => `${d}: ${c} respuestas`).join(', ');
+
+    const weekPrompt = `Analiza las reflexiones HSM de esta semana de un usuario:
+
+${weekSummary}
+
+Dimensiones trabajadas: ${dimList}
+
+Genera un resumen semanal de 4-5 líneas que incluya:
+1. En qué dimensión está creciendo más (basado en profundidad de respuestas)
+2. Qué dimensión necesita más atención (la menos trabajada o con respuestas superficiales)
+3. Un patrón que notaste entre sus respuestas
+4. Una sugerencia concreta para la próxima semana
+
+En español, tono de coach. Sin emojis. Directo.`;
+
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, messages: [{ role: 'user', content: weekPrompt }] }),
+    })
+      .then(r => r.json())
+      .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setWeeklyHSMReview(t); })
+      .catch(() => {});
+  }, [isSunday]);
 
   function mealKey(i: number) { return `meal-${today}-${i}`; }
 
@@ -455,24 +572,25 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
         </div>
       </div>
 
-      {/* ── Tu Espacio — 3 HSM questions per day ── */}
+      {/* ── Tu Espacio — 5 HSM questions per day ── */}
       <div className="th-section-label">
         <span>Tu Espacio</span>
         <span className="th-section-meta">
-          {todayDimensions.filter(d => dailyHSMResponses.some(r => r.date === today && r.dimension === d.title)).length}/3
+          {todayDimensions.filter(d => todayResponses.some(r => r.dimension === d.title)).length}/{todayDimensions.length}
         </span>
       </div>
-      {todayDimensions.map(dim => {
-        const answered = dailyHSMResponses.some(r => r.date === today && r.dimension === dim.title);
+      {todayDimensions.map((dim, idx) => {
+        const answered = todayResponses.some(r => r.dimension === dim.title);
         const inputVal = hsmInputs[dim.title] ?? '';
+        const isAI = idx === todayDimensions.length - 1 && aiQuestion;
         return answered ? (
-          <div key={dim.title} className="th-hsm-done">
+          <div key={dim.title + idx} className="th-hsm-done">
             <span>{dim.emoji}</span>
             <span>{dim.title} — respondido</span>
           </div>
         ) : (
-          <div key={dim.title} className="th-hsm-card">
-            <div className="th-hsm-label">{dim.emoji} {dim.title}</div>
+          <div key={dim.title + idx} className={`th-hsm-card${isAI ? ' th-hsm-ai' : ''}`}>
+            <div className="th-hsm-label">{dim.emoji} {dim.title}{isAI ? ' · IA' : ''}</div>
             <div className="th-hsm-question">{dim.q}</div>
             <input
               className="th-hsm-input"
@@ -485,6 +603,22 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           </div>
         );
       })}
+
+      {/* ── Daily Review (after all 5 answered) ── */}
+      {dailyReview && (
+        <div className="th-review">
+          <div className="th-review-label">Tu observación de hoy</div>
+          <p className="th-review-text">{dailyReview}</p>
+        </div>
+      )}
+
+      {/* ── Weekly HSM Review (Sundays) ── */}
+      {weeklyHSMReview && (
+        <div className="th-review th-review-weekly">
+          <div className="th-review-label">Resumen semanal HSM</div>
+          <p className="th-review-text">{weeklyHSMReview}</p>
+        </div>
+      )}
 
       </div>{/* end tab-content */}
     </div>
