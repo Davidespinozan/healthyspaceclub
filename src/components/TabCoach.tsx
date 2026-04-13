@@ -31,7 +31,8 @@ function buildSystemPrompt(store: ReturnType<typeof useAppStore.getState>): stri
 
   const HSM_DIMS = ['Identidad','Vocación','Propósito','Metas','Disciplina','Cuerpo','Entorno y Relaciones','Control Emocional','Resiliencia','Evolución Constante'];
   const energyMap: Record<string, string> = { energia: 'Con energía', regular: 'Regular', cansado: 'Cansado' };
-  const todayHSM = dailyHSMResponses.find(r => r.date === today);
+  const todayHSMs = dailyHSMResponses.filter(r => r.date === today);
+  const recentHSMs = dailyHSMResponses.slice(-10); // last 10 responses for context
   const workoutDone = dailyWorkout?.date === today;
 
   return `Eres el coach personal de ${userName || 'el usuario'}, entrenado en el Healthy Space Method (HSM) — una filosofía de transformación integral creada por David Espinoza que trabaja 10 dimensiones de vida de forma simultánea y continua.
@@ -56,7 +57,10 @@ HOY:
 - Alimentos: ${todayFood.map(e => e.desc).join(', ') || 'Ninguno registrado'}
 - Hábitos: ${habitsDone}/4
 - Entrenamiento completado: ${workoutDone ? 'sí' : 'no'}
-- Respuesta HSM de hoy: ${todayHSM?.response || 'Sin respuesta aún'}
+- Respuestas HSM de hoy: ${todayHSMs.map(r => `${r.dimension}: "${r.response}"`).join(' | ') || 'Sin respuestas aún'}
+
+REFLEXIONES RECIENTES DEL USUARIO (últimas 10):
+${recentHSMs.map(r => `[${r.date}] ${r.dimension}: "${r.response}"`).join('\n') || 'Sin reflexiones aún'}
 
 PESO RECIENTE: ${weightTrend}
 ENTRENOS RECIENTES:

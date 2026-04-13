@@ -64,7 +64,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     streakCount, obData,
     dailyBriefing, setDailyBriefing,
     dailyCheckin, dailyCheckinDate, setDailyCheckin,
-    activeHSMDimension, dailyHSMResponses, addHSMResponse,
+    dailyHSMResponses, addHSMResponse,
     lastStreakMilestone, setLastStreakMilestone,
     nightCheckIn,
   } = useAppStore();
@@ -73,7 +73,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const thisWeekSunday = (() => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return d.toISOString().split('T')[0]; })();
   const reviewPending = isSunday && lastWeeklyReview !== thisWeekSunday;
   const [showReview, setShowReview] = useState(reviewPending);
-  const [hsmInput, setHsmInput] = useState('');
 
   const today = new Date().toISOString().split('T')[0];
   const hour = new Date().getHours();
@@ -123,11 +122,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const workoutToday = dailyWorkout?.date === today ? dailyWorkout.plan as unknown as WorkoutPlan : null;
   const workoutExCount = workoutToday?.exercises?.length ?? 0;
   const workoutChecked = dailyWorkoutChecked.length;
-  const todayHSMDone = dailyHSMResponses.some(r => r.date === today);
+  const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
 
-  // Progress: meals + workout exercises + 1 for HSM reto
-  const totalItems = (weeklyPlan ? todayMeals.length : 0) + workoutExCount + 1; // +1 for HSM
-  const doneItems = (weeklyPlan ? checkedMeals : 0) + workoutChecked + (todayHSMDone ? 1 : 0);
+  // Progress: meals + workout exercises + 3 HSM questions
+  const totalItems = (weeklyPlan ? todayMeals.length : 0) + workoutExCount + 3;
+  const doneItems = (weeklyPlan ? checkedMeals : 0) + workoutChecked + Math.min(todayHSMAnswered, 3);
   const dayPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
 
   // Briefing
@@ -152,13 +151,21 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const intentionText = yesterdayIntention || puedoText || quoteOfDay.text;
   const intentionSource = yesterdayIntention ? 'Tu intención de anoche' : puedoText ? 'Tu declaración PUEDO' : quoteOfDay.source;
 
-  // HSM daily question
-  const hsmStep = HSM_STEPS[activeHSMDimension] ?? HSM_STEPS[0];
+  // HSM daily questions — 3 per day, rotating through all 10 dimensions in 3-4 days
+  const todayDayIndex = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  const todayHSMSlot = (todayDayIndex % 4); // 4-day cycle: 0,1,2,3
+  const todayDimensions = [
+    HSM_STEPS[(todayHSMSlot * 3) % 10],
+    HSM_STEPS[(todayHSMSlot * 3 + 1) % 10],
+    HSM_STEPS[(todayHSMSlot * 3 + 2) % 10],
+  ];
+  const [hsmInputs, setHsmInputs] = useState<Record<string, string>>({});
 
-  function handleHSMSubmit() {
-    if (!hsmInput.trim()) return;
-    addHSMResponse({ dimension: hsmStep.title, question: hsmStep.q, response: hsmInput.trim() });
-    setHsmInput('');
+  function handleHSMSubmit(dim: typeof HSM_STEPS[0]) {
+    const val = hsmInputs[dim.title] ?? '';
+    if (!val.trim()) return;
+    addHSMResponse({ dimension: dim.title, question: dim.q, response: val.trim() });
+    setHsmInputs(prev => ({ ...prev, [dim.title]: '' }));
   }
 
   function mealKey(i: number) { return `meal-${today}-${i}`; }
@@ -330,26 +337,36 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
         </div>
       </div>
 
-      {/* ── HSM daily card ── */}
-      {!todayHSMDone ? (
-        <div className="th-hsm-card">
-          <div className="th-hsm-label">{hsmStep.emoji} {hsmStep.title}</div>
-          <div className="th-hsm-question">{hsmStep.q}</div>
-          <input
-            className="th-hsm-input"
-            placeholder="Escribe tu respuesta..."
-            value={hsmInput}
-            onChange={e => setHsmInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleHSMSubmit()}
-          />
-          <button className="th-hsm-btn" onClick={handleHSMSubmit} disabled={!hsmInput.trim()}>Registrar</button>
-        </div>
-      ) : (
-        <div className="th-hsm-done">
-          <span>{hsmStep.emoji}</span>
-          <span>Reflexión de hoy registrada</span>
-        </div>
-      )}
+      {/* ── Tu Espacio — 3 HSM questions per day ── */}
+      <div className="th-section-label">
+        <span>Tu Espacio</span>
+        <span className="th-section-meta">
+          {todayDimensions.filter(d => dailyHSMResponses.some(r => r.date === today && r.dimension === d.title)).length}/3
+        </span>
+      </div>
+      {todayDimensions.map(dim => {
+        const answered = dailyHSMResponses.some(r => r.date === today && r.dimension === dim.title);
+        const inputVal = hsmInputs[dim.title] ?? '';
+        return answered ? (
+          <div key={dim.title} className="th-hsm-done">
+            <span>{dim.emoji}</span>
+            <span>{dim.title} — respondido</span>
+          </div>
+        ) : (
+          <div key={dim.title} className="th-hsm-card">
+            <div className="th-hsm-label">{dim.emoji} {dim.title}</div>
+            <div className="th-hsm-question">{dim.q}</div>
+            <input
+              className="th-hsm-input"
+              placeholder="Escribe tu respuesta..."
+              value={inputVal}
+              onChange={e => setHsmInputs(prev => ({ ...prev, [dim.title]: e.target.value }))}
+              onKeyDown={e => e.key === 'Enter' && handleHSMSubmit(dim)}
+            />
+            <button className="th-hsm-btn" onClick={() => handleHSMSubmit(dim)} disabled={!inputVal.trim()}>Registrar</button>
+          </div>
+        );
+      })}
 
       </div>{/* end tab-content */}
     </div>
