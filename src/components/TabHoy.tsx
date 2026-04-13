@@ -8,18 +8,86 @@ import NightCheckIn from './NightCheckIn';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
-const HSM_STEPS = [
-  { emoji: '🧠', title: 'Identidad',           q: '¿Quién eres cuando nadie te ve?' },
-  { emoji: '✨', title: 'Vocación',             q: '¿Qué harías gratis el resto de tu vida?' },
-  { emoji: '🎯', title: 'Propósito',            q: '¿Para qué estás aquí realmente?' },
-  { emoji: '📍', title: 'Metas',                q: '¿Hacia dónde vas este mes?' },
-  { emoji: '⚡', title: 'Disciplina',           q: '¿Qué hábito estás construyendo ahora?' },
-  { emoji: '💪', title: 'Cuerpo',               q: '¿Cómo trataste a tu cuerpo hoy?' },
-  { emoji: '🌱', title: 'Entorno y Relaciones', q: '¿Quién te sumó energía hoy?' },
-  { emoji: '🧘', title: 'Control Emocional',    q: '¿Qué emoción dominó tu día?' },
-  { emoji: '🔥', title: 'Resiliencia',          q: '¿Qué dificultad enfrentaste hoy?' },
-  { emoji: '🚀', title: 'Evolución',            q: '¿Qué aprendiste hoy de ti?' },
+/* ── HSM Question Bank — 5 per dimension, 50 total ── */
+const HSM_BANK: { emoji: string; title: string; questions: string[] }[] = [
+  { emoji: '🧠', title: 'Identidad', questions: [
+    '¿Quién eres cuando nadie te ve?',
+    '¿Tus acciones de hoy reflejaron tus valores?',
+    '¿Lo que quieres es genuinamente tuyo o te lo impusieron?',
+    '¿Qué hiciste hoy que fue 100% tú?',
+    '¿Qué creencia sobre ti mismo necesitas soltar?',
+  ]},
+  { emoji: '✨', title: 'Vocación', questions: [
+    '¿Qué harías gratis el resto de tu vida?',
+    '¿En qué momento del día te sentiste más vivo?',
+    '¿Qué actividad te hace perder la noción del tiempo?',
+    '¿Lo que haces hoy está conectado con lo que te llama?',
+    '¿Qué temas estudiarías aunque no te pagaran?',
+  ]},
+  { emoji: '🎯', title: 'Propósito', questions: [
+    '¿Para qué estás aquí realmente?',
+    '¿Tu decisión más importante de hoy estuvo alineada con lo que quieres ser?',
+    '¿Estás viviendo en piloto automático o con intención?',
+    '¿Qué impacto quieres tener en la vida de otros?',
+    '¿Qué legado estás construyendo con tus acciones de hoy?',
+  ]},
+  { emoji: '📍', title: 'Metas', questions: [
+    '¿Hacia dónde vas este mes?',
+    '¿Qué avanzaste hoy hacia tu meta principal?',
+    '¿Estás postergando algo importante por esperar condiciones perfectas?',
+    '¿Celebraste algún logro pequeño hoy?',
+    '¿Tus metas a corto plazo te acercan a las de largo plazo?',
+  ]},
+  { emoji: '⚡', title: 'Disciplina', questions: [
+    '¿Qué hábito estás construyendo ahora?',
+    '¿Hubo un momento hoy donde elegiste hacer lo difícil?',
+    '¿Actuaste por disciplina o esperaste sentirte motivado?',
+    '¿Qué hábito negativo intentó aparecer hoy?',
+    '¿Qué pequeña acción puedes hacer ahora mismo sin esperar?',
+  ]},
+  { emoji: '💪', title: 'Cuerpo', questions: [
+    '¿Cómo trataste a tu cuerpo hoy?',
+    '¿Tu alimentación de hoy fue combustible o placer vacío?',
+    '¿Dormiste lo suficiente para recuperarte?',
+    '¿Estás escuchando las señales de tu cuerpo o ignorándolas?',
+    '¿Qué come la versión de ti que quieres ser?',
+  ]},
+  { emoji: '🌱', title: 'Entorno y Relaciones', questions: [
+    '¿Quién te sumó energía hoy?',
+    '¿Alguien te quitó energía hoy?',
+    '¿Tu entorno físico te inspiró o te agotó?',
+    '¿Hay alguna relación que necesita límites más claros?',
+    '¿Tu espacio refleja quién quieres ser?',
+  ]},
+  { emoji: '🧘', title: 'Control Emocional', questions: [
+    '¿Qué emoción dominó tu día?',
+    '¿Reaccionaste o respondiste ante algo difícil hoy?',
+    '¿Hubo un momento donde pausaste antes de actuar?',
+    '¿Qué emoción apareció hoy que no esperabas?',
+    '¿Tu ansiedad viene del futuro o del pasado — no del presente?',
+  ]},
+  { emoji: '🔥', title: 'Resiliencia', questions: [
+    '¿Qué dificultad enfrentaste hoy?',
+    '¿Aprendiste algo de lo que salió mal?',
+    '¿Qué haría la mejor versión de ti ante esta situación?',
+    '¿Cómo reaccionas diferente hoy vs hace 3 meses?',
+    '¿Estás viendo este problema como obstáculo o como oportunidad?',
+  ]},
+  { emoji: '🚀', title: 'Evolución', questions: [
+    '¿Qué aprendiste hoy de ti?',
+    '¿Cómo eres diferente a quien eras hace un mes?',
+    '¿Dedicaste tiempo hoy a aprender algo nuevo?',
+    '¿Tu versión de éxito ha evolucionado o sigue siendo la misma?',
+    '¿Estás siendo proactivo ante los cambios o reactivo?',
+  ]},
 ];
+
+// Pick a deterministic but rotating question per dimension per day
+function getDailyQuestion(dimIndex: number, dayIndex: number): { emoji: string; title: string; q: string } {
+  const dim = HSM_BANK[dimIndex];
+  const qIndex = (dayIndex * 3 + dimIndex * 7) % dim.questions.length; // pseudo-random spread
+  return { emoji: dim.emoji, title: dim.title, q: dim.questions[qIndex] };
+}
 
 const FALLBACK_QUOTES = [
   { text: 'No necesitas motivación. Necesitas disciplina.', source: 'Healthy Space Method' },
@@ -151,17 +219,17 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const intentionText = yesterdayIntention || puedoText || quoteOfDay.text;
   const intentionSource = yesterdayIntention ? 'Tu intención de anoche' : puedoText ? 'Tu declaración PUEDO' : quoteOfDay.source;
 
-  // HSM daily questions — 3 per day, rotating through all 10 dimensions in 3-4 days
+  // HSM daily questions — 3 per day, rotating dimensions + questions within each
   const todayDayIndex = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-  const todayHSMSlot = (todayDayIndex % 4); // 4-day cycle: 0,1,2,3
+  const todayHSMSlot = (todayDayIndex % 4); // 4-day cycle for dimension rotation
   const todayDimensions = [
-    HSM_STEPS[(todayHSMSlot * 3) % 10],
-    HSM_STEPS[(todayHSMSlot * 3 + 1) % 10],
-    HSM_STEPS[(todayHSMSlot * 3 + 2) % 10],
+    getDailyQuestion((todayHSMSlot * 3) % 10, todayDayIndex),
+    getDailyQuestion((todayHSMSlot * 3 + 1) % 10, todayDayIndex),
+    getDailyQuestion((todayHSMSlot * 3 + 2) % 10, todayDayIndex),
   ];
   const [hsmInputs, setHsmInputs] = useState<Record<string, string>>({});
 
-  function handleHSMSubmit(dim: typeof HSM_STEPS[0]) {
+  function handleHSMSubmit(dim: { emoji: string; title: string; q: string }) {
     const val = hsmInputs[dim.title] ?? '';
     if (!val.trim()) return;
     addHSMResponse({ dimension: dim.title, question: dim.q, response: val.trim() });
