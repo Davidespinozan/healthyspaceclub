@@ -155,22 +155,7 @@ const MEAL_EMOJI: Record<string, string> = {
 
 type WorkoutPlan = { type: string; duration: string; exercises: { name: string }[] };
 
-async function generateBriefing(params: {
-  firstName: string; streak: number; checkedMeals: number;
-  totalMeals: number; hasWorkout: boolean; goal: string;
-}): Promise<string> {
-  const prompt = `Escribe UNA sola frase corta y motivadora para ${params.firstName || 'alguien'} que lleva ${params.streak} días de racha y quiere ${params.goal || 'mejorar su salud'}. Máximo 12 palabras. Sin saludo. Sin emojis. Directo. Ejemplo: "Hoy es otro voto a favor de quien quieres ser."`;
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': API_KEY, 'anthropic-version': '2023-06-01',
-      'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 120, messages: [{ role: 'user', content: prompt }] }),
-  });
-  const data = await res.json();
-  return data.content?.[0]?.text ?? '';
-}
+// generateBriefing is now inline in the useEffect below
 
 export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const {
@@ -212,7 +197,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const MILESTONES = [3, 7, 14, 21, 30, 60, 90];
   const [milestone, setMilestone] = useState<number | null>(null);
   const MILESTONE_COPY: Record<number, { emoji: string; title: string; sub: string }> = {
-    3:  { emoji: '🔥', title: '¡3 días seguidos!', sub: 'El primer hábito está naciendo. No pares.' },
+    3:  { emoji: '🔥', title: '¡3 días seguidos!', sub: 'La mayoría abandona aquí. Tú no. El hábito está naciendo.' },
     7:  { emoji: '⚡', title: '¡Una semana completa!', sub: 'Eso ya no es suerte — es disciplina.' },
     14: { emoji: '💪', title: '¡Dos semanas de racha!', sub: 'Tu cuerpo y tu mente ya lo están notando.' },
     21: { emoji: '🧠', title: '¡21 días — el hábito está instalado!', sub: 'Dicen que 21 días forman un hábito. Tú lo lograste.' },
@@ -248,14 +233,39 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const doneItems = (weeklyPlan ? checkedMeals : 0) + workoutChecked + Math.min(todayHSMAnswered, 5);
   const dayPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
 
-  // Briefing
+  // Briefing — Day 1 gets personalized welcome, other days get short briefing
+  const { startDate: userStartDate } = useAppStore();
+  const isDay1 = userStartDate === today;
+  const daysSinceStart = userStartDate ? Math.floor((Date.now() - new Date(userStartDate).getTime()) / 86400000) : 0;
+
   useEffect(() => {
-    if (dailyBriefing?.date === today) return;
-    generateBriefing({
-      firstName, streak: streakCount, checkedMeals,
-      totalMeals: todayMeals.length, hasWorkout: !!workoutToday,
-      goal: String((obData as Record<string, unknown>)?.goal ?? ''),
-    }).then(msg => { if (msg) setDailyBriefing({ date: today, message: msg }); }).catch(() => {});
+    if (dailyBriefing?.date === today || !API_KEY) return;
+
+    let prompt: string;
+    if (isDay1) {
+      prompt = `Eres el coach personal de ${firstName || 'el usuario'} en Healthy Space Club. Acaba de completar su registro.
+
+Datos: ${obData.sex || 'sin dato'}, ${obData.edad || '?'} años, ${obData.peso || '?'}kg, objetivo: ${obData.goal || '?'}, actividad: ${obData.activity || '?'}
+
+Escribe un mensaje de bienvenida de 3-4 líneas que:
+- Mencione su objetivo específico (${obData.goal})
+- Reconozca su nivel de actividad
+- Anticipe lo que van a trabajar juntos
+- Sea cálido pero directo, como un coach que ya te conoce
+
+En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
+    } else {
+      prompt = `Escribe UNA sola frase corta y motivadora para ${firstName || 'alguien'} que lleva ${streakCount} días de racha y quiere ${(obData as Record<string, unknown>)?.goal || 'mejorar su salud'}. Máximo 12 palabras. Sin saludo. Sin emojis. Directo.`;
+    }
+
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: isDay1 ? 200 : 60, messages: [{ role: 'user', content: prompt }] }),
+    })
+      .then(r => r.json())
+      .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyBriefing({ date: today, message: t }); })
+      .catch(() => {});
   }, [today]);
 
   // Check-in already done today?
@@ -369,6 +379,30 @@ Escribe una observación de 2-3 líneas. Debe:
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyReview(t); })
       .catch(() => {});
   }, [allAnswered]);
+
+  // Day 5 mini review — "Esto es lo que ya sé de ti"
+  const [miniReview, setMiniReview] = useState<string | null>(null);
+  useEffect(() => {
+    if (daysSinceStart !== 5 || !API_KEY || miniReview) return;
+    if (dailyHSMResponses.length < 5) return;
+    const allSoFar = dailyHSMResponses.slice(-15).map(r => `${r.dimension}: "${r.response}"`).join('\n');
+    const miniPrompt = `Un usuario lleva 5 días usando la app Healthy Space Method. Estas son sus reflexiones:
+
+${allSoFar}
+
+Escribe un mensaje que empiece con "Llevas 5 días. Esto es lo que ya sé de ti:" seguido de 3 observaciones específicas (una por línea, con guión). Cada observación debe citar o parafrasear algo concreto que escribió. Termina con una frase corta motivadora.
+
+En español. Sin emojis. Tono de coach que ya te conoce.`;
+
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 250, messages: [{ role: 'user', content: miniPrompt }] }),
+    })
+      .then(r => r.json())
+      .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setMiniReview(t); })
+      .catch(() => {});
+  }, [daysSinceStart]);
 
   // Weekly HSM review (Sundays)
   const [weeklyHSMReview, setWeeklyHSMReview] = useState<string | null>(null);
@@ -646,6 +680,14 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
         <div className="th-review">
           <div className="th-review-label">Tu observación de hoy</div>
           <p className="th-review-text">{dailyReview}</p>
+        </div>
+      )}
+
+      {/* ── Day 5 Mini Review ── */}
+      {miniReview && (
+        <div className="th-review th-review-mini">
+          <div className="th-review-label">Tu coach te conoce</div>
+          <p className="th-review-text">{miniReview}</p>
         </div>
       )}
 

@@ -5381,6 +5381,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   font-size: .84rem; color: var(--cream); line-height: 1.6;
   font-style: italic; margin: 0;
 }
+.th-review-mini .th-review-text { font-style: normal; white-space: pre-line; }
 .th-review-weekly { border-left-color: var(--cream); }
 .th-review-weekly .th-review-label { color: var(--cream); }
 .th-review-weekly .th-review-text { font-style: normal; }
