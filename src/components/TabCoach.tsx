@@ -43,6 +43,10 @@ Nombre: ${userName || 'el usuario'}
 Sexo: ${obData.sex || '?'} | Edad: ${obData.edad || '?'} | Peso: ${obData.peso || '?'}kg | Altura: ${obData.estatura || '?'}cm
 TDEE: ${tdee} cal/día | Meta calórica: ${planGoal} cal/día
 Objetivo: ${obData.goal || '?'} | Nivel de actividad: ${obData.activity || '?'}
+${obData.goal === 'Ganar músculo' ? 'ENFOQUE NUTRICIONAL: Superávit +300 kcal. Prioriza proteína alta (1.8-2.2g/kg). Entrenamiento de fuerza e hipertrofia.' : ''}
+${obData.goal === 'Bajar grasa' ? 'ENFOQUE NUTRICIONAL: Déficit -500 kcal. Mantener proteína alta para preservar músculo. Priorizar saciedad.' : ''}
+${obData.goal === 'Recomposición' ? 'ENFOQUE NUTRICIONAL: Déficit leve -200 kcal. Proteína muy alta (2g/kg). Combinar fuerza + cardio. Proceso lento pero sostenible.' : ''}
+${obData.goal === 'Bienestar integral' ? 'ENFOQUE NUTRICIONAL: Mantenimiento. Alimentación equilibrada sin restricciones extremas. Priorizar energía, sueño y estrés.' : ''}
 Dimensión HSM activa: ${HSM_DIMS[activeHSMDimension] || 'Identidad'}
 Racha actual: ${streakCount} días
 

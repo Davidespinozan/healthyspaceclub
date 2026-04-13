@@ -232,8 +232,10 @@ export const useAppStore = create<AppState>()(
     const planKey    = assignPlan(tdee, goal);
 
     let planGoal = tdee;
-    if      (goal === 'Bajar grasa corporal' || goal === 'Bajar de peso') planGoal = tdee - 500;
+    if      (goal === 'Bajar grasa corporal' || goal === 'Bajar grasa' || goal === 'Bajar de peso') planGoal = tdee - 500;
     else if (goal === 'Subir masa muscular' || goal === 'Ganar músculo') planGoal = tdee + 300;
+    else if (goal === 'Recomposición' || goal === 'Recomponer') planGoal = tdee - 200;
+    // Bienestar integral → maintenance (tdee as-is)
 
     const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 

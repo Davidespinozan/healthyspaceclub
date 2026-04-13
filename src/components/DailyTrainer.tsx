@@ -92,11 +92,18 @@ ESTADO HOY:
 HISTORIAL RECIENTE (últimos 7 días):
 ${workoutHistory}
 
+OBJETIVO DEL USUARIO: ${obData.goal || 'general'}
+${obData.goal === 'Ganar músculo' ? 'ENFOQUE: Hipertrofia y fuerza. Prioriza ejercicios compuestos con pesos pesados, series de 6-12 reps, descansos largos (90-120 seg). Tipo preferido: Upper Body o Lower Body (split).' : ''}
+${obData.goal === 'Bajar grasa' ? 'ENFOQUE: Alta quema calórica. Prioriza circuitos, supersets, cardio HIIT, descansos cortos (30-45 seg). Tipo preferido: Full Body o Cardio.' : ''}
+${obData.goal === 'Recomposición' ? 'ENFOQUE: Mixto fuerza + cardio. Combina ejercicios de fuerza (8-12 reps) con finisher de cardio. Descansos moderados (60-90 seg). Tipo preferido: Full Body o Upper/Lower.' : ''}
+${obData.goal === 'Bienestar integral' ? 'ENFOQUE: Equilibrio y movilidad. Incluye ejercicios funcionales, yoga, estiramientos. Intensidad media-baja, sin buscar agotamiento. Tipo preferido: Full Body o Descanso Activo.' : ''}
+
 REGLAS:
 - No repitas el mismo grupo muscular trabajado ayer o anteayer
 - Si está cansado o durmió mal, baja la intensidad 30-40%
 - Ajusta ejercicios al equipo disponible
 - El número de ejercicios debe ajustarse al tiempo disponible
+- El tipo de rutina debe alinearse con el ENFOQUE del objetivo
 
 Devuelve SOLO este JSON sin markdown, sin texto extra:
 {

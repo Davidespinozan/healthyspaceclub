@@ -84,10 +84,10 @@ export default function OnboardingScreen() {
 
   // Goal label for result screen
   const goalLabels: Record<string, string> = {
-    'Ganar músculo': 'Ganancia muscular',
-    'Bajar de peso': 'Pérdida de grasa',
-    'Más energía': 'Más energía diaria',
-    'Bienestar integral': 'Bienestar integral',
+    'Ganar músculo': 'Ganancia muscular · +300 kcal',
+    'Bajar grasa': 'Pérdida de grasa · -500 kcal',
+    'Recomposición': 'Recomposición corporal · -200 kcal',
+    'Bienestar integral': 'Bienestar integral · mantenimiento',
   };
 
   return (
@@ -168,10 +168,10 @@ export default function OnboardingScreen() {
             <h2 className="onb-question">¿Qué quieres lograr?</h2>
             <div className="onb-cards-col">
               {[
-                { id: 'Ganar músculo', emoji: '💪', desc: 'Construir fuerza y masa muscular' },
-                { id: 'Bajar de peso', emoji: '🔥', desc: 'Perder grasa de forma sostenible' },
-                { id: 'Más energía', emoji: '⚡', desc: 'Sentirme mejor cada día' },
-                { id: 'Bienestar integral', emoji: '🧘', desc: 'Cuerpo, mente y propósito' },
+                { id: 'Ganar músculo', emoji: '💪', desc: 'Fuerza, volumen y progresión de cargas' },
+                { id: 'Bajar grasa', emoji: '🔥', desc: 'Perder grasa de forma sostenible' },
+                { id: 'Recomposición', emoji: '⚡', desc: 'Perder grasa y ganar músculo a la vez' },
+                { id: 'Bienestar integral', emoji: '🧘', desc: 'Energía, movilidad, menos estrés' },
               ].map(o => (
                 <div
                   key={o.id}
