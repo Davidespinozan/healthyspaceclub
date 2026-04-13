@@ -179,6 +179,10 @@ interface AppState {
   setActiveHSMDimension: (n: number) => void;
   hsmUnlockDays: number[];
 
+  // Cumulative HSM profile (updated weekly by AI)
+  hsmProfile: { text: string; updatedAt: string } | null;
+  setHSMProfile: (text: string) => void;
+
   // Night check-in
   nightCheckIn: {
     date: string;
@@ -531,6 +535,10 @@ export const useAppStore = create<AppState>()(
   setActiveHSMDimension: (n) => set({ activeHSMDimension: n }),
   hsmUnlockDays: [],
 
+  // Cumulative HSM profile
+  hsmProfile: null,
+  setHSMProfile: (text) => set({ hsmProfile: { text, updatedAt: new Date().toISOString().split('T')[0] } }),
+
   // Night check-in — also maintains streak for the day
   nightCheckIn: null,
   saveNightCheckIn: (data) => {
@@ -597,6 +605,7 @@ export const useAppStore = create<AppState>()(
       coachChatDate: '',
       activeHSMDimension: 0,
       hsmUnlockDays: [],
+      hsmProfile: null,
       nightCheckIn: null,
     });
   },
@@ -641,6 +650,7 @@ export const useAppStore = create<AppState>()(
     coachChatDate: state.coachChatDate,
     activeHSMDimension: state.activeHSMDimension,
     hsmUnlockDays: state.hsmUnlockDays,
+    hsmProfile: state.hsmProfile,
     nightCheckIn: state.nightCheckIn,
   }),
 }

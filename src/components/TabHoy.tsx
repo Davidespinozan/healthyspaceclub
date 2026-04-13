@@ -185,6 +185,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     dailyHSMResponses, addHSMResponse,
     lastStreakMilestone, setLastStreakMilestone,
     nightCheckIn,
+    hsmProfile, setHSMProfile,
   } = useAppStore();
 
   const isSunday = new Date().getDay() === 0;
@@ -400,6 +401,42 @@ En español, tono de coach. Sin emojis. Directo.`;
     })
       .then(r => r.json())
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setWeeklyHSMReview(t); })
+      .catch(() => {});
+  }, [isSunday]);
+
+  // Cumulative HSM profile — updated weekly on Sundays
+  useEffect(() => {
+    if (!isSunday || !API_KEY) return;
+    // Only update if not updated this week
+    if (hsmProfile?.updatedAt === today) return;
+    if (dailyHSMResponses.length < 10) return;
+
+    const allResponses = dailyHSMResponses.slice(-50).map(r => `[${r.date}] ${r.dimension}: "${r.response}"`).join('\n');
+    const existingProfile = hsmProfile?.text || 'Sin perfil previo.';
+
+    const profilePrompt = `Eres un psicólogo que lleva notas de sesión. Actualiza el perfil acumulativo de este usuario basándote en su perfil anterior y sus reflexiones recientes.
+
+PERFIL ANTERIOR:
+${existingProfile}
+
+REFLEXIONES RECIENTES:
+${allResponses}
+
+Escribe un párrafo de máximo 200 palabras que resuma:
+- Patrones emocionales y de comportamiento que se repiten
+- Miedos, creencias limitantes o bloqueos detectados
+- Fortalezas y áreas de crecimiento
+- Tendencias de las últimas semanas (¿mejorando? ¿estancado? ¿nuevo tema emergiendo?)
+
+Este perfil será usado por el coach IA para personalizar sus respuestas. Escribe en tercera persona ("El usuario..."). Sin emojis. Profesional pero humano.`;
+
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, messages: [{ role: 'user', content: profilePrompt }] }),
+    })
+      .then(r => r.json())
+      .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setHSMProfile(t); })
       .catch(() => {});
   }, [isSunday]);
 

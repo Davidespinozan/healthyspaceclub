@@ -13,7 +13,7 @@ const QUICK_CHIPS = [
 function buildSystemPrompt(store: ReturnType<typeof useAppStore.getState>): string {
   const { userName, obData, tdee, planGoal, habits, weightLog, foodLog, workoutLog,
     dailyCheckin, activeHSMDimension, streakCount, weeklyPlan, mealPlanKey,
-    dailyHSMResponses, dailyWorkout } = store;
+    dailyHSMResponses, dailyWorkout, hsmProfile } = store;
 
   const today = new Date().toISOString().split('T')[0];
   const todayFood = foodLog.filter(e => e.date === today);
@@ -50,7 +50,13 @@ ${obData.goal === 'Recomposición' ? 'ENFOQUE NUTRICIONAL: Déficit leve -200 kc
 ${obData.goal === 'Bienestar integral' ? 'ENFOQUE NUTRICIONAL: Mantenimiento. Alimentación equilibrada sin restricciones extremas. Priorizar energía, sueño y estrés.' : ''}
 Dimensión HSM activa: ${HSM_DIMS[activeHSMDimension] || 'Identidad'}
 Racha actual: ${streakCount} días
-
+${hsmProfile?.text ? `
+═══════════════════════════════
+PERFIL PSICOLÓGICO ACUMULATIVO
+═══════════════════════════════
+${hsmProfile.text}
+(Actualizado: ${hsmProfile.updatedAt})
+` : ''}
 HOY:
 - Energía al despertar: ${dailyCheckin ? energyMap[dailyCheckin] : 'Sin registrar'}
 - Calorías consumidas: ${todayKcal} de ${planGoal} (P:${todayProt}g C:${todayCarbs}g G:${todayFat}g)
