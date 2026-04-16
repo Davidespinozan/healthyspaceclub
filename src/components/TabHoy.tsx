@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { calcDayKcal, calcMealKcal } from '../utils/kcalCalc';
+import { supabase } from '../lib/supabase';
 import WeeklyReview from './WeeklyReview';
 import NightCheckIn from './NightCheckIn';
 import Stories from './Stories';
@@ -233,8 +234,56 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const todayMeals = scaledPlan[todayPlanIdx >= 0 ? todayPlanIdx : 0]?.meals ?? [];
   const checkedMeals = todayMeals.filter((_, i) => !!mealChecks[`meal-${today}-${i}`]).length;
 
-  // Meal detail popout
+  // Meal detail popout + recipe
   const [mealDetail, setMealDetail] = useState<typeof selectedMeals[0] | null>(null);
+  const [recipeSteps, setRecipeSteps] = useState<string | null>(null);
+  const [recipeLoading, setRecipeLoading] = useState(false);
+
+  // Load recipe when meal detail opens
+  useEffect(() => {
+    if (!mealDetail) { setRecipeSteps(null); return; }
+    setRecipeSteps(null);
+    setRecipeLoading(true);
+
+    // 1. Check Supabase cache
+    supabase.from('meal_recipes').select('steps').eq('meal_name', mealDetail.name).single()
+      .then(({ data }) => {
+        if (data?.steps) {
+          // Fake 1s delay so it feels generated
+          setTimeout(() => { setRecipeSteps(data.steps); setRecipeLoading(false); }, 800);
+        } else if (API_KEY) {
+          // 2. Generate with Claude and cache
+          const prompt = `Genera el paso a paso para preparar "${mealDetail.name}".
+Ingredientes: ${(mealDetail.portions ?? []).join(', ')}
+Descripción: ${mealDetail.desc || ''}
+
+Escribe 4-6 pasos numerados, cortos (1 línea cada uno). En español. Solo los pasos, nada más.
+Ejemplo:
+1. Corta el pollo en cubos y salpimenta.
+2. Calienta una sartén con aceite a fuego medio.
+3. ...`;
+
+          fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+            body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, messages: [{ role: 'user', content: prompt }] }),
+          })
+            .then(r => r.json())
+            .then(aiData => {
+              const steps = aiData.content?.[0]?.text?.trim() ?? '';
+              if (steps) {
+                setRecipeSteps(steps);
+                // Cache in Supabase for everyone
+                supabase.from('meal_recipes').insert({ meal_name: mealDetail.name, steps }).then(() => {});
+              }
+              setRecipeLoading(false);
+            })
+            .catch(() => setRecipeLoading(false));
+        } else {
+          setRecipeLoading(false);
+        }
+      });
+  }, [mealDetail?.name]);
 
   // Workout detail popout
   type WorkoutExercise = { name: string; sets?: string; reps?: string; rest?: string; tip?: string };
@@ -788,6 +837,24 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                 <div key={i} className="th-popout-portion">{p}</div>
               ))}
             </div>
+
+            {/* Recipe steps */}
+            <div className="th-popout-label">Preparación</div>
+            {recipeLoading ? (
+              <div className="th-recipe-loading">
+                <div className="th-recipe-loading-dots"><span /><span /><span /></div>
+                <span>Generando preparación...</span>
+              </div>
+            ) : recipeSteps ? (
+              <div className="th-recipe-steps">
+                {recipeSteps.split('\n').filter(l => l.trim()).map((step, i) => (
+                  <div key={i} className="th-recipe-step">{step}</div>
+                ))}
+              </div>
+            ) : (
+              <div className="th-recipe-empty">No disponible</div>
+            )}
+
             <button className="th-popout-close" onClick={() => setMealDetail(null)}>Cerrar</button>
           </div>
         </div>
