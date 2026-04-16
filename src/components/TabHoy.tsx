@@ -212,17 +212,33 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     if (reached > lastStreakMilestone) { setMilestone(reached); setLastStreakMilestone(reached); }
   }, [streakCount]);
 
-  // Today's meals
+  // Meals — day-selectable
+  const DAY_LABELS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const [selectedDow, setSelectedDow] = useState(new Date().getDay());
   const activePlan = mealPlans[weeklyPlan?.mealPlanKey ?? mealPlanKey] ?? mealPlans['planA'];
   const scaledPlan = planGoal > 0 ? scalePlan(activePlan, planGoal) : activePlan;
   const anchor = shoppingDay ?? 0;
+  const selectedOffset = (selectedDow - anchor + 7) % 7;
+  const selectedDayNum = weeklyPlan ? weeklyPlan.selectedDays[selectedOffset] ?? weeklyPlan.selectedDays[0] : null;
+  const selectedPlanIdx = selectedDayNum != null ? scaledPlan.findIndex(d => d.day === selectedDayNum) : selectedOffset % scaledPlan.length;
+  const selectedMeals = scaledPlan[selectedPlanIdx >= 0 ? selectedPlanIdx : 0]?.meals ?? [];
+  const selectedDayKcal = calcDayKcal(scaledPlan[selectedPlanIdx >= 0 ? selectedPlanIdx : 0]?.meals ?? []);
+  const isSelectedToday = selectedDow === new Date().getDay();
+
+  // For today specifically (progress tracking)
   const todayDow = new Date().getDay();
   const todayOffset = (todayDow - anchor + 7) % 7;
   const todayDayNum = weeklyPlan ? weeklyPlan.selectedDays[todayOffset] ?? weeklyPlan.selectedDays[0] : null;
   const todayPlanIdx = todayDayNum != null ? scaledPlan.findIndex(d => d.day === todayDayNum) : todayOffset % scaledPlan.length;
   const todayMeals = scaledPlan[todayPlanIdx >= 0 ? todayPlanIdx : 0]?.meals ?? [];
-  const totalMealKcal = calcDayKcal(scaledPlan[todayPlanIdx >= 0 ? todayPlanIdx : 0]?.meals ?? []);
   const checkedMeals = todayMeals.filter((_, i) => !!mealChecks[`meal-${today}-${i}`]).length;
+
+  // Meal detail popout
+  const [mealDetail, setMealDetail] = useState<typeof selectedMeals[0] | null>(null);
+
+  // Workout detail popout
+  type WorkoutExercise = { name: string; sets?: string; reps?: string; rest?: string; tip?: string };
+  const [workoutDetail, setWorkoutDetail] = useState<WorkoutExercise | null>(null);
 
   const workoutToday = dailyWorkout?.date === today ? dailyWorkout.plan as unknown as WorkoutPlan : null;
   const workoutExCount = workoutToday?.exercises?.length ?? 0;
@@ -584,41 +600,60 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
           {/* ── Meals ── */}
           <div className="th-section-label">
             <span>Alimentación</span>
-            {weeklyPlan && <span className="th-section-meta">{checkedMeals}/{todayMeals.length} · {planGoal > 0 ? planGoal.toLocaleString() : totalMealKcal} kcal</span>}
+            {weeklyPlan && <span className="th-section-meta">{isSelectedToday ? `${checkedMeals}/${todayMeals.length} · ` : ''}{selectedDayKcal} kcal</span>}
           </div>
+
+          {/* Day selector */}
+          {weeklyPlan && (
+            <div className="th-day-tabs">
+              {DAY_LABELS.map((lbl, i) => (
+                <button
+                  key={i}
+                  className={`th-day-tab${selectedDow === i ? ' active' : ''}${i === todayDow ? ' today' : ''}`}
+                  onClick={() => setSelectedDow(i)}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          )}
+
           {weeklyPlan ? (<>
             {/* Main meals (with photos) */}
-            {todayMeals.filter(m => !m.name.startsWith('Snack')).map((meal) => {
-              const origIdx = todayMeals.indexOf(meal);
+            {selectedMeals.filter(m => !m.name.startsWith('Snack')).map((meal) => {
+              const origIdx = selectedMeals.indexOf(meal);
               const key = mealKey(origIdx);
-              const done = !!mealChecks[key];
+              const done = isSelectedToday && !!mealChecks[key];
               return (
-                <div key={origIdx} className={`th-meal${done ? ' done' : ''}`} onClick={() => toggleMealCheck(key)}>
+                <div key={origIdx} className={`th-meal${done ? ' done' : ''}`}>
                   {meal.img ? (
-                    <img src={meal.img} alt="" className="th-meal-img" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    <img src={meal.img} alt="" className="th-meal-img" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      onClick={() => setMealDetail(meal)} />
                   ) : (
-                    <div className="th-meal-emoji">{MEAL_EMOJI[meal.time] ?? '🥗'}</div>
+                    <div className="th-meal-emoji" onClick={() => setMealDetail(meal)}>{MEAL_EMOJI[meal.time] ?? '🥗'}</div>
                   )}
-                  <div className="th-meal-body">
+                  <div className="th-meal-body" onClick={() => setMealDetail(meal)}>
                     <div className="th-meal-name">{meal.name}</div>
                     <div className="th-meal-time">{meal.time}</div>
                   </div>
                   <div className="th-meal-right">
                     <div className="th-meal-kcal">{meal.portions ? `${calcMealKcal(meal.portions)}` : ''}</div>
-                    <div className={`th-meal-check${done ? ' checked' : ''}`}>{done ? '✓' : ''}</div>
+                    {isSelectedToday && (
+                      <div className={`th-meal-check${done ? ' checked' : ''}`} onClick={() => toggleMealCheck(key)}>{done ? '✓' : ''}</div>
+                    )}
                   </div>
                 </div>
               );
             })}
             {/* Snacks (compact row) */}
             <div className="th-snacks-row">
-              {todayMeals.filter(m => m.name.startsWith('Snack')).map((meal) => {
-                const origIdx = todayMeals.indexOf(meal);
+              {selectedMeals.filter(m => m.name.startsWith('Snack')).map((meal) => {
+                const origIdx = selectedMeals.indexOf(meal);
                 const key = mealKey(origIdx);
-                const done = !!mealChecks[key];
+                const done = isSelectedToday && !!mealChecks[key];
                 return (
-                  <div key={origIdx} className={`th-snack${done ? ' done' : ''}`} onClick={() => toggleMealCheck(key)}>
-                    <div className={`th-snack-check${done ? ' checked' : ''}`}>{done ? '✓' : ''}</div>
+                  <div key={origIdx} className={`th-snack${done ? ' done' : ''}`} onClick={() => isSelectedToday ? toggleMealCheck(key) : setMealDetail(meal)}>
+                    {isSelectedToday && <div className={`th-snack-check${done ? ' checked' : ''}`}>{done ? '✓' : ''}</div>}
                     <span className="th-snack-name">{meal.time.replace(/^[^\s]+\s/, '')}</span>
                     <span className="th-snack-kcal">{meal.portions ? calcMealKcal(meal.portions) : ''}</span>
                   </div>
@@ -649,12 +684,15 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
           {workoutToday ? (
             <>
               <div className="th-workout-badge">{workoutToday.type} · {workoutToday.duration}</div>
-              {(workoutToday.exercises ?? []).map((ex, i) => {
+              {(workoutToday.exercises ?? []).map((ex: any, i: number) => {
                 const done = dailyWorkoutChecked.includes(i);
                 return (
-                  <div key={i} className={`th-item${done ? ' done' : ''}`} onClick={() => toggleDailyWorkoutCheck(i)}>
-                    <div className={`th-item-check${done ? ' checked' : ''}`}>{done ? '✓' : ''}</div>
-                    <div className="th-item-body"><div className="th-item-title">{ex.name}</div></div>
+                  <div key={i} className={`th-item${done ? ' done' : ''}`}>
+                    <div className={`th-item-check${done ? ' checked' : ''}`} onClick={() => toggleDailyWorkoutCheck(i)}>{done ? '✓' : ''}</div>
+                    <div className="th-item-body" onClick={() => setWorkoutDetail(ex)}>
+                      <div className="th-item-title">{ex.name}</div>
+                      {ex.sets && <div className="th-item-sub">{ex.sets} × {ex.reps} · {ex.rest}</div>}
+                    </div>
                   </div>
                 );
               })}
@@ -729,6 +767,53 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
       )}
 
       </div>{/* end tab-content */}
+
+      {/* ── Meal Detail Popout ── */}
+      {mealDetail && (
+        <div className="th-popout-backdrop" onClick={() => setMealDetail(null)}>
+          <div className="th-popout" onClick={e => e.stopPropagation()}>
+            <div className="th-popout-handle" />
+            {mealDetail.img && (
+              <img src={mealDetail.img} alt="" className="th-popout-img" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            )}
+            <div className="th-popout-header">
+              <div className="th-popout-time">{mealDetail.time}</div>
+              <div className="th-popout-kcal">{mealDetail.portions ? calcMealKcal(mealDetail.portions) : 0} kcal</div>
+            </div>
+            <div className="th-popout-name">{mealDetail.name}</div>
+            {mealDetail.desc && <div className="th-popout-desc">{mealDetail.desc}</div>}
+            <div className="th-popout-label">Ingredientes</div>
+            <div className="th-popout-portions">
+              {(mealDetail.portions ?? []).map((p, i) => (
+                <div key={i} className="th-popout-portion">{p}</div>
+              ))}
+            </div>
+            <button className="th-popout-close" onClick={() => setMealDetail(null)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Workout Detail Popout ── */}
+      {workoutDetail && (
+        <div className="th-popout-backdrop" onClick={() => setWorkoutDetail(null)}>
+          <div className="th-popout th-popout-sm" onClick={e => e.stopPropagation()}>
+            <div className="th-popout-handle" />
+            <div className="th-popout-name">{workoutDetail.name}</div>
+            <div className="th-popout-workout-meta">
+              {workoutDetail.sets && <span>{workoutDetail.sets} series</span>}
+              {workoutDetail.reps && <span>{workoutDetail.reps} reps</span>}
+              {workoutDetail.rest && <span>{workoutDetail.rest} descanso</span>}
+            </div>
+            {workoutDetail.tip && (
+              <div className="th-popout-tip">
+                <span className="th-popout-tip-label">Tip</span>
+                <span>{workoutDetail.tip}</span>
+              </div>
+            )}
+            <button className="th-popout-close" onClick={() => setWorkoutDetail(null)}>Cerrar</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
