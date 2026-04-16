@@ -5335,6 +5335,46 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .th-cta-arrow { font-size: 1.2rem; font-weight: 700; color: var(--amber); flex-shrink: 0; }
 
+/* Meal cards with thumbnails */
+.th-meal {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; background: var(--card);
+  border: 1px solid var(--sand); border-radius: 12px;
+  cursor: pointer; transition: all .15s; overflow: hidden;
+}
+.th-meal:hover { border-color: var(--sage); }
+.th-meal.done { opacity: .5; }
+.th-meal.done .th-meal-name { text-decoration: line-through; }
+.th-meal-img {
+  width: 48px; height: 48px; border-radius: 10px; object-fit: cover; flex-shrink: 0;
+}
+.th-meal-emoji {
+  width: 48px; height: 48px; border-radius: 10px; background: var(--warm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+}
+.th-meal-body { flex: 1; min-width: 0; }
+.th-meal-name {
+  font-size: .84rem; font-weight: 600; color: var(--txt);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.th-meal-time { font-size: .7rem; color: var(--txt2); margin-top: 1px; }
+.th-meal-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.th-meal-kcal {
+  font-size: .68rem; font-weight: 700; color: var(--moss);
+  background: var(--warm); padding: 2px 8px; border-radius: 8px;
+}
+.th-meal-check {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 1.5px solid var(--sand); background: var(--card);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .65rem; font-weight: 800; color: var(--card); transition: all .15s;
+}
+.th-meal-check.checked {
+  background: var(--forest); border-color: var(--forest);
+  animation: checkPop .3s cubic-bezier(.34,1.56,.64,1);
+}
+
 .th-energy-note { font-size: .72rem; font-weight: 600; color: var(--amber); font-style: italic; padding: 2px 2px 6px; }
 .th-workout-badge { font-size: .72rem; font-weight: 700; color: var(--moss); background: var(--warm); padding: 8px 14px; border-radius: 8px; }
 

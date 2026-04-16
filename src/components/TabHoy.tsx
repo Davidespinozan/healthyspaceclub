@@ -585,15 +585,21 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
           {weeklyPlan ? todayMeals.map((meal, i) => {
             const key = mealKey(i);
             const done = !!mealChecks[key];
-            const emoji = MEAL_EMOJI[meal.time] ?? '🥗';
             return (
-              <div key={i} className={`th-item${done ? ' done' : ''}`} onClick={() => toggleMealCheck(key)}>
-                <div className={`th-item-check${done ? ' checked' : ''}`}>{done ? '✓' : ''}</div>
-                <div className="th-item-body">
-                  <div className="th-item-title">{emoji} {meal.name}</div>
-                  <div className="th-item-sub">{meal.time}</div>
+              <div key={i} className={`th-meal${done ? ' done' : ''}`} onClick={() => toggleMealCheck(key)}>
+                {meal.img ? (
+                  <img src={meal.img} alt="" className="th-meal-img" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                ) : (
+                  <div className="th-meal-emoji">{MEAL_EMOJI[meal.time] ?? '🥗'}</div>
+                )}
+                <div className="th-meal-body">
+                  <div className="th-meal-name">{meal.name}</div>
+                  <div className="th-meal-time">{meal.time}</div>
                 </div>
-                <div className="th-item-kcal">{meal.portions ? `${calcMealKcal(meal.portions)}` : ''}</div>
+                <div className="th-meal-right">
+                  <div className="th-meal-kcal">{meal.portions ? `${calcMealKcal(meal.portions)}` : ''}</div>
+                  <div className={`th-meal-check${done ? ' checked' : ''}`}>{done ? '✓' : ''}</div>
+                </div>
               </div>
             );
           }) : (
