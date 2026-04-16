@@ -5294,14 +5294,15 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 /* Section labels */
 .th-section-label {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 4px 0 10px; margin-top: 8px; position: relative;
-  font-size: .78rem; font-weight: 700; color: var(--amber);
+  padding: 6px 0 12px; margin-top: 8px; position: relative;
+  font-size: .88rem; font-weight: 700; color: var(--forest);
 }
 .th-section-label::after {
-  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
-  background: rgba(191,160,101,.25);
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--amber), rgba(191,160,101,.1));
+  border-radius: 2px;
 }
-.th-section-meta { font-size: .7rem; font-weight: 600; color: var(--moss); }
+.th-section-meta { font-size: .72rem; font-weight: 600; color: var(--amber); }
 
 /* Items (meals + exercises) */
 .th-item {
@@ -5325,15 +5326,19 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .th-item-title { font-size: .84rem; font-weight: 600; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .th-item-sub { font-size: .7rem; color: var(--txt2); margin-top: 1px; }
 .th-item-kcal { font-size: .68rem; font-weight: 700; color: var(--moss); background: var(--warm); padding: 2px 8px; border-radius: 8px; flex-shrink: 0; }
-.th-item-cta { border-style: solid; border-color: var(--sand); background: var(--card); border-left: 2px solid var(--amber); }
-.th-item-cta .th-item-title { color: var(--forest); font-weight: 700; }
+.th-item-cta {
+  border: 1.5px solid var(--amber); background: var(--forest);
+  padding: 18px 16px;
+}
+.th-item-cta .th-item-title { color: var(--cream); font-weight: 700; }
+.th-item-cta .th-item-sub { color: rgba(246,242,234,.5); }
 
 .th-cta-icon {
-  width: 36px; height: 36px; border-radius: 10px; background: var(--cream);
+  width: 42px; height: 42px; border-radius: 12px; background: rgba(191,160,101,.15);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem; flex-shrink: 0;
+  font-size: 1.3rem; flex-shrink: 0;
 }
-.th-cta-arrow { font-size: 1.2rem; font-weight: 700; color: var(--amber); flex-shrink: 0; }
+.th-cta-arrow { font-size: 1.4rem; font-weight: 700; color: var(--amber); flex-shrink: 0; }
 
 /* Meal cards with thumbnails */
 .th-meal {
@@ -5346,12 +5351,12 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .th-meal.done { opacity: .5; }
 .th-meal.done .th-meal-name { text-decoration: line-through; }
 .th-meal-img {
-  width: 48px; height: 48px; border-radius: 10px; object-fit: cover; flex-shrink: 0;
+  width: 56px; height: 56px; border-radius: 12px; object-fit: cover; flex-shrink: 0;
 }
 .th-meal-emoji {
-  width: 48px; height: 48px; border-radius: 10px; background: var(--warm);
+  width: 56px; height: 56px; border-radius: 12px; background: var(--warm);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.2rem; flex-shrink: 0;
+  font-size: 1.4rem; flex-shrink: 0;
 }
 .th-meal-body { flex: 1; min-width: 0; }
 .th-meal-name {
@@ -5374,6 +5379,26 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   background: var(--forest); border-color: var(--forest);
   animation: checkPop .3s cubic-bezier(.34,1.56,.64,1);
 }
+
+/* Snacks compact row */
+.th-snacks-row { display: flex; gap: 8px; }
+.th-snack {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; background: var(--warm); border-radius: 10px;
+  cursor: pointer; transition: opacity .15s;
+}
+.th-snack.done { opacity: .45; }
+.th-snack.done .th-snack-name { text-decoration: line-through; }
+.th-snack-check {
+  width: 16px; height: 16px; border-radius: 4px;
+  border: 1.5px solid var(--sand); background: var(--card);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .55rem; font-weight: 800; color: var(--card); flex-shrink: 0;
+  transition: all .15s;
+}
+.th-snack-check.checked { background: var(--forest); border-color: var(--forest); }
+.th-snack-name { font-size: .75rem; font-weight: 600; color: var(--txt); flex: 1; }
+.th-snack-kcal { font-size: .65rem; font-weight: 700; color: var(--moss); }
 
 .th-energy-note { font-size: .72rem; font-weight: 600; color: var(--amber); font-style: italic; padding: 2px 2px 6px; }
 .th-workout-badge { font-size: .72rem; font-weight: 700; color: var(--moss); background: var(--warm); padding: 8px 14px; border-radius: 8px; }

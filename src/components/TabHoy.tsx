@@ -582,27 +582,46 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
             <span>Alimentación</span>
             {weeklyPlan && <span className="th-section-meta">{checkedMeals}/{todayMeals.length} · {planGoal > 0 ? planGoal.toLocaleString() : totalMealKcal} kcal</span>}
           </div>
-          {weeklyPlan ? todayMeals.map((meal, i) => {
-            const key = mealKey(i);
-            const done = !!mealChecks[key];
-            return (
-              <div key={i} className={`th-meal${done ? ' done' : ''}`} onClick={() => toggleMealCheck(key)}>
-                {meal.img ? (
-                  <img src={meal.img} alt="" className="th-meal-img" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                ) : (
-                  <div className="th-meal-emoji">{MEAL_EMOJI[meal.time] ?? '🥗'}</div>
-                )}
-                <div className="th-meal-body">
-                  <div className="th-meal-name">{meal.name}</div>
-                  <div className="th-meal-time">{meal.time}</div>
+          {weeklyPlan ? (<>
+            {/* Main meals (with photos) */}
+            {todayMeals.filter(m => !m.name.startsWith('Snack')).map((meal) => {
+              const origIdx = todayMeals.indexOf(meal);
+              const key = mealKey(origIdx);
+              const done = !!mealChecks[key];
+              return (
+                <div key={origIdx} className={`th-meal${done ? ' done' : ''}`} onClick={() => toggleMealCheck(key)}>
+                  {meal.img ? (
+                    <img src={meal.img} alt="" className="th-meal-img" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  ) : (
+                    <div className="th-meal-emoji">{MEAL_EMOJI[meal.time] ?? '🥗'}</div>
+                  )}
+                  <div className="th-meal-body">
+                    <div className="th-meal-name">{meal.name}</div>
+                    <div className="th-meal-time">{meal.time}</div>
+                  </div>
+                  <div className="th-meal-right">
+                    <div className="th-meal-kcal">{meal.portions ? `${calcMealKcal(meal.portions)}` : ''}</div>
+                    <div className={`th-meal-check${done ? ' checked' : ''}`}>{done ? '✓' : ''}</div>
+                  </div>
                 </div>
-                <div className="th-meal-right">
-                  <div className="th-meal-kcal">{meal.portions ? `${calcMealKcal(meal.portions)}` : ''}</div>
-                  <div className={`th-meal-check${done ? ' checked' : ''}`}>{done ? '✓' : ''}</div>
-                </div>
-              </div>
-            );
-          }) : (
+              );
+            })}
+            {/* Snacks (compact row) */}
+            <div className="th-snacks-row">
+              {todayMeals.filter(m => m.name.startsWith('Snack')).map((meal) => {
+                const origIdx = todayMeals.indexOf(meal);
+                const key = mealKey(origIdx);
+                const done = !!mealChecks[key];
+                return (
+                  <div key={origIdx} className={`th-snack${done ? ' done' : ''}`} onClick={() => toggleMealCheck(key)}>
+                    <div className={`th-snack-check${done ? ' checked' : ''}`}>{done ? '✓' : ''}</div>
+                    <span className="th-snack-name">{meal.time.replace(/^[^\s]+\s/, '')}</span>
+                    <span className="th-snack-kcal">{meal.portions ? calcMealKcal(meal.portions) : ''}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </>) : (
             <div className="th-item th-item-cta" onClick={() => onNav('alimentacion')}>
               <div className="th-cta-icon">🥗</div>
               <div className="th-item-body">
