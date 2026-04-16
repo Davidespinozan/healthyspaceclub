@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Home, MessageCircle, Brain, Flame, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Home, Brain, Flame, User, MessageCircle } from 'lucide-react';
 import { useAppStore } from '../store';
 import type { DashPage } from '../types';
 
@@ -17,15 +17,15 @@ import LifeSystemScreen from './LifeSystemScreen';
 import { Leaf, Dumbbell } from 'lucide-react';
 
 const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
-  { id: 'hoy',    icon: Home,          label: 'Hoy' },
-  { id: 'coach',  icon: MessageCircle, label: 'Coach' },
-  { id: 'club',   icon: Flame,         label: 'Club' },
-  { id: 'metodo', icon: Brain,         label: 'Método' },
-  { id: 'tu',     icon: User,          label: 'Tú' },
+  { id: 'hoy',    icon: Home,   label: 'Hoy' },
+  { id: 'club',   icon: Flame,  label: 'Club' },
+  { id: 'metodo', icon: Brain,  label: 'Método' },
+  { id: 'tu',     icon: User,   label: 'Tú' },
 ];
 
 export default function DashboardScreen() {
   const { dashPage, setDashPage, checkTrialExpiry, activeHSMDimension } = useAppStore();
+  const [coachOpen, setCoachOpen] = useState(false);
 
   useEffect(() => { checkTrialExpiry(); }, []);
 
@@ -34,14 +34,13 @@ export default function DashboardScreen() {
     window.scrollTo(0, 0);
   }
 
-  const isSubPage = !['hoy', 'coach', 'club', 'metodo', 'tu'].includes(dashPage);
+  const isSubPage = !['hoy', 'club', 'metodo', 'tu'].includes(dashPage);
 
   return (
     <div className="app-shell">
       <main className="app-main">
         {/* Main tabs */}
         {dashPage === 'hoy' && <TabHoy onNav={(p) => navTo(p as DashPage)} />}
-        {dashPage === 'coach' && <TabCoach />}
         {dashPage === 'club' && <TabClub onNav={navTo} />}
         {dashPage === 'metodo' && <TabMetodo onNav={navTo} />}
         {dashPage === 'tu' && <TabTu onNav={navTo} />}
@@ -86,7 +85,25 @@ export default function DashboardScreen() {
         )}
       </main>
 
-      {/* Navigation */}
+      {/* Coach FAB */}
+      <button
+        className={`coach-fab${coachOpen ? ' open' : ''}`}
+        onClick={() => setCoachOpen(o => !o)}
+      >
+        {coachOpen
+          ? <span className="coach-fab-x">✕</span>
+          : <MessageCircle size={22} strokeWidth={2} />
+        }
+      </button>
+
+      {/* Coach overlay */}
+      {coachOpen && (
+        <div className="coach-overlay">
+          <TabCoach />
+        </div>
+      )}
+
+      {/* Bottom Navigation */}
       <nav className="bnav">
         <div className="bnav-brand">
           <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="HSC" className="bnav-logo" />
@@ -103,7 +120,7 @@ export default function DashboardScreen() {
               className={`bnav-item${active ? ' active' : ''}`}
               onClick={() => navTo(tab.id)}
             >
-              <Icon size={20} strokeWidth={active ? 2 : 1.5} />
+              <Icon size={22} strokeWidth={active ? 2 : 1.5} />
               <span className="bnav-label">{tab.label}</span>
               {active && <div className="bnav-dot" />}
             </div>

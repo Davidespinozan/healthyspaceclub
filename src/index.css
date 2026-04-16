@@ -5187,6 +5187,33 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   width: 4px; height: 4px; border-radius: 50%;
   background: #BFA065; position: absolute; bottom: 2px;
 }
+/* Coach FAB */
+.coach-fab {
+  position: fixed; z-index: 200;
+  bottom: 90px; right: 16px;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--forest); color: var(--cream);
+  border: 2px solid var(--amber);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 4px 20px rgba(30,51,48,.3);
+  transition: all .2s;
+}
+.coach-fab:hover { transform: scale(1.05); }
+.coach-fab.open { background: var(--amber); color: var(--forest); border-color: var(--forest); }
+.coach-fab-x { font-size: 1.1rem; font-weight: 700; }
+
+.coach-overlay {
+  position: fixed; inset: 0; z-index: 150;
+  background: var(--cream);
+  animation: tabFadeIn .18s ease;
+  padding-bottom: 72px;
+}
+
+@media (min-width: 1024px) {
+  .coach-fab { bottom: 24px; right: 24px; width: 56px; height: 56px; }
+  .coach-overlay { left: 220px; padding-bottom: 0; }
+}
+
 .bnav-brand { display: none; }
 .bnav-logo { height: 44px; width: auto; }
 
@@ -5454,7 +5481,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 /* ══════════════════════════════════════════════════════════════
    TAB COACH
 ══════════════════════════════════════════════════════════════ */
-.tc-wrap { display: flex; flex-direction: column; height: calc(100vh - 72px); }
+.tc-wrap { display: flex; flex-direction: column; height: 100%; }
 .tc-header { background: var(--forest); padding: 24px 20px 18px; color: var(--cream); }
 .tc-header-title { font-size: 1.15rem; font-weight: 700; }
 .tc-header-sub { font-size: .75rem; color: rgba(246,242,234,.5); margin-top: 2px; }
