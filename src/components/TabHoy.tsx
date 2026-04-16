@@ -5,6 +5,7 @@ import { scalePlan } from '../utils/scalePlan';
 import { calcDayKcal, calcMealKcal } from '../utils/kcalCalc';
 import WeeklyReview from './WeeklyReview';
 import NightCheckIn from './NightCheckIn';
+import Stories from './Stories';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
@@ -497,6 +498,9 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
           </div>
         </div>
       )}
+
+      {/* ── Stories row ── */}
+      <Stories />
 
       {/* ── Dark header (full-bleed) ── */}
       <div className="th-header">

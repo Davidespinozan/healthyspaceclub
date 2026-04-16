@@ -5841,7 +5841,149 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .nc-submit.disabled:hover { opacity: 1; }
 
 /* ══════════════════════════════════════════════════════════════
-   TAB CLUB — Social Feed
+   STORIES — Instagram-style bubbles + viewer
+══════════════════════════════════════════════════════════════ */
+
+/* Bubbles row */
+.st-row {
+  display: flex; gap: 12px; padding: 12px 18px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.st-row::-webkit-scrollbar { display: none; }
+
+.st-bubble {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; flex-shrink: 0;
+}
+.st-bubble-ring {
+  width: 56px; height: 56px; border-radius: 50%;
+  border: 2px solid var(--amber); padding: 2px;
+  display: flex; align-items: center; justify-content: center;
+}
+.st-bubble-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.st-bubble-letter {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: var(--forest); color: var(--cream);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem; font-weight: 700;
+}
+.st-bubble-name { font-size: .65rem; font-weight: 600; color: var(--txt2); max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Add story bubble */
+.st-add .st-add-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  border: 2px dashed var(--amber); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; font-weight: 300; color: var(--amber);
+}
+
+/* Story viewer (fullscreen) */
+.st-viewer {
+  position: fixed; inset: 0; z-index: 600;
+  background: #000; display: flex; align-items: center; justify-content: center;
+  animation: ncFadeIn .2s ease;
+}
+.st-viewer-inner {
+  position: relative; width: 100%; max-width: 440px; height: 100%;
+  display: flex; flex-direction: column;
+}
+.st-viewer-progress { display: flex; gap: 3px; padding: 8px 12px; }
+.st-prog-seg { flex: 1; height: 2px; border-radius: 2px; background: rgba(255,255,255,.25); }
+.st-prog-seg.active { background: #fff; }
+
+.st-viewer-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+}
+.st-viewer-avatar {
+  width: 32px; height: 32px; border-radius: 50%; overflow: hidden;
+  background: var(--forest); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.st-viewer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.st-viewer-avatar span { color: var(--cream); font-size: .7rem; font-weight: 700; }
+.st-viewer-name { font-size: .84rem; font-weight: 700; color: #fff; flex: 1; }
+.st-viewer-streak { font-size: .72rem; font-weight: 700; color: var(--amber); }
+.st-viewer-close {
+  background: none; border: none; color: rgba(255,255,255,.7);
+  font-size: 1.2rem; cursor: pointer; padding: 4px;
+}
+
+.st-viewer-media {
+  flex: 1; width: 100%; object-fit: contain; min-height: 0;
+}
+.st-viewer-text-only {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 40px; font-size: 1.2rem; font-weight: 600; color: #fff;
+  text-align: center; line-height: 1.5;
+}
+.st-viewer-text {
+  position: absolute; bottom: 100px; left: 0; right: 0;
+  padding: 12px 16px; background: linear-gradient(transparent, rgba(0,0,0,.7));
+  color: #fff; font-size: .88rem; line-height: 1.4;
+}
+.st-viewer-workout {
+  position: absolute; bottom: 70px; left: 14px;
+  font-size: .72rem; font-weight: 600; color: var(--amber);
+  background: rgba(0,0,0,.5); padding: 4px 10px; border-radius: 6px;
+}
+.st-viewer-fire {
+  position: absolute; bottom: 20px; right: 16px;
+  padding: 8px 16px; border-radius: 50px;
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; font-size: .88rem; cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+.st-viewer-fire:hover { background: rgba(255,255,255,.25); }
+
+/* Nav tap areas */
+.st-nav { position: absolute; top: 80px; bottom: 80px; width: 40%; }
+.st-nav-prev { left: 0; }
+.st-nav-next { right: 0; }
+
+/* Share story modal */
+.st-share-backdrop {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.5); display: flex;
+  align-items: flex-end; justify-content: center;
+  animation: ncFadeIn .2s ease;
+}
+.st-share {
+  background: var(--forest); border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 600px; padding: 16px 20px 28px;
+  animation: ncSlideUp .3s ease;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.st-share-preview { position: relative; border-radius: 14px; overflow: hidden; }
+.st-share-media { width: 100%; max-height: 240px; object-fit: cover; display: block; border-radius: 14px; }
+.st-share-remove {
+  position: absolute; top: 8px; right: 8px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(0,0,0,.6); color: #fff; border: none;
+  font-size: .8rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.st-share-picker {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; padding: 24px; border-radius: 14px;
+  border: 1.5px dashed rgba(246,242,234,.2); cursor: pointer;
+}
+.st-share-picker:hover { border-color: var(--amber); }
+.st-share-picker-icon { font-size: 1.8rem; }
+.st-share-picker-text { font-size: .78rem; color: rgba(246,242,234,.5); font-weight: 600; }
+
+.st-share-meta { display: flex; align-items: center; gap: 8px; }
+.st-share-count { font-size: .68rem; color: rgba(246,242,234,.4); }
+.st-share-workout {
+  font-size: .68rem; font-weight: 600; color: var(--amber);
+  background: rgba(191,160,101,.12); padding: 2px 8px; border-radius: 6px;
+}
+.st-share-streak { font-size: .7rem; font-weight: 700; color: var(--cream); margin-left: auto; }
+
+/* ══════════════════════════════════════════════════════════════
+   TAB CLUB — Social Feed (legacy, kept for reference)
 ══════════════════════════════════════════════════════════════ */
 .cl-wrap { display: flex; flex-direction: column; }
 .cl-header { background: linear-gradient(160deg, #1e3330 0%, #2E4A42 100%); padding: 24px 20px 18px; color: var(--cream); }

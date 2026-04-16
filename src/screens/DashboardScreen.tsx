@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Home, Brain, Flame, User, MessageCircle } from 'lucide-react';
+import { Home, Brain, User, MessageCircle } from 'lucide-react';
 import { useAppStore } from '../store';
 import type { DashPage } from '../types';
 
 import TabHoy from '../components/TabHoy';
 import TabCoach from '../components/TabCoach';
 import TabMetodo from '../components/TabMetodo';
-import TabClub from '../components/TabClub';
+// TabClub removed — stories now integrated into TabHoy
 import TabTu from '../components/TabTu';
 import MiHuella from '../components/MiHuella';
 
@@ -18,7 +18,6 @@ import { Leaf, Dumbbell } from 'lucide-react';
 
 const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
   { id: 'hoy',    icon: Home,   label: 'Hoy' },
-  { id: 'club',   icon: Flame,  label: 'Club' },
   { id: 'metodo', icon: Brain,  label: 'Método' },
   { id: 'tu',     icon: User,   label: 'Tú' },
 ];
@@ -34,14 +33,14 @@ export default function DashboardScreen() {
     window.scrollTo(0, 0);
   }
 
-  const isSubPage = !['hoy', 'club', 'metodo', 'tu'].includes(dashPage);
+  const isSubPage = !['hoy', 'metodo', 'tu'].includes(dashPage);
 
   return (
     <div className="app-shell">
       <main className="app-main">
         {/* Main tabs */}
         {dashPage === 'hoy' && <TabHoy onNav={(p) => navTo(p as DashPage)} />}
-        {dashPage === 'club' && <TabClub onNav={navTo} />}
+        {/* Club removed — stories integrated into TabHoy */}
         {dashPage === 'metodo' && <TabMetodo onNav={navTo} />}
         {dashPage === 'tu' && <TabTu onNav={navTo} />}
 
