@@ -5868,6 +5868,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   font-size: .9rem; font-weight: 700;
 }
 .st-bubble-name { font-size: .65rem; font-weight: 600; color: var(--txt2); max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-bubble-streak { font-size: .6rem; font-weight: 700; color: var(--amber); }
 
 /* Add story bubble */
 .st-add .st-add-icon {

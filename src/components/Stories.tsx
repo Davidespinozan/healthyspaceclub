@@ -128,6 +128,7 @@ export default function Stories() {
               }
             </div>
             <span className="st-bubble-name">{post.username.split(' ')[0]}</span>
+            {post.streak > 0 && <span className="st-bubble-streak">🔥 {post.streak}</span>}
           </div>
         ))}
       </div>
