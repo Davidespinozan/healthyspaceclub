@@ -24,6 +24,8 @@ export default function TabClub({ onNav }: { onNav: (page: DashPage) => void }) 
   const [loading, setLoading] = useState(true);
   const [showShare, setShowShare] = useState(false);
   const [shareText, setShareText] = useState('');
+  const [shareMedia, setShareMedia] = useState<File | null>(null);
+  const [sharePreview, setSharePreview] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [firedPosts, setFiredPosts] = useState<Set<string>>(new Set());
 
@@ -61,21 +63,48 @@ export default function TabClub({ onNav }: { onNav: (page: DashPage) => void }) 
       });
   }, [posts, userId]);
 
-  // Share post
+  // Handle media selection
+  function handleMediaSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setShareMedia(file);
+    const url = URL.createObjectURL(file);
+    setSharePreview(url);
+  }
+
+  function clearMedia() {
+    setShareMedia(null);
+    if (sharePreview) URL.revokeObjectURL(sharePreview);
+    setSharePreview(null);
+  }
+
+  // Share post with optional media upload
   async function handleShare() {
     if (sharing) return;
     setSharing(true);
+
+    let photoUrl = '';
+    if (shareMedia) {
+      const ext = shareMedia.name.split('.').pop() || 'jpg';
+      const path = `${userId}_${Date.now()}.${ext}`;
+      await supabase.storage.from('club').upload(path, shareMedia);
+      const { data } = supabase.storage.from('club').getPublicUrl(path);
+      photoUrl = data.publicUrl;
+    }
+
     await supabase.from('club_posts').insert({
       user_id: userId,
       username: userName || 'Anónimo',
       avatar_url: '',
       streak: streakCount,
       workout_summary: workoutSummary,
-      photo_url: '',
+      photo_url: photoUrl,
       text: shareText.trim().slice(0, 150),
       fire_count: 0,
     });
+
     setShareText('');
+    clearMedia();
     setShowShare(false);
     setSharing(false);
     fetchPosts();
@@ -116,11 +145,9 @@ export default function TabClub({ onNav }: { onNav: (page: DashPage) => void }) 
 
       <div className="tab-content">
         {/* Share CTA */}
-        {workoutToday && (
-          <button className="cl-share-cta" onClick={() => setShowShare(true)}>
-            Compartir al Club
-          </button>
-        )}
+        <button className="cl-share-cta" onClick={() => setShowShare(true)}>
+          + Compartir al Club
+        </button>
 
         {/* Feed */}
         {loading ? (
@@ -160,7 +187,10 @@ export default function TabClub({ onNav }: { onNav: (page: DashPage) => void }) 
 
                 {post.photo_url && (
                   <div className="cl-post-photo">
-                    <img src={post.photo_url} alt="" />
+                    {post.photo_url.match(/\.(mp4|mov|webm)$/i)
+                      ? <video src={post.photo_url} controls />
+                      : <img src={post.photo_url} alt="" />
+                    }
                   </div>
                 )}
 
@@ -176,32 +206,47 @@ export default function TabClub({ onNav }: { onNav: (page: DashPage) => void }) 
         )}
       </div>
 
-      {/* Share Modal */}
+      {/* Share Modal — Instagram story style */}
       {showShare && (
-        <div className="cl-modal-backdrop" onClick={() => setShowShare(false)}>
+        <div className="cl-modal-backdrop" onClick={() => { clearMedia(); setShowShare(false); }}>
           <div className="cl-modal" onClick={e => e.stopPropagation()}>
             <div className="cl-modal-handle" />
-            <div className="cl-modal-title">Compartir al Club</div>
 
-            {workoutSummary && (
-              <div className="cl-modal-workout">{workoutSummary}</div>
+            {/* Media preview or picker */}
+            {sharePreview ? (
+              <div className="cl-media-preview">
+                {shareMedia?.type.startsWith('video/')
+                  ? <video src={sharePreview} className="cl-media-content" controls />
+                  : <img src={sharePreview} alt="" className="cl-media-content" />
+                }
+                <button className="cl-media-remove" onClick={clearMedia}>✕</button>
+              </div>
+            ) : (
+              <label className="cl-media-picker">
+                <input type="file" accept="image/*,video/*" onChange={handleMediaSelect} hidden />
+                <div className="cl-media-picker-icon">📷</div>
+                <div className="cl-media-picker-text">Foto o video</div>
+              </label>
             )}
 
-            <div className="cl-modal-streak">🔥 Racha: {streakCount} días</div>
-
+            {/* Text + meta */}
             <textarea
               className="cl-modal-input"
-              placeholder="¿Cómo te fue hoy? (máx 150 caracteres)"
+              placeholder="¿Cómo te fue hoy?"
               maxLength={150}
               value={shareText}
               onChange={e => setShareText(e.target.value)}
             />
-            <div className="cl-modal-count">{shareText.length}/150</div>
+            <div className="cl-modal-meta">
+              <div className="cl-modal-count">{shareText.length}/150</div>
+              {workoutSummary && <div className="cl-modal-workout">{workoutSummary}</div>}
+              <div className="cl-modal-streak">🔥 {streakCount}</div>
+            </div>
 
             <button
               className="cl-modal-submit"
               onClick={handleShare}
-              disabled={sharing}
+              disabled={sharing || (!shareText.trim() && !shareMedia)}
             >
               {sharing ? 'Publicando...' : 'Publicar'}
             </button>

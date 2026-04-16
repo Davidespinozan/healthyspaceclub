@@ -5912,28 +5912,57 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   display: flex; flex-direction: column; gap: 14px;
 }
 .cl-modal-handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(246,242,234,.2); margin: 0 auto; }
-.cl-modal-title { font-size: 1rem; font-weight: 700; color: var(--cream); }
-.cl-modal-workout {
-  font-size: .78rem; font-weight: 600; color: var(--amber);
-  background: rgba(191,160,101,.12); padding: 8px 12px; border-radius: 8px;
-  align-self: flex-start;
+
+/* Media picker */
+.cl-media-picker {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 32px 16px; border-radius: 14px;
+  border: 1.5px dashed rgba(246,242,234,.2); cursor: pointer;
+  transition: border-color .15s;
 }
-.cl-modal-streak { font-size: .82rem; font-weight: 600; color: var(--cream); }
+.cl-media-picker:hover { border-color: var(--amber); }
+.cl-media-picker-icon { font-size: 2rem; }
+.cl-media-picker-text { font-size: .82rem; color: rgba(246,242,234,.5); font-weight: 600; }
+
+/* Media preview */
+.cl-media-preview { position: relative; border-radius: 14px; overflow: hidden; }
+.cl-media-content { width: 100%; max-height: 300px; object-fit: cover; display: block; border-radius: 14px; }
+.cl-media-remove {
+  position: absolute; top: 8px; right: 8px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(0,0,0,.6); color: #fff; border: none;
+  font-size: .8rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
 .cl-modal-input {
-  width: 100%; min-height: 72px; padding: 12px; border-radius: 10px;
+  width: 100%; min-height: 56px; padding: 12px; border-radius: 10px;
   background: rgba(246,242,234,.08); border: 1px solid rgba(191,160,101,.3);
   color: var(--cream); font-size: 16px !important; font-family: inherit;
-  outline: none; resize: vertical;
+  outline: none; resize: none;
 }
 .cl-modal-input::placeholder { color: rgba(246,242,234,.4); }
 .cl-modal-input:focus { border-color: var(--amber); }
-.cl-modal-count { font-size: .7rem; color: rgba(246,242,234,.4); text-align: right; margin-top: -8px; }
+
+.cl-modal-meta {
+  display: flex; align-items: center; gap: 8px;
+}
+.cl-modal-count { font-size: .7rem; color: rgba(246,242,234,.4); }
+.cl-modal-workout {
+  font-size: .7rem; font-weight: 600; color: var(--amber);
+  background: rgba(191,160,101,.12); padding: 3px 8px; border-radius: 6px;
+}
+.cl-modal-streak { font-size: .72rem; font-weight: 700; color: var(--cream); margin-left: auto; }
+
 .cl-modal-submit {
   width: 100%; padding: 14px; border: none; border-radius: 12px;
   background: var(--amber); color: var(--forest); font-size: .88rem; font-weight: 700;
   cursor: pointer; font-family: inherit;
 }
 .cl-modal-submit:disabled { opacity: .4; cursor: default; }
+
+/* Post video */
+.cl-post-photo video { width: 100%; border-radius: 10px; display: block; }
 
 /* ══════════════════════════════════════════════════════════════
    MI HUELLA — Public Profile
