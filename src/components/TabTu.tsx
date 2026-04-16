@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useAppStore } from '../store';
-import { useLifeSystemStore } from '../store/lifeSystemStore';
 import type { DashPage } from '../types';
 
 const RADAR_DIMS = ['Identidad','Vocación','Propósito','Metas','Disciplina','Cuerpo','Entorno y Relaciones','Control Emocional','Resiliencia','Evolución'];
@@ -22,12 +21,6 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
       return { label: RADAR_SHORT[i], value: Math.min(count / maxExpected, 1) };
     });
   }, [dailyHSMResponses]);
-  const { setActivePanel } = useLifeSystemStore();
-
-  function navLS(panel: 'time' | 'journal' | 'dash') {
-    setActivePanel(panel);
-    onNav('lifesystem');
-  }
 
   const today = new Date().toISOString().split('T')[0];
   const todayKcal = Math.round(foodLog.filter(e => e.date === today).reduce((s, e) => s + e.kcal, 0));
@@ -188,27 +181,6 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
             </div>
           </>
         )}
-      </div>
-
-      {/* Control de vida */}
-      <div className="tt-section">
-        <div className="tt-section-title">Control de vida</div>
-        <div className="tt-cards">
-          <div className="tt-card" onClick={() => navLS('time')}>
-            <div className="tt-card-icon-wrap"><span>📅</span></div>
-            <div>
-              <div className="tt-card-title">Time blocking</div>
-              <div className="tt-card-sub">Organiza tu día por bloques</div>
-            </div>
-          </div>
-          <div className="tt-card" onClick={() => navLS('journal')}>
-            <div className="tt-card-icon-wrap"><span>✦</span></div>
-            <div>
-              <div className="tt-card-title">Journal</div>
-              <div className="tt-card-sub">Reflexiones y notas diarias</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Mi Huella */}
