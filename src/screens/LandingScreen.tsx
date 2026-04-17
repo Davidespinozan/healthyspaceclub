@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
 import { useAppStore } from '../store';
-import { useCountUp, useInView } from '../utils/effects';
+// trust stats removed
 
 // ── Magnetic button wrapper ────────────────────────────────────────────────
 function MagneticBtn({ children, className, onClick, style }: {
@@ -53,12 +53,7 @@ export default function LandingScreen() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // ── Counter trust stats ────────────────────────────────────
-  const trustRef = useRef<HTMLDivElement>(null);
-  const trustInView = useInView(trustRef);
-  const members = useCountUp(3200, 1800, trustInView);
-  const satisfaction = useCountUp(98, 1400, trustInView);
-  const rating = useCountUp(49, 1200, trustInView); // displayed as 4.9
+  // ── (trust stats removed) ──
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -143,29 +138,12 @@ export default function LandingScreen() {
         <div className="hero-orb hero-orb-3" />
         <div className="hero-inner">
           <div className="hero-content">
-            <div className="badge">3 en 1 · Nutrición · Entreno · Mente</div>
-            <p className="hero-tagline">Club Digital Wellness</p>
+            <p className="hero-tagline">Club Digital</p>
             <h1>Un sistema real para quienes<br />les gusta <em>vivir bien.</em></h1>
-            <p className="hero-sub">Tu coach, nutriólogo y entrenador en uno.</p>
+            <p className="hero-sub-strong">Tu coach, nutriólogo y entrenador en uno.</p>
             <div className="hero-btns">
               <MagneticBtn className="btn-p" onClick={() => openPay('Pro Anual','$1,699','12 meses · Plan Pro')}>Comenzar ahora →</MagneticBtn>
               <a className="btn-g" href="#s-pillars">Ver qué incluye ↓</a>
-            </div>
-            <div className="hero-trust" ref={trustRef}>
-              <div className="hero-trust-stat">
-                <div className="hero-trust-num">{members.toLocaleString()}+</div>
-                <div className="hero-trust-lbl">Miembros activos</div>
-              </div>
-              <div className="hero-trust-div" />
-              <div className="hero-trust-stat">
-                <div className="hero-trust-num">{satisfaction}%</div>
-                <div className="hero-trust-lbl">Satisfacción</div>
-              </div>
-              <div className="hero-trust-div" />
-              <div className="hero-trust-stat">
-                <div className="hero-trust-num">{(rating / 10).toFixed(1)} ★</div>
-                <div className="hero-trust-lbl">Calificación</div>
-              </div>
             </div>
           </div>
           <div className="hero-img">
@@ -175,14 +153,6 @@ export default function LandingScreen() {
               ref={heroImgRef}
               style={{ willChange: 'transform', transform: 'scale(1.04)' }}
             />
-            <div className="hero-float-card hfc-1">
-              <span className="hfc-icon">🥗</span>
-              <div><span className="hfc-t">Plan Nutricional</span><span className="hfc-s">Actualizado semanalmente</span></div>
-            </div>
-            <div className="hero-float-card hfc-2">
-              <span className="hfc-icon">💪</span>
-              <div><span className="hfc-t">Video por ejercicio</span><span className="hfc-s">Técnica paso a paso</span></div>
-            </div>
             <div className="hero-img-dots">
               {Array.from({ length: 25 }).map((_, i) => <span key={i} />)}
             </div>
