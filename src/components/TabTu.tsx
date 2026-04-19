@@ -8,8 +8,8 @@ const RADAR_SHORT = ['Identidad','Vocación','Propósito','Metas','Disciplina','
 
 export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
-    userName, obData, planGoal, streakCount, startDate,
-    foodLog, hsmUnlockDays, dailyHSMResponses, logout,
+    userName, obData, tdee, planGoal, streakCount, startDate,
+    foodLog, workoutLog, hsmUnlockDays, dailyHSMResponses, logout,
   } = useAppStore();
 
   const userId = obData.name ? String(obData.name).toLowerCase().replace(/\s+/g, '_') : 'anon';
@@ -17,12 +17,15 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
 
   // Profile from Supabase
   const [profile, setProfile] = useState({ display_name: '', bio: '', avatar_url: '' });
+  const [postCount, setPostCount] = useState(0);
 
   useEffect(() => {
     supabase.from('user_profiles').select('*').eq('user_id', userId).single()
       .then(({ data }) => {
         if (data) setProfile({ display_name: data.display_name, bio: data.bio, avatar_url: data.avatar_url });
       });
+    supabase.from('club_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId)
+      .then(({ count }) => { if (count != null) setPostCount(count); });
   }, [userId]);
 
   // Avatar upload
@@ -54,7 +57,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
 
   return (
     <div className="tp-wrap">
-      {/* Avatar + name */}
+      {/* ── Avatar + name ── */}
       <div className="tp-header">
         <label className="tp-avatar">
           {profile.avatar_url
@@ -68,7 +71,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         <button className="tp-edit" onClick={() => onNav('huella')}>Editar perfil</button>
       </div>
 
-      {/* Stats */}
+      {/* ── Stats ── */}
       <div className="tp-stats">
         <div className="tp-stat">
           <div className="tp-stat-val">{streakCount}</div>
@@ -79,12 +82,32 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
           <div className="tp-stat-lbl">Días activos</div>
         </div>
         <div className="tp-stat">
+          <div className="tp-stat-val">{postCount}</div>
+          <div className="tp-stat-lbl">Posts</div>
+        </div>
+        <div className="tp-stat">
           <div className="tp-stat-val">{weeksActive}</div>
           <div className="tp-stat-lbl">Semanas</div>
         </div>
       </div>
 
-      {/* Calories today */}
+      {/* ── Quick actions ── */}
+      <div className="tp-actions">
+        <div className="tp-action" onClick={() => onNav('alimentacion')}>
+          <span className="tp-action-icon">🥗</span>
+          <span className="tp-action-lbl">Plan</span>
+        </div>
+        <div className="tp-action" onClick={() => onNav('entrenamiento')}>
+          <span className="tp-action-icon">💪</span>
+          <span className="tp-action-lbl">Rutina</span>
+        </div>
+        <div className="tp-action" onClick={() => onNav('alimentacion')}>
+          <span className="tp-action-icon">🛒</span>
+          <span className="tp-action-lbl">Súper</span>
+        </div>
+      </div>
+
+      {/* ── Calories today ── */}
       <div className="tp-kcal">
         <div className="tp-kcal-row">
           <span>Calorías hoy</span>
@@ -95,7 +118,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         </div>
       </div>
 
-      {/* Activity calendar */}
+      {/* ── Activity calendar ── */}
       {startDate && (
         <div className="tp-section">
           <div className="tp-section-title">Actividad</div>
@@ -111,7 +134,27 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         </div>
       )}
 
-      {/* Radar chart */}
+      {/* ── Workout history ── */}
+      {workoutLog.length > 0 && (
+        <div className="tp-section">
+          <div className="tp-section-title">Últimos entrenamientos</div>
+          <div className="tp-history">
+            {[...workoutLog].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5).map((entry, i) => (
+              <div key={i} className="tp-history-item">
+                <div className="tp-history-date">{entry.date}</div>
+                <div className="tp-history-exercise">{entry.exercise}</div>
+                <div className="tp-history-sets">
+                  {entry.sets.map((s, si) => (
+                    <span key={si} className="tp-history-set">{s.reps}×{s.kg}kg</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Radar chart ── */}
       {dailyHSMResponses.length > 0 && (
         <div className="tp-section">
           <div className="tp-section-title">Tus dimensiones</div>
@@ -144,7 +187,35 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         </div>
       )}
 
-      {/* Logout */}
+      {/* ── Milestones ── */}
+      <div className="tp-section">
+        <div className="tp-section-title">Logros</div>
+        <div className="tp-milestones">
+          {[3,7,14,21,30,60,90].map(m => (
+            <div key={m} className={`tp-milestone${streakCount >= m ? ' on' : ''}`}>
+              <span className="tp-milestone-num">{m}</span>
+              <span className="tp-milestone-lbl">días</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Profile data ── */}
+      <div className="tp-section">
+        <div className="tp-section-title">Perfil</div>
+        <div className="tp-profile-data">
+          <div className="tp-row"><span>Sexo</span><span>{String(obData.sex || '—')}</span></div>
+          <div className="tp-row"><span>Edad</span><span>{obData.edad ? `${obData.edad} años` : '—'}</span></div>
+          <div className="tp-row"><span>Peso</span><span>{obData.peso ? `${obData.peso} kg` : '—'}</span></div>
+          <div className="tp-row"><span>Estatura</span><span>{obData.estatura ? `${obData.estatura} cm` : '—'}</span></div>
+          <div className="tp-row"><span>Actividad</span><span>{String(obData.activity || '—')}</span></div>
+          <div className="tp-row"><span>Objetivo</span><span>{String(obData.goal || '—')}</span></div>
+          {planGoal > 0 && <div className="tp-row"><span>Meta calórica</span><span className="tp-kcal-highlight">{planGoal.toLocaleString()} kcal/día</span></div>}
+          {tdee > 0 && <div className="tp-row"><span>TDEE</span><span>{tdee.toLocaleString()} kcal</span></div>}
+        </div>
+      </div>
+
+      {/* ── Logout ── */}
       <button className="tp-logout" onClick={logout}>Cerrar sesión</button>
     </div>
   );
