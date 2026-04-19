@@ -16,7 +16,8 @@ export default {
         gold: '#BFA065',
       },
       fontFamily: {
-        sans: ['Montserrat', 'sans-serif'],
+        sans: ['Inter', 'Montserrat', 'sans-serif'],
+        serif: ['Fraunces', 'Georgia', 'serif'],
       },
     },
   },
