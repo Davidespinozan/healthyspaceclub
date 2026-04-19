@@ -5664,93 +5664,54 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 /* ══════════════════════════════════════════════════════════════
    TAB TÚ
 ══════════════════════════════════════════════════════════════ */
-/* Profile hero (Instagram-style) */
-.tt-wrap { display: flex; flex-direction: column; }
-.tt-profile-hero { display: flex; align-items: center; gap: 16px; padding: 24px 20px 16px; }
-.tt-avatar-wrap { cursor: pointer; flex-shrink: 0; }
-.tt-avatar-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--amber); }
-.tt-avatar-placeholder { width: 80px; height: 80px; border-radius: 50%; background: var(--forest); color: var(--cream); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; border: 3px solid var(--amber); }
-.tt-profile-info { flex: 1; }
-.tt-profile-name { font-size: 1.15rem; font-weight: 700; color: var(--txt); }
-.tt-profile-bio { font-size: .8rem; color: var(--txt2); margin-top: 2px; line-height: 1.4; }
-.tt-edit-profile { margin-top: 8px; padding: 6px 16px; border-radius: 8px; border: 1px solid var(--sand); background: var(--card); font-size: .75rem; font-weight: 600; color: var(--txt); cursor: pointer; font-family: inherit; }
-.tt-edit-profile:hover { border-color: var(--forest); }
+/* ══════════════════════════════════════════════════════════════
+   TAB TÚ — Clean single-scroll profile
+══════════════════════════════════════════════════════════════ */
+.tp-wrap { display: flex; flex-direction: column; gap: 20px; padding-bottom: 20px; }
 
-/* Stats row */
-.tt-stats-row { display: flex; align-items: center; justify-content: space-around; padding: 12px 20px 16px; }
-.tt-stat { text-align: center; }
-.tt-stat-val { font-size: 1.1rem; font-weight: 800; color: var(--txt); }
-.tt-stat-lbl { font-size: .65rem; color: var(--txt2); margin-top: 1px; }
-.tt-stat-div { width: 1px; height: 28px; background: var(--sand); }
+/* Header */
+.tp-header { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 20px 8px; }
+.tp-avatar { cursor: pointer; }
+.tp-avatar img { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; border: 3px solid var(--amber); }
+.tp-avatar-letter { width: 88px; height: 88px; border-radius: 50%; background: var(--forest); color: var(--cream); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; border: 3px solid var(--amber); }
+.tp-name { font-size: 1.2rem; font-weight: 700; color: var(--txt); }
+.tp-bio { font-size: .82rem; color: var(--txt2); text-align: center; max-width: 260px; line-height: 1.4; }
+.tp-edit { margin-top: 4px; padding: 7px 20px; border-radius: 8px; border: 1px solid var(--sand); background: var(--card); font-size: .78rem; font-weight: 600; color: var(--txt); cursor: pointer; font-family: inherit; }
+.tp-edit:hover { border-color: var(--forest); }
 
-/* Tab bar */
-.tt-tab-bar { display: flex; border-bottom: 1px solid var(--sand); }
-.tt-tab { flex: 1; padding: 10px 0; border: none; background: none; font-size: .82rem; font-weight: 600; color: var(--txt2); cursor: pointer; font-family: inherit; position: relative; transition: color .15s; }
-.tt-tab.active { color: var(--txt); }
-.tt-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 20%; right: 20%; height: 2px; background: var(--forest); border-radius: 2px; }
+/* Stats */
+.tp-stats { display: flex; justify-content: center; gap: 32px; padding: 0 20px; }
+.tp-stat { text-align: center; }
+.tp-stat-val { font-size: 1.2rem; font-weight: 800; color: var(--txt); }
+.tp-stat-lbl { font-size: .65rem; color: var(--txt2); margin-top: 1px; }
 
-/* Quick actions */
-.tt-actions { display: flex; justify-content: space-around; padding: 4px 0; }
-.tt-action { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 8px; }
-.tt-action-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--card); border: 1px solid var(--sand); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: border-color .15s; }
-.tt-action:hover .tt-action-icon { border-color: var(--forest); }
-.tt-action-lbl { font-size: .68rem; font-weight: 600; color: var(--txt2); }
+/* Calories */
+.tp-kcal { background: var(--card); border: 1px solid var(--sand); border-radius: 12px; padding: 14px 16px; margin: 0 20px; }
+.tp-kcal-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: .8rem; color: var(--txt2); font-weight: 600; }
+.tp-kcal-val { color: var(--amber); font-weight: 700; }
+.tp-kcal-bar-wrap { background: var(--sand); border-radius: 20px; height: 6px; overflow: hidden; }
+.tp-kcal-bar { height: 100%; background: var(--forest); border-radius: 20px; transition: width .4s; }
 
-/* Today card */
-.tt-today-card { background: var(--card); border: 1px solid var(--sand); border-radius: 12px; padding: 14px 16px; }
-.tt-today-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-.tt-today-lbl { font-size: .78rem; font-weight: 600; color: var(--txt2); }
-.tt-today-val { font-size: .78rem; font-weight: 700; color: var(--amber); }
-.tt-today-bar-wrap { background: var(--sand); border-radius: 20px; height: 6px; overflow: hidden; }
-.tt-today-bar { height: 100%; background: var(--forest); border-radius: 20px; transition: width .4s; }
+/* Sections */
+.tp-section { padding: 0 20px; }
+.tp-section-title { font-size: .75rem; font-weight: 700; color: var(--txt2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
 
-/* Section */
-.tt-section-title { font-size: .75rem; font-weight: 700; color: var(--txt2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
-.tt-section { display: flex; flex-direction: column; gap: 10px; }
+/* Calendar */
+.tp-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.tp-cal { aspect-ratio: 1; border-radius: 4px; background: var(--sand); transition: background .2s; }
+.tp-cal.on { background: var(--amber); }
+.tp-cal.today { outline: 2px solid var(--forest); outline-offset: 1px; }
 
-/* Milestones */
-.tt-milestones { display: flex; gap: 8px; flex-wrap: wrap; }
-.tt-milestone { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 44px; height: 44px; border-radius: 50%; background: var(--sand); justify-content: center; }
-.tt-milestone.achieved { background: var(--forest); }
-.tt-milestone-num { font-size: .82rem; font-weight: 800; color: var(--txt2); }
-.tt-milestone.achieved .tt-milestone-num { color: var(--amber); }
-.tt-milestone-lbl { font-size: .5rem; color: var(--txt2); text-transform: uppercase; }
-.tt-milestone.achieved .tt-milestone-lbl { color: rgba(246,242,234,.6); }
+/* Radar */
+.tp-radar-wrap { display: flex; justify-content: center; padding: 4px 0; }
+.tp-radar { width: 100%; max-width: 260px; height: auto; }
+.tp-radar-ring { fill: none; stroke: var(--sand); stroke-width: 0.5; }
+.tp-radar-fill { fill: rgba(191,160,101,.2); stroke: var(--amber); stroke-width: 2; stroke-linejoin: round; transition: all .4s; }
+.tp-radar-lbl { font-size: 9px; fill: var(--txt2); font-weight: 600; }
 
-/* Adherence calendar */
-.tt-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 4px 0; }
-.tt-cal-cell { aspect-ratio: 1; border-radius: 4px; background: var(--sand); transition: background .2s; }
-.tt-cal-cell.active { background: var(--amber); }
-.tt-cal-cell.today { outline: 2px solid var(--forest); outline-offset: 1px; }
-.tt-cal-cell.small { width: 10px; height: 10px; aspect-ratio: auto; }
-.tt-cal-legend { display: flex; justify-content: space-between; align-items: center; font-size: .72rem; color: var(--txt2); margin-top: 6px; }
-.tt-cal-legend-dots { display: flex; align-items: center; gap: 6px; }
-
-/* Radar chart */
-.tt-radar-wrap { display: flex; justify-content: center; padding: 8px 0; }
-.tt-radar-svg { width: 100%; max-width: 280px; height: auto; }
-.tt-radar-ring { fill: none; stroke: var(--sand); stroke-width: 0.5; }
-.tt-radar-data { fill: rgba(191,160,101,.2); stroke: var(--amber); stroke-width: 2; stroke-linejoin: round; transition: all .4s ease; }
-.tt-radar-label { font-size: 9px; fill: var(--txt2); font-weight: 600; }
-
-/* Workout history */
-.tt-history { display: flex; flex-direction: column; gap: 6px; }
-.tt-history-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--card); border: 1px solid var(--sand); border-radius: 12px; font-size: .8rem; }
-.tt-history-date { font-size: .7rem; color: var(--txt2); font-weight: 600; min-width: 72px; }
-.tt-history-exercise { font-weight: 700; color: var(--txt); flex: 1; }
-.tt-history-sets { display: flex; gap: 6px; flex-wrap: wrap; }
-.tt-history-set { font-size: .75rem; font-weight: 600; color: var(--moss); background: var(--warm); padding: 3px 8px; border-radius: 6px; }
-
-/* Profile settings */
-.tt-profile { background: var(--card); border-radius: 12px; border: 1px solid var(--sand); overflow: hidden; }
-.tt-profile-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid rgba(46,74,66,.06); min-height: 48px; }
-.tt-profile-row:last-child { border-bottom: none; }
-.tt-profile-lbl { font-size: .78rem; color: var(--txt2); }
-.tt-profile-val { font-size: .82rem; font-weight: 600; color: var(--txt); }
-.tt-profile-kcal { color: var(--amber); }
-
-.tt-logout { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(200,60,60,.2); background: rgba(200,60,60,.04); color: #c83c3c; font-size: .84rem; font-weight: 600; cursor: pointer; transition: background .15s; }
-.tt-logout:hover { background: rgba(200,60,60,.08); }
+/* Logout */
+.tp-logout { margin: 0 20px; padding: 14px; border-radius: 12px; border: 1px solid rgba(200,60,60,.15); background: transparent; color: rgba(200,60,60,.6); font-size: .82rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; }
+.tp-logout:hover { background: rgba(200,60,60,.04); color: #c83c3c; }
 
 /* Hide old sidebar + old bottom nav on dashboard — override legacy layout */
 .sidebar, .mob-sidebar-ov, .bottom-nav, .topbar { display: none !important; }
