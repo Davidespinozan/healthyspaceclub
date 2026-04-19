@@ -1,0 +1,50 @@
+112:  // Growth Plan (Healthy Space Method)
+113:  growthData: Record<number, Record<string, string>>; // step index → user answers
+114:  growthCompleted: boolean[]; // length 10
+115:  saveGrowthData: (step: number, data: Record<string, string>) => void;
+116:  completeGrowthStep: (step: number) => void;
+167:  // Daily HSM micro-responses
+168:  dailyHSMResponses: { date: string; dimension: string; question: string; response: string }[];
+169:  addHSMResponse: (entry: { dimension: string; question: string; response: string }) => void;
+177:  // Active HSM dimension + unlock tracking
+178:  activeHSMDimension: number;
+179:  setActiveHSMDimension: (n: number) => void;
+180:  hsmUnlockDays: number[];
+182:  // Cumulative HSM profile (updated weekly by AI)
+183:  hsmProfile: { text: string; updatedAt: string } | null;
+184:  setHSMProfile: (text: string) => void;
+464:  // Growth Plan (Healthy Space Method)
+465:  growthData: {},
+466:  growthCompleted: Array(10).fill(false),
+467:  saveGrowthData: (step, data) =>
+468:    set((state) => ({ growthData: { ...state.growthData, [step]: { ...(state.growthData[step] ?? {}), ...data } } })),
+469:  completeGrowthStep: (step) =>
+471:      const next = [...state.growthCompleted];
+473:      return { growthCompleted: next };
+490:    const { lastActiveDate, streakCount, hsmUnlockDays, startDate } = get();
+497:    // Track active day for HSM unlock
+499:    const updatedUnlockDays = hsmUnlockDays.includes(dayIndex) ? hsmUnlockDays : [...hsmUnlockDays, dayIndex];
+505:      hsmUnlockDays: updatedUnlockDays,
+509:  // Daily HSM micro-responses
+510:  dailyHSMResponses: [],
+511:  addHSMResponse: (entry) => {
+514:      dailyHSMResponses: [...state.dailyHSMResponses, { date: today, ...entry }],
+533:  // Active HSM dimension + unlock tracking
+534:  activeHSMDimension: 0,
+535:  setActiveHSMDimension: (n) => set({ activeHSMDimension: n }),
+536:  hsmUnlockDays: [],
+538:  // Cumulative HSM profile
+539:  hsmProfile: null,
+540:  setHSMProfile: (text) => set({ hsmProfile: { text, updatedAt: new Date().toISOString().split('T')[0] } }),
+588:      growthData: {},
+589:      growthCompleted: Array(10).fill(false),
+603:      dailyHSMResponses: [],
+606:      activeHSMDimension: 0,
+607:      hsmUnlockDays: [],
+608:      hsmProfile: null,
+633:    growthData: state.growthData,
+634:    growthCompleted: state.growthCompleted,
+648:    dailyHSMResponses: state.dailyHSMResponses,
+651:    activeHSMDimension: state.activeHSMDimension,
+652:    hsmUnlockDays: state.hsmUnlockDays,
+653:    hsmProfile: state.hsmProfile,

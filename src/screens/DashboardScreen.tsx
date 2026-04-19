@@ -1,29 +1,27 @@
 import { useEffect, useState } from 'react';
-import { Home, Brain, User, MessageCircle } from 'lucide-react';
+import { Home, User, MessageCircle } from 'lucide-react';
 import { useAppStore } from '../store';
 import type { DashPage } from '../types';
 
 import TabHoy from '../components/TabHoy';
 import TabCoach from '../components/TabCoach';
-import TabMetodo from '../components/TabMetodo';
+// TabMetodo removed — backed up in _hsm_backup/
 // TabClub removed — stories now integrated into TabHoy
 import TabTu from '../components/TabTu';
 import MiHuella from '../components/MiHuella';
 
 import WeeklyNutritionPlanner from '../components/WeeklyNutritionPlanner';
 import DailyTrainer from '../components/DailyTrainer';
-import GrowthPlan from '../components/GrowthPlan';
-import LifeSystemScreen from './LifeSystemScreen';
+// GrowthPlan + LifeSystemScreen removed — backed up in _hsm_backup/
 import { Leaf, Dumbbell } from 'lucide-react';
 
 const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
   { id: 'hoy',    icon: Home,   label: 'Hoy' },
-  { id: 'metodo', icon: Brain,  label: 'Método' },
   { id: 'tu',     icon: User,   label: 'Tú' },
 ];
 
 export default function DashboardScreen() {
-  const { dashPage, setDashPage, checkTrialExpiry, activeHSMDimension } = useAppStore();
+  const { dashPage, setDashPage, checkTrialExpiry } = useAppStore();
   const [coachOpen, setCoachOpen] = useState(false);
 
   useEffect(() => { checkTrialExpiry(); }, []);
@@ -33,7 +31,7 @@ export default function DashboardScreen() {
     window.scrollTo(0, 0);
   }
 
-  const isSubPage = !['hoy', 'metodo', 'tu'].includes(dashPage);
+  const isSubPage = !['hoy', 'tu'].includes(dashPage);
 
   return (
     <div className="app-shell">
@@ -41,7 +39,7 @@ export default function DashboardScreen() {
         {/* Main tabs */}
         {dashPage === 'hoy' && <TabHoy onNav={(p) => navTo(p as DashPage)} />}
         {/* Club removed — stories integrated into TabHoy */}
-        {dashPage === 'metodo' && <TabMetodo onNav={navTo} />}
+        {/* Método tab removed — HSM questions remain in Tu Espacio */}
         {dashPage === 'tu' && <TabTu onNav={navTo} />}
 
         {/* Sub-pages */}
@@ -65,18 +63,7 @@ export default function DashboardScreen() {
             <DailyTrainer />
           </div>
         )}
-        {dashPage === 'hsm' && (
-          <div className="sub-page tab-content">
-            <button className="sub-back" onClick={() => navTo('metodo')}>← Volver</button>
-            <GrowthPlan visible={true} initialModule={activeHSMDimension} />
-          </div>
-        )}
-        {dashPage === 'lifesystem' && (
-          <div className="sub-page tab-content">
-            <button className="sub-back" onClick={() => navTo('metodo')}>← Volver</button>
-            <LifeSystemScreen inline />
-          </div>
-        )}
+        {/* hsm and lifesystem sub-pages removed */}
         {dashPage === 'huella' && (
           <div className="sub-page tab-content">
             <MiHuella onBack={() => navTo('tu')} />
@@ -111,7 +98,6 @@ export default function DashboardScreen() {
           const Icon = tab.icon;
           const active = dashPage === tab.id
             || (isSubPage && tab.id === 'hoy' && ['alimentacion', 'entrenamiento'].includes(dashPage))
-            || (isSubPage && tab.id === 'metodo' && ['hsm', 'lifesystem'].includes(dashPage))
             || (isSubPage && tab.id === 'tu' && dashPage === 'huella');
           return (
             <div
