@@ -269,6 +269,7 @@ export default function Stories() {
       {profileUserId && (
         <PublicProfile
           userId={profileUserId}
+          currentUserId={userId}
           onClose={() => setProfileUserId(null)}
         />
       )}

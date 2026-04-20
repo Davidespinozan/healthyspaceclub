@@ -254,9 +254,122 @@
   text-align: center;
 }
 
+.pp-empty-emoji {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
 .pp-empty-text {
   font-size: 13px;
   color: var(--pp-txt2);
   margin: 0;
   font-style: italic;
+}
+
+.pp-empty-sub {
+  font-size: 11px;
+  color: rgba(30, 51, 48, 0.45);
+  margin: 4px 0 0;
+  font-style: italic;
+}
+
+/* ── Loading/Error ──────────────────── */
+
+.pp-loading-text {
+  font-size: 12px;
+  color: rgba(30, 51, 48, 0.55);
+  margin-top: 12px;
+  font-style: italic;
+}
+
+.pp-error {
+  padding: 40px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+.pp-error-text {
+  font-size: 14px;
+  color: #A8864E;
+  margin: 0;
+  font-style: italic;
+}
+
+.pp-error-btn {
+  padding: 10px 20px;
+  background: #1e3330;
+  color: #F6F2EA;
+  border: none;
+  border-radius: 50px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ── Member since ───────────────────── */
+
+.pp-member-since {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(30, 51, 48, 0.45);
+  margin: 14px 0 0;
+}
+
+/* ── Workout chip ───────────────────── */
+
+.pp-post-workout-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  background: rgba(191, 160, 101, 0.15);
+  border: 0.5px solid rgba(191, 160, 101, 0.25);
+  border-radius: 50px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #A8864E;
+  letter-spacing: 0.04em;
+  margin: 0 16px 10px;
+}
+
+/* ── Fire button ────────────────────── */
+
+.pp-post-fire {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  background: white;
+  border: 1px solid rgba(30, 51, 48, 0.1);
+  border-radius: 50px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(30, 51, 48, 0.55);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-left: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pp-post-fire:hover {
+  border-color: #BFA065;
+  color: #BFA065;
+}
+
+.pp-post-fire.on {
+  background: rgba(191, 160, 101, 0.12);
+  border-color: #BFA065;
+  color: #A8864E;
+}
+
+.pp-post-fire:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
