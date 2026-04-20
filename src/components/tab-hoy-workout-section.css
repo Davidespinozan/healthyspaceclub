@@ -1,9 +1,12 @@
 /* ══════════════════════════════════════════════════════════════
    TAB HOY — WORKOUT SECTION
+   Cards estilo alimentación con thumbnail rectangular + video loop
+   Mobile-first, match total con th2-meal-*
    ══════════════════════════════════════════════════════════════ */
 
 .thw-section {
   --thw-forest: #1e3330;
+  --thw-moss: #2E4A42;
   --thw-amber: #BFA065;
   --thw-terra: #A8864E;
   --thw-cream: #F6F2EA;
@@ -31,7 +34,7 @@
 }
 
 .thw-heading {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--thw-forest);
@@ -44,7 +47,7 @@
   color: var(--thw-amber);
 }
 
-/* ── Meta chips ─────────────────────────────── */
+/* ── Meta chips (intensity/duration) ──────────── */
 
 .thw-meta {
   display: flex;
@@ -56,6 +59,7 @@
 .thw-meta-chip {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   padding: 5px 12px;
   background: var(--thw-warm);
   border: 0.5px solid var(--thw-sand);
@@ -82,99 +86,169 @@
 .thw-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
+
+/* ══════════════════════════════════════════════════════════
+   CARD — estilo alimentación (th2-meal-*)
+   Thumbnail rectangular + info centro + kcal/check derecha
+   ══════════════════════════════════════════════════════════ */
 
 .thw-card {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 10px;
   background: white;
   border: 0.5px solid var(--thw-sand);
-  border-radius: 16px;
+  border-radius: 18px;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
   transition: all 0.15s;
   width: 100%;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.thw-card:hover {
+.thw-card:hover,
+.thw-card:focus-visible {
   border-color: var(--thw-amber);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(30, 51, 48, 0.05);
+  box-shadow: 0 4px 14px rgba(30, 51, 48, 0.06);
+  outline: none;
 }
 
 .thw-card.done {
   background: var(--thw-warm);
-  opacity: 0.65;
+  opacity: 0.72;
 }
 
 .thw-card.done .thw-card-name {
   text-decoration: line-through;
+  text-decoration-color: var(--thw-terra);
+  text-decoration-thickness: 1px;
 }
 
-/* ── Thumb (circle with emoji) ──────────────── */
+/* ── Thumbnail (rectangular, video or gradient fallback) ── */
 
 .thw-thumb {
   flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(168deg, var(--thw-warm) 0%, var(--thw-sand) 100%);
-  border: 0.5px solid var(--thw-sand);
-  display: inline-flex;
+  width: 86px;
+  height: 86px;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(168deg, var(--thw-forest) 0%, var(--thw-moss) 100%);
+  border: 0.5px solid rgba(30, 51, 48, 0.08);
+}
+
+@media (min-width: 640px) {
+  .thw-thumb {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+/* Fallback: gradient + centered emoji + amber glow */
+.thw-thumb-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  overflow: hidden;
+}
+
+.thw-thumb-fallback::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(191, 160, 101, 0.3) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .thw-thumb-emoji {
-  font-size: 24px;
+  font-size: 34px;
   line-height: 1;
+  position: relative;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
 }
 
+/* Video preview (autoplay muted loop) */
+.thw-thumb-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Video badge (bottom-right overlay) */
 .thw-thumb-badge {
   position: absolute;
-  bottom: -2px;
-  right: -2px;
-  background: var(--thw-forest);
-  color: var(--thw-amber);
+  bottom: 5px;
+  right: 5px;
+  background: rgba(30, 51, 48, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--thw-cream);
   font-size: 9px;
   font-weight: 700;
-  padding: 2px 5px;
-  border-radius: 10px;
-  border: 1.5px solid var(--thw-cream);
+  letter-spacing: 0.04em;
+  padding: 3px 7px;
+  border-radius: 50px;
+  border: 0.5px solid rgba(246, 242, 234, 0.18);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   line-height: 1;
+  z-index: 2;
 }
 
+/* Done overlay */
 .thw-thumb-done {
   position: absolute;
   inset: 0;
-  background: rgba(191, 160, 101, 0.85);
+  background: rgba(191, 160, 101, 0.78);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   color: white;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
+  z-index: 3;
 }
 
-/* ── Card body ─────────────────────────── */
+/* ── Card body (info centro) ─────────────── */
 
 .thw-card-body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding-right: 4px;
 }
 
 .thw-card-name {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--thw-forest);
-  line-height: 1.3;
-  margin-bottom: 3px;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .thw-card-stats {
@@ -183,7 +257,7 @@
   display: flex;
   gap: 5px;
   align-items: center;
-  margin-bottom: 3px;
+  flex-wrap: wrap;
 }
 
 .thw-card-dot {
@@ -196,17 +270,60 @@
   font-style: italic;
   line-height: 1.4;
   margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-/* ── Arrow ───────────────────────────── */
+/* ── Right side (check inline como meals) ─────── */
+
+.thw-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-right: 4px;
+}
 
 .thw-card-arrow {
-  flex-shrink: 0;
   color: var(--thw-sand);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 400;
   line-height: 1;
-  padding-right: 2px;
+}
+
+.thw-card-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  border: 1.5px solid var(--thw-sand);
+  color: var(--thw-amber);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.thw-card-check:hover {
+  border-color: var(--thw-amber);
+}
+
+.thw-card-check.checked {
+  background: var(--thw-amber);
+  border-color: var(--thw-amber);
+  color: white;
 }
 
 /* ── Empty state ──────────────────── */
@@ -224,38 +341,4 @@
   color: var(--thw-txt2);
   margin: 0;
   font-style: italic;
-}
-
-/* ─── Mobile refinements ─── */
-@media (max-width: 400px) {
-  .thw-section {
-    padding: 18px 0 6px;
-  }
-  .thw-heading {
-    font-size: 17px;
-  }
-  .thw-card {
-    padding: 8px 10px;
-    gap: 10px;
-    border-radius: 14px;
-  }
-  .thw-thumb {
-    width: 46px;
-    height: 46px;
-  }
-  .thw-thumb-emoji {
-    font-size: 20px;
-  }
-  .thw-card-name {
-    font-size: 12px;
-  }
-  .thw-card-stats {
-    font-size: 10px;
-  }
-  .thw-card-tip {
-    font-size: 10px;
-  }
-  .thw-card-arrow {
-    font-size: 18px;
-  }
 }

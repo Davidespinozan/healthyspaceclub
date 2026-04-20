@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { X, Check, RotateCcw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { X, Check, RotateCcw, Maximize2, Volume2, VolumeX, Play } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Exercise, ExerciseVideo } from '../types';
 import './exercise-detail-popout.css';
@@ -25,8 +25,14 @@ export default function ExerciseDetailPopout({
   onClose,
 }: Props) {
   const [videos, setVideos] = useState<ExerciseVideo[]>(exercise.videos || []);
-  const [activeVideoIdx, setActiveVideoIdx] = useState(0);
+  const [activeIdx, setActiveIdx] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
 
   // Load videos from Supabase if not in bank
   useEffect(() => {
@@ -54,17 +60,83 @@ export default function ExerciseDetailPopout({
     loadVideos();
   }, [exercise.id, exercise.videos]);
 
-  // Close on ESC
+  // Close on ESC + arrow keys
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft' && activeIdx > 0) setActiveIdx(i => i - 1);
+      if (e.key === 'ArrowRight' && activeIdx < videos.length - 1) setActiveIdx(i => i + 1);
     }
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose]);
+  }, [onClose, activeIdx, videos.length]);
+
+  // Prevent body scroll when open
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  // Auto-play the active video
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.currentTime = 0;
+    if (!isPaused) {
+      v.play().catch(() => {});
+    }
+  }, [activeIdx, isPaused]);
 
   const hasVideos = videos.length > 0;
-  const activeVideo = hasVideos ? videos[activeVideoIdx] : null;
+
+  // Swipe handlers
+  function onTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchEndX.current = null;
+  }
+  function onTouchMove(e: React.TouchEvent) {
+    touchEndX.current = e.targetTouches[0].clientX;
+  }
+  function onTouchEnd() {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const diff = touchStartX.current - touchEndX.current;
+    const threshold = 50;
+    if (diff > threshold && activeIdx < videos.length - 1) {
+      setActiveIdx(i => i + 1);
+    } else if (diff < -threshold && activeIdx > 0) {
+      setActiveIdx(i => i - 1);
+    }
+    touchStartX.current = null;
+    touchEndX.current = null;
+  }
+
+  function togglePlay() {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play().catch(() => {});
+      setIsPaused(false);
+    } else {
+      v.pause();
+      setIsPaused(true);
+    }
+  }
+
+  function toggleMute() {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
+  }
+
+  function requestFullscreen() {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.requestFullscreen) v.requestFullscreen();
+    // @ts-ignore
+    else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+  }
 
   return (
     <div className="edp-backdrop" onClick={onClose}>
@@ -73,20 +145,115 @@ export default function ExerciseDetailPopout({
           <X size={18} />
         </button>
 
-        {/* Video or emoji hero */}
-        <div className="edp-hero">
+        {/* ── Hero: video carousel or fallback ── */}
+        <div
+          className="edp-hero"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
           {loading ? (
             <div className="edp-hero-placeholder">
               <div className="edp-hero-emoji">{exercise.emoji}</div>
             </div>
           ) : hasVideos ? (
-            <video
-              key={activeVideo?.url}
-              src={activeVideo?.url}
-              controls
-              playsInline
-              className="edp-hero-video"
-            />
+            <>
+              {/* Track with all videos side by side */}
+              <div
+                ref={trackRef}
+                className="edp-track"
+                style={{ transform: `translateX(-${activeIdx * 100}%)` }}
+              >
+                {videos.map((v, i) => (
+                  <div key={v.url} className="edp-slide">
+                    <video
+                      ref={i === activeIdx ? videoRef : null}
+                      src={v.url}
+                      autoPlay={i === activeIdx}
+                      muted={muted}
+                      loop
+                      playsInline
+                      className="edp-hero-video"
+                      onClick={togglePlay}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Label badge over video */}
+              {videos[activeIdx]?.label && (
+                <div className="edp-label-badge">
+                  {videos[activeIdx].label}
+                </div>
+              )}
+
+              {/* Video controls (right side) */}
+              <div className="edp-video-controls">
+                <button
+                  className="edp-vc-btn"
+                  onClick={toggleMute}
+                  aria-label={muted ? 'Activar sonido' : 'Silenciar'}
+                >
+                  {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                </button>
+                <button
+                  className="edp-vc-btn"
+                  onClick={requestFullscreen}
+                  aria-label="Pantalla completa"
+                >
+                  <Maximize2 size={14} />
+                </button>
+              </div>
+
+              {/* Play/pause indicator (only when paused) */}
+              {isPaused && (
+                <button
+                  className="edp-play-indicator"
+                  onClick={togglePlay}
+                  aria-label="Reproducir"
+                >
+                  <Play size={28} fill="currentColor" />
+                </button>
+              )}
+
+              {/* Dots pagination */}
+              {videos.length > 1 && (
+                <div className="edp-dots">
+                  {videos.map((_, i) => (
+                    <button
+                      key={i}
+                      className={`edp-dot${i === activeIdx ? ' active' : ''}`}
+                      onClick={() => setActiveIdx(i)}
+                      aria-label={`Ir al video ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Prev/next arrows (desktop) */}
+              {videos.length > 1 && (
+                <>
+                  {activeIdx > 0 && (
+                    <button
+                      className="edp-arrow edp-arrow-prev"
+                      onClick={() => setActiveIdx(i => i - 1)}
+                      aria-label="Anterior"
+                    >
+                      ‹
+                    </button>
+                  )}
+                  {activeIdx < videos.length - 1 && (
+                    <button
+                      className="edp-arrow edp-arrow-next"
+                      onClick={() => setActiveIdx(i => i + 1)}
+                      aria-label="Siguiente"
+                    >
+                      ›
+                    </button>
+                  )}
+                </>
+              )}
+            </>
           ) : (
             <div className="edp-hero-placeholder">
               <div className="edp-hero-emoji">{exercise.emoji}</div>
@@ -95,22 +262,7 @@ export default function ExerciseDetailPopout({
           )}
         </div>
 
-        {/* Video tabs */}
-        {videos.length > 1 && (
-          <div className="edp-tabs">
-            {videos.map((v, i) => (
-              <button
-                key={i}
-                className={`edp-tab${activeVideoIdx === i ? ' on' : ''}`}
-                onClick={() => setActiveVideoIdx(i)}
-              >
-                {v.label || `Variación ${i + 1}`}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Body */}
+        {/* ── Body ── */}
         <div className="edp-body">
           <p className="edp-micro">
             {exercise.muscleGroup} · {exercise.difficulty}

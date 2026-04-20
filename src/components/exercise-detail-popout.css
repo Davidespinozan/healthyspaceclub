@@ -1,5 +1,6 @@
 /* ══════════════════════════════════════════════════════════════
-   EXERCISE DETAIL POPOUT — Modal/sheet with video + steps
+   EXERCISE DETAIL POPOUT — Video carousel + editorial body
+   Mobile-first, swipeable, autoplay loop
    ══════════════════════════════════════════════════════════════ */
 
 .edp-backdrop {
@@ -35,7 +36,7 @@
   color: var(--edp-txt);
   background: var(--edp-cream);
   width: 100%;
-  max-width: 520px;
+  max-width: 540px;
   max-height: 92vh;
   overflow-y: auto;
   border-radius: 24px 24px 0 0;
@@ -43,9 +44,10 @@
   position: relative;
   animation: edp-slide-up 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
   box-shadow: 0 -20px 60px rgba(30, 51, 48, 0.2);
+  overscroll-behavior: contain;
 }
 
-@media (min-width: 520px) {
+@media (min-width: 640px) {
   .edp-modal {
     border-radius: 24px;
     margin: 24px;
@@ -75,21 +77,23 @@
 
 .edp-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: rgba(246, 242, 234, 0.9);
-  border: 0.5px solid var(--edp-sand);
+  background: rgba(246, 242, 234, 0.95);
+  border: 0.5px solid rgba(30, 51, 48, 0.08);
   color: var(--edp-forest);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  z-index: 10;
+  z-index: 20;
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .edp-close:hover {
@@ -97,28 +101,51 @@
   border-color: var(--edp-amber);
 }
 
-/* ── Hero (video or emoji) ──────────────────────────── */
+/* ── Hero (video carousel) ──────────────────────────── */
 
 .edp-hero {
   width: 100%;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 4 / 5;
+  max-height: 520px;
   background: var(--edp-forest);
   position: relative;
   border-radius: 24px 24px 0 0;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
 }
 
-@media (min-width: 520px) {
+@media (min-width: 640px) {
   .edp-hero {
-    border-radius: 24px 24px 0 0;
+    aspect-ratio: 16 / 11;
+    max-height: 420px;
   }
+}
+
+/* Track: slides horizontally */
+.edp-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+  will-change: transform;
+}
+
+.edp-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
 .edp-hero-video {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   background: #000;
+  display: block;
+  cursor: pointer;
 }
 
 .edp-hero-placeholder {
@@ -129,90 +156,223 @@
   align-items: center;
   justify-content: center;
   background: linear-gradient(168deg, #1e3330 0%, #2E4A42 100%);
-  gap: 12px;
+  gap: 14px;
   position: relative;
 }
 
 .edp-hero-placeholder::before {
   content: '';
   position: absolute;
-  top: -60px;
-  right: -60px;
-  width: 200px;
-  height: 200px;
+  top: -80px;
+  right: -80px;
+  width: 240px;
+  height: 240px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(191, 160, 101, 0.25) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(191, 160, 101, 0.28) 0%, transparent 70%);
   pointer-events: none;
 }
 
 .edp-hero-emoji {
-  font-size: 60px;
+  font-size: 72px;
   line-height: 1;
   position: relative;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
 }
 
 .edp-hero-no-video {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(246, 242, 234, 0.6);
+  color: rgba(246, 242, 234, 0.55);
   margin: 0;
   font-style: italic;
   position: relative;
 }
 
-/* ── Video tabs ──────────────────────────────────────── */
+/* ── Label badge over video (variation name) ──── */
 
-.edp-tabs {
+.edp-label-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 5px 11px;
+  background: rgba(30, 51, 48, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 0.5px solid rgba(246, 242, 234, 0.2);
+  border-radius: 50px;
+  color: var(--edp-cream);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* ── Video controls (right side, subtle) ──────── */
+
+.edp-video-controls {
+  position: absolute;
+  top: 14px;
+  right: 54px;
   display: flex;
   gap: 6px;
-  padding: 12px 20px 0;
-  overflow-x: auto;
-  scrollbar-width: none;
+  z-index: 5;
 }
 
-.edp-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.edp-tab {
-  flex-shrink: 0;
-  padding: 8px 14px;
-  background: white;
-  border: 0.5px solid var(--edp-sand);
-  border-radius: 50px;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--edp-forest);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.edp-tab:hover {
-  border-color: var(--edp-amber);
-}
-
-.edp-tab.on {
-  background: var(--edp-forest);
+.edp-vc-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(30, 51, 48, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 0.5px solid rgba(246, 242, 234, 0.18);
   color: var(--edp-cream);
-  border-color: var(--edp-forest);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* ── Body ──────────────────────────────────────────── */
+.edp-vc-btn:hover {
+  background: rgba(30, 51, 48, 0.85);
+  color: var(--edp-amber);
+}
+
+/* ── Play indicator (only when paused) ───────── */
+
+.edp-play-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(30, 51, 48, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 0.5px solid rgba(246, 242, 234, 0.25);
+  color: var(--edp-amber);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6;
+  padding-left: 4px;
+  animation: edp-fade-in 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Dots pagination ─────────────────────────── */
+
+.edp-dots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 5;
+  padding: 6px 10px;
+  background: rgba(30, 51, 48, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 50px;
+}
+
+.edp-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(246, 242, 234, 0.35);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.edp-dot:hover {
+  background: rgba(246, 242, 234, 0.6);
+}
+
+.edp-dot.active {
+  background: var(--edp-amber);
+  width: 20px;
+  border-radius: 4px;
+}
+
+/* ── Prev/next arrows (desktop only) ───────── */
+
+.edp-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(30, 51, 48, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 0.5px solid rgba(246, 242, 234, 0.18);
+  color: var(--edp-cream);
+  font-size: 22px;
+  font-weight: 300;
+  cursor: pointer;
+  z-index: 5;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 640px) {
+  .edp-arrow {
+    display: inline-flex;
+  }
+}
+
+.edp-arrow:hover {
+  background: rgba(30, 51, 48, 0.85);
+  color: var(--edp-amber);
+}
+
+.edp-arrow-prev {
+  left: 12px;
+}
+
+.edp-arrow-next {
+  right: 12px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   BODY (content below video)
+   ══════════════════════════════════════════════════════════ */
 
 .edp-body {
-  padding: 20px 22px;
+  padding: 22px 22px 16px;
+}
+
+@media (min-width: 640px) {
+  .edp-body {
+    padding: 24px 26px 18px;
+  }
 }
 
 .edp-micro {
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--edp-amber);
-  margin: 0 0 6px;
+  margin: 0 0 8px;
 }
 
 .edp-name {
@@ -224,10 +384,16 @@
   margin: 0 0 8px;
 }
 
+@media (min-width: 640px) {
+  .edp-name {
+    font-size: 26px;
+  }
+}
+
 .edp-desc {
   font-size: 13px;
   color: var(--edp-txt2);
-  line-height: 1.5;
+  line-height: 1.55;
   margin: 0 0 18px;
   font-style: italic;
 }
@@ -237,30 +403,37 @@
 .edp-stats {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
+  gap: 2px;
   margin-bottom: 18px;
-  padding: 14px;
+  padding: 16px 10px;
   background: var(--edp-warm);
-  border-radius: 14px;
+  border-radius: 16px;
   border: 0.5px solid var(--edp-sand);
 }
 
 .edp-stat {
   text-align: center;
+  padding: 0 6px;
+  border-right: 0.5px solid var(--edp-sand);
+}
+
+.edp-stat:last-child {
+  border-right: none;
 }
 
 .edp-stat-val {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--edp-forest);
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
 }
 
 .edp-stat-lbl {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--edp-txt2);
 }
@@ -269,7 +442,7 @@
 
 .edp-tip {
   padding: 14px 16px;
-  background: linear-gradient(135deg, rgba(191, 160, 101, 0.08) 0%, rgba(168, 134, 78, 0.08) 100%);
+  background: linear-gradient(135deg, rgba(191, 160, 101, 0.1) 0%, rgba(168, 134, 78, 0.08) 100%);
   border: 0.5px solid rgba(191, 160, 101, 0.22);
   border-left: 3px solid var(--edp-amber);
   border-radius: 12px;
@@ -279,10 +452,10 @@
 .edp-tip-label {
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--edp-amber);
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 
 .edp-tip-text {
@@ -302,10 +475,10 @@
 .edp-steps-label {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--edp-forest);
-  margin: 0 0 10px;
+  margin: 0 0 12px;
 }
 
 .edp-step {
@@ -321,8 +494,8 @@
 
 .edp-step-num {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--edp-forest);
   color: var(--edp-amber);
@@ -336,52 +509,62 @@
 
 .edp-step-body {
   flex: 1;
+  min-width: 0;
 }
 
 .edp-step-title {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--edp-forest);
-  margin-bottom: 2px;
+  margin-bottom: 3px;
+  line-height: 1.3;
 }
 
 .edp-step-desc {
   font-size: 12px;
   color: var(--edp-txt2);
-  line-height: 1.5;
+  line-height: 1.55;
   margin: 0;
 }
 
-/* ── General tip ────────────────────────────── */
+/* ── General tip (bottom) ───────────────────── */
 
 .edp-general-tip {
-  padding: 10px 14px;
+  padding: 12px 14px;
   background: var(--edp-warm);
-  border-radius: 10px;
+  border-radius: 12px;
   margin-top: 14px;
+  border: 0.5px solid var(--edp-sand);
 }
 
 .edp-general-tip-text {
   font-size: 12px;
   color: var(--edp-forest);
-  line-height: 1.5;
+  line-height: 1.55;
   margin: 0;
   font-style: italic;
 }
 
-/* ── Footer CTA ──────────────────────────── */
+/* ── Footer CTA (sticky) ───────────────────── */
 
 .edp-footer {
-  padding: 16px 22px calc(22px + env(safe-area-inset-bottom, 0px));
+  padding: 14px 22px calc(14px + env(safe-area-inset-bottom, 0px));
   border-top: 0.5px solid var(--edp-sand);
   background: var(--edp-cream);
   position: sticky;
   bottom: 0;
+  z-index: 5;
+}
+
+@media (min-width: 640px) {
+  .edp-footer {
+    padding: 16px 26px;
+  }
 }
 
 .edp-cta {
   width: 100%;
-  padding: 14px;
+  padding: 15px;
   background: var(--edp-forest);
   color: var(--edp-cream);
   border: none;
@@ -394,8 +577,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .edp-cta:hover {
@@ -410,46 +594,4 @@
 
 .edp-cta.done:hover {
   background: var(--edp-sand);
-}
-
-/* ─── Mobile refinements ─── */
-@media (max-width: 400px) {
-  .edp-modal {
-    max-height: 95vh;
-    border-radius: 20px 20px 0 0;
-  }
-  .edp-hero {
-    aspect-ratio: 16 / 9;
-    border-radius: 20px 20px 0 0;
-  }
-  .edp-body {
-    padding: 16px 16px;
-  }
-  .edp-name {
-    font-size: 18px;
-  }
-  .edp-stats {
-    padding: 12px 10px;
-    gap: 6px;
-  }
-  .edp-stat-val {
-    font-size: 17px;
-  }
-  .edp-step {
-    gap: 10px;
-    padding: 10px 0;
-  }
-  .edp-step-title {
-    font-size: 12px;
-  }
-  .edp-step-desc {
-    font-size: 11px;
-  }
-  .edp-footer {
-    padding: 14px 16px 18px;
-  }
-  .edp-close {
-    top: 12px;
-    right: 12px;
-  }
 }

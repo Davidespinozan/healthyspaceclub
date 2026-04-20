@@ -713,7 +713,9 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
 
           const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
           const totalCount = workout.exercises?.length || 0;
-          const doneCount = dailyWorkoutChecked.filter((_: any, i: number) => dailyWorkoutChecked.includes(i)).length;
+          const doneCount = dailyWorkoutChecked.length;
+
+          const intensityLabel = workout.intensity || '';
 
           return (
             <section className="thw-section">
@@ -726,9 +728,14 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                 <span className="thw-meta-chip">
                   <em>{workout.type}</em>
                 </span>
-                {workout.intensity && (
+                {workout.duration && (
                   <span className="thw-meta-chip thw-meta-sub">
-                    {workout.intensity}
+                    {workout.duration}
+                  </span>
+                )}
+                {intensityLabel && (
+                  <span className="thw-meta-chip thw-meta-sub">
+                    {intensityLabel}
                   </span>
                 )}
               </div>
@@ -738,44 +745,66 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                   {workout.exercises.map((ex: any, i: number) => {
                     const bank = exerciseMap.get(ex.id);
                     const videoCount = bank?.videos?.length || 0;
+                    const firstVideoUrl = bank?.videos?.[0]?.url;
                     const isDone = dailyWorkoutChecked.includes(i);
                     const displayName = bank?.name || ex.name || 'Ejercicio';
                     const displayEmoji = bank?.emoji || '💪';
 
+                    function openPopout(e: React.MouseEvent) {
+                      e.stopPropagation();
+                      const fallback: Exercise = {
+                        id: ex.id || `ex-${i}`,
+                        name: ex.name || 'Ejercicio',
+                        emoji: '💪',
+                        desc: '',
+                        muscleGroup: 'cuerpo-completo',
+                        equipment: ['gym'],
+                        goals: ['hipertrofia'],
+                        type: 'compuesto',
+                        difficulty: 'intermedio',
+                        defaultSets: 3,
+                        defaultReps: '10',
+                        defaultRest: 60,
+                        steps: [],
+                      };
+                      setSelectedExercise({
+                        exercise: bank || fallback,
+                        planData: {
+                          sets: typeof ex.sets === 'number' ? ex.sets : parseInt(ex.sets) || 3,
+                          reps: String(ex.reps || '10'),
+                          rest: typeof ex.rest === 'number' ? ex.rest : parseInt(ex.rest) || 60,
+                          tip_personalizado: ex.tip_personalizado || ex.tip,
+                        },
+                        index: i,
+                      });
+                    }
+
+                    function handleToggleCheck(e: React.MouseEvent) {
+                      e.stopPropagation();
+                      toggleDailyWorkoutCheck(i);
+                    }
+
                     return (
-                      <button
+                      <div
                         key={`${ex.id || i}-${i}`}
                         className={`thw-card${isDone ? ' done' : ''}`}
-                        onClick={() => {
-                          const fallback: Exercise = {
-                            id: ex.id || `ex-${i}`,
-                            name: ex.name || 'Ejercicio',
-                            emoji: '💪',
-                            desc: '',
-                            muscleGroup: 'cuerpo-completo',
-                            equipment: ['gym'],
-                            goals: ['hipertrofia'],
-                            type: 'compuesto',
-                            difficulty: 'intermedio',
-                            defaultSets: 3,
-                            defaultReps: '10',
-                            defaultRest: 60,
-                            steps: [],
-                          };
-                          setSelectedExercise({
-                            exercise: bank || fallback,
-                            planData: {
-                              sets: typeof ex.sets === 'number' ? ex.sets : parseInt(ex.sets) || 3,
-                              reps: String(ex.reps || '10'),
-                              rest: typeof ex.rest === 'number' ? ex.rest : parseInt(ex.rest) || 60,
-                              tip_personalizado: ex.tip_personalizado || ex.tip,
-                            },
-                            index: i,
-                          });
-                        }}
+                        onClick={openPopout}
                       >
                         <div className="thw-thumb">
-                          <div className="thw-thumb-emoji">{displayEmoji}</div>
+                          {firstVideoUrl ? (
+                            <video
+                              src={firstVideoUrl}
+                              autoPlay
+                              muted
+                              loop
+                              playsInline
+                              className="thw-thumb-video"
+                            />
+                          ) : (
+                            <div className="thw-thumb-fallback">
+                              <div className="thw-thumb-emoji">{displayEmoji}</div>
+                            </div>
+                          )}
                           {videoCount > 0 && (
                             <div className="thw-thumb-badge">
                               ▶ {videoCount}
@@ -785,6 +814,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                             <div className="thw-thumb-done">✓</div>
                           )}
                         </div>
+
                         <div className="thw-card-body">
                           <div className="thw-card-name">{displayName}</div>
                           <div className="thw-card-stats">
@@ -798,8 +828,17 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                             </div>
                           )}
                         </div>
-                        <div className="thw-card-arrow">›</div>
-                      </button>
+
+                        <div className="thw-card-right">
+                          <button
+                            className={`thw-card-check${isDone ? ' checked' : ''}`}
+                            onClick={handleToggleCheck}
+                            aria-label={isDone ? 'Desmarcar' : 'Marcar como hecho'}
+                          >
+                            {isDone ? '✓' : ''}
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
