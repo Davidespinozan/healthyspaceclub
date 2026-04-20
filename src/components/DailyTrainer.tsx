@@ -85,6 +85,7 @@ async function orchestrateWorkout(params: {
   dayLabel: string;
   context: string;
 }): Promise<CachedWorkout & { razon?: string }> {
+  if (!API_KEY) throw new Error('API no disponible. Intenta más tarde.');
   const { candidates, targetCount, goal, intensity, userName, dayLabel, context } = params;
 
   const candidatesCompact = candidates.map(c =>

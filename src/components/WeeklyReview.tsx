@@ -13,6 +13,7 @@ async function generateReviewMessage(params: {
   completedModules: number;
   goal: string;
 }): Promise<string> {
+  if (!API_KEY) return 'Tu resumen semanal estará disponible cuando se configure la API.';
   const prompt = `Eres un coach de vida. Escribe un resumen semanal personalizado y motivador en 2-3 oraciones para ${params.userName || 'el usuario'}.
 
 DATOS DE LA SEMANA:

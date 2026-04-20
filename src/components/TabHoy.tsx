@@ -723,6 +723,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                               muted
                               loop
                               playsInline
+                              preload="metadata"
                               className="thw-thumb-video"
                             />
                           ) : (

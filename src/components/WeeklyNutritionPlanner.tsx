@@ -83,6 +83,7 @@ async function generateWeeklyPlan(params: {
   userName: string;
   answers: Record<string, string>;
 }): Promise<{ selectedDays: number[]; shoppingList: string[]; nota: string }> {
+  if (!API_KEY) throw new Error('API no disponible. Intenta más tarde.');
   const mealList = buildMealList(params.planKey);
 
   const goalLabel: Record<string, string> = {
