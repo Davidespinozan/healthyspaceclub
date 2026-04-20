@@ -44,12 +44,17 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
 
   async function handleSave() {
     setSaving(true);
+    const savedName = editName.trim() || userName || 'Anónimo';
+    const savedBio = editBio.trim().slice(0, 100);
     await supabase
       .from('user_profiles')
-      .update({ display_name: editName.trim() || userName || 'Anónimo', bio: editBio.trim().slice(0, 100) })
-      .eq('user_id', userId);
-    const savedName = editName.trim() || userName || 'Anónimo';
-    setProfile(prev => ({ ...prev, display_name: savedName, bio: editBio.trim() }));
+      .upsert({
+        user_id: userId,
+        display_name: savedName,
+        bio: savedBio,
+        avatar_url: profile.avatar_url,
+      }, { onConflict: 'user_id' });
+    setProfile(prev => ({ ...prev, display_name: savedName, bio: savedBio }));
     setUserName(savedName);
     setEditing(false);
     setSaving(false);
@@ -63,7 +68,14 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
     await supabase.storage.from('avatars').upload(path, file, { upsert: true });
     const { data } = supabase.storage.from('avatars').getPublicUrl(path);
     const url = data.publicUrl + '?t=' + Date.now();
-    await supabase.from('user_profiles').update({ avatar_url: url }).eq('user_id', userId);
+    await supabase
+      .from('user_profiles')
+      .upsert({
+        user_id: userId,
+        display_name: profile.display_name || userName || 'Anónimo',
+        bio: profile.bio || '',
+        avatar_url: url,
+      }, { onConflict: 'user_id' });
     setProfile(prev => ({ ...prev, avatar_url: url }));
   }
 
