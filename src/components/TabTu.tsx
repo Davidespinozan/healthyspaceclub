@@ -49,8 +49,8 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
     if (!file) return;
     const ext = file.name.split('.').pop();
     const path = `${userId}.${ext}`;
-    await supabase.storage.from('avatars').upload(path, file, { upsert: true });
-    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+    await supabase.storage.from('AVATAR').upload(path, file, { upsert: true });
+    const { data } = supabase.storage.from('AVATAR').getPublicUrl(path);
     const url = data.publicUrl + '?t=' + Date.now();
     await supabase.from('user_profiles').update({ avatar_url: url }).eq('user_id', userId);
     setProfile(prev => ({ ...prev, avatar_url: url }));
