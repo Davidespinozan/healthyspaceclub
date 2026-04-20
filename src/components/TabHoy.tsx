@@ -771,18 +771,31 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                         key={`${ex.id || i}-${i}`}
                         className={`thw-card${isDone ? ' done' : ''}`}
                         onClick={() => {
-                          if (bank) {
-                            setSelectedExercise({
-                              exercise: bank,
-                              planData: {
-                                sets: typeof ex.sets === 'number' ? ex.sets : parseInt(ex.sets) || 3,
-                                reps: String(ex.reps || '10'),
-                                rest: typeof ex.rest === 'number' ? ex.rest : parseInt(ex.rest) || 60,
-                                tip_personalizado: ex.tip_personalizado || ex.tip,
-                              },
-                              index: i,
-                            });
-                          }
+                          const fallback: Exercise = {
+                            id: ex.id || `ex-${i}`,
+                            name: ex.name || 'Ejercicio',
+                            emoji: '💪',
+                            desc: '',
+                            muscleGroup: 'cuerpo-completo',
+                            equipment: ['gym'],
+                            goals: ['hipertrofia'],
+                            type: 'compuesto',
+                            difficulty: 'intermedio',
+                            defaultSets: 3,
+                            defaultReps: '10',
+                            defaultRest: 60,
+                            steps: [],
+                          };
+                          setSelectedExercise({
+                            exercise: bank || fallback,
+                            planData: {
+                              sets: typeof ex.sets === 'number' ? ex.sets : parseInt(ex.sets) || 3,
+                              reps: String(ex.reps || '10'),
+                              rest: typeof ex.rest === 'number' ? ex.rest : parseInt(ex.rest) || 60,
+                              tip_personalizado: ex.tip_personalizado || ex.tip,
+                            },
+                            index: i,
+                          });
                         }}
                       >
                         <div className="thw-thumb">
