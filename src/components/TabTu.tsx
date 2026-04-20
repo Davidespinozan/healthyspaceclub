@@ -238,13 +238,6 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
               <div className="tu2-quick-sub">Genera la de hoy</div>
             </div>
           </div>
-          <div className="tu2-quick-card" onClick={() => onNav('alimentacion')}>
-            <div className="tu2-quick-icon">🛒</div>
-            <div className="tu2-quick-body">
-              <div className="tu2-quick-name">Súper</div>
-              <div className="tu2-quick-sub">Tu lista</div>
-            </div>
-          </div>
         </div>
       </div>
 
