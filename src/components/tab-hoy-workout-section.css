@@ -1,0 +1,227 @@
+/* ══════════════════════════════════════════════════════════════
+   TAB HOY — WORKOUT SECTION
+   ══════════════════════════════════════════════════════════════ */
+
+.thw-section {
+  --thw-forest: #1e3330;
+  --thw-amber: #BFA065;
+  --thw-terra: #A8864E;
+  --thw-cream: #F6F2EA;
+  --thw-warm: #F0EBE0;
+  --thw-sand: #E8E1D3;
+  --thw-txt: #1e3330;
+  --thw-txt2: rgba(30, 51, 48, 0.58);
+
+  font-family: 'Montserrat', system-ui, sans-serif;
+  color: var(--thw-txt);
+  padding: 24px 0 8px;
+}
+
+.thw-section * {
+  box-sizing: border-box;
+}
+
+/* ── Header ─────────────────────────────────────── */
+
+.thw-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.thw-heading {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--thw-forest);
+  margin: 0;
+}
+
+.thw-progress {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--thw-amber);
+}
+
+/* ── Meta chips ─────────────────────────────── */
+
+.thw-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.thw-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  background: var(--thw-warm);
+  border: 0.5px solid var(--thw-sand);
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--thw-forest);
+  letter-spacing: 0.02em;
+}
+
+.thw-meta-chip em {
+  font-style: italic;
+  color: var(--thw-amber);
+  font-weight: 700;
+}
+
+.thw-meta-sub {
+  text-transform: capitalize;
+  color: var(--thw-txt2);
+}
+
+/* ── List ─────────────────────────────────── */
+
+.thw-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thw-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: white;
+  border: 0.5px solid var(--thw-sand);
+  border-radius: 16px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.thw-card:hover {
+  border-color: var(--thw-amber);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 51, 48, 0.05);
+}
+
+.thw-card.done {
+  background: var(--thw-warm);
+  opacity: 0.65;
+}
+
+.thw-card.done .thw-card-name {
+  text-decoration: line-through;
+}
+
+/* ── Thumb (circle with emoji) ──────────────── */
+
+.thw-thumb {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(168deg, var(--thw-warm) 0%, var(--thw-sand) 100%);
+  border: 0.5px solid var(--thw-sand);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.thw-thumb-emoji {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.thw-thumb-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: var(--thw-forest);
+  color: var(--thw-amber);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 10px;
+  border: 1.5px solid var(--thw-cream);
+  line-height: 1;
+}
+
+.thw-thumb-done {
+  position: absolute;
+  inset: 0;
+  background: rgba(191, 160, 101, 0.85);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* ── Card body ─────────────────────────── */
+
+.thw-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.thw-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--thw-forest);
+  line-height: 1.3;
+  margin-bottom: 3px;
+}
+
+.thw-card-stats {
+  font-size: 11px;
+  color: var(--thw-txt2);
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-bottom: 3px;
+}
+
+.thw-card-dot {
+  color: var(--thw-sand);
+}
+
+.thw-card-tip {
+  font-size: 11px;
+  color: var(--thw-terra);
+  font-style: italic;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+/* ── Arrow ───────────────────────────── */
+
+.thw-card-arrow {
+  flex-shrink: 0;
+  color: var(--thw-sand);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+  padding-right: 2px;
+}
+
+/* ── Empty state ──────────────────── */
+
+.thw-empty {
+  padding: 24px;
+  text-align: center;
+  background: var(--thw-warm);
+  border-radius: 14px;
+  border: 0.5px dashed var(--thw-sand);
+}
+
+.thw-empty-text {
+  font-size: 13px;
+  color: var(--thw-txt2);
+  margin: 0;
+  font-style: italic;
+}
