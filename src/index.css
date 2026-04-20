@@ -34,16 +34,31 @@
   --bg: #F6F2EA;
 }
 
-html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; height: 100%; }
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+  height: 100%;
+  height: -webkit-fill-available;
+}
 
 /* Prevent iOS auto-zoom on input focus (requires font-size >= 16px) */
 input, textarea, select { font-size: 16px !important; }
 
-/* Prevent mobile keyboard from resizing the viewport */
-@supports (height: 100dvh) {
-  html, body { height: 100%; overflow: auto; }
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: var(--cream);
+  color: var(--txt);
+  overflow-x: hidden;
+  min-height: 100%;
+  min-height: -webkit-fill-available;
 }
-body { font-family: 'Montserrat', sans-serif; background: var(--cream); color: var(--txt); overflow-x: hidden; }
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  min-height: 100dvh;
+}
 img, video { max-width: 100%; display: block; }
 
 /* ═══════════════════════════════════
@@ -5163,8 +5178,19 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 /* ══════════════════════════════════════════════════════════════
    APP SHELL — Bottom Nav Layout (replaces sidebar)
 ══════════════════════════════════════════════════════════════ */
-.app-shell { display: flex; flex-direction: column; min-height: 100vh; background: var(--cream); }
-.app-main { flex: 1; padding: 0 0 76px; }
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  background: var(--cream);
+}
+.app-main {
+  flex: 1;
+  padding: 0 0 calc(64px + env(safe-area-inset-bottom, 12px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .app-main > * { animation: tabFadeIn .18s ease; }
 @keyframes tabFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -5208,7 +5234,9 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   position: fixed; inset: 0; z-index: 150;
   background: var(--cream);
   animation: tabFadeIn .18s ease;
-  padding-bottom: 72px;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (min-width: 1024px) {
