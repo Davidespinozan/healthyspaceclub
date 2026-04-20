@@ -65,8 +65,8 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
     if (!file) return;
     const ext = file.name.split('.').pop();
     const path = `${userId}.${ext}`;
-    await supabase.storage.from('AVATAR').upload(path, file, { upsert: true });
-    const { data } = supabase.storage.from('AVATAR').getPublicUrl(path);
+    await supabase.storage.from('avatar').upload(path, file, { upsert: true });
+    const { data } = supabase.storage.from('avatar').getPublicUrl(path);
     const url = data.publicUrl + '?t=' + Date.now();
     await supabase
       .from('user_profiles')
