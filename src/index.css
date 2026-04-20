@@ -5847,8 +5847,8 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   .tt-cards { grid-template-columns: 1fr 1fr; gap: 12px; }
 }
 
-/* ── Wide Desktop (1280px+) ── */
-@media (min-width: 1280px) {
+/* ── Wide Desktop ── */
+@media (min-width: 1024px) {
   .tab-content { max-width: 960px; }
   .th-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
   .tc-bubble { max-width: 50%; }
