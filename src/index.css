@@ -5184,6 +5184,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   min-height: 100dvh;
   min-height: -webkit-fill-available;
   background: var(--cream);
+  padding-top: env(safe-area-inset-top, 0px);
 }
 .app-main {
   flex: 1;
