@@ -1,121 +1,129 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../store';
-import { RefreshCw, Clock, Zap, ChevronRight } from 'lucide-react';
+import { exercises as exerciseBank } from '../data/exercises';
+import {
+  decideTodayWorkout,
+  analyzeWorkoutHistory,
+  filterExercisesForWorkout,
+  buildConfigHash,
+  exerciseCountForDuration,
+} from '../utils/workoutPlanner';
+import {
+  getCachedWorkout,
+  saveWorkoutToCache,
+  validateWorkout,
+  type CachedWorkout,
+} from '../utils/workoutCache';
+import type {
+  Exercise,
+  Equipment,
+  Goal,
+  MuscleGroup,
+  WorkoutDayDecision,
+} from '../types';
+import { RefreshCw, Clock, Zap, ChevronRight, Lock, Settings } from 'lucide-react';
+import './daily-trainer-v2.css';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
-/* ── Questions flow ───────────────────────────────────────────── */
-const QUESTIONS = [
-  {
-    id: 'feeling',
-    question: '¿Cómo te sientes hoy?',
-    emoji: '🌤️',
-    options: [
-      { label: 'Con todo', value: 'excelente', icon: '🔥' },
-      { label: 'Bien',     value: 'bien',      icon: '💪' },
-      { label: 'Regular',  value: 'regular',   icon: '😐' },
-      { label: 'Cansado',  value: 'cansado',   icon: '😴' },
-    ],
-  },
-  {
-    id: 'sleep',
-    question: '¿Cómo dormiste anoche?',
-    emoji: '🌙',
-    options: [
-      { label: 'Muy bien (+7h)',  value: 'muy bien',  icon: '😴' },
-      { label: 'Normal (5-7h)',   value: 'normal',    icon: '🙂' },
-      { label: 'Mal (menos de 5h)', value: 'mal',     icon: '😵' },
-    ],
-  },
-  {
-    id: 'equipment',
-    question: '¿Qué equipo tienes hoy?',
-    emoji: '🏋️',
-    options: [
-      { label: 'Gym completo', value: 'gym',    icon: '🏋️' },
-      { label: 'Ligas / bandas', value: 'ligas', icon: '🪢' },
-      { label: 'Solo cuerpo',  value: 'cuerpo', icon: '🤸' },
-    ],
-  },
-  {
-    id: 'time',
-    question: '¿Cuánto tiempo tienes?',
-    emoji: '⏱️',
-    options: [
-      { label: '20–30 min', value: '25', icon: '⚡' },
-      { label: '40–50 min', value: '45', icon: '🕐' },
-      { label: '60+ min',   value: '60', icon: '💯' },
-    ],
-  },
+// ══════════════════════════════════════════════════════════════
+// CONFIG DE UI
+// ══════════════════════════════════════════════════════════════
+
+const TIME_OPTIONS = [
+  { value: 25, label: '25 min' },
+  { value: 45, label: '45 min' },
+  { value: 60, label: '60+ min' },
 ];
 
-/* ── Workout exercise type ────────────────────────────────────── */
-interface Exercise {
-  name: string;
-  sets: string;
-  reps: string;
-  rest: string;
-  tip?: string;
-}
+const EQUIPMENT_OPTIONS: Array<{
+  value: Equipment;
+  label: string;
+  sub: string;
+  icon: string;
+}> = [
+  { value: 'gym', label: 'En el gym', sub: 'completo', icon: '🏋️' },
+  { value: 'cuerpo', label: 'En casa sin equipo', sub: 'solo cuerpo', icon: '🤸' },
+  { value: 'ligas', label: 'En casa con ligas', sub: 'bandas', icon: '🎗️' },
+];
 
-interface WorkoutPlan {
-  type: string;
-  duration: string;
-  intensity: string;
-  warmup: string;
-  exercises: Exercise[];
-  cooldown: string;
-  note: string;
-}
+const GOAL_OPTIONS: Array<{
+  value: Goal;
+  label: string;
+  icon: string;
+}> = [
+  { value: 'fuerza', label: 'Fuerza', icon: '💪' },
+  { value: 'hipertrofia', label: 'Crecer músculo', icon: '📈' },
+  { value: 'condicion', label: 'Sudar', icon: '💦' },
+  { value: 'movilidad', label: 'Estirar', icon: '🧘' },
+];
 
-/* ── AI call — returns JSON workout ──────────────────────────── */
-async function generateWorkout(
-  answers: Record<string, string>,
-  workoutHistory: string,
-  userName: string,
-  obData: Record<string, string | number>,
-): Promise<WorkoutPlan> {
-  const today = new Date();
-  const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const MUSCLE_OPTIONS: Array<{ value: string; label: string; groups: MuscleGroup[] }> = [
+  { value: 'full-body', label: 'Full body', groups: ['pecho','espalda','cuadriceps','gluteo','core'] },
+  { value: 'upper', label: 'Upper', groups: ['pecho','espalda','hombros','biceps','triceps'] },
+  { value: 'lower', label: 'Lower', groups: ['cuadriceps','isquios','gluteo','pantorrillas'] },
+  { value: 'pecho', label: 'Pecho', groups: ['pecho'] },
+  { value: 'espalda', label: 'Espalda', groups: ['espalda'] },
+  { value: 'hombros', label: 'Hombros', groups: ['hombros'] },
+  { value: 'brazos', label: 'Brazos', groups: ['biceps','triceps'] },
+  { value: 'piernas', label: 'Piernas', groups: ['cuadriceps','isquios','pantorrillas'] },
+  { value: 'gluteo', label: 'Glúteo', groups: ['gluteo'] },
+  { value: 'core', label: 'Core', groups: ['core'] },
+];
 
-  const prompt = `Genera una rutina de entrenamiento personalizada en JSON.
+const DAY_NAMES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 
-USUARIO: ${userName || 'usuario'}, ${obData.sex || '?'}, ${obData.edad || '?'} años, ${obData.peso || '?'}kg, meta: ${obData.goal || '?'}
+// ══════════════════════════════════════════════════════════════
+// LLAMADA A IA — ORQUESTADOR
+// ══════════════════════════════════════════════════════════════
 
-HOY: ${dayNames[today.getDay()]}
-ESTADO HOY:
-- Se siente: ${answers.feeling}
-- Durmió: ${answers.sleep}
-- Equipo disponible: ${answers.equipment}
-- Tiempo disponible: ${answers.time} minutos
+async function orchestrateWorkout(params: {
+  candidates: Exercise[];
+  targetCount: number;
+  goal: Goal;
+  intensity: 'baja' | 'media' | 'alta';
+  userName: string;
+  dayLabel: string;
+}): Promise<CachedWorkout> {
+  const { candidates, targetCount, goal, intensity, userName, dayLabel } = params;
 
-HISTORIAL RECIENTE (últimos 7 días):
-${workoutHistory}
+  const candidatesCompact = candidates.map(c =>
+    `${c.id} | ${c.muscleGroup} | ${c.type} | sets:${c.defaultSets} reps:${c.defaultReps} rest:${c.defaultRest}s`
+  ).join('\n');
 
-OBJETIVO DEL USUARIO: ${obData.goal || 'general'}
-${obData.goal === 'Ganar músculo' ? 'ENFOQUE: Hipertrofia y fuerza. Prioriza ejercicios compuestos con pesos pesados, series de 6-12 reps, descansos largos (90-120 seg). Tipo preferido: Upper Body o Lower Body (split).' : ''}
-${obData.goal === 'Bajar grasa' ? 'ENFOQUE: Alta quema calórica. Prioriza circuitos, supersets, cardio HIIT, descansos cortos (30-45 seg). Tipo preferido: Full Body o Cardio.' : ''}
-${obData.goal === 'Recomposición' ? 'ENFOQUE: Mixto fuerza + cardio. Combina ejercicios de fuerza (8-12 reps) con finisher de cardio. Descansos moderados (60-90 seg). Tipo preferido: Full Body o Upper/Lower.' : ''}
-${obData.goal === 'Bienestar integral' ? 'ENFOQUE: Equilibrio y movilidad. Incluye ejercicios funcionales, yoga, estiramientos. Intensidad media-baja, sin buscar agotamiento. Tipo preferido: Full Body o Descanso Activo.' : ''}
+  const intensityInstruction = intensity === 'baja'
+    ? 'Intensidad BAJA: reduce sets 30%, reps más bajas, descansos más largos'
+    : intensity === 'alta'
+    ? 'Intensidad ALTA: sets altos, peso/reps desafiantes, descansos ajustados al goal'
+    : 'Intensidad MEDIA: sets y reps estándar según defaults de cada ejercicio';
 
-REGLAS:
-- No repitas el mismo grupo muscular trabajado ayer o anteayer
-- Si está cansado o durmió mal, baja la intensidad 30-40%
-- Ajusta ejercicios al equipo disponible
-- El número de ejercicios debe ajustarse al tiempo disponible
-- El tipo de rutina debe alinearse con el ENFOQUE del objetivo
+  const prompt = `Orquesta una sesión de ${dayLabel} para ${userName || 'el usuario'}.
 
-Devuelve SOLO este JSON sin markdown, sin texto extra:
+EJERCICIOS DISPONIBLES (elige solo de esta lista):
+${candidatesCompact}
+
+PARÁMETROS:
+- Cantidad objetivo: ${targetCount} ejercicios
+- Goal del día: ${goal}
+- ${intensityInstruction}
+
+TAREA:
+1. Selecciona exactamente ${targetCount} IDs de la lista (variedad y orden lógico: compuestos primero, aislamiento después, core al final)
+2. Ajusta sets/reps/rest según el goal (fuerza: reps bajas 4-6, descansos 120s; hipertrofia: 8-12 reps, 60-90s; condicion: circuito 15+ reps, 30-45s; movilidad: tiempos largos)
+3. Escribe tip_personalizado breve (máx 15 palabras) por ejercicio
+4. Escribe warmup y cooldown breves (1 oración cada uno)
+5. Escribe note motivadora breve (1-2 oraciones para ${userName || 'el usuario'})
+
+Responde SOLO este JSON, sin markdown:
 {
-  "type": "Upper Body / Lower Body / Full Body / Cardio / Descanso Activo",
-  "duration": "X min",
-  "intensity": "Alta / Media / Baja",
-  "warmup": "descripción del calentamiento en 1 oración",
+  "type": "${dayLabel}",
+  "intensity": "${intensity}",
   "exercises": [
-    { "name": "nombre", "sets": "X", "reps": "Y", "rest": "Z seg", "tip": "consejo corto" }
+    { "id": "exercise-id", "sets": 4, "reps": "8-10", "rest": 90, "tip_personalizado": "tip breve" }
   ],
-  "cooldown": "descripción del enfriamiento en 1 oración",
-  "note": "mensaje motivador personalizado para ${userName || 'el usuario'} de 1-2 oraciones"
+  "warmup": "...",
+  "cooldown": "...",
+  "note": "..."
 }`;
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -128,230 +136,572 @@ Devuelve SOLO este JSON sin markdown, sin texto extra:
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 800,
+      max_tokens: 500,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
 
   if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`API error ${res.status}: ${errText}`);
+    throw new Error(`API ${res.status}: ${await res.text()}`);
   }
+
   const data = await res.json();
   const raw = data.content?.[0]?.text ?? '{}';
-  // Strip markdown code fences if present
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-  return JSON.parse(cleaned) as WorkoutPlan;
+  return JSON.parse(cleaned) as CachedWorkout;
 }
 
-/* ── Intensity colors ─────────────────────────────────────────── */
-const INTENSITY_COLOR: Record<string, string> = {
-  'Alta': '#e05c2a',
-  'Media': '#2d7a4f',
-  'Baja': '#4a90d9',
-};
+// ══════════════════════════════════════════════════════════════
+// COMPONENTE PRINCIPAL
+// ══════════════════════════════════════════════════════════════
 
-/* ── Main component ───────────────────────────────────────────── */
+type Phase = 'decision' | 'manual' | 'generating' | 'plan' | 'error';
+
 export default function DailyTrainer() {
   const userName = useAppStore(s => s.userName);
   const obData = useAppStore(s => s.obData);
   const workoutLog = useAppStore(s => s.workoutLog);
   const dailyCheckIn = useAppStore(s => s.dailyCheckIn);
+  const storedWorkout = useAppStore(s => s.dailyWorkout);
+  const saveDailyWorkout = useAppStore(s => s.saveDailyWorkout);
+  const storedChecked = useAppStore(s => s.dailyWorkoutChecked);
+  const toggleDailyWorkoutCheck = useAppStore(s => s.toggleDailyWorkoutCheck);
+  const regenCount = useAppStore(s => s.dailyWorkoutRegenCount);
+  const incrementRegen = useAppStore(s => s.incrementDailyWorkoutRegen);
 
   const today = new Date().toISOString().split('T')[0];
-  const checkIn = dailyCheckIn?.date === today ? dailyCheckIn : null;
+  const firstName = userName?.split(' ')[0] || '';
+  const todayDayName = DAY_NAMES[new Date().getDay()];
+  const todayDateShort = `${new Date().getDate()} ${new Date().toLocaleDateString('es-ES', { month: 'short' })}`;
 
-  // If check-in already answered feeling + sleep, skip those 2 questions
-  const firstStep = checkIn ? 2 : 0;
-  const preAnswers: Record<string, string> = checkIn
-    ? { feeling: checkIn.feeling, sleep: checkIn.sleep }
-    : {};
+  // ── Regen limit
+  const regensToday = regenCount?.date === today ? regenCount.count : 0;
+  const regenBlocked = regensToday >= 3;
+  const regensLeft = Math.max(0, 3 - regensToday);
 
-  const [step, setStep] = useState(firstStep);
-  const [answers, setAnswers] = useState<Record<string, string>>(preAnswers);
-  const saveDailyWorkout = useAppStore(s => s.saveDailyWorkout);
-  const storedWorkout = useAppStore(s => s.dailyWorkout);
+  // ── Today's planned decision
+  const todayDecision: WorkoutDayDecision = useMemo(() => decideTodayWorkout({
+    userObjective: String(obData?.goal || ''),
+    workoutLog: workoutLog || [],
+    exercises: exerciseBank,
+    dailyEnergy: dailyCheckIn?.date === today ? dailyCheckIn.feeling as any : undefined,
+    dailySleep: dailyCheckIn?.date === today ? dailyCheckIn.sleep as any : undefined,
+  }), [obData, workoutLog, dailyCheckIn, today]);
 
-  const [generating, setGenerating] = useState(false);
-  const [plan, setPlan] = useState<WorkoutPlan | null>(
-    storedWorkout?.date === today ? storedWorkout.plan as unknown as WorkoutPlan : null
+  // ── Local state
+  const [phase, setPhase] = useState<Phase>(() => {
+    if (storedWorkout?.date === today) return 'plan';
+    return 'decision';
+  });
+  const [plan, setPlan] = useState<CachedWorkout | null>(
+    storedWorkout?.date === today ? (storedWorkout.plan as any) : null
   );
   const [error, setError] = useState('');
 
-  const storedChecked = useAppStore(s => s.dailyWorkoutChecked);
-  const toggleDailyWorkoutCheck = useAppStore(s => s.toggleDailyWorkoutCheck);
+  // Auto-mode config
+  const [selectedTime, setSelectedTime] = useState<number>(45);
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment>('gym');
 
-  function toggleCheck(i: number) { toggleDailyWorkoutCheck(i); }
+  // Manual-mode config
+  const [manualEquipment, setManualEquipment] = useState<Equipment[]>(['gym']);
+  const [manualMuscles, setManualMuscles] = useState<string[]>(['full-body']);
+  const [manualGoal, setManualGoal] = useState<Goal>('hipertrofia');
+  const [manualTime, setManualTime] = useState<number>(45);
 
-  const workoutHistory = [...workoutLog]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 7)
-    .map(e => `${e.date} — ${e.exercise}: ${e.sets.map(s => `${s.reps}×${s.kg}kg`).join(', ')}`)
-    .join('\n') || 'Sin entrenamientos registrados esta semana.';
+  // ── Reset if day changed
+  useEffect(() => {
+    if (storedWorkout && storedWorkout.date !== today) {
+      setPlan(null);
+      setPhase('decision');
+    }
+  }, [today, storedWorkout]);
 
-  async function handleOption(value: string) {
-    const q = QUESTIONS[step];
-    const newAnswers = { ...answers, [q.id]: value };
-    setAnswers(newAnswers);
+  // ══════════════════════════════════════════════════════════════
+  // GENERAR RUTINA (con cache)
+  // ══════════════════════════════════════════════════════════════
 
-    if (step < QUESTIONS.length - 1) {
-      setStep(s => s + 1);
-    } else {
-      // All answered — generate
-      setGenerating(true);
-      setError('');
-      try {
-        const result = await generateWorkout(newAnswers, workoutHistory, userName, obData as Record<string, string | number>);
-        setPlan(result);
-        saveDailyWorkout(result as unknown as Record<string, unknown>);
-      } catch (e) {
-        setError(`Error: ${e instanceof Error ? e.message : 'Intenta de nuevo.'}`);
-      } finally {
-        setGenerating(false);
+  async function generateWorkout(params: {
+    equipment: Equipment[];
+    muscleGroups: MuscleGroup[];
+    goal: Goal;
+    duration: number;
+    dayLabel: string;
+    isManual: boolean;
+  }) {
+    setPhase('generating');
+    setError('');
+
+    try {
+      const dayTypeKey = params.isManual ? 'manual' : todayDecision.type;
+      const configHash = buildConfigHash({
+        duration: params.duration,
+        equipment: params.equipment.sort().join(','),
+        goal: params.goal,
+        dayType: dayTypeKey,
+      });
+
+      // Try cache first
+      const validIds = new Set(exerciseBank.map(e => e.id));
+      const cached = await getCachedWorkout(configHash);
+      if (cached && validateWorkout(cached, validIds)) {
+        setPlan(cached);
+        saveDailyWorkout(cached as any);
+        setPhase('plan');
+        return;
       }
+
+      // No cache — orchestrate with IA
+      const history = analyzeWorkoutHistory(workoutLog || [], exerciseBank);
+      const excludeMuscles = [...history.yesterday, ...history.twoDaysAgo];
+
+      const candidates = filterExercisesForWorkout({
+        exercises: exerciseBank,
+        equipment: params.equipment,
+        muscleGroups: params.muscleGroups,
+        goal: params.goal,
+        excludeMuscles: params.isManual ? [] : excludeMuscles,
+      });
+
+      if (candidates.length < 3) {
+        throw new Error('No hay suficientes ejercicios para esta combinación. Prueba cambiar equipo o grupo muscular.');
+      }
+
+      const targetCount = Math.min(
+        exerciseCountForDuration(params.duration),
+        candidates.length
+      );
+
+      const workout = await orchestrateWorkout({
+        candidates: candidates.slice(0, 15),
+        targetCount,
+        goal: params.goal,
+        intensity: todayDecision.intensity,
+        userName,
+        dayLabel: params.dayLabel,
+      });
+
+      // Validate before saving
+      if (!validateWorkout(workout, validIds)) {
+        throw new Error('La rutina generada tiene ejercicios inválidos. Reintenta.');
+      }
+
+      // Save to cache (fire and forget)
+      saveWorkoutToCache({
+        configHash,
+        duration: params.duration,
+        equipment: params.equipment.sort().join(','),
+        goal: params.goal,
+        dayType: dayTypeKey,
+        workout,
+      }).catch(() => {});
+
+      setPlan(workout);
+      saveDailyWorkout(workout as any);
+      setPhase('plan');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al generar la rutina');
+      setPhase('error');
     }
   }
 
-  function reset() {
-    setStep(firstStep);
-    setAnswers(preAnswers);
-    setPlan(null);
-    setError('');
-    setGenerating(false);
-    saveDailyWorkout(null as unknown as Record<string, unknown>);
+  // ══════════════════════════════════════════════════════════════
+  // HANDLERS
+  // ══════════════════════════════════════════════════════════════
+
+  function handleAutoGenerate() {
+    if (todayDecision.type === 'descanso') {
+      setPlan({
+        type: 'Descanso',
+        intensity: 'baja',
+        exercises: [],
+        warmup: '',
+        cooldown: '',
+        note: 'Hoy toca descansar. Escucha a tu cuerpo.',
+      });
+      setPhase('plan');
+      return;
+    }
+
+    const goal: Goal = todayDecision.type === 'movilidad'
+      ? 'movilidad'
+      : todayDecision.type === 'cardio'
+      ? 'condicion'
+      : 'hipertrofia';
+
+    generateWorkout({
+      equipment: [selectedEquipment],
+      muscleGroups: todayDecision.muscleGroups,
+      goal,
+      duration: selectedTime,
+      dayLabel: todayDecision.label,
+      isManual: false,
+    });
   }
 
-  // ── Generating state ──
-  if (generating) {
+  function handleManualGenerate() {
+    const muscleGroups = Array.from(new Set(
+      manualMuscles.flatMap(m => {
+        const opt = MUSCLE_OPTIONS.find(o => o.value === m);
+        return opt?.groups || [];
+      })
+    ));
+
+    if (manualEquipment.length === 0 || muscleGroups.length === 0) {
+      setError('Elige al menos un equipo y un grupo muscular.');
+      setPhase('error');
+      return;
+    }
+
+    generateWorkout({
+      equipment: manualEquipment,
+      muscleGroups: muscleGroups as MuscleGroup[],
+      goal: manualGoal,
+      duration: manualTime,
+      dayLabel: 'Rutina personalizada',
+      isManual: true,
+    });
+  }
+
+  function handleRegenerate() {
+    if (regenBlocked) return;
+    incrementRegen();
+    setPlan(null);
+    saveDailyWorkout(null as any);
+    setPhase('decision');
+  }
+
+  function toggleManualMuscle(value: string) {
+    setManualMuscles(prev =>
+      prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    );
+  }
+
+  function toggleManualEquipment(value: Equipment) {
+    setManualEquipment(prev =>
+      prev.includes(value)
+        ? prev.filter(v => v !== value)
+        : [...prev, value]
+    );
+  }
+
+  function toggleCheck(i: number) {
+    toggleDailyWorkoutCheck(i);
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // RENDER: GENERATING
+  // ══════════════════════════════════════════════════════════════
+
+  if (phase === 'generating') {
     return (
-      <div className="dtr-generating">
-        <div className="dtr-gen-spinner" />
-        <div className="dtr-gen-title">Creando tu rutina de hoy...</div>
-        <div className="dtr-gen-sub">Analizando tu historial y estado del día</div>
+      <div className="dt2-wrap">
+        <div className="dt2-generating">
+          <div className="dt2-gen-spinner" />
+          <h3 className="dt2-gen-title">Armando <em>tu rutina</em>...</h3>
+          <p className="dt2-gen-sub">Tu coach está eligiendo los mejores ejercicios</p>
+        </div>
       </div>
     );
   }
 
-  // ── Plan displayed ──
-  if (plan) {
+  // ══════════════════════════════════════════════════════════════
+  // RENDER: ERROR
+  // ══════════════════════════════════════════════════════════════
+
+  if (phase === 'error') {
     return (
-      <div className="dtr-plan">
-        {/* Plan header */}
-        <div className="dtr-plan-header">
-          <div className="dtr-plan-header-top">
-            <div>
-              <div className="dtr-plan-badge">Tu rutina de hoy</div>
-              <div className="dtr-plan-type">{plan.type}</div>
+      <div className="dt2-wrap">
+        <div className="dt2-error">
+          <p className="dt2-error-text">⚠️ {error}</p>
+          <button className="dt2-error-btn" onClick={() => setPhase('decision')}>
+            Volver
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // RENDER: DECISION SCREEN (auto mode)
+  // ══════════════════════════════════════════════════════════════
+
+  if (phase === 'decision') {
+    return (
+      <div className="dt2-wrap">
+        <div className="dt2-hero">
+          <p className="dt2-hero-micro">rutina · {todayDayName} {todayDateShort}</p>
+          <h1 className="dt2-hero-title">
+            {firstName ? `${firstName}, ` : ''}<em>listo para entrenar</em>.
+          </h1>
+          <p className="dt2-hero-sub">Dime 2 cosas y yo armo el resto.</p>
+        </div>
+
+        {/* Main decision card */}
+        <div className="dt2-card">
+          <div className="dt2-card-badge">
+            <span className="dt2-card-badge-dot" />
+            <span className="dt2-card-badge-text">decidido por tu coach</span>
+          </div>
+          <p className="dt2-card-label">Hoy toca</p>
+          <h2 className="dt2-card-title">
+            <em>{todayDecision.label}</em>
+          </h2>
+          <div className="dt2-card-why">
+            <div className="dt2-card-why-label">Por qué hoy</div>
+            <p className="dt2-card-why-text">{todayDecision.reason}</p>
+          </div>
+        </div>
+
+        {/* Config questions */}
+        {todayDecision.type !== 'descanso' && (
+          <>
+            <div className="dt2-q">
+              <p className="dt2-q-label">¿Cuánto tiempo tienes?</p>
+              <div className="dt2-chips dt2-chips-3">
+                {TIME_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    className={`dt2-chip${selectedTime === opt.value ? ' on' : ''}`}
+                    onClick={() => setSelectedTime(opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <button className="dtr-restart" onClick={reset} title="Reiniciar">
-              <RefreshCw size={14} />
+
+            <div className="dt2-q">
+              <p className="dt2-q-label">¿Dónde estás hoy?</p>
+              <div className="dt2-chips dt2-chips-col">
+                {EQUIPMENT_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    className={`dt2-chip dt2-chip-eq${selectedEquipment === opt.value ? ' on' : ''}`}
+                    onClick={() => setSelectedEquipment(opt.value)}
+                  >
+                    <span className="dt2-chip-icon">{opt.icon}</span>
+                    <span>{opt.label}</span>
+                    <span className="dt2-chip-desc">{opt.sub}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button className="dt2-cta" onClick={handleAutoGenerate}>
+              Arma mi <em>rutina</em> →
             </button>
-          </div>
-          <div className="dtr-plan-meta">
-            <span className="dtr-meta-chip"><Clock size={13} /> {plan.duration}</span>
-            <span
-              className="dtr-meta-chip"
-              style={{ background: `${INTENSITY_COLOR[plan.intensity] ?? '#2d7a4f'}22`, color: INTENSITY_COLOR[plan.intensity] ?? '#2d7a4f', borderColor: `${INTENSITY_COLOR[plan.intensity] ?? '#2d7a4f'}44` }}
-            >
-              <Zap size={13} /> {plan.intensity}
-            </span>
+          </>
+        )}
+
+        {todayDecision.type === 'descanso' && (
+          <button className="dt2-cta" onClick={handleAutoGenerate}>
+            Aceptar día de descanso →
+          </button>
+        )}
+
+        <div className="dt2-manual-link">
+          <button className="dt2-link" onClick={() => setPhase('manual')}>
+            Prefiero elegir yo todo <Settings size={12} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // RENDER: MANUAL MODE
+  // ══════════════════════════════════════════════════════════════
+
+  if (phase === 'manual') {
+    return (
+      <div className="dt2-wrap">
+        <div className="dt2-hero">
+          <p className="dt2-hero-micro">rutina personalizada</p>
+          <h1 className="dt2-hero-title">
+            <em>Tú decides</em> todo.
+          </h1>
+          <p className="dt2-hero-sub">Elige equipo, grupos, cómo se siente y cuánto tiempo.</p>
+        </div>
+
+        <div className="dt2-q">
+          <p className="dt2-q-label">
+            Con qué entrenas
+            <span className="dt2-q-hint">puedes elegir varios</span>
+          </p>
+          <div className="dt2-chips">
+            {EQUIPMENT_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                className={`dt2-chip${manualEquipment.includes(opt.value) ? ' on' : ''}`}
+                onClick={() => toggleManualEquipment(opt.value)}
+              >
+                <span className="dt2-chip-icon">{opt.icon}</span>
+                <span>{opt.label.replace('En el ', '').replace('En casa ', '')}</span>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Warmup */}
-        <div className="dtr-phase">
-          <div className="dtr-phase-label">🔥 Calentamiento</div>
-          <div className="dtr-phase-text">{plan.warmup}</div>
+        <div className="dt2-q">
+          <p className="dt2-q-label">
+            Qué trabajas hoy
+            <span className="dt2-q-hint">puedes elegir varios</span>
+          </p>
+          <div className="dt2-chips">
+            {MUSCLE_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                className={`dt2-chip${manualMuscles.includes(opt.value) ? ' on' : ''}`}
+                onClick={() => toggleManualMuscle(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Exercises */}
-        <div className="dtr-exercises">
-          {plan.exercises.map((ex, i) => (
-            <div
-              key={i}
-              className={`dtr-exercise${storedChecked.includes(i) ? ' dtr-exercise-done' : ''}`}
-              onClick={() => toggleCheck(i)}
-            >
-              <div className={`dtr-ex-check${storedChecked.includes(i) ? ' checked' : ''}`}>
-                {storedChecked.includes(i) ? '✓' : i + 1}
-              </div>
-              <div className="dtr-ex-body">
-                <div className="dtr-ex-name">{ex.name}</div>
-                <div className="dtr-ex-detail">
-                  <span className="dtr-ex-chip">{ex.sets} series</span>
-                  <span className="dtr-ex-chip">{ex.reps} reps</span>
-                  <span className="dtr-ex-chip dtr-ex-rest">🕐 {ex.rest} descanso</span>
-                </div>
-                {ex.tip && <div className="dtr-ex-tip">💡 {ex.tip}</div>}
-              </div>
+        <div className="dt2-q">
+          <p className="dt2-q-label">
+            Cómo se siente
+            <span className="dt2-q-hint">elige una</span>
+          </p>
+          <div className="dt2-chips">
+            {GOAL_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                className={`dt2-chip${manualGoal === opt.value ? ' on' : ''}`}
+                onClick={() => setManualGoal(opt.value)}
+              >
+                <span className="dt2-chip-icon">{opt.icon}</span>
+                <span>{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="dt2-q">
+          <p className="dt2-q-label">
+            Cuánto tiempo
+            <span className="dt2-q-hint">elige una</span>
+          </p>
+          <div className="dt2-chips dt2-chips-3">
+            {TIME_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                className={`dt2-chip${manualTime === opt.value ? ' on' : ''}`}
+                onClick={() => setManualTime(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button className="dt2-cta" onClick={handleManualGenerate}>
+          Generar mi <em>rutina personalizada</em> →
+        </button>
+
+        <div className="dt2-manual-link">
+          <button className="dt2-link" onClick={() => setPhase('decision')}>
+            ← Volver al modo automático
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // RENDER: PLAN (rutina generada)
+  // ══════════════════════════════════════════════════════════════
+
+  if (phase === 'plan' && plan) {
+    const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
+    const checked = storedChecked || [];
+
+    return (
+      <div className="dt2-wrap">
+        <div className="dt2-plan-header">
+          <div>
+            <p className="dt2-plan-micro">tu rutina · {todayDayName} {todayDateShort}</p>
+            <h2 className="dt2-plan-title">
+              <em>{plan.type}</em>
+            </h2>
+            <div className="dt2-plan-meta">
+              <span className="dt2-meta-chip">
+                <Clock size={11} /> {plan.exercises.length > 0 ? `${plan.exercises.length} ejercicios` : 'descanso'}
+              </span>
+              <span className="dt2-meta-chip">
+                <Zap size={11} /> {plan.intensity}
+              </span>
             </div>
-          ))}
+          </div>
+          <button
+            className={`dt2-regen${regenBlocked ? ' locked' : ''}`}
+            onClick={handleRegenerate}
+            disabled={regenBlocked}
+            title={regenBlocked ? 'Ya regeneraste 3 veces hoy' : `Te quedan ${regensLeft} regeneraciones`}
+          >
+            {regenBlocked ? <Lock size={14} /> : <RefreshCw size={14} />}
+          </button>
         </div>
 
-        {/* Cooldown */}
-        <div className="dtr-phase">
-          <div className="dtr-phase-label">🧊 Enfriamiento</div>
-          <div className="dtr-phase-text">{plan.cooldown}</div>
-        </div>
+        {plan.warmup && (
+          <div className="dt2-section dt2-warmup">
+            <div className="dt2-section-label">Calentamiento</div>
+            <p className="dt2-section-text">{plan.warmup}</p>
+          </div>
+        )}
 
-        {/* Coach note */}
+        {plan.exercises.length > 0 && (
+          <div className="dt2-exercises">
+            {plan.exercises.map((ex, i) => {
+              const bank = exerciseMap.get(ex.id);
+              const isDone = checked.includes(i);
+              return (
+                <div key={`${ex.id}-${i}`} className={`dt2-ex${isDone ? ' done' : ''}`}>
+                  <button
+                    className="dt2-ex-check"
+                    onClick={() => toggleCheck(i)}
+                    aria-label={isDone ? 'Desmarcar' : 'Marcar como hecho'}
+                  >
+                    {isDone ? '✓' : ''}
+                  </button>
+                  <div className="dt2-ex-emoji">{bank?.emoji || '💪'}</div>
+                  <div className="dt2-ex-body">
+                    <div className="dt2-ex-name">{bank?.name || ex.id}</div>
+                    <div className="dt2-ex-stats">
+                      <span>{ex.sets} × {ex.reps}</span>
+                      <span className="dt2-ex-dot">·</span>
+                      <span>{ex.rest}s descanso</span>
+                    </div>
+                    {ex.tip_personalizado && (
+                      <div className="dt2-ex-tip">{ex.tip_personalizado}</div>
+                    )}
+                  </div>
+                  <ChevronRight size={14} className="dt2-ex-arrow" />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {plan.cooldown && (
+          <div className="dt2-section dt2-cooldown">
+            <div className="dt2-section-label">Enfriamiento</div>
+            <p className="dt2-section-text">{plan.cooldown}</p>
+          </div>
+        )}
+
         {plan.note && (
-          <div className="dtr-note">
-            <span className="dtr-note-icon">💪</span>
-            <p>{plan.note}</p>
+          <div className="dt2-note">
+            <p className="dt2-note-text">{plan.note}</p>
           </div>
         )}
       </div>
     );
   }
 
-  // ── Error ──
-  if (error) {
-    return (
-      <div className="dtr-error">
-        <div>{error}</div>
-        <button className="dtr-error-btn" onClick={reset}>Intentar de nuevo</button>
-      </div>
-    );
-  }
-
-  // ── Questions flow ──
-  const q = QUESTIONS[step];
-  const firstName = userName?.split(' ')[0] || '';
-
-  return (
-    <div className="dtr-flow">
-      {/* Progress dots */}
-      <div className="dtr-progress">
-        {QUESTIONS.map((_, i) => (
-          <div key={i} className={`dtr-dot${i < step ? ' done' : i === step ? ' active' : ''}`} />
-        ))}
-      </div>
-
-      {/* Question card */}
-      <div className="dtr-question-card">
-        <div className="dtr-q-emoji">{q.emoji}</div>
-        <div className="dtr-q-text">
-          {step === 0 && firstName ? `${firstName}, ${q.question.toLowerCase()}` : q.question}
-        </div>
-        <div className="dtr-options">
-          {q.options.map(opt => (
-            <button
-              key={opt.value}
-              className="dtr-option"
-              onClick={() => handleOption(opt.value)}
-            >
-              <span className="dtr-opt-icon">{opt.icon}</span>
-              <span className="dtr-opt-label">{opt.label}</span>
-              <ChevronRight size={14} className="dtr-opt-arrow" />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {step > 0 && (
-        <button className="dtr-back" onClick={() => setStep(s => s - 1)}>← Anterior</button>
-      )}
-    </div>
-  );
+  return null;
 }

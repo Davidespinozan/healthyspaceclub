@@ -1,0 +1,621 @@
+/* ══════════════════════════════════════════════════════════════
+   DAILY TRAINER V2 — Editorial natural palette
+   ══════════════════════════════════════════════════════════════ */
+
+.dt2-wrap {
+  --dt2-forest: #1e3330;
+  --dt2-moss: #2E4A42;
+  --dt2-amber: #BFA065;
+  --dt2-terra: #A8864E;
+  --dt2-cream: #F6F2EA;
+  --dt2-warm: #F0EBE0;
+  --dt2-sand: #E8E1D3;
+  --dt2-txt: #1e3330;
+  --dt2-txt2: rgba(30, 51, 48, 0.58);
+
+  font-family: 'Montserrat', system-ui, sans-serif;
+  color: var(--dt2-txt);
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+}
+
+.dt2-wrap * {
+  box-sizing: border-box;
+}
+
+/* ── Hero ─────────────────────────────────────────────────── */
+
+.dt2-hero {
+  padding: 20px 0 20px;
+  margin-bottom: 20px;
+  border-bottom: 0.5px solid var(--dt2-sand);
+}
+
+.dt2-hero-micro {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dt2-amber);
+  margin: 0 0 6px;
+}
+
+.dt2-hero-title {
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: var(--dt2-forest);
+  line-height: 1.15;
+  margin: 0 0 8px;
+}
+
+.dt2-hero-title em {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--dt2-amber);
+}
+
+.dt2-hero-sub {
+  font-size: 13px;
+  color: var(--dt2-txt2);
+  line-height: 1.5;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ── Decision Card (auto mode) ──────────────────────────── */
+
+.dt2-card {
+  background: linear-gradient(168deg, #1e3330 0%, #2E4A42 100%);
+  border-radius: 22px;
+  padding: 24px 22px;
+  color: var(--dt2-cream);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.dt2-card::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(191, 160, 101, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.dt2-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: rgba(246, 242, 234, 0.12);
+  border: 0.5px solid rgba(246, 242, 234, 0.2);
+  border-radius: 50px;
+  margin-bottom: 14px;
+  position: relative;
+}
+
+.dt2-card-badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--dt2-amber);
+}
+
+.dt2-card-badge-text {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dt2-cream);
+}
+
+.dt2-card-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(246, 242, 234, 0.55);
+  margin: 0 0 6px;
+  font-style: italic;
+  position: relative;
+}
+
+.dt2-card-title {
+  font-size: clamp(26px, 6vw, 32px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--dt2-cream);
+  line-height: 1;
+  margin: 0 0 18px;
+  position: relative;
+}
+
+.dt2-card-title em {
+  font-style: italic;
+  color: var(--dt2-amber);
+  font-weight: 600;
+}
+
+.dt2-card-why {
+  background: rgba(191, 160, 101, 0.12);
+  border: 0.5px solid rgba(191, 160, 101, 0.22);
+  border-radius: 12px;
+  padding: 12px 14px;
+  position: relative;
+}
+
+.dt2-card-why-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dt2-amber);
+  margin-bottom: 5px;
+}
+
+.dt2-card-why-text {
+  font-size: 12.5px;
+  color: rgba(246, 242, 234, 0.88);
+  line-height: 1.55;
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Questions (chips) ──────────────────────────────────── */
+
+.dt2-q {
+  margin-bottom: 20px;
+}
+
+.dt2-q-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dt2-forest);
+  margin: 0 0 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.dt2-q-hint {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dt2-txt2);
+}
+
+.dt2-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dt2-chips-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.dt2-chips-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.dt2-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: white;
+  border: 1px solid var(--dt2-sand);
+  border-radius: 50px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dt2-forest);
+  cursor: pointer;
+  transition: all 0.15s;
+  justify-content: center;
+}
+
+.dt2-chip:hover {
+  border-color: var(--dt2-amber);
+}
+
+.dt2-chip.on {
+  background: var(--dt2-forest);
+  color: var(--dt2-cream);
+  border-color: var(--dt2-forest);
+}
+
+.dt2-chip-eq {
+  border-radius: 14px;
+  padding: 12px 14px;
+  justify-content: flex-start;
+}
+
+.dt2-chip-icon {
+  font-size: 14px;
+}
+
+.dt2-chip-desc {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--dt2-txt2);
+  margin-left: auto;
+  font-style: italic;
+}
+
+.dt2-chip.on .dt2-chip-desc {
+  color: rgba(246, 242, 234, 0.6);
+}
+
+/* ── CTA ────────────────────────────────────────────────── */
+
+.dt2-cta {
+  width: 100%;
+  padding: 15px;
+  background: var(--dt2-forest);
+  color: var(--dt2-cream);
+  border: none;
+  border-radius: 50px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
+  margin-top: 4px;
+}
+
+.dt2-cta:hover {
+  background: var(--dt2-moss);
+}
+
+.dt2-cta em {
+  font-style: italic;
+  color: var(--dt2-amber);
+  font-weight: 700;
+}
+
+/* ── Manual link ────────────────────────────────────────── */
+
+.dt2-manual-link {
+  text-align: center;
+  padding: 14px 0 0;
+}
+
+.dt2-link {
+  background: transparent;
+  border: none;
+  color: var(--dt2-txt2);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--dt2-sand);
+  text-underline-offset: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dt2-link:hover {
+  color: var(--dt2-forest);
+  text-decoration-color: var(--dt2-amber);
+}
+
+/* ── Generating state ───────────────────────────────────── */
+
+.dt2-generating {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.dt2-gen-spinner {
+  width: 40px;
+  height: 40px;
+  border: 2.5px solid var(--dt2-sand);
+  border-top-color: var(--dt2-amber);
+  border-radius: 50%;
+  animation: dt2-spin 0.8s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes dt2-spin {
+  to { transform: rotate(360deg); }
+}
+
+.dt2-gen-title {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--dt2-forest);
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+
+.dt2-gen-title em {
+  font-style: italic;
+  color: var(--dt2-amber);
+  font-weight: 600;
+}
+
+.dt2-gen-sub {
+  font-size: 13px;
+  color: var(--dt2-txt2);
+  margin: 0;
+  font-style: italic;
+}
+
+/* ── Error state ───────────────────────────────────────── */
+
+.dt2-error {
+  padding: 40px 20px;
+  text-align: center;
+  background: var(--dt2-warm);
+  border-radius: 14px;
+  border: 0.5px solid var(--dt2-sand);
+}
+
+.dt2-error-text {
+  font-size: 13px;
+  color: var(--dt2-forest);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.dt2-error-btn {
+  background: var(--dt2-forest);
+  color: var(--dt2-cream);
+  border: none;
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ══════════════════════════════════════════════════════════
+   PLAN VIEW (rutina generada)
+   ══════════════════════════════════════════════════════════ */
+
+.dt2-plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 0;
+  margin-bottom: 20px;
+  border-bottom: 0.5px solid var(--dt2-sand);
+  gap: 12px;
+}
+
+.dt2-plan-micro {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dt2-amber);
+  margin: 0 0 5px;
+}
+
+.dt2-plan-title {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: var(--dt2-forest);
+  margin: 0 0 10px;
+  line-height: 1.15;
+}
+
+.dt2-plan-title em {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--dt2-amber);
+}
+
+.dt2-plan-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dt2-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--dt2-warm);
+  border: 0.5px solid var(--dt2-sand);
+  border-radius: 50px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--dt2-forest);
+}
+
+.dt2-regen {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid var(--dt2-sand);
+  color: var(--dt2-forest);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.dt2-regen:hover:not(:disabled) {
+  border-color: var(--dt2-amber);
+  color: var(--dt2-amber);
+}
+
+.dt2-regen.locked {
+  background: var(--dt2-sand);
+  color: var(--dt2-txt2);
+  cursor: not-allowed;
+}
+
+/* ── Section cards (warmup/cooldown) ────────────────── */
+
+.dt2-section {
+  padding: 14px 16px;
+  background: var(--dt2-warm);
+  border-radius: 14px;
+  margin-bottom: 16px;
+  border: 0.5px solid var(--dt2-sand);
+}
+
+.dt2-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dt2-amber);
+  margin-bottom: 5px;
+}
+
+.dt2-section-text {
+  font-size: 12.5px;
+  color: var(--dt2-forest);
+  line-height: 1.55;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ── Exercises list ──────────────────────────────────── */
+
+.dt2-exercises {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.dt2-ex {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: white;
+  border: 0.5px solid var(--dt2-sand);
+  border-radius: 14px;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.dt2-ex:hover {
+  border-color: var(--dt2-amber);
+}
+
+.dt2-ex.done {
+  background: var(--dt2-warm);
+  opacity: 0.6;
+}
+
+.dt2-ex.done .dt2-ex-name {
+  text-decoration: line-through;
+}
+
+.dt2-ex-check {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  border: 1.5px solid var(--dt2-sand);
+  color: var(--dt2-amber);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.dt2-ex.done .dt2-ex-check {
+  background: var(--dt2-amber);
+  color: white;
+  border-color: var(--dt2-amber);
+}
+
+.dt2-ex-emoji {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--dt2-warm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.dt2-ex-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dt2-ex-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dt2-forest);
+  margin-bottom: 2px;
+  line-height: 1.25;
+}
+
+.dt2-ex-stats {
+  font-size: 11px;
+  color: var(--dt2-txt2);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dt2-ex-dot {
+  color: var(--dt2-sand);
+}
+
+.dt2-ex-tip {
+  font-size: 11px;
+  color: var(--dt2-terra);
+  font-style: italic;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.dt2-ex-arrow {
+  flex-shrink: 0;
+  color: var(--dt2-sand);
+}
+
+/* ── Coach note ──────────────────────────────────────── */
+
+.dt2-note {
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(191, 160, 101, 0.08) 0%, rgba(168, 134, 78, 0.08) 100%);
+  border: 0.5px solid rgba(191, 160, 101, 0.2);
+  border-left: 3px solid var(--dt2-amber);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.dt2-note-text {
+  font-size: 12.5px;
+  color: var(--dt2-forest);
+  line-height: 1.55;
+  margin: 0;
+  font-style: italic;
+}
