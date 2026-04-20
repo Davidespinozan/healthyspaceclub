@@ -18,8 +18,10 @@
 /* ─── Hero editorial ─── */
 .tu2-hero {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  text-align: center;
+  gap: 14px;
   padding-bottom: 28px;
   border-bottom: 0.5px solid var(--sand);
 }
@@ -41,6 +43,9 @@
 .tu2-hero-body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .tu2-hero-micro {
   font-size: 10px;
@@ -79,7 +84,7 @@
   color: var(--forest);
   cursor: pointer;
   font-family: inherit;
-  align-self: flex-start;
+  align-self: center;
   white-space: nowrap;
 }
 .tu2-hero-edit:hover {
@@ -524,26 +529,13 @@
     padding: 24px 14px 32px;
     gap: 20px;
   }
-  .tu2-hero {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 12px;
-  }
   .tu2-avatar {
     width: 72px;
     height: 72px;
     font-size: 28px;
   }
-  .tu2-hero-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
   .tu2-hero-name {
     font-size: 22px;
-    line-height: 1.15;
-    word-break: break-word;
   }
   .tu2-hero-sub {
     font-size: 11.5px;
@@ -551,7 +543,6 @@
   .tu2-hero-edit {
     padding: 7px 14px;
     font-size: 11px;
-    align-self: center;
   }
   .tu2-stats {
     padding: 14px 0;
@@ -598,6 +589,18 @@
   .tu2-wrap {
     padding: 40px 32px 60px;
     gap: 32px;
+  }
+  .tu2-hero {
+    flex-direction: row;
+    text-align: left;
+    align-items: center;
+    gap: 20px;
+  }
+  .tu2-hero-body {
+    align-items: flex-start;
+  }
+  .tu2-hero-edit {
+    align-self: flex-start;
   }
   .tu2-hero-name {
     font-size: 32px;
