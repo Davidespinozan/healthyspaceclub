@@ -3,7 +3,7 @@ import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 
 export default function MiHuella({ onBack }: { onBack: () => void }) {
-  const { userName, streakCount, hsmUnlockDays, obData } = useAppStore();
+  const { userName, setUserName, streakCount, hsmUnlockDays, obData } = useAppStore();
   const userId = obData.name ? String(obData.name).toLowerCase().replace(/\s+/g, '_') : 'anon';
 
   const [profile, setProfile] = useState({ display_name: '', bio: '', avatar_url: '' });
@@ -48,7 +48,9 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
       .from('user_profiles')
       .update({ display_name: editName.trim() || userName || 'Anónimo', bio: editBio.trim().slice(0, 100) })
       .eq('user_id', userId);
-    setProfile(prev => ({ ...prev, display_name: editName.trim() || userName || 'Anónimo', bio: editBio.trim() }));
+    const savedName = editName.trim() || userName || 'Anónimo';
+    setProfile(prev => ({ ...prev, display_name: savedName, bio: editBio.trim() }));
+    setUserName(savedName);
     setEditing(false);
     setSaving(false);
   }
