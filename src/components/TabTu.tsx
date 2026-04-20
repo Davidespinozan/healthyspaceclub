@@ -24,8 +24,8 @@ const DIM_SHORT: Record<string, string> = {
 
 export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
-    userName, obData, tdee, planGoal, streakCount, startDate,
-    foodLog, workoutLog, hsmUnlockDays, dailyHSMResponses, logout,
+    userName, setUserName, obData, tdee, planGoal, streakCount, startDate,
+    foodLog, workoutLog, dailyHSMResponses, logout,
     hsmProfile,
   } = useAppStore();
 
@@ -34,6 +34,10 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
 
   const [profile, setProfile] = useState({ display_name: '', bio: '', avatar_url: '' });
   const [postCount, setPostCount] = useState(0);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editBio, setEditBio] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     supabase.from('user_profiles').select('*').eq('user_id', userId).single()
@@ -43,6 +47,24 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
     supabase.from('club_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId)
       .then(({ count }) => { if (count != null) setPostCount(count); });
   }, [userId]);
+
+  async function handleSave() {
+    setSaving(true);
+    const savedName = editName.trim() || userName || 'Anónimo';
+    const savedBio = editBio.trim().slice(0, 100);
+    await supabase
+      .from('user_profiles')
+      .upsert({
+        user_id: userId,
+        display_name: savedName,
+        bio: savedBio,
+        avatar_url: profile.avatar_url,
+      }, { onConflict: 'user_id' });
+    setProfile(prev => ({ ...prev, display_name: savedName, bio: savedBio }));
+    setUserName(savedName);
+    setEditing(false);
+    setSaving(false);
+  }
 
   async function handleAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -68,7 +90,6 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
 
   const today = new Date().toISOString().split('T')[0];
   const todayKcal = Math.round(foodLog.filter(e => e.date === today).reduce((s, e) => s + e.kcal, 0));
-  const weeksActive = startDate ? Math.max(1, Math.floor((Date.now() - new Date(startDate).getTime()) / (7 * 86400000)) + 1) : 0;
 
   // Historial de reviews — últimos 3 días con respuestas HSM
   const recentReviews = useMemo(() => {
@@ -138,36 +159,46 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
           <p className="tu2-hero-micro">
             {startDate ? `día ${daysSinceStart} · miembro desde ${new Date(startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}` : 'tu perfil'}
           </p>
-          <h1 className="tu2-hero-name">
-            {profile.display_name || userName || 'Anónimo'}
-            {streakCount > 0 && <>, <em>{streakCount >= 30 ? 'eres élite.' : streakCount >= 15 ? 'imparable.' : streakCount >= 8 ? 'en racha.' : streakCount >= 4 ? 'vas bien.' : 'empezando.'}</em></>}
-          </h1>
-          <p className="tu2-hero-sub">
-            {totalReflections > 0
-              ? `${streakCount} días construyendo. ${totalReflections} reflexiones escritas. Este es tu espejo.`
-              : profile.bio || 'Empieza a escribir en Tu Espacio para que tu coach te conozca.'}
-          </p>
-        </div>
-        <button className="tu2-hero-edit" onClick={() => onNav('huella')}>Editar perfil</button>
-      </div>
-
-      {/* ── Stats ── */}
-      <div className="tu2-stats">
-        <div className="tu2-stat">
-          <div className="tu2-stat-num">{streakCount}</div>
-          <div className="tu2-stat-label">Racha</div>
-        </div>
-        <div className="tu2-stat">
-          <div className="tu2-stat-num">{hsmUnlockDays.length}</div>
-          <div className="tu2-stat-label">Días activos</div>
-        </div>
-        <div className="tu2-stat">
-          <div className="tu2-stat-num">{totalReflections}</div>
-          <div className="tu2-stat-label">Reflexiones</div>
-        </div>
-        <div className="tu2-stat">
-          <div className="tu2-stat-num">{weeksActive > 1 ? <em>{weeksActive}</em> : weeksActive}</div>
-          <div className="tu2-stat-label">Semanas</div>
+          {!editing ? (
+            <>
+              <h1 className="tu2-hero-name">
+                {profile.display_name || userName || 'Anónimo'}
+                {streakCount > 0 && <>, <em>{streakCount >= 30 ? 'eres élite.' : streakCount >= 15 ? 'imparable.' : streakCount >= 8 ? 'en racha.' : streakCount >= 4 ? 'vas bien.' : 'empezando.'}</em></>}
+              </h1>
+              <p className="tu2-hero-sub">
+                {totalReflections > 0
+                  ? `${streakCount} días construyendo. ${totalReflections} reflexiones escritas. Este es tu espejo.`
+                  : profile.bio || 'Empieza a escribir en Tu Espacio para que tu coach te conozca.'}
+              </p>
+              <button className="tu2-hero-edit" onClick={() => {
+                setEditName(profile.display_name || userName || '');
+                setEditBio(profile.bio || '');
+                setEditing(true);
+              }}>Editar perfil</button>
+            </>
+          ) : (
+            <>
+              <input
+                className="tu2-edit-input"
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                placeholder="Tu nombre"
+                autoFocus
+              />
+              <input
+                className="tu2-edit-input tu2-edit-bio"
+                value={editBio}
+                onChange={e => setEditBio(e.target.value.slice(0, 100))}
+                placeholder="Bio corta (máx 100)"
+              />
+              <div className="tu2-edit-actions">
+                <button className="tu2-edit-save" onClick={handleSave} disabled={saving}>
+                  {saving ? 'Guardando...' : 'Guardar'}
+                </button>
+                <button className="tu2-edit-cancel" onClick={() => setEditing(false)}>Cancelar</button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
