@@ -2,20 +2,36 @@ import { useMemo, useEffect, useState } from 'react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
+import './tab-tu-v2.css';
 
 const RADAR_DIMS = ['Identidad','Vocación','Propósito','Metas','Disciplina','Cuerpo','Entorno y Relaciones','Control Emocional','Resiliencia','Evolución'];
-const RADAR_SHORT = ['Identidad','Vocación','Propósito','Metas','Disciplina','Cuerpo','Entorno','Emocional','Resiliencia','Evolución'];
+const DIM_EMOJI: Record<string, string> = {
+  'Identidad': '🧠',
+  'Vocación': '✨',
+  'Propósito': '🎯',
+  'Metas': '📍',
+  'Disciplina': '⚡',
+  'Cuerpo': '💪',
+  'Entorno y Relaciones': '🌱',
+  'Control Emocional': '🧘',
+  'Resiliencia': '🔥',
+  'Evolución': '🚀',
+};
+const DIM_SHORT: Record<string, string> = {
+  'Entorno y Relaciones': 'Entorno',
+  'Control Emocional': 'Emocional',
+};
 
 export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
     userName, obData, tdee, planGoal, streakCount, startDate,
     foodLog, workoutLog, hsmUnlockDays, dailyHSMResponses, logout,
+    hsmProfile,
   } = useAppStore();
 
   const userId = obData.name ? String(obData.name).toLowerCase().replace(/\s+/g, '_') : 'anon';
   const firstName = userName?.split(' ')[0] || '';
 
-  // Profile from Supabase
   const [profile, setProfile] = useState({ display_name: '', bio: '', avatar_url: '' });
   const [postCount, setPostCount] = useState(0);
 
@@ -28,7 +44,6 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
       .then(({ count }) => { if (count != null) setPostCount(count); });
   }, [userId]);
 
-  // Avatar upload
   async function handleAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -41,182 +56,346 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
     setProfile(prev => ({ ...prev, avatar_url: url }));
   }
 
-  // Radar
+  // Radar / dimensiones (lógica preservada)
   const radarData = useMemo(() => {
     const cutoff = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
     const recent = dailyHSMResponses.filter(r => r.date >= cutoff);
-    return RADAR_DIMS.map((dim, i) => {
+    return RADAR_DIMS.map(dim => {
       const count = recent.filter(r => r.dimension === dim).length;
-      return { label: RADAR_SHORT[i], value: Math.min(count / 12, 1) };
-    });
+      return { label: dim, short: DIM_SHORT[dim] || dim, emoji: DIM_EMOJI[dim] || '•', count, value: Math.min(count / 12, 1) };
+    }).sort((a, b) => b.count - a.count);
   }, [dailyHSMResponses]);
 
   const today = new Date().toISOString().split('T')[0];
   const todayKcal = Math.round(foodLog.filter(e => e.date === today).reduce((s, e) => s + e.kcal, 0));
   const weeksActive = startDate ? Math.max(1, Math.floor((Date.now() - new Date(startDate).getTime()) / (7 * 86400000)) + 1) : 0;
 
+  // Historial de reviews — últimos 3 días con respuestas HSM
+  const recentReviews = useMemo(() => {
+    const byDate: Record<string, { dimension: string; response: string }[]> = {};
+    dailyHSMResponses.forEach(r => {
+      if (!byDate[r.date]) byDate[r.date] = [];
+      byDate[r.date].push({ dimension: r.dimension, response: r.response });
+    });
+    return Object.entries(byDate)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .slice(0, 3)
+      .map(([date, responses]) => ({ date, responses }));
+  }, [dailyHSMResponses]);
+
+  function formatReviewDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const month = d.toLocaleDateString('es-ES', { month: 'short' });
+    const dow = d.toLocaleDateString('es-ES', { weekday: 'short' });
+    const isToday = dateStr === today;
+    return isToday ? `${day} ${month} · hoy` : `${day} ${month} · ${dow}`;
+  }
+
+  // hsmProfile puede ser string u objeto — normalizamos sin romper
+  const profileText = useMemo(() => {
+    if (!hsmProfile) return null;
+    if (typeof hsmProfile === 'string') return hsmProfile;
+    if (typeof hsmProfile === 'object' && hsmProfile !== null) {
+      const obj = hsmProfile as Record<string, unknown>;
+      if (typeof obj.text === 'string') return obj.text as string;
+    }
+    return null;
+  }, [hsmProfile]);
+
+  const profileUpdatedAt = useMemo(() => {
+    if (!hsmProfile || typeof hsmProfile !== 'object') return null;
+    const obj = hsmProfile as Record<string, unknown>;
+    return typeof obj.updatedAt === 'string' ? obj.updatedAt as string : null;
+  }, [hsmProfile]);
+
+  function formatProfileDate(dateStr: string | null): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const month = d.toLocaleDateString('es-ES', { month: 'short' });
+    const dow = d.toLocaleDateString('es-ES', { weekday: 'long' });
+    return `actualizado ${dow} ${day} ${month}`;
+  }
+
+  const totalReflections = dailyHSMResponses.length;
+  const daysSinceStart = startDate
+    ? Math.floor((Date.now() - new Date(startDate).getTime()) / 86400000) + 1
+    : 0;
+
   return (
-    <div className="tp-wrap">
-      {/* ── Avatar + name ── */}
-      <div className="tp-header">
-        <label className="tp-avatar">
+    <div className="tu2-wrap">
+      {/* ── Hero ── */}
+      <div className="tu2-hero">
+        <label className="tu2-avatar" style={{ cursor: 'pointer', overflow: 'hidden' }}>
           {profile.avatar_url
-            ? <img src={profile.avatar_url} alt="" />
-            : <div className="tp-avatar-letter">{(firstName || '?')[0].toUpperCase()}</div>
+            ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            : <span>{(firstName || '?')[0].toUpperCase()}</span>
           }
           <input type="file" accept="image/*" onChange={handleAvatar} hidden />
         </label>
-        <div className="tp-name">{profile.display_name || userName || 'Anónimo'}</div>
-        {profile.bio && <div className="tp-bio">{profile.bio}</div>}
-        <button className="tp-edit" onClick={() => onNav('huella')}>Editar perfil</button>
+        <div className="tu2-hero-body">
+          <p className="tu2-hero-micro">
+            {startDate ? `día ${daysSinceStart} · miembro desde ${new Date(startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}` : 'tu perfil'}
+          </p>
+          <h1 className="tu2-hero-name">
+            {profile.display_name || userName || 'Anónimo'}
+            {streakCount > 0 && <>, <em>vas bien.</em></>}
+          </h1>
+          <p className="tu2-hero-sub">
+            {totalReflections > 0
+              ? `${streakCount} días construyendo. ${totalReflections} reflexiones escritas. Este es tu espejo.`
+              : profile.bio || 'Empieza a escribir en Tu Espacio para que tu coach te conozca.'}
+          </p>
+        </div>
+        <button className="tu2-hero-edit" onClick={() => onNav('huella')}>Editar perfil</button>
       </div>
 
       {/* ── Stats ── */}
-      <div className="tp-stats">
-        <div className="tp-stat">
-          <div className="tp-stat-val">{streakCount}</div>
-          <div className="tp-stat-lbl">Racha</div>
+      <div className="tu2-stats">
+        <div className="tu2-stat">
+          <div className="tu2-stat-num">{streakCount}</div>
+          <div className="tu2-stat-label">Racha</div>
         </div>
-        <div className="tp-stat">
-          <div className="tp-stat-val">{hsmUnlockDays.length}</div>
-          <div className="tp-stat-lbl">Días activos</div>
+        <div className="tu2-stat">
+          <div className="tu2-stat-num">{hsmUnlockDays.length}</div>
+          <div className="tu2-stat-label">Días activos</div>
         </div>
-        <div className="tp-stat">
-          <div className="tp-stat-val">{postCount}</div>
-          <div className="tp-stat-lbl">Posts</div>
+        <div className="tu2-stat">
+          <div className="tu2-stat-num">{totalReflections}</div>
+          <div className="tu2-stat-label">Reflexiones</div>
         </div>
-        <div className="tp-stat">
-          <div className="tp-stat-val">{weeksActive}</div>
-          <div className="tp-stat-lbl">Semanas</div>
-        </div>
-      </div>
-
-      {/* ── Quick actions ── */}
-      <div className="tp-actions">
-        <div className="tp-action" onClick={() => onNav('alimentacion')}>
-          <span className="tp-action-icon">🥗</span>
-          <span className="tp-action-lbl">Plan</span>
-        </div>
-        <div className="tp-action" onClick={() => onNav('entrenamiento')}>
-          <span className="tp-action-icon">💪</span>
-          <span className="tp-action-lbl">Rutina</span>
-        </div>
-        <div className="tp-action" onClick={() => onNav('alimentacion')}>
-          <span className="tp-action-icon">🛒</span>
-          <span className="tp-action-lbl">Súper</span>
+        <div className="tu2-stat">
+          <div className="tu2-stat-num">{weeksActive > 1 ? <em>{weeksActive}</em> : weeksActive}</div>
+          <div className="tu2-stat-label">Semanas</div>
         </div>
       </div>
 
-      {/* ── Calories today ── */}
-      <div className="tp-kcal">
-        <div className="tp-kcal-row">
-          <span>Calorías hoy</span>
-          <span className="tp-kcal-val">{todayKcal.toLocaleString()} / {planGoal > 0 ? planGoal.toLocaleString() : '—'}</span>
-        </div>
-        <div className="tp-kcal-bar-wrap">
-          <div className="tp-kcal-bar" style={{ width: `${planGoal > 0 ? Math.min((todayKcal / planGoal) * 100, 100) : 0}%` }} />
-        </div>
-      </div>
-
-      {/* ── Activity calendar ── */}
-      {startDate && (
-        <div className="tp-section">
-          <div className="tp-section-title">Actividad</div>
-          <div className="tp-calendar">
-            {Array.from({ length: 28 }, (_, i) => {
-              const d = new Date(); d.setDate(d.getDate() - (27 - i));
-              const startD = new Date(startDate);
-              const dayIndex = Math.floor((d.getTime() - startD.getTime()) / 86400000);
-              const isActive = hsmUnlockDays.includes(dayIndex);
-              return <div key={i} className={`tp-cal${isActive ? ' on' : ''}${i === 27 ? ' today' : ''}`} />;
-            })}
+      {/* ── Perfil psicológico (pieza central) ── */}
+      <div className="tu2-profile">
+        <div className="tu2-profile-top">
+          <div className="tu2-profile-badge">
+            <span className="tu2-profile-badge-dot" />
+            <span className="tu2-profile-badge-text">Perfil del coach</span>
           </div>
+          {profileUpdatedAt && (
+            <span className="tu2-profile-updated">{formatProfileDate(profileUpdatedAt)}</span>
+          )}
         </div>
-      )}
+        <h2 className="tu2-profile-title">
+          {profileText ? <>Esto es lo que <em>ya sé de ti</em>.</> : <>Aún no <em>te conozco</em>.</>}
+        </h2>
+        {profileText ? (
+          <p className="tu2-profile-text">{profileText}</p>
+        ) : (
+          <div className="tu2-profile-empty">
+            <p className="tu2-profile-empty-text">
+              Tu coach genera este perfil cada domingo basándose en tus reflexiones. Necesita al menos 10 respuestas para empezar. Llevas {totalReflections} de 10.
+            </p>
+          </div>
+        )}
+      </div>
 
-      {/* ── Workout history ── */}
-      {workoutLog.length > 0 && (
-        <div className="tp-section">
-          <div className="tp-section-title">Últimos entrenamientos</div>
-          <div className="tp-history">
-            {[...workoutLog].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5).map((entry, i) => (
-              <div key={i} className="tp-history-item">
-                <div className="tp-history-date">{entry.date}</div>
-                <div className="tp-history-exercise">{entry.exercise}</div>
-                <div className="tp-history-sets">
-                  {entry.sets.map((s, si) => (
-                    <span key={si} className="tp-history-set">{s.reps}×{s.kg}kg</span>
-                  ))}
+      {/* ── 10 dimensiones HSM ── */}
+      {dailyHSMResponses.length > 0 && (
+        <div>
+          <h3 className="tu2-section-title">
+            Tus 10 dimensiones
+            <span className="tu2-section-meta">últimos 30 días</span>
+          </h3>
+          <div className="tu2-dims">
+            {radarData.map(d => (
+              <div key={d.label} className="tu2-dim">
+                <div className="tu2-dim-emoji">{d.emoji}</div>
+                <div className="tu2-dim-body">
+                  <div className="tu2-dim-name">{d.short}</div>
+                  <div className="tu2-dim-bar-track">
+                    <div className="tu2-dim-bar-fill" style={{ width: `${Math.max(d.value * 100, 4)}%` }} />
+                  </div>
                 </div>
+                <span className={`tu2-dim-count${d.count === 0 ? ' zero' : ''}`}>{d.count}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* ── Radar chart ── */}
-      {dailyHSMResponses.length > 0 && (
-        <div className="tp-section">
-          <div className="tp-section-title">Tus dimensiones</div>
-          <div className="tp-radar-wrap">
-            <svg viewBox="0 0 300 300" className="tp-radar">
-              {[0.25, 0.5, 0.75, 1].map(r => (
-                <polygon key={r} className="tp-radar-ring" points={
-                  Array.from({ length: 10 }, (_, i) => {
-                    const a = (Math.PI * 2 * i / 10) - Math.PI / 2;
-                    return `${150 + Math.cos(a) * 120 * r},${150 + Math.sin(a) * 120 * r}`;
-                  }).join(' ')
-                } />
-              ))}
-              <polygon className="tp-radar-fill" points={
-                radarData.map((d, i) => {
-                  const a = (Math.PI * 2 * i / 10) - Math.PI / 2;
-                  const v = Math.max(d.value, 0.05);
-                  return `${150 + Math.cos(a) * 120 * v},${150 + Math.sin(a) * 120 * v}`;
-                }).join(' ')
-              } />
-              {radarData.map((d, i) => {
-                const a = (Math.PI * 2 * i / 10) - Math.PI / 2;
-                return (
-                  <text key={i} x={150 + Math.cos(a) * 145} y={150 + Math.sin(a) * 145}
-                    className="tp-radar-lbl" textAnchor="middle" dominantBaseline="middle">{d.label}</text>
-                );
-              })}
-            </svg>
+      {/* ── Accesos rápidos ── */}
+      <div>
+        <h3 className="tu2-section-title">Accesos rápidos</h3>
+        <div className="tu2-quick">
+          <div className="tu2-quick-card" onClick={() => onNav('alimentacion')}>
+            <div className="tu2-quick-icon">🥗</div>
+            <div className="tu2-quick-body">
+              <div className="tu2-quick-name">Plan</div>
+              <div className="tu2-quick-sub">Tu semana</div>
+            </div>
+          </div>
+          <div className="tu2-quick-card" onClick={() => onNav('entrenamiento')}>
+            <div className="tu2-quick-icon">💪</div>
+            <div className="tu2-quick-body">
+              <div className="tu2-quick-name">Rutina</div>
+              <div className="tu2-quick-sub">Genera la de hoy</div>
+            </div>
+          </div>
+          <div className="tu2-quick-card" onClick={() => onNav('alimentacion')}>
+            <div className="tu2-quick-icon">🛒</div>
+            <div className="tu2-quick-body">
+              <div className="tu2-quick-name">Súper</div>
+              <div className="tu2-quick-sub">Tu lista</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Historial de observaciones ── */}
+      {recentReviews.length > 0 && (
+        <div>
+          <h3 className="tu2-section-title">
+            Tus observaciones
+            <span className="tu2-section-meta">últimas {recentReviews.length}</span>
+          </h3>
+          <div className="tu2-reviews">
+            {recentReviews.map(({ date, responses }) => (
+              <div key={date} className="tu2-review">
+                <div className="tu2-review-top">
+                  <span className="tu2-review-date">{formatReviewDate(date)}</span>
+                  <span className="tu2-review-type">{responses.length} reflexión{responses.length !== 1 ? 'es' : ''}</span>
+                </div>
+                <p className="tu2-review-text">
+                  {responses.slice(0, 2).map((r, i) => (
+                    <span key={i}>
+                      {i > 0 && ' · '}
+                      <em>"{r.response.substring(0, 80)}{r.response.length > 80 ? '...' : ''}"</em>
+                    </span>
+                  ))}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* ── Milestones ── */}
-      <div className="tp-section">
-        <div className="tp-section-title">Logros</div>
-        <div className="tp-milestones">
+      {/* ── Últimos entrenamientos ── */}
+      {workoutLog.length > 0 && (
+        <div>
+          <h3 className="tu2-section-title">
+            Últimos entrenamientos
+            <span className="tu2-section-meta">{workoutLog.length} totales</span>
+          </h3>
+          <div className="tu2-reviews">
+            {[...workoutLog].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3).map((entry, i) => (
+              <div key={i} className="tu2-review">
+                <div className="tu2-review-top">
+                  <span className="tu2-review-date">{formatReviewDate(entry.date)}</span>
+                  <span className="tu2-review-type">{entry.sets.length} series</span>
+                </div>
+                <p className="tu2-review-text" style={{ fontStyle: 'normal' }}>
+                  {entry.exercise} · {entry.sets.map(s => `${s.reps}×${s.kg}kg`).join(' · ')}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Logros ── */}
+      <div>
+        <h3 className="tu2-section-title">
+          Logros
+          <span className="tu2-section-meta">racha</span>
+        </h3>
+        <div className="tu2-milestones">
           {[3,7,14,21,30,60,90].map(m => (
-            <div key={m} className={`tp-milestone${streakCount >= m ? ' on' : ''}`}>
-              <span className="tp-milestone-num">{m}</span>
-              <span className="tp-milestone-lbl">días</span>
+            <div key={m} className={`tu2-milestone${streakCount >= m ? ' reached' : ''}`}>
+              <span className="tu2-milestone-num">{m}</span>
+              <span className="tu2-milestone-label">días</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Profile data ── */}
-      <div className="tp-section">
-        <div className="tp-section-title">Perfil</div>
-        <div className="tp-profile-data">
-          <div className="tp-row"><span>Sexo</span><span>{String(obData.sex || '—')}</span></div>
-          <div className="tp-row"><span>Edad</span><span>{obData.edad ? `${obData.edad} años` : '—'}</span></div>
-          <div className="tp-row"><span>Peso</span><span>{obData.peso ? `${obData.peso} kg` : '—'}</span></div>
-          <div className="tp-row"><span>Estatura</span><span>{obData.estatura ? `${obData.estatura} cm` : '—'}</span></div>
-          <div className="tp-row"><span>Actividad</span><span>{String(obData.activity || '—')}</span></div>
-          <div className="tp-row"><span>Objetivo</span><span>{String(obData.goal || '—')}</span></div>
-          {planGoal > 0 && <div className="tp-row"><span>Meta calórica</span><span className="tp-kcal-highlight">{planGoal.toLocaleString()} kcal/día</span></div>}
-          {tdee > 0 && <div className="tp-row"><span>TDEE</span><span>{tdee.toLocaleString()} kcal</span></div>}
+      {/* ── Calorías hoy (compact) ── */}
+      {planGoal > 0 && (
+        <div>
+          <h3 className="tu2-section-title">
+            Calorías hoy
+            <span className="tu2-section-meta">{todayKcal.toLocaleString()} / {planGoal.toLocaleString()}</span>
+          </h3>
+          <div style={{
+            background: 'white',
+            border: '0.5px solid var(--sand)',
+            borderRadius: '14px',
+            padding: '14px 18px',
+          }}>
+            <div style={{
+              height: '5px',
+              background: 'var(--sand)',
+              borderRadius: '10px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                width: `${Math.min((todayKcal / planGoal) * 100, 100)}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, var(--amber) 0%, #d4b374 100%)',
+                borderRadius: '10px',
+                transition: 'width 0.4s',
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Tus datos ── */}
+      <div>
+        <h3 className="tu2-section-title">Tus datos</h3>
+        <div className="tu2-data">
+          <div className="tu2-data-row">
+            <span className="tu2-data-key">Sexo</span>
+            <span className="tu2-data-val">{String(obData.sex || '—')}</span>
+          </div>
+          <div className="tu2-data-row">
+            <span className="tu2-data-key">Edad</span>
+            <span className="tu2-data-val">{obData.edad ? `${obData.edad} años` : '—'}</span>
+          </div>
+          <div className="tu2-data-row">
+            <span className="tu2-data-key">Peso</span>
+            <span className="tu2-data-val">{obData.peso ? `${obData.peso} kg` : '—'}</span>
+          </div>
+          <div className="tu2-data-row">
+            <span className="tu2-data-key">Estatura</span>
+            <span className="tu2-data-val">{obData.estatura ? `${obData.estatura} cm` : '—'}</span>
+          </div>
+          <div className="tu2-data-row">
+            <span className="tu2-data-key">Actividad</span>
+            <span className="tu2-data-val">{String(obData.activity || '—')}</span>
+          </div>
+          <div className="tu2-data-row">
+            <span className="tu2-data-key">Objetivo</span>
+            <span className="tu2-data-val">{String(obData.goal || '—')}</span>
+          </div>
+          {planGoal > 0 && (
+            <div className="tu2-data-row">
+              <span className="tu2-data-key">Meta calórica</span>
+              <span className="tu2-data-val accent">{planGoal.toLocaleString()} kcal/día</span>
+            </div>
+          )}
+          {tdee > 0 && (
+            <div className="tu2-data-row">
+              <span className="tu2-data-key">TDEE</span>
+              <span className="tu2-data-val">{tdee.toLocaleString()} kcal</span>
+            </div>
+          )}
+          {postCount > 0 && (
+            <div className="tu2-data-row">
+              <span className="tu2-data-key">Posts en el club</span>
+              <span className="tu2-data-val">{postCount}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── Logout ── */}
-      <button className="tp-logout" onClick={logout}>Cerrar sesión</button>
+      <button className="tu2-logout" onClick={logout}>Cerrar sesión</button>
     </div>
   );
 }
