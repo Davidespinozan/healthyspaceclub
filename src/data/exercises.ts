@@ -26,6 +26,10 @@ export const exercises: Exercise[] = [
       { title: 'Repetición', desc: 'Repite sin bloquear los codos arriba para mantener tensión.' },
     ],
     tip: 'Mantén las escápulas retraídas y los pies firmes en el suelo.',
+    videos: [
+      { url: 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/exercises-videos/270e9694-1efe-451f-ae0b-eda66c910cd4.mp4', label: 'Ejecución' },
+      { url: 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/exercises-videos/737bf598-63f0-45c0-b74a-9a72354bf720.mp4', label: 'Ángulo lateral' },
+    ],
     category: '4 series',
     bg: 'linear-gradient(135deg,#EDE9E0,#E0D9CA)',
   },
@@ -328,6 +332,9 @@ export const exercises: Exercise[] = [
       { title: 'Bajada', desc: 'Baja controlado sintiendo el estiramiento del dorsal.' },
     ],
     tip: 'Mantén la espalda neutra — nunca redondees la columna.',
+    videos: [
+      { url: 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/exercises-videos/9f105240-3d20-4a5b-be22-456bbc3ec391.mp4', label: 'Ejecución' },
+    ],
     category: '4 series',
     bg: 'linear-gradient(135deg,#e0f0e8,#c8e8d5)',
   },
