@@ -1,4 +1,4 @@
-UEimport { useState } from 'react';
+import { useState } from 'react';
 import { useAppStore } from '../store';
 import { useLifeSystemStore, calKey } from '../store/lifeSystemStore';
 import type { LSPanel } from '../types/lifeSystem';
