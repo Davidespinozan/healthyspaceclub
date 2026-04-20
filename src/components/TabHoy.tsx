@@ -170,7 +170,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     weeklyPlan, lastWeeklyReview,
     streakCount, obData,
     dailyBriefing, setDailyBriefing,
-    dailyCheckin, dailyCheckinDate, setDailyCheckin,
+    dailyCheckin, dailyCheckinDate,
     dailyHSMResponses,
     lastStreakMilestone, setLastStreakMilestone,
     nightCheckIn,
@@ -531,30 +531,6 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
 
       {/* ── BODY ── */}
       <div className="th2-body">
-
-        {/* Check-in de energía */}
-        {!checkinDone ? (
-          <div className="th2-checkin">
-            <div className="th2-checkin-label">¿Cómo amaneciste?</div>
-            <div className="th2-checkin-opts">
-              {([['cansado', '😴', 'Cansado'], ['regular', '😐', 'Regular'], ['energia', '⚡', 'Con energía']] as const).map(([val, icon, lbl]) => (
-                <button key={val} className="th2-checkin-btn" onClick={() => setDailyCheckin(val)}>
-                  <span className="th2-checkin-icon">{icon}</span>
-                  <span className="th2-checkin-lbl">{lbl}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="th2-checkin-done">
-            <span className="th2-checkin-done-icon">
-              {dailyCheckin === 'energia' ? '⚡' : dailyCheckin === 'regular' ? '😐' : '😴'}
-            </span>
-            <span className="th2-checkin-done-text">
-              {dailyCheckin === 'energia' ? 'Con energía' : dailyCheckin === 'regular' ? 'Regular' : 'Cansado'} · registrado
-            </span>
-          </div>
-        )}
 
         {/* Intención del día */}
         <div className="th2-intention">
