@@ -687,4 +687,195 @@
   .dt2-gen-title {
     font-size: 18px;
   }
+  .dt2-mod-card {
+    padding: 14px 14px;
+  }
+  .dt2-mod-emoji {
+    font-size: 24px;
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   STEP INDICATOR (progress dots)
+   ══════════════════════════════════════════════════════════ */
+
+.dt2-step-indicator {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.dt2-step-dot {
+  flex: 1;
+  height: 3px;
+  border-radius: 10px;
+  background: var(--dt2-sand);
+  transition: background 0.3s;
+}
+
+.dt2-step-dot.active,
+.dt2-step-dot.done {
+  background: var(--dt2-amber);
+}
+
+/* ══════════════════════════════════════════════════════════
+   MODALITY CARDS (step 1)
+   ══════════════════════════════════════════════════════════ */
+
+.dt2-modality-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.dt2-mod-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 16px;
+  background: white;
+  border: 1.5px solid var(--dt2-sand);
+  border-radius: 18px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dt2-mod-card:hover,
+.dt2-mod-card:active {
+  border-color: var(--dt2-amber);
+}
+
+.dt2-mod-card.selected {
+  border-color: var(--dt2-forest);
+  background: rgba(30, 51, 48, 0.04);
+}
+
+.dt2-mod-card.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dt2-mod-card.locked:hover {
+  border-color: var(--dt2-sand);
+}
+
+.dt2-mod-emoji {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--dt2-warm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.dt2-mod-card.selected .dt2-mod-emoji {
+  background: var(--dt2-forest);
+}
+
+.dt2-mod-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dt2-mod-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dt2-forest);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dt2-mod-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dt2-amber);
+  background: rgba(191, 160, 101, 0.12);
+  padding: 2px 8px;
+  border-radius: 50px;
+}
+
+.dt2-mod-sub {
+  font-size: 11.5px;
+  color: var(--dt2-txt2);
+  line-height: 1.4;
+}
+
+.dt2-mod-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--dt2-forest);
+  color: var(--dt2-amber);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   GENERATING BULLETS
+   ══════════════════════════════════════════════════════════ */
+
+.dt2-gen-bullets {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.dt2-gen-bullet {
+  font-size: 12px;
+  color: var(--dt2-txt2);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* ══════════════════════════════════════════════════════════
+   WHY CARD (in plan view)
+   ══════════════════════════════════════════════════════════ */
+
+.dt2-card-why {
+  background: rgba(191, 160, 101, 0.08);
+  border: 0.5px solid rgba(191, 160, 101, 0.2);
+  border-left: 3px solid var(--dt2-amber);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.dt2-card-why-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dt2-amber);
+  margin-bottom: 5px;
+}
+
+.dt2-card-why-text {
+  font-size: 12.5px;
+  color: var(--dt2-forest);
+  line-height: 1.55;
+  font-style: italic;
+  margin: 0;
 }

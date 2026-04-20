@@ -3,6 +3,7 @@ import type {
   MuscleGroup,
   Equipment,
   Goal,
+  Modality,
   WorkoutDayType,
   WorkoutDayDecision
 } from '../types';
@@ -371,4 +372,85 @@ export function exerciseCountForDuration(minutes: number): number {
   if (minutes <= 25) return 5;
   if (minutes <= 45) return 7;
   return 9;
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODALITY HELPERS
+// ══════════════════════════════════════════════════════════════
+
+export function getExerciseModalities(ex: Exercise): string[] {
+  const mods = new Set<string>();
+  if (ex.goals.includes('fuerza') || ex.goals.includes('hipertrofia')) {
+    mods.add('fuerza');
+    mods.add('hipertrofia');
+  }
+  if (ex.goals.includes('condicion') || ex.type === 'cardio' || ex.type === 'funcional') {
+    mods.add('cardio');
+    mods.add('hiit');
+  }
+  if (ex.goals.includes('movilidad') || ex.type === 'movilidad' || ex.type === 'activacion') {
+    mods.add('yoga');
+    mods.add('movilidad');
+    mods.add('recovery');
+  }
+  return Array.from(mods);
+}
+
+export function filterByModality(exercises: Exercise[], modality: Modality): Exercise[] {
+  if (modality === 'auto') return exercises;
+  const modalityMap: Record<string, string[]> = {
+    'fuerza': ['fuerza', 'hipertrofia'],
+    'yoga': ['yoga', 'movilidad', 'recovery'],
+    'cardio': ['cardio', 'hiit'],
+  };
+  const tags = modalityMap[modality] || [];
+  return exercises.filter(ex => {
+    const exMods = getExerciseModalities(ex);
+    return tags.some(t => exMods.includes(t));
+  });
+}
+
+export function countByModality(exercises: Exercise[]): Record<string, number> {
+  const counts: Record<string, number> = { fuerza: 0, yoga: 0, cardio: 0 };
+  exercises.forEach(ex => {
+    const mods = getExerciseModalities(ex);
+    if (mods.includes('fuerza')) counts.fuerza++;
+    if (mods.includes('yoga')) counts.yoga++;
+    if (mods.includes('cardio')) counts.cardio++;
+  });
+  return counts;
+}
+
+export function suggestModality(params: {
+  workoutLog: WorkoutEntry[];
+  exercises: Exercise[];
+  dailyEnergy?: string;
+  streakCount?: number;
+}): { modality: Modality; reason: string } {
+  const { workoutLog, exercises, dailyEnergy } = params;
+  const history = analyzeWorkoutHistory(workoutLog, exercises);
+
+  // Tired → suggest yoga
+  if (dailyEnergy === 'cansado') {
+    return { modality: 'yoga', reason: 'Tu check-in dice que estás cansado — yoga te va a sentar bien' };
+  }
+
+  // 4+ consecutive strength days → suggest yoga
+  const last4Dates = Array.from({ length: 4 }, (_, i) =>
+    new Date(Date.now() - i * 86400000).toISOString().split('T')[0]
+  );
+  const consecutiveStrength = last4Dates.every(date =>
+    workoutLog.some(e => e.date === date)
+  );
+  if (consecutiveStrength) {
+    return { modality: 'yoga', reason: 'Llevas 4+ días entrenando seguidos — tu cuerpo necesita recovery' };
+  }
+
+  // 3+ rest days → suggest auto (full body)
+  if (history.restDays >= 3) {
+    return { modality: 'auto', reason: `Llevas ${history.restDays} días sin entrenar — hora de reactivar` };
+  }
+
+  // Default
+  return { modality: 'auto', reason: 'Tu coach analiza tu historial y decide lo mejor para hoy' };
 }

@@ -44,6 +44,8 @@ export type ExerciseType =
 
 export type Difficulty = 'principiante' | 'intermedio' | 'avanzado';
 
+export type Modality = 'auto' | 'fuerza' | 'yoga' | 'cardio';
+
 export interface ExerciseVideo {
   url: string;
   label?: string;
