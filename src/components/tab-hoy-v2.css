@@ -10,14 +10,14 @@
   flex-direction: column;
   gap: 0;
   padding-bottom: 24px;
-  background: #1e3330;
 }
 
 /* ─── Hero editorial oscuro ─── */
 .th2-hero {
   background: linear-gradient(168deg, #1e3330 0%, #2E4A42 55%, #3d6359 100%);
   color: var(--cream);
-  padding: 28px 22px 32px;
+  padding: calc(28px + env(safe-area-inset-top, 0px)) 22px 32px;
+  margin-top: calc(-1 * env(safe-area-inset-top, 0px));
   position: relative;
   overflow: hidden;
 }
@@ -159,7 +159,6 @@
   max-width: 600px;
   margin: 0 auto;
   width: 100%;
-  background: var(--cream);
 }
 
 /* ─── Check-in pill ─── */
