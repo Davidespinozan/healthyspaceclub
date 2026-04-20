@@ -553,46 +553,6 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
           </div>
         </div>
 
-        {/* Tu espacio HSM — la pieza central */}
-        {allAnswered ? (
-          <div className="th2-espacio-done">
-            <div className="th2-espacio-done-label">Tu observación de hoy</div>
-            <p className="th2-espacio-done-text">
-              {dailyReview || 'Las 5 de hoy, listas. Tu coach ya analizó tus respuestas.'}
-            </p>
-            <button className="th2-espacio-done-btn" onClick={() => setShowEspacioFlow(true)}>
-              Ver review completo
-            </button>
-          </div>
-        ) : (
-          <div className="th2-espacio" onClick={() => setShowEspacioFlow(true)}>
-            <div className="th2-espacio-top">
-              <div className="th2-espacio-badge">
-                <span className="th2-espacio-badge-dot" />
-                <span className="th2-espacio-badge-text">Tu Espacio</span>
-              </div>
-              <span className="th2-espacio-count">{todayHSMAnswered}/{todayDimensions.length}</span>
-            </div>
-            <h2 className="th2-espacio-title">
-              {todayHSMAnswered === 0
-                ? <>Hoy toca abrir <em>tu espacio</em>.</>
-                : <>Ya escribiste <em>{todayHSMAnswered}</em>. Faltan {todayDimensions.length - todayHSMAnswered}.</>
-              }
-            </h2>
-            <p className="th2-espacio-sub">
-              5 preguntas de reflexión. Tu coach te devuelve un insight citando tus palabras.
-            </p>
-            <div className="th2-espacio-dots">
-              {Array.from({ length: todayDimensions.length }).map((_, i) => (
-                <div key={i} className={`th2-espacio-dot${i < todayHSMAnswered ? ' done' : ''}`} />
-              ))}
-            </div>
-            <button className="th2-espacio-btn">
-              {todayHSMAnswered === 0 ? 'Empezar →' : 'Continuar →'}
-            </button>
-          </div>
-        )}
-
         {/* ── Alimentación ── */}
         <div className="th2-section-label">
           <span className="th2-section-title">Alimentación</span>
@@ -850,6 +810,46 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
             </section>
           );
         })()}
+
+        {/* Tu espacio HSM */}
+        {allAnswered ? (
+          <div className="th2-espacio-done">
+            <div className="th2-espacio-done-label">Tu observación de hoy</div>
+            <p className="th2-espacio-done-text">
+              {dailyReview || 'Las 5 de hoy, listas. Tu coach ya analizó tus respuestas.'}
+            </p>
+            <button className="th2-espacio-done-btn" onClick={() => setShowEspacioFlow(true)}>
+              Ver review completo
+            </button>
+          </div>
+        ) : (
+          <div className="th2-espacio" onClick={() => setShowEspacioFlow(true)}>
+            <div className="th2-espacio-top">
+              <div className="th2-espacio-badge">
+                <span className="th2-espacio-badge-dot" />
+                <span className="th2-espacio-badge-text">Tu Espacio</span>
+              </div>
+              <span className="th2-espacio-count">{todayHSMAnswered}/{todayDimensions.length}</span>
+            </div>
+            <h2 className="th2-espacio-title">
+              {todayHSMAnswered === 0
+                ? <>Hoy toca abrir <em>tu espacio</em>.</>
+                : <>Ya escribiste <em>{todayHSMAnswered}</em>. Faltan {todayDimensions.length - todayHSMAnswered}.</>
+              }
+            </h2>
+            <p className="th2-espacio-sub">
+              5 preguntas de reflexión. Tu coach te devuelve un insight citando tus palabras.
+            </p>
+            <div className="th2-espacio-dots">
+              {Array.from({ length: todayDimensions.length }).map((_, i) => (
+                <div key={i} className={`th2-espacio-dot${i < todayHSMAnswered ? ' done' : ''}`} />
+              ))}
+            </div>
+            <button className="th2-espacio-btn">
+              {todayHSMAnswered === 0 ? 'Empezar →' : 'Continuar →'}
+            </button>
+          </div>
+        )}
 
         {/* Day 5 review */}
         {miniReview && (
