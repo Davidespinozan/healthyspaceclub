@@ -525,16 +525,25 @@
     gap: 20px;
   }
   .tu2-hero {
-    flex-wrap: wrap;
-    gap: 14px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
   }
   .tu2-avatar {
-    width: 64px;
-    height: 64px;
-    font-size: 26px;
+    width: 72px;
+    height: 72px;
+    font-size: 28px;
+  }
+  .tu2-hero-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .tu2-hero-name {
     font-size: 22px;
+    line-height: 1.15;
+    word-break: break-word;
   }
   .tu2-hero-sub {
     font-size: 11.5px;
@@ -542,6 +551,7 @@
   .tu2-hero-edit {
     padding: 7px 14px;
     font-size: 11px;
+    align-self: center;
   }
   .tu2-stats {
     padding: 14px 0;
