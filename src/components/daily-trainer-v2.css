@@ -17,7 +17,7 @@
   color: var(--dt2-txt);
   max-width: 640px;
   margin: 0 auto;
-  padding: 0 20px 40px;
+  padding: 0 20px 100px;
 }
 
 .dt2-wrap * {
@@ -225,7 +225,8 @@
   justify-content: center;
 }
 
-.dt2-chip:hover {
+.dt2-chip:hover,
+.dt2-chip:active {
   border-color: var(--dt2-amber);
 }
 
@@ -515,7 +516,8 @@
   cursor: pointer;
 }
 
-.dt2-ex:hover {
+.dt2-ex:hover,
+.dt2-ex:active {
   border-color: var(--dt2-amber);
 }
 

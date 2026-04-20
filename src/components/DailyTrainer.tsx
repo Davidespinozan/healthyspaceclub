@@ -22,6 +22,7 @@ import type {
   WorkoutDayDecision,
 } from '../types';
 import { RefreshCw, Clock, Zap, ChevronRight, Lock, Settings } from 'lucide-react';
+import ExerciseDetailPopout from './ExerciseDetailPopout';
 import './daily-trainer-v2.css';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
@@ -187,6 +188,13 @@ export default function DailyTrainer() {
     dailyEnergy: dailyCheckIn?.date === today ? dailyCheckIn.feeling as any : undefined,
     dailySleep: dailyCheckIn?.date === today ? dailyCheckIn.sleep as any : undefined,
   }), [obData, workoutLog, dailyCheckIn, today]);
+
+  // ── Exercise detail popout
+  const [selectedExercise, setSelectedExercise] = useState<{
+    exercise: Exercise;
+    planData: { sets: number; reps: string; rest: number; tip_personalizado?: string };
+    index: number;
+  } | null>(null);
 
   // ── Local state
   const [phase, setPhase] = useState<Phase>(() => {
@@ -660,10 +668,40 @@ export default function DailyTrainer() {
               const bank = exerciseMap.get(ex.id);
               const isDone = checked.includes(i);
               return (
-                <div key={`${ex.id}-${i}`} className={`dt2-ex${isDone ? ' done' : ''}`}>
+                <div
+                  key={`${ex.id}-${i}`}
+                  className={`dt2-ex${isDone ? ' done' : ''}`}
+                  onClick={() => {
+                    const fallback: Exercise = {
+                      id: ex.id || `ex-${i}`,
+                      name: bank?.name || ex.id || 'Ejercicio',
+                      emoji: '💪',
+                      desc: '',
+                      muscleGroup: 'cuerpo-completo',
+                      equipment: ['gym'],
+                      goals: ['hipertrofia'],
+                      type: 'compuesto',
+                      difficulty: 'intermedio',
+                      defaultSets: 3,
+                      defaultReps: '10',
+                      defaultRest: 60,
+                      steps: [],
+                    };
+                    setSelectedExercise({
+                      exercise: bank || fallback,
+                      planData: {
+                        sets: typeof ex.sets === 'number' ? ex.sets : parseInt(ex.sets) || 3,
+                        reps: String(ex.reps || '10'),
+                        rest: typeof ex.rest === 'number' ? ex.rest : parseInt(ex.rest) || 60,
+                        tip_personalizado: ex.tip_personalizado,
+                      },
+                      index: i,
+                    });
+                  }}
+                >
                   <button
                     className="dt2-ex-check"
-                    onClick={() => toggleCheck(i)}
+                    onClick={(e) => { e.stopPropagation(); toggleCheck(i); }}
                     aria-label={isDone ? 'Desmarcar' : 'Marcar como hecho'}
                   >
                     {isDone ? '✓' : ''}
@@ -698,6 +736,16 @@ export default function DailyTrainer() {
           <div className="dt2-note">
             <p className="dt2-note-text">{plan.note}</p>
           </div>
+        )}
+
+        {selectedExercise && (
+          <ExerciseDetailPopout
+            exercise={selectedExercise.exercise}
+            planData={selectedExercise.planData}
+            isDone={checked.includes(selectedExercise.index)}
+            onToggleDone={() => toggleCheck(selectedExercise.index)}
+            onClose={() => setSelectedExercise(null)}
+          />
         )}
       </div>
     );

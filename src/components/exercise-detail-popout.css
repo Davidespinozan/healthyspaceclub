@@ -372,7 +372,7 @@
 /* ── Footer CTA ──────────────────────────── */
 
 .edp-footer {
-  padding: 16px 22px 22px;
+  padding: 16px 22px calc(22px + env(safe-area-inset-bottom, 0px));
   border-top: 0.5px solid var(--edp-sand);
   background: var(--edp-cream);
   position: sticky;
