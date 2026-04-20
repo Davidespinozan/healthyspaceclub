@@ -194,6 +194,18 @@ export default function Stories() {
               🔥 {viewing.fire_count > 0 ? viewing.fire_count : ''}
             </button>
 
+            {/* Delete (only own stories) */}
+            {viewing.user_id === userId && (
+              <button className="st-viewer-delete" onClick={async (e) => {
+                e.stopPropagation();
+                await supabase.from('club_posts').delete().eq('id', viewing.id);
+                setPosts(prev => prev.filter(p => p.id !== viewing.id));
+                setViewingIdx(null);
+              }}>
+                🗑️ Borrar
+              </button>
+            )}
+
             {/* Nav arrows */}
             {viewingIdx !== null && viewingIdx > 0 && (
               <div className="st-nav st-nav-prev" onClick={(e) => { e.stopPropagation(); setViewingIdx(viewingIdx! - 1); }} />
