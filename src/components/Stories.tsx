@@ -22,6 +22,7 @@ export default function Stories() {
   const [posts, setPosts] = useState<StoryPost[]>([]);
   const [viewingIdx, setViewingIdx] = useState<number | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [userAvatarUrl, setUserAvatarUrl] = useState('');
   const [shareText, setShareText] = useState('');
   const [shareMedia, setShareMedia] = useState<File | null>(null);
   const [sharePreview, setSharePreview] = useState<string | null>(null);
@@ -45,6 +46,12 @@ export default function Stories() {
   }, [today]);
 
   useEffect(() => { fetchPosts(); }, [fetchPosts]);
+
+  // Fetch user's avatar
+  useEffect(() => {
+    supabase.from('user_profiles').select('avatar_url').eq('user_id', userId).single()
+      .then(({ data }) => { if (data?.avatar_url) setUserAvatarUrl(data.avatar_url); });
+  }, [userId]);
 
   // Group by user (show 1 bubble per user, latest post)
   const userStories = posts.reduce<Record<string, StoryPost[]>>((acc, p) => {
@@ -82,7 +89,7 @@ export default function Stories() {
     await supabase.from('club_posts').insert({
       user_id: userId,
       username: userName || 'Anónimo',
-      avatar_url: '',
+      avatar_url: userAvatarUrl,
       streak: streakCount,
       workout_summary: workoutSummary,
       photo_url: photoUrl,
