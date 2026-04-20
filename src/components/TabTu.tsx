@@ -140,7 +140,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
           </p>
           <h1 className="tu2-hero-name">
             {profile.display_name || userName || 'Anónimo'}
-            {streakCount > 0 && <>, <em>vas bien.</em></>}
+            {streakCount > 0 && <>, <em>{streakCount >= 30 ? 'eres élite.' : streakCount >= 15 ? 'imparable.' : streakCount >= 8 ? 'en racha.' : streakCount >= 4 ? 'vas bien.' : 'empezando.'}</em></>}
           </h1>
           <p className="tu2-hero-sub">
             {totalReflections > 0
