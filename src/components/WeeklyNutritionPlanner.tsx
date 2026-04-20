@@ -3,19 +3,19 @@ import { useAppStore } from '../store';
 import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
-import { RefreshCw, ShoppingCart, ChevronRight, Calendar } from 'lucide-react';
+import { RefreshCw, ShoppingCart, ChevronRight, Calendar, Lock } from 'lucide-react';
+import './weekly-nutrition-planner-v2.css';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
 const DAY_NAMES      = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const DAY_NAMES_FULL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-/* ── Questions ──────────────────────────────────────────────────── */
 const QUESTIONS = [
   {
     id: 'cuisines',
     question: '¿Qué cocinas te apetecen esta semana?',
-    emoji: '🌍',
+    hint: 'Puedes elegir varias o mezclar todo.',
     multi: true,
     options: [
       { label: 'Mexicana',   value: 'mexicana',  icon: '🇲🇽' },
@@ -28,7 +28,7 @@ const QUESTIONS = [
   {
     id: 'cravings',
     question: '¿Alguna preferencia de comida esta semana?',
-    emoji: '✍️',
+    hint: 'Cuéntame en tus palabras o salta.',
     multi: false,
     freeText: true,
     placeholder: 'ej. pasta, pollo, algo ligero, sin gluten, más verduras...',
@@ -37,7 +37,7 @@ const QUESTIONS = [
   {
     id: 'avoid',
     question: '¿Algo que prefieras evitar?',
-    emoji: '🚫',
+    hint: 'Elige una opción para continuar.',
     multi: false,
     options: [
       { label: 'Nada, como de todo', value: 'nada',      icon: '✅' },
@@ -49,17 +49,14 @@ const QUESTIONS = [
   },
 ];
 
-/* ── Meal time visual metadata ──────────────────────────────────── */
-const MEAL_META: Record<string, { emoji: string; color: string }> = {
-  'Desayuno':  { emoji: '🌅', color: '#f59e0b' },
-  'Snack AM':  { emoji: '🍎', color: '#10b981' },
-  'Comida':    { emoji: '🍽️', color: '#2d7a4f' },
-  'Snack PM':  { emoji: '🥜', color: '#8b5cf6' },
-  'Cena':      { emoji: '🌙', color: '#3b82f6' },
-  'default':   { emoji: '🥗', color: '#2d7a4f' },
+const MEAL_EMOJI: Record<string, string> = {
+  'Desayuno': '🌅',
+  'Snack AM': '🍎',
+  'Comida': '🍽️',
+  'Snack PM': '🥜',
+  'Cena': '🌙',
 };
 
-/* ── Meal catalogue for Claude ─────────────────────────────────── */
 const CUISINES_MAP = [
   { id: 'mexicana',  label: 'Mexicana',  days: [1, 7]   },
   { id: 'japonesa',  label: 'Japonesa',  days: [8, 14]  },
@@ -79,7 +76,6 @@ function buildMealList(planKey: string): string {
   }).join('\n');
 }
 
-/* ── Claude API call ────────────────────────────────────────────── */
 async function generateWeeklyPlan(params: {
   planKey: string;
   planGoal: number;
@@ -149,9 +145,6 @@ Responde SOLO este JSON, sin markdown, sin texto extra:
   return JSON.parse(cleaned);
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   Main component
-══════════════════════════════════════════════════════════════════ */
 export default function WeeklyNutritionPlanner() {
   const {
     shoppingDay, setShoppingDay,
@@ -161,16 +154,15 @@ export default function WeeklyNutritionPlanner() {
     planRegenCount, incrementPlanRegen,
   } = useAppStore();
 
-  // Regen limit: max 2 per week (Sunday-anchored)
   const weekStart = (() => {
     const d = new Date();
     d.setDate(d.getDate() - d.getDay());
     return d.toISOString().split('T')[0];
   })();
   const regenThisWeek = planRegenCount?.weekStart === weekStart ? planRegenCount.count : 0;
-  const regenBlocked  = regenThisWeek >= 2;
+  const regenBlocked = regenThisWeek >= 2;
+  const regenLeft = Math.max(0, 2 - regenThisWeek);
 
-  /* ── Local state ── */
   const [phase, setPhase] = useState<'setup-day' | 'questions' | 'generating' | 'plan' | 'error'>(
     () => {
       if (shoppingDay === null) return 'setup-day';
@@ -182,13 +174,12 @@ export default function WeeklyNutritionPlanner() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [multiSel, setMultiSel] = useState<string[]>([]);
   const [freeText, setFreeText] = useState('');
-  const [error, setError]  = useState('');
+  const [error, setError] = useState('');
   const [activeDay, setActiveDay] = useState(() =>
     shoppingDay !== null ? (new Date().getDay() - shoppingDay + 7) % 7 : 0
   );
   const [showShopping, setShowShopping] = useState(false);
 
-  /* ── Derived data ── */
   const activeMealPlan = mealPlans[mealPlanKey] ?? mealPlans['planA'];
   const scaledPlan = useMemo(
     () => planGoal > 0 ? scalePlan(activeMealPlan, planGoal) : activeMealPlan,
@@ -197,13 +188,10 @@ export default function WeeklyNutritionPlanner() {
   const todayOffset = shoppingDay !== null ? (new Date().getDay() - shoppingDay + 7) % 7 : -1;
   const firstName = userName?.split(' ')[0] || '';
 
-  /* ── Option select (single + multi) ── */
   function handleOption(value: string) {
     const q = QUESTIONS[step];
-
     if (q.multi) {
       if (value === 'todas') {
-        // "Mezcla todo" deselects others
         const next = multiSel.includes('todas') ? [] : ['todas'];
         setMultiSel(next);
         return;
@@ -213,8 +201,6 @@ export default function WeeklyNutritionPlanner() {
       );
       return;
     }
-
-    // Single select — advance immediately
     advance({ ...answers, [q.id]: value });
   }
 
@@ -227,16 +213,12 @@ export default function WeeklyNutritionPlanner() {
 
   async function advance(newAnswers: Record<string, string>) {
     setAnswers(newAnswers);
-
     if (step < QUESTIONS.length - 1) {
       setStep(s => s + 1);
       return;
     }
-
-    // Last step — generate
     setPhase('generating');
     setError('');
-
     try {
       const result = await generateWeeklyPlan({
         planKey: mealPlanKey,
@@ -245,12 +227,10 @@ export default function WeeklyNutritionPlanner() {
         userName,
         answers: newAnswers,
       });
-
       const valid = result.selectedDays
         .map(d => Math.max(1, Math.min(28, d)))
         .slice(0, 7);
       while (valid.length < 7) valid.push(valid[valid.length - 1] ?? 1);
-
       saveWeeklyPlan({
         generatedAt: new Date().toISOString(),
         mealPlanKey,
@@ -278,31 +258,31 @@ export default function WeeklyNutritionPlanner() {
     setPhase('questions');
   }
 
-  /* ══════════════════ SETUP DAY ═══════════════════════════════ */
+  /* ═══ SETUP DAY ═══ */
   if (phase === 'setup-day') {
     return (
-      <div className="dtr-flow">
-        <div className="dtr-progress">
-          <div className="dtr-dot active" />
+      <div className="wnp2-wrap">
+        <div className="wnp2-progress">
+          <div className="wnp2-progress-dot active" />
         </div>
-        <div className="dtr-question-card">
-          <div className="dtr-q-emoji">🛒</div>
-          <div className="dtr-q-text">
-            {firstName ? `${firstName}, ¿qué día vas al súper?` : '¿Qué día vas al súper?'}
-          </div>
-          <p className="dtr-q-hint">Esto ancla el inicio de tu semana de comidas.</p>
-          <div className="dtr-options">
+        <div className="wnp2-setup">
+          <p className="wnp2-setup-micro">antes de empezar</p>
+          <h3 className="wnp2-setup-title">
+            {firstName ? `${firstName}, ¿qué día vas al ` : '¿Qué día vas al '}<em>súper</em>?
+          </h3>
+          <p className="wnp2-setup-hint">Esto ancla el inicio de tu semana de comidas.</p>
+          <div className="wnp2-setup-days">
             {DAY_NAMES_FULL.map((name, i) => (
               <button
                 key={i}
-                className="dtr-option dtr-option-day"
+                className="wnp2-setup-day"
                 onClick={() => {
                   setShoppingDay(i);
                   setPhase('questions');
                 }}
               >
-                <span className="dtr-opt-label">{name}</span>
-                <ChevronRight size={14} className="dtr-opt-arrow" />
+                <span className="wnp2-setup-day-name">{name}</span>
+                <span className="wnp2-setup-day-arrow"><ChevronRight size={15} /></span>
               </button>
             ))}
           </div>
@@ -311,51 +291,65 @@ export default function WeeklyNutritionPlanner() {
     );
   }
 
-  /* ══════════════════ GENERATING ══════════════════════════════ */
+  /* ═══ GENERATING ═══ */
   if (phase === 'generating') {
     return (
-      <div className="dtr-generating">
-        <div className="dtr-gen-spinner" />
-        <div className="dtr-gen-title">Armando tu semana...</div>
-        <div className="dtr-gen-sub">Seleccionando las mejores comidas para ti</div>
+      <div className="wnp2-wrap">
+        <div className="wnp2-generating">
+          <div className="wnp2-gen-spinner" />
+          <h3 className="wnp2-gen-title">Armando <em>tu semana</em>...</h3>
+          <p className="wnp2-gen-sub">Seleccionando las mejores comidas para ti</p>
+        </div>
       </div>
     );
   }
 
-  /* ══════════════════ ERROR ════════════════════════════════════ */
+  /* ═══ ERROR ═══ */
   if (phase === 'error') {
     return (
-      <div className="dtr-error">
-        <div>⚠️ {error}</div>
-        <button className="dtr-error-btn" onClick={resetQuestionnaire}>Intentar de nuevo</button>
+      <div className="wnp2-wrap">
+        <div className="wnp2-error">
+          <p className="wnp2-error-text">⚠️ {error}</p>
+          <button className="wnp2-error-btn" onClick={resetQuestionnaire}>Intentar de nuevo</button>
+        </div>
       </div>
     );
   }
 
-  /* ══════════════════ QUESTIONS ════════════════════════════════ */
+  /* ═══ QUESTIONS ═══ */
   if (phase === 'questions') {
     const q = QUESTIONS[step];
     return (
-      <div className="dtr-flow">
-        {/* Progress dots */}
-        <div className="dtr-progress">
+      <div className="wnp2-wrap">
+        <div className="wnp2-progress">
           {QUESTIONS.map((_, i) => (
-            <div key={i} className={`dtr-dot${i < step ? ' done' : i === step ? ' active' : ''}`} />
+            <div
+              key={i}
+              className={`wnp2-progress-dot${i < step ? ' done' : i === step ? ' active' : ''}`}
+            />
           ))}
         </div>
 
-        {/* Question card */}
-        <div className="dtr-question-card">
-          <div className="dtr-q-emoji">{q.emoji}</div>
-          <div className="dtr-q-text">
-            {step === 0 && firstName ? `${firstName}, ${q.question.toLowerCase()}` : q.question}
-          </div>
+        <div className="wnp2-q-card">
+          <p className="wnp2-q-micro">pregunta {step + 1} de {QUESTIONS.length}</p>
+          <h3 className="wnp2-q-title">
+            {step === 0 && firstName ? `${firstName}, ` : ''}
+            {q.question.includes('te apetecen') && (
+              <>¿Qué cocinas <em>te apetecen</em> esta semana?</>
+            )}
+            {q.question.includes('preferencia de comida') && (
+              <>¿Alguna <em>preferencia</em> de comida esta semana?</>
+            )}
+            {q.question.includes('evitar') && (
+              <>¿Algo que prefieras <em>evitar</em>?</>
+            )}
+          </h3>
+          <p className="wnp2-q-hint">{q.hint}</p>
 
-          {/* Free-text input */}
           {(q as any).freeText ? (
-            <div className="wnp-freetext">
+            <div className="wnp2-freetext">
               <textarea
-                className="wnp-freetext-input"
+                className="wnp2-freetext-input"
                 placeholder={(q as any).placeholder}
                 value={freeText}
                 onChange={e => setFreeText(e.target.value)}
@@ -363,7 +357,7 @@ export default function WeeklyNutritionPlanner() {
                 autoFocus
               />
               <button
-                className="dtr-confirm-multi"
+                className="wnp2-confirm"
                 onClick={() => {
                   advance({ ...answers, [q.id]: freeText.trim() || 'sin preferencias específicas' });
                   setFreeText('');
@@ -374,27 +368,27 @@ export default function WeeklyNutritionPlanner() {
             </div>
           ) : (
             <>
-              <div className={`dtr-options${q.multi ? ' dtr-options-grid' : ''}`}>
+              <div className="wnp2-options">
                 {q.options.map(opt => {
                   const isSelected = q.multi && multiSel.includes(opt.value);
                   return (
                     <button
                       key={opt.value}
-                      className={`dtr-option${isSelected ? ' dtr-option-selected' : ''}`}
+                      className={`wnp2-option${isSelected ? ' selected' : ''}`}
                       onClick={() => handleOption(opt.value)}
                     >
-                      <span className="dtr-opt-icon">{opt.icon}</span>
-                      <span className="dtr-opt-label">{opt.label}</span>
+                      <span className="wnp2-opt-icon">{opt.icon}</span>
+                      <span className="wnp2-opt-label">{opt.label}</span>
                       {q.multi
-                        ? <span className="dtr-opt-check">{isSelected ? '✓' : ''}</span>
-                        : <ChevronRight size={14} className="dtr-opt-arrow" />
+                        ? (isSelected && <span className="wnp2-opt-check">✓</span>)
+                        : <span className="wnp2-opt-arrow"><ChevronRight size={14} /></span>
                       }
                     </button>
                   );
                 })}
               </div>
               {q.multi && (
-                <button className="dtr-confirm-multi" onClick={confirmMulti}>
+                <button className="wnp2-confirm" onClick={confirmMulti}>
                   {multiSel.length === 0 ? 'Mezclar todo →' : `Confirmar (${multiSel.length}) →`}
                 </button>
               )}
@@ -403,168 +397,237 @@ export default function WeeklyNutritionPlanner() {
         </div>
 
         {step > 0 && (
-          <button className="dtr-back" onClick={() => setStep(s => s - 1)}>← Anterior</button>
+          <button className="wnp2-back" onClick={() => setStep(s => s - 1)}>← Anterior</button>
         )}
       </div>
     );
   }
 
-  /* ══════════════════ PLAN DISPLAY ════════════════════════════ */
+  /* ═══ PLAN DISPLAY ═══ */
   if (!weeklyPlan) return null;
 
   const dayPlanIdx = scaledPlan.findIndex(d => d.day === weeklyPlan.selectedDays[activeDay]);
-  const dayPlan    = dayPlanIdx >= 0 ? scaledPlan[dayPlanIdx] : null;
-  const dayKcal    = dayPlan ? calcDayKcal(dayPlan.meals) : 0;
+  const dayPlan = dayPlanIdx >= 0 ? scaledPlan[dayPlanIdx] : null;
+  const dayKcal = dayPlan ? calcDayKcal(dayPlan.meals) : 0;
+
+  const shoppingTotal = weeklyPlan.shoppingList.length;
+  const shoppingDone = weeklyPlan.shoppingList.filter((_, i) => !!mealChecks[`shop-${i}`]).length;
+  const shoppingPct = shoppingTotal > 0 ? Math.round((shoppingDone / shoppingTotal) * 100) : 0;
+
+  const weekStartDate = (() => {
+    if (shoppingDay === null) return '';
+    const d = new Date();
+    const diff = (d.getDay() - shoppingDay + 7) % 7;
+    d.setDate(d.getDate() - diff);
+    return `${d.getDate()} ${d.toLocaleDateString('es-ES', { month: 'short' })}`;
+  })();
+  const weekEndDate = (() => {
+    if (shoppingDay === null) return '';
+    const d = new Date();
+    const diff = (d.getDay() - shoppingDay + 7) % 7;
+    d.setDate(d.getDate() - diff + 6);
+    return `${d.getDate()} ${d.toLocaleDateString('es-ES', { month: 'short' })}`;
+  })();
 
   return (
-    <div className="dtr-plan">
+    <div className="wnp2-wrap">
       {/* Header */}
-      <div className="dtr-plan-header">
-        <div className="dtr-plan-header-top">
-          <div>
-            <div className="dtr-plan-badge">Tu semana de comidas</div>
-            <div className="dtr-plan-type">Plan personalizado</div>
+      <div className="wnp2-header">
+        <div className="wnp2-header-top">
+          <div style={{ flex: 1 }}>
+            <div className="wnp2-header-badge">
+              <span className="wnp2-header-badge-dot" />
+              <span className="wnp2-header-badge-text">
+                tu semana · del {weekStartDate} al {weekEndDate}
+              </span>
+            </div>
+            <h3 className="wnp2-header-title">
+              Plan <em>personalizado</em>
+            </h3>
           </div>
-          <div className="wnp-regen-wrap">
-            {regenBlocked ? (
-              <span className="wnp-regen-blocked" title="Límite semanal alcanzado">🔒 2/2</span>
-            ) : (
-              <button className="dtr-restart" onClick={resetQuestionnaire}
-                title={`Regenerar plan (${2 - regenThisWeek} restante${2 - regenThisWeek === 1 ? '' : 's'})`}>
-                <RefreshCw size={14} />
-                <span className="wnp-regen-left">{2 - regenThisWeek}</span>
-              </button>
-            )}
-          </div>
+          {regenBlocked ? (
+            <div className="wnp2-regen-blocked" title="Límite semanal alcanzado">
+              <Lock size={11} />
+              <span>2/2</span>
+            </div>
+          ) : (
+            <button
+              className="wnp2-regen"
+              onClick={resetQuestionnaire}
+              title={`Regenerar plan (${regenLeft} restante${regenLeft === 1 ? '' : 's'})`}
+            >
+              <RefreshCw size={11} />
+              <span>{regenLeft}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* AI coach note — outside the dark header */}
+      {/* Nota del coach */}
       {weeklyPlan.nota && (
-        <div className="wnp-nota">
-          <span className="wnp-nota-icon">🥗</span>
-          <p>{weeklyPlan.nota}</p>
+        <div className="wnp2-nota">
+          <span className="wnp2-nota-icon">🥗</span>
+          <p className="wnp2-nota-text">{weeklyPlan.nota}</p>
         </div>
       )}
 
-      {/* Tabs: Plan / Lista del súper */}
-      <div className="wnp-tabs">
-        <button className={`wnp-tab${!showShopping ? ' on' : ''}`} onClick={() => setShowShopping(false)}>
+      {/* Tabs */}
+      <div className="wnp2-tabs">
+        <button
+          className={`wnp2-tab${!showShopping ? ' on' : ''}`}
+          onClick={() => setShowShopping(false)}
+        >
           <Calendar size={13} /> Mi Plan
         </button>
-        <button className={`wnp-tab${showShopping ? ' on' : ''}`} onClick={() => setShowShopping(true)}>
-          <ShoppingCart size={13} /> Lista del Súper
+        <button
+          className={`wnp2-tab${showShopping ? ' on' : ''}`}
+          onClick={() => setShowShopping(true)}
+        >
+          <ShoppingCart size={13} /> Lista · {shoppingDone}/{shoppingTotal}
         </button>
       </div>
 
       {showShopping ? (
         /* ── Shopping list ── */
-        <div className="wnp-shopping">
-          <div className="wnp-shopping-title">🛒 Lista de compras de la semana</div>
-          <div className="wnp-shopping-list">
-            {weeklyPlan.shoppingList.map((item, i) => {
-              const key = `shop-${i}`;
-              const checked = !!mealChecks[key];
-              return (
-                <div
-                  key={i}
-                  className={`wnp-shopping-item${checked ? ' wnp-shopping-item-done' : ''}`}
-                  onClick={() => toggleMealCheck(key)}
-                >
-                  <div className={`wnp-shopping-check${checked ? ' checked' : ''}`}>
-                    {checked ? '✓' : ''}
-                  </div>
-                  <span>{item}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
         <>
-          {/* Day tabs */}
-          <div className="wnp-day-tabs">
-            {Array.from({ length: 7 }, (_, i) => {
-              const dow = (shoppingDay! + i) % 7;
-              const isToday = i === todayOffset;
-              return (
-                <button
-                  key={i}
-                  className={`wnp-day-tab${activeDay === i ? ' on' : ''}${isToday ? ' today' : ''}`}
-                  onClick={() => setActiveDay(i)}
-                >
-                  <span className="wnp-dt-name">{DAY_NAMES[dow]}</span>
-                  {isToday && <span className="wnp-dt-dot" />}
-                </button>
-              );
-            })}
+          <div className="wnp2-shop-header">
+            <div className="wnp2-shop-icon">
+              <ShoppingCart size={20} />
+            </div>
+            <div className="wnp2-shop-body">
+              <div className="wnp2-shop-micro">
+                súper · {shoppingDay !== null ? DAY_NAMES_FULL[shoppingDay].toLowerCase() : ''}
+              </div>
+              <div className="wnp2-shop-title">{shoppingDone} de {shoppingTotal} tachado</div>
+            </div>
+            <div className="wnp2-shop-pct">
+              {shoppingPct}<small>%</small>
+            </div>
           </div>
 
-          {/* Meals of the day */}
-          {dayPlan ? (
-            <div className="wnp-meals">
-              {/* Day header */}
-              <div className="wnp-meals-header">
-                <div>
-                  <span className="wnp-meals-day">
-                    {DAY_NAMES_FULL[(shoppingDay! + activeDay) % 7]}
-                    {activeDay === todayOffset && <span className="wnp-today-chip">Hoy</span>}
-                  </span>
-                  {dayKcal > 0 && (
-                    <div className="wnp-day-kcal-bar-wrap">
-                      <div className="wnp-day-kcal-bar"
-                        style={{ width: `${Math.min((dayKcal / (planGoal || dayKcal)) * 100, 100)}%` }} />
-                    </div>
-                  )}
-                </div>
-                {dayKcal > 0 && <span className="wnp-meals-kcal">{dayKcal} kcal</span>}
-              </div>
-
-              {dayPlan.meals.map((meal, i) => {
-                const mkcal = calcMealKcal(meal.portions);
-                const dayDate = new Date(Date.now() + (activeDay - (todayOffset >= 0 ? todayOffset : 0)) * 86400000)
-                  .toISOString().split('T')[0];
-                const checkKey = `meal-${dayDate}-${i}`;
-                const checked  = !!mealChecks[checkKey];
-                const mealMeta = MEAL_META[meal.time] ?? MEAL_META['default'];
+          {weeklyPlan.shoppingList.length > 0 ? (
+            <div className="wnp2-shop-items">
+              {weeklyPlan.shoppingList.map((item, i) => {
+                const key = `shop-${i}`;
+                const checked = !!mealChecks[key];
                 return (
                   <div
                     key={i}
-                    className={`wnp-meal2${checked ? ' done' : ''}`}
-                    style={{ '--meal-color': mealMeta.color } as React.CSSProperties}
-                    onClick={() => toggleMealCheck(checkKey)}
+                    className={`wnp2-shop-item${checked ? ' done' : ''}`}
+                    onClick={() => toggleMealCheck(key)}
                   >
-                    {/* Left accent + emoji */}
-                    <div className="wnp-meal2-accent" />
-                    <div className="wnp-meal2-icon">{mealMeta.emoji}</div>
-
-                    {/* Content */}
-                    <div className="wnp-meal2-body">
-                      <div className="wnp-meal2-top">
-                        <span className="wnp-meal2-time">{meal.time}</span>
-                        <div className="wnp-meal2-right">
-                          {mkcal > 0 && <span className="wnp-meal2-kcal">{mkcal} kcal</span>}
-                          <div className={`wnp-meal2-check${checked ? ' checked' : ''}`}>
-                            {checked ? '✓' : ''}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="wnp-meal2-name">{meal.name}</div>
-                      <div className="wnp-meal2-portions">
-                        {meal.portions.slice(0, 4).map((p, j) => (
-                          <span key={j} className="wnp-meal2-chip">{p}</span>
-                        ))}
-                        {meal.portions.length > 4 && (
-                          <span className="wnp-meal2-chip wnp-chip-more">+{meal.portions.length - 4} más</span>
-                        )}
-                      </div>
+                    <div className={`wnp2-shop-item-check${checked ? ' checked' : ''}`}>
+                      {checked ? '✓' : ''}
                     </div>
+                    <span className="wnp2-shop-item-text">{item}</span>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="wnp-empty-day">Sin comidas asignadas para este día.</div>
+            <div className="wnp2-shop-empty">Aún no hay lista de compras.</div>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Day tabs */}
+          <div className="wnp2-days">
+            {Array.from({ length: 7 }, (_, i) => {
+              const dow = shoppingDay !== null ? (shoppingDay + i) % 7 : i;
+              const isToday = i === todayOffset;
+              return (
+                <button
+                  key={i}
+                  className={`wnp2-day${activeDay === i ? ' on' : ''}${isToday ? ' today' : ''}`}
+                  onClick={() => setActiveDay(i)}
+                >
+                  {DAY_NAMES[dow]}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Day header */}
+          <div className="wnp2-day-header">
+            <span className="wnp2-day-name">
+              {shoppingDay !== null ? DAY_NAMES_FULL[(shoppingDay + activeDay) % 7] : ''}
+              {activeDay === todayOffset && <span className="wnp2-today-chip">Hoy</span>}
+            </span>
+            {dayKcal > 0 && (
+              <div className="wnp2-day-kcal-block">
+                <span className="wnp2-day-kcal">{dayKcal} kcal</span>
+                <div className="wnp2-day-kcal-bar-wrap">
+                  <div
+                    className="wnp2-day-kcal-bar"
+                    style={{
+                      width: `${Math.min((dayKcal / (planGoal || dayKcal)) * 100, 100)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Meals */}
+          {dayPlan ? (
+            dayPlan.meals.map((meal, i) => {
+              const mkcal = calcMealKcal(meal.portions);
+              const dayDate = new Date(
+                Date.now() + (activeDay - (todayOffset >= 0 ? todayOffset : 0)) * 86400000
+              ).toISOString().split('T')[0];
+              const checkKey = `meal-${dayDate}-${i}`;
+              const checked = !!mealChecks[checkKey];
+              const portionsToShow = meal.portions.slice(0, 3);
+              const extraCount = meal.portions.length - portionsToShow.length;
+
+              return (
+                <div
+                  key={i}
+                  className={`wnp2-meal${checked ? ' done' : ''}`}
+                  onClick={() => toggleMealCheck(checkKey)}
+                >
+                  {meal.img ? (
+                    <div
+                      className="wnp2-meal-circle"
+                      style={{ backgroundImage: `url(${meal.img})` }}
+                    />
+                  ) : (
+                    <div className="wnp2-meal-circle">
+                      <span>{MEAL_EMOJI[meal.time] ?? '🥗'}</span>
+                    </div>
+                  )}
+                  <div className="wnp2-meal-body">
+                    <div className="wnp2-meal-time">
+                      <span>{MEAL_EMOJI[meal.time] ?? '🥗'}</span>
+                      <span>{meal.time}</span>
+                    </div>
+                    <div className="wnp2-meal-name">{meal.name}</div>
+                    <div className="wnp2-meal-chips">
+                      {portionsToShow.map((p, j) => (
+                        <span key={j} className="wnp2-meal-chip">{p}</span>
+                      ))}
+                      {extraCount > 0 && (
+                        <span className="wnp2-meal-chip more">+{extraCount}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="wnp2-meal-right">
+                    {mkcal > 0 && <span className="wnp2-meal-kcal">{mkcal}</span>}
+                    <div
+                      className={`wnp2-meal-check${checked ? ' checked' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleMealCheck(checkKey);
+                      }}
+                    >
+                      {checked ? '✓' : ''}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="wnp2-empty-day">Sin comidas asignadas para este día.</div>
           )}
         </>
       )}
