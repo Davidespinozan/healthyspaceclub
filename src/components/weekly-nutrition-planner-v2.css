@@ -785,3 +785,68 @@
   color: var(--txt2);
   font-style: italic;
 }
+
+/* ─── Mobile refinements ─── */
+@media (max-width: 400px) {
+  .wnp2-setup {
+    padding: 18px 16px;
+  }
+  .wnp2-setup-title {
+    font-size: 18px;
+  }
+  .wnp2-q-card {
+    padding: 18px 16px;
+  }
+  .wnp2-q-title {
+    font-size: 17px;
+  }
+  .wnp2-header {
+    padding: 14px 16px;
+  }
+  .wnp2-header-title {
+    font-size: 16px;
+  }
+  .wnp2-days {
+    gap: 3px;
+  }
+  .wnp2-day {
+    padding: 7px 0;
+    font-size: 10px;
+  }
+  .wnp2-day-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .wnp2-day-kcal-bar-wrap {
+    width: 60px;
+  }
+  .wnp2-meal {
+    padding: 10px;
+    gap: 10px;
+  }
+  .wnp2-meal-circle {
+    width: 50px;
+    height: 50px;
+    font-size: 22px;
+  }
+  .wnp2-meal-name {
+    font-size: 12px;
+  }
+  .wnp2-shop-header {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  .wnp2-shop-icon {
+    width: 36px; height: 36px;
+  }
+  .wnp2-shop-item {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .wnp2-generating {
+    padding: 36px 16px;
+  }
+  .wnp2-gen-title {
+    font-size: 16px;
+  }
+}

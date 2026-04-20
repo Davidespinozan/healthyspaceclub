@@ -411,3 +411,45 @@
 .edp-cta.done:hover {
   background: var(--edp-sand);
 }
+
+/* ─── Mobile refinements ─── */
+@media (max-width: 400px) {
+  .edp-modal {
+    max-height: 95vh;
+    border-radius: 20px 20px 0 0;
+  }
+  .edp-hero {
+    aspect-ratio: 16 / 9;
+    border-radius: 20px 20px 0 0;
+  }
+  .edp-body {
+    padding: 16px 16px;
+  }
+  .edp-name {
+    font-size: 18px;
+  }
+  .edp-stats {
+    padding: 12px 10px;
+    gap: 6px;
+  }
+  .edp-stat-val {
+    font-size: 17px;
+  }
+  .edp-step {
+    gap: 10px;
+    padding: 10px 0;
+  }
+  .edp-step-title {
+    font-size: 12px;
+  }
+  .edp-step-desc {
+    font-size: 11px;
+  }
+  .edp-footer {
+    padding: 14px 16px 18px;
+  }
+  .edp-close {
+    top: 12px;
+    right: 12px;
+  }
+}

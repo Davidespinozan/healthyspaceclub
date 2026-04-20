@@ -225,3 +225,37 @@
   margin: 0;
   font-style: italic;
 }
+
+/* ─── Mobile refinements ─── */
+@media (max-width: 400px) {
+  .thw-section {
+    padding: 18px 0 6px;
+  }
+  .thw-heading {
+    font-size: 17px;
+  }
+  .thw-card {
+    padding: 8px 10px;
+    gap: 10px;
+    border-radius: 14px;
+  }
+  .thw-thumb {
+    width: 46px;
+    height: 46px;
+  }
+  .thw-thumb-emoji {
+    font-size: 20px;
+  }
+  .thw-card-name {
+    font-size: 12px;
+  }
+  .thw-card-stats {
+    font-size: 10px;
+  }
+  .thw-card-tip {
+    font-size: 10px;
+  }
+  .thw-card-arrow {
+    font-size: 18px;
+  }
+}

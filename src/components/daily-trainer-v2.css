@@ -619,3 +619,70 @@
   margin: 0;
   font-style: italic;
 }
+
+/* ─── Mobile refinements ─── */
+@media (max-width: 400px) {
+  .dt2-wrap {
+    padding: 0 14px 32px;
+  }
+  .dt2-hero {
+    padding: 16px 0 16px;
+    margin-bottom: 16px;
+  }
+  .dt2-hero-title {
+    font-size: 20px;
+  }
+  .dt2-card {
+    padding: 18px 16px;
+    border-radius: 18px;
+  }
+  .dt2-card-title {
+    font-size: 24px;
+  }
+  .dt2-card-why {
+    padding: 10px 12px;
+  }
+  .dt2-chips-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+  }
+  .dt2-chip {
+    padding: 8px 10px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  .dt2-chip-eq {
+    padding: 10px 12px;
+  }
+  .dt2-cta {
+    padding: 13px;
+    font-size: 12.5px;
+  }
+  .dt2-plan-title {
+    font-size: 20px;
+  }
+  .dt2-ex {
+    padding: 10px 10px;
+    gap: 10px;
+  }
+  .dt2-ex-emoji {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+  .dt2-ex-name {
+    font-size: 12px;
+  }
+  .dt2-section {
+    padding: 12px 14px;
+  }
+  .dt2-note {
+    padding: 12px 14px;
+  }
+  .dt2-generating {
+    padding: 40px 16px;
+  }
+  .dt2-gen-title {
+    font-size: 18px;
+  }
+}
