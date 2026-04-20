@@ -8,6 +8,7 @@ import WeeklyReview from './WeeklyReview';
 import NightCheckIn from './NightCheckIn';
 import Stories from './Stories';
 import TuEspacioFlow from './TuEspacioFlow';
+import './tab-hoy-v2.css';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
@@ -135,7 +136,6 @@ const HSM_BANK: { emoji: string; title: string; questions: string[] }[] = [
   ]},
 ];
 
-// Pick a deterministic but rotating question per dimension per day
 function getDailyQuestion(dimIndex: number, dayIndex: number): { emoji: string; title: string; q: string } {
   const dim = HSM_BANK[dimIndex];
   const qIndex = (dayIndex * 3 + dimIndex * 7) % dim.questions.length;
@@ -157,8 +157,6 @@ const MEAL_EMOJI: Record<string, string> = {
 };
 
 type WorkoutPlan = { type: string; duration: string; exercises: { name: string }[] };
-
-// generateBriefing is now inline in the useEffect below
 
 export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const {
@@ -189,16 +187,13 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const nightDone = nightCheckIn?.date === today && nightCheckIn?.completed;
   const [showNight, setShowNight] = useState(() => {
     const h = new Date().getHours();
-    const isNight = h >= 20 && h <= 23; // only 8pm-midnight, not early morning
+    const isNight = h >= 20 && h <= 23;
     return isNight && !(nightCheckIn?.date === new Date().toISOString().split('T')[0] && nightCheckIn?.completed);
   });
-  const momento = (hour >= 5 && hour < 12) ? 'Momento mañana' : (hour >= 12 && hour < 19) ? 'Momento tarde' : 'Momento noche';
+  const momento = (hour >= 5 && hour < 12) ? 'mañana' : (hour >= 12 && hour < 19) ? 'tarde' : 'noche';
+  const saludo = (hour >= 5 && hour < 12) ? 'Buenos días' : (hour >= 12 && hour < 19) ? 'Buenas tardes' : 'Buenas noches';
   const firstName = userName?.split(' ')[0] || '';
 
-  // Note: streak is updated when user explicitly does check-in (setDailyCheckin),
-  // NOT automatically on page visit. saveDailyCheckIn is only for legacy compatibility.
-
-  // Milestone
   const MILESTONES = [3, 7, 14, 21, 30, 60, 90];
   const [milestone, setMilestone] = useState<number | null>(null);
   const MILESTONE_COPY: Record<number, { emoji: string; title: string; sub: string }> = {
@@ -216,7 +211,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     if (reached > lastStreakMilestone) { setMilestone(reached); setLastStreakMilestone(reached); }
   }, [streakCount]);
 
-  // Meals — day-selectable
   const DAY_LABELS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const [selectedDow, setSelectedDow] = useState(new Date().getDay());
   const activePlan = mealPlans[weeklyPlan?.mealPlanKey ?? mealPlanKey] ?? mealPlans['planA'];
@@ -229,7 +223,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const selectedDayKcal = calcDayKcal(scaledPlan[selectedPlanIdx >= 0 ? selectedPlanIdx : 0]?.meals ?? []);
   const isSelectedToday = selectedDow === new Date().getDay();
 
-  // For today specifically (progress tracking)
   const todayDow = new Date().getDay();
   const todayOffset = (todayDow - anchor + 7) % 7;
   const todayDayNum = weeklyPlan ? weeklyPlan.selectedDays[todayOffset] ?? weeklyPlan.selectedDays[0] : null;
@@ -237,25 +230,20 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const todayMeals = scaledPlan[todayPlanIdx >= 0 ? todayPlanIdx : 0]?.meals ?? [];
   const checkedMeals = todayMeals.filter((_, i) => !!mealChecks[`meal-${today}-${i}`]).length;
 
-  // Meal detail popout + recipe
   const [mealDetail, setMealDetail] = useState<typeof selectedMeals[0] | null>(null);
   const [recipeSteps, setRecipeSteps] = useState<string | null>(null);
   const [recipeLoading, setRecipeLoading] = useState(false);
 
-  // Load recipe when meal detail opens
   useEffect(() => {
     if (!mealDetail) { setRecipeSteps(null); return; }
     setRecipeSteps(null);
     setRecipeLoading(true);
 
-    // 1. Check Supabase cache
     supabase.from('meal_recipes').select('steps').eq('meal_name', mealDetail.name).single()
       .then(({ data }) => {
         if (data?.steps) {
-          // Fake 1s delay so it feels generated
           setTimeout(() => { setRecipeSteps(data.steps); setRecipeLoading(false); }, 800);
         } else if (API_KEY) {
-          // 2. Generate with Claude and cache
           const prompt = `Genera el paso a paso para preparar "${mealDetail.name}".
 Ingredientes: ${(mealDetail.portions ?? []).join(', ')}
 Descripción: ${mealDetail.desc || ''}
@@ -276,7 +264,6 @@ Ejemplo:
               const steps = aiData.content?.[0]?.text?.trim() ?? '';
               if (steps) {
                 setRecipeSteps(steps);
-                // Cache in Supabase for everyone
                 supabase.from('meal_recipes').insert({ meal_name: mealDetail.name, steps }).then(() => {});
               }
               setRecipeLoading(false);
@@ -288,7 +275,6 @@ Ejemplo:
       });
   }, [mealDetail?.name]);
 
-  // Workout detail popout
   type WorkoutExercise = { name: string; sets?: string; reps?: string; rest?: string; tip?: string };
   const [workoutDetail, setWorkoutDetail] = useState<WorkoutExercise | null>(null);
 
@@ -297,12 +283,10 @@ Ejemplo:
   const workoutChecked = dailyWorkoutChecked.length;
   const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
 
-  // Progress: meals + workout exercises + 5 HSM questions
   const totalItems = (weeklyPlan ? todayMeals.length : 0) + workoutExCount + 5;
   const doneItems = (weeklyPlan ? checkedMeals : 0) + workoutChecked + Math.min(todayHSMAnswered, 5);
   const dayPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
 
-  // Briefing — Day 1 gets personalized welcome, other days get short briefing
   const { startDate: userStartDate } = useAppStore();
   const isDay1 = userStartDate === today;
   const daysSinceStart = userStartDate ? Math.floor((Date.now() - new Date(userStartDate).getTime()) / 86400000) : 0;
@@ -337,10 +321,8 @@ En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
       .catch(() => {});
   }, [today]);
 
-  // Check-in already done today?
   const checkinDone = dailyCheckinDate === today && dailyCheckin !== null;
 
-  // Intention: yesterday's night check-in intention > puedo > rotating quote
   const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
   const yesterdayIntention = nightCheckIn?.date === yesterdayStr ? nightCheckIn.intencionManana : '';
   const puedoText = (growthData[0] as Record<string, string>)?.decl_0;
@@ -349,9 +331,8 @@ En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
   const intentionText = yesterdayIntention || puedoText || quoteOfDay.text;
   const intentionSource = yesterdayIntention ? 'Tu intención de anoche' : puedoText ? 'Tu declaración PUEDO' : quoteOfDay.source;
 
-  // HSM daily questions — 5 per day (4 fixed rotating + 1 AI-generated)
   const todayDayIndex = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-  const todayHSMSlot = (todayDayIndex % 3); // 3-day cycle → covers all 10 dims in 2-3 days
+  const todayHSMSlot = (todayDayIndex % 3);
   const fixedDimensions = [
     getDailyQuestion((todayHSMSlot * 4) % 10, todayDayIndex),
     getDailyQuestion((todayHSMSlot * 4 + 1) % 10, todayDayIndex),
@@ -359,7 +340,6 @@ En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
     getDailyQuestion((todayHSMSlot * 4 + 3) % 10, todayDayIndex),
   ];
 
-  // 5th question: AI-generated based on last 7 days
   const [aiQuestion, setAiQuestion] = useState<{ emoji: string; title: string; q: string } | null>(null);
   const [dailyReview, setDailyReview] = useState<string | null>(null);
 
@@ -369,11 +349,9 @@ En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
   });
   const todayResponses = dailyHSMResponses.filter(r => r.date === today);
 
-  // Generate AI question based on recent patterns
   useEffect(() => {
     if (!API_KEY || aiQuestion) return;
     if (last7Responses.length < 3) {
-      // Not enough data yet — use a random dimension not in today's fixed set
       const usedTitles = fixedDimensions.map(d => d.title);
       const unused = HSM_BANK.filter(d => !usedTitles.includes(d.title));
       const pick = unused[todayDayIndex % unused.length];
@@ -403,7 +381,6 @@ Responde SOLO la pregunta, nada más.`;
       .then(data => {
         const q = data.content?.[0]?.text?.trim() ?? '';
         if (q) {
-          // Find least-answered dimension this week
           const dimCounts: Record<string, number> = {};
           HSM_BANK.forEach(d => { dimCounts[d.title] = 0; });
           last7Responses.forEach(r => { dimCounts[r.dimension] = (dimCounts[r.dimension] ?? 0) + 1; });
@@ -416,9 +393,6 @@ Responde SOLO la pregunta, nada más.`;
 
   const todayDimensions = aiQuestion ? [...fixedDimensions, aiQuestion] : fixedDimensions;
 
-  // handleHSMSubmit moved to TuEspacioFlow component
-
-  // Generate daily review when all 5 are answered
   const allAnswered = todayDimensions.length > 0 && todayDimensions.every(d => todayResponses.some(r => r.dimension === d.title));
   useEffect(() => {
     if (!allAnswered || dailyReview || !API_KEY) return;
@@ -443,7 +417,6 @@ Escribe una observación de 2-3 líneas. Debe:
       .catch(() => {});
   }, [allAnswered]);
 
-  // Day 5 mini review — "Esto es lo que ya sé de ti"
   const [miniReview, setMiniReview] = useState<string | null>(null);
   useEffect(() => {
     if (daysSinceStart !== 5 || !API_KEY || miniReview) return;
@@ -467,11 +440,10 @@ En español. Sin emojis. Tono de coach que ya te conoce.`;
       .catch(() => {});
   }, [daysSinceStart]);
 
-  // Weekly HSM review (Sundays)
   const [weeklyHSMReview, setWeeklyHSMReview] = useState<string | null>(null);
   useEffect(() => {
     if (!isSunday || !API_KEY || weeklyHSMReview) return;
-    if (last7Responses.length < 5) return; // not enough data
+    if (last7Responses.length < 5) return;
     const weekSummary = last7Responses.map(r => `[${r.date}] ${r.dimension}: "${r.response}"`).join('\n');
     const dimCounts: Record<string, number> = {};
     last7Responses.forEach(r => { dimCounts[r.dimension] = (dimCounts[r.dimension] ?? 0) + 1; });
@@ -501,10 +473,8 @@ En español, tono de coach. Sin emojis. Directo.`;
       .catch(() => {});
   }, [isSunday]);
 
-  // Cumulative HSM profile — updated weekly on Sundays
   useEffect(() => {
     if (!isSunday || !API_KEY) return;
-    // Only update if not updated this week
     if (hsmProfile?.updatedAt === today) return;
     if (dailyHSMResponses.length < 10) return;
 
@@ -542,285 +512,319 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
   const mileCopy = milestone ? MILESTONE_COPY[milestone] : null;
 
   return (
-    <div className="th-wrap">
-      {/* Night check-in */}
+    <div className="th2-wrap">
+      {/* Overlays — sin cambios */}
       {showNight && <NightCheckIn onClose={() => setShowNight(false)} />}
-
-      {/* Sunday review */}
       {showReview && <WeeklyReview onClose={() => setShowReview(false)} onPlanNextWeek={() => onNav('alimentacion')} />}
 
-      {/* Milestone */}
       {milestone && mileCopy && (
-        <div className="me-milestone" onClick={() => setMilestone(null)}>
-          <div className="me-milestone-inner">
-            <div className="me-milestone-emoji">{mileCopy.emoji}</div>
-            <div className="me-milestone-title">{mileCopy.title}</div>
-            <div className="me-milestone-sub">{mileCopy.sub}</div>
-            <button className="me-milestone-close" onClick={() => setMilestone(null)}>Continuar</button>
+        <div className="th2-milestone" onClick={() => setMilestone(null)}>
+          <div className="th2-milestone-inner">
+            <div className="th2-milestone-emoji">{mileCopy.emoji}</div>
+            <div className="th2-milestone-title">{mileCopy.title}</div>
+            <div className="th2-milestone-sub">{mileCopy.sub}</div>
+            <button className="th2-milestone-close" onClick={() => setMilestone(null)}>Continuar</button>
           </div>
         </div>
       )}
 
-      {/* ── Stories row ── */}
+      {/* Stories — componente existente intacto */}
       <Stories />
 
-      {/* ── Dark header (full-bleed) ── */}
-      <div className="th-header">
-        <div className="th-header-top">
-          <div className="th-greeting">{firstName ? `Hola, ${firstName}` : 'Hola'}</div>
-          <div
-            className="th-momento-pill"
-            onClick={() => { if (momento === 'Momento noche' && !nightDone) setShowNight(true); }}
-            style={momento === 'Momento noche' && !nightDone ? { cursor: 'pointer' } : undefined}
-          >{momento}</div>
+      {/* ── HERO editorial ── */}
+      <div className="th2-hero">
+        <div className="th2-hero-top">
+          <div className="th2-date-chip">
+            <span className="th2-date-chip-dot" />
+            <span className="th2-date-chip-text">día {streakCount || 1} · momento {momento}</span>
+          </div>
+          {firstName && <div className="th2-avatar">{firstName.charAt(0).toUpperCase()}</div>}
         </div>
-        {/* Weekly streak dots */}
-        <div className="th-streak-bar">
-          <span className="th-streak-num">{streakCount}</span>
-          <div className="th-streak-dots">
+
+        <p className="th2-greeting">{saludo}</p>
+        <h1 className="th2-headline">
+          {firstName ? <>{firstName},<br /><em>vamos hoy.</em></> : <>Vamos <em>hoy.</em></>}
+        </h1>
+
+        <div className="th2-hero-meta">
+          <div className="th2-streak-block">
+            <span className="th2-streak-num">{streakCount}</span>
+            <span className="th2-streak-label">días de racha</span>
+          </div>
+          <div className="th2-streak-dots">
             {Array.from({ length: 7 }, (_, i) => {
               const dayDate = new Date();
               dayDate.setDate(dayDate.getDate() - (6 - i));
               const dayStr = dayDate.toISOString().split('T')[0];
               const isActive = useAppStore.getState().lastActiveDate === dayStr ||
                 (i === 6 && checkinDone);
-              return <div key={i} className={`th-streak-dot${isActive ? ' active' : ''}`} />;
+              return <div key={i} className={`th2-streak-dot${isActive ? ' active' : ''}`} />;
             })}
           </div>
         </div>
-        {dailyBriefing?.date === today && dailyBriefing?.message
-          ? <p className="th-briefing">{dailyBriefing.message}</p>
-          : API_KEY && <div className="th-briefing-skeleton"><div className="th-skeleton-line" /><div className="th-skeleton-line short" /></div>
-        }
+
+        {dailyBriefing?.date === today && dailyBriefing?.message && (
+          <div className="th2-briefing">{dailyBriefing.message}</div>
+        )}
       </div>
 
-      {/* ── Padded content ── */}
-      <div className="tab-content">
+      {/* ── BODY ── */}
+      <div className="th2-body">
 
-      {/* ── Check-in card ── */}
-      {!checkinDone ? (
-        <div className="th-card">
-          <div className="th-card-label">¿Cómo amaneciste?</div>
-          <div className="th-checkin-opts">
-            {([['cansado', '😴', 'Cansado'], ['regular', '😐', 'Regular'], ['energia', '⚡', 'Con energía']] as const).map(([val, icon, lbl]) => (
-              <button key={val} className="th-checkin-btn" onClick={() => setDailyCheckin(val)}>
-                <span className="th-checkin-icon">{icon}</span>
-                <span className="th-checkin-lbl">{lbl}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="th-card th-card-sm">
-          <span className="th-checkin-done-icon">
-            {dailyCheckin === 'energia' ? '⚡' : dailyCheckin === 'regular' ? '😐' : '😴'}
-          </span>
-          <span className="th-checkin-done-text">
-            {dailyCheckin === 'energia' ? 'Con energía' : dailyCheckin === 'regular' ? 'Regular' : 'Cansado'} · registrado
-          </span>
-        </div>
-      )}
-
-      {/* ── Intention card (dark) ── */}
-      <div className="th-intention">
-        <div className="th-intention-label"><span className="th-intention-dot" /> Intención del día</div>
-        <div className="th-intention-text">{intentionText}</div>
-        <div className="th-intention-source">{intentionSource}</div>
-      </div>
-
-      {/* ── Day progress ── */}
-      <div className={`th-card${dayPct >= 100 ? ' th-card-complete' : ''}`}>
-        <div className="th-progress-header">
-          <span className="th-progress-title">{dayPct >= 100 ? '¡Día completado!' : 'Tu día'}</span>
-          <span className="th-progress-count">{doneItems}/{totalItems}</span>
-        </div>
-        <div className="th-bar-wrap">
-          <div className="th-bar" style={{ width: `${dayPct}%` }} />
-        </div>
-        {dayPct >= 100 && <div className="th-confetti">✦ ✦ ✦</div>}
-      </div>
-
-      {/* ── Meals + Workout (2-col on wide desktop) ── */}
-      <div className="th-two-col">
-        <div>
-          {/* ── Meals ── */}
-          <div className="th-section-label">
-            <span>Alimentación</span>
-            {weeklyPlan && <span className="th-section-meta">{isSelectedToday ? `${checkedMeals}/${todayMeals.length} · ` : ''}{selectedDayKcal} kcal</span>}
-          </div>
-
-          {/* Day selector */}
-          {weeklyPlan && (
-            <div className="th-day-tabs">
-              {DAY_LABELS.map((lbl, i) => (
-                <button
-                  key={i}
-                  className={`th-day-tab${selectedDow === i ? ' active' : ''}${i === todayDow ? ' today' : ''}`}
-                  onClick={() => setSelectedDow(i)}
-                >
-                  {lbl}
+        {/* Check-in de energía */}
+        {!checkinDone ? (
+          <div className="th2-checkin">
+            <div className="th2-checkin-label">¿Cómo amaneciste?</div>
+            <div className="th2-checkin-opts">
+              {([['cansado', '😴', 'Cansado'], ['regular', '😐', 'Regular'], ['energia', '⚡', 'Con energía']] as const).map(([val, icon, lbl]) => (
+                <button key={val} className="th2-checkin-btn" onClick={() => setDailyCheckin(val)}>
+                  <span className="th2-checkin-icon">{icon}</span>
+                  <span className="th2-checkin-lbl">{lbl}</span>
                 </button>
               ))}
             </div>
-          )}
+          </div>
+        ) : (
+          <div className="th2-checkin-done">
+            <span className="th2-checkin-done-icon">
+              {dailyCheckin === 'energia' ? '⚡' : dailyCheckin === 'regular' ? '😐' : '😴'}
+            </span>
+            <span className="th2-checkin-done-text">
+              {dailyCheckin === 'energia' ? 'Con energía' : dailyCheckin === 'regular' ? 'Regular' : 'Cansado'} · registrado
+            </span>
+          </div>
+        )}
 
-          {weeklyPlan ? (<>
-            {/* Main meals (with photos) */}
+        {/* Intención del día */}
+        <div className="th2-intention">
+          <div className="th2-intention-label">
+            <span className="th2-intention-label-dot" />
+            Intención del día
+          </div>
+          <div className="th2-intention-text">{intentionText}</div>
+          <div className="th2-intention-source">— {intentionSource}</div>
+        </div>
+
+        {/* Progreso del día */}
+        <div className={`th2-progress${dayPct >= 100 ? ' complete' : ''}`}>
+          <div className="th2-progress-top">
+            <span className="th2-progress-title">{dayPct >= 100 ? '¡Día completado!' : 'Tu día'}</span>
+            <span className="th2-progress-pct">{doneItems} / {totalItems}</span>
+          </div>
+          <div className="th2-progress-bar">
+            <div className="th2-progress-bar-fill" style={{ width: `${dayPct}%` }} />
+          </div>
+        </div>
+
+        {/* Tu espacio HSM — la pieza central */}
+        {allAnswered ? (
+          <div className="th2-espacio-done">
+            <div className="th2-espacio-done-label">Tu observación de hoy</div>
+            <p className="th2-espacio-done-text">
+              {dailyReview || 'Las 5 de hoy, listas. Tu coach ya analizó tus respuestas.'}
+            </p>
+            <button className="th2-espacio-done-btn" onClick={() => setShowEspacioFlow(true)}>
+              Ver review completo
+            </button>
+          </div>
+        ) : (
+          <div className="th2-espacio" onClick={() => setShowEspacioFlow(true)}>
+            <div className="th2-espacio-top">
+              <div className="th2-espacio-badge">
+                <span className="th2-espacio-badge-dot" />
+                <span className="th2-espacio-badge-text">Tu Espacio</span>
+              </div>
+              <span className="th2-espacio-count">{todayHSMAnswered}/{todayDimensions.length}</span>
+            </div>
+            <h2 className="th2-espacio-title">
+              {todayHSMAnswered === 0
+                ? <>Hoy toca abrir <em>tu espacio</em>.</>
+                : <>Ya escribiste <em>{todayHSMAnswered}</em>. Faltan {todayDimensions.length - todayHSMAnswered}.</>
+              }
+            </h2>
+            <p className="th2-espacio-sub">
+              5 preguntas de reflexión. Tu coach te devuelve un insight citando tus palabras.
+            </p>
+            <div className="th2-espacio-dots">
+              {Array.from({ length: todayDimensions.length }).map((_, i) => (
+                <div key={i} className={`th2-espacio-dot${i < todayHSMAnswered ? ' done' : ''}`} />
+              ))}
+            </div>
+            <button className="th2-espacio-btn">
+              {todayHSMAnswered === 0 ? 'Empezar →' : 'Continuar →'}
+            </button>
+          </div>
+        )}
+
+        {/* ── Alimentación ── */}
+        <div className="th2-section-label">
+          <span className="th2-section-title">Alimentación</span>
+          {weeklyPlan && (
+            <span className="th2-section-meta">
+              {isSelectedToday ? `${checkedMeals}/${todayMeals.length} · ` : ''}{selectedDayKcal} kcal
+            </span>
+          )}
+        </div>
+
+        {weeklyPlan && (
+          <div className="th2-day-tabs">
+            {DAY_LABELS.map((lbl, i) => (
+              <button
+                key={i}
+                className={`th2-day-tab${selectedDow === i ? ' active' : ''}${i === todayDow ? ' today' : ''}`}
+                onClick={() => setSelectedDow(i)}
+              >
+                {lbl}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {weeklyPlan ? (
+          <>
             {selectedMeals.filter(m => !m.name.startsWith('Snack')).map((meal) => {
               const origIdx = selectedMeals.indexOf(meal);
               const key = mealKey(origIdx);
               const done = isSelectedToday && !!mealChecks[key];
               return (
-                <div key={origIdx} className={`th-meal${done ? ' done' : ''}`}>
+                <div key={origIdx} className={`th2-meal${done ? ' done' : ''}`}>
                   {meal.img ? (
-                    <img src={meal.img} alt="" className="th-meal-img" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      onClick={() => setMealDetail(meal)} />
+                    <img
+                      src={meal.img}
+                      alt=""
+                      className="th2-meal-img"
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      onClick={() => setMealDetail(meal)}
+                    />
                   ) : (
-                    <div className="th-meal-emoji" onClick={() => setMealDetail(meal)}>{MEAL_EMOJI[meal.time] ?? '🥗'}</div>
+                    <div className="th2-meal-emoji" onClick={() => setMealDetail(meal)}>
+                      {MEAL_EMOJI[meal.time] ?? '🥗'}
+                    </div>
                   )}
-                  <div className="th-meal-body" onClick={() => setMealDetail(meal)}>
-                    <div className="th-meal-name">{meal.name}</div>
-                    <div className="th-meal-time">{meal.time}</div>
+                  <div className="th2-meal-body" onClick={() => setMealDetail(meal)}>
+                    <div className="th2-meal-time">{meal.time}</div>
+                    <div className="th2-meal-name">{meal.name}</div>
                   </div>
-                  <div className="th-meal-right">
-                    <div className="th-meal-kcal">{meal.portions ? `${calcMealKcal(meal.portions)}` : ''}</div>
+                  <div className="th2-meal-right">
+                    <div className="th2-meal-kcal">
+                      {meal.portions ? calcMealKcal(meal.portions) : ''}
+                    </div>
                     {isSelectedToday && (
-                      <div className={`th-meal-check${done ? ' checked' : ''}`} onClick={() => toggleMealCheck(key)}>{done ? '✓' : ''}</div>
+                      <div
+                        className={`th2-meal-check${done ? ' checked' : ''}`}
+                        onClick={() => toggleMealCheck(key)}
+                      >
+                        {done ? '✓' : ''}
+                      </div>
                     )}
                   </div>
                 </div>
               );
             })}
-            {/* Snacks (compact row) */}
-            <div className="th-snacks-row">
-              {selectedMeals.filter(m => m.name.startsWith('Snack')).map((meal) => {
-                const origIdx = selectedMeals.indexOf(meal);
-                const key = mealKey(origIdx);
-                const done = isSelectedToday && !!mealChecks[key];
-                return (
-                  <div key={origIdx} className={`th-snack${done ? ' done' : ''}`} onClick={() => isSelectedToday ? toggleMealCheck(key) : setMealDetail(meal)}>
-                    {isSelectedToday && <div className={`th-snack-check${done ? ' checked' : ''}`}>{done ? '✓' : ''}</div>}
-                    <span className="th-snack-name">{meal.time.replace(/^[^\s]+\s/, '')}</span>
-                    <span className="th-snack-kcal">{meal.portions ? calcMealKcal(meal.portions) : ''}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </>) : (
-            <div className="th-item th-item-cta" onClick={() => onNav('alimentacion')}>
-              <div className="th-cta-icon">🥗</div>
-              <div className="th-item-body">
-                <div className="th-item-title">Genera tu plan de nutrición</div>
-                <div className="th-item-sub">Tu nutricionista IA lo personaliza para ti</div>
+
+            {selectedMeals.filter(m => m.name.startsWith('Snack')).length > 0 && (
+              <div className="th2-snacks">
+                {selectedMeals.filter(m => m.name.startsWith('Snack')).map((meal) => {
+                  const origIdx = selectedMeals.indexOf(meal);
+                  const key = mealKey(origIdx);
+                  const done = isSelectedToday && !!mealChecks[key];
+                  return (
+                    <div
+                      key={origIdx}
+                      className={`th2-snack${done ? ' done' : ''}`}
+                      onClick={() => isSelectedToday ? toggleMealCheck(key) : setMealDetail(meal)}
+                    >
+                      {isSelectedToday && (
+                        <div className={`th2-snack-check${done ? ' checked' : ''}`}>
+                          {done ? '✓' : ''}
+                        </div>
+                      )}
+                      <span className="th2-snack-name">{meal.time.replace(/^[^\s]+\s/, '')}</span>
+                      <span className="th2-snack-kcal">{meal.portions ? calcMealKcal(meal.portions) : ''}</span>
+                    </div>
+                  );
+                })}
               </div>
-              <span className="th-cta-arrow">›</span>
+            )}
+          </>
+        ) : (
+          <div className="th2-cta" onClick={() => onNav('alimentacion')}>
+            <div className="th2-cta-icon">🥗</div>
+            <div className="th2-cta-body">
+              <div className="th2-cta-title">Genera tu plan de nutrición</div>
+              <div className="th2-cta-sub">Tu nutricionista IA lo personaliza para ti</div>
             </div>
-          )}
+            <span className="th2-cta-arrow">›</span>
+          </div>
+        )}
+
+        {/* ── Entrenamiento ── */}
+        <div className="th2-section-label">
+          <span className="th2-section-title">Entrenamiento</span>
+          {workoutToday && <span className="th2-section-meta">{workoutChecked}/{workoutExCount}</span>}
         </div>
 
-        <div>
-          {/* ── Workout ── */}
-          <div className="th-section-label">
-            <span>Entrenamiento</span>
-            {workoutToday && <span className="th-section-meta">{workoutChecked}/{workoutExCount}</span>}
-          </div>
-          {checkinDone && dailyCheckin === 'cansado' && (
-            <div className="th-energy-note">Ajustado a tu energía de hoy</div>
-          )}
-          {workoutToday ? (
-            <>
-              <div className="th-workout-badge">{workoutToday.type} · {workoutToday.duration}</div>
-              {(workoutToday.exercises ?? []).map((ex: any, i: number) => {
-                const done = dailyWorkoutChecked.includes(i);
-                return (
-                  <div key={i} className={`th-item${done ? ' done' : ''}`}>
-                    <div className={`th-item-check${done ? ' checked' : ''}`} onClick={() => toggleDailyWorkoutCheck(i)}>{done ? '✓' : ''}</div>
-                    <div className="th-item-body" onClick={() => setWorkoutDetail(ex)}>
-                      <div className="th-item-title">{ex.name}</div>
-                      {ex.sets && <div className="th-item-sub">{ex.sets} × {ex.reps} · {ex.rest}</div>}
-                    </div>
-                  </div>
-                );
-              })}
-            </>
-          ) : (
-            <div className="th-item th-item-cta" onClick={() => onNav('entrenamiento')}>
-              <div className="th-cta-icon">💪</div>
-              <div className="th-item-body">
-                <div className="th-item-title">Genera tu rutina de hoy</div>
-                <div className="th-item-sub">Tu coach la personaliza según cómo te sientes</div>
-              </div>
-              <span className="th-cta-arrow">›</span>
+        {checkinDone && dailyCheckin === 'cansado' && (
+          <div className="th2-energy-note">— Ajustado a tu energía de hoy</div>
+        )}
+
+        {workoutToday ? (
+          <>
+            <div>
+              <span className="th2-workout-badge">{workoutToday.type} · {workoutToday.duration}</span>
             </div>
-          )}
-        </div>
+            {(workoutToday.exercises ?? []).map((ex: any, i: number) => {
+              const done = dailyWorkoutChecked.includes(i);
+              return (
+                <div key={i} className={`th2-wo${done ? ' done' : ''}`}>
+                  <div
+                    className={`th2-wo-check${done ? ' checked' : ''}`}
+                    onClick={() => toggleDailyWorkoutCheck(i)}
+                  >
+                    {done ? '✓' : ''}
+                  </div>
+                  <div className="th2-wo-body" onClick={() => setWorkoutDetail(ex)}>
+                    <div className="th2-wo-title">{ex.name}</div>
+                    {ex.sets && <div className="th2-wo-sub">{ex.sets} × {ex.reps} · {ex.rest}</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        ) : (
+          <div className="th2-cta" onClick={() => onNav('entrenamiento')}>
+            <div className="th2-cta-icon">💪</div>
+            <div className="th2-cta-body">
+              <div className="th2-cta-title">Genera tu rutina de hoy</div>
+              <div className="th2-cta-sub">Tu coach la personaliza según cómo te sientes</div>
+            </div>
+            <span className="th2-cta-arrow">›</span>
+          </div>
+        )}
+
+        {/* Day 5 review */}
+        {miniReview && (
+          <div className="th2-review th2-review-mini">
+            <div className="th2-review-label">Tu coach te conoce</div>
+            <p className="th2-review-text">{miniReview}</p>
+          </div>
+        )}
+
+        {/* Weekly review */}
+        {weeklyHSMReview && (
+          <div className="th2-review">
+            <div className="th2-review-label">Resumen semanal HSM</div>
+            <p className="th2-review-text">{weeklyHSMReview}</p>
+          </div>
+        )}
+
+        {showEspacioFlow && (
+          <TuEspacioFlow onClose={() => setShowEspacioFlow(false)} />
+        )}
+
       </div>
 
-      {/* ── Tu Espacio — CTA card or done state ── */}
-      {allAnswered ? (
-        <div className="th-espacio-done">
-          <div className="th-espacio-done-label">Tu observación de hoy</div>
-          <p className="th-espacio-done-text">
-            {dailyReview || 'Las 5 de hoy, listas. Tu coach ya analizó tus respuestas.'}
-          </p>
-          <button className="th-espacio-done-btn" onClick={() => setShowEspacioFlow(true)}>
-            Ver review completo
-          </button>
-        </div>
-      ) : (
-        <div className="th-espacio-cta" onClick={() => setShowEspacioFlow(true)}>
-          <div className="th-espacio-cta-orb" />
-          <div className="th-espacio-header">
-            <div className="th-espacio-badge">
-              <span className="th-espacio-badge-dot" />
-              <span>Tu Espacio</span>
-            </div>
-            <span className="th-espacio-count">{todayHSMAnswered}/{todayDimensions.length}</span>
-          </div>
-          <div className="th-espacio-title">
-            {todayHSMAnswered === 0
-              ? 'Hoy toca abrir tu espacio.'
-              : `Ya respondiste ${todayHSMAnswered}. Faltan ${todayDimensions.length - todayHSMAnswered}.`
-            }
-          </div>
-          <div className="th-espacio-sub">
-            5 preguntas de reflexión. Tu coach te devuelve un insight citando tus palabras.
-          </div>
-          <div className="th-espacio-dots">
-            {Array.from({ length: todayDimensions.length }).map((_, i) => (
-              <div key={i} className={`th-espacio-dot-item${i < todayHSMAnswered ? ' done' : ''}`} />
-            ))}
-          </div>
-          <button className="th-espacio-btn">
-            {todayHSMAnswered === 0 ? 'Empezar →' : 'Continuar →'}
-          </button>
-        </div>
-      )}
-
-      {/* ── Day 5 Mini Review ── */}
-      {miniReview && (
-        <div className="th-review th-review-mini">
-          <div className="th-review-label">Tu coach te conoce</div>
-          <p className="th-review-text">{miniReview}</p>
-        </div>
-      )}
-
-      {/* ── Weekly HSM Review (Sundays) ── */}
-      {weeklyHSMReview && (
-        <div className="th-review th-review-weekly">
-          <div className="th-review-label">Resumen semanal HSM</div>
-          <p className="th-review-text">{weeklyHSMReview}</p>
-        </div>
-      )}
-
-      {/* ── Tu Espacio Flow overlay ── */}
-      {showEspacioFlow && (
-        <TuEspacioFlow onClose={() => setShowEspacioFlow(false)} />
-      )}
-
-      </div>{/* end tab-content */}
-
-      {/* ── Meal Detail Popout ── */}
+      {/* ── Meal popout (sin cambios, usa clases th- originales) ── */}
       {mealDetail && (
         <div className="th-popout-backdrop" onClick={() => setMealDetail(null)}>
           <div className="th-popout" onClick={e => e.stopPropagation()}>
@@ -841,7 +845,6 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
               ))}
             </div>
 
-            {/* Recipe steps */}
             <div className="th-popout-label">Preparación</div>
             {recipeLoading ? (
               <div className="th-recipe-loading">
@@ -863,7 +866,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
         </div>
       )}
 
-      {/* ── Workout Detail Popout ── */}
+      {/* ── Workout popout (sin cambios) ── */}
       {workoutDetail && (
         <div className="th-popout-backdrop" onClick={() => setWorkoutDetail(null)}>
           <div className="th-popout th-popout-sm" onClick={e => e.stopPropagation()}>
