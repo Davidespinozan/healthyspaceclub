@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import WeeklyReview from './WeeklyReview';
 import NightCheckIn from './NightCheckIn';
 import Stories from './Stories';
+import TuEspacioFlow from './TuEspacioFlow';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
@@ -169,11 +170,13 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     streakCount, obData,
     dailyBriefing, setDailyBriefing,
     dailyCheckin, dailyCheckinDate, setDailyCheckin,
-    dailyHSMResponses, addHSMResponse,
+    dailyHSMResponses,
     lastStreakMilestone, setLastStreakMilestone,
     nightCheckIn,
     hsmProfile, setHSMProfile,
   } = useAppStore();
+
+  const [showEspacioFlow, setShowEspacioFlow] = useState(false);
 
   const isSunday = new Date().getDay() === 0;
   const thisWeekSunday = (() => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return d.toISOString().split('T')[0]; })();
@@ -359,7 +362,6 @@ En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
   // 5th question: AI-generated based on last 7 days
   const [aiQuestion, setAiQuestion] = useState<{ emoji: string; title: string; q: string } | null>(null);
   const [dailyReview, setDailyReview] = useState<string | null>(null);
-  const [hsmInputs, setHsmInputs] = useState<Record<string, string>>({});
 
   const last7Responses = dailyHSMResponses.filter(r => {
     const d = new Date(r.date);
@@ -414,12 +416,7 @@ Responde SOLO la pregunta, nada más.`;
 
   const todayDimensions = aiQuestion ? [...fixedDimensions, aiQuestion] : fixedDimensions;
 
-  function handleHSMSubmit(dim: { emoji: string; title: string; q: string }) {
-    const val = hsmInputs[dim.title] ?? '';
-    if (!val.trim()) return;
-    addHSMResponse({ dimension: dim.title, question: dim.q, response: val.trim() });
-    setHsmInputs(prev => ({ ...prev, [dim.title]: '' }));
-  }
+  // handleHSMSubmit moved to TuEspacioFlow component
 
   // Generate daily review when all 5 are answered
   const allAnswered = todayDimensions.length > 0 && todayDimensions.every(d => todayResponses.some(r => r.dimension === d.title));
@@ -759,43 +756,44 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
         </div>
       </div>
 
-      {/* ── Tu Espacio — 5 HSM questions per day ── */}
-      <div className="th-section-label">
-        <span>Tu Espacio</span>
-        <span className="th-section-meta">
-          {todayDimensions.filter(d => todayResponses.some(r => r.dimension === d.title)).length}/{todayDimensions.length}
-        </span>
-      </div>
-      {todayDimensions.map((dim, idx) => {
-        const answered = todayResponses.some(r => r.dimension === dim.title);
-        const inputVal = hsmInputs[dim.title] ?? '';
-        const isAI = idx === todayDimensions.length - 1 && aiQuestion;
-        return answered ? (
-          <div key={dim.title + idx} className="th-hsm-done">
-            <span>{dim.emoji}</span>
-            <span>{dim.title} — respondido</span>
+      {/* ── Tu Espacio — CTA card or done state ── */}
+      {allAnswered ? (
+        <div className="th-espacio-done">
+          <div className="th-espacio-done-label">Tu observación de hoy</div>
+          <p className="th-espacio-done-text">
+            {dailyReview || 'Las 5 de hoy, listas. Tu coach ya analizó tus respuestas.'}
+          </p>
+          <button className="th-espacio-done-btn" onClick={() => setShowEspacioFlow(true)}>
+            Ver review completo
+          </button>
+        </div>
+      ) : (
+        <div className="th-espacio-cta" onClick={() => setShowEspacioFlow(true)}>
+          <div className="th-espacio-cta-orb" />
+          <div className="th-espacio-header">
+            <div className="th-espacio-badge">
+              <span className="th-espacio-badge-dot" />
+              <span>Tu Espacio</span>
+            </div>
+            <span className="th-espacio-count">{todayHSMAnswered}/{todayDimensions.length}</span>
           </div>
-        ) : (
-          <div key={dim.title + idx} className={`th-hsm-card${isAI ? ' th-hsm-ai' : ''}`}>
-            <div className="th-hsm-label">{dim.emoji} {dim.title}{isAI ? ' · IA' : ''}</div>
-            <div className="th-hsm-question">{dim.q}</div>
-            <input
-              className="th-hsm-input"
-              placeholder="Escribe tu respuesta..."
-              value={inputVal}
-              onChange={e => setHsmInputs(prev => ({ ...prev, [dim.title]: e.target.value }))}
-              onKeyDown={e => e.key === 'Enter' && handleHSMSubmit(dim)}
-            />
-            <button className="th-hsm-btn" onClick={() => handleHSMSubmit(dim)} disabled={!inputVal.trim()}>Registrar</button>
+          <div className="th-espacio-title">
+            {todayHSMAnswered === 0
+              ? 'Hoy toca abrir tu espacio.'
+              : `Ya respondiste ${todayHSMAnswered}. Faltan ${todayDimensions.length - todayHSMAnswered}.`
+            }
           </div>
-        );
-      })}
-
-      {/* ── Daily Review (after all 5 answered) ── */}
-      {dailyReview && (
-        <div className="th-review">
-          <div className="th-review-label">Tu observación de hoy</div>
-          <p className="th-review-text">{dailyReview}</p>
+          <div className="th-espacio-sub">
+            5 preguntas de reflexión. Tu coach te devuelve un insight citando tus palabras.
+          </div>
+          <div className="th-espacio-dots">
+            {Array.from({ length: todayDimensions.length }).map((_, i) => (
+              <div key={i} className={`th-espacio-dot-item${i < todayHSMAnswered ? ' done' : ''}`} />
+            ))}
+          </div>
+          <button className="th-espacio-btn">
+            {todayHSMAnswered === 0 ? 'Empezar →' : 'Continuar →'}
+          </button>
         </div>
       )}
 
@@ -813,6 +811,11 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
           <div className="th-review-label">Resumen semanal HSM</div>
           <p className="th-review-text">{weeklyHSMReview}</p>
         </div>
+      )}
+
+      {/* ── Tu Espacio Flow overlay ── */}
+      {showEspacioFlow && (
+        <TuEspacioFlow onClose={() => setShowEspacioFlow(false)} />
       )}
 
       </div>{/* end tab-content */}
