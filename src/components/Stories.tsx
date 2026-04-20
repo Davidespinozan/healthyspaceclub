@@ -38,21 +38,27 @@ export default function Stories() {
 
   // Fetch today's stories
   const fetchPosts = useCallback(async () => {
-    const { data } = await supabase
-      .from('club_posts')
-      .select('*')
-      .gte('created_at', today + 'T00:00:00')
-      .order('created_at', { ascending: false })
-      .limit(30);
-    if (data) setPosts(data);
+    try {
+      const { data } = await supabase
+        .from('club_posts')
+        .select('*')
+        .gte('created_at', today + 'T00:00:00')
+        .order('created_at', { ascending: false })
+        .limit(30);
+      if (data) setPosts(data);
+    } catch (e) { console.warn('[Stories] query failed:', e); }
   }, [today]);
 
   useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
   // Fetch user's avatar
   useEffect(() => {
-    supabase.from('user_profiles').select('avatar_url').eq('user_id', userId).single()
-      .then(({ data }) => { if (data?.avatar_url) setUserAvatarUrl(data.avatar_url); });
+    (async () => {
+      try {
+        const { data } = await supabase.from('user_profiles').select('avatar_url').eq('user_id', userId).single();
+        if (data?.avatar_url) setUserAvatarUrl(data.avatar_url);
+      } catch (e) { console.warn('[Stories] query failed:', e); }
+    })();
   }, [userId]);
 
   // Group by user (show 1 bubble per user, latest post)
@@ -80,24 +86,26 @@ export default function Stories() {
   async function handleShare() {
     if (sharing) return;
     setSharing(true);
-    let photoUrl = '';
-    if (shareMedia) {
-      const ext = shareMedia.name.split('.').pop() || 'jpg';
-      const path = `${userId}_${Date.now()}.${ext}`;
-      await supabase.storage.from('club').upload(path, shareMedia);
-      const { data } = supabase.storage.from('club').getPublicUrl(path);
-      photoUrl = data.publicUrl;
-    }
-    await supabase.from('club_posts').insert({
-      user_id: userId,
-      username: userName || 'Anónimo',
-      avatar_url: userAvatarUrl,
-      streak: streakCount,
-      workout_summary: workoutSummary,
-      photo_url: photoUrl,
-      text: shareText.trim().slice(0, 150),
-      fire_count: 0,
-    });
+    try {
+      let photoUrl = '';
+      if (shareMedia) {
+        const ext = shareMedia.name.split('.').pop() || 'jpg';
+        const path = `${userId}_${Date.now()}.${ext}`;
+        await supabase.storage.from('club').upload(path, shareMedia);
+        const { data } = supabase.storage.from('club').getPublicUrl(path);
+        photoUrl = data.publicUrl;
+      }
+      await supabase.from('club_posts').insert({
+        user_id: userId,
+        username: userName || 'Anónimo',
+        avatar_url: userAvatarUrl,
+        streak: streakCount,
+        workout_summary: workoutSummary,
+        photo_url: photoUrl,
+        text: shareText.trim().slice(0, 150),
+        fire_count: 0,
+      });
+    } catch (e) { console.warn('[Stories] mutation failed:', e); }
     setShareText('');
     clearMedia();
     setShowShare(false);
@@ -110,8 +118,10 @@ export default function Stories() {
     if (viewingIdx === null) return;
     const post = posts[viewingIdx];
     if (!post) return;
-    await supabase.from('club_fires').upsert({ post_id: post.id, user_id: userId });
-    await supabase.from('club_posts').update({ fire_count: post.fire_count + 1 }).eq('id', post.id);
+    try {
+      await supabase.from('club_fires').upsert({ post_id: post.id, user_id: userId });
+      await supabase.from('club_posts').update({ fire_count: post.fire_count + 1 }).eq('id', post.id);
+    } catch (e) { console.warn('[Stories] mutation failed:', e); }
     setPosts(prev => prev.map(p => p.id === post.id ? { ...p, fire_count: p.fire_count + 1 } : p));
   }
 
@@ -200,7 +210,9 @@ export default function Stories() {
             {viewing.user_id === userId && (
               <button className="st-viewer-delete" onClick={async (e) => {
                 e.stopPropagation();
-                await supabase.from('club_posts').delete().eq('id', viewing.id);
+                try {
+                  await supabase.from('club_posts').delete().eq('id', viewing.id);
+                } catch (e) { console.warn('[Stories] mutation failed:', e); }
                 setPosts(prev => prev.filter(p => p.id !== viewing.id));
                 setViewingIdx(null);
               }}>

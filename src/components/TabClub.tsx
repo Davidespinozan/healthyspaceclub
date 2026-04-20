@@ -38,13 +38,15 @@ export default function TabClub({ onNav }: { onNav: (page: DashPage) => void }) 
   // Fetch posts
   const fetchPosts = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('club_posts')
-      .select('*')
-      .gte('created_at', today + 'T00:00:00')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (data) setPosts(data);
+    try {
+      const { data } = await supabase
+        .from('club_posts')
+        .select('*')
+        .gte('created_at', today + 'T00:00:00')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (data) setPosts(data);
+    } catch (e) { console.warn('[TabClub] query failed:', e); }
     setLoading(false);
   }, [today]);
 
@@ -53,14 +55,16 @@ export default function TabClub({ onNav }: { onNav: (page: DashPage) => void }) 
   // Check which posts I've already fired
   useEffect(() => {
     if (posts.length === 0) return;
-    supabase
-      .from('club_fires')
-      .select('post_id')
-      .eq('user_id', userId)
-      .in('post_id', posts.map(p => p.id))
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('club_fires')
+          .select('post_id')
+          .eq('user_id', userId)
+          .in('post_id', posts.map(p => p.id));
         if (data) setFiredPosts(new Set(data.map(d => d.post_id)));
-      });
+      } catch (e) { console.warn('[TabClub] query failed:', e); }
+    })();
   }, [posts, userId]);
 
   // Handle media selection
@@ -83,25 +87,27 @@ export default function TabClub({ onNav }: { onNav: (page: DashPage) => void }) 
     if (sharing) return;
     setSharing(true);
 
-    let photoUrl = '';
-    if (shareMedia) {
-      const ext = shareMedia.name.split('.').pop() || 'jpg';
-      const path = `${userId}_${Date.now()}.${ext}`;
-      await supabase.storage.from('club').upload(path, shareMedia);
-      const { data } = supabase.storage.from('club').getPublicUrl(path);
-      photoUrl = data.publicUrl;
-    }
+    try {
+      let photoUrl = '';
+      if (shareMedia) {
+        const ext = shareMedia.name.split('.').pop() || 'jpg';
+        const path = `${userId}_${Date.now()}.${ext}`;
+        await supabase.storage.from('club').upload(path, shareMedia);
+        const { data } = supabase.storage.from('club').getPublicUrl(path);
+        photoUrl = data.publicUrl;
+      }
 
-    await supabase.from('club_posts').insert({
-      user_id: userId,
-      username: userName || 'Anónimo',
-      avatar_url: '',
-      streak: streakCount,
-      workout_summary: workoutSummary,
-      photo_url: photoUrl,
-      text: shareText.trim().slice(0, 150),
-      fire_count: 0,
-    });
+      await supabase.from('club_posts').insert({
+        user_id: userId,
+        username: userName || 'Anónimo',
+        avatar_url: '',
+        streak: streakCount,
+        workout_summary: workoutSummary,
+        photo_url: photoUrl,
+        text: shareText.trim().slice(0, 150),
+        fire_count: 0,
+      });
+    } catch (e) { console.warn('[TabClub] mutation failed:', e); }
 
     setShareText('');
     clearMedia();
@@ -114,13 +120,17 @@ export default function TabClub({ onNav }: { onNav: (page: DashPage) => void }) 
   async function toggleFire(post: ClubPost) {
     const alreadyFired = firedPosts.has(post.id);
     if (alreadyFired) {
-      await supabase.from('club_fires').delete().eq('post_id', post.id).eq('user_id', userId);
-      await supabase.from('club_posts').update({ fire_count: Math.max(0, post.fire_count - 1) }).eq('id', post.id);
+      try {
+        await supabase.from('club_fires').delete().eq('post_id', post.id).eq('user_id', userId);
+        await supabase.from('club_posts').update({ fire_count: Math.max(0, post.fire_count - 1) }).eq('id', post.id);
+      } catch (e) { console.warn('[TabClub] mutation failed:', e); }
       setFiredPosts(prev => { const n = new Set(prev); n.delete(post.id); return n; });
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, fire_count: Math.max(0, p.fire_count - 1) } : p));
     } else {
-      await supabase.from('club_fires').insert({ post_id: post.id, user_id: userId });
-      await supabase.from('club_posts').update({ fire_count: post.fire_count + 1 }).eq('id', post.id);
+      try {
+        await supabase.from('club_fires').insert({ post_id: post.id, user_id: userId });
+        await supabase.from('club_posts').update({ fire_count: post.fire_count + 1 }).eq('id', post.id);
+      } catch (e) { console.warn('[TabClub] mutation failed:', e); }
       setFiredPosts(prev => new Set(prev).add(post.id));
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, fire_count: p.fire_count + 1 } : p));
     }

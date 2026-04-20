@@ -15,12 +15,13 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
 
   // Load profile
   useEffect(() => {
-    supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
         if (data) {
           setProfile({ display_name: data.display_name, bio: data.bio, avatar_url: data.avatar_url });
           setEditName(data.display_name);
@@ -28,32 +29,41 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
         } else {
           // Create profile if doesn't exist
           const name = userName || 'Anónimo';
-          supabase.from('user_profiles').insert({ user_id: userId, display_name: name, bio: '', avatar_url: '' });
+          try {
+            await supabase.from('user_profiles').insert({ user_id: userId, display_name: name, bio: '', avatar_url: '' });
+          } catch (e) { console.warn('[MiHuella] mutation failed:', e); }
           setProfile({ display_name: name, bio: '', avatar_url: '' });
           setEditName(name);
         }
-      });
+      } catch (e) { console.warn('[MiHuella] query failed:', e); }
+    })();
 
     // Count posts
-    supabase
-      .from('club_posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .then(({ count }) => { if (count != null) setPostCount(count); });
+    (async () => {
+      try {
+        const { count } = await supabase
+          .from('club_posts')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId);
+        if (count != null) setPostCount(count);
+      } catch (e) { console.warn('[MiHuella] query failed:', e); }
+    })();
   }, [userId]);
 
   async function handleSave() {
     setSaving(true);
     const savedName = editName.trim() || userName || 'Anónimo';
     const savedBio = editBio.trim().slice(0, 100);
-    await supabase
-      .from('user_profiles')
-      .upsert({
-        user_id: userId,
-        display_name: savedName,
-        bio: savedBio,
-        avatar_url: profile.avatar_url,
-      }, { onConflict: 'user_id' });
+    try {
+      await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: userId,
+          display_name: savedName,
+          bio: savedBio,
+          avatar_url: profile.avatar_url,
+        }, { onConflict: 'user_id' });
+    } catch (e) { console.warn('[MiHuella] mutation failed:', e); }
     setProfile(prev => ({ ...prev, display_name: savedName, bio: savedBio }));
     setUserName(savedName);
     setEditing(false);
@@ -65,18 +75,20 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
     if (!file) return;
     const ext = file.name.split('.').pop();
     const path = `${userId}.${ext}`;
-    await supabase.storage.from('avatar').upload(path, file, { upsert: true });
-    const { data } = supabase.storage.from('avatar').getPublicUrl(path);
-    const url = data.publicUrl + '?t=' + Date.now();
-    await supabase
-      .from('user_profiles')
-      .upsert({
-        user_id: userId,
-        display_name: profile.display_name || userName || 'Anónimo',
-        bio: profile.bio || '',
-        avatar_url: url,
-      }, { onConflict: 'user_id' });
-    setProfile(prev => ({ ...prev, avatar_url: url }));
+    try {
+      await supabase.storage.from('avatar').upload(path, file, { upsert: true });
+      const { data } = supabase.storage.from('avatar').getPublicUrl(path);
+      const url = data.publicUrl + '?t=' + Date.now();
+      await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: userId,
+          display_name: profile.display_name || userName || 'Anónimo',
+          bio: profile.bio || '',
+          avatar_url: url,
+        }, { onConflict: 'user_id' });
+      setProfile(prev => ({ ...prev, avatar_url: url }));
+    } catch (e) { console.warn('[MiHuella] mutation failed:', e); }
   }
 
   return (

@@ -40,26 +40,34 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    supabase.from('user_profiles').select('*').eq('user_id', userId).single()
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase.from('user_profiles').select('*').eq('user_id', userId).single();
         if (data) setProfile({ display_name: data.display_name, bio: data.bio, avatar_url: data.avatar_url });
-      });
-    supabase.from('club_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId)
-      .then(({ count }) => { if (count != null) setPostCount(count); });
+      } catch (e) { console.warn('[TabTu] query failed:', e); }
+    })();
+    (async () => {
+      try {
+        const { count } = await supabase.from('club_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+        if (count != null) setPostCount(count);
+      } catch (e) { console.warn('[TabTu] query failed:', e); }
+    })();
   }, [userId]);
 
   async function handleSave() {
     setSaving(true);
     const savedName = editName.trim() || userName || 'Anónimo';
     const savedBio = editBio.trim().slice(0, 100);
-    await supabase
-      .from('user_profiles')
-      .upsert({
-        user_id: userId,
-        display_name: savedName,
-        bio: savedBio,
-        avatar_url: profile.avatar_url,
-      }, { onConflict: 'user_id' });
+    try {
+      await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: userId,
+          display_name: savedName,
+          bio: savedBio,
+          avatar_url: profile.avatar_url,
+        }, { onConflict: 'user_id' });
+    } catch (e) { console.warn('[TabTu] mutation failed:', e); }
     setProfile(prev => ({ ...prev, display_name: savedName, bio: savedBio }));
     setUserName(savedName);
     setEditing(false);
@@ -71,11 +79,13 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
     if (!file) return;
     const ext = file.name.split('.').pop();
     const path = `${userId}.${ext}`;
-    await supabase.storage.from('avatar').upload(path, file, { upsert: true });
-    const { data } = supabase.storage.from('avatar').getPublicUrl(path);
-    const url = data.publicUrl + '?t=' + Date.now();
-    await supabase.from('user_profiles').update({ avatar_url: url }).eq('user_id', userId);
-    setProfile(prev => ({ ...prev, avatar_url: url }));
+    try {
+      await supabase.storage.from('avatar').upload(path, file, { upsert: true });
+      const { data } = supabase.storage.from('avatar').getPublicUrl(path);
+      const url = data.publicUrl + '?t=' + Date.now();
+      await supabase.from('user_profiles').update({ avatar_url: url }).eq('user_id', userId);
+      setProfile(prev => ({ ...prev, avatar_url: url }));
+    } catch (e) { console.warn('[TabTu] mutation failed:', e); }
   }
 
   // Radar / dimensiones (lógica preservada)
