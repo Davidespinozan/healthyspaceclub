@@ -121,7 +121,13 @@ export default function Stories() {
       <div className="st-row">
         {/* Add story button */}
         <div className="st-bubble st-add" onClick={() => setShowShare(true)}>
-          <div className="st-add-icon">+</div>
+          <div className="st-bubble-ring">
+            {userAvatarUrl
+              ? <img src={userAvatarUrl} alt="" className="st-bubble-img" />
+              : <div className="st-bubble-letter">{(userName || '?')[0].toUpperCase()}</div>
+            }
+            <div className="st-add-badge">+</div>
+          </div>
           <span className="st-bubble-name">Tu story</span>
         </div>
 
