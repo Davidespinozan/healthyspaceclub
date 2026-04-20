@@ -145,28 +145,15 @@ function getDailyQuestion(dimIndex: number, dayIndex: number): { emoji: string; 
   return { emoji: dim.emoji, title: dim.title, q: dim.questions[qIndex] };
 }
 
-const FALLBACK_QUOTES = [
-  { text: 'No necesitas motivación. Necesitas disciplina.', source: 'Healthy Space Method' },
-  { text: 'Lo que haces todos los días importa más que lo que haces de vez en cuando.', source: 'Método HSM' },
-  { text: 'Tu cuerpo es el reflejo de tus decisiones diarias.', source: 'Método HSM' },
-  { text: 'La consistencia vence al talento cuando el talento no es consistente.', source: 'Método HSM' },
-  { text: 'Cada día que entrenas es un voto a favor de la persona que quieres ser.', source: 'Método HSM' },
-  { text: 'El cambio no es un evento. Es un proceso diario.', source: 'Método HSM' },
-  { text: 'Hoy es el día más importante de tu transformación.', source: 'Método HSM' },
-];
-
 const MEAL_EMOJI: Record<string, string> = {
   'Desayuno': '🌅', 'Snack AM': '🍎', 'Comida': '🍽️', 'Snack PM': '🥜', 'Cena': '🌙',
 };
-
-type WorkoutPlan = { type: string; duration: string; exercises: { name: string }[] };
 
 export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const {
     userName, planGoal, mealPlanKey, shoppingDay,
     mealChecks, toggleMealCheck,
     dailyWorkout, dailyWorkoutChecked, toggleDailyWorkoutCheck,
-    growthData,
     weeklyPlan, lastWeeklyReview,
     streakCount, obData,
     dailyBriefing, setDailyBriefing,
@@ -239,14 +226,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
   const [mealDetail, setMealDetail] = useState<typeof selectedMeals[0] | null>(null);
 
-  const workoutToday = dailyWorkout?.date === today ? dailyWorkout.plan as unknown as WorkoutPlan : null;
-  const workoutExCount = workoutToday?.exercises?.length ?? 0;
-  const workoutChecked = dailyWorkoutChecked.length;
   const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
-
-  const totalItems = (weeklyPlan ? todayMeals.length : 0) + workoutExCount + 5;
-  const doneItems = (weeklyPlan ? checkedMeals : 0) + workoutChecked + Math.min(todayHSMAnswered, 5);
-  const dayPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
 
   const { startDate: userStartDate } = useAppStore();
   const isDay1 = userStartDate === today;
@@ -286,11 +266,6 @@ En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
 
   const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
   const yesterdayIntention = nightCheckIn?.date === yesterdayStr ? nightCheckIn.intencionManana : '';
-  const puedoText = (growthData[0] as Record<string, string>)?.decl_0;
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-  const quoteOfDay = FALLBACK_QUOTES[dayOfYear % FALLBACK_QUOTES.length];
-  const intentionText = yesterdayIntention || puedoText || quoteOfDay.text;
-  const intentionSource = yesterdayIntention ? 'Tu intención de anoche' : puedoText ? 'Tu declaración PUEDO' : quoteOfDay.source;
 
   const todayDayIndex = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const todayHSMSlot = (todayDayIndex % 3);
@@ -532,26 +507,16 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
       {/* ── BODY ── */}
       <div className="th2-body">
 
-        {/* Intención del día */}
-        <div className="th2-intention">
-          <div className="th2-intention-label">
-            <span className="th2-intention-label-dot" />
-            Intención del día
+        {/* Intención del día (solo si escribiste algo anoche) */}
+        {yesterdayIntention && (
+          <div className="th2-intention">
+            <div className="th2-intention-label">
+              <span className="th2-intention-label-dot" />
+              Tu intención de anoche
+            </div>
+            <div className="th2-intention-text">{yesterdayIntention}</div>
           </div>
-          <div className="th2-intention-text">{intentionText}</div>
-          <div className="th2-intention-source">— {intentionSource}</div>
-        </div>
-
-        {/* Progreso del día */}
-        <div className={`th2-progress${dayPct >= 100 ? ' complete' : ''}`}>
-          <div className="th2-progress-top">
-            <span className="th2-progress-title">{dayPct >= 100 ? '¡Día completado!' : 'Tu día'}</span>
-            <span className="th2-progress-pct">{doneItems} / {totalItems}</span>
-          </div>
-          <div className="th2-progress-bar">
-            <div className="th2-progress-bar-fill" style={{ width: `${dayPct}%` }} />
-          </div>
-        </div>
+        )}
 
         {/* ── Alimentación ── */}
         <div className="th2-section-label">
