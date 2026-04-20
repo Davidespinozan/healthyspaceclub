@@ -279,7 +279,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
   if (!currentDim) return null;
 
   return (
-    <div className="te-flow" style={{ background: `linear-gradient(165deg, ${currentDim.color}15 0%, ${currentDim.color}08 100%)` }}>
+    <div className="te-flow">
       {/* Close */}
       <div className="te-flow-close" onClick={onClose}>✕</div>
 
