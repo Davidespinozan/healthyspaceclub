@@ -358,7 +358,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.pp-post-fire:hover {
+.pp-post-fire:hover,
+.pp-post-fire:active {
   border-color: #BFA065;
   color: #BFA065;
 }

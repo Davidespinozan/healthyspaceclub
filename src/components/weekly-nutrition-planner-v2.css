@@ -61,8 +61,10 @@
   cursor: pointer;
   font-family: inherit;
   transition: border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
-.wnp2-setup-day:hover {
+.wnp2-setup-day:hover,
+.wnp2-setup-day:active {
   border-color: var(--amber);
 }
 .wnp2-setup-day-name {
@@ -148,8 +150,10 @@
   font-family: inherit;
   text-align: left;
   transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
-.wnp2-option:hover {
+.wnp2-option:hover,
+.wnp2-option:active {
   border-color: var(--amber);
 }
 .wnp2-option.selected {
@@ -227,8 +231,10 @@
   cursor: pointer;
   letter-spacing: 0.02em;
   transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
-.wnp2-confirm:hover {
+.wnp2-confirm:hover,
+.wnp2-confirm:active {
   background: #152826;
 }
 .wnp2-back {
@@ -242,8 +248,10 @@
   font-weight: 600;
   cursor: pointer;
   border-radius: 50px;
+  -webkit-tap-highlight-color: transparent;
 }
-.wnp2-back:hover {
+.wnp2-back:hover,
+.wnp2-back:active {
   color: var(--forest);
   background: var(--warm);
 }
@@ -315,6 +323,7 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ─── Plan header (forest) ─── */
@@ -358,7 +367,7 @@
   background: var(--amber);
 }
 .wnp2-header-badge-text {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -391,8 +400,10 @@
   font-weight: 700;
   transition: background 0.15s;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
 }
-.wnp2-regen:hover {
+.wnp2-regen:hover,
+.wnp2-regen:active {
   background: rgba(246,242,234,0.18);
 }
 .wnp2-regen-blocked {
@@ -458,6 +469,7 @@
   justify-content: center;
   gap: 6px;
   transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 .wnp2-tab.on {
   background: var(--forest);
@@ -482,6 +494,7 @@
   font-family: inherit;
   position: relative;
   transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 .wnp2-day.on {
   background: var(--forest);
@@ -517,7 +530,7 @@
   padding: 2px 9px;
   background: var(--amber);
   color: white;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -560,6 +573,7 @@
   cursor: pointer;
   position: relative;
   transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 .wnp2-meal.done {
   opacity: 0.55;
@@ -592,7 +606,7 @@
   min-width: 0;
 }
 .wnp2-meal-time {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -619,7 +633,7 @@
   gap: 3px;
 }
 .wnp2-meal-chip {
-  font-size: 9.5px;
+  font-size: 10px;
   padding: 2px 7px;
   background: var(--warm);
   color: var(--txt2);
@@ -646,6 +660,7 @@
 }
 .wnp2-meal-check {
   width: 22px; height: 22px;
+  min-width: 44px; min-height: 44px;
   border-radius: 7px;
   border: 1.5px solid var(--sand);
   background: white;
@@ -697,7 +712,7 @@
   min-width: 0;
 }
 .wnp2-shop-micro {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -738,11 +753,13 @@
   border-bottom: 0.5px solid var(--sand);
   cursor: pointer;
   transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 .wnp2-shop-item:last-child {
   border-bottom: none;
 }
-.wnp2-shop-item:hover {
+.wnp2-shop-item:hover,
+.wnp2-shop-item:active {
   background: var(--warm);
 }
 .wnp2-shop-item.done {
@@ -750,6 +767,7 @@
 }
 .wnp2-shop-item-check {
   width: 22px; height: 22px;
+  min-width: 44px; min-height: 44px;
   border-radius: 7px;
   border: 1.5px solid var(--sand);
   background: white;

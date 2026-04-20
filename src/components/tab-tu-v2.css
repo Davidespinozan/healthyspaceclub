@@ -93,8 +93,10 @@
   font-family: inherit;
   align-self: center;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
 }
-.tu2-hero-edit:hover {
+.tu2-hero-edit:hover,
+.tu2-hero-edit:active {
   background: var(--forest);
   color: var(--cream);
 }
@@ -141,6 +143,7 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .tu2-edit-save:disabled {
   opacity: 0.5;
@@ -155,6 +158,7 @@
   font-weight: 600;
   color: var(--txt2);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ─── Stats inline ─── */
@@ -329,6 +333,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  -webkit-tap-highlight-color: transparent;
 }
 .tu2-dim-emoji {
   width: 36px;
@@ -397,8 +402,10 @@
   position: relative;
   overflow: hidden;
   transition: transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
-.tu2-quick-card:hover {
+.tu2-quick-card:hover,
+.tu2-quick-card:active {
   transform: translateY(-1px);
 }
 .tu2-quick-card::before {
@@ -528,7 +535,7 @@
   color: var(--amber);
 }
 .tu2-milestone-label {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -582,8 +589,10 @@
   font-family: inherit;
   margin-top: 8px;
   transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
-.tu2-logout:hover {
+.tu2-logout:hover,
+.tu2-logout:active {
   color: #c9603e;
   border-color: #c9603e;
 }
@@ -619,7 +628,7 @@
     font-size: 20px;
   }
   .tu2-stat-label {
-    font-size: 9px;
+    font-size: 10px;
   }
   .tu2-profile {
     padding: 20px 18px;

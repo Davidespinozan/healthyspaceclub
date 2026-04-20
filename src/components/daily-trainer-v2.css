@@ -184,7 +184,7 @@
 }
 
 .dt2-q-hint {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -276,7 +276,8 @@
   margin-top: 4px;
 }
 
-.dt2-cta:hover {
+.dt2-cta:hover,
+.dt2-cta:active {
   background: var(--dt2-moss);
 }
 
@@ -309,7 +310,8 @@
   gap: 4px;
 }
 
-.dt2-link:hover {
+.dt2-link:hover,
+.dt2-link:active {
   color: var(--dt2-forest);
   text-decoration-color: var(--dt2-amber);
 }
@@ -457,7 +459,8 @@
   transition: all 0.15s;
 }
 
-.dt2-regen:hover:not(:disabled) {
+.dt2-regen:hover:not(:disabled),
+.dt2-regen:active:not(:disabled) {
   border-color: var(--dt2-amber);
   color: var(--dt2-amber);
 }
@@ -534,6 +537,8 @@
   flex-shrink: 0;
   width: 22px;
   height: 22px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
   background: white;
   border: 1.5px solid var(--dt2-sand);
@@ -762,7 +767,8 @@
   cursor: not-allowed;
 }
 
-.dt2-mod-card.locked:hover {
+.dt2-mod-card.locked:hover,
+.dt2-mod-card.locked:active {
   border-color: var(--dt2-sand);
 }
 
@@ -798,7 +804,7 @@
 }
 
 .dt2-mod-badge {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -817,6 +823,8 @@
 .dt2-mod-check {
   width: 24px;
   height: 24px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
   background: var(--dt2-forest);
   color: var(--dt2-amber);

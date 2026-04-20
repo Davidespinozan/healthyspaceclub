@@ -79,8 +79,8 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: rgba(246, 242, 234, 0.95);
   border: 0.5px solid rgba(30, 51, 48, 0.08);
@@ -96,7 +96,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.edp-close:hover {
+.edp-close:hover,
+.edp-close:active {
   background: white;
   border-color: var(--edp-amber);
 }
@@ -223,8 +224,8 @@
 }
 
 .edp-vc-btn {
-  width: 30px;
-  height: 30px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: rgba(30, 51, 48, 0.6);
   backdrop-filter: blur(8px);
@@ -239,7 +240,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.edp-vc-btn:hover {
+.edp-vc-btn:hover,
+.edp-vc-btn:active {
   background: rgba(30, 51, 48, 0.85);
   color: var(--edp-amber);
 }
@@ -293,12 +295,13 @@
   background: rgba(246, 242, 234, 0.35);
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 19px 10px;
   transition: all 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
 
-.edp-dot:hover {
+.edp-dot:hover,
+.edp-dot:active {
   background: rgba(246, 242, 234, 0.6);
 }
 
@@ -339,7 +342,8 @@
   }
 }
 
-.edp-arrow:hover {
+.edp-arrow:hover,
+.edp-arrow:active {
   background: rgba(30, 51, 48, 0.85);
   color: var(--edp-amber);
 }
@@ -431,7 +435,7 @@
 }
 
 .edp-stat-lbl {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -582,7 +586,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.edp-cta:hover {
+.edp-cta:hover,
+.edp-cta:active {
   background: var(--edp-moss);
 }
 
@@ -592,6 +597,7 @@
   border: 1px solid var(--edp-sand);
 }
 
-.edp-cta.done:hover {
+.edp-cta.done:hover,
+.edp-cta.done:active {
   background: var(--edp-sand);
 }

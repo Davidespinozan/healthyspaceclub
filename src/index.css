@@ -5736,7 +5736,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .tp-radar { width: 100%; max-width: 260px; height: auto; }
 .tp-radar-ring { fill: none; stroke: var(--sand); stroke-width: 0.5; }
 .tp-radar-fill { fill: rgba(191,160,101,.2); stroke: var(--amber); stroke-width: 2; stroke-linejoin: round; transition: all .4s; }
-.tp-radar-lbl { font-size: 9px; fill: var(--txt2); font-weight: 600; }
+.tp-radar-lbl { font-size: 10px; fill: var(--txt2); font-weight: 600; }
 
 /* Quick actions */
 .tp-actions { display: flex; justify-content: center; gap: 20px; padding: 0 20px; }
