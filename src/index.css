@@ -6026,9 +6026,19 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .st-viewer-fire:hover { background: rgba(255,255,255,.25); }
 
 /* Nav tap areas */
-.st-nav { position: absolute; top: 80px; bottom: 80px; width: 40%; }
-.st-nav-prev { left: 0; }
-.st-nav-next { right: 0; }
+.st-nav {
+  position: absolute; top: 50%; width: 36px; height: 36px;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.35); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 10;
+  color: white; font-size: 16px; font-weight: 700;
+}
+.st-nav:hover { background: rgba(0,0,0,0.55); }
+.st-nav-prev { left: 10px; }
+.st-nav-next { right: 10px; }
+.st-nav-prev::after { content: '‹'; }
+.st-nav-next::after { content: '›'; }
 
 /* Share story modal */
 .st-share-backdrop {
