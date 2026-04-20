@@ -184,7 +184,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const today = new Date().toISOString().split('T')[0];
   const hour = new Date().getHours();
 
-  const nightDone = nightCheckIn?.date === today && nightCheckIn?.completed;
   const [showNight, setShowNight] = useState(() => {
     const h = new Date().getHours();
     const isNight = h >= 20 && h <= 23;
