@@ -165,10 +165,11 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
                 {profile.display_name || userName || 'Anónimo'}
                 {streakCount > 0 && <>, <em>{streakCount >= 30 ? 'eres élite.' : streakCount >= 15 ? 'imparable.' : streakCount >= 8 ? 'en racha.' : streakCount >= 4 ? 'vas bien.' : 'empezando.'}</em></>}
               </h1>
+              {profile.bio && <p className="tu2-hero-bio">{profile.bio}</p>}
               <p className="tu2-hero-sub">
                 {totalReflections > 0
-                  ? `${streakCount} días construyendo. ${totalReflections} reflexiones escritas. Este es tu espejo.`
-                  : profile.bio || 'Empieza a escribir en Tu Espacio para que tu coach te conozca.'}
+                  ? `${streakCount} días construyendo. ${totalReflections} reflexiones escritas.`
+                  : 'Empieza a escribir en Tu Espacio para que tu coach te conozca.'}
               </p>
               <button className="tu2-hero-edit" onClick={() => {
                 setEditName(profile.display_name || userName || '');

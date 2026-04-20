@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
+import PublicProfile from './PublicProfile';
 
 interface StoryPost {
   id: string;
@@ -27,6 +28,7 @@ export default function Stories() {
   const [shareMedia, setShareMedia] = useState<File | null>(null);
   const [sharePreview, setSharePreview] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
   const workoutToday = dailyWorkout?.date === today ? dailyWorkout.plan as Record<string, unknown> : null;
@@ -165,7 +167,7 @@ export default function Stories() {
                   : <span>{(viewing.username || '?')[0].toUpperCase()}</span>
                 }
               </div>
-              <div className="st-viewer-name">{viewing.username}</div>
+              <div className="st-viewer-name" onClick={(e) => { e.stopPropagation(); setViewingIdx(null); setProfileUserId(viewing.user_id); }} style={{ cursor: 'pointer' }}>{viewing.username}</div>
               {viewing.streak > 0 && <div className="st-viewer-streak">🔥 {viewing.streak}</div>}
               <button className="st-viewer-close" onClick={() => setViewingIdx(null)}>✕</button>
             </div>
@@ -262,6 +264,13 @@ export default function Stories() {
             </button>
           </div>
         </div>
+      )}
+
+      {profileUserId && (
+        <PublicProfile
+          userId={profileUserId}
+          onClose={() => setProfileUserId(null)}
+        />
       )}
     </>
   );

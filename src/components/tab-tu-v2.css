@@ -68,8 +68,15 @@
   font-weight: 500;
   color: var(--amber);
 }
+.tu2-hero-bio {
+  font-size: 13px;
+  color: var(--forest);
+  margin: 0 0 4px;
+  line-height: 1.4;
+  font-style: italic;
+}
 .tu2-hero-sub {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--txt2);
   margin: 0;
   line-height: 1.5;
