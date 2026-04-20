@@ -489,9 +489,6 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
         </div>
       )}
 
-      {/* Stories — componente existente intacto */}
-      <Stories />
-
       {/* ── HERO editorial ── */}
       <div className="th2-hero">
         <div className="th2-hero-top">
@@ -528,6 +525,9 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
           <div className="th2-briefing">{dailyBriefing.message}</div>
         )}
       </div>
+
+      {/* Stories — después del hero */}
+      <Stories />
 
       {/* ── BODY ── */}
       <div className="th2-body">
