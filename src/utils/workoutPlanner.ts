@@ -350,8 +350,30 @@ export function buildConfigHash(params: {
   goal: string;
   dayType: string;
   schemaVersion?: number;
+  modality?: string;
+  energy?: string;
+  objective?: string;
+  priorExercise?: string;
+  discomfort?: string;
+  painArea?: string;
+  restDays?: number;
+  yesterdayMuscles?: string;
 }): string {
-  const str = `v${params.schemaVersion || 0}-${params.duration}-${params.equipment}-${params.goal}-${params.dayType}`;
+  const str = [
+    `v${params.schemaVersion || 0}`,
+    params.duration,
+    params.equipment,
+    params.goal,
+    params.dayType,
+    params.modality || 'auto',
+    params.energy || 'none',
+    params.objective || 'none',
+    params.priorExercise || 'none',
+    params.discomfort || 'none',
+    params.painArea || 'none',
+    params.restDays ?? -1,
+    params.yesterdayMuscles || 'none',
+  ].join('-');
   // Simple hash function (djb2)
   let hash = 5381;
   for (let i = 0; i < str.length; i++) {
