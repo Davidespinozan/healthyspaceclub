@@ -441,27 +441,12 @@ export default function DailyTrainer() {
         muscleGroups = todayDecision.muscleGroups;
       }
 
-      const dayTypeKey = selectedModality === 'auto' ? todayDecision.type : selectedModality;
-      const configHash = buildConfigHash({
-        duration: selectedTime,
-        equipment: selectedEquipment,
-        goal,
-        dayType: dayTypeKey,
-      });
-
-      // Try cache
-      const validIds = new Set(exerciseBank.map(e => e.id));
-      const cached = await getCachedWorkout(configHash);
-      if (cached && validateWorkout(cached, validIds)) {
-        setPlan(cached);
-        saveDailyWorkout(cached as any);
-        setPhase('plan');
-        return;
-      }
-
-      // Rama especial para yoga: Power Vinyasa con format YogaPlan
+      // Rama especial para yoga: Power Vinyasa (sin cache, siempre regenerar)
       if (selectedModality === 'yoga') {
         const yogaCandidates = filterByModality(exerciseBank, 'yoga');
+
+        console.warn('[yoga-debug] candidates count:', yogaCandidates.length);
+        console.warn('[yoga-debug] candidates ids:', yogaCandidates.map(e => e.id));
 
         if (yogaCandidates.length < 15) {
           throw new Error(`Solo hay ${yogaCandidates.length} poses de yoga curadas. Necesitamos mínimo 15 para Power Vinyasa.`);
@@ -478,8 +463,32 @@ export default function DailyTrainer() {
           painArea: discomfort === 'pain' ? painArea : undefined,
         });
 
+        console.warn('[yoga-debug] plan received:', {
+          type: yogaPlan.type,
+          posesCount: yogaPlan.poses?.length,
+          totalDuration: yogaPlan.totalDuration,
+        });
+
         setPlan(yogaPlan as any);
         saveDailyWorkout(yogaPlan as any);
+        setPhase('plan');
+        return;
+      }
+
+      // Rama FUERZA/CARDIO/AUTO: con cache
+      const dayTypeKey = selectedModality === 'auto' ? todayDecision.type : selectedModality;
+      const configHash = buildConfigHash({
+        duration: selectedTime,
+        equipment: selectedEquipment,
+        goal,
+        dayType: dayTypeKey,
+      });
+
+      const validIds = new Set(exerciseBank.map(e => e.id));
+      const cached = await getCachedWorkout(configHash);
+      if (cached && validateWorkout(cached, validIds)) {
+        setPlan(cached);
+        saveDailyWorkout(cached as any);
         setPhase('plan');
         return;
       }
