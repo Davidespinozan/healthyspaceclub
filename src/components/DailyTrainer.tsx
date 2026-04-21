@@ -522,18 +522,20 @@ export default function DailyTrainer() {
         let yogaPlan = await orchestratePowerVinyasa(orchParams);
 
         const yogaIds = new Set(exerciseBank.filter(e => e.isYoga).map(e => e.id));
-        const validation = validatePowerVinyasaPlan(yogaPlan, targetDurationSeconds, yogaIds);
+        let validation = validatePowerVinyasaPlan(yogaPlan, targetDurationSeconds, yogaIds);
 
         if (!validation.valid) {
           console.warn('[yoga] validación fallida, reintentando:', validation.errors);
           yogaPlan = await orchestratePowerVinyasa(orchParams);
-          const retryValidation = validatePowerVinyasaPlan(yogaPlan, targetDurationSeconds, yogaIds);
-          if (!retryValidation.valid) {
-            console.error('[yoga] segundo intento falló:', retryValidation.errors);
+          validation = validatePowerVinyasaPlan(yogaPlan, targetDurationSeconds, yogaIds);
+          if (!validation.valid) {
+            console.error('[yoga] segundo intento falló:', validation.errors);
+            // NO incrementar contador — generación falló
+            throw new Error('No pudimos generar una nueva rutina. Intenta en un momento.');
           }
         }
 
-        // Guardar en cache con todas las variables
+        // Solo llegamos aquí si validación pasó
         saveWorkoutToCache({
           configHash,
           duration: selectedTime,
@@ -544,7 +546,6 @@ export default function DailyTrainer() {
           schemaType: 'yoga',
         }).catch(() => {});
 
-        // Increment regen AFTER successful generation
         incrementRegen(selectedModality);
         console.info(`[regen] ${selectedModality}: ${(regenCounts[selectedModality] || 0) + 1}/3 today | admin: ${isAdmin}`);
 
@@ -637,8 +638,16 @@ export default function DailyTrainer() {
       saveDailyWorkout(workout as any);
       setPhase('plan');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al generar la rutina');
-      setPhase('error');
+      const msg = e instanceof Error ? e.message : 'Error al generar la rutina';
+      setError(msg);
+      // If we had a previous plan, go back to it instead of modality
+      if (plan) {
+        setPhase('plan');
+        // Show error briefly as alert since we're going back to plan
+        alert(msg);
+      } else {
+        setPhase('error');
+      }
     }
   }
 

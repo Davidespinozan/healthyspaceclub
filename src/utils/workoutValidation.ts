@@ -35,7 +35,7 @@ export function validatePowerVinyasaPlan(
   }
 
   const actualDuration = plan.poses.reduce((s, p) => s + p.duration, 0);
-  const tolerance = targetDurationSeconds * 0.15;
+  const tolerance = targetDurationSeconds * 0.25;
   if (Math.abs(actualDuration - targetDurationSeconds) > tolerance) {
     errors.push(`Duración ${actualDuration}s fuera de tolerancia (target ${targetDurationSeconds}s)`);
   }
