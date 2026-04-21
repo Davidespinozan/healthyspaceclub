@@ -957,3 +957,25 @@
   flex-wrap: wrap;
   margin-bottom: 3px;
 }
+
+/* ── Yoga start CTA ──────────────────────── */
+
+.dt2-yoga-start-cta {
+  width: 100%;
+  padding: 16px;
+  margin: 14px 0 18px;
+  border-radius: 50px;
+  background: var(--dt2-forest, #1e3330);
+  color: var(--dt2-amber, #BFA065);
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s;
+}
+
+.dt2-yoga-start-cta:active {
+  transform: scale(0.98);
+}

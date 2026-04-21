@@ -33,6 +33,7 @@ import type {
 } from '../types';
 import { RefreshCw, Clock, Zap, ChevronRight, Lock } from 'lucide-react';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
+import YogaFlowPlayer from './YogaFlowPlayer';
 import './daily-trainer-v2.css';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
@@ -374,6 +375,8 @@ export default function DailyTrainer() {
   const [contextBullets, setContextBullets] = useState<string[]>([]);
 
   // Popout
+  const [playerOpen, setPlayerOpen] = useState(false);
+
   const [selectedExercise, setSelectedExercise] = useState<{
     exercise: Exercise;
     planData: { sets: number; reps: string; rest: number; tip_personalizado?: string };
@@ -893,6 +896,14 @@ export default function DailyTrainer() {
             </div>
           )}
 
+          {/* CTA para abrir player */}
+          <button
+            className="dt2-yoga-start-cta"
+            onClick={() => setPlayerOpen(true)}
+          >
+            ▶ comenzar flow
+          </button>
+
           {yogaPlan.opening && (
             <div className="dt2-section dt2-warmup">
               <div className="dt2-section-label">Opening</div>
@@ -940,6 +951,19 @@ export default function DailyTrainer() {
             <div className="dt2-note">
               <p className="dt2-note-text">{yogaPlan.note}</p>
             </div>
+          )}
+
+          {/* Player overlay */}
+          {playerOpen && (
+            <YogaFlowPlayer
+              plan={yogaPlan}
+              exerciseBank={exerciseBank}
+              onClose={() => setPlayerOpen(false)}
+              onComplete={() => {
+                // TODO: registrar en workoutLog, sumar racha
+                setPlayerOpen(false);
+              }}
+            />
           )}
         </div>
       );
