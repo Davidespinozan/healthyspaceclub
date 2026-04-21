@@ -146,8 +146,8 @@ interface AppState {
   incrementPlanRegen: () => void;
 
   // Daily workout regen counter (max 3 per day)
-  dailyWorkoutRegenCount: { date: string; count: number };
-  incrementDailyWorkoutRegen: () => void;
+  dailyWorkoutRegenCount: { date: string; countByModality: Record<string, number> };
+  incrementDailyWorkoutRegen: (modality: string) => void;
 
   // Daily check-in + streak
   dailyCheckIn: { date: string; feeling: string; sleep: string } | null;
@@ -419,14 +419,14 @@ export const useAppStore = create<AppState>()(
   planRegenCount: null,
 
   // Daily workout regen counter
-  dailyWorkoutRegenCount: { date: '', count: 0 },
-  incrementDailyWorkoutRegen: () => set((state) => {
+  dailyWorkoutRegenCount: { date: '', countByModality: {} },
+  incrementDailyWorkoutRegen: (modality: string) => set((state) => {
     const today = new Date().toISOString().split('T')[0];
     const current = state.dailyWorkoutRegenCount;
-    if (current.date === today) {
-      return { dailyWorkoutRegenCount: { date: today, count: current.count + 1 } };
-    }
-    return { dailyWorkoutRegenCount: { date: today, count: 1 } };
+    const isToday = current.date === today;
+    const counts = isToday ? { ...current.countByModality } : {};
+    counts[modality] = (counts[modality] || 0) + 1;
+    return { dailyWorkoutRegenCount: { date: today, countByModality: counts } };
   }),
   incrementPlanRegen: () => {
     const weekStart = (() => {
@@ -610,7 +610,7 @@ export const useAppStore = create<AppState>()(
       streakCount: 0,
       lastActiveDate: null,
       planRegenCount: null,
-      dailyWorkoutRegenCount: { date: '', count: 0 },
+      dailyWorkoutRegenCount: { date: '', countByModality: {} },
       lastWeeklyReview: null,
       dailyBriefing: null,
       lastStreakMilestone: 0,

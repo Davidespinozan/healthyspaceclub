@@ -324,9 +324,9 @@ export default function DailyTrainer() {
   const todayDayName = DAY_NAMES[new Date().getDay()];
   const todayDateShort = `${new Date().getDate()} ${new Date().toLocaleDateString('es-ES', { month: 'short' })}`;
 
-  const regensToday = regenCount?.date === today ? regenCount.count : 0;
-  const regenBlocked = regensToday >= 3;
-  const regensLeft = Math.max(0, 3 - regensToday);
+  // Admin bypass
+  const ADMIN_USERS = ['David', 'Magaly']; // TODO: replace with isAdmin flag when auth exists
+  const isAdmin = ADMIN_USERS.some(a => firstName.toLowerCase().startsWith(a.toLowerCase()));
 
   // Check if we have today's checkin already
   const hasCheckinToday = dailyCheckinDate === today && dailyCheckin !== null;
@@ -370,6 +370,12 @@ export default function DailyTrainer() {
   const [painArea, setPainArea] = useState('');
   const [selectedTime, setSelectedTime] = useState(45);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment>('gym');
+
+  // Per-modality regen count
+  const regenCounts = regenCount?.date === today ? (regenCount.countByModality || {}) : {};
+  const regensForModality = regenCounts[selectedModality] || 0;
+  const regenBlocked = !isAdmin && regensForModality >= 3;
+  const regensLeft = Math.max(0, 3 - regensForModality);
 
   // Loading context bullets
   const [contextBullets, setContextBullets] = useState<string[]>([]);
@@ -538,6 +544,10 @@ export default function DailyTrainer() {
           schemaType: 'yoga',
         }).catch(() => {});
 
+        // Increment regen AFTER successful generation
+        incrementRegen(selectedModality);
+        console.info(`[regen] ${selectedModality}: ${(regenCounts[selectedModality] || 0) + 1}/3 today | admin: ${isAdmin}`);
+
         setPlan(yogaPlan as any);
         saveDailyWorkout(yogaPlan as any);
         setPhase('plan');
@@ -619,6 +629,10 @@ export default function DailyTrainer() {
         schemaType: 'workout',
       }).catch(() => {});
 
+      // Increment regen AFTER successful generation
+      incrementRegen(selectedModality);
+      console.info(`[regen] ${selectedModality}: ${(regenCounts[selectedModality] || 0) + 1}/3 today | admin: ${isAdmin}`);
+
       setPlan(workout);
       saveDailyWorkout(workout as any);
       setPhase('plan');
@@ -630,7 +644,7 @@ export default function DailyTrainer() {
 
   function handleRegenerate() {
     if (regenBlocked) return;
-    incrementRegen();
+    // Don't increment here — increment AFTER successful generation
     setPlan(null);
     saveDailyWorkout(null as any);
     setPhase('modality');
