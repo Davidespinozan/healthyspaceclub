@@ -158,11 +158,6 @@ export function decideTodayWorkout(params: {
   // Analyze history
   const history = analyzeWorkoutHistory(workoutLog, exercises);
 
-  // If user already trained today, rest
-  if (history.today.length > 0) {
-    return buildDecision('descanso', 'Ya entrenaste hoy — tu cuerpo necesita recuperarse.', 'baja');
-  }
-
   // Pick next in cycle, avoiding yesterday's muscles
   const todayType = pickNextInCycle(cycle, history);
 
