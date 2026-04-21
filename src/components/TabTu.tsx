@@ -2,6 +2,7 @@ import { useMemo, useEffect, useState } from 'react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
+import { validateMediaFile } from '../utils/mediaValidation';
 import './tab-tu-v2.css';
 
 const RADAR_DIMS = ['Identidad','Vocación','Propósito','Metas','Disciplina','Cuerpo','Entorno y Relaciones','Control Emocional','Resiliencia','Evolución'];
@@ -77,6 +78,8 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   async function handleAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const check = validateMediaFile(file);
+    if (!check.valid) { alert(check.error); return; }
     const ext = file.name.split('.').pop();
     const path = `${userId}.${ext}`;
     try {

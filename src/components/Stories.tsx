@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import PublicProfile from './PublicProfile';
+import { validateMediaFile } from '../utils/mediaValidation';
 
 interface StoryPost {
   id: string;
@@ -73,6 +74,8 @@ export default function Stories() {
   function handleMediaSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const check = validateMediaFile(file, true);
+    if (!check.valid) { alert(check.error); return; }
     setShareMedia(file);
     setSharePreview(URL.createObjectURL(file));
   }

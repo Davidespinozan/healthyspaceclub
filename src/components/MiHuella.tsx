@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
+import { validateMediaFile } from '../utils/mediaValidation';
 
 export default function MiHuella({ onBack }: { onBack: () => void }) {
   const { userName, setUserName, streakCount, hsmUnlockDays, obData } = useAppStore();
@@ -73,6 +74,8 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
   async function handleAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const check = validateMediaFile(file);
+    if (!check.valid) { alert(check.error); return; }
     const ext = file.name.split('.').pop();
     const path = `${userId}.${ext}`;
     try {
