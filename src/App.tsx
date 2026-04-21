@@ -1,14 +1,14 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore } from './store';
 // import { supabase } from './lib/supabase'; // activar con Supabase
 import LandingScreen from './screens/LandingScreen';
-import LoginScreen from './screens/LoginScreen';
-import OnboardingScreen from './screens/OnboardingScreen';
-import DashboardScreen from './screens/DashboardScreen';
-// LifeSystemScreen now accessed only via DashboardScreen inline
-import PaymentModal from './components/modals/PaymentModal';
-import SignupModal from './components/modals/SignupModal';
-import VideoModal from './components/modals/VideoModal';
+
+const LoginScreen = lazy(() => import('./screens/LoginScreen'));
+const OnboardingScreen = lazy(() => import('./screens/OnboardingScreen'));
+const DashboardScreen = lazy(() => import('./screens/DashboardScreen'));
+const PaymentModal = lazy(() => import('./components/modals/PaymentModal'));
+const SignupModal = lazy(() => import('./components/modals/SignupModal'));
+const VideoModal = lazy(() => import('./components/modals/VideoModal'));
 
 export default function App() {
   const { currentScreen, activeModal } = useAppStore();
@@ -99,34 +99,34 @@ export default function App() {
       {/* Grain overlay */}
       <div className="grain-overlay" aria-hidden="true" />
 
-      {/* Screens — conditional rendering for performance */}
+      {/* Screens — lazy loaded for code splitting */}
       {currentScreen === 'landing' && (
         <div id="scr-landing" className={`screen active ${fadeClass}`}>
           <LandingScreen />
         </div>
       )}
-      {currentScreen === 'login' && (
-        <div id="scr-login" className={`screen active ${fadeClass}`}>
-          <LoginScreen />
-        </div>
-      )}
-      {currentScreen === 'onboarding' && (
-        <div id="scr-onboarding" className={`screen active ${fadeClass}`}>
-          <OnboardingScreen />
-        </div>
-      )}
-      {currentScreen === 'dashboard' && (
-        <div id="scr-dashboard" className={`screen active ${fadeClass}`}>
-          <DashboardScreen />
-        </div>
-      )}
-      {/* LifeSystemScreen now only accessible inline via DashboardScreen */}
+      <Suspense fallback={null}>
+        {currentScreen === 'login' && (
+          <div id="scr-login" className={`screen active ${fadeClass}`}>
+            <LoginScreen />
+          </div>
+        )}
+        {currentScreen === 'onboarding' && (
+          <div id="scr-onboarding" className={`screen active ${fadeClass}`}>
+            <OnboardingScreen />
+          </div>
+        )}
+        {currentScreen === 'dashboard' && (
+          <div id="scr-dashboard" className={`screen active ${fadeClass}`}>
+            <DashboardScreen />
+          </div>
+        )}
 
-      {/* Modals */}
-      {activeModal === 'pay' && <PaymentModal />}
-
-      {activeModal === 'signup' && <SignupModal />}
-      {activeModal === 'video' && <VideoModal />}
+        {/* Modals */}
+        {activeModal === 'pay' && <PaymentModal />}
+        {activeModal === 'signup' && <SignupModal />}
+        {activeModal === 'video' && <VideoModal />}
+      </Suspense>
     </>
   );
 }

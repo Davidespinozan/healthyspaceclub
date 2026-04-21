@@ -11,7 +11,15 @@ const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 const DAY_NAMES      = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const DAY_NAMES_FULL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-const QUESTIONS = [
+const QUESTIONS: Array<{
+  id: string;
+  question: string;
+  hint: string;
+  multi: boolean;
+  freeText?: boolean;
+  placeholder?: string;
+  options: Array<{ label: string; value: string; icon: string }>;
+}> = [
   {
     id: 'cuisines',
     question: '¿Qué cocinas te apetecen esta semana?',
@@ -347,11 +355,11 @@ export default function WeeklyNutritionPlanner() {
           </h3>
           <p className="wnp2-q-hint">{q.hint}</p>
 
-          {(q as any).freeText ? (
+          {q.freeText ? (
             <div className="wnp2-freetext">
               <textarea
                 className="wnp2-freetext-input"
-                placeholder={(q as any).placeholder}
+                placeholder={q.placeholder}
                 value={freeText}
                 onChange={e => setFreeText(e.target.value)}
                 rows={3}

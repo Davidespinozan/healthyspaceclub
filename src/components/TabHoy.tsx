@@ -203,7 +203,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     if (streakCount < 3) return;
     const reached = MILESTONES.filter(m => m <= streakCount).pop() ?? 0;
     if (reached > lastStreakMilestone) { setMilestone(reached); setLastStreakMilestone(reached); }
-  }, [streakCount]);
+  }, [streakCount, lastStreakMilestone]);
 
   const DAY_LABELS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const [selectedDow, setSelectedDow] = useState(new Date().getDay());

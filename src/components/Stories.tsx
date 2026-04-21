@@ -34,7 +34,7 @@ export default function Stories() {
   const today = new Date().toISOString().split('T')[0];
   const workoutToday = dailyWorkout?.date === today ? dailyWorkout.plan as Record<string, unknown> : null;
   const workoutSummary = workoutToday
-    ? `${(workoutToday as any).type || 'Entrenamiento'} · ${(workoutToday as any).duration || ''}`
+    ? `${(workoutToday as Record<string, unknown>).type || 'Entrenamiento'} · ${(workoutToday as Record<string, unknown>).duration || ''}`
     : '';
 
   // Fetch today's stories
