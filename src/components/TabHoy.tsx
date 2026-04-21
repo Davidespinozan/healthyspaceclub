@@ -636,6 +636,34 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
             );
           }
 
+          // Detect yoga plan (has poses instead of exercises)
+          const isYogaPlan = Array.isArray(workout.poses);
+          if (isYogaPlan) {
+            const poseCount = workout.poses.length;
+            const totalMin = Math.round((workout.totalDuration || 0) / 60);
+            return (
+              <section className="thw-section">
+                <div className="thw-header">
+                  <h2 className="thw-heading">Entrenamiento</h2>
+                  <span className="thw-progress">🧘 {poseCount} poses</span>
+                </div>
+                <div className="thw-meta">
+                  <span className="thw-meta-chip"><em>{workout.type || 'Power Vinyasa'}</em></span>
+                  {totalMin > 0 && <span className="thw-meta-chip thw-meta-sub">{totalMin} min</span>}
+                  {workout.intensity && <span className="thw-meta-chip thw-meta-sub">{workout.intensity}</span>}
+                </div>
+                <div className="th2-cta" onClick={() => onNav('entrenamiento')} style={{ marginTop: 0 }}>
+                  <div className="th2-cta-icon">🧘</div>
+                  <div className="th2-cta-body">
+                    <div className="th2-cta-title">Abrir tu flow de yoga</div>
+                    <div className="th2-cta-sub">Power Vinyasa · {poseCount} poses · {totalMin} min</div>
+                  </div>
+                  <span className="th2-cta-arrow">›</span>
+                </div>
+              </section>
+            );
+          }
+
           const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
           const totalCount = workout.exercises?.length || 0;
           const doneCount = dailyWorkoutChecked.length;
