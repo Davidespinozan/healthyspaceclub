@@ -398,9 +398,13 @@ export function getExerciseModalities(ex: Exercise): string[] {
 
 export function filterByModality(exercises: Exercise[], modality: Modality): Exercise[] {
   if (modality === 'auto') return exercises;
+
+  if (modality === 'yoga') {
+    return exercises.filter(ex => ex.isYoga === true);
+  }
+
   const modalityMap: Record<string, string[]> = {
     'fuerza': ['fuerza', 'hipertrofia'],
-    'yoga': ['yoga', 'movilidad', 'recovery'],
     'cardio': ['cardio', 'hiit'],
   };
   const tags = modalityMap[modality] || [];

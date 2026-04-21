@@ -887,3 +887,73 @@
   font-style: italic;
   margin: 0;
 }
+
+/* ══════════════════════════════════════════════════════════
+   YOGA LIST (Power Vinyasa plan)
+   ══════════════════════════════════════════════════════════ */
+
+.dt2-yoga-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.dt2-yoga-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border: 0.5px solid var(--dt2-sand, #E8E1D3);
+  border-radius: 14px;
+  transition: all 0.15s;
+}
+
+.dt2-yoga-item:hover,
+.dt2-yoga-item:active {
+  border-color: var(--dt2-amber, #BFA065);
+}
+
+.dt2-yoga-num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--dt2-forest, #1e3330);
+  color: var(--dt2-amber, #BFA065);
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dt2-yoga-emoji {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.dt2-yoga-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dt2-yoga-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--dt2-forest, #1e3330);
+  margin-bottom: 3px;
+}
+
+.dt2-yoga-meta {
+  font-size: 11px;
+  color: rgba(30, 51, 48, 0.55);
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
+}

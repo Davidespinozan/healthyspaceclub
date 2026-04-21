@@ -24,6 +24,7 @@ import type {
   MuscleGroup,
   Modality,
   WorkoutDayDecision,
+  YogaPlan,
 } from '../types';
 import { RefreshCw, Clock, Zap, ChevronRight, Lock } from 'lucide-react';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
@@ -152,6 +153,143 @@ Responde SOLO este JSON, sin markdown:
   const raw = data.content?.[0]?.text ?? '{}';
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
   return JSON.parse(cleaned);
+}
+
+// ══════════════════════════════════════════════════════════════
+// POWER VINYASA ORCHESTRATOR
+// ══════════════════════════════════════════════════════════════
+
+async function orchestratePowerVinyasa(params: {
+  candidates: Exercise[];
+  targetDurationSeconds: number;
+  userName: string;
+  context: string;
+  painArea?: string;
+}): Promise<YogaPlan> {
+  if (!API_KEY) throw new Error('API no disponible. Intenta más tarde.');
+
+  const candidatesInfo = params.candidates.map(p =>
+    `${p.id} | base: ${p.defaultDuration}s | ${p.muscleGroup} | ${p.difficulty}`
+  ).join('\n');
+
+  const minutes = Math.round(params.targetDurationSeconds / 60);
+  const minSec = Math.floor(params.targetDurationSeconds * 0.95);
+  const maxSec = Math.ceil(params.targetDurationSeconds * 1.05);
+
+  const painInstruction = params.painArea
+    ? `\n\nEVITA poses que comprometan: ${params.painArea}.`
+    : '';
+
+  const prompt = `Genera un flow de POWER VINYASA auténtico (estilo Baron Baptiste, influencia Ashtanga) de EXACTAMENTE ${minutes} minutos para ${params.userName || 'el usuario'}.
+
+CONTEXTO DEL USUARIO:
+${params.context}
+
+POSES DISPONIBLES (elige solo de esta lista — son las únicas válidas):
+${candidatesInfo}
+
+ESTRUCTURA RITUAL OBLIGATORIA DE POWER VINYASA:
+
+1. OPENING (5-8% del tiempo) — centering
+   - child-pose para grounding
+
+2. WARM-UP (15-20%) — movilidad activa
+   - cat-cow
+   - downward-dog
+   - sun-salutation-a (3-4 rounds con repetitions)
+   - sun-salutation-b (3-4 rounds con repetitions)
+
+3. STANDING SERIES (30-35%) — completar un lado, luego el otro
+   Secuencia tipo por lado:
+   - warrior-i → warrior-ii → reverse-warrior → triangle-pose
+   - half-moon (si nivel intermedio/avanzado)
+   - Insertar VINYASA entre poses: high-plank-yoga → chaturanga → upward-dog → downward-dog
+   - crescent-lunge → revolved-chair (opcional) → warrior-iii
+
+4. PEAK POSE (5-8%) — UNA pose desafiante según nivel
+   - Principiante: boat-pose o side-plank-yoga
+   - Intermedio: crow-pose o camel-pose
+   - Avanzado: wheel-pose
+
+5. COOL-DOWN (15-20%) — descenso al suelo
+   - pigeon-pose (60s por lado = 120s total)
+   - seated-forward-fold
+   - seated-twist (60s)
+   - supine-twist (60s)
+   - happy-baby
+
+6. SAVASANA (8-10%) — OBLIGATORIO AL FINAL
+   - savasana mínimo 300 segundos, sin excepción
+
+REGLAS ESTRICTAS:
+- La suma de TODAS las duraciones debe estar entre ${minSec}s y ${maxSec}s
+- NO incluyas descansos entre poses (el flow es continuo en Power Vinyasa)
+- En vinyasas de standing series: high-plank-yoga (15s) → chaturanga (15s) → upward-dog (15s) → downward-dog (30s) = 75s total
+- Para sun-salutation-a y sun-salutation-b, usa "repetitions" de 3-4 vueltas
+- Para poses con "por lado" (warriors, triangle, pigeon, lizard, crescent, half-moon, side-plank, seated-twist, revolved-chair), usa "sides": "both" — la duration ya incluye ambos lados
+- Cada pose tiene "tip_personalizado" breve (máx 12 palabras) enfocado en respiración, alineación o sensación
+- Savasana al final es OBLIGATORIO, mínimo 300s${painInstruction}
+
+Responde SOLO este JSON, sin markdown ni texto extra:
+{
+  "type": "Power Vinyasa ${minutes} min",
+  "totalDuration": ${params.targetDurationSeconds},
+  "intensity": "media",
+  "opening": "Instrucción breve de apertura (1 frase)",
+  "poses": [
+    { "id": "child-pose", "duration": 45, "tip_personalizado": "Respira profundo, siente el peso del cuerpo" },
+    { "id": "cat-cow", "duration": 60, "tip_personalizado": "..." },
+    { "id": "sun-salutation-a", "duration": 180, "repetitions": 3, "tip_personalizado": "..." },
+    { "id": "warrior-i", "duration": 30, "sides": "both", "tip_personalizado": "..." },
+    { "id": "high-plank-yoga", "duration": 15, "tip_personalizado": "..." },
+    { "id": "chaturanga", "duration": 15, "tip_personalizado": "..." },
+    { "id": "upward-dog", "duration": 15, "tip_personalizado": "..." },
+    { "id": "downward-dog", "duration": 30, "tip_personalizado": "..." },
+    { "id": "savasana", "duration": 300, "tip_personalizado": "Suelta todo, recibe el flow" }
+  ],
+  "closing": "Instrucción breve de cierre (1 frase)",
+  "note": "Mensaje motivador breve citando el contexto",
+  "razon": "Por qué este flow hoy, citando al menos 2 piezas del contexto"
+}`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 3000,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  const raw = data.content?.[0]?.text ?? '{}';
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  const yogaPlan = JSON.parse(cleaned) as YogaPlan;
+
+  // Validación de duración total
+  const actualDuration = yogaPlan.poses.reduce((sum, p) => sum + p.duration, 0);
+  const diff = Math.abs(actualDuration - params.targetDurationSeconds);
+  const tolerance = params.targetDurationSeconds * 0.1;
+  if (diff > tolerance) {
+    console.warn(`[power-vinyasa] duración ${actualDuration}s vs target ${params.targetDurationSeconds}s (diff: ${diff}s)`);
+  }
+
+  // Validación: savasana al final es obligatorio
+  const lastPose = yogaPlan.poses[yogaPlan.poses.length - 1];
+  if (lastPose?.id !== 'savasana') {
+    console.warn('[power-vinyasa] Savasana no está al final, forzando');
+    yogaPlan.poses = yogaPlan.poses.filter(p => p.id !== 'savasana');
+    yogaPlan.poses.push({ id: 'savasana', duration: 300, tip_personalizado: 'Suelta, recibe el flow' });
+  }
+
+  return yogaPlan;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -321,19 +459,41 @@ export default function DailyTrainer() {
         return;
       }
 
+      // Rama especial para yoga: Power Vinyasa con format YogaPlan
+      if (selectedModality === 'yoga') {
+        const yogaCandidates = filterByModality(exerciseBank, 'yoga');
+
+        if (yogaCandidates.length < 15) {
+          throw new Error(`Solo hay ${yogaCandidates.length} poses de yoga curadas. Necesitamos mínimo 15 para Power Vinyasa.`);
+        }
+
+        const targetDurationSeconds = selectedTime * 60;
+        const contextStr = bullets.join('\n- ');
+
+        const yogaPlan = await orchestratePowerVinyasa({
+          candidates: yogaCandidates,
+          targetDurationSeconds,
+          userName,
+          context: `- ${contextStr}`,
+          painArea: discomfort === 'pain' ? painArea : undefined,
+        });
+
+        setPlan(yogaPlan as any);
+        saveDailyWorkout(yogaPlan as any);
+        setPhase('plan');
+        return;
+      }
+
       // Filter by modality first, then by equipment/muscles
       const modalityFiltered = filterByModality(exerciseBank, selectedModality);
-
-      const equipmentList: Equipment[] = selectedModality === 'yoga' ? ['cuerpo'] : [selectedEquipment];
+      const equipmentList: Equipment[] = [selectedEquipment];
 
       let candidates: Exercise[];
-      if (selectedModality === 'yoga' || selectedModality === 'cardio') {
-        // For yoga/cardio, just filter by equipment
+      if (selectedModality === 'cardio') {
         candidates = modalityFiltered.filter(ex =>
           ex.equipment.some(e => equipmentList.includes(e))
         );
       } else {
-        // For fuerza/auto, use full filter with muscle groups
         candidates = filterExercisesForWorkout({
           exercises: modalityFiltered.length > 0 ? modalityFiltered : exerciseBank,
           equipment: equipmentList,
@@ -659,7 +819,94 @@ export default function DailyTrainer() {
   // ══════════════════════════════════════════════════════════════
 
   if (phase === 'plan' && plan) {
+    const isYoga = 'poses' in plan && Array.isArray((plan as any).poses);
     const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
+
+    if (isYoga) {
+      const yogaPlan = plan as unknown as YogaPlan;
+
+      return (
+        <div className="dt2-wrap">
+          <div className="dt2-plan-header">
+            <div>
+              <p className="dt2-plan-micro">tu flow · {todayDayName} {todayDateShort}</p>
+              <h2 className="dt2-plan-title"><em>{yogaPlan.type}</em></h2>
+              <div className="dt2-plan-meta">
+                <span className="dt2-meta-chip">
+                  <Clock size={11} /> {Math.round(yogaPlan.totalDuration / 60)} min total
+                </span>
+                <span className="dt2-meta-chip">
+                  🧘 {yogaPlan.poses.length} poses
+                </span>
+              </div>
+            </div>
+            <button
+              className={`dt2-regen${regenBlocked ? ' locked' : ''}`}
+              onClick={handleRegenerate}
+              disabled={regenBlocked}
+            >
+              {regenBlocked ? <Lock size={14} /> : <RefreshCw size={14} />}
+            </button>
+          </div>
+
+          {yogaPlan.razon && (
+            <div className="dt2-card-why">
+              <div className="dt2-card-why-label">Por qué hoy</div>
+              <p className="dt2-card-why-text">{yogaPlan.razon}</p>
+            </div>
+          )}
+
+          {yogaPlan.opening && (
+            <div className="dt2-section dt2-warmup">
+              <div className="dt2-section-label">Opening</div>
+              <p className="dt2-section-text">{yogaPlan.opening}</p>
+            </div>
+          )}
+
+          <div className="dt2-yoga-list">
+            {yogaPlan.poses.map((pose, i) => {
+              const bank = exerciseMap.get(pose.id);
+              const durationMin = Math.floor(pose.duration / 60);
+              const durationSec = pose.duration % 60;
+              const durationLabel = durationMin > 0
+                ? `${durationMin}:${String(durationSec).padStart(2, '0')}`
+                : `${pose.duration}s`;
+
+              return (
+                <div key={`${pose.id}-${i}`} className="dt2-yoga-item">
+                  <div className="dt2-yoga-num">{i + 1}</div>
+                  <div className="dt2-yoga-emoji">{bank?.emoji || '🧘'}</div>
+                  <div className="dt2-yoga-body">
+                    <div className="dt2-yoga-name">{bank?.name || pose.id}</div>
+                    <div className="dt2-yoga-meta">
+                      <span>{durationLabel}</span>
+                      {pose.repetitions && (<><span className="dt2-ex-dot">·</span><span>{pose.repetitions}x</span></>)}
+                      {pose.sides === 'both' && (<><span className="dt2-ex-dot">·</span><span>ambos lados</span></>)}
+                    </div>
+                    {pose.tip_personalizado && (
+                      <div className="dt2-ex-tip">{pose.tip_personalizado}</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {yogaPlan.closing && (
+            <div className="dt2-section dt2-cooldown">
+              <div className="dt2-section-label">Closing</div>
+              <p className="dt2-section-text">{yogaPlan.closing}</p>
+            </div>
+          )}
+
+          {yogaPlan.note && (
+            <div className="dt2-note">
+              <p className="dt2-note-text">{yogaPlan.note}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
     const checked = storedChecked || [];
 
     return (

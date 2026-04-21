@@ -74,10 +74,33 @@ export interface Exercise {
   thumb_url?: string;
   videos?: ExerciseVideo[];
 
+  // Yoga
+  isYoga?: boolean;
+  defaultDuration?: number;
+
   // Legacy compat
   category?: string;
   bg?: string;
   duration?: string;
+}
+
+export interface YogaPose {
+  id: string;
+  duration: number;
+  repetitions?: number;
+  sides?: 'both' | 'left' | 'right';
+  tip_personalizado?: string;
+}
+
+export interface YogaPlan {
+  type: string;
+  totalDuration: number;
+  intensity: 'baja' | 'media' | 'alta';
+  opening: string;
+  poses: YogaPose[];
+  closing: string;
+  note?: string;
+  razon?: string;
 }
 
 // Workout day plan (what the planner decides)
