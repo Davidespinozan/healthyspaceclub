@@ -889,20 +889,20 @@ export default function DailyTrainer() {
             </button>
           </div>
 
-          {yogaPlan.razon && (
-            <div className="dt2-card-why">
-              <div className="dt2-card-why-label">Por qué hoy</div>
-              <p className="dt2-card-why-text">{yogaPlan.razon}</p>
-            </div>
-          )}
-
-          {/* CTA para abrir player */}
+          {/* CTA para abrir player — ARRIBA, visible sin scroll */}
           <button
             className="dt2-yoga-start-cta"
             onClick={() => setPlayerOpen(true)}
           >
             ▶ comenzar flow
           </button>
+
+          {yogaPlan.razon && (
+            <div className="dt2-card-why">
+              <div className="dt2-card-why-label">Por qué hoy</div>
+              <p className="dt2-card-why-text">{yogaPlan.razon}</p>
+            </div>
+          )}
 
           {yogaPlan.opening && (
             <div className="dt2-section dt2-warmup">
