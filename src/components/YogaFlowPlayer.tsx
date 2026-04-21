@@ -307,7 +307,10 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           {plan.razon && (
             <p className="yfp-prep-quote">{plan.razon}</p>
           )}
+        </div>
 
+        {/* CTA fijo abajo */}
+        <div className="yfp-cta-wrap">
           <button className="yfp-cta" onClick={handleStart}>
             ▶ comenzar flow
           </button>
