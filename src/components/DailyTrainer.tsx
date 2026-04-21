@@ -479,20 +479,9 @@ export default function DailyTrainer() {
       const validIds = new Set(exerciseBank.map(e => e.id));
       const cached = await getCachedWorkout(configHash, schemaType);
 
-      // Yoga: validar que cache tenga format YogaPlan
-      if (selectedModality === 'yoga' && cached) {
-        const yogaIds = new Set(exerciseBank.filter(e => e.isYoga).map(e => e.id));
-        const isValidYoga = cached && 'poses' in (cached as any) && Array.isArray((cached as any).poses);
-        if (isValidYoga) {
-          const validation = validatePowerVinyasaPlan(cached as any, selectedTime * 60, yogaIds);
-          if (validation.valid) {
-            setPlan(cached as any);
-            saveDailyWorkout(cached as any);
-            setPhase('plan');
-            return;
-          }
-        }
-        // Cache inválido para yoga — seguir a generar fresh
+      // Yoga: NO usar cache — siempre generar fresh (stretch needs fresh plan)
+      if (selectedModality === 'yoga') {
+        // Skip cache for yoga — fall through to generation
       } else if (cached && validateWorkout(cached, validIds)) {
         // Fuerza/cardio/auto: cache válido
         setPlan(cached);
@@ -521,6 +510,7 @@ export default function DailyTrainer() {
         };
 
         let yogaPlan = await orchestratePowerVinyasa(orchParams);
+        console.info(`[DEBUG-1] yogaPlan generated. Total: ${yogaPlan.poses.reduce((s: number, p: any) => s + p.duration, 0)}s, savasana: ${yogaPlan.poses.find((p: any) => p.id === 'savasana')?.duration}`);
 
         const yogaIds = new Set(exerciseBank.filter(e => e.isYoga).map(e => e.id));
         let validation = validatePowerVinyasaPlan(yogaPlan, targetDurationSeconds, yogaIds);
@@ -537,10 +527,8 @@ export default function DailyTrainer() {
         }
 
         // Stretch duration to match target
-        const originalSec = yogaPlan.poses.reduce((s: number, p: any) => s + p.duration, 0);
         const adjustedPlan = stretchToTargetDuration(yogaPlan, targetDurationSeconds);
-        const adjustedSec = adjustedPlan.poses.reduce((s, p) => s + p.duration, 0);
-        console.info(`[stretch] ${originalSec}s → ${adjustedSec}s (target: ${targetDurationSeconds}s)`);
+        console.info(`[DEBUG-2] adjustedPlan. Total: ${adjustedPlan.poses.reduce((s, p) => s + p.duration, 0)}s, savasana: ${adjustedPlan.poses.find(p => p.id === 'savasana')?.duration}`);
 
         // Save to cache
         saveWorkoutToCache({
@@ -556,6 +544,7 @@ export default function DailyTrainer() {
         // Save plan FIRST, then increment counter
         setPlan(adjustedPlan as any);
         saveDailyWorkout(adjustedPlan as any);
+        console.info(`[DEBUG-3] called setPlan+saveDailyWorkout with adjustedPlan. totalDuration: ${adjustedPlan.totalDuration}`);
         setPhase('plan');
 
         // Increment ONLY after successful save
