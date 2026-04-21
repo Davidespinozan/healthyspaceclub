@@ -537,7 +537,10 @@ export default function DailyTrainer() {
         }
 
         // Stretch duration to match target
+        const originalSec = yogaPlan.poses.reduce((s: number, p: any) => s + p.duration, 0);
         const adjustedPlan = stretchToTargetDuration(yogaPlan, targetDurationSeconds);
+        const adjustedSec = adjustedPlan.poses.reduce((s, p) => s + p.duration, 0);
+        console.info(`[stretch] ${originalSec}s → ${adjustedSec}s (target: ${targetDurationSeconds}s)`);
 
         // Save to cache
         saveWorkoutToCache({
