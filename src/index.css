@@ -133,6 +133,7 @@ img, video { max-width: 100%; display: block; }
 nav.landing-nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 300;
   padding: 0 60px; height:76px;
+  padding-top: env(safe-area-inset-top, 0px);
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
   background: #2E4A42;
   border-bottom: none;
@@ -1785,7 +1786,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
 }
 
 @media (max-width:768px) {
-  nav.landing-nav { padding:0 18px; height:64px; display:flex; justify-content:center; align-items:center; position:fixed; }
+  nav.landing-nav { padding:0 18px; padding-top: env(safe-area-inset-top, 0px); height: calc(64px + env(safe-area-inset-top, 0px)); display:flex; justify-content:center; align-items:center; position:fixed; }
   .nav-links { display:none !important; }
   .nav-left { display:none !important; }
   .nav-hamburger { display:flex; position:absolute; right:18px; }
