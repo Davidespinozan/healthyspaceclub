@@ -354,8 +354,9 @@ export function buildConfigHash(params: {
   equipment: string;
   goal: string;
   dayType: string;
+  schemaVersion?: number;
 }): string {
-  const str = `${params.duration}-${params.equipment}-${params.goal}-${params.dayType}`;
+  const str = `v${params.schemaVersion || 0}-${params.duration}-${params.equipment}-${params.goal}-${params.dayType}`;
   // Simple hash function (djb2)
   let hash = 5381;
   for (let i = 0; i < str.length; i++) {

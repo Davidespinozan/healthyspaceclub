@@ -15,8 +15,13 @@ import {
   getCachedWorkout,
   saveWorkoutToCache,
   validateWorkout,
+  SCHEMA_VERSIONS,
   type CachedWorkout,
 } from '../utils/workoutCache';
+import {
+  validatePowerVinyasaPlan,
+  validateWorkoutPlanStrict,
+} from '../utils/workoutValidation';
 import type {
   Exercise,
   Equipment,
@@ -455,13 +460,29 @@ export default function DailyTrainer() {
         const targetDurationSeconds = selectedTime * 60;
         const contextStr = bullets.join('\n- ');
 
-        const yogaPlan = await orchestratePowerVinyasa({
+        const orchParams = {
           candidates: yogaCandidates,
           targetDurationSeconds,
           userName,
           context: `- ${contextStr}`,
           painArea: discomfort === 'pain' ? painArea : undefined,
-        });
+        };
+
+        let yogaPlan = await orchestratePowerVinyasa(orchParams);
+
+        // Post-generation validation
+        const yogaIds = new Set(exerciseBank.filter(e => e.isYoga).map(e => e.id));
+        const validation = validatePowerVinyasaPlan(yogaPlan, targetDurationSeconds, yogaIds);
+
+        if (!validation.valid) {
+          console.warn('[yoga] validación fallida, reintentando:', validation.errors);
+          yogaPlan = await orchestratePowerVinyasa(orchParams);
+          const retryValidation = validatePowerVinyasaPlan(yogaPlan, targetDurationSeconds, yogaIds);
+          if (!retryValidation.valid) {
+            console.error('[yoga] segundo intento falló:', retryValidation.errors);
+            // Usar el plan con errores leves en vez de fallar completamente
+          }
+        }
 
         console.warn('[yoga-debug] plan received:', {
           type: yogaPlan.type,
@@ -482,10 +503,11 @@ export default function DailyTrainer() {
         equipment: selectedEquipment,
         goal,
         dayType: dayTypeKey,
+        schemaVersion: SCHEMA_VERSIONS.workout,
       });
 
       const validIds = new Set(exerciseBank.map(e => e.id));
-      const cached = await getCachedWorkout(configHash);
+      const cached = await getCachedWorkout(configHash, 'workout');
       if (cached && validateWorkout(cached, validIds)) {
         setPlan(cached);
         saveDailyWorkout(cached as any);
@@ -553,6 +575,11 @@ export default function DailyTrainer() {
         throw new Error('La rutina generada tiene ejercicios inválidos. Reintenta.');
       }
 
+      const strictValidation = validateWorkoutPlanStrict(workout, validIds);
+      if (!strictValidation.valid) {
+        console.warn('[workout] validación estricta:', strictValidation.errors);
+      }
+
       saveWorkoutToCache({
         configHash,
         duration: selectedTime,
@@ -560,6 +587,7 @@ export default function DailyTrainer() {
         goal,
         dayType: dayTypeKey,
         workout,
+        schemaType: 'workout',
       }).catch(() => {});
 
       setPlan(workout);
