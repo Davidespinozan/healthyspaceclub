@@ -22,6 +22,7 @@ import {
   validatePowerVinyasaPlan,
   validateWorkoutPlanStrict,
 } from '../utils/workoutValidation';
+import { stretchToTargetDuration } from '../utils/yogaPostProcess';
 import type {
   Exercise,
   Equipment,
@@ -535,23 +536,28 @@ export default function DailyTrainer() {
           }
         }
 
-        // Solo llegamos aquí si validación pasó
+        // Stretch duration to match target
+        const adjustedPlan = stretchToTargetDuration(yogaPlan, targetDurationSeconds);
+
+        // Save to cache
         saveWorkoutToCache({
           configHash,
           duration: selectedTime,
           equipment: selectedEquipment,
           goal,
           dayType: dayTypeKey,
-          workout: yogaPlan as any,
+          workout: adjustedPlan as any,
           schemaType: 'yoga',
         }).catch(() => {});
 
+        // Save plan FIRST, then increment counter
+        setPlan(adjustedPlan as any);
+        saveDailyWorkout(adjustedPlan as any);
+        setPhase('plan');
+
+        // Increment ONLY after successful save
         incrementRegen(selectedModality);
         console.info(`[regen] ${selectedModality}: ${(regenCounts[selectedModality] || 0) + 1}/3 today | admin: ${isAdmin}`);
-
-        setPlan(yogaPlan as any);
-        saveDailyWorkout(yogaPlan as any);
-        setPhase('plan');
         return;
       }
 
