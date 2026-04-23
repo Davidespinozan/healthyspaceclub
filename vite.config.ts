@@ -15,7 +15,7 @@ export default defineConfig({
         start_url: '/',
         display: 'standalone',
         background_color: '#F6F2EA',
-        theme_color: '#2E4A42',
+        theme_color: '#153330',
         orientation: 'any',
         icons: [
           { src: 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

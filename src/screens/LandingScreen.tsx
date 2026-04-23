@@ -206,6 +206,7 @@ export default function LandingScreen() {
             />
             <h2 className="lifestyle-statement"><span>Tu plan.</span><span>Tu comunidad.</span><em>Tu mejor versión.</em></h2>
             <MagneticBtn className="btn-lifestyle" onClick={() => openAnnualCheckout()}>Únete hoy →</MagneticBtn>
+            <p className="lifestyle-platforms">Úsala como app en iOS, Android y web</p>
           </div>
         </div>
       </section>
