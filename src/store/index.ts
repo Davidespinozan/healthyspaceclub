@@ -2,11 +2,14 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep } from '../types';
 import { calcTDEE, assignPlan } from '../utils/tdee';
+import type { Region, Currency } from '../utils/region';
 
 interface PayInfo {
   plan: string;
   price: string;
   period: string;
+  amount?: number;
+  currency?: Currency;
 }
 
 interface AppState {
@@ -38,7 +41,11 @@ interface AppState {
 
   // Payment modal
   payInfo: PayInfo;
-  openPay: (plan: string, price: string, period: string) => void;
+  openPay: (plan: string, price: string, period: string, amount?: number, currency?: Currency) => void;
+
+  // Landing region (null while detecting)
+  region: Region | null;
+  setRegion: (region: Region, manual?: boolean) => void;
 
   // Video modal
   videoState: VideoState | null;
@@ -277,8 +284,15 @@ export const useAppStore = create<AppState>()(
 
   // Payment modal
   payInfo: { plan: '', price: '', period: '' },
-  openPay: (plan, price, period) =>
-    set({ payInfo: { plan, price, period }, activeModal: 'pay' }),
+  openPay: (plan, price, period, amount, currency) =>
+    set({ payInfo: { plan, price, period, amount, currency }, activeModal: 'pay' }),
+
+  // Landing region
+  region: null,
+  setRegion: (region, manual = false) => {
+    import('../utils/region').then(({ saveRegion }) => saveRegion(region, manual));
+    set({ region });
+  },
 
   // Video modal
   videoState: null,

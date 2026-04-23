@@ -1,6 +1,19 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
 import { useAppStore } from '../store';
+import { PRICING, detectRegion, type Region } from '../utils/region';
 // trust stats removed
+
+const REGION_OPTIONS: Region[] = ['LATAM', 'EUROPE', 'REST'];
+const fmtPrice = (n: number) => n.toLocaleString('en-US');
+
+// Inline check icon (no emojis) for trial feature lists
+function CheckIcon() {
+  return (
+    <svg className="tr-ck" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+      <path d="M2 6.2l2.6 2.6L10 3.4" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 // ── Magnetic button wrapper ────────────────────────────────────────────────
 function MagneticBtn({ children, className, onClick, style }: {
@@ -35,9 +48,41 @@ function MagneticBtn({ children, className, onClick, style }: {
 }
 
 export default function LandingScreen() {
-  const { openPay, goTo, mobileMenuOpen, toggleMobileMenu, pillarsOpen, togglePillars } = useAppStore();
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
+  const { openPay, goTo, mobileMenuOpen, toggleMobileMenu, pillarsOpen, togglePillars, region, setRegion } = useAppStore();
   const pillarsAutoOpened = useRef(false);
+
+  // ── Region detection (IP → cache → navigator.language fallback) ────────────
+  useEffect(() => {
+    let cancelled = false;
+    detectRegion().then((r) => {
+      if (cancelled) return;
+      setRegion(r, false);
+      if (typeof console !== 'undefined') console.log('[HSC] region resolved:', r);
+    });
+    return () => { cancelled = true; };
+  }, [setRegion]);
+
+  const pricing = region ? PRICING[region] : null;
+  const openAnnualCheckout = useCallback(() => {
+    if (!pricing) return;
+    openPay(
+      'Anual',
+      `${pricing.symbol}${fmtPrice(pricing.annual)} ${pricing.currency}`,
+      `12 meses · ${pricing.symbol}${pricing.annualPerMonth}/mes`,
+      pricing.annual,
+      pricing.currency,
+    );
+  }, [openPay, pricing]);
+  const openMonthlyCheckout = useCallback(() => {
+    if (!pricing) return;
+    openPay(
+      'Mensual',
+      `${pricing.symbol}${fmtPrice(pricing.monthly)} ${pricing.currency}`,
+      'Cancela cuando quieras',
+      pricing.monthly,
+      pricing.currency,
+    );
+  }, [openPay, pricing]);
 
   // ── Parallax ──────────────────────────────────────────────
   const heroImgRef = useRef<HTMLImageElement>(null);
@@ -89,15 +134,14 @@ export default function LandingScreen() {
         <div className="nav-left">
           <span className="nav-login" onClick={() => goTo('login')}>Iniciar sesión</span>
         </div>
-        <div className="logo">
+        <div className="logo logo-nav">
           <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" />
-          <span className="logo-club">CLUB</span>
         </div>
         <div className="nav-links">
           <a href="#s-pillars">El Club</a>
           <a href="#s-how">Cómo funciona</a>
           <a href="#s-pricing">Planes</a>
-          <a className="nav-cta" onClick={() => openPay('Pro Anual','$1,699','12 meses · Plan Pro')}>Únete al Club</a>
+          <a className="nav-cta" onClick={() => openAnnualCheckout()}>Únete al Club</a>
         </div>
         <button className={`nav-hamburger${mobileMenuOpen ? ' open' : ''}`} onClick={toggleMobileMenu} aria-label="Menu">
           <span /><span /><span />
@@ -111,7 +155,7 @@ export default function LandingScreen() {
           <a href="#s-how" onClick={toggleMobileMenu}>Cómo funciona</a>
           <a href="#s-pricing" onClick={toggleMobileMenu}>Planes</a>
           <span className="mob-menu-login" onClick={() => { toggleMobileMenu(); goTo('login'); }}>Iniciar sesión</span>
-          <button className="mob-menu-cta" onClick={() => { toggleMobileMenu(); openPay('Pro Anual','$1,699','12 meses · Plan Pro'); }}>Únete al Club →</button>
+          <button className="mob-menu-cta" onClick={() => { toggleMobileMenu(); openAnnualCheckout(); }}>Únete al Club →</button>
         </div>
       </div>
 
@@ -125,8 +169,9 @@ export default function LandingScreen() {
             <p className="hero-tagline">¿Decidiste cambiar?</p>
             <h1><span className="h1-gold">La IA crea tu plan.</span><br /><span className="h1-accent">El club te hace <em>cumplirlo.</em></span></h1>
             <div className="hero-btns">
-              <MagneticBtn className="btn-p" onClick={() => openPay('Pro Anual','$1,699','12 meses · Plan Pro')}>Empezar mi plan →</MagneticBtn>
+              <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>Probar 3 días gratis →</MagneticBtn>
             </div>
+            <p className="hero-microcopy">Sin compromiso · Cancela cuando quieras</p>
           </div>
           <div className="hero-img">
             <img
@@ -217,97 +262,73 @@ export default function LandingScreen() {
               <div className="hs reveal reveal-delay-3"><div className="hs-num">03</div><h4>Videos + Plan</h4><p>Ejercicios y recetas en pasos con video.</p></div>
               <div className="hs reveal"><div className="hs-num">04</div><h4>Construyes el hábito</h4><p>El sistema trabaja. Tú solo apareces.</p></div>
             </div>
-            <MagneticBtn className="btn-lifestyle" onClick={() => openPay('Pro Anual','$1,699','12 meses · Plan Pro')}>Únete hoy →</MagneticBtn>
+            <MagneticBtn className="btn-lifestyle" onClick={() => openAnnualCheckout()}>Únete hoy →</MagneticBtn>
           </div>
         </div>
       </section>
 
-      {/* PRICING */}
+      {/* PRICING — 2 planes con precios por región */}
       <section className="pricing" id="s-pricing">
         <div className="sec-lbl reveal">Membresía</div>
         <h2 className="reveal">Elige tu plan <em>ideal</em></h2>
-        <p className="pricing-sub reveal">Sin contratos. Sin compromisos eternos. Solo resultados.</p>
+        <p className="pricing-sub reveal">Prueba 3 días gratis. Cancela antes del cobro con 1 click.</p>
 
-        {/* Billing toggle */}
-        <div className="billing-toggle reveal">
-          <button className={`bt-opt${billingCycle === 'monthly' ? ' active' : ''}`} onClick={() => setBillingCycle('monthly')}>Mensual</button>
-          <button className={`bt-opt${billingCycle === 'annual' ? ' active' : ''}`} onClick={() => setBillingCycle('annual')}>
-            Anual <span className="bt-save">Ahorra 30%</span>
-          </button>
-        </div>
-        <div className="billing-trial-note">Sin tarjeta requerida durante el periodo de prueba</div>
-
-        <div className="pcards pcards-3">
-          {/* BÁSICO */}
+        <div className="pcards pcards-2">
+          {/* MENSUAL */}
           <div className="pcard">
-            <div className="ptrial-badge">✦ 3 días gratis</div>
-            <div className="pname">Básico</div>
+            <div className="pname">Mensual</div>
             <div className="pamount">
-              {billingCycle === 'monthly' ? '$149' : '$999'}
-              <span style={{ fontSize: '.82rem', fontWeight: 400, opacity: .35 }}>{billingCycle === 'monthly' ? '/mes' : '/año'}</span>
+              {pricing ? (
+                <>
+                  <span className="pam-sym">{pricing.symbol}</span>{fmtPrice(pricing.monthly)}
+                  <span className="pam-unit">/mes</span>
+                </>
+              ) : <span className="pam-skeleton" aria-hidden="true" />}
             </div>
-            <div className="pperiod">{billingCycle === 'monthly' ? 'cancela cuando quieras' : 'pago único · $83/mes · 2 meses gratis'}</div>
+            <div className="pperiod">{pricing ? `${pricing.currency} · Cancela cuando quieras` : ' '}</div>
+            <ul className="ptrial-list">
+              <li><CheckIcon />3 días gratis</li>
+              <li><CheckIcon />Te avisamos antes del cobro</li>
+              <li><CheckIcon />Cancela en 1 click</li>
+            </ul>
             <ul className="pfeats">
               <li>Plan de alimentación personalizado</li>
-              <li>28 días de menú con porciones</li>
-              <li>Recetas semanales en video</li>
-              <li>Plan de entrenamiento 7 días</li>
-              <li>Videos por ejercicio con pasos</li>
+              <li>Rutinas completas con video</li>
+              <li>Macros y progresión inteligente</li>
+              <li>AI Coach y Healthy Space Method</li>
             </ul>
-            <MagneticBtn className="btn-join" onClick={() => openPay(
-              billingCycle === 'monthly' ? 'Básico Mensual' : 'Básico Anual',
-              billingCycle === 'monthly' ? '$149' : '$999',
-              billingCycle === 'monthly' ? 'Membresía mensual · cancela cuando quieras' : '12 meses · Plan Básico'
-            )}>Empezar 3 días gratis →</MagneticBtn>
+            <MagneticBtn className="btn-join" onClick={openMonthlyCheckout}>Probar 3 días gratis →</MagneticBtn>
           </div>
 
-          {/* PRO */}
+          {/* ANUAL — destacado (forest) */}
           <div className="pcard feat">
             <div className="pbadge">⭐ Más popular</div>
-            <div className="ptrial-badge">✦ 3 días gratis</div>
-            <div className="pname">Pro</div>
+            <div className="pname">Anual</div>
             <div className="pamount">
-              {billingCycle === 'monthly' ? '$199' : '$1,699'}
-              <span style={{ fontSize: '.82rem', fontWeight: 400, opacity: .35 }}>{billingCycle === 'monthly' ? '/mes' : '/año'}</span>
+              {pricing ? (
+                <>
+                  <span className="pam-sym">{pricing.symbol}</span>{fmtPrice(pricing.annual)}
+                  <span className="pam-unit">/año</span>
+                </>
+              ) : <span className="pam-skeleton" aria-hidden="true" />}
             </div>
-            <div className="pperiod">{billingCycle === 'monthly' ? 'cancela cuando quieras' : 'pago único · $142/mes · 2 meses gratis'}</div>
-            <ul className="pfeats">
-              <li>Todo lo del plan Básico</li>
-              <li>Macros personalizados (P/C/G)</li>
-              <li>Intercambio inteligente de ingredientes</li>
-              <li>Registro de entrenamiento con progresión</li>
-              <li>Fotos de progreso + comparador</li>
-              <li>Healthy Space Method (libro)</li>
+            <div className="pperiod">
+              {pricing
+                ? `${pricing.currency} · equivale ${pricing.symbol}${pricing.annualPerMonth}/mes · ahorras ${pricing.savingsPct}%`
+                : ' '}
+            </div>
+            <ul className="ptrial-list">
+              <li><CheckIcon />3 días gratis</li>
+              <li><CheckIcon />Te avisamos antes del cobro</li>
+              <li><CheckIcon />Cancela en 1 click</li>
             </ul>
-            <MagneticBtn className="btn-join" onClick={() => openPay(
-              billingCycle === 'monthly' ? 'Pro Mensual' : 'Pro Anual',
-              billingCycle === 'monthly' ? '$199' : '$1,699',
-              billingCycle === 'monthly' ? 'Membresía mensual · cancela cuando quieras' : '12 meses · Plan Pro'
-            )}>Empezar 3 días gratis →</MagneticBtn>
-          </div>
-
-          {/* ELITE */}
-          <div className="pcard pcard-elite">
-            <div className="ptrial-badge">✦ 3 días gratis</div>
-            <div className="pname">Elite</div>
-            <div className="pamount">
-              {billingCycle === 'monthly' ? '$299' : '$2,499'}
-              <span style={{ fontSize: '.82rem', fontWeight: 400, opacity: .35 }}>{billingCycle === 'monthly' ? '/mes' : '/año'}</span>
-            </div>
-            <div className="pperiod">{billingCycle === 'monthly' ? 'cancela cuando quieras' : 'pago único · $208/mes · 2 meses gratis'}</div>
             <ul className="pfeats">
-              <li>Todo lo del plan Pro</li>
-              <li>AI Coach personalizado</li>
-              <li>Control de Vida (Notion)</li>
-              <li>Comunidad privada del Club</li>
-              <li>Acceso anticipado a contenido</li>
+              <li>Todo lo del plan mensual</li>
+              <li>12 meses por el precio de ~8</li>
+              <li>Acceso anticipado a nuevas rutinas</li>
               <li>Soporte prioritario</li>
             </ul>
-            <MagneticBtn className="btn-join" onClick={() => openPay(
-              billingCycle === 'monthly' ? 'Elite Mensual' : 'Elite Anual',
-              billingCycle === 'monthly' ? '$299' : '$2,499',
-              billingCycle === 'monthly' ? 'Membresía mensual · cancela cuando quieras' : '12 meses · Plan Elite'
-            )}>Empezar 3 días gratis →</MagneticBtn>
+            <MagneticBtn className="btn-join" onClick={openAnnualCheckout}>Probar 3 días gratis →</MagneticBtn>
           </div>
         </div>
       </section>
@@ -317,12 +338,14 @@ export default function LandingScreen() {
         <div className="faq-in">
           <div className="sec-lbl">Preguntas frecuentes</div>
           <h2>Todo lo que necesitas <em>saber</em></h2>
+          <FaqItem q="¿Tengo que pagar para probar?" a="Los primeros 3 días son gratis. Ingresas tu tarjeta para activar el trial pero no se cobra nada hasta el día 4. Puedes cancelar antes en 1 click y no se te cobra." />
+          <FaqItem q="¿Me avisan antes del cobro?" a="Sí. 24 horas antes de que termine tu trial de 3 días te enviamos un email recordándote. Si no quieres continuar, cancelas desde tu perfil y listo." />
+          <FaqItem q="¿Cómo cancelo mi membresía?" a="Desde tu perfil en HSC, en 1 click. Sin preguntas, sin fricción." />
           <FaqItem q="¿Los videos incluyen todas las recetas y ejercicios?" a="Sí. Cada ejercicio tiene su propio video con instrucciones paso a paso. Las recetas también tienen video de preparación dividido por etapas para seguirlo fácilmente desde tu celular o computadora." />
           <FaqItem q="¿Necesito experiencia previa?" a="No. El Club tiene contenido para todos los niveles. Los videos explican la técnica desde cero para que cualquier persona pueda seguirlos." />
           <FaqItem q="¿Necesito ir al gimnasio?" a="No. Tenemos rutinas y videos para gym, para casa y para quienes solo tienen 20 minutos al día." />
           <FaqItem q="¿El contenido se actualiza?" a="Sí. Las recetas semanales se renuevan con nuevos videos, las rutinas progresan mes a mes y continuamos añadiendo módulos de crecimiento." />
-          <FaqItem q="¿Puedo cancelar cuando quiera?" a="El plan mensual se cancela en cualquier momento sin penalizaciones. El plan anual es un pago único por 12 meses de acceso completo." />
-          <FaqItem q="¿Cuál es la diferencia entre los planes?" a="Básico incluye tu plan de alimentación y entrenamiento con videos. Pro agrega macros personalizados, intercambio de ingredientes y registro de progresión. Elite suma AI Coach, comunidad privada y acceso anticipado a todo el contenido nuevo." />
+          <FaqItem q="¿Cuál es la diferencia entre el plan mensual y el anual?" a="El contenido es el mismo. El plan anual cuesta el equivalente a ~8 meses, te da acceso anticipado a nuevas rutinas y soporte prioritario. Ambos empiezan con 3 días gratis." />
         </div>
       </div>
 
@@ -332,6 +355,22 @@ export default function LandingScreen() {
           <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" />
         </div>
         <p>© 2025 Healthy Space Club · Todos los derechos reservados</p>
+        <div className="region-selector" aria-label="Seleccionar región de precios">
+          {REGION_OPTIONS.map((r) => {
+            const p = PRICING[r];
+            const active = region === r;
+            return (
+              <button
+                key={r}
+                className={`rs-opt${active ? ' rs-on' : ''}`}
+                onClick={() => setRegion(r, true)}
+                aria-pressed={active}
+              >
+                <span className="rs-flag">{p.flag}</span> {p.currency}
+              </button>
+            );
+          })}
+        </div>
       </footer>
     </>
   );
