@@ -53,7 +53,7 @@ export default function LoginScreen() {
       <div className="ls-card">
         <div className="ls-logo">
           <img
-            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png"
+            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
             alt="Healthy Space Club"
           />
         </div>

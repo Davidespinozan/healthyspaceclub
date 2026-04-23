@@ -992,12 +992,8 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
 .login-screen { min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px; position:relative; background:var(--forest); }
 .ls-bg { position:absolute; inset:0; background:radial-gradient(ellipse at 30% 40%, rgba(191,160,101,.1) 0%, transparent 55%), radial-gradient(ellipse at 70% 70%, rgba(46,74,66,.4) 0%, transparent 50%); pointer-events:none; }
 .ls-card { position:relative; z-index:1; background:white; border-radius:28px; padding:40px 36px; width:100%; max-width:420px; box-shadow:0 40px 80px rgba(0,0,0,.28); }
-.ls-logo {
-  display:flex; justify-content:center; align-items:center;
-  margin:-12px auto 28px; padding:18px 32px;
-  background:var(--forest); border-radius:18px; width:fit-content;
-}
-.ls-logo img { height:72px; width:auto; display:block; }
+.ls-logo { display:flex; justify-content:center; margin-bottom:24px; }
+.ls-logo img { height:96px; width:96px; border-radius:20px; display:block; }
 .ls-head { text-align:center; margin-bottom:28px; }
 .ls-head h1 { font-family:'Montserrat',sans-serif; font-size:1.35rem; font-weight:800; color:var(--forest); margin-bottom:6px; }
 .ls-head p { font-size:.84rem; color:var(--txt2); }
