@@ -212,8 +212,7 @@ export default function LandingScreen() {
             <div className="pill-id-divider" />
             <div className="pill-id-pillars">
               <span>Nutrición</span><span className="pill-id-dot" />
-              <span>Entrenamiento</span><span className="pill-id-dot" />
-              <span>Mentalidad</span>
+              <span>Entrenamiento</span>
             </div>
             <p className="pill-id-sub">Un solo espacio. Tres pilares. Todo integrado.</p>
             <div className="pill-id-hint">
@@ -238,13 +237,6 @@ export default function LandingScreen() {
             <span className="ptag">Tu entrenador personal 24/7</span>
           </div>
 
-          <div className={`pillar pillar-gold pillar-hidden reveal reveal-delay-3${pillarsOpen ? ' pillar-show' : ''}`}>
-            <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hpm_johgyu.webp" alt="Mentalidad" /></div>
-            <div className="pill-num">03</div>
-            <h3>Mentalidad</h3>
-            <p>Healthy Space Method + Control de Vida (Notion). Identidad, propósito y metas — con un sistema para planear, ejecutar y sostener hábitos.</p>
-            <span className="ptag">Tu coach de crecimiento</span>
-          </div>
         </div>
       </section>
 
