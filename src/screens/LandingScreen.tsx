@@ -176,6 +176,33 @@ export default function LandingScreen() {
         </div>
       </section>
 
+      {/* METHODOLOGY — progreso, comunidad, sistema */}
+      <section className="method" aria-label="Metodología">
+        <div className="method-inner">
+          <div className="method-row reveal reveal-delay-1">
+            <img className="method-icon" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PROGRESO.png" alt="" aria-hidden="true" />
+            <div className="method-text">
+              <div className="method-title">Progreso</div>
+              <div className="method-sub">Mejora constante</div>
+            </div>
+          </div>
+          <div className="method-row reveal reveal-delay-2">
+            <img className="method-icon" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/COMUNIDAD.png" alt="" aria-hidden="true" />
+            <div className="method-text">
+              <div className="method-title">Comunidad</div>
+              <div className="method-sub">No lo haces solo</div>
+            </div>
+          </div>
+          <div className="method-row reveal reveal-delay-3">
+            <img className="method-icon" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/SISTEMA.png" alt="" aria-hidden="true" />
+            <div className="method-text">
+              <div className="method-title">Sistema</div>
+              <div className="method-sub">Plan + Acción + IA</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* LIFESTYLE BANNER / HOW */}
       <section className="lifestyle-banner" id="s-how">
         <div className="lifestyle-inner lifestyle-inner-noimg">

@@ -691,6 +691,21 @@ h1 em::after {
 .hs h4 { font-family:'Montserrat',sans-serif; font-size:1.05rem; color:var(--forest); margin-bottom:8px; font-weight:600; }
 .hs p { font-size:.78rem; color:var(--txt2); line-height:1.7; }
 
+/* Methodology — progreso / comunidad / sistema */
+.method { background:var(--forest); padding:80px 60px; position:relative; }
+.method-inner { max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:44px; }
+.method-row { display:flex; align-items:center; gap:28px; }
+.method-icon { width:74px; height:74px; flex-shrink:0; object-fit:contain; }
+.method-text { display:flex; flex-direction:column; gap:4px; }
+.method-title {
+  font-family:'Montserrat',sans-serif; font-size:1.35rem; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase; color:white; line-height:1;
+}
+.method-sub {
+  font-family:'Montserrat',sans-serif; font-size:.82rem; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.6);
+}
+
 /* Lifestyle Banner */
 .lifestyle-banner { padding:0; background:white; position:relative; overflow:hidden; }
 .lifestyle-banner::before {
@@ -1847,6 +1862,12 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
   .btn-p { padding:14px 32px; font-size:.84rem; }
 
   .pillars, .how, .pricing, .testi, .faq { padding:36px 22px; }
+  .method { padding:48px 22px; }
+  .method-inner { gap:28px; }
+  .method-row { gap:18px; }
+  .method-icon { width:52px; height:52px; }
+  .method-title { font-size:1.05rem; }
+  .method-sub { font-size:.68rem; letter-spacing:.12em; }
   .pg { grid-template-columns:1fr 1fr; gap:10px; }
   .pillar { padding:16px 14px; border-radius:18px; }
   .pillar-img { margin-bottom:12px; }
