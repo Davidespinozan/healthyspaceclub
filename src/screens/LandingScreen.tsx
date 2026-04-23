@@ -186,14 +186,13 @@ export default function LandingScreen() {
       {/* LIFESTYLE BANNER / HOW */}
       <section className="lifestyle-banner" id="s-how">
         <div className="lifestyle-inner lifestyle-inner-noimg">
-          <div className="lifestyle-text-side">
-            <h2>Simple, sostenible, <em>sistematizado.</em></h2>
-            <div className="how-steps how-steps-inline">
-              <div className="hs reveal reveal-delay-1"><div className="hs-num">01</div><h4>Te unes al Club</h4><p>Acceso inmediato a toda la plataforma.</p></div>
-              <div className="hs reveal reveal-delay-2"><div className="hs-num">02</div><h4>Tu perfil de hábitos</h4><p>Onboarding que personaliza tu experiencia.</p></div>
-              <div className="hs reveal reveal-delay-3"><div className="hs-num">03</div><h4>Videos + Plan</h4><p>Ejercicios y recetas en pasos con video.</p></div>
-              <div className="hs reveal"><div className="hs-num">04</div><h4>Construyes el hábito</h4><p>El sistema trabaja. Tú solo apareces.</p></div>
-            </div>
+          <div className="lifestyle-text-side lifestyle-center">
+            <img
+              className="lifestyle-logo"
+              src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
+              alt="Healthy Space Club"
+            />
+            <h2 className="lifestyle-statement">Tu plan. Tu comunidad.<br /><em>Tu mejor versión.</em></h2>
             <MagneticBtn className="btn-lifestyle" onClick={() => openAnnualCheckout()}>Únete hoy →</MagneticBtn>
           </div>
         </div>
