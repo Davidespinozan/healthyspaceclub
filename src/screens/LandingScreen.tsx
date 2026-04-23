@@ -37,8 +37,6 @@ function MagneticBtn({ children, className, onClick, style }: {
 export default function LandingScreen() {
   const { openPay, goTo, mobileMenuOpen, toggleMobileMenu, pillarsOpen, togglePillars } = useAppStore();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
-  const [vidPlaying, setVidPlaying] = useState(false);
-  const playerRef = useRef<HTMLDivElement>(null);
   const pillarsAutoOpened = useRef(false);
 
   // ── Parallax ──────────────────────────────────────────────
@@ -83,20 +81,6 @@ export default function LandingScreen() {
     obs.observe(section);
     return () => obs.disconnect();
   }, [pillarsOpen, togglePillars]);
-
-  function playShowcaseVid() {
-    if (vidPlaying) return;
-    setVidPlaying(true);
-    const playerEl = playerRef.current;
-    if (!playerEl) return;
-    const thumb = playerEl.querySelector('.vid-showcase-thumb') as HTMLElement;
-    const iframe = playerEl.querySelector('.vid-showcase-iframe') as HTMLElement;
-    if (thumb) thumb.style.display = 'none';
-    if (iframe) {
-      iframe.style.display = 'block';
-      iframe.innerHTML = '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" allow="autoplay; fullscreen" allowfullscreen></iframe>';
-    }
-  }
 
   return (
     <>
@@ -159,26 +143,6 @@ export default function LandingScreen() {
             <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </a>
-      </section>
-
-      {/* VIDEO SHOWCASE */}
-      <section className="vid-showcase">
-        <div className="vid-showcase-inner">
-          <div className="vid-showcase-text">
-            <div className="sec-lbl" style={{ color: 'var(--amber)' }}>Conoce el Club</div>
-            <h2 className="vid-showcase-title">Mira cómo funciona <em>el Club.</em></h2>
-          </div>
-          <div className="vid-showcase-player" ref={playerRef} onClick={playShowcaseVid}>
-            <div className="vid-showcase-thumb">
-              <div className="vid-showcase-overlay" />
-              <div className="vid-showcase-play">
-                <div className="vid-showcase-play-btn">▶</div>
-              </div>
-              <div className="vid-showcase-badge">🎬 Video de presentación</div>
-            </div>
-            <div className="vid-showcase-iframe" style={{ display: 'none' }} />
-          </div>
-        </div>
       </section>
 
       {/* PILLARS */}
