@@ -1802,7 +1802,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
   .logo img { height:40px; }
   .logo-nav img { height:80px; }
   .logo-club { font-size:.87rem; letter-spacing:.25em; }
-  nav.landing-nav.scrolled { height:92px; }
+  nav.landing-nav.scrolled { height: calc(92px + env(safe-area-inset-top, 0px)); }
 
   .hero { padding:calc(140px + env(safe-area-inset-top, 0px)) 22px 40px !important; min-height:auto !important; align-items:initial !important; display:block !important; position:relative; }
   .hero::before, .hero::after { display:none !important; }
