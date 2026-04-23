@@ -1799,29 +1799,21 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
   .logo-club { font-size:.87rem; letter-spacing:.25em; }
   nav.landing-nav.scrolled { height:58px; }
 
-  .hero { padding:0 !important; min-height:100dvh !important; align-items:stretch !important; display:flex !important; position:relative; background:var(--forest) !important; }
+  .hero { padding:110px 22px 40px !important; min-height:auto !important; align-items:initial !important; display:block !important; position:relative; background:var(--cream) !important; }
   .hero::before, .hero::after { display:none !important; }
-  .hero-inner { grid-template-columns:1fr; gap:0; position:relative; z-index:2; display:flex !important; flex-direction:column; justify-content:flex-end; min-height:100dvh; padding:0 22px 36px; }
-  .hero-img { position:absolute !important; inset:0; width:100%; height:100%; order:0; z-index:0; }
-  .hero-img img { width:100%; height:100%; object-fit:cover; object-position:center top; border-radius:0 !important; position:absolute; inset:0; }
-  .hero-img::before { content:''; position:absolute; inset:0; z-index:1; background:linear-gradient(to top, rgba(30,51,48,.97) 0%, rgba(30,51,48,.85) 30%, rgba(30,51,48,.45) 60%, rgba(30,51,48,.15) 100%) !important; display:block !important; border-radius:0 !important; width:100% !important; height:100% !important; top:0 !important; left:0 !important; }
-  .hero-img::after { display:none !important; }
+  .hero-inner { grid-template-columns:1fr !important; gap:28px; position:relative; z-index:2; display:flex !important; flex-direction:column; justify-content:flex-start; min-height:auto; padding:0; }
+  .hero-img { position:relative !important; inset:auto; width:100%; height:auto !important; aspect-ratio:1/1; order:0; z-index:0; border-radius:24px; overflow:hidden; }
+  .hero-img img { width:100% !important; height:100% !important; object-fit:cover; object-position:center; border-radius:24px !important; position:relative !important; inset:auto !important; transform:none !important; }
+  .hero-img::before, .hero-img::after { display:none !important; }
   .hero-content { order:1; position:relative; z-index:3; }
-  .hero-content h1 { font-size:2.5rem !important; color:white !important; }
-  .hero-content h1 em { color:var(--amber) !important; }
-  .hero-content .hero-sub, .hero-content .hero-sub-strong { color:rgba(255,255,255,.55) !important; font-size:1rem !important; line-height:1.6; margin-bottom:28px; }
-  .hero-content .hero-sub-strong { color:rgba(255,255,255,.85) !important; font-weight:600; }
-  .hero-content .hero-tagline { color:var(--amber) !important; }
+  .hero-content h1 { font-size:2.2rem !important; }
+  .hero-content .hero-tagline { font-size:1.3rem !important; letter-spacing:.1em; margin-bottom:14px; }
   .hero-float-card { display:none; }
   .hero-img-dots { display:none; }
   .hero-orb { display:none; }
-  .hero .btn-p { padding:16px 36px !important; font-size:1rem !important; }
-  .hero .btn-g { color:rgba(255,255,255,.4) !important; }
-  .hero-trust { gap:14px; flex-wrap:wrap; }
-  .hero-trust-num { font-size:1.05rem; color:white !important; }
-  .hero-trust-lbl { font-size:.55rem; color:rgba(255,255,255,.45) !important; }
-  .hero-trust-div { background:rgba(255,255,255,.1) !important; }
-  .badge { font-size:.52rem; padding:8px 16px; margin-bottom:20px; background:rgba(255,255,255,.08) !important; border-color:rgba(255,255,255,.15) !important; color:rgba(255,255,255,.7) !important; }
+  .hero .btn-p { padding:14px 32px !important; font-size:.92rem !important; }
+  .hero-trust { gap:14px; flex-wrap:wrap; justify-content:center; }
+  .badge { font-size:.52rem; padding:8px 16px; margin-bottom:20px; }
   .btn-p { padding:14px 32px; font-size:.84rem; }
 
   .pillars, .how, .pricing, .testi, .faq { padding:36px 22px; }
