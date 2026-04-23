@@ -151,9 +151,6 @@ export default function LandingScreen() {
               ref={heroImgRef}
               style={{ willChange: 'transform', transform: 'scale(1.04)' }}
             />
-            <div className="hero-img-dots">
-              {Array.from({ length: 25 }).map((_, i) => <span key={i} />)}
-            </div>
           </div>
         </div>
         <a href="#s-pillars" className="hero-scroll" aria-label="Ver más abajo">
