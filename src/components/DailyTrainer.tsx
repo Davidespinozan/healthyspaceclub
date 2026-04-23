@@ -510,7 +510,6 @@ export default function DailyTrainer() {
         };
 
         let yogaPlan = await orchestratePowerVinyasa(orchParams);
-        console.info(`[DEBUG-1] yogaPlan generated. Total: ${yogaPlan.poses.reduce((s: number, p: any) => s + p.duration, 0)}s, savasana: ${yogaPlan.poses.find((p: any) => p.id === 'savasana')?.duration}`);
 
         const yogaIds = new Set(exerciseBank.filter(e => e.isYoga).map(e => e.id));
         let validation = validatePowerVinyasaPlan(yogaPlan, targetDurationSeconds, yogaIds);
@@ -528,7 +527,6 @@ export default function DailyTrainer() {
 
         // Stretch duration to match target
         const adjustedPlan = stretchToTargetDuration(yogaPlan, targetDurationSeconds);
-        console.info(`[DEBUG-2] adjustedPlan. Total: ${adjustedPlan.poses.reduce((s, p) => s + p.duration, 0)}s, savasana: ${adjustedPlan.poses.find(p => p.id === 'savasana')?.duration}`);
 
         // Save to cache
         saveWorkoutToCache({
@@ -544,7 +542,6 @@ export default function DailyTrainer() {
         // Save plan FIRST, then increment counter
         setPlan(adjustedPlan as any);
         saveDailyWorkout(adjustedPlan as any);
-        console.info(`[DEBUG-3] called setPlan+saveDailyWorkout with adjustedPlan. totalDuration: ${adjustedPlan.totalDuration}`);
         setPhase('plan');
 
         // Increment ONLY after successful save
