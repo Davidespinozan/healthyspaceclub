@@ -1847,8 +1847,10 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
   .btn-p { padding:14px 32px; font-size:.84rem; }
 
   .pillars, .how, .pricing, .testi, .faq { padding:36px 22px; }
-  .pg { grid-template-columns:1fr; gap:14px; }
-  .pillar { padding:36px 24px; }
+  .pg { grid-template-columns:1fr 1fr; gap:10px; }
+  .pillar { padding:16px 14px; border-radius:18px; }
+  .pillar-img { margin-bottom:12px; }
+  .ptag-lead { font-size:.62rem; letter-spacing:.12em; margin-top:10px; }
   .how-steps { grid-template-columns:1fr 1fr; gap:20px; }
   .how-steps::before { display:none; }
   .how-steps-inline { grid-template-columns:1fr; gap:14px; }
