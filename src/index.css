@@ -349,8 +349,8 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
 }
 .badge::before { content:''; width:7px; height:7px; background:var(--amber); border-radius:50%; animation:pulse 2.5s infinite; box-shadow:0 0 12px rgba(191,160,101,.4); }
 .hero-tagline {
-  font-size:2.1rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
-  color:var(--forest); margin-bottom:20px; text-align:center;
+  font-size:1.4rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--amber); margin-bottom:18px; text-align:center;
 }
 h1 {
   font-family:'Montserrat',sans-serif; font-size:clamp(2.8rem,5.2vw,4.8rem);
@@ -365,6 +365,20 @@ h1 em::after {
 }
 .hero-content { text-align:center; }
 .hero-content .hero-btns { justify-content:center; }
+.hero-scroll {
+  position:absolute; left:50%; bottom:28px; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  color:var(--forest); text-decoration:none;
+  font-size:.62rem; font-weight:700; letter-spacing:.28em; text-transform:uppercase;
+  opacity:.55; animation:scrollHint 2.4s ease-in-out infinite;
+  z-index:4; pointer-events:auto;
+}
+.hero-scroll:hover { opacity:.9; }
+.hero-scroll svg { display:block; }
+@keyframes scrollHint {
+  0%,100% { transform:translate(-50%,0); opacity:.35; }
+  50%     { transform:translate(-50%,6px); opacity:.75; }
+}
 .hero h1 { font-size:clamp(2.4rem,4vw,3.6rem); letter-spacing:-.035em; }
 .hero h1 em { color:var(--forest); }
 .hero h1 em::after { background:linear-gradient(90deg, var(--amber), rgba(191,160,101,.2)); }
@@ -1812,7 +1826,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
   .hero-img::before, .hero-img::after { display:none !important; }
   .hero-content { order:1; position:relative; z-index:3; }
   .hero-content h1 { font-size:clamp(1.55rem,6.8vw,1.9rem) !important; letter-spacing:-.04em; }
-  .hero-content .hero-tagline { font-size:1.3rem !important; letter-spacing:.1em; margin-bottom:14px; }
+  .hero-content .hero-tagline { font-size:.95rem !important; letter-spacing:.2em; margin-bottom:12px; }
   .hero-float-card { display:none; }
   .hero-img-dots { display:none; }
   .hero-orb { display:none; }

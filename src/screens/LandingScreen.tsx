@@ -156,6 +156,12 @@ export default function LandingScreen() {
             </div>
           </div>
         </div>
+        <a href="#s-pillars" className="hero-scroll" aria-label="Ver más abajo">
+          <span>Desliza</span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </a>
       </section>
 
       {/* VIDEO SHOWCASE */}
