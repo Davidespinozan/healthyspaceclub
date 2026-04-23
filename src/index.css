@@ -232,7 +232,7 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
   justify-content:center; position:relative;
 }
 .login-head .pay-x { position:absolute; top:14px; right:14px; }
-.login-logo { height:44px; width:auto; }
+.login-logo { height:64px; width:64px; border-radius:14px; display:block; }
 .login-body { padding:28px; }
 .login-title {
   font-family:'Montserrat',sans-serif; font-size:1.3rem; font-weight:700;

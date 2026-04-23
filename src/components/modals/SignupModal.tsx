@@ -39,7 +39,7 @@ export default function SignupModal() {
       <div className="login-box">
         <div className="login-head" style={{ background: 'linear-gradient(135deg,var(--forest),var(--moss))' }}>
           <img
-            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png"
+            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
             alt="Healthy Space Club"
             className="login-logo"
           />
