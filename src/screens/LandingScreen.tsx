@@ -276,10 +276,6 @@ export default function LandingScreen() {
           <FaqItem q="¿Tengo que pagar para probar?" a="Los primeros 3 días son gratis. Ingresas tu tarjeta para activar el trial pero no se cobra nada hasta el día 4. Puedes cancelar antes en 1 click y no se te cobra." />
           <FaqItem q="¿Me avisan antes del cobro?" a="Sí. 24 horas antes de que termine tu trial de 3 días te enviamos un email recordándote. Si no quieres continuar, cancelas desde tu perfil y listo." />
           <FaqItem q="¿Cómo cancelo mi membresía?" a="Desde tu perfil en HSC, en 1 click. Sin preguntas, sin fricción." />
-          <FaqItem q="¿Los videos incluyen todas las recetas y ejercicios?" a="Sí. Cada ejercicio tiene su propio video con instrucciones paso a paso. Las recetas también tienen video de preparación dividido por etapas para seguirlo fácilmente desde tu celular o computadora." />
-          <FaqItem q="¿Necesito experiencia previa?" a="No. El Club tiene contenido para todos los niveles. Los videos explican la técnica desde cero para que cualquier persona pueda seguirlos." />
-          <FaqItem q="¿Necesito ir al gimnasio?" a="No. Tenemos rutinas y videos para gym, para casa y para quienes solo tienen 20 minutos al día." />
-          <FaqItem q="¿El contenido se actualiza?" a="Sí. Las recetas semanales se renuevan con nuevos videos, las rutinas progresan mes a mes y continuamos añadiendo módulos de crecimiento." />
           <FaqItem q="¿Cuál es la diferencia entre el plan mensual y el anual?" a="El contenido es el mismo. El plan anual cuesta el equivalente a ~8 meses, te da acceso anticipado a nuevas rutinas y soporte prioritario. Ambos empiezan con 3 días gratis." />
         </div>
       </div>

@@ -896,8 +896,7 @@ h1 em::after {
   color:var(--forest); font-weight:700; margin-bottom:48px; text-align:center;
 }
 .faq h2 em { font-style:italic; color:var(--amber); }
-.fi { border-bottom:1px solid rgba(46,74,66,.05); padding:26px 0; cursor:pointer; transition:all .3s; }
-.fi:hover { padding-left:8px; }
+.fi { border-bottom:1px solid rgba(46,74,66,.05); padding:26px 0; cursor:pointer; transition:color .3s; }
 .fi-q { font-size:.9rem; font-weight:600; color:var(--forest); display:flex; justify-content:space-between; align-items:center; gap:14px; min-height:44px; transition:color .2s; }
 .fi:hover .fi-q { color:var(--moss); }
 .fi-arr { color:var(--amber); transition:transform .4s cubic-bezier(.23,1,.32,1); font-size:.78rem; flex-shrink:0; }
