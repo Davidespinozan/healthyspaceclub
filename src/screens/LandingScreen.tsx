@@ -244,7 +244,7 @@ export default function LandingScreen() {
       <section className="lifestyle-banner" id="s-how">
         <div className="lifestyle-inner">
           <div className="lifestyle-img-side">
-            <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/imagen2_ne3j1j.webp" alt="Healthy Space lifestyle" />
+            <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/123.webp" alt="Healthy Space lifestyle" />
           </div>
           <div className="lifestyle-text-side">
             <h2>Simple, sostenible, <em>sistematizado.</em></h2>
