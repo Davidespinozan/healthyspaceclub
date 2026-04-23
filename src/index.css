@@ -1841,13 +1841,23 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
   .how-steps-inline .hs-num { width:38px; height:38px; min-width:38px; font-size:.6rem; }
   .pcards { grid-template-columns:1fr; }
   .pcards.pcards-3 { grid-template-columns:1fr; max-width:400px; }
-  .pcards.pcards-2 { grid-template-columns:1fr; max-width:420px; gap:20px; }
-  .pcard { padding:40px 28px; }
+  .pcards.pcards-2 { grid-template-columns:1fr; max-width:420px; gap:14px; }
+  .pcard { padding:24px 22px; border-radius:22px; }
   .pcard.feat { order:-1; }
-  .pamount { font-size:2.6rem; }
-  .pam-sym { font-size:1.2rem; }
-  .ptrial-list li { font-size:.74rem; }
-  .pricing-sub { margin-bottom:32px !important; }
+  .pname { margin-bottom:10px; }
+  .pamount { font-size:2.3rem; margin-bottom:4px; }
+  .pam-sym { font-size:1.05rem; }
+  .pam-unit { font-size:.7rem; }
+  .pperiod { margin-bottom:16px; font-size:.7rem; }
+  .ptrial-list { margin:2px 0 14px; gap:4px; }
+  .ptrial-list li { font-size:.72rem; }
+  .pfeats { margin-bottom:18px; gap:8px; }
+  .pfeats li { font-size:.78rem; }
+  .btn-join { padding:13px; font-size:.82rem; }
+  .pbadge { top:-11px; font-size:.54rem; padding:6px 16px; }
+  .pricing h2 { margin-bottom:8px; }
+  .pricing-sub { margin-bottom:22px !important; font-size:.82rem; }
+  .pricing { padding:28px 18px 44px !important; }
   /* Pay modal trial block — let rows wrap on narrow screens */
   .pay-trial { margin:0 20px; padding:14px 14px; }
   .pay-trial-row { flex-wrap:wrap; gap:4px; font-size:.78rem; }
