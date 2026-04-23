@@ -21,7 +21,7 @@
 }
 
 .pp-modal {
-  --pp-forest: #1e3330;
+  --pp-forest: #153330;
   --pp-amber: #BFA065;
   --pp-cream: #F6F2EA;
   --pp-warm: #F0EBE0;
@@ -300,7 +300,7 @@
 
 .pp-error-btn {
   padding: 10px 20px;
-  background: #1e3330;
+  background: #153330;
   color: #F6F2EA;
   border: none;
   border-radius: 50px;

@@ -30,7 +30,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           padding: '40px 24px',
           textAlign: 'center',
           fontFamily: 'Montserrat, system-ui, sans-serif',
-          color: '#1e3330',
+          color: '#153330',
           background: '#F6F2EA',
           minHeight: '100dvh',
           display: 'flex',
@@ -51,7 +51,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             }}
             style={{
               padding: '12px 28px',
-              background: '#1e3330',
+              background: '#153330',
               color: '#BFA065',
               border: 'none',
               borderRadius: '50px',

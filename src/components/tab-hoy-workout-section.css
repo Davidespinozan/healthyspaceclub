@@ -5,14 +5,14 @@
    ══════════════════════════════════════════════════════════════ */
 
 .thw-section {
-  --thw-forest: #1e3330;
+  --thw-forest: #153330;
   --thw-moss: #2E4A42;
   --thw-amber: #BFA065;
   --thw-terra: #A8864E;
   --thw-cream: #F6F2EA;
   --thw-warm: #F0EBE0;
   --thw-sand: #E8E1D3;
-  --thw-txt: #1e3330;
+  --thw-txt: #153330;
   --thw-txt2: rgba(30, 51, 48, 0.58);
 
   font-family: 'Montserrat', system-ui, sans-serif;

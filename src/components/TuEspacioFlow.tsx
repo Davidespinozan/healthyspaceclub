@@ -113,7 +113,7 @@ const HSM_BANK: { emoji: string; title: string; color: string; questions: string
     '¿Quién te apoya cuando necesitas levantarte?',
     '¿Por qué empezaste este proceso? Recuérdalo.',
   ]},
-  { emoji: '🚀', title: 'Evolución', color: '#1e3330', questions: [
+  { emoji: '🚀', title: 'Evolución', color: '#153330', questions: [
     '¿Qué aprendiste hoy de ti?',
     '¿Cómo eres diferente a quien eras hace un mes?',
     '¿Dedicaste tiempo hoy a aprender algo nuevo?',
@@ -252,7 +252,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
   // ── Completion screen ──
   if (allDone) {
     return (
-      <div className="te-flow" style={{ background: 'linear-gradient(165deg, #1e3330 0%, #2d5a3d 100%)' }}>
+      <div className="te-flow" style={{ background: 'linear-gradient(165deg, #153330 0%, #2d5a3d 100%)' }}>
         <div className="te-flow-close" onClick={onClose}>✕</div>
         <div className="te-complete">
           <div className="te-complete-check">✦</div>

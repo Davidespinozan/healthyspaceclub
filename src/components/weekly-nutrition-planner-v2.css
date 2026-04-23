@@ -328,7 +328,7 @@
 
 /* ─── Plan header (forest) ─── */
 .wnp2-header {
-  background: linear-gradient(168deg, #1e3330 0%, #2E4A42 100%);
+  background: linear-gradient(168deg, #153330 0%, #2E4A42 100%);
   border-radius: 18px;
   padding: 18px 20px;
   color: var(--cream);

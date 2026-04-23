@@ -14,7 +14,7 @@
 
 /* ─── Hero editorial oscuro ─── */
 .th2-hero {
-  background: linear-gradient(168deg, #1e3330 0%, #2E4A42 55%, #3d6359 100%);
+  background: linear-gradient(168deg, #153330 0%, #2E4A42 55%, #3d6359 100%);
   color: var(--cream);
   padding: 28px 22px 32px;
   position: relative;

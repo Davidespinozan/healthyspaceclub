@@ -22,14 +22,14 @@
 }
 
 .edp-modal {
-  --edp-forest: #1e3330;
+  --edp-forest: #153330;
   --edp-moss: #2E4A42;
   --edp-amber: #BFA065;
   --edp-terra: #A8864E;
   --edp-cream: #F6F2EA;
   --edp-warm: #F0EBE0;
   --edp-sand: #E8E1D3;
-  --edp-txt: #1e3330;
+  --edp-txt: #153330;
   --edp-txt2: rgba(30, 51, 48, 0.58);
 
   font-family: 'Montserrat', system-ui, sans-serif;
@@ -156,7 +156,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(168deg, #1e3330 0%, #2E4A42 100%);
+  background: linear-gradient(168deg, #153330 0%, #2E4A42 100%);
   gap: 14px;
   position: relative;
 }

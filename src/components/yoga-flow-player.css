@@ -4,7 +4,7 @@
    ══════════════════════════════════════════════════════════════ */
 
 .yfp {
-  --yfp-forest: #1e3330;
+  --yfp-forest: #153330;
   --yfp-cream: #F6F2EA;
   --yfp-amber: #BFA065;
   --yfp-sage: #7FA150;
@@ -109,7 +109,7 @@
 .yfp-prep-hero {
   aspect-ratio: 16 / 11;
   border-radius: 18px;
-  background: linear-gradient(135deg, #7FA150 0%, #1e3330 100%);
+  background: linear-gradient(135deg, #7FA150 0%, #153330 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -206,7 +206,7 @@
 
 .yfp-video-area {
   aspect-ratio: 4 / 3;
-  background: linear-gradient(160deg, #7FA150 0%, #1e3330 100%);
+  background: linear-gradient(160deg, #7FA150 0%, #153330 100%);
   position: relative;
   overflow: hidden;
   cursor: pointer;

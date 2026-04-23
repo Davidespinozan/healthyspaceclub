@@ -3,14 +3,14 @@
    ══════════════════════════════════════════════════════════════ */
 
 .dt2-wrap {
-  --dt2-forest: #1e3330;
+  --dt2-forest: #153330;
   --dt2-moss: #2E4A42;
   --dt2-amber: #BFA065;
   --dt2-terra: #A8864E;
   --dt2-cream: #F6F2EA;
   --dt2-warm: #F0EBE0;
   --dt2-sand: #E8E1D3;
-  --dt2-txt: #1e3330;
+  --dt2-txt: #153330;
   --dt2-txt2: rgba(30, 51, 48, 0.58);
 
   font-family: 'Montserrat', system-ui, sans-serif;
@@ -67,7 +67,7 @@
 /* ── Decision Card (auto mode) ──────────────────────────── */
 
 .dt2-card {
-  background: linear-gradient(168deg, #1e3330 0%, #2E4A42 100%);
+  background: linear-gradient(168deg, #153330 0%, #2E4A42 100%);
   border-radius: 22px;
   padding: 24px 22px;
   color: var(--dt2-cream);
@@ -921,7 +921,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--dt2-forest, #1e3330);
+  background: var(--dt2-forest, #153330);
   color: var(--dt2-amber, #BFA065);
   font-size: 10px;
   font-weight: 700;
@@ -945,7 +945,7 @@
 .dt2-yoga-name {
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--dt2-forest, #1e3330);
+  color: var(--dt2-forest, #153330);
   margin-bottom: 3px;
 }
 
@@ -966,7 +966,7 @@
   padding: 16px;
   margin: 14px 0 18px;
   border-radius: 50px;
-  background: var(--dt2-forest, #1e3330);
+  background: var(--dt2-forest, #153330);
   color: var(--dt2-amber, #BFA065);
   font-size: 16px;
   font-style: italic;
