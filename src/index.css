@@ -570,11 +570,13 @@ h1 em::after {
 }
 .pillar:hover .ptag { border-color:rgba(191,160,101,.35); background:rgba(191,160,101,.08); }
 .ptag-lead {
-  margin-top:24px; font-family:'Montserrat',sans-serif;
-  font-size:1.35rem; font-weight:700; letter-spacing:-.01em; line-height:1.15;
-  text-transform:none; color:white; border:none; padding:0; border-radius:0;
+  display:block; margin-top:20px; padding:0;
+  font-family:'Montserrat',sans-serif;
+  font-size:1.5rem; font-weight:700; letter-spacing:-.015em; line-height:1.2;
+  text-transform:none; color:white;
+  border:none; border-radius:0; background:transparent;
 }
-.ptag-lead::before { content:'— '; color:var(--amber); font-weight:600; }
+.ptag-lead::before { content:none; }
 .pillar:hover .ptag-lead { border-color:transparent; background:transparent; }
 
 .pill-identity-btn {
