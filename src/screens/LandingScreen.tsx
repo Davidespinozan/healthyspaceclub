@@ -139,7 +139,7 @@ export default function LandingScreen() {
         <div className="hero-inner">
           <div className="hero-content">
             <p className="hero-tagline">¿Decidiste cambiar?</p>
-            <h1>La IA crea tu plan.<br /><span className="h1-accent">El club te hace <em>cumplirlo.</em></span></h1>
+            <h1><span className="h1-gold">La IA crea tu plan.</span><br /><span className="h1-accent">El club te hace <em>cumplirlo.</em></span></h1>
             <div className="hero-btns">
               <MagneticBtn className="btn-p" onClick={() => openPay('Pro Anual','$1,699','12 meses · Plan Pro')}>Comenzar ahora →</MagneticBtn>
             </div>
