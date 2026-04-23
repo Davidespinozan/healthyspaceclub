@@ -736,10 +736,10 @@ h1 em::after {
 .btn-lifestyle:hover { transform:translateY(-3px); box-shadow:0 18px 44px rgba(191,160,101,.35); background:#d4b374; }
 
 /* Pricing */
-.pricing { padding:50px 60px; background:var(--cream); text-align:center; position:relative; overflow:hidden; }
+.pricing { padding:50px 60px; background:var(--forest); text-align:center; position:relative; overflow:hidden; }
 .pricing::before {
   content:''; position:absolute; top:50%; left:50%; width:500px; height:500px;
-  background:radial-gradient(circle, rgba(191,160,101,.04) 0%, transparent 70%);
+  background:radial-gradient(circle, rgba(191,160,101,.08) 0%, transparent 70%);
   transform:translate(-50%,-50%); pointer-events:none;
 }
 .pricing-wrapper { display:grid; grid-template-columns:1fr 1fr; gap:50px; align-items:center; max-width:1200px; margin:0 auto; }
@@ -751,10 +751,10 @@ h1 em::after {
 .pricing .sec-lbl::before { background:var(--amber); }
 .pricing h2 {
   font-family:'Montserrat',sans-serif; font-size:clamp(2rem,3.4vw,2.8rem);
-  color:var(--forest); margin-bottom:10px; font-weight:700;
+  color:var(--cream); margin-bottom:10px; font-weight:700;
 }
 .pricing h2 em { font-style:italic; color:var(--amber); }
-.pricing-sub { color:var(--txt2); font-size:.9rem; margin-bottom:64px; }
+.pricing-sub { color:rgba(246,242,234,.65); font-size:.9rem; margin-bottom:64px; }
 
 /* Billing toggle */
 .billing-toggle { display:flex; justify-content:center; gap:0; margin-bottom:48px; background:rgba(46,74,66,.04); border:1px solid rgba(46,74,66,.08); border-radius:50px; padding:4px; max-width:320px; margin-left:auto; margin-right:auto; }
