@@ -48,8 +48,7 @@ function MagneticBtn({ children, className, onClick, style }: {
 }
 
 export default function LandingScreen() {
-  const { openPay, goTo, mobileMenuOpen, toggleMobileMenu, pillarsOpen, togglePillars, region, setRegion } = useAppStore();
-  const pillarsAutoOpened = useRef(false);
+  const { openPay, goTo, mobileMenuOpen, toggleMobileMenu, region, setRegion } = useAppStore();
 
   // ── Region detection (IP → cache → navigator.language fallback) ────────────
   useEffect(() => {
@@ -97,35 +96,6 @@ export default function LandingScreen() {
   }, []);
 
   // ── (trust stats removed) ──
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        const el = document.activeElement as HTMLElement;
-        if (el?.id === 'pillIdentityBtn') togglePillars();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePillars]);
-
-  // ── Auto-open pillars when section scrolls into view ──────
-  useEffect(() => {
-    const section = document.getElementById('s-pillars');
-    if (!section) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !pillarsAutoOpened.current && !pillarsOpen) {
-          pillarsAutoOpened.current = true;
-          togglePillars();
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.35 }
-    );
-    obs.observe(section);
-    return () => obs.disconnect();
-  }, [pillarsOpen, togglePillars]);
 
   return (
     <>
@@ -197,46 +167,19 @@ export default function LandingScreen() {
         <h2 className="reveal">Todo lo que<br />necesitas para<br /><em>transformarte</em></h2>
         <p className="sub reveal">Reemplaza coaches, nutriólogos y entrenadores individuales con un sistema de bolsillo.</p>
         <div className="pg">
-          {/* Identity button */}
-          <div
-            className={`pill-identity pill-identity-btn reveal${pillarsOpen ? ' active' : ''}`}
-            id="pillIdentityBtn"
-            onClick={togglePillars}
-            role="button"
-            tabIndex={0}
-          >
-            <div className="pill-id-logo">
-              <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space" />
-              <span className="pill-id-logo-club">Club</span>
-            </div>
-            <div className="pill-id-divider" />
-            <div className="pill-id-pillars">
-              <span>Nutrición</span><span className="pill-id-dot" />
-              <span>Entrenamiento</span>
-            </div>
-            <p className="pill-id-sub">Un solo espacio. Tres pilares. Todo integrado.</p>
-            <div className="pill-id-hint">
-              <span className="pill-id-hint-text">{pillarsOpen ? 'Ocultar' : 'Ver más'}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-            </div>
-          </div>
-
-          <div className={`pillar pillar-gold pillar-hidden reveal reveal-delay-1${pillarsOpen ? ' pillar-show' : ''}`}>
+          <div className="pillar pillar-gold reveal reveal-delay-1">
             <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp" alt="Nutrición" /></div>
             <div className="pill-num">01</div>
             <h3>Nutrición</h3>
-            <p>Una membresía donde la nutrición se vuelve simple: plan personalizado, recetas y ritmo. Sostenible, repetible, real.</p>
             <span className="ptag">Tu nutriólogo en el bolsillo</span>
           </div>
 
-          <div className={`pillar pillar-gold pillar-hidden reveal reveal-delay-2${pillarsOpen ? ' pillar-show' : ''}`}>
+          <div className="pillar pillar-gold reveal reveal-delay-2">
             <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/workout_s1mccg.webp" alt="Entrenamiento" /></div>
             <div className="pill-num">02</div>
             <h3>Entrenamiento</h3>
-            <p>La ruta oficial del Club: fuerza + condición + movilidad. Tú eliges nivel y tiempo — el sistema te da estructura para mejorar semana a semana.</p>
             <span className="ptag">Tu entrenador personal 24/7</span>
           </div>
-
         </div>
       </section>
 
