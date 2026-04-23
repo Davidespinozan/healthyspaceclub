@@ -41,7 +41,7 @@ export default class ErrorBoundary extends Component<Props, State> {
         }}>
           <div style={{ fontSize: '48px' }}>⚠️</div>
           <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>Algo salió mal</h2>
-          <p style={{ fontSize: '13px', color: 'rgba(30,51,48,0.6)', margin: 0, maxWidth: '280px', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '13px', color: 'rgba(21,51,48,0.6)', margin: 0, maxWidth: '280px', lineHeight: 1.5 }}>
             {this.state.error?.message || 'Error inesperado'}
           </p>
           <button

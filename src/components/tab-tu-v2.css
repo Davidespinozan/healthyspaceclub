@@ -121,7 +121,7 @@
   border-color: var(--amber);
 }
 .tu2-edit-input::placeholder {
-  color: rgba(30,51,48,0.35);
+  color: rgba(21,51,48,0.35);
   font-weight: 400;
 }
 .tu2-edit-bio {

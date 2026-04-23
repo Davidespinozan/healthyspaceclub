@@ -11,7 +11,7 @@
   --dt2-warm: #F0EBE0;
   --dt2-sand: #E8E1D3;
   --dt2-txt: #153330;
-  --dt2-txt2: rgba(30, 51, 48, 0.58);
+  --dt2-txt2: rgba(21, 51, 48, 0.58);
 
   font-family: 'Montserrat', system-ui, sans-serif;
   color: var(--dt2-txt);
@@ -760,7 +760,7 @@
 
 .dt2-mod-card.selected {
   border-color: var(--dt2-forest);
-  background: rgba(30, 51, 48, 0.04);
+  background: rgba(21, 51, 48, 0.04);
 }
 
 .dt2-mod-card.locked {
@@ -951,7 +951,7 @@
 
 .dt2-yoga-meta {
   font-size: 11px;
-  color: rgba(30, 51, 48, 0.55);
+  color: rgba(21, 51, 48, 0.55);
   display: flex;
   gap: 5px;
   align-items: center;

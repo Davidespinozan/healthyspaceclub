@@ -662,7 +662,7 @@
 .th2-espacio:hover,
 .th2-espacio:active {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(30,51,48,0.08);
+  box-shadow: 0 8px 24px rgba(21,51,48,0.08);
   border-color: var(--amber);
 }
 .th2-espacio::before {
@@ -863,7 +863,7 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(30,51,48,0.88);
+  background: rgba(21,51,48,0.88);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;

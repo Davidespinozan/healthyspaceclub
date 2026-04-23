@@ -9,7 +9,7 @@
   --yfp-amber: #BFA065;
   --yfp-sage: #7FA150;
   --yfp-sand: #E8E1D3;
-  --yfp-txt2: rgba(30, 51, 48, 0.55);
+  --yfp-txt2: rgba(21, 51, 48, 0.55);
 
   position: fixed;
   inset: 0;
@@ -38,7 +38,7 @@
   width: 36px; height: 36px;
   min-width: 44px; min-height: 44px;
   border-radius: 50%;
-  background: rgba(30, 51, 48, 0.06);
+  background: rgba(21, 51, 48, 0.06);
   border: none;
   color: var(--yfp-forest);
   cursor: pointer;
@@ -48,7 +48,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.yfp-header-btn:active { background: rgba(30, 51, 48, 0.12); }
+.yfp-header-btn:active { background: rgba(21, 51, 48, 0.12); }
 
 .yfp-header-title {
   font-size: 13px;
@@ -162,7 +162,7 @@
   margin: 0 0 22px;
   font-size: 12px;
   font-style: italic;
-  color: rgba(30, 51, 48, 0.6);
+  color: rgba(21, 51, 48, 0.6);
   line-height: 1.5;
 }
 
@@ -172,7 +172,7 @@
   background: var(--yfp-cream);
   padding: 14px 20px;
   padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-  border-top: 0.5px solid rgba(30, 51, 48, 0.08);
+  border-top: 0.5px solid rgba(21, 51, 48, 0.08);
   z-index: 10;
 }
 
@@ -264,14 +264,14 @@
   display: flex;
   gap: 2px;
   padding: 8px 16px;
-  background: rgba(30, 51, 48, 0.03);
+  background: rgba(21, 51, 48, 0.03);
 }
 
 .yfp-prog-dot {
   flex: 1;
   height: 3px;
   border-radius: 2px;
-  background: rgba(30, 51, 48, 0.12);
+  background: rgba(21, 51, 48, 0.12);
   transition: background 0.3s;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -333,7 +333,7 @@
 
 .yfp-timer-bg {
   fill: none;
-  stroke: rgba(30, 51, 48, 0.08);
+  stroke: rgba(21, 51, 48, 0.08);
   stroke-width: 4;
 }
 
@@ -387,7 +387,7 @@
 
 .yfp-ctrl {
   border-radius: 50%;
-  border: 0.5px solid rgba(30, 51, 48, 0.15);
+  border: 0.5px solid rgba(21, 51, 48, 0.15);
   background: transparent;
   color: var(--yfp-forest);
   cursor: pointer;
@@ -397,7 +397,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.yfp-ctrl:active { background: rgba(30, 51, 48, 0.06); }
+.yfp-ctrl:active { background: rgba(21, 51, 48, 0.06); }
 
 .yfp-ctrl-sm {
   width: 48px; height: 48px;
@@ -420,7 +420,7 @@
   position: fixed;
   inset: 0;
   z-index: 2010;
-  background: rgba(30, 51, 48, 0.88);
+  background: rgba(21, 51, 48, 0.88);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   display: flex;
@@ -592,7 +592,7 @@
 .yfp-info-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(30, 51, 48, 0.85);
+  background: rgba(21, 51, 48, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;

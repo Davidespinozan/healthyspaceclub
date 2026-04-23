@@ -5,7 +5,7 @@
 .pp-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(30, 51, 48, 0.6);
+  background: rgba(21, 51, 48, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 9998;
@@ -26,7 +26,7 @@
   --pp-cream: #F6F2EA;
   --pp-warm: #F0EBE0;
   --pp-sand: #E8E1D3;
-  --pp-txt2: rgba(30, 51, 48, 0.58);
+  --pp-txt2: rgba(21, 51, 48, 0.58);
 
   font-family: 'Montserrat', system-ui, sans-serif;
   color: var(--pp-forest);
@@ -39,7 +39,7 @@
   padding: 0;
   position: relative;
   animation: pp-slide-up 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
-  box-shadow: 0 -20px 60px rgba(30, 51, 48, 0.2);
+  box-shadow: 0 -20px 60px rgba(21, 51, 48, 0.2);
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
@@ -72,7 +72,7 @@
   height: 34px;
   border-radius: 50%;
   background: rgba(246, 242, 234, 0.95);
-  border: 0.5px solid rgba(30, 51, 48, 0.08);
+  border: 0.5px solid rgba(21, 51, 48, 0.08);
   color: var(--pp-forest);
   cursor: pointer;
   display: inline-flex;
@@ -268,7 +268,7 @@
 
 .pp-empty-sub {
   font-size: 11px;
-  color: rgba(30, 51, 48, 0.45);
+  color: rgba(21, 51, 48, 0.45);
   margin: 4px 0 0;
   font-style: italic;
 }
@@ -277,7 +277,7 @@
 
 .pp-loading-text {
   font-size: 12px;
-  color: rgba(30, 51, 48, 0.55);
+  color: rgba(21, 51, 48, 0.55);
   margin-top: 12px;
   font-style: italic;
 }
@@ -317,7 +317,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(30, 51, 48, 0.45);
+  color: rgba(21, 51, 48, 0.45);
   margin: 14px 0 0;
 }
 
@@ -346,12 +346,12 @@
   gap: 5px;
   padding: 5px 11px;
   background: white;
-  border: 1px solid rgba(30, 51, 48, 0.1);
+  border: 1px solid rgba(21, 51, 48, 0.1);
   border-radius: 50px;
   font-family: inherit;
   font-size: 11px;
   font-weight: 600;
-  color: rgba(30, 51, 48, 0.55);
+  color: rgba(21, 51, 48, 0.55);
   cursor: pointer;
   transition: all 0.15s;
   margin-left: auto;

@@ -214,7 +214,7 @@
   background: white;
 }
 .wnp2-freetext-input::placeholder {
-  color: rgba(30,51,48,0.4);
+  color: rgba(21,51,48,0.4);
 }
 
 .wnp2-confirm {
@@ -594,7 +594,7 @@
   background-position: center;
   flex-shrink: 0;
   border: 2px solid white;
-  box-shadow: 0 2px 8px rgba(30,51,48,0.1);
+  box-shadow: 0 2px 8px rgba(21,51,48,0.1);
   background-color: var(--warm);
   display: flex;
   align-items: center;

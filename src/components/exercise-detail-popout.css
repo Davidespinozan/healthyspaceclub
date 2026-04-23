@@ -6,7 +6,7 @@
 .edp-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(30, 51, 48, 0.6);
+  background: rgba(21, 51, 48, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 9999;
@@ -30,7 +30,7 @@
   --edp-warm: #F0EBE0;
   --edp-sand: #E8E1D3;
   --edp-txt: #153330;
-  --edp-txt2: rgba(30, 51, 48, 0.58);
+  --edp-txt2: rgba(21, 51, 48, 0.58);
 
   font-family: 'Montserrat', system-ui, sans-serif;
   color: var(--edp-txt);
@@ -43,7 +43,7 @@
   padding: 0;
   position: relative;
   animation: edp-slide-up 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
-  box-shadow: 0 -20px 60px rgba(30, 51, 48, 0.2);
+  box-shadow: 0 -20px 60px rgba(21, 51, 48, 0.2);
   overscroll-behavior: contain;
 }
 
@@ -83,7 +83,7 @@
   height: 44px;
   border-radius: 50%;
   background: rgba(246, 242, 234, 0.95);
-  border: 0.5px solid rgba(30, 51, 48, 0.08);
+  border: 0.5px solid rgba(21, 51, 48, 0.08);
   color: var(--edp-forest);
   cursor: pointer;
   display: inline-flex;
@@ -198,7 +198,7 @@
   top: 14px;
   left: 14px;
   padding: 5px 11px;
-  background: rgba(30, 51, 48, 0.7);
+  background: rgba(21, 51, 48, 0.7);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 0.5px solid rgba(246, 242, 234, 0.2);
@@ -227,7 +227,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(30, 51, 48, 0.6);
+  background: rgba(21, 51, 48, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 0.5px solid rgba(246, 242, 234, 0.18);
@@ -242,7 +242,7 @@
 
 .edp-vc-btn:hover,
 .edp-vc-btn:active {
-  background: rgba(30, 51, 48, 0.85);
+  background: rgba(21, 51, 48, 0.85);
   color: var(--edp-amber);
 }
 
@@ -256,7 +256,7 @@
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: rgba(30, 51, 48, 0.75);
+  background: rgba(21, 51, 48, 0.75);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 0.5px solid rgba(246, 242, 234, 0.25);
@@ -282,7 +282,7 @@
   gap: 6px;
   z-index: 5;
   padding: 6px 10px;
-  background: rgba(30, 51, 48, 0.5);
+  background: rgba(21, 51, 48, 0.5);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 50px;
@@ -320,7 +320,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(30, 51, 48, 0.6);
+  background: rgba(21, 51, 48, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 0.5px solid rgba(246, 242, 234, 0.18);
@@ -344,7 +344,7 @@
 
 .edp-arrow:hover,
 .edp-arrow:active {
-  background: rgba(30, 51, 48, 0.85);
+  background: rgba(21, 51, 48, 0.85);
   color: var(--edp-amber);
 }
 

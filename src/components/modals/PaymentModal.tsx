@@ -74,17 +74,17 @@ export default function PaymentModal() {
             onChange={(e) => setEmail(e.target.value)}
           />
           <div className="pay-lbl">Número de tarjeta</div>
-          <div className="pay-inp stripe-element" style={{ color: 'rgba(30,51,48,.35)', fontSize: '0.87rem' }}>
+          <div className="pay-inp stripe-element" style={{ color: 'rgba(21,51,48,.35)', fontSize: '0.87rem' }}>
             4242 4242 4242 4242 (demo)
           </div>
           <div className="pay-row">
             <div>
               <div className="pay-lbl">Vencimiento</div>
-              <div className="pay-inp stripe-element" style={{ color: 'rgba(30,51,48,.35)', fontSize: '0.87rem' }}>12/27</div>
+              <div className="pay-inp stripe-element" style={{ color: 'rgba(21,51,48,.35)', fontSize: '0.87rem' }}>12/27</div>
             </div>
             <div>
               <div className="pay-lbl">CVC</div>
-              <div className="pay-inp stripe-element" style={{ color: 'rgba(30,51,48,.35)', fontSize: '0.87rem' }}>123</div>
+              <div className="pay-inp stripe-element" style={{ color: 'rgba(21,51,48,.35)', fontSize: '0.87rem' }}>123</div>
             </div>
           </div>
           {loading ? (
