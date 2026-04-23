@@ -707,7 +707,10 @@ h1 em::after {
   text-transform:uppercase; letter-spacing:-.02em;
   font-size:clamp(1.8rem,3.4vw,2.8rem) !important;
   margin-bottom:32px !important;
+  line-height:1.12;
 }
+.lifestyle-statement > span,
+.lifestyle-statement > em { display:block; }
 .lifestyle-img-side { position:relative; overflow:hidden; }
 .lifestyle-img-side img {
   width:100%; height:100%; object-fit:cover; display:block;
@@ -1867,7 +1870,6 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
   .pricing h2 { margin-bottom:8px; }
   .pricing-sub { margin-bottom:22px !important; font-size:.82rem; }
   .pricing { padding:28px 18px 44px !important; }
-  .lifestyle-statement .ls-brk { display:block; }
   /* Pay modal trial block — let rows wrap on narrow screens */
   .pay-trial { margin:0 20px; padding:14px 14px; }
   .pay-trial-row { flex-wrap:wrap; gap:4px; font-size:.78rem; }
