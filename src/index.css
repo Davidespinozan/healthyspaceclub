@@ -1858,6 +1858,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
   .pricing h2 { margin-bottom:8px; }
   .pricing-sub { margin-bottom:22px !important; font-size:.82rem; }
   .pricing { padding:28px 18px 44px !important; }
+  .lifestyle-statement .ls-brk { display:block; }
   /* Pay modal trial block — let rows wrap on narrow screens */
   .pay-trial { margin:0 20px; padding:14px 14px; }
   .pay-trial-row { flex-wrap:wrap; gap:4px; font-size:.78rem; }

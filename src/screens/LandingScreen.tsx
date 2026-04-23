@@ -192,7 +192,7 @@ export default function LandingScreen() {
               src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
               alt="Healthy Space Club"
             />
-            <h2 className="lifestyle-statement">Tu plan. Tu comunidad.<br /><em>Tu mejor versión.</em></h2>
+            <h2 className="lifestyle-statement">Tu plan. <span className="ls-brk">Tu comunidad.</span><br /><em>Tu mejor versión.</em></h2>
             <MagneticBtn className="btn-lifestyle" onClick={() => openAnnualCheckout()}>Únete hoy →</MagneticBtn>
           </div>
         </div>
