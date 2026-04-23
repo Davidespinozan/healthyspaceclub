@@ -1827,6 +1827,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
   .hero-content { order:1; position:relative; z-index:3; }
   .hero-content h1 { font-size:clamp(1.55rem,6.8vw,1.9rem) !important; letter-spacing:-.04em; }
   .hero-content .hero-tagline { font-size:.95rem !important; letter-spacing:.2em; margin-bottom:12px; }
+  .hero-scroll { display:none; }
   .hero-float-card { display:none; }
   .hero-img-dots { display:none; }
   .hero-orb { display:none; }
