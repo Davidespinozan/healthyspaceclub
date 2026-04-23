@@ -169,16 +169,12 @@ export default function LandingScreen() {
         <div className="pg">
           <div className="pillar pillar-gold reveal reveal-delay-1">
             <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp" alt="Nutrición" /></div>
-            <div className="pill-num">01</div>
-            <h3>Nutrición</h3>
-            <span className="ptag">Tu nutriólogo en el bolsillo</span>
+            <span className="ptag ptag-lead">Tu nutriólogo en el bolsillo</span>
           </div>
 
           <div className="pillar pillar-gold reveal reveal-delay-2">
             <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/workout_s1mccg.webp" alt="Entrenamiento" /></div>
-            <div className="pill-num">02</div>
-            <h3>Entrenamiento</h3>
-            <span className="ptag">Tu entrenador personal 24/7</span>
+            <span className="ptag ptag-lead">Tu entrenador personal 24/7</span>
           </div>
         </div>
       </section>
