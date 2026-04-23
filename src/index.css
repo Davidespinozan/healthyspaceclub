@@ -691,6 +691,7 @@ h1 em::after {
   pointer-events:none;
 }
 .lifestyle-inner { display:grid; grid-template-columns:1fr 1fr; min-height:580px; }
+.lifestyle-inner-noimg { grid-template-columns:1fr; min-height:auto; max-width:900px; margin:0 auto; }
 .lifestyle-img-side { position:relative; overflow:hidden; }
 .lifestyle-img-side img {
   width:100%; height:100%; object-fit:cover; display:block;

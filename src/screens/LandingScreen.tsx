@@ -185,10 +185,7 @@ export default function LandingScreen() {
 
       {/* LIFESTYLE BANNER / HOW */}
       <section className="lifestyle-banner" id="s-how">
-        <div className="lifestyle-inner">
-          <div className="lifestyle-img-side">
-            <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/123.webp" alt="Healthy Space lifestyle" />
-          </div>
+        <div className="lifestyle-inner lifestyle-inner-noimg">
           <div className="lifestyle-text-side">
             <h2>Simple, sostenible, <em>sistematizado.</em></h2>
             <div className="how-steps how-steps-inline">
