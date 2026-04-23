@@ -140,7 +140,7 @@ export default function LandingScreen() {
           <div className="hero-content">
             <p className="hero-tagline">Club Digital</p>
             <h1>Un sistema real para quienes<br />les gusta <em>vivir bien.</em></h1>
-            <p className="hero-sub-strong">Tu coach, nutriólogo y entrenador en uno.</p>
+            <p className="hero-sub-strong">CLUB DIGITAL</p>
             <div className="hero-btns">
               <MagneticBtn className="btn-p" onClick={() => openPay('Pro Anual','$1,699','12 meses · Plan Pro')}>Comenzar ahora →</MagneticBtn>
               <a className="btn-g" href="#s-pillars">Ver qué incluye ↓</a>
