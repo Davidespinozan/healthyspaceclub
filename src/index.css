@@ -575,7 +575,7 @@ h1 em::after {
   border:2px solid rgba(191,160,101,.35);
   border-radius:32px;
   padding:48px 40px 40px !important;
-  background:linear-gradient(145deg, #1a332f 0%, #162b28 100%);
+  background:linear-gradient(145deg, #11332f 0%, #0d2b28 100%);
   transition:all .5s cubic-bezier(.23,1,.32,1);
   animation:pillBtnGlow 2.8s ease-in-out infinite;
   position:relative;
@@ -583,7 +583,7 @@ h1 em::after {
 }
 .pill-identity-btn:hover {
   border-color:rgba(191,160,101,.6);
-  background:linear-gradient(145deg, #1e3a35 0%, #1a332f 100%);
+  background:linear-gradient(145deg, #153a35 0%, #11332f 100%);
   transform:scale(1.02);
   box-shadow:0 20px 60px rgba(191,160,101,.2);
   animation:none;
@@ -605,7 +605,7 @@ h1 em::after {
 .pill-identity-btn.active .pill-id-hint svg { transform:rotate(180deg); }
 
 .pillar-gold {
-  background:linear-gradient(145deg, #1a332f 0%, #162b28 100%) !important;
+  background:linear-gradient(145deg, #11332f 0%, #0d2b28 100%) !important;
   border:2px solid rgba(191,160,101,.35) !important;
   box-shadow:0 8px 32px rgba(0,0,0,.25);
 }
@@ -614,7 +614,7 @@ h1 em::after {
 .pillar-gold h3 { }
 .pillar-gold:hover {
   border-color:rgba(191,160,101,.6) !important;
-  background:linear-gradient(145deg, #1e3a35 0%, #1a332f 100%) !important;
+  background:linear-gradient(145deg, #153a35 0%, #11332f 100%) !important;
   box-shadow:0 20px 60px rgba(191,160,101,.2);
 }
 .pillar-hidden {
@@ -1249,7 +1249,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
 .page.on { display:block; }
 
 /* Dashboard Components */
-.w-hero { background:linear-gradient(135deg,var(--forest) 0%,#1a3633 100%); border-radius:20px; padding:36px; position:relative; overflow:hidden; margin-bottom:24px; box-shadow:var(--shadow-lg); }
+.w-hero { background:linear-gradient(135deg,var(--forest) 0%,#113633 100%); border-radius:20px; padding:36px; position:relative; overflow:hidden; margin-bottom:24px; box-shadow:var(--shadow-lg); }
 .w-hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 80% 40%,rgba(191,160,101,.18) 0%,transparent 65%); }
 .w-tag { font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--mint); margin-bottom:12px; position:relative; }
 .w-hero h2 { font-family:'Montserrat',sans-serif; font-size:clamp(1.5rem,3vw,2.3rem); font-weight:800; color:white; line-height:1.12; margin-bottom:10px; position:relative; }
@@ -1267,7 +1267,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
 .welcome-vid-sub { font-size:.72rem; color:var(--txt2); margin-top:1px; }
 .welcome-vid-close { background:rgba(46,74,66,.06); border:none; color:var(--txt2); width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:.75rem; display:flex; align-items:center; justify-content:center; transition:all .2s; flex-shrink:0; }
 .welcome-vid-close:hover { background:rgba(46,74,66,.12); color:var(--forest); }
-.welcome-vid-player { aspect-ratio:16/9; position:relative; cursor:pointer; background:linear-gradient(145deg, #2E4A42 0%, #153330 60%, #1a2e2b 100%); }
+.welcome-vid-player { aspect-ratio:16/9; position:relative; cursor:pointer; background:linear-gradient(145deg, #2E4A42 0%, #153330 60%, #112e2b 100%); }
 .welcome-vid-thumb { width:100%; height:100%; position:relative; display:flex; align-items:center; justify-content:center; }
 .welcome-vid-overlay { position:absolute; inset:0; background: radial-gradient(ellipse at 30% 40%, rgba(191,160,101,.1) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(46,74,66,.15) 0%, transparent 50%); }
 .welcome-vid-play { width:68px; height:68px; border-radius:50%; background:var(--amber); color:var(--forest); display:flex; align-items:center; justify-content:center; font-size:1.5rem; padding-left:4px; position:relative; z-index:2; box-shadow:0 8px 28px rgba(191,160,101,.4); transition:all .35s; animation:gentleFloat 3s ease-in-out infinite; }
@@ -1283,7 +1283,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
 .sec-vid-icon { width:34px; height:34px; background:rgba(46,74,66,.08); border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--forest); }
 .sec-vid-title { font-family:'Montserrat',sans-serif; font-size:.9rem; font-weight:700; color:var(--forest); }
 .sec-vid-sub { font-size:.71rem; color:var(--txt2); margin-top:1px; }
-.sec-vid-player { aspect-ratio:16/9; position:relative; cursor:pointer; background:linear-gradient(145deg, #2E4A42 0%, #153330 60%, #1a2e2b 100%); }
+.sec-vid-player { aspect-ratio:16/9; position:relative; cursor:pointer; background:linear-gradient(145deg, #2E4A42 0%, #153330 60%, #112e2b 100%); }
 .sec-vid-thumb { width:100%; height:100%; position:relative; display:flex; align-items:center; justify-content:center; }
 .sec-vid-overlay { position:absolute; inset:0; background:radial-gradient(ellipse at 30% 40%, rgba(191,160,101,.1) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(46,74,66,.15) 0%, transparent 50%); }
 .sec-vid-play { width:58px; height:58px; border-radius:50%; background:var(--amber); color:var(--forest); display:flex; align-items:center; justify-content:center; font-size:1.3rem; padding-left:4px; position:relative; z-index:2; box-shadow:0 8px 28px rgba(191,160,101,.4); transition:all .35s; animation:gentleFloat 3s ease-in-out infinite; }
@@ -1727,7 +1727,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; }
 .vid-ov { position:fixed; inset:0; background:rgba(20,36,33,.82); backdrop-filter:blur(16px); z-index:800; display:none; align-items:flex-end; justify-content:center; }
 .vid-ov.open { display:flex; }
 .vid-box { background:white; width:100%; max-width:660px; border-radius:24px 24px 0 0; animation:slideUp .38s cubic-bezier(.32,1,.36,1) both; max-height:92dvh; overflow-y:auto; box-shadow:0 -20px 60px rgba(0,0,0,.3); }
-.vid-player { background:#1a2e2b; aspect-ratio:16/9; position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+.vid-player { background:#112e2b; aspect-ratio:16/9; position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
 .vp-emoji { font-size:5rem; opacity:.13; position:absolute; }
 .vp-btn { width:64px; height:64px; background:rgba(46,74,66,.88); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.7rem; position:relative; z-index:1; transition:all .22s; box-shadow:0 8px 24px rgba(46,74,66,.5); }
 .vid-player:hover .vp-btn { transform:scale(1.1); background:var(--sage); }
