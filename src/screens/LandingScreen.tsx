@@ -138,7 +138,7 @@ export default function LandingScreen() {
         <div className="hero-orb hero-orb-3" />
         <div className="hero-inner">
           <div className="hero-content">
-            <p className="hero-tagline">Club Digital</p>
+            <p className="hero-tagline">¿Decidiste cambiar?</p>
             <h1>Un sistema real para quienes<br />les gusta <em>vivir bien.</em></h1>
             <p className="hero-sub-strong">CLUB DIGITAL</p>
             <div className="hero-btns">
