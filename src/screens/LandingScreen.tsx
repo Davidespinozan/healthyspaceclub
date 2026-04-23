@@ -163,9 +163,6 @@ export default function LandingScreen() {
       {/* PILLARS */}
       <section className="pillars" id="s-pillars">
         <div className="pill-grid-bg" />
-        <div className="sec-lbl reveal">Los tres pilares</div>
-        <h2 className="reveal">Todo lo que<br />necesitas para<br /><em>transformarte</em></h2>
-        <p className="sub reveal">Reemplaza coaches, nutriólogos y entrenadores individuales con un sistema de bolsillo.</p>
         <div className="pg">
           <div className="pillar pillar-gold reveal reveal-delay-1">
             <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp" alt="Nutrición" /></div>
