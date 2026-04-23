@@ -274,7 +274,7 @@ export default function LandingScreen() {
         <div className="logo">
           <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" />
         </div>
-        <p>© 2025 Healthy Space Club · Todos los derechos reservados</p>
+        <p>© 2026 Healthy Space Club · Todos los derechos reservados</p>
         <div className="region-selector" aria-label="Seleccionar región de precios">
           {REGION_OPTIONS.map((r) => {
             const p = PRICING[r];
