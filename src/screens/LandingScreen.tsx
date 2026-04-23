@@ -148,7 +148,7 @@ export default function LandingScreen() {
           </div>
           <div className="hero-img">
             <img
-              src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero_pghcvy.webp"
+              src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero.webp"
               alt="Healthy Space Club"
               ref={heroImgRef}
               style={{ willChange: 'transform', transform: 'scale(1.04)' }}
