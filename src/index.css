@@ -359,6 +359,8 @@ h1 em::after {
   background:linear-gradient(90deg, var(--amber), rgba(191,160,101,.2));
   border-radius:2px;
 }
+.hero-content { text-align:center; }
+.hero-content .hero-btns { justify-content:center; }
 .hero h1 { font-size:clamp(2.4rem,4vw,3.6rem); letter-spacing:-.035em; }
 .hero h1 em { color:var(--amber); }
 .hero h1 .h1-accent { color:var(--amber); }
