@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
 import { validateMediaFile } from '../utils/mediaValidation';
+import CoachProfileSheet from './CoachProfileSheet';
 import './tab-tu-v3.css';
 
 const MILESTONE_STEPS = [3, 7, 14, 30, 90, 365];
@@ -23,6 +24,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
   const [saving, setSaving] = useState(false);
+  const [coachOpen, setCoachOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -220,8 +222,8 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         className="tt3-coach-card"
         role="button"
         tabIndex={0}
-        onClick={() => alert('Modal del coach próximamente')}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') alert('Modal del coach próximamente'); }}
+        onClick={() => setCoachOpen(true)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setCoachOpen(true); }}
       >
         <div className="tt3-coach-eyebrow">
           <span className="tt3-coach-eyebrow-dot" />
@@ -273,6 +275,16 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
           ))
         )}
       </div>
+
+      <CoachProfileSheet
+        open={coachOpen}
+        onClose={() => setCoachOpen(false)}
+        onReflect={() => {
+          setCoachOpen(false);
+          onNav('hoy');
+          setTimeout(() => alert('Desliza al final de Hoy y toca Tu Espacio para reflexionar.'), 250);
+        }}
+      />
 
     </div>
   );

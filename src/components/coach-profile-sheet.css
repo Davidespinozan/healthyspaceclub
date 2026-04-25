@@ -1,0 +1,311 @@
+/* ═════════════════════════════════════════════════════════════
+   CoachProfileSheet — modal del perfil del coach
+   Prefijo: .cps-* (único en el proyecto)
+   Paleta: --forest, --amber, --terra, --cream, --warm, --sand, --txt2
+   Fonts: Montserrat (default) + Georgia serif (titulares editoriales)
+   ═════════════════════════════════════════════════════════════ */
+
+.cps-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(21, 51, 48, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: cpsFadeIn 0.2s ease;
+  padding: 0;
+}
+@keyframes cpsFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cps-sheet {
+  position: relative;
+  background: var(--cream);
+  border-radius: 18px 18px 0 0;
+  padding: 16px 20px 24px;
+  width: 100%;
+  max-width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  animation: cpsSlideUp 0.28s cubic-bezier(0.34, 1.2, 0.64, 1);
+  -webkit-overflow-scrolling: touch;
+}
+@keyframes cpsSlideUp {
+  from { transform: translateY(28px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.cps-handle {
+  width: 40px;
+  height: 4px;
+  background: rgba(21, 51, 48, 0.2);
+  border-radius: 3px;
+  margin: 0 auto 14px;
+}
+
+.cps-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(21, 51, 48, 0.06);
+  color: var(--forest);
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 1;
+}
+
+/* ═══ Header ═══ */
+.cps-header {
+  text-align: center;
+  margin-bottom: 18px;
+  padding-top: 4px;
+}
+.cps-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(191, 160, 101, 0.15);
+  border-radius: 50px;
+  margin-bottom: 12px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.cps-eyebrow-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+  flex-shrink: 0;
+}
+.cps-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--forest);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin: 0 0 6px;
+  text-transform: none;
+}
+.cps-title em {
+  font-style: italic;
+  color: var(--terra);
+}
+.cps-meta {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-style: italic;
+  color: var(--forest);
+  opacity: 0.55;
+  margin: 0;
+}
+
+/* ═══ Quote box (perfil psicológico) ═══ */
+.cps-quote {
+  background: white;
+  border-left: 2px solid var(--amber);
+  border-radius: 0 14px 14px 0;
+  padding: 16px 18px;
+  margin-bottom: 22px;
+}
+.cps-quote-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 13.5px;
+  color: var(--forest);
+  line-height: 1.65;
+  margin: 0;
+  white-space: pre-line;
+}
+.cps-quote-text em {
+  font-style: italic;
+  color: var(--terra);
+  font-weight: 600;
+}
+
+/* ═══ Dimensions ═══ */
+.cps-dims-section {
+  margin-bottom: 22px;
+}
+.cps-dims-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+.cps-dims-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--forest);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cps-dims-meta {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--amber);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.cps-dims-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cps-dim {
+  background: white;
+  border: 0.5px solid var(--sand);
+  border-radius: 12px;
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cps-dim.empty {
+  opacity: 0.5;
+}
+.cps-dim-emoji {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--warm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.cps-dim-body {
+  flex: 1;
+  min-width: 0;
+}
+.cps-dim-name {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--forest);
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cps-dim-bar {
+  height: 3px;
+  background: var(--sand);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cps-dim-bar-fill {
+  height: 100%;
+  background: var(--amber);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.cps-dim-count {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--amber);
+  min-width: 20px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.cps-dim.empty .cps-dim-count {
+  color: rgba(21, 51, 48, 0.5);
+}
+
+/* ═══ CTA ═══ */
+.cps-cta {
+  width: 100%;
+  padding: 13px;
+  background: var(--forest);
+  color: var(--cream);
+  border: none;
+  border-radius: 50px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-bottom: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.cps-cta:hover,
+.cps-cta:active {
+  opacity: 0.9;
+}
+.cps-cta-microcopy {
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  color: var(--forest);
+  opacity: 0.5;
+  font-style: italic;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ═══ Responsive desktop ═══ */
+@media (min-width: 768px) {
+  .cps-overlay {
+    align-items: center;
+    padding: 24px;
+  }
+  .cps-sheet {
+    max-width: 560px;
+    border-radius: 20px;
+    max-height: 85vh;
+    padding: 32px 40px 36px;
+  }
+  .cps-handle {
+    display: none;
+  }
+  .cps-close {
+    top: 22px;
+    right: 24px;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  .cps-header {
+    margin-bottom: 24px;
+  }
+  .cps-title {
+    font-size: 26px;
+  }
+  .cps-meta {
+    font-size: 11px;
+  }
+  .cps-quote-text {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .cps-dims-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .cps-cta {
+    padding: 14px;
+    font-size: 13px;
+  }
+}
