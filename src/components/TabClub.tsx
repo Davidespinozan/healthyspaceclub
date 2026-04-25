@@ -100,10 +100,10 @@ export default function TabClub() {
 
   return (
     <div className="tc-wrap">
-      <header className="tc-header">
+      <div className="tc-header">
         <h1 className="tc-title">El Club</h1>
         <span className="tc-meta">{activeToday} {activeToday === 1 ? 'activo' : 'activos'} hoy</span>
-      </header>
+      </div>
 
       <div className="tc-stories-wrap">
         <Stories />
