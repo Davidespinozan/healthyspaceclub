@@ -32,12 +32,16 @@
 
 .th3-hero-top {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 22px;
   position: relative;
 }
 .th3-avatar {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: 38px; height: 38px;
   border-radius: 50%;
   background: rgba(246,242,234,0.95);
