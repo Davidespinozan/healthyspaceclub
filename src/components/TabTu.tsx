@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
 import { validateMediaFile } from '../utils/mediaValidation';
 import CoachProfileSheet from './CoachProfileSheet';
+import SettingsSheet from './SettingsSheet';
 import './tab-tu-v3.css';
 
 const MILESTONE_STEPS = [3, 7, 14, 30, 90, 365];
@@ -25,6 +26,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const [editBio, setEditBio] = useState('');
   const [saving, setSaving] = useState(false);
   const [coachOpen, setCoachOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -124,7 +126,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         <span className="tt3-topbar-name">{displayName}</span>
         <button
           className="tt3-topbar-menu"
-          onClick={() => onNav('huella')}
+          onClick={() => setSettingsOpen(true)}
           aria-label="Ajustes"
           type="button"
         >
@@ -284,6 +286,11 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
           onNav('hoy');
           setTimeout(() => alert('Desliza al final de Hoy y toca Tu Espacio para reflexionar.'), 250);
         }}
+      />
+
+      <SettingsSheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
 
     </div>
