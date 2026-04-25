@@ -180,6 +180,14 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   });
   const firstName = userName?.split(' ')[0] || '';
 
+  // Greeting by local hour: 5–11 días, 12–18 tardes, 19–4 noches
+  const heroGreeting = (() => {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return 'Buenos días';
+    if (h >= 12 && h < 19) return 'Buenas tardes';
+    return 'Buenas noches';
+  })();
+
   const MILESTONES = [3, 7, 14, 21, 30, 60, 90];
   const [milestone, setMilestone] = useState<number | null>(null);
   const MILESTONE_COPY: Record<number, { emoji: string; title: string; sub: string }> = {
@@ -472,7 +480,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
         </div>
 
         <p className="th3-eyebrow">{heroDate}</p>
-        <h1 className="th3-headline">{firstName ? `Hola, ${firstName}.` : 'Hola.'}</h1>
+        <h1 className="th3-headline">{firstName ? `${heroGreeting}, ${firstName}.` : `${heroGreeting}.`}</h1>
         <p className="th3-subhead">{heroSubhead}</p>
 
         <div className="th3-divider" />
