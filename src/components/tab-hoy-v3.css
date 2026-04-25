@@ -1,0 +1,533 @@
+/* ═════════════════════════════════════════════════════════════
+   TabHoy v3 — Editorial premium redesign
+   Prefijo: .th3-* (no colisiona con .th2-* ni .thw-*)
+   Paleta: --forest, --moss, --sage, --cream, --warm, --sand, --amber, --terra
+   Fonts: Montserrat (default global) + Georgia serif (titulares editoriales)
+   ═════════════════════════════════════════════════════════════ */
+
+.th3-wrap {
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+  min-height: 100dvh;
+}
+
+/* ═══ HERO (forest gradient) ═══ */
+.th3-hero {
+  background: linear-gradient(168deg, #153330 0%, #2E4A42 55%, #3d6359 100%);
+  color: var(--cream);
+  padding: 24px 22px 30px;
+  position: relative;
+  overflow: hidden;
+}
+.th3-hero::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(191,160,101,0.16) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.th3-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+  position: relative;
+}
+.th3-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: rgba(246,242,234,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--forest);
+  font-style: italic;
+  flex-shrink: 0;
+}
+
+.th3-eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0 0 10px;
+  position: relative;
+}
+
+.th3-headline {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--cream);
+  margin: 0 0 12px;
+  position: relative;
+}
+
+.th3-subhead {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: rgba(246,242,234,0.7);
+  margin: 0 0 22px;
+  position: relative;
+}
+
+.th3-divider {
+  height: 0.5px;
+  background: rgba(246,242,234,0.15);
+  margin: 14px 0 14px;
+  position: relative;
+}
+
+.th3-streak {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  position: relative;
+}
+.th3-streak-num {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-size: 26px;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.th3-streak-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(246,242,234,0.55);
+}
+.th3-streak-dots {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.th3-streak-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(246,242,234,0.15);
+}
+.th3-streak-dot.active { background: var(--amber); }
+
+/* ═══ BODY (cream background) ═══ */
+.th3-body {
+  background: var(--cream);
+  padding: 26px 16px 24px;
+  max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
+  flex: 1;
+}
+
+.th3-section-eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(21,51,48,0.5);
+  margin: 0 0 14px;
+}
+
+/* ═══ Grid 2 cards ═══ */
+.th3-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+.th3-card {
+  background: white;
+  border: 0.5px solid var(--sand);
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+}
+.th3-card:hover,
+.th3-card:active {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(21,51,48,0.06);
+}
+
+/* Cover (portada gradient) */
+.th3-cover {
+  aspect-ratio: 1.05;
+  position: relative;
+  overflow: hidden;
+}
+.th3-cover-rutina {
+  background:
+    radial-gradient(circle at 80% 20%, rgba(191,160,101,0.22) 0%, transparent 55%),
+    linear-gradient(155deg, #2E4A42 0%, #153330 60%, #0a1f1c 100%);
+}
+.th3-cover-nutricion {
+  background:
+    radial-gradient(circle at 80% 20%, rgba(246,242,234,0.28) 0%, transparent 55%),
+    linear-gradient(155deg, #D4976B 0%, #BFA065 60%, #A8864E 100%);
+}
+.th3-cover-italic {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.th3-cover-rutina .th3-cover-italic { color: rgba(191,160,101,0.9); }
+.th3-cover-nutricion .th3-cover-italic { color: rgba(21,51,48,0.7); }
+
+/* Card body */
+.th3-card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.th3-card-eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0;
+}
+.th3-card-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-size: 17px;
+  color: var(--forest);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.th3-card-meta {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(21,51,48,0.5);
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* Card list (meals / exercises) */
+.th3-card-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+}
+.th3-card-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 0.5px solid var(--sand);
+  min-height: 0;
+}
+.th3-card-list-item:first-child { border-top: none; }
+.th3-card-list-name {
+  flex: 1;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--forest);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.th3-card-list-name.done {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+.th3-card-list-check {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  border: 1.5px solid var(--sand);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.th3-card-list-check.checked {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--amber);
+}
+
+/* Card foot */
+.th3-card-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--sand);
+}
+.th3-card-foot-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: rgba(21,51,48,0.55);
+}
+.th3-card-arrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--amber);
+  font-weight: 400;
+}
+
+/* ═══ Separator ═══ */
+.th3-separator {
+  height: 0.5px;
+  background: rgba(21,51,48,0.1);
+  margin: 22px 0;
+}
+
+/* ═══ Tu Espacio (discreto) ═══ */
+.th3-espacio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+.th3-espacio-body { flex: 1; min-width: 0; }
+.th3-espacio-eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0 0 4px;
+}
+.th3-espacio-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 15.5px;
+  line-height: 1.4;
+  color: var(--forest);
+  margin: 0;
+}
+.th3-espacio-arrow {
+  color: var(--amber);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* ═══ Reviews (mini día 5 + weekly HSM + daily review when complete) ═══ */
+.th3-review {
+  background: var(--forest);
+  border-radius: 16px;
+  padding: 18px 20px;
+  border-left: 3px solid var(--amber);
+  margin-top: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.th3-review::before {
+  content: '"';
+  position: absolute;
+  top: -28px;
+  left: 14px;
+  font-size: 6rem;
+  font-style: italic;
+  color: rgba(191,160,101,0.08);
+  line-height: 1;
+  font-family: Georgia, serif;
+  pointer-events: none;
+}
+.th3-review-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0 0 8px;
+  position: relative;
+}
+.th3-review-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: rgba(246,242,234,0.92);
+  margin: 0;
+  position: relative;
+  white-space: pre-line;
+}
+.th3-review-text.plain {
+  font-style: normal;
+}
+.th3-review-btn {
+  margin-top: 12px;
+  padding: 9px 22px;
+  background: transparent;
+  border: 1px solid rgba(246,242,234,0.25);
+  border-radius: 50px;
+  color: var(--cream);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.th3-review-btn:hover,
+.th3-review-btn:active {
+  background: rgba(246,242,234,0.08);
+  border-color: var(--amber);
+}
+
+/* ═══ Milestone overlay ═══ */
+.th3-milestone {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(21,51,48,0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: th3FadeIn 0.3s ease;
+}
+.th3-milestone-inner {
+  background: var(--cream);
+  border-radius: 24px;
+  padding: 36px 28px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  border: 1px solid var(--amber);
+}
+.th3-milestone-emoji {
+  font-size: 3.5rem;
+  margin-bottom: 14px;
+}
+.th3-milestone-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-size: 1.4rem;
+  color: var(--forest);
+  margin: 0 0 10px;
+  letter-spacing: -0.015em;
+}
+.th3-milestone-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9rem;
+  color: rgba(21,51,48,0.65);
+  line-height: 1.55;
+  margin: 0 0 22px;
+}
+.th3-milestone-close {
+  padding: 12px 28px;
+  background: var(--forest);
+  color: var(--cream);
+  border: none;
+  border-radius: 50px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+@keyframes th3FadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ═══ Responsive desktop ═══ */
+@media (min-width: 768px) {
+  .th3-hero {
+    padding: 36px 40px;
+  }
+  .th3-headline {
+    font-size: 44px;
+  }
+  .th3-subhead {
+    font-size: 1.1rem;
+  }
+  .th3-divider {
+    margin: 18px 0;
+  }
+  .th3-body {
+    padding: 36px 40px;
+  }
+  .th3-grid {
+    gap: 16px;
+  }
+  .th3-card-body {
+    padding: 18px;
+    gap: 8px;
+  }
+  .th3-card-title {
+    font-size: 19px;
+  }
+  .th3-espacio-text {
+    font-size: 17px;
+  }
+  .th3-separator {
+    margin: 28px 0;
+  }
+}
+
+/* ═══ Tiny mobile (< 360px) ═══ */
+@media (max-width: 360px) {
+  .th3-hero { padding: 22px 18px 26px; }
+  .th3-headline { font-size: 28px; }
+  .th3-card-body { padding: 12px; }
+  .th3-card-title { font-size: 15px; }
+  .th3-card-list-name { font-size: 0.74rem; }
+}

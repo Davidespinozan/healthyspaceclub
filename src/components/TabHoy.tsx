@@ -10,7 +10,8 @@ import TuEspacioFlow from './TuEspacioFlow';
 import { exercises as exerciseBank } from '../data/exercises';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 import type { Exercise } from '../types';
-import './tab-hoy-v2.css';
+import { Logo } from './Logo';
+import './tab-hoy-v3.css';
 import './tab-hoy-workout-section.css';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
@@ -145,10 +146,6 @@ function getDailyQuestion(dimIndex: number, dayIndex: number): { emoji: string; 
   return { emoji: dim.emoji, title: dim.title, q: dim.questions[qIndex] };
 }
 
-const MEAL_EMOJI: Record<string, string> = {
-  'Desayuno': '🌅', 'Snack AM': '🍎', 'Comida': '🍽️', 'Snack PM': '🥜', 'Cena': '🌙',
-};
-
 export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const {
     userName, planGoal, mealPlanKey, shoppingDay,
@@ -177,15 +174,12 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const [showReview, setShowReview] = useState(reviewPending);
 
   const today = new Date().toISOString().split('T')[0];
-  const hour = new Date().getHours();
 
   const [showNight, setShowNight] = useState(() => {
     const h = new Date().getHours();
     const isNight = h >= 20 && h <= 23;
     return isNight && !(nightCheckIn?.date === new Date().toISOString().split('T')[0] && nightCheckIn?.completed);
   });
-  const momento = (hour >= 5 && hour < 12) ? 'mañana' : (hour >= 12 && hour < 19) ? 'tarde' : 'noche';
-  const saludo = (hour >= 5 && hour < 12) ? 'Buenos días' : (hour >= 12 && hour < 19) ? 'Buenas tardes' : 'Buenas noches';
   const firstName = userName?.split(' ')[0] || '';
 
   const MILESTONES = [3, 7, 14, 21, 30, 60, 90];
@@ -205,17 +199,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     if (reached > lastStreakMilestone) { setMilestone(reached); setLastStreakMilestone(reached); }
   }, [streakCount, lastStreakMilestone]);
 
-  const DAY_LABELS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  const [selectedDow, setSelectedDow] = useState(new Date().getDay());
   const activePlan = mealPlans[weeklyPlan?.mealPlanKey ?? mealPlanKey] ?? mealPlans['planA'];
   const scaledPlan = planGoal > 0 ? scalePlan(activePlan, planGoal) : activePlan;
   const anchor = shoppingDay ?? 0;
-  const selectedOffset = (selectedDow - anchor + 7) % 7;
-  const selectedDayNum = weeklyPlan ? weeklyPlan.selectedDays[selectedOffset] ?? weeklyPlan.selectedDays[0] : null;
-  const selectedPlanIdx = selectedDayNum != null ? scaledPlan.findIndex(d => d.day === selectedDayNum) : selectedOffset % scaledPlan.length;
-  const selectedMeals = scaledPlan[selectedPlanIdx >= 0 ? selectedPlanIdx : 0]?.meals ?? [];
-  const selectedDayKcal = calcDayKcal(scaledPlan[selectedPlanIdx >= 0 ? selectedPlanIdx : 0]?.meals ?? []);
-  const isSelectedToday = selectedDow === new Date().getDay();
 
   const todayDow = new Date().getDay();
   const todayOffset = (todayDow - anchor + 7) % 7;
@@ -224,7 +210,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const todayMeals = scaledPlan[todayPlanIdx >= 0 ? todayPlanIdx : 0]?.meals ?? [];
   const checkedMeals = todayMeals.filter((_, i) => !!mealChecks[`meal-${today}-${i}`]).length;
 
-  const [mealDetail, setMealDetail] = useState<typeof selectedMeals[0] | null>(null);
+  const [mealDetail, setMealDetail] = useState<typeof todayMeals[0] | null>(null);
 
   const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
 
@@ -263,9 +249,6 @@ En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
   }, [today]);
 
   const checkinDone = dailyCheckinDate === today && dailyCheckin !== null;
-
-  const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  const yesterdayIntention = nightCheckIn?.date === yesterdayStr ? nightCheckIn.intencionManana : '';
 
   const todayDayIndex = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const todayHSMSlot = (todayDayIndex % 3);
@@ -447,427 +430,313 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
 
   const mileCopy = milestone ? MILESTONE_COPY[milestone] : null;
 
+  // Editorial date string for hero eyebrow: "Miércoles · 24 abril"
+  const heroDate = (() => {
+    const d = new Date();
+    const dayName = d.toLocaleDateString('es-ES', { weekday: 'long' });
+    const cap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+    const day = d.getDate();
+    const month = d.toLocaleDateString('es-ES', { month: 'long' });
+    return `${cap} · ${day} ${month}`;
+  })();
+
+  // Subhead for the hero: dailyBriefing if fresh, fallback otherwise
+  const heroSubhead =
+    (dailyBriefing?.date === today && dailyBriefing?.message)
+      ? dailyBriefing.message
+      : 'Otro día para construirte.';
+
   return (
-    <div className="th2-wrap">
-      {/* Overlays — sin cambios */}
+    <div className="th3-wrap">
+      {/* Overlays — preserved */}
       {showNight && <NightCheckIn onClose={() => setShowNight(false)} />}
       {showReview && <WeeklyReview onClose={() => setShowReview(false)} onPlanNextWeek={() => onNav('alimentacion')} />}
 
       {milestone && mileCopy && (
-        <div className="th2-milestone" onClick={() => setMilestone(null)}>
-          <div className="th2-milestone-inner">
-            <div className="th2-milestone-emoji">{mileCopy.emoji}</div>
-            <div className="th2-milestone-title">{mileCopy.title}</div>
-            <div className="th2-milestone-sub">{mileCopy.sub}</div>
-            <button className="th2-milestone-close" onClick={() => setMilestone(null)}>Continuar</button>
+        <div className="th3-milestone" onClick={() => setMilestone(null)}>
+          <div className="th3-milestone-inner" onClick={e => e.stopPropagation()}>
+            <div className="th3-milestone-emoji">{mileCopy.emoji}</div>
+            <h2 className="th3-milestone-title">{mileCopy.title}</h2>
+            <p className="th3-milestone-sub">{mileCopy.sub}</p>
+            <button className="th3-milestone-close" onClick={() => setMilestone(null)}>Continuar</button>
           </div>
         </div>
       )}
 
       {/* ── HERO editorial ── */}
-      <div className="th2-hero">
-        <div className="th2-hero-top">
-          <div className="th2-date-chip">
-            <span className="th2-date-chip-dot" />
-            <span className="th2-date-chip-text">día {streakCount || 1} · momento {momento}</span>
-          </div>
-          {firstName && <div className="th2-avatar">{firstName.charAt(0).toUpperCase()}</div>}
+      <header className="th3-hero">
+        <div className="th3-hero-top">
+          <Logo variant="wordmark" size={28} />
+          {firstName && <div className="th3-avatar">{firstName.charAt(0).toUpperCase()}</div>}
         </div>
 
-        <p className="th2-greeting">{saludo}</p>
-        <h1 className="th2-headline">
-          {firstName ? <>{firstName},<br /><em>vamos hoy.</em></> : <>Vamos <em>hoy.</em></>}
-        </h1>
+        <p className="th3-eyebrow">{heroDate}</p>
+        <h1 className="th3-headline">{firstName ? `Hola, ${firstName}.` : 'Hola.'}</h1>
+        <p className="th3-subhead">{heroSubhead}</p>
 
-        <div className="th2-hero-meta">
-          <div className="th2-streak-block">
-            <span className="th2-streak-num">{streakCount}</span>
-            <span className="th2-streak-label">días de racha</span>
-          </div>
-          <div className="th2-streak-dots">
+        <div className="th3-divider" />
+
+        <div className="th3-streak">
+          <span className="th3-streak-num">{streakCount}</span>
+          <span className="th3-streak-label">días en racha</span>
+          <div className="th3-streak-dots">
             {Array.from({ length: 7 }, (_, i) => {
               const dayDate = new Date();
               dayDate.setDate(dayDate.getDate() - (6 - i));
               const dayStr = dayDate.toISOString().split('T')[0];
               const isActive = useAppStore.getState().lastActiveDate === dayStr ||
                 (i === 6 && checkinDone);
-              return <div key={i} className={`th2-streak-dot${isActive ? ' active' : ''}`} />;
+              return <div key={i} className={`th3-streak-dot${isActive ? ' active' : ''}`} />;
             })}
           </div>
         </div>
+      </header>
 
-        {dailyBriefing?.date === today && dailyBriefing?.message && (
-          <div className="th2-briefing">{dailyBriefing.message}</div>
-        )}
-      </div>
-
-      {/* Stories — después del hero */}
+      {/* Stories — preserved as-is, will be moved to Club later */}
       <Stories />
 
       {/* ── BODY ── */}
-      <div className="th2-body">
+      <section className="th3-body">
+        <p className="th3-section-eyebrow">Para hoy</p>
 
-        {/* Intención del día (solo si escribiste algo anoche) */}
-        {yesterdayIntention && (
-          <div className="th2-intention">
-            <div className="th2-intention-label">
-              <span className="th2-intention-label-dot" />
-              Tu intención de anoche
+        <div className="th3-grid">
+          {/* CARD RUTINA */}
+          <article
+            className="th3-card th3-card-rutina"
+            onClick={() => onNav('entrenamiento')}
+          >
+            <div className="th3-cover th3-cover-rutina">
+              <span className="th3-cover-italic">en movimiento</span>
             </div>
-            <div className="th2-intention-text">{yesterdayIntention}</div>
-          </div>
-        )}
+            <div className="th3-card-body">
+              <p className="th3-card-eyebrow">Entrenamiento</p>
+              {(() => {
+                const workout = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
+                if (!workout) {
+                  return (
+                    <>
+                      <h2 className="th3-card-title">Genera tu rutina</h2>
+                      <p className="th3-card-meta">Personalizada según cómo te sientas.</p>
+                    </>
+                  );
+                }
+                const isYogaPlan = Array.isArray((workout as { poses?: unknown }).poses);
+                if (isYogaPlan) {
+                  const poses = (workout as { poses: unknown[] }).poses;
+                  const totalDuration = (workout as { totalDuration?: number }).totalDuration ?? 0;
+                  const wType = (workout as { type?: string }).type ?? 'Power Vinyasa';
+                  const totalMin = Math.round(totalDuration / 60);
+                  return (
+                    <>
+                      <h2 className="th3-card-title">Tu flow de hoy</h2>
+                      <p className="th3-card-meta">
+                        {wType} · {poses.length} poses{totalMin > 0 ? ` · ${totalMin} min` : ''}
+                      </p>
+                    </>
+                  );
+                }
+                const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
+                const exList = ((workout as { exercises?: unknown[] }).exercises ?? []) as Array<Record<string, unknown>>;
+                const wType = (workout as { type?: string }).type ?? '';
+                const wDuration = (workout as { duration?: string }).duration ?? '';
+                return (
+                  <>
+                    <h2 className="th3-card-title">Tu rutina de hoy</h2>
+                    {(wType || wDuration) && (
+                      <p className="th3-card-meta">
+                        {wType}{wType && wDuration ? ' · ' : ''}{wDuration}
+                      </p>
+                    )}
+                    {exList.length > 0 && (
+                      <ul className="th3-card-list">
+                        {exList.slice(0, 6).map((ex, i) => {
+                          const exId = String(ex.id ?? `ex-${i}`);
+                          const bank = exerciseMap.get(exId);
+                          const isDone = dailyWorkoutChecked.includes(i);
+                          const displayName = String(bank?.name || ex.name || 'Ejercicio');
 
-        {/* ── Alimentación ── */}
-        <div className="th2-section-label">
-          <span className="th2-section-title">Alimentación</span>
-          {weeklyPlan && (
-            <span className="th2-section-meta">
-              {isSelectedToday ? `${checkedMeals}/${todayMeals.length} · ` : ''}{selectedDayKcal} kcal
-            </span>
-          )}
+                          function openPopout(e: React.MouseEvent) {
+                            e.stopPropagation();
+                            const fallback: Exercise = {
+                              id: exId,
+                              name: String(ex.name || 'Ejercicio'),
+                              emoji: '💪',
+                              desc: '',
+                              muscleGroup: 'cuerpo-completo',
+                              equipment: ['gym'],
+                              goals: ['hipertrofia'],
+                              type: 'compuesto',
+                              difficulty: 'intermedio',
+                              defaultSets: 3,
+                              defaultReps: '10',
+                              defaultRest: 60,
+                              steps: [],
+                            };
+                            setSelectedExercise({
+                              exercise: bank || fallback,
+                              planData: {
+                                sets: typeof ex.sets === 'number' ? ex.sets : parseInt(String(ex.sets)) || 3,
+                                reps: String(ex.reps || '10'),
+                                rest: typeof ex.rest === 'number' ? ex.rest : parseInt(String(ex.rest)) || 60,
+                                tip_personalizado: (ex.tip_personalizado as string | undefined) || (ex.tip as string | undefined),
+                              },
+                              index: i,
+                            });
+                          }
+                          function handleToggle(e: React.MouseEvent) {
+                            e.stopPropagation();
+                            toggleDailyWorkoutCheck(i);
+                          }
+
+                          return (
+                            <li key={`${exId}-${i}`} className="th3-card-list-item">
+                              <button
+                                type="button"
+                                className={`th3-card-list-name${isDone ? ' done' : ''}`}
+                                onClick={openPopout}
+                              >
+                                {displayName}
+                              </button>
+                              <button
+                                type="button"
+                                className={`th3-card-list-check${isDone ? ' checked' : ''}`}
+                                onClick={handleToggle}
+                                aria-label={isDone ? 'Desmarcar ejercicio' : 'Marcar ejercicio'}
+                              >
+                                {isDone ? '✓' : ''}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </>
+                );
+              })()}
+              <div className="th3-card-foot">
+                <span className="th3-card-foot-text">Personalizada hoy</span>
+                <span className="th3-card-arrow">→</span>
+              </div>
+            </div>
+          </article>
+
+          {/* CARD NUTRICIÓN */}
+          <article
+            className="th3-card th3-card-nutricion"
+            onClick={() => onNav('alimentacion')}
+          >
+            <div className="th3-cover th3-cover-nutricion">
+              <span className="th3-cover-italic">de la tierra</span>
+            </div>
+            <div className="th3-card-body">
+              <p className="th3-card-eyebrow">Nutrición</p>
+              {!weeklyPlan ? (
+                <>
+                  <h2 className="th3-card-title">Genera tu plan</h2>
+                  <p className="th3-card-meta">Tu nutricionista IA lo arma.</p>
+                </>
+              ) : (
+                <>
+                  <h2 className="th3-card-title">Tu plan de hoy</h2>
+                  <p className="th3-card-meta">
+                    {checkedMeals}/{todayMeals.length} · {calcDayKcal(todayMeals)} kcal
+                  </p>
+                  {todayMeals.length > 0 && (
+                    <ul className="th3-card-list">
+                      {todayMeals.slice(0, 6).map((meal, i) => {
+                        const key = mealKey(i);
+                        const done = !!mealChecks[key];
+                        function openDetail(e: React.MouseEvent) {
+                          e.stopPropagation();
+                          setMealDetail(meal);
+                        }
+                        function handleToggle(e: React.MouseEvent) {
+                          e.stopPropagation();
+                          toggleMealCheck(key);
+                        }
+                        return (
+                          <li key={i} className="th3-card-list-item">
+                            <button
+                              type="button"
+                              className={`th3-card-list-name${done ? ' done' : ''}`}
+                              onClick={openDetail}
+                            >
+                              {meal.name}
+                            </button>
+                            <button
+                              type="button"
+                              className={`th3-card-list-check${done ? ' checked' : ''}`}
+                              onClick={handleToggle}
+                              aria-label={done ? 'Desmarcar comida' : 'Marcar comida'}
+                            >
+                              {done ? '✓' : ''}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </>
+              )}
+              <div className="th3-card-foot">
+                <span className="th3-card-foot-text">A tu medida</span>
+                <span className="th3-card-arrow">→</span>
+              </div>
+            </div>
+          </article>
         </div>
 
-        {weeklyPlan && (
-          <div className="th2-day-tabs">
-            {DAY_LABELS.map((lbl, i) => (
-              <button
-                key={i}
-                className={`th2-day-tab${selectedDow === i ? ' active' : ''}${i === todayDow ? ' today' : ''}`}
-                onClick={() => setSelectedDow(i)}
-              >
-                {lbl}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="th3-separator" />
 
-        {weeklyPlan ? (
-          <>
-            {selectedMeals.filter(m => !m.name.startsWith('Snack')).map((meal) => {
-              const origIdx = selectedMeals.indexOf(meal);
-              const key = mealKey(origIdx);
-              const done = isSelectedToday && !!mealChecks[key];
-              return (
-                <div key={origIdx} className={`th2-meal${done ? ' done' : ''}`}>
-                  {meal.img ? (
-                    <img
-                      src={meal.img}
-                      alt=""
-                      className="th2-meal-img"
-                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      onClick={() => setMealDetail(meal)}
-                    />
-                  ) : (
-                    <div className="th2-meal-emoji" onClick={() => setMealDetail(meal)}>
-                      {MEAL_EMOJI[meal.time] ?? '🥗'}
-                    </div>
-                  )}
-                  <div className="th2-meal-body" onClick={() => setMealDetail(meal)}>
-                    <div className="th2-meal-time">{meal.time}</div>
-                    <div className="th2-meal-name">{meal.name}</div>
-                  </div>
-                  <div className="th2-meal-right">
-                    <div className="th2-meal-kcal">
-                      {meal.portions ? calcMealKcal(meal.portions) : ''}
-                    </div>
-                    {isSelectedToday && (
-                      <div
-                        className={`th2-meal-check${done ? ' checked' : ''}`}
-                        onClick={() => toggleMealCheck(key)}
-                      >
-                        {done ? '✓' : ''}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-
-            {selectedMeals.filter(m => m.name.startsWith('Snack')).length > 0 && (
-              <div className="th2-snacks">
-                {selectedMeals.filter(m => m.name.startsWith('Snack')).map((meal) => {
-                  const origIdx = selectedMeals.indexOf(meal);
-                  const key = mealKey(origIdx);
-                  const done = isSelectedToday && !!mealChecks[key];
-                  return (
-                    <div
-                      key={origIdx}
-                      className={`th2-snack${done ? ' done' : ''}`}
-                      onClick={() => isSelectedToday ? toggleMealCheck(key) : setMealDetail(meal)}
-                    >
-                      {isSelectedToday && (
-                        <div className={`th2-snack-check${done ? ' checked' : ''}`}>
-                          {done ? '✓' : ''}
-                        </div>
-                      )}
-                      <span className="th2-snack-name">{meal.time.replace(/^[^\s]+\s/, '')}</span>
-                      <span className="th2-snack-kcal">{meal.portions ? calcMealKcal(meal.portions) : ''}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="th2-cta" onClick={() => onNav('alimentacion')}>
-            <div className="th2-cta-icon">🥗</div>
-            <div className="th2-cta-body">
-              <div className="th2-cta-title">Genera tu plan de nutrición</div>
-              <div className="th2-cta-sub">Tu nutricionista IA lo personaliza para ti</div>
-            </div>
-            <span className="th2-cta-arrow">›</span>
-          </div>
-        )}
-
-        {/* ══════════ ENTRENAMIENTO ══════════ */}
-        {(() => {
-          const workout = dailyWorkout?.date === today ? dailyWorkout.plan as any : null;
-          if (!workout) {
-            return (
-              <div className="th2-cta" onClick={() => onNav('entrenamiento')}>
-                <div className="th2-cta-icon">💪</div>
-                <div className="th2-cta-body">
-                  <div className="th2-cta-title">Genera tu rutina de hoy</div>
-                  <div className="th2-cta-sub">Tu coach la personaliza según cómo te sientes</div>
-                </div>
-                <span className="th2-cta-arrow">›</span>
-              </div>
-            );
-          }
-
-          // Detect yoga plan (has poses instead of exercises)
-          const isYogaPlan = Array.isArray(workout.poses);
-          if (isYogaPlan) {
-            const poseCount = workout.poses.length;
-            const totalMin = Math.round((workout.totalDuration || 0) / 60);
-            return (
-              <section className="thw-section">
-                <div className="thw-header">
-                  <h2 className="thw-heading">Entrenamiento</h2>
-                  <span className="thw-progress">🧘 {poseCount} poses</span>
-                </div>
-                <div className="thw-meta">
-                  <span className="thw-meta-chip"><em>{workout.type || 'Power Vinyasa'}</em></span>
-                  {totalMin > 0 && <span className="thw-meta-chip thw-meta-sub">{totalMin} min</span>}
-                  {workout.intensity && <span className="thw-meta-chip thw-meta-sub">{workout.intensity}</span>}
-                </div>
-                <div className="th2-cta" onClick={() => onNav('entrenamiento')} style={{ marginTop: 0 }}>
-                  <div className="th2-cta-icon">🧘</div>
-                  <div className="th2-cta-body">
-                    <div className="th2-cta-title">Abrir tu flow de yoga</div>
-                    <div className="th2-cta-sub">Power Vinyasa · {poseCount} poses · {totalMin} min</div>
-                  </div>
-                  <span className="th2-cta-arrow">›</span>
-                </div>
-              </section>
-            );
-          }
-
-          const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
-          const totalCount = workout.exercises?.length || 0;
-          const doneCount = dailyWorkoutChecked.length;
-
-          const intensityLabel = workout.intensity || '';
-
-          return (
-            <section className="thw-section">
-              <div className="thw-header">
-                <h2 className="thw-heading">Entrenamiento</h2>
-                <span className="thw-progress">{doneCount}/{totalCount}</span>
-              </div>
-
-              <div className="thw-meta">
-                <span className="thw-meta-chip">
-                  <em>{workout.type}</em>
-                </span>
-                {workout.duration && (
-                  <span className="thw-meta-chip thw-meta-sub">
-                    {workout.duration}
-                  </span>
-                )}
-                {intensityLabel && (
-                  <span className="thw-meta-chip thw-meta-sub">
-                    {intensityLabel}
-                  </span>
-                )}
-              </div>
-
-              {workout.exercises && workout.exercises.length > 0 ? (
-                <div className="thw-list">
-                  {workout.exercises.map((ex: any, i: number) => {
-                    const bank = exerciseMap.get(ex.id);
-                    const videoCount = bank?.videos?.length || 0;
-                    const firstVideoUrl = bank?.videos?.[0]?.url;
-                    const isDone = dailyWorkoutChecked.includes(i);
-                    const displayName = bank?.name || ex.name || 'Ejercicio';
-                    const displayEmoji = bank?.emoji || '💪';
-
-                    function openPopout(e: React.MouseEvent) {
-                      e.stopPropagation();
-                      const fallback: Exercise = {
-                        id: ex.id || `ex-${i}`,
-                        name: ex.name || 'Ejercicio',
-                        emoji: '💪',
-                        desc: '',
-                        muscleGroup: 'cuerpo-completo',
-                        equipment: ['gym'],
-                        goals: ['hipertrofia'],
-                        type: 'compuesto',
-                        difficulty: 'intermedio',
-                        defaultSets: 3,
-                        defaultReps: '10',
-                        defaultRest: 60,
-                        steps: [],
-                      };
-                      setSelectedExercise({
-                        exercise: bank || fallback,
-                        planData: {
-                          sets: typeof ex.sets === 'number' ? ex.sets : parseInt(ex.sets) || 3,
-                          reps: String(ex.reps || '10'),
-                          rest: typeof ex.rest === 'number' ? ex.rest : parseInt(ex.rest) || 60,
-                          tip_personalizado: ex.tip_personalizado || ex.tip,
-                        },
-                        index: i,
-                      });
-                    }
-
-                    function handleToggleCheck(e: React.MouseEvent) {
-                      e.stopPropagation();
-                      toggleDailyWorkoutCheck(i);
-                    }
-
-                    return (
-                      <div
-                        key={`${ex.id || i}-${i}`}
-                        className={`thw-card${isDone ? ' done' : ''}`}
-                        onClick={openPopout}
-                      >
-                        <div className="thw-thumb">
-                          {firstVideoUrl ? (
-                            <video
-                              src={firstVideoUrl}
-                              autoPlay
-                              muted
-                              loop
-                              playsInline
-                              preload="metadata"
-                              className="thw-thumb-video"
-                            />
-                          ) : (
-                            <div className="thw-thumb-fallback">
-                              <div className="thw-thumb-emoji">{displayEmoji}</div>
-                            </div>
-                          )}
-                          {videoCount > 0 && (
-                            <div className="thw-thumb-badge">
-                              ▶ {videoCount}
-                            </div>
-                          )}
-                          {isDone && (
-                            <div className="thw-thumb-done">✓</div>
-                          )}
-                        </div>
-
-                        <div className="thw-card-body">
-                          <div className="thw-card-name">{displayName}</div>
-                          <div className="thw-card-stats">
-                            <span>{ex.sets} × {ex.reps}</span>
-                            <span className="thw-card-dot">·</span>
-                            <span>{ex.rest}s</span>
-                          </div>
-                          {ex.tip_personalizado && (
-                            <div className="thw-card-tip">
-                              {ex.tip_personalizado}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="thw-card-right">
-                          <button
-                            className={`thw-card-check${isDone ? ' checked' : ''}`}
-                            onClick={handleToggleCheck}
-                            aria-label={isDone ? 'Desmarcar' : 'Marcar como hecho'}
-                          >
-                            {isDone ? '✓' : ''}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="thw-empty">
-                  <p className="thw-empty-text">Hoy toca descansar.</p>
-                </div>
-              )}
-            </section>
-          );
-        })()}
-
-        {/* Tu espacio HSM */}
+        {/* ── Tu Espacio (discreto / o review si ya respondió las 5) ── */}
         {allAnswered ? (
-          <div className="th2-espacio-done">
-            <div className="th2-espacio-done-label">Tu observación de hoy</div>
-            <p className="th2-espacio-done-text">
+          <div className="th3-review">
+            <div className="th3-review-label">Tu observación de hoy</div>
+            <p className="th3-review-text">
               {dailyReview || 'Las 5 de hoy, listas. Tu coach ya analizó tus respuestas.'}
             </p>
-            <button className="th2-espacio-done-btn" onClick={() => setShowEspacioFlow(true)}>
+            <button className="th3-review-btn" onClick={() => setShowEspacioFlow(true)}>
               Ver review completo
             </button>
           </div>
         ) : (
-          <div className="th2-espacio" onClick={() => setShowEspacioFlow(true)}>
-            <div className="th2-espacio-top">
-              <div className="th2-espacio-badge">
-                <span className="th2-espacio-badge-dot" />
-                <span className="th2-espacio-badge-text">Tu Espacio</span>
-              </div>
-              <span className="th2-espacio-count">{todayHSMAnswered}/{todayDimensions.length}</span>
+          <button
+            type="button"
+            className="th3-espacio"
+            onClick={() => setShowEspacioFlow(true)}
+          >
+            <div className="th3-espacio-body">
+              <p className="th3-espacio-eyebrow">Tu espacio</p>
+              <p className="th3-espacio-text">
+                {todayHSMAnswered === 0
+                  ? 'Reflexiona 5 minutos para que tu coach te conozca mejor.'
+                  : `Ya escribiste ${todayHSMAnswered}. Faltan ${todayDimensions.length - todayHSMAnswered}.`}
+              </p>
             </div>
-            <h2 className="th2-espacio-title">
-              {todayHSMAnswered === 0
-                ? <>Hoy toca abrir <em>tu espacio</em>.</>
-                : <>Ya escribiste <em>{todayHSMAnswered}</em>. Faltan {todayDimensions.length - todayHSMAnswered}.</>
-              }
-            </h2>
-            <p className="th2-espacio-sub">
-              5 preguntas de reflexión. Tu coach te devuelve un insight citando tus palabras.
-            </p>
-            <div className="th2-espacio-dots">
-              {Array.from({ length: todayDimensions.length }).map((_, i) => (
-                <div key={i} className={`th2-espacio-dot${i < todayHSMAnswered ? ' done' : ''}`} />
-              ))}
-            </div>
-            <button className="th2-espacio-btn">
-              {todayHSMAnswered === 0 ? 'Empezar →' : 'Continuar →'}
-            </button>
-          </div>
+            <span className="th3-espacio-arrow">→</span>
+          </button>
         )}
 
-        {/* Day 5 review */}
         {miniReview && (
-          <div className="th2-review th2-review-mini">
-            <div className="th2-review-label">Tu coach te conoce</div>
-            <p className="th2-review-text">{miniReview}</p>
+          <div className="th3-review th3-review-mini">
+            <div className="th3-review-label">Tu coach te conoce</div>
+            <p className="th3-review-text plain">{miniReview}</p>
           </div>
         )}
 
-        {/* Weekly review */}
         {weeklyHSMReview && (
-          <div className="th2-review">
-            <div className="th2-review-label">Resumen semanal HSM</div>
-            <p className="th2-review-text">{weeklyHSMReview}</p>
+          <div className="th3-review">
+            <div className="th3-review-label">Resumen semanal HSM</div>
+            <p className="th3-review-text">{weeklyHSMReview}</p>
           </div>
         )}
 
         {showEspacioFlow && (
           <TuEspacioFlow onClose={() => setShowEspacioFlow(false)} />
         )}
+      </section>
 
-      </div>
-
-      {/* ── Meal popout (sin cambios, usa clases th- originales) ── */}
+      {/* ── Meal popout (preserved, classes are global in index.css) ── */}
       {mealDetail && (
         <div className="th-popout-backdrop" onClick={() => setMealDetail(null)}>
           <div className="th-popout" onClick={e => e.stopPropagation()}>
@@ -893,7 +762,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
         </div>
       )}
 
-      {/* ── Exercise detail popout (nuevo) ── */}
+      {/* ── Exercise detail popout (preserved) ── */}
       {selectedExercise && (
         <ExerciseDetailPopout
           exercise={selectedExercise.exercise}
