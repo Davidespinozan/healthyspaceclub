@@ -590,7 +590,10 @@ export default function DailyTrainer() {
       else if (priorExercise === 'light' || discomfort === 'mild') intensity = 'media';
 
       if (candidates.length < 3) {
-        throw new Error(`No hay suficientes ejercicios de ${modalityLabel} para esta combinación. Prueba cambiar equipo.`);
+        const msg = selectedModality === 'auto'
+          ? 'Tu coach no encontró suficientes ejercicios para esta combinación. Prueba cambiar el equipo o la duración.'
+          : `No hay suficientes ejercicios de ${modalityLabel.toLowerCase()} para esta combinación. Prueba cambiar el equipo o la duración.`;
+        throw new Error(msg);
       }
 
       const targetCount = Math.min(exerciseCountForDuration(selectedTime), candidates.length);
