@@ -176,14 +176,20 @@
   overflow: hidden;
 }
 .th3-cover-rutina {
-  background:
-    radial-gradient(circle at 80% 20%, rgba(191,160,101,0.22) 0%, transparent 55%),
-    linear-gradient(155deg, #2E4A42 0%, #153330 60%, #0a1f1c 100%);
+  background-image:
+    linear-gradient(180deg, transparent 45%, rgba(0,0,0,0.55) 100%),
+    url('https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/2.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .th3-cover-nutricion {
-  background:
-    radial-gradient(circle at 80% 20%, rgba(246,242,234,0.28) 0%, transparent 55%),
-    linear-gradient(155deg, #D4976B 0%, #BFA065 60%, #A8864E 100%);
+  background-image:
+    linear-gradient(180deg, transparent 45%, rgba(0,0,0,0.5) 100%),
+    url('https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/1.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .th3-cover-italic {
   position: absolute;
@@ -195,9 +201,9 @@
   font-size: 11px;
   line-height: 1;
   letter-spacing: 0.02em;
+  color: var(--cream);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.45);
 }
-.th3-cover-rutina .th3-cover-italic { color: rgba(191,160,101,0.9); }
-.th3-cover-nutricion .th3-cover-italic { color: rgba(21,51,48,0.7); }
 
 /* Card body */
 .th3-card-body {
