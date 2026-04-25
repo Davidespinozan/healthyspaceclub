@@ -1,0 +1,166 @@
+import Stories from './Stories';
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAppStore } from '../store';
+import './tab-club.css';
+
+interface ClubFeedPost {
+  id: string;
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  streak: number;
+  workout_summary: string | null;
+  photo_url: string | null;
+  text: string | null;
+  fire_count: number;
+  created_at: string;
+}
+
+export default function TabClub() {
+  const { obData } = useAppStore();
+  const userId = obData?.name ? String(obData.name).toLowerCase().replace(/\s+/g, '_') : 'anon';
+
+  const [posts, setPosts] = useState<ClubFeedPost[]>([]);
+  const [activeToday, setActiveToday] = useState(0);
+  const [firedIds, setFiredIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetchFeed();
+    fetchActiveCount();
+    fetchUserFires();
+  }, []);
+
+  async function fetchFeed() {
+    try {
+      const { data } = await supabase
+        .from('club_posts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (data) setPosts(data as ClubFeedPost[]);
+    } catch (e) {
+      console.warn('[TabClub] fetchFeed failed:', e);
+    }
+  }
+
+  async function fetchActiveCount() {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { count } = await supabase
+        .from('club_posts')
+        .select('user_id', { count: 'exact', head: true })
+        .gte('created_at', today + 'T00:00:00');
+      if (count != null) setActiveToday(count);
+    } catch (e) {
+      console.warn('[TabClub] fetchActiveCount failed:', e);
+    }
+  }
+
+  async function fetchUserFires() {
+    try {
+      const { data } = await supabase
+        .from('club_fires')
+        .select('post_id')
+        .eq('user_id', userId);
+      if (data) setFiredIds(new Set(data.map((d: { post_id: string }) => d.post_id)));
+    } catch (e) {
+      console.warn('[TabClub] fetchUserFires failed:', e);
+    }
+  }
+
+  async function toggleFire(postId: string) {
+    const isFired = firedIds.has(postId);
+    try {
+      if (isFired) {
+        await supabase.from('club_fires').delete().eq('post_id', postId).eq('user_id', userId);
+        const newSet = new Set(firedIds); newSet.delete(postId); setFiredIds(newSet);
+        setPosts(p => p.map(post => post.id === postId ? { ...post, fire_count: Math.max(0, post.fire_count - 1) } : post));
+      } else {
+        await supabase.from('club_fires').insert({ post_id: postId, user_id: userId });
+        const newSet = new Set(firedIds); newSet.add(postId); setFiredIds(newSet);
+        setPosts(p => p.map(post => post.id === postId ? { ...post, fire_count: post.fire_count + 1 } : post));
+      }
+    } catch (e) {
+      console.warn('[TabClub] toggleFire failed:', e);
+    }
+  }
+
+  function timeAgo(dateStr: string): string {
+    const now = Date.now();
+    const then = new Date(dateStr).getTime();
+    const diffMin = Math.floor((now - then) / 60000);
+    if (diffMin < 1) return 'ahora';
+    if (diffMin < 60) return `hace ${diffMin} min`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `hace ${diffH}h`;
+    const diffD = Math.floor(diffH / 24);
+    return `hace ${diffD}d`;
+  }
+
+  return (
+    <div className="tc-wrap">
+      <header className="tc-header">
+        <h1 className="tc-title">El Club</h1>
+        <span className="tc-meta">{activeToday} {activeToday === 1 ? 'activo' : 'activos'} hoy</span>
+      </header>
+
+      <div className="tc-stories-wrap">
+        <Stories />
+      </div>
+
+      <section className="tc-feed">
+        {posts.length === 0 && (
+          <div className="tc-empty">
+            <p className="tc-empty-text">Aún no hay publicaciones del club.</p>
+            <p className="tc-empty-sub">Sube tu primera story para empezar.</p>
+          </div>
+        )}
+        {posts.map(post => (
+          <article key={post.id} className="tc-post">
+            <header className="tc-post-head">
+              <div className="tc-post-author">
+                <div className="tc-post-avatar">
+                  {post.avatar_url
+                    ? <img src={post.avatar_url} alt="" />
+                    : <span>{(post.username || '?')[0].toUpperCase()}</span>
+                  }
+                </div>
+                <div className="tc-post-meta">
+                  <div className="tc-post-name">
+                    <span className="tc-post-username">{post.username || 'Anónimo'}</span>
+                    {post.streak > 0 && <span className="tc-post-streak"> · {post.streak} días</span>}
+                  </div>
+                  <div className="tc-post-time">{timeAgo(post.created_at)}</div>
+                </div>
+              </div>
+              {post.workout_summary && (
+                <span className="tc-post-tag">{post.workout_summary}</span>
+              )}
+            </header>
+
+            {post.photo_url && (
+              <div className="tc-post-media">
+                <img src={post.photo_url} alt="" loading="lazy" />
+              </div>
+            )}
+
+            {post.text && (
+              <p className="tc-post-text">{post.text}</p>
+            )}
+
+            <footer className="tc-post-actions">
+              <button
+                className={`tc-post-fire${firedIds.has(post.id) ? ' active' : ''}`}
+                onClick={() => toggleFire(post.id)}
+              >
+                <span className="tc-post-fire-icon">🔥</span>
+                <span className="tc-post-fire-count">{post.fire_count}</span>
+              </button>
+            </footer>
+          </article>
+        ))}
+      </section>
+    </div>
+  );
+}

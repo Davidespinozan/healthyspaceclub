@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Home, User, MessageCircle } from 'lucide-react';
+import { Home, User, MessageCircle, Users } from 'lucide-react';
 import { useAppStore } from '../store';
 import type { DashPage } from '../types';
 
 import TabHoy from '../components/TabHoy';
 import TabCoach from '../components/TabCoach';
 // TabMetodo removed — backed up in _hsm_backup/
-// TabClub removed — stories now integrated into TabHoy
+import TabClub from '../components/TabClub';
 import TabTu from '../components/TabTu';
 import MiHuella from '../components/MiHuella';
 
@@ -17,6 +17,7 @@ import { Leaf, Dumbbell } from 'lucide-react';
 
 const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
   { id: 'hoy',    icon: Home,   label: 'Hoy' },
+  { id: 'club',   icon: Users,  label: 'Club' },
   { id: 'tu',     icon: User,   label: 'Tú' },
 ];
 
@@ -31,14 +32,14 @@ export default function DashboardScreen() {
     window.scrollTo(0, 0);
   }
 
-  const isSubPage = !['hoy', 'tu'].includes(dashPage);
+  const isSubPage = !['hoy', 'club', 'tu'].includes(dashPage);
 
   return (
     <div className="app-shell">
       <main className="app-main">
         {/* Main tabs */}
         {dashPage === 'hoy' && <TabHoy onNav={(p) => navTo(p as DashPage)} />}
-        {/* Club removed — stories integrated into TabHoy */}
+        {dashPage === 'club' && <TabClub />}
         {/* Método tab removed — HSM questions remain in Tu Espacio */}
         {dashPage === 'tu' && <TabTu onNav={navTo} />}
 

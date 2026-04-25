@@ -5,7 +5,6 @@ import { scalePlan } from '../utils/scalePlan';
 import { calcDayKcal, calcMealKcal } from '../utils/kcalCalc';
 import WeeklyReview from './WeeklyReview';
 import NightCheckIn from './NightCheckIn';
-import Stories from './Stories';
 import TuEspacioFlow from './TuEspacioFlow';
 import { exercises as exerciseBank } from '../data/exercises';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
@@ -491,9 +490,6 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
           </div>
         </div>
       </header>
-
-      {/* Stories — preserved as-is, will be moved to Club later */}
-      <Stories />
 
       {/* ── BODY ── */}
       <section className="th3-body">
