@@ -22,6 +22,8 @@ export async function compressImageSquare(
     return file;
   }
 
+  const originalKB = Math.round(file.size / 1024);
+
   // Cargar la imagen
   const img = await loadImage(file);
 
@@ -59,6 +61,10 @@ export async function compressImageSquare(
       quality
     );
   });
+
+  const compressedKB = Math.round(blob.size / 1024);
+  const reduction = Math.round(100 - (compressedKB / originalKB) * 100);
+  console.log(`[compressImageSquare] ${file.name}: ${originalKB}KB → ${compressedKB}KB (${reduction}% reduction)`);
 
   return blob;
 }

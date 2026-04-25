@@ -2,7 +2,7 @@ import { useMemo, useEffect, useState } from 'react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
-import { validateMediaFile } from '../utils/mediaValidation';
+import { uploadAvatar } from '../utils/uploadAvatar';
 import CoachProfileSheet from './CoachProfileSheet';
 import SettingsSheet from './SettingsSheet';
 import './tab-tu-v3.css';
@@ -78,17 +78,22 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   async function handleAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const check = validateMediaFile(file);
-    if (!check.valid) { alert(check.error); return; }
-    const ext = file.name.split('.').pop();
-    const path = `${userId}.${ext}`;
+
+    const result = await uploadAvatar(file, userId);
+    if ('error' in result) {
+      alert(result.error);
+      return;
+    }
+
     try {
-      await supabase.storage.from('avatar').upload(path, file, { upsert: true });
-      const { data } = supabase.storage.from('avatar').getPublicUrl(path);
-      const url = data.publicUrl + '?t=' + Date.now();
-      await supabase.from('user_profiles').update({ avatar_url: url }).eq('user_id', userId);
-      setProfile(prev => ({ ...prev, avatar_url: url }));
-    } catch (e) { console.warn('[TabTu] mutation failed:', e); }
+      await supabase
+        .from('user_profiles')
+        .update({ avatar_url: result.url })
+        .eq('user_id', userId);
+      setProfile(prev => ({ ...prev, avatar_url: result.url }));
+    } catch (e) {
+      console.warn('[TabTu] mutation failed:', e);
+    }
   }
 
   function handleShare() {
