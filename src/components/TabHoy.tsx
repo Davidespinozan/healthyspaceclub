@@ -11,7 +11,6 @@ import ExerciseDetailPopout from './ExerciseDetailPopout';
 import type { Exercise } from '../types';
 import { Logo } from './Logo';
 import './tab-hoy-v3.css';
-import './tab-hoy-workout-section.css';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
