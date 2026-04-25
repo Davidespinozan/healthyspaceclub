@@ -94,6 +94,7 @@ export default function DashboardScreen() {
       <nav className="bnav">
         <div className="bnav-brand">
           <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png" alt="HSC" className="bnav-logo" />
+          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" className="bnav-wordmark" />
         </div>
         {TABS.map(tab => {
           const Icon = tab.icon;

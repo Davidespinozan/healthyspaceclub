@@ -41,7 +41,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 0;
 }
 .th3-avatar {
   position: absolute;
@@ -510,8 +510,7 @@
   .th3-hero {
     padding: 36px 40px;
   }
-  .th3-hero-logo { height: 28px !important; }
-  .th3-hero-icon { width: 22px !important; height: 22px !important; }
+  .th3-hero-brand { display: none; }
   .th3-headline {
     font-size: 44px;
   }

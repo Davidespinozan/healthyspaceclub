@@ -5883,11 +5883,13 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   }
   .bnav-item.active { background: rgba(246,242,234,.08); color: #F6F2EA; }
   .bnav-brand {
-    display: flex; align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0;
     padding: 0 20px 20px; margin-bottom: 8px;
     border-bottom: 0.5px solid rgba(246,242,234,.1);
   }
   .bnav-logo { height: 48px; width: 48px; border-radius: 11px; }
+  .bnav-wordmark { height: 36px; width: auto; display: block; }
   .bnav-label { font-size: .85rem; font-weight: 600; color: inherit; }
   .bnav-dot {
     position: absolute; left: 0; top: 50%; transform: translateY(-50%);
