@@ -43,6 +43,9 @@
   align-items: center;
   gap: 0;
 }
+.th3-hero-brand .th3-hero-logo {
+  margin-top: -10px;
+}
 .th3-avatar {
   position: absolute;
   right: 0;
