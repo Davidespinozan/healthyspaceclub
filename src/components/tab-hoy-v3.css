@@ -499,6 +499,7 @@
   .th3-hero {
     padding: 36px 40px;
   }
+  .th3-hero-logo { height: 28px !important; }
   .th3-headline {
     font-size: 44px;
   }
