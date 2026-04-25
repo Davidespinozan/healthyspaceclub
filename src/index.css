@@ -5889,7 +5889,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
     border-bottom: 0.5px solid rgba(246,242,234,.1);
   }
   .bnav-logo { height: 48px; width: 48px; border-radius: 11px; }
-  .bnav-wordmark { height: 36px; width: auto; display: block; }
+  .bnav-wordmark { height: 72px; width: auto; display: block; margin-top: -10px; }
   .bnav-label { font-size: .85rem; font-weight: 600; color: inherit; }
   .bnav-dot {
     position: absolute; left: 0; top: 50%; transform: translateY(-50%);
