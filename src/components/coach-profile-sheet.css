@@ -8,7 +8,7 @@
 .cps-overlay {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 200;
   background: rgba(21, 51, 48, 0.5);
   display: flex;
   align-items: flex-end;
@@ -25,10 +25,10 @@
   position: relative;
   background: var(--cream);
   border-radius: 18px 18px 0 0;
-  padding: 16px 20px 24px;
+  padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px));
   width: 100%;
   max-width: 100%;
-  max-height: 88vh;
+  max-height: 80vh;
   overflow-y: auto;
   animation: cpsSlideUp 0.28s cubic-bezier(0.34, 1.2, 0.64, 1);
   -webkit-overflow-scrolling: touch;
@@ -273,7 +273,7 @@
   .cps-sheet {
     max-width: 560px;
     border-radius: 20px;
-    max-height: 85vh;
+    max-height: 80vh;
     padding: 32px 40px 36px;
   }
   .cps-handle {
