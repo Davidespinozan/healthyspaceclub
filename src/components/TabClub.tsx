@@ -99,65 +99,65 @@ export default function TabClub() {
   }
 
   return (
-    <div className="tc-wrap">
-      <div className="tc-header">
-        <h1 className="tc-title">El Club</h1>
-        <span className="tc-meta">{activeToday} {activeToday === 1 ? 'activo' : 'activos'} hoy</span>
+    <div className="clb-wrap">
+      <div className="clb-header">
+        <h1 className="clb-title">El Club</h1>
+        <span className="clb-meta">{activeToday} {activeToday === 1 ? 'activo' : 'activos'} hoy</span>
       </div>
 
-      <div className="tc-stories-wrap">
+      <div className="clb-stories-wrap">
         <Stories />
       </div>
 
-      <section className="tc-feed">
+      <section className="clb-feed">
         {posts.length === 0 && (
-          <div className="tc-empty">
-            <p className="tc-empty-text">Aún no hay publicaciones del club.</p>
-            <p className="tc-empty-sub">Sube tu primera story para empezar.</p>
+          <div className="clb-empty">
+            <p className="clb-empty-text">Aún no hay publicaciones del club.</p>
+            <p className="clb-empty-sub">Sube tu primera story para empezar.</p>
           </div>
         )}
         {posts.map(post => (
-          <article key={post.id} className="tc-post">
-            <header className="tc-post-head">
-              <div className="tc-post-author">
-                <div className="tc-post-avatar">
+          <article key={post.id} className="clb-post">
+            <div className="clb-post-head">
+              <div className="clb-post-author">
+                <div className="clb-post-avatar">
                   {post.avatar_url
                     ? <img src={post.avatar_url} alt="" />
                     : <span>{(post.username || '?')[0].toUpperCase()}</span>
                   }
                 </div>
-                <div className="tc-post-meta">
-                  <div className="tc-post-name">
-                    <span className="tc-post-username">{post.username || 'Anónimo'}</span>
-                    {post.streak > 0 && <span className="tc-post-streak"> · {post.streak} días</span>}
+                <div className="clb-post-meta">
+                  <div className="clb-post-name">
+                    <span className="clb-post-username">{post.username || 'Anónimo'}</span>
+                    {post.streak > 0 && <span className="clb-post-streak"> · {post.streak} días</span>}
                   </div>
-                  <div className="tc-post-time">{timeAgo(post.created_at)}</div>
+                  <div className="clb-post-time">{timeAgo(post.created_at)}</div>
                 </div>
               </div>
               {post.workout_summary && (
-                <span className="tc-post-tag">{post.workout_summary}</span>
+                <span className="clb-post-tag">{post.workout_summary}</span>
               )}
-            </header>
+            </div>
 
             {post.photo_url && (
-              <div className="tc-post-media">
+              <div className="clb-post-media">
                 <img src={post.photo_url} alt="" loading="lazy" />
               </div>
             )}
 
             {post.text && (
-              <p className="tc-post-text">{post.text}</p>
+              <p className="clb-post-text">{post.text}</p>
             )}
 
-            <footer className="tc-post-actions">
+            <div className="clb-post-actions">
               <button
-                className={`tc-post-fire${firedIds.has(post.id) ? ' active' : ''}`}
+                className={`clb-post-fire${firedIds.has(post.id) ? ' active' : ''}`}
                 onClick={() => toggleFire(post.id)}
               >
-                <span className="tc-post-fire-icon">🔥</span>
-                <span className="tc-post-fire-count">{post.fire_count}</span>
+                <span className="clb-post-fire-icon">🔥</span>
+                <span className="clb-post-fire-count">{post.fire_count}</span>
               </button>
-            </footer>
+            </div>
           </article>
         ))}
       </section>
