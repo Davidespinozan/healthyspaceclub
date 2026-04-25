@@ -19,6 +19,7 @@
   color: var(--forest);
   letter-spacing: -0.01em;
   margin: 0;
+  text-transform: none;
 }
 
 .clb-meta {
@@ -133,12 +134,13 @@
 .clb-post-media {
   margin: 0 -18px 12px;
   background: var(--warm);
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
 }
 .clb-post-media img {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
-  max-height: 480px;
   object-fit: cover;
 }
 
@@ -225,5 +227,6 @@
     margin: 0 0 14px;
     border-radius: 12px;
     overflow: hidden;
+    aspect-ratio: 1 / 1;
   }
 }

@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import PublicProfile from './PublicProfile';
 import { validateMediaFile } from '../utils/mediaValidation';
+import { compressImageSquare } from '../utils/imageCompress';
 
 interface StoryPost {
   id: string;
@@ -92,9 +93,13 @@ export default function Stories() {
     try {
       let photoUrl = '';
       if (shareMedia) {
-        const ext = shareMedia.name.split('.').pop() || 'jpg';
+        const isImage = shareMedia.type.startsWith('image/');
+        const compressed = isImage ? await compressImageSquare(shareMedia) : shareMedia;
+        const ext = isImage ? 'jpg' : (shareMedia.name.split('.').pop() || 'bin');
         const path = `${userId}_${Date.now()}.${ext}`;
-        await supabase.storage.from('club').upload(path, shareMedia);
+        await supabase.storage.from('club').upload(path, compressed, {
+          contentType: isImage ? 'image/jpeg' : shareMedia.type,
+        });
         const { data } = supabase.storage.from('club').getPublicUrl(path);
         photoUrl = data.publicUrl;
       }
