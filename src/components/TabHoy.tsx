@@ -464,7 +464,10 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
       {/* ── HERO editorial ── */}
       <header className="th3-hero">
         <div className="th3-hero-top">
-          <Logo variant="wordmark" size={56} className="th3-hero-logo" />
+          <div className="th3-hero-brand">
+            <Logo variant="icon" size={44} className="th3-hero-icon" />
+            <Logo variant="wordmark" size={67} className="th3-hero-logo" />
+          </div>
           {firstName && <div className="th3-avatar">{firstName.charAt(0).toUpperCase()}</div>}
         </div>
 
