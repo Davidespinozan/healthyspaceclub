@@ -1,0 +1,456 @@
+/* ═════════════════════════════════════════════════════════════
+   TabTu v3 — Editorial social profile
+   Prefijo: .tt3-* (no colisiona con .tu2-* viejo)
+   Paleta: --forest, --amber, --terra, --cream, --warm, --sand, --txt2
+   Fonts: Montserrat (default global) + Georgia serif (titulares editoriales)
+   ═════════════════════════════════════════════════════════════ */
+
+.tt3-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 0 calc(40px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+  min-height: 100dvh;
+}
+
+/* ═══ A. Topbar ═══ */
+.tt3-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 0.5px solid rgba(21, 51, 48, 0.08);
+}
+.tt3-topbar-name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--forest);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tt3-topbar-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--forest);
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+/* ═══ B. Header (avatar + name + bio + stats) ═══ */
+.tt3-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 18px;
+}
+.tt3-avatar {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--amber) 0%, var(--terra) 100%);
+  color: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 30px;
+  font-weight: 400;
+  font-style: italic;
+  flex-shrink: 0;
+  cursor: pointer;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.tt3-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.tt3-header-body {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4px;
+}
+.tt3-name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--forest);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-transform: none;
+}
+.tt3-bio {
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--forest);
+  opacity: 0.6;
+  line-height: 1.4;
+  margin: 4px 0 0;
+}
+.tt3-stats {
+  display: flex;
+  gap: 12px;
+  padding-top: 8px;
+  flex-wrap: wrap;
+}
+.tt3-stat {
+  font-size: 12px;
+  color: var(--forest);
+  white-space: nowrap;
+}
+.tt3-stat-num {
+  font-weight: 600;
+  color: var(--forest);
+}
+.tt3-stat-label {
+  color: var(--forest);
+  opacity: 0.6;
+  margin-left: 4px;
+}
+
+/* ═══ C. Botones de perfil ═══ */
+.tt3-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 18px 22px;
+}
+.tt3-btn-primary,
+.tt3-btn-outline {
+  flex: 1;
+  padding: 11px;
+  border-radius: 10px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+}
+.tt3-btn-primary {
+  background: var(--forest);
+  color: var(--cream);
+  border: 1px solid var(--forest);
+}
+.tt3-btn-primary:hover,
+.tt3-btn-primary:active {
+  background: #0f2624;
+}
+.tt3-btn-outline {
+  background: transparent;
+  color: var(--forest);
+  border: 1px solid var(--forest);
+}
+.tt3-btn-outline:hover,
+.tt3-btn-outline:active {
+  background: rgba(21, 51, 48, 0.04);
+}
+
+/* ═══ D. Coach card (chica) ═══ */
+.tt3-coach-card {
+  position: relative;
+  background: white;
+  border: 0.5px solid var(--sand);
+  border-radius: 14px;
+  padding: 13px 36px 13px 14px;
+  margin: 0 18px 22px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.tt3-coach-card:hover,
+.tt3-coach-card:active {
+  border-color: var(--amber);
+}
+.tt3-coach-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0 0 5px;
+}
+.tt3-coach-eyebrow-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+  flex-shrink: 0;
+}
+.tt3-coach-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--forest);
+  line-height: 1.5;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tt3-coach-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--forest);
+  opacity: 0.4;
+  line-height: 1;
+}
+
+/* ═══ E. Logros ═══ */
+.tt3-milestones-section {
+  margin: 0 0 22px;
+}
+.tt3-milestones-eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--forest);
+  opacity: 0.55;
+  padding: 0 18px 12px;
+  margin: 0;
+}
+.tt3-milestones {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 0 18px 18px;
+  scrollbar-width: none;
+}
+.tt3-milestones::-webkit-scrollbar {
+  display: none;
+}
+.tt3-milestone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex-shrink: 0;
+}
+.tt3-milestone-circle {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  background: transparent;
+  border: 1px dashed rgba(21, 51, 48, 0.5);
+}
+.tt3-milestone.reached .tt3-milestone-circle {
+  background: var(--amber);
+  border: none;
+}
+.tt3-milestone-num {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--forest);
+  opacity: 0.4;
+  line-height: 1;
+}
+.tt3-milestone.reached .tt3-milestone-num {
+  font-weight: 700;
+  opacity: 1;
+}
+.tt3-milestone-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--forest);
+}
+/* Variant: 365 / 1 año */
+.tt3-milestone--year .tt3-milestone-circle {
+  border-color: var(--amber);
+}
+.tt3-milestone--year .tt3-milestone-num {
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* ═══ F. Tabs ═══ */
+.tt3-tabs {
+  display: flex;
+  border-top: 0.5px solid rgba(21, 51, 48, 0.15);
+  margin: 0 0 4px;
+}
+.tt3-tab {
+  flex: 1;
+  text-align: center;
+  padding: 14px 4px;
+  background: transparent;
+  border: none;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--forest);
+  opacity: 0.4;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+.tt3-tab.active {
+  border-top: 1.5px solid var(--forest);
+  margin-top: -0.5px;
+  opacity: 1;
+}
+.tt3-tab.disabled {
+  cursor: not-allowed;
+}
+
+/* ═══ G. Grid 3x3 ═══ */
+.tt3-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+.tt3-grid-item {
+  aspect-ratio: 1 / 1;
+  background: var(--warm);
+  overflow: hidden;
+}
+.tt3-grid-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.tt3-grid-empty {
+  padding: 60px 24px;
+  text-align: center;
+}
+.tt3-grid-empty-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 16px;
+  color: var(--forest);
+  opacity: 0.7;
+  margin: 0;
+  line-height: 1.4;
+}
+.tt3-grid-empty-sub {
+  font-size: 12px;
+  color: var(--forest);
+  opacity: 0.5;
+  margin: 6px 0 0;
+}
+
+/* ═══ Edit form (inline en .tt3-header-body) ═══ */
+.tt3-edit-input {
+  display: block;
+  width: 100%;
+  background: white;
+  border: 1px solid var(--sand);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--forest);
+  margin-bottom: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.tt3-edit-input:focus {
+  outline: none;
+  border-color: var(--amber);
+}
+.tt3-edit-input::placeholder {
+  color: rgba(21, 51, 48, 0.35);
+  font-weight: 400;
+}
+.tt3-edit-input--bio {
+  font-size: 12.5px;
+  font-weight: 400;
+}
+.tt3-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.tt3-edit-save,
+.tt3-edit-cancel {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 50px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tt3-edit-save {
+  padding: 8px 20px;
+  background: var(--forest);
+  color: var(--cream);
+  border: none;
+}
+.tt3-edit-save:disabled {
+  opacity: 0.5;
+}
+.tt3-edit-cancel {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--sand);
+  color: var(--txt2);
+}
+
+/* ═══ Responsive desktop ═══ */
+@media (min-width: 768px) {
+  .tt3-wrap {
+    padding: 0 40px calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+  .tt3-topbar {
+    padding: 18px 0;
+  }
+  .tt3-header {
+    padding: 28px 0;
+  }
+  .tt3-avatar {
+    width: 110px;
+    height: 110px;
+    font-size: 42px;
+  }
+  .tt3-name {
+    font-size: 30px;
+  }
+  .tt3-actions {
+    padding: 0 0 28px;
+  }
+  .tt3-coach-card {
+    margin: 0 0 28px;
+  }
+  .tt3-milestones-eyebrow {
+    padding: 0 0 14px;
+  }
+  .tt3-milestones {
+    padding: 0 0 22px;
+  }
+  .tt3-grid {
+    gap: 4px;
+  }
+}

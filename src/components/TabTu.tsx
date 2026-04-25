@@ -3,30 +3,13 @@ import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
 import { validateMediaFile } from '../utils/mediaValidation';
-import './tab-tu-v2.css';
+import './tab-tu-v3.css';
 
-const RADAR_DIMS = ['Identidad','Vocación','Propósito','Metas','Disciplina','Cuerpo','Entorno y Relaciones','Control Emocional','Resiliencia','Evolución'];
-const DIM_EMOJI: Record<string, string> = {
-  'Identidad': '🧠',
-  'Vocación': '✨',
-  'Propósito': '🎯',
-  'Metas': '📍',
-  'Disciplina': '⚡',
-  'Cuerpo': '💪',
-  'Entorno y Relaciones': '🌱',
-  'Control Emocional': '🧘',
-  'Resiliencia': '🔥',
-  'Evolución': '🚀',
-};
-const DIM_SHORT: Record<string, string> = {
-  'Entorno y Relaciones': 'Entorno',
-  'Control Emocional': 'Emocional',
-};
+const MILESTONE_STEPS = [3, 7, 14, 30, 90, 365];
 
 export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
-    userName, setUserName, obData, tdee, planGoal, streakCount, startDate,
-    foodLog, workoutLog, dailyHSMResponses, logout,
+    userName, setUserName, obData, streakCount,
     hsmProfile,
   } = useAppStore();
 
@@ -35,6 +18,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
 
   const [profile, setProfile] = useState({ display_name: '', bio: '', avatar_url: '' });
   const [postCount, setPostCount] = useState(0);
+  const [userPosts, setUserPosts] = useState<{ id: string; photo_url: string }[]>([]);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
@@ -52,6 +36,18 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         const { count } = await supabase.from('club_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId);
         if (count != null) setPostCount(count);
       } catch (e) { console.warn('[TabTu] query failed:', e); }
+    })();
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('club_posts')
+          .select('id, photo_url')
+          .eq('user_id', userId)
+          .not('photo_url', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(9);
+        if (data) setUserPosts(data as { id: string; photo_url: string }[]);
+      } catch (e) { console.warn('[TabTu] fetchUserPosts failed:', e); }
     })();
   }, [userId]);
 
@@ -91,39 +87,17 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
     } catch (e) { console.warn('[TabTu] mutation failed:', e); }
   }
 
-  // Radar / dimensiones (lógica preservada)
-  const radarData = useMemo(() => {
-    const cutoff = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
-    const recent = dailyHSMResponses.filter(r => r.date >= cutoff);
-    return RADAR_DIMS.map(dim => {
-      const count = recent.filter(r => r.dimension === dim).length;
-      return { label: dim, short: DIM_SHORT[dim] || dim, emoji: DIM_EMOJI[dim] || '•', count, value: Math.min(count / 12, 1) };
-    }).sort((a, b) => b.count - a.count);
-  }, [dailyHSMResponses]);
-
-  const today = new Date().toISOString().split('T')[0];
-  const todayKcal = Math.round(foodLog.filter(e => e.date === today).reduce((s, e) => s + e.kcal, 0));
-
-  // Historial de reviews — últimos 3 días con respuestas HSM
-  const recentReviews = useMemo(() => {
-    const byDate: Record<string, { dimension: string; response: string }[]> = {};
-    dailyHSMResponses.forEach(r => {
-      if (!byDate[r.date]) byDate[r.date] = [];
-      byDate[r.date].push({ dimension: r.dimension, response: r.response });
-    });
-    return Object.entries(byDate)
-      .sort(([a], [b]) => b.localeCompare(a))
-      .slice(0, 3)
-      .map(([date, responses]) => ({ date, responses }));
-  }, [dailyHSMResponses]);
-
-  function formatReviewDate(dateStr: string): string {
-    const d = new Date(dateStr);
-    const day = d.getDate();
-    const month = d.toLocaleDateString('es-ES', { month: 'short' });
-    const dow = d.toLocaleDateString('es-ES', { weekday: 'short' });
-    const isToday = dateStr === today;
-    return isToday ? `${day} ${month} · hoy` : `${day} ${month} · ${dow}`;
+  function handleShare() {
+    const data = { title: 'Mi perfil HSC', url: window.location.href };
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      navigator.share(data).catch(() => {});
+      return;
+    }
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => alert('URL copiada al portapapeles'))
+        .catch(() => {});
+    }
   }
 
   // hsmProfile puede ser string u objeto — normalizamos sin romper
@@ -137,303 +111,169 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
     return null;
   }, [hsmProfile]);
 
-  const profileUpdatedAt = useMemo(() => {
-    if (!hsmProfile || typeof hsmProfile !== 'object') return null;
-    const obj = hsmProfile as Record<string, unknown>;
-    return typeof obj.updatedAt === 'string' ? obj.updatedAt as string : null;
-  }, [hsmProfile]);
-
-  function formatProfileDate(dateStr: string | null): string {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    const day = d.getDate();
-    const month = d.toLocaleDateString('es-ES', { month: 'short' });
-    const dow = d.toLocaleDateString('es-ES', { weekday: 'long' });
-    return `actualizado ${dow} ${day} ${month}`;
-  }
-
-  const totalReflections = dailyHSMResponses.length;
-  const daysSinceStart = startDate
-    ? Math.floor((Date.now() - new Date(startDate).getTime()) / 86400000) + 1
-    : 0;
+  const displayName = profile.display_name || userName || 'Anónimo';
+  const achievedCount = MILESTONE_STEPS.filter(m => streakCount >= m).length;
 
   return (
-    <div className="tu2-wrap">
-      {/* ── Hero ── */}
-      <div className="tu2-hero">
-        <label className="tu2-avatar" style={{ cursor: 'pointer', overflow: 'hidden' }}>
+    <div className="tt3-wrap">
+
+      {/* A. Topbar */}
+      <div className="tt3-topbar">
+        <span className="tt3-topbar-name">{displayName}</span>
+        <button
+          className="tt3-topbar-menu"
+          onClick={() => onNav('huella')}
+          aria-label="Ajustes"
+          type="button"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <line x1="3" y1="6" x2="17" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="3" y1="14" x2="17" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* B. Header social */}
+      <div className="tt3-header">
+        <label className="tt3-avatar" aria-label="Cambiar avatar">
           {profile.avatar_url
-            ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-            : <span>{(firstName || '?')[0].toUpperCase()}</span>
+            ? <img src={profile.avatar_url} alt="" />
+            : <span>{(firstName || displayName || '?')[0].toUpperCase()}</span>
           }
           <input type="file" accept="image/*" onChange={handleAvatar} hidden />
         </label>
-        <div className="tu2-hero-body">
-          <p className="tu2-hero-micro">
-            {startDate ? `día ${daysSinceStart} · miembro desde ${new Date(startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}` : 'tu perfil'}
-          </p>
+        <div className="tt3-header-body">
           {!editing ? (
             <>
-              <h1 className="tu2-hero-name">
-                {profile.display_name || userName || 'Anónimo'}
-                {streakCount > 0 && <>, <em>{streakCount >= 30 ? 'eres élite.' : streakCount >= 15 ? 'imparable.' : streakCount >= 8 ? 'en racha.' : streakCount >= 4 ? 'vas bien.' : 'empezando.'}</em></>}
-              </h1>
-              {profile.bio && <p className="tu2-hero-bio">{profile.bio}</p>}
-              <p className="tu2-hero-sub">
-                {totalReflections > 0
-                  ? `${streakCount} días construyendo. ${totalReflections} reflexiones escritas.`
-                  : 'Empieza a escribir en Tu Espacio para que tu coach te conozca.'}
-              </p>
-              <button className="tu2-hero-edit" onClick={() => {
-                setEditName(profile.display_name || userName || '');
-                setEditBio(profile.bio || '');
-                setEditing(true);
-              }}>Editar perfil</button>
+              <h1 className="tt3-name">{displayName}</h1>
+              {profile.bio && <p className="tt3-bio">{profile.bio}</p>}
+              <div className="tt3-stats">
+                <span className="tt3-stat">
+                  <span className="tt3-stat-num">{postCount}</span>
+                  <span className="tt3-stat-label">{postCount === 1 ? 'post' : 'posts'}</span>
+                </span>
+                <span className="tt3-stat">
+                  <span className="tt3-stat-num">{streakCount}</span>
+                  <span className="tt3-stat-label">{streakCount === 1 ? 'día racha' : 'días racha'}</span>
+                </span>
+                <span className="tt3-stat">
+                  <span className="tt3-stat-num">{achievedCount}</span>
+                  <span className="tt3-stat-label">{achievedCount === 1 ? 'logro' : 'logros'}</span>
+                </span>
+              </div>
             </>
           ) : (
             <>
               <input
-                className="tu2-edit-input"
+                className="tt3-edit-input"
                 value={editName}
                 onChange={e => setEditName(e.target.value)}
                 placeholder="Tu nombre"
                 autoFocus
               />
               <input
-                className="tu2-edit-input tu2-edit-bio"
+                className="tt3-edit-input tt3-edit-input--bio"
                 value={editBio}
                 onChange={e => setEditBio(e.target.value.slice(0, 100))}
                 placeholder="Bio corta (máx 100)"
               />
-              <div className="tu2-edit-actions">
-                <button className="tu2-edit-save" onClick={handleSave} disabled={saving}>
+              <div className="tt3-edit-actions">
+                <button className="tt3-edit-save" onClick={handleSave} disabled={saving} type="button">
                   {saving ? 'Guardando...' : 'Guardar'}
                 </button>
-                <button className="tu2-edit-cancel" onClick={() => setEditing(false)}>Cancelar</button>
+                <button className="tt3-edit-cancel" onClick={() => setEditing(false)} type="button">
+                  Cancelar
+                </button>
               </div>
             </>
           )}
         </div>
       </div>
 
-      {/* ── Perfil psicológico (pieza central) ── */}
-      <div className="tu2-profile">
-        <div className="tu2-profile-top">
-          <div className="tu2-profile-badge">
-            <span className="tu2-profile-badge-dot" />
-            <span className="tu2-profile-badge-text">Perfil del coach</span>
-          </div>
-          {profileUpdatedAt && (
-            <span className="tu2-profile-updated">{formatProfileDate(profileUpdatedAt)}</span>
-          )}
+      {/* C. Botones de perfil (sólo cuando NO está editando) */}
+      {!editing && (
+        <div className="tt3-actions">
+          <button
+            className="tt3-btn-primary"
+            type="button"
+            onClick={() => {
+              setEditName(profile.display_name || userName || '');
+              setEditBio(profile.bio || '');
+              setEditing(true);
+            }}
+          >
+            Editar perfil
+          </button>
+          <button
+            className="tt3-btn-outline"
+            type="button"
+            onClick={handleShare}
+          >
+            Compartir
+          </button>
         </div>
-        <h2 className="tu2-profile-title">
-          {profileText ? <>Esto es lo que <em>ya sé de ti</em>.</> : <>Aún no <em>te conozco</em>.</>}
-        </h2>
-        {profileText ? (
-          <p className="tu2-profile-text">{profileText}</p>
-        ) : (
-          <div className="tu2-profile-empty">
-            <p className="tu2-profile-empty-text">
-              Tu coach genera este perfil cada domingo basándose en tus reflexiones. Necesita al menos 10 respuestas para empezar. Llevas {totalReflections} de 10.
-            </p>
-          </div>
-        )}
+      )}
+
+      {/* D. Card chica del coach */}
+      <div
+        className="tt3-coach-card"
+        role="button"
+        tabIndex={0}
+        onClick={() => alert('Modal del coach próximamente')}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') alert('Modal del coach próximamente'); }}
+      >
+        <div className="tt3-coach-eyebrow">
+          <span className="tt3-coach-eyebrow-dot" />
+          Tu coach
+        </div>
+        <p className="tt3-coach-text">
+          {profileText || 'Aún estoy aprendiendo de ti. Reflexiona en Tu Espacio para que pueda conocerte.'}
+        </p>
+        <span className="tt3-coach-arrow" aria-hidden="true">→</span>
       </div>
 
-      {/* ── 10 dimensiones HSM ── */}
-      {dailyHSMResponses.length > 0 && (
-        <div>
-          <h3 className="tu2-section-title">
-            Tus 10 dimensiones
-            <span className="tu2-section-meta">últimos 30 días</span>
-          </h3>
-          <div className="tu2-dims">
-            {radarData.map(d => (
-              <div key={d.label} className="tu2-dim">
-                <div className="tu2-dim-emoji">{d.emoji}</div>
-                <div className="tu2-dim-body">
-                  <div className="tu2-dim-name">{d.short}</div>
-                  <div className="tu2-dim-bar-track">
-                    <div className="tu2-dim-bar-fill" style={{ width: `${Math.max(d.value * 100, 4)}%` }} />
-                  </div>
-                </div>
-                <span className={`tu2-dim-count${d.count === 0 ? ' zero' : ''}`}>{d.count}</span>
+      {/* E. Logros */}
+      <section className="tt3-milestones-section">
+        <p className="tt3-milestones-eyebrow">Logros</p>
+        <div className="tt3-milestones">
+          {MILESTONE_STEPS.map(m => (
+            <div
+              key={m}
+              className={`tt3-milestone${streakCount >= m ? ' reached' : ''}${m === 365 ? ' tt3-milestone--year' : ''}`}
+            >
+              <div className="tt3-milestone-circle">
+                <span className="tt3-milestone-num">{m}</span>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Accesos rápidos ── */}
-      <div>
-        <h3 className="tu2-section-title">Accesos rápidos</h3>
-        <div className="tu2-quick">
-          <div className="tu2-quick-card" onClick={() => onNav('alimentacion')}>
-            <div className="tu2-quick-icon">🥗</div>
-            <div className="tu2-quick-body">
-              <div className="tu2-quick-name">Plan</div>
-              <div className="tu2-quick-sub">Tu semana</div>
-            </div>
-          </div>
-          <div className="tu2-quick-card" onClick={() => onNav('entrenamiento')}>
-            <div className="tu2-quick-icon">💪</div>
-            <div className="tu2-quick-body">
-              <div className="tu2-quick-name">Rutina</div>
-              <div className="tu2-quick-sub">Genera la de hoy</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Historial de observaciones ── */}
-      {recentReviews.length > 0 && (
-        <div>
-          <h3 className="tu2-section-title">
-            Tus observaciones
-            <span className="tu2-section-meta">últimas {recentReviews.length}</span>
-          </h3>
-          <div className="tu2-reviews">
-            {recentReviews.map(({ date, responses }) => (
-              <div key={date} className="tu2-review">
-                <div className="tu2-review-top">
-                  <span className="tu2-review-date">{formatReviewDate(date)}</span>
-                  <span className="tu2-review-type">{responses.length} reflexión{responses.length !== 1 ? 'es' : ''}</span>
-                </div>
-                <p className="tu2-review-text">
-                  {responses.slice(0, 2).map((r, i) => (
-                    <span key={i}>
-                      {i > 0 && ' · '}
-                      <em>"{r.response.substring(0, 80)}{r.response.length > 80 ? '...' : ''}"</em>
-                    </span>
-                  ))}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Últimos entrenamientos ── */}
-      {workoutLog.length > 0 && (
-        <div>
-          <h3 className="tu2-section-title">
-            Últimos entrenamientos
-            <span className="tu2-section-meta">{workoutLog.length} totales</span>
-          </h3>
-          <div className="tu2-reviews">
-            {[...workoutLog].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3).map((entry, i) => (
-              <div key={i} className="tu2-review">
-                <div className="tu2-review-top">
-                  <span className="tu2-review-date">{formatReviewDate(entry.date)}</span>
-                  <span className="tu2-review-type">{entry.sets.length} series</span>
-                </div>
-                <p className="tu2-review-text" style={{ fontStyle: 'normal' }}>
-                  {entry.exercise} · {entry.sets.map(s => `${s.reps}×${s.kg}kg`).join(' · ')}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Logros ── */}
-      <div>
-        <h3 className="tu2-section-title">
-          Logros
-          <span className="tu2-section-meta">racha</span>
-        </h3>
-        <div className="tu2-milestones">
-          {[3,7,14,21,30,60,90].map(m => (
-            <div key={m} className={`tu2-milestone${streakCount >= m ? ' reached' : ''}`}>
-              <span className="tu2-milestone-num">{m}</span>
-              <span className="tu2-milestone-label">días</span>
+              <div className="tt3-milestone-label">{m === 365 ? '1 año' : 'días'}</div>
             </div>
           ))}
         </div>
+      </section>
+
+      {/* F. Tabs */}
+      <div className="tt3-tabs">
+        <button type="button" className="tt3-tab active">Posts</button>
+        <button type="button" className="tt3-tab disabled" disabled>Rutinas</button>
+        <button type="button" className="tt3-tab disabled" disabled>Comidas</button>
       </div>
 
-      {/* ── Calorías hoy (compact) ── */}
-      {planGoal > 0 && (
-        <div>
-          <h3 className="tu2-section-title">
-            Calorías hoy
-            <span className="tu2-section-meta">{todayKcal.toLocaleString()} / {planGoal.toLocaleString()}</span>
-          </h3>
-          <div style={{
-            background: 'white',
-            border: '0.5px solid var(--sand)',
-            borderRadius: '14px',
-            padding: '14px 18px',
-          }}>
-            <div style={{
-              height: '5px',
-              background: 'var(--sand)',
-              borderRadius: '10px',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                width: `${Math.min((todayKcal / planGoal) * 100, 100)}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, var(--amber) 0%, #d4b374 100%)',
-                borderRadius: '10px',
-                transition: 'width 0.4s',
-              }} />
+      {/* G. Grid 3x3 */}
+      <div className="tt3-grid">
+        {userPosts.length === 0 ? (
+          <div className="tt3-grid-empty" style={{ gridColumn: '1 / -1' }}>
+            <p className="tt3-grid-empty-text">Aún no has compartido nada.</p>
+            <p className="tt3-grid-empty-sub">Comparte tu primer logro en el Club.</p>
+          </div>
+        ) : (
+          userPosts.map(post => (
+            <div key={post.id} className="tt3-grid-item">
+              <img src={post.photo_url} alt="" loading="lazy" />
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Tus datos ── */}
-      <div>
-        <h3 className="tu2-section-title">Tus datos</h3>
-        <div className="tu2-data">
-          <div className="tu2-data-row">
-            <span className="tu2-data-key">Sexo</span>
-            <span className="tu2-data-val">{String(obData.sex || '—')}</span>
-          </div>
-          <div className="tu2-data-row">
-            <span className="tu2-data-key">Edad</span>
-            <span className="tu2-data-val">{obData.edad ? `${obData.edad} años` : '—'}</span>
-          </div>
-          <div className="tu2-data-row">
-            <span className="tu2-data-key">Peso</span>
-            <span className="tu2-data-val">{obData.peso ? `${obData.peso} kg` : '—'}</span>
-          </div>
-          <div className="tu2-data-row">
-            <span className="tu2-data-key">Estatura</span>
-            <span className="tu2-data-val">{obData.estatura ? `${obData.estatura} cm` : '—'}</span>
-          </div>
-          <div className="tu2-data-row">
-            <span className="tu2-data-key">Actividad</span>
-            <span className="tu2-data-val">{String(obData.activity || '—')}</span>
-          </div>
-          <div className="tu2-data-row">
-            <span className="tu2-data-key">Objetivo</span>
-            <span className="tu2-data-val">{String(obData.goal || '—')}</span>
-          </div>
-          {planGoal > 0 && (
-            <div className="tu2-data-row">
-              <span className="tu2-data-key">Meta calórica</span>
-              <span className="tu2-data-val accent">{planGoal.toLocaleString()} kcal/día</span>
-            </div>
-          )}
-          {tdee > 0 && (
-            <div className="tu2-data-row">
-              <span className="tu2-data-key">TDEE</span>
-              <span className="tu2-data-val">{tdee.toLocaleString()} kcal</span>
-            </div>
-          )}
-          {postCount > 0 && (
-            <div className="tu2-data-row">
-              <span className="tu2-data-key">Posts en el club</span>
-              <span className="tu2-data-val">{postCount}</span>
-            </div>
-          )}
-        </div>
+          ))
+        )}
       </div>
 
-      <button className="tu2-logout" onClick={logout}>Cerrar sesión</button>
     </div>
   );
 }
