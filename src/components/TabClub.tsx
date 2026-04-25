@@ -1,4 +1,5 @@
-import Stories from './Stories';
+import CreatePostModal from './CreatePostModal';
+import PublicProfile from './PublicProfile';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
@@ -24,12 +25,28 @@ export default function TabClub() {
   const [posts, setPosts] = useState<ClubFeedPost[]>([]);
   const [activeToday, setActiveToday] = useState(0);
   const [firedIds, setFiredIds] = useState<Set<string>>(new Set());
+  const [createOpen, setCreateOpen] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFeed();
     fetchActiveCount();
     fetchUserFires();
   }, []);
+
+  // Close kebab menu on outside click
+  useEffect(() => {
+    if (!openMenuId) return;
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.clb-post-menu')) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openMenuId]);
 
   async function fetchFeed() {
     try {
@@ -86,6 +103,16 @@ export default function TabClub() {
     }
   }
 
+  async function deletePost(postId: string) {
+    try {
+      await supabase.from('club_posts').delete().eq('id', postId);
+      setPosts(prev => prev.filter(p => p.id !== postId));
+      setOpenMenuId(null);
+    } catch (e) {
+      console.warn('[TabClub] deletePost failed:', e);
+    }
+  }
+
   function timeAgo(dateStr: string): string {
     const now = Date.now();
     const then = new Date(dateStr).getTime();
@@ -105,62 +132,116 @@ export default function TabClub() {
         <span className="clb-meta">{activeToday} {activeToday === 1 ? 'activo' : 'activos'} hoy</span>
       </div>
 
-      <div className="clb-stories-wrap">
-        <Stories />
-      </div>
-
       <section className="clb-feed">
         {posts.length === 0 && (
           <div className="clb-empty">
             <p className="clb-empty-text">Aún no hay publicaciones del club.</p>
-            <p className="clb-empty-sub">Sube tu primera story para empezar.</p>
+            <p className="clb-empty-sub">Comparte tu primer logro para empezar.</p>
           </div>
         )}
-        {posts.map(post => (
-          <article key={post.id} className="clb-post">
-            <div className="clb-post-head">
-              <div className="clb-post-author">
-                <div className="clb-post-avatar">
-                  {post.avatar_url
-                    ? <img src={post.avatar_url} alt="" />
-                    : <span>{(post.username || '?')[0].toUpperCase()}</span>
-                  }
-                </div>
-                <div className="clb-post-meta">
-                  <div className="clb-post-name">
-                    <span className="clb-post-username">{post.username || 'Anónimo'}</span>
-                    {post.streak > 0 && <span className="clb-post-streak"> · {post.streak} días</span>}
+        {posts.map(post => {
+          const isOwn = post.user_id === userId;
+          return (
+            <article key={post.id} className="clb-post">
+              <div className="clb-post-head">
+                <div
+                  className="clb-post-author"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setProfileUserId(post.user_id)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') setProfileUserId(post.user_id);
+                  }}
+                >
+                  <div className="clb-post-avatar">
+                    {post.avatar_url
+                      ? <img src={post.avatar_url} alt="" />
+                      : <span>{(post.username || '?')[0].toUpperCase()}</span>
+                    }
                   </div>
-                  <div className="clb-post-time">{timeAgo(post.created_at)}</div>
+                  <div className="clb-post-meta">
+                    <div className="clb-post-name">
+                      <span className="clb-post-username">{post.username || 'Anónimo'}</span>
+                      {post.streak > 0 && <span className="clb-post-streak"> · {post.streak} días</span>}
+                    </div>
+                    <div className="clb-post-time">{timeAgo(post.created_at)}</div>
+                  </div>
                 </div>
+                {post.workout_summary && (
+                  <span className="clb-post-tag">{post.workout_summary}</span>
+                )}
               </div>
-              {post.workout_summary && (
-                <span className="clb-post-tag">{post.workout_summary}</span>
+
+              {isOwn && (
+                <div className="clb-post-menu">
+                  <button
+                    type="button"
+                    className="clb-post-menu-trigger"
+                    aria-label="Opciones"
+                    onClick={() => setOpenMenuId(openMenuId === post.id ? null : post.id)}
+                  >
+                    ⋯
+                  </button>
+                  {openMenuId === post.id && (
+                    <div className="clb-post-menu-dropdown">
+                      <button
+                        type="button"
+                        className="clb-post-menu-item"
+                        onClick={() => deletePost(post.id)}
+                      >
+                        Borrar
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
-            </div>
 
-            {post.photo_url && (
-              <div className="clb-post-media">
-                <img src={post.photo_url} alt="" loading="lazy" />
+              {post.photo_url && (
+                <div className="clb-post-media">
+                  <img src={post.photo_url} alt="" loading="lazy" />
+                </div>
+              )}
+
+              {post.text && (
+                <p className="clb-post-text">{post.text}</p>
+              )}
+
+              <div className="clb-post-actions">
+                <button
+                  className={`clb-post-fire${firedIds.has(post.id) ? ' active' : ''}`}
+                  onClick={() => toggleFire(post.id)}
+                >
+                  <span className="clb-post-fire-icon">🔥</span>
+                  <span className="clb-post-fire-count">{post.fire_count}</span>
+                </button>
               </div>
-            )}
-
-            {post.text && (
-              <p className="clb-post-text">{post.text}</p>
-            )}
-
-            <div className="clb-post-actions">
-              <button
-                className={`clb-post-fire${firedIds.has(post.id) ? ' active' : ''}`}
-                onClick={() => toggleFire(post.id)}
-              >
-                <span className="clb-post-fire-icon">🔥</span>
-                <span className="clb-post-fire-count">{post.fire_count}</span>
-              </button>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </section>
+
+      <button
+        type="button"
+        className="clb-fab"
+        aria-label="Crear publicación"
+        onClick={() => setCreateOpen(true)}
+      >
+        +
+      </button>
+
+      <CreatePostModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onPostCreated={() => fetchFeed()}
+      />
+
+      {profileUserId && (
+        <PublicProfile
+          userId={profileUserId}
+          currentUserId={userId}
+          onClose={() => setProfileUserId(null)}
+        />
+      )}
     </div>
   );
 }
