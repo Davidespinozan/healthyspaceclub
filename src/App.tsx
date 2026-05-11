@@ -29,6 +29,15 @@ export default function App() {
       console.log('[auth]', event, session?.user?.email ?? 'no user');
       setSession(session);
 
+      if (event === 'SIGNED_IN' && session) {
+        const { currentScreen, startDate } = useAppStore.getState();
+        if (currentScreen === 'login') {
+          useAppStore.setState({
+            currentScreen: startDate ? 'dashboard' : 'onboarding',
+          });
+        }
+      }
+
       if (event === 'SIGNED_OUT') {
         useAppStore.setState({
           currentScreen: 'landing',
