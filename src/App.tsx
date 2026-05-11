@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore } from './store';
-// import { supabase } from './lib/supabase'; // activar con Supabase
+import { supabase } from './lib/supabase';
 import LandingScreen from './screens/LandingScreen';
 
 const LoginScreen = lazy(() => import('./screens/LoginScreen'));
@@ -12,30 +12,36 @@ const VideoModal = lazy(() => import('./components/modals/VideoModal'));
 
 export default function App() {
   const { currentScreen, activeModal } = useAppStore();
+  const setSession = useAppStore(s => s.setSession);
+  const setAuthReady = useAppStore(s => s.setAuthReady);
+  const authReady = useAppStore(s => s.authReady);
 
-  // ── Supabase auth state listener (activar cuando Supabase esté configurado) ──
-  // TODO: descomentar cuando .env.local tenga las credenciales reales
-  /*
+  // ── Supabase auth state listener ──────────────────────────
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session && (currentScreen === 'landing' || currentScreen === 'login')) {
-        const name = data.session.user.email?.split('@')[0] ?? '';
-        setUserName(name.charAt(0).toUpperCase() + name.slice(1));
-        goTo(startDate ? 'dashboard' : 'onboarding');
-      }
+    // Verificar sesión inicial
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthReady(true);
     });
+
+    // Escuchar cambios de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        const name = session.user.email?.split('@')[0] ?? '';
-        setUserName(name.charAt(0).toUpperCase() + name.slice(1));
-        goTo(startDate ? 'dashboard' : 'onboarding');
+      console.log('[auth]', event, session?.user?.email ?? 'no user');
+      setSession(session);
+
+      if (event === 'SIGNED_OUT') {
+        useAppStore.setState({
+          currentScreen: 'landing',
+          userName: '',
+          obData: {},
+        });
       }
-      if (event === 'SIGNED_OUT') goTo('landing');
     });
-    return () => subscription.unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  */
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [setSession, setAuthReady]);
 
   // ── Reading progress bar ────────────────────────────────
   const [progress, setProgress] = useState(0);
@@ -79,6 +85,30 @@ export default function App() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [currentScreen]);
+
+  // ── Loading gate — esperar verificación inicial de sesión ──
+  if (!authReady) {
+    return (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--cream, #F6F2EA)',
+      }}>
+        <div style={{
+          width: 32,
+          height: 32,
+          border: '2px solid #BFA065',
+          borderTopColor: 'transparent',
+          borderRadius: '50%',
+          animation: 'spin 0.6s linear infinite',
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <>

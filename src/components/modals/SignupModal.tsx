@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useAppStore } from '../../store';
+import { supabase } from '../../lib/supabase';
 
 export default function SignupModal() {
-  const { closeModal, goTo, setUserName } = useAppStore();
+  const { closeModal, goTo, setUserName, setObData } = useAppStore();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  function handleSignup() {
+  async function handleSignup() {
     setError('');
     if (name.trim().length < 2) {
       setError('Ingresa tu nombre (mínimo 2 caracteres).');
@@ -24,14 +25,34 @@ export default function SignupModal() {
       setError('La contraseña debe tener al menos 8 caracteres.');
       return;
     }
+
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: trimEmail,
+        password,
+      });
+
+      if (signUpError) {
+        setError(signUpError.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data.session) {
+        const displayName = name.trim().split(' ')[0];
+        setUserName(displayName);
+        setObData('name', displayName);
+        closeModal();
+        goTo('onboarding');
+      } else if (data.user && !data.session) {
+        setError('Revisa tu email para confirmar tu cuenta.');
+        setLoading(false);
+      }
+    } catch {
+      setError('Error al crear cuenta. Intenta de nuevo.');
       setLoading(false);
-      const displayName = name.trim().split(' ')[0];
-      setUserName(displayName);
-      closeModal();
-      goTo('onboarding');
-    }, 1200);
+    }
   }
 
   return (

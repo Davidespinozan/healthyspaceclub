@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { Session, User } from '@supabase/supabase-js';
 import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep } from '../types';
 import { calcTDEE, assignPlan } from '../utils/tdee';
 import type { Region, Currency } from '../utils/region';
@@ -21,6 +22,13 @@ interface AppState {
   userName: string;
   setUserName: (name: string) => void;
   startDate: string; // ISO date string YYYY-MM-DD
+
+  // Session (Supabase Auth)
+  session: Session | null;
+  user: User | null;
+  authReady: boolean;
+  setSession: (session: Session | null) => void;
+  setAuthReady: (ready: boolean) => void;
 
   // Onboarding
   obStep: number;
@@ -224,6 +232,13 @@ export const useAppStore = create<AppState>()(
   userName: '',
   setUserName: (name) => set({ userName: name }),
   startDate: '',
+
+  // Session (Supabase Auth)
+  session: null,
+  user: null,
+  authReady: false,
+  setSession: (session) => set({ session, user: session?.user ?? null }),
+  setAuthReady: (ready) => set({ authReady: ready }),
 
   // Onboarding
   obStep: 1,
