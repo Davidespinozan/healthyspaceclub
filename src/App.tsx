@@ -25,11 +25,35 @@ export default function App() {
     });
 
     // Escuchar cambios de auth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('[auth]', event, session?.user?.email ?? 'no user');
       setSession(session);
 
       if (event === 'SIGNED_IN' && session) {
+        // Hidratar perfil desde Supabase (sobrescribe lo que haya en localStorage)
+        try {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+
+          if (profile) {
+            useAppStore.setState({
+              userName: profile.display_name ?? '',
+              obData: (profile.ob_data as Record<string, string | number>) ?? {},
+              startDate: profile.start_date ?? '',
+              tdee: profile.tdee ?? 0,
+              planGoal: profile.plan_goal ?? 0,
+              mealPlanKey: profile.meal_plan_key ?? 'planA',
+              userPlan: (profile.user_plan ?? 'none') as 'none' | 'trial' | 'basico' | 'pro' | 'elite',
+              trialEndsAt: profile.trial_ends_at ?? null,
+            });
+          }
+        } catch (e) {
+          console.error('[auth] failed to hydrate profile:', e);
+        }
+
         const { currentScreen, startDate } = useAppStore.getState();
         if (currentScreen === 'login') {
           useAppStore.setState({

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep } from '../types';
 import { calcTDEE, assignPlan } from '../utils/tdee';
 import type { Region, Currency } from '../utils/region';
@@ -35,7 +36,7 @@ interface AppState {
   obData: Record<string, string | number>;
   setObStep: (step: number) => void;
   setObData: (key: string, value: string | number) => void;
-  finishOnboardingCalc: () => void; // calculates TDEE + assigns plan without navigating
+  finishOnboardingCalc: () => Promise<void>; // calculates TDEE + assigns plan, upserts profile to Supabase
   finishOnboarding: () => void;     // navigates to dashboard
 
   // Dashboard
@@ -247,7 +248,7 @@ export const useAppStore = create<AppState>()(
   setObData: (key, value) =>
     set((state) => ({ obData: { ...state.obData, [key]: value } })),
   // Calculate TDEE + assign plan WITHOUT navigating (called during processing step)
-  finishOnboardingCalc: () => {
+  finishOnboardingCalc: async () => {
     const { obData, setUserName } = get();
     if (obData.name) setUserName(String(obData.name));
 
@@ -277,6 +278,28 @@ export const useAppStore = create<AppState>()(
       userPlan: 'pro',
       trialEndsAt,
     });
+
+    // Persist to Supabase if authenticated
+    const user = get().user;
+    if (user?.id) {
+      try {
+        const state = get();
+        await supabase.from('user_profiles').upsert({
+          user_id: user.id,
+          display_name: state.userName,
+          ob_data: state.obData,
+          start_date: state.startDate,
+          tdee: state.tdee,
+          plan_goal: state.planGoal,
+          meal_plan_key: state.mealPlanKey,
+          user_plan: state.userPlan,
+          trial_ends_at: state.trialEndsAt,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+      } catch (e) {
+        console.error('[onboarding] failed to persist profile:', e);
+      }
+    }
   },
 
   // Navigate to dashboard (called when user taps "Entrar a mi espacio")
