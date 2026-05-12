@@ -3,13 +3,23 @@ import { useAppStore } from '../store';
 import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
-import { RefreshCw, ShoppingCart, ChevronRight, Calendar, Lock } from 'lucide-react';
+import { RefreshCw, ShoppingCart, Calendar, Lock } from 'lucide-react';
 import './weekly-nutrition-planner-v2.css';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
 const DAY_NAMES      = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const DAY_NAMES_FULL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+const SETUP_DAYS: Array<{ value: number; label: string; sub?: string }> = [
+  { value: 0, label: 'Domingo',   sub: 'clásico día del súper' },
+  { value: 1, label: 'Lunes',     sub: 'inicio de semana' },
+  { value: 2, label: 'Martes' },
+  { value: 3, label: 'Miércoles' },
+  { value: 4, label: 'Jueves',    sub: 'mid-week refresh' },
+  { value: 5, label: 'Viernes' },
+  { value: 6, label: 'Sábado' },
+];
 
 const QUESTIONS: Array<{
   id: string;
@@ -18,7 +28,7 @@ const QUESTIONS: Array<{
   multi: boolean;
   freeText?: boolean;
   placeholder?: string;
-  options: Array<{ label: string; value: string; icon: string }>;
+  options: Array<{ label: string; value: string; icon: string; sub?: string }>;
 }> = [
   {
     id: 'cuisines',
@@ -26,17 +36,17 @@ const QUESTIONS: Array<{
     hint: 'Puedes elegir varias o mezclar todo.',
     multi: true,
     options: [
-      { label: 'Mexicana',   value: 'mexicana',  icon: '🇲🇽' },
-      { label: 'Japonesa',   value: 'japonesa',  icon: '🇯🇵' },
-      { label: 'Italiana',   value: 'italiana',  icon: '🇮🇹' },
-      { label: 'Americana',  value: 'americana', icon: '🇺🇸' },
-      { label: 'Mezcla todo', value: 'todas',    icon: '🎲' },
+      { label: 'Mexicana',    value: 'mexicana',  icon: '🇲🇽', sub: 'Tacos, enchiladas, pozole' },
+      { label: 'Japonesa',    value: 'japonesa',  icon: '🇯🇵', sub: 'Sushi, ramen, donburi' },
+      { label: 'Italiana',    value: 'italiana',  icon: '🇮🇹', sub: 'Pasta, risotto, focaccia' },
+      { label: 'Americana',   value: 'americana', icon: '🇺🇸', sub: 'Bowls, sándwiches, BBQ' },
+      { label: 'Mezcla todo', value: 'todas',     icon: '🎲', sub: 'Variedad sin sesgo' },
     ],
   },
   {
     id: 'cravings',
     question: '¿Alguna preferencia de comida esta semana?',
-    hint: 'Cuéntame en tus palabras o salta.',
+    hint: 'Opcional. Podés saltar este paso.',
     multi: false,
     freeText: true,
     placeholder: 'ej. pasta, pollo, algo ligero, sin gluten, más verduras...',
@@ -45,17 +55,19 @@ const QUESTIONS: Array<{
   {
     id: 'avoid',
     question: '¿Algo que prefieras evitar?',
-    hint: 'Elige una opción para continuar.',
+    hint: 'Una sola opción.',
     multi: false,
     options: [
-      { label: 'Nada, como de todo', value: 'nada',      icon: '✅' },
-      { label: 'Mariscos',          value: 'mariscos',   icon: '🦐' },
-      { label: 'Carne roja',        value: 'carne roja', icon: '🥩' },
-      { label: 'Picante',           value: 'picante',    icon: '🌶️' },
-      { label: 'Gluten',            value: 'gluten',     icon: '🌾' },
+      { label: 'Gluten',           value: 'gluten',     icon: '🌾', sub: 'Sin trigo, pan, pasta' },
+      { label: 'Lácteos',          value: 'lacteos',    icon: '🥛', sub: 'Sin queso, leche, yogurt' },
+      { label: 'Carne roja',       value: 'carne-roja', icon: '🥩', sub: 'Sin res, cerdo, cordero' },
+      { label: 'Mariscos',         value: 'mariscos',   icon: '🦐', sub: 'Sin pescado ni camarón' },
+      { label: 'Nada en especial', value: 'nada',       icon: '✨', sub: 'Como vegano sin restricción' },
     ],
   },
 ];
+
+const EYEBROW_LABEL_Q = ['COCINAS', 'ANTOJOS', 'EVITAR'];
 
 const MEAL_EMOJI: Record<string, string> = {
   'Desayuno': '🌅',
@@ -183,6 +195,7 @@ export default function WeeklyNutritionPlanner() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [multiSel, setMultiSel] = useState<string[]>([]);
   const [freeText, setFreeText] = useState('');
+  const [singleSel, setSingleSel] = useState<string>('');
   const [error, setError] = useState('');
   const [activeDay, setActiveDay] = useState(() =>
     shoppingDay !== null ? (new Date().getDay() - shoppingDay + 7) % 7 : 0
@@ -210,7 +223,8 @@ export default function WeeklyNutritionPlanner() {
       );
       return;
     }
-    advance({ ...answers, [q.id]: value });
+    // Single-select: solo toggle visual, advance se dispara desde el CTA
+    setSingleSel(value);
   }
 
   function confirmMulti() {
@@ -218,6 +232,13 @@ export default function WeeklyNutritionPlanner() {
     const val = multiSel.length === 0 ? 'todas' : multiSel.join(', ');
     advance({ ...answers, [q.id]: val });
     setMultiSel([]);
+  }
+
+  function confirmSingle() {
+    if (!singleSel) return;
+    const q = QUESTIONS[step];
+    advance({ ...answers, [q.id]: singleSel });
+    setSingleSel('');
   }
 
   async function advance(newAnswers: Record<string, string>) {
@@ -263,6 +284,7 @@ export default function WeeklyNutritionPlanner() {
     setStep(0);
     setAnswers({});
     setMultiSel([]);
+    setSingleSel('');
     setError('');
     setPhase('questions');
   }
@@ -270,31 +292,38 @@ export default function WeeklyNutritionPlanner() {
   /* ═══ SETUP DAY ═══ */
   if (phase === 'setup-day') {
     return (
-      <div className="wnp2-wrap">
-        <div className="wnp2-progress">
-          <div className="wnp2-progress-dot active" />
-        </div>
-        <div className="wnp2-setup">
-          <p className="wnp2-setup-micro">antes de empezar</p>
-          <h3 className="wnp2-setup-title">
-            {firstName ? `${firstName}, ¿qué día vas al ` : '¿Qué día vas al '}<em>súper</em>?
-          </h3>
-          <p className="wnp2-setup-hint">Esto ancla el inicio de tu semana de comidas.</p>
-          <div className="wnp2-setup-days">
-            {DAY_NAMES_FULL.map((name, i) => (
-              <button
-                key={i}
-                className="wnp2-setup-day"
-                onClick={() => {
-                  setShoppingDay(i);
-                  setPhase('questions');
-                }}
-              >
-                <span className="wnp2-setup-day-name">{name}</span>
-                <span className="wnp2-setup-day-arrow"><ChevronRight size={15} /></span>
-              </button>
-            ))}
+      <div className="wz-root">
+        <div className="wz-hero">
+          <div className="wz-stepper">
+            <div className="wz-stepper-bar active" />
+            <div className="wz-stepper-bar" />
+            <div className="wz-stepper-bar" />
+            <div className="wz-stepper-bar" />
           </div>
+          <p className="wz-eyebrow">PASO 1 · DÍA DEL SÚPER</p>
+          <h1 className="wz-title">
+            {firstName ? `${firstName}, ¿qué día vas al ` : '¿Qué día vas al '}<em>súper</em>?
+          </h1>
+          <p className="wz-subtitle">Esto ancla el inicio de tu semana de comidas.</p>
+        </div>
+
+        <div className="wz-options">
+          {SETUP_DAYS.map(day => (
+            <button
+              key={day.value}
+              className="wz-option"
+              onClick={() => {
+                setShoppingDay(day.value);
+                setPhase('questions');
+              }}
+            >
+              <div className="wz-option-thumb">📅</div>
+              <div className="wz-option-body">
+                <div className="wz-option-label">{day.label}</div>
+                {day.sub && <div className="wz-option-sub">{day.sub}</div>}
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     );
@@ -302,12 +331,37 @@ export default function WeeklyNutritionPlanner() {
 
   /* ═══ GENERATING ═══ */
   if (phase === 'generating') {
+    const bullets: string[] = [];
+    const cuisinesAns = answers.cuisines;
+    if (cuisinesAns && cuisinesAns !== 'todas') {
+      bullets.push(`Cocinas: ${cuisinesAns}`);
+    } else {
+      bullets.push('Cocinas: mezcla variada');
+    }
+    const cravingsAns = answers.cravings;
+    if (cravingsAns && cravingsAns !== 'sin preferencias específicas') {
+      bullets.push(`Antojos: ${cravingsAns}`);
+    }
+    const avoidAns = answers.avoid;
+    if (avoidAns && avoidAns !== 'nada') {
+      const avoidOpt = QUESTIONS[2].options.find(o => o.value === avoidAns);
+      bullets.push(`Evitar: ${(avoidOpt?.label ?? avoidAns).toLowerCase()}`);
+    }
+    if (shoppingDay !== null) {
+      bullets.push(`Súper: ${DAY_NAMES_FULL[shoppingDay].toLowerCase()}`);
+    }
+
     return (
-      <div className="wnp2-wrap">
-        <div className="wnp2-generating">
-          <div className="wnp2-gen-spinner" />
-          <h3 className="wnp2-gen-title">Armando <em>tu semana</em>...</h3>
-          <p className="wnp2-gen-sub">Seleccionando las mejores comidas para ti</p>
+      <div className="wz-root">
+        <div className="wz-generating">
+          <div className="wz-spinner" />
+          <h2 className="wz-generating-title">Armando <em>tu semana</em>...</h2>
+          <p className="wz-generating-sub">Seleccionando las mejores comidas para ti</p>
+          <div className="wz-generating-bullets">
+            {bullets.map((b, i) => (
+              <div key={i} className="wz-generating-bullet">· {b}</div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -316,10 +370,10 @@ export default function WeeklyNutritionPlanner() {
   /* ═══ ERROR ═══ */
   if (phase === 'error') {
     return (
-      <div className="wnp2-wrap">
-        <div className="wnp2-error">
-          <p className="wnp2-error-text">⚠️ {error}</p>
-          <button className="wnp2-error-btn" onClick={resetQuestionnaire}>Intentar de nuevo</button>
+      <div className="wz-root">
+        <div className="wz-error wz-error--alert">
+          <p className="wz-error-text">⚠️ {error}</p>
+          <button className="wz-error-btn" onClick={resetQuestionnaire}>Intentar de nuevo</button>
         </div>
       </div>
     );
@@ -328,85 +382,132 @@ export default function WeeklyNutritionPlanner() {
   /* ═══ QUESTIONS ═══ */
   if (phase === 'questions') {
     const q = QUESTIONS[step];
-    return (
-      <div className="wnp2-wrap">
-        <div className="wnp2-progress">
-          {QUESTIONS.map((_, i) => (
-            <div
-              key={i}
-              className={`wnp2-progress-dot${i < step ? ' done' : i === step ? ' active' : ''}`}
-            />
-          ))}
-        </div>
+    // Stepper: barra 1 = setup-day (siempre done), barras 2-4 = questions step 0-2
+    const stepperClass = (i: number) => {
+      if (i === 0) return 'wz-stepper-bar done';                // setup-day already done
+      const qIdx = i - 1;                                       // 0 = cuisines, 1 = cravings, 2 = avoid
+      if (qIdx < step) return 'wz-stepper-bar done';
+      if (qIdx === step) return 'wz-stepper-bar active';
+      return 'wz-stepper-bar';
+    };
 
-        <div className="wnp2-q-card">
-          <p className="wnp2-q-micro">pregunta {step + 1} de {QUESTIONS.length}</p>
-          <h3 className="wnp2-q-title">
-            {step === 0 && firstName ? `${firstName}, ` : ''}
-            {q.question.includes('te apetecen') && (
-              <>¿Qué cocinas <em>te apetecen</em> esta semana?</>
-            )}
-            {q.question.includes('preferencia de comida') && (
-              <>¿Alguna <em>preferencia</em> de comida esta semana?</>
-            )}
-            {q.question.includes('evitar') && (
-              <>¿Algo que prefieras <em>evitar</em>?</>
-            )}
-          </h3>
-          <p className="wnp2-q-hint">{q.hint}</p>
+    const cuisinesTitle = <>¿Qué cocinas <em>te apetecen</em> esta semana?</>;
+    const cravingsTitle = <>¿Algún <em>antojo</em> esta semana?</>;
+    const avoidTitle    = <>¿Algo que prefieras <em>evitar</em>?</>;
 
-          {q.freeText ? (
-            <div className="wnp2-freetext">
-              <textarea
-                className="wnp2-freetext-input"
-                placeholder={q.placeholder}
-                value={freeText}
-                onChange={e => setFreeText(e.target.value)}
-                rows={3}
-                autoFocus
-              />
-              <button
-                className="wnp2-confirm"
-                onClick={() => {
-                  advance({ ...answers, [q.id]: freeText.trim() || 'sin preferencias específicas' });
-                  setFreeText('');
-                }}
-              >
-                {freeText.trim() ? 'Continuar →' : 'Saltar →'}
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="wnp2-options">
-                {q.options.map(opt => {
-                  const isSelected = q.multi && multiSel.includes(opt.value);
-                  return (
-                    <button
-                      key={opt.value}
-                      className={`wnp2-option${isSelected ? ' selected' : ''}`}
-                      onClick={() => handleOption(opt.value)}
-                    >
-                      <span className="wnp2-opt-icon">{opt.icon}</span>
-                      <span className="wnp2-opt-label">{opt.label}</span>
-                      {q.multi
-                        ? (isSelected && <span className="wnp2-opt-check">✓</span>)
-                        : <span className="wnp2-opt-arrow"><ChevronRight size={14} /></span>
-                      }
-                    </button>
-                  );
-                })}
-              </div>
-              {q.multi && (
-                <button className="wnp2-confirm" onClick={confirmMulti}>
-                  {multiSel.length === 0 ? 'Mezclar todo →' : `Confirmar (${multiSel.length}) →`}
+    const renderBody = () => {
+      if (q.freeText) {
+        return (
+          <textarea
+            className="wz-textarea"
+            placeholder={q.placeholder}
+            value={freeText}
+            onChange={e => setFreeText(e.target.value)}
+            rows={3}
+            autoFocus
+          />
+        );
+      }
+      if (q.multi) {
+        return (
+          <div className="wz-options">
+            {q.options.map(opt => {
+              const isSelected = multiSel.includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  className={`wz-option${isSelected ? ' selected' : ''}`}
+                  onClick={() => handleOption(opt.value)}
+                >
+                  <div className="wz-option-thumb">{opt.icon}</div>
+                  <div className="wz-option-body">
+                    <div className="wz-option-label">{opt.label}</div>
+                    {opt.sub && <div className="wz-option-sub">{opt.sub}</div>}
+                  </div>
+                  {isSelected && <div className="wz-option-check">✓</div>}
                 </button>
-              )}
-            </>
-          )}
+              );
+            })}
+          </div>
+        );
+      }
+      // single-select (avoid)
+      return (
+        <div className="wz-options">
+          {q.options.map(opt => {
+            const isSelected = singleSel === opt.value;
+            return (
+              <button
+                key={opt.value}
+                className={`wz-option${isSelected ? ' selected' : ''}`}
+                onClick={() => handleOption(opt.value)}
+              >
+                <div className="wz-option-thumb">{opt.icon}</div>
+                <div className="wz-option-body">
+                  <div className="wz-option-label">{opt.label}</div>
+                  {opt.sub && <div className="wz-option-sub">{opt.sub}</div>}
+                </div>
+                {isSelected && <div className="wz-option-check">✓</div>}
+              </button>
+            );
+          })}
         </div>
+      );
+    };
+
+    const renderCta = () => {
+      if (q.freeText) {
+        return (
+          <button
+            className="wz-cta"
+            onClick={() => {
+              advance({ ...answers, [q.id]: freeText.trim() || 'sin preferencias específicas' });
+              setFreeText('');
+            }}
+          >
+            {freeText.trim() ? 'Continuar →' : 'Saltar →'}
+          </button>
+        );
+      }
+      if (q.multi) {
+        return (
+          <button className="wz-cta" onClick={confirmMulti}>
+            {multiSel.length === 0 ? 'Mezclar todo →' : `Confirmar (${multiSel.length}) →`}
+          </button>
+        );
+      }
+      return (
+        <button className="wz-cta" disabled={!singleSel} onClick={confirmSingle}>
+          Siguiente →
+        </button>
+      );
+    };
+
+    return (
+      <div className="wz-root">
+        <div className="wz-hero">
+          <div className="wz-stepper">
+            <div className={stepperClass(0)} />
+            <div className={stepperClass(1)} />
+            <div className={stepperClass(2)} />
+            <div className={stepperClass(3)} />
+          </div>
+          <p className="wz-eyebrow">PASO {step + 2} · {EYEBROW_LABEL_Q[step]}</p>
+          <h1 className="wz-title">
+            {step === 0 && cuisinesTitle}
+            {step === 1 && cravingsTitle}
+            {step === 2 && avoidTitle}
+          </h1>
+          <p className="wz-subtitle">{q.hint}</p>
+        </div>
+
+        {renderBody()}
+        {renderCta()}
 
         {step > 0 && (
-          <button className="wnp2-back" onClick={() => setStep(s => s - 1)}>← Anterior</button>
+          <div className="wz-back">
+            <button className="wz-back-link" onClick={() => setStep(s => s - 1)}>← Anterior</button>
+          </div>
         )}
       </div>
     );
