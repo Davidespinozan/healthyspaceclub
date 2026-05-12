@@ -5,6 +5,7 @@ import {
   decideTodayWorkout,
   analyzeWorkoutHistory,
   filterWithProgressiveRelaxation,
+  selectVariantForEquipment,
   buildConfigHash,
   exerciseCountForDuration,
   filterByModality,
@@ -86,6 +87,7 @@ const PAIN_AREAS = ['hombro', 'rodilla', 'espalda', 'cuello', 'otro'];
 
 async function orchestrateWorkout(params: {
   candidates: Exercise[];
+  equipment: Equipment[];
   targetCount: number;
   goal: Goal;
   intensity: 'baja' | 'media' | 'alta';
@@ -94,11 +96,18 @@ async function orchestrateWorkout(params: {
   context: string;
 }): Promise<CachedWorkout & { razon?: string }> {
   if (!API_KEY) throw new Error('API no disponible. Intenta más tarde.');
-  const { candidates, targetCount, goal, intensity, userName, dayLabel, context } = params;
+  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context } = params;
 
-  const candidatesCompact = candidates.map(c =>
-    `${c.id} | ${c.muscleGroup} | ${c.type} | sets:${c.defaultSets} reps:${c.defaultReps} rest:${c.defaultRest}s`
-  ).join('\n');
+  // Para cada candidato, seleccionar la variante específica que aplica al equipo
+  // del usuario. Si tiene overrides (sets/reps/rest), usar esos en vez de los del patrón.
+  const candidatesCompact = candidates.map(c => {
+    const variant = selectVariantForEquipment(c, equipment);
+    const effectiveName = variant ? `${c.name} — ${variant.name}` : c.name;
+    const effectiveSets = variant?.defaultSets ?? c.defaultSets;
+    const effectiveReps = variant?.defaultReps ?? c.defaultReps;
+    const effectiveRest = variant?.defaultRest ?? c.defaultRest;
+    return `${c.id} | ${effectiveName} | ${c.muscleGroup} | ${c.type} | sets:${effectiveSets} reps:${effectiveReps} rest:${effectiveRest}s`;
+  }).join('\n');
 
   const intensityInstruction = intensity === 'baja'
     ? 'Intensidad BAJA: reduce sets 30%, reps más bajas, descansos más largos'
@@ -614,6 +623,7 @@ export default function DailyTrainer() {
       const contextStr = bullets.join('\n- ');
       const workout = await orchestrateWorkout({
         candidates: candidates.slice(0, 15),
+        equipment: equipmentList,
         targetCount,
         goal,
         intensity,
@@ -1152,6 +1162,7 @@ export default function DailyTrainer() {
           <ExerciseDetailPopout
             exercise={selectedExercise.exercise}
             planData={selectedExercise.planData}
+            userEquipment={[selectedEquipment]}
             isDone={checked.includes(selectedExercise.index)}
             onToggleDone={() => toggleCheck(selectedExercise.index)}
             onClose={() => setSelectedExercise(null)}

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, Check, RotateCcw, Maximize2, Volume2, VolumeX, Play } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { Exercise, ExerciseVideo } from '../types';
+import type { Exercise, ExerciseVideo, Equipment } from '../types';
+import { selectVariantForEquipment } from '../utils/workoutPlanner';
 import './exercise-detail-popout.css';
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
     rest: number;
     tip_personalizado?: string;
   };
+  /** Equipo del usuario. Si se provee y el ejercicio tiene variantes, se muestra la variante específica. */
+  userEquipment?: Equipment[];
   isDone: boolean;
   onToggleDone: () => void;
   onClose: () => void;
@@ -20,10 +23,14 @@ interface Props {
 export default function ExerciseDetailPopout({
   exercise,
   planData,
+  userEquipment,
   isDone,
   onToggleDone,
   onClose,
 }: Props) {
+  // Variante específica del equipo del usuario (si aplica)
+  const variant = userEquipment ? selectVariantForEquipment(exercise, userEquipment) : null;
+  const displayName = variant ? `${exercise.name} — ${variant.name}` : exercise.name;
   const [videos, setVideos] = useState<ExerciseVideo[]>(exercise.videos || []);
   const [activeIdx, setActiveIdx] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -267,8 +274,11 @@ export default function ExerciseDetailPopout({
           <p className="edp-micro">
             {exercise.muscleGroup} · {exercise.difficulty}
           </p>
-          <h2 className="edp-name">{exercise.name}</h2>
+          <h2 className="edp-name">{displayName}</h2>
           <p className="edp-desc">{exercise.desc}</p>
+          {variant?.notes && (
+            <p className="edp-variant-notes">{variant.notes}</p>
+          )}
 
           {/* Stats row */}
           <div className="edp-stats">

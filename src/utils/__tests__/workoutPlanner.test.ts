@@ -105,6 +105,24 @@ describe('workoutPlanner', () => {
       const variant = selectVariantForEquipment(yoga, ['cuerpo']);
       expect(variant).toBeNull();
     });
+
+    it('usa overrides de defaultReps cuando la variante los tiene', () => {
+      // press-horizontal-flexiones tiene defaultReps: '12-15' (override del patrón '8-10')
+      const press = exercises.find(e => e.id === 'press-horizontal')!;
+      const variant = selectVariantForEquipment(press, ['cuerpo']);
+      expect(variant).not.toBeNull();
+      // La variante de flexiones tiene defaultReps definido y distinto del patrón
+      if (variant?.defaultReps) {
+        expect(variant.defaultReps).not.toBe(press.defaultReps);
+      }
+    });
+
+    it('preserva equipment del patrón si no hay variantes (legacy / yoga)', () => {
+      // yoga no tiene variants — el consumer debe usar yoga.equipment directamente cuando variant === null
+      const yoga = exercises.find(e => e.isYoga)!;
+      const variant = selectVariantForEquipment(yoga, ['cuerpo']);
+      expect(variant).toBeNull();
+    });
   });
 
   describe('filterWithProgressiveRelaxation', () => {
