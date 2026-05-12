@@ -101,13 +101,14 @@ export default function App() {
 
   // ── Scroll reveal ───────────────────────────────────────
   useEffect(() => {
+    if (!authReady) return;
     const obs = new IntersectionObserver(
       (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add('visible')),
       { threshold: 0.1 }
     );
     document.querySelectorAll('.reveal').forEach((el) => obs.observe(el));
     return () => obs.disconnect();
-  }, [currentScreen]);
+  }, [currentScreen, authReady]);
 
   // ── Nav scroll effect ───────────────────────────────────
   useEffect(() => {
