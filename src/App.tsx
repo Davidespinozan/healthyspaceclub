@@ -15,6 +15,14 @@ export default function App() {
   const setSession = useAppStore(s => s.setSession);
   const setAuthReady = useAppStore(s => s.setAuthReady);
   const authReady = useAppStore(s => s.authReady);
+  const startDate = useAppStore(s => s.startDate);
+
+  // ── Reroute: si profile hidrata después y trae startDate, salir de onboarding ──
+  useEffect(() => {
+    if (currentScreen === 'onboarding' && startDate) {
+      useAppStore.setState({ currentScreen: 'dashboard' });
+    }
+  }, [startDate, currentScreen]);
 
   // ── Supabase auth state listener ──────────────────────────
   useEffect(() => {
@@ -30,36 +38,40 @@ export default function App() {
       setSession(session);
 
       if (event === 'SIGNED_IN' && session) {
-        // Hidratar perfil desde Supabase (sobrescribe lo que haya en localStorage)
-        try {
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-
-          if (profile) {
-            useAppStore.setState({
-              userName: profile.display_name ?? '',
-              obData: (profile.ob_data as Record<string, string | number>) ?? {},
-              startDate: profile.start_date ?? '',
-              tdee: profile.tdee ?? 0,
-              planGoal: profile.plan_goal ?? 0,
-              mealPlanKey: profile.meal_plan_key ?? 'planA',
-              userPlan: (profile.user_plan ?? 'none') as 'none' | 'trial' | 'basico' | 'pro' | 'elite',
-              trialEndsAt: profile.trial_ends_at ?? null,
-            });
-          }
-        } catch (e) {
-          console.error('[auth] failed to hydrate profile:', e);
-        }
-
+        // Redirect INMEDIATO (sync, fuera del auth lock de Supabase v2)
         const { currentScreen, startDate } = useAppStore.getState();
         if (currentScreen === 'login') {
           useAppStore.setState({
             currentScreen: startDate ? 'dashboard' : 'onboarding',
           });
         }
+
+        // Hidratar profile en background. setTimeout(0) saca la query del lock
+        // del callback de onAuthStateChange — evita deadlock en supabase-js v2.
+        setTimeout(async () => {
+          try {
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+
+            if (profile) {
+              useAppStore.setState({
+                userName: profile.display_name ?? '',
+                obData: (profile.ob_data as Record<string, string | number>) ?? {},
+                startDate: profile.start_date ?? '',
+                tdee: profile.tdee ?? 0,
+                planGoal: profile.plan_goal ?? 0,
+                mealPlanKey: profile.meal_plan_key ?? 'planA',
+                userPlan: (profile.user_plan ?? 'none') as 'none' | 'trial' | 'basico' | 'pro' | 'elite',
+                trialEndsAt: profile.trial_ends_at ?? null,
+              });
+            }
+          } catch (e) {
+            console.error('[auth] failed to hydrate profile:', e);
+          }
+        }, 0);
       }
 
       if (event === 'SIGNED_OUT') {

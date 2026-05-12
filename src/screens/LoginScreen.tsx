@@ -18,21 +18,29 @@ export default function LoginScreen() {
     setError('');
     setLoading(true);
 
-    if (!SUPABASE_CONFIGURED) {
-      // Supabase not configured yet — bypass auth and go straight to dashboard
-      const name = email.split('@')[0];
-      setUserName(name.charAt(0).toUpperCase() + name.slice(1));
-      goTo('dashboard');
-      return;
-    }
+    try {
+      if (!SUPABASE_CONFIGURED) {
+        // Supabase not configured yet — bypass auth and go straight to dashboard
+        const name = email.split('@')[0];
+        setUserName(name.charAt(0).toUpperCase() + name.slice(1));
+        goTo('dashboard');
+        return;
+      }
 
-    const { supabase } = await import('../lib/supabase');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError('Correo o contraseña incorrectos. Intenta de nuevo.');
+      const { supabase } = await import('../lib/supabase');
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError('Correo o contraseña incorrectos. Intenta de nuevo.');
+      }
+      // On success, onAuthStateChange in App.tsx handles the redirect
+    } catch (err) {
+      setError('Error de conexión. Intenta de nuevo.');
+      console.error('[login]', err);
+    } finally {
+      // Defensa: setLoading(false) garantizado aunque el redirect del listener
+      // falle o tarde. Sin esto, el botón queda spinning indefinidamente.
       setLoading(false);
     }
-    // On success, onAuthStateChange in App.tsx handles the redirect
   }
 
   async function handleReset() {
