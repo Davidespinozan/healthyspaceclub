@@ -727,14 +727,14 @@ export default function DailyTrainer() {
 
   if (phase === 'generating') {
     return (
-      <div className="dt2-wrap">
-        <div className="dt2-generating">
-          <div className="dt2-gen-spinner" />
-          <h3 className="dt2-gen-title">Armando <em>tu rutina</em>...</h3>
-          <p className="dt2-gen-sub">Tu coach está considerando:</p>
-          <div className="dt2-gen-bullets">
+      <div className="wz-root">
+        <div className="wz-generating">
+          <div className="wz-spinner" />
+          <h3 className="wz-generating-title">Armando <em>tu rutina</em>...</h3>
+          <p className="wz-generating-sub">Tu coach está considerando:</p>
+          <div className="wz-generating-bullets">
             {contextBullets.map((b, i) => (
-              <div key={i} className="dt2-gen-bullet">· {b}</div>
+              <div key={i} className="wz-generating-bullet">· {b}</div>
             ))}
           </div>
         </div>
@@ -748,10 +748,10 @@ export default function DailyTrainer() {
 
   if (phase === 'error') {
     return (
-      <div className="dt2-wrap">
-        <div className="dt2-error">
-          <p className="dt2-error-text">⚠️ {error}</p>
-          <button className="dt2-error-btn" onClick={() => setPhase('modality')}>Volver</button>
+      <div className="wz-root">
+        <div className="wz-error">
+          <p className="wz-error-text">⚠️ {error}</p>
+          <button className="wz-error-btn" onClick={() => setPhase('modality')}>Volver</button>
         </div>
       </div>
     );
@@ -763,20 +763,20 @@ export default function DailyTrainer() {
 
   if (phase === 'modality') {
     return (
-      <div className="dt2-wrap">
-        <div className="dt2-hero">
-          <div className="dt2-step-indicator">
-            <div className="dt2-step-dot active" />
-            <div className="dt2-step-dot" />
-            {!skipPhysical && <div className="dt2-step-dot" />}
+      <div className="wz-root">
+        <div className="wz-hero">
+          <div className="wz-stepper">
+            <div className="wz-stepper-bar active" />
+            <div className="wz-stepper-bar" />
+            {!skipPhysical && <div className="wz-stepper-bar" />}
           </div>
-          <p className="dt2-hero-micro">paso 1 · {todayDayName} {todayDateShort}</p>
-          <h1 className="dt2-hero-title">
+          <p className="wz-eyebrow">paso 1 · {todayDayName} {todayDateShort}</p>
+          <h1 className="wz-title">
             {firstName ? `${firstName}, ` : ''}<em>¿qué quieres hacer hoy?</em>
           </h1>
         </div>
 
-        <div className="dt2-modality-list">
+        <div className="wz-options">
           {MODALITY_OPTIONS.map(opt => {
             const count = opt.value === 'auto' ? 999 : (modalityCounts[opt.value] || 0);
             const locked = opt.minExercises > 0 && count < opt.minExercises;
@@ -792,25 +792,25 @@ export default function DailyTrainer() {
             return (
               <button
                 key={opt.value}
-                className={`dt2-mod-card${isSelected ? ' selected' : ''}${locked ? ' locked' : ''}`}
+                className={`wz-option${isSelected ? ' selected' : ''}${locked ? ' locked' : ''}`}
                 onClick={() => !locked && setSelectedModality(opt.value)}
                 disabled={locked}
               >
-                <div className="dt2-mod-emoji">{locked ? '🔒' : opt.emoji}</div>
-                <div className="dt2-mod-body">
-                  <div className="dt2-mod-label">
+                <div className="wz-option-thumb">{locked ? '🔒' : opt.emoji}</div>
+                <div className="wz-option-body">
+                  <div className="wz-option-label">
                     {opt.label}
-                    {isSuggested && !locked && <span className="dt2-mod-badge">sugerido</span>}
+                    {isSuggested && !locked && <span className="wz-option-badge">sugerido</span>}
                   </div>
-                  <div className="dt2-mod-sub">{locked ? 'Próximamente' : subLabel}</div>
+                  <div className="wz-option-sub">{locked ? 'Próximamente' : subLabel}</div>
                 </div>
-                {isSelected && !locked && <div className="dt2-mod-check">✓</div>}
+                {isSelected && !locked && <div className="wz-option-check">✓</div>}
               </button>
             );
           })}
         </div>
 
-        <button className="dt2-cta" onClick={handleModalityNext}>
+        <button className="wz-cta" onClick={handleModalityNext}>
           Siguiente →
         </button>
       </div>
@@ -823,45 +823,45 @@ export default function DailyTrainer() {
 
   if (phase === 'physical') {
     return (
-      <div className="dt2-wrap">
-        <div className="dt2-hero">
-          <div className="dt2-step-indicator">
-            <div className="dt2-step-dot done" />
-            <div className="dt2-step-dot active" />
-            <div className="dt2-step-dot" />
+      <div className="wz-root">
+        <div className="wz-hero">
+          <div className="wz-stepper">
+            <div className="wz-stepper-bar done" />
+            <div className="wz-stepper-bar active" />
+            <div className="wz-stepper-bar" />
           </div>
-          <p className="dt2-hero-micro">paso 2 · contexto físico</p>
-          <h1 className="dt2-hero-title">
+          <p className="wz-eyebrow">paso 2 · contexto físico</p>
+          <h1 className="wz-title">
             <em>¿Cómo vienes hoy?</em>
           </h1>
         </div>
 
-        <div className="dt2-q">
-          <p className="dt2-q-label">¿Ya hiciste ejercicio hoy?</p>
-          <div className="dt2-chips dt2-chips-col">
+        <div className="wz-q">
+          <p className="wz-q-label">¿Ya hiciste ejercicio hoy?</p>
+          <div className="wz-chips wz-chips-col">
             {PRIOR_EXERCISE_OPTIONS.map(opt => (
               <button
                 key={opt.value}
-                className={`dt2-chip dt2-chip-eq${priorExercise === opt.value ? ' on' : ''}`}
+                className={`wz-chip wz-chip-block${priorExercise === opt.value ? ' on' : ''}`}
                 onClick={() => setPriorExercise(opt.value)}
               >
-                <span className="dt2-chip-icon">{opt.icon}</span>
+                <span className="wz-chip-icon">{opt.icon}</span>
                 <span>{opt.label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        <div className="dt2-q">
-          <p className="dt2-q-label">¿Alguna molestia hoy?</p>
-          <div className="dt2-chips dt2-chips-col">
+        <div className="wz-q">
+          <p className="wz-q-label">¿Alguna molestia hoy?</p>
+          <div className="wz-chips wz-chips-col">
             {DISCOMFORT_OPTIONS.map(opt => (
               <button
                 key={opt.value}
-                className={`dt2-chip dt2-chip-eq${discomfort === opt.value ? ' on' : ''}`}
+                className={`wz-chip wz-chip-block${discomfort === opt.value ? ' on' : ''}`}
                 onClick={() => setDiscomfort(opt.value)}
               >
-                <span className="dt2-chip-icon">{opt.icon}</span>
+                <span className="wz-chip-icon">{opt.icon}</span>
                 <span>{opt.label}</span>
               </button>
             ))}
@@ -869,13 +869,13 @@ export default function DailyTrainer() {
         </div>
 
         {discomfort === 'pain' && (
-          <div className="dt2-q">
-            <p className="dt2-q-label">¿Dónde?</p>
-            <div className="dt2-chips">
+          <div className="wz-q">
+            <p className="wz-q-label">¿Dónde?</p>
+            <div className="wz-chips">
               {PAIN_AREAS.map(area => (
                 <button
                   key={area}
-                  className={`dt2-chip${painArea === area ? ' on' : ''}`}
+                  className={`wz-chip${painArea === area ? ' on' : ''}`}
                   onClick={() => setPainArea(area)}
                 >
                   {area}
@@ -885,12 +885,12 @@ export default function DailyTrainer() {
           </div>
         )}
 
-        <button className="dt2-cta" onClick={handlePhysicalNext}>
+        <button className="wz-cta" onClick={handlePhysicalNext}>
           Siguiente →
         </button>
 
-        <div className="dt2-manual-link">
-          <button className="dt2-link" onClick={() => setPhase('modality')}>← Anterior</button>
+        <div className="wz-back">
+          <button className="wz-back-link" onClick={() => setPhase('modality')}>← Anterior</button>
         </div>
       </div>
     );
@@ -904,26 +904,26 @@ export default function DailyTrainer() {
     const stepNum = skipPhysical ? 2 : 3;
 
     return (
-      <div className="dt2-wrap">
-        <div className="dt2-hero">
-          <div className="dt2-step-indicator">
-            <div className="dt2-step-dot done" />
-            {!skipPhysical && <div className="dt2-step-dot done" />}
-            <div className="dt2-step-dot active" />
+      <div className="wz-root">
+        <div className="wz-hero">
+          <div className="wz-stepper">
+            <div className="wz-stepper-bar done" />
+            {!skipPhysical && <div className="wz-stepper-bar done" />}
+            <div className="wz-stepper-bar active" />
           </div>
-          <p className="dt2-hero-micro">paso {stepNum} · logística</p>
-          <h1 className="dt2-hero-title">
+          <p className="wz-eyebrow">paso {stepNum} · logística</p>
+          <h1 className="wz-title">
             <em>Últimos detalles</em>
           </h1>
         </div>
 
-        <div className="dt2-q">
-          <p className="dt2-q-label">¿Cuánto tiempo tienes?</p>
-          <div className="dt2-chips dt2-chips-3">
+        <div className="wz-q">
+          <p className="wz-q-label">¿Cuánto tiempo tienes?</p>
+          <div className="wz-chips wz-chips-3">
             {TIME_OPTIONS.map(opt => (
               <button
                 key={opt.value}
-                className={`dt2-chip${selectedTime === opt.value ? ' on' : ''}`}
+                className={`wz-chip${selectedTime === opt.value ? ' on' : ''}`}
                 onClick={() => setSelectedTime(opt.value)}
               >
                 {opt.label}
@@ -933,16 +933,16 @@ export default function DailyTrainer() {
         </div>
 
         {selectedModality !== 'yoga' && (
-          <div className="dt2-q">
-            <p className="dt2-q-label">¿Dónde estás hoy?</p>
-            <div className="dt2-chips dt2-chips-col">
+          <div className="wz-q">
+            <p className="wz-q-label">¿Dónde estás hoy?</p>
+            <div className="wz-chips wz-chips-col">
               {EQUIPMENT_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
-                  className={`dt2-chip dt2-chip-eq${selectedEquipment === opt.value ? ' on' : ''}`}
+                  className={`wz-chip wz-chip-block${selectedEquipment === opt.value ? ' on' : ''}`}
                   onClick={() => setSelectedEquipment(opt.value)}
                 >
-                  <span className="dt2-chip-icon">{opt.icon}</span>
+                  <span className="wz-chip-icon">{opt.icon}</span>
                   <span>{opt.label}</span>
                 </button>
               ))}
@@ -950,12 +950,12 @@ export default function DailyTrainer() {
           </div>
         )}
 
-        <button className="dt2-cta" onClick={handleGenerate}>
+        <button className="wz-cta" onClick={handleGenerate}>
           Arma mi <em>rutina</em> →
         </button>
 
-        <div className="dt2-manual-link">
-          <button className="dt2-link" onClick={() => setPhase(skipPhysical ? 'modality' : 'physical')}>← Anterior</button>
+        <div className="wz-back">
+          <button className="wz-back-link" onClick={() => setPhase(skipPhysical ? 'modality' : 'physical')}>← Anterior</button>
         </div>
       </div>
     );
@@ -973,7 +973,7 @@ export default function DailyTrainer() {
       const yogaPlan = plan as unknown as YogaPlan;
 
       return (
-        <div className="dt2-wrap">
+        <div className="wz-root">
           <div className="dt2-plan-header">
             <div>
               <p className="dt2-plan-micro">tu flow · {todayDayName} {todayDateShort}</p>
@@ -1111,7 +1111,7 @@ export default function DailyTrainer() {
     const checked = storedChecked || [];
 
     return (
-      <div className="dt2-wrap">
+      <div className="wz-root">
         <div className="dt2-plan-header">
           <div>
             <p className="dt2-plan-micro">tu rutina · {todayDayName} {todayDateShort}</p>
