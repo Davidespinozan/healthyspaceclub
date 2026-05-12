@@ -37,15 +37,27 @@ export default function OnboardingScreen() {
   ];
 
   function goNext() {
+    const hasSession = !!useAppStore.getState().session;
     setDir('next');
     setAnimKey(k => k + 1);
-    setStep(s => s + 1);
+    setStep(s => {
+      const next = s + 1;
+      // Skip Step 2 (signup) si ya hay session — viene de SignupModal post-pago
+      if (next === 2 && hasSession) return 3;
+      return next;
+    });
   }
 
   function goBack() {
+    const hasSession = !!useAppStore.getState().session;
     setDir('prev');
     setAnimKey(k => k + 1);
-    setStep(s => s - 1);
+    setStep(s => {
+      const prev = s - 1;
+      // Skip Step 2 hacia atrás también — no hay nada que editar ahí cuando ya hay session
+      if (prev === 2 && hasSession) return 1;
+      return prev;
+    });
   }
 
   async function handleOnboardingSignup() {
@@ -102,8 +114,7 @@ export default function OnboardingScreen() {
   useEffect(() => {
     if (step !== 7) return;
 
-    // Save all data to store
-    setObData('name', signupName.trim().split(' ')[0]);
+    // Save all data to store (name ya fue guardado en SignupModal o handleOnboardingSignup)
     setObData('sex', sex);
     setObData('goal', goal);
     setObData('edad', Number(edad) || 28);
