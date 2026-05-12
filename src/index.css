@@ -1106,6 +1106,16 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
   cursor: pointer; transition: all .2s; font-family: inherit;
 }
 .onb-btn-gold:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(191,160,101,.35); }
+.onb-btn-gold:disabled { opacity: .25; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Inline error message (signup step) */
+.onb-error {
+  width: 100%; max-width: 320px; margin: 4px 0 12px;
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(204,51,51,.08); border: 1px solid rgba(204,51,51,.2);
+  color: #b32d2d; font-size: .82rem; font-weight: 600;
+  text-align: center; line-height: 1.35;
+}
 
 .onb-btn-dark {
   width: 100%; max-width: 320px; padding: 16px 24px; border: none; border-radius: 50px;

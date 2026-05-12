@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
+import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
 import { validateMediaFile } from '../utils/mediaValidation';
 import { compressImageSquare } from '../utils/imageCompress';
@@ -11,8 +12,8 @@ interface Props {
 }
 
 export default function CreatePostModal({ open, onClose, onPostCreated }: Props) {
-  const { userName, streakCount, dailyWorkout, obData } = useAppStore();
-  const userId = obData?.name ? String(obData.name).toLowerCase().replace(/\s+/g, '_') : 'anon';
+  const { userName, streakCount, dailyWorkout } = useAppStore();
+  const userId = useCurrentUserId();
 
   const [userAvatarUrl, setUserAvatarUrl] = useState('');
   const [shareText, setShareText] = useState('');

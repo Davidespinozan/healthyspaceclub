@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
+import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
 import { uploadAvatar } from '../utils/uploadAvatar';
 
 export default function MiHuella({ onBack }: { onBack: () => void }) {
-  const { userName, setUserName, streakCount, hsmUnlockDays, obData } = useAppStore();
-  const userId = obData.name ? String(obData.name).toLowerCase().replace(/\s+/g, '_') : 'anon';
+  const { userName, setUserName, streakCount, hsmUnlockDays } = useAppStore();
+  const userId = useCurrentUserId();
 
   const [profile, setProfile] = useState({ display_name: '', bio: '', avatar_url: '' });
   const [postCount, setPostCount] = useState(0);

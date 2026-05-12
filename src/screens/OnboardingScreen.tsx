@@ -1,18 +1,25 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useAppStore } from '../store';
+import { supabase } from '../lib/supabase';
 
 const TOTAL_STEPS = 8;
 
 export default function OnboardingScreen() {
-  const { setObData, finishOnboardingCalc, finishOnboarding } = useAppStore();
+  const { userName, setUserName, setObData, finishOnboardingCalc, finishOnboarding } = useAppStore();
 
   const [step, setStep] = useState(1);
   const [dir, setDir] = useState<'next' | 'prev'>('next');
   const [animKey, setAnimKey] = useState(0);
 
-  // Form state
-  const [name, setName] = useState('');
+  // Signup state (Step 2)
+  const [signupName, setSignupName] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupLoading, setSignupLoading] = useState(false);
+  const [signupError, setSignupError] = useState('');
+
+  // Form state (Steps 3-6)
   const [sex, setSex] = useState('');
   const [goal, setGoal] = useState('');
   const [edad, setEdad] = useState('');
@@ -41,12 +48,62 @@ export default function OnboardingScreen() {
     setStep(s => s - 1);
   }
 
+  async function handleOnboardingSignup() {
+    setSignupError('');
+
+    if (signupName.trim().length < 2) {
+      setSignupError('Ingresa tu nombre (mínimo 2 caracteres).');
+      return;
+    }
+    if (!signupEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupEmail.trim())) {
+      setSignupError('Ingresa un correo válido.');
+      return;
+    }
+    if (signupPassword.length < 8) {
+      setSignupError('Mínimo 8 caracteres.');
+      return;
+    }
+
+    setSignupLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: signupEmail.trim(),
+        password: signupPassword,
+      });
+
+      if (error) {
+        if (error.message.includes('already registered') || error.message.includes('already exists')) {
+          setSignupError('Este correo ya está registrado. Inicia sesión desde la landing.');
+        } else {
+          setSignupError(error.message);
+        }
+        setSignupLoading(false);
+        return;
+      }
+
+      if (!data.session) {
+        setSignupError('No se pudo crear la sesión. Contacta soporte.');
+        setSignupLoading(false);
+        return;
+      }
+
+      const displayName = signupName.trim().split(' ')[0];
+      setUserName(displayName);
+      setObData('name', displayName);
+      goNext();
+    } catch {
+      setSignupError('Error al crear cuenta. Intenta de nuevo.');
+    } finally {
+      setSignupLoading(false);
+    }
+  }
+
   // Step 7: processing animation + save to store
   useEffect(() => {
     if (step !== 7) return;
 
     // Save all data to store
-    setObData('name', name);
+    setObData('name', signupName.trim().split(' ')[0]);
     setObData('sex', sex);
     setObData('goal', goal);
     setObData('edad', Number(edad) || 28);
@@ -117,24 +174,47 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {/* ── Step 2: Nombre ── */}
+      {/* ── Step 2: Signup (email + password + nombre) ── */}
       {step === 2 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
           <div className="onb-center">
-            <h2 className="onb-question">¿Cómo te llamas?</h2>
-            <p className="onb-hint">Así te va a llamar tu coach</p>
+            <h2 className="onb-question">Crea tu cuenta</h2>
+            <p className="onb-hint">Para guardar tu progreso entre dispositivos</p>
+
             <input
               className="onb-input-big"
               type="text"
               placeholder="Tu nombre"
               autoComplete="name"
               autoFocus
-              value={name}
-              onChange={e => setName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && name.trim().length >= 2 && goNext()}
+              value={signupName}
+              onChange={e => setSignupName(e.target.value)}
             />
-            <button className="onb-btn-dark" onClick={goNext} disabled={name.trim().length < 2}>
-              Continuar
+            <input
+              className="onb-input-big"
+              type="email"
+              placeholder="tu@correo.com"
+              autoComplete="email"
+              value={signupEmail}
+              onChange={e => setSignupEmail(e.target.value)}
+            />
+            <input
+              className="onb-input-big"
+              type="password"
+              placeholder="Contraseña (mínimo 8 caracteres)"
+              autoComplete="new-password"
+              value={signupPassword}
+              onChange={e => setSignupPassword(e.target.value)}
+            />
+
+            {signupError && <div className="onb-error">{signupError}</div>}
+
+            <button
+              className="onb-btn-gold"
+              onClick={handleOnboardingSignup}
+              disabled={signupLoading}
+            >
+              {signupLoading ? 'Creando cuenta…' : 'Crear mi cuenta'}
             </button>
           </div>
         </div>
@@ -272,7 +352,7 @@ export default function OnboardingScreen() {
       {step === 8 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
           <div className="onb-center">
-            <h2 className="onb-result-title">Todo listo, {name.split(' ')[0]}</h2>
+            <h2 className="onb-result-title">Todo listo, {userName}</h2>
             <div className="onb-result-card">
               <div className="onb-result-kcal">
                 {useAppStore.getState().planGoal > 0

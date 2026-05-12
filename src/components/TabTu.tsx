@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useAppStore } from '../store';
+import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
 import { uploadAvatar } from '../utils/uploadAvatar';
@@ -11,11 +12,11 @@ const MILESTONE_STEPS = [3, 7, 14, 30, 90, 365];
 
 export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
-    userName, setUserName, obData, streakCount,
+    userName, setUserName, streakCount,
     hsmProfile,
   } = useAppStore();
 
-  const userId = obData.name ? String(obData.name).toLowerCase().replace(/\s+/g, '_') : 'anon';
+  const userId = useCurrentUserId();
   const firstName = userName?.split(' ')[0] || '';
 
   const [profile, setProfile] = useState({ display_name: '', bio: '', avatar_url: '' });

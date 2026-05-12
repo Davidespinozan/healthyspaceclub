@@ -2,7 +2,7 @@ import CreatePostModal from './CreatePostModal';
 import PublicProfile from './PublicProfile';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAppStore } from '../store';
+import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import './tab-club.css';
 
 interface ClubFeedPost {
@@ -19,8 +19,7 @@ interface ClubFeedPost {
 }
 
 export default function TabClub() {
-  const { obData } = useAppStore();
-  const userId = obData?.name ? String(obData.name).toLowerCase().replace(/\s+/g, '_') : 'anon';
+  const userId = useCurrentUserId();
 
   const [posts, setPosts] = useState<ClubFeedPost[]>([]);
   const [activeToday, setActiveToday] = useState(0);
