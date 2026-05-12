@@ -205,6 +205,22 @@ export interface WorkoutEntry {
   sets: { reps: number; kg: number }[];
 }
 
+/**
+ * Una sesión completa de entrenamiento — entry "por sesión" (vs WorkoutEntry "por ejercicio").
+ * Se persiste en Zustand `completedSessions` cuando el usuario termina un YogaFlowPlayer
+ * o WorkoutPlayer. `date` está en UTC (consistente con WorkoutEntry); el local timezone solo
+ * se calcula al insertar a Supabase (column `date_local`).
+ */
+export interface CompletedSession {
+  date: string;              // UTC YYYY-MM-DD
+  completedAtIso: string;    // ISO completo con timezone para ordering exacto
+  modality: Modality;
+  exerciseIds: string[];
+  durationSeconds: number;
+  exercisesCompleted: number;
+  exercisesTotal: number;
+}
+
 export interface RecipeStep {
   title: string;
   desc: string;

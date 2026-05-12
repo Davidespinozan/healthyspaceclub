@@ -3,8 +3,10 @@ import {
   filterExercisesForWorkout,
   filterWithProgressiveRelaxation,
   selectVariantForEquipment,
+  analyzeWorkoutHistory,
 } from '../workoutPlanner';
 import { exercises } from '../../data/exercises';
+import type { CompletedSession } from '../../types';
 
 describe('workoutPlanner', () => {
   describe('filterExercisesForWorkout (con variantes)', () => {
@@ -191,6 +193,59 @@ describe('workoutPlanner', () => {
         minCandidates: 3,
       });
       expect(result.exercises.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('analyzeWorkoutHistory (con completedSessions)', () => {
+    it('back-compat: comportamiento idéntico cuando completedSessions=[] (caso usuarios existentes)', () => {
+      const today = new Date().toISOString().split('T')[0];
+      const workoutLog = [
+        { date: today, exercise: 'press-horizontal', sets: [{ reps: 8, kg: 60 }] },
+      ];
+      // Con completedSessions vacío
+      const withEmpty = analyzeWorkoutHistory(workoutLog, exercises, []);
+      // Sin pasar completedSessions (default = [])
+      const withoutParam = analyzeWorkoutHistory(workoutLog, exercises);
+
+      expect(withEmpty).toEqual(withoutParam);
+      // Y ambos detectan el workout de hoy
+      expect(withEmpty.today.length).toBeGreaterThan(0);
+      expect(withEmpty.today).toContain('pecho');
+      expect(withEmpty.restDays).toBe(0);
+    });
+
+    it('lee completedSessions: una sesión hoy registra músculos y restDays=0', () => {
+      const today = new Date().toISOString().split('T')[0];
+      const sessions: CompletedSession[] = [{
+        date: today,
+        completedAtIso: new Date().toISOString(),
+        modality: 'yoga',
+        exerciseIds: ['sun-salutation-a', 'warrior-i'],
+        durationSeconds: 1800,
+        exercisesCompleted: 2,
+        exercisesTotal: 2,
+      }];
+      const result = analyzeWorkoutHistory([], exercises, sessions);
+      // Sun salutation A es muscleGroup: 'cuerpo-completo'
+      expect(result.today.length).toBeGreaterThan(0);
+      expect(result.restDays).toBe(0);
+    });
+
+    it('detecta restDays correctamente leyendo ambas fuentes', () => {
+      const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0];
+      // Última sesión hace 3 días
+      const sessions: CompletedSession[] = [{
+        date: threeDaysAgo,
+        completedAtIso: new Date(Date.now() - 3 * 86400000).toISOString(),
+        modality: 'fuerza',
+        exerciseIds: ['press-horizontal'],
+        durationSeconds: 1800,
+        exercisesCompleted: 1,
+        exercisesTotal: 1,
+      }];
+      const result = analyzeWorkoutHistory([], exercises, sessions);
+      // Hoy + ayer + anteayer = 3 restDays consecutivos
+      expect(result.restDays).toBe(3);
     });
   });
 });

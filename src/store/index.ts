@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep } from '../types';
+import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep, CompletedSession } from '../types';
 import { calcTDEE, assignPlan } from '../utils/tdee';
 import type { Region, Currency } from '../utils/region';
 
@@ -109,10 +109,14 @@ interface AppState {
   tdee: number;        // kcal/day maintenance
   planGoal: number;    // kcal/day target (tdee ± adjustment)
 
-  // Workout log
+  // Workout log (granular per-exercise: legacy, usado para tracking de reps/kg)
   workoutLog: { date: string; exercise: string; sets: { reps: number; kg: number }[] }[];
   addWorkoutEntry: (exercise: string, sets: { reps: number; kg: number }[]) => void;
   removeWorkoutEntry: (date: string, exercise: string) => void;
+
+  // Completed sessions (per-session: nuevo, escrito por finishWorkoutSession al terminar player)
+  completedSessions: CompletedSession[];
+  addCompletedSession: (session: CompletedSession) => void;
 
   // Food log (manual + AI)
   foodLog: { id: string; date: string; desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' }[];
@@ -423,7 +427,7 @@ export const useAppStore = create<AppState>()(
   tdee: 0,
   planGoal: 0,
 
-  // Workout log
+  // Workout log (granular per-exercise: legacy)
   workoutLog: [],
   addWorkoutEntry: (exercise, sets) =>
     set((state) => {
@@ -434,6 +438,11 @@ export const useAppStore = create<AppState>()(
     set((state) => ({
       workoutLog: state.workoutLog.filter(e => !(e.date === date && e.exercise === exercise)),
     })),
+
+  // Completed sessions (per-session: nuevo, escrito por finishWorkoutSession)
+  completedSessions: [],
+  addCompletedSession: (session) =>
+    set((state) => ({ completedSessions: [...state.completedSessions, session] })),
 
   // Food log
   foodLog: [],
@@ -649,6 +658,7 @@ export const useAppStore = create<AppState>()(
       tdee: 0,
       planGoal: 0,
       workoutLog: [],
+      completedSessions: [],
       foodLog: [],
       userPlan: 'none',
       trialEndsAt: null,
@@ -694,6 +704,7 @@ export const useAppStore = create<AppState>()(
     tdee: state.tdee,
     planGoal: state.planGoal,
     workoutLog: state.workoutLog,
+    completedSessions: state.completedSessions,
     foodLog: state.foodLog,
     currentScreen: state.currentScreen === 'landing' ? 'landing' : state.currentScreen,
     userPlan: state.userPlan,

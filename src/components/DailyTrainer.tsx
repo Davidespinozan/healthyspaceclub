@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useAppStore } from '../store';
 import { exercises as exerciseBank } from '../data/exercises';
 import {
@@ -25,6 +25,7 @@ import {
   validateWorkoutPlanStrict,
 } from '../utils/workoutValidation';
 import { stretchToTargetDuration } from '../utils/yogaPostProcess';
+import { finishWorkoutSession, type ExerciseLogItem } from '../utils/workoutLogger';
 import type {
   Exercise,
   Equipment,
@@ -334,6 +335,11 @@ export default function DailyTrainer() {
   const regenCount = useAppStore(s => s.dailyWorkoutRegenCount);
   const incrementRegen = useAppStore(s => s.incrementDailyWorkoutRegen);
   const streakCount = useAppStore(s => s.streakCount);
+  const completedSessions = useAppStore(s => s.completedSessions);
+  const addCompletedSession = useAppStore(s => s.addCompletedSession);
+
+  // Tracking de cuándo se abrió el player — para calcular duración real al onComplete
+  const playerStartedAtRef = useRef<number>(0);
 
   const today = new Date().toISOString().split('T')[0];
   const firstName = userName?.split(' ')[0] || '';
@@ -358,7 +364,8 @@ export default function DailyTrainer() {
     exercises: exerciseBank,
     dailyEnergy: dailyCheckin || undefined,
     streakCount,
-  }), [workoutLog, dailyCheckin, streakCount]);
+    completedSessions,
+  }), [workoutLog, dailyCheckin, streakCount, completedSessions]);
 
   // Auto decision
   const todayDecision: WorkoutDayDecision = useMemo(() => decideTodayWorkout({
@@ -367,7 +374,8 @@ export default function DailyTrainer() {
     exercises: exerciseBank,
     dailyEnergy: dailyCheckIn?.date === today ? dailyCheckIn.feeling as any : undefined,
     dailySleep: dailyCheckIn?.date === today ? dailyCheckIn.sleep as any : undefined,
-  }), [obData, workoutLog, dailyCheckIn, today]);
+    completedSessions,
+  }), [obData, workoutLog, dailyCheckIn, today, completedSessions]);
 
   // ── State
   const [phase, setPhase] = useState<Phase>(() => {
@@ -428,7 +436,7 @@ export default function DailyTrainer() {
   // ── Generate
   async function handleGenerate() {
     // Build context
-    const history = analyzeWorkoutHistory(workoutLog || [], exerciseBank);
+    const history = analyzeWorkoutHistory(workoutLog || [], exerciseBank, completedSessions);
     const bullets: string[] = [];
 
     if (history.restDays > 0) bullets.push(`${history.restDays} día${history.restDays > 1 ? 's' : ''} sin entrenar`);
@@ -989,7 +997,10 @@ export default function DailyTrainer() {
           {/* CTA para abrir player — ARRIBA, visible sin scroll */}
           <button
             className="dt2-yoga-start-cta"
-            onClick={() => setPlayerOpen(true)}
+            onClick={() => {
+              playerStartedAtRef.current = Date.now();
+              setPlayerOpen(true);
+            }}
           >
             ▶ comenzar flow
           </button>
@@ -1057,7 +1068,37 @@ export default function DailyTrainer() {
               exerciseBank={exerciseBank}
               onClose={() => setPlayerOpen(false)}
               onComplete={() => {
-                // TODO: registrar en workoutLog, sumar racha
+                // Persistir sesión: Zustand (bloqueante) + Supabase (no-bloqueante)
+                const startedAt = playerStartedAtRef.current;
+                const durationSeconds = startedAt > 0
+                  ? Math.round((Date.now() - startedAt) / 1000)
+                  : yogaPlan.totalDuration;
+                const userId = useAppStore.getState().user?.id ?? null;
+
+                const exercisesLog: ExerciseLogItem[] = yogaPlan.poses.map((pose, i) => ({
+                  exercise_id: pose.id,
+                  order: i,
+                  planned: {
+                    duration: pose.duration,
+                    ...(pose.repetitions !== undefined && { repetitions: pose.repetitions }),
+                    ...(pose.sides !== undefined && { sides: pose.sides }),
+                  },
+                }));
+
+                finishWorkoutSession({
+                  userId,
+                  modality: 'yoga',
+                  exercises: exercisesLog,
+                  exercisesCompleted: yogaPlan.poses.length,
+                  exercisesTotal: yogaPlan.poses.length,
+                  durationSeconds,
+                  targetDurationSeconds: yogaPlan.totalDuration,
+                  equipment: selectedEquipment,
+                  dayType: 'power-vinyasa',
+                  coachReason: yogaPlan.razon,
+                  generationMethod: 'ai_generated',
+                }, addCompletedSession).catch(() => {});
+
                 setPlayerOpen(false);
               }}
             />

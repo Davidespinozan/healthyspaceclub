@@ -9,7 +9,7 @@ import type {
   WorkoutDayType,
   WorkoutDayDecision
 } from '../types';
-import type { WorkoutEntry } from '../types';
+import type { WorkoutEntry, CompletedSession } from '../types';
 
 // ══════════════════════════════════════════════════════════════
 // CICLADO BASE POR OBJETIVO
@@ -98,7 +98,8 @@ interface WorkedMuscles {
 
 export function analyzeWorkoutHistory(
   workoutLog: WorkoutEntry[],
-  exercises: Exercise[]
+  exercises: Exercise[],
+  completedSessions: CompletedSession[] = []
 ): WorkedMuscles {
   const today = new Date().toISOString().split('T')[0];
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
@@ -111,31 +112,54 @@ export function analyzeWorkoutHistory(
     return exerciseMap.get(nameOrId) || exerciseByName.get(nameOrId.toLowerCase());
   }
 
-  function getMusclesFromEntries(entries: WorkoutEntry[]): MuscleGroup[] {
+  /**
+   * Computa los músculos trabajados en una fecha leyendo AMBAS fuentes:
+   * - workoutLog (granular per-exercise, legacy)
+   * - completedSessions (per-session, nuevo)
+   *
+   * Ambas usan `date` en UTC YYYY-MM-DD para back-compat.
+   */
+  function getMusclesForDate(date: string): MuscleGroup[] {
     const muscles = new Set<MuscleGroup>();
-    entries.forEach(e => {
+
+    // Fuente 1: workoutLog (legacy)
+    workoutLog.filter(e => e.date === date).forEach(e => {
       const ex = findExercise(e.exercise);
       if (ex) {
         muscles.add(ex.muscleGroup);
         (ex.secondaryMuscles || []).forEach(m => muscles.add(m));
       }
     });
+
+    // Fuente 2: completedSessions (nuevo)
+    completedSessions.filter(s => s.date === date).forEach(s => {
+      s.exerciseIds.forEach(id => {
+        const ex = findExercise(id);
+        if (ex) {
+          muscles.add(ex.muscleGroup);
+          (ex.secondaryMuscles || []).forEach(m => muscles.add(m));
+        }
+      });
+    });
+
     return Array.from(muscles);
   }
 
-  // Count consecutive rest days (from today backwards)
+  // Count consecutive rest days (from today backwards) — chequea AMBAS fuentes
   let restDays = 0;
   for (let i = 0; i < 7; i++) {
     const date = new Date(Date.now() - i * 86400000).toISOString().split('T')[0];
-    const hasWorkout = workoutLog.some(e => e.date === date);
+    const hasWorkout =
+      workoutLog.some(e => e.date === date) ||
+      completedSessions.some(s => s.date === date);
     if (!hasWorkout) restDays++;
     else break;
   }
 
   return {
-    today: getMusclesFromEntries(workoutLog.filter(e => e.date === today)),
-    yesterday: getMusclesFromEntries(workoutLog.filter(e => e.date === yesterday)),
-    twoDaysAgo: getMusclesFromEntries(workoutLog.filter(e => e.date === twoDaysAgo)),
+    today: getMusclesForDate(today),
+    yesterday: getMusclesForDate(yesterday),
+    twoDaysAgo: getMusclesForDate(twoDaysAgo),
     restDays,
   };
 }
@@ -150,15 +174,16 @@ export function decideTodayWorkout(params: {
   exercises: Exercise[];
   dailyEnergy?: 'bien' | 'regular' | 'cansado';
   dailySleep?: 'muy bien' | 'normal' | 'mal';
+  completedSessions?: CompletedSession[];
 }): WorkoutDayDecision {
-  const { userObjective, workoutLog, exercises, dailyEnergy, dailySleep } = params;
+  const { userObjective, workoutLog, exercises, dailyEnergy, dailySleep, completedSessions = [] } = params;
 
   // Normalize objective to cycle key
   const objectiveKey = normalizeObjective(userObjective);
   const cycle = CYCLES[objectiveKey] || CYCLES['recomposicion'];
 
-  // Analyze history
-  const history = analyzeWorkoutHistory(workoutLog, exercises);
+  // Analyze history (incluye completedSessions si existen)
+  const history = analyzeWorkoutHistory(workoutLog, exercises, completedSessions);
 
   // Pick next in cycle, avoiding yesterday's muscles
   const todayType = pickNextInCycle(cycle, history);
@@ -607,9 +632,10 @@ export function suggestModality(params: {
   exercises: Exercise[];
   dailyEnergy?: string;
   streakCount?: number;
+  completedSessions?: CompletedSession[];
 }): { modality: Modality; reason: string } {
-  const { workoutLog, exercises, dailyEnergy } = params;
-  const history = analyzeWorkoutHistory(workoutLog, exercises);
+  const { workoutLog, exercises, dailyEnergy, completedSessions = [] } = params;
+  const history = analyzeWorkoutHistory(workoutLog, exercises, completedSessions);
 
   // Tired → suggest yoga
   if (dailyEnergy === 'cansado') {
