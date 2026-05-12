@@ -46,6 +46,19 @@ export type Difficulty = 'principiante' | 'intermedio' | 'avanzado';
 
 export type Modality = 'auto' | 'fuerza' | 'yoga' | 'cardio';
 
+/**
+ * Perfil crónico del usuario derivado del onboarding. Todos los campos son opcionales
+ * porque el onboarding puede no estar completo o porque históricamente algunos campos
+ * pueden faltar. Usado por los orchestrators de IA para personalizar la rutina.
+ */
+export interface UserProfile {
+  sex?: 'Hombre' | 'Mujer' | string;
+  edad?: number;
+  peso?: number; // kg
+  estatura?: number; // cm
+  activity?: 'Sedentaria' | 'Ligera' | 'Moderada' | 'Alta' | string;
+}
+
 export interface ExerciseVideo {
   url: string;
   label?: string;

@@ -6,6 +6,7 @@ import {
   analyzeWorkoutHistory,
   filterWithProgressiveRelaxation,
   selectVariantForEquipment,
+  buildUserProfileBlock,
   buildConfigHash,
   exerciseCountForDuration,
   filterByModality,
@@ -30,6 +31,7 @@ import type {
   Goal,
   MuscleGroup,
   Modality,
+  UserProfile,
   WorkoutDayDecision,
   YogaPlan,
 } from '../types';
@@ -94,9 +96,11 @@ async function orchestrateWorkout(params: {
   userName: string;
   dayLabel: string;
   context: string;
+  userProfile?: UserProfile;
 }): Promise<CachedWorkout & { razon?: string }> {
   if (!API_KEY) throw new Error('API no disponible. Intenta más tarde.');
-  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context } = params;
+  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context, userProfile } = params;
+  const profileBlock = buildUserProfileBlock(userProfile);
 
   // Para cada candidato, seleccionar la variante específica que aplica al equipo
   // del usuario. Si tiene overrides (sets/reps/rest), usar esos en vez de los del patrón.
@@ -116,7 +120,7 @@ async function orchestrateWorkout(params: {
     : 'Intensidad MEDIA: sets y reps estándar según defaults de cada ejercicio';
 
   const prompt = `Orquesta una sesión de ${dayLabel} para ${userName || 'el usuario'}.
-
+${profileBlock}
 CONTEXTO DEL USUARIO:
 ${context}
 
@@ -181,8 +185,10 @@ async function orchestratePowerVinyasa(params: {
   userName: string;
   context: string;
   painArea?: string;
+  userProfile?: UserProfile;
 }): Promise<YogaPlan> {
   if (!API_KEY) throw new Error('API no disponible. Intenta más tarde.');
+  const profileBlock = buildUserProfileBlock(params.userProfile);
 
   const candidatesInfo = params.candidates.map(p =>
     `${p.id} | base: ${p.defaultDuration}s | ${p.muscleGroup} | ${p.difficulty}`
@@ -197,7 +203,7 @@ async function orchestratePowerVinyasa(params: {
     : '';
 
   const prompt = `Genera un flow de POWER VINYASA auténtico (estilo Baron Baptiste, influencia Ashtanga) de EXACTAMENTE ${minutes} minutos para ${params.userName || 'el usuario'}.
-
+${profileBlock}
 CONTEXTO DEL USUARIO:
 ${params.context}
 
@@ -440,6 +446,25 @@ export default function DailyTrainer() {
     setPhase('generating');
     setError('');
 
+    // Construir UserProfile del onboarding con casting seguro.
+    // Empty string o NaN → undefined (no llega como "0" o "NaN" al prompt).
+    const toNum = (v: string | number | undefined): number | undefined => {
+      if (v === undefined || v === null || v === '') return undefined;
+      const n = Number(v);
+      return isNaN(n) ? undefined : n;
+    };
+    const toStr = (v: string | number | undefined): string | undefined => {
+      if (v === undefined || v === null || v === '') return undefined;
+      return String(v);
+    };
+    const userProfile: UserProfile = {
+      sex: toStr(obData?.sex),
+      edad: toNum(obData?.edad),
+      peso: toNum(obData?.peso),
+      estatura: toNum(obData?.estatura),
+      activity: toStr(obData?.activity),
+    };
+
     try {
       // Determine day type and goal based on modality
       let dayLabel: string;
@@ -516,6 +541,7 @@ export default function DailyTrainer() {
           userName,
           context: `- ${contextStr}`,
           painArea: discomfort === 'pain' ? painArea : undefined,
+          userProfile,
         };
 
         let yogaPlan = await orchestratePowerVinyasa(orchParams);
@@ -630,6 +656,7 @@ export default function DailyTrainer() {
         userName,
         dayLabel,
         context: `- ${contextStr}`,
+        userProfile,
       });
 
       if (!validateWorkout(workout, validIds)) {
