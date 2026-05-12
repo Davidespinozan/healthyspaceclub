@@ -1,5 +1,6 @@
 import type {
   Exercise,
+  ExerciseVariant,
   MuscleGroup,
   Equipment,
   Goal,
@@ -322,7 +323,11 @@ export function filterExercisesForWorkout(params: {
 
   return exercises.filter(ex => {
     // Filter 1: equipment
-    const hasEquipment = ex.equipment.some(e => equipment.includes(e));
+    // Yoga sigue mirando exercise.equipment plano (no tiene variants).
+    // Patrones: mirar si al menos UNA variante aplica al equipo del usuario.
+    const hasEquipment = ex.isYoga
+      ? ex.equipment.some(e => equipment.includes(e))
+      : (ex.variants?.some(v => v.equipment.some(e => equipment.includes(e))) ?? false);
     if (!hasEquipment) return false;
 
     // Filter 2: muscle group match (primary or secondary)
@@ -338,6 +343,129 @@ export function filterExercisesForWorkout(params: {
 
     return true;
   });
+}
+
+// ══════════════════════════════════════════════════════════════
+// SELECCIÓN DE VARIANTE POR EQUIPO
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * Selecciona la mejor variante de un ejercicio según el equipo del usuario.
+ *
+ * Prioridad:
+ * 1. Si el ejercicio NO tiene variants (legacy / yoga), devuelve null (usa defaults del patrón)
+ * 2. Variante con isDefault: true que aplique al equipo del usuario
+ * 3. Primera variante que aplique al equipo del usuario
+ * 4. null si ninguna variante aplica (no debería pasar si filterExercisesForWorkout filtró antes)
+ */
+export function selectVariantForEquipment(
+  exercise: Exercise,
+  userEquipment: Equipment[]
+): ExerciseVariant | null {
+  if (!exercise.variants || exercise.variants.length === 0) return null;
+
+  // Variantes que aplican al equipo del usuario
+  const applicable = exercise.variants.filter(v =>
+    v.equipment.some(e => userEquipment.includes(e))
+  );
+
+  if (applicable.length === 0) return null;
+
+  // Preferir la default si está entre las aplicables
+  const defaultApplicable = applicable.find(v => v.isDefault === true);
+  if (defaultApplicable) return defaultApplicable;
+
+  // Si no hay default aplicable, devolver la primera
+  return applicable[0];
+}
+
+// ══════════════════════════════════════════════════════════════
+// FILTRADO CON RELAJACIÓN PROGRESIVA
+// ══════════════════════════════════════════════════════════════
+
+export interface FilterResult {
+  exercises: Exercise[];
+  relaxationLevel: 0 | 1 | 2 | 3;
+  relaxedConstraints: string[]; // ej: ['músculos de ayer', 'goal exacto']
+}
+
+/**
+ * Filtra ejercicios con relajación progresiva de constraints cuando no hay
+ * suficientes candidatos para construir un workout completo.
+ *
+ * Niveles:
+ * - 0: filtro estricto (todo aplica)
+ * - 1: drop excludeMuscles (ignora "no repetir músculos de ayer")
+ * - 2: drop goal exacto (acepta cualquier goal del ejercicio)
+ * - 3: drop muscleGroups (solo equipment) — último recurso
+ */
+export function filterWithProgressiveRelaxation(params: {
+  exercises: Exercise[];
+  equipment: Equipment[];
+  muscleGroups: MuscleGroup[];
+  goal: Goal;
+  excludeMuscles: MuscleGroup[];
+  minCandidates?: number;
+}): FilterResult {
+  const minRequired = params.minCandidates ?? 3;
+
+  // NIVEL 0 — filtro estricto
+  let candidates = filterExercisesForWorkout({
+    exercises: params.exercises,
+    equipment: params.equipment,
+    muscleGroups: params.muscleGroups,
+    goal: params.goal,
+    excludeMuscles: params.excludeMuscles,
+  });
+  if (candidates.length >= minRequired) {
+    return { exercises: candidates, relaxationLevel: 0, relaxedConstraints: [] };
+  }
+
+  // NIVEL 1 — drop excludeMuscles
+  candidates = filterExercisesForWorkout({
+    exercises: params.exercises,
+    equipment: params.equipment,
+    muscleGroups: params.muscleGroups,
+    goal: params.goal,
+    excludeMuscles: [],
+  });
+  if (candidates.length >= minRequired) {
+    return {
+      exercises: candidates,
+      relaxationLevel: 1,
+      relaxedConstraints: ['músculos de ayer'],
+    };
+  }
+
+  // NIVEL 2 — drop goal (acepta cualquier goal)
+  candidates = params.exercises.filter(ex => {
+    const matchesEquipment = ex.isYoga
+      ? ex.equipment.some(e => params.equipment.includes(e))
+      : (ex.variants?.some(v => v.equipment.some(e => params.equipment.includes(e))) ?? false);
+    const matchesMuscle =
+      params.muscleGroups.includes(ex.muscleGroup) ||
+      (ex.secondaryMuscles?.some(m => params.muscleGroups.includes(m)) ?? false);
+    return matchesEquipment && matchesMuscle;
+  });
+  if (candidates.length >= minRequired) {
+    return {
+      exercises: candidates,
+      relaxationLevel: 2,
+      relaxedConstraints: ['músculos de ayer', 'goal exacto'],
+    };
+  }
+
+  // NIVEL 3 — solo equipment (último recurso)
+  candidates = params.exercises.filter(ex =>
+    ex.isYoga
+      ? ex.equipment.some(e => params.equipment.includes(e))
+      : (ex.variants?.some(v => v.equipment.some(e => params.equipment.includes(e))) ?? false)
+  );
+  return {
+    exercises: candidates,
+    relaxationLevel: 3,
+    relaxedConstraints: ['músculos de ayer', 'goal exacto', 'split exacto'],
+  };
 }
 
 // ══════════════════════════════════════════════════════════════
