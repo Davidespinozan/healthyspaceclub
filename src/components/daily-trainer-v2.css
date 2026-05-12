@@ -961,7 +961,8 @@
 
 /* ── Yoga start CTA ──────────────────────── */
 
-.dt2-yoga-start-cta {
+.dt2-yoga-start-cta,
+.dt2-start-workout-cta {
   width: 100%;
   padding: 16px;
   margin: 14px 0 18px;
@@ -977,6 +978,7 @@
   transition: transform 0.1s;
 }
 
-.dt2-yoga-start-cta:active {
+.dt2-yoga-start-cta:active,
+.dt2-start-workout-cta:active {
   transform: scale(0.98);
 }

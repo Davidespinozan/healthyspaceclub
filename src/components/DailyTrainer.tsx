@@ -39,6 +39,7 @@ import type {
 import { RefreshCw, Clock, Zap, ChevronRight, Lock } from 'lucide-react';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 import YogaFlowPlayer from './YogaFlowPlayer';
+import WorkoutPlayer from './WorkoutPlayer';
 import './daily-trainer-v2.css';
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
@@ -406,6 +407,7 @@ export default function DailyTrainer() {
 
   // Popout
   const [playerOpen, setPlayerOpen] = useState(false);
+  const [workoutPlayerOpen, setWorkoutPlayerOpen] = useState(false);
 
   const [selectedExercise, setSelectedExercise] = useState<{
     exercise: Exercise;
@@ -1135,6 +1137,19 @@ export default function DailyTrainer() {
           </button>
         </div>
 
+        {/* CTA para abrir player — ARRIBA, visible sin scroll. Solo si hay ejercicios. */}
+        {plan.exercises.length > 0 && (
+          <button
+            className="dt2-start-workout-cta"
+            onClick={() => {
+              playerStartedAtRef.current = Date.now();
+              setWorkoutPlayerOpen(true);
+            }}
+          >
+            ▶ comenzar entrenamiento
+          </button>
+        )}
+
         {/* Razón del coach */}
         {(plan as any).razon && (
           <div className="dt2-card-why">
@@ -1234,6 +1249,51 @@ export default function DailyTrainer() {
             isDone={checked.includes(selectedExercise.index)}
             onToggleDone={() => toggleCheck(selectedExercise.index)}
             onClose={() => setSelectedExercise(null)}
+          />
+        )}
+
+        {/* WorkoutPlayer overlay full-screen — fuerza/cardio */}
+        {workoutPlayerOpen && plan.exercises.length > 0 && (
+          <WorkoutPlayer
+            workout={plan}
+            exerciseBank={exerciseBank}
+            userEquipment={[selectedEquipment]}
+            onClose={() => setWorkoutPlayerOpen(false)}
+            onComplete={(data) => {
+              // Mapear modality: si 'auto', derivar del todayDecision.type
+              const sessionModality: Modality =
+                selectedModality === 'cardio' ? 'cardio' :
+                selectedModality === 'auto' ? (todayDecision.type === 'cardio' ? 'cardio' : 'fuerza') :
+                'fuerza';
+
+              const userId = useAppStore.getState().user?.id ?? null;
+              const exercisesLog: ExerciseLogItem[] = plan.exercises.map((ex, i) => ({
+                exercise_id: ex.id,
+                order: i,
+                planned: {
+                  sets: ex.sets,
+                  reps: ex.reps,
+                  rest: ex.rest,
+                  ...(ex.tip_personalizado && { tip: ex.tip_personalizado }),
+                },
+              }));
+
+              finishWorkoutSession({
+                userId,
+                modality: sessionModality,
+                exercises: exercisesLog,
+                exercisesCompleted: data.exercisesCompleted,
+                exercisesTotal: plan.exercises.length,
+                durationSeconds: data.durationSeconds,
+                targetDurationSeconds: selectedTime * 60,
+                equipment: selectedEquipment,
+                dayType: todayDecision.type,
+                coachReason: (plan as any).razon,
+                generationMethod: 'ai_generated',
+              }, addCompletedSession).catch(() => {});
+
+              setWorkoutPlayerOpen(false);
+            }}
           />
         )}
       </div>
