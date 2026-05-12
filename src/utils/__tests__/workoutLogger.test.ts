@@ -5,12 +5,14 @@ import {
   groupLoggedSetsByExercise,
 } from '../workoutLogger';
 
-const insertMock = vi.fn(() => Promise.resolve({ error: null }));
-const fromMock = vi.fn(() => ({ insert: insertMock }));
+const insertMock = vi.fn((_payload: Record<string, unknown>) =>
+  Promise.resolve({ error: null }),
+);
+const fromMock = vi.fn((_tableName: string) => ({ insert: insertMock }));
 
 vi.mock('../../lib/supabase', () => ({
   supabase: {
-    from: (...args: unknown[]) => fromMock(...args),
+    from: (tableName: string) => fromMock(tableName),
   },
 }));
 
@@ -88,7 +90,7 @@ describe('finishWorkoutSession', () => {
     );
     expect(fromMock).toHaveBeenCalledWith('workout_log');
     expect(insertMock).toHaveBeenCalledOnce();
-    const inserted = insertMock.mock.calls[0][0] as Record<string, unknown>;
+    const inserted = insertMock.mock.calls[0][0];
     expect(inserted.user_id).toBe('550e8400-e29b-41d4-a716-446655440000');
     expect(inserted.modality).toBe('cardio');
     expect(inserted.duration_minutes).toBe(10); // 600s / 60 = 10 min
