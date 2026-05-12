@@ -51,6 +51,57 @@ export interface ExerciseVideo {
   label?: string;
 }
 
+/**
+ * Una variante específica de un patrón de ejercicio.
+ * Ejemplo: el patrón "press-horizontal" tiene variantes
+ *   { id: 'press-horizontal-barra', name: 'Con barra', equipment: ['gym'] }
+ *   { id: 'press-horizontal-mancuernas', name: 'Con mancuernas', equipment: ['gym'] }
+ *   { id: 'press-horizontal-flexiones', name: 'Flexiones', equipment: ['cuerpo'] }
+ *
+ * Las variantes pueden override los pasos/sets/reps del patrón si difieren.
+ */
+export interface ExerciseVariant {
+  /** ID único de la variante. Convención: '<exercise-id>-<equipment-suffix>' (ej. 'press-horizontal-barra') */
+  id: string;
+
+  /** Nombre display de la variante (ej. 'Con barra', 'Con mancuernas', 'Flexiones') */
+  name: string;
+
+  /** Equipo que requiere esta variante específica. Casi siempre singleton, pero el tipo permite más. */
+  equipment: Equipment[];
+
+  /** Dificultad de esta variante (puede diferir de la del patrón base). */
+  difficulty?: Difficulty;
+
+  /** Pasos pedagógicos específicos de esta variante. Si no se define, se usan los del patrón. */
+  steps?: ExerciseStep[];
+
+  /** Tip específico de esta variante. */
+  tip?: string;
+
+  /** Notas pedagógicas adicionales para el usuario. */
+  notes?: string;
+
+  /** Video específico de esta variante (URL). */
+  videoUrl?: string;
+
+  /** Thumbnail del video de la variante. */
+  thumbnailUrl?: string;
+
+  /** Duración del video en segundos. */
+  videoDuration?: number;
+
+  /** Si esta es la variante recomendada / default del patrón. */
+  isDefault?: boolean;
+
+  /** Override de sets si esta variante difiere del patrón. */
+  defaultSets?: number;
+  /** Override de reps. */
+  defaultReps?: string;
+  /** Override de rest. */
+  defaultRest?: number;
+}
+
 export interface Exercise {
   id: string;
   name: string;
@@ -59,20 +110,37 @@ export interface Exercise {
 
   muscleGroup: MuscleGroup;
   secondaryMuscles?: MuscleGroup[];
+
+  /**
+   * Equipo agregado del patrón. INVARIANTE: debe ser la UNIÓN de los equipment
+   * de todas las variantes (cuando existen). El planner filtra por este campo;
+   * si se desincroniza con variants[].equipment, el planner puede aceptar un
+   * ejercicio sin tener variante válida para el equipo del usuario.
+   */
   equipment: Equipment[];
+
   goals: Goal[];
   type: ExerciseType;
   difficulty: Difficulty;
 
+  /** Defaults del patrón. Usados si la variante seleccionada no tiene override. */
   defaultSets: number;
   defaultReps: string;
   defaultRest: number;
 
+  /** Pasos pedagógicos genéricos del patrón. */
   steps: ExerciseStep[];
   tip?: string;
 
   thumb_url?: string;
   videos?: ExerciseVideo[];
+
+  /**
+   * Variantes específicas del patrón. OPCIONAL — los ejercicios viejos del banco
+   * (modelo plano) y los yoga poses siguen siendo válidos sin variants.
+   * Los ejercicios del rediseño "patrón + variantes" tendrán esta propiedad poblada.
+   */
+  variants?: ExerciseVariant[];
 
   // Yoga
   isYoga?: boolean;
