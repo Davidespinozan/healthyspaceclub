@@ -4,7 +4,7 @@ import { exercises as exerciseBank } from '../data/exercises';
 import {
   decideTodayWorkout,
   analyzeWorkoutHistory,
-  filterExercisesForWorkout,
+  filterWithProgressiveRelaxation,
   buildConfigHash,
   exerciseCountForDuration,
   filterByModality,
@@ -560,13 +560,23 @@ export default function DailyTrainer() {
           ex.equipment.some(e => equipmentList.includes(e))
         );
       } else {
-        candidates = filterExercisesForWorkout({
+        const filterResult = filterWithProgressiveRelaxation({
           exercises: modalityFiltered.length > 0 ? modalityFiltered : exerciseBank,
           equipment: equipmentList,
           muscleGroups,
           goal,
           excludeMuscles: selectedModality === 'auto' ? [...history.yesterday] : [],
+          minCandidates: 3,
         });
+        candidates = filterResult.exercises;
+
+        // Si el coach relajó constraints, informarle a la IA en el contexto
+        // para que pueda explicar al usuario por qué la rutina no es "perfecta".
+        if (filterResult.relaxationLevel > 0) {
+          bullets.push(
+            `Coach relajó constraints (nivel ${filterResult.relaxationLevel}): ${filterResult.relaxedConstraints.join(', ')}`
+          );
+        }
       }
 
       // Exclude pain area muscles
@@ -589,10 +599,13 @@ export default function DailyTrainer() {
       if (priorExercise === 'heavy' || dailyCheckin === 'cansado') intensity = 'baja';
       else if (priorExercise === 'light' || discomfort === 'mild') intensity = 'media';
 
-      if (candidates.length < 3) {
+      // Guardia defensiva: filterWithProgressiveRelaxation nivel 3 SIEMPRE devuelve
+      // candidatos si el equipo coincide con algún ejercicio. Si llegamos a 0 acá,
+      // es caso extremo (equipo inexistente, banco vacío, o painArea filter recortó todo).
+      if (candidates.length === 0) {
         const msg = selectedModality === 'auto'
-          ? 'Tu coach no encontró suficientes ejercicios para esta combinación. Prueba cambiar el equipo o la duración.'
-          : `No hay suficientes ejercicios de ${modalityLabel.toLowerCase()} para esta combinación. Prueba cambiar el equipo o la duración.`;
+          ? 'Tu coach no encontró ejercicios para esta combinación. Verifica el equipo seleccionado.'
+          : `No hay ejercicios de ${modalityLabel.toLowerCase()} para tu equipo. Cambia la modalidad o el equipo.`;
         throw new Error(msg);
       }
 

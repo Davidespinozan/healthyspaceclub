@@ -147,5 +147,32 @@ describe('workoutPlanner', () => {
       // Aunque relajemos todo, debe haber algo
       expect(result.exercises.length).toBeGreaterThan(0);
     });
+
+    it('escenario realista: usuario con solo cuerpo + historial cargado SIEMPRE devuelve ≥1 candidato', () => {
+      // Simula: usuario con solo cuerpo, ayer entrenó pecho+hombros+triceps, hoy quiere fuerza pecho
+      // Esto antes hubiera caído en el bug "<3 candidatos"
+      const result = filterWithProgressiveRelaxation({
+        exercises,
+        equipment: ['cuerpo'],
+        muscleGroups: ['pecho'],
+        goal: 'fuerza',
+        excludeMuscles: ['pecho', 'hombros', 'triceps'],
+        minCandidates: 3,
+      });
+      expect(result.exercises.length).toBeGreaterThan(0);
+      // Probablemente caiga en nivel 1 o 2 porque excludeMuscles bloquea pecho
+    });
+
+    it('escenario extremo: equipo solo ligas + objetivo movilidad SIEMPRE da resultado', () => {
+      const result = filterWithProgressiveRelaxation({
+        exercises,
+        equipment: ['ligas'],
+        muscleGroups: ['biceps'],
+        goal: 'movilidad', // raro: ligas + movilidad
+        excludeMuscles: [],
+        minCandidates: 3,
+      });
+      expect(result.exercises.length).toBeGreaterThan(0);
+    });
   });
 });
