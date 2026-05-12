@@ -1015,7 +1015,7 @@ export default function DailyTrainer() {
           )}
 
           {yogaPlan.opening && (
-            <div className="dt2-section dt2-warmup">
+            <div className="dt2-section">
               <div className="dt2-section-label">Opening</div>
               <p className="dt2-section-text">{yogaPlan.opening}</p>
             </div>
@@ -1051,7 +1051,7 @@ export default function DailyTrainer() {
           </div>
 
           {yogaPlan.closing && (
-            <div className="dt2-section dt2-cooldown">
+            <div className="dt2-section">
               <div className="dt2-section-label">Closing</div>
               <p className="dt2-section-text">{yogaPlan.closing}</p>
             </div>
@@ -1159,7 +1159,7 @@ export default function DailyTrainer() {
         )}
 
         {plan.warmup && (
-          <div className="dt2-section dt2-warmup">
+          <div className="dt2-section">
             <div className="dt2-section-label">Calentamiento</div>
             <p className="dt2-section-text">{plan.warmup}</p>
           </div>
@@ -1229,7 +1229,7 @@ export default function DailyTrainer() {
         )}
 
         {plan.cooldown && (
-          <div className="dt2-section dt2-cooldown">
+          <div className="dt2-section">
             <div className="dt2-section-label">Enfriamiento</div>
             <p className="dt2-section-text">{plan.cooldown}</p>
           </div>
