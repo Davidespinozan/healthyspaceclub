@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { finishWorkoutSession } from '../workoutLogger';
+import {
+  finishWorkoutSession,
+  parseRepsToNumber,
+  groupLoggedSetsByExercise,
+} from '../workoutLogger';
 
 const insertMock = vi.fn(() => Promise.resolve({ error: null }));
 const fromMock = vi.fn(() => ({ insert: insertMock }));
@@ -94,5 +98,61 @@ describe('finishWorkoutSession', () => {
     expect(inserted.exercises_completed).toBe(1);
     // date_local debe estar en formato YYYY-MM-DD (local timezone)
     expect(inserted.date_local).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe('parseRepsToNumber', () => {
+  it('parsea single number "10"', () => {
+    expect(parseRepsToNumber('10')).toBe(10);
+  });
+
+  it('parsea rango "8-10" como el último número', () => {
+    expect(parseRepsToNumber('8-10')).toBe(10);
+  });
+
+  it('parsea "12-15 por lado" como 15 (último número)', () => {
+    expect(parseRepsToNumber('12-15 por lado')).toBe(15);
+  });
+
+  it('parsea "30 seg" como 30 (segundos como número trackeable)', () => {
+    expect(parseRepsToNumber('30 seg')).toBe(30);
+  });
+
+  it('retorna 0 para vacío / undefined / sin números', () => {
+    expect(parseRepsToNumber('')).toBe(0);
+    expect(parseRepsToNumber(undefined)).toBe(0);
+    expect(parseRepsToNumber('sin números')).toBe(0);
+  });
+});
+
+describe('groupLoggedSetsByExercise', () => {
+  it('agrupa sets planos en arrays por ejercicio según el plan', () => {
+    const sets = [
+      { reps: 10, kg: 60 },
+      { reps: 9, kg: 60 },
+      { reps: 8, kg: 60 },
+      { reps: 12, kg: 0 },
+      { reps: 12, kg: 0 },
+    ];
+    const exercises = [{ sets: 3 }, { sets: 2 }];
+    const result = groupLoggedSetsByExercise(sets, exercises);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toHaveLength(3);
+    expect(result[1]).toHaveLength(2);
+    expect(result[0][0]).toEqual({ reps: 10, kg: 60 });
+    expect(result[1][0]).toEqual({ reps: 12, kg: 0 });
+  });
+
+  it('preserva nulls como sets saltados sin descalzar la posición', () => {
+    const sets = [
+      { reps: 10, kg: 60 },
+      null,
+      null,
+      { reps: 12, kg: 0 },
+    ];
+    const exercises = [{ sets: 3 }, { sets: 1 }];
+    const result = groupLoggedSetsByExercise(sets, exercises);
+    expect(result[0]).toEqual([{ reps: 10, kg: 60 }, null, null]);
+    expect(result[1]).toEqual([{ reps: 12, kg: 0 }]);
   });
 });

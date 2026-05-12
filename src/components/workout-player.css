@@ -421,6 +421,132 @@
   margin: 0;
 }
 
+/* ── Log-set screen (capturar reps/kg) ───────────────── */
+
+.wp-log-set {
+  flex: 1;
+  padding: 32px 24px 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wp-log-set-micro {
+  font-size: 11px;
+  color: var(--wp-amber);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 16px;
+}
+
+.wp-log-set-counter {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--wp-txt);
+  margin: 0 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.wp-log-set-of {
+  color: var(--wp-txt3);
+  font-weight: 400;
+}
+
+.wp-log-set-prompt {
+  font-size: 14px;
+  color: var(--wp-txt2);
+  margin: 0 0 32px;
+}
+
+.wp-log-set-fields {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  margin: 0 0 32px;
+}
+
+.wp-log-set-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.wp-log-set-label {
+  font-size: 11px;
+  color: var(--wp-amber);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wp-log-set-input-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.wp-log-set-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--wp-txt);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.wp-log-set-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.wp-log-set-btn:active {
+  transform: scale(0.95);
+}
+
+.wp-log-set-input {
+  width: 110px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  color: var(--wp-amber);
+  font-size: 2rem;
+  font-weight: 800;
+  font-family: inherit;
+  text-align: center;
+  outline: none;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+
+.wp-log-set-input::-webkit-outer-spin-button,
+.wp-log-set-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.wp-log-set-input:focus {
+  border-color: var(--wp-amber);
+  background: rgba(191, 160, 101, 0.08);
+}
+
+.wp-log-set-unit {
+  font-size: 11px;
+  color: var(--wp-txt3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 /* ── Rest screen ─────────────────────────────────────── */
 
 .wp-rest {

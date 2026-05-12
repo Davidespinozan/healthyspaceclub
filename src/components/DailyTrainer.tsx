@@ -25,7 +25,7 @@ import {
   validateWorkoutPlanStrict,
 } from '../utils/workoutValidation';
 import { stretchToTargetDuration } from '../utils/yogaPostProcess';
-import { finishWorkoutSession, type ExerciseLogItem } from '../utils/workoutLogger';
+import { finishWorkoutSession, groupLoggedSetsByExercise, type ExerciseLogItem } from '../utils/workoutLogger';
 import type {
   Exercise,
   Equipment,
@@ -1267,16 +1267,36 @@ export default function DailyTrainer() {
                 'fuerza';
 
               const userId = useAppStore.getState().user?.id ?? null;
-              const exercisesLog: ExerciseLogItem[] = plan.exercises.map((ex, i) => ({
-                exercise_id: ex.id,
-                order: i,
-                planned: {
-                  sets: ex.sets,
-                  reps: ex.reps,
-                  rest: ex.rest,
-                  ...(ex.tip_personalizado && { tip: ex.tip_personalizado }),
-                },
-              }));
+
+              // Reagrupar loggedSets por ejercicio para construir `performed`
+              const performedByExercise = groupLoggedSetsByExercise(
+                data.loggedSets,
+                plan.exercises,
+              );
+              const completedAtIso = new Date().toISOString();
+
+              const exercisesLog: ExerciseLogItem[] = plan.exercises.map((ex, i) => {
+                const setsForExercise = performedByExercise[i] || [];
+                const hasAnyData = setsForExercise.length > 0;
+                const allSkipped = hasAnyData && setsForExercise.every(s => s === null);
+                return {
+                  exercise_id: ex.id,
+                  order: i,
+                  planned: {
+                    sets: ex.sets,
+                    reps: ex.reps,
+                    rest: ex.rest,
+                    ...(ex.tip_personalizado && { tip: ex.tip_personalizado }),
+                  },
+                  ...(hasAnyData && {
+                    performed: {
+                      sets: setsForExercise,
+                      skipped: allSkipped,
+                      completed_at: completedAtIso,
+                    },
+                  }),
+                };
+              });
 
               finishWorkoutSession({
                 userId,
@@ -1290,6 +1310,7 @@ export default function DailyTrainer() {
                 dayType: todayDecision.type,
                 coachReason: (plan as any).razon,
                 generationMethod: 'ai_generated',
+                loggedSets: data.loggedSets,
               }, addCompletedSession).catch(() => {});
 
               setWorkoutPlayerOpen(false);

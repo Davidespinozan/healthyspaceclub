@@ -206,6 +206,15 @@ export interface WorkoutEntry {
 }
 
 /**
+ * Una serie completada con reps/kg reales medidos durante la sesión.
+ * Capturada por el WorkoutPlayer en phase 'log-set' (Sesión 4).
+ */
+export interface LoggedSet {
+  reps: number;
+  kg: number;
+}
+
+/**
  * Una sesión completa de entrenamiento — entry "por sesión" (vs WorkoutEntry "por ejercicio").
  * Se persiste en Zustand `completedSessions` cuando el usuario termina un YogaFlowPlayer
  * o WorkoutPlayer. `date` está en UTC (consistente con WorkoutEntry); el local timezone solo
@@ -219,6 +228,12 @@ export interface CompletedSession {
   durationSeconds: number;
   exercisesCompleted: number;
   exercisesTotal: number;
+  /**
+   * Sets logueados en orden plano de ejecución (un slot por serie scheduled).
+   * null = serie saltada por el usuario.
+   * Si está `undefined`, la sesión fue completada sin tracking (versiones anteriores del player).
+   */
+  loggedSets?: Array<LoggedSet | null>;
 }
 
 export interface RecipeStep {

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { X, Pause, Play, Check, SkipForward } from 'lucide-react';
+import { X, Pause, Play, Check, SkipForward, Minus, Plus } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
-import type { Exercise, Equipment } from '../types';
+import { parseRepsToNumber } from '../utils/workoutLogger';
+import type { Exercise, Equipment, LoggedSet } from '../types';
 import type { CachedWorkout } from '../utils/workoutCache';
 import './workout-player.css';
 
-type PlayerPhase = 'prep' | 'exercise' | 'rest' | 'transition' | 'paused' | 'completed';
+type PlayerPhase = 'prep' | 'exercise' | 'log-set' | 'rest' | 'transition' | 'paused' | 'completed';
 
 interface Props {
   workout: CachedWorkout;
@@ -16,6 +17,7 @@ interface Props {
     exercisesCompleted: number;
     totalSetsCompleted: number;
     durationSeconds: number;
+    loggedSets: Array<LoggedSet | null>;
   }) => void;
   onClose: () => void;
 }
@@ -61,9 +63,11 @@ export default function WorkoutPlayer({
   const [startedAt, setStartedAt] = useState<number>(0);
   const [pausedFromPhase, setPausedFromPhase] = useState<PlayerPhase | null>(null);
   const [transitionNext, setTransitionNext] = useState<{ prev: string; next: string } | null>(null);
+  const [loggedSets, setLoggedSets] = useState<Array<LoggedSet | null>>([]);
+  const [logSetInputs, setLogSetInputs] = useState<{ reps: number; kg: number }>({ reps: 0, kg: 0 });
 
-  // ── Wake lock activo en sesión activa
-  useWakeLock(phase === 'exercise' || phase === 'rest' || phase === 'transition');
+  // ── Wake lock activo en sesión activa (incluye log-set)
+  useWakeLock(phase === 'exercise' || phase === 'log-set' || phase === 'rest' || phase === 'transition');
 
   // ── Body scroll lock todo el tiempo que el player esté montado
   useEffect(() => {
@@ -84,7 +88,7 @@ export default function WorkoutPlayer({
 
   // ── Persistencia de progreso (no en prep/completed)
   useEffect(() => {
-    if (phase === 'exercise' || phase === 'rest' || phase === 'paused') {
+    if (phase === 'exercise' || phase === 'log-set' || phase === 'rest' || phase === 'paused') {
       localStorage.setItem(PROGRESS_KEY, JSON.stringify({
         workoutDate: new Date().toISOString().split('T')[0],
         planHash,
@@ -94,10 +98,11 @@ export default function WorkoutPlayer({
         exercisesCompleted,
         totalSetsCompleted,
         startedAt,
+        loggedSets,
       }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentExerciseIndex, currentSet, restSecondsLeft, phase]);
+  }, [currentExerciseIndex, currentSet, restSecondsLeft, phase, loggedSets]);
 
   // ── Timer de descanso (solo en phase 'rest')
   useEffect(() => {
@@ -149,6 +154,7 @@ export default function WorkoutPlayer({
             setExercisesCompleted(data.exercisesCompleted || 0);
             setTotalSetsCompleted(data.totalSetsCompleted || 0);
             setStartedAt(data.startedAt || Date.now());
+            setLoggedSets(Array.isArray(data.loggedSets) ? data.loggedSets : []);
             setPhase('exercise');
             return;
           }
@@ -162,26 +168,52 @@ export default function WorkoutPlayer({
     setExercisesCompleted(0);
     setTotalSetsCompleted(0);
     setStartedAt(Date.now());
+    setLoggedSets([]);
     setPhase('exercise');
   }
 
   function handleCompleteSet() {
-    const newTotalSets = totalSetsCompleted + 1;
+    // Pre-rellenar inputs del log-set y avanzar a la phase de captura
+    const parsedReps = parseRepsToNumber(currentEx?.reps);
+    // kg: último valor del MISMO ejercicio (en loggedSets pushed hasta ahora)
+    const startPos = exercises
+      .slice(0, currentExerciseIndex)
+      .reduce((acc, ex) => acc + ex.sets, 0);
+    const setsOfCurrent = loggedSets.slice(startPos);
+    let lastKg = 0;
+    for (let i = setsOfCurrent.length - 1; i >= 0; i--) {
+      const entry = setsOfCurrent[i];
+      if (entry) { lastKg = entry.kg; break; }
+    }
+    setLogSetInputs({ reps: parsedReps, kg: lastKg });
+    setPhase('log-set');
+  }
+
+  /**
+   * Avanza después del log-set. `skip` indica si el usuario saltó el set
+   * (push null) o lo guardó (push {reps, kg}).
+   */
+  function handleLogSetSubmit(skip: boolean) {
+    const entry: LoggedSet | null = skip ? null : {
+      reps: Math.max(0, logSetInputs.reps),
+      kg: Math.max(0, logSetInputs.kg),
+    };
+    setLoggedSets(prev => [...prev, entry]);
+
+    // Solo incrementar totalSetsCompleted si el set NO fue saltado
+    const newTotalSets = skip ? totalSetsCompleted : totalSetsCompleted + 1;
     setTotalSetsCompleted(newTotalSets);
 
     const isLastSet = currentSet >= totalSetsForCurrent;
-
     if (!isLastSet) {
-      // Más sets en este ejercicio → descanso
       setRestSecondsLeft(currentEx?.rest || 60);
       setPhase('rest');
     } else {
-      // Último set del ejercicio: NO hay descanso, va directo a transition
       const newCompleted = exercisesCompleted + 1;
       setExercisesCompleted(newCompleted);
       const isLastExercise = currentExerciseIndex >= totalExercises - 1;
       if (isLastExercise) {
-        finishSession(newCompleted, newTotalSets);
+        finishSession(newCompleted, newTotalSets, [...loggedSets, entry]);
       } else {
         startTransitionToNext();
       }
@@ -217,10 +249,17 @@ export default function WorkoutPlayer({
   }
 
   function handleSkipExercise() {
+    // Push nulls para TODAS las series restantes del ejercicio actual
+    // (preserva integridad: loggedSets.length == series scheduled hasta este punto)
+    const remainingSets = Math.max(0, totalSetsForCurrent - currentSet + 1);
+    const nulls: Array<LoggedSet | null> = new Array(remainingSets).fill(null);
+    const updatedLoggedSets = [...loggedSets, ...nulls];
+    setLoggedSets(updatedLoggedSets);
+
     // Skip cuenta el ejercicio como NO completado, pero avanza
     const isLastExercise = currentExerciseIndex >= totalExercises - 1;
     if (isLastExercise) {
-      finishSession(exercisesCompleted, totalSetsCompleted);
+      finishSession(exercisesCompleted, totalSetsCompleted, updatedLoggedSets);
     } else {
       startTransitionToNext();
     }
@@ -230,13 +269,13 @@ export default function WorkoutPlayer({
     if (phase === 'paused') {
       setPhase(pausedFromPhase || 'exercise');
       setPausedFromPhase(null);
-    } else if (phase === 'exercise' || phase === 'rest') {
+    } else if (phase === 'exercise' || phase === 'log-set' || phase === 'rest') {
       setPausedFromPhase(phase);
       setPhase('paused');
     }
   }
 
-  function finishSession(completed: number, sets: number) {
+  function finishSession(completed: number, sets: number, finalLoggedSets?: Array<LoggedSet | null>) {
     localStorage.removeItem(PROGRESS_KEY);
     const durationSeconds = startedAt > 0 ? Math.round((Date.now() - startedAt) / 1000) : 0;
     setPhase('completed');
@@ -244,6 +283,7 @@ export default function WorkoutPlayer({
       exercisesCompleted: completed,
       totalSetsCompleted: sets,
       durationSeconds,
+      loggedSets: finalLoggedSets ?? loggedSets,
     });
   }
 
@@ -380,6 +420,94 @@ export default function WorkoutPlayer({
             </button>
             <button className="wp-skip" onClick={handleSkipExercise}>
               <SkipForward size={14} /> saltar ejercicio
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Phase: LOG-SET (capturar reps/kg reales) ── */}
+      {phase === 'log-set' && currentEx && (
+        <div className="wp-log-set">
+          <p className="wp-log-set-micro">
+            {currentBank?.muscleGroup} · {displayName}
+          </p>
+          <div className="wp-log-set-counter">
+            Serie {currentSet} <span className="wp-log-set-of">de</span> {totalSetsForCurrent}
+          </div>
+          <p className="wp-log-set-prompt">¿Cómo te fue?</p>
+
+          <div className="wp-log-set-fields">
+            <div className="wp-log-set-field">
+              <label className="wp-log-set-label">Reps completadas</label>
+              <div className="wp-log-set-input-row">
+                <button
+                  type="button"
+                  className="wp-log-set-btn"
+                  onClick={() => setLogSetInputs(s => ({ ...s, reps: Math.max(0, s.reps - 1) }))}
+                  aria-label="Restar 1"
+                >
+                  <Minus size={20} />
+                </button>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  className="wp-log-set-input"
+                  value={logSetInputs.reps}
+                  onChange={e =>
+                    setLogSetInputs(s => ({ ...s, reps: Math.max(0, Number(e.target.value) || 0) }))
+                  }
+                />
+                <button
+                  type="button"
+                  className="wp-log-set-btn"
+                  onClick={() => setLogSetInputs(s => ({ ...s, reps: s.reps + 1 }))}
+                  aria-label="Sumar 1"
+                >
+                  <Plus size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="wp-log-set-field">
+              <label className="wp-log-set-label">Peso adicional (opcional)</label>
+              <div className="wp-log-set-input-row">
+                <button
+                  type="button"
+                  className="wp-log-set-btn"
+                  onClick={() => setLogSetInputs(s => ({ ...s, kg: Math.max(0, s.kg - 2.5) }))}
+                  aria-label="Restar 2.5kg"
+                >
+                  <Minus size={20} />
+                </button>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="2.5"
+                  className="wp-log-set-input"
+                  value={logSetInputs.kg}
+                  onChange={e =>
+                    setLogSetInputs(s => ({ ...s, kg: Math.max(0, Number(e.target.value) || 0) }))
+                  }
+                />
+                <button
+                  type="button"
+                  className="wp-log-set-btn"
+                  onClick={() => setLogSetInputs(s => ({ ...s, kg: s.kg + 2.5 }))}
+                  aria-label="Sumar 2.5kg"
+                >
+                  <Plus size={20} />
+                </button>
+              </div>
+              <span className="wp-log-set-unit">kg</span>
+            </div>
+          </div>
+
+          <div className="wp-cta-wrap">
+            <button className="wp-cta" onClick={() => handleLogSetSubmit(false)}>
+              <Check size={18} /> Guardar y descansar
+            </button>
+            <button className="wp-skip" onClick={() => handleLogSetSubmit(true)}>
+              <SkipForward size={14} /> saltar set
             </button>
           </div>
         </div>

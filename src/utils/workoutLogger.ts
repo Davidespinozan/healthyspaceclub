@@ -1,17 +1,60 @@
 import { supabase } from '../lib/supabase';
-import type { CompletedSession, Modality } from '../types';
+import type { CompletedSession, Modality, LoggedSet } from '../types';
 
 /**
  * Shape de la entrada `exercises` (jsonb) en la tabla workout_log.
  * - Para yoga: `planned` trae { duration, repetitions?, sides? }
  * - Para fuerza/cardio: `planned` trae { sets, reps, rest, tip? }
- * - `performed` queda para Sesión 4 (tracking de reps/kg reales)
- * - `variant_id` queda para Sesión 4
+ * - `performed` (Sesión 4): reps/kg reales medidos por el WorkoutPlayer
+ * - `variant_id` queda para Sesión 5+
  */
 export interface ExerciseLogItem {
   exercise_id: string;
   order: number;
   planned?: Record<string, unknown>;
+  performed?: {
+    sets: Array<LoggedSet | null>;
+    skipped?: boolean;
+    completed_at?: string;
+  };
+}
+
+/**
+ * Parsea el string `reps` del plan a número para pre-rellenar el input de log-set.
+ * Casos cubiertos:
+ *   "10" → 10
+ *   "8-10" → 10 (último número del rango)
+ *   "12-15 por lado" → 15
+ *   "30 seg" → 30 (segundos como número trackeable)
+ *   "" / undefined / "sin números" → 0
+ */
+export function parseRepsToNumber(reps: string | undefined): number {
+  if (!reps) return 0;
+  const matches = reps.match(/(\d+)/g);
+  if (!matches || matches.length === 0) return 0;
+  return Number(matches[matches.length - 1]);
+}
+
+/**
+ * Agrupa `loggedSets` (array plano en orden de ejecución) en arrays por ejercicio,
+ * respetando el plan (cada ejercicio tiene N series).
+ * Retorna una matriz: para cada ejercicio del plan, sus series logueadas.
+ */
+export function groupLoggedSetsByExercise(
+  loggedSets: Array<LoggedSet | null>,
+  exercises: Array<{ sets: number }>,
+): Array<Array<LoggedSet | null>> {
+  const result: Array<Array<LoggedSet | null>> = [];
+  let pos = 0;
+  for (const ex of exercises) {
+    const slice: Array<LoggedSet | null> = [];
+    for (let s = 0; s < ex.sets; s++) {
+      slice.push(loggedSets[pos] ?? null);
+      pos++;
+    }
+    result.push(slice);
+  }
+  return result;
 }
 
 export interface FinishSessionPayload {
@@ -33,6 +76,12 @@ export interface FinishSessionPayload {
   coachReason?: string;
   /** Opcional: "cache_hit" | "ai_generated" | "manual" — para analytics. */
   generationMethod?: string;
+  /**
+   * Opcional: sets logueados con reps/kg reales (Sesión 4).
+   * Se persiste en Zustand `CompletedSession.loggedSets`.
+   * El Supabase row los recibe estructurados dentro de `exercises[i].performed`.
+   */
+  loggedSets?: Array<LoggedSet | null>;
 }
 
 /**
@@ -60,6 +109,7 @@ export async function finishWorkoutSession(
     durationSeconds: payload.durationSeconds,
     exercisesCompleted: payload.exercisesCompleted,
     exercisesTotal: payload.exercisesTotal,
+    ...(payload.loggedSets && payload.loggedSets.length > 0 && { loggedSets: payload.loggedSets }),
   };
   addCompletedSession(session);
 
