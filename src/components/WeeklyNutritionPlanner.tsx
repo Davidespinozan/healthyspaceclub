@@ -11,14 +11,14 @@ const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 const DAY_NAMES      = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const DAY_NAMES_FULL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-const SETUP_DAYS: Array<{ value: number; label: string; sub?: string }> = [
-  { value: 0, label: 'Domingo',   sub: 'clásico día del súper' },
-  { value: 1, label: 'Lunes',     sub: 'inicio de semana' },
-  { value: 2, label: 'Martes' },
-  { value: 3, label: 'Miércoles' },
-  { value: 4, label: 'Jueves',    sub: 'mid-week refresh' },
-  { value: 5, label: 'Viernes' },
-  { value: 6, label: 'Sábado' },
+const SETUP_DAYS: Array<{ value: number; label: string; thumb: string; sub?: string }> = [
+  { value: 0, label: 'Domingo',   thumb: 'Do', sub: 'clásico día del súper' },
+  { value: 1, label: 'Lunes',     thumb: 'Lu', sub: 'inicio de semana' },
+  { value: 2, label: 'Martes',    thumb: 'Ma' },
+  { value: 3, label: 'Miércoles', thumb: 'Mi' },
+  { value: 4, label: 'Jueves',    thumb: 'Ju', sub: 'mid-week refresh' },
+  { value: 5, label: 'Viernes',   thumb: 'Vi' },
+  { value: 6, label: 'Sábado',    thumb: 'Sá' },
 ];
 
 const QUESTIONS: Array<{
@@ -317,7 +317,19 @@ export default function WeeklyNutritionPlanner() {
                 setPhase('questions');
               }}
             >
-              <div className="wz-option-thumb">📅</div>
+              <div
+                className="wz-option-thumb"
+                style={{
+                  fontFamily: 'Georgia, "Times New Roman", serif',
+                  fontStyle: 'italic',
+                  fontWeight: 600,
+                  fontSize: '20px',
+                  color: 'var(--amber)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {day.thumb}
+              </div>
               <div className="wz-option-body">
                 <div className="wz-option-label">{day.label}</div>
                 {day.sub && <div className="wz-option-sub">{day.sub}</div>}
@@ -504,11 +516,20 @@ export default function WeeklyNutritionPlanner() {
         {renderBody()}
         {renderCta()}
 
-        {step > 0 && (
-          <div className="wz-back">
-            <button className="wz-back-link" onClick={() => setStep(s => s - 1)}>← Anterior</button>
-          </div>
-        )}
+        <div className="wz-back">
+          <button
+            className="wz-back-link"
+            onClick={() => {
+              if (step === 0) {
+                setPhase('setup-day');
+              } else {
+                setStep(s => s - 1);
+              }
+            }}
+          >
+            ← Anterior
+          </button>
+        </div>
       </div>
     );
   }
