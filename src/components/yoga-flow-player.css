@@ -73,7 +73,7 @@
    ══════════════════════════════════════════════════════════ */
 
 .yfp-prep {
-  padding: 0 20px 40px;
+  padding: 0 20px 120px;
   max-width: 480px;
   margin: 0 auto;
 }
@@ -167,8 +167,10 @@
 }
 
 .yfp-cta-wrap {
-  position: sticky;
+  position: fixed;
   bottom: 0;
+  left: 0;
+  right: 0;
   background: var(--yfp-cream);
   padding: 14px 20px;
   padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
