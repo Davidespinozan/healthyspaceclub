@@ -386,10 +386,13 @@
   font-weight: 600;
 }
 .wnp2-regen {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 6px 11px;
+  padding: 6px 14px;
+  min-width: 44px;
+  min-height: 44px;
   background: rgba(246,242,234,0.1);
   border: 0.5px solid rgba(246,242,234,0.2);
   border-radius: 50px;

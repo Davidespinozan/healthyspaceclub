@@ -585,6 +585,7 @@ export default function WeeklyNutritionPlanner() {
             <button
               className="wnp2-regen"
               onClick={resetQuestionnaire}
+              aria-label="Regenerar plan semanal"
               title={`Regenerar plan (${regenLeft} restante${regenLeft === 1 ? '' : 's'})`}
             >
               <RefreshCw size={11} />

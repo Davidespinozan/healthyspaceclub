@@ -155,26 +155,39 @@ Responde SOLO este JSON, sin markdown:
   "razon": "..."
 }`;
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1200,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60_000);
 
-  if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
-  const data = await res.json();
-  const raw = data.content?.[0]?.text ?? '{}';
-  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-  return JSON.parse(cleaned);
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1200,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    const raw = data.content?.[0]?.text ?? '{}';
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    return JSON.parse(cleaned);
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') {
+      throw new Error('La generación tardó demasiado. Intenta de nuevo.');
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -276,26 +289,40 @@ Responde SOLO este JSON, sin markdown ni texto extra:
   "razon": "Por qué este flow hoy, citando al menos 2 piezas del contexto"
 }`;
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 3000,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60_000);
 
-  if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
-  const data = await res.json();
-  const raw = data.content?.[0]?.text ?? '{}';
-  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-  const yogaPlan = JSON.parse(cleaned) as YogaPlan;
+  let yogaPlan: YogaPlan;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    const raw = data.content?.[0]?.text ?? '{}';
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    yogaPlan = JSON.parse(cleaned) as YogaPlan;
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') {
+      throw new Error('La generación tardó demasiado. Intenta de nuevo.');
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   // Validación de duración total
   const actualDuration = yogaPlan.poses.reduce((sum, p) => sum + p.duration, 0);
@@ -991,6 +1018,8 @@ export default function DailyTrainer() {
               className={`dt2-regen${regenBlocked ? ' locked' : ''}`}
               onClick={handleRegenerate}
               disabled={regenBlocked}
+              aria-label="Regenerar rutina"
+              title="Regenerar rutina"
             >
               {regenBlocked ? <Lock size={14} /> : <RefreshCw size={14} />}
             </button>
@@ -1131,6 +1160,7 @@ export default function DailyTrainer() {
             className={`dt2-regen${regenBlocked ? ' locked' : ''}`}
             onClick={handleRegenerate}
             disabled={regenBlocked}
+            aria-label="Regenerar rutina"
             title={regenBlocked ? 'Ya regeneraste 3 veces hoy' : `Te quedan ${regensLeft} regeneraciones`}
           >
             {regenBlocked ? <Lock size={14} /> : <RefreshCw size={14} />}

@@ -25,6 +25,8 @@
   font-family: 'Montserrat', system-ui, sans-serif;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   animation: wpFadeIn 0.3s ease;
 }
 
@@ -40,6 +42,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 18px;
+  padding-top: calc(14px + env(safe-area-inset-top, 0px));
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   position: sticky;
   top: 0;
@@ -53,12 +56,15 @@
   color: var(--wp-txt);
   width: 36px;
   height: 36px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .wp-header-btn:hover {

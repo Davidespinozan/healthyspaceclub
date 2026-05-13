@@ -25,11 +25,21 @@ export async function getCachedWorkout(
   expectedSchema: 'yoga' | 'workout' = 'workout'
 ): Promise<CachedWorkout | null> {
   try {
-    const { data, error } = await supabase
+    // Race con timeout 5s — cache lookup debería ser instantáneo.
+    // Si Supabase tarda más, asumimos miss y dejamos que se genere fresh.
+    const queryPromise = supabase
       .from('workout_cache')
       .select('workout_json, hits')
       .eq('config_hash', configHash)
       .single();
+
+    const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) => {
+      setTimeout(() => resolve({ data: null, error: { message: 'cache lookup timeout' } }), 5000);
+    });
+
+    const { data, error } = (await Promise.race([queryPromise, timeoutPromise])) as
+      | { data: { workout_json: unknown; hits: number } | null; error: unknown }
+      | { data: null; error: { message: string } };
 
     if (error || !data) return null;
 
