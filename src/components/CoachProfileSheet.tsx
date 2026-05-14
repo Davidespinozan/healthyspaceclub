@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useAppStore } from '../store';
 import './coach-profile-sheet.css';
 
@@ -99,7 +100,7 @@ export default function CoachProfileSheet({ open, onClose, onReflect }: Props) {
   const showUpdatedMeta = !!(profileText && profileUpdatedAt);
   const reflectionWord = totalReflections === 1 ? 'reflexión' : 'reflexiones';
 
-  return (
+  return createPortal(
     <div className="cps-overlay" onClick={onClose}>
       <div className="cps-sheet" onClick={e => e.stopPropagation()}>
         <div className="cps-handle" />
@@ -172,6 +173,7 @@ export default function CoachProfileSheet({ open, onClose, onReflect }: Props) {
           5 preguntas para profundizar en la dimensión que menos has explorado.
         </p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

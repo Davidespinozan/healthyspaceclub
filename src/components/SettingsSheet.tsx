@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAppStore } from '../store';
 import './settings-sheet.css';
 
@@ -54,7 +55,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
 
   const daysLeft = trialDaysLeft();
 
-  return (
+  return createPortal(
     <div className="ss-overlay" onClick={onClose}>
       <div className="ss-sheet" onClick={e => e.stopPropagation()}>
         <div className="ss-handle" />
@@ -175,6 +176,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
 
         <p className="ss-version">HSC v1.2.0 · made with care in Valencia</p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

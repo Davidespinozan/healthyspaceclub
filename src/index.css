@@ -5268,7 +5268,10 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   -webkit-overflow-scrolling: touch;
 }
 .app-main > * { animation: tabFadeIn .18s ease; }
-@keyframes tabFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+/* NOTA: animación solo opacity — NO incluir transform. transform != none en un ancestro
+   crea un containing block para position: fixed descendientes, rompiendo overlays full-screen
+   (players, modals, sheets). Es el origen del bug que tuvimos con WorkoutPlayer y ExerciseDetailPopout. */
+@keyframes tabFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* ── Bottom Nav ── */
 .bnav {

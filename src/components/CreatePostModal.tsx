@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
@@ -94,7 +95,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="st-share-backdrop" onClick={() => { clearMedia(); onClose(); }}>
       <div className="st-share" onClick={e => e.stopPropagation()}>
         <div className="cl-modal-handle" />
@@ -136,6 +137,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
           {sharing ? 'Publicando...' : 'Compartir'}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

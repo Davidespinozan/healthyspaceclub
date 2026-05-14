@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check, RotateCcw, Maximize2, Volume2, VolumeX, Play } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Exercise, ExerciseVideo, Equipment } from '../types';
@@ -145,7 +146,7 @@ export default function ExerciseDetailPopout({
     else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
   }
 
-  return (
+  return createPortal(
     <div className="edp-backdrop" onClick={onClose}>
       <div className="edp-modal" onClick={e => e.stopPropagation()}>
         <button className="edp-close" onClick={onClose} aria-label="Cerrar">
@@ -346,6 +347,7 @@ export default function ExerciseDetailPopout({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
