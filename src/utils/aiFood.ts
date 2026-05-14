@@ -14,6 +14,10 @@ export async function analyzeFoodAI(description: string): Promise<AIFoodResult |
   const apiKey = import.meta.env.VITE_CLAUDE_API_KEY;
   if (!apiKey) return null;
 
+  // AbortController + 60s timeout — evita request colgada si Anthropic stalla.
+  // AbortError cae en el catch existente → return null (contrato de la función).
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60_000);
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -36,6 +40,7 @@ Comida: ${description}`,
           },
         ],
       }),
+      signal: controller.signal,
     });
 
     if (!res.ok) return null;
@@ -47,5 +52,7 @@ Comida: ${description}`,
     return JSON.parse(match[0]) as AIFoodResult;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }

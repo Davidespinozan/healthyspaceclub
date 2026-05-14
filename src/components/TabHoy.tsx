@@ -244,14 +244,19 @@ En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
       prompt = `Escribe UNA sola frase corta y motivadora para ${firstName || 'alguien'} que lleva ${streakCount} días de racha y quiere ${(obData as Record<string, unknown>)?.goal || 'mejorar su salud'}. Máximo 12 palabras. Sin saludo. Sin emojis. Directo.`;
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: isDay1 ? 200 : 60, messages: [{ role: 'user', content: prompt }] }),
+      signal: controller.signal,
     })
       .then(r => r.json())
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyBriefing({ date: today, message: t }); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => clearTimeout(timeoutId));
+    return () => { clearTimeout(timeoutId); controller.abort(); };
   }, [today]);
 
   const checkinDone = dailyCheckinDate === today && dailyCheckin !== null;
@@ -297,10 +302,13 @@ Genera UNA pregunta de reflexión profunda y específica para hoy. La pregunta d
 
 Responde SOLO la pregunta, nada más.`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 60, messages: [{ role: 'user', content: prompt }] }),
+      signal: controller.signal,
     })
       .then(r => r.json())
       .then(data => {
@@ -313,7 +321,9 @@ Responde SOLO la pregunta, nada más.`;
           setAiQuestion({ emoji: '🤖', title: leastDim.title, q });
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => clearTimeout(timeoutId));
+    return () => { clearTimeout(timeoutId); controller.abort(); };
   }, [today]);
 
   const todayDimensions = aiQuestion ? [...fixedDimensions, aiQuestion] : fixedDimensions;
@@ -332,14 +342,19 @@ Escribe una observación de 2-3 líneas. Debe:
 - Terminar con una observación que invite a la acción mañana
 - En español, tono de coach cercano. Sin emojis.`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 200, messages: [{ role: 'user', content: reviewPrompt }] }),
+      signal: controller.signal,
     })
       .then(r => r.json())
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyReview(t); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => clearTimeout(timeoutId));
+    return () => { clearTimeout(timeoutId); controller.abort(); };
   }, [allAnswered]);
 
   const [miniReview, setMiniReview] = useState<string | null>(null);
@@ -355,14 +370,19 @@ Escribe un mensaje que empiece con "Llevas 5 días. Esto es lo que ya sé de ti:
 
 En español. Sin emojis. Tono de coach que ya te conoce.`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 250, messages: [{ role: 'user', content: miniPrompt }] }),
+      signal: controller.signal,
     })
       .then(r => r.json())
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setMiniReview(t); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => clearTimeout(timeoutId));
+    return () => { clearTimeout(timeoutId); controller.abort(); };
   }, [daysSinceStart]);
 
   const [weeklyHSMReview, setWeeklyHSMReview] = useState<string | null>(null);
@@ -388,14 +408,19 @@ Genera un resumen semanal de 4-5 líneas que incluya:
 
 En español, tono de coach. Sin emojis. Directo.`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, messages: [{ role: 'user', content: weekPrompt }] }),
+      signal: controller.signal,
     })
       .then(r => r.json())
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setWeeklyHSMReview(t); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => clearTimeout(timeoutId));
+    return () => { clearTimeout(timeoutId); controller.abort(); };
   }, [isSunday]);
 
   useEffect(() => {
@@ -422,14 +447,19 @@ Escribe un párrafo de máximo 200 palabras que resuma:
 
 Este perfil será usado por el coach IA para personalizar sus respuestas. Escribe en tercera persona ("El usuario..."). Sin emojis. Profesional pero humano.`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, messages: [{ role: 'user', content: profilePrompt }] }),
+      signal: controller.signal,
     })
       .then(r => r.json())
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setHSMProfile(t); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => clearTimeout(timeoutId));
+    return () => { clearTimeout(timeoutId); controller.abort(); };
   }, [isSunday]);
 
   function mealKey(i: number) { return `meal-${today}-${i}`; }

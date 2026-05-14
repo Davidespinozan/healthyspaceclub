@@ -26,22 +26,38 @@ DATOS DE LA SEMANA:
 
 Sé directo, honesto y motivador. Menciona 1 logro concreto y 1 área de enfoque para la próxima semana. Máximo 3 oraciones. No uses emojis.`;
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 200,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
-  const data = await res.json();
-  return data.content?.[0]?.text ?? '';
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60_000);
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 200,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`API ${res.status}: ${await res.text()}`);
+    }
+    const data = await res.json();
+    return data.content?.[0]?.text ?? '';
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') {
+      throw new Error('El resumen semanal tardó demasiado. Intenta de nuevo.');
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export default function WeeklyReview({ onClose, onPlanNextWeek }: {
@@ -96,7 +112,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
       streak: streakCount, weightChange, completedModules, goal,
     })
       .then(msg => setMessage(msg))
-      .catch(() => setMessage(''))
+      .catch((e) => setMessage(e instanceof Error ? e.message : ''))
       .finally(() => setLoading(false));
   }, []);
 

@@ -153,20 +153,32 @@ async function askCoach(
   messages: { role: 'user' | 'assistant'; content: string }[],
   systemPrompt: string
 ): Promise<string> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': API_KEY, 'anthropic-version': '2023-06-01',
-      'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001', max_tokens: 512, system: systemPrompt,
-      messages: messages.map(m => ({ role: m.role, content: m.content })),
-    }),
-  });
-  if (!res.ok) throw new Error('API error');
-  const data = await res.json();
-  return data.content?.[0]?.text ?? 'No pude responder, intenta de nuevo.';
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60_000);
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': API_KEY, 'anthropic-version': '2023-06-01',
+        'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001', max_tokens: 512, system: systemPrompt,
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error('El coach tuvo un problema. Intenta de nuevo.');
+    const data = await res.json();
+    return data.content?.[0]?.text ?? 'No pude responder, intenta de nuevo.';
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') {
+      throw new Error('El coach no respondió a tiempo. Intenta de nuevo.');
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export default function TabCoach() {
@@ -215,8 +227,8 @@ export default function TabCoach() {
         buildSystemPrompt(state)
       );
       addCoachMessage('assistant', reply);
-    } catch {
-      addCoachMessage('assistant', 'Hubo un error, intenta de nuevo.');
+    } catch (e) {
+      addCoachMessage('assistant', e instanceof Error ? e.message : 'Hubo un error, intenta de nuevo.');
     } finally {
       setLoading(false);
     }

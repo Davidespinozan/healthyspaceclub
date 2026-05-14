@@ -168,6 +168,8 @@ export default function TuEspacioFlow({ onClose }: Props) {
       return;
     }
     const recentSummary = last7Responses.slice(-10).map(r => `${r.dimension}: "${r.response}"`).join('\n');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
@@ -175,6 +177,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
         model: 'claude-haiku-4-5-20251001', max_tokens: 60,
         messages: [{ role: 'user', content: `Basándote en estas reflexiones recientes:\n\n${recentSummary}\n\nGenera UNA pregunta de reflexión profunda. Debe conectar con algo concreto que el usuario escribió, ser de la dimensión que menos ha explorado, empezar con "¿", máximo 15 palabras. Responde SOLO la pregunta.` }],
       }),
+      signal: controller.signal,
     })
       .then(r => r.json())
       .then(data => {
@@ -187,7 +190,9 @@ export default function TuEspacioFlow({ onClose }: Props) {
           setAiQuestion({ emoji: '🤖', title: leastDim.title, color: leastDim.color, q });
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => clearTimeout(timeoutId));
+    return () => { clearTimeout(timeoutId); controller.abort(); };
   }, [today]);
 
   const allDimensions = aiQuestion ? [...fixedDimensions, aiQuestion] : fixedDimensions;
@@ -210,6 +215,8 @@ export default function TuEspacioFlow({ onClose }: Props) {
     if (!allDone || dailyReview || !API_KEY) return;
     setReviewLoading(true);
     const todaySummary = todayResponses.map(r => `${r.dimension}: "${r.response}"`).join('\n');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
@@ -217,11 +224,13 @@ export default function TuEspacioFlow({ onClose }: Props) {
         model: 'claude-haiku-4-5-20251001', max_tokens: 200,
         messages: [{ role: 'user', content: `El usuario respondió estas reflexiones hoy:\n\n${todaySummary}\n\nEscribe una observación de 2-3 líneas. Debe:\n- Referenciar algo CONCRETO de lo que escribió (cita una palabra o frase)\n- Conectar dos respuestas entre sí si hay relación\n- Terminar con una observación que invite a la acción mañana\n- En español, tono de coach cercano. Sin emojis.` }],
       }),
+      signal: controller.signal,
     })
       .then(r => r.json())
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyReview(t); })
       .catch(() => {})
-      .finally(() => setReviewLoading(false));
+      .finally(() => { clearTimeout(timeoutId); setReviewLoading(false); });
+    return () => { clearTimeout(timeoutId); controller.abort(); };
   }, [allDone]);
 
   // Focus textarea when question changes
