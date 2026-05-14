@@ -13,6 +13,7 @@
   --warm:   #F0EBE0;
   --sand:   #E8E1D3;
   --amber:  #BFA065;
+  --amber-deep: #7C6232; /* WCAG AA — 5.15:1 sobre cream. Para texto mostaza accesible */
   --terra:  #A8864E;
   --gold:   #BFA065;
   --sky:    #EDE9E0;
@@ -44,6 +45,18 @@ html {
 
 /* Prevent iOS auto-zoom on input focus (requires font-size >= 16px) */
 input, textarea, select { font-size: 16px !important; }
+
+/* Accesibilidad: respetar prefers-reduced-motion del SO.
+   Bloque global — neutraliza TODA animación/transición (spinners, fades,
+   slides) sin tener que wrappear cada @keyframes individualmente. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 body {
   font-family: 'Montserrat', sans-serif;

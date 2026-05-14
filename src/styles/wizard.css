@@ -32,7 +32,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--amber);
+  color: var(--amber-deep); /* WCAG AA 5.15:1 sobre cream */
   margin: 0 0 6px;
 }
 
@@ -48,7 +48,7 @@
 .wz-title em {
   font-style: italic;
   font-weight: 600;
-  color: var(--amber);
+  color: var(--amber-deep); /* WCAG AA — coherente con .wz-eyebrow */
 }
 
 .wz-subtitle {
