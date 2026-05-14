@@ -57,6 +57,22 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     setSharePreview(null);
   }
 
+  // Extrae mensaje legible de Error JS, PostgrestError o StorageError de Supabase.
+  // Supabase devuelve objetos planos { message, code, details, hint } — no Error.
+  function extractErrorMessage(e: unknown): string {
+    if (e instanceof Error) return e.message;
+    if (e && typeof e === 'object') {
+      const obj = e as Record<string, unknown>;
+      if (typeof obj.message === 'string' && obj.message.length > 0) {
+        const parts: string[] = [obj.message];
+        if (typeof obj.code === 'string' && obj.code.length > 0) parts.push(`(code: ${obj.code})`);
+        if (typeof obj.hint === 'string' && obj.hint.length > 0) parts.push(`hint: ${obj.hint}`);
+        return parts.join(' ');
+      }
+    }
+    return 'Error desconocido';
+  }
+
   async function handleShare() {
     if (sharing) return;
     setSharing(true);
@@ -78,7 +94,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
         const { data } = supabase.storage.from('club').getPublicUrl(path);
         photoUrl = data.publicUrl;
       } catch (e) {
-        imageError = e instanceof Error ? e.message : 'Error subiendo imagen';
+        imageError = extractErrorMessage(e);
         console.error('[CreatePostModal] upload failed:', e);
       }
     }
@@ -102,7 +118,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
       clearMedia();
       onClose();
     } catch (e) {
-      alert(`No se pudo publicar: ${e instanceof Error ? e.message : 'Error desconocido'}`);
+      alert(`No se pudo publicar: ${extractErrorMessage(e)}`);
       console.error('[CreatePostModal] insert failed:', e);
     } finally {
       setSharing(false);

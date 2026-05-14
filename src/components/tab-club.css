@@ -320,3 +320,11 @@
     font-size: 24px;
   }
 }
+
+/* Desktop ≥1024px: sidebar de 220px ocupa el left edge — desplazar FAB para que no quede oculto detrás del sidebar */
+@media (min-width: 1024px) {
+  .clb-fab {
+    left: calc(220px + 32px);
+    z-index: 200;
+  }
+}
