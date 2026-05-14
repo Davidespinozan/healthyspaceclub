@@ -10,10 +10,40 @@ import './tab-tu-v3.css';
 
 const MILESTONE_STEPS = [3, 7, 14, 30, 90, 365];
 
+const MODALITY_EMOJI: Record<string, string> = {
+  fuerza: '💪',
+  yoga: '🧘',
+  cardio: '🏃',
+};
+
+function formatWorkoutDate(iso: string): string {
+  const now = new Date();
+  const then = new Date(iso);
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  if (sameDay(now, then)) return 'Hoy';
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (sameDay(yesterday, then)) return 'Ayer';
+  const diffMs = now.getTime() - then.getTime();
+  const days = Math.floor(diffMs / 86400000);
+  if (days < 7) return `Hace ${days} días`;
+  if (days < 30) {
+    const weeks = Math.floor(days / 7);
+    return weeks === 1 ? 'Hace 1 semana' : `Hace ${weeks} semanas`;
+  }
+  if (days < 365) {
+    const months = Math.floor(days / 30);
+    return months === 1 ? 'Hace 1 mes' : `Hace ${months} meses`;
+  }
+  const years = Math.floor(days / 365);
+  return years === 1 ? 'Hace 1 año' : `Hace ${years} años`;
+}
+
 export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
     userName, setUserName, streakCount,
-    hsmProfile,
+    hsmProfile, completedSessions,
   } = useAppStore();
 
   const userId = useCurrentUserId();
@@ -28,6 +58,20 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const [saving, setSaving] = useState(false);
   const [coachOpen, setCoachOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'posts' | 'rutinas' | 'comidas'>('posts');
+
+  const sortedSessions = useMemo(
+    () => [...(completedSessions ?? [])].sort(
+      (a, b) => new Date(b.completedAtIso).getTime() - new Date(a.completedAtIso).getTime()
+    ),
+    [completedSessions]
+  );
+
+  const foodLog = useAppStore(s => s.foodLog);
+  const sortedFoodLog = useMemo(
+    () => [...(foodLog ?? [])].sort((a, b) => b.id.localeCompare(a.id)),
+    [foodLog]
+  );
 
   useEffect(() => {
     (async () => {
@@ -263,26 +307,120 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
 
       {/* F. Tabs */}
       <div className="tt3-tabs">
-        <button type="button" className="tt3-tab active">Posts</button>
-        <button type="button" className="tt3-tab disabled" disabled>Rutinas</button>
-        <button type="button" className="tt3-tab disabled" disabled>Comidas</button>
+        <button
+          type="button"
+          className={`tt3-tab${activeTab === 'posts' ? ' active' : ''}`}
+          onClick={() => setActiveTab('posts')}
+        >
+          Posts
+        </button>
+        <button
+          type="button"
+          className={`tt3-tab${activeTab === 'rutinas' ? ' active' : ''}`}
+          onClick={() => setActiveTab('rutinas')}
+        >
+          Rutinas
+        </button>
+        <button
+          type="button"
+          className={`tt3-tab${activeTab === 'comidas' ? ' active' : ''}`}
+          onClick={() => setActiveTab('comidas')}
+        >
+          Comidas
+        </button>
       </div>
 
-      {/* G. Grid 3x3 */}
-      <div className="tt3-grid">
-        {userPosts.length === 0 ? (
-          <div className="tt3-grid-empty" style={{ gridColumn: '1 / -1' }}>
-            <p className="tt3-grid-empty-text">Aún no has compartido nada.</p>
-            <p className="tt3-grid-empty-sub">Comparte tu primer logro en el Club.</p>
-          </div>
-        ) : (
-          userPosts.map(post => (
-            <div key={post.id} className="tt3-grid-item">
-              <img src={post.photo_url} alt="" loading="lazy" />
+      {/* G. Grid — Posts o Rutinas según activeTab */}
+      {activeTab === 'posts' && (
+        <div className="tt3-grid">
+          {userPosts.length === 0 ? (
+            <div className="tt3-grid-empty" style={{ gridColumn: '1 / -1' }}>
+              <p className="tt3-grid-empty-text">Aún no has compartido nada.</p>
+              <p className="tt3-grid-empty-sub">Comparte tu primer logro en el Club.</p>
             </div>
-          ))
-        )}
-      </div>
+          ) : (
+            userPosts.map(post => (
+              <div key={post.id} className="tt3-grid-item">
+                <img src={post.photo_url} alt="" loading="lazy" />
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeTab === 'rutinas' && (
+        <div className="tt3-routines">
+          {sortedSessions.length === 0 ? (
+            <div className="tt3-grid-empty">
+              <p className="tt3-grid-empty-text">Aún no has completado entrenamientos.</p>
+              <p className="tt3-grid-empty-sub">
+                Genera tu primera rutina desde el Trainer y completala para verla aquí.
+              </p>
+            </div>
+          ) : (
+            sortedSessions.map((s, i) => {
+              const minutes = Math.max(1, Math.round((s.durationSeconds || 0) / 60));
+              const modalityLabel =
+                s.modality === 'fuerza' ? 'Fuerza' :
+                s.modality === 'yoga' ? 'Yoga' :
+                s.modality === 'cardio' ? 'Cardio' :
+                String(s.modality);
+              return (
+                <div key={`${s.completedAtIso}-${i}`} className="tt3-routine">
+                  <div className="tt3-routine-emoji">{MODALITY_EMOJI[s.modality] ?? '🏋️'}</div>
+                  <div className="tt3-routine-body">
+                    <div className="tt3-routine-date">{formatWorkoutDate(s.completedAtIso)}</div>
+                    <div className="tt3-routine-meta">{modalityLabel} · {minutes} min</div>
+                  </div>
+                  <div className="tt3-routine-stats">
+                    {s.exercisesCompleted}/{s.exercisesTotal}
+                    <span className="tt3-routine-stats-label">ejercicios</span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {activeTab === 'comidas' && (
+        <div className="tt3-routines">
+          {sortedFoodLog.length === 0 ? (
+            <div className="tt3-grid-empty">
+              <p className="tt3-grid-empty-text">Aún no has registrado comidas.</p>
+              <p className="tt3-grid-empty-sub">
+                Empieza a registrar comidas desde el Hoy.
+              </p>
+            </div>
+          ) : (
+            sortedFoodLog.map(entry => {
+              const hasMacros = entry.kcal > 0 || entry.prot > 0 || entry.carbs > 0 || entry.fat > 0;
+              return (
+                <div key={entry.id} className="tt3-routine">
+                  <div className="tt3-routine-emoji">🍽️</div>
+                  <div className="tt3-routine-body">
+                    <div className="tt3-routine-date">{formatWorkoutDate(entry.date)}</div>
+                    <div className="tt3-routine-meta">{entry.desc}</div>
+                    {hasMacros && (
+                      <div className="tt3-routine-macros">
+                        {entry.kcal > 0 && <span>{entry.kcal} kcal</span>}
+                        {entry.prot > 0 && <span>P {entry.prot}g</span>}
+                        {entry.carbs > 0 && <span>C {entry.carbs}g</span>}
+                        {entry.fat > 0 && <span>G {entry.fat}g</span>}
+                      </div>
+                    )}
+                  </div>
+                  {entry.source === 'ai' && (
+                    <div className="tt3-routine-stats">
+                      <span className="tt3-routine-stats-label">IA</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
 
       <CoachProfileSheet
         open={coachOpen}
