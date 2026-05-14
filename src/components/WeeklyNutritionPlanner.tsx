@@ -4,9 +4,8 @@ import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { RefreshCw, ShoppingCart, Calendar, Lock } from 'lucide-react';
+import { callAI } from '../utils/aiProxy';
 import './weekly-nutrition-planner-v2.css';
-
-const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
 const DAY_NAMES      = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const DAY_NAMES_FULL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -103,7 +102,6 @@ async function generateWeeklyPlan(params: {
   userName: string;
   answers: Record<string, string>;
 }): Promise<{ selectedDays: number[]; shoppingList: string[]; nota: string }> {
-  if (!API_KEY) throw new Error('API no disponible. Intenta más tarde.');
   const mealList = buildMealList(params.planKey);
 
   const goalLabel: Record<string, string> = {
@@ -145,27 +143,10 @@ Responde SOLO este JSON, sin markdown, sin texto extra:
   const timeoutId = setTimeout(() => controller.abort(), 60_000);
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1200,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: controller.signal,
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`API ${res.status}: ${errText}`);
-    }
-    const data = await res.json();
+    const data = await callAI(
+      { max_tokens: 1200, messages: [{ role: 'user', content: prompt }] },
+      controller.signal,
+    );
     const raw = data.content?.[0]?.text ?? '{}';
     const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
     return JSON.parse(cleaned);

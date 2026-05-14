@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../store';
-
-const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
+import { callAI } from '../utils/aiProxy';
 
 const QUICK_CHIPS = [
   '¿Puedo comer esto?',
@@ -156,20 +155,14 @@ async function askCoach(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60_000);
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': API_KEY, 'anthropic-version': '2023-06-01',
-        'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 512, system: systemPrompt,
+    const data = await callAI(
+      {
+        max_tokens: 512,
+        system: systemPrompt,
         messages: messages.map(m => ({ role: m.role, content: m.content })),
-      }),
-      signal: controller.signal,
-    });
-    if (!res.ok) throw new Error('El coach tuvo un problema. Intenta de nuevo.');
-    const data = await res.json();
+      },
+      controller.signal,
+    );
     return data.content?.[0]?.text ?? 'No pude responder, intenta de nuevo.';
   } catch (e) {
     if ((e as Error).name === 'AbortError') {
@@ -206,13 +199,6 @@ export default function TabCoach() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
-
-  if (!API_KEY) return (
-    <div className="tc-wrap">
-      <div className="tc-header"><div className="tc-header-title">Tu coach personal</div></div>
-      <div className="tc-empty">Configura VITE_CLAUDE_API_KEY para activar el coach.</div>
-    </div>
-  );
 
   async function send(text: string) {
     addCoachMessage('user', text);

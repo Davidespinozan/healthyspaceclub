@@ -26,6 +26,7 @@ import {
 } from '../utils/workoutValidation';
 import { stretchToTargetDuration } from '../utils/yogaPostProcess';
 import { finishWorkoutSession, groupLoggedSetsByExercise, type ExerciseLogItem } from '../utils/workoutLogger';
+import { callAI } from '../utils/aiProxy';
 import type {
   Exercise,
   Equipment,
@@ -45,8 +46,6 @@ import './daily-trainer-v2.css';
 // bundle inicial de DashboardScreen — solo se cargan al abrir un player.
 const YogaFlowPlayer = lazy(() => import('./YogaFlowPlayer'));
 const WorkoutPlayer = lazy(() => import('./WorkoutPlayer'));
-
-const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
 const DAY_NAMES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 
@@ -104,7 +103,6 @@ async function orchestrateWorkout(params: {
   context: string;
   userProfile?: UserProfile;
 }): Promise<CachedWorkout & { razon?: string }> {
-  if (!API_KEY) throw new Error('API no disponible. Intenta más tarde.');
   const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context, userProfile } = params;
   const profileBlock = buildUserProfileBlock(userProfile);
 
@@ -163,24 +161,10 @@ Responde SOLO este JSON, sin markdown:
   const timeoutId = setTimeout(() => controller.abort(), 60_000);
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1200,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: controller.signal,
-    });
-
-    if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
-    const data = await res.json();
+    const data = await callAI(
+      { max_tokens: 1200, messages: [{ role: 'user', content: prompt }] },
+      controller.signal,
+    );
     const raw = data.content?.[0]?.text ?? '{}';
     const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
     return JSON.parse(cleaned);
@@ -206,7 +190,6 @@ async function orchestratePowerVinyasa(params: {
   painArea?: string;
   userProfile?: UserProfile;
 }): Promise<YogaPlan> {
-  if (!API_KEY) throw new Error('API no disponible. Intenta más tarde.');
   const profileBlock = buildUserProfileBlock(params.userProfile);
 
   const candidatesInfo = params.candidates.map(p =>
@@ -298,24 +281,10 @@ Responde SOLO este JSON, sin markdown ni texto extra:
 
   let yogaPlan: YogaPlan;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 3000,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: controller.signal,
-    });
-
-    if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`);
-    const data = await res.json();
+    const data = await callAI(
+      { max_tokens: 3000, messages: [{ role: 'user', content: prompt }] },
+      controller.signal,
+    );
     const raw = data.content?.[0]?.text ?? '{}';
     const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
     yogaPlan = JSON.parse(cleaned) as YogaPlan;

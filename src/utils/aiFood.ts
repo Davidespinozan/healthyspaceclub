@@ -1,3 +1,5 @@
+import { callAI } from './aiProxy';
+
 export interface AIFoodResult {
   kcal: number;
   prot: number;
@@ -7,28 +9,18 @@ export interface AIFoodResult {
 }
 
 /**
- * Analiza una descripción de comida usando Claude API.
- * Requiere VITE_CLAUDE_API_KEY en el .env
+ * Analiza una descripción de comida usando Claude vía el Edge Function ai-proxy.
+ * La API key de Anthropic vive server-side — el cliente solo llama al proxy.
+ * Mantiene el contrato `AIFoodResult | null`: cualquier fallo → null.
  */
 export async function analyzeFoodAI(description: string): Promise<AIFoodResult | null> {
-  const apiKey = import.meta.env.VITE_CLAUDE_API_KEY;
-  if (!apiKey) return null;
-
-  // AbortController + 60s timeout — evita request colgada si Anthropic stalla.
-  // AbortError cae en el catch existente → return null (contrato de la función).
+  // AbortController + 60s timeout — libera al cliente si el proxy/Anthropic stalla.
+  // AbortError (y cualquier otro error) cae en el catch → return null.
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60_000);
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+    const data = await callAI(
+      {
         max_tokens: 256,
         messages: [
           {
@@ -39,12 +31,10 @@ export async function analyzeFoodAI(description: string): Promise<AIFoodResult |
 Comida: ${description}`,
           },
         ],
-      }),
-      signal: controller.signal,
-    });
+      },
+      controller.signal,
+    );
 
-    if (!res.ok) return null;
-    const data = await res.json();
     const text: string = data.content?.[0]?.text ?? '';
     // Extraer JSON aunque haya texto adicional
     const match = text.match(/\{[\s\S]*\}/);

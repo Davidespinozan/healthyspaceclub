@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { ChevronRight } from 'lucide-react';
-
-const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
+import { callAI } from '../utils/aiProxy';
 
 async function generateReviewMessage(params: {
   userName: string;
@@ -13,7 +12,6 @@ async function generateReviewMessage(params: {
   completedModules: number;
   goal: string;
 }): Promise<string> {
-  if (!API_KEY) return 'Tu resumen semanal estará disponible cuando se configure la API.';
   const prompt = `Eres un coach de vida. Escribe un resumen semanal personalizado y motivador en 2-3 oraciones para ${params.userName || 'el usuario'}.
 
 DATOS DE LA SEMANA:
@@ -30,25 +28,10 @@ Sé directo, honesto y motivador. Menciona 1 logro concreto y 1 área de enfoque
   const timeoutId = setTimeout(() => controller.abort(), 60_000);
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      throw new Error(`API ${res.status}: ${await res.text()}`);
-    }
-    const data = await res.json();
+    const data = await callAI(
+      { max_tokens: 200, messages: [{ role: 'user', content: prompt }] },
+      controller.signal,
+    );
     return data.content?.[0]?.text ?? '';
   } catch (e) {
     if ((e as Error).name === 'AbortError') {

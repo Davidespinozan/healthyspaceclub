@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../store';
-
-const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
+import { callAI } from '../utils/aiProxy';
 
 /* ── HSM Question Bank — 10 per dimension, 100 total ── */
 const HSM_BANK: { emoji: string; title: string; color: string; questions: string[] }[] = [
@@ -138,7 +137,9 @@ interface Props {
 }
 
 export default function TuEspacioFlow({ onClose }: Props) {
-  const { dailyHSMResponses, addHSMResponse } = useAppStore();
+  const { dailyHSMResponses, addHSMResponse, userPlan, trialEndsAt } = useAppStore();
+  const isPlanActive = userPlan && userPlan !== 'none' &&
+    (!trialEndsAt || new Date(trialEndsAt) > new Date());
   const today = new Date().toISOString().split('T')[0];
   const todayResponses = dailyHSMResponses.filter(r => r.date === today);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -159,7 +160,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
 
   useEffect(() => {
     if (aiQuestion) return;
-    if (!API_KEY || last7Responses.length < 3) {
+    if (!isPlanActive || last7Responses.length < 3) {
       const usedTitles = fixedDimensions.map(d => d.title);
       const unused = HSM_BANK.filter(d => !usedTitles.includes(d.title));
       const pick = unused[todayDayIndex % unused.length];
@@ -170,16 +171,10 @@ export default function TuEspacioFlow({ onClose }: Props) {
     const recentSummary = last7Responses.slice(-10).map(r => `${r.dimension}: "${r.response}"`).join('\n');
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
-    fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 60,
-        messages: [{ role: 'user', content: `Basándote en estas reflexiones recientes:\n\n${recentSummary}\n\nGenera UNA pregunta de reflexión profunda. Debe conectar con algo concreto que el usuario escribió, ser de la dimensión que menos ha explorado, empezar con "¿", máximo 15 palabras. Responde SOLO la pregunta.` }],
-      }),
-      signal: controller.signal,
-    })
-      .then(r => r.json())
+    callAI({
+      max_tokens: 60,
+      messages: [{ role: 'user', content: `Basándote en estas reflexiones recientes:\n\n${recentSummary}\n\nGenera UNA pregunta de reflexión profunda. Debe conectar con algo concreto que el usuario escribió, ser de la dimensión que menos ha explorado, empezar con "¿", máximo 15 palabras. Responde SOLO la pregunta.` }],
+    }, controller.signal)
       .then(data => {
         const q = data.content?.[0]?.text?.trim() ?? '';
         if (q) {
@@ -212,21 +207,15 @@ export default function TuEspacioFlow({ onClose }: Props) {
 
   // Generate review when all done
   useEffect(() => {
-    if (!allDone || dailyReview || !API_KEY) return;
+    if (!allDone || dailyReview || !isPlanActive) return;
     setReviewLoading(true);
     const todaySummary = todayResponses.map(r => `${r.dimension}: "${r.response}"`).join('\n');
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
-    fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 200,
-        messages: [{ role: 'user', content: `El usuario respondió estas reflexiones hoy:\n\n${todaySummary}\n\nEscribe una observación de 2-3 líneas. Debe:\n- Referenciar algo CONCRETO de lo que escribió (cita una palabra o frase)\n- Conectar dos respuestas entre sí si hay relación\n- Terminar con una observación que invite a la acción mañana\n- En español, tono de coach cercano. Sin emojis.` }],
-      }),
-      signal: controller.signal,
-    })
-      .then(r => r.json())
+    callAI({
+      max_tokens: 200,
+      messages: [{ role: 'user', content: `El usuario respondió estas reflexiones hoy:\n\n${todaySummary}\n\nEscribe una observación de 2-3 líneas. Debe:\n- Referenciar algo CONCRETO de lo que escribió (cita una palabra o frase)\n- Conectar dos respuestas entre sí si hay relación\n- Terminar con una observación que invite a la acción mañana\n- En español, tono de coach cercano. Sin emojis.` }],
+    }, controller.signal)
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyReview(t); })
       .catch(() => {})
       .finally(() => { clearTimeout(timeoutId); setReviewLoading(false); });

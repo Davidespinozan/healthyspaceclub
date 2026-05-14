@@ -10,9 +10,8 @@ import { exercises as exerciseBank } from '../data/exercises';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 import type { Exercise } from '../types';
 import { Logo } from './Logo';
+import { callAI } from '../utils/aiProxy';
 import './tab-hoy-v3.css';
-
-const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
 /* ── HSM Question Bank — 10 per dimension, 100 total ── */
 const HSM_BANK: { emoji: string; title: string; questions: string[] }[] = [
@@ -157,7 +156,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     lastStreakMilestone, setLastStreakMilestone,
     nightCheckIn,
     hsmProfile, setHSMProfile,
+    userPlan, trialEndsAt,
   } = useAppStore();
+
+  const isPlanActive = userPlan && userPlan !== 'none' &&
+    (!trialEndsAt || new Date(trialEndsAt) > new Date());
 
   const [showEspacioFlow, setShowEspacioFlow] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<{
@@ -225,7 +228,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const daysSinceStart = userStartDate ? Math.floor((Date.now() - new Date(userStartDate).getTime()) / 86400000) : 0;
 
   useEffect(() => {
-    if (dailyBriefing?.date === today || !API_KEY) return;
+    if (dailyBriefing?.date === today || !isPlanActive) return;
 
     let prompt: string;
     if (isDay1) {
@@ -246,13 +249,7 @@ En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
-    fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: isDay1 ? 200 : 60, messages: [{ role: 'user', content: prompt }] }),
-      signal: controller.signal,
-    })
-      .then(r => r.json())
+    callAI({ max_tokens: isDay1 ? 200 : 60, messages: [{ role: 'user', content: prompt }] }, controller.signal)
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyBriefing({ date: today, message: t }); })
       .catch(() => {})
       .finally(() => clearTimeout(timeoutId));
@@ -280,7 +277,7 @@ En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
   const todayResponses = dailyHSMResponses.filter(r => r.date === today);
 
   useEffect(() => {
-    if (!API_KEY || aiQuestion) return;
+    if (!isPlanActive || aiQuestion) return;
     if (last7Responses.length < 3) {
       const usedTitles = fixedDimensions.map(d => d.title);
       const unused = HSM_BANK.filter(d => !usedTitles.includes(d.title));
@@ -304,13 +301,7 @@ Responde SOLO la pregunta, nada más.`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
-    fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 60, messages: [{ role: 'user', content: prompt }] }),
-      signal: controller.signal,
-    })
-      .then(r => r.json())
+    callAI({ max_tokens: 60, messages: [{ role: 'user', content: prompt }] }, controller.signal)
       .then(data => {
         const q = data.content?.[0]?.text?.trim() ?? '';
         if (q) {
@@ -330,7 +321,7 @@ Responde SOLO la pregunta, nada más.`;
 
   const allAnswered = todayDimensions.length > 0 && todayDimensions.every(d => todayResponses.some(r => r.dimension === d.title));
   useEffect(() => {
-    if (!allAnswered || dailyReview || !API_KEY) return;
+    if (!allAnswered || dailyReview || !isPlanActive) return;
     const todaySummary = todayResponses.map(r => `${r.dimension}: "${r.response}"`).join('\n');
     const reviewPrompt = `El usuario respondió estas reflexiones hoy:
 
@@ -344,13 +335,7 @@ Escribe una observación de 2-3 líneas. Debe:
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
-    fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 200, messages: [{ role: 'user', content: reviewPrompt }] }),
-      signal: controller.signal,
-    })
-      .then(r => r.json())
+    callAI({ max_tokens: 200, messages: [{ role: 'user', content: reviewPrompt }] }, controller.signal)
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyReview(t); })
       .catch(() => {})
       .finally(() => clearTimeout(timeoutId));
@@ -359,7 +344,7 @@ Escribe una observación de 2-3 líneas. Debe:
 
   const [miniReview, setMiniReview] = useState<string | null>(null);
   useEffect(() => {
-    if (daysSinceStart !== 5 || !API_KEY || miniReview) return;
+    if (daysSinceStart !== 5 || !isPlanActive || miniReview) return;
     if (dailyHSMResponses.length < 5) return;
     const allSoFar = dailyHSMResponses.slice(-15).map(r => `${r.dimension}: "${r.response}"`).join('\n');
     const miniPrompt = `Un usuario lleva 5 días usando la app Healthy Space Method. Estas son sus reflexiones:
@@ -372,13 +357,7 @@ En español. Sin emojis. Tono de coach que ya te conoce.`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
-    fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 250, messages: [{ role: 'user', content: miniPrompt }] }),
-      signal: controller.signal,
-    })
-      .then(r => r.json())
+    callAI({ max_tokens: 250, messages: [{ role: 'user', content: miniPrompt }] }, controller.signal)
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setMiniReview(t); })
       .catch(() => {})
       .finally(() => clearTimeout(timeoutId));
@@ -387,7 +366,7 @@ En español. Sin emojis. Tono de coach que ya te conoce.`;
 
   const [weeklyHSMReview, setWeeklyHSMReview] = useState<string | null>(null);
   useEffect(() => {
-    if (!isSunday || !API_KEY || weeklyHSMReview) return;
+    if (!isSunday || !isPlanActive || weeklyHSMReview) return;
     if (last7Responses.length < 5) return;
     const weekSummary = last7Responses.map(r => `[${r.date}] ${r.dimension}: "${r.response}"`).join('\n');
     const dimCounts: Record<string, number> = {};
@@ -410,13 +389,7 @@ En español, tono de coach. Sin emojis. Directo.`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
-    fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, messages: [{ role: 'user', content: weekPrompt }] }),
-      signal: controller.signal,
-    })
-      .then(r => r.json())
+    callAI({ max_tokens: 300, messages: [{ role: 'user', content: weekPrompt }] }, controller.signal)
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setWeeklyHSMReview(t); })
       .catch(() => {})
       .finally(() => clearTimeout(timeoutId));
@@ -424,7 +397,7 @@ En español, tono de coach. Sin emojis. Directo.`;
   }, [isSunday]);
 
   useEffect(() => {
-    if (!isSunday || !API_KEY) return;
+    if (!isSunday || !isPlanActive) return;
     if (hsmProfile?.updatedAt === today) return;
     if (dailyHSMResponses.length < 10) return;
 
@@ -449,13 +422,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
-    fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, messages: [{ role: 'user', content: profilePrompt }] }),
-      signal: controller.signal,
-    })
-      .then(r => r.json())
+    callAI({ max_tokens: 400, messages: [{ role: 'user', content: profilePrompt }] }, controller.signal)
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setHSMProfile(t); })
       .catch(() => {})
       .finally(() => clearTimeout(timeoutId));
