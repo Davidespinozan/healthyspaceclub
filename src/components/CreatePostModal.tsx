@@ -60,21 +60,32 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
   async function handleShare() {
     if (sharing) return;
     setSharing(true);
-    let success = false;
-    try {
-      let photoUrl = '';
-      if (shareMedia) {
+
+    let photoUrl = '';
+    let imageError: string | null = null;
+
+    // Intent 1: upload imagen (separado del insert — si falla, el post de texto sigue)
+    if (shareMedia) {
+      try {
         const isImage = shareMedia.type.startsWith('image/');
         const compressed = isImage ? await compressImageSquare(shareMedia) : shareMedia;
         const ext = isImage ? 'jpg' : (shareMedia.name.split('.').pop() || 'bin');
         const path = `${userId}_${Date.now()}.${ext}`;
-        await supabase.storage.from('club').upload(path, compressed, {
+        const { error: uploadErr } = await supabase.storage.from('club').upload(path, compressed, {
           contentType: isImage ? 'image/jpeg' : shareMedia.type,
         });
+        if (uploadErr) throw uploadErr;
         const { data } = supabase.storage.from('club').getPublicUrl(path);
         photoUrl = data.publicUrl;
+      } catch (e) {
+        imageError = e instanceof Error ? e.message : 'Error subiendo imagen';
+        console.error('[CreatePostModal] upload failed:', e);
       }
-      await supabase.from('club_posts').insert({
+    }
+
+    // Intent 2: insert post (siempre intentar, aunque falle la imagen)
+    try {
+      const { error: insertErr } = await supabase.from('club_posts').insert({
         user_id: userId,
         username: userName || 'Anónimo',
         avatar_url: userAvatarUrl,
@@ -84,13 +95,18 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
         text: shareText.trim().slice(0, 150),
         fire_count: 0,
       });
-      success = true;
-    } catch (e) { console.warn('[CreatePostModal] mutation failed:', e); }
-    setShareText('');
-    clearMedia();
-    setSharing(false);
-    if (success) onPostCreated?.();
-    onClose();
+      if (insertErr) throw insertErr;
+      if (imageError) alert(`Publicado, pero la imagen no se pudo subir: ${imageError}`);
+      onPostCreated?.();
+      setShareText('');
+      clearMedia();
+      onClose();
+    } catch (e) {
+      alert(`No se pudo publicar: ${e instanceof Error ? e.message : 'Error desconocido'}`);
+      console.error('[CreatePostModal] insert failed:', e);
+    } finally {
+      setSharing(false);
+    }
   }
 
   if (!open) return null;
