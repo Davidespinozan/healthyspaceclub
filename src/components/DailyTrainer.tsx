@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
 import { exercises as exerciseBank } from '../data/exercises';
 import {
@@ -38,9 +38,13 @@ import type {
 } from '../types';
 import { RefreshCw, Clock, Zap, ChevronRight, Lock } from 'lucide-react';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
-import YogaFlowPlayer from './YogaFlowPlayer';
-import WorkoutPlayer from './WorkoutPlayer';
+import PlayerLoadingFallback from './PlayerLoadingFallback';
 import './daily-trainer-v2.css';
+
+// Lazy: los Players (WorkoutPlayer 23kB + YogaFlowPlayer 18.7kB) salen del
+// bundle inicial de DashboardScreen — solo se cargan al abrir un player.
+const YogaFlowPlayer = lazy(() => import('./YogaFlowPlayer'));
+const WorkoutPlayer = lazy(() => import('./WorkoutPlayer'));
 
 const API_KEY = import.meta.env.VITE_CLAUDE_API_KEY;
 
@@ -1092,8 +1096,9 @@ export default function DailyTrainer() {
             </div>
           )}
 
-          {/* Player overlay */}
+          {/* Player overlay — lazy + Suspense */}
           {playerOpen && (
+            <Suspense fallback={<PlayerLoadingFallback />}>
             <YogaFlowPlayer
               plan={yogaPlan}
               exerciseBank={exerciseBank}
@@ -1133,6 +1138,7 @@ export default function DailyTrainer() {
                 setPlayerOpen(false);
               }}
             />
+            </Suspense>
           )}
         </div>
       );
@@ -1282,8 +1288,9 @@ export default function DailyTrainer() {
           />
         )}
 
-        {/* WorkoutPlayer overlay full-screen — fuerza/cardio */}
+        {/* WorkoutPlayer overlay full-screen — fuerza/cardio · lazy + Suspense */}
         {workoutPlayerOpen && plan.exercises.length > 0 && (
+          <Suspense fallback={<PlayerLoadingFallback />}>
           <WorkoutPlayer
             workout={plan}
             exerciseBank={exerciseBank}
@@ -1346,6 +1353,7 @@ export default function DailyTrainer() {
               setWorkoutPlayerOpen(false);
             }}
           />
+          </Suspense>
         )}
       </div>
     );
