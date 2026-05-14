@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Pause, Play, Check, SkipForward, Minus, Plus } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
@@ -298,10 +299,11 @@ export default function WorkoutPlayer({
   }
 
   // ══════════════════════════════════════════════════════════════
-  // RENDER
+  // RENDER (Portal a document.body para escapar containing-block
+  // creado por el animation transform en .app-main > *)
   // ══════════════════════════════════════════════════════════════
 
-  return (
+  return createPortal(
     <div className="wp">
       {/* Header — siempre visible */}
       <div className="wp-header">
@@ -601,6 +603,7 @@ export default function WorkoutPlayer({
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

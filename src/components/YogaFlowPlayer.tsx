@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, SkipBack, SkipForward, Pause, Play, Volume2, VolumeX } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
 import type { Exercise, YogaPlan, YogaPose } from '../types';
@@ -271,7 +272,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   if (phase === 'preparation') {
     const vinyasaCount = poses.filter(p => p.id === 'chaturanga').length;
 
-    return (
+    return createPortal(
       <div className="yfp">
         <div className="yfp-header">
           <button className="yfp-header-btn" onClick={onClose}><X size={16} /></button>
@@ -315,7 +316,8 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
             ▶ comenzar flow
           </button>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -324,12 +326,13 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   // ══════════════════════════════════════════════════════════════
 
   if (phase === 'side-switch') {
-    return (
+    return createPortal(
       <div className="yfp">
         <div className="yfp-side-switch">
           <div className="yfp-side-switch-text">CAMBIA DE LADO</div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -339,7 +342,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
 
   if (phase === 'transition' && transitionNext) {
     const nextBank = exerciseMap.get(transitionNext.next.id);
-    return (
+    return createPortal(
       <div className="yfp">
         <div className="yfp-transition">
           <div className="yfp-trans-check">✓</div>
@@ -355,7 +358,8 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
             <div className="yfp-trans-dot" />
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -364,7 +368,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   // ══════════════════════════════════════════════════════════════
 
   if (phase === 'completed') {
-    return (
+    return createPortal(
       <div className="yfp">
         <div className="yfp-completed">
           <div className="yfp-done-emoji">🙏</div>
@@ -380,7 +384,8 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
             cerrar sin guardar
           </button>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -394,7 +399,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   const nextPose = currentIndex < poses.length - 1 ? poses[currentIndex + 1] : null;
   const nextBank = nextPose ? exerciseMap.get(nextPose.id) : null;
 
-  return (
+  return createPortal(
     <div className="yfp">
       <div className="yfp-playing">
         {/* Header */}
@@ -501,6 +506,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
