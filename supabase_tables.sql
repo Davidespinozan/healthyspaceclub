@@ -1,9 +1,13 @@
+-- ============================================================
+-- HSC Supabase Schema
+-- Synced with production: 2026-05-14 (verified via information_schema)
+-- ============================================================
 -- Run this in Supabase Dashboard → SQL Editor
 
 -- User profiles for the Club
 CREATE TABLE IF NOT EXISTS user_profiles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id text UNIQUE NOT NULL,
+  user_id uuid UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name text NOT NULL DEFAULT '',
   bio text DEFAULT '',
   avatar_url text DEFAULT '',
@@ -15,7 +19,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
 -- Club posts (social feed)
 CREATE TABLE IF NOT EXISTS club_posts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id text NOT NULL,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   username text NOT NULL DEFAULT '',
   avatar_url text DEFAULT '',
   streak integer DEFAULT 0,
@@ -30,7 +34,7 @@ CREATE TABLE IF NOT EXISTS club_posts (
 CREATE TABLE IF NOT EXISTS club_fires (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   post_id uuid REFERENCES club_posts(id) ON DELETE CASCADE,
-  user_id text NOT NULL,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at timestamptz DEFAULT now(),
   UNIQUE(post_id, user_id)
 );
@@ -60,6 +64,7 @@ CREATE POLICY "Anyone can read fires" ON club_fires FOR SELECT USING (true);
 CREATE POLICY "Anyone can insert fires" ON club_fires FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can delete fires" ON club_fires FOR DELETE USING (true);
 
--- Storage buckets (run these separately if needed)
+-- Storage buckets — run separately in Supabase Studio.
+-- Bucket 'club' already exists in production (creado 2026-05-14).
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('club', 'club', true);
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true);
