@@ -198,6 +198,15 @@ interface AppState {
   addCoachMessage: (role: 'user' | 'assistant', content: string) => void;
   clearCoachChat: () => void;
 
+  // Coach overlay state (transitorio, no persistido)
+  coachOpen: boolean;
+  setCoachOpen: (open: boolean) => void;
+  coachPrefilledMessage: string | null;
+  setCoachPrefilledMessage: (msg: string | null) => void;
+
+  // Recalcular TDEE/planGoal/mealPlanKey desde obData actual
+  recalcFromObData: () => Promise<void>;
+
   // Active HSM dimension + unlock tracking
   activeHSMDimension: number;
   setActiveHSMDimension: (n: number) => void;
@@ -605,6 +614,48 @@ export const useAppStore = create<AppState>()(
     });
   },
   clearCoachChat: () => set({ coachChatHistory: [], coachChatDate: '' }),
+
+  coachOpen: false,
+  setCoachOpen: (open) => set({ coachOpen: open }),
+  coachPrefilledMessage: null,
+  setCoachPrefilledMessage: (msg) => set({ coachPrefilledMessage: msg }),
+
+  recalcFromObData: async () => {
+    const { obData } = get();
+    const sexo      = String(obData.sex      || 'Hombre');
+    const pesoKg    = Number(obData.peso     || 70);
+    const estatura  = Number(obData.estatura || 170);
+    const edad      = Number(obData.edad     || 28);
+    const activity  = String(obData.activity || 'Moderada');
+    const goal      = String(obData.goal     || '');
+
+    const tdee     = calcTDEE(sexo, pesoKg, estatura, edad, activity);
+    const planKey  = assignPlan(tdee, goal);
+
+    let planGoal = tdee;
+    if      (goal === 'Bajar grasa corporal' || goal === 'Bajar grasa' || goal === 'Bajar de peso') planGoal = tdee - 500;
+    else if (goal === 'Subir masa muscular' || goal === 'Ganar músculo') planGoal = tdee + 300;
+    else if (goal === 'Recomposición' || goal === 'Recomponer') planGoal = tdee - 200;
+
+    set({ mealPlanKey: planKey, tdee, planGoal });
+
+    const user = get().user;
+    if (user?.id) {
+      try {
+        const state = get();
+        await supabase.from('user_profiles').upsert({
+          user_id: user.id,
+          ob_data: state.obData,
+          tdee: state.tdee,
+          plan_goal: state.planGoal,
+          meal_plan_key: state.mealPlanKey,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+      } catch (e) {
+        console.error('[recalcFromObData] failed to persist profile:', e);
+      }
+    }
+  },
 
   // Active HSM dimension + unlock tracking
   activeHSMDimension: 0,

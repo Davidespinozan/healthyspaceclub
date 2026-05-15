@@ -1,0 +1,246 @@
+/* ──────────────────────────────────────────────────────────────
+   sheet-base.css — Sheets full-screen (Terms, Privacy, ManagePlan, EditData)
+   Identidad visual HSC: cream bg, forest text, amber accents.
+   ────────────────────────────────────────────────────────────── */
+
+.sh-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(21, 51, 48, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: sh-fade-in 0.2s ease-out;
+}
+@keyframes sh-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.sh-sheet {
+  background: var(--cream, #F6F2EA);
+  width: 100%;
+  max-width: 640px;
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 20px 20px 0 0;
+  padding: 14px 22px 32px;
+  position: relative;
+  animation: sh-slide-up 0.28s cubic-bezier(0.23, 1, 0.32, 1);
+  color: var(--forest, #153330);
+}
+@keyframes sh-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.sh-handle {
+  width: 40px;
+  height: 4px;
+  background: rgba(21, 51, 48, 0.18);
+  border-radius: 2px;
+  margin: 0 auto 14px;
+}
+
+.sh-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: rgba(21, 51, 48, 0.06);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1rem;
+  color: var(--forest, #153330);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+}
+.sh-close:hover { background: rgba(21, 51, 48, 0.12); }
+
+.sh-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.sh-intro {
+  font-size: 0.92rem;
+  color: rgba(21, 51, 48, 0.7);
+  line-height: 1.5;
+  margin: 0 0 22px;
+}
+
+.sh-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sh-section {
+  margin-bottom: 18px;
+}
+
+.sh-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--forest, #153330);
+}
+
+.sh-p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--forest, #153330);
+  margin: 0 0 8px;
+}
+.sh-p--muted { color: rgba(21, 51, 48, 0.65); font-size: 0.85rem; }
+
+.sh-list {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+}
+.sh-list li {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--forest, #153330);
+  padding: 4px 0 4px 16px;
+  position: relative;
+}
+.sh-list li::before {
+  content: '·';
+  position: absolute;
+  left: 4px;
+  color: var(--amber, #d4976b);
+  font-weight: 700;
+}
+
+.sh-disclaimer {
+  margin-top: 24px;
+  padding: 12px 14px;
+  background: rgba(212, 151, 107, 0.1);
+  border-left: 3px solid var(--amber, #d4976b);
+  border-radius: 6px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: rgba(21, 51, 48, 0.78);
+}
+
+.sh-updated {
+  margin-top: 14px;
+  font-size: 0.78rem;
+  color: rgba(21, 51, 48, 0.5);
+  text-align: center;
+}
+
+/* ──── ManagePlanSheet ──── */
+.sh-plan-badge {
+  background: linear-gradient(135deg, var(--forest, #153330), #2a4f4a);
+  color: var(--cream, #F6F2EA);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sh-plan-badge-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+.sh-plan-badge-name {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.sh-plan-info {
+  background: rgba(21, 51, 48, 0.05);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.sh-plan-info p { margin: 0; }
+.sh-plan-info p + p { margin-top: 4px; }
+.sh-plan-info strong { color: var(--amber, #d4976b); }
+.sh-plan-sub { color: rgba(21, 51, 48, 0.6); font-size: 0.8rem; }
+
+.sh-cta {
+  display: block;
+  width: 100%;
+  background: var(--amber, #d4976b);
+  color: var(--forest, #153330);
+  border: none;
+  padding: 14px 20px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  min-height: 48px;
+}
+.sh-cta:hover { filter: brightness(1.05); }
+.sh-cta:disabled { opacity: 0.55; cursor: default; }
+
+/* ──── EditDataSheet ──── */
+.sh-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.sh-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sh-field-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(21, 51, 48, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sh-input {
+  background: var(--card, #FFF);
+  border: 1px solid rgba(21, 51, 48, 0.12);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.92rem;
+  color: var(--forest, #153330);
+  min-height: 44px;
+  font-family: inherit;
+}
+.sh-input:focus {
+  outline: none;
+  border-color: var(--forest, #153330);
+}
+
+.sh-error {
+  color: #cc3333;
+  font-size: 0.85rem;
+  margin: 6px 0 10px;
+}
+
+.sh-saved {
+  background: rgba(45, 122, 79, 0.08);
+  border: 1px solid rgba(45, 122, 79, 0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 10px 0 14px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.sh-saved p { margin: 0; }
+.sh-saved-stats { margin-top: 4px; color: rgba(21, 51, 48, 0.78); }
+.sh-saved-stats strong { color: var(--amber, #d4976b); }
+
+@media (max-width: 480px) {
+  .sh-form { grid-template-columns: 1fr; }
+  .sh-title { font-size: 1.4rem; }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Home, User, MessageCircle, Users } from 'lucide-react';
 import { useAppStore } from '../store';
 import type { DashPage } from '../types';
@@ -22,8 +22,7 @@ const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
 ];
 
 export default function DashboardScreen() {
-  const { dashPage, setDashPage, checkTrialExpiry } = useAppStore();
-  const [coachOpen, setCoachOpen] = useState(false);
+  const { dashPage, setDashPage, checkTrialExpiry, coachOpen, setCoachOpen } = useAppStore();
 
   useEffect(() => { checkTrialExpiry(); }, []);
 
@@ -75,7 +74,7 @@ export default function DashboardScreen() {
       {/* Coach FAB */}
       <button
         className={`coach-fab${coachOpen ? ' open' : ''}`}
-        onClick={() => setCoachOpen(o => !o)}
+        onClick={() => setCoachOpen(!coachOpen)}
       >
         {coachOpen
           ? <span className="coach-fab-x">✕</span>

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAppStore } from '../../store';
 import { supabase } from '../../lib/supabase';
+import TermsSheet from '../sheets/TermsSheet';
+import PrivacySheet from '../sheets/PrivacySheet';
 
 export default function SignupModal() {
   const { closeModal, goTo, setUserName, setObData } = useAppStore();
@@ -9,6 +11,9 @@ export default function SignupModal() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   async function handleSignup() {
     setError('');
@@ -23,6 +28,10 @@ export default function SignupModal() {
     }
     if (password.length < 8) {
       setError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+    if (!acceptedTerms) {
+      setError('Aceptá los Términos y la Política de Privacidad para continuar.');
       return;
     }
 
@@ -97,6 +106,25 @@ export default function SignupModal() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          <label className="signup-tos">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={e => setAcceptedTerms(e.target.checked)}
+            />
+            <span>
+              Acepto los{' '}
+              <button type="button" className="signup-tos-link" onClick={() => setShowTerms(true)}>
+                Términos de Servicio
+              </button>
+              {' '}y la{' '}
+              <button type="button" className="signup-tos-link" onClick={() => setShowPrivacy(true)}>
+                Política de Privacidad
+              </button>
+              .
+            </span>
+          </label>
+
           {error && <div style={{ color: '#cc3333', fontSize: '.8rem', margin: '0 0 10px', textAlign: 'center' }}>{error}</div>}
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0' }}>
@@ -107,8 +135,13 @@ export default function SignupModal() {
           ) : (
             <button
               className="btn-login"
-              style={{ background: 'var(--amber)', color: 'var(--forest)' }}
+              style={{
+                background: acceptedTerms ? 'var(--amber)' : 'rgba(212,151,107,.4)',
+                color: 'var(--forest)',
+                cursor: acceptedTerms ? 'pointer' : 'not-allowed',
+              }}
               onClick={handleSignup}
+              disabled={!acceptedTerms}
             >
               Crear mi cuenta ✦
             </button>
@@ -116,6 +149,9 @@ export default function SignupModal() {
           <p className="login-demo">— Demo visual · ingresa cualquier dato —</p>
         </div>
       </div>
+
+      {showTerms && <TermsSheet onClose={() => setShowTerms(false)} />}
+      {showPrivacy && <PrivacySheet onClose={() => setShowPrivacy(false)} />}
     </div>
   );
 }

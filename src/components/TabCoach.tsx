@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { callAI } from '../utils/aiProxy';
+import ManagePlanSheet from './sheets/ManagePlanSheet';
+import TermsSheet from './sheets/TermsSheet';
+import PrivacySheet from './sheets/PrivacySheet';
 
 const QUICK_CHIPS = [
   '¿Puedo comer esto?',
@@ -8,6 +11,22 @@ const QUICK_CHIPS = [
   'Estoy ansioso',
   '¿Cómo voy?',
 ];
+
+type CoachAction = 'open_manage_plan' | 'log_support_ticket' | 'open_privacy' | 'open_terms';
+
+const ACTION_LABELS: Record<CoachAction, string> = {
+  open_manage_plan: 'Ver mi plan →',
+  log_support_ticket: 'Registrar para soporte →',
+  open_privacy: 'Ver Política de Privacidad →',
+  open_terms: 'Ver Términos →',
+};
+
+function parseAction(content: string): { text: string; action: CoachAction | null } {
+  const match = content.match(/\[ACTION:\s*(open_manage_plan|log_support_ticket|open_privacy|open_terms)\s*\]/i);
+  if (!match) return { text: content, action: null };
+  const text = content.replace(match[0], '').trim();
+  return { text, action: match[1].toLowerCase() as CoachAction };
+}
 
 function buildSystemPrompt(store: ReturnType<typeof useAppStore.getState>): string {
   const { userName, obData, tdee, planGoal, habits, weightLog, foodLog, workoutLog,
@@ -145,7 +164,26 @@ REGLAS DE COMUNICACIÓN
 - Si lleva más de 7 días de racha: reconócelo explícitamente
 - Si no cumplió algo: confronta con amabilidad, sin juicio, con pregunta
 - Nunca des listas de 5 puntos — conversa, no des clase
-- Si el usuario pregunta algo fuera del HSM/salud: responde brevemente y redirige a lo que importa hoy`;
+- Si el usuario pregunta algo fuera del HSM/salud: responde brevemente y redirige a lo que importa hoy
+
+═══════════════════════════════
+REGLA 11 — TEMAS DE GESTIÓN (intent routing)
+═══════════════════════════════
+Si el user pregunta sobre alguno de estos temas, respondé en MÁXIMO 2 oraciones
+explicando lo relevante, y SIEMPRE añadí al final una línea aparte con el formato:
+[ACTION: nombre_action]
+
+Mapeo:
+- Plan, suscripción, cancelar, upgrade, días de trial, cobro → [ACTION: open_manage_plan]
+- Soporte, problema técnico, bug, no funciona, error, escalar a humano → [ACTION: log_support_ticket]
+- Eliminar cuenta, borrar datos, privacidad, qué datos guardan, GDPR → [ACTION: open_privacy]
+- Términos, condiciones de uso, política de servicio → [ACTION: open_terms]
+
+REGLAS para [ACTION:]:
+- La línea debe ir SOLA, al final del mensaje, sin texto antes ni después en la misma línea
+- NUNCA ejecutes acciones destructivas: tu rol es OFRECER llevar al user al lugar correcto, no actuar
+- Si el tema NO es de gestión, NO incluyas [ACTION: ...]
+- Solo UNA action por respuesta`;
 }
 
 async function askCoach(
@@ -176,10 +214,33 @@ async function askCoach(
 
 export default function TabCoach() {
   const { userName, coachChatHistory, coachChatDate, addCoachMessage,
-    foodLog, dailyWorkout, streakCount, dailyCheckin, planGoal } = useAppStore();
+    foodLog, dailyWorkout, streakCount, dailyCheckin, planGoal,
+    coachPrefilledMessage, setCoachPrefilledMessage } = useAppStore();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPlan, setShowPlan] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Read prefilled message on mount and clear from store
+  useEffect(() => {
+    if (coachPrefilledMessage) {
+      setInput(coachPrefilledMessage);
+      setCoachPrefilledMessage(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleAction(action: CoachAction) {
+    if (action === 'open_manage_plan') setShowPlan(true);
+    else if (action === 'open_terms') setShowTerms(true);
+    else if (action === 'open_privacy') setShowPrivacy(true);
+    else if (action === 'log_support_ticket') {
+      console.log('[support_ticket]', { history: useAppStore.getState().coachChatHistory });
+      alert('Tu solicitud quedó registrada. El equipo te contactará por correo en menos de 48h.');
+    }
+  }
 
   const today = new Date().toISOString().split('T')[0];
   const messages = coachChatDate === today ? coachChatHistory : [];
@@ -248,11 +309,30 @@ export default function TabCoach() {
         {messages.length === 0 && (
           <div className="tc-welcome">{welcomeMsg}</div>
         )}
-        {messages.map((m, i) => (
-          <div key={i} className={`tc-msg ${m.role === 'user' ? 'tc-msg-user' : 'tc-msg-ai'}`}>
-            <div className="tc-bubble">{m.content}</div>
-          </div>
-        ))}
+        {messages.map((m, i) => {
+          if (m.role === 'user') {
+            return (
+              <div key={i} className="tc-msg tc-msg-user">
+                <div className="tc-bubble">{m.content}</div>
+              </div>
+            );
+          }
+          const { text, action } = parseAction(m.content);
+          return (
+            <div key={i} className="tc-msg tc-msg-ai">
+              <div className="tc-bubble">{text}</div>
+              {action && (
+                <button
+                  type="button"
+                  className="tc-action-btn"
+                  onClick={() => handleAction(action)}
+                >
+                  {ACTION_LABELS[action]}
+                </button>
+              )}
+            </div>
+          );
+        })}
         {loading && (
           <div className="tc-msg tc-msg-ai">
             <div className="tc-bubble tc-typing"><span /><span /><span /></div>
@@ -276,6 +356,10 @@ export default function TabCoach() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
+
+      {showPlan && <ManagePlanSheet onClose={() => setShowPlan(false)} />}
+      {showTerms && <TermsSheet onClose={() => setShowTerms(false)} />}
+      {showPrivacy && <PrivacySheet onClose={() => setShowPrivacy(false)} />}
     </div>
   );
 }

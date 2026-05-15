@@ -1,6 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppStore } from '../store';
+import { openCoachWith } from '../utils/openCoach';
+import ManagePlanSheet from './sheets/ManagePlanSheet';
+import EditDataSheet from './sheets/EditDataSheet';
+import TermsSheet from './sheets/TermsSheet';
+import PrivacySheet from './sheets/PrivacySheet';
 import './settings-sheet.css';
 
 interface Props {
@@ -10,6 +15,16 @@ interface Props {
 
 export default function SettingsSheet({ open, onClose }: Props) {
   const { userPlan, trialEndsAt, obData, tdee, planGoal, logout } = useAppStore();
+
+  const [showManagePlan, setShowManagePlan] = useState(false);
+  const [showEditData, setShowEditData] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+
+  function handleContactSupport() {
+    onClose();
+    openCoachWith('Necesito ayuda con algo.');
+  }
 
   function trialDaysLeft(): number | null {
     if (!trialEndsAt) return null;
@@ -83,12 +98,13 @@ export default function SettingsSheet({ open, onClose }: Props) {
                 Tu prueba termina en <em>{daysLeft} {daysLeft === 1 ? 'día' : 'días'}</em>
               </p>
             )}
-            <a
-              href="mailto:soporte@stryvstudio.com?subject=Gestionar%20mi%20plan%20HSC"
+            <button
+              type="button"
               className="ss-plan-link"
+              onClick={() => setShowManagePlan(true)}
             >
               Gestionar plan →
-            </a>
+            </button>
           </div>
         </section>
 
@@ -135,37 +151,31 @@ export default function SettingsSheet({ open, onClose }: Props) {
               </div>
             )}
           </div>
-          <p className="ss-data-microcopy">
-            Para actualizar tus datos, escríbenos a <a href="mailto:soporte@stryvstudio.com">soporte@stryvstudio.com</a>
-          </p>
+          <button
+            type="button"
+            className="ss-data-edit"
+            onClick={() => setShowEditData(true)}
+          >
+            Editar mis datos →
+          </button>
         </section>
 
         {/* Sección 3: Ayuda */}
         <section className="ss-section">
           <p className="ss-section-eyebrow">Ayuda y soporte</p>
           <div className="ss-help-list">
-            <a href="mailto:soporte@stryvstudio.com" className="ss-help-row">
+            <button type="button" className="ss-help-row" onClick={handleContactSupport}>
               <span>Contactar soporte</span>
               <span className="ss-help-arrow">→</span>
-            </a>
-            <a
-              href="https://stryvstudio.com/terminos"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ss-help-row"
-            >
+            </button>
+            <button type="button" className="ss-help-row" onClick={() => setShowTerms(true)}>
               <span>Términos de servicio</span>
-              <span className="ss-help-arrow">↗</span>
-            </a>
-            <a
-              href="https://stryvstudio.com/privacidad"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ss-help-row"
-            >
+              <span className="ss-help-arrow">→</span>
+            </button>
+            <button type="button" className="ss-help-row" onClick={() => setShowPrivacy(true)}>
               <span>Privacidad</span>
-              <span className="ss-help-arrow">↗</span>
-            </a>
+              <span className="ss-help-arrow">→</span>
+            </button>
           </div>
         </section>
 
@@ -176,6 +186,11 @@ export default function SettingsSheet({ open, onClose }: Props) {
 
         <p className="ss-version">HSC v1.2.0 · made with care in Valencia</p>
       </div>
+
+      {showManagePlan && <ManagePlanSheet onClose={() => setShowManagePlan(false)} />}
+      {showEditData && <EditDataSheet onClose={() => setShowEditData(false)} />}
+      {showTerms && <TermsSheet onClose={() => setShowTerms(false)} />}
+      {showPrivacy && <PrivacySheet onClose={() => setShowPrivacy(false)} />}
     </div>,
     document.body
   );

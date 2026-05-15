@@ -5724,6 +5724,50 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .tc-msg-ai .tc-bubble { background: var(--card); border: 1px solid var(--sand); color: var(--txt); border-bottom-left-radius: 4px; }
 .tc-msg-user .tc-bubble { background: var(--forest); color: var(--cream); border-bottom-right-radius: 4px; }
+.tc-msg-ai { flex-direction: column; align-items: flex-start; }
+.tc-action-btn {
+  margin-top: 6px;
+  background: var(--amber);
+  color: var(--forest);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
+}
+.tc-action-btn:hover { filter: brightness(1.05); }
+
+/* Signup terms-of-service checkbox */
+.signup-tos {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 14px 0 12px;
+  font-size: .78rem;
+  line-height: 1.5;
+  color: var(--txt2);
+  cursor: pointer;
+}
+.signup-tos input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--forest);
+}
+.signup-tos-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--amber);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.signup-tos-link:hover { filter: brightness(1.1); }
 
 .tc-typing { display: flex; gap: 4px; padding: 14px 18px; }
 .tc-typing span { width: 6px; height: 6px; border-radius: 50%; background: rgba(21,51,48,.3); animation: tcBounce .6s infinite alternate; }

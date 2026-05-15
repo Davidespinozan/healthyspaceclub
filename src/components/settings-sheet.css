@@ -120,11 +120,31 @@
   color: var(--amber);
   text-decoration: none;
   letter-spacing: 0.02em;
+  border: none;
   border-bottom: 0.5px solid rgba(191, 160, 101, 0.4);
-  padding-bottom: 2px;
+  padding: 0 0 2px;
+  background: none;
+  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 .ss-plan-link:hover { border-bottom-color: var(--amber); }
+
+.ss-data-edit {
+  display: inline-block;
+  margin-top: 14px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--amber);
+  background: none;
+  border: none;
+  border-bottom: 0.5px solid rgba(191, 160, 101, 0.4);
+  padding: 0 0 2px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  -webkit-tap-highlight-color: transparent;
+}
+.ss-data-edit:hover { border-bottom-color: var(--amber); }
 
 /* Data card — listado limpio */
 .ss-data-card {
@@ -184,10 +204,15 @@
   font-size: 13px;
   color: var(--forest);
   text-decoration: none;
+  border: none;
   border-bottom: 0.5px solid rgba(232, 225, 211, 0.5);
+  background: none;
+  width: 100%;
+  text-align: left;
   cursor: pointer;
   transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
 }
 .ss-help-row:last-child { border-bottom: none; }
 .ss-help-row:hover { background: var(--warm); }

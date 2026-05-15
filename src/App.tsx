@@ -6,6 +6,7 @@ import LandingScreen from './screens/LandingScreen';
 const LoginScreen = lazy(() => import('./screens/LoginScreen'));
 const OnboardingScreen = lazy(() => import('./screens/OnboardingScreen'));
 const DashboardScreen = lazy(() => import('./screens/DashboardScreen'));
+const ResetPasswordScreen = lazy(() => import('./screens/ResetPasswordScreen'));
 const PaymentModal = lazy(() => import('./components/modals/PaymentModal'));
 const SignupModal = lazy(() => import('./components/modals/SignupModal'));
 const VideoModal = lazy(() => import('./components/modals/VideoModal'));
@@ -29,6 +30,10 @@ export default function App() {
     // Verificar sesión inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      // Si el usuario aterriza en /reset-password (link de recovery), forzamos esa pantalla.
+      if (typeof window !== 'undefined' && window.location.pathname.includes('reset-password')) {
+        useAppStore.setState({ currentScreen: 'reset-password' });
+      }
       setAuthReady(true);
     });
 
@@ -36,6 +41,11 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('[auth]', event, session?.user?.email ?? 'no user');
       setSession(session);
+
+      if (event === 'PASSWORD_RECOVERY') {
+        useAppStore.setState({ currentScreen: 'reset-password' });
+        return;
+      }
 
       if (event === 'SIGNED_IN' && session) {
         // Redirect INMEDIATO (sync, fuera del auth lock de Supabase v2)
@@ -195,6 +205,11 @@ export default function App() {
         {currentScreen === 'dashboard' && (
           <div id="scr-dashboard" className={`screen active ${fadeClass}`}>
             <DashboardScreen />
+          </div>
+        )}
+        {currentScreen === 'reset-password' && (
+          <div id="scr-reset-password" className={`screen active ${fadeClass}`}>
+            <ResetPasswordScreen />
           </div>
         )}
 
