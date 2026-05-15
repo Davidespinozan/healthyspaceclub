@@ -14,6 +14,8 @@
   --sand:   #E8E1D3;
   --amber:  #BFA065;
   --amber-deep: #7C6232; /* WCAG AA — 5.15:1 sobre cream. Para texto mostaza accesible */
+  --taupe:      #8a8270; /* Neutral editorial para subtítulos / metadata */
+  --taupe-deep: #6b6359; /* Neutral más oscuro para labels uppercase */
   --terra:  #A8864E;
   --gold:   #BFA065;
   --sky:    #EDE9E0;

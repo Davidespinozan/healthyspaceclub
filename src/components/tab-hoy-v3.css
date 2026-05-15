@@ -46,24 +46,6 @@
 .th3-hero-brand .th3-hero-logo {
   margin-top: -10px;
 }
-.th3-avatar {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 38px; height: 38px;
-  border-radius: 50%;
-  background: rgba(246,242,234,0.95);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--forest);
-  font-style: italic;
-  flex-shrink: 0;
-}
-
 .th3-eyebrow {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.68rem;

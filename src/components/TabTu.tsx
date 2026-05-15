@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useState } from 'react';
+import { Menu, Flame, Lock, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
@@ -8,42 +9,19 @@ import CoachProfileSheet from './CoachProfileSheet';
 import SettingsSheet from './SettingsSheet';
 import './tab-tu-v3.css';
 
-const MILESTONE_STEPS = [3, 7, 14, 30, 90, 365];
-
-const MODALITY_EMOJI: Record<string, string> = {
-  fuerza: '💪',
-  yoga: '🧘',
-  cardio: '🏃',
+const MILESTONE_STEPS = [3, 7, 14, 30, 60, 90, 180, 365] as const;
+const MILESTONE_LABELS: Record<number, string> = {
+  3: '3d', 7: '7d', 14: '14d', 30: '30d', 60: '60d', 90: '90d', 180: '180d', 365: '1a',
 };
-
-function formatWorkoutDate(iso: string): string {
-  const now = new Date();
-  const then = new Date(iso);
-  const sameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  if (sameDay(now, then)) return 'Hoy';
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (sameDay(yesterday, then)) return 'Ayer';
-  const diffMs = now.getTime() - then.getTime();
-  const days = Math.floor(diffMs / 86400000);
-  if (days < 7) return `Hace ${days} días`;
-  if (days < 30) {
-    const weeks = Math.floor(days / 7);
-    return weeks === 1 ? 'Hace 1 semana' : `Hace ${weeks} semanas`;
-  }
-  if (days < 365) {
-    const months = Math.floor(days / 30);
-    return months === 1 ? 'Hace 1 mes' : `Hace ${months} meses`;
-  }
-  const years = Math.floor(days / 365);
-  return years === 1 ? 'Hace 1 año' : `Hace ${years} años`;
-}
+const MILESTONE_FULL_LABELS: Record<number, string> = {
+  3: '3 días', 7: '7 días', 14: '14 días', 30: '30 días',
+  60: '60 días', 90: '90 días', 180: '180 días', 365: '1 año',
+};
 
 export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
-    userName, setUserName, streakCount,
-    hsmProfile, completedSessions,
+    userName, setUserName, streakCount, startDate,
+    hsmProfile,
   } = useAppStore();
 
   const userId = useCurrentUserId();
@@ -58,20 +36,27 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const [saving, setSaving] = useState(false);
   const [coachOpen, setCoachOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'posts' | 'rutinas' | 'comidas'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'reflexiones'>('posts');
 
-  const sortedSessions = useMemo(
-    () => [...(completedSessions ?? [])].sort(
-      (a, b) => new Date(b.completedAtIso).getTime() - new Date(a.completedAtIso).getTime()
-    ),
-    [completedSessions]
+  const { yearNumber, dayOfYear } = useMemo(() => {
+    const start = startDate ? new Date(startDate).getTime() : Date.now();
+    const days = Math.max(0, Math.floor((Date.now() - start) / 86400000));
+    return { yearNumber: Math.floor(days / 365) + 1, dayOfYear: (days % 365) + 1 };
+  }, [startDate]);
+
+  const achievementsCount = useMemo(
+    () => MILESTONE_STEPS.filter(m => streakCount >= m).length,
+    [streakCount]
   );
 
-  const foodLog = useAppStore(s => s.foodLog);
-  const sortedFoodLog = useMemo(
-    () => [...(foodLog ?? [])].sort((a, b) => b.id.localeCompare(a.id)),
-    [foodLog]
+  const nextMilestone = useMemo(
+    () => MILESTONE_STEPS.find(m => streakCount < m),
+    [streakCount]
   );
+
+  function openLogrosSheet() {
+    console.log('TODO: LogrosSheet');
+  }
 
   useEffect(() => {
     (async () => {
@@ -166,29 +151,23 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   }, [hsmProfile]);
 
   const displayName = profile.display_name || userName || 'Anónimo';
-  const achievedCount = MILESTONE_STEPS.filter(m => streakCount >= m).length;
 
   return (
     <div className="tt3-wrap">
 
-      {/* A. Topbar */}
+      {/* A. Topbar — solo hamburguesa en círculo, alineada a la derecha */}
       <div className="tt3-topbar">
-        <span className="tt3-topbar-name">{displayName}</span>
         <button
           className="tt3-topbar-menu"
           onClick={() => setSettingsOpen(true)}
           aria-label="Ajustes"
           type="button"
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <line x1="3" y1="6" x2="17" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="3" y1="14" x2="17" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+          <Menu size={18} strokeWidth={1.6} />
         </button>
       </div>
 
-      {/* B. Header social */}
+      {/* B. Header centrado — avatar + nombre + bio */}
       <div className="tt3-header">
         <label className="tt3-avatar" aria-label="Cambiar avatar">
           {profile.avatar_url
@@ -197,55 +176,59 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
           }
           <input type="file" accept="image/*" onChange={handleAvatar} hidden />
         </label>
-        <div className="tt3-header-body">
-          {!editing ? (
-            <>
-              <h1 className="tt3-name">{displayName}</h1>
-              {profile.bio && <p className="tt3-bio">{profile.bio}</p>}
-              <div className="tt3-stats">
-                <span className="tt3-stat">
-                  <span className="tt3-stat-num">{postCount}</span>
-                  <span className="tt3-stat-label">{postCount === 1 ? 'post' : 'posts'}</span>
-                </span>
-                <span className="tt3-stat">
-                  <span className="tt3-stat-num">{streakCount}</span>
-                  <span className="tt3-stat-label">{streakCount === 1 ? 'día racha' : 'días racha'}</span>
-                </span>
-                <span className="tt3-stat">
-                  <span className="tt3-stat-num">{achievedCount}</span>
-                  <span className="tt3-stat-label">{achievedCount === 1 ? 'logro' : 'logros'}</span>
-                </span>
-              </div>
-            </>
-          ) : (
-            <>
-              <input
-                className="tt3-edit-input"
-                value={editName}
-                onChange={e => setEditName(e.target.value)}
-                placeholder="Tu nombre"
-                autoFocus
-              />
-              <input
-                className="tt3-edit-input tt3-edit-input--bio"
-                value={editBio}
-                onChange={e => setEditBio(e.target.value.slice(0, 100))}
-                placeholder="Bio corta (máx 100)"
-              />
-              <div className="tt3-edit-actions">
-                <button className="tt3-edit-save" onClick={handleSave} disabled={saving} type="button">
-                  {saving ? 'Guardando...' : 'Guardar'}
-                </button>
-                <button className="tt3-edit-cancel" onClick={() => setEditing(false)} type="button">
-                  Cancelar
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+
+        {!editing ? (
+          <>
+            <h1 className="tt3-name">{displayName}</h1>
+            {profile.bio && <p className="tt3-bio">{profile.bio}</p>}
+            <p className="tt3-year-label">Año {yearNumber} · día {dayOfYear}</p>
+          </>
+        ) : (
+          <div className="tt3-edit-block">
+            <input
+              className="tt3-edit-input"
+              value={editName}
+              onChange={e => setEditName(e.target.value)}
+              placeholder="Tu nombre"
+              autoFocus
+            />
+            <input
+              className="tt3-edit-input tt3-edit-input--bio"
+              value={editBio}
+              onChange={e => setEditBio(e.target.value.slice(0, 100))}
+              placeholder="Bio corta (máx 100)"
+            />
+            <div className="tt3-edit-actions">
+              <button className="tt3-edit-save" onClick={handleSave} disabled={saving} type="button">
+                {saving ? 'Guardando...' : 'Guardar'}
+              </button>
+              <button className="tt3-edit-cancel" onClick={() => setEditing(false)} type="button">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* C. Botones de perfil (sólo cuando NO está editando) */}
+      {/* C. Stats hero — inline con separadores verticales */}
+      {!editing && (
+        <div className="tt3-stats-row">
+          <div className="tt3-stat-cell">
+            <div className="tt3-stat-num">{postCount}</div>
+            <div className="tt3-stat-label">Posts</div>
+          </div>
+          <div className="tt3-stat-cell tt3-stat-cell--middle">
+            <div className="tt3-stat-num tt3-stat-num--accent">{streakCount}</div>
+            <div className="tt3-stat-label">Racha</div>
+          </div>
+          <div className="tt3-stat-cell">
+            <div className="tt3-stat-num">{achievementsCount}</div>
+            <div className="tt3-stat-label">Logros</div>
+          </div>
+        </div>
+      )}
+
+      {/* D. Botones de perfil (sólo cuando NO está editando) */}
       {!editing && (
         <div className="tt3-actions">
           <button
@@ -269,7 +252,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         </div>
       )}
 
-      {/* D. Card chica del coach */}
+      {/* E. Card del coach — horizontal: dot + body + arrow */}
       <div
         className="tt3-coach-card"
         role="button"
@@ -277,35 +260,59 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         onClick={() => setCoachOpen(true)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setCoachOpen(true); }}
       >
-        <div className="tt3-coach-eyebrow">
-          <span className="tt3-coach-eyebrow-dot" />
-          Tu coach
+        <span className="tt3-coach-dot" aria-hidden="true" />
+        <div className="tt3-coach-body">
+          <div className="tt3-coach-eyebrow">Tu coach</div>
+          <p className="tt3-coach-text">
+            {profileText || 'Aún estoy aprendiendo de ti. Reflexiona en Tu Espacio para que pueda conocerte.'}
+          </p>
         </div>
-        <p className="tt3-coach-text">
-          {profileText || 'Aún estoy aprendiendo de ti. Reflexiona en Tu Espacio para que pueda conocerte.'}
-        </p>
-        <span className="tt3-coach-arrow" aria-hidden="true">→</span>
+        <ArrowRight size={16} strokeWidth={1.6} className="tt3-coach-arrow" aria-hidden="true" />
       </div>
 
-      {/* E. Logros */}
+      {/* F. Logros — fila horizontal compacta + heading "Ver todos" + contexto */}
       <section className="tt3-milestones-section">
-        <p className="tt3-milestones-eyebrow">Logros</p>
-        <div className="tt3-milestones">
-          {MILESTONE_STEPS.map(m => (
-            <div
-              key={m}
-              className={`tt3-milestone${streakCount >= m ? ' reached' : ''}${m === 365 ? ' tt3-milestone--year' : ''}`}
-            >
-              <div className="tt3-milestone-circle">
-                <span className="tt3-milestone-num">{m}</span>
-              </div>
-              <div className="tt3-milestone-label">{m === 365 ? '1 año' : 'días'}</div>
-            </div>
-          ))}
+        <div className="tt3-milestones-header">
+          <span className="tt3-milestones-eyebrow">Logros</span>
+          <button
+            type="button"
+            className="tt3-milestones-link"
+            onClick={openLogrosSheet}
+          >
+            Ver todos →
+          </button>
         </div>
+
+        <div className="tt3-milestones">
+          {MILESTONE_STEPS.map(m => {
+            const reached = streakCount >= m;
+            const isYear = m === 365;
+            return (
+              <div
+                key={m}
+                className={`tt3-milestone${reached ? ' reached' : ''}${isYear ? ' tt3-milestone--year' : ''}`}
+              >
+                <div className="tt3-milestone-circle">
+                  {reached
+                    ? <Flame size={20} strokeWidth={1.6} aria-hidden="true" />
+                    : <Lock size={16} strokeWidth={1.6} aria-hidden="true" />
+                  }
+                </div>
+                <div className="tt3-milestone-label">{MILESTONE_LABELS[m]}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="tt3-milestones-context">
+          {nextMilestone
+            ? <>Llevás {streakCount} {streakCount === 1 ? 'día' : 'días'} — el siguiente logro a {MILESTONE_FULL_LABELS[nextMilestone]}</>
+            : <>Año completo. Próximo logro: año {yearNumber + 1}.</>
+          }
+        </p>
       </section>
 
-      {/* F. Tabs */}
+      {/* G. Tabs — Posts / Reflexiones */}
       <div className="tt3-tabs">
         <button
           type="button"
@@ -316,109 +323,36 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         </button>
         <button
           type="button"
-          className={`tt3-tab${activeTab === 'rutinas' ? ' active' : ''}`}
-          onClick={() => setActiveTab('rutinas')}
+          className={`tt3-tab${activeTab === 'reflexiones' ? ' active' : ''}`}
+          onClick={() => setActiveTab('reflexiones')}
         >
-          Rutinas
-        </button>
-        <button
-          type="button"
-          className={`tt3-tab${activeTab === 'comidas' ? ' active' : ''}`}
-          onClick={() => setActiveTab('comidas')}
-        >
-          Comidas
+          Reflexiones
         </button>
       </div>
 
-      {/* G. Grid — Posts o Rutinas según activeTab */}
-      {activeTab === 'posts' && (
-        <div className="tt3-grid">
-          {userPosts.length === 0 ? (
-            <div className="tt3-grid-empty" style={{ gridColumn: '1 / -1' }}>
-              <p className="tt3-grid-empty-text">Aún no has compartido nada.</p>
-              <p className="tt3-grid-empty-sub">Comparte tu primer logro en el Club.</p>
-            </div>
-          ) : (
-            userPosts.map(post => (
+      {/* H. Contenido por tab */}
+      {activeTab === 'posts' && (() => {
+        const minCells = 6;
+        const placeholders = Math.max(0, minCells - userPosts.length);
+        return (
+          <div className="tt3-grid">
+            {userPosts.map(post => (
               <div key={post.id} className="tt3-grid-item">
                 <img src={post.photo_url} alt="" loading="lazy" />
               </div>
-            ))
-          )}
-        </div>
-      )}
+            ))}
+            {Array.from({ length: placeholders }, (_, i) => (
+              <div key={`ph-${i}`} className="tt3-grid-item tt3-grid-item--empty" aria-hidden="true" />
+            ))}
+          </div>
+        );
+      })()}
 
-      {activeTab === 'rutinas' && (
-        <div className="tt3-routines">
-          {sortedSessions.length === 0 ? (
-            <div className="tt3-grid-empty">
-              <p className="tt3-grid-empty-text">Aún no has completado entrenamientos.</p>
-              <p className="tt3-grid-empty-sub">
-                Genera tu primera rutina desde el Trainer y completala para verla aquí.
-              </p>
-            </div>
-          ) : (
-            sortedSessions.map((s, i) => {
-              const minutes = Math.max(1, Math.round((s.durationSeconds || 0) / 60));
-              const modalityLabel =
-                s.modality === 'fuerza' ? 'Fuerza' :
-                s.modality === 'yoga' ? 'Yoga' :
-                s.modality === 'cardio' ? 'Cardio' :
-                String(s.modality);
-              return (
-                <div key={`${s.completedAtIso}-${i}`} className="tt3-routine">
-                  <div className="tt3-routine-emoji">{MODALITY_EMOJI[s.modality] ?? '🏋️'}</div>
-                  <div className="tt3-routine-body">
-                    <div className="tt3-routine-date">{formatWorkoutDate(s.completedAtIso)}</div>
-                    <div className="tt3-routine-meta">{modalityLabel} · {minutes} min</div>
-                  </div>
-                  <div className="tt3-routine-stats">
-                    {s.exercisesCompleted}/{s.exercisesTotal}
-                    <span className="tt3-routine-stats-label">ejercicios</span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      )}
-
-      {activeTab === 'comidas' && (
-        <div className="tt3-routines">
-          {sortedFoodLog.length === 0 ? (
-            <div className="tt3-grid-empty">
-              <p className="tt3-grid-empty-text">Aún no has registrado comidas.</p>
-              <p className="tt3-grid-empty-sub">
-                Empieza a registrar comidas desde el Hoy.
-              </p>
-            </div>
-          ) : (
-            sortedFoodLog.map(entry => {
-              const hasMacros = entry.kcal > 0 || entry.prot > 0 || entry.carbs > 0 || entry.fat > 0;
-              return (
-                <div key={entry.id} className="tt3-routine">
-                  <div className="tt3-routine-emoji">🍽️</div>
-                  <div className="tt3-routine-body">
-                    <div className="tt3-routine-date">{formatWorkoutDate(entry.date)}</div>
-                    <div className="tt3-routine-meta">{entry.desc}</div>
-                    {hasMacros && (
-                      <div className="tt3-routine-macros">
-                        {entry.kcal > 0 && <span>{entry.kcal} kcal</span>}
-                        {entry.prot > 0 && <span>P {entry.prot}g</span>}
-                        {entry.carbs > 0 && <span>C {entry.carbs}g</span>}
-                        {entry.fat > 0 && <span>G {entry.fat}g</span>}
-                      </div>
-                    )}
-                  </div>
-                  {entry.source === 'ai' && (
-                    <div className="tt3-routine-stats">
-                      <span className="tt3-routine-stats-label">IA</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
+      {activeTab === 'reflexiones' && (
+        <div className="tt3-reflections-empty">
+          <p className="tt3-reflections-empty-text">
+            Tus reflexiones de Tu Espacio aparecerán aquí.
+          </p>
         </div>
       )}
 
