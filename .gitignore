@@ -8,3 +8,4 @@ ios/
 /playwright-report
 /test-results
 /playwright/.cache
+supabase/.temp/
