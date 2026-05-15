@@ -252,6 +252,9 @@
   object-fit: cover;
   background: #000;
 }
+.cpm-video--mirror {
+  transform: scaleX(-1);
+}
 /* Overlay con el marco del aspecto */
 .cpm-aspect-overlay {
   position: absolute;

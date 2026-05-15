@@ -214,7 +214,13 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    // Espejar horizontalmente para cámara frontal (selfie) — match con preview
+    if (cameraFacing === 'user') {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(video, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
     if (!blob) return;
     const url = URL.createObjectURL(blob);
@@ -378,6 +384,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
             onSwapCamera={handleSwapCamera}
             onClose={handleClose}
             cameraError={cameraError}
+            cameraFacing={cameraFacing}
             onOpenGallery={handleOpenGallery}
             onBack={() => setView('choose')}
           />
@@ -462,7 +469,7 @@ function ChooseView({
 // VIEW: capturing
 // ══════════════════════════════════════════════════════════════
 function CapturingView({
-  videoRef, aspectRatio, onAspectChange, onCapture, onSwapCamera, onClose, cameraError, onOpenGallery, onBack,
+  videoRef, aspectRatio, onAspectChange, onCapture, onSwapCamera, onClose, cameraError, cameraFacing, onOpenGallery, onBack,
 }: {
   videoRef: React.MutableRefObject<HTMLVideoElement | null>;
   aspectRatio: AspectRatio;
@@ -471,6 +478,7 @@ function CapturingView({
   onSwapCamera: () => void;
   onClose: () => void;
   cameraError: CameraError;
+  cameraFacing: 'user' | 'environment';
   onOpenGallery: () => void;
   onBack: () => void;
 }) {
@@ -520,7 +528,7 @@ function CapturingView({
           <>
             <video
               ref={videoRef}
-              className="cpm-video"
+              className={`cpm-video${cameraFacing === 'user' ? ' cpm-video--mirror' : ''}`}
               playsInline
               muted
               autoPlay
