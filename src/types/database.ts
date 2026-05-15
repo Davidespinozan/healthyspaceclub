@@ -206,6 +206,7 @@ export type Database = {
       club_posts: {
         Row: {
           avatar_url: string | null
+          comments_count: number
           created_at: string
           fire_count: number
           id: string
@@ -218,6 +219,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          comments_count?: number
           created_at?: string
           fire_count?: number
           id?: string
@@ -230,6 +232,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          comments_count?: number
           created_at?: string
           fire_count?: number
           id?: string

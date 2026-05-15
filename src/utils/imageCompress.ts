@@ -1,89 +1,118 @@
 /**
- * Comprime y recorta una imagen al formato cuadrado 1:1 antes de subirla a Supabase.
+ * Comprime una imagen al aspect ratio elegido antes de subirla a Supabase.
  *
- * - Recorta a cuadrado 1:1 desde el centro
- * - Resize a max 1080x1080 (suficiente para mostrar full-bleed en cualquier pantalla)
- * - Convierte a JPEG con quality 0.85 (balance peso/calidad)
+ * Dos modos:
+ *  - Center-crop (default): recorta centrado al aspect ratio pedido.
+ *  - Explicit-crop: si recibe `cropPixels` (típicamente de react-easy-crop),
+ *    usa esa región exacta del source en lugar de center-crop.
  *
- * Resultado típico: archivos de 4-8 MB → 200-400 KB (20× menos peso).
+ * Aspect ratios soportados:
+ *  - '1:1'  → output 1080×1080
+ *  - '4:5'  → output 1080×1350 (vertical, Instagram-style)
  *
- * @param file - Archivo original del input file
- * @param maxSize - Tamaño máximo del lado del cuadrado (default 1080)
- * @param quality - Calidad JPEG entre 0 y 1 (default 0.85)
- * @returns Promise<Blob> - Blob JPEG cuadrado optimizado
+ * JPEG 0.85 quality por defecto.
  */
-export async function compressImageSquare(
+
+export type AspectRatio = '1:1' | '4:5';
+
+export interface CropPixels {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface CompressImageOptions {
+  aspectRatio?: AspectRatio;
+  /** Región exacta del source a recortar (de react-easy-crop). Si se omite, center-crop. */
+  cropPixels?: CropPixels;
+  /** Quality JPEG entre 0 y 1. Default 0.85. */
+  quality?: number;
+}
+
+const DIMENSIONS: Record<AspectRatio, { w: number; h: number }> = {
+  '1:1': { w: 1080, h: 1080 },
+  '4:5': { w: 1080, h: 1350 },
+};
+
+export async function compressImage(
   file: File,
-  maxSize: number = 1080,
-  quality: number = 0.85
+  options: CompressImageOptions = {},
 ): Promise<Blob> {
-  // Si no es imagen, devolver original sin modificar
-  if (!file.type.startsWith('image/')) {
-    return file;
-  }
+  const aspectRatio = options.aspectRatio ?? '1:1';
+  const quality = options.quality ?? 0.85;
+
+  if (!file.type.startsWith('image/')) return file;
 
   const originalKB = Math.round(file.size / 1024);
-
-  // Cargar la imagen
   const img = await loadImage(file);
 
-  // Calcular el cuadrado de recorte centrado
-  const sourceSize = Math.min(img.width, img.height);
-  const sourceX = (img.width - sourceSize) / 2;
-  const sourceY = (img.height - sourceSize) / 2;
+  const { w: targetW, h: targetH } = DIMENSIONS[aspectRatio];
 
-  // Tamaño de salida (cap a maxSize)
-  const targetSize = Math.min(sourceSize, maxSize);
+  // Determinar región de recorte del source
+  let srcX = 0, srcY = 0, srcW = img.width, srcH = img.height;
+  if (options.cropPixels) {
+    srcX = options.cropPixels.x;
+    srcY = options.cropPixels.y;
+    srcW = options.cropPixels.width;
+    srcH = options.cropPixels.height;
+  } else {
+    // Center-crop al aspect ratio pedido
+    const targetAspect = targetW / targetH;
+    const srcAspect = img.width / img.height;
+    if (srcAspect > targetAspect) {
+      // Source más ancho: crop laterales
+      srcW = img.height * targetAspect;
+      srcX = (img.width - srcW) / 2;
+    } else {
+      // Source más alto: crop top/bottom
+      srcH = img.width / targetAspect;
+      srcY = (img.height - srcH) / 2;
+    }
+  }
 
-  // Canvas para procesar
   const canvas = document.createElement('canvas');
-  canvas.width = targetSize;
-  canvas.height = targetSize;
+  canvas.width = targetW;
+  canvas.height = targetH;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas context unavailable');
 
-  // Mejor calidad de resize
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  // Dibujar la imagen recortada al cuadrado y redimensionada
-  ctx.drawImage(
-    img,
-    sourceX, sourceY, sourceSize, sourceSize,  // crop source
-    0, 0, targetSize, targetSize                // dest
-  );
+  ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, targetW, targetH);
 
-  // Convertir a Blob JPEG
   const blob: Blob = await new Promise((resolve, reject) => {
     canvas.toBlob(
-      (b) => b ? resolve(b) : reject(new Error('Canvas toBlob failed')),
+      b => (b ? resolve(b) : reject(new Error('Canvas toBlob failed'))),
       'image/jpeg',
-      quality
+      quality,
     );
   });
 
   const compressedKB = Math.round(blob.size / 1024);
   const reduction = Math.round(100 - (compressedKB / originalKB) * 100);
-  console.log(`[compressImageSquare] ${file.name}: ${originalKB}KB → ${compressedKB}KB (${reduction}% reduction)`);
+  console.log(
+    `[compressImage:${aspectRatio}] ${file.name}: ${originalKB}KB → ${compressedKB}KB (${reduction}% reduction)`,
+  );
 
   return blob;
 }
 
 /**
- * Helper interno: carga un File como HTMLImageElement.
+ * Backwards-compat: avatar legacy callsite. Equivale a compressImage(file, { aspectRatio: '1:1' }).
+ * @deprecated Usá compressImage directamente.
  */
+export function compressImageSquare(file: File, _maxSize?: number, quality?: number): Promise<Blob> {
+  return compressImage(file, { aspectRatio: '1:1', quality });
+}
+
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(img);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Image load failed'));
-    };
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
     img.src = url;
   });
 }
