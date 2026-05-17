@@ -1105,6 +1105,30 @@ export type Database = {
         }
         Relationships: []
       }
+      weight_log: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          kg: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          kg: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          kg?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       workout_cache: {
         Row: {
           config_hash: string

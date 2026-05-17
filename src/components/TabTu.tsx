@@ -8,6 +8,7 @@ import { uploadAvatar } from '../utils/uploadAvatar';
 import CoachProfileSheet from './CoachProfileSheet';
 import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
+import WeightTrackingCard from './WeightTrackingCard';
 import './tab-tu-v3.css';
 
 const MILESTONE_STEPS = [3, 7, 14, 30, 60, 90, 180, 365] as const;
@@ -254,6 +255,9 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
           </button>
         </div>
       )}
+
+      {/* E0. Card de peso semanal */}
+      {!editing && <WeightTrackingCard />}
 
       {/* E. Card del coach — horizontal: dot + body + arrow */}
       <div

@@ -5269,6 +5269,89 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   color: var(--txt2); font-size: .85rem; cursor: pointer;
 }
 
+/* Weight prompt (registrar peso de la semana desde el review) */
+.wr-weight-prompt {
+  background: rgba(124, 98, 50, 0.10);
+  border: 1px solid rgba(124, 98, 50, 0.25);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.wr-weight-prompt-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--forest);
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+.wr-weight-prompt-input-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(21, 51, 48, 0.12);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.wr-weight-prompt-input-row:focus-within { border-color: var(--amber-deep); }
+.wr-weight-prompt-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.2rem;
+  color: var(--forest);
+  min-width: 0;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.wr-weight-prompt-input::-webkit-outer-spin-button,
+.wr-weight-prompt-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.wr-weight-prompt-unit {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--taupe);
+  letter-spacing: 0.02em;
+}
+.wr-weight-prompt-error {
+  color: #cc3333;
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+.wr-weight-prompt-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.wr-weight-prompt-skip,
+.wr-weight-prompt-save {
+  flex: 1;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 38px;
+  -webkit-tap-highlight-color: transparent;
+}
+.wr-weight-prompt-skip {
+  background: none;
+  border: 1px solid rgba(21, 51, 48, 0.18);
+  color: var(--forest);
+}
+.wr-weight-prompt-skip:hover { background: rgba(21, 51, 48, 0.04); }
+.wr-weight-prompt-save {
+  background: var(--amber-deep);
+  color: var(--cream);
+  border: none;
+}
+.wr-weight-prompt-save:hover { filter: brightness(1.08); }
+.wr-weight-prompt-save:disabled,
+.wr-weight-prompt-skip:disabled { opacity: 0.5; cursor: default; }
+
 /* ══════════════════════════════════════════════════════════════
    APP SHELL — Bottom Nav Layout (replaces sidebar)
 ══════════════════════════════════════════════════════════════ */

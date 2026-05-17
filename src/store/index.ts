@@ -90,8 +90,8 @@ interface AppState {
 
   // Weight log
   weightLog: { date: string; kg: number }[];
-  addWeight: (kg: number) => void;
-  removeWeight: (date: string) => void;
+  addWeight: (kg: number) => Promise<void>;
+  removeWeight: (date: string) => Promise<void>;
 
   // Meal check-off (tracks which meals the user actually ate)
   mealChecks: Record<string, boolean>; // { '2026-03-09-planA-1-0': true }
@@ -410,14 +410,56 @@ export const useAppStore = create<AppState>()(
 
   // Weight log
   weightLog: [],
-  addWeight: (kg) =>
+  addWeight: async (kg) => {
+    const today = new Date().toISOString().split('T')[0];
+    const userId = get().user?.id;
+
+    // Optimistic update local primero (UX responsiva, modo offline OK)
     set((state) => {
-      const today = new Date().toISOString().split('T')[0];
       const filtered = state.weightLog.filter(e => e.date !== today);
       return { weightLog: [...filtered, { date: today, kg }].sort((a, b) => a.date.localeCompare(b.date)) };
-    }),
-  removeWeight: (date) =>
-    set((state) => ({ weightLog: state.weightLog.filter(e => e.date !== date) })),
+    });
+
+    // Upsert a Supabase si hay sesión
+    if (userId) {
+      const { error } = await supabase
+        .from('weight_log')
+        .upsert(
+          { user_id: userId, date: today, kg },
+          { onConflict: 'user_id,date' },
+        );
+      if (error) {
+        console.error('[addWeight] supabase upsert failed:', error);
+        throw error;
+      }
+    }
+
+    // Mantener obData.peso sincronizado con el último peso registrado
+    // (los 8 consumidores leen este campo: TDEE, Coach IA, DailyTrainer, etc.)
+    const state = get();
+    const currentPeso = Number(state.obData?.peso);
+    if (currentPeso !== kg) {
+      state.setObData('peso', kg);
+      try { await state.recalcFromObData(); } catch (e) {
+        console.warn('[addWeight] recalcFromObData failed:', e);
+      }
+    }
+  },
+  removeWeight: async (date) => {
+    const userId = get().user?.id;
+    set((state) => ({ weightLog: state.weightLog.filter(e => e.date !== date) }));
+    if (userId) {
+      const { error } = await supabase
+        .from('weight_log')
+        .delete()
+        .eq('user_id', userId)
+        .eq('date', date);
+      if (error) {
+        console.error('[removeWeight] supabase delete failed:', error);
+        throw error;
+      }
+    }
+  },
 
   // Meal check-off
   mealChecks: {},

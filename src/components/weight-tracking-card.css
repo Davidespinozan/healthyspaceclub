@@ -1,0 +1,210 @@
+/* ═════════════════════════════════════════════════════════════
+   WeightTrackingCard — tracking semanal del peso del user
+   Prefijo: .wt-*
+   ═════════════════════════════════════════════════════════════ */
+
+.wt-card {
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin: 0 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wt-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wt-card-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--taupe-deep);
+}
+
+.wt-card-delta {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--taupe);
+}
+.wt-card-delta.is-down { color: var(--amber-deep); }
+.wt-card-delta.is-up   { color: #b35a3a; }
+.wt-card-delta.is-stable { color: var(--taupe); }
+
+.wt-card-value {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--forest);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin-top: 2px;
+}
+.wt-card-unit {
+  font-size: 16px;
+  font-style: normal;
+  color: var(--taupe);
+  margin-left: 4px;
+}
+
+.wt-card-meta {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--taupe);
+  margin: 4px 0 10px;
+  line-height: 1.4;
+}
+
+.wt-card-btn {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid rgba(124, 98, 50, 0.35);
+  color: var(--amber-deep);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 36px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.wt-card-btn:hover {
+  background: rgba(124, 98, 50, 0.08);
+  border-color: rgba(124, 98, 50, 0.55);
+}
+
+/* ═══ Modal ═══════════════════════════════════════════════ */
+.wt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(21, 51, 48, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: wt-fade 0.18s ease-out;
+}
+@keyframes wt-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.wt-modal {
+  background: var(--cream);
+  border-radius: 18px;
+  padding: 24px;
+  max-width: 360px;
+  width: 100%;
+  color: var(--forest);
+  animation: wt-pop 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+}
+@keyframes wt-pop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.wt-modal-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 0 0 8px;
+  letter-spacing: -0.005em;
+}
+.wt-modal-intro {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--taupe);
+  margin: 0 0 18px;
+}
+
+.wt-modal-input-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(21, 51, 48, 0.12);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+}
+.wt-modal-input-row:focus-within {
+  border-color: var(--amber-deep);
+}
+.wt-modal-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.6rem;
+  color: var(--forest);
+  -moz-appearance: textfield;
+  appearance: textfield;
+  min-width: 0;
+}
+.wt-modal-input::-webkit-outer-spin-button,
+.wt-modal-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.wt-modal-unit {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--taupe);
+  letter-spacing: 0.02em;
+}
+
+.wt-modal-error {
+  color: #cc3333;
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
+.wt-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+.wt-modal-btn-ghost,
+.wt-modal-btn-primary {
+  flex: 1;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+}
+.wt-modal-btn-ghost {
+  background: none;
+  border: 1px solid rgba(21, 51, 48, 0.18);
+  color: var(--forest);
+}
+.wt-modal-btn-ghost:hover { background: rgba(21, 51, 48, 0.04); }
+.wt-modal-btn-primary {
+  background: var(--amber-deep);
+  color: var(--cream);
+  border: none;
+}
+.wt-modal-btn-primary:hover { filter: brightness(1.08); }
+.wt-modal-btn-primary:disabled { opacity: 0.55; cursor: default; }
+.wt-modal-btn-ghost:disabled { opacity: 0.55; cursor: default; }
+
+@media (max-width: 380px) {
+  .wt-card { margin: 0 14px 18px; }
+}

@@ -51,10 +51,43 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
     userName, mealChecks, workoutLog, streakCount,
     weightLog, growthCompleted, obData,
     markWeeklyReviewDone, clearWeeklyPlan,
+    addWeight,
   } = useAppStore();
 
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // ── Weight prompt state (registrar peso de la semana) ────────
+  const [weightPromptSkipped, setWeightPromptSkipped] = useState(false);
+  const [weightInput, setWeightInput] = useState('');
+  const [weightSaving, setWeightSaving] = useState(false);
+  const [weightError, setWeightError] = useState('');
+
+  const sundayThisWeek = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - d.getDay());
+    return d.toISOString().split('T')[0];
+  })();
+  const registeredThisWeek = weightLog.some(e => e.date >= sundayThisWeek);
+  const showWeightPrompt = !registeredThisWeek && !weightPromptSkipped;
+
+  async function handleSaveWeight() {
+    setWeightError('');
+    const kg = parseFloat(weightInput);
+    if (!kg || kg < 30 || kg > 300) {
+      setWeightError('Ingresá un peso entre 30 y 300 kg.');
+      return;
+    }
+    setWeightSaving(true);
+    try {
+      await addWeight(kg);
+      setWeightInput('');
+    } catch {
+      setWeightError('No se pudo guardar. Intentá de nuevo.');
+    } finally {
+      setWeightSaving(false);
+    }
+  }
 
   // ── Stats ────────────────────────────────────────────────────
   const today = new Date();
@@ -132,6 +165,47 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
             </div>
           </div>
         </div>
+
+        {/* Weight prompt (solo si no registró esta semana y no skip) */}
+        {showWeightPrompt && (
+          <div className="wr-weight-prompt">
+            <p className="wr-weight-prompt-text">
+              ¿Querés registrar tu peso de esta semana?
+            </p>
+            <div className="wr-weight-prompt-input-row">
+              <input
+                type="number"
+                step="0.1"
+                min={30}
+                max={300}
+                value={weightInput}
+                onChange={e => setWeightInput(e.target.value)}
+                placeholder="70.5"
+                className="wr-weight-prompt-input"
+              />
+              <span className="wr-weight-prompt-unit">kg</span>
+            </div>
+            {weightError && <p className="wr-weight-prompt-error">{weightError}</p>}
+            <div className="wr-weight-prompt-actions">
+              <button
+                type="button"
+                className="wr-weight-prompt-skip"
+                onClick={() => setWeightPromptSkipped(true)}
+                disabled={weightSaving}
+              >
+                Saltar
+              </button>
+              <button
+                type="button"
+                className="wr-weight-prompt-save"
+                onClick={handleSaveWeight}
+                disabled={weightSaving || !weightInput.trim()}
+              >
+                {weightSaving ? 'Guardando…' : 'Registrar'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Stats grid */}
         <div className="wr-stats">

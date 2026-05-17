@@ -81,6 +81,22 @@ export default function App() {
           } catch (e) {
             console.error('[auth] failed to hydrate profile:', e);
           }
+
+          // Hidratar weight_log en paralelo (independiente del profile)
+          try {
+            const { data: weights } = await supabase
+              .from('weight_log')
+              .select('date, kg')
+              .eq('user_id', session.user.id)
+              .order('date', { ascending: true });
+            if (weights) {
+              useAppStore.setState({
+                weightLog: weights.map(w => ({ date: w.date, kg: Number(w.kg) })),
+              });
+            }
+          } catch (e) {
+            console.error('[auth] failed to hydrate weight_log:', e);
+          }
         }, 0);
       }
 
