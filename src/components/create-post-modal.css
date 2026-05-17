@@ -71,6 +71,26 @@
 .cpm-icon-btn:hover { background: rgba(255, 255, 255, 0.06); }
 .cpm-icon-btn--placeholder { visibility: hidden; }
 
+/* Capturing view: botones icon sobre el video (contraste fuerte) */
+.cpm-capturing-head .cpm-icon-btn,
+.cpm-capturing-foot .cpm-icon-btn {
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.cpm-capturing-head .cpm-icon-btn:hover,
+.cpm-capturing-foot .cpm-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.55);
+}
+.cpm-capturing-head .cpm-icon-btn--placeholder,
+.cpm-capturing-foot .cpm-icon-btn--placeholder {
+  background: none;
+  backdrop-filter: none;
+}
+
 .cpm-close {
   display: flex;
   align-items: center;
@@ -225,22 +245,32 @@
 
 /* ═══ VIEW: capturing ════════════════════════════════════ */
 .cpm-capturing {
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  width: 100%;
   height: 100%;
-  background: #0a0a0a;
+  background: #000;
   color: #fff;
+  overflow: hidden;
 }
 .cpm-capturing-head {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
-  flex-shrink: 0;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 18px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+}
+.cpm-capturing-head > * {
+  pointer-events: auto;
 }
 .cpm-capturing-stage {
-  flex: 1;
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -250,7 +280,7 @@
 .cpm-video {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   background: #000;
 }
 .cpm-video--mirror {
@@ -279,11 +309,20 @@
 .cpm-aspect-overlay[data-aspect="16:9"]::before { aspect-ratio: 16 / 9; }
 
 .cpm-capturing-foot {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 18px 22px calc(22px + env(safe-area-inset-bottom, 0px));
-  flex-shrink: 0;
+  padding: 30px 22px calc(22px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+}
+.cpm-capturing-foot > * {
+  pointer-events: auto;
 }
 .cpm-capture-btn {
   width: 70px;
