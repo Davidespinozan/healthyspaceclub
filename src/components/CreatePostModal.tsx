@@ -20,7 +20,7 @@ interface Props {
 type ModalView = 'choose' | 'cropping' | 'composing' | 'uploading';
 
 const MAX_CAPTION = 150;
-const ASPECTS: Record<AspectRatio, number> = { '1:1': 1, '4:5': 4 / 5, '16:9': 16 / 9 };
+const ASPECTS: Record<AspectRatio, number> = { '1:1': 1, '4:5': 4 / 5, '4:3': 4 / 3 };
 
 /**
  * Opciones de aspect ratio que se muestran al user en cropping con label
@@ -41,7 +41,7 @@ function getAvailableAspectOptions(width: number, height: number): AspectOption[
   if (width > height) {
     return [
       { value: '1:1',  label: 'Cuadrado' },
-      { value: '16:9', label: 'Horizontal' },
+      { value: '4:3', label: 'Horizontal' },
     ];
   }
   if (height > width) {
@@ -55,7 +55,7 @@ function getAvailableAspectOptions(width: number, height: number): AspectOption[
 
 /** Default: respeta la orientación natural de la foto. */
 function getDefaultAspect(width: number, height: number): AspectRatio {
-  if (width > height) return '16:9';
+  if (width > height) return '4:3';
   if (height > width) return '4:5';
   return '1:1';
 }
