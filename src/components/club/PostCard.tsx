@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Flame, MessageCircle } from 'lucide-react';
 import './post-card.css';
 
@@ -49,13 +49,31 @@ export default function PostCard({
   showAuthor = true,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const isOwn = currentUserId === post.user_id;
   const streak = post.streak ?? 0;
+
+  // Cerrar el dropdown del kebab al tap fuera (patrón UX universal).
+  // Usamos mousedown + touchstart (no click) para responsividad en mobile.
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleOutside(e: MouseEvent | TouchEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, [menuOpen]);
 
   return (
     <article className="post-card">
       {isOwn && onDelete && (
-        <div className="post-card-menu">
+        <div className="post-card-menu" ref={menuRef}>
           <button
             type="button"
             className="post-card-menu-trigger"
