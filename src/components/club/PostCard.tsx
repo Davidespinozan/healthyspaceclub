@@ -54,6 +54,30 @@ export default function PostCard({
 
   return (
     <article className="post-card">
+      {isOwn && onDelete && (
+        <div className="post-card-menu">
+          <button
+            type="button"
+            className="post-card-menu-trigger"
+            aria-label="Opciones del post"
+            onClick={() => setMenuOpen(o => !o)}
+          >
+            ⋯
+          </button>
+          {menuOpen && (
+            <div className="post-card-menu-dropdown">
+              <button
+                type="button"
+                className="post-card-menu-item"
+                onClick={() => { setMenuOpen(false); onDelete(post.id); }}
+              >
+                Borrar
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {showAuthor && (
         <div className="post-card-head">
           <div
@@ -82,30 +106,6 @@ export default function PostCard({
 
           {post.workout_summary && (
             <span className="post-card-tag">{post.workout_summary}</span>
-          )}
-
-          {isOwn && onDelete && (
-            <div className="post-card-menu">
-              <button
-                type="button"
-                className="post-card-menu-trigger"
-                aria-label="Opciones del post"
-                onClick={() => setMenuOpen(o => !o)}
-              >
-                ⋯
-              </button>
-              {menuOpen && (
-                <div className="post-card-menu-dropdown">
-                  <button
-                    type="button"
-                    className="post-card-menu-item"
-                    onClick={() => { setMenuOpen(false); onDelete(post.id); }}
-                  >
-                    Borrar
-                  </button>
-                </div>
-              )}
-            </div>
           )}
         </div>
       )}
