@@ -72,6 +72,61 @@ function loadImageDimensions(url: string): Promise<{ width: number; height: numb
   });
 }
 
+/**
+ * Orientación física del device en el momento del capture. matchMedia es más
+ * confiable que screen.orientation en iOS Safari (especialmente en PWA standalone).
+ */
+function getDeviceOrientation(): 'portrait' | 'landscape' {
+  if (typeof window === 'undefined') return 'portrait';
+  return window.matchMedia('(orientation: landscape)').matches ? 'landscape' : 'portrait';
+}
+
+/**
+ * Dibuja el video al canvas aplicando rotación (si device está landscape) y
+ * mirror (si es cámara frontal). Las dimensiones del canvas resultante reflejan
+ * la orientación VISUAL correcta — no la nativa del sensor.
+ *
+ * iOS Safari devuelve el stream en la orientación nativa del sensor (portrait
+ * = 1080×1920). Si el user está sosteniendo el celu landscape, sin rotar el
+ * canvas, el frame guardado quedaría vertical y getAvailableAspectOptions
+ * lo detectaría mal como vertical.
+ */
+function drawVideoToCanvas(
+  video: HTMLVideoElement,
+  canvas: HTMLCanvasElement,
+  orientation: 'portrait' | 'landscape',
+  mirror: boolean,
+): void {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+
+  if (orientation === 'landscape') {
+    // Swap dims para que el canvas refleje el aspect visual (landscape).
+    canvas.width = vh;
+    canvas.height = vw;
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(Math.PI / 2); // 90° clockwise
+    if (mirror) ctx.scale(-1, 1);
+    ctx.drawImage(video, -vw / 2, -vh / 2);
+    ctx.restore();
+  } else {
+    canvas.width = vw;
+    canvas.height = vh;
+    if (mirror) {
+      ctx.save();
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0);
+      ctx.restore();
+    } else {
+      ctx.drawImage(video, 0, 0);
+    }
+  }
+}
+
 export default function CreatePostModal({ open, onClose, onPostCreated }: Props) {
   const { userName, streakCount, dailyWorkout } = useAppStore();
   const userId = useCurrentUserId();
@@ -273,17 +328,14 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     const video = videoRef.current;
     if (!video || video.videoWidth === 0) return;
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    // Espejar horizontalmente para cámara frontal (selfie) — match con preview
-    if (cameraFacing === 'user') {
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-    }
-    ctx.drawImage(video, 0, 0);
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const orientation = getDeviceOrientation();
+    const mirror = cameraFacing === 'user';
+    // El helper ajusta canvas.width/height y aplica rotación + mirror según
+    // corresponda. iOS Safari devuelve el stream con orientación nativa del
+    // sensor; en landscape hay que rotar 90° para que el canvas refleje
+    // el aspect visual real.
+    drawVideoToCanvas(video, canvas, orientation, mirror);
+
     const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
     if (!blob) return;
     const url = URL.createObjectURL(blob);
