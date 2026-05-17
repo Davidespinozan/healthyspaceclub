@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
-import { Camera, Image as ImageIcon, FileText, X, RotateCw, ArrowLeft } from 'lucide-react';
+import { Camera, Image as ImageIcon, FileText, X, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
@@ -17,9 +17,7 @@ interface Props {
   onPostCreated?: () => void;
 }
 
-type ModalView = 'choose' | 'capturing' | 'cropping' | 'composing' | 'uploading';
-type CameraError = 'denied' | 'no_camera' | 'busy' | 'unknown' | null;
-type PhotoSource = 'camera' | 'gallery' | null;
+type ModalView = 'choose' | 'cropping' | 'composing' | 'uploading';
 
 const MAX_CAPTION = 150;
 const ASPECTS: Record<AspectRatio, number> = { '1:1': 1, '4:5': 4 / 5, '16:9': 16 / 9 };
@@ -62,7 +60,7 @@ function getDefaultAspect(width: number, height: number): AspectRatio {
   return '1:1';
 }
 
-/** Carga un File como imagen y resuelve sus dimensiones naturales. */
+/** Carga un File como imagen y resuelve sus dimensiones naturales (con EXIF aplicado). */
 function loadImageDimensions(url: string): Promise<{ width: number; height: number }> {
   return new Promise(resolve => {
     const img = new Image();
@@ -72,61 +70,6 @@ function loadImageDimensions(url: string): Promise<{ width: number; height: numb
   });
 }
 
-/**
- * Orientación física del device en el momento del capture. matchMedia es más
- * confiable que screen.orientation en iOS Safari (especialmente en PWA standalone).
- */
-function getDeviceOrientation(): 'portrait' | 'landscape' {
-  if (typeof window === 'undefined') return 'portrait';
-  return window.matchMedia('(orientation: landscape)').matches ? 'landscape' : 'portrait';
-}
-
-/**
- * Dibuja el video al canvas aplicando rotación (si device está landscape) y
- * mirror (si es cámara frontal). Las dimensiones del canvas resultante reflejan
- * la orientación VISUAL correcta — no la nativa del sensor.
- *
- * iOS Safari devuelve el stream en la orientación nativa del sensor (portrait
- * = 1080×1920). Si el user está sosteniendo el celu landscape, sin rotar el
- * canvas, el frame guardado quedaría vertical y getAvailableAspectOptions
- * lo detectaría mal como vertical.
- */
-function drawVideoToCanvas(
-  video: HTMLVideoElement,
-  canvas: HTMLCanvasElement,
-  orientation: 'portrait' | 'landscape',
-  mirror: boolean,
-): void {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  const vw = video.videoWidth;
-  const vh = video.videoHeight;
-
-  if (orientation === 'landscape') {
-    // Swap dims para que el canvas refleje el aspect visual (landscape).
-    canvas.width = vh;
-    canvas.height = vw;
-    ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate(Math.PI / 2); // 90° clockwise
-    if (mirror) ctx.scale(-1, 1);
-    ctx.drawImage(video, -vw / 2, -vh / 2);
-    ctx.restore();
-  } else {
-    canvas.width = vw;
-    canvas.height = vh;
-    if (mirror) {
-      ctx.save();
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0);
-      ctx.restore();
-    } else {
-      ctx.drawImage(video, 0, 0);
-    }
-  }
-}
-
 export default function CreatePostModal({ open, onClose, onPostCreated }: Props) {
   const { userName, streakCount, dailyWorkout } = useAppStore();
   const userId = useCurrentUserId();
@@ -134,24 +77,19 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
   const [userAvatarUrl, setUserAvatarUrl] = useState('');
   const [view, setView] = useState<ModalView>('choose');
   const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [photoSource, setPhotoSource] = useState<PhotoSource>(null);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [caption, setCaption] = useState('');
-  const [cameraError, setCameraError] = useState<CameraError>(null);
-  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('environment');
   const [availableAspects, setAvailableAspects] = useState<AspectOption[]>([
     { value: '1:1', label: 'Cuadrado' },
     { value: '4:5', label: 'Vertical' },
   ]);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const captureInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
   const workoutToday = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
@@ -179,13 +117,11 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     if (open) return;
     setView('choose');
     setImageSrc(null);
-    setPhotoSource(null);
     setAspectRatio('1:1');
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setCroppedAreaPixels(null);
     setCaption('');
-    setCameraError(null);
     setUploadError(null);
   }, [open]);
 
@@ -205,84 +141,26 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, view, caption]);
 
-  // ── Stream lifecycle: arrancar/parar cámara según view ───
-  useEffect(() => {
-    if (view !== 'capturing') {
-      stopStream();
-      return;
-    }
-    startCamera(cameraFacing);
-    return () => { stopStream(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, cameraFacing]);
-
-  function stopStream() {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) videoRef.current.srcObject = null;
-  }
-
-  async function startCamera(facing: 'user' | 'environment') {
-    setCameraError(null);
-    if (!navigator.mediaDevices?.getUserMedia) {
-      // Sin support: silenciosamente fallback al input file con capture
-      captureInputRef.current?.click();
-      setView('choose');
-      return;
-    }
-    try {
-      // Constraints mínimas: dejar que iOS/Android decidan la mejor orientación
-      // y dimensiones del stream según el device. Sesgar con ideal width/height
-      // forzaba portrait artificial que descuadraba el stage.
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => { /* autoplay puede ser bloqueado, ignorar */ });
-      }
-    } catch (e) {
-      const err = e as DOMException;
-      if (err.name === 'NotAllowedError' || err.name === 'SecurityError') setCameraError('denied');
-      else if (err.name === 'NotFoundError') setCameraError('no_camera');
-      else if (err.name === 'NotReadableError') setCameraError('busy');
-      else setCameraError('unknown');
-    }
-  }
-
   function handleEsc() {
     if (view === 'uploading') return;
     if (view === 'composing' && caption.trim().length > 0) return;
-    handleClose();
-  }
-
-  function handleClose() {
-    stopStream();
     onClose();
   }
 
   function handleBackdropClick() {
     // Cierra solo si NO hay trabajo en progreso.
-    if (view === 'choose') { handleClose(); return; }
-    if (view === 'composing' && !caption.trim() && !imageSrc) { handleClose(); return; }
+    if (view === 'choose') { onClose(); return; }
+    if (view === 'composing' && !caption.trim() && !imageSrc) { onClose(); return; }
     // Otros casos: ignorar el tap
   }
 
   // ── Flujo: elegir fuente ──────────────────────────────────
   function handleTakePhoto() {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      captureInputRef.current?.click();
-      return;
-    }
-    setView('capturing');
+    cameraInputRef.current?.click();
   }
 
   function handleOpenGallery() {
-    fileInputRef.current?.click();
+    galleryInputRef.current?.click();
   }
 
   function handleTextOnly() {
@@ -290,9 +168,14 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     setView('composing');
   }
 
-  async function handleGalleryFile(e: React.ChangeEvent<HTMLInputElement>) {
+  /**
+   * Handler único para galería y cámara nativa. iOS aplica EXIF correctamente
+   * al cargar la imagen con `new Image()`, por eso naturalWidth/naturalHeight
+   * ya reflejan la orientación visual real (no la del sensor).
+   */
+  async function handleImageFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    e.target.value = '';
+    e.target.value = ''; // reset para permitir re-seleccionar la misma foto
     if (!file) return;
     const check = validateMediaFile(file, false);
     if (!check.valid) { alert(check.error); return; }
@@ -302,54 +185,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     setAvailableAspects(getAvailableAspectOptions(width, height));
     setAspectRatio(getDefaultAspect(width, height));
     setCroppedAreaPixels(null);
-    setPhotoSource('gallery');
     setView('cropping');
-  }
-
-  async function handleCaptureFile(e: React.ChangeEvent<HTMLInputElement>) {
-    // Fallback nativo (sin getUserMedia): se trata como galería con detection.
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    const check = validateMediaFile(file, false);
-    if (!check.valid) { alert(check.error); return; }
-    const url = URL.createObjectURL(file);
-    const { width, height } = await loadImageDimensions(url);
-    setImageSrc(url);
-    setAvailableAspects(getAvailableAspectOptions(width, height));
-    setAspectRatio(getDefaultAspect(width, height));
-    setCroppedAreaPixels(null);
-    setPhotoSource('gallery');
-    setView('cropping');
-  }
-
-  // ── Capture frame del video → detecta aspect → cropping (ajustable) ──
-  async function handleCaptureFrame() {
-    const video = videoRef.current;
-    if (!video || video.videoWidth === 0) return;
-    const canvas = document.createElement('canvas');
-    const orientation = getDeviceOrientation();
-    const mirror = cameraFacing === 'user';
-    // El helper ajusta canvas.width/height y aplica rotación + mirror según
-    // corresponda. iOS Safari devuelve el stream con orientación nativa del
-    // sensor; en landscape hay que rotar 90° para que el canvas refleje
-    // el aspect visual real.
-    drawVideoToCanvas(video, canvas, orientation, mirror);
-
-    const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-
-    setImageSrc(url);
-    setAvailableAspects(getAvailableAspectOptions(canvas.width, canvas.height));
-    setAspectRatio(getDefaultAspect(canvas.width, canvas.height));
-    setCroppedAreaPixels(null);
-    setPhotoSource('camera');
-    setView('cropping');
-  }
-
-  function handleSwapCamera() {
-    setCameraFacing(prev => (prev === 'environment' ? 'user' : 'environment'));
   }
 
   // ── Crop callbacks ────────────────────────────────────────
@@ -362,27 +198,18 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
   }
 
   function handleCropBack() {
-    // Descartar foto y volver al paso anterior según source.
     if (imageSrc) URL.revokeObjectURL(imageSrc);
     setImageSrc(null);
     setCroppedAreaPixels(null);
-    if (photoSource === 'camera') {
-      // Re-disparar cámara, mantenemos photoSource='camera' para próxima captura
-      setView('capturing');
-    } else {
-      setPhotoSource(null);
-      setView('choose');
-    }
+    setView('choose');
   }
 
   function handleComposingBack() {
     setUploadError(null);
     if (imageSrc) {
-      // Ambos paths (camera y gallery) pasan por cropping ahora
       setView('cropping');
       return;
     }
-    // Solo-texto o sin foto: volver al choose
     setView('choose');
   }
 
@@ -397,7 +224,6 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
 
     if (imageSrc && croppedAreaPixels) {
       try {
-        // Reconstruir File desde imageSrc (puede ser blob: o data:)
         const res = await fetch(imageSrc);
         const blobIn = await res.blob();
         const file = new File([blobIn], `capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
@@ -433,7 +259,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
       if (insertErr) throw insertErr;
       if (imageError) alert(`Publicado, pero la imagen no se pudo subir: ${imageError}`);
       onPostCreated?.();
-      handleClose();
+      onClose();
     } catch (e) {
       setUploadError(extractErrorMessage(e));
       setView('composing');
@@ -451,21 +277,21 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
       aria-modal="true"
     >
       <div className="cpm-sheet" onClick={e => e.stopPropagation()}>
-        {/* Hidden inputs siempre presentes */}
+        {/* Inputs hidden — uno para cámara nativa, otro para galería */}
         <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={handleGalleryFile}
-        />
-        <input
-          ref={captureInputRef}
+          ref={cameraInputRef}
           type="file"
           accept="image/*"
           capture="environment"
           hidden
-          onChange={handleCaptureFile}
+          onChange={handleImageFile}
+        />
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={handleImageFile}
         />
 
         {view === 'choose' && (
@@ -473,20 +299,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
             onTakePhoto={handleTakePhoto}
             onGallery={handleOpenGallery}
             onTextOnly={handleTextOnly}
-            onClose={handleClose}
-          />
-        )}
-
-        {view === 'capturing' && (
-          <CapturingView
-            videoRef={videoRef}
-            onCapture={handleCaptureFrame}
-            onSwapCamera={handleSwapCamera}
-            onClose={handleClose}
-            cameraError={cameraError}
-            cameraFacing={cameraFacing}
-            onOpenGallery={handleOpenGallery}
-            onBack={() => setView('choose')}
+            onClose={onClose}
           />
         )}
 
@@ -562,79 +375,6 @@ function ChooseView({
           <span>Solo texto</span>
         </button>
       </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// VIEW: capturing
-// ══════════════════════════════════════════════════════════════
-function CapturingView({
-  videoRef, onCapture, onSwapCamera, onClose, cameraError, cameraFacing, onOpenGallery, onBack,
-}: {
-  videoRef: React.MutableRefObject<HTMLVideoElement | null>;
-  onCapture: () => void;
-  onSwapCamera: () => void;
-  onClose: () => void;
-  cameraError: CameraError;
-  cameraFacing: 'user' | 'environment';
-  onOpenGallery: () => void;
-  onBack: () => void;
-}) {
-  return (
-    <div className="cpm-capturing">
-      <header className="cpm-capturing-head">
-        <button type="button" className="cpm-icon-btn" onClick={onBack} aria-label="Volver">
-          <ArrowLeft size={20} />
-        </button>
-        <span className="cpm-icon-btn cpm-icon-btn--placeholder" aria-hidden="true" />
-        <button type="button" className="cpm-icon-btn" onClick={onClose} aria-label="Cerrar">
-          <X size={20} />
-        </button>
-      </header>
-
-      <div className="cpm-capturing-stage">
-        {cameraError ? (
-          <div className="cpm-camera-error">
-            <Camera size={36} strokeWidth={1.5} className="cpm-camera-error-icon" />
-            <p className="cpm-camera-error-title">Sin acceso a la cámara</p>
-            <p className="cpm-camera-error-sub">
-              Activalo desde los ajustes del navegador,<br />o elegí una foto de tu galería.
-            </p>
-            <div className="cpm-camera-error-actions">
-              <button type="button" className="cpm-btn-primary" onClick={onOpenGallery}>
-                Abrir galería
-              </button>
-              <button type="button" className="cpm-btn-ghost" onClick={onBack}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        ) : (
-          <video
-            ref={videoRef}
-            className={`cpm-video${cameraFacing === 'user' ? ' cpm-video--mirror' : ''}`}
-            playsInline
-            muted
-            autoPlay
-          />
-        )}
-      </div>
-
-      {!cameraError && (
-        <footer className="cpm-capturing-foot">
-          <button type="button" className="cpm-icon-btn" onClick={onSwapCamera} aria-label="Cambiar cámara">
-            <RotateCw size={20} />
-          </button>
-          <button
-            type="button"
-            className="cpm-capture-btn"
-            onClick={onCapture}
-            aria-label="Capturar foto"
-          />
-          <span className="cpm-icon-btn cpm-icon-btn--placeholder" aria-hidden="true" />
-        </footer>
-      )}
     </div>
   );
 }
