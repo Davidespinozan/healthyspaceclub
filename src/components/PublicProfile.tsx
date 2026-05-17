@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { X, Flame } from 'lucide-react';
+import { X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import PostCard, { type ClubPost } from './club/PostCard';
 import './public-profile.css';
 
 interface ProfileData {
@@ -10,45 +11,15 @@ interface ProfileData {
   created_at?: string;
 }
 
-interface PostData {
-  id: string;
-  username: string;
-  avatar_url: string;
-  streak: number;
-  workout_summary: string;
-  photo_url: string;
-  text: string;
-  fire_count: number;
-  created_at: string;
-}
-
 interface Props {
   userId: string;
   currentUserId?: string; // para saber si este usuario puede dar fire
   onClose: () => void;
 }
 
-function timeAgo(dateStr: string): string {
-  const d = new Date(dateStr);
-  const diff = Date.now() - d.getTime();
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(mins / 60);
-  const days = Math.floor(hours / 24);
-
-  if (mins < 1) return 'justo ahora';
-  if (mins < 60) return `hace ${mins}m`;
-  if (hours < 24) return `hace ${hours}h`;
-  if (days === 1) return 'ayer';
-  if (days < 7) return `hace ${days}d`;
-
-  const day = d.getDate();
-  const month = d.toLocaleDateString('es-ES', { month: 'short' });
-  return `${day} ${month}`;
-}
-
 export default function PublicProfile({ userId, currentUserId, onClose }: Props) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [posts, setPosts] = useState<PostData[]>([]);
+  const [posts, setPosts] = useState<ClubPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userFires, setUserFires] = useState<Set<string>>(new Set());
@@ -75,7 +46,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
         if (postsRes.error) throw new Error(postsRes.error.message);
 
         if (profileRes.data) setProfile(profileRes.data);
-        if (postsRes.data) setPosts(postsRes.data);
+        if (postsRes.data) setPosts(postsRes.data as ClubPost[]);
 
         // Cargar fires del currentUser sobre estos posts
         if (currentUserId && postsRes.data && postsRes.data.length > 0) {
@@ -226,72 +197,20 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
               )}
             </div>
 
-            {/* Feed */}
+            {/* Feed — usa PostCard compartido, sin author (ya está en el header del perfil) */}
             {posts.length > 0 ? (
               <div className="pp-feed">
-                {posts.map(post => {
-                  const hasFire = userFires.has(post.id);
-                  const isOwnPost = currentUserId === userId;
-
-                  return (
-                    <div key={post.id} className="pp-post">
-                      {post.workout_summary && (
-                        <div className="pp-post-workout-chip">
-                          💪 {post.workout_summary}
-                        </div>
-                      )}
-
-                      {post.photo_url && (
-                        post.photo_url.match(/\.(mp4|mov|webm)$/i) ? (
-                          <video
-                            src={post.photo_url}
-                            className="pp-post-media"
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            onError={e => {
-                              (e.target as HTMLVideoElement).style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src={post.photo_url}
-                            alt=""
-                            className="pp-post-media"
-                            onError={e => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        )
-                      )}
-
-                      {post.text && (
-                        <p className="pp-post-text">{post.text}</p>
-                      )}
-
-                      <div className="pp-post-footer">
-                        <span className="pp-post-date">{timeAgo(post.created_at)}</span>
-
-                        {currentUserId && !isOwnPost ? (
-                          <button
-                            className={`pp-post-fire${hasFire ? ' on' : ''}`}
-                            onClick={() => toggleFire(post.id)}
-                            disabled={firingPost === post.id}
-                            aria-label={hasFire ? 'Quitar fire' : 'Dar fire'}
-                          >
-                            <Flame size={14} fill={hasFire ? 'currentColor' : 'none'} />
-                            <span>{post.fire_count}</span>
-                          </button>
-                        ) : post.fire_count > 0 && (
-                          <span className="pp-post-fires">
-                            🔥 {post.fire_count}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {posts.map(post => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    currentUserId={currentUserId ?? null}
+                    hasFire={userFires.has(post.id)}
+                    onFireToggle={() => toggleFire(post.id)}
+                    onAuthorTap={() => { /* ya estamos en su perfil */ }}
+                    showAuthor={false}
+                  />
+                ))}
               </div>
             ) : (
               <div className="pp-empty">

@@ -1,7 +1,15 @@
+/* ═════════════════════════════════════════════════════════════
+   TabClub — wrapper, header, empty state y FAB
+   El render de cada post vive en components/club/PostCard
+   (estilos .post-card-* en post-card.css)
+   ═════════════════════════════════════════════════════════════ */
+
 .clb-wrap {
   display: flex;
   flex-direction: column;
   padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+  background: var(--cream);
+  min-height: 100dvh;
 }
 
 .clb-header {
@@ -9,7 +17,6 @@
   justify-content: space-between;
   align-items: baseline;
   padding: 22px 18px 14px;
-  border-bottom: 0.5px solid rgba(21,51,48,0.08);
 }
 
 .clb-title {
@@ -19,7 +26,6 @@
   color: var(--forest);
   letter-spacing: -0.01em;
   margin: 0;
-  text-transform: none;
 }
 
 .clb-meta {
@@ -31,6 +37,7 @@
 .clb-feed {
   display: flex;
   flex-direction: column;
+  padding: 0 14px;
 }
 
 .clb-empty {
@@ -52,214 +59,7 @@
   margin: 0;
 }
 
-.clb-post {
-  position: relative;
-  background: white;
-  padding: 18px;
-  border-bottom: 0.5px solid rgba(21,51,48,0.08);
-}
-
-.clb-post-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.clb-post-author {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.clb-post-author:hover .clb-post-username {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.clb-post-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--warm);
-  flex-shrink: 0;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--forest);
-  font-weight: 600;
-  font-size: 14px;
-}
-.clb-post-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.clb-post-meta {
-  min-width: 0;
-}
-.clb-post-name {
-  font-size: 13px;
-  color: var(--forest);
-  line-height: 1.2;
-}
-.clb-post-username {
-  font-weight: 600;
-}
-.clb-post-streak {
-  color: var(--amber);
-  font-weight: 500;
-}
-.clb-post-time {
-  font-size: 11px;
-  color: var(--forest);
-  opacity: 0.55;
-  margin-top: 2px;
-}
-
-.clb-post-tag {
-  background: var(--amber);
-  color: var(--forest);
-  font-size: 10px;
-  font-weight: 600;
-  padding: 5px 10px;
-  border-radius: 6px;
-  white-space: nowrap;
-  align-self: flex-start;
-}
-
-.clb-post-media {
-  margin: 0 -18px 12px;
-  background: var(--warm);
-  aspect-ratio: 4 / 5;
-  overflow: hidden;
-}
-.clb-post-media img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-}
-
-.clb-post-text {
-  font-family: Georgia, serif;
-  font-size: 14px;
-  font-style: italic;
-  color: var(--forest);
-  line-height: 1.45;
-  margin: 0 0 12px;
-}
-
-.clb-post-actions {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  padding-top: 4px;
-}
-
-.clb-post-fire {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 14px 7px 12px;
-  background: transparent;
-  border: 0.5px solid var(--sand);
-  border-radius: 50px;
-  cursor: pointer;
-  font-family: inherit;
-  -webkit-tap-highlight-color: transparent;
-  transition: all 0.18s ease;
-}
-.clb-post-fire:hover {
-  border-color: var(--amber);
-  background: rgba(191, 160, 101, 0.06);
-}
-.clb-post-fire.active {
-  border-color: var(--amber);
-  background: rgba(191, 160, 101, 0.1);
-}
-
-.clb-post-fire-icon {
-  font-size: 15px;
-  line-height: 1;
-  filter: grayscale(0.7) opacity(0.55);
-  transition: filter 0.18s ease;
-}
-.clb-post-fire.active .clb-post-fire-icon {
-  filter: grayscale(0) opacity(1);
-}
-
-.clb-post-fire-count {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--forest);
-  letter-spacing: -0.01em;
-  line-height: 1;
-}
-.clb-post-fire.active .clb-post-fire-count {
-  color: var(--amber);
-}
-
-/* Kebab menu (own posts) */
-.clb-post-menu {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-}
-.clb-post-menu-trigger {
-  background: transparent;
-  border: none;
-  color: rgba(21, 51, 48, 0.4);
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px 10px;
-  border-radius: 50%;
-  font-family: inherit;
-  line-height: 1;
-  -webkit-tap-highlight-color: transparent;
-}
-.clb-post-menu-trigger:hover {
-  background: rgba(21, 51, 48, 0.06);
-  color: var(--forest);
-}
-.clb-post-menu-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border: 0.5px solid var(--sand);
-  border-radius: 10px;
-  padding: 4px;
-  margin-top: 4px;
-  box-shadow: 0 6px 18px rgba(21, 51, 48, 0.12);
-  z-index: 10;
-}
-.clb-post-menu-item {
-  display: block;
-  width: 100%;
-  padding: 8px 14px;
-  background: transparent;
-  border: none;
-  color: rgb(180, 60, 60);
-  font-size: 13px;
-  cursor: pointer;
-  border-radius: 6px;
-  text-align: left;
-  font-family: inherit;
-  white-space: nowrap;
-  -webkit-tap-highlight-color: transparent;
-}
-.clb-post-menu-item:hover {
-  background: rgba(180, 60, 60, 0.08);
-}
-
-/* Floating action button (create post) — bottom-left, opposite to Coach FAB */
+/* ─── Floating action button (create post) ──────────────── */
 .clb-fab {
   position: fixed;
   bottom: calc(90px + env(safe-area-inset-bottom, 0px));
@@ -298,19 +98,7 @@
     max-width: 720px;
     margin: 0 auto;
     width: 100%;
-  }
-  .clb-post {
-    border-radius: 16px;
-    border: 0.5px solid var(--sand);
-    margin: 14px 0;
-    padding: 22px;
-    border-bottom: 0.5px solid var(--sand);
-  }
-  .clb-post-media {
-    margin: 0 0 14px;
-    border-radius: 12px;
-    overflow: hidden;
-    aspect-ratio: 4 / 5;
+    padding: 0 24px;
   }
   .clb-fab {
     bottom: 32px;
@@ -321,7 +109,7 @@
   }
 }
 
-/* Desktop ≥1024px: sidebar de 220px ocupa el left edge — desplazar FAB para que no quede oculto detrás del sidebar */
+/* Desktop ≥1024px: sidebar de 220px en left edge — desplazar FAB */
 @media (min-width: 1024px) {
   .clb-fab {
     left: calc(220px + 32px);

@@ -22,7 +22,8 @@ type CameraError = 'denied' | 'no_camera' | 'busy' | 'unknown' | null;
 type PhotoSource = 'camera' | 'gallery' | null;
 
 const MAX_CAPTION = 150;
-const ASPECTS: Record<AspectRatio, number> = { '1:1': 1, '4:5': 4 / 5 };
+const ASPECTS: Record<AspectRatio, number> = { '1:1': 1, '4:5': 4 / 5, '16:9': 16 / 9 };
+const ASPECT_OPTIONS: AspectRatio[] = ['1:1', '4:5', '16:9'];
 
 export default function CreatePostModal({ open, onClose, onPostCreated }: Props) {
   const { userName, streakCount, dailyWorkout } = useAppStore();
@@ -327,6 +328,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
         photo_url: photoUrl,
         text: caption.trim().slice(0, MAX_CAPTION),
         fire_count: 0,
+        aspect_ratio: aspectRatio,
       });
       if (insertErr) throw insertErr;
       if (imageError) alert(`Publicado, pero la imagen no se pudo subir: ${imageError}`);
@@ -489,7 +491,7 @@ function CapturingView({
           <ArrowLeft size={20} />
         </button>
         <div className="cpm-aspect-toggle" role="tablist" aria-label="Aspect ratio">
-          {(['1:1', '4:5'] as AspectRatio[]).map(a => (
+          {ASPECT_OPTIONS.map(a => (
             <button
               key={a}
               type="button"
@@ -534,7 +536,7 @@ function CapturingView({
               autoPlay
               data-aspect={aspectRatio}
             />
-            <div className={`cpm-aspect-overlay cpm-aspect-overlay--${aspectRatio === '1:1' ? 'sq' : 'tall'}`} />
+            <div className="cpm-aspect-overlay" data-aspect={aspectRatio} />
           </>
         )}
       </div>
@@ -599,7 +601,7 @@ function CroppingView({
           objectFit="contain"
         />
         <div className="cpm-aspect-pill" role="tablist" aria-label="Aspect ratio">
-          {(['1:1', '4:5'] as AspectRatio[]).map(a => (
+          {ASPECT_OPTIONS.map(a => (
             <button
               key={a}
               type="button"
@@ -646,7 +648,7 @@ function ComposingView({
 
       <div className="cpm-composing-body">
         {imageSrc && (
-          <div className={`cpm-composing-preview cpm-composing-preview--${aspectRatio === '1:1' ? 'sq' : 'tall'}`}>
+          <div className="cpm-composing-preview" data-aspect={aspectRatio}>
             <img src={imageSrc} alt="" />
           </div>
         )}

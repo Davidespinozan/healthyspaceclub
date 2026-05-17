@@ -1,51 +1,25 @@
 import CreatePostModal from './CreatePostModal';
 import PublicProfile from './PublicProfile';
+import PostCard, { type ClubPost } from './club/PostCard';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import './tab-club.css';
 
-interface ClubFeedPost {
-  id: string;
-  user_id: string;
-  username: string;
-  avatar_url: string | null;
-  streak: number;
-  workout_summary: string | null;
-  photo_url: string | null;
-  text: string | null;
-  fire_count: number;
-  created_at: string;
-}
-
 export default function TabClub() {
   const userId = useCurrentUserId();
 
-  const [posts, setPosts] = useState<ClubFeedPost[]>([]);
+  const [posts, setPosts] = useState<ClubPost[]>([]);
   const [activeToday, setActiveToday] = useState(0);
   const [firedIds, setFiredIds] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFeed();
     fetchActiveCount();
     fetchUserFires();
   }, []);
-
-  // Close kebab menu on outside click
-  useEffect(() => {
-    if (!openMenuId) return;
-    function handleClickOutside(e: MouseEvent) {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.clb-post-menu')) {
-        setOpenMenuId(null);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [openMenuId]);
 
   async function fetchFeed() {
     try {
@@ -54,7 +28,7 @@ export default function TabClub() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
-      if (data) setPosts(data as ClubFeedPost[]);
+      if (data) setPosts(data as ClubPost[]);
     } catch (e) {
       console.warn('[TabClub] fetchFeed failed:', e);
     }
@@ -106,22 +80,9 @@ export default function TabClub() {
     try {
       await supabase.from('club_posts').delete().eq('id', postId);
       setPosts(prev => prev.filter(p => p.id !== postId));
-      setOpenMenuId(null);
     } catch (e) {
       console.warn('[TabClub] deletePost failed:', e);
     }
-  }
-
-  function timeAgo(dateStr: string): string {
-    const now = Date.now();
-    const then = new Date(dateStr).getTime();
-    const diffMin = Math.floor((now - then) / 60000);
-    if (diffMin < 1) return 'ahora';
-    if (diffMin < 60) return `hace ${diffMin} min`;
-    const diffH = Math.floor(diffMin / 60);
-    if (diffH < 24) return `hace ${diffH}h`;
-    const diffD = Math.floor(diffH / 24);
-    return `hace ${diffD}d`;
   }
 
   return (
@@ -138,85 +99,17 @@ export default function TabClub() {
             <p className="clb-empty-sub">Comparte tu primer logro para empezar.</p>
           </div>
         )}
-        {posts.map(post => {
-          const isOwn = post.user_id === userId;
-          return (
-            <article key={post.id} className="clb-post">
-              <div className="clb-post-head">
-                <div
-                  className="clb-post-author"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setProfileUserId(post.user_id)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') setProfileUserId(post.user_id);
-                  }}
-                >
-                  <div className="clb-post-avatar">
-                    {post.avatar_url
-                      ? <img src={post.avatar_url} alt="" />
-                      : <span>{(post.username || '?')[0].toUpperCase()}</span>
-                    }
-                  </div>
-                  <div className="clb-post-meta">
-                    <div className="clb-post-name">
-                      <span className="clb-post-username">{post.username || 'Anónimo'}</span>
-                      {post.streak > 0 && <span className="clb-post-streak"> · {post.streak} días</span>}
-                    </div>
-                    <div className="clb-post-time">{timeAgo(post.created_at)}</div>
-                  </div>
-                </div>
-                {post.workout_summary && (
-                  <span className="clb-post-tag">{post.workout_summary}</span>
-                )}
-              </div>
-
-              {isOwn && (
-                <div className="clb-post-menu">
-                  <button
-                    type="button"
-                    className="clb-post-menu-trigger"
-                    aria-label="Opciones"
-                    onClick={() => setOpenMenuId(openMenuId === post.id ? null : post.id)}
-                  >
-                    ⋯
-                  </button>
-                  {openMenuId === post.id && (
-                    <div className="clb-post-menu-dropdown">
-                      <button
-                        type="button"
-                        className="clb-post-menu-item"
-                        onClick={() => deletePost(post.id)}
-                      >
-                        Borrar
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {post.photo_url && (
-                <div className="clb-post-media">
-                  <img src={post.photo_url} alt="" loading="lazy" />
-                </div>
-              )}
-
-              {post.text && (
-                <p className="clb-post-text">{post.text}</p>
-              )}
-
-              <div className="clb-post-actions">
-                <button
-                  className={`clb-post-fire${firedIds.has(post.id) ? ' active' : ''}`}
-                  onClick={() => toggleFire(post.id)}
-                >
-                  <span className="clb-post-fire-icon">🔥</span>
-                  <span className="clb-post-fire-count">{post.fire_count}</span>
-                </button>
-              </div>
-            </article>
-          );
-        })}
+        {posts.map(post => (
+          <PostCard
+            key={post.id}
+            post={post}
+            currentUserId={userId}
+            hasFire={firedIds.has(post.id)}
+            onFireToggle={toggleFire}
+            onAuthorTap={setProfileUserId}
+            onDelete={deletePost}
+          />
+        ))}
       </section>
 
       <button

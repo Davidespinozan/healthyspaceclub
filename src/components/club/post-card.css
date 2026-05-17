@@ -1,0 +1,209 @@
+/* ═════════════════════════════════════════════════════════════
+   PostCard — componente reutilizable de post en feeds del Club
+   Prefijo: .post-card-*
+   Paleta: --cream, --forest, --amber-deep, --taupe, --taupe-deep
+   ═════════════════════════════════════════════════════════════ */
+
+.post-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+/* ─── Head: author + meta + tag + kebab ─────────────────── */
+.post-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.post-card-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.post-card-author:hover .post-card-username {
+  color: var(--amber-deep);
+}
+
+.post-card-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--warm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--forest);
+}
+.post-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.post-card-meta {
+  flex: 1;
+  min-width: 0;
+}
+.post-card-name {
+  font-size: 13px;
+  line-height: 1.2;
+}
+.post-card-username {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  color: var(--forest);
+  transition: color 0.15s;
+}
+.post-card-streak {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--taupe);
+}
+.post-card-time {
+  font-size: 11px;
+  color: var(--taupe);
+  margin-top: 2px;
+}
+
+.post-card-tag {
+  background: rgba(124, 98, 50, 0.12);
+  color: var(--amber-deep);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 4px 9px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── Kebab menu (posts propios) ─────────────────────────── */
+.post-card-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+.post-card-menu-trigger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--taupe-deep);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.post-card-menu-trigger:hover {
+  background: rgba(21, 51, 48, 0.06);
+}
+.post-card-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid rgba(21, 51, 48, 0.1);
+  border-radius: 10px;
+  padding: 4px;
+  min-width: 120px;
+  z-index: 10;
+  box-shadow: 0 4px 14px rgba(21, 51, 48, 0.08);
+}
+.post-card-menu-item {
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--forest);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.post-card-menu-item:hover {
+  background: rgba(21, 51, 48, 0.04);
+}
+
+/* ─── Media — aspect ratio honesto ───────────────────────── */
+.post-card-media {
+  margin: 0;
+  background: var(--warm);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.post-card-media[data-aspect="1:1"]  { aspect-ratio: 1 / 1; }
+.post-card-media[data-aspect="4:5"]  { aspect-ratio: 4 / 5; }
+.post-card-media[data-aspect="16:9"] { aspect-ratio: 16 / 9; }
+.post-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ─── Texto del post ─────────────────────────────────────── */
+.post-card-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--forest);
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+
+/* ─── Acciones (fire + comments) ─────────────────────────── */
+.post-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 10px;
+}
+
+.post-card-fire,
+.post-card-comments {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 4px 2px;
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--taupe-deep);
+  -webkit-tap-highlight-color: transparent;
+  min-height: 32px;
+  transition: color 0.15s;
+}
+.post-card-fire:hover {
+  color: var(--amber-deep);
+}
+.post-card-fire.is-active {
+  color: var(--amber-deep);
+}
+.post-card-comments {
+  cursor: default;
+}

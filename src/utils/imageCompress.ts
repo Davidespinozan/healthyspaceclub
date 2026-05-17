@@ -6,14 +6,15 @@
  *  - Explicit-crop: si recibe `cropPixels` (típicamente de react-easy-crop),
  *    usa esa región exacta del source en lugar de center-crop.
  *
- * Aspect ratios soportados:
- *  - '1:1'  → output 1080×1080
- *  - '4:5'  → output 1080×1350 (vertical, Instagram-style)
+ * Aspect ratios soportados (regla: dimensión menor = 1080):
+ *  - '1:1'   → output 1080×1080  (cuadrado clásico)
+ *  - '4:5'   → output 1080×1350  (vertical Instagram-style)
+ *  - '16:9'  → output 1920×1080  (horizontal HD)
  *
  * JPEG 0.85 quality por defecto.
  */
 
-export type AspectRatio = '1:1' | '4:5';
+export type AspectRatio = '1:1' | '4:5' | '16:9';
 
 export interface CropPixels {
   x: number;
@@ -31,8 +32,9 @@ export interface CompressImageOptions {
 }
 
 const DIMENSIONS: Record<AspectRatio, { w: number; h: number }> = {
-  '1:1': { w: 1080, h: 1080 },
-  '4:5': { w: 1080, h: 1350 },
+  '1:1':  { w: 1080, h: 1080 },
+  '4:5':  { w: 1080, h: 1350 },
+  '16:9': { w: 1920, h: 1080 },
 };
 
 export async function compressImage(

@@ -205,6 +205,7 @@ export type Database = {
       }
       club_posts: {
         Row: {
+          aspect_ratio: string
           avatar_url: string | null
           comments_count: number
           created_at: string
@@ -218,6 +219,7 @@ export type Database = {
           workout_summary: string | null
         }
         Insert: {
+          aspect_ratio?: string
           avatar_url?: string | null
           comments_count?: number
           created_at?: string
@@ -231,6 +233,7 @@ export type Database = {
           workout_summary?: string | null
         }
         Update: {
+          aspect_ratio?: string
           avatar_url?: string | null
           comments_count?: number
           created_at?: string
