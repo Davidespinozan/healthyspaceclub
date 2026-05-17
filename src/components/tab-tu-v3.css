@@ -424,6 +424,10 @@
   border-radius: 4px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.04);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .tt3-grid-item img {
   width: 100%;

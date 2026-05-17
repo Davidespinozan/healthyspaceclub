@@ -7,6 +7,7 @@ import type { DashPage } from '../types';
 import { uploadAvatar } from '../utils/uploadAvatar';
 import CoachProfileSheet from './CoachProfileSheet';
 import SettingsSheet from './SettingsSheet';
+import PublicProfile from './PublicProfile';
 import './tab-tu-v3.css';
 
 const MILESTONE_STEPS = [3, 7, 14, 30, 60, 90, 180, 365] as const;
@@ -36,6 +37,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const [saving, setSaving] = useState(false);
   const [coachOpen, setCoachOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'reflexiones'>('posts');
 
   const { yearNumber, dayOfYear } = useMemo(() => {
@@ -58,6 +60,23 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
     console.log('TODO: LogrosSheet');
   }
 
+  async function refreshUserPosts() {
+    try {
+      const { count } = await supabase.from('club_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+      if (count != null) setPostCount(count);
+    } catch (e) { console.warn('[TabTu] postCount failed:', e); }
+    try {
+      const { data } = await supabase
+        .from('club_posts')
+        .select('id, photo_url')
+        .eq('user_id', userId)
+        .not('photo_url', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(9);
+      if (data) setUserPosts(data as { id: string; photo_url: string }[]);
+    } catch (e) { console.warn('[TabTu] fetchUserPosts failed:', e); }
+  }
+
   useEffect(() => {
     (async () => {
       try {
@@ -65,24 +84,8 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         if (data) setProfile({ display_name: data.display_name, bio: data.bio, avatar_url: data.avatar_url });
       } catch (e) { console.warn('[TabTu] query failed:', e); }
     })();
-    (async () => {
-      try {
-        const { count } = await supabase.from('club_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId);
-        if (count != null) setPostCount(count);
-      } catch (e) { console.warn('[TabTu] query failed:', e); }
-    })();
-    (async () => {
-      try {
-        const { data } = await supabase
-          .from('club_posts')
-          .select('id, photo_url')
-          .eq('user_id', userId)
-          .not('photo_url', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(9);
-        if (data) setUserPosts(data as { id: string; photo_url: string }[]);
-      } catch (e) { console.warn('[TabTu] fetchUserPosts failed:', e); }
-    })();
+    refreshUserPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   async function handleSave() {
@@ -337,9 +340,15 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         return (
           <div className="tt3-grid">
             {userPosts.map(post => (
-              <div key={post.id} className="tt3-grid-item">
+              <button
+                key={post.id}
+                type="button"
+                className="tt3-grid-item"
+                onClick={() => setProfileOpen(true)}
+                aria-label="Ver mis posts"
+              >
                 <img src={post.photo_url} alt="" loading="lazy" />
-              </div>
+              </button>
             ))}
             {Array.from({ length: placeholders }, (_, i) => (
               <div key={`ph-${i}`} className="tt3-grid-item tt3-grid-item--empty" aria-hidden="true" />
@@ -370,6 +379,17 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
+
+      {profileOpen && (
+        <PublicProfile
+          userId={userId}
+          currentUserId={userId}
+          onClose={() => {
+            setProfileOpen(false);
+            refreshUserPosts();
+          }}
+        />
+      )}
 
     </div>
   );

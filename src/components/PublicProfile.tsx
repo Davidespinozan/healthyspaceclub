@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
+import { deleteClubPost } from '../utils/clubPosts';
 import './public-profile.css';
 
 interface ProfileData {
@@ -85,6 +86,18 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
     return () => document.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
+  async function handleDelete(postId: string) {
+    if (!window.confirm('¿Eliminar este post?')) return;
+    const post = posts.find(p => p.id === postId);
+    try {
+      await deleteClubPost(postId, post?.photo_url ?? null);
+      setPosts(prev => prev.filter(p => p.id !== postId));
+    } catch (e) {
+      console.warn('[public-profile] delete failed:', e);
+      alert('No se pudo borrar el post.');
+    }
+  }
+
   async function toggleFire(postId: string) {
     if (!currentUserId || firingPost === postId) return;
     setFiringPost(postId);
@@ -127,6 +140,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
   }
 
   const displayName = profile?.display_name || posts[0]?.username || userId;
+  const isOwnProfile = !!currentUserId && currentUserId === userId;
   const initial = (displayName || '?')[0].toUpperCase();
   const avatarUrl = profile?.avatar_url || posts[0]?.avatar_url || '';
   const totalFires = posts.reduce((sum, p) => sum + (p.fire_count || 0), 0);
@@ -208,6 +222,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
                     hasFire={userFires.has(post.id)}
                     onFireToggle={() => toggleFire(post.id)}
                     onAuthorTap={() => { /* ya estamos en su perfil */ }}
+                    onDelete={isOwnProfile ? handleDelete : undefined}
                     showAuthor={false}
                   />
                 ))}

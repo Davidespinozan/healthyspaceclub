@@ -4,6 +4,7 @@ import PostCard, { type ClubPost } from './club/PostCard';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
+import { deleteClubPost } from '../utils/clubPosts';
 import './tab-club.css';
 
 export default function TabClub() {
@@ -77,11 +78,14 @@ export default function TabClub() {
   }
 
   async function deletePost(postId: string) {
+    if (!window.confirm('¿Eliminar este post?')) return;
+    const post = posts.find(p => p.id === postId);
     try {
-      await supabase.from('club_posts').delete().eq('id', postId);
+      await deleteClubPost(postId, post?.photo_url ?? null);
       setPosts(prev => prev.filter(p => p.id !== postId));
     } catch (e) {
       console.warn('[TabClub] deletePost failed:', e);
+      alert('No se pudo borrar el post.');
     }
   }
 
@@ -131,7 +135,11 @@ export default function TabClub() {
         <PublicProfile
           userId={profileUserId}
           currentUserId={userId}
-          onClose={() => setProfileUserId(null)}
+          onClose={() => {
+            setProfileUserId(null);
+            // Re-fetch para sincronizar borrados hechos desde el perfil propio
+            fetchFeed();
+          }}
         />
       )}
     </div>

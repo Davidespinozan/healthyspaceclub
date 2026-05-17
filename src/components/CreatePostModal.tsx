@@ -25,6 +25,28 @@ const MAX_CAPTION = 150;
 const ASPECTS: Record<AspectRatio, number> = { '1:1': 1, '4:5': 4 / 5, '16:9': 16 / 9 };
 const ASPECT_OPTIONS: AspectRatio[] = ['1:1', '4:5', '16:9'];
 
+/** Devuelve el AspectRatio más cercano a la proporción real del frame/imagen. */
+function detectClosestAspect(width: number, height: number): AspectRatio {
+  const ratio = width / height;
+  const candidates: { aspect: AspectRatio; diff: number }[] = [
+    { aspect: '1:1',  diff: Math.abs(ratio - ASPECTS['1:1']) },
+    { aspect: '4:5',  diff: Math.abs(ratio - ASPECTS['4:5']) },
+    { aspect: '16:9', diff: Math.abs(ratio - ASPECTS['16:9']) },
+  ];
+  candidates.sort((a, b) => a.diff - b.diff);
+  return candidates[0].aspect;
+}
+
+/** Carga un File como imagen y resuelve su aspect ratio más cercano. */
+function detectFileAspect(url: string): Promise<AspectRatio> {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(detectClosestAspect(img.naturalWidth, img.naturalHeight));
+    img.onerror = () => resolve('1:1');
+    img.src = url;
+  });
+}
+
 export default function CreatePostModal({ open, onClose, onPostCreated }: Props) {
   const { userName, streakCount, dailyWorkout } = useAppStore();
   const userId = useCurrentUserId();
@@ -181,32 +203,38 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     setView('composing');
   }
 
-  function handleGalleryFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleGalleryFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     const check = validateMediaFile(file, false);
     if (!check.valid) { alert(check.error); return; }
     const url = URL.createObjectURL(file);
+    const detected = await detectFileAspect(url);
     setImageSrc(url);
+    setAspectRatio(detected);
+    setCroppedAreaPixels(null);
     setPhotoSource('gallery');
     setView('cropping');
   }
 
-  function handleCaptureFile(e: React.ChangeEvent<HTMLInputElement>) {
-    // Fallback nativo (sin getUserMedia): se trata como galería — necesita revisión en cropping.
+  async function handleCaptureFile(e: React.ChangeEvent<HTMLInputElement>) {
+    // Fallback nativo (sin getUserMedia): se trata como galería con detection.
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     const check = validateMediaFile(file, false);
     if (!check.valid) { alert(check.error); return; }
     const url = URL.createObjectURL(file);
+    const detected = await detectFileAspect(url);
     setImageSrc(url);
+    setAspectRatio(detected);
+    setCroppedAreaPixels(null);
     setPhotoSource('gallery');
     setView('cropping');
   }
 
-  // ── Capture frame del video con center-crop al aspect elegido → composing ──
+  // ── Capture frame del video → detecta aspect → cropping (ajustable) ──
   async function handleCaptureFrame() {
     const video = videoRef.current;
     if (!video || video.videoWidth === 0) return;
@@ -226,23 +254,13 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     if (!blob) return;
     const url = URL.createObjectURL(blob);
 
-    // Center-crop al aspect elegido en 'capturing'
-    const targetAspect = ASPECTS[aspectRatio]; // 1 o 4/5
-    const srcAspect = canvas.width / canvas.height;
-    let cropW = canvas.width;
-    let cropH = canvas.height;
-    if (srcAspect > targetAspect) {
-      cropW = canvas.height * targetAspect;
-    } else {
-      cropH = canvas.width / targetAspect;
-    }
-    const cropX = (canvas.width - cropW) / 2;
-    const cropY = (canvas.height - cropH) / 2;
-
+    // Aspect detectado automáticamente del frame real (sin imponer un ratio fijo)
+    const detected = detectClosestAspect(canvas.width, canvas.height);
     setImageSrc(url);
-    setCroppedAreaPixels({ x: cropX, y: cropY, width: cropW, height: cropH });
+    setAspectRatio(detected);
+    setCroppedAreaPixels(null);
     setPhotoSource('camera');
-    setView('composing'); // SKIP cropping — el user ya encuadró en capturing
+    setView('cropping'); // ahora el camera path también pasa por cropping
   }
 
   function handleSwapCamera() {
@@ -259,26 +277,23 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
   }
 
   function handleCropBack() {
-    // Cropping solo se alcanza desde galería: volver siempre al choose.
+    // Descartar foto y volver al paso anterior según source.
     if (imageSrc) URL.revokeObjectURL(imageSrc);
     setImageSrc(null);
     setCroppedAreaPixels(null);
-    setPhotoSource(null);
-    setView('choose');
+    if (photoSource === 'camera') {
+      // Re-disparar cámara, mantenemos photoSource='camera' para próxima captura
+      setView('capturing');
+    } else {
+      setPhotoSource(null);
+      setView('choose');
+    }
   }
 
   function handleComposingBack() {
     setUploadError(null);
-    if (photoSource === 'camera') {
-      // Cámara in-app: descartar foto y volver a re-disparar
-      if (imageSrc) URL.revokeObjectURL(imageSrc);
-      setImageSrc(null);
-      setCroppedAreaPixels(null);
-      setView('capturing');
-      return;
-    }
-    if (photoSource === 'gallery' && imageSrc) {
-      // Galería: volver a ajustar el crop (mantiene imageSrc y crop pixels)
+    if (imageSrc) {
+      // Ambos paths (camera y gallery) pasan por cropping ahora
       setView('cropping');
       return;
     }
@@ -380,8 +395,6 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
         {view === 'capturing' && (
           <CapturingView
             videoRef={videoRef}
-            aspectRatio={aspectRatio}
-            onAspectChange={setAspectRatio}
             onCapture={handleCaptureFrame}
             onSwapCamera={handleSwapCamera}
             onClose={handleClose}
@@ -471,11 +484,9 @@ function ChooseView({
 // VIEW: capturing
 // ══════════════════════════════════════════════════════════════
 function CapturingView({
-  videoRef, aspectRatio, onAspectChange, onCapture, onSwapCamera, onClose, cameraError, cameraFacing, onOpenGallery, onBack,
+  videoRef, onCapture, onSwapCamera, onClose, cameraError, cameraFacing, onOpenGallery, onBack,
 }: {
   videoRef: React.MutableRefObject<HTMLVideoElement | null>;
-  aspectRatio: AspectRatio;
-  onAspectChange: (a: AspectRatio) => void;
   onCapture: () => void;
   onSwapCamera: () => void;
   onClose: () => void;
@@ -490,20 +501,7 @@ function CapturingView({
         <button type="button" className="cpm-icon-btn" onClick={onBack} aria-label="Volver">
           <ArrowLeft size={20} />
         </button>
-        <div className="cpm-aspect-toggle" role="tablist" aria-label="Aspect ratio">
-          {ASPECT_OPTIONS.map(a => (
-            <button
-              key={a}
-              type="button"
-              role="tab"
-              aria-selected={aspectRatio === a}
-              className={`cpm-aspect-tab${aspectRatio === a ? ' is-active' : ''}`}
-              onClick={() => onAspectChange(a)}
-            >
-              {a}
-            </button>
-          ))}
-        </div>
+        <span className="cpm-icon-btn cpm-icon-btn--placeholder" aria-hidden="true" />
         <button type="button" className="cpm-icon-btn" onClick={onClose} aria-label="Cerrar">
           <X size={20} />
         </button>
@@ -527,17 +525,13 @@ function CapturingView({
             </div>
           </div>
         ) : (
-          <>
-            <video
-              ref={videoRef}
-              className={`cpm-video${cameraFacing === 'user' ? ' cpm-video--mirror' : ''}`}
-              playsInline
-              muted
-              autoPlay
-              data-aspect={aspectRatio}
-            />
-            <div className="cpm-aspect-overlay" data-aspect={aspectRatio} />
-          </>
+          <video
+            ref={videoRef}
+            className={`cpm-video${cameraFacing === 'user' ? ' cpm-video--mirror' : ''}`}
+            playsInline
+            muted
+            autoPlay
+          />
         )}
       </div>
 
