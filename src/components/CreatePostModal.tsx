@@ -23,26 +23,51 @@ type PhotoSource = 'camera' | 'gallery' | null;
 
 const MAX_CAPTION = 150;
 const ASPECTS: Record<AspectRatio, number> = { '1:1': 1, '4:5': 4 / 5, '16:9': 16 / 9 };
-const ASPECT_OPTIONS: AspectRatio[] = ['1:1', '4:5', '16:9'];
 
-/** Devuelve el AspectRatio más cercano a la proporción real del frame/imagen. */
-function detectClosestAspect(width: number, height: number): AspectRatio {
-  const ratio = width / height;
-  const candidates: { aspect: AspectRatio; diff: number }[] = [
-    { aspect: '1:1',  diff: Math.abs(ratio - ASPECTS['1:1']) },
-    { aspect: '4:5',  diff: Math.abs(ratio - ASPECTS['4:5']) },
-    { aspect: '16:9', diff: Math.abs(ratio - ASPECTS['16:9']) },
-  ];
-  candidates.sort((a, b) => a.diff - b.diff);
-  return candidates[0].aspect;
+/**
+ * Opciones de aspect ratio que se muestran al user en cropping con label
+ * humano. El value es el AspectRatio técnico que se guarda en DB.
+ */
+interface AspectOption {
+  value: AspectRatio;
+  label: string;
 }
 
-/** Carga un File como imagen y resuelve su aspect ratio más cercano. */
-function detectFileAspect(url: string): Promise<AspectRatio> {
+/**
+ * Decide qué opciones ofrecer según el aspect natural de la foto:
+ *  - vertical (h > w)   → Cuadrado / Vertical
+ *  - horizontal (w > h) → Cuadrado / Horizontal
+ *  - cuadrada           → solo Cuadrado (no toggle)
+ */
+function getAvailableAspectOptions(width: number, height: number): AspectOption[] {
+  if (width > height) {
+    return [
+      { value: '1:1',  label: 'Cuadrado' },
+      { value: '16:9', label: 'Horizontal' },
+    ];
+  }
+  if (height > width) {
+    return [
+      { value: '1:1', label: 'Cuadrado' },
+      { value: '4:5', label: 'Vertical' },
+    ];
+  }
+  return [{ value: '1:1', label: 'Cuadrado' }];
+}
+
+/** Default: respeta la orientación natural de la foto. */
+function getDefaultAspect(width: number, height: number): AspectRatio {
+  if (width > height) return '16:9';
+  if (height > width) return '4:5';
+  return '1:1';
+}
+
+/** Carga un File como imagen y resuelve sus dimensiones naturales. */
+function loadImageDimensions(url: string): Promise<{ width: number; height: number }> {
   return new Promise(resolve => {
     const img = new Image();
-    img.onload = () => resolve(detectClosestAspect(img.naturalWidth, img.naturalHeight));
-    img.onerror = () => resolve('1:1');
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => resolve({ width: 1080, height: 1080 });
     img.src = url;
   });
 }
@@ -62,6 +87,10 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
   const [caption, setCaption] = useState('');
   const [cameraError, setCameraError] = useState<CameraError>(null);
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('environment');
+  const [availableAspects, setAvailableAspects] = useState<AspectOption[]>([
+    { value: '1:1', label: 'Cuadrado' },
+    { value: '4:5', label: 'Vertical' },
+  ]);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -149,13 +178,11 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
       return;
     }
     try {
+      // Constraints mínimas: dejar que iOS/Android decidan la mejor orientación
+      // y dimensiones del stream según el device. Sesgar con ideal width/height
+      // forzaba portrait artificial que descuadraba el stage.
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: facing,
-          width: { ideal: 1080 },
-          height: { ideal: 1920 },
-          aspectRatio: { ideal: 9 / 16 },
-        },
+        video: { facingMode: facing },
         audio: false,
       });
       streamRef.current = stream;
@@ -215,9 +242,10 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     const check = validateMediaFile(file, false);
     if (!check.valid) { alert(check.error); return; }
     const url = URL.createObjectURL(file);
-    const detected = await detectFileAspect(url);
+    const { width, height } = await loadImageDimensions(url);
     setImageSrc(url);
-    setAspectRatio(detected);
+    setAvailableAspects(getAvailableAspectOptions(width, height));
+    setAspectRatio(getDefaultAspect(width, height));
     setCroppedAreaPixels(null);
     setPhotoSource('gallery');
     setView('cropping');
@@ -231,9 +259,10 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     const check = validateMediaFile(file, false);
     if (!check.valid) { alert(check.error); return; }
     const url = URL.createObjectURL(file);
-    const detected = await detectFileAspect(url);
+    const { width, height } = await loadImageDimensions(url);
     setImageSrc(url);
-    setAspectRatio(detected);
+    setAvailableAspects(getAvailableAspectOptions(width, height));
+    setAspectRatio(getDefaultAspect(width, height));
     setCroppedAreaPixels(null);
     setPhotoSource('gallery');
     setView('cropping');
@@ -259,13 +288,12 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     if (!blob) return;
     const url = URL.createObjectURL(blob);
 
-    // Aspect detectado automáticamente del frame real (sin imponer un ratio fijo)
-    const detected = detectClosestAspect(canvas.width, canvas.height);
     setImageSrc(url);
-    setAspectRatio(detected);
+    setAvailableAspects(getAvailableAspectOptions(canvas.width, canvas.height));
+    setAspectRatio(getDefaultAspect(canvas.width, canvas.height));
     setCroppedAreaPixels(null);
     setPhotoSource('camera');
-    setView('cropping'); // ahora el camera path también pasa por cropping
+    setView('cropping');
   }
 
   function handleSwapCamera() {
@@ -414,6 +442,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
           <CroppingView
             imageSrc={imageSrc}
             aspectRatio={aspectRatio}
+            availableAspects={availableAspects}
             onAspectChange={setAspectRatio}
             crop={crop}
             zoom={zoom}
@@ -562,10 +591,11 @@ function CapturingView({
 // VIEW: cropping
 // ══════════════════════════════════════════════════════════════
 function CroppingView({
-  imageSrc, aspectRatio, onAspectChange, crop, zoom, onCropChange, onZoomChange, onCropComplete, onConfirm, onBack,
+  imageSrc, aspectRatio, availableAspects, onAspectChange, crop, zoom, onCropChange, onZoomChange, onCropComplete, onConfirm, onBack,
 }: {
   imageSrc: string;
   aspectRatio: AspectRatio;
+  availableAspects: AspectOption[];
   onAspectChange: (a: AspectRatio) => void;
   crop: { x: number; y: number };
   zoom: number;
@@ -599,20 +629,22 @@ function CroppingView({
           showGrid
           objectFit="contain"
         />
-        <div className="cpm-aspect-pill" role="tablist" aria-label="Aspect ratio">
-          {ASPECT_OPTIONS.map(a => (
-            <button
-              key={a}
-              type="button"
-              role="tab"
-              aria-selected={aspectRatio === a}
-              className={`cpm-aspect-tab${aspectRatio === a ? ' is-active' : ''}`}
-              onClick={() => onAspectChange(a)}
-            >
-              {a}
-            </button>
-          ))}
-        </div>
+        {availableAspects.length > 1 && (
+          <div className="cpm-aspect-pill" role="tablist" aria-label="Formato de la foto">
+            {availableAspects.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                role="tab"
+                aria-selected={aspectRatio === opt.value}
+                className={`cpm-aspect-tab${aspectRatio === opt.value ? ' is-active' : ''}`}
+                onClick={() => onAspectChange(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

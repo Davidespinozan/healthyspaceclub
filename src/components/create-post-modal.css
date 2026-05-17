@@ -412,22 +412,25 @@
 /* Pill flotante de aspect ratio sobre la foto (Instagram-style) */
 .cpm-aspect-pill {
   position: absolute;
-  bottom: 16px;
-  left: 16px;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 10;
   display: flex;
-  gap: 2px;
-  padding: 3px;
+  gap: 4px;
+  padding: 4px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 .cpm-aspect-pill .cpm-aspect-tab {
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 0.76rem;
-  padding: 5px 12px;
-  min-height: 28px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  padding: 8px 18px;
+  min-height: 36px;
 }
 .cpm-aspect-pill .cpm-aspect-tab.is-active {
   background: #fff;
