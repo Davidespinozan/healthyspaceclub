@@ -322,7 +322,7 @@
   overflow: hidden;
 }
 .cpm-composing-preview[data-aspect="1:1"] { aspect-ratio: 1 / 1; }
-.cpm-composing-preview[data-aspect="4:5"] { aspect-ratio: 4 / 5; }
+.cpm-composing-preview[data-aspect="3:4"] { aspect-ratio: 3 / 4; }
 .cpm-composing-preview[data-aspect="4:3"] { aspect-ratio: 4 / 3; }
 .cpm-composing-preview img {
   width: 100%;

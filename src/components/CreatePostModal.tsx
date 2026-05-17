@@ -20,7 +20,7 @@ interface Props {
 type ModalView = 'choose' | 'cropping' | 'composing' | 'uploading';
 
 const MAX_CAPTION = 150;
-const ASPECTS: Record<AspectRatio, number> = { '1:1': 1, '4:5': 4 / 5, '4:3': 4 / 3 };
+const ASPECTS: Record<AspectRatio, number> = { '1:1': 1, '3:4': 3 / 4, '4:3': 4 / 3 };
 
 /**
  * Opciones de aspect ratio que se muestran al user en cropping con label
@@ -47,7 +47,7 @@ function getAvailableAspectOptions(width: number, height: number): AspectOption[
   if (height > width) {
     return [
       { value: '1:1', label: 'Cuadrado' },
-      { value: '4:5', label: 'Vertical' },
+      { value: '3:4', label: 'Vertical' },
     ];
   }
   return [{ value: '1:1', label: 'Cuadrado' }];
@@ -56,7 +56,7 @@ function getAvailableAspectOptions(width: number, height: number): AspectOption[
 /** Default: respeta la orientación natural de la foto. */
 function getDefaultAspect(width: number, height: number): AspectRatio {
   if (width > height) return '4:3';
-  if (height > width) return '4:5';
+  if (height > width) return '3:4';
   return '1:1';
 }
 
@@ -84,7 +84,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
   const [caption, setCaption] = useState('');
   const [availableAspects, setAvailableAspects] = useState<AspectOption[]>([
     { value: '1:1', label: 'Cuadrado' },
-    { value: '4:5', label: 'Vertical' },
+    { value: '3:4', label: 'Vertical' },
   ]);
   const [uploadError, setUploadError] = useState<string | null>(null);
 

@@ -7,14 +7,14 @@
  *    usa esa región exacta del source en lugar de center-crop.
  *
  * Aspect ratios soportados (regla: dimensión menor = 1080):
- *  - '1:1'   → output 1080×1080  (cuadrado clásico)
- *  - '4:5'   → output 1080×1350  (vertical Instagram-style)
- *  - '4:3'   → output 1440×1080  (horizontal — match con cámara nativa iPhone)
+ *  - '1:1'  → output 1080×1080  (cuadrado clásico)
+ *  - '3:4'  → output 1080×1440  (vertical — match con cámara nativa iPhone)
+ *  - '4:3'  → output 1440×1080  (horizontal — match con cámara nativa iPhone)
  *
  * JPEG 0.85 quality por defecto.
  */
 
-export type AspectRatio = '1:1' | '4:5' | '4:3';
+export type AspectRatio = '1:1' | '3:4' | '4:3';
 
 export interface CropPixels {
   x: number;
@@ -33,7 +33,7 @@ export interface CompressImageOptions {
 
 const DIMENSIONS: Record<AspectRatio, { w: number; h: number }> = {
   '1:1': { w: 1080, h: 1080 },
-  '4:5': { w: 1080, h: 1350 },
+  '3:4': { w: 1080, h: 1440 },
   '4:3': { w: 1440, h: 1080 },
 };
 

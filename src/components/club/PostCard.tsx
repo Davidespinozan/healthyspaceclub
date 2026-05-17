@@ -13,7 +13,7 @@ export interface ClubPost {
   text: string | null;
   fire_count: number;
   comments_count: number;
-  aspect_ratio: '1:1' | '4:5' | '4:3';
+  aspect_ratio: '1:1' | '3:4' | '4:3';
   created_at: string;
 }
 
