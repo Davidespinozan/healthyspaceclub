@@ -36,6 +36,10 @@
   --text-main: #153330;
   --card: #ffffff;
   --bg: #F6F2EA;
+  /* Aliases retroactivos para vars usadas en código legacy */
+  --surface: var(--cream);
+  --bg2: var(--warm);
+  --txt1: var(--forest);
 }
 
 html {
