@@ -61,19 +61,24 @@
   color: var(--terracota);
   flex-shrink: 0;
 }
-.weight-row-delta.up {
-  background: rgba(21, 51, 48, 0.08);
-  color: rgba(21, 51, 48, 0.6);
-}
-.weight-row-delta.stable {
-  background: rgba(21, 51, 48, 0.06);
-  color: rgba(21, 51, 48, 0.45);
-}
 
 .weight-row-chevron {
   color: rgba(21, 51, 48, 0.4);
   font-size: 14px;
   flex-shrink: 0;
+}
+
+/* Meta contextual debajo del row (no clickeable, info-only) */
+.weight-row-meta {
+  margin: -4px 22px 14px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 11px;
+  color: var(--taupe);
+  line-height: 1.3;
+}
+@media (max-width: 380px) {
+  .weight-row-meta { margin: -4px 14px 14px; }
 }
 
 /* ═══ Modal de registro ═══════════════════════════════════ */
@@ -193,54 +198,51 @@
 .weight-modal-btn-primary:disabled,
 .weight-modal-btn-ghost:disabled { opacity: 0.55; cursor: default; }
 
-/* ═══ Toast ═══════════════════════════════════════════════ */
+/* ═══ Toast (inline, debajo de la card) ═══════════════════ */
 .weight-toast {
-  position: fixed;
-  bottom: 90px;
-  left: 50%;
-  transform: translateX(-50%);
   background: var(--terracota-soft);
-  border-left: 2px solid var(--terracota);
-  border-radius: 0 8px 8px 0;
-  padding: 10px 14px;
+  border-left: 3px solid var(--terracota);
+  border-radius: 0 12px 12px 0;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  z-index: 1000;
-  animation: weight-toast-in 0.3s ease, weight-toast-out 0.3s ease 2.2s forwards;
+  gap: 10px;
+  margin: 8px 22px 12px;
+  animation: weight-toast-in 0.3s ease forwards, weight-toast-out 0.4s ease 4.6s forwards;
   pointer-events: none;
-  max-width: 320px;
 }
 
 .weight-toast-check {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--terracota);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 13px;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
 .weight-toast-text {
   font-family: Georgia, 'Times New Roman', serif;
   font-style: italic;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--forest);
 }
 
 @keyframes weight-toast-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes weight-toast-out {
-  from { opacity: 1; transform: translateX(-50%) translateY(0); }
-  to   { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
 }
 
 @media (max-width: 380px) {
   .weight-row { width: calc(100% - 28px); margin: 12px 14px; }
+  .weight-toast { margin: 8px 14px 12px; }
 }

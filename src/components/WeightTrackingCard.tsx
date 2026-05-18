@@ -24,16 +24,41 @@ export default function WeightTrackingCard() {
     : (typeof obData?.peso === 'string' ? Number(obData.peso) : null);
   const currentWeight = lastEntry?.kg ?? (Number.isFinite(obPeso) ? obPeso : null);
 
-  // Delta vs entry de hace ≥7 días
-  const delta = useMemo(() => {
-    if (!lastEntry) return null;
+  // Delta inteligente: intenta vs entry de hace ≥7 días, fallback al primer entry.
+  const deltaInfo = useMemo(() => {
+    if (!lastEntry || sorted.length < 2) return null;
+    const previousEntries = sorted.slice(0, -1);
+    if (previousEntries.length === 0) return null;
+
+    // Intento 1: entry de hace ≥7 días
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     const weekAgoStr = weekAgo.toISOString().split('T')[0];
-    const previous = sorted.filter(e => e.date <= weekAgoStr).pop();
-    if (!previous) return null;
-    return +(lastEntry.kg - previous.kg).toFixed(1);
+    const weekAgoEntry = previousEntries.filter(e => e.date <= weekAgoStr).pop();
+    if (weekAgoEntry) {
+      return {
+        value: +(lastEntry.kg - weekAgoEntry.kg).toFixed(1),
+        label: 'semana' as const,
+      };
+    }
+
+    // Fallback: usar la entry más vieja disponible
+    const oldestEntry = previousEntries[0];
+    return {
+      value: +(lastEntry.kg - oldestEntry.kg).toFixed(1),
+      label: 'inicio' as const,
+    };
   }, [sorted, lastEntry]);
+
+  // ¿Registró peso esta semana? (desde el domingo pasado)
+  const registeredThisWeek = useMemo(() => {
+    const sundayThisWeek = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - d.getDay());
+      return d.toISOString().split('T')[0];
+    })();
+    return sorted.some(e => e.date >= sundayThisWeek);
+  }, [sorted]);
 
   // Body overflow lock + ESC handler cuando modal abre
   useEffect(() => {
@@ -63,7 +88,7 @@ export default function WeightTrackingCard() {
       // Micro-feedback: toast con confirmación
       setToastValue(kg);
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 2500);
+      setTimeout(() => setShowToast(false), 5000);
     } catch (e) {
       console.error('[WeightTrackingCard] save failed:', e);
       setError('No se pudo guardar. Intentá de nuevo.');
@@ -78,8 +103,15 @@ export default function WeightTrackingCard() {
     setShowModal(true);
   }
 
-  const deltaClass = delta === null ? '' : delta < 0 ? ' down' : delta > 0 ? ' up' : ' stable';
-  const deltaArrow = delta === null ? '' : delta < 0 ? '↓' : delta > 0 ? '↑' : '—';
+  const showChip = deltaInfo !== null && deltaInfo.value !== 0;
+  const chipDirection = deltaInfo && deltaInfo.value < 0 ? 'down' : 'up';
+  const metaText = (() => {
+    if (deltaInfo?.label === 'inicio' && Math.abs(deltaInfo.value) > 0) {
+      return 'desde tu primer registro';
+    }
+    if (registeredThisWeek) return 'registrado esta semana';
+    return 'pesate 1 vez por semana, mismo día';
+  })();
 
   return (
     <>
@@ -91,14 +123,22 @@ export default function WeightTrackingCard() {
               ? <>{currentWeight} <span className="weight-row-unit">kg</span></>
               : 'Sin registrar'}
           </span>
-          {delta !== null && (
-            <span className={`weight-row-delta${deltaClass}`}>
-              {deltaArrow} {Math.abs(delta)} kg
+          {showChip && deltaInfo && (
+            <span className={`weight-row-delta ${chipDirection}`}>
+              {deltaInfo.value < 0 ? '↓' : '↑'} {Math.abs(deltaInfo.value)} kg
             </span>
           )}
         </div>
         <span className="weight-row-chevron" aria-hidden="true">›</span>
       </button>
+      <div className="weight-row-meta">{metaText}</div>
+
+      {showToast && toastValue !== null && (
+        <div className="weight-toast" role="status" aria-live="polite">
+          <div className="weight-toast-check" aria-hidden="true">✓</div>
+          <div className="weight-toast-text">Peso registrado · {toastValue} kg</div>
+        </div>
+      )}
 
       {showModal && (
         <div className="weight-modal-overlay" onClick={() => !saving && setShowModal(false)}>
@@ -147,12 +187,6 @@ export default function WeightTrackingCard() {
         </div>
       )}
 
-      {showToast && toastValue !== null && (
-        <div className="weight-toast" role="status" aria-live="polite">
-          <div className="weight-toast-check" aria-hidden="true">✓</div>
-          <div className="weight-toast-text">Peso registrado · {toastValue} kg</div>
-        </div>
-      )}
     </>
   );
 }
