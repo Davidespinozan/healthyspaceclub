@@ -9,6 +9,7 @@ import CoachProfileSheet from './CoachProfileSheet';
 import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
+import LogrosSheet from './sheets/LogrosSheet';
 import {
   MILESTONE_STEPS,
   MILESTONE_LABELS,
@@ -38,6 +39,8 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'reflexiones'>('posts');
+  const [logrosSheetOpen, setLogrosSheetOpen] = useState(false);
+  const [focusedMilestone, setFocusedMilestone] = useState<number | undefined>(undefined);
 
   const { yearNumber, dayOfYear } = useMemo(() => {
     const start = startDate ? new Date(startDate).getTime() : Date.now();
@@ -55,8 +58,9 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
     [streakCount]
   );
 
-  function openLogrosSheet() {
-    console.log('TODO: LogrosSheet');
+  function openLogrosSheet(focused?: number) {
+    setFocusedMilestone(focused);
+    setLogrosSheetOpen(true);
   }
 
   async function refreshUserPosts() {
@@ -223,10 +227,14 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
             <div className="tt3-stat-num tt3-stat-num--accent">{streakCount}</div>
             <div className="tt3-stat-label">Racha 🔥</div>
           </div>
-          <div className="tt3-stat-cell">
+          <button
+            type="button"
+            className="tt3-stat-cell tt3-stat-cell--button"
+            onClick={() => openLogrosSheet()}
+          >
             <div className="tt3-stat-num">{achievementsCount}</div>
             <div className="tt3-stat-label">Logros</div>
-          </div>
+          </button>
         </div>
       )}
 
@@ -282,7 +290,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
           <button
             type="button"
             className="tt3-milestones-link"
-            onClick={openLogrosSheet}
+            onClick={() => openLogrosSheet()}
           >
             Ver todos →
           </button>
@@ -293,9 +301,11 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
             const reached = streakCount >= m;
             const isYear = m === 365;
             return (
-              <div
+              <button
+                type="button"
                 key={m}
                 className={`tt3-milestone${reached ? ' reached' : ''}${isYear ? ' tt3-milestone--year' : ''}`}
+                onClick={() => openLogrosSheet(m)}
               >
                 <div className="tt3-milestone-circle">
                   {reached
@@ -304,7 +314,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
                   }
                 </div>
                 <div className="tt3-milestone-label">{MILESTONE_LABELS[m]}</div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -392,6 +402,12 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
           }}
         />
       )}
+
+      <LogrosSheet
+        isOpen={logrosSheetOpen}
+        onClose={() => setLogrosSheetOpen(false)}
+        initialMilestoneDay={focusedMilestone}
+      />
 
     </div>
   );

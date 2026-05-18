@@ -178,6 +178,18 @@
   border-left: 0.5px solid rgba(124, 98, 50, 0.18);
   border-right: 0.5px solid rgba(124, 98, 50, 0.18);
 }
+.tt3-stat-cell--button {
+  background: none;
+  border: none;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.12s;
+}
+.tt3-stat-cell--button:hover { opacity: 0.72; }
+.tt3-stat-cell--button:active { transform: scale(0.97); }
 .tt3-stat-num {
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 20px;
@@ -340,8 +352,16 @@
   min-width: 50px;
   flex-shrink: 0;
   opacity: 0.4;
-  transition: opacity 0.2s;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.2s, transform 0.12s;
 }
+.tt3-milestone:active { transform: scale(0.94); }
 .tt3-milestone.reached { opacity: 1; }
 .tt3-milestone-circle {
   width: 44px;
