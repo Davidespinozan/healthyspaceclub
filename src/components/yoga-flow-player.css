@@ -5,7 +5,6 @@
 
 .yfp {
   --yfp-forest: #153330;
-  --yfp-cream: #F6F2EA;
   --yfp-amber: #BFA065;
   --yfp-sage: #7FA150;
   --yfp-sand: #E8E1D3;
@@ -14,7 +13,7 @@
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: var(--yfp-cream);
+  background: var(--sala-bg);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -171,7 +170,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--yfp-cream);
+  background: var(--sala-bg);
   padding: 14px 20px;
   padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   border-top: 0.5px solid rgba(21, 51, 48, 0.08);
@@ -251,7 +250,7 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 20px;
-  color: var(--yfp-cream);
+  color: var(--sala-surface);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -435,7 +434,7 @@
   font-size: 24px;
   font-style: italic;
   font-weight: 400;
-  color: var(--yfp-cream);
+  color: var(--sala-surface);
   animation: yfp-pulse 0.5s ease infinite;
 }
 
@@ -488,7 +487,7 @@
 .yfp-trans-name {
   font-size: 26px;
   font-weight: 400;
-  color: var(--yfp-cream);
+  color: var(--sala-surface);
   margin: 0 0 12px;
 }
 
@@ -601,7 +600,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--yfp-cream);
+  color: var(--sala-surface);
   text-align: center;
   gap: 8px;
   z-index: 10;

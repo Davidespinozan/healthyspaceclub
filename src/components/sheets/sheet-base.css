@@ -17,7 +17,7 @@
 @keyframes sh-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 .sh-sheet {
-  background: var(--cream, #F6F2EA);
+  background: var(--sala-surface);
   width: 100%;
   max-width: 640px;
   max-height: 92vh;
@@ -138,7 +138,7 @@
 /* ──── ManagePlanSheet ──── */
 .sh-plan-badge {
   background: linear-gradient(135deg, var(--forest, #153330), #2a4f4a);
-  color: var(--cream, #F6F2EA);
+  color: var(--sala-surface);
   border-radius: 14px;
   padding: 18px 20px;
   margin-bottom: 18px;
@@ -256,7 +256,7 @@
 /* Estado actual */
 .mps-status-card {
   background: linear-gradient(135deg, var(--forest, #153330), #2a4f4a);
-  color: var(--cream, #F6F2EA);
+  color: var(--sala-surface);
   border-radius: 18px;
   padding: 22px 22px;
   display: flex;
@@ -281,7 +281,7 @@
   font-size: 1.05rem;
   line-height: 1.4;
   margin: 0;
-  color: var(--cream, #F6F2EA);
+  color: var(--sala-surface);
 }
 .mps-status-line strong {
   color: var(--amber, #d4976b);
@@ -327,7 +327,7 @@
 }
 .mps-pm-brand {
   background: var(--forest, #153330);
-  color: var(--cream, #F6F2EA);
+  color: var(--sala-surface);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -374,7 +374,7 @@
   top: -10px;
   right: 14px;
   background: var(--forest, #153330);
-  color: var(--cream, #F6F2EA);
+  color: var(--sala-surface);
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -556,7 +556,7 @@
   animation: sh-fade-in 0.18s ease-out;
 }
 .mps-modal {
-  background: var(--cream, #F6F2EA);
+  background: var(--sala-surface);
   border-radius: 18px;
   padding: 24px;
   max-width: 420px;

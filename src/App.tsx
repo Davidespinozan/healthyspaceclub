@@ -216,7 +216,7 @@ export default function App() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--cream, #F6F2EA)',
+        background: 'var(--sala-bg)',
       }}>
         <div style={{
           width: 32,

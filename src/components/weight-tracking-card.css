@@ -98,7 +98,7 @@
 @keyframes weight-modal-fade { from { opacity: 0; } to { opacity: 1; } }
 
 .weight-modal {
-  background: var(--cream);
+  background: var(--sala-surface);
   border-radius: 18px;
   padding: 24px;
   max-width: 360px;
@@ -191,7 +191,7 @@
 .weight-modal-btn-ghost:hover { background: rgba(21, 51, 48, 0.04); }
 .weight-modal-btn-primary {
   background: var(--terracota);
-  color: var(--cream);
+  color: var(--sala-surface);
   border: none;
 }
 .weight-modal-btn-primary:hover { filter: brightness(1.08); }

@@ -6,12 +6,11 @@
 :root {
   --wp-bg: #153330;
   --wp-bg-2: #1a3d39;
-  --wp-cream: #F6F2EA;
   --wp-amber: #BFA065;
   --wp-amber-soft: rgba(191, 160, 101, 0.18);
-  --wp-txt: #F6F2EA;
-  --wp-txt2: rgba(246, 242, 234, 0.65);
-  --wp-txt3: rgba(246, 242, 234, 0.4);
+  --wp-txt: var(--sala-surface);
+  --wp-txt2: rgba(255, 255, 255, 0.65);
+  --wp-txt3: rgba(255, 255, 255, 0.4);
 }
 
 .wp {

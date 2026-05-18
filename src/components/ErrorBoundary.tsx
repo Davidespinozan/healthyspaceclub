@@ -31,7 +31,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           textAlign: 'center',
           fontFamily: 'Montserrat, system-ui, sans-serif',
           color: '#153330',
-          background: '#F6F2EA',
+          background: 'var(--sala-bg)',
           minHeight: '100dvh',
           display: 'flex',
           flexDirection: 'column',

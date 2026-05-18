@@ -258,7 +258,7 @@
 
 .wz-chip.on {
   background: var(--forest);
-  color: var(--cream);
+  color: var(--sala-surface);
   border-color: var(--forest);
 }
 
@@ -290,7 +290,7 @@
   width: 100%;
   padding: 15px;
   background: var(--forest);
-  color: var(--cream);
+  color: var(--sala-surface);
   border: none;
   border-radius: 50px;
   font-family: inherit;
@@ -421,7 +421,7 @@
 
 .wz-error-btn {
   background: var(--forest);
-  color: var(--cream);
+  color: var(--sala-surface);
   border: none;
   padding: 10px 24px;
   border-radius: 50px;

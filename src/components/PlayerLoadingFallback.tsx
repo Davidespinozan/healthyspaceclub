@@ -12,7 +12,7 @@ export default function PlayerLoadingFallback() {
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: 'var(--cream)',
+        background: 'var(--sala-bg)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

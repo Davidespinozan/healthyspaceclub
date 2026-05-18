@@ -26,7 +26,6 @@
   --edp-moss: #2E4A42;
   --edp-amber: #BFA065;
   --edp-terra: #A8864E;
-  --edp-cream: #F6F2EA;
   --edp-warm: #F0EBE0;
   --edp-sand: #E8E1D3;
   --edp-txt: #153330;
@@ -34,7 +33,7 @@
 
   font-family: 'Montserrat', system-ui, sans-serif;
   color: var(--edp-txt);
-  background: var(--edp-cream);
+  background: var(--sala-surface);
   width: 100%;
   max-width: 540px;
   max-height: 92vh;
@@ -203,7 +202,7 @@
   -webkit-backdrop-filter: blur(8px);
   border: 0.5px solid rgba(246, 242, 234, 0.2);
   border-radius: 50px;
-  color: var(--edp-cream);
+  color: var(--sala-surface);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -231,7 +230,7 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 0.5px solid rgba(246, 242, 234, 0.18);
-  color: var(--edp-cream);
+  color: var(--sala-surface);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -324,7 +323,7 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 0.5px solid rgba(246, 242, 234, 0.18);
-  color: var(--edp-cream);
+  color: var(--sala-surface);
   font-size: 22px;
   font-weight: 300;
   cursor: pointer;
@@ -565,7 +564,7 @@
 .edp-footer {
   padding: 14px 22px calc(14px + env(safe-area-inset-bottom, 0px));
   border-top: 0.5px solid var(--edp-sand);
-  background: var(--edp-cream);
+  background: var(--sala-surface);
   position: sticky;
   bottom: 0;
   z-index: 5;
@@ -581,7 +580,7 @@
   width: 100%;
   padding: 15px;
   background: var(--edp-forest);
-  color: var(--edp-cream);
+  color: var(--sala-surface);
   border: none;
   border-radius: 50px;
   font-family: inherit;

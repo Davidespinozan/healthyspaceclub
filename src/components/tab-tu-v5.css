@@ -5,7 +5,7 @@
 
 .tt5-screen {
   padding: 0 0 24px;
-  background: var(--cream);
+  background: var(--sala-bg);
   min-height: 100vh;
   color: var(--forest);
 }
@@ -148,7 +148,7 @@
 }
 .tt5-edit-save {
   background: var(--forest);
-  color: var(--cream);
+  color: var(--sala-surface);
   border: none;
 }
 .tt5-edit-cancel {
@@ -180,7 +180,7 @@
 
 .tt5-btn--primary {
   background: var(--forest);
-  color: var(--cream);
+  color: var(--sala-surface);
   border: none;
   font-weight: 500;
 }
