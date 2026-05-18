@@ -222,7 +222,7 @@
   padding: 13px;
   margin-top: 14px;
   background: var(--forest);
-  color: var(--cream);
+  color: var(--sala-surface);
   border: none;
   border-radius: 50px;
   font-family: inherit;
@@ -316,7 +316,7 @@
   align-self: flex-start;
   padding: 9px 18px;
   background: var(--forest);
-  color: var(--cream);
+  color: var(--sala-surface);
   border: none;
   border-radius: 50px;
   font-family: inherit;
@@ -331,7 +331,7 @@
   background: linear-gradient(168deg, #153330 0%, #2E4A42 100%);
   border-radius: 18px;
   padding: 18px 20px;
-  color: var(--cream);
+  color: var(--sala-surface);
   position: relative;
   overflow: hidden;
 }
@@ -371,7 +371,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--cream);
+  color: var(--sala-surface);
 }
 .wnp2-header-title {
   font-size: 19px;
@@ -476,7 +476,7 @@
 }
 .wnp2-tab.on {
   background: var(--forest);
-  color: var(--cream);
+  color: var(--sala-surface);
 }
 
 /* ─── Day selector ─── */
@@ -488,7 +488,7 @@
   flex: 1;
   padding: 9px 0;
   border: 0.5px solid var(--sand);
-  background: var(--cream);
+  background: var(--sala-surface);
   color: var(--txt2);
   font-size: 11px;
   font-weight: 600;
@@ -501,7 +501,7 @@
 }
 .wnp2-day.on {
   background: var(--forest);
-  color: var(--cream);
+  color: var(--sala-surface);
   border-color: var(--forest);
 }
 .wnp2-day.today::after {

@@ -8,14 +8,14 @@
 .th3-wrap {
   display: flex;
   flex-direction: column;
-  background: var(--cream);
+  background: var(--sala-bg);
   min-height: 100dvh;
 }
 
 /* ═══ HERO (forest gradient) ═══ */
 .th3-hero {
   background: linear-gradient(168deg, #153330 0%, #2E4A42 55%, #3d6359 100%);
-  color: var(--cream);
+  color: var(--sala-surface);
   padding: 18px 22px 22px;
   position: relative;
   overflow: hidden;
@@ -63,7 +63,7 @@
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: -0.01em;
-  color: var(--cream);
+  color: var(--sala-surface);
   margin: 0 0 8px;
   position: relative;
   text-transform: none;
@@ -121,9 +121,9 @@
 }
 .th3-streak-dot.active { background: var(--amber); }
 
-/* ═══ BODY (cream background) ═══ */
+/* ═══ BODY (sala bg) ═══ */
 .th3-body {
-  background: var(--cream);
+  background: var(--sala-bg);
   padding: 26px 16px 24px;
   max-width: 880px;
   margin: 0 auto;
@@ -197,7 +197,7 @@
   font-size: 11px;
   line-height: 1;
   letter-spacing: 0.02em;
-  color: var(--cream);
+  color: var(--sala-surface);
   text-shadow: 0 1px 4px rgba(0,0,0,0.45);
 }
 
@@ -416,7 +416,7 @@
   background: transparent;
   border: 1px solid rgba(246,242,234,0.25);
   border-radius: 50px;
-  color: var(--cream);
+  color: var(--sala-surface);
   font-family: 'Montserrat', sans-serif;
   font-size: 0.78rem;
   font-weight: 600;
@@ -446,7 +446,7 @@
   animation: th3FadeIn 0.3s ease;
 }
 .th3-milestone-inner {
-  background: var(--cream);
+  background: var(--sala-surface);
   border-radius: 24px;
   padding: 36px 28px;
   max-width: 360px;
@@ -476,7 +476,7 @@
 .th3-milestone-close {
   padding: 12px 28px;
   background: var(--forest);
-  color: var(--cream);
+  color: var(--sala-surface);
   border: none;
   border-radius: 50px;
   font-family: 'Montserrat', sans-serif;
