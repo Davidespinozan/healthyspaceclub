@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore } from './store';
 import { supabase } from './lib/supabase';
+import { MILESTONE_STEPS } from './constants/milestones';
 import LandingScreen from './screens/LandingScreen';
 
 const LoginScreen = lazy(() => import('./screens/LoginScreen'));
@@ -107,6 +108,40 @@ export default function App() {
               .order('unlocked_at', { ascending: true });
             if (milestones) {
               useAppStore.setState({ userMilestones: milestones });
+            }
+
+            // Backfill retroactivo: si la tabla está vacía pero el user tiene
+            // streak local (Zustand persist), derivar milestones desde streakCount
+            // y persistir. unlocked_at = lastActiveDate como aproximación honesta.
+            const localState = useAppStore.getState();
+            const localStreak = localState.streakCount;
+            if ((milestones?.length ?? 0) === 0 && localStreak > 0) {
+              const derived = MILESTONE_STEPS.filter(m => localStreak >= m);
+              if (derived.length > 0) {
+                const fallbackUnlocked = localState.lastActiveDate
+                  ? new Date(`${localState.lastActiveDate}T00:00:00Z`).toISOString()
+                  : new Date().toISOString();
+                const rows = derived.map(milestone_days => ({
+                  user_id: session.user.id,
+                  milestone_days,
+                  unlocked_at: fallbackUnlocked,
+                }));
+                console.log('[milestone-backfill] inserting', rows.length, 'milestones for streak', localStreak);
+                const { error: backfillError } = await supabase
+                  .from('user_milestones')
+                  .upsert(rows, { onConflict: 'user_id,milestone_days', ignoreDuplicates: true });
+                if (backfillError) {
+                  console.error('[milestone-backfill] upsert failed:', backfillError);
+                } else {
+                  useAppStore.setState({
+                    userMilestones: derived.map(milestone_days => ({
+                      milestone_days,
+                      unlocked_at: fallbackUnlocked,
+                    })),
+                  });
+                  console.log('[milestone-backfill] OK, hydrated', derived.length, 'entries');
+                }
+              }
             }
           } catch (e) {
             console.error('[auth] failed to hydrate user_milestones:', e);
