@@ -9,16 +9,14 @@ import CoachProfileSheet from './CoachProfileSheet';
 import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
+import {
+  MILESTONE_STEPS,
+  MILESTONE_LABELS,
+  MILESTONE_FULL_LABELS,
+  getAchievementsCount,
+  getNextMilestone,
+} from '../constants/milestones';
 import './tab-tu-v3.css';
-
-const MILESTONE_STEPS = [3, 7, 14, 30, 60, 90, 180, 365] as const;
-const MILESTONE_LABELS: Record<number, string> = {
-  3: '3d', 7: '7d', 14: '14d', 30: '30d', 60: '60d', 90: '90d', 180: '180d', 365: '1a',
-};
-const MILESTONE_FULL_LABELS: Record<number, string> = {
-  3: '3 días', 7: '7 días', 14: '14 días', 30: '30 días',
-  60: '60 días', 90: '90 días', 180: '180 días', 365: '1 año',
-};
 
 export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const {
@@ -48,12 +46,12 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   }, [startDate]);
 
   const achievementsCount = useMemo(
-    () => MILESTONE_STEPS.filter(m => streakCount >= m).length,
+    () => getAchievementsCount(streakCount),
     [streakCount]
   );
 
   const nextMilestone = useMemo(
-    () => MILESTONE_STEPS.find(m => streakCount < m),
+    () => getNextMilestone(streakCount),
     [streakCount]
   );
 

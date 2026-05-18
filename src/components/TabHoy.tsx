@@ -11,6 +11,7 @@ import ExerciseDetailPopout from './ExerciseDetailPopout';
 import type { Exercise } from '../types';
 import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
+import { MILESTONE_STEPS, MILESTONE_COPY } from '../constants/milestones';
 import './tab-hoy-v3.css';
 
 /* ── HSM Question Bank — 10 per dimension, 100 total ── */
@@ -191,20 +192,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     return 'Buenas noches';
   })();
 
-  const MILESTONES = [3, 7, 14, 21, 30, 60, 90];
   const [milestone, setMilestone] = useState<number | null>(null);
-  const MILESTONE_COPY: Record<number, { emoji: string; title: string; sub: string }> = {
-    3:  { emoji: '🔥', title: '¡3 días seguidos!', sub: 'La mayoría abandona aquí. Tú no. El hábito está naciendo.' },
-    7:  { emoji: '⚡', title: '¡Una semana completa!', sub: 'Eso ya no es suerte — es disciplina.' },
-    14: { emoji: '💪', title: '¡Dos semanas de racha!', sub: 'Tu cuerpo y tu mente ya lo están notando.' },
-    21: { emoji: '🧠', title: '¡21 días — el hábito está instalado!', sub: 'Dicen que 21 días forman un hábito. Tú lo lograste.' },
-    30: { emoji: '🏆', title: '¡Un mes de racha!', sub: '30 días de consistencia. Eso te pone en el top 1%.' },
-    60: { emoji: '🚀', title: '¡60 días sin parar!', sub: 'Dos meses de constancia. Ya eres otra persona.' },
-    90: { emoji: '👑', title: '¡90 días — nivel élite!', sub: '3 meses. Pocos llegan aquí. Tú sí.' },
-  };
   useEffect(() => {
     if (streakCount < 3) return;
-    const reached = MILESTONES.filter(m => m <= streakCount).pop() ?? 0;
+    const reached = MILESTONE_STEPS.filter(m => m <= streakCount).pop() ?? 0;
     if (reached > lastStreakMilestone) { setMilestone(reached); setLastStreakMilestone(reached); }
   }, [streakCount, lastStreakMilestone]);
 
