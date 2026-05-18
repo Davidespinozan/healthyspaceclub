@@ -44,8 +44,9 @@
     max-width: 480px;
     height: auto;
     max-height: 90vh;
-    border-radius: 18px;
+    border-radius: var(--radius-2xl);
     overflow: hidden;
+    box-shadow: var(--shadow-pro-2xl);
     animation: cpm-pop 0.18s ease-out;
   }
   @keyframes cpm-pop {
@@ -93,25 +94,36 @@
   color: var(--sala-surface);
   border: none;
   padding: 14px 22px;
-  border-radius: 999px;
+  border-radius: var(--radius-base);
+  font-family: 'Montserrat', sans-serif;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tight);
   cursor: pointer;
   min-height: 48px;
+  box-shadow: var(--shadow-pro-lift-forest);
   -webkit-tap-highlight-color: transparent;
+  transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
-.cpm-btn-primary:hover { filter: brightness(1.08); }
-.cpm-btn-primary:disabled { opacity: 0.5; cursor: default; }
+.cpm-btn-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(8, 20, 27, 0.20);
+}
+.cpm-btn-primary:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
 
 .cpm-btn-ghost {
-  background: none;
-  border: 1px solid rgba(21, 51, 48, 0.2);
+  background: var(--surface-glass-strong);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(21, 51, 48, 0.08);
   color: var(--forest, #153330);
   padding: 12px 22px;
-  border-radius: 999px;
+  border-radius: var(--radius-base);
   font-size: 0.92rem;
   font-weight: 500;
   cursor: pointer;
+  box-shadow: var(--shadow-pro-md);
   min-height: 44px;
   -webkit-tap-highlight-color: transparent;
 }

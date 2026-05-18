@@ -5351,19 +5351,22 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 
 .wr-sheet {
   width: 100%; max-width: 480px;
-  background: var(--surface); border-radius: 24px 24px 0 0;
-  padding: 28px 20px 40px;
+  background: var(--sala-surface);
+  border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+  padding: 28px 20px calc(40px + env(safe-area-inset-bottom, 0px));
   display: flex; flex-direction: column; gap: 20px;
   animation: wr-slide .3s cubic-bezier(.23,1,.32,1);
   max-height: 90vh; overflow-y: auto;
+  overscroll-behavior: contain;
+  box-shadow: var(--shadow-pro-2xl);
 }
 @keyframes wr-slide { from { transform:translateY(40px); opacity:0 } to { transform:translateY(0); opacity:1 } }
 
 /* Header */
 .wr-header { display: flex; align-items: center; gap: 14px; }
 .wr-header-emoji { font-size: 2.2rem; line-height: 1; }
-.wr-header-label { font-size: .7rem; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 2px; }
-.wr-header-title { font-size: 1.15rem; font-weight: 800; color: var(--txt1); line-height: 1.2; }
+.wr-header-label { font-family: 'Montserrat', sans-serif; font-size: .7rem; font-weight: 600; color: var(--amber-deep); text-transform: uppercase; letter-spacing: var(--tracking-kicker-loose); margin-bottom: 2px; }
+.wr-header-title { font-family: Georgia, 'Times New Roman', serif; font-size: 1.3rem; font-weight: 500; color: var(--txt1); line-height: 1.15; letter-spacing: var(--tracking-tighter); }
 
 /* Stats grid */
 .wr-stats {
@@ -5371,15 +5374,18 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .wr-stat {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 16px 10px; border-radius: 14px;
-  background: var(--bg2); border: 1.5px solid var(--border);
+  padding: 16px 10px; border-radius: var(--radius-md);
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
   text-align: center;
+  box-shadow: var(--shadow-pro-md);
 }
 .wr-stat.good { border-color: color-mix(in srgb, var(--green) 40%, transparent); background: color-mix(in srgb, var(--green) 8%, transparent); }
 .wr-stat-icon { font-size: 1.4rem; }
-.wr-stat-val  { font-size: 1.3rem; font-weight: 800; color: var(--txt1); line-height: 1; }
+.wr-stat-val  { font-family: Georgia, 'Times New Roman', serif; font-size: 1.4rem; font-weight: 400; color: var(--txt1); line-height: 1; letter-spacing: var(--tracking-tightest); }
 .wr-stat.good .wr-stat-val { color: var(--green); }
-.wr-stat-label { font-size: .68rem; color: var(--txt2); }
+.wr-stat-label { font-family: 'Montserrat', sans-serif; font-size: .65rem; color: var(--txt2); text-transform: uppercase; letter-spacing: var(--tracking-kicker); font-weight: 600; margin-top: 4px; }
 
 /* Weight badge */
 .wr-weight {
@@ -5404,14 +5410,24 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .wr-actions { display: flex; flex-direction: column; gap: 10px; }
 .wr-btn-primary {
   display: flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 15px; border-radius: 14px;
-  background: var(--green); color: #fff;
-  font-size: .92rem; font-weight: 700; cursor: pointer;
+  padding: 15px; border-radius: var(--radius-base);
+  background: var(--forest); color: var(--sala-surface);
+  font-family: 'Montserrat', sans-serif;
+  font-size: .92rem; font-weight: 500; letter-spacing: var(--tracking-tight);
+  cursor: pointer;
+  box-shadow: var(--shadow-pro-lift-forest);
+  transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
+.wr-btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
 .wr-btn-secondary {
-  padding: 12px; border-radius: 14px;
-  background: var(--bg2); border: 1.5px solid var(--border);
-  color: var(--txt2); font-size: .85rem; cursor: pointer;
+  padding: 12px; border-radius: var(--radius-base);
+  background: var(--surface-glass-strong);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(21, 51, 48, 0.08);
+  color: var(--txt2);
+  font-family: 'Montserrat', sans-serif;
+  font-size: .85rem; cursor: pointer;
+  box-shadow: var(--shadow-pro-md);
 }
 
 /* Weight prompt (registrar peso de la semana desde el review) */

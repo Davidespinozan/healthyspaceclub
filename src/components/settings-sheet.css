@@ -17,14 +17,16 @@
 .ss-sheet {
   position: relative;
   background: var(--sala-surface);
-  border-radius: 18px 18px 0 0;
+  border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
   padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px));
   width: 100%;
   max-width: 100%;
   max-height: 88vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   animation: ssSlideUp 0.28s cubic-bezier(0.32, 0.72, 0.32, 1);
   -webkit-overflow-scrolling: touch;
+  box-shadow: var(--shadow-pro-2xl);
 }
 @keyframes ssSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
@@ -35,28 +37,42 @@
   margin: 0 auto 18px;
 }
 
+.ss-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
 .ss-close {
-  position: absolute;
-  top: 16px; right: 18px;
-  width: 28px; height: 28px;
-  border: none; border-radius: 50%;
-  background: rgba(21, 51, 48, 0.06);
-  color: var(--forest);
+  width: 36px; height: 36px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--surface-glass-strong);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgba(21, 51, 48, 0.7);
   font-size: 14px;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-pro-md);
   -webkit-tap-highlight-color: transparent;
-  z-index: 1;
+  transition: transform var(--duration-fast) ease;
 }
+.ss-close:active { transform: scale(0.95); }
 
 .ss-title {
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 22px;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--forest);
-  letter-spacing: -0.015em;
-  margin: 0 0 24px;
-  text-transform: none;
+  letter-spacing: var(--tracking-tighter);
+  margin: 0;
+  line-height: 1.15;
+  flex: 1;
+  min-width: 0;
 }
 
 .ss-section { margin-bottom: 24px; }
@@ -65,18 +81,19 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 10px;
   font-weight: 600;
-  color: rgba(21, 51, 48, 0.55);
-  letter-spacing: 0.18em;
+  color: rgba(21, 51, 48, 0.5);
+  letter-spacing: var(--tracking-kicker-loose);
   text-transform: uppercase;
   margin: 0 0 10px;
 }
 
 /* Plan card — forest oscura como statement piece */
 .ss-plan-card {
-  background: var(--forest);
+  background: linear-gradient(135deg, var(--forest), #1d3d39);
   color: var(--sala-surface);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: 18px 20px;
+  box-shadow: var(--shadow-pro-lift-forest);
 }
 .ss-plan-tier {
   display: flex;
@@ -148,10 +165,13 @@
 
 /* Data card — listado limpio */
 .ss-data-card {
-  background: white;
-  border: 0.5px solid var(--sand);
-  border-radius: 14px;
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: var(--shadow-pro-md);
 }
 .ss-data-row {
   display: flex;
@@ -190,10 +210,13 @@
 
 /* Help list */
 .ss-help-list {
-  background: white;
-  border: 0.5px solid var(--sand);
-  border-radius: 14px;
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: var(--shadow-pro-md);
 }
 .ss-help-row {
   display: flex;
@@ -261,12 +284,12 @@
   }
   .ss-sheet {
     max-width: 540px;
-    border-radius: 20px;
+    border-radius: var(--radius-2xl);
     max-height: 85vh;
     padding: 32px 36px 36px;
   }
   .ss-handle { display: none; }
-  .ss-close { top: 22px; right: 24px; width: 32px; height: 32px; font-size: 16px; }
-  .ss-title { font-size: 26px; margin-bottom: 28px; }
+  .ss-title { font-size: 26px; }
+  .ss-header-row { margin-bottom: 28px; }
   .ss-section { margin-bottom: 28px; }
 }

@@ -38,17 +38,18 @@
   max-width: 540px;
   max-height: 92vh;
   overflow-y: auto;
-  border-radius: 24px 24px 0 0;
+  border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
   padding: 0;
   position: relative;
   animation: edp-slide-up 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
-  box-shadow: 0 -20px 60px rgba(21, 51, 48, 0.2);
+  box-shadow: var(--shadow-pro-2xl);
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (min-width: 640px) {
   .edp-modal {
-    border-radius: 24px;
+    border-radius: var(--radius-3xl);
     margin: 24px;
     max-height: 88vh;
   }
@@ -582,24 +583,27 @@
   background: var(--edp-forest);
   color: var(--sala-surface);
   border: none;
-  border-radius: 50px;
+  border-radius: var(--radius-base);
   font-family: inherit;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-tight);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background 0.15s;
+  box-shadow: var(--shadow-pro-lift-forest);
+  transition: transform var(--duration-fast) ease, background var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.edp-cta:hover,
-.edp-cta:active {
+.edp-cta:hover {
   background: var(--edp-moss);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(8, 20, 27, 0.20);
 }
+.edp-cta:active { transform: scale(0.98); }
 
 .edp-cta.done {
   background: var(--edp-warm);

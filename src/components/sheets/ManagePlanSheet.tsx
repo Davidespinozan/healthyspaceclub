@@ -118,16 +118,17 @@ export default function ManagePlanSheet({ onClose }: Props) {
     <div className="sh-overlay" onClick={onClose}>
       <div className="sh-sheet" onClick={e => e.stopPropagation()}>
         <div className="sh-handle" />
-        <button
-          className="sh-close"
-          onClick={onClose}
-          aria-label="Cerrar"
-          type="button"
-        >
-          ✕
-        </button>
-
-        <h1 className="sh-title">Mi Plan</h1>
+        <div className="sh-header-row">
+          <h1 className="sh-title">Mi Plan</h1>
+          <button
+            className="sh-close"
+            onClick={onClose}
+            aria-label="Cerrar"
+            type="button"
+          >
+            ✕
+          </button>
+        </div>
 
         {/* SECCIÓN 2 — Estado actual */}
         <section className="mps-section">

@@ -74,16 +74,17 @@ export default function SettingsSheet({ open, onClose }: Props) {
     <div className="ss-overlay" onClick={onClose}>
       <div className="ss-sheet" onClick={e => e.stopPropagation()}>
         <div className="ss-handle" />
-        <button
-          className="ss-close"
-          onClick={onClose}
-          aria-label="Cerrar"
-          type="button"
-        >
-          ✕
-        </button>
-
-        <h1 className="ss-title">Ajustes</h1>
+        <div className="ss-header-row">
+          <h1 className="ss-title">Ajustes</h1>
+          <button
+            className="ss-close"
+            onClick={onClose}
+            aria-label="Cerrar"
+            type="button"
+          >
+            ✕
+          </button>
+        </div>
 
         {/* Sección 1: Mi plan */}
         <section className="ss-section">

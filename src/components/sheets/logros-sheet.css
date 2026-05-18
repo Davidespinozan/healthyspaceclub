@@ -17,9 +17,10 @@
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.6rem;
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tighter);
   margin: 0 0 4px;
   color: var(--forest);
+  line-height: 1.15;
 }
 .ls-progress {
   font-family: Georgia, 'Times New Roman', serif;
@@ -43,9 +44,11 @@
 }
 
 .ls-card {
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(21, 51, 48, 0.08);
-  border-radius: 16px;
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: var(--radius-base);
   padding: 18px 14px 16px;
   display: flex;
   flex-direction: column;
@@ -57,9 +60,11 @@
   font-family: inherit;
   color: var(--forest);
   opacity: 0;
+  box-shadow: var(--shadow-pro-md);
   animation: ls-card-in 0.32s ease forwards;
-  transition: transform 0.12s ease, box-shadow 0.15s ease;
+  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
+.ls-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-pro-lg); }
 @keyframes ls-card-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -108,7 +113,7 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-kicker);
   text-transform: uppercase;
   color: rgba(21, 51, 48, 0.45);
   margin-top: 2px;

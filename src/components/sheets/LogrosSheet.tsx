@@ -72,7 +72,7 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
     <div className="sh-overlay" onClick={onClose}>
       <div className="sh-sheet ls-sheet" onClick={e => e.stopPropagation()}>
         <div className="sh-handle" />
-        <button className="sh-close" onClick={onClose} aria-label="Cerrar" type="button">✕</button>
+        <button className="sh-close sh-close--floating" onClick={onClose} aria-label="Cerrar" type="button">✕</button>
 
         {focusedMilestone ? (
           <div className="ls-detail">

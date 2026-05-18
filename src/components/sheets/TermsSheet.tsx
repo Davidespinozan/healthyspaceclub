@@ -23,16 +23,17 @@ export default function TermsSheet({ onClose }: Props) {
     <div className="sh-overlay" onClick={onClose}>
       <div className="sh-sheet" onClick={e => e.stopPropagation()}>
         <div className="sh-handle" />
-        <button
-          className="sh-close"
-          onClick={onClose}
-          aria-label="Cerrar"
-          type="button"
-        >
-          ✕
-        </button>
-
-        <h1 className="sh-title">Términos de Servicio</h1>
+        <div className="sh-header-row">
+          <h1 className="sh-title">Términos de Servicio</h1>
+          <button
+            className="sh-close"
+            onClick={onClose}
+            aria-label="Cerrar"
+            type="button"
+          >
+            ✕
+          </button>
+        </div>
         <p className="sh-intro">{TERMS_INTRO}</p>
 
         <div className="sh-body">
