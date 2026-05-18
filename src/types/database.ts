@@ -1000,6 +1000,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_milestones: {
+        Row: {
+          created_at: string
+          id: string
+          milestone_days: number
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          milestone_days: number
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          milestone_days?: number
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           blocked_exercises: string[] | null

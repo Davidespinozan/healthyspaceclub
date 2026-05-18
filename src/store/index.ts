@@ -5,6 +5,46 @@ import { supabase } from '../lib/supabase';
 import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep, CompletedSession } from '../types';
 import { calcTDEE, assignPlan } from '../utils/tdee';
 import type { Region, Currency } from '../utils/region';
+import { MILESTONE_STEPS } from '../constants/milestones';
+
+export interface MilestoneEntry {
+  milestone_days: number;
+  unlocked_at: string;
+}
+
+// Detecta milestones recién cruzados, persiste en Supabase y devuelve las entries
+// nuevas. No bloquea al caller si la persistencia falla.
+export async function tryUnlockMilestones(
+  previousStreak: number,
+  newStreak: number,
+  userId: string | undefined,
+): Promise<MilestoneEntry[]> {
+  const newlyUnlocked = MILESTONE_STEPS.filter(
+    m => previousStreak < m && newStreak >= m,
+  );
+  if (newlyUnlocked.length === 0) return [];
+
+  const now = new Date().toISOString();
+  const entries: MilestoneEntry[] = newlyUnlocked.map(milestone_days => ({
+    milestone_days,
+    unlocked_at: now,
+  }));
+
+  if (!userId) return entries;
+
+  try {
+    const { error } = await supabase
+      .from('user_milestones')
+      .upsert(
+        entries.map(e => ({ user_id: userId, ...e })),
+        { onConflict: 'user_id,milestone_days', ignoreDuplicates: true },
+      );
+    if (error) console.error('[milestones] upsert failed:', error);
+  } catch (e) {
+    console.error('[milestones] upsert threw:', e);
+  }
+  return entries;
+}
 
 interface PayInfo {
   plan: string;
@@ -171,7 +211,7 @@ interface AppState {
 
   // Daily check-in + streak
   dailyCheckIn: { date: string; feeling: string; sleep: string } | null;
-  saveDailyCheckIn: (data: { feeling: string; sleep: string }) => void;
+  saveDailyCheckIn: (data: { feeling: string; sleep: string }) => Promise<void>;
   streakCount: number;
   lastActiveDate: string | null;
 
@@ -183,10 +223,14 @@ interface AppState {
   lastStreakMilestone: number;
   setLastStreakMilestone: (n: number) => void;
 
+  // Persisted milestone unlocks (synced from user_milestones table)
+  userMilestones: MilestoneEntry[];
+  setUserMilestones: (m: MilestoneEntry[]) => void;
+
   // Daily energy check-in (Hoy tab)
   dailyCheckin: 'cansado' | 'regular' | 'energia' | null;
   dailyCheckinDate: string;
-  setDailyCheckin: (val: 'cansado' | 'regular' | 'energia') => void;
+  setDailyCheckin: (val: 'cansado' | 'regular' | 'energia') => Promise<void>;
 
   // Daily HSM micro-responses
   dailyHSMResponses: { date: string; dimension: string; question: string; response: string }[];
@@ -229,7 +273,7 @@ interface AppState {
   saveNightCheckIn: (data: {
     energia: string; cumplimiento: string; valores: string;
     reflexion: string; intencionManana: string;
-  }) => void;
+  }) => Promise<void>;
 
   // Logout
   logout: () => void;
@@ -572,13 +616,17 @@ export const useAppStore = create<AppState>()(
   lastStreakMilestone: 0,
   setLastStreakMilestone: (n) => set({ lastStreakMilestone: n }),
 
+  // Persisted milestone unlocks
+  userMilestones: [],
+  setUserMilestones: (m) => set({ userMilestones: m }),
+
   // Daily check-in + streak
   dailyCheckIn: null,
   streakCount: 0,
   lastActiveDate: null,
-  saveDailyCheckIn: (data) => {
+  saveDailyCheckIn: async (data) => {
     const today = new Date().toISOString().split('T')[0];
-    const { lastActiveDate, streakCount } = get();
+    const { lastActiveDate, streakCount, user } = get();
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     const newStreak = lastActiveDate === today
       ? streakCount
@@ -586,6 +634,11 @@ export const useAppStore = create<AppState>()(
         ? streakCount + 1
         : 1;
     set({ dailyCheckIn: { date: today, ...data }, lastActiveDate: today, streakCount: newStreak });
+
+    const unlocked = await tryUnlockMilestones(streakCount, newStreak, user?.id);
+    if (unlocked.length > 0) {
+      set((s) => ({ userMilestones: [...s.userMilestones, ...unlocked] }));
+    }
   },
 
   // Growth Plan (Healthy Space Method)
@@ -612,9 +665,9 @@ export const useAppStore = create<AppState>()(
   // Daily energy check-in (Hoy tab) — also updates streak
   dailyCheckin: null,
   dailyCheckinDate: '',
-  setDailyCheckin: (val) => {
+  setDailyCheckin: async (val) => {
     const today = new Date().toISOString().split('T')[0];
-    const { lastActiveDate, streakCount, hsmUnlockDays, startDate } = get();
+    const { lastActiveDate, streakCount, hsmUnlockDays, startDate, user } = get();
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     const newStreak = lastActiveDate === today
       ? streakCount
@@ -631,6 +684,11 @@ export const useAppStore = create<AppState>()(
       streakCount: newStreak,
       hsmUnlockDays: updatedUnlockDays,
     });
+
+    const unlocked = await tryUnlockMilestones(streakCount, newStreak, user?.id);
+    if (unlocked.length > 0) {
+      set((s) => ({ userMilestones: [...s.userMilestones, ...unlocked] }));
+    }
   },
 
   // Daily HSM micro-responses
@@ -710,9 +768,9 @@ export const useAppStore = create<AppState>()(
 
   // Night check-in — also maintains streak for the day
   nightCheckIn: null,
-  saveNightCheckIn: (data) => {
+  saveNightCheckIn: async (data) => {
     const today = new Date().toISOString().split('T')[0];
-    const { lastActiveDate, streakCount } = get();
+    const { lastActiveDate, streakCount, user } = get();
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     const newStreak = lastActiveDate === today
       ? streakCount
@@ -724,6 +782,11 @@ export const useAppStore = create<AppState>()(
       lastActiveDate: today,
       streakCount: newStreak,
     });
+
+    const unlocked = await tryUnlockMilestones(streakCount, newStreak, user?.id);
+    if (unlocked.length > 0) {
+      set((s) => ({ userMilestones: [...s.userMilestones, ...unlocked] }));
+    }
   },
 
   // Logout — signs out of Supabase and clears all local state
@@ -769,6 +832,7 @@ export const useAppStore = create<AppState>()(
       lastWeeklyReview: null,
       dailyBriefing: null,
       lastStreakMilestone: 0,
+      userMilestones: [],
       dailyCheckin: null,
       dailyCheckinDate: '',
       dailyHSMResponses: [],
@@ -816,6 +880,7 @@ export const useAppStore = create<AppState>()(
     lastWeeklyReview: state.lastWeeklyReview,
     dailyBriefing: state.dailyBriefing,
     lastStreakMilestone: state.lastStreakMilestone,
+    userMilestones: state.userMilestones,
     dailyCheckin: state.dailyCheckin,
     dailyCheckinDate: state.dailyCheckinDate,
     dailyHSMResponses: state.dailyHSMResponses,

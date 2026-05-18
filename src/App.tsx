@@ -97,6 +97,20 @@ export default function App() {
           } catch (e) {
             console.error('[auth] failed to hydrate weight_log:', e);
           }
+
+          // Hidratar user_milestones en paralelo (logros desbloqueados)
+          try {
+            const { data: milestones } = await supabase
+              .from('user_milestones')
+              .select('milestone_days, unlocked_at')
+              .eq('user_id', session.user.id)
+              .order('unlocked_at', { ascending: true });
+            if (milestones) {
+              useAppStore.setState({ userMilestones: milestones });
+            }
+          } catch (e) {
+            console.error('[auth] failed to hydrate user_milestones:', e);
+          }
         }, 0);
       }
 
