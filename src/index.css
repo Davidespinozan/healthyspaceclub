@@ -52,6 +52,139 @@
   --sala-surface: #FFFFFF;       /* Cards, modales, sidebar, inputs */
   --sala-border: #E8E6E0;        /* Bordes sutiles */
   --sala-border-strong: #D4D0C8; /* Bordes con más presencia (inputs hover, secondary CTAs) */
+
+  /* ====================================================
+     Sistema "Pro" — tokens del design system editorial.
+     USO:
+     - Shadows: --shadow-pro-{sm,md,lg,xl,2xl} para componentes
+       nuevos. --shadow-md/-lg legacy (moss-based) siguen vivos para
+       no romper estilos viejos; usar los Pro en código nuevo.
+     - Radii: --radius-{xs..3xl} para sustituir números mágicos.
+     - Glass: --surface-glass-{light,strong,soft} con .surface-glass*
+       utility classes (backdrop-filter aplicado).
+     - Tracking: serif Georgia con --tracking-{tight,tighter,tightest}
+       para titulares; kicker labels con --tracking-kicker(-loose).
+     - Duration: --duration-{fast,base,slow} para transitions.
+     ==================================================== */
+
+  /* Pro — sombras lift (basado en forest, más sutiles que las legacy) */
+  --shadow-pro-sm: 0 2px 4px rgba(21, 51, 48, 0.04);
+  --shadow-pro-md: 0 8px 16px rgba(21, 51, 48, 0.06);
+  --shadow-pro-lg: 0 12px 24px rgba(21, 51, 48, 0.06);
+  --shadow-pro-xl: 0 14px 32px rgba(21, 51, 48, 0.10);
+  --shadow-pro-2xl: 0 24px 56px rgba(21, 51, 48, 0.16);
+  --shadow-pro-lift-forest: 0 10px 20px rgba(8, 20, 27, 0.16);
+  --shadow-pro-lift-terracota: 0 10px 20px rgba(199, 91, 58, 0.16);
+
+  /* Pro — radios escalonados */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 14px;
+  --radius-base: 16px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-2xl: 24px;
+  --radius-3xl: 28px;
+
+  /* Pro — surfaces translúcidas */
+  --surface-glass-light: rgba(255, 255, 255, 0.62);
+  --surface-glass-strong: rgba(255, 255, 255, 0.7);
+  --surface-glass-soft: rgba(255, 255, 255, 0.5);
+  --surface-glass-border: rgba(255, 255, 255, 0.5);
+
+  /* Pro — typography tracking */
+  --tracking-tight: -0.02em;
+  --tracking-tighter: -0.03em;
+  --tracking-tightest: -0.04em;
+  --tracking-kicker: 0.18em;
+  --tracking-kicker-loose: 0.22em;
+
+  /* Pro — duraciones de transición */
+  --duration-fast: 0.18s;
+  --duration-base: 0.22s;
+  --duration-slow: 0.28s;
+}
+
+/* ====================================================
+   Sistema "Pro" — Utility classes reusables
+   (font-size 16px en inputs y tap-highlight en html ya
+   están cubiertos abajo; no se duplican aquí)
+   ==================================================== */
+
+/* Glass surfaces — usar con position:absolute o como bg de cards */
+.surface-glass {
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+}
+
+.surface-glass-strong {
+  background: var(--surface-glass-strong);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.surface-glass-soft {
+  background: var(--surface-glass-soft);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Lift shadows con hover sutil (translate Y + grow shadow) */
+.lift-md {
+  box-shadow: var(--shadow-pro-md);
+  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.lift-md:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-pro-lg);
+}
+
+.lift-lg {
+  box-shadow: var(--shadow-pro-lg);
+  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.lift-lg:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-pro-xl);
+}
+
+/* Typography — titulares editoriales Georgia */
+.heading-pro {
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: var(--tracking-tight);
+  font-weight: 500;
+}
+
+.numeric-pro {
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: var(--tracking-tightest);
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* Kicker labels (eyebrow uppercase) */
+.kicker {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-kicker-loose);
+  font-weight: 600;
+  color: rgba(21, 51, 48, 0.5);
+}
+
+/* iOS niceties globales (refuerzo del que ya está en html) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area insets para iOS notch / home indicator */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 html {

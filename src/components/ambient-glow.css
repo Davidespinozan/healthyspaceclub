@@ -1,0 +1,69 @@
+/* ═════════════════════════════════════════════════════════════
+   AmbientGlow — capa decorativa de blobs radiales con blur.
+   Variantes: warm (mostaza + terracota), cool (forest + mostaza),
+   subtle (mostaza muy soft).
+   Uso: <AmbientGlow variant="warm" /> dentro de un parent con
+   position: relative + overflow: hidden.
+   ═════════════════════════════════════════════════════════════ */
+
+.ambient-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.ambient-glow-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+}
+
+/* warm — paleta cálida (mostaza + terracota) sobre cream */
+.ambient-glow--warm .ambient-glow-blob--1 {
+  top: -100px;
+  right: -80px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(212, 165, 128, 0.18) 0%, transparent 70%);
+}
+.ambient-glow--warm .ambient-glow-blob--2 {
+  bottom: -80px;
+  left: -60px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(199, 91, 58, 0.08) 0%, transparent 70%);
+}
+
+/* cool — paleta fría (forest + mostaza) para hero forest dark */
+.ambient-glow--cool .ambient-glow-blob--1 {
+  top: -100px;
+  right: -80px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(21, 51, 48, 0.12) 0%, transparent 70%);
+}
+.ambient-glow--cool .ambient-glow-blob--2 {
+  bottom: -80px;
+  left: -60px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(124, 98, 50, 0.10) 0%, transparent 70%);
+}
+
+/* subtle — apenas perceptible, para contenedores que no quieren color fuerte */
+.ambient-glow--subtle .ambient-glow-blob--1 {
+  top: -100px;
+  right: -80px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(124, 98, 50, 0.06) 0%, transparent 70%);
+}
+.ambient-glow--subtle .ambient-glow-blob--2 {
+  bottom: -80px;
+  left: -60px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(124, 98, 50, 0.06) 0%, transparent 70%);
+}
