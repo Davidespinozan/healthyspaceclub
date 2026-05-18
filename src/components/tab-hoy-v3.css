@@ -59,10 +59,10 @@
 
 .th3-headline {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 26px;
-  font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: var(--tracking-tighter);
   color: var(--sala-surface);
   margin: 0 0 8px;
   position: relative;
@@ -95,17 +95,18 @@
 }
 .th3-streak-num {
   font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 400;
-  font-size: 26px;
+  font-weight: 500;
+  font-size: 28px;
   color: var(--amber);
   font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tightest);
   line-height: 1;
 }
 .th3-streak-label {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-kicker);
   text-transform: uppercase;
   color: rgba(246,242,234,0.55);
 }
@@ -134,8 +135,8 @@
 .th3-section-eyebrow {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
+  font-weight: 600;
+  letter-spacing: var(--tracking-kicker-loose);
   text-transform: uppercase;
   color: rgba(21,51,48,0.5);
   margin: 0 0 14px;
@@ -149,21 +150,22 @@
   align-items: stretch;
 }
 .th3-card {
-  background: white;
-  border: 0.5px solid var(--sand);
-  border-radius: 18px;
+  background: var(--sala-surface);
+  border: 1px solid var(--sala-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   -webkit-tap-highlight-color: transparent;
+  box-shadow: var(--shadow-pro-md);
+  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
-.th3-card:hover,
-.th3-card:active {
+.th3-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(21,51,48,0.06);
+  box-shadow: var(--shadow-pro-lg);
 }
+.th3-card:active { transform: scale(0.98); }
 
 /* Cover (portada gradient) */
 .th3-cover {
@@ -211,20 +213,20 @@
 }
 .th3-card-eyebrow {
   font-family: 'Montserrat', sans-serif;
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-kicker);
   text-transform: uppercase;
-  color: var(--amber);
+  color: var(--amber-deep);
   margin: 0;
 }
 .th3-card-title {
   font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 400;
+  font-weight: 500;
   font-size: 17px;
   color: var(--forest);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  line-height: 1.15;
+  letter-spacing: var(--tracking-tight);
   margin: 0;
 }
 .th3-card-meta {
@@ -343,11 +345,11 @@
 .th3-espacio-body { flex: 1; min-width: 0; }
 .th3-espacio-eyebrow {
   font-family: 'Montserrat', sans-serif;
-  font-size: 0.56rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-kicker-loose);
   text-transform: uppercase;
-  color: var(--amber);
+  color: var(--amber-deep);
   margin: 0 0 4px;
 }
 .th3-espacio-text {
@@ -357,6 +359,7 @@
   font-size: 15.5px;
   line-height: 1.4;
   color: var(--forest);
+  letter-spacing: var(--tracking-tight);
   margin: 0;
 }
 .th3-espacio-arrow {
@@ -367,13 +370,14 @@
 
 /* ═══ Reviews (mini día 5 + weekly HSM + daily review when complete) ═══ */
 .th3-review {
-  background: var(--forest);
-  border-radius: 16px;
+  background: linear-gradient(135deg, var(--forest), #1d3d39);
+  border-radius: var(--radius-base);
   padding: 18px 20px;
   border-left: 3px solid var(--amber);
   margin-top: 16px;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-pro-lift-forest);
 }
 .th3-review::before {
   content: '"';
@@ -390,8 +394,8 @@
 .th3-review-label {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-weight: 600;
+  letter-spacing: var(--tracking-kicker);
   text-transform: uppercase;
   color: var(--amber);
   margin: 0 0 8px;
@@ -413,18 +417,22 @@
 .th3-review-btn {
   margin-top: 12px;
   padding: 9px 22px;
-  background: transparent;
+  background: rgba(246,242,234,0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(246,242,234,0.25);
-  border-radius: 50px;
+  border-radius: var(--radius-base);
   color: var(--sala-surface);
   font-family: 'Montserrat', sans-serif;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tight);
   cursor: pointer;
   position: relative;
-  transition: all 0.15s;
+  transition: transform var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease;
   -webkit-tap-highlight-color: transparent;
 }
+.th3-review-btn:hover { transform: translateY(-1px); }
 .th3-review-btn:hover,
 .th3-review-btn:active {
   background: rgba(246,242,234,0.08);
@@ -447,24 +455,27 @@
 }
 .th3-milestone-inner {
   background: var(--sala-surface);
-  border-radius: 24px;
+  border-radius: var(--radius-3xl);
   padding: 36px 28px;
   max-width: 360px;
   width: 100%;
   text-align: center;
   border: 1px solid var(--amber);
+  box-shadow: var(--shadow-pro-2xl);
 }
 .th3-milestone-emoji {
   font-size: 3.5rem;
   margin-bottom: 14px;
+  filter: drop-shadow(0 6px 14px rgba(199, 91, 58, 0.18));
 }
 .th3-milestone-title {
   font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 400;
+  font-weight: 500;
   font-size: 1.4rem;
   color: var(--forest);
   margin: 0 0 10px;
-  letter-spacing: -0.015em;
+  letter-spacing: var(--tracking-tighter);
+  line-height: 1.15;
 }
 .th3-milestone-sub {
   font-family: 'Montserrat', sans-serif;
@@ -478,13 +489,17 @@
   background: var(--forest);
   color: var(--sala-surface);
   border: none;
-  border-radius: 50px;
+  border-radius: var(--radius-base);
   font-family: 'Montserrat', sans-serif;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tight);
   cursor: pointer;
+  box-shadow: var(--shadow-pro-lift-forest);
   -webkit-tap-highlight-color: transparent;
+  transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease;
 }
+.th3-milestone-close:hover { filter: brightness(1.08); transform: translateY(-1px); }
 @keyframes th3FadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
