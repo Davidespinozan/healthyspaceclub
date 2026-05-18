@@ -12,7 +12,7 @@ const ACTIVITY_OPTIONS = ['Sedentaria', 'Ligera', 'Moderada', 'Alta', 'Atleta'];
 const GOAL_OPTIONS = ['Bajar grasa', 'Subir masa muscular', 'Recomposición', 'Bienestar integral'];
 
 export default function EditDataSheet({ onClose }: Props) {
-  const { obData, setObData, recalcFromObData, tdee, planGoal } = useAppStore();
+  const { obData, setObData, recalcFromObData, addWeight, tdee, planGoal } = useAppStore();
 
   const [form, setForm] = useState({
     sex: String(obData.sex || ''),
@@ -56,19 +56,31 @@ export default function EditDataSheet({ onClose }: Props) {
     if (!form.goal) { setError('Seleccioná tu objetivo.'); return; }
 
     setSaving(true);
+    const pesoChanged = pesoN !== Number(obData.peso);
+
     setObData('sex', form.sex);
     setObData('edad', edadN);
-    setObData('peso', pesoN);
     setObData('estatura', estaturaN);
     setObData('activity', form.activity);
     setObData('goal', form.goal);
 
     try {
-      await recalcFromObData();
+      if (pesoChanged) {
+        // addWeight crea entry en weight_log + setObData('peso') + recalcFromObData
+        // (camino unificado para mantener histórico consistente)
+        await addWeight(pesoN);
+      } else {
+        // Peso no cambió: solo recalc por los otros campos
+        setObData('peso', pesoN);
+        await recalcFromObData();
+      }
       setSaved(true);
     } catch (e) {
       console.error('[EditDataSheet] save failed:', e);
-      setError('No pudimos guardar. Intentá de nuevo.');
+      // Fallback: aplicar setObData + recalc igual para no perder los demás campos
+      setObData('peso', pesoN);
+      try { await recalcFromObData(); } catch { /* ignore */ }
+      setError('Guardamos tus datos pero el peso no se sincronizó. Intentá de nuevo desde TabTu.');
     } finally {
       setSaving(false);
     }

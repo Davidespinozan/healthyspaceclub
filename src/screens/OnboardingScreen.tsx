@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 const TOTAL_STEPS = 8;
 
 export default function OnboardingScreen() {
-  const { userName, setUserName, setObData, finishOnboardingCalc, finishOnboarding } = useAppStore();
+  const { userName, setUserName, setObData, finishOnboardingCalc, finishOnboarding, addWeight } = useAppStore();
 
   const [step, setStep] = useState(1);
   const [dir, setDir] = useState<'next' | 'prev'>('next');
@@ -128,9 +128,16 @@ export default function OnboardingScreen() {
       setTimeout(() => setProcessingLine(i + 1), (i + 1) * 800)
     );
     // After all lines shown, calculate TDEE and advance to step 8
-    const finalTimer = setTimeout(() => {
+    const finalTimer = setTimeout(async () => {
       // Trigger TDEE calculation NOW so step 8 can read the result
-      finishOnboardingCalc();
+      await finishOnboardingCalc();
+      // Crear primera entry en weight_log para que el tracking semanal
+      // arranque con un punto de referencia desde el día 1.
+      const pesoInicial = Number(peso) || 70;
+      if (pesoInicial >= 30 && pesoInicial <= 300) {
+        try { await addWeight(pesoInicial); }
+        catch (e) { console.warn('[onboarding] addWeight failed (no-blocking):', e); }
+      }
       setDir('next');
       setAnimKey(k => k + 1);
       setStep(8);
