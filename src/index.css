@@ -43,6 +43,12 @@
   /* Acento secundario - cálido, energético */
   --terracota: #C75B3A;
   --terracota-soft: rgba(199, 91, 58, 0.12);
+
+  /* Sala — sistema de superficies (introducido en refactor TabTu, reemplaza progresivamente a --cream) */
+  --sala-bg: #FAFAF7;            /* Fondo principal cream cálido (página entera) */
+  --sala-surface: #FFFFFF;       /* Cards, modales, sidebar, inputs */
+  --sala-border: #E8E6E0;        /* Bordes sutiles */
+  --sala-border-strong: #D4D0C8; /* Bordes con más presencia (inputs hover, secondary CTAs) */
 }
 
 html {
