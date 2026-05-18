@@ -17,7 +17,7 @@
 @keyframes cpm-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 .cpm-sheet {
-  background: var(--cream, #F6F2EA);
+  background: var(--sala-surface);
   width: 100%;
   height: 100dvh;
   max-height: 100dvh;
@@ -90,7 +90,7 @@
 /* ─── Buttons ─────────────────────────────────────────────── */
 .cpm-btn-primary {
   background: var(--forest, #153330);
-  color: var(--cream, #F6F2EA);
+  color: var(--sala-surface);
   border: none;
   padding: 14px 22px;
   border-radius: 999px;
@@ -214,7 +214,7 @@
 }
 .cpm-choose-option--primary {
   background: var(--forest, #153330);
-  color: var(--cream, #F6F2EA);
+  color: var(--sala-surface);
   border-color: var(--forest, #153330);
 }
 .cpm-choose-option--primary:hover {
@@ -380,7 +380,7 @@
   flex-shrink: 0;
   padding: 14px 22px calc(18px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(21, 51, 48, 0.08);
-  background: var(--cream, #F6F2EA);
+  background: var(--sala-surface);
 }
 .cpm-composing-foot .cpm-btn-primary { width: 100%; }
 

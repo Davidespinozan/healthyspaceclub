@@ -8,7 +8,7 @@
   display: flex;
   flex-direction: column;
   padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
-  background: var(--cream);
+  background: var(--sala-bg);
   min-height: 100dvh;
 }
 
@@ -68,7 +68,7 @@
   height: 52px;
   border-radius: 50%;
   background: var(--forest);
-  color: var(--cream);
+  color: var(--sala-surface);
   border: none;
   font-size: 22px;
   font-weight: 300;
