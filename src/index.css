@@ -40,6 +40,9 @@
   --surface: var(--cream);
   --bg2: var(--warm);
   --txt1: var(--forest);
+  /* Acento secundario - cálido, energético */
+  --terracota: #C75B3A;
+  --terracota-soft: rgba(199, 91, 58, 0.12);
 }
 
 html {

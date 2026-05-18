@@ -11,6 +11,8 @@ export default function WeightTrackingCard() {
   const [inputValue, setInputValue] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [toastValue, setToastValue] = useState<number | null>(null);
 
   const sorted = useMemo(
     () => [...weightLog].sort((a, b) => a.date.localeCompare(b.date)),
@@ -33,17 +35,7 @@ export default function WeightTrackingCard() {
     return +(lastEntry.kg - previous.kg).toFixed(1);
   }, [sorted, lastEntry]);
 
-  // ¿Registrado esta semana? (desde el domingo pasado)
-  const registeredThisWeek = useMemo(() => {
-    const sundayThisWeek = (() => {
-      const d = new Date();
-      d.setDate(d.getDate() - d.getDay());
-      return d.toISOString().split('T')[0];
-    })();
-    return sorted.some(e => e.date >= sundayThisWeek);
-  }, [sorted]);
-
-  // Body overflow lock cuando modal abre
+  // Body overflow lock + ESC handler cuando modal abre
   useEffect(() => {
     if (!showModal) return;
     const prev = document.body.style.overflow;
@@ -68,6 +60,10 @@ export default function WeightTrackingCard() {
       await addWeight(kg);
       setInputValue('');
       setShowModal(false);
+      // Micro-feedback: toast con confirmación
+      setToastValue(kg);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2500);
     } catch (e) {
       console.error('[WeightTrackingCard] save failed:', e);
       setError('No se pudo guardar. Intentá de nuevo.');
@@ -82,47 +78,37 @@ export default function WeightTrackingCard() {
     setShowModal(true);
   }
 
-  const deltaClass = delta === null ? '' : delta < 0 ? ' is-down' : delta > 0 ? ' is-up' : ' is-stable';
+  const deltaClass = delta === null ? '' : delta < 0 ? ' down' : delta > 0 ? ' up' : ' stable';
   const deltaArrow = delta === null ? '' : delta < 0 ? '↓' : delta > 0 ? '↑' : '—';
 
   return (
     <>
-      <div className="wt-card">
-        <div className="wt-card-head">
-          <span className="wt-card-label">Tu peso</span>
+      <button type="button" className="weight-row" onClick={openModal}>
+        <div className="weight-row-left">
+          <span className="weight-row-label">Peso</span>
+          <span className="weight-row-value">
+            {currentWeight !== null && currentWeight !== undefined
+              ? <>{currentWeight} <span className="weight-row-unit">kg</span></>
+              : 'Sin registrar'}
+          </span>
           {delta !== null && (
-            <span className={`wt-card-delta${deltaClass}`}>
+            <span className={`weight-row-delta${deltaClass}`}>
               {deltaArrow} {Math.abs(delta)} kg
             </span>
           )}
         </div>
-
-        <div className="wt-card-value">
-          {currentWeight !== null && currentWeight !== undefined
-            ? <>{currentWeight}<span className="wt-card-unit"> kg</span></>
-            : 'Sin registrar'}
-        </div>
-
-        <p className="wt-card-meta">
-          {registeredThisWeek
-            ? 'Registrado esta semana'
-            : 'Pesate 1 vez por semana, mismo día y hora, en ayunas.'}
-        </p>
-
-        <button type="button" className="wt-card-btn" onClick={openModal}>
-          {registeredThisWeek ? 'Actualizar' : 'Registrar peso'}
-        </button>
-      </div>
+        <span className="weight-row-chevron" aria-hidden="true">›</span>
+      </button>
 
       {showModal && (
-        <div className="wt-modal-overlay" onClick={() => !saving && setShowModal(false)}>
-          <div className="wt-modal" onClick={e => e.stopPropagation()}>
-            <h3 className="wt-modal-title">Registrar peso</h3>
-            <p className="wt-modal-intro">
+        <div className="weight-modal-overlay" onClick={() => !saving && setShowModal(false)}>
+          <div className="weight-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="weight-modal-title">Registrar peso</h3>
+            <p className="weight-modal-intro">
               Idealmente, pesate en la mañana después del baño, en ayunas y sin ropa.
             </p>
 
-            <div className="wt-modal-input-row">
+            <div className="weight-modal-input-row">
               <input
                 type="number"
                 step="0.1"
@@ -131,18 +117,18 @@ export default function WeightTrackingCard() {
                 value={inputValue}
                 onChange={e => setInputValue(e.target.value)}
                 placeholder="70.5"
-                className="wt-modal-input"
+                className="weight-modal-input"
                 autoFocus
               />
-              <span className="wt-modal-unit">kg</span>
+              <span className="weight-modal-unit">kg</span>
             </div>
 
-            {error && <p className="wt-modal-error">{error}</p>}
+            {error && <p className="weight-modal-error">{error}</p>}
 
-            <div className="wt-modal-actions">
+            <div className="weight-modal-actions">
               <button
                 type="button"
-                className="wt-modal-btn-ghost"
+                className="weight-modal-btn-ghost"
                 onClick={() => setShowModal(false)}
                 disabled={saving}
               >
@@ -150,7 +136,7 @@ export default function WeightTrackingCard() {
               </button>
               <button
                 type="button"
-                className="wt-modal-btn-primary"
+                className="weight-modal-btn-primary"
                 onClick={handleSave}
                 disabled={saving}
               >
@@ -158,6 +144,13 @@ export default function WeightTrackingCard() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {showToast && toastValue !== null && (
+        <div className="weight-toast" role="status" aria-live="polite">
+          <div className="weight-toast-check" aria-hidden="true">✓</div>
+          <div className="weight-toast-text">Peso registrado · {toastValue} kg</div>
         </div>
       )}
     </>

@@ -223,7 +223,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
           </div>
           <div className="tt3-stat-cell tt3-stat-cell--middle">
             <div className="tt3-stat-num tt3-stat-num--accent">{streakCount}</div>
-            <div className="tt3-stat-label">Racha</div>
+            <div className="tt3-stat-label">Racha 🔥</div>
           </div>
           <div className="tt3-stat-cell">
             <div className="tt3-stat-num">{achievementsCount}</div>
