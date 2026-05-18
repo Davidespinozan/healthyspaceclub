@@ -3,23 +3,30 @@
    Prefijos: .weight-row-*, .weight-modal-*, .weight-toast-*
    ═════════════════════════════════════════════════════════════ */
 
-/* ═══ Fila compacta clickeable (mismo fondo que stats tt5) ═ */
+/* ═══ Fila compacta Pro (glass + lift) ═══════════════════ */
 .weight-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: calc(100% - 40px);
-  background: rgba(124, 98, 50, 0.08);
-  border: none;
-  border-radius: 10px;
-  padding: 11px 14px;
-  margin: 0 20px 12px;
+  width: calc(100% - 44px);
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  margin: 0 22px 12px;
+  gap: 12px;
   cursor: pointer;
+  box-shadow: var(--shadow-pro-lg);
   -webkit-tap-highlight-color: transparent;
   font-family: inherit;
-  transition: background 0.15s;
+  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
-.weight-row:hover { background: rgba(124, 98, 50, 0.14); }
+.weight-row:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-pro-xl);
+}
 
 .weight-row-left {
   display: flex;
@@ -30,19 +37,21 @@
 
 .weight-row-label {
   font-family: 'Montserrat', sans-serif;
-  font-size: 10px;
-  color: rgba(21, 51, 48, 0.55);
+  font-size: 9px;
+  color: rgba(21, 51, 48, 0.5);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--tracking-kicker-loose);
+  font-weight: 600;
   flex-shrink: 0;
 }
 
 .weight-row-value {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 400;
   color: var(--forest);
-  letter-spacing: -0.005em;
+  line-height: 1;
+  letter-spacing: var(--tracking-tighter);
 }
 .weight-row-unit {
   font-family: 'Montserrat', sans-serif;
@@ -243,6 +252,6 @@
 }
 
 @media (max-width: 380px) {
-  .weight-row { width: calc(100% - 28px); margin: 0 14px 12px; }
+  .weight-row { width: calc(100% - 28px); margin: 0 14px 12px; padding: 12px 14px; }
   .weight-toast { margin: 8px 14px 12px; }
 }

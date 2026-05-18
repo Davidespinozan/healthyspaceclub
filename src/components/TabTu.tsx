@@ -9,6 +9,7 @@ import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
 import LogrosSheet from './sheets/LogrosSheet';
+import AmbientGlow from './AmbientGlow';
 import {
   MILESTONE_STEPS,
   MILESTONE_LABELS,
@@ -151,6 +152,8 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
 
   return (
     <div className="tt5-screen">
+      <AmbientGlow variant="warm" />
+      <div className="tt5-content">
 
       {/* HEADER lateral — avatar + meta (☰ inline a la derecha del nombre) */}
       <div className="tt5-header">
@@ -233,22 +236,22 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
       {!editing && (
         <div className="tt5-stats">
           <div className="tt5-stat tt5-stat--posts">
-            <div className="tt5-stat-num">{postCount}</div>
             <div className="tt5-stat-label">Posts</div>
+            <div className="tt5-stat-num">{postCount}</div>
           </div>
           <div className="tt5-stat tt5-stat--racha">
-            <div className="tt5-stat-num">{streakCount} 🔥</div>
             <div className="tt5-stat-label">Racha</div>
+            <div className="tt5-stat-num">{streakCount} 🔥</div>
           </div>
           <button
             type="button"
             className="tt5-stat tt5-stat--logros"
             onClick={() => openLogrosSheet()}
           >
+            <div className="tt5-stat-label">Logros</div>
             <div className="tt5-stat-num">
               {achievementsCount}<span className="tt5-stat-num-total">/{MILESTONE_STEPS.length}</span>
             </div>
-            <div className="tt5-stat-label">Logros</div>
           </button>
         </div>
       )}
@@ -362,6 +365,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
         initialMilestoneDay={focusedMilestone}
       />
 
+      </div>
     </div>
   );
 }

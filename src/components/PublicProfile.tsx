@@ -224,18 +224,18 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
             {/* STATS */}
             <div className="pp5-stats">
               <div className="pp5-stat pp5-stat--posts">
-                <div className="pp5-stat-num">{posts.length}</div>
                 <div className="pp5-stat-label">Posts</div>
+                <div className="pp5-stat-num">{posts.length}</div>
               </div>
               <div className="pp5-stat pp5-stat--racha">
-                <div className="pp5-stat-num">{visitedStreak} 🔥</div>
                 <div className="pp5-stat-label">Racha</div>
+                <div className="pp5-stat-num">{visitedStreak} 🔥</div>
               </div>
               <div className="pp5-stat pp5-stat--logros">
+                <div className="pp5-stat-label">Logros</div>
                 <div className="pp5-stat-num">
                   {sortedHighlights.length}<span className="pp5-stat-num-total">/{MILESTONE_STEPS.length}</span>
                 </div>
-                <div className="pp5-stat-label">Logros</div>
               </div>
             </div>
 

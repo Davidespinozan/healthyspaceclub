@@ -82,8 +82,8 @@
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.6);
   box-shadow:
-    0 0 0 3px rgba(212, 165, 128, 0.25),
-    0 6px 16px rgba(21, 51, 48, 0.06);
+    0 0 0 3px rgba(212, 165, 128, 0.35),
+    var(--shadow-pro-xl);
 }
 .pp5-avatar-wrap img {
   width: 100%;
@@ -121,10 +121,10 @@
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 22px;
   color: var(--forest);
-  line-height: 1.15;
+  line-height: 1.1;
   margin: 0;
-  font-weight: 400;
-  letter-spacing: -0.005em;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tight);
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -135,71 +135,82 @@
   font-family: Georgia, 'Times New Roman', serif;
   font-style: italic;
   font-size: 12px;
-  color: rgba(21, 51, 48, 0.6);
+  color: rgba(21, 51, 48, 0.55);
   line-height: 1.4;
-  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
 }
 
 .pp5-year-chip {
   display: inline-flex;
-  background: rgba(124, 98, 50, 0.1);
-  padding: 4px 11px;
+  background: rgba(124, 98, 50, 0.12);
+  padding: 5px 13px;
   border-radius: 999px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   font-family: Georgia, 'Times New Roman', serif;
   font-style: italic;
   font-size: 11px;
   color: var(--amber-deep);
+  letter-spacing: 0.02em;
 }
 
-/* ═══ STATS — unificadas con mismo fondo mostaza soft ════ */
+/* ═══ STATS Pro — glass + lift ═══════════════════════════ */
 .pp5-stats {
-  padding: 18px 20px 12px;
+  padding: 18px 22px 14px;
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .pp5-stat {
   flex: 1;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 8px;
+  border: 1px solid var(--surface-glass-border);
+  border-radius: var(--radius-lg);
+  padding: 14px 10px;
   text-align: center;
   font-family: inherit;
   color: inherit;
-  background: rgba(124, 98, 50, 0.08);
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-pro-lg);
 }
+.pp5-stat--racha { box-shadow: 0 12px 24px rgba(199, 91, 58, 0.08); }
+.pp5-stat--logros { box-shadow: 0 12px 24px rgba(124, 98, 50, 0.08); }
+
+.pp5-stat-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  color: rgba(21, 51, 48, 0.45);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-kicker-loose);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.pp5-stat--racha .pp5-stat-label { color: rgba(199, 91, 58, 0.65); }
+.pp5-stat--logros .pp5-stat-label { color: rgba(124, 98, 50, 0.65); }
 
 .pp5-stat-num {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 19px;
+  font-size: 26px;
   line-height: 1;
   color: var(--forest);
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-weight: 400;
+  letter-spacing: var(--tracking-tightest);
 }
 .pp5-stat--racha .pp5-stat-num {
   color: var(--terracota);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 5px;
 }
 .pp5-stat--logros .pp5-stat-num { color: var(--amber-deep); }
 
 .pp5-stat-num-total {
-  font-size: 11px;
-  opacity: 0.5;
+  font-size: 14px;
+  opacity: 0.45;
   margin-left: 2px;
-}
-
-.pp5-stat-label {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 8px;
-  color: rgba(21, 51, 48, 0.55);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-top: 5px;
-  font-weight: 500;
 }
 
 /* ═══ HIGHLIGHTS — solo unlocked ═════════════════════════ */
@@ -326,9 +337,9 @@
 @media (max-width: 380px) {
   .pp5-header { padding: 24px 14px 0; gap: 14px; }
   .pp5-avatar-wrap { width: 88px; height: 88px; }
-  .pp5-name { font-size: 22px; }
+  .pp5-name { font-size: 20px; }
   .pp5-stats { padding: 18px 14px 12px; gap: 8px; }
   .pp5-stat { padding: 12px 8px; }
-  .pp5-stat-num { font-size: 20px; }
+  .pp5-stat-num { font-size: 22px; }
   .pp5-highlights { padding: 8px 14px 18px; gap: 12px; }
 }
