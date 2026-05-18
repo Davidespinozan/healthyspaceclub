@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../../store';
@@ -7,6 +7,8 @@ import {
   MILESTONE_COPY,
   MILESTONE_LABELS,
 } from '../../constants/milestones';
+import ShareableMilestoneCard from './ShareableMilestoneCard';
+import { shareMilestone } from '../../utils/shareMilestone';
 import './sheet-base.css';
 import './logros-sheet.css';
 
@@ -24,8 +26,13 @@ function formatUnlockedDate(iso: string): string {
 export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Props) {
   const userMilestones = useAppStore(s => s.userMilestones);
   const streakCount = useAppStore(s => s.streakCount);
+  const userName = useAppStore(s => s.userName);
+  const startDate = useAppStore(s => s.startDate);
 
   const [focused, setFocused] = useState<number | null>(initialMilestoneDay ?? null);
+  const [sharing, setSharing] = useState<'square' | 'story' | null>(null);
+  const shareableSquareRef = useRef<HTMLDivElement>(null);
+  const shareableStoryRef = useRef<HTMLDivElement>(null);
 
   // Reset focused milestone cuando el sheet se abre con un initialMilestoneDay distinto
   useEffect(() => {
@@ -66,6 +73,29 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
     ? milestones.find(m => m.days === focused) ?? null
     : null;
 
+  async function handleShare(format: 'square' | 'story') {
+    if (!focusedMilestone?.isUnlocked || !focusedMilestone.unlockedAt) return;
+    setSharing(format);
+    // Tick para garantizar que el off-screen card está renderizado
+    await new Promise(resolve => setTimeout(resolve, 50));
+    const cardElement = format === 'square'
+      ? shareableSquareRef.current
+      : shareableStoryRef.current;
+    if (!cardElement) {
+      setSharing(null);
+      return;
+    }
+    const result = await shareMilestone({
+      cardElement,
+      milestoneDay: focusedMilestone.days,
+      userName: userName || 'HSC member',
+    });
+    setSharing(null);
+    if (!result.success && result.error) {
+      alert('Error al compartir: ' + result.error);
+    }
+  }
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -103,8 +133,26 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
               </p>
             )}
 
-            {/* Espacio reservado para botón "Compartir" (Fase 4B) */}
-            <div className="ls-detail-share-slot" aria-hidden="true" />
+            {focusedMilestone.isUnlocked && (
+              <div className="ls-detail-share-actions">
+                <button
+                  type="button"
+                  className="ls-share-btn ls-share-btn--primary"
+                  onClick={() => handleShare('story')}
+                  disabled={sharing !== null}
+                >
+                  {sharing === 'story' ? 'Generando...' : 'Compartir en Historia'}
+                </button>
+                <button
+                  type="button"
+                  className="ls-share-btn ls-share-btn--secondary"
+                  onClick={() => handleShare('square')}
+                  disabled={sharing !== null}
+                >
+                  {sharing === 'square' ? 'Generando...' : 'Compartir como post'}
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -140,6 +188,39 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
               ))}
             </div>
           </>
+        )}
+
+        {/* Off-screen cards para html-to-image. Render solo cuando hay un focused unlocked */}
+        {focusedMilestone?.isUnlocked && focusedMilestone.unlockedAt && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'fixed',
+              left: '-99999px',
+              top: 0,
+              pointerEvents: 'none',
+              zIndex: -1,
+            }}
+          >
+            <div ref={shareableSquareRef}>
+              <ShareableMilestoneCard
+                milestoneDay={focusedMilestone.days}
+                unlockedAt={focusedMilestone.unlockedAt}
+                userName={userName}
+                startDate={startDate}
+                format="square"
+              />
+            </div>
+            <div ref={shareableStoryRef}>
+              <ShareableMilestoneCard
+                milestoneDay={focusedMilestone.days}
+                unlockedAt={focusedMilestone.unlockedAt}
+                userName={userName}
+                startDate={startDate}
+                format="story"
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>,
