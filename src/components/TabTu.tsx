@@ -1,11 +1,10 @@
 import { useMemo, useEffect, useState } from 'react';
-import { Menu, Flame, Lock, ArrowRight } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
 import { uploadAvatar } from '../utils/uploadAvatar';
-import CoachProfileSheet from './CoachProfileSheet';
 import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
@@ -13,16 +12,16 @@ import LogrosSheet from './sheets/LogrosSheet';
 import {
   MILESTONE_STEPS,
   MILESTONE_LABELS,
-  MILESTONE_FULL_LABELS,
+  MILESTONE_COPY,
   getAchievementsCount,
   getNextMilestone,
 } from '../constants/milestones';
-import './tab-tu-v3.css';
+import './tab-tu-v5.css';
 
-export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
+export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => void }) {
+  void _onNav;
   const {
-    userName, setUserName, streakCount, startDate,
-    hsmProfile,
+    userName, setUserName, streakCount, startDate, userMilestones,
   } = useAppStore();
 
   const userId = useCurrentUserId();
@@ -35,7 +34,6 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
   const [saving, setSaving] = useState(false);
-  const [coachOpen, setCoachOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'reflexiones'>('posts');
@@ -56,6 +54,11 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   const nextMilestone = useMemo(
     () => getNextMilestone(streakCount),
     [streakCount]
+  );
+
+  const unlockedDays = useMemo(
+    () => new Set(userMilestones.map(m => m.milestone_days)),
+    [userMilestones]
   );
 
   function openLogrosSheet(focused?: number) {
@@ -114,13 +117,11 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
   async function handleAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const result = await uploadAvatar(file, userId);
     if ('error' in result) {
       alert(result.error);
       return;
     }
-
     try {
       await supabase
         .from('user_profiles')
@@ -145,26 +146,16 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
     }
   }
 
-  // hsmProfile puede ser string u objeto — normalizamos sin romper
-  const profileText = useMemo(() => {
-    if (!hsmProfile) return null;
-    if (typeof hsmProfile === 'string') return hsmProfile;
-    if (typeof hsmProfile === 'object' && hsmProfile !== null) {
-      const obj = hsmProfile as Record<string, unknown>;
-      if (typeof obj.text === 'string') return obj.text as string;
-    }
-    return null;
-  }, [hsmProfile]);
-
   const displayName = profile.display_name || userName || 'Anónimo';
+  const initial = (firstName || displayName || '?')[0].toUpperCase();
 
   return (
-    <div className="tt3-wrap">
+    <div className="tt5-screen">
 
-      {/* A. Topbar — solo hamburguesa en círculo, alineada a la derecha */}
-      <div className="tt3-topbar">
+      {/* TOPBAR */}
+      <div className="tt5-topbar">
         <button
-          className="tt3-topbar-menu"
+          className="tt5-menu-btn"
           onClick={() => setSettingsOpen(true)}
           aria-label="Ajustes"
           type="button"
@@ -173,42 +164,42 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         </button>
       </div>
 
-      {/* B. Header centrado — avatar + nombre + bio */}
-      <div className="tt3-header">
-        <label className="tt3-avatar" aria-label="Cambiar avatar">
+      {/* HEADER lateral — avatar + meta */}
+      <div className="tt5-header">
+        <label className="tt5-avatar-wrap" aria-label="Cambiar avatar">
           {profile.avatar_url
             ? <img src={profile.avatar_url} alt="" />
-            : <span>{(firstName || displayName || '?')[0].toUpperCase()}</span>
+            : <div className="tt5-avatar-fallback">{initial}</div>
           }
-          <input type="file" accept="image/*" onChange={handleAvatar} hidden />
+          <input type="file" accept="image/*" onChange={handleAvatar} />
         </label>
 
         {!editing ? (
-          <>
-            <h1 className="tt3-name">{displayName}</h1>
-            {profile.bio && <p className="tt3-bio">{profile.bio}</p>}
-            <p className="tt3-year-label">Año {yearNumber} · día {dayOfYear}</p>
-          </>
+          <div className="tt5-header-meta">
+            <h1 className="tt5-name">{displayName}</h1>
+            {profile.bio && <p className="tt5-bio">{profile.bio}</p>}
+            <span className="tt5-year-chip">Año {yearNumber} · día {dayOfYear}</span>
+          </div>
         ) : (
-          <div className="tt3-edit-block">
+          <div className="tt5-edit-block">
             <input
-              className="tt3-edit-input"
+              className="tt5-edit-input"
               value={editName}
               onChange={e => setEditName(e.target.value)}
               placeholder="Tu nombre"
               autoFocus
             />
             <input
-              className="tt3-edit-input tt3-edit-input--bio"
+              className="tt5-edit-input"
               value={editBio}
               onChange={e => setEditBio(e.target.value.slice(0, 100))}
               placeholder="Bio corta (máx 100)"
             />
-            <div className="tt3-edit-actions">
-              <button className="tt3-edit-save" onClick={handleSave} disabled={saving} type="button">
+            <div className="tt5-edit-actions">
+              <button className="tt5-edit-save" onClick={handleSave} disabled={saving} type="button">
                 {saving ? 'Guardando...' : 'Guardar'}
               </button>
-              <button className="tt3-edit-cancel" onClick={() => setEditing(false)} type="button">
+              <button className="tt5-edit-cancel" onClick={() => setEditing(false)} type="button">
                 Cancelar
               </button>
             </div>
@@ -216,33 +207,11 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         )}
       </div>
 
-      {/* C. Stats hero — inline con separadores verticales */}
+      {/* ACTIONS */}
       {!editing && (
-        <div className="tt3-stats-row">
-          <div className="tt3-stat-cell">
-            <div className="tt3-stat-num">{postCount}</div>
-            <div className="tt3-stat-label">Posts</div>
-          </div>
-          <div className="tt3-stat-cell tt3-stat-cell--middle">
-            <div className="tt3-stat-num tt3-stat-num--accent">{streakCount}</div>
-            <div className="tt3-stat-label">Racha 🔥</div>
-          </div>
+        <div className="tt5-actions">
           <button
-            type="button"
-            className="tt3-stat-cell tt3-stat-cell--button"
-            onClick={() => openLogrosSheet()}
-          >
-            <div className="tt3-stat-num">{achievementsCount}</div>
-            <div className="tt3-stat-label">Logros</div>
-          </button>
-        </div>
-      )}
-
-      {/* D. Botones de perfil (sólo cuando NO está editando) */}
-      {!editing && (
-        <div className="tt3-actions">
-          <button
-            className="tt3-btn-primary"
+            className="tt5-btn tt5-btn--primary"
             type="button"
             onClick={() => {
               setEditName(profile.display_name || userName || '');
@@ -253,7 +222,7 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
             Editar perfil
           </button>
           <button
-            className="tt3-btn-outline"
+            className="tt5-btn tt5-btn--secondary"
             type="button"
             onClick={handleShare}
           >
@@ -262,100 +231,96 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
         </div>
       )}
 
-      {/* E0. Card de peso semanal */}
-      {!editing && <WeightTrackingCard />}
-
-      {/* E. Card del coach — horizontal: dot + body + arrow */}
-      <div
-        className="tt3-coach-card"
-        role="button"
-        tabIndex={0}
-        onClick={() => setCoachOpen(true)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setCoachOpen(true); }}
-      >
-        <span className="tt3-coach-dot" aria-hidden="true" />
-        <div className="tt3-coach-body">
-          <div className="tt3-coach-eyebrow">Tu coach</div>
-          <p className="tt3-coach-text">
-            {profileText || 'Aún estoy aprendiendo de ti. Reflexiona en Tu Espacio para que pueda conocerte.'}
-          </p>
-        </div>
-        <ArrowRight size={16} strokeWidth={1.6} className="tt3-coach-arrow" aria-hidden="true" />
-      </div>
-
-      {/* F. Logros — fila horizontal compacta + heading "Ver todos" + contexto */}
-      <section className="tt3-milestones-section">
-        <div className="tt3-milestones-header">
-          <span className="tt3-milestones-eyebrow">Logros</span>
+      {/* STATS */}
+      {!editing && (
+        <div className="tt5-stats">
+          <div className="tt5-stat tt5-stat--posts">
+            <div className="tt5-stat-num">{postCount}</div>
+            <div className="tt5-stat-label">Posts</div>
+          </div>
+          <div className="tt5-stat tt5-stat--racha">
+            <div className="tt5-stat-num">{streakCount} 🔥</div>
+            <div className="tt5-stat-label">Racha</div>
+          </div>
           <button
             type="button"
-            className="tt3-milestones-link"
+            className="tt5-stat tt5-stat--logros"
             onClick={() => openLogrosSheet()}
           >
-            Ver todos →
+            <div className="tt5-stat-num">
+              {achievementsCount}<span className="tt5-stat-num-total">/{MILESTONE_STEPS.length}</span>
+            </div>
+            <div className="tt5-stat-label">Logros</div>
           </button>
         </div>
+      )}
 
-        <div className="tt3-milestones">
-          {MILESTONE_STEPS.map(m => {
-            const reached = streakCount >= m;
-            const isYear = m === 365;
+      {/* WEIGHT */}
+      {!editing && <WeightTrackingCard />}
+
+      {/* HIGHLIGHTS — scroll horizontal */}
+      {!editing && (
+        <div className="tt5-highlights">
+          {MILESTONE_STEPS.map((days, idx) => {
+            const isUnlocked = unlockedDays.has(days);
+            const isNext = !isUnlocked && days === nextMilestone;
+            const futureOpacity = !isUnlocked && !isNext ? 1 - idx * 0.08 : undefined;
+            const remaining = Math.max(0, days - streakCount);
             return (
               <button
                 type="button"
-                key={m}
-                className={`tt3-milestone${reached ? ' reached' : ''}${isYear ? ' tt3-milestone--year' : ''}`}
-                onClick={() => openLogrosSheet(m)}
+                key={days}
+                className={`tt5-highlight${isUnlocked ? ' is-unlocked' : ''}${isNext ? ' is-next' : ''}`}
+                style={futureOpacity !== undefined ? { opacity: futureOpacity } : undefined}
+                onClick={() => openLogrosSheet(days)}
               >
-                <div className="tt3-milestone-circle">
-                  {reached
-                    ? <Flame size={20} strokeWidth={1.6} aria-hidden="true" />
-                    : <Lock size={16} strokeWidth={1.6} aria-hidden="true" />
-                  }
+                <div className="tt5-highlight-ring">
+                  <div className="tt5-highlight-emoji" aria-hidden="true">
+                    {isUnlocked ? MILESTONE_COPY[days].emoji : '🔒'}
+                  </div>
                 </div>
-                <div className="tt3-milestone-label">{MILESTONE_LABELS[m]}</div>
+                <div className="tt5-highlight-label">
+                  {isNext ? 'Próximo' : MILESTONE_LABELS[days]}
+                </div>
+                {isNext && (
+                  <div className="tt5-highlight-sub">a {remaining}d</div>
+                )}
               </button>
             );
           })}
         </div>
+      )}
 
-        <p className="tt3-milestones-context">
-          {nextMilestone
-            ? <>Llevás {streakCount} {streakCount === 1 ? 'día' : 'días'} — el siguiente logro a {MILESTONE_FULL_LABELS[nextMilestone]}</>
-            : <>Año completo. Próximo logro: año {yearNumber + 1}.</>
-          }
-        </p>
-      </section>
+      {/* TABS */}
+      {!editing && (
+        <div className="tt5-tabs">
+          <button
+            type="button"
+            className={activeTab === 'posts' ? 'is-active' : ''}
+            onClick={() => setActiveTab('posts')}
+          >
+            Posts
+          </button>
+          <button
+            type="button"
+            className={activeTab === 'reflexiones' ? 'is-active' : ''}
+            onClick={() => setActiveTab('reflexiones')}
+          >
+            Reflexiones
+          </button>
+        </div>
+      )}
 
-      {/* G. Tabs — Posts / Reflexiones */}
-      <div className="tt3-tabs">
-        <button
-          type="button"
-          className={`tt3-tab${activeTab === 'posts' ? ' active' : ''}`}
-          onClick={() => setActiveTab('posts')}
-        >
-          Posts
-        </button>
-        <button
-          type="button"
-          className={`tt3-tab${activeTab === 'reflexiones' ? ' active' : ''}`}
-          onClick={() => setActiveTab('reflexiones')}
-        >
-          Reflexiones
-        </button>
-      </div>
-
-      {/* H. Contenido por tab */}
-      {activeTab === 'posts' && (() => {
+      {!editing && activeTab === 'posts' && (() => {
         const minCells = 6;
         const placeholders = Math.max(0, minCells - userPosts.length);
         return (
-          <div className="tt3-grid">
+          <div className="tt5-grid">
             {userPosts.map(post => (
               <button
                 key={post.id}
                 type="button"
-                className="tt3-grid-item"
+                className="tt5-grid-item"
                 onClick={() => setProfileOpen(true)}
                 aria-label="Ver mis posts"
               >
@@ -363,29 +328,19 @@ export default function TabTu({ onNav }: { onNav: (page: DashPage) => void }) {
               </button>
             ))}
             {Array.from({ length: placeholders }, (_, i) => (
-              <div key={`ph-${i}`} className="tt3-grid-item tt3-grid-item--empty" aria-hidden="true" />
+              <div key={`ph-${i}`} className="tt5-grid-item tt5-grid-item--empty" aria-hidden="true" />
             ))}
           </div>
         );
       })()}
 
-      {activeTab === 'reflexiones' && (
-        <div className="tt3-reflections-empty">
-          <p className="tt3-reflections-empty-text">
+      {!editing && activeTab === 'reflexiones' && (
+        <div className="tt5-reflections-empty">
+          <p className="tt5-reflections-empty-text">
             Tus reflexiones de Tu Espacio aparecerán aquí.
           </p>
         </div>
       )}
-
-      <CoachProfileSheet
-        open={coachOpen}
-        onClose={() => setCoachOpen(false)}
-        onReflect={() => {
-          setCoachOpen(false);
-          onNav('hoy');
-          setTimeout(() => alert('Desliza al final de Hoy y toca Tu Espacio para reflexionar.'), 250);
-        }}
-      />
 
       <SettingsSheet
         open={settingsOpen}
