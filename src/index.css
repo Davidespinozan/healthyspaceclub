@@ -9,7 +9,10 @@
   --sage:   #3d6359;
   --mint:   #BFA065;
   --lime:   #e8dcc5;
-  --cream:  #F6F2EA;
+  /* --cream: alias retroactivo apuntado al sistema sala. Las 83 refs legacy
+     en este archivo (.btn-g, .pcard, .onb-*, .dash-*, .th-*, .tc-*, .tm-*,
+     .cl-*, .bnav-*, etc) siguen funcionando vía esta redirección. */
+  --cream:  var(--sala-bg);
   --warm:   #F0EBE0;
   --sand:   #E8E1D3;
   --amber:  #BFA065;
@@ -35,10 +38,10 @@
   --text-muted: rgba(21,51,48,.5);
   --text-main: #153330;
   --card: #ffffff;
-  --bg: #F6F2EA;
-  /* Aliases retroactivos para vars usadas en código legacy */
-  --surface: var(--cream);
-  --bg2: var(--warm);
+  --bg: var(--sala-bg);
+  /* Aliases retroactivos para vars usadas en código legacy — redirigidos al sistema sala */
+  --surface: var(--sala-surface);
+  --bg2: var(--sala-bg);
   --txt1: var(--forest);
   /* Acento secundario - cálido, energético */
   --terracota: #C75B3A;
