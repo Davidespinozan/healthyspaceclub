@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, lazy, Suspense } from 'react';
-import { useAppStore } from './store';
+import { useAppStore, persistStreakToProfile } from './store';
 import { supabase } from './lib/supabase';
 import { MILESTONE_STEPS } from './constants/milestones';
 import LandingScreen from './screens/LandingScreen';
@@ -63,7 +63,7 @@ export default function App() {
           try {
             const { data: profile } = await supabase
               .from('user_profiles')
-              .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at')
+              .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date')
               .eq('user_id', session.user.id)
               .maybeSingle();
 
@@ -78,6 +78,16 @@ export default function App() {
                 userPlan: (profile.user_plan ?? 'none') as 'none' | 'trial' | 'basico' | 'pro' | 'elite',
                 trialEndsAt: profile.trial_ends_at ?? null,
               });
+
+              // Backfill streak server: si server está en 0 pero el local tiene
+              // streak > 0, pushear local → server. Una vez por device.
+              const localState = useAppStore.getState();
+              const localStreak = localState.streakCount;
+              if ((profile.streak_count ?? 0) === 0 && localStreak > 0) {
+                const fallbackDate = localState.lastActiveDate ?? new Date().toISOString().split('T')[0];
+                console.log('[streak-backfill] pushing local streak', localStreak, 'to server');
+                await persistStreakToProfile(session.user.id, localStreak, fallbackDate);
+              }
             }
           } catch (e) {
             console.error('[auth] failed to hydrate profile:', e);

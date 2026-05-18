@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
 import { deleteClubPost } from '../utils/clubPosts';
+import { MILESTONE_STEPS, MILESTONE_COPY, MILESTONE_LABELS } from '../constants/milestones';
 import './public-profile.css';
 
 interface ProfileData {
@@ -10,17 +11,25 @@ interface ProfileData {
   bio: string;
   avatar_url: string;
   created_at?: string;
+  start_date?: string | null;
+  streak_count?: number | null;
+}
+
+interface MilestoneRow {
+  milestone_days: number;
+  unlocked_at: string;
 }
 
 interface Props {
   userId: string;
-  currentUserId?: string; // para saber si este usuario puede dar fire
+  currentUserId?: string;
   onClose: () => void;
 }
 
 export default function PublicProfile({ userId, currentUserId, onClose }: Props) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [posts, setPosts] = useState<ClubPost[]>([]);
+  const [milestones, setMilestones] = useState<MilestoneRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userFires, setUserFires] = useState<Set<string>>(new Set());
@@ -29,10 +38,10 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
   useEffect(() => {
     async function load() {
       try {
-        const [profileRes, postsRes] = await Promise.all([
+        const [profileRes, postsRes, milestonesRes] = await Promise.all([
           supabase
             .from('user_profiles')
-            .select('display_name, bio, avatar_url, created_at')
+            .select('display_name, bio, avatar_url, created_at, start_date, streak_count')
             .eq('user_id', userId)
             .maybeSingle(),
           supabase
@@ -41,15 +50,21 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
             .eq('user_id', userId)
             .order('created_at', { ascending: false })
             .limit(50),
+          supabase
+            .from('user_milestones')
+            .select('milestone_days, unlocked_at')
+            .eq('user_id', userId)
+            .order('milestone_days', { ascending: true }),
         ]);
 
         if (profileRes.error) throw new Error(profileRes.error.message);
         if (postsRes.error) throw new Error(postsRes.error.message);
+        if (milestonesRes.error) throw new Error(milestonesRes.error.message);
 
         if (profileRes.data) setProfile(profileRes.data);
         if (postsRes.data) setPosts(postsRes.data as ClubPost[]);
+        if (milestonesRes.data) setMilestones(milestonesRes.data);
 
-        // Cargar fires del currentUser sobre estos posts
         if (currentUserId && postsRes.data && postsRes.data.length > 0) {
           const postIds = postsRes.data.map(p => p.id);
           const firesRes = await supabase
@@ -139,81 +154,103 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
     }
   }
 
+  const { yearN, dayN } = useMemo(() => {
+    const start = profile?.start_date
+      ? new Date(profile.start_date).getTime()
+      : profile?.created_at
+        ? new Date(profile.created_at).getTime()
+        : Date.now();
+    const days = Math.max(0, Math.floor((Date.now() - start) / 86400000));
+    return { yearN: Math.floor(days / 365) + 1, dayN: (days % 365) + 1 };
+  }, [profile?.start_date, profile?.created_at]);
+
+  const unlockedSet = useMemo(
+    () => new Set(milestones.map(m => m.milestone_days)),
+    [milestones],
+  );
+  const sortedHighlights = useMemo(
+    () => MILESTONE_STEPS.filter(d => unlockedSet.has(d)),
+    [unlockedSet],
+  );
+
   const displayName = profile?.display_name || posts[0]?.username || userId;
   const isOwnProfile = !!currentUserId && currentUserId === userId;
   const initial = (displayName || '?')[0].toUpperCase();
   const avatarUrl = profile?.avatar_url || posts[0]?.avatar_url || '';
-  const totalFires = posts.reduce((sum, p) => sum + (p.fire_count || 0), 0);
-  const currentStreak = posts[0]?.streak ?? 0;
-  const memberSince = profile?.created_at || posts[posts.length - 1]?.created_at;
+  const visitedStreak = profile?.streak_count ?? 0;
+  const hasContent = posts.length > 0 || sortedHighlights.length > 0;
 
   return (
-    <div className="pp-backdrop" onClick={onClose}>
-      <div className="pp-modal" onClick={e => e.stopPropagation()}>
-        <button className="pp-close" onClick={onClose} aria-label="Cerrar">
+    <div className="pp5-backdrop" onClick={onClose}>
+      <div className="pp5-modal" onClick={e => e.stopPropagation()}>
+        <button className="pp5-close" onClick={onClose} aria-label="Cerrar" type="button">
           <X size={18} />
         </button>
 
         {loading ? (
-          <div className="pp-loading">
-            <div className="pp-spinner" />
-            <p className="pp-loading-text">Cargando perfil...</p>
+          <div className="pp5-loading">
+            <div className="pp5-spinner" />
+            <p className="pp5-loading-text">Cargando perfil...</p>
           </div>
         ) : error ? (
-          <div className="pp-error">
-            <p className="pp-error-text">{error}</p>
-            <button className="pp-error-btn" onClick={onClose}>Cerrar</button>
+          <div className="pp5-error">
+            <p className="pp5-error-text">{error}</p>
+            <button className="pp5-error-btn" onClick={onClose} type="button">Cerrar</button>
           </div>
         ) : (
           <>
-            {/* Header */}
-            <div className="pp-header">
-              <div className="pp-avatar">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt=""
-                    className="pp-avatar-img"
-                    onError={e => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <span className="pp-avatar-letter">{initial}</span>
-                )}
+            {/* HEADER lateral */}
+            <div className="pp5-header">
+              <div className="pp5-avatar-wrap">
+                {avatarUrl
+                  ? <img src={avatarUrl} alt="" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  : <div className="pp5-avatar-fallback">{initial}</div>
+                }
               </div>
-              <h2 className="pp-name">{displayName}</h2>
-              {profile?.bio && <p className="pp-bio">{profile.bio}</p>}
-
-              <div className="pp-stats">
-                <div className="pp-stat">
-                  <span className="pp-stat-num">{posts.length}</span>
-                  <span className="pp-stat-lbl">posts</span>
-                </div>
-                {currentStreak > 0 && (
-                  <div className="pp-stat">
-                    <span className="pp-stat-num">🔥 {currentStreak}</span>
-                    <span className="pp-stat-lbl">racha</span>
-                  </div>
-                )}
-                {totalFires > 0 && (
-                  <div className="pp-stat">
-                    <span className="pp-stat-num">{totalFires}</span>
-                    <span className="pp-stat-lbl">fires recibidos</span>
-                  </div>
-                )}
+              <div className="pp5-header-meta">
+                <h1 className="pp5-name">{displayName}</h1>
+                {profile?.bio && <p className="pp5-bio">{profile.bio}</p>}
+                <span className="pp5-year-chip">Año {yearN} · día {dayN}</span>
               </div>
-
-              {memberSince && (
-                <p className="pp-member-since">
-                  Miembro desde {new Date(memberSince).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-                </p>
-              )}
             </div>
 
-            {/* Feed — usa PostCard compartido, sin author (ya está en el header del perfil) */}
+            {/* STATS */}
+            <div className="pp5-stats">
+              <div className="pp5-stat pp5-stat--posts">
+                <div className="pp5-stat-num">{posts.length}</div>
+                <div className="pp5-stat-label">Posts</div>
+              </div>
+              <div className="pp5-stat pp5-stat--racha">
+                <div className="pp5-stat-num">{visitedStreak} 🔥</div>
+                <div className="pp5-stat-label">Racha</div>
+              </div>
+              <div className="pp5-stat pp5-stat--logros">
+                <div className="pp5-stat-num">
+                  {sortedHighlights.length}<span className="pp5-stat-num-total">/{MILESTONE_STEPS.length}</span>
+                </div>
+                <div className="pp5-stat-label">Logros</div>
+              </div>
+            </div>
+
+            {/* HIGHLIGHTS — solo logros desbloqueados */}
+            {sortedHighlights.length > 0 && (
+              <div className="pp5-highlights">
+                {sortedHighlights.map(days => (
+                  <div key={days} className="pp5-highlight">
+                    <div className="pp5-highlight-ring">
+                      <div className="pp5-highlight-emoji" aria-hidden="true">
+                        {MILESTONE_COPY[days].emoji}
+                      </div>
+                    </div>
+                    <div className="pp5-highlight-label">{MILESTONE_LABELS[days]}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* FEED */}
             {posts.length > 0 ? (
-              <div className="pp-feed">
+              <div className="pp5-feed">
                 {posts.map(post => (
                   <PostCard
                     key={post.id}
@@ -227,17 +264,12 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
                   />
                 ))}
               </div>
-            ) : (
-              <div className="pp-empty">
-                <div className="pp-empty-emoji">🌱</div>
-                <p className="pp-empty-text">
-                  {displayName} aún no ha publicado nada.
-                </p>
-                <p className="pp-empty-sub">
-                  Apenas comienza su espacio.
-                </p>
+            ) : !hasContent ? (
+              <div className="pp5-empty">
+                <div className="pp5-empty-emoji">🌱</div>
+                <p className="pp5-empty-text">Este perfil aún no tiene contenido público.</p>
               </div>
-            )}
+            ) : null}
           </>
         )}
       </div>

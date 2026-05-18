@@ -46,6 +46,32 @@ export async function tryUnlockMilestones(
   return entries;
 }
 
+// Persiste streak en user_profiles para que PublicProfile pueda leerlo.
+// No bloquea el caller si falla.
+export async function persistStreakToProfile(
+  userId: string | undefined,
+  streakCount: number,
+  lastActiveDate: string,
+): Promise<void> {
+  if (!userId) return;
+  try {
+    const { error } = await supabase
+      .from('user_profiles')
+      .upsert(
+        {
+          user_id: userId,
+          streak_count: streakCount,
+          last_active_date: lastActiveDate,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
+    if (error) console.error('[streak] persist failed:', error);
+  } catch (e) {
+    console.error('[streak] persist threw:', e);
+  }
+}
+
 interface PayInfo {
   plan: string;
   price: string;
@@ -639,6 +665,7 @@ export const useAppStore = create<AppState>()(
     if (unlocked.length > 0) {
       set((s) => ({ userMilestones: [...s.userMilestones, ...unlocked] }));
     }
+    await persistStreakToProfile(user?.id, newStreak, today);
   },
 
   // Growth Plan (Healthy Space Method)
@@ -689,6 +716,7 @@ export const useAppStore = create<AppState>()(
     if (unlocked.length > 0) {
       set((s) => ({ userMilestones: [...s.userMilestones, ...unlocked] }));
     }
+    await persistStreakToProfile(user?.id, newStreak, today);
   },
 
   // Daily HSM micro-responses
@@ -787,6 +815,7 @@ export const useAppStore = create<AppState>()(
     if (unlocked.length > 0) {
       set((s) => ({ userMilestones: [...s.userMilestones, ...unlocked] }));
     }
+    await persistStreakToProfile(user?.id, newStreak, today);
   },
 
   // Logout — signs out of Supabase and clears all local state

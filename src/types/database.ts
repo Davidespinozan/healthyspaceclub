@@ -1081,10 +1081,12 @@ export type Database = {
           id: string
           is_admin: boolean
           is_public: boolean | null
+          last_active_date: string | null
           meal_plan_key: string | null
           ob_data: Json | null
           plan_goal: number | null
           start_date: string | null
+          streak_count: number
           tdee: number | null
           trial_ends_at: string | null
           updated_at: string
@@ -1099,10 +1101,12 @@ export type Database = {
           id?: string
           is_admin?: boolean
           is_public?: boolean | null
+          last_active_date?: string | null
           meal_plan_key?: string | null
           ob_data?: Json | null
           plan_goal?: number | null
           start_date?: string | null
+          streak_count?: number
           tdee?: number | null
           trial_ends_at?: string | null
           updated_at?: string
@@ -1117,10 +1121,12 @@ export type Database = {
           id?: string
           is_admin?: boolean
           is_public?: boolean | null
+          last_active_date?: string | null
           meal_plan_key?: string | null
           ob_data?: Json | null
           plan_goal?: number | null
           start_date?: string | null
+          streak_count?: number
           tdee?: number | null
           trial_ends_at?: string | null
           updated_at?: string
