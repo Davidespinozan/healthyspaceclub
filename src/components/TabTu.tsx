@@ -152,19 +152,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   return (
     <div className="tt5-screen">
 
-      {/* TOPBAR */}
-      <div className="tt5-topbar">
-        <button
-          className="tt5-menu-btn"
-          onClick={() => setSettingsOpen(true)}
-          aria-label="Ajustes"
-          type="button"
-        >
-          <Menu size={18} strokeWidth={1.6} />
-        </button>
-      </div>
-
-      {/* HEADER lateral — avatar + meta */}
+      {/* HEADER lateral — avatar + meta (☰ inline a la derecha del nombre) */}
       <div className="tt5-header">
         <label className="tt5-avatar-wrap" aria-label="Cambiar avatar">
           {profile.avatar_url
@@ -176,7 +164,17 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
 
         {!editing ? (
           <div className="tt5-header-meta">
-            <h1 className="tt5-name">{displayName}</h1>
+            <div className="tt5-name-row">
+              <h1 className="tt5-name">{displayName}</h1>
+              <button
+                className="tt5-menu-btn"
+                onClick={() => setSettingsOpen(true)}
+                aria-label="Ajustes"
+                type="button"
+              >
+                <Menu size={16} strokeWidth={1.6} />
+              </button>
+            </div>
             {profile.bio && <p className="tt5-bio">{profile.bio}</p>}
             <span className="tt5-year-chip">Año {yearNumber} · día {dayOfYear}</span>
           </div>

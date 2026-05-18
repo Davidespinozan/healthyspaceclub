@@ -40,30 +40,37 @@
   .pp5-modal { border-radius: 24px; margin: 24px; max-height: 88vh; }
 }
 
+/* Close inline en .pp5-name-row (al lado del nombre). Variant --floating
+   se usa en loading/error states donde no hay header. */
 .pp5-close {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  background: rgba(21, 51, 48, 0.06);
+  background: var(--sala-surface);
   border: none;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  color: var(--forest);
+  color: rgba(21, 51, 48, 0.7);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 5;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(21, 51, 48, 0.04);
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
 }
-.pp5-close:hover { background: rgba(21, 51, 48, 0.12); }
+.pp5-close:hover { background: rgba(255, 255, 255, 0.85); }
+.pp5-close--floating {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 5;
+}
 
 /* ═══ HEADER lateral (mismo lenguaje que tt5-header) ═════ */
 .pp5-header {
-  padding: 28px 20px 0;
+  padding: 22px 20px 0;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 18px;
 }
 
@@ -99,17 +106,27 @@
 .pp5-header-meta {
   flex: 1;
   min-width: 0;
-  padding-bottom: 6px;
+  padding-top: 4px;
+}
+
+.pp5-name-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .pp5-name {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 26px;
+  font-size: 22px;
   color: var(--forest);
-  line-height: 1.12;
-  margin: 0 0 6px;
+  line-height: 1.15;
+  margin: 0;
   font-weight: 400;
   letter-spacing: -0.005em;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -134,30 +151,27 @@
   color: var(--amber-deep);
 }
 
-/* ═══ STATS ══════════════════════════════════════════════ */
+/* ═══ STATS — unificadas con mismo fondo mostaza soft ════ */
 .pp5-stats {
-  padding: 22px 20px 16px;
+  padding: 18px 20px 12px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .pp5-stat {
   flex: 1;
   border: none;
-  border-radius: 12px;
-  padding: 14px 10px;
+  border-radius: 10px;
+  padding: 10px 8px;
   text-align: center;
   font-family: inherit;
   color: inherit;
+  background: rgba(124, 98, 50, 0.08);
 }
-
-.pp5-stat--posts { background: var(--sala-surface); }
-.pp5-stat--racha { background: rgba(199, 91, 58, 0.08); }
-.pp5-stat--logros { background: rgba(124, 98, 50, 0.08); }
 
 .pp5-stat-num {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 22px;
+  font-size: 19px;
   line-height: 1;
   color: var(--forest);
   font-weight: 500;
@@ -173,18 +187,18 @@
 .pp5-stat--logros .pp5-stat-num { color: var(--amber-deep); }
 
 .pp5-stat-num-total {
-  font-size: 13px;
+  font-size: 11px;
   opacity: 0.5;
   margin-left: 2px;
 }
 
 .pp5-stat-label {
   font-family: 'Montserrat', sans-serif;
-  font-size: 9px;
+  font-size: 8px;
   color: rgba(21, 51, 48, 0.55);
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-top: 6px;
+  margin-top: 5px;
   font-weight: 500;
 }
 

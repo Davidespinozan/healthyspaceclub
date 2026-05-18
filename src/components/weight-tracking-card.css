@@ -3,23 +3,23 @@
    Prefijos: .weight-row-*, .weight-modal-*, .weight-toast-*
    ═════════════════════════════════════════════════════════════ */
 
-/* ═══ Fila compacta clickeable ════════════════════════════ */
+/* ═══ Fila compacta clickeable (mismo fondo que stats tt5) ═ */
 .weight-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: calc(100% - 44px);
-  background: rgba(255, 255, 255, 0.6);
+  width: calc(100% - 40px);
+  background: rgba(124, 98, 50, 0.08);
   border: none;
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin: 12px 22px;
+  border-radius: 10px;
+  padding: 11px 14px;
+  margin: 0 20px 12px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   font-family: inherit;
   transition: background 0.15s;
 }
-.weight-row:hover { background: rgba(255, 255, 255, 0.85); }
+.weight-row:hover { background: rgba(124, 98, 50, 0.14); }
 
 .weight-row-left {
   display: flex;
@@ -70,7 +70,7 @@
 
 /* Meta contextual debajo del row (no clickeable, info-only) */
 .weight-row-meta {
-  margin: -4px 22px 14px;
+  margin: -4px 20px 14px;
   font-family: Georgia, 'Times New Roman', serif;
   font-style: italic;
   font-size: 11px;
@@ -207,7 +207,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 8px 22px 12px;
+  margin: 8px 20px 12px;
   animation: weight-toast-in 0.3s ease forwards, weight-toast-out 0.4s ease 4.6s forwards;
   pointer-events: none;
 }
@@ -243,6 +243,6 @@
 }
 
 @media (max-width: 380px) {
-  .weight-row { width: calc(100% - 28px); margin: 12px 14px; }
+  .weight-row { width: calc(100% - 28px); margin: 0 14px 12px; }
   .weight-toast { margin: 8px 14px 12px; }
 }

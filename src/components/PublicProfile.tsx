@@ -183,23 +183,25 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
   return (
     <div className="pp5-backdrop" onClick={onClose}>
       <div className="pp5-modal" onClick={e => e.stopPropagation()}>
-        <button className="pp5-close" onClick={onClose} aria-label="Cerrar" type="button">
-          <X size={18} />
-        </button>
-
         {loading ? (
           <div className="pp5-loading">
+            <button className="pp5-close pp5-close--floating" onClick={onClose} aria-label="Cerrar" type="button">
+              <X size={18} />
+            </button>
             <div className="pp5-spinner" />
             <p className="pp5-loading-text">Cargando perfil...</p>
           </div>
         ) : error ? (
           <div className="pp5-error">
+            <button className="pp5-close pp5-close--floating" onClick={onClose} aria-label="Cerrar" type="button">
+              <X size={18} />
+            </button>
             <p className="pp5-error-text">{error}</p>
             <button className="pp5-error-btn" onClick={onClose} type="button">Cerrar</button>
           </div>
         ) : (
           <>
-            {/* HEADER lateral */}
+            {/* HEADER lateral (✕ inline en name-row) */}
             <div className="pp5-header">
               <div className="pp5-avatar-wrap">
                 {avatarUrl
@@ -208,7 +210,12 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
                 }
               </div>
               <div className="pp5-header-meta">
-                <h1 className="pp5-name">{displayName}</h1>
+                <div className="pp5-name-row">
+                  <h1 className="pp5-name">{displayName}</h1>
+                  <button className="pp5-close" onClick={onClose} aria-label="Cerrar" type="button">
+                    <X size={16} />
+                  </button>
+                </div>
                 {profile?.bio && <p className="pp5-bio">{profile.bio}</p>}
                 <span className="pp5-year-chip">Año {yearN} · día {dayN}</span>
               </div>
