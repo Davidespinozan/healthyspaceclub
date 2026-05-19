@@ -6,10 +6,19 @@
 
 .post-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.55);
-  border-radius: 14px;
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: var(--radius-lg);
   padding: 16px;
   margin-bottom: 14px;
+  box-shadow: var(--shadow-pro-md);
+  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.post-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-pro-lg);
 }
 
 /* ─── Head: author + meta + tag + kebab ─────────────────── */
@@ -49,6 +58,9 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--forest);
+  box-shadow:
+    0 0 0 2px rgba(212, 165, 128, 0.18),
+    var(--shadow-pro-sm);
 }
 .post-card-avatar img {
   width: 100%;
@@ -64,12 +76,13 @@
 .post-card-name {
   font-size: 13px;
   line-height: 1.2;
+  letter-spacing: var(--tracking-tight);
 }
 .post-card-username {
   font-family: 'Montserrat', sans-serif;
   font-weight: 600;
   color: var(--forest);
-  transition: color 0.15s;
+  transition: color var(--duration-fast) ease;
 }
 .post-card-streak {
   font-family: Georgia, 'Times New Roman', serif;
@@ -78,18 +91,25 @@
   color: var(--taupe);
 }
 .post-card-time {
-  font-size: 11px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
   color: var(--taupe);
-  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-kicker);
+  font-weight: 600;
+  margin-top: 4px;
 }
 
 .post-card-tag {
   background: rgba(124, 98, 50, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--amber-deep);
+  font-family: 'Montserrat', sans-serif;
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 4px 9px;
+  letter-spacing: var(--tracking-kicker);
+  padding: 4px 10px;
   border-radius: 999px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -111,27 +131,29 @@
   color: var(--taupe-deep);
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   -webkit-tap-highlight-color: transparent;
+  transition: background var(--duration-fast) ease, transform var(--duration-fast) ease;
 }
 .post-card-menu-trigger:hover {
   background: rgba(21, 51, 48, 0.06);
 }
+.post-card-menu-trigger:active { transform: scale(0.92); }
 .post-card-menu-dropdown {
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 4px;
-  background: #fff;
-  border: 1px solid rgba(21, 51, 48, 0.1);
-  border-radius: 10px;
+  margin-top: 6px;
+  background: var(--sala-surface);
+  border: 1px solid var(--sala-border);
+  border-radius: var(--radius-sm);
   padding: 4px;
   min-width: 120px;
   z-index: 10;
-  box-shadow: 0 4px 14px rgba(21, 51, 48, 0.08);
+  box-shadow: var(--shadow-pro-lg);
 }
 .post-card-menu-item {
   background: none;
@@ -153,7 +175,7 @@
 .post-card-media {
   margin: 0;
   background: var(--warm);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 .post-card-media[data-aspect="1:1"]  { aspect-ratio: 1 / 1; }
@@ -173,6 +195,7 @@
   font-size: 14px;
   color: var(--forest);
   line-height: 1.5;
+  letter-spacing: var(--tracking-tight);
   margin: 12px 0 0;
 }
 
@@ -199,10 +222,13 @@
   color: var(--taupe-deep);
   -webkit-tap-highlight-color: transparent;
   min-height: 32px;
-  transition: color 0.15s;
+  transition: color var(--duration-fast) ease, transform var(--duration-fast) ease;
 }
 .post-card-fire:hover {
   color: var(--amber-deep);
+}
+.post-card-fire:active {
+  transform: scale(0.9);
 }
 .post-card-fire.is-active {
   color: var(--amber-deep);
