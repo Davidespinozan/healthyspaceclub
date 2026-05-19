@@ -36,23 +36,29 @@
 .yfp-header-btn {
   width: 36px; height: 36px;
   min-width: 44px; min-height: 44px;
-  border-radius: 50%;
-  background: rgba(21, 51, 48, 0.06);
-  border: none;
+  border-radius: var(--radius-md);
+  background: var(--surface-glass-strong);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(21, 51, 48, 0.08);
   color: var(--yfp-forest);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--shadow-pro-sm);
   -webkit-tap-highlight-color: transparent;
+  transition: background var(--duration-fast) ease, transform var(--duration-fast) ease;
 }
 
-.yfp-header-btn:active { background: rgba(21, 51, 48, 0.12); }
+.yfp-header-btn:active { background: rgba(255, 255, 255, 0.85); transform: scale(0.95); }
 
 .yfp-header-title {
+  font-family: Georgia, 'Times New Roman', serif;
   font-size: 13px;
   font-style: italic;
   font-weight: 500;
+  letter-spacing: var(--tracking-tight);
   color: var(--yfp-forest);
 }
 
@@ -78,19 +84,22 @@
 }
 
 .yfp-prep-micro {
+  font-family: 'Montserrat', sans-serif;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-weight: 600;
+  letter-spacing: var(--tracking-kicker-loose);
   text-transform: uppercase;
   color: var(--yfp-amber);
   margin: 0 0 8px;
 }
 
 .yfp-prep-title {
-  font-size: 22px;
-  font-weight: 400;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tighter);
   color: var(--yfp-forest);
-  line-height: 1.2;
+  line-height: 1.15;
   margin: 0 0 6px;
 }
 
@@ -107,7 +116,7 @@
 
 .yfp-prep-hero {
   aspect-ratio: 16 / 11;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(135deg, #7FA150 0%, #153330 100%);
   display: flex;
   align-items: center;
@@ -115,6 +124,7 @@
   margin-bottom: 18px;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-pro-lg);
 }
 
 .yfp-prep-hero-emoji {
@@ -123,17 +133,21 @@
 }
 
 .yfp-prep-structure {
-  background: rgba(127, 161, 80, 0.08);
-  border: 0.5px solid rgba(127, 161, 80, 0.2);
-  border-radius: 14px;
+  background: rgba(127, 161, 80, 0.10);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(127, 161, 80, 0.2);
+  border-radius: var(--radius-md);
   padding: 14px 16px;
   margin-bottom: 18px;
+  box-shadow: var(--shadow-pro-sm);
 }
 
 .yfp-prep-struct-label {
+  font-family: 'Montserrat', sans-serif;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-weight: 600;
+  letter-spacing: var(--tracking-kicker-loose);
   text-transform: uppercase;
   color: var(--yfp-sage);
   margin-bottom: 10px;
@@ -180,18 +194,26 @@
 .yfp-cta {
   width: 100%;
   padding: 16px;
-  border-radius: 50px;
-  background: var(--yfp-forest);
+  border-radius: var(--radius-base);
+  background: linear-gradient(135deg, var(--yfp-forest), #1d3d39);
   color: var(--yfp-amber);
+  font-family: Georgia, 'Times New Roman', serif;
   font-size: 16px;
   font-style: italic;
   font-weight: 500;
+  letter-spacing: var(--tracking-tight);
   border: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s;
+  box-shadow: var(--shadow-pro-lift-forest);
+  transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
 
+.yfp-cta:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 12px 24px rgba(8, 20, 27, 0.24);
+}
 .yfp-cta:active { transform: scale(0.98); }
 
 /* ══════════════════════════════════════════════════════════

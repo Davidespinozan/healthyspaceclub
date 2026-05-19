@@ -371,20 +371,22 @@
 }
 
 .edp-micro {
+  font-family: 'Montserrat', sans-serif;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-weight: 600;
+  letter-spacing: var(--tracking-kicker);
   text-transform: uppercase;
   color: var(--edp-amber);
   margin: 0 0 8px;
 }
 
 .edp-name {
-  font-size: 22px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 24px;
   font-weight: 500;
-  letter-spacing: -0.015em;
+  letter-spacing: var(--tracking-tighter);
   color: var(--edp-forest);
-  line-height: 1.2;
+  line-height: 1.15;
   margin: 0 0 8px;
 }
 
@@ -395,9 +397,11 @@
 }
 
 .edp-desc {
-  font-size: 13px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13.5px;
   color: var(--edp-txt2);
   line-height: 1.55;
+  letter-spacing: var(--tracking-tight);
   margin: 0 0 18px;
   font-style: italic;
 }
@@ -421,9 +425,12 @@
   gap: 2px;
   margin-bottom: 18px;
   padding: 16px 10px;
-  background: var(--edp-warm);
-  border-radius: 16px;
-  border: 0.5px solid var(--edp-sand);
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-glass-border);
+  box-shadow: var(--shadow-pro-md);
 }
 
 .edp-stat {
@@ -437,18 +444,20 @@
 }
 
 .edp-stat-val {
-  font-size: 22px;
-  font-weight: 600;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 24px;
+  font-weight: 400;
   color: var(--edp-forest);
   line-height: 1;
   margin-bottom: 6px;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tightest);
 }
 
 .edp-stat-lbl {
+  font-family: 'Montserrat', sans-serif;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-weight: 600;
+  letter-spacing: var(--tracking-kicker);
   text-transform: uppercase;
   color: var(--edp-txt2);
 }
@@ -458,25 +467,31 @@
 .edp-tip {
   padding: 14px 16px;
   background: linear-gradient(135deg, rgba(191, 160, 101, 0.1) 0%, rgba(168, 134, 78, 0.08) 100%);
-  border: 0.5px solid rgba(191, 160, 101, 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(191, 160, 101, 0.22);
   border-left: 3px solid var(--edp-amber);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   margin-bottom: 18px;
+  box-shadow: var(--shadow-pro-sm);
 }
 
 .edp-tip-label {
+  font-family: 'Montserrat', sans-serif;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-weight: 600;
+  letter-spacing: var(--tracking-kicker-loose);
   text-transform: uppercase;
   color: var(--edp-amber);
   margin-bottom: 5px;
 }
 
 .edp-tip-text {
-  font-size: 12.5px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13px;
   color: var(--edp-forest);
   line-height: 1.55;
+  letter-spacing: var(--tracking-tight);
   margin: 0;
   font-style: italic;
 }

@@ -50,29 +50,35 @@
 }
 
 .wp-header-btn {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: none;
   color: var(--wp-txt);
   width: 36px;
   height: 36px;
   min-width: 44px;
   min-height: 44px;
-  border-radius: 50%;
+  border-radius: var(--radius-md);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s;
+  transition: background var(--duration-fast) ease, transform var(--duration-fast) ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .wp-header-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
 }
+.wp-header-btn:active { transform: scale(0.95); }
 
 .wp-header-title {
-  font-size: 14px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
   color: var(--wp-txt2);
 }
 
@@ -104,18 +110,22 @@
 }
 
 .wp-prep-micro {
+  font-family: 'Montserrat', sans-serif;
   font-size: 11px;
   color: var(--wp-amber);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-kicker);
   text-transform: uppercase;
+  font-weight: 600;
   margin: 0 0 6px;
 }
 
 .wp-prep-title {
-  font-size: 2rem;
-  font-weight: 700;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.2rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tighter);
   margin: 0 0 4px;
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 .wp-prep-title em {
@@ -123,24 +133,32 @@
 }
 
 .wp-prep-sub {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
   color: var(--wp-txt2);
-  font-size: 14px;
+  font-size: 15px;
+  letter-spacing: var(--tracking-tight);
   margin: 0 0 28px;
 }
 
 .wp-prep-section {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-left: 2px solid var(--wp-amber);
   padding: 14px 16px;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   margin: 0 0 24px;
+  box-shadow: var(--shadow-pro-sm);
 }
 
 .wp-prep-section-label {
+  font-family: 'Montserrat', sans-serif;
   font-size: 11px;
   color: var(--wp-amber);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-kicker);
   text-transform: uppercase;
+  font-weight: 600;
   margin: 0 0 6px;
 }
 
@@ -219,39 +237,45 @@
   background: var(--wp-amber);
   color: var(--wp-bg);
   border: none;
-  border-radius: 50px;
+  border-radius: var(--radius-base);
   padding: 16px 32px;
+  font-family: 'Montserrat', sans-serif;
   font-size: 15px;
-  font-weight: 700;
-  font-family: inherit;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tight);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   min-width: 240px;
   justify-content: center;
-  transition: transform 0.15s, box-shadow 0.15s;
-  box-shadow: 0 8px 24px rgba(191, 160, 101, 0.35);
+  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease, filter var(--duration-fast) ease;
+  box-shadow: 0 10px 24px rgba(191, 160, 101, 0.32);
 }
 
 .wp-cta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(191, 160, 101, 0.45);
+  filter: brightness(1.05);
+  box-shadow: 0 14px 32px rgba(191, 160, 101, 0.44);
 }
 
 .wp-cta:active {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
 .wp-cta-secondary {
   background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: var(--wp-txt);
   box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .wp-cta-secondary:hover {
   background: rgba(255, 255, 255, 0.14);
   box-shadow: none;
+  filter: none;
 }
 
 .wp-skip {
@@ -384,24 +408,32 @@
 /* Set card */
 
 .wp-set-card {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
   padding: 20px;
   text-align: center;
+  box-shadow: var(--shadow-pro-md);
 }
 
 .wp-set-label {
+  font-family: 'Montserrat', sans-serif;
   font-size: 11px;
   color: var(--wp-amber);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-kicker);
   text-transform: uppercase;
+  font-weight: 600;
   margin: 0 0 8px;
 }
 
 .wp-set-counter {
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.8rem;
+  font-weight: 500;
   color: var(--wp-amber);
+  letter-spacing: var(--tracking-tightest);
   line-height: 1;
   margin: 0 0 6px;
   font-variant-numeric: tabular-nums;
@@ -568,17 +600,21 @@
 }
 
 .wp-rest-label {
-  font-size: 14px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
   color: var(--wp-amber);
-  letter-spacing: 0.1em;
+  letter-spacing: var(--tracking-kicker-loose);
   text-transform: uppercase;
+  font-weight: 600;
   margin: 0 0 16px;
 }
 
 .wp-rest-timer {
-  font-size: 5rem;
-  font-weight: 800;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 5.5rem;
+  font-weight: 400;
   color: var(--wp-amber);
+  letter-spacing: var(--tracking-tightest);
   line-height: 1;
   font-variant-numeric: tabular-nums;
   margin: 0 0 28px;
