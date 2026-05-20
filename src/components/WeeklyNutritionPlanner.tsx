@@ -5,68 +5,122 @@ import { scalePlan } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { RefreshCw, ShoppingCart, Calendar, Lock } from 'lucide-react';
 import { callAI } from '../utils/aiProxy';
+import { useT } from '../i18n';
+import { plural, formatDate } from '../i18n/format';
+import type { TranslationKey } from '../i18n/es';
 import './weekly-nutrition-planner-v2.css';
 
-const DAY_NAMES      = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-const DAY_NAMES_FULL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-
-const SETUP_DAYS: Array<{ value: number; label: string; thumb: string; sub?: string }> = [
-  { value: 0, label: 'Domingo',   thumb: 'Do', sub: 'clásico día del súper' },
-  { value: 1, label: 'Lunes',     thumb: 'Lu', sub: 'inicio de semana' },
-  { value: 2, label: 'Martes',    thumb: 'Ma' },
-  { value: 3, label: 'Miércoles', thumb: 'Mi' },
-  { value: 4, label: 'Jueves',    thumb: 'Ju', sub: 'mid-week refresh' },
-  { value: 5, label: 'Viernes',   thumb: 'Vi' },
-  { value: 6, label: 'Sábado',    thumb: 'Sá' },
+// Day name keys indexed by JS Date.getDay() (0=Sunday).
+const DAY_SHORT_KEYS: TranslationKey[] = [
+  'days.shortSun', 'days.shortMon', 'days.shortTue', 'days.shortWed',
+  'days.shortThu', 'days.shortFri', 'days.shortSat',
+];
+const DAY_LONG_KEYS: TranslationKey[] = [
+  'days.longSun', 'days.longMon', 'days.longTue', 'days.longWed',
+  'days.longThu', 'days.longFri', 'days.longSat',
 ];
 
+// Meal time map (data layer ES → translation key).
+const MEAL_TIME_KEYS: Record<string, TranslationKey> = {
+  'Desayuno': 'mealTime.desayuno',
+  'Snack AM': 'mealTime.snackAm',
+  'Comida': 'mealTime.comida',
+  'Snack PM': 'mealTime.snackPm',
+  'Cena': 'mealTime.cena',
+};
+
+// Quiz options stay con stored values en ES (data layer). Display via map.
+const CUISINE_LABEL_KEYS: Record<string, TranslationKey> = {
+  'mexicana': 'nutritionPlanner.cuisineMexican',
+  'japonesa': 'nutritionPlanner.cuisineJapanese',
+  'italiana': 'nutritionPlanner.cuisineItalian',
+  'americana': 'nutritionPlanner.cuisineAmerican',
+  'todas': 'nutritionPlanner.cuisineMix',
+};
+const CUISINE_SUB_KEYS: Record<string, TranslationKey> = {
+  'mexicana': 'nutritionPlanner.cuisineMexicanSub',
+  'japonesa': 'nutritionPlanner.cuisineJapaneseSub',
+  'italiana': 'nutritionPlanner.cuisineItalianSub',
+  'americana': 'nutritionPlanner.cuisineAmericanSub',
+  'todas': 'nutritionPlanner.cuisineMixSub',
+};
+const AVOID_LABEL_KEYS: Record<string, TranslationKey> = {
+  'gluten': 'nutritionPlanner.avoidGluten',
+  'lacteos': 'nutritionPlanner.avoidDairy',
+  'carne-roja': 'nutritionPlanner.avoidRedMeat',
+  'mariscos': 'nutritionPlanner.avoidSeafood',
+  'nada': 'nutritionPlanner.avoidNone',
+};
+const AVOID_SUB_KEYS: Record<string, TranslationKey> = {
+  'gluten': 'nutritionPlanner.avoidGlutenSub',
+  'lacteos': 'nutritionPlanner.avoidDairySub',
+  'carne-roja': 'nutritionPlanner.avoidRedMeatSub',
+  'mariscos': 'nutritionPlanner.avoidSeafoodSub',
+  'nada': 'nutritionPlanner.avoidNoneSub',
+};
+
+// SETUP_DAYS: value + sub key (label resuelto en runtime via DAY_LONG_KEYS).
+// thumb: monograma de 2 chars universal — no se traduce (es solo iconito).
+const SETUP_DAYS: Array<{ value: number; thumb: string; subKey?: TranslationKey }> = [
+  { value: 0, thumb: 'Do', subKey: 'nutritionPlanner.daySubClassic' },
+  { value: 1, thumb: 'Lu', subKey: 'nutritionPlanner.daySubStart' },
+  { value: 2, thumb: 'Ma' },
+  { value: 3, thumb: 'Mi' },
+  { value: 4, thumb: 'Ju', subKey: 'nutritionPlanner.daySubMidweek' },
+  { value: 5, thumb: 'Vi' },
+  { value: 6, thumb: 'Sá' },
+];
+
+// QUESTIONS retains shape needed for flow logic (id/multi/freeText/option values);
+// display labels/hints/option text resolve via t() at render time using the
+// translation-key maps above (CUISINE_LABEL_KEYS, AVOID_LABEL_KEYS, etc.).
 const QUESTIONS: Array<{
   id: string;
-  question: string;
-  hint: string;
+  hintKey: TranslationKey;
   multi: boolean;
   freeText?: boolean;
-  placeholder?: string;
-  options: Array<{ label: string; value: string; icon: string; sub?: string }>;
+  placeholderKey?: TranslationKey;
+  options: Array<{ value: string; icon: string }>;
 }> = [
   {
     id: 'cuisines',
-    question: '¿Qué cocinas te apetecen esta semana?',
-    hint: 'Puedes elegir varias o mezclar todo.',
+    hintKey: 'nutritionPlanner.hCuisines',
     multi: true,
     options: [
-      { label: 'Mexicana',    value: 'mexicana',  icon: '🇲🇽', sub: 'Tacos, enchiladas, pozole' },
-      { label: 'Japonesa',    value: 'japonesa',  icon: '🇯🇵', sub: 'Sushi, ramen, donburi' },
-      { label: 'Italiana',    value: 'italiana',  icon: '🇮🇹', sub: 'Pasta, risotto, focaccia' },
-      { label: 'Americana',   value: 'americana', icon: '🇺🇸', sub: 'Bowls, sándwiches, BBQ' },
-      { label: 'Mezcla todo', value: 'todas',     icon: '🎲', sub: 'Variedad sin sesgo' },
+      { value: 'mexicana',  icon: '🇲🇽' },
+      { value: 'japonesa',  icon: '🇯🇵' },
+      { value: 'italiana',  icon: '🇮🇹' },
+      { value: 'americana', icon: '🇺🇸' },
+      { value: 'todas',     icon: '🎲' },
     ],
   },
   {
     id: 'cravings',
-    question: '¿Alguna preferencia de comida esta semana?',
-    hint: 'Opcional. Podés saltar este paso.',
+    hintKey: 'nutritionPlanner.hCravings',
     multi: false,
     freeText: true,
-    placeholder: 'ej. pasta, pollo, algo ligero, sin gluten, más verduras...',
+    placeholderKey: 'nutritionPlanner.cravingsPlaceholder',
     options: [],
   },
   {
     id: 'avoid',
-    question: '¿Algo que prefieras evitar?',
-    hint: 'Una sola opción.',
+    hintKey: 'nutritionPlanner.hAvoid',
     multi: false,
     options: [
-      { label: 'Gluten',           value: 'gluten',     icon: '🌾', sub: 'Sin trigo, pan, pasta' },
-      { label: 'Lácteos',          value: 'lacteos',    icon: '🥛', sub: 'Sin queso, leche, yogurt' },
-      { label: 'Carne roja',       value: 'carne-roja', icon: '🥩', sub: 'Sin res, cerdo, cordero' },
-      { label: 'Mariscos',         value: 'mariscos',   icon: '🦐', sub: 'Sin pescado ni camarón' },
-      { label: 'Nada en especial', value: 'nada',       icon: '✨', sub: 'Como vegano sin restricción' },
+      { value: 'gluten',     icon: '🌾' },
+      { value: 'lacteos',    icon: '🥛' },
+      { value: 'carne-roja', icon: '🥩' },
+      { value: 'mariscos',   icon: '🦐' },
+      { value: 'nada',       icon: '✨' },
     ],
   },
 ];
 
-const EYEBROW_LABEL_Q = ['COCINAS', 'ANTOJOS', 'EVITAR'];
+const EYEBROW_KEYS_Q: TranslationKey[] = [
+  'nutritionPlanner.eyebrowCuisines',
+  'nutritionPlanner.eyebrowCravings',
+  'nutritionPlanner.eyebrowAvoid',
+];
 
 const MEAL_EMOJI: Record<string, string> = {
   'Desayuno': '🌅',
@@ -161,6 +215,7 @@ Responde SOLO este JSON, sin markdown, sin texto extra:
 }
 
 export default function WeeklyNutritionPlanner() {
+  const { t, locale } = useT();
   const {
     shoppingDay, setShoppingDay,
     weeklyPlan, saveWeeklyPlan, clearWeeklyPlan,
@@ -294,11 +349,13 @@ export default function WeeklyNutritionPlanner() {
             <div className="wz-stepper-bar" />
             <div className="wz-stepper-bar" />
           </div>
-          <p className="wz-eyebrow">PASO 1 · DÍA DEL SÚPER</p>
+          <p className="wz-eyebrow">{t('nutritionPlanner.setupDayEyebrow')}</p>
           <h1 className="wz-title">
-            {firstName ? `${firstName}, ¿qué día vas al ` : '¿Qué día vas al '}<em>súper</em>?
+            {firstName
+              ? t('nutritionPlanner.setupDayTitleName', { name: firstName })
+              : t('nutritionPlanner.setupDayTitleAnon')}
           </h1>
-          <p className="wz-subtitle">Esto ancla el inicio de tu semana de comidas.</p>
+          <p className="wz-subtitle">{t('nutritionPlanner.setupDaySubtitle')}</p>
         </div>
 
         <div className="wz-options">
@@ -325,8 +382,8 @@ export default function WeeklyNutritionPlanner() {
                 {day.thumb}
               </div>
               <div className="wz-option-body">
-                <div className="wz-option-label">{day.label}</div>
-                {day.sub && <div className="wz-option-sub">{day.sub}</div>}
+                <div className="wz-option-label">{t(DAY_LONG_KEYS[day.value])}</div>
+                {day.subKey && <div className="wz-option-sub">{t(day.subKey)}</div>}
               </div>
             </button>
           ))}
@@ -340,29 +397,37 @@ export default function WeeklyNutritionPlanner() {
     const bullets: string[] = [];
     const cuisinesAns = answers.cuisines;
     if (cuisinesAns && cuisinesAns !== 'todas') {
-      bullets.push(`Cocinas: ${cuisinesAns}`);
+      // cuisines stored as comma-joined values (e.g. "mexicana, japonesa"). Map each
+      // to its translated label; unknown values pass through (no-op).
+      const parts = cuisinesAns.split(',').map(s => s.trim()).filter(Boolean);
+      const labels = parts.map(v => {
+        const k = CUISINE_LABEL_KEYS[v];
+        return k ? t(k) : v;
+      }).join(', ');
+      bullets.push(`${t('nutritionPlanner.genBulletCuisines')} ${labels}`);
     } else {
-      bullets.push('Cocinas: mezcla variada');
+      bullets.push(`${t('nutritionPlanner.genBulletCuisines')} ${t('nutritionPlanner.genCuisinesVariedFallback')}`);
     }
     const cravingsAns = answers.cravings;
     if (cravingsAns && cravingsAns !== 'sin preferencias específicas') {
-      bullets.push(`Antojos: ${cravingsAns}`);
+      bullets.push(`${t('nutritionPlanner.genBulletCravings')} ${cravingsAns}`);
     }
     const avoidAns = answers.avoid;
     if (avoidAns && avoidAns !== 'nada') {
-      const avoidOpt = QUESTIONS[2].options.find(o => o.value === avoidAns);
-      bullets.push(`Evitar: ${(avoidOpt?.label ?? avoidAns).toLowerCase()}`);
+      const k = AVOID_LABEL_KEYS[avoidAns];
+      const label = k ? t(k) : avoidAns;
+      bullets.push(`${t('nutritionPlanner.genBulletAvoid')} ${label.toLowerCase()}`);
     }
     if (shoppingDay !== null) {
-      bullets.push(`Súper: ${DAY_NAMES_FULL[shoppingDay].toLowerCase()}`);
+      bullets.push(`${t('nutritionPlanner.genBulletShop')} ${t(DAY_LONG_KEYS[shoppingDay]).toLowerCase()}`);
     }
 
     return (
       <div className="wz-root">
         <div className="wz-generating">
           <div className="wz-spinner" />
-          <h2 className="wz-generating-title">Armando <em>tu semana</em>...</h2>
-          <p className="wz-generating-sub">Seleccionando las mejores comidas para ti</p>
+          <h2 className="wz-generating-title">{t('nutritionPlanner.generatingTitle')}</h2>
+          <p className="wz-generating-sub">{t('nutritionPlanner.generatingSub')}</p>
           <div className="wz-generating-bullets">
             {bullets.map((b, i) => (
               <div key={i} className="wz-generating-bullet">· {b}</div>
@@ -379,7 +444,9 @@ export default function WeeklyNutritionPlanner() {
       <div className="wz-root">
         <div className="wz-error wz-error--alert">
           <p className="wz-error-text">⚠️ {error}</p>
-          <button className="wz-error-btn" onClick={resetQuestionnaire}>Intentar de nuevo</button>
+          <button className="wz-error-btn" onClick={resetQuestionnaire}>
+            {t('nutritionPlanner.errorRetry')}
+          </button>
         </div>
       </div>
     );
@@ -397,16 +464,35 @@ export default function WeeklyNutritionPlanner() {
       return 'wz-stepper-bar';
     };
 
-    const cuisinesTitle = <>¿Qué cocinas <em>te apetecen</em> esta semana?</>;
-    const cravingsTitle = <>¿Algún <em>antojo</em> esta semana?</>;
-    const avoidTitle    = <>¿Algo que prefieras <em>evitar</em>?</>;
+    // Resolve option label/sub via question-id-specific maps.
+    const optionLabel = (value: string): string => {
+      if (q.id === 'cuisines') return t(CUISINE_LABEL_KEYS[value] ?? 'nutritionPlanner.cuisineMix');
+      if (q.id === 'avoid') return t(AVOID_LABEL_KEYS[value] ?? 'nutritionPlanner.avoidNone');
+      return value;
+    };
+    const optionSub = (value: string): string | undefined => {
+      if (q.id === 'cuisines') {
+        const k = CUISINE_SUB_KEYS[value];
+        return k ? t(k) : undefined;
+      }
+      if (q.id === 'avoid') {
+        const k = AVOID_SUB_KEYS[value];
+        return k ? t(k) : undefined;
+      }
+      return undefined;
+    };
+
+    const titleKey: TranslationKey =
+      q.id === 'cuisines' ? 'nutritionPlanner.qCuisines'
+      : q.id === 'cravings' ? 'nutritionPlanner.qCravings'
+      : 'nutritionPlanner.qAvoid';
 
     const renderBody = () => {
       if (q.freeText) {
         return (
           <textarea
             className="wz-textarea"
-            placeholder={q.placeholder}
+            placeholder={q.placeholderKey ? t(q.placeholderKey) : ''}
             value={freeText}
             onChange={e => setFreeText(e.target.value)}
             rows={3}
@@ -419,6 +505,7 @@ export default function WeeklyNutritionPlanner() {
           <div className="wz-options">
             {q.options.map(opt => {
               const isSelected = multiSel.includes(opt.value);
+              const sub = optionSub(opt.value);
               return (
                 <button
                   key={opt.value}
@@ -427,8 +514,8 @@ export default function WeeklyNutritionPlanner() {
                 >
                   <div className="wz-option-thumb">{opt.icon}</div>
                   <div className="wz-option-body">
-                    <div className="wz-option-label">{opt.label}</div>
-                    {opt.sub && <div className="wz-option-sub">{opt.sub}</div>}
+                    <div className="wz-option-label">{optionLabel(opt.value)}</div>
+                    {sub && <div className="wz-option-sub">{sub}</div>}
                   </div>
                   {isSelected && <div className="wz-option-check">✓</div>}
                 </button>
@@ -442,6 +529,7 @@ export default function WeeklyNutritionPlanner() {
         <div className="wz-options">
           {q.options.map(opt => {
             const isSelected = singleSel === opt.value;
+            const sub = optionSub(opt.value);
             return (
               <button
                 key={opt.value}
@@ -450,8 +538,8 @@ export default function WeeklyNutritionPlanner() {
               >
                 <div className="wz-option-thumb">{opt.icon}</div>
                 <div className="wz-option-body">
-                  <div className="wz-option-label">{opt.label}</div>
-                  {opt.sub && <div className="wz-option-sub">{opt.sub}</div>}
+                  <div className="wz-option-label">{optionLabel(opt.value)}</div>
+                  {sub && <div className="wz-option-sub">{sub}</div>}
                 </div>
                 {isSelected && <div className="wz-option-check">✓</div>}
               </button>
@@ -471,20 +559,22 @@ export default function WeeklyNutritionPlanner() {
               setFreeText('');
             }}
           >
-            {freeText.trim() ? 'Continuar →' : 'Saltar →'}
+            {freeText.trim() ? t('nutritionPlanner.continue') : t('nutritionPlanner.skip')}
           </button>
         );
       }
       if (q.multi) {
         return (
           <button className="wz-cta" onClick={confirmMulti}>
-            {multiSel.length === 0 ? 'Mezclar todo →' : `Confirmar (${multiSel.length}) →`}
+            {multiSel.length === 0
+              ? t('nutritionPlanner.mixAll')
+              : t('nutritionPlanner.confirmCount', { count: multiSel.length })}
           </button>
         );
       }
       return (
         <button className="wz-cta" disabled={!singleSel} onClick={confirmSingle}>
-          Siguiente →
+          {t('nutritionPlanner.next')}
         </button>
       );
     };
@@ -498,13 +588,14 @@ export default function WeeklyNutritionPlanner() {
             <div className={stepperClass(2)} />
             <div className={stepperClass(3)} />
           </div>
-          <p className="wz-eyebrow">PASO {step + 2} · {EYEBROW_LABEL_Q[step]}</p>
-          <h1 className="wz-title">
-            {step === 0 && cuisinesTitle}
-            {step === 1 && cravingsTitle}
-            {step === 2 && avoidTitle}
-          </h1>
-          <p className="wz-subtitle">{q.hint}</p>
+          <p className="wz-eyebrow">
+            {t('nutritionPlanner.stepEyebrowQuestion', {
+              step: step + 2,
+              label: t(EYEBROW_KEYS_Q[step]),
+            })}
+          </p>
+          <h1 className="wz-title">{t(titleKey)}</h1>
+          <p className="wz-subtitle">{t(q.hintKey)}</p>
         </div>
 
         {renderBody()}
@@ -521,7 +612,7 @@ export default function WeeklyNutritionPlanner() {
               }
             }}
           >
-            ← Anterior
+            {t('nutritionPlanner.previous')}
           </button>
         </div>
       </div>
@@ -544,14 +635,14 @@ export default function WeeklyNutritionPlanner() {
     const d = new Date();
     const diff = (d.getDay() - shoppingDay + 7) % 7;
     d.setDate(d.getDate() - diff);
-    return `${d.getDate()} ${d.toLocaleDateString('es-ES', { month: 'short' })}`;
+    return formatDate(d, locale, { day: 'numeric', month: 'short' });
   })();
   const weekEndDate = (() => {
     if (shoppingDay === null) return '';
     const d = new Date();
     const diff = (d.getDay() - shoppingDay + 7) % 7;
     d.setDate(d.getDate() - diff + 6);
-    return `${d.getDate()} ${d.toLocaleDateString('es-ES', { month: 'short' })}`;
+    return formatDate(d, locale, { day: 'numeric', month: 'short' });
   })();
 
   return (
@@ -563,15 +654,13 @@ export default function WeeklyNutritionPlanner() {
             <div className="wnp2-header-badge">
               <span className="wnp2-header-badge-dot" />
               <span className="wnp2-header-badge-text">
-                tu semana · del {weekStartDate} al {weekEndDate}
+                {t('nutritionPlanner.weekRange', { start: weekStartDate, end: weekEndDate })}
               </span>
             </div>
-            <h3 className="wnp2-header-title">
-              Plan <em>personalizado</em>
-            </h3>
+            <h3 className="wnp2-header-title">{t('nutritionPlanner.planTitle')}</h3>
           </div>
           {regenBlocked ? (
-            <div className="wnp2-regen-blocked" title="Límite semanal alcanzado">
+            <div className="wnp2-regen-blocked" title={t('nutritionPlanner.regenBlocked')}>
               <Lock size={11} />
               <span>2/2</span>
             </div>
@@ -579,8 +668,11 @@ export default function WeeklyNutritionPlanner() {
             <button
               className="wnp2-regen"
               onClick={resetQuestionnaire}
-              aria-label="Regenerar plan semanal"
-              title={`Regenerar plan (${regenLeft} restante${regenLeft === 1 ? '' : 's'})`}
+              aria-label={t('nutritionPlanner.ariaRegen')}
+              title={plural(regenLeft, {
+                one: t('nutritionPlanner.regenTitleOne', { n: regenLeft }),
+                other: t('nutritionPlanner.regenTitleOther', { n: regenLeft }),
+              })}
             >
               <RefreshCw size={11} />
               <span>{regenLeft}</span>
@@ -603,13 +695,13 @@ export default function WeeklyNutritionPlanner() {
           className={`wnp2-tab${!showShopping ? ' on' : ''}`}
           onClick={() => setShowShopping(false)}
         >
-          <Calendar size={13} /> Mi Plan
+          <Calendar size={13} /> {t('nutritionPlanner.tabMyPlan')}
         </button>
         <button
           className={`wnp2-tab${showShopping ? ' on' : ''}`}
           onClick={() => setShowShopping(true)}
         >
-          <ShoppingCart size={13} /> Lista · {shoppingDone}/{shoppingTotal}
+          <ShoppingCart size={13} /> {t('nutritionPlanner.tabList', { done: shoppingDone, total: shoppingTotal })}
         </button>
       </div>
 
@@ -622,9 +714,13 @@ export default function WeeklyNutritionPlanner() {
             </div>
             <div className="wnp2-shop-body">
               <div className="wnp2-shop-micro">
-                súper · {shoppingDay !== null ? DAY_NAMES_FULL[shoppingDay].toLowerCase() : ''}
+                {t('nutritionPlanner.shopMicro', {
+                  day: shoppingDay !== null ? t(DAY_LONG_KEYS[shoppingDay]).toLowerCase() : '',
+                })}
               </div>
-              <div className="wnp2-shop-title">{shoppingDone} de {shoppingTotal} tachado</div>
+              <div className="wnp2-shop-title">
+                {t('nutritionPlanner.shopTitle', { done: shoppingDone, total: shoppingTotal })}
+              </div>
             </div>
             <div className="wnp2-shop-pct">
               {shoppingPct}<small>%</small>
@@ -651,7 +747,7 @@ export default function WeeklyNutritionPlanner() {
               })}
             </div>
           ) : (
-            <div className="wnp2-shop-empty">Aún no hay lista de compras.</div>
+            <div className="wnp2-shop-empty">{t('nutritionPlanner.shopEmpty')}</div>
           )}
         </>
       ) : (
@@ -667,7 +763,7 @@ export default function WeeklyNutritionPlanner() {
                   className={`wnp2-day${activeDay === i ? ' on' : ''}${isToday ? ' today' : ''}`}
                   onClick={() => setActiveDay(i)}
                 >
-                  {DAY_NAMES[dow]}
+                  {t(DAY_SHORT_KEYS[dow])}
                 </button>
               );
             })}
@@ -676,8 +772,10 @@ export default function WeeklyNutritionPlanner() {
           {/* Day header */}
           <div className="wnp2-day-header">
             <span className="wnp2-day-name">
-              {shoppingDay !== null ? DAY_NAMES_FULL[(shoppingDay + activeDay) % 7] : ''}
-              {activeDay === todayOffset && <span className="wnp2-today-chip">Hoy</span>}
+              {shoppingDay !== null ? t(DAY_LONG_KEYS[(shoppingDay + activeDay) % 7]) : ''}
+              {activeDay === todayOffset && (
+                <span className="wnp2-today-chip">{t('nutritionPlanner.todayChip')}</span>
+              )}
             </span>
             {dayKcal > 0 && (
               <div className="wnp2-day-kcal-block">
@@ -725,7 +823,7 @@ export default function WeeklyNutritionPlanner() {
                   <div className="wnp2-meal-body">
                     <div className="wnp2-meal-time">
                       <span>{MEAL_EMOJI[meal.time] ?? '🥗'}</span>
-                      <span>{meal.time}</span>
+                      <span>{MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time}</span>
                     </div>
                     <div className="wnp2-meal-name">{meal.name}</div>
                     <div className="wnp2-meal-chips">
@@ -753,7 +851,7 @@ export default function WeeklyNutritionPlanner() {
               );
             })
           ) : (
-            <div className="wnp2-empty-day">Sin comidas asignadas para este día.</div>
+            <div className="wnp2-empty-day">{t('nutritionPlanner.emptyDay')}</div>
           )}
         </>
       )}

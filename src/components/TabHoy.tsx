@@ -13,7 +13,18 @@ import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
 import { MILESTONE_STEPS, getMilestoneCopy } from '../constants/milestones';
 import { useT } from '../i18n';
+import { plural } from '../i18n/format';
+import type { TranslationKey } from '../i18n/es';
 import './tab-hoy-v3.css';
+
+// Map para localizar nombre de comida en popout (data layer queda ES).
+const MEAL_TIME_KEYS: Record<string, TranslationKey> = {
+  'Desayuno': 'mealTime.desayuno',
+  'Snack AM': 'mealTime.snackAm',
+  'Comida': 'mealTime.comida',
+  'Snack PM': 'mealTime.snackPm',
+  'Cena': 'mealTime.cena',
+};
 
 /* ── HSM Question Bank — 10 per dimension, 100 total ── */
 const HSM_BANK: { emoji: string; title: string; questions: string[] }[] = [
@@ -146,7 +157,7 @@ function getDailyQuestion(dimIndex: number, dayIndex: number): { emoji: string; 
 }
 
 export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const {
     userName, planGoal, mealPlanKey, shoppingDay,
     mealChecks, toggleMealCheck,
@@ -189,9 +200,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // Greeting by local hour: 5–11 días, 12–18 tardes, 19–4 noches
   const heroGreeting = (() => {
     const h = new Date().getHours();
-    if (h >= 5 && h < 12) return 'Buenos días';
-    if (h >= 12 && h < 19) return 'Buenas tardes';
-    return 'Buenas noches';
+    if (h >= 5 && h < 12) return t('hoy.greetingMorning');
+    if (h >= 12 && h < 19) return t('hoy.greetingAfternoon');
+    return t('hoy.greetingEvening');
   })();
 
   const [milestone, setMilestone] = useState<number | null>(null);
@@ -426,21 +437,24 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
 
   const mileCopy = milestone ? getMilestoneCopy(milestone, t) : null;
 
-  // Editorial date string for hero eyebrow: "Miércoles · 24 abril"
+  // Editorial date string for hero eyebrow: "Miércoles · 24 abril" / "Wednesday · April 24"
   const heroDate = (() => {
     const d = new Date();
-    const dayName = d.toLocaleDateString('es-ES', { weekday: 'long' });
+    const localeStr = locale === 'en' ? 'en-US' : 'es-ES';
+    const dayName = d.toLocaleDateString(localeStr, { weekday: 'long' });
     const cap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
     const day = d.getDate();
-    const month = d.toLocaleDateString('es-ES', { month: 'long' });
-    return `${cap} · ${day} ${month}`;
+    const month = d.toLocaleDateString(localeStr, { month: 'long' });
+    return locale === 'en' ? `${cap} · ${month} ${day}` : `${cap} · ${day} ${month}`;
   })();
 
   // Subhead for the hero: dailyBriefing if fresh, fallback otherwise
+  // NOTA: dailyBriefing.message es output de Coach AI (prompt ES en líneas ~223).
+  // Hasta Lote 5 (prompts coach), users EN verán texto ES en el subhead cuando hay briefing cacheado.
   const heroSubhead =
     (dailyBriefing?.date === today && dailyBriefing?.message)
       ? dailyBriefing.message
-      : 'Otro día para construirte.';
+      : t('hoy.subheadFallback');
 
   return (
     <div className="th3-wrap">
@@ -454,7 +468,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
             <div className="th3-milestone-emoji">{mileCopy.emoji}</div>
             <h2 className="th3-milestone-title">{mileCopy.title}</h2>
             <p className="th3-milestone-sub">{mileCopy.sub}</p>
-            <button className="th3-milestone-close" onClick={() => setMilestone(null)}>Continuar</button>
+            <button className="th3-milestone-close" onClick={() => setMilestone(null)}>{t('hoy.milestoneClose')}</button>
           </div>
         </div>
       )}
@@ -476,7 +490,12 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
 
         <div className="th3-streak">
           <span className="th3-streak-num">{streakCount}</span>
-          <span className="th3-streak-label">días en racha</span>
+          <span className="th3-streak-label">
+            {plural(streakCount, {
+              one: t('hoy.streakLabelOne'),
+              other: t('hoy.streakLabelOther'),
+            })}
+          </span>
           <div className="th3-streak-dots">
             {Array.from({ length: 7 }, (_, i) => {
               const dayDate = new Date();
@@ -492,7 +511,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
 
       {/* ── BODY ── */}
       <section className="th3-body">
-        <p className="th3-section-eyebrow">Para hoy</p>
+        <p className="th3-section-eyebrow">{t('hoy.forToday')}</p>
 
         <div className="th3-grid">
           {/* CARD RUTINA */}
@@ -501,17 +520,17 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
             onClick={() => onNav('entrenamiento')}
           >
             <div className="th3-cover th3-cover-rutina">
-              <span className="th3-cover-italic">en movimiento</span>
+              <span className="th3-cover-italic">{t('hoy.coverInMotion')}</span>
             </div>
             <div className="th3-card-body">
-              <p className="th3-card-eyebrow">Entrenamiento</p>
+              <p className="th3-card-eyebrow">{t('hoy.cardEyebrowTraining')}</p>
               {(() => {
                 const workout = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
                 if (!workout) {
                   return (
                     <>
-                      <h2 className="th3-card-title">Genera tu rutina</h2>
-                      <p className="th3-card-meta">Personalizada según cómo te sientas.</p>
+                      <h2 className="th3-card-title">{t('hoy.routineGenerate')}</h2>
+                      <p className="th3-card-meta">{t('hoy.routineGenerateMeta')}</p>
                     </>
                   );
                 }
@@ -523,7 +542,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                   const totalMin = Math.round(totalDuration / 60);
                   return (
                     <>
-                      <h2 className="th3-card-title">Tu flow de hoy</h2>
+                      <h2 className="th3-card-title">{t('hoy.routineFlow')}</h2>
                       <p className="th3-card-meta">
                         {wType} · {poses.length} poses{totalMin > 0 ? ` · ${totalMin} min` : ''}
                       </p>
@@ -536,7 +555,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                 const wDuration = (workout as { duration?: string }).duration ?? '';
                 return (
                   <>
-                    <h2 className="th3-card-title">Tu rutina de hoy</h2>
+                    <h2 className="th3-card-title">{t('hoy.routineToday')}</h2>
                     {(wType || wDuration) && (
                       <p className="th3-card-meta">
                         {wType}{wType && wDuration ? ' · ' : ''}{wDuration}
@@ -609,7 +628,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                 );
               })()}
               <div className="th3-card-foot">
-                <span className="th3-card-foot-text">Personalizada hoy</span>
+                <span className="th3-card-foot-text">{t('hoy.cardFootPersonalized')}</span>
                 <span className="th3-card-arrow">→</span>
               </div>
             </div>
@@ -621,18 +640,18 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
             onClick={() => onNav('alimentacion')}
           >
             <div className="th3-cover th3-cover-nutricion">
-              <span className="th3-cover-italic">de la tierra</span>
+              <span className="th3-cover-italic">{t('hoy.coverFromEarth')}</span>
             </div>
             <div className="th3-card-body">
-              <p className="th3-card-eyebrow">Nutrición</p>
+              <p className="th3-card-eyebrow">{t('hoy.cardEyebrowNutrition')}</p>
               {!weeklyPlan ? (
                 <>
-                  <h2 className="th3-card-title">Genera tu plan</h2>
-                  <p className="th3-card-meta">Tu nutricionista IA lo arma.</p>
+                  <h2 className="th3-card-title">{t('hoy.nutritionGenerate')}</h2>
+                  <p className="th3-card-meta">{t('hoy.nutritionGenerateMeta')}</p>
                 </>
               ) : (
                 <>
-                  <h2 className="th3-card-title">Tu plan de hoy</h2>
+                  <h2 className="th3-card-title">{t('hoy.nutritionToday')}</h2>
                   <p className="th3-card-meta">
                     {checkedMeals}/{todayMeals.length} · {calcDayKcal(todayMeals)} kcal
                   </p>
@@ -662,7 +681,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                               type="button"
                               className={`th3-card-list-check${done ? ' checked' : ''}`}
                               onClick={handleToggle}
-                              aria-label={done ? 'Desmarcar comida' : 'Marcar comida'}
+                              aria-label={done ? t('hoy.ariaMealUncheck') : t('hoy.ariaMealCheck')}
                             >
                               {done ? '✓' : ''}
                             </button>
@@ -674,7 +693,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                 </>
               )}
               <div className="th3-card-foot">
-                <span className="th3-card-foot-text">A tu medida</span>
+                <span className="th3-card-foot-text">{t('hoy.cardFootTailored')}</span>
                 <span className="th3-card-arrow">→</span>
               </div>
             </div>
@@ -686,12 +705,12 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
         {/* ── Tu Espacio (discreto / o review si ya respondió las 5) ── */}
         {allAnswered ? (
           <div className="th3-review">
-            <div className="th3-review-label">Tu observación de hoy</div>
+            <div className="th3-review-label">{t('hoy.reviewLabelToday')}</div>
             <p className="th3-review-text">
-              {dailyReview || 'Las 5 de hoy, listas. Tu coach ya analizó tus respuestas.'}
+              {dailyReview || t('hoy.reviewFallback')}
             </p>
             <button className="th3-review-btn" onClick={() => setShowEspacioFlow(true)}>
-              Ver review completo
+              {t('hoy.viewFullReview')}
             </button>
           </div>
         ) : (
@@ -701,11 +720,14 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
             onClick={() => setShowEspacioFlow(true)}
           >
             <div className="th3-espacio-body">
-              <p className="th3-espacio-eyebrow">Tu espacio</p>
+              <p className="th3-espacio-eyebrow">{t('hoy.espacioEyebrow')}</p>
               <p className="th3-espacio-text">
                 {todayHSMAnswered === 0
-                  ? 'Reflexiona 5 minutos para que tu coach te conozca mejor.'
-                  : `Ya escribiste ${todayHSMAnswered}. Faltan ${todayDimensions.length - todayHSMAnswered}.`}
+                  ? t('hoy.espacioPromptInitial')
+                  : t('hoy.espacioPromptProgress', {
+                      answered: todayHSMAnswered,
+                      remaining: todayDimensions.length - todayHSMAnswered,
+                    })}
               </p>
             </div>
             <span className="th3-espacio-arrow">→</span>
@@ -714,14 +736,14 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
 
         {miniReview && (
           <div className="th3-review th3-review-mini">
-            <div className="th3-review-label">Tu coach te conoce</div>
+            <div className="th3-review-label">{t('hoy.reviewLabelCoach')}</div>
             <p className="th3-review-text plain">{miniReview}</p>
           </div>
         )}
 
         {weeklyHSMReview && (
           <div className="th3-review">
-            <div className="th3-review-label">Resumen semanal HSM</div>
+            <div className="th3-review-label">{t('hoy.reviewLabelWeeklyHsm')}</div>
             <p className="th3-review-text">{weeklyHSMReview}</p>
           </div>
         )}
@@ -740,19 +762,19 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
               <img src={mealDetail.img} alt="" className="th-popout-img" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             )}
             <div className="th-popout-header">
-              <div className="th-popout-time">{mealDetail.time}</div>
+              <div className="th-popout-time">{MEAL_TIME_KEYS[mealDetail.time] ? t(MEAL_TIME_KEYS[mealDetail.time]) : mealDetail.time}</div>
               <div className="th-popout-kcal">{mealDetail.portions ? calcMealKcal(mealDetail.portions) : 0} kcal</div>
             </div>
             <div className="th-popout-name">{mealDetail.name}</div>
             {mealDetail.desc && <div className="th-popout-desc">{mealDetail.desc}</div>}
-            <div className="th-popout-label">Ingredientes</div>
+            <div className="th-popout-label">{t('hoy.popoutIngredients')}</div>
             <div className="th-popout-portions">
               {(mealDetail.portions ?? []).map((p, i) => (
                 <div key={i} className="th-popout-portion">{p}</div>
               ))}
             </div>
 
-            <button className="th-popout-close" onClick={() => setMealDetail(null)}>Cerrar</button>
+            <button className="th-popout-close" onClick={() => setMealDetail(null)}>{t('common.close')}</button>
           </div>
         </div>
       )}
