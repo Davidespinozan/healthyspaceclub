@@ -80,7 +80,16 @@ interface PayInfo {
   currency?: Currency;
 }
 
+export type AppLanguage = 'es' | 'en';
+
 interface AppState {
+  // i18n
+  language: AppLanguage;
+  // True solo si el user eligió manualmente desde Ajustes. Mientras sea false,
+  // el bootstrap puede sobrescribir con navigator.language.
+  languageSetByUser: boolean;
+  setLanguage: (lang: AppLanguage) => void;
+
   // Navigation
   currentScreen: ScreenType;
   goTo: (screen: ScreenType) => void;
@@ -309,6 +318,12 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
   // Navigation
+  // i18n — default es; bootstrap puede sobrescribir con navigator.language
+  // mientras languageSetByUser sea false. setLanguage marca el flag = true.
+  language: 'es',
+  languageSetByUser: false,
+  setLanguage: (lang) => set({ language: lang, languageSetByUser: true }),
+
   currentScreen: 'landing',
   goTo: (screen) => set({ currentScreen: screen }),
 
@@ -877,6 +892,8 @@ export const useAppStore = create<AppState>()(
 {
   name: 'hsc-store',
   partialize: (state) => ({
+    language: state.language,
+    languageSetByUser: state.languageSetByUser,
     userName: state.userName,
     obData: state.obData,
     startDate: state.startDate,

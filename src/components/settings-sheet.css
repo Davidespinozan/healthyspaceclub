@@ -244,6 +244,41 @@
   font-size: 14px;
 }
 
+/* Language toggle — i18n Lote 0 */
+.ss-lang-toggle {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: var(--radius-base);
+  box-shadow: var(--shadow-pro-sm);
+}
+.ss-lang-btn {
+  flex: 1;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tight);
+  color: rgba(21, 51, 48, 0.6);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--duration-fast) ease, color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  min-height: 40px;
+}
+.ss-lang-btn:hover:not(.is-active) { color: var(--forest); background: rgba(21, 51, 48, 0.04); }
+.ss-lang-btn.is-active {
+  background: var(--forest);
+  color: var(--sala-surface);
+  box-shadow: var(--shadow-pro-md);
+}
+
 /* Logout */
 .ss-logout {
   width: 100%;

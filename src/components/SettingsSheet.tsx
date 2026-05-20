@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppStore } from '../store';
 import { openCoachWith } from '../utils/openCoach';
+import { useT } from '../i18n';
 import ManagePlanSheet from './sheets/ManagePlanSheet';
 import EditDataSheet from './sheets/EditDataSheet';
 import TermsSheet from './sheets/TermsSheet';
@@ -15,6 +16,9 @@ interface Props {
 
 export default function SettingsSheet({ open, onClose }: Props) {
   const { userPlan, trialEndsAt, obData, tdee, planGoal, logout } = useAppStore();
+  const language = useAppStore(s => s.language);
+  const setLanguage = useAppStore(s => s.setLanguage);
+  const { t } = useT();
 
   const [showManagePlan, setShowManagePlan] = useState(false);
   const [showEditData, setShowEditData] = useState(false);
@@ -159,6 +163,29 @@ export default function SettingsSheet({ open, onClose }: Props) {
           >
             Editar mis datos →
           </button>
+        </section>
+
+        {/* Sección Idioma — i18n Lote 0 */}
+        <section className="ss-section">
+          <p className="ss-section-eyebrow">{t('settings.language')}</p>
+          <div className="ss-lang-toggle">
+            <button
+              type="button"
+              className={`ss-lang-btn${language === 'es' ? ' is-active' : ''}`}
+              onClick={() => setLanguage('es')}
+              aria-pressed={language === 'es'}
+            >
+              {t('settings.languageEs')}
+            </button>
+            <button
+              type="button"
+              className={`ss-lang-btn${language === 'en' ? ' is-active' : ''}`}
+              onClick={() => setLanguage('en')}
+              aria-pressed={language === 'en'}
+            >
+              {t('settings.languageEn')}
+            </button>
+          </div>
         </section>
 
         {/* Sección 3: Ayuda */}

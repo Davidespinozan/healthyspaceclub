@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore, persistStreakToProfile } from './store';
 import { supabase } from './lib/supabase';
 import { MILESTONE_STEPS } from './constants/milestones';
+import { detectBrowserLanguage } from './i18n';
 import LandingScreen from './screens/LandingScreen';
 
 const LoginScreen = lazy(() => import('./screens/LoginScreen'));
@@ -18,6 +19,19 @@ export default function App() {
   const setAuthReady = useAppStore(s => s.setAuthReady);
   const authReady = useAppStore(s => s.authReady);
   const startDate = useAppStore(s => s.startDate);
+
+  // ── Bootstrap idioma — corre una vez al mount ────────────
+  // Si el user nunca eligió manualmente (languageSetByUser=false), aplicamos
+  // navigator.language. Si ya eligió antes (persistido), respetamos esa elección.
+  useEffect(() => {
+    const { languageSetByUser, language } = useAppStore.getState();
+    if (!languageSetByUser) {
+      const detected = detectBrowserLanguage();
+      if (detected !== language) {
+        useAppStore.setState({ language: detected });
+      }
+    }
+  }, []);
 
   // ── Reroute: si profile hidrata después y trae startDate, salir de onboarding ──
   useEffect(() => {
