@@ -8,6 +8,7 @@ import {
   getMilestoneLabel,
 } from '../../constants/milestones';
 import { useT } from '../../i18n';
+import { formatDate, plural } from '../../i18n/format';
 import './sheet-base.css';
 import './logros-sheet.css';
 
@@ -15,11 +16,6 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   initialMilestoneDay?: number;
-}
-
-function formatUnlockedDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Props) {
@@ -74,7 +70,7 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
     <div className="sh-overlay" onClick={onClose}>
       <div className="sh-sheet ls-sheet" onClick={e => e.stopPropagation()}>
         <div className="sh-handle" />
-        <button className="sh-close sh-close--floating" onClick={onClose} aria-label="Cerrar" type="button">✕</button>
+        <button className="sh-close sh-close--floating" onClick={onClose} aria-label={t('common.close')} type="button">✕</button>
 
         {focusedMilestone ? (
           <div className="ls-detail">
@@ -82,10 +78,10 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
               type="button"
               className="ls-back"
               onClick={() => setFocused(null)}
-              aria-label="Volver al grid"
+              aria-label={t('logros.backLabel')}
             >
               <ArrowLeft size={16} strokeWidth={1.8} />
-              <span>Volver</span>
+              <span>{t('common.back')}</span>
             </button>
 
             <div className={`ls-detail-emoji${focusedMilestone.isUnlocked ? '' : ' ls-detail-emoji--locked'}`} aria-hidden="true">
@@ -97,11 +93,16 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
 
             {focusedMilestone.isUnlocked && focusedMilestone.unlockedAt ? (
               <p className="ls-detail-date">
-                Desbloqueado el {formatUnlockedDate(focusedMilestone.unlockedAt)}
+                {t('logros.unlockedOn')} {formatDate(focusedMilestone.unlockedAt, locale)}
               </p>
             ) : (
               <p className="ls-detail-pending">
-                Llevás <strong>{streakCount}</strong> {streakCount === 1 ? 'día' : 'días'} — te {focusedMilestone.daysRemaining === 1 ? 'falta' : 'faltan'} <strong>{focusedMilestone.daysRemaining}</strong> para desbloquear.
+                {t('logros.pending', {
+                  streak: streakCount,
+                  dayWord: plural(streakCount, { one: t('logros.dayOne'), other: t('logros.dayOther') }),
+                  missWord: plural(focusedMilestone.daysRemaining, { one: t('logros.missOne'), other: t('logros.missOther') }),
+                  remaining: focusedMilestone.daysRemaining,
+                })}
               </p>
             )}
 
@@ -109,9 +110,9 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
         ) : (
           <>
             <div className="ls-header">
-              <h2 className="ls-title">Logros</h2>
+              <h2 className="ls-title">{t('logros.title')}</h2>
               <p className="ls-progress">
-                <strong>{unlockedCount}</strong> / {MILESTONE_STEPS.length} desbloqueados
+                <strong>{unlockedCount}</strong> / {MILESTONE_STEPS.length} {t('logros.progressSuffix')}
               </p>
             </div>
 
@@ -130,10 +131,14 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
                   <div className="ls-card-title">{m.copy.title}</div>
                   <div className="ls-card-sub">
                     {m.isUnlocked && m.unlockedAt
-                      ? formatUnlockedDate(m.unlockedAt)
+                      ? formatDate(m.unlockedAt, locale)
                       : m.daysRemaining === 0
-                        ? 'Disponible hoy'
-                        : `Te ${m.daysRemaining === 1 ? 'falta' : 'faltan'} ${m.daysRemaining} ${m.daysRemaining === 1 ? 'día' : 'días'}`}
+                        ? t('logros.availableToday')
+                        : t('logros.cardRemaining', {
+                            missWord: plural(m.daysRemaining, { one: t('logros.missOne'), other: t('logros.missOther') }),
+                            n: m.daysRemaining,
+                            dayWord: plural(m.daysRemaining, { one: t('logros.dayOne'), other: t('logros.dayOther') }),
+                          })}
                   </div>
                   <div className="ls-card-label">{m.label}</div>
                 </button>

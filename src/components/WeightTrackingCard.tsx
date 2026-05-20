@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../store';
+import { useT } from '../i18n';
 import './weight-tracking-card.css';
 
 export default function WeightTrackingCard() {
   const weightLog = useAppStore(s => s.weightLog);
   const addWeight = useAppStore(s => s.addWeight);
   const obData = useAppStore(s => s.obData);
+  const { t } = useT();
 
   const [showModal, setShowModal] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -77,7 +79,7 @@ export default function WeightTrackingCard() {
     setError('');
     const kg = parseFloat(inputValue);
     if (!kg || kg < 30 || kg > 300) {
-      setError('Ingresá un peso entre 30 y 300 kg.');
+      setError(t('weight.errInvalid'));
       return;
     }
     setSaving(true);
@@ -91,7 +93,7 @@ export default function WeightTrackingCard() {
       setTimeout(() => setShowToast(false), 5000);
     } catch (e) {
       console.error('[WeightTrackingCard] save failed:', e);
-      setError('No se pudo guardar. Intentá de nuevo.');
+      setError(t('weight.errSave'));
     } finally {
       setSaving(false);
     }
@@ -107,21 +109,21 @@ export default function WeightTrackingCard() {
   const chipDirection = deltaInfo && deltaInfo.value < 0 ? 'down' : 'up';
   const metaText = (() => {
     if (deltaInfo?.label === 'inicio' && Math.abs(deltaInfo.value) > 0) {
-      return 'desde tu primer registro';
+      return t('weight.metaSinceFirst');
     }
-    if (registeredThisWeek) return 'registrado esta semana';
-    return 'pesate 1 vez por semana, mismo día';
+    if (registeredThisWeek) return t('weight.metaThisWeek');
+    return t('weight.metaWeeklyTip');
   })();
 
   return (
     <>
       <button type="button" className="weight-row" onClick={openModal}>
         <div className="weight-row-left">
-          <span className="weight-row-label">Peso</span>
+          <span className="weight-row-label">{t('weight.label')}</span>
           <span className="weight-row-value">
             {currentWeight !== null && currentWeight !== undefined
               ? <>{currentWeight} <span className="weight-row-unit">kg</span></>
-              : 'Sin registrar'}
+              : t('weight.unset')}
           </span>
           {showChip && deltaInfo && (
             <span className={`weight-row-delta ${chipDirection}`}>
@@ -136,16 +138,16 @@ export default function WeightTrackingCard() {
       {showToast && toastValue !== null && (
         <div className="weight-toast" role="status" aria-live="polite">
           <div className="weight-toast-check" aria-hidden="true">✓</div>
-          <div className="weight-toast-text">Peso registrado · {toastValue} kg</div>
+          <div className="weight-toast-text">{t('weight.toastSaved')} {toastValue} kg</div>
         </div>
       )}
 
       {showModal && (
         <div className="weight-modal-overlay" onClick={() => !saving && setShowModal(false)}>
           <div className="weight-modal" onClick={e => e.stopPropagation()}>
-            <h3 className="weight-modal-title">Registrar peso</h3>
+            <h3 className="weight-modal-title">{t('weight.modalTitle')}</h3>
             <p className="weight-modal-intro">
-              Idealmente, pesate en la mañana después del baño, en ayunas y sin ropa.
+              {t('weight.modalIntro')}
             </p>
 
             <div className="weight-modal-input-row">
@@ -156,7 +158,7 @@ export default function WeightTrackingCard() {
                 max={300}
                 value={inputValue}
                 onChange={e => setInputValue(e.target.value)}
-                placeholder="70.5"
+                placeholder={t('weight.placeholder')}
                 className="weight-modal-input"
                 autoFocus
               />
@@ -172,7 +174,7 @@ export default function WeightTrackingCard() {
                 onClick={() => setShowModal(false)}
                 disabled={saving}
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -180,7 +182,7 @@ export default function WeightTrackingCard() {
                 onClick={handleSave}
                 disabled={saving}
               >
-                {saving ? 'Guardando…' : 'Guardar'}
+                {saving ? t('common.saving') : t('common.save')}
               </button>
             </div>
           </div>

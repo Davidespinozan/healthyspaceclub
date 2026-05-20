@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useAppStore } from '../../store';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
 import { openCoachWith } from '../../utils/openCoach';
+import { useT } from '../../i18n';
 import {
   getSubscription,
   getPaymentMethod,
@@ -22,38 +23,25 @@ interface Props {
   onClose: () => void;
 }
 
-const FAQ_ITEMS = [
-  {
-    q: '¿Cuándo se hace el cobro?',
-    a: 'Tu trial dura 7 días gratis. Después se hace un cobro mensual o anual según el plan que elijas. Te avisamos 24h antes del primer cobro.',
-  },
-  {
-    q: '¿Qué pasa si cancelo?',
-    a: 'Mantenés acceso hasta el final del período que ya pagaste. Después tu cuenta queda en modo gratuito; tus datos quedan guardados por si volvés.',
-  },
-  {
-    q: '¿Puedo cambiar de plan en cualquier momento?',
-    a: 'Sí. Si cambiás de mensual a anual, se prorratea el saldo. Si cambiás de anual a mensual, el cambio aplica al próximo ciclo.',
-  },
-  {
-    q: '¿Hay descuentos por pagar anual?',
-    a: 'Sí. El plan anual cuesta lo equivalente a aproximadamente 9 meses — ahorrás ~3 meses al año vs pagar mes a mes.',
-  },
-  {
-    q: '¿Cómo elimino mi cuenta y mis datos?',
-    a: 'Hablá con el coach o escribí a soporte@stryvstudio.com. Procesamos eliminación dentro de 30 días según GDPR / LFPDPPP.',
-  },
-];
-
-function planDisplayName(plan: SubscriptionInfo['plan']): string {
-  if (plan === 'trial') return 'Trial Gratuito';
-  if (plan === 'pro') return 'HSC Pro';
-  return 'Sin plan activo';
-}
+// FAQ items se arman con t() inside del componente para que se localicen.
+const FAQ_KEYS = [
+  { q: 'managePlan.faq1q', a: 'managePlan.faq1a' },
+  { q: 'managePlan.faq2q', a: 'managePlan.faq2a' },
+  { q: 'managePlan.faq3q', a: 'managePlan.faq3a' },
+  { q: 'managePlan.faq4q', a: 'managePlan.faq4a' },
+  { q: 'managePlan.faq5q', a: 'managePlan.faq5a' },
+] as const;
 
 export default function ManagePlanSheet({ onClose }: Props) {
   const userId = useCurrentUserId();
+  const { t } = useT();
   const { trialEndsAt: storeTrialEndsAt } = useAppStore();
+
+  function planDisplayName(plan: SubscriptionInfo['plan']): string {
+    if (plan === 'trial') return t('managePlan.planTrial');
+    if (plan === 'pro') return t('managePlan.planPro');
+    return t('managePlan.planNone');
+  }
 
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
@@ -92,21 +80,21 @@ export default function ManagePlanSheet({ onClose }: Props) {
   }, [userId, storeTrialEndsAt]);
 
   function notWired(action: string) {
-    if (window.confirm(`${STRIPE_NOT_WIRED_MESSAGE}\n\n¿Querés hablar con el coach sobre "${action}"?`)) {
+    if (window.confirm(`${STRIPE_NOT_WIRED_MESSAGE}\n\n${t('managePlan.notWiredAsk')} "${action}"?`)) {
       onClose();
       openCoachWith(`Quiero ${action}.`);
     }
   }
 
-  function handleAddPaymentMethod() { notWired('agregar un método de pago'); }
-  function handleUpdatePaymentMethod() { notWired('actualizar mi método de pago'); }
-  function handleChangeCycle(_target: BillingCycle) { notWired('cambiar mi plan'); }
+  function handleAddPaymentMethod() { notWired(t('managePlan.actionAddPm')); }
+  function handleUpdatePaymentMethod() { notWired(t('managePlan.actionUpdatePm')); }
+  function handleChangeCycle(_target: BillingCycle) { notWired(t('managePlan.actionChangePlan')); }
   function handleConfirmCancel() {
     setBusy(true);
     setTimeout(() => {
       setBusy(false);
       setShowCancelConfirm(false);
-      notWired('cancelar mi suscripción');
+      notWired(t('managePlan.actionCancel'));
     }, 300);
   }
 
@@ -119,11 +107,11 @@ export default function ManagePlanSheet({ onClose }: Props) {
       <div className="sh-sheet" onClick={e => e.stopPropagation()}>
         <div className="sh-handle" />
         <div className="sh-header-row">
-          <h1 className="sh-title">Mi Plan</h1>
+          <h1 className="sh-title">{t('managePlan.title')}</h1>
           <button
             className="sh-close"
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={t('common.close')}
             type="button"
           >
             ✕
@@ -137,49 +125,49 @@ export default function ManagePlanSheet({ onClose }: Props) {
             {isTrialing && renewalDate ? (
               <>
                 <p className="mps-status-line">
-                  Te quedan <strong>{Math.max(0, Math.ceil((renewalDate.getTime() - Date.now()) / 86400000))} días</strong> de prueba gratuita.
+                  {t('managePlan.trialDaysLeft')} <strong>{Math.max(0, Math.ceil((renewalDate.getTime() - Date.now()) / 86400000))} {t('settings.daysOther')}</strong> {t('managePlan.trialDaysLeftSuffix')}
                 </p>
                 <p className="mps-status-sub">
-                  Tu primer cobro será el {formatRenewalDate(renewalDate)} · {formatPrice(priceInfo.monthly, priceInfo.currency)} / mes
+                  {t('managePlan.firstChargeOn')} {formatRenewalDate(renewalDate)} · {formatPrice(priceInfo.monthly, priceInfo.currency)} {t('managePlan.perMonth')}
                 </p>
               </>
             ) : subscription?.status === 'active' && renewalDate ? (
               <>
                 <p className="mps-status-line">
-                  Tu plan se renueva el <strong>{formatRenewalDate(renewalDate)}</strong>.
+                  {t('managePlan.renewsOn')} <strong>{formatRenewalDate(renewalDate)}</strong>.
                 </p>
                 <p className="mps-status-sub">
                   {currentCycle === 'yearly'
-                    ? `${formatPrice(priceInfo.yearly, priceInfo.currency)} / año`
-                    : `${formatPrice(priceInfo.monthly, priceInfo.currency)} / mes`}
+                    ? `${formatPrice(priceInfo.yearly, priceInfo.currency)} ${t('managePlan.perYear')}`
+                    : `${formatPrice(priceInfo.monthly, priceInfo.currency)} ${t('managePlan.perMonth')}`}
                 </p>
               </>
             ) : (
-              <p className="mps-status-line">Sin plan activo.</p>
+              <p className="mps-status-line">{t('managePlan.noActivePlan')}</p>
             )}
           </div>
         </section>
 
         {/* SECCIÓN 3 — Método de pago */}
         <section className="mps-section">
-          <h2 className="sh-heading">Método de pago</h2>
+          <h2 className="sh-heading">{t('managePlan.paymentMethod')}</h2>
           {paymentMethod ? (
             <div className="mps-payment-method-card">
               <div className="mps-pm-brand">{paymentMethod.brand.toUpperCase()}</div>
               <div className="mps-pm-info">
-                <div>{paymentMethod.brand.charAt(0).toUpperCase() + paymentMethod.brand.slice(1)} terminada en {paymentMethod.last4}</div>
-                <div className="mps-pm-exp">Vence {String(paymentMethod.expMonth).padStart(2, '0')}/{String(paymentMethod.expYear).slice(-2)}</div>
+                <div>{paymentMethod.brand.charAt(0).toUpperCase() + paymentMethod.brand.slice(1)} {t('managePlan.pmEndingIn')} {paymentMethod.last4}</div>
+                <div className="mps-pm-exp">{t('managePlan.pmExpires')} {String(paymentMethod.expMonth).padStart(2, '0')}/{String(paymentMethod.expYear).slice(-2)}</div>
               </div>
               <button type="button" className="mps-pm-update" onClick={handleUpdatePaymentMethod}>
-                Actualizar →
+                {t('managePlan.pmUpdate')}
               </button>
             </div>
           ) : (
             <div className="mps-payment-method-empty">
               <div className="mps-pm-empty-icon">💳</div>
-              <p className="mps-pm-empty-text">Aún no agregaste un método de pago.</p>
+              <p className="mps-pm-empty-text">{t('managePlan.pmEmpty')}</p>
               <button type="button" className="sh-cta" onClick={handleAddPaymentMethod}>
-                Agregar método de pago →
+                {t('managePlan.pmAdd')}
               </button>
             </div>
           )}
@@ -187,48 +175,48 @@ export default function ManagePlanSheet({ onClose }: Props) {
 
         {/* SECCIÓN 4 — Cambiar plan */}
         <section className="mps-section">
-          <h2 className="sh-heading">Plan actual y opciones</h2>
+          <h2 className="sh-heading">{t('managePlan.planSection')}</h2>
           <div className="mps-plan-options">
             <div className={`mps-plan-card${currentCycle === 'monthly' ? ' mps-plan-card--selected' : ''}`}>
-              {currentCycle === 'monthly' && <span className="mps-plan-tag">Actual</span>}
-              <div className="mps-plan-name">Mensual</div>
+              {currentCycle === 'monthly' && <span className="mps-plan-tag">{t('managePlan.planCurrentBadge')}</span>}
+              <div className="mps-plan-name">{t('managePlan.cycleMonthly')}</div>
               <div className="mps-plan-price">
                 {formatPrice(priceInfo.monthly, priceInfo.currency)}
-                <span className="mps-plan-price-unit"> /mes</span>
+                <span className="mps-plan-price-unit"> {t('managePlan.perMonth')}</span>
               </div>
               {isTrialing && renewalDate && (
                 <p className="mps-plan-sub">
-                  Te suscribís cuando termine el trial el {formatRenewalDate(renewalDate)}.
+                  {t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.
                 </p>
               )}
               {!isTrialing && currentCycle === 'yearly' && (
                 <button type="button" className="mps-plan-cta-secondary" onClick={() => handleChangeCycle('monthly')}>
-                  Cambiar a mensual
+                  {t('managePlan.switchToMonthly')}
                 </button>
               )}
             </div>
 
             <div className={`mps-plan-card${currentCycle === 'yearly' ? ' mps-plan-card--selected' : ''}`}>
-              {currentCycle === 'yearly' && <span className="mps-plan-tag">Actual</span>}
+              {currentCycle === 'yearly' && <span className="mps-plan-tag">{t('managePlan.planCurrentBadge')}</span>}
               <span className="mps-savings-badge">
-                Ahorrás {formatPrice(priceInfo.yearlySavings, priceInfo.currency)} / año
+                {t('managePlan.saveYearly')} {formatPrice(priceInfo.yearlySavings, priceInfo.currency)} {t('managePlan.saveYearlySuffix')}
               </span>
-              <div className="mps-plan-name">Anual</div>
+              <div className="mps-plan-name">{t('managePlan.cycleYearly')}</div>
               <div className="mps-plan-price">
                 {formatPrice(priceInfo.yearly, priceInfo.currency)}
-                <span className="mps-plan-price-unit"> /año</span>
+                <span className="mps-plan-price-unit"> {t('managePlan.perYear')}</span>
               </div>
               <div className="mps-plan-equiv">
-                Equivale a {formatPrice(priceInfo.yearlyMonthly, priceInfo.currency)} / mes
+                {t('managePlan.equivalentTo')} {formatPrice(priceInfo.yearlyMonthly, priceInfo.currency)} {t('managePlan.equivalentSuffix')}
               </div>
               {isTrialing && renewalDate && (
                 <p className="mps-plan-sub">
-                  Te suscribís cuando termine el trial el {formatRenewalDate(renewalDate)}.
+                  {t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.
                 </p>
               )}
               {!isTrialing && currentCycle === 'monthly' && (
                 <button type="button" className="sh-cta mps-plan-cta-primary" onClick={() => handleChangeCycle('yearly')}>
-                  Cambiar a anual y ahorrar →
+                  {t('managePlan.switchToYearly')}
                 </button>
               )}
             </div>
@@ -237,11 +225,11 @@ export default function ManagePlanSheet({ onClose }: Props) {
 
         {/* SECCIÓN 5 — Historial */}
         <section className="mps-section">
-          <h2 className="sh-heading">Historial</h2>
+          <h2 className="sh-heading">{t('managePlan.historyTitle')}</h2>
           {history.length === 0 ? (
             <p className="mps-history-empty">
-              Aún no hay pagos. {renewalDate && isTrialing
-                ? `Tu primer cobro será el ${formatRenewalDate(renewalDate)}.`
+              {t('managePlan.historyEmpty')} {renewalDate && isTrialing
+                ? `${t('managePlan.historyEmptyFirstCharge')} ${formatRenewalDate(renewalDate)}.`
                 : ''}
             </p>
           ) : (
@@ -267,15 +255,15 @@ export default function ManagePlanSheet({ onClose }: Props) {
         {/* SECCIÓN 6 — Cancelar */}
         <section className="mps-section">
           <button type="button" className="mps-cancel-btn" onClick={() => setShowCancelConfirm(true)}>
-            Cancelar suscripción
+            {t('managePlan.cancelSubscription')}
           </button>
         </section>
 
         {/* SECCIÓN 7 — FAQ */}
         <section className="mps-section">
-          <h2 className="sh-heading">Preguntas frecuentes</h2>
+          <h2 className="sh-heading">{t('managePlan.faqTitle')}</h2>
           <div className="mps-faq">
-            {FAQ_ITEMS.map((item, i) => (
+            {FAQ_KEYS.map((item, i) => (
               <div key={i} className={`mps-faq-item${openFaq === i ? ' mps-faq-item--open' : ''}`}>
                 <button
                   type="button"
@@ -283,10 +271,10 @@ export default function ManagePlanSheet({ onClose }: Props) {
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   aria-expanded={openFaq === i}
                 >
-                  <span>{item.q}</span>
+                  <span>{t(item.q)}</span>
                   <span className="mps-faq-arrow">{openFaq === i ? '−' : '+'}</span>
                 </button>
-                {openFaq === i && <p className="mps-faq-a">{item.a}</p>}
+                {openFaq === i && <p className="mps-faq-a">{t(item.a)}</p>}
               </div>
             ))}
           </div>
@@ -296,12 +284,12 @@ export default function ManagePlanSheet({ onClose }: Props) {
         {showCancelConfirm && (
           <div className="mps-modal-overlay" onClick={() => !busy && setShowCancelConfirm(false)}>
             <div className="mps-modal" onClick={e => e.stopPropagation()}>
-              <h3 className="mps-modal-title">¿Estás seguro de que querés cancelar?</h3>
-              <p className="mps-modal-p">Si cancelás:</p>
+              <h3 className="mps-modal-title">{t('managePlan.cancelTitle')}</h3>
+              <p className="mps-modal-p">{t('managePlan.cancelIntro')}</p>
               <ul className="sh-list">
-                <li>Mantenés acceso hasta {renewalDate ? formatRenewalDate(renewalDate) : 'el final del período'}.</li>
-                <li>Después no podrás generar rutinas ni planes con IA.</li>
-                <li>Tus datos quedan guardados por si volvés.</li>
+                <li>{t('managePlan.cancelKeepAccess')} {renewalDate ? formatRenewalDate(renewalDate) : t('managePlan.cancelKeepAccessFallback')}.</li>
+                <li>{t('managePlan.cancelLoseAi')}</li>
+                <li>{t('managePlan.cancelDataKept')}</li>
               </ul>
               <div className="mps-modal-actions">
                 <button
@@ -310,7 +298,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                   onClick={() => setShowCancelConfirm(false)}
                   disabled={busy}
                 >
-                  No, volver
+                  {t('managePlan.cancelNo')}
                 </button>
                 <button
                   type="button"
@@ -318,7 +306,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                   onClick={handleConfirmCancel}
                   disabled={busy}
                 >
-                  {busy ? 'Procesando…' : 'Sí, cancelar'}
+                  {busy ? t('common.processing') : t('managePlan.cancelYes')}
                 </button>
               </div>
             </div>

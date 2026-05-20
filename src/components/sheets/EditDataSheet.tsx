@@ -1,18 +1,40 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppStore } from '../../store';
+import { useT } from '../../i18n';
+import type { TranslationKey } from '../../i18n/es';
 import './sheet-base.css';
 
 interface Props {
   onClose: () => void;
 }
 
+// Stored values stay in Spanish (data layer). Display labels use t() for i18n.
 const SEX_OPTIONS = ['Hombre', 'Mujer'];
 const ACTIVITY_OPTIONS = ['Sedentaria', 'Ligera', 'Moderada', 'Alta', 'Atleta'];
 const GOAL_OPTIONS = ['Bajar grasa', 'Subir masa muscular', 'Recomposición', 'Bienestar integral'];
 
+const SEX_KEYS: Record<string, TranslationKey> = {
+  'Hombre': 'editData.sexHombre',
+  'Mujer': 'editData.sexMujer',
+};
+const ACTIVITY_KEYS: Record<string, TranslationKey> = {
+  'Sedentaria': 'editData.actSedentaria',
+  'Ligera': 'editData.actLigera',
+  'Moderada': 'editData.actModerada',
+  'Alta': 'editData.actAlta',
+  'Atleta': 'editData.actAtleta',
+};
+const GOAL_KEYS: Record<string, TranslationKey> = {
+  'Bajar grasa': 'editData.goalBajarGrasa',
+  'Subir masa muscular': 'editData.goalSubirMasaMuscular',
+  'Recomposición': 'editData.goalRecomposicion',
+  'Bienestar integral': 'editData.goalBienestarIntegral',
+};
+
 export default function EditDataSheet({ onClose }: Props) {
   const { obData, setObData, recalcFromObData, addWeight, tdee, planGoal } = useAppStore();
+  const { t } = useT();
 
   const [form, setForm] = useState({
     sex: String(obData.sex || ''),
@@ -48,12 +70,12 @@ export default function EditDataSheet({ onClose }: Props) {
     const pesoN = Number(form.peso);
     const estaturaN = Number(form.estatura);
 
-    if (!form.sex || !SEX_OPTIONS.includes(form.sex)) { setError('Seleccioná tu sexo.'); return; }
-    if (!edadN || edadN < 13 || edadN > 100) { setError('Edad inválida (13-100).'); return; }
-    if (!pesoN || pesoN < 30 || pesoN > 300) { setError('Peso inválido (30-300 kg).'); return; }
-    if (!estaturaN || estaturaN < 100 || estaturaN > 230) { setError('Estatura inválida (100-230 cm).'); return; }
-    if (!form.activity || !ACTIVITY_OPTIONS.includes(form.activity)) { setError('Seleccioná tu nivel de actividad.'); return; }
-    if (!form.goal) { setError('Seleccioná tu objetivo.'); return; }
+    if (!form.sex || !SEX_OPTIONS.includes(form.sex)) { setError(t('editData.errSex')); return; }
+    if (!edadN || edadN < 13 || edadN > 100) { setError(t('editData.errAge')); return; }
+    if (!pesoN || pesoN < 30 || pesoN > 300) { setError(t('editData.errWeight')); return; }
+    if (!estaturaN || estaturaN < 100 || estaturaN > 230) { setError(t('editData.errHeight')); return; }
+    if (!form.activity || !ACTIVITY_OPTIONS.includes(form.activity)) { setError(t('editData.errActivity')); return; }
+    if (!form.goal) { setError(t('editData.errGoal')); return; }
 
     setSaving(true);
     const pesoChanged = pesoN !== Number(obData.peso);
@@ -80,7 +102,7 @@ export default function EditDataSheet({ onClose }: Props) {
       // Fallback: aplicar setObData + recalc igual para no perder los demás campos
       setObData('peso', pesoN);
       try { await recalcFromObData(); } catch { /* ignore */ }
-      setError('Guardamos tus datos pero el peso no se sincronizó. Intentá de nuevo desde TabTu.');
+      setError(t('editData.errSaveFallback'));
     } finally {
       setSaving(false);
     }
@@ -91,35 +113,33 @@ export default function EditDataSheet({ onClose }: Props) {
       <div className="sh-sheet" onClick={e => e.stopPropagation()}>
         <div className="sh-handle" />
         <div className="sh-header-row">
-          <h1 className="sh-title">Editar mis datos</h1>
+          <h1 className="sh-title">{t('editData.title')}</h1>
           <button
             className="sh-close"
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={t('common.close')}
             type="button"
           >
             ✕
           </button>
         </div>
-        <p className="sh-intro">
-          Actualizá tus datos para que el plan se recalcule según tu situación actual.
-        </p>
+        <p className="sh-intro">{t('editData.intro')}</p>
 
         <div className="sh-form">
           <label className="sh-field">
-            <span className="sh-field-label">Sexo</span>
+            <span className="sh-field-label">{t('editData.sex')}</span>
             <select
               className="sh-input"
               value={form.sex}
               onChange={e => update('sex', e.target.value)}
             >
               <option value="">—</option>
-              {SEX_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              {SEX_OPTIONS.map(o => <option key={o} value={o}>{t(SEX_KEYS[o])}</option>)}
             </select>
           </label>
 
           <label className="sh-field">
-            <span className="sh-field-label">Edad</span>
+            <span className="sh-field-label">{t('editData.age')}</span>
             <input
               className="sh-input"
               type="number"
@@ -128,12 +148,12 @@ export default function EditDataSheet({ onClose }: Props) {
               max={100}
               value={form.edad}
               onChange={e => update('edad', e.target.value)}
-              placeholder="años"
+              placeholder={t('editData.placeholderYears')}
             />
           </label>
 
           <label className="sh-field">
-            <span className="sh-field-label">Peso (kg)</span>
+            <span className="sh-field-label">{t('editData.weight')}</span>
             <input
               className="sh-input"
               type="number"
@@ -147,7 +167,7 @@ export default function EditDataSheet({ onClose }: Props) {
           </label>
 
           <label className="sh-field">
-            <span className="sh-field-label">Estatura (cm)</span>
+            <span className="sh-field-label">{t('editData.height')}</span>
             <input
               className="sh-input"
               type="number"
@@ -160,26 +180,26 @@ export default function EditDataSheet({ onClose }: Props) {
           </label>
 
           <label className="sh-field">
-            <span className="sh-field-label">Actividad</span>
+            <span className="sh-field-label">{t('editData.activity')}</span>
             <select
               className="sh-input"
               value={form.activity}
               onChange={e => update('activity', e.target.value)}
             >
               <option value="">—</option>
-              {ACTIVITY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              {ACTIVITY_OPTIONS.map(o => <option key={o} value={o}>{t(ACTIVITY_KEYS[o])}</option>)}
             </select>
           </label>
 
           <label className="sh-field">
-            <span className="sh-field-label">Objetivo</span>
+            <span className="sh-field-label">{t('editData.goal')}</span>
             <select
               className="sh-input"
               value={form.goal}
               onChange={e => update('goal', e.target.value)}
             >
               <option value="">—</option>
-              {GOAL_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              {GOAL_OPTIONS.map(o => <option key={o} value={o}>{t(GOAL_KEYS[o])}</option>)}
             </select>
           </label>
         </div>
@@ -188,7 +208,7 @@ export default function EditDataSheet({ onClose }: Props) {
 
         {saved && (
           <div className="sh-saved">
-            <p>✓ Datos guardados. Tu plan se actualizó:</p>
+            <p>{t('editData.saved')}</p>
             <p className="sh-saved-stats">
               TDEE: <strong>{tdee.toLocaleString()} kcal</strong> · Meta: <strong>{planGoal.toLocaleString()} kcal/día</strong>
             </p>
@@ -201,7 +221,7 @@ export default function EditDataSheet({ onClose }: Props) {
           onClick={handleSave}
           disabled={saving}
         >
-          {saving ? 'Guardando…' : 'Guardar cambios'}
+          {saving ? t('common.saving') : t('editData.save')}
         </button>
       </div>
     </div>,

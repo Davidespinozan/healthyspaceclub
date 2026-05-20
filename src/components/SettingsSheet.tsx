@@ -3,11 +3,31 @@ import { createPortal } from 'react-dom';
 import { useAppStore } from '../store';
 import { openCoachWith } from '../utils/openCoach';
 import { useT } from '../i18n';
+import type { TranslationKey } from '../i18n/es';
 import ManagePlanSheet from './sheets/ManagePlanSheet';
 import EditDataSheet from './sheets/EditDataSheet';
 import TermsSheet from './sheets/TermsSheet';
 import PrivacySheet from './sheets/PrivacySheet';
 import './settings-sheet.css';
+
+// Reusable mappings (stored ES value → translation key) — mirror EditDataSheet
+const SEX_KEYS: Record<string, TranslationKey> = {
+  'Hombre': 'editData.sexHombre',
+  'Mujer': 'editData.sexMujer',
+};
+const ACTIVITY_KEYS: Record<string, TranslationKey> = {
+  'Sedentaria': 'editData.actSedentaria',
+  'Ligera': 'editData.actLigera',
+  'Moderada': 'editData.actModerada',
+  'Alta': 'editData.actAlta',
+  'Atleta': 'editData.actAtleta',
+};
+const GOAL_KEYS: Record<string, TranslationKey> = {
+  'Bajar grasa': 'editData.goalBajarGrasa',
+  'Subir masa muscular': 'editData.goalSubirMasaMuscular',
+  'Recomposición': 'editData.goalRecomposicion',
+  'Bienestar integral': 'editData.goalBienestarIntegral',
+};
 
 interface Props {
   open: boolean;
@@ -27,7 +47,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
 
   function handleContactSupport() {
     onClose();
-    openCoachWith('Necesito ayuda con algo.');
+    openCoachWith(t('settings.supportRequest'));
   }
 
   function trialDaysLeft(): number | null {
@@ -39,17 +59,25 @@ export default function SettingsSheet({ open, onClose }: Props) {
 
   function planLabel(): string {
     switch (userPlan) {
-      case 'pro': return 'Pro';
-      case 'elite': return 'Elite';
-      case 'basico': return 'Básico';
-      case 'trial': return 'Prueba gratuita';
+      case 'pro': return t('settings.planPro');
+      case 'elite': return t('settings.planElite');
+      case 'basico': return t('settings.planBasico');
+      case 'trial': return t('settings.planTrial');
       case 'none':
-      default: return 'Sin plan activo';
+      default: return t('settings.planNone');
     }
   }
 
+  // Display label para valores guardados en ES (obData.sex, etc).
+  // Si el value existe en la map, traduce; sino muestra el value crudo o '—'.
+  function obDataLabel(map: Record<string, TranslationKey>, value: unknown): string {
+    const s = String(value || '');
+    if (!s) return '—';
+    return map[s] ? t(map[s]) : s;
+  }
+
   function handleLogout() {
-    if (window.confirm('¿Cerrar sesión? Tendrás que volver a iniciar sesión para acceder a tu cuenta.')) {
+    if (window.confirm(t('settings.logoutConfirm'))) {
       onClose();
       logout();
     }
@@ -79,11 +107,11 @@ export default function SettingsSheet({ open, onClose }: Props) {
       <div className="ss-sheet" onClick={e => e.stopPropagation()}>
         <div className="ss-handle" />
         <div className="ss-header-row">
-          <h1 className="ss-title">Ajustes</h1>
+          <h1 className="ss-title">{t('settings.title')}</h1>
           <button
             className="ss-close"
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={t('common.close')}
             type="button"
           >
             ✕
@@ -92,15 +120,15 @@ export default function SettingsSheet({ open, onClose }: Props) {
 
         {/* Sección 1: Mi plan */}
         <section className="ss-section">
-          <p className="ss-section-eyebrow">Mi plan</p>
+          <p className="ss-section-eyebrow">{t('settings.myPlan')}</p>
           <div className="ss-plan-card">
             <div className="ss-plan-tier">
-              <span className="ss-plan-tier-label">Plan actual</span>
+              <span className="ss-plan-tier-label">{t('settings.currentPlan')}</span>
               <span className="ss-plan-tier-name">{planLabel()}</span>
             </div>
             {daysLeft !== null && daysLeft > 0 && (
               <p className="ss-plan-trial">
-                Tu prueba termina en <em>{daysLeft} {daysLeft === 1 ? 'día' : 'días'}</em>
+                {t('settings.trialEndsIn')} <em>{daysLeft} {daysLeft === 1 ? t('settings.daysOne') : t('settings.daysOther')}</em>
               </p>
             )}
             <button
@@ -108,40 +136,40 @@ export default function SettingsSheet({ open, onClose }: Props) {
               className="ss-plan-link"
               onClick={() => setShowManagePlan(true)}
             >
-              Gestionar plan →
+              {t('settings.managePlan')}
             </button>
           </div>
         </section>
 
         {/* Sección 2: Datos personales */}
         <section className="ss-section">
-          <p className="ss-section-eyebrow">Tus datos</p>
+          <p className="ss-section-eyebrow">{t('settings.yourData')}</p>
           <div className="ss-data-card">
             <div className="ss-data-row">
-              <span className="ss-data-key">Sexo</span>
-              <span className="ss-data-val">{String(obData.sex || '—')}</span>
+              <span className="ss-data-key">{t('editData.sex')}</span>
+              <span className="ss-data-val">{obDataLabel(SEX_KEYS, obData.sex)}</span>
             </div>
             <div className="ss-data-row">
-              <span className="ss-data-key">Edad</span>
-              <span className="ss-data-val">{obData.edad ? `${obData.edad} años` : '—'}</span>
+              <span className="ss-data-key">{t('editData.age')}</span>
+              <span className="ss-data-val">{obData.edad ? `${obData.edad} ${obData.edad === 1 ? t('settings.daysOne') : t('editData.placeholderYears')}` : '—'}</span>
             </div>
             <div className="ss-data-row">
-              <span className="ss-data-key">Peso</span>
+              <span className="ss-data-key">{t('editData.weight')}</span>
               <span className="ss-data-val">{obData.peso ? `${obData.peso} kg` : '—'}</span>
             </div>
             <div className="ss-data-row">
-              <span className="ss-data-key">Estatura</span>
+              <span className="ss-data-key">{t('editData.height')}</span>
               <span className="ss-data-val">
                 {(obData.estatura || obData.altura) ? `${obData.estatura || obData.altura} cm` : '—'}
               </span>
             </div>
             <div className="ss-data-row">
-              <span className="ss-data-key">Actividad</span>
-              <span className="ss-data-val">{String(obData.activity || obData.actividad || '—')}</span>
+              <span className="ss-data-key">{t('editData.activity')}</span>
+              <span className="ss-data-val">{obDataLabel(ACTIVITY_KEYS, obData.activity || obData.actividad)}</span>
             </div>
             <div className="ss-data-row">
-              <span className="ss-data-key">Objetivo</span>
-              <span className="ss-data-val">{String(obData.goal || '—')}</span>
+              <span className="ss-data-key">{t('editData.goal')}</span>
+              <span className="ss-data-val">{obDataLabel(GOAL_KEYS, obData.goal)}</span>
             </div>
             {tdee > 0 && (
               <div className="ss-data-row">
@@ -151,7 +179,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
             )}
             {planGoal > 0 && (
               <div className="ss-data-row">
-                <span className="ss-data-key">Meta calórica</span>
+                <span className="ss-data-key">{t('settings.calorieTarget')}</span>
                 <span className="ss-data-val ss-data-val--accent">{planGoal.toLocaleString()} kcal/día</span>
               </div>
             )}
@@ -161,7 +189,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
             className="ss-data-edit"
             onClick={() => setShowEditData(true)}
           >
-            Editar mis datos →
+            {t('settings.editData')}
           </button>
         </section>
 
@@ -190,18 +218,18 @@ export default function SettingsSheet({ open, onClose }: Props) {
 
         {/* Sección 3: Ayuda */}
         <section className="ss-section">
-          <p className="ss-section-eyebrow">Ayuda y soporte</p>
+          <p className="ss-section-eyebrow">{t('settings.helpAndSupport')}</p>
           <div className="ss-help-list">
             <button type="button" className="ss-help-row" onClick={handleContactSupport}>
-              <span>Contactar soporte</span>
+              <span>{t('settings.contactSupport')}</span>
               <span className="ss-help-arrow">→</span>
             </button>
             <button type="button" className="ss-help-row" onClick={() => setShowTerms(true)}>
-              <span>Términos de servicio</span>
+              <span>{t('settings.termsOfService')}</span>
               <span className="ss-help-arrow">→</span>
             </button>
             <button type="button" className="ss-help-row" onClick={() => setShowPrivacy(true)}>
-              <span>Privacidad</span>
+              <span>{t('settings.privacy')}</span>
               <span className="ss-help-arrow">→</span>
             </button>
           </div>
@@ -209,7 +237,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
 
         {/* Sección 4: Logout */}
         <button className="ss-logout" onClick={handleLogout} type="button">
-          Cerrar sesión
+          {t('settings.logout')}
         </button>
 
         <p className="ss-version">HSC v1.2.0 · made with care in Valencia</p>

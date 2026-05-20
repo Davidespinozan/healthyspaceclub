@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PRIVACY_SECTIONS, PRIVACY_LAST_UPDATED, PRIVACY_INTRO, PRIVACY_DISCLAIMER } from '../../content/legal/privacy';
+import { useT } from '../../i18n';
 import './sheet-base.css';
 
 interface Props {
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export default function PrivacySheet({ onClose }: Props) {
+  const { t, locale } = useT();
+
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -24,19 +27,22 @@ export default function PrivacySheet({ onClose }: Props) {
       <div className="sh-sheet" onClick={e => e.stopPropagation()}>
         <div className="sh-handle" />
         <div className="sh-header-row">
-          <h1 className="sh-title">Política de Privacidad</h1>
+          <h1 className="sh-title">{t('legal.privacyTitle')}</h1>
           <button
             className="sh-close"
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={t('common.close')}
             type="button"
           >
             ✕
           </button>
         </div>
-        <p className="sh-intro">{PRIVACY_INTRO}</p>
+        {locale === 'en' && (
+          <p className="sh-disclaimer" lang="en">{t('legal.onlySpanishNotice')}</p>
+        )}
+        <p className="sh-intro" lang="es">{PRIVACY_INTRO}</p>
 
-        <div className="sh-body">
+        <div className="sh-body" lang="es">
           {PRIVACY_SECTIONS.map(section => (
             <section key={section.heading} className="sh-section">
               <h2 className="sh-heading">{section.heading}</h2>
@@ -52,7 +58,7 @@ export default function PrivacySheet({ onClose }: Props) {
           ))}
 
           <p className="sh-disclaimer">{PRIVACY_DISCLAIMER}</p>
-          <p className="sh-updated">Última actualización: {PRIVACY_LAST_UPDATED}</p>
+          <p className="sh-updated">{t('legal.lastUpdated')} {PRIVACY_LAST_UPDATED}</p>
         </div>
       </div>
     </div>,
