@@ -12,15 +12,17 @@ import LogrosSheet from './sheets/LogrosSheet';
 import AmbientGlow from './AmbientGlow';
 import {
   MILESTONE_STEPS,
-  MILESTONE_LABELS,
-  MILESTONE_COPY,
+  MILESTONE_EMOJI,
+  getMilestoneLabel,
   getAchievementsCount,
   getNextMilestone,
 } from '../constants/milestones';
+import { useT } from '../i18n';
 import './tab-tu-v5.css';
 
 export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => void }) {
   void _onNav;
+  const { locale } = useT();
   const {
     userName, setUserName, streakCount, startDate, userMilestones,
   } = useAppStore();
@@ -277,11 +279,11 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
               >
                 <div className="tt5-highlight-ring">
                   <div className="tt5-highlight-emoji" aria-hidden="true">
-                    {isUnlocked ? MILESTONE_COPY[days].emoji : '🔒'}
+                    {isUnlocked ? MILESTONE_EMOJI[days] : '🔒'}
                   </div>
                 </div>
                 <div className="tt5-highlight-label">
-                  {isNext ? 'Próximo' : MILESTONE_LABELS[days]}
+                  {isNext ? 'Próximo' : getMilestoneLabel(days, locale)}
                 </div>
                 {isNext && (
                   <div className="tt5-highlight-sub">a {remaining}d</div>

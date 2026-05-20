@@ -13,6 +13,19 @@ export const es = {
     languageEs: 'Español',
     languageEn: 'Inglés',
   },
+  milestones: {
+    d3:   { title: '3 días',      sub: 'Has plantado el hábito' },
+    d7:   { title: 'Una semana',  sub: 'La constancia toma forma' },
+    d14:  { title: 'Dos semanas', sub: 'Tu cuerpo empieza a notar el cambio' },
+    d30:  { title: 'Un mes',      sub: 'Ya es parte de tu vida' },
+    d60:  { title: 'Dos meses',   sub: 'Disciplina genuina' },
+    d90:  { title: 'Un trimestre', sub: 'Pocas personas llegan aquí' },
+    d180: { title: 'Seis meses',  sub: 'Transformación profunda' },
+    d365: { title: 'Un año',      sub: 'Maestría' },
+    // Solo los labels que dependen del locale. '3d', '7d', etc. son universales
+    // y se renderean como constante en milestones.ts. '1a'/'1y' difiere.
+    labelD365: '1a',
+  },
 } as const;
 
 // Helper type para extraer todas las keys anidadas como dot-notation:

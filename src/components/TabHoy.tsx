@@ -11,7 +11,8 @@ import ExerciseDetailPopout from './ExerciseDetailPopout';
 import type { Exercise } from '../types';
 import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
-import { MILESTONE_STEPS, MILESTONE_COPY } from '../constants/milestones';
+import { MILESTONE_STEPS, getMilestoneCopy } from '../constants/milestones';
+import { useT } from '../i18n';
 import './tab-hoy-v3.css';
 
 /* ── HSM Question Bank — 10 per dimension, 100 total ── */
@@ -145,6 +146,7 @@ function getDailyQuestion(dimIndex: number, dayIndex: number): { emoji: string; 
 }
 
 export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
+  const { t } = useT();
   const {
     userName, planGoal, mealPlanKey, shoppingDay,
     mealChecks, toggleMealCheck,
@@ -422,7 +424,7 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
 
   function mealKey(i: number) { return `meal-${today}-${i}`; }
 
-  const mileCopy = milestone ? MILESTONE_COPY[milestone] : null;
+  const mileCopy = milestone ? getMilestoneCopy(milestone, t) : null;
 
   // Editorial date string for hero eyebrow: "Miércoles · 24 abril"
   const heroDate = (() => {

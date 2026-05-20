@@ -1,7 +1,13 @@
+import type { AppLanguage } from '../store';
+import type { TranslationKey } from '../i18n/es';
+
 export const MILESTONE_STEPS = [3, 7, 14, 30, 60, 90, 180, 365] as const;
 
 export type MilestoneDay = typeof MILESTONE_STEPS[number];
 
+// Labels universales (no varían por locale). '3d', '7d', etc. son sufijos
+// neutrales internacionales. Solo '1a' (1 año) cambia a '1y' en EN — para
+// eso usar getMilestoneLabel(days, locale).
 export const MILESTONE_LABELS: Record<number, string> = {
   3: '3d',
   7: '7d',
@@ -13,6 +19,8 @@ export const MILESTONE_LABELS: Record<number, string> = {
   365: '1a',
 };
 
+// DEPRECATED: dead code post TabTu v5 refactor. Mantener para no romper
+// si algún componente lo importa silenciosamente; cleanup en lote futuro.
 export const MILESTONE_FULL_LABELS: Record<number, string> = {
   3: '3 días',
   7: 'una semana',
@@ -24,16 +32,43 @@ export const MILESTONE_FULL_LABELS: Record<number, string> = {
   365: 'un año',
 };
 
-export const MILESTONE_COPY: Record<number, { emoji: string; title: string; sub: string }> = {
-  3: { emoji: '🌱', title: '3 días', sub: 'Has plantado el hábito' },
-  7: { emoji: '🔥', title: 'Una semana', sub: 'La constancia toma forma' },
-  14: { emoji: '✨', title: 'Dos semanas', sub: 'Tu cuerpo empieza a notar el cambio' },
-  30: { emoji: '🌙', title: 'Un mes', sub: 'Ya es parte de tu vida' },
-  60: { emoji: '⛰️', title: 'Dos meses', sub: 'Disciplina genuina' },
-  90: { emoji: '🌊', title: 'Un trimestre', sub: 'Pocas personas llegan aquí' },
-  180: { emoji: '☀️', title: 'Seis meses', sub: 'Transformación profunda' },
-  365: { emoji: '🏔️', title: 'Un año', sub: 'Maestría' },
+// Emojis universales — no se traducen.
+export const MILESTONE_EMOJI: Record<number, string> = {
+  3: '🌱',
+  7: '🔥',
+  14: '✨',
+  30: '🌙',
+  60: '⛰️',
+  90: '🌊',
+  180: '☀️',
+  365: '🏔️',
 };
+
+// Type del t() function de useT(). Loose para no forzar al caller a importar
+// TranslationKey si no quiere. Internamente casteamos las keys construidas
+// con template strings.
+type TFn = (key: TranslationKey, params?: Record<string, string | number>) => string;
+
+// Locale-aware copy de un milestone. Devuelve el shape legacy
+// { emoji, title, sub } para que los consumidores no tengan que cambiar
+// destructures existentes. Uso: const copy = getMilestoneCopy(days, t);
+export function getMilestoneCopy(
+  days: number,
+  t: TFn,
+): { emoji: string; title: string; sub: string } {
+  return {
+    emoji: MILESTONE_EMOJI[days] ?? '',
+    title: t(`milestones.d${days}.title` as TranslationKey),
+    sub:   t(`milestones.d${days}.sub`   as TranslationKey),
+  };
+}
+
+// Label corto del chip ('3d', '7d', ..., '1a' / '1y'). Solo d365 varía por
+// locale; el resto se lee del const universal.
+export function getMilestoneLabel(days: number, locale: AppLanguage): string {
+  if (days === 365) return locale === 'en' ? '1y' : '1a';
+  return MILESTONE_LABELS[days] ?? '';
+}
 
 export function getAchievementsCount(streakCount: number): number {
   return MILESTONE_STEPS.filter(m => streakCount >= m).length;

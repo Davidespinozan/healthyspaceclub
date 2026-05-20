@@ -3,7 +3,8 @@ import { X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
 import { deleteClubPost } from '../utils/clubPosts';
-import { MILESTONE_STEPS, MILESTONE_COPY, MILESTONE_LABELS } from '../constants/milestones';
+import { MILESTONE_STEPS, MILESTONE_EMOJI, getMilestoneLabel } from '../constants/milestones';
+import { useT } from '../i18n';
 import './public-profile.css';
 
 interface ProfileData {
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export default function PublicProfile({ userId, currentUserId, onClose }: Props) {
+  const { locale } = useT();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [posts, setPosts] = useState<ClubPost[]>([]);
   const [milestones, setMilestones] = useState<MilestoneRow[]>([]);
@@ -246,10 +248,10 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
                   <div key={days} className="pp5-highlight">
                     <div className="pp5-highlight-ring">
                       <div className="pp5-highlight-emoji" aria-hidden="true">
-                        {MILESTONE_COPY[days].emoji}
+                        {MILESTONE_EMOJI[days]}
                       </div>
                     </div>
-                    <div className="pp5-highlight-label">{MILESTONE_LABELS[days]}</div>
+                    <div className="pp5-highlight-label">{getMilestoneLabel(days, locale)}</div>
                   </div>
                 ))}
               </div>

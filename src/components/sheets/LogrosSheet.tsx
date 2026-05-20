@@ -4,9 +4,10 @@ import { ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../../store';
 import {
   MILESTONE_STEPS,
-  MILESTONE_COPY,
-  MILESTONE_LABELS,
+  getMilestoneCopy,
+  getMilestoneLabel,
 } from '../../constants/milestones';
+import { useT } from '../../i18n';
 import './sheet-base.css';
 import './logros-sheet.css';
 
@@ -24,6 +25,7 @@ function formatUnlockedDate(iso: string): string {
 export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Props) {
   const userMilestones = useAppStore(s => s.userMilestones);
   const streakCount = useAppStore(s => s.streakCount);
+  const { t, locale } = useT();
 
   const [focused, setFocused] = useState<number | null>(initialMilestoneDay ?? null);
 
@@ -55,11 +57,11 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
       days,
       isUnlocked: !!entry,
       unlockedAt: entry?.unlocked_at,
-      copy: MILESTONE_COPY[days],
-      label: MILESTONE_LABELS[days],
+      copy: getMilestoneCopy(days, t),
+      label: getMilestoneLabel(days, locale),
       daysRemaining: Math.max(0, days - streakCount),
     };
-  }), [userMilestones, streakCount]);
+  }), [userMilestones, streakCount, t, locale]);
 
   const unlockedCount = milestones.filter(m => m.isUnlocked).length;
   const focusedMilestone = focused !== null
