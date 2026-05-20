@@ -5,10 +5,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { deleteClubPost } from '../utils/clubPosts';
+import { useT } from '../i18n';
+import { plural } from '../i18n/format';
 import './tab-club.css';
 
 export default function TabClub() {
   const userId = useCurrentUserId();
+  const { t } = useT();
 
   const [posts, setPosts] = useState<ClubPost[]>([]);
   const [activeToday, setActiveToday] = useState(0);
@@ -78,29 +81,34 @@ export default function TabClub() {
   }
 
   async function deletePost(postId: string) {
-    if (!window.confirm('¿Eliminar este post?')) return;
+    if (!window.confirm(t('club.deletePostConfirm'))) return;
     const post = posts.find(p => p.id === postId);
     try {
       await deleteClubPost(postId, post?.photo_url ?? null);
       setPosts(prev => prev.filter(p => p.id !== postId));
     } catch (e) {
       console.warn('[TabClub] deletePost failed:', e);
-      alert('No se pudo borrar el post.');
+      alert(t('club.deletePostFailed'));
     }
   }
 
   return (
     <div className="clb-wrap">
       <div className="clb-header">
-        <h1 className="clb-title">El Club</h1>
-        <span className="clb-meta">{activeToday} {activeToday === 1 ? 'activo' : 'activos'} hoy</span>
+        <h1 className="clb-title">{t('club.title')}</h1>
+        <span className="clb-meta">
+          {plural(activeToday, {
+            one: t('club.activeOne', { count: activeToday }),
+            other: t('club.activeOther', { count: activeToday }),
+          })}
+        </span>
       </div>
 
       <section className="clb-feed">
         {posts.length === 0 && (
           <div className="clb-empty">
-            <p className="clb-empty-text">Aún no hay publicaciones del club.</p>
-            <p className="clb-empty-sub">Comparte tu primer logro para empezar.</p>
+            <p className="clb-empty-text">{t('club.emptyTitle')}</p>
+            <p className="clb-empty-sub">{t('club.emptySub')}</p>
           </div>
         )}
         {posts.map(post => (
@@ -119,7 +127,7 @@ export default function TabClub() {
       <button
         type="button"
         className="clb-fab"
-        aria-label="Crear publicación"
+        aria-label={t('club.ariaCreate')}
         onClick={() => setCreateOpen(true)}
       >
         +

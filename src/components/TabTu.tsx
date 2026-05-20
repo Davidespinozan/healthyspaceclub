@@ -22,7 +22,7 @@ import './tab-tu-v5.css';
 
 export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => void }) {
   void _onNav;
-  const { locale } = useT();
+  const { t, locale } = useT();
   const {
     userName, setUserName, streakCount, startDate, userMilestones,
   } = useAppStore();
@@ -137,14 +137,14 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   }
 
   function handleShare() {
-    const data = { title: 'Mi perfil HSC', url: window.location.href };
+    const data = { title: t('profile.shareTitle'), url: window.location.href };
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       navigator.share(data).catch(() => {});
       return;
     }
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href)
-        .then(() => alert('URL copiada al portapapeles'))
+        .then(() => alert(t('profile.urlCopied')))
         .catch(() => {});
     }
   }
@@ -159,7 +159,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
 
       {/* HEADER lateral — avatar + meta (☰ inline a la derecha del nombre) */}
       <div className="tt5-header">
-        <label className="tt5-avatar-wrap" aria-label="Cambiar avatar">
+        <label className="tt5-avatar-wrap" aria-label={t('profile.ariaChangeAvatar')}>
           {profile.avatar_url
             ? <img src={profile.avatar_url} alt="" />
             : <div className="tt5-avatar-fallback">{initial}</div>
@@ -174,14 +174,14 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
               <button
                 className="tt5-menu-btn"
                 onClick={() => setSettingsOpen(true)}
-                aria-label="Ajustes"
+                aria-label={t('profile.ariaSettings')}
                 type="button"
               >
                 <Menu size={16} strokeWidth={1.6} />
               </button>
             </div>
             {profile.bio && <p className="tt5-bio">{profile.bio}</p>}
-            <span className="tt5-year-chip">Año {yearNumber} · día {dayOfYear}</span>
+            <span className="tt5-year-chip">{t('profile.yearDayChip', { year: yearNumber, day: dayOfYear })}</span>
           </div>
         ) : (
           <div className="tt5-edit-block">
@@ -189,21 +189,21 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
               className="tt5-edit-input"
               value={editName}
               onChange={e => setEditName(e.target.value)}
-              placeholder="Tu nombre"
+              placeholder={t('profile.editNamePlaceholder')}
               autoFocus
             />
             <input
               className="tt5-edit-input"
               value={editBio}
               onChange={e => setEditBio(e.target.value.slice(0, 100))}
-              placeholder="Bio corta (máx 100)"
+              placeholder={t('profile.editBioPlaceholder')}
             />
             <div className="tt5-edit-actions">
               <button className="tt5-edit-save" onClick={handleSave} disabled={saving} type="button">
-                {saving ? 'Guardando...' : 'Guardar'}
+                {saving ? t('common.saving') : t('common.save')}
               </button>
               <button className="tt5-edit-cancel" onClick={() => setEditing(false)} type="button">
-                Cancelar
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -222,14 +222,14 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
               setEditing(true);
             }}
           >
-            Editar perfil
+            {t('profile.editProfile')}
           </button>
           <button
             className="tt5-btn tt5-btn--secondary"
             type="button"
             onClick={handleShare}
           >
-            Compartir
+            {t('profile.share')}
           </button>
         </div>
       )}
@@ -238,11 +238,11 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
       {!editing && (
         <div className="tt5-stats">
           <div className="tt5-stat tt5-stat--posts">
-            <div className="tt5-stat-label">Posts</div>
+            <div className="tt5-stat-label">{t('profile.statPosts')}</div>
             <div className="tt5-stat-num">{postCount}</div>
           </div>
           <div className="tt5-stat tt5-stat--racha">
-            <div className="tt5-stat-label">Racha</div>
+            <div className="tt5-stat-label">{t('profile.statStreak')}</div>
             <div className="tt5-stat-num">{streakCount} 🔥</div>
           </div>
           <button
@@ -250,7 +250,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
             className="tt5-stat tt5-stat--logros"
             onClick={() => openLogrosSheet()}
           >
-            <div className="tt5-stat-label">Logros</div>
+            <div className="tt5-stat-label">{t('profile.statLogros')}</div>
             <div className="tt5-stat-num">
               {achievementsCount}<span className="tt5-stat-num-total">/{MILESTONE_STEPS.length}</span>
             </div>
@@ -283,10 +283,10 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
                   </div>
                 </div>
                 <div className="tt5-highlight-label">
-                  {isNext ? 'Próximo' : getMilestoneLabel(days, locale)}
+                  {isNext ? t('profile.nextLabel') : getMilestoneLabel(days, locale)}
                 </div>
                 {isNext && (
-                  <div className="tt5-highlight-sub">a {remaining}d</div>
+                  <div className="tt5-highlight-sub">{t('profile.nextSub', { n: remaining })}</div>
                 )}
               </button>
             );
@@ -302,14 +302,14 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
             className={activeTab === 'posts' ? 'is-active' : ''}
             onClick={() => setActiveTab('posts')}
           >
-            Posts
+            {t('profile.tabPosts')}
           </button>
           <button
             type="button"
             className={activeTab === 'reflexiones' ? 'is-active' : ''}
             onClick={() => setActiveTab('reflexiones')}
           >
-            Reflexiones
+            {t('profile.tabReflexiones')}
           </button>
         </div>
       )}
@@ -325,7 +325,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
                 type="button"
                 className="tt5-grid-item"
                 onClick={() => setProfileOpen(true)}
-                aria-label="Ver mis posts"
+                aria-label={t('profile.ariaViewPosts')}
               >
                 <img src={post.photo_url} alt="" loading="lazy" />
               </button>
@@ -340,7 +340,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
       {!editing && activeTab === 'reflexiones' && (
         <div className="tt5-reflections-empty">
           <p className="tt5-reflections-empty-text">
-            Tus reflexiones de Tu Espacio aparecerán aquí.
+            {t('profile.reflexionesEmpty')}
           </p>
         </div>
       )}

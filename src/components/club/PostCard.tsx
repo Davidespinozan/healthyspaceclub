@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Flame, MessageCircle } from 'lucide-react';
+import { useT } from '../../i18n';
+import { plural } from '../../i18n/format';
+import type { TranslationKey } from '../../i18n/es';
 import './post-card.css';
+
+// Tipo loose para t() — evita acoplar a la signature exacta de useT.
+type TFn = (key: TranslationKey, params?: Record<string, string | number>) => string;
 
 export interface ClubPost {
   id: string;
@@ -27,16 +33,16 @@ interface Props {
   showAuthor?: boolean;
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: TFn): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
   const diffMin = Math.floor((now - then) / 60000);
-  if (diffMin < 1) return 'ahora';
-  if (diffMin < 60) return `hace ${diffMin} min`;
+  if (diffMin < 1) return t('post.timeJustNow');
+  if (diffMin < 60) return t('post.timeMin', { n: diffMin });
   const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `hace ${diffH}h`;
+  if (diffH < 24) return t('post.timeHour', { n: diffH });
   const diffD = Math.floor(diffH / 24);
-  return `hace ${diffD}d`;
+  return t('post.timeDay', { n: diffD });
 }
 
 export default function PostCard({
@@ -48,6 +54,7 @@ export default function PostCard({
   onDelete,
   showAuthor = true,
 }: Props) {
+  const { t } = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const isOwn = currentUserId === post.user_id;
@@ -77,7 +84,7 @@ export default function PostCard({
           <button
             type="button"
             className="post-card-menu-trigger"
-            aria-label="Opciones del post"
+            aria-label={t('post.ariaOptions')}
             onClick={() => setMenuOpen(o => !o)}
           >
             ⋯
@@ -89,7 +96,7 @@ export default function PostCard({
                 className="post-card-menu-item"
                 onClick={() => { setMenuOpen(false); onDelete(post.id); }}
               >
-                Borrar
+                {t('post.delete')}
               </button>
             </div>
           )}
@@ -115,10 +122,15 @@ export default function PostCard({
             </div>
             <div className="post-card-meta">
               <div className="post-card-name">
-                <span className="post-card-username">{post.username || 'Anónimo'}</span>
-                {streak > 0 && <span className="post-card-streak"> · {streak} días</span>}
+                <span className="post-card-username">{post.username || t('post.anonymous')}</span>
+                {streak > 0 && (
+                  <span className="post-card-streak"> {plural(streak, {
+                    one: t('post.streakDaysOne', { streak }),
+                    other: t('post.streakDaysOther', { streak }),
+                  })}</span>
+                )}
               </div>
-              <div className="post-card-time">{timeAgo(post.created_at)}</div>
+              <div className="post-card-time">{timeAgo(post.created_at, t)}</div>
             </div>
           </div>
 
@@ -141,14 +153,17 @@ export default function PostCard({
           type="button"
           className={`post-card-fire${hasFire ? ' is-active' : ''}`}
           onClick={() => onFireToggle(post.id)}
-          aria-label={hasFire ? 'Quitar fire' : 'Dar fire'}
+          aria-label={hasFire ? t('post.ariaRemoveFire') : t('post.ariaAddFire')}
           aria-pressed={hasFire}
         >
           <Flame size={16} strokeWidth={1.6} fill={hasFire ? 'currentColor' : 'none'} />
           <span>{post.fire_count}</span>
         </button>
         {post.comments_count > 0 && (
-          <div className="post-card-comments" aria-label={`${post.comments_count} comentarios`}>
+          <div className="post-card-comments" aria-label={plural(post.comments_count, {
+            one: t('post.ariaCommentsOne', { count: post.comments_count }),
+            other: t('post.ariaCommentsOther', { count: post.comments_count }),
+          })}>
             <MessageCircle size={16} strokeWidth={1.6} />
             <span>{post.comments_count}</span>
           </div>

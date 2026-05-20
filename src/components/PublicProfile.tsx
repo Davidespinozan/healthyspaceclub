@@ -28,7 +28,7 @@ interface Props {
 }
 
 export default function PublicProfile({ userId, currentUserId, onClose }: Props) {
-  const { locale } = useT();
+  const { t, locale } = useT();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [posts, setPosts] = useState<ClubPost[]>([]);
   const [milestones, setMilestones] = useState<MilestoneRow[]>([]);
@@ -104,14 +104,14 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
   }, [onClose]);
 
   async function handleDelete(postId: string) {
-    if (!window.confirm('¿Eliminar este post?')) return;
+    if (!window.confirm(t('club.deletePostConfirm'))) return;
     const post = posts.find(p => p.id === postId);
     try {
       await deleteClubPost(postId, post?.photo_url ?? null);
       setPosts(prev => prev.filter(p => p.id !== postId));
     } catch (e) {
       console.warn('[public-profile] delete failed:', e);
-      alert('No se pudo borrar el post.');
+      alert(t('club.deletePostFailed'));
     }
   }
 
@@ -187,19 +187,19 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
       <div className="pp5-modal" onClick={e => e.stopPropagation()}>
         {loading ? (
           <div className="pp5-loading">
-            <button className="pp5-close pp5-close--floating" onClick={onClose} aria-label="Cerrar" type="button">
+            <button className="pp5-close pp5-close--floating" onClick={onClose} aria-label={t('common.close')} type="button">
               <X size={18} />
             </button>
             <div className="pp5-spinner" />
-            <p className="pp5-loading-text">Cargando perfil...</p>
+            <p className="pp5-loading-text">{t('profile.loadingProfile')}</p>
           </div>
         ) : error ? (
           <div className="pp5-error">
-            <button className="pp5-close pp5-close--floating" onClick={onClose} aria-label="Cerrar" type="button">
+            <button className="pp5-close pp5-close--floating" onClick={onClose} aria-label={t('common.close')} type="button">
               <X size={18} />
             </button>
             <p className="pp5-error-text">{error}</p>
-            <button className="pp5-error-btn" onClick={onClose} type="button">Cerrar</button>
+            <button className="pp5-error-btn" onClick={onClose} type="button">{t('common.close')}</button>
           </div>
         ) : (
           <>
@@ -214,27 +214,27 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
               <div className="pp5-header-meta">
                 <div className="pp5-name-row">
                   <h1 className="pp5-name">{displayName}</h1>
-                  <button className="pp5-close" onClick={onClose} aria-label="Cerrar" type="button">
+                  <button className="pp5-close" onClick={onClose} aria-label={t('common.close')} type="button">
                     <X size={16} />
                   </button>
                 </div>
                 {profile?.bio && <p className="pp5-bio">{profile.bio}</p>}
-                <span className="pp5-year-chip">Año {yearN} · día {dayN}</span>
+                <span className="pp5-year-chip">{t('profile.yearDayChip', { year: yearN, day: dayN })}</span>
               </div>
             </div>
 
             {/* STATS */}
             <div className="pp5-stats">
               <div className="pp5-stat pp5-stat--posts">
-                <div className="pp5-stat-label">Posts</div>
+                <div className="pp5-stat-label">{t('profile.statPosts')}</div>
                 <div className="pp5-stat-num">{posts.length}</div>
               </div>
               <div className="pp5-stat pp5-stat--racha">
-                <div className="pp5-stat-label">Racha</div>
+                <div className="pp5-stat-label">{t('profile.statStreak')}</div>
                 <div className="pp5-stat-num">{visitedStreak} 🔥</div>
               </div>
               <div className="pp5-stat pp5-stat--logros">
-                <div className="pp5-stat-label">Logros</div>
+                <div className="pp5-stat-label">{t('profile.statLogros')}</div>
                 <div className="pp5-stat-num">
                   {sortedHighlights.length}<span className="pp5-stat-num-total">/{MILESTONE_STEPS.length}</span>
                 </div>
@@ -276,7 +276,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
             ) : !hasContent ? (
               <div className="pp5-empty">
                 <div className="pp5-empty-emoji">🌱</div>
-                <p className="pp5-empty-text">Este perfil aún no tiene contenido público.</p>
+                <p className="pp5-empty-text">{t('profile.publicEmpty')}</p>
               </div>
             ) : null}
           </>
