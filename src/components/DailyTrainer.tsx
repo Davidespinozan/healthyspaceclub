@@ -37,7 +37,7 @@ import type {
   WorkoutDayDecision,
   YogaPlan,
 } from '../types';
-import { RefreshCw, Clock, Zap, ChevronRight, Lock, Bot, Dumbbell, Flower2, Activity, type LucideIcon } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, Lock, Bot, Dumbbell, Flower2, Activity, PersonStanding, Cable, Footprints, AlertTriangle, Bandage, CircleCheck, type LucideIcon } from 'lucide-react';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 import PlayerLoadingFallback from './PlayerLoadingFallback';
@@ -69,22 +69,22 @@ const TIME_OPTIONS = [
   { value: 60, label: '60+ min' },
 ];
 
-const EQUIPMENT_OPTIONS: Array<{ value: Equipment; label: string; icon: string }> = [
-  { value: 'gym', label: 'En el gym', icon: '🏋️' },
-  { value: 'cuerpo', label: 'En casa', icon: '🤸' },
-  { value: 'ligas', label: 'Con bandas', icon: '🎗️' },
+const EQUIPMENT_OPTIONS: Array<{ value: Equipment; label: string; icon: LucideIcon }> = [
+  { value: 'gym', label: 'En el gym', icon: Dumbbell },
+  { value: 'cuerpo', label: 'En casa', icon: PersonStanding },
+  { value: 'ligas', label: 'Con bandas', icon: Cable },
 ];
 
-const PRIOR_EXERCISE_OPTIONS = [
-  { value: 'none', label: 'No, este es el primero', icon: '✅' },
-  { value: 'light', label: 'Sí, algo ligero', icon: '🚶' },
-  { value: 'heavy', label: 'Sí, fuerte', icon: '💪' },
+const PRIOR_EXERCISE_OPTIONS: Array<{ value: string; label: string; icon: LucideIcon }> = [
+  { value: 'none', label: 'No, este es el primero', icon: CircleCheck },
+  { value: 'light', label: 'Sí, algo ligero', icon: Footprints },
+  { value: 'heavy', label: 'Sí, fuerte', icon: Dumbbell },
 ];
 
-const DISCOMFORT_OPTIONS = [
-  { value: 'none', label: 'Todo bien', icon: '✅' },
-  { value: 'mild', label: 'Algo leve, puedo entrenar', icon: '⚠️' },
-  { value: 'pain', label: 'Dolor específico', icon: '🩹' },
+const DISCOMFORT_OPTIONS: Array<{ value: string; label: string; icon: LucideIcon }> = [
+  { value: 'none', label: 'Todo bien', icon: CircleCheck },
+  { value: 'mild', label: 'Algo leve, puedo entrenar', icon: AlertTriangle },
+  { value: 'pain', label: 'Dolor específico', icon: Bandage },
 ];
 
 const PAIN_AREAS = ['hombro', 'rodilla', 'espalda', 'cuello', 'otro'];
@@ -850,7 +850,7 @@ export default function DailyTrainer() {
                 className={`wz-chip wz-chip-block${priorExercise === opt.value ? ' on' : ''}`}
                 onClick={() => setPriorExercise(opt.value)}
               >
-                <span className="wz-chip-icon">{opt.icon}</span>
+                <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
                 <span>{opt.label}</span>
               </button>
             ))}
@@ -866,7 +866,7 @@ export default function DailyTrainer() {
                 className={`wz-chip wz-chip-block${discomfort === opt.value ? ' on' : ''}`}
                 onClick={() => setDiscomfort(opt.value)}
               >
-                <span className="wz-chip-icon">{opt.icon}</span>
+                <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
                 <span>{opt.label}</span>
               </button>
             ))}
@@ -947,7 +947,7 @@ export default function DailyTrainer() {
                   className={`wz-chip wz-chip-block${selectedEquipment === opt.value ? ' on' : ''}`}
                   onClick={() => setSelectedEquipment(opt.value)}
                 >
-                  <span className="wz-chip-icon">{opt.icon}</span>
+                  <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
                   <span>{opt.label}</span>
                 </button>
               ))}
