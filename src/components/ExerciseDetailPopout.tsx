@@ -4,6 +4,7 @@ import { X, Check, RotateCcw, Maximize2, Volume2, VolumeX, Play } from 'lucide-r
 import { supabase } from '../lib/supabase';
 import type { Exercise, ExerciseVideo, Equipment } from '../types';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
+import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import './exercise-detail-popout.css';
 
 interface Props {
@@ -162,7 +163,9 @@ export default function ExerciseDetailPopout({
         >
           {loading ? (
             <div className="edp-hero-placeholder">
-              <div className="edp-hero-emoji">{exercise.emoji}</div>
+              <div className="edp-hero-emoji">
+                {(() => { const Ic = getExerciseIcon(exercise); return <Ic size={56} strokeWidth={1.5} />; })()}
+              </div>
             </div>
           ) : hasVideos ? (
             <>
@@ -264,7 +267,9 @@ export default function ExerciseDetailPopout({
             </>
           ) : (
             <div className="edp-hero-placeholder">
-              <div className="edp-hero-emoji">{exercise.emoji}</div>
+              <div className="edp-hero-emoji">
+                {(() => { const Ic = getExerciseIcon(exercise); return <Ic size={56} strokeWidth={1.5} />; })()}
+              </div>
               <p className="edp-hero-no-video">Video próximamente</p>
             </div>
           )}

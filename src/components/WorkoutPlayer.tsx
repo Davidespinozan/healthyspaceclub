@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Pause, Play, Check, SkipForward, Minus, Plus } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
 import { parseRepsToNumber } from '../utils/workoutLogger';
 import type { Exercise, Equipment, LoggedSet } from '../types';
@@ -128,7 +129,7 @@ export default function WorkoutPlayer({
   const displayName = currentBank
     ? (variant ? `${currentBank.name} — ${variant.name}` : currentBank.name)
     : currentEx?.id || '';
-  const displayEmoji = currentBank?.emoji || '💪';
+  const DisplayIcon = getExerciseIcon(currentBank);
   const totalSetsForCurrent = currentEx?.sets || 1;
 
   // ── Handlers
@@ -357,7 +358,9 @@ export default function WorkoutPlayer({
               return (
                 <div key={`${ex.id}-${i}`} className="wp-prep-list-row">
                   <span className="wp-prep-list-num">{i + 1}</span>
-                  <span className="wp-prep-list-emoji">{bank?.emoji || '💪'}</span>
+                  <span className="wp-prep-list-emoji">
+                    {(() => { const Ic = getExerciseIcon(bank); return <Ic size={20} strokeWidth={1.5} />; })()}
+                  </span>
                   <span className="wp-prep-list-name">{name}</span>
                   <span className="wp-prep-list-sets">{ex.sets} × {ex.reps}</span>
                 </div>
@@ -378,7 +381,7 @@ export default function WorkoutPlayer({
         <div className="wp-active">
           <div className="wp-video-area">
             <div className="wp-video-fallback">
-              <div className="wp-video-emoji">{displayEmoji}</div>
+              <div className="wp-video-emoji"><DisplayIcon size={56} strokeWidth={1.5} /></div>
               <p className="wp-video-label">Video próximamente</p>
             </div>
           </div>

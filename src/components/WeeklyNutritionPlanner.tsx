@@ -3,7 +3,7 @@ import { useAppStore } from '../store';
 import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
-import { RefreshCw, ShoppingCart, Calendar, Lock } from 'lucide-react';
+import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, type LucideIcon } from 'lucide-react';
 import { callAI } from '../utils/aiProxy';
 import { useT } from '../i18n';
 import { plural, formatDate } from '../i18n/format';
@@ -122,12 +122,12 @@ const EYEBROW_KEYS_Q: TranslationKey[] = [
   'nutritionPlanner.eyebrowAvoid',
 ];
 
-const MEAL_EMOJI: Record<string, string> = {
-  'Desayuno': '🌅',
-  'Snack AM': '🍎',
-  'Comida': '🍽️',
-  'Snack PM': '🥜',
-  'Cena': '🌙',
+const MEAL_ICON: Record<string, LucideIcon> = {
+  'Desayuno': Sunrise,
+  'Snack AM': Apple,
+  'Comida': Utensils,
+  'Snack PM': Nut,
+  'Cena': Moon,
 };
 
 const CUISINES_MAP = [
@@ -684,7 +684,7 @@ export default function WeeklyNutritionPlanner() {
       {/* Nota del coach */}
       {weeklyPlan.nota && (
         <div className="wnp2-nota">
-          <span className="wnp2-nota-icon">🥗</span>
+          <span className="wnp2-nota-icon"><Leaf size={18} strokeWidth={1.5} /></span>
           <p className="wnp2-nota-text">{weeklyPlan.nota}</p>
         </div>
       )}
@@ -817,12 +817,12 @@ export default function WeeklyNutritionPlanner() {
                     />
                   ) : (
                     <div className="wnp2-meal-circle">
-                      <span>{MEAL_EMOJI[meal.time] ?? '🥗'}</span>
+                      {(() => { const Ic = MEAL_ICON[meal.time] ?? Leaf; return <Ic size={28} strokeWidth={1.5} />; })()}
                     </div>
                   )}
                   <div className="wnp2-meal-body">
                     <div className="wnp2-meal-time">
-                      <span>{MEAL_EMOJI[meal.time] ?? '🥗'}</span>
+                      {(() => { const Ic = MEAL_ICON[meal.time] ?? Leaf; return <Ic size={14} strokeWidth={1.5} />; })()}
                       <span>{MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time}</span>
                     </div>
                     <div className="wnp2-meal-name">{meal.name}</div>

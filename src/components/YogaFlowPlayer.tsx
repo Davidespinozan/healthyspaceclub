@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, SkipBack, SkipForward, Pause, Play, Volume2, VolumeX } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import type { Exercise, YogaPlan, YogaPose } from '../types';
 import './yoga-flow-player.css';
 
@@ -427,7 +428,9 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
             />
           ) : (
             <div className="yfp-video-fallback">
-              <div className="yfp-video-emoji">{currentBank?.emoji || '🧘'}</div>
+              <div className="yfp-video-emoji">
+                {(() => { const Ic = getExerciseIcon(currentBank); return <Ic size={56} strokeWidth={1.5} />; })()}
+              </div>
               <span className="yfp-video-label">video próximamente · {currentBank?.name}</span>
             </div>
           )}

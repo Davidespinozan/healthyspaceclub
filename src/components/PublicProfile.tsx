@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { X } from 'lucide-react';
+import { X, Flame } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
 import { deleteClubPost } from '../utils/clubPosts';
@@ -231,7 +231,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
               </div>
               <div className="pp5-stat pp5-stat--racha">
                 <div className="pp5-stat-label">{t('profile.statStreak')}</div>
-                <div className="pp5-stat-num">{visitedStreak} 🔥</div>
+                <div className="pp5-stat-num">{visitedStreak} <Flame size={20} strokeWidth={1.6} /></div>
               </div>
               <div className="pp5-stat pp5-stat--logros">
                 <div className="pp5-stat-label">{t('profile.statLogros')}</div>

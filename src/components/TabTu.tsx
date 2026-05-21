@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Flame } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
@@ -243,7 +243,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
           </div>
           <div className="tt5-stat tt5-stat--racha">
             <div className="tt5-stat-label">{t('profile.statStreak')}</div>
-            <div className="tt5-stat-num">{streakCount} 🔥</div>
+            <div className="tt5-stat-num">{streakCount} <Flame size={20} strokeWidth={1.6} /></div>
           </div>
           <button
             type="button"

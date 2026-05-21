@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Flame } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { callAI } from '../utils/aiProxy';
 
 async function generateReviewMessage(params: {
@@ -132,10 +133,10 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
       .finally(() => setLoading(false));
   }, []);
 
-  const STATS = [
+  const STATS: Array<{ icon: ReactNode; label: string; value: string; good: boolean }> = [
     { icon: '🥗', label: 'Días con comidas',    value: `${mealDays}/7`,          good: mealDays >= 5 },
     { icon: '💪', label: 'Entrenamientos',        value: `${workoutDays} días`,    good: workoutDays >= 3 },
-    { icon: '🔥', label: 'Racha',                 value: `${streakCount} días`,    good: streakCount >= 5 },
+    { icon: <Flame size={20} strokeWidth={1.6} />, label: 'Racha', value: `${streakCount} días`, good: streakCount >= 5 },
     { icon: '🧠', label: 'Módulos completados',   value: `${completedModules}/10`, good: completedModules > 0 },
   ];
 

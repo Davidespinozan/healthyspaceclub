@@ -37,7 +37,8 @@ import type {
   WorkoutDayDecision,
   YogaPlan,
 } from '../types';
-import { RefreshCw, Clock, Zap, ChevronRight, Lock } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, Lock, Bot, Dumbbell, Flower2, Activity, type LucideIcon } from 'lucide-react';
+import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 import PlayerLoadingFallback from './PlayerLoadingFallback';
 import './daily-trainer-v2.css';
@@ -51,15 +52,15 @@ const DAY_NAMES = ['domingo','lunes','martes','miércoles','jueves','viernes','s
 
 const MODALITY_OPTIONS: Array<{
   value: Modality;
-  emoji: string;
+  icon: LucideIcon;
   label: string;
   sub: string;
   minExercises: number;
 }> = [
-  { value: 'auto', emoji: '🤖', label: 'Lo que mi coach decida', sub: '', minExercises: 0 },
-  { value: 'fuerza', emoji: '🏋️', label: 'Fuerza', sub: 'Push, Pull, Legs, Full body', minExercises: 5 },
-  { value: 'yoga', emoji: '🧘', label: 'Yoga / recovery', sub: 'Recovery activo + movilidad', minExercises: 5 },
-  { value: 'cardio', emoji: '🏃', label: 'Cardio', sub: 'HIIT, intervalos, walking', minExercises: 5 },
+  { value: 'auto', icon: Bot, label: 'Lo que mi coach decida', sub: '', minExercises: 0 },
+  { value: 'fuerza', icon: Dumbbell, label: 'Fuerza', sub: 'Push, Pull, Legs, Full body', minExercises: 5 },
+  { value: 'yoga', icon: Flower2, label: 'Yoga / recovery', sub: 'Recovery activo + movilidad', minExercises: 5 },
+  { value: 'cardio', icon: Activity, label: 'Cardio', sub: 'HIIT, intervalos, walking', minExercises: 5 },
 ];
 
 const TIME_OPTIONS = [
@@ -796,7 +797,11 @@ export default function DailyTrainer() {
                 onClick={() => !locked && setSelectedModality(opt.value)}
                 disabled={locked}
               >
-                <div className="wz-option-thumb">{locked ? '🔒' : opt.emoji}</div>
+                <div className="wz-option-thumb">
+                  {locked
+                    ? <Lock size={22} strokeWidth={1.5} />
+                    : <opt.icon size={22} strokeWidth={1.5} />}
+                </div>
                 <div className="wz-option-body">
                   <div className="wz-option-label">
                     {opt.label}
@@ -1032,10 +1037,11 @@ export default function DailyTrainer() {
                 ? `${durationMin}:${String(durationSec).padStart(2, '0')}`
                 : `${pose.duration}s`;
 
+              const PoseIcon = getExerciseIcon(bank);
               return (
                 <div key={`${pose.id}-${i}`} className="dt2-yoga-item">
                   <div className="dt2-yoga-num">{i + 1}</div>
-                  <div className="dt2-yoga-emoji">{bank?.emoji || '🧘'}</div>
+                  <div className="dt2-yoga-emoji"><PoseIcon size={22} strokeWidth={1.5} /></div>
                   <div className="dt2-yoga-body">
                     <div className="dt2-yoga-name">{bank?.name || pose.id}</div>
                     <div className="dt2-yoga-meta">
@@ -1214,7 +1220,9 @@ export default function DailyTrainer() {
                   >
                     {isDone ? '✓' : ''}
                   </button>
-                  <div className="dt2-ex-emoji">{bank?.emoji || '💪'}</div>
+                  <div className="dt2-ex-emoji">
+                    {(() => { const Ic = getExerciseIcon(bank); return <Ic size={22} strokeWidth={1.5} />; })()}
+                  </div>
                   <div className="dt2-ex-body">
                     <div className="dt2-ex-name">{bank?.name || ex.id}</div>
                     <div className="dt2-ex-stats">
