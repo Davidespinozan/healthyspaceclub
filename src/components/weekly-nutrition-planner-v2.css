@@ -680,6 +680,34 @@
   color: var(--amber);
 }
 
+/* ─── Snack: variante compacta (sin foto, subordinada a mains) ─── */
+.wnp2-meal--snack {
+  padding: 8px 12px;
+  gap: 10px;
+  background: var(--warm);
+  border: none;
+}
+.wnp2-meal--snack::before {
+  display: none;
+}
+.wnp2-meal--snack .wnp2-meal-circle {
+  width: 32px;
+  height: 32px;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+  color: var(--amber);
+}
+.wnp2-meal--snack .wnp2-meal-name {
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+.wnp2-meal--snack .wnp2-meal-time {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  margin-bottom: 2px;
+}
+
 .wnp2-empty-day {
   background: var(--warm);
   border-radius: 14px;

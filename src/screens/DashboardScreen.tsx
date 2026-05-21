@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
-import { Home, User, MessageCircle, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Home, User, MessageCircle, Users, Leaf, Dumbbell } from 'lucide-react';
 import { useAppStore } from '../store';
+import { useT } from '../i18n';
 import type { DashPage } from '../types';
 
 import TabHoy from '../components/TabHoy';
@@ -13,7 +14,6 @@ import MiHuella from '../components/MiHuella';
 import WeeklyNutritionPlanner from '../components/WeeklyNutritionPlanner';
 import DailyTrainer from '../components/DailyTrainer';
 // GrowthPlan + LifeSystemScreen removed — backed up in _hsm_backup/
-import { Leaf, Dumbbell } from 'lucide-react';
 
 const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
   { id: 'hoy',    icon: Home,   label: 'Hoy' },
@@ -22,7 +22,14 @@ const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
 ];
 
 export default function DashboardScreen() {
-  const { dashPage, setDashPage, checkTrialExpiry, coachOpen, setCoachOpen } = useAppStore();
+  const { dashPage, setDashPage, checkTrialExpiry, coachOpen, setCoachOpen, weeklyPlan } = useAppStore();
+  const { t } = useT();
+  // sec-hero condicional: la card intro (icon + título + descripción) solo se
+  // muestra cuando NO hay plan/rutina generado. Cuando hay contenido, los
+  // componentes hijos ya emiten su propio header rico → la card sería duplicada.
+  const hasMealPlan = !!weeklyPlan;
+  const [trainerPhase, setTrainerPhase] = useState<string>('modality');
+  const hasWorkoutPlan = trainerPhase === 'plan';
 
   useEffect(() => { checkTrialExpiry(); }, []);
 
@@ -45,22 +52,32 @@ export default function DashboardScreen() {
         {/* Sub-pages */}
         {dashPage === 'alimentacion' && (
           <div className="sub-page tab-content">
-            <button className="sub-back" onClick={() => navTo('hoy')}>← Volver</button>
-            <div className="sec-hero">
-              <div className="sh-icon"><Leaf size={24} strokeWidth={1.5} /></div>
-              <div><h2>Nutrición</h2><p>Tu nutricionista IA genera un plan de 7 días personalizado.</p></div>
-            </div>
+            <button className="sub-back" onClick={() => navTo('hoy')}>← {t('common.back')}</button>
+            {!hasMealPlan && (
+              <div className="sec-hero">
+                <div className="sh-icon"><Leaf size={24} strokeWidth={1.5} /></div>
+                <div>
+                  <h2>{t('hoy.cardEyebrowNutrition')}</h2>
+                  <p>{t('subPage.nutritionDesc')}</p>
+                </div>
+              </div>
+            )}
             <WeeklyNutritionPlanner />
           </div>
         )}
         {dashPage === 'entrenamiento' && (
           <div className="sub-page tab-content">
-            <button className="sub-back" onClick={() => navTo('hoy')}>← Volver</button>
-            <div className="sec-hero">
-              <div className="sh-icon"><Dumbbell size={24} strokeWidth={1.5} /></div>
-              <div><h2>Entrenamiento</h2><p>Tu coach personal te dice qué hacer hoy.</p></div>
-            </div>
-            <DailyTrainer />
+            <button className="sub-back" onClick={() => navTo('hoy')}>← {t('common.back')}</button>
+            {!hasWorkoutPlan && (
+              <div className="sec-hero">
+                <div className="sh-icon"><Dumbbell size={24} strokeWidth={1.5} /></div>
+                <div>
+                  <h2>{t('hoy.cardEyebrowTraining')}</h2>
+                  <p>{t('subPage.trainingDesc')}</p>
+                </div>
+              </div>
+            )}
+            <DailyTrainer onPhaseChange={setTrainerPhase} />
           </div>
         )}
         {/* hsm and lifesystem sub-pages removed */}

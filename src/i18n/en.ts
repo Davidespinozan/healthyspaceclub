@@ -195,6 +195,10 @@ export const en: Translations<typeof es> = {
     deletePostConfirm: 'Delete this post?',
     deletePostFailed: "Couldn't delete the post.",
   },
+  subPage: {
+    nutritionDesc: 'Your AI nutritionist generates a personalized 7-day plan.',
+    trainingDesc: 'Your personal coach tells you what to do today.',
+  },
   days: {
     longSun: 'Sunday',
     longMon: 'Monday',

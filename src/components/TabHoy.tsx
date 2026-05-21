@@ -2,29 +2,20 @@ import { useEffect, useState } from 'react';
 import { useAppStore } from '../store';
 import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
-import { calcDayKcal, calcMealKcal } from '../utils/kcalCalc';
+import { calcDayKcal } from '../utils/kcalCalc';
 import WeeklyReview from './WeeklyReview';
 import NightCheckIn from './NightCheckIn';
 import TuEspacioFlow from './TuEspacioFlow';
 import { exercises as exerciseBank } from '../data/exercises';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
+import MealDetailPopout from './MealDetailPopout';
 import type { Exercise } from '../types';
 import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
 import { MILESTONE_STEPS, getMilestoneCopy } from '../constants/milestones';
 import { useT } from '../i18n';
 import { plural } from '../i18n/format';
-import type { TranslationKey } from '../i18n/es';
 import './tab-hoy-v3.css';
-
-// Map para localizar nombre de comida en popout (data layer queda ES).
-const MEAL_TIME_KEYS: Record<string, TranslationKey> = {
-  'Desayuno': 'mealTime.desayuno',
-  'Snack AM': 'mealTime.snackAm',
-  'Comida': 'mealTime.comida',
-  'Snack PM': 'mealTime.snackPm',
-  'Cena': 'mealTime.cena',
-};
 
 /* ── HSM Question Bank — 10 per dimension, 100 total ── */
 const HSM_BANK: { emoji: string; title: string; questions: string[] }[] = [
@@ -753,31 +744,8 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
         )}
       </section>
 
-      {/* ── Meal popout (preserved, classes are global in index.css) ── */}
-      {mealDetail && (
-        <div className="th-popout-backdrop" onClick={() => setMealDetail(null)}>
-          <div className="th-popout" onClick={e => e.stopPropagation()}>
-            <div className="th-popout-handle" />
-            {mealDetail.img && (
-              <img src={mealDetail.img} alt="" className="th-popout-img" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-            )}
-            <div className="th-popout-header">
-              <div className="th-popout-time">{MEAL_TIME_KEYS[mealDetail.time] ? t(MEAL_TIME_KEYS[mealDetail.time]) : mealDetail.time}</div>
-              <div className="th-popout-kcal">{mealDetail.portions ? calcMealKcal(mealDetail.portions) : 0} kcal</div>
-            </div>
-            <div className="th-popout-name">{mealDetail.name}</div>
-            {mealDetail.desc && <div className="th-popout-desc">{mealDetail.desc}</div>}
-            <div className="th-popout-label">{t('hoy.popoutIngredients')}</div>
-            <div className="th-popout-portions">
-              {(mealDetail.portions ?? []).map((p, i) => (
-                <div key={i} className="th-popout-portion">{p}</div>
-              ))}
-            </div>
-
-            <button className="th-popout-close" onClick={() => setMealDetail(null)}>{t('common.close')}</button>
-          </div>
-        </div>
-      )}
+      {/* ── Meal popout (componente reutilizable) ── */}
+      <MealDetailPopout meal={mealDetail} onClose={() => setMealDetail(null)} />
 
       {/* ── Exercise detail popout (preserved) ── */}
       {selectedExercise && (

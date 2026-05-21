@@ -194,6 +194,10 @@ export const es = {
     deletePostConfirm: '¿Eliminar este post?',
     deletePostFailed: 'No se pudo borrar el post.',
   },
+  subPage: {
+    nutritionDesc: 'Tu nutricionista IA genera un plan de 7 días personalizado.',
+    trainingDesc: 'Tu coach personal te dice qué hacer hoy.',
+  },
   days: {
     longSun: 'Domingo',
     longMon: 'Lunes',

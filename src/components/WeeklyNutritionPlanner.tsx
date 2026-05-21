@@ -4,6 +4,7 @@ import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, type LucideIcon } from 'lucide-react';
+import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import { callAI } from '../utils/aiProxy';
 import { useT } from '../i18n';
 import { plural, formatDate } from '../i18n/format';
@@ -250,6 +251,7 @@ export default function WeeklyNutritionPlanner() {
     shoppingDay !== null ? (new Date().getDay() - shoppingDay + 7) % 7 : 0
   );
   const [showShopping, setShowShopping] = useState(false);
+  const [mealDetail, setMealDetail] = useState<PopoutMeal | null>(null);
 
   const activeMealPlan = mealPlans[mealPlanKey] ?? mealPlans['planA'];
   const scaledPlan = useMemo(
@@ -803,37 +805,41 @@ export default function WeeklyNutritionPlanner() {
               const checked = !!mealChecks[checkKey];
               const portionsToShow = meal.portions.slice(0, 3);
               const extraCount = meal.portions.length - portionsToShow.length;
+              const isSnack = meal.time.startsWith('Snack');
+              const Ic = MEAL_ICON[meal.time] ?? Leaf;
 
               return (
                 <div
                   key={i}
-                  className={`wnp2-meal${checked ? ' done' : ''}`}
-                  onClick={() => toggleMealCheck(checkKey)}
+                  className={`wnp2-meal${checked ? ' done' : ''}${isSnack ? ' wnp2-meal--snack' : ''}`}
+                  onClick={() => setMealDetail(meal)}
                 >
-                  {meal.img ? (
+                  {meal.img && !isSnack ? (
                     <div
                       className="wnp2-meal-circle"
                       style={{ backgroundImage: `url(${meal.img})` }}
                     />
                   ) : (
                     <div className="wnp2-meal-circle">
-                      {(() => { const Ic = MEAL_ICON[meal.time] ?? Leaf; return <Ic size={28} strokeWidth={1.5} />; })()}
+                      <Ic size={isSnack ? 18 : 28} strokeWidth={1.5} />
                     </div>
                   )}
                   <div className="wnp2-meal-body">
                     <div className="wnp2-meal-time">
-                      {(() => { const Ic = MEAL_ICON[meal.time] ?? Leaf; return <Ic size={14} strokeWidth={1.5} />; })()}
+                      {!isSnack && <Ic size={14} strokeWidth={1.5} />}
                       <span>{MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time}</span>
                     </div>
                     <div className="wnp2-meal-name">{meal.name}</div>
-                    <div className="wnp2-meal-chips">
-                      {portionsToShow.map((p, j) => (
-                        <span key={j} className="wnp2-meal-chip">{p}</span>
-                      ))}
-                      {extraCount > 0 && (
-                        <span className="wnp2-meal-chip more">+{extraCount}</span>
-                      )}
-                    </div>
+                    {!isSnack && (
+                      <div className="wnp2-meal-chips">
+                        {portionsToShow.map((p, j) => (
+                          <span key={j} className="wnp2-meal-chip">{p}</span>
+                        ))}
+                        {extraCount > 0 && (
+                          <span className="wnp2-meal-chip more">+{extraCount}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="wnp2-meal-right">
                     {mkcal > 0 && <span className="wnp2-meal-kcal">{mkcal}</span>}
@@ -855,6 +861,8 @@ export default function WeeklyNutritionPlanner() {
           )}
         </>
       )}
+
+      <MealDetailPopout meal={mealDetail} onClose={() => setMealDetail(null)} />
     </div>
   );
 }

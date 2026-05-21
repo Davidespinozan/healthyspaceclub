@@ -323,7 +323,13 @@ Responde SOLO este JSON, sin markdown ni texto extra:
 
 type Phase = 'modality' | 'physical' | 'logistics' | 'generating' | 'plan' | 'error';
 
-export default function DailyTrainer() {
+interface DailyTrainerProps {
+  /** Callback opcional para notificar al padre cuando cambia phase
+   *  (e.g. DashboardScreen condiciona el sec-hero según haya rutina del día). */
+  onPhaseChange?: (phase: Phase) => void;
+}
+
+export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) {
   const userName = useAppStore(s => s.userName);
   const obData = useAppStore(s => s.obData);
   const workoutLog = useAppStore(s => s.workoutLog);
@@ -384,6 +390,8 @@ export default function DailyTrainer() {
     if (storedWorkout?.date === today) return 'plan';
     return 'modality';
   });
+  // Notificar phase al padre (DashboardScreen condiciona sec-hero según haya rutina).
+  useEffect(() => { onPhaseChange?.(phase); }, [phase, onPhaseChange]);
   const [plan, setPlan] = useState<(CachedWorkout & { razon?: string }) | null>(
     storedWorkout?.date === today ? (storedWorkout.plan as any) : null
   );
