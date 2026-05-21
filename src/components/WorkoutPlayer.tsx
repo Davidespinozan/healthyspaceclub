@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Pause, Play, Check, SkipForward, Minus, Plus } from 'lucide-react';
+import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
@@ -9,7 +9,7 @@ import type { Exercise, Equipment, LoggedSet } from '../types';
 import type { CachedWorkout } from '../utils/workoutCache';
 import './workout-player.css';
 
-type PlayerPhase = 'prep' | 'exercise' | 'log-set' | 'rest' | 'transition' | 'paused' | 'completed';
+type PlayerPhase = 'prep' | 'exercise' | 'paused' | 'completed';
 
 interface Props {
   workout: CachedWorkout;
@@ -25,7 +25,6 @@ interface Props {
 }
 
 const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-const TRANSITION_MS = 3000;
 const PROGRESS_KEY = 'workout-player-progress';
 
 function formatTime(seconds: number): string {
@@ -46,7 +45,10 @@ export default function WorkoutPlayer({
   onComplete,
   onClose,
 }: Props) {
-  const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
+  const exerciseMap = useMemo(
+    () => new Map(exerciseBank.map(e => [e.id, e])),
+    [exerciseBank],
+  );
   const exercises = workout.exercises;
   const totalExercises = exercises.length;
   const planHash = buildPlanHash(workout);
@@ -55,74 +57,17 @@ export default function WorkoutPlayer({
   const todayDate = new Date().getDate();
   const todayMonth = new Date().toLocaleDateString('es-ES', { month: 'short' });
 
-  // ── State
+  // ── State (4 phases + sub-estados)
   const [phase, setPhase] = useState<PlayerPhase>('prep');
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [currentSet, setCurrentSet] = useState(1);
-  const [restSecondsLeft, setRestSecondsLeft] = useState(0);
-  const [exercisesCompleted, setExercisesCompleted] = useState(0);
-  const [totalSetsCompleted, setTotalSetsCompleted] = useState(0);
+  const [loggedSets, setLoggedSets] = useState<Array<LoggedSet | null>>([]);
+  const [restState, setRestState] = useState<{ secondsLeft: number; forSet: number } | null>(null);
+  const [editingSet, setEditingSet] = useState<{ exerciseIndex: number; setIndex: number } | null>(null);
+  const [editValues, setEditValues] = useState<LoggedSet>({ reps: 0, kg: 0 });
   const [startedAt, setStartedAt] = useState<number>(0);
   const [pausedFromPhase, setPausedFromPhase] = useState<PlayerPhase | null>(null);
-  const [transitionNext, setTransitionNext] = useState<{ prev: string; next: string } | null>(null);
-  const [loggedSets, setLoggedSets] = useState<Array<LoggedSet | null>>([]);
-  const [logSetInputs, setLogSetInputs] = useState<{ reps: number; kg: number }>({ reps: 0, kg: 0 });
 
-  // ── Wake lock activo en sesión activa (incluye log-set)
-  useWakeLock(phase === 'exercise' || phase === 'log-set' || phase === 'rest' || phase === 'transition');
-
-  // ── Body scroll lock todo el tiempo que el player esté montado
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, []);
-
-  // ── ESC handler
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleExit();
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
-
-  // ── Persistencia de progreso (no en prep/completed)
-  useEffect(() => {
-    if (phase === 'exercise' || phase === 'log-set' || phase === 'rest' || phase === 'paused') {
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify({
-        workoutDate: new Date().toISOString().split('T')[0],
-        planHash,
-        currentExerciseIndex,
-        currentSet,
-        restSecondsLeft,
-        exercisesCompleted,
-        totalSetsCompleted,
-        startedAt,
-        loggedSets,
-      }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentExerciseIndex, currentSet, restSecondsLeft, phase, loggedSets]);
-
-  // ── Timer de descanso (solo en phase 'rest')
-  useEffect(() => {
-    if (phase !== 'rest') return;
-    const interval = setInterval(() => {
-      setRestSecondsLeft(prev => {
-        if (prev <= 1) {
-          handleRestComplete();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
-
-  // ── Datos del ejercicio actual
+  // ── Derived per-current-exercise
   const currentEx = exercises[currentExerciseIndex];
   const currentBank = currentEx ? exerciseMap.get(currentEx.id) : undefined;
   const variant = currentBank ? selectVariantForEquipment(currentBank, userEquipment) : null;
@@ -132,10 +77,89 @@ export default function WorkoutPlayer({
   const DisplayIcon = getExerciseIcon(currentBank);
   const totalSetsForCurrent = currentEx?.sets || 1;
 
+  // Posición en loggedSets donde comienzan los sets del ejercicio actual.
+  // loggedSets es plano en orden de ejecución: [ex0-s0, ex0-s1, ..., ex1-s0, ...]
+  const startPos = useMemo(
+    () => exercises.slice(0, currentExerciseIndex).reduce((acc, ex) => acc + ex.sets, 0),
+    [exercises, currentExerciseIndex],
+  );
+  const setsRegisteredForCurrent = Math.max(0, loggedSets.length - startPos);
+  const allSetsRegistered = setsRegisteredForCurrent >= totalSetsForCurrent;
+
+  // ── Wake lock + body scroll lock + ESC handler
+
+  useWakeLock(phase === 'exercise');
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (editingSet) { saveEditSet(); return; }
+        handleExit();
+      }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, editingSet]);
+
+  // ── localStorage autosave (key + shape compatibles con la versión anterior).
+  // Persistimos `currentSet` derivado para compat con el confirm() de resume.
+  useEffect(() => {
+    if (phase === 'exercise' || phase === 'paused') {
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify({
+        workoutDate: new Date().toISOString().split('T')[0],
+        planHash,
+        currentExerciseIndex,
+        currentSet: Math.min(setsRegisteredForCurrent + 1, totalSetsForCurrent),
+        restSecondsLeft: restState?.secondsLeft ?? 0,
+        exercisesCompleted: computeExercisesCompleted(loggedSets),
+        totalSetsCompleted: loggedSets.filter(s => s !== null).length,
+        startedAt,
+        loggedSets,
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, currentExerciseIndex, loggedSets, restState]);
+
+  // ── Rest countdown (non-blocking, solo informa)
+  useEffect(() => {
+    if (!restState || phase !== 'exercise') return;
+    const interval = setInterval(() => {
+      setRestState(prev => {
+        if (!prev) return prev;
+        if (prev.secondsLeft <= 1) return null;
+        return { ...prev, secondsLeft: prev.secondsLeft - 1 };
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [restState, phase]);
+
+  // ── Helpers
+
+  function computeExercisesCompleted(sets: Array<LoggedSet | null>): number {
+    let count = 0;
+    let pos = 0;
+    for (const ex of exercises) {
+      const slice = sets.slice(pos, pos + ex.sets);
+      if (slice.some(s => s !== null && s !== undefined)) count++;
+      pos += ex.sets;
+    }
+    return count;
+  }
+
+  function startPosFor(exerciseIdx: number): number {
+    return exercises.slice(0, exerciseIdx).reduce((acc, ex) => acc + ex.sets, 0);
+  }
+
   // ── Handlers
 
   function handleStart() {
-    // Check for saved progress
     try {
       const saved = localStorage.getItem(PROGRESS_KEY);
       if (saved) {
@@ -147,14 +171,10 @@ export default function WorkoutPlayer({
 
         if (sameDay && samePlan && midSession) {
           const resume = confirm(
-            `Tenías una sesión en progreso (ejercicio ${data.currentExerciseIndex + 1} de ${totalExercises}). ¿Continuar?`
+            `Tenías una sesión en progreso (ejercicio ${data.currentExerciseIndex + 1} de ${totalExercises}). ¿Continuar?`,
           );
           if (resume) {
             setCurrentExerciseIndex(data.currentExerciseIndex);
-            setCurrentSet(data.currentSet || 1);
-            setRestSecondsLeft(data.restSecondsLeft || 0);
-            setExercisesCompleted(data.exercisesCompleted || 0);
-            setTotalSetsCompleted(data.totalSetsCompleted || 0);
             setStartedAt(data.startedAt || Date.now());
             setLoggedSets(Array.isArray(data.loggedSets) ? data.loggedSets : []);
             setPhase('exercise');
@@ -166,127 +186,110 @@ export default function WorkoutPlayer({
 
     // Empezar de cero
     setCurrentExerciseIndex(0);
-    setCurrentSet(1);
-    setExercisesCompleted(0);
-    setTotalSetsCompleted(0);
     setStartedAt(Date.now());
     setLoggedSets([]);
+    setRestState(null);
     setPhase('exercise');
   }
 
-  function handleCompleteSet() {
-    // Pre-rellenar inputs del log-set y avanzar a la phase de captura
-    const parsedReps = parseRepsToNumber(currentEx?.reps);
-    // kg: último valor del MISMO ejercicio (en loggedSets pushed hasta ahora)
-    const startPos = exercises
-      .slice(0, currentExerciseIndex)
-      .reduce((acc, ex) => acc + ex.sets, 0);
-    const setsOfCurrent = loggedSets.slice(startPos);
+  function markCurrentSet() {
+    if (allSetsRegistered || !currentEx) return;
+    const parsedReps = parseRepsToNumber(currentEx.reps);
+    // Pre-fill kg: último kg non-null del ejercicio actual
     let lastKg = 0;
-    for (let i = setsOfCurrent.length - 1; i >= 0; i--) {
-      const entry = setsOfCurrent[i];
+    for (let i = loggedSets.length - 1; i >= startPos; i--) {
+      const entry = loggedSets[i];
       if (entry) { lastKg = entry.kg; break; }
     }
-    setLogSetInputs({ reps: parsedReps, kg: lastKg });
-    setPhase('log-set');
+    const newEntry: LoggedSet = { reps: parsedReps, kg: lastKg };
+    const newLogged = [...loggedSets, newEntry];
+    setLoggedSets(newLogged);
+
+    const willBeLastSet = setsRegisteredForCurrent + 1 >= totalSetsForCurrent;
+    if (willBeLastSet) {
+      setRestState(null);
+    } else {
+      // Auto-rest: arranca contador para la próxima serie
+      setRestState({
+        secondsLeft: currentEx.rest || 60,
+        forSet: setsRegisteredForCurrent + 1,
+      });
+    }
   }
 
-  /**
-   * Avanza después del log-set. `skip` indica si el usuario saltó el set
-   * (push null) o lo guardó (push {reps, kg}).
-   */
-  function handleLogSetSubmit(skip: boolean) {
-    const entry: LoggedSet | null = skip ? null : {
-      reps: Math.max(0, logSetInputs.reps),
-      kg: Math.max(0, logSetInputs.kg),
+  function openEditSet(exerciseIdx: number, setIdx: number) {
+    const flatIdx = startPosFor(exerciseIdx) + setIdx;
+    const entry = loggedSets[flatIdx];
+    if (!entry) return; // null (skipped) o undefined → no editable
+    setEditingSet({ exerciseIndex: exerciseIdx, setIndex: setIdx });
+    setEditValues({ reps: entry.reps, kg: entry.kg });
+  }
+
+  function saveEditSet() {
+    if (!editingSet) return;
+    const flatIdx = startPosFor(editingSet.exerciseIndex) + editingSet.setIndex;
+    const newEntry: LoggedSet = {
+      reps: Math.max(0, editValues.reps),
+      kg: Math.max(0, editValues.kg),
     };
-    setLoggedSets(prev => [...prev, entry]);
-
-    // Solo incrementar totalSetsCompleted si el set NO fue saltado
-    const newTotalSets = skip ? totalSetsCompleted : totalSetsCompleted + 1;
-    setTotalSetsCompleted(newTotalSets);
-
-    const isLastSet = currentSet >= totalSetsForCurrent;
-    if (!isLastSet) {
-      setRestSecondsLeft(currentEx?.rest || 60);
-      setPhase('rest');
-    } else {
-      const newCompleted = exercisesCompleted + 1;
-      setExercisesCompleted(newCompleted);
-      const isLastExercise = currentExerciseIndex >= totalExercises - 1;
-      if (isLastExercise) {
-        finishSession(newCompleted, newTotalSets, [...loggedSets, entry]);
-      } else {
-        startTransitionToNext();
-      }
-    }
+    setLoggedSets(prev => {
+      const next = [...prev];
+      next[flatIdx] = newEntry;
+      return next;
+    });
+    setEditingSet(null);
   }
 
-  function startTransitionToNext() {
+  function skipRest() {
+    setRestState(null);
+  }
+
+  function goToNextExercise() {
+    if (!currentEx) return;
+    // Pad nulls para los sets no marcados del ejercicio actual (preserva shape del contrato)
+    const missing = totalSetsForCurrent - setsRegisteredForCurrent;
+    const padded = missing > 0
+      ? [...loggedSets, ...new Array<LoggedSet | null>(missing).fill(null)]
+      : loggedSets;
+    setLoggedSets(padded);
+    setRestState(null);
+
     const nextIdx = currentExerciseIndex + 1;
-    const nextBank = exerciseMap.get(exercises[nextIdx].id);
-    const nextVariant = nextBank ? selectVariantForEquipment(nextBank, userEquipment) : null;
-    const nextName = nextBank
-      ? (nextVariant ? `${nextBank.name} — ${nextVariant.name}` : nextBank.name)
-      : exercises[nextIdx].id;
-
-    setTransitionNext({ prev: displayName, next: nextName });
-    setPhase('transition');
-
-    setTimeout(() => {
-      setCurrentExerciseIndex(nextIdx);
-      setCurrentSet(1);
-      setTransitionNext(null);
-      setPhase('exercise');
-    }, TRANSITION_MS);
-  }
-
-  function handleRestComplete() {
-    setCurrentSet(s => s + 1);
-    setPhase('exercise');
-  }
-
-  function handleSkipRest() {
-    handleRestComplete();
-  }
-
-  function handleSkipExercise() {
-    // Push nulls para TODAS las series restantes del ejercicio actual
-    // (preserva integridad: loggedSets.length == series scheduled hasta este punto)
-    const remainingSets = Math.max(0, totalSetsForCurrent - currentSet + 1);
-    const nulls: Array<LoggedSet | null> = new Array(remainingSets).fill(null);
-    const updatedLoggedSets = [...loggedSets, ...nulls];
-    setLoggedSets(updatedLoggedSets);
-
-    // Skip cuenta el ejercicio como NO completado, pero avanza
-    const isLastExercise = currentExerciseIndex >= totalExercises - 1;
-    if (isLastExercise) {
-      finishSession(exercisesCompleted, totalSetsCompleted, updatedLoggedSets);
+    if (nextIdx >= totalExercises) {
+      finishSession(padded);
     } else {
-      startTransitionToNext();
+      setCurrentExerciseIndex(nextIdx);
     }
+  }
+
+  function finishSession(finalLogged: Array<LoggedSet | null>) {
+    // Pad al total esperado (defensive)
+    const totalSetsExpected = exercises.reduce((acc, ex) => acc + ex.sets, 0);
+    const padded = [...finalLogged];
+    while (padded.length < totalSetsExpected) padded.push(null);
+
+    const totalSetsCompleted = padded.filter(s => s !== null).length;
+    const exercisesCompleted = computeExercisesCompleted(padded);
+    const durationSeconds = startedAt > 0 ? Math.round((Date.now() - startedAt) / 1000) : 0;
+
+    localStorage.removeItem(PROGRESS_KEY);
+    setPhase('completed');
+    onComplete({
+      exercisesCompleted,
+      totalSetsCompleted,
+      durationSeconds,
+      loggedSets: padded,
+    });
   }
 
   function handlePause() {
     if (phase === 'paused') {
       setPhase(pausedFromPhase || 'exercise');
       setPausedFromPhase(null);
-    } else if (phase === 'exercise' || phase === 'log-set' || phase === 'rest') {
+    } else if (phase === 'exercise') {
       setPausedFromPhase(phase);
       setPhase('paused');
     }
-  }
-
-  function finishSession(completed: number, sets: number, finalLoggedSets?: Array<LoggedSet | null>) {
-    localStorage.removeItem(PROGRESS_KEY);
-    const durationSeconds = startedAt > 0 ? Math.round((Date.now() - startedAt) / 1000) : 0;
-    setPhase('completed');
-    onComplete({
-      exercisesCompleted: completed,
-      totalSetsCompleted: sets,
-      durationSeconds,
-      loggedSets: finalLoggedSets ?? loggedSets,
-    });
   }
 
   function handleExit() {
@@ -299,14 +302,27 @@ export default function WorkoutPlayer({
     }
   }
 
+  // ── Stats para pantalla completed
+  const completedStats = useMemo(() => {
+    const totalSetsCompleted = loggedSets.filter(s => s !== null).length;
+    const exercisesCompleted = computeExercisesCompleted(loggedSets);
+    const totalKg = loggedSets.reduce((acc, s) => acc + (s?.kg ?? 0), 0);
+    const minutes = startedAt > 0 ? Math.round((Date.now() - startedAt) / 60000) : 0;
+    return { totalSetsCompleted, exercisesCompleted, totalKg, minutes };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   // ══════════════════════════════════════════════════════════════
-  // RENDER (Portal a document.body para escapar containing-block
-  // creado por el animation transform en .app-main > *)
+  // RENDER
   // ══════════════════════════════════════════════════════════════
+
+  const progressPct = totalExercises > 0
+    ? Math.round((currentExerciseIndex / totalExercises) * 100)
+    : 0;
 
   return createPortal(
     <div className="wp">
-      {/* Header — siempre visible */}
+      {/* Header siempre visible */}
       <div className="wp-header">
         <button className="wp-header-btn" onClick={handleExit} aria-label="Cerrar">
           <X size={20} />
@@ -319,7 +335,7 @@ export default function WorkoutPlayer({
             : <>ejercicio {currentExerciseIndex + 1} <span className="wp-header-of">de</span> {totalExercises}</>}
         </div>
         <div className="wp-header-counter">
-          {phase !== 'prep' && phase !== 'completed' && (
+          {phase === 'exercise' || phase === 'paused' ? (
             <button
               className="wp-header-btn"
               onClick={handlePause}
@@ -327,11 +343,18 @@ export default function WorkoutPlayer({
             >
               {phase === 'paused' ? <Play size={18} /> : <Pause size={18} />}
             </button>
-          )}
+          ) : null}
         </div>
       </div>
 
-      {/* ── Phase: PREP ── */}
+      {/* Barra de progreso (solo en exercise) */}
+      {phase === 'exercise' && (
+        <div className="wp-progress-bar">
+          <div className="wp-progress-bar-fill" style={{ width: `${progressPct}%` }} />
+        </div>
+      )}
+
+      {/* ── PHASE: PREP ── */}
       {phase === 'prep' && (
         <div className="wp-prep">
           <p className="wp-prep-micro">tu sesión · {todayDayName} {todayDate} {todayMonth}</p>
@@ -355,11 +378,12 @@ export default function WorkoutPlayer({
               const name = bank
                 ? (v ? `${bank.name} — ${v.name}` : bank.name)
                 : ex.id;
+              const Ic = getExerciseIcon(bank);
               return (
                 <div key={`${ex.id}-${i}`} className="wp-prep-list-row">
                   <span className="wp-prep-list-num">{i + 1}</span>
                   <span className="wp-prep-list-emoji">
-                    {(() => { const Ic = getExerciseIcon(bank); return <Ic size={20} strokeWidth={1.5} />; })()}
+                    <Ic size={20} strokeWidth={1.5} />
                   </span>
                   <span className="wp-prep-list-name">{name}</span>
                   <span className="wp-prep-list-sets">{ex.sets} × {ex.reps}</span>
@@ -376,23 +400,14 @@ export default function WorkoutPlayer({
         </div>
       )}
 
-      {/* ── Phase: EXERCISE (set activo) ── */}
+      {/* ── PHASE: EXERCISE (1 pantalla por ejercicio con filas de series) ── */}
       {phase === 'exercise' && currentEx && (
-        <div className="wp-active">
+        <div className={`wp-active${restState ? ' has-rest' : ''}`} key={`ex-${currentExerciseIndex}`}>
           <div className="wp-video-area">
             <div className="wp-video-fallback">
               <div className="wp-video-emoji"><DisplayIcon size={56} strokeWidth={1.5} /></div>
               <p className="wp-video-label">Video próximamente</p>
             </div>
-          </div>
-
-          <div className="wp-progress">
-            {exercises.map((_, i) => (
-              <span
-                key={i}
-                className={`wp-prog-dot${i === currentExerciseIndex ? ' active' : ''}${i < currentExerciseIndex ? ' done' : ''}`}
-              />
-            ))}
           </div>
 
           <div className="wp-ex-info">
@@ -408,155 +423,80 @@ export default function WorkoutPlayer({
             )}
           </div>
 
-          <div className="wp-set-card">
-            <div className="wp-set-label">Serie</div>
-            <div className="wp-set-counter">
-              {currentSet} <span className="wp-set-of">de</span> {totalSetsForCurrent}
+          <div className="wp-sets">
+            <div className="wp-sets-head">
+              <span className="wp-sets-label">SERIES · {totalSetsForCurrent} × {currentEx.reps}</span>
+              <span className="wp-sets-counter">
+                {Math.min(setsRegisteredForCurrent, totalSetsForCurrent)} de {totalSetsForCurrent}
+              </span>
             </div>
-            <div className="wp-set-reps">{currentEx.reps} reps</div>
-            <div className="wp-set-rest">
-              descanso siguiente: {currentEx.rest}s
-            </div>
-          </div>
+            <div className="wp-set-rows">
+              {Array.from({ length: totalSetsForCurrent }).map((_, setIdx) => {
+                const flatIdx = startPos + setIdx;
+                const entry = loggedSets[flatIdx];
+                const isLogged = flatIdx < loggedSets.length;
+                const isSkipped = isLogged && entry === null;
+                const isDone = isLogged && entry !== null;
+                const isActive = !isLogged && setIdx === setsRegisteredForCurrent;
 
-          <div className="wp-cta-wrap">
-            <button className="wp-cta" onClick={handleCompleteSet}>
-              <Check size={18} /> Completar serie
-            </button>
-            <button className="wp-skip" onClick={handleSkipExercise}>
-              <SkipForward size={14} /> saltar ejercicio
-            </button>
-          </div>
-        </div>
-      )}
+                const rowClass = `wp-set-row${
+                  isDone ? ' done' : isSkipped ? ' skipped' : isActive ? ' active' : ' future'
+                }`;
 
-      {/* ── Phase: LOG-SET (capturar reps/kg reales) ── */}
-      {phase === 'log-set' && currentEx && (
-        <div className="wp-log-set">
-          <p className="wp-log-set-micro">
-            {currentBank?.muscleGroup} · {displayName}
-          </p>
-          <div className="wp-log-set-counter">
-            Serie {currentSet} <span className="wp-log-set-of">de</span> {totalSetsForCurrent}
-          </div>
-          <p className="wp-log-set-prompt">¿Cómo te fue?</p>
-
-          <div className="wp-log-set-fields">
-            <div className="wp-log-set-field">
-              <label className="wp-log-set-label">Reps completadas</label>
-              <div className="wp-log-set-input-row">
-                <button
-                  type="button"
-                  className="wp-log-set-btn"
-                  onClick={() => setLogSetInputs(s => ({ ...s, reps: Math.max(0, s.reps - 1) }))}
-                  aria-label="Restar 1"
-                >
-                  <Minus size={20} />
-                </button>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  className="wp-log-set-input"
-                  value={logSetInputs.reps}
-                  onChange={e =>
-                    setLogSetInputs(s => ({ ...s, reps: Math.max(0, Number(e.target.value) || 0) }))
-                  }
-                />
-                <button
-                  type="button"
-                  className="wp-log-set-btn"
-                  onClick={() => setLogSetInputs(s => ({ ...s, reps: s.reps + 1 }))}
-                  aria-label="Sumar 1"
-                >
-                  <Plus size={20} />
-                </button>
-              </div>
-            </div>
-
-            <div className="wp-log-set-field">
-              <label className="wp-log-set-label">Peso adicional (opcional)</label>
-              <div className="wp-log-set-input-row">
-                <button
-                  type="button"
-                  className="wp-log-set-btn"
-                  onClick={() => setLogSetInputs(s => ({ ...s, kg: Math.max(0, s.kg - 2.5) }))}
-                  aria-label="Restar 2.5kg"
-                >
-                  <Minus size={20} />
-                </button>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="2.5"
-                  className="wp-log-set-input"
-                  value={logSetInputs.kg}
-                  onChange={e =>
-                    setLogSetInputs(s => ({ ...s, kg: Math.max(0, Number(e.target.value) || 0) }))
-                  }
-                />
-                <button
-                  type="button"
-                  className="wp-log-set-btn"
-                  onClick={() => setLogSetInputs(s => ({ ...s, kg: s.kg + 2.5 }))}
-                  aria-label="Sumar 2.5kg"
-                >
-                  <Plus size={20} />
-                </button>
-              </div>
-              <span className="wp-log-set-unit">kg</span>
+                return (
+                  <button
+                    key={setIdx}
+                    type="button"
+                    className={rowClass}
+                    onClick={() => {
+                      if (isDone) openEditSet(currentExerciseIndex, setIdx);
+                      else if (isActive) markCurrentSet();
+                    }}
+                    disabled={!isActive && !isDone}
+                  >
+                    <span className="wp-set-row-circle">
+                      {isDone && <Check size={14} strokeWidth={2} />}
+                    </span>
+                    <span className="wp-set-row-label">
+                      Serie {setIdx + 1}
+                      {isDone && entry && (
+                        <span className="wp-set-row-vals"> · {entry.reps} reps · {entry.kg}kg</span>
+                      )}
+                      {isSkipped && (
+                        <span className="wp-set-row-vals wp-set-row-vals--muted"> · saltada</span>
+                      )}
+                      {isActive && (
+                        <span className="wp-set-row-hint"> · tocá para marcar</span>
+                      )}
+                    </span>
+                    <span className="wp-set-row-icon">
+                      {isDone ? <Pencil size={14} strokeWidth={1.6} /> : isActive ? <ChevronRight size={16} /> : null}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           <div className="wp-cta-wrap">
-            <button className="wp-cta" onClick={() => handleLogSetSubmit(false)}>
-              <Check size={18} /> Guardar y descansar
-            </button>
-            <button className="wp-skip" onClick={() => handleLogSetSubmit(true)}>
-              <SkipForward size={14} /> saltar set
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Phase: REST (countdown entre series) ── */}
-      {phase === 'rest' && currentEx && (
-        <div className="wp-rest">
-          <div className="wp-rest-label">Descanso</div>
-          <div className="wp-rest-timer">{formatTime(restSecondsLeft)}</div>
-          <p className="wp-rest-next">
-            Siguiente: serie {currentSet + 1} de {totalSetsForCurrent} · {currentEx.reps} reps
-          </p>
-          <p className="wp-rest-exercise">{displayName}</p>
-
-          <div className="wp-cta-wrap">
-            <button className="wp-cta wp-cta-secondary" onClick={handleSkipRest}>
-              <SkipForward size={16} /> saltar descanso
+            <button
+              className={`wp-cta${!allSetsRegistered ? ' wp-cta-secondary' : ''}`}
+              onClick={goToNextExercise}
+            >
+              {currentExerciseIndex + 1 >= totalExercises ? 'Terminar sesión' : 'Siguiente ejercicio'}
+              <ChevronRight size={18} />
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Phase: TRANSITION (3s entre ejercicios) ── */}
-      {phase === 'transition' && transitionNext && (
-        <div className="wp-transition">
-          <p className="wp-transition-prev">Terminaste: {transitionNext.prev}</p>
-          <p className="wp-transition-label">Siguiente</p>
-          <h2 className="wp-transition-next">{transitionNext.next}</h2>
-          <div className="wp-transition-dots">
-            <span className="wp-transition-dot" />
-            <span className="wp-transition-dot" />
-            <span className="wp-transition-dot" />
-          </div>
-        </div>
-      )}
-
-      {/* ── Phase: PAUSED ── */}
+      {/* ── PHASE: PAUSED ── */}
       {phase === 'paused' && (
         <div className="wp-paused">
           <Pause size={48} className="wp-paused-icon" />
           <p className="wp-paused-label">En pausa</p>
           <p className="wp-paused-sub">
-            Ejercicio {currentExerciseIndex + 1} de {totalExercises} · serie {currentSet}
+            Ejercicio {currentExerciseIndex + 1} de {totalExercises} · {setsRegisteredForCurrent} de {totalSetsForCurrent} series
           </p>
           <div className="wp-cta-wrap">
             <button className="wp-cta" onClick={handlePause}>
@@ -569,25 +509,23 @@ export default function WorkoutPlayer({
         </div>
       )}
 
-      {/* ── Phase: COMPLETED ── */}
+      {/* ── PHASE: COMPLETED ── */}
       {phase === 'completed' && (
         <div className="wp-completed">
-          <div className="wp-completed-check">✓</div>
+          <div className="wp-completed-check"><Check size={32} strokeWidth={2.5} /></div>
           <h2 className="wp-completed-title">¡Sesión completada!</h2>
           <div className="wp-completed-stats">
             <div className="wp-completed-stat">
-              <div className="wp-completed-stat-val">{exercisesCompleted}</div>
-              <div className="wp-completed-stat-lbl">ejercicios</div>
+              <div className="wp-completed-stat-val">{completedStats.minutes}</div>
+              <div className="wp-completed-stat-lbl">min</div>
             </div>
             <div className="wp-completed-stat">
-              <div className="wp-completed-stat-val">{totalSetsCompleted}</div>
+              <div className="wp-completed-stat-val">{completedStats.totalSetsCompleted}</div>
               <div className="wp-completed-stat-lbl">series</div>
             </div>
             <div className="wp-completed-stat">
-              <div className="wp-completed-stat-val">
-                {startedAt > 0 ? Math.round((Date.now() - startedAt) / 60000) : 0}
-              </div>
-              <div className="wp-completed-stat-lbl">minutos</div>
+              <div className="wp-completed-stat-val">{completedStats.totalKg}</div>
+              <div className="wp-completed-stat-lbl">kg total</div>
             </div>
           </div>
           {workout.cooldown && (
@@ -596,9 +534,6 @@ export default function WorkoutPlayer({
               <p className="wp-prep-section-text">{workout.cooldown}</p>
             </div>
           )}
-          {workout.note && (
-            <p className="wp-completed-note">{workout.note}</p>
-          )}
           <div className="wp-cta-wrap">
             <button className="wp-cta" onClick={onClose}>
               Terminar
@@ -606,7 +541,97 @@ export default function WorkoutPlayer({
           </div>
         </div>
       )}
+
+      {/* Rest bar flotante (no-bloqueante, sticky bottom) */}
+      {phase === 'exercise' && restState && (
+        <div className="wp-rest-bar" role="status" aria-live="polite">
+          <span className="wp-rest-bar-label">
+            <span className="wp-rest-bar-dot" />
+            descansando {formatTime(restState.secondsLeft)}
+          </span>
+          <button className="wp-rest-bar-skip" onClick={skipRest} type="button">
+            saltar
+          </button>
+        </div>
+      )}
+
+      {/* Mini-popup de ajuste reps/kg */}
+      {editingSet && (
+        <div className="wp-edit-backdrop" onClick={saveEditSet}>
+          <div className="wp-edit-popup" onClick={e => e.stopPropagation()}>
+            <div className="wp-edit-handle" />
+            <div className="wp-edit-title">Serie {editingSet.setIndex + 1}</div>
+            <div className="wp-edit-fields">
+              <div className="wp-edit-field">
+                <label className="wp-edit-label">Reps</label>
+                <div className="wp-edit-row">
+                  <button
+                    type="button"
+                    className="wp-edit-btn"
+                    onClick={() => setEditValues(v => ({ ...v, reps: Math.max(0, v.reps - 1) }))}
+                    aria-label="Restar 1 rep"
+                  >
+                    <Minus size={20} />
+                  </button>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    className="wp-edit-input"
+                    value={editValues.reps}
+                    onChange={e =>
+                      setEditValues(v => ({ ...v, reps: Math.max(0, Number(e.target.value) || 0) }))
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="wp-edit-btn"
+                    onClick={() => setEditValues(v => ({ ...v, reps: v.reps + 1 }))}
+                    aria-label="Sumar 1 rep"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="wp-edit-field">
+                <label className="wp-edit-label">Peso (kg)</label>
+                <div className="wp-edit-row">
+                  <button
+                    type="button"
+                    className="wp-edit-btn"
+                    onClick={() => setEditValues(v => ({ ...v, kg: Math.max(0, v.kg - 2.5) }))}
+                    aria-label="Restar 2.5 kg"
+                  >
+                    <Minus size={20} />
+                  </button>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="2.5"
+                    className="wp-edit-input"
+                    value={editValues.kg}
+                    onChange={e =>
+                      setEditValues(v => ({ ...v, kg: Math.max(0, Number(e.target.value) || 0) }))
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="wp-edit-btn"
+                    onClick={() => setEditValues(v => ({ ...v, kg: v.kg + 2.5 }))}
+                    aria-label="Sumar 2.5 kg"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button className="wp-edit-done" onClick={saveEditSet} type="button">
+              Listo
+            </button>
+          </div>
+        </div>
+      )}
     </div>,
-    document.body
+    document.body,
   );
 }
