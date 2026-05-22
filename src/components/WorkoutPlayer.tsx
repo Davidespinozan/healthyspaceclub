@@ -4,7 +4,16 @@ import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight } from 'lucide
 import { useWakeLock } from '../hooks/useWakeLock';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
-import { parseRepsToNumber } from '../utils/workoutLogger';
+import {
+  startPosFor,
+  markSet as markSetPure,
+  editSetAt,
+  padForNextExercise,
+  computeExercisesCompleted,
+  computeSessionStats,
+  buildOnCompletePayload,
+  parseResumeState,
+} from '../utils/workoutSession';
 import type { Exercise, Equipment, LoggedSet } from '../types';
 import type { CachedWorkout } from '../utils/workoutCache';
 import './workout-player.css';
@@ -80,7 +89,7 @@ export default function WorkoutPlayer({
   // Posición en loggedSets donde comienzan los sets del ejercicio actual.
   // loggedSets es plano en orden de ejecución: [ex0-s0, ex0-s1, ..., ex1-s0, ...]
   const startPos = useMemo(
-    () => exercises.slice(0, currentExerciseIndex).reduce((acc, ex) => acc + ex.sets, 0),
+    () => startPosFor(currentExerciseIndex, exercises),
     [exercises, currentExerciseIndex],
   );
   const setsRegisteredForCurrent = Math.max(0, loggedSets.length - startPos);
@@ -118,7 +127,7 @@ export default function WorkoutPlayer({
         currentExerciseIndex,
         currentSet: Math.min(setsRegisteredForCurrent + 1, totalSetsForCurrent),
         restSecondsLeft: restState?.secondsLeft ?? 0,
-        exercisesCompleted: computeExercisesCompleted(loggedSets),
+        exercisesCompleted: computeExercisesCompleted(loggedSets, exercises),
         totalSetsCompleted: loggedSets.filter(s => s !== null).length,
         startedAt,
         loggedSets,
@@ -140,49 +149,28 @@ export default function WorkoutPlayer({
     return () => clearInterval(interval);
   }, [restState, phase]);
 
-  // ── Helpers
-
-  function computeExercisesCompleted(sets: Array<LoggedSet | null>): number {
-    let count = 0;
-    let pos = 0;
-    for (const ex of exercises) {
-      const slice = sets.slice(pos, pos + ex.sets);
-      if (slice.some(s => s !== null && s !== undefined)) count++;
-      pos += ex.sets;
-    }
-    return count;
-  }
-
-  function startPosFor(exerciseIdx: number): number {
-    return exercises.slice(0, exerciseIdx).reduce((acc, ex) => acc + ex.sets, 0);
-  }
-
-  // ── Handlers
+  // ── Handlers (lógica delegada a src/utils/workoutSession.ts)
 
   function handleStart() {
-    try {
-      const saved = localStorage.getItem(PROGRESS_KEY);
-      if (saved) {
-        const data = JSON.parse(saved);
-        const today = new Date().toISOString().split('T')[0];
-        const sameDay = data.workoutDate === today;
-        const samePlan = data.planHash === planHash;
-        const midSession = data.currentExerciseIndex > 0 && data.currentExerciseIndex < totalExercises;
+    const raw = (() => {
+      try { return localStorage.getItem(PROGRESS_KEY); }
+      catch { return null; }
+    })();
+    const today = new Date().toISOString().split('T')[0];
+    const resumeState = parseResumeState(raw, planHash, today, totalExercises);
 
-        if (sameDay && samePlan && midSession) {
-          const resume = confirm(
-            `Tenías una sesión en progreso (ejercicio ${data.currentExerciseIndex + 1} de ${totalExercises}). ¿Continuar?`,
-          );
-          if (resume) {
-            setCurrentExerciseIndex(data.currentExerciseIndex);
-            setStartedAt(data.startedAt || Date.now());
-            setLoggedSets(Array.isArray(data.loggedSets) ? data.loggedSets : []);
-            setPhase('exercise');
-            return;
-          }
-        }
+    if (resumeState) {
+      const ok = confirm(
+        `Tenías una sesión en progreso (ejercicio ${resumeState.currentExerciseIndex + 1} de ${totalExercises}). ¿Continuar?`,
+      );
+      if (ok) {
+        setCurrentExerciseIndex(resumeState.currentExerciseIndex);
+        setStartedAt(resumeState.startedAt || Date.now());
+        setLoggedSets(resumeState.loggedSets);
+        setPhase('exercise');
+        return;
       }
-    } catch { /* ignore parse errors */ }
+    }
 
     // Empezar de cero
     setCurrentExerciseIndex(0);
@@ -194,31 +182,17 @@ export default function WorkoutPlayer({
 
   function markCurrentSet() {
     if (allSetsRegistered || !currentEx) return;
-    const parsedReps = parseRepsToNumber(currentEx.reps);
-    // Pre-fill kg: último kg non-null del ejercicio actual
-    let lastKg = 0;
-    for (let i = loggedSets.length - 1; i >= startPos; i--) {
-      const entry = loggedSets[i];
-      if (entry) { lastKg = entry.kg; break; }
-    }
-    const newEntry: LoggedSet = { reps: parsedReps, kg: lastKg };
-    const newLogged = [...loggedSets, newEntry];
-    setLoggedSets(newLogged);
-
-    const willBeLastSet = setsRegisteredForCurrent + 1 >= totalSetsForCurrent;
-    if (willBeLastSet) {
+    const { newLoggedSets, restSeconds } = markSetPure(loggedSets, currentExerciseIndex, exercises);
+    setLoggedSets(newLoggedSets);
+    if (restSeconds === null) {
       setRestState(null);
     } else {
-      // Auto-rest: arranca contador para la próxima serie
-      setRestState({
-        secondsLeft: currentEx.rest || 60,
-        forSet: setsRegisteredForCurrent + 1,
-      });
+      setRestState({ secondsLeft: restSeconds, forSet: setsRegisteredForCurrent + 1 });
     }
   }
 
   function openEditSet(exerciseIdx: number, setIdx: number) {
-    const flatIdx = startPosFor(exerciseIdx) + setIdx;
+    const flatIdx = startPosFor(exerciseIdx, exercises) + setIdx;
     const entry = loggedSets[flatIdx];
     if (!entry) return; // null (skipped) o undefined → no editable
     setEditingSet({ exerciseIndex: exerciseIdx, setIndex: setIdx });
@@ -227,16 +201,7 @@ export default function WorkoutPlayer({
 
   function saveEditSet() {
     if (!editingSet) return;
-    const flatIdx = startPosFor(editingSet.exerciseIndex) + editingSet.setIndex;
-    const newEntry: LoggedSet = {
-      reps: Math.max(0, editValues.reps),
-      kg: Math.max(0, editValues.kg),
-    };
-    setLoggedSets(prev => {
-      const next = [...prev];
-      next[flatIdx] = newEntry;
-      return next;
-    });
+    setLoggedSets(prev => editSetAt(prev, editingSet.exerciseIndex, editingSet.setIndex, exercises, editValues));
     setEditingSet(null);
   }
 
@@ -246,11 +211,7 @@ export default function WorkoutPlayer({
 
   function goToNextExercise() {
     if (!currentEx) return;
-    // Pad nulls para los sets no marcados del ejercicio actual (preserva shape del contrato)
-    const missing = totalSetsForCurrent - setsRegisteredForCurrent;
-    const padded = missing > 0
-      ? [...loggedSets, ...new Array<LoggedSet | null>(missing).fill(null)]
-      : loggedSets;
+    const padded = padForNextExercise(loggedSets, currentExerciseIndex, exercises);
     setLoggedSets(padded);
     setRestState(null);
 
@@ -263,23 +224,10 @@ export default function WorkoutPlayer({
   }
 
   function finishSession(finalLogged: Array<LoggedSet | null>) {
-    // Pad al total esperado (defensive)
-    const totalSetsExpected = exercises.reduce((acc, ex) => acc + ex.sets, 0);
-    const padded = [...finalLogged];
-    while (padded.length < totalSetsExpected) padded.push(null);
-
-    const totalSetsCompleted = padded.filter(s => s !== null).length;
-    const exercisesCompleted = computeExercisesCompleted(padded);
-    const durationSeconds = startedAt > 0 ? Math.round((Date.now() - startedAt) / 1000) : 0;
-
+    const payload = buildOnCompletePayload(finalLogged, startedAt, Date.now(), exercises);
     localStorage.removeItem(PROGRESS_KEY);
     setPhase('completed');
-    onComplete({
-      exercisesCompleted,
-      totalSetsCompleted,
-      durationSeconds,
-      loggedSets: padded,
-    });
+    onComplete(payload);
   }
 
   function handlePause() {
@@ -303,14 +251,11 @@ export default function WorkoutPlayer({
   }
 
   // ── Stats para pantalla completed
-  const completedStats = useMemo(() => {
-    const totalSetsCompleted = loggedSets.filter(s => s !== null).length;
-    const exercisesCompleted = computeExercisesCompleted(loggedSets);
-    const totalKg = loggedSets.reduce((acc, s) => acc + (s?.kg ?? 0), 0);
-    const minutes = startedAt > 0 ? Math.round((Date.now() - startedAt) / 60000) : 0;
-    return { totalSetsCompleted, exercisesCompleted, totalKg, minutes };
+  const completedStats = useMemo(
+    () => computeSessionStats(loggedSets, startedAt, Date.now(), exercises),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+    [phase],
+  );
 
   // ══════════════════════════════════════════════════════════════
   // RENDER
