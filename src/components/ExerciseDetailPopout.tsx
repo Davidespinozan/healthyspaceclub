@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Check, RotateCcw, Maximize2, Volume2, VolumeX, Play } from 'lucide-react';
+import { X, Maximize2, Volume2, VolumeX, Play } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Exercise, ExerciseVideo, Equipment } from '../types';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
@@ -17,8 +17,6 @@ interface Props {
   };
   /** Equipo del usuario. Si se provee y el ejercicio tiene variantes, se muestra la variante específica. */
   userEquipment?: Equipment[];
-  isDone: boolean;
-  onToggleDone: () => void;
   onClose: () => void;
 }
 
@@ -26,8 +24,6 @@ export default function ExerciseDetailPopout({
   exercise,
   planData,
   userEquipment,
-  isDone,
-  onToggleDone,
   onClose,
 }: Props) {
   // Variante específica del equipo del usuario (si aplica)
@@ -334,23 +330,6 @@ export default function ExerciseDetailPopout({
           )}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="edp-footer">
-          <button
-            className={`edp-cta${isDone ? ' done' : ''}`}
-            onClick={onToggleDone}
-          >
-            {isDone ? (
-              <>
-                <RotateCcw size={14} /> Desmarcar
-              </>
-            ) : (
-              <>
-                <Check size={14} /> Marcar como hecho
-              </>
-            )}
-          </button>
-        </div>
       </div>
     </div>,
     document.body

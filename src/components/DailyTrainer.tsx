@@ -338,8 +338,9 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
   const dailyCheckinDate = useAppStore(s => s.dailyCheckinDate);
   const storedWorkout = useAppStore(s => s.dailyWorkout);
   const saveDailyWorkout = useAppStore(s => s.saveDailyWorkout);
-  const storedChecked = useAppStore(s => s.dailyWorkoutChecked);
-  const toggleDailyWorkoutCheck = useAppStore(s => s.toggleDailyWorkoutCheck);
+  // dailyWorkoutChecked / toggleDailyWorkoutCheck: deprecados (L2 sunset).
+  // Quedan en el store sin uso para back-compat — el WorkoutPlayer guiado es
+  // ahora la única vía de registrar progreso (escribe a completedSessions).
   const regenCount = useAppStore(s => s.dailyWorkoutRegenCount);
   const incrementRegen = useAppStore(s => s.incrementDailyWorkoutRegen);
   const streakCount = useAppStore(s => s.streakCount);
@@ -724,10 +725,6 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
     setPlan(null);
     saveDailyWorkout(null as any);
     setPhase('modality');
-  }
-
-  function toggleCheck(i: number) {
-    toggleDailyWorkoutCheck(i);
   }
 
   // ══════════════════════════════════════════════════════════════
@@ -1126,8 +1123,6 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
         </div>
       );
     }
-    const checked = storedChecked || [];
-
     return (
       <div className="wz-root">
         <div className="dt2-plan-header">
@@ -1188,11 +1183,10 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
           <div className="dt2-exercises">
             {plan.exercises.map((ex, i) => {
               const bank = exerciseMap.get(ex.id);
-              const isDone = checked.includes(i);
               return (
                 <div
                   key={`${ex.id}-${i}`}
-                  className={`dt2-ex${isDone ? ' done' : ''}`}
+                  className="dt2-ex"
                   onClick={() => {
                     const fallback: Exercise = {
                       id: ex.id || `ex-${i}`,
@@ -1221,13 +1215,6 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
                     });
                   }}
                 >
-                  <button
-                    className="dt2-ex-check"
-                    onClick={(e) => { e.stopPropagation(); toggleCheck(i); }}
-                    aria-label={isDone ? 'Desmarcar' : 'Marcar como hecho'}
-                  >
-                    {isDone ? '✓' : ''}
-                  </button>
                   <div className="dt2-ex-emoji">
                     {(() => { const Ic = getExerciseIcon(bank); return <Ic size={22} strokeWidth={1.5} />; })()}
                   </div>
@@ -1267,8 +1254,6 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
             exercise={selectedExercise.exercise}
             planData={selectedExercise.planData}
             userEquipment={[selectedEquipment]}
-            isDone={checked.includes(selectedExercise.index)}
-            onToggleDone={() => toggleCheck(selectedExercise.index)}
             onClose={() => setSelectedExercise(null)}
           />
         )}

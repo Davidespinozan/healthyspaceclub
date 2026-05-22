@@ -152,7 +152,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const {
     userName, planGoal, mealPlanKey, shoppingDay,
     mealChecks, toggleMealCheck,
-    dailyWorkout, dailyWorkoutChecked, toggleDailyWorkoutCheck,
+    dailyWorkout,
+    // dailyWorkoutChecked / toggleDailyWorkoutCheck deprecados (L2 sunset).
     weeklyPlan, lastWeeklyReview,
     streakCount, obData,
     dailyBriefing, setDailyBriefing,
@@ -557,7 +558,6 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                         {exList.slice(0, 6).map((ex, i) => {
                           const exId = String(ex.id ?? `ex-${i}`);
                           const bank = exerciseMap.get(exId);
-                          const isDone = dailyWorkoutChecked.includes(i);
                           const displayName = String(bank?.name || ex.name || 'Ejercicio');
 
                           function openPopout(e: React.MouseEvent) {
@@ -588,27 +588,15 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
                               index: i,
                             });
                           }
-                          function handleToggle(e: React.MouseEvent) {
-                            e.stopPropagation();
-                            toggleDailyWorkoutCheck(i);
-                          }
 
                           return (
                             <li key={`${exId}-${i}`} className="th3-card-list-item">
                               <button
                                 type="button"
-                                className={`th3-card-list-name${isDone ? ' done' : ''}`}
+                                className="th3-card-list-name"
                                 onClick={openPopout}
                               >
                                 {displayName}
-                              </button>
-                              <button
-                                type="button"
-                                className={`th3-card-list-check${isDone ? ' checked' : ''}`}
-                                onClick={handleToggle}
-                                aria-label={isDone ? 'Desmarcar ejercicio' : 'Marcar ejercicio'}
-                              >
-                                {isDone ? '✓' : ''}
                               </button>
                             </li>
                           );
@@ -747,15 +735,11 @@ Este perfil será usado por el coach IA para personalizar sus respuestas. Escrib
       {/* ── Meal popout (componente reutilizable) ── */}
       <MealDetailPopout meal={mealDetail} onClose={() => setMealDetail(null)} />
 
-      {/* ── Exercise detail popout (preserved) ── */}
+      {/* ── Exercise detail popout (read-only desde L2 sunset) ── */}
       {selectedExercise && (
         <ExerciseDetailPopout
           exercise={selectedExercise.exercise}
           planData={selectedExercise.planData}
-          isDone={dailyWorkoutChecked.includes(selectedExercise.index)}
-          onToggleDone={() => {
-            toggleDailyWorkoutCheck(selectedExercise.index);
-          }}
           onClose={() => setSelectedExercise(null)}
         />
       )}
