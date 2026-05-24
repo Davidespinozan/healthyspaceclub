@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../store';
+import { useT } from '../i18n';
 import { callAI } from '../utils/aiProxy';
 import { buildHSMQuestionPrompt } from '../ai/prompts/hsmQuestion';
 import { buildHSMDailyReviewPrompt } from '../ai/prompts/hsmReview';
@@ -139,6 +140,7 @@ interface Props {
 }
 
 export default function TuEspacioFlow({ onClose }: Props) {
+  const { locale } = useT();
   const { dailyHSMResponses, addHSMResponse, userPlan, trialEndsAt, markActiveDay } = useAppStore();
   const isPlanActive = userPlan && userPlan !== 'none' &&
     (!trialEndsAt || new Date(trialEndsAt) > new Date());
@@ -175,7 +177,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
     callAI({
       max_tokens: 60,
-      messages: [{ role: 'user', content: buildHSMQuestionPrompt(recentSummary) }],
+      messages: [{ role: 'user', content: buildHSMQuestionPrompt(recentSummary, locale) }],
     }, controller.signal)
       .then(data => {
         const q = data.content?.[0]?.text?.trim() ?? '';
@@ -219,7 +221,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
     callAI({
       max_tokens: 200,
-      messages: [{ role: 'user', content: buildHSMDailyReviewPrompt(todaySummary) }],
+      messages: [{ role: 'user', content: buildHSMDailyReviewPrompt(todaySummary, locale) }],
     }, controller.signal)
       .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyReview(t); })
       .catch(() => {})

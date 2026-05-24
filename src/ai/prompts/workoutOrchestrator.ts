@@ -6,7 +6,8 @@
 // {nombre} tiene 7 días de descanso..."). Reescritos para hablar directo
 // al usuario.
 
-import { COACH_VOICE_RULES } from '../voice';
+import type { AppLanguage } from '../../store';
+import { getVoiceRules, getOutputLanguageDirective } from '../voice';
 
 interface WorkoutParams {
   dayLabel: string;
@@ -18,6 +19,7 @@ interface WorkoutParams {
   goal: string;
   intensityInstruction: string;
   intensity: string;
+  locale?: AppLanguage;
 }
 
 /**
@@ -31,6 +33,7 @@ interface WorkoutParams {
  */
 export function buildWorkoutOrchestratorPrompt(p: WorkoutParams): string {
   void p.userName;
+  const locale = p.locale ?? 'es';
   return `Orquesta una sesión de ${p.dayLabel} para el usuario.
 ${p.profileBlock}
 CONTEXTO DEL USUARIO:
@@ -44,7 +47,7 @@ PARÁMETROS:
 - Goal del día: ${p.goal}
 - ${p.intensityInstruction}
 
-${COACH_VOICE_RULES}
+${getVoiceRules(locale, 'default')}
 
 Los campos "note" y "razon" del JSON se muestran AL USUARIO directamente —
 deben hablarle en 2da persona (tú/te/tu), sin usar su nombre, sin "el usuario".
@@ -68,7 +71,7 @@ Responde SOLO este JSON, sin markdown:
   "cooldown": "...",
   "note": "...",
   "razon": "..."
-}`;
+}${getOutputLanguageDirective(locale)}`;
 }
 
 interface YogaParams {
@@ -81,6 +84,7 @@ interface YogaParams {
   minSec: number;
   maxSec: number;
   painInstruction: string;
+  locale?: AppLanguage;
 }
 
 /**
@@ -93,6 +97,7 @@ interface YogaParams {
  */
 export function buildYogaOrchestratorPrompt(p: YogaParams): string {
   void p.userName;
+  const locale = p.locale ?? 'es';
   return `Genera un flow de POWER VINYASA auténtico (estilo Baron Baptiste, influencia Ashtanga) de EXACTAMENTE ${p.minutes} minutos para el usuario.
 ${p.profileBlock}
 CONTEXTO DEL USUARIO:
@@ -143,7 +148,7 @@ REGLAS ESTRICTAS:
 - Cada pose tiene "tip_personalizado" breve (máx 12 palabras) enfocado en respiración, alineación o sensación, dirigido al usuario en 2da persona
 - Savasana al final es OBLIGATORIO, mínimo 300s${p.painInstruction}
 
-${COACH_VOICE_RULES}
+${getVoiceRules(locale, 'default')}
 
 Los campos "opening", "closing", "note" y "razon" se muestran AL USUARIO —
 deben hablarle en 2da persona (tú/te/tu), sin usar su nombre. La "razon"
@@ -169,5 +174,5 @@ Responde SOLO este JSON, sin markdown ni texto extra:
   "closing": "Instrucción breve de cierre (1 frase, 2da persona)",
   "note": "Mensaje motivador breve en 2da persona, citando el contexto",
   "razon": "Por qué este flow hoy, en 2da persona, citando al menos 2 piezas del contexto"
-}`;
+}${getOutputLanguageDirective(locale)}`;
 }

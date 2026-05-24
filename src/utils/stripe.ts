@@ -155,6 +155,3 @@ export async function changeSubscription(_newCycle: BillingCycle): Promise<void>
 export async function cancelSubscription(_immediate: boolean = false): Promise<void> {
   throw new Error('STRIPE_NOT_WIRED');
 }
-
-export const STRIPE_NOT_WIRED_MESSAGE =
-  'Sistema de pagos en activación. Hablá con el coach para gestionar tu plan mientras tanto.';

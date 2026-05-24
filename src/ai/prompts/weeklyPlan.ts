@@ -1,7 +1,9 @@
 // Prompt JSON-mode para generar plan semanal de comidas.
 // Lote Coach-B: aplica regla de voz al campo "nota" (user-facing).
+// Lote i18n-5: locale opcional + directiva de output language.
 
-import { COACH_VOICE_RULES } from '../voice';
+import type { AppLanguage } from '../../store';
+import { getVoiceRules, getOutputLanguageDirective } from '../voice';
 
 interface WeeklyPlanParams {
   userName: string;
@@ -10,6 +12,7 @@ interface WeeklyPlanParams {
   answers: Record<string, string>;
   styleFromGoal: string;
   mealList: string;
+  locale?: AppLanguage;
 }
 
 /**
@@ -20,6 +23,7 @@ interface WeeklyPlanParams {
  */
 export function buildWeeklyPlanPrompt(p: WeeklyPlanParams): string {
   void p.userName;
+  const locale = p.locale ?? 'es';
   return `Eres un nutricionista experto. Crea un plan semanal personalizado.
 
 PERFIL DEL USUARIO:
@@ -37,7 +41,7 @@ PREFERENCIAS ESTA SEMANA:
 OPCIONES DISPONIBLES (banco de comidas):
 ${p.mealList}
 
-${COACH_VOICE_RULES}
+${getVoiceRules(locale, 'default')}
 
 El campo "nota" del JSON se muestra AL USUARIO — debe hablarle en 2da persona
 (tú/te/tu), sin usar su nombre.
@@ -49,5 +53,5 @@ Responde SOLO este JSON, sin markdown, sin texto extra:
   "selectedDays": [N1, N2, N3, N4, N5, N6, N7],
   "shoppingList": ["artículo con cantidad", "artículo con cantidad"],
   "nota": "mensaje motivador breve de 1-2 oraciones, en 2da persona (tú)"
-}`;
+}${getOutputLanguageDirective(locale)}`;
 }

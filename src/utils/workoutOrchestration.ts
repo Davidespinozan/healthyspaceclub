@@ -19,6 +19,7 @@ import {
 } from '../ai/prompts/workoutOrchestrator';
 import { callAI } from './aiProxy';
 import type { Exercise, Equipment, Goal, UserProfile, YogaPlan } from '../types';
+import type { AppLanguage } from '../store';
 import type { CachedWorkout } from './workoutCache';
 
 export async function orchestrateWorkout(params: {
@@ -31,8 +32,9 @@ export async function orchestrateWorkout(params: {
   dayLabel: string;
   context: string;
   userProfile?: UserProfile;
+  locale?: AppLanguage;
 }): Promise<CachedWorkout & { razon?: string }> {
-  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context, userProfile } = params;
+  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context, userProfile, locale } = params;
   const profileBlock = buildUserProfileBlock(userProfile);
 
   // Para cada candidato, seleccionar la variante específica que aplica al equipo
@@ -54,7 +56,7 @@ export async function orchestrateWorkout(params: {
 
   const prompt = buildWorkoutOrchestratorPrompt({
     dayLabel, userName, profileBlock, context, candidatesCompact,
-    targetCount, goal, intensityInstruction, intensity,
+    targetCount, goal, intensityInstruction, intensity, locale,
   });
 
   const controller = new AbortController();
@@ -85,6 +87,7 @@ export async function orchestratePowerVinyasa(params: {
   context: string;
   painArea?: string;
   userProfile?: UserProfile;
+  locale?: AppLanguage;
 }): Promise<YogaPlan> {
   const profileBlock = buildUserProfileBlock(params.userProfile);
 
@@ -110,6 +113,7 @@ export async function orchestratePowerVinyasa(params: {
     minSec,
     maxSec,
     painInstruction,
+    locale: params.locale,
   });
 
   const controller = new AbortController();

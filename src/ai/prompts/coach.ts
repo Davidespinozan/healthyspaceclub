@@ -1,19 +1,21 @@
-import type { useAppStore } from '../../store';
+import type { useAppStore, AppLanguage } from '../../store';
 import { buildHSMCoreBlock } from '../hsmCore';
-import { COACH_VOICE_RULES } from '../voice';
+import { getVoiceRules, getOutputLanguageDirective } from '../voice';
 
 /**
  * System prompt del coach IA (chat conversacional en TabCoach).
  *
  * Mudado desde TabCoach.tsx buildSystemPrompt en el Lote Coach-A.
- * CONTRATO: el string runtime devuelto es IDÉNTICO al que generaba la
- * función inline en TabCoach. Cero cambio de contenido en este lote.
+ * i18n-5: recibe locale para inyectar regla de voz por idioma + directiva
+ * final de output language cuando locale === 'en'. El cuerpo del prompt
+ * (filosofía HSM, 10 dimensiones, reglas de comunicación) queda en español.
  *
  * El bloque "FILOSOFÍA HSM + 10 DIMENSIONES" vive en src/ai/hsmCore.ts
  * y se interpola acá para evitar duplicación.
  */
 export function buildCoachSystemPrompt(
   store: ReturnType<typeof useAppStore.getState>,
+  locale: AppLanguage = 'es',
 ): string {
   const { userName, obData, tdee, planGoal, habits, weightLog, foodLog, workoutLog,
     dailyCheckin, activeHSMDimension, streakCount, weeklyPlan, mealPlanKey,
@@ -82,7 +84,7 @@ ${buildHSMCoreBlock(streakCount)}
 ═══════════════════════════════
 REGLAS DE COMUNICACIÓN
 ═══════════════════════════════
-${COACH_VOICE_RULES}
+${getVoiceRules(locale, 'default')}
 
 - Tono cercano y directo — como un amigo que sabe mucho.
 - Máximo 3 oraciones por respuesta — eres conciso, no das conferencias.
@@ -112,5 +114,5 @@ REGLAS para [ACTION:]:
 - La línea debe ir SOLA, al final del mensaje, sin texto antes ni después en la misma línea
 - NUNCA ejecutes acciones destructivas: tu rol es OFRECER llevar al user al lugar correcto, no actuar
 - Si el tema NO es de gestión, NO incluyas [ACTION: ...]
-- Solo UNA action por respuesta`;
+- Solo UNA action por respuesta${getOutputLanguageDirective(locale)}`;
 }

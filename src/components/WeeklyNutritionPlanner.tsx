@@ -157,6 +157,7 @@ async function generateWeeklyPlan(params: {
   obData: Record<string, string | number>;
   userName: string;
   answers: Record<string, string>;
+  locale: 'es' | 'en';
 }): Promise<{ selectedDays: number[]; shoppingList: string[]; nota: string }> {
   const mealList = buildMealList(params.planKey);
 
@@ -175,6 +176,7 @@ async function generateWeeklyPlan(params: {
     answers: params.answers,
     styleFromGoal,
     mealList,
+    locale: params.locale,
   });
 
   const controller = new AbortController();
@@ -290,6 +292,7 @@ export default function WeeklyNutritionPlanner() {
         obData: obData as Record<string, string | number>,
         userName,
         answers: newAnswers,
+        locale,
       });
       const valid = result.selectedDays
         .map(d => Math.max(1, Math.min(28, d)))

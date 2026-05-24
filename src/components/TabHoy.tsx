@@ -235,11 +235,13 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           peso: obData.peso || '',
           goal: obData.goal || '',
           activity: obData.activity || '',
+          locale,
         })
       : buildDailyBriefingPrompt({
           firstName,
           streakCount,
           goal: String((obData as Record<string, unknown>)?.goal || ''),
+          locale,
         });
 
     const controller = new AbortController();
@@ -282,7 +284,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       return;
     }
     const recentSummary = last7Responses.slice(-10).map(r => `${r.dimension}: "${r.response}"`).join('\n');
-    const prompt = buildHSMQuestionPrompt(recentSummary);
+    const prompt = buildHSMQuestionPrompt(recentSummary, locale);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -308,7 +310,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   useEffect(() => {
     if (!allAnswered || dailyReview || !isPlanActive) return;
     const todaySummary = todayResponses.map(r => `${r.dimension}: "${r.response}"`).join('\n');
-    const reviewPrompt = buildHSMDailyReviewPrompt(todaySummary);
+    const reviewPrompt = buildHSMDailyReviewPrompt(todaySummary, locale);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -324,7 +326,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     if (daysSinceStart !== 5 || !isPlanActive || miniReview) return;
     if (dailyHSMResponses.length < 5) return;
     const allSoFar = dailyHSMResponses.slice(-15).map(r => `${r.dimension}: "${r.response}"`).join('\n');
-    const miniPrompt = buildHSM5DayMiniReviewPrompt(allSoFar);
+    const miniPrompt = buildHSM5DayMiniReviewPrompt(allSoFar, locale);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -344,7 +346,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     last7Responses.forEach(r => { dimCounts[r.dimension] = (dimCounts[r.dimension] ?? 0) + 1; });
     const dimList = Object.entries(dimCounts).sort((a, b) => b[1] - a[1]).map(([d, c]) => `${d}: ${c} respuestas`).join(', ');
 
-    const weekPrompt = buildHSMWeeklyReviewPrompt(weekSummary, dimList);
+    const weekPrompt = buildHSMWeeklyReviewPrompt(weekSummary, dimList, locale);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);

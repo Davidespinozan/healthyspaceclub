@@ -1,26 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../store';
+import { useT } from '../i18n';
 import { callAI } from '../utils/aiProxy';
 import { buildCoachSystemPrompt } from '../ai/prompts/coach';
 import ManagePlanSheet from './sheets/ManagePlanSheet';
 import TermsSheet from './sheets/TermsSheet';
 import PrivacySheet from './sheets/PrivacySheet';
 
-const QUICK_CHIPS = [
-  '¿Puedo comer esto?',
-  'Entreno rápido',
-  'Estoy ansioso',
-  '¿Cómo voy?',
-];
-
 type CoachAction = 'open_manage_plan' | 'log_support_ticket' | 'open_privacy' | 'open_terms';
-
-const ACTION_LABELS: Record<CoachAction, string> = {
-  open_manage_plan: 'Ver mi plan →',
-  log_support_ticket: 'Registrar para soporte →',
-  open_privacy: 'Ver Política de Privacidad →',
-  open_terms: 'Ver Términos →',
-};
 
 function parseAction(content: string): { text: string; action: CoachAction | null } {
   const match = content.match(/\[ACTION:\s*(open_manage_plan|log_support_ticket|open_privacy|open_terms)\s*\]/i);
@@ -31,7 +18,8 @@ function parseAction(content: string): { text: string; action: CoachAction | nul
 
 async function askCoach(
   messages: { role: 'user' | 'assistant'; content: string }[],
-  systemPrompt: string
+  systemPrompt: string,
+  errors: { timeout: string; noReply: string },
 ): Promise<string> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -44,10 +32,10 @@ async function askCoach(
       },
       controller.signal,
     );
-    return data.content?.[0]?.text ?? 'No pude responder, intenta de nuevo.';
+    return data.content?.[0]?.text ?? errors.noReply;
   } catch (e) {
     if ((e as Error).name === 'AbortError') {
-      throw new Error('El coach no respondió a tiempo. Intenta de nuevo.');
+      throw new Error(errors.timeout);
     }
     throw e;
   } finally {
@@ -56,9 +44,24 @@ async function askCoach(
 }
 
 export default function TabCoach() {
-  const { userName, coachChatHistory, coachChatDate, addCoachMessage,
+  const { t, locale } = useT();
+  const { coachChatHistory, coachChatDate, addCoachMessage,
     foodLog, dailyWorkout, streakCount, dailyCheckin, planGoal,
     coachPrefilledMessage, setCoachPrefilledMessage } = useAppStore();
+
+  const QUICK_CHIPS = [
+    t('coach.chip1'),
+    t('coach.chip2'),
+    t('coach.chip3'),
+    t('coach.chip4'),
+  ];
+
+  const ACTION_LABELS: Record<CoachAction, string> = {
+    open_manage_plan: t('coach.actionOpenManagePlan'),
+    log_support_ticket: t('coach.actionLogSupportTicket'),
+    open_privacy: t('coach.actionOpenPrivacy'),
+    open_terms: t('coach.actionOpenTerms'),
+  };
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPlan, setShowPlan] = useState(false);
@@ -81,23 +84,22 @@ export default function TabCoach() {
     else if (action === 'open_privacy') setShowPrivacy(true);
     else if (action === 'log_support_ticket') {
       console.log('[support_ticket]', { history: useAppStore.getState().coachChatHistory });
-      alert('Tu solicitud quedó registrada. El equipo te contactará por correo en menos de 48h.');
+      alert(t('coach.supportTicketAlert'));
     }
   }
 
   const today = new Date().toISOString().split('T')[0];
   const messages = coachChatDate === today ? coachChatHistory : [];
 
-  // Contextual welcome
+  // Contextual welcome (Coach-B voice rule: 2da persona, sin nombre).
   const todayKcal = foodLog.filter(e => e.date === today).reduce((s, e) => s + e.kcal, 0);
   const hasWorkout = dailyWorkout?.date === today;
   const welcomeMsg = (() => {
-    const name = userName?.split(' ')[0] || '';
-    if (streakCount >= 7) return `${name}, llevas ${streakCount} días de racha. ¿Cómo te ayudo a mantenerla?`;
-    if (todayKcal > 0 && planGoal > 0) return `${name}, llevas ${todayKcal} de ${planGoal} kcal hoy. ¿Qué necesitas?`;
-    if (hasWorkout) return `${name}, ya tienes rutina lista hoy. ¿Dudas sobre algún ejercicio?`;
-    if (dailyCheckin === 'cansado') return `${name}, hoy amaneciste cansado. ¿Te ayudo a ajustar el día?`;
-    return `¡Hola${name ? `, ${name}` : ''}! Soy tu coach. ¿En qué te ayudo hoy?`;
+    if (streakCount >= 7) return t('coach.welcomeStreak', { streak: streakCount });
+    if (todayKcal > 0 && planGoal > 0) return t('coach.welcomeKcal', { kcal: todayKcal, goal: planGoal });
+    if (hasWorkout) return t('coach.welcomeWorkout');
+    if (dailyCheckin === 'cansado') return t('coach.welcomeTired');
+    return t('coach.welcomeDefault');
   })();
 
   useEffect(() => {
@@ -114,28 +116,29 @@ export default function TabCoach() {
       const allMsgs = [...chatDate, { role: 'user' as const, content: text, timestamp: '' }];
       const reply = await askCoach(
         allMsgs.map(m => ({ role: m.role, content: m.content })),
-        buildCoachSystemPrompt(state)
+        buildCoachSystemPrompt(state, locale),
+        { timeout: t('coach.errorTimeout'), noReply: t('coach.errorNoReply') },
       );
       addCoachMessage('assistant', reply);
     } catch (e) {
-      addCoachMessage('assistant', e instanceof Error ? e.message : 'Hubo un error, intenta de nuevo.');
+      addCoachMessage('assistant', e instanceof Error ? e.message : t('coach.errorGeneric'));
     } finally {
       setLoading(false);
     }
   }
 
   function handleSubmit() {
-    const t = input.trim();
-    if (!t || loading) return;
-    send(t);
+    const trimmed = input.trim();
+    if (!trimmed || loading) return;
+    send(trimmed);
   }
 
   return (
     <div className="tc-wrap">
       {/* Header */}
       <div className="tc-header">
-        <div className="tc-header-title">Tu coach personal</div>
-        <div className="tc-header-sub">Nutriólogo, entrenador y coach de vida</div>
+        <div className="tc-header-title">{t('coach.headerTitle')}</div>
+        <div className="tc-header-sub">{t('coach.headerSub')}</div>
       </div>
 
       {/* Quick chips */}
@@ -189,7 +192,7 @@ export default function TabCoach() {
         <input
           className="tc-input"
           type="text"
-          placeholder="Pregúntame algo..."
+          placeholder={t('coach.inputPlaceholder')}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSubmit()}

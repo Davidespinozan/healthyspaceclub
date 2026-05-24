@@ -11,7 +11,6 @@ import {
   getPriceInfo,
   formatPrice,
   formatRenewalDate,
-  STRIPE_NOT_WIRED_MESSAGE,
   type BillingCycle,
   type SubscriptionInfo,
   type PaymentMethod,
@@ -80,7 +79,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
   }, [userId, storeTrialEndsAt]);
 
   function notWired(action: string) {
-    if (window.confirm(`${STRIPE_NOT_WIRED_MESSAGE}\n\n${t('managePlan.notWiredAsk')} "${action}"?`)) {
+    if (window.confirm(`${t('coach.stripeNotWired')}\n\n${t('managePlan.notWiredAsk')} "${action}"?`)) {
       onClose();
       openCoachWith(`Quiero ${action}.`);
     }

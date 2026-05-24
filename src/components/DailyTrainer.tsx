@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../store';
+import { useT } from '../i18n';
 import { exercises as exerciseBank } from '../data/exercises';
 import {
   decideTodayWorkout,
@@ -55,6 +56,7 @@ interface DailyTrainerProps {
 }
 
 export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) {
+  const { locale } = useT();
   const userName = useAppStore(s => s.userName);
   const obData = useAppStore(s => s.obData);
   const workoutLog = useAppStore(s => s.workoutLog);
@@ -264,6 +266,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
           context: `- ${contextStr}`,
           painArea: discomfort === 'pain' ? painArea : undefined,
           userProfile,
+          locale,
         };
 
         let yogaPlan = await orchestratePowerVinyasa(orchParams);
@@ -379,6 +382,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
         dayLabel,
         context: `- ${contextStr}`,
         userProfile,
+        locale,
       });
 
       if (!validateWorkout(workout, validIds)) {

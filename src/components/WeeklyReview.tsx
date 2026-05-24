@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
+import { useT } from '../i18n';
 import { ChevronRight, Flame } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { callAI } from '../utils/aiProxy';
@@ -13,6 +14,7 @@ async function generateReviewMessage(params: {
   weightChange: number | null;
   completedModules: number;
   goal: string;
+  locale: 'es' | 'en';
 }): Promise<string> {
   const prompt = buildWeeklyReviewMessagePrompt(params);
 
@@ -39,6 +41,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
   onClose: () => void;
   onPlanNextWeek: () => void;
 }) {
+  const { locale } = useT();
   const {
     userName, mealChecks, workoutLog, streakCount,
     weightLog, growthCompleted, obData,
@@ -118,6 +121,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
     generateReviewMessage({
       userName: firstName, mealDays, workoutDays,
       streak: streakCount, weightChange, completedModules, goal,
+      locale,
     })
       .then(msg => setMessage(msg))
       .catch((e) => setMessage(e instanceof Error ? e.message : ''))

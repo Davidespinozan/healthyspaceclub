@@ -1,7 +1,9 @@
 // Prompts del daily briefing mostrado en TabHoy hero subhead.
 // Lote Coach-B: aplica regla de voz canónica (2da persona).
+// Lote i18n-5: recibe locale para regla de voz + directiva de output.
 
-import { COACH_VOICE_RULES_DAY1, COACH_VOICE_RULES_SHORT } from '../voice';
+import type { AppLanguage } from '../../store';
+import { getVoiceRules, getOutputLanguageDirective } from '../voice';
 
 interface Day1Params {
   firstName: string;
@@ -10,6 +12,7 @@ interface Day1Params {
   peso: string | number;
   goal: string | number;
   activity: string | number;
+  locale?: AppLanguage;
 }
 
 /**
@@ -18,6 +21,7 @@ interface Day1Params {
  * Output: texto 3-4 líneas. max_tokens 200.
  */
 export function buildDay1BriefingPrompt(p: Day1Params): string {
+  const locale = p.locale ?? 'es';
   return `Eres el coach personal del usuario en Healthy Space Club. Acaba de completar su registro.
 
 DATOS DEL USUARIO:
@@ -28,7 +32,7 @@ DATOS DEL USUARIO:
 - Objetivo: ${p.goal || '?'}
 - Actividad: ${p.activity || '?'}
 
-${COACH_VOICE_RULES_DAY1}
+${getVoiceRules(locale, 'day1')}
 
 TAREA: Escribe un mensaje de bienvenida de 3-4 líneas que:
 - Empiece saludándolo con su nombre (una sola vez).
@@ -37,13 +41,14 @@ TAREA: Escribe un mensaje de bienvenida de 3-4 líneas que:
 - Anticipe lo que van a trabajar juntos.
 - Sea cálido pero directo, como un coach que ya lo conoce.
 
-Sin "Hola" ni "Bienvenido" — saluda con naturalidad. Directo al punto.`;
+Sin "Hola" ni "Bienvenido" — saluda con naturalidad. Directo al punto.${getOutputLanguageDirective(locale)}`;
 }
 
 interface DailyParams {
   firstName: string;
   streakCount: number;
   goal: string;
+  locale?: AppLanguage;
 }
 
 /**
@@ -56,9 +61,10 @@ interface DailyParams {
  */
 export function buildDailyBriefingPrompt(p: DailyParams): string {
   void p.firstName; // descartado intencionalmente — la regla de voz prohíbe el nombre acá
+  const locale = p.locale ?? 'es';
   return `Escribe UNA sola frase corta y motivadora para mostrar al usuario hoy. El usuario lleva ${p.streakCount} días de racha y quiere ${p.goal || 'mejorar su salud'}.
 
-${COACH_VOICE_RULES_SHORT}
+${getVoiceRules(locale, 'short')}
 
-Háblale directo en 2da persona ("tú llevas...", "tu meta..."). Máximo 12 palabras. Sin saludo. Directo.`;
+Háblale directo en 2da persona ("tú llevas...", "tu meta..."). Máximo 12 palabras. Sin saludo. Directo.${getOutputLanguageDirective(locale)}`;
 }

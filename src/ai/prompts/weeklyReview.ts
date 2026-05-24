@@ -1,7 +1,9 @@
 // Prompt del resumen semanal mostrado en WeeklyReview component.
 // Lote Coach-B: regla de voz aplicada (2da persona, sin nombre).
+// Lote i18n-5: locale opcional + directiva de output language.
 
-import { COACH_VOICE_RULES } from '../voice';
+import type { AppLanguage } from '../../store';
+import { getVoiceRules, getOutputLanguageDirective } from '../voice';
 
 interface WeeklyReviewParams {
   userName: string;
@@ -11,6 +13,7 @@ interface WeeklyReviewParams {
   weightChange: number | null;
   completedModules: number;
   goal: string;
+  locale?: AppLanguage;
 }
 
 /**
@@ -20,6 +23,7 @@ interface WeeklyReviewParams {
  */
 export function buildWeeklyReviewMessagePrompt(p: WeeklyReviewParams): string {
   void p.userName;
+  const locale = p.locale ?? 'es';
   return `Eres un coach de vida. Escribe un resumen semanal personalizado y motivador para mostrar al usuario.
 
 DATOS DE LA SEMANA:
@@ -30,7 +34,7 @@ DATOS DE LA SEMANA:
 - Módulos de crecimiento completados: ${p.completedModules}/10
 - Objetivo: ${p.goal || 'mejorar salud'}
 
-${COACH_VOICE_RULES}
+${getVoiceRules(locale, 'default')}
 
-TAREA: Escribe 2-3 oraciones dirigidas al usuario en 2da persona. Sé directo, honesto y motivador. Menciona 1 logro concreto suyo y 1 área de enfoque para la próxima semana. Máximo 3 oraciones.`;
+TAREA: Escribe 2-3 oraciones dirigidas al usuario en 2da persona. Sé directo, honesto y motivador. Menciona 1 logro concreto suyo y 1 área de enfoque para la próxima semana. Máximo 3 oraciones.${getOutputLanguageDirective(locale)}`;
 }
