@@ -65,9 +65,6 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
   const dailyCheckinDate = useAppStore(s => s.dailyCheckinDate);
   const storedWorkout = useAppStore(s => s.dailyWorkout);
   const saveDailyWorkout = useAppStore(s => s.saveDailyWorkout);
-  // dailyWorkoutChecked / toggleDailyWorkoutCheck: deprecados (L2 sunset).
-  // Quedan en el store sin uso para back-compat — el WorkoutPlayer guiado es
-  // ahora la única vía de registrar progreso (escribe a completedSessions).
   const regenCount = useAppStore(s => s.dailyWorkoutRegenCount);
   const incrementRegen = useAppStore(s => s.incrementDailyWorkoutRegen);
   const streakCount = useAppStore(s => s.streakCount);

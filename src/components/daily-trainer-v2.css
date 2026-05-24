@@ -154,40 +154,6 @@
   border-color: var(--amber);
 }
 
-.dt2-ex.done {
-  background: var(--warm);
-  opacity: 0.6;
-}
-
-.dt2-ex.done .dt2-ex-name {
-  text-decoration: line-through;
-}
-
-.dt2-ex-check {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  min-width: 44px;
-  min-height: 44px;
-  border-radius: 50%;
-  background: white;
-  border: 1.5px solid var(--sand);
-  color: var(--amber);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-
-.dt2-ex.done .dt2-ex-check {
-  background: var(--amber);
-  color: white;
-  border-color: var(--amber);
-}
-
 .dt2-ex-emoji {
   flex-shrink: 0;
   width: 40px;

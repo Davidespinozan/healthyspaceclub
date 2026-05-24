@@ -160,7 +160,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     userName, planGoal, mealPlanKey, shoppingDay,
     mealChecks, toggleMealCheck,
     dailyWorkout,
-    // dailyWorkoutChecked / toggleDailyWorkoutCheck deprecados (L2 sunset).
     weeklyPlan, lastWeeklyReview,
     streakCount, obData,
     dailyBriefing, setDailyBriefing,
