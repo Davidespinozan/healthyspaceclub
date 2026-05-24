@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { exercises as exerciseBank } from '../data/exercises';
 import {
@@ -23,7 +23,6 @@ import {
   validateWorkoutPlanStrict,
 } from '../utils/workoutValidation';
 import { stretchToTargetDuration } from '../utils/yogaPostProcess';
-import { finishWorkoutSession, groupLoggedSetsByExercise, type ExerciseLogItem } from '../utils/workoutLogger';
 import { orchestrateWorkout, orchestratePowerVinyasa } from '../utils/workoutOrchestration';
 import type {
   Exercise,
@@ -35,18 +34,11 @@ import type {
   WorkoutDayDecision,
   YogaPlan,
 } from '../types';
-import { RefreshCw, Clock, Zap, ChevronRight, Lock } from 'lucide-react';
-import { getExerciseIcon } from '../utils/muscleGroupIcon';
-import ExerciseDetailPopout from './ExerciseDetailPopout';
-import PlayerLoadingFallback from './PlayerLoadingFallback';
 import Wizard from './dailyTrainer/Wizard';
+import YogaPlanView from './dailyTrainer/YogaPlan';
+import WorkoutPlanView from './dailyTrainer/WorkoutPlan';
 import { MODALITY_OPTIONS } from './dailyTrainer/constants';
 import './daily-trainer-v2.css';
-
-// Lazy: los Players (WorkoutPlayer 23kB + YogaFlowPlayer 18.7kB) salen del
-// bundle inicial de DashboardScreen — solo se cargan al abrir un player.
-const YogaFlowPlayer = lazy(() => import('./YogaFlowPlayer'));
-const WorkoutPlayer = lazy(() => import('./WorkoutPlayer'));
 
 const DAY_NAMES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 
@@ -79,9 +71,6 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
   const streakCount = useAppStore(s => s.streakCount);
   const completedSessions = useAppStore(s => s.completedSessions);
   const addCompletedSession = useAppStore(s => s.addCompletedSession);
-
-  // Tracking de cuándo se abrió el player — para calcular duración real al onComplete
-  const playerStartedAtRef = useRef<number>(0);
 
   const today = new Date().toISOString().split('T')[0];
   const firstName = userName?.split(' ')[0] || '';
@@ -147,16 +136,6 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
 
   // Loading context bullets
   const [contextBullets, setContextBullets] = useState<string[]>([]);
-
-  // Popout
-  const [playerOpen, setPlayerOpen] = useState(false);
-  const [workoutPlayerOpen, setWorkoutPlayerOpen] = useState(false);
-
-  const [selectedExercise, setSelectedExercise] = useState<{
-    exercise: Exercise;
-    planData: { sets: number; reps: string; rest: number; tip_personalizado?: string };
-    index: number;
-  } | null>(null);
 
   useEffect(() => {
     if (storedWorkout && storedWorkout.date !== today) {
@@ -523,356 +502,38 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
   // ══════════════════════════════════════════════════════════════
 
   if (phase === 'plan' && plan) {
-    const isYoga = 'poses' in plan && Array.isArray((plan as any).poses);
-    const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
+    const isYoga = 'poses' in plan && Array.isArray((plan as { poses?: unknown }).poses);
 
     if (isYoga) {
-      const yogaPlan = plan as unknown as YogaPlan;
-
       return (
-        <div className="wz-root">
-          <div className="dt2-plan-header">
-            <div>
-              <p className="dt2-plan-micro">tu flow · {todayDayName} {todayDateShort}</p>
-              <h2 className="dt2-plan-title"><em>{yogaPlan.type}</em></h2>
-              <div className="dt2-plan-meta">
-                <span className="dt2-meta-chip">
-                  <Clock size={11} /> {Math.round(yogaPlan.totalDuration / 60)} min total
-                </span>
-                <span className="dt2-meta-chip">
-                  🧘 {yogaPlan.poses.length} poses
-                </span>
-              </div>
-            </div>
-            <button
-              className={`dt2-regen${regenBlocked ? ' locked' : ''}`}
-              onClick={handleRegenerate}
-              disabled={regenBlocked}
-              aria-label="Regenerar rutina"
-              title="Regenerar rutina"
-            >
-              {regenBlocked ? <Lock size={14} /> : <RefreshCw size={14} />}
-            </button>
-          </div>
-
-          {/* CTA para abrir player — ARRIBA, visible sin scroll */}
-          <button
-            className="dt2-yoga-start-cta"
-            onClick={() => {
-              playerStartedAtRef.current = Date.now();
-              setPlayerOpen(true);
-            }}
-          >
-            ▶ comenzar flow
-          </button>
-
-          {yogaPlan.razon && (
-            <div className="dt2-card-why">
-              <div className="dt2-card-why-label">Por qué hoy</div>
-              <p className="dt2-card-why-text">{yogaPlan.razon}</p>
-            </div>
-          )}
-
-          {yogaPlan.opening && (
-            <div className="dt2-section">
-              <div className="dt2-section-label">Opening</div>
-              <p className="dt2-section-text">{yogaPlan.opening}</p>
-            </div>
-          )}
-
-          <div className="dt2-yoga-list">
-            {yogaPlan.poses.map((pose, i) => {
-              const bank = exerciseMap.get(pose.id);
-              const durationMin = Math.floor(pose.duration / 60);
-              const durationSec = pose.duration % 60;
-              const durationLabel = durationMin > 0
-                ? `${durationMin}:${String(durationSec).padStart(2, '0')}`
-                : `${pose.duration}s`;
-
-              const PoseIcon = getExerciseIcon(bank);
-              return (
-                <div key={`${pose.id}-${i}`} className="dt2-yoga-item">
-                  <div className="dt2-yoga-num">{i + 1}</div>
-                  <div className="dt2-yoga-emoji"><PoseIcon size={22} strokeWidth={1.5} /></div>
-                  <div className="dt2-yoga-body">
-                    <div className="dt2-yoga-name">{bank?.name || pose.id}</div>
-                    <div className="dt2-yoga-meta">
-                      <span>{durationLabel}</span>
-                      {pose.repetitions && (<><span className="dt2-ex-dot">·</span><span>{pose.repetitions}x</span></>)}
-                      {pose.sides === 'both' && (<><span className="dt2-ex-dot">·</span><span>ambos lados</span></>)}
-                    </div>
-                    {pose.tip_personalizado && (
-                      <div className="dt2-ex-tip">{pose.tip_personalizado}</div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {yogaPlan.closing && (
-            <div className="dt2-section">
-              <div className="dt2-section-label">Closing</div>
-              <p className="dt2-section-text">{yogaPlan.closing}</p>
-            </div>
-          )}
-
-          {yogaPlan.note && (
-            <div className="dt2-note">
-              <p className="dt2-note-text">{yogaPlan.note}</p>
-            </div>
-          )}
-
-          {/* Player overlay — lazy + Suspense */}
-          {playerOpen && (
-            <Suspense fallback={<PlayerLoadingFallback />}>
-            <YogaFlowPlayer
-              plan={yogaPlan}
-              exerciseBank={exerciseBank}
-              onClose={() => setPlayerOpen(false)}
-              onComplete={() => {
-                // Persistir sesión: Zustand (bloqueante) + Supabase (no-bloqueante)
-                const startedAt = playerStartedAtRef.current;
-                const durationSeconds = startedAt > 0
-                  ? Math.round((Date.now() - startedAt) / 1000)
-                  : yogaPlan.totalDuration;
-                const userId = useAppStore.getState().user?.id ?? null;
-
-                const exercisesLog: ExerciseLogItem[] = yogaPlan.poses.map((pose, i) => ({
-                  exercise_id: pose.id,
-                  order: i,
-                  planned: {
-                    duration: pose.duration,
-                    ...(pose.repetitions !== undefined && { repetitions: pose.repetitions }),
-                    ...(pose.sides !== undefined && { sides: pose.sides }),
-                  },
-                }));
-
-                finishWorkoutSession({
-                  userId,
-                  modality: 'yoga',
-                  exercises: exercisesLog,
-                  exercisesCompleted: yogaPlan.poses.length,
-                  exercisesTotal: yogaPlan.poses.length,
-                  durationSeconds,
-                  targetDurationSeconds: yogaPlan.totalDuration,
-                  equipment: selectedEquipment,
-                  dayType: 'power-vinyasa',
-                  coachReason: yogaPlan.razon,
-                  generationMethod: 'ai_generated',
-                }, addCompletedSession).catch(() => {});
-
-                setPlayerOpen(false);
-              }}
-            />
-            </Suspense>
-          )}
-        </div>
+        <YogaPlanView
+          yogaPlan={plan as unknown as YogaPlan}
+          regenBlocked={regenBlocked}
+          selectedEquipment={selectedEquipment}
+          exerciseBank={exerciseBank}
+          addCompletedSession={addCompletedSession}
+          onRegenerate={handleRegenerate}
+          todayDayName={todayDayName}
+          todayDateShort={todayDateShort}
+        />
       );
     }
+
     return (
-      <div className="wz-root">
-        <div className="dt2-plan-header">
-          <div>
-            <p className="dt2-plan-micro">tu rutina · {todayDayName} {todayDateShort}</p>
-            <h2 className="dt2-plan-title">
-              <em>{plan.type}</em>
-            </h2>
-            <div className="dt2-plan-meta">
-              <span className="dt2-meta-chip">
-                <Clock size={11} /> {plan.exercises.length > 0 ? `${plan.exercises.length} ejercicios` : 'descanso'}
-              </span>
-              <span className="dt2-meta-chip">
-                <Zap size={11} /> {plan.intensity}
-              </span>
-            </div>
-          </div>
-          <button
-            className={`dt2-regen${regenBlocked ? ' locked' : ''}`}
-            onClick={handleRegenerate}
-            disabled={regenBlocked}
-            aria-label="Regenerar rutina"
-            title={regenBlocked ? 'Ya regeneraste 3 veces hoy' : `Te quedan ${regensLeft} regeneraciones`}
-          >
-            {regenBlocked ? <Lock size={14} /> : <RefreshCw size={14} />}
-          </button>
-        </div>
-
-        {/* CTA para abrir player — ARRIBA, visible sin scroll. Solo si hay ejercicios. */}
-        {plan.exercises.length > 0 && (
-          <button
-            className="dt2-start-workout-cta"
-            onClick={() => {
-              playerStartedAtRef.current = Date.now();
-              setWorkoutPlayerOpen(true);
-            }}
-          >
-            ▶ comenzar entrenamiento
-          </button>
-        )}
-
-        {/* Razón del coach */}
-        {(plan as any).razon && (
-          <div className="dt2-card-why">
-            <div className="dt2-card-why-label">Por qué hoy</div>
-            <p className="dt2-card-why-text">{(plan as any).razon}</p>
-          </div>
-        )}
-
-        {plan.warmup && (
-          <div className="dt2-section">
-            <div className="dt2-section-label">Calentamiento</div>
-            <p className="dt2-section-text">{plan.warmup}</p>
-          </div>
-        )}
-
-        {plan.exercises.length > 0 && (
-          <div className="dt2-exercises">
-            {plan.exercises.map((ex, i) => {
-              const bank = exerciseMap.get(ex.id);
-              return (
-                <div
-                  key={`${ex.id}-${i}`}
-                  className="dt2-ex"
-                  onClick={() => {
-                    const fallback: Exercise = {
-                      id: ex.id || `ex-${i}`,
-                      name: bank?.name || ex.id || 'Ejercicio',
-                      emoji: '💪',
-                      desc: '',
-                      muscleGroup: 'cuerpo-completo',
-                      equipment: ['gym'],
-                      goals: ['hipertrofia'],
-                      type: 'compuesto',
-                      difficulty: 'intermedio',
-                      defaultSets: 3,
-                      defaultReps: '10',
-                      defaultRest: 60,
-                      steps: [],
-                    };
-                    setSelectedExercise({
-                      exercise: bank || fallback,
-                      planData: {
-                        sets: typeof ex.sets === 'number' ? ex.sets : parseInt(ex.sets) || 3,
-                        reps: String(ex.reps || '10'),
-                        rest: typeof ex.rest === 'number' ? ex.rest : parseInt(ex.rest) || 60,
-                        tip_personalizado: ex.tip_personalizado,
-                      },
-                      index: i,
-                    });
-                  }}
-                >
-                  <div className="dt2-ex-emoji">
-                    {(() => { const Ic = getExerciseIcon(bank); return <Ic size={22} strokeWidth={1.5} />; })()}
-                  </div>
-                  <div className="dt2-ex-body">
-                    <div className="dt2-ex-name">{bank?.name || ex.id}</div>
-                    <div className="dt2-ex-stats">
-                      <span>{ex.sets} × {ex.reps}</span>
-                      <span className="dt2-ex-dot">·</span>
-                      <span>{ex.rest}s descanso</span>
-                    </div>
-                    {ex.tip_personalizado && (
-                      <div className="dt2-ex-tip">{ex.tip_personalizado}</div>
-                    )}
-                  </div>
-                  <ChevronRight size={14} className="dt2-ex-arrow" />
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {plan.cooldown && (
-          <div className="dt2-section">
-            <div className="dt2-section-label">Enfriamiento</div>
-            <p className="dt2-section-text">{plan.cooldown}</p>
-          </div>
-        )}
-
-        {plan.note && (
-          <div className="dt2-note">
-            <p className="dt2-note-text">{plan.note}</p>
-          </div>
-        )}
-
-        {selectedExercise && (
-          <ExerciseDetailPopout
-            exercise={selectedExercise.exercise}
-            planData={selectedExercise.planData}
-            userEquipment={[selectedEquipment]}
-            onClose={() => setSelectedExercise(null)}
-          />
-        )}
-
-        {/* WorkoutPlayer overlay full-screen — fuerza/cardio · lazy + Suspense */}
-        {workoutPlayerOpen && plan.exercises.length > 0 && (
-          <Suspense fallback={<PlayerLoadingFallback />}>
-          <WorkoutPlayer
-            workout={plan}
-            exerciseBank={exerciseBank}
-            userEquipment={[selectedEquipment]}
-            onClose={() => setWorkoutPlayerOpen(false)}
-            onComplete={(data) => {
-              // Mapear modality: si 'auto', derivar del todayDecision.type
-              const sessionModality: Modality =
-                selectedModality === 'cardio' ? 'cardio' :
-                selectedModality === 'auto' ? (todayDecision.type === 'cardio' ? 'cardio' : 'fuerza') :
-                'fuerza';
-
-              const userId = useAppStore.getState().user?.id ?? null;
-
-              // Reagrupar loggedSets por ejercicio para construir `performed`
-              const performedByExercise = groupLoggedSetsByExercise(
-                data.loggedSets,
-                plan.exercises,
-              );
-              const completedAtIso = new Date().toISOString();
-
-              const exercisesLog: ExerciseLogItem[] = plan.exercises.map((ex, i) => {
-                const setsForExercise = performedByExercise[i] || [];
-                const hasAnyData = setsForExercise.length > 0;
-                const allSkipped = hasAnyData && setsForExercise.every(s => s === null);
-                return {
-                  exercise_id: ex.id,
-                  order: i,
-                  planned: {
-                    sets: ex.sets,
-                    reps: ex.reps,
-                    rest: ex.rest,
-                    ...(ex.tip_personalizado && { tip: ex.tip_personalizado }),
-                  },
-                  ...(hasAnyData && {
-                    performed: {
-                      sets: setsForExercise,
-                      skipped: allSkipped,
-                      completed_at: completedAtIso,
-                    },
-                  }),
-                };
-              });
-
-              finishWorkoutSession({
-                userId,
-                modality: sessionModality,
-                exercises: exercisesLog,
-                exercisesCompleted: data.exercisesCompleted,
-                exercisesTotal: plan.exercises.length,
-                durationSeconds: data.durationSeconds,
-                targetDurationSeconds: selectedTime * 60,
-                equipment: selectedEquipment,
-                dayType: todayDecision.type,
-                coachReason: (plan as any).razon,
-                generationMethod: 'ai_generated',
-                loggedSets: data.loggedSets,
-              }, addCompletedSession).catch(() => {});
-
-              setWorkoutPlayerOpen(false);
-            }}
-          />
-          </Suspense>
-        )}
-      </div>
+      <WorkoutPlanView
+        plan={plan}
+        regenBlocked={regenBlocked}
+        regensLeft={regensLeft}
+        selectedEquipment={selectedEquipment}
+        selectedModality={selectedModality}
+        selectedTime={selectedTime}
+        todayDecision={todayDecision}
+        exerciseBank={exerciseBank}
+        addCompletedSession={addCompletedSession}
+        onRegenerate={handleRegenerate}
+        todayDayName={todayDayName}
+        todayDateShort={todayDateShort}
+      />
     );
   }
 
