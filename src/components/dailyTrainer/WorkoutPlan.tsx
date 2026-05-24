@@ -45,6 +45,7 @@ interface Props {
   todayDecision: WorkoutDayDecision;
   exerciseBank: Exercise[];
   addCompletedSession: (session: CompletedSession) => void;
+  markActiveDay: () => Promise<void>;
   onRegenerate: () => void;
   todayDayName: string;
   todayDateShort: string;
@@ -60,6 +61,7 @@ export default function WorkoutPlan({
   todayDecision,
   exerciseBank,
   addCompletedSession,
+  markActiveDay,
   onRegenerate,
   todayDayName,
   todayDateShort,
@@ -268,7 +270,7 @@ export default function WorkoutPlan({
               coachReason: (plan as { razon?: string }).razon,
               generationMethod: 'ai_generated',
               loggedSets: data.loggedSets,
-            }, addCompletedSession).catch(() => {});
+            }, addCompletedSession, markActiveDay).catch(() => {});
 
             setWorkoutPlayerOpen(false);
           }}

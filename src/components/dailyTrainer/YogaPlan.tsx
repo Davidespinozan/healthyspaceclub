@@ -25,6 +25,7 @@ interface Props {
   selectedEquipment: Equipment;
   exerciseBank: Exercise[];
   addCompletedSession: (session: CompletedSession) => void;
+  markActiveDay: () => Promise<void>;
   onRegenerate: () => void;
   todayDayName: string;
   todayDateShort: string;
@@ -36,6 +37,7 @@ export default function YogaPlan({
   selectedEquipment,
   exerciseBank,
   addCompletedSession,
+  markActiveDay,
   onRegenerate,
   todayDayName,
   todayDateShort,
@@ -175,7 +177,7 @@ export default function YogaPlan({
               dayType: 'power-vinyasa',
               coachReason: yogaPlan.razon,
               generationMethod: 'ai_generated',
-            }, addCompletedSession).catch(() => {});
+            }, addCompletedSession, markActiveDay).catch(() => {});
 
             setPlayerOpen(false);
           }}

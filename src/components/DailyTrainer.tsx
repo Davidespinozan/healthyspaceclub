@@ -71,6 +71,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
   const streakCount = useAppStore(s => s.streakCount);
   const completedSessions = useAppStore(s => s.completedSessions);
   const addCompletedSession = useAppStore(s => s.addCompletedSession);
+  const markActiveDay = useAppStore(s => s.markActiveDay);
 
   const today = new Date().toISOString().split('T')[0];
   const firstName = userName?.split(' ')[0] || '';
@@ -512,6 +513,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
           selectedEquipment={selectedEquipment}
           exerciseBank={exerciseBank}
           addCompletedSession={addCompletedSession}
+          markActiveDay={markActiveDay}
           onRegenerate={handleRegenerate}
           todayDayName={todayDayName}
           todayDateShort={todayDateShort}
@@ -530,6 +532,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
         todayDecision={todayDecision}
         exerciseBank={exerciseBank}
         addCompletedSession={addCompletedSession}
+        markActiveDay={markActiveDay}
         onRegenerate={handleRegenerate}
         todayDayName={todayDayName}
         todayDateShort={todayDateShort}

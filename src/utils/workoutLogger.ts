@@ -87,15 +87,21 @@ export interface FinishSessionPayload {
 /**
  * Finaliza una sesión de entrenamiento.
  *
- * Persistencia en 2 capas:
+ * Persistencia en 3 capas:
  * 1. Zustand `completedSessions` (vía addCompletedSession) — BLOCANTE, sin él analyzeWorkoutHistory falla
- * 2. Supabase `workout_log` (insert) — NON-bloqueante, solo si hay userId
+ * 2. Racha del día (vía markActiveDay) — BLOCANTE, único disparador vivo desde Lote Racha-1
+ * 3. Supabase `workout_log` (insert) — NON-bloqueante, solo si hay userId
  *
  * Si Supabase falla, el flujo del usuario NO se rompe — solo log de warning.
+ *
+ * `markActiveDay` se recibe explícita por parámetro (no via useAppStore.getState
+ * interno) para mantener la función honesta sobre sus dependencias y poder
+ * mockearla en tests, igual que `addCompletedSession`.
  */
 export async function finishWorkoutSession(
   payload: FinishSessionPayload,
   addCompletedSession: (session: CompletedSession) => void,
+  markActiveDay: () => Promise<void>,
 ): Promise<void> {
   const now = new Date();
 
@@ -112,6 +118,9 @@ export async function finishWorkoutSession(
     ...(payload.loggedSets && payload.loggedSets.length > 0 && { loggedSets: payload.loggedSets }),
   };
   addCompletedSession(session);
+
+  // 2. Marcar el día como activo para la racha (idempotente por día)
+  await markActiveDay();
 
   // 2. Insertar en Supabase (NON-bloqueante)
   if (!payload.userId) {

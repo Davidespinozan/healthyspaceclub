@@ -39,6 +39,7 @@ describe('finishWorkoutSession', () => {
         equipment: 'gym',
       },
       mockAdd,
+      vi.fn().mockResolvedValue(undefined),
     );
     expect(mockAdd).toHaveBeenCalledOnce();
     const session = mockAdd.mock.calls[0][0];
@@ -67,6 +68,7 @@ describe('finishWorkoutSession', () => {
         equipment: 'cuerpo',
       },
       mockAdd,
+      vi.fn().mockResolvedValue(undefined),
     );
     expect(fromMock).not.toHaveBeenCalled();
     expect(insertMock).not.toHaveBeenCalled();
@@ -87,6 +89,7 @@ describe('finishWorkoutSession', () => {
         dayType: 'cardio',
       },
       mockAdd,
+      vi.fn().mockResolvedValue(undefined),
     );
     expect(fromMock).toHaveBeenCalledWith('workout_log');
     expect(insertMock).toHaveBeenCalledOnce();
@@ -100,6 +103,26 @@ describe('finishWorkoutSession', () => {
     expect(inserted.exercises_completed).toBe(1);
     // date_local debe estar en formato YYYY-MM-DD (local timezone)
     expect(inserted.date_local).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('llama markActiveDay siempre (independiente de userId) — Lote Racha-1', async () => {
+    const mockAdd = vi.fn();
+    const mockMark = vi.fn().mockResolvedValue(undefined);
+    await finishWorkoutSession(
+      {
+        userId: null,
+        modality: 'fuerza',
+        exercises: [{ exercise_id: 'press-horizontal', order: 0 }],
+        exercisesCompleted: 1,
+        exercisesTotal: 1,
+        durationSeconds: 1200,
+        targetDurationSeconds: 1200,
+        equipment: 'gym',
+      },
+      mockAdd,
+      mockMark,
+    );
+    expect(mockMark).toHaveBeenCalledOnce();
   });
 });
 

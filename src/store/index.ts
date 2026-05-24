@@ -6,6 +6,7 @@ import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseSt
 import { calcTDEE, assignPlan } from '../utils/tdee';
 import type { Region, Currency } from '../utils/region';
 import { MILESTONE_STEPS } from '../constants/milestones';
+import { computeStreak } from '../utils/streak';
 
 export interface MilestoneEntry {
   milestone_days: number;
@@ -249,6 +250,12 @@ interface AppState {
   saveDailyCheckIn: (data: { feeling: string; sleep: string }) => Promise<void>;
   streakCount: number;
   lastActiveDate: string | null;
+  /**
+   * Marca el día actual como activo (movimiento o reflexión HSM completa).
+   * Idempotente por día — si ya se marcó hoy, no hace side-effects. Punto
+   * único de actualización de racha; todos los disparadores convergen acá.
+   */
+  markActiveDay: () => Promise<void>;
 
   // Daily AI briefing (cached per day)
   dailyBriefing: { date: string; message: string } | null;
@@ -665,6 +672,22 @@ export const useAppStore = create<AppState>()(
   dailyCheckIn: null,
   streakCount: 0,
   lastActiveDate: null,
+  // Punto único de actualización de racha (Lote Racha-1).
+  // Idempotente: si ya se marcó hoy, early return sin side-effects.
+  // Todos los disparadores (workout/yoga finish, HSM all-done,
+  // Night Check-in) convergen acá.
+  markActiveDay: async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const { streakCount, lastActiveDate, user } = get();
+    const { newStreak, changed } = computeStreak(streakCount, lastActiveDate, today);
+    if (!changed) return;
+    set({ streakCount: newStreak, lastActiveDate: today });
+    const unlocked = await tryUnlockMilestones(streakCount, newStreak, user?.id);
+    if (unlocked.length > 0) {
+      set((s) => ({ userMilestones: [...s.userMilestones, ...unlocked] }));
+    }
+    await persistStreakToProfile(user?.id, newStreak, today);
+  },
   saveDailyCheckIn: async (data) => {
     const today = new Date().toISOString().split('T')[0];
     const { lastActiveDate, streakCount, user } = get();
@@ -809,28 +832,13 @@ export const useAppStore = create<AppState>()(
   hsmProfile: null,
   setHSMProfile: (text) => set({ hsmProfile: { text, updatedAt: new Date().toISOString().split('T')[0] } }),
 
-  // Night check-in — also maintains streak for the day
+  // Night check-in — guarda el objeto. Racha delegada a markActiveDay
+  // (Lote Racha-1: single source of truth para streak updates).
   nightCheckIn: null,
   saveNightCheckIn: async (data) => {
     const today = new Date().toISOString().split('T')[0];
-    const { lastActiveDate, streakCount, user } = get();
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    const newStreak = lastActiveDate === today
-      ? streakCount
-      : lastActiveDate === yesterday
-        ? streakCount + 1
-        : 1;
-    set({
-      nightCheckIn: { date: today, ...data, completed: true },
-      lastActiveDate: today,
-      streakCount: newStreak,
-    });
-
-    const unlocked = await tryUnlockMilestones(streakCount, newStreak, user?.id);
-    if (unlocked.length > 0) {
-      set((s) => ({ userMilestones: [...s.userMilestones, ...unlocked] }));
-    }
-    await persistStreakToProfile(user?.id, newStreak, today);
+    set({ nightCheckIn: { date: today, ...data, completed: true } });
+    await get().markActiveDay();
   },
 
   // Logout — signs out of Supabase and clears all local state

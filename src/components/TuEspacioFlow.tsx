@@ -139,7 +139,7 @@ interface Props {
 }
 
 export default function TuEspacioFlow({ onClose }: Props) {
-  const { dailyHSMResponses, addHSMResponse, userPlan, trialEndsAt } = useAppStore();
+  const { dailyHSMResponses, addHSMResponse, userPlan, trialEndsAt, markActiveDay } = useAppStore();
   const isPlanActive = userPlan && userPlan !== 'none' &&
     (!trialEndsAt || new Date(trialEndsAt) > new Date());
   const today = new Date().toISOString().split('T')[0];
@@ -210,6 +210,9 @@ export default function TuEspacioFlow({ onClose }: Props) {
   // Generate review when all done
   useEffect(() => {
     if (!allDone || dailyReview || !isPlanActive) return;
+    // Marcar racha por "HSM completo del día" (Lote Racha-1).
+    // Idempotente por día — si el usuario ya entrenó hoy, no duplica.
+    markActiveDay().catch(() => {});
     setReviewLoading(true);
     const todaySummary = todayResponses.map(r => `${r.dimension}: "${r.response}"`).join('\n');
     const controller = new AbortController();
