@@ -35,10 +35,12 @@ import type {
   WorkoutDayDecision,
   YogaPlan,
 } from '../types';
-import { RefreshCw, Clock, Zap, ChevronRight, Lock, Bot, Dumbbell, Flower2, Activity, PersonStanding, Cable, Footprints, AlertTriangle, Bandage, CircleCheck, type LucideIcon } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, Lock } from 'lucide-react';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 import PlayerLoadingFallback from './PlayerLoadingFallback';
+import Wizard from './dailyTrainer/Wizard';
+import { MODALITY_OPTIONS } from './dailyTrainer/constants';
 import './daily-trainer-v2.css';
 
 // Lazy: los Players (WorkoutPlayer 23kB + YogaFlowPlayer 18.7kB) salen del
@@ -47,45 +49,6 @@ const YogaFlowPlayer = lazy(() => import('./YogaFlowPlayer'));
 const WorkoutPlayer = lazy(() => import('./WorkoutPlayer'));
 
 const DAY_NAMES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-
-const MODALITY_OPTIONS: Array<{
-  value: Modality;
-  icon: LucideIcon;
-  label: string;
-  sub: string;
-  minExercises: number;
-}> = [
-  { value: 'auto', icon: Bot, label: 'Lo que mi coach decida', sub: '', minExercises: 0 },
-  { value: 'fuerza', icon: Dumbbell, label: 'Fuerza', sub: 'Push, Pull, Legs, Full body', minExercises: 5 },
-  { value: 'yoga', icon: Flower2, label: 'Yoga / recovery', sub: 'Recovery activo + movilidad', minExercises: 5 },
-  { value: 'cardio', icon: Activity, label: 'Cardio', sub: 'HIIT, intervalos, walking', minExercises: 5 },
-];
-
-const TIME_OPTIONS = [
-  { value: 25, label: '25 min' },
-  { value: 45, label: '45 min' },
-  { value: 60, label: '60+ min' },
-];
-
-const EQUIPMENT_OPTIONS: Array<{ value: Equipment; label: string; icon: LucideIcon }> = [
-  { value: 'gym', label: 'En el gym', icon: Dumbbell },
-  { value: 'cuerpo', label: 'En casa', icon: PersonStanding },
-  { value: 'ligas', label: 'Con bandas', icon: Cable },
-];
-
-const PRIOR_EXERCISE_OPTIONS: Array<{ value: string; label: string; icon: LucideIcon }> = [
-  { value: 'none', label: 'No, este es el primero', icon: CircleCheck },
-  { value: 'light', label: 'Sí, algo ligero', icon: Footprints },
-  { value: 'heavy', label: 'Sí, fuerte', icon: Dumbbell },
-];
-
-const DISCOMFORT_OPTIONS: Array<{ value: string; label: string; icon: LucideIcon }> = [
-  { value: 'none', label: 'Todo bien', icon: CircleCheck },
-  { value: 'mild', label: 'Algo leve, puedo entrenar', icon: AlertTriangle },
-  { value: 'pain', label: 'Dolor específico', icon: Bandage },
-];
-
-const PAIN_AREAS = ['hombro', 'rodilla', 'espalda', 'cuello', 'otro'];
 
 // ══════════════════════════════════════════════════════════════
 // COMPONENT
@@ -202,18 +165,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
     }
   }, [today, storedWorkout]);
 
-  // ── Flow navigation
-  function handleModalityNext() {
-    if (skipPhysical) {
-      setPhase('logistics');
-    } else {
-      setPhase('physical');
-    }
-  }
-
-  function handlePhysicalNext() {
-    setPhase('logistics');
-  }
+  // Nav handlers entre pasos del wizard viven dentro de Wizard.tsx (DT-B).
 
   // ── Generate
   async function handleGenerate() {
@@ -534,210 +486,35 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
   }
 
   // ══════════════════════════════════════════════════════════════
-  // RENDER: STEP 1 — MODALITY
+  // RENDER: WIZARD (modality | physical | logistics)
+  // Extraído a src/components/dailyTrainer/Wizard.tsx en DT-B.
   // ══════════════════════════════════════════════════════════════
 
-  if (phase === 'modality') {
+  if (phase === 'modality' || phase === 'physical' || phase === 'logistics') {
     return (
-      <div className="wz-root">
-        <div className="wz-hero">
-          <div className="wz-stepper">
-            <div className="wz-stepper-bar active" />
-            <div className="wz-stepper-bar" />
-            {!skipPhysical && <div className="wz-stepper-bar" />}
-          </div>
-          <p className="wz-eyebrow">paso 1 · {todayDayName} {todayDateShort}</p>
-          <h1 className="wz-title">
-            {firstName ? `${firstName}, ` : ''}<em>¿qué quieres hacer hoy?</em>
-          </h1>
-        </div>
-
-        <div className="wz-options">
-          {MODALITY_OPTIONS.map(opt => {
-            const count = opt.value === 'auto' ? 999 : (modalityCounts[opt.value] || 0);
-            const locked = opt.minExercises > 0 && count < opt.minExercises;
-            const isSelected = selectedModality === opt.value;
-            const isSuggested = suggestion.modality === opt.value;
-
-            // Dynamic sub-label for auto
-            let subLabel = opt.sub;
-            if (opt.value === 'auto') {
-              subLabel = suggestion.reason;
-            }
-
-            return (
-              <button
-                key={opt.value}
-                className={`wz-option${isSelected ? ' selected' : ''}${locked ? ' locked' : ''}`}
-                onClick={() => !locked && setSelectedModality(opt.value)}
-                disabled={locked}
-              >
-                <div className="wz-option-thumb">
-                  {locked
-                    ? <Lock size={22} strokeWidth={1.5} />
-                    : <opt.icon size={22} strokeWidth={1.5} />}
-                </div>
-                <div className="wz-option-body">
-                  <div className="wz-option-label">
-                    {opt.label}
-                    {isSuggested && !locked && <span className="wz-option-badge">sugerido</span>}
-                  </div>
-                  <div className="wz-option-sub">{locked ? 'Próximamente' : subLabel}</div>
-                </div>
-                {isSelected && !locked && <div className="wz-option-check">✓</div>}
-              </button>
-            );
-          })}
-        </div>
-
-        <button className="wz-cta" onClick={handleModalityNext}>
-          Siguiente →
-        </button>
-      </div>
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════
-  // RENDER: STEP 2 — PHYSICAL CONTEXT
-  // ══════════════════════════════════════════════════════════════
-
-  if (phase === 'physical') {
-    return (
-      <div className="wz-root">
-        <div className="wz-hero">
-          <div className="wz-stepper">
-            <div className="wz-stepper-bar done" />
-            <div className="wz-stepper-bar active" />
-            <div className="wz-stepper-bar" />
-          </div>
-          <p className="wz-eyebrow">paso 2 · contexto físico</p>
-          <h1 className="wz-title">
-            <em>¿Cómo vienes hoy?</em>
-          </h1>
-        </div>
-
-        <div className="wz-q">
-          <p className="wz-q-label">¿Ya hiciste ejercicio hoy?</p>
-          <div className="wz-chips wz-chips-col">
-            {PRIOR_EXERCISE_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                className={`wz-chip wz-chip-block${priorExercise === opt.value ? ' on' : ''}`}
-                onClick={() => setPriorExercise(opt.value)}
-              >
-                <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
-                <span>{opt.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="wz-q">
-          <p className="wz-q-label">¿Alguna molestia hoy?</p>
-          <div className="wz-chips wz-chips-col">
-            {DISCOMFORT_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                className={`wz-chip wz-chip-block${discomfort === opt.value ? ' on' : ''}`}
-                onClick={() => setDiscomfort(opt.value)}
-              >
-                <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
-                <span>{opt.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {discomfort === 'pain' && (
-          <div className="wz-q">
-            <p className="wz-q-label">¿Dónde?</p>
-            <div className="wz-chips">
-              {PAIN_AREAS.map(area => (
-                <button
-                  key={area}
-                  className={`wz-chip${painArea === area ? ' on' : ''}`}
-                  onClick={() => setPainArea(area)}
-                >
-                  {area}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <button className="wz-cta" onClick={handlePhysicalNext}>
-          Siguiente →
-        </button>
-
-        <div className="wz-back">
-          <button className="wz-back-link" onClick={() => setPhase('modality')}>← Anterior</button>
-        </div>
-      </div>
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════
-  // RENDER: STEP 3 — LOGISTICS
-  // ══════════════════════════════════════════════════════════════
-
-  if (phase === 'logistics') {
-    const stepNum = skipPhysical ? 2 : 3;
-
-    return (
-      <div className="wz-root">
-        <div className="wz-hero">
-          <div className="wz-stepper">
-            <div className="wz-stepper-bar done" />
-            {!skipPhysical && <div className="wz-stepper-bar done" />}
-            <div className="wz-stepper-bar active" />
-          </div>
-          <p className="wz-eyebrow">paso {stepNum} · logística</p>
-          <h1 className="wz-title">
-            <em>Últimos detalles</em>
-          </h1>
-        </div>
-
-        <div className="wz-q">
-          <p className="wz-q-label">¿Cuánto tiempo tienes?</p>
-          <div className="wz-chips wz-chips-3">
-            {TIME_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                className={`wz-chip${selectedTime === opt.value ? ' on' : ''}`}
-                onClick={() => setSelectedTime(opt.value)}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {selectedModality !== 'yoga' && (
-          <div className="wz-q">
-            <p className="wz-q-label">¿Dónde estás hoy?</p>
-            <div className="wz-chips wz-chips-col">
-              {EQUIPMENT_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  className={`wz-chip wz-chip-block${selectedEquipment === opt.value ? ' on' : ''}`}
-                  onClick={() => setSelectedEquipment(opt.value)}
-                >
-                  <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
-                  <span>{opt.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <button className="wz-cta" onClick={handleGenerate}>
-          Arma mi <em>rutina</em> →
-        </button>
-
-        <div className="wz-back">
-          <button className="wz-back-link" onClick={() => setPhase(skipPhysical ? 'modality' : 'physical')}>← Anterior</button>
-        </div>
-      </div>
+      <Wizard
+        phase={phase}
+        setPhase={setPhase}
+        firstName={firstName}
+        todayDayName={todayDayName}
+        todayDateShort={todayDateShort}
+        suggestion={suggestion}
+        modalityCounts={modalityCounts}
+        skipPhysical={skipPhysical}
+        selectedModality={selectedModality}
+        setSelectedModality={setSelectedModality}
+        priorExercise={priorExercise}
+        setPriorExercise={setPriorExercise}
+        discomfort={discomfort}
+        setDiscomfort={setDiscomfort}
+        painArea={painArea}
+        setPainArea={setPainArea}
+        selectedTime={selectedTime}
+        setSelectedTime={setSelectedTime}
+        selectedEquipment={selectedEquipment}
+        setSelectedEquipment={setSelectedEquipment}
+        onGenerate={handleGenerate}
+      />
     );
   }
 
