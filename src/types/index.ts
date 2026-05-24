@@ -188,7 +188,7 @@ export interface YogaPlan {
 export type WorkoutDayType =
   | 'upper' | 'lower' | 'full-body'
   | 'push' | 'pull' | 'legs'
-  | 'cardio' | 'movilidad' | 'descanso';
+  | 'cardio' | 'movilidad';
 
 export interface WorkoutDayDecision {
   type: WorkoutDayType;

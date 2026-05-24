@@ -14,12 +14,16 @@ import type { WorkoutEntry, CompletedSession } from '../types';
 // CICLADO BASE POR OBJETIVO
 // ══════════════════════════════════════════════════════════════
 
+// Ciclos semanales por objetivo. El 7mo día (y 6to en bienestar) era 'descanso'
+// rígido — reemplazado por 'movilidad' en Lote Descanso→Movilidad. Filosofía
+// HSC "adaptive not strict": siempre hay algo suave que mover, descanso forzado
+// no es la única opción de recuperación.
 const CYCLES: Record<string, WorkoutDayType[]> = {
-  'ganar-musculo': ['upper', 'lower', 'upper', 'lower', 'full-body', 'movilidad', 'descanso'],
-  'perder-grasa': ['full-body', 'lower', 'upper', 'cardio', 'full-body', 'movilidad', 'descanso'],
-  'recomposicion': ['upper', 'lower', 'full-body', 'upper', 'lower', 'movilidad', 'descanso'],
-  'mantener': ['full-body', 'movilidad', 'upper', 'lower', 'cardio', 'movilidad', 'descanso'],
-  'bienestar': ['full-body', 'movilidad', 'cardio', 'full-body', 'movilidad', 'descanso', 'descanso'],
+  'ganar-musculo': ['upper', 'lower', 'upper', 'lower', 'full-body', 'movilidad', 'movilidad'],
+  'perder-grasa': ['full-body', 'lower', 'upper', 'cardio', 'full-body', 'movilidad', 'movilidad'],
+  'recomposicion': ['upper', 'lower', 'full-body', 'upper', 'lower', 'movilidad', 'movilidad'],
+  'mantener': ['full-body', 'movilidad', 'upper', 'lower', 'cardio', 'movilidad', 'movilidad'],
+  'bienestar': ['full-body', 'movilidad', 'cardio', 'full-body', 'movilidad', 'movilidad', 'movilidad'],
 };
 
 const DAY_TYPE_CONFIG: Record<WorkoutDayType, {
@@ -74,12 +78,6 @@ const DAY_TYPE_CONFIG: Record<WorkoutDayType, {
     label: 'Movilidad',
     focus: 'movilidad y recuperación activa',
     muscleGroups: ['cuerpo-completo'],
-    defaultGoal: 'movilidad',
-  },
-  'descanso': {
-    label: 'Descanso',
-    focus: 'recuperación total',
-    muscleGroups: [],
     defaultGoal: 'movilidad',
   },
 };
@@ -219,7 +217,7 @@ function pickNextInCycle(
   const suggestedConfig = DAY_TYPE_CONFIG[suggested];
   const hasConflict = suggestedConfig.muscleGroups.some(m => yesterdayMuscles.has(m));
 
-  if (hasConflict && suggested !== 'movilidad' && suggested !== 'descanso' && suggested !== 'cardio') {
+  if (hasConflict && suggested !== 'movilidad' && suggested !== 'cardio') {
     // Find alternative that doesn't conflict
     const alternatives: WorkoutDayType[] = ['upper', 'lower', 'cardio', 'movilidad', 'full-body'];
     for (const alt of alternatives) {
@@ -228,13 +226,6 @@ function pickNextInCycle(
         suggested = alt;
         break;
       }
-    }
-  }
-
-  // If user has been resting 3+ days, prefer light work
-  if (history.restDays >= 4 && suggested !== 'descanso') {
-    if (suggested === 'upper' || suggested === 'lower') {
-      // Keep the plan but intensity will be lower
     }
   }
 
@@ -288,14 +279,9 @@ function buildReason(
 
   // Today's recommendation
   const typeConfig = DAY_TYPE_CONFIG[todayType];
-  let closing = '';
-  if (todayType === 'descanso') {
-    closing = 'hoy toca descansar para recuperar.';
-  } else if (todayType === 'movilidad') {
-    closing = 'hoy toca movilidad para recuperar activo.';
-  } else {
-    closing = `es el momento de enfocarnos en ${typeConfig.focus}.`;
-  }
+  const closing = todayType === 'movilidad'
+    ? 'hoy un flow suave para recuperar activo.'
+    : `es el momento de enfocarnos en ${typeConfig.focus}.`;
 
   return parts.join(', ') + '. ' + closing.charAt(0).toUpperCase() + closing.slice(1);
 }

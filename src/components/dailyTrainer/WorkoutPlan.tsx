@@ -85,7 +85,7 @@ export default function WorkoutPlan({
           </h2>
           <div className="dt2-plan-meta">
             <span className="dt2-meta-chip">
-              <Clock size={11} /> {plan.exercises.length > 0 ? `${plan.exercises.length} ejercicios` : 'descanso'}
+              <Clock size={11} /> {plan.exercises.length} ejercicios
             </span>
             <span className="dt2-meta-chip">
               <Zap size={11} /> {plan.intensity}
