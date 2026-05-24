@@ -3,14 +3,11 @@
 
 export { buildUserProfileBlock } from './profile';
 export { buildHSMCoreBlock } from './hsmCore';
-export { COACH_VOICE_RULES_PLACEHOLDER } from './voice';
+export { COACH_VOICE_RULES, COACH_VOICE_RULES_SHORT, COACH_VOICE_RULES_DAY1 } from './voice';
 
 export { buildCoachSystemPrompt } from './prompts/coach';
 export { buildDay1BriefingPrompt, buildDailyBriefingPrompt } from './prompts/dailyBriefing';
-export {
-  buildHSMQuestionPromptStructured,
-  buildHSMQuestionPromptInline,
-} from './prompts/hsmQuestion';
+export { buildHSMQuestionPrompt } from './prompts/hsmQuestion';
 export {
   buildHSMDailyReviewPrompt,
   buildHSM5DayMiniReviewPrompt,

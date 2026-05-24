@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../store';
 import { callAI } from '../utils/aiProxy';
-import { buildHSMQuestionPromptInline } from '../ai/prompts/hsmQuestion';
+import { buildHSMQuestionPrompt } from '../ai/prompts/hsmQuestion';
 import { buildHSMDailyReviewPrompt } from '../ai/prompts/hsmReview';
 
 /* ── HSM Question Bank — 10 per dimension, 100 total ── */
@@ -175,7 +175,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
     callAI({
       max_tokens: 60,
-      messages: [{ role: 'user', content: buildHSMQuestionPromptInline(recentSummary) }],
+      messages: [{ role: 'user', content: buildHSMQuestionPrompt(recentSummary) }],
     }, controller.signal)
       .then(data => {
         const q = data.content?.[0]?.text?.trim() ?? '';

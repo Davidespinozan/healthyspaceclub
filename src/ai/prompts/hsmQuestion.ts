@@ -1,33 +1,33 @@
-// Prompts de "AI question" — 5ta pregunta del día HSM generada por IA.
+// Prompt único para "AI question" — 5ta pregunta del día HSM generada por IA.
 //
-// TabHoy y TuEspacioFlow tienen versiones TEXTUALMENTE DIFERENTES de este
-// prompt (TabHoy estructurado con bullets, TuEspacioFlow inline). Coexisten
-// como dos builders separados hasta que el Lote Coach-B decida cuál pulir.
+// Lote Coach-A tenía 2 builders separados (Structured TabHoy + Inline
+// TuEspacioFlow) con strings textualmente distintos. Lote Coach-B unifica a
+// un solo builder porque el output esperado es el mismo: 1 pregunta breve
+// que conecta con respuestas recientes del usuario.
 //
-// Mudados desde TabHoy.tsx:286-296 y TuEspacioFlow.tsx:176.
+// El output (pregunta interrogativa "¿...?") es naturalmente 2da persona,
+// pero igual aplicamos la regla SHORT para evitar drift.
+
+import { COACH_VOICE_RULES_SHORT } from '../voice';
 
 /**
- * Variante TabHoy: estructurada con bullets, menciona "esta semana" + HSM.
- * Output: 1 pregunta (max 15 palabras). max_tokens 60.
+ * Genera UNA pregunta de reflexión profunda para hoy basada en las últimas
+ * respuestas HSM del usuario. Output: 1 pregunta (max 15 palabras). max_tokens 60.
  */
-export function buildHSMQuestionPromptStructured(recentSummary: string): string {
-  return `Basándote en estas reflexiones recientes de un usuario del Healthy Space Method:
+export function buildHSMQuestionPrompt(recentSummary: string): string {
+  return `Basándote en estas reflexiones recientes del usuario en el Healthy Space Method:
 
 ${recentSummary}
 
+${COACH_VOICE_RULES_SHORT}
+
 Genera UNA pregunta de reflexión profunda y específica para hoy. La pregunta debe:
-- Conectar con algo concreto que el usuario escribió
-- Ser de la dimensión que menos ha explorado esta semana
-- Empezar con "¿"
-- Máximo 15 palabras
+- Hablarle directamente al usuario en 2da persona (tú).
+- Conectar con algo concreto que escribió.
+- Ser de la dimensión que menos ha explorado.
+- Empezar con "¿".
+- Máximo 15 palabras.
 
 Responde SOLO la pregunta, nada más.`;
 }
 
-/**
- * Variante TuEspacioFlow: inline, sin bullets.
- * Output: 1 pregunta (max 15 palabras). max_tokens 60.
- */
-export function buildHSMQuestionPromptInline(recentSummary: string): string {
-  return `Basándote en estas reflexiones recientes:\n\n${recentSummary}\n\nGenera UNA pregunta de reflexión profunda. Debe conectar con algo concreto que el usuario escribió, ser de la dimensión que menos ha explorado, empezar con "¿", máximo 15 palabras. Responde SOLO la pregunta.`;
-}

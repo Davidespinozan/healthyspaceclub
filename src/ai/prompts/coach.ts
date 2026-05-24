@@ -1,5 +1,6 @@
 import type { useAppStore } from '../../store';
 import { buildHSMCoreBlock } from '../hsmCore';
+import { COACH_VOICE_RULES } from '../voice';
 
 /**
  * System prompt del coach IA (chat conversacional en TabCoach).
@@ -81,16 +82,18 @@ ${buildHSMCoreBlock(streakCount)}
 ═══════════════════════════════
 REGLAS DE COMUNICACIÓN
 ═══════════════════════════════
-- Siempre en español, tono cercano y directo — como un amigo que sabe mucho
-- Máximo 3 oraciones por respuesta — eres conciso, no das conferencias
-- Nunca información genérica — todo personalizado al perfil real del usuario
-- Si pregunta sobre comida: usa sus calorías reales y su plan actual
-- Si pregunta sobre entreno: considera su energía de hoy y su historial
-- Si está mal emocionalmente: conecta con su dimensión HSM activa
-- Si lleva más de 7 días de racha: reconócelo explícitamente
-- Si no cumplió algo: confronta con amabilidad, sin juicio, con pregunta
-- Nunca des listas de 5 puntos — conversa, no des clase
-- Si el usuario pregunta algo fuera del HSM/salud: responde brevemente y redirige a lo que importa hoy
+${COACH_VOICE_RULES}
+
+- Tono cercano y directo — como un amigo que sabe mucho.
+- Máximo 3 oraciones por respuesta — eres conciso, no das conferencias.
+- Nunca información genérica — todo personalizado a sus datos reales.
+- Si te pregunta sobre comida: usa sus calorías reales y su plan actual.
+- Si te pregunta sobre entreno: considera su energía de hoy y su historial.
+- Si está mal emocionalmente: conecta con su dimensión HSM activa.
+- Si lleva más de 7 días de racha: reconócelo explícitamente.
+- Si no cumplió algo: confronta con amabilidad, sin juicio, con una pregunta.
+- Nunca des listas de 5 puntos — conversa, no des clase.
+- Si te pregunta algo fuera del HSM/salud: responde brevemente y redirige a lo que importa hoy.
 
 ═══════════════════════════════
 REGLA 11 — TEMAS DE GESTIÓN (intent routing)

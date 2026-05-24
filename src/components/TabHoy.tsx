@@ -13,7 +13,7 @@ import type { Exercise } from '../types';
 import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
 import { buildDay1BriefingPrompt, buildDailyBriefingPrompt } from '../ai/prompts/dailyBriefing';
-import { buildHSMQuestionPromptStructured } from '../ai/prompts/hsmQuestion';
+import { buildHSMQuestionPrompt } from '../ai/prompts/hsmQuestion';
 import {
   buildHSMDailyReviewPrompt,
   buildHSM5DayMiniReviewPrompt,
@@ -289,7 +289,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       return;
     }
     const recentSummary = last7Responses.slice(-10).map(r => `${r.dimension}: "${r.response}"`).join('\n');
-    const prompt = buildHSMQuestionPromptStructured(recentSummary);
+    const prompt = buildHSMQuestionPrompt(recentSummary);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
