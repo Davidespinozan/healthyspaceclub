@@ -4,7 +4,6 @@ import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { calcDayKcal } from '../utils/kcalCalc';
 import WeeklyReview from './WeeklyReview';
-import NightCheckIn from './NightCheckIn';
 import TuEspacioFlow from './TuEspacioFlow';
 import { exercises as exerciseBank } from '../data/exercises';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
@@ -168,7 +167,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     dailyCheckin, dailyCheckinDate,
     dailyHSMResponses,
     lastStreakMilestone, setLastStreakMilestone,
-    nightCheckIn,
     hsmProfile, setHSMProfile,
     userPlan, trialEndsAt,
   } = useAppStore();
@@ -190,11 +188,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const [showNight, setShowNight] = useState(() => {
-    const h = new Date().getHours();
-    const isNight = h >= 20 && h <= 23;
-    return isNight && !(nightCheckIn?.date === new Date().toISOString().split('T')[0] && nightCheckIn?.completed);
-  });
   const firstName = userName?.split(' ')[0] || '';
 
   // Greeting by local hour: 5–11 días, 12–18 tardes, 19–4 noches
@@ -407,7 +400,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   return (
     <div className="th3-wrap">
       {/* Overlays — preserved */}
-      {showNight && <NightCheckIn onClose={() => setShowNight(false)} />}
       {showReview && <WeeklyReview onClose={() => setShowReview(false)} onPlanNextWeek={() => onNav('alimentacion')} />}
 
       {milestone && mileCopy && (

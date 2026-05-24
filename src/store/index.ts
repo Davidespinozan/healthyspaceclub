@@ -246,8 +246,10 @@ interface AppState {
   incrementDailyWorkoutRegen: (modality: string) => void;
 
   // Daily check-in + streak
+  // dailyCheckIn: campo persistido (consumers lo leen en DailyTrainer para
+  // sugerir intensidad). saveDailyCheckIn fue purgada en Lote Racha-2 — era
+  // zombie sin caller. El campo se queda por seguridad de hidratación.
   dailyCheckIn: { date: string; feeling: string; sleep: string } | null;
-  saveDailyCheckIn: (data: { feeling: string; sleep: string }) => Promise<void>;
   streakCount: number;
   lastActiveDate: string | null;
   /**
@@ -269,10 +271,10 @@ interface AppState {
   userMilestones: MilestoneEntry[];
   setUserMilestones: (m: MilestoneEntry[]) => void;
 
-  // Daily energy check-in (Hoy tab)
+  // Daily energy check-in (Hoy tab) — campos persistidos, mutator purgado
+  // en Lote Racha-2 (era zombie). Consumers vivos: DailyTrainer, TabCoach.
   dailyCheckin: 'cansado' | 'regular' | 'energia' | null;
   dailyCheckinDate: string;
-  setDailyCheckin: (val: 'cansado' | 'regular' | 'energia') => Promise<void>;
 
   // Daily HSM micro-responses
   dailyHSMResponses: { date: string; dimension: string; question: string; response: string }[];
@@ -301,21 +303,6 @@ interface AppState {
   // Cumulative HSM profile (updated weekly by AI)
   hsmProfile: { text: string; updatedAt: string } | null;
   setHSMProfile: (text: string) => void;
-
-  // Night check-in
-  nightCheckIn: {
-    date: string;
-    energia: string;
-    cumplimiento: string;
-    valores: string;
-    reflexion: string;
-    intencionManana: string;
-    completed: boolean;
-  } | null;
-  saveNightCheckIn: (data: {
-    energia: string; cumplimiento: string; valores: string;
-    reflexion: string; intencionManana: string;
-  }) => Promise<void>;
 
   // Logout
   logout: () => void;
@@ -688,23 +675,6 @@ export const useAppStore = create<AppState>()(
     }
     await persistStreakToProfile(user?.id, newStreak, today);
   },
-  saveDailyCheckIn: async (data) => {
-    const today = new Date().toISOString().split('T')[0];
-    const { lastActiveDate, streakCount, user } = get();
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    const newStreak = lastActiveDate === today
-      ? streakCount
-      : lastActiveDate === yesterday
-        ? streakCount + 1
-        : 1;
-    set({ dailyCheckIn: { date: today, ...data }, lastActiveDate: today, streakCount: newStreak });
-
-    const unlocked = await tryUnlockMilestones(streakCount, newStreak, user?.id);
-    if (unlocked.length > 0) {
-      set((s) => ({ userMilestones: [...s.userMilestones, ...unlocked] }));
-    }
-    await persistStreakToProfile(user?.id, newStreak, today);
-  },
 
   // Growth Plan (Healthy Space Method)
   growthData: {},
@@ -727,35 +697,12 @@ export const useAppStore = create<AppState>()(
   },
   selectPlan: (plan) => set({ userPlan: plan, trialEndsAt: null }),
 
-  // Daily energy check-in (Hoy tab) — also updates streak
+  // Daily energy check-in (Hoy tab) — campos persistidos.
+  // setDailyCheckin fue purgada en Lote Racha-2 (zombie sin caller).
+  // Los campos quedan por seguridad de hidratación + consumers vivos
+  // (DailyTrainer + TabCoach leen `dailyCheckin` para sugerir intensidad).
   dailyCheckin: null,
   dailyCheckinDate: '',
-  setDailyCheckin: async (val) => {
-    const today = new Date().toISOString().split('T')[0];
-    const { lastActiveDate, streakCount, hsmUnlockDays, startDate, user } = get();
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    const newStreak = lastActiveDate === today
-      ? streakCount
-      : lastActiveDate === yesterday
-        ? streakCount + 1
-        : 1;
-    // Track active day for HSM unlock
-    const dayIndex = startDate ? Math.floor((Date.now() - new Date(startDate).getTime()) / 86400000) : 0;
-    const updatedUnlockDays = hsmUnlockDays.includes(dayIndex) ? hsmUnlockDays : [...hsmUnlockDays, dayIndex];
-    set({
-      dailyCheckin: val,
-      dailyCheckinDate: today,
-      lastActiveDate: today,
-      streakCount: newStreak,
-      hsmUnlockDays: updatedUnlockDays,
-    });
-
-    const unlocked = await tryUnlockMilestones(streakCount, newStreak, user?.id);
-    if (unlocked.length > 0) {
-      set((s) => ({ userMilestones: [...s.userMilestones, ...unlocked] }));
-    }
-    await persistStreakToProfile(user?.id, newStreak, today);
-  },
 
   // Daily HSM micro-responses
   dailyHSMResponses: [],
@@ -832,14 +779,8 @@ export const useAppStore = create<AppState>()(
   hsmProfile: null,
   setHSMProfile: (text) => set({ hsmProfile: { text, updatedAt: new Date().toISOString().split('T')[0] } }),
 
-  // Night check-in — guarda el objeto. Racha delegada a markActiveDay
-  // (Lote Racha-1: single source of truth para streak updates).
-  nightCheckIn: null,
-  saveNightCheckIn: async (data) => {
-    const today = new Date().toISOString().split('T')[0];
-    set({ nightCheckIn: { date: today, ...data, completed: true } });
-    await get().markActiveDay();
-  },
+  // Night check-in eliminado en Lote Racha-2. La racha vive en markActiveDay
+  // (Racha-1) y se dispara desde workout/yoga/HSM completo.
 
   // Logout — signs out of Supabase and clears all local state
   logout: () => {
@@ -893,7 +834,6 @@ export const useAppStore = create<AppState>()(
       activeHSMDimension: 0,
       hsmUnlockDays: [],
       hsmProfile: null,
-      nightCheckIn: null,
     });
   },
 }),
@@ -943,7 +883,6 @@ export const useAppStore = create<AppState>()(
     activeHSMDimension: state.activeHSMDimension,
     hsmUnlockDays: state.hsmUnlockDays,
     hsmProfile: state.hsmProfile,
-    nightCheckIn: state.nightCheckIn,
   }),
 }
   )
