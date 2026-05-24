@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { Home, User, MessageCircle, Users, Leaf, Dumbbell } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
@@ -10,9 +10,14 @@ import TabCoach from '../components/TabCoach';
 import TabClub from '../components/TabClub';
 import TabTu from '../components/TabTu';
 import MiHuella from '../components/MiHuella';
+import SubPageLoadingFallback from '../components/SubPageLoadingFallback';
 
-import WeeklyNutritionPlanner from '../components/WeeklyNutritionPlanner';
-import DailyTrainer from '../components/DailyTrainer';
+// Sub-pages lazy — Split-1: las dos más pesadas salen del initial chunk.
+// DailyTrainer y WeeklyNutritionPlanner solo se cargan al entrar a su
+// sub-page (/entrenamiento, /alimentacion). exercises.ts y mealPlan.ts
+// siguen viajando con TabHoy (eager) — eso es Split-1b futuro.
+const WeeklyNutritionPlanner = lazy(() => import('../components/WeeklyNutritionPlanner'));
+const DailyTrainer = lazy(() => import('../components/DailyTrainer'));
 // GrowthPlan + LifeSystemScreen removed — backed up in _hsm_backup/
 
 const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
@@ -62,7 +67,9 @@ export default function DashboardScreen() {
                 </div>
               </div>
             )}
-            <WeeklyNutritionPlanner />
+            <Suspense fallback={<SubPageLoadingFallback />}>
+              <WeeklyNutritionPlanner />
+            </Suspense>
           </div>
         )}
         {dashPage === 'entrenamiento' && (
@@ -77,7 +84,9 @@ export default function DashboardScreen() {
                 </div>
               </div>
             )}
-            <DailyTrainer onPhaseChange={setTrainerPhase} />
+            <Suspense fallback={<SubPageLoadingFallback />}>
+              <DailyTrainer onPhaseChange={setTrainerPhase} />
+            </Suspense>
           </div>
         )}
         {/* hsm and lifesystem sub-pages removed */}
