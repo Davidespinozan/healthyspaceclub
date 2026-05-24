@@ -12,6 +12,14 @@ import MealDetailPopout from './MealDetailPopout';
 import type { Exercise } from '../types';
 import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
+import { buildDay1BriefingPrompt, buildDailyBriefingPrompt } from '../ai/prompts/dailyBriefing';
+import { buildHSMQuestionPromptStructured } from '../ai/prompts/hsmQuestion';
+import {
+  buildHSMDailyReviewPrompt,
+  buildHSM5DayMiniReviewPrompt,
+  buildHSMWeeklyReviewPrompt,
+} from '../ai/prompts/hsmReview';
+import { buildHSMProfilePrompt } from '../ai/prompts/hsmProfile';
 import { MILESTONE_STEPS, getMilestoneCopy } from '../constants/milestones';
 import { useT } from '../i18n';
 import { plural } from '../i18n/format';
@@ -226,22 +234,20 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   useEffect(() => {
     if (dailyBriefing?.date === today || !isPlanActive) return;
 
-    let prompt: string;
-    if (isDay1) {
-      prompt = `Eres el coach personal de ${firstName || 'el usuario'} en Healthy Space Club. Acaba de completar su registro.
-
-Datos: ${obData.sex || 'sin dato'}, ${obData.edad || '?'} años, ${obData.peso || '?'}kg, objetivo: ${obData.goal || '?'}, actividad: ${obData.activity || '?'}
-
-Escribe un mensaje de bienvenida de 3-4 líneas que:
-- Mencione su objetivo específico (${obData.goal})
-- Reconozca su nivel de actividad
-- Anticipe lo que van a trabajar juntos
-- Sea cálido pero directo, como un coach que ya te conoce
-
-En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
-    } else {
-      prompt = `Escribe UNA sola frase corta y motivadora para ${firstName || 'alguien'} que lleva ${streakCount} días de racha y quiere ${(obData as Record<string, unknown>)?.goal || 'mejorar su salud'}. Máximo 12 palabras. Sin saludo. Sin emojis. Directo.`;
-    }
+    const prompt = isDay1
+      ? buildDay1BriefingPrompt({
+          firstName,
+          sex: obData.sex || '',
+          edad: obData.edad || '',
+          peso: obData.peso || '',
+          goal: obData.goal || '',
+          activity: obData.activity || '',
+        })
+      : buildDailyBriefingPrompt({
+          firstName,
+          streakCount,
+          goal: String((obData as Record<string, unknown>)?.goal || ''),
+        });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -283,17 +289,7 @@ En español. Sin emojis. Sin "Hola" ni "Bienvenido". Directo al punto.`;
       return;
     }
     const recentSummary = last7Responses.slice(-10).map(r => `${r.dimension}: "${r.response}"`).join('\n');
-    const prompt = `Basándote en estas reflexiones recientes de un usuario del Healthy Space Method:
-
-${recentSummary}
-
-Genera UNA pregunta de reflexión profunda y específica para hoy. La pregunta debe:
-- Conectar con algo concreto que el usuario escribió
-- Ser de la dimensión que menos ha explorado esta semana
-- Empezar con "¿"
-- Máximo 15 palabras
-
-Responde SOLO la pregunta, nada más.`;
+    const prompt = buildHSMQuestionPromptStructured(recentSummary);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -319,15 +315,7 @@ Responde SOLO la pregunta, nada más.`;
   useEffect(() => {
     if (!allAnswered || dailyReview || !isPlanActive) return;
     const todaySummary = todayResponses.map(r => `${r.dimension}: "${r.response}"`).join('\n');
-    const reviewPrompt = `El usuario respondió estas reflexiones hoy:
-
-${todaySummary}
-
-Escribe una observación de 2-3 líneas. Debe:
-- Referenciar algo CONCRETO de lo que escribió (cita una palabra o frase)
-- Conectar dos respuestas entre sí si hay relación
-- Terminar con una observación que invite a la acción mañana
-- En español, tono de coach cercano. Sin emojis.`;
+    const reviewPrompt = buildHSMDailyReviewPrompt(todaySummary);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -343,13 +331,7 @@ Escribe una observación de 2-3 líneas. Debe:
     if (daysSinceStart !== 5 || !isPlanActive || miniReview) return;
     if (dailyHSMResponses.length < 5) return;
     const allSoFar = dailyHSMResponses.slice(-15).map(r => `${r.dimension}: "${r.response}"`).join('\n');
-    const miniPrompt = `Un usuario lleva 5 días usando la app Healthy Space Method. Estas son sus reflexiones:
-
-${allSoFar}
-
-Escribe un mensaje que empiece con "Llevas 5 días. Esto es lo que ya sé de ti:" seguido de 3 observaciones específicas (una por línea, con guión). Cada observación debe citar o parafrasear algo concreto que escribió. Termina con una frase corta motivadora.
-
-En español. Sin emojis. Tono de coach que ya te conoce.`;
+    const miniPrompt = buildHSM5DayMiniReviewPrompt(allSoFar);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -369,19 +351,7 @@ En español. Sin emojis. Tono de coach que ya te conoce.`;
     last7Responses.forEach(r => { dimCounts[r.dimension] = (dimCounts[r.dimension] ?? 0) + 1; });
     const dimList = Object.entries(dimCounts).sort((a, b) => b[1] - a[1]).map(([d, c]) => `${d}: ${c} respuestas`).join(', ');
 
-    const weekPrompt = `Analiza las reflexiones HSM de esta semana de un usuario:
-
-${weekSummary}
-
-Dimensiones trabajadas: ${dimList}
-
-Genera un resumen semanal de 4-5 líneas que incluya:
-1. En qué dimensión está creciendo más (basado en profundidad de respuestas)
-2. Qué dimensión necesita más atención (la menos trabajada o con respuestas superficiales)
-3. Un patrón que notaste entre sus respuestas
-4. Una sugerencia concreta para la próxima semana
-
-En español, tono de coach. Sin emojis. Directo.`;
+    const weekPrompt = buildHSMWeeklyReviewPrompt(weekSummary, dimList);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -400,21 +370,7 @@ En español, tono de coach. Sin emojis. Directo.`;
     const allResponses = dailyHSMResponses.slice(-50).map(r => `[${r.date}] ${r.dimension}: "${r.response}"`).join('\n');
     const existingProfile = hsmProfile?.text || 'Sin perfil previo.';
 
-    const profilePrompt = `Eres un psicólogo que lleva notas de sesión. Actualiza el perfil acumulativo de este usuario basándote en su perfil anterior y sus reflexiones recientes.
-
-PERFIL ANTERIOR:
-${existingProfile}
-
-REFLEXIONES RECIENTES:
-${allResponses}
-
-Escribe un párrafo de máximo 200 palabras que resuma:
-- Patrones emocionales y de comportamiento que se repiten
-- Miedos, creencias limitantes o bloqueos detectados
-- Fortalezas y áreas de crecimiento
-- Tendencias de las últimas semanas (¿mejorando? ¿estancado? ¿nuevo tema emergiendo?)
-
-Este perfil será usado por el coach IA para personalizar sus respuestas. Escribe en tercera persona ("El usuario..."). Sin emojis. Profesional pero humano.`;
+    const profilePrompt = buildHSMProfilePrompt(existingProfile, allResponses);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);

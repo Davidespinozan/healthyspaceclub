@@ -6,6 +6,7 @@ import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import { callAI } from '../utils/aiProxy';
+import { buildWeeklyPlanPrompt } from '../ai/prompts/weeklyPlan';
 import { useT } from '../i18n';
 import { plural, formatDate } from '../i18n/format';
 import type { TranslationKey } from '../i18n/es';
@@ -167,32 +168,14 @@ async function generateWeeklyPlan(params: {
   };
   const styleFromGoal = goalLabel[String(params.obData.goal)] ?? 'variada y balanceada';
 
-  const prompt = `Eres un nutricionista experto. Crea un plan semanal personalizado.
-
-PERFIL DEL USUARIO:
-- Nombre: ${params.userName || 'usuario'}
-- Sexo: ${params.obData.sex || '?'} | Edad: ${params.obData.edad || '?'} años
-- Peso actual: ${params.obData.peso || '?'} kg | Altura: ${params.obData.altura || params.obData.estatura || '?'} cm
-- Actividad: ${params.obData.actividad || '?'}
-- Objetivo: ${params.obData.goal || '?'} → ${styleFromGoal}
-- Meta calórica: ${params.planGoal} kcal/día
-
-PREFERENCIAS ESTA SEMANA:
-- Cocinas: ${params.answers.cuisines || 'todas'}
-- Preferencias de comida: ${params.answers.cravings || 'sin preferencias específicas'}
-- Evitar: ${params.answers.avoid || 'nada'}
-
-OPCIONES DISPONIBLES (banco de comidas):
-${mealList}
-
-TAREA: Selecciona exactamente 7 días del banco (uno por día, Lunes a Domingo) que mejor se adapten a las preferencias del usuario. Considera diversidad y que no se repitan los mismos platillos consecutivos. Genera también una lista de compras consolidada y simple.
-
-Responde SOLO este JSON, sin markdown, sin texto extra:
-{
-  "selectedDays": [N1, N2, N3, N4, N5, N6, N7],
-  "shoppingList": ["artículo con cantidad", "artículo con cantidad"],
-  "nota": "mensaje motivador breve de 1-2 oraciones"
-}`;
+  const prompt = buildWeeklyPlanPrompt({
+    userName: params.userName,
+    obData: params.obData,
+    planGoal: params.planGoal,
+    answers: params.answers,
+    styleFromGoal,
+    mealList,
+  });
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60_000);

@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { ChevronRight, Flame } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { callAI } from '../utils/aiProxy';
+import { buildWeeklyReviewMessagePrompt } from '../ai/prompts/weeklyReview';
 
 async function generateReviewMessage(params: {
   userName: string;
@@ -13,17 +14,7 @@ async function generateReviewMessage(params: {
   completedModules: number;
   goal: string;
 }): Promise<string> {
-  const prompt = `Eres un coach de vida. Escribe un resumen semanal personalizado y motivador en 2-3 oraciones para ${params.userName || 'el usuario'}.
-
-DATOS DE LA SEMANA:
-- Días con comidas registradas: ${params.mealDays}/7
-- Entrenamientos completados: ${params.workoutDays}
-- Racha actual: ${params.streak} días
-- Cambio de peso: ${params.weightChange !== null ? `${params.weightChange > 0 ? '+' : ''}${params.weightChange} kg` : 'sin registro'}
-- Módulos de crecimiento completados: ${params.completedModules}/10
-- Objetivo: ${params.goal || 'mejorar salud'}
-
-Sé directo, honesto y motivador. Menciona 1 logro concreto y 1 área de enfoque para la próxima semana. Máximo 3 oraciones. No uses emojis.`;
+  const prompt = buildWeeklyReviewMessagePrompt(params);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60_000);
