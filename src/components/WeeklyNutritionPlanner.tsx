@@ -208,6 +208,7 @@ export default function WeeklyNutritionPlanner() {
     weeklyPlan, saveWeeklyPlan, clearWeeklyPlan,
     mealPlanKey, planGoal, obData, userName,
     mealChecks, toggleMealCheck,
+    mealResolvedByLog,
     planRegenCount, incrementPlanRegen,
   } = useAppStore();
 
@@ -237,8 +238,8 @@ export default function WeeklyNutritionPlanner() {
     shoppingDay !== null ? (new Date().getDay() - shoppingDay + 7) % 7 : 0
   );
   const [showShopping, setShowShopping] = useState(false);
-  const [mealDetail, setMealDetail] = useState<PopoutMeal | null>(null);
-  const [foodLogTime, setFoodLogTime] = useState<string | null>(null);
+  const [mealDetail, setMealDetail] = useState<{ meal: PopoutMeal; index: number } | null>(null);
+  const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
 
   const activeMealPlan = mealPlans[mealPlanKey] ?? mealPlans['planA'];
   const scaledPlan = useMemo(
@@ -791,6 +792,11 @@ export default function WeeklyNutritionPlanner() {
               ).toISOString().split('T')[0];
               const checkKey = `meal-${dayDate}-${i}`;
               const checked = !!mealChecks[checkKey];
+              // Resolved-by-log solo aplica para los meals de HOY (el flag se
+              // setea con today, no con dayDate). Visualmente reusamos la clase
+              // .done (strikethrough) — el dot ámbar distintivo solo está en
+              // TabHoy donde el row es más compacto.
+              const resolved = activeDay === todayOffset && !!mealResolvedByLog[checkKey];
               const portionsToShow = meal.portions.slice(0, 3);
               const extraCount = meal.portions.length - portionsToShow.length;
               const isSnack = meal.time.startsWith('Snack');
@@ -799,8 +805,8 @@ export default function WeeklyNutritionPlanner() {
               return (
                 <div
                   key={i}
-                  className={`wnp2-meal${checked ? ' done' : ''}${isSnack ? ' wnp2-meal--snack' : ''}`}
-                  onClick={() => setMealDetail(meal)}
+                  className={`wnp2-meal${checked || resolved ? ' done' : ''}${isSnack ? ' wnp2-meal--snack' : ''}`}
+                  onClick={() => setMealDetail({ meal, index: i })}
                 >
                   {meal.img && !isSnack ? (
                     <div
@@ -851,19 +857,26 @@ export default function WeeklyNutritionPlanner() {
       )}
 
       <MealDetailPopout
-        meal={mealDetail}
+        meal={mealDetail?.meal ?? null}
+        /* Solo pasamos mealIndex si el user está parado en el día de HOY
+           del calendario (activeDay === todayOffset). El foodLog siempre
+           se stampa con la fecha actual, así que auto-marcar un meal de
+           otro día sería incoherente. Si está mirando hoy → comporta igual
+           que TabHoy. Si está en otro día → registro sigue funcionando,
+           solo no auto-marca. */
+        mealIndex={activeDay === todayOffset ? mealDetail?.index : undefined}
         onClose={() => setMealDetail(null)}
-        onLogOther={(time) => { setMealDetail(null); setFoodLogTime(time); }}
-        /* WNP muestra la semana completa, no solo "hoy" — no pasamos
-           mealIndex porque el foodLog siempre se stampa con la fecha
-           actual. Auto-mark vía mealResolvedByLog solo aplica en TabHoy
-           (vista de hoy). El sheet sigue funcionando, solo no marca row. */
+        onLogOther={(time, index) => {
+          setMealDetail(null);
+          setFoodLogTarget({ time, index });
+        }}
       />
 
-      {foodLogTime !== null && (
+      {foodLogTarget !== null && (
         <FoodLogSheet
-          mealTime={foodLogTime}
-          onClose={() => setFoodLogTime(null)}
+          mealTime={foodLogTarget.time}
+          mealIndex={foodLogTarget.index}
+          onClose={() => setFoodLogTarget(null)}
         />
       )}
     </div>
