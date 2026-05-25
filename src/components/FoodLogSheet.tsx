@@ -30,14 +30,18 @@ type Phase = 'input' | 'estimating' | 'done' | 'error';
 interface Props {
   /** Time del meal del plan que se está reemplazando (e.g. "Desayuno"). Opcional. */
   mealTime?: string;
+  /** Índice del meal del plan en la lista del día — si se provee, el meal
+   *  se marca como "resuelto por log" tras un registro exitoso (Food-4). */
+  mealIndex?: number;
   onClose: () => void;
   /** Disparado tras un registro exitoso (después del tap "Listo"). */
   onLogged?: () => void;
 }
 
-export default function FoodLogSheet({ mealTime, onClose, onLogged }: Props) {
+export default function FoodLogSheet({ mealTime, mealIndex, onClose, onLogged }: Props) {
   const { t, locale } = useT();
   const addFoodLog = useAppStore(s => s.addFoodLog);
+  const setMealResolvedByLog = useAppStore(s => s.setMealResolvedByLog);
 
   const [phase, setPhase] = useState<Phase>('input');
   const [text, setText] = useState('');
@@ -77,6 +81,14 @@ export default function FoodLogSheet({ mealTime, onClose, onLogged }: Props) {
 
       const entry = sanitizeFoodEntry(parsed, trimmed, 'ai');
       await addFoodLog(entry);
+
+      // Food-4: marcar el meal del plan como resuelto por log (señal visual
+      // distinta al check ✓ "seguí el plan"). Solo si vino con mealIndex.
+      if (mealIndex !== undefined) {
+        const today = new Date().toISOString().split('T')[0];
+        setMealResolvedByLog(`meal-${today}-${mealIndex}`);
+      }
+
       setEstimate({ kcal: entry.kcal, prot: entry.prot, carbs: entry.carbs, fat: entry.fat });
       setPhase('done');
     } catch (e) {

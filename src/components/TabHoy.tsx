@@ -160,6 +160,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const {
     userName, planGoal, mealPlanKey, shoppingDay,
     mealChecks, toggleMealCheck,
+    mealResolvedByLog,
     foodLog,
     dailyWorkout,
     weeklyPlan, lastWeeklyReview,
@@ -224,8 +225,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const hasFoodLogToday = todayFoodLog.length > 0;
   const consumedKcal = todayFoodLog.reduce((s, e) => s + e.kcal, 0);
 
-  const [mealDetail, setMealDetail] = useState<typeof todayMeals[0] | null>(null);
-  const [foodLogTime, setFoodLogTime] = useState<string | null>(null);
+  const [mealDetail, setMealDetail] = useState<{ meal: typeof todayMeals[0]; index: number } | null>(null);
+  const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
 
   const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
 
@@ -600,9 +601,15 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                       {todayMeals.slice(0, 6).map((meal, i) => {
                         const key = mealKey(i);
                         const done = !!mealChecks[key];
+                        const resolved = !!mealResolvedByLog[key];
+                        // Visual: checked gana sobre resolved (edge case: el
+                        // user marcó ✓ Y registró comida — el ✓ es el gesto
+                        // más explícito). resolved aplica solo si !done.
+                        const showResolvedDot = resolved && !done;
+                        const strike = done || resolved;
                         function openDetail(e: React.MouseEvent) {
                           e.stopPropagation();
-                          setMealDetail(meal);
+                          setMealDetail({ meal, index: i });
                         }
                         function handleToggle(e: React.MouseEvent) {
                           e.stopPropagation();
@@ -612,7 +619,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                           <li key={i} className="th3-card-list-item">
                             <button
                               type="button"
-                              className={`th3-card-list-name${done ? ' done' : ''}`}
+                              className={`th3-card-list-name${strike ? ' done' : ''}`}
                               onClick={openDetail}
                             >
                               {meal.name}
@@ -621,9 +628,20 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                               type="button"
                               className={`th3-card-list-check${done ? ' checked' : ''}`}
                               onClick={handleToggle}
-                              aria-label={done ? t('hoy.ariaMealUncheck') : t('hoy.ariaMealCheck')}
+                              aria-label={
+                                done ? t('hoy.ariaMealUncheck')
+                                  : showResolvedDot ? t('hoy.ariaMealResolvedByLog')
+                                  : t('hoy.ariaMealCheck')
+                              }
+                              style={showResolvedDot ? {
+                                color: 'var(--amber-deep)',
+                                background: 'white',
+                                fontSize: '1rem',
+                                fontWeight: 700,
+                                cursor: 'default',
+                              } : undefined}
                             >
-                              {done ? '✓' : ''}
+                              {done ? '✓' : showResolvedDot ? '·' : ''}
                             </button>
                           </li>
                         );
@@ -695,16 +713,21 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
       {/* ── Meal popout (componente reutilizable) ── */}
       <MealDetailPopout
-        meal={mealDetail}
+        meal={mealDetail?.meal ?? null}
+        mealIndex={mealDetail?.index}
         onClose={() => setMealDetail(null)}
-        onLogOther={(time) => { setMealDetail(null); setFoodLogTime(time); }}
+        onLogOther={(time, index) => {
+          setMealDetail(null);
+          setFoodLogTarget({ time, index });
+        }}
       />
 
-      {/* ── Food log sheet (Food-2): captura texto libre + IA estima macros ── */}
-      {foodLogTime !== null && (
+      {/* ── Food log sheet (Food-2 + Food-4): captura texto libre + IA estima macros ── */}
+      {foodLogTarget !== null && (
         <FoodLogSheet
-          mealTime={foodLogTime}
-          onClose={() => setFoodLogTime(null)}
+          mealTime={foodLogTarget.time}
+          mealIndex={foodLogTarget.index}
+          onClose={() => setFoodLogTarget(null)}
         />
       )}
 

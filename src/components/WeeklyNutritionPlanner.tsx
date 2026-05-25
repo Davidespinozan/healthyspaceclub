@@ -854,6 +854,10 @@ export default function WeeklyNutritionPlanner() {
         meal={mealDetail}
         onClose={() => setMealDetail(null)}
         onLogOther={(time) => { setMealDetail(null); setFoodLogTime(time); }}
+        /* WNP muestra la semana completa, no solo "hoy" — no pasamos
+           mealIndex porque el foodLog siempre se stampa con la fecha
+           actual. Auto-mark vía mealResolvedByLog solo aplica en TabHoy
+           (vista de hoy). El sheet sigue funcionando, solo no marca row. */
       />
 
       {foodLogTime !== null && (

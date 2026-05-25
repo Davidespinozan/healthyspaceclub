@@ -246,6 +246,7 @@ export const en: Translations<typeof es> = {
     cardFootTailored: 'Tailored to you',
     ariaMealCheck: 'Check meal',
     ariaMealUncheck: 'Uncheck meal',
+    ariaMealResolvedByLog: 'Logged a different meal',
     espacioEyebrow: 'Tu Espacio',
     espacioPromptInitial: 'Reflect for 5 minutes so your coach can get to know you better.',
     espacioPromptProgress: "You've written {answered}. {remaining} to go.",

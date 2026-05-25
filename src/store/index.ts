@@ -173,6 +173,14 @@ interface AppState {
   mealChecks: Record<string, boolean>; // { '2026-03-09-planA-1-0': true }
   toggleMealCheck: (key: string) => void;
 
+  // Meal resolved-by-log (Food-4). Auto-seteado cuando el user registra
+  // "comí otra cosa" desde el FoodLogSheet — marca el meal del plan como
+  // resuelto pero con señal visual DISTINTA al check ✓ del plan.
+  // Honestidad: no fingir que siguió el plan.
+  // Solo localStorage (igual que mealChecks), no Supabase.
+  mealResolvedByLog: Record<string, true>; // { 'meal-2026-05-25-0': true }
+  setMealResolvedByLog: (key: string) => void;
+
   // Welcome video closed
   welcomeVidClosed: boolean;
   setWelcomeVidClosed: (closed: boolean) => void;
@@ -544,6 +552,11 @@ export const useAppStore = create<AppState>()(
   toggleMealCheck: (key) =>
     set((state) => ({ mealChecks: { ...state.mealChecks, [key]: !state.mealChecks[key] } })),
 
+  // Meal resolved-by-log (Food-4): set automático desde FoodLogSheet
+  mealResolvedByLog: {},
+  setMealResolvedByLog: (key) =>
+    set((state) => ({ mealResolvedByLog: { ...state.mealResolvedByLog, [key]: true } })),
+
   // Welcome video
   welcomeVidClosed: false,
   setWelcomeVidClosed: (closed) => set({ welcomeVidClosed: closed }),
@@ -830,6 +843,7 @@ export const useAppStore = create<AppState>()(
       habitHistory: {},
       weightLog: [],
       mealChecks: {},
+      mealResolvedByLog: {},
       welcomeVidClosed: false,
       mealPlanKey: 'planA',
       tdee: 0,
@@ -877,6 +891,7 @@ export const useAppStore = create<AppState>()(
     habitHistory: state.habitHistory,
     weightLog: state.weightLog,
     mealChecks: state.mealChecks,
+    mealResolvedByLog: state.mealResolvedByLog,
     welcomeVidClosed: state.welcomeVidClosed,
     mealPlanKey: state.mealPlanKey,
     tdee: state.tdee,

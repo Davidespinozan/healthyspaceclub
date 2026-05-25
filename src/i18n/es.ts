@@ -245,6 +245,7 @@ export const es = {
     cardFootTailored: 'A tu medida',
     ariaMealCheck: 'Marcar comida',
     ariaMealUncheck: 'Desmarcar comida',
+    ariaMealResolvedByLog: 'Resuelta con otra comida',
     espacioEyebrow: 'Tu Espacio',
     espacioPromptInitial: 'Reflexiona 5 minutos para que tu coach te conozca mejor.',
     espacioPromptProgress: 'Ya escribiste {answered}. Faltan {remaining}.',
