@@ -194,10 +194,11 @@ interface AppState {
   completedSessions: CompletedSession[];
   addCompletedSession: (session: CompletedSession) => void;
 
-  // Food log (manual + AI)
+  // Food log (manual + AI). Lote Food-1: sync con Supabase tabla food_log.
+  // Shape `desc` en cliente ↔ columna `description` en SQL (mapeo al borde).
   foodLog: { id: string; date: string; desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' }[];
-  addFoodLog: (entry: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' }) => void;
-  removeFoodLog: (id: string) => void;
+  addFoodLog: (entry: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' }) => Promise<void>;
+  removeFoodLog: (id: string) => Promise<void>;
 
   // Plan / Trial
   userPlan: 'none' | 'trial' | 'basico' | 'pro' | 'elite';
@@ -572,16 +573,53 @@ export const useAppStore = create<AppState>()(
   addCompletedSession: (session) =>
     set((state) => ({ completedSessions: [...state.completedSessions, session] })),
 
-  // Food log
+  // Food log — patrón addWeight: optimistic local + upsert Supabase + throw si falla.
+  // NO dispara markActiveDay (nutrición no cuenta para la racha por ahora).
+  // Mapeo desc (cliente) ↔ description (SQL) al borde del sync.
   foodLog: [],
-  addFoodLog: (entry) =>
-    set((state) => {
-      const today = new Date().toISOString().split('T')[0];
-      const id = `${today}-${Date.now()}`;
-      return { foodLog: [...state.foodLog, { id, date: today, ...entry }] };
-    }),
-  removeFoodLog: (id) =>
-    set((state) => ({ foodLog: state.foodLog.filter(e => e.id !== id) })),
+  addFoodLog: async (entry) => {
+    const today = new Date().toISOString().split('T')[0];
+    const id = crypto.randomUUID();
+    const userId = get().user?.id;
+
+    // Optimistic local primero (UX responsiva, modo offline OK)
+    set((state) => ({ foodLog: [...state.foodLog, { id, date: today, ...entry }] }));
+
+    if (userId) {
+      const { error } = await supabase
+        .from('food_log')
+        .insert({
+          id,
+          user_id: userId,
+          date: today,
+          description: entry.desc,
+          kcal: entry.kcal,
+          prot: entry.prot,
+          carbs: entry.carbs,
+          fat: entry.fat,
+          source: entry.source,
+        });
+      if (error) {
+        console.error('[addFoodLog] supabase insert failed:', error);
+        throw error;
+      }
+    }
+  },
+  removeFoodLog: async (id) => {
+    const userId = get().user?.id;
+    set((state) => ({ foodLog: state.foodLog.filter(e => e.id !== id) }));
+    if (userId) {
+      const { error } = await supabase
+        .from('food_log')
+        .delete()
+        .eq('user_id', userId)
+        .eq('id', id);
+      if (error) {
+        console.error('[removeFoodLog] supabase delete failed:', error);
+        throw error;
+      }
+    }
+  },
 
   // Trial expiry
   checkTrialExpiry: () => {

@@ -123,6 +123,36 @@ export default function App() {
             console.error('[auth] failed to hydrate weight_log:', e);
           }
 
+          // Hidratar food_log: últimos 14 días (Food-1).
+          // El coach prompt lee solo el día de hoy; 14 días alcanza para
+          // sobrevivir cambio de device sin traer toda la historia.
+          // Mapeo description (SQL) → desc (cliente).
+          try {
+            const cutoff = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+            const { data: foods } = await supabase
+              .from('food_log')
+              .select('id, date, description, kcal, prot, carbs, fat, source')
+              .eq('user_id', session.user.id)
+              .gte('date', cutoff)
+              .order('date', { ascending: true });
+            if (foods) {
+              useAppStore.setState({
+                foodLog: foods.map(f => ({
+                  id: f.id,
+                  date: f.date,
+                  desc: f.description,
+                  kcal: Number(f.kcal),
+                  prot: Number(f.prot),
+                  carbs: Number(f.carbs),
+                  fat: Number(f.fat),
+                  source: f.source as 'manual' | 'ai',
+                })),
+              });
+            }
+          } catch (e) {
+            console.error('[auth] failed to hydrate food_log:', e);
+          }
+
           // Hidratar user_milestones en paralelo (logros desbloqueados)
           try {
             const { data: milestones } = await supabase
