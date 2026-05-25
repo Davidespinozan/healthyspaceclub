@@ -137,7 +137,8 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
 
   function handlePlanNextWeek() {
     markWeeklyReviewDone();
-    clearWeeklyPlan();       // trigger re-generation of next week's plan
+    // Fire-and-forget: local clear inmediato + Supabase background.
+    clearWeeklyPlan().catch((e) => console.error('[handlePlanNextWeek] clearWeeklyPlan failed:', e));
     onPlanNextWeek();
     onClose();
   }

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore, persistStreakToProfile } from './store';
 import { supabase } from './lib/supabase';
 import { MILESTONE_STEPS } from './constants/milestones';
+import { shouldUseRemotePlan } from './utils/planSync';
 import { detectBrowserLanguage } from './i18n';
 import LandingScreen from './screens/LandingScreen';
 
@@ -77,7 +78,7 @@ export default function App() {
           try {
             const { data: profile } = await supabase
               .from('user_profiles')
-              .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date')
+              .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date, weekly_plan, weekly_plan_updated_at, shopping_day')
               .eq('user_id', session.user.id)
               .maybeSingle();
 
@@ -101,6 +102,52 @@ export default function App() {
                 const fallbackDate = localState.lastActiveDate ?? new Date().toISOString().split('T')[0];
                 console.log('[streak-backfill] pushing local streak', localStreak, 'to server');
                 await persistStreakToProfile(session.user.id, localStreak, fallbackDate);
+              }
+
+              // Sync-1: weeklyPlan + shoppingDay con push-then-pull.
+              // shouldUseRemotePlan decide si subir local (backfill), bajar
+              // remote (pull), o no hacer nada. Esto evita pisar el plan
+              // local de usuarios existentes en el primer login post-deploy.
+              const localPlan = localState.weeklyPlan;
+              const localPlanUpdatedAt = localPlan?.generatedAt ?? null;
+              const remotePlan = (profile.weekly_plan ?? null) as typeof localPlan;
+              const remotePlanUpdatedAt = profile.weekly_plan_updated_at ?? null;
+              const decision = shouldUseRemotePlan(
+                localPlan, localPlanUpdatedAt, remotePlan, remotePlanUpdatedAt,
+              );
+              if (decision === 'use_remote') {
+                useAppStore.setState({ weeklyPlan: remotePlan });
+              } else if (decision === 'use_local' && localPlan) {
+                // Backfill: subir el local a Supabase
+                console.log('[weekly-plan-backfill] pushing local plan to server');
+                const now = new Date().toISOString();
+                await supabase.from('user_profiles').upsert(
+                  {
+                    user_id: session.user.id,
+                    weekly_plan: localPlan,
+                    weekly_plan_updated_at: now,
+                    updated_at: now,
+                  },
+                  { onConflict: 'user_id' },
+                );
+              }
+
+              // shopping_day: simpler — si remote tiene valor, usar; si no,
+              // backfill el local (si lo hay).
+              const localShoppingDay = localState.shoppingDay;
+              const remoteShoppingDay = profile.shopping_day;
+              if (remoteShoppingDay !== null && remoteShoppingDay !== undefined) {
+                useAppStore.setState({ shoppingDay: remoteShoppingDay });
+              } else if (localShoppingDay !== null && localShoppingDay !== undefined) {
+                console.log('[shopping-day-backfill] pushing local shopping_day to server');
+                await supabase.from('user_profiles').upsert(
+                  {
+                    user_id: session.user.id,
+                    shopping_day: localShoppingDay,
+                    updated_at: new Date().toISOString(),
+                  },
+                  { onConflict: 'user_id' },
+                );
               }
             }
           } catch (e) {

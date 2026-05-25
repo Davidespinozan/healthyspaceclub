@@ -301,7 +301,7 @@ export default function WeeklyNutritionPlanner() {
         .map(d => Math.max(1, Math.min(28, d)))
         .slice(0, 7);
       while (valid.length < 7) valid.push(valid[valid.length - 1] ?? 1);
-      saveWeeklyPlan({
+      await saveWeeklyPlan({
         generatedAt: new Date().toISOString(),
         mealPlanKey,
         selectedDays: valid,
@@ -320,7 +320,9 @@ export default function WeeklyNutritionPlanner() {
   function resetQuestionnaire() {
     if (regenBlocked) return;
     incrementPlanRegen();
-    clearWeeklyPlan();
+    // Fire-and-forget: limpiar local inmediato + Supabase en background.
+    // Si falla el upsert, solo log — la próxima saveWeeklyPlan sobreescribe.
+    clearWeeklyPlan().catch((e) => console.error('[resetQuestionnaire] clearWeeklyPlan failed:', e));
     setStep(0);
     setAnswers({});
     setMultiSel([]);
@@ -355,7 +357,11 @@ export default function WeeklyNutritionPlanner() {
               key={day.value}
               className="wz-option"
               onClick={() => {
-                setShoppingDay(day.value);
+                // Fire-and-forget: local + Supabase background. UX no debe
+                // bloquear el avance del wizard por una latencia de red.
+                setShoppingDay(day.value).catch((e) =>
+                  console.error('[setShoppingDay] failed:', e),
+                );
                 setPhase('questions');
               }}
             >
