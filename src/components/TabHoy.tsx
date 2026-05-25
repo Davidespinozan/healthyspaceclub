@@ -160,6 +160,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const {
     userName, planGoal, mealPlanKey, shoppingDay,
     mealChecks, toggleMealCheck,
+    foodLog,
     dailyWorkout,
     weeklyPlan, lastWeeklyReview,
     streakCount, obData,
@@ -215,6 +216,13 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const todayPlanIdx = todayDayNum != null ? scaledPlan.findIndex(d => d.day === todayDayNum) : todayOffset % scaledPlan.length;
   const todayMeals = scaledPlan[todayPlanIdx >= 0 ? todayPlanIdx : 0]?.meals ?? [];
   const checkedMeals = todayMeals.filter((_, i) => !!mealChecks[`meal-${today}-${i}`]).length;
+
+  // Food-3: si el user registró comida hoy, la card pasa a mostrar consumo
+  // real vs meta (foco en realidad, no en el plan). Si no hay foodLog,
+  // sigue mostrando el plan como antes (cero regresión).
+  const todayFoodLog = foodLog.filter(e => e.date === today);
+  const hasFoodLogToday = todayFoodLog.length > 0;
+  const consumedKcal = todayFoodLog.reduce((s, e) => s + e.kcal, 0);
 
   const [mealDetail, setMealDetail] = useState<typeof todayMeals[0] | null>(null);
   const [foodLogTime, setFoodLogTime] = useState<string | null>(null);
@@ -583,7 +591,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 <>
                   <h2 className="th3-card-title">{t('hoy.nutritionToday')}</h2>
                   <p className="th3-card-meta">
-                    {checkedMeals}/{todayMeals.length} · {calcDayKcal(todayMeals)} kcal
+                    {hasFoodLogToday
+                      ? t('hoy.nutritionConsumed', { consumed: consumedKcal, goal: planGoal })
+                      : `${checkedMeals}/${todayMeals.length} · ${calcDayKcal(todayMeals)} kcal`}
                   </p>
                   {todayMeals.length > 0 && (
                     <ul className="th3-card-list">

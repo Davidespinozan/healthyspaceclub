@@ -239,6 +239,7 @@ export const en: Translations<typeof es> = {
     nutritionGenerate: 'Generate your plan',
     nutritionGenerateMeta: 'Your AI nutritionist builds it.',
     nutritionToday: "Today's plan",
+    nutritionConsumed: '{consumed} / {goal} kcal',
     coverInMotion: 'in motion',
     coverFromEarth: 'from the earth',
     cardFootPersonalized: 'Personalized today',
