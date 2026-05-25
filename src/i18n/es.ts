@@ -239,6 +239,7 @@ export const es = {
     nutritionGenerateMeta: 'Tu nutricionista IA lo arma.',
     nutritionToday: 'Tu plan de hoy',
     nutritionConsumed: '{consumed} / {goal} kcal',
+    nutritionMeta: '{completed}/{total} · {consumed} / {goal} kcal',
     coverInMotion: 'en movimiento',
     coverFromEarth: 'de la tierra',
     cardFootPersonalized: 'Personalizada hoy',

@@ -240,6 +240,7 @@ export const en: Translations<typeof es> = {
     nutritionGenerateMeta: 'Your AI nutritionist builds it.',
     nutritionToday: "Today's plan",
     nutritionConsumed: '{consumed} / {goal} kcal',
+    nutritionMeta: '{completed}/{total} · {consumed} / {goal} kcal',
     coverInMotion: 'in motion',
     coverFromEarth: 'from the earth',
     cardFootPersonalized: 'Personalized today',

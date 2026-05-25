@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAppStore } from '../store';
 import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
-import { calcDayKcal } from '../utils/kcalCalc';
+import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
 import { exercises as exerciseBank } from '../data/exercises';
@@ -216,14 +216,18 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const todayDayNum = weeklyPlan ? weeklyPlan.selectedDays[todayOffset] ?? weeklyPlan.selectedDays[0] : null;
   const todayPlanIdx = todayDayNum != null ? scaledPlan.findIndex(d => d.day === todayDayNum) : todayOffset % scaledPlan.length;
   const todayMeals = scaledPlan[todayPlanIdx >= 0 ? todayPlanIdx : 0]?.meals ?? [];
-  const checkedMeals = todayMeals.filter((_, i) => !!mealChecks[`meal-${today}-${i}`]).length;
-
-  // Food-3: si el user registró comida hoy, la card pasa a mostrar consumo
-  // real vs meta (foco en realidad, no en el plan). Si no hay foodLog,
-  // sigue mostrando el plan como antes (cero regresión).
-  const todayFoodLog = foodLog.filter(e => e.date === today);
-  const hasFoodLogToday = todayFoodLog.length > 0;
-  const consumedKcal = todayFoodLog.reduce((s, e) => s + e.kcal, 0);
+  // Food-5: cálculo unificado de consumo del día.
+  // Reemplaza el patrón inconsistente previo (Food-3) que solo contaba el
+  // foodLog y dejaba al plan ✓ sin sumar kcal. Ahora plan ✓ y foodLog
+  // alimentan el mismo número, con mealResolvedByLog como llave
+  // anti-duplicado (franja resuelta por log no duplica el plan).
+  const dayConsumption = computeDayConsumption({
+    todayMeals,
+    mealChecks,
+    mealResolvedByLog,
+    foodLog,
+    today,
+  });
 
   const [mealDetail, setMealDetail] = useState<{ meal: typeof todayMeals[0]; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
@@ -592,9 +596,12 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 <>
                   <h2 className="th3-card-title">{t('hoy.nutritionToday')}</h2>
                   <p className="th3-card-meta">
-                    {hasFoodLogToday
-                      ? t('hoy.nutritionConsumed', { consumed: consumedKcal, goal: planGoal })
-                      : `${checkedMeals}/${todayMeals.length} · ${calcDayKcal(todayMeals)} kcal`}
+                    {t('hoy.nutritionMeta', {
+                      completed: dayConsumption.completedSlots,
+                      total: dayConsumption.totalSlots,
+                      consumed: dayConsumption.consumedKcal,
+                      goal: planGoal,
+                    })}
                   </p>
                   {todayMeals.length > 0 && (
                     <ul className="th3-card-list">
