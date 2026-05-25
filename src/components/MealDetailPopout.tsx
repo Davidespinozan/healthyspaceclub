@@ -23,12 +23,19 @@ const MEAL_TIME_KEYS: Record<string, TranslationKey> = {
 interface Props {
   meal: PopoutMeal | null;
   onClose: () => void;
+  /**
+   * Si se provee, se muestra el CTA "registrar mi comida" debajo de los
+   * ingredientes. El handler recibe el time del meal del plan (para el
+   * eyebrow contextual del FoodLogSheet). El popout se sigue manteniendo
+   * read-only de la info del meal — solo delega la acción de logging.
+   */
+  onLogOther?: (mealTime: string) => void;
 }
 
 // Popout de detalle de comida: backdrop + handle + img + time + kcal + name +
 // desc + ingredientes + close. Reutilizado desde TabHoy y WeeklyNutritionPlanner.
 // Clases CSS .th-popout-* viven en index.css (globales por historial).
-export default function MealDetailPopout({ meal, onClose }: Props) {
+export default function MealDetailPopout({ meal, onClose, onLogOther }: Props) {
   const { t } = useT();
   if (!meal) return null;
 
@@ -59,6 +66,36 @@ export default function MealDetailPopout({ meal, onClose }: Props) {
             <div key={i} className="th-popout-portion">{p}</div>
           ))}
         </div>
+        {onLogOther && (
+          <div style={{
+            borderTop: '0.5px solid var(--sand)',
+            marginTop: 6,
+            paddingTop: 12,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}>
+            <p style={{
+              fontFamily: 'Georgia, serif', fontStyle: 'italic',
+              fontSize: '.82rem', color: 'var(--txt2)', margin: 0,
+            }}>
+              {t('foodLog.detailQuestion')}
+            </p>
+            <button
+              type="button"
+              onClick={() => onLogOther(meal.time)}
+              style={{
+                width: '100%', padding: 12, borderRadius: 10,
+                background: 'transparent', color: 'var(--forest)',
+                border: '1px solid var(--forest)',
+                fontSize: '.84rem', fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              {t('foodLog.detailCta')}
+            </button>
+          </div>
+        )}
         <button className="th-popout-close" onClick={onClose}>{t('common.close')}</button>
       </div>
     </div>

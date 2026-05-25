@@ -5,6 +5,7 @@ import { scalePlan } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
+import FoodLogSheet from './FoodLogSheet';
 import { callAI } from '../utils/aiProxy';
 import { buildWeeklyPlanPrompt } from '../ai/prompts/weeklyPlan';
 import { useT } from '../i18n';
@@ -237,6 +238,7 @@ export default function WeeklyNutritionPlanner() {
   );
   const [showShopping, setShowShopping] = useState(false);
   const [mealDetail, setMealDetail] = useState<PopoutMeal | null>(null);
+  const [foodLogTime, setFoodLogTime] = useState<string | null>(null);
 
   const activeMealPlan = mealPlans[mealPlanKey] ?? mealPlans['planA'];
   const scaledPlan = useMemo(
@@ -848,7 +850,18 @@ export default function WeeklyNutritionPlanner() {
         </>
       )}
 
-      <MealDetailPopout meal={mealDetail} onClose={() => setMealDetail(null)} />
+      <MealDetailPopout
+        meal={mealDetail}
+        onClose={() => setMealDetail(null)}
+        onLogOther={(time) => { setMealDetail(null); setFoodLogTime(time); }}
+      />
+
+      {foodLogTime !== null && (
+        <FoodLogSheet
+          mealTime={foodLogTime}
+          onClose={() => setFoodLogTime(null)}
+        />
+      )}
     </div>
   );
 }

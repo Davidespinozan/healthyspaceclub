@@ -361,4 +361,30 @@ export const en: Translations<typeof es> = {
     welcomeDefault: 'Hi! I’m your coach. How can I help today?',
     stripeNotWired: 'Payments system is being activated. Talk to your coach to manage your plan in the meantime.',
   },
+  foodLog: {
+    detailQuestion: 'Had something different?',
+    detailCta: 'Log what I ate →',
+
+    eyebrow: 'LOG A MEAL',
+    eyebrowInstead: 'Instead of {time}',
+    title: 'What did you eat?',
+    placeholder: 'E.g. al pastor tacos with a coke, tuna salad, coffee and a cookie...',
+    disclaimer: 'No judgment. Just so I can show up better for you.',
+
+    ctaSubmit: 'Log it',
+    ctaCancel: 'Cancel',
+    ctaRetry: 'Try again',
+    ctaDone: 'Done',
+
+    estimating: 'Estimating...',
+
+    doneEyebrow: 'LOGGED',
+    doneMacros: 'Estimate · P {prot}g · C {carbs}g · F {fat}g',
+    doneNote: 'It’s an estimate. What matters is you logged it.',
+
+    errorEmptyInput: 'Tell me a bit more so I can estimate.',
+    errorEstimate: 'I couldn’t estimate that. Try describing it differently.',
+    errorSave: 'Couldn’t save it. Try again.',
+    errorTimeout: 'The estimate took too long. Try again.',
+  },
 } as const;

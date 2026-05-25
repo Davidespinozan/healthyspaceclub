@@ -8,6 +8,7 @@ import TuEspacioFlow from './TuEspacioFlow';
 import { exercises as exerciseBank } from '../data/exercises';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 import MealDetailPopout from './MealDetailPopout';
+import FoodLogSheet from './FoodLogSheet';
 import type { Exercise } from '../types';
 import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
@@ -216,6 +217,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const checkedMeals = todayMeals.filter((_, i) => !!mealChecks[`meal-${today}-${i}`]).length;
 
   const [mealDetail, setMealDetail] = useState<typeof todayMeals[0] | null>(null);
+  const [foodLogTime, setFoodLogTime] = useState<string | null>(null);
 
   const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
 
@@ -682,7 +684,19 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       </section>
 
       {/* ── Meal popout (componente reutilizable) ── */}
-      <MealDetailPopout meal={mealDetail} onClose={() => setMealDetail(null)} />
+      <MealDetailPopout
+        meal={mealDetail}
+        onClose={() => setMealDetail(null)}
+        onLogOther={(time) => { setMealDetail(null); setFoodLogTime(time); }}
+      />
+
+      {/* ── Food log sheet (Food-2): captura texto libre + IA estima macros ── */}
+      {foodLogTime !== null && (
+        <FoodLogSheet
+          mealTime={foodLogTime}
+          onClose={() => setFoodLogTime(null)}
+        />
+      )}
 
       {/* ── Exercise detail popout (read-only desde L2 sunset) ── */}
       {selectedExercise && (

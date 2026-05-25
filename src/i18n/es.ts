@@ -360,6 +360,38 @@ export const es = {
     welcomeDefault: '¡Hola! Soy tu coach. ¿En qué te ayudo hoy?',
     stripeNotWired: 'Sistema de pagos en activación. Hablá con el coach para gestionar tu plan mientras tanto.',
   },
+  foodLog: {
+    // CTA dentro de MealDetailPopout
+    detailQuestion: '¿Comiste otra cosa?',
+    detailCta: 'Registrar mi comida →',
+
+    // Sheet header
+    eyebrow: 'REGISTRAR COMIDA',
+    eyebrowInstead: 'En vez de {time}',
+    title: '¿Qué comiste?',
+    placeholder: 'Ej. tacos al pastor con coca, ensalada con atún, un café y una galleta...',
+    disclaimer: 'Sin juzgar. Solo para acompañarte mejor.',
+
+    // CTAs
+    ctaSubmit: 'Registrar',
+    ctaCancel: 'Cancelar',
+    ctaRetry: 'Intentar de nuevo',
+    ctaDone: 'Listo',
+
+    // Estados
+    estimating: 'Estimando...',
+
+    // Vista "done"
+    doneEyebrow: 'REGISTRADO',
+    doneMacros: 'Estimado · P {prot}g · C {carbs}g · G {fat}g',
+    doneNote: 'Es un estimado. Lo que importa es que lo registraste.',
+
+    // Errores honestos
+    errorEmptyInput: 'Contame algo más para poder estimar.',
+    errorEstimate: 'No pude estimar eso. Probá describirlo distinto.',
+    errorSave: 'No se pudo guardar. Intentá de nuevo.',
+    errorTimeout: 'La estimación tardó demasiado. Intentá de nuevo.',
+  },
 } as const;
 
 // Helper: dot-notation keys del dict (común.save → 'common.save').
