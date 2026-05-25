@@ -3,6 +3,7 @@ import { useAppStore, persistStreakToProfile } from './store';
 import { supabase } from './lib/supabase';
 import { MILESTONE_STEPS } from './constants/milestones';
 import { shouldUseRemotePlan } from './utils/planSync';
+import { mergeMealProgress, type MealProgressRow } from './utils/mealProgressSync';
 import { detectBrowserLanguage } from './i18n';
 import LandingScreen from './screens/LandingScreen';
 
@@ -198,6 +199,55 @@ export default function App() {
             }
           } catch (e) {
             console.error('[auth] failed to hydrate food_log:', e);
+          }
+
+          // Hidratar meal_progress: últimos 14 días (Sync-2).
+          // Merge "true wins": un check hecho en cualquier device sobrevive.
+          // Backfill push: lo que local tiene y remote no se sube.
+          try {
+            const cutoff = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+            const { data: rows } = await supabase
+              .from('meal_progress')
+              .select('date, meal_index, checked, resolved_by_log')
+              .eq('user_id', session.user.id)
+              .gte('date', cutoff);
+            if (rows) {
+              const localState = useAppStore.getState();
+              const { merged, toPush } = mergeMealProgress(
+                {
+                  mealChecks: localState.mealChecks,
+                  mealResolvedByLog: localState.mealResolvedByLog,
+                },
+                rows.map(r => ({
+                  date: r.date,
+                  meal_index: r.meal_index,
+                  checked: !!r.checked,
+                  resolved_by_log: !!r.resolved_by_log,
+                })),
+              );
+              useAppStore.setState({
+                mealChecks: merged.mealChecks,
+                mealResolvedByLog: merged.mealResolvedByLog,
+              });
+
+              if (toPush.length > 0) {
+                console.log('[meal-progress-backfill] pushing', toPush.length, 'rows');
+                const now = new Date().toISOString();
+                await supabase.from('meal_progress').upsert(
+                  toPush.map((p: MealProgressRow) => ({
+                    user_id: session.user.id,
+                    date: p.date,
+                    meal_index: p.meal_index,
+                    checked: p.checked,
+                    resolved_by_log: p.resolved_by_log,
+                    updated_at: now,
+                  })),
+                  { onConflict: 'user_id,date,meal_index' },
+                );
+              }
+            }
+          } catch (e) {
+            console.error('[auth] failed to hydrate meal_progress:', e);
           }
 
           // Hidratar user_milestones en paralelo (logros desbloqueados)

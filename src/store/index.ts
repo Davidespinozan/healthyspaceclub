@@ -7,6 +7,7 @@ import { calcTDEE, assignPlan } from '../utils/tdee';
 import type { Region, Currency } from '../utils/region';
 import { MILESTONE_STEPS } from '../constants/milestones';
 import { computeStreak } from '../utils/streak';
+import { extractDateAndIndex, pruneMealProgressFromDate } from '../utils/mealProgressSync';
 
 export interface MilestoneEntry {
   milestone_days: number;
@@ -547,15 +548,61 @@ export const useAppStore = create<AppState>()(
     }
   },
 
-  // Meal check-off
+  // Meal check-off — Sync-2: fire-and-forget upsert a meal_progress.
+  // El toggle es 1-tap, debe sentirse instantáneo → no await, no throw.
+  // Si Supabase falla, log y la próxima sync recupera ("true wins" merge).
+  // CRÍTICO: el upsert envía AMBOS flags (checked + resolved_by_log) leídos
+  // del local actual para no pisar el otro flag con su default.
   mealChecks: {},
-  toggleMealCheck: (key) =>
-    set((state) => ({ mealChecks: { ...state.mealChecks, [key]: !state.mealChecks[key] } })),
+  toggleMealCheck: (key) => {
+    const state = get();
+    const newChecked = !state.mealChecks[key];
+    const currentResolved = !!state.mealResolvedByLog[key];
+    set({ mealChecks: { ...state.mealChecks, [key]: newChecked } });
+
+    const userId = state.user?.id;
+    if (!userId) return;
+    const parsed = extractDateAndIndex(key);
+    if (!parsed) return; // ignorar keys legacy tipo 'shop-N'
+    supabase.from('meal_progress')
+      .upsert({
+        user_id: userId,
+        date: parsed.date,
+        meal_index: parsed.index,
+        checked: newChecked,
+        resolved_by_log: currentResolved,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,date,meal_index' })
+      .then(({ error }) => {
+        if (error) console.error('[toggleMealCheck] supabase upsert failed:', error);
+      });
+  },
 
   // Meal resolved-by-log (Food-4): set automático desde FoodLogSheet
+  // Mismo patrón que toggleMealCheck (fire-and-forget + preservar checked).
   mealResolvedByLog: {},
-  setMealResolvedByLog: (key) =>
-    set((state) => ({ mealResolvedByLog: { ...state.mealResolvedByLog, [key]: true } })),
+  setMealResolvedByLog: (key) => {
+    const state = get();
+    const currentChecked = !!state.mealChecks[key];
+    set({ mealResolvedByLog: { ...state.mealResolvedByLog, [key]: true } });
+
+    const userId = state.user?.id;
+    if (!userId) return;
+    const parsed = extractDateAndIndex(key);
+    if (!parsed) return;
+    supabase.from('meal_progress')
+      .upsert({
+        user_id: userId,
+        date: parsed.date,
+        meal_index: parsed.index,
+        checked: currentChecked,
+        resolved_by_log: true,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,date,meal_index' })
+      .then(({ error }) => {
+        if (error) console.error('[setMealResolvedByLog] supabase upsert failed:', error);
+      });
+  },
 
   // Welcome video
   welcomeVidClosed: false,
@@ -664,9 +711,46 @@ export const useAppStore = create<AppState>()(
   // Weekly nutrition plan — Sync-1: persiste en user_profiles.weekly_plan jsonb
   // Patrón addWeight: optimistic local + await Supabase upsert + throw si falla.
   // weekly_plan_updated_at se setea server-side para el algoritmo shouldUseRemotePlan.
+  //
+  // Sync-2: si el plan cambió (generatedAt distinto al actual), limpiar
+  // mealChecks + mealResolvedByLog de hoy+futuro. Los índices del plan v1
+  // no aplican al plan v2; la historia pasada queda intacta porque era
+  // válida contra el plan que estaba vigente entonces.
   weeklyPlan: null,
   saveWeeklyPlan: async (plan) => {
+    const prevState = get();
+    const isRegeneration =
+      prevState.weeklyPlan != null &&
+      prevState.weeklyPlan.generatedAt !== plan.generatedAt;
+
     set({ weeklyPlan: plan });
+
+    if (isRegeneration) {
+      const today = new Date().toISOString().split('T')[0];
+      const pruned = pruneMealProgressFromDate(
+        {
+          mealChecks: prevState.mealChecks,
+          mealResolvedByLog: prevState.mealResolvedByLog,
+        },
+        today,
+      );
+      set({
+        mealChecks: pruned.mealChecks,
+        mealResolvedByLog: pruned.mealResolvedByLog,
+      });
+      // Fire-and-forget DELETE en Supabase de hoy+futuro
+      const userId = prevState.user?.id;
+      if (userId) {
+        supabase.from('meal_progress')
+          .delete()
+          .eq('user_id', userId)
+          .gte('date', today)
+          .then(({ error }) => {
+            if (error) console.error('[saveWeeklyPlan] meal_progress prune failed:', error);
+          });
+      }
+    }
+
     const userId = get().user?.id;
     if (userId) {
       const now = new Date().toISOString();
