@@ -5,6 +5,7 @@ import { ChevronRight, Flame } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { callAI } from '../utils/aiProxy';
 import { buildWeeklyReviewMessagePrompt } from '../ai/prompts/weeklyReview';
+import { countWorkoutDaysSince } from '../utils/workoutWeekStats';
 
 async function generateReviewMessage(params: {
   userName: string;
@@ -43,7 +44,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
 }) {
   const { locale } = useT();
   const {
-    userName, mealChecks, workoutLog, streakCount,
+    userName, mealChecks, completedSessions, streakCount,
     weightLog, growthCompleted, obData,
     markWeeklyReviewDone, clearWeeklyPlan,
     addWeight,
@@ -97,12 +98,14 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
   );
   const mealDays = mealDates.size;
 
-  // Workout days from log
-  const workoutDays = new Set(
-    workoutLog
-      .filter(e => e.date >= weekAgo.toISOString().split('T')[0])
-      .map(e => e.date)
-  ).size;
+  // Track-1: contar días únicos con entrenamiento de la última semana.
+  // Antes leía workoutLog (legacy, zombie sin escritores → siempre 0).
+  // Fuente correcta: completedSessions (se llena por finishWorkoutSession
+  // cada vez que el user termina una sesión vía WorkoutPlayer / YogaFlowPlayer).
+  const workoutDays = countWorkoutDaysSince(
+    completedSessions,
+    weekAgo.toISOString().split('T')[0],
+  );
 
   // Weight change this week
   const sorted = [...weightLog].sort((a, b) => a.date.localeCompare(b.date));
