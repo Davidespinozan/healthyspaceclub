@@ -5535,6 +5535,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .coach-fab:hover { transform: scale(1.05); }
 .coach-fab.open { background: var(--amber); color: var(--forest); border-color: var(--forest); }
+.coach-fab svg { color: var(--cream); }
 .coach-fab-x { font-size: 1.1rem; font-weight: 700; }
 
 .coach-overlay {
@@ -6620,25 +6621,34 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .te-flow-close:hover { background: rgba(255, 255, 255, 0.85); }
 .te-flow-close:active { transform: scale(0.95); }
 
-/* Progress */
-.te-progress { padding: 56px 24px 0; }
+/* Progress — barra fina terracota + label minimal junto, sin dots redundantes */
+.te-progress {
+  padding: 56px 24px 0;
+  max-width: 540px; margin: 0 auto; width: 100%;
+  display: flex; align-items: center; gap: 10px;
+}
 .te-progress-bar {
-  height: 3px; background: rgba(21,51,48,.08); border-radius: 3px;
-  overflow: hidden; margin-bottom: 8px;
+  flex: 1;
+  height: 3px; background: var(--sand); border-radius: 3px;
+  overflow: hidden;
 }
 .te-progress-fill {
   height: 100%; border-radius: 3px;
+  background: var(--terracota);
   transition: width .5s cubic-bezier(.23,1,.32,1);
 }
 .te-progress-label {
-  font-size: .7rem; font-weight: 600; color: var(--txt2);
-  text-align: right;
+  font-family: 'Montserrat', sans-serif;
+  font-size: .68rem; font-weight: 600;
+  color: var(--txt2);
+  letter-spacing: var(--tracking-kicker);
+  flex-shrink: 0;
 }
 
-/* Question area */
+/* Question area — sin justify-content:center que generaba el vacío grande arriba */
 .te-question-area {
-  flex: 1; display: flex; flex-direction: column;
-  justify-content: center; padding: 0 28px 40px;
+  display: flex; flex-direction: column;
+  padding: 32px 28px 40px;
   max-width: 540px; margin: 0 auto; width: 100%;
 }
 .te-anim-in { animation: teSlideIn .35s ease both; }
@@ -6646,31 +6656,30 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 @keyframes teSlideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes teSlideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-30px); } }
 
-/* Dimension badge — color brand viene via inline style */
+/* Dimension badge — pill suave terracota, único acento para las 10 dimensiones */
 .te-dim-badge {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 14px; border-radius: 999px;
-  border: 1.5px solid; width: fit-content;
+  background: var(--terracota-soft);
+  width: fit-content;
   margin-bottom: 24px;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-pro-sm);
 }
-.te-dim-emoji { font-size: 1rem; }
 .te-dim-title {
   font-family: 'Montserrat', sans-serif;
-  font-size: .78rem; font-weight: 600;
+  font-size: .72rem; font-weight: 700;
+  color: var(--terracota);
   text-transform: uppercase;
   letter-spacing: var(--tracking-kicker);
 }
 .te-dim-ai {
   font-family: 'Montserrat', sans-serif;
-  font-size: .6rem; font-weight: 600;
-  background: var(--forest); color: var(--sala-surface);
+  font-size: .58rem; font-weight: 700;
+  background: var(--terracota); color: var(--sala-surface);
   padding: 2px 6px; border-radius: var(--radius-xs);
   letter-spacing: var(--tracking-kicker);
 }
 
-/* Question text — Georgia editorial */
+/* Question text — Georgia editorial (protagonista) */
 .te-question {
   font-family: Georgia, 'Times New Roman', serif;
   font-size: clamp(1.5rem, 4.5vw, 1.9rem);
@@ -6679,7 +6688,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   letter-spacing: var(--tracking-tighter);
 }
 
-/* Textarea */
+/* Textarea — focus terracota para coherencia con el acento */
 .te-textarea {
   width: 100%; min-height: 120px; padding: 16px 18px;
   background: var(--sala-surface);
@@ -6693,9 +6702,9 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .te-textarea::placeholder { color: rgba(21,51,48,.35); }
 .te-textarea:hover { border-color: var(--sala-border-strong); }
-.te-textarea:focus { border-color: var(--sage); box-shadow: 0 0 0 3px rgba(61,99,89,.10); }
+.te-textarea:focus { border-color: var(--terracota); box-shadow: 0 0 0 3px var(--terracota-soft); }
 
-/* Submit button — color brand puede venir via inline style */
+/* Submit — forest sólido siempre, atenuado pero no gris muerto cuando disabled */
 .te-submit {
   width: 100%; padding: 15px; border: none;
   border-radius: var(--radius-base);
@@ -6705,25 +6714,14 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   letter-spacing: var(--tracking-tight);
   cursor: pointer;
   box-shadow: var(--shadow-pro-lift-forest);
-  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease, filter var(--duration-fast) ease;
-  margin-bottom: 20px;
+  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease, opacity var(--duration-fast) ease;
 }
 .te-submit:hover:not(:disabled) {
   transform: translateY(-1px);
-  filter: brightness(1.08);
   box-shadow: 0 12px 24px rgba(8, 20, 27, 0.24);
 }
 .te-submit:active:not(:disabled) { transform: scale(0.98); }
-.te-submit:disabled { background: rgba(21,51,48,.15); color: rgba(21,51,48,.3); box-shadow: none; cursor: default; }
-
-/* Dots */
-.te-dots { display: flex; justify-content: center; gap: 8px; }
-.te-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: rgba(21,51,48,.1); transition: all .3s;
-}
-.te-dot.done { transform: scale(1); }
-.te-dot.active { width: 24px; border-radius: 4px; }
+.te-submit:disabled { opacity: 0.4; box-shadow: none; cursor: default; }
 
 /* ── Completion screen ── */
 .te-complete {

@@ -291,17 +291,16 @@ export default function TuEspacioFlow({ onClose }: Props) {
       {/* Progress */}
       <div className="te-progress">
         <div className="te-progress-bar">
-          <div className="te-progress-fill" style={{ width: `${progressPct}%`, background: currentDim.color }} />
+          <div className="te-progress-fill" style={{ width: `${progressPct}%` }} />
         </div>
-        <div className="te-progress-label">{answeredCount + 1} de {allDimensions.length}</div>
+        <div className="te-progress-label">{answeredCount + 1}/{allDimensions.length}</div>
       </div>
 
       {/* Question card */}
       <div className={`te-question-area te-anim-${animState}`}>
-        {/* Dimension badge */}
-        <div className="te-dim-badge" style={{ background: `${currentDim.color}20`, borderColor: `${currentDim.color}40` }}>
-          <span className="te-dim-emoji">{currentDim.emoji}</span>
-          <span className="te-dim-title" style={{ color: currentDim.color }}>{currentDim.title}</span>
+        {/* Dimension badge — acento terracota único, sin emoji ni color-por-dimensión */}
+        <div className="te-dim-badge">
+          <span className="te-dim-title">{currentDim.title}</span>
           {currentIndex === allDimensions.length - 1 && aiQuestion && (
             <span className="te-dim-ai">IA</span>
           )}
@@ -326,21 +325,9 @@ export default function TuEspacioFlow({ onClose }: Props) {
           className="te-submit"
           onClick={handleSubmit}
           disabled={!inputVal.trim()}
-          style={{ background: inputVal.trim() ? currentDim.color : undefined }}
         >
           {answeredCount + 1 < allDimensions.length ? 'Siguiente →' : 'Completar ✦'}
         </button>
-
-        {/* Dots */}
-        <div className="te-dots">
-          {allDimensions.map((d, i) => (
-            <div
-              key={d.title}
-              className={`te-dot${i < answeredCount ? ' done' : i === answeredCount ? ' active' : ''}`}
-              style={i <= answeredCount ? { background: currentDim.color } : undefined}
-            />
-          ))}
-        </div>
       </div>
     </div>
   );
