@@ -120,31 +120,84 @@ export default function FoodLogSheet({ mealTime, mealIndex, onClose, onLogged }:
       <div className="th-popout th-popout-sm" onClick={e => e.stopPropagation()}>
         <div className="th-popout-handle" />
 
-        {/* Eyebrow */}
-        <div className="th-popout-time">
-          {phase === 'done' ? t('foodLog.doneEyebrow') : t('foodLog.eyebrow')}
-          {timeLabel && phase !== 'done' && ` · ${t('foodLog.eyebrowInstead', { time: timeLabel })}`}
+        {/* Scrolleable: eyebrow + contenido según fase. Los botones de
+            acción viven SIEMPRE en el footer sticky, nunca acá. */}
+        <div className="th-popout-content">
+          <div className="th-popout-time">
+            {phase === 'done' ? t('foodLog.doneEyebrow') : t('foodLog.eyebrow')}
+            {timeLabel && phase !== 'done' && ` · ${t('foodLog.eyebrowInstead', { time: timeLabel })}`}
+          </div>
+
+          {/* INPUT — textarea + disclaimer (CTA va al footer) */}
+          {phase === 'input' && (
+            <>
+              <div className="th-popout-name">{t('foodLog.title')}</div>
+              <textarea
+                ref={textareaRef}
+                className="wz-textarea"
+                placeholder={t('foodLog.placeholder')}
+                value={text}
+                onChange={e => setText(e.target.value)}
+                rows={3}
+              />
+              <p style={{
+                fontFamily: 'Georgia, serif', fontStyle: 'italic',
+                fontSize: '.78rem', color: 'var(--txt2)',
+                margin: '4px 0 0', lineHeight: 1.4,
+              }}>
+                {t('foodLog.disclaimer')}
+              </p>
+            </>
+          )}
+
+          {/* ESTIMATING — spinner (sin footer; ver abajo) */}
+          {phase === 'estimating' && (
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              gap: 16, padding: '40px 20px',
+            }}>
+              <div className="wz-spinner" />
+              <p style={{ color: 'var(--txt2)', fontStyle: 'italic', fontSize: 13 }}>
+                {t('foodLog.estimating')}
+              </p>
+            </div>
+          )}
+
+          {/* DONE — info de lo registrado (CTA Listo va al footer) */}
+          {phase === 'done' && estimate && (
+            <>
+              <div className="th-popout-header">
+                <div className="th-popout-time">{timeLabel}</div>
+                <div className="th-popout-kcal">~{estimate.kcal} kcal</div>
+              </div>
+              <div className="th-popout-name">{text.trim()}</div>
+              <div className="th-popout-desc">
+                {t('foodLog.doneMacros', {
+                  prot: estimate.prot,
+                  carbs: estimate.carbs,
+                  fat: estimate.fat,
+                })}
+              </div>
+              <p style={{
+                fontFamily: 'Georgia, serif', fontStyle: 'italic',
+                fontSize: '.78rem', color: 'var(--txt2)',
+                margin: '8px 0 0', lineHeight: 1.4,
+              }}>
+                {t('foodLog.doneNote')}
+              </p>
+            </>
+          )}
+
+          {/* ERROR — mensaje (CTAs al footer) */}
+          {phase === 'error' && (
+            <div className="th-popout-name">{t(errorKey)}</div>
+          )}
         </div>
 
-        {/* ── INPUT ── */}
+        {/* Footer sticky variable según fase. En 'estimating' NO se renderiza
+            (el spinner es el único contenido y no hay acción posible). */}
         {phase === 'input' && (
-          <>
-            <div className="th-popout-name">{t('foodLog.title')}</div>
-            <textarea
-              ref={textareaRef}
-              className="wz-textarea"
-              placeholder={t('foodLog.placeholder')}
-              value={text}
-              onChange={e => setText(e.target.value)}
-              rows={3}
-            />
-            <p style={{
-              fontFamily: 'Georgia, serif', fontStyle: 'italic',
-              fontSize: '.78rem', color: 'var(--txt2)',
-              margin: '4px 0 8px', lineHeight: 1.4,
-            }}>
-              {t('foodLog.disclaimer')}
-            </p>
+          <div className="th-popout-footer">
             <button
               type="button"
               className="wz-cta"
@@ -156,61 +209,26 @@ export default function FoodLogSheet({ mealTime, mealIndex, onClose, onLogged }:
             <button type="button" className="th-popout-close" onClick={onClose}>
               {t('foodLog.ctaCancel')}
             </button>
-          </>
-        )}
-
-        {/* ── ESTIMATING ── */}
-        {phase === 'estimating' && (
-          <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            gap: 16, padding: '40px 20px',
-          }}>
-            <div className="wz-spinner" />
-            <p style={{ color: 'var(--txt2)', fontStyle: 'italic', fontSize: 13 }}>
-              {t('foodLog.estimating')}
-            </p>
           </div>
         )}
 
-        {/* ── DONE ── */}
         {phase === 'done' && estimate && (
-          <>
-            <div className="th-popout-header">
-              <div className="th-popout-time">{timeLabel}</div>
-              <div className="th-popout-kcal">~{estimate.kcal} kcal</div>
-            </div>
-            <div className="th-popout-name">{text.trim()}</div>
-            <div className="th-popout-desc">
-              {t('foodLog.doneMacros', {
-                prot: estimate.prot,
-                carbs: estimate.carbs,
-                fat: estimate.fat,
-              })}
-            </div>
-            <p style={{
-              fontFamily: 'Georgia, serif', fontStyle: 'italic',
-              fontSize: '.78rem', color: 'var(--txt2)',
-              margin: '8px 0', lineHeight: 1.4,
-            }}>
-              {t('foodLog.doneNote')}
-            </p>
+          <div className="th-popout-footer">
             <button type="button" className="wz-cta" onClick={handleDone}>
               {t('foodLog.ctaDone')}
             </button>
-          </>
+          </div>
         )}
 
-        {/* ── ERROR ── */}
         {phase === 'error' && (
-          <>
-            <div className="th-popout-name">{t(errorKey)}</div>
+          <div className="th-popout-footer">
             <button type="button" className="wz-cta" onClick={handleRetry}>
               {t('foodLog.ctaRetry')}
             </button>
             <button type="button" className="th-popout-close" onClick={onClose}>
               {t('foodLog.ctaCancel')}
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>

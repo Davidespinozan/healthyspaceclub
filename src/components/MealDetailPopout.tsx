@@ -49,57 +49,59 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther 
     <div className="th-popout-backdrop" onClick={onClose}>
       <div className="th-popout" onClick={e => e.stopPropagation()}>
         <div className="th-popout-handle" />
-        {meal.img && (
-          <img
-            src={meal.img}
-            alt=""
-            className="th-popout-img"
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          />
-        )}
-        <div className="th-popout-header">
-          <div className="th-popout-time">{timeLabel}</div>
-          <div className="th-popout-kcal">{kcal} kcal</div>
-        </div>
-        <div className="th-popout-name">{meal.name}</div>
-        {meal.desc && <div className="th-popout-desc">{meal.desc}</div>}
-        <div className="th-popout-label">{t('hoy.popoutIngredients')}</div>
-        <div className="th-popout-portions">
-          {(meal.portions ?? []).map((p, i) => (
-            <div key={i} className="th-popout-portion">{p}</div>
-          ))}
-        </div>
-        {onLogOther && (
-          <div style={{
-            borderTop: '0.5px solid var(--sand)',
-            marginTop: 6,
-            paddingTop: 12,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-          }}>
-            <p style={{
-              fontFamily: 'Georgia, serif', fontStyle: 'italic',
-              fontSize: '.82rem', color: 'var(--txt2)', margin: 0,
-            }}>
-              {t('foodLog.detailQuestion')}
-            </p>
-            <button
-              type="button"
-              onClick={() => onLogOther(meal.time, mealIndex)}
-              style={{
-                width: '100%', padding: 12, borderRadius: 10,
-                background: 'transparent', color: 'var(--forest)',
-                border: '1px solid var(--forest)',
-                fontSize: '.84rem', fontWeight: 600, cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
-            >
-              {t('foodLog.detailCta')}
-            </button>
+
+        {/* Scrolleable: imagen + info + ingredientes */}
+        <div className="th-popout-content">
+          {meal.img && (
+            <img
+              src={meal.img}
+              alt=""
+              className="th-popout-img"
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          )}
+          <div className="th-popout-header">
+            <div className="th-popout-time">{timeLabel}</div>
+            <div className="th-popout-kcal">{kcal} kcal</div>
           </div>
-        )}
-        <button className="th-popout-close" onClick={onClose}>{t('common.close')}</button>
+          <div className="th-popout-name">{meal.name}</div>
+          {meal.desc && <div className="th-popout-desc">{meal.desc}</div>}
+          <div className="th-popout-label">{t('hoy.popoutIngredients')}</div>
+          <div className="th-popout-portions">
+            {(meal.portions ?? []).map((p, i) => (
+              <div key={i} className="th-popout-portion">{p}</div>
+            ))}
+          </div>
+        </div>
+
+        {/* Sticky footer: acciones siempre visibles, sin scroll */}
+        <div className="th-popout-footer">
+          {onLogOther && (
+            <>
+              <p style={{
+                fontFamily: 'Georgia, serif', fontStyle: 'italic',
+                fontSize: '.82rem', color: 'var(--txt2)',
+                margin: 0, textAlign: 'center',
+              }}>
+                {t('foodLog.detailQuestion')}
+              </p>
+              <button
+                type="button"
+                onClick={() => onLogOther(meal.time, mealIndex)}
+                style={{
+                  width: '100%', padding: 12, borderRadius: 10,
+                  background: 'transparent', color: 'var(--forest)',
+                  border: '1px solid var(--forest)',
+                  fontSize: '.84rem', fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {t('foodLog.detailCta')}
+              </button>
+            </>
+          )}
+          <button className="th-popout-close" onClick={onClose}>{t('common.close')}</button>
+        </div>
       </div>
     </div>
   );
