@@ -4,6 +4,11 @@ import { supabase } from './lib/supabase';
 import { MILESTONE_STEPS } from './constants/milestones';
 import { shouldUseRemotePlan } from './utils/planSync';
 import { mergeMealProgress, type MealProgressRow } from './utils/mealProgressSync';
+import {
+  mapWorkoutLogRowToSession,
+  mergeWorkoutSessions,
+  type WorkoutLogRow,
+} from './utils/workoutSync';
 import { detectBrowserLanguage } from './i18n';
 import LandingScreen from './screens/LandingScreen';
 
@@ -199,6 +204,60 @@ export default function App() {
             }
           } catch (e) {
             console.error('[auth] failed to hydrate food_log:', e);
+          }
+
+          // Hidratar workout_log: últimos 14 días (Track-2).
+          // Merge UNIÓN con dedup por completedAtIso. Lo que local tiene
+          // y remote no → backfill push (insert no-bloqueante de antes).
+          // Cierra la asimetría: ahora el historial de entrenamientos
+          // también viaja entre dispositivos, igual que food_log.
+          try {
+            const cutoff = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+            const { data: workouts } = await supabase
+              .from('workout_log')
+              .select('date_local, completed_at, modality, duration_minutes, exercises_completed, exercises_total, exercises')
+              .eq('user_id', session.user.id)
+              .gte('date_local', cutoff)
+              .order('completed_at', { ascending: true });
+            if (workouts) {
+              const remoteSessions = (workouts as WorkoutLogRow[]).map(mapWorkoutLogRowToSession);
+              const localState = useAppStore.getState();
+              const { merged, toPush } = mergeWorkoutSessions(
+                localState.completedSessions,
+                remoteSessions,
+              );
+              useAppStore.setState({ completedSessions: merged });
+
+              if (toPush.length > 0) {
+                console.log('[workout-log-backfill] pushing', toPush.length, 'sessions');
+                // Backfill: las sesiones locales que remote no tiene se
+                // suben. Reconstruir exercises jsonb mínimo desde
+                // exerciseIds (no tenemos planned/performed acá — solo IDs).
+                // El planner remoto va a ver la sesión + duration + count,
+                // y el flat loggedSets se preserva en local.
+                const rows = toPush.map(s => ({
+                  user_id: session.user.id,
+                  date_local: s.date,
+                  completed_at: s.completedAtIso,
+                  modality: s.modality,
+                  duration_minutes: Math.round(s.durationSeconds / 60),
+                  target_duration_minutes: Math.round(s.durationSeconds / 60),
+                  equipment: 'gym', // placeholder defensivo; sesión local no preservó equipment
+                  exercises: s.exerciseIds.map((id, order) => ({ exercise_id: id, order })),
+                  exercises_completed: s.exercisesCompleted,
+                  exercises_total: s.exercisesTotal,
+                  generation_method: 'backfill',
+                }));
+                const { error: backfillError } = await supabase
+                  .from('workout_log')
+                  .insert(rows);
+                if (backfillError) {
+                  console.warn('[workout-log-backfill] insert failed:', backfillError);
+                }
+              }
+            }
+          } catch (e) {
+            console.error('[auth] failed to hydrate workout_log:', e);
           }
 
           // Hidratar meal_progress: últimos 14 días (Sync-2).
