@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useT } from '../i18n';
 import { calcMealKcal } from '../utils/kcalCalc';
 import type { TranslationKey } from '../i18n/es';
@@ -45,7 +46,7 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther 
   const kcal = meal.portions ? calcMealKcal(meal.portions) : 0;
   const timeLabel = MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time;
 
-  return (
+  return createPortal(
     <div className="th-popout-backdrop" onClick={onClose}>
       <div className="th-popout" onClick={e => e.stopPropagation()}>
         <div className="th-popout-handle" />
@@ -103,6 +104,7 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther 
           <button className="th-popout-close" onClick={onClose}>{t('common.close')}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

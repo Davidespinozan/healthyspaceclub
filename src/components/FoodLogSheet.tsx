@@ -8,6 +8,7 @@
 // info del meal y solo delega acá vía un callback.
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { callAI } from '../utils/aiProxy';
@@ -115,7 +116,7 @@ export default function FoodLogSheet({ mealTime, mealIndex, onClose, onLogged }:
 
   const timeLabel = mealTime && MEAL_TIME_KEYS[mealTime] ? t(MEAL_TIME_KEYS[mealTime]) : mealTime;
 
-  return (
+  return createPortal(
     <div className="th-popout-backdrop" onClick={onClose}>
       <div className="th-popout th-popout-sm" onClick={e => e.stopPropagation()}>
         <div className="th-popout-handle" />
@@ -231,6 +232,7 @@ export default function FoodLogSheet({ mealTime, mealIndex, onClose, onLogged }:
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
