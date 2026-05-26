@@ -259,6 +259,8 @@ export const en: Translations<typeof es> = {
     relHaceDiasOther: '{n} days ago',
     durMinShort: '{n} min',
     espacioEyebrow: 'Tu Espacio',
+    espacioTitle: 'Your reflection today',
+    espacioSubtitle: '5 min · your coach gets to know you',
     espacioPromptInitial: 'Reflect for 5 minutes so your coach can get to know you better.',
     espacioPromptProgress: "You've written {answered}. {remaining} to go.",
     reviewLabelToday: "Today's reflection",

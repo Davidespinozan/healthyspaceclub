@@ -375,43 +375,70 @@
   margin: 22px 0;
 }
 
-/* ═══ Tu Espacio (discreto) ═══ */
+/* ═══ Tu Espacio — franja terracota (acceso secundario al flujo HSM) ═══ */
 .th3-espacio {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 4px 8px;
-  background: transparent;
-  border: none;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--terracota-soft);
+  border: 1.3px solid rgba(199, 91, 58, 0.22);
+  border-radius: var(--radius-base);
   cursor: pointer;
   font-family: inherit;
   text-align: left;
   width: 100%;
   -webkit-tap-highlight-color: transparent;
+  transition: background var(--duration-fast) ease, transform var(--duration-fast) ease, border-color var(--duration-fast) ease;
 }
+.th3-espacio:hover {
+  background: rgba(199, 91, 58, 0.16);
+  border-color: rgba(199, 91, 58, 0.32);
+}
+.th3-espacio:active { transform: scale(0.99); }
+
+.th3-espacio-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(199, 91, 58, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.th3-espacio-icon svg { color: var(--terracota); }
+
 .th3-espacio-body { flex: 1; min-width: 0; }
 .th3-espacio-eyebrow {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.6rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--tracking-kicker-loose);
   text-transform: uppercase;
-  color: var(--amber-deep);
-  margin: 0 0 4px;
+  color: var(--terracota);
+  margin: 0 0 2px;
 }
-.th3-espacio-text {
+.th3-espacio-title {
   font-family: Georgia, 'Times New Roman', serif;
-  font-style: italic;
-  font-weight: 400;
+  font-weight: 500;
   font-size: 15.5px;
-  line-height: 1.4;
+  line-height: 1.25;
   color: var(--forest);
   letter-spacing: var(--tracking-tight);
+  margin: 0 0 2px;
+}
+.th3-espacio-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--txt2);
   margin: 0;
 }
 .th3-espacio-arrow {
-  color: var(--amber);
-  font-size: 1.1rem;
+  color: var(--terracota);
+  font-size: 1.05rem;
   flex-shrink: 0;
 }
 
@@ -580,8 +607,11 @@
   .th3-card-title {
     font-size: 19px;
   }
-  .th3-espacio-text {
+  .th3-espacio-title {
     font-size: 17px;
+  }
+  .th3-espacio-sub {
+    font-size: 12.5px;
   }
   .th3-separator {
     margin: 28px 0;

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Sparkles } from 'lucide-react';
 import { useAppStore } from '../store';
 import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
@@ -746,11 +747,15 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             className="th3-espacio"
             onClick={() => setShowEspacioFlow(true)}
           >
+            <span className="th3-espacio-icon">
+              <Sparkles size={18} strokeWidth={1.8} />
+            </span>
             <div className="th3-espacio-body">
               <p className="th3-espacio-eyebrow">{t('hoy.espacioEyebrow')}</p>
-              <p className="th3-espacio-text">
+              <p className="th3-espacio-title">{t('hoy.espacioTitle')}</p>
+              <p className="th3-espacio-sub">
                 {todayHSMAnswered === 0
-                  ? t('hoy.espacioPromptInitial')
+                  ? t('hoy.espacioSubtitle')
                   : t('hoy.espacioPromptProgress', {
                       answered: todayHSMAnswered,
                       remaining: todayDimensions.length - todayHSMAnswered,

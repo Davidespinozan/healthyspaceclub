@@ -258,6 +258,8 @@ export const es = {
     relHaceDiasOther: 'hace {n} días',
     durMinShort: '{n} min',
     espacioEyebrow: 'Tu Espacio',
+    espacioTitle: 'Tu reflexión de hoy',
+    espacioSubtitle: '5 min · tu coach te conoce mejor',
     espacioPromptInitial: 'Reflexiona 5 minutos para que tu coach te conozca mejor.',
     espacioPromptProgress: 'Ya escribiste {answered}. Faltan {remaining}.',
     reviewLabelToday: 'Tu observación de hoy',
