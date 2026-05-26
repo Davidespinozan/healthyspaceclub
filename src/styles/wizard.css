@@ -130,7 +130,6 @@
   height: 48px;
   border-radius: 14px;
   background: var(--warm);
-  color: var(--forest);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,10 +137,13 @@
   flex-shrink: 0;
 }
 
+.wz-option-thumb svg { color: var(--forest); }
+
 .wz-option.selected .wz-option-thumb {
   background: var(--forest);
-  color: var(--warm);
 }
+
+.wz-option.selected .wz-option-thumb svg { color: var(--warm); }
 
 .wz-option-body {
   flex: 1;
@@ -272,12 +274,11 @@
 
 .wz-chip-icon {
   font-size: 14px;
-  color: var(--forest);
 }
 
-.wz-chip.on .wz-chip-icon {
-  color: var(--sala-surface);
-}
+.wz-chip-icon svg { color: var(--forest); }
+
+.wz-chip.on .wz-chip-icon svg { color: var(--sala-surface); }
 
 .wz-chip-desc {
   font-size: 10px;
