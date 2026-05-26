@@ -14,8 +14,9 @@
 // - ExerciseDetailPopout sigue read-only (sunset L2 — sin isDone/onToggleDone)
 
 import { lazy, Suspense, useRef, useState } from 'react';
-import { RefreshCw, Clock, Zap, ChevronRight, Lock } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { useT } from '../../i18n';
 import { getExerciseIcon } from '../../utils/muscleGroupIcon';
 import {
   finishWorkoutSession,
@@ -66,7 +67,11 @@ export default function WorkoutPlan({
   todayDayName,
   todayDateShort,
 }: Props) {
+  const { t } = useT();
   const [workoutPlayerOpen, setWorkoutPlayerOpen] = useState(false);
+  // Plan-1: "POR QUÉ HOY" colapsable. Default cerrado — el plan arranca
+  // limpio, el usuario lo abre si quiere leer el rationale del coach.
+  const [whyOpen, setWhyOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<{
     exercise: Exercise;
     planData: { sets: number; reps: string; rest: number; tip_personalizado?: string };
@@ -116,11 +121,23 @@ export default function WorkoutPlan({
         </button>
       )}
 
-      {/* Razón del coach */}
+      {/* Razón del coach — Plan-1: colapsable, default cerrado.
+          El plan arranca limpio; el usuario lo abre si le interesa. */}
       {(plan as { razon?: string }).razon && (
-        <div className="dt2-card-why">
-          <div className="dt2-card-why-label">Por qué hoy</div>
-          <p className="dt2-card-why-text">{(plan as { razon?: string }).razon}</p>
+        <div className={`dt2-card-why${whyOpen ? ' is-open' : ''}`}>
+          <button
+            type="button"
+            className="dt2-card-why-toggle"
+            onClick={() => setWhyOpen(o => !o)}
+            aria-expanded={whyOpen}
+            aria-label={whyOpen ? t('hoy.ariaWhyCollapse') : t('hoy.ariaWhyExpand')}
+          >
+            <span className="dt2-card-why-label">Por qué hoy</span>
+            <ChevronDown size={14} className="dt2-card-why-chev" />
+          </button>
+          {whyOpen && (
+            <p className="dt2-card-why-text">{(plan as { razon?: string }).razon}</p>
+          )}
         </div>
       )}
 
@@ -177,9 +194,9 @@ export default function WorkoutPlan({
                     <span className="dt2-ex-dot">·</span>
                     <span>{ex.rest}s descanso</span>
                   </div>
-                  {ex.tip_personalizado && (
-                    <div className="dt2-ex-tip">{ex.tip_personalizado}</div>
-                  )}
+                  {/* Plan-1: tip italic escondido de la card (vivía en
+                      .dt2-ex-tip). El tap de la card abre ExerciseDetailPopout
+                      que ya muestra el tip completo — cero info perdida. */}
                 </div>
                 <ChevronRight size={14} className="dt2-ex-arrow" />
               </div>

@@ -101,11 +101,14 @@
    SECTION CARDS (warmup/cooldown del plan)
    ══════════════════════════════════════════════════════════ */
 
+/* Plan-1: secciones compactas — calentamiento/enfriamiento son contexto,
+   no protagonistas. Padding y font reducidos, margin entre secciones más
+   chico. El label terracota de Color-1 se mantiene como latido visual. */
 .dt2-section {
-  padding: 14px 16px;
+  padding: 10px 14px;
   background: var(--warm);
-  border-radius: 14px;
-  margin-bottom: 16px;
+  border-radius: 12px;
+  margin-bottom: 12px;
   border: 0.5px solid var(--sand);
 }
 
@@ -114,17 +117,14 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  /* Color-1: terracota en vez de amber. La caja warm + label amber
-     era beige-sobre-beige plano. Terracota sobre warm tiene contraste
-     real y le da un latido a CALENTAMIENTO/ENFRIAMIENTO. */
   color: var(--terracota);
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 }
 
 .dt2-section-text {
-  font-size: 12.5px;
-  color: var(--forest);
-  line-height: 1.55;
+  font-size: 11.5px;
+  color: var(--txt2);
+  line-height: 1.5;
   margin: 0;
   font-style: italic;
 }
@@ -243,13 +243,33 @@
    WHY CARD (en plan view)
    ══════════════════════════════════════════════════════════ */
 
+/* Plan-1: el "POR QUÉ HOY" es ahora colapsable. La caja es un container;
+   el header tappable (.dt2-card-why-toggle) ocupa toda la fila; el texto
+   (.dt2-card-why-text) se muestra solo cuando is-open. */
 .dt2-card-why {
   background: rgba(191, 160, 101, 0.08);
   border: 0.5px solid rgba(191, 160, 101, 0.2);
   border-left: 3px solid var(--amber);
   border-radius: 12px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.dt2-card-why.is-open {
+  padding-bottom: 14px;
+}
+
+.dt2-card-why-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .dt2-card-why-label {
@@ -258,7 +278,16 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--amber);
-  margin-bottom: 5px;
+}
+
+.dt2-card-why-chev {
+  color: var(--amber);
+  transition: transform 0.18s ease;
+  flex-shrink: 0;
+}
+
+.dt2-card-why.is-open .dt2-card-why-chev {
+  transform: rotate(180deg);
 }
 
 .dt2-card-why-text {
@@ -266,7 +295,13 @@
   color: var(--forest);
   line-height: 1.55;
   font-style: italic;
-  margin: 0;
+  margin: 8px 0 0;
+  animation: dt2-card-why-fade 0.18s ease;
+}
+
+@keyframes dt2-card-why-fade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ══════════════════════════════════════════════════════════

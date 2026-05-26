@@ -248,6 +248,8 @@ export const en: Translations<typeof es> = {
     ariaMealCheck: 'Check meal',
     ariaMealUncheck: 'Uncheck meal',
     ariaMealResolvedByLog: 'Logged a different meal',
+    ariaWhyExpand: 'Show why',
+    ariaWhyCollapse: 'Hide why',
     espacioEyebrow: 'Tu Espacio',
     espacioPromptInitial: 'Reflect for 5 minutes so your coach can get to know you better.',
     espacioPromptProgress: "You've written {answered}. {remaining} to go.",

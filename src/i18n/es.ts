@@ -247,6 +247,8 @@ export const es = {
     ariaMealCheck: 'Marcar comida',
     ariaMealUncheck: 'Desmarcar comida',
     ariaMealResolvedByLog: 'Resuelta con otra comida',
+    ariaWhyExpand: 'Mostrar por qué',
+    ariaWhyCollapse: 'Ocultar por qué',
     espacioEyebrow: 'Tu Espacio',
     espacioPromptInitial: 'Reflexiona 5 minutos para que tu coach te conozca mejor.',
     espacioPromptProgress: 'Ya escribiste {answered}. Faltan {remaining}.',
