@@ -680,12 +680,16 @@
   color: var(--amber);
 }
 
-/* ─── Snack: variante compacta (sin foto, subordinada a mains) ─── */
+/* ─── Snack: variante compacta (sin foto, subordinada a mains) ───
+   Color-1: el snack recupera identidad propia (fondo blanco + borde
+   sand + accent terracota). Distinto de la main meal (que tiene
+   border-left amber), lectura clara: "esto es un snack, es distinto". */
 .wnp2-meal--snack {
   padding: 8px 12px;
   gap: 10px;
-  background: var(--warm);
-  border: none;
+  background: white;
+  border: 0.5px solid var(--sand);
+  border-left: 3px solid var(--terracota);
 }
 .wnp2-meal--snack::before {
   display: none;
@@ -706,6 +710,13 @@
   font-size: 9px;
   letter-spacing: 0.12em;
   margin-bottom: 2px;
+}
+/* Color-1: chip kcal del snack visible (antes era warm sobre warm =
+   invisible). Terracota-soft + terracota text se unen al border-left,
+   refuerza la identidad del snack. */
+.wnp2-meal--snack .wnp2-meal-kcal {
+  background: var(--terracota-soft);
+  color: var(--terracota);
 }
 
 .wnp2-empty-day {

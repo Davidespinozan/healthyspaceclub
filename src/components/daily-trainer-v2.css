@@ -114,7 +114,10 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--amber);
+  /* Color-1: terracota en vez de amber. La caja warm + label amber
+     era beige-sobre-beige plano. Terracota sobre warm tiene contraste
+     real y le da un latido a CALENTAMIENTO/ENFRIAMIENTO. */
+  color: var(--terracota);
   margin-bottom: 5px;
 }
 
@@ -145,6 +148,9 @@
   background: white;
   border: 0.5px solid var(--sand);
   border-radius: 14px;
+  /* Color-1: sombra editorial sutil — despega las cards del cream
+     de fondo sin romper la elegancia. */
+  box-shadow: 0 2px 8px rgba(21,51,48,0.04);
   transition: all 0.15s;
   cursor: pointer;
 }
@@ -185,6 +191,14 @@
   display: flex;
   gap: 6px;
   align-items: center;
+}
+
+/* Color-1: sets×reps (primer span) destacados — la data principal
+   de la rutina deja de ser metadata secundaria. El "·" y "Ns descanso"
+   quedan en txt2 (default del contenedor), preservando jerarquía. */
+.dt2-ex-stats > span:first-child {
+  color: var(--forest);
+  font-weight: 500;
 }
 
 .dt2-ex-dot {
