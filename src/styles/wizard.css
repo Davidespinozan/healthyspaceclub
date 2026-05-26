@@ -130,6 +130,7 @@
   height: 48px;
   border-radius: 14px;
   background: var(--warm);
+  color: var(--forest);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -139,6 +140,7 @@
 
 .wz-option.selected .wz-option-thumb {
   background: var(--forest);
+  color: var(--warm);
 }
 
 .wz-option-body {
@@ -270,6 +272,11 @@
 
 .wz-chip-icon {
   font-size: 14px;
+  color: var(--forest);
+}
+
+.wz-chip.on .wz-chip-icon {
+  color: var(--sala-surface);
 }
 
 .wz-chip-desc {

@@ -226,6 +226,13 @@ body {
 }
 img, video { max-width: 100%; display: block; }
 
+/* iOS Safari aplica el azul de sistema (#007AFF) a SVG dentro de <button>
+   cuando no hay color explícito en el cascade. Fallback con :where() para
+   especificidad 0 → cualquier color en una clase contenedora (.tt5-menu-btn,
+   .wz-option-thumb, etc.) o en el ícono mismo gana. Solo toca SVG, nunca
+   el texto del botón. */
+:where(button) :where(svg) { color: var(--txt); }
+
 /* ═══════════════════════════════════
    SCREENS
 ═══════════════════════════════════ */
