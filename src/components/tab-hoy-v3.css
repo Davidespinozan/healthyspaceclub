@@ -220,6 +220,24 @@
   color: var(--amber-deep);
   margin: 0;
 }
+/* Track-3a: eyebrow celebra "Entrenaste hoy ✓" si hay sesión completada. */
+.th3-card-eyebrow--done {
+  color: var(--forest);
+}
+.th3-card-eyebrow-check {
+  color: var(--terracota);
+  margin-left: 2px;
+}
+/* Track-3a: footer micro "Última sesión · ayer · 45 min" cuando NO hay
+   rutina del día pero hay sesión previa. Da contexto sin saturar el CTA. */
+.th3-card-last-session {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 0.7rem;
+  color: var(--txt2);
+  margin: 4px 0 0;
+  line-height: 1.3;
+}
 .th3-card-title {
   font-family: Georgia, 'Times New Roman', serif;
   font-weight: 500;

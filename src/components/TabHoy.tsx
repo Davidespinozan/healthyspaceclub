@@ -23,6 +23,7 @@ import { buildHSMProfilePrompt } from '../ai/prompts/hsmProfile';
 import { MILESTONE_STEPS, getMilestoneCopy } from '../constants/milestones';
 import { useT } from '../i18n';
 import { plural } from '../i18n/format';
+import { relativeDayKind } from '../utils/relativeDay';
 import './tab-hoy-v3.css';
 
 /* ── HSM Question Bank — 10 per dimension, 100 total ── */
@@ -162,6 +163,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     mealChecks, toggleMealCheck,
     mealResolvedByLog,
     foodLog,
+    completedSessions,
     dailyWorkout,
     weeklyPlan, lastWeeklyReview,
     streakCount, obData,
@@ -232,6 +234,14 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // bajo la lista del plan ("REGISTRADO"). Solo display — NO toca
   // computeDayConsumption (Food-5) ni el dot ámbar (Food-4).
   const todayFoodLog = foodLog.filter(e => e.date === today);
+
+  // Track-3a: derivar estado de sesiones para la card de Rutina.
+  // sessionsToday → si hay alguna, eyebrow muta a "Entrenaste hoy ✓".
+  // lastSession  → si NO hay rutina del día, footer micro "Última sesión · ...".
+  const sessionsToday = completedSessions.filter(s => s.date === today);
+  const lastSession = completedSessions.length > 0
+    ? [...completedSessions].sort((a, b) => b.completedAtIso.localeCompare(a.completedAtIso))[0]
+    : null;
 
   const [mealDetail, setMealDetail] = useState<{ meal: typeof todayMeals[0]; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
@@ -483,14 +493,41 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               <span className="th3-cover-italic">{t('hoy.coverInMotion')}</span>
             </div>
             <div className="th3-card-body">
-              <p className="th3-card-eyebrow">{t('hoy.cardEyebrowTraining')}</p>
+              {/* Track-3a: eyebrow celebra "Entrenaste hoy ✓" si hay
+                  alguna sesión completada hoy. Sutil, sin romper layout. */}
+              <p className={`th3-card-eyebrow${sessionsToday.length > 0 ? ' th3-card-eyebrow--done' : ''}`}>
+                {sessionsToday.length > 0 ? (
+                  <>{t('hoy.entrenasteHoy')} <span className="th3-card-eyebrow-check">✓</span></>
+                ) : (
+                  t('hoy.cardEyebrowTraining')
+                )}
+              </p>
               {(() => {
                 const workout = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
                 if (!workout) {
+                  // Track-3a: si NO hay rutina del día pero SÍ hay sesión previa,
+                  // mostrar footer micro "Última sesión · ayer · 45 min" para dar
+                  // contexto sin saturar el CTA "Genera tu rutina".
+                  let lastSessionLabel: string | null = null;
+                  if (lastSession) {
+                    const rel = relativeDayKind(lastSession.date, today);
+                    const dayLabel =
+                      rel.kind === 'today' ? t('hoy.relHoy')
+                      : rel.kind === 'yesterday' ? t('hoy.relAyer')
+                      : plural(rel.days, {
+                          one: t('hoy.relHaceDiasOne'),
+                          other: t('hoy.relHaceDiasOther', { n: rel.days }),
+                        });
+                    const mins = Math.max(1, Math.round(lastSession.durationSeconds / 60));
+                    lastSessionLabel = `${t('hoy.ultimaSesion')} · ${dayLabel} · ${t('hoy.durMinShort', { n: mins })}`;
+                  }
                   return (
                     <>
                       <h2 className="th3-card-title">{t('hoy.routineGenerate')}</h2>
                       <p className="th3-card-meta">{t('hoy.routineGenerateMeta')}</p>
+                      {lastSessionLabel && (
+                        <p className="th3-card-last-session">{lastSessionLabel}</p>
+                      )}
                     </>
                   );
                 }
