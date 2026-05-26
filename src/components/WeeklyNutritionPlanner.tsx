@@ -3,7 +3,7 @@ import { useAppStore } from '../store';
 import { mealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
-import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, type LucideIcon } from 'lucide-react';
+import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, ChevronDown, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import { callAI } from '../utils/aiProxy';
@@ -238,6 +238,9 @@ export default function WeeklyNutritionPlanner() {
     shoppingDay !== null ? (new Date().getDay() - shoppingDay + 7) % 7 : 0
   );
   const [showShopping, setShowShopping] = useState(false);
+  // Plan-2: nota del coach colapsable. Default cerrado — el plan arranca
+  // limpio, espejo del "POR QUÉ HOY" del entreno (Plan-1).
+  const [notaOpen, setNotaOpen] = useState(false);
   const [mealDetail, setMealDetail] = useState<{ meal: PopoutMeal; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
 
@@ -678,11 +681,25 @@ export default function WeeklyNutritionPlanner() {
         </div>
       </div>
 
-      {/* Nota del coach */}
+      {/* Nota del coach — Plan-2: colapsable, default cerrado.
+          Espejo del "POR QUÉ HOY" colapsable del entreno (Plan-1) para
+          coherencia hermana entre las dos pantallas de "plan". */}
       {weeklyPlan.nota && (
-        <div className="wnp2-nota">
-          <span className="wnp2-nota-icon"><Leaf size={18} strokeWidth={1.5} /></span>
-          <p className="wnp2-nota-text">{weeklyPlan.nota}</p>
+        <div className={`wnp2-nota${notaOpen ? ' is-open' : ''}`}>
+          <button
+            type="button"
+            className="wnp2-nota-toggle"
+            onClick={() => setNotaOpen(o => !o)}
+            aria-expanded={notaOpen}
+            aria-label={notaOpen ? t('nutritionPlanner.ariaNotaCollapse') : t('nutritionPlanner.ariaNotaExpand')}
+          >
+            <span className="wnp2-nota-icon"><Leaf size={18} strokeWidth={1.5} /></span>
+            <span className="wnp2-nota-label">{t('nutritionPlanner.notaLabel')}</span>
+            <ChevronDown size={14} className="wnp2-nota-chev" />
+          </button>
+          {notaOpen && (
+            <p className="wnp2-nota-text">{weeklyPlan.nota}</p>
+          )}
         </div>
       )}
 

@@ -327,6 +327,9 @@ export const en: Translations<typeof es> = {
     regenTitleOther: 'Regenerate plan ({n} left)',
     regenBlocked: 'Weekly limit reached',
     ariaRegen: 'Regenerate weekly plan',
+    notaLabel: 'Note from your coach',
+    ariaNotaExpand: 'Show note',
+    ariaNotaCollapse: 'Hide note',
   },
   post: {
     anonymous: 'Anonymous',

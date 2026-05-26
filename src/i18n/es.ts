@@ -326,6 +326,9 @@ export const es = {
     regenTitleOther: 'Regenerar plan ({n} restantes)',
     regenBlocked: 'Límite semanal alcanzado',
     ariaRegen: 'Regenerar plan semanal',
+    notaLabel: 'Nota de tu coach',
+    ariaNotaExpand: 'Mostrar nota',
+    ariaNotaCollapse: 'Ocultar nota',
   },
   post: {
     anonymous: 'Anónimo',
