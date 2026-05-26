@@ -29,6 +29,9 @@ Genera UNA pregunta de reflexión profunda y específica para hoy. La pregunta d
 - Ser de la dimensión que menos ha explorado.
 - Empezar con "¿".
 - Máximo 15 palabras.
+- Entenderse SOLA, sin asumir que el usuario ya nombró o identificó algo antes. Si referencias una meta, problema, emoción o hábito, pídele que lo nombre en la propia pregunta (ej. "¿Tienes una meta importante ahora? ¿...?"). NUNCA uses "tu meta principal", "este problema", "esa emoción", "tu último X" sin que la pregunta misma establezca el referente.
+- Evitar slogans o frases motivacionales convertidas en pregunta.
+- Preferir aterrizaje en "hoy" o "esta semana" antes que abstracciones filosóficas máximas.
 
 Responde SOLO la pregunta, nada más.${getOutputLanguageDirective(locale)}`;
 }
