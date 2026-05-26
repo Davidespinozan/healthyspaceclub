@@ -228,6 +228,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     foodLog,
     today,
   });
+  // FoodLog-Display: las entradas registradas hoy se muestran como ítems
+  // bajo la lista del plan ("REGISTRADO"). Solo display — NO toca
+  // computeDayConsumption (Food-5) ni el dot ámbar (Food-4).
+  const todayFoodLog = foodLog.filter(e => e.date === today);
 
   const [mealDetail, setMealDetail] = useState<{ meal: typeof todayMeals[0]; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
@@ -603,7 +607,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                       goal: planGoal,
                     })}
                   </p>
-                  {todayMeals.length > 0 && (
+                  {(todayMeals.length > 0 || todayFoodLog.length > 0) && (
                     <ul className="th3-card-list">
                       {todayMeals.slice(0, 6).map((meal, i) => {
                         const key = mealKey(i);
@@ -653,6 +657,27 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                           </li>
                         );
                       })}
+                      {/* FoodLog-Display: lo que el user registró hoy aparece
+                          listado bajo el plan. Sub-eyebrow "REGISTRADO" +
+                          desc + ~kcal. No tappable, solo display. */}
+                      {todayFoodLog.length > 0 && (
+                        <>
+                          <li className="th3-card-list-sep">
+                            <span className="th3-card-list-sep-label">
+                              {t('hoy.foodLogSection')}
+                            </span>
+                          </li>
+                          {todayFoodLog.map(entry => (
+                            <li
+                              key={entry.id}
+                              className="th3-card-list-item th3-card-list-item--log"
+                            >
+                              <span className="th3-card-list-name">{entry.desc}</span>
+                              <span className="th3-card-list-kcal">~{entry.kcal} kcal</span>
+                            </li>
+                          ))}
+                        </>
+                      )}
                     </ul>
                   )}
                 </>

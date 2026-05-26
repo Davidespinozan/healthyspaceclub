@@ -297,6 +297,35 @@
   color: var(--amber);
 }
 
+/* FoodLog-Display — sub-eyebrow "REGISTRADO" + filas de ítems registrados.
+   Cierra el loop visual: lo que el user registró aparece bajo el plan. */
+.th3-card-list-sep {
+  display: flex;
+  align-items: center;
+  padding: 10px 0 4px;
+  border-top: none;
+}
+.th3-card-list-sep-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+  color: var(--amber-deep);
+}
+.th3-card-list-item--log .th3-card-list-name {
+  cursor: default; /* no tappable — solo display */
+}
+.th3-card-list-kcal {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--amber-deep);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 /* Card foot */
 .th3-card-foot {
   display: flex;
