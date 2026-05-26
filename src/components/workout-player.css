@@ -117,48 +117,7 @@
   transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ── Prep screen ─────────────────────────────────────── */
-
-.wp-prep {
-  flex: 1;
-  padding: 32px 24px calc(160px + env(safe-area-inset-bottom, 0px));
-  max-width: 600px;
-  margin: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.wp-prep-micro {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
-  color: var(--wp-amber);
-  letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
-  font-weight: 600;
-  margin: 0 0 6px;
-}
-
-.wp-prep-title {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 2.2rem;
-  font-weight: 500;
-  letter-spacing: var(--tracking-tighter);
-  margin: 0 0 4px;
-  line-height: 1.1;
-}
-
-.wp-prep-title em {
-  font-style: italic;
-}
-
-.wp-prep-sub {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-style: italic;
-  color: var(--wp-txt2);
-  font-size: 15px;
-  letter-spacing: var(--tracking-tight);
-  margin: 0 0 28px;
-}
+/* ── Section card (reusada en phase=completed para enfriamiento) ── */
 
 .wp-prep-section {
   background: rgba(255, 255, 255, 0.05);
@@ -188,56 +147,7 @@
   margin: 0;
 }
 
-.wp-prep-list {
-  margin: 0 0 32px;
-}
-
-.wp-prep-list-label {
-  font-size: 11px;
-  color: var(--wp-amber);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin: 0 0 14px;
-}
-
-.wp-prep-list-row {
-  display: grid;
-  grid-template-columns: 28px 32px 1fr auto;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.wp-prep-list-row:last-child {
-  border-bottom: none;
-}
-
-.wp-prep-list-num {
-  font-size: 12px;
-  color: var(--wp-txt3);
-  font-weight: 600;
-}
-
-.wp-prep-list-emoji {
-  font-size: 20px;
-  text-align: center;
-  color: var(--wp-amber);
-}
-
-.wp-prep-list-name {
-  font-size: 14px;
-  color: var(--wp-txt);
-  font-weight: 500;
-}
-
-.wp-prep-list-sets {
-  font-size: 12px;
-  color: var(--wp-txt2);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── CTA wrap (fixed bottom en prep/paused/completed; inline en exercise) ── */
+/* ── CTA wrap (fixed bottom en paused/completed; inline en exercise) ── */
 
 .wp-cta-wrap {
   position: fixed;
@@ -867,7 +777,6 @@
 /* ── Responsive ───────────────────────────────────────── */
 
 @media (min-width: 640px) {
-  .wp-prep-title,
   .wp-completed-title {
     font-size: 2.2rem;
   }

@@ -18,7 +18,11 @@ import type { Exercise, Equipment, LoggedSet } from '../types';
 import type { CachedWorkout } from '../utils/workoutCache';
 import './workout-player.css';
 
-type PlayerPhase = 'prep' | 'exercise' | 'paused' | 'completed';
+// Flow-1: phase 'prep' eliminado — el WorkoutPlan (cream) ya es la antesala
+// con toda la info (lista, tips, calentamiento, POR QUÉ HOY, enfriamiento).
+// El player abre directo en 'exercise'. Si hay resume state, se detecta
+// en el useEffect de mount (no en una pantalla intermedia).
+type PlayerPhase = 'exercise' | 'paused' | 'completed';
 
 interface Props {
   workout: CachedWorkout;
@@ -33,7 +37,6 @@ interface Props {
   onClose: () => void;
 }
 
-const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const PROGRESS_KEY = 'workout-player-progress';
 
 function formatTime(seconds: number): string {
@@ -62,18 +65,14 @@ export default function WorkoutPlayer({
   const totalExercises = exercises.length;
   const planHash = buildPlanHash(workout);
 
-  const todayDayName = DAY_NAMES[new Date().getDay()];
-  const todayDate = new Date().getDate();
-  const todayMonth = new Date().toLocaleDateString('es-ES', { month: 'short' });
-
-  // ── State (4 phases + sub-estados)
-  const [phase, setPhase] = useState<PlayerPhase>('prep');
+  // ── State (3 phases + sub-estados). Flow-1: arrancamos directo en 'exercise'.
+  const [phase, setPhase] = useState<PlayerPhase>('exercise');
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [loggedSets, setLoggedSets] = useState<Array<LoggedSet | null>>([]);
   const [restState, setRestState] = useState<{ secondsLeft: number; forSet: number } | null>(null);
   const [editingSet, setEditingSet] = useState<{ exerciseIndex: number; setIndex: number } | null>(null);
   const [editValues, setEditValues] = useState<LoggedSet>({ reps: 0, kg: 0 });
-  const [startedAt, setStartedAt] = useState<number>(0);
+  const [startedAt, setStartedAt] = useState<number>(() => Date.now());
   const [pausedFromPhase, setPausedFromPhase] = useState<PlayerPhase | null>(null);
 
   // ── Derived per-current-exercise
@@ -151,34 +150,29 @@ export default function WorkoutPlayer({
 
   // ── Handlers (lógica delegada a src/utils/workoutSession.ts)
 
-  function handleStart() {
+  // Flow-1: detección de resume on mount (antes vivía en handleStart, que
+  // se disparaba al tap "comenzar sesión" del prep). Ahora el player abre
+  // directo en 'exercise' (initial state); este effect solo aplica resume
+  // si existe sesión guardada del mismo plan/día.
+  useEffect(() => {
     const raw = (() => {
       try { return localStorage.getItem(PROGRESS_KEY); }
       catch { return null; }
     })();
     const today = new Date().toISOString().split('T')[0];
     const resumeState = parseResumeState(raw, planHash, today, totalExercises);
+    if (!resumeState) return; // fresh start con los defaults del useState
 
-    if (resumeState) {
-      const ok = confirm(
-        `Tenías una sesión en progreso (ejercicio ${resumeState.currentExerciseIndex + 1} de ${totalExercises}). ¿Continuar?`,
-      );
-      if (ok) {
-        setCurrentExerciseIndex(resumeState.currentExerciseIndex);
-        setStartedAt(resumeState.startedAt || Date.now());
-        setLoggedSets(resumeState.loggedSets);
-        setPhase('exercise');
-        return;
-      }
+    const ok = confirm(
+      `Tenías una sesión en progreso (ejercicio ${resumeState.currentExerciseIndex + 1} de ${totalExercises}). ¿Continuar?`,
+    );
+    if (ok) {
+      setCurrentExerciseIndex(resumeState.currentExerciseIndex);
+      setStartedAt(resumeState.startedAt || Date.now());
+      setLoggedSets(resumeState.loggedSets);
     }
-
-    // Empezar de cero
-    setCurrentExerciseIndex(0);
-    setStartedAt(Date.now());
-    setLoggedSets([]);
-    setRestState(null);
-    setPhase('exercise');
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function markCurrentSet() {
     if (allSetsRegistered || !currentEx) return;
@@ -241,7 +235,7 @@ export default function WorkoutPlayer({
   }
 
   function handleExit() {
-    if (phase === 'prep' || phase === 'completed') {
+    if (phase === 'completed') {
       onClose();
       return;
     }
@@ -273,9 +267,7 @@ export default function WorkoutPlayer({
           <X size={20} />
         </button>
         <div className="wp-header-title">
-          {phase === 'prep'
-            ? <em>tu sesión</em>
-            : phase === 'completed'
+          {phase === 'completed'
             ? <em>completado</em>
             : <>ejercicio {currentExerciseIndex + 1} <span className="wp-header-of">de</span> {totalExercises}</>}
         </div>
@@ -296,52 +288,6 @@ export default function WorkoutPlayer({
       {phase === 'exercise' && (
         <div className="wp-progress-bar">
           <div className="wp-progress-bar-fill" style={{ width: `${progressPct}%` }} />
-        </div>
-      )}
-
-      {/* ── PHASE: PREP ── */}
-      {phase === 'prep' && (
-        <div className="wp-prep">
-          <p className="wp-prep-micro">tu sesión · {todayDayName} {todayDate} {todayMonth}</p>
-          <h1 className="wp-prep-title"><em>{workout.type || 'Entrenamiento'}</em></h1>
-          <p className="wp-prep-sub">
-            {totalExercises} ejercicios · intensidad {workout.intensity}
-          </p>
-
-          {workout.warmup && (
-            <div className="wp-prep-section">
-              <div className="wp-prep-section-label">Calentamiento</div>
-              <p className="wp-prep-section-text">{workout.warmup}</p>
-            </div>
-          )}
-
-          <div className="wp-prep-list">
-            <div className="wp-prep-list-label">Lo que viene</div>
-            {exercises.map((ex, i) => {
-              const bank = exerciseMap.get(ex.id);
-              const v = bank ? selectVariantForEquipment(bank, userEquipment) : null;
-              const name = bank
-                ? (v ? `${bank.name} — ${v.name}` : bank.name)
-                : ex.id;
-              const Ic = getExerciseIcon(bank);
-              return (
-                <div key={`${ex.id}-${i}`} className="wp-prep-list-row">
-                  <span className="wp-prep-list-num">{i + 1}</span>
-                  <span className="wp-prep-list-emoji">
-                    <Ic size={20} strokeWidth={1.5} />
-                  </span>
-                  <span className="wp-prep-list-name">{name}</span>
-                  <span className="wp-prep-list-sets">{ex.sets} × {ex.reps}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="wp-cta-wrap">
-            <button className="wp-cta" onClick={handleStart}>
-              ▶ comenzar sesión
-            </button>
-          </div>
         </div>
       )}
 
