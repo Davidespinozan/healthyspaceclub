@@ -8,7 +8,6 @@ import { uploadAvatar } from '../utils/uploadAvatar';
 import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
-import WorkoutHistoryCard from './WorkoutHistoryCard';
 import LogrosSheet from './sheets/LogrosSheet';
 import AmbientGlow from './AmbientGlow';
 import {
@@ -261,9 +260,6 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
 
       {/* WEIGHT */}
       {!editing && <WeightTrackingCard />}
-
-      {/* WORKOUT HISTORY — Track-3b: espejo de WeightTrackingCard. */}
-      {!editing && <WorkoutHistoryCard />}
 
       {/* HIGHLIGHTS — scroll horizontal */}
       {!editing && (
