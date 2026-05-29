@@ -103,7 +103,7 @@ export const es = {
     cancelSubscription: 'Cancelar suscripción',
     faqTitle: 'Preguntas frecuentes',
     faq1q: '¿Cuándo se hace el cobro?',
-    faq1a: 'Tu trial dura 7 días gratis. Después se hace un cobro mensual o anual según el plan que elijas. Te avisamos 24h antes del primer cobro.',
+    faq1a: 'Tu trial dura 3 días gratis. Después se hace un cobro mensual o anual según el plan que elijas. Te avisamos 24h antes del primer cobro.',
     faq2q: '¿Qué pasa si cancelo?',
     faq2a: 'Mantenés acceso hasta el final del período que ya pagaste. Después tu cuenta queda en modo gratuito; tus datos quedan guardados por si volvés.',
     faq3q: '¿Puedo cambiar de plan en cualquier momento?',

@@ -104,7 +104,7 @@ export const en: Translations<typeof es> = {
     cancelSubscription: 'Cancel subscription',
     faqTitle: 'FAQ',
     faq1q: 'When does the charge happen?',
-    faq1a: "Your trial lasts 7 free days. After that, you're charged monthly or yearly depending on the plan you pick. We notify you 24h before the first charge.",
+    faq1a: "Your trial lasts 3 free days. After that, you're charged monthly or yearly depending on the plan you pick. We notify you 24h before the first charge.",
     faq2q: 'What happens if I cancel?',
     faq2a: 'You keep access until the end of the period you already paid for. After that, your account goes into free mode — your data stays in case you come back.',
     faq3q: 'Can I switch plans at any time?',

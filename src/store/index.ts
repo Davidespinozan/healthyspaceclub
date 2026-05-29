@@ -368,7 +368,7 @@ export const useAppStore = create<AppState>()(
     else if (goal === 'Recomposición' || goal === 'Recomponer') planGoal = tdee - 200;
     // Bienestar integral → maintenance (tdee as-is)
 
-    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
     set({
       mealPlanKey: planKey,
@@ -878,7 +878,7 @@ export const useAppStore = create<AppState>()(
   // Inicia el trial: userPlan = 'trial' durante el período de prueba.
   // La transición 'trial' → 'pro' ocurre al cobrarse el primer pago (Stripe-2).
   startTrial: () => {
-    const endsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const endsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
     set({ userPlan: 'trial', trialEndsAt: endsAt });
   },
   // Compra directa de plan pagado (sin trial). Se cableará en Stripe-2.
