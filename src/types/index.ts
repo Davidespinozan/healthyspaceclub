@@ -255,7 +255,7 @@ export interface Recipe {
   steps: RecipeStep[];
 }
 
-export type ScreenType = 'landing' | 'login' | 'onboarding' | 'dashboard' | 'reset-password';
+export type ScreenType = 'landing' | 'login' | 'onboarding' | 'dashboard' | 'reset-password' | 'checkout';
 export type ModalType = 'pay' | 'login' | 'signup' | 'video' | null;
 export type DashPage = 'hoy' | 'coach' | 'metodo' | 'club' | 'tu' | 'alimentacion' | 'recetas' | 'entrenamiento' | 'rutinas' | 'hsm' | 'lifesystem' | 'huella';
 export type VideoType = 'exercise' | 'recipe' | 'welcome';

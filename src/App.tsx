@@ -10,12 +10,14 @@ import {
   type WorkoutLogRow,
 } from './utils/workoutSync';
 import { detectBrowserLanguage } from './i18n';
+import { createCheckout, openCheckoutUrl } from './utils/stripe';
 import LandingScreen from './screens/LandingScreen';
 
 const LoginScreen = lazy(() => import('./screens/LoginScreen'));
 const OnboardingScreen = lazy(() => import('./screens/OnboardingScreen'));
 const DashboardScreen = lazy(() => import('./screens/DashboardScreen'));
 const ResetPasswordScreen = lazy(() => import('./screens/ResetPasswordScreen'));
+const CheckoutReturnScreen = lazy(() => import('./screens/CheckoutReturnScreen'));
 const PaymentModal = lazy(() => import('./components/modals/PaymentModal'));
 const SignupModal = lazy(() => import('./components/modals/SignupModal'));
 const VideoModal = lazy(() => import('./components/modals/VideoModal'));
@@ -56,6 +58,10 @@ export default function App() {
       if (typeof window !== 'undefined' && window.location.pathname.includes('reset-password')) {
         useAppStore.setState({ currentScreen: 'reset-password' });
       }
+      // Retorno de Stripe Checkout (success/cancel) → pantalla de retorno.
+      if (typeof window !== 'undefined' && window.location.pathname.includes('/checkout/')) {
+        useAppStore.setState({ currentScreen: 'checkout' });
+      }
       setAuthReady(true);
     });
 
@@ -71,8 +77,28 @@ export default function App() {
 
       if (event === 'SIGNED_IN' && session) {
         // Redirect INMEDIATO (sync, fuera del auth lock de Supabase v2)
-        const { currentScreen, startDate } = useAppStore.getState();
-        if (currentScreen === 'login') {
+        const { currentScreen, startDate, pendingCheckout } = useAppStore.getState();
+
+        if (pendingCheckout) {
+          // El user tocó "suscribirse" sin sesión → reanudar el checkout real.
+          // En setTimeout(0) para no chocar con el lock de onAuthStateChange (supabase v2).
+          useAppStore.getState().setPendingCheckout(null);
+          useAppStore.setState({ activeModal: null });
+          const locale = useAppStore.getState().language;
+          setTimeout(async () => {
+            try {
+              const url = await createCheckout({ ...pendingCheckout, locale });
+              await openCheckoutUrl(url, () =>
+                useAppStore.setState({ activeModal: null, currentScreen: 'checkout' }),
+              );
+            } catch (e) {
+              console.error('[auth] resume checkout falló:', e instanceof Error ? e.message : e);
+              useAppStore.setState({
+                currentScreen: useAppStore.getState().startDate ? 'dashboard' : 'onboarding',
+              });
+            }
+          }, 0);
+        } else if (currentScreen === 'login') {
           useAppStore.setState({
             currentScreen: startDate ? 'dashboard' : 'onboarding',
           });
@@ -84,11 +110,24 @@ export default function App() {
           try {
             const { data: profile } = await supabase
               .from('user_profiles')
-              .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date, weekly_plan, weekly_plan_updated_at, shopping_day')
+              .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, subscription_status, subscription_period_end, streak_count, last_active_date, weekly_plan, weekly_plan_updated_at, shopping_day')
               .eq('user_id', session.user.id)
               .maybeSingle();
 
             if (profile) {
+              // userPlan refleja la realidad de Stripe (subscription_status, lo mantiene
+              // el webhook). Si aún no hay suscripción ('none'), caemos al user_plan legacy
+              // del onboarding para no regresionar a usuarios pre-Stripe. Transición —
+              // el gating real es Stripe-3.
+              const subStatus = (profile.subscription_status ?? 'none') as 'none' | 'trial' | 'pro';
+              const resolvedPlan = subStatus !== 'none'
+                ? subStatus
+                : ((profile.user_plan ?? 'none') as 'none' | 'trial' | 'pro');
+              const resolvedTrialEndsAt =
+                subStatus === 'trial' ? (profile.subscription_period_end ?? profile.trial_ends_at ?? null)
+                : subStatus === 'pro' ? null
+                : (profile.trial_ends_at ?? null);
+
               useAppStore.setState({
                 userName: profile.display_name ?? '',
                 obData: (profile.ob_data as Record<string, string | number>) ?? {},
@@ -96,8 +135,8 @@ export default function App() {
                 tdee: profile.tdee ?? 0,
                 planGoal: profile.plan_goal ?? 0,
                 mealPlanKey: profile.meal_plan_key ?? 'planA',
-                userPlan: (profile.user_plan ?? 'none') as 'none' | 'trial' | 'pro',
-                trialEndsAt: profile.trial_ends_at ?? null,
+                userPlan: resolvedPlan,
+                trialEndsAt: resolvedTrialEndsAt,
               });
 
               // Backfill streak server: si server está en 0 pero el local tiene
@@ -485,6 +524,11 @@ export default function App() {
         {currentScreen === 'reset-password' && (
           <div id="scr-reset-password" className={`screen active ${fadeClass}`}>
             <ResetPasswordScreen />
+          </div>
+        )}
+        {currentScreen === 'checkout' && (
+          <div id="scr-checkout" className={`screen active ${fadeClass}`}>
+            <CheckoutReturnScreen />
           </div>
         )}
 

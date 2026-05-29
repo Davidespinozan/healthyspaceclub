@@ -80,6 +80,7 @@ interface PayInfo {
   period: string;
   amount?: number;
   currency?: Currency;
+  cycle?: 'monthly' | 'annual';   // ciclo para el checkout real (Stripe)
 }
 
 export type AppLanguage = 'es' | 'en';
@@ -127,7 +128,12 @@ interface AppState {
 
   // Payment modal
   payInfo: PayInfo;
-  openPay: (plan: string, price: string, period: string, amount?: number, currency?: Currency) => void;
+  openPay: (plan: string, price: string, period: string, amount?: number, currency?: Currency, cycle?: 'monthly' | 'annual') => void;
+
+  // Checkout pendiente: si el user toca "suscribirse" sin sesión, guardamos
+  // {region, cycle} y reanudamos el checkout tras el SIGNED_IN.
+  pendingCheckout: { region: Region; cycle: 'monthly' | 'annual' } | null;
+  setPendingCheckout: (v: { region: Region; cycle: 'monthly' | 'annual' } | null) => void;
 
   // Landing region (null while detecting)
   region: Region | null;
@@ -422,8 +428,11 @@ export const useAppStore = create<AppState>()(
 
   // Payment modal
   payInfo: { plan: '', price: '', period: '' },
-  openPay: (plan, price, period, amount, currency) =>
-    set({ payInfo: { plan, price, period, amount, currency }, activeModal: 'pay' }),
+  openPay: (plan, price, period, amount, currency, cycle) =>
+    set({ payInfo: { plan, price, period, amount, currency, cycle }, activeModal: 'pay' }),
+
+  pendingCheckout: null,
+  setPendingCheckout: (v) => set({ pendingCheckout: v }),
 
   // Landing region
   region: null,
