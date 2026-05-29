@@ -829,6 +829,24 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_webhook_events: {
+        Row: {
+          id: string
+          received_at: string
+          type: string
+        }
+        Insert: {
+          id: string
+          received_at?: string
+          type: string
+        }
+        Update: {
+          id?: string
+          received_at?: string
+          type?: string
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           amount: number | null
@@ -1076,6 +1094,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          billing_cycle: string | null
           created_at: string
           display_name: string
           id: string
@@ -1085,8 +1104,12 @@ export type Database = {
           meal_plan_key: string | null
           ob_data: Json | null
           plan_goal: number | null
+          plan_id: string | null
           start_date: string | null
           streak_count: number
+          stripe_customer_id: string | null
+          subscription_period_end: string | null
+          subscription_status: string
           tdee: number | null
           trial_ends_at: string | null
           updated_at: string
@@ -1096,6 +1119,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          billing_cycle?: string | null
           created_at?: string
           display_name?: string
           id?: string
@@ -1105,8 +1129,12 @@ export type Database = {
           meal_plan_key?: string | null
           ob_data?: Json | null
           plan_goal?: number | null
+          plan_id?: string | null
           start_date?: string | null
           streak_count?: number
+          stripe_customer_id?: string | null
+          subscription_period_end?: string | null
+          subscription_status?: string
           tdee?: number | null
           trial_ends_at?: string | null
           updated_at?: string
@@ -1116,6 +1144,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          billing_cycle?: string | null
           created_at?: string
           display_name?: string
           id?: string
@@ -1125,8 +1154,12 @@ export type Database = {
           meal_plan_key?: string | null
           ob_data?: Json | null
           plan_goal?: number | null
+          plan_id?: string | null
           start_date?: string | null
           streak_count?: number
+          stripe_customer_id?: string | null
+          subscription_period_end?: string | null
+          subscription_status?: string
           tdee?: number | null
           trial_ends_at?: string | null
           updated_at?: string

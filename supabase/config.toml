@@ -1,0 +1,19 @@
+project_id = "ltveorvqvvlyivjwxjlc"
+
+# ── Edge Functions ──────────────────────────────────────────────────
+# Por default verify_jwt = true (Supabase valida el JWT del caller antes
+# de invocar la función). El webhook de Stripe es la excepción: Stripe NO
+# manda un JWT de Supabase, así que hay que desactivarlo o todas las
+# llamadas darían 401.
+
+[functions.stripe-checkout]
+verify_jwt = true
+
+[functions.stripe-portal]
+verify_jwt = true
+
+[functions.stripe-get-subscription]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
