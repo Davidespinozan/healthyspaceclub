@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep, CompletedSession } from '../types';
 import { calcTDEE, assignPlan } from '../utils/tdee';
 import type { Region, Currency } from '../utils/region';
+import type { BillingCycle } from '../utils/stripe';
 import { MILESTONE_STEPS } from '../constants/milestones';
 import { computeStreak } from '../utils/streak';
 import { extractDateAndIndex, pruneMealProgressFromDate } from '../utils/mealProgressSync';
@@ -80,6 +81,7 @@ interface PayInfo {
   period: string;
   amount?: number;
   currency?: Currency;
+  cycle?: BillingCycle;   // 'monthly' | 'yearly' — para crear la suscripción (Stripe-2b)
 }
 
 export type AppLanguage = 'es' | 'en';
@@ -127,7 +129,7 @@ interface AppState {
 
   // Payment modal
   payInfo: PayInfo;
-  openPay: (plan: string, price: string, period: string, amount?: number, currency?: Currency) => void;
+  openPay: (plan: string, price: string, period: string, amount?: number, currency?: Currency, cycle?: BillingCycle) => void;
 
   // Landing region (null while detecting)
   region: Region | null;
@@ -422,8 +424,8 @@ export const useAppStore = create<AppState>()(
 
   // Payment modal
   payInfo: { plan: '', price: '', period: '' },
-  openPay: (plan, price, period, amount, currency) =>
-    set({ payInfo: { plan, price, period, amount, currency }, activeModal: 'pay' }),
+  openPay: (plan, price, period, amount, currency, cycle) =>
+    set({ payInfo: { plan, price, period, amount, currency, cycle }, activeModal: 'pay' }),
 
   // Landing region
   region: null,

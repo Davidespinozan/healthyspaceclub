@@ -9,6 +9,12 @@ project_id = "ltveorvqvvlyivjwxjlc"
 [functions.stripe-checkout]
 verify_jwt = true
 
+[functions.stripe-setup-intent]
+verify_jwt = true
+
+[functions.stripe-create-subscription]
+verify_jwt = true
+
 [functions.stripe-portal]
 verify_jwt = true
 

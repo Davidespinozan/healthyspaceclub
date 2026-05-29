@@ -7,7 +7,8 @@
  */
 
 import { useAppStore } from '../store';
-import { getCachedRegion, regionFromLanguage, pricingForCurrency, PRICING } from './region';
+import { getCachedRegion, regionFromLanguage, pricingForCurrency, PRICING, type Region } from './region';
+import { supabase } from '../lib/supabase';
 
 export type BillingCycle = 'monthly' | 'yearly';
 export type Currency = 'MXN' | 'EUR' | 'USD';
@@ -164,4 +165,36 @@ export async function changeSubscription(_newCycle: BillingCycle): Promise<void>
  */
 export async function cancelSubscription(_immediate: boolean = false): Promise<void> {
   throw new Error('STRIPE_NOT_WIRED');
+}
+
+// ============================================================
+// Stripe Elements (Stripe-2b) — pago en UI propia, SetupIntent-first.
+// Aditivo: no reemplaza los mocks de arriba (ManagePlanSheet los sigue usando).
+// El JWT lo adjunta supabase.functions.invoke automáticamente.
+// ============================================================
+
+/** Asegura el customer y crea un SetupIntent. Devuelve el client_secret para el Payment Element. */
+export async function createSetupIntent(): Promise<{ clientSecret: string }> {
+  const { data, error } = await supabase.functions.invoke('stripe-setup-intent', { body: {} });
+  if (error) throw new Error(error.message || 'No se pudo preparar el método de pago');
+  if (!data?.clientSecret) throw new Error('Setup sin client_secret');
+  return { clientSecret: data.clientSecret as string };
+}
+
+/**
+ * Crea la suscripción (trial 3 días) con el payment method ya confirmado.
+ * `cycle` es BillingCycle de la app ('monthly'|'yearly'); acá se traduce al
+ * formato del backend/lookup_key ('monthly'|'annual') antes de invocar.
+ */
+export async function createSubscription(p: {
+  region: Region;
+  cycle: BillingCycle;
+  paymentMethodId: string;
+}): Promise<{ status: string; subscriptionId: string }> {
+  const cycle = p.cycle === 'yearly' ? 'annual' : 'monthly';
+  const { data, error } = await supabase.functions.invoke('stripe-create-subscription', {
+    body: { region: p.region, cycle, paymentMethodId: p.paymentMethodId },
+  });
+  if (error) throw new Error(error.message || 'No se pudo crear la suscripción');
+  return { status: data.status as string, subscriptionId: data.subscriptionId as string };
 }
