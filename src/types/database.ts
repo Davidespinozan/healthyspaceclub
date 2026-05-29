@@ -335,6 +335,81 @@ export type Database = {
         }
         Relationships: []
       }
+      food_log: {
+        Row: {
+          carbs: number
+          created_at: string
+          date: string
+          description: string
+          fat: number
+          id: string
+          kcal: number
+          prot: number
+          source: string
+          user_id: string
+        }
+        Insert: {
+          carbs?: number
+          created_at?: string
+          date: string
+          description: string
+          fat?: number
+          id?: string
+          kcal: number
+          prot?: number
+          source: string
+          user_id: string
+        }
+        Update: {
+          carbs?: number
+          created_at?: string
+          date?: string
+          description?: string
+          fat?: number
+          id?: string
+          kcal?: number
+          prot?: number
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hogar_sesiones: {
+        Row: {
+          answers: Json | null
+          created_at: string | null
+          emo: number | null
+          emo_name: string | null
+          id: string
+          path: string | null
+          practica: string | null
+          ritmo: string | null
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          created_at?: string | null
+          emo?: number | null
+          emo_name?: string | null
+          id?: string
+          path?: string | null
+          practica?: string | null
+          ritmo?: string | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          created_at?: string | null
+          emo?: number | null
+          emo_name?: string | null
+          id?: string
+          path?: string | null
+          practica?: string | null
+          ritmo?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       investments: {
         Row: {
           amount: number | null
@@ -475,6 +550,36 @@ export type Database = {
           updated_at?: string | null
           version?: string | null
           week?: number | null
+        }
+        Relationships: []
+      }
+      meal_progress: {
+        Row: {
+          checked: boolean
+          date: string
+          id: string
+          meal_index: number
+          resolved_by_log: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checked?: boolean
+          date: string
+          id?: string
+          meal_index: number
+          resolved_by_log?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checked?: boolean
+          date?: string
+          id?: string
+          meal_index?: number
+          resolved_by_log?: boolean
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -756,6 +861,7 @@ export type Database = {
           alumnos_activos: number | null
           clientes_activos: number | null
           cobrado_total: number | null
+          costo_ads: number | null
           costo_equipo: number | null
           costo_stack: number | null
           costo_tools: number | null
@@ -781,6 +887,7 @@ export type Database = {
           alumnos_activos?: number | null
           clientes_activos?: number | null
           cobrado_total?: number | null
+          costo_ads?: number | null
           costo_equipo?: number | null
           costo_stack?: number | null
           costo_tools?: number | null
@@ -806,6 +913,7 @@ export type Database = {
           alumnos_activos?: number | null
           clientes_activos?: number | null
           cobrado_total?: number | null
+          costo_ads?: number | null
           costo_equipo?: number | null
           costo_stack?: number | null
           costo_tools?: number | null
@@ -826,24 +934,6 @@ export type Database = {
           team_activos?: number | null
           tools_activos?: number | null
           utilidad?: number | null
-        }
-        Relationships: []
-      }
-      stripe_webhook_events: {
-        Row: {
-          id: string
-          received_at: string
-          type: string
-        }
-        Insert: {
-          id: string
-          received_at?: string
-          type: string
-        }
-        Update: {
-          id?: string
-          received_at?: string
-          type?: string
         }
         Relationships: []
       }
@@ -1093,8 +1183,8 @@ export type Database = {
       user_profiles: {
         Row: {
           avatar_url: string | null
-          bio: string | null
           billing_cycle: string | null
+          bio: string | null
           created_at: string
           display_name: string
           id: string
@@ -1105,6 +1195,7 @@ export type Database = {
           ob_data: Json | null
           plan_goal: number | null
           plan_id: string | null
+          shopping_day: number | null
           start_date: string | null
           streak_count: number
           stripe_customer_id: string | null
@@ -1115,11 +1206,13 @@ export type Database = {
           updated_at: string
           user_id: string
           user_plan: string | null
+          weekly_plan: Json | null
+          weekly_plan_updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
-          bio?: string | null
           billing_cycle?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string
           id?: string
@@ -1130,6 +1223,7 @@ export type Database = {
           ob_data?: Json | null
           plan_goal?: number | null
           plan_id?: string | null
+          shopping_day?: number | null
           start_date?: string | null
           streak_count?: number
           stripe_customer_id?: string | null
@@ -1140,11 +1234,13 @@ export type Database = {
           updated_at?: string
           user_id: string
           user_plan?: string | null
+          weekly_plan?: Json | null
+          weekly_plan_updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
-          bio?: string | null
           billing_cycle?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string
           id?: string
@@ -1155,6 +1251,7 @@ export type Database = {
           ob_data?: Json | null
           plan_goal?: number | null
           plan_id?: string | null
+          shopping_day?: number | null
           start_date?: string | null
           streak_count?: number
           stripe_customer_id?: string | null
@@ -1165,6 +1262,8 @@ export type Database = {
           updated_at?: string
           user_id?: string
           user_plan?: string | null
+          weekly_plan?: Json | null
+          weekly_plan_updated_at?: string | null
         }
         Relationships: []
       }
