@@ -70,7 +70,6 @@ export default function LandingScreen() {
       `12 meses · ${pricing.symbol}${pricing.annualPerMonth}/mes`,
       pricing.annual,
       pricing.currency,
-      'annual',
     );
   }, [openPay, pricing]);
   const openMonthlyCheckout = useCallback(() => {
@@ -81,7 +80,6 @@ export default function LandingScreen() {
       'Cancela cuando quieras',
       pricing.monthly,
       pricing.currency,
-      'monthly',
     );
   }, [openPay, pricing]);
 

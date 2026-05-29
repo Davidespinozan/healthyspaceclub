@@ -1,55 +1,36 @@
 import { useState, useMemo } from 'react';
 import { useAppStore } from '../../store';
-import { useT } from '../../i18n';
-import { createCheckout, openCheckoutUrl } from '../../utils/stripe';
-import { getCachedRegion, regionFromLanguage } from '../../utils/region';
 
-function formatBillDate(date: Date, locale: string): string {
-  return date.toLocaleDateString(locale === 'en' ? 'en-US' : 'es-MX', { day: 'numeric', month: 'long' });
+const DEMO_MODE = true;
+
+function formatBillDate(date: Date): string {
+  // Spanish date format: "26 de abril"
+  return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' });
 }
 
 export default function PaymentModal() {
-  const { payInfo, region, user, closeModal, openModal, setPendingCheckout, goTo } = useAppStore();
-  const { t, locale } = useT();
+  const { payInfo, closeModal, openModal } = useAppStore();
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const currency = payInfo.currency ?? '';
   const amount = payInfo.amount ?? 0;
-  const displayPrice = payInfo.price; // ya formateado por el caller (ej. "$1,990 MXN")
+  const displayPrice = payInfo.price; // already formatted by caller (e.g. "$1,499 MXN")
 
   const billDateLabel = useMemo(() => {
     const d = new Date();
-    d.setDate(d.getDate() + 3); // trial de 3 días
-    return formatBillDate(d, locale);
-  }, [locale]);
+    d.setDate(d.getDate() + 3);
+    return formatBillDate(d);
+  }, []);
 
-  async function handleStartCheckout() {
-    setError(null);
-    const resolvedRegion = region ?? getCachedRegion() ?? regionFromLanguage();
-    const cycle = payInfo.cycle ?? 'monthly';
-
-    // Sin sesión: el checkout necesita JWT (verify_jwt). Guardamos la intención
-    // y mandamos a signup; App.tsx reanuda el checkout tras el SIGNED_IN.
-    if (!user) {
-      setPendingCheckout({ region: resolvedRegion, cycle });
-      openModal('signup');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const url = await createCheckout({ region: resolvedRegion, cycle, locale });
-      await openCheckoutUrl(url, () => {
-        // Native: al cerrarse el in-app browser, vamos a la pantalla de retorno (que pollea).
+  function handlePay() {
+    if (DEMO_MODE) {
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
         closeModal();
-        goTo('checkout');
-      });
-      // Web: openCheckoutUrl ya navegó fuera. Mantenemos loading hasta que se vaya.
-    } catch (e) {
-      console.error('[PaymentModal] checkout error:', e instanceof Error ? e.message : e);
-      setError(t('checkout.error'));
-      setLoading(false);
+        openModal('signup');
+      }, 1800);
     }
   }
 
@@ -66,11 +47,11 @@ export default function PaymentModal() {
           <button className="pay-x" onClick={closeModal}>✕</button>
         </div>
 
-        {/* Trial billing summary — claro, sin sorpresas */}
+        {/* Trial billing summary — clear, no surprises */}
         <div className="pay-trial">
           <div className="pay-trial-row">
             <span className="pay-trial-lbl">Hoy pagas</span>
-            <span className="pay-trial-val pay-trial-val-free">{currency ? `${currency.slice(0, 1) === 'E' ? '€' : '$'}0` : '$0'}</span>
+            <span className="pay-trial-val pay-trial-val-free">{currency ? `${currency.slice(0,1) === 'E' ? '€' : '$'}0` : '$0'}</span>
           </div>
           <div className="pay-trial-row">
             <span className="pay-trial-lbl">El {billDateLabel} se cobrará</span>
@@ -83,24 +64,40 @@ export default function PaymentModal() {
         </div>
 
         <div className="pay-body">
-          <div className="pay-secure">🔒 {t('checkout.secureNote')}</div>
-
-          {error && (
-            <div style={{ color: '#cc3333', fontSize: '.8rem', margin: '4px 0 10px', textAlign: 'center' }}>
-              {error}
+          <div className="pay-secure">Pago 100% seguro con Stripe</div>
+          <div className="pay-lbl">Correo electrónico</div>
+          <input
+            className="pay-inp"
+            type="email"
+            placeholder="tu@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <div className="pay-lbl">Número de tarjeta</div>
+          <div className="pay-inp stripe-element" style={{ color: 'rgba(21,51,48,.35)', fontSize: '0.87rem' }}>
+            4242 4242 4242 4242 (demo)
+          </div>
+          <div className="pay-row">
+            <div>
+              <div className="pay-lbl">Vencimiento</div>
+              <div className="pay-inp stripe-element" style={{ color: 'rgba(21,51,48,.35)', fontSize: '0.87rem' }}>12/27</div>
             </div>
-          )}
-
+            <div>
+              <div className="pay-lbl">CVC</div>
+              <div className="pay-inp stripe-element" style={{ color: 'rgba(21,51,48,.35)', fontSize: '0.87rem' }}>123</div>
+            </div>
+          </div>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '10px 0' }}>
               <div className="spinner" />
-              <div style={{ fontSize: '.8rem', color: 'var(--txt2)' }}>{t('checkout.opening')}</div>
+              <div style={{ fontSize: '.8rem', color: 'var(--txt2)' }}>Procesando pago seguro…</div>
             </div>
           ) : (
-            <button className="btn-pay" onClick={handleStartCheckout}>
+            <button className="btn-pay" onClick={handlePay}>
               🔒 Empezar trial gratis · {displayPrice}/después
             </button>
           )}
+          <div className="pay-demo">Modo demo · no se realizan cobros reales</div>
         </div>
       </div>
     </div>

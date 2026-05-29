@@ -53,11 +53,7 @@ export default function SignupModal() {
         setUserName(displayName);
         setObData('name', displayName);
         closeModal();
-        // Si hay un checkout pendiente, App.tsx (SIGNED_IN) lo reanuda y redirige
-        // a Stripe — no navegamos a onboarding para no pisar ese flujo.
-        if (!useAppStore.getState().pendingCheckout) {
-          goTo('onboarding');
-        }
+        goTo('onboarding');
       } else if (data.user && !data.session) {
         setError('Revisa tu email para confirmar tu cuenta.');
         setLoading(false);
@@ -80,9 +76,9 @@ export default function SignupModal() {
           <button className="pay-x" onClick={closeModal}>✕</button>
         </div>
         <div className="login-body">
-          <div className="signup-check">✦</div>
-          <h3 className="login-title" style={{ textAlign: 'center' }}>Creá tu cuenta</h3>
-          <p className="login-sub" style={{ textAlign: 'center' }}>Un paso antes de tu prueba gratis. Después te llevamos al pago seguro.</p>
+          <div className="signup-check">✓</div>
+          <h3 className="login-title" style={{ textAlign: 'center' }}>¡Pago exitoso!</h3>
+          <p className="login-sub" style={{ textAlign: 'center' }}>Crea tu cuenta para acceder al Club.</p>
           <div className="pay-lbl">Nombre completo</div>
           <input
             className="pay-inp"
@@ -150,7 +146,7 @@ export default function SignupModal() {
               Crear mi cuenta ✦
             </button>
           )}
-          <p className="login-demo">— Sin cobro hoy · cancelás cuando quieras —</p>
+          <p className="login-demo">— Demo visual · ingresa cualquier dato —</p>
         </div>
       </div>
 
