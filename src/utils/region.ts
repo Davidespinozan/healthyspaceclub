@@ -12,6 +12,9 @@ export interface RegionPricing {
   annual: number;
   annualPerMonth: number;
   savingsPct: number;
+  // lookup_keys estables de Stripe (sobreviven test→live). En Stripe-1 la edge
+  // function resuelve lookup_key → price_id vía Stripe API. NO son price_ids.
+  stripeLookupKeys: { monthly: string; annual: string };
 }
 
 // Única fuente de verdad de los montos base. Los derivados (annualPerMonth,
@@ -21,14 +24,17 @@ export const PRICING: Record<Region, RegionPricing> = {
   LATAM: {
     currency: 'MXN', symbol: '$', flag: '🇲🇽',
     monthly: 249, annual: 1990, annualPerMonth: 166, savingsPct: 33,
+    stripeLookupKeys: { monthly: 'hsc_pro_latam_monthly', annual: 'hsc_pro_latam_annual' },
   },
   EUROPE: {
     currency: 'EUR', symbol: '€', flag: '🇪🇺',
     monthly: 19, annual: 149, annualPerMonth: 12, savingsPct: 35,
+    stripeLookupKeys: { monthly: 'hsc_pro_europe_monthly', annual: 'hsc_pro_europe_annual' },
   },
   REST: {
     currency: 'USD', symbol: '$', flag: '🇺🇸',
     monthly: 24, annual: 189, annualPerMonth: 16, savingsPct: 34,
+    stripeLookupKeys: { monthly: 'hsc_pro_usd_monthly', annual: 'hsc_pro_usd_annual' },
   },
 };
 
