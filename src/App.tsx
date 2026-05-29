@@ -119,6 +119,12 @@ export default function App() {
               // el webhook). Si aún no hay suscripción ('none'), caemos al user_plan legacy
               // del onboarding para no regresionar a usuarios pre-Stripe. Transición —
               // el gating real es Stripe-3.
+              //
+              // ⚠️ LANDMINE para Stripe-3: un usuario que se suscribió y luego CANCELÓ
+              // queda en subscription_status='none', y este coalesce lo manda al user_plan
+              // legacy → recuperaría acceso indebido. Stripe-3 lo cierra distinguiendo por
+              // stripe_customer_id: seteado = tuvo suscripción (sin acceso en 'none');
+              // null = nunca se suscribió (legacy/grandfather). NO tocar el gating acá.
               const subStatus = (profile.subscription_status ?? 'none') as 'none' | 'trial' | 'pro';
               const resolvedPlan = subStatus !== 'none'
                 ? subStatus
