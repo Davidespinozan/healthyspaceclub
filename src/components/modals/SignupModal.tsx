@@ -1,67 +1,21 @@
-import { useState } from 'react';
 import { useAppStore } from '../../store';
-import { supabase } from '../../lib/supabase';
 import TermsSheet from '../sheets/TermsSheet';
 import PrivacySheet from '../sheets/PrivacySheet';
+import { useEmailSignup } from '../../hooks/useEmailSignup';
 
 export default function SignupModal() {
   const { closeModal, goTo, setUserName, setObData } = useAppStore();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [showTerms, setShowTerms] = useState(false);
-  const [showPrivacy, setShowPrivacy] = useState(false);
+  const su = useEmailSignup();
 
   async function handleSignup() {
-    setError('');
-    if (name.trim().length < 2) {
-      setError('Ingresa tu nombre (mínimo 2 caracteres).');
-      return;
+    const { outcome } = await su.submit();
+    if (outcome === 'session') {
+      setUserName(su.firstName);
+      setObData('name', su.firstName);
+      closeModal();
+      goTo('onboarding');
     }
-    const trimEmail = email.trim();
-    if (!trimEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimEmail)) {
-      setError('Ingresa un correo válido.');
-      return;
-    }
-    if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.');
-      return;
-    }
-    if (!acceptedTerms) {
-      setError('Aceptá los Términos y la Política de Privacidad para continuar.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: trimEmail,
-        password,
-      });
-
-      if (signUpError) {
-        setError(signUpError.message);
-        setLoading(false);
-        return;
-      }
-
-      if (data.session) {
-        const displayName = name.trim().split(' ')[0];
-        setUserName(displayName);
-        setObData('name', displayName);
-        closeModal();
-        goTo('onboarding');
-      } else if (data.user && !data.session) {
-        setError('Revisa tu email para confirmar tu cuenta.');
-        setLoading(false);
-      }
-    } catch {
-      setError('Error al crear cuenta. Intenta de nuevo.');
-      setLoading(false);
-    }
+    // 'needs-confirmation' y 'error' ya dejaron el mensaje en su.error.
   }
 
   return (
@@ -85,8 +39,8 @@ export default function SignupModal() {
             type="text"
             placeholder="Tu nombre"
             autoComplete="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={su.name}
+            onChange={(e) => su.setName(e.target.value)}
           />
           <div className="pay-lbl">Correo electrónico</div>
           <input
@@ -94,8 +48,8 @@ export default function SignupModal() {
             type="email"
             placeholder="tu@correo.com"
             autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={su.email}
+            onChange={(e) => su.setEmail(e.target.value)}
           />
           <div className="pay-lbl">Crea una contraseña</div>
           <input
@@ -103,30 +57,30 @@ export default function SignupModal() {
             type="password"
             placeholder="Mínimo 8 caracteres"
             autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={su.password}
+            onChange={(e) => su.setPassword(e.target.value)}
           />
           <label className="signup-tos">
             <input
               type="checkbox"
-              checked={acceptedTerms}
-              onChange={e => setAcceptedTerms(e.target.checked)}
+              checked={su.acceptedTerms}
+              onChange={e => su.setAcceptedTerms(e.target.checked)}
             />
             <span>
               Acepto los{' '}
-              <button type="button" className="signup-tos-link" onClick={() => setShowTerms(true)}>
+              <button type="button" className="signup-tos-link" onClick={() => su.setShowTerms(true)}>
                 Términos de Servicio
               </button>
               {' '}y la{' '}
-              <button type="button" className="signup-tos-link" onClick={() => setShowPrivacy(true)}>
+              <button type="button" className="signup-tos-link" onClick={() => su.setShowPrivacy(true)}>
                 Política de Privacidad
               </button>
               .
             </span>
           </label>
 
-          {error && <div style={{ color: '#cc3333', fontSize: '.8rem', margin: '0 0 10px', textAlign: 'center' }}>{error}</div>}
-          {loading ? (
+          {su.error && <div style={{ color: '#cc3333', fontSize: '.8rem', margin: '0 0 10px', textAlign: 'center' }}>{su.error}</div>}
+          {su.loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0' }}>
               <svg width="22" height="22" viewBox="0 0 24 24" style={{ animation: 'spin .8s linear infinite' }}>
                 <circle cx="12" cy="12" r="10" stroke="var(--moss)" strokeWidth="3" fill="none" strokeDasharray="32" strokeLinecap="round" />
@@ -136,12 +90,12 @@ export default function SignupModal() {
             <button
               className="btn-login"
               style={{
-                background: acceptedTerms ? 'var(--amber)' : 'rgba(212,151,107,.4)',
+                background: su.acceptedTerms ? 'var(--amber)' : 'rgba(212,151,107,.4)',
                 color: 'var(--forest)',
-                cursor: acceptedTerms ? 'pointer' : 'not-allowed',
+                cursor: su.acceptedTerms ? 'pointer' : 'not-allowed',
               }}
               onClick={handleSignup}
-              disabled={!acceptedTerms}
+              disabled={!su.acceptedTerms}
             >
               Crear mi cuenta ✦
             </button>
@@ -150,8 +104,8 @@ export default function SignupModal() {
         </div>
       </div>
 
-      {showTerms && <TermsSheet onClose={() => setShowTerms(false)} />}
-      {showPrivacy && <PrivacySheet onClose={() => setShowPrivacy(false)} />}
+      {su.showTerms && <TermsSheet onClose={() => su.setShowTerms(false)} />}
+      {su.showPrivacy && <PrivacySheet onClose={() => su.setShowPrivacy(false)} />}
     </div>
   );
 }
