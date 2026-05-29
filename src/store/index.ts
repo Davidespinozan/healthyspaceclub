@@ -210,10 +210,10 @@ interface AppState {
   removeFoodLog: (id: string) => Promise<void>;
 
   // Plan / Trial
-  userPlan: 'none' | 'trial' | 'basico' | 'pro' | 'elite';
+  userPlan: 'none' | 'trial' | 'pro';
   trialEndsAt: string | null;
-  selectPlan: (plan: 'basico' | 'pro' | 'elite') => void;
-  startTrial: (plan: 'basico' | 'pro' | 'elite') => void;
+  selectPlan: () => void;
+  startTrial: () => void;
 
   // Growth Plan (Healthy Space Method)
   growthData: Record<number, Record<string, string>>; // step index → user answers
@@ -375,7 +375,7 @@ export const useAppStore = create<AppState>()(
       tdee,
       planGoal,
       startDate: new Date().toISOString().split('T')[0],
-      userPlan: 'pro',
+      userPlan: 'trial',
       trialEndsAt,
     });
 
@@ -875,11 +875,14 @@ export const useAppStore = create<AppState>()(
   // Plan / Trial
   userPlan: 'none',
   trialEndsAt: null,
-  startTrial: (plan) => {
+  // Inicia el trial: userPlan = 'trial' durante el período de prueba.
+  // La transición 'trial' → 'pro' ocurre al cobrarse el primer pago (Stripe-2).
+  startTrial: () => {
     const endsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    set({ userPlan: plan, trialEndsAt: endsAt });
+    set({ userPlan: 'trial', trialEndsAt: endsAt });
   },
-  selectPlan: (plan) => set({ userPlan: plan, trialEndsAt: null }),
+  // Compra directa de plan pagado (sin trial). Se cableará en Stripe-2.
+  selectPlan: () => set({ userPlan: 'pro', trialEndsAt: null }),
 
   // Daily energy check-in (Hoy tab) — campos persistidos.
   // setDailyCheckin fue purgada en Lote Racha-2 (zombie sin caller).

@@ -96,7 +96,7 @@ export default function App() {
                 tdee: profile.tdee ?? 0,
                 planGoal: profile.plan_goal ?? 0,
                 mealPlanKey: profile.meal_plan_key ?? 'planA',
-                userPlan: (profile.user_plan ?? 'none') as 'none' | 'trial' | 'basico' | 'pro' | 'elite',
+                userPlan: (profile.user_plan ?? 'none') as 'none' | 'trial' | 'pro',
                 trialEndsAt: profile.trial_ends_at ?? null,
               });
 

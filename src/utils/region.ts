@@ -14,20 +14,34 @@ export interface RegionPricing {
   savingsPct: number;
 }
 
+// Única fuente de verdad de los montos base. Los derivados (annualPerMonth,
+// savingsPct) se calculan desde monthly/annual; stripe.ts también lee de aquí.
+// annualPerMonth = round(annual / 12). savingsPct = round((1 - annual/(monthly*12)) * 100).
 export const PRICING: Record<Region, RegionPricing> = {
   LATAM: {
     currency: 'MXN', symbol: '$', flag: '🇲🇽',
-    monthly: 199, annual: 1499, annualPerMonth: 125, savingsPct: 37,
+    monthly: 249, annual: 1990, annualPerMonth: 166, savingsPct: 33,
   },
   EUROPE: {
     currency: 'EUR', symbol: '€', flag: '🇪🇺',
-    monthly: 14, annual: 109, annualPerMonth: 9, savingsPct: 35,
+    monthly: 19, annual: 149, annualPerMonth: 12, savingsPct: 35,
   },
   REST: {
     currency: 'USD', symbol: '$', flag: '🇺🇸',
-    monthly: 17, annual: 129, annualPerMonth: 11, savingsPct: 37,
+    monthly: 24, annual: 189, annualPerMonth: 16, savingsPct: 34,
   },
 };
+
+const CURRENCY_TO_REGION: Record<Currency, Region> = {
+  MXN: 'LATAM',
+  EUR: 'EUROPE',
+  USD: 'REST',
+};
+
+/** Devuelve los precios base de region.ts para una currency dada. */
+export function pricingForCurrency(currency: Currency): RegionPricing {
+  return PRICING[CURRENCY_TO_REGION[currency]];
+}
 
 const LATAM_CODES = new Set([
   'MX','CO','AR','CL','PE','EC','UY','PY','BO','VE',

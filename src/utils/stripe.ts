@@ -7,6 +7,7 @@
  */
 
 import { useAppStore } from '../store';
+import { getCachedRegion, regionFromLanguage, pricingForCurrency, PRICING } from './region';
 
 export type BillingCycle = 'monthly' | 'yearly';
 export type Currency = 'MXN' | 'EUR' | 'USD';
@@ -46,24 +47,33 @@ export interface PaymentHistoryEntry {
   description: string;
 }
 
-/** Detecta la región del user por timezone del navegador. */
+/**
+ * Currency del user, derivada del sistema ÚNICO de detección de región
+ * (region.ts: IP vía ipapi.co + cache en localStorage, fallback a navigator.language).
+ * Es sync: lee la región que la landing ya cacheó; si no hay cache, infiere por idioma.
+ */
 export function getUserRegion(): Currency {
-  // TODO(stripe): refinar con IP geolookup en server-side cuando esté Stripe wired
-  if (typeof Intl === 'undefined') return 'USD';
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-  if (tz.includes('Mexico') || tz.includes('Tijuana') || tz.includes('Monterrey')) return 'MXN';
-  if (tz.includes('Madrid') || tz.includes('Europe') || tz.includes('Atlantic/Canary')) return 'EUR';
-  return 'USD';
+  const region = getCachedRegion() ?? regionFromLanguage();
+  return PRICING[region].currency;
 }
 
+/**
+ * Lee los montos base de region.ts (única fuente de verdad) y calcula en runtime
+ * los derivados que la UI de pago necesita. No duplica precios.
+ */
 export function getPriceInfo(currency?: Currency): PriceInfo {
   const c = currency ?? getUserRegion();
-  const PRICES: Record<Currency, PriceInfo> = {
-    MXN: { currency: 'MXN', monthly: 199, yearly: 1499, yearlyDiscount: 37, yearlyMonthly: 124.92, yearlySavings: 889 },
-    EUR: { currency: 'EUR', monthly: 14,  yearly: 109,  yearlyDiscount: 35, yearlyMonthly: 9.08,   yearlySavings: 59 },
-    USD: { currency: 'USD', monthly: 17,  yearly: 129,  yearlyDiscount: 37, yearlyMonthly: 10.75,  yearlySavings: 75 },
+  const base = pricingForCurrency(c);
+  const monthly = base.monthly;
+  const yearly = base.annual;
+  return {
+    currency: c,
+    monthly,
+    yearly,
+    yearlyDiscount: base.savingsPct,
+    yearlyMonthly: Math.round((yearly / 12) * 100) / 100,
+    yearlySavings: monthly * 12 - yearly,
   };
-  return PRICES[c];
 }
 
 export function formatPrice(amount: number, currency: Currency): string {

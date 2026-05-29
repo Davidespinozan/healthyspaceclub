@@ -60,8 +60,6 @@ export default function SettingsSheet({ open, onClose }: Props) {
   function planLabel(): string {
     switch (userPlan) {
       case 'pro': return t('settings.planPro');
-      case 'elite': return t('settings.planElite');
-      case 'basico': return t('settings.planBasico');
       case 'trial': return t('settings.planTrial');
       case 'none':
       default: return t('settings.planNone');
