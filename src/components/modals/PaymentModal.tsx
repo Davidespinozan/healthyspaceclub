@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useAppStore } from '../../store';
@@ -112,29 +112,37 @@ function CardForm({ clientSecret, cycle, priceLabel }: { clientSecret: string; c
     setProcessing(true);
     setError(null);
 
-    // a) Confirmar el SetupIntent (card-only → 3DS in-modal, sin redirect).
-    const { error: confirmErr, setupIntent } = await stripe.confirmSetup({
-      elements,
-      clientSecret,
-      redirect: 'if_required',
-      confirmParams: { return_url: window.location.origin },
-    });
-    if (confirmErr) {
-      setError(confirmErr.message ?? 'Tu tarjeta fue rechazada. Probá con otra.');
-      setProcessing(false);
-      return;
-    }
-
-    const pm = setupIntent?.payment_method;
-    const paymentMethodId = typeof pm === 'string' ? pm : pm?.id;
-    if (!paymentMethodId) {
-      setError('No se pudo confirmar la tarjeta. Probá de nuevo.');
-      setProcessing(false);
-      return;
-    }
-
-    // b) Crear la suscripción con el PM confirmado y el ciclo seleccionado.
     try {
+      // 0) Stripe exige elements.submit() ANTES de confirmSetup (primera op async).
+      const { error: submitError } = await elements.submit();
+      if (submitError) {
+        setError(submitError.message ?? 'Revisá los datos de la tarjeta.');
+        setProcessing(false);
+        return;
+      }
+
+      // a) Confirmar el SetupIntent (card-only → 3DS in-modal, sin redirect).
+      const { error: confirmErr, setupIntent } = await stripe.confirmSetup({
+        elements,
+        clientSecret,
+        redirect: 'if_required',
+        confirmParams: { return_url: window.location.origin },
+      });
+      if (confirmErr) {
+        setError(confirmErr.message ?? 'Tu tarjeta fue rechazada. Probá con otra.');
+        setProcessing(false);
+        return;
+      }
+
+      const pm = setupIntent?.payment_method;
+      const paymentMethodId = typeof pm === 'string' ? pm : pm?.id;
+      if (!paymentMethodId) {
+        setError('No se pudo confirmar la tarjeta. Probá de nuevo.');
+        setProcessing(false);
+        return;
+      }
+
+      // b) Crear la suscripción con el PM confirmado y el ciclo seleccionado.
       const resolvedRegion = region ?? getCachedRegion() ?? regionFromLanguage();
       await createSubscription({ region: resolvedRegion, cycle, paymentMethodId });
       // c) Éxito → onboarding.
@@ -185,6 +193,7 @@ function CardForm({ clientSecret, cycle, priceLabel }: { clientSecret: string; c
 function CardPhase({ cycle, priceLabel }: { cycle: BillingCycle; priceLabel: string }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  const fetchedRef = useRef(false);
 
   const fetchSI = useCallback(async () => {
     setLoadErr(null);
@@ -197,7 +206,15 @@ function CardPhase({ cycle, priceLabel }: { cycle: BillingCycle; priceLabel: str
     }
   }, []);
 
-  useEffect(() => { fetchSI(); }, [fetchSI]);
+  // El SetupIntent se crea UNA sola vez. StrictMode (dev) monta el effect dos
+  // veces; sin este guard se crean 2 SetupIntents y el clientSecret cambia tras
+  // montar <Elements> ("clientSecret is not a mutable property"), lo que hace que
+  // confirmSetup confirme un intent distinto al del Element → 400.
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    fetchSI();
+  }, [fetchSI]);
 
   if (loadErr) {
     return (

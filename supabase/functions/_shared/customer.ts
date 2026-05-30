@@ -30,11 +30,15 @@ export async function getOrCreateCustomer(
   );
 
   // Persistir ANTES de seguir → evita carrera con el webhook.
-  // service_role: el trigger guard_user_profiles_billing lo permite.
+  // UPSERT (no update): en el flujo signup→pago→onboarding la fila de user_profiles
+  // todavía no existe al pagar (la crea finishOnboardingCalc en el onboarding, que
+  // ocurre DESPUÉS). Un .update() afectaría 0 filas y el stripe_customer_id nunca se
+  // guardaría → stripe-create-subscription daría "No hay cliente de pago". El upsert
+  // crea la fila si falta; el onboarding luego mergea por user_id sin conflicto.
+  // service_role: el trigger guard_user_profiles_billing permite escribir billing.
   const { error } = await admin
     .from('user_profiles')
-    .update({ stripe_customer_id: customer.id })
-    .eq('user_id', user.id);
+    .upsert({ user_id: user.id, stripe_customer_id: customer.id }, { onConflict: 'user_id' });
   if (error) {
     throw new Error(`No se pudo guardar el customer: ${error.message}`);
   }
