@@ -16,6 +16,7 @@ const LoginScreen = lazy(() => import('./screens/LoginScreen'));
 const OnboardingScreen = lazy(() => import('./screens/OnboardingScreen'));
 const DashboardScreen = lazy(() => import('./screens/DashboardScreen'));
 const ResetPasswordScreen = lazy(() => import('./screens/ResetPasswordScreen'));
+const PaywallScreen = lazy(() => import('./screens/PaywallScreen'));
 const PaymentModal = lazy(() => import('./components/modals/PaymentModal'));
 const SignupModal = lazy(() => import('./components/modals/SignupModal'));
 const VideoModal = lazy(() => import('./components/modals/VideoModal'));
@@ -26,6 +27,9 @@ export default function App() {
   const setAuthReady = useAppStore(s => s.setAuthReady);
   const authReady = useAppStore(s => s.authReady);
   const startDate = useAppStore(s => s.startDate);
+  const user = useAppStore(s => s.user);
+  const subscriptionStatus = useAppStore(s => s.subscriptionStatus);
+  const subscriptionStatusLoaded = useAppStore(s => s.subscriptionStatusLoaded);
 
   // ── Bootstrap idioma — corre una vez al mount ────────────
   // Si el user nunca eligió manualmente (languageSetByUser=false), aplicamos
@@ -46,6 +50,37 @@ export default function App() {
       useAppStore.setState({ currentScreen: 'dashboard' });
     }
   }, [startDate, currentScreen]);
+
+  // ── Cargar subscription_status (gate Stripe-3) ────────────────────
+  // ⚠️ Atado a authReady + sesión (NO solo a SIGNED_IN) → corre también en reload
+  // (INITIAL_SESSION), si no el que recarga quedaría en loading infinito.
+  // subscriptionStatus/Loaded NO se persisten (Protección 1) → siempre frescos de DB.
+  useEffect(() => {
+    if (!authReady || !user || subscriptionStatusLoaded) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('subscription_status, stripe_customer_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      useAppStore.setState({
+        subscriptionStatus: (data?.subscription_status ?? 'none') as 'none' | 'trial' | 'pro',
+        stripeCustomerId: data?.stripe_customer_id ?? null,
+        subscriptionStatusLoaded: true,
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [authReady, user, subscriptionStatusLoaded]);
+
+  // ── Gate: sin suscripción ('none') NO entra al dashboard → paywall ─
+  // Gatea SOLO 'dashboard'; no toca landing/login/onboarding/reset-password/checkout/paywall.
+  useEffect(() => {
+    if (authReady && subscriptionStatusLoaded && subscriptionStatus === 'none' && currentScreen === 'dashboard') {
+      useAppStore.setState({ currentScreen: 'paywall' });
+    }
+  }, [authReady, subscriptionStatusLoaded, subscriptionStatus, currentScreen]);
 
   // ── Supabase auth state listener ──────────────────────────
   useEffect(() => {
@@ -478,13 +513,34 @@ export default function App() {
           </div>
         )}
         {currentScreen === 'dashboard' && (
-          <div id="scr-dashboard" className={`screen active ${fadeClass}`}>
-            <DashboardScreen />
-          </div>
+          // ⚠️ Protección 3 (flash/leak): el dashboard solo se monta con suscripción
+          // confirmada. Mientras el status no cargó (o es 'none' y el gate aún no
+          // redirigió), mostramos spinner — nunca el dashboard.
+          subscriptionStatusLoaded && subscriptionStatus !== 'none' ? (
+            <div id="scr-dashboard" className={`screen active ${fadeClass}`}>
+              <DashboardScreen />
+            </div>
+          ) : (
+            <div id="scr-dashboard-gate" className="screen active" style={{
+              position: 'fixed', inset: 0, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', background: 'var(--sala-bg)',
+            }}>
+              <div style={{
+                width: 32, height: 32, border: '2px solid #BFA065',
+                borderTopColor: 'transparent', borderRadius: '50%',
+                animation: 'spin 0.6s linear infinite',
+              }} />
+            </div>
+          )
         )}
         {currentScreen === 'reset-password' && (
           <div id="scr-reset-password" className={`screen active ${fadeClass}`}>
             <ResetPasswordScreen />
+          </div>
+        )}
+        {currentScreen === 'paywall' && (
+          <div id="scr-paywall" className={`screen active ${fadeClass}`}>
+            <PaywallScreen />
           </div>
         )}
 

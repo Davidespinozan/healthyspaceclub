@@ -119,14 +119,24 @@ export default function LoginScreen() {
             >
               ¿Olvidaste tu contraseña?
             </button>
+
+            {/* Volver a la landing. Estilo inline a propósito: la clase .ls-back
+                global (index.css:2574, de LifeSystemScreen) la pintaría blanca sobre
+                la card clara → invisible. */}
+            <button
+              type="button"
+              onClick={() => goTo('landing')}
+              disabled={loading}
+              style={{
+                display: 'block', margin: '20px auto 0', background: 'none', border: 'none',
+                color: 'var(--txt2)', fontSize: '.78rem', cursor: 'pointer',
+                fontFamily: 'inherit', textDecoration: 'none',
+              }}
+            >
+              ← Volver al inicio
+            </button>
           </form>
         )}
-
-        <div className="ls-footer">
-          <button className="ls-back" onClick={() => goTo('landing')}>
-            ← Volver al inicio
-          </button>
-        </div>
       </div>
     </div>
   );

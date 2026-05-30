@@ -217,6 +217,13 @@ interface AppState {
   selectPlan: () => void;
   startTrial: () => void;
 
+  // Suscripción real (la mantiene el webhook en user_profiles.subscription_status).
+  // Fuente del gate de Stripe-3. NO se persisten (Protección 1): se leen frescos de la
+  // DB en cada carga — persistir 'trial' dejaría un trial vencido con acceso.
+  subscriptionStatus: 'none' | 'trial' | 'pro' | null; // null = desconocido (aún no cargado)
+  subscriptionStatusLoaded: boolean;
+  stripeCustomerId: string | null; // para mensajería futura del paywall; el gate no lo usa
+
   // Growth Plan (Healthy Space Method)
   growthData: Record<number, Record<string, string>>; // step index → user answers
   growthCompleted: boolean[]; // length 10
@@ -877,6 +884,9 @@ export const useAppStore = create<AppState>()(
   // Plan / Trial
   userPlan: 'none',
   trialEndsAt: null,
+  subscriptionStatus: null,
+  subscriptionStatusLoaded: false,
+  stripeCustomerId: null,
   // Inicia el trial: userPlan = 'trial' durante el período de prueba.
   // La transición 'trial' → 'pro' ocurre al cobrarse el primer pago (Stripe-2).
   startTrial: () => {
@@ -1001,6 +1011,9 @@ export const useAppStore = create<AppState>()(
       foodLog: [],
       userPlan: 'none',
       trialEndsAt: null,
+      subscriptionStatus: null,
+      subscriptionStatusLoaded: false,
+      stripeCustomerId: null,
       growthData: {},
       growthCompleted: Array(10).fill(false),
       dailyWorkout: null,
@@ -1050,6 +1063,9 @@ export const useAppStore = create<AppState>()(
     currentScreen: state.currentScreen === 'landing' ? 'landing' : state.currentScreen,
     userPlan: state.userPlan,
     trialEndsAt: state.trialEndsAt,
+    // ⚠️ Protección 1: subscriptionStatus / subscriptionStatusLoaded / stripeCustomerId
+    // NO se persisten a propósito — se leen frescos de la DB en cada carga (un 'trial'
+    // persistido dejaría un trial vencido con acceso). El allowlist ya los excluye.
     growthData: state.growthData,
     growthCompleted: state.growthCompleted,
     shoppingDay: state.shoppingDay,

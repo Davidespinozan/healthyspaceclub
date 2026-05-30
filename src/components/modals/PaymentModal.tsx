@@ -144,7 +144,14 @@ function CardForm({ clientSecret, cycle, priceLabel }: { clientSecret: string; c
 
       // b) Crear la suscripción con el PM confirmado y el ciclo seleccionado.
       const resolvedRegion = region ?? getCachedRegion() ?? regionFromLanguage();
-      await createSubscription({ region: resolvedRegion, cycle, paymentMethodId });
+      const { status } = await createSubscription({ region: resolvedRegion, cycle, paymentMethodId });
+      // ⚠️ Protección 2 (carrera con webhook): set optimista del status para que el
+      // gate no rebote a quien ACABA de pagar antes de que el webhook escriba.
+      // 'active' → 'pro'; cualquier otro estado de un alta con trial → 'trial'.
+      useAppStore.setState({
+        subscriptionStatus: status === 'active' ? 'pro' : 'trial',
+        subscriptionStatusLoaded: true,
+      });
       // c) Éxito → onboarding.
       closeModal();
       goTo('onboarding');
@@ -255,7 +262,7 @@ function CycleToggle({ cycle, onChange, savingsPct }: {
   const off: React.CSSProperties = { ...base, borderColor: 'rgba(21,51,48,.18)', color: 'var(--txt2)' };
 
   return (
-    <div style={{ display: 'flex', gap: 8, margin: '2px 0 12px' }}>
+    <div style={{ display: 'flex', gap: 12, margin: '2px 28px 12px' }}>
       <button type="button" style={cycle === 'yearly' ? on : off} onClick={() => onChange('yearly')}>
         Anual
         {savingsPct > 0 && (
