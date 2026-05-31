@@ -130,9 +130,16 @@ export async function getSubscription(_userId: string): Promise<SubscriptionInfo
   };
 }
 
-/** TODO(stripe): query Stripe PaymentMethod via Edge Function. */
-export async function getPaymentMethod(_userId: string): Promise<PaymentMethod | null> {
-  return null;
+/** Tarjeta default del customer (vía edge function). null si no hay o si falla. */
+export async function getPaymentMethod(_userId?: string): Promise<PaymentMethod | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke('stripe-get-payment-method', { body: {} });
+    if (error) throw new Error(error.message || 'No se pudo leer el método de pago');
+    return (data?.paymentMethod ?? null) as PaymentMethod | null;
+  } catch (e) {
+    console.error('[stripe] getPaymentMethod falló:', e instanceof Error ? e.message : e);
+    return null;
+  }
 }
 
 /** TODO(stripe): query Stripe Invoices via Edge Function. */

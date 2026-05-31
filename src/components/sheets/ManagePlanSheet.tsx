@@ -45,6 +45,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
 
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [pmLoading, setPmLoading] = useState(true);
   const [history, setHistory] = useState<PaymentHistoryEntry[]>([]);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -75,6 +76,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
       setSubscription(sub);
       setPaymentMethod(pm);
       setHistory(hist);
+      setPmLoading(false);
     })();
     return () => { cancelled = true; };
   }, [userId, storeTrialEndsAt]);
@@ -169,7 +171,15 @@ export default function ManagePlanSheet({ onClose }: Props) {
         {/* SECCIÓN 3 — Método de pago */}
         <section className="mps-section">
           <h2 className="sh-heading">{t('managePlan.paymentMethod')}</h2>
-          {paymentMethod ? (
+          {pmLoading ? (
+            <div className="mps-payment-method-card" style={{ opacity: 0.5 }}>
+              <div className="mps-pm-brand" style={{ background: 'rgba(21,51,48,.08)', color: 'transparent' }}>••••</div>
+              <div className="mps-pm-info">
+                <div style={{ background: 'rgba(21,51,48,.08)', borderRadius: 6, height: 14, width: 160 }} />
+                <div className="mps-pm-exp" style={{ background: 'rgba(21,51,48,.06)', borderRadius: 6, height: 11, width: 90, marginTop: 6 }} />
+              </div>
+            </div>
+          ) : paymentMethod ? (
             <div className="mps-payment-method-card">
               <div className="mps-pm-brand">{paymentMethod.brand.toUpperCase()}</div>
               <div className="mps-pm-info">
