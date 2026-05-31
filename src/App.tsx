@@ -29,7 +29,9 @@ export default function App() {
   const startDate = useAppStore(s => s.startDate);
   const user = useAppStore(s => s.user);
   const subscriptionStatus = useAppStore(s => s.subscriptionStatus);
-  const subscriptionStatusLoaded = useAppStore(s => s.subscriptionStatusLoaded);
+  const subscriptionStatusLoadedFor = useAppStore(s => s.subscriptionStatusLoadedFor);
+  // "loaded" keyado por usuario: solo cuenta si el status cargado es del user actual.
+  const subscriptionStatusLoaded = !!user && subscriptionStatusLoadedFor === user.id;
 
   // ── Bootstrap idioma — corre una vez al mount ────────────
   // Si el user nunca eligió manualmente (languageSetByUser=false), aplicamos
@@ -56,13 +58,14 @@ export default function App() {
   // (INITIAL_SESSION), si no el que recarga quedaría en loading infinito.
   // subscriptionStatus/Loaded NO se persisten (Protección 1) → siempre frescos de DB.
   useEffect(() => {
-    if (!authReady || !user || subscriptionStatusLoaded) return;
+    if (!authReady || !user || subscriptionStatusLoadedFor === user.id) return;
+    const uid = user.id;
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from('user_profiles')
         .select('subscription_status, stripe_customer_id, subscription_period_end, cancel_at_period_end')
-        .eq('user_id', user.id)
+        .eq('user_id', uid)
         .maybeSingle();
       if (cancelled) return;
       useAppStore.setState({
@@ -70,11 +73,11 @@ export default function App() {
         stripeCustomerId: data?.stripe_customer_id ?? null,
         subscriptionPeriodEnd: data?.subscription_period_end ?? null,
         cancelAtPeriodEnd: data?.cancel_at_period_end ?? false,
-        subscriptionStatusLoaded: true,
+        subscriptionStatusLoadedFor: uid,
       });
     })();
     return () => { cancelled = true; };
-  }, [authReady, user, subscriptionStatusLoaded]);
+  }, [authReady, user, subscriptionStatusLoadedFor]);
 
   // ── Gate: sin suscripción ('none') NO entra al dashboard → paywall ─
   // Gatea SOLO 'dashboard'; no toca landing/login/onboarding/reset-password/checkout/paywall.
@@ -401,6 +404,8 @@ export default function App() {
           currentScreen: 'landing',
           userName: '',
           obData: {},
+          subscriptionStatus: null,
+          subscriptionStatusLoadedFor: null,
         });
       }
     });

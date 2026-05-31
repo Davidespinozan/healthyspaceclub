@@ -150,7 +150,7 @@ function CardForm({ clientSecret, cycle, priceLabel }: { clientSecret: string; c
       // 'active' → 'pro'; cualquier otro estado de un alta con trial → 'trial'.
       useAppStore.setState({
         subscriptionStatus: status === 'active' ? 'pro' : 'trial',
-        subscriptionStatusLoaded: true,
+        subscriptionStatusLoadedFor: useAppStore.getState().user?.id ?? null,
       });
       // c) Éxito → onboarding.
       closeModal();

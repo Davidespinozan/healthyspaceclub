@@ -221,7 +221,7 @@ interface AppState {
   // Fuente del gate de Stripe-3. NO se persisten (Protección 1): se leen frescos de la
   // DB en cada carga — persistir 'trial' dejaría un trial vencido con acceso.
   subscriptionStatus: 'none' | 'trial' | 'pro' | null; // null = desconocido (aún no cargado)
-  subscriptionStatusLoaded: boolean;
+  subscriptionStatusLoadedFor: string | null; // user.id cuyo status se cargó (anti-herencia de sesión)
   stripeCustomerId: string | null; // para mensajería futura del paywall; el gate no lo usa
   subscriptionPeriodEnd: string | null; // fin del período actual (lo persiste el webhook)
   cancelAtPeriodEnd: boolean | null;     // marcada para cancelar al fin del período
@@ -889,7 +889,7 @@ export const useAppStore = create<AppState>()(
   userPlan: 'none',
   trialEndsAt: null,
   subscriptionStatus: null,
-  subscriptionStatusLoaded: false,
+  subscriptionStatusLoadedFor: null,
   stripeCustomerId: null,
   subscriptionPeriodEnd: null,
   cancelAtPeriodEnd: null,
@@ -1020,7 +1020,7 @@ export const useAppStore = create<AppState>()(
       userPlan: 'none',
       trialEndsAt: null,
       subscriptionStatus: null,
-      subscriptionStatusLoaded: false,
+      subscriptionStatusLoadedFor: null,
       stripeCustomerId: null,
       subscriptionPeriodEnd: null,
       cancelAtPeriodEnd: null,
@@ -1073,7 +1073,7 @@ export const useAppStore = create<AppState>()(
     currentScreen: state.currentScreen === 'landing' ? 'landing' : state.currentScreen,
     userPlan: state.userPlan,
     trialEndsAt: state.trialEndsAt,
-    // ⚠️ Protección 1: subscriptionStatus / subscriptionStatusLoaded / stripeCustomerId /
+    // ⚠️ Protección 1: subscriptionStatus / subscriptionStatusLoadedFor / stripeCustomerId /
     // subscriptionPeriodEnd / cancelAtPeriodEnd NO se persisten a propósito — se leen
     // frescos de la DB en cada carga (un 'trial' persistido dejaría un trial vencido con
     // acceso). El allowlist ya los excluye.
