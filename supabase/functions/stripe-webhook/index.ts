@@ -158,8 +158,7 @@ async function applyToUser(
       if (userId) {
         await admin
           .from('user_profiles')
-          .update({ stripe_customer_id: customerId })
-          .eq('user_id', userId);
+          .upsert({ user_id: userId, stripe_customer_id: customerId }, { onConflict: 'user_id' });
       }
     } catch (e) {
       console.error('[stripe-webhook] retrieve customer falló:', e instanceof Error ? e.message : e);

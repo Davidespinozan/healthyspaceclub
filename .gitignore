@@ -11,3 +11,6 @@ ios/
 /test-results
 /playwright/.cache
 supabase/.temp/
+
+# script de diagnóstico read-only (lee secrets de env, no commitear)
+scripts/investigate-stripe.ts

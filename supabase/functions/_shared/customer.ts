@@ -20,6 +20,21 @@ export async function getOrCreateCustomer(
   const existing: string | null = profile?.stripe_customer_id ?? null;
   if (existing) return existing;
 
+  // Anti-duplicados: si la DB perdió el id, reusar el customer ya existente en Stripe (por email).
+  if (user.email) {
+    const found = await stripe.customers.list({ email: user.email, limit: 100 });
+    const match =
+      found.data.find((c) => c.metadata?.supabase_user_id === user.id) ??
+      found.data[0] ??
+      null;
+    if (match) {
+      await admin
+        .from('user_profiles')
+        .upsert({ user_id: user.id, stripe_customer_id: match.id }, { onConflict: 'user_id' });
+      return match.id;
+    }
+  }
+
   const customer = await stripe.customers.create(
     {
       email: user.email ?? undefined,
