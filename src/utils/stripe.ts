@@ -122,11 +122,11 @@ export async function getSubscription(_userId: string): Promise<SubscriptionInfo
   return {
     plan: (userPlan === 'trial' ? 'trial' : 'pro'),
     billingCycle: 'monthly',
-    nextRenewalDate: trialEndsAt,
+    nextRenewalDate: store.subscriptionPeriodEnd ? new Date(store.subscriptionPeriodEnd) : trialEndsAt,
     paymentMethod: null,
     status: isTrialing ? 'trialing' : 'active',
     trialEndsAt,
-    cancelAtPeriodEnd: false,
+    cancelAtPeriodEnd: store.cancelAtPeriodEnd ?? false,
   };
 }
 
@@ -159,12 +159,15 @@ export async function changeSubscription(_newCycle: BillingCycle): Promise<void>
 }
 
 /**
- * TODO(stripe): cancelar la suscripción.
- * immediate=false → cancel_at_period_end (acceso hasta fin de período).
- * immediate=true  → cancela ya (refund prorrateado si aplica).
+ * Cancela la suscripción al fin del período (cancel_at_period_end:true) vía edge
+ * function. El webhook persiste el flag + fecha en user_profiles. El JWT lo adjunta invoke.
  */
-export async function cancelSubscription(_immediate: boolean = false): Promise<void> {
-  throw new Error('STRIPE_NOT_WIRED');
+export async function cancelSubscription(): Promise<{
+  status: string; cancelAtPeriodEnd: boolean; cancelAt: string | null;
+}> {
+  const { data, error } = await supabase.functions.invoke('stripe-cancel-subscription', { body: {} });
+  if (error) throw new Error(error.message || 'No se pudo cancelar la suscripción');
+  return data;
 }
 
 // ============================================================

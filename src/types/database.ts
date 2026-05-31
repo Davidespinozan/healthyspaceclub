@@ -1185,6 +1185,7 @@ export type Database = {
           avatar_url: string | null
           billing_cycle: string | null
           bio: string | null
+          cancel_at_period_end: boolean
           created_at: string
           display_name: string
           id: string
@@ -1213,6 +1214,7 @@ export type Database = {
           avatar_url?: string | null
           billing_cycle?: string | null
           bio?: string | null
+          cancel_at_period_end?: boolean
           created_at?: string
           display_name?: string
           id?: string
@@ -1241,6 +1243,7 @@ export type Database = {
           avatar_url?: string | null
           billing_cycle?: string | null
           bio?: string | null
+          cancel_at_period_end?: boolean
           created_at?: string
           display_name?: string
           id?: string

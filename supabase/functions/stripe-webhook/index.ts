@@ -102,6 +102,9 @@ Deno.serve(async (req: Request) => {
           subscription_period_end: periodEnd,
           plan_id: planId,
           billing_cycle: billingCycle,
+          cancel_at_period_end: event.type === 'customer.subscription.deleted'
+            ? false
+            : (sub.cancel_at_period_end ?? false),
         });
 
         if (!updated) {

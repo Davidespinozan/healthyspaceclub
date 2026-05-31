@@ -61,13 +61,15 @@ export default function App() {
     (async () => {
       const { data } = await supabase
         .from('user_profiles')
-        .select('subscription_status, stripe_customer_id')
+        .select('subscription_status, stripe_customer_id, subscription_period_end, cancel_at_period_end')
         .eq('user_id', user.id)
         .maybeSingle();
       if (cancelled) return;
       useAppStore.setState({
         subscriptionStatus: (data?.subscription_status ?? 'none') as 'none' | 'trial' | 'pro',
         stripeCustomerId: data?.stripe_customer_id ?? null,
+        subscriptionPeriodEnd: data?.subscription_period_end ?? null,
+        cancelAtPeriodEnd: data?.cancel_at_period_end ?? false,
         subscriptionStatusLoaded: true,
       });
     })();

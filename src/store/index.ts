@@ -223,6 +223,10 @@ interface AppState {
   subscriptionStatus: 'none' | 'trial' | 'pro' | null; // null = desconocido (aún no cargado)
   subscriptionStatusLoaded: boolean;
   stripeCustomerId: string | null; // para mensajería futura del paywall; el gate no lo usa
+  subscriptionPeriodEnd: string | null; // fin del período actual (lo persiste el webhook)
+  cancelAtPeriodEnd: boolean | null;     // marcada para cancelar al fin del período
+  setSubscriptionPeriodEnd: (v: string | null) => void;
+  setCancelAtPeriodEnd: (v: boolean) => void;
 
   // Growth Plan (Healthy Space Method)
   growthData: Record<number, Record<string, string>>; // step index → user answers
@@ -887,6 +891,10 @@ export const useAppStore = create<AppState>()(
   subscriptionStatus: null,
   subscriptionStatusLoaded: false,
   stripeCustomerId: null,
+  subscriptionPeriodEnd: null,
+  cancelAtPeriodEnd: null,
+  setSubscriptionPeriodEnd: (v) => set({ subscriptionPeriodEnd: v }),
+  setCancelAtPeriodEnd: (v) => set({ cancelAtPeriodEnd: v }),
   // Inicia el trial: userPlan = 'trial' durante el período de prueba.
   // La transición 'trial' → 'pro' ocurre al cobrarse el primer pago (Stripe-2).
   startTrial: () => {
@@ -1014,6 +1022,8 @@ export const useAppStore = create<AppState>()(
       subscriptionStatus: null,
       subscriptionStatusLoaded: false,
       stripeCustomerId: null,
+      subscriptionPeriodEnd: null,
+      cancelAtPeriodEnd: null,
       growthData: {},
       growthCompleted: Array(10).fill(false),
       dailyWorkout: null,
@@ -1063,9 +1073,10 @@ export const useAppStore = create<AppState>()(
     currentScreen: state.currentScreen === 'landing' ? 'landing' : state.currentScreen,
     userPlan: state.userPlan,
     trialEndsAt: state.trialEndsAt,
-    // ⚠️ Protección 1: subscriptionStatus / subscriptionStatusLoaded / stripeCustomerId
-    // NO se persisten a propósito — se leen frescos de la DB en cada carga (un 'trial'
-    // persistido dejaría un trial vencido con acceso). El allowlist ya los excluye.
+    // ⚠️ Protección 1: subscriptionStatus / subscriptionStatusLoaded / stripeCustomerId /
+    // subscriptionPeriodEnd / cancelAtPeriodEnd NO se persisten a propósito — se leen
+    // frescos de la DB en cada carga (un 'trial' persistido dejaría un trial vencido con
+    // acceso). El allowlist ya los excluye.
     growthData: state.growthData,
     growthCompleted: state.growthCompleted,
     shoppingDay: state.shoppingDay,

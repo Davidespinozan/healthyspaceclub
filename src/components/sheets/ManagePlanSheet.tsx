@@ -6,6 +6,7 @@ import { openCoachWith } from '../../utils/openCoach';
 import { useT } from '../../i18n';
 import {
   getSubscription,
+  cancelSubscription,
   getPaymentMethod,
   getPaymentHistory,
   getPriceInfo,
@@ -88,13 +89,24 @@ export default function ManagePlanSheet({ onClose }: Props) {
   function handleAddPaymentMethod() { notWired(t('managePlan.actionAddPm')); }
   function handleUpdatePaymentMethod() { notWired(t('managePlan.actionUpdatePm')); }
   function handleChangeCycle(_target: BillingCycle) { notWired(t('managePlan.actionChangePlan')); }
-  function handleConfirmCancel() {
+  async function handleConfirmCancel() {
     setBusy(true);
-    setTimeout(() => {
-      setBusy(false);
+    try {
+      const res = await cancelSubscription();
+      const store = useAppStore.getState();
+      store.setCancelAtPeriodEnd(true);
+      if (res.cancelAt) store.setSubscriptionPeriodEnd(res.cancelAt);
+      setSubscription((prev) => prev ? {
+        ...prev,
+        cancelAtPeriodEnd: true,
+        nextRenewalDate: res.cancelAt ? new Date(res.cancelAt) : prev.nextRenewalDate,
+      } : prev);
       setShowCancelConfirm(false);
-      notWired(t('managePlan.actionCancel'));
-    }, 300);
+    } catch {
+      window.alert(t('managePlan.cancelError'));
+    } finally {
+      setBusy(false);
+    }
   }
 
   const isTrialing = subscription?.status === 'trialing';
@@ -121,7 +133,14 @@ export default function ManagePlanSheet({ onClose }: Props) {
         <section className="mps-section">
           <div className="mps-status-card">
             <span className="mps-status-badge">{planDisplayName(subscription?.plan ?? 'none')}</span>
-            {isTrialing && renewalDate ? (
+            {subscription?.cancelAtPeriodEnd && renewalDate ? (
+              <>
+                <p className="mps-status-line">
+                  {t('managePlan.cancelsOn')} <strong>{formatRenewalDate(renewalDate)}</strong>.
+                </p>
+                <p className="mps-status-sub">{t('managePlan.cancelKeepsAccess')}</p>
+              </>
+            ) : isTrialing && renewalDate ? (
               <>
                 <p className="mps-status-line">
                   {t('managePlan.trialDaysLeft')} <strong>{Math.max(0, Math.ceil((renewalDate.getTime() - Date.now()) / 86400000))} {t('settings.daysOther')}</strong> {t('managePlan.trialDaysLeftSuffix')}
@@ -185,7 +204,9 @@ export default function ManagePlanSheet({ onClose }: Props) {
               </div>
               {isTrialing && renewalDate && (
                 <p className="mps-plan-sub">
-                  {t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.
+                  {subscription?.cancelAtPeriodEnd
+                    ? <>{t('managePlan.trialEndsOn')} {formatRenewalDate(renewalDate)} {t('managePlan.trialEndsNoRenew')}</>
+                    : <>{t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.</>}
                 </p>
               )}
               {!isTrialing && currentCycle === 'yearly' && (
@@ -210,7 +231,9 @@ export default function ManagePlanSheet({ onClose }: Props) {
               </div>
               {isTrialing && renewalDate && (
                 <p className="mps-plan-sub">
-                  {t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.
+                  {subscription?.cancelAtPeriodEnd
+                    ? <>{t('managePlan.trialEndsOn')} {formatRenewalDate(renewalDate)} {t('managePlan.trialEndsNoRenew')}</>
+                    : <>{t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.</>}
                 </p>
               )}
               {!isTrialing && currentCycle === 'monthly' && (
@@ -227,7 +250,9 @@ export default function ManagePlanSheet({ onClose }: Props) {
           <h2 className="sh-heading">{t('managePlan.historyTitle')}</h2>
           {history.length === 0 ? (
             <p className="mps-history-empty">
-              {t('managePlan.historyEmpty')} {renewalDate && isTrialing
+              {t('managePlan.historyEmpty')} {subscription?.cancelAtPeriodEnd
+                ? t('managePlan.historyEmptyCanceled')
+                : renewalDate && isTrialing
                 ? `${t('managePlan.historyEmptyFirstCharge')} ${formatRenewalDate(renewalDate)}.`
                 : ''}
             </p>
@@ -251,12 +276,14 @@ export default function ManagePlanSheet({ onClose }: Props) {
           )}
         </section>
 
-        {/* SECCIÓN 6 — Cancelar */}
-        <section className="mps-section">
-          <button type="button" className="mps-cancel-btn" onClick={() => setShowCancelConfirm(true)}>
-            {t('managePlan.cancelSubscription')}
-          </button>
-        </section>
+        {/* SECCIÓN 6 — Cancelar (oculto si ya está marcada para cancelar) */}
+        {!subscription?.cancelAtPeriodEnd && (
+          <section className="mps-section">
+            <button type="button" className="mps-cancel-btn" onClick={() => setShowCancelConfirm(true)}>
+              {t('managePlan.cancelSubscription')}
+            </button>
+          </section>
+        )}
 
         {/* SECCIÓN 7 — FAQ */}
         <section className="mps-section">
