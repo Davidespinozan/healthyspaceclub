@@ -1167,6 +1167,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 .pay-plan-lbl { font-size:.66rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--mint); margin-bottom:5px; }
 .pay-plan-name { font-family:'Montserrat',sans-serif; font-size:1.4rem; font-weight:700; color:white; margin-bottom:3px; }
 .pay-plan-price { font-size:.84rem; color:rgba(255,255,255,.5); }
+.pay-plan-period { font-size:.8rem; color:var(--mint); margin-top:2px; }
 .pay-feats { display:flex; gap:7px; margin-top:12px; flex-wrap:wrap; }
 .pf { font-size:.66rem; background:rgba(255,255,255,.14); color:rgba(255,255,255,.88); padding:3px 9px; border-radius:50px; font-weight:600; }
 .pay-body { padding:24px 28px; }
