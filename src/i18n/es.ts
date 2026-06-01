@@ -86,6 +86,8 @@ export const es = {
     pmEndingIn: 'terminada en',
     pmExpires: 'Vence',
     pmUpdate: 'Actualizar →',
+    pmChange: 'Cambiar método de pago',
+    pmChangeCta: 'Guardar tarjeta',
     planSection: 'Plan actual y opciones',
     planCurrentBadge: 'Actual',
     cycleMonthly: 'Mensual',

@@ -4,10 +4,12 @@ import { useAppStore } from '../../store';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
 import { openCoachWith } from '../../utils/openCoach';
 import { useT } from '../../i18n';
+import CardCollectForm from '../CardCollectForm';
 import {
   getSubscription,
   cancelSubscription,
   getPaymentMethod,
+  updatePaymentMethod,
   getPaymentHistory,
   getPriceInfo,
   formatPrice,
@@ -50,6 +52,14 @@ export default function ManagePlanSheet({ onClose }: Props) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [showChangeCard, setShowChangeCard] = useState(false);
+
+  async function refreshPaymentMethod() {
+    setPmLoading(true);
+    const pm = await getPaymentMethod();
+    setPaymentMethod(pm);
+    setPmLoading(false);
+  }
 
   const priceInfo = getPriceInfo();
 
@@ -178,13 +188,18 @@ export default function ManagePlanSheet({ onClose }: Props) {
               </div>
             </div>
           ) : paymentMethod ? (
-            <div className="mps-payment-method-card">
-              <div className="mps-pm-brand">{paymentMethod.brand.toUpperCase()}</div>
-              <div className="mps-pm-info">
-                <div>{paymentMethod.brand.charAt(0).toUpperCase() + paymentMethod.brand.slice(1)} {t('managePlan.pmEndingIn')} {paymentMethod.last4}</div>
-                <div className="mps-pm-exp">{t('managePlan.pmExpires')} {String(paymentMethod.expMonth).padStart(2, '0')}/{String(paymentMethod.expYear).slice(-2)}</div>
+            <>
+              <div className="mps-payment-method-card">
+                <div className="mps-pm-brand">{paymentMethod.brand.toUpperCase()}</div>
+                <div className="mps-pm-info">
+                  <div>{paymentMethod.brand.charAt(0).toUpperCase() + paymentMethod.brand.slice(1)} {t('managePlan.pmEndingIn')} {paymentMethod.last4}</div>
+                  <div className="mps-pm-exp">{t('managePlan.pmExpires')} {String(paymentMethod.expMonth).padStart(2, '0')}/{String(paymentMethod.expYear).slice(-2)}</div>
+                </div>
+                <button type="button" className="mps-pm-update" onClick={() => setShowChangeCard(true)}>
+                  {t('managePlan.pmChange')}
+                </button>
               </div>
-            </div>
+            </>
           ) : (
             <div className="mps-payment-method-empty">
               <div className="mps-pm-empty-icon">💳</div>
@@ -337,6 +352,23 @@ export default function ManagePlanSheet({ onClose }: Props) {
                   {busy ? t('common.processing') : t('managePlan.cancelYes')}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cambiar método de pago — mini-sheet con CardCollectForm reusable */}
+        {showChangeCard && (
+          <div className="mps-modal-overlay" onClick={() => setShowChangeCard(false)}>
+            <div className="mps-modal" onClick={e => e.stopPropagation()}>
+              <h3 className="mps-modal-title">{t('managePlan.pmChange')}</h3>
+              <CardCollectForm
+                ctaLabel={t('managePlan.pmChangeCta')}
+                onPaymentMethod={async (pmId) => {
+                  await updatePaymentMethod(pmId); // si falla, CardCollectForm muestra el error
+                  setShowChangeCard(false);
+                  await refreshPaymentMethod();
+                }}
+              />
             </div>
           </div>
         )}

@@ -155,9 +155,21 @@ export async function startCheckout(_billingCycle: BillingCycle, _currency: Curr
   throw new Error('STRIPE_NOT_WIRED');
 }
 
-/** TODO(stripe): crear Customer Portal session via Edge Function y devolver URL. */
-export async function updatePaymentMethod(): Promise<string> {
-  throw new Error('STRIPE_NOT_WIRED');
+/**
+ * Cambia el método de pago default (customer + sub activa) vía edge function.
+ * La PM ya quedó attachada al confirmar el SetupIntent en el cliente.
+ * Lanza Error con mensaje claro si falla (el caller lo maneja).
+ */
+export async function updatePaymentMethod(paymentMethodId: string): Promise<{
+  ok: boolean;
+  subscriptionStatus: string;
+  paymentMethod: PaymentMethod | null;
+}> {
+  const { data, error } = await supabase.functions.invoke('stripe-update-payment-method', {
+    body: { paymentMethodId },
+  });
+  if (error) throw new Error(error.message || 'No se pudo cambiar el método de pago');
+  return data;
 }
 
 /** TODO(stripe): update Stripe subscription al nuevo billing cycle (prorrateo automático). */

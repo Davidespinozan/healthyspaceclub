@@ -27,5 +27,8 @@ verify_jwt = true
 [functions.stripe-get-payment-method]
 verify_jwt = true
 
+[functions.stripe-update-payment-method]
+verify_jwt = true
+
 [functions.stripe-webhook]
 verify_jwt = false

@@ -87,6 +87,8 @@ export const en: Translations<typeof es> = {
     pmEndingIn: 'ending in',
     pmExpires: 'Expires',
     pmUpdate: 'Update →',
+    pmChange: 'Change payment method',
+    pmChangeCta: 'Save card',
     planSection: 'Current plan and options',
     planCurrentBadge: 'Current',
     cycleMonthly: 'Monthly',
