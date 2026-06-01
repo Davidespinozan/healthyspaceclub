@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef, lazy, Suspense } from 'react';
-import { useAppStore, persistStreakToProfile } from './store';
+import { useAppStore } from './store';
 import { supabase } from './lib/supabase';
-import { MILESTONE_STEPS } from './constants/milestones';
 import { shouldUseRemotePlan } from './utils/planSync';
-import { mergeMealProgress, type MealProgressRow } from './utils/mealProgressSync';
+import { mergeMealProgress } from './utils/mealProgressSync';
 import {
   mapWorkoutLogRowToSession,
   mergeWorkoutSessions,
@@ -126,7 +125,10 @@ export default function App() {
 
       if (event === 'SIGNED_IN' && session) {
         // Anti-fuga: reseteá datos de otro user ANTES de rutear/hidratar.
-        const cacheTrusted = ensureDataOwner(session.user.id);
+        // Efecto: si el dueño del cache no es este user, resetea + reclama
+        // dataOwnerId (guard anti-leak). Ya no se backfillea local→DB, así que
+        // el valor de retorno no se usa.
+        ensureDataOwner(session.user.id);
         // Redirect INMEDIATO (sync, fuera del auth lock de Supabase v2)
         const { currentScreen, startDate } = useAppStore.getState();
         if (currentScreen === 'login') {
@@ -157,15 +159,8 @@ export default function App() {
                 trialEndsAt: profile.trial_ends_at ?? null,
               });
 
-              // Backfill streak server: si server está en 0 pero el local tiene
-              // streak > 0, pushear local → server. Una vez por device.
+              // NO auto-backfill de streak local→DB en hidratación (re-seed).
               const localState = useAppStore.getState();
-              const localStreak = localState.streakCount;
-              if ((profile.streak_count ?? 0) === 0 && localStreak > 0 && cacheTrusted) {
-                const fallbackDate = localState.lastActiveDate ?? new Date().toISOString().split('T')[0];
-                console.log('[streak-backfill] pushing local streak', localStreak, 'to server');
-                await persistStreakToProfile(session.user.id, localStreak, fallbackDate);
-              }
 
               // Sync-1: weeklyPlan + shoppingDay con push-then-pull.
               // shouldUseRemotePlan decide si subir local (backfill), bajar
@@ -185,22 +180,11 @@ export default function App() {
               // El generate persiste por su cuenta (saveWeeklyPlan). Esto evita
               // re-seedear la DB con el plan cacheado en cada reload.
 
-              // shopping_day: simpler — si remote tiene valor, usar; si no,
-              // backfill el local (si lo hay).
-              const localShoppingDay = localState.shoppingDay;
+              // shopping_day: solo lectura remote→local. NO auto-backfill
+              // local→DB en hidratación (re-seed).
               const remoteShoppingDay = profile.shopping_day;
               if (remoteShoppingDay !== null && remoteShoppingDay !== undefined) {
                 useAppStore.setState({ shoppingDay: remoteShoppingDay });
-              } else if (localShoppingDay !== null && localShoppingDay !== undefined && cacheTrusted) {
-                console.log('[shopping-day-backfill] pushing local shopping_day to server');
-                await supabase.from('user_profiles').upsert(
-                  {
-                    user_id: session.user.id,
-                    shopping_day: localShoppingDay,
-                    updated_at: new Date().toISOString(),
-                  },
-                  { onConflict: 'user_id' },
-                );
               }
             }
           } catch (e) {
@@ -293,7 +277,7 @@ export default function App() {
               .gte('date', cutoff);
             if (rows) {
               const localState = useAppStore.getState();
-              const { merged, toPush } = mergeMealProgress(
+              const { merged } = mergeMealProgress(
                 {
                   mealChecks: localState.mealChecks,
                   mealResolvedByLog: localState.mealResolvedByLog,
@@ -310,21 +294,8 @@ export default function App() {
                 mealResolvedByLog: merged.mealResolvedByLog,
               });
 
-              if (toPush.length > 0 && cacheTrusted) {
-                console.log('[meal-progress-backfill] pushing', toPush.length, 'rows');
-                const now = new Date().toISOString();
-                await supabase.from('meal_progress').upsert(
-                  toPush.map((p: MealProgressRow) => ({
-                    user_id: session.user.id,
-                    date: p.date,
-                    meal_index: p.meal_index,
-                    checked: p.checked,
-                    resolved_by_log: p.resolved_by_log,
-                    updated_at: now,
-                  })),
-                  { onConflict: 'user_id,date,meal_index' },
-                );
-              }
+              // NO auto-backfill de meal_progress local→DB en hidratación
+              // (re-seed). La lectura/merge remote→local (arriba) se mantiene.
             }
           } catch (e) {
             console.error('[auth] failed to hydrate meal_progress:', e);
@@ -341,39 +312,8 @@ export default function App() {
               useAppStore.setState({ userMilestones: milestones });
             }
 
-            // Backfill retroactivo: si la tabla está vacía pero el user tiene
-            // streak local (Zustand persist), derivar milestones desde streakCount
-            // y persistir. unlocked_at = lastActiveDate como aproximación honesta.
-            const localState = useAppStore.getState();
-            const localStreak = localState.streakCount;
-            if ((milestones?.length ?? 0) === 0 && localStreak > 0 && cacheTrusted) {
-              const derived = MILESTONE_STEPS.filter(m => localStreak >= m);
-              if (derived.length > 0) {
-                const fallbackUnlocked = localState.lastActiveDate
-                  ? new Date(`${localState.lastActiveDate}T00:00:00Z`).toISOString()
-                  : new Date().toISOString();
-                const rows = derived.map(milestone_days => ({
-                  user_id: session.user.id,
-                  milestone_days,
-                  unlocked_at: fallbackUnlocked,
-                }));
-                console.log('[milestone-backfill] inserting', rows.length, 'milestones for streak', localStreak);
-                const { error: backfillError } = await supabase
-                  .from('user_milestones')
-                  .upsert(rows, { onConflict: 'user_id,milestone_days', ignoreDuplicates: true });
-                if (backfillError) {
-                  console.error('[milestone-backfill] upsert failed:', backfillError);
-                } else {
-                  useAppStore.setState({
-                    userMilestones: derived.map(milestone_days => ({
-                      milestone_days,
-                      unlocked_at: fallbackUnlocked,
-                    })),
-                  });
-                  console.log('[milestone-backfill] OK, hydrated', derived.length, 'entries');
-                }
-              }
-            }
+            // NO auto-backfill de milestones local→DB en hidratación (re-seed).
+            // La lectura remote→local (arriba) se mantiene.
           } catch (e) {
             console.error('[auth] failed to hydrate user_milestones:', e);
           }
