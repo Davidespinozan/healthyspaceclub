@@ -89,18 +89,18 @@ export default function App() {
 
   // ── Supabase auth state listener ──────────────────────────
   useEffect(() => {
-    // Anti-fuga entre cuentas: si los datos persistidos pertenecen a OTRO user.id,
-    // reseteá el slice per-usuario ANTES de hidratar. Si dataOwnerId es null
-    // (primer load / post-logout, datos ya limpios), adoptamos al user actual sin
-    // resetear — así no borramos datos offline legítimos en el primer load post-deploy.
-    function ensureDataOwner(userId: string) {
+    // Anti-fuga entre cuentas: la DB es la fuente de verdad; el cache offline solo
+    // se confía si dataOwnerId === usuario autenticado. Si NO coincide (incluido
+    // dataOwnerId===null = dueño desconocido), reseteá el slice per-usuario ANTES de
+    // hidratar y adoptá el id. Devuelve si el cache era de confianza.
+    function ensureDataOwner(userId: string): boolean {
       const { dataOwnerId } = useAppStore.getState();
-      if (dataOwnerId && dataOwnerId !== userId) {
+      const trusted = dataOwnerId === userId;
+      if (!trusted) {
         useAppStore.getState().resetUserScopedData();
-      }
-      if (dataOwnerId !== userId) {
         useAppStore.setState({ dataOwnerId: userId });
       }
+      return trusted;
     }
 
     // Verificar sesión inicial
@@ -126,7 +126,7 @@ export default function App() {
 
       if (event === 'SIGNED_IN' && session) {
         // Anti-fuga: reseteá datos de otro user ANTES de rutear/hidratar.
-        ensureDataOwner(session.user.id);
+        const cacheTrusted = ensureDataOwner(session.user.id);
         // Redirect INMEDIATO (sync, fuera del auth lock de Supabase v2)
         const { currentScreen, startDate } = useAppStore.getState();
         if (currentScreen === 'login') {
@@ -182,8 +182,8 @@ export default function App() {
                 useAppStore.setState({ weeklyPlan: remotePlan });
               } else if (
                 decision === 'use_local' && localPlan &&
-                // Guard anti-fuga: NUNCA backfillear si los datos no son del user actual.
-                useAppStore.getState().dataOwnerId === session.user.id
+                // Guard anti-fuga: solo backfillear si el cache era del user actual.
+                cacheTrusted
               ) {
                 // Backfill: subir el local a Supabase
                 console.log('[weekly-plan-backfill] pushing local plan to server');
