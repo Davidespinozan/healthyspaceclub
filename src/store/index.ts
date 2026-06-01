@@ -1005,6 +1005,7 @@ export const useAppStore = create<AppState>()(
     startDate: '',
     habits: { agua: false, frutas: false, ejercicio: false, sueno: false },
     habitHistory: {},
+    habitsDate: '',
     weightLog: [],
     mealChecks: {},
     mealResolvedByLog: {},

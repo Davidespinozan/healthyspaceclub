@@ -161,7 +161,7 @@ export default function App() {
               // streak > 0, pushear local → server. Una vez por device.
               const localState = useAppStore.getState();
               const localStreak = localState.streakCount;
-              if ((profile.streak_count ?? 0) === 0 && localStreak > 0) {
+              if ((profile.streak_count ?? 0) === 0 && localStreak > 0 && cacheTrusted) {
                 const fallbackDate = localState.lastActiveDate ?? new Date().toISOString().split('T')[0];
                 console.log('[streak-backfill] pushing local streak', localStreak, 'to server');
                 await persistStreakToProfile(session.user.id, localStreak, fallbackDate);
@@ -205,7 +205,7 @@ export default function App() {
               const remoteShoppingDay = profile.shopping_day;
               if (remoteShoppingDay !== null && remoteShoppingDay !== undefined) {
                 useAppStore.setState({ shoppingDay: remoteShoppingDay });
-              } else if (localShoppingDay !== null && localShoppingDay !== undefined) {
+              } else if (localShoppingDay !== null && localShoppingDay !== undefined && cacheTrusted) {
                 console.log('[shopping-day-backfill] pushing local shopping_day to server');
                 await supabase.from('user_profiles').upsert(
                   {
@@ -289,7 +289,7 @@ export default function App() {
               );
               useAppStore.setState({ completedSessions: merged });
 
-              if (toPush.length > 0) {
+              if (toPush.length > 0 && cacheTrusted) {
                 console.log('[workout-log-backfill] pushing', toPush.length, 'sessions');
                 // Backfill: las sesiones locales que remote no tiene se
                 // suben. Reconstruir exercises jsonb mínimo desde
@@ -350,7 +350,7 @@ export default function App() {
                 mealResolvedByLog: merged.mealResolvedByLog,
               });
 
-              if (toPush.length > 0) {
+              if (toPush.length > 0 && cacheTrusted) {
                 console.log('[meal-progress-backfill] pushing', toPush.length, 'rows');
                 const now = new Date().toISOString();
                 await supabase.from('meal_progress').upsert(
@@ -386,7 +386,7 @@ export default function App() {
             // y persistir. unlocked_at = lastActiveDate como aproximación honesta.
             const localState = useAppStore.getState();
             const localStreak = localState.streakCount;
-            if ((milestones?.length ?? 0) === 0 && localStreak > 0) {
+            if ((milestones?.length ?? 0) === 0 && localStreak > 0 && cacheTrusted) {
               const derived = MILESTONE_STEPS.filter(m => localStreak >= m);
               if (derived.length > 0) {
                 const fallbackUnlocked = localState.lastActiveDate
