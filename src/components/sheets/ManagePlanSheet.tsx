@@ -88,8 +88,6 @@ export default function ManagePlanSheet({ onClose }: Props) {
     }
   }
 
-  function handleAddPaymentMethod() { notWired(t('managePlan.actionAddPm')); }
-  function handleUpdatePaymentMethod() { notWired(t('managePlan.actionUpdatePm')); }
   function handleChangeCycle(_target: BillingCycle) { notWired(t('managePlan.actionChangePlan')); }
   async function handleConfirmCancel() {
     setBusy(true);
@@ -186,17 +184,11 @@ export default function ManagePlanSheet({ onClose }: Props) {
                 <div>{paymentMethod.brand.charAt(0).toUpperCase() + paymentMethod.brand.slice(1)} {t('managePlan.pmEndingIn')} {paymentMethod.last4}</div>
                 <div className="mps-pm-exp">{t('managePlan.pmExpires')} {String(paymentMethod.expMonth).padStart(2, '0')}/{String(paymentMethod.expYear).slice(-2)}</div>
               </div>
-              <button type="button" className="mps-pm-update" onClick={handleUpdatePaymentMethod}>
-                {t('managePlan.pmUpdate')}
-              </button>
             </div>
           ) : (
             <div className="mps-payment-method-empty">
               <div className="mps-pm-empty-icon">💳</div>
               <p className="mps-pm-empty-text">{t('managePlan.pmEmpty')}</p>
-              <button type="button" className="sh-cta" onClick={handleAddPaymentMethod}>
-                {t('managePlan.pmAdd')}
-              </button>
             </div>
           )}
         </section>
