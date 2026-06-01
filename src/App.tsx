@@ -180,24 +180,10 @@ export default function App() {
               );
               if (decision === 'use_remote') {
                 useAppStore.setState({ weeklyPlan: remotePlan });
-              } else if (
-                decision === 'use_local' && localPlan &&
-                // Guard anti-fuga: solo backfillear si el cache era del user actual.
-                cacheTrusted
-              ) {
-                // Backfill: subir el local a Supabase
-                console.log('[weekly-plan-backfill] pushing local plan to server');
-                const now = new Date().toISOString();
-                await supabase.from('user_profiles').upsert(
-                  {
-                    user_id: session.user.id,
-                    weekly_plan: localPlan,
-                    weekly_plan_updated_at: now,
-                    updated_at: now,
-                  },
-                  { onConflict: 'user_id' },
-                );
               }
+              // 'use_local'/'noop': NO auto-backfill local→DB en hidratación.
+              // El generate persiste por su cuenta (saveWeeklyPlan). Esto evita
+              // re-seedear la DB con el plan cacheado en cada reload.
 
               // shopping_day: simpler — si remote tiene valor, usar; si no,
               // backfill el local (si lo hay).
@@ -283,39 +269,13 @@ export default function App() {
             if (workouts) {
               const remoteSessions = (workouts as WorkoutLogRow[]).map(mapWorkoutLogRowToSession);
               const localState = useAppStore.getState();
-              const { merged, toPush } = mergeWorkoutSessions(
+              const { merged } = mergeWorkoutSessions(
                 localState.completedSessions,
                 remoteSessions,
               );
+              // Solo lectura remote→local. NO auto-backfill local→DB en
+              // hidratación (evita re-insertar sesiones cacheadas en cada reload).
               useAppStore.setState({ completedSessions: merged });
-
-              if (toPush.length > 0 && cacheTrusted) {
-                console.log('[workout-log-backfill] pushing', toPush.length, 'sessions');
-                // Backfill: las sesiones locales que remote no tiene se
-                // suben. Reconstruir exercises jsonb mínimo desde
-                // exerciseIds (no tenemos planned/performed acá — solo IDs).
-                // El planner remoto va a ver la sesión + duration + count,
-                // y el flat loggedSets se preserva en local.
-                const rows = toPush.map(s => ({
-                  user_id: session.user.id,
-                  date_local: s.date,
-                  completed_at: s.completedAtIso,
-                  modality: s.modality,
-                  duration_minutes: Math.round(s.durationSeconds / 60),
-                  target_duration_minutes: Math.round(s.durationSeconds / 60),
-                  equipment: 'gym', // placeholder defensivo; sesión local no preservó equipment
-                  exercises: s.exerciseIds.map((id, order) => ({ exercise_id: id, order })),
-                  exercises_completed: s.exercisesCompleted,
-                  exercises_total: s.exercisesTotal,
-                  generation_method: 'backfill',
-                }));
-                const { error: backfillError } = await supabase
-                  .from('workout_log')
-                  .insert(rows);
-                if (backfillError) {
-                  console.warn('[workout-log-backfill] insert failed:', backfillError);
-                }
-              }
             }
           } catch (e) {
             console.error('[auth] failed to hydrate workout_log:', e);
