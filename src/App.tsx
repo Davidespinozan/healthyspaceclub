@@ -89,8 +89,23 @@ export default function App() {
 
   // ── Supabase auth state listener ──────────────────────────
   useEffect(() => {
+    // Anti-fuga entre cuentas: si los datos persistidos pertenecen a OTRO user.id,
+    // reseteá el slice per-usuario ANTES de hidratar. Si dataOwnerId es null
+    // (primer load / post-logout, datos ya limpios), adoptamos al user actual sin
+    // resetear — así no borramos datos offline legítimos en el primer load post-deploy.
+    function ensureDataOwner(userId: string) {
+      const { dataOwnerId } = useAppStore.getState();
+      if (dataOwnerId && dataOwnerId !== userId) {
+        useAppStore.getState().resetUserScopedData();
+      }
+      if (dataOwnerId !== userId) {
+        useAppStore.setState({ dataOwnerId: userId });
+      }
+    }
+
     // Verificar sesión inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) ensureDataOwner(session.user.id);
       setSession(session);
       // Si el usuario aterriza en /reset-password (link de recovery), forzamos esa pantalla.
       if (typeof window !== 'undefined' && window.location.pathname.includes('reset-password')) {
@@ -110,6 +125,8 @@ export default function App() {
       }
 
       if (event === 'SIGNED_IN' && session) {
+        // Anti-fuga: reseteá datos de otro user ANTES de rutear/hidratar.
+        ensureDataOwner(session.user.id);
         // Redirect INMEDIATO (sync, fuera del auth lock de Supabase v2)
         const { currentScreen, startDate } = useAppStore.getState();
         if (currentScreen === 'login') {
@@ -163,7 +180,11 @@ export default function App() {
               );
               if (decision === 'use_remote') {
                 useAppStore.setState({ weeklyPlan: remotePlan });
-              } else if (decision === 'use_local' && localPlan) {
+              } else if (
+                decision === 'use_local' && localPlan &&
+                // Guard anti-fuga: NUNCA backfillear si los datos no son del user actual.
+                useAppStore.getState().dataOwnerId === session.user.id
+              ) {
                 // Backfill: subir el local a Supabase
                 console.log('[weekly-plan-backfill] pushing local plan to server');
                 const now = new Date().toISOString();
@@ -400,13 +421,9 @@ export default function App() {
       }
 
       if (event === 'SIGNED_OUT') {
-        useAppStore.setState({
-          currentScreen: 'landing',
-          userName: '',
-          obData: {},
-          subscriptionStatus: null,
-          subscriptionStatusLoadedFor: null,
-        });
+        // Mismo reset per-usuario que logout + soltar el dueño de los datos.
+        useAppStore.getState().resetUserScopedData();
+        useAppStore.setState({ currentScreen: 'landing', dataOwnerId: null });
       }
     });
 

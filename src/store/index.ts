@@ -325,8 +325,12 @@ interface AppState {
   hsmProfile: { text: string; updatedAt: string } | null;
   setHSMProfile: (text: string) => void;
 
-  // Logout
+  // Logout / namespacing de datos por usuario
   logout: () => void;
+  // Resetea TODO el estado per-usuario (datos), sin tocar nav/UI ni settings app-level.
+  resetUserScopedData: () => void;
+  // user.id dueño de los datos persistidos offline (anti-fuga entre cuentas). Persistido.
+  dataOwnerId: string | null;
 }
 
 export const useAppStore = create<AppState>()(
@@ -990,62 +994,72 @@ export const useAppStore = create<AppState>()(
   // (Racha-1) y se dispara desde workout/yoga/HSM completo.
 
   // Logout — signs out of Supabase and clears all local state
+  dataOwnerId: null,
+
+  // Resetea SOLO datos per-usuario. NO toca nav/UI (currentScreen, dashPage, modales)
+  // ni settings app-level (idioma/tema). Usado por logout y por el guard anti-fuga.
+  resetUserScopedData: () => set({
+    userName: '',
+    obStep: 1,
+    obData: {},
+    startDate: '',
+    habits: { agua: false, frutas: false, ejercicio: false, sueno: false },
+    habitHistory: {},
+    weightLog: [],
+    mealChecks: {},
+    mealResolvedByLog: {},
+    welcomeVidClosed: false,
+    mealPlanKey: 'planA',
+    tdee: 0,
+    planGoal: 0,
+    workoutLog: [],
+    completedSessions: [],
+    foodLog: [],
+    userPlan: 'none',
+    trialEndsAt: null,
+    subscriptionStatus: null,
+    subscriptionStatusLoadedFor: null,
+    stripeCustomerId: null,
+    subscriptionPeriodEnd: null,
+    cancelAtPeriodEnd: null,
+    growthData: {},
+    growthCompleted: Array(10).fill(false),
+    dailyWorkout: null,
+    shoppingDay: null,
+    weeklyPlan: null,
+    dailyCheckIn: null,
+    streakCount: 0,
+    lastActiveDate: null,
+    planRegenCount: null,
+    dailyWorkoutRegenCount: { date: '', countByModality: {} },
+    lastWeeklyReview: null,
+    dailyBriefing: null,
+    lastStreakMilestone: 0,
+    userMilestones: [],
+    dailyCheckin: null,
+    dailyCheckinDate: '',
+    dailyHSMResponses: [],
+    coachChatHistory: [],
+    coachChatDate: '',
+    activeHSMDimension: 0,
+    hsmUnlockDays: [],
+    hsmProfile: null,
+  }),
+
   logout: () => {
     import('../lib/supabase').then(({ supabase }) => supabase.auth.signOut());
     localStorage.removeItem('hsc-life-system-v2');
+    get().resetUserScopedData();
+    // Nav/UI + marca de dueño (comportamiento neto idéntico al logout previo).
     set({
       currentScreen: 'landing',
-      userName: '',
-      obStep: 1,
-      obData: {},
-      startDate: '',
       dashPage: 'hoy',
       activeModal: null,
       videoState: null,
       pillarsOpen: false,
       mobileSidebarOpen: false,
       mobileMenuOpen: false,
-      habits: { agua: false, frutas: false, ejercicio: false, sueno: false },
-      habitHistory: {},
-      weightLog: [],
-      mealChecks: {},
-      mealResolvedByLog: {},
-      welcomeVidClosed: false,
-      mealPlanKey: 'planA',
-      tdee: 0,
-      planGoal: 0,
-      workoutLog: [],
-      completedSessions: [],
-      foodLog: [],
-      userPlan: 'none',
-      trialEndsAt: null,
-      subscriptionStatus: null,
-      subscriptionStatusLoadedFor: null,
-      stripeCustomerId: null,
-      subscriptionPeriodEnd: null,
-      cancelAtPeriodEnd: null,
-      growthData: {},
-      growthCompleted: Array(10).fill(false),
-      dailyWorkout: null,
-      shoppingDay: null,
-      weeklyPlan: null,
-      dailyCheckIn: null,
-      streakCount: 0,
-      lastActiveDate: null,
-      planRegenCount: null,
-      dailyWorkoutRegenCount: { date: '', countByModality: {} },
-      lastWeeklyReview: null,
-      dailyBriefing: null,
-      lastStreakMilestone: 0,
-      userMilestones: [],
-      dailyCheckin: null,
-      dailyCheckinDate: '',
-      dailyHSMResponses: [],
-      coachChatHistory: [],
-      coachChatDate: '',
-      activeHSMDimension: 0,
-      hsmUnlockDays: [],
-      hsmProfile: null,
+      dataOwnerId: null,
     });
   },
 }),
@@ -1073,6 +1087,7 @@ export const useAppStore = create<AppState>()(
     currentScreen: state.currentScreen === 'landing' ? 'landing' : state.currentScreen,
     userPlan: state.userPlan,
     trialEndsAt: state.trialEndsAt,
+    dataOwnerId: state.dataOwnerId, // marca de dueño de los datos offline (anti-fuga entre cuentas)
     // ⚠️ Protección 1: subscriptionStatus / subscriptionStatusLoadedFor / stripeCustomerId /
     // subscriptionPeriodEnd / cancelAtPeriodEnd NO se persisten a propósito — se leen
     // frescos de la DB en cada carga (un 'trial' persistido dejaría un trial vencido con
