@@ -22,140 +22,12 @@ import {
 } from '../ai/prompts/hsmReview';
 import { buildHSMProfilePrompt } from '../ai/prompts/hsmProfile';
 import { MILESTONE_STEPS, getMilestoneCopy } from '../constants/milestones';
+import { getHSMBank } from '../data/hsmBank';
 import { useT } from '../i18n';
 import { plural } from '../i18n/format';
 import { relativeDayKind } from '../utils/relativeDay';
 import './tab-hoy-v3.css';
 
-/* ── HSM Question Bank — 10 per dimension, 100 total ── */
-const HSM_BANK: { emoji: string; title: string; questions: string[] }[] = [
-  { emoji: '🧠', title: 'Identidad', questions: [
-    '¿Quién eres cuando nadie te ve?',
-    '¿Tus acciones de hoy reflejaron tus valores más profundos?',
-    'Piensa en algo que persigues con ganas. ¿Lo quieres tú, o lo heredaste de alguien más?',
-    '¿Qué hiciste hoy que fue 100% tú?',
-    '¿Qué creencia sobre ti mismo necesitas soltar?',
-    '¿Qué sabes hacer mejor que la mayoría?',
-    '¿Tu día de hoy se pareció a la vida que quieres vivir?',
-    '¿Qué experiencia te marcó y definió quién eres hoy?',
-    '¿Cuál es tu mayor miedo y cómo te limita?',
-    '¿Qué talento natural tienes que no estás usando?',
-  ]},
-  { emoji: '✨', title: 'Vocación', questions: [
-    '¿Qué harías gratis el resto de tu vida?',
-    '¿En qué momento del día te sentiste más vivo?',
-    '¿Qué actividad te hace perder la noción del tiempo?',
-    '¿Algo de lo que hiciste hoy te entusiasmó de verdad, no solo por obligación?',
-    '¿Qué temas estudiarías aunque no te pagaran?',
-    '¿Cuáles son tus habilidades naturales que otros reconocen?',
-    '¿En qué te piden ayuda constantemente?',
-    '¿Qué problema del mundo te indigna lo suficiente para actuar?',
-    '¿Qué cambio quieres ver en tu entorno?',
-    '¿Qué cosa que ya sabes hacer podría servirle a alguien más?',
-  ]},
-  { emoji: '🎯', title: 'Propósito', questions: [
-    '¿Qué te gustaría que la gente recordara de ti? Empieza por hoy.',
-    '¿Tu decisión más importante de hoy estuvo alineada con lo que quieres ser?',
-    '¿Estás viviendo en piloto automático o con intención?',
-    '¿Qué impacto quieres tener en la vida de otras personas?',
-    '¿Qué legado estás construyendo con tus acciones de hoy?',
-    '¿Cuándo fue la última vez que sentiste que lo que hacías tenía un significado mayor?',
-    '¿Cómo quieres que te recuerden?',
-    '¿Qué harías si supieras que no puedes fallar?',
-    '¿Cómo quieres que las personas se sientan después de interactuar contigo?',
-    '¿Estás persiguiendo metas sin sentir satisfacción?',
-  ]},
-  { emoji: '📍', title: 'Metas', questions: [
-    '¿Hacia dónde vas este mes?',
-    '¿Tienes una meta importante ahora? ¿Avanzaste algo hacia ella hoy?',
-    '¿Estás postergando algo importante por esperar condiciones perfectas?',
-    '¿Celebraste algún logro pequeño hoy?',
-    'Piensa en algo que quieres lograr este año. ¿Lo que haces estas semanas te acerca?',
-    '¿Hacia qué estás trabajando ahora? ¿Sigue siendo algo que de verdad quieres?',
-    'Si tuvieras que elegir una meta para los próximos 3 meses, ¿cuál sería? ¿Cómo sabrás que la lograste?',
-    '¿Qué es lo que más quieres conseguir en este momento de tu vida? ¿Por qué te importa?',
-    '¿Hay algo que te propusiste antes y que ya no te representa? ¿Vale la pena soltarlo?',
-    '¿Hay algo que estás postergando esperando el momento perfecto? ¿Qué paso pequeño podrías dar hoy?',
-  ]},
-  { emoji: '⚡', title: 'Disciplina', questions: [
-    '¿Qué hábito estás construyendo ahora?',
-    '¿Hubo un momento hoy donde elegiste hacer lo difícil?',
-    '¿Actuaste por disciplina o esperaste sentirte motivado?',
-    '¿Qué hábito negativo intentó aparecer hoy y cómo lo manejaste?',
-    '¿Qué pequeña acción puedes hacer ahora mismo sin esperar?',
-    '¿Has sido constante últimamente? ¿Eso refleja la persona que quieres ser?',
-    '¿Qué hábito te gustaría dejar? ¿Qué suele dispararlo?',
-    '¿Hay un patrón que quieres romper? ¿Con qué cosa mejor podrías reemplazarlo?',
-    '¿A qué hora del día eres más disciplinado y cuándo flaqueas?',
-    '¿Hubo algo hoy que no tenías ganas de hacer pero hiciste igual?',
-  ]},
-  { emoji: '💪', title: 'Cuerpo', questions: [
-    '¿Cómo trataste a tu cuerpo hoy?',
-    '¿Tu alimentación de hoy fue combustible o placer vacío?',
-    '¿Dormiste lo suficiente para recuperarte?',
-    '¿Estás escuchando las señales de tu cuerpo o ignorándolas?',
-    '¿Qué come la versión de ti que quieres ser?',
-    '¿Cómo describirías tu relación actual con tu cuerpo?',
-    '¿Qué es lo que más valoras de tu cuerpo?',
-    '¿Cómo se mueve y ejercita la versión de ti que quieres ser?',
-    'Cuando el cuerpo te pide una pausa, ¿se la das o lo ignoras?',
-    '¿Completaste tu entrenamiento? Si no, ¿qué lo impidió realmente?',
-  ]},
-  { emoji: '🌱', title: 'Entorno y Relaciones', questions: [
-    '¿Quién te sumó energía hoy?',
-    '¿Alguien te quitó energía hoy?',
-    '¿Tu entorno físico te inspiró o te agotó?',
-    '¿Hay alguna relación en tu vida que necesita límites más claros?',
-    '¿Tu espacio de trabajo refleja quién quieres ser?',
-    '¿Las personas cercanas apoyan tu proceso de evolución?',
-    '¿Qué relación necesitas fortalecer esta semana?',
-    '¿Qué cambio puedes hacer en tu espacio esta semana?',
-    '¿Cómo sería tu entorno ideal?',
-    '¿Qué límite necesitas establecer que has estado evitando?',
-  ]},
-  { emoji: '🧘', title: 'Control Emocional', questions: [
-    '¿Qué emoción dominó tu día?',
-    '¿Pasó algo hoy que te movió emocionalmente? ¿Reaccionaste en caliente o respondiste con calma?',
-    '¿Hubo un momento donde pausaste antes de actuar?',
-    '¿Qué emoción apareció hoy que no esperabas?',
-    'Si sentiste ansiedad hoy, ¿de dónde venía: de algo que ya pasó o de algo que temes?',
-    '¿Qué estás sintiendo en este momento? ¿Qué crees que te está diciendo?',
-    '¿Qué emoción se repite más en tus días? ¿Cómo sueles reaccionar cuando aparece?',
-    'La próxima vez que algo te altere, ¿cómo te gustaría responder en vez de reaccionar?',
-    '¿Qué te ayuda a calmarte cuando pierdes el control?',
-    '¿Cómo procesas las emociones difíciles sin reprimirlas?',
-  ]},
-  { emoji: '🔥', title: 'Resiliencia', questions: [
-    '¿Qué dificultad enfrentaste hoy?',
-    '¿Algo te salió mal hoy? ¿Qué aprendiste de eso?',
-    '¿Estás enfrentando algo difícil ahora? ¿Qué haría tu mejor versión en tu lugar?',
-    '¿Cómo reaccionas diferente hoy vs hace 3 meses?',
-    '¿Qué dificultad tienes enfrente hoy? ¿La estás viendo como obstáculo o como oportunidad?',
-    '¿Cuál ha sido el obstáculo más grande que has superado?',
-    '¿Qué te dice tu voz interna cuando algo sale mal?',
-    'Piensa en un momento difícil que ya superaste. ¿Cómo te cambió?',
-    '¿Quién te apoya cuando necesitas levantarte?',
-    '¿Por qué empezaste a cuidarte? Cuando sea difícil, esa razón te sostiene.',
-  ]},
-  { emoji: '🚀', title: 'Evolución', questions: [
-    '¿Qué aprendiste hoy de ti?',
-    '¿Cómo eres diferente a quien eras hace un mes?',
-    '¿Dedicaste tiempo hoy a aprender algo nuevo?',
-    'Lo que para ti significaba "éxito" hace unos años, ¿sigue siendo lo mismo hoy?',
-    '¿Hay algún cambio que veías venir? ¿Lo estás preparando o esperando a que llegue?',
-    '¿Qué estás aprendiendo ahora mismo?',
-    '¿Cómo es la mejor versión de ti en 3 años?',
-    '¿Qué quieres haber construido al final de tu vida?',
-    '¿Qué quieres que digan de ti las personas que amas?',
-    '¿Qué le dirías a tu yo del futuro?',
-  ]},
-];
-
-function getDailyQuestion(dimIndex: number, dayIndex: number): { emoji: string; title: string; q: string } {
-  const dim = HSM_BANK[dimIndex];
-  const qIndex = (dayIndex * 3 + dimIndex * 7) % dim.questions.length;
-  return { emoji: dim.emoji, title: dim.title, q: dim.questions[qIndex] };
-}
 
 export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const { t, locale } = useT();
@@ -178,6 +50,14 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
   const isPlanActive = userPlan && userPlan !== 'none' &&
     (!trialEndsAt || new Date(trialEndsAt) > new Date());
+
+  // HSM bank localizado (i18n contenido). getDailyQuestion cierra sobre él.
+  const HSM_BANK = getHSMBank(locale);
+  const getDailyQuestion = (dimIndex: number, dayIndex: number) => {
+    const dim = HSM_BANK[dimIndex];
+    const qIndex = (dayIndex * 3 + dimIndex * 7) % dim.questions.length;
+    return { emoji: dim.emoji, title: dim.title, q: dim.questions[qIndex] };
+  };
 
   const [showEspacioFlow, setShowEspacioFlow] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<{
