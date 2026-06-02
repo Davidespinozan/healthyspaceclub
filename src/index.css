@@ -5501,8 +5501,9 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
    Paleta terracota de la app (igual que la card "Tu Espacio"). */
 .pastdue-banner {
   display: flex;
+  flex-wrap: wrap;        /* mobile: el CTA envuelve a una fila propia */
   align-items: center;
-  gap: 12px;
+  gap: 10px 12px;
   padding: 12px 16px;
   background: var(--terracota-soft);
   border-bottom: 1.3px solid rgba(199, 91, 58, 0.22);
@@ -5522,12 +5523,12 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   color: var(--txt2);
 }
 .pastdue-cta {
-  flex: 0 0 auto;
+  flex: 1 0 100%;         /* mobile: full-width, fila propia debajo del texto */
   background: var(--terracota);
   color: #fff;
   border: none;
   border-radius: var(--radius-base);
-  padding: 8px 14px;
+  padding: 10px 14px;
   font-family: 'Montserrat', sans-serif;
   font-size: 12px;
   font-weight: 600;
@@ -6313,6 +6314,8 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   .app-main { margin-left: 220px; padding-bottom: 0; }
   /* El banner de past_due también respeta la sidebar fija en desktop */
   .pastdue-banner { margin-left: 220px; }
+  /* Desktop: el CTA vuelve inline a la derecha (no full-width) */
+  .pastdue-cta { flex: 0 0 auto; padding: 8px 14px; }
   .tab-content { max-width: 800px; padding: 28px 40px; }
   .th-header, .tc-header, .tm-hero, .tt-metrics { padding-left: 40px; padding-right: 40px; }
 
