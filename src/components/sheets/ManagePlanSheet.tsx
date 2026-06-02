@@ -133,11 +133,6 @@ export default function ManagePlanSheet({ onClose }: Props) {
   const isTrialing = subscription?.status === 'trialing';
   const currentCycle = subscription?.billingCycle ?? 'monthly';
   const renewalDate = subscription?.nextRenewalDate ?? null;
-  // El switch de ciclo solo aplica a una sub PAGA activa. Mientras carga
-  // (subscription === null), en trial, o sin plan → no se ofrece. Esto evita
-  // el parpadeo del botón al abrir (antes se mostraba con el default y luego
-  // se ocultaba al resolver el estado).
-  const canSwitchCycle = subscription?.status === 'active';
 
   return createPortal(
     <div className="sh-overlay" onClick={onClose}>
@@ -242,7 +237,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                     : <>{t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.</>}
                 </p>
               )}
-              {canSwitchCycle && currentCycle === 'yearly' && (
+              {!isTrialing && currentCycle === 'yearly' && (
                 <button type="button" className="mps-plan-cta-secondary" disabled={busy} onClick={() => handleChangeCycle('monthly')}>
                   {t('managePlan.switchToMonthly')}
                 </button>
@@ -269,7 +264,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                     : <>{t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.</>}
                 </p>
               )}
-              {canSwitchCycle && currentCycle === 'monthly' && (
+              {!isTrialing && currentCycle === 'monthly' && (
                 <button type="button" className="sh-cta mps-plan-cta-primary" disabled={busy} onClick={() => handleChangeCycle('yearly')}>
                   {t('managePlan.switchToYearly')}
                 </button>
