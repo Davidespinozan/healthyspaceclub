@@ -238,32 +238,44 @@ export default function SettingsSheet({ open, onClose }: Props) {
             </button>
           ) : (
             <div className="ss-pw-form">
-              <input
-                type="password"
-                className="ss-pw-input"
-                placeholder={t('settings.newPassword')}
-                value={newPw}
-                onChange={e => { setNewPw(e.target.value); setPwError(''); setPwSuccess(false); }}
-                autoComplete="new-password"
-              />
-              <input
-                type="password"
-                className="ss-pw-input"
-                placeholder={t('settings.confirmPassword')}
-                value={confirmPw}
-                onChange={e => { setConfirmPw(e.target.value); setPwError(''); setPwSuccess(false); }}
-                autoComplete="new-password"
-              />
-              {pwError && <p className="ss-pw-msg ss-pw-msg--error">{pwError}</p>}
-              {pwSuccess && <p className="ss-pw-msg ss-pw-msg--ok">{t('settings.pwSuccess')}</p>}
-              <div className="ss-pw-actions">
-                <button type="button" className="ss-pw-cancel" onClick={resetPwForm}>
-                  {t('common.cancel')}
-                </button>
-                <button type="button" className="ss-pw-save" disabled={pwBusy} onClick={handleChangePassword}>
-                  {pwBusy ? '…' : t('settings.pwSave')}
-                </button>
-              </div>
+              {pwSuccess ? (
+                <>
+                  <p className="ss-pw-msg ss-pw-msg--ok">{t('settings.pwSuccess')}</p>
+                  <div className="ss-pw-actions">
+                    <button type="button" className="ss-pw-save" onClick={resetPwForm}>
+                      {t('common.close')}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="password"
+                    className="ss-pw-input"
+                    placeholder={t('settings.newPassword')}
+                    value={newPw}
+                    onChange={e => { setNewPw(e.target.value); setPwError(''); }}
+                    autoComplete="new-password"
+                  />
+                  <input
+                    type="password"
+                    className="ss-pw-input"
+                    placeholder={t('settings.confirmPassword')}
+                    value={confirmPw}
+                    onChange={e => { setConfirmPw(e.target.value); setPwError(''); }}
+                    autoComplete="new-password"
+                  />
+                  {pwError && <p className="ss-pw-msg ss-pw-msg--error">{pwError}</p>}
+                  <div className="ss-pw-actions">
+                    <button type="button" className="ss-pw-cancel" onClick={resetPwForm}>
+                      {t('common.cancel')}
+                    </button>
+                    <button type="button" className="ss-pw-save" disabled={pwBusy} onClick={handleChangePassword}>
+                      {pwBusy ? '…' : t('settings.pwSave')}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </section>
