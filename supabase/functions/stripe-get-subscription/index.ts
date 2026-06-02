@@ -23,7 +23,7 @@ Deno.serve(async (req: Request) => {
   const admin = getAdmin();
   const { data: profile, error } = await admin
     .from('user_profiles')
-    .select('subscription_status, subscription_period_end, plan_id, billing_cycle')
+    .select('subscription_status, subscription_period_end, plan_id, billing_cycle, cancel_at_period_end')
     .eq('user_id', user.id)
     .maybeSingle();
 
@@ -37,5 +37,6 @@ Deno.serve(async (req: Request) => {
     subscription_period_end: profile?.subscription_period_end ?? null,
     plan_id: profile?.plan_id ?? null,
     billing_cycle: profile?.billing_cycle ?? null,
+    cancel_at_period_end: profile?.cancel_at_period_end ?? false,
   }, 200);
 });

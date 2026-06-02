@@ -6,7 +6,6 @@
  * archivo cambia — la UI no se toca.
  */
 
-import { useAppStore } from '../store';
 import { getCachedRegion, regionFromLanguage, pricingForCurrency, PRICING, type Region } from './region';
 import { supabase } from '../lib/supabase';
 
@@ -95,38 +94,37 @@ export function formatRenewalDate(date: Date): string {
 // ============================================================
 
 /**
- * TODO(stripe): reemplazar por fetch a Edge Function
- *   /functions/v1/stripe-get-subscription con JWT del user.
- * Hoy deriva la info del store local: trial activo basado en trialEndsAt,
- * billingCycle siempre 'monthly' (no hay info real de Stripe), sin payment method.
+ * Lee el estado real desde user_profiles (que el webhook mantiene fresco)
+ * vía la edge function stripe-get-subscription. Incluye el billing_cycle real
+ * (monthly/annual) — antes estaba hardcodeado en 'monthly'. paymentMethod va
+ * por getPaymentMethod aparte. El JWT lo adjunta invoke.
  */
 export async function getSubscription(_userId: string): Promise<SubscriptionInfo | null> {
-  const store = useAppStore.getState();
-  const userPlan = store.userPlan;
-  const trialEndsAt = store.trialEndsAt ? new Date(store.trialEndsAt) : null;
-
-  if (!userPlan || userPlan === 'none') {
-    return {
-      plan: 'none',
-      billingCycle: null,
-      nextRenewalDate: null,
-      paymentMethod: null,
-      status: 'canceled',
-      trialEndsAt: null,
-      cancelAtPeriodEnd: false,
-    };
+  const { data, error } = await supabase.functions.invoke('stripe-get-subscription', { body: {} });
+  if (error) {
+    console.error('[stripe] getSubscription falló:', error.message);
+    return null;
   }
 
-  const isTrialing = !!(trialEndsAt && trialEndsAt > new Date());
+  const sub = (data?.subscription_status ?? 'none') as 'none' | 'trial' | 'pro';
+  const periodEnd = data?.subscription_period_end ? new Date(data.subscription_period_end) : null;
+  const billingCycle: BillingCycle | null =
+    data?.billing_cycle === 'annual' ? 'yearly'
+    : data?.billing_cycle === 'monthly' ? 'monthly'
+    : null;
+
+  const plan: SubscriptionInfo['plan'] = sub === 'pro' ? 'pro' : sub === 'trial' ? 'trial' : 'none';
+  const status: SubscriptionInfo['status'] =
+    sub === 'trial' ? 'trialing' : sub === 'pro' ? 'active' : 'canceled';
 
   return {
-    plan: (userPlan === 'trial' ? 'trial' : 'pro'),
-    billingCycle: 'monthly',
-    nextRenewalDate: store.subscriptionPeriodEnd ? new Date(store.subscriptionPeriodEnd) : trialEndsAt,
+    plan,
+    billingCycle,
+    nextRenewalDate: periodEnd,
     paymentMethod: null,
-    status: isTrialing ? 'trialing' : 'active',
-    trialEndsAt,
-    cancelAtPeriodEnd: store.cancelAtPeriodEnd ?? false,
+    status,
+    trialEndsAt: sub === 'trial' ? periodEnd : null,
+    cancelAtPeriodEnd: !!data?.cancel_at_period_end,
   };
 }
 
