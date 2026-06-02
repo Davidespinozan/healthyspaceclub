@@ -21,6 +21,9 @@ verify_jwt = true
 [functions.stripe-change-cycle]
 verify_jwt = true
 
+[functions.stripe-get-invoices]
+verify_jwt = true
+
 [functions.stripe-portal]
 verify_jwt = true
 

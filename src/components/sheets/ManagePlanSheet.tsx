@@ -133,6 +133,10 @@ export default function ManagePlanSheet({ onClose }: Props) {
   const isTrialing = subscription?.status === 'trialing';
   const currentCycle = subscription?.billingCycle ?? 'monthly';
   const renewalDate = subscription?.nextRenewalDate ?? null;
+  // Se puede cambiar de ciclo si hay una sub real (trial o activa). Durante el
+  // trial es seguro: no hay cobro hasta que termina; solo cambia el precio
+  // futuro. Mientras carga (subscription === null) → false, sin parpadeo.
+  const canSwitchCycle = subscription?.status === 'active' || subscription?.status === 'trialing';
 
   return createPortal(
     <div className="sh-overlay" onClick={onClose}>
@@ -237,7 +241,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                     : <>{t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.</>}
                 </p>
               )}
-              {!isTrialing && currentCycle === 'yearly' && (
+              {canSwitchCycle && currentCycle === 'yearly' && (
                 <button type="button" className="mps-plan-cta-secondary" disabled={busy} onClick={() => handleChangeCycle('monthly')}>
                   {t('managePlan.switchToMonthly')}
                 </button>
@@ -264,7 +268,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                     : <>{t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.</>}
                 </p>
               )}
-              {!isTrialing && currentCycle === 'monthly' && (
+              {canSwitchCycle && currentCycle === 'monthly' && (
                 <button type="button" className="sh-cta mps-plan-cta-primary" disabled={busy} onClick={() => handleChangeCycle('yearly')}>
                   {t('managePlan.switchToYearly')}
                 </button>
