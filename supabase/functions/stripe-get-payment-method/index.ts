@@ -39,7 +39,18 @@ Deno.serve(async (req: Request) => {
     });
     // customer puede ser DeletedCustomer; acceso defensivo.
     // deno-lint-ignore no-explicit-any
-    const pm = (customer as any)?.invoice_settings?.default_payment_method;
+    let pm = (customer as any)?.invoice_settings?.default_payment_method;
+
+    // Fallback: la tarjeta puede estar ADJUNTA al customer sin ser la default
+    // (ej. alta vía SetupIntent cuando create-subscription cortó por 409 antes
+    // de fijarla como default). Listar las adjuntas y usar la primera.
+    if (!pm?.card) {
+      const list = await stripe.paymentMethods.list({
+        customer: customerId, type: 'card', limit: 1,
+      });
+      pm = list.data[0] ?? null;
+    }
+
     const card = pm?.card;
     if (!card) return json({ paymentMethod: null }, 200);
 
