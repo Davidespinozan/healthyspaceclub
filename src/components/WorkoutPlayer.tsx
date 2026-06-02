@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { useT } from '../i18n';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
 import {
@@ -57,6 +58,7 @@ export default function WorkoutPlayer({
   onComplete,
   onClose,
 }: Props) {
+  const { t } = useT();
   const exerciseMap = useMemo(
     () => new Map(exerciseBank.map(e => [e.id, e])),
     [exerciseBank],
@@ -239,7 +241,7 @@ export default function WorkoutPlayer({
       onClose();
       return;
     }
-    if (confirm('¿Salir de la sesión? Tu progreso se guarda automáticamente.')) {
+    if (confirm(t('workout.exitConfirm'))) {
       onClose();
     }
   }
@@ -263,20 +265,20 @@ export default function WorkoutPlayer({
     <div className="wp">
       {/* Header siempre visible */}
       <div className="wp-header">
-        <button className="wp-header-btn" onClick={handleExit} aria-label="Cerrar">
+        <button className="wp-header-btn" onClick={handleExit} aria-label={t('workout.close')}>
           <X size={20} />
         </button>
         <div className="wp-header-title">
           {phase === 'completed'
-            ? <em>completado</em>
-            : <>ejercicio {currentExerciseIndex + 1} <span className="wp-header-of">de</span> {totalExercises}</>}
+            ? <em>{t('workout.completed')}</em>
+            : <>{t('workout.exercise')} {currentExerciseIndex + 1} <span className="wp-header-of">{t('workout.of')}</span> {totalExercises}</>}
         </div>
         <div className="wp-header-counter">
           {phase === 'exercise' || phase === 'paused' ? (
             <button
               className="wp-header-btn"
               onClick={handlePause}
-              aria-label={phase === 'paused' ? 'Continuar' : 'Pausar'}
+              aria-label={phase === 'paused' ? t('workout.resume') : t('workout.pause')}
             >
               {phase === 'paused' ? <Play size={18} /> : <Pause size={18} />}
             </button>
@@ -297,7 +299,7 @@ export default function WorkoutPlayer({
           <div className="wp-video-area">
             <div className="wp-video-fallback">
               <div className="wp-video-emoji"><DisplayIcon size={56} strokeWidth={1.5} /></div>
-              <p className="wp-video-label">Video próximamente</p>
+              <p className="wp-video-label">{t('workout.videoSoon')}</p>
             </div>
           </div>
 
@@ -316,9 +318,9 @@ export default function WorkoutPlayer({
 
           <div className="wp-sets">
             <div className="wp-sets-head">
-              <span className="wp-sets-label">SERIES · {totalSetsForCurrent} × {currentEx.reps}</span>
+              <span className="wp-sets-label">{t('workout.setsLabel')} · {totalSetsForCurrent} × {currentEx.reps}</span>
               <span className="wp-sets-counter">
-                {Math.min(setsRegisteredForCurrent, totalSetsForCurrent)} de {totalSetsForCurrent}
+                {Math.min(setsRegisteredForCurrent, totalSetsForCurrent)} {t('workout.of')} {totalSetsForCurrent}
               </span>
             </div>
             <div className="wp-set-rows">
@@ -349,15 +351,15 @@ export default function WorkoutPlayer({
                       {isDone && <Check size={14} strokeWidth={2} />}
                     </span>
                     <span className="wp-set-row-label">
-                      Serie {setIdx + 1}
+                      {t('workout.set')} {setIdx + 1}
                       {isDone && entry && (
-                        <span className="wp-set-row-vals"> · {entry.reps} reps · {entry.kg}kg</span>
+                        <span className="wp-set-row-vals"> · {entry.reps} {t('workout.repsLower')} · {entry.kg}kg</span>
                       )}
                       {isSkipped && (
-                        <span className="wp-set-row-vals wp-set-row-vals--muted"> · saltada</span>
+                        <span className="wp-set-row-vals wp-set-row-vals--muted"> · {t('workout.skipped')}</span>
                       )}
                       {isActive && (
-                        <span className="wp-set-row-hint"> · tocá para marcar</span>
+                        <span className="wp-set-row-hint"> · {t('workout.tapToMark')}</span>
                       )}
                     </span>
                     <span className="wp-set-row-icon">
@@ -374,7 +376,7 @@ export default function WorkoutPlayer({
               className={`wp-cta${!allSetsRegistered ? ' wp-cta-secondary' : ''}`}
               onClick={goToNextExercise}
             >
-              {currentExerciseIndex + 1 >= totalExercises ? 'Terminar sesión' : 'Siguiente ejercicio'}
+              {currentExerciseIndex + 1 >= totalExercises ? t('workout.finishSession') : t('workout.nextExercise')}
               <ChevronRight size={18} />
             </button>
           </div>
@@ -385,16 +387,16 @@ export default function WorkoutPlayer({
       {phase === 'paused' && (
         <div className="wp-paused">
           <Pause size={48} className="wp-paused-icon" />
-          <p className="wp-paused-label">En pausa</p>
+          <p className="wp-paused-label">{t('workout.pausedLabel')}</p>
           <p className="wp-paused-sub">
-            Ejercicio {currentExerciseIndex + 1} de {totalExercises} · {setsRegisteredForCurrent} de {totalSetsForCurrent} series
+            {t('workout.pausedSub', { i: currentExerciseIndex + 1, total: totalExercises, done: setsRegisteredForCurrent, sets: totalSetsForCurrent })}
           </p>
           <div className="wp-cta-wrap">
             <button className="wp-cta" onClick={handlePause}>
-              <Play size={18} /> Continuar
+              <Play size={18} /> {t('workout.resume')}
             </button>
             <button className="wp-skip" onClick={handleExit}>
-              salir de la sesión
+              {t('workout.exitSession')}
             </button>
           </div>
         </div>
@@ -404,7 +406,7 @@ export default function WorkoutPlayer({
       {phase === 'completed' && (
         <div className="wp-completed">
           <div className="wp-completed-check"><Check size={32} strokeWidth={2.5} /></div>
-          <h2 className="wp-completed-title">¡Sesión completada!</h2>
+          <h2 className="wp-completed-title">{t('workout.completedTitle')}</h2>
           <div className="wp-completed-stats">
             <div className="wp-completed-stat">
               <div className="wp-completed-stat-val">{completedStats.minutes}</div>
@@ -412,22 +414,22 @@ export default function WorkoutPlayer({
             </div>
             <div className="wp-completed-stat">
               <div className="wp-completed-stat-val">{completedStats.totalSetsCompleted}</div>
-              <div className="wp-completed-stat-lbl">series</div>
+              <div className="wp-completed-stat-lbl">{t('workout.setsLower')}</div>
             </div>
             <div className="wp-completed-stat">
               <div className="wp-completed-stat-val">{completedStats.totalKg}</div>
-              <div className="wp-completed-stat-lbl">kg total</div>
+              <div className="wp-completed-stat-lbl">{t('workout.kgTotal')}</div>
             </div>
           </div>
           {workout.cooldown && (
             <div className="wp-prep-section">
-              <div className="wp-prep-section-label">Enfriamiento</div>
+              <div className="wp-prep-section-label">{t('workout.cooldown')}</div>
               <p className="wp-prep-section-text">{workout.cooldown}</p>
             </div>
           )}
           <div className="wp-cta-wrap">
             <button className="wp-cta" onClick={onClose}>
-              Terminar
+              {t('workout.finish')}
             </button>
           </div>
         </div>
@@ -438,10 +440,10 @@ export default function WorkoutPlayer({
         <div className="wp-rest-bar" role="status" aria-live="polite">
           <span className="wp-rest-bar-label">
             <span className="wp-rest-bar-dot" />
-            descansando {formatTime(restState.secondsLeft)}
+            {t('workout.resting', { time: formatTime(restState.secondsLeft) })}
           </span>
           <button className="wp-rest-bar-skip" onClick={skipRest} type="button">
-            saltar
+            {t('workout.skip')}
           </button>
         </div>
       )}
@@ -451,16 +453,16 @@ export default function WorkoutPlayer({
         <div className="wp-edit-backdrop" onClick={saveEditSet}>
           <div className="wp-edit-popup" onClick={e => e.stopPropagation()}>
             <div className="wp-edit-handle" />
-            <div className="wp-edit-title">Serie {editingSet.setIndex + 1}</div>
+            <div className="wp-edit-title">{t('workout.set')} {editingSet.setIndex + 1}</div>
             <div className="wp-edit-fields">
               <div className="wp-edit-field">
-                <label className="wp-edit-label">Reps</label>
+                <label className="wp-edit-label">{t('workout.reps')}</label>
                 <div className="wp-edit-row">
                   <button
                     type="button"
                     className="wp-edit-btn"
                     onClick={() => setEditValues(v => ({ ...v, reps: Math.max(0, v.reps - 1) }))}
-                    aria-label="Restar 1 rep"
+                    aria-label={t('workout.ariaMinusRep')}
                   >
                     <Minus size={20} />
                   </button>
@@ -477,7 +479,7 @@ export default function WorkoutPlayer({
                     type="button"
                     className="wp-edit-btn"
                     onClick={() => setEditValues(v => ({ ...v, reps: v.reps + 1 }))}
-                    aria-label="Sumar 1 rep"
+                    aria-label={t('workout.ariaPlusRep')}
                   >
                     <Plus size={20} />
                   </button>
@@ -485,13 +487,13 @@ export default function WorkoutPlayer({
               </div>
 
               <div className="wp-edit-field">
-                <label className="wp-edit-label">Peso (kg)</label>
+                <label className="wp-edit-label">{t('workout.weightKg')}</label>
                 <div className="wp-edit-row">
                   <button
                     type="button"
                     className="wp-edit-btn"
                     onClick={() => setEditValues(v => ({ ...v, kg: Math.max(0, v.kg - 2.5) }))}
-                    aria-label="Restar 2.5 kg"
+                    aria-label={t('workout.ariaMinusKg')}
                   >
                     <Minus size={20} />
                   </button>
@@ -509,7 +511,7 @@ export default function WorkoutPlayer({
                     type="button"
                     className="wp-edit-btn"
                     onClick={() => setEditValues(v => ({ ...v, kg: v.kg + 2.5 }))}
-                    aria-label="Sumar 2.5 kg"
+                    aria-label={t('workout.ariaPlusKg')}
                   >
                     <Plus size={20} />
                   </button>
@@ -517,7 +519,7 @@ export default function WorkoutPlayer({
               </div>
             </div>
             <button className="wp-edit-done" onClick={saveEditSet} type="button">
-              Listo
+              {t('workout.done')}
             </button>
           </div>
         </div>

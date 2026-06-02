@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import type { Exercise, ExerciseVideo, Equipment } from '../types';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
+import { useT } from '../i18n';
 import './exercise-detail-popout.css';
 
 interface Props {
@@ -26,6 +27,7 @@ export default function ExerciseDetailPopout({
   userEquipment,
   onClose,
 }: Props) {
+  const { t } = useT();
   // Variante específica del equipo del usuario (si aplica)
   const variant = userEquipment ? selectVariantForEquipment(exercise, userEquipment) : null;
   const displayName = variant ? `${exercise.name} — ${variant.name}` : exercise.name;
@@ -54,7 +56,7 @@ export default function ExerciseDetailPopout({
           .order('display_order', { ascending: true });
 
         if (!error && data && data.length > 0) {
-          setVideos(data.map(v => ({ url: v.video_url, label: v.label || 'Ejecución' })));
+          setVideos(data.map(v => ({ url: v.video_url, label: v.label || t('workout.execution') })));
         }
       } catch (e) {
         console.warn('[popout] video fetch failed:', e);
@@ -266,7 +268,7 @@ export default function ExerciseDetailPopout({
               <div className="edp-hero-emoji">
                 {(() => { const Ic = getExerciseIcon(exercise); return <Ic size={56} strokeWidth={1.5} />; })()}
               </div>
-              <p className="edp-hero-no-video">Video próximamente</p>
+              <p className="edp-hero-no-video">{t('workout.videoSoon')}</p>
             </div>
           )}
         </div>
@@ -286,22 +288,22 @@ export default function ExerciseDetailPopout({
           <div className="edp-stats">
             <div className="edp-stat">
               <div className="edp-stat-val">{planData.sets}</div>
-              <div className="edp-stat-lbl">series</div>
+              <div className="edp-stat-lbl">{t('workout.setsLower')}</div>
             </div>
             <div className="edp-stat">
               <div className="edp-stat-val">{planData.reps}</div>
-              <div className="edp-stat-lbl">reps</div>
+              <div className="edp-stat-lbl">{t('workout.repsLower')}</div>
             </div>
             <div className="edp-stat">
               <div className="edp-stat-val">{planData.rest}s</div>
-              <div className="edp-stat-lbl">descanso</div>
+              <div className="edp-stat-lbl">{t('workout.statRest')}</div>
             </div>
           </div>
 
           {/* Personalized tip */}
           {planData.tip_personalizado && (
             <div className="edp-tip">
-              <div className="edp-tip-label">Tu coach dice</div>
+              <div className="edp-tip-label">{t('workout.coachSays')}</div>
               <p className="edp-tip-text">{planData.tip_personalizado}</p>
             </div>
           )}
@@ -309,7 +311,7 @@ export default function ExerciseDetailPopout({
           {/* Pedagogical steps */}
           {exercise.steps && exercise.steps.length > 0 && (
             <div className="edp-steps">
-              <div className="edp-steps-label">Cómo hacerlo bien</div>
+              <div className="edp-steps-label">{t('workout.howToDoIt')}</div>
               {exercise.steps.map((step, i) => (
                 <div key={i} className="edp-step">
                   <div className="edp-step-num">{i + 1}</div>
