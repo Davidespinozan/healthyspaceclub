@@ -31,7 +31,9 @@ export async function getCachedWorkout(
       .from('workout_cache')
       .select('workout_json, hits')
       .eq('config_hash', configHash)
-      .single();
+      // maybeSingle (no single): en cache miss devuelve data:null sin error.
+      // single tiraba 406 (Not Acceptable) en 0 filas → ruido en consola.
+      .maybeSingle();
 
     const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) => {
       setTimeout(() => resolve({ data: null, error: { message: 'cache lookup timeout' } }), 5000);
