@@ -1,4 +1,6 @@
 import type { Exercise } from '../types';
+import type { AppLanguage } from '../store';
+import { exercisesEn } from './exercises.en';
 
 // ════════════════════════════════════════════════════════════════
 // BANCO DE EJERCICIOS — Modelo "Patrón + Variantes"
@@ -3005,3 +3007,20 @@ export const exercises: Exercise[] = [
     bg: 'linear-gradient(135deg,#f0e0d0,#e8d0b8)',
   },
 ];
+
+// i18n de contenido (A2a): devuelve el banco con name/desc/tip traducidos
+// cuando locale==='en' (overlay exercises.en.ts). steps/variants → A2b.
+// IDs/muscleGroup/equipment/etc. nunca cambian.
+export function getExercises(lang: AppLanguage): Exercise[] {
+  if (lang !== 'en') return exercises;
+  return exercises.map((ex) => {
+    const o = exercisesEn[ex.id];
+    if (!o) return ex;
+    return {
+      ...ex,
+      ...(o.name ? { name: o.name } : {}),
+      ...(o.desc ? { desc: o.desc } : {}),
+      ...(o.tip ? { tip: o.tip } : {}),
+    };
+  });
+}

@@ -6,7 +6,7 @@ import { scalePlan } from '../utils/scalePlan';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
-import { exercises as exerciseBank } from '../data/exercises';
+import { getExercises } from '../data/exercises';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 import MealDetailPopout from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
@@ -51,7 +51,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const isPlanActive = userPlan && userPlan !== 'none' &&
     (!trialEndsAt || new Date(trialEndsAt) > new Date());
 
-  // HSM bank localizado (i18n contenido). getDailyQuestion cierra sobre él.
+  // Banco de ejercicios + HSM localizados (i18n contenido).
+  const exerciseBank = getExercises(locale);
+  // HSM bank localizado. getDailyQuestion cierra sobre él.
   const HSM_BANK = getHSMBank(locale);
   const getDailyQuestion = (dimIndex: number, dayIndex: number) => {
     const dim = HSM_BANK[dimIndex];

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
-import { exercises as exerciseBank } from '../data/exercises';
+import { getExercises } from '../data/exercises';
 import {
   decideTodayWorkout,
   analyzeWorkoutHistory,
@@ -57,6 +57,7 @@ interface DailyTrainerProps {
 
 export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) {
   const { locale } = useT();
+  const exerciseBank = getExercises(locale);
   const userName = useAppStore(s => s.userName);
   const obData = useAppStore(s => s.obData);
   const workoutLog = useAppStore(s => s.workoutLog);
