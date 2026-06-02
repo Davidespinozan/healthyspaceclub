@@ -184,7 +184,7 @@
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.18em;
-  text-transform: uppercase;
+  text-transform: none;
   color: rgba(246, 242, 234, 0.55);
   margin: 0;
   font-style: italic;
@@ -207,7 +207,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   z-index: 5;
   pointer-events: none;
 }
@@ -375,13 +375,13 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--edp-amber);
   margin: 0 0 8px;
 }
 
 .edp-name {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 24px;
   font-weight: 500;
   letter-spacing: var(--tracking-tighter);
@@ -397,7 +397,7 @@
 }
 
 .edp-desc {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 13.5px;
   color: var(--edp-txt2);
   line-height: 1.55;
@@ -444,7 +444,7 @@
 }
 
 .edp-stat-val {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 24px;
   font-weight: 400;
   color: var(--edp-forest);
@@ -458,7 +458,7 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--tracking-kicker);
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--edp-txt2);
 }
 
@@ -481,13 +481,13 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--tracking-kicker-loose);
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--edp-amber);
   margin-bottom: 5px;
 }
 
 .edp-tip-text {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 13px;
   color: var(--edp-forest);
   line-height: 1.55;
@@ -506,7 +506,7 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--edp-forest);
   margin: 0 0 12px;
 }

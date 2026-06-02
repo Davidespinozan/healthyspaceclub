@@ -371,7 +371,7 @@ export default function WeeklyNutritionPlanner() {
               <div
                 className="wz-option-thumb"
                 style={{
-                  fontFamily: 'Georgia, "Times New Roman", serif',
+                  fontFamily: 'Montserrat, sans-serif',
                   fontStyle: 'italic',
                   fontWeight: 600,
                   fontSize: '20px',

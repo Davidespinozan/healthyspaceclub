@@ -80,7 +80,7 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther 
           {onLogOther && (
             <>
               <p style={{
-                fontFamily: 'Georgia, serif', fontStyle: 'italic',
+                fontFamily: 'Montserrat, sans-serif', fontStyle: 'italic',
                 fontSize: '.82rem', color: 'var(--txt2)',
                 margin: 0, textAlign: 'center',
               }}>

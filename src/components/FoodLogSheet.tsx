@@ -142,7 +142,7 @@ export default function FoodLogSheet({ mealTime, mealIndex, onClose, onLogged }:
                 rows={3}
               />
               <p style={{
-                fontFamily: 'Georgia, serif', fontStyle: 'italic',
+                fontFamily: 'Montserrat, sans-serif', fontStyle: 'italic',
                 fontSize: '.78rem', color: 'var(--txt2)',
                 margin: '4px 0 0', lineHeight: 1.4,
               }}>
@@ -180,7 +180,7 @@ export default function FoodLogSheet({ mealTime, mealIndex, onClose, onLogged }:
                 })}
               </div>
               <p style={{
-                fontFamily: 'Georgia, serif', fontStyle: 'italic',
+                fontFamily: 'Montserrat, sans-serif', fontStyle: 'italic',
                 fontSize: '.78rem', color: 'var(--txt2)',
                 margin: '8px 0 0', lineHeight: 1.4,
               }}>

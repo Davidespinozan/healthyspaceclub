@@ -78,7 +78,7 @@
 }
 
 .sh-title {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.6rem;
   font-weight: 500;
   margin: 0;
@@ -113,7 +113,7 @@
   font-weight: 600;
   margin: 0 0 10px;
   color: rgba(21, 51, 48, 0.5);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: var(--tracking-kicker-loose);
 }
 
@@ -178,13 +178,13 @@
 .sh-plan-badge-label {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.72rem;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: var(--tracking-kicker);
   opacity: 0.65;
   font-weight: 600;
 }
 .sh-plan-badge-name {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.4rem;
   font-weight: 500;
   letter-spacing: var(--tracking-tighter);
@@ -259,7 +259,7 @@
   font-size: 0.7rem;
   font-weight: 600;
   color: rgba(21, 51, 48, 0.55);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: var(--tracking-kicker);
 }
 .sh-input {
@@ -330,7 +330,7 @@
   color: var(--amber, #d4976b);
   font-size: 0.72rem;
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.08em;
   padding: 5px 10px;
   border-radius: 999px;
@@ -437,7 +437,7 @@
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-transform: none;
   padding: 4px 10px;
   border-radius: 999px;
 }
@@ -456,7 +456,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   color: rgba(21, 51, 48, 0.7);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.06em;
 }
 .mps-plan-price {

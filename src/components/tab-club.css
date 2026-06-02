@@ -20,7 +20,7 @@
 }
 
 .clb-title {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 26px;
   font-weight: 500;
   color: var(--forest);
@@ -34,7 +34,7 @@
   font-size: 10px;
   color: var(--forest);
   opacity: 0.5;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: var(--tracking-kicker);
   font-weight: 600;
 }
@@ -50,7 +50,7 @@
   text-align: center;
 }
 .clb-empty-text {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 16px;
   font-style: italic;
   color: var(--forest);

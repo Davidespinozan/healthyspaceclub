@@ -22,7 +22,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--amber);
   margin: 0 0 8px;
 }
@@ -109,7 +109,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--amber);
   margin: 0 0 8px;
 }
@@ -370,7 +370,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--sala-surface);
 }
 .wnp2-header-title {
@@ -458,7 +458,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--amber);
   flex: 1;
   text-align: left;
@@ -572,7 +572,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-transform: none;
   border-radius: 50px;
 }
 .wnp2-day-kcal-block {
@@ -648,7 +648,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--amber);
   margin-bottom: 3px;
   display: flex;
@@ -793,7 +793,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--terra);
   margin-bottom: 3px;
 }

@@ -54,7 +54,7 @@
 .yfp-header-btn:active { background: rgba(255, 255, 255, 0.85); transform: scale(0.95); }
 
 .yfp-header-title {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 13px;
   font-style: italic;
   font-weight: 500;
@@ -88,13 +88,13 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--tracking-kicker-loose);
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--yfp-amber);
   margin: 0 0 8px;
 }
 
 .yfp-prep-title {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 24px;
   font-weight: 500;
   letter-spacing: var(--tracking-tighter);
@@ -148,7 +148,7 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--tracking-kicker-loose);
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--yfp-sage);
   margin-bottom: 10px;
 }
@@ -197,7 +197,7 @@
   border-radius: var(--radius-base);
   background: linear-gradient(135deg, var(--yfp-forest), #1d3d39);
   color: var(--yfp-amber);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 16px;
   font-style: italic;
   font-weight: 500;
@@ -276,7 +276,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
+  text-transform: none;
   z-index: 5;
 }
 
@@ -501,7 +501,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--yfp-amber);
   margin: 0 0 8px;
 }
@@ -575,7 +575,7 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--yfp-amber);
   margin: 0 0 32px;
 }

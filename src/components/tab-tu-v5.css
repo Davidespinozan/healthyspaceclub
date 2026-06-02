@@ -50,7 +50,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 36px;
   color: var(--amber-deep);
   background: rgba(212, 165, 128, 0.18);
@@ -72,7 +72,7 @@
 }
 
 .tt5-name {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 22px;
   color: var(--forest);
   line-height: 1.1;
@@ -106,7 +106,7 @@
 .tt5-menu-btn:active { transform: scale(0.95); }
 
 .tt5-bio {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-style: italic;
   font-size: 12px;
   color: rgba(21, 51, 48, 0.55);
@@ -122,7 +122,7 @@
   border-radius: 999px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-style: italic;
   font-size: 11px;
   color: var(--amber-deep);
@@ -254,7 +254,7 @@ button.tt5-stat:active { transform: scale(0.97); }
   font-family: 'Montserrat', sans-serif;
   font-size: 9px;
   color: rgba(21, 51, 48, 0.45);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: var(--tracking-kicker-loose);
   font-weight: 600;
   margin-bottom: 8px;
@@ -263,7 +263,7 @@ button.tt5-stat:active { transform: scale(0.97); }
 .tt5-stat--logros .tt5-stat-label { color: rgba(124, 98, 50, 0.65); }
 
 .tt5-stat-num {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 26px;
   line-height: 1;
   color: var(--forest);
@@ -348,7 +348,7 @@ button.tt5-stat:active { transform: scale(0.97); }
 }
 
 .tt5-highlight-label {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-style: italic;
   font-size: 11px;
   color: var(--forest);
@@ -362,7 +362,7 @@ button.tt5-stat:active { transform: scale(0.97); }
   font-family: 'Montserrat', sans-serif;
   font-size: 9px;
   color: var(--terracota);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
   margin-top: 2px;
   font-weight: 600;
@@ -387,7 +387,7 @@ button.tt5-stat:active { transform: scale(0.97); }
   border: none;
   cursor: pointer;
   color: rgba(21, 51, 48, 0.45);
-  text-transform: uppercase;
+  text-transform: none;
   font-weight: 500;
   min-height: 44px;
   -webkit-tap-highlight-color: transparent;
@@ -434,7 +434,7 @@ button.tt5-stat:active { transform: scale(0.97); }
   text-align: center;
 }
 .tt5-reflections-empty-text {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Montserrat', sans-serif;
   font-style: italic;
   font-size: 14px;
   color: rgba(21, 51, 48, 0.55);

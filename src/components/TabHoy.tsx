@@ -446,6 +446,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
       {/* ── HERO editorial ── */}
       <header className="th3-hero">
+        {/* Dark premium FX: glow orbs animados (gradientes van en el background) */}
+        <div className="th3-hero-fx" aria-hidden="true">
+          <div className="th3-hero-orb th3-hero-orb-1" />
+          <div className="th3-hero-orb th3-hero-orb-2" />
+        </div>
         <div className="th3-hero-top">
           <div className="th3-hero-brand">
             <Logo variant="icon" size={44} className="th3-hero-icon" />
