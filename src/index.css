@@ -6299,6 +6299,8 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 
   /* Main content shifts right */
   .app-main { margin-left: 220px; padding-bottom: 0; }
+  /* El banner de past_due también respeta la sidebar fija en desktop */
+  .pastdue-banner { margin-left: 220px; }
   .tab-content { max-width: 800px; padding: 28px 40px; }
   .th-header, .tc-header, .tm-hero, .tt-metrics { padding-left: 40px; padding-right: 40px; }
 
