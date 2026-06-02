@@ -10,6 +10,7 @@
 //   estén disponibles después de generar (regen + WorkoutPlayer)
 
 import { Lock } from 'lucide-react';
+import { useT } from '../../i18n';
 import type { Modality, Equipment } from '../../types';
 import {
   MODALITY_OPTIONS,
@@ -64,6 +65,7 @@ export default function Wizard({
   selectedEquipment, setSelectedEquipment,
   onGenerate,
 }: WizardProps) {
+  const { t } = useT();
   // Navegación entre pasos — saltar physical cuando skipPhysical es true.
   function handleModalityNext() {
     if (skipPhysical) setPhase('logistics');
@@ -86,9 +88,9 @@ export default function Wizard({
             <div className="wz-stepper-bar" />
             {!skipPhysical && <div className="wz-stepper-bar" />}
           </div>
-          <p className="wz-eyebrow">paso 1 · {todayDayName} {todayDateShort}</p>
+          <p className="wz-eyebrow">{t('wizard.step1', { day: todayDayName, date: todayDateShort })}</p>
           <h1 className="wz-title">
-            {firstName ? `${firstName}, ` : ''}<em>¿qué quieres hacer hoy?</em>
+            {firstName ? `${firstName}, ` : ''}<em>{t('wizard.modalityQ')}</em>
           </h1>
         </div>
 
@@ -100,7 +102,7 @@ export default function Wizard({
             const isSuggested = suggestion.modality === opt.value;
 
             // Dynamic sub-label for auto
-            let subLabel = opt.sub;
+            let subLabel = opt.subKey ? t(opt.subKey) : '';
             if (opt.value === 'auto') {
               subLabel = suggestion.reason;
             }
@@ -119,10 +121,10 @@ export default function Wizard({
                 </div>
                 <div className="wz-option-body">
                   <div className="wz-option-label">
-                    {opt.label}
-                    {isSuggested && !locked && <span className="wz-option-badge">sugerido</span>}
+                    {t(opt.labelKey)}
+                    {isSuggested && !locked && <span className="wz-option-badge">{t('wizard.suggested')}</span>}
                   </div>
-                  <div className="wz-option-sub">{locked ? 'Próximamente' : subLabel}</div>
+                  <div className="wz-option-sub">{locked ? t('wizard.comingSoon') : subLabel}</div>
                 </div>
                 {isSelected && !locked && <div className="wz-option-check">✓</div>}
               </button>
@@ -131,7 +133,7 @@ export default function Wizard({
         </div>
 
         <button className="wz-cta" onClick={handleModalityNext}>
-          Siguiente →
+          {t('wizard.next')}
         </button>
       </div>
     );
@@ -149,14 +151,14 @@ export default function Wizard({
             <div className="wz-stepper-bar active" />
             <div className="wz-stepper-bar" />
           </div>
-          <p className="wz-eyebrow">paso 2 · contexto físico</p>
+          <p className="wz-eyebrow">{t('wizard.step2')}</p>
           <h1 className="wz-title">
-            <em>¿Cómo vienes hoy?</em>
+            <em>{t('wizard.physicalQ')}</em>
           </h1>
         </div>
 
         <div className="wz-q">
-          <p className="wz-q-label">¿Ya hiciste ejercicio hoy?</p>
+          <p className="wz-q-label">{t('wizard.priorQ')}</p>
           <div className="wz-chips wz-chips-col">
             {PRIOR_EXERCISE_OPTIONS.map(opt => (
               <button
@@ -165,14 +167,14 @@ export default function Wizard({
                 onClick={() => setPriorExercise(opt.value)}
               >
                 <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
-                <span>{opt.label}</span>
+                <span>{t(opt.labelKey)}</span>
               </button>
             ))}
           </div>
         </div>
 
         <div className="wz-q">
-          <p className="wz-q-label">¿Alguna molestia hoy?</p>
+          <p className="wz-q-label">{t('wizard.discomfortQ')}</p>
           <div className="wz-chips wz-chips-col">
             {DISCOMFORT_OPTIONS.map(opt => (
               <button
@@ -181,7 +183,7 @@ export default function Wizard({
                 onClick={() => setDiscomfort(opt.value)}
               >
                 <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
-                <span>{opt.label}</span>
+                <span>{t(opt.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -189,15 +191,15 @@ export default function Wizard({
 
         {discomfort === 'pain' && (
           <div className="wz-q">
-            <p className="wz-q-label">¿Dónde?</p>
+            <p className="wz-q-label">{t('wizard.whereQ')}</p>
             <div className="wz-chips">
               {PAIN_AREAS.map(area => (
                 <button
-                  key={area}
-                  className={`wz-chip${painArea === area ? ' on' : ''}`}
-                  onClick={() => setPainArea(area)}
+                  key={area.value}
+                  className={`wz-chip${painArea === area.value ? ' on' : ''}`}
+                  onClick={() => setPainArea(area.value)}
                 >
-                  {area}
+                  {t(area.labelKey)}
                 </button>
               ))}
             </div>
@@ -205,11 +207,11 @@ export default function Wizard({
         )}
 
         <button className="wz-cta" onClick={handlePhysicalNext}>
-          Siguiente →
+          {t('wizard.next')}
         </button>
 
         <div className="wz-back">
-          <button className="wz-back-link" onClick={() => setPhase('modality')}>← Anterior</button>
+          <button className="wz-back-link" onClick={() => setPhase('modality')}>{t('wizard.back')}</button>
         </div>
       </div>
     );
@@ -229,14 +231,14 @@ export default function Wizard({
             {!skipPhysical && <div className="wz-stepper-bar done" />}
             <div className="wz-stepper-bar active" />
           </div>
-          <p className="wz-eyebrow">paso {stepNum} · logística</p>
+          <p className="wz-eyebrow">{t('wizard.step3', { n: stepNum })}</p>
           <h1 className="wz-title">
-            <em>Últimos detalles</em>
+            <em>{t('wizard.logisticsTitle')}</em>
           </h1>
         </div>
 
         <div className="wz-q">
-          <p className="wz-q-label">¿Cuánto tiempo tienes?</p>
+          <p className="wz-q-label">{t('wizard.timeQ')}</p>
           <div className="wz-chips wz-chips-3">
             {TIME_OPTIONS.map(opt => (
               <button
@@ -252,7 +254,7 @@ export default function Wizard({
 
         {selectedModality !== 'yoga' && (
           <div className="wz-q">
-            <p className="wz-q-label">¿Dónde estás hoy?</p>
+            <p className="wz-q-label">{t('wizard.equipmentQ')}</p>
             <div className="wz-chips wz-chips-col">
               {EQUIPMENT_OPTIONS.map(opt => (
                 <button
@@ -261,7 +263,7 @@ export default function Wizard({
                   onClick={() => setSelectedEquipment(opt.value)}
                 >
                   <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
-                  <span>{opt.label}</span>
+                  <span>{t(opt.labelKey)}</span>
                 </button>
               ))}
             </div>
@@ -269,11 +271,11 @@ export default function Wizard({
         )}
 
         <button className="wz-cta" onClick={onGenerate}>
-          Arma mi <em>rutina</em> →
+          {t('wizard.generatePre')} <em>{t('wizard.routine')}</em> →
         </button>
 
         <div className="wz-back">
-          <button className="wz-back-link" onClick={() => setPhase(skipPhysical ? 'modality' : 'physical')}>← Anterior</button>
+          <button className="wz-back-link" onClick={() => setPhase(skipPhysical ? 'modality' : 'physical')}>{t('wizard.back')}</button>
         </div>
       </div>
     );
