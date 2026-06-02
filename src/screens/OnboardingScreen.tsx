@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
+import { useT } from '../i18n';
+import type { TranslationKey } from '../i18n/es';
 
 const TOTAL_STEPS = 8;
 
 export default function OnboardingScreen() {
+  const { t } = useT();
   const { userName, setUserName, setObData, finishOnboardingCalc, finishOnboarding, addWeight } = useAppStore();
 
   const [step, setStep] = useState(1);
@@ -30,10 +33,10 @@ export default function OnboardingScreen() {
   // Processing animation
   const [processingLine, setProcessingLine] = useState(0);
   const processingTexts = [
-    'Calculando tu metabolismo...',
-    'Diseñando tu plan de nutrición...',
-    'Preparando tu coach personal...',
-    'Activando el Healthy Space Method...',
+    t('onboarding.proc1'),
+    t('onboarding.proc2'),
+    t('onboarding.proc3'),
+    t('onboarding.proc4'),
   ];
 
   function goNext() {
@@ -64,15 +67,15 @@ export default function OnboardingScreen() {
     setSignupError('');
 
     if (signupName.trim().length < 2) {
-      setSignupError('Ingresa tu nombre (mínimo 2 caracteres).');
+      setSignupError(t('onboarding.errName'));
       return;
     }
     if (!signupEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupEmail.trim())) {
-      setSignupError('Ingresa un correo válido.');
+      setSignupError(t('onboarding.errEmail'));
       return;
     }
     if (signupPassword.length < 8) {
-      setSignupError('Mínimo 8 caracteres.');
+      setSignupError(t('onboarding.errPassword'));
       return;
     }
 
@@ -85,7 +88,7 @@ export default function OnboardingScreen() {
 
       if (error) {
         if (error.message.includes('already registered') || error.message.includes('already exists')) {
-          setSignupError('Este correo ya está registrado. Inicia sesión desde la landing.');
+          setSignupError(t('onboarding.errExists'));
         } else {
           setSignupError(error.message);
         }
@@ -94,7 +97,7 @@ export default function OnboardingScreen() {
       }
 
       if (!data.session) {
-        setSignupError('No se pudo crear la sesión. Contacta soporte.');
+        setSignupError(t('onboarding.errNoSession'));
         setSignupLoading(false);
         return;
       }
@@ -104,7 +107,7 @@ export default function OnboardingScreen() {
       setObData('name', displayName);
       goNext();
     } catch {
-      setSignupError('Error al crear cuenta. Intenta de nuevo.');
+      setSignupError(t('onboarding.errGeneric'));
     } finally {
       setSignupLoading(false);
     }
@@ -157,12 +160,13 @@ export default function OnboardingScreen() {
   // Can go back?
   const showBack = step >= 2 && step <= 6;
 
-  // Goal label for result screen
-  const goalLabels: Record<string, string> = {
-    'Ganar músculo': 'Ganancia muscular · +300 kcal',
-    'Bajar grasa': 'Pérdida de grasa · -500 kcal',
-    'Recomposición': 'Recomposición corporal · -200 kcal',
-    'Bienestar integral': 'Bienestar integral · mantenimiento',
+  // Goal label for result screen. La KEY (valor en español) la usa el motor;
+  // solo se traduce el texto mostrado.
+  const goalLabelKeys: Record<string, TranslationKey> = {
+    'Ganar músculo': 'onboarding.resultGain',
+    'Bajar grasa': 'onboarding.resultLose',
+    'Recomposición': 'onboarding.resultRecomp',
+    'Bienestar integral': 'onboarding.resultWellness',
   };
 
   return (
@@ -186,8 +190,8 @@ export default function OnboardingScreen() {
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
           <div className="onb-center">
             <div className="onb-brand">Healthy Space</div>
-            <div className="onb-brand-sub">Tu coach de vida, nutrición y crecimiento personal</div>
-            <button className="onb-btn-gold" onClick={goNext}>Comenzar mi proceso</button>
+            <div className="onb-brand-sub">{t('onboarding.brandSub')}</div>
+            <button className="onb-btn-gold" onClick={goNext}>{t('onboarding.start')}</button>
           </div>
         </div>
       )}
@@ -196,13 +200,13 @@ export default function OnboardingScreen() {
       {step === 2 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
           <div className="onb-center">
-            <h2 className="onb-question">Crea tu cuenta</h2>
-            <p className="onb-hint">Para guardar tu progreso entre dispositivos</p>
+            <h2 className="onb-question">{t('onboarding.createAccount')}</h2>
+            <p className="onb-hint">{t('onboarding.createAccountHint')}</p>
 
             <input
               className="onb-input-big"
               type="text"
-              placeholder="Tu nombre"
+              placeholder={t('onboarding.namePlaceholder')}
               autoComplete="name"
               autoFocus
               value={signupName}
@@ -211,7 +215,7 @@ export default function OnboardingScreen() {
             <input
               className="onb-input-big"
               type="email"
-              placeholder="tu@correo.com"
+              placeholder={t('onboarding.emailPlaceholder')}
               autoComplete="email"
               value={signupEmail}
               onChange={e => setSignupEmail(e.target.value)}
@@ -219,7 +223,7 @@ export default function OnboardingScreen() {
             <input
               className="onb-input-big"
               type="password"
-              placeholder="Contraseña (mínimo 8 caracteres)"
+              placeholder={t('onboarding.passwordPlaceholder')}
               autoComplete="new-password"
               value={signupPassword}
               onChange={e => setSignupPassword(e.target.value)}
@@ -232,7 +236,7 @@ export default function OnboardingScreen() {
               onClick={handleOnboardingSignup}
               disabled={signupLoading}
             >
-              {signupLoading ? 'Creando cuenta…' : 'Crear mi cuenta'}
+              {signupLoading ? t('onboarding.creating') : t('onboarding.createBtn')}
             </button>
           </div>
         </div>
@@ -242,7 +246,7 @@ export default function OnboardingScreen() {
       {step === 3 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
           <div className="onb-center">
-            <h2 className="onb-question">¿Cuál es tu sexo biológico?</h2>
+            <h2 className="onb-question">{t('onboarding.sexQuestion')}</h2>
             <div className="onb-cards-row">
               {(['Hombre', 'Mujer'] as const).map(s => (
                 <div
@@ -251,7 +255,7 @@ export default function OnboardingScreen() {
                   onClick={() => { setSex(s); setTimeout(goNext, 200); }}
                 >
                   <span className="onb-card-emoji">{s === 'Hombre' ? '🙋‍♂️' : '🙋‍♀️'}</span>
-                  <span className="onb-card-label">{s}</span>
+                  <span className="onb-card-label">{t(s === 'Hombre' ? 'onboarding.sexMale' : 'onboarding.sexFemale')}</span>
                 </div>
               ))}
             </div>
@@ -263,14 +267,14 @@ export default function OnboardingScreen() {
       {step === 4 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
           <div className="onb-center">
-            <h2 className="onb-question">¿Qué quieres lograr?</h2>
+            <h2 className="onb-question">{t('onboarding.goalQuestion')}</h2>
             <div className="onb-cards-col">
-              {[
-                { id: 'Ganar músculo', emoji: '💪', desc: 'Fuerza, volumen y progresión de cargas' },
-                { id: 'Bajar grasa', emoji: '🔥', desc: 'Perder grasa de forma sostenible' },
-                { id: 'Recomposición', emoji: '⚡', desc: 'Perder grasa y ganar músculo a la vez' },
-                { id: 'Bienestar integral', emoji: '🧘', desc: 'Energía, movilidad, menos estrés' },
-              ].map(o => (
+              {([
+                { id: 'Ganar músculo', emoji: '💪', titleKey: 'onboarding.goalGain', descKey: 'onboarding.goalGainDesc' },
+                { id: 'Bajar grasa', emoji: '🔥', titleKey: 'onboarding.goalLose', descKey: 'onboarding.goalLoseDesc' },
+                { id: 'Recomposición', emoji: '⚡', titleKey: 'onboarding.goalRecomp', descKey: 'onboarding.goalRecompDesc' },
+                { id: 'Bienestar integral', emoji: '🧘', titleKey: 'onboarding.goalWellness', descKey: 'onboarding.goalWellnessDesc' },
+              ] as const).map(o => (
                 <div
                   key={o.id}
                   className={`onb-card-option${goal === o.id ? ' selected' : ''}`}
@@ -278,8 +282,8 @@ export default function OnboardingScreen() {
                 >
                   <span className="onb-card-emoji">{o.emoji}</span>
                   <div>
-                    <div className="onb-card-title">{o.id}</div>
-                    <div className="onb-card-desc">{o.desc}</div>
+                    <div className="onb-card-title">{t(o.titleKey)}</div>
+                    <div className="onb-card-desc">{t(o.descKey)}</div>
                   </div>
                 </div>
               ))}
@@ -292,19 +296,19 @@ export default function OnboardingScreen() {
       {step === 5 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
           <div className="onb-center">
-            <h2 className="onb-question">Tus datos para personalizar todo</h2>
-            <p className="onb-hint">Calculamos tu metabolismo exacto con estos datos</p>
+            <h2 className="onb-question">{t('onboarding.dataQuestion')}</h2>
+            <p className="onb-hint">{t('onboarding.dataHint')}</p>
             <div className="onb-inputs-group">
               <div className="onb-input-field">
-                <label>Edad</label>
+                <label>{t('onboarding.age')}</label>
                 <input type="number" inputMode="numeric" placeholder="28" value={edad} onChange={e => setEdad(e.target.value)} />
               </div>
               <div className="onb-input-field">
-                <label>Peso (kg)</label>
+                <label>{t('onboarding.weightKg')}</label>
                 <input type="number" inputMode="decimal" placeholder="70" value={peso} onChange={e => setPeso(e.target.value)} />
               </div>
               <div className="onb-input-field">
-                <label>Altura (cm)</label>
+                <label>{t('onboarding.heightCm')}</label>
                 <input type="number" inputMode="numeric" placeholder="170" value={estatura} onChange={e => setEstatura(e.target.value)} />
               </div>
             </div>
@@ -313,7 +317,7 @@ export default function OnboardingScreen() {
               onClick={goNext}
               disabled={!edad || !peso || !estatura}
             >
-              Continuar
+              {t('onboarding.continue')}
             </button>
           </div>
         </div>
@@ -323,14 +327,14 @@ export default function OnboardingScreen() {
       {step === 6 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
           <div className="onb-center">
-            <h2 className="onb-question">¿Qué tan activo eres normalmente?</h2>
+            <h2 className="onb-question">{t('onboarding.activityQuestion')}</h2>
             <div className="onb-cards-col">
-              {[
-                { id: 'Sedentaria', emoji: '🛋', desc: 'Trabajo de escritorio, poco movimiento' },
-                { id: 'Ligera', emoji: '🚶', desc: 'Camino algo, actividad ocasional' },
-                { id: 'Moderada', emoji: '🏃', desc: 'Ejercicio 3-4 veces por semana' },
-                { id: 'Alta', emoji: '🏋', desc: 'Entreno intenso casi todos los días' },
-              ].map(o => (
+              {([
+                { id: 'Sedentaria', emoji: '🛋', titleKey: 'onboarding.actSed', descKey: 'onboarding.actSedDesc' },
+                { id: 'Ligera', emoji: '🚶', titleKey: 'onboarding.actLight', descKey: 'onboarding.actLightDesc' },
+                { id: 'Moderada', emoji: '🏃', titleKey: 'onboarding.actMod', descKey: 'onboarding.actModDesc' },
+                { id: 'Alta', emoji: '🏋', titleKey: 'onboarding.actHigh', descKey: 'onboarding.actHighDesc' },
+              ] as const).map(o => (
                 <div
                   key={o.id}
                   className={`onb-card-option${activity === o.id ? ' selected' : ''}`}
@@ -338,8 +342,8 @@ export default function OnboardingScreen() {
                 >
                   <span className="onb-card-emoji">{o.emoji}</span>
                   <div>
-                    <div className="onb-card-title">{o.id}</div>
-                    <div className="onb-card-desc">{o.desc}</div>
+                    <div className="onb-card-title">{t(o.titleKey)}</div>
+                    <div className="onb-card-desc">{t(o.descKey)}</div>
                   </div>
                 </div>
               ))}
@@ -370,18 +374,18 @@ export default function OnboardingScreen() {
       {step === 8 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
           <div className="onb-center">
-            <h2 className="onb-result-title">Todo listo, {userName}</h2>
+            <h2 className="onb-result-title">{t('onboarding.resultTitle', { name: userName })}</h2>
             <div className="onb-result-card">
               <div className="onb-result-kcal">
                 {useAppStore.getState().planGoal > 0
                   ? useAppStore.getState().planGoal.toLocaleString()
-                  : '—'} <span>kcal/día</span>
+                  : '—'} <span>{t('onboarding.kcalDay')}</span>
               </div>
-              <div className="onb-result-plan">{goalLabels[goal] || goal}</div>
-              <div className="onb-result-coach">Tu coach ya te conoce</div>
+              <div className="onb-result-plan">{goalLabelKeys[goal] ? t(goalLabelKeys[goal]) : goal}</div>
+              <div className="onb-result-coach">{t('onboarding.coachKnows')}</div>
             </div>
             <button className="onb-btn-gold" onClick={handleFinish}>
-              Entrar a mi espacio
+              {t('onboarding.enterSpace')}
             </button>
           </div>
         </div>
