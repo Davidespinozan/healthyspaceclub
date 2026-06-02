@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { X, SkipBack, SkipForward, Pause, Play, Volume2, VolumeX } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
+import { useT } from '../i18n';
+import { useAppStore } from '../store';
 import type { Exercise, YogaPlan, YogaPose } from '../types';
 import './yoga-flow-player.css';
 
@@ -15,8 +17,6 @@ interface Props {
   onComplete: () => void;
 }
 
-const DAY_NAMES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -24,12 +24,15 @@ function formatTime(seconds: number): string {
 }
 
 export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete }: Props) {
+  const { t } = useT();
+  const language = useAppStore(s => s.language);
+  const dateLocale = language === 'en' ? 'en-US' : 'es-ES';
   const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
   const poses = plan.poses;
   const totalPoses = poses.length;
-  const todayDayName = DAY_NAMES[new Date().getDay()];
+  const todayDayName = new Date().toLocaleDateString(dateLocale, { weekday: 'long' });
   const todayDate = new Date().getDate();
-  const todayMonth = new Date().toLocaleDateString('es-ES', { month: 'short' });
+  const todayMonth = new Date().toLocaleDateString(dateLocale, { month: 'short' });
 
   const [phase, setPhase] = useState<PlayerPhase>('preparation');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -117,7 +120,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     if (currentPose?.sides !== 'both') return null;
     const half = Math.floor(currentPose.duration / 2);
     const elapsed = currentPose.duration - secondsRemaining;
-    return elapsed < half ? 'lado derecho' : 'lado izquierdo';
+    return elapsed < half ? t('yoga.sideRight') : t('yoga.sideLeft');
   };
 
   // Round label
@@ -126,7 +129,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     const elapsed = currentPose.duration - secondsRemaining;
     const perRound = currentPose.duration / currentPose.repetitions;
     const round = Math.min(Math.floor(elapsed / perRound) + 1, currentPose.repetitions);
-    return `ronda ${round} de ${currentPose.repetitions}`;
+    return t('yoga.round', { r: round, total: currentPose.repetitions });
   };
 
   // Stats for completed screen
@@ -164,7 +167,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
         const { flowDate, currentIndex: savedIdx, secondsRemaining: savedSec } = JSON.parse(saved);
         const today = new Date().toISOString().split('T')[0];
         if (flowDate === today && savedIdx < poses.length - 1 && savedIdx > 0) {
-          const resume = confirm(`Tenías un flow en progreso (pose ${savedIdx + 1}). ¿Continuar?`);
+          const resume = confirm(t('yoga.resumeConfirm', { n: savedIdx + 1 }));
           if (resume) {
             setCurrentIndex(savedIdx);
             setSecondsRemaining(savedSec);
@@ -198,7 +201,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     // Warn if skipping savasana
     const isLastBeforeSavasana = currentIndex === poses.length - 2 && poses[poses.length - 1]?.id === 'savasana';
     if (isLastBeforeSavasana) {
-      if (!confirm('Saltar savasana no es recomendado. ¿Estás seguro?')) return;
+      if (!confirm(t('yoga.skipSavasanaConfirm'))) return;
     }
 
     // Fast transition
@@ -229,7 +232,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
       setPhase('paused');
       setPausedBeforeExit(true);
     } else {
-      if (confirm('¿Seguro que quieres salir? Perderás tu progreso.')) {
+      if (confirm(t('yoga.exitConfirm'))) {
         localStorage.removeItem('yoga-flow-progress');
         onClose();
       } else if (pausedBeforeExit) {
@@ -243,7 +246,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   useEffect(() => {
     if (phase === 'paused' && pausedBeforeExit) {
       const timer = setTimeout(() => {
-        if (confirm('¿Seguro que quieres salir? Perderás tu progreso.')) {
+        if (confirm(t('yoga.exitConfirm'))) {
           localStorage.removeItem('yoga-flow-progress');
           onClose();
         } else {
@@ -277,7 +280,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
       <div className="yfp">
         <div className="yfp-header">
           <button className="yfp-header-btn" onClick={onClose}><X size={16} /></button>
-          <span className="yfp-header-title">flow</span>
+          <span className="yfp-header-title">{t('yoga.flow')}</span>
           <button className="yfp-header-btn" onClick={() => setMuted(!muted)}>
             {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
           </button>
@@ -286,10 +289,10 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
         <div className="yfp-prep">
           <p className="yfp-prep-micro">{todayDayName} {todayDate} {todayMonth} · power vinyasa</p>
           <h1 className="yfp-prep-title">
-            {totalMinutes} <em>minutos</em> de flow auténtico.
+            {totalMinutes} <em>{t('yoga.minutes')}</em> {t('yoga.ofFlow')}
           </h1>
           <p className="yfp-prep-sub">
-            {totalPoses} poses · {vinyasaCount > 0 ? `${vinyasaCount} vinyasas · ` : ''}savasana final
+            {totalPoses} poses · {vinyasaCount > 0 ? `${vinyasaCount} vinyasas · ` : ''}{t('yoga.savasanaFinal')}
           </p>
 
           <div className="yfp-prep-hero">
@@ -297,8 +300,8 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           </div>
 
           <div className="yfp-prep-structure">
-            <div className="yfp-prep-struct-label">estructura del flow</div>
-            {['apertura y centering', 'sun salutations a + b', 'standing series con vinyasas', 'peak pose · cool-down', `savasana ${Math.round((poses.find(p => p.id === 'savasana')?.duration || 300) / 60)} min`].map((text, i) => (
+            <div className="yfp-prep-struct-label">{t('yoga.flowStructure')}</div>
+            {[t('yoga.struct1'), t('yoga.struct2'), t('yoga.struct3'), t('yoga.struct4'), t('yoga.struct5', { n: Math.round((poses.find(p => p.id === 'savasana')?.duration || 300) / 60) })].map((text, i) => (
               <div key={i} className="yfp-prep-struct-row">
                 <span className="yfp-prep-struct-dot" />
                 <span>{text}</span>
@@ -314,7 +317,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
         {/* CTA fijo abajo */}
         <div className="yfp-cta-wrap">
           <button className="yfp-cta" onClick={handleStart}>
-            ▶ comenzar flow
+            {t('yoga.startFlow')}
           </button>
         </div>
       </div>,
@@ -330,7 +333,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     return createPortal(
       <div className="yfp">
         <div className="yfp-side-switch">
-          <div className="yfp-side-switch-text">CAMBIA DE LADO</div>
+          <div className="yfp-side-switch-text">{t('yoga.switchSide')}</div>
         </div>
       </div>,
       document.body
@@ -347,8 +350,8 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
       <div className="yfp">
         <div className="yfp-transition">
           <div className="yfp-trans-check">✓</div>
-          <p className="yfp-trans-done">{transitionNext.prev} completado</p>
-          <p className="yfp-trans-label">PRÓXIMA POSE</p>
+          <p className="yfp-trans-done">{t('yoga.poseDone', { pose: transitionNext.prev })}</p>
+          <p className="yfp-trans-label">{t('yoga.nextPose')}</p>
           <h2 className="yfp-trans-name">{nextBank?.name || transitionNext.next.id}</h2>
           <p className="yfp-trans-cue">
             {transitionNext.next.tip_personalizado || nextBank?.tip || ''}
@@ -374,15 +377,15 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
         <div className="yfp-completed">
           <div className="yfp-done-emoji">🙏</div>
           <h1 className="yfp-done-title">Namasté.</h1>
-          <p className="yfp-done-sub">Completaste Power Vinyasa</p>
+          <p className="yfp-done-sub">{t('yoga.completedVinyasa')}</p>
           <p className="yfp-done-stats">
             {totalMinutes} min · {totalPoses} poses
           </p>
           <button className="yfp-done-cta" onClick={handleComplete}>
-            marcar como hecho ✓
+            {t('yoga.markDone')}
           </button>
           <button className="yfp-done-skip" onClick={onClose}>
-            cerrar sin guardar
+            {t('yoga.closeNoSave')}
           </button>
         </div>
       </div>,
@@ -491,7 +494,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
         {/* Next preview */}
         {nextBank && (
           <div className="yfp-next">
-            <p className="yfp-next-label">próxima</p>
+            <p className="yfp-next-label">{t('yoga.next')}</p>
             <p className="yfp-next-name">{nextBank.name}</p>
           </div>
         )}

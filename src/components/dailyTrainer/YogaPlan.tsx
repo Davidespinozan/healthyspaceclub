@@ -13,6 +13,7 @@ import { lazy, Suspense, useRef, useState } from 'react';
 import { RefreshCw, Clock, Lock } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { getExerciseIcon } from '../../utils/muscleGroupIcon';
+import { useT } from '../../i18n';
 import { finishWorkoutSession, type ExerciseLogItem } from '../../utils/workoutLogger';
 import type { Exercise, Equipment, YogaPlan as YogaPlanType, CompletedSession } from '../../types';
 import PlayerLoadingFallback from '../PlayerLoadingFallback';
@@ -42,6 +43,7 @@ export default function YogaPlan({
   todayDayName,
   todayDateShort,
 }: Props) {
+  const { t } = useT();
   const [playerOpen, setPlayerOpen] = useState(false);
   const playerStartedAtRef = useRef<number>(0);
   const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
@@ -85,14 +87,14 @@ export default function YogaPlan({
 
       {yogaPlan.razon && (
         <div className="dt2-card-why">
-          <div className="dt2-card-why-label">Por qué hoy</div>
+          <div className="dt2-card-why-label">{t('yoga.whyToday')}</div>
           <p className="dt2-card-why-text">{yogaPlan.razon}</p>
         </div>
       )}
 
       {yogaPlan.opening && (
         <div className="dt2-section">
-          <div className="dt2-section-label">Opening</div>
+          <div className="dt2-section-label">{t('yoga.opening')}</div>
           <p className="dt2-section-text">{yogaPlan.opening}</p>
         </div>
       )}
@@ -116,7 +118,7 @@ export default function YogaPlan({
                 <div className="dt2-yoga-meta">
                   <span>{durationLabel}</span>
                   {pose.repetitions && (<><span className="dt2-ex-dot">·</span><span>{pose.repetitions}x</span></>)}
-                  {pose.sides === 'both' && (<><span className="dt2-ex-dot">·</span><span>ambos lados</span></>)}
+                  {pose.sides === 'both' && (<><span className="dt2-ex-dot">·</span><span>{t('yoga.bothSides')}</span></>)}
                 </div>
                 {pose.tip_personalizado && (
                   <div className="dt2-ex-tip">{pose.tip_personalizado}</div>
@@ -129,7 +131,7 @@ export default function YogaPlan({
 
       {yogaPlan.closing && (
         <div className="dt2-section">
-          <div className="dt2-section-label">Closing</div>
+          <div className="dt2-section-label">{t('yoga.closing')}</div>
           <p className="dt2-section-text">{yogaPlan.closing}</p>
         </div>
       )}
