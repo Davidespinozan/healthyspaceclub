@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { createSetupIntent } from '../utils/stripe';
+import { useT } from '../i18n';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string);
 
@@ -34,6 +35,7 @@ interface Props {
 }
 
 function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { clientSecret: string }) {
+  const { t } = useT();
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
@@ -47,7 +49,7 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
       // Stripe exige elements.submit() ANTES de confirmSetup (primera op async).
       const { error: submitError } = await elements.submit();
       if (submitError) {
-        setError(submitError.message ?? 'Revisá los datos de la tarjeta.');
+        setError(submitError.message ?? t('pay.errCard'));
         setProcessing(false);
         return;
       }
@@ -60,7 +62,7 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
         confirmParams: { return_url: window.location.origin },
       });
       if (confirmErr) {
-        setError(confirmErr.message ?? 'Tu tarjeta fue rechazada. Probá con otra.');
+        setError(confirmErr.message ?? t('pay.errDeclined'));
         setProcessing(false);
         return;
       }
@@ -68,7 +70,7 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
       const pm = setupIntent?.payment_method;
       const paymentMethodId = typeof pm === 'string' ? pm : pm?.id;
       if (!paymentMethodId) {
-        setError('No se pudo confirmar la tarjeta. Probá de nuevo.');
+        setError(t('pay.errConfirm'));
         setProcessing(false);
         return;
       }
@@ -78,14 +80,14 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
       await onPaymentMethod(paymentMethodId);
       setProcessing(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo procesar la tarjeta. Reintentá.');
+      setError(e instanceof Error ? e.message : t('pay.errProcess'));
       setProcessing(false);
     }
   }
 
   return (
     <>
-      <div className="pay-secure">Pago seguro — la tarjeta la procesa Stripe.</div>
+      <div className="pay-secure">{t('pay.secure')}</div>
       <PaymentElement options={paymentElementOptions} />
       {error && (
         <div style={{ color: '#cc3333', fontSize: '.8rem', margin: '10px 0', textAlign: 'center' }}>{error}</div>
@@ -93,7 +95,7 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
       {processing ? (
         <div style={{ textAlign: 'center', padding: '10px 0' }}>
           <div className="spinner" />
-          <div style={{ fontSize: '.8rem', color: 'var(--txt2)' }}>Procesando…</div>
+          <div style={{ fontSize: '.8rem', color: 'var(--txt2)' }}>{t('pay.processing')}</div>
         </div>
       ) : (
         <button className="btn-pay" onClick={handleConfirm} style={{ marginTop: 14 }}>
@@ -105,6 +107,7 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
 }
 
 export default function CardCollectForm({ ctaLabel, onPaymentMethod }: Props) {
+  const { t } = useT();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const fetchedRef = useRef(false);
@@ -116,9 +119,9 @@ export default function CardCollectForm({ ctaLabel, onPaymentMethod }: Props) {
       const { clientSecret } = await createSetupIntent();
       setClientSecret(clientSecret);
     } catch {
-      setLoadErr('No se pudo preparar el pago. Reintentar.');
+      setLoadErr(t('pay.errPrepare'));
     }
-  }, []);
+  }, [t]);
 
   // SetupIntent una sola vez (StrictMode monta el effect 2 veces; sin guard se crean
   // 2 SetupIntents y el clientSecret cambia tras montar <Elements> → confirmSetup 400).
@@ -132,7 +135,7 @@ export default function CardCollectForm({ ctaLabel, onPaymentMethod }: Props) {
     return (
       <div style={{ textAlign: 'center', padding: '8px 0' }}>
         <p style={{ color: '#cc3333', marginBottom: 16 }}>{loadErr}</p>
-        <button className="btn-pay" onClick={fetchSI}>Reintentar</button>
+        <button className="btn-pay" onClick={fetchSI}>{t('pay.retry')}</button>
       </div>
     );
   }
@@ -140,7 +143,7 @@ export default function CardCollectForm({ ctaLabel, onPaymentMethod }: Props) {
     return (
       <div style={{ textAlign: 'center', padding: '20px 0' }}>
         <div className="spinner" />
-        <div style={{ fontSize: '.8rem', color: 'var(--txt2)' }}>Preparando el pago seguro…</div>
+        <div style={{ fontSize: '.8rem', color: 'var(--txt2)' }}>{t('pay.preparing')}</div>
       </div>
     );
   }
