@@ -1,9 +1,11 @@
 import { useAppStore } from '../../store';
+import { useT } from '../../i18n';
 import TermsSheet from '../sheets/TermsSheet';
 import PrivacySheet from '../sheets/PrivacySheet';
 import { useEmailSignup } from '../../hooks/useEmailSignup';
 
 export default function SignupModal() {
+  const { t } = useT();
   const { closeModal, goTo, setUserName, setObData } = useAppStore();
   const su = useEmailSignup();
 
@@ -31,31 +33,31 @@ export default function SignupModal() {
         </div>
         <div className="login-body">
           <div className="signup-check">✓</div>
-          <h3 className="login-title" style={{ textAlign: 'center' }}>¡Pago exitoso!</h3>
-          <p className="login-sub" style={{ textAlign: 'center' }}>Crea tu cuenta para acceder al Club.</p>
-          <div className="pay-lbl">Nombre completo</div>
+          <h3 className="login-title" style={{ textAlign: 'center' }}>{t('signup.success')}</h3>
+          <p className="login-sub" style={{ textAlign: 'center' }}>{t('signup.subtitle')}</p>
+          <div className="pay-lbl">{t('signup.nameLabel')}</div>
           <input
             className="pay-inp"
             type="text"
-            placeholder="Tu nombre"
+            placeholder={t('signup.namePlaceholder')}
             autoComplete="name"
             value={su.name}
             onChange={(e) => su.setName(e.target.value)}
           />
-          <div className="pay-lbl">Correo electrónico</div>
+          <div className="pay-lbl">{t('signup.emailLabel')}</div>
           <input
             className="pay-inp"
             type="email"
-            placeholder="tu@correo.com"
+            placeholder={t('signup.emailPlaceholder')}
             autoComplete="email"
             value={su.email}
             onChange={(e) => su.setEmail(e.target.value)}
           />
-          <div className="pay-lbl">Crea una contraseña</div>
+          <div className="pay-lbl">{t('signup.passwordLabel')}</div>
           <input
             className="pay-inp"
             type="password"
-            placeholder="Mínimo 8 caracteres"
+            placeholder={t('signup.passwordPlaceholder')}
             autoComplete="new-password"
             value={su.password}
             onChange={(e) => su.setPassword(e.target.value)}
@@ -67,13 +69,13 @@ export default function SignupModal() {
               onChange={e => su.setAcceptedTerms(e.target.checked)}
             />
             <span>
-              Acepto los{' '}
+              {t('signup.tosAccept')}{' '}
               <button type="button" className="signup-tos-link" onClick={() => su.setShowTerms(true)}>
-                Términos de Servicio
+                {t('signup.tosTerms')}
               </button>
-              {' '}y la{' '}
+              {' '}{t('signup.tosAnd')}{' '}
               <button type="button" className="signup-tos-link" onClick={() => su.setShowPrivacy(true)}>
-                Política de Privacidad
+                {t('signup.tosPrivacy')}
               </button>
               .
             </span>
@@ -97,10 +99,10 @@ export default function SignupModal() {
               onClick={handleSignup}
               disabled={!su.acceptedTerms}
             >
-              Crear mi cuenta ✦
+              {t('signup.submit')}
             </button>
           )}
-          <p className="login-demo">— Demo visual · ingresa cualquier dato —</p>
+          <p className="login-demo">{t('signup.demo')}</p>
         </div>
       </div>
 

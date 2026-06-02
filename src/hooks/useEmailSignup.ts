@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useT } from '../i18n';
 
 // Lógica de alta por email extraída de SignupModal para reusarla en el
 // PaymentModal de dos fases. NO navega ni cierra modales — devuelve el outcome
@@ -7,6 +8,7 @@ import { supabase } from '../lib/supabase';
 export type SignupOutcome = 'session' | 'needs-confirmation' | 'error';
 
 export function useEmailSignup() {
+  const { t } = useT();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,20 +21,20 @@ export function useEmailSignup() {
   async function submit(): Promise<{ outcome: SignupOutcome }> {
     setError('');
     if (name.trim().length < 2) {
-      setError('Ingresa tu nombre (mínimo 2 caracteres).');
+      setError(t('signup.errName'));
       return { outcome: 'error' };
     }
     const trimEmail = email.trim();
     if (!trimEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimEmail)) {
-      setError('Ingresa un correo válido.');
+      setError(t('signup.errEmail'));
       return { outcome: 'error' };
     }
     if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.');
+      setError(t('signup.errPassword'));
       return { outcome: 'error' };
     }
     if (!acceptedTerms) {
-      setError('Aceptá los Términos y la Política de Privacidad para continuar.');
+      setError(t('signup.errTos'));
       return { outcome: 'error' };
     }
 
@@ -55,7 +57,7 @@ export function useEmailSignup() {
       }
 
       if (data.user && !data.session) {
-        setError('Revisa tu email para confirmar tu cuenta.');
+        setError(t('signup.errConfirm'));
         setLoading(false);
         return { outcome: 'needs-confirmation' };
       }
@@ -63,7 +65,7 @@ export function useEmailSignup() {
       setLoading(false);
       return { outcome: 'error' };
     } catch {
-      setError('Error al crear cuenta. Intenta de nuevo.');
+      setError(t('signup.errGeneric'));
       setLoading(false);
       return { outcome: 'error' };
     }

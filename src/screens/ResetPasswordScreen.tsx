@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
+import { useT } from '../i18n';
 
 export default function ResetPasswordScreen() {
+  const { t } = useT();
   const goTo = useAppStore(s => s.goTo);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -14,18 +16,18 @@ export default function ResetPasswordScreen() {
     e.preventDefault();
     setError('');
     if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.');
+      setError(t('resetPassword.errTooShort'));
       return;
     }
     if (password !== confirm) {
-      setError('Las contraseñas no coinciden.');
+      setError(t('resetPassword.errMismatch'));
       return;
     }
     setLoading(true);
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) {
-        setError(updateError.message || 'No pudimos actualizar tu contraseña.');
+        setError(updateError.message || t('resetPassword.errUpdate'));
         return;
       }
       setSuccess(true);
@@ -34,7 +36,7 @@ export default function ResetPasswordScreen() {
       setTimeout(() => goTo('login'), 1600);
     } catch (e) {
       console.error('[reset-password]', e);
-      setError('Error de conexión. Intenta de nuevo.');
+      setError(t('resetPassword.errConnection'));
     } finally {
       setLoading(false);
     }
@@ -52,24 +54,24 @@ export default function ResetPasswordScreen() {
         </div>
 
         <div className="ls-head">
-          <h1>Nueva contraseña</h1>
-          <p>Elegí una nueva contraseña para tu cuenta.</p>
+          <h1>{t('resetPassword.title')}</h1>
+          <p>{t('resetPassword.subtitle')}</p>
         </div>
 
         {success ? (
           <div className="ls-reset-ok">
             <div className="ls-reset-icon">✓</div>
-            <div className="ls-reset-title">Contraseña actualizada</div>
-            <p>Te llevamos al login…</p>
+            <div className="ls-reset-title">{t('resetPassword.okTitle')}</div>
+            <p>{t('resetPassword.okBody')}</p>
           </div>
         ) : (
           <form className="ls-form" onSubmit={handleSubmit}>
             <div className="ls-field">
-              <label className="ls-label">Nueva contraseña</label>
+              <label className="ls-label">{t('resetPassword.newLabel')}</label>
               <input
                 className="ls-input"
                 type="password"
-                placeholder="Mínimo 8 caracteres"
+                placeholder={t('resetPassword.newPlaceholder')}
                 autoComplete="new-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -77,11 +79,11 @@ export default function ResetPasswordScreen() {
               />
             </div>
             <div className="ls-field">
-              <label className="ls-label">Confirmar contraseña</label>
+              <label className="ls-label">{t('resetPassword.confirmLabel')}</label>
               <input
                 className="ls-input"
                 type="password"
-                placeholder="Repetí la contraseña"
+                placeholder={t('resetPassword.confirmPlaceholder')}
                 autoComplete="new-password"
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
@@ -92,7 +94,7 @@ export default function ResetPasswordScreen() {
             {error && <div className="ls-error">{error}</div>}
 
             <button className="ls-btn" type="submit" disabled={loading}>
-              {loading ? <span className="ls-spinner" /> : 'Guardar nueva contraseña'}
+              {loading ? <span className="ls-spinner" /> : t('resetPassword.submit')}
             </button>
           </form>
         )}

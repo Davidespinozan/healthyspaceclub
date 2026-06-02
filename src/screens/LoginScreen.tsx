@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useAppStore } from '../store';
+import { useT } from '../i18n';
 
 const SUPABASE_CONFIGURED = import.meta.env.VITE_SUPABASE_URL &&
   !import.meta.env.VITE_SUPABASE_URL.includes('placeholder');
 
 export default function LoginScreen() {
+  const { t } = useT();
   const goTo = useAppStore(s => s.goTo);
   const setUserName = useAppStore(s => s.setUserName);
   const [email, setEmail] = useState('');
@@ -30,11 +32,11 @@ export default function LoginScreen() {
       const { supabase } = await import('../lib/supabase');
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        setError('Correo o contraseña incorrectos. Intenta de nuevo.');
+        setError(t('login.errInvalid'));
       }
       // On success, onAuthStateChange in App.tsx handles the redirect
     } catch (err) {
-      setError('Error de conexión. Intenta de nuevo.');
+      setError(t('login.errConnection'));
       console.error('[login]', err);
     } finally {
       // Defensa: setLoading(false) garantizado aunque el redirect del listener
@@ -44,7 +46,7 @@ export default function LoginScreen() {
   }
 
   async function handleReset() {
-    if (!email) { setError('Escribe tu correo primero.'); return; }
+    if (!email) { setError(t('login.errNoEmail')); return; }
     if (!SUPABASE_CONFIGURED) { setResetSent(true); return; }
     setLoading(true);
     const { supabase } = await import('../lib/supabase');
@@ -67,25 +69,25 @@ export default function LoginScreen() {
         </div>
 
         <div className="ls-head">
-          <h1>Acceso para Miembros</h1>
-          <p>Inicia sesión para continuar tu programa</p>
+          <h1>{t('login.title')}</h1>
+          <p>{t('login.subtitle')}</p>
         </div>
 
         {resetSent ? (
           <div className="ls-reset-ok">
             <div className="ls-reset-icon">✉️</div>
-            <div className="ls-reset-title">Revisa tu correo</div>
-            <p>Te enviamos un enlace para restablecer tu contraseña.</p>
-            <button className="ls-btn" onClick={() => setResetSent(false)}>Volver al login</button>
+            <div className="ls-reset-title">{t('login.resetTitle')}</div>
+            <p>{t('login.resetBody')}</p>
+            <button className="ls-btn" onClick={() => setResetSent(false)}>{t('login.resetBack')}</button>
           </div>
         ) : (
           <form className="ls-form" onSubmit={handleLogin}>
             <div className="ls-field">
-              <label className="ls-label">Correo electrónico</label>
+              <label className="ls-label">{t('login.emailLabel')}</label>
               <input
                 className="ls-input"
                 type="email"
-                placeholder="tu@correo.com"
+                placeholder={t('login.emailPlaceholder')}
                 autoComplete="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -93,7 +95,7 @@ export default function LoginScreen() {
               />
             </div>
             <div className="ls-field">
-              <label className="ls-label">Contraseña</label>
+              <label className="ls-label">{t('login.passwordLabel')}</label>
               <input
                 className="ls-input"
                 type="password"
@@ -108,7 +110,7 @@ export default function LoginScreen() {
             {error && <div className="ls-error">{error}</div>}
 
             <button className="ls-btn" type="submit" disabled={loading}>
-              {loading ? <span className="ls-spinner" /> : 'Entrar al Club'}
+              {loading ? <span className="ls-spinner" /> : t('login.submit')}
             </button>
 
             <button
@@ -117,7 +119,7 @@ export default function LoginScreen() {
               onClick={handleReset}
               disabled={loading}
             >
-              ¿Olvidaste tu contraseña?
+              {t('login.forgot')}
             </button>
 
             {/* Volver a la landing. Estilo inline a propósito: la clase .ls-back
@@ -133,7 +135,7 @@ export default function LoginScreen() {
                 fontFamily: 'inherit', textDecoration: 'none',
               }}
             >
-              ← Volver al inicio
+              {t('login.back')}
             </button>
           </form>
         )}

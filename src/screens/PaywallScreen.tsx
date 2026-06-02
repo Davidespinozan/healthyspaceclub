@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
+import { useT } from '../i18n';
 import { getPriceInfo, formatPrice, type BillingCycle } from '../utils/stripe';
 
 // Pantalla de paywall — destino del gate de suscripción (Stripe-3).
@@ -7,6 +8,7 @@ import { getPriceInfo, formatPrice, type BillingCycle } from '../utils/stripe';
 // Reusa EXACTAMENTE la lógica de precio/ciclo de PaymentModal/LandingScreen (getPriceInfo).
 // NOTA: en este paso (3a) nada rutea hacia acá; se conecta en 3b.
 export default function PaywallScreen() {
+  const { t } = useT();
   const openPay = useAppStore(s => s.openPay);
   const logout = useAppStore(s => s.logout);
 
@@ -17,10 +19,10 @@ export default function PaywallScreen() {
   const isYearly = cycle === 'yearly';
   const amountSel = isYearly ? priceInfo.yearly : priceInfo.monthly;
   const priceLabel = `${formatPrice(amountSel, priceInfo.currency)} ${priceInfo.currency}`;
-  const planName = isYearly ? 'Anual' : 'Mensual';
+  const planName = isYearly ? t('paywall.cycleYearly') : t('paywall.cycleMonthly');
   const periodLabel = isYearly
-    ? `12 meses · ${formatPrice(priceInfo.yearlyMonthly, priceInfo.currency)}/mes`
-    : 'Cancela cuando quieras';
+    ? t('paywall.yearlyPeriod', { monthly: formatPrice(priceInfo.yearlyMonthly, priceInfo.currency) })
+    : t('paywall.monthlyPeriod');
 
   function handleStart() {
     // Mismos args que los CTAs del LandingScreen → abre PaymentModal (fase 2 si hay sesión).
@@ -48,25 +50,24 @@ export default function PaywallScreen() {
       <div style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
         <div style={{ fontSize: '2rem', marginBottom: 14 }}>✦</div>
         <h1 style={{ fontSize: '1.6rem', lineHeight: 1.2, color: 'var(--forest)', marginBottom: 10 }}>
-          Suscribite para continuar
+          {t('paywall.title')}
         </h1>
         <p style={{ color: 'var(--txt2)', fontSize: '.95rem', lineHeight: 1.5, marginBottom: 26 }}>
-          Tu espacio en el Club te espera. Elegí tu plan y seguí con tu nutrición,
-          tus entrenos y tu coach — sin cortes.
+          {t('paywall.body')}
         </p>
 
         {/* Selector de ciclo */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
           <button type="button" style={isYearly ? segOn : segOff} onClick={() => setCycle('yearly')}>
-            Anual
+            {t('paywall.cycleYearly')}
             {priceInfo.yearlyDiscount > 0 && (
               <span style={{ display: 'block', fontSize: '.7rem', color: 'var(--amber)', fontWeight: 700 }}>
-                Ahorrás {priceInfo.yearlyDiscount}%
+                {t('paywall.save', { pct: priceInfo.yearlyDiscount })}
               </span>
             )}
           </button>
           <button type="button" style={!isYearly ? segOn : segOff} onClick={() => setCycle('monthly')}>
-            Mensual
+            {t('paywall.cycleMonthly')}
           </button>
         </div>
 
@@ -77,11 +78,11 @@ export default function PaywallScreen() {
         </div>
 
         <button className="btn-pay" onClick={handleStart} style={{ width: '100%' }}>
-          Empezar
+          {t('paywall.start')}
         </button>
 
         <p style={{ fontSize: '.72rem', color: 'var(--txt2)', marginTop: 12 }}>
-          Tu prueba de 3 días empieza al confirmar. Cancelás cuando quieras.
+          {t('paywall.trialNote')}
         </p>
 
         <button
@@ -92,7 +93,7 @@ export default function PaywallScreen() {
             color: 'var(--txt2)', fontSize: '.82rem', textDecoration: 'underline',
           }}
         >
-          Cerrar sesión
+          {t('paywall.logout')}
         </button>
       </div>
     </div>
