@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
 import { useAppStore } from '../store';
+import { useT } from '../i18n';
 import { PRICING, detectRegion, type Region } from '../utils/region';
 // trust stats removed
 
@@ -48,6 +49,7 @@ function MagneticBtn({ children, className, onClick, style }: {
 }
 
 export default function LandingScreen() {
+  const { t } = useT();
   const { openPay, goTo, mobileMenuOpen, toggleMobileMenu, region, setRegion } = useAppStore();
 
   // ── Region detection (IP → cache → navigator.language fallback) ────────────
@@ -65,25 +67,25 @@ export default function LandingScreen() {
   const openAnnualCheckout = useCallback(() => {
     if (!pricing) return;
     openPay(
-      'Anual',
+      t('paywall.cycleYearly'),
       `${pricing.symbol}${fmtPrice(pricing.annual)} ${pricing.currency}`,
-      `12 meses · ${pricing.symbol}${pricing.annualPerMonth}/mes`,
+      t('paywall.yearlyPeriod', { monthly: `${pricing.symbol}${pricing.annualPerMonth}` }),
       pricing.annual,
       pricing.currency,
       'yearly',
     );
-  }, [openPay, pricing]);
+  }, [openPay, pricing, t]);
   const openMonthlyCheckout = useCallback(() => {
     if (!pricing) return;
     openPay(
-      'Mensual',
+      t('paywall.cycleMonthly'),
       `${pricing.symbol}${fmtPrice(pricing.monthly)} ${pricing.currency}`,
-      'Cancela cuando quieras',
+      t('paywall.monthlyPeriod'),
       pricing.monthly,
       pricing.currency,
       'monthly',
     );
-  }, [openPay, pricing]);
+  }, [openPay, pricing, t]);
 
   // ── Parallax ──────────────────────────────────────────────
   const heroImgRef = useRef<HTMLImageElement>(null);
@@ -104,18 +106,18 @@ export default function LandingScreen() {
       {/* NAV */}
       <nav id="landing-nav" className="landing-nav">
         <div className="nav-left">
-          <span className="nav-login" onClick={() => goTo('login')}>Iniciar sesión</span>
+          <span className="nav-login" onClick={() => goTo('login')}>{t('landing.login')}</span>
         </div>
         <div className="logo logo-nav">
           <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" />
         </div>
         <div className="nav-links">
-          <a href="#s-pillars">El Club</a>
-          <a href="#s-how">Cómo funciona</a>
-          <a href="#s-pricing">Planes</a>
-          <a className="nav-cta" onClick={() => openAnnualCheckout()}>Únete al Club</a>
+          <a href="#s-pillars">{t('landing.navClub')}</a>
+          <a href="#s-how">{t('landing.navHow')}</a>
+          <a href="#s-pricing">{t('landing.navPlans')}</a>
+          <a className="nav-cta" onClick={() => openAnnualCheckout()}>{t('landing.navJoin')}</a>
         </div>
-        <button className={`nav-hamburger${mobileMenuOpen ? ' open' : ''}`} onClick={toggleMobileMenu} aria-label="Menu">
+        <button className={`nav-hamburger${mobileMenuOpen ? ' open' : ''}`} onClick={toggleMobileMenu} aria-label={t('landing.menuAria')}>
           <span /><span /><span />
         </button>
       </nav>
@@ -123,11 +125,11 @@ export default function LandingScreen() {
       {/* MOBILE MENU */}
       <div className={`mob-menu${mobileMenuOpen ? ' open' : ''}`}>
         <div className="mob-menu-inner">
-          <a href="#s-pillars" onClick={toggleMobileMenu}>El Club</a>
-          <a href="#s-how" onClick={toggleMobileMenu}>Cómo funciona</a>
-          <a href="#s-pricing" onClick={toggleMobileMenu}>Planes</a>
-          <span className="mob-menu-login" onClick={() => { toggleMobileMenu(); goTo('login'); }}>Iniciar sesión</span>
-          <button className="mob-menu-cta" onClick={() => { toggleMobileMenu(); openAnnualCheckout(); }}>Únete al Club →</button>
+          <a href="#s-pillars" onClick={toggleMobileMenu}>{t('landing.navClub')}</a>
+          <a href="#s-how" onClick={toggleMobileMenu}>{t('landing.navHow')}</a>
+          <a href="#s-pricing" onClick={toggleMobileMenu}>{t('landing.navPlans')}</a>
+          <span className="mob-menu-login" onClick={() => { toggleMobileMenu(); goTo('login'); }}>{t('landing.login')}</span>
+          <button className="mob-menu-cta" onClick={() => { toggleMobileMenu(); openAnnualCheckout(); }}>{t('landing.navJoinArrow')}</button>
         </div>
       </div>
 
@@ -138,12 +140,12 @@ export default function LandingScreen() {
         <div className="hero-orb hero-orb-3" />
         <div className="hero-inner">
           <div className="hero-content">
-            <p className="hero-tagline">¿Decidiste cambiar?</p>
-            <h1><span className="h1-gold">La IA crea tu plan.</span><br /><span className="h1-accent">El club te hace <em>cumplirlo.</em></span></h1>
+            <p className="hero-tagline">{t('landing.heroTagline')}</p>
+            <h1><span className="h1-gold">{t('landing.heroH1a')}</span><br /><span className="h1-accent">{t('landing.heroH1b')} <em>{t('landing.heroH1bEm')}</em></span></h1>
             <div className="hero-btns">
-              <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>Probar 3 días gratis →</MagneticBtn>
+              <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>{t('landing.trialCta')}</MagneticBtn>
             </div>
-            <p className="hero-microcopy">Sin compromiso · Cancela cuando quieras</p>
+            <p className="hero-microcopy">{t('landing.heroMicro')}</p>
           </div>
           <div className="hero-img">
             <img
@@ -154,8 +156,8 @@ export default function LandingScreen() {
             />
           </div>
         </div>
-        <a href="#s-pillars" className="hero-scroll" aria-label="Ver más abajo">
-          <span>Desliza</span>
+        <a href="#s-pillars" className="hero-scroll" aria-label={t('landing.scrollAria')}>
+          <span>{t('landing.scroll')}</span>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -167,13 +169,13 @@ export default function LandingScreen() {
         <div className="pill-grid-bg" />
         <div className="pg">
           <div className="pillar pillar-gold reveal reveal-delay-1">
-            <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp" alt="Nutrición" /></div>
-            <span className="ptag ptag-lead">Tu nutriólogo en el bolsillo</span>
+            <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp" alt={t('landing.altNutrition')} /></div>
+            <span className="ptag ptag-lead">{t('landing.pillar1')}</span>
           </div>
 
           <div className="pillar pillar-gold reveal reveal-delay-2">
-            <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/workout_s1mccg.webp" alt="Entrenamiento" /></div>
-            <span className="ptag ptag-lead">Tu entrenador personal 24/7</span>
+            <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/workout_s1mccg.webp" alt={t('landing.altWorkout')} /></div>
+            <span className="ptag ptag-lead">{t('landing.pillar2')}</span>
           </div>
         </div>
 
@@ -181,18 +183,18 @@ export default function LandingScreen() {
         <div className="method-row3">
           <div className="method-col reveal reveal-delay-1">
             <img className="method-icon" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PROGRESO.png" alt="" aria-hidden="true" />
-            <div className="method-title">Progreso</div>
-            <div className="method-sub">Mejora constante</div>
+            <div className="method-title">{t('landing.method1Title')}</div>
+            <div className="method-sub">{t('landing.method1Sub')}</div>
           </div>
           <div className="method-col reveal reveal-delay-2">
             <img className="method-icon" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/COMUNIDAD.png" alt="" aria-hidden="true" />
-            <div className="method-title">Comunidad</div>
-            <div className="method-sub">No lo haces solo</div>
+            <div className="method-title">{t('landing.method2Title')}</div>
+            <div className="method-sub">{t('landing.method2Sub')}</div>
           </div>
           <div className="method-col reveal reveal-delay-3">
             <img className="method-icon" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/SISTEMA.png" alt="" aria-hidden="true" />
-            <div className="method-title">Sistema</div>
-            <div className="method-sub">Plan + Acción + IA</div>
+            <div className="method-title">{t('landing.method3Title')}</div>
+            <div className="method-sub">{t('landing.method3Sub')}</div>
           </div>
         </div>
       </section>
@@ -206,75 +208,75 @@ export default function LandingScreen() {
               src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
               alt="Healthy Space Club"
             />
-            <h2 className="lifestyle-statement"><span>Tu plan.</span><span>Tu comunidad.</span><em>Tu mejor versión.</em></h2>
-            <MagneticBtn className="btn-lifestyle" onClick={() => openAnnualCheckout()}>Únete hoy →</MagneticBtn>
-            <p className="lifestyle-platforms">Úsala como app en iOS, Android y web</p>
+            <h2 className="lifestyle-statement"><span>{t('landing.statement1')}</span><span>{t('landing.statement2')}</span><em>{t('landing.statementEm')}</em></h2>
+            <MagneticBtn className="btn-lifestyle" onClick={() => openAnnualCheckout()}>{t('landing.joinToday')}</MagneticBtn>
+            <p className="lifestyle-platforms">{t('landing.platforms')}</p>
           </div>
         </div>
       </section>
 
       {/* PRICING — 2 planes con precios por región */}
       <section className="pricing" id="s-pricing">
-        <div className="sec-lbl reveal">Membresía</div>
-        <h2 className="reveal">Elige tu plan <em>ideal</em></h2>
-        <p className="pricing-sub reveal">Prueba 3 días gratis. Cancela antes del cobro con 1 click.</p>
+        <div className="sec-lbl reveal">{t('landing.pricingLbl')}</div>
+        <h2 className="reveal">{t('landing.pricingTitlePre')} <em>{t('landing.pricingTitleEm')}</em></h2>
+        <p className="pricing-sub reveal">{t('landing.pricingSub')}</p>
 
         <div className="pcards pcards-2">
           {/* MENSUAL */}
           <div className="pcard">
-            <div className="pname">Mensual</div>
+            <div className="pname">{t('landing.monthly')}</div>
             <div className="pamount">
               {pricing ? (
                 <>
                   <span className="pam-sym">{pricing.symbol}</span>{fmtPrice(pricing.monthly)}
-                  <span className="pam-unit">/mes</span>
+                  <span className="pam-unit">{t('landing.perMonth')}</span>
                 </>
               ) : <span className="pam-skeleton" aria-hidden="true" />}
             </div>
-            <div className="pperiod">{pricing ? `${pricing.currency} · Cancela cuando quieras` : ' '}</div>
+            <div className="pperiod">{pricing ? `${pricing.currency} · ${t('landing.monthlyPeriod')}` : ' '}</div>
             <ul className="ptrial-list">
-              <li><CheckIcon />3 días gratis</li>
-              <li><CheckIcon />Te avisamos antes del cobro</li>
-              <li><CheckIcon />Cancela en 1 click</li>
+              <li><CheckIcon />{t('landing.trialFree')}</li>
+              <li><CheckIcon />{t('landing.trialNotice')}</li>
+              <li><CheckIcon />{t('landing.trialCancel')}</li>
             </ul>
             <ul className="pfeats">
-              <li>Plan de alimentación personalizado</li>
-              <li>Rutinas completas con video</li>
-              <li>Macros y progresión inteligente</li>
-              <li>AI Coach y Healthy Space Method</li>
+              <li>{t('landing.mFeat1')}</li>
+              <li>{t('landing.mFeat2')}</li>
+              <li>{t('landing.mFeat3')}</li>
+              <li>{t('landing.mFeat4')}</li>
             </ul>
-            <MagneticBtn className="btn-join" onClick={openMonthlyCheckout}>Probar 3 días gratis →</MagneticBtn>
+            <MagneticBtn className="btn-join" onClick={openMonthlyCheckout}>{t('landing.trialCta')}</MagneticBtn>
           </div>
 
           {/* ANUAL — destacado (forest) */}
           <div className="pcard feat">
-            <div className="pbadge">⭐ Más popular</div>
-            <div className="pname">Anual</div>
+            <div className="pbadge">{t('landing.popular')}</div>
+            <div className="pname">{t('landing.annual')}</div>
             <div className="pamount">
               {pricing ? (
                 <>
                   <span className="pam-sym">{pricing.symbol}</span>{fmtPrice(pricing.annual)}
-                  <span className="pam-unit">/año</span>
+                  <span className="pam-unit">{t('landing.perYear')}</span>
                 </>
               ) : <span className="pam-skeleton" aria-hidden="true" />}
             </div>
             <div className="pperiod">
               {pricing
-                ? `${pricing.currency} · equivale ${pricing.symbol}${pricing.annualPerMonth}/mes · ahorras ${pricing.savingsPct}%`
+                ? `${pricing.currency} · ${t('landing.annualPeriod', { price: `${pricing.symbol}${pricing.annualPerMonth}`, pct: pricing.savingsPct })}`
                 : ' '}
             </div>
             <ul className="ptrial-list">
-              <li><CheckIcon />3 días gratis</li>
-              <li><CheckIcon />Te avisamos antes del cobro</li>
-              <li><CheckIcon />Cancela en 1 click</li>
+              <li><CheckIcon />{t('landing.trialFree')}</li>
+              <li><CheckIcon />{t('landing.trialNotice')}</li>
+              <li><CheckIcon />{t('landing.trialCancel')}</li>
             </ul>
             <ul className="pfeats">
-              <li>Todo lo del plan mensual</li>
-              <li>12 meses por el precio de ~8</li>
-              <li>Acceso anticipado a nuevas rutinas</li>
-              <li>Soporte prioritario</li>
+              <li>{t('landing.aFeat1')}</li>
+              <li>{t('landing.aFeat2')}</li>
+              <li>{t('landing.aFeat3')}</li>
+              <li>{t('landing.aFeat4')}</li>
             </ul>
-            <MagneticBtn className="btn-join" onClick={openAnnualCheckout}>Probar 3 días gratis →</MagneticBtn>
+            <MagneticBtn className="btn-join" onClick={openAnnualCheckout}>{t('landing.trialCta')}</MagneticBtn>
           </div>
         </div>
       </section>
@@ -282,12 +284,12 @@ export default function LandingScreen() {
       {/* FAQ */}
       <div className="faq">
         <div className="faq-in">
-          <div className="sec-lbl">Preguntas frecuentes</div>
-          <h2>Todo lo que necesitas <em>saber</em></h2>
-          <FaqItem q="¿Tengo que pagar para probar?" a="Los primeros 3 días son gratis. Ingresas tu tarjeta para activar el trial pero no se cobra nada hasta el día 4. Puedes cancelar antes en 1 click y no se te cobra." />
-          <FaqItem q="¿Me avisan antes del cobro?" a="Sí. 24 horas antes de que termine tu trial de 3 días te enviamos un email recordándote. Si no quieres continuar, cancelas desde tu perfil y listo." />
-          <FaqItem q="¿Cómo cancelo mi membresía?" a="Desde tu perfil en HSC, en 1 click. Sin preguntas, sin fricción." />
-          <FaqItem q="¿Cuál es la diferencia entre el plan mensual y el anual?" a="El contenido es el mismo. El plan anual cuesta el equivalente a ~8 meses, te da acceso anticipado a nuevas rutinas y soporte prioritario. Ambos empiezan con 3 días gratis." />
+          <div className="sec-lbl">{t('landing.faqLbl')}</div>
+          <h2>{t('landing.faqTitlePre')} <em>{t('landing.faqTitleEm')}</em></h2>
+          <FaqItem q={t('landing.faq1q')} a={t('landing.faq1a')} />
+          <FaqItem q={t('landing.faq2q')} a={t('landing.faq2a')} />
+          <FaqItem q={t('landing.faq3q')} a={t('landing.faq3a')} />
+          <FaqItem q={t('landing.faq4q')} a={t('landing.faq4a')} />
         </div>
       </div>
 
@@ -296,8 +298,8 @@ export default function LandingScreen() {
         <div className="logo">
           <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" />
         </div>
-        <p>© 2026 Healthy Space Club · Todos los derechos reservados</p>
-        <div className="region-selector" aria-label="Seleccionar región de precios">
+        <p>{t('landing.copyright')}</p>
+        <div className="region-selector" aria-label={t('landing.regionAria')}>
           {REGION_OPTIONS.map((r) => {
             const p = PRICING[r];
             const active = region === r;
