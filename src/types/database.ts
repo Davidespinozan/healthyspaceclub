@@ -1209,6 +1209,10 @@ export type Database = {
           user_plan: string | null
           weekly_plan: Json | null
           weekly_plan_updated_at: string | null
+          daily_workout: Json | null
+          daily_workout_updated_at: string | null
+          daily_workout_regen: Json | null
+          daily_workout_regen_updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1238,6 +1242,10 @@ export type Database = {
           user_plan?: string | null
           weekly_plan?: Json | null
           weekly_plan_updated_at?: string | null
+          daily_workout?: Json | null
+          daily_workout_updated_at?: string | null
+          daily_workout_regen?: Json | null
+          daily_workout_regen_updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1267,6 +1275,10 @@ export type Database = {
           user_plan?: string | null
           weekly_plan?: Json | null
           weekly_plan_updated_at?: string | null
+          daily_workout?: Json | null
+          daily_workout_updated_at?: string | null
+          daily_workout_regen?: Json | null
+          daily_workout_regen_updated_at?: string | null
         }
         Relationships: []
       }

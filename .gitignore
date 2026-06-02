@@ -12,5 +12,8 @@ ios/
 /playwright/.cache
 supabase/.temp/
 
-# script de diagnóstico read-only (lee secrets de env, no commitear)
+# scripts de diagnóstico read-only (leen secrets de env, no commitear)
 scripts/investigate-stripe.ts
+scripts/audit-db-contamination.mjs
+scripts/cleanup-db-contamination.mjs
+scripts/stripe-reset-customer.mjs

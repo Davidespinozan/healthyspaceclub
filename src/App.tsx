@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore } from './store';
 import { supabase } from './lib/supabase';
 import { shouldUseRemotePlan } from './utils/planSync';
+import { shouldUseRemoteWorkout } from './utils/dailyWorkoutSync';
 import { mergeMealProgress } from './utils/mealProgressSync';
 import {
   mapWorkoutLogRowToSession,
@@ -143,7 +144,7 @@ export default function App() {
           try {
             const { data: profile } = await supabase
               .from('user_profiles')
-              .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date, weekly_plan, weekly_plan_updated_at, shopping_day')
+              .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date, weekly_plan, weekly_plan_updated_at, shopping_day, daily_workout, daily_workout_updated_at, daily_workout_regen, daily_workout_regen_updated_at')
               .eq('user_id', session.user.id)
               .maybeSingle();
 
@@ -185,6 +186,29 @@ export default function App() {
               const remoteShoppingDay = profile.shopping_day;
               if (remoteShoppingDay !== null && remoteShoppingDay !== undefined) {
                 useAppStore.setState({ shoppingDay: remoteShoppingDay });
+              }
+
+              // Sync-3: dailyWorkout + regen count, solo lectura remote→local.
+              // El generate persiste por su cuenta (saveDailyWorkout /
+              // incrementDailyWorkoutRegen). NO auto-backfill local→DB acá.
+              const localWorkout = localState.dailyWorkout;
+              const remoteWorkout = (profile.daily_workout ?? null) as typeof localWorkout;
+              const decWorkout = shouldUseRemoteWorkout(
+                localWorkout, localWorkout?.generatedAt ?? null,
+                remoteWorkout, profile.daily_workout_updated_at ?? null,
+              );
+              if (decWorkout === 'use_remote') {
+                useAppStore.setState({ dailyWorkout: remoteWorkout });
+              }
+
+              const localRegen = localState.dailyWorkoutRegenCount;
+              const remoteRegen = (profile.daily_workout_regen ?? null) as typeof localRegen | null;
+              const decRegen = shouldUseRemoteWorkout(
+                localRegen, localRegen?.updatedAt ?? null,
+                remoteRegen, profile.daily_workout_regen_updated_at ?? null,
+              );
+              if (decRegen === 'use_remote' && remoteRegen) {
+                useAppStore.setState({ dailyWorkoutRegenCount: remoteRegen });
               }
             }
           } catch (e) {

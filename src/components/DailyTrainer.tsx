@@ -240,7 +240,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
       } else if (cached && validateWorkout(cached, validIds)) {
         // Fuerza/cardio/auto: cache válido
         setPlan(cached);
-        saveDailyWorkout(cached as any);
+        await saveDailyWorkout(cached as any);
         setPhase('plan');
         return;
       }
@@ -298,7 +298,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
 
         // Save plan FIRST, then increment counter
         setPlan(adjustedPlan as any);
-        saveDailyWorkout(adjustedPlan as any);
+        await saveDailyWorkout(adjustedPlan as any);
         setPhase('plan');
 
         // Increment ONLY after successful save
@@ -406,7 +406,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
       console.info(`[regen] ${selectedModality}: ${(regenCounts[selectedModality] || 0) + 1}/3 today | admin: ${isAdmin}`);
 
       setPlan(workout);
-      saveDailyWorkout(workout as any);
+      await saveDailyWorkout(workout as any);
       setPhase('plan');
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error al generar la rutina';
@@ -426,7 +426,8 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
     if (regenBlocked) return;
     // Don't increment here — increment AFTER successful generation
     setPlan(null);
-    saveDailyWorkout(null as any);
+    // clear: fire-and-forget (no bloquea el volver a selección de modalidad).
+    void saveDailyWorkout(null as any).catch(() => {});
     setPhase('modality');
   }
 
