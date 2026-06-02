@@ -109,6 +109,8 @@ export const es = {
     cancelsOn: 'Se cancelará el',
     cancelKeepsAccess: 'Mantenés acceso hasta entonces.',
     cancelError: 'No pudimos cancelar tu plan. Probá de nuevo en un momento.',
+    changeCycleConfirm: 'Vas a cambiar tu ciclo de facturación. El cambio aplica al instante y la diferencia se prorratea en tu próxima factura. ¿Confirmás?',
+    changeCycleError: 'No pudimos cambiar tu plan. Probá de nuevo en un momento.',
     faqTitle: 'Preguntas frecuentes',
     faq1q: '¿Cuándo se hace el cobro?',
     faq1a: 'Tu trial dura 3 días gratis. Después se hace un cobro mensual o anual según el plan que elijas. Te avisamos 24h antes del primer cobro.',

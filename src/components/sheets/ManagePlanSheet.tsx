@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppStore } from '../../store';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
-import { openCoachWith } from '../../utils/openCoach';
 import { useT } from '../../i18n';
 import CardCollectForm from '../CardCollectForm';
 import {
   getSubscription,
   cancelSubscription,
+  changeSubscription,
   getPaymentMethod,
   updatePaymentMethod,
   getPaymentHistory,
@@ -19,6 +19,7 @@ import {
   type PaymentMethod,
   type PaymentHistoryEntry,
 } from '../../utils/stripe';
+import { getCachedRegion, regionFromLanguage } from '../../utils/region';
 import './sheet-base.css';
 
 interface Props {
@@ -91,14 +92,24 @@ export default function ManagePlanSheet({ onClose }: Props) {
     return () => { cancelled = true; };
   }, [userId, storeTrialEndsAt]);
 
-  function notWired(action: string) {
-    if (window.confirm(`${t('coach.stripeNotWired')}\n\n${t('managePlan.notWiredAsk')} "${action}"?`)) {
-      onClose();
-      openCoachWith(`Quiero ${action}.`);
+  async function handleChangeCycle(target: BillingCycle) {
+    if (busy || target === currentCycle) return;
+    if (!window.confirm(t('managePlan.changeCycleConfirm'))) return;
+    setBusy(true);
+    try {
+      const store = useAppStore.getState();
+      const region = store.region ?? getCachedRegion() ?? regionFromLanguage();
+      await changeSubscription(target, region);
+      // Optimista: refleja el nuevo ciclo en la UI. El webhook persiste
+      // billing_cycle en la DB (fuente de verdad). getSubscription todavía
+      // es mock → en un reload el display vuelve a mock hasta que se wiree.
+      setSubscription((prev) => prev ? { ...prev, billingCycle: target } : prev);
+    } catch {
+      window.alert(t('managePlan.changeCycleError'));
+    } finally {
+      setBusy(false);
     }
   }
-
-  function handleChangeCycle(_target: BillingCycle) { notWired(t('managePlan.actionChangePlan')); }
   async function handleConfirmCancel() {
     setBusy(true);
     try {
@@ -227,7 +238,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                 </p>
               )}
               {!isTrialing && currentCycle === 'yearly' && (
-                <button type="button" className="mps-plan-cta-secondary" onClick={() => handleChangeCycle('monthly')}>
+                <button type="button" className="mps-plan-cta-secondary" disabled={busy} onClick={() => handleChangeCycle('monthly')}>
                   {t('managePlan.switchToMonthly')}
                 </button>
               )}
@@ -254,7 +265,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                 </p>
               )}
               {!isTrialing && currentCycle === 'monthly' && (
-                <button type="button" className="sh-cta mps-plan-cta-primary" onClick={() => handleChangeCycle('yearly')}>
+                <button type="button" className="sh-cta mps-plan-cta-primary" disabled={busy} onClick={() => handleChangeCycle('yearly')}>
                   {t('managePlan.switchToYearly')}
                 </button>
               )}

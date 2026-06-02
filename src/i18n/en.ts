@@ -110,6 +110,8 @@ export const en: Translations<typeof es> = {
     cancelsOn: 'Cancels on',
     cancelKeepsAccess: 'You keep access until then.',
     cancelError: "We couldn't cancel your plan. Please try again in a moment.",
+    changeCycleConfirm: 'You are about to change your billing cycle. The change applies immediately and the difference is prorated on your next invoice. Confirm?',
+    changeCycleError: "We couldn't change your plan. Please try again in a moment.",
     faqTitle: 'FAQ',
     faq1q: 'When does the charge happen?',
     faq1a: "Your trial lasts 3 free days. After that, you're charged monthly or yearly depending on the plan you pick. We notify you 24h before the first charge.",

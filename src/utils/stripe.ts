@@ -172,9 +172,22 @@ export async function updatePaymentMethod(paymentMethodId: string): Promise<{
   return data;
 }
 
-/** TODO(stripe): update Stripe subscription al nuevo billing cycle (prorrateo automático). */
-export async function changeSubscription(_newCycle: BillingCycle): Promise<void> {
-  throw new Error('STRIPE_NOT_WIRED');
+/**
+ * Cambia el ciclo de la suscripción (mensual↔anual) vía edge function, con
+ * prorrateo en la próxima factura. `cycle` de la app ('monthly'|'yearly') se
+ * traduce al formato backend ('monthly'|'annual'). El webhook persiste el
+ * nuevo billing_cycle. El JWT lo adjunta invoke.
+ */
+export async function changeSubscription(
+  newCycle: BillingCycle,
+  region: Region,
+): Promise<{ status: string; cycle: BillingCycle }> {
+  const cycle = newCycle === 'yearly' ? 'annual' : 'monthly';
+  const { data, error } = await supabase.functions.invoke('stripe-change-cycle', {
+    body: { region, cycle },
+  });
+  if (error) throw new Error(error.message || 'No se pudo cambiar el plan');
+  return { status: data.status as string, cycle: newCycle };
 }
 
 /**

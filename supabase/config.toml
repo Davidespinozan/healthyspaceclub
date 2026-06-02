@@ -18,6 +18,9 @@ verify_jwt = true
 [functions.stripe-cancel-subscription]
 verify_jwt = true
 
+[functions.stripe-change-cycle]
+verify_jwt = true
+
 [functions.stripe-portal]
 verify_jwt = true
 
