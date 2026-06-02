@@ -1202,6 +1202,7 @@ export type Database = {
           stripe_customer_id: string | null
           subscription_period_end: string | null
           subscription_status: string
+          payment_past_due: boolean
           tdee: number | null
           trial_ends_at: string | null
           updated_at: string
@@ -1235,6 +1236,7 @@ export type Database = {
           stripe_customer_id?: string | null
           subscription_period_end?: string | null
           subscription_status?: string
+          payment_past_due?: boolean
           tdee?: number | null
           trial_ends_at?: string | null
           updated_at?: string
@@ -1268,6 +1270,7 @@ export type Database = {
           stripe_customer_id?: string | null
           subscription_period_end?: string | null
           subscription_status?: string
+          payment_past_due?: boolean
           tdee?: number | null
           trial_ends_at?: string | null
           updated_at?: string

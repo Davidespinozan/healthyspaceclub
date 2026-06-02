@@ -5496,6 +5496,33 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+/* Banner de pago fallido (past_due) — Billing-PastDue */
+.pastdue-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #FDECEA;
+  border-bottom: 1px solid #F5C6C0;
+  color: #8A2417;
+}
+.pastdue-icon { flex: 0 0 auto; color: #C0392B; }
+.pastdue-text { display: flex; flex-direction: column; line-height: 1.25; flex: 1; min-width: 0; }
+.pastdue-text strong { font-size: .82rem; }
+.pastdue-text span { font-size: .76rem; opacity: .9; }
+.pastdue-cta {
+  flex: 0 0 auto;
+  background: #C0392B;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pastdue-cta:hover { background: #A93226; }
 .app-main > * { animation: tabFadeIn .18s ease; }
 /* NOTA: animación solo opacity — NO incluir transform. transform != none en un ancestro
    crea un containing block para position: fixed descendientes, rompiendo overlays full-screen

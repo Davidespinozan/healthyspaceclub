@@ -64,7 +64,7 @@ export default function App() {
     (async () => {
       const { data } = await supabase
         .from('user_profiles')
-        .select('subscription_status, stripe_customer_id, subscription_period_end, cancel_at_period_end')
+        .select('subscription_status, stripe_customer_id, subscription_period_end, cancel_at_period_end, payment_past_due')
         .eq('user_id', uid)
         .maybeSingle();
       if (cancelled) return;
@@ -73,6 +73,7 @@ export default function App() {
         stripeCustomerId: data?.stripe_customer_id ?? null,
         subscriptionPeriodEnd: data?.subscription_period_end ?? null,
         cancelAtPeriodEnd: data?.cancel_at_period_end ?? false,
+        paymentPastDue: data?.payment_past_due ?? false,
         subscriptionStatusLoadedFor: uid,
       });
     })();

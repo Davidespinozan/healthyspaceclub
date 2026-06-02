@@ -135,6 +135,11 @@ export const en: Translations<typeof es> = {
     actionChangePlan: 'changing my plan',
     actionCancel: 'canceling my subscription',
   },
+  pastDue: {
+    title: 'There was a problem with your payment',
+    body: "We couldn't charge your subscription. Update your card to keep your access.",
+    cta: 'Update card',
+  },
   weight: {
     label: 'Weight',
     unset: 'Not logged',

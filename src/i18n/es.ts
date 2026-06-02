@@ -134,6 +134,11 @@ export const es = {
     actionChangePlan: 'cambiar mi plan',
     actionCancel: 'cancelar mi suscripción',
   },
+  pastDue: {
+    title: 'Hubo un problema con tu pago',
+    body: 'No pudimos cobrar tu suscripción. Actualizá tu tarjeta para no perder el acceso.',
+    cta: 'Actualizar tarjeta',
+  },
   weight: {
     label: 'Peso',
     unset: 'Sin registrar',

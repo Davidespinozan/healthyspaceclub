@@ -1,9 +1,10 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
-import { Home, User, MessageCircle, Users, Leaf, Dumbbell } from 'lucide-react';
+import { Home, User, MessageCircle, Users, Leaf, Dumbbell, AlertCircle } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import type { DashPage } from '../types';
 
+import ManagePlanSheet from '../components/sheets/ManagePlanSheet';
 import TabHoy from '../components/TabHoy';
 import TabCoach from '../components/TabCoach';
 // TabMetodo removed — backed up in _hsm_backup/
@@ -27,8 +28,9 @@ const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
 ];
 
 export default function DashboardScreen() {
-  const { dashPage, setDashPage, checkTrialExpiry, coachOpen, setCoachOpen, weeklyPlan } = useAppStore();
+  const { dashPage, setDashPage, checkTrialExpiry, coachOpen, setCoachOpen, weeklyPlan, paymentPastDue } = useAppStore();
   const { t } = useT();
+  const [showPastDuePlan, setShowPastDuePlan] = useState(false);
   // sec-hero condicional: la card intro (icon + título + descripción) solo se
   // muestra cuando NO hay plan/rutina generado. Cuando hay contenido, los
   // componentes hijos ya emiten su propio header rico → la card sería duplicada.
@@ -47,6 +49,21 @@ export default function DashboardScreen() {
 
   return (
     <div className="app-shell">
+      {/* Banner global de pago fallido (past_due). Acceso no cambia; CTA a
+          actualizar tarjeta. Se carga del status; aparece en el próximo load. */}
+      {paymentPastDue && (
+        <div className="pastdue-banner" role="alert">
+          <AlertCircle size={18} strokeWidth={2} className="pastdue-icon" />
+          <div className="pastdue-text">
+            <strong>{t('pastDue.title')}</strong>
+            <span>{t('pastDue.body')}</span>
+          </div>
+          <button className="pastdue-cta" onClick={() => setShowPastDuePlan(true)}>
+            {t('pastDue.cta')}
+          </button>
+        </div>
+      )}
+      {showPastDuePlan && <ManagePlanSheet onClose={() => setShowPastDuePlan(false)} />}
       <main className="app-main">
         {/* Main tabs */}
         {dashPage === 'hoy' && <TabHoy onNav={(p) => navTo(p as DashPage)} />}

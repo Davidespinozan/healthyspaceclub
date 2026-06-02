@@ -225,6 +225,7 @@ interface AppState {
   stripeCustomerId: string | null; // para mensajería futura del paywall; el gate no lo usa
   subscriptionPeriodEnd: string | null; // fin del período actual (lo persiste el webhook)
   cancelAtPeriodEnd: boolean | null;     // marcada para cancelar al fin del período
+  paymentPastDue: boolean;               // pago fallido (dunning): dispara banner; acceso NO cambia. Lo escribe el webhook.
   setSubscriptionPeriodEnd: (v: string | null) => void;
   setCancelAtPeriodEnd: (v: boolean) => void;
 
@@ -943,6 +944,7 @@ export const useAppStore = create<AppState>()(
   stripeCustomerId: null,
   subscriptionPeriodEnd: null,
   cancelAtPeriodEnd: null,
+  paymentPastDue: false,
   setSubscriptionPeriodEnd: (v) => set({ subscriptionPeriodEnd: v }),
   setCancelAtPeriodEnd: (v) => set({ cancelAtPeriodEnd: v }),
   // Inicia el trial: userPlan = 'trial' durante el período de prueba.
@@ -1069,6 +1071,7 @@ export const useAppStore = create<AppState>()(
     stripeCustomerId: null,
     subscriptionPeriodEnd: null,
     cancelAtPeriodEnd: null,
+    paymentPastDue: false,
     growthData: {},
     growthCompleted: Array(10).fill(false),
     dailyWorkout: null,

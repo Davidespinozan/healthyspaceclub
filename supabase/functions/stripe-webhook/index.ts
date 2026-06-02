@@ -105,6 +105,9 @@ Deno.serve(async (req: Request) => {
           cancel_at_period_end: event.type === 'customer.subscription.deleted'
             ? false
             : (sub.cancel_at_period_end ?? false),
+          payment_past_due: event.type === 'customer.subscription.deleted'
+            ? false
+            : (sub.status === 'past_due'),
         });
 
         if (!updated) {
