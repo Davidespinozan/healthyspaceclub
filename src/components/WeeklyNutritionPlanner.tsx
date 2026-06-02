@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
-import { mealPlans } from '../data/mealPlan';
+import { mealPlans, getMealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, ChevronDown, type LucideIcon } from 'lucide-react';
@@ -244,7 +244,8 @@ export default function WeeklyNutritionPlanner() {
   const [mealDetail, setMealDetail] = useState<{ meal: PopoutMeal; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
 
-  const activeMealPlan = mealPlans[mealPlanKey] ?? mealPlans['planA'];
+  const localizedMealPlans = getMealPlans(locale);
+  const activeMealPlan = localizedMealPlans[mealPlanKey] ?? localizedMealPlans['planA'];
   const scaledPlan = useMemo(
     () => planGoal > 0 ? scalePlan(activeMealPlan, planGoal) : activeMealPlan,
     [activeMealPlan, planGoal],

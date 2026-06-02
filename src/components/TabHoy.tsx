@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useAppStore } from '../store';
-import { mealPlans } from '../data/mealPlan';
+import { getMealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
@@ -51,8 +51,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const isPlanActive = userPlan && userPlan !== 'none' &&
     (!trialEndsAt || new Date(trialEndsAt) > new Date());
 
-  // Banco de ejercicios + HSM localizados (i18n contenido).
+  // Banco de ejercicios + comidas + HSM localizados (i18n contenido).
   const exerciseBank = getExercises(locale);
+  const mealPlans = getMealPlans(locale);
   // HSM bank localizado. getDailyQuestion cierra sobre él.
   const HSM_BANK = getHSMBank(locale);
   const getDailyQuestion = (dimIndex: number, dayIndex: number) => {

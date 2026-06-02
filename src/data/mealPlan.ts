@@ -1,4 +1,6 @@
 import type { DayPlan, CuisineTheme } from '../types';
+import type { AppLanguage } from '../store';
+import { mealNamesEn } from './mealPlan.en';
 
 export const cuisineThemes: CuisineTheme[] = [
   { label: 'Mexicana',  flag: '🇲🇽',  days: [1, 7]   },
@@ -834,3 +836,24 @@ export const cuisineThemesMap: Record<string, CuisineTheme[]> = {
 
 /** Retrocompatibilidad — no usar en código nuevo */
 export const mealPlanData = planA;
+
+// i18n de contenido (A3a): nombres de comida traducidos cuando locale==='en'
+// (overlay mealPlan.en.ts). desc + portions → A3b/A3c (siguen en español).
+// Memoizado: el mapeo de ~560 comidas se hace una sola vez.
+let _mealPlansEnCache: Record<string, DayPlan[]> | null = null;
+export function getMealPlans(lang: AppLanguage): Record<string, DayPlan[]> {
+  if (lang !== 'en') return mealPlans;
+  if (_mealPlansEnCache) return _mealPlansEnCache;
+  const out: Record<string, DayPlan[]> = {};
+  for (const key of Object.keys(mealPlans)) {
+    out[key] = mealPlans[key].map((day) => ({
+      ...day,
+      meals: day.meals.map((m) => {
+        const en = mealNamesEn[m.name];
+        return en ? { ...m, name: en } : m;
+      }),
+    }));
+  }
+  _mealPlansEnCache = out;
+  return out;
+}
