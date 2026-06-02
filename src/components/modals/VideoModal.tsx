@@ -1,6 +1,8 @@
 import { useAppStore } from '../../store';
+import { useT } from '../../i18n';
 
 export default function VideoModal() {
+  const { t } = useT();
   const { videoState, closeVideo, vidNavNext, vidNavPrev, setVideoPlaying, setVideoStep } = useAppStore();
   if (!videoState) return null;
 
@@ -17,15 +19,15 @@ export default function VideoModal() {
           <div className="vp-btn">
             {videoState.playing ? '⏸' : '▶'}
           </div>
-          <div className="vp-label">Paso {currentStep + 1} de {steps.length}</div>
-          <div className="vp-badge">{videoState.type === 'exercise' ? '💪 Ejercicio' : '🍳 Receta'}</div>
+          <div className="vp-label">{t('video.step', { n: currentStep + 1, total: steps.length })}</div>
+          <div className="vp-badge">{videoState.type === 'exercise' ? `💪 ${t('video.exercise')}` : `🍳 ${t('video.recipe')}`}</div>
         </div>
 
         {/* Body */}
         <div className="vid-body">
           <div className="vid-title">{title}</div>
           <div className="vid-sub">{desc}</div>
-          <div className="steps-lbl">PASOS DE LA TÉCNICA</div>
+          <div className="steps-lbl">{t('video.techniqueSteps')}</div>
 
           {steps.map((step, idx) => (
             <div
@@ -54,13 +56,13 @@ export default function VideoModal() {
             disabled={currentStep === 0}
             style={{ opacity: currentStep === 0 ? 0.35 : 1 }}
           >
-            ← Anterior
+            ← {t('common.back')}
           </button>
           <button
             className="btn-next"
             onClick={isLast ? closeVideo : vidNavNext}
           >
-            {isLast ? '✓ Completar' : 'Siguiente →'}
+            {isLast ? t('video.complete') : t('video.next')}
           </button>
         </div>
       </div>

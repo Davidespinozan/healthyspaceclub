@@ -4,6 +4,7 @@ import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { Camera, Image as ImageIcon, FileText, X, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../store';
+import { useT } from '../i18n';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
 import { validateMediaFile } from '../utils/mediaValidation';
@@ -71,6 +72,7 @@ function loadImageDimensions(url: string): Promise<{ width: number; height: numb
 }
 
 export default function CreatePostModal({ open, onClose, onPostCreated }: Props) {
+  const { t } = useT();
   const { userName, streakCount, dailyWorkout } = useAppStore();
   const userId = useCurrentUserId();
 
@@ -94,7 +96,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
   const today = new Date().toISOString().split('T')[0];
   const workoutToday = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
   const workoutSummary = workoutToday
-    ? `${workoutToday.type || 'Entrenamiento'} · ${workoutToday.duration || ''}`
+    ? `${workoutToday.type || t('post.workoutFallback')} · ${workoutToday.duration || ''}`
     : '';
 
   // ── Fetch avatar para insert ──────────────────────────────
@@ -247,7 +249,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     try {
       const { error: insertErr } = await supabase.from('club_posts').insert({
         user_id: userId,
-        username: userName || 'Anónimo',
+        username: userName || t('common.anonymous'),
         avatar_url: userAvatarUrl,
         streak: streakCount,
         workout_summary: workoutSummary,
@@ -352,27 +354,28 @@ function ChooseView({
   onTextOnly: () => void;
   onClose: () => void;
 }) {
+  const { t } = useT();
   return (
     <div className="cpm-choose">
       <header className="cpm-choose-head">
-        <button type="button" className="cpm-close" onClick={onClose} aria-label="Cerrar">
+        <button type="button" className="cpm-close" onClick={onClose} aria-label={t('common.close')}>
           <X size={20} />
         </button>
-        <h1 className="cpm-choose-title">Nueva publicación</h1>
+        <h1 className="cpm-choose-title">{t('post.newPost')}</h1>
         <span className="cpm-choose-spacer" />
       </header>
       <div className="cpm-choose-options">
         <button type="button" className="cpm-choose-option cpm-choose-option--primary" onClick={onTakePhoto}>
           <Camera size={22} strokeWidth={1.6} />
-          <span>Tomar foto</span>
+          <span>{t('post.takePhoto')}</span>
         </button>
         <button type="button" className="cpm-choose-option" onClick={onGallery}>
           <ImageIcon size={22} strokeWidth={1.6} />
-          <span>Subir de galería</span>
+          <span>{t('post.fromGallery')}</span>
         </button>
         <button type="button" className="cpm-choose-option" onClick={onTextOnly}>
           <FileText size={22} strokeWidth={1.6} />
-          <span>Solo texto</span>
+          <span>{t('post.textOnly')}</span>
         </button>
       </div>
     </div>
@@ -397,15 +400,20 @@ function CroppingView({
   onConfirm: () => void;
   onBack: () => void;
 }) {
+  const { t } = useT();
+  const aspectKey = (v: AspectRatio) =>
+    v === '1:1' ? 'post.aspectSquare' as const
+    : v === '4:3' ? 'post.aspectHorizontal' as const
+    : 'post.aspectVertical' as const;
   return (
     <div className="cpm-cropping">
       <header className="cpm-cropping-head">
-        <button type="button" className="cpm-icon-btn" onClick={onBack} aria-label="Volver">
+        <button type="button" className="cpm-icon-btn" onClick={onBack} aria-label={t('common.back')}>
           <ArrowLeft size={20} />
         </button>
-        <h2 className="cpm-cropping-title">Recortar</h2>
+        <h2 className="cpm-cropping-title">{t('post.crop')}</h2>
         <button type="button" className="cpm-done-btn" onClick={onConfirm}>
-          Listo
+          {t('common.done')}
         </button>
       </header>
 
@@ -422,7 +430,7 @@ function CroppingView({
           objectFit="contain"
         />
         {availableAspects.length > 1 && (
-          <div className="cpm-aspect-pill" role="tablist" aria-label="Formato de la foto">
+          <div className="cpm-aspect-pill" role="tablist" aria-label={t('post.aspectAria')}>
             {availableAspects.map(opt => (
               <button
                 key={opt.value}
@@ -432,7 +440,7 @@ function CroppingView({
                 className={`cpm-aspect-tab${aspectRatio === opt.value ? ' is-active' : ''}`}
                 onClick={() => onAspectChange(opt.value)}
               >
-                {opt.label}
+                {t(aspectKey(opt.value))}
               </button>
             ))}
           </div>
@@ -457,15 +465,16 @@ function ComposingView({
   onBack: () => void;
   uploadError: string | null;
 }) {
+  const { t } = useT();
   const remaining = MAX_CAPTION - caption.length;
   const isNearLimit = remaining <= 20;
   return (
     <div className="cpm-composing">
       <header className="cpm-composing-head">
-        <button type="button" className="cpm-icon-btn" onClick={onBack} aria-label="Volver">
+        <button type="button" className="cpm-icon-btn" onClick={onBack} aria-label={t('common.back')}>
           <ArrowLeft size={20} />
         </button>
-        <h2 className="cpm-composing-title">Componer</h2>
+        <h2 className="cpm-composing-title">{t('post.compose')}</h2>
         <span className="cpm-choose-spacer" />
       </header>
 
@@ -478,7 +487,7 @@ function ComposingView({
 
         <textarea
           className="cpm-composing-input"
-          placeholder="¿Cómo te fue hoy?"
+          placeholder={t('post.captionPlaceholder')}
           maxLength={MAX_CAPTION}
           value={caption}
           onChange={e => onCaptionChange(e.target.value)}
@@ -492,7 +501,7 @@ function ComposingView({
           {workoutSummary && <span className="cpm-composing-chip">{workoutSummary}</span>}
         </div>
 
-        {uploadError && <p className="cpm-composing-error">No se pudo publicar: {uploadError}</p>}
+        {uploadError && <p className="cpm-composing-error">{t('post.publishError', { error: uploadError })}</p>}
       </div>
 
       <footer className="cpm-composing-foot">
@@ -502,7 +511,7 @@ function ComposingView({
           onClick={onSubmit}
           disabled={!caption.trim() && !imageSrc}
         >
-          Publicar
+          {t('post.publish')}
         </button>
       </footer>
     </div>
@@ -513,10 +522,11 @@ function ComposingView({
 // VIEW: uploading
 // ══════════════════════════════════════════════════════════════
 function UploadingView() {
+  const { t } = useT();
   return (
     <div className="cpm-uploading">
       <div className="cpm-spinner" />
-      <p className="cpm-uploading-text">Publicando…</p>
+      <p className="cpm-uploading-text">{t('post.publishing')}</p>
     </div>
   );
 }

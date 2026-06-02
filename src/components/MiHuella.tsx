@@ -3,8 +3,10 @@ import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
 import { uploadAvatar } from '../utils/uploadAvatar';
+import { useT } from '../i18n';
 
 export default function MiHuella({ onBack }: { onBack: () => void }) {
+  const { t } = useT();
   const { userName, setUserName, streakCount, hsmUnlockDays } = useAppStore();
   const userId = useCurrentUserId();
 
@@ -99,7 +101,7 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="hu-wrap">
-      <button className="sub-back" onClick={onBack}>← Volver</button>
+      <button className="sub-back" onClick={onBack}>← {t('common.back')}</button>
 
       <div className="hu-header">
         <label className="hu-avatar-wrap">
@@ -108,14 +110,14 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
             : <div className="hu-avatar-placeholder">{(profile.display_name || '?')[0].toUpperCase()}</div>
           }
           <input type="file" accept="image/*" onChange={handleAvatar} hidden />
-          <div className="hu-avatar-edit">Cambiar</div>
+          <div className="hu-avatar-edit">{t('profile.change')}</div>
         </label>
 
         {!editing ? (
           <div className="hu-info">
             <div className="hu-name">{profile.display_name || userName}</div>
             {profile.bio && <div className="hu-bio">{profile.bio}</div>}
-            <button className="hu-edit-btn" onClick={() => setEditing(true)}>Editar perfil</button>
+            <button className="hu-edit-btn" onClick={() => setEditing(true)}>{t('profile.editProfile')}</button>
           </div>
         ) : (
           <div className="hu-info">
@@ -123,19 +125,19 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
               className="hu-edit-input"
               value={editName}
               onChange={e => setEditName(e.target.value)}
-              placeholder="Nombre público"
+              placeholder={t('profile.editNamePlaceholder')}
             />
             <input
               className="hu-edit-input"
               value={editBio}
               onChange={e => setEditBio(e.target.value.slice(0, 100))}
-              placeholder="Bio corta (máx 100)"
+              placeholder={t('profile.editBioPlaceholder')}
             />
             <div className="hu-edit-actions">
               <button className="hu-save-btn" onClick={handleSave} disabled={saving}>
-                {saving ? 'Guardando...' : 'Guardar'}
+                {saving ? t('common.saving') : t('common.save')}
               </button>
-              <button className="hu-cancel-btn" onClick={() => setEditing(false)}>Cancelar</button>
+              <button className="hu-cancel-btn" onClick={() => setEditing(false)}>{t('common.cancel')}</button>
             </div>
           </div>
         )}
@@ -144,15 +146,15 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
       <div className="hu-stats">
         <div className="hu-stat">
           <div className="hu-stat-val">{streakCount}</div>
-          <div className="hu-stat-lbl">Racha</div>
+          <div className="hu-stat-lbl">{t('profile.statStreak')}</div>
         </div>
         <div className="hu-stat">
           <div className="hu-stat-val">{hsmUnlockDays.length}</div>
-          <div className="hu-stat-lbl">Días activos</div>
+          <div className="hu-stat-lbl">{t('profile.activeDays')}</div>
         </div>
         <div className="hu-stat">
           <div className="hu-stat-val">{postCount}</div>
-          <div className="hu-stat-lbl">Posts</div>
+          <div className="hu-stat-lbl">{t('profile.statPosts')}</div>
         </div>
       </div>
     </div>
