@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppStore } from '../store';
+import { supabase } from '../lib/supabase';
 import { openCoachWith } from '../utils/openCoach';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n/es';
@@ -36,6 +37,7 @@ interface Props {
 
 export default function SettingsSheet({ open, onClose }: Props) {
   const { userPlan, trialEndsAt, obData, tdee, planGoal, logout } = useAppStore();
+  const user = useAppStore(s => s.user);
   const language = useAppStore(s => s.language);
   const setLanguage = useAppStore(s => s.setLanguage);
   const { t } = useT();
@@ -44,6 +46,32 @@ export default function SettingsSheet({ open, onClose }: Props) {
   const [showEditData, setShowEditData] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+
+  // Cambio de contraseña in-app (sesión actual, sin email).
+  const [showPwForm, setShowPwForm] = useState(false);
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState(false);
+
+  function resetPwForm() {
+    setShowPwForm(false);
+    setNewPw(''); setConfirmPw('');
+    setPwError(''); setPwSuccess(false);
+  }
+
+  async function handleChangePassword() {
+    setPwError(''); setPwSuccess(false);
+    if (newPw.length < 8) { setPwError(t('settings.pwTooShort')); return; }
+    if (newPw !== confirmPw) { setPwError(t('settings.pwMismatch')); return; }
+    setPwBusy(true);
+    const { error } = await supabase.auth.updateUser({ password: newPw });
+    setPwBusy(false);
+    if (error) { setPwError(error.message || t('settings.pwError')); return; }
+    setPwSuccess(true);
+    setNewPw(''); setConfirmPw('');
+  }
 
   function handleContactSupport() {
     onClose();
@@ -189,6 +217,55 @@ export default function SettingsSheet({ open, onClose }: Props) {
           >
             {t('settings.editData')}
           </button>
+        </section>
+
+        {/* Sección Cuenta: email + cambiar contraseña */}
+        <section className="ss-section">
+          <p className="ss-section-eyebrow">{t('settings.account')}</p>
+          <div className="ss-data-card">
+            <div className="ss-data-row">
+              <span className="ss-data-key">{t('settings.email')}</span>
+              <span className="ss-data-val">{user?.email ?? '—'}</span>
+            </div>
+          </div>
+          {!showPwForm ? (
+            <button
+              type="button"
+              className="ss-data-edit"
+              onClick={() => setShowPwForm(true)}
+            >
+              {t('settings.changePassword')}
+            </button>
+          ) : (
+            <div className="ss-pw-form">
+              <input
+                type="password"
+                className="ss-pw-input"
+                placeholder={t('settings.newPassword')}
+                value={newPw}
+                onChange={e => { setNewPw(e.target.value); setPwError(''); setPwSuccess(false); }}
+                autoComplete="new-password"
+              />
+              <input
+                type="password"
+                className="ss-pw-input"
+                placeholder={t('settings.confirmPassword')}
+                value={confirmPw}
+                onChange={e => { setConfirmPw(e.target.value); setPwError(''); setPwSuccess(false); }}
+                autoComplete="new-password"
+              />
+              {pwError && <p className="ss-pw-msg ss-pw-msg--error">{pwError}</p>}
+              {pwSuccess && <p className="ss-pw-msg ss-pw-msg--ok">{t('settings.pwSuccess')}</p>}
+              <div className="ss-pw-actions">
+                <button type="button" className="ss-pw-cancel" onClick={resetPwForm}>
+                  {t('common.cancel')}
+                </button>
+                <button type="button" className="ss-pw-save" disabled={pwBusy} onClick={handleChangePassword}>
+                  {pwBusy ? '…' : t('settings.pwSave')}
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Sección Idioma — i18n Lote 0 */}

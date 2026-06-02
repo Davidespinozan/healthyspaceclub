@@ -163,6 +163,57 @@
 }
 .ss-data-edit:hover { border-bottom-color: var(--amber); }
 
+/* Cambio de contraseña in-app */
+.ss-pw-form {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ss-pw-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  padding: 11px 14px;
+  border: 1px solid var(--surface-glass-border);
+  border-radius: 12px;
+  background: var(--surface-glass-light);
+  color: var(--forest);
+  outline: none;
+}
+.ss-pw-input:focus { border-color: var(--amber); }
+.ss-pw-msg { font-family: 'Montserrat', sans-serif; font-size: 12px; margin: 0; }
+.ss-pw-msg--error { color: #C0392B; }
+.ss-pw-msg--ok { color: #2E7D32; }
+.ss-pw-actions { display: flex; gap: 10px; align-items: center; margin-top: 2px; }
+.ss-pw-cancel {
+  flex: 0 0 auto;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--txt2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+.ss-pw-save {
+  flex: 1;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--forest);
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ss-pw-save:disabled { opacity: 0.6; cursor: default; }
+
 /* Data card — listado limpio */
 .ss-data-card {
   background: var(--surface-glass-light);
