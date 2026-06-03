@@ -38,7 +38,18 @@
   box-shadow:
     0 0 0 3px rgba(191, 160, 101, 0.55),
     var(--shadow-pro-xl);
-  cursor: pointer;
+  cursor: default;
+}
+/* Solo editable (modo editar) muestra que se puede cambiar la foto */
+.tt5-avatar-wrap--editable { cursor: pointer; }
+.tt5-avatar-wrap--editable::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(21, 51, 48, 0.35);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z'/%3E%3Ccircle cx='12' cy='13' r='3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
 }
 .tt5-avatar-wrap img {
   width: 100%;

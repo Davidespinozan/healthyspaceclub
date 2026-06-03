@@ -140,13 +140,22 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
 
       {/* HEADER lateral — avatar + meta (☰ inline a la derecha del nombre) */}
       <div className="tt5-header">
-        <label className="tt5-avatar-wrap" aria-label={t('profile.ariaChangeAvatar')}>
-          {profile.avatar_url
-            ? <img src={profile.avatar_url} alt="" />
-            : <div className="tt5-avatar-fallback">{initial}</div>
-          }
-          <input type="file" accept="image/*" onChange={handleAvatar} />
-        </label>
+        {editing ? (
+          <label className="tt5-avatar-wrap tt5-avatar-wrap--editable" aria-label={t('profile.ariaChangeAvatar')}>
+            {profile.avatar_url
+              ? <img src={profile.avatar_url} alt="" />
+              : <div className="tt5-avatar-fallback">{initial}</div>
+            }
+            <input type="file" accept="image/*" onChange={handleAvatar} />
+          </label>
+        ) : (
+          <div className="tt5-avatar-wrap">
+            {profile.avatar_url
+              ? <img src={profile.avatar_url} alt="" />
+              : <div className="tt5-avatar-fallback">{initial}</div>
+            }
+          </div>
+        )}
 
         {!editing ? (
           <div className="tt5-header-meta">
