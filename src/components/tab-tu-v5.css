@@ -442,6 +442,44 @@ button.tt5-stat:active { transform: scale(0.97); }
   margin: 0;
 }
 
+/* ═══ Reflexiones reales (HSM) — terracota vibrante, tema de reflexión ═══ */
+.tt5-reflections {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 14px 18px;
+}
+.tt5-reflection {
+  background: linear-gradient(135deg, #C75B3A, #A8472B);
+  border: 1px solid rgba(199, 91, 58, 0.5);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 18px rgba(199, 91, 58, 0.20);
+  padding: 14px 16px;
+  text-align: left;
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+}
+.tt5-reflection-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 8px; margin-bottom: 8px;
+}
+.tt5-reflection-dim {
+  font-family: 'Montserrat', sans-serif; font-size: 0.62rem; font-weight: 700;
+  letter-spacing: var(--tracking-kicker); color: rgba(255, 255, 255, 0.9);
+}
+.tt5-reflection-date {
+  font-family: 'Montserrat', sans-serif; font-size: 0.62rem; font-weight: 500;
+  color: rgba(255, 255, 255, 0.6); white-space: nowrap;
+}
+.tt5-reflection-q {
+  font-family: 'Montserrat', sans-serif; font-size: 0.72rem; font-style: italic;
+  color: rgba(255, 255, 255, 0.68); line-height: 1.4; margin: 0 0 6px;
+}
+.tt5-reflection-a {
+  font-family: 'Montserrat', sans-serif; font-size: 0.9rem;
+  color: #fff; line-height: 1.5; margin: 0;
+}
+.tt5-highlight-lock { color: rgba(21, 51, 48, 0.4); }
+
 /* ═══ Responsive ═════════════════════════════════════════ */
 @media (max-width: 380px) {
   .tt5-header { gap: 14px; padding: 18px 14px 0; }

@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from 'react';
-import { Menu, Flame } from 'lucide-react';
+import { Menu, Flame, Lock } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
@@ -18,6 +18,7 @@ import {
   getNextMilestone,
 } from '../constants/milestones';
 import { useT } from '../i18n';
+import { formatDate } from '../i18n/format';
 import './tab-tu-v5.css';
 
 export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => void }) {
@@ -25,7 +26,9 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   const { t, locale } = useT();
   const {
     userName, setUserName, streakCount, startDate, userMilestones,
+    dailyHSMResponses,
   } = useAppStore();
+  const reflections = useMemo(() => [...dailyHSMResponses].reverse(), [dailyHSMResponses]);
 
   const userId = useCurrentUserId();
   const firstName = userName?.split(' ')[0] || '';
@@ -279,7 +282,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
               >
                 <div className="tt5-highlight-ring">
                   <div className="tt5-highlight-emoji" aria-hidden="true">
-                    {isUnlocked ? MILESTONE_EMOJI[days] : '🔒'}
+                    {isUnlocked ? MILESTONE_EMOJI[days] : <Lock size={16} strokeWidth={2} className="tt5-highlight-lock" />}
                   </div>
                 </div>
                 <div className="tt5-highlight-label">
@@ -338,11 +341,28 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
       })()}
 
       {!editing && activeTab === 'reflexiones' && (
-        <div className="tt5-reflections-empty">
-          <p className="tt5-reflections-empty-text">
-            {t('profile.reflexionesEmpty')}
-          </p>
-        </div>
+        reflections.length === 0 ? (
+          <div className="tt5-reflections-empty">
+            <p className="tt5-reflections-empty-text">
+              {t('profile.reflexionesEmpty')}
+            </p>
+          </div>
+        ) : (
+          <div className="tt5-reflections">
+            {reflections.map((r, i) => (
+              <div key={`${r.date}-${r.dimension}-${i}`} className="tt5-reflection">
+                <div className="tt5-reflection-head">
+                  <span className="tt5-reflection-dim">{r.dimension}</span>
+                  <span className="tt5-reflection-date">
+                    {formatDate(r.date, locale, { day: 'numeric', month: 'short' })}
+                  </span>
+                </div>
+                <p className="tt5-reflection-q">{r.question}</p>
+                <p className="tt5-reflection-a">{r.response}</p>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
       <SettingsSheet
