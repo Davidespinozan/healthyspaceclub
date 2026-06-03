@@ -5569,11 +5569,12 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .bnav {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
   display: flex; justify-content: space-around; align-items: center;
-  /* Frosted glass translúcido — el contenido se ve detrás con blur (look iOS moderno) */
-  background: var(--glass-forest);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  backdrop-filter: blur(20px) saturate(140%);
-  border-top: 1px solid rgba(246,242,234,.08);
+  /* Verde profundo con gradiente + un toque de translucidez (no gris lavado).
+     Alta opacidad para conservar la riqueza del forest; blur sutil para el material. */
+  background: linear-gradient(180deg, rgba(46,74,66,0.95), rgba(21,51,48,0.97));
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  border-top: 1px solid rgba(191,160,101,.18);
   border-radius: 22px 22px 0 0;
   box-shadow: 0 -8px 28px rgba(8,20,27,.22);
   padding: 10px 0 12px;
