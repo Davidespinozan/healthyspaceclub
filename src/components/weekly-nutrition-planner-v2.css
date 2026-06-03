@@ -329,11 +329,13 @@
 /* ─── Plan header (forest) ─── */
 .wnp2-header {
   background: linear-gradient(168deg, #153330 0%, #2E4A42 100%);
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 18px 20px;
   color: var(--sala-surface);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 12px 30px rgba(8, 20, 27, 0.22);
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
 }
 .wnp2-header::before {
   content: '';
@@ -374,11 +376,11 @@
   color: var(--sala-surface);
 }
 .wnp2-header-title {
-  font-size: 19px;
-  font-weight: 500;
-  letter-spacing: -0.015em;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: var(--tracking-tighter);
   margin: 0;
-  line-height: 1.15;
+  line-height: 1.1;
 }
 .wnp2-header-title em {
   font-style: italic;
@@ -602,21 +604,35 @@
 
 /* ─── Meal card (layout A: círculo a la izquierda) ─── */
 .wnp2-meal {
-  background: white;
-  border: 0.5px solid var(--sand);
-  border-radius: 14px;
-  padding: 12px 14px;
+  background: var(--sala-surface, white);
+  border: 1px solid var(--sala-border, var(--sand));
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
   display: flex;
   align-items: center;
   gap: 14px;
   cursor: pointer;
   position: relative;
-  transition: all 0.15s;
+  box-shadow: var(--shadow-pro-md);
+  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease;
   -webkit-tap-highlight-color: transparent;
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
 }
+.wnp2-meal:nth-child(1) { animation-delay: 0.04s; }
+.wnp2-meal:nth-child(2) { animation-delay: 0.09s; }
+.wnp2-meal:nth-child(3) { animation-delay: 0.14s; }
+.wnp2-meal:nth-child(4) { animation-delay: 0.19s; }
+.wnp2-meal:nth-child(5) { animation-delay: 0.24s; }
+.wnp2-meal:nth-child(6) { animation-delay: 0.29s; }
+.wnp2-meal:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-pro-xl);
+}
+.wnp2-meal:active { transform: scale(0.98); }
 .wnp2-meal.done {
   opacity: 0.55;
 }
+@media (prefers-reduced-motion: reduce) { .wnp2-meal { animation: none; } }
 .wnp2-meal::before {
   content: '';
   position: absolute;
@@ -656,12 +672,12 @@
   gap: 5px;
 }
 .wnp2-meal-name {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--forest);
-  line-height: 1.25;
+  line-height: 1.2;
   margin-bottom: 6px;
-  letter-spacing: -0.005em;
+  letter-spacing: var(--tracking-tight);
 }
 .wnp2-meal.done .wnp2-meal-name {
   text-decoration: line-through;
