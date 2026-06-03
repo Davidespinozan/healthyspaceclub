@@ -286,9 +286,11 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
                     {isUnlocked ? <span className="tt5-highlight-days">{days}d</span> : <Lock size={16} strokeWidth={2} className="tt5-highlight-lock" />}
                   </div>
                 </div>
-                <div className="tt5-highlight-label">
-                  {isNext ? t('profile.nextLabel') : isUnlocked ? t('profile.achievedLabel') : getMilestoneLabel(days, locale)}
-                </div>
+                {!isUnlocked && (
+                  <div className="tt5-highlight-label">
+                    {isNext ? t('profile.nextLabel') : getMilestoneLabel(days, locale)}
+                  </div>
+                )}
                 {isNext && (
                   <div className="tt5-highlight-sub">{t('profile.nextSub', { n: remaining })}</div>
                 )}
