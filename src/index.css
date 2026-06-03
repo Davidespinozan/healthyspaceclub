@@ -6832,11 +6832,13 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 
 .te-complete-title {
   font-family: 'Montserrat', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 500;
+  font-size: 1.7rem;
+  font-weight: 800;
   letter-spacing: var(--tracking-tighter);
   color: white;
   margin-bottom: 6px;
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  animation-delay: 0.08s;
 }
 .te-complete-sub {
   font-family: 'Montserrat', sans-serif;
@@ -6844,6 +6846,8 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   font-size: .92rem;
   color: rgba(246,242,234,.6);
   margin-bottom: 28px;
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  animation-delay: 0.14s;
 }
 
 /* Review */
@@ -6858,6 +6862,8 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   width: 100%;
   margin-bottom: 28px;
   box-shadow: var(--shadow-pro-md);
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  animation-delay: 0.20s;
 }
 .te-review-label {
   font-family: 'Montserrat', sans-serif;
@@ -6885,23 +6891,26 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .te-review-dots span:nth-child(3) { animation-delay: .3s; }
 
 .te-complete-btn {
-  padding: 14px 36px;
-  border: 1px solid rgba(246,242,234,.18);
-  border-radius: var(--radius-base);
-  background: rgba(246,242,234,.06);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  color: var(--sala-surface);
+  padding: 15px 40px;
+  border: none;
+  border-radius: 999px;
+  background: var(--grad-amber);
+  color: #fff;
   font-family: 'Montserrat', sans-serif;
-  font-size: .88rem; font-weight: 500;
+  font-size: .9rem; font-weight: 700;
   letter-spacing: var(--tracking-tight);
   cursor: pointer;
-  transition: transform var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease;
+  box-shadow: var(--glow-amber);
+  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, filter var(--duration-base) ease;
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  animation-delay: 0.26s;
 }
 .te-complete-btn:hover {
-  background: rgba(246,242,234,.12);
-  border-color: rgba(246,242,234,.35);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(168, 134, 78, 0.4);
+  filter: brightness(1.03);
 }
+.te-complete-btn:active { transform: scale(0.975); }
 
 /* ── Tu Espacio CTA card in TabHoy ── */
 .th-espacio-cta {

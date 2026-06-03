@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function TuEspacioFlow({ onClose }: Props) {
-  const { locale } = useT();
+  const { t, locale } = useT();
   const { dailyHSMResponses, addHSMResponse, userPlan, trialEndsAt, markActiveDay } = useAppStore();
   const isPlanActive = userPlan && userPlan !== 'none' &&
     (!trialEndsAt || new Date(trialEndsAt) > new Date());
@@ -136,24 +136,30 @@ export default function TuEspacioFlow({ onClose }: Props) {
   // ── Completion screen ──
   if (allDone) {
     return (
-      <div className="te-flow" style={{ background: 'linear-gradient(165deg, #153330 0%, #2d5a3d 100%)' }}>
+      <div
+        className="te-flow"
+        style={{
+          background:
+            'radial-gradient(120% 90% at 12% 0%, #2E4A42 0%, transparent 55%), radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%), linear-gradient(155deg, #153330 0%, #1b3c37 52%, #102a27 100%)',
+        }}
+      >
         <div className="te-flow-close" onClick={onClose}>✕</div>
         <div className="te-complete">
           <div className="te-complete-check">✦</div>
-          <div className="te-complete-title">Las 5 de hoy, listas.</div>
-          <div className="te-complete-sub">Tu coach leyó tus respuestas.</div>
+          <div className="te-complete-title">{t('hoy.reviewCompleteTitle')}</div>
+          <div className="te-complete-sub">{t('hoy.reviewCompleteSub')}</div>
           {reviewLoading ? (
             <div className="te-review-loading">
               <div className="te-review-dots"><span /><span /><span /></div>
-              <span>Analizando tus respuestas...</span>
+              <span>{t('hoy.reviewAnalyzing')}</span>
             </div>
           ) : dailyReview ? (
             <div className="te-review">
-              <div className="te-review-label">Tu observación de hoy</div>
+              <div className="te-review-label">{t('hoy.reviewLabelToday')}</div>
               <p className="te-review-text">{dailyReview}</p>
             </div>
           ) : null}
-          <button className="te-complete-btn" onClick={onClose}>Volver a Hoy</button>
+          <button className="te-complete-btn" onClick={onClose}>{t('hoy.reviewBackToHoy')}</button>
         </div>
       </div>
     );
