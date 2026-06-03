@@ -214,27 +214,29 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
               <div className="pp5-header-meta">
                 <div className="pp5-name-row">
                   <h1 className="pp5-name">{displayName}</h1>
-                  {isOwnProfile && (
-                    <button
-                      className="pp5-close"
-                      onClick={() => {
-                        const data = { title: t('profile.shareTitle'), url: window.location.href };
-                        if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-                          navigator.share(data).catch(() => {});
-                        }
-                      }}
-                      aria-label={t('profile.share')}
-                      type="button"
-                    >
-                      <Share2 size={15} />
-                    </button>
-                  )}
-                  <button className="pp5-close" onClick={onClose} aria-label={t('common.close')} type="button">
-                    <X size={16} />
-                  </button>
                 </div>
                 {profile?.bio && <p className="pp5-bio">{profile.bio}</p>}
                 <span className="pp5-year-chip">{t('profile.yearDayChip', { year: yearN, day: dayN })}</span>
+              </div>
+              <div className="pp5-header-actions">
+                {isOwnProfile && (
+                  <button
+                    className="pp5-close"
+                    onClick={() => {
+                      const data = { title: t('profile.shareTitle'), url: window.location.href };
+                      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+                        navigator.share(data).catch(() => {});
+                      }
+                    }}
+                    aria-label={t('profile.share')}
+                    type="button"
+                  >
+                    <Share2 size={15} />
+                  </button>
+                )}
+                <button className="pp5-close" onClick={onClose} aria-label={t('common.close')} type="button">
+                  <X size={16} />
+                </button>
               </div>
             </div>
 
