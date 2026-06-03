@@ -8,7 +8,6 @@ import { uploadAvatar } from '../utils/uploadAvatar';
 import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
-import LogrosSheet from './sheets/LogrosSheet';
 import AmbientGlow from './AmbientGlow';
 import {
   MILESTONE_STEPS,
@@ -42,8 +41,6 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'reflexiones'>('posts');
-  const [logrosSheetOpen, setLogrosSheetOpen] = useState(false);
-  const [focusedMilestone, setFocusedMilestone] = useState<number | undefined>(undefined);
 
   const { yearNumber, dayOfYear } = useMemo(() => {
     const start = startDate ? new Date(startDate).getTime() : Date.now();
@@ -65,11 +62,6 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
     () => new Set(userMilestones.map(m => m.milestone_days)),
     [userMilestones]
   );
-
-  function openLogrosSheet(focused?: number) {
-    setFocusedMilestone(focused);
-    setLogrosSheetOpen(true);
-  }
 
   async function refreshUserPosts() {
     try {
@@ -247,16 +239,12 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
             <div className="tt5-stat-label">{t('profile.statStreak')}</div>
             <div className="tt5-stat-num">{streakCount} <Flame size={20} strokeWidth={1.6} /></div>
           </div>
-          <button
-            type="button"
-            className="tt5-stat tt5-stat--logros"
-            onClick={() => openLogrosSheet()}
-          >
+          <div className="tt5-stat tt5-stat--logros">
             <div className="tt5-stat-label">{t('profile.statLogros')}</div>
             <div className="tt5-stat-num">
               {achievementsCount}<span className="tt5-stat-num-total">/{MILESTONE_STEPS.length}</span>
             </div>
-          </button>
+          </div>
         </div>
       )}
 
@@ -274,12 +262,10 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
             const futureOpacity = !isUnlocked && !isNext ? 1 - idx * 0.08 : undefined;
             const remaining = Math.max(0, days - streakCount);
             return (
-              <button
-                type="button"
+              <div
                 key={days}
                 className={`tt5-highlight${isUnlocked ? ' is-unlocked' : ''}${isNext ? ' is-next' : ''}`}
                 style={futureOpacity !== undefined ? { opacity: futureOpacity } : undefined}
-                onClick={() => openLogrosSheet(days)}
               >
                 <div className="tt5-highlight-ring">
                   <div className="tt5-highlight-emoji" aria-hidden="true">
@@ -294,7 +280,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
                 {isNext && (
                   <div className="tt5-highlight-sub">{t('profile.nextSub', { n: remaining })}</div>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>
@@ -383,12 +369,6 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
           }}
         />
       )}
-
-      <LogrosSheet
-        isOpen={logrosSheetOpen}
-        onClose={() => setLogrosSheetOpen(false)}
-        initialMilestoneDay={focusedMilestone}
-      />
 
       </div>
     </div>
