@@ -426,10 +426,20 @@ export default function App() {
     );
   }
 
+  // Atajo de PREVIEW dev-only: abrir ?preview=paywall renderiza esa pantalla sin
+  // necesidad de estar logueado/sin-suscripción. En producción import.meta.env.DEV
+  // es false → nunca se activa (queda muerto en el build).
+  const previewScreen = import.meta.env.DEV
+    ? new URLSearchParams(window.location.search).get('preview')
+    : null;
+
   return (
     <>
       {/* Banner global de update de PWA — fijo arriba, persistente hasta recargar */}
       <UpdatePrompt />
+      {previewScreen === 'paywall' && (
+        <Suspense fallback={null}><PaywallScreen /></Suspense>
+      )}
       {/* Reading progress bar */}
       {currentScreen === 'landing' && (
         <div
