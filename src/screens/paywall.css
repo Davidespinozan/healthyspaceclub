@@ -1,0 +1,210 @@
+/* ============================================================
+   PILOTO de modernización visual — Paywall (scoped, .pw-*).
+   No toca tokens globales ni otras pantallas. Si el look se aprueba,
+   de acá sale el lenguaje (profundidad + tipografía + botón + motion)
+   para escalar al resto de la app.
+   ============================================================ */
+
+.pw-pilot {
+  position: fixed;
+  inset: 0;
+  z-index: 400; /* < 500 (.ov del modal) → el PaymentModal abre por encima */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 22px;
+  overflow-y: auto;
+  background: var(--sala-bg);
+}
+/* Glow de profundidad detrás de la card */
+.pw-pilot::before {
+  content: '';
+  position: absolute;
+  top: -8%;
+  left: 50%;
+  width: 640px;
+  height: 440px;
+  max-width: 130vw;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(21, 51, 48, 0.07), transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Card elevada con highlight superior ── */
+.pw-card {
+  position: relative;
+  width: 100%;
+  max-width: 412px;
+  text-align: center;
+  padding: 34px 28px 26px;
+  background: var(--sala-surface);
+  border: 1px solid var(--sala-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-pro-2xl);
+  animation: pwCardIn 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Hairline de luz arriba (sensación de material) */
+.pw-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+}
+
+/* Entrada escalonada de los bloques internos */
+.pw-card > * { animation: pwRise 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.pw-card > *:nth-child(1) { animation-delay: 0.04s; }
+.pw-card > *:nth-child(2) { animation-delay: 0.09s; }
+.pw-card > *:nth-child(3) { animation-delay: 0.14s; }
+.pw-card > *:nth-child(4) { animation-delay: 0.19s; }
+.pw-card > *:nth-child(5) { animation-delay: 0.24s; }
+.pw-card > *:nth-child(6) { animation-delay: 0.29s; }
+.pw-card > *:nth-child(7) { animation-delay: 0.34s; }
+
+@keyframes pwCardIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pwRise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── Marca ── */
+.pw-mark {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--amber);
+  background: linear-gradient(135deg, rgba(191, 160, 101, 0.16), rgba(191, 160, 101, 0.06));
+  border: 1px solid rgba(191, 160, 101, 0.28);
+  border-radius: 16px;
+}
+
+/* ── Tipografía con presencia ── */
+.pw-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.78rem;
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: var(--tracking-tighter);
+  color: var(--forest);
+  margin-bottom: 10px;
+}
+.pw-body {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--txt2);
+  margin-bottom: 24px;
+}
+
+/* ── Segmented control de ciclo (pill elevada) ── */
+.pw-seg {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  margin-bottom: 20px;
+  background: var(--sala-bg);
+  border: 1px solid var(--sala-border);
+  border-radius: 999px;
+}
+.pw-seg-btn {
+  flex: 1;
+  padding: 11px 8px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tight);
+  color: var(--txt2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.22s cubic-bezier(0.22, 1, 0.36, 1), color 0.22s ease, box-shadow 0.22s ease;
+}
+.pw-seg-btn.on {
+  background: var(--sala-surface);
+  color: var(--forest);
+  font-weight: 700;
+  box-shadow: var(--shadow-pro-md);
+}
+.pw-seg-save {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--amber-deep);
+  margin-top: 2px;
+}
+
+/* ── Precio ── */
+.pw-price { margin-bottom: 24px; }
+.pw-price-amount {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: var(--tracking-tighter);
+  color: var(--forest);
+  line-height: 1;
+}
+.pw-price-period {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.8rem;
+  color: var(--txt2);
+  margin-top: 6px;
+}
+
+/* ── CTA con gradiente amber→gold + glow (matchea "Únete al Club") ── */
+.pw-cta {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 10px 24px rgba(168, 134, 78, 0.32);
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s ease, filter 0.18s ease;
+}
+.pw-cta:hover { transform: translateY(-2px); box-shadow: 0 16px 32px rgba(168, 134, 78, 0.4); filter: brightness(1.03); }
+.pw-cta:active { transform: scale(0.975); box-shadow: 0 6px 16px rgba(168, 134, 78, 0.3); }
+
+.pw-trial {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.72rem;
+  color: var(--txt2);
+  margin-top: 14px;
+}
+.pw-logout {
+  margin-top: 26px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--txt2);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.18s ease;
+}
+.pw-logout:hover { color: var(--forest); }
+
+/* Accesibilidad: sin movimiento si el usuario lo pidió */
+@media (prefers-reduced-motion: reduce) {
+  .pw-card, .pw-card > * { animation: none; }
+  .pw-cta:hover, .pw-cta:active { transform: none; }
+}

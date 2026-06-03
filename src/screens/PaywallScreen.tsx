@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { getPriceInfo, formatPrice, type BillingCycle } from '../utils/stripe';
 import LanguageToggle from '../components/LanguageToggle';
+import './paywall.css';
 
 // Pantalla de paywall — destino del gate de suscripción (Stripe-3).
 // Full-screen, NO dismissable (sin overlay/X que devuelva a la app).
@@ -30,71 +31,50 @@ export default function PaywallScreen() {
     openPay(planName, priceLabel, periodLabel, amountSel, priceInfo.currency, cycle);
   }
 
-  // Toggle de ciclo (mismo patrón visual que PaymentModal).
-  const segBase: React.CSSProperties = {
-    flex: 1, padding: '12px 8px', borderRadius: 12, cursor: 'pointer',
-    border: '1.5px solid', fontSize: '.9rem', textAlign: 'center', lineHeight: 1.25,
-    background: 'transparent', transition: 'all .15s',
-  };
-  const segOn: React.CSSProperties = { ...segBase, borderColor: 'var(--amber)', background: 'rgba(191,160,101,.14)', color: 'var(--forest)', fontWeight: 600 };
-  const segOff: React.CSSProperties = { ...segBase, borderColor: 'rgba(21,51,48,.18)', color: 'var(--txt2)' };
-
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 400, // < 500 (.ov del modal) → el PaymentModal abre por encima
-        background: 'var(--sala-bg)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '32px 22px', overflowY: 'auto',
-      }}
-    >
+    <div className="pw-pilot">
       <LanguageToggle className="lang-toggle--corner-left" />
-      <div style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
-        <div style={{ fontSize: '2rem', marginBottom: 14 }}>✦</div>
-        <h1 style={{ fontSize: '1.6rem', lineHeight: 1.2, color: 'var(--forest)', marginBottom: 10 }}>
-          {t('paywall.title')}
-        </h1>
-        <p style={{ color: 'var(--txt2)', fontSize: '.95rem', lineHeight: 1.5, marginBottom: 26 }}>
-          {t('paywall.body')}
-        </p>
+      <div className="pw-card">
+        <div className="pw-mark">✦</div>
+        <h1 className="pw-title">{t('paywall.title')}</h1>
+        <p className="pw-body">{t('paywall.body')}</p>
 
         {/* Selector de ciclo */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
-          <button type="button" style={isYearly ? segOn : segOff} onClick={() => setCycle('yearly')}>
+        <div className="pw-seg" role="group" aria-label={t('paywall.cycleYearly')}>
+          <button
+            type="button"
+            className={`pw-seg-btn${isYearly ? ' on' : ''}`}
+            onClick={() => setCycle('yearly')}
+            aria-pressed={isYearly}
+          >
             {t('paywall.cycleYearly')}
             {priceInfo.yearlyDiscount > 0 && (
-              <span style={{ display: 'block', fontSize: '.7rem', color: 'var(--amber)', fontWeight: 700 }}>
-                {t('paywall.save', { pct: priceInfo.yearlyDiscount })}
-              </span>
+              <span className="pw-seg-save">{t('paywall.save', { pct: priceInfo.yearlyDiscount })}</span>
             )}
           </button>
-          <button type="button" style={!isYearly ? segOn : segOff} onClick={() => setCycle('monthly')}>
+          <button
+            type="button"
+            className={`pw-seg-btn${!isYearly ? ' on' : ''}`}
+            onClick={() => setCycle('monthly')}
+            aria-pressed={!isYearly}
+          >
             {t('paywall.cycleMonthly')}
           </button>
         </div>
 
         {/* Precio del ciclo seleccionado */}
-        <div style={{ marginBottom: 22 }}>
-          <div style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--forest)' }}>{priceLabel}</div>
-          <div style={{ fontSize: '.8rem', color: 'var(--txt2)' }}>{periodLabel}</div>
+        <div className="pw-price">
+          <div className="pw-price-amount">{priceLabel}</div>
+          <div className="pw-price-period">{periodLabel}</div>
         </div>
 
-        <button className="btn-pay" onClick={handleStart} style={{ width: '100%' }}>
+        <button className="pw-cta" onClick={handleStart}>
           {t('paywall.start')}
         </button>
 
-        <p style={{ fontSize: '.72rem', color: 'var(--txt2)', marginTop: 12 }}>
-          {t('paywall.trialNote')}
-        </p>
+        <p className="pw-trial">{t('paywall.trialNote')}</p>
 
-        <button
-          type="button"
-          onClick={logout}
-          style={{
-            marginTop: 28, background: 'none', border: 'none', cursor: 'pointer',
-            color: 'var(--txt2)', fontSize: '.82rem', textDecoration: 'underline',
-          }}
-        >
+        <button type="button" className="pw-logout" onClick={logout}>
           {t('paywall.logout')}
         </button>
       </div>
