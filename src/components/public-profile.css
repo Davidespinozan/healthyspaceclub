@@ -353,3 +353,66 @@
   .pp5-stat-num { font-size: 22px; }
   .pp5-highlights { padding: 8px 14px 18px; gap: 12px; }
 }
+
+/* ═══ Menú de compartir (WhatsApp · Copiar · Más) ═══ */
+.pp5-share-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 100vh; height: 100dvh;
+  background: rgba(21, 51, 48, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: pp5-fade-in 0.18s ease-out;
+}
+.pp5-share-sheet {
+  background: var(--sala-surface);
+  width: 100%;
+  max-width: 440px;
+  border-radius: 22px 22px 0 0;
+  padding: 10px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -16px 48px rgba(21, 51, 48, 0.22);
+  animation: pp5-slide-up 0.26s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@media (min-width: 640px) {
+  .pp5-share-backdrop { align-items: center; }
+  .pp5-share-sheet { border-radius: 20px; margin: 24px; }
+}
+.pp5-share-grabber {
+  width: 36px; height: 4px; border-radius: 999px;
+  background: var(--sala-border-strong);
+  margin: 0 auto 14px;
+}
+.pp5-share-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.95rem; font-weight: 700;
+  color: var(--forest); text-align: center;
+  margin-bottom: 12px; letter-spacing: var(--tracking-tight);
+}
+.pp5-share-opt {
+  display: flex; align-items: center; gap: 14px;
+  width: 100%; padding: 13px 14px;
+  background: var(--sala-bg);
+  border: 1px solid var(--sala-border);
+  border-radius: var(--radius-base);
+  margin-bottom: 8px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.92rem; font-weight: 600;
+  color: var(--forest); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--duration-fast) ease, background var(--duration-fast) ease;
+}
+.pp5-share-opt:active { transform: scale(0.98); }
+.pp5-share-opt:last-child { margin-bottom: 0; }
+.pp5-share-icon {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--sala-surface); color: var(--forest);
+  border: 1px solid var(--sala-border); flex-shrink: 0;
+}
+.pp5-share-opt--wa .pp5-share-icon {
+  background: #25D366; color: #fff; border-color: #25D366;
+}

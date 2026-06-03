@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { X, Flame, Share2 } from 'lucide-react';
+import { X, Flame, Share2, Link2, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
 import { deleteClubPost } from '../utils/clubPosts';
@@ -36,6 +36,29 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
   const [error, setError] = useState<string | null>(null);
   const [userFires, setUserFires] = useState<Set<string>>(new Set());
   const [firingPost, setFiringPost] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const shareMsg = `${t('profile.shareText')} ${shareUrl}`;
+  const nativeShareAvailable = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+  function shareWhatsApp() {
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareMsg)}`, '_blank');
+    setShareOpen(false);
+  }
+  function copyShareLink() {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1600);
+      }).catch(() => {});
+    }
+  }
+  function shareNative() {
+    if (nativeShareAvailable) {
+      navigator.share({ title: t('profile.shareTitle'), text: t('profile.shareText'), url: shareUrl }).catch(() => {});
+    }
+    setShareOpen(false);
+  }
 
   useEffect(() => {
     async function load() {
@@ -171,7 +194,11 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
     [milestones],
   );
   const sortedHighlights = useMemo(
-    () => MILESTONE_STEPS.filter(d => unlockedSet.has(d)),
+    // Preview dev-only: muestra los primeros 4 logros en local para ver el estilo
+    // (el perfil público solo lista desbloqueados; en prod refleja datos reales).
+    () => (import.meta.env.DEV
+      ? MILESTONE_STEPS.slice(0, 4)
+      : MILESTONE_STEPS.filter(d => unlockedSet.has(d))),
     [unlockedSet],
   );
 
@@ -218,12 +245,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
                     {isOwnProfile && (
                       <button
                         className="pp5-close"
-                        onClick={() => {
-                          const data = { title: t('profile.shareTitle'), url: window.location.href };
-                          if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-                            navigator.share(data).catch(() => {});
-                          }
-                        }}
+                        onClick={() => setShareOpen(true)}
                         aria-label={t('profile.share')}
                         type="button"
                       >
@@ -296,6 +318,38 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
           </>
         )}
       </div>
+
+      {shareOpen && (
+        <div
+          className="pp5-share-backdrop"
+          onClick={(e) => { e.stopPropagation(); setShareOpen(false); }}
+        >
+          <div className="pp5-share-sheet" onClick={e => e.stopPropagation()}>
+            <div className="pp5-share-grabber" />
+            <div className="pp5-share-title">{t('profile.shareSheetTitle')}</div>
+            <button className="pp5-share-opt pp5-share-opt--wa" onClick={shareWhatsApp} type="button">
+              <span className="pp5-share-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.004c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.13a8.23 8.23 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.36c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.27.86 5.83 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.69 8.24-8.24 8.24Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.16.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.42-.14-.01-.31-.01-.48-.01-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28Z"/>
+                </svg>
+              </span>
+              {t('profile.shareWhatsApp')}
+            </button>
+            <button className="pp5-share-opt" onClick={copyShareLink} type="button">
+              <span className="pp5-share-icon" aria-hidden="true">
+                {copied ? <Check size={18} strokeWidth={2.5} /> : <Link2 size={18} />}
+              </span>
+              {copied ? t('profile.shareCopied') : t('profile.shareCopy')}
+            </button>
+            {nativeShareAvailable && (
+              <button className="pp5-share-opt" onClick={shareNative} type="button">
+                <span className="pp5-share-icon" aria-hidden="true"><Share2 size={18} /></span>
+                {t('profile.shareMore')}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
