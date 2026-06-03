@@ -541,6 +541,16 @@ export const es = {
     pending: 'Llevás {streak} {dayWord} — te {missWord} {remaining} para desbloquear.',
     cardRemaining: 'Te {missWord} {n} {dayWord}',
   },
+  milestones: {
+    d3: { title: 'Primer brote', sub: 'Tres días seguidos. El hábito empezó a germinar.' },
+    d7: { title: 'Una semana encendida', sub: 'Siete días. Ya no es casualidad — es ritmo.' },
+    d14: { title: 'Dos semanas brillando', sub: 'Catorce días. La constancia se nota.' },
+    d30: { title: 'Un mes completo', sub: 'Treinta días. Esto ya es parte de quién sos.' },
+    d60: { title: 'Cumbre de dos meses', sub: 'Sesenta días. Pocos llegan hasta acá.' },
+    d90: { title: 'Noventa días en flujo', sub: 'Un trimestre entero. Imparable.' },
+    d180: { title: 'Medio año', sub: 'Ciento ochenta días. Una nueva versión tuya.' },
+    d365: { title: 'Un año, la cima', sub: 'Trescientos sesenta y cinco días. Leyenda.' },
+  },
   legal: {
     termsTitle: 'Términos de Servicio',
     privacyTitle: 'Política de Privacidad',

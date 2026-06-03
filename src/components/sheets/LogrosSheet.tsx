@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Lock } from 'lucide-react';
 import { useAppStore } from '../../store';
 import {
   MILESTONE_STEPS,
@@ -85,7 +85,7 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
             </button>
 
             <div className={`ls-detail-emoji${focusedMilestone.isUnlocked ? '' : ' ls-detail-emoji--locked'}`} aria-hidden="true">
-              {focusedMilestone.isUnlocked ? focusedMilestone.copy.emoji : '🔒'}
+              {focusedMilestone.isUnlocked ? focusedMilestone.copy.emoji : <Lock size={30} strokeWidth={1.8} />}
             </div>
 
             <h2 className="ls-detail-title">{focusedMilestone.copy.title}</h2>

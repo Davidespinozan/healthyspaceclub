@@ -542,6 +542,16 @@ export const en: Translations<typeof es> = {
     pending: 'You have {streak} {dayWord} — {remaining} more to unlock.',
     cardRemaining: '{n} {dayWord} to go',
   },
+  milestones: {
+    d3: { title: 'First sprout', sub: 'Three days straight. The habit is taking root.' },
+    d7: { title: 'Week on fire', sub: "Seven days. It's not chance anymore — it's rhythm." },
+    d14: { title: 'Two weeks shining', sub: 'Fourteen days. The consistency shows.' },
+    d30: { title: 'A full month', sub: 'Thirty days. This is part of who you are now.' },
+    d60: { title: 'Two-month summit', sub: 'Sixty days. Few make it this far.' },
+    d90: { title: 'Ninety days in flow', sub: 'A whole quarter. Unstoppable.' },
+    d180: { title: 'Half a year', sub: 'A hundred eighty days. A new version of you.' },
+    d365: { title: 'One year, the peak', sub: 'Three hundred sixty-five days. Legend.' },
+  },
   legal: {
     termsTitle: 'Terms of Service',
     privacyTitle: 'Privacy Policy',
