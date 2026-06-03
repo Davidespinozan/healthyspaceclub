@@ -323,7 +323,7 @@ nav.landing-nav.scrolled .logo img { height:44px; }
 nav.landing-nav.scrolled .logo-nav img { height:88px; }
 nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
 .nav-links { display:flex; gap:32px; align-items:center; justify-content:flex-end; }
-.nav-left { display:flex; align-items:center; justify-content:flex-start; }
+.nav-left { display:flex; align-items:center; justify-content:flex-start; gap:18px; }
 .nav-links a { font-size:.68rem; font-weight:500; color:rgba(255,255,255,.85); text-decoration:none; opacity:.4; transition:all .35s; letter-spacing:.1em; text-transform:none; position:relative; cursor: pointer; }
 .nav-links a:hover { opacity:1; }
 .nav-links a::after {
