@@ -48,7 +48,7 @@ export default function PaywallScreen() {
         padding: '32px 22px', overflowY: 'auto',
       }}
     >
-      <LanguageToggle className="lang-toggle--corner" />
+      <LanguageToggle className="lang-toggle--corner-left" />
       <div style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
         <div style={{ fontSize: '2rem', marginBottom: 14 }}>✦</div>
         <h1 style={{ fontSize: '1.6rem', lineHeight: 1.2, color: 'var(--forest)', marginBottom: 10 }}>

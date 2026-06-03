@@ -41,6 +41,14 @@
   right: 16px;
 }
 
+/* Variante izquierda — coincide con el ancla del landing (toggle a la izquierda),
+   para que al pasar de landing → login/paywall el toggle no "salte" de lado. */
+.lang-toggle--corner-left {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  left: 16px;
+}
+
 /* Landing: en desktop el toggle vive dentro de nav-left; en mobile (donde
    nav-left se oculta) vive dentro del menú hamburguesa, igual que el login —
    en flujo, no flotando sobre el hero. */

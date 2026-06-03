@@ -61,7 +61,7 @@ export default function LoginScreen() {
   return (
     <div className="login-screen">
       <div className="ls-bg" />
-      <LanguageToggle className="lang-toggle--corner" />
+      <LanguageToggle className="lang-toggle--corner-left" />
       <div className="ls-card">
         <div className="ls-logo">
           <img
