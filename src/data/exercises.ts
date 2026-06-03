@@ -1,6 +1,6 @@
 import type { Exercise } from '../types';
 import type { AppLanguage } from '../store';
-import { exercisesEn } from './exercises.en';
+import { exercisesEn, stepTitleEn, variantNameEn } from './exercises.en';
 
 // ════════════════════════════════════════════════════════════════
 // BANCO DE EJERCICIOS — Modelo "Patrón + Variantes"
@@ -3015,12 +3015,22 @@ export function getExercises(lang: AppLanguage): Exercise[] {
   if (lang !== 'en') return exercises;
   return exercises.map((ex) => {
     const o = exercisesEn[ex.id];
-    if (!o) return ex;
+    // A2b: títulos de pasos + nombres de variantes (siempre, no dependen de `o`).
+    const steps = ex.steps?.map((s) => {
+      const title = stepTitleEn[s.title];
+      return title ? { ...s, title } : s;
+    });
+    const variants = ex.variants?.map((v) => {
+      const name = variantNameEn[v.name];
+      return name ? { ...v, name } : v;
+    });
     return {
       ...ex,
-      ...(o.name ? { name: o.name } : {}),
-      ...(o.desc ? { desc: o.desc } : {}),
-      ...(o.tip ? { tip: o.tip } : {}),
+      ...(o?.name ? { name: o.name } : {}),
+      ...(o?.desc ? { desc: o.desc } : {}),
+      ...(o?.tip ? { tip: o.tip } : {}),
+      ...(steps ? { steps } : {}),
+      ...(variants ? { variants } : {}),
     };
   });
 }
