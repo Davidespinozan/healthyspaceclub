@@ -12,7 +12,6 @@ import LogrosSheet from './sheets/LogrosSheet';
 import AmbientGlow from './AmbientGlow';
 import {
   MILESTONE_STEPS,
-  MILESTONE_EMOJI,
   getMilestoneLabel,
   getAchievementsCount,
   getNextMilestone,
@@ -268,7 +267,9 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
       {!editing && (
         <div className="tt5-highlights">
           {MILESTONE_STEPS.map((days, idx) => {
-            const isUnlocked = unlockedDays.has(days);
+            // Preview dev-only: los primeros 4 logros se muestran desbloqueados en
+            // local para ver el estado. import.meta.env.DEV → nunca afecta producción.
+            const isUnlocked = (import.meta.env.DEV && idx < 4) || unlockedDays.has(days);
             const isNext = !isUnlocked && days === nextMilestone;
             const futureOpacity = !isUnlocked && !isNext ? 1 - idx * 0.08 : undefined;
             const remaining = Math.max(0, days - streakCount);
@@ -282,7 +283,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
               >
                 <div className="tt5-highlight-ring">
                   <div className="tt5-highlight-emoji" aria-hidden="true">
-                    {isUnlocked ? MILESTONE_EMOJI[days] : <Lock size={16} strokeWidth={2} className="tt5-highlight-lock" />}
+                    {isUnlocked ? <span className="tt5-highlight-days">{days}d</span> : <Lock size={16} strokeWidth={2} className="tt5-highlight-lock" />}
                   </div>
                 </div>
                 <div className="tt5-highlight-label">
