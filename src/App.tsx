@@ -11,6 +11,7 @@ import {
 } from './utils/workoutSync';
 import { detectBrowserLanguage } from './i18n';
 import LandingScreen from './screens/LandingScreen';
+import UpdatePrompt from './components/UpdatePrompt';
 
 const LoginScreen = lazy(() => import('./screens/LoginScreen'));
 const OnboardingScreen = lazy(() => import('./screens/OnboardingScreen'));
@@ -427,6 +428,8 @@ export default function App() {
 
   return (
     <>
+      {/* Banner global de update de PWA — fijo arriba, persistente hasta recargar */}
+      <UpdatePrompt />
       {/* Reading progress bar */}
       {currentScreen === 'landing' && (
         <div

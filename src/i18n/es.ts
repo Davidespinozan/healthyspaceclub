@@ -153,6 +153,10 @@ export const es = {
     body: 'No pudimos cobrar tu suscripción. Actualizá tu tarjeta para no perder el acceso.',
     cta: 'Actualizar tarjeta',
   },
+  update: {
+    title: 'Nueva versión disponible',
+    cta: 'Recargar',
+  },
   login: {
     title: 'Acceso para Miembros',
     subtitle: 'Inicia sesión para continuar tu programa',

@@ -154,6 +154,10 @@ export const en: Translations<typeof es> = {
     body: "We couldn't charge your subscription. Update your card to keep your access.",
     cta: 'Update card',
   },
+  update: {
+    title: 'New version available',
+    cta: 'Reload',
+  },
   login: {
     title: 'Member Access',
     subtitle: 'Sign in to continue your program',

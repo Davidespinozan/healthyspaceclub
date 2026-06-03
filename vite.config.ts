@@ -7,7 +7,16 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' (no 'autoUpdate'): el SW nuevo queda en waiting hasta que el
+      // usuario acepta recargar (ver main.tsx + UpdatePrompt). Evita que la app
+      // viva siga corriendo el bundle viejo tras un deploy sin avisar.
+      // injectRegister:false → registramos vía virtual:pwa-register en main.tsx
+      // (si no, el plugin inyecta un registerSW.js extra = doble registro).
+      // OJO: esto SOLO aplica a web/PWA instalada. El build iOS nativo (Capacitor,
+      // webDir bundled, sin server.url) NO corre service worker — se actualiza por
+      // rebuild + App Store, no por este flow.
+      registerType: 'prompt',
+      injectRegister: false,
       manifest: {
         name: 'Healthy Space Club',
         short_name: 'Healthy Space',

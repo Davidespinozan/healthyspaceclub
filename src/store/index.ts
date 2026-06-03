@@ -94,6 +94,14 @@ interface AppState {
   languageSetByUser: boolean;
   setLanguage: (lang: AppLanguage) => void;
 
+  // PWA update (solo web/PWA — el build iOS nativo de Capacitor NO usa este flow;
+  // se actualiza por rebuild + App Store, no por service worker). Estado transitorio,
+  // no persistido. Lo setea el registro del SW en main.tsx.
+  updateReady: boolean;
+  setUpdateReady: (v: boolean) => void;
+  triggerUpdate: (() => void) | null;
+  setTriggerUpdate: (fn: () => void) => void;
+
   // Navigation
   currentScreen: ScreenType;
   goTo: (screen: ScreenType) => void;
@@ -343,6 +351,11 @@ export const useAppStore = create<AppState>()(
   language: 'es',
   languageSetByUser: false,
   setLanguage: (lang) => set({ language: lang, languageSetByUser: true }),
+
+  updateReady: false,
+  setUpdateReady: (v) => set({ updateReady: v }),
+  triggerUpdate: null,
+  setTriggerUpdate: (fn) => set({ triggerUpdate: fn }),
 
   currentScreen: 'landing',
   goTo: (screen) => set({ currentScreen: screen }),
