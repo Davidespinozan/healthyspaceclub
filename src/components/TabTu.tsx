@@ -287,7 +287,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
                   </div>
                 </div>
                 <div className="tt5-highlight-label">
-                  {isNext ? t('profile.nextLabel') : getMilestoneLabel(days, locale)}
+                  {isNext ? t('profile.nextLabel') : isUnlocked ? t('profile.achievedLabel') : getMilestoneLabel(days, locale)}
                 </div>
                 {isNext && (
                   <div className="tt5-highlight-sub">{t('profile.nextSub', { n: remaining })}</div>

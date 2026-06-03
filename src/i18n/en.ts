@@ -561,6 +561,7 @@ export const en: Translations<typeof es> = {
     tabPosts: 'Posts',
     tabReflexiones: 'Reflections',
     nextLabel: 'Next',
+    achievedLabel: 'Unlocked',
     nextSub: 'in {n}d',
     yearDayChip: 'Year {year} · Day {day}',
     reflexionesEmpty: 'Your reflections from Tu Espacio will appear here.',

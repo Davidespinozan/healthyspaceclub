@@ -560,6 +560,7 @@ export const es = {
     tabPosts: 'Posts',
     tabReflexiones: 'Reflexiones',
     nextLabel: 'Próximo',
+    achievedLabel: 'Logrado',
     nextSub: 'a {n}d',
     yearDayChip: 'Año {year} · día {day}',
     reflexionesEmpty: 'Tus reflexiones de Tu Espacio aparecerán aquí.',
