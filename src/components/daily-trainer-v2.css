@@ -34,12 +34,12 @@
 }
 
 .dt2-plan-title {
-  font-size: 24px;
-  font-weight: 500;
-  letter-spacing: -0.015em;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: var(--tracking-tighter);
   color: var(--forest);
   margin: 0 0 10px;
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 .dt2-plan-title em {
@@ -144,21 +144,30 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
-  background: white;
-  border: 0.5px solid var(--sand);
-  border-radius: 14px;
-  /* Color-1: sombra editorial sutil — despega las cards del cream
-     de fondo sin romper la elegancia. */
-  box-shadow: 0 2px 8px rgba(21,51,48,0.04);
-  transition: all 0.15s;
+  padding: 14px 16px;
+  background: var(--sala-surface, white);
+  border: 1px solid var(--sala-border, var(--sand));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pro-md);
+  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
   cursor: pointer;
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
 }
-
-.dt2-ex:hover,
-.dt2-ex:active {
-  border-color: var(--amber);
+.dt2-ex:nth-child(1) { animation-delay: 0.04s; }
+.dt2-ex:nth-child(2) { animation-delay: 0.09s; }
+.dt2-ex:nth-child(3) { animation-delay: 0.14s; }
+.dt2-ex:nth-child(4) { animation-delay: 0.19s; }
+.dt2-ex:nth-child(5) { animation-delay: 0.24s; }
+.dt2-ex:nth-child(6) { animation-delay: 0.29s; }
+.dt2-ex:nth-child(7) { animation-delay: 0.34s; }
+.dt2-ex:nth-child(8) { animation-delay: 0.39s; }
+.dt2-ex:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-pro-xl);
+  border-color: rgba(191, 160, 101, 0.4);
 }
+.dt2-ex:active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .dt2-ex { animation: none; } }
 
 .dt2-ex-emoji {
   flex-shrink: 0;
@@ -215,7 +224,7 @@
 
 .dt2-ex-arrow {
   flex-shrink: 0;
-  color: var(--sand);
+  color: var(--amber);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -381,20 +390,25 @@
 .dt2-yoga-start-cta,
 .dt2-start-workout-cta {
   width: 100%;
-  padding: 16px;
+  padding: 17px;
   margin: 14px 0 18px;
   border-radius: 50px;
-  background: var(--forest, #153330);
+  background: linear-gradient(135deg, var(--moss, #2E4A42), var(--forest, #153330));
   color: var(--amber, #BFA065);
   font-size: 16px;
   font-style: italic;
-  font-weight: 500;
+  font-weight: 600;
   border: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s;
+  box-shadow: 0 10px 26px rgba(21, 51, 48, 0.28);
+  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, filter var(--duration-base) ease;
 }
-
+.dt2-start-workout-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(21, 51, 48, 0.36);
+  filter: brightness(1.05);
+}
 .dt2-yoga-start-cta:active,
 .dt2-start-workout-cta:active {
   transform: scale(0.98);
@@ -426,4 +440,12 @@
   .dt2-note {
     padding: 12px 14px;
   }
+}
+
+/* Entrada escalonada de los bloques superiores (reusa la fundación) */
+.dt2-plan-header { animation: riseIn 0.5s var(--ease-out-soft) backwards; }
+.dt2-card-why { animation: riseIn 0.5s var(--ease-out-soft) backwards; animation-delay: 0.04s; }
+.dt2-section { animation: riseIn 0.5s var(--ease-out-soft) backwards; animation-delay: 0.06s; }
+@media (prefers-reduced-motion: reduce) {
+  .dt2-plan-header, .dt2-card-why, .dt2-section { animation: none; }
 }
