@@ -23,6 +23,7 @@
   display: flex;
   align-items: center;   /* centrado vertical → balance con el avatar */
   gap: 16px;
+  position: relative;    /* ancla del botón de menú (absolute) */
 }
 
 .tt5-avatar-wrap {
@@ -65,10 +66,10 @@
 
 .tt5-name-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+  padding-right: 42px;   /* reserva espacio para el botón de menú (absolute) */
 }
 
 .tt5-name {
@@ -86,6 +87,10 @@
 }
 
 .tt5-menu-btn {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  z-index: 2;
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
@@ -107,12 +112,12 @@
 
 .tt5-bio {
   font-family: 'Montserrat', sans-serif;
-  font-style: italic;
-  font-size: 13px;
-  color: rgba(21, 51, 48, 0.55);
-  line-height: 1.4;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(21, 51, 48, 0.6);
+  line-height: 1.35;
   letter-spacing: -0.01em;
-  margin: 0 0 8px;
+  margin: 0 0 9px;
 }
 
 .tt5-year-chip {
