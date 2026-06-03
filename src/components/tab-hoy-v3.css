@@ -99,9 +99,9 @@
 
 .th3-headline {
   font-family: 'Montserrat', sans-serif;
-  font-size: 28px;
-  font-weight: 500;
-  line-height: 1.05;
+  font-size: 33px;
+  font-weight: 800;
+  line-height: 1.02;
   letter-spacing: var(--tracking-tighter);
   color: var(--sala-surface);
   margin: 0 0 8px;
@@ -127,16 +127,29 @@
   position: relative;
 }
 
-.th3-streak {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
+/* ═══ Panel "Tu día" — racha + checks reales (engagement) ═══ */
+.th3-day {
   position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(191, 160, 101, 0.20);
+  border-radius: var(--radius-base);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow var(--duration-base) ease, border-color var(--duration-base) ease, background var(--duration-base) ease;
 }
+.th3-day.is-complete {
+  border-color: rgba(191, 160, 101, 0.5);
+  background: rgba(191, 160, 101, 0.09);
+  box-shadow: 0 0 0 1px rgba(191,160,101,.22), 0 10px 30px rgba(191,160,101,.20);
+}
+.th3-day-head { display: flex; align-items: center; justify-content: space-between; }
+.th3-day-streak { display: flex; align-items: baseline; gap: 8px; }
 .th3-streak-num {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 500;
-  font-size: 28px;
+  font-weight: 700;
+  font-size: 26px;
   color: var(--amber);
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-tightest);
@@ -144,23 +157,47 @@
 }
 .th3-streak-label {
   font-family: 'Montserrat', sans-serif;
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: var(--tracking-kicker);
-  text-transform: none;
   color: rgba(246,242,234,0.55);
 }
-.th3-streak-dots {
-  display: flex;
-  gap: 4px;
-  margin-left: auto;
+.th3-day-status {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: var(--tracking-kicker);
+  color: rgba(246,242,234,0.45);
 }
-.th3-streak-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: rgba(246,242,234,0.15);
+.th3-day.is-complete .th3-day-status { color: var(--amber); }
+
+.th3-day-checks { display: flex; gap: 6px; }
+.th3-check { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.th3-check-ring {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(246,242,234,0.45);
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(246,242,234,0.14);
+  transition: color var(--duration-base) ease, background var(--duration-base) ease, border-color var(--duration-base) ease;
 }
-.th3-streak-dot.active { background: var(--amber); }
+.th3-check.done .th3-check-ring {
+  color: var(--forest);
+  background: var(--amber);
+  border-color: var(--amber);
+  animation: th3CheckPop 0.34s var(--ease-spring);
+}
+@keyframes th3CheckPop { 0% { transform: scale(0.6); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.th3-check-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.58rem; font-weight: 600; letter-spacing: 0.01em;
+  color: rgba(246,242,234,0.5);
+  font-variant-numeric: tabular-nums;
+}
+.th3-check.done .th3-check-label { color: rgba(246,242,234,0.85); }
+@media (prefers-reduced-motion: reduce) {
+  .th3-check.done .th3-check-ring { animation: none; }
+}
 
 /* ═══ BODY (sala bg) ═══ */
 .th3-body {
@@ -406,6 +443,7 @@
   padding-top: 10px;
   border-top: 0.5px solid var(--sand);
 }
+.th3-card-foot--arrow-only { justify-content: flex-end; }
 .th3-card-foot-text {
   font-family: 'Montserrat', sans-serif;
   font-style: italic;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check } from 'lucide-react';
 import { useAppStore } from '../store';
+import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { getMealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { computeDayConsumption } from '../utils/foodConsumption';
@@ -41,7 +42,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     weeklyPlan, lastWeeklyReview,
     streakCount, obData,
     dailyBriefing, setDailyBriefing,
-    dailyCheckin, dailyCheckinDate,
     dailyHSMResponses,
     lastStreakMilestone, setLastStreakMilestone,
     hsmProfile, setHSMProfile,
@@ -132,6 +132,34 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
   const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
 
+  // ── Panel "Tu día": completado real de hoy (engagement / dopamina) ──────────
+  const trainedToday = sessionsToday.length > 0;
+  const reflectionDone = todayHSMAnswered > 0;
+  const kcalGoal = planGoal > 0 ? planGoal : 0;
+  const kcalConsumed = Math.round(dayConsumption.consumedKcal);
+  const nutritionPct = kcalGoal > 0 ? Math.min(1, kcalConsumed / kcalGoal) : 0;
+  const nutritionDone = kcalGoal > 0 ? nutritionPct >= 0.8 : kcalConsumed > 0;
+  const [postedToday, setPostedToday] = useState(false);
+  const userId = useCurrentUserId();
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { supabase } = await import('../lib/supabase');
+        const { count } = await supabase
+          .from('club_posts')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .gte('created_at', today + 'T00:00:00');
+        if (!cancelled) setPostedToday((count ?? 0) > 0);
+      } catch { /* bonus check — silencioso si falla */ }
+    })();
+    return () => { cancelled = true; };
+  }, [userId, today]);
+  const coreDoneCount = [trainedToday, nutritionDone, reflectionDone].filter(Boolean).length;
+  const allCoreDone = coreDoneCount === 3;
+
   const { startDate: userStartDate } = useAppStore();
   const isDay1 = userStartDate === today;
   const daysSinceStart = userStartDate ? Math.floor((Date.now() - new Date(userStartDate).getTime()) / 86400000) : 0;
@@ -164,8 +192,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       .finally(() => clearTimeout(timeoutId));
     return () => { clearTimeout(timeoutId); controller.abort(); };
   }, [today]);
-
-  const checkinDone = dailyCheckinDate === today && dailyCheckin !== null;
 
   const todayDayIndex = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const todayHSMSlot = (todayDayIndex % 3);
@@ -347,23 +373,37 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
         <div className="th3-divider" />
 
-        <div className="th3-streak">
-          <span className="th3-streak-num">{streakCount}</span>
-          <span className="th3-streak-label">
-            {plural(streakCount, {
-              one: t('hoy.streakLabelOne'),
-              other: t('hoy.streakLabelOther'),
-            })}
-          </span>
-          <div className="th3-streak-dots">
-            {Array.from({ length: 7 }, (_, i) => {
-              const dayDate = new Date();
-              dayDate.setDate(dayDate.getDate() - (6 - i));
-              const dayStr = dayDate.toISOString().split('T')[0];
-              const isActive = useAppStore.getState().lastActiveDate === dayStr ||
-                (i === 6 && checkinDone);
-              return <div key={i} className={`th3-streak-dot${isActive ? ' active' : ''}`} />;
-            })}
+        {/* ── Panel "Tu día": racha + checks reales de hoy ── */}
+        <div className={`th3-day${allCoreDone ? ' is-complete' : ''}`}>
+          <div className="th3-day-head">
+            <div className="th3-day-streak">
+              <span className="th3-streak-num">{streakCount}</span>
+              <span className="th3-streak-label">
+                {plural(streakCount, { one: t('hoy.streakLabelOne'), other: t('hoy.streakLabelOther') })}
+              </span>
+            </div>
+            <span className="th3-day-status">
+              {allCoreDone && <Sparkles size={12} strokeWidth={2.5} />}
+              {allCoreDone ? t('hoy.dayComplete') : t('hoy.dayTitle')}
+            </span>
+          </div>
+          <div className="th3-day-checks">
+            <div className={`th3-check${trainedToday ? ' done' : ''}`}>
+              <span className="th3-check-ring">{trainedToday ? <Check size={15} strokeWidth={3} /> : <Dumbbell size={14} strokeWidth={2} />}</span>
+              <span className="th3-check-label">{t('hoy.checkTraining')}</span>
+            </div>
+            <div className={`th3-check${nutritionDone ? ' done' : ''}`}>
+              <span className="th3-check-ring">{nutritionDone ? <Check size={15} strokeWidth={3} /> : <Utensils size={14} strokeWidth={2} />}</span>
+              <span className="th3-check-label">{t('hoy.checkNutrition')}</span>
+            </div>
+            <div className={`th3-check${reflectionDone ? ' done' : ''}`}>
+              <span className="th3-check-ring">{reflectionDone ? <Check size={15} strokeWidth={3} /> : <Brain size={14} strokeWidth={2} />}</span>
+              <span className="th3-check-label">{t('hoy.checkReflection')}</span>
+            </div>
+            <div className={`th3-check th3-check--bonus${postedToday ? ' done' : ''}`}>
+              <span className="th3-check-ring">{postedToday ? <Check size={15} strokeWidth={3} /> : <Camera size={14} strokeWidth={2} />}</span>
+              <span className="th3-check-label">{t('hoy.checkShare')}</span>
+            </div>
           </div>
         </div>
       </header>
@@ -378,9 +418,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             className="th3-card th3-card-rutina"
             onClick={() => onNav('entrenamiento')}
           >
-            <div className="th3-cover th3-cover-rutina">
-              <span className="th3-cover-italic">{t('hoy.coverInMotion')}</span>
-            </div>
+            <div className="th3-cover th3-cover-rutina" />
             <div className="th3-card-body">
               {/* Track-3a: eyebrow celebra "Entrenaste hoy ✓" si hay
                   alguna sesión completada hoy. Sutil, sin romper layout. */}
@@ -500,8 +538,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   </>
                 );
               })()}
-              <div className="th3-card-foot">
-                <span className="th3-card-foot-text">{t('hoy.cardFootPersonalized')}</span>
+              <div className="th3-card-foot th3-card-foot--arrow-only">
                 <span className="th3-card-arrow">→</span>
               </div>
             </div>
@@ -512,9 +549,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             className="th3-card th3-card-nutricion"
             onClick={() => onNav('alimentacion')}
           >
-            <div className="th3-cover th3-cover-nutricion">
-              <span className="th3-cover-italic">{t('hoy.coverFromEarth')}</span>
-            </div>
+            <div className="th3-cover th3-cover-nutricion" />
             <div className="th3-card-body">
               <p className="th3-card-eyebrow">{t('hoy.cardEyebrowNutrition')}</p>
               {!weeklyPlan ? (
@@ -608,8 +643,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   )}
                 </>
               )}
-              <div className="th3-card-foot">
-                <span className="th3-card-foot-text">{t('hoy.cardFootTailored')}</span>
+              <div className="th3-card-foot th3-card-foot--arrow-only">
                 <span className="th3-card-arrow">→</span>
               </div>
             </div>
