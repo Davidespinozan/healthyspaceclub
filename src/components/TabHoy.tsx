@@ -35,6 +35,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const {
     userName, planGoal, mealPlanKey, shoppingDay,
     mealChecks, toggleMealCheck,
+    workoutChecks, toggleWorkoutCheck,
     mealResolvedByLog,
     foodLog,
     completedSessions,
@@ -521,14 +522,24 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                             });
                           }
 
+                          const exCheckKey = `${today}-${exId}`;
+                          const exDone = !!workoutChecks[exCheckKey];
                           return (
                             <li key={`${exId}-${i}`} className="th3-card-list-item">
                               <button
                                 type="button"
-                                className="th3-card-list-name"
+                                className={`th3-card-list-name${exDone ? ' done' : ''}`}
                                 onClick={openPopout}
                               >
                                 {displayName}
+                              </button>
+                              <button
+                                type="button"
+                                className={`th3-card-list-check${exDone ? ' checked' : ''}`}
+                                onClick={(e) => { e.stopPropagation(); toggleWorkoutCheck(exCheckKey); }}
+                                aria-label={exDone ? t('hoy.ariaMealUncheck') : t('hoy.ariaMealCheck')}
+                              >
+                                {exDone ? '✓' : ''}
                               </button>
                             </li>
                           );

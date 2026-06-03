@@ -184,6 +184,13 @@ interface AppState {
   mealChecks: Record<string, boolean>; // { '2026-03-09-planA-1-0': true }
   toggleMealCheck: (key: string) => void;
 
+  // Checks por ejercicio del día (key `${date}-${exerciseId}`). Compartido entre
+  // la card de Hoy y el player de entrenamiento → marcar en cualquiera sincroniza.
+  // Solo localStorage (como mealChecks local). setWorkoutCheck lo usa el player.
+  workoutChecks: Record<string, boolean>;
+  toggleWorkoutCheck: (key: string) => void;
+  setWorkoutCheck: (key: string, val: boolean) => void;
+
   // Meal resolved-by-log (Food-4). Auto-seteado cuando el user registra
   // "comí otra cosa" desde el FoodLogSheet — marca el meal del plan como
   // resuelto pero con señal visual DISTINTA al check ✓ del plan.
@@ -608,6 +615,13 @@ export const useAppStore = create<AppState>()(
         if (error) console.error('[toggleMealCheck] supabase upsert failed:', error);
       });
   },
+
+  // Workout checks (por ejercicio del día) — espejo local de mealChecks.
+  workoutChecks: {},
+  toggleWorkoutCheck: (key) =>
+    set((state) => ({ workoutChecks: { ...state.workoutChecks, [key]: !state.workoutChecks[key] } })),
+  setWorkoutCheck: (key, val) =>
+    set((state) => (state.workoutChecks[key] === val ? state : { workoutChecks: { ...state.workoutChecks, [key]: val } })),
 
   // Meal resolved-by-log (Food-4): set automático desde FoodLogSheet
   // Mismo patrón que toggleMealCheck (fire-and-forget + preservar checked).
@@ -1139,6 +1153,7 @@ export const useAppStore = create<AppState>()(
     habitHistory: state.habitHistory,
     weightLog: state.weightLog,
     mealChecks: state.mealChecks,
+    workoutChecks: state.workoutChecks,
     mealResolvedByLog: state.mealResolvedByLog,
     welcomeVidClosed: state.welcomeVidClosed,
     mealPlanKey: state.mealPlanKey,

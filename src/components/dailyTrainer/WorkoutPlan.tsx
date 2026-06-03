@@ -251,10 +251,16 @@ export default function WorkoutPlan({
             );
             const completedAtIso = new Date().toISOString();
 
+            // Sync con la card de Hoy: marcar como hecho cada ejercicio realizado
+            // (no skipeado). Comparte workoutChecks → los ✓ aparecen en la card.
+            const checkDay = completedAtIso.split('T')[0];
+            const setWorkoutCheck = useAppStore.getState().setWorkoutCheck;
+
             const exercisesLog: ExerciseLogItem[] = plan.exercises.map((ex, i) => {
               const setsForExercise = performedByExercise[i] || [];
               const hasAnyData = setsForExercise.length > 0;
               const allSkipped = hasAnyData && setsForExercise.every(s => s === null);
+              if (hasAnyData && !allSkipped) setWorkoutCheck(`${checkDay}-${ex.id}`, true);
               return {
                 exercise_id: ex.id,
                 order: i,
