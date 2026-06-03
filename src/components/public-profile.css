@@ -6,7 +6,13 @@
 
 .pp5-backdrop {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* dvh descuenta la barra dinámica del navegador en mobile — sin esto el fondo
+     del sheet queda fuera de pantalla y el scroll no llega abajo. vh de fallback. */
+  height: 100vh;
+  height: 100dvh;
   background: rgba(21, 51, 48, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -23,9 +29,10 @@
   width: 100%;
   max-width: 640px;
   max-height: 92vh;
+  max-height: 92dvh;
   overflow-y: auto;
   border-radius: 20px 20px 0 0;
-  padding: 0 0 32px;
+  padding: 0 0 calc(32px + env(safe-area-inset-bottom, 0px));
   position: relative;
   color: var(--forest);
   animation: pp5-slide-up 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
@@ -37,7 +44,7 @@
 
 @media (min-width: 640px) {
   .pp5-backdrop { align-items: center; }
-  .pp5-modal { border-radius: 24px; margin: 24px; max-height: 88vh; }
+  .pp5-modal { border-radius: 24px; margin: 24px; max-height: 88vh; max-height: 88dvh; }
 }
 
 /* Close inline en .pp5-name-row (al lado del nombre). Variant --floating
@@ -143,15 +150,14 @@
 
 .pp5-year-chip {
   display: inline-flex;
-  background: rgba(124, 98, 50, 0.12);
+  background: linear-gradient(135deg, #C9A968, #A8864E);
   padding: 5px 13px;
   border-radius: 999px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(168, 134, 78, 0.28);
   font-family: 'Montserrat', sans-serif;
-  font-style: italic;
+  font-weight: 600;
   font-size: 11px;
-  color: var(--amber-deep);
+  color: #fff;
   letter-spacing: 0.02em;
 }
 
