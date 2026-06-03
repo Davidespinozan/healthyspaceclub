@@ -41,16 +41,7 @@
   right: 16px;
 }
 
-/* Landing: en desktop el toggle vive dentro de nav-left; esta instancia solo
-   aparece en mobile (≤768px), fija arriba a la izquierda (logo centrado,
-   hamburger a la derecha). */
-.lang-toggle--landing-mobile { display: none; }
-@media (max-width: 768px) {
-  .lang-toggle--landing-mobile {
-    display: inline-flex;
-    position: fixed;
-    top: calc(env(safe-area-inset-top, 0px) + 28px);
-    left: 18px;
-    z-index: 1100;
-  }
-}
+/* Landing: en desktop el toggle vive dentro de nav-left; en mobile (donde
+   nav-left se oculta) vive dentro del menú hamburguesa, igual que el login —
+   en flujo, no flotando sobre el hero. */
+.lang-toggle--mob-menu { align-self: center; }

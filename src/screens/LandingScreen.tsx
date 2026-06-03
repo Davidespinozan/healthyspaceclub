@@ -104,10 +104,6 @@ export default function LandingScreen() {
 
   return (
     <>
-      {/* Toggle de idioma mobile-only (en desktop va dentro de nav-left, que se
-          oculta en ≤768px). Top-left: logo va centrado y el hamburger a la derecha. */}
-      <LanguageToggle className="lang-toggle--landing-mobile" />
-
       {/* NAV */}
       <nav id="landing-nav" className="landing-nav">
         <div className="nav-left">
@@ -131,6 +127,7 @@ export default function LandingScreen() {
       {/* MOBILE MENU */}
       <div className={`mob-menu${mobileMenuOpen ? ' open' : ''}`}>
         <div className="mob-menu-inner">
+          <LanguageToggle className="lang-toggle--mob-menu" />
           <a href="#s-pillars" onClick={toggleMobileMenu}>{t('landing.navClub')}</a>
           <a href="#s-how" onClick={toggleMobileMenu}>{t('landing.navHow')}</a>
           <a href="#s-pricing" onClick={toggleMobileMenu}>{t('landing.navPlans')}</a>
