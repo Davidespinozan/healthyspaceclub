@@ -118,7 +118,7 @@ export default function WorkoutPlan({
           }}
         >
           <span className="dt2-cta-play" aria-hidden="true">▶</span>
-          comenzar entrenamiento
+          {t('workout.startWorkout')}
         </button>
       )}
 
@@ -133,7 +133,7 @@ export default function WorkoutPlan({
             aria-expanded={whyOpen}
             aria-label={whyOpen ? t('hoy.ariaWhyCollapse') : t('hoy.ariaWhyExpand')}
           >
-            <span className="dt2-card-why-label">Por qué hoy</span>
+            <span className="dt2-card-why-label">{t('workout.whyToday')}</span>
             <ChevronDown size={14} className="dt2-card-why-chev" />
           </button>
           {whyOpen && (
@@ -144,7 +144,7 @@ export default function WorkoutPlan({
 
       {plan.warmup && (
         <div className="dt2-section">
-          <div className="dt2-section-label">Calentamiento</div>
+          <div className="dt2-section-label">{t('workout.warmup')}</div>
           <p className="dt2-section-text">{plan.warmup}</p>
         </div>
       )}
@@ -208,7 +208,7 @@ export default function WorkoutPlan({
 
       {plan.cooldown && (
         <div className="dt2-section">
-          <div className="dt2-section-label">Enfriamiento</div>
+          <div className="dt2-section-label">{t('workout.cooldown')}</div>
           <p className="dt2-section-text">{plan.cooldown}</p>
         </div>
       )}
