@@ -117,7 +117,8 @@ export default function WorkoutPlan({
             setWorkoutPlayerOpen(true);
           }}
         >
-          ▶ comenzar entrenamiento
+          <span className="dt2-cta-play" aria-hidden="true">▶</span>
+          comenzar entrenamiento
         </button>
       )}
 

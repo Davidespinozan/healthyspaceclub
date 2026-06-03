@@ -110,11 +110,12 @@
    no protagonistas. Padding y font reducidos, margin entre secciones más
    chico. El label terracota de Color-1 se mantiene como latido visual. */
 .dt2-section {
-  padding: 10px 14px;
-  background: var(--warm);
-  border-radius: 12px;
+  padding: 13px 16px;
+  background: linear-gradient(135deg, #C75B3A, #A8472B);
+  border-radius: var(--radius-base);
   margin-bottom: 12px;
-  border: 0.5px solid var(--sand);
+  border: 1px solid rgba(199, 91, 58, 0.5);
+  box-shadow: 0 8px 22px rgba(199, 91, 58, 0.24);
 }
 
 .dt2-section-label {
@@ -122,13 +123,13 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: none;
-  color: var(--terracota);
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 3px;
 }
 
 .dt2-section-text {
   font-size: 11.5px;
-  color: var(--txt2);
+  color: rgba(255, 255, 255, 0.92);
   line-height: 1.5;
   margin: 0;
   font-style: italic;
@@ -150,10 +151,10 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: var(--sala-surface, white);
+  background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
   border: 1px solid var(--sala-border, var(--sand));
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-pro-md);
+  box-shadow: var(--shadow-pro-lg), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
   cursor: pointer;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
@@ -239,16 +240,16 @@
 
 .dt2-note {
   padding: 16px 18px;
-  background: linear-gradient(135deg, rgba(191, 160, 101, 0.08) 0%, rgba(168, 134, 78, 0.08) 100%);
-  border: 0.5px solid rgba(191, 160, 101, 0.2);
-  border-left: 3px solid var(--amber);
-  border-radius: 12px;
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  border: 1px solid rgba(168, 134, 78, 0.5);
+  border-radius: var(--radius-base);
+  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
   margin-bottom: 16px;
 }
 
 .dt2-note-text {
   font-size: 12.5px;
-  color: var(--forest);
+  color: rgba(255, 255, 255, 0.95);
   line-height: 1.55;
   margin: 0;
   font-style: italic;
@@ -262,11 +263,11 @@
    el header tappable (.dt2-card-why-toggle) ocupa toda la fila; el texto
    (.dt2-card-why-text) se muestra solo cuando is-open. */
 .dt2-card-why {
-  background: rgba(191, 160, 101, 0.08);
-  border: 0.5px solid rgba(191, 160, 101, 0.2);
-  border-left: 3px solid var(--amber);
-  border-radius: 12px;
-  padding: 10px 14px;
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  border: 1px solid rgba(168, 134, 78, 0.5);
+  border-radius: var(--radius-base);
+  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
+  padding: 12px 14px;
   margin-bottom: 12px;
 }
 
@@ -292,11 +293,11 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: none;
-  color: var(--amber);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .dt2-card-why-chev {
-  color: var(--amber);
+  color: rgba(255, 255, 255, 0.9);
   transition: transform 0.18s ease;
   flex-shrink: 0;
 }
@@ -307,7 +308,7 @@
 
 .dt2-card-why-text {
   font-size: 12.5px;
-  color: var(--forest);
+  color: rgba(255, 255, 255, 0.92);
   line-height: 1.55;
   font-style: italic;
   margin: 8px 0 0;
@@ -396,12 +397,12 @@
 .dt2-yoga-start-cta,
 .dt2-start-workout-cta {
   width: 100%;
-  padding: 17px;
+  padding: 14px 18px;
   margin: 14px 0 18px;
   border-radius: 50px;
   background: linear-gradient(135deg, var(--moss, #2E4A42), var(--forest, #153330));
   color: var(--amber, #BFA065);
-  font-size: 16px;
+  font-size: 15.5px;
   font-style: italic;
   font-weight: 600;
   border: none;
@@ -409,7 +410,12 @@
   -webkit-tap-highlight-color: transparent;
   box-shadow: 0 10px 26px rgba(21, 51, 48, 0.28);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, filter var(--duration-base) ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
 }
+.dt2-cta-play { font-size: 0.82em; line-height: 1; font-style: normal; }
 .dt2-start-workout-cta:hover {
   transform: translateY(-2px);
   box-shadow: 0 16px 34px rgba(21, 51, 48, 0.36);
