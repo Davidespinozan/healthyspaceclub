@@ -230,8 +230,8 @@
 .tt5-stat {
   flex: 1;
   border: 1px solid var(--surface-glass-border);
-  border-radius: var(--radius-lg);
-  padding: 14px 10px;
+  border-radius: var(--radius-xl);
+  padding: 16px 10px;
   text-align: center;
   cursor: default;
   font-family: inherit;
@@ -239,12 +239,12 @@
   background: var(--surface-glass-light);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-pro-lg);
-  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  box-shadow: var(--shadow-pro-xl);
+  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease;
   -webkit-tap-highlight-color: transparent;
 }
 button.tt5-stat { cursor: pointer; }
-.tt5-stat:hover { transform: translateY(-1px); }
+.tt5-stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-pro-2xl); }
 button.tt5-stat:active { transform: scale(0.97); }
 
 .tt5-stat--racha { box-shadow: 0 12px 24px rgba(199, 91, 58, 0.08); }
