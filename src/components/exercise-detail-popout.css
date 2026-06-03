@@ -431,6 +431,8 @@
   border-radius: var(--radius-lg);
   border: 1px solid var(--surface-glass-border);
   box-shadow: var(--shadow-pro-md);
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  animation-delay: 0.06s;
 }
 
 .edp-stat {
@@ -445,8 +447,8 @@
 
 .edp-stat-val {
   font-family: 'Montserrat', sans-serif;
-  font-size: 24px;
-  font-weight: 400;
+  font-size: 25px;
+  font-weight: 600;
   color: var(--edp-forest);
   line-height: 1;
   margin-bottom: 6px;
@@ -465,31 +467,30 @@
 /* ── Personalized tip ──────────────────────────── */
 
 .edp-tip {
-  padding: 14px 16px;
-  background: linear-gradient(135deg, rgba(191, 160, 101, 0.1) 0%, rgba(168, 134, 78, 0.08) 100%);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(191, 160, 101, 0.22);
-  border-left: 3px solid var(--edp-amber);
-  border-radius: var(--radius-md);
+  padding: 14px 16px 15px;
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  border: 1px solid rgba(168, 134, 78, 0.5);
+  border-radius: var(--radius-base);
   margin-bottom: 18px;
-  box-shadow: var(--shadow-pro-sm);
+  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  animation-delay: 0.1s;
 }
 
 .edp-tip-label {
   font-family: 'Montserrat', sans-serif;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--tracking-kicker-loose);
   text-transform: none;
-  color: var(--edp-amber);
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 5px;
 }
 
 .edp-tip-text {
   font-family: 'Montserrat', sans-serif;
   font-size: 13px;
-  color: var(--edp-forest);
+  color: rgba(255, 255, 255, 0.96);
   line-height: 1.55;
   letter-spacing: var(--tracking-tight);
   margin: 0;
@@ -516,7 +517,14 @@
   gap: 12px;
   padding: 12px 0;
   border-bottom: 0.5px solid var(--edp-sand);
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
 }
+
+.edp-step:nth-child(2) { animation-delay: 0.14s; }
+.edp-step:nth-child(3) { animation-delay: 0.19s; }
+.edp-step:nth-child(4) { animation-delay: 0.24s; }
+.edp-step:nth-child(5) { animation-delay: 0.29s; }
+.edp-step:nth-child(6) { animation-delay: 0.34s; }
 
 .edp-step:last-child {
   border-bottom: none;
@@ -524,17 +532,18 @@
 
 .edp-step-num {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--edp-forest);
-  color: var(--edp-amber);
-  font-size: 11px;
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  color: var(--edp-forest);
+  font-size: 12px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-top: 1px;
+  box-shadow: 0 4px 10px rgba(168, 134, 78, 0.32);
 }
 
 .edp-step-body {
@@ -560,18 +569,30 @@
 /* ── General tip (bottom) ───────────────────── */
 
 .edp-general-tip {
-  padding: 12px 14px;
-  background: var(--edp-warm);
-  border-radius: 12px;
-  margin-top: 14px;
-  border: 0.5px solid var(--edp-sand);
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #C75B3A, #A8472B);
+  border-radius: var(--radius-base);
+  margin-top: 16px;
+  border: 1px solid rgba(199, 91, 58, 0.5);
+  box-shadow: 0 8px 22px rgba(199, 91, 58, 0.24);
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  animation-delay: 0.18s;
 }
 
 .edp-general-tip-text {
-  font-size: 12px;
-  color: var(--edp-forest);
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.95);
   line-height: 1.55;
   margin: 0;
   font-style: italic;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edp-stats,
+  .edp-tip,
+  .edp-step,
+  .edp-general-tip {
+    animation: none;
+  }
 }
 
