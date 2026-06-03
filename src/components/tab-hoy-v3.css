@@ -453,10 +453,18 @@
 }
 .th3-card-arrow {
   font-family: 'Montserrat', sans-serif;
-  font-size: 1rem;
+  font-size: 1.3rem;
   line-height: 1;
-  color: var(--amber);
-  font-weight: 400;
+  color: var(--amber-deep);
+  font-weight: 500;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(191, 160, 101, 0.15);
+  flex-shrink: 0;
 }
 
 /* ═══ Separator ═══ */
