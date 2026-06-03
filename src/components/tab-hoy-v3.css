@@ -538,14 +538,15 @@
 
 /* ═══ Reviews (mini día 5 + weekly HSM + daily review when complete) ═══ */
 .th3-review {
-  background: linear-gradient(135deg, var(--forest), #1d3d39);
+  /* Terracota vibrante — color temático de reflexión (= franja "Tu Espacio") */
+  background: linear-gradient(135deg, #C75B3A, #A8472B);
   border-radius: var(--radius-base);
   padding: 18px 20px;
-  border-left: 3px solid var(--amber);
+  border: 1px solid rgba(199, 91, 58, 0.5);
   margin-top: 16px;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-pro-lift-forest);
+  box-shadow: 0 8px 22px rgba(199, 91, 58, 0.26);
 }
 .th3-review::before {
   content: '"';
@@ -554,7 +555,7 @@
   left: 14px;
   font-size: 6rem;
   font-style: italic;
-  color: rgba(191,160,101,0.08);
+  color: rgba(255,255,255,0.12);
   line-height: 1;
   font-family: 'Montserrat', sans-serif;
   pointer-events: none;
@@ -562,10 +563,10 @@
 .th3-review-label {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.64rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--tracking-kicker);
   text-transform: none;
-  color: var(--amber);
+  color: rgba(255,255,255,0.85);
   margin: 0 0 8px;
   position: relative;
 }
@@ -603,8 +604,8 @@
 .th3-review-btn:hover { transform: translateY(-1px); }
 .th3-review-btn:hover,
 .th3-review-btn:active {
-  background: rgba(246,242,234,0.08);
-  border-color: var(--amber);
+  background: rgba(246,242,234,0.14);
+  border-color: rgba(246,242,234,0.55);
 }
 
 /* ═══ Milestone overlay ═══ */
