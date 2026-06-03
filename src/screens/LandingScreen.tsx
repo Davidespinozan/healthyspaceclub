@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEven
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { PRICING, detectRegion, type Region } from '../utils/region';
+import LanguageToggle from '../components/LanguageToggle';
 // trust stats removed
 
 const REGION_OPTIONS: Region[] = ['LATAM', 'EUROPE', 'REST'];
@@ -103,9 +104,14 @@ export default function LandingScreen() {
 
   return (
     <>
+      {/* Toggle de idioma mobile-only (en desktop va dentro de nav-left, que se
+          oculta en ≤768px). Top-left: logo va centrado y el hamburger a la derecha. */}
+      <LanguageToggle className="lang-toggle--landing-mobile" />
+
       {/* NAV */}
       <nav id="landing-nav" className="landing-nav">
         <div className="nav-left">
+          <LanguageToggle />
           <span className="nav-login" onClick={() => goTo('login')}>{t('landing.login')}</span>
         </div>
         <div className="logo logo-nav">

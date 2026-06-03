@@ -4,6 +4,7 @@ import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n/es';
+import LanguageToggle from '../components/LanguageToggle';
 
 const TOTAL_STEPS = 8;
 
@@ -171,6 +172,7 @@ export default function OnboardingScreen() {
 
   return (
     <div className="onb">
+      <LanguageToggle className="lang-toggle--corner" />
       {/* Progress bar */}
       {showProgress && (
         <div className="onb-progress">

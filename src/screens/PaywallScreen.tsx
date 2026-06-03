@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { getPriceInfo, formatPrice, type BillingCycle } from '../utils/stripe';
+import LanguageToggle from '../components/LanguageToggle';
 
 // Pantalla de paywall — destino del gate de suscripción (Stripe-3).
 // Full-screen, NO dismissable (sin overlay/X que devuelva a la app).
@@ -47,6 +48,7 @@ export default function PaywallScreen() {
         padding: '32px 22px', overflowY: 'auto',
       }}
     >
+      <LanguageToggle className="lang-toggle--corner" />
       <div style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
         <div style={{ fontSize: '2rem', marginBottom: 14 }}>✦</div>
         <h1 style={{ fontSize: '1.6rem', lineHeight: 1.2, color: 'var(--forest)', marginBottom: 10 }}>

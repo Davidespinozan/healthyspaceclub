@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
+import LanguageToggle from '../components/LanguageToggle';
 
 export default function ResetPasswordScreen() {
   const { t } = useT();
@@ -45,6 +46,7 @@ export default function ResetPasswordScreen() {
   return (
     <div className="login-screen">
       <div className="ls-bg" />
+      <LanguageToggle className="lang-toggle--corner" />
       <div className="ls-card">
         <div className="ls-logo">
           <img
