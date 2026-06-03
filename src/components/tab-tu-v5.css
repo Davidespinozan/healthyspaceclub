@@ -351,8 +351,8 @@ button.tt5-stat:active { transform: scale(0.97); }
 /* Logro desbloqueado: contador de días dentro del anillo (no emoji) */
 .tt5-highlight-days {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 800;
-  font-size: 19px;
+  font-weight: 600;
+  font-size: 18px;
   letter-spacing: var(--tracking-tight);
   color: #fff;
   line-height: 1;
