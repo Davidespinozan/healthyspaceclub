@@ -741,9 +741,10 @@
 .wnp2-meal--snack {
   padding: 9px 14px;
   gap: 10px;
-  /* Terracota: identidad propia del snack (color-coding vs comidas doradas) */
-  background: linear-gradient(135deg, rgba(199, 91, 58, 0.13), rgba(199, 91, 58, 0.05));
-  border: 1px solid rgba(199, 91, 58, 0.28);
+  /* Terracota VIBRANTE — mismo que Calentamiento/Enfriamiento del entreno */
+  background: linear-gradient(135deg, #C75B3A, #A8472B);
+  border: 1px solid rgba(199, 91, 58, 0.5);
+  box-shadow: 0 8px 22px rgba(199, 91, 58, 0.24);
 }
 .wnp2-meal--snack::before {
   display: none;
@@ -754,12 +755,13 @@
   box-shadow: none;
   border: none;
   background: transparent;
-  color: var(--terracota);
+  color: rgba(255, 255, 255, 0.9);
 }
 /* Snack compacto: comida en una sola línea (ellipsis → caja más corta) */
 .wnp2-meal--snack .wnp2-meal-name {
   font-size: 12.5px;
   margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.95);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -768,14 +770,14 @@
   font-size: 9px;
   letter-spacing: 0.12em;
   margin-bottom: 2px;
-  color: var(--terracota);
+  color: rgba(255, 255, 255, 0.85);
 }
 /* Color-1: chip kcal del snack visible (antes era warm sobre warm =
    invisible). Terracota-soft + terracota text se unen al border-left,
    refuerza la identidad del snack. */
 .wnp2-meal--snack .wnp2-meal-kcal {
-  background: var(--terracota-soft);
-  color: var(--terracota);
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
 }
 
 .wnp2-empty-day {
