@@ -134,7 +134,17 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
 
   // ── Panel "Tu día": completado real de hoy (engagement / dopamina) ──────────
-  const trainedToday = sessionsToday.length > 0;
+  // "Entreno" del panel: sesión completada en el player O todos los ejercicios
+  // del día marcados a mano en la card (mismos ids/slice que muestra la card).
+  const todayWorkoutPlan = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
+  const todayExerciseIds = todayWorkoutPlan
+    ? (((todayWorkoutPlan.exercises ?? []) as Array<Record<string, unknown>>)
+        .slice(0, 6)
+        .map((ex, i) => String(ex.id ?? `ex-${i}`)))
+    : [];
+  const allExercisesChecked = todayExerciseIds.length > 0 &&
+    todayExerciseIds.every((id) => workoutChecks[`${today}-${id}`]);
+  const trainedToday = sessionsToday.length > 0 || allExercisesChecked;
   const reflectionDone = todayHSMAnswered > 0;
   const kcalGoal = planGoal > 0 ? planGoal : 0;
   const kcalConsumed = Math.round(dayConsumption.consumedKcal);
