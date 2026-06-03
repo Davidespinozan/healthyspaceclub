@@ -38,10 +38,10 @@ import type {
 import Wizard from './dailyTrainer/Wizard';
 import YogaPlanView from './dailyTrainer/YogaPlan';
 import WorkoutPlanView from './dailyTrainer/WorkoutPlan';
-import { MODALITY_OPTIONS } from './dailyTrainer/constants';
+import { MODALITY_OPTIONS, EQUIPMENT_OPTIONS, PAIN_AREAS } from './dailyTrainer/constants';
+import type { TranslationKey } from '../i18n/es';
 import './daily-trainer-v2.css';
 
-const DAY_NAMES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 
 // ══════════════════════════════════════════════════════════════
 // COMPONENT
@@ -56,7 +56,7 @@ interface DailyTrainerProps {
 }
 
 export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) {
-  const { locale } = useT();
+  const { t, locale } = useT();
   const exerciseBank = getExercises(locale);
   const userName = useAppStore(s => s.userName);
   const obData = useAppStore(s => s.obData);
@@ -75,7 +75,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
 
   const today = new Date().toISOString().split('T')[0];
   const firstName = userName?.split(' ')[0] || '';
-  const todayDayName = DAY_NAMES[new Date().getDay()];
+  const todayDayName = new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { weekday: 'long' });
   const todayDateShort = `${new Date().getDate()} ${new Date().toLocaleDateString('es-ES', { month: 'short' })}`;
 
   // Admin bypass
@@ -153,18 +153,38 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
     const history = analyzeWorkoutHistory(workoutLog || [], exerciseBank, completedSessions);
     const bullets: string[] = [];
 
-    if (history.restDays > 0) bullets.push(`${history.restDays} día${history.restDays > 1 ? 's' : ''} sin entrenar`);
-    else bullets.push('Entrenó ayer');
-    bullets.push(`Objetivo: ${obData?.goal || 'general'}`);
-    if (hasCheckinToday) bullets.push(`Energía: ${dailyCheckin}`);
-    const modalityLabel = MODALITY_OPTIONS.find(m => m.value === selectedModality)?.label || 'auto';
-    bullets.push(`Modalidad: ${modalityLabel}`);
-    bullets.push(`${selectedTime} min en ${selectedEquipment}`);
-    if (priorExercise !== 'none') bullets.push(`Ya entrenó hoy: ${priorExercise === 'light' ? 'algo ligero' : 'fuerte'}`);
-    if (discomfort === 'mild') bullets.push('Molestia leve');
-    if (discomfort === 'pain' && painArea) bullets.push(`Dolor en: ${painArea}`);
+    if (history.restDays > 0) bullets.push(history.restDays === 1 ? t('wizard.genRestDay') : t('wizard.genRestDays', { n: history.restDays }));
+    else bullets.push(t('wizard.genTrainedYesterday'));
 
-    setContextBullets(bullets);
+    const GOAL_KEY: Record<string, TranslationKey> = {
+      'Ganar músculo': 'onboarding.goalGain',
+      'Bajar grasa': 'onboarding.goalLose',
+      'Recomposición': 'onboarding.goalRecomp',
+      'Bienestar integral': 'onboarding.goalWellness',
+    };
+    const goalLabel = obData?.goal && GOAL_KEY[obData.goal] ? t(GOAL_KEY[obData.goal]) : (obData?.goal || 'general');
+    bullets.push(t('wizard.genGoal', { goal: goalLabel }));
+
+    if (hasCheckinToday && dailyCheckin) {
+      const ENERGY_KEY: Record<string, TranslationKey> = { cansado: 'wizard.energyTired', regular: 'wizard.energyRegular', energia: 'wizard.energyHigh' };
+      bullets.push(t('wizard.genEnergy', { level: t(ENERGY_KEY[dailyCheckin]) }));
+    }
+
+    const modOpt = MODALITY_OPTIONS.find(m => m.value === selectedModality);
+    const modalityLabel = modOpt?.label || 'auto'; // español — contexto del prompt + mensaje de error
+    bullets.push(t('wizard.genModality', { mod: modOpt ? t(modOpt.labelKey) : modalityLabel }));
+
+    const eqKey = EQUIPMENT_OPTIONS.find(e => e.value === selectedEquipment)?.labelKey;
+    bullets.push(t('wizard.genTimeEquip', { min: selectedTime, equip: eqKey ? t(eqKey) : selectedEquipment }));
+
+    if (priorExercise !== 'none') bullets.push(priorExercise === 'light' ? t('wizard.genPriorLight') : t('wizard.genPriorHeavy'));
+    if (discomfort === 'mild') bullets.push(t('wizard.genMildDiscomfort'));
+    if (discomfort === 'pain' && painArea) {
+      const areaKey = PAIN_AREAS.find(p => p.value === painArea)?.labelKey;
+      bullets.push(t('wizard.genPainAt', { area: areaKey ? t(areaKey) : painArea }));
+    }
+
+    setContextBullets([...bullets]); // copia: los push posteriores al prompt (relajación) no deben filtrarse al display
     setPhase('generating');
     setError('');
 
@@ -251,7 +271,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
         const yogaCandidates = filterByModality(exerciseBank, 'yoga');
 
         if (yogaCandidates.length < 15) {
-          throw new Error(`Solo hay ${yogaCandidates.length} poses de yoga curadas. Necesitamos mínimo 15 para Power Vinyasa.`);
+          throw new Error(t('wizard.genErrYoga', { n: yogaCandidates.length }));
         }
 
         const targetDurationSeconds = selectedTime * 60;
@@ -361,9 +381,10 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
       // candidatos si el equipo coincide con algún ejercicio. Si llegamos a 0 acá,
       // es caso extremo (equipo inexistente, banco vacío, o painArea filter recortó todo).
       if (candidates.length === 0) {
+        const modLabelLocalized = MODALITY_OPTIONS.find(m => m.value === selectedModality)?.labelKey;
         const msg = selectedModality === 'auto'
-          ? 'Tu coach no encontró ejercicios para esta combinación. Verifica el equipo seleccionado.'
-          : `No hay ejercicios de ${modalityLabel.toLowerCase()} para tu equipo. Cambia la modalidad o el equipo.`;
+          ? t('wizard.genErrNoneAuto')
+          : t('wizard.genErrNoneMod', { mod: (modLabelLocalized ? t(modLabelLocalized) : modalityLabel).toLowerCase() });
         throw new Error(msg);
       }
 
@@ -384,7 +405,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
       });
 
       if (!validateWorkout(workout, validIds)) {
-        throw new Error('La rutina generada tiene ejercicios inválidos. Reintenta.');
+        throw new Error(t('wizard.genErrInvalid'));
       }
 
       const strictValidation = validateWorkoutPlanStrict(workout, validIds);
@@ -410,7 +431,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
       await saveDailyWorkout(workout as any);
       setPhase('plan');
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Error al generar la rutina';
+      const msg = e instanceof Error ? e.message : t('wizard.genErrFallback');
       setError(msg);
       // If we had a previous plan, go back to it instead of modality
       if (plan) {
@@ -441,8 +462,8 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
       <div className="wz-root">
         <div className="wz-generating">
           <div className="wz-spinner" />
-          <h3 className="wz-generating-title">Armando <em>tu rutina</em>...</h3>
-          <p className="wz-generating-sub">Tu coach está considerando:</p>
+          <h3 className="wz-generating-title">{t('wizard.genTitlePre')} <em>{t('wizard.genTitleEm')}</em>...</h3>
+          <p className="wz-generating-sub">{t('wizard.genConsidering')}</p>
           <div className="wz-generating-bullets">
             {contextBullets.map((b, i) => (
               <div key={i} className="wz-generating-bullet">· {b}</div>
@@ -462,7 +483,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
       <div className="wz-root">
         <div className="wz-error">
           <p className="wz-error-text">⚠️ {error}</p>
-          <button className="wz-error-btn" onClick={() => setPhase('modality')}>Volver</button>
+          <button className="wz-error-btn" onClick={() => setPhase('modality')}>{t('wizard.genErrBack')}</button>
         </div>
       </div>
     );

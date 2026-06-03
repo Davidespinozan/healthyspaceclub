@@ -11,6 +11,7 @@
 
 import { Lock } from 'lucide-react';
 import { useT } from '../../i18n';
+import type { TranslationKey } from '../../i18n/es';
 import type { Modality, Equipment } from '../../types';
 import {
   MODALITY_OPTIONS,
@@ -31,7 +32,7 @@ interface WizardProps {
   firstName: string;
   todayDayName: string;
   todayDateShort: string;
-  suggestion: { modality: Modality; reason: string };
+  suggestion: { modality: Modality; reasonKey: TranslationKey; reasonParams?: Record<string, string | number> };
   modalityCounts: Record<string, number>;
   skipPhysical: boolean;
 
@@ -104,7 +105,7 @@ export default function Wizard({
             // Dynamic sub-label for auto
             let subLabel = opt.subKey ? t(opt.subKey) : '';
             if (opt.value === 'auto') {
-              subLabel = suggestion.reason;
+              subLabel = t(suggestion.reasonKey, suggestion.reasonParams);
             }
 
             return (

@@ -9,6 +9,7 @@ import type {
   WorkoutDayDecision
 } from '../types';
 import type { WorkoutEntry, CompletedSession } from '../types';
+import type { TranslationKey } from '../i18n/es';
 
 // ══════════════════════════════════════════════════════════════
 // CICLADO BASE POR OBJETIVO
@@ -594,13 +595,13 @@ export function suggestModality(params: {
   dailyEnergy?: string;
   streakCount?: number;
   completedSessions?: CompletedSession[];
-}): { modality: Modality; reason: string } {
+}): { modality: Modality; reasonKey: TranslationKey; reasonParams?: Record<string, string | number> } {
   const { workoutLog, exercises, dailyEnergy, completedSessions = [] } = params;
   const history = analyzeWorkoutHistory(workoutLog, exercises, completedSessions);
 
   // Tired → suggest yoga
   if (dailyEnergy === 'cansado') {
-    return { modality: 'yoga', reason: 'Tu check-in dice que estás cansado — yoga te va a sentar bien' };
+    return { modality: 'yoga', reasonKey: 'wizard.reasonTired' };
   }
 
   // 4+ consecutive strength days → suggest yoga
@@ -611,14 +612,14 @@ export function suggestModality(params: {
     workoutLog.some(e => e.date === date)
   );
   if (consecutiveStrength) {
-    return { modality: 'yoga', reason: 'Llevas 4+ días entrenando seguidos — tu cuerpo necesita recovery' };
+    return { modality: 'yoga', reasonKey: 'wizard.reasonRecovery' };
   }
 
   // 3+ rest days → suggest auto (full body)
   if (history.restDays >= 3) {
-    return { modality: 'auto', reason: `Llevas ${history.restDays} días sin entrenar — hora de reactivar` };
+    return { modality: 'auto', reasonKey: 'wizard.reasonReactivate', reasonParams: { n: history.restDays } };
   }
 
   // Default
-  return { modality: 'auto', reason: 'Tu coach analiza tu historial y decide lo mejor para hoy' };
+  return { modality: 'auto', reasonKey: 'wizard.reasonAuto' };
 }
