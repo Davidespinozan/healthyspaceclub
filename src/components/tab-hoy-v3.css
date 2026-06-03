@@ -192,18 +192,18 @@
 .th3-card {
   background: var(--sala-surface);
   border: 1px solid var(--sala-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   overflow: hidden;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: var(--shadow-pro-md);
+  box-shadow: var(--shadow-pro-xl);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease;
 }
 .th3-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-pro-xl);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-pro-2xl);
 }
 .th3-card:active { transform: scale(0.97); }
 
@@ -293,11 +293,11 @@
 }
 .th3-card-title {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 500;
-  font-size: 17px;
+  font-weight: 700;
+  font-size: 18px;
   color: var(--forest);
-  line-height: 1.15;
-  letter-spacing: var(--tracking-tight);
+  line-height: 1.12;
+  letter-spacing: var(--tracking-tighter);
   margin: 0;
 }
 .th3-card-meta {
