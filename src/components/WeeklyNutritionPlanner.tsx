@@ -847,7 +847,7 @@ export default function WeeklyNutritionPlanner() {
                       {!isSnack && <Ic size={14} strokeWidth={1.5} />}
                       <span>{MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time}</span>
                     </div>
-                    <div className="wnp2-meal-name">{meal.name}</div>
+                    <div className="wnp2-meal-name">{isSnack ? (meal.portions[0] ?? meal.name) : meal.name}</div>
                     {!isSnack && (
                       <div className="wnp2-meal-chips">
                         {portionsToShow.map((p, j) => (

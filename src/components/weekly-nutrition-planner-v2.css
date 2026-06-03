@@ -739,11 +739,11 @@
    sand + accent terracota). Distinto de la main meal (que tiene
    border-left amber), lectura clara: "esto es un snack, es distinto". */
 .wnp2-meal--snack {
-  padding: 8px 12px;
+  padding: 9px 14px;
   gap: 10px;
-  background: white;
-  border: 0.5px solid var(--sand);
-  border-left: 3px solid var(--terracota);
+  /* Terracota: identidad propia del snack (color-coding vs comidas doradas) */
+  background: linear-gradient(135deg, rgba(199, 91, 58, 0.13), rgba(199, 91, 58, 0.05));
+  border: 1px solid rgba(199, 91, 58, 0.28);
 }
 .wnp2-meal--snack::before {
   display: none;
@@ -754,16 +754,21 @@
   box-shadow: none;
   border: none;
   background: transparent;
-  color: var(--amber);
+  color: var(--terracota);
 }
+/* Snack compacto: comida en una sola línea (ellipsis → caja más corta) */
 .wnp2-meal--snack .wnp2-meal-name {
-  font-size: 12px;
-  margin-bottom: 3px;
+  font-size: 12.5px;
+  margin-bottom: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .wnp2-meal--snack .wnp2-meal-time {
   font-size: 9px;
   letter-spacing: 0.12em;
   margin-bottom: 2px;
+  color: var(--terracota);
 }
 /* Color-1: chip kcal del snack visible (antes era warm sobre warm =
    invisible). Terracota-soft + terracota text se unen al border-left,
