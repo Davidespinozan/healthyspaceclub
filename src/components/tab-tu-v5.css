@@ -326,9 +326,9 @@ button.tt5-stat:active { transform: scale(0.97); }
 }
 
 .tt5-highlight.is-unlocked .tt5-highlight-ring {
-  border: 2px solid var(--terracota);
-  background: linear-gradient(135deg, rgba(199, 91, 58, 0.18), rgba(124, 98, 50, 0.14));
-  box-shadow: 0 0 0 2px rgba(199, 91, 58, 0.12);
+  border: none;
+  background: linear-gradient(135deg, #C75B3A, #A8472B);
+  box-shadow: 0 6px 16px rgba(199, 91, 58, 0.34);
 }
 
 .tt5-highlight.is-next .tt5-highlight-ring {
