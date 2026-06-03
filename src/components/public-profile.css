@@ -81,14 +81,11 @@
   gap: 16px;
   position: relative;
 }
-/* Acciones (compartir/cerrar) fuera del flujo → nombre y bio quedan pegados */
+/* Acciones (compartir/cerrar) en línea con el nombre, a la derecha */
 .pp5-header-actions {
-  position: absolute;
-  top: 18px;
-  right: 20px;
   display: flex;
   gap: 8px;
-  z-index: 2;
+  flex-shrink: 0;
 }
 
 .pp5-avatar-wrap {
@@ -128,9 +125,9 @@
 .pp5-name-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  margin-bottom: 3px;
-  padding-right: 84px;   /* reserva para las acciones (absolute) */
+  margin-bottom: 4px;
 }
 
 .pp5-name {
@@ -144,6 +141,7 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
 }
 
