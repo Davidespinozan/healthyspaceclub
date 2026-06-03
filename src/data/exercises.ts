@@ -1,6 +1,6 @@
 import type { Exercise } from '../types';
 import type { AppLanguage } from '../store';
-import { exercisesEn, stepTitleEn, variantNameEn } from './exercises.en';
+import { exercisesEn, stepTitleEn, stepDescEn, variantNameEn } from './exercises.en';
 
 // ════════════════════════════════════════════════════════════════
 // BANCO DE EJERCICIOS — Modelo "Patrón + Variantes"
@@ -3017,8 +3017,9 @@ export function getExercises(lang: AppLanguage): Exercise[] {
     const o = exercisesEn[ex.id];
     // A2b: títulos de pasos + nombres de variantes (siempre, no dependen de `o`).
     const steps = ex.steps?.map((s) => {
-      const title = stepTitleEn[s.title];
-      return title ? { ...s, title } : s;
+      const title = stepTitleEn[s.title] ?? s.title;
+      const desc = stepDescEn[s.desc] ?? s.desc;
+      return title !== s.title || desc !== s.desc ? { ...s, title, desc } : s;
     });
     const variants = ex.variants?.map((v) => {
       const name = variantNameEn[v.name];
