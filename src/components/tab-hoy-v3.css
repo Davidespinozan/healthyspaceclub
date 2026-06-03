@@ -199,13 +199,26 @@
   flex-direction: column;
   -webkit-tap-highlight-color: transparent;
   box-shadow: var(--shadow-pro-md);
-  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease;
 }
 .th3-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-pro-lg);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-pro-xl);
 }
-.th3-card:active { transform: scale(0.98); }
+.th3-card:active { transform: scale(0.97); }
+
+/* ═══ Modernización: entrada escalonada al montar la tab (reusa la fundación) ═══ */
+.th3-hero { animation: riseIn 0.5s var(--ease-out-soft) backwards; }
+.th3-body > * { animation: riseIn 0.5s var(--ease-out-soft) backwards; }
+.th3-body > *:nth-child(1) { animation-delay: 0.06s; }
+.th3-body > *:nth-child(2) { animation-delay: 0.12s; }
+.th3-body > *:nth-child(3) { animation-delay: 0.18s; }
+.th3-body > *:nth-child(4) { animation-delay: 0.24s; }
+.th3-body > *:nth-child(5) { animation-delay: 0.30s; }
+.th3-body > *:nth-child(6) { animation-delay: 0.36s; }
+@media (prefers-reduced-motion: reduce) {
+  .th3-hero, .th3-body > * { animation: none; }
+}
 
 /* Cover (portada gradient) */
 .th3-cover {
