@@ -126,3 +126,10 @@
     z-index: 200;
   }
 }
+
+/* ═══ Modernización: entrada escalonada (reusa la fundación :root) ═══ */
+.clb-header { animation: riseIn 0.5s var(--ease-out-soft) backwards; animation-delay: 0.05s; }
+.clb-feed { animation: riseIn 0.5s var(--ease-out-soft) backwards; animation-delay: 0.12s; }
+@media (prefers-reduced-motion: reduce) {
+  .clb-header, .clb-feed { animation: none; }
+}

@@ -453,3 +453,11 @@ button.tt5-stat:active { transform: scale(0.97); }
   .tt5-stat-num { font-size: 22px; }
   .tt5-highlights { padding: 8px 14px 18px; gap: 12px; }
 }
+
+/* ═══ Modernización: entrada escalonada (reusa la fundación :root) ═══ */
+.tt5-header { animation: riseIn 0.5s var(--ease-out-soft) backwards; animation-delay: 0.05s; }
+.tt5-stats { animation: riseIn 0.5s var(--ease-out-soft) backwards; animation-delay: 0.12s; }
+.tt5-grid { animation: riseIn 0.5s var(--ease-out-soft) backwards; animation-delay: 0.19s; }
+@media (prefers-reduced-motion: reduce) {
+  .tt5-header, .tt5-stats, .tt5-grid { animation: none; }
+}
