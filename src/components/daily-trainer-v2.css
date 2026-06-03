@@ -263,10 +263,10 @@
    el header tappable (.dt2-card-why-toggle) ocupa toda la fila; el texto
    (.dt2-card-why-text) se muestra solo cuando is-open. */
 .dt2-card-why {
-  background: linear-gradient(135deg, #C9A968, #A8864E);
-  border: 1px solid rgba(168, 134, 78, 0.5);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--sand, #E4DAC8);
   border-radius: var(--radius-base);
-  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
+  box-shadow: none;
   padding: 12px 14px;
   margin-bottom: 12px;
 }
@@ -293,11 +293,11 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: none;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(21, 51, 48, 0.55);
 }
 
 .dt2-card-why-chev {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(21, 51, 48, 0.5);
   transition: transform 0.18s ease;
   flex-shrink: 0;
 }
@@ -308,7 +308,7 @@
 
 .dt2-card-why-text {
   font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(21, 51, 48, 0.78);
   line-height: 1.55;
   font-style: italic;
   margin: 8px 0 0;
@@ -396,19 +396,20 @@
 
 .dt2-yoga-start-cta,
 .dt2-start-workout-cta {
-  width: 100%;
-  padding: 14px 18px;
-  margin: 14px 0 18px;
+  width: auto;
+  align-self: center;
+  padding: 13px 30px;
+  margin: 14px auto 18px;
   border-radius: 50px;
-  background: linear-gradient(135deg, var(--moss, #2E4A42), var(--forest, #153330));
-  color: var(--amber, #BFA065);
+  background: linear-gradient(135deg, #C9A867, var(--amber, #BFA065));
+  color: var(--forest, #153330);
   font-size: 15.5px;
   font-style: italic;
-  font-weight: 600;
+  font-weight: 700;
   border: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 10px 26px rgba(21, 51, 48, 0.28);
+  box-shadow: 0 10px 26px rgba(191, 160, 101, 0.38);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, filter var(--duration-base) ease;
   display: flex;
   align-items: center;
@@ -418,7 +419,7 @@
 .dt2-cta-play { font-size: 0.82em; line-height: 1; font-style: normal; }
 .dt2-start-workout-cta:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 34px rgba(21, 51, 48, 0.36);
+  box-shadow: 0 16px 34px rgba(191, 160, 101, 0.46);
   filter: brightness(1.05);
 }
 .dt2-yoga-start-cta:active,
