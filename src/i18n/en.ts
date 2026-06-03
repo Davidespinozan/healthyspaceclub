@@ -563,6 +563,7 @@ export const en: Translations<typeof es> = {
     change: 'Change',
     activeDays: 'Active days',
     share: 'Share',
+    viewPublic: 'View public profile',
     shareTitle: 'My HSC profile',
     urlCopied: 'URL copied to clipboard',
     statPosts: 'Posts',

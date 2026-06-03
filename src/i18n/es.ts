@@ -562,6 +562,7 @@ export const es = {
     change: 'Cambiar',
     activeDays: 'Días activos',
     share: 'Compartir',
+    viewPublic: 'Ver perfil público',
     shareTitle: 'Mi perfil HSC',
     urlCopied: 'URL copiada al portapapeles',
     statPosts: 'Posts',

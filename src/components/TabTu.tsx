@@ -130,19 +130,6 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
     }
   }
 
-  function handleShare() {
-    const data = { title: t('profile.shareTitle'), url: window.location.href };
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      navigator.share(data).catch(() => {});
-      return;
-    }
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href)
-        .then(() => alert(t('profile.urlCopied')))
-        .catch(() => {});
-    }
-  }
-
   const displayName = profile.display_name || userName || 'Anónimo';
   const initial = (firstName || displayName || '?')[0].toUpperCase();
 
@@ -221,9 +208,9 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
           <button
             className="tt5-btn tt5-btn--secondary"
             type="button"
-            onClick={handleShare}
+            onClick={() => setProfileOpen(true)}
           >
-            {t('profile.share')}
+            {t('profile.viewPublic')}
           </button>
         </div>
       )}

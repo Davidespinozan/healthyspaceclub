@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { X, Flame } from 'lucide-react';
+import { X, Flame, Share2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
 import { deleteClubPost } from '../utils/clubPosts';
@@ -214,6 +214,21 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
               <div className="pp5-header-meta">
                 <div className="pp5-name-row">
                   <h1 className="pp5-name">{displayName}</h1>
+                  {isOwnProfile && (
+                    <button
+                      className="pp5-close"
+                      onClick={() => {
+                        const data = { title: t('profile.shareTitle'), url: window.location.href };
+                        if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+                          navigator.share(data).catch(() => {});
+                        }
+                      }}
+                      aria-label={t('profile.share')}
+                      type="button"
+                    >
+                      <Share2 size={15} />
+                    </button>
+                  )}
                   <button className="pp5-close" onClick={onClose} aria-label={t('common.close')} type="button">
                     <X size={16} />
                   </button>
