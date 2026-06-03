@@ -252,23 +252,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 6px;
-  border: 2px solid var(--terracota);
-  background: linear-gradient(135deg, rgba(199, 91, 58, 0.18), rgba(124, 98, 50, 0.14));
-  box-shadow: 0 0 0 2px rgba(199, 91, 58, 0.12);
+  margin: 0 auto;
+  border: none;
+  /* Terracota vibrante — igual que los logros desbloqueados del perfil privado */
+  background: linear-gradient(135deg, #C75B3A, #A8472B);
+  box-shadow: 0 6px 16px rgba(199, 91, 58, 0.34);
 }
 
-.pp5-highlight-emoji {
-  font-size: 24px;
-  line-height: 1;
-}
-
-.pp5-highlight-label {
+.pp5-highlight-days {
   font-family: 'Montserrat', sans-serif;
-  font-style: italic;
-  font-size: 11px;
-  color: var(--forest);
-  line-height: 1.2;
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: var(--tracking-tight);
+  color: #fff;
+  line-height: 1;
 }
 
 /* ═══ FEED de posts ═══════════════════════════════════════ */

@@ -3,7 +3,7 @@ import { X, Flame, Share2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
 import { deleteClubPost } from '../utils/clubPosts';
-import { MILESTONE_STEPS, MILESTONE_EMOJI, getMilestoneLabel } from '../constants/milestones';
+import { MILESTONE_STEPS } from '../constants/milestones';
 import { useT } from '../i18n';
 import './public-profile.css';
 
@@ -28,7 +28,7 @@ interface Props {
 }
 
 export default function PublicProfile({ userId, currentUserId, onClose }: Props) {
-  const { t, locale } = useT();
+  const { t } = useT();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [posts, setPosts] = useState<ClubPost[]>([]);
   const [milestones, setMilestones] = useState<MilestoneRow[]>([]);
@@ -264,11 +264,8 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
                 {sortedHighlights.map(days => (
                   <div key={days} className="pp5-highlight">
                     <div className="pp5-highlight-ring">
-                      <div className="pp5-highlight-emoji" aria-hidden="true">
-                        {MILESTONE_EMOJI[days]}
-                      </div>
+                      <span className="pp5-highlight-days">{days}d</span>
                     </div>
-                    <div className="pp5-highlight-label">{getMilestoneLabel(days, locale)}</div>
                   </div>
                 ))}
               </div>
