@@ -17,11 +17,16 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 20px 0;
-  padding-top: calc(20px + env(safe-area-inset-top, 0px));
-  margin-bottom: 20px;
-  border-bottom: 0.5px solid var(--sand);
   gap: 12px;
+  /* Hero forest — ancla de color (como el hero de Hoy / header de nutrición) */
+  background:
+    radial-gradient(120% 90% at 12% 0%, #2E4A42 0%, transparent 55%),
+    linear-gradient(155deg, #153330 0%, #1b3c37 52%, #102a27 100%);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  margin-bottom: 18px;
+  color: var(--sala-surface);
+  box-shadow: 0 12px 30px rgba(8, 20, 27, 0.22);
 }
 
 .dt2-plan-micro {
@@ -37,7 +42,7 @@
   font-size: 27px;
   font-weight: 800;
   letter-spacing: var(--tracking-tighter);
-  color: var(--forest);
+  color: var(--sala-surface);
   margin: 0 0 10px;
   line-height: 1.1;
 }
@@ -58,13 +63,13 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  background: var(--warm);
-  border: 0.5px solid var(--sand);
+  padding: 5px 11px;
+  background: rgba(246, 242, 234, 0.12);
+  border: 1px solid rgba(246, 242, 234, 0.18);
   border-radius: 50px;
   font-size: 10px;
   font-weight: 600;
-  color: var(--forest);
+  color: var(--sala-surface);
 }
 
 .dt2-regen {
@@ -74,9 +79,9 @@
   min-width: 44px;
   min-height: 44px;
   border-radius: 50%;
-  background: white;
-  border: 1px solid var(--sand);
-  color: var(--forest);
+  background: rgba(246, 242, 234, 0.12);
+  border: 1px solid rgba(246, 242, 234, 0.2);
+  color: var(--sala-surface);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -171,10 +176,11 @@
 
 .dt2-ex-emoji {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: var(--warm);
+  background: linear-gradient(135deg, rgba(191, 160, 101, 0.22), rgba(168, 134, 78, 0.14));
+  color: var(--amber-deep);
   display: inline-flex;
   align-items: center;
   justify-content: center;
