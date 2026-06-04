@@ -668,7 +668,6 @@ export const es = {
     movedToday: 'Te moviste hoy',
     viewFullRoutine: 'Ver tu rutina completa',
     viewFullPlan: 'Ver tu plan completo',
-    foodLogHint: '¿Comiste algo distinto? Toca cualquier comida para registrarlo.',
     ultimaSesion: 'Última sesión',
     relHoy: 'hoy',
     relAyer: 'ayer',

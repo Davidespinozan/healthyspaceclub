@@ -27,7 +27,6 @@ import { MILESTONE_STEPS, getMilestoneCopy } from '../constants/milestones';
 import { getHSMBank } from '../data/hsmBank';
 import { useT } from '../i18n';
 import { plural } from '../i18n/format';
-import { relativeDayKind } from '../utils/relativeDay';
 import './tab-hoy-v3.css';
 
 
@@ -124,11 +123,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
   // Track-3a: derivar estado de sesiones para la card de Rutina.
   // sessionsToday → si hay alguna, eyebrow muta a "Entrenaste hoy ✓".
-  // lastSession  → si NO hay rutina del día, footer micro "Última sesión · ...".
   const sessionsToday = completedSessions.filter(s => s.date === today);
-  const lastSession = completedSessions.length > 0
-    ? [...completedSessions].sort((a, b) => b.completedAtIso.localeCompare(a.completedAtIso))[0]
-    : null;
 
   // Movimiento alterno registrado hoy (básquet, hiking, surf…). Cuenta como
   // día activo igual que una sesión, pero con celebración propia ("te moviste").
@@ -456,29 +451,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               {(() => {
                 const workout = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
                 if (!workout) {
-                  // Track-3a: si NO hay rutina del día pero SÍ hay sesión previa,
-                  // mostrar footer micro "Última sesión · ayer · 45 min" para dar
-                  // contexto sin saturar el CTA "Genera tu rutina".
-                  let lastSessionLabel: string | null = null;
-                  if (lastSession) {
-                    const rel = relativeDayKind(lastSession.date, today);
-                    const dayLabel =
-                      rel.kind === 'today' ? t('hoy.relHoy')
-                      : rel.kind === 'yesterday' ? t('hoy.relAyer')
-                      : plural(rel.days, {
-                          one: t('hoy.relHaceDiasOne'),
-                          other: t('hoy.relHaceDiasOther', { n: rel.days }),
-                        });
-                    const mins = Math.max(1, Math.round(lastSession.durationSeconds / 60));
-                    lastSessionLabel = `${t('hoy.ultimaSesion')} · ${dayLabel} · ${t('hoy.durMinShort', { n: mins })}`;
-                  }
                   return (
                     <>
                       <h2 className="th3-card-title">{t('hoy.routineGenerate')}</h2>
                       <p className="th3-card-meta">{t('hoy.routineGenerateMeta')}</p>
-                      {lastSessionLabel && (
-                        <p className="th3-card-last-session">{lastSessionLabel}</p>
-                      )}
                     </>
                   );
                 }
@@ -694,11 +670,17 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   )}
                 </>
               )}
-              {/* Descubrimiento: enseña el gesto "toca una comida para registrar
-                  lo que comiste de verdad" — el log es por-comida (reemplaza ese
-                  slot), no un botón genérico. */}
+              {/* "¿Comiste otra cosa?" — mismo look que "¿Hiciste otra actividad?"
+                  de entreno. El log de comida es por-comida; aquí lleva al plan
+                  completo donde se toca la comida a reemplazar. */}
               {weeklyPlan && (
-                <p className="th3-card-foodlog-hint">{t('hoy.foodLogHint')}</p>
+                <button
+                  type="button"
+                  className="th3-card-alt-activity"
+                  onClick={(e) => { e.stopPropagation(); onNav('alimentacion'); }}
+                >
+                  {t('foodLog.detailQuestion')}
+                </button>
               )}
               <div className="th3-card-foot">
                 <span className="th3-card-foot-text">{t('hoy.viewFullPlan')}</span>

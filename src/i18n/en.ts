@@ -669,7 +669,6 @@ export const en: Translations<typeof es> = {
     movedToday: 'You moved today',
     viewFullRoutine: 'See your full routine',
     viewFullPlan: 'See your full plan',
-    foodLogHint: 'Ate something different? Tap any meal to log it.',
     ultimaSesion: 'Last session',
     relHoy: 'today',
     relAyer: 'yesterday',

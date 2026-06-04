@@ -468,18 +468,13 @@
 .th3-card-alt-activity:active { opacity: .6; }
 .th3-card-alt-activity.logged { color: var(--forest); }
 .th3-card-alt-check { color: var(--terracota); font-weight: 700; }
-/* Hint de descubrimiento en nutrición: enseña que tocando una comida se
-   registra lo que comiste. Texto guía, no botón (la acción es por-comida). */
-.th3-card-foodlog-hint {
-  margin-top: 12px;
-  padding: 12px 0 0;
-  border-top: 0.5px solid var(--sand);
-  font-family: 'Montserrat', sans-serif;
-  font-size: 0.74rem;
-  font-style: italic;
-  font-weight: 400;
-  line-height: 1.4;
-  color: var(--txt2);
+/* Cuando el foot sigue a la fila de actividad, NO duplicar borde: un solo
+   divisor arriba del bloque (actividad + navegación). Evita el look cargado
+   de dos líneas apiladas, sobre todo en mobile. */
+.th3-card-alt-activity + .th3-card-foot {
+  border-top: none;
+  margin-top: 8px;
+  padding-top: 0;
 }
 .th3-card-foot-text {
   font-family: 'Montserrat', sans-serif;
