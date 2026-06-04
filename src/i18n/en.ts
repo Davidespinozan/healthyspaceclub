@@ -15,6 +15,11 @@ export const en: Translations<typeof es> = {
     anonymous: 'Anonymous',
     done: 'Done',
   },
+  nav: {
+    today: 'Today',
+    club: 'Club',
+    you: 'You',
+  },
   settings: {
     language: 'Language',
     languageEs: 'Spanish',
@@ -28,6 +33,7 @@ export const en: Translations<typeof es> = {
     yourData: 'Your data',
     editData: 'Edit my data →',
     calorieTarget: 'Calorie target',
+    kcalPerDay: 'kcal/day',
     helpAndSupport: 'Help & support',
     contactSupport: 'Contact support',
     termsOfService: 'Terms of service',
@@ -62,6 +68,7 @@ export const en: Translations<typeof es> = {
     placeholderYears: 'years',
     save: 'Save changes',
     saved: '✓ Data saved. Your plan was updated:',
+    goalShort: 'Goal',
     errSex: 'Select your sex.',
     errAge: 'Invalid age (13-100).',
     errWeight: 'Invalid weight (30-300 kg).',
@@ -747,6 +754,7 @@ export const en: Translations<typeof es> = {
     popoutIngredients: 'Ingredients',
   },
   nutritionPlanner: {
+    genError: 'We couldn’t generate your plan. Try again.',
     setupDayEyebrow: 'STEP 1 · GROCERY DAY',
     setupDayTitleName: '{name}, what day do you grocery shop?',
     setupDayTitleAnon: 'What day do you grocery shop?',

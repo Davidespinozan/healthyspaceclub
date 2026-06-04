@@ -3,6 +3,7 @@ import { Home, User, MessageCircle, Users, AlertCircle } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import type { DashPage } from '../types';
+import type { TranslationKey } from '../i18n/es';
 
 import ManagePlanSheet from '../components/sheets/ManagePlanSheet';
 import TabHoy from '../components/TabHoy';
@@ -21,10 +22,10 @@ const WeeklyNutritionPlanner = lazy(() => import('../components/WeeklyNutritionP
 const DailyTrainer = lazy(() => import('../components/DailyTrainer'));
 // GrowthPlan + LifeSystemScreen removed — backed up in _hsm_backup/
 
-const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
-  { id: 'hoy',    icon: Home,   label: 'Hoy' },
-  { id: 'club',   icon: Users,  label: 'Club' },
-  { id: 'tu',     icon: User,   label: 'Tú' },
+const TABS: { id: DashPage; icon: typeof Home; labelKey: TranslationKey }[] = [
+  { id: 'hoy',    icon: Home,   labelKey: 'nav.today' },
+  { id: 'club',   icon: Users,  labelKey: 'nav.club' },
+  { id: 'tu',     icon: User,   labelKey: 'nav.you' },
 ];
 
 export default function DashboardScreen() {
@@ -131,7 +132,7 @@ export default function DashboardScreen() {
               onClick={() => navTo(tab.id)}
             >
               <Icon size={22} strokeWidth={active ? 2 : 1.5} />
-              <span className="bnav-label">{tab.label}</span>
+              <span className="bnav-label">{t(tab.labelKey)}</span>
               {active && <div className="bnav-dot" />}
             </div>
           );

@@ -14,6 +14,11 @@ export const es = {
     anonymous: 'Anónimo',
     done: 'Listo',
   },
+  nav: {
+    today: 'Hoy',
+    club: 'Club',
+    you: 'Tú',
+  },
   settings: {
     language: 'Idioma',
     languageEs: 'Español',
@@ -27,6 +32,7 @@ export const es = {
     yourData: 'Tus datos',
     editData: 'Editar mis datos →',
     calorieTarget: 'Meta calórica',
+    kcalPerDay: 'kcal/día',
     helpAndSupport: 'Ayuda y soporte',
     contactSupport: 'Contactar soporte',
     termsOfService: 'Términos de servicio',
@@ -61,6 +67,7 @@ export const es = {
     placeholderYears: 'años',
     save: 'Guardar cambios',
     saved: '✓ Datos guardados. Tu plan se actualizó:',
+    goalShort: 'Meta',
     errSex: 'Seleccioná tu sexo.',
     errAge: 'Edad inválida (13-100).',
     errWeight: 'Peso inválido (30-300 kg).',
@@ -746,6 +753,7 @@ export const es = {
     popoutIngredients: 'Ingredientes',
   },
   nutritionPlanner: {
+    genError: 'No pudimos generar tu plan. Intenta de nuevo.',
     setupDayEyebrow: 'PASO 1 · DÍA DEL SÚPER',
     setupDayTitleName: '{name}, ¿qué día vas al súper?',
     setupDayTitleAnon: '¿Qué día vas al súper?',

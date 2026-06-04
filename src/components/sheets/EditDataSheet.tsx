@@ -210,7 +210,7 @@ export default function EditDataSheet({ onClose }: Props) {
           <div className="sh-saved">
             <p>{t('editData.saved')}</p>
             <p className="sh-saved-stats">
-              TDEE: <strong>{tdee.toLocaleString()} kcal</strong> · Meta: <strong>{planGoal.toLocaleString()} kcal/día</strong>
+              TDEE: <strong>{tdee.toLocaleString()} kcal</strong> · {t('editData.goalShort')}: <strong>{planGoal.toLocaleString()} {t('settings.kcalPerDay')}</strong>
             </p>
           </div>
         )}

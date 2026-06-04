@@ -316,7 +316,8 @@ export default function WeeklyNutritionPlanner() {
       setActiveDay(todayOffset >= 0 ? todayOffset : 0);
       setPhase('plan');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al generar el plan');
+      console.error('[WeeklyNutritionPlanner] generation failed:', e);
+      setError(t('nutritionPlanner.genError'));
       setPhase('error');
     }
   }
@@ -380,7 +381,7 @@ export default function WeeklyNutritionPlanner() {
                   letterSpacing: '-0.02em',
                 }}
               >
-                {day.thumb}
+                {t(DAY_SHORT_KEYS[day.value])}
               </div>
               <div className="wz-option-body">
                 <div className="wz-option-label">{t(DAY_LONG_KEYS[day.value])}</div>

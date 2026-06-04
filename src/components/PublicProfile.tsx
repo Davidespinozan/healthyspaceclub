@@ -194,11 +194,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
     [milestones],
   );
   const sortedHighlights = useMemo(
-    // Preview dev-only: muestra los primeros 4 logros en local para ver el estilo
-    // (el perfil público solo lista desbloqueados; en prod refleja datos reales).
-    () => (import.meta.env.DEV
-      ? MILESTONE_STEPS.slice(0, 4)
-      : MILESTONE_STEPS.filter(d => unlockedSet.has(d))),
+    () => MILESTONE_STEPS.filter(d => unlockedSet.has(d)),
     [unlockedSet],
   );
 

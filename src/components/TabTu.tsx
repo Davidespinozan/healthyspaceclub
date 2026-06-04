@@ -93,7 +93,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
 
   async function handleSave() {
     setSaving(true);
-    const savedName = editName.trim() || userName || 'Anónimo';
+    const savedName = editName.trim() || userName || t('common.anonymous');
     const savedBio = editBio.trim().slice(0, 100);
     try {
       await supabase
@@ -130,7 +130,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
     }
   }
 
-  const displayName = profile.display_name || userName || 'Anónimo';
+  const displayName = profile.display_name || userName || t('common.anonymous');
   const initial = (firstName || displayName || '?')[0].toUpperCase();
 
   return (
@@ -251,9 +251,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
       {!editing && (
         <div className="tt5-highlights">
           {MILESTONE_STEPS.map((days, idx) => {
-            // Preview dev-only: los primeros 4 logros se muestran desbloqueados en
-            // local para ver el estado. import.meta.env.DEV → nunca afecta producción.
-            const isUnlocked = (import.meta.env.DEV && idx < 4) || unlockedDays.has(days);
+            const isUnlocked = unlockedDays.has(days);
             const isNext = !isUnlocked && days === nextMilestone;
             const futureOpacity = !isUnlocked && !isNext ? 1 - idx * 0.08 : undefined;
             const remaining = Math.max(0, days - streakCount);

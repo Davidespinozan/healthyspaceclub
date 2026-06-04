@@ -32,7 +32,7 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
           setEditBio(data.bio);
         } else {
           // Create profile if doesn't exist
-          const name = userName || 'Anónimo';
+          const name = userName || t('common.anonymous');
           try {
             await supabase.from('user_profiles').insert({ user_id: userId, display_name: name, bio: '', avatar_url: '' });
           } catch (e) { console.warn('[MiHuella] mutation failed:', e); }
@@ -56,7 +56,7 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
 
   async function handleSave() {
     setSaving(true);
-    const savedName = editName.trim() || userName || 'Anónimo';
+    const savedName = editName.trim() || userName || t('common.anonymous');
     const savedBio = editBio.trim().slice(0, 100);
     try {
       await supabase
@@ -89,7 +89,7 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
         .from('user_profiles')
         .upsert({
           user_id: userId,
-          display_name: profile.display_name || userName || 'Anónimo',
+          display_name: profile.display_name || userName || t('common.anonymous'),
           bio: profile.bio || '',
           avatar_url: result.url,
         }, { onConflict: 'user_id' });

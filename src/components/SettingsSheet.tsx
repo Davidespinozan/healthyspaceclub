@@ -206,7 +206,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
             {planGoal > 0 && (
               <div className="ss-data-row">
                 <span className="ss-data-key">{t('settings.calorieTarget')}</span>
-                <span className="ss-data-val ss-data-val--accent">{planGoal.toLocaleString()} kcal/día</span>
+                <span className="ss-data-val ss-data-val--accent">{planGoal.toLocaleString()} {t('settings.kcalPerDay')}</span>
               </div>
             )}
           </div>

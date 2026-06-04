@@ -431,7 +431,8 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
       await saveDailyWorkout(workout as any);
       setPhase('plan');
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t('wizard.genErrFallback');
+      console.error('[DailyTrainer] generation failed:', e);
+      const msg = t('wizard.genErrFallback');
       setError(msg);
       // If we had a previous plan, go back to it instead of modality
       if (plan) {
