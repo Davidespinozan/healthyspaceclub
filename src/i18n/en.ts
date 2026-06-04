@@ -899,7 +899,7 @@ export const en: Translations<typeof es> = {
   },
   activityLog: {
     // CTA inside the workout plan / Hoy card
-    detailQuestion: 'Did you do something else today?',
+    detailQuestion: 'Did something else?',
     detailCta: 'Log my movement →',
 
     // Sheet

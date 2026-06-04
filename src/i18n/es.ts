@@ -904,7 +904,7 @@ export const es = {
   },
   activityLog: {
     // CTA dentro del plan de entrenamiento / tarjeta de Hoy
-    detailQuestion: '¿Hiciste otra actividad hoy?',
+    detailQuestion: '¿Hiciste otra actividad?',
     detailCta: 'Registrar mi movimiento →',
 
     // Sheet
