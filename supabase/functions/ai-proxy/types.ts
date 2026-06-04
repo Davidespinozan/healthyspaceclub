@@ -1,6 +1,6 @@
 // Tipos compartidos del Edge Function ai-proxy.
 
-export type UserPlan = 'none' | 'trial' | 'basico' | 'pro' | 'elite';
+export type UserPlan = 'none' | 'trial' | 'pro';
 
 export interface AIProxyRequest {
   model?: string;

@@ -47,13 +47,21 @@ PARÁMETROS:
 - Goal del día: ${p.goal}
 - ${p.intensityInstruction}
 
+ORDEN DE EJERCICIOS (crítico — la secuencia debe ser inteligente, no aleatoria):
+- Compuestos pesados y los movimientos más técnicos PRIMERO (más energía al inicio); aislamiento después; core/abdominales al FINAL.
+- FULL BODY: alterna patrones para no fatigar el mismo músculo seguido. Intercala tren inferior ↔ superior y empuje ↔ tracción. NO encadenes 3 o más ejercicios del mismo grupo o patrón seguidos. Distribuye, no agrupes.
+  · MAL: pierna, upper, upper, upper, upper, upper, full-body.
+  · BIEN: pierna (compuesto), empuje, tracción, pierna, empuje, tracción, core.
+- SPLIT (push/pull/legs/upper/lower): el compuesto principal primero, luego los accesorios del mismo enfoque de mayor a menor demanda, aislamiento y core al final.
+- Nunca pongas el mismo patrón de movimiento dos veces seguidas si puedes alternarlo.
+
 ${getVoiceRules(locale, 'default')}
 
 Los campos "note" y "razon" del JSON se muestran AL USUARIO directamente —
 deben hablarle en 2da persona (tú/te/tu), sin usar su nombre, sin "el usuario".
 
 TAREA:
-1. Selecciona exactamente ${p.targetCount} IDs de la lista (variedad y orden lógico: compuestos primero, aislamiento después, core al final).
+1. Selecciona exactamente ${p.targetCount} IDs de la lista y ORDÉNALOS aplicando las reglas de "ORDEN DE EJERCICIOS" de arriba (variedad + secuencia inteligente, intercalando músculos).
 2. Ajusta sets/reps/rest según el goal (fuerza: reps bajas 4-6, descansos 120s; hipertrofia: 8-12 reps, 60-90s; condicion: circuito 15+ reps, 30-45s; movilidad: tiempos largos).
 3. Escribe tip_personalizado breve (máx 15 palabras) por ejercicio, dirigido al usuario en 2da persona.
 4. Escribe warmup y cooldown breves (1 oración cada uno), en 2da persona.

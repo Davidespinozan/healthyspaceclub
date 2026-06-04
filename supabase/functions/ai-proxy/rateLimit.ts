@@ -2,20 +2,19 @@ import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import type { RateLimitResult, UserAccess } from './types.ts';
 
 // Límites diarios por plan. -1 = ilimitado.
+// pro tiene un tope alto (no -1) como red anti-abuso: invisible para uso normal
+// pero protege contra un usuario que martillee el chat del coach miles de veces.
 const DAILY_LIMITS: Record<string, number> = {
   none: 0,
   trial: 20,
-  basico: 10,
-  pro: -1,
-  elite: -1,
+  pro: 150,
 };
 
 /**
  * Determina si el usuario puede hacer una request de IA hoy.
  * - admin → ilimitado
- * - pro / elite → ilimitado
+ * - pro → 150/día (tope anti-abuso; uso normal nunca lo alcanza)
  * - trial → 20/día (rechaza si trial_ends_at venció)
- * - basico → 10/día
  * - none → 0
  *
  * El conteo usa ai_usage_log filtrado por success=true del día UTC actual,
