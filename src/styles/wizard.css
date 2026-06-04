@@ -21,10 +21,18 @@
 
 /* ── Hero ──────────────────────────────────────────────────────── */
 
+/* Hero forest compacto — mismo lenguaje que el header de Hoy / entreno /
+   nutrición. Una sola cabecera (antes había una card blanca .sec-hero encima
+   que robaba media pantalla). Stepper + kicker ámbar + pregunta, todo dentro. */
 .wz-hero {
-  padding: 20px 0 20px;
-  margin-bottom: 20px;
-  border-bottom: 0.5px solid var(--sand);
+  background:
+    radial-gradient(120% 90% at 12% 0%, #2E4A42 0%, transparent 55%),
+    linear-gradient(155deg, #153330 0%, #1b3c37 52%, #102a27 100%);
+  border-radius: var(--radius-xl);
+  padding: 16px 18px 18px;
+  margin-bottom: 18px;
+  color: var(--sala-surface);
+  box-shadow: 0 12px 30px rgba(8, 20, 27, 0.22);
 }
 
 .wz-eyebrow {
@@ -32,30 +40,30 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: none;
-  color: var(--amber-deep); /* WCAG AA 5.15:1 sobre cream */
+  color: var(--amber);
   margin: 0 0 6px;
 }
 
 .wz-title {
-  font-size: clamp(22px, 5vw, 28px);
-  font-weight: 500;
+  font-size: clamp(19px, 4.4vw, 23px);
+  font-weight: 600;
   letter-spacing: -0.015em;
-  color: var(--forest);
-  line-height: 1.15;
-  margin: 0 0 8px;
+  color: var(--sala-surface);
+  line-height: 1.18;
+  margin: 0;
 }
 
 .wz-title em {
   font-style: italic;
   font-weight: 600;
-  color: var(--amber-deep); /* WCAG AA — coherente con .wz-eyebrow */
+  color: var(--amber);
 }
 
 .wz-subtitle {
-  font-size: 13px;
-  color: var(--txt2);
+  font-size: 12.5px;
+  color: rgba(246, 242, 234, 0.62);
   line-height: 1.5;
-  margin: 0;
+  margin: 6px 0 0;
   font-style: italic;
 }
 
@@ -71,13 +79,13 @@
   flex: 1;
   height: 3px;
   border-radius: 10px;
-  background: var(--sand);
+  background: rgba(246, 242, 234, 0.2);
   transition: background 0.3s;
 }
 
 .wz-stepper-bar.active,
 .wz-stepper-bar.done {
-  background: var(--amber);
+  background: linear-gradient(90deg, #C9A968, #A8864E);
 }
 
 /* ── Options list (cards opción con thumb + body + check) ──────── */
@@ -94,25 +102,40 @@
   align-items: center;
   gap: 14px;
   padding: 16px 16px;
-  background: white;
+  background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
   border: 1.5px solid var(--sand);
   border-radius: 18px;
+  box-shadow: var(--shadow-pro-md), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: transform 0.2s var(--ease-out-soft), box-shadow 0.2s, border-color 0.2s, background 0.2s;
   width: 100%;
   -webkit-tap-highlight-color: transparent;
+  animation: riseIn 0.4s var(--ease-out-soft) backwards;
 }
+.wz-option:nth-child(1) { animation-delay: 0.03s; }
+.wz-option:nth-child(2) { animation-delay: 0.07s; }
+.wz-option:nth-child(3) { animation-delay: 0.11s; }
+.wz-option:nth-child(4) { animation-delay: 0.15s; }
+.wz-option:nth-child(5) { animation-delay: 0.19s; }
+.wz-option:nth-child(6) { animation-delay: 0.23s; }
 
-.wz-option:hover,
-.wz-option:active {
+.wz-option:hover {
+  transform: translateY(-2px);
   border-color: var(--amber);
+  box-shadow: var(--shadow-pro-lg), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
+.wz-option:active { transform: scale(0.99); }
 
 .wz-option.selected {
-  border-color: var(--forest);
-  background: rgba(21, 51, 48, 0.04);
+  border-color: var(--amber);
+  background: linear-gradient(180deg, #ffffff 0%, #faf3e6 100%);
+  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wz-option { animation: none; }
 }
 
 .wz-option.locked {
@@ -140,10 +163,11 @@
 .wz-option-thumb svg { color: var(--forest); }
 
 .wz-option.selected .wz-option-thumb {
-  background: var(--forest);
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  box-shadow: 0 4px 12px rgba(168, 134, 78, 0.3);
 }
 
-.wz-option.selected .wz-option-thumb svg { color: var(--warm); }
+.wz-option.selected .wz-option-thumb svg { color: #fff; }
 
 .wz-option-body {
   flex: 1;
@@ -183,14 +207,15 @@
   min-width: 44px;
   min-height: 44px;
   border-radius: 50%;
-  background: var(--forest);
-  color: var(--amber);
+  background: linear-gradient(135deg, #C75B3A, #A8472B);
+  color: #fff;
   font-size: 13px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(199, 91, 58, 0.28);
 }
 
 /* ── Question block ────────────────────────────────────────────── */
@@ -261,9 +286,10 @@
 }
 
 .wz-chip.on {
-  background: var(--forest);
-  color: var(--sala-surface);
-  border-color: var(--forest);
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(168, 134, 78, 0.28);
 }
 
 .wz-chip-block {
@@ -278,7 +304,7 @@
 
 .wz-chip-icon svg { color: var(--forest); }
 
-.wz-chip.on .wz-chip-icon svg { color: var(--sala-surface); }
+.wz-chip.on .wz-chip-icon svg { color: #fff; }
 
 .wz-chip-desc {
   font-size: 10px;

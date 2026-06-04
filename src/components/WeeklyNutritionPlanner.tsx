@@ -3,7 +3,7 @@ import { useAppStore } from '../store';
 import { mealPlans, getMealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
-import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, ChevronDown, type LucideIcon } from 'lucide-react';
+import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, ChevronDown, Wheat, Milk, Beef, Shell, CircleCheck, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import { callAI } from '../utils/aiProxy';
@@ -83,7 +83,7 @@ const QUESTIONS: Array<{
   multi: boolean;
   freeText?: boolean;
   placeholderKey?: TranslationKey;
-  options: Array<{ value: string; icon: string }>;
+  options: Array<{ value: string; icon: string | LucideIcon }>;
 }> = [
   {
     id: 'cuisines',
@@ -110,11 +110,11 @@ const QUESTIONS: Array<{
     hintKey: 'nutritionPlanner.hAvoid',
     multi: false,
     options: [
-      { value: 'gluten',     icon: '🌾' },
-      { value: 'lacteos',    icon: '🥛' },
-      { value: 'carne-roja', icon: '🥩' },
-      { value: 'mariscos',   icon: '🦐' },
-      { value: 'nada',       icon: '✨' },
+      { value: 'gluten',     icon: Wheat },
+      { value: 'lacteos',    icon: Milk },
+      { value: 'carne-roja', icon: Beef },
+      { value: 'mariscos',   icon: Shell },
+      { value: 'nada',       icon: CircleCheck },
     ],
   },
 ];
@@ -513,7 +513,9 @@ export default function WeeklyNutritionPlanner() {
                   className={`wz-option${isSelected ? ' selected' : ''}`}
                   onClick={() => handleOption(opt.value)}
                 >
-                  <div className="wz-option-thumb">{opt.icon}</div>
+                  <div className="wz-option-thumb">
+                    {typeof opt.icon === 'string' ? opt.icon : <opt.icon size={22} strokeWidth={1.5} />}
+                  </div>
                   <div className="wz-option-body">
                     <div className="wz-option-label">{optionLabel(opt.value)}</div>
                     {sub && <div className="wz-option-sub">{sub}</div>}
@@ -537,7 +539,9 @@ export default function WeeklyNutritionPlanner() {
                 className={`wz-option${isSelected ? ' selected' : ''}`}
                 onClick={() => handleOption(opt.value)}
               >
-                <div className="wz-option-thumb">{opt.icon}</div>
+                <div className="wz-option-thumb">
+                  {typeof opt.icon === 'string' ? opt.icon : <opt.icon size={22} strokeWidth={1.5} />}
+                </div>
                 <div className="wz-option-body">
                   <div className="wz-option-label">{optionLabel(opt.value)}</div>
                   {sub && <div className="wz-option-sub">{sub}</div>}

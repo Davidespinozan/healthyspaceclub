@@ -1,5 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
-import { Home, User, MessageCircle, Users, Leaf, Dumbbell, AlertCircle } from 'lucide-react';
+import { Home, User, MessageCircle, Users, AlertCircle } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import type { DashPage } from '../types';
@@ -28,15 +28,14 @@ const TABS: { id: DashPage; icon: typeof Home; label: string }[] = [
 ];
 
 export default function DashboardScreen() {
-  const { dashPage, setDashPage, checkTrialExpiry, coachOpen, setCoachOpen, weeklyPlan, paymentPastDue } = useAppStore();
+  const { dashPage, setDashPage, checkTrialExpiry, coachOpen, setCoachOpen, paymentPastDue } = useAppStore();
   const { t } = useT();
   const [showPastDuePlan, setShowPastDuePlan] = useState(false);
-  // sec-hero condicional: la card intro (icon + título + descripción) solo se
-  // muestra cuando NO hay plan/rutina generado. Cuando hay contenido, los
-  // componentes hijos ya emiten su propio header rico → la card sería duplicada.
-  const hasMealPlan = !!weeklyPlan;
-  const [trainerPhase, setTrainerPhase] = useState<string>('modality');
-  const hasWorkoutPlan = trainerPhase === 'plan';
+  // El cuestionario (Trainer/Nutrición) ya emite su propio hero forest compacto,
+  // así que ya no montamos la card intro `.sec-hero` (era una segunda cabecera
+  // que duplicaba contexto y robaba media pantalla). setTrainerPhase se mantiene
+  // por compatibilidad con el callback de DailyTrainer.
+  const [, setTrainerPhase] = useState<string>('modality');
 
   useEffect(() => { checkTrialExpiry(); }, []);
 
@@ -75,15 +74,6 @@ export default function DashboardScreen() {
         {dashPage === 'alimentacion' && (
           <div className="sub-page tab-content">
             <button className="sub-back" onClick={() => navTo('hoy')}>← {t('common.back')}</button>
-            {!hasMealPlan && (
-              <div className="sec-hero">
-                <div className="sh-icon"><Leaf size={24} strokeWidth={1.5} /></div>
-                <div>
-                  <h2>{t('hoy.cardEyebrowNutrition')}</h2>
-                  <p>{t('subPage.nutritionDesc')}</p>
-                </div>
-              </div>
-            )}
             <Suspense fallback={<SubPageLoadingFallback />}>
               <WeeklyNutritionPlanner />
             </Suspense>
@@ -92,15 +82,6 @@ export default function DashboardScreen() {
         {dashPage === 'entrenamiento' && (
           <div className="sub-page tab-content">
             <button className="sub-back" onClick={() => navTo('hoy')}>← {t('common.back')}</button>
-            {!hasWorkoutPlan && (
-              <div className="sec-hero">
-                <div className="sh-icon"><Dumbbell size={24} strokeWidth={1.5} /></div>
-                <div>
-                  <h2>{t('hoy.cardEyebrowTraining')}</h2>
-                  <p>{t('subPage.trainingDesc')}</p>
-                </div>
-              </div>
-            )}
             <Suspense fallback={<SubPageLoadingFallback />}>
               <DailyTrainer onPhaseChange={setTrainerPhase} />
             </Suspense>
