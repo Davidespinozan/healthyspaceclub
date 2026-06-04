@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Sparkles } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { callAI } from '../utils/aiProxy';
@@ -145,7 +146,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
       >
         <div className="te-flow-close" onClick={onClose}>✕</div>
         <div className="te-complete">
-          <div className="te-complete-check">✦</div>
+          <div className="te-complete-check"><Sparkles size={26} strokeWidth={1.8} /></div>
           <div className="te-complete-title">{t('hoy.reviewCompleteTitle')}</div>
           <div className="te-complete-sub">{t('hoy.reviewCompleteSub')}</div>
           {reviewLoading ? (

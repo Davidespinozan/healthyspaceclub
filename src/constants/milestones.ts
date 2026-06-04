@@ -1,3 +1,4 @@
+import { Sprout, Flame, Sparkles, Moon, Mountain, Waves, Sun, MountainSnow, type LucideIcon } from 'lucide-react';
 import type { AppLanguage } from '../store';
 import type { TranslationKey } from '../i18n/es';
 
@@ -32,7 +33,7 @@ export const MILESTONE_FULL_LABELS: Record<number, string> = {
   365: 'un año',
 };
 
-// Emojis universales — no se traducen.
+// Emojis universales — no se traducen. (DEPRECATED para UI: usar MILESTONE_ICON.)
 export const MILESTONE_EMOJI: Record<number, string> = {
   3: '🌱',
   7: '🔥',
@@ -42,6 +43,19 @@ export const MILESTONE_EMOJI: Record<number, string> = {
   90: '🌊',
   180: '☀️',
   365: '🏔️',
+};
+
+// Íconos Lucide por hito — mapean la progresión (brote → fuego → cima nevada).
+// Reemplazan los emojis en la UI (regla: SVG, no emojis).
+export const MILESTONE_ICON: Record<number, LucideIcon> = {
+  3: Sprout,
+  7: Flame,
+  14: Sparkles,
+  30: Moon,
+  60: Mountain,
+  90: Waves,
+  180: Sun,
+  365: MountainSnow,
 };
 
 // Type del t() function de useT(). Loose para no forzar al caller a importar

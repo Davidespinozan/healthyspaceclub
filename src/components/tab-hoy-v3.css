@@ -93,23 +93,6 @@
   position: relative;
 }
 
-/* Wordmark al pie — firma discreta. El logo es claro (para fondos oscuros),
-   así que lo oscurecemos con filtro para que lea como marca de agua en crema. */
-.th3-footer {
-  display: flex;
-  justify-content: center;
-  padding: 30px 0 calc(16px + env(safe-area-inset-bottom, 0px));
-  margin-top: 6px;
-}
-/* Logo en sus colores originales sobre una placa forest sutil (el wordmark es
-   claro y no leería sobre la crema). Firma discreta al pie. */
-.th3-footer-logo {
-  padding: 12px 20px;
-  background: linear-gradient(155deg, #1b3c37 0%, #102a27 100%);
-  border-radius: 14px;
-  box-shadow: var(--shadow-pro-md);
-  opacity: 0.92;
-}
 
 .th3-headline {
   font-family: 'Montserrat', sans-serif;
@@ -681,52 +664,88 @@
   animation: th3FadeIn 0.3s ease;
 }
 .th3-milestone-inner {
-  background: var(--sala-surface);
+  /* Card de celebración forest — mismo lenguaje que el player completado y el
+     cierre de Tu Espacio (forest + dorado + entrada spring). */
+  background:
+    radial-gradient(120% 90% at 50% 0%, #2E4A42 0%, transparent 60%),
+    linear-gradient(160deg, #153330 0%, #1b3c37 55%, #102a27 100%);
   border-radius: var(--radius-3xl);
-  padding: 36px 28px;
+  padding: 40px 28px 32px;
   max-width: 360px;
   width: 100%;
   text-align: center;
-  border: 1px solid var(--amber);
-  box-shadow: var(--shadow-pro-2xl);
+  color: var(--sala-surface);
+  border: 1px solid rgba(191, 160, 101, 0.45);
+  box-shadow: var(--shadow-pro-2xl), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: th3MilePop 0.5s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) backwards;
+}
+@keyframes th3MilePop {
+  from { opacity: 0; transform: scale(0.85) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 .th3-milestone-emoji {
-  font-size: 3.5rem;
-  margin-bottom: 14px;
-  filter: drop-shadow(0 6px 14px rgba(199, 91, 58, 0.18));
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--amber);
+  background: radial-gradient(circle, rgba(191, 160, 101, 0.3) 0%, rgba(191, 160, 101, 0.07) 60%, transparent 75%);
+  filter: drop-shadow(0 6px 16px rgba(168, 134, 78, 0.4));
+  animation: th3MileEmoji 0.6s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) 0.1s backwards;
+}
+@keyframes th3MileEmoji {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: scale(1); }
 }
 .th3-milestone-title {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 500;
-  font-size: 1.4rem;
-  color: var(--forest);
+  font-weight: 600;
+  font-size: 1.45rem;
+  color: var(--sala-surface);
   margin: 0 0 10px;
   letter-spacing: var(--tracking-tighter);
   line-height: 1.15;
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  animation-delay: 0.18s;
 }
 .th3-milestone-sub {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.9rem;
-  color: rgba(21,51,48,0.65);
+  color: rgba(246, 242, 234, 0.62);
   line-height: 1.55;
-  margin: 0 0 22px;
+  margin: 0 0 24px;
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  animation-delay: 0.24s;
 }
 .th3-milestone-close {
-  padding: 12px 28px;
-  background: var(--forest);
-  color: var(--sala-surface);
+  padding: 13px 32px;
+  background: var(--grad-amber);
+  color: #fff;
   border: none;
-  border-radius: var(--radius-base);
+  border-radius: 999px;
   font-family: 'Montserrat', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 700;
   letter-spacing: var(--tracking-tight);
   cursor: pointer;
-  box-shadow: var(--shadow-pro-lift-forest);
+  box-shadow: var(--glow-amber);
   -webkit-tap-highlight-color: transparent;
-  transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease;
+  transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  animation-delay: 0.30s;
 }
-.th3-milestone-close:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.th3-milestone-close:hover { filter: brightness(1.04); transform: translateY(-2px); box-shadow: 0 16px 32px rgba(168, 134, 78, 0.4); }
+.th3-milestone-close:active { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) {
+  .th3-milestone-inner,
+  .th3-milestone-emoji,
+  .th3-milestone-title,
+  .th3-milestone-sub,
+  .th3-milestone-close { animation: none; }
+}
 @keyframes th3FadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

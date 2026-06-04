@@ -23,7 +23,7 @@ import {
   buildHSMWeeklyReviewPrompt,
 } from '../ai/prompts/hsmReview';
 import { buildHSMProfilePrompt } from '../ai/prompts/hsmProfile';
-import { MILESTONE_STEPS, getMilestoneCopy } from '../constants/milestones';
+import { MILESTONE_STEPS, MILESTONE_ICON, getMilestoneCopy } from '../constants/milestones';
 import { getHSMBank } from '../data/hsmBank';
 import { useT } from '../i18n';
 import { plural } from '../i18n/format';
@@ -364,7 +364,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       {milestone && mileCopy && (
         <div className="th3-milestone" onClick={() => setMilestone(null)}>
           <div className="th3-milestone-inner" onClick={e => e.stopPropagation()}>
-            <div className="th3-milestone-emoji">{mileCopy.emoji}</div>
+            <div className="th3-milestone-emoji">
+              {(() => { const MileIcon = MILESTONE_ICON[milestone] ?? Sparkles; return <MileIcon size={40} strokeWidth={1.5} />; })()}
+            </div>
             <h2 className="th3-milestone-title">{mileCopy.title}</h2>
             <p className="th3-milestone-sub">{mileCopy.sub}</p>
             <button className="th3-milestone-close" onClick={() => setMilestone(null)}>{t('hoy.milestoneClose')}</button>
@@ -744,10 +746,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           <TuEspacioFlow onClose={() => setShowEspacioFlow(false)} />
         )}
 
-        {/* Wordmark como firma discreta al pie de todo */}
-        <div className="th3-footer">
-          <Logo variant="wordmark" size={34} className="th3-footer-logo" />
-        </div>
       </section>
 
       {/* ── Meal popout (componente reutilizable) ── */}

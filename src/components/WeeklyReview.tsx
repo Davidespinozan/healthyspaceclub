@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
-import { ChevronRight, Flame } from 'lucide-react';
+import { ChevronRight, Flame, BarChart3, Salad, Dumbbell, Brain, TrendingDown, TrendingUp } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { callAI } from '../utils/aiProxy';
 import { buildWeeklyReviewMessagePrompt } from '../ai/prompts/weeklyReview';
@@ -130,10 +130,10 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
   }, []);
 
   const STATS: Array<{ icon: ReactNode; label: string; value: string; good: boolean }> = [
-    { icon: '🥗', label: t('weeklyReview.statMeals'),    value: `${mealDays}/7`,          good: mealDays >= 5 },
-    { icon: '💪', label: t('weeklyReview.statWorkouts'),  value: t('weeklyReview.daysValue', { n: workoutDays }),    good: workoutDays >= 3 },
+    { icon: <Salad size={20} strokeWidth={1.6} />, label: t('weeklyReview.statMeals'),    value: `${mealDays}/7`,          good: mealDays >= 5 },
+    { icon: <Dumbbell size={20} strokeWidth={1.6} />, label: t('weeklyReview.statWorkouts'),  value: t('weeklyReview.daysValue', { n: workoutDays }),    good: workoutDays >= 3 },
     { icon: <Flame size={20} strokeWidth={1.6} />, label: t('weeklyReview.statStreak'), value: t('weeklyReview.daysValue', { n: streakCount }), good: streakCount >= 5 },
-    { icon: '🧠', label: t('weeklyReview.statModules'),   value: `${completedModules}/10`, good: completedModules > 0 },
+    { icon: <Brain size={20} strokeWidth={1.6} />, label: t('weeklyReview.statModules'),   value: `${completedModules}/10`, good: completedModules > 0 },
   ];
 
   function handlePlanNextWeek() {
@@ -155,7 +155,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
 
         {/* Header */}
         <div className="wr-header">
-          <div className="wr-header-emoji">📊</div>
+          <div className="wr-header-emoji"><BarChart3 size={22} strokeWidth={1.7} /></div>
           <div>
             <div className="wr-header-label">{t('weeklyReview.headerLabel')}</div>
             <div className="wr-header-title">
@@ -219,7 +219,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
         {/* Weight change */}
         {weightChange !== null && (
           <div className={`wr-weight${weightChange <= 0 ? ' down' : ' up'}`}>
-            <span>{weightChange <= 0 ? '📉' : '📈'}</span>
+            <span className="wr-weight-icon">{weightChange <= 0 ? <TrendingDown size={18} strokeWidth={2} /> : <TrendingUp size={18} strokeWidth={2} />}</span>
             <span>
               {weightChange === 0 ? t('weeklyReview.weightStable') :
                weightChange < 0 ? t('weeklyReview.weightDown', { n: Math.abs(weightChange) }) :

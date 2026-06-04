@@ -24,11 +24,12 @@ El usuario respondió estas reflexiones hoy (te las muestro acá para que las an
 
 ${todaySummary}
 
-TAREA: Escribe una observación de 2-3 líneas dirigida al usuario en 2da persona. Debe:
-- Referenciar algo CONCRETO que escribió (cita una palabra o frase suya entre comillas).
-- Conectar dos respuestas entre sí si hay relación.
-- Terminar con una observación que invite a la acción mañana.
-- Tono de coach cercano.${getOutputLanguageDirective(locale)}`;
+TAREA: Escribe una observación breve (2-3 líneas) dirigida al usuario, como alguien que de verdad leyó lo que escribió y lo entiende — no un coach genérico. Debe:
+- Partir de algo ESPECÍFICO que dijo. Puedes citar una frase suya entre comillas SOLO si vale la pena echársela de vuelta; si no, parafrasea con naturalidad — no fuerces la cita cada vez.
+- Si dos respuestas se conectan de verdad, nómbralo; si no, no lo inventes.
+- Cerrar de forma ORGÁNICA y variada: a veces una observación que resuene, a veces una pregunta suave, a veces un pequeño hilo para mañana. NO termines siempre con una instrucción ni con un "deberías".
+- Ser concreto y honesto. Prohibido el relleno motivacional, los clichés ("sigue así", "tú puedes", "qué valiente") y la validación vacía.
+Tono: cercano, aterrizado, humano — como un amigo perceptivo, no un coach de autoayuda.${getOutputLanguageDirective(locale)}`;
 }
 
 /**
