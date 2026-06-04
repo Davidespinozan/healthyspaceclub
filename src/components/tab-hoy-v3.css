@@ -70,21 +70,17 @@
   .th3-hero-orb { width: 380px; height: 380px; filter: blur(60px); }
 }
 
-.th3-hero-top {
+/* Fila de fecha: fecha a la izquierda, monograma "H" alineado a la derecha
+   a la misma altura — recupera el espacio que robaba el logo grande arriba. */
+.th3-hero-datebar {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  position: relative;
+  margin-bottom: 10px;
 }
-.th3-hero-brand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-}
-.th3-hero-brand .th3-hero-logo {
-  margin-top: -10px;
+.th3-hero-datebar-icon {
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(8, 20, 27, 0.25);
 }
 .th3-eyebrow {
   font-family: 'Montserrat', sans-serif;
@@ -93,8 +89,21 @@
   letter-spacing: 0.18em;
   text-transform: none;
   color: var(--amber);
-  margin: 0 0 6px;
+  margin: 0;
   position: relative;
+}
+
+/* Wordmark al pie — firma discreta. El logo es claro (para fondos oscuros),
+   así que lo oscurecemos con filtro para que lea como marca de agua en crema. */
+.th3-footer {
+  display: flex;
+  justify-content: center;
+  padding: 30px 0 calc(16px + env(safe-area-inset-bottom, 0px));
+  margin-top: 6px;
+}
+.th3-footer-logo {
+  filter: brightness(0) saturate(0);
+  opacity: 0.16;
 }
 
 .th3-headline {

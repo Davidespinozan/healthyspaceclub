@@ -379,14 +379,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           <div className="th3-hero-orb th3-hero-orb-1" />
           <div className="th3-hero-orb th3-hero-orb-2" />
         </div>
-        <div className="th3-hero-top">
-          <div className="th3-hero-brand">
-            <Logo variant="icon" size={44} className="th3-hero-icon" />
-            <Logo variant="wordmark" size={67} className="th3-hero-logo" />
-          </div>
+        <div className="th3-hero-datebar">
+          <p className="th3-eyebrow">{heroDate}</p>
+          <Logo variant="icon" size={34} className="th3-hero-datebar-icon" />
         </div>
-
-        <p className="th3-eyebrow">{heroDate}</p>
         <h1 className="th3-headline">{firstName ? `${heroGreeting}, ${firstName}.` : `${heroGreeting}.`}</h1>
         <p className="th3-subhead">{heroSubhead}</p>
 
@@ -455,7 +451,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 if (!workout) {
                   return (
                     <>
-                      <h2 className="th3-card-title">{t('hoy.routineGenerate')}</h2>
+                      <h2 className="th3-card-title">{t('hoy.routineToday')}</h2>
                       <p className="th3-card-meta">{t('hoy.routineGenerateMeta')}</p>
                     </>
                   );
@@ -567,7 +563,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 )}
               </button>
               <div className="th3-card-foot">
-                <span className="th3-card-foot-text">{t('hoy.viewFullRoutine')}</span>
+                <span className="th3-card-foot-text">{todayWorkoutPlan ? t('hoy.viewFullRoutine') : t('hoy.routineGenerate')}</span>
                 <span className="th3-card-arrow">→</span>
               </div>
             </div>
@@ -583,7 +579,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               <p className="th3-card-eyebrow">{t('hoy.cardEyebrowNutrition')}</p>
               {!weeklyPlan ? (
                 <>
-                  <h2 className="th3-card-title">{t('hoy.nutritionGenerate')}</h2>
+                  <h2 className="th3-card-title">{t('hoy.nutritionToday')}</h2>
                   <p className="th3-card-meta">{t('hoy.nutritionGenerateMeta')}</p>
                 </>
               ) : (
@@ -685,7 +681,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 </button>
               )}
               <div className="th3-card-foot">
-                <span className="th3-card-foot-text">{t('hoy.viewFullPlan')}</span>
+                <span className="th3-card-foot-text">{weeklyPlan ? t('hoy.viewFullPlan') : t('hoy.nutritionGenerate')}</span>
                 <span className="th3-card-arrow">→</span>
               </div>
             </div>
@@ -747,6 +743,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
         {showEspacioFlow && (
           <TuEspacioFlow onClose={() => setShowEspacioFlow(false)} />
         )}
+
+        {/* Wordmark como firma discreta al pie de todo */}
+        <div className="th3-footer">
+          <Logo variant="wordmark" size={34} className="th3-footer-logo" />
+        </div>
       </section>
 
       {/* ── Meal popout (componente reutilizable) ── */}
