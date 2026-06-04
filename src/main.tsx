@@ -19,12 +19,20 @@ const updateSW = registerSW({
   },
   onRegisteredSW(_swUrl, r) {
     if (!r) return
-    // Un PWA standalone casi nunca navega → chequeo activo de versión nueva:
-    // cada 60 min y cada vez que el usuario vuelve a la app (tab visible).
-    setInterval(() => { r.update() }, 60 * 60 * 1000)
+    // Un PWA standalone casi nunca navega → chequeo activo y agresivo para que
+    // el aviso de "nueva versión" aparezca en segundos, no en horas:
+    //  - una vez al cargar
+    //  - cada 60s
+    //  - al volver a la app (tab visible) o recuperar foco
+    //  - al reconectar a internet
+    const check = () => { r.update().catch(() => {}) }
+    check()
+    setInterval(check, 60 * 1000)
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') r.update()
+      if (document.visibilityState === 'visible') check()
     })
+    window.addEventListener('focus', check)
+    window.addEventListener('online', check)
   },
 })
 useAppStore.getState().setTriggerUpdate(() => { updateSW(true) })

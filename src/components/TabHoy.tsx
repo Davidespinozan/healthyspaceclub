@@ -182,7 +182,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const daysSinceStart = userStartDate ? Math.floor((Date.now() - new Date(userStartDate).getTime()) / 86400000) : 0;
 
   useEffect(() => {
-    if (dailyBriefing?.date === today || !isPlanActive) return;
+    // Regenera si no hay briefing de hoy O si el idioma cacheado no coincide
+    // con el locale actual (al cambiar ES↔EN el subhead debe re-traducirse).
+    if ((dailyBriefing?.date === today && dailyBriefing?.lang === locale) || !isPlanActive) return;
 
     const prompt = isDay1
       ? buildDay1BriefingPrompt({
@@ -204,11 +206,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
     callAI({ max_tokens: isDay1 ? 200 : 60, messages: [{ role: 'user', content: prompt }] }, controller.signal)
-      .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyBriefing({ date: today, message: t }); })
+      .then(data => { const txt = data.content?.[0]?.text?.trim(); if (txt) setDailyBriefing({ date: today, message: txt, lang: locale }); })
       .catch(() => {})
       .finally(() => clearTimeout(timeoutId));
     return () => { clearTimeout(timeoutId); controller.abort(); };
-  }, [today]);
+  }, [today, locale]);
 
   const todayDayIndex = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const todayHSMSlot = (todayDayIndex % 3);
@@ -346,11 +348,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     return locale === 'en' ? `${cap} · ${month} ${day}` : `${cap} · ${day} ${month}`;
   })();
 
-  // Subhead for the hero: dailyBriefing if fresh, fallback otherwise
-  // NOTA: dailyBriefing.message es output de Coach AI (prompt ES en líneas ~223).
-  // Hasta Lote 5 (prompts coach), users EN verán texto ES en el subhead cuando hay briefing cacheado.
+  // Subhead for the hero: dailyBriefing solo si es de hoy Y del idioma actual.
+  // Al cambiar ES↔EN, mientras se regenera el briefing en el nuevo idioma se
+  // muestra el fallback (ya traducido) — nunca texto en el idioma anterior.
   const heroSubhead =
-    (dailyBriefing?.date === today && dailyBriefing?.message)
+    (dailyBriefing?.date === today && dailyBriefing?.lang === locale && dailyBriefing?.message)
       ? dailyBriefing.message
       : t('hoy.subheadFallback');
 

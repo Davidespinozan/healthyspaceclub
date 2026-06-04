@@ -303,8 +303,8 @@ interface AppState {
   markActiveDay: () => Promise<void>;
 
   // Daily AI briefing (cached per day)
-  dailyBriefing: { date: string; message: string } | null;
-  setDailyBriefing: (b: { date: string; message: string }) => void;
+  dailyBriefing: { date: string; message: string; lang: 'es' | 'en' } | null;
+  setDailyBriefing: (b: { date: string; message: string; lang: 'es' | 'en' }) => void;
 
   // Streak milestones already celebrated
   lastStreakMilestone: number;
