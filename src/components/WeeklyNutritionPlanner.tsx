@@ -426,15 +426,27 @@ export default function WeeklyNutritionPlanner() {
 
     return (
       <div className="wz-root">
-        <div className="wz-generating">
-          <div className="wz-spinner" />
-          <h2 className="wz-generating-title">{t('nutritionPlanner.generatingTitle')}</h2>
-          <p className="wz-generating-sub">{t('nutritionPlanner.generatingSub')}</p>
-          <div className="wz-generating-bullets">
-            {bullets.map((b, i) => (
-              <div key={i} className="wz-generating-bullet">· {b}</div>
-            ))}
-          </div>
+        <div className="wnp2-header">
+          <h3 className="wnp2-header-title">{t('nutritionPlanner.generatingTitle')}</h3>
+          <p className="wnp2-gs-sub">{t('nutritionPlanner.generatingSub')}</p>
+          {bullets.length > 0 && (
+            <div className="wnp2-gs-chips">
+              {bullets.map((b, i) => (
+                <span key={i} className="wnp2-gs-chip">{b}</span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="wnp2-gs-list">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="wnp2-gs-meal">
+              <div className="wnp2-gs-icon" />
+              <div className="wnp2-gs-lines">
+                <div className="wnp2-gs-line" style={{ width: `${72 - i * 6}%` }} />
+                <div className="wnp2-gs-line wnp2-gs-line--short" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

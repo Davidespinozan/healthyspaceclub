@@ -983,3 +983,86 @@
     font-size: 16px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SKELETON DE GENERACIÓN (híbrido) — espejo del de entreno.
+   Header forest real + subtítulo + chips de contexto + cards shimmer
+   que calcan .wnp2-meal. El shimmer evita la sensación de "congelado"
+   en esperas largas de IA; los chips dicen "armando TU plan".
+   ═══════════════════════════════════════════════════════════════ */
+.wnp2-gs-sub {
+  font-size: 12.5px;
+  font-style: italic;
+  color: rgba(246, 242, 234, 0.62);
+  line-height: 1.5;
+  margin: 6px 0 0;
+  position: relative;
+}
+.wnp2-gs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  position: relative;
+}
+.wnp2-gs-chip {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--sala-surface);
+  background: rgba(246, 242, 234, 0.12);
+  border: 0.5px solid rgba(246, 242, 234, 0.18);
+  border-radius: 50px;
+  padding: 5px 11px;
+}
+.wnp2-gs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+.wnp2-gs-meal {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
+  border: 1px solid var(--sala-border, var(--sand));
+  box-shadow: var(--shadow-pro-lg), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  position: relative;
+  overflow: hidden;
+}
+.wnp2-gs-meal::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 12px; bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: rgba(191, 160, 101, 0.4);
+}
+.wnp2-gs-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+.wnp2-gs-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wnp2-gs-line { height: 11px; border-radius: 6px; }
+.wnp2-gs-line--short { height: 9px; width: 40%; }
+.wnp2-gs-icon,
+.wnp2-gs-line {
+  background: linear-gradient(90deg, #ece5d8 25%, #f3ecdf 50%, #ece5d8 75%);
+  background-size: 200% 100%;
+  animation: wnp2-gs-shimmer 1.4s var(--ease-out-soft) infinite;
+}
+@keyframes wnp2-gs-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .wnp2-gs-icon,
+  .wnp2-gs-line { animation: none; }
+}
