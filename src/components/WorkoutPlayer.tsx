@@ -166,7 +166,7 @@ export default function WorkoutPlayer({
     if (!resumeState) return; // fresh start con los defaults del useState
 
     const ok = confirm(
-      `Tenías una sesión en progreso (ejercicio ${resumeState.currentExerciseIndex + 1} de ${totalExercises}). ¿Continuar?`,
+      t('workout.resumeConfirm', { n: resumeState.currentExerciseIndex + 1, total: totalExercises }),
     );
     if (ok) {
       setCurrentExerciseIndex(resumeState.currentExerciseIndex);

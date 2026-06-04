@@ -86,13 +86,13 @@ export default function WorkoutPlan({
     <div className="wz-root">
       <div className="dt2-plan-header">
         <div>
-          <p className="dt2-plan-micro">tu rutina · {todayDayName} {todayDateShort}</p>
+          <p className="dt2-plan-micro">{t('workout.planMicro')} · {todayDayName} {todayDateShort}</p>
           <h2 className="dt2-plan-title">
             <em>{plan.type}</em>
           </h2>
           <div className="dt2-plan-meta">
             <span className="dt2-meta-chip">
-              <Clock size={11} /> {plan.exercises.length} ejercicios
+              <Clock size={11} /> {t('workout.exercisesCount', { n: plan.exercises.length })}
             </span>
             <span className="dt2-meta-chip">
               <Zap size={11} /> {plan.intensity}
@@ -103,8 +103,8 @@ export default function WorkoutPlan({
           className={`dt2-regen${regenBlocked ? ' locked' : ''}`}
           onClick={onRegenerate}
           disabled={regenBlocked}
-          aria-label="Regenerar rutina"
-          title={regenBlocked ? 'Ya regeneraste 3 veces hoy' : `Te quedan ${regensLeft} regeneraciones`}
+          aria-label={t('workout.regenAria')}
+          title={regenBlocked ? t('workout.regenBlocked') : t('workout.regenLeft', { n: regensLeft })}
         >
           {regenBlocked ? <Lock size={14} /> : <RefreshCw size={14} />}
         </button>
@@ -195,7 +195,7 @@ export default function WorkoutPlan({
                   <div className="dt2-ex-stats">
                     <span>{ex.sets} × {ex.reps}</span>
                     <span className="dt2-ex-dot">·</span>
-                    <span>{ex.rest}s descanso</span>
+                    <span>{ex.rest}s {t('workout.statRest')}</span>
                   </div>
                   {/* Plan-1: tip italic escondido de la card (vivía en
                       .dt2-ex-tip). El tap de la card abre ExerciseDetailPopout

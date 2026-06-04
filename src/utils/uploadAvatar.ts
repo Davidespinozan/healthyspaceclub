@@ -1,15 +1,17 @@
 import { supabase } from '../lib/supabase';
 import { compressImageSquare } from './imageCompress';
 import { validateMediaFile } from './mediaValidation';
+import type { TranslationKey } from '../i18n/es';
 
 export interface UploadAvatarResult {
   url: string;
-  error?: never;
+  errorKey?: never;
 }
 
 export interface UploadAvatarError {
   url?: never;
-  error: string;
+  errorKey: TranslationKey;
+  errorParams?: Record<string, string | number>;
 }
 
 export type UploadAvatarOutcome = UploadAvatarResult | UploadAvatarError;
@@ -25,15 +27,15 @@ export type UploadAvatarOutcome = UploadAvatarResult | UploadAvatarError;
 export async function uploadAvatar(file: File, userId: string): Promise<UploadAvatarOutcome> {
   const check = validateMediaFile(file);
   if (!check.valid) {
-    return { error: check.error || 'Archivo no válido' };
+    return { errorKey: check.errorKey ?? 'media.uploadFailed', errorParams: check.errorParams };
   }
 
   let compressed: Blob;
   try {
     compressed = await compressImageSquare(file, 720, 0.85);
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Error al procesar la imagen';
-    return { error: `No se pudo procesar la imagen: ${msg}` };
+    console.error('[uploadAvatar] compress failed:', e);
+    return { errorKey: 'media.processFailed' };
   }
 
   const path = `${userId}.jpg`;
@@ -45,11 +47,11 @@ export async function uploadAvatar(file: File, userId: string): Promise<UploadAv
         contentType: 'image/jpeg',
       });
     if (uploadErr) {
-      return { error: `Error al subir: ${uploadErr.message}` };
+      return { errorKey: 'media.uploadFailed' };
     }
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Error de red';
-    return { error: `Error al subir: ${msg}` };
+    console.error('[uploadAvatar] upload failed:', e);
+    return { errorKey: 'media.uploadFailed' };
   }
 
   const { data } = supabase.storage.from('avatar').getPublicUrl(path);

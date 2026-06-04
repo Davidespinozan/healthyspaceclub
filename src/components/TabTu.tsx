@@ -115,8 +115,8 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
     const file = e.target.files?.[0];
     if (!file) return;
     const result = await uploadAvatar(file, userId);
-    if ('error' in result) {
-      alert(result.error);
+    if (result.errorKey) {
+      alert(t(result.errorKey, result.errorParams));
       return;
     }
     try {

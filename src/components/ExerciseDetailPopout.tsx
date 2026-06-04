@@ -148,7 +148,7 @@ export default function ExerciseDetailPopout({
   return createPortal(
     <div className="edp-backdrop" onClick={onClose}>
       <div className="edp-modal" onClick={e => e.stopPropagation()}>
-        <button className="edp-close" onClick={onClose} aria-label="Cerrar">
+        <button className="edp-close" onClick={onClose} aria-label={t('exerciseDetail.close')}>
           <X size={18} />
         </button>
 
@@ -201,14 +201,14 @@ export default function ExerciseDetailPopout({
                 <button
                   className="edp-vc-btn"
                   onClick={toggleMute}
-                  aria-label={muted ? 'Activar sonido' : 'Silenciar'}
+                  aria-label={muted ? t('exerciseDetail.unmute') : t('exerciseDetail.mute')}
                 >
                   {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
                 </button>
                 <button
                   className="edp-vc-btn"
                   onClick={requestFullscreen}
-                  aria-label="Pantalla completa"
+                  aria-label={t('exerciseDetail.fullscreen')}
                 >
                   <Maximize2 size={14} />
                 </button>
@@ -219,7 +219,7 @@ export default function ExerciseDetailPopout({
                 <button
                   className="edp-play-indicator"
                   onClick={togglePlay}
-                  aria-label="Reproducir"
+                  aria-label={t('exerciseDetail.play')}
                 >
                   <Play size={28} fill="currentColor" />
                 </button>
@@ -233,7 +233,7 @@ export default function ExerciseDetailPopout({
                       key={i}
                       className={`edp-dot${i === activeIdx ? ' active' : ''}`}
                       onClick={() => setActiveIdx(i)}
-                      aria-label={`Ir al video ${i + 1}`}
+                      aria-label={t('exerciseDetail.goToVideo', { n: i + 1 })}
                     />
                   ))}
                 </div>
@@ -246,7 +246,7 @@ export default function ExerciseDetailPopout({
                     <button
                       className="edp-arrow edp-arrow-prev"
                       onClick={() => setActiveIdx(i => i - 1)}
-                      aria-label="Anterior"
+                      aria-label={t('exerciseDetail.prev')}
                     >
                       ‹
                     </button>
@@ -255,7 +255,7 @@ export default function ExerciseDetailPopout({
                     <button
                       className="edp-arrow edp-arrow-next"
                       onClick={() => setActiveIdx(i => i + 1)}
-                      aria-label="Siguiente"
+                      aria-label={t('exerciseDetail.next')}
                     >
                       ›
                     </button>

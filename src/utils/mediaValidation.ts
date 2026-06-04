@@ -1,11 +1,17 @@
+import type { TranslationKey } from '../i18n/es';
+
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 
+// Devuelve una CLAVE i18n (no un string fijo) + params opcionales, para que el
+// componente que lo llama localice el mensaje con t(). El util solo importa el
+// TYPE de i18n, sin acoplarse al runtime de traducción.
 export interface MediaValidationResult {
   valid: boolean;
-  error?: string;
+  errorKey?: TranslationKey;
+  errorParams?: Record<string, string | number>;
 }
 
 export function validateMediaFile(file: File, allowVideo = false): MediaValidationResult {
@@ -16,9 +22,7 @@ export function validateMediaFile(file: File, allowVideo = false): MediaValidati
   if (!allowedTypes.includes(file.type)) {
     return {
       valid: false,
-      error: allowVideo
-        ? 'Solo se permiten imágenes (JPG, PNG, WebP) y videos (MP4, MOV, WebM).'
-        : 'Solo se permiten imágenes (JPG, PNG, WebP).',
+      errorKey: allowVideo ? 'media.typeVideo' : 'media.typeImage',
     };
   }
 
@@ -29,7 +33,8 @@ export function validateMediaFile(file: File, allowVideo = false): MediaValidati
   if (file.size > maxSize) {
     return {
       valid: false,
-      error: `El archivo es demasiado grande. Máximo ${maxLabel}.`,
+      errorKey: 'media.tooLarge',
+      errorParams: { max: maxLabel },
     };
   }
 
@@ -42,7 +47,7 @@ export function validateMediaFile(file: File, allowVideo = false): MediaValidati
   if (!validExtensions.includes(ext)) {
     return {
       valid: false,
-      error: 'La extensión del archivo no coincide con el tipo permitido.',
+      errorKey: 'media.badExt',
     };
   }
 

@@ -187,7 +187,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
         <div className="te-dim-badge">
           <span className="te-dim-title">{currentDim.title}</span>
           {currentIndex === allDimensions.length - 1 && aiQuestion && (
-            <span className="te-dim-ai">IA</span>
+            <span className="te-dim-ai">{t('espacio.aiTag')}</span>
           )}
         </div>
 
@@ -198,7 +198,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
         <textarea
           ref={inputRef}
           className="te-textarea"
-          placeholder="Escribe lo que sientes..."
+          placeholder={t('espacio.placeholder')}
           value={inputVal}
           onChange={e => setInputVal(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
@@ -211,7 +211,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
           onClick={handleSubmit}
           disabled={!inputVal.trim()}
         >
-          {answeredCount + 1 < allDimensions.length ? 'Siguiente →' : 'Completar ✦'}
+          {answeredCount + 1 < allDimensions.length ? t('espacio.next') : t('espacio.complete')}
         </button>
       </div>
     </div>

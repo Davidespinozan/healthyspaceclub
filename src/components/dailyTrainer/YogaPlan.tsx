@@ -52,14 +52,14 @@ export default function YogaPlan({
     <div className="wz-root">
       <div className="dt2-plan-header">
         <div>
-          <p className="dt2-plan-micro">tu flow · {todayDayName} {todayDateShort}</p>
+          <p className="dt2-plan-micro">{t('yoga.planMicro')} · {todayDayName} {todayDateShort}</p>
           <h2 className="dt2-plan-title"><em>{yogaPlan.type}</em></h2>
           <div className="dt2-plan-meta">
             <span className="dt2-meta-chip">
-              <Clock size={11} /> {Math.round(yogaPlan.totalDuration / 60)} min total
+              <Clock size={11} /> {t('yoga.minTotal', { n: Math.round(yogaPlan.totalDuration / 60) })}
             </span>
             <span className="dt2-meta-chip">
-              🧘 {yogaPlan.poses.length} poses
+              🧘 {t('yoga.posesCount', { n: yogaPlan.poses.length })}
             </span>
           </div>
         </div>
@@ -67,8 +67,8 @@ export default function YogaPlan({
           className={`dt2-regen${regenBlocked ? ' locked' : ''}`}
           onClick={onRegenerate}
           disabled={regenBlocked}
-          aria-label="Regenerar rutina"
-          title="Regenerar rutina"
+          aria-label={t('workout.regenAria')}
+          title={t('workout.regenAria')}
         >
           {regenBlocked ? <Lock size={14} /> : <RefreshCw size={14} />}
         </button>
@@ -82,7 +82,7 @@ export default function YogaPlan({
           setPlayerOpen(true);
         }}
       >
-        ▶ comenzar flow
+        {t('yoga.startFlow')}
       </button>
 
       {yogaPlan.razon && (

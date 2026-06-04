@@ -29,9 +29,7 @@ async function generateReviewMessage(params: {
     );
     return data.content?.[0]?.text ?? '';
   } catch (e) {
-    if ((e as Error).name === 'AbortError') {
-      throw new Error('El resumen semanal tardó demasiado. Intenta de nuevo.');
-    }
+    // El mensaje se localiza en el componente (catch → t('weeklyReview.loadError')).
     throw e;
   } finally {
     clearTimeout(timeoutId);
@@ -42,7 +40,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
   onClose: () => void;
   onPlanNextWeek: () => void;
 }) {
-  const { locale } = useT();
+  const { t, locale } = useT();
   const {
     userName, mealChecks, completedSessions, streakCount,
     weightLog, growthCompleted, obData,
@@ -71,7 +69,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
     setWeightError('');
     const kg = parseFloat(weightInput);
     if (!kg || kg < 30 || kg > 300) {
-      setWeightError('Ingresá un peso entre 30 y 300 kg.');
+      setWeightError(t('weeklyReview.weightRange'));
       return;
     }
     setWeightSaving(true);
@@ -79,7 +77,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
       await addWeight(kg);
       setWeightInput('');
     } catch {
-      setWeightError('No se pudo guardar. Intentá de nuevo.');
+      setWeightError(t('weeklyReview.saveError'));
     } finally {
       setWeightSaving(false);
     }
@@ -127,15 +125,15 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
       locale,
     })
       .then(msg => setMessage(msg))
-      .catch((e) => setMessage(e instanceof Error ? e.message : ''))
+      .catch(() => setMessage(t('weeklyReview.loadError')))
       .finally(() => setLoading(false));
   }, []);
 
   const STATS: Array<{ icon: ReactNode; label: string; value: string; good: boolean }> = [
-    { icon: '🥗', label: 'Días con comidas',    value: `${mealDays}/7`,          good: mealDays >= 5 },
-    { icon: '💪', label: 'Entrenamientos',        value: `${workoutDays} días`,    good: workoutDays >= 3 },
-    { icon: <Flame size={20} strokeWidth={1.6} />, label: 'Racha', value: `${streakCount} días`, good: streakCount >= 5 },
-    { icon: '🧠', label: 'Módulos completados',   value: `${completedModules}/10`, good: completedModules > 0 },
+    { icon: '🥗', label: t('weeklyReview.statMeals'),    value: `${mealDays}/7`,          good: mealDays >= 5 },
+    { icon: '💪', label: t('weeklyReview.statWorkouts'),  value: t('weeklyReview.daysValue', { n: workoutDays }),    good: workoutDays >= 3 },
+    { icon: <Flame size={20} strokeWidth={1.6} />, label: t('weeklyReview.statStreak'), value: t('weeklyReview.daysValue', { n: streakCount }), good: streakCount >= 5 },
+    { icon: '🧠', label: t('weeklyReview.statModules'),   value: `${completedModules}/10`, good: completedModules > 0 },
   ];
 
   function handlePlanNextWeek() {
@@ -159,9 +157,9 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
         <div className="wr-header">
           <div className="wr-header-emoji">📊</div>
           <div>
-            <div className="wr-header-label">Resumen semanal</div>
+            <div className="wr-header-label">{t('weeklyReview.headerLabel')}</div>
             <div className="wr-header-title">
-              {firstName ? `¿Cómo fue tu semana, ${firstName}?` : '¿Cómo fue tu semana?'}
+              {firstName ? t('weeklyReview.headerTitleName', { name: firstName }) : t('weeklyReview.headerTitle')}
             </div>
           </div>
         </div>
@@ -170,7 +168,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
         {showWeightPrompt && (
           <div className="wr-weight-prompt">
             <p className="wr-weight-prompt-text">
-              ¿Querés registrar tu peso de esta semana?
+              {t('weeklyReview.weightPrompt')}
             </p>
             <div className="wr-weight-prompt-input-row">
               <input
@@ -193,7 +191,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
                 onClick={() => setWeightPromptSkipped(true)}
                 disabled={weightSaving}
               >
-                Saltar
+                {t('weeklyReview.skip')}
               </button>
               <button
                 type="button"
@@ -201,7 +199,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
                 onClick={handleSaveWeight}
                 disabled={weightSaving || !weightInput.trim()}
               >
-                {weightSaving ? 'Guardando…' : 'Registrar'}
+                {weightSaving ? t('common.saving') : t('weeklyReview.register')}
               </button>
             </div>
           </div>
@@ -223,9 +221,9 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
           <div className={`wr-weight${weightChange <= 0 ? ' down' : ' up'}`}>
             <span>{weightChange <= 0 ? '📉' : '📈'}</span>
             <span>
-              {weightChange === 0 ? 'Peso estable esta semana' :
-               weightChange < 0 ? `Bajaste ${Math.abs(weightChange)} kg esta semana` :
-               `Subiste ${weightChange} kg esta semana`}
+              {weightChange === 0 ? t('weeklyReview.weightStable') :
+               weightChange < 0 ? t('weeklyReview.weightDown', { n: Math.abs(weightChange) }) :
+               t('weeklyReview.weightUp', { n: weightChange })}
             </span>
           </div>
         )}
@@ -235,7 +233,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
           {loading ? (
             <div className="wr-loading">
               <div className="wr-spinner" />
-              <span>Tu coach está analizando tu semana...</span>
+              <span>{t('weeklyReview.analyzing')}</span>
             </div>
           ) : message ? (
             <p>{message}</p>
@@ -245,10 +243,10 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
         {/* Actions */}
         <div className="wr-actions">
           <button className="wr-btn-primary" onClick={handlePlanNextWeek}>
-            Planear próxima semana <ChevronRight size={16} />
+            {t('weeklyReview.planNextWeek')} <ChevronRight size={16} />
           </button>
           <button className="wr-btn-secondary" onClick={handleDismiss}>
-            Cerrar
+            {t('common.close')}
           </button>
         </div>
 

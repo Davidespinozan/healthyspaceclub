@@ -79,8 +79,8 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
     if (!file) return;
 
     const result = await uploadAvatar(file, userId);
-    if ('error' in result) {
-      alert(result.error);
+    if (result.errorKey) {
+      alert(t(result.errorKey, result.errorParams));
       return;
     }
 

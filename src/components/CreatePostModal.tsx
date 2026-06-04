@@ -180,7 +180,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     e.target.value = ''; // reset para permitir re-seleccionar la misma foto
     if (!file) return;
     const check = validateMediaFile(file, false);
-    if (!check.valid) { alert(check.error); return; }
+    if (!check.valid) { alert(t(check.errorKey!, check.errorParams)); return; }
     const url = URL.createObjectURL(file);
     const { width, height } = await loadImageDimensions(url);
     setImageSrc(url);
@@ -241,7 +241,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
         const { data } = supabase.storage.from('club').getPublicUrl(path);
         photoUrl = data.publicUrl;
       } catch (e) {
-        imageError = extractErrorMessage(e);
+        imageError = extractErrorMessage(e, t('post.unknownError'));
         console.error('[CreatePostModal] upload failed:', e);
       }
     }
@@ -259,11 +259,11 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
         aspect_ratio: aspectRatio,
       });
       if (insertErr) throw insertErr;
-      if (imageError) alert(`Publicado, pero la imagen no se pudo subir: ${imageError}`);
+      if (imageError) alert(t('post.imageUploadFailed', { error: imageError }));
       onPostCreated?.();
       onClose();
     } catch (e) {
-      setUploadError(extractErrorMessage(e));
+      setUploadError(extractErrorMessage(e, t('post.unknownError')));
       setView('composing');
     }
   }
@@ -534,7 +534,7 @@ function UploadingView() {
 // ══════════════════════════════════════════════════════════════
 // Helper
 // ══════════════════════════════════════════════════════════════
-function extractErrorMessage(e: unknown): string {
+function extractErrorMessage(e: unknown, fallback: string): string {
   if (e instanceof Error) return e.message;
   if (e && typeof e === 'object') {
     const obj = e as Record<string, unknown>;
@@ -545,5 +545,5 @@ function extractErrorMessage(e: unknown): string {
       return parts.join(' ');
     }
   }
-  return 'Error desconocido';
+  return fallback;
 }
