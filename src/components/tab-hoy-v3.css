@@ -444,6 +444,43 @@
   border-top: 0.5px solid var(--sand);
 }
 .th3-card-foot--arrow-only { justify-content: flex-end; }
+/* "¿Hiciste otra actividad?" — fila propia justo donde termina el plan,
+   separada de la flecha de navegación (que ahora dice "Ver tu rutina completa").
+   Si ya registró, muestra qué hizo con un ✓ terracota. */
+.th3-card-alt-activity {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 0 0;
+  background: none;
+  border: none;
+  border-top: 0.5px solid var(--sand);
+  text-align: left;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--amber-deep);
+  cursor: pointer;
+  transition: opacity .2s var(--ease-out-soft);
+}
+.th3-card-alt-activity:active { opacity: .6; }
+.th3-card-alt-activity.logged { color: var(--forest); }
+.th3-card-alt-check { color: var(--terracota); font-weight: 700; }
+/* Hint de descubrimiento en nutrición: enseña que tocando una comida se
+   registra lo que comiste. Texto guía, no botón (la acción es por-comida). */
+.th3-card-foodlog-hint {
+  margin-top: 12px;
+  padding: 12px 0 0;
+  border-top: 0.5px solid var(--sand);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.74rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--txt2);
+}
 .th3-card-foot-text {
   font-family: 'Montserrat', sans-serif;
   font-style: italic;

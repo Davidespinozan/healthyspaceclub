@@ -220,6 +220,12 @@ interface AppState {
   completedSessions: CompletedSession[];
   addCompletedSession: (session: CompletedSession) => void;
 
+  // Activity log (movimiento alterno: básquet, hiking, surf…). Premia el
+  // movimiento aunque no se haya hecho la rutina prescrita. addActivityLog
+  // dispara markActiveDay → el día cuenta para la racha. Local only por ahora.
+  activityLog: { id: string; date: string; activity: string; durationMin: number | null; loggedAtIso: string }[];
+  addActivityLog: (entry: { activity: string; durationMin: number | null }) => Promise<void>;
+
   // Food log (manual + AI). Lote Food-1: sync con Supabase tabla food_log.
   // Shape `desc` en cliente ↔ columna `description` en SQL (mapeo al borde).
   foodLog: { id: string; date: string; desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' }[];
@@ -678,6 +684,22 @@ export const useAppStore = create<AppState>()(
   addCompletedSession: (session) =>
     set((state) => ({ completedSessions: [...state.completedSessions, session] })),
 
+  // Activity log (movimiento alterno). Optimistic local + markActiveDay para
+  // que el día cuente en la racha. Sin Supabase por ahora (la racha ya persiste
+  // server-side vía persistStreakToProfile dentro de markActiveDay).
+  activityLog: [],
+  addActivityLog: async (entry) => {
+    const today = new Date().toISOString().split('T')[0];
+    const id = crypto.randomUUID();
+    set((state) => ({
+      activityLog: [
+        ...state.activityLog,
+        { id, date: today, loggedAtIso: new Date().toISOString(), ...entry },
+      ],
+    }));
+    await get().markActiveDay();
+  },
+
   // Food log — patrón addWeight: optimistic local + upsert Supabase + throw si falla.
   // NO dispara markActiveDay (nutrición no cuenta para la racha por ahora).
   // Mapeo desc (cliente) ↔ description (SQL) al borde del sync.
@@ -1090,6 +1112,7 @@ export const useAppStore = create<AppState>()(
     planGoal: 0,
     workoutLog: [],
     completedSessions: [],
+    activityLog: [],
     foodLog: [],
     userPlan: 'none',
     trialEndsAt: null,
@@ -1161,6 +1184,7 @@ export const useAppStore = create<AppState>()(
     planGoal: state.planGoal,
     workoutLog: state.workoutLog,
     completedSessions: state.completedSessions,
+    activityLog: state.activityLog,
     foodLog: state.foodLog,
     currentScreen: state.currentScreen === 'landing' ? 'landing' : state.currentScreen,
     userPlan: state.userPlan,

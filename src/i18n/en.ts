@@ -666,6 +666,10 @@ export const en: Translations<typeof es> = {
     ariaWhyCollapse: 'Hide why',
     foodLogSection: 'Logged',
     entrenasteHoy: 'Trained today',
+    movedToday: 'You moved today',
+    viewFullRoutine: 'See your full routine',
+    viewFullPlan: 'See your full plan',
+    foodLogHint: 'Ate something different? Tap any meal to log it.',
     ultimaSesion: 'Last session',
     relHoy: 'today',
     relAyer: 'yesterday',
@@ -837,5 +841,42 @@ export const en: Translations<typeof es> = {
     errorEstimate: 'I couldn’t estimate that. Try describing it differently.',
     errorSave: 'Couldn’t save it. Try again.',
     errorTimeout: 'The estimate took too long. Try again.',
+  },
+  activityLog: {
+    // CTA inside the workout plan / Hoy card
+    detailQuestion: 'Did you do something else today?',
+    detailCta: 'Log my movement →',
+
+    // Sheet
+    eyebrow: 'LOG ACTIVITY',
+    title: 'What did you do today?',
+    subtitle: 'Basketball, a hike, surfing… movement counts too.',
+    placeholder: 'Type your activity…',
+    durationLabel: 'Duration (optional)',
+    min: 'min',
+    durationOpen: '60+ min',
+
+    // CTAs
+    ctaSubmit: 'Log my movement',
+    ctaCancel: 'Cancel',
+    ctaDone: 'Done',
+
+    // "done" view
+    doneTitle: 'That counts! 💪',
+    doneNote: 'Your day is marked as active. Movement is movement.',
+
+    // Suggested activities
+    actBasket: 'Basketball',
+    actSoccer: 'Soccer',
+    actVolley: 'Volleyball',
+    actHiking: 'Hiking',
+    actSurf: 'Surfing',
+    actSwim: 'Swimming',
+    actCycling: 'Cycling',
+    actDance: 'Dancing',
+    actWalk: 'Walking',
+    actTennis: 'Tennis',
+    actClimb: 'Climbing',
+    actOther: 'Other',
   },
 } as const;

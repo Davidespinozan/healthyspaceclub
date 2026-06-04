@@ -665,6 +665,10 @@ export const es = {
     ariaWhyCollapse: 'Ocultar por qué',
     foodLogSection: 'Registrado',
     entrenasteHoy: 'Entrenaste hoy',
+    movedToday: 'Te moviste hoy',
+    viewFullRoutine: 'Ver tu rutina completa',
+    viewFullPlan: 'Ver tu plan completo',
+    foodLogHint: '¿Comiste algo distinto? Toca cualquier comida para registrarlo.',
     ultimaSesion: 'Última sesión',
     relHoy: 'hoy',
     relAyer: 'ayer',
@@ -842,6 +846,43 @@ export const es = {
     errorEstimate: 'No pude estimar eso. Probá describirlo distinto.',
     errorSave: 'No se pudo guardar. Intentá de nuevo.',
     errorTimeout: 'La estimación tardó demasiado. Intentá de nuevo.',
+  },
+  activityLog: {
+    // CTA dentro del plan de entrenamiento / tarjeta de Hoy
+    detailQuestion: '¿Hiciste otra actividad hoy?',
+    detailCta: 'Registrar mi movimiento →',
+
+    // Sheet
+    eyebrow: 'REGISTRAR ACTIVIDAD',
+    title: '¿Qué hiciste hoy?',
+    subtitle: 'Básquet, una caminata, surf… el movimiento también cuenta.',
+    placeholder: 'Escribe tu actividad…',
+    durationLabel: 'Duración (opcional)',
+    min: 'min',
+    durationOpen: '60+ min',
+
+    // CTAs
+    ctaSubmit: 'Registrar mi movimiento',
+    ctaCancel: 'Cancelar',
+    ctaDone: 'Listo',
+
+    // Vista "done"
+    doneTitle: '¡Eso cuenta! 💪',
+    doneNote: 'Tu día queda marcado como activo. El movimiento es movimiento.',
+
+    // Actividades sugeridas
+    actBasket: 'Básquet',
+    actSoccer: 'Fútbol',
+    actVolley: 'Vóley',
+    actHiking: 'Senderismo',
+    actSurf: 'Surf',
+    actSwim: 'Natación',
+    actCycling: 'Ciclismo',
+    actDance: 'Baile',
+    actWalk: 'Caminata',
+    actTennis: 'Tenis',
+    actClimb: 'Escalada',
+    actOther: 'Otro',
   },
 } as const;
 

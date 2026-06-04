@@ -11,6 +11,7 @@ import { getExercises } from '../data/exercises';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 import MealDetailPopout from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
+import ActivityLogSheet from './ActivityLogSheet';
 import type { Exercise } from '../types';
 import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
@@ -39,6 +40,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     mealResolvedByLog,
     foodLog,
     completedSessions,
+    activityLog,
     dailyWorkout,
     weeklyPlan, lastWeeklyReview,
     streakCount, obData,
@@ -128,8 +130,17 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     ? [...completedSessions].sort((a, b) => b.completedAtIso.localeCompare(a.completedAtIso))[0]
     : null;
 
+  // Movimiento alterno registrado hoy (básquet, hiking, surf…). Cuenta como
+  // día activo igual que una sesión, pero con celebración propia ("te moviste").
+  const todayActivities = activityLog.filter(a => a.date === today);
+  const lastActivityToday = todayActivities.length > 0 ? todayActivities[todayActivities.length - 1] : null;
+  const activityToday = todayActivities.length > 0;
+  const fmtActivityDur = (d: number | null) =>
+    d == null ? '' : d === 90 ? ` · ${t('activityLog.durationOpen')}` : ` · ${d} ${t('activityLog.min')}`;
+
   const [mealDetail, setMealDetail] = useState<{ meal: typeof todayMeals[0]; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
+  const [activityOpen, setActivityOpen] = useState(false);
 
   const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
 
@@ -144,7 +155,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     : [];
   const allExercisesChecked = todayExerciseIds.length > 0 &&
     todayExerciseIds.every((id) => workoutChecks[`${today}-${id}`]);
-  const trainedToday = sessionsToday.length > 0 || allExercisesChecked;
+  const trainedToday = sessionsToday.length > 0 || allExercisesChecked || activityToday;
   const reflectionDone = todayHSMAnswered > 0;
   const kcalGoal = planGoal > 0 ? planGoal : 0;
   const kcalConsumed = Math.round(dayConsumption.consumedKcal);
@@ -433,9 +444,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             <div className="th3-card-body">
               {/* Track-3a: eyebrow celebra "Entrenaste hoy ✓" si hay
                   alguna sesión completada hoy. Sutil, sin romper layout. */}
-              <p className={`th3-card-eyebrow${sessionsToday.length > 0 ? ' th3-card-eyebrow--done' : ''}`}>
+              <p className={`th3-card-eyebrow${(sessionsToday.length > 0 || activityToday) ? ' th3-card-eyebrow--done' : ''}`}>
                 {sessionsToday.length > 0 ? (
                   <>{t('hoy.entrenasteHoy')} <span className="th3-card-eyebrow-check">✓</span></>
+                ) : activityToday ? (
+                  <>{t('hoy.movedToday')} <span className="th3-card-eyebrow-check">✓</span></>
                 ) : (
                   t('hoy.cardEyebrowTraining')
                 )}
@@ -559,7 +572,24 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   </>
                 );
               })()}
-              <div className="th3-card-foot th3-card-foot--arrow-only">
+              {/* Movimiento alterno — justo donde termina el plan, separado de
+                  la flecha de navegación. Si ya registró, muestra qué hizo. */}
+              <button
+                type="button"
+                className={`th3-card-alt-activity${lastActivityToday ? ' logged' : ''}`}
+                onClick={(e) => { e.stopPropagation(); setActivityOpen(true); }}
+              >
+                {lastActivityToday ? (
+                  <>
+                    <span className="th3-card-alt-check" aria-hidden="true">✓</span>
+                    {lastActivityToday.activity}{fmtActivityDur(lastActivityToday.durationMin)}
+                  </>
+                ) : (
+                  t('activityLog.detailQuestion')
+                )}
+              </button>
+              <div className="th3-card-foot">
+                <span className="th3-card-foot-text">{t('hoy.viewFullRoutine')}</span>
                 <span className="th3-card-arrow">→</span>
               </div>
             </div>
@@ -664,7 +694,14 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   )}
                 </>
               )}
-              <div className="th3-card-foot th3-card-foot--arrow-only">
+              {/* Descubrimiento: enseña el gesto "toca una comida para registrar
+                  lo que comiste de verdad" — el log es por-comida (reemplaza ese
+                  slot), no un botón genérico. */}
+              {weeklyPlan && (
+                <p className="th3-card-foodlog-hint">{t('hoy.foodLogHint')}</p>
+              )}
+              <div className="th3-card-foot">
+                <span className="th3-card-foot-text">{t('hoy.viewFullPlan')}</span>
                 <span className="th3-card-arrow">→</span>
               </div>
             </div>
@@ -756,6 +793,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           onClose={() => setSelectedExercise(null)}
         />
       )}
+
+      {/* ── Activity log sheet: movimiento alterno cuenta como día activo ── */}
+      {activityOpen && <ActivityLogSheet onClose={() => setActivityOpen(false)} />}
     </div>
   );
 }

@@ -246,6 +246,101 @@
 }
 
 /* ══════════════════════════════════════════════════════════
+   SKELETON DE GENERACIÓN (híbrido)
+   Header forest real + chips de contexto + cards shimmer que
+   calcan .dt2-ex. El shimmer es la señal de "vivo" en esperas
+   de IA largas; los chips dicen "trabajando en TU plan".
+   ══════════════════════════════════════════════════════════ */
+
+.dt2-skel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dt2-skel-ex {
+  display: flex;
+  position: relative;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
+  border: 1px solid var(--sala-border, var(--sand));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pro-lg), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+}
+.dt2-skel-ex::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 12px; bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: rgba(191, 160, 101, 0.4);
+}
+
+.dt2-skel-dot {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+}
+
+.dt2-skel-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dt2-skel-line { height: 11px; border-radius: 6px; }
+.dt2-skel-line--short { height: 9px; width: 42%; }
+
+.dt2-skel-dot,
+.dt2-skel-line {
+  background: linear-gradient(90deg, #ece5d8 25%, #f3ecdf 50%, #ece5d8 75%);
+  background-size: 200% 100%;
+  animation: dt2-shimmer 1.4s var(--ease-out-soft) infinite;
+}
+
+@keyframes dt2-shimmer {
+  to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dt2-skel-dot,
+  .dt2-skel-line { animation: none; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   ACTIVIDAD ALTERNA — premiar el movimiento aunque no se haya
+   hecho la rutina prescrita. CTA discreto al final del plan.
+   ══════════════════════════════════════════════════════════ */
+.dt2-alt-activity {
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+  text-align: left;
+  background: rgba(191, 160, 101, 0.07);
+  border: 1px dashed rgba(191, 160, 101, 0.45);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform .2s var(--ease-out-soft), background .2s, border-color .2s;
+}
+.dt2-alt-activity:hover {
+  background: rgba(191, 160, 101, 0.12);
+  border-color: rgba(191, 160, 101, 0.65);
+}
+.dt2-alt-activity:active { transform: scale(0.99); }
+.dt2-alt-activity-q { font-size: .82rem; font-weight: 600; color: var(--forest); }
+.dt2-alt-activity-cta { font-size: .78rem; font-weight: 700; color: var(--amber-deep); }
+
+/* ══════════════════════════════════════════════════════════
    COACH NOTE
    ══════════════════════════════════════════════════════════ */
 

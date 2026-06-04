@@ -459,16 +459,30 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
 
   if (phase === 'generating') {
     return (
-      <div className="wz-root">
-        <div className="wz-generating">
-          <div className="wz-spinner" />
-          <h3 className="wz-generating-title">{t('wizard.genTitlePre')} <em>{t('wizard.genTitleEm')}</em>...</h3>
-          <p className="wz-generating-sub">{t('wizard.genConsidering')}</p>
-          <div className="wz-generating-bullets">
-            {contextBullets.map((b, i) => (
-              <div key={i} className="wz-generating-bullet">· {b}</div>
-            ))}
+      <div className="dt2-root">
+        <div className="dt2-plan-header">
+          <div>
+            <p className="dt2-plan-micro">{t('wizard.genConsidering')}</p>
+            <h2 className="dt2-plan-title">{t('wizard.genTitlePre')} <em>{t('wizard.genTitleEm')}</em></h2>
+            {contextBullets.length > 0 && (
+              <div className="dt2-plan-meta">
+                {contextBullets.map((b, i) => (
+                  <span key={i} className="dt2-meta-chip">{b}</span>
+                ))}
+              </div>
+            )}
           </div>
+        </div>
+        <div className="dt2-skel-list">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="dt2-skel-ex">
+              <div className="dt2-skel-dot" />
+              <div className="dt2-skel-lines">
+                <div className="dt2-skel-line" style={{ width: `${72 - i * 7}%` }} />
+                <div className="dt2-skel-line dt2-skel-line--short" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

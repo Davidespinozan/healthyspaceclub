@@ -32,6 +32,7 @@ import type {
 } from '../../types';
 import type { CachedWorkout } from '../../utils/workoutCache';
 import ExerciseDetailPopout from '../ExerciseDetailPopout';
+import ActivityLogSheet from '../ActivityLogSheet';
 import PlayerLoadingFallback from '../PlayerLoadingFallback';
 
 const WorkoutPlayer = lazy(() => import('../WorkoutPlayer'));
@@ -69,6 +70,7 @@ export default function WorkoutPlan({
 }: Props) {
   const { t } = useT();
   const [workoutPlayerOpen, setWorkoutPlayerOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
   // Plan-1: "POR QUÉ HOY" colapsable. Default cerrado — el plan arranca
   // limpio, el usuario lo abre si quiere leer el rationale del coach.
   const [whyOpen, setWhyOpen] = useState(false);
@@ -218,6 +220,15 @@ export default function WorkoutPlan({
           <p className="dt2-note-text">{plan.note}</p>
         </div>
       )}
+
+      {/* Actividad alterna — "hoy no hice esto, pero hice esto". El movimiento
+          también cuenta: registra básquet/hiking/surf y el día queda activo. */}
+      <button type="button" className="dt2-alt-activity" onClick={() => setActivityOpen(true)}>
+        <span className="dt2-alt-activity-q">{t('activityLog.detailQuestion')}</span>
+        <span className="dt2-alt-activity-cta">{t('activityLog.detailCta')}</span>
+      </button>
+
+      {activityOpen && <ActivityLogSheet onClose={() => setActivityOpen(false)} />}
 
       {selectedExercise && (
         <ExerciseDetailPopout

@@ -48,7 +48,7 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther 
 
   return createPortal(
     <div className="th-popout-backdrop" onClick={onClose}>
-      <div className="th-popout" onClick={e => e.stopPropagation()}>
+      <div className="th-popout th-popout--meal" onClick={e => e.stopPropagation()}>
         <div className="th-popout-handle" />
 
         {/* Scrolleable: imagen + info + ingredientes */}
