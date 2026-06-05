@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
+import { validateEmailDeliverable } from '../utils/emailValidation';
 
 // Lógica de alta por email extraída de SignupModal para reusarla en el
 // PaymentModal de dos fases. NO navega ni cierra modales — devuelve el outcome
@@ -39,6 +40,13 @@ export function useEmailSignup() {
     }
 
     setLoading(true);
+    // Validación de email sin fricción: corta desechables y dominios inexistentes.
+    const ev = await validateEmailDeliverable(trimEmail);
+    if (!ev.valid) {
+      setError(ev.reason === 'disposable' ? t('signup.errEmailDisposable') : t('signup.errEmailReal'));
+      setLoading(false);
+      return { outcome: 'error' };
+    }
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: trimEmail,

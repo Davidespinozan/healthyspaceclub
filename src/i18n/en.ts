@@ -225,6 +225,8 @@ export const en: Translations<typeof es> = {
     demo: '— Visual demo · enter any data —',
     errName: 'Enter your name (at least 2 characters).',
     errEmail: 'Enter a valid email.',
+    errEmailReal: "That email doesn't seem to exist. Use a real one.",
+    errEmailDisposable: 'Temporary emails are not allowed. Use your real email.',
     errPassword: 'Password must be at least 8 characters.',
     errTos: 'Accept the Terms and Privacy Policy to continue.',
     errConfirm: 'Check your email to confirm your account.',

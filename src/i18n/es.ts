@@ -224,6 +224,8 @@ export const es = {
     demo: '— Demo visual · ingresa cualquier dato —',
     errName: 'Ingresa tu nombre (mínimo 2 caracteres).',
     errEmail: 'Ingresa un correo válido.',
+    errEmailReal: 'Ese correo no parece existir. Usa uno real.',
+    errEmailDisposable: 'No se permiten correos temporales. Usa tu correo real.',
     errPassword: 'La contraseña debe tener al menos 8 caracteres.',
     errTos: 'Aceptá los Términos y la Política de Privacidad para continuar.',
     errConfirm: 'Revisa tu email para confirmar tu cuenta.',

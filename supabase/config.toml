@@ -38,3 +38,7 @@ verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+# validate-email: se llama antes del signup (sin sesión) → sin JWT.
+[functions.validate-email]
+verify_jwt = false

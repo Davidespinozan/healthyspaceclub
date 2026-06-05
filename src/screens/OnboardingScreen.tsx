@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity } from 'lucide-react';
+import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity, AtSign, Check, Loader2, X } from 'lucide-react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n/es';
+import { suggestUsername, isValidUsernameFormat, checkUsernameAvailable, claimUsername } from '../utils/username';
+import { validateEmailDeliverable } from '../utils/emailValidation';
 import LanguageToggle from '../components/LanguageToggle';
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 9;
 
 export default function OnboardingScreen() {
   const { t } = useT();
-  const { userName, setUserName, setObData, finishOnboardingCalc, finishOnboarding, addWeight } = useAppStore();
+  const { userName, setUserName, setObData, setUsername, finishOnboardingCalc, finishOnboarding, addWeight } = useAppStore();
 
   const [step, setStep] = useState(1);
   const [dir, setDir] = useState<'next' | 'prev'>('next');
@@ -30,6 +32,54 @@ export default function OnboardingScreen() {
   const [peso, setPeso] = useState('');
   const [estatura, setEstatura] = useState('');
   const [activity, setActivity] = useState('');
+
+  // @usuario (Step 7) — obligatorio para cuentas nuevas.
+  const [handle, setHandle] = useState('');
+  const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+  const [handleSaving, setHandleSaving] = useState(false);
+
+  // Pre-sugerir el @usuario al llegar al paso (desde el nombre).
+  useEffect(() => {
+    if (step === 7 && !handle) setHandle(suggestUsername(userName));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  // Chequeo de disponibilidad debounced.
+  useEffect(() => {
+    if (step !== 7) return;
+    const h = handle.trim().toLowerCase();
+    if (!isValidUsernameFormat(h)) { setHandleStatus('invalid'); return; }
+    setHandleStatus('checking');
+    const id = setTimeout(async () => {
+      const ok = await checkUsernameAvailable(h);
+      setHandleStatus(prev => (prev === 'checking' ? (ok ? 'available' : 'taken') : prev));
+    }, 400);
+    return () => clearTimeout(id);
+  }, [handle, step]);
+
+  async function handleUsernameContinue() {
+    if (handleStatus !== 'available' || handleSaving) return;
+    setHandleSaving(true);
+    const h = handle.trim().toLowerCase();
+    const uid = useAppStore.getState().session?.user?.id;
+    // Asegura la fila de perfil antes de reclamar (claim_username hace UPDATE).
+    if (uid) {
+      await supabase.from('user_profiles').upsert(
+        { user_id: uid, display_name: userName }, { onConflict: 'user_id' },
+      );
+    }
+    const res = await claimUsername(h);
+    setHandleSaving(false);
+    if (res === 'ok') {
+      setUsername(h);
+      setObData('username', h);
+      goNext();
+    } else if (res === 'taken') {
+      setHandleStatus('taken');
+    } else if (res === 'invalid') {
+      setHandleStatus('invalid');
+    }
+  }
 
   // Processing animation
   const [processingLine, setProcessingLine] = useState(0);
@@ -81,6 +131,13 @@ export default function OnboardingScreen() {
     }
 
     setSignupLoading(true);
+    // Validación de email sin fricción: corta desechables y dominios inexistentes.
+    const ev = await validateEmailDeliverable(signupEmail.trim());
+    if (!ev.valid) {
+      setSignupError(ev.reason === 'disposable' ? t('signup.errEmailDisposable') : t('signup.errEmailReal'));
+      setSignupLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase.auth.signUp({
         email: signupEmail.trim(),
@@ -114,9 +171,9 @@ export default function OnboardingScreen() {
     }
   }
 
-  // Step 7: processing animation + save to store
+  // Step 8: processing animation + save to store
   useEffect(() => {
-    if (step !== 7) return;
+    if (step !== 8) return;
 
     // Save all data to store (name ya fue guardado en SignupModal o handleOnboardingSignup)
     setObData('sex', sex);
@@ -144,7 +201,7 @@ export default function OnboardingScreen() {
       }
       setDir('next');
       setAnimKey(k => k + 1);
-      setStep(8);
+      setStep(9);
     }, processingTexts.length * 800 + 700);
 
     return () => { timers.forEach(clearTimeout); clearTimeout(finalTimer); };
@@ -154,12 +211,12 @@ export default function OnboardingScreen() {
     finishOnboarding();
   }
 
-  // Progress bar (steps 2-7, not shown on 1 and 8)
-  const showProgress = step >= 2 && step <= 7;
+  // Progress bar (steps 2-8 = cuenta..procesando, no en 1 ni en 9 listo)
+  const showProgress = step >= 2 && step <= 8;
   const progressPct = showProgress ? ((step - 1) / (TOTAL_STEPS - 2)) * 100 : 0;
 
-  // Can go back?
-  const showBack = step >= 2 && step <= 6;
+  // Can go back? (cuenta..@usuario; no en procesando ni listo)
+  const showBack = step >= 2 && step <= 7;
 
   // Goal label for result screen. La KEY (valor en español) la usa el motor;
   // solo se traduce el texto mostrado.
@@ -354,8 +411,52 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {/* ── Step 7: Processing ── */}
+      {/* ── Step 7: @usuario (obligatorio para cuentas nuevas) ── */}
       {step === 7 && (
+        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
+          <div className="onb-center">
+            <h2 className="onb-question">{t('username.title')}</h2>
+            <p className="onb-hint">{t('username.sub')}</p>
+
+            <div className={`onb-handle-field onb-handle-field--${handleStatus}`}>
+              <span className="onb-handle-at"><AtSign size={20} strokeWidth={2} /></span>
+              <input
+                className="onb-handle-input"
+                type="text"
+                value={handle}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                maxLength={20}
+                onChange={e => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              />
+              <span className="onb-handle-status">
+                {handleStatus === 'checking' && <Loader2 size={18} className="onb-handle-spin" />}
+                {handleStatus === 'available' && <Check size={18} className="onb-handle-ok" />}
+                {(handleStatus === 'taken' || handleStatus === 'invalid') && <X size={18} className="onb-handle-bad" />}
+              </span>
+            </div>
+            <p className={`onb-handle-msg onb-handle-msg--${handleStatus}`}>
+              {handleStatus === 'available' && t('username.available')}
+              {handleStatus === 'taken' && t('username.taken')}
+              {handleStatus === 'invalid' && t('username.invalid')}
+              {handleStatus === 'checking' && t('username.checking')}
+              {handleStatus === 'idle' && t('username.hint')}
+            </p>
+
+            <button
+              className="onb-btn-gold"
+              onClick={handleUsernameContinue}
+              disabled={handleStatus !== 'available' || handleSaving}
+            >
+              {handleSaving ? t('username.saving') : t('onboarding.continue')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 8: Processing ── */}
+      {step === 8 && (
         <div key={animKey} className="onb-slide onb-dark">
           <div className="onb-center">
             <div className="onb-processing">
@@ -372,8 +473,8 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {/* ── Step 8: Profile ready ── */}
-      {step === 8 && (
+      {/* ── Step 9: Profile ready ── */}
+      {step === 9 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
           <div className="onb-center">
             <h2 className="onb-result-title">{t('onboarding.resultTitle', { name: userName })}</h2>

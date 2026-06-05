@@ -1332,6 +1332,34 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 .onb-input-big::placeholder { color: rgba(21,51,48,.25); font-weight: 400; }
 .onb-input-big:focus { border-color: #153330; }
 
+/* @usuario (onboarding step 7) */
+.onb-handle-field {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; max-width: 320px; padding: 14px 16px;
+  border-radius: 14px; border: 2px solid #E8E1D3; background: #fff;
+  transition: border-color .2s, box-shadow .2s;
+}
+.onb-handle-field--available { border-color: #4F9D69; box-shadow: 0 0 0 3px rgba(79,157,105,.12); }
+.onb-handle-field--taken,
+.onb-handle-field--invalid { border-color: #C75B3A; box-shadow: 0 0 0 3px rgba(199,91,58,.12); }
+.onb-handle-at { color: #BFA065; display: flex; flex-shrink: 0; }
+.onb-handle-input {
+  flex: 1; min-width: 0; border: none; outline: none; background: transparent;
+  font-size: 1.2rem; font-weight: 700; color: #153330; font-family: inherit;
+}
+.onb-handle-status { display: flex; flex-shrink: 0; min-width: 18px; }
+.onb-handle-ok { color: #4F9D69; }
+.onb-handle-bad { color: #C75B3A; }
+.onb-handle-spin { color: #BFA065; animation: onb-handle-spin .7s linear infinite; }
+@keyframes onb-handle-spin { to { transform: rotate(360deg); } }
+.onb-handle-msg {
+  font-size: .78rem; font-weight: 600; margin: 8px 0 22px; min-height: 16px;
+  max-width: 320px;
+}
+.onb-handle-msg--idle, .onb-handle-msg--checking { color: rgba(21,51,48,.5); }
+.onb-handle-msg--available { color: #4F9D69; }
+.onb-handle-msg--taken, .onb-handle-msg--invalid { color: #C75B3A; }
+
 /* Sex selection cards */
 .onb-cards-row { display: flex; gap: 12px; width: 100%; max-width: 320px; }
 .onb-card-select {
