@@ -290,9 +290,15 @@
   padding: 40px 24px 24px;
   text-align: center;
 }
-.pp5-empty-emoji {
-  font-size: 40px;
+.pp5-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px; height: 56px;
   margin-bottom: 12px;
+  border-radius: 50%;
+  background: rgba(201, 169, 104, 0.14);
+  color: var(--amber-deep, #A8864E);
 }
 .pp5-empty-text {
   font-family: 'Montserrat', sans-serif;

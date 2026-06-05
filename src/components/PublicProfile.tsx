@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { X, Flame, Share2, Link2, Check } from 'lucide-react';
+import { X, Flame, Share2, Link2, Check, Sprout } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
 import CommentsSheet from './club/CommentsSheet';
@@ -199,7 +199,9 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
     [unlockedSet],
   );
 
-  const displayName = profile?.display_name || posts[0]?.username || userId;
+  // Nunca caer al userId (UUID) — se ve como letras/números random. Cae al
+  // @usuario o al username de un post, y por último a un genérico.
+  const displayName = profile?.display_name || profile?.username || posts[0]?.username || t('post.anonymous');
   const isOwnProfile = !!currentUserId && currentUserId === userId;
   const initial = (displayName || '?')[0].toUpperCase();
   const avatarUrl = profile?.avatar_url || posts[0]?.avatar_url || '';
@@ -309,7 +311,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
               </div>
             ) : !hasContent ? (
               <div className="pp5-empty">
-                <div className="pp5-empty-emoji">🌱</div>
+                <div className="pp5-empty-icon"><Sprout size={30} strokeWidth={1.6} /></div>
                 <p className="pp5-empty-text">{t('profile.publicEmpty')}</p>
               </div>
             ) : null}

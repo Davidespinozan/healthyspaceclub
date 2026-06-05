@@ -40,8 +40,14 @@ export default function TabClub() {
   useEffect(() => {
     fetchFeed();
     fetchActiveCount();
-    fetchUserFires();
   }, []);
+
+  // Los fires del usuario se cargan cuando el userId está listo (antes corría
+  // con userId nulo en el primer render → se veían sin marcar al recargar).
+  useEffect(() => {
+    if (userId && userId !== 'anon') fetchUserFires();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   async function fetchFeed() {
     try {
