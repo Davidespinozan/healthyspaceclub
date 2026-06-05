@@ -235,22 +235,25 @@ export default function SettingsSheet({ open, onClose }: Props) {
               <span className="ss-data-val">{username ? `@${username}` : '—'}</span>
             </div>
           </div>
-          <button
-            type="button"
-            className="ss-data-edit"
-            onClick={() => setShowUsernameEdit(true)}
-          >
-            {username ? t('settings.changeUsername') : t('settings.chooseUsername')}
-          </button>
-          {!showPwForm ? (
+          <div className="ss-data-edits">
             <button
               type="button"
               className="ss-data-edit"
-              onClick={() => setShowPwForm(true)}
+              onClick={() => setShowUsernameEdit(true)}
             >
-              {t('settings.changePassword')}
+              {username ? t('settings.changeUsername') : t('settings.chooseUsername')}
             </button>
-          ) : (
+            {!showPwForm && (
+              <button
+                type="button"
+                className="ss-data-edit"
+                onClick={() => setShowPwForm(true)}
+              >
+                {t('settings.changePassword')}
+              </button>
+            )}
+          </div>
+          {showPwForm && (
             <div className="ss-pw-form">
               {pwSuccess ? (
                 <>
