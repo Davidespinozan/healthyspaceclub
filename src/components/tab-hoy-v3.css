@@ -75,7 +75,7 @@
 .th3-hero-top {
   display: flex;
   justify-content: space-between;
-  align-items: center; /* logo centrado con el saludo (balancea el saludo de 2 líneas) */
+  align-items: flex-start; /* logo arriba, en la esquina */
   gap: 16px;
 }
 .th3-hero-logo {
