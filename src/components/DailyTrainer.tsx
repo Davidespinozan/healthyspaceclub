@@ -144,9 +144,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const [focus, setFocus] = useState<FocusValue>('auto');
   const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>([]);
   const [lastTrained, setLastTrained] = useState('');
-  // Modo pareja: compañero (conectado → prellenado con datos reales; o invitado).
-  const [partnerName, setPartnerName] = useState(() => pendingPartner?.name ?? '');
-  const [partnerNivel, setPartnerNivel] = useState<'principiante' | 'intermedio' | 'avanzado'>(() => {
+  // Modo pareja: compañero conectado y matcheado, prellenado con sus datos reales.
+  const [partnerName] = useState(() => pendingPartner?.name ?? '');
+  const [partnerNivel] = useState<'principiante' | 'intermedio' | 'avanzado'>(() => {
     const n = pendingPartner?.nivel;
     return n === 'principiante' || n === 'intermedio' || n === 'avanzado' ? n : 'intermedio';
   });
@@ -619,9 +619,6 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         hasSystemHistory={hasSystemHistory}
         partnerMode={partnerMode}
         partnerName={partnerName}
-        setPartnerName={setPartnerName}
-        partnerNivel={partnerNivel}
-        setPartnerNivel={setPartnerNivel}
         onGenerate={handleGenerate}
       />
     );

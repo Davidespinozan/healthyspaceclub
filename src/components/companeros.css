@@ -142,3 +142,5 @@
   font-size: 11.5px; font-weight: 700; color: rgba(21,51,48,0.5);
 }
 .comp-row-tag--ok { color: #3C7E52; }
+
+.comp-row--muted { opacity: 0.6; }

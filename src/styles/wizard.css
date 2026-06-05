@@ -304,6 +304,22 @@
 
 .wz-chip-icon svg { color: var(--forest); }
 
+/* Confirmador del compañero conectado (modo pareja) */
+.wz-partner-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  box-shadow: 0 4px 14px rgba(168, 134, 78, 0.26);
+}
+.wz-partner-confirm svg { flex-shrink: 0; }
+
 /* Input de nombre del compañero (modo pareja) */
 .wz-partner-input {
   width: 100%;

@@ -489,6 +489,7 @@ export const en: Translations<typeof es> = {
     step1: 'step 1 · {day} {date}',
     modalityQ: 'what do you want to do today?',
     partnerQ: 'who are you training with?',
+    partnerTrainingWith: 'Training with {name}',
     partnerNamePlaceholder: "Your partner's name",
     partnerLevelQ: 'Their level',
     partnerLevelBeginner: 'Beginner',

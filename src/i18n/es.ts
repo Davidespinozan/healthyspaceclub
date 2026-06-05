@@ -488,6 +488,7 @@ export const es = {
     step1: 'paso 1 · {day} {date}',
     modalityQ: '¿qué quieres hacer hoy?',
     partnerQ: '¿con quién entrenas?',
+    partnerTrainingWith: 'Entrenando con {name}',
     partnerNamePlaceholder: 'Nombre de tu compañero',
     partnerLevelQ: 'Su nivel',
     partnerLevelBeginner: 'Principiante',

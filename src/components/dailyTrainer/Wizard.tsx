@@ -9,7 +9,7 @@
 // - Las selecciones (modality/time/equipment/etc.) viven en el padre para que
 //   estén disponibles después de generar (regen + WorkoutPlayer)
 
-import { Lock } from 'lucide-react';
+import { Lock, Users } from 'lucide-react';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
 import type { Modality, Equipment, MuscleGroup } from '../../types';
@@ -22,7 +22,6 @@ import {
   FOCUS_OPTIONS,
   MUSCLE_OPTIONS,
   LAST_TRAINED_OPTIONS,
-  PARTNER_LEVEL_OPTIONS,
   type WizardPhase,
   type FocusValue,
 } from './constants';
@@ -61,12 +60,9 @@ interface WizardProps {
   setLastTrained: (v: string) => void;
   hasSystemHistory: boolean;
 
-  // Modo pareja (Fase 2 · entrenar con alguien): compañero invitado.
+  // Modo pareja: compañero conectado y matcheado (solo confirmación).
   partnerMode: boolean;
   partnerName: string;
-  setPartnerName: (v: string) => void;
-  partnerNivel: 'principiante' | 'intermedio' | 'avanzado';
-  setPartnerNivel: (v: 'principiante' | 'intermedio' | 'avanzado') => void;
 
   // Acción final
   onGenerate: () => void;
@@ -85,7 +81,7 @@ export default function Wizard({
   selectedMuscles, setSelectedMuscles,
   lastTrained, setLastTrained,
   hasSystemHistory,
-  partnerMode, partnerName, setPartnerName, partnerNivel, setPartnerNivel,
+  partnerMode, partnerName,
   onGenerate,
 }: WizardProps) {
   const { t } = useT();
@@ -264,30 +260,12 @@ export default function Wizard({
           </h1>
         </div>
 
-        {/* Compañero (modo pareja) — nombre + nivel. Sin cuenta, modo invitado. */}
+        {/* Compañero (modo pareja) — conectado y matcheado. Solo confirmación;
+            su nivel/equipo reales ya vienen de su perfil. */}
         {partnerMode && (
-          <div className="wz-q">
-            <p className="wz-q-label">{t('wizard.partnerQ')}</p>
-            <input
-              type="text"
-              className="wz-partner-input"
-              value={partnerName}
-              onChange={(e) => setPartnerName(e.target.value)}
-              placeholder={t('wizard.partnerNamePlaceholder')}
-              maxLength={24}
-            />
-            <p className="wz-q-label wz-muscle-label">{t('wizard.partnerLevelQ')}</p>
-            <div className="wz-chips wz-chips-3">
-              {PARTNER_LEVEL_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  className={`wz-chip${partnerNivel === opt.value ? ' on' : ''}`}
-                  onClick={() => setPartnerNivel(opt.value)}
-                >
-                  {t(opt.labelKey)}
-                </button>
-              ))}
-            </div>
+          <div className="wz-partner-confirm">
+            <Users size={16} strokeWidth={2} />
+            <span>{t('wizard.partnerTrainingWith', { name: partnerName })}</span>
           </div>
         )}
 

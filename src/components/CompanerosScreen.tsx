@@ -8,7 +8,7 @@
 //   - Siempre: "Entrenar con un invitado" (modo invitado, no requiere cuenta).
 
 import { useEffect, useState, useCallback } from 'react';
-import { Search, UserPlus, Check, X, Dumbbell, AtSign, Clock, Loader2, Users } from 'lucide-react';
+import { Search, UserPlus, Check, X, Dumbbell, AtSign, Clock, Loader2 } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import {
@@ -65,9 +65,8 @@ export default function CompanerosScreen() {
 
   const incoming = partnerships.filter(p => p.direction === 'incoming' && p.status === 'pending');
   const accepted = partnerships.filter(p => p.status === 'accepted');
-  const outgoingPending = new Set(
-    partnerships.filter(p => p.direction === 'outgoing' && p.status === 'pending').map(p => p.other_id),
-  );
+  const outgoing = partnerships.filter(p => p.direction === 'outgoing' && p.status === 'pending');
+  const outgoingPending = new Set(outgoing.map(p => p.other_id));
   const connectedIds = new Set(accepted.map(p => p.other_id));
 
   async function handleInvite(u: UserSearchResult) {
@@ -93,11 +92,6 @@ export default function CompanerosScreen() {
       equipment: prof?.equipment,
       avatarUrl: p.other_avatar,
     });
-    setDashPage('entrenamiento-pareja');
-  }
-
-  function trainGuest() {
-    setPendingPartner(null);
     setDashPage('entrenamiento-pareja');
   }
 
@@ -200,10 +194,11 @@ export default function CompanerosScreen() {
           {/* Compañeros conectados */}
           <div className="comp-section">
             <p className="comp-section-label">{t('partners.yourPartners')}</p>
-            {accepted.length === 0 ? (
+            {accepted.length === 0 && outgoing.length === 0 ? (
               <p className="comp-empty">{t('partners.noPartners')}</p>
             ) : (
               <div className="comp-list">
+                {/* Conectados → entrenan juntos */}
                 {accepted.map(p => (
                   <div className="comp-row" key={p.partnership_id}>
                     <Avatar name={p.other_name || p.other_username} url={p.other_avatar} />
@@ -220,21 +215,22 @@ export default function CompanerosScreen() {
                     </button>
                   </div>
                 ))}
+                {/* Invitaciones enviadas → esperando que acepten (sin entrenar aún) */}
+                {outgoing.map(p => (
+                  <div className="comp-row comp-row--muted" key={p.partnership_id}>
+                    <Avatar name={p.other_name || p.other_username} url={p.other_avatar} />
+                    <div className="comp-row-body">
+                      <span className="comp-row-name">{displayName(p.other_name, p.other_username)}</span>
+                      {p.other_username && <span className="comp-row-handle">@{p.other_username}</span>}
+                    </div>
+                    <span className="comp-row-tag"><Clock size={13} /> {t('partners.pending')}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </>
       )}
-
-      {/* Entrenar con invitado — siempre disponible, no requiere cuenta. */}
-      <button className="comp-guest" onClick={trainGuest}>
-        <span className="comp-guest-icon"><Users size={18} strokeWidth={1.8} /></span>
-        <div className="comp-guest-body">
-          <p className="comp-guest-title">{t('partners.guestTitle')}</p>
-          <p className="comp-guest-sub">{t('partners.guestSub')}</p>
-        </div>
-        <span className="comp-guest-arrow">→</span>
-      </button>
 
       {showUsernameSetup && (
         <UsernameSetupSheet
