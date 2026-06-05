@@ -338,17 +338,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
   const mileCopy = milestone ? getMilestoneCopy(milestone, t) : null;
 
-  // Editorial date string for hero eyebrow: "Miércoles · 24 abril" / "Wednesday · April 24"
-  const heroDate = (() => {
-    const d = new Date();
-    const localeStr = locale === 'en' ? 'en-US' : 'es-ES';
-    const dayName = d.toLocaleDateString(localeStr, { weekday: 'long' });
-    const cap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
-    const day = d.getDate();
-    const month = d.toLocaleDateString(localeStr, { month: 'long' });
-    return locale === 'en' ? `${cap} · ${month} ${day}` : `${cap} · ${day} ${month}`;
-  })();
-
   // Subhead for the hero: dailyBriefing solo si es de hoy Y del idioma actual.
   // Al cambiar ES↔EN, mientras se regenera el briefing en el nuevo idioma se
   // muestra el fallback (ya traducido) — nunca texto en el idioma anterior.
@@ -383,7 +372,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           <div className="th3-hero-orb th3-hero-orb-2" />
         </div>
         <div className="th3-hero-datebar">
-          <p className="th3-eyebrow">{heroDate}</p>
           <Logo variant="icon" size={34} className="th3-hero-datebar-icon" />
         </div>
         <h1 className="th3-headline">{firstName ? `${heroGreeting}, ${firstName}.` : `${heroGreeting}.`}</h1>
@@ -587,7 +575,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 )}
               </button>
               <div className="th3-card-foot">
-                <span className="th3-card-foot-text">{todayWorkoutPlan ? t('hoy.viewFullRoutine') : t('hoy.routineGenerate')}</span>
+                <span className="th3-card-foot-text">{todayWorkoutPlan ? t('hoy.viewFullRoutine') : t('hoy.generate')}</span>
                 <span className="th3-card-arrow">→</span>
               </div>
             </div>
@@ -702,7 +690,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 </button>
               )}
               <div className="th3-card-foot">
-                <span className="th3-card-foot-text">{weeklyPlan ? t('hoy.viewFullPlan') : t('hoy.nutritionGenerate')}</span>
+                <span className="th3-card-foot-text">{weeklyPlan ? t('hoy.viewFullPlan') : t('hoy.generate')}</span>
                 <span className="th3-card-arrow">→</span>
               </div>
             </div>

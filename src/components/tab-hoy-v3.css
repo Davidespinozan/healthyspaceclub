@@ -74,7 +74,7 @@
    a la misma altura — recupera el espacio que robaba el logo grande arriba. */
 .th3-hero-datebar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 10px;
 }

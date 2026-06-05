@@ -795,6 +795,7 @@ export const en: Translations<typeof es> = {
     cardEyebrowTraining: 'Training',
     cardEyebrowNutrition: 'Nutrition',
     routineGenerate: 'Generate your routine',
+    generate: 'Generate',
     routineGenerateMeta: 'Built around how you feel.',
     routineFlow: "Today's flow",
     routineToday: "Today's routine",

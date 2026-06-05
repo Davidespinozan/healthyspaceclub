@@ -794,6 +794,7 @@ export const es = {
     cardEyebrowTraining: 'Entrenamiento',
     cardEyebrowNutrition: 'Nutrición',
     routineGenerate: 'Genera tu rutina',
+    generate: 'Generar',
     routineGenerateMeta: 'Personalizada según cómo te sientas.',
     routineFlow: 'Tu flow de hoy',
     routineToday: 'Tu rutina de hoy',
