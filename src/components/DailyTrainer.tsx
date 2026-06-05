@@ -27,6 +27,7 @@ import {
 } from '../utils/workoutValidation';
 import { stretchToTargetDuration } from '../utils/yogaPostProcess';
 import { orchestrateWorkout, orchestratePowerVinyasa } from '../utils/workoutOrchestration';
+import { clusterIndividualsByMuscle } from '../utils/exerciseOrder';
 import { deliverPartnerWorkout, getPartnerRecentDaytypes } from '../utils/partners';
 import type {
   Exercise,
@@ -319,7 +320,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       if (selectedModality === 'yoga') {
         // Skip cache for yoga — fall through to generation
       } else if (cached && validateWorkout(cached, validIds)) {
-        // Fuerza/cardio/auto: cache válido
+        // Fuerza/cardio/auto: cache válido. Reordena individuales por músculo
+        // (por si fue cacheado antes de esta regla).
+        cached.exercises = clusterIndividualsByMuscle(cached.exercises, exerciseBank);
         setPlan(cached);
         await saveDailyWorkout(cached as any);
         setPhase('plan');
@@ -494,6 +497,12 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       if (!validateWorkout(workout, validIds)) {
         throw new Error(t('wizard.genErrInvalid'));
       }
+
+      // Anti-enfriamiento determinista: agrupa individuales del mismo músculo
+      // (la IA a veces los intercala). Las biseries/superseries quedan intactas.
+      (workout as CachedWorkout).exercises = clusterIndividualsByMuscle(
+        (workout as CachedWorkout).exercises, exerciseBank,
+      );
 
       const strictValidation = validateWorkoutPlanStrict(workout, validIds);
       if (!strictValidation.valid) {
