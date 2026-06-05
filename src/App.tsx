@@ -153,20 +153,24 @@ export default function App() {
             // @usuario (Fase 1A) — query aparte y tolerante: si la migración aún
             // no está desplegada, la columna no existe y el error se ignora sin
             // romper la hidratación del perfil.
+            let handle: string | null = null;
             try {
               const { data: u } = await supabase
                 .from('user_profiles')
                 .select('username')
                 .eq('user_id', session.user.id)
                 .maybeSingle();
-              if (u && (u as { username?: string | null }).username) {
-                useAppStore.setState({ username: (u as { username?: string | null }).username ?? null });
+              handle = (u as { username?: string | null } | null)?.username ?? null;
+              if (handle) {
+                useAppStore.setState({ username: handle });
               }
             } catch { /* columna username inexistente (pre-migración) → ignora */ }
 
             if (profile) {
               useAppStore.setState({
-                userName: profile.display_name ?? '',
+                // Si el perfil no tiene display_name, caemos al @usuario (que
+                // siempre existe) en vez de quedar "Anónimo".
+                userName: profile.display_name || handle || '',
                 avatarUrl: (profile as { avatar_url?: string | null }).avatar_url ?? null,
                 obData: (profile.ob_data as Record<string, string | number>) ?? {},
                 startDate: profile.start_date ?? '',

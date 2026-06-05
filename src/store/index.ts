@@ -415,7 +415,10 @@ export const useAppStore = create<AppState>()(
   // Calculate TDEE + assign plan WITHOUT navigating (called during processing step)
   finishOnboardingCalc: async () => {
     const { obData, setUserName } = get();
-    if (obData.name) setUserName(String(obData.name));
+    // Garantiza un nombre: el de onboarding, o el @usuario si se saltó el paso
+    // de nombre (sesión previa). Evita que el perfil quede sin display_name → "Anónimo".
+    const resolvedName = String(obData.name || get().username || '').trim();
+    if (resolvedName) setUserName(resolvedName);
 
     const sexo      = String(obData.sex      || 'Hombre');
     const pesoKg    = Number(obData.peso     || 70);
