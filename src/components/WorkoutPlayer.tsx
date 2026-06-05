@@ -70,7 +70,6 @@ export default function WorkoutPlayer({
     [exerciseBank],
   );
   const exercises = workout.exercises;
-  const totalExercises = exercises.length;
   const planHash = buildPlanHash(workout);
 
   // Secuencia de ejecución (intercala superseries por vuelta). El player camina
@@ -105,15 +104,34 @@ export default function WorkoutPlayer({
   }, [exercises]);
   const totalBlocks = blocks.length;
 
+  // Auto-resume: lee el progreso guardado (mismo plan/día) UNA vez para
+  // inicializar el estado en el primer render — sin diálogo confirm (que en PWA
+  // se auto-cancelaba) y sin flash de "ejercicio 1".
+  const savedProgress = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(PROGRESS_KEY);
+      if (!raw) return null;
+      const d = JSON.parse(raw);
+      const today = new Date().toISOString().split('T')[0];
+      if (d && d.version === 2 && d.workoutDate === today && d.planHash === planHash
+          && typeof d.currentStep === 'number' && d.currentStep >= 0
+          && d.currentStep < sequence.length && Array.isArray(d.loggedByExercise)) {
+        return d as { currentStep: number; loggedByExercise: LoggedByExercise; startedAt?: number };
+      }
+    } catch { /* noop */ }
+    return null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── State
   const [phase, setPhase] = useState<PlayerPhase>('exercise');
   const [shareOpen, setShareOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [loggedByExercise, setLoggedByExercise] = useState<LoggedByExercise>(() => initLoggedByExercise(exercises));
+  const [currentStep, setCurrentStep] = useState(() => savedProgress?.currentStep ?? 0);
+  const [loggedByExercise, setLoggedByExercise] = useState<LoggedByExercise>(() => savedProgress?.loggedByExercise ?? initLoggedByExercise(exercises));
   const [restState, setRestState] = useState<{ secondsLeft: number } | null>(null);
   const [editingSet, setEditingSet] = useState<{ exerciseIndex: number; setIndex: number } | null>(null);
   const [editValues, setEditValues] = useState<LoggedSet>({ reps: 0, kg: 0 });
-  const [startedAt, setStartedAt] = useState<number>(() => Date.now());
+  const [startedAt] = useState<number>(() => savedProgress?.startedAt ?? Date.now());
   const [pausedFromPhase, setPausedFromPhase] = useState<PlayerPhase | null>(null);
   // Cronómetro de sesión (segundos desde el inicio). Tiempo de reloj — coincide
   // con la duración que se registra al terminar (computeSessionStats usa now-startedAt).
@@ -263,40 +281,20 @@ export default function WorkoutPlayer({
 
   // ── Handlers (lógica delegada a src/utils/workoutSession.ts)
 
-  // Flow-1: detección de resume on mount (antes vivía en handleStart, que
-  // se disparaba al tap "comenzar sesión" del prep). Ahora el player abre
-  // directo en 'exercise' (initial state); este effect solo aplica resume
-  // si existe sesión guardada del mismo plan/día.
+  // El resume ahora se aplica en los inicializadores de estado (savedProgress),
+  // sin diálogo. Aquí solo limpiamos un guardado inválido (otro plan/día) para
+  // no acumular basura en localStorage.
   useEffect(() => {
-    const raw = (() => {
-      try { return localStorage.getItem(PROGRESS_KEY); }
-      catch { return null; }
-    })();
-    if (!raw) return;
-    let data: Record<string, unknown> | null = null;
-    try { data = JSON.parse(raw); } catch { data = null; }
-    const today = new Date().toISOString().split('T')[0];
-    // Solo resume del shape v2, mismo plan/día, con progreso real (step > 0).
-    // Sesiones viejas (v1) o de otro plan/día → se descartan limpio.
-    const validV2 =
-      data && data.version === 2 &&
-      data.workoutDate === today && data.planHash === planHash &&
-      typeof data.currentStep === 'number' && data.currentStep > 0 &&
-      data.currentStep < sequence.length && Array.isArray(data.loggedByExercise);
-    if (!validV2) {
-      localStorage.removeItem(PROGRESS_KEY);
-      return;
-    }
-    const savedStep = data!.currentStep as number;
-    const savedEx = (sequence[savedStep]?.exIndex ?? 0) + 1;
-    const ok = confirm(t('workout.resumeConfirm', { n: savedEx, total: totalExercises }));
-    if (ok) {
-      setCurrentStep(savedStep);
-      setLoggedByExercise(data!.loggedByExercise as LoggedByExercise);
-      setStartedAt(typeof data!.startedAt === 'number' ? (data!.startedAt as number) : Date.now());
-    } else {
-      localStorage.removeItem(PROGRESS_KEY);
-    }
+    if (savedProgress) return;
+    try {
+      const raw = localStorage.getItem(PROGRESS_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      const today = new Date().toISOString().split('T')[0];
+      if (!d || d.workoutDate !== today || d.planHash !== planHash) {
+        localStorage.removeItem(PROGRESS_KEY);
+      }
+    } catch { /* noop */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -313,6 +311,12 @@ export default function WorkoutPlayer({
       kg: lastKgForExercise(loggedByExercise, currentExerciseIndex),
     };
     setLoggedByExercise(prev => setLogAt(prev, currentExerciseIndex, currentSetNum - 1, entry));
+    // Marca el ejercicio como hecho en Hoy en cuanto se completa (en vivo, no
+    // solo al terminar la sesión) — así la lista de Hoy refleja el avance.
+    if (setsRegisteredForCurrent + 1 >= totalSetsForCurrent && currentEx.id) {
+      const today = new Date().toISOString().split('T')[0];
+      try { useAppStore.getState().setWorkoutCheck(`${today}-${currentEx.id}`, true); } catch { /* noop */ }
+    }
     if (atBlockEnd) {
       setRestState(null);
     } else {
