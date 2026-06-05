@@ -194,7 +194,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
 
         {/* SECCIÓN 3 — Método de pago */}
         <section className="mps-section">
-          <h2 className="sh-heading">{t('managePlan.paymentMethod')}</h2>
+          <h2 className="sh-eyebrow">{t('managePlan.paymentMethod')}</h2>
           {pmLoading ? (
             <div className="mps-payment-method-card" style={{ opacity: 0.5 }}>
               <div className="mps-pm-brand" style={{ background: 'rgba(21,51,48,.08)', color: 'transparent' }}>••••</div>
@@ -226,7 +226,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
 
         {/* SECCIÓN 4 — Cambiar plan */}
         <section className="mps-section">
-          <h2 className="sh-heading">{t('managePlan.planSection')}</h2>
+          <h2 className="sh-eyebrow">{t('managePlan.planSection')}</h2>
           <div className="mps-plan-options">
             <div className={`mps-plan-card${currentCycle === 'monthly' ? ' mps-plan-card--selected' : ''}`}>
               {currentCycle === 'monthly' && <span className="mps-plan-tag">{t('managePlan.planCurrentBadge')}</span>}
@@ -280,7 +280,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
 
         {/* SECCIÓN 5 — Historial */}
         <section className="mps-section">
-          <h2 className="sh-heading">{t('managePlan.historyTitle')}</h2>
+          <h2 className="sh-eyebrow">{t('managePlan.historyTitle')}</h2>
           {history.length === 0 ? (
             <p className="mps-history-empty">
               {t('managePlan.historyEmpty')} {subscription?.cancelAtPeriodEnd
@@ -324,7 +324,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
 
         {/* SECCIÓN 7 — FAQ */}
         <section className="mps-section">
-          <h2 className="sh-heading">{t('managePlan.faqTitle')}</h2>
+          <h2 className="sh-eyebrow">{t('managePlan.faqTitle')}</h2>
           <div className="mps-faq">
             {FAQ_KEYS.map((item, i) => (
               <div key={i} className={`mps-faq-item${openFaq === i ? ' mps-faq-item--open' : ''}`}>

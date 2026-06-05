@@ -117,6 +117,20 @@
   letter-spacing: var(--tracking-kicker-loose);
 }
 
+/* Eyebrow moderno (igual que Ajustes): ámbar mayúsculas con barra dorada.
+   Para labels cortos de sección — NO para encabezados legales largos. */
+.sh-eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: var(--amber-deep, #7C6232);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding-left: 10px;
+  border-left: 3px solid var(--amber, #BFA065);
+}
+
 .sh-p {
   font-size: 0.9rem;
   line-height: 1.6;
