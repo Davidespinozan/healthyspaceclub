@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
 import CommentsSheet from './club/CommentsSheet';
 import { deleteClubPost } from '../utils/clubPosts';
+import { followUser, unfollowUser, isFollowing, getFollowCounts } from '../utils/follows';
 import { MILESTONE_STEPS } from '../constants/milestones';
 import { useT } from '../i18n';
 import './public-profile.css';
@@ -42,6 +43,9 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+  const [following, setFollowing] = useState(false);
+  const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
+  const [followBusy, setFollowBusy] = useState(false);
 
   function bumpCommentCount(postId: string, delta: number) {
     setPosts(p => p.map(post => post.id === postId
@@ -122,6 +126,34 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
     }
     load();
   }, [userId, currentUserId]);
+
+  // Estado de seguimiento + contadores.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const counts = await getFollowCounts(userId);
+      if (active) setFollowCounts(counts);
+      if (currentUserId && currentUserId !== userId) {
+        const f = await isFollowing(userId);
+        if (active) setFollowing(f);
+      }
+    })();
+    return () => { active = false; };
+  }, [userId, currentUserId]);
+
+  async function handleFollow() {
+    if (followBusy) return;
+    setFollowBusy(true);
+    const next = !following;
+    setFollowing(next);
+    setFollowCounts(c => ({ ...c, followers: Math.max(0, c.followers + (next ? 1 : -1)) }));
+    const ok = next ? await followUser(userId) : await unfollowUser(userId);
+    if (!ok) {
+      setFollowing(!next);
+      setFollowCounts(c => ({ ...c, followers: Math.max(0, c.followers + (next ? -1 : 1)) }));
+    }
+    setFollowBusy(false);
+  }
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -259,6 +291,21 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
                 </div>
                 {profile?.username && <p className="pp5-handle">@{profile.username}</p>}
                 {profile?.bio && <p className="pp5-bio">{profile.bio}</p>}
+                <p className="pp5-follow-counts">
+                  <strong>{followCounts.followers}</strong> {followCounts.followers === 1 ? t('profile.followerOne') : t('profile.followers')}
+                  {'  ·  '}
+                  <strong>{followCounts.following}</strong> {t('profile.followingLabel')}
+                </p>
+                {!isOwnProfile && (
+                  <button
+                    type="button"
+                    className={`pp5-follow-btn${following ? ' is-following' : ''}`}
+                    onClick={handleFollow}
+                    disabled={followBusy}
+                  >
+                    {following ? t('profile.following') : t('profile.follow')}
+                  </button>
+                )}
               </div>
             </div>
 

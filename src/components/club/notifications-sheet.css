@@ -106,6 +106,7 @@
 .nts-badge--collab { background: linear-gradient(135deg, #C75B3A, #A8472B); }
 .nts-badge--partner_invite { background: linear-gradient(135deg, #C75B3A, #A8472B); }
 .nts-badge--partner_accept { background: linear-gradient(135deg, #2EE06A, #1FA84E); }
+.nts-badge--follow { background: linear-gradient(135deg, #2E4A42, #153330); }
 
 .nts-body { flex: 1; min-width: 0; }
 .nts-text {

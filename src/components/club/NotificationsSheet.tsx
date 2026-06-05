@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
-import { X, Flame, MessageCircle, Users, UserPlus, Check } from 'lucide-react';
+import { X, Flame, MessageCircle, Users, UserPlus, Check, UserCheck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
@@ -33,6 +33,7 @@ function iconFor(type: AppNotification['type']) {
     case 'collab': return <Users size={15} strokeWidth={2} />;
     case 'partner_invite': return <UserPlus size={15} strokeWidth={2} />;
     case 'partner_accept': return <Check size={15} strokeWidth={2} />;
+    case 'follow': return <UserCheck size={15} strokeWidth={2} />;
   }
 }
 
@@ -43,6 +44,7 @@ function textFor(n: AppNotification, t: TFn): string {
     case 'collab': return t('notif.collab');
     case 'partner_invite': return t('notif.partnerInvite');
     case 'partner_accept': return t('notif.partnerAccept');
+    case 'follow': return t('notif.follow');
   }
 }
 

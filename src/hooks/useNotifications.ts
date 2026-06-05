@@ -6,7 +6,7 @@ export interface AppNotification {
   actor_id: string | null;
   actor_username: string | null;
   actor_avatar_url: string | null;
-  type: 'fire' | 'comment' | 'collab' | 'partner_invite' | 'partner_accept';
+  type: 'fire' | 'comment' | 'collab' | 'partner_invite' | 'partner_accept' | 'follow';
   post_id: string | null;
   preview: string | null;
   read: boolean;

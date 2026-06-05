@@ -4,6 +4,7 @@ import PostCard, { type ClubPost } from './club/PostCard';
 import CommentsSheet from './club/CommentsSheet';
 import NotificationsSheet from './club/NotificationsSheet';
 import { useNotifications } from '../hooks/useNotifications';
+import { getFollowingIds } from '../utils/follows';
 import { Bell } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -18,6 +19,8 @@ export default function TabClub() {
   const { t } = useT();
 
   const [posts, setPosts] = useState<ClubPost[]>([]);
+  const [feedMode, setFeedMode] = useState<'all' | 'following'>('all');
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [activeToday, setActiveToday] = useState(0);
   const [firedIds, setFiredIds] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
@@ -38,24 +41,37 @@ export default function TabClub() {
   }
 
   useEffect(() => {
-    fetchFeed();
     fetchActiveCount();
   }, []);
 
-  // Los fires del usuario se cargan cuando el userId está listo (antes corría
-  // con userId nulo en el primer render → se veían sin marcar al recargar).
+  // Los fires + a quién sigues se cargan cuando el userId está listo.
   useEffect(() => {
-    if (userId && userId !== 'anon') fetchUserFires();
+    if (userId && userId !== 'anon') {
+      fetchUserFires();
+      getFollowingIds().then(setFollowingIds).catch(() => {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  // El feed se recarga al cambiar de modo (Todos/Siguiendo) o tu lista de seguidos.
+  useEffect(() => {
+    fetchFeed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedMode, followingIds]);
+
   async function fetchFeed() {
     try {
-      const { data } = await supabase
+      let query = supabase
         .from('club_posts')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
+      if (feedMode === 'following') {
+        // Posts de quienes sigues + los tuyos. Sin seguidos → lista vacía.
+        const ids = [...followingIds, userId].filter(Boolean);
+        query = query.in('user_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
+      }
+      const { data } = await query;
       if (data) setPosts(data as ClubPost[]);
     } catch (e) {
       console.warn('[TabClub] fetchFeed failed:', e);
@@ -134,11 +150,32 @@ export default function TabClub() {
         </div>
       </div>
 
+      <div className="clb-feed-toggle" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          className={`clb-feed-tab${feedMode === 'all' ? ' is-active' : ''}`}
+          aria-selected={feedMode === 'all'}
+          onClick={() => setFeedMode('all')}
+        >
+          {t('club.feedAll')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className={`clb-feed-tab${feedMode === 'following' ? ' is-active' : ''}`}
+          aria-selected={feedMode === 'following'}
+          onClick={() => setFeedMode('following')}
+        >
+          {t('club.feedFollowing')}
+        </button>
+      </div>
+
       <section className="clb-feed">
         {posts.length === 0 && (
           <div className="clb-empty">
-            <p className="clb-empty-text">{t('club.emptyTitle')}</p>
-            <p className="clb-empty-sub">{t('club.emptySub')}</p>
+            <p className="clb-empty-text">{feedMode === 'following' ? t('club.followingEmpty') : t('club.emptyTitle')}</p>
+            <p className="clb-empty-sub">{feedMode === 'following' ? t('club.followingEmptySub') : t('club.emptySub')}</p>
           </div>
         )}
         {posts.map(post => (
