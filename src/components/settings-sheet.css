@@ -394,7 +394,6 @@
   background: var(--surface-glass-light);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--surface-glass-border);
-  border-left: 3px solid var(--amber, #BFA065);
   border-radius: 50px;
   color: var(--forest);
   font-family: 'Montserrat', sans-serif;
@@ -403,13 +402,13 @@
   cursor: pointer;
   letter-spacing: 0.02em;
   box-shadow: var(--shadow-pro-md);
-  transition: all 0.18s;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
   margin-bottom: 14px;
   -webkit-tap-highlight-color: transparent;
 }
 .ss-logout:hover {
   background: linear-gradient(135deg, rgba(199, 91, 58, 0.10), rgba(199, 91, 58, 0.04));
-  border-left-color: var(--terracota, #C75B3A);
+  border-color: rgba(199, 91, 58, 0.4);
   color: var(--terracota, #C75B3A);
 }
 
