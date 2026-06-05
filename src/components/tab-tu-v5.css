@@ -34,10 +34,11 @@
   overflow: hidden;
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.6);
-  /* Ring dorado vibrante */
+  /* Ring dorado vibrante: doble anillo + glow dorado */
   box-shadow:
-    0 0 0 3px rgba(191, 160, 101, 0.55),
-    var(--shadow-pro-xl);
+    0 0 0 3px #C9A968,
+    0 0 0 6px rgba(168, 134, 78, 0.22),
+    0 12px 32px rgba(168, 134, 78, 0.4);
   cursor: default;
 }
 /* Solo editable (modo editar) muestra que se puede cambiar la foto */
@@ -272,8 +273,21 @@ button.tt5-stat { cursor: pointer; }
 .tt5-stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-pro-2xl); }
 button.tt5-stat:active { transform: scale(0.97); }
 
-.tt5-stat--racha { box-shadow: 0 12px 24px rgba(199, 91, 58, 0.08); }
-.tt5-stat--logros { box-shadow: 0 12px 24px rgba(124, 98, 50, 0.08); }
+/* Tinte de gradiente vibrante por stat — más color, mismo aire premium. */
+.tt5-stat--posts {
+  background: linear-gradient(165deg, rgba(46, 74, 66, 0.12), var(--surface-glass-light) 70%);
+  border-color: rgba(46, 74, 66, 0.2);
+}
+.tt5-stat--racha {
+  background: linear-gradient(165deg, rgba(199, 91, 58, 0.16), var(--surface-glass-light) 70%);
+  border-color: rgba(199, 91, 58, 0.28);
+  box-shadow: 0 12px 26px rgba(199, 91, 58, 0.14);
+}
+.tt5-stat--logros {
+  background: linear-gradient(165deg, rgba(201, 169, 104, 0.18), var(--surface-glass-light) 70%);
+  border-color: rgba(168, 134, 78, 0.3);
+  box-shadow: 0 12px 26px rgba(168, 134, 78, 0.14);
+}
 
 .tt5-stat-label {
   font-family: 'Montserrat', sans-serif;
@@ -292,7 +306,7 @@ button.tt5-stat:active { transform: scale(0.97); }
   font-size: 26px;
   line-height: 1;
   color: var(--forest);
-  font-weight: 400;
+  font-weight: 800;
   letter-spacing: var(--tracking-tightest);
 }
 .tt5-stat--racha .tt5-stat-num {
