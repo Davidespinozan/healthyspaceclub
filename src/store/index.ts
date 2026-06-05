@@ -434,12 +434,15 @@ export const useAppStore = create<AppState>()(
     // Bienestar integral → maintenance (tdee as-is)
 
     const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    const startDateStr = new Date().toISOString().split('T')[0];
 
+    // NO seteamos startDate en el store aquí: App.tsx redirige onboarding→dashboard
+    // en cuanto startDate existe, lo que se saltaba la pantalla de resultado.
+    // startDate se setea al tocar "Entrar a mi espacio" (finishOnboarding).
     set({
       mealPlanKey: planKey,
       tdee,
       planGoal,
-      startDate: new Date().toISOString().split('T')[0],
       userPlan: 'trial',
       trialEndsAt,
     });
@@ -453,7 +456,7 @@ export const useAppStore = create<AppState>()(
           user_id: user.id,
           display_name: state.userName,
           ob_data: state.obData,
-          start_date: state.startDate,
+          start_date: startDateStr,
           tdee: state.tdee,
           plan_goal: state.planGoal,
           meal_plan_key: state.mealPlanKey,
@@ -467,10 +470,12 @@ export const useAppStore = create<AppState>()(
     }
   },
 
-  // Navigate to dashboard (called when user taps "Entrar a mi espacio")
+  // Navigate to dashboard (called when user taps "Entrar a mi espacio").
+  // Aquí sí seteamos startDate — ya pasó la pantalla de resultado.
   finishOnboarding: () => {
     set({
       currentScreen: 'dashboard',
+      startDate: get().startDate || new Date().toISOString().split('T')[0],
       obStep: 1,
       activeModal: null,
     });
