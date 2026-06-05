@@ -187,7 +187,8 @@ async function generateWeeklyPlan(params: {
 
   try {
     const data = await callAI(
-      { max_tokens: 1200, messages: [{ role: 'user', content: prompt }] },
+      // 2000 (antes 1200) para que la lista de compras + nota no corte el JSON.
+      { max_tokens: 2000, messages: [{ role: 'user', content: prompt }] },
       controller.signal,
     );
     const raw = data.content?.[0]?.text ?? '{}';

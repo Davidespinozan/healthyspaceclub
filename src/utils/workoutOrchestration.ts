@@ -87,7 +87,10 @@ export async function orchestrateWorkout(params: {
 
   try {
     const data = await callAI(
-      { max_tokens: 1200, messages: [{ role: 'user', content: prompt }] },
+      // 1200 era muy bajo: con 7-9 ejercicios + tips, y en pareja con reps/tip
+      // del compañero, la respuesta se cortaba → JSON inválido ("unterminated
+      // string"). 3000 da margen suficiente.
+      { max_tokens: 3000, messages: [{ role: 'user', content: prompt }] },
       controller.signal,
     );
     const raw = data.content?.[0]?.text ?? '{}';
