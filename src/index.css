@@ -5681,17 +5681,30 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .coach-fab {
   position: fixed; z-index: 200;
   bottom: 90px; right: 16px;
-  width: 52px; height: 52px; border-radius: 50%;
-  background: var(--forest); color: var(--cream);
-  border: 2px solid var(--amber);
+  width: 56px; height: 56px; border-radius: 50%;
+  /* Gradiente dorado vibrante + glow (sistema actual) */
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  color: #fff;
+  border: none;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; box-shadow: 0 4px 20px rgba(21,51,48,.3);
-  transition: all .2s;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(168, 134, 78, 0.42), 0 2px 8px rgba(21, 51, 48, 0.2);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .2s var(--ease-out-soft, ease), box-shadow .2s ease, filter .2s ease, background .2s ease;
 }
-.coach-fab:hover { transform: scale(1.05); }
-.coach-fab.open { background: var(--amber); color: var(--forest); border-color: var(--forest); }
-.coach-fab svg { color: var(--cream); }
-.coach-fab-x { font-size: 1.1rem; font-weight: 700; }
+.coach-fab:hover {
+  transform: translateY(-2px) scale(1.04);
+  filter: brightness(1.05);
+  box-shadow: 0 12px 30px rgba(168, 134, 78, 0.52), 0 2px 8px rgba(21, 51, 48, 0.2);
+}
+.coach-fab:active { transform: scale(0.96); }
+.coach-fab svg { color: #fff; }
+/* Abierto = forest oscuro con la X (modo "cerrar") */
+.coach-fab.open {
+  background: linear-gradient(135deg, #2E4A42, #153330);
+  box-shadow: 0 8px 24px rgba(21, 51, 48, 0.4);
+}
+.coach-fab.open svg { color: #fff; }
 
 .coach-overlay {
   position: fixed;

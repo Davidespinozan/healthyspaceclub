@@ -1,5 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
-import { Home, User, MessageCircle, Users, AlertCircle } from 'lucide-react';
+import { Home, User, MessageCircle, Users, AlertCircle, X } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import type { DashPage } from '../types';
@@ -119,8 +119,8 @@ export default function DashboardScreen() {
         onClick={() => setCoachOpen(!coachOpen)}
       >
         {coachOpen
-          ? <span className="coach-fab-x">✕</span>
-          : <MessageCircle size={22} strokeWidth={2} />
+          ? <X size={23} strokeWidth={2.5} />
+          : <MessageCircle size={23} strokeWidth={2} />
         }
       </button>
 
