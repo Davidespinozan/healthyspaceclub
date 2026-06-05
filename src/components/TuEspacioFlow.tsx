@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { callAI } from '../utils/aiProxy';
@@ -144,7 +144,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
             'radial-gradient(120% 90% at 12% 0%, #2E4A42 0%, transparent 55%), radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%), linear-gradient(155deg, #153330 0%, #1b3c37 52%, #102a27 100%)',
         }}
       >
-        <div className="te-flow-close" onClick={onClose}>✕</div>
+        <button className="te-flow-close" onClick={onClose} aria-label={t('common.close')} type="button"><X size={18} strokeWidth={2} /></button>
         <div className="te-complete">
           <div className="te-complete-check"><Sparkles size={26} strokeWidth={1.8} /></div>
           <div className="te-complete-title">{t('hoy.reviewCompleteTitle')}</div>
