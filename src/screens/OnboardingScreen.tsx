@@ -191,7 +191,7 @@ export default function OnboardingScreen() {
       {step === 1 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
           <div className="onb-center">
-            <div className="onb-brand">Healthy Space</div>
+            <div className="onb-brand">Healthy Space Club</div>
             <div className="onb-brand-sub">{t('onboarding.brandSub')}</div>
             <button className="onb-btn-gold" onClick={goNext}>{t('onboarding.start')}</button>
           </div>

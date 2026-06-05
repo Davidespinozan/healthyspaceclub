@@ -255,7 +255,7 @@ export const en: Translations<typeof es> = {
     retry: 'Retry',
   },
   onboarding: {
-    brandSub: 'Your coach for life, nutrition and personal growth',
+    brandSub: 'Training and nutrition, powered by AI. Your space to follow through.',
     start: 'Start my journey',
     createAccount: 'Create your account',
     createAccountHint: 'To save your progress across devices',

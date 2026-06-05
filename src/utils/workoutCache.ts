@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 2, // v2: foco específico filtra solo por músculo primario (invalida caché previo)
+  workout: 3, // v3: orden agrupado en días enfocados (push/pull/legs) vs alternar en full body
 } as const;
 
 export interface CachedWorkout {

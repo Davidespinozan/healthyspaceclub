@@ -254,7 +254,7 @@ export const es = {
     retry: 'Reintentar',
   },
   onboarding: {
-    brandSub: 'Tu coach de vida, nutrición y crecimiento personal',
+    brandSub: 'Entrenamiento y nutrición con IA. Tu espacio para cumplir.',
     start: 'Comenzar mi proceso',
     createAccount: 'Crea tu cuenta',
     createAccountHint: 'Para guardar tu progreso entre dispositivos',

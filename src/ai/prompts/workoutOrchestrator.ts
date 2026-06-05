@@ -48,13 +48,19 @@ PARÁMETROS:
 - ${p.intensityInstruction}
 
 ORDEN DE EJERCICIOS (crítico — la secuencia debe ser inteligente, no aleatoria):
-- Compuestos pesados y los movimientos más técnicos PRIMERO (más energía al inicio); aislamiento después; core/abdominales al FINAL.
-- FULL BODY: alterna patrones para no fatigar el mismo músculo seguido. Intercala tren inferior ↔ superior y empuje ↔ tracción. NO encadenes 3 o más ejercicios del mismo grupo o patrón seguidos. Distribuye, no agrupes.
-  · MAL: pierna, upper, upper, upper, upper, upper, full-body.
-  · BIEN: pierna (compuesto), empuje, tracción, pierna, empuje, tracción, core.
-- SPLIT (push/pull/legs/upper/lower): el compuesto principal primero, luego los accesorios del mismo enfoque de mayor a menor demanda, aislamiento y core al final.
-- Nunca pongas el mismo patrón de movimiento dos veces seguidas si puedes alternarlo.
-- Si el día abarca VARIOS músculos (ej. "Bíceps + Tríceps"), REPARTE los ejercicios de forma pareja entre ellos — no satures uno solo. Con 2 músculos, ~mitad y mitad.
+- Regla base: compuestos pesados y los movimientos más técnicos PRIMERO (más energía al inicio); aislamiento después; core/abdominales al FINAL.
+
+- DÍA ENFOCADO (push, pull, legs, upper, lower, o músculos específicos): AGRUPA con lógica, NO alternes al azar. Ordena por prioridad muscular: el músculo/movimiento más grande y pesado primero, luego accesorios de mayor a menor demanda, y el músculo asistente pequeño AL FINAL.
+  · PUSH: pecho compuesto (press) → press de hombro → aislamiento de pecho/hombro (aperturas, pec deck, elevaciones) → TRÍCEPS al final.
+  · PULL: espalda compuesto (jalón/remo) → accesorios de espalda → BÍCEPS al final.
+  · LEGS: sentadilla/peso muerto → accesorios → aislamiento (extensiones, curl femoral, pantorrillas).
+  · MAL (revuelto): pecho, hombro, pecho, hombro, pecho, tríceps, pecho.
+  · BIEN (agrupado): pecho, pecho, hombro, aislamiento pecho, aislamiento hombro, tríceps.
+
+- FULL BODY: aquí SÍ alterna — intercala tren inferior ↔ superior y empuje ↔ tracción para no fatigar el mismo músculo seguido. No encadenes 3+ del mismo grupo. Distribuye.
+  · BIEN (full body): pierna, empuje, tracción, pierna, empuje, tracción, core.
+
+- Si el foco son VARIOS músculos específicos (ej. "Bíceps + Tríceps"): repártelos parejo pero AGRUPADOS por músculo (bloque de uno, luego el otro), no intercalados ejercicio por ejercicio.
 
 ${getVoiceRules(locale, 'default')}
 
@@ -62,7 +68,7 @@ Los campos "note" y "razon" del JSON se muestran AL USUARIO directamente —
 deben hablarle en 2da persona (tú/te/tu), sin usar su nombre, sin "el usuario".
 
 TAREA:
-1. Selecciona exactamente ${p.targetCount} IDs de la lista y ORDÉNALOS aplicando las reglas de "ORDEN DE EJERCICIOS" de arriba (variedad + secuencia inteligente, intercalando músculos).
+1. Selecciona exactamente ${p.targetCount} IDs de la lista y ORDÉNALOS aplicando las reglas de "ORDEN DE EJERCICIOS" de arriba (agrupar con lógica en días enfocados; alternar SOLO en full body).
 2. Ajusta sets/reps/rest según el goal (fuerza: reps bajas 4-6, descansos 120s; hipertrofia: 8-12 reps, 60-90s; condicion: circuito 15+ reps, 30-45s; movilidad: tiempos largos).
 3. Escribe tip_personalizado breve (máx 15 palabras) por ejercicio, dirigido al usuario en 2da persona.
 4. Escribe warmup y cooldown breves (1 oración cada uno), en 2da persona.
