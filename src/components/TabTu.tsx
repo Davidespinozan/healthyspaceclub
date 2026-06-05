@@ -24,7 +24,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   const { t, locale } = useT();
   const {
     userName, setUserName, streakCount, startDate, userMilestones,
-    dailyHSMResponses,
+    dailyHSMResponses, username,
   } = useAppStore();
   const reflections = useMemo(() => [...dailyHSMResponses].reverse(), [dailyHSMResponses]);
 
@@ -170,6 +170,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
                 <Menu size={16} strokeWidth={1.6} />
               </button>
             </div>
+            {username && <p className="tt5-handle">@{username}</p>}
             {profile.bio && <p className="tt5-bio">{profile.bio}</p>}
             <span className="tt5-year-chip">{t('profile.yearDayChip', { year: yearNumber, day: dayOfYear })}</span>
           </div>

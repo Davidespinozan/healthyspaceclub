@@ -7,6 +7,7 @@ import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n/es';
 import ManagePlanSheet from './sheets/ManagePlanSheet';
 import EditDataSheet from './sheets/EditDataSheet';
+import UsernameSetupSheet from './UsernameSetupSheet';
 import TermsSheet from './sheets/TermsSheet';
 import PrivacySheet from './sheets/PrivacySheet';
 import './settings-sheet.css';
@@ -42,8 +43,10 @@ export default function SettingsSheet({ open, onClose }: Props) {
   const setLanguage = useAppStore(s => s.setLanguage);
   const { t } = useT();
 
+  const username = useAppStore(s => s.username);
   const [showManagePlan, setShowManagePlan] = useState(false);
   const [showEditData, setShowEditData] = useState(false);
+  const [showUsernameEdit, setShowUsernameEdit] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
 
@@ -227,7 +230,18 @@ export default function SettingsSheet({ open, onClose }: Props) {
               <span className="ss-data-key">{t('settings.email')}</span>
               <span className="ss-data-val">{user?.email ?? '—'}</span>
             </div>
+            <div className="ss-data-row">
+              <span className="ss-data-key">{t('settings.username')}</span>
+              <span className="ss-data-val">{username ? `@${username}` : '—'}</span>
+            </div>
           </div>
+          <button
+            type="button"
+            className="ss-data-edit"
+            onClick={() => setShowUsernameEdit(true)}
+          >
+            {username ? t('settings.changeUsername') : t('settings.chooseUsername')}
+          </button>
           {!showPwForm ? (
             <button
               type="button"
@@ -332,6 +346,13 @@ export default function SettingsSheet({ open, onClose }: Props) {
 
       {showManagePlan && <ManagePlanSheet onClose={() => setShowManagePlan(false)} />}
       {showEditData && <EditDataSheet onClose={() => setShowEditData(false)} />}
+      {showUsernameEdit && (
+        <UsernameSetupSheet
+          initialHandle={username}
+          onClose={() => setShowUsernameEdit(false)}
+          onDone={() => setShowUsernameEdit(false)}
+        />
+      )}
       {showTerms && <TermsSheet onClose={() => setShowTerms(false)} />}
       {showPrivacy && <PrivacySheet onClose={() => setShowPrivacy(false)} />}
     </div>,

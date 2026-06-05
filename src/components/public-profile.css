@@ -145,6 +145,15 @@
   text-overflow: ellipsis;
 }
 
+.pp5-handle {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #A8864E;
+  letter-spacing: 0.01em;
+  margin: 2px 0 7px;
+}
+
 .pp5-bio {
   font-family: 'Montserrat', sans-serif;
   font-size: 14px;

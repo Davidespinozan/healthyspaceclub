@@ -9,6 +9,7 @@ import './public-profile.css';
 
 interface ProfileData {
   display_name: string;
+  username?: string | null;
   bio: string;
   avatar_url: string;
   created_at?: string;
@@ -66,7 +67,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
         const [profileRes, postsRes, milestonesRes] = await Promise.all([
           supabase
             .from('user_profiles')
-            .select('display_name, bio, avatar_url, created_at, start_date, streak_count')
+            .select('display_name, username, bio, avatar_url, created_at, start_date, streak_count')
             .eq('user_id', userId)
             .maybeSingle(),
           supabase
@@ -253,6 +254,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
                     </button>
                   </div>
                 </div>
+                {profile?.username && <p className="pp5-handle">@{profile.username}</p>}
                 {profile?.bio && <p className="pp5-bio">{profile.bio}</p>}
                 <span className="pp5-year-chip">{t('profile.yearDayChip', { year: yearN, day: dayN })}</span>
               </div>

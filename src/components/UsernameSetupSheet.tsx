@@ -22,16 +22,18 @@ interface Props {
   /** Se dispara tras reclamar el handle con éxito. */
   onDone: () => void;
   onClose: () => void;
+  /** Si se pasa, el sheet edita ese handle (pre-llenado) en vez de sugerir uno. */
+  initialHandle?: string | null;
 }
 
 type Status = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
-export default function UsernameSetupSheet({ onDone, onClose }: Props) {
+export default function UsernameSetupSheet({ onDone, onClose, initialHandle }: Props) {
   const { t } = useT();
   const userName = useAppStore(s => s.userName);
   const setUsername = useAppStore(s => s.setUsername);
 
-  const [handle, setHandle] = useState(() => suggestUsername(userName));
+  const [handle, setHandle] = useState(() => initialHandle || suggestUsername(userName));
   const [status, setStatus] = useState<Status>('idle');
   const [submitting, setSubmitting] = useState(false);
 

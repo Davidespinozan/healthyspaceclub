@@ -48,7 +48,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     lastStreakMilestone, setLastStreakMilestone,
     hsmProfile, setHSMProfile,
     userPlan, trialEndsAt,
-    avatarUrl,
+    avatarUrl, username,
   } = useAppStore();
 
   const isPlanActive = userPlan && userPlan !== 'none' &&
@@ -387,6 +387,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           <Logo variant="icon" size={34} className="th3-hero-datebar-icon" />
         </div>
         <h1 className="th3-headline">{firstName ? `${heroGreeting}, ${firstName}.` : `${heroGreeting}.`}</h1>
+        {username && <p className="th3-handle">@{username}</p>}
         <p className="th3-subhead">{heroSubhead}</p>
 
         <div className="th3-divider" />
