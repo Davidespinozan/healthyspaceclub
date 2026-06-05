@@ -1254,7 +1254,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 
 /* Progress bar */
 .onb-progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: #E8E1D3; z-index: 10; }
-.onb-progress-fill { height: 100%; background: #BFA065; transition: width .4s ease; }
+.onb-progress-fill { height: 100%; background: linear-gradient(90deg, #C9A968, #A8864E); transition: width .4s ease; }
 
 /* Back button */
 .onb-back {
@@ -1297,10 +1297,12 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 /* Buttons */
 .onb-btn-gold {
   width: 100%; max-width: 320px; padding: 16px 24px; border: none; border-radius: 50px;
-  background: #BFA065; color: #153330; font-size: .95rem; font-weight: 700;
+  background: var(--grad-amber); color: #fff; font-size: .95rem; font-weight: 700;
   cursor: pointer; transition: all .2s; font-family: inherit;
+  box-shadow: var(--glow-amber);
 }
-.onb-btn-gold:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(191,160,101,.35); }
+.onb-btn-gold:hover { transform: translateY(-2px); box-shadow: 0 16px 32px rgba(168,134,78,.4); filter: brightness(1.03); }
+.onb-btn-gold:active { transform: scale(.98); }
 .onb-btn-gold:disabled { opacity: .25; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* Inline error message (signup step) */
@@ -1333,29 +1335,60 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 /* Sex selection cards */
 .onb-cards-row { display: flex; gap: 12px; width: 100%; max-width: 320px; }
 .onb-card-select {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 24px 16px; border-radius: 16px; cursor: pointer;
-  border: 2px solid #E8E1D3; background: #fff; transition: all .2s;
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 22px 16px; border-radius: 18px; cursor: pointer;
+  border: 1.5px solid var(--sand);
+  background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
+  box-shadow: var(--shadow-pro-md), inset 0 1px 0 rgba(255,255,255,.9);
+  transition: transform .2s var(--ease-out-soft), border-color .2s, box-shadow .2s, background .2s;
+  animation: riseIn .4s var(--ease-out-soft) backwards;
+  -webkit-tap-highlight-color: transparent;
 }
-.onb-card-select:hover { border-color: #153330; }
-.onb-card-select.selected { background: #153330; border-color: #153330; }
+.onb-card-select:hover { transform: translateY(-2px); border-color: var(--amber); box-shadow: var(--shadow-pro-lg), inset 0 1px 0 rgba(255,255,255,.9); }
+.onb-card-select:active { transform: scale(.98); }
+.onb-card-select.selected { background: linear-gradient(155deg, #153330, #1b3c37); border-color: var(--amber); }
 .onb-card-select.selected .onb-card-label { color: #F6F2EA; }
-.onb-card-emoji { font-size: 2rem; }
+
+/* Medallón de ícono (sexo + objetivo + actividad) — reemplaza el emoji */
+.onb-card-icon {
+  width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(191,160,101,.22), rgba(168,134,78,.14));
+  color: var(--amber-deep);
+}
+.onb-card-select.selected .onb-card-icon,
+.onb-card-option.selected .onb-card-icon {
+  background: var(--grad-amber);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(168,134,78,.3);
+}
 .onb-card-label { font-size: .9rem; font-weight: 700; color: #153330; }
+
+@media (prefers-reduced-motion: reduce) {
+  .onb-card-select, .onb-card-option { animation: none; }
+}
 
 /* Goal / Activity option cards */
 .onb-cards-col { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 420px; }
 .onb-card-option {
-  display: flex; align-items: center; gap: 14px; padding: 16px 18px;
-  border-radius: 14px; border: 2px solid #E8E1D3; background: #fff;
-  cursor: pointer; transition: all .2s; text-align: left;
-  min-height: 52px;
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+  border-radius: var(--radius-lg); border: 1.5px solid var(--sand);
+  background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
+  box-shadow: var(--shadow-pro-md), inset 0 1px 0 rgba(255,255,255,.9);
+  cursor: pointer; text-align: left; min-height: 52px;
+  transition: transform .2s var(--ease-out-soft), border-color .2s, box-shadow .2s, background .2s;
+  animation: riseIn .4s var(--ease-out-soft) backwards;
+  -webkit-tap-highlight-color: transparent;
 }
-.onb-card-option:hover { border-color: #153330; }
-.onb-card-option.selected { background: #153330; border-color: #153330; }
+.onb-card-option:nth-child(1) { animation-delay: .04s; }
+.onb-card-option:nth-child(2) { animation-delay: .09s; }
+.onb-card-option:nth-child(3) { animation-delay: .14s; }
+.onb-card-option:nth-child(4) { animation-delay: .19s; }
+.onb-card-option:hover { transform: translateY(-2px); border-color: var(--amber); box-shadow: var(--shadow-pro-lg), inset 0 1px 0 rgba(255,255,255,.9); }
+.onb-card-option:active { transform: scale(.99); }
+.onb-card-option.selected { background: linear-gradient(155deg, #153330, #1b3c37); border-color: var(--amber); }
 .onb-card-option.selected .onb-card-title { color: #F6F2EA; }
-.onb-card-option.selected .onb-card-desc { color: rgba(246,242,234,.5); }
-.onb-card-option.selected .onb-card-emoji { filter: none; }
+.onb-card-option.selected .onb-card-desc { color: rgba(246,242,234,.55); }
 .onb-card-title { font-size: .88rem; font-weight: 700; color: #153330; }
 .onb-card-desc { font-size: .75rem; color: rgba(21,51,48,.5); margin-top: 1px; }
 
@@ -1383,9 +1416,14 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 /* Result screen */
 .onb-result-title { font-size: 1.6rem; font-weight: 800; color: #F6F2EA; margin-bottom: 24px; }
 .onb-result-card {
-  background: rgba(246,242,234,.08); border: 1px solid rgba(191,160,101,.3);
-  border-radius: 20px; padding: 28px 24px; width: 100%; max-width: 320px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(191,160,101,.12) 0%, transparent 60%),
+    rgba(246,242,234,.08);
+  border: 1px solid rgba(191,160,101,.4);
+  border-radius: var(--radius-xl, 22px); padding: 30px 24px; width: 100%; max-width: 320px;
   margin-bottom: 32px;
+  box-shadow: 0 16px 40px rgba(168,134,78,.18), inset 0 1px 0 rgba(255,255,255,.06);
+  animation: riseIn .5s var(--ease-out-soft) backwards; animation-delay: .12s;
 }
 .onb-result-kcal { font-size: 2.4rem; font-weight: 800; color: #BFA065; line-height: 1; margin-bottom: 4px; }
 .onb-result-kcal span { font-size: .9rem; font-weight: 500; color: rgba(246,242,234,.4); }

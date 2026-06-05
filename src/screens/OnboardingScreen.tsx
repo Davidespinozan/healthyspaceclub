@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity } from 'lucide-react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
@@ -256,7 +256,7 @@ export default function OnboardingScreen() {
                   className={`onb-card-select${sex === s ? ' selected' : ''}`}
                   onClick={() => { setSex(s); setTimeout(goNext, 200); }}
                 >
-                  <span className="onb-card-emoji">{s === 'Hombre' ? '🙋‍♂️' : '🙋‍♀️'}</span>
+                  <span className="onb-card-icon">{s === 'Hombre' ? <User size={24} strokeWidth={1.8} /> : <UserRound size={24} strokeWidth={1.8} />}</span>
                   <span className="onb-card-label">{t(s === 'Hombre' ? 'onboarding.sexMale' : 'onboarding.sexFemale')}</span>
                 </div>
               ))}
@@ -272,17 +272,17 @@ export default function OnboardingScreen() {
             <h2 className="onb-question">{t('onboarding.goalQuestion')}</h2>
             <div className="onb-cards-col">
               {([
-                { id: 'Ganar músculo', emoji: '💪', titleKey: 'onboarding.goalGain', descKey: 'onboarding.goalGainDesc' },
-                { id: 'Bajar grasa', emoji: '🔥', titleKey: 'onboarding.goalLose', descKey: 'onboarding.goalLoseDesc' },
-                { id: 'Recomposición', emoji: '⚡', titleKey: 'onboarding.goalRecomp', descKey: 'onboarding.goalRecompDesc' },
-                { id: 'Bienestar integral', emoji: '🧘', titleKey: 'onboarding.goalWellness', descKey: 'onboarding.goalWellnessDesc' },
+                { id: 'Ganar músculo', icon: Dumbbell, titleKey: 'onboarding.goalGain', descKey: 'onboarding.goalGainDesc' },
+                { id: 'Bajar grasa', icon: Flame, titleKey: 'onboarding.goalLose', descKey: 'onboarding.goalLoseDesc' },
+                { id: 'Recomposición', icon: Zap, titleKey: 'onboarding.goalRecomp', descKey: 'onboarding.goalRecompDesc' },
+                { id: 'Bienestar integral', icon: Flower2, titleKey: 'onboarding.goalWellness', descKey: 'onboarding.goalWellnessDesc' },
               ] as const).map(o => (
                 <div
                   key={o.id}
                   className={`onb-card-option${goal === o.id ? ' selected' : ''}`}
                   onClick={() => { setGoal(o.id); setTimeout(goNext, 200); }}
                 >
-                  <span className="onb-card-emoji">{o.emoji}</span>
+                  <span className="onb-card-icon"><o.icon size={22} strokeWidth={1.7} /></span>
                   <div>
                     <div className="onb-card-title">{t(o.titleKey)}</div>
                     <div className="onb-card-desc">{t(o.descKey)}</div>
@@ -332,17 +332,17 @@ export default function OnboardingScreen() {
             <h2 className="onb-question">{t('onboarding.activityQuestion')}</h2>
             <div className="onb-cards-col">
               {([
-                { id: 'Sedentaria', emoji: '🛋', titleKey: 'onboarding.actSed', descKey: 'onboarding.actSedDesc' },
-                { id: 'Ligera', emoji: '🚶', titleKey: 'onboarding.actLight', descKey: 'onboarding.actLightDesc' },
-                { id: 'Moderada', emoji: '🏃', titleKey: 'onboarding.actMod', descKey: 'onboarding.actModDesc' },
-                { id: 'Alta', emoji: '🏋', titleKey: 'onboarding.actHigh', descKey: 'onboarding.actHighDesc' },
+                { id: 'Sedentaria', icon: Sofa, titleKey: 'onboarding.actSed', descKey: 'onboarding.actSedDesc' },
+                { id: 'Ligera', icon: Footprints, titleKey: 'onboarding.actLight', descKey: 'onboarding.actLightDesc' },
+                { id: 'Moderada', icon: Activity, titleKey: 'onboarding.actMod', descKey: 'onboarding.actModDesc' },
+                { id: 'Alta', icon: Dumbbell, titleKey: 'onboarding.actHigh', descKey: 'onboarding.actHighDesc' },
               ] as const).map(o => (
                 <div
                   key={o.id}
                   className={`onb-card-option${activity === o.id ? ' selected' : ''}`}
                   onClick={() => { setActivity(o.id); setTimeout(goNext, 200); }}
                 >
-                  <span className="onb-card-emoji">{o.emoji}</span>
+                  <span className="onb-card-icon"><o.icon size={22} strokeWidth={1.7} /></span>
                   <div>
                     <div className="onb-card-title">{t(o.titleKey)}</div>
                     <div className="onb-card-desc">{t(o.descKey)}</div>
