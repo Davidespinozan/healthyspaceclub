@@ -23,7 +23,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   void _onNav;
   const { t, locale } = useT();
   const {
-    userName, setUserName, streakCount, startDate, userMilestones,
+    userName, setUserName, streakCount, userMilestones,
     dailyHSMResponses, username,
   } = useAppStore();
   const reflections = useMemo(() => [...dailyHSMResponses].reverse(), [dailyHSMResponses]);
@@ -42,11 +42,6 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   const [profileOpen, setProfileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'reflexiones'>('posts');
 
-  const { yearNumber, dayOfYear } = useMemo(() => {
-    const start = startDate ? new Date(startDate).getTime() : Date.now();
-    const days = Math.max(0, Math.floor((Date.now() - start) / 86400000));
-    return { yearNumber: Math.floor(days / 365) + 1, dayOfYear: (days % 365) + 1 };
-  }, [startDate]);
 
   const achievementsCount = useMemo(
     () => getAchievementsCount(streakCount),
@@ -172,7 +167,6 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
             </div>
             {username && <p className="tt5-handle">@{username}</p>}
             {profile.bio && <p className="tt5-bio">{profile.bio}</p>}
-            <span className="tt5-year-chip">{t('profile.yearDayChip', { year: yearNumber, day: dayOfYear })}</span>
           </div>
         ) : (
           <div className="tt5-edit-block">

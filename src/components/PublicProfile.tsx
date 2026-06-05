@@ -180,15 +180,6 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
     }
   }
 
-  const { yearN, dayN } = useMemo(() => {
-    const start = profile?.start_date
-      ? new Date(profile.start_date).getTime()
-      : profile?.created_at
-        ? new Date(profile.created_at).getTime()
-        : Date.now();
-    const days = Math.max(0, Math.floor((Date.now() - start) / 86400000));
-    return { yearN: Math.floor(days / 365) + 1, dayN: (days % 365) + 1 };
-  }, [profile?.start_date, profile?.created_at]);
 
   const unlockedSet = useMemo(
     () => new Set(milestones.map(m => m.milestone_days)),
@@ -256,7 +247,6 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
                 </div>
                 {profile?.username && <p className="pp5-handle">@{profile.username}</p>}
                 {profile?.bio && <p className="pp5-bio">{profile.bio}</p>}
-                <span className="pp5-year-chip">{t('profile.yearDayChip', { year: yearN, day: dayN })}</span>
               </div>
             </div>
 
