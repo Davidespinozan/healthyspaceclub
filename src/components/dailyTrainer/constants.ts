@@ -6,12 +6,53 @@
 import {
   Bot, Dumbbell, Flower2, Activity, PersonStanding, Cable,
   Footprints, AlertTriangle, Bandage, CircleCheck,
+  Flame, Calendar, Sprout, SlidersHorizontal,
   type LucideIcon,
 } from 'lucide-react';
-import type { Equipment, Modality } from '../../types';
+import type { Equipment, Modality, MuscleGroup } from '../../types';
 import type { TranslationKey } from '../../i18n/es';
 
 export type WizardPhase = 'modality' | 'physical' | 'logistics';
+
+// Foco de fuerza: auto (coach decide), split preset, o "específico" (multi-select
+// de músculos). Los presets mapean a DAY_TYPE_CONFIG de workoutPlanner.
+export type FocusValue = 'auto' | 'push' | 'pull' | 'legs' | 'upper' | 'lower' | 'full-body' | 'specific';
+
+export const FOCUS_OPTIONS: Array<{ value: FocusValue; labelKey: TranslationKey; icon: LucideIcon }> = [
+  { value: 'auto', labelKey: 'wizard.focusAuto', icon: Bot },
+  { value: 'full-body', labelKey: 'wizard.focusFull', icon: PersonStanding },
+  { value: 'upper', labelKey: 'wizard.focusUpper', icon: Dumbbell },
+  { value: 'lower', labelKey: 'wizard.focusLower', icon: PersonStanding },
+  { value: 'push', labelKey: 'wizard.focusPush', icon: Dumbbell },
+  { value: 'pull', labelKey: 'wizard.focusPull', icon: Dumbbell },
+  { value: 'legs', labelKey: 'wizard.focusLegs', icon: PersonStanding },
+  { value: 'specific', labelKey: 'wizard.focusSpecific', icon: SlidersHorizontal },
+];
+
+// Músculos individuales para el modo "específico" (multi-select). Excluye
+// cardio/cuerpo-completo (no son músculos a aislar). value = MuscleGroup interno.
+export const MUSCLE_OPTIONS: Array<{ value: MuscleGroup; labelKey: TranslationKey }> = [
+  { value: 'pecho', labelKey: 'wizard.musclePecho' },
+  { value: 'espalda', labelKey: 'wizard.muscleEspalda' },
+  { value: 'hombros', labelKey: 'wizard.muscleHombros' },
+  { value: 'biceps', labelKey: 'wizard.muscleBiceps' },
+  { value: 'triceps', labelKey: 'wizard.muscleTriceps' },
+  { value: 'cuadriceps', labelKey: 'wizard.muscleCuadriceps' },
+  { value: 'isquios', labelKey: 'wizard.muscleIsquios' },
+  { value: 'gluteo', labelKey: 'wizard.muscleGluteo' },
+  { value: 'pantorrillas', labelKey: 'wizard.musclePantorrillas' },
+  { value: 'core', labelKey: 'wizard.muscleCore' },
+];
+
+// "¿Cuándo entrenaste por última vez?" — solo se pregunta cuando el sistema
+// no tiene historial propio (usuario nuevo). Mapea a restDays vía
+// restDaysFromLastTrained (workoutPlanner).
+export const LAST_TRAINED_OPTIONS: Array<{ value: string; labelKey: TranslationKey; icon: LucideIcon }> = [
+  { value: 'recent', labelKey: 'wizard.lastRecent', icon: Flame },
+  { value: 'few', labelKey: 'wizard.lastFew', icon: Footprints },
+  { value: 'week', labelKey: 'wizard.lastWeek', icon: Calendar },
+  { value: 'long', labelKey: 'wizard.lastLong', icon: Sprout },
+];
 
 // `label`/`sub` (español) se mantienen: el padre los usa como CONTEXTO del
 // prompt de IA (no UI). `labelKey`/`subKey` son para el display traducido.

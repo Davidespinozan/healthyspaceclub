@@ -551,3 +551,7 @@
     height: 44px;
   }
 }
+
+/* Sub-bloque de músculos específicos (foco custom) */
+.wz-muscle-grid { margin-top: 14px; }
+.wz-muscle-label { margin-bottom: 8px; }

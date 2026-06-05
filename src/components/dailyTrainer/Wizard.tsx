@@ -12,15 +12,18 @@
 import { Lock } from 'lucide-react';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
-import type { Modality, Equipment } from '../../types';
+import type { Modality, Equipment, MuscleGroup } from '../../types';
 import {
   MODALITY_OPTIONS,
   TIME_OPTIONS,
   EQUIPMENT_OPTIONS,
-  PRIOR_EXERCISE_OPTIONS,
   DISCOMFORT_OPTIONS,
   PAIN_AREAS,
+  FOCUS_OPTIONS,
+  MUSCLE_OPTIONS,
+  LAST_TRAINED_OPTIONS,
   type WizardPhase,
+  type FocusValue,
 } from './constants';
 
 interface WizardProps {
@@ -39,8 +42,6 @@ interface WizardProps {
   // Selecciones controladas (padre dueño del state — sobreviven al wizard)
   selectedModality: Modality;
   setSelectedModality: (m: Modality) => void;
-  priorExercise: string;
-  setPriorExercise: (v: string) => void;
   discomfort: string;
   setDiscomfort: (v: string) => void;
   painArea: string;
@@ -49,6 +50,15 @@ interface WizardProps {
   setSelectedTime: (t: number) => void;
   selectedEquipment: Equipment;
   setSelectedEquipment: (e: Equipment) => void;
+
+  // Foco de fuerza + historia
+  focus: FocusValue;
+  setFocus: (f: FocusValue) => void;
+  selectedMuscles: MuscleGroup[];
+  setSelectedMuscles: (m: MuscleGroup[]) => void;
+  lastTrained: string;
+  setLastTrained: (v: string) => void;
+  hasSystemHistory: boolean;
 
   // Acción final
   onGenerate: () => void;
@@ -59,11 +69,14 @@ export default function Wizard({
   firstName, todayDayName, todayDateShort,
   suggestion, modalityCounts, skipPhysical,
   selectedModality, setSelectedModality,
-  priorExercise, setPriorExercise,
   discomfort, setDiscomfort,
   painArea, setPainArea,
   selectedTime, setSelectedTime,
   selectedEquipment, setSelectedEquipment,
+  focus, setFocus,
+  selectedMuscles, setSelectedMuscles,
+  lastTrained, setLastTrained,
+  hasSystemHistory,
   onGenerate,
 }: WizardProps) {
   const { t } = useT();
@@ -158,21 +171,25 @@ export default function Wizard({
           </h1>
         </div>
 
-        <div className="wz-q">
-          <p className="wz-q-label">{t('wizard.priorQ')}</p>
-          <div className="wz-chips wz-chips-col">
-            {PRIOR_EXERCISE_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                className={`wz-chip wz-chip-block${priorExercise === opt.value ? ' on' : ''}`}
-                onClick={() => setPriorExercise(opt.value)}
-              >
-                <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
-                <span>{t(opt.labelKey)}</span>
-              </button>
-            ))}
+        {/* Historia: solo se pregunta cuando el sistema NO tiene registro propio.
+            Cuando ya hay sesiones, las deriva de la data real. */}
+        {!hasSystemHistory && (
+          <div className="wz-q">
+            <p className="wz-q-label">{t('wizard.lastTrainedQ')}</p>
+            <div className="wz-chips wz-chips-col">
+              {LAST_TRAINED_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  className={`wz-chip wz-chip-block${lastTrained === opt.value ? ' on' : ''}`}
+                  onClick={() => setLastTrained(opt.value)}
+                >
+                  <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
+                  <span>{t(opt.labelKey)}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="wz-q">
           <p className="wz-q-label">{t('wizard.discomfortQ')}</p>
@@ -237,6 +254,44 @@ export default function Wizard({
             <em>{t('wizard.logisticsTitle')}</em>
           </h1>
         </div>
+
+        {/* Foco — solo fuerza. Auto / split preset / músculos específicos. */}
+        {selectedModality === 'fuerza' && (
+          <div className="wz-q">
+            <p className="wz-q-label">{t('wizard.focusQ')}</p>
+            <div className="wz-chips wz-chips-col">
+              {FOCUS_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  className={`wz-chip wz-chip-block${focus === opt.value ? ' on' : ''}`}
+                  onClick={() => setFocus(opt.value)}
+                >
+                  <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
+                  <span>{t(opt.labelKey)}</span>
+                </button>
+              ))}
+            </div>
+            {focus === 'specific' && (
+              <div className="wz-muscle-grid">
+                <p className="wz-q-label wz-muscle-label">{t('wizard.focusSpecificQ')}</p>
+                <div className="wz-chips">
+                  {MUSCLE_OPTIONS.map(m => {
+                    const on = selectedMuscles.includes(m.value);
+                    return (
+                      <button
+                        key={m.value}
+                        className={`wz-chip${on ? ' on' : ''}`}
+                        onClick={() => setSelectedMuscles(on ? selectedMuscles.filter(x => x !== m.value) : [...selectedMuscles, m.value])}
+                      >
+                        {t(m.labelKey)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="wz-q">
           <p className="wz-q-label">{t('wizard.timeQ')}</p>

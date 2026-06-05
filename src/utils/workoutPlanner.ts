@@ -27,7 +27,7 @@ const CYCLES: Record<string, WorkoutDayType[]> = {
   'bienestar': ['full-body', 'movilidad', 'cardio', 'full-body', 'movilidad', 'movilidad', 'movilidad'],
 };
 
-const DAY_TYPE_CONFIG: Record<WorkoutDayType, {
+export const DAY_TYPE_CONFIG: Record<WorkoutDayType, {
   label: string;
   focus: string;
   muscleGroups: MuscleGroup[];
@@ -92,6 +92,20 @@ interface WorkedMuscles {
   yesterday: MuscleGroup[];
   twoDaysAgo: MuscleGroup[];
   restDays: number; // consecutive rest days
+}
+
+// Cuando el sistema NO tiene historial propio (usuario nuevo), restDays se
+// calcula falso (=7) porque no hay registros. Esta función traduce la respuesta
+// del usuario ("¿cuándo entrenaste por última vez?") a restDays reales, para no
+// asumir que lleva una semana sin entrenar.
+export function restDaysFromLastTrained(answer: string): number {
+  switch (answer) {
+    case 'recent': return 1;  // hoy o ayer
+    case 'few': return 3;     // hace 2-3 días
+    case 'week': return 6;    // hace una semana
+    case 'long': return 7;    // hace más de un mes / empezando (retomar suave)
+    default: return 2;        // sin respuesta → punto neutral
+  }
 }
 
 export function analyzeWorkoutHistory(

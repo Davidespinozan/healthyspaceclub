@@ -11,6 +11,8 @@ import {
   filterByModality,
   countByModality,
   suggestModality,
+  DAY_TYPE_CONFIG,
+  restDaysFromLastTrained,
 } from '../utils/workoutPlanner';
 import {
   getCachedWorkout,
@@ -38,7 +40,8 @@ import type {
 import Wizard from './dailyTrainer/Wizard';
 import YogaPlanView from './dailyTrainer/YogaPlan';
 import WorkoutPlanView from './dailyTrainer/WorkoutPlan';
-import { MODALITY_OPTIONS, EQUIPMENT_OPTIONS, PAIN_AREAS } from './dailyTrainer/constants';
+import { MODALITY_OPTIONS, EQUIPMENT_OPTIONS, PAIN_AREAS, MUSCLE_OPTIONS, type FocusValue } from './dailyTrainer/constants';
+import type { WorkoutDayType } from '../types';
 import type { TranslationKey } from '../i18n/es';
 import './daily-trainer-v2.css';
 
@@ -123,11 +126,20 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
 
   // Flow state
   const [selectedModality, setSelectedModality] = useState<Modality>(suggestion.modality);
-  const [priorExercise, setPriorExercise] = useState('none');
+  // priorExercise quedó como contexto legacy (ya no se pregunta; lo reemplazó
+  // lastTrained). Se mantiene fijo en 'none' para no romper bullets/configHash.
+  const [priorExercise] = useState('none');
   const [discomfort, setDiscomfort] = useState('none');
   const [painArea, setPainArea] = useState('');
   const [selectedTime, setSelectedTime] = useState(45);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment>('gym');
+  // Foco de fuerza (qué entrenar) + historia (cuándo entrenó por última vez).
+  const [focus, setFocus] = useState<FocusValue>('auto');
+  const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>([]);
+  const [lastTrained, setLastTrained] = useState('');
+  // Si el sistema ya tiene sesiones/registros propios, NO preguntamos historia
+  // (la deriva de la data real). Solo el usuario nuevo responde lastTrained.
+  const hasSystemHistory = completedSessions.length > 0 || (workoutLog?.length ?? 0) > 0;
 
   // Per-modality regen count
   const regenCounts = regenCount?.date === today ? (regenCount.countByModality || {}) : {};
@@ -153,8 +165,16 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
     const history = analyzeWorkoutHistory(workoutLog || [], exerciseBank, completedSessions);
     const bullets: string[] = [];
 
-    if (history.restDays > 0) bullets.push(history.restDays === 1 ? t('wizard.genRestDay') : t('wizard.genRestDays', { n: history.restDays }));
-    else bullets.push(t('wizard.genTrainedYesterday'));
+    // Historia: si el sistema tiene data real, usa restDays calculado. Si es
+    // usuario nuevo (sin data), usa su respuesta — NO asumir 7 días sin entrenar.
+    const restDays = hasSystemHistory ? history.restDays : restDaysFromLastTrained(lastTrained);
+    if (!hasSystemHistory && lastTrained === 'long') {
+      bullets.push(t('wizard.genFirstWorkout'));
+    } else if (restDays > 0) {
+      bullets.push(restDays === 1 ? t('wizard.genRestDay') : t('wizard.genRestDays', { n: restDays }));
+    } else {
+      bullets.push(t('wizard.genTrainedYesterday'));
+    }
 
     const GOAL_KEY: Record<string, TranslationKey> = {
       'Ganar músculo': 'onboarding.goalGain',
@@ -173,6 +193,14 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
     const modOpt = MODALITY_OPTIONS.find(m => m.value === selectedModality);
     const modalityLabel = modOpt?.label || 'auto'; // español — contexto del prompt + mensaje de error
     bullets.push(t('wizard.genModality', { mod: modOpt ? t(modOpt.labelKey) : modalityLabel }));
+
+    // Foco elegido por el usuario (solo fuerza, cuando no es auto)
+    if (selectedModality === 'fuerza' && focus !== 'auto') {
+      const focusText = focus === 'specific'
+        ? selectedMuscles.map(m => { const o = MUSCLE_OPTIONS.find(x => x.value === m); return o ? t(o.labelKey) : m; }).join(' + ')
+        : DAY_TYPE_CONFIG[focus as WorkoutDayType].label;
+      if (focusText) bullets.push(t('wizard.genFocus', { focus: focusText }));
+    }
 
     const eqKey = EQUIPMENT_OPTIONS.find(e => e.value === selectedEquipment)?.labelKey;
     bullets.push(t('wizard.genTimeEquip', { min: selectedTime, equip: eqKey ? t(eqKey) : selectedEquipment }));
@@ -226,14 +254,30 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
         goal = 'condicion';
         muscleGroups = ['cardio', 'cuerpo-completo'];
       } else {
-        // fuerza — use auto decision for muscle group split
-        dayLabel = todayDecision.label;
+        // fuerza — el usuario elige el foco (auto / split preset / músculos específicos)
         goal = 'hipertrofia';
-        muscleGroups = todayDecision.muscleGroups;
+        if (focus === 'auto') {
+          dayLabel = todayDecision.label;
+          muscleGroups = todayDecision.muscleGroups;
+        } else if (focus === 'specific') {
+          muscleGroups = selectedMuscles.length > 0 ? selectedMuscles : todayDecision.muscleGroups;
+          dayLabel = muscleGroups.map(m => { const o = MUSCLE_OPTIONS.find(x => x.value === m); return o ? t(o.labelKey) : m; }).join(' + ');
+        } else {
+          const cfg = DAY_TYPE_CONFIG[focus as WorkoutDayType];
+          dayLabel = cfg.label;
+          muscleGroups = cfg.muscleGroups;
+          goal = cfg.defaultGoal;
+        }
       }
 
-      // Hash con TODAS las variables del contexto
-      const dayTypeKey = selectedModality === 'auto' ? todayDecision.type : selectedModality;
+      // Hash con TODAS las variables del contexto. El foco se codifica en dayType
+      // para que distinto foco (push vs pull vs músculos específicos) NO colisione
+      // en el caché y devuelva la misma rutina.
+      const dayTypeKey = selectedModality === 'auto'
+        ? todayDecision.type
+        : selectedModality === 'fuerza'
+          ? (focus === 'specific' ? `specific:${[...selectedMuscles].sort().join(',')}` : `fuerza:${focus}`)
+          : selectedModality;
       const schemaType = selectedModality === 'yoga' ? 'yoga' : 'workout' as const;
       const configHash = buildConfigHash({
         duration: selectedTime,
@@ -247,7 +291,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
         priorExercise,
         discomfort,
         painArea: discomfort === 'pain' ? painArea : undefined,
-        restDays: history.restDays,
+        restDays,
         yesterdayMuscles: history.yesterday.sort().join(',') || undefined,
       });
 
@@ -522,8 +566,6 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
         skipPhysical={skipPhysical}
         selectedModality={selectedModality}
         setSelectedModality={setSelectedModality}
-        priorExercise={priorExercise}
-        setPriorExercise={setPriorExercise}
         discomfort={discomfort}
         setDiscomfort={setDiscomfort}
         painArea={painArea}
@@ -532,6 +574,13 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
         setSelectedTime={setSelectedTime}
         selectedEquipment={selectedEquipment}
         setSelectedEquipment={setSelectedEquipment}
+        focus={focus}
+        setFocus={setFocus}
+        selectedMuscles={selectedMuscles}
+        setSelectedMuscles={setSelectedMuscles}
+        lastTrained={lastTrained}
+        setLastTrained={setLastTrained}
+        hasSystemHistory={hasSystemHistory}
         onGenerate={handleGenerate}
       />
     );
