@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { PRICING, detectRegion, type Region } from '../utils/region';
@@ -327,7 +328,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className={`fi${open ? ' open' : ''}`} onClick={() => setOpen(!open)}>
-      <div className="fi-q">{q} <span className="fi-arr">▼</span></div>
+      <div className="fi-q">{q} <ChevronDown className="fi-arr" size={16} strokeWidth={2} /></div>
       <div className="fi-a">{a}</div>
     </div>
   );

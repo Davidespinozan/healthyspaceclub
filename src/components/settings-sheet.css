@@ -80,11 +80,13 @@
 .ss-section-eyebrow {
   font-family: 'Montserrat', sans-serif;
   font-size: 10px;
-  font-weight: 600;
-  color: rgba(21, 51, 48, 0.5);
-  letter-spacing: var(--tracking-kicker-loose);
-  text-transform: none;
+  font-weight: 700;
+  color: var(--amber-deep, #7C6232);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   margin: 0 0 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--amber, #BFA065);
 }
 
 /* Plan card — forest oscura como statement piece */
@@ -93,7 +95,8 @@
   color: var(--sala-surface);
   border-radius: var(--radius-lg);
   padding: 18px 20px;
-  box-shadow: var(--shadow-pro-lift-forest);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-pro-2xl), 0 0 26px rgba(168, 134, 78, 0.14);
 }
 .ss-plan-tier {
   display: flex;
@@ -295,12 +298,13 @@
   width: 100%;
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s ease, transform 0.15s ease;
   -webkit-tap-highlight-color: transparent;
   min-height: 44px;
 }
 .ss-help-row:last-child { border-bottom: none; }
-.ss-help-row:hover { background: var(--warm); }
+.ss-help-row:hover { background: linear-gradient(135deg, rgba(201,169,104,0.10), rgba(201,169,104,0.03)); transform: translateX(2px); }
+.ss-help-row:hover .ss-help-arrow { color: var(--amber-deep, #A8864E); }
 .ss-help-arrow {
   color: rgba(21, 51, 48, 0.4);
   flex-shrink: 0;
@@ -350,22 +354,26 @@
 .ss-logout {
   width: 100%;
   padding: 13px;
-  background: transparent;
-  border: 1px solid var(--sand);
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-left: 3px solid var(--amber, #BFA065);
   border-radius: 50px;
-  color: rgba(21, 51, 48, 0.7);
+  color: var(--forest);
   font-family: 'Montserrat', sans-serif;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   letter-spacing: 0.02em;
+  box-shadow: var(--shadow-pro-md);
   transition: all 0.18s;
   margin-bottom: 14px;
   -webkit-tap-highlight-color: transparent;
 }
 .ss-logout:hover {
-  border-color: rgba(192, 70, 70, 0.4);
-  color: rgb(180, 60, 60);
+  background: linear-gradient(135deg, rgba(199, 91, 58, 0.10), rgba(199, 91, 58, 0.04));
+  border-left-color: var(--terracota, #C75B3A);
+  color: var(--terracota, #C75B3A);
 }
 
 .ss-version {
