@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronRight, Loader2 } from 'lucide-react';
 import { useAppStore } from '../store';
+import { pushSupported, getPushEnabled, enablePush, disablePush } from '../utils/push';
 import { supabase } from '../lib/supabase';
 import { openCoachWith } from '../utils/openCoach';
 import { useT } from '../i18n';
@@ -50,6 +51,26 @@ export default function SettingsSheet({ open, onClose }: Props) {
   const [showUsernameEdit, setShowUsernameEdit] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+
+  // Web Push (notificaciones con la app cerrada).
+  const [pushState, setPushState] = useState<'unknown' | 'off' | 'on' | 'denied' | 'unsupported'>('unknown');
+  const [pushBusy, setPushBusy] = useState(false);
+  useEffect(() => {
+    if (!pushSupported()) { setPushState('unsupported'); return; }
+    getPushEnabled().then(on => setPushState(on ? 'on' : (Notification.permission === 'denied' ? 'denied' : 'off')));
+  }, []);
+  async function togglePush() {
+    if (pushBusy) return;
+    setPushBusy(true);
+    if (pushState === 'on') {
+      await disablePush();
+      setPushState('off');
+    } else {
+      const r = await enablePush();
+      setPushState(r === 'enabled' ? 'on' : r === 'denied' ? 'denied' : r === 'unsupported' ? 'unsupported' : 'off');
+    }
+    setPushBusy(false);
+  }
 
   // Cambio de contraseña in-app (sesión actual, sin email).
   const [showPwForm, setShowPwForm] = useState(false);
@@ -297,6 +318,27 @@ export default function SettingsSheet({ open, onClose }: Props) {
             </div>
           )}
         </section>
+
+        {/* Sección Notificaciones — Web Push */}
+        {pushState !== 'unsupported' && (
+          <section className="ss-section">
+            <p className="ss-section-eyebrow">{t('settings.notifications')}</p>
+            <div className="ss-notif-row">
+              <p className="ss-notif-hint">{t('settings.notifHint')}</p>
+              <button
+                type="button"
+                className={`ss-notif-btn${pushState === 'on' ? ' is-on' : ''}`}
+                onClick={togglePush}
+                disabled={pushBusy || pushState === 'denied'}
+              >
+                {pushBusy
+                  ? <Loader2 className="ss-spin" size={15} strokeWidth={2.4} />
+                  : pushState === 'on' ? t('settings.notifEnabled') : t('settings.notifEnable')}
+              </button>
+            </div>
+            {pushState === 'denied' && <p className="ss-notif-warn">{t('settings.notifDenied')}</p>}
+          </section>
+        )}
 
         {/* Sección Idioma — i18n Lote 0 */}
         <section className="ss-section">

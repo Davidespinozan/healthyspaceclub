@@ -315,6 +315,33 @@
 .ss-spin { animation: ss-spin-kf 0.8s linear infinite; }
 @keyframes ss-spin-kf { to { transform: rotate(360deg); } }
 
+/* Notificaciones (Web Push) */
+.ss-notif-row {
+  display: flex; align-items: center; gap: 14px;
+}
+.ss-notif-hint {
+  flex: 1; margin: 0;
+  font-family: 'Montserrat', sans-serif; font-size: 12px; line-height: 1.45;
+  color: rgba(21, 51, 48, 0.6);
+}
+.ss-notif-btn {
+  flex-shrink: 0;
+  border: none; cursor: pointer;
+  border-radius: 999px; padding: 9px 20px;
+  font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700;
+  background: linear-gradient(135deg, #C9A968, #A8864E); color: #fff;
+  box-shadow: 0 6px 16px rgba(168, 134, 78, 0.3);
+  display: inline-flex; align-items: center; justify-content: center; min-width: 84px;
+}
+.ss-notif-btn.is-on {
+  background: rgba(31, 168, 78, 0.12); color: #1FA84E; box-shadow: none;
+}
+.ss-notif-btn:disabled { opacity: 0.55; cursor: default; }
+.ss-notif-warn {
+  margin: 8px 0 0; font-family: 'Montserrat', sans-serif; font-size: 11px;
+  color: var(--terracota, #C75B3A);
+}
+
 /* Language toggle — i18n Lote 0 */
 .ss-lang-toggle {
   display: flex;

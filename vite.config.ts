@@ -17,6 +17,10 @@ export default defineConfig({
       // rebuild + App Store, no por este flow.
       registerType: 'prompt',
       injectRegister: false,
+      // Importa el handler de Web Push dentro del SW generado por workbox.
+      workbox: {
+        importScripts: ['push-sw.js'],
+      },
       manifest: {
         name: 'Healthy Space Club',
         short_name: 'Healthy Space',
