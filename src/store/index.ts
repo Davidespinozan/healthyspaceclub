@@ -279,6 +279,7 @@ interface AppState {
     shoppingList: string[];
     nota: string;
     preferences: string;
+    lang?: 'es' | 'en';        // idioma en que se generó la nota IA
   } | null;
   saveWeeklyPlan: (plan: NonNullable<AppState['weeklyPlan']>) => Promise<void>;
   clearWeeklyPlan: () => Promise<void>;
@@ -935,7 +936,11 @@ export const useAppStore = create<AppState>()(
   saveDailyWorkout: async (plan) => {
     const generatedAt = new Date().toISOString();
     const date = generatedAt.split('T')[0];
-    set({ dailyWorkout: { date, plan, generatedAt } });
+    // Estampamos el idioma actual en el plan: así sabemos en qué idioma se
+    // generó la prosa IA (calentamiento/nota/tips) y podemos avisar si el user
+    // cambia de idioma después (texto mezclado).
+    const planStamped = plan ? { ...plan, lang: get().language } : plan;
+    set({ dailyWorkout: { date, plan: planStamped, generatedAt } });
 
     const userId = get().user?.id;
     if (userId) {
@@ -944,7 +949,7 @@ export const useAppStore = create<AppState>()(
         .upsert(
           {
             user_id: userId,
-            daily_workout: { date, plan, generatedAt },
+            daily_workout: { date, plan: planStamped, generatedAt },
             daily_workout_updated_at: generatedAt,
             updated_at: generatedAt,
           },

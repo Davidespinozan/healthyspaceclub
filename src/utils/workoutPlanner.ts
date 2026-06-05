@@ -534,6 +534,10 @@ export function buildConfigHash(params: {
   // Modo pareja: una firma del compañero (nivel+equipo+objetivo) para que la
   // rutina de dos NO colisione con la cache individual ni entre parejas distintas.
   partner?: string;
+  // Idioma: el contenido generado por IA (calentamiento, enfriamiento, nota,
+  // tips) sale en este idioma. Sin esto, cambiar de idioma reusaba la rutina
+  // cacheada en el idioma anterior → texto mezclado.
+  locale?: string;
 }): string {
   const str = [
     `v${params.schemaVersion || 0}`,
@@ -550,6 +554,7 @@ export function buildConfigHash(params: {
     params.restDays ?? -1,
     params.yesterdayMuscles || 'none',
     params.partner || 'solo',
+    params.locale || 'es',
   ].join('-');
   // Simple hash function (djb2)
   let hash = 5381;

@@ -36,6 +36,7 @@ import ActivityLogSheet from '../ActivityLogSheet';
 import PartnerLiveHeader from '../PartnerLiveHeader';
 import PlayerLoadingFallback from '../PlayerLoadingFallback';
 import type { TranslationKey } from '../../i18n/es';
+import { translateDayLabel } from '../../utils/dayTypeLabel';
 
 const WorkoutPlayer = lazy(() => import('../WorkoutPlayer'));
 
@@ -86,7 +87,8 @@ export default function WorkoutPlan({
   todayDayName,
   todayDateShort,
 }: Props) {
-  const { t } = useT();
+  const { t, locale } = useT();
+  const langMismatch = !!(plan as { lang?: string }).lang && (plan as { lang?: string }).lang !== locale;
   const [workoutPlayerOpen, setWorkoutPlayerOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
   // Plan-1: "POR QUÉ HOY" colapsable. Default cerrado — el plan arranca
@@ -106,7 +108,7 @@ export default function WorkoutPlan({
         <div>
           <p className="dt2-plan-micro">{t('workout.planMicro')} · {todayDayName} {todayDateShort}</p>
           <h2 className="dt2-plan-title">
-            <em>{plan.type}</em>
+            <em>{translateDayLabel(plan.type, t)}</em>
           </h2>
           <div className="dt2-plan-meta">
             <span className="dt2-meta-chip">
@@ -131,6 +133,17 @@ export default function WorkoutPlan({
           </button>
         )}
       </div>
+
+      {/* Aviso: la rutina se generó en otro idioma (la prosa IA quedaría mezclada).
+          Ofrecemos regenerar en el idioma actual. Pareja no regenera en solitario. */}
+      {langMismatch && !plan.partnerMode && (
+        <div className="dt2-lang-mismatch">
+          <span>{t('workout.langMismatch')}</span>
+          <button type="button" onClick={onRegenerate} disabled={regenBlocked}>
+            {t('workout.langMismatchCta')}
+          </button>
+        </div>
+      )}
 
       {/* CTA para abrir player — ARRIBA, visible sin scroll. Solo si hay ejercicios. */}
       {plan.exercises.length > 0 && (

@@ -592,6 +592,35 @@
    ══════════════════════════════════════════════════════════ */
 
 .dt2-yoga-start-cta,
+/* Aviso de idioma de la rutina (prosa IA en otro idioma) */
+.dt2-lang-mismatch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(199, 91, 58, 0.10);
+  border: 1px solid rgba(199, 91, 58, 0.28);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.78rem;
+  color: var(--terracota, #C75B3A);
+}
+.dt2-lang-mismatch button {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 16px;
+  background: linear-gradient(135deg, #C75B3A, #A8472B);
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dt2-lang-mismatch button:disabled { opacity: 0.5; cursor: default; }
+
 .dt2-start-workout-cta {
   width: auto;
   align-self: center;

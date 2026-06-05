@@ -11,6 +11,7 @@ import { getExercises } from '../data/exercises';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 import MealDetailPopout from './MealDetailPopout';
 import { chronoMeals } from '../utils/mealOrder';
+import { translateDayLabel } from '../utils/dayTypeLabel';
 import FoodLogSheet from './FoodLogSheet';
 import ActivityLogSheet from './ActivityLogSheet';
 import { listPartnerships, respondInvite, type Partnership } from '../utils/partners';
@@ -517,7 +518,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 if (isYogaPlan) {
                   const poses = (workout as { poses: unknown[] }).poses;
                   const totalDuration = (workout as { totalDuration?: number }).totalDuration ?? 0;
-                  const wType = (workout as { type?: string }).type ?? 'Power Vinyasa';
+                  const wType = translateDayLabel((workout as { type?: string }).type ?? 'Power Vinyasa', t);
                   const totalMin = Math.round(totalDuration / 60);
                   return (
                     <>
@@ -530,7 +531,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 }
                 const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
                 const exList = ((workout as { exercises?: unknown[] }).exercises ?? []) as Array<Record<string, unknown>>;
-                const wType = (workout as { type?: string }).type ?? '';
+                const wType = translateDayLabel((workout as { type?: string }).type ?? '', t);
                 const wDuration = (workout as { duration?: string }).duration ?? '';
                 return (
                   <>

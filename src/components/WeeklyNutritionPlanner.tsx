@@ -315,6 +315,7 @@ export default function WeeklyNutritionPlanner() {
         shoppingList: result.shoppingList ?? [],
         nota: result.nota ?? '',
         preferences: [newAnswers.cuisines, newAnswers.cravings, newAnswers.avoid].filter(Boolean).join(' · '),
+        lang: locale,
       });
       setActiveDay(todayOffset >= 0 ? todayOffset : 0);
       setPhase('plan');
@@ -705,7 +706,7 @@ export default function WeeklyNutritionPlanner() {
       {/* Nota del coach — Plan-2: colapsable, default cerrado.
           Espejo del "POR QUÉ HOY" colapsable del entreno (Plan-1) para
           coherencia hermana entre las dos pantallas de "plan". */}
-      {weeklyPlan.nota && (
+      {weeklyPlan.nota && (!weeklyPlan.lang || weeklyPlan.lang === locale) && (
         <div className={`wnp2-nota${notaOpen ? ' is-open' : ''}`}>
           <button
             type="button"

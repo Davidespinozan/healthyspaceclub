@@ -14,6 +14,7 @@ import { RefreshCw, Clock, Lock } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { getExerciseIcon } from '../../utils/muscleGroupIcon';
 import { useT } from '../../i18n';
+import { translateDayLabel } from '../../utils/dayTypeLabel';
 import { finishWorkoutSession, type ExerciseLogItem } from '../../utils/workoutLogger';
 import type { Exercise, Equipment, YogaPlan as YogaPlanType, CompletedSession } from '../../types';
 import PlayerLoadingFallback from '../PlayerLoadingFallback';
@@ -53,7 +54,7 @@ export default function YogaPlan({
       <div className="dt2-plan-header">
         <div>
           <p className="dt2-plan-micro">{t('yoga.planMicro')} · {todayDayName} {todayDateShort}</p>
-          <h2 className="dt2-plan-title"><em>{yogaPlan.type}</em></h2>
+          <h2 className="dt2-plan-title"><em>{translateDayLabel(yogaPlan.type, t)}</em></h2>
           <div className="dt2-plan-meta">
             <span className="dt2-meta-chip">
               <Clock size={11} /> {t('yoga.minTotal', { n: Math.round(yogaPlan.totalDuration / 60) })}

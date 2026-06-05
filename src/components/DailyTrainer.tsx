@@ -308,6 +308,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         restDays,
         yesterdayMuscles: history.yesterday.sort().join(',') || undefined,
         partner: partnerMode ? partnerNivel : undefined,
+        locale,
       });
 
       // Intentar cache (para TODAS las modalidades)
