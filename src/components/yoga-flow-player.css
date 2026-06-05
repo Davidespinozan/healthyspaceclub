@@ -5,23 +5,24 @@
 
 .yfp {
   --yfp-forest: #153330;
-  /* Modernizado al sistema vibrante: dorado + terracota (antes amber viejo +
-     verde sage fuera de paleta, que se veía anticuado). */
-  --yfp-amber: #A8864E;
+  /* Inmersivo oscuro, idéntico en nivel al player de fuerza: fondo forest,
+     texto claro, dorado vibrante + terracota. */
+  --yfp-amber: #C9A968;
   --yfp-gold-grad: linear-gradient(135deg, #C9A968, #A8864E);
   --yfp-sage: #C75B3A;
   --yfp-sand: #E8E1D3;
-  --yfp-txt2: rgba(21, 51, 48, 0.55);
+  --yfp-txt: #F6F2EA;
+  --yfp-txt2: rgba(246, 242, 234, 0.62);
 
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: var(--sala-bg);
+  background: linear-gradient(170deg, #153330 0%, #1a3d39 100%);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   font-family: 'Montserrat', system-ui, sans-serif;
-  color: var(--yfp-forest);
+  color: var(--yfp-txt);
 }
 
 .yfp * { box-sizing: border-box; }
@@ -40,11 +41,11 @@
   width: 36px; height: 36px;
   min-width: 44px; min-height: 44px;
   border-radius: var(--radius-md);
-  background: var(--surface-glass-strong);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(21, 51, 48, 0.08);
-  color: var(--yfp-forest);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--yfp-txt);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -54,7 +55,7 @@
   transition: background var(--duration-fast) ease, transform var(--duration-fast) ease;
 }
 
-.yfp-header-btn:active { background: rgba(255, 255, 255, 0.85); transform: scale(0.95); }
+.yfp-header-btn:active { background: rgba(255, 255, 255, 0.2); transform: scale(0.95); }
 
 .yfp-header-title {
   font-family: 'Montserrat', sans-serif;
@@ -62,13 +63,13 @@
   font-style: italic;
   font-weight: 500;
   letter-spacing: var(--tracking-tight);
-  color: var(--yfp-forest);
+  color: var(--yfp-txt);
 }
 
 .yfp-header-counter {
   font-size: 13px;
   font-style: italic;
-  color: var(--yfp-forest);
+  color: var(--yfp-txt);
 }
 
 .yfp-header-counter em {
@@ -101,7 +102,7 @@
   font-size: 24px;
   font-weight: 500;
   letter-spacing: var(--tracking-tighter);
-  color: var(--yfp-forest);
+  color: var(--yfp-txt);
   line-height: 1.15;
   margin: 0 0 6px;
 }
@@ -163,7 +164,7 @@
   gap: 8px;
   padding: 5px 0;
   font-size: 12px;
-  color: var(--yfp-forest);
+  color: var(--yfp-txt);
 }
 
 .yfp-prep-struct-dot {
@@ -179,7 +180,7 @@
   margin: 0 0 22px;
   font-size: 12px;
   font-style: italic;
-  color: rgba(21, 51, 48, 0.6);
+  color: rgba(246, 242, 234, 0.6);
   line-height: 1.5;
 }
 
@@ -188,10 +189,10 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--sala-bg);
+  background: linear-gradient(to bottom, transparent, #153330 32%);
   padding: 14px 20px;
   padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-  border-top: 0.5px solid rgba(21, 51, 48, 0.08);
+  border-top: 0.5px solid rgba(255, 255, 255, 0.1);
   z-index: 10;
 }
 
@@ -293,14 +294,14 @@
   display: flex;
   gap: 2px;
   padding: 8px 16px;
-  background: rgba(21, 51, 48, 0.03);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .yfp-prog-dot {
   flex: 1;
   height: 3px;
   border-radius: 2px;
-  background: rgba(21, 51, 48, 0.12);
+  background: rgba(255, 255, 255, 0.18);
   transition: background 0.3s;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -317,7 +318,7 @@
   background: inherit;
 }
 
-.yfp-prog-dot.done { background: var(--yfp-forest); }
+.yfp-prog-dot.done { background: rgba(201, 169, 104, 0.5); }
 .yfp-prog-dot.active { background: var(--yfp-amber); }
 
 /* Pose info */
@@ -335,7 +336,7 @@
 .yfp-pose-name {
   font-size: 20px;
   font-weight: 400;
-  color: var(--yfp-forest);
+  color: var(--yfp-txt);
   margin: 0;
 }
 
@@ -362,7 +363,7 @@
 
 .yfp-timer-bg {
   fill: none;
-  stroke: rgba(21, 51, 48, 0.08);
+  stroke: rgba(255, 255, 255, 0.14);
   stroke-width: 4;
 }
 
@@ -382,7 +383,7 @@
   justify-content: center;
   font-size: 26px;
   font-weight: 500;
-  color: var(--yfp-forest);
+  color: var(--yfp-txt);
 }
 
 /* Next preview */
@@ -400,7 +401,7 @@
 .yfp-next-name {
   font-size: 12px;
   font-weight: 500;
-  color: var(--yfp-forest);
+  color: var(--yfp-txt);
   margin: 0;
 }
 
@@ -416,9 +417,9 @@
 
 .yfp-ctrl {
   border-radius: 50%;
-  border: 0.5px solid rgba(21, 51, 48, 0.15);
+  border: 0.5px solid rgba(255, 255, 255, 0.16);
   background: transparent;
-  color: var(--yfp-forest);
+  color: var(--yfp-txt);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -426,7 +427,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.yfp-ctrl:active { background: rgba(21, 51, 48, 0.06); }
+.yfp-ctrl:active { background: rgba(255, 255, 255, 0.1); }
 
 .yfp-ctrl-sm {
   width: 48px; height: 48px;
@@ -434,12 +435,13 @@
 
 .yfp-ctrl-lg {
   width: 60px; height: 60px;
-  background: var(--yfp-forest);
-  color: var(--yfp-amber);
+  background: var(--yfp-gold-grad);
+  color: #fff;
   border: none;
+  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.42);
 }
 
-.yfp-ctrl-lg:active { background: #152826; }
+.yfp-ctrl-lg:active { transform: scale(0.95); filter: brightness(0.97); }
 
 /* ══════════════════════════════════════════════════════════
    SIDE SWITCH OVERLAY
@@ -571,7 +573,7 @@
   font-size: 36px;
   font-style: italic;
   font-weight: 400;
-  color: var(--yfp-forest);
+  color: var(--yfp-txt);
   margin: 0 0 8px;
 }
 
