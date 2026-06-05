@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { X, CreditCard, CheckCircle, AlertCircle, XCircle, ChevronDown } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
 import { useT } from '../../i18n';
@@ -150,7 +151,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
             aria-label={t('common.close')}
             type="button"
           >
-            ✕
+            <X size={18} strokeWidth={2} />
           </button>
         </div>
 
@@ -217,7 +218,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
             </>
           ) : (
             <div className="mps-payment-method-empty">
-              <div className="mps-pm-empty-icon">💳</div>
+              <div className="mps-pm-empty-icon"><CreditCard size={30} strokeWidth={1.6} /></div>
               <p className="mps-pm-empty-text">{t('managePlan.pmEmpty')}</p>
             </div>
           )}
@@ -293,7 +294,11 @@ export default function ManagePlanSheet({ onClose }: Props) {
               {history.slice(0, 6).map(entry => (
                 <li key={entry.id} className="mps-history-entry">
                   <span className={`mps-history-icon mps-history-icon--${entry.status}`}>
-                    {entry.status === 'succeeded' ? '✓' : entry.status === 'pending' ? '⚠' : '✗'}
+                    {entry.status === 'succeeded'
+                      ? <CheckCircle size={16} strokeWidth={2} />
+                      : entry.status === 'pending'
+                      ? <AlertCircle size={16} strokeWidth={2} />
+                      : <XCircle size={16} strokeWidth={2} />}
                   </span>
                   <div className="mps-history-body">
                     <div className="mps-history-desc">{entry.description}</div>
@@ -330,7 +335,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                   aria-expanded={openFaq === i}
                 >
                   <span>{t(item.q)}</span>
-                  <span className="mps-faq-arrow">{openFaq === i ? '−' : '+'}</span>
+                  <ChevronDown className="mps-faq-arrow" size={17} strokeWidth={2} />
                 </button>
                 {openFaq === i && <p className="mps-faq-a">{t(item.a)}</p>}
               </div>

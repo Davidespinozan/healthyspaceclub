@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import { PRIVACY_SECTIONS, PRIVACY_LAST_UPDATED, PRIVACY_INTRO, PRIVACY_DISCLAIMER } from '../../content/legal/privacy';
 import { useT } from '../../i18n';
 import './sheet-base.css';
@@ -34,7 +35,7 @@ export default function PrivacySheet({ onClose }: Props) {
             aria-label={t('common.close')}
             type="button"
           >
-            ✕
+            <X size={18} strokeWidth={2} />
           </button>
         </div>
         {locale === 'en' && (

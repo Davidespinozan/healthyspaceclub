@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { X, ChevronRight, Loader2 } from 'lucide-react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { openCoachWith } from '../utils/openCoach';
@@ -143,7 +144,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
             aria-label={t('common.close')}
             type="button"
           >
-            ✕
+            <X size={18} strokeWidth={2} />
           </button>
         </div>
 
@@ -288,7 +289,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
                       {t('common.cancel')}
                     </button>
                     <button type="button" className="ss-pw-save" disabled={pwBusy} onClick={handleChangePassword}>
-                      {pwBusy ? '…' : t('settings.pwSave')}
+                      {pwBusy ? <Loader2 className="ss-spin" size={15} strokeWidth={2.4} /> : t('settings.pwSave')}
                     </button>
                   </div>
                 </>
@@ -326,15 +327,15 @@ export default function SettingsSheet({ open, onClose }: Props) {
           <div className="ss-help-list">
             <button type="button" className="ss-help-row" onClick={handleContactSupport}>
               <span>{t('settings.contactSupport')}</span>
-              <span className="ss-help-arrow">→</span>
+              <ChevronRight className="ss-help-arrow" size={16} strokeWidth={2} />
             </button>
             <button type="button" className="ss-help-row" onClick={() => setShowTerms(true)}>
               <span>{t('settings.termsOfService')}</span>
-              <span className="ss-help-arrow">→</span>
+              <ChevronRight className="ss-help-arrow" size={16} strokeWidth={2} />
             </button>
             <button type="button" className="ss-help-row" onClick={() => setShowPrivacy(true)}>
               <span>{t('settings.privacy')}</span>
-              <span className="ss-help-arrow">→</span>
+              <ChevronRight className="ss-help-arrow" size={16} strokeWidth={2} />
             </button>
           </div>
         </section>

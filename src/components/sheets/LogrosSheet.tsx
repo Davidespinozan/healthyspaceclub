@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { ArrowLeft, Lock, X } from 'lucide-react';
 import { useAppStore } from '../../store';
 import {
   MILESTONE_STEPS,
@@ -70,7 +70,7 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
     <div className="sh-overlay" onClick={onClose}>
       <div className="sh-sheet ls-sheet" onClick={e => e.stopPropagation()}>
         <div className="sh-handle" />
-        <button className="sh-close sh-close--floating" onClick={onClose} aria-label={t('common.close')} type="button">✕</button>
+        <button className="sh-close sh-close--floating" onClick={onClose} aria-label={t('common.close')} type="button"><X size={18} strokeWidth={2} /></button>
 
         {focusedMilestone ? (
           <div className="ls-detail">

@@ -303,8 +303,13 @@
 .ss-help-row:hover { background: var(--warm); }
 .ss-help-arrow {
   color: rgba(21, 51, 48, 0.4);
-  font-size: 14px;
+  flex-shrink: 0;
+  display: block;
 }
+
+/* Spinner (cambio de contraseña) — reemplaza el "…" de texto. */
+.ss-spin { animation: ss-spin-kf 0.8s linear infinite; }
+@keyframes ss-spin-kf { to { transform: rotate(360deg); } }
 
 /* Language toggle — i18n Lote 0 */
 .ss-lang-toggle {

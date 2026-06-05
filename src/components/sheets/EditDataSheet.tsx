@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
@@ -120,7 +121,7 @@ export default function EditDataSheet({ onClose }: Props) {
             aria-label={t('common.close')}
             type="button"
           >
-            ✕
+            <X size={18} strokeWidth={2} />
           </button>
         </div>
         <p className="sh-intro">{t('editData.intro')}</p>

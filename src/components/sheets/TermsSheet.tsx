@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import { TERMS_SECTIONS, TERMS_LAST_UPDATED, TERMS_INTRO, TERMS_DISCLAIMER } from '../../content/legal/terms';
 import { useT } from '../../i18n';
 import './sheet-base.css';
@@ -34,7 +35,7 @@ export default function TermsSheet({ onClose }: Props) {
             aria-label={t('common.close')}
             type="button"
           >
-            ✕
+            <X size={18} strokeWidth={2} />
           </button>
         </div>
         {locale === 'en' && (
