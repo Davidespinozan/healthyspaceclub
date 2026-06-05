@@ -154,26 +154,25 @@
 .th3-day-head { display: flex; align-items: center; justify-content: space-between; }
 .th3-day-streak { display: flex; align-items: center; gap: 7px; }
 .th3-streak-flame {
-  color: #F2945E;
+  color: var(--amber);
   flex-shrink: 0;
-  filter: drop-shadow(0 0 8px rgba(242, 130, 74, 0.55));
+  filter: drop-shadow(0 0 6px rgba(201, 169, 104, 0.45));
 }
 .th3-streak-num {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 800;
+  font-weight: 700;
   font-size: 26px;
-  color: #F2945E;
+  color: var(--amber);
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-tightest);
   line-height: 1;
-  text-shadow: 0 0 16px rgba(242, 130, 74, 0.40);
 }
 .th3-streak-label {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.62rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-kicker);
-  color: rgba(242, 148, 94, 0.85);
+  color: rgba(246,242,234,0.55);
 }
 .th3-day-status {
   display: inline-flex; align-items: center; gap: 4px;

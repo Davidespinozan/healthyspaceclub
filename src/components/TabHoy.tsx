@@ -384,7 +384,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
         <div className={`th3-day${allCoreDone ? ' is-complete' : ''}`}>
           <div className="th3-day-head">
             <div className="th3-day-streak">
-              <Flame size={20} strokeWidth={2.2} className="th3-streak-flame" />
+              <Flame size={18} strokeWidth={2.2} className="th3-streak-flame" />
               <span className="th3-streak-num">{streakCount}</span>
               <span className="th3-streak-label">
                 {plural(streakCount, { one: t('hoy.streakLabelOne'), other: t('hoy.streakLabelOther') })}
