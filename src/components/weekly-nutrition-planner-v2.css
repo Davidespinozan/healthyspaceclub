@@ -735,45 +735,21 @@
   border-color: var(--forest);
   color: var(--amber);
 }
-/* Snack (terracota): check translúcido, no blanco sólido */
-.wnp2-meal--snack .wnp2-meal-check {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-.wnp2-meal--snack .wnp2-meal-check.checked {
-  background: #fff;
-  border-color: #fff;
-  color: var(--terracota);
-}
-
-/* ─── Snack: variante compacta (sin foto, subordinada a mains) ───
-   Color-1: el snack recupera identidad propia (fondo blanco + borde
-   sand + accent terracota). Distinto de la main meal (que tiene
-   border-left amber), lectura clara: "esto es un snack, es distinto". */
+/* ─── Snack: misma tarjeta cream que las comidas, pero más delgada ───
+   Sin foto (icono pequeño), una sola línea. Mantiene el accent amber
+   del border-left para leerse como parte del mismo sistema. */
 .wnp2-meal--snack {
-  padding: 7px 14px;
+  padding: 9px 14px;
   gap: 11px;
-  /* Terracota VIBRANTE — mismo que Calentamiento/Enfriamiento del entreno */
-  background: linear-gradient(135deg, #C75B3A, #A8472B);
-  border: 1px solid rgba(199, 91, 58, 0.5);
-  box-shadow: 0 8px 22px rgba(199, 91, 58, 0.24);
-}
-.wnp2-meal--snack::before {
-  display: none;
 }
 .wnp2-meal--snack .wnp2-meal-circle {
-  width: 32px;
-  height: 32px;
-  box-shadow: none;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.9);
+  width: 38px;
+  height: 38px;
 }
 /* Snack compacto: comida en una sola línea (ellipsis → caja más corta) */
 .wnp2-meal--snack .wnp2-meal-name {
-  font-size: 12.5px;
+  font-size: 13px;
   margin-bottom: 0;
-  color: rgba(255, 255, 255, 0.95);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -782,14 +758,6 @@
   font-size: 9px;
   letter-spacing: 0.12em;
   margin-bottom: 2px;
-  color: rgba(255, 255, 255, 0.85);
-}
-/* Color-1: chip kcal del snack visible (antes era warm sobre warm =
-   invisible). Terracota-soft + terracota text se unen al border-left,
-   refuerza la identidad del snack. */
-.wnp2-meal--snack .wnp2-meal-kcal {
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
 }
 
 .wnp2-empty-day {

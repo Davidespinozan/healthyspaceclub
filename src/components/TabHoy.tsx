@@ -10,6 +10,7 @@ import TuEspacioFlow from './TuEspacioFlow';
 import { getExercises } from '../data/exercises';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 import MealDetailPopout from './MealDetailPopout';
+import { chronoMeals } from '../utils/mealOrder';
 import FoodLogSheet from './FoodLogSheet';
 import ActivityLogSheet from './ActivityLogSheet';
 import { listPartnerships, respondInvite, type Partnership } from '../utils/partners';
@@ -658,7 +659,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   </p>
                   {(todayMeals.length > 0 || todayFoodLog.length > 0) && (
                     <ul className="th3-card-list">
-                      {todayMeals.slice(0, 6).map((meal, i) => {
+                      {chronoMeals(todayMeals).slice(0, 6).map(({ meal, i }) => {
                         const key = mealKey(i);
                         const done = !!mealChecks[key];
                         const resolved = !!mealResolvedByLog[key];

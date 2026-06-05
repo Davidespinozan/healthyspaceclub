@@ -7,6 +7,7 @@ import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut,
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import CreatePostModal from './CreatePostModal';
+import { chronoMeals } from '../utils/mealOrder';
 import { callAI } from '../utils/aiProxy';
 import { buildWeeklyPlanPrompt } from '../ai/prompts/weeklyPlan';
 import { useT } from '../i18n';
@@ -32,17 +33,6 @@ const MEAL_TIME_KEYS: Record<string, TranslationKey> = {
   'Snack PM': 'mealTime.snackPm',
   'Cena': 'mealTime.cena',
 };
-
-// Orden cronológico de comidas (los snacks van ENTRE las comidas:
-// desayuno → snack AM → comida → snack PM → cena).
-function mealChrono(time: string): number {
-  if (time.includes('Desayuno')) return 0;
-  if (time.includes('Snack AM')) return 1;
-  if (time.includes('Comida')) return 2;
-  if (time.includes('Snack PM')) return 3;
-  if (time.includes('Cena')) return 4;
-  return 99;
-}
 
 // Quiz options stay con stored values en ES (data layer). Display via map.
 const CUISINE_LABEL_KEYS: Record<string, TranslationKey> = {
@@ -840,9 +830,7 @@ export default function WeeklyNutritionPlanner() {
           {/* Meals — en orden cronológico (snacks entre comidas), conservando el
               índice original para el check key. */}
           {dayPlan ? (
-            dayPlan.meals
-              .map((meal, i) => ({ meal, i }))
-              .sort((a, b) => mealChrono(a.meal.time) - mealChrono(b.meal.time))
+            chronoMeals(dayPlan.meals)
               .map(({ meal, i }) => {
               const mkcal = calcMealKcal(meal.portions);
               const dayDate = new Date(
