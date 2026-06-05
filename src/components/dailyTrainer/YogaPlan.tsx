@@ -83,6 +83,7 @@ export default function YogaPlan({
           setPlayerOpen(true);
         }}
       >
+        <span className="dt2-cta-play" aria-hidden="true">▶</span>
         {t('yoga.startFlow')}
       </button>
 

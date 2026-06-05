@@ -380,10 +380,25 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           schemaType: 'yoga',
         }).catch(() => {});
 
+        // Modo pareja: el flow PASA A SER la rutina de hoy de los dos. Igual que
+        // en fuerza/cardio — marca metadatos y ENTREGA al compañero (antes no se
+        // entregaba, por eso el flow no le llegaba al invitado).
+        if (partnerMode) {
+          (adjustedPlan as any).partnerMode = true;
+          (adjustedPlan as any).partnerName = partnerName.trim() || t('wizard.partnerNamePlaceholder');
+          (adjustedPlan as any).partnerAvatar = pendingPartner?.avatarUrl ?? null;
+          (adjustedPlan as any).partnerId = pendingPartner?.id ?? null;
+        }
+
         // Save plan FIRST, then increment counter
         setPlan(adjustedPlan as any);
         await saveDailyWorkout(adjustedPlan as any);
         setPhase('plan');
+
+        // Sesión compartida: entrega el MISMO flow al compañero (no genera él).
+        if (partnerMode && pendingPartner?.id) {
+          deliverPartnerWorkout(pendingPartner.id, adjustedPlan).catch(() => {});
+        }
 
         // Increment ONLY after successful save
         incrementRegen(selectedModality);

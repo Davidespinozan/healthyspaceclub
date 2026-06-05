@@ -456,7 +456,7 @@ export const es = {
     struct3: 'standing series con vinyasas',
     struct4: 'peak pose · cool-down',
     struct5: 'savasana {n} min',
-    startFlow: '▶ comenzar flow',
+    startFlow: 'comenzar flow',
     switchSide: 'CAMBIA DE LADO',
     poseDone: '{pose} completado',
     nextPose: 'PRÓXIMA POSE',

@@ -457,7 +457,7 @@ export const en: Translations<typeof es> = {
     struct3: 'standing series with vinyasas',
     struct4: 'peak pose · cool-down',
     struct5: 'savasana {n} min',
-    startFlow: '▶ start flow',
+    startFlow: 'start flow',
     switchSide: 'SWITCH SIDES',
     poseDone: '{pose} done',
     nextPose: 'NEXT POSE',

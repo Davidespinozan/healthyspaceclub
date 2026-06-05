@@ -591,7 +591,6 @@
    START CTAs (yoga / workout)
    ══════════════════════════════════════════════════════════ */
 
-.dt2-yoga-start-cta,
 /* Aviso de idioma de la rutina (prosa IA en otro idioma) */
 .dt2-lang-mismatch {
   display: flex;
@@ -621,6 +620,7 @@
 }
 .dt2-lang-mismatch button:disabled { opacity: 0.5; cursor: default; }
 
+.dt2-yoga-start-cta,
 .dt2-start-workout-cta {
   width: auto;
   align-self: center;
