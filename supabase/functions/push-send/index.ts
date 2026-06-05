@@ -40,6 +40,7 @@ function buildMessage(n: NotifRecord): { title: string; body: string } {
     case 'follow': return { title: 'Healthy Space Club', body: `${who} te empezó a seguir` };
     case 'partner_invite': return { title: 'Healthy Space Club', body: `${who} te invitó a entrenar` };
     case 'partner_accept': return { title: 'Healthy Space Club', body: `${who} aceptó entrenar contigo` };
+    case 'reminder': return { title: 'Healthy Space Club', body: n.preview || 'Tienes un recordatorio' };
     default: return { title: 'Healthy Space Club', body: 'Tienes una nueva notificación' };
   }
 }

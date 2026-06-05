@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
-import { X, Flame, MessageCircle, Users, UserPlus, Check, UserCheck } from 'lucide-react';
+import { X, Flame, MessageCircle, Users, UserPlus, Check, UserCheck, Bell } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
@@ -34,6 +34,7 @@ function iconFor(type: AppNotification['type']) {
     case 'partner_invite': return <UserPlus size={15} strokeWidth={2} />;
     case 'partner_accept': return <Check size={15} strokeWidth={2} />;
     case 'follow': return <UserCheck size={15} strokeWidth={2} />;
+    case 'reminder': return <Bell size={15} strokeWidth={2} />;
   }
 }
 
@@ -45,6 +46,7 @@ function textFor(n: AppNotification, t: TFn): string {
     case 'partner_invite': return t('notif.partnerInvite');
     case 'partner_accept': return t('notif.partnerAccept');
     case 'follow': return t('notif.follow');
+    case 'reminder': return n.preview || '';
   }
 }
 
@@ -94,6 +96,7 @@ export default function NotificationsSheet({ open, items, onClose, onTapPost, on
             <p className="nts-empty">{t('notif.empty')}</p>
           ) : (
             items.map(n => {
+              const isReminder = n.type === 'reminder';
               const name = n.actor_username || t('notif.someone');
               const tappable = !!(n.post_id && onTapPost);
               return (
@@ -106,14 +109,18 @@ export default function NotificationsSheet({ open, items, onClose, onTapPost, on
                     className="nts-avatar"
                     onClick={(e) => { e.stopPropagation(); if (n.actor_id && onTapActor) onTapActor(n.actor_id); }}
                   >
-                    {n.actor_avatar_url
-                      ? <img src={n.actor_avatar_url} alt="" />
-                      : <span>{name[0].toUpperCase()}</span>}
-                    <span className={`nts-badge nts-badge--${n.type}`}>{iconFor(n.type)}</span>
+                    {isReminder
+                      ? <span className="nts-rem-icon"><Bell size={18} strokeWidth={2} /></span>
+                      : n.actor_avatar_url
+                        ? <img src={n.actor_avatar_url} alt="" />
+                        : <span>{name[0].toUpperCase()}</span>}
+                    {!isReminder && <span className={`nts-badge nts-badge--${n.type}`}>{iconFor(n.type)}</span>}
                   </div>
                   <div className="nts-body">
                     <p className="nts-text">
-                      <span className="nts-name">{name}</span>{' '}{textFor(n, t)}
+                      {isReminder
+                        ? textFor(n, t)
+                        : <><span className="nts-name">{name}</span>{' '}{textFor(n, t)}</>}
                     </p>
                     <span className="nts-time">{timeAgo(n.created_at, t)}</span>
                     {/* Colaboración: aceptar/rechazar inline (estilo Instagram). */}
