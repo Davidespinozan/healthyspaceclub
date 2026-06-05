@@ -1,19 +1,21 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight } from 'lucide-react';
+import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useT } from '../i18n';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
+import { parseRepsToNumber } from '../utils/workoutLogger';
 import {
-  startPosFor,
-  markSet as markSetPure,
-  editSetAt,
-  padForNextExercise,
-  computeExercisesCompleted,
+  buildExecutionSequence,
+  initLoggedByExercise,
+  setLogAt,
+  flattenByExercise,
+  lastKgForExercise,
+  setsDoneForExercise,
   computeSessionStats,
   buildOnCompletePayload,
-  parseResumeState,
+  type LoggedByExercise,
 } from '../utils/workoutSession';
 import type { Exercise, Equipment, LoggedSet } from '../types';
 import type { CachedWorkout } from '../utils/workoutCache';
@@ -67,17 +69,52 @@ export default function WorkoutPlayer({
   const totalExercises = exercises.length;
   const planHash = buildPlanHash(workout);
 
-  // ── State (3 phases + sub-estados). Flow-1: arrancamos directo en 'exercise'.
+  // Secuencia de ejecución (intercala superseries por vuelta). El player camina
+  // por `currentStep`; las series se guardan POR EJERCICIO (2D) y se aplanan al
+  // finalizar → el contrato downstream (racha/Supabase) queda idéntico.
+  const sequence = useMemo(() => buildExecutionSequence(exercises), [exercises]);
+  const blockId = useMemo(
+    () => (exIndex: number) => exercises[exIndex]?.group || `__solo_${exIndex}`,
+    [exercises],
+  );
+
+  // Bloques de la sesión: cada estación es un run de ejercicios CONSECUTIVOS con
+  // el mismo `group` (superserie), o un ejercicio suelto. Fuente única de verdad
+  // de la estructura de bloques — mismo criterio que buildExecutionSequence.
+  const blocks = useMemo(() => {
+    const result: number[][] = [];
+    let i = 0;
+    while (i < exercises.length) {
+      const g = exercises[i].group;
+      if (g) {
+        const run: number[] = [];
+        let j = i;
+        while (j < exercises.length && exercises[j].group === g) { run.push(j); j++; }
+        result.push(run);
+        i = j;
+      } else {
+        result.push([i]);
+        i++;
+      }
+    }
+    return result;
+  }, [exercises]);
+  const totalBlocks = blocks.length;
+
+  // ── State
   const [phase, setPhase] = useState<PlayerPhase>('exercise');
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [loggedSets, setLoggedSets] = useState<Array<LoggedSet | null>>([]);
-  const [restState, setRestState] = useState<{ secondsLeft: number; forSet: number } | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [loggedByExercise, setLoggedByExercise] = useState<LoggedByExercise>(() => initLoggedByExercise(exercises));
+  const [restState, setRestState] = useState<{ secondsLeft: number } | null>(null);
   const [editingSet, setEditingSet] = useState<{ exerciseIndex: number; setIndex: number } | null>(null);
   const [editValues, setEditValues] = useState<LoggedSet>({ reps: 0, kg: 0 });
   const [startedAt, setStartedAt] = useState<number>(() => Date.now());
   const [pausedFromPhase, setPausedFromPhase] = useState<PlayerPhase | null>(null);
 
-  // ── Derived per-current-exercise
+  // ── Derived del step actual
+  const step = sequence[currentStep];
+  const currentExerciseIndex = step?.exIndex ?? Math.max(0, exercises.length - 1);
+  const currentSetNum = step?.setNum ?? 1;
   const currentEx = exercises[currentExerciseIndex];
   const currentBank = currentEx ? exerciseMap.get(currentEx.id) : undefined;
   const variant = currentBank ? selectVariantForEquipment(currentBank, userEquipment) : null;
@@ -86,15 +123,44 @@ export default function WorkoutPlayer({
     : currentEx?.id || '';
   const DisplayIcon = getExerciseIcon(currentBank);
   const totalSetsForCurrent = currentEx?.sets || 1;
+  const setsRegisteredForCurrent = setsDoneForExercise(loggedByExercise, currentExerciseIndex);
 
-  // Posición en loggedSets donde comienzan los sets del ejercicio actual.
-  // loggedSets es plano en orden de ejecución: [ex0-s0, ex0-s1, ..., ex1-s0, ...]
-  const startPos = useMemo(
-    () => startPosFor(currentExerciseIndex, exercises),
-    [exercises, currentExerciseIndex],
+  // Límites de bloque (superserie = run del mismo `group`; o ejercicio suelto).
+  const isBlockEnd = (stepIdx: number): boolean => {
+    if (stepIdx >= sequence.length - 1) return true;
+    return blockId(sequence[stepIdx + 1].exIndex) !== blockId(sequence[stepIdx].exIndex);
+  };
+  const nextBlockStartFrom = (stepIdx: number): number => {
+    const cur = blockId(sequence[stepIdx]?.exIndex ?? 0);
+    let k = stepIdx + 1;
+    while (k < sequence.length && blockId(sequence[k].exIndex) === cur) k++;
+    return k;
+  };
+  const currentSetMarked = !!loggedByExercise[currentExerciseIndex]?.[currentSetNum - 1];
+  const atBlockEnd = step ? isBlockEnd(currentStep) : true;
+  const blockComplete = atBlockEnd && currentSetMarked; // muestra CTA siguiente/terminar
+  const isLastBlock = nextBlockStartFrom(currentStep) >= sequence.length;
+  // Cue "sin descanso · ahora [B]" cuando el step encadena con el siguiente miembro.
+  const chainedNextName = step?.chained && sequence[currentStep + 1]
+    ? (exerciseMap.get(exercises[sequence[currentStep + 1].exIndex]?.id || '')?.name || '')
+    : '';
+
+  // Bloque actual (estación) y posición de la sesión, derivados de `blocks`.
+  // `currentBlockNumber` es monótono (no rebota): una superserie cuenta como una
+  // sola estación aunque el recorrido vuelva al ejercicio A en la siguiente vuelta.
+  const currentBlockIndex = useMemo(
+    () => blocks.findIndex(b => b.includes(currentExerciseIndex)),
+    [blocks, currentExerciseIndex],
   );
-  const setsRegisteredForCurrent = Math.max(0, loggedSets.length - startPos);
-  const allSetsRegistered = setsRegisteredForCurrent >= totalSetsForCurrent;
+  const currentBlockMembers = currentBlockIndex >= 0 ? blocks[currentBlockIndex] : [currentExerciseIndex];
+  const currentBlockNumber = currentBlockIndex >= 0 ? currentBlockIndex + 1 : 1;
+  const isSuperset = currentBlockMembers.length > 1;
+  const blockBadge = currentBlockMembers.length >= 4
+    ? t('workout.superset')
+    : currentBlockMembers.length === 3
+      ? t('workout.triset')
+      : t('workout.biset');
+  const blockPosition = isSuperset ? currentBlockMembers.indexOf(currentExerciseIndex) : -1;
 
   // ── Wake lock + body scroll lock + ESC handler
 
@@ -118,24 +184,20 @@ export default function WorkoutPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, editingSet]);
 
-  // ── localStorage autosave (key + shape compatibles con la versión anterior).
-  // Persistimos `currentSet` derivado para compat con el confirm() de resume.
+  // ── localStorage autosave (shape v2 — currentStep + store 2D).
   useEffect(() => {
     if (phase === 'exercise' || phase === 'paused') {
       localStorage.setItem(PROGRESS_KEY, JSON.stringify({
         workoutDate: new Date().toISOString().split('T')[0],
         planHash,
-        currentExerciseIndex,
-        currentSet: Math.min(setsRegisteredForCurrent + 1, totalSetsForCurrent),
-        restSecondsLeft: restState?.secondsLeft ?? 0,
-        exercisesCompleted: computeExercisesCompleted(loggedSets, exercises),
-        totalSetsCompleted: loggedSets.filter(s => s !== null).length,
+        version: 2,
+        currentStep,
+        loggedByExercise,
         startedAt,
-        loggedSets,
       }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, currentExerciseIndex, loggedSets, restState]);
+  }, [phase, currentStep, loggedByExercise]);
 
   // ── Rest countdown (non-blocking, solo informa)
   useEffect(() => {
@@ -161,35 +223,55 @@ export default function WorkoutPlayer({
       try { return localStorage.getItem(PROGRESS_KEY); }
       catch { return null; }
     })();
+    if (!raw) return;
+    let data: Record<string, unknown> | null = null;
+    try { data = JSON.parse(raw); } catch { data = null; }
     const today = new Date().toISOString().split('T')[0];
-    const resumeState = parseResumeState(raw, planHash, today, totalExercises);
-    if (!resumeState) return; // fresh start con los defaults del useState
-
-    const ok = confirm(
-      t('workout.resumeConfirm', { n: resumeState.currentExerciseIndex + 1, total: totalExercises }),
-    );
+    // Solo resume del shape v2, mismo plan/día, con progreso real (step > 0).
+    // Sesiones viejas (v1) o de otro plan/día → se descartan limpio.
+    const validV2 =
+      data && data.version === 2 &&
+      data.workoutDate === today && data.planHash === planHash &&
+      typeof data.currentStep === 'number' && data.currentStep > 0 &&
+      data.currentStep < sequence.length && Array.isArray(data.loggedByExercise);
+    if (!validV2) {
+      localStorage.removeItem(PROGRESS_KEY);
+      return;
+    }
+    const savedStep = data!.currentStep as number;
+    const savedEx = (sequence[savedStep]?.exIndex ?? 0) + 1;
+    const ok = confirm(t('workout.resumeConfirm', { n: savedEx, total: totalExercises }));
     if (ok) {
-      setCurrentExerciseIndex(resumeState.currentExerciseIndex);
-      setStartedAt(resumeState.startedAt || Date.now());
-      setLoggedSets(resumeState.loggedSets);
+      setCurrentStep(savedStep);
+      setLoggedByExercise(data!.loggedByExercise as LoggedByExercise);
+      setStartedAt(typeof data!.startedAt === 'number' ? (data!.startedAt as number) : Date.now());
+    } else {
+      localStorage.removeItem(PROGRESS_KEY);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Marca el set actual del paso. Si es el último paso del bloque (atBlockEnd)
+  // NO auto-avanza: aparece la CTA "siguiente bloque". En cualquier otro paso
+  // avanza al siguiente step y arma el descanso (restAfter=0 → encadenado, sin
+  // descanso, pasa directo al siguiente ejercicio del bloque).
   function markCurrentSet() {
-    if (allSetsRegistered || !currentEx) return;
-    const { newLoggedSets, restSeconds } = markSetPure(loggedSets, currentExerciseIndex, exercises);
-    setLoggedSets(newLoggedSets);
-    if (restSeconds === null) {
+    if (!step || currentSetMarked || !currentEx) return;
+    const entry: LoggedSet = {
+      reps: parseRepsToNumber(currentEx.reps),
+      kg: lastKgForExercise(loggedByExercise, currentExerciseIndex),
+    };
+    setLoggedByExercise(prev => setLogAt(prev, currentExerciseIndex, currentSetNum - 1, entry));
+    if (atBlockEnd) {
       setRestState(null);
     } else {
-      setRestState({ secondsLeft: restSeconds, forSet: setsRegisteredForCurrent + 1 });
+      setCurrentStep(currentStep + 1);
+      setRestState(step.restAfter > 0 ? { secondsLeft: step.restAfter } : null);
     }
   }
 
   function openEditSet(exerciseIdx: number, setIdx: number) {
-    const flatIdx = startPosFor(exerciseIdx, exercises) + setIdx;
-    const entry = loggedSets[flatIdx];
+    const entry = loggedByExercise[exerciseIdx]?.[setIdx];
     if (!entry) return; // null (skipped) o undefined → no editable
     setEditingSet({ exerciseIndex: exerciseIdx, setIndex: setIdx });
     setEditValues({ reps: entry.reps, kg: entry.kg });
@@ -197,7 +279,10 @@ export default function WorkoutPlayer({
 
   function saveEditSet() {
     if (!editingSet) return;
-    setLoggedSets(prev => editSetAt(prev, editingSet.exerciseIndex, editingSet.setIndex, exercises, editValues));
+    setLoggedByExercise(prev => setLogAt(prev, editingSet.exerciseIndex, editingSet.setIndex, {
+      reps: Math.max(0, editValues.reps),
+      kg: Math.max(0, editValues.kg),
+    }));
     setEditingSet(null);
   }
 
@@ -205,22 +290,21 @@ export default function WorkoutPlayer({
     setRestState(null);
   }
 
+  // Avanza al inicio del siguiente bloque. Los sets no marcados del bloque
+  // actual quedan null en el store 2D (saltados) — flattenByExercise los
+  // preserva por-ejercicio para el payload de cierre.
   function goToNextExercise() {
-    if (!currentEx) return;
-    const padded = padForNextExercise(loggedSets, currentExerciseIndex, exercises);
-    setLoggedSets(padded);
     setRestState(null);
-
-    const nextIdx = currentExerciseIndex + 1;
-    if (nextIdx >= totalExercises) {
-      finishSession(padded);
+    const next = nextBlockStartFrom(currentStep);
+    if (next >= sequence.length) {
+      finishSession(loggedByExercise);
     } else {
-      setCurrentExerciseIndex(nextIdx);
+      setCurrentStep(next);
     }
   }
 
-  function finishSession(finalLogged: Array<LoggedSet | null>) {
-    const payload = buildOnCompletePayload(finalLogged, startedAt, Date.now(), exercises);
+  function finishSession(logged: LoggedByExercise) {
+    const payload = buildOnCompletePayload(flattenByExercise(logged), startedAt, Date.now(), exercises);
     localStorage.removeItem(PROGRESS_KEY);
     setPhase('completed');
     onComplete(payload);
@@ -248,7 +332,7 @@ export default function WorkoutPlayer({
 
   // ── Stats para pantalla completed
   const completedStats = useMemo(
-    () => computeSessionStats(loggedSets, startedAt, Date.now(), exercises),
+    () => computeSessionStats(flattenByExercise(loggedByExercise), startedAt, Date.now(), exercises),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [phase],
   );
@@ -257,8 +341,8 @@ export default function WorkoutPlayer({
   // RENDER
   // ══════════════════════════════════════════════════════════════
 
-  const progressPct = totalExercises > 0
-    ? Math.round((currentExerciseIndex / totalExercises) * 100)
+  const progressPct = sequence.length > 0
+    ? Math.round((currentStep / sequence.length) * 100)
     : 0;
 
   return createPortal(
@@ -271,7 +355,7 @@ export default function WorkoutPlayer({
         <div className="wp-header-title">
           {phase === 'completed'
             ? <em>{t('workout.completed')}</em>
-            : <>{t('workout.exercise')} {currentExerciseIndex + 1} <span className="wp-header-of">{t('workout.of')}</span> {totalExercises}</>}
+            : <>{t('workout.exercise')} {currentBlockNumber} <span className="wp-header-of">{t('workout.of')}</span> {totalBlocks}</>}
         </div>
         <div className="wp-header-counter">
           {phase === 'exercise' || phase === 'paused' ? (
@@ -304,6 +388,15 @@ export default function WorkoutPlayer({
           </div>
 
           <div className="wp-ex-info">
+            {isSuperset && (
+              <div className="wp-superset-badge">
+                <Zap size={13} strokeWidth={2} />
+                <span>{blockBadge}</span>
+                <span className="wp-superset-pos">
+                  {String.fromCharCode(65 + blockPosition)}{currentBlockMembers.length > 0 ? `/${currentBlockMembers.length}` : ''}
+                </span>
+              </div>
+            )}
             <p className="wp-ex-micro">
               {currentBank?.muscleGroup} · {currentBank?.difficulty}
             </p>
@@ -318,19 +411,22 @@ export default function WorkoutPlayer({
 
           <div className="wp-sets">
             <div className="wp-sets-head">
-              <span className="wp-sets-label">{t('workout.setsLabel')} · {totalSetsForCurrent} × {currentEx.reps}</span>
+              <span className="wp-sets-label">
+                {isSuperset
+                  ? t('workout.supersetRound', { n: currentSetNum, total: totalSetsForCurrent })
+                  : <>{t('workout.setsLabel')} · {totalSetsForCurrent} × {currentEx.reps}</>}
+              </span>
               <span className="wp-sets-counter">
                 {Math.min(setsRegisteredForCurrent, totalSetsForCurrent)} {t('workout.of')} {totalSetsForCurrent}
               </span>
             </div>
             <div className="wp-set-rows">
               {Array.from({ length: totalSetsForCurrent }).map((_, setIdx) => {
-                const flatIdx = startPos + setIdx;
-                const entry = loggedSets[flatIdx];
-                const isLogged = flatIdx < loggedSets.length;
-                const isSkipped = isLogged && entry === null;
-                const isDone = isLogged && entry !== null;
-                const isActive = !isLogged && setIdx === setsRegisteredForCurrent;
+                const entry = (loggedByExercise[currentExerciseIndex] || [])[setIdx];
+                const isDone = entry != null;
+                const isActive = !isDone && setIdx === currentSetNum - 1;
+                // null en una posición ya superada por la vuelta actual = saltada
+                const isSkipped = entry == null && setIdx < currentSetNum - 1;
 
                 const rowClass = `wp-set-row${
                   isDone ? ' done' : isSkipped ? ' skipped' : isActive ? ' active' : ' future'
@@ -358,8 +454,11 @@ export default function WorkoutPlayer({
                       {isSkipped && (
                         <span className="wp-set-row-vals wp-set-row-vals--muted"> · {t('workout.skipped')}</span>
                       )}
-                      {isActive && (
+                      {isActive && !chainedNextName && (
                         <span className="wp-set-row-hint"> · {t('workout.tapToMark')}</span>
+                      )}
+                      {isActive && chainedNextName && (
+                        <span className="wp-set-row-hint wp-set-row-hint--chain"> · {t('workout.supersetNext')} {chainedNextName}</span>
                       )}
                     </span>
                     <span className="wp-set-row-icon">
@@ -373,10 +472,10 @@ export default function WorkoutPlayer({
 
           <div className="wp-cta-wrap">
             <button
-              className={`wp-cta${!allSetsRegistered ? ' wp-cta-secondary' : ''}`}
+              className={`wp-cta${!blockComplete ? ' wp-cta-secondary' : ''}`}
               onClick={goToNextExercise}
             >
-              {currentExerciseIndex + 1 >= totalExercises ? t('workout.finishSession') : t('workout.nextExercise')}
+              {isLastBlock ? t('workout.finishSession') : t('workout.nextExercise')}
               <ChevronRight size={18} />
             </button>
           </div>
@@ -389,7 +488,7 @@ export default function WorkoutPlayer({
           <Pause size={48} className="wp-paused-icon" />
           <p className="wp-paused-label">{t('workout.pausedLabel')}</p>
           <p className="wp-paused-sub">
-            {t('workout.pausedSub', { i: currentExerciseIndex + 1, total: totalExercises, done: setsRegisteredForCurrent, sets: totalSetsForCurrent })}
+            {t('workout.pausedSub', { i: currentBlockNumber, total: totalBlocks, done: setsRegisteredForCurrent, sets: totalSetsForCurrent })}
           </p>
           <div className="wp-cta-wrap">
             <button className="wp-cta" onClick={handlePause}>
