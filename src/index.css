@@ -5581,7 +5581,9 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   flex-direction: column;
   min-height: 100dvh;
   min-height: -webkit-fill-available;
-  background: var(--cream);
+  /* La franja del safe-area (notch/status bar) toma este color, no blanco — va
+     con el verde del hero. El contenido (th3-body, etc.) lleva su propio fondo. */
+  background: #153330;
   padding-top: env(safe-area-inset-top, 0px);
 }
 .app-main {
