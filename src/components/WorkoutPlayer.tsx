@@ -128,6 +128,7 @@ export default function WorkoutPlayer({
   const [phase, setPhase] = useState<PlayerPhase>('exercise');
   const [shareOpen, setShareOpen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
+  const [videoAspect, setVideoAspect] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState(() => savedProgress?.currentStep ?? 0);
   const [loggedByExercise, setLoggedByExercise] = useState<LoggedByExercise>(() => savedProgress?.loggedByExercise ?? initLoggedByExercise(exercises));
   const [restState, setRestState] = useState<{ secondsLeft: number } | null>(null);
@@ -229,6 +230,7 @@ export default function WorkoutPlayer({
   // (la tabla). Antes el player SIEMPRE mostraba 'video próximamente'.
   useEffect(() => {
     let active = true;
+    setVideoAspect(null);
     const bankVideo = (currentBank?.videos as { url: string }[] | undefined)?.[0]?.url;
     if (bankVideo) { setCurrentVideoUrl(bankVideo); return; }
     setCurrentVideoUrl(null);
@@ -487,7 +489,10 @@ export default function WorkoutPlayer({
       {/* ── PHASE: EXERCISE (1 pantalla por ejercicio con filas de series) ── */}
       {phase === 'exercise' && currentEx && (
         <div className={`wp-active${restState ? ' has-rest' : ''}`} key={`ex-${currentExerciseIndex}`}>
-          <div className="wp-video-area">
+          <div
+            className="wp-video-area"
+            style={videoAspect ? { aspectRatio: String(Math.min(1.9, Math.max(0.5, videoAspect))) } : undefined}
+          >
             {currentVideoUrl ? (
               <video
                 key={currentVideoUrl}
@@ -498,6 +503,10 @@ export default function WorkoutPlayer({
                 loop
                 playsInline
                 preload="metadata"
+                onLoadedMetadata={e => {
+                  const v = e.currentTarget;
+                  if (v.videoWidth && v.videoHeight) setVideoAspect(v.videoWidth / v.videoHeight);
+                }}
               />
             ) : (
               <div className="wp-video-fallback">

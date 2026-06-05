@@ -374,15 +374,17 @@
 }
 
 .wp-video-area {
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  max-height: 240px;
+  /* Casi a los bordes: sale del padding del contenedor (-18px de 24px → ~6px
+     del borde de pantalla) para verse grande. El aspecto lo fija el video. */
+  width: calc(100% + 36px);
+  margin: -2px -18px 18px;
+  aspect-ratio: 16 / 9;
+  max-height: 62vh;
   background: rgba(0, 0, 0, 0.25);
-  border-radius: 16px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 0 18px;
   overflow: hidden;
 }
 
