@@ -746,18 +746,21 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           </article>
         </div>
 
-        {/* ── Entrenar en pareja (Fase 2 · entrenar con alguien) ── */}
-        <button
-          type="button"
-          className="th3-partner"
-          onClick={() => onNav('companeros')}
-        >
-          <span className="th3-partner-icon">
-            <Users size={18} strokeWidth={1.8} />
-          </span>
-          <p className="th3-partner-title">{t('hoy.partnerTitle')}</p>
-          <span className="th3-partner-arrow">→</span>
-        </button>
+        {/* ── Entrenar en pareja — se oculta si ya hay rutina de pareja hoy
+              (ya estás enlazado y generaron la rutina; el botón sobra). ── */}
+        {!(todayWorkoutPlan as { partnerMode?: boolean } | null)?.partnerMode && (
+          <button
+            type="button"
+            className="th3-partner"
+            onClick={() => onNav('companeros')}
+          >
+            <span className="th3-partner-icon">
+              <Users size={18} strokeWidth={1.8} />
+            </span>
+            <p className="th3-partner-title">{t('hoy.partnerTitle')}</p>
+            <span className="th3-partner-arrow">→</span>
+          </button>
+        )}
 
         {/* ── Tu Espacio (discreto / o review si ya respondió las 5) ── */}
         {allAnswered ? (
