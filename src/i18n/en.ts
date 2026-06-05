@@ -260,7 +260,7 @@ export const en: Translations<typeof es> = {
     retry: 'Retry',
   },
   onboarding: {
-    brandSub: 'Training and nutrition, powered by AI. Your space to follow through.',
+    brandSub: 'Training and nutrition, powered by AI\nYour space to follow through.',
     start: 'Start my journey',
     createAccount: 'Create your account',
     createAccountHint: 'To save your progress across devices',

@@ -248,7 +248,18 @@ export default function OnboardingScreen() {
       {step === 1 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
           <div className="onb-center">
-            <div className="onb-brand">Healthy Space Club</div>
+            <div className="onb-brand-logos">
+              <img
+                src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
+                alt=""
+                className="onb-brand-icon"
+              />
+              <img
+                src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png"
+                alt="Healthy Space Club"
+                className="onb-brand-wordmark"
+              />
+            </div>
             <div className="onb-brand-sub">{t('onboarding.brandSub')}</div>
             <button className="onb-btn-gold" onClick={goNext}>{t('onboarding.start')}</button>
           </div>
