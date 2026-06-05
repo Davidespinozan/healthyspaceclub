@@ -1,5 +1,5 @@
 /* Cabecera en vivo de pareja (dos avatares + "Entrenando con X") */
-.pl-live { display: flex; align-items: center; gap: 10px; margin: 2px 0 10px; }
+.pl-live { display: flex; align-items: center; gap: 10px; margin: 2px 0 10px; flex-wrap: wrap; min-width: 0; }
 .pl-avatars { display: flex; flex-shrink: 0; }
 .pl-av {
   width: 30px; height: 30px; border-radius: 50%;
@@ -19,6 +19,7 @@
   box-shadow: 0 4px 12px rgba(168, 134, 78, 0.28);
   font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 11.5px;
   color: #fff; letter-spacing: 0.02em;
+  min-width: 0; max-width: 100%;
 }
 .pl-live-dot {
   width: 8px; height: 8px; border-radius: 50%;

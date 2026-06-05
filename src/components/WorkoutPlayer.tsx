@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { usePartnerPresence } from '../hooks/usePartnerPresence';
+import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
@@ -157,6 +159,23 @@ export default function WorkoutPlayer({
   );
   const currentBlockMembers = currentBlockIndex >= 0 ? blocks[currentBlockIndex] : [currentExerciseIndex];
   const currentBlockNumber = currentBlockIndex >= 0 ? currentBlockIndex + 1 : 1;
+
+  // ── Co-presencia en vivo (Parte 2): comparto mi posición y veo la del compañero.
+  const myId = useAppStore(s => s.user?.id) ?? null;
+  const partnerMode = !!workout.partnerMode;
+  const partnerId = (workout.partnerId as string | null) ?? null;
+  const partnerName = workout.partnerName || '';
+  const partnerAvatar = (workout.partnerAvatar as string | null) ?? null;
+  const partnerLive = usePartnerPresence(partnerMode, myId, partnerId, {
+    exIndex: currentExerciseIndex,
+    setNum: currentSetNum,
+    resting: !!restState,
+    done: phase === 'completed',
+  });
+  // Nombre del ejercicio donde va el compañero (para el strip en vivo).
+  const partnerExName = partnerLive
+    ? (exerciseMap.get(exercises[partnerLive.exIndex]?.id || '')?.name || '')
+    : '';
   const isSuperset = currentBlockMembers.length > 1;
   const blockBadge = currentBlockMembers.length >= 4
     ? t('workout.superset')
@@ -393,6 +412,25 @@ export default function WorkoutPlayer({
       {phase === 'exercise' && (
         <div className="wp-progress-bar">
           <div className="wp-progress-bar-fill" style={{ width: `${progressPct}%` }} />
+        </div>
+      )}
+
+      {/* ── Co-presencia en vivo: dónde va el compañero ── */}
+      {partnerMode && (phase === 'exercise' || phase === 'paused') && (
+        <div className="wp-partner-live">
+          <span className="wp-pl-dot" />
+          {partnerAvatar
+            ? <img className="wp-pl-av" src={partnerAvatar} alt="" />
+            : <span className="wp-pl-av wp-pl-av--fb">{(partnerName.trim().charAt(0) || '?').toUpperCase()}</span>}
+          <span className="wp-pl-text">
+            {!partnerLive
+              ? t('workout.partnerWaiting', { name: partnerName })
+              : partnerLive.done
+                ? t('workout.partnerFinished', { name: partnerName })
+                : partnerLive.resting
+                  ? t('workout.partnerResting', { name: partnerName })
+                  : t('workout.partnerAt', { name: partnerName, ex: partnerExName, n: partnerLive.setNum })}
+          </span>
         </div>
       )}
 
