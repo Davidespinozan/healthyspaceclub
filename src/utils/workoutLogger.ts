@@ -82,6 +82,10 @@ export interface FinishSessionPayload {
    * El Supabase row los recibe estructurados dentro de `exercises[i].performed`.
    */
   loggedSets?: Array<LoggedSet | null>;
+  /** Modo pareja (Fase 3): cuenta del compañero conectado (null si invitado). */
+  partnerUserId?: string | null;
+  /** Modo pareja: nombre del compañero, para "entrenaste con X". */
+  partnerName?: string | null;
 }
 
 /**
@@ -145,6 +149,8 @@ export async function finishWorkoutSession(
       exercises_total: payload.exercisesTotal,
       coach_reason: payload.coachReason,
       generation_method: payload.generationMethod,
+      partner_user_id: payload.partnerUserId ?? null,
+      partner_name: payload.partnerName ?? null,
     });
 
     if (error) {

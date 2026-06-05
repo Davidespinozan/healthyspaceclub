@@ -381,6 +381,9 @@ export default function WorkoutPlan({
               coachReason: (plan as { razon?: string }).razon,
               generationMethod: 'ai_generated',
               loggedSets: data.loggedSets,
+              // Fase 3 · crédito compartido: liga la sesión al compañero.
+              partnerUserId: plan.partnerMode ? (useAppStore.getState().pendingPartner?.id ?? null) : null,
+              partnerName: plan.partnerMode ? (plan.partnerName ?? null) : null,
             }, addCompletedSession, markActiveDay).catch(() => {});
 
             setWorkoutPlayerOpen(false);

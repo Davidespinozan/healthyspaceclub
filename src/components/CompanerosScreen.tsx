@@ -13,7 +13,7 @@ import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import {
   searchUsers, sendInvite, respondInvite, listPartnerships, getPartnerTrainingProfile,
-  type UserSearchResult, type Partnership,
+  countSessionsWith, type UserSearchResult, type Partnership,
 } from '../utils/partners';
 import UsernameSetupSheet from './UsernameSetupSheet';
 import './companeros.css';
@@ -36,9 +36,17 @@ export default function CompanerosScreen() {
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [invited, setInvited] = useState<Set<string>>(new Set());
+  const [counts, setCounts] = useState<Record<string, number>>({});
 
   const refresh = useCallback(async () => {
-    setPartnerships(await listPartnerships());
+    const parts = await listPartnerships();
+    setPartnerships(parts);
+    // Fase 3: cuántas veces entrené con cada compañero conectado.
+    const acc = parts.filter(p => p.status === 'accepted');
+    const entries = await Promise.all(
+      acc.map(async p => [p.other_id, await countSessionsWith(p.other_id)] as const),
+    );
+    setCounts(Object.fromEntries(entries));
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -200,7 +208,11 @@ export default function CompanerosScreen() {
                     <Avatar name={p.other_name || p.other_username} url={p.other_avatar} />
                     <div className="comp-row-body">
                       <span className="comp-row-name">{displayName(p.other_name, p.other_username)}</span>
-                      {p.other_username && <span className="comp-row-handle">@{p.other_username}</span>}
+                      <span className="comp-row-handle">
+                        {counts[p.other_id] > 0
+                          ? t('partners.together', { n: counts[p.other_id] })
+                          : (p.other_username ? `@${p.other_username}` : '')}
+                      </span>
                     </div>
                     <button className="comp-train-btn" onClick={() => trainWith(p)}>
                       <Dumbbell size={14} strokeWidth={2} /> {t('partners.train')}

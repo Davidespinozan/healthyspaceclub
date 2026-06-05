@@ -395,6 +395,7 @@ export const es = {
     yourPartners: 'Tus compañeros',
     noPartners: 'Aún no tienes compañeros. Busca a alguien arriba.',
     train: 'Entrenar',
+    together: '{n}× juntos',
     guestTitle: 'Entrenar con un invitado',
     guestSub: 'Sin cuenta — solo dinos su nivel y listo.',
     aPartner: 'tu compañero',

@@ -82,6 +82,16 @@ export interface PartnerTrainingProfile {
   equipment?: string[];
 }
 
+/** Cuántas veces YO he entrenado con este compañero (de mis propios logs). */
+export async function countSessionsWith(partnerId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('workout_log')
+    .select('id', { count: 'exact', head: true })
+    .eq('partner_user_id', partnerId);
+  if (error) return 0;
+  return count ?? 0;
+}
+
 export async function getPartnerTrainingProfile(userId: string): Promise<PartnerTrainingProfile | null> {
   // RPC SECURITY DEFINER: solo devuelve datos si hay conexión aceptada.
   const { data, error } = await supabase.rpc('get_partner_profile', { partner: userId });
