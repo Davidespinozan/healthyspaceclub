@@ -198,23 +198,31 @@ export default function CompanerosScreen() {
               <p className="comp-empty">{t('partners.noPartners')}</p>
             ) : (
               <div className="comp-list">
-                {/* Conectados → entrenan juntos */}
-                {accepted.map(p => (
-                  <div className="comp-row" key={p.partnership_id}>
-                    <Avatar name={p.other_name || p.other_username} url={p.other_avatar} />
-                    <div className="comp-row-body">
-                      <span className="comp-row-name">{displayName(p.other_name, p.other_username)}</span>
-                      <span className="comp-row-handle">
-                        {counts[p.other_id] > 0
-                          ? t('partners.together', { n: counts[p.other_id] })
-                          : (p.other_username ? `@${p.other_username}` : '')}
-                      </span>
+                {/* Conectados → SOLO el que invitó (requester) genera la rutina;
+                    el otro la recibe (evita que ambos generen rutinas distintas). */}
+                {accepted.map(p => {
+                  const iHost = p.direction === 'outgoing';
+                  return (
+                    <div className="comp-row" key={p.partnership_id}>
+                      <Avatar name={p.other_name || p.other_username} url={p.other_avatar} />
+                      <div className="comp-row-body">
+                        <span className="comp-row-name">{displayName(p.other_name, p.other_username)}</span>
+                        <span className="comp-row-handle">
+                          {counts[p.other_id] > 0
+                            ? t('partners.together', { n: counts[p.other_id] })
+                            : (p.other_username ? `@${p.other_username}` : '')}
+                        </span>
+                      </div>
+                      {iHost ? (
+                        <button className="comp-train-btn" onClick={() => trainWith(p)}>
+                          <Dumbbell size={14} strokeWidth={2} /> {t('partners.train')}
+                        </button>
+                      ) : (
+                        <span className="comp-row-tag">{t('partners.hostsRoutine')}</span>
+                      )}
                     </div>
-                    <button className="comp-train-btn" onClick={() => trainWith(p)}>
-                      <Dumbbell size={14} strokeWidth={2} /> {t('partners.train')}
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
                 {/* Invitaciones enviadas → esperando que acepten (sin entrenar aún) */}
                 {outgoing.map(p => (
                   <div className="comp-row comp-row--muted" key={p.partnership_id}>

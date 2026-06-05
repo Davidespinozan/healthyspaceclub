@@ -407,6 +407,7 @@ export const en: Translations<typeof es> = {
     yourPartners: 'Your partners',
     noPartners: "No partners yet. Search for someone above.",
     train: 'Train',
+    hostsRoutine: 'builds the routine',
     together: '{n}× together',
     guestTitle: 'Train with a guest',
     guestSub: 'No account — just tell us their level.',

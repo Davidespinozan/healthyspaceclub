@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 6, // v6: regla anti-enfriamiento en el orden (no separar mismo músculo)
+  workout: 7, // v7: anti-enfriamiento + excepción biseries que emparejan músculos
 } as const;
 
 // Formato de coordinación de un ejercicio cuando se entrena en pareja:

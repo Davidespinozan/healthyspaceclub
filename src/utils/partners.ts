@@ -27,6 +27,21 @@ export interface Partnership {
 export type InviteResult = 'sent' | 'self' | 'exists' | 'error';
 export type RespondResult = 'accepted' | 'declined' | 'notfound' | 'error';
 
+/** Notifica en vivo a un usuario (broadcast a su canal personal) para que su
+ *  pantalla se actualice al instante, sin recargar. */
+function notifyUser(userId: string, event: string) {
+  try {
+    const ch = supabase.channel(`user:${userId}`);
+    ch.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        ch.send({ type: 'broadcast', event, payload: {} }).finally(() => {
+          setTimeout(() => { try { supabase.removeChannel(ch); } catch { /* noop */ } }, 500);
+        });
+      }
+    });
+  } catch { /* noop */ }
+}
+
 /** Busca usuarios por @usuario o nombre (mín. 2 chars, solo perfiles públicos).
  *  Quita el "@" del inicio para que escribir "@pedro" encuentre a "pedro". */
 export async function searchUsers(q: string): Promise<UserSearchResult[]> {
@@ -47,6 +62,7 @@ export async function sendInvite(targetId: string): Promise<InviteResult> {
     console.warn('[partners] invite failed:', error.message);
     return 'error';
   }
+  if (data === 'sent') notifyUser(targetId, 'invite'); // aparece al instante en su pantalla
   if (data === 'sent' || data === 'self' || data === 'exists') return data;
   return 'error';
 }

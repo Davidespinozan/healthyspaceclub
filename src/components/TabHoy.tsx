@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight, Flame, X } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
@@ -13,6 +13,7 @@ import MealDetailPopout from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import ActivityLogSheet from './ActivityLogSheet';
 import { listPartnerships, respondInvite, type Partnership } from '../utils/partners';
+import { supabase } from '../lib/supabase';
 import PartnerLiveHeader from './PartnerLiveHeader';
 import type { Exercise } from '../types';
 import { Logo } from './Logo';
@@ -72,13 +73,21 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // Invitaciones de pareja recibidas — se muestran en Hoy para aceptar/rechazar
   // sin tener que entrar a Compañeros.
   const [partnerInvites, setPartnerInvites] = useState<Partnership[]>([]);
-  useEffect(() => {
-    let alive = true;
+  const refetchInvites = useCallback(() => {
     listPartnerships()
-      .then(list => { if (alive) setPartnerInvites(list.filter(p => p.direction === 'incoming' && p.status === 'pending')); })
+      .then(list => setPartnerInvites(list.filter(p => p.direction === 'incoming' && p.status === 'pending')))
       .catch(() => {});
-    return () => { alive = false; };
   }, []);
+  useEffect(() => { refetchInvites(); }, [refetchInvites]);
+  // Realtime: cuando alguien te invita, aparece al instante (sin recargar).
+  useEffect(() => {
+    const uid = useAppStore.getState().user?.id;
+    if (!uid) return;
+    const ch = supabase.channel(`user:${uid}`);
+    ch.on('broadcast', { event: 'invite' }, () => refetchInvites());
+    ch.subscribe();
+    return () => { try { supabase.removeChannel(ch); } catch { /* noop */ } };
+  }, [refetchInvites]);
   async function respondPartnerInvite(p: Partnership, accept: boolean) {
     setPartnerInvites(prev => prev.filter(x => x.partnership_id !== p.partnership_id));
     await respondInvite(p.partnership_id, accept).catch(() => {});
