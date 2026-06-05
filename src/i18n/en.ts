@@ -1018,7 +1018,7 @@ export const en: Translations<typeof es> = {
     stripeNotWired: 'Payments system is being activated. Talk to your coach to manage your plan in the meantime.',
   },
   foodLog: {
-    detailQuestion: 'Had something different?',
+    detailQuestion: 'Ate something else?',
     detailCta: 'Log what I ate →',
 
     eyebrow: 'LOG A MEAL',
