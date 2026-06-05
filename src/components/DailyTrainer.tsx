@@ -389,6 +389,9 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
           goal,
           excludeMuscles: selectedModality === 'auto' ? [...history.yesterday] : [],
           minCandidates: 3,
+          // Foco específico → solo músculo primario (no traer espalda por tener
+          // bíceps secundario). Presets/auto sí aprovechan los compuestos.
+          primaryOnly: selectedModality === 'fuerza' && focus === 'specific',
         });
         candidates = filterResult.exercises;
 

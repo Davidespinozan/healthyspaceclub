@@ -479,7 +479,7 @@ export const en: Translations<typeof es> = {
     focusAuto: 'Let my coach decide',
     focusFull: 'Full body',
     focusUpper: 'Upper body',
-    focusLower: 'Lower body',
+    focusLower: 'Legs',
     focusPush: 'Push · chest, shoulders, triceps',
     focusPull: 'Pull · back, biceps',
     focusLegs: 'Legs',
@@ -495,6 +495,8 @@ export const en: Translations<typeof es> = {
     muscleGluteo: 'Glutes',
     musclePantorrillas: 'Calves',
     muscleCore: 'Core',
+    muscleCardio: 'Cardio',
+    muscleCuerpoCompleto: 'Full body',
     // History (only when the system has no record yet)
     lastTrainedQ: 'When did you last train?',
     lastRecent: 'Today or yesterday',

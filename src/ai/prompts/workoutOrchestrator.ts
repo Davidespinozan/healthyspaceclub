@@ -54,6 +54,7 @@ ORDEN DE EJERCICIOS (crítico — la secuencia debe ser inteligente, no aleatori
   · BIEN: pierna (compuesto), empuje, tracción, pierna, empuje, tracción, core.
 - SPLIT (push/pull/legs/upper/lower): el compuesto principal primero, luego los accesorios del mismo enfoque de mayor a menor demanda, aislamiento y core al final.
 - Nunca pongas el mismo patrón de movimiento dos veces seguidas si puedes alternarlo.
+- Si el día abarca VARIOS músculos (ej. "Bíceps + Tríceps"), REPARTE los ejercicios de forma pareja entre ellos — no satures uno solo. Con 2 músculos, ~mitad y mitad.
 
 ${getVoiceRules(locale, 'default')}
 

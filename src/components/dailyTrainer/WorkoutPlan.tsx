@@ -34,8 +34,18 @@ import type { CachedWorkout } from '../../utils/workoutCache';
 import ExerciseDetailPopout from '../ExerciseDetailPopout';
 import ActivityLogSheet from '../ActivityLogSheet';
 import PlayerLoadingFallback from '../PlayerLoadingFallback';
+import type { TranslationKey } from '../../i18n/es';
 
 const WorkoutPlayer = lazy(() => import('../WorkoutPlayer'));
+
+// Músculo primario → label traducible. Tag visible en cada ejercicio para que
+// el usuario vea de un vistazo qué trabaja (y verifique que respeta su foco).
+const MUSCLE_LABEL_KEY: Record<string, TranslationKey> = {
+  pecho: 'wizard.musclePecho', espalda: 'wizard.muscleEspalda', hombros: 'wizard.muscleHombros',
+  biceps: 'wizard.muscleBiceps', triceps: 'wizard.muscleTriceps', cuadriceps: 'wizard.muscleCuadriceps',
+  isquios: 'wizard.muscleIsquios', gluteo: 'wizard.muscleGluteo', pantorrillas: 'wizard.musclePantorrillas',
+  core: 'wizard.muscleCore', cardio: 'wizard.muscleCardio', 'cuerpo-completo': 'wizard.muscleCuerpoCompleto',
+};
 
 interface Props {
   plan: CachedWorkout & { razon?: string };
@@ -193,6 +203,9 @@ export default function WorkoutPlan({
                 <div className="dt2-ex-body">
                   <div className="dt2-ex-name">{bank?.name || ex.id}</div>
                   <div className="dt2-ex-stats">
+                    {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
+                      <span className="dt2-ex-muscle">{t(MUSCLE_LABEL_KEY[bank.muscleGroup])}</span>
+                    )}
                     <span>{ex.sets} × {ex.reps}</span>
                     <span className="dt2-ex-dot">·</span>
                     <span>{ex.rest}s {t('workout.statRest')}</span>

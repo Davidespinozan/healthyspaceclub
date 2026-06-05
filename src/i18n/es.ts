@@ -478,7 +478,7 @@ export const es = {
     focusAuto: 'Lo que decida mi coach',
     focusFull: 'Full body',
     focusUpper: 'Tren superior',
-    focusLower: 'Tren inferior',
+    focusLower: 'Piernas',
     focusPush: 'Empuje · pecho, hombro, tríceps',
     focusPull: 'Tracción · espalda, bíceps',
     focusLegs: 'Piernas',
@@ -494,6 +494,8 @@ export const es = {
     muscleGluteo: 'Glúteo',
     musclePantorrillas: 'Pantorrillas',
     muscleCore: 'Core',
+    muscleCardio: 'Cardio',
+    muscleCuerpoCompleto: 'Cuerpo completo',
     // Historia (solo si el sistema no tiene registro propio)
     lastTrainedQ: '¿Cuándo entrenaste por última vez?',
     lastRecent: 'Hoy o ayer',

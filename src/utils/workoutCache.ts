@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 1,
+  workout: 2, // v2: foco específico filtra solo por músculo primario (invalida caché previo)
 } as const;
 
 export interface CachedWorkout {

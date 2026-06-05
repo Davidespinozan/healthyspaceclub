@@ -350,8 +350,12 @@ export function filterExercisesForWorkout(params: {
   goal: Goal;
   excludeMuscles?: MuscleGroup[]; // muscles to avoid (yesterday's work)
   difficulty?: 'principiante' | 'intermedio' | 'avanzado';
+  // Cuando el usuario elige músculos ESPECÍFICOS, queremos ejercicios cuyo
+  // músculo PRIMARIO esté en la selección — no traer espalda solo porque tiene
+  // bíceps como secundario. Los splits/auto sí aceptan secundarios (compuestos).
+  primaryOnly?: boolean;
 }): Exercise[] {
-  const { exercises, equipment, muscleGroups, goal, excludeMuscles = [] } = params;
+  const { exercises, equipment, muscleGroups, goal, excludeMuscles = [], primaryOnly = false } = params;
 
   return exercises.filter(ex => {
     // Filter 1: equipment
@@ -362,10 +366,14 @@ export function filterExercisesForWorkout(params: {
       : (ex.variants?.some(v => v.equipment.some(e => equipment.includes(e))) ?? false);
     if (!hasEquipment) return false;
 
-    // Filter 2: muscle group match (primary or secondary)
+    // Filter 2: muscle group match (primary; secondary solo si no es primaryOnly)
     const primaryMatch = muscleGroups.includes(ex.muscleGroup);
     const secondaryMatch = (ex.secondaryMuscles || []).some(m => muscleGroups.includes(m));
-    if (!primaryMatch && !secondaryMatch) return false;
+    if (primaryOnly) {
+      if (!primaryMatch) return false;
+    } else if (!primaryMatch && !secondaryMatch) {
+      return false;
+    }
 
     // Filter 3: goal
     if (!ex.goals.includes(goal)) return false;
@@ -438,8 +446,10 @@ export function filterWithProgressiveRelaxation(params: {
   goal: Goal;
   excludeMuscles: MuscleGroup[];
   minCandidates?: number;
+  primaryOnly?: boolean;
 }): FilterResult {
   const minRequired = params.minCandidates ?? 3;
+  const primaryOnly = params.primaryOnly ?? false;
 
   // NIVEL 0 — filtro estricto
   let candidates = filterExercisesForWorkout({
@@ -448,6 +458,7 @@ export function filterWithProgressiveRelaxation(params: {
     muscleGroups: params.muscleGroups,
     goal: params.goal,
     excludeMuscles: params.excludeMuscles,
+    primaryOnly,
   });
   if (candidates.length >= minRequired) {
     return { exercises: candidates, relaxationLevel: 0, relaxedConstraints: [] };
@@ -460,6 +471,7 @@ export function filterWithProgressiveRelaxation(params: {
     muscleGroups: params.muscleGroups,
     goal: params.goal,
     excludeMuscles: [],
+    primaryOnly,
   });
   if (candidates.length >= minRequired) {
     return {
@@ -474,9 +486,10 @@ export function filterWithProgressiveRelaxation(params: {
     const matchesEquipment = ex.isYoga
       ? ex.equipment.some(e => params.equipment.includes(e))
       : (ex.variants?.some(v => v.equipment.some(e => params.equipment.includes(e))) ?? false);
-    const matchesMuscle =
-      params.muscleGroups.includes(ex.muscleGroup) ||
-      (ex.secondaryMuscles?.some(m => params.muscleGroups.includes(m)) ?? false);
+    const matchesMuscle = primaryOnly
+      ? params.muscleGroups.includes(ex.muscleGroup)
+      : (params.muscleGroups.includes(ex.muscleGroup) ||
+         (ex.secondaryMuscles?.some(m => params.muscleGroups.includes(m)) ?? false));
     return matchesEquipment && matchesMuscle;
   });
   if (candidates.length >= minRequired) {

@@ -25,7 +25,6 @@ export const FOCUS_OPTIONS: Array<{ value: FocusValue; labelKey: TranslationKey;
   { value: 'lower', labelKey: 'wizard.focusLower', icon: PersonStanding },
   { value: 'push', labelKey: 'wizard.focusPush', icon: Dumbbell },
   { value: 'pull', labelKey: 'wizard.focusPull', icon: Dumbbell },
-  { value: 'legs', labelKey: 'wizard.focusLegs', icon: PersonStanding },
   { value: 'specific', labelKey: 'wizard.focusSpecific', icon: SlidersHorizontal },
 ];
 
