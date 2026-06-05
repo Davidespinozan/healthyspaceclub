@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 5, // v5: modo pareja (format/repsB/tipB + partnerMode) — entrenar con alguien
+  workout: 6, // v6: regla anti-enfriamiento en el orden (no separar mismo músculo)
 } as const;
 
 // Formato de coordinación de un ejercicio cuando se entrena en pareja:

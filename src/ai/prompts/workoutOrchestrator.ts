@@ -87,6 +87,11 @@ ORDEN DE EJERCICIOS (crítico — la secuencia debe ser inteligente, no aleatori
 - FULL BODY: aquí SÍ alterna — intercala tren inferior ↔ superior y empuje ↔ tracción para no fatigar el mismo músculo seguido. No encadenes 3+ del mismo grupo. Distribuye.
   · BIEN (full body): pierna, empuje, tracción, pierna, empuje, tracción, core.
 
+- REGLA ANTI-ENFRIAMIENTO (crítica, aplica SIEMPRE): NUNCA separes dos ejercicios del MISMO músculo con 2 o MÁS ejercicios de otro músculo en medio — el músculo se enfría y pierde el estímulo acumulado. Si alternas antagonistas (pecho/espalda, bíceps/tríceps, cuádriceps/femoral), hazlo 1:1 ESTRICTO (pecho, espalda, pecho, espalda...) o AGRUPA todo el músculo junto. Entre dos ejercicios del mismo músculo, máximo UN ejercicio de otro músculo.
+  · MAL (pecho se enfría): pecho, espalda, espalda, pecho.
+  · BIEN (1:1): pecho, espalda, pecho, espalda.
+  · BIEN (agrupado): pecho, pecho, espalda, espalda.
+
 - Si el foco son VARIOS músculos específicos (ej. "Bíceps + Tríceps"): repártelos parejo pero AGRUPADOS por músculo (bloque de uno, luego el otro), no intercalados ejercicio por ejercicio.
 
 SUPERSERIES / BISERIES (técnica de coach pro — úsalas con criterio, NO en todo):
