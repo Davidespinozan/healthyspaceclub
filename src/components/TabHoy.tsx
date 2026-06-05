@@ -478,12 +478,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               {(() => {
                 const workout = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
                 if (!workout) {
-                  return (
-                    <>
-                      <h2 className="th3-card-title">{t('hoy.routineToday')}</h2>
-                      <p className="th3-card-meta">{t('hoy.routineGenerateMeta')}</p>
-                    </>
-                  );
+                  return <h2 className="th3-card-title">{t('hoy.routineToday')}</h2>;
                 }
                 const isYogaPlan = Array.isArray((workout as { poses?: unknown }).poses);
                 if (isYogaPlan) {
@@ -607,10 +602,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             <div className="th3-card-body">
               <p className="th3-card-eyebrow">{t('hoy.cardEyebrowNutrition')}</p>
               {!weeklyPlan ? (
-                <>
-                  <h2 className="th3-card-title">{t('hoy.nutritionToday')}</h2>
-                  <p className="th3-card-meta">{t('hoy.nutritionGenerateMeta')}</p>
-                </>
+                <h2 className="th3-card-title">{t('hoy.nutritionToday')}</h2>
               ) : (
                 <>
                   <h2 className="th3-card-title">{t('hoy.nutritionToday')}</h2>
