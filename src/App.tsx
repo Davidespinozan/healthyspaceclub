@@ -150,6 +150,20 @@ export default function App() {
               .eq('user_id', session.user.id)
               .maybeSingle();
 
+            // @usuario (Fase 1A) — query aparte y tolerante: si la migración aún
+            // no está desplegada, la columna no existe y el error se ignora sin
+            // romper la hidratación del perfil.
+            try {
+              const { data: u } = await supabase
+                .from('user_profiles')
+                .select('username')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+              if (u && (u as { username?: string | null }).username) {
+                useAppStore.setState({ username: (u as { username?: string | null }).username ?? null });
+              }
+            } catch { /* columna username inexistente (pre-migración) → ignora */ }
+
             if (profile) {
               useAppStore.setState({
                 userName: profile.display_name ?? '',

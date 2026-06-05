@@ -2,8 +2,14 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 4, // v4: superseries/biseries (campo group) — programación de coach pro
+  workout: 5, // v5: modo pareja (format/repsB/tipB + partnerMode) — entrenar con alguien
 } as const;
+
+// Formato de coordinación de un ejercicio cuando se entrena en pareja:
+//  - 'juntos'    → ambos lo hacen a la vez (cada quien con su carga/reps).
+//  - 'alternado' → uno trabaja mientras el otro descansa, se turnan por set.
+//  - 'asistido'  → uno ejecuta y el otro asiste (spotter / resistencia / conteo).
+export type PartnerFormat = 'juntos' | 'alternado' | 'asistido';
 
 export interface CachedWorkout {
   type: string;
@@ -18,10 +24,19 @@ export interface CachedWorkout {
     // `group` (ej. "A") se hacen encadenados (sin descanso entre ellos, descanso
     // al cerrar la vuelta). Ausente = serie recta.
     group?: string;
+    // ── Modo pareja (solo presentes cuando partnerMode = true) ──
+    // Mismos ejercicios para ambos; la IA ajusta la PRESCRIPCIÓN por persona.
+    // `reps`/`tip_personalizado` son los de quien usa el dispositivo (persona A).
+    format?: PartnerFormat;
+    repsB?: string; // reps sugeridas para el compañero (persona B) si difieren
+    tipB?: string;  // cue breve para el compañero
   }>;
   warmup: string;
   cooldown: string;
   note: string;
+  // ── Metadatos de modo pareja ──
+  partnerMode?: boolean;
+  partnerName?: string;
 }
 
 export async function getCachedWorkout(

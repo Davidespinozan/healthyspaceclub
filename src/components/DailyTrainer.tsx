@@ -56,9 +56,12 @@ interface DailyTrainerProps {
   /** Callback opcional para notificar al padre cuando cambia phase
    *  (e.g. DashboardScreen condiciona el sec-hero según haya rutina del día). */
   onPhaseChange?: (phase: Phase) => void;
+  /** Modo pareja (Fase 2 · entrenar con alguien): el wizard captura un compañero
+   *  invitado y la rutina se genera para dos. No persiste en dailyWorkout. */
+  partnerMode?: boolean;
 }
 
-export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) {
+export default function DailyTrainer({ onPhaseChange, partnerMode = false }: DailyTrainerProps = {}) {
   const { t, locale } = useT();
   const exerciseBank = getExercises(locale);
   const userName = useAppStore(s => s.userName);
@@ -75,6 +78,9 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
   const completedSessions = useAppStore(s => s.completedSessions);
   const addCompletedSession = useAppStore(s => s.addCompletedSession);
   const markActiveDay = useAppStore(s => s.markActiveDay);
+  // Compañero conectado elegido en la pantalla Compañeros (modo pareja). Si está
+  // presente, prellenamos su nombre/nivel reales; si no, es modo invitado manual.
+  const pendingPartner = useAppStore(s => s.pendingPartner);
 
   const today = new Date().toISOString().split('T')[0];
   const firstName = userName?.split(' ')[0] || '';
@@ -114,13 +120,14 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
 
   // ── State
   const [phase, setPhase] = useState<Phase>(() => {
-    if (storedWorkout?.date === today) return 'plan';
+    // Modo pareja siempre arranca fresco (la rutina de hoy guardada es la solo).
+    if (!partnerMode && storedWorkout?.date === today) return 'plan';
     return 'modality';
   });
   // Notificar phase al padre (DashboardScreen condiciona sec-hero según haya rutina).
   useEffect(() => { onPhaseChange?.(phase); }, [phase, onPhaseChange]);
   const [plan, setPlan] = useState<(CachedWorkout & { razon?: string }) | null>(
-    storedWorkout?.date === today ? (storedWorkout.plan as any) : null
+    !partnerMode && storedWorkout?.date === today ? (storedWorkout.plan as any) : null
   );
   const [error, setError] = useState('');
 
@@ -137,6 +144,12 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
   const [focus, setFocus] = useState<FocusValue>('auto');
   const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>([]);
   const [lastTrained, setLastTrained] = useState('');
+  // Modo pareja: compañero (conectado → prellenado con datos reales; o invitado).
+  const [partnerName, setPartnerName] = useState(() => pendingPartner?.name ?? '');
+  const [partnerNivel, setPartnerNivel] = useState<'principiante' | 'intermedio' | 'avanzado'>(() => {
+    const n = pendingPartner?.nivel;
+    return n === 'principiante' || n === 'intermedio' || n === 'avanzado' ? n : 'intermedio';
+  });
   // Si el sistema ya tiene sesiones/registros propios, NO preguntamos historia
   // (la deriva de la data real). Solo el usuario nuevo responde lastTrained.
   const hasSystemHistory = completedSessions.length > 0 || (workoutLog?.length ?? 0) > 0;
@@ -293,6 +306,7 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
         painArea: discomfort === 'pain' ? painArea : undefined,
         restDays,
         yesterdayMuscles: history.yesterday.sort().join(',') || undefined,
+        partner: partnerMode ? partnerNivel : undefined,
       });
 
       // Intentar cache (para TODAS las modalidades)
@@ -449,6 +463,15 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
         context: `- ${contextStr}`,
         userProfile,
         locale,
+        partner: partnerMode
+          ? {
+              name: partnerName.trim() || t('wizard.partnerNamePlaceholder'),
+              nivel: partnerNivel,
+              // Compañero conectado → su equipo real (de su perfil); si no, el del usuario.
+              equipment: (pendingPartner?.equipment as Equipment[] | undefined) ?? equipmentList,
+              goalLabel: goal,
+            }
+          : undefined,
       });
 
       if (!validateWorkout(workout, validIds)) {
@@ -474,8 +497,15 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
       incrementRegen(selectedModality);
       console.info(`[regen] ${selectedModality}: ${(regenCounts[selectedModality] || 0) + 1}/3 today | admin: ${isAdmin}`);
 
+      // Garantiza los metadatos de pareja aunque el modelo los omita.
+      if (partnerMode) {
+        (workout as CachedWorkout).partnerMode = true;
+        (workout as CachedWorkout).partnerName = partnerName.trim() || t('wizard.partnerNamePlaceholder');
+      }
+
       setPlan(workout);
-      await saveDailyWorkout(workout as any);
+      // El plan de pareja es de un solo uso — NO sobrescribe la rutina solo del día.
+      if (!partnerMode) await saveDailyWorkout(workout as any);
       setPhase('plan');
     } catch (e) {
       console.error('[DailyTrainer] generation failed:', e);
@@ -584,6 +614,11 @@ export default function DailyTrainer({ onPhaseChange }: DailyTrainerProps = {}) 
         lastTrained={lastTrained}
         setLastTrained={setLastTrained}
         hasSystemHistory={hasSystemHistory}
+        partnerMode={partnerMode}
+        partnerName={partnerName}
+        setPartnerName={setPartnerName}
+        partnerNivel={partnerNivel}
+        setPartnerNivel={setPartnerNivel}
         onGenerate={handleGenerate}
       />
     );

@@ -304,6 +304,28 @@
 
 .wz-chip-icon svg { color: var(--forest); }
 
+/* Input de nombre del compañero (modo pareja) */
+.wz-partner-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: white;
+  border: 1px solid var(--sand);
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--forest);
+  margin-bottom: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.wz-partner-input::placeholder { color: rgba(21, 51, 48, 0.4); font-weight: 500; }
+.wz-partner-input:focus {
+  outline: none;
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(168, 134, 78, 0.14);
+}
+
 .wz-chip.on .wz-chip-icon svg { color: #fff; }
 
 .wz-chip-desc {

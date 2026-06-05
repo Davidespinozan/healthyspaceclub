@@ -14,7 +14,7 @@
 // - ExerciseDetailPopout sigue read-only (sunset L2 — sin isDone/onToggleDone)
 
 import { lazy, Suspense, useRef, useState } from 'react';
-import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Users } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useT } from '../../i18n';
 import { getExerciseIcon } from '../../utils/muscleGroupIcon';
@@ -45,6 +45,13 @@ const MUSCLE_LABEL_KEY: Record<string, TranslationKey> = {
   biceps: 'wizard.muscleBiceps', triceps: 'wizard.muscleTriceps', cuadriceps: 'wizard.muscleCuadriceps',
   isquios: 'wizard.muscleIsquios', gluteo: 'wizard.muscleGluteo', pantorrillas: 'wizard.musclePantorrillas',
   core: 'wizard.muscleCore', cardio: 'wizard.muscleCardio', 'cuerpo-completo': 'wizard.muscleCuerpoCompleto',
+};
+
+// Formato de coordinación (modo pareja) → label traducible.
+const PARTNER_FMT_KEY: Record<string, TranslationKey> = {
+  juntos: 'workout.partnerFmtJuntos',
+  alternado: 'workout.partnerFmtAlternado',
+  asistido: 'workout.partnerFmtAsistido',
 };
 
 interface Props {
@@ -134,6 +141,14 @@ export default function WorkoutPlan({
         </button>
       )}
 
+      {/* Banner modo pareja — la rutina está pensada para los dos. */}
+      {plan.partnerMode && (
+        <div className="dt2-partner-banner">
+          <Users size={15} strokeWidth={2} />
+          <span>{t('workout.partnerBanner', { name: plan.partnerName || t('workout.partnerYou') })}</span>
+        </div>
+      )}
+
       {/* Razón del coach — Plan-1: colapsable, default cerrado.
           El plan arranca limpio; el usuario lo abre si le interesa. */}
       {(plan as { razon?: string }).razon && (
@@ -202,14 +217,37 @@ export default function WorkoutPlan({
               </div>
               <div className="dt2-ex-body">
                 <div className="dt2-ex-name">{bank?.name || ex.id}</div>
-                <div className="dt2-ex-stats">
-                  {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
-                    <span className="dt2-ex-muscle">{t(MUSCLE_LABEL_KEY[bank.muscleGroup])}</span>
-                  )}
-                  <span>{ex.sets} × {ex.reps}</span>
-                  <span className="dt2-ex-dot">·</span>
-                  <span>{ex.rest}s {t('workout.statRest')}</span>
-                </div>
+                {plan.partnerMode ? (
+                  <>
+                    <div className="dt2-ex-stats">
+                      {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
+                        <span className="dt2-ex-muscle">{t(MUSCLE_LABEL_KEY[bank.muscleGroup])}</span>
+                      )}
+                      {ex.format && PARTNER_FMT_KEY[ex.format] && (
+                        <span className="dt2-ex-fmt">{t(PARTNER_FMT_KEY[ex.format])}</span>
+                      )}
+                      <span className="dt2-ex-dot">·</span>
+                      <span>{ex.rest}s {t('workout.statRest')}</span>
+                    </div>
+                    <div className="dt2-ex-prows">
+                      <span className="dt2-ex-prow">
+                        <b>{t('workout.partnerYou')}</b> {ex.sets} × {ex.reps}
+                      </span>
+                      <span className="dt2-ex-prow dt2-ex-prow--b">
+                        <b>{plan.partnerName}</b> {ex.sets} × {ex.repsB || ex.reps}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="dt2-ex-stats">
+                    {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
+                      <span className="dt2-ex-muscle">{t(MUSCLE_LABEL_KEY[bank.muscleGroup])}</span>
+                    )}
+                    <span>{ex.sets} × {ex.reps}</span>
+                    <span className="dt2-ex-dot">·</span>
+                    <span>{ex.rest}s {t('workout.statRest')}</span>
+                  </div>
+                )}
               </div>
               <ChevronRight size={14} className="dt2-ex-arrow" />
             </div>

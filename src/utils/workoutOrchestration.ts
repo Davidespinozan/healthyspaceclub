@@ -22,6 +22,25 @@ import type { Exercise, Equipment, Goal, UserProfile, YogaPlan } from '../types'
 import type { AppLanguage } from '../store';
 import type { CachedWorkout } from './workoutCache';
 
+// Compañero de entrenamiento (modo invitado): datos mínimos para que la IA
+// ajuste la prescripción por persona. No requiere cuenta — los captura un
+// formulario rápido (Fase 2 · entrenar con alguien).
+export interface PartnerInput {
+  name: string;
+  nivel?: 'principiante' | 'intermedio' | 'avanzado' | string;
+  equipment?: Equipment[];
+  goalLabel?: string;
+}
+
+/** Bloque de perfil del compañero para el prompt (legible por el modelo). */
+function buildPartnerProfileBlock(partner: PartnerInput): string {
+  const lines: string[] = [];
+  if (partner.nivel) lines.push(`- Nivel: ${partner.nivel}`);
+  if (partner.equipment && partner.equipment.length) lines.push(`- Equipo disponible: ${partner.equipment.join(', ')}`);
+  if (partner.goalLabel) lines.push(`- Objetivo: ${partner.goalLabel}`);
+  return lines.length ? lines.join('\n') : '- Sin datos adicionales (asume nivel similar al usuario)';
+}
+
 export async function orchestrateWorkout(params: {
   candidates: Exercise[];
   equipment: Equipment[];
@@ -33,8 +52,9 @@ export async function orchestrateWorkout(params: {
   context: string;
   userProfile?: UserProfile;
   locale?: AppLanguage;
+  partner?: PartnerInput;
 }): Promise<CachedWorkout & { razon?: string }> {
-  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context, userProfile, locale } = params;
+  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context, userProfile, locale, partner } = params;
   const profileBlock = buildUserProfileBlock(userProfile);
 
   // Para cada candidato, seleccionar la variante específica que aplica al equipo
@@ -57,6 +77,9 @@ export async function orchestrateWorkout(params: {
   const prompt = buildWorkoutOrchestratorPrompt({
     dayLabel, userName, profileBlock, context, candidatesCompact,
     targetCount, goal, intensityInstruction, intensity, locale,
+    partner: partner
+      ? { name: partner.name, profileBlock: buildPartnerProfileBlock(partner) }
+      : undefined,
   });
 
   const controller = new AbortController();

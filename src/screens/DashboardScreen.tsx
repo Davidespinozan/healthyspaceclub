@@ -20,6 +20,7 @@ import SubPageLoadingFallback from '../components/SubPageLoadingFallback';
 // siguen viajando con TabHoy (eager) — eso es Split-1b futuro.
 const WeeklyNutritionPlanner = lazy(() => import('../components/WeeklyNutritionPlanner'));
 const DailyTrainer = lazy(() => import('../components/DailyTrainer'));
+const CompanerosScreen = lazy(() => import('../components/CompanerosScreen'));
 // GrowthPlan + LifeSystemScreen removed — backed up in _hsm_backup/
 
 const TABS: { id: DashPage; icon: typeof Home; labelKey: TranslationKey }[] = [
@@ -85,6 +86,22 @@ export default function DashboardScreen() {
             <button className="sub-back" onClick={() => navTo('hoy')}>← {t('common.back')}</button>
             <Suspense fallback={<SubPageLoadingFallback />}>
               <DailyTrainer onPhaseChange={setTrainerPhase} />
+            </Suspense>
+          </div>
+        )}
+        {dashPage === 'companeros' && (
+          <div className="sub-page tab-content">
+            <button className="sub-back" onClick={() => navTo('hoy')}>← {t('common.back')}</button>
+            <Suspense fallback={<SubPageLoadingFallback />}>
+              <CompanerosScreen />
+            </Suspense>
+          </div>
+        )}
+        {dashPage === 'entrenamiento-pareja' && (
+          <div className="sub-page tab-content">
+            <button className="sub-back" onClick={() => navTo('companeros')}>← {t('common.back')}</button>
+            <Suspense fallback={<SubPageLoadingFallback />}>
+              <DailyTrainer onPhaseChange={setTrainerPhase} partnerMode />
             </Suspense>
           </div>
         )}

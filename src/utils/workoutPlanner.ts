@@ -531,6 +531,9 @@ export function buildConfigHash(params: {
   painArea?: string;
   restDays?: number;
   yesterdayMuscles?: string;
+  // Modo pareja: una firma del compañero (nivel+equipo+objetivo) para que la
+  // rutina de dos NO colisione con la cache individual ni entre parejas distintas.
+  partner?: string;
 }): string {
   const str = [
     `v${params.schemaVersion || 0}`,
@@ -546,6 +549,7 @@ export function buildConfigHash(params: {
     params.painArea || 'none',
     params.restDays ?? -1,
     params.yesterdayMuscles || 'none',
+    params.partner || 'solo',
   ].join('-');
   // Simple hash function (djb2)
   let hash = 5381;

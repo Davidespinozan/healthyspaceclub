@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check } from 'lucide-react';
+import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { getMealPlans } from '../data/mealPlan';
@@ -689,6 +689,23 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             </div>
           </article>
         </div>
+
+        {/* ── Entrenar en pareja (Fase 2 · entrenar con alguien) ── */}
+        <button
+          type="button"
+          className="th3-partner"
+          onClick={() => onNav('companeros')}
+        >
+          <span className="th3-partner-icon">
+            <Users size={18} strokeWidth={1.8} />
+          </span>
+          <div className="th3-partner-body">
+            <p className="th3-partner-eyebrow">{t('hoy.partnerEyebrow')}</p>
+            <p className="th3-partner-title">{t('hoy.partnerTitle')}</p>
+            <p className="th3-partner-sub">{t('hoy.partnerMeta')}</p>
+          </div>
+          <span className="th3-partner-arrow">→</span>
+        </button>
 
         <div className="th3-separator" />
 

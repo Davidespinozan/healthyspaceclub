@@ -76,6 +76,14 @@ export const TIME_OPTIONS = [
   { value: 60, label: '60+ min' },
 ];
 
+// Nivel del compañero (modo pareja / invitado). `value` es el término que viaja
+// al prompt; `labelKey` es el display traducido.
+export const PARTNER_LEVEL_OPTIONS: Array<{ value: 'principiante' | 'intermedio' | 'avanzado'; labelKey: TranslationKey }> = [
+  { value: 'principiante', labelKey: 'wizard.partnerLevelBeginner' },
+  { value: 'intermedio', labelKey: 'wizard.partnerLevelIntermediate' },
+  { value: 'avanzado', labelKey: 'wizard.partnerLevelAdvanced' },
+];
+
 export const EQUIPMENT_OPTIONS: Array<{ value: Equipment; labelKey: TranslationKey; icon: LucideIcon }> = [
   { value: 'gym', labelKey: 'wizard.eqGym', icon: Dumbbell },
   { value: 'cuerpo', labelKey: 'wizard.eqHome', icon: PersonStanding },

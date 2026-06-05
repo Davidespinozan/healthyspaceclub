@@ -109,6 +109,13 @@ interface AppState {
   // User
   userName: string;
   setUserName: (name: string) => void;
+  // Handle social público (@usuario). null = aún no lo ha elegido. Fase 1A.
+  username: string | null;
+  setUsername: (handle: string | null) => void;
+  // Compañero elegido para la próxima rutina de pareja (efímero, no se persiste).
+  // Lo setea la pantalla Compañeros; lo lee DailyTrainer en modo pareja. Fase 1B.
+  pendingPartner: { id: string; name: string; nivel?: string; equipment?: string[] } | null;
+  setPendingPartner: (p: { id: string; name: string; nivel?: string; equipment?: string[] } | null) => void;
   startDate: string; // ISO date string YYYY-MM-DD
 
   // Session (Supabase Auth)
@@ -376,6 +383,10 @@ export const useAppStore = create<AppState>()(
   // User
   userName: '',
   setUserName: (name) => set({ userName: name }),
+  username: null,
+  setUsername: (handle) => set({ username: handle }),
+  pendingPartner: null,
+  setPendingPartner: (p) => set({ pendingPartner: p }),
   startDate: '',
 
   // Session (Supabase Auth)
@@ -1097,6 +1108,8 @@ export const useAppStore = create<AppState>()(
   // ni settings app-level (idioma/tema). Usado por logout y por el guard anti-fuga.
   resetUserScopedData: () => set({
     userName: '',
+    username: null,
+    pendingPartner: null,
     obStep: 1,
     obData: {},
     startDate: '',
@@ -1169,6 +1182,7 @@ export const useAppStore = create<AppState>()(
     language: state.language,
     languageSetByUser: state.languageSetByUser,
     userName: state.userName,
+    username: state.username,
     obData: state.obData,
     startDate: state.startDate,
     habits: state.habits,

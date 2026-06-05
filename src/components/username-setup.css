@@ -1,0 +1,73 @@
+/* Fase 1A · Sheet de @usuario — sobre el shell .th-popout-* */
+
+.usn-sub {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--wp-txt2, rgba(21, 51, 48, 0.6));
+  margin: 4px 0 16px;
+}
+
+.usn-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1.5px solid var(--sand, #e4ddcf);
+  border-radius: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.usn-field--available { border-color: #4F9D69; box-shadow: 0 0 0 3px rgba(79, 157, 105, 0.12); }
+.usn-field--taken,
+.usn-field--invalid { border-color: #C75B3A; box-shadow: 0 0 0 3px rgba(199, 91, 58, 0.12); }
+
+.usn-at { color: var(--amber, #BFA065); display: flex; flex-shrink: 0; }
+
+.usn-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--forest, #153330);
+  letter-spacing: 0.01em;
+}
+
+.usn-status { display: flex; flex-shrink: 0; min-width: 16px; }
+.usn-ok { color: #4F9D69; }
+.usn-bad { color: #C75B3A; }
+.usn-spin { color: var(--amber, #BFA065); animation: usn-spin 0.7s linear infinite; }
+@keyframes usn-spin { to { transform: rotate(360deg); } }
+
+.usn-msg {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 8px 2px 0;
+  min-height: 16px;
+}
+.usn-msg--idle,
+.usn-msg--checking { color: var(--wp-txt2, rgba(21, 51, 48, 0.55)); }
+.usn-msg--available { color: #4F9D69; }
+.usn-msg--taken,
+.usn-msg--invalid { color: #C75B3A; }
+
+.usn-confirm {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  box-shadow: 0 6px 18px rgba(168, 134, 78, 0.3);
+  cursor: pointer;
+  transition: transform 0.12s, filter 0.15s, opacity 0.15s;
+}
+.usn-confirm:hover:not(:disabled) { filter: brightness(1.04); transform: translateY(-1px); }
+.usn-confirm:active:not(:disabled) { transform: scale(0.99); }
+.usn-confirm:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }

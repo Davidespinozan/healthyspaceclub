@@ -577,6 +577,76 @@
   flex-shrink: 0;
 }
 
+/* ═══ Entrenar en pareja (Fase 2) — gold vibrante para diferenciar de reflexión ═══ */
+.th3-partner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-top: 16px;
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  border: 1px solid rgba(168, 134, 78, 0.5);
+  border-radius: var(--radius-base);
+  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, filter var(--duration-base) ease;
+}
+.th3-partner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(168, 134, 78, 0.34);
+  filter: brightness(1.04);
+}
+.th3-partner:active { transform: scale(0.99); }
+
+.th3-partner-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.20);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.th3-partner-icon svg { color: #fff; }
+
+.th3-partner-body { flex: 1; min-width: 0; }
+.th3-partner-eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-kicker-loose);
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 2px;
+}
+.th3-partner-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 15.5px;
+  line-height: 1.25;
+  color: #fff;
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 2px;
+}
+.th3-partner-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0;
+}
+.th3-partner-arrow {
+  color: #fff;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
 /* ═══ Reviews (mini día 5 + weekly HSM + daily review when complete) ═══ */
 .th3-review {
   /* Terracota vibrante — color temático de reflexión (= franja "Tu Espacio") */

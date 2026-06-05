@@ -257,7 +257,7 @@ export interface Recipe {
 
 export type ScreenType = 'landing' | 'login' | 'onboarding' | 'dashboard' | 'reset-password' | 'paywall';
 export type ModalType = 'pay' | 'login' | 'signup' | 'video' | null;
-export type DashPage = 'hoy' | 'coach' | 'metodo' | 'club' | 'tu' | 'alimentacion' | 'recetas' | 'entrenamiento' | 'rutinas' | 'hsm' | 'lifesystem' | 'huella';
+export type DashPage = 'hoy' | 'coach' | 'metodo' | 'club' | 'tu' | 'alimentacion' | 'recetas' | 'entrenamiento' | 'entrenamiento-pareja' | 'companeros' | 'rutinas' | 'hsm' | 'lifesystem' | 'huella';
 export type VideoType = 'exercise' | 'recipe' | 'welcome';
 
 export interface VideoState {

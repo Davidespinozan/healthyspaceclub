@@ -20,6 +20,12 @@ interface WorkoutParams {
   intensityInstruction: string;
   intensity: string;
   locale?: AppLanguage;
+  // ── Modo pareja (opcional): si presente, la rutina se diseña para DOS personas
+  // entrenando juntas. Mismos ejercicios; la IA ajusta la prescripción por persona.
+  partner?: {
+    name: string;         // nombre/etiqueta del compañero (persona B)
+    profileBlock: string; // perfil del compañero: nivel, equipo, objetivo
+  };
 }
 
 /**
@@ -34,7 +40,28 @@ interface WorkoutParams {
 export function buildWorkoutOrchestratorPrompt(p: WorkoutParams): string {
   void p.userName;
   const locale = p.locale ?? 'es';
-  return `Orquesta una sesión de ${p.dayLabel} para el usuario.
+  const partner = p.partner;
+
+  // Bloque de reglas de pareja — solo cuando hay compañero. La rutina se diseña
+  // para DOS entrenando juntos: mismos ejercicios, prescripción ajustada por
+  // persona, y un formato de coordinación por ejercicio.
+  const partnerSection = partner ? `
+ENTRENAMIENTO EN PAREJA (esta sesión es para DOS personas entrenando JUNTAS):
+PERFIL DEL COMPAÑERO (persona B — "${partner.name}"):
+${partner.profileBlock}
+Reglas de pareja (críticas):
+- AMBOS hacen los MISMOS ejercicios (mismo "id"). NO inventes ejercicios distintos por persona.
+- Ajusta la PRESCRIPCIÓN a cada nivel: "reps" es para quien usa la app (persona A); si el compañero debería hacer reps distintas por su nivel, ponlas en "repsB". Si coinciden, omite "repsB".
+- "tip_personalizado" es el cue para la persona A; "tipB" es un cue breve para el compañero (omítelo si no aporta).
+- Asigna a CADA ejercicio un "format" de coordinación:
+  · "juntos"    → los dos a la vez, cada quien con su carga (ideal en máquinas dobles, peso corporal, bandas).
+  · "alternado" → se turnan set a set (uno trabaja, el otro descansa/observa) — ideal cuando comparten una barra/rack/mancuernas.
+  · "asistido"  → uno ejecuta y el otro asiste (spotter en press/sentadilla, conteo, resistencia manual).
+- Usa "alternado" como formato por defecto cuando comparten equipo pesado; "juntos" cuando hay equipo de sobra o es peso corporal; "asistido" en 1-2 ejercicios clave donde un spotter suma.
+- El "note" y la "razon" deben mencionar que es una sesión para los dos, hablándole a la persona A en 2da persona ("tú y ${partner.name}...").
+` : '';
+
+  return `Orquesta una sesión de ${p.dayLabel} ${partner ? 'para DOS personas (un usuario y su compañero) entrenando juntas' : 'para el usuario'}.
 ${p.profileBlock}
 CONTEXTO DEL USUARIO:
 ${p.context}
@@ -73,7 +100,7 @@ SUPERSERIES / BISERIES (técnica de coach pro — úsalas con criterio, NO en to
 - Empareja los ejercicios del MISMO group con el MISMO número de sets, y el mismo "rest" (el descanso se aplica al cerrar la vuelta).
 - Si el tiempo es CORTO (25 min), usa más superseries para meter volumen en menos tiempo.
 - Regla de oro: 1-2 grupos por sesión es lo normal. NO superserías toda la rutina; la mayoría son series rectas.
-
+${partnerSection}
 ${getVoiceRules(locale, 'default')}
 
 Los campos "note" y "razon" del JSON se muestran AL USUARIO directamente —
@@ -85,21 +112,27 @@ TAREA:
 3. Escribe tip_personalizado breve (máx 15 palabras) por ejercicio, dirigido al usuario en 2da persona.
 4. Escribe warmup y cooldown breves (1 oración cada uno), en 2da persona.
 5. Escribe "note": mensaje motivador breve (1-2 oraciones), hablándole directo (ej. "tu próximo paso es..." NO "X, tu próximo paso...").
-6. Escribe "razon": por qué elegiste esta rutina, hablándole al usuario en 2da persona, citando al menos 2 piezas del contexto. Ejemplo: "Elegí esta rutina porque tienes 7 días de descanso y buscas hipertrofia" — NO "Elegí esta rutina porque {nombre} tiene...".
+6. Escribe "razon": por qué elegiste esta rutina, hablándole al usuario en 2da persona, citando al menos 2 piezas del contexto. Ejemplo: "Elegí esta rutina porque tienes 7 días de descanso y buscas hipertrofia" — NO "Elegí esta rutina porque {nombre} tiene...".${partner ? `
+7. PAREJA: a cada ejercicio agrégale "format" ("juntos" | "alternado" | "asistido"). Si el compañero debe hacer reps distintas, agrega "repsB"; si aporta, agrega "tipB" (cue para el compañero). Pon "partnerMode": true y "partnerName": "${partner.name}".` : ''}
 
 Responde SOLO este JSON, sin markdown:
 {
   "type": "${p.dayLabel}",
   "intensity": "${p.intensity}",
   "exercises": [
-    { "id": "exercise-id", "sets": 4, "reps": "8-10", "rest": 90, "tip_personalizado": "tip breve" },
+    ${partner
+      ? `{ "id": "exercise-id", "sets": 4, "reps": "8-10", "rest": 90, "format": "alternado", "repsB": "10-12", "tip_personalizado": "tip breve", "tipB": "cue para el compañero" },
+    { "id": "accesorio-1", "sets": 3, "reps": "12-15", "rest": 60, "format": "juntos", "group": "A", "tip_personalizado": "..." }`
+      : `{ "id": "exercise-id", "sets": 4, "reps": "8-10", "rest": 90, "tip_personalizado": "tip breve" },
     { "id": "accesorio-1", "sets": 3, "reps": "10-12", "rest": 60, "group": "A", "tip_personalizado": "..." },
-    { "id": "accesorio-2", "sets": 3, "reps": "10-12", "rest": 60, "group": "A", "tip_personalizado": "..." }
+    { "id": "accesorio-2", "sets": 3, "reps": "10-12", "rest": 60, "group": "A", "tip_personalizado": "..." }`}
   ],
   "warmup": "...",
   "cooldown": "...",
   "note": "...",
-  "razon": "..."
+  "razon": "..."${partner ? `,
+  "partnerMode": true,
+  "partnerName": "${partner.name}"` : ''}
 }${getOutputLanguageDirective(locale)}`;
 }
 
