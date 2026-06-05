@@ -27,9 +27,10 @@ export interface Partnership {
 export type InviteResult = 'sent' | 'self' | 'exists' | 'error';
 export type RespondResult = 'accepted' | 'declined' | 'notfound' | 'error';
 
-/** Busca usuarios por @usuario o nombre (mín. 2 chars, solo perfiles públicos). */
+/** Busca usuarios por @usuario o nombre (mín. 2 chars, solo perfiles públicos).
+ *  Quita el "@" del inicio para que escribir "@pedro" encuentre a "pedro". */
 export async function searchUsers(q: string): Promise<UserSearchResult[]> {
-  const query = q.trim();
+  const query = q.trim().replace(/^@+/, '');
   if (query.length < 2) return [];
   const { data, error } = await supabase.rpc('search_users', { q: query });
   if (error) {

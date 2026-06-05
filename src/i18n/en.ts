@@ -816,6 +816,7 @@ export const en: Translations<typeof es> = {
     partnerMeta: 'Your coach builds a routine designed for both of you.',
     partnerFoot: 'Train with someone',
     trainingWith: 'Training with {name}',
+    invitedYou: '{name} invited you to train together',
     ariaMealCheck: 'Check meal',
     ariaMealUncheck: 'Uncheck meal',
     ariaMealResolvedByLog: 'Logged a different meal',

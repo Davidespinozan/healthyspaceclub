@@ -602,6 +602,35 @@
   flex-shrink: 0;
 }
 
+/* ═══ Invitaciones de pareja recibidas (banner en Hoy) ═══ */
+.th3-invites { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.th3-invite {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 16px;
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.24);
+}
+.th3-invite-icon {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.th3-invite-icon svg { color: #fff; }
+.th3-invite-body { flex: 1; min-width: 0; }
+.th3-invite-title {
+  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13.5px;
+  color: #fff; margin: 0; line-height: 1.3;
+}
+.th3-invite-sub { font-size: 11.5px; color: rgba(255, 255, 255, 0.8); margin: 1px 0 0; }
+.th3-invite-actions { display: flex; gap: 7px; flex-shrink: 0; }
+.th3-invite-btn {
+  width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: transform 0.12s;
+}
+.th3-invite-btn:active { transform: scale(0.92); }
+.th3-invite-btn--ok { background: #fff; color: #A8864E; }
+.th3-invite-btn--no { background: rgba(255, 255, 255, 0.18); color: #fff; }
+
 /* ═══ Cabecera "en vivo" de rutina de pareja (en la tarjeta de rutina de hoy) ═══ */
 .th3-partner-live {
   display: flex;

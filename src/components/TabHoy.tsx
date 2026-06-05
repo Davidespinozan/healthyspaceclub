@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight, Flame } from 'lucide-react';
+import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight, Flame, X } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { getMealPlans } from '../data/mealPlan';
@@ -12,6 +12,7 @@ import ExerciseDetailPopout from './ExerciseDetailPopout';
 import MealDetailPopout from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import ActivityLogSheet from './ActivityLogSheet';
+import { listPartnerships, respondInvite, type Partnership } from '../utils/partners';
 import type { Exercise } from '../types';
 import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
@@ -66,6 +67,21 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   };
 
   const [showEspacioFlow, setShowEspacioFlow] = useState(false);
+
+  // Invitaciones de pareja recibidas — se muestran en Hoy para aceptar/rechazar
+  // sin tener que entrar a Compañeros.
+  const [partnerInvites, setPartnerInvites] = useState<Partnership[]>([]);
+  useEffect(() => {
+    let alive = true;
+    listPartnerships()
+      .then(list => { if (alive) setPartnerInvites(list.filter(p => p.direction === 'incoming' && p.status === 'pending')); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  async function respondPartnerInvite(p: Partnership, accept: boolean) {
+    setPartnerInvites(prev => prev.filter(x => x.partnership_id !== p.partnership_id));
+    await respondInvite(p.partnership_id, accept).catch(() => {});
+  }
   const [selectedExercise, setSelectedExercise] = useState<{
     exercise: Exercise;
     planData: { sets: number; reps: string; rest: number; tip_personalizado?: string };
@@ -418,6 +434,32 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
       {/* ── BODY ── */}
       <section className="th3-body">
+        {/* Invitaciones de pareja recibidas — aceptar/rechazar desde Hoy */}
+        {partnerInvites.length > 0 && (
+          <div className="th3-invites">
+            {partnerInvites.map(p => {
+              const inviter = p.other_name || (p.other_username ? `@${p.other_username}` : t('partners.aPartner'));
+              return (
+                <div className="th3-invite" key={p.partnership_id}>
+                  <span className="th3-invite-icon"><Users size={17} strokeWidth={1.9} /></span>
+                  <div className="th3-invite-body">
+                    <p className="th3-invite-title">{t('hoy.invitedYou', { name: inviter })}</p>
+                    {p.other_username && <p className="th3-invite-sub">@{p.other_username}</p>}
+                  </div>
+                  <div className="th3-invite-actions">
+                    <button className="th3-invite-btn th3-invite-btn--ok" onClick={() => respondPartnerInvite(p, true)} aria-label={t('partners.accept')}>
+                      <Check size={17} strokeWidth={2.5} />
+                    </button>
+                    <button className="th3-invite-btn th3-invite-btn--no" onClick={() => respondPartnerInvite(p, false)} aria-label={t('partners.decline')}>
+                      <X size={17} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <p className="th3-section-eyebrow">{t('hoy.forToday')}</p>
 
         <div className="th3-grid">

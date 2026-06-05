@@ -815,6 +815,7 @@ export const es = {
     partnerMeta: 'Tu coach arma una rutina pensada para los dos.',
     partnerFoot: 'Entrenar con alguien',
     trainingWith: 'Entrenando con {name}',
+    invitedYou: '{name} te invitó a entrenar en pareja',
     ariaMealCheck: 'Marcar comida',
     ariaMealUncheck: 'Desmarcar comida',
     ariaMealResolvedByLog: 'Resuelta con otra comida',
