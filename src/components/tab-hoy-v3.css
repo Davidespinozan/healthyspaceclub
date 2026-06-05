@@ -152,22 +152,28 @@
   box-shadow: 0 0 0 1px rgba(191,160,101,.22), 0 10px 30px rgba(191,160,101,.20);
 }
 .th3-day-head { display: flex; align-items: center; justify-content: space-between; }
-.th3-day-streak { display: flex; align-items: baseline; gap: 8px; }
+.th3-day-streak { display: flex; align-items: center; gap: 7px; }
+.th3-streak-flame {
+  color: #F2945E;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(242, 130, 74, 0.55));
+}
 .th3-streak-num {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 26px;
-  color: var(--amber);
+  color: #F2945E;
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-tightest);
   line-height: 1;
+  text-shadow: 0 0 16px rgba(242, 130, 74, 0.40);
 }
 .th3-streak-label {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.62rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: var(--tracking-kicker);
-  color: rgba(246,242,234,0.55);
+  color: rgba(242, 148, 94, 0.85);
 }
 .th3-day-status {
   display: inline-flex; align-items: center; gap: 4px;

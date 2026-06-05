@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight } from 'lucide-react';
+import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight, Flame } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { getMealPlans } from '../data/mealPlan';
@@ -384,6 +384,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
         <div className={`th3-day${allCoreDone ? ' is-complete' : ''}`}>
           <div className="th3-day-head">
             <div className="th3-day-streak">
+              <Flame size={20} strokeWidth={2.2} className="th3-streak-flame" />
               <span className="th3-streak-num">{streakCount}</span>
               <span className="th3-streak-label">
                 {plural(streakCount, { one: t('hoy.streakLabelOne'), other: t('hoy.streakLabelOther') })}
