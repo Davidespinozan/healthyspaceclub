@@ -174,12 +174,25 @@ export default function WorkoutPlayer({
     setsDone: setsRegisteredForCurrent,
     done: phase === 'completed',
   });
-  // Posición global comparable (ejercicio, sets hechos) → turnos alternados.
+  // Posición global comparable (ejercicio, sets hechos) → turnos estrictos.
   const myPos = currentExerciseIndex * 1000 + setsRegisteredForCurrent;
   const partnerPos = partnerLive ? partnerLive.exIndex * 1000 + partnerLive.setsDone : null;
-  // Es turno del compañero cuando vas adelante de él (y él no terminó). Solo se
-  // gatea si hay datos en vivo del compañero — si no, no te bloquea (fail-open).
-  const partnerTurn = partnerMode && !!partnerLive && !partnerLive.done && partnerPos !== null && myPos > partnerPos;
+  // Turnos ESTRICTOS: siempre arranca uno (determinista — el id menor). El que
+  // va ATRÁS tiene el turno; en EMPATE le toca al "primero". El otro queda
+  // bloqueado y ve de quién es el turno. Sin compañero en vivo (o ya terminó)
+  // → sin bloqueo (fail-open, no te quedas trabado).
+  const iGoFirst = !!myId && !!partnerId ? myId < partnerId : true;
+  const hasLivePartner = partnerMode && !!partnerLive && !partnerLive.done && partnerPos !== null;
+  const myTurn = !hasLivePartner
+    ? true
+    : myPos < (partnerPos as number)
+      ? true
+      : myPos > (partnerPos as number)
+        ? false
+        : iGoFirst;
+  const partnerTurn = !!hasLivePartner && !myTurn;
+  // Mostramos el indicador de turno a AMBOS mientras el compañero esté en vivo.
+  const showTurnStrip = partnerMode && !!hasLivePartner && phase === 'exercise';
   const isSuperset = currentBlockMembers.length > 1;
   const blockBadge = currentBlockMembers.length >= 4
     ? t('workout.superset')
@@ -421,15 +434,23 @@ export default function WorkoutPlayer({
         </div>
       )}
 
-      {/* ── Turno del compañero: vibrante, solo cuando ya es su turno ── */}
-      {partnerMode && partnerTurn && phase === 'exercise' && (
-        <div className="wp-turn">
-          {partnerAvatar
-            ? <img className="wp-turn-av" src={partnerAvatar} alt="" />
-            : <span className="wp-turn-av wp-turn-av--fb">{(partnerName.trim().charAt(0) || '?').toUpperCase()}</span>}
-          <span className="wp-turn-text">{t('workout.partnerTurn', { name: partnerName })}</span>
-          <span className="wp-turn-dots"><i /><i /><i /></span>
-        </div>
+      {/* ── Indicador de turno: visible para AMBOS. "Tu turno" (verde, vas tú)
+            o "Es turno de X" (dorado, esperas al compañero). ── */}
+      {showTurnStrip && (
+        myTurn ? (
+          <div className="wp-turn wp-turn--mine">
+            <span className="wp-turn-dot-live" />
+            <span className="wp-turn-text">{t('workout.yourTurn')}</span>
+          </div>
+        ) : (
+          <div className="wp-turn">
+            {partnerAvatar
+              ? <img className="wp-turn-av" src={partnerAvatar} alt="" />
+              : <span className="wp-turn-av wp-turn-av--fb">{(partnerName.trim().charAt(0) || '?').toUpperCase()}</span>}
+            <span className="wp-turn-text">{t('workout.partnerTurn', { name: partnerName })}</span>
+            <span className="wp-turn-dots"><i /><i /><i /></span>
+          </div>
+        )
       )}
 
       {/* ── PHASE: EXERCISE (1 pantalla por ejercicio con filas de series) ── */}

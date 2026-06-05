@@ -379,6 +379,7 @@ export const en: Translations<typeof es> = {
     supersetRound: 'Round {n} of {total}',
     elapsed: 'Session time',
     partnerTurn: "It's {name}'s turn",
+    yourTurn: "Your turn",
     partnerWaiting: 'Waiting for {name}…',
     partnerFinished: '{name} finished',
     partnerResting: '{name} resting',

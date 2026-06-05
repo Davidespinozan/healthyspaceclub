@@ -166,6 +166,24 @@
 .wp-turn-dots i:nth-child(3) { animation-delay: 0.3s; }
 @keyframes wp-turn-bounce { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
 
+/* Tu turno: verde vivo, leés "te toca a ti" — distinto del dorado de espera. */
+.wp-turn--mine {
+  background: linear-gradient(135deg, #2EE06A, #1FA84E);
+  box-shadow: 0 6px 20px rgba(31, 168, 78, 0.38);
+  justify-content: center;
+}
+.wp-turn-dot-live {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+  background: #fff;
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  animation: wp-turn-pulse 1.3s ease-out infinite;
+}
+@keyframes wp-turn-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
 /* CTA bloqueado (no avanzar hasta terminar sets / turno del compañero) */
 .wp-cta-locked { opacity: 0.4; cursor: not-allowed; }
 
