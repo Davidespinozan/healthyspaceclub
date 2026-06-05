@@ -260,7 +260,6 @@ export default function OnboardingScreen() {
                 className="onb-brand-wordmark"
               />
             </div>
-            <div className="onb-brand-sub">{t('onboarding.brandSub')}</div>
             <button className="onb-btn-gold" onClick={goNext}>{t('onboarding.start')}</button>
           </div>
         </div>
