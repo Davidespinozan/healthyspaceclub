@@ -108,11 +108,11 @@
 
 .th3-handle {
   font-family: 'Montserrat', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: #C9A968;
-  margin: -2px 0 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: rgba(201, 169, 104, 0.78);
+  margin: -5px 0 16px;
 }
 
 .th3-subhead {
@@ -521,7 +521,8 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 16px;
+  padding: 15px 16px;
+  margin-top: 10px;
   /* Terracota vibrante (no el rosa opaco) — color que pop-ea, texto crema */
   background: linear-gradient(135deg, #C75B3A, #A8472B);
   border: 1px solid rgba(199, 91, 58, 0.5);
@@ -564,13 +565,15 @@
   margin: 0 0 2px;
 }
 .th3-espacio-title {
+  flex: 1;
+  min-width: 0;
   font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-  font-size: 15.5px;
-  line-height: 1.25;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
   color: #fff;
   letter-spacing: var(--tracking-tight);
-  margin: 0 0 2px;
+  margin: 0;
 }
 .th3-espacio-sub {
   font-family: 'Montserrat', sans-serif;
@@ -626,8 +629,8 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 16px;
-  margin-top: 16px;
+  padding: 15px 16px;
+  margin-top: 14px;
   background: linear-gradient(135deg, #C9A968, #A8864E);
   border: 1px solid rgba(168, 134, 78, 0.5);
   border-radius: var(--radius-base);
@@ -669,13 +672,15 @@
   margin: 0 0 2px;
 }
 .th3-partner-title {
+  flex: 1;
+  min-width: 0;
   font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-  font-size: 15.5px;
-  line-height: 1.25;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
   color: #fff;
   letter-spacing: var(--tracking-tight);
-  margin: 0 0 2px;
+  margin: 0;
 }
 .th3-partner-sub {
   font-family: 'Montserrat', sans-serif;

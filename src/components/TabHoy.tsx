@@ -726,15 +726,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           <span className="th3-partner-icon">
             <Users size={18} strokeWidth={1.8} />
           </span>
-          <div className="th3-partner-body">
-            <p className="th3-partner-eyebrow">{t('hoy.partnerEyebrow')}</p>
-            <p className="th3-partner-title">{t('hoy.partnerTitle')}</p>
-            <p className="th3-partner-sub">{t('hoy.partnerMeta')}</p>
-          </div>
+          <p className="th3-partner-title">{t('hoy.partnerTitle')}</p>
           <span className="th3-partner-arrow">→</span>
         </button>
-
-        <div className="th3-separator" />
 
         {/* ── Tu Espacio (discreto / o review si ya respondió las 5) ── */}
         {allAnswered ? (
@@ -756,18 +750,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             <span className="th3-espacio-icon">
               <Sparkles size={18} strokeWidth={1.8} />
             </span>
-            <div className="th3-espacio-body">
-              <p className="th3-espacio-eyebrow">{t('hoy.espacioEyebrow')}</p>
-              <p className="th3-espacio-title">{t('hoy.espacioTitle')}</p>
-              <p className="th3-espacio-sub">
-                {todayHSMAnswered === 0
-                  ? t('hoy.espacioSubtitle')
-                  : t('hoy.espacioPromptProgress', {
-                      answered: todayHSMAnswered,
-                      remaining: todayDimensions.length - todayHSMAnswered,
-                    })}
-              </p>
-            </div>
+            <p className="th3-espacio-title">{t('hoy.espacioTitle')}</p>
             <span className="th3-espacio-arrow">→</span>
           </button>
         )}
