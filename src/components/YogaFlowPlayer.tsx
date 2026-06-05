@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, SkipBack, SkipForward, Pause, Play, Volume2, VolumeX, Flower2, Sparkles, Check } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -34,9 +34,30 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   const todayDate = new Date().getDate();
   const todayMonth = new Date().toLocaleDateString(dateLocale, { month: 'short' });
 
-  const [phase, setPhase] = useState<PlayerPhase>('preparation');
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [secondsRemaining, setSecondsRemaining] = useState(poses[0]?.duration || 45);
+  // Auto-resume: si saliste a mitad del flow HOY, retoma donde quedaste (antes
+  // se guardaba el progreso pero nunca se leía → siempre empezaba de cero).
+  const savedYoga = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('yoga-flow-progress');
+      if (!raw) return null;
+      const d = JSON.parse(raw);
+      const today = new Date().toISOString().split('T')[0];
+      if (d && d.flowDate === today && typeof d.currentIndex === 'number'
+          && d.currentIndex > 0 && d.currentIndex < poses.length) {
+        return d as { currentIndex: number; secondsRemaining: number };
+      }
+    } catch { /* noop */ }
+    return null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [phase, setPhase] = useState<PlayerPhase>(savedYoga ? 'playing' : 'preparation');
+  const [currentIndex, setCurrentIndex] = useState(savedYoga?.currentIndex ?? 0);
+  const [secondsRemaining, setSecondsRemaining] = useState(
+    savedYoga
+      ? (savedYoga.secondsRemaining || poses[savedYoga.currentIndex]?.duration || 45)
+      : (poses[0]?.duration || 45)
+  );
   const [sideSwitchShown, setSideSwitchShown] = useState(false);
   const [infoOverlay, setInfoOverlay] = useState(false);
   const [muted, setMuted] = useState(true); // TODO: V2 audio
