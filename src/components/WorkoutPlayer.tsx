@@ -6,6 +6,7 @@ import { translateMuscle, translateDifficulty } from '../utils/exerciseMeta';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { usePartnerPresence } from '../hooks/usePartnerPresence';
 import { useAppStore } from '../store';
+import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
@@ -126,6 +127,7 @@ export default function WorkoutPlayer({
   // ── State
   const [phase, setPhase] = useState<PlayerPhase>('exercise');
   const [shareOpen, setShareOpen] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(() => savedProgress?.currentStep ?? 0);
   const [loggedByExercise, setLoggedByExercise] = useState<LoggedByExercise>(() => savedProgress?.loggedByExercise ?? initLoggedByExercise(exercises));
   const [restState, setRestState] = useState<{ secondsLeft: number } | null>(null);
@@ -222,6 +224,31 @@ export default function WorkoutPlayer({
   // ── Wake lock + body scroll lock + ESC handler
 
   useWakeLock(phase === 'exercise');
+
+  // Video del ejercicio actual: del bank si lo trae, si no de exercise_videos
+  // (la tabla). Antes el player SIEMPRE mostraba 'video próximamente'.
+  useEffect(() => {
+    let active = true;
+    const bankVideo = (currentBank?.videos as { url: string }[] | undefined)?.[0]?.url;
+    if (bankVideo) { setCurrentVideoUrl(bankVideo); return; }
+    setCurrentVideoUrl(null);
+    const exId = currentBank?.id;
+    if (!exId) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('exercise_videos')
+          .select('video_url')
+          .eq('exercise_id', exId)
+          .order('display_order', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (active && data?.video_url) setCurrentVideoUrl(data.video_url);
+      } catch { /* noop */ }
+    })();
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentBank?.id]);
 
   // Cronómetro de sesión: tick cada segundo mientras se entrena (o en pausa, para
   // que coincida con la duración de reloj que se guarda al terminar).
@@ -461,10 +488,23 @@ export default function WorkoutPlayer({
       {phase === 'exercise' && currentEx && (
         <div className={`wp-active${restState ? ' has-rest' : ''}`} key={`ex-${currentExerciseIndex}`}>
           <div className="wp-video-area">
-            <div className="wp-video-fallback">
-              <div className="wp-video-emoji"><DisplayIcon size={56} strokeWidth={1.5} /></div>
-              <p className="wp-video-label">{t('workout.videoSoon')}</p>
-            </div>
+            {currentVideoUrl ? (
+              <video
+                key={currentVideoUrl}
+                src={currentVideoUrl}
+                className="wp-video"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+            ) : (
+              <div className="wp-video-fallback">
+                <div className="wp-video-emoji"><DisplayIcon size={56} strokeWidth={1.5} /></div>
+                <p className="wp-video-label">{t('workout.videoSoon')}</p>
+              </div>
+            )}
           </div>
 
           <div className="wp-ex-info">

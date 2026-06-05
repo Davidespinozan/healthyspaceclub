@@ -82,9 +82,9 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(246, 242, 234, 0.95);
-  border: 0.5px solid rgba(21, 51, 48, 0.08);
-  color: var(--edp-forest);
+  background: rgba(21, 51, 48, 0.6);
+  border: 0.5px solid rgba(246, 242, 234, 0.18);
+  color: var(--sala-surface);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -98,8 +98,8 @@
 
 .edp-close:hover,
 .edp-close:active {
-  background: white;
-  border-color: var(--edp-amber);
+  background: rgba(21, 51, 48, 0.85);
+  color: var(--edp-amber);
 }
 
 /* ── Hero (video carousel) ──────────────────────────── */
@@ -108,7 +108,7 @@
   width: 100%;
   aspect-ratio: 4 / 5;
   max-height: 520px;
-  background: var(--edp-forest);
+  background: #0d1f1c;
   position: relative;
   border-radius: 24px 24px 0 0;
   overflow: hidden;
@@ -143,8 +143,11 @@
 .edp-hero-video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  background: #000;
+  /* contain: muestra el video COMPLETO sin recortar (horizontal o vertical).
+     El hero se adapta al aspecto real del video vía inline style, así que casi
+     nunca hay barras; contain solo protege contra recortes. */
+  object-fit: contain;
+  background: #0d1f1c;
   display: block;
   cursor: pointer;
 }

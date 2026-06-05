@@ -13,7 +13,8 @@
 //   loggedSets, targetDurationSeconds, etc.) que alimentan racha/historial
 // - ExerciseDetailPopout sigue read-only (sunset L2 — sin isDone/onToggleDone)
 
-import { lazy, Suspense, useRef, useState } from 'react';
+import { lazy, Suspense, useRef, useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
 import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useT } from '../../i18n';
@@ -101,6 +102,31 @@ export default function WorkoutPlan({
   } | null>(null);
   const playerStartedAtRef = useRef<number>(0);
   const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
+
+  // Mini-preview de video por ejercicio (reemplaza el ícono de pesa donde haya).
+  const [videoByEx, setVideoByEx] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const ids = Array.from(new Set(plan.exercises.map(e => e.id).filter(Boolean)));
+    if (ids.length === 0) return;
+    let active = true;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('exercise_videos')
+          .select('exercise_id, video_url, display_order')
+          .in('exercise_id', ids)
+          .order('display_order', { ascending: true });
+        if (!active || !data) return;
+        const map: Record<string, string> = {};
+        for (const row of data as { exercise_id: string; video_url: string }[]) {
+          if (!map[row.exercise_id]) map[row.exercise_id] = row.video_url;
+        }
+        setVideoByEx(map);
+      } catch { /* noop */ }
+    })();
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan.exercises.map(e => e.id).join(',')]);
 
   return (
     <div className="wz-root">
@@ -232,7 +258,19 @@ export default function WorkoutPlan({
               }}
             >
               <div className="dt2-ex-emoji">
-                {(() => { const Ic = getExerciseIcon(bank); return <Ic size={22} strokeWidth={1.5} />; })()}
+                {videoByEx[ex.id] ? (
+                  <video
+                    className="dt2-ex-video"
+                    src={videoByEx[ex.id]}
+                    muted
+                    autoPlay
+                    loop
+                    playsInline
+                    preload="metadata"
+                  />
+                ) : (
+                  (() => { const Ic = getExerciseIcon(bank); return <Ic size={22} strokeWidth={1.5} />; })()
+                )}
               </div>
               <div className="dt2-ex-body">
                 <div className="dt2-ex-name">{bank?.name || ex.id}</div>

@@ -37,6 +37,9 @@ export default function ExerciseDetailPopout({
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [muted, setMuted] = useState(true);
+  // Aspecto real del video (ancho/alto). El hero se adapta para no recortar
+  // videos horizontales ni verticales.
+  const [videoAspect, setVideoAspect] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
@@ -159,6 +162,7 @@ export default function ExerciseDetailPopout({
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
+          style={videoAspect ? { aspectRatio: String(Math.min(1.9, Math.max(0.5, videoAspect))), maxHeight: 'none' } : undefined}
         >
           {loading ? (
             <div className="edp-hero-placeholder">
@@ -185,6 +189,12 @@ export default function ExerciseDetailPopout({
                       playsInline
                       className="edp-hero-video"
                       onClick={togglePlay}
+                      onLoadedMetadata={e => {
+                        const vid = e.currentTarget;
+                        if (i === activeIdx && vid.videoWidth && vid.videoHeight) {
+                          setVideoAspect(vid.videoWidth / vid.videoHeight);
+                        }
+                      }}
                     />
                   </div>
                 ))}

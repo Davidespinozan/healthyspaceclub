@@ -197,6 +197,14 @@
   align-items: center;
   justify-content: center;
   font-size: 18px;
+  overflow: hidden;
+}
+.dt2-ex-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
 }
 
 .dt2-ex-body {
