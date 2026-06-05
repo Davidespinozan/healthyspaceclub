@@ -313,6 +313,9 @@ export const es = {
     kcalDay: 'kcal/día',
     coachKnows: 'Tu coach ya te conoce',
     enterSpace: 'Entrar a mi espacio',
+    resultMetabolism: 'Tu metabolismo',
+    resultTarget: 'Tu meta diaria',
+    resultAnalysisDone: 'Análisis completo',
   },
   workout: {
     dayTypeUpper: 'Tren superior',

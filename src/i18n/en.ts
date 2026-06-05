@@ -314,6 +314,9 @@ export const en: Translations<typeof es> = {
     kcalDay: 'kcal/day',
     coachKnows: 'Your coach already knows you',
     enterSpace: 'Enter my space',
+    resultMetabolism: 'Your metabolism',
+    resultTarget: 'Your daily target',
+    resultAnalysisDone: 'Analysis complete',
   },
   workout: {
     dayTypeUpper: 'Upper body',

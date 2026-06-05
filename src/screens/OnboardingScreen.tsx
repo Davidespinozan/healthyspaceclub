@@ -8,6 +8,8 @@ import { suggestUsername, isValidUsernameFormat, checkUsernameAvailable, claimUs
 import { validateEmailDeliverable } from '../utils/emailValidation';
 import LanguageToggle from '../components/LanguageToggle';
 
+const BRAND_ICON = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png';
+
 const TOTAL_STEPS = 9;
 
 export default function OnboardingScreen() {
@@ -469,30 +471,52 @@ export default function OnboardingScreen() {
       {step === 8 && (
         <div key={animKey} className="onb-slide onb-dark">
           <div className="onb-center">
+            <div className="onb-proc-logo">
+              <img src={BRAND_ICON} alt="" />
+            </div>
             <div className="onb-processing">
-              {processingTexts.map((text, i) => (
-                <div
-                  key={i}
-                  className={`onb-proc-line${i < processingLine ? ' visible' : ''}`}
-                >
-                  {text}
-                </div>
-              ))}
+              {processingTexts.map((text, i) => {
+                const done = i < processingLine;
+                const active = i === processingLine;
+                return (
+                  <div
+                    key={i}
+                    className={`onb-proc-line${done ? ' done' : ''}${active ? ' active' : ''}`}
+                  >
+                    <span className="onb-proc-ic">
+                      {done
+                        ? <Check size={15} strokeWidth={3} />
+                        : <Loader2 size={15} strokeWidth={2.5} className="onb-proc-spin" />}
+                    </span>
+                    <span className="onb-proc-text">{text}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
       )}
 
       {/* ── Step 9: Profile ready ── */}
-      {step === 9 && (
+      {step === 9 && (() => {
+        const tdeeVal = useAppStore.getState().tdee;
+        const goalVal = useAppStore.getState().planGoal;
+        return (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
           <div className="onb-center">
+            <div className="onb-result-badge"><Check size={14} strokeWidth={3} /> {t('onboarding.resultAnalysisDone')}</div>
             <h2 className="onb-result-title">{t('onboarding.resultTitle', { name: userName })}</h2>
             <div className="onb-result-card">
-              <div className="onb-result-kcal">
-                {useAppStore.getState().planGoal > 0
-                  ? useAppStore.getState().planGoal.toLocaleString()
-                  : '—'} <span>{t('onboarding.kcalDay')}</span>
+              <div className="onb-result-row">
+                <span className="onb-result-row-label">{t('onboarding.resultMetabolism')}</span>
+                <span className="onb-result-row-val">{tdeeVal > 0 ? tdeeVal.toLocaleString() : '—'}<i>{t('onboarding.kcalDay')}</i></span>
+              </div>
+              <div className="onb-result-divider" />
+              <div className="onb-result-target">
+                <span className="onb-result-row-label">{t('onboarding.resultTarget')}</span>
+                <div className="onb-result-kcal">
+                  {goalVal > 0 ? goalVal.toLocaleString() : '—'} <span>{t('onboarding.kcalDay')}</span>
+                </div>
               </div>
               <div className="onb-result-plan">{goalLabelKeys[goal] ? t(goalLabelKeys[goal]) : goal}</div>
               <div className="onb-result-coach">{t('onboarding.coachKnows')}</div>
@@ -502,7 +526,8 @@ export default function OnboardingScreen() {
             </button>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
