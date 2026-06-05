@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap } from 'lucide-react';
+import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useT } from '../i18n';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
@@ -110,6 +110,9 @@ export default function WorkoutPlayer({
   const [editValues, setEditValues] = useState<LoggedSet>({ reps: 0, kg: 0 });
   const [startedAt, setStartedAt] = useState<number>(() => Date.now());
   const [pausedFromPhase, setPausedFromPhase] = useState<PlayerPhase | null>(null);
+  // Cronómetro de sesión (segundos desde el inicio). Tiempo de reloj — coincide
+  // con la duración que se registra al terminar (computeSessionStats usa now-startedAt).
+  const [elapsedSec, setElapsedSec] = useState(0);
 
   // ── Derived del step actual
   const step = sequence[currentStep];
@@ -165,6 +168,16 @@ export default function WorkoutPlayer({
   // ── Wake lock + body scroll lock + ESC handler
 
   useWakeLock(phase === 'exercise');
+
+  // Cronómetro de sesión: tick cada segundo mientras se entrena (o en pausa, para
+  // que coincida con la duración de reloj que se guarda al terminar).
+  useEffect(() => {
+    if (phase !== 'exercise' && phase !== 'paused') return;
+    const tick = () => setElapsedSec(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [phase, startedAt]);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -359,13 +372,19 @@ export default function WorkoutPlayer({
         </div>
         <div className="wp-header-counter">
           {phase === 'exercise' || phase === 'paused' ? (
-            <button
-              className="wp-header-btn"
-              onClick={handlePause}
-              aria-label={phase === 'paused' ? t('workout.resume') : t('workout.pause')}
-            >
-              {phase === 'paused' ? <Play size={18} /> : <Pause size={18} />}
-            </button>
+            <>
+              <span className={`wp-timer${phase === 'paused' ? ' is-paused' : ''}`} aria-label={t('workout.elapsed')}>
+                <Clock size={13} strokeWidth={2} />
+                {formatTime(elapsedSec)}
+              </span>
+              <button
+                className="wp-header-btn"
+                onClick={handlePause}
+                aria-label={phase === 'paused' ? t('workout.resume') : t('workout.pause')}
+              >
+                {phase === 'paused' ? <Play size={18} /> : <Pause size={18} />}
+              </button>
+            </>
           ) : null}
         </div>
       </div>

@@ -360,6 +360,7 @@ export const es = {
     triset: 'Triserie',
     supersetNext: 'Sin descanso · ahora',
     supersetRound: 'Vuelta {n} de {total}',
+    elapsed: 'Tiempo de sesión',
     partnerYou: 'Tú',
     partnerBanner: 'Rutina para los dos · tú y {name}',
     partnerFmtJuntos: 'Juntos',

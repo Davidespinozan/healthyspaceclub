@@ -361,6 +361,7 @@ export const en: Translations<typeof es> = {
     triset: 'Triset',
     supersetNext: 'No rest · now',
     supersetRound: 'Round {n} of {total}',
+    elapsed: 'Session time',
     partnerYou: 'You',
     partnerBanner: 'Routine for both · you and {name}',
     partnerFmtJuntos: 'Together',

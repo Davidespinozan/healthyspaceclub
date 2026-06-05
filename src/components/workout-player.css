@@ -103,6 +103,22 @@
   gap: 8px;
 }
 
+/* Cronómetro de sesión */
+.wp-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--wp-txt2, rgba(255, 255, 255, 0.7));
+  padding: 4px 9px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.07);
+}
+.wp-timer svg { color: var(--wp-amber, #BFA065); flex-shrink: 0; }
+.wp-timer.is-paused { opacity: 0.55; }
+
 /* ── Progress bar (top, debajo del header) ───────────── */
 
 .wp-progress-bar {
