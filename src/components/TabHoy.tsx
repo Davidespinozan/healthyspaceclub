@@ -558,22 +558,25 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   </>
                 );
               })()}
-              {/* Movimiento alterno — justo donde termina el plan, separado de
-                  la flecha de navegación. Si ya registró, muestra qué hizo. */}
-              <button
-                type="button"
-                className={`th3-card-alt-activity${lastActivityToday ? ' logged' : ''}`}
-                onClick={(e) => { e.stopPropagation(); setActivityOpen(true); }}
-              >
-                {lastActivityToday ? (
-                  <>
-                    <span className="th3-card-alt-check" aria-hidden="true">✓</span>
-                    {lastActivityToday.activity}{fmtActivityDur(lastActivityToday.durationMin)}
-                  </>
-                ) : (
-                  t('activityLog.detailQuestion')
-                )}
-              </button>
+              {/* Movimiento alterno — solo cuando ya hay rutina (es "¿hiciste algo
+                  en vez de esto?") o si ya registró una actividad. En la tarjeta
+                  vacía no aparece, para no verse atravesado. */}
+              {(todayWorkoutPlan || lastActivityToday) && (
+                <button
+                  type="button"
+                  className={`th3-card-alt-activity${lastActivityToday ? ' logged' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); setActivityOpen(true); }}
+                >
+                  {lastActivityToday ? (
+                    <>
+                      <span className="th3-card-alt-check" aria-hidden="true">✓</span>
+                      {lastActivityToday.activity}{fmtActivityDur(lastActivityToday.durationMin)}
+                    </>
+                  ) : (
+                    t('activityLog.detailQuestion')
+                  )}
+                </button>
+              )}
               <div className="th3-card-foot">
                 <span className="th3-card-foot-text">{todayWorkoutPlan ? t('hoy.viewFullRoutine') : t('hoy.generate')}</span>
                 <span className="th3-card-arrow">→</span>
