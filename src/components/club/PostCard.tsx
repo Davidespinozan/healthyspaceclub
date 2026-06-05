@@ -35,6 +35,7 @@ interface Props {
   hasFire: boolean;
   onFireToggle: (postId: string) => void;
   onAuthorTap: (userId: string) => void;
+  onCommentTap?: (postId: string) => void;
   onDelete?: (postId: string) => void;
   showAuthor?: boolean;
 }
@@ -57,6 +58,7 @@ export default function PostCard({
   hasFire,
   onFireToggle,
   onAuthorTap,
+  onCommentTap,
   onDelete,
   showAuthor = true,
 }: Props) {
@@ -184,15 +186,18 @@ export default function PostCard({
           <Flame size={16} strokeWidth={1.6} fill={hasFire ? 'currentColor' : 'none'} />
           <span>{post.fire_count}</span>
         </button>
-        {post.comments_count > 0 && (
-          <div className="post-card-comments" aria-label={plural(post.comments_count, {
+        <button
+          type="button"
+          className="post-card-comments"
+          onClick={() => onCommentTap?.(post.id)}
+          aria-label={plural(post.comments_count, {
             one: t('post.ariaCommentsOne', { count: post.comments_count }),
             other: t('post.ariaCommentsOther', { count: post.comments_count }),
-          })}>
-            <MessageCircle size={16} strokeWidth={1.6} />
-            <span>{post.comments_count}</span>
-          </div>
-        )}
+          })}
+        >
+          <MessageCircle size={16} strokeWidth={1.6} />
+          {post.comments_count > 0 && <span>{post.comments_count}</span>}
+        </button>
       </div>
     </article>
   );

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { X, Flame, Share2, Link2, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
+import CommentsSheet from './club/CommentsSheet';
 import { deleteClubPost } from '../utils/clubPosts';
 import { MILESTONE_STEPS } from '../constants/milestones';
 import { useT } from '../i18n';
@@ -39,6 +40,13 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
   const [firingPost, setFiringPost] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+
+  function bumpCommentCount(postId: string, delta: number) {
+    setPosts(p => p.map(post => post.id === postId
+      ? { ...post, comments_count: Math.max(0, post.comments_count + delta) }
+      : post));
+  }
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
   const shareMsg = `${t('profile.shareText')} ${shareUrl}`;
   const nativeShareAvailable = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
@@ -293,6 +301,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
                     hasFire={userFires.has(post.id)}
                     onFireToggle={() => toggleFire(post.id)}
                     onAuthorTap={() => { /* ya estamos en su perfil */ }}
+                    onCommentTap={setCommentsPostId}
                     onDelete={isOwnProfile ? handleDelete : undefined}
                     showAuthor={false}
                   />
@@ -339,6 +348,13 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
           </div>
         </div>
       )}
+
+      <CommentsSheet
+        postId={commentsPostId}
+        currentUserId={currentUserId ?? null}
+        onClose={() => setCommentsPostId(null)}
+        onCountChange={bumpCommentCount}
+      />
     </div>
   );
 }

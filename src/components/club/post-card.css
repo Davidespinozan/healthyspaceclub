@@ -277,6 +277,9 @@
 .post-card-fire.is-active {
   color: var(--amber-deep);
 }
-.post-card-comments {
-  cursor: default;
+.post-card-comments:hover {
+  color: var(--amber-deep);
+}
+.post-card-comments:active {
+  transform: scale(0.9);
 }

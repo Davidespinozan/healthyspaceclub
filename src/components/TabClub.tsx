@@ -1,6 +1,7 @@
 import CreatePostModal from './CreatePostModal';
 import PublicProfile from './PublicProfile';
 import PostCard, { type ClubPost } from './club/PostCard';
+import CommentsSheet from './club/CommentsSheet';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
@@ -18,6 +19,13 @@ export default function TabClub() {
   const [firedIds, setFiredIds] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+
+  function bumpCommentCount(postId: string, delta: number) {
+    setPosts(p => p.map(post => post.id === postId
+      ? { ...post, comments_count: Math.max(0, post.comments_count + delta) }
+      : post));
+  }
 
   useEffect(() => {
     fetchFeed();
@@ -119,6 +127,7 @@ export default function TabClub() {
             hasFire={firedIds.has(post.id)}
             onFireToggle={toggleFire}
             onAuthorTap={setProfileUserId}
+            onCommentTap={setCommentsPostId}
             onDelete={deletePost}
           />
         ))}
@@ -137,6 +146,14 @@ export default function TabClub() {
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         onPostCreated={() => fetchFeed()}
+      />
+
+      <CommentsSheet
+        postId={commentsPostId}
+        currentUserId={userId}
+        onClose={() => setCommentsPostId(null)}
+        onCountChange={bumpCommentCount}
+        onAuthorTap={(uid) => { setCommentsPostId(null); setProfileUserId(uid); }}
       />
 
       {profileUserId && (
