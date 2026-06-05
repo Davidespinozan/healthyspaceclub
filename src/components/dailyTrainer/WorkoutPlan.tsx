@@ -302,12 +302,14 @@ export default function WorkoutPlan({
         </div>
       )}
 
-      {/* Actividad alterna — "hoy no hice esto, pero hice esto". El movimiento
-          también cuenta: registra básquet/hiking/surf y el día queda activo. */}
-      <button type="button" className="dt2-alt-activity" onClick={() => setActivityOpen(true)}>
-        <span className="dt2-alt-activity-q">{t('activityLog.detailQuestion')}</span>
-        <span className="dt2-alt-activity-cta">{t('activityLog.detailCta')}</span>
-      </button>
+      {/* Actividad alterna — "hoy no hice esto, pero hice esto". Oculta en sesión
+          de pareja (es obvio que están haciendo la rutina juntos). */}
+      {!plan.partnerMode && (
+        <button type="button" className="dt2-alt-activity" onClick={() => setActivityOpen(true)}>
+          <span className="dt2-alt-activity-q">{t('activityLog.detailQuestion')}</span>
+          <span className="dt2-alt-activity-cta">{t('activityLog.detailCta')}</span>
+        </button>
+      )}
 
       {activityOpen && <ActivityLogSheet onClose={() => setActivityOpen(false)} />}
 

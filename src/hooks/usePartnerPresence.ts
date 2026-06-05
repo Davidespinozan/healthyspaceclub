@@ -9,10 +9,9 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 export interface PartnerProgress {
-  exIndex: number;
-  setNum: number;
-  resting: boolean;
-  done: boolean;
+  exIndex: number;   // ejercicio actual del compañero
+  setsDone: number;  // sets completados de ese ejercicio
+  done: boolean;     // terminó toda la sesión
 }
 
 export function usePartnerPresence(
@@ -36,8 +35,7 @@ export function usePartnerPresence(
       const p = msg.payload as Partial<PartnerProgress>;
       setPartner({
         exIndex: p.exIndex ?? 0,
-        setNum: p.setNum ?? 1,
-        resting: !!p.resting,
+        setsDone: p.setsDone ?? 0,
         done: !!p.done,
       });
     });
@@ -58,7 +56,7 @@ export function usePartnerPresence(
       event: 'progress',
       payload: { ...myProgress, from: myId },
     });
-  }, [ready, myProgress.exIndex, myProgress.setNum, myProgress.resting, myProgress.done, myId]);
+  }, [ready, myProgress.exIndex, myProgress.setsDone, myProgress.done, myId]);
 
   return enabled ? partner : null;
 }

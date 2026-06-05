@@ -366,6 +366,7 @@ export const es = {
     supersetNext: 'Sin descanso · ahora',
     supersetRound: 'Vuelta {n} de {total}',
     elapsed: 'Tiempo de sesión',
+    partnerTurn: 'Es turno de {name}',
     partnerWaiting: 'Esperando a {name}…',
     partnerFinished: '{name} ya terminó',
     partnerResting: '{name} descansando',

@@ -138,6 +138,37 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
 
+/* Turno del compañero — vibrante (solo cuando es su turno) */
+.wp-turn {
+  display: flex; align-items: center; gap: 11px;
+  margin: 12px 16px; padding: 12px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  box-shadow: 0 6px 20px rgba(168, 134, 78, 0.4);
+  animation: wp-turn-in 0.3s ease;
+}
+@keyframes wp-turn-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.wp-turn-av {
+  width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+}
+.wp-turn-av--fb {
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.2); color: #fff; font-weight: 800; font-size: 13px;
+}
+.wp-turn-text {
+  flex: 1; min-width: 0; font-family: 'Montserrat', sans-serif;
+  font-weight: 800; font-size: 15px; color: #fff; letter-spacing: -0.01em;
+}
+.wp-turn-dots { display: inline-flex; gap: 3px; flex-shrink: 0; }
+.wp-turn-dots i { width: 5px; height: 5px; border-radius: 50%; background: #fff; animation: wp-turn-bounce 1s infinite; }
+.wp-turn-dots i:nth-child(2) { animation-delay: 0.15s; }
+.wp-turn-dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes wp-turn-bounce { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+
+/* CTA bloqueado (no avanzar hasta terminar sets / turno del compañero) */
+.wp-cta-locked { opacity: 0.4; cursor: not-allowed; }
+
 /* Cronómetro de sesión */
 .wp-timer {
   display: inline-flex;

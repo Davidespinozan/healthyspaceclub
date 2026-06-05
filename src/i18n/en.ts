@@ -367,6 +367,7 @@ export const en: Translations<typeof es> = {
     supersetNext: 'No rest · now',
     supersetRound: 'Round {n} of {total}',
     elapsed: 'Session time',
+    partnerTurn: "It's {name}'s turn",
     partnerWaiting: 'Waiting for {name}…',
     partnerFinished: '{name} finished',
     partnerResting: '{name} resting',

@@ -160,7 +160,7 @@ export default function WorkoutPlayer({
   const currentBlockMembers = currentBlockIndex >= 0 ? blocks[currentBlockIndex] : [currentExerciseIndex];
   const currentBlockNumber = currentBlockIndex >= 0 ? currentBlockIndex + 1 : 1;
 
-  // ── Co-presencia en vivo (Parte 2): comparto mi posición y veo la del compañero.
+  // ── Co-presencia + turnos (Parte 2): comparto mis sets hechos y veo los del otro.
   const myId = useAppStore(s => s.user?.id) ?? null;
   const partnerMode = !!workout.partnerMode;
   const partnerId = (workout.partnerId as string | null) ?? null;
@@ -168,14 +168,15 @@ export default function WorkoutPlayer({
   const partnerAvatar = (workout.partnerAvatar as string | null) ?? null;
   const partnerLive = usePartnerPresence(partnerMode, myId, partnerId, {
     exIndex: currentExerciseIndex,
-    setNum: currentSetNum,
-    resting: !!restState,
+    setsDone: setsRegisteredForCurrent,
     done: phase === 'completed',
   });
-  // Nombre del ejercicio donde va el compañero (para el strip en vivo).
-  const partnerExName = partnerLive
-    ? (exerciseMap.get(exercises[partnerLive.exIndex]?.id || '')?.name || '')
-    : '';
+  // Posición global comparable (ejercicio, sets hechos) → turnos alternados.
+  const myPos = currentExerciseIndex * 1000 + setsRegisteredForCurrent;
+  const partnerPos = partnerLive ? partnerLive.exIndex * 1000 + partnerLive.setsDone : null;
+  // Es turno del compañero cuando vas adelante de él (y él no terminó). Solo se
+  // gatea si hay datos en vivo del compañero — si no, no te bloquea (fail-open).
+  const partnerTurn = partnerMode && !!partnerLive && !partnerLive.done && partnerPos !== null && myPos > partnerPos;
   const isSuperset = currentBlockMembers.length > 1;
   const blockBadge = currentBlockMembers.length >= 4
     ? t('workout.superset')
@@ -288,6 +289,8 @@ export default function WorkoutPlayer({
   // avanza al siguiente step y arma el descanso (restAfter=0 → encadenado, sin
   // descanso, pasa directo al siguiente ejercicio del bloque).
   function markCurrentSet() {
+    // Turnos: no puedes adelantarte a tu compañero (debe alcanzarte primero).
+    if (partnerTurn) return;
     if (!step || currentSetMarked || !currentEx) return;
     const entry: LoggedSet = {
       reps: parseRepsToNumber(currentEx.reps),
@@ -415,22 +418,14 @@ export default function WorkoutPlayer({
         </div>
       )}
 
-      {/* ── Co-presencia en vivo: dónde va el compañero ── */}
-      {partnerMode && (phase === 'exercise' || phase === 'paused') && (
-        <div className="wp-partner-live">
-          <span className="wp-pl-dot" />
+      {/* ── Turno del compañero: vibrante, solo cuando ya es su turno ── */}
+      {partnerMode && partnerTurn && phase === 'exercise' && (
+        <div className="wp-turn">
           {partnerAvatar
-            ? <img className="wp-pl-av" src={partnerAvatar} alt="" />
-            : <span className="wp-pl-av wp-pl-av--fb">{(partnerName.trim().charAt(0) || '?').toUpperCase()}</span>}
-          <span className="wp-pl-text">
-            {!partnerLive
-              ? t('workout.partnerWaiting', { name: partnerName })
-              : partnerLive.done
-                ? t('workout.partnerFinished', { name: partnerName })
-                : partnerLive.resting
-                  ? t('workout.partnerResting', { name: partnerName })
-                  : t('workout.partnerAt', { name: partnerName, ex: partnerExName, n: partnerLive.setNum })}
-          </span>
+            ? <img className="wp-turn-av" src={partnerAvatar} alt="" />
+            : <span className="wp-turn-av wp-turn-av--fb">{(partnerName.trim().charAt(0) || '?').toUpperCase()}</span>}
+          <span className="wp-turn-text">{t('workout.partnerTurn', { name: partnerName })}</span>
+          <span className="wp-turn-dots"><i /><i /><i /></span>
         </div>
       )}
 
@@ -498,7 +493,7 @@ export default function WorkoutPlayer({
                       if (isDone) openEditSet(currentExerciseIndex, setIdx);
                       else if (isActive) markCurrentSet();
                     }}
-                    disabled={!isActive && !isDone}
+                    disabled={(!isActive && !isDone) || (isActive && partnerTurn)}
                   >
                     <span className="wp-set-row-circle">
                       {isDone && <Check size={14} strokeWidth={2} />}
@@ -528,9 +523,12 @@ export default function WorkoutPlayer({
           </div>
 
           <div className="wp-cta-wrap">
+            {/* No se avanza de ejercicio hasta terminar TODOS los sets (solo y
+                pareja); en pareja, además hasta que el compañero alcance. */}
             <button
-              className={`wp-cta${!blockComplete ? ' wp-cta-secondary' : ''}`}
+              className={`wp-cta${(!blockComplete || partnerTurn) ? ' wp-cta-locked' : ''}`}
               onClick={goToNextExercise}
+              disabled={!blockComplete || partnerTurn}
             >
               {isLastBlock ? t('workout.finishSession') : t('workout.nextExercise')}
               <ChevronRight size={18} />
