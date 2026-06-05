@@ -125,6 +125,29 @@
   background: linear-gradient(135deg, #C9A968, #A8864E);
 }
 
+/* Aceptar/rechazar colaboración */
+.nts-collab-actions { display: flex; gap: 8px; margin-top: 8px; }
+.nts-collab-accept, .nts-collab-reject {
+  border: none; cursor: pointer;
+  border-radius: 999px; padding: 6px 16px;
+  font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
+}
+.nts-collab-accept {
+  background: linear-gradient(135deg, #C9A968, #A8864E); color: #fff;
+  box-shadow: 0 4px 12px rgba(168, 134, 78, 0.3);
+}
+.nts-collab-reject {
+  background: rgba(21, 51, 48, 0.06); color: var(--forest, #153330);
+}
+.nts-collab-accept:active, .nts-collab-reject:active { transform: scale(0.95); }
+.nts-collab-result {
+  display: inline-block; margin-top: 6px;
+  font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700;
+}
+.nts-collab-result--accepted { color: #1FA84E; }
+.nts-collab-result--rejected { color: var(--taupe, #9a8f7d); }
+
 /* Campana + badge en el header del Club. */
 .clb-bell {
   position: relative;

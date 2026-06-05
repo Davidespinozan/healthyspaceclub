@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Flame, Share2, Link2, Check, Sprout } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
@@ -81,8 +82,8 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
           supabase
             .from('club_posts')
             .select('*')
-            // Posts propios + colaboraciones donde es coautor (estilo Instagram).
-            .or(`user_id.eq.${userId},coauthor_id.eq.${userId}`)
+            // Posts propios + colaboraciones ACEPTADAS donde es coautor.
+            .or(`user_id.eq.${userId},and(coauthor_id.eq.${userId},coauthor_accepted.eq.true)`)
             .order('created_at', { ascending: false })
             .limit(50),
           supabase
@@ -208,7 +209,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
   const visitedStreak = profile?.streak_count ?? 0;
   const hasContent = posts.length > 0 || sortedHighlights.length > 0;
 
-  return (
+  return createPortal(
     <div className="pp5-backdrop" onClick={onClose}>
       <div className="pp5-modal" onClick={e => e.stopPropagation()}>
         {loading ? (
@@ -357,6 +358,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
         onClose={() => setCommentsPostId(null)}
         onCountChange={bumpCommentCount}
       />
-    </div>
+    </div>,
+    document.body,
   );
 }

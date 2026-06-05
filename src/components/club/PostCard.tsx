@@ -25,6 +25,7 @@ export interface ClubPost {
   coauthor_id?: string | null;
   coauthor_username?: string | null;
   coauthor_avatar_url?: string | null;
+  coauthor_accepted?: boolean | null;
   meal_summary?: string | null;
   post_context?: 'workout' | 'meal' | 'free' | null;
 }
@@ -67,7 +68,8 @@ export default function PostCard({
   const menuRef = useRef<HTMLDivElement>(null);
   const isOwn = currentUserId === post.user_id;
   const streak = post.streak ?? 0;
-  const isCollab = !!post.coauthor_id;
+  // La atribución dual solo se muestra cuando el coautor ACEPTÓ la colaboración.
+  const isCollab = !!post.coauthor_id && post.coauthor_accepted === true;
   // Tag de contexto: comida si el post nació en una comida, si no el entreno.
   const contextTag = post.post_context === 'meal' ? post.meal_summary : post.workout_summary;
 

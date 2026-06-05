@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Flame, MessageCircle, Users, UserPlus, Check } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
 import type { AppNotification } from '../../hooks/useNotifications';
@@ -47,6 +48,24 @@ function textFor(n: AppNotification, t: TFn): string {
 
 export default function NotificationsSheet({ open, items, onClose, onTapPost, onTapActor }: Props) {
   const { t } = useT();
+  // Estado local de respuesta a colaboraciones (aceptada/rechazada).
+  const [collabResp, setCollabResp] = useState<Record<string, 'accepted' | 'rejected'>>({});
+
+  async function respondCollab(notifId: string, postId: string, accept: boolean) {
+    setCollabResp(prev => ({ ...prev, [notifId]: accept ? 'accepted' : 'rejected' }));
+    try {
+      if (accept) {
+        await supabase.from('club_posts').update({ coauthor_accepted: true }).eq('id', postId);
+      } else {
+        // Rechazar: el post deja de ser colaboración (se queda solo del autor).
+        await supabase.from('club_posts')
+          .update({ coauthor_id: null, coauthor_username: '', coauthor_avatar_url: '', coauthor_accepted: false })
+          .eq('id', postId);
+      }
+    } catch (e) {
+      console.warn('[NotificationsSheet] collab respond failed:', e);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -95,6 +114,23 @@ export default function NotificationsSheet({ open, items, onClose, onTapPost, on
                       <span className="nts-name">{name}</span>{' '}{textFor(n, t)}
                     </p>
                     <span className="nts-time">{timeAgo(n.created_at, t)}</span>
+                    {/* Colaboración: aceptar/rechazar inline (estilo Instagram). */}
+                    {n.type === 'collab' && n.post_id && (
+                      collabResp[n.id] ? (
+                        <span className={`nts-collab-result nts-collab-result--${collabResp[n.id]}`}>
+                          {collabResp[n.id] === 'accepted' ? t('notif.collabAccepted') : t('notif.collabRejected')}
+                        </span>
+                      ) : (
+                        <div className="nts-collab-actions" onClick={e => e.stopPropagation()}>
+                          <button type="button" className="nts-collab-accept" onClick={() => respondCollab(n.id, n.post_id!, true)}>
+                            {t('notif.accept')}
+                          </button>
+                          <button type="button" className="nts-collab-reject" onClick={() => respondCollab(n.id, n.post_id!, false)}>
+                            {t('notif.reject')}
+                          </button>
+                        </div>
+                      )
+                    )}
                   </div>
                   {!n.read && <span className="nts-dot" />}
                 </div>
