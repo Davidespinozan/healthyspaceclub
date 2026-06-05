@@ -13,6 +13,7 @@ import MealDetailPopout from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import ActivityLogSheet from './ActivityLogSheet';
 import { listPartnerships, respondInvite, type Partnership } from '../utils/partners';
+import PartnerLiveHeader from './PartnerLiveHeader';
 import type { Exercise } from '../types';
 import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
@@ -49,7 +50,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     lastStreakMilestone, setLastStreakMilestone,
     hsmProfile, setHSMProfile,
     userPlan, trialEndsAt,
-    avatarUrl, username,
+    username,
   } = useAppStore();
 
   const isPlanActive = userPlan && userPlan !== 'none' &&
@@ -482,28 +483,14 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 )}
               </p>
               {(() => {
-                // Cabecera "en vivo" cuando la rutina de hoy es de pareja: los dos
-                // avatares + "Entrenando con X" con punto pulsante.
+                // Cabecera "en vivo" cuando la rutina de hoy es de pareja.
                 const w = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
                 if (!w || !w.partnerMode) return null;
-                const pName = String(w.partnerName || '');
-                const pAvatar = (w.partnerAvatar as string | null) || null;
-                const initial = (s: string) => (s.trim().charAt(0) || '?').toUpperCase();
                 return (
-                  <div className="th3-partner-live">
-                    <div className="th3-partner-avatars">
-                      {avatarUrl
-                        ? <img className="th3-pl-av" src={avatarUrl} alt="" />
-                        : <span className="th3-pl-av th3-pl-av--fb">{initial(userName || 'Tú')}</span>}
-                      {pAvatar
-                        ? <img className="th3-pl-av th3-pl-av--2" src={pAvatar} alt="" />
-                        : <span className="th3-pl-av th3-pl-av--2 th3-pl-av--fb">{initial(pName)}</span>}
-                    </div>
-                    <span className="th3-partner-live-text">
-                      <span className="th3-partner-live-dot" />
-                      {t('hoy.trainingWith', { name: pName })}
-                    </span>
-                  </div>
+                  <PartnerLiveHeader
+                    partnerName={String(w.partnerName || '')}
+                    partnerAvatar={(w.partnerAvatar as string | null) || null}
+                  />
                 );
               })()}
               {(() => {

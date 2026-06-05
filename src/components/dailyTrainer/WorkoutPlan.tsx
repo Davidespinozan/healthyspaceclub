@@ -14,7 +14,7 @@
 // - ExerciseDetailPopout sigue read-only (sunset L2 — sin isDone/onToggleDone)
 
 import { lazy, Suspense, useRef, useState } from 'react';
-import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Users } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useT } from '../../i18n';
 import { getExerciseIcon } from '../../utils/muscleGroupIcon';
@@ -33,6 +33,7 @@ import type {
 import type { CachedWorkout } from '../../utils/workoutCache';
 import ExerciseDetailPopout from '../ExerciseDetailPopout';
 import ActivityLogSheet from '../ActivityLogSheet';
+import PartnerLiveHeader from '../PartnerLiveHeader';
 import PlayerLoadingFallback from '../PlayerLoadingFallback';
 import type { TranslationKey } from '../../i18n/es';
 
@@ -141,12 +142,12 @@ export default function WorkoutPlan({
         </button>
       )}
 
-      {/* Banner modo pareja — la rutina está pensada para los dos. */}
+      {/* Cabecera de pareja — los dos avatares + "Entrenando con X" (igual que Hoy). */}
       {plan.partnerMode && (
-        <div className="dt2-partner-banner">
-          <Users size={15} strokeWidth={2} />
-          <span>{t('workout.partnerBanner', { name: plan.partnerName || t('workout.partnerYou') })}</span>
-        </div>
+        <PartnerLiveHeader
+          partnerName={plan.partnerName || ''}
+          partnerAvatar={(plan as { partnerAvatar?: string | null }).partnerAvatar ?? null}
+        />
       )}
 
       {/* Razón del coach — Plan-1: colapsable, default cerrado.

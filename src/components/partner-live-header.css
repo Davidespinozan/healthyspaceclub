@@ -1,0 +1,28 @@
+/* Cabecera en vivo de pareja (dos avatares + "Entrenando con X") */
+.pl-live { display: flex; align-items: center; gap: 10px; margin: 2px 0 10px; }
+.pl-avatars { display: flex; flex-shrink: 0; }
+.pl-av {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 2px solid #fff; object-fit: cover; background: #e8e1d3;
+}
+.pl-av--2 { margin-left: -10px; }
+.pl-av--fb {
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #2E4A42, #153330);
+  color: #fff; font-weight: 800; font-size: 13px;
+}
+.pl-live-text {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 700; color: #153330;
+}
+.pl-live-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #4F9D69; flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(79, 157, 105, 0.55);
+  animation: pl-pulse 1.6s ease-out infinite;
+}
+@keyframes pl-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(79, 157, 105, 0.55); }
+  70%  { box-shadow: 0 0 0 7px rgba(79, 157, 105, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 157, 105, 0); }
+}
