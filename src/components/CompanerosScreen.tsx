@@ -10,6 +10,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Search, UserPlus, Check, X, Dumbbell, AtSign, Clock, Loader2 } from 'lucide-react';
 import { useAppStore } from '../store';
+import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import {
   searchUsers, sendInvite, respondInvite, listPartnerships, getPartnerTrainingProfile,
@@ -49,6 +50,22 @@ export default function CompanerosScreen() {
     setCounts(Object.fromEntries(entries));
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
+
+  // Realtime: cuando alguien acepta tu invitación (o te llega una nueva), la
+  // lista se actualiza al instante sin recargar — igual de rápido que el envío.
+  useEffect(() => {
+    const uid = useAppStore.getState().user?.id;
+    if (!uid) return;
+    const ch = supabase.channel(`user:${uid}`);
+    ch.on('broadcast', { event: 'partner_accept' }, () => refresh());
+    ch.on('broadcast', { event: 'invite' }, () => refresh());
+    // El host entregó la rutina de pareja → recárgala para que esté lista en Hoy.
+    ch.on('broadcast', { event: 'partner_workout' }, () => {
+      useAppStore.getState().pullDailyWorkout();
+    });
+    ch.subscribe();
+    return () => { try { supabase.removeChannel(ch); } catch { /* noop */ } };
+  }, [refresh]);
 
   // Búsqueda debounced (350ms).
   useEffect(() => {

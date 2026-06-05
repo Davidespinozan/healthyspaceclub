@@ -87,12 +87,17 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     if (!uid) return;
     const ch = supabase.channel(`user:${uid}`);
     ch.on('broadcast', { event: 'invite' }, () => refetchInvites());
+    // El compañero (host) generó/entregó la rutina → recárgala al instante.
+    ch.on('broadcast', { event: 'partner_workout' }, () => {
+      useAppStore.getState().pullDailyWorkout();
+    });
     ch.subscribe();
     return () => { try { supabase.removeChannel(ch); } catch { /* noop */ } };
   }, [refetchInvites]);
   async function respondPartnerInvite(p: Partnership, accept: boolean) {
     setPartnerInvites(prev => prev.filter(x => x.partnership_id !== p.partnership_id));
-    await respondInvite(p.partnership_id, accept).catch(() => {});
+    // p.other_id = quien invitó; se le notifica la aceptación al instante.
+    await respondInvite(p.partnership_id, accept, p.other_id).catch(() => {});
   }
   const [selectedExercise, setSelectedExercise] = useState<{
     exercise: Exercise;

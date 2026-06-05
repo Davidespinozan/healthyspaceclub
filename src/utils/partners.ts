@@ -141,6 +141,10 @@ export async function deliverPartnerWorkout(partnerId: string, plan: unknown): P
     console.warn('[partners] deliver failed:', error.message);
     return false;
   }
+  if (data === 'delivered') {
+    // Avisa al compañero para que su rutina de hoy aparezca al instante.
+    notifyUser(partnerId, 'partner_workout');
+  }
   return data === 'delivered';
 }
 
