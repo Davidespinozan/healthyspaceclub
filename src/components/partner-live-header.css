@@ -13,15 +13,16 @@
 }
 .pl-live-text {
   display: inline-flex; align-items: center; gap: 5px;
-  /* Chip dorado (igual que el year/day de Tu Espacio) con el punto verde "en vivo" */
+  /* Chip dorado chico (igual que el year/day de Tu Espacio) con punto verde "en vivo".
+     Texto en 2 renglones si no cabe — sin recortar. */
   background: linear-gradient(135deg, #C9A968, #A8864E);
-  padding: 4px 10px; border-radius: 999px;
+  padding: 5px 11px; border-radius: 13px;
   box-shadow: 0 4px 12px rgba(168, 134, 78, 0.28);
-  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 10.5px;
+  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 10px;
   color: #fff; letter-spacing: 0.02em;
-  flex: 0 1 auto; min-width: 0; overflow: hidden;
+  flex: 0 1 auto; min-width: 0;
 }
-.pl-live-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.pl-live-label { line-height: 1.25; min-width: 0; }
 .pl-live-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: #4F9D69; flex-shrink: 0;
