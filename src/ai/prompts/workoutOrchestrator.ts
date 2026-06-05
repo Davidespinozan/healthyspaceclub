@@ -62,6 +62,18 @@ ORDEN DE EJERCICIOS (crítico — la secuencia debe ser inteligente, no aleatori
 
 - Si el foco son VARIOS músculos específicos (ej. "Bíceps + Tríceps"): repártelos parejo pero AGRUPADOS por músculo (bloque de uno, luego el otro), no intercalados ejercicio por ejercicio.
 
+SUPERSERIES / BISERIES (técnica de coach pro — úsalas con criterio, NO en todo):
+- Marca ejercicios con el MISMO valor en "group" (ej. "A", "B") para que se hagan ENCADENADOS: sin descanso entre ellos, el descanso va al cerrar la vuelta. Sin "group" = serie recta normal.
+- Los compuestos PESADOS principales (press de banca, sentadilla, peso muerto, dominadas, remo pesado) van como SERIE RECTA (sin group) — máxima fuerza, técnica y seguridad. NUNCA los superserías.
+- Agrupa ACCESORIOS y AISLAMIENTO para densidad e intensidad:
+  · Push: biserie de tríceps al final, o superserie de aislamiento (aperturas + elevación lateral).
+  · Pull: superserie de accesorio de espalda + bíceps, o biserie de bíceps al final.
+  · Legs: superserie de aislamiento (extensiones + curl femoral; o cuádriceps + pantorrillas).
+  · Full body / Upper: superserie de ANTAGONISTAS (pecho + espalda, o bíceps + tríceps).
+- Empareja los ejercicios del MISMO group con el MISMO número de sets, y el mismo "rest" (el descanso se aplica al cerrar la vuelta).
+- Si el tiempo es CORTO (25 min), usa más superseries para meter volumen en menos tiempo.
+- Regla de oro: 1-2 grupos por sesión es lo normal. NO superserías toda la rutina; la mayoría son series rectas.
+
 ${getVoiceRules(locale, 'default')}
 
 Los campos "note" y "razon" del JSON se muestran AL USUARIO directamente —
@@ -80,7 +92,9 @@ Responde SOLO este JSON, sin markdown:
   "type": "${p.dayLabel}",
   "intensity": "${p.intensity}",
   "exercises": [
-    { "id": "exercise-id", "sets": 4, "reps": "8-10", "rest": 90, "tip_personalizado": "tip breve" }
+    { "id": "exercise-id", "sets": 4, "reps": "8-10", "rest": 90, "tip_personalizado": "tip breve" },
+    { "id": "accesorio-1", "sets": 3, "reps": "10-12", "rest": 60, "group": "A", "tip_personalizado": "..." },
+    { "id": "accesorio-2", "sets": 3, "reps": "10-12", "rest": 60, "group": "A", "tip_personalizado": "..." }
   ],
   "warmup": "...",
   "cooldown": "...",

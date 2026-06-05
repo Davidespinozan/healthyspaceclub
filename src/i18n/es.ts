@@ -355,6 +355,11 @@ export const es = {
     regenBlocked: 'Ya regeneraste 3 veces hoy',
     regenLeft: 'Te quedan {n} regeneraciones',
     resumeConfirm: 'Tenías una sesión en progreso (ejercicio {n} de {total}). ¿Continuar?',
+    superset: 'Superserie',
+    biset: 'Biserie',
+    triset: 'Triserie',
+    supersetNext: 'Sin descanso · ahora',
+    supersetRound: 'Vuelta {n} de {total}',
   },
   yoga: {
     resumeConfirm: 'Tenías un flow en progreso (pose {n}). ¿Continuar?',

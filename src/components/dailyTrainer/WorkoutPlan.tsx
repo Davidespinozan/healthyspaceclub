@@ -161,65 +161,90 @@ export default function WorkoutPlan({
         </div>
       )}
 
-      {plan.exercises.length > 0 && (
-        <div className="dt2-exercises">
-          {plan.exercises.map((ex, i) => {
-            const bank = exerciseMap.get(ex.id);
-            return (
-              <div
-                key={`${ex.id}-${i}`}
-                className="dt2-ex"
-                onClick={() => {
-                  const fallback: Exercise = {
-                    id: ex.id || `ex-${i}`,
-                    name: bank?.name || ex.id || 'Ejercicio',
-                    emoji: '💪',
-                    desc: '',
-                    muscleGroup: 'cuerpo-completo',
-                    equipment: ['gym'],
-                    goals: ['hipertrofia'],
-                    type: 'compuesto',
-                    difficulty: 'intermedio',
-                    defaultSets: 3,
-                    defaultReps: '10',
-                    defaultRest: 60,
-                    steps: [],
-                  };
-                  setSelectedExercise({
-                    exercise: bank || fallback,
-                    planData: {
-                      sets: typeof ex.sets === 'number' ? ex.sets : parseInt(ex.sets) || 3,
-                      reps: String(ex.reps || '10'),
-                      rest: typeof ex.rest === 'number' ? ex.rest : parseInt(ex.rest) || 60,
-                      tip_personalizado: ex.tip_personalizado,
-                    },
-                    index: i,
-                  });
-                }}
-              >
-                <div className="dt2-ex-emoji">
-                  {(() => { const Ic = getExerciseIcon(bank); return <Ic size={22} strokeWidth={1.5} />; })()}
-                </div>
-                <div className="dt2-ex-body">
-                  <div className="dt2-ex-name">{bank?.name || ex.id}</div>
-                  <div className="dt2-ex-stats">
-                    {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
-                      <span className="dt2-ex-muscle">{t(MUSCLE_LABEL_KEY[bank.muscleGroup])}</span>
-                    )}
-                    <span>{ex.sets} × {ex.reps}</span>
-                    <span className="dt2-ex-dot">·</span>
-                    <span>{ex.rest}s {t('workout.statRest')}</span>
-                  </div>
-                  {/* Plan-1: tip italic escondido de la card (vivía en
-                      .dt2-ex-tip). El tap de la card abre ExerciseDetailPopout
-                      que ya muestra el tip completo — cero info perdida. */}
-                </div>
-                <ChevronRight size={14} className="dt2-ex-arrow" />
+      {plan.exercises.length > 0 && (() => {
+        type PlanEx = typeof plan.exercises[number];
+        const renderCard = (ex: PlanEx, i: number) => {
+          const bank = exerciseMap.get(ex.id);
+          return (
+            <div
+              key={`${ex.id}-${i}`}
+              className="dt2-ex"
+              onClick={() => {
+                const fallback: Exercise = {
+                  id: ex.id || `ex-${i}`,
+                  name: bank?.name || ex.id || 'Ejercicio',
+                  emoji: '💪',
+                  desc: '',
+                  muscleGroup: 'cuerpo-completo',
+                  equipment: ['gym'],
+                  goals: ['hipertrofia'],
+                  type: 'compuesto',
+                  difficulty: 'intermedio',
+                  defaultSets: 3,
+                  defaultReps: '10',
+                  defaultRest: 60,
+                  steps: [],
+                };
+                setSelectedExercise({
+                  exercise: bank || fallback,
+                  planData: {
+                    sets: typeof ex.sets === 'number' ? ex.sets : parseInt(ex.sets) || 3,
+                    reps: String(ex.reps || '10'),
+                    rest: typeof ex.rest === 'number' ? ex.rest : parseInt(ex.rest) || 60,
+                    tip_personalizado: ex.tip_personalizado,
+                  },
+                  index: i,
+                });
+              }}
+            >
+              <div className="dt2-ex-emoji">
+                {(() => { const Ic = getExerciseIcon(bank); return <Ic size={22} strokeWidth={1.5} />; })()}
               </div>
-            );
-          })}
-        </div>
-      )}
+              <div className="dt2-ex-body">
+                <div className="dt2-ex-name">{bank?.name || ex.id}</div>
+                <div className="dt2-ex-stats">
+                  {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
+                    <span className="dt2-ex-muscle">{t(MUSCLE_LABEL_KEY[bank.muscleGroup])}</span>
+                  )}
+                  <span>{ex.sets} × {ex.reps}</span>
+                  <span className="dt2-ex-dot">·</span>
+                  <span>{ex.rest}s {t('workout.statRest')}</span>
+                </div>
+              </div>
+              <ChevronRight size={14} className="dt2-ex-arrow" />
+            </div>
+          );
+        };
+
+        // Agrupar ejercicios consecutivos con el mismo `group` (superseries).
+        const blocks: { group?: string; items: { ex: PlanEx; i: number }[] }[] = [];
+        plan.exercises.forEach((ex, i) => {
+          const last = blocks[blocks.length - 1];
+          if (ex.group && last && last.group === ex.group) last.items.push({ ex, i });
+          else blocks.push({ group: ex.group, items: [{ ex, i }] });
+        });
+
+        return (
+          <div className="dt2-exercises">
+            {blocks.map((b, bi) => {
+              if (b.group && b.items.length >= 2) {
+                const label = b.items.length === 2 ? t('workout.biset')
+                  : b.items.length === 3 ? t('workout.triset')
+                  : t('workout.superset');
+                return (
+                  <div key={`grp-${bi}`} className="dt2-superset">
+                    <div className="dt2-superset-badge"><Zap size={11} strokeWidth={2.5} /> {label}</div>
+                    <div className="dt2-superset-items">
+                      {b.items.map(({ ex, i }) => renderCard(ex, i))}
+                    </div>
+                  </div>
+                );
+              }
+              return b.items.map(({ ex, i }) => renderCard(ex, i));
+            })}
+          </div>
+        );
+      })()}
 
       {plan.cooldown && (
         <div className="dt2-section">

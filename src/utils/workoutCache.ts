@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 3, // v3: orden agrupado en días enfocados (push/pull/legs) vs alternar en full body
+  workout: 4, // v4: superseries/biseries (campo group) — programación de coach pro
 } as const;
 
 export interface CachedWorkout {
@@ -14,6 +14,10 @@ export interface CachedWorkout {
     reps: string;
     rest: number;
     tip_personalizado?: string;
+    // Agrupación para superseries/biseries/triseries. Ejercicios con el mismo
+    // `group` (ej. "A") se hacen encadenados (sin descanso entre ellos, descanso
+    // al cerrar la vuelta). Ausente = serie recta.
+    group?: string;
   }>;
   warmup: string;
   cooldown: string;

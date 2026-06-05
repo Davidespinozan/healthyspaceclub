@@ -356,6 +356,11 @@ export const en: Translations<typeof es> = {
     regenBlocked: 'You already regenerated 3 times today',
     regenLeft: '{n} regenerations left',
     resumeConfirm: 'You had a session in progress (exercise {n} of {total}). Continue?',
+    superset: 'Superset',
+    biset: 'Biset',
+    triset: 'Triset',
+    supersetNext: 'No rest · now',
+    supersetRound: 'Round {n} of {total}',
   },
   yoga: {
     resumeConfirm: 'You had a flow in progress (pose {n}). Continue?',
