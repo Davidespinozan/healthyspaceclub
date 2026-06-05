@@ -96,9 +96,9 @@
 
 .th3-headline {
   font-family: 'Montserrat', sans-serif;
-  font-size: 33px;
+  font-size: 28px;
   font-weight: 800;
-  line-height: 1.02;
+  line-height: 1.08;
   letter-spacing: var(--tracking-tighter);
   color: var(--sala-surface);
   margin: 0 0 8px;
