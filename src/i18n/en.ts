@@ -959,6 +959,10 @@ export const en: Translations<typeof es> = {
     ariaRemoveFire: 'Remove fire',
     ariaCommentsOne: '{count} comment',
     ariaCommentsOther: '{count} comments',
+    collabToggle: 'Collab with @{name}',
+    collabHint: 'Shows on both profiles',
+    collabWith: 'with @{name}',
+    shareFromWorkout: 'Share a photo',
   },
   coach: {
     headerTitle: 'Your personal coach',

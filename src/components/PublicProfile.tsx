@@ -73,7 +73,8 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
           supabase
             .from('club_posts')
             .select('*')
-            .eq('user_id', userId)
+            // Posts propios + colaboraciones donde es coautor (estilo Instagram).
+            .or(`user_id.eq.${userId},coauthor_id.eq.${userId}`)
             .order('created_at', { ascending: false })
             .limit(50),
           supabase

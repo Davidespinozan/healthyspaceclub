@@ -6092,6 +6092,13 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   background: var(--sand); color: var(--txt); font-size: .84rem; font-weight: 600;
   cursor: pointer; font-family: inherit; margin-top: 4px;
 }
+.th-popout-share {
+  width: 100%; padding: 12px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #C9A968, #A8864E); color: #fff;
+  font-size: .84rem; font-weight: 600; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  box-shadow: 0 6px 16px rgba(168, 134, 78, 0.3);
+}
 
 /* ══════════════════════════════════════════════════════════════
    MEAL DETAIL POPOUT — sistema de color vibrante

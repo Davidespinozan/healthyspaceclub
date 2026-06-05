@@ -21,6 +21,12 @@ export interface ClubPost {
   comments_count: number;
   aspect_ratio: '1:1' | '3:4' | '4:3';
   created_at: string;
+  // Colab estilo Instagram + contexto enriquecido.
+  coauthor_id?: string | null;
+  coauthor_username?: string | null;
+  coauthor_avatar_url?: string | null;
+  meal_summary?: string | null;
+  post_context?: 'workout' | 'meal' | 'free' | null;
 }
 
 interface Props {
@@ -59,6 +65,9 @@ export default function PostCard({
   const menuRef = useRef<HTMLDivElement>(null);
   const isOwn = currentUserId === post.user_id;
   const streak = post.streak ?? 0;
+  const isCollab = !!post.coauthor_id;
+  // Tag de contexto: comida si el post nació en una comida, si no el entreno.
+  const contextTag = post.post_context === 'meal' ? post.meal_summary : post.workout_summary;
 
   // Cerrar el dropdown del kebab al tap fuera (patrón UX universal).
   // Usamos mousedown + touchstart (no click) para responsividad en mobile.
@@ -114,15 +123,31 @@ export default function PostCard({
               if (e.key === 'Enter' || e.key === ' ') onAuthorTap(post.user_id);
             }}
           >
-            <div className="post-card-avatar">
+            <div className={`post-card-avatar${isCollab ? ' is-collab' : ''}`}>
               {post.avatar_url
                 ? <img src={post.avatar_url} alt="" />
                 : <span>{(post.username || '?')[0].toUpperCase()}</span>
               }
+              {isCollab && (
+                <div className="post-card-avatar-co">
+                  {post.coauthor_avatar_url
+                    ? <img src={post.coauthor_avatar_url} alt="" />
+                    : <span>{(post.coauthor_username || '?')[0].toUpperCase()}</span>
+                  }
+                </div>
+              )}
             </div>
             <div className="post-card-meta">
               <div className="post-card-name">
                 <span className="post-card-username">{post.username || t('post.anonymous')}</span>
+                {isCollab && (
+                  <span
+                    className="post-card-collab"
+                    onClick={e => { e.stopPropagation(); if (post.coauthor_id) onAuthorTap(post.coauthor_id); }}
+                  >
+                    {' '}{t('post.collabWith', { name: post.coauthor_username || '' })}
+                  </span>
+                )}
                 {streak > 0 && (
                   <span className="post-card-streak"> {plural(streak, {
                     one: t('post.streakDaysOne', { streak }),
@@ -134,8 +159,8 @@ export default function PostCard({
             </div>
           </div>
 
-          {post.workout_summary && (
-            <span className="post-card-tag">{post.workout_summary}</span>
+          {contextTag && (
+            <span className="post-card-tag">{contextTag}</span>
           )}
         </div>
       )}

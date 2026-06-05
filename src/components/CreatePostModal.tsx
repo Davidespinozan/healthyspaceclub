@@ -12,10 +12,17 @@ import { compressImage } from '../utils/imageCompress';
 import type { AspectRatio } from '../utils/imageCompress';
 import './create-post-modal.css';
 
+/** Contexto opcional cuando se publica DESDE un entreno o una comida. */
+export interface PostContext {
+  kind?: 'workout' | 'meal' | 'free';
+  mealSummary?: string;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
   onPostCreated?: () => void;
+  context?: PostContext;
 }
 
 type ModalView = 'choose' | 'cropping' | 'composing' | 'uploading';
@@ -71,12 +78,13 @@ function loadImageDimensions(url: string): Promise<{ width: number; height: numb
   });
 }
 
-export default function CreatePostModal({ open, onClose, onPostCreated }: Props) {
+export default function CreatePostModal({ open, onClose, onPostCreated, context }: Props) {
   const { t } = useT();
   const { userName, streakCount, dailyWorkout } = useAppStore();
   const userId = useCurrentUserId();
 
   const [userAvatarUrl, setUserAvatarUrl] = useState('');
+  const [collab, setCollab] = useState(true);
   const [view, setView] = useState<ModalView>('choose');
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
@@ -98,6 +106,28 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
   const workoutSummary = workoutToday
     ? `${workoutToday.type || t('post.workoutFallback')} · ${workoutToday.duration || ''}`
     : '';
+
+  // ¿El entreno de hoy fue en pareja? → ofrecemos colaborar (estilo Instagram).
+  const partner = workoutToday && (workoutToday as { partnerMode?: boolean }).partnerMode
+    ? {
+        id: (workoutToday as { partnerId?: string | null }).partnerId ?? null,
+        name: (workoutToday as { partnerName?: string }).partnerName ?? '',
+        avatar: (workoutToday as { partnerAvatar?: string | null }).partnerAvatar ?? '',
+      }
+    : null;
+
+  // Contexto del post: explícito (entrada desde comida/entreno) o inferido.
+  const mealSummary = context?.mealSummary ?? '';
+  const postContext: 'workout' | 'meal' | 'free' =
+    context?.kind === 'meal' ? 'meal'
+    : context?.kind === 'workout' ? 'workout'
+    : workoutToday ? 'workout'
+    : 'free';
+
+  // El toggle de colab solo aplica a posts de entreno con pareja.
+  const canCollab = postContext === 'workout' && !!partner?.id;
+  // Tag que se muestra en composición según contexto.
+  const contextSummary = postContext === 'meal' ? mealSummary : workoutSummary;
 
   // ── Fetch avatar para insert ──────────────────────────────
   useEffect(() => {
@@ -125,6 +155,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
     setCroppedAreaPixels(null);
     setCaption('');
     setUploadError(null);
+    setCollab(true);
   }, [open]);
 
   // ── Body overflow lock + ESC handler ──────────────────────
@@ -246,13 +277,32 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
       }
     }
 
+    // Si es colab, resolvemos el @username actual del coautor (display name no sirve).
+    const isCollabPost = canCollab && collab;
+    let coUsername = '';
+    if (isCollabPost && partner?.id) {
+      try {
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('username')
+          .eq('user_id', partner.id)
+          .single();
+        coUsername = data?.username || partner.name || '';
+      } catch { coUsername = partner.name || ''; }
+    }
+
     try {
       const { error: insertErr } = await supabase.from('club_posts').insert({
         user_id: userId,
         username: userName || t('common.anonymous'),
         avatar_url: userAvatarUrl,
         streak: streakCount,
-        workout_summary: workoutSummary,
+        workout_summary: postContext === 'workout' ? workoutSummary : '',
+        meal_summary: postContext === 'meal' ? mealSummary : '',
+        post_context: postContext,
+        coauthor_id: isCollabPost ? partner!.id : null,
+        coauthor_username: isCollabPost ? coUsername : '',
+        coauthor_avatar_url: isCollabPost ? (partner!.avatar || '') : '',
         photo_url: photoUrl,
         text: caption.trim().slice(0, MAX_CAPTION),
         fire_count: 0,
@@ -327,7 +377,11 @@ export default function CreatePostModal({ open, onClose, onPostCreated }: Props)
             aspectRatio={aspectRatio}
             caption={caption}
             onCaptionChange={setCaption}
-            workoutSummary={workoutSummary}
+            workoutSummary={contextSummary}
+            canCollab={canCollab}
+            collab={collab}
+            onCollabChange={setCollab}
+            partnerName={partner?.name ?? ''}
             onSubmit={handleSubmit}
             onBack={handleComposingBack}
             uploadError={uploadError}
@@ -454,13 +508,19 @@ function CroppingView({
 // VIEW: composing
 // ══════════════════════════════════════════════════════════════
 function ComposingView({
-  imageSrc, aspectRatio, caption, onCaptionChange, workoutSummary, onSubmit, onBack, uploadError,
+  imageSrc, aspectRatio, caption, onCaptionChange, workoutSummary,
+  canCollab, collab, onCollabChange, partnerName,
+  onSubmit, onBack, uploadError,
 }: {
   imageSrc: string | null;
   aspectRatio: AspectRatio;
   caption: string;
   onCaptionChange: (s: string) => void;
   workoutSummary: string;
+  canCollab: boolean;
+  collab: boolean;
+  onCollabChange: (v: boolean) => void;
+  partnerName: string;
   onSubmit: () => void;
   onBack: () => void;
   uploadError: string | null;
@@ -500,6 +560,21 @@ function ComposingView({
           </span>
           {workoutSummary && <span className="cpm-composing-chip">{workoutSummary}</span>}
         </div>
+
+        {canCollab && (
+          <button
+            type="button"
+            className={`cpm-collab${collab ? ' is-on' : ''}`}
+            onClick={() => onCollabChange(!collab)}
+            aria-pressed={collab}
+          >
+            <span className="cpm-collab-main">
+              <span className="cpm-collab-label">{t('post.collabToggle', { name: partnerName })}</span>
+              <span className="cpm-collab-hint">{t('post.collabHint')}</span>
+            </span>
+            <span className={`cpm-collab-switch${collab ? ' is-on' : ''}`}><span className="cpm-collab-knob" /></span>
+          </button>
+        )}
 
         {uploadError && <p className="cpm-composing-error">{t('post.publishError', { error: uploadError })}</p>}
       </div>

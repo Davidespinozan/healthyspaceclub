@@ -6,6 +6,7 @@ import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, ChevronDown, Wheat, Milk, Beef, Shell, CircleCheck, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
+import CreatePostModal from './CreatePostModal';
 import { callAI } from '../utils/aiProxy';
 import { buildWeeklyPlanPrompt } from '../ai/prompts/weeklyPlan';
 import { useT } from '../i18n';
@@ -254,6 +255,7 @@ export default function WeeklyNutritionPlanner() {
   const [notaOpen, setNotaOpen] = useState(false);
   const [mealDetail, setMealDetail] = useState<{ meal: PopoutMeal; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
+  const [shareMeal, setShareMeal] = useState<string | null>(null);
 
   const localizedMealPlans = getMealPlans(locale);
   const activeMealPlan = localizedMealPlans[mealPlanKey] ?? localizedMealPlans['planA'];
@@ -926,6 +928,16 @@ export default function WeeklyNutritionPlanner() {
           setMealDetail(null);
           setFoodLogTarget({ time, index });
         }}
+        onShare={(summary) => {
+          setMealDetail(null);
+          setShareMeal(summary);
+        }}
+      />
+
+      <CreatePostModal
+        open={shareMeal !== null}
+        onClose={() => setShareMeal(null)}
+        context={{ kind: 'meal', mealSummary: shareMeal ?? '' }}
       />
 
       {foodLogTarget !== null && (

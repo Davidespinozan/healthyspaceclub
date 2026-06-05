@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock } from 'lucide-react';
+import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera } from 'lucide-react';
+import CreatePostModal from './CreatePostModal';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { usePartnerPresence } from '../hooks/usePartnerPresence';
 import { useAppStore } from '../store';
@@ -105,6 +106,7 @@ export default function WorkoutPlayer({
 
   // ── State
   const [phase, setPhase] = useState<PlayerPhase>('exercise');
+  const [shareOpen, setShareOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [loggedByExercise, setLoggedByExercise] = useState<LoggedByExercise>(() => initLoggedByExercise(exercises));
   const [restState, setRestState] = useState<{ secondsLeft: number } | null>(null);
@@ -582,12 +584,22 @@ export default function WorkoutPlayer({
             </div>
           )}
           <div className="wp-cta-wrap">
+            <button className="wp-share-cta" onClick={() => setShareOpen(true)}>
+              <Camera size={18} strokeWidth={2} />
+              {t('post.shareFromWorkout')}
+            </button>
             <button className="wp-cta" onClick={onClose}>
               {t('workout.finish')}
             </button>
           </div>
         </div>
       )}
+
+      <CreatePostModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        context={{ kind: 'workout' }}
+      />
 
       {/* Rest bar flotante (no-bloqueante, sticky bottom) */}
       {phase === 'exercise' && restState && (

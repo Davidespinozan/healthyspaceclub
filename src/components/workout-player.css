@@ -274,6 +274,30 @@
   box-shadow: 0 14px 32px rgba(191, 160, 101, 0.44);
 }
 
+/* Botón secundario "Compartir foto" en la pantalla de completado. */
+.wp-share-cta {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  border-radius: var(--radius-base);
+  padding: 14px 32px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tight);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 240px;
+  justify-content: center;
+  transition: background var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+.wp-share-cta:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
 .wp-cta:active {
   transform: scale(0.98);
 }

@@ -412,6 +412,59 @@
   margin: 0;
 }
 
+/* Toggle de colaboración (estilo Instagram) — entreno en pareja. */
+.cpm-collab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid rgba(168, 134, 78, 0.3);
+  border-radius: 14px;
+  background: rgba(201, 169, 104, 0.06);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.cpm-collab.is-on {
+  border-color: rgba(168, 134, 78, 0.65);
+  background: rgba(201, 169, 104, 0.12);
+}
+.cpm-collab-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cpm-collab-label {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--forest, #153330);
+}
+.cpm-collab-hint {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.68rem;
+  color: var(--taupe, #9a8f7d);
+}
+.cpm-collab-switch {
+  flex-shrink: 0;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(154, 143, 125, 0.35);
+  position: relative;
+  transition: background 0.18s ease;
+}
+.cpm-collab-switch.is-on { background: linear-gradient(135deg, #C9A968, #A8864E); }
+.cpm-collab-knob {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  transition: transform 0.18s ease;
+}
+.cpm-collab-switch.is-on .cpm-collab-knob { transform: translateX(18px); }
+
 .cpm-composing-foot {
   flex-shrink: 0;
   padding: 14px 22px calc(18px + env(safe-area-inset-bottom, 0px));

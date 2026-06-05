@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { Camera } from 'lucide-react';
 import { useT } from '../i18n';
 import { calcMealKcal } from '../utils/kcalCalc';
 import type { TranslationKey } from '../i18n/es';
@@ -34,12 +35,14 @@ interface Props {
    * en la lista del día. El popout sigue read-only — solo delega.
    */
   onLogOther?: (mealTime: string, mealIndex: number | undefined) => void;
+  /** Si se provee, muestra "Compartir foto" — publica esta comida al Club. */
+  onShare?: (summary: string) => void;
 }
 
 // Popout de detalle de comida: backdrop + handle + img + time + kcal + name +
 // desc + ingredientes + close. Reutilizado desde TabHoy y WeeklyNutritionPlanner.
 // Clases CSS .th-popout-* viven en index.css (globales por historial).
-export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther }: Props) {
+export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther, onShare }: Props) {
   const { t } = useT();
   if (!meal) return null;
 
@@ -100,6 +103,16 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther 
                 {t('foodLog.detailCta')}
               </button>
             </>
+          )}
+          {onShare && (
+            <button
+              type="button"
+              className="th-popout-share"
+              onClick={() => onShare(`${timeLabel} · ${meal.name}`)}
+            >
+              <Camera size={17} strokeWidth={2} />
+              {t('post.shareFromWorkout')}
+            </button>
           )}
           <button className="th-popout-close" onClick={onClose}>{t('common.close')}</button>
         </div>

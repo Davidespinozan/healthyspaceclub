@@ -958,6 +958,10 @@ export const es = {
     ariaRemoveFire: 'Quitar fire',
     ariaCommentsOne: '{count} comentario',
     ariaCommentsOther: '{count} comentarios',
+    collabToggle: 'Colaborar con @{name}',
+    collabHint: 'Aparece en el perfil de los dos',
+    collabWith: 'con @{name}',
+    shareFromWorkout: 'Compartir foto',
   },
   coach: {
     headerTitle: 'Tu coach personal',
