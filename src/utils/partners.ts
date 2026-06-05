@@ -83,6 +83,17 @@ export interface PartnerTrainingProfile {
   equipment?: string[];
 }
 
+/** Entrega la rutina de pareja al daily_workout del compañero (sesión compartida).
+ *  Solo surte efecto si están conectados (la función lo valida). */
+export async function deliverPartnerWorkout(partnerId: string, plan: unknown): Promise<boolean> {
+  const { data, error } = await supabase.rpc('deliver_partner_workout', { partner: partnerId, plan });
+  if (error) {
+    console.warn('[partners] deliver failed:', error.message);
+    return false;
+  }
+  return data === 'delivered';
+}
+
 /** Cuántas veces YO he entrenado con este compañero (de mis propios logs). */
 export async function countSessionsWith(partnerId: string): Promise<number> {
   const { count, error } = await supabase

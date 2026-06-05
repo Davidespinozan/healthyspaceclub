@@ -117,15 +117,19 @@ export default function WorkoutPlan({
             </span>
           </div>
         </div>
-        <button
-          className={`dt2-regen${regenBlocked ? ' locked' : ''}`}
-          onClick={onRegenerate}
-          disabled={regenBlocked}
-          aria-label={t('workout.regenAria')}
-          title={regenBlocked ? t('workout.regenBlocked') : t('workout.regenLeft', { n: regensLeft })}
-        >
-          {regenBlocked ? <Lock size={14} /> : <RefreshCw size={14} />}
-        </button>
+        {/* Sesión de pareja amarra el día: la rutina de pareja NO se regenera en
+            solitario aquí (se regenera por Compañeros → Entrenar, para los dos). */}
+        {!plan.partnerMode && (
+          <button
+            className={`dt2-regen${regenBlocked ? ' locked' : ''}`}
+            onClick={onRegenerate}
+            disabled={regenBlocked}
+            aria-label={t('workout.regenAria')}
+            title={regenBlocked ? t('workout.regenBlocked') : t('workout.regenLeft', { n: regensLeft })}
+          >
+            {regenBlocked ? <Lock size={14} /> : <RefreshCw size={14} />}
+          </button>
+        )}
       </div>
 
       {/* CTA para abrir player — ARRIBA, visible sin scroll. Solo si hay ejercicios. */}

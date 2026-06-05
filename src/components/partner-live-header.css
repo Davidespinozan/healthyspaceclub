@@ -13,7 +13,12 @@
 }
 .pl-live-text {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size: 12.5px; font-weight: 700; color: #153330;
+  /* Chip dorado (igual que el year/day de Tu Espacio) con el punto verde "en vivo" */
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  padding: 5px 12px; border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(168, 134, 78, 0.28);
+  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 11.5px;
+  color: #fff; letter-spacing: 0.02em;
 }
 .pl-live-dot {
   width: 8px; height: 8px; border-radius: 50%;

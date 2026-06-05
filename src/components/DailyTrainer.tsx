@@ -27,6 +27,7 @@ import {
 } from '../utils/workoutValidation';
 import { stretchToTargetDuration } from '../utils/yogaPostProcess';
 import { orchestrateWorkout, orchestratePowerVinyasa } from '../utils/workoutOrchestration';
+import { deliverPartnerWorkout } from '../utils/partners';
 import type {
   Exercise,
   Equipment,
@@ -509,6 +510,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
       setPlan(workout);
       await saveDailyWorkout(workout as any);
+      // Sesión compartida: entrega la MISMA rutina al compañero (no genera él).
+      if (partnerMode && pendingPartner?.id) {
+        deliverPartnerWorkout(pendingPartner.id, workout).catch(() => {});
+      }
       setPhase('plan');
     } catch (e) {
       console.error('[DailyTrainer] generation failed:', e);
