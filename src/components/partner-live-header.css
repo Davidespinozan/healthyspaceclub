@@ -1,5 +1,5 @@
 /* Cabecera en vivo de pareja (dos avatares + "Entrenando con X") */
-.pl-live { display: flex; align-items: center; gap: 10px; margin: 2px 0 10px; flex-wrap: wrap; min-width: 0; }
+.pl-live { display: flex; align-items: center; gap: 8px; margin: 2px 0 10px; min-width: 0; }
 .pl-avatars { display: flex; flex-shrink: 0; }
 .pl-av {
   width: 30px; height: 30px; border-radius: 50%;
@@ -12,15 +12,16 @@
   color: #fff; font-weight: 800; font-size: 13px;
 }
 .pl-live-text {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; gap: 5px;
   /* Chip dorado (igual que el year/day de Tu Espacio) con el punto verde "en vivo" */
   background: linear-gradient(135deg, #C9A968, #A8864E);
-  padding: 5px 12px; border-radius: 999px;
+  padding: 4px 10px; border-radius: 999px;
   box-shadow: 0 4px 12px rgba(168, 134, 78, 0.28);
-  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 11.5px;
+  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 10.5px;
   color: #fff; letter-spacing: 0.02em;
-  min-width: 0; max-width: 100%;
+  flex: 0 1 auto; min-width: 0; overflow: hidden;
 }
+.pl-live-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .pl-live-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: #4F9D69; flex-shrink: 0;

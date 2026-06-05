@@ -593,23 +593,25 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   </>
                 );
               })()}
-              {/* Movimiento alterno — SIEMPRE disponible (te moviste, cuenta aunque
-                  no generes rutina). En vacío va bajo el título-CTA; con rutina,
-                  justo donde termina el plan. */}
-              <button
-                type="button"
-                className={`th3-card-alt-activity${lastActivityToday ? ' logged' : ''}`}
-                onClick={(e) => { e.stopPropagation(); setActivityOpen(true); }}
-              >
-                {lastActivityToday ? (
-                  <>
-                    <span className="th3-card-alt-check" aria-hidden="true">✓</span>
-                    {lastActivityToday.activity}{fmtActivityDur(lastActivityToday.durationMin)}
-                  </>
-                ) : (
-                  t('activityLog.detailQuestion')
-                )}
-              </button>
+              {/* Movimiento alterno — disponible salvo en sesión de pareja (ahí es
+                  obvio que están haciendo la rutina juntos). En vacío va bajo el
+                  título-CTA; con rutina, justo donde termina el plan. */}
+              {!(todayWorkoutPlan as { partnerMode?: boolean } | null)?.partnerMode && (
+                <button
+                  type="button"
+                  className={`th3-card-alt-activity${lastActivityToday ? ' logged' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); setActivityOpen(true); }}
+                >
+                  {lastActivityToday ? (
+                    <>
+                      <span className="th3-card-alt-check" aria-hidden="true">✓</span>
+                      {lastActivityToday.activity}{fmtActivityDur(lastActivityToday.durationMin)}
+                    </>
+                  ) : (
+                    t('activityLog.detailQuestion')
+                  )}
+                </button>
+              )}
               {/* Pie "Ver completa" SOLO cuando hay rutina — en vacío el título ya
                   es la acción ("Generar tu rutina de hoy →"), sin pie. */}
               {todayWorkoutPlan && (

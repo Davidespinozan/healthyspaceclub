@@ -35,7 +35,7 @@ export default function PartnerLiveHeader({
       </div>
       <span className="pl-live-text">
         <span className="pl-live-dot" />
-        {t('hoy.trainingWith', { name: partnerName })}
+        <span className="pl-live-label">{t('hoy.trainingWith', { name: partnerName })}</span>
       </span>
     </div>
   );
