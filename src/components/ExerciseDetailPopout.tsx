@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Maximize2, Volume2, VolumeX, Play } from 'lucide-react';
+import { X, Maximize2, Play } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Exercise, ExerciseVideo, Equipment } from '../types';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
@@ -36,7 +36,6 @@ export default function ExerciseDetailPopout({
   const [activeIdx, setActiveIdx] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
-  const [muted, setMuted] = useState(true);
   // Aspecto real del video (ancho/alto). El hero se adapta para no recortar
   // videos horizontales ni verticales.
   const [videoAspect, setVideoAspect] = useState<number | null>(null);
@@ -134,13 +133,6 @@ export default function ExerciseDetailPopout({
     }
   }
 
-  function toggleMute() {
-    const v = videoRef.current;
-    if (!v) return;
-    v.muted = !v.muted;
-    setMuted(v.muted);
-  }
-
   function requestFullscreen() {
     const v = videoRef.current;
     if (!v) return;
@@ -184,7 +176,7 @@ export default function ExerciseDetailPopout({
                       ref={i === activeIdx ? videoRef : null}
                       src={v.url}
                       autoPlay={i === activeIdx}
-                      muted={muted}
+                      muted
                       loop
                       playsInline
                       className="edp-hero-video"
@@ -207,21 +199,14 @@ export default function ExerciseDetailPopout({
                 </div>
               )}
 
-              {/* Video controls (right side) */}
+              {/* Solo expandir (los videos no llevan sonido → sin mute). */}
               <div className="edp-video-controls">
-                <button
-                  className="edp-vc-btn"
-                  onClick={toggleMute}
-                  aria-label={muted ? t('exerciseDetail.unmute') : t('exerciseDetail.mute')}
-                >
-                  {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                </button>
                 <button
                   className="edp-vc-btn"
                   onClick={requestFullscreen}
                   aria-label={t('exerciseDetail.fullscreen')}
                 >
-                  <Maximize2 size={14} />
+                  <Maximize2 size={16} />
                 </button>
               </div>
 
