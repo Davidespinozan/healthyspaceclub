@@ -147,7 +147,8 @@
 .ss-plan-link:hover { border-bottom-color: var(--amber); }
 
 .ss-data-edit {
-  display: inline-block;
+  display: block;
+  width: fit-content;
   margin-top: 14px;
   font-family: 'Montserrat', sans-serif;
   font-size: 12px;
