@@ -341,6 +341,16 @@
   margin: 8px 0 0; font-family: 'Montserrat', sans-serif; font-size: 11px;
   color: var(--terracota, #C75B3A);
 }
+.ss-notif-install {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(201, 169, 104, 0.10);
+  border: 1px solid rgba(168, 134, 78, 0.25);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px; line-height: 1.5;
+  color: var(--forest, #153330);
+}
 
 /* Language toggle — i18n Lote 0 */
 .ss-lang-toggle {

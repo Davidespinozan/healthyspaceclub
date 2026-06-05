@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronRight, Loader2 } from 'lucide-react';
 import { useAppStore } from '../store';
-import { pushSupported, getPushEnabled, enablePush, disablePush } from '../utils/push';
+import { pushSupported, getPushEnabled, enablePush, disablePush, pushNeedsInstall } from '../utils/push';
 import { supabase } from '../lib/supabase';
 import { openCoachWith } from '../utils/openCoach';
 import { useT } from '../i18n';
@@ -323,20 +323,27 @@ export default function SettingsSheet({ open, onClose }: Props) {
         {pushState !== 'unsupported' && (
           <section className="ss-section">
             <p className="ss-section-eyebrow">{t('settings.notifications')}</p>
-            <div className="ss-notif-row">
-              <p className="ss-notif-hint">{t('settings.notifHint')}</p>
-              <button
-                type="button"
-                className={`ss-notif-btn${pushState === 'on' ? ' is-on' : ''}`}
-                onClick={togglePush}
-                disabled={pushBusy || pushState === 'denied'}
-              >
-                {pushBusy
-                  ? <Loader2 className="ss-spin" size={15} strokeWidth={2.4} />
-                  : pushState === 'on' ? t('settings.notifEnabled') : t('settings.notifEnable')}
-              </button>
-            </div>
-            {pushState === 'denied' && <p className="ss-notif-warn">{t('settings.notifDenied')}</p>}
+            {pushNeedsInstall() ? (
+              // iOS sin instalar: iOS ni muestra el diálogo de permiso. Guiamos a instalar.
+              <p className="ss-notif-install">{t('settings.notifInstall')}</p>
+            ) : (
+              <>
+                <div className="ss-notif-row">
+                  <p className="ss-notif-hint">{t('settings.notifHint')}</p>
+                  <button
+                    type="button"
+                    className={`ss-notif-btn${pushState === 'on' ? ' is-on' : ''}`}
+                    onClick={togglePush}
+                    disabled={pushBusy || pushState === 'denied'}
+                  >
+                    {pushBusy
+                      ? <Loader2 className="ss-spin" size={15} strokeWidth={2.4} />
+                      : pushState === 'on' ? t('settings.notifEnabled') : t('settings.notifEnable')}
+                  </button>
+                </div>
+                {pushState === 'denied' && <p className="ss-notif-warn">{t('settings.notifDenied')}</p>}
+              </>
+            )}
           </section>
         )}
 

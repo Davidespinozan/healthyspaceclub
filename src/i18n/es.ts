@@ -30,6 +30,7 @@ export const es = {
     notifDenied: 'Bloqueadas en tu navegador. Actívalas en los ajustes del sistema.',
     notifUnsupported: 'Tu dispositivo no soporta push (en iOS, instala la app a la pantalla de inicio).',
     notifError: 'No se pudo activar. Intenta de nuevo.',
+    notifInstall: 'En iPhone, primero instala la app: toca Compartir y luego "Agregar a inicio". Ábrela desde ese ícono y vuelve aquí para activar.',
     title: 'Ajustes',
     myPlan: 'Mi plan',
     currentPlan: 'Plan actual',

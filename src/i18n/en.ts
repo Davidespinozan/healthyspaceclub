@@ -31,6 +31,7 @@ export const en: Translations<typeof es> = {
     notifDenied: 'Blocked in your browser. Turn them on in system settings.',
     notifUnsupported: "Your device doesn't support push (on iOS, install the app to your home screen).",
     notifError: "Couldn't enable. Try again.",
+    notifInstall: 'On iPhone, install the app first: tap Share, then "Add to Home Screen". Open it from that icon and come back here to enable.',
     title: 'Settings',
     myPlan: 'My plan',
     currentPlan: 'Current plan',

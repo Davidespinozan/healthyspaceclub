@@ -22,6 +22,27 @@ export function pushSupported(): boolean {
     && 'Notification' in window;
 }
 
+/** ¿La app corre como PWA instalada (standalone)? */
+export function isStandalone(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia?.('(display-mode: standalone)').matches
+    || (navigator as unknown as { standalone?: boolean }).standalone === true;
+}
+
+export function isIOS(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  return /iphone|ipad|ipod/i.test(ua)
+    || (navigator.platform === 'MacIntel' && (navigator as unknown as { maxTouchPoints?: number }).maxTouchPoints! > 1);
+}
+
+/** En iOS el push EXIGE la PWA instalada a inicio. Si es iOS y NO está
+ *  instalada, hay que pedirle al usuario que la instale primero (si no, iOS
+ *  ni muestra el diálogo de permiso). */
+export function pushNeedsInstall(): boolean {
+  return isIOS() && !isStandalone();
+}
+
 export async function getPushEnabled(): Promise<boolean> {
   if (!pushSupported()) return false;
   try {
