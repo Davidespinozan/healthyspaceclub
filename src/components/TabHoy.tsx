@@ -371,10 +371,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           <div className="th3-hero-orb th3-hero-orb-1" />
           <div className="th3-hero-orb th3-hero-orb-2" />
         </div>
-        <div className="th3-hero-datebar">
-          <Logo variant="icon" size={34} className="th3-hero-datebar-icon" />
+        <div className="th3-hero-top">
+          <h1 className="th3-headline">{firstName ? `${heroGreeting}, ${firstName}.` : `${heroGreeting}.`}</h1>
+          <Logo variant="icon" size={34} className="th3-hero-logo" />
         </div>
-        <h1 className="th3-headline">{firstName ? `${heroGreeting}, ${firstName}.` : `${heroGreeting}.`}</h1>
         {username && <p className="th3-handle">@{username}</p>}
         <p className="th3-subhead">{heroSubhead}</p>
 
