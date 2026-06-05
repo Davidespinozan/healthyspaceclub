@@ -804,6 +804,7 @@ export const es = {
     partnerTitle: 'Entrena en pareja',
     partnerMeta: 'Tu coach arma una rutina pensada para los dos.',
     partnerFoot: 'Entrenar con alguien',
+    trainingWith: 'Entrenando con {name}',
     ariaMealCheck: 'Marcar comida',
     ariaMealUncheck: 'Desmarcar comida',
     ariaMealResolvedByLog: 'Resuelta con otra comida',

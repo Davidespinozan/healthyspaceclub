@@ -146,7 +146,7 @@ export default function App() {
           try {
             const { data: profile } = await supabase
               .from('user_profiles')
-              .select('display_name, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date, weekly_plan, weekly_plan_updated_at, shopping_day, daily_workout, daily_workout_updated_at, daily_workout_regen, daily_workout_regen_updated_at')
+              .select('display_name, avatar_url, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date, weekly_plan, weekly_plan_updated_at, shopping_day, daily_workout, daily_workout_updated_at, daily_workout_regen, daily_workout_regen_updated_at')
               .eq('user_id', session.user.id)
               .maybeSingle();
 
@@ -167,6 +167,7 @@ export default function App() {
             if (profile) {
               useAppStore.setState({
                 userName: profile.display_name ?? '',
+                avatarUrl: (profile as { avatar_url?: string | null }).avatar_url ?? null,
                 obData: (profile.ob_data as Record<string, string | number>) ?? {},
                 startDate: profile.start_date ?? '',
                 tdee: profile.tdee ?? 0,

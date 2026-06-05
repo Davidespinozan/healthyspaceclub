@@ -497,15 +497,18 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       incrementRegen(selectedModality);
       console.info(`[regen] ${selectedModality}: ${(regenCounts[selectedModality] || 0) + 1}/3 today | admin: ${isAdmin}`);
 
-      // Garantiza los metadatos de pareja aunque el modelo los omita.
+      // Garantiza los metadatos de pareja aunque el modelo los omita. La rutina
+      // de pareja PASA A SER la rutina de hoy (no es un flujo separado) — por eso
+      // también se guarda en dailyWorkout, con avatar/id para la tarjeta de Hoy.
       if (partnerMode) {
         (workout as CachedWorkout).partnerMode = true;
         (workout as CachedWorkout).partnerName = partnerName.trim() || t('wizard.partnerNamePlaceholder');
+        (workout as CachedWorkout).partnerAvatar = pendingPartner?.avatarUrl ?? null;
+        (workout as CachedWorkout).partnerId = pendingPartner?.id ?? null;
       }
 
       setPlan(workout);
-      // El plan de pareja es de un solo uso — NO sobrescribe la rutina solo del día.
-      if (!partnerMode) await saveDailyWorkout(workout as any);
+      await saveDailyWorkout(workout as any);
       setPhase('plan');
     } catch (e) {
       console.error('[DailyTrainer] generation failed:', e);

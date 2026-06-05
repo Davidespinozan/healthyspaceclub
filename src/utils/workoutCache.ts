@@ -37,6 +37,8 @@ export interface CachedWorkout {
   // ── Metadatos de modo pareja ──
   partnerMode?: boolean;
   partnerName?: string;
+  partnerAvatar?: string | null; // foto del compañero (para la tarjeta de hoy)
+  partnerId?: string | null;     // cuenta del compañero conectado (null si invitado)
 }
 
 export async function getCachedWorkout(

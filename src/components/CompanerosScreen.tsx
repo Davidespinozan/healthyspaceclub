@@ -91,6 +91,7 @@ export default function CompanerosScreen() {
       name: p.other_name || (p.other_username ? `@${p.other_username}` : t('partners.aPartner')),
       nivel: prof?.nivel,
       equipment: prof?.equipment,
+      avatarUrl: p.other_avatar,
     });
     setDashPage('entrenamiento-pareja');
   }

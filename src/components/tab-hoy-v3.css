@@ -577,6 +577,41 @@
   flex-shrink: 0;
 }
 
+/* ═══ Cabecera "en vivo" de rutina de pareja (en la tarjeta de rutina de hoy) ═══ */
+.th3-partner-live {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0 8px;
+}
+.th3-partner-avatars { display: flex; flex-shrink: 0; }
+.th3-pl-av {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 2px solid var(--sala-surface, #fff);
+  object-fit: cover; background: #e8e1d3;
+}
+.th3-pl-av--2 { margin-left: -10px; }
+.th3-pl-av--fb {
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #2E4A42, #153330);
+  color: #fff; font-weight: 800; font-size: 13px;
+}
+.th3-partner-live-text {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 700; color: var(--forest, #153330);
+}
+.th3-partner-live-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #4F9D69; flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(79, 157, 105, 0.55);
+  animation: th3-pulse 1.6s ease-out infinite;
+}
+@keyframes th3-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(79, 157, 105, 0.55); }
+  70%  { box-shadow: 0 0 0 7px rgba(79, 157, 105, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 157, 105, 0); }
+}
+
 /* ═══ Entrenar en pareja (Fase 2) — gold vibrante para diferenciar de reflexión ═══ */
 .th3-partner {
   display: flex;

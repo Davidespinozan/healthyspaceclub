@@ -112,10 +112,14 @@ interface AppState {
   // Handle social público (@usuario). null = aún no lo ha elegido. Fase 1A.
   username: string | null;
   setUsername: (handle: string | null) => void;
+  // Foto de perfil propia (de user_profiles.avatar_url). Para mostrar la pareja
+  // de avatares en la tarjeta de rutina de hoy.
+  avatarUrl: string | null;
+  setAvatarUrl: (url: string | null) => void;
   // Compañero elegido para la próxima rutina de pareja (efímero, no se persiste).
   // Lo setea la pantalla Compañeros; lo lee DailyTrainer en modo pareja. Fase 1B.
-  pendingPartner: { id: string; name: string; nivel?: string; equipment?: string[] } | null;
-  setPendingPartner: (p: { id: string; name: string; nivel?: string; equipment?: string[] } | null) => void;
+  pendingPartner: { id: string; name: string; nivel?: string; equipment?: string[]; avatarUrl?: string | null } | null;
+  setPendingPartner: (p: { id: string; name: string; nivel?: string; equipment?: string[]; avatarUrl?: string | null } | null) => void;
   startDate: string; // ISO date string YYYY-MM-DD
 
   // Session (Supabase Auth)
@@ -385,6 +389,8 @@ export const useAppStore = create<AppState>()(
   setUserName: (name) => set({ userName: name }),
   username: null,
   setUsername: (handle) => set({ username: handle }),
+  avatarUrl: null,
+  setAvatarUrl: (url) => set({ avatarUrl: url }),
   pendingPartner: null,
   setPendingPartner: (p) => set({ pendingPartner: p }),
   startDate: '',
@@ -1109,6 +1115,7 @@ export const useAppStore = create<AppState>()(
   resetUserScopedData: () => set({
     userName: '',
     username: null,
+    avatarUrl: null,
     pendingPartner: null,
     obStep: 1,
     obData: {},
