@@ -1291,9 +1291,9 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 /* Typography */
 .onb-brand { font-size: 2rem; font-weight: 800; color: #F6F2EA; letter-spacing: -.02em; margin-bottom: 8px; }
 /* Bienvenida: monograma + wordmark (igual que el sidebar de desktop) */
-.onb-brand-logos { display: flex; flex-direction: column; align-items: center; margin-bottom: 26px; }
-.onb-brand-icon { width: 86px; height: 86px; border-radius: 18px; display: block; }
-.onb-brand-wordmark { height: 126px; width: auto; display: block; margin-top: -28px; }
+.onb-brand-logos { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
+.onb-brand-icon { width: 104px; height: 104px; border-radius: 22px; display: block; }
+.onb-brand-wordmark { height: 132px; width: auto; display: block; margin-top: -34px; }
 .onb-question { font-size: 1.5rem; font-weight: 700; color: #153330; margin-bottom: 8px; line-height: 1.2; }
 .onb-hint { font-size: .84rem; color: rgba(21,51,48,.5); margin-bottom: 28px; line-height: 1.5; }
 
