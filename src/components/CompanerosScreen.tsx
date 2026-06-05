@@ -79,7 +79,7 @@ export default function CompanerosScreen() {
   }
 
   async function handleRespond(p: Partnership, accept: boolean) {
-    await respondInvite(p.partnership_id, accept);
+    await respondInvite(p.partnership_id, accept, p.other_id);
     refresh();
   }
 

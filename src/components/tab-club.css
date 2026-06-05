@@ -15,8 +15,13 @@
 .clb-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   padding: 22px 18px 14px;
+}
+.clb-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .clb-title {

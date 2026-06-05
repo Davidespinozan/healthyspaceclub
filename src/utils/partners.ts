@@ -42,6 +42,28 @@ function notifyUser(userId: string, event: string) {
   } catch { /* noop */ }
 }
 
+/** Inserta una notificación in-app para `recipientId` con el actor = usuario
+ *  actual (resuelve su username/avatar). No notifica si te lo haces a ti mismo. */
+async function pushNotification(
+  recipientId: string,
+  type: 'partner_invite' | 'partner_accept',
+) {
+  try {
+    const { data: auth } = await supabase.auth.getUser();
+    const me = auth?.user?.id;
+    if (!me || me === recipientId) return;
+    const { data: prof } = await supabase
+      .from('user_profiles').select('username, avatar_url').eq('user_id', me).single();
+    await supabase.from('notifications').insert({
+      user_id: recipientId,
+      actor_id: me,
+      actor_username: prof?.username ?? '',
+      actor_avatar_url: prof?.avatar_url ?? '',
+      type,
+    });
+  } catch { /* noop */ }
+}
+
 /** Busca usuarios por @usuario o nombre (mín. 2 chars, solo perfiles públicos).
  *  Quita el "@" del inicio para que escribir "@pedro" encuentre a "pedro". */
 export async function searchUsers(q: string): Promise<UserSearchResult[]> {
@@ -62,13 +84,21 @@ export async function sendInvite(targetId: string): Promise<InviteResult> {
     console.warn('[partners] invite failed:', error.message);
     return 'error';
   }
-  if (data === 'sent') notifyUser(targetId, 'invite'); // aparece al instante en su pantalla
+  if (data === 'sent') {
+    notifyUser(targetId, 'invite');          // aparece al instante en su pantalla
+    pushNotification(targetId, 'partner_invite'); // queda en su centro de notificaciones
+  }
   if (data === 'sent' || data === 'self' || data === 'exists') return data;
   return 'error';
 }
 
-/** Acepta o rechaza una invitación recibida. */
-export async function respondInvite(partnershipId: string, accept: boolean): Promise<RespondResult> {
+/** Acepta o rechaza una invitación recibida. `inviterId` (opcional) permite
+ *  notificar al que invitó cuando aceptas. */
+export async function respondInvite(
+  partnershipId: string,
+  accept: boolean,
+  inviterId?: string,
+): Promise<RespondResult> {
   const { data, error } = await supabase.rpc('respond_partner_invite', {
     partnership: partnershipId,
     accept,
@@ -76,6 +106,10 @@ export async function respondInvite(partnershipId: string, accept: boolean): Pro
   if (error) {
     console.warn('[partners] respond failed:', error.message);
     return 'error';
+  }
+  if (data === 'accepted' && inviterId) {
+    notifyUser(inviterId, 'partner_accept');
+    pushNotification(inviterId, 'partner_accept');
   }
   if (data === 'accepted' || data === 'declined' || data === 'notfound') return data;
   return 'error';

@@ -2,6 +2,9 @@ import CreatePostModal from './CreatePostModal';
 import PublicProfile from './PublicProfile';
 import PostCard, { type ClubPost } from './club/PostCard';
 import CommentsSheet from './club/CommentsSheet';
+import NotificationsSheet from './club/NotificationsSheet';
+import { useNotifications } from '../hooks/useNotifications';
+import { Bell } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
@@ -20,6 +23,13 @@ export default function TabClub() {
   const [createOpen, setCreateOpen] = useState(false);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const { items: notifications, unread, markAllRead } = useNotifications(userId);
+
+  function openNotifs() {
+    setNotifOpen(true);
+    markAllRead();
+  }
 
   function bumpCommentCount(postId: string, delta: number) {
     setPosts(p => p.map(post => post.id === postId
@@ -104,12 +114,18 @@ export default function TabClub() {
     <div className="clb-wrap">
       <div className="clb-header">
         <h1 className="clb-title">{t('club.title')}</h1>
-        <span className="clb-meta">
-          {plural(activeToday, {
-            one: t('club.activeOne', { count: activeToday }),
-            other: t('club.activeOther', { count: activeToday }),
-          })}
-        </span>
+        <div className="clb-header-right">
+          <span className="clb-meta">
+            {plural(activeToday, {
+              one: t('club.activeOne', { count: activeToday }),
+              other: t('club.activeOther', { count: activeToday }),
+            })}
+          </span>
+          <button type="button" className="clb-bell" onClick={openNotifs} aria-label={t('notif.ariaOpen')}>
+            <Bell size={22} strokeWidth={1.8} />
+            {unread > 0 && <span className="clb-bell-badge">{unread > 9 ? '9+' : unread}</span>}
+          </button>
+        </div>
       </div>
 
       <section className="clb-feed">
@@ -154,6 +170,14 @@ export default function TabClub() {
         onClose={() => setCommentsPostId(null)}
         onCountChange={bumpCommentCount}
         onAuthorTap={(uid) => { setCommentsPostId(null); setProfileUserId(uid); }}
+      />
+
+      <NotificationsSheet
+        open={notifOpen}
+        items={notifications}
+        onClose={() => setNotifOpen(false)}
+        onTapPost={(pid) => { setNotifOpen(false); setCommentsPostId(pid); }}
+        onTapActor={(uid) => { setNotifOpen(false); setProfileUserId(uid); }}
       />
 
       {profileUserId && (
