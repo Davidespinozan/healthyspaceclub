@@ -344,6 +344,13 @@
   letter-spacing: var(--tracking-tighter);
   margin: 0;
 }
+/* Estado vacío: el título ES la acción ("Generar tu rutina de hoy →") */
+.th3-card-title-arrow {
+  display: inline-block;
+  vertical-align: -3px;
+  margin-left: 7px;
+  color: var(--amber-deep);
+}
 .th3-card-meta {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.7rem;

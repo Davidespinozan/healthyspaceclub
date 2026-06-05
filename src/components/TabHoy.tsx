@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users } from 'lucide-react';
+import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { getMealPlans } from '../data/mealPlan';
@@ -466,7 +466,12 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               {(() => {
                 const workout = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
                 if (!workout) {
-                  return <h2 className="th3-card-title">{t('hoy.routineToday')}</h2>;
+                  return (
+                    <h2 className="th3-card-title th3-card-title--cta">
+                      {t('hoy.routineGenerateTitle')}
+                      <ArrowRight size={18} strokeWidth={2.2} className="th3-card-title-arrow" />
+                    </h2>
+                  );
                 }
                 const isYogaPlan = Array.isArray((workout as { poses?: unknown }).poses);
                 if (isYogaPlan) {
@@ -558,29 +563,31 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   </>
                 );
               })()}
-              {/* Movimiento alterno — solo cuando ya hay rutina (es "¿hiciste algo
-                  en vez de esto?") o si ya registró una actividad. En la tarjeta
-                  vacía no aparece, para no verse atravesado. */}
-              {(todayWorkoutPlan || lastActivityToday) && (
-                <button
-                  type="button"
-                  className={`th3-card-alt-activity${lastActivityToday ? ' logged' : ''}`}
-                  onClick={(e) => { e.stopPropagation(); setActivityOpen(true); }}
-                >
-                  {lastActivityToday ? (
-                    <>
-                      <span className="th3-card-alt-check" aria-hidden="true">✓</span>
-                      {lastActivityToday.activity}{fmtActivityDur(lastActivityToday.durationMin)}
-                    </>
-                  ) : (
-                    t('activityLog.detailQuestion')
-                  )}
-                </button>
+              {/* Movimiento alterno — SIEMPRE disponible (te moviste, cuenta aunque
+                  no generes rutina). En vacío va bajo el título-CTA; con rutina,
+                  justo donde termina el plan. */}
+              <button
+                type="button"
+                className={`th3-card-alt-activity${lastActivityToday ? ' logged' : ''}`}
+                onClick={(e) => { e.stopPropagation(); setActivityOpen(true); }}
+              >
+                {lastActivityToday ? (
+                  <>
+                    <span className="th3-card-alt-check" aria-hidden="true">✓</span>
+                    {lastActivityToday.activity}{fmtActivityDur(lastActivityToday.durationMin)}
+                  </>
+                ) : (
+                  t('activityLog.detailQuestion')
+                )}
+              </button>
+              {/* Pie "Ver completa" SOLO cuando hay rutina — en vacío el título ya
+                  es la acción ("Generar tu rutina de hoy →"), sin pie. */}
+              {todayWorkoutPlan && (
+                <div className="th3-card-foot">
+                  <span className="th3-card-foot-text">{t('hoy.viewFullRoutine')}</span>
+                  <span className="th3-card-arrow">→</span>
+                </div>
               )}
-              <div className="th3-card-foot">
-                <span className="th3-card-foot-text">{todayWorkoutPlan ? t('hoy.viewFullRoutine') : t('hoy.generate')}</span>
-                <span className="th3-card-arrow">→</span>
-              </div>
             </div>
           </article>
 
@@ -593,7 +600,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             <div className="th3-card-body">
               <p className="th3-card-eyebrow">{t('hoy.cardEyebrowNutrition')}</p>
               {!weeklyPlan ? (
-                <h2 className="th3-card-title">{t('hoy.nutritionToday')}</h2>
+                <h2 className="th3-card-title th3-card-title--cta">
+                  {t('hoy.nutritionGenerateTitle')}
+                  <ArrowRight size={18} strokeWidth={2.2} className="th3-card-title-arrow" />
+                </h2>
               ) : (
                 <>
                   <h2 className="th3-card-title">{t('hoy.nutritionToday')}</h2>
@@ -692,10 +702,14 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   {t('foodLog.detailQuestion')}
                 </button>
               )}
-              <div className="th3-card-foot">
-                <span className="th3-card-foot-text">{weeklyPlan ? t('hoy.viewFullPlan') : t('hoy.generate')}</span>
-                <span className="th3-card-arrow">→</span>
-              </div>
+              {/* Pie "Ver completo" SOLO con plan — en vacío el título ya es la
+                  acción ("Generar tu plan de hoy →"). */}
+              {weeklyPlan && (
+                <div className="th3-card-foot">
+                  <span className="th3-card-foot-text">{t('hoy.viewFullPlan')}</span>
+                  <span className="th3-card-arrow">→</span>
+                </div>
+              )}
             </div>
           </article>
         </div>
