@@ -1,29 +1,29 @@
 /* Cabecera en vivo de pareja: avatares entrelazados + badge "con X" a un lado. */
-.pl-live { display: flex; align-items: center; gap: 8px; margin: 2px 0 10px; min-width: 0; max-width: 100%; }
+.pl-live { display: flex; align-items: center; gap: 6px; margin: 2px 0 10px; min-width: 0; max-width: 100%; }
 .pl-avatars { display: flex; flex-shrink: 0; }
 .pl-av {
-  width: 30px; height: 30px; border-radius: 50%;
+  width: 26px; height: 26px; border-radius: 50%;
   border: 2px solid #fff; object-fit: cover; background: #e8e1d3;
 }
-.pl-av--2 { margin-left: -10px; }
+.pl-av--2 { margin-left: -9px; }
 .pl-av--fb {
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, #2E4A42, #153330);
-  color: #fff; font-weight: 800; font-size: 13px;
+  color: #fff; font-weight: 800; font-size: 11px;
 }
 .pl-live-text {
-  display: inline-flex; align-items: center; gap: 6px;
-  /* Chip dorado chico "con X" — una línea, junto a los avatares. */
+  display: inline-flex; align-items: center; gap: 5px;
+  /* Chip dorado compacto "con X" — una línea, junto a los avatares. */
   background: linear-gradient(135deg, #C9A968, #A8864E);
-  padding: 5px 12px; border-radius: 999px;
+  padding: 4px 9px; border-radius: 999px;
   box-shadow: 0 4px 12px rgba(168, 134, 78, 0.28);
-  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 11px;
-  color: #fff; letter-spacing: 0.02em;
-  max-width: 100%; min-width: 0;
+  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 10px;
+  color: #fff; letter-spacing: 0.01em;
+  min-width: 0;
 }
 .pl-live-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .pl-live-dot {
-  width: 9px; height: 9px; border-radius: 50%;
+  width: 8px; height: 8px; border-radius: 50%;
   background: #2EE06A; flex-shrink: 0; /* verde vivo, "en vivo" */
   box-shadow: 0 0 0 0 rgba(46, 224, 106, 0.75);
   animation: pl-pulse 1.3s ease-out infinite;
