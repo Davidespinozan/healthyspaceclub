@@ -113,6 +113,30 @@
   cursor: pointer;
 }
 
+/* Tira de colab en el perfil (showAuthor=false): dos avatares + ambos handles. */
+.post-card-collab-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+.post-card-collab-avs { display: flex; flex-shrink: 0; }
+.post-card-collab-av {
+  width: 22px; height: 22px; border-radius: 50%;
+  overflow: hidden; background: var(--warm, #e8e1d3);
+  border: 1.5px solid #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 600;
+  color: var(--forest, #153330);
+}
+.post-card-collab-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.post-card-collab-av--2 { margin-left: -8px; }
+.post-card-collab-names {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px; font-weight: 600;
+  color: var(--amber-deep, #A8864E);
+}
+
 .post-card-meta {
   flex: 1;
   min-width: 0;

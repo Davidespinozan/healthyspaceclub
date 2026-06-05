@@ -167,6 +167,28 @@ export default function PostCard({
         </div>
       )}
 
+      {/* En el perfil (showAuthor=false) no se ve la cabecera; si es colab,
+          mostramos una tira compacta con ambos autores. */}
+      {!showAuthor && isCollab && (
+        <div className="post-card-collab-strip">
+          <div className="post-card-collab-avs">
+            <div className="post-card-collab-av">
+              {post.avatar_url
+                ? <img src={post.avatar_url} alt="" />
+                : <span>{(post.username || '?')[0].toUpperCase()}</span>}
+            </div>
+            <div className="post-card-collab-av post-card-collab-av--2">
+              {post.coauthor_avatar_url
+                ? <img src={post.coauthor_avatar_url} alt="" />
+                : <span>{(post.coauthor_username || '?')[0].toUpperCase()}</span>}
+            </div>
+          </div>
+          <span className="post-card-collab-names">
+            @{post.username} · @{post.coauthor_username}
+          </span>
+        </div>
+      )}
+
       {post.photo_url && (
         <div className="post-card-media" data-aspect={post.aspect_ratio}>
           <img src={post.photo_url} alt="" loading="lazy" />
