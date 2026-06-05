@@ -149,6 +149,7 @@ export default function WorkoutPlan({
       {/* Cabecera de pareja — los dos avatares + "Entrenando con X" (igual que Hoy). */}
       {plan.partnerMode && (
         <PartnerLiveHeader
+          variant="plain"
           partnerName={plan.partnerName || ''}
           partnerAvatar={(plan as { partnerAvatar?: string | null }).partnerAvatar ?? null}
         />

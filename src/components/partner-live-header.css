@@ -33,3 +33,10 @@
   70%  { box-shadow: 0 0 0 8px rgba(46, 224, 106, 0); }
   100% { box-shadow: 0 0 0 0 rgba(46, 224, 106, 0); }
 }
+
+/* Variante 'plain' (WorkoutPlan): centrado, sin fondo dorado, texto completo. */
+.pl-live--plain { justify-content: center; margin: 4px 0 16px; }
+.pl-live--plain .pl-live-text {
+  background: none; box-shadow: none; padding: 0;
+  color: var(--forest, #153330); font-size: 13px; font-weight: 700;
+}

@@ -19,23 +19,30 @@ function Av({ url, name, cls }: { url: string | null; name: string; cls: string 
 export default function PartnerLiveHeader({
   partnerName,
   partnerAvatar,
+  variant = 'card',
 }: {
   partnerName: string;
   partnerAvatar: string | null;
+  /** 'card' = chip dorado compacto "con X" (Hoy); 'plain' = centrado, sin fondo,
+   *  texto completo "Entrenando con X" (WorkoutPlan, página ya con color). */
+  variant?: 'card' | 'plain';
 }) {
   const { t } = useT();
   const avatarUrl = useAppStore(s => s.avatarUrl);
   const userName = useAppStore(s => s.userName);
+  const plain = variant === 'plain';
 
   return (
-    <div className="pl-live">
+    <div className={`pl-live${plain ? ' pl-live--plain' : ''}`}>
       <div className="pl-avatars">
         <Av url={avatarUrl} name={userName || 'Tú'} cls="pl-av" />
         <Av url={partnerAvatar} name={partnerName} cls="pl-av pl-av--2" />
       </div>
       <span className="pl-live-text">
         <span className="pl-live-dot" />
-        <span className="pl-live-label">{t('hoy.trainingWith', { name: partnerName })}</span>
+        <span className="pl-live-label">
+          {t(plain ? 'hoy.trainingWithFull' : 'hoy.trainingWith', { name: partnerName })}
+        </span>
       </span>
     </div>
   );
