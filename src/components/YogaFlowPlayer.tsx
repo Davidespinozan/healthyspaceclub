@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, SkipBack, SkipForward, Pause, Play, Volume2, VolumeX } from 'lucide-react';
+import { X, SkipBack, SkipForward, Pause, Play, Volume2, VolumeX, Flower2, Sparkles, Check } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { useT } from '../i18n';
@@ -296,7 +296,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           </p>
 
           <div className="yfp-prep-hero">
-            <div className="yfp-prep-hero-emoji">🧘</div>
+            <div className="yfp-prep-hero-emoji"><Flower2 size={64} strokeWidth={1.4} /></div>
           </div>
 
           <div className="yfp-prep-structure">
@@ -349,7 +349,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     return createPortal(
       <div className="yfp">
         <div className="yfp-transition">
-          <div className="yfp-trans-check">✓</div>
+          <div className="yfp-trans-check"><Check size={26} strokeWidth={2.6} /></div>
           <p className="yfp-trans-done">{t('yoga.poseDone', { pose: transitionNext.prev })}</p>
           <p className="yfp-trans-label">{t('yoga.nextPose')}</p>
           <h2 className="yfp-trans-name">{nextBank?.name || transitionNext.next.id}</h2>
@@ -375,7 +375,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     return createPortal(
       <div className="yfp">
         <div className="yfp-completed">
-          <div className="yfp-done-emoji">🙏</div>
+          <div className="yfp-done-emoji"><Sparkles size={38} strokeWidth={1.6} /></div>
           <h1 className="yfp-done-title">Namasté.</h1>
           <p className="yfp-done-sub">{t('yoga.completedVinyasa')}</p>
           <p className="yfp-done-stats">
@@ -410,7 +410,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
         <div className="yfp-header">
           <button className="yfp-header-btn" onClick={handleExit}><X size={16} /></button>
           <span className="yfp-header-counter">
-            {currentIndex + 1} <em>de {totalPoses}</em>
+            {currentIndex + 1} <em>{t('workout.of')} {totalPoses}</em>
           </span>
           <button className="yfp-header-btn" onClick={() => setMuted(!muted)}>
             {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -434,7 +434,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
               <div className="yfp-video-emoji">
                 {(() => { const Ic = getExerciseIcon(currentBank); return <Ic size={56} strokeWidth={1.5} />; })()}
               </div>
-              <span className="yfp-video-label">video próximamente · {currentBank?.name}</span>
+              <span className="yfp-video-label">{t('workout.videoSoon')} · {currentBank?.name}</span>
             </div>
           )}
 
@@ -447,7 +447,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
               <div className="yfp-info-name">{currentBank?.name || currentPose?.id}</div>
               <div className="yfp-info-time">{formatTime(secondsRemaining)}</div>
               {nextBank && (
-                <div className="yfp-info-next">próxima: {nextBank.name}</div>
+                <div className="yfp-info-next">{t('yoga.next')}: {nextBank.name}</div>
               )}
             </div>
           )}

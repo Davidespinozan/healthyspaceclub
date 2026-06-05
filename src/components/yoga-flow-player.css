@@ -5,8 +5,11 @@
 
 .yfp {
   --yfp-forest: #153330;
-  --yfp-amber: #BFA065;
-  --yfp-sage: #7FA150;
+  /* Modernizado al sistema vibrante: dorado + terracota (antes amber viejo +
+     verde sage fuera de paleta, que se veía anticuado). */
+  --yfp-amber: #A8864E;
+  --yfp-gold-grad: linear-gradient(135deg, #C9A968, #A8864E);
+  --yfp-sage: #C75B3A;
   --yfp-sand: #E8E1D3;
   --yfp-txt2: rgba(21, 51, 48, 0.55);
 
@@ -117,7 +120,7 @@
 .yfp-prep-hero {
   aspect-ratio: 16 / 11;
   border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, #7FA150 0%, #153330 100%);
+  background: linear-gradient(135deg, #C9A968 0%, #153330 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -128,15 +131,16 @@
 }
 
 .yfp-prep-hero-emoji {
-  font-size: 72px;
-  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.2));
+  display: inline-flex;
+  color: rgba(255, 255, 255, 0.94);
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.25));
 }
 
 .yfp-prep-structure {
-  background: rgba(127, 161, 80, 0.10);
+  background: rgba(201, 169, 104, 0.10);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(127, 161, 80, 0.2);
+  border: 1px solid rgba(168, 134, 78, 0.22);
   border-radius: var(--radius-md);
   padding: 14px 16px;
   margin-bottom: 18px;
@@ -194,25 +198,26 @@
 .yfp-cta {
   width: 100%;
   padding: 16px;
-  border-radius: var(--radius-base);
-  background: linear-gradient(135deg, var(--yfp-forest), #1d3d39);
-  color: var(--yfp-amber);
+  border-radius: 50px;
+  background: var(--yfp-gold-grad);
+  color: #fff;
   font-family: 'Montserrat', sans-serif;
-  font-size: 16px;
+  font-size: 15.5px;
   font-style: italic;
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: var(--tracking-tight);
   border: none;
   cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: var(--shadow-pro-lift-forest);
+  box-shadow: 0 10px 26px rgba(168, 134, 78, 0.4);
   transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
 
 .yfp-cta:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.08);
-  box-shadow: 0 12px 24px rgba(8, 20, 27, 0.24);
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 16px 34px rgba(168, 134, 78, 0.5);
 }
 .yfp-cta:active { transform: scale(0.98); }
 
@@ -229,7 +234,7 @@
 
 .yfp-video-area {
   aspect-ratio: 4 / 3;
-  background: linear-gradient(160deg, #7FA150 0%, #153330 100%);
+  background: linear-gradient(160deg, #C9A968 0%, #153330 100%);
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -252,7 +257,8 @@
 }
 
 .yfp-video-emoji {
-  font-size: 80px;
+  display: inline-flex;
+  color: rgba(246, 242, 234, 0.88);
   filter: drop-shadow(0 4px 16px rgba(0,0,0,0.25));
 }
 
@@ -362,8 +368,8 @@
 
 .yfp-timer-fill {
   fill: none;
-  stroke: var(--yfp-amber);
-  stroke-width: 4;
+  stroke: #C9A968;
+  stroke-width: 5;
   stroke-linecap: round;
   transition: stroke-dashoffset 1s linear;
 }
@@ -479,15 +485,16 @@
 }
 
 .yfp-trans-check {
-  width: 44px; height: 44px;
+  width: 48px; height: 48px;
   border-radius: 50%;
-  border: 2px solid var(--yfp-amber);
-  color: var(--yfp-amber);
-  font-size: 20px;
+  border: none;
+  background: var(--yfp-gold-grad);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  box-shadow: 0 8px 20px rgba(168, 134, 78, 0.36);
 }
 
 .yfp-trans-done {
@@ -552,9 +559,12 @@
 }
 
 .yfp-done-emoji {
-  font-size: 72px;
-  opacity: 0.9;
-  margin-bottom: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 84px; height: 84px; border-radius: 50%;
+  margin: 0 auto 18px;
+  background: var(--yfp-gold-grad);
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(168, 134, 78, 0.4);
 }
 
 .yfp-done-title {
@@ -582,17 +592,18 @@
 
 .yfp-done-cta {
   width: 100%;
-  max-width: 320px;
+  max-width: 300px;
   padding: 16px;
   border-radius: 50px;
-  background: var(--yfp-forest);
-  color: var(--yfp-amber);
+  background: var(--yfp-gold-grad);
+  color: #fff;
   font-size: 15px;
   font-style: italic;
-  font-weight: 500;
+  font-weight: 700;
   border: none;
   cursor: pointer;
   margin-bottom: 12px;
+  box-shadow: 0 10px 26px rgba(168, 134, 78, 0.4);
   -webkit-tap-highlight-color: transparent;
 }
 
