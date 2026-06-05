@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera } from 'lucide-react';
 import CreatePostModal from './CreatePostModal';
+import { translateMuscle, translateDifficulty } from '../utils/exerciseMeta';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { usePartnerPresence } from '../hooks/usePartnerPresence';
 import { useAppStore } from '../store';
@@ -452,7 +453,9 @@ export default function WorkoutPlayer({
               </div>
             )}
             <p className="wp-ex-micro">
-              {currentBank?.muscleGroup} · {currentBank?.difficulty}
+              {currentBank?.muscleGroup ? translateMuscle(currentBank.muscleGroup, t) : ''}
+              {currentBank?.muscleGroup && currentBank?.difficulty ? ' · ' : ''}
+              {currentBank?.difficulty ? translateDifficulty(currentBank.difficulty, t) : ''}
             </p>
             <h2 className="wp-ex-name">{displayName}</h2>
             {variant?.notes && (

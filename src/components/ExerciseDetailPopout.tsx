@@ -6,6 +6,7 @@ import type { Exercise, ExerciseVideo, Equipment } from '../types';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { useT } from '../i18n';
+import { translateMuscle, translateDifficulty } from '../utils/exerciseMeta';
 import './exercise-detail-popout.css';
 
 interface Props {
@@ -276,7 +277,7 @@ export default function ExerciseDetailPopout({
         {/* ── Body ── */}
         <div className="edp-body">
           <p className="edp-micro">
-            {exercise.muscleGroup} · {exercise.difficulty}
+            {translateMuscle(exercise.muscleGroup, t)} · {translateDifficulty(exercise.difficulty, t)}
           </p>
           <h2 className="edp-name">{displayName}</h2>
           <p className="edp-desc">{exercise.desc}</p>
