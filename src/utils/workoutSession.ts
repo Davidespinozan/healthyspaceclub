@@ -213,6 +213,106 @@ export interface ResumeState {
  *
  * Los campos individuales tienen fallback seguros (startedAt → 0, loggedSets → []).
  */
+// ══════════════════════════════════════════════════════════════
+// SUPERSERIES — secuencia de ejecución + store 2D (Lote Supersets-4)
+//
+// Diseño seguro: las series se guardan POR EJERCICIO (estructura 2D). Solo el
+// RECORRIDO se intercala (encadenado). Al aplanar por ejercicio, el payload
+// downstream (racha/historial/Supabase) queda idéntico — el contrato no cambia.
+// ══════════════════════════════════════════════════════════════
+
+export type LoggedByExercise = Array<Array<LoggedSet | null>>;
+
+/** Step de ejecución. `chained` = encadena con el siguiente (sin descanso). */
+export interface ExecStep {
+  exIndex: number;   // ejercicio en workout.exercises
+  setNum: number;    // 1-based
+  restAfter: number; // segundos de descanso tras este step (0 = sin descanso)
+  chained: boolean;  // true = "sin descanso · ahora [siguiente]" (mismo grupo, misma vuelta)
+}
+
+/**
+ * Construye el orden de ejecución. Series rectas: set1, set2... (descanso entre
+ * sets, no tras el último). Grupos (mismo `group` consecutivo): se intercalan por
+ * vuelta — A-v1, B-v1, DESCANSO, A-v2, B-v2... (sin descanso entre miembros de la
+ * vuelta; descanso al cerrar la vuelta, salvo la última). Sets disparejos: cada
+ * miembro aparece solo en las vueltas que le tocan.
+ */
+export function buildExecutionSequence(exercises: WorkoutExercise[]): ExecStep[] {
+  const steps: ExecStep[] = [];
+  let i = 0;
+  while (i < exercises.length) {
+    const g = exercises[i].group;
+    if (g) {
+      const members: number[] = [];
+      let j = i;
+      while (j < exercises.length && exercises[j].group === g) { members.push(j); j++; }
+      const maxRounds = Math.max(...members.map(m => exercises[m].sets || 1));
+      for (let r = 1; r <= maxRounds; r++) {
+        const active = members.filter(m => r <= (exercises[m].sets || 1));
+        active.forEach((m, k) => {
+          const lastInRound = k === active.length - 1;
+          const lastRound = r === maxRounds;
+          steps.push({
+            exIndex: m,
+            setNum: r,
+            // descanso solo al cerrar la vuelta, y no tras la última vuelta del grupo
+            restAfter: lastInRound && !lastRound ? (exercises[m].rest || 60) : 0,
+            chained: !lastInRound, // encadena con el siguiente miembro de la vuelta
+          });
+        });
+      }
+      i = j;
+    } else {
+      const S = exercises[i].sets || 1;
+      for (let s = 1; s <= S; s++) {
+        steps.push({
+          exIndex: i,
+          setNum: s,
+          restAfter: s < S ? (exercises[i].rest || 60) : 0, // descanso entre sets, no tras el último
+          chained: false,
+        });
+      }
+      i++;
+    }
+  }
+  return steps;
+}
+
+/** Estructura 2D inicial: una franja de nulls por ejercicio (largo = sets). */
+export function initLoggedByExercise(exercises: WorkoutExercise[]): LoggedByExercise {
+  return exercises.map(ex => new Array<LoggedSet | null>(ex.sets || 1).fill(null));
+}
+
+/** Escribe (o limpia) un set en su slot 2D, inmutable. */
+export function setLogAt(
+  logged: LoggedByExercise,
+  exIndex: number,
+  setIdx: number,
+  entry: LoggedSet | null,
+): LoggedByExercise {
+  return logged.map((arr, i) => (i === exIndex ? arr.map((v, j) => (j === setIdx ? entry : v)) : arr));
+}
+
+/** Aplana a flat per-exercise contiguo — el shape del contrato downstream. */
+export function flattenByExercise(logged: LoggedByExercise): Array<LoggedSet | null> {
+  return logged.flat();
+}
+
+/** Último kg non-null registrado del ejercicio (pre-fill del próximo set). */
+export function lastKgForExercise(logged: LoggedByExercise, exIndex: number): number {
+  const arr = logged[exIndex] || [];
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (arr[i]) return arr[i]!.kg;
+  }
+  return 0;
+}
+
+/** Cuántos sets non-null lleva el ejercicio. */
+export function setsDoneForExercise(logged: LoggedByExercise, exIndex: number): number {
+  return (logged[exIndex] || []).filter(s => s !== null).length;
+}
+
 export function parseResumeState(
   rawJson: string | null | undefined,
   expectedPlanHash: string,

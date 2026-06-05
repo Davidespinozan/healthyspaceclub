@@ -10,6 +10,12 @@ import {
   computeSessionStats,
   buildOnCompletePayload,
   parseResumeState,
+  buildExecutionSequence,
+  initLoggedByExercise,
+  setLogAt,
+  flattenByExercise,
+  lastKgForExercise,
+  setsDoneForExercise,
   type WorkoutExercise,
 } from '../workoutSession';
 import type { LoggedSet } from '../../types';
@@ -418,5 +424,91 @@ describe('parseResumeState', () => {
     expect(result).not.toBeNull();
     expect(result?.startedAt).toBe(0);
     expect(result?.loggedSets).toEqual([]);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// SUPERSERIES — buildExecutionSequence + store 2D
+// ════════════════════════════════════════════════════════════════
+const exG = (id: string, sets: number, group?: string, rest = 90): WorkoutExercise =>
+  ({ id, sets, reps: '8-10', rest, ...(group ? { group } : {}) });
+
+describe('buildExecutionSequence', () => {
+  it('series rectas: descanso entre sets, no tras el último, sin chained', () => {
+    const seq = buildExecutionSequence([exG('a', 2), exG('b', 2)]);
+    expect(seq).toEqual([
+      { exIndex: 0, setNum: 1, restAfter: 90, chained: false },
+      { exIndex: 0, setNum: 2, restAfter: 0, chained: false },
+      { exIndex: 1, setNum: 1, restAfter: 90, chained: false },
+      { exIndex: 1, setNum: 2, restAfter: 0, chained: false },
+    ]);
+  });
+
+  it('biserie: intercala A↔B por vuelta, encadena A, descansa tras B (salvo última)', () => {
+    const seq = buildExecutionSequence([exG('a', 3, 'A', 60), exG('b', 3, 'A', 60)]);
+    expect(seq).toEqual([
+      { exIndex: 0, setNum: 1, restAfter: 0, chained: true },
+      { exIndex: 1, setNum: 1, restAfter: 60, chained: false },
+      { exIndex: 0, setNum: 2, restAfter: 0, chained: true },
+      { exIndex: 1, setNum: 2, restAfter: 60, chained: false },
+      { exIndex: 0, setNum: 3, restAfter: 0, chained: true },
+      { exIndex: 1, setNum: 3, restAfter: 0, chained: false }, // última vuelta: sin descanso
+    ]);
+  });
+
+  it('triserie: A,B encadenados, descanso tras C', () => {
+    const seq = buildExecutionSequence([exG('a', 2, 'A'), exG('b', 2, 'A'), exG('c', 2, 'A')]);
+    expect(seq.map(s => [s.exIndex, s.setNum, s.chained])).toEqual([
+      [0, 1, true], [1, 1, true], [2, 1, false],
+      [0, 2, true], [1, 2, true], [2, 2, false],
+    ]);
+    expect(seq[2].restAfter).toBe(90); // descanso tras C en vuelta 1
+    expect(seq[5].restAfter).toBe(0);  // sin descanso tras C en última vuelta
+  });
+
+  it('sets disparejos en grupo: cada miembro solo en sus vueltas', () => {
+    const seq = buildExecutionSequence([exG('a', 3, 'A'), exG('b', 2, 'A')]);
+    // vueltas: r1 a,b · r2 a,b · r3 a(solo)
+    expect(seq.map(s => [s.exIndex, s.setNum])).toEqual([
+      [0, 1], [1, 1], [0, 2], [1, 2], [0, 3],
+    ]);
+    // r3: a es único miembro → lastInRound, lastRound → no chained, sin descanso
+    expect(seq[4]).toEqual({ exIndex: 0, setNum: 3, restAfter: 0, chained: false });
+  });
+
+  it('mezcla recta + grupo', () => {
+    const seq = buildExecutionSequence([exG('a', 2), exG('b', 2, 'A'), exG('c', 2, 'A')]);
+    expect(seq.map(s => s.exIndex)).toEqual([0, 0, 1, 2, 1, 2]);
+  });
+});
+
+describe('store 2D (loggedByExercise)', () => {
+  it('init crea franjas de null por ejercicio', () => {
+    const logged = initLoggedByExercise([exG('a', 3), exG('b', 2)]);
+    expect(logged).toEqual([[null, null, null], [null, null]]);
+  });
+
+  it('setLogAt escribe inmutable en el slot correcto', () => {
+    const l0 = initLoggedByExercise([exG('a', 2), exG('b', 2)]);
+    const l1 = setLogAt(l0, 1, 0, set(10, 40));
+    expect(l1[1][0]).toEqual({ reps: 10, kg: 40 });
+    expect(l0[1][0]).toBeNull(); // original intacto
+  });
+
+  it('flatten produce flat per-exercise contiguo (compat con helpers existentes)', () => {
+    let logged = initLoggedByExercise([exG('a', 2), exG('b', 2)]);
+    logged = setLogAt(logged, 0, 0, set(10, 50));
+    logged = setLogAt(logged, 1, 0, set(8, 30));
+    const flat = flattenByExercise(logged);
+    expect(flat.length).toBe(4);
+    expect(computeExercisesCompleted(flat, [exG('a', 2), exG('b', 2)])).toBe(2);
+  });
+
+  it('lastKgForExercise y setsDoneForExercise', () => {
+    let logged = initLoggedByExercise([exG('a', 3)]);
+    logged = setLogAt(logged, 0, 0, set(10, 40));
+    logged = setLogAt(logged, 0, 1, set(9, 45));
+    expect(lastKgForExercise(logged, 0)).toBe(45);
+    expect(setsDoneForExercise(logged, 0)).toBe(2);
   });
 });
