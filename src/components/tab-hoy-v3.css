@@ -20,7 +20,7 @@
     radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%),    /* profundidad, esquina inf-der */
     linear-gradient(155deg, #153330 0%, #1b3c37 52%, #102a27 100%);        /* base diagonal unificadora */
   color: var(--sala-surface);
-  padding: 14px 22px 22px; /* la safe-area la maneja .app-shell — no duplicar */
+  padding: 20px 22px 22px; /* la safe-area la maneja .app-shell — no duplicar */
   position: relative;
   overflow: hidden;
 }
@@ -953,7 +953,7 @@
 
 /* ═══ Tiny mobile (< 360px) ═══ */
 @media (max-width: 360px) {
-  .th3-hero { padding: 14px 18px 26px; }
+  .th3-hero { padding: 18px 18px 26px; }
   .th3-headline { font-size: 28px; }
   .th3-card-body { padding: 12px; }
   .th3-card-title { font-size: 15px; }
