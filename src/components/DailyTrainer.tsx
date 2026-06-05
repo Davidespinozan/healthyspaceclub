@@ -27,7 +27,7 @@ import {
 } from '../utils/workoutValidation';
 import { stretchToTargetDuration } from '../utils/yogaPostProcess';
 import { orchestrateWorkout, orchestratePowerVinyasa } from '../utils/workoutOrchestration';
-import { deliverPartnerWorkout } from '../utils/partners';
+import { deliverPartnerWorkout, getPartnerRecentDaytypes } from '../utils/partners';
 import type {
   Exercise,
   Equipment,
@@ -391,6 +391,19 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       const modalityFiltered = filterByModality(exerciseBank, selectedModality);
       const equipmentList: Equipment[] = [selectedEquipment];
 
+      // Sesión de pareja: el entrenador evita también los músculos que el
+      // COMPAÑERO entrenó recientemente (si él hizo pierna ayer, hoy no toca).
+      let partnerExcludeMuscles: MuscleGroup[] = [];
+      if (partnerMode && pendingPartner?.id) {
+        try {
+          const dts = await getPartnerRecentDaytypes(pendingPartner.id);
+          partnerExcludeMuscles = [...new Set(dts.flatMap(dt => DAY_TYPE_CONFIG[dt as WorkoutDayType]?.muscleGroups ?? []))];
+          if (partnerExcludeMuscles.length) {
+            bullets.push(`${partnerName} entrenó recientemente ${partnerExcludeMuscles.join(', ')} — no repitas esos músculos hoy (descanso para los dos)`);
+          }
+        } catch { /* noop */ }
+      }
+
       let candidates: Exercise[];
       if (selectedModality === 'cardio') {
         candidates = modalityFiltered.filter(ex =>
@@ -402,7 +415,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           equipment: equipmentList,
           muscleGroups,
           goal,
-          excludeMuscles: selectedModality === 'auto' ? [...history.yesterday] : [],
+          excludeMuscles: partnerMode
+            ? [...history.yesterday, ...partnerExcludeMuscles]
+            : (selectedModality === 'auto' ? [...history.yesterday] : []),
           minCandidates: 3,
           // Foco específico → solo músculo primario (no traer espalda por tener
           // bíceps secundario). Presets/auto sí aprovechan los compuestos.

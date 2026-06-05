@@ -110,6 +110,14 @@ export async function deliverPartnerWorkout(partnerId: string, plan: unknown): P
   return data === 'delivered';
 }
 
+/** day_type recientes del compañero (últimas ~36h) — para evitar sus músculos
+ *  al generar la rutina de pareja. Solo si están conectados (lo valida la función). */
+export async function getPartnerRecentDaytypes(partnerId: string): Promise<string[]> {
+  const { data, error } = await supabase.rpc('get_partner_recent_daytypes', { partner: partnerId });
+  if (error || !Array.isArray(data)) return [];
+  return (data as string[]).filter(Boolean);
+}
+
 /** Cuántas veces YO he entrenado con este compañero (de mis propios logs). */
 export async function countSessionsWith(partnerId: string): Promise<number> {
   const { count, error } = await supabase
