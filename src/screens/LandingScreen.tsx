@@ -161,7 +161,15 @@ export default function LandingScreen() {
       </div>
 
       {/* HERO */}
-      <section className="hero">
+      <section
+        className="hero"
+        onMouseMove={e => {
+          const r = e.currentTarget.getBoundingClientRect();
+          e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
+          e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
+        }}
+      >
+        <div className="hero-spotlight" aria-hidden="true" />
         <div className="hero-orb hero-orb-1" />
         <div className="hero-orb hero-orb-2" />
         <div className="hero-orb hero-orb-3" />
