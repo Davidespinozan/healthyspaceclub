@@ -283,7 +283,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
     if (isCollabPost && partner?.id) {
       try {
         const { data } = await supabase
-          .from('user_profiles')
+          .from('public_profiles')
           .select('username')
           .eq('user_id', partner.id)
           .single();

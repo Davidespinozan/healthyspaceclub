@@ -79,7 +79,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
       try {
         const [profileRes, postsRes, milestonesRes] = await Promise.all([
           supabase
-            .from('user_profiles')
+            .from('public_profiles')
             .select('display_name, username, bio, avatar_url, created_at, start_date, streak_count')
             .eq('user_id', userId)
             .maybeSingle(),
