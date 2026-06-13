@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
-import { callAI } from '../utils/aiProxy';
+import { callAIStream } from '../utils/aiProxy';
 import { buildCoachSystemPrompt } from '../ai/prompts/coach';
 import ManagePlanSheet from './sheets/ManagePlanSheet';
 import TermsSheet from './sheets/TermsSheet';
@@ -14,33 +14,6 @@ function parseAction(content: string): { text: string; action: CoachAction | nul
   if (!match) return { text: content, action: null };
   const text = content.replace(match[0], '').trim();
   return { text, action: match[1].toLowerCase() as CoachAction };
-}
-
-async function askCoach(
-  messages: { role: 'user' | 'assistant'; content: string }[],
-  systemPrompt: string,
-  errors: { timeout: string; noReply: string },
-): Promise<string> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60_000);
-  try {
-    const data = await callAI(
-      {
-        max_tokens: 512,
-        system: systemPrompt,
-        messages: messages.map(m => ({ role: m.role, content: m.content })),
-      },
-      controller.signal,
-    );
-    return data.content?.[0]?.text ?? errors.noReply;
-  } catch (e) {
-    if ((e as Error).name === 'AbortError') {
-      throw new Error(errors.timeout);
-    }
-    throw e;
-  } finally {
-    clearTimeout(timeoutId);
-  }
 }
 
 export default function TabCoach() {
@@ -64,6 +37,7 @@ export default function TabCoach() {
   };
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [streamingText, setStreamingText] = useState<string | null>(null);
   const [showPlan, setShowPlan] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -104,25 +78,38 @@ export default function TabCoach() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  }, [messages, loading, streamingText]);
 
   async function send(text: string) {
     addCoachMessage('user', text);
     setInput('');
     setLoading(true);
+    setStreamingText('');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
     try {
       const state = useAppStore.getState();
       const chatDate = state.coachChatDate === today ? state.coachChatHistory : [];
       const allMsgs = [...chatDate, { role: 'user' as const, content: text, timestamp: '' }];
-      const reply = await askCoach(
-        allMsgs.map(m => ({ role: m.role, content: m.content })),
-        buildCoachSystemPrompt(state, locale),
-        { timeout: t('coach.errorTimeout'), noReply: t('coach.errorNoReply') },
+      // Streaming: el texto aparece en vivo conforme la IA lo genera.
+      const full = await callAIStream(
+        {
+          max_tokens: 512,
+          system: buildCoachSystemPrompt(state, locale),
+          messages: allMsgs.map(m => ({ role: m.role, content: m.content })),
+        },
+        (piece) => setStreamingText(prev => (prev ?? '') + piece),
+        controller.signal,
       );
-      addCoachMessage('assistant', reply);
+      addCoachMessage('assistant', full || t('coach.errorNoReply'));
     } catch (e) {
-      addCoachMessage('assistant', e instanceof Error ? e.message : t('coach.errorGeneric'));
+      const msg = (e as Error).name === 'AbortError'
+        ? t('coach.errorTimeout')
+        : (e instanceof Error ? e.message : t('coach.errorGeneric'));
+      addCoachMessage('assistant', msg);
     } finally {
+      clearTimeout(timeoutId);
+      setStreamingText(null);
       setLoading(false);
     }
   }
@@ -179,7 +166,14 @@ export default function TabCoach() {
             </div>
           );
         })}
-        {loading && (
+        {/* Respuesta en streaming (escribe en vivo) */}
+        {streamingText && (
+          <div className="tc-msg tc-msg-ai">
+            <div className="tc-bubble">{parseAction(streamingText).text}<span className="tc-cursor" /></div>
+          </div>
+        )}
+        {/* Dots solo mientras esperamos el primer token */}
+        {loading && !streamingText && (
           <div className="tc-msg tc-msg-ai">
             <div className="tc-bubble tc-typing"><span /><span /><span /></div>
           </div>

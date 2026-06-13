@@ -109,3 +109,64 @@ export async function callAI(
     throw new AIProxyError(500, (e as Error).message || 'Error desconocido');
   }
 }
+
+const FN_URL = (import.meta.env.VITE_SUPABASE_URL ?? 'https://ltveorvqvvlyivjwxjlc.supabase.co') + '/functions/v1/ai-proxy';
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0dmVvcnZxdnZseWl2and4amxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzODEzNTAsImV4cCI6MjA4Nzk1NzM1MH0.BpBc3lM6VpDyL5299H1MwQK0VBOBjKWQQconfpcCsfU';
+
+/**
+ * Igual que callAI pero en STREAMING: invoca onText con cada fragmento de texto
+ * conforme Anthropic lo va generando (efecto "escribe en vivo" en el coach).
+ * Devuelve el texto completo al terminar.
+ */
+export async function callAIStream(
+  req: AIProxyRequest,
+  onText: (delta: string) => void,
+  signal?: AbortSignal,
+): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new AIProxyError(401, 'No hay sesión activa', 'no_session');
+
+  const res = await fetch(FN_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': ANON_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 4096, ...req, stream: true }),
+    signal,
+  });
+
+  if (!res.ok || !res.body) {
+    let message = `Error ${res.status}`;
+    try { const j = await res.json(); if (j?.message) message = j.message; } catch { /* noop */ }
+    throw new AIProxyError(res.status, message);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  let full = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const events = buf.split('\n\n');
+    buf = events.pop() ?? '';
+    for (const ev of events) {
+      const dataLine = ev.split('\n').find(l => l.startsWith('data:'));
+      if (!dataLine) continue;
+      const data = dataLine.slice(5).trim();
+      if (!data || data === '[DONE]') continue;
+      try {
+        const json = JSON.parse(data);
+        if (json.type === 'content_block_delta' && json.delta?.type === 'text_delta') {
+          const piece = json.delta.text as string;
+          full += piece;
+          onText(piece);
+        }
+      } catch { /* eventos no-JSON (ping, etc.) → ignorar */ }
+    }
+  }
+  return full;
+}
