@@ -14,6 +14,7 @@ import { chronoMeals } from '../utils/mealOrder';
 import { translateDayLabel } from '../utils/dayTypeLabel';
 import DailyRings, { type RingItem } from './DailyRings';
 import DayCelebration from './DayCelebration';
+import { useCountUp } from '../hooks/useCountUp';
 import FoodLogSheet from './FoodLogSheet';
 import ActivityLogSheet from './ActivityLogSheet';
 import { listPartnerships, respondInvite, type Partnership } from '../utils/partners';
@@ -221,6 +222,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   }, [userId, today]);
   const coreDoneCount = [trainedToday, nutritionDone, reflectionDone].filter(Boolean).length;
   const allCoreDone = coreDoneCount === 3;
+  const animatedStreak = useCountUp(streakCount);
 
   // Anillos de progreso diario (estilo Apple Fitness).
   const ringItems: RingItem[] = [
@@ -448,7 +450,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           <div className="th3-day-head">
             <div className="th3-day-streak">
               <Flame size={18} strokeWidth={2.2} className="th3-streak-flame" />
-              <span className="th3-streak-num">{streakCount}</span>
+              <span className="th3-streak-num">{animatedStreak}</span>
               <span className="th3-streak-label">
                 {plural(streakCount, { one: t('hoy.streakLabelOne'), other: t('hoy.streakLabelOther') })}
               </span>

@@ -5756,6 +5756,11 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   animation: bnavPill .32s var(--ease-spring);
 }
 @keyframes bnavPill { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: none; } }
+/* El icono rebota cuando su tab se vuelve activo */
+.bnav-item svg { transition: transform var(--duration-fast) var(--ease-spring); }
+.bnav-item.active svg { animation: bnavIconPop .42s var(--ease-spring); }
+@keyframes bnavIconPop { 0% { transform: scale(1); } 42% { transform: scale(1.24) translateY(-2px); } 100% { transform: scale(1) translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .bnav-item.active svg { animation: none; } }
 .bnav-label { font-size: .7rem; font-weight: 600; letter-spacing: .02em; }
 .bnav-item.active .bnav-label { color: #F6F2EA; }
 .bnav-dot { display: none; }  /* mobile: reemplazado por el pill (desktop lo re-activa como barra lateral) */
