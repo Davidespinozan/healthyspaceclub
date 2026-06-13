@@ -45,8 +45,18 @@ function buildMessage(n: NotifRecord): { title: string; body: string } {
   }
 }
 
+// Secreto compartido para autenticar al trigger de la DB. push-send se despliega
+// --no-verify-jwt (el trigger no manda JWT), así que SIN esto cualquiera con la
+// URL podía mandar push arbitrarios a cualquier usuario (spam/phishing) y
+// enumerar quién tiene suscripciones. Si está configurado, se EXIGE el header.
+// Si aún no se configura, sigue abierto (no rompe push) — ver pasos en el commit.
+const HOOK_SECRET = Deno.env.get('PUSH_HOOK_SECRET') ?? '';
+
 Deno.serve(async (req) => {
   try {
+    if (HOOK_SECRET && req.headers.get('x-push-secret') !== HOOK_SECRET) {
+      return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
+    }
     if (!configured) {
       return new Response(JSON.stringify({ error: 'VAPID keys not set' }), { status: 200 });
     }

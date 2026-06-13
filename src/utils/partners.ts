@@ -32,11 +32,24 @@ export type RespondResult = 'accepted' | 'declined' | 'notfound' | 'error';
 function notifyUser(userId: string, event: string) {
   try {
     const ch = supabase.channel(`user:${userId}`);
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      try { supabase.removeChannel(ch); } catch { /* noop */ }
+    };
+    // Red de seguridad: pase lo que pase (nunca SUBSCRIBED, CHANNEL_ERROR,
+    // TIMED_OUT, CLOSED), el canal se libera. Antes solo se limpiaba en el
+    // branch de éxito → fuga permanente bajo red intermitente.
+    const safety = setTimeout(cleanup, 4_000);
     ch.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         ch.send({ type: 'broadcast', event, payload: {} }).finally(() => {
-          setTimeout(() => { try { supabase.removeChannel(ch); } catch { /* noop */ } }, 500);
+          setTimeout(() => { clearTimeout(safety); cleanup(); }, 500);
         });
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        clearTimeout(safety);
+        cleanup();
       }
     });
   } catch { /* noop */ }

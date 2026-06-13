@@ -152,10 +152,19 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── 5. Fetch a Anthropic con key server-side ────────────────
-  const model = body.model ?? DEFAULT_MODEL;
+  // Anti-amplificación de costo: el cliente NO elige libremente modelo ni
+  // max_tokens. Solo se permiten los modelos que la app usa de verdad; cualquier
+  // otro cae al default barato (Haiku). max_tokens se capa a 4096.
+  const ALLOWED_MODELS = new Set([
+    'claude-haiku-4-5-20251001',
+    'claude-sonnet-4-6',
+  ]);
+  const model = (typeof body.model === 'string' && ALLOWED_MODELS.has(body.model)) ? body.model : DEFAULT_MODEL;
+  const reqMaxTokens = typeof body.max_tokens === 'number' ? body.max_tokens : 1024;
+  const max_tokens = Math.max(1, Math.min(reqMaxTokens, 4096));
   const anthropicBody: Record<string, unknown> = {
     model,
-    max_tokens: body.max_tokens ?? 1024,
+    max_tokens,
     messages: body.messages,
   };
   if (body.system) anthropicBody.system = body.system;

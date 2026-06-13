@@ -23,7 +23,12 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if ('focus' in client) return client.focus();
+        if ('focus' in client) {
+          // Antes solo enfocaba → si la app ya estaba abierta, el deep-link se
+          // perdía. Ahora navega a la ruta del push (si el navegador lo soporta).
+          if ('navigate' in client && targetUrl) { try { client.navigate(targetUrl); } catch (e) { /* noop */ } }
+          return client.focus();
+        }
       }
       if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
     })

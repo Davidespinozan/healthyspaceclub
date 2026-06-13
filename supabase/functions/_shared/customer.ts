@@ -20,13 +20,14 @@ export async function getOrCreateCustomer(
   const existing: string | null = profile?.stripe_customer_id ?? null;
   if (existing) return existing;
 
-  // Anti-duplicados: si la DB perdió el id, reusar el customer ya existente en Stripe (por email).
+  // Anti-duplicados: si la DB perdió el id, reusar el customer ya existente en
+  // Stripe SOLO si su metadata.supabase_user_id coincide con este usuario. El
+  // fallback anterior (found.data[0]) podía atar el customer de OTRA persona con
+  // el mismo email → cruce de facturación/suscripción. Si no hay match por
+  // metadata, creamos uno nuevo (idempotencyKey evita duplicados reales).
   if (user.email) {
     const found = await stripe.customers.list({ email: user.email, limit: 100 });
-    const match =
-      found.data.find((c) => c.metadata?.supabase_user_id === user.id) ??
-      found.data[0] ??
-      null;
+    const match = found.data.find((c) => c.metadata?.supabase_user_id === user.id) ?? null;
     if (match) {
       await admin
         .from('user_profiles')

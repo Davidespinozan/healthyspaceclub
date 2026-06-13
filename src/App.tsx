@@ -93,6 +93,21 @@ export default function App() {
     return () => { cancelled = true; };
   }, [authReady, user, subscriptionStatusLoadedFor]);
 
+  // ── Re-validar suscripción al volver al foco ──────────────────────
+  // El loader de arriba corre UNA vez por sesión. Si una suscripción se cancela
+  // o expira con la app abierta (sesión PWA larga), el cliente nunca lo
+  // re-leería → acceso obsoleto. Al volver la pestaña a primer plano, forzamos
+  // un refetch limpiando el marcador (re-dispara el efecto de arriba).
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        useAppStore.setState({ subscriptionStatusLoadedFor: null });
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+
   // ── Gate: sin suscripción ('none') NO entra al dashboard → paywall ─
   // Gatea SOLO 'dashboard'; no toca landing/login/onboarding/reset-password/checkout/paywall.
   useEffect(() => {
