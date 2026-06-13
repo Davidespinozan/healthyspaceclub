@@ -1,0 +1,69 @@
+.dr-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+.dr-ring {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+button.dr-ring { cursor: pointer; }
+button.dr-ring:active { transform: scale(0.95); }
+
+.dr-circle {
+  position: relative;
+  width: 52px;
+  height: 52px;
+}
+.dr-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg); /* el llenado arranca arriba */
+}
+.dr-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 4.5;
+}
+.dr-fill {
+  fill: none;
+  stroke: var(--dr-color, #C9A968);
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  /* Animación de llenado al montar/cambiar */
+  transition: stroke-dashoffset 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--dr-color) 50%, transparent));
+}
+.dr-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(246, 242, 234, 0.6);
+  transition: color 0.3s ease;
+}
+.dr-ring.is-done .dr-icon { color: var(--dr-color, #C9A968); }
+.dr-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(246, 242, 234, 0.55);
+  text-align: center;
+}
+.dr-ring.is-done .dr-label { color: rgba(246, 242, 234, 0.85); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dr-fill { transition: none; }
+}

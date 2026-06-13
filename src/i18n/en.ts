@@ -841,6 +841,8 @@ export const en: Translations<typeof es> = {
     streakLabelOther: 'day streak',
     dayTitle: 'Your day',
     dayComplete: 'Day complete',
+    dayCloseTitle: 'You closed your day!',
+    dayCloseSub: 'Training, meals and reflection — all done. Keep it up.',
     checkTraining: 'Training',
     checkNutrition: 'Menu',
     checkReflection: 'Reflection',

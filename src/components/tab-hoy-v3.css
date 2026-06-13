@@ -183,6 +183,7 @@
 }
 .th3-day.is-complete .th3-day-status { color: var(--amber); }
 
+.th3-day-rings { margin-top: 2px; }
 .th3-day-checks { display: flex; gap: 6px; }
 .th3-check { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .th3-check-ring {

@@ -1,0 +1,71 @@
+.dcl-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(21, 51, 48, 0.32);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: dcl-fade 0.25s ease;
+  overflow: hidden;
+}
+@keyframes dcl-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.dcl-confetti { position: absolute; inset: 0; pointer-events: none; }
+.dcl-piece {
+  position: absolute;
+  top: -16px;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: dcl-fall;
+  animation-timing-function: cubic-bezier(0.3, 0.7, 0.4, 1);
+  animation-iteration-count: 1;
+}
+@keyframes dcl-fall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(102vh) rotate(720deg); opacity: 0.9; }
+}
+
+.dcl-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 34px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #1b3c37, #153330);
+  border: 1px solid rgba(201, 169, 104, 0.3);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), 0 0 30px rgba(201, 169, 104, 0.2);
+  text-align: center;
+  animation: dcl-pop 0.5s cubic-bezier(0.22, 1.4, 0.4, 1);
+}
+@keyframes dcl-pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+.dcl-icon {
+  width: 60px; height: 60px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(168, 134, 78, 0.45);
+  margin-bottom: 4px;
+}
+.dcl-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.15rem; font-weight: 800;
+  color: #F6F2EA; margin: 0;
+}
+.dcl-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.82rem; color: rgba(246, 242, 234, 0.65); margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dcl-piece { display: none; }
+  .dcl-card { animation: dcl-fade 0.25s ease; }
+}

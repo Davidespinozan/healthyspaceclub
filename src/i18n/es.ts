@@ -840,6 +840,8 @@ export const es = {
     streakLabelOther: 'días en racha',
     dayTitle: 'Tu día',
     dayComplete: 'Día completo',
+    dayCloseTitle: '¡Cerraste tu día!',
+    dayCloseSub: 'Entreno, menú y reflexión — completos. Sigue así.',
     checkTraining: 'Entreno',
     checkNutrition: 'Menú',
     checkReflection: 'Reflexión',

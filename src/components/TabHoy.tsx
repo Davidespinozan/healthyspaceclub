@@ -12,6 +12,8 @@ import ExerciseDetailPopout from './ExerciseDetailPopout';
 import MealDetailPopout from './MealDetailPopout';
 import { chronoMeals } from '../utils/mealOrder';
 import { translateDayLabel } from '../utils/dayTypeLabel';
+import DailyRings, { type RingItem } from './DailyRings';
+import DayCelebration from './DayCelebration';
 import FoodLogSheet from './FoodLogSheet';
 import ActivityLogSheet from './ActivityLogSheet';
 import { listPartnerships, respondInvite, type Partnership } from '../utils/partners';
@@ -210,6 +212,25 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   }, [userId, today]);
   const coreDoneCount = [trainedToday, nutritionDone, reflectionDone].filter(Boolean).length;
   const allCoreDone = coreDoneCount === 3;
+
+  // Anillos de progreso diario (estilo Apple Fitness).
+  const ringItems: RingItem[] = [
+    { key: 'train', progress: trainedToday ? 1 : 0, done: trainedToday, label: t('hoy.checkTraining'), color: '#C9A968', icon: <Dumbbell size={15} strokeWidth={2} /> },
+    { key: 'meal', progress: nutritionPct, done: nutritionDone, label: t('hoy.checkNutrition'), color: '#C75B3A', icon: <Utensils size={15} strokeWidth={2} /> },
+    { key: 'reflect', progress: reflectionDone ? 1 : 0, done: reflectionDone, label: t('hoy.checkReflection'), color: '#6CBFA6', icon: <Brain size={15} strokeWidth={2} /> },
+    { key: 'share', progress: postedToday ? 1 : 0, done: postedToday, label: t('hoy.checkShare'), color: '#E0C074', icon: <Camera size={15} strokeWidth={2} /> },
+  ];
+
+  // Celebración al cerrar los 3 anillos core (una vez al día).
+  const [showCelebration, setShowCelebration] = useState(false);
+  useEffect(() => {
+    if (!allCoreDone) return;
+    try {
+      if (localStorage.getItem('day-complete-celebrated') === today) return;
+      localStorage.setItem('day-complete-celebrated', today);
+      setShowCelebration(true);
+    } catch { /* noop */ }
+  }, [allCoreDone, today]);
 
   const { startDate: userStartDate } = useAppStore();
   const isDay1 = userStartDate === today;
@@ -428,23 +449,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               {allCoreDone ? t('hoy.dayComplete') : t('hoy.dayTitle')}
             </span>
           </div>
-          <div className="th3-day-checks">
-            <div className={`th3-check${trainedToday ? ' done' : ''}`}>
-              <span className="th3-check-ring">{trainedToday ? <Check size={15} strokeWidth={3} /> : <Dumbbell size={14} strokeWidth={2} />}</span>
-              <span className="th3-check-label">{t('hoy.checkTraining')}</span>
-            </div>
-            <div className={`th3-check${nutritionDone ? ' done' : ''}`}>
-              <span className="th3-check-ring">{nutritionDone ? <Check size={15} strokeWidth={3} /> : <Utensils size={14} strokeWidth={2} />}</span>
-              <span className="th3-check-label">{t('hoy.checkNutrition')}</span>
-            </div>
-            <div className={`th3-check${reflectionDone ? ' done' : ''}`}>
-              <span className="th3-check-ring">{reflectionDone ? <Check size={15} strokeWidth={3} /> : <Brain size={14} strokeWidth={2} />}</span>
-              <span className="th3-check-label">{t('hoy.checkReflection')}</span>
-            </div>
-            <div className={`th3-check th3-check--bonus${postedToday ? ' done' : ''}`}>
-              <span className="th3-check-ring">{postedToday ? <Check size={15} strokeWidth={3} /> : <Camera size={14} strokeWidth={2} />}</span>
-              <span className="th3-check-label">{t('hoy.checkShare')}</span>
-            </div>
+          <div className="th3-day-rings">
+            <DailyRings items={ringItems} />
           </div>
         </div>
       </header>
@@ -854,6 +860,13 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
       {/* ── Activity log sheet: movimiento alterno cuenta como día activo ── */}
       {activityOpen && <ActivityLogSheet onClose={() => setActivityOpen(false)} />}
+      {showCelebration && (
+        <DayCelebration
+          message={t('hoy.dayCloseTitle')}
+          sub={t('hoy.dayCloseSub')}
+          onDone={() => setShowCelebration(false)}
+        />
+      )}
     </div>
   );
 }
