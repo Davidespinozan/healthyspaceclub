@@ -103,7 +103,11 @@ export default function LandingScreen() {
 
   // ── Hero "vivo": carrusel auto-rotativo con puntitos + swipe ──
   // Agrega más URLs aquí para que rote entre varias imágenes.
+  // Placeholder: misma imagen x3 para activar el carrusel (puntitos + rotación).
+  // Cambia estas URLs por imágenes distintas cuando las tengas.
   const HERO_IMAGES = [
+    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero.webp',
+    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero.webp',
     'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero.webp',
   ];
   const [heroSlide, setHeroSlide] = useState(0);
@@ -191,7 +195,7 @@ export default function LandingScreen() {
           >
             {HERO_IMAGES.map((src, i) => (
               <img
-                key={src}
+                key={i}
                 src={src}
                 alt="Healthy Space Club"
                 className={`hero-slide${i === heroSlide ? ' is-active' : ''}`}
