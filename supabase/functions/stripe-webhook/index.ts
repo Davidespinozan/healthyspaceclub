@@ -97,6 +97,7 @@ Deno.serve(async (req: Request) => {
         const billingCycle = interval ? billingCycleFromInterval(interval) : null;
         const periodEnd = periodEndISO(sub);
 
+        const eventAt = new Date(event.created * 1000).toISOString();
         const updated = await applyToUser(admin, stripe, customerId, sub, {
           subscription_status: plan,
           subscription_period_end: periodEnd,
@@ -108,12 +109,31 @@ Deno.serve(async (req: Request) => {
           payment_past_due: event.type === 'customer.subscription.deleted'
             ? false
             : (sub.status === 'past_due'),
-        });
+          last_sub_event_at: eventAt,
+        }, eventAt);
 
         if (!updated) {
           console.error('[stripe-webhook] no se encontró user para customer', customerId);
           // 200 igual: reintentar no ayudaría (el user no existe en nuestra DB).
         }
+        break;
+      }
+      case 'invoice.payment_failed': {
+        // Señal de respaldo del banner past_due (independiente de que llegue o
+        // no el subscription.updated→past_due).
+        // deno-lint-ignore no-explicit-any
+        const inv = event.data.object as any;
+        const customerId: string = typeof inv.customer === 'string' ? inv.customer : inv.customer?.id;
+        if (customerId) await applyToUser(admin, stripe, customerId, inv, { payment_past_due: true });
+        break;
+      }
+      case 'invoice.paid':
+      case 'invoice.payment_succeeded': {
+        // Se regularizó el pago → limpia el banner.
+        // deno-lint-ignore no-explicit-any
+        const inv = event.data.object as any;
+        const customerId: string = typeof inv.customer === 'string' ? inv.customer : inv.customer?.id;
+        if (customerId) await applyToUser(admin, stripe, customerId, inv, { payment_past_due: false });
         break;
       }
       default:
@@ -142,15 +162,25 @@ async function applyToUser(
   // deno-lint-ignore no-explicit-any
   _sub: any,
   fields: Record<string, unknown>,
+  // Si viene, se ignora el evento cuando es MÁS VIEJO que el último de
+  // suscripción ya aplicado (anti out-of-order). Solo para eventos de sub.
+  guardEventAt?: string,
 ): Promise<boolean> {
   // 1) match directo por customer_id
   const { data: byCustomer } = await admin
     .from('user_profiles')
-    .select('user_id')
+    .select('user_id, last_sub_event_at')
     .eq('stripe_customer_id', customerId)
     .maybeSingle();
 
   let userId: string | null = byCustomer?.user_id ?? null;
+
+  // Guardia de orden: si ya aplicamos un evento de suscripción más nuevo, este
+  // (reintento/entrega tardía) no debe pisar el estado fresco.
+  if (guardEventAt && byCustomer?.last_sub_event_at
+      && new Date(guardEventAt) <= new Date(byCustomer.last_sub_event_at)) {
+    return true; // "manejado" (intencionalmente ignorado)
+  }
 
   // 2) fallback: leer metadata.supabase_user_id del customer en Stripe
   if (!userId && customerId) {

@@ -29,10 +29,29 @@ export default function App() {
   const authReady = useAppStore(s => s.authReady);
   const startDate = useAppStore(s => s.startDate);
   const user = useAppStore(s => s.user);
-  const subscriptionStatus = useAppStore(s => s.subscriptionStatus);
+  const rawSubscriptionStatus = useAppStore(s => s.subscriptionStatus);
   const subscriptionStatusLoadedFor = useAppStore(s => s.subscriptionStatusLoadedFor);
+  const subscriptionPeriodEnd = useAppStore(s => s.subscriptionPeriodEnd);
+  const cancelAtPeriodEnd = useAppStore(s => s.cancelAtPeriodEnd);
+  const paymentPastDue = useAppStore(s => s.paymentPastDue);
   // "loaded" keyado por usuario: solo cuenta si el status cargado es del user actual.
   const subscriptionStatusLoaded = !!user && subscriptionStatusLoadedFor === user.id;
+
+  // Tope de seguridad por period_end (independiente de la zona horaria del user
+  // — comparamos instantes UTC). Si la suscripción está CANCELADA-al-fin-de-ciclo
+  // o en MORA y el fin de periodo pagado quedó atrás (con 3 días de gracia para
+  // absorber clock-skew y la ventana hasta que llegue el webhook de renovación),
+  // tratamos el acceso como caducado. Una suscripción activa y al día SIEMPRE
+  // tiene period_end futuro → nunca se corta por error. Cubre el caso de un
+  // past_due que nunca se cancela y el de un webhook de cancelación perdido.
+  const accessLapsed = (() => {
+    if (!subscriptionPeriodEnd) return false;
+    if (!cancelAtPeriodEnd && !paymentPastDue) return false;
+    const end = new Date(subscriptionPeriodEnd).getTime();
+    if (!Number.isFinite(end)) return false;
+    return end + 3 * 86_400_000 < Date.now();
+  })();
+  const subscriptionStatus = accessLapsed ? 'none' : rawSubscriptionStatus;
 
   // ── Bootstrap idioma — corre una vez al mount ────────────
   // Si el user nunca eligió manualmente (languageSetByUser=false), aplicamos
