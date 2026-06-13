@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Session, User } from '@supabase/supabase-js';
@@ -437,7 +438,7 @@ export const useAppStore = create<AppState>()(
     // Bienestar integral → maintenance (tdee as-is)
 
     const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
-    const startDateStr = new Date().toISOString().split('T')[0];
+    const startDateStr = dayKey(new Date());
 
     // NO seteamos startDate en el store aquí: App.tsx redirige onboarding→dashboard
     // en cuanto startDate existe, lo que se saltaba la pantalla de resultado.
@@ -478,7 +479,7 @@ export const useAppStore = create<AppState>()(
   finishOnboarding: () => {
     set({
       currentScreen: 'dashboard',
-      startDate: get().startDate || new Date().toISOString().split('T')[0],
+      startDate: get().startDate || dayKey(new Date()),
       obStep: 1,
       activeModal: null,
     });
@@ -555,7 +556,7 @@ export const useAppStore = create<AppState>()(
   habitHistory: {},
   toggleHabit: (id) =>
     set((state) => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = dayKey(new Date());
       // Reset habits if it's a new day
       const baseHabits = state.habitsDate === today
         ? state.habits
@@ -571,7 +572,7 @@ export const useAppStore = create<AppState>()(
   // Weight log
   weightLog: [],
   addWeight: async (kg) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = dayKey(new Date());
     const userId = get().user?.id;
 
     // Optimistic update local primero (UX responsiva, modo offline OK)
@@ -700,7 +701,7 @@ export const useAppStore = create<AppState>()(
   workoutLog: [],
   addWorkoutEntry: (exercise, sets) =>
     set((state) => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = dayKey(new Date());
       return { workoutLog: [...state.workoutLog, { date: today, exercise, sets }] };
     }),
   removeWorkoutEntry: (date, exercise) =>
@@ -718,7 +719,7 @@ export const useAppStore = create<AppState>()(
   // server-side vía persistStreakToProfile dentro de markActiveDay).
   activityLog: [],
   addActivityLog: async (entry) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = dayKey(new Date());
     const id = crypto.randomUUID();
     set((state) => ({
       activityLog: [
@@ -734,7 +735,7 @@ export const useAppStore = create<AppState>()(
   // Mapeo desc (cliente) ↔ description (SQL) al borde del sync.
   foodLog: [],
   addFoodLog: async (entry) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = dayKey(new Date());
     const id = crypto.randomUUID();
     const userId = get().user?.id;
 
@@ -822,7 +823,7 @@ export const useAppStore = create<AppState>()(
     set({ weeklyPlan: plan });
 
     if (isRegeneration) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = dayKey(new Date());
       const pruned = pruneMealProgressFromDate(
         {
           mealChecks: prevState.mealChecks,
@@ -892,7 +893,7 @@ export const useAppStore = create<AppState>()(
 
   // Weekly review
   lastWeeklyReview: null,
-  markWeeklyReviewDone: () => set({ lastWeeklyReview: new Date().toISOString().split('T')[0] }),
+  markWeeklyReviewDone: () => set({ lastWeeklyReview: dayKey(new Date()) }),
 
   // Weekly plan regen limit
   planRegenCount: null,
@@ -903,7 +904,7 @@ export const useAppStore = create<AppState>()(
   // upsert fire-and-forget (es un contador, no bloquea ni throwea; si falla,
   // log y la próxima escritura/hidratación recupera por timestamp).
   incrementDailyWorkoutRegen: (modality: string) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = dayKey(new Date());
     const current = get().dailyWorkoutRegenCount;
     const isToday = current.date === today;
     const counts = isToday ? { ...current.countByModality } : {};
@@ -932,7 +933,7 @@ export const useAppStore = create<AppState>()(
     const weekStart = (() => {
       const d = new Date();
       d.setDate(d.getDate() - d.getDay()); // Sunday anchor
-      return d.toISOString().split('T')[0];
+      return dayKey(d);
     })();
     const current = get().planRegenCount;
     const sameWeek = current?.weekStart === weekStart;
@@ -1012,7 +1013,7 @@ export const useAppStore = create<AppState>()(
   // Todos los disparadores (workout/yoga finish, HSM all-done,
   // Night Check-in) convergen acá.
   markActiveDay: async () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = dayKey(new Date());
     const { streakCount, lastActiveDate, user } = get();
     const { newStreak, changed } = computeStreak(streakCount, lastActiveDate, today);
     if (!changed) return;
@@ -1066,7 +1067,7 @@ export const useAppStore = create<AppState>()(
   // Daily HSM micro-responses
   dailyHSMResponses: [],
   addHSMResponse: (entry) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = dayKey(new Date());
     set((state) => ({
       dailyHSMResponses: [...state.dailyHSMResponses, { date: today, ...entry }],
     }));
@@ -1076,7 +1077,7 @@ export const useAppStore = create<AppState>()(
   coachChatHistory: [],
   coachChatDate: '',
   addCoachMessage: (role, content) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = dayKey(new Date());
     set((state) => {
       const history = state.coachChatDate === today ? state.coachChatHistory : [];
       return {
@@ -1136,7 +1137,7 @@ export const useAppStore = create<AppState>()(
 
   // Cumulative HSM profile
   hsmProfile: null,
-  setHSMProfile: (text) => set({ hsmProfile: { text, updatedAt: new Date().toISOString().split('T')[0] } }),
+  setHSMProfile: (text) => set({ hsmProfile: { text, updatedAt: dayKey(new Date()) } }),
 
   // Night check-in eliminado en Lote Racha-2. La racha vive en markActiveDay
   // (Racha-1) y se dispara desde workout/yoga/HSM completo.

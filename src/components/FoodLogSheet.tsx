@@ -7,6 +7,7 @@
 // El sheet es read/write — el MealDetailPopout sigue read-only de la
 // info del meal y solo delega acá vía un callback.
 
+import { dayKey } from '../utils/localDate';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppStore } from '../store';
@@ -86,7 +87,7 @@ export default function FoodLogSheet({ mealTime, mealIndex, onClose, onLogged }:
       // Food-4: marcar el meal del plan como resuelto por log (señal visual
       // distinta al check ✓ "seguí el plan"). Solo si vino con mealIndex.
       if (mealIndex !== undefined) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = dayKey(new Date());
         setMealResolvedByLog(`meal-${today}-${mealIndex}`);
       }
 

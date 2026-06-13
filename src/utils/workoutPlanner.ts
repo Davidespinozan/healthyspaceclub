@@ -1,3 +1,4 @@
+import { dayKey } from './localDate';
 import type {
   Exercise,
   ExerciseVariant,
@@ -113,9 +114,9 @@ export function analyzeWorkoutHistory(
   exercises: Exercise[],
   completedSessions: CompletedSession[] = []
 ): WorkedMuscles {
-  const today = new Date().toISOString().split('T')[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0];
+  const today = dayKey(new Date());
+  const yesterday = dayKey(new Date(Date.now() - 86400000));
+  const twoDaysAgo = dayKey(new Date(Date.now() - 2 * 86400000));
 
   const exerciseMap = new Map(exercises.map(e => [e.id, e]));
   const exerciseByName = new Map(exercises.map(e => [e.name.toLowerCase(), e]));
@@ -160,7 +161,7 @@ export function analyzeWorkoutHistory(
   // Count consecutive rest days (from today backwards) — chequea AMBAS fuentes
   let restDays = 0;
   for (let i = 0; i < 7; i++) {
-    const date = new Date(Date.now() - i * 86400000).toISOString().split('T')[0];
+    const date = dayKey(new Date(Date.now() - i * 86400000));
     const hasWorkout =
       workoutLog.some(e => e.date === date) ||
       completedSessions.some(s => s.date === date);
@@ -642,7 +643,7 @@ export function suggestModality(params: {
 
   // 4+ consecutive strength days → suggest yoga
   const last4Dates = Array.from({ length: 4 }, (_, i) =>
-    new Date(Date.now() - i * 86400000).toISOString().split('T')[0]
+    dayKey(new Date(Date.now() - i * 86400000))
   );
   const consecutiveStrength = last4Dates.every(date =>
     workoutLog.some(e => e.date === date)

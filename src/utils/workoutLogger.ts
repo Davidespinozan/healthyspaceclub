@@ -1,3 +1,4 @@
+import { dayKey } from './localDate';
 import { supabase } from '../lib/supabase';
 import type { CompletedSession, Modality, LoggedSet } from '../types';
 
@@ -112,7 +113,7 @@ export async function finishWorkoutSession(
   // 1. Persistir en Zustand (BLOCANTE)
   // `date` en UTC YYYY-MM-DD para consistencia con WorkoutEntry existente
   const session: CompletedSession = {
-    date: now.toISOString().split('T')[0],
+    date: dayKey(now),
     completedAtIso: now.toISOString(),
     modality: payload.modality,
     exerciseIds: payload.exercises.map(e => e.exercise_id),

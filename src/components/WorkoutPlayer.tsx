@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera } from 'lucide-react';
@@ -114,7 +115,7 @@ export default function WorkoutPlayer({
       const raw = localStorage.getItem(PROGRESS_KEY);
       if (!raw) return null;
       const d = JSON.parse(raw);
-      const today = new Date().toISOString().split('T')[0];
+      const today = dayKey(new Date());
       if (d && d.version === 2 && d.workoutDate === today && d.planHash === planHash
           && typeof d.currentStep === 'number' && d.currentStep >= 0
           && d.currentStep < sequence.length && Array.isArray(d.loggedByExercise)) {
@@ -285,7 +286,7 @@ export default function WorkoutPlayer({
   useEffect(() => {
     if (phase === 'exercise' || phase === 'paused') {
       localStorage.setItem(PROGRESS_KEY, JSON.stringify({
-        workoutDate: new Date().toISOString().split('T')[0],
+        workoutDate: dayKey(new Date()),
         planHash,
         version: 2,
         currentStep,
@@ -320,7 +321,7 @@ export default function WorkoutPlayer({
       const raw = localStorage.getItem(PROGRESS_KEY);
       if (!raw) return;
       const d = JSON.parse(raw);
-      const today = new Date().toISOString().split('T')[0];
+      const today = dayKey(new Date());
       if (!d || d.workoutDate !== today || d.planHash !== planHash) {
         localStorage.removeItem(PROGRESS_KEY);
       }
@@ -345,7 +346,7 @@ export default function WorkoutPlayer({
     // Marca el ejercicio como hecho en Hoy en cuanto se completa (en vivo, no
     // solo al terminar la sesión) — así la lista de Hoy refleja el avance.
     if (setsRegisteredForCurrent + 1 >= totalSetsForCurrent && currentEx.id) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = dayKey(new Date());
       try { useAppStore.getState().setWorkoutCheck(`${today}-${currentEx.id}`, true); } catch { /* noop */ }
     }
     if (atBlockEnd) {

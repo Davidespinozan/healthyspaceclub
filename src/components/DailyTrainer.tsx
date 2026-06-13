@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
@@ -84,7 +85,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // presente, prellenamos su nombre/nivel reales; si no, es modo invitado manual.
   const pendingPartner = useAppStore(s => s.pendingPartner);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = dayKey(new Date());
   const firstName = userName?.split(' ')[0] || '';
   const todayDayName = new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { weekday: 'long' });
   const todayDateShort = `${new Date().getDate()} ${new Date().toLocaleDateString('es-ES', { month: 'short' })}`;

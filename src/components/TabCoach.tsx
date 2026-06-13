@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
@@ -62,7 +63,7 @@ export default function TabCoach() {
     }
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = dayKey(new Date());
   const messages = coachChatDate === today ? coachChatHistory : [];
 
   // Contextual welcome (Coach-B voice rule: 2da persona, sin nombre).

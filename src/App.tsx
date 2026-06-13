@@ -1,3 +1,4 @@
+import { dayKey } from './utils/localDate';
 import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore } from './store';
 import { supabase } from './lib/supabase';
@@ -303,7 +304,7 @@ export default function App() {
           // sobrevivir cambio de device sin traer toda la historia.
           // Mapeo description (SQL) → desc (cliente).
           try {
-            const cutoff = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+            const cutoff = dayKey(new Date(Date.now() - 14 * 86400000));
             const { data: foods } = await supabase
               .from('food_log')
               .select('id, date, description, kcal, prot, carbs, fat, source')
@@ -334,7 +335,7 @@ export default function App() {
           // Cierra la asimetría: ahora el historial de entrenamientos
           // también viaja entre dispositivos, igual que food_log.
           try {
-            const cutoff = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+            const cutoff = dayKey(new Date(Date.now() - 14 * 86400000));
             const { data: workouts } = await supabase
               .from('workout_log')
               .select('date_local, completed_at, modality, duration_minutes, exercises_completed, exercises_total, exercises')
@@ -360,7 +361,7 @@ export default function App() {
           // Merge "true wins": un check hecho en cualquier device sobrevive.
           // Backfill push: lo que local tiene y remote no se sube.
           try {
-            const cutoff = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+            const cutoff = dayKey(new Date(Date.now() - 14 * 86400000));
             const { data: rows } = await supabase
               .from('meal_progress')
               .select('date, meal_index, checked, resolved_by_log')

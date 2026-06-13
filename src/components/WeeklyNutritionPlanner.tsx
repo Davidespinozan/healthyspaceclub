@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import { useState, useMemo } from 'react';
 import { useAppStore } from '../store';
 import { mealPlans, getMealPlans } from '../data/mealPlan';
@@ -229,7 +230,7 @@ export default function WeeklyNutritionPlanner() {
   const weekStart = (() => {
     const d = new Date();
     d.setDate(d.getDate() - d.getDay());
-    return d.toISOString().split('T')[0];
+    return dayKey(d);
   })();
   const regenThisWeek = planRegenCount?.weekStart === weekStart ? planRegenCount.count : 0;
   const regenBlocked = regenThisWeek >= 2;
@@ -846,9 +847,9 @@ export default function WeeklyNutritionPlanner() {
             chronoMeals(dayPlan.meals)
               .map(({ meal, i }) => {
               const mkcal = calcMealKcal(meal.portions);
-              const dayDate = new Date(
+              const dayDate = dayKey(new Date(
                 Date.now() + (activeDay - (todayOffset >= 0 ? todayOffset : 0)) * 86400000
-              ).toISOString().split('T')[0];
+              ));
               const checkKey = `meal-${dayDate}-${i}`;
               const checked = !!mealChecks[checkKey];
               // Resolved-by-log solo aplica para los meals de HOY (el flag se

@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
@@ -35,7 +36,7 @@ export default function WeightTrackingCard() {
     // Intento 1: entry de hace ≥7 días
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
-    const weekAgoStr = weekAgo.toISOString().split('T')[0];
+    const weekAgoStr = dayKey(weekAgo);
     const weekAgoEntry = previousEntries.filter(e => e.date <= weekAgoStr).pop();
     if (weekAgoEntry) {
       return {
@@ -57,7 +58,7 @@ export default function WeightTrackingCard() {
     const sundayThisWeek = (() => {
       const d = new Date();
       d.setDate(d.getDate() - d.getDay());
-      return d.toISOString().split('T')[0];
+      return dayKey(d);
     })();
     return sorted.some(e => e.date >= sundayThisWeek);
   }, [sorted]);

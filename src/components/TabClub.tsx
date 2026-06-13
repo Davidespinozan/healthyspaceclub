@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import CreatePostModal from './CreatePostModal';
 import PublicProfile from './PublicProfile';
 import PostCard, { type ClubPost } from './club/PostCard';
@@ -81,7 +82,7 @@ export default function TabClub() {
 
   async function fetchActiveCount() {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = dayKey(new Date());
       const { count } = await supabase
         .from('club_posts')
         .select('user_id', { count: 'exact', head: true })

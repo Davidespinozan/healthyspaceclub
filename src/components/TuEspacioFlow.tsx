@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import { useState, useEffect, useRef } from 'react';
 import { Sparkles, X } from 'lucide-react';
 import { useAppStore } from '../store';
@@ -24,7 +25,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
     const qIndex = (dayIndex * 3 + dimIndex * 7) % dim.questions.length;
     return { emoji: dim.emoji, title: dim.title, color: dim.color, q: dim.questions[qIndex] };
   };
-  const today = new Date().toISOString().split('T')[0];
+  const today = dayKey(new Date());
   const todayResponses = dailyHSMResponses.filter(r => r.date === today);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 

@@ -1,3 +1,4 @@
+import { dayKey } from './localDate';
 // Lógica pura de decisión de racha (streak).
 //
 // Extraída del store en el Lote Racha-1 para tener una única fuente de verdad
@@ -42,7 +43,7 @@ export function computeStreak(
 
   const todayMs = new Date(today).getTime();
   const yesterdayMs = todayMs - 86_400_000;
-  const yesterday = new Date(yesterdayMs).toISOString().split('T')[0];
+  const yesterday = dayKey(new Date(yesterdayMs));
 
   if (lastActiveDate === yesterday) {
     return { newStreak: currentCount + 1, changed: true };

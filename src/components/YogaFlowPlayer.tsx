@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, SkipBack, SkipForward, Pause, Play, Volume2, VolumeX, Flower2, Sparkles, Check } from 'lucide-react';
@@ -41,7 +42,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
       const raw = localStorage.getItem('yoga-flow-progress');
       if (!raw) return null;
       const d = JSON.parse(raw);
-      const today = new Date().toISOString().split('T')[0];
+      const today = dayKey(new Date());
       if (d && d.flowDate === today && typeof d.currentIndex === 'number'
           && d.currentIndex > 0 && d.currentIndex < poses.length) {
         return d as { currentIndex: number; secondsRemaining: number };
@@ -89,7 +90,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   useEffect(() => {
     if (phase === 'playing' || phase === 'paused') {
       localStorage.setItem('yoga-flow-progress', JSON.stringify({
-        flowDate: new Date().toISOString().split('T')[0],
+        flowDate: dayKey(new Date()),
         currentIndex,
         secondsRemaining,
       }));
@@ -186,7 +187,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
       const saved = localStorage.getItem('yoga-flow-progress');
       if (saved) {
         const { flowDate, currentIndex: savedIdx, secondsRemaining: savedSec } = JSON.parse(saved);
-        const today = new Date().toISOString().split('T')[0];
+        const today = dayKey(new Date());
         if (flowDate === today && savedIdx < poses.length - 1 && savedIdx > 0) {
           const resume = confirm(t('yoga.resumeConfirm', { n: savedIdx + 1 }));
           if (resume) {

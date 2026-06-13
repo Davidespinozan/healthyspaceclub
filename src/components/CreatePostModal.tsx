@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
@@ -101,7 +102,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = dayKey(new Date());
   const workoutToday = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
   const workoutSummary = workoutToday
     ? `${workoutToday.type || t('post.workoutFallback')} · ${workoutToday.duration || ''}`

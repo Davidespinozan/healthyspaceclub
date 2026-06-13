@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
@@ -60,7 +61,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
   const sundayThisWeek = (() => {
     const d = new Date();
     d.setDate(d.getDate() - d.getDay());
-    return d.toISOString().split('T')[0];
+    return dayKey(d);
   })();
   const registeredThisWeek = weightLog.some(e => e.date >= sundayThisWeek);
   const showWeightPrompt = !registeredThisWeek && !weightPromptSkipped;
@@ -92,7 +93,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
     Object.keys(mealChecks)
       .filter(k => mealChecks[k])
       .map(k => k.split('-').slice(1, 4).join('-'))  // extract YYYY-MM-DD from meal-YYYY-MM-DD-N
-      .filter(d => d >= weekAgo.toISOString().split('T')[0])
+      .filter(d => d >= dayKey(weekAgo))
   );
   const mealDays = mealDates.size;
 
@@ -102,12 +103,12 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
   // cada vez que el user termina una sesión vía WorkoutPlayer / YogaFlowPlayer).
   const workoutDays = countWorkoutDaysSince(
     completedSessions,
-    weekAgo.toISOString().split('T')[0],
+    dayKey(weekAgo),
   );
 
   // Weight change this week
   const sorted = [...weightLog].sort((a, b) => a.date.localeCompare(b.date));
-  const weekAgoWeight = sorted.filter(e => e.date <= weekAgo.toISOString().split('T')[0]).pop()?.kg;
+  const weekAgoWeight = sorted.filter(e => e.date <= dayKey(weekAgo)).pop()?.kg;
   const currentWeight = sorted[sorted.length - 1]?.kg;
   const weightChange = weekAgoWeight && currentWeight
     ? +(currentWeight - weekAgoWeight).toFixed(1)

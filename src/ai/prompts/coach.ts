@@ -1,3 +1,4 @@
+import { dayKey } from '../../utils/localDate';
 import type { useAppStore, AppLanguage } from '../../store';
 import { buildHSMCoreBlock } from '../hsmCore';
 import { getVoiceRules, getOutputLanguageDirective } from '../voice';
@@ -21,7 +22,7 @@ export function buildCoachSystemPrompt(
     dailyCheckin, activeHSMDimension, streakCount, weeklyPlan, mealPlanKey,
     dailyHSMResponses, dailyWorkout, hsmProfile } = store;
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = dayKey(new Date());
   const todayFood = foodLog.filter(e => e.date === today);
   const todayKcal = todayFood.reduce((s, e) => s + e.kcal, 0);
   const todayProt = Math.round(todayFood.reduce((s, e) => s + e.prot, 0));

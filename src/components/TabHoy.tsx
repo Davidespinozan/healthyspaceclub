@@ -1,3 +1,4 @@
+import { dayKey } from '../utils/localDate';
 import { useEffect, useState, useCallback } from 'react';
 import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight, Flame, X } from 'lucide-react';
 import { useAppStore } from '../store';
@@ -109,11 +110,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   } | null>(null);
 
   const isSunday = new Date().getDay() === 0;
-  const thisWeekSunday = (() => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return d.toISOString().split('T')[0]; })();
+  const thisWeekSunday = (() => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return dayKey(d); })();
   const reviewPending = isSunday && lastWeeklyReview !== thisWeekSunday;
   const [showReview, setShowReview] = useState(reviewPending);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = dayKey(new Date());
 
   const firstName = userName?.split(' ')[0] || '';
 
