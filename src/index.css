@@ -520,6 +520,31 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
   border:1.5px solid rgba(191,160,101,.12); border-radius:20px;
   pointer-events:none;
 }
+
+/* ── Hero "vivo": carrusel (crossfade + Ken Burns + puntitos) ── */
+.hero-carousel { position:relative; height:560px; overflow:hidden; border-radius:16px;
+  box-shadow:0 40px 100px rgba(21,51,48,.2), 0 8px 32px rgba(21,51,48,.1); }
+.hero-carousel .hero-slide {
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:16px;
+  opacity:0; transition:opacity 1.1s cubic-bezier(.23,1,.32,1);
+  animation:heroKenBurns 16s ease-in-out infinite alternate;
+}
+.hero-carousel .hero-slide.is-active { opacity:1; }
+@keyframes heroKenBurns { from{transform:scale(1.04)} to{transform:scale(1.15) translate(-1.5%,-1.5%)} }
+.hero-dots {
+  position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+  display:flex; gap:8px; z-index:4; padding:7px 12px; border-radius:999px;
+  background:rgba(21,51,48,.4); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+}
+.hero-dot { width:8px; height:8px; border-radius:50%; border:none; padding:0; cursor:pointer;
+  background:rgba(255,255,255,.5); transition:width .3s ease, background .3s ease; -webkit-tap-highlight-color:transparent; }
+.hero-dot.is-active { background:#fff; width:22px; border-radius:4px; }
+@media (prefers-reduced-motion: reduce) { .hero-carousel .hero-slide { animation:none; } }
+@media (max-width:768px) {
+  .hero-carousel { height:auto; aspect-ratio:1/1; }
+  .hero-carousel .hero-slide { position:absolute !important; inset:0 !important;
+    width:100% !important; height:100% !important; border-radius:16px !important; }
+}
 .hero-badge-center {
   grid-column:1 / -1; display:flex; justify-content:center; margin-bottom:20px;
 }

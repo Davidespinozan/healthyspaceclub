@@ -89,17 +89,40 @@ export default function LandingScreen() {
     );
   }, [openPay, pricing, t]);
 
-  // ── Parallax ──────────────────────────────────────────────
-  const heroImgRef = useRef<HTMLImageElement>(null);
+  // ── Parallax (sobre el contenedor del carrusel) ───────────
+  const heroParallaxRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const onScroll = () => {
-      if (heroImgRef.current) {
-        heroImgRef.current.style.transform = `translateY(${window.scrollY * 0.18}px) scale(1.04)`;
+      if (heroParallaxRef.current) {
+        heroParallaxRef.current.style.transform = `translateY(${window.scrollY * 0.18}px)`;
       }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // ── Hero "vivo": carrusel auto-rotativo con puntitos + swipe ──
+  // Agrega más URLs aquí para que rote entre varias imágenes.
+  const HERO_IMAGES = [
+    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero.webp',
+  ];
+  const [heroSlide, setHeroSlide] = useState(0);
+  const heroTouchX = useRef<number | null>(null);
+  useEffect(() => {
+    if (HERO_IMAGES.length < 2) return;
+    const id = setInterval(() => setHeroSlide(s => (s + 1) % HERO_IMAGES.length), 5000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [HERO_IMAGES.length]);
+  function heroSwipeStart(e: React.TouchEvent) { heroTouchX.current = e.touches[0].clientX; }
+  function heroSwipeEnd(e: React.TouchEvent) {
+    if (heroTouchX.current === null || HERO_IMAGES.length < 2) return;
+    const dx = e.changedTouches[0].clientX - heroTouchX.current;
+    if (Math.abs(dx) > 40) {
+      setHeroSlide(s => (s + (dx < 0 ? 1 : -1) + HERO_IMAGES.length) % HERO_IMAGES.length);
+    }
+    heroTouchX.current = null;
+  }
 
   // ── (trust stats removed) ──
 
@@ -151,13 +174,36 @@ export default function LandingScreen() {
             </div>
             <p className="hero-microcopy">{t('landing.heroMicro')}</p>
           </div>
-          <div className="hero-img">
-            <img
-              src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero.webp"
-              alt="Healthy Space Club"
-              ref={heroImgRef}
-              style={{ willChange: 'transform', transform: 'scale(1.04)' }}
-            />
+          <div
+            className="hero-img hero-carousel"
+            ref={heroParallaxRef}
+            style={{ willChange: 'transform' }}
+            onTouchStart={heroSwipeStart}
+            onTouchEnd={heroSwipeEnd}
+          >
+            {HERO_IMAGES.map((src, i) => (
+              <img
+                key={src}
+                src={src}
+                alt="Healthy Space Club"
+                className={`hero-slide${i === heroSlide ? ' is-active' : ''}`}
+                loading={i === 0 ? 'eager' : 'lazy'}
+              />
+            ))}
+            {HERO_IMAGES.length > 1 && (
+              <div className="hero-dots" role="tablist" aria-label="Imágenes">
+                {HERO_IMAGES.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`hero-dot${i === heroSlide ? ' is-active' : ''}`}
+                    aria-label={`Imagen ${i + 1}`}
+                    aria-selected={i === heroSlide}
+                    onClick={() => setHeroSlide(i)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <a href="#s-pillars" className="hero-scroll" aria-label={t('landing.scrollAria')}>
