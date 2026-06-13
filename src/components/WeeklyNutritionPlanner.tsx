@@ -193,7 +193,18 @@ async function generateWeeklyPlan(params: {
     );
     const raw = data.content?.[0]?.text ?? '{}';
     const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-    return JSON.parse(cleaned);
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      throw new Error('No se pudo generar el plan completo. Intenta de nuevo.');
+    }
+    // Si el JSON es válido pero le falta selectedDays, el .map posterior
+    // reventaría: validamos la forma mínima esperada.
+    if (!parsed || !Array.isArray(parsed.selectedDays)) {
+      throw new Error('No se pudo generar el plan completo. Intenta de nuevo.');
+    }
+    return parsed;
   } catch (e) {
     if ((e as Error).name === 'AbortError') {
       throw new Error('La generación del plan semanal tardó demasiado. Intenta de nuevo.');

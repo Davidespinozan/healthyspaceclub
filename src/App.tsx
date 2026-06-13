@@ -63,20 +63,32 @@ export default function App() {
     const uid = user.id;
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('subscription_status, stripe_customer_id, subscription_period_end, cancel_at_period_end, payment_past_due')
-        .eq('user_id', uid)
-        .maybeSingle();
-      if (cancelled) return;
-      useAppStore.setState({
-        subscriptionStatus: (data?.subscription_status ?? 'none') as 'none' | 'trial' | 'pro',
-        stripeCustomerId: data?.stripe_customer_id ?? null,
-        subscriptionPeriodEnd: data?.subscription_period_end ?? null,
-        cancelAtPeriodEnd: data?.cancel_at_period_end ?? false,
-        paymentPastDue: data?.payment_past_due ?? false,
-        subscriptionStatusLoadedFor: uid,
-      });
+      // Reintento con backoff: un error transitorio (red/RLS/timeout) NO debe
+      // caer a 'none' ni marcar loadedFor, porque eso atoraría a un usuario que
+      // paga en el paywall sin forma de reintentar. Reintentamos hasta que la DB
+      // responda; solo entonces fijamos el estado.
+      for (let attempt = 0; !cancelled; attempt++) {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('subscription_status, stripe_customer_id, subscription_period_end, cancel_at_period_end, payment_past_due')
+          .eq('user_id', uid)
+          .maybeSingle();
+        if (cancelled) return;
+        if (error) {
+          console.warn(`[sub] fetch subscription_status falló (intento ${attempt + 1}), reintentando:`, error.message);
+          await new Promise(r => setTimeout(r, Math.min(1000 * 2 ** attempt, 15_000)));
+          continue;
+        }
+        useAppStore.setState({
+          subscriptionStatus: (data?.subscription_status ?? 'none') as 'none' | 'trial' | 'pro',
+          stripeCustomerId: data?.stripe_customer_id ?? null,
+          subscriptionPeriodEnd: data?.subscription_period_end ?? null,
+          cancelAtPeriodEnd: data?.cancel_at_period_end ?? false,
+          paymentPastDue: data?.payment_past_due ?? false,
+          subscriptionStatusLoadedFor: uid,
+        });
+        return;
+      }
     })();
     return () => { cancelled = true; };
   }, [authReady, user, subscriptionStatusLoadedFor]);

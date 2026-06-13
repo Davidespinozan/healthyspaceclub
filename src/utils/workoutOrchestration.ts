@@ -95,7 +95,13 @@ export async function orchestrateWorkout(params: {
     );
     const raw = data.content?.[0]?.text ?? '{}';
     const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-    return JSON.parse(cleaned);
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      // JSON truncado/malformado (p.ej. respuesta cortada): no expongas el
+      // SyntaxError crudo al usuario; pide reintentar.
+      throw new Error('No se pudo generar la rutina completa. Intenta de nuevo.');
+    }
   } catch (e) {
     if ((e as Error).name === 'AbortError') {
       throw new Error('La generación tardó demasiado. Intenta de nuevo.');

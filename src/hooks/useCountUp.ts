@@ -6,6 +6,8 @@ export function useCountUp(target: number, durationMs = 900): number {
   const started = useRef(false);
 
   useEffect(() => {
+    // NaN/no-finito (valor corrupto) → 0, para no pintar "NaN" en pantalla.
+    if (!Number.isFinite(target)) { setVal(0); return; }
     if (target <= 0) { setVal(target); return; }
     const reduce = typeof window !== 'undefined'
       && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;

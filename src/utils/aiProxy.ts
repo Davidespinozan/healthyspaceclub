@@ -160,12 +160,22 @@ export async function callAIStream(
       if (!data || data === '[DONE]') continue;
       try {
         const json = JSON.parse(data);
+        // Anthropic puede emitir un evento `error` a mitad del stream (overloaded,
+        // etc.) DESPUÉS de mandar headers 200. Si lo ignoramos, el stream termina
+        // y se commitea una respuesta vacía/parcial como si fuera buena. Lo
+        // propagamos para que el caller muestre un error real.
+        if (json.type === 'error') {
+          throw new AIProxyError(503, json.error?.message ?? 'stream_error', json.error?.type);
+        }
         if (json.type === 'content_block_delta' && json.delta?.type === 'text_delta') {
           const piece = json.delta.text as string;
           full += piece;
           onText(piece);
         }
-      } catch { /* eventos no-JSON (ping, etc.) → ignorar */ }
+      } catch (e) {
+        if (e instanceof AIProxyError) throw e;
+        /* eventos no-JSON (ping, etc.) → ignorar */
+      }
     }
   }
   return full;
