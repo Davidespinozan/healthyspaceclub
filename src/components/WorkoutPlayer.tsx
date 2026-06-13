@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera } from 'lucide-react';
 import CreatePostModal from './CreatePostModal';
 import { translateMuscle, translateDifficulty } from '../utils/exerciseMeta';
+import { haptics } from '../utils/haptics';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { usePartnerPresence } from '../hooks/usePartnerPresence';
 import { useAppStore } from '../store';
@@ -335,6 +336,7 @@ export default function WorkoutPlayer({
     // Turnos: no puedes adelantarte a tu compañero (debe alcanzarte primero).
     if (partnerTurn) return;
     if (!step || currentSetMarked || !currentEx) return;
+    haptics.tap();
     const entry: LoggedSet = {
       reps: parseRepsToNumber(currentEx.reps),
       kg: lastKgForExercise(loggedByExercise, currentExerciseIndex),
@@ -390,6 +392,7 @@ export default function WorkoutPlayer({
   function finishSession(logged: LoggedByExercise) {
     const payload = buildOnCompletePayload(flattenByExercise(logged), startedAt, Date.now(), exercises);
     localStorage.removeItem(PROGRESS_KEY);
+    haptics.success();
     setPhase('completed');
     onComplete(payload);
   }

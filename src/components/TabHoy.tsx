@@ -190,8 +190,17 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const reflectionDone = todayHSMAnswered > 0;
   const kcalGoal = planGoal > 0 ? planGoal : 0;
   const kcalConsumed = Math.round(dayConsumption.consumedKcal);
-  const nutritionPct = kcalGoal > 0 ? Math.min(1, kcalConsumed / kcalGoal) : 0;
-  const nutritionDone = kcalGoal > 0 ? nutritionPct >= 0.8 : kcalConsumed > 0;
+  // El anillo de menú refleja la ACCIÓN del usuario: comidas marcadas / total
+  // (antes era kcal≥80% de la meta, y marcar todo no lo cerraba si el plan
+  // sumaba menos). Fallback a kcal si no hay slots de comida.
+  const mealSlotsTotal = dayConsumption.totalSlots;
+  const mealSlotsDone = dayConsumption.completedSlots;
+  const nutritionPct = mealSlotsTotal > 0
+    ? mealSlotsDone / mealSlotsTotal
+    : (kcalGoal > 0 ? Math.min(1, kcalConsumed / kcalGoal) : 0);
+  const nutritionDone = mealSlotsTotal > 0
+    ? mealSlotsDone >= mealSlotsTotal
+    : (kcalGoal > 0 ? kcalConsumed / kcalGoal >= 0.8 : kcalConsumed > 0);
   const [postedToday, setPostedToday] = useState(false);
   const userId = useCurrentUserId();
   useEffect(() => {

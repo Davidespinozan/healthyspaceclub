@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Sparkles } from 'lucide-react';
+import { haptics } from '../utils/haptics';
 import './day-celebration.css';
 
 const COLORS = ['#C9A968', '#C75B3A', '#2E4A42', '#A8864E', '#F0E2B8'];
@@ -12,6 +13,7 @@ export default function DayCelebration({ message, sub, onDone }: {
   onDone: () => void;
 }) {
   useEffect(() => {
+    haptics.celebrate();
     const id = setTimeout(onDone, 3200);
     return () => clearTimeout(id);
   }, [onDone]);

@@ -5,6 +5,7 @@ import CommentsSheet from './club/CommentsSheet';
 import NotificationsSheet from './club/NotificationsSheet';
 import { useNotifications } from '../hooks/useNotifications';
 import { getFollowingIds } from '../utils/follows';
+import { haptics } from '../utils/haptics';
 import { Bell } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -111,6 +112,7 @@ export default function TabClub() {
         const newSet = new Set(firedIds); newSet.delete(postId); setFiredIds(newSet);
         setPosts(p => p.map(post => post.id === postId ? { ...post, fire_count: Math.max(0, post.fire_count - 1) } : post));
       } else {
+        haptics.tap();
         await supabase.from('club_fires').insert({ post_id: postId, user_id: userId });
         const newSet = new Set(firedIds); newSet.add(postId); setFiredIds(newSet);
         setPosts(p => p.map(post => post.id === postId ? { ...post, fire_count: post.fire_count + 1 } : post));

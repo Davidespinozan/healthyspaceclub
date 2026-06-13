@@ -160,6 +160,43 @@ Deno.serve(async (req: Request) => {
   };
   if (body.system) anthropicBody.system = body.system;
 
+  // ── 5b. Modo STREAMING (coach): pipea el SSE de Anthropic al cliente ──
+  const wantsStream = (body as { stream?: boolean }).stream === true;
+  if (wantsStream) {
+    anthropicBody.stream = true;
+    let sRes: Response;
+    try {
+      sRes = await fetch(ANTHROPIC_URL, {
+        method: 'POST',
+        headers: {
+          'x-api-key': Deno.env.get('CLAUDE_API_KEY')!,
+          'anthropic-version': ANTHROPIC_VERSION,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(anthropicBody),
+      });
+    } catch (e) {
+      await logUsage(supabaseAdmin, user.id, model, null, null, false, 'fetch_failed', Date.now() - startedAt);
+      console.error('[ai-proxy] stream fetch failed:', e instanceof Error ? e.message : e);
+      return json({ message: 'No se pudo contactar el servicio de IA. Intenta de nuevo.' }, 502);
+    }
+    if (!sRes.ok || !sRes.body) {
+      const errorCode = `anthropic_${sRes.status}`;
+      await logUsage(supabaseAdmin, user.id, model, null, null, false, errorCode, Date.now() - startedAt);
+      return json({ message: `El servicio de IA tuvo un problema (${sRes.status}). Intenta de nuevo.` }, 502);
+    }
+    // Cuenta la request para el rate limit (tokens imprecisos en streaming).
+    await logUsage(supabaseAdmin, user.id, model, null, null, true, null, Date.now() - startedAt);
+    return new Response(sRes.body, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+  }
+
   let anthropicData: Record<string, unknown> | null = null;
   try {
     const aRes = await fetch(ANTHROPIC_URL, {
