@@ -947,7 +947,10 @@ export const useAppStore = create<AppState>()(
   // como timestamp comparable para shouldUseRemoteWorkout en la hidratación.
   saveDailyWorkout: async (plan) => {
     const generatedAt = new Date().toISOString();
-    const date = generatedAt.split('T')[0];
+    // Día LOCAL (no UTC): el resto de la app compara dailyWorkout.date contra
+    // dayKey() local. Con UTC, de noche en América la rutina recién generada
+    // tenía fecha de "mañana" y desaparecía de Hoy / se re-pedía.
+    const date = dayKey();
 
     // Limpiar (plan falsy): dejamos dailyWorkout en null, NO un objeto
     // malformado { date, plan:null } — ese objeto truncado hacía que

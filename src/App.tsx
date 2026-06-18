@@ -114,15 +114,29 @@ export default function App() {
   }, [authReady, user, subscriptionStatusLoadedFor]);
 
   // ── Re-validar suscripción al volver al foco ──────────────────────
-  // El loader de arriba corre UNA vez por sesión. Si una suscripción se cancela
-  // o expira con la app abierta (sesión PWA larga), el cliente nunca lo
-  // re-leería → acceso obsoleto. Al volver la pestaña a primer plano, forzamos
-  // un refetch limpiando el marcador (re-dispara el efecto de arriba).
+  // Si una suscripción se cancela/expira con la app abierta (sesión PWA larga),
+  // el cliente quedaría con acceso obsoleto. Al volver la pestaña a primer plano
+  // refrescamos el estado EN SEGUNDO PLANO — actualizamos los campos sin tocar
+  // subscriptionStatusLoadedFor, para NO tumbar `subscriptionStatusLoaded` (eso
+  // parpadeaba el dashboard a spinner en cada retorno).
   useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        useAppStore.setState({ subscriptionStatusLoadedFor: null });
-      }
+    const onVisible = async () => {
+      if (document.visibilityState !== 'visible') return;
+      const u = useAppStore.getState().user;
+      if (!u) return;
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('subscription_status, stripe_customer_id, subscription_period_end, cancel_at_period_end, payment_past_due')
+        .eq('user_id', u.id)
+        .maybeSingle();
+      if (error || !data) return; // error transitorio → conservamos lo que había
+      useAppStore.setState({
+        subscriptionStatus: (data.subscription_status ?? 'none') as 'none' | 'trial' | 'pro',
+        stripeCustomerId: data.stripe_customer_id ?? null,
+        subscriptionPeriodEnd: data.subscription_period_end ?? null,
+        cancelAtPeriodEnd: data.cancel_at_period_end ?? false,
+        paymentPastDue: data.payment_past_due ?? false,
+      });
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);

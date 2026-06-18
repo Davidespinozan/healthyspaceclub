@@ -41,9 +41,12 @@ export function computeStreak(
     return { newStreak: currentCount, changed: false };
   }
 
-  const todayMs = new Date(today).getTime();
-  const yesterdayMs = todayMs - 86_400_000;
-  const yesterday = dayKey(new Date(yesterdayMs));
+  // `today` es una clave de día LOCAL (dayKey). `new Date("YYYY-MM-DD")` la
+  // parsearía como medianoche UTC → en zonas con offset negativo (América) el
+  // -24h cae DOS días atrás y la racha se reseteaba a diario. Calculamos "ayer"
+  // con aritmética de fecha LOCAL a partir de los componentes de `today`.
+  const [y, m, d] = today.split('-').map(Number);
+  const yesterday = dayKey(new Date(y, m - 1, d - 1));
 
   if (lastActiveDate === yesterday) {
     return { newStreak: currentCount + 1, changed: true };

@@ -82,6 +82,7 @@ export default function ExerciseDetailPopout({
             url: v.video_url,
             label: nameOf(v.exercise_id) || v.label || t('workout.execution'),
           })));
+          setActiveIdx(0); // reset al primer video (evita índice fuera de rango si el set cambió)
         }
       } catch (e) {
         console.warn('[popout] video fetch failed:', e);
