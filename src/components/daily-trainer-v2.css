@@ -207,6 +207,15 @@
   border-radius: 50%;
 }
 
+/* Desktop tiene más espacio → preview aún más grande y visual. */
+@media (min-width: 640px) {
+  .dt2-ex-emoji {
+    width: 84px;
+    height: 84px;
+    font-size: 34px;
+  }
+}
+
 .dt2-ex-body {
   flex: 1;
   min-width: 0;
