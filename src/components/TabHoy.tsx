@@ -9,7 +9,6 @@ import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
 import { getExercises } from '../data/exercises';
-import ExerciseDetailPopout from './ExerciseDetailPopout';
 import MealDetailPopout from './MealDetailPopout';
 import { chronoMeals } from '../utils/mealOrder';
 import { translateDayLabel } from '../utils/dayTypeLabel';
@@ -21,7 +20,6 @@ import ActivityLogSheet from './ActivityLogSheet';
 import { listPartnerships, respondInvite, type Partnership } from '../utils/partners';
 import { supabase } from '../lib/supabase';
 import PartnerLiveHeader from './PartnerLiveHeader';
-import type { Exercise } from '../types';
 import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
 import { buildDay1BriefingPrompt, buildDailyBriefingPrompt } from '../ai/prompts/dailyBriefing';
@@ -106,12 +104,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     // p.other_id = quien invitó; se le notifica la aceptación al instante.
     await respondInvite(p.partnership_id, accept, p.other_id).catch(() => {});
   }
-  const [selectedExercise, setSelectedExercise] = useState<{
-    exercise: Exercise;
-    planData: { sets: number; reps: string; rest: number; tip_personalizado?: string };
-    index: number;
-  } | null>(null);
-
   const isSunday = new Date().getDay() === 0;
   const thisWeekSunday = (() => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return dayKey(d); })();
   const reviewPending = isSunday && lastWeeklyReview !== thisWeekSunday;
@@ -574,33 +566,12 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                           const bank = exerciseMap.get(exId);
                           const displayName = String(bank?.name || ex.name || 'Ejercicio');
 
-                          function openPopout(e: React.MouseEvent) {
+                          // Hoy es tablero: el detalle del ejercicio (con video y
+                          // técnica) vive en Entrenamiento. Tocar el ejercicio aquí
+                          // lleva allá en vez de abrir un popout duplicado.
+                          function goToTraining(e: React.MouseEvent) {
                             e.stopPropagation();
-                            const fallback: Exercise = {
-                              id: exId,
-                              name: String(ex.name || 'Ejercicio'),
-                              emoji: '💪',
-                              desc: '',
-                              muscleGroup: 'cuerpo-completo',
-                              equipment: ['gym'],
-                              goals: ['hipertrofia'],
-                              type: 'compuesto',
-                              difficulty: 'intermedio',
-                              defaultSets: 3,
-                              defaultReps: '10',
-                              defaultRest: 60,
-                              steps: [],
-                            };
-                            setSelectedExercise({
-                              exercise: bank || fallback,
-                              planData: {
-                                sets: typeof ex.sets === 'number' ? ex.sets : parseInt(String(ex.sets)) || 3,
-                                reps: String(ex.reps || '10'),
-                                rest: typeof ex.rest === 'number' ? ex.rest : parseInt(String(ex.rest)) || 60,
-                                tip_personalizado: (ex.tip_personalizado as string | undefined) || (ex.tip as string | undefined),
-                              },
-                              index: i,
-                            });
+                            onNav('entrenamiento');
                           }
 
                           const exCheckKey = `${today}-${exId}`;
@@ -610,7 +581,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                               <button
                                 type="button"
                                 className={`th3-card-list-name${exDone ? ' done' : ''}`}
-                                onClick={openPopout}
+                                onClick={goToTraining}
                               >
                                 {displayName}
                               </button>
@@ -861,15 +832,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           mealTime={foodLogTarget.time}
           mealIndex={foodLogTarget.index}
           onClose={() => setFoodLogTarget(null)}
-        />
-      )}
-
-      {/* ── Exercise detail popout (read-only desde L2 sunset) ── */}
-      {selectedExercise && (
-        <ExerciseDetailPopout
-          exercise={selectedExercise.exercise}
-          planData={selectedExercise.planData}
-          onClose={() => setSelectedExercise(null)}
         />
       )}
 
