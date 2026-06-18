@@ -975,11 +975,24 @@
 
 /* Botón "Ver técnica" dentro del player → abre el popout de specs sin salir
    del entrenamiento (integra specs + registro de series en un solo flujo). */
+/* Fila músculo·dificultad + botón "Ver técnica" a la derecha (acción secundaria
+   limpia arriba del nombre, en vez de flotando bajo él). */
+.wp-ex-microrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.wp-ex-microrow .wp-ex-micro {
+  margin: 0;
+}
+
 .wp-ex-technique {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 10px;
+  flex-shrink: 0;
   padding: 7px 14px;
   border: 1px solid rgba(201, 169, 104, 0.45);
   border-radius: 999px;

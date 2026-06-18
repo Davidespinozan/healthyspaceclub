@@ -573,18 +573,20 @@ export default function WorkoutPlayer({
                 </span>
               </div>
             )}
-            <p className="wp-ex-micro">
-              {currentBank?.muscleGroup ? translateMuscle(currentBank.muscleGroup, t) : ''}
-              {currentBank?.muscleGroup && currentBank?.difficulty ? ' · ' : ''}
-              {currentBank?.difficulty ? translateDifficulty(currentBank.difficulty, t) : ''}
-            </p>
+            <div className="wp-ex-microrow">
+              <p className="wp-ex-micro">
+                {currentBank?.muscleGroup ? translateMuscle(currentBank.muscleGroup, t) : ''}
+                {currentBank?.muscleGroup && currentBank?.difficulty ? ' · ' : ''}
+                {currentBank?.difficulty ? translateDifficulty(currentBank.difficulty, t) : ''}
+              </p>
+              {currentBank && (
+                <button type="button" className="wp-ex-technique" onClick={() => setShowSpecs(true)}>
+                  <Info size={14} strokeWidth={2} />
+                  <span>{t('workout.seeTechnique')}</span>
+                </button>
+              )}
+            </div>
             <h2 className="wp-ex-name">{displayName}</h2>
-            {currentBank && (
-              <button type="button" className="wp-ex-technique" onClick={() => setShowSpecs(true)}>
-                <Info size={14} strokeWidth={2} />
-                <span>{t('workout.seeTechnique')}</span>
-              </button>
-            )}
             {variant?.notes && (
               <p className="wp-ex-notes">{variant.notes}</p>
             )}
