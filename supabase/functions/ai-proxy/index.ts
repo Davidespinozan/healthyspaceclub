@@ -96,21 +96,25 @@ Deno.serve(async (req: Request) => {
   const userEmail = (user.email ?? '').toLowerCase();
   const isAdminByEmail = adminEmails.includes(userEmail);
 
-  // ── 2. Leer perfil (plan + admin + trial) ───────────────────
+  // ── 2. Leer perfil (plan + admin) ───────────────────────────
+  // El acceso a IA se gatea por el estado REAL de Stripe (subscription_status),
+  // NO por el trial local (user_plan/trial_ends_at), que se expiraba solo sin
+  // mirar Stripe y devolvía 402 "trial expirado" con una suscripción activa.
   const { data: profile } = await supabaseAdmin
     .from('user_profiles')
-    .select('user_plan, is_admin, trial_ends_at')
+    .select('subscription_status, is_admin')
     .eq('user_id', user.id)
     .maybeSingle();
 
   // Admin si CUALQUIERA de los dos caminos aplica: email en env var O flag en DB.
   const isAdmin = isAdminByEmail || profile?.is_admin === true;
 
+  const subStatus = (profile?.subscription_status ?? 'none') as UserPlan;
   const access: UserAccess = {
     userId: user.id,
-    plan: (profile?.user_plan ?? 'none') as UserPlan,
+    plan: subStatus, // 'none' | 'trial' | 'pro' — mismo enum que los límites
     isAdmin,
-    trialEndsAt: profile?.trial_ends_at ?? null,
+    trialEndsAt: null, // Stripe es autoritativo: el fin de trial lo refleja el status, no una fecha local
   };
 
   console.log(JSON.stringify({
@@ -119,7 +123,7 @@ Deno.serve(async (req: Request) => {
     action: 'rate_limit_check',
     is_admin: isAdmin,
     admin_source: isAdminByEmail ? 'email_env' : (profile?.is_admin ? 'db_flag' : 'none'),
-    plan: profile?.user_plan ?? 'none',
+    plan: subStatus,
   }));
 
   // ── 3. Rate limit ───────────────────────────────────────────
