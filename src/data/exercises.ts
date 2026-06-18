@@ -225,33 +225,6 @@ export const exercises: Exercise[] = [
     category: '3 series',
     bg: 'linear-gradient(135deg,#EDE9E0,#E0D9CA)',
   },
-  {
-    id: 'pec-deck',
-    emoji: '💪',
-    name: 'Pec Deck',
-    desc: 'Brazos abiertos contrayendo pecho — aislamiento puro con máquina.',
-    muscleGroup: 'pecho',
-    equipment: ['gym'],
-    goals: ['hipertrofia'],
-    type: 'aislamiento',
-    difficulty: 'principiante',
-    defaultSets: 3,
-    defaultReps: '12-15',
-    defaultRest: 60,
-    steps: [
-      { title: 'Ajuste', desc: 'Ajusta el asiento para que las manos queden a la altura de los pezones.' },
-      { title: 'Posición inicial', desc: 'Espalda apoyada, escápulas retraídas, antebrazos apoyados en pads.' },
-      { title: 'Cierre', desc: 'Junta los pads frente al pecho contrayendo 1 segundo.' },
-      { title: 'Apertura', desc: 'Abre controlado hasta sentir estiramiento, sin sobrepasar el plano del torso.' },
-    ],
-    tip: 'Apta para drop sets y fallo seguro — sin riesgo de soltar peso encima.',
-    variants: [
-      { id: 'pec-deck-sentado', name: 'Sentado', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Versión estándar — la mayoría de gyms tiene esta máquina.' },
-      { id: 'pec-deck-cruces-polea', name: 'Cruces en polea', equipment: ['gym'], difficulty: 'intermedio', notes: 'Sustituto en gyms sin pec deck — más demanda de estabilización.' },
-    ],
-    category: '3 series',
-    bg: 'linear-gradient(135deg,#EDE9E0,#E0D9CA)',
-  },
 
   // ══════════════════════════════════════════════════════════════
   // ESPALDA (9 patrones)
