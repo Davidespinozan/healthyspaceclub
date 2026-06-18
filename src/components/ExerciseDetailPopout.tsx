@@ -59,11 +59,13 @@ export default function ExerciseDetailPopout({
         return;
       }
       try {
-        // UN ejercicio = TODAS sus variantes en scroll. Traemos los videos del
-        // patrón base Y de todas sus variantes, y los mostramos como carrusel
-        // (cada uno etiquetado con el nombre de su variante: "En Smith", "En
-        // máquina"…). La variante que tocaría por equipo se muestra primero.
-        const variantIds = exercise.variants?.map(v => v.id) ?? [];
+        // Carrusel de variantes en scroll, PERO acorde al equipo del usuario:
+        // en gym los implementos son intercambiables (se ven todas las de gym);
+        // en casa/ligas solo las de ese equipo (no le mostramos máquina a quien
+        // entrena en casa). Si no se pasa equipo, se muestran todas.
+        const variantIds = (exercise.variants ?? [])
+          .filter(v => !userEquipment || v.equipment.some(e => userEquipment.includes(e)))
+          .map(v => v.id);
         const ids = [exercise.id, ...variantIds];
         const { data, error } = await supabase
           .from('exercise_videos')

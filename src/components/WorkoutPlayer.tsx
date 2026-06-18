@@ -248,12 +248,15 @@ export default function WorkoutPlayer({
     if (!exId) return;
     (async () => {
       try {
-        // El MOVIMIENTO manda, no el equipo: buscamos el video entre el patrón
-        // base Y TODAS sus variantes. Preferimos el de la variante elegida por
-        // equipo; si esa no tiene, el del base; si tampoco, CUALQUIER variante
-        // del mismo movimiento (hacer aperturas con mancuernas ≈ con máquina).
-        const variantIds = (currentBank?.variants ?? []).map(v => v.id);
-        const ids = [exId, ...variantIds];
+        // Video acorde al EQUIPO del usuario:
+        // - En gym los implementos (barra/mancuerna/máquina) son intercambiables
+        //   → cualquier variante de gym sirve (el movimiento manda).
+        // - En casa/ligas NO: solo variantes que coincidan con su equipo (no le
+        //   mostramos un video de máquina a quien entrena en casa).
+        const matchEquip = (currentBank?.variants ?? [])
+          .filter(v => v.equipment.some(e => userEquipment.includes(e)))
+          .map(v => v.id);
+        const ids = [exId, ...matchEquip];
         const { data } = await supabase
           .from('exercise_videos')
           .select('exercise_id, video_url, display_order')

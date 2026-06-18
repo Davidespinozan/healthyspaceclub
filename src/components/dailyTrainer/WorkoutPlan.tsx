@@ -113,7 +113,12 @@ export default function WorkoutPlan({
       .map(e => {
         const ex = exerciseMap.get(e.id);
         const v = ex ? selectVariantForEquipment(ex, [selectedEquipment]) : null;
-        const variantIds = ex?.variants?.map(vv => vv.id) ?? [];
+        // Solo variantes que coinciden con el equipo elegido: en gym los
+        // implementos son intercambiables; en casa/ligas no se muestra el video
+        // de otro equipo (peso corporal ve peso corporal, ligas ve ligas).
+        const variantIds = (ex?.variants ?? [])
+          .filter(vv => vv.equipment.includes(selectedEquipment))
+          .map(vv => vv.id);
         return { baseId: e.id, varId: v?.id, variantIds };
       })
       .filter(p => p.baseId);
