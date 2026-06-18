@@ -41,6 +41,7 @@ export const exercises: Exercise[] = [
       { id: 'press-horizontal-flexiones', name: 'Flexiones', equipment: ['cuerpo'], difficulty: 'principiante', defaultSets: 4, defaultReps: '12-15', defaultRest: 60, notes: 'Sin equipo. Mantén core firme — la cadera no debe hundirse.' },
       { id: 'press-horizontal-flexiones-declinadas', name: 'Flexiones declinadas', equipment: ['cuerpo'], difficulty: 'intermedio', defaultSets: 4, defaultReps: '10-12', defaultRest: 60, notes: 'Pies elevados en silla o banco - mayor estrés en pecho superior.' },
       { id: 'press-horizontal-maquina', name: 'En máquina', equipment: ['gym'], difficulty: 'principiante', notes: 'Chest press sentado — trayectoria guiada, ideal para principiantes o alto volumen sin spotter.' },
+      { id: 'press-horizontal-maquina-neutral', name: 'En máquina (agarre neutro)', equipment: ['gym'], difficulty: 'principiante', notes: 'Agarre neutro (palmas enfrentadas) — más énfasis en tríceps que en pecho. Cómodo para hombros sensibles.' },
       { id: 'press-horizontal-mancuernas-piso', name: 'Floor press mancuernas', equipment: ['gym'], difficulty: 'intermedio', notes: 'Acostado en el piso — el rango se limita al tocar codos, protege el hombro y enfatiza el bloqueo de tríceps.' },
     ],
     category: '4 series',
