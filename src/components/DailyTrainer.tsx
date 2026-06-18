@@ -587,6 +587,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     void saveDailyWorkout(null as any).catch(() => {});
   }
 
+  // Red de seguridad anti-pantalla-en-blanco: si por cualquier transición quedó
+  // phase='plan' sin plan, lo tratamos como 'modality' (el wizard) en vez de
+  // caer en `return null` (blanco). Bulletproof, pase lo que pase.
+  const safePhase = phase === 'plan' && !plan ? 'modality' : phase;
+
   // ══════════════════════════════════════════════════════════════
   // RENDER: GENERATING
   // ══════════════════════════════════════════════════════════════
@@ -642,10 +647,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // Extraído a src/components/dailyTrainer/Wizard.tsx en DT-B.
   // ══════════════════════════════════════════════════════════════
 
-  if (phase === 'modality' || phase === 'physical' || phase === 'logistics') {
+  if (safePhase === 'modality' || safePhase === 'physical' || safePhase === 'logistics') {
     return (
       <Wizard
-        phase={phase}
+        phase={safePhase}
         setPhase={setPhase}
         firstName={firstName}
         todayDayName={todayDayName}
