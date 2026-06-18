@@ -577,10 +577,14 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   function handleRegenerate() {
     if (regenBlocked) return;
     // Don't increment here — increment AFTER successful generation
+    // ORDEN IMPORTA: cambiamos de fase ANTES de limpiar el plan y de tocar el
+    // store. saveDailyWorkout hace un set() al que DailyTrainer está suscrito y
+    // fuerza un re-render síncrono; si phase siguiera en 'plan' con plan=null,
+    // el render caería en `return null` → pantalla en blanco.
+    setPhase('modality');
     setPlan(null);
     // clear: fire-and-forget (no bloquea el volver a selección de modalidad).
     void saveDailyWorkout(null as any).catch(() => {});
-    setPhase('modality');
   }
 
   // ══════════════════════════════════════════════════════════════

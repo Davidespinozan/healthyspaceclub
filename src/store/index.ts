@@ -948,10 +948,29 @@ export const useAppStore = create<AppState>()(
   saveDailyWorkout: async (plan) => {
     const generatedAt = new Date().toISOString();
     const date = generatedAt.split('T')[0];
+
+    // Limpiar (plan falsy): dejamos dailyWorkout en null, NO un objeto
+    // malformado { date, plan:null } — ese objeto truncado hacía que
+    // consumidores que esperan dailyWorkout.plan tronaran (pantalla en blanco).
+    if (!plan) {
+      set({ dailyWorkout: null });
+      const uid = get().user?.id;
+      if (uid) {
+        await supabase
+          .from('user_profiles')
+          .upsert(
+            { user_id: uid, daily_workout: null, daily_workout_updated_at: generatedAt, updated_at: generatedAt },
+            { onConflict: 'user_id' },
+          )
+          .then(({ error }) => { if (error) console.error('[saveDailyWorkout] clear failed:', error); });
+      }
+      return;
+    }
+
     // Estampamos el idioma actual en el plan: así sabemos en qué idioma se
     // generó la prosa IA (calentamiento/nota/tips) y podemos avisar si el user
     // cambia de idioma después (texto mezclado).
-    const planStamped = plan ? { ...plan, lang: get().language } : plan;
+    const planStamped = { ...plan, lang: get().language };
     set({ dailyWorkout: { date, plan: planStamped, generatedAt } });
 
     const userId = get().user?.id;
