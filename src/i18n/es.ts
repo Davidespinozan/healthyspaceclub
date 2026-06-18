@@ -361,6 +361,7 @@ export const es = {
     kgTotal: 'kg total',
     cooldown: 'Enfriamiento',
     warmup: 'Calentamiento',
+    warmupCta: 'Listo, a entrenar',
     whyToday: 'Por qué hoy',
     startWorkout: 'comenzar entrenamiento',
     finish: 'Terminar',

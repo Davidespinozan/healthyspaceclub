@@ -33,7 +33,7 @@ import './workout-player.css';
 // con toda la info (lista, tips, calentamiento, POR QUÉ HOY, enfriamiento).
 // El player abre directo en 'exercise'. Si hay resume state, se detecta
 // en el useEffect de mount (no en una pantalla intermedia).
-type PlayerPhase = 'exercise' | 'paused' | 'completed';
+type PlayerPhase = 'warmup' | 'exercise' | 'paused' | 'completed';
 
 interface Props {
   workout: CachedWorkout;
@@ -128,7 +128,12 @@ export default function WorkoutPlayer({
   }, []);
 
   // ── State
-  const [phase, setPhase] = useState<PlayerPhase>('exercise');
+  // Arranque GUIADO: si hay calentamiento y NO estamos retomando una sesión,
+  // la primera pantalla es el calentamiento (antes vivía en la vista previa del
+  // plan, que saturaba). Si se retoma, vamos directo a ejercicio.
+  const [phase, setPhase] = useState<PlayerPhase>(
+    () => (!savedProgress && (workout as CachedWorkout).warmup ? 'warmup' : 'exercise'),
+  );
   const [shareOpen, setShareOpen] = useState(false);
   const [showSpecs, setShowSpecs] = useState(false); // popout de técnica/specs encima del player
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
@@ -138,7 +143,7 @@ export default function WorkoutPlayer({
   const [restState, setRestState] = useState<{ secondsLeft: number } | null>(null);
   const [editingSet, setEditingSet] = useState<{ exerciseIndex: number; setIndex: number } | null>(null);
   const [editValues, setEditValues] = useState<LoggedSet>({ reps: 0, kg: 0 });
-  const [startedAt] = useState<number>(() => savedProgress?.startedAt ?? Date.now());
+  const [startedAt, setStartedAt] = useState<number>(() => savedProgress?.startedAt ?? Date.now());
   const [pausedFromPhase, setPausedFromPhase] = useState<PlayerPhase | null>(null);
   // Cronómetro de sesión (segundos desde el inicio). Tiempo de reloj — coincide
   // con la duración que se registra al terminar (computeSessionStats usa now-startedAt).
@@ -406,6 +411,14 @@ export default function WorkoutPlayer({
     onComplete(payload);
   }
 
+  // Calentamiento → ejercicios. Reiniciamos el cronómetro aquí para no contar el
+  // tiempo de lectura del calentamiento dentro de la duración del entrenamiento.
+  function startExercises() {
+    haptics.tap();
+    setStartedAt(Date.now());
+    setPhase('exercise');
+  }
+
   function handlePause() {
     if (phase === 'paused') {
       setPhase(pausedFromPhase || 'exercise');
@@ -451,7 +464,9 @@ export default function WorkoutPlayer({
         <div className="wp-header-title">
           {phase === 'completed'
             ? <em>{t('workout.completed')}</em>
-            : <>{t('workout.exercise')} {currentBlockNumber} <span className="wp-header-of">{t('workout.of')}</span> {totalBlocks}</>}
+            : phase === 'warmup'
+              ? <em>{t('workout.warmup')}</em>
+              : <>{t('workout.exercise')} {currentBlockNumber} <span className="wp-header-of">{t('workout.of')}</span> {totalBlocks}</>}
         </div>
         <div className="wp-header-counter">
           {phase === 'exercise' || phase === 'paused' ? (
@@ -476,6 +491,19 @@ export default function WorkoutPlayer({
       {phase === 'exercise' && (
         <div className="wp-progress-bar">
           <div className="wp-progress-bar-fill" style={{ width: `${progressPct}%` }} />
+        </div>
+      )}
+
+      {/* ── PHASE: WARMUP (calentamiento guiado, antes de los ejercicios) ── */}
+      {phase === 'warmup' && (
+        <div className="wp-prep">
+          <div className="wp-prep-card">
+            <div className="wp-prep-section-label">{t('workout.warmup')}</div>
+            <p className="wp-prep-section-text">{(workout as CachedWorkout).warmup}</p>
+            <button className="wp-cta" onClick={startExercises}>
+              {t('workout.warmupCta')}
+            </button>
+          </div>
         </div>
       )}
 

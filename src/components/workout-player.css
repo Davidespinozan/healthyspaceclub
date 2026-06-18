@@ -994,3 +994,30 @@
 }
 .wp-ex-technique:active { transform: scale(0.96); }
 .wp-ex-technique svg { flex-shrink: 0; }
+
+/* ── Pantalla de calentamiento guiado (primera del player, antes era info que
+   saturaba la vista previa del plan) ── */
+.wp-prep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 24px 20px;
+}
+.wp-prep-card {
+  width: 100%;
+  max-width: 460px;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 2px solid var(--wp-amber);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  padding: 22px 22px 24px;
+  box-shadow: var(--shadow-pro-sm);
+}
+.wp-prep-card .wp-prep-section-text {
+  font-size: 15px;
+  margin-bottom: 22px;
+}
+.wp-prep-card .wp-cta {
+  width: 100%;
+}

@@ -228,12 +228,8 @@ export default function WorkoutPlan({
         </div>
       )}
 
-      {plan.warmup && (
-        <div className="dt2-section">
-          <div className="dt2-section-label">{t('workout.warmup')}</div>
-          <p className="dt2-section-text">{plan.warmup}</p>
-        </div>
-      )}
+      {/* Calentamiento y enfriamiento se MUESTRAN dentro del player (flujo guiado),
+          ya no en la vista previa — saturaba con info que no se retiene parado. */}
 
       {plan.exercises.length > 0 && (() => {
         type PlanEx = typeof plan.exercises[number];
@@ -288,37 +284,16 @@ export default function WorkoutPlan({
               </div>
               <div className="dt2-ex-body">
                 <div className="dt2-ex-name">{bank?.name || ex.id}</div>
-                {plan.partnerMode ? (
-                  <>
-                    <div className="dt2-ex-stats">
-                      {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
-                        <span className="dt2-ex-muscle">{t(MUSCLE_LABEL_KEY[bank.muscleGroup])}</span>
-                      )}
-                      {ex.format && PARTNER_FMT_KEY[ex.format] && (
-                        <span className="dt2-ex-fmt">{t(PARTNER_FMT_KEY[ex.format])}</span>
-                      )}
-                      <span className="dt2-ex-dot">·</span>
-                      <span>{ex.rest}s {t('workout.statRest')}</span>
-                    </div>
-                    <div className="dt2-ex-prows">
-                      <span className="dt2-ex-prow">
-                        <b>{t('workout.partnerYou')}</b> {ex.sets} × {ex.reps}
-                      </span>
-                      <span className="dt2-ex-prow dt2-ex-prow--b">
-                        <b>{plan.partnerName}</b> {ex.sets} × {ex.repsB || ex.reps}
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="dt2-ex-stats">
-                    {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
-                      <span className="dt2-ex-muscle">{t(MUSCLE_LABEL_KEY[bank.muscleGroup])}</span>
-                    )}
-                    <span>{ex.sets} × {ex.reps}</span>
-                    <span className="dt2-ex-dot">·</span>
-                    <span>{ex.rest}s {t('workout.statRest')}</span>
-                  </div>
-                )}
+                {/* Vista previa COMPACTA: solo músculo (+ formato en pareja). Las
+                    series/reps/descanso se ven por ejercicio dentro del player. */}
+                <div className="dt2-ex-stats">
+                  {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
+                    <span className="dt2-ex-muscle">{t(MUSCLE_LABEL_KEY[bank.muscleGroup])}</span>
+                  )}
+                  {plan.partnerMode && ex.format && PARTNER_FMT_KEY[ex.format] && (
+                    <span className="dt2-ex-fmt">{t(PARTNER_FMT_KEY[ex.format])}</span>
+                  )}
+                </div>
               </div>
               <ChevronRight size={14} className="dt2-ex-arrow" />
             </div>
@@ -354,13 +329,6 @@ export default function WorkoutPlan({
           </div>
         );
       })()}
-
-      {plan.cooldown && (
-        <div className="dt2-section">
-          <div className="dt2-section-label">{t('workout.cooldown')}</div>
-          <p className="dt2-section-text">{plan.cooldown}</p>
-        </div>
-      )}
 
       {plan.note && (
         <div className="dt2-note">

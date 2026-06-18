@@ -362,6 +362,7 @@ export const en: Translations<typeof es> = {
     kgTotal: 'total kg',
     cooldown: 'Cooldown',
     warmup: 'Warm-up',
+    warmupCta: "Ready, let's train",
     whyToday: 'Why today',
     startWorkout: 'start workout',
     finish: 'Finish',
