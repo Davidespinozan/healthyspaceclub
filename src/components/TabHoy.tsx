@@ -56,12 +56,15 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     dailyHSMResponses,
     lastStreakMilestone, setLastStreakMilestone,
     hsmProfile, setHSMProfile,
-    userPlan, trialEndsAt,
+    subscriptionStatus,
     username,
   } = useAppStore();
 
-  const isPlanActive = userPlan && userPlan !== 'none' &&
-    (!trialEndsAt || new Date(trialEndsAt) > new Date());
+  // Acceso real = estado de Stripe (subscriptionStatus), NO el trial local
+  // (userPlan/trialEndsAt), que se expira solo sin mirar Stripe y desincronizaba
+  // (mostraba "trial expirado" con una suscripción activa). El dashboard ya solo
+  // monta con suscripción válida, así que aquí siempre es true salvo edge.
+  const isPlanActive = subscriptionStatus !== 'none';
 
   // Banco de ejercicios + comidas + HSM localizados (i18n contenido).
   const exerciseBank = getExercises(locale);

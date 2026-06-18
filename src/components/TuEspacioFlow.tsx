@@ -14,9 +14,9 @@ interface Props {
 
 export default function TuEspacioFlow({ onClose }: Props) {
   const { t, locale } = useT();
-  const { dailyHSMResponses, addHSMResponse, userPlan, trialEndsAt, markActiveDay } = useAppStore();
-  const isPlanActive = userPlan && userPlan !== 'none' &&
-    (!trialEndsAt || new Date(trialEndsAt) > new Date());
+  const { dailyHSMResponses, addHSMResponse, subscriptionStatus, markActiveDay } = useAppStore();
+  // Acceso real = Stripe (subscriptionStatus), no el trial local desincronizado.
+  const isPlanActive = subscriptionStatus !== 'none';
 
   // HSM bank localizado (i18n contenido).
   const HSM_BANK = getHSMBank(locale);

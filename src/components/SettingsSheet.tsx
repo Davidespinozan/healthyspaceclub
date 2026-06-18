@@ -39,7 +39,10 @@ interface Props {
 }
 
 export default function SettingsSheet({ open, onClose }: Props) {
-  const { userPlan, trialEndsAt, obData, tdee, planGoal, logout } = useAppStore();
+  // Plan/prueba desde el estado REAL de Stripe (subscriptionStatus/PeriodEnd),
+  // no del trial local (userPlan/trialEndsAt), que se expiraba solo y mostraba
+  // "prueba expirada" aunque la suscripción siguiera activa.
+  const { subscriptionStatus, subscriptionPeriodEnd, obData, tdee, planGoal, logout } = useAppStore();
   const user = useAppStore(s => s.user);
   const language = useAppStore(s => s.language);
   const setLanguage = useAppStore(s => s.setLanguage);
@@ -104,14 +107,16 @@ export default function SettingsSheet({ open, onClose }: Props) {
   }
 
   function trialDaysLeft(): number | null {
-    if (!trialEndsAt) return null;
-    const ms = new Date(trialEndsAt).getTime() - Date.now();
+    // Solo aplica en trial real de Stripe; los días se miden contra el fin de
+    // periodo (subscriptionPeriodEnd), igual que la pantalla "Mi Plan".
+    if (subscriptionStatus !== 'trial' || !subscriptionPeriodEnd) return null;
+    const ms = new Date(subscriptionPeriodEnd).getTime() - Date.now();
     if (ms <= 0) return 0;
     return Math.ceil(ms / 86400000);
   }
 
   function planLabel(): string {
-    switch (userPlan) {
+    switch (subscriptionStatus) {
       case 'pro': return t('settings.planPro');
       case 'trial': return t('settings.planTrial');
       case 'none':
