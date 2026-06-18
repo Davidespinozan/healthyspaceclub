@@ -237,22 +237,27 @@ export default function WorkoutPlayer({
     if (bankVideo) { setCurrentVideoUrl(bankVideo); return; }
     setCurrentVideoUrl(null);
     const exId = currentBank?.id;
+    const varId = variant?.id;
     if (!exId) return;
     (async () => {
       try {
+        // Busca el video de la VARIANTE seleccionada primero (cada variante puede
+        // tener su demo: barra/máquina/mancuernas…); si no hay, cae al patrón base.
+        const ids = varId ? [varId, exId] : [exId];
         const { data } = await supabase
           .from('exercise_videos')
-          .select('video_url')
-          .eq('exercise_id', exId)
-          .order('display_order', { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        if (active && data?.video_url) setCurrentVideoUrl(data.video_url);
+          .select('exercise_id, video_url, display_order')
+          .in('exercise_id', ids)
+          .order('display_order', { ascending: true });
+        if (!active || !data) return;
+        const row = (varId && data.find(r => r.exercise_id === varId))
+          || data.find(r => r.exercise_id === exId);
+        if (row?.video_url) setCurrentVideoUrl(row.video_url);
       } catch { /* noop */ }
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentBank?.id]);
+  }, [currentBank?.id, variant?.id]);
 
   // Cronómetro de sesión: tick cada segundo mientras se entrena (o en pausa, para
   // que coincida con la duración de reloj que se guarda al terminar).

@@ -24,6 +24,7 @@ import {
   groupLoggedSetsByExercise,
   type ExerciseLogItem,
 } from '../../utils/workoutLogger';
+import { selectVariantForEquipment } from '../../utils/workoutPlanner';
 import type {
   Exercise,
   Equipment,
@@ -104,9 +105,17 @@ export default function WorkoutPlan({
   const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
 
   // Mini-preview de video por ejercicio (reemplaza el ícono de pesa donde haya).
+  // Usa el video de la VARIANTE que tocaría por equipo; si no hay, el del base.
   const [videoByEx, setVideoByEx] = useState<Record<string, string>>({});
   useEffect(() => {
-    const ids = Array.from(new Set(plan.exercises.map(e => e.id).filter(Boolean)));
+    const pairs = plan.exercises
+      .map(e => {
+        const ex = exerciseMap.get(e.id);
+        const v = ex ? selectVariantForEquipment(ex, [selectedEquipment]) : null;
+        return { baseId: e.id, varId: v?.id };
+      })
+      .filter(p => p.baseId);
+    const ids = Array.from(new Set(pairs.flatMap(p => (p.varId ? [p.varId, p.baseId] : [p.baseId]))));
     if (ids.length === 0) return;
     let active = true;
     (async () => {
@@ -117,16 +126,21 @@ export default function WorkoutPlan({
           .in('exercise_id', ids)
           .order('display_order', { ascending: true });
         if (!active || !data) return;
-        const map: Record<string, string> = {};
+        const byId: Record<string, string> = {};
         for (const row of data as { exercise_id: string; video_url: string }[]) {
-          if (!map[row.exercise_id]) map[row.exercise_id] = row.video_url;
+          if (!byId[row.exercise_id]) byId[row.exercise_id] = row.video_url;
+        }
+        const map: Record<string, string> = {};
+        for (const p of pairs) {
+          const url = (p.varId && byId[p.varId]) || byId[p.baseId];
+          if (url) map[p.baseId] = url;
         }
         setVideoByEx(map);
       } catch { /* noop */ }
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan.exercises.map(e => e.id).join(',')]);
+  }, [plan.exercises.map(e => e.id).join(','), selectedEquipment]);
 
   return (
     <div className="wz-root">

@@ -52,14 +52,18 @@ export default function ExerciseDetailPopout({
         return;
       }
       try {
+        // Prefiere el video de la variante específica; si no hay, el del patrón base.
+        const ids = variant?.id ? [variant.id, exercise.id] : [exercise.id];
         const { data, error } = await supabase
           .from('exercise_videos')
-          .select('video_url, label, display_order')
-          .eq('exercise_id', exercise.id)
+          .select('exercise_id, video_url, label, display_order')
+          .in('exercise_id', ids)
           .order('display_order', { ascending: true });
 
         if (!error && data && data.length > 0) {
-          setVideos(data.map(v => ({ url: v.video_url, label: v.label || t('workout.execution') })));
+          const varRows = variant?.id ? data.filter(v => v.exercise_id === variant.id) : [];
+          const rows = varRows.length > 0 ? varRows : data.filter(v => v.exercise_id === exercise.id);
+          setVideos(rows.map(v => ({ url: v.video_url, label: v.label || t('workout.execution') })));
         }
       } catch (e) {
         console.warn('[popout] video fetch failed:', e);
@@ -68,7 +72,8 @@ export default function ExerciseDetailPopout({
       }
     }
     loadVideos();
-  }, [exercise.id, exercise.videos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exercise.id, exercise.videos, variant?.id]);
 
   // Close on ESC + arrow keys
   useEffect(() => {
