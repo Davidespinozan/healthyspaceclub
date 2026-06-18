@@ -23,7 +23,7 @@ export const exercisesEn: Record<string, ExerciseOverlay> = {
   'pec-deck': { name: 'Pec Deck', desc: 'Arms closing in to contract the chest — pure isolation on a machine.', tip: 'Great for drop sets and safe failure — no risk of dropping weight on yourself.' },
   // ── ESPALDA ──
   'traccion-vertical-pesada': { name: 'Pull-up', desc: 'Pulling your body up to the bar from above — the king of back patterns.', tip: "If you can't do 5 clean pull-ups, start with assistance (band or machine) or negatives." },
-  'traccion-vertical-polea': { name: 'Lat Pulldown', desc: 'Pulling weight down from above on a cable — a progressive alternative to pull-ups.', tip: "Don't swing your torso — if you need to, the weight is too heavy." },
+  'traccion-vertical-polea': { name: 'Vertical Pull', desc: 'Pulling from overhead — pull-ups or lat pulldown. The king of back patterns.', tip: "Don't swing your torso — if you need to, the weight is too heavy." },
   'remo-horizontal-pesado': { name: 'Bent-Over Row', desc: 'Pulling weight toward your abdomen — mass and thickness for the whole back.', tip: 'If your lower back rounds you’ve lost the pattern — drop the weight until you can keep a neutral spine.' },
   'remo-unilateral': { name: 'Single-Arm Row', desc: 'Pulling weight one side at a time toward the hip — corrects asymmetries and deep recruitment.', tip: 'Don’t rotate your torso to "help" — if you do, the weight is too heavy or you’re fatigued.' },
   'remo-invertido': { name: 'Inverted Row', desc: 'Row with the body suspended — the bodyweight equivalent of the bent-over row.', tip: 'More horizontal = harder. Start with a high bar and lower it as you progress.' },
@@ -68,6 +68,8 @@ export const exercisesEn: Record<string, ExerciseOverlay> = {
   'good-morning': { name: 'Good Morning', desc: 'Hip hinge with a bar on the shoulders — posterior-chain strength.', tip: 'Start with VERY light weight — the forward torso looks easy but the leverage is brutal.' },
   'patada-gluteo': { name: 'Glute Kickback', desc: 'Unilateral hip extension on all fours — pure glute isolation.', tip: 'Don’t arch your back — the movement is only at the hip, the spine stays neutral.' },
   'abduccion-cadera': { name: 'Hip Abduction', desc: 'Moving the leg away from the center — glute medius isolation.', tip: 'Lean your torso slightly forward to target the glute medius more than the TFL.' },
+  'aduccion-cadera': { name: 'Hip Adduction', desc: 'Bringing the legs together against resistance — isolates the adductors (inner thigh).', tip: 'Full range and controlled negative — the adductors respond to stretch under tension.' },
+  'elevacion-talones': { name: 'Calf Raise', desc: 'Pushing through the forefoot to build the calves (gastrocnemius and soleus).', tip: 'Pause 1 second at the top and lower with full range — the calf needs tension through the whole path.' },
   'caminata-lateral-monstruo': { name: 'Lateral Walk / Monster Walk', desc: 'Side steps under band tension — glute medius activation.', tip: 'Great before leg or lower-body training — wakes up the glute medius to stabilize the hip.' },
   // ── CORE ──
   'anti-extension-isometrica': { name: 'Isometric Anti-Extension', desc: 'Holding the body in a straight line resisting lumbar extension — the base of core stability.', tip: 'If you only hold 15 seconds with perfect form, that beats 60 with a sagging hip.' },
@@ -303,6 +305,14 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Caminadora': 'Treadmill',
+  'Elíptica': 'Elliptical',
+  'Trap bar': 'Trap bar',
+  'Máquina de pie': 'Standing machine',
+  'Floor press mancuernas': 'Dumbbell floor press',
+  'Sentado agarre neutro': 'Seated neutral grip',
+  'Sentado agarre prono': 'Seated pronated grip',
+  'En máquina (dip assist)': 'Machine (dip assist)',
   'Ab wheel (de pie)': 'Ab wheel (standing)',
   'Ab wheel (rodillas)': 'Ab wheel (knees)',
   'Acostado en máquina': 'Lying on machine',
