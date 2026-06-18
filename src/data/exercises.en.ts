@@ -69,6 +69,7 @@ export const exercisesEn: Record<string, ExerciseOverlay> = {
   'patada-gluteo': { name: 'Glute Kickback', desc: 'Unilateral hip extension on all fours — pure glute isolation.', tip: 'Don’t arch your back — the movement is only at the hip, the spine stays neutral.' },
   'abduccion-cadera': { name: 'Hip Abduction', desc: 'Moving the leg away from the center — glute medius isolation.', tip: 'Lean your torso slightly forward to target the glute medius more than the TFL.' },
   'aduccion-cadera': { name: 'Hip Adduction', desc: 'Bringing the legs together against resistance — isolates the adductors (inner thigh).', tip: 'Full range and controlled negative — the adductors respond to stretch under tension.' },
+  'hiperextension-gluteo': { name: 'Glute Hyperextension', desc: 'Hip extension on a 45° bench with a rounded back — targets the glutes (not the lower back).', tip: 'Round your upper back slightly and focus on pushing with the glute — if you feel your lower back, you are doing a back extension instead.' },
   'elevacion-talones': { name: 'Calf Raise', desc: 'Pushing through the forefoot to build the calves (gastrocnemius and soleus).', tip: 'Pause 1 second at the top and lower with full range — the calf needs tension through the whole path.' },
   'caminata-lateral-monstruo': { name: 'Lateral Walk / Monster Walk', desc: 'Side steps under band tension — glute medius activation.', tip: 'Great before leg or lower-body training — wakes up the glute medius to stabilize the hip.' },
   // ── CORE ──
