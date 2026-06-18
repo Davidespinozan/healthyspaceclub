@@ -59,8 +59,12 @@ export default function ExerciseDetailPopout({
         return;
       }
       try {
-        // Prefiere el video de la variante específica; si no hay, el del patrón base.
-        const ids = variant?.id ? [variant.id, exercise.id] : [exercise.id];
+        // UN ejercicio = TODAS sus variantes en scroll. Traemos los videos del
+        // patrón base Y de todas sus variantes, y los mostramos como carrusel
+        // (cada uno etiquetado con el nombre de su variante: "En Smith", "En
+        // máquina"…). La variante que tocaría por equipo se muestra primero.
+        const variantIds = exercise.variants?.map(v => v.id) ?? [];
+        const ids = [exercise.id, ...variantIds];
         const { data, error } = await supabase
           .from('exercise_videos')
           .select('exercise_id, video_url, label, display_order')
@@ -68,9 +72,14 @@ export default function ExerciseDetailPopout({
           .order('display_order', { ascending: true });
 
         if (!error && data && data.length > 0) {
-          const varRows = variant?.id ? data.filter(v => v.exercise_id === variant.id) : [];
-          const rows = varRows.length > 0 ? varRows : data.filter(v => v.exercise_id === exercise.id);
-          setVideos(rows.map(v => ({ url: v.video_url, label: v.label || t('workout.execution') })));
+          const nameOf = (exid: string) =>
+            exercise.variants?.find(v => v.id === exid)?.name;
+          const rows = [...data].sort((a, b) =>
+            (a.exercise_id === variant?.id ? -1 : 0) - (b.exercise_id === variant?.id ? -1 : 0));
+          setVideos(rows.map(v => ({
+            url: v.video_url,
+            label: nameOf(v.exercise_id) || v.label || t('workout.execution'),
+          })));
         }
       } catch (e) {
         console.warn('[popout] video fetch failed:', e);
