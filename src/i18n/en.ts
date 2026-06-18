@@ -327,6 +327,7 @@ export const en: Translations<typeof es> = {
     resultAnalysisDone: 'Analysis complete',
   },
   workout: {
+    seeTechnique: 'See technique',
     dayTypeUpper: 'Upper body',
     dayTypeLower: 'Lower body',
     dayTypeFullBody: 'Full body',

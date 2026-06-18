@@ -1,8 +1,9 @@
 import { dayKey } from '../utils/localDate';
 import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera } from 'lucide-react';
+import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera, Info } from 'lucide-react';
 import CreatePostModal from './CreatePostModal';
+import ExerciseDetailPopout from './ExerciseDetailPopout';
 import { translateMuscle, translateDifficulty } from '../utils/exerciseMeta';
 import { haptics } from '../utils/haptics';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -129,6 +130,7 @@ export default function WorkoutPlayer({
   // ── State
   const [phase, setPhase] = useState<PlayerPhase>('exercise');
   const [shareOpen, setShareOpen] = useState(false);
+  const [showSpecs, setShowSpecs] = useState(false); // popout de técnica/specs encima del player
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
   const [videoAspect, setVideoAspect] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState(() => savedProgress?.currentStep ?? 0);
@@ -278,6 +280,7 @@ export default function WorkoutPlayer({
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (showSpecs) return; // el popout de técnica maneja su propio ESC
         if (editingSet) { saveEditSet(); return; }
         handleExit();
       }
@@ -285,7 +288,7 @@ export default function WorkoutPlayer({
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, editingSet]);
+  }, [phase, editingSet, showSpecs]);
 
   // ── localStorage autosave (shape v2 — currentStep + store 2D).
   useEffect(() => {
@@ -541,6 +544,12 @@ export default function WorkoutPlayer({
               {currentBank?.difficulty ? translateDifficulty(currentBank.difficulty, t) : ''}
             </p>
             <h2 className="wp-ex-name">{displayName}</h2>
+            {currentBank && (
+              <button type="button" className="wp-ex-technique" onClick={() => setShowSpecs(true)}>
+                <Info size={14} strokeWidth={2} />
+                <span>{t('workout.seeTechnique')}</span>
+              </button>
+            )}
             {variant?.notes && (
               <p className="wp-ex-notes">{variant.notes}</p>
             )}
@@ -686,6 +695,22 @@ export default function WorkoutPlayer({
         onClose={() => setShareOpen(false)}
         context={{ kind: 'workout' }}
       />
+
+      {/* Specs/técnica del ejercicio actual SIN salir del entrenamiento —
+          mismo popout que en Hoy/plan, una sola fuente de verdad. */}
+      {showSpecs && currentBank && currentEx && (
+        <ExerciseDetailPopout
+          exercise={currentBank}
+          planData={{
+            sets: totalSetsForCurrent,
+            reps: currentEx.reps,
+            rest: currentEx.rest,
+            tip_personalizado: currentEx.tip_personalizado,
+          }}
+          userEquipment={userEquipment}
+          onClose={() => setShowSpecs(false)}
+        />
+      )}
 
       {/* Rest bar flotante (no-bloqueante, sticky bottom) */}
       {phase === 'exercise' && restState && (

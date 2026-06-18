@@ -326,6 +326,7 @@ export const es = {
     resultAnalysisDone: 'Análisis completo',
   },
   workout: {
+    seeTechnique: 'Ver técnica',
     dayTypeUpper: 'Tren superior',
     dayTypeLower: 'Tren inferior',
     dayTypeFullBody: 'Cuerpo completo',

@@ -972,3 +972,25 @@
   .wp-active,
   .wp-rest-bar { animation: none; }
 }
+
+/* Botón "Ver técnica" dentro del player → abre el popout de specs sin salir
+   del entrenamiento (integra specs + registro de series en un solo flujo). */
+.wp-ex-technique {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 7px 14px;
+  border: 1px solid rgba(201, 169, 104, 0.45);
+  border-radius: 999px;
+  background: rgba(201, 169, 104, 0.10);
+  color: #A8864E;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.wp-ex-technique:active { transform: scale(0.96); }
+.wp-ex-technique svg { flex-shrink: 0; }
