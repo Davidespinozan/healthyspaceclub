@@ -104,18 +104,20 @@ export default function WorkoutPlan({
   const playerStartedAtRef = useRef<number>(0);
   const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
 
-  // Mini-preview de video por ejercicio (reemplaza el ícono de pesa donde haya).
-  // Usa el video de la VARIANTE que tocaría por equipo; si no hay, el del base.
+  // Mini-preview de video por ejercicio. El MOVIMIENTO manda: preferimos la
+  // variante por equipo, luego el base, y si no hay, CUALQUIER variante del mismo
+  // movimiento (así casi siempre se ve un demo, aunque no sea exacto al equipo).
   const [videoByEx, setVideoByEx] = useState<Record<string, string>>({});
   useEffect(() => {
     const pairs = plan.exercises
       .map(e => {
         const ex = exerciseMap.get(e.id);
         const v = ex ? selectVariantForEquipment(ex, [selectedEquipment]) : null;
-        return { baseId: e.id, varId: v?.id };
+        const variantIds = ex?.variants?.map(vv => vv.id) ?? [];
+        return { baseId: e.id, varId: v?.id, variantIds };
       })
       .filter(p => p.baseId);
-    const ids = Array.from(new Set(pairs.flatMap(p => (p.varId ? [p.varId, p.baseId] : [p.baseId]))));
+    const ids = Array.from(new Set(pairs.flatMap(p => [p.baseId, ...p.variantIds])));
     if (ids.length === 0) return;
     let active = true;
     (async () => {
@@ -132,7 +134,8 @@ export default function WorkoutPlan({
         }
         const map: Record<string, string> = {};
         for (const p of pairs) {
-          const url = (p.varId && byId[p.varId]) || byId[p.baseId];
+          const url = (p.varId && byId[p.varId]) || byId[p.baseId]
+            || p.variantIds.map(id => byId[id]).find(Boolean);
           if (url) map[p.baseId] = url;
         }
         setVideoByEx(map);

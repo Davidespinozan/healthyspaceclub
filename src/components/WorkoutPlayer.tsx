@@ -248,17 +248,21 @@ export default function WorkoutPlayer({
     if (!exId) return;
     (async () => {
       try {
-        // Busca el video de la VARIANTE seleccionada primero (cada variante puede
-        // tener su demo: barra/máquina/mancuernas…); si no hay, cae al patrón base.
-        const ids = varId ? [varId, exId] : [exId];
+        // El MOVIMIENTO manda, no el equipo: buscamos el video entre el patrón
+        // base Y TODAS sus variantes. Preferimos el de la variante elegida por
+        // equipo; si esa no tiene, el del base; si tampoco, CUALQUIER variante
+        // del mismo movimiento (hacer aperturas con mancuernas ≈ con máquina).
+        const variantIds = (currentBank?.variants ?? []).map(v => v.id);
+        const ids = [exId, ...variantIds];
         const { data } = await supabase
           .from('exercise_videos')
           .select('exercise_id, video_url, display_order')
           .in('exercise_id', ids)
           .order('display_order', { ascending: true });
-        if (!active || !data) return;
+        if (!active || !data || data.length === 0) return;
         const row = (varId && data.find(r => r.exercise_id === varId))
-          || data.find(r => r.exercise_id === exId);
+          || data.find(r => r.exercise_id === exId)
+          || data[0];
         if (row?.video_url) setCurrentVideoUrl(row.video_url);
       } catch { /* noop */ }
     })();
