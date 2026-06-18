@@ -9,7 +9,10 @@
   background: rgba(21, 51, 48, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 9999;
+  /* 10020 para quedar SOBRE el player de entrenamiento (z-index 10000 y sus
+     capas hasta 10010) cuando se abre "Ver técnica" desde adentro. En Hoy/plan
+     queda igual por encima del contenido normal. */
+  z-index: 10020;
   display: flex;
   align-items: flex-end;
   justify-content: center;
