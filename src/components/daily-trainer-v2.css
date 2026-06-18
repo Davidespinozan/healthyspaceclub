@@ -188,15 +188,15 @@
 
 .dt2-ex-emoji {
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
+  width: 63px;
+  height: 63px;
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(191, 160, 101, 0.22), rgba(168, 134, 78, 0.14));
   color: var(--amber-deep);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 26px;
   overflow: hidden;
 }
 .dt2-ex-video {
@@ -674,9 +674,9 @@
     gap: 10px;
   }
   .dt2-ex-emoji {
-    width: 34px;
-    height: 34px;
-    font-size: 15px;
+    width: 51px;
+    height: 51px;
+    font-size: 22px;
   }
   .dt2-ex-name {
     font-size: 12px;
