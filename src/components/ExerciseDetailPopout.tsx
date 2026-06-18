@@ -19,6 +19,10 @@ interface Props {
   };
   /** Equipo del usuario. Si se provee y el ejercicio tiene variantes, se muestra la variante específica. */
   userEquipment?: Equipment[];
+  /** Modo compacto (desde el player de entrenamiento): sin video, sin stats ni
+   *  descripción — solo la técnica (pasos + tips), porque el player ya muestra
+   *  el video y las series/reps/descanso. */
+  compact?: boolean;
   onClose: () => void;
 }
 
@@ -26,6 +30,7 @@ export default function ExerciseDetailPopout({
   exercise,
   planData,
   userEquipment,
+  compact = false,
   onClose,
 }: Props) {
   const { t } = useT();
@@ -47,6 +52,8 @@ export default function ExerciseDetailPopout({
   // Load videos from Supabase if not in bank
   useEffect(() => {
     async function loadVideos() {
+      // Compacto: no mostramos video → ni siquiera lo buscamos.
+      if (compact) { setLoading(false); return; }
       if (exercise.videos && exercise.videos.length > 0) {
         setLoading(false);
         return;
@@ -148,12 +155,14 @@ export default function ExerciseDetailPopout({
 
   return createPortal(
     <div className="edp-backdrop" onClick={onClose}>
-      <div className="edp-modal" onClick={e => e.stopPropagation()}>
+      <div className={`edp-modal${compact ? ' edp-modal--compact' : ''}`} onClick={e => e.stopPropagation()}>
         <button className="edp-close" onClick={onClose} aria-label={t('exerciseDetail.close')}>
           <X size={18} />
         </button>
 
-        {/* ── Hero: video carousel or fallback ── */}
+        {/* ── Hero: video carousel or fallback. En compacto NO se renderiza
+            (el player ya muestra el video). ── */}
+        {!compact && (
         <div
           className="edp-hero"
           onTouchStart={onTouchStart}
@@ -273,6 +282,7 @@ export default function ExerciseDetailPopout({
             </div>
           )}
         </div>
+        )}
 
         {/* ── Body ── */}
         <div className="edp-body">
@@ -280,12 +290,13 @@ export default function ExerciseDetailPopout({
             {translateMuscle(exercise.muscleGroup, t)} · {translateDifficulty(exercise.difficulty, t)}
           </p>
           <h2 className="edp-name">{displayName}</h2>
-          <p className="edp-desc">{exercise.desc}</p>
+          {!compact && <p className="edp-desc">{exercise.desc}</p>}
           {variant?.notes && (
             <p className="edp-variant-notes">{variant.notes}</p>
           )}
 
-          {/* Stats row */}
+          {/* Stats row — oculta en compacto: el player ya muestra series/reps/descanso. */}
+          {!compact && (
           <div className="edp-stats">
             <div className="edp-stat">
               <div className="edp-stat-val">{planData.sets}</div>
@@ -300,6 +311,7 @@ export default function ExerciseDetailPopout({
               <div className="edp-stat-lbl">{t('workout.statRest')}</div>
             </div>
           </div>
+          )}
 
           {/* Personalized tip */}
           {planData.tip_personalizado && (

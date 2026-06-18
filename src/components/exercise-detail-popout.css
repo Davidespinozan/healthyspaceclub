@@ -606,3 +606,9 @@
   }
 }
 
+
+/* Modo compacto (desde el player "Ver técnica"): sin hero/video. El botón de
+   cerrar ya no flota sobre el video, así que damos espacio arriba al cuerpo. */
+.edp-modal--compact .edp-body {
+  padding-top: 58px;
+}

@@ -708,6 +708,7 @@ export default function WorkoutPlayer({
             tip_personalizado: currentEx.tip_personalizado,
           }}
           userEquipment={userEquipment}
+          compact
           onClose={() => setShowSpecs(false)}
         />
       )}
