@@ -13,6 +13,19 @@ import './styles/wizard.css'
 // NOTA: el build iOS nativo de Capacitor NO corre service worker (assets
 // empaquetados, sin server.url) — se actualiza por rebuild + App Store. Acá
 // `registerSW` simplemente no registra nada en ese entorno y no estorba.
+// Recarga explícita cuando el SW nuevo toma control. vite-plugin-pwa hace esto
+// internamente vía `controllerchange`, pero en desktop a veces no dispara la
+// recarga (su listener se registra tarde / el evento ya ocurrió) → el botón
+// "Recargar" no hacía nada. Registramos NUESTRO listener primero.
+let swRefreshing = false
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (swRefreshing) return
+    swRefreshing = true
+    window.location.reload()
+  })
+}
+
 const updateSW = registerSW({
   onNeedRefresh() {
     useAppStore.getState().setUpdateReady(true)
@@ -35,7 +48,14 @@ const updateSW = registerSW({
     window.addEventListener('online', check)
   },
 })
-useAppStore.getState().setTriggerUpdate(() => { updateSW(true) })
+useAppStore.getState().setTriggerUpdate(() => {
+  // skipWaiting + activa el SW nuevo → dispara controllerchange (recarga arriba).
+  Promise.resolve(updateSW(true)).catch(() => {})
+  // Fallback: si en ~2.5s no recargó (algún desktop no dispara controllerchange
+  // del worker en waiting), forzamos recarga — el skipWaiting ya corrió, así que
+  // trae el bundle nuevo.
+  setTimeout(() => { if (!swRefreshing) window.location.reload() }, 2500)
+})
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
