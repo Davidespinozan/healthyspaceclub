@@ -315,12 +315,28 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
       // Intentar cache (para TODAS las modalidades)
       const validIds = new Set(exerciseBank.map(e => e.id));
+      const equipmentList: Equipment[] = [selectedEquipment];
+      // Un ejercicio es válido para el equipo del usuario solo si tiene una
+      // variante de ese equipo (o, en yoga, equipment del patrón). Esto evita
+      // que la IA (o un cache viejo) cuele ejercicios de máquina a alguien que
+      // entrena en casa: validateWorkout solo checa que el id exista en el
+      // banco, NO el equipo — por eso se colaban.
+      const fitsEquipment = (w: { exercises?: Array<{ id?: string }> } | null): boolean => {
+        if (!w || !Array.isArray(w.exercises)) return false;
+        return w.exercises.every(ex => {
+          const b = exerciseBank.find(e => e.id === ex.id);
+          if (!b) return false;
+          return b.isYoga
+            ? b.equipment.some(e => equipmentList.includes(e))
+            : (b.variants?.some(v => v.equipment.some(e => equipmentList.includes(e))) ?? false);
+        });
+      };
       const cached = await getCachedWorkout(configHash, schemaType);
 
       // Yoga: NO usar cache — siempre generar fresh (stretch needs fresh plan)
       if (selectedModality === 'yoga') {
         // Skip cache for yoga — fall through to generation
-      } else if (cached && validateWorkout(cached, validIds)) {
+      } else if (cached && validateWorkout(cached, validIds) && fitsEquipment(cached)) {
         // Fuerza/cardio/auto: cache válido. Reordena individuales por músculo
         // (por si fue cacheado antes de esta regla).
         cached.exercises = clusterIndividualsByMuscle(cached.exercises, exerciseBank);
@@ -409,7 +425,6 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
       // Filter by modality first, then by equipment/muscles
       const modalityFiltered = filterByModality(exerciseBank, selectedModality);
-      const equipmentList: Equipment[] = [selectedEquipment];
 
       // Sesión de pareja: el entrenador evita también los músculos que el
       // COMPAÑERO entrenó recientemente (si él hizo pierna ayer, hoy no toca).
@@ -510,7 +525,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           : undefined,
       });
 
-      if (!validateWorkout(workout, validIds)) {
+      if (!validateWorkout(workout, validIds) || !fitsEquipment(workout)) {
         throw new Error(t('wizard.genErrInvalid'));
       }
 

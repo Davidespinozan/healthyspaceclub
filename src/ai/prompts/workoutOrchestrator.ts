@@ -113,6 +113,7 @@ deben hablarle en 2da persona (tú/te/tu), sin usar su nombre, sin "el usuario".
 
 TAREA:
 1. Selecciona exactamente ${p.targetCount} IDs de la lista y ORDÉNALOS aplicando las reglas de "ORDEN DE EJERCICIOS" de arriba (agrupar con lógica en días enfocados; alternar SOLO en full body).
+   ⚠️ OBLIGATORIO: usa ÚNICAMENTE los "id" EXACTOS que aparecen en la lista de EJERCICIOS DISPONIBLES. NO inventes ids, NO uses ejercicios que no estén en la lista, NO sustituyas por equivalentes. La lista ya está filtrada por el equipo del usuario — cualquier id fuera de ella se RECHAZA.
 2. Ajusta sets/reps/rest según el goal (fuerza: reps bajas 4-6, descansos 120s; hipertrofia: 8-12 reps, 60-90s; condicion: circuito 15+ reps, 30-45s; movilidad: tiempos largos).
 3. Escribe tip_personalizado breve (máx 15 palabras) por ejercicio, dirigido al usuario en 2da persona.
 4. Escribe warmup y cooldown breves (1 oración cada uno), en 2da persona.
