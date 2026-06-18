@@ -3,8 +3,8 @@ import { exercises } from '../exercises';
 
 describe('Banco de ejercicios', () => {
   describe('Estructura general', () => {
-    it('tiene exactamente 104 entradas', () => {
-      expect(exercises).toHaveLength(104);
+    it('tiene exactamente 103 entradas', () => {
+      expect(exercises).toHaveLength(103);
     });
 
     it('cada entrada tiene los campos required del Exercise interface', () => {
@@ -100,9 +100,9 @@ describe('Banco de ejercicios', () => {
   });
 
   describe('Patrones de fuerza/cardio', () => {
-    it('tiene exactamente 69 patrones (no-yoga)', () => {
+    it('tiene exactamente 68 patrones (no-yoga)', () => {
       const patterns = exercises.filter(e => !e.isYoga);
-      expect(patterns).toHaveLength(69);
+      expect(patterns).toHaveLength(68);
     });
 
     it('cada patrón no-yoga tiene al menos 1 variante', () => {
