@@ -89,9 +89,12 @@ export function getVoiceRules(
  */
 export function getOutputLanguageDirective(locale: AppLanguage): string {
   if (locale === 'en') {
-    return '\n\nIMPORTANT: Respond to the user in natural English. The instructions above are in Spanish, but your output MUST be in English.';
+    return '\n\nIMPORTANT: Respond to the user in natural English, REGARDLESS of the language of the prior conversation. The instructions above are in Spanish, but your output MUST be in English.';
   }
-  return '';
+  // Antes esto era '' (sin directiva en español). Bug: si el historial del chat
+  // estaba en inglés, la IA seguía la conversación en inglés aunque el usuario
+  // ya hubiera cambiado a español. Ahora forzamos español explícitamente.
+  return '\n\nIMPORTANTE: Responde al usuario SIEMPRE en español natural, sin importar en qué idioma esté el historial previo de la conversación.';
 }
 
 // ────────────────────────────────────────────────────────────
