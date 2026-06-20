@@ -7574,22 +7574,32 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 /* Dos móviles lado a lado, sin empalmarse. Diferencia de tamaño sutil.
    Más separación en desktop (sobra espacio horizontal). */
-/* El móvil está inclinado → su PNG tiene mucho espacio transparente a los
-   lados. Para que los cuerpos queden a ~1cm hay que traslapar las imágenes
-   con margin negativo (solo se solapan las zonas transparentes). */
-.ll-phones { display:flex; align-items:center; justify-content:center; gap:0; }
-.ll-phone {
-  flex:0 0 auto; width:auto; height:528px;
-  filter:drop-shadow(0 30px 60px rgba(0,0,0,.55));
+/* Tres marcos CSS premium (estilo Apple) */
+.ll-phones { display:flex; align-items:center; justify-content:center; gap:18px; }
+.pf3 {
+  flex:0 0 auto; width:205px; position:relative;
+  border-radius:42px; padding:7px;
+  background:linear-gradient(155deg, #2c2c2e 0%, #121214 55%, #0a0a0b 100%);
+  box-shadow:0 40px 70px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.06);
 }
-.ll-phone--back { height:487px; opacity:.97; }   /* ~8% más chico, sutil */
-.ll-phone--front { margin-left:-110px; z-index:2; }
+.pf3--mid { width:230px; z-index:2; }
+.pf3--side { z-index:1; opacity:.97; }
+.pf3-screen {
+  position:relative; border-radius:36px; overflow:hidden; aspect-ratio:1180/2556;
+  /* Placeholder on-brand; reemplazar por captura/video real */
+  background:radial-gradient(ellipse at 50% 18%, #1d3c36 0%, #0d1f1c 72%);
+  box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.6);
+}
+.pf3-island {
+  position:absolute; top:11px; left:50%; transform:translateX(-50%);
+  width:30%; height:17px; border-radius:999px; background:#000; z-index:2;
+}
 @media (max-width:860px) {
   .ll { padding:64px 16px; }
   .ll-in { grid-template-columns:1fr; gap:36px; text-align:center; }
   .ll-sub { margin-left:auto; margin-right:auto; }
-  /* En móvil: más grandes y muy pegados */
-  .ll-phone { height:330px; }
-  .ll-phone--back { height:306px; }
-  .ll-phone--front { margin-left:-64px; }
+  .ll-phones { gap:10px; }
+  .pf3 { width:108px; border-radius:26px; padding:5px; }
+  .pf3--mid { width:122px; }
+  .pf3-island { height:11px; top:7px; }
 }

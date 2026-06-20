@@ -166,9 +166,11 @@ export default function LandingScreen() {
             <h2 className="ll-title">{t('landing.bannerTitlePre')} <em>{t('landing.bannerTitleEm')}</em></h2>
           </div>
           <div className="ll-phones" aria-hidden="true">
-            {/* Pantalla verde = placeholder; luego montamos captura/video encima */}
-            <img className="ll-phone ll-phone--back" src="/phone-mock.webp" alt="" loading="lazy" />
-            <img className="ll-phone ll-phone--front" src="/phone-mock.webp" alt="" loading="lazy" />
+            {/* Marcos CSS premium — la pantalla (.pf3-screen) queda lista para
+                montar capturas/video reales después. */}
+            <div className="pf3 pf3--side"><div className="pf3-screen"><span className="pf3-island" /></div></div>
+            <div className="pf3 pf3--mid"><div className="pf3-screen"><span className="pf3-island" /></div></div>
+            <div className="pf3 pf3--side"><div className="pf3-screen"><span className="pf3-island" /></div></div>
           </div>
         </div>
       </section>
