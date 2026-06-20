@@ -26,8 +26,8 @@
    que robaba media pantalla). Stepper + kicker ámbar + pregunta, todo dentro. */
 .wz-hero {
   background:
-    radial-gradient(120% 90% at 12% 0%, #1C3B35 0%, transparent 55%),
-    linear-gradient(155deg, #0E2521 0%, #1b3c37 52%, #102a27 100%);
+    radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%),
+    #0d1f1c;
   border-radius: var(--radius-xl);
   padding: 16px 18px 18px;
   margin-bottom: 18px;

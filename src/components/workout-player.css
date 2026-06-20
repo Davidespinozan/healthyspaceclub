@@ -20,8 +20,8 @@
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(120% 70% at 12% 0%, #1C3B35 0%, transparent 55%),
-    linear-gradient(165deg, #0E2521 0%, #1b3c37 55%, #102a27 100%);
+    radial-gradient(120% 70% at 12% 0%, #1d3c36 0%, transparent 55%),
+    #0d1f1c;
   color: var(--wp-txt);
   z-index: 10000;
   display: flex;
