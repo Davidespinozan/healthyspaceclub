@@ -149,7 +149,6 @@ export default function LandingScreen() {
               <li><Sparkles size={14} strokeWidth={2} />{t('landing.heroChip1')}</li>
               <li><Dumbbell size={14} strokeWidth={2} />{t('landing.heroChip2')}</li>
               <li><Users size={14} strokeWidth={2} />{t('landing.heroChip3')}</li>
-              <li><Smartphone size={14} strokeWidth={2} />{t('landing.heroChip4')}</li>
             </ul>
           </div>
         </div>
