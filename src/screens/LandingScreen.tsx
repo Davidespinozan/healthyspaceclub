@@ -287,6 +287,32 @@ export default function LandingScreen() {
         </div>
       </section>
 
+      {/* TRANSFORMACIONES — antes/después */}
+      <section className="trans">
+        <div className="trans-in">
+          <div className="trans-text reveal">
+            <span className="trans-kicker">{t('landing.transKicker')}</span>
+            <h2 className="trans-title">{t('landing.transTitle')}</h2>
+            <ul className="trans-list">
+              <li><CheckIcon />{t('landing.transB1')}</li>
+              <li><CheckIcon />{t('landing.transB2')}</li>
+              <li><CheckIcon />{t('landing.transB3')}</li>
+              <li><CheckIcon />{t('landing.transB4')}</li>
+            </ul>
+          </div>
+          <div className="trans-photo reveal">
+            <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/cambios.webp" alt="" loading="lazy" />
+            <span className="trans-tag trans-tag--l">{t('landing.transAntes')}</span>
+            <span className="trans-tag trans-tag--r">{t('landing.transDespues')}</span>
+          </div>
+          <div className="trans-stats reveal">
+            <div><b>{t('landing.transStat1Num')}</b><span>{t('landing.transStat1Lbl')}</span></div>
+            <div><b>{t('landing.transStat2Num')}</b><span>{t('landing.transStat2Lbl')}</span></div>
+            <div><b>{t('landing.transStat3Num')}</b><span>{t('landing.transStat3Lbl')}</span></div>
+          </div>
+        </div>
+      </section>
+
       {/* PRICING — 2 planes con precios por región */}
       <section className="pricing" id="s-pricing">
         <div className="sec-lbl reveal">{t('landing.pricingLbl')}</div>
