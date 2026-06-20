@@ -28,7 +28,11 @@ if ('serviceWorker' in navigator) {
 
 const updateSW = registerSW({
   onNeedRefresh() {
-    useAppStore.getState().setUpdateReady(true)
+    // Auto-actualización: en cuanto se detecta una versión nueva, aplicamos el
+    // SW (skipWaiting) y recargamos solos — sin banner ni botón. El controllerchange
+    // de arriba dispara la recarga; el setTimeout es respaldo para desktop.
+    Promise.resolve(updateSW(true)).catch(() => {})
+    setTimeout(() => { if (!swRefreshing) window.location.reload() }, 3000)
   },
   onRegisteredSW(_swUrl, r) {
     if (!r) return
