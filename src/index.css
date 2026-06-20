@@ -600,7 +600,11 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
   .hero-phones { display:none; }
   .hero-bg-img { object-fit:cover; object-position:center; }
   .hero-scrim { background:none; }
-  .hero--dark .hero-content { max-width:100%; text-align:left; }
+  /* Móvil: todo centrado y título en mayúsculas */
+  .hero--dark .hero-content { max-width:100%; text-align:center; }
+  .hero--dark .hero-content .hero-btns { justify-content:center; }
+  .hero--dark .hero-chips { justify-content:center; }
+  .hero h1 { text-transform:uppercase; }
 }
 .hero-badge-center {
   grid-column:1 / -1; display:flex; justify-content:center; margin-bottom:20px;
