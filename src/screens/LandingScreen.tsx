@@ -132,11 +132,10 @@ export default function LandingScreen() {
   // ── Hero "vivo": carrusel auto-rotativo con puntitos + swipe ──
   // Agrega más URLs aquí para que rote entre varias imágenes.
   // Placeholder: misma imagen x3 para activar el carrusel (puntitos + rotación).
-  // Cambia estas URLs por imágenes distintas cuando las tengas.
+  // Imagen cinematográfica del hero (verde profundo + dorado, comida + gym).
+  // Composición única estilo editorial — reemplaza el carrusel de fotos sueltas.
   const HERO_IMAGES = [
-    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero.webp',
-    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/workout_s1mccg.webp',
-    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp',
+    '/hero-cinematic.webp',
   ];
   const [heroSlide, setHeroSlide] = useState(0);
   const heroTouchX = useRef<number | null>(null);
