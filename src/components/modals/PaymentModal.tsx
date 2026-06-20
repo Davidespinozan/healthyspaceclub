@@ -118,7 +118,7 @@ function CycleToggle({ cycle, onChange, savingsPct }: {
   const off: React.CSSProperties = { ...base, borderColor: 'rgba(21,51,48,.18)', color: 'var(--txt2)' };
 
   return (
-    <div style={{ display: 'flex', gap: 12, margin: '2px 28px 14px' }}>
+    <div style={{ display: 'flex', gap: 12, margin: '16px 28px 16px' }}>
       <button type="button" style={cycle === 'yearly' ? on : off} onClick={() => onChange('yearly')}>
         {t('paywall.cycleYearly')}
         {savingsPct > 0 && (

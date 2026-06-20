@@ -1228,7 +1228,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 .ov { position:fixed; inset:0; background:rgba(20,36,33,.7); backdrop-filter:blur(14px); z-index:500; display:none; align-items:center; justify-content:center; padding:16px; }
 .ov.open { display:flex; }
 .pay-box { background:white; border-radius:24px; width:100%; max-width:420px; overflow:hidden; animation:popUp .35s cubic-bezier(.34,1.56,.64,1) both; box-shadow:0 50px 100px rgba(0,0,0,.28); }
-.pay-head { background:linear-gradient(135deg,var(--forest),var(--moss)); padding:22px 28px 14px; position:relative; }
+.pay-head { background:linear-gradient(135deg,var(--forest),var(--moss)); padding:22px 28px 12px; position:relative; }
 .pay-x { position:absolute; top:14px; right:14px; background:rgba(255,255,255,.15); border:none; color:white; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:.85rem; display:flex; align-items:center; justify-content:center; min-width:30px; }
 .pay-x:hover { background:rgba(255,255,255,.25); }
 .pay-plan-lbl { font-size:.66rem; font-weight:700; letter-spacing:.12em; text-transform:none; color:var(--mint); margin-bottom:5px; }
