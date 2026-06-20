@@ -579,7 +579,7 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
      de la foto ya es oscura, suficiente para que el título se lea. */
   background:none;
 }
-.hero--dark .hero-content { text-align:left; max-width:560px; }
+.hero--dark .hero-content { text-align:left; max-width:720px; }
 .hero--dark .hero-content .hero-btns { justify-content:flex-start; }
 .hero--dark .hero-chips { justify-content:flex-start; }
 .hero.hero--dark h1 .h1-accent,
