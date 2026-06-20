@@ -1222,23 +1222,23 @@ h1 em::after {
 
 /* FAQ */
 .faq {
-  padding:96px 60px; position:relative;
-  background:radial-gradient(110% 60% at 50% 0%, rgba(29,60,54,.20) 0%, transparent 52%), #050707;
+  /* Momento cálido (crema/beige del sistema interno) — descanso visual */
+  padding:96px 60px; position:relative; background:#F6F2EA;
 }
 .faq-in { max-width:980px; margin:0 auto; text-align:center; }
-.faq .sec-lbl { color:var(--amber); text-align:center; }
-.faq .sec-lbl::before { background:var(--amber); }
+.faq .sec-lbl { color:var(--terracota); text-align:center; }
+.faq .sec-lbl::before { background:var(--terracota); }
 .faq h2 {
   font-family:'Montserrat',sans-serif; font-size:clamp(2rem,3.2vw,2.4rem);
-  color:var(--cream); font-weight:700; margin-bottom:44px; text-align:center;
+  color:var(--forest); font-weight:700; margin-bottom:44px; text-align:center;
 }
-.faq h2 em { font-style:italic; color:var(--amber); }
+.faq h2 em { font-style:italic; color:var(--amber-deep, #A8864E); }
 .faq-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 48px; text-align:left; }
-.fi { border-bottom:1px solid rgba(246,242,234,.1); padding:18px 0; cursor:pointer; transition:color .3s; text-align:left; }
-.fi-q { font-size:.92rem; font-weight:600; color:var(--cream); display:flex; justify-content:space-between; align-items:center; gap:14px; min-height:44px; transition:color .2s; }
-.fi:hover .fi-q { color:var(--amber); }
-.fi-arr { color:var(--amber); transition:transform .4s cubic-bezier(.23,1,.32,1); font-size:.78rem; flex-shrink:0; }
-.fi-a { font-size:.85rem; color:rgba(255,255,255,.55); line-height:1.8; max-height:0; overflow:hidden; transition:max-height .5s cubic-bezier(.23,1,.32,1), padding .3s; }
+.fi { border-bottom:1px solid rgba(46,74,66,.12); padding:18px 0; cursor:pointer; transition:color .3s; text-align:left; }
+.fi-q { font-size:.92rem; font-weight:600; color:var(--forest); display:flex; justify-content:space-between; align-items:center; gap:14px; min-height:44px; transition:color .2s; }
+.fi:hover .fi-q { color:var(--terracota); }
+.fi-arr { color:var(--amber-deep, #A8864E); transition:transform .4s cubic-bezier(.23,1,.32,1); font-size:.78rem; flex-shrink:0; }
+.fi-a { font-size:.85rem; color:var(--txt2); line-height:1.8; max-height:0; overflow:hidden; transition:max-height .5s cubic-bezier(.23,1,.32,1), padding .3s; }
 @media (max-width:680px){ .faq-grid { grid-template-columns:1fr; gap:0; } }
 .fi.open .fi-a { max-height:240px; padding-top:14px; }
 .fi.open .fi-arr { transform:rotate(180deg); }
@@ -7668,7 +7668,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   max-width:1240px; margin:0 auto;
   display:grid; grid-template-columns:0.82fr 1.5fr 0.62fr; gap:40px; align-items:center;
 }
-.trans-kicker { font-size:.7rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--amber); }
+.trans-kicker { font-size:.7rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--terracota); }
 .trans-title { font-family:'Montserrat',sans-serif; font-weight:700; font-size:clamp(1.7rem,2.6vw,2.3rem); color:var(--cream); margin:14px 0 26px; line-height:1.1; letter-spacing:-.02em; }
 .trans-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:13px; }
 .trans-list li { display:flex; align-items:center; gap:10px; font-size:.95rem; font-weight:600; color:rgba(255,255,255,.85); }
@@ -7681,13 +7681,14 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   padding:6px 14px; border-radius:50px;
 }
 .trans-tag--l { left:14px; }
-.trans-tag--r { right:14px; color:var(--amber); border-color:rgba(191,160,101,.4); }
+.trans-tag--r { right:14px; color:var(--terracota); border-color:rgba(199,91,58,.45); }
 .trans-stats { display:flex; flex-direction:column; gap:14px; }
 .trans-stats div {
   background:rgba(255,255,255,.035);
   border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:18px 20px; text-align:center;
 }
 .trans-stats b { display:block; font-family:'Montserrat',sans-serif; font-size:1.55rem; font-weight:800; color:var(--cream); line-height:1; }
+.trans-stats div:nth-child(1) b { color:var(--terracota); }
 .trans-stats div:nth-child(2) b { color:var(--amber); }
 .trans-stats span { font-size:.68rem; color:rgba(255,255,255,.55); letter-spacing:.02em; margin-top:5px; display:block; }
 @media (max-width:980px) {
