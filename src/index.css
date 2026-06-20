@@ -599,7 +599,7 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
      la imagen llena todo el ancho y alto, completa y sin recortar nada. */
   /* Texto más abajo; imagen "bajada" (muestra su parte alta, antes oculta bajo
      el menú) y recortada de abajo para que no quede demasiado larga. */
-  .hero { align-items:flex-start; min-height:0; height:auto; aspect-ratio:1200/2430; padding:168px 24px 0; }
+  .hero { align-items:flex-start; min-height:0; height:auto; aspect-ratio:1200/2430; padding:244px 24px 0; }
   .hero-bg { left:0; }
   .hero-phones { display:none; }
   .hero-bg-img { object-fit:cover; object-position:center top; }
@@ -7538,18 +7538,22 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 /* Dos móviles lado a lado, sin empalmarse. Diferencia de tamaño sutil.
    Más separación en desktop (sobra espacio horizontal). */
-.ll-phones { display:flex; align-items:center; justify-content:center; gap:18px; }
+/* El móvil está inclinado → su PNG tiene mucho espacio transparente a los
+   lados. Para que los cuerpos queden a ~1cm hay que traslapar las imágenes
+   con margin negativo (solo se solapan las zonas transparentes). */
+.ll-phones { display:flex; align-items:center; justify-content:center; gap:0; }
 .ll-phone {
   flex:0 0 auto; width:auto; height:528px;
   filter:drop-shadow(0 30px 60px rgba(0,0,0,.55));
 }
 .ll-phone--back { height:487px; opacity:.97; }   /* ~8% más chico, sutil */
+.ll-phone--front { margin-left:-110px; z-index:2; }
 @media (max-width:860px) {
   .ll { padding:64px 16px; }
   .ll-in { grid-template-columns:1fr; gap:36px; text-align:center; }
   .ll-sub { margin-left:auto; margin-right:auto; }
-  /* En móvil: más pegados y un poco más grandes */
-  .ll-phones { gap:8px; }
+  /* En móvil: más grandes y muy pegados */
   .ll-phone { height:330px; }
   .ll-phone--back { height:306px; }
+  .ll-phone--front { margin-left:-64px; }
 }
