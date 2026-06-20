@@ -269,11 +269,8 @@ export default function LandingScreen() {
           </div>
           </div>
         </div>
-      </section>
-
-      {/* FRANJA — Lleva tu plan (logo + badges/QR) */}
-      <section className="appbanner" id="s-how">
-        <div className="appbanner-in">
+        {/* FRANJA — Lleva tu plan, panel dentro de "Un sistema completo" */}
+        <div className="appbanner-in" id="s-how">
           <img
             className="appbanner-logo"
             src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"

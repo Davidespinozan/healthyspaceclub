@@ -7501,13 +7501,13 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 /* ════════════ APP BANNER (franja) ════════════ */
 .appbanner { background:#050707; padding:0 60px 96px; }
 .appbanner-in {
-  max-width:1180px; margin:0 auto;
-  display:flex; align-items:center; gap:24px;
+  max-width:1180px; margin:52px auto 0;
+  display:flex; align-items:center; gap:24px; min-height:380px;
   background:
-    linear-gradient(90deg, rgba(5,7,7,.95) 0%, rgba(5,7,7,.74) 40%, rgba(5,7,7,.28) 72%, rgba(5,7,7,.05) 100%),
-    url("https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/seccion3.webp") center right / cover no-repeat;
+    linear-gradient(90deg, rgba(5,7,7,.95) 0%, rgba(5,7,7,.72) 38%, rgba(5,7,7,.22) 70%, rgba(5,7,7,.02) 100%),
+    url("https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/seccion3.webp") right center / cover no-repeat;
   border:1px solid rgba(255,255,255,.09);
-  border-radius:24px; padding:30px 36px; overflow:hidden;
+  border-radius:24px; padding:40px 44px; overflow:hidden;
   box-shadow:0 24px 60px rgba(8,20,18,.4);
 }
 .appbanner-logo {
@@ -7527,8 +7527,13 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   font-size:.78rem; font-weight:600; white-space:nowrap;
 }
 @media (max-width:760px) {
-  .appbanner { padding:0 22px 64px; }
-  .appbanner-in { flex-direction:column; text-align:center; gap:16px; padding:28px 24px; }
+  .appbanner-in {
+    flex-direction:column; text-align:center; gap:14px; padding:30px 22px; min-height:440px;
+    justify-content:flex-start;
+    background:
+      linear-gradient(180deg, rgba(5,7,7,.93) 0%, rgba(5,7,7,.55) 26%, rgba(5,7,7,.12) 54%, transparent 100%),
+      url("https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/seccion3.webp") center bottom / cover no-repeat;
+  }
 }
 
 /* ════════════ CTA FINAL (lenguaje del hero) ════════════ */
