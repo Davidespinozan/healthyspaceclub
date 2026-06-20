@@ -7584,8 +7584,8 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .pf-big--main { width:300px; z-index:3; }
 .pf-big--side { width:236px; z-index:1; }
-.pf-big--left  { margin-right:-18px; transform:translateY(24px) rotate(-1.5deg); }
-.pf-big--right { margin-left:-18px;  transform:translateY(24px) rotate(1.5deg); }
+.pf-big--left  { margin-right:-6px; transform:translateY(24px) rotate(-1.5deg); }
+.pf-big--right { margin-left:-6px;  transform:translateY(24px) rotate(1.5deg); }
 .pf-big-screen {
   position:relative; container-type:inline-size;
   border-radius:16.5% / 7.9%; overflow:hidden; aspect-ratio:1180/2556;
@@ -7635,11 +7635,11 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   .ll { padding:60px 16px; }
   .ll-in { grid-template-columns:1fr; gap:40px; text-align:center; }
   .ll-sub { margin-left:auto; margin-right:auto; }
-  /* 3 en fila dentro de los márgenes: un poco más grandes, más traslape */
-  .pf-big--main { width:min(170px,44vw); }
-  .pf-big--side { width:min(115px,29vw); }
-  .pf-big--left  { margin-right:-28px; transform:translateY(14px) rotate(-1.5deg); }
-  .pf-big--right { margin-left:-28px;  transform:translateY(14px) rotate(1.5deg); }
+  /* 3 en fila: laterales menos metidos (más pantalla visible), aún dentro de márgenes */
+  .pf-big--main { width:min(158px,42vw); }
+  .pf-big--side { width:min(104px,28vw); }
+  .pf-big--left  { margin-right:-20px; transform:translateY(14px) rotate(-1.5deg); }
+  .pf-big--right { margin-left:-20px;  transform:translateY(14px) rotate(1.5deg); }
 }
 
 /* ════════════ Grano cinematográfico (profundidad premium) ════════════ */
