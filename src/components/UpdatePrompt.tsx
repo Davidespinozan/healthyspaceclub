@@ -20,13 +20,18 @@ export default function UpdatePrompt() {
 
   if (!updateReady) return null;
 
+  // Toda la barra es el botón → target enorme, imposible de fallar el tap.
+  // (Antes solo la pastilla chica era clickeable: ~30px, difícil de acertar.)
   return (
-    <div className="update-prompt" role="alert">
+    <button
+      type="button"
+      className="update-prompt"
+      onClick={() => triggerUpdate?.()}
+      aria-label={`${t('update.title')} — ${t('update.cta')}`}
+    >
       <RefreshCw size={16} strokeWidth={2} className="update-prompt-icon" />
       <span className="update-prompt-text">{t('update.title')}</span>
-      <button className="update-prompt-cta" onClick={() => triggerUpdate?.()}>
-        {t('update.cta')}
-      </button>
-    </div>
+      <span className="update-prompt-cta">{t('update.cta')}</span>
+    </button>
   );
 }
