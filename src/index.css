@@ -7502,3 +7502,42 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   .finalcta { padding:44px 24px; }
   .finalcta-in { flex-direction:column; text-align:center; }
 }
+
+/* ════════════ SECCIÓN 2 — "Lleva tu plan" con móviles ════════════ */
+.ll { background:#0d1f1c; padding:84px 60px; overflow:hidden; }
+.ll-in {
+  max-width:1180px; margin:0 auto;
+  display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center;
+}
+.ll-kicker {
+  font-size:.7rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--amber); margin:0 0 16px;
+}
+.ll-title {
+  font-family:'Montserrat',sans-serif; font-weight:700;
+  font-size:clamp(1.9rem,3.2vw,2.8rem); line-height:1.1; letter-spacing:-.03em;
+  color:var(--cream); margin:0 0 18px;
+}
+.ll-title em { font-style:normal; color:var(--amber); display:block; }
+.ll-sub { font-size:1.02rem; line-height:1.7; color:rgba(255,255,255,.6); margin:0 0 24px; max-width:380px; }
+.ll-soon {
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(191,160,101,.14); border:1px solid rgba(191,160,101,.32);
+  color:var(--amber); border-radius:50px; padding:11px 18px; font-size:.8rem; font-weight:600;
+}
+.ll-phones { position:relative; min-height:540px; }
+.ll-phone {
+  position:absolute; top:50%; height:480px; width:auto;
+  filter:drop-shadow(0 30px 60px rgba(0,0,0,.55));
+}
+.ll-phone--front { left:4%; transform:translateY(-50%); z-index:2; }
+.ll-phone--back { left:34%; height:430px; transform:translateY(-48%); z-index:1; opacity:.96; }
+@media (max-width:860px) {
+  .ll { padding:64px 24px; }
+  .ll-in { grid-template-columns:1fr; gap:36px; text-align:center; }
+  .ll-sub { margin-left:auto; margin-right:auto; }
+  .ll-phones { min-height:440px; }
+  .ll-phone { height:400px; }
+  .ll-phone--front { left:50%; transform:translate(-66%,-50%); }
+  .ll-phone--back { left:50%; height:360px; transform:translate(-12%,-48%); }
+}

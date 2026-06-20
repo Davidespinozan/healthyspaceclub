@@ -104,8 +104,8 @@ export default function LandingScreen() {
           <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" />
         </div>
         <div className="nav-links">
-          <a href="#s-pillars">{t('landing.navClub')}</a>
-          <a href="#s-how">{t('landing.navHow')}</a>
+          <a href="#s-app">{t('landing.navClub')}</a>
+          <a href="#s-pillars">{t('landing.navHow')}</a>
           <a href="#s-pricing">{t('landing.navPlans')}</a>
           <a className="nav-cta" onClick={() => openAnnualCheckout()}>{t('landing.navJoin')}</a>
         </div>
@@ -118,8 +118,8 @@ export default function LandingScreen() {
       <div className={`mob-menu${mobileMenuOpen ? ' open' : ''}`}>
         <div className="mob-menu-inner">
           <LanguageToggle className="lang-toggle--mob-menu" />
-          <a href="#s-pillars" onClick={toggleMobileMenu}>{t('landing.navClub')}</a>
-          <a href="#s-how" onClick={toggleMobileMenu}>{t('landing.navHow')}</a>
+          <a href="#s-app" onClick={toggleMobileMenu}>{t('landing.navClub')}</a>
+          <a href="#s-pillars" onClick={toggleMobileMenu}>{t('landing.navHow')}</a>
           <a href="#s-pricing" onClick={toggleMobileMenu}>{t('landing.navPlans')}</a>
           <span className="mob-menu-login" onClick={() => { toggleMobileMenu(); goTo('login'); }}>{t('landing.login')}</span>
           <button className="mob-menu-cta" onClick={() => { toggleMobileMenu(); openAnnualCheckout(); }}>{t('landing.navJoinArrow')}</button>
@@ -161,6 +161,23 @@ export default function LandingScreen() {
         </a>
       </section>
 
+      {/* LLEVA TU PLAN — banner con móviles (sección 2, después del hero) */}
+      <section className="ll" id="s-app">
+        <div className="ll-in">
+          <div className="ll-text reveal">
+            <p className="ll-kicker">{t('landing.bannerKicker')}</p>
+            <h2 className="ll-title">{t('landing.bannerTitlePre')} <em>{t('landing.bannerTitleEm')}</em></h2>
+            <p className="ll-sub">{t('landing.bannerSub')}</p>
+            <span className="ll-soon"><Smartphone size={15} strokeWidth={2} />{t('landing.bannerSoon')}</span>
+          </div>
+          <div className="ll-phones" aria-hidden="true">
+            {/* Pantalla verde = placeholder; luego montamos captura/video encima */}
+            <img className="ll-phone ll-phone--back" src="/phone-mock.webp" alt="" loading="lazy" />
+            <img className="ll-phone ll-phone--front" src="/phone-mock.webp" alt="" loading="lazy" />
+          </div>
+        </div>
+      </section>
+
       {/* SISTEMA — feature row */}
       <section className="sys" id="s-pillars">
         <div className="sys-in">
@@ -187,22 +204,6 @@ export default function LandingScreen() {
               <p>{t('landing.f4Sub')}</p>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* APP BANNER */}
-      <section className="appbanner" id="s-how">
-        <div className="appbanner-in">
-          <img
-            className="appbanner-logo"
-            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
-            alt="Healthy Space Club"
-          />
-          <div className="appbanner-text">
-            <h3>{t('landing.bannerTitle')}</h3>
-            <p>{t('landing.bannerSub')}</p>
-          </div>
-          <span className="appbanner-soon"><Smartphone size={15} strokeWidth={2} />{t('landing.bannerSoon')}</span>
         </div>
       </section>
 
