@@ -685,12 +685,6 @@ h1 em::after {
   /* Mismo vignette profundo que el placeholder del iPhone (glow arriba → base muy oscura) */
   background: radial-gradient(ellipse at 50% 22%, #1d3c36 0%, #0d1f1c 70%);
 }
-.pillars::before {
-  content:''; position:absolute; inset:0;
-  background:
-    radial-gradient(ellipse at 15% 80%, rgba(191,160,101,.08) 0%, transparent 40%),
-    radial-gradient(ellipse at 85% 20%, rgba(191,160,101,.05) 0%, transparent 40%);
-}
 .pill-grid-bg {
   position:absolute; inset:0; opacity:.02;
   background-image:
@@ -1211,7 +1205,8 @@ h1 em::after {
 
 /* Footer */
 footer {
-  background:var(--forest); padding:52px 60px;
+  background: radial-gradient(120% 90% at 50% 0%, #1d3c36 0%, transparent 58%), #0d1f1c;
+  padding:52px 60px;
   display:flex; flex-direction:column; align-items:center; gap:20px;
   position:relative;
 }

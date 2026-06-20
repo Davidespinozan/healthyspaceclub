@@ -256,7 +256,6 @@ export default function LandingScreen() {
 
       {/* PILLARS */}
       <section className="pillars" id="s-pillars">
-        <div className="pill-grid-bg" />
         <div className="pillar-phones">
           <div className="pillar-phone reveal reveal-delay-1">
             <PhoneFrame label={t('landing.showPlaceholder')} />
