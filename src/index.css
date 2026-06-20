@@ -1059,9 +1059,9 @@ h1 em::after {
 /* Pricing */
 .pricing {
   padding:88px 60px; text-align:center; position:relative; overflow:hidden;
-  /* Glow amplio y elegante detrás de las tarjetas */
+  /* Glow contenido detrás de las tarjetas (sección media) */
   background:
-    radial-gradient(95% 70% at 50% 42%, rgba(29,60,54,.45) 0%, transparent 58%),
+    radial-gradient(80% 55% at 50% 46%, rgba(29,60,54,.22) 0%, transparent 55%),
     #0d1f1c;
 }
 .pricing::before {
@@ -1222,24 +1222,22 @@ h1 em::after {
 
 /* FAQ */
 .faq {
-  padding:88px 60px; position:relative;
-  background:
-    radial-gradient(120% 90% at 50% 0%, #1d3c36 0%, transparent 58%),
-    #0d1f1c;
+  /* Descanso visual: sección clara y minimalista entre las oscuras */
+  padding:96px 60px; position:relative; background:#F7F8F6;
 }
 .faq-in { max-width:660px; margin:0 auto; text-align:center; }
-.faq .sec-lbl { color:var(--amber); text-align:center; }
-.faq .sec-lbl::before { background:var(--amber); }
+.faq .sec-lbl { color:var(--amber-deep, #A8864E); text-align:center; }
+.faq .sec-lbl::before { background:var(--amber-deep, #A8864E); }
 .faq h2 {
   font-family:'Montserrat',sans-serif; font-size:clamp(2rem,3.2vw,2.4rem);
-  color:var(--cream); font-weight:700; margin-bottom:48px; text-align:center;
+  color:var(--forest); font-weight:700; margin-bottom:48px; text-align:center;
 }
-.faq h2 em { font-style:italic; color:var(--amber); }
-.fi { border-bottom:1px solid rgba(246,242,234,.08); padding:14px 0; cursor:pointer; transition:color .3s; text-align:left; }
-.fi-q { font-size:.9rem; font-weight:600; color:var(--cream); display:flex; justify-content:space-between; align-items:center; gap:14px; min-height:44px; transition:color .2s; }
-.fi:hover .fi-q { color:var(--amber); }
-.fi-arr { color:var(--amber); transition:transform .4s cubic-bezier(.23,1,.32,1); font-size:.78rem; flex-shrink:0; }
-.fi-a { font-size:.84rem; color:rgba(255,255,255,.55); line-height:1.8; max-height:0; overflow:hidden; transition:max-height .5s cubic-bezier(.23,1,.32,1), padding .3s; }
+.faq h2 em { font-style:italic; color:var(--amber-deep, #A8864E); }
+.fi { border-bottom:1px solid rgba(46,74,66,.1); padding:16px 0; cursor:pointer; transition:color .3s; text-align:left; }
+.fi-q { font-size:.9rem; font-weight:600; color:var(--forest); display:flex; justify-content:space-between; align-items:center; gap:14px; min-height:44px; transition:color .2s; }
+.fi:hover .fi-q { color:var(--moss); }
+.fi-arr { color:var(--amber-deep, #A8864E); transition:transform .4s cubic-bezier(.23,1,.32,1); font-size:.78rem; flex-shrink:0; }
+.fi-a { font-size:.84rem; color:var(--txt2); line-height:1.8; max-height:0; overflow:hidden; transition:max-height .5s cubic-bezier(.23,1,.32,1), padding .3s; }
 .fi.open .fi-a { max-height:240px; padding-top:14px; }
 .fi.open .fi-arr { transform:rotate(180deg); }
 
@@ -7457,8 +7455,9 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 
 /* ════════════ SISTEMA — feature row (oscuro premium) ════════════ */
 .sys {
+  /* Sección calmada: glow muy sutil, el peso va a las cards */
   background:
-    radial-gradient(120% 90% at 50% 0%, #1d3c36 0%, transparent 58%),
+    radial-gradient(110% 55% at 50% -10%, rgba(29,60,54,.26) 0%, transparent 50%),
     #0d1f1c;
   padding:96px 60px;
 }
@@ -7498,10 +7497,10 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .appbanner-in {
   max-width:1180px; margin:0 auto;
   display:flex; align-items:center; gap:24px;
-  background:radial-gradient(120% 180% at 12% 0%, #1d3c36 0%, transparent 55%), #0d1f1c;
+  background:radial-gradient(120% 180% at 12% 0%, rgba(29,60,54,.4) 0%, transparent 55%), #0d1f1c;
   border:1px solid #1C3B35;
   border-radius:24px; padding:30px 36px;
-  box-shadow:0 0 70px rgba(29,60,54,.14), 0 24px 60px rgba(8,20,18,.3);
+  box-shadow:0 0 40px rgba(29,60,54,.07), 0 24px 60px rgba(8,20,18,.3);
 }
 .appbanner-logo {
   width:64px; height:64px; border-radius:16px; flex-shrink:0;
@@ -7547,12 +7546,11 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 
 /* ════════════ SECCIÓN 2 — "Lleva tu plan" con móviles ════════════ */
 .ll {
-  /* Glow central detrás de los teléfonos (punto visual más fuerte tras el hero) */
+  /* Momento de impacto: foco visual fuerte y contenido detrás de los teléfonos */
   background:
-    radial-gradient(70% 80% at 74% 50%, rgba(29,60,54,.55) 0%, transparent 60%),
-    radial-gradient(120% 90% at 50% 0%, #1d3c36 0%, transparent 55%),
+    radial-gradient(56% 70% at 74% 50%, rgba(29,60,54,.92) 0%, rgba(29,60,54,.34) 40%, transparent 62%),
     #0d1f1c;
-  padding:96px 60px; overflow:hidden;
+  padding:104px 60px; overflow:hidden;
 }
 .ll-in {
   max-width:1180px; margin:0 auto;
