@@ -576,9 +576,9 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
 .hero--dark .hero-phones { position:absolute; inset:0; }
 .hero-scrim {
   position:absolute; inset:0; z-index:1; pointer-events:none;
-  background:
-    linear-gradient(100deg, rgba(8,20,18,.72) 0%, rgba(8,20,18,.4) 32%, rgba(8,20,18,0) 58%),
-    linear-gradient(0deg, rgba(8,20,18,.35) 0%, transparent 22%);
+  /* Sin velo: se respeta la oscuridad original de la imagen. La zona izquierda
+     de la foto ya es oscura, suficiente para que el título se lea. */
+  background:none;
 }
 .hero--dark .hero-content { text-align:left; max-width:560px; }
 .hero--dark .hero-content .hero-btns { justify-content:flex-start; }
