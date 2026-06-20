@@ -7517,7 +7517,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .ll { background:#0d1f1c; padding:84px 60px; overflow:hidden; }
 .ll-in {
   max-width:1180px; margin:0 auto;
-  display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center;
+  display:grid; grid-template-columns:0.82fr 1.18fr; gap:48px; align-items:center;
 }
 .ll-kicker {
   font-size:.7rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
@@ -7535,19 +7535,20 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   background:rgba(191,160,101,.14); border:1px solid rgba(191,160,101,.32);
   color:var(--amber); border-radius:50px; padding:11px 18px; font-size:.8rem; font-weight:600;
 }
-.ll-phones { position:relative; min-height:540px; }
+/* Dos móviles lado a lado, sin empalmarse. Diferencia de tamaño sutil.
+   Más separación en desktop (sobra espacio horizontal). */
+.ll-phones { display:flex; align-items:center; justify-content:center; gap:44px; }
 .ll-phone {
-  position:absolute; top:50%; height:480px; width:auto;
+  flex:0 0 auto; width:auto; height:440px;
   filter:drop-shadow(0 30px 60px rgba(0,0,0,.55));
 }
-.ll-phone--front { left:4%; transform:translateY(-50%); z-index:2; }
-.ll-phone--back { left:34%; height:430px; transform:translateY(-48%); z-index:1; opacity:.96; }
+.ll-phone--back { height:406px; opacity:.97; }   /* ~8% más chico, sutil */
 @media (max-width:860px) {
   .ll { padding:64px 24px; }
   .ll-in { grid-template-columns:1fr; gap:36px; text-align:center; }
   .ll-sub { margin-left:auto; margin-right:auto; }
-  .ll-phones { min-height:440px; }
-  .ll-phone { height:400px; }
-  .ll-phone--front { left:50%; transform:translate(-66%,-50%); }
-  .ll-phone--back { left:50%; height:360px; transform:translate(-12%,-48%); }
+  /* En móvil hay menos espacio: menos separación y móviles más chicos */
+  .ll-phones { gap:14px; }
+  .ll-phone { height:300px; }
+  .ll-phone--back { height:278px; }
 }
