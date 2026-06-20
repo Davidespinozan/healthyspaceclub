@@ -597,10 +597,11 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
      comida visible abajo. Scrim oscurece la zona alta para el texto. */
   /* La sección toma la proporción EXACTA de la imagen móvil (1200x2587) →
      la imagen llena todo el ancho y alto, completa y sin recortar nada. */
-  .hero { align-items:flex-start; min-height:0; height:auto; aspect-ratio:1200/2587; padding:118px 24px 0; }
+  /* Recorta ~1cm de abajo: sección un poco menos alta + imagen anclada arriba */
+  .hero { align-items:flex-start; min-height:0; height:auto; aspect-ratio:1200/2470; padding:118px 24px 0; }
   .hero-bg { left:0; }
   .hero-phones { display:none; }
-  .hero-bg-img { object-fit:cover; object-position:center; }
+  .hero-bg-img { object-fit:cover; object-position:center top; }
   .hero-scrim { background:none; }
   /* Móvil: todo centrado y título en mayúsculas */
   .hero--dark .hero-content { max-width:100%; text-align:center; }
