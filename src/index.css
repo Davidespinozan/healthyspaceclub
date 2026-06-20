@@ -7426,3 +7426,75 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   .pillar-phones { gap: 38px; }
   .pillar-phones .pf-device { width: min(218px, 66vw); }
 }
+
+/* ════════════ SISTEMA — feature row (sección clara) ════════════ */
+.sys { background:var(--white); padding:84px 60px; }
+.sys-in {
+  max-width:1180px; margin:0 auto;
+  display:grid; grid-template-columns:0.85fr 2.3fr; gap:56px; align-items:start;
+}
+.sys-title {
+  font-family:'Montserrat',sans-serif; font-weight:700;
+  font-size:clamp(1.7rem,2.6vw,2.3rem); letter-spacing:-.03em; line-height:1.12;
+  color:var(--forest); margin:0;
+}
+.sys-title em { font-style:italic; color:var(--amber-deep, #A8864E); }
+.sys-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:30px; }
+.sys-ic { color:var(--amber-deep, #A8864E); margin-bottom:14px; }
+.sys-feat h3 {
+  font-family:'Montserrat',sans-serif; font-size:.96rem; font-weight:700;
+  color:var(--forest); margin:0 0 8px; letter-spacing:-.01em;
+}
+.sys-feat p { font-size:.84rem; line-height:1.6; color:var(--txt2); margin:0; }
+@media (max-width:900px) {
+  .sys { padding:64px 28px; }
+  .sys-in { grid-template-columns:1fr; gap:34px; }
+  .sys-grid { grid-template-columns:repeat(2,1fr); gap:28px; }
+}
+@media (max-width:560px) { .sys-grid { grid-template-columns:1fr; } }
+
+/* ════════════ APP BANNER ════════════ */
+.appbanner { background:var(--white); padding:0 60px 84px; }
+.appbanner-in {
+  max-width:1180px; margin:0 auto;
+  display:flex; align-items:center; gap:24px;
+  background:radial-gradient(120% 180% at 12% 0%, #1d3c36 0%, transparent 55%), #0d1f1c;
+  border-radius:24px; padding:28px 36px;
+  box-shadow:0 24px 60px rgba(8,20,18,.28);
+}
+.appbanner-logo {
+  width:64px; height:64px; border-radius:16px; flex-shrink:0;
+  background:rgba(255,255,255,.05); padding:9px;
+}
+.appbanner-text { flex:1; min-width:0; }
+.appbanner-text h3 {
+  font-family:'Montserrat',sans-serif; font-size:1.16rem; font-weight:700;
+  color:var(--cream); margin:0 0 4px;
+}
+.appbanner-text p { font-size:.88rem; color:rgba(255,255,255,.55); margin:0; }
+.appbanner-soon {
+  flex-shrink:0; display:inline-flex; align-items:center; gap:8px;
+  background:rgba(191,160,101,.14); border:1px solid rgba(191,160,101,.32);
+  color:var(--amber); border-radius:50px; padding:11px 18px;
+  font-size:.78rem; font-weight:600; white-space:nowrap;
+}
+@media (max-width:760px) {
+  .appbanner { padding:0 22px 64px; }
+  .appbanner-in { flex-direction:column; text-align:center; gap:16px; padding:28px 24px; }
+}
+
+/* ════════════ CTA FINAL ════════════ */
+.finalcta { background:var(--forest); padding:56px 60px; }
+.finalcta-in {
+  max-width:1180px; margin:0 auto;
+  display:flex; align-items:center; justify-content:space-between; gap:32px; flex-wrap:wrap;
+}
+.finalcta-text h2 {
+  font-family:'Montserrat',sans-serif; font-size:clamp(1.5rem,2.4vw,2rem); font-weight:700;
+  color:var(--cream); margin:0 0 6px; letter-spacing:-.02em;
+}
+.finalcta-text p { color:rgba(255,255,255,.55); margin:0; font-size:.95rem; }
+@media (max-width:680px) {
+  .finalcta { padding:44px 24px; }
+  .finalcta-in { flex-direction:column; text-align:center; }
+}

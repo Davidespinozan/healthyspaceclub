@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
-import { ChevronDown, Sparkles, Dumbbell, Users, Smartphone } from 'lucide-react';
+import { ChevronDown, Sparkles, Dumbbell, Users, Smartphone, Brain, Salad } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { PRICING, detectRegion, type Region } from '../utils/region';
@@ -47,34 +47,6 @@ function MagneticBtn({ children, className, onClick, style }: {
     >
       {children}
     </button>
-  );
-}
-
-// ── Marco de iPhone (CSS puro, estética HSC) ───────────────────────────────
-// Soporta imagen o video en loop. Mientras no haya captura real, muestra un
-// placeholder con el ícono. Reemplazar `src`/`video` por las pantallas reales.
-function PhoneFrame({ src, video, alt = '', label }: {
-  src?: string;
-  video?: string;
-  alt?: string;
-  label?: string;
-}) {
-  return (
-    <div className="pf-device">
-      <div className="pf-screen">
-        <span className="pf-notch" aria-hidden="true" />
-        {video ? (
-          <video className="pf-shot" src={video} autoPlay muted loop playsInline preload="metadata" />
-        ) : src ? (
-          <img className="pf-shot" src={src} alt={alt} loading="lazy" />
-        ) : (
-          <div className="pf-placeholder">
-            <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png" alt="" />
-            {label && <span>{label}</span>}
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -159,14 +131,6 @@ export default function LandingScreen() {
         {/* Imagen de fondo a la derecha (full-bleed) — reemplazar por la imagen que mande David */}
         <div className="hero-bg" aria-hidden="true">
           <img className="hero-bg-img" src="/hero-cinematic.webp" alt="" loading="eager" />
-          <div className="hero-phones">
-            <div className="hero-phone hero-phone--back">
-              <PhoneFrame label={t('landing.showPlaceholder')} />
-            </div>
-            <div className="hero-phone hero-phone--front">
-              <PhoneFrame label={t('landing.showPlaceholder')} />
-            </div>
-          </div>
         </div>
         {/* Scrim: oscurece la izquierda para que el título resalte, deja ver la imagen a la derecha */}
         <div className="hero-scrim" aria-hidden="true" />
@@ -194,52 +158,48 @@ export default function LandingScreen() {
         </a>
       </section>
 
-      {/* PILLARS */}
-      <section className="pillars" id="s-pillars">
-        <div className="pillar-phones">
-          <div className="pillar-phone reveal reveal-delay-1">
-            <PhoneFrame label={t('landing.showPlaceholder')} />
-            <span className="ptag ptag-lead">{t('landing.pillar1')}</span>
-          </div>
-          <div className="pillar-phone reveal reveal-delay-2">
-            <PhoneFrame label={t('landing.showPlaceholder')} />
-            <span className="ptag ptag-lead">{t('landing.pillar2')}</span>
-          </div>
-        </div>
-
-        {/* Methodology row inside pillars section */}
-        <div className="method-row3">
-          <div className="method-col reveal reveal-delay-1">
-            <img className="method-icon" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PROGRESO.png" alt="" aria-hidden="true" />
-            <div className="method-title">{t('landing.method1Title')}</div>
-            <div className="method-sub">{t('landing.method1Sub')}</div>
-          </div>
-          <div className="method-col reveal reveal-delay-2">
-            <img className="method-icon" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/COMUNIDAD.png" alt="" aria-hidden="true" />
-            <div className="method-title">{t('landing.method2Title')}</div>
-            <div className="method-sub">{t('landing.method2Sub')}</div>
-          </div>
-          <div className="method-col reveal reveal-delay-3">
-            <img className="method-icon" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/SISTEMA.png" alt="" aria-hidden="true" />
-            <div className="method-title">{t('landing.method3Title')}</div>
-            <div className="method-sub">{t('landing.method3Sub')}</div>
+      {/* SISTEMA — feature row */}
+      <section className="sys" id="s-pillars">
+        <div className="sys-in">
+          <h2 className="sys-title">{t('landing.sysTitlePre')} <em>{t('landing.sysTitleEm')}</em> {t('landing.sysTitlePost')}</h2>
+          <div className="sys-grid">
+            <div className="sys-feat reveal reveal-delay-1">
+              <Brain className="sys-ic" size={26} strokeWidth={1.6} />
+              <h3>{t('landing.f1Title')}</h3>
+              <p>{t('landing.f1Sub')}</p>
+            </div>
+            <div className="sys-feat reveal reveal-delay-2">
+              <Dumbbell className="sys-ic" size={26} strokeWidth={1.6} />
+              <h3>{t('landing.f2Title')}</h3>
+              <p>{t('landing.f2Sub')}</p>
+            </div>
+            <div className="sys-feat reveal reveal-delay-3">
+              <Salad className="sys-ic" size={26} strokeWidth={1.6} />
+              <h3>{t('landing.f3Title')}</h3>
+              <p>{t('landing.f3Sub')}</p>
+            </div>
+            <div className="sys-feat reveal reveal-delay-4">
+              <Users className="sys-ic" size={26} strokeWidth={1.6} />
+              <h3>{t('landing.f4Title')}</h3>
+              <p>{t('landing.f4Sub')}</p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* LIFESTYLE BANNER / HOW */}
-      <section className="lifestyle-banner" id="s-how">
-        <div className="lifestyle-inner lifestyle-inner-noimg">
-          <div className="lifestyle-text-side lifestyle-center">
-            <img
-              className="lifestyle-logo"
-              src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
-              alt="Healthy Space Club"
-            />
-            <h2 className="lifestyle-statement"><span>{t('landing.statement1')}</span><span>{t('landing.statement2')}</span><em>{t('landing.statementEm')}</em></h2>
-            <MagneticBtn className="btn-lifestyle" onClick={() => openAnnualCheckout()}>{t('landing.joinToday')}</MagneticBtn>
-            <p className="lifestyle-platforms">{t('landing.platforms')}</p>
+      {/* APP BANNER */}
+      <section className="appbanner" id="s-how">
+        <div className="appbanner-in">
+          <img
+            className="appbanner-logo"
+            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
+            alt="Healthy Space Club"
+          />
+          <div className="appbanner-text">
+            <h3>{t('landing.bannerTitle')}</h3>
+            <p>{t('landing.bannerSub')}</p>
           </div>
+          <span className="appbanner-soon"><Smartphone size={15} strokeWidth={2} />{t('landing.bannerSoon')}</span>
         </div>
       </section>
 
@@ -320,6 +280,17 @@ export default function LandingScreen() {
           <FaqItem q={t('landing.faq4q')} a={t('landing.faq4a')} />
         </div>
       </div>
+
+      {/* CTA FINAL */}
+      <section className="finalcta">
+        <div className="finalcta-in">
+          <div className="finalcta-text">
+            <h2>{t('landing.ctaFinalTitle')}</h2>
+            <p>{t('landing.ctaFinalSub')}</p>
+          </div>
+          <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>{t('landing.trialCta')}</MagneticBtn>
+        </div>
+      </section>
 
       {/* FOOTER */}
       <footer>
