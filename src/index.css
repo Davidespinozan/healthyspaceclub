@@ -594,12 +594,13 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
 @media (max-width:768px) {
   /* Móvil: imagen vertical (oscuro arriba → comida abajo). Título arriba,
      comida visible abajo. Scrim oscurece la zona alta para el texto. */
-  .hero { align-items:flex-start; padding:118px 24px 80px; }
+  .hero { align-items:flex-start; padding:118px 24px 0; }
   .hero-bg { left:0; }
   .hero-phones { display:none; }
-  .hero-bg-img { object-position:center; }
+  /* Imagen móvil COMPLETA (sin recortar lados): se ve entera, edge-to-edge. */
+  .hero-bg-img { object-fit:contain; object-position:center top; }
   .hero-scrim {
-    background:linear-gradient(180deg, rgba(8,20,18,.5) 0%, rgba(8,20,18,.18) 38%, transparent 60%);
+    background:linear-gradient(180deg, rgba(8,20,18,.5) 0%, rgba(8,20,18,.18) 36%, transparent 58%);
   }
   .hero--dark .hero-content { max-width:100%; text-align:left; }
 }
