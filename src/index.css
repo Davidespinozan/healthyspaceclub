@@ -7578,9 +7578,9 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .ll-phones { display:flex; align-items:center; justify-content:center; }
 .pf-big {
   position:relative; flex:0 0 auto;
-  border-radius:14% / 6.6%; padding:2.6%;
-  background:linear-gradient(150deg, #34343a 0%, #141416 52%, #09090a 100%);
-  box-shadow:0 50px 100px rgba(0,0,0,.55), 0 16px 36px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.08);
+  border-radius:18% / 8.4%; padding:1.5%;
+  background:linear-gradient(160deg, #414146 0%, #18181b 38%, #0a0a0c 100%);
+  box-shadow:0 55px 110px rgba(0,0,0,.6), 0 16px 40px rgba(0,0,0,.42), inset 0 0 0 1px rgba(255,255,255,.12);
 }
 .pf-big--main { width:300px; z-index:3; }
 .pf-big--side { width:236px; z-index:1; }
@@ -7588,13 +7588,12 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .pf-big--right { margin-left:-18px;  transform:translateY(24px) rotate(1.5deg); }
 .pf-big-screen {
   position:relative; container-type:inline-size;
-  border-radius:13% / 6.1%; overflow:hidden; aspect-ratio:1180/2556;
-  background:linear-gradient(180deg, #102a26 0%, #0d1f1c 60%);
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.7);
+  border-radius:16.5% / 7.9%; overflow:hidden; aspect-ratio:1180/2556;
+  background:linear-gradient(180deg, #0f2622 0%, #0b1c19 55%, #0a1714 100%);
 }
 .pf-big-island {
-  position:absolute; top:4.2cqw; left:50%; transform:translateX(-50%);
-  width:30%; height:6.2cqw; border-radius:999px; background:#000; z-index:5;
+  position:absolute; top:3.2cqw; left:50%; transform:translateX(-50%);
+  width:25%; height:5.4cqw; border-radius:999px; background:#000; z-index:5;
 }
 /* UI representativa (escala con el ancho de cada pantalla vía cqw) */
 .appui { position:absolute; inset:0; display:flex; flex-direction:column; padding:14cqw 6cqw 0; font-family:'Montserrat',sans-serif; color:var(--cream); }
@@ -7604,9 +7603,9 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .appui-greet { font-size:8.5cqw; font-weight:800; letter-spacing:-.02em; line-height:1; }
 .appui-sub { font-size:3.6cqw; color:var(--amber); font-weight:600; margin-top:1.6cqw; letter-spacing:.03em; }
 .appui-card {
-  display:flex; align-items:center; gap:3.4cqw; padding:3.4cqw; margin-bottom:3.2cqw;
-  background:linear-gradient(180deg, rgba(28,59,53,.5), rgba(13,31,28,.3));
-  border:1px solid rgba(28,59,53,.85); border-radius:5.5cqw;
+  display:flex; align-items:center; gap:3.8cqw; padding:4.2cqw; margin-bottom:3.6cqw;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.08); border-radius:7cqw;
 }
 .appui-thumb { width:15cqw; height:15cqw; border-radius:4cqw; object-fit:cover; flex-shrink:0; }
 .appui-card-tx { display:flex; flex-direction:column; min-width:0; }
@@ -7617,13 +7616,13 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .appui-delta { font-size:3.8cqw; color:var(--amber); font-weight:700; margin-top:1.5cqw; }
 .appui-spark { width:100%; height:16cqw; margin:4cqw 0; display:block; }
 .appui-stats { display:flex; gap:3cqw; }
-.appui-stats div { flex:1; background:linear-gradient(180deg, rgba(28,59,53,.5), rgba(13,31,28,.3)); border:1px solid rgba(28,59,53,.85); border-radius:4.5cqw; padding:3.4cqw; }
+.appui-stats div { flex:1; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.08); border-radius:4.5cqw; padding:3.4cqw; }
 .appui-stats b { display:block; font-size:5.5cqw; font-weight:800; }
 .appui-stats span { font-size:3.2cqw; color:rgba(255,255,255,.55); }
 .appui-metric {
-  margin-top:1cqw; padding:4cqw; border-radius:5.5cqw;
-  background:linear-gradient(180deg, rgba(28,59,53,.5), rgba(13,31,28,.3));
-  border:1px solid rgba(28,59,53,.85);
+  margin-top:1cqw; padding:4cqw; border-radius:7cqw;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.08);
 }
 .appui-metric-row { display:flex; justify-content:space-between; font-size:3.4cqw; font-weight:600; margin-bottom:2.6cqw; }
 .appui-metric-row span:last-child { color:rgba(255,255,255,.55); }
