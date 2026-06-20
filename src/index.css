@@ -505,21 +505,19 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
   max-width:1240px; width:100%; position:relative; z-index:1;
 }
 .hero-content { animation:fadeUp .8s cubic-bezier(.23,1,.32,1) both; }
-.hero-img {
+/* Hero estático: escena cinematográfica + dos celulares 3D al frente */
+.hero-stage {
   position:relative; animation:fadeUp 1s cubic-bezier(.23,1,.32,1) .15s both;
-  overflow:visible;
+  perspective:1400px;
 }
-.hero-img img {
-  width:100%; height:560px; border-radius:16px; object-fit:cover;
-  box-shadow:0 40px 100px rgba(21,51,48,.2), 0 8px 32px rgba(21,51,48,.1);
-  transition:transform .8s cubic-bezier(.23,1,.32,1);
-  overflow:hidden;
+.hero-stage-bg {
+  position:relative; border-radius:20px; overflow:hidden;
+  box-shadow:0 40px 100px rgba(8,20,18,.45), 0 8px 32px rgba(8,20,18,.3);
 }
-.hero-img:hover img { transform:scale(1.02) rotate(-.3deg); }
-.hero-img::before {
-  content:''; position:absolute; top:-14px; left:-14px; right:14px; bottom:14px;
-  border:1.5px solid rgba(191,160,101,.12); border-radius:20px;
-  pointer-events:none;
+.hero-stage-bg img { display:block; width:100%; height:560px; object-fit:cover; }
+.hero-stage-bg::after {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(120deg, rgba(8,20,18,.55) 0%, rgba(8,20,18,.08) 45%, rgba(8,20,18,.4) 100%);
 }
 
 /* Spotlight que sigue el cursor (ambiente premium, solo desktop con hover). */
@@ -532,29 +530,24 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
   .hero:hover .hero-spotlight { opacity:1; }
 }
 
-/* ── Hero "vivo": carrusel (crossfade + Ken Burns + puntitos) ── */
-.hero-carousel { position:relative; height:560px; overflow:hidden; border-radius:16px;
-  box-shadow:0 40px 100px rgba(21,51,48,.2), 0 8px 32px rgba(21,51,48,.1); }
-.hero-carousel .hero-slide {
-  position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:16px;
-  opacity:0; transition:opacity 1.1s cubic-bezier(.23,1,.32,1);
-  animation:heroKenBurns 16s ease-in-out infinite alternate;
+/* Celulares 3D del hero (estáticos, en perspectiva, superpuestos) */
+.hero-phones {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  transform-style:preserve-3d; pointer-events:none;
 }
-.hero-carousel .hero-slide.is-active { opacity:1; }
-@keyframes heroKenBurns { from{transform:scale(1.04)} to{transform:scale(1.15) translate(-1.5%,-1.5%)} }
-.hero-dots {
-  position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
-  display:flex; gap:8px; z-index:4; padding:7px 12px; border-radius:999px;
-  background:rgba(21,51,48,.4); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+.hero-phone { position:absolute; filter:drop-shadow(0 30px 50px rgba(0,0,0,.55)); }
+.hero-phone .pf-device { width:206px; animation:none; }
+.hero-phone--back {
+  transform:translateX(62px) translateY(-6px) rotateY(-16deg) rotate(3deg) scale(.93);
+  z-index:1;
 }
-.hero-dot { width:8px; height:8px; border-radius:50%; border:none; padding:0; cursor:pointer;
-  background:rgba(255,255,255,.5); transition:width .3s ease, background .3s ease; -webkit-tap-highlight-color:transparent; }
-.hero-dot.is-active { background:#fff; width:22px; border-radius:4px; }
-@media (prefers-reduced-motion: reduce) { .hero-carousel .hero-slide { animation:none; } }
+.hero-phone--front {
+  transform:translateX(-58px) translateY(26px) rotateY(13deg) rotate(-3deg);
+  z-index:2;
+}
 @media (max-width:768px) {
-  .hero-carousel { height:auto; aspect-ratio:1/1; }
-  .hero-carousel .hero-slide { position:absolute !important; inset:0 !important;
-    width:100% !important; height:100% !important; border-radius:16px !important; }
+  .hero-stage-bg img { height:auto; aspect-ratio:4/3; }
+  .hero-phones { display:none; }
 }
 .hero-badge-center {
   grid-column:1 / -1; display:flex; justify-content:center; margin-bottom:20px;
