@@ -590,6 +590,8 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
   border-color:rgba(255,255,255,.14);
 }
 .hero--dark .hero-scroll { color:rgba(255,255,255,.5); }
+/* Título y kicker en mayúsculas (desktop y móvil) */
+.hero--dark h1, .hero--dark .hero-tagline { text-transform:uppercase; }
 @media (max-width:768px) {
   /* Móvil: imagen vertical (oscuro arriba → comida abajo). Título arriba,
      comida visible abajo. Scrim oscurece la zona alta para el texto. */
