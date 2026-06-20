@@ -597,11 +597,12 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
      comida visible abajo. Scrim oscurece la zona alta para el texto. */
   /* La sección toma la proporción EXACTA de la imagen móvil (1200x2587) →
      la imagen llena todo el ancho y alto, completa y sin recortar nada. */
-  /* Imagen móvil completa (proporción exacta de la imagen, sin recortar) */
-  .hero { align-items:flex-start; min-height:0; height:auto; aspect-ratio:1200/2587; padding:118px 24px 0; }
+  /* Texto más abajo; imagen "bajada" (muestra su parte alta, antes oculta bajo
+     el menú) y recortada de abajo para que no quede demasiado larga. */
+  .hero { align-items:flex-start; min-height:0; height:auto; aspect-ratio:1200/2430; padding:168px 24px 0; }
   .hero-bg { left:0; }
   .hero-phones { display:none; }
-  .hero-bg-img { object-fit:cover; object-position:center; }
+  .hero-bg-img { object-fit:cover; object-position:center top; }
   .hero-scrim { background:none; }
   /* Móvil: todo centrado y título en mayúsculas */
   .hero--dark .hero-content { max-width:100%; text-align:center; }
@@ -7517,7 +7518,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .ll { background:#0d1f1c; padding:84px 60px; overflow:hidden; }
 .ll-in {
   max-width:1180px; margin:0 auto;
-  display:grid; grid-template-columns:0.82fr 1.18fr; gap:48px; align-items:center;
+  display:grid; grid-template-columns:0.72fr 1.28fr; gap:48px; align-items:center;
 }
 .ll-kicker {
   font-size:.7rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
@@ -7537,18 +7538,18 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 /* Dos móviles lado a lado, sin empalmarse. Diferencia de tamaño sutil.
    Más separación en desktop (sobra espacio horizontal). */
-.ll-phones { display:flex; align-items:center; justify-content:center; gap:44px; }
+.ll-phones { display:flex; align-items:center; justify-content:center; gap:18px; }
 .ll-phone {
-  flex:0 0 auto; width:auto; height:440px;
+  flex:0 0 auto; width:auto; height:528px;
   filter:drop-shadow(0 30px 60px rgba(0,0,0,.55));
 }
-.ll-phone--back { height:406px; opacity:.97; }   /* ~8% más chico, sutil */
+.ll-phone--back { height:487px; opacity:.97; }   /* ~8% más chico, sutil */
 @media (max-width:860px) {
-  .ll { padding:64px 24px; }
+  .ll { padding:64px 16px; }
   .ll-in { grid-template-columns:1fr; gap:36px; text-align:center; }
   .ll-sub { margin-left:auto; margin-right:auto; }
-  /* En móvil hay menos espacio: menos separación y móviles más chicos */
-  .ll-phones { gap:14px; }
-  .ll-phone { height:300px; }
-  .ll-phone--back { height:278px; }
+  /* En móvil: más pegados y un poco más grandes */
+  .ll-phones { gap:8px; }
+  .ll-phone { height:330px; }
+  .ll-phone--back { height:306px; }
 }
