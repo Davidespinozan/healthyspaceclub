@@ -682,8 +682,10 @@ h1 em::after {
 /* Pillars */
 .pillars {
   padding:50px 60px; position:relative; overflow:hidden;
-  /* Mismo vignette profundo que el placeholder del iPhone (glow arriba → base muy oscura) */
-  background: radial-gradient(ellipse at 50% 22%, #1d3c36 0%, #0d1f1c 70%);
+  /* Plano y profundo: en una sección tan ancha el gradiente radial creaba un
+     arco visible + banding ("ondas"). El verde sólido deja que los celulares
+     (que sí llevan su propio gradiente) sean los que aporten la profundidad. */
+  background: #0d1f1c;
 }
 .pill-grid-bg {
   position:absolute; inset:0; opacity:.02;
