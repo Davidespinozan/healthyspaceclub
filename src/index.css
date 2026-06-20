@@ -579,7 +579,7 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
      de la foto ya es oscura, suficiente para que el título se lea. */
   background:none;
 }
-.hero--dark .hero-content { text-align:left; max-width:720px; }
+.hero--dark .hero-content { text-align:left; max-width:780px; }
 .hero--dark .hero-content .hero-btns { justify-content:flex-start; }
 .hero--dark .hero-chips { justify-content:flex-start; }
 .hero.hero--dark h1 .h1-accent,
@@ -609,9 +609,10 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
   .hero--dark .hero-content .hero-btns { justify-content:center; }
   .hero--dark .hero-chips { justify-content:center; }
   .hero h1, .hero-tagline { text-transform:uppercase; }
-  /* Títulos más grandes en móvil (+10% acumulado x2) */
+  /* Títulos más grandes en móvil */
   .hero-tagline { font-size:1.69rem; }
   .hero h1 { font-size:3.27rem; }
+  .hero h1 .h1-gold { white-space:normal; }
 }
 .hero-badge-center {
   grid-column:1 / -1; display:flex; justify-content:center; margin-bottom:20px;
@@ -626,7 +627,7 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
 }
 .badge::before { content:''; width:7px; height:7px; background:var(--amber); border-radius:50%; animation:pulse 2.5s infinite; box-shadow:0 0 12px rgba(191,160,101,.4); }
 .hero-tagline {
-  font-size:1.4rem; font-weight:700; letter-spacing:.18em; text-transform:none;
+  font-size:1.6rem; font-weight:700; letter-spacing:.18em; text-transform:none;
   color:var(--amber); margin-bottom:18px; text-align:center;
 }
 h1 {
@@ -660,7 +661,9 @@ h1 em::after {
   0%,100% { transform:translateY(0); opacity:.35; }
   50%     { transform:translateY(6px); opacity:.75; }
 }
-.hero h1 { font-size:clamp(2.7rem,4.6vw,4.1rem); letter-spacing:-.04em; line-height:1.02; margin-bottom:28px; }
+.hero h1 { font-size:clamp(2.9rem,5vw,4.35rem); letter-spacing:-.04em; line-height:1.02; margin-bottom:28px; }
+/* "La IA crea tu plan." siempre en una línea (desktop) */
+.hero h1 .h1-gold { white-space:nowrap; }
 .hero h1 em { color:var(--forest); }
 .hero h1 em::after { background:linear-gradient(90deg, var(--amber), rgba(191,160,101,.2)); }
 .hero h1 .h1-accent { color:var(--forest); }
