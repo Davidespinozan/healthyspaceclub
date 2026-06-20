@@ -168,17 +168,32 @@ export default function LandingScreen() {
             <h2 className="ll-title">{t('landing.bannerTitlePre')} <em>{t('landing.bannerTitleEm')}</em></h2>
           </div>
           <div className="ll-phones" aria-hidden="true">
-            {/* Teléfono principal grande con pantalla legible (UI representativa,
-                reemplazable por captura real de la app). */}
-            <div className="pf-big">
+            {/* 3 pantallas representativas (reemplazables por capturas reales). */}
+            {/* PROGRESO (lado) */}
+            <div className="pf-big pf-big--side pf-big--left">
               <div className="pf-big-screen">
                 <span className="pf-big-island" />
                 <div className="appui">
                   <div className="appui-status"><span>9:41</span><span className="appui-status-r" /></div>
-                  <div className="appui-head">
-                    <span className="appui-greet">Hoy</span>
-                    <span className="appui-sub">Tu plan del día</span>
+                  <div className="appui-head"><span className="appui-greet">Progreso</span><span className="appui-sub">Tu evolución</span></div>
+                  <div className="appui-big">72.4<small>kg</small></div>
+                  <div className="appui-delta">−2.4 kg este mes</div>
+                  <svg className="appui-spark" viewBox="0 0 100 38" preserveAspectRatio="none"><polyline points="0,30 18,26 34,28 50,18 66,20 82,9 100,6" fill="none" stroke="#C9A968" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <div className="appui-stats">
+                    <div><b>16.4%</b><span>Grasa</span></div>
+                    <div><b>62.1</b><span>Músculo</span></div>
                   </div>
+                  <div className="appui-tabs"><i /><i /><i /><i className="on" /><i /></div>
+                </div>
+              </div>
+            </div>
+            {/* HOY (principal) */}
+            <div className="pf-big pf-big--main">
+              <div className="pf-big-screen">
+                <span className="pf-big-island" />
+                <div className="appui">
+                  <div className="appui-status"><span>9:41</span><span className="appui-status-r" /></div>
+                  <div className="appui-head"><span className="appui-greet">Hoy</span><span className="appui-sub">Tu plan del día</span></div>
                   <div className="appui-card">
                     <img className="appui-thumb" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp" alt="" />
                     <div className="appui-card-tx"><b>Desayuno</b><span>Avena proteica · 410 kcal</span></div>
@@ -191,7 +206,30 @@ export default function LandingScreen() {
                     <div className="appui-metric-row"><span>Pasos</span><span>8,346 / 10,000</span></div>
                     <div className="appui-bar"><i /></div>
                   </div>
-                  <div className="appui-tabs"><i /><i /><i className="on" /><i /><i /></div>
+                  <div className="appui-tabs"><i className="on" /><i /><i /><i /><i /></div>
+                </div>
+              </div>
+            </div>
+            {/* NUTRICIÓN (lado) */}
+            <div className="pf-big pf-big--side pf-big--right">
+              <div className="pf-big-screen">
+                <span className="pf-big-island" />
+                <div className="appui">
+                  <div className="appui-status"><span>9:41</span><span className="appui-status-r" /></div>
+                  <div className="appui-head"><span className="appui-greet">Nutrición</span><span className="appui-sub">Tu plan de hoy</span></div>
+                  <div className="appui-card">
+                    <img className="appui-thumb" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp" alt="" />
+                    <div className="appui-card-tx"><b>Comida</b><span>Salmón + quinoa · 520 kcal</span></div>
+                  </div>
+                  <div className="appui-card">
+                    <img className="appui-thumb" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero.webp" alt="" />
+                    <div className="appui-card-tx"><b>Cena</b><span>Pollo + verduras · 430 kcal</span></div>
+                  </div>
+                  <div className="appui-metric">
+                    <div className="appui-metric-row"><span>Proteína</span><span>128 / 150 g</span></div>
+                    <div className="appui-bar"><i /></div>
+                  </div>
+                  <div className="appui-tabs"><i /><i className="on" /><i /><i /><i /></div>
                 </div>
               </div>
             </div>
