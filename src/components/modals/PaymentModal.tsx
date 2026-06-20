@@ -19,8 +19,21 @@ function AccountPhase({ onAuthed }: { onAuthed: (firstName: string) => void }) {
   const closeModal = useAppStore(s => s.closeModal);
   const su = useEmailSignup();
   const emailTaken = /registrad|already|exist/i.test(su.error);
+  // Confirmación de correo y contraseña (evita typos en el registro de pago).
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [matchError, setMatchError] = useState('');
 
   async function handleContinue() {
+    if (su.email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) {
+      setMatchError(t('signup.emailMismatch'));
+      return;
+    }
+    if (su.password !== confirmPassword) {
+      setMatchError(t('signup.passwordMismatch'));
+      return;
+    }
+    setMatchError('');
     const { outcome } = await su.submit();
     if (outcome === 'session') onAuthed(su.firstName);
     // 'error' / 'needs-confirmation' → su.error ya tiene el mensaje (no avanzamos).
@@ -34,10 +47,17 @@ function AccountPhase({ onAuthed }: { onAuthed: (firstName: string) => void }) {
         value={su.name} onChange={(e) => su.setName(e.target.value)} />
       <div className="pay-lbl">{t('signup.emailLabel')}</div>
       <input className="pay-inp" type="email" placeholder={t('signup.emailPlaceholder')} autoComplete="email"
-        value={su.email} onChange={(e) => su.setEmail(e.target.value)} />
+        value={su.email} onChange={(e) => { su.setEmail(e.target.value); setMatchError(''); }} />
+      <div className="pay-lbl">{t('signup.emailConfirmLabel')}</div>
+      <input className="pay-inp" type="email" placeholder={t('signup.emailConfirmPlaceholder')} autoComplete="off"
+        onPaste={(e) => e.preventDefault()}
+        value={confirmEmail} onChange={(e) => { setConfirmEmail(e.target.value); setMatchError(''); }} />
       <div className="pay-lbl">{t('signup.passwordLabel')}</div>
       <input className="pay-inp" type="password" placeholder={t('signup.passwordPlaceholder')} autoComplete="new-password"
-        value={su.password} onChange={(e) => su.setPassword(e.target.value)} />
+        value={su.password} onChange={(e) => { su.setPassword(e.target.value); setMatchError(''); }} />
+      <div className="pay-lbl">{t('signup.passwordConfirmLabel')}</div>
+      <input className="pay-inp" type="password" placeholder={t('signup.passwordConfirmPlaceholder')} autoComplete="new-password"
+        value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setMatchError(''); }} />
       <label className="signup-tos">
         <input type="checkbox" checked={su.acceptedTerms} onChange={e => su.setAcceptedTerms(e.target.checked)} />
         <span>
@@ -47,6 +67,12 @@ function AccountPhase({ onAuthed }: { onAuthed: (firstName: string) => void }) {
           <button type="button" className="signup-tos-link" onClick={() => su.setShowPrivacy(true)}>{t('signup.tosPrivacy')}</button>.
         </span>
       </label>
+
+      {matchError && (
+        <div style={{ color: '#cc3333', fontSize: '.8rem', margin: '4px 0 10px', textAlign: 'center' }}>
+          {matchError}
+        </div>
+      )}
 
       {su.error && (
         <div style={{ color: '#cc3333', fontSize: '.8rem', margin: '4px 0 10px', textAlign: 'center' }}>
@@ -92,7 +118,7 @@ function CycleToggle({ cycle, onChange, savingsPct }: {
   const off: React.CSSProperties = { ...base, borderColor: 'rgba(21,51,48,.18)', color: 'var(--txt2)' };
 
   return (
-    <div style={{ display: 'flex', gap: 12, margin: '2px 28px 12px' }}>
+    <div style={{ display: 'flex', gap: 12, margin: '2px 28px 14px' }}>
       <button type="button" style={cycle === 'yearly' ? on : off} onClick={() => onChange('yearly')}>
         {t('paywall.cycleYearly')}
         {savingsPct > 0 && (
