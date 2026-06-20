@@ -155,18 +155,21 @@ export default function LandingScreen() {
       </div>
 
       {/* HERO */}
-      <section
-        className="hero"
-        onMouseMove={e => {
-          const r = e.currentTarget.getBoundingClientRect();
-          e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
-          e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
-        }}
-      >
-        <div className="hero-spotlight" aria-hidden="true" />
-        <div className="hero-orb hero-orb-1" />
-        <div className="hero-orb hero-orb-2" />
-        <div className="hero-orb hero-orb-3" />
+      <section className="hero hero--dark">
+        {/* Imagen de fondo a la derecha (full-bleed) — reemplazar por la imagen que mande David */}
+        <div className="hero-bg" aria-hidden="true">
+          <img className="hero-bg-img" src="/hero-cinematic.webp" alt="" loading="eager" />
+          <div className="hero-phones">
+            <div className="hero-phone hero-phone--back">
+              <PhoneFrame label={t('landing.showPlaceholder')} />
+            </div>
+            <div className="hero-phone hero-phone--front">
+              <PhoneFrame label={t('landing.showPlaceholder')} />
+            </div>
+          </div>
+        </div>
+        {/* Scrim: oscurece la izquierda para que el título resalte, deja ver la imagen a la derecha */}
+        <div className="hero-scrim" aria-hidden="true" />
         <div className="hero-inner">
           <div className="hero-content">
             <p className="hero-tagline">{t('landing.heroTagline')}</p>
@@ -181,19 +184,6 @@ export default function LandingScreen() {
               <li><Users size={14} strokeWidth={2} />{t('landing.heroChip3')}</li>
               <li><Smartphone size={14} strokeWidth={2} />{t('landing.heroChip4')}</li>
             </ul>
-          </div>
-          <div className="hero-stage">
-            <div className="hero-stage-bg">
-              <img src="/hero-cinematic.webp" alt="Healthy Space Club" loading="eager" />
-            </div>
-            <div className="hero-phones" aria-hidden="true">
-              <div className="hero-phone hero-phone--back">
-                <PhoneFrame label={t('landing.showPlaceholder')} />
-              </div>
-              <div className="hero-phone hero-phone--front">
-                <PhoneFrame label={t('landing.showPlaceholder')} />
-              </div>
-            </div>
           </div>
         </div>
         <a href="#s-pillars" className="hero-scroll" aria-label={t('landing.scrollAria')}>
