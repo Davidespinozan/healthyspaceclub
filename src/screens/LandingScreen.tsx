@@ -128,9 +128,9 @@ export default function LandingScreen() {
 
       {/* HERO */}
       <section className="hero hero--dark">
-        {/* Imagen de fondo a la derecha (full-bleed) — reemplazar por la imagen que mande David */}
+        {/* Imagen de fondo full-bleed: zona oscura a la izq (título) + producto a la der */}
         <div className="hero-bg" aria-hidden="true">
-          <img className="hero-bg-img" src="/hero-cinematic.webp" alt="" loading="eager" />
+          <img className="hero-bg-img" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero%20(1).webp" alt="" loading="eager" />
         </div>
         {/* Scrim: oscurece la izquierda para que el título resalte, deja ver la imagen a la derecha */}
         <div className="hero-scrim" aria-hidden="true" />
