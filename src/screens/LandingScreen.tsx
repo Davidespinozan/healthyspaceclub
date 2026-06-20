@@ -144,7 +144,6 @@ export default function LandingScreen() {
             <div className="hero-btns">
               <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>{t('landing.trialCta')}</MagneticBtn>
             </div>
-            <p className="hero-microcopy">{t('landing.heroMicro')}</p>
             <ul className="hero-chips" aria-label="Healthy Space Club">
               <li><Salad size={14} strokeWidth={2} />{t('landing.heroChip1')}</li>
               <li><Dumbbell size={14} strokeWidth={2} />{t('landing.heroChip2')}</li>
