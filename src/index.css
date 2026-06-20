@@ -594,11 +594,12 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
 @media (max-width:768px) {
   /* Móvil: imagen vertical (oscuro arriba → comida abajo). Título arriba,
      comida visible abajo. Scrim oscurece la zona alta para el texto. */
-  .hero { align-items:flex-start; padding:118px 24px 0; }
+  /* La sección toma la proporción EXACTA de la imagen móvil (1200x2587) →
+     la imagen llena todo el ancho y alto, completa y sin recortar nada. */
+  .hero { align-items:flex-start; min-height:0; height:auto; aspect-ratio:1200/2587; padding:118px 24px 0; }
   .hero-bg { left:0; }
   .hero-phones { display:none; }
-  /* Imagen móvil COMPLETA (sin recortar lados): se ve entera, edge-to-edge. */
-  .hero-bg-img { object-fit:contain; object-position:center top; }
+  .hero-bg-img { object-fit:cover; object-position:center; }
   .hero-scrim {
     background:linear-gradient(180deg, rgba(8,20,18,.5) 0%, rgba(8,20,18,.18) 36%, transparent 58%);
   }
