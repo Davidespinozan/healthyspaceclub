@@ -520,6 +520,23 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
   background:linear-gradient(120deg, rgba(8,20,18,.55) 0%, rgba(8,20,18,.08) 45%, rgba(8,20,18,.4) 100%);
 }
 
+/* Chips de confianza del hero — atributos reales del producto */
+.hero-chips {
+  list-style:none; margin:24px 0 0; padding:0;
+  display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
+}
+.hero-chips li {
+  display:inline-flex; align-items:center; gap:7px;
+  font-size:.72rem; font-weight:600; color:var(--moss);
+  background:rgba(46,74,66,.05); border:1px solid rgba(46,74,66,.12);
+  border-radius:50px; padding:8px 14px;
+}
+.hero-chips li svg { color:var(--amber); flex-shrink:0; }
+@media (max-width:768px) {
+  .hero-chips { gap:8px; }
+  .hero-chips li { font-size:.68rem; padding:7px 12px; }
+}
+
 /* Spotlight que sigue el cursor (ambiente premium, solo desktop con hover). */
 .hero-spotlight {
   position:absolute; inset:0; z-index:0; pointer-events:none;

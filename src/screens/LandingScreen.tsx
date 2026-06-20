@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Sparkles, Dumbbell, Users, Smartphone } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { PRICING, detectRegion, type Region } from '../utils/region';
@@ -175,6 +175,12 @@ export default function LandingScreen() {
               <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>{t('landing.trialCta')}</MagneticBtn>
             </div>
             <p className="hero-microcopy">{t('landing.heroMicro')}</p>
+            <ul className="hero-chips" aria-label="Healthy Space Club">
+              <li><Sparkles size={14} strokeWidth={2} />{t('landing.heroChip1')}</li>
+              <li><Dumbbell size={14} strokeWidth={2} />{t('landing.heroChip2')}</li>
+              <li><Users size={14} strokeWidth={2} />{t('landing.heroChip3')}</li>
+              <li><Smartphone size={14} strokeWidth={2} />{t('landing.heroChip4')}</li>
+            </ul>
           </div>
           <div className="hero-stage">
             <div className="hero-stage-bg">
