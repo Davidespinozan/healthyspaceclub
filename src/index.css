@@ -7632,13 +7632,14 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .appui-tabs i { width:5.5cqw; height:5.5cqw; border-radius:2cqw; background:rgba(255,255,255,.18); }
 .appui-tabs i.on { background:var(--amber); }
 @media (max-width:860px) {
-  .ll { padding:60px 14px; }
+  .ll { padding:60px 16px; }
   .ll-in { grid-template-columns:1fr; gap:40px; text-align:center; }
   .ll-sub { margin-left:auto; margin-right:auto; }
-  .pf-big--main { width:min(190px,46vw); }
-  .pf-big--side { width:min(150px,37vw); }
-  .pf-big--left  { margin-right:-14px; transform:translateY(16px) rotate(-1.5deg); }
-  .pf-big--right { margin-left:-14px;  transform:translateY(16px) rotate(1.5deg); }
+  /* 3 en fila pero dentro de los márgenes: más chicos y con más traslape */
+  .pf-big--main { width:min(156px,43vw); }
+  .pf-big--side { width:min(106px,29vw); }
+  .pf-big--left  { margin-right:-22px; transform:translateY(14px) rotate(-1.5deg); }
+  .pf-big--right { margin-left:-22px;  transform:translateY(14px) rotate(1.5deg); }
 }
 
 /* ════════════ Grano cinematográfico (profundidad premium) ════════════ */
