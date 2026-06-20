@@ -13,10 +13,18 @@
 }
 
 .clb-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 22px 18px 14px;
+  align-items: flex-start;
+  padding: 22px 18px 22px;
+  min-height: 160px;
+  border-radius: 0 0 26px 26px;
+  overflow: hidden;
+  /* Foto de comunidad a la derecha + scrim crema a la izquierda (placeholder: pareja) */
+  background:
+    linear-gradient(95deg, #F6F2EA 0%, #F6F2EA 32%, rgba(246,242,234,.55) 52%, rgba(246,242,234,0) 76%),
+    url("/app-pareja.webp") center right / cover no-repeat;
 }
 .clb-header-right {
   display: flex;
