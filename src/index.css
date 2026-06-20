@@ -7599,7 +7599,9 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   .ll-in { grid-template-columns:1fr; gap:36px; text-align:center; }
   .ll-sub { margin-left:auto; margin-right:auto; }
   .ll-phones { gap:10px; }
-  .pf3 { width:108px; border-radius:26px; padding:5px; }
+  /* Mismas proporciones que desktop, escaladas (radio de pantalla incluido) */
+  .pf3 { width:108px; border-radius:22px; padding:4px; }
   .pf3--mid { width:122px; }
-  .pf3-island { height:11px; top:7px; }
+  .pf3-screen { border-radius:18px; }
+  .pf3-island { width:30%; height:9px; top:6px; }
 }
