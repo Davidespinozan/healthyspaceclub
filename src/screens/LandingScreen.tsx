@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
-import { ChevronDown, Sparkles, Dumbbell, Users, Smartphone, Brain, Salad } from 'lucide-react';
+import { ChevronDown, Dumbbell, Users, Smartphone, Brain, Salad } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { PRICING, detectRegion, type Region } from '../utils/region';
@@ -146,7 +146,7 @@ export default function LandingScreen() {
             </div>
             <p className="hero-microcopy">{t('landing.heroMicro')}</p>
             <ul className="hero-chips" aria-label="Healthy Space Club">
-              <li><Sparkles size={14} strokeWidth={2} />{t('landing.heroChip1')}</li>
+              <li><Salad size={14} strokeWidth={2} />{t('landing.heroChip1')}</li>
               <li><Dumbbell size={14} strokeWidth={2} />{t('landing.heroChip2')}</li>
               <li><Users size={14} strokeWidth={2} />{t('landing.heroChip3')}</li>
             </ul>
