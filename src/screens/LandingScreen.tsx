@@ -50,6 +50,34 @@ function MagneticBtn({ children, className, onClick, style }: {
   );
 }
 
+// ── Marco de iPhone (CSS puro, estética HSC) ───────────────────────────────
+// Soporta imagen o video en loop. Mientras no haya captura real, muestra un
+// placeholder con el ícono. Reemplazar `src`/`video` por las pantallas reales.
+function PhoneFrame({ src, video, alt = '', label }: {
+  src?: string;
+  video?: string;
+  alt?: string;
+  label?: string;
+}) {
+  return (
+    <div className="pf-device">
+      <div className="pf-screen">
+        <span className="pf-notch" aria-hidden="true" />
+        {video ? (
+          <video className="pf-shot" src={video} autoPlay muted loop playsInline preload="metadata" />
+        ) : src ? (
+          <img className="pf-shot" src={src} alt={alt} loading="lazy" />
+        ) : (
+          <div className="pf-placeholder">
+            <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png" alt="" />
+            {label && <span>{label}</span>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function LandingScreen() {
   const { t } = useT();
   const { openPay, goTo, mobileMenuOpen, toggleMobileMenu, region, setRegion } = useAppStore();
@@ -257,6 +285,47 @@ export default function LandingScreen() {
             <img className="method-icon" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/SISTEMA.png" alt="" aria-hidden="true" />
             <div className="method-title">{t('landing.method3Title')}</div>
             <div className="method-sub">{t('landing.method3Sub')}</div>
+          </div>
+        </div>
+      </section>
+
+      {/* APP SHOWCASE — mírala en acción (mockups de iPhone) */}
+      <section className="appshow" id="s-app">
+        <div className="sec-lbl reveal">{t('landing.showLbl')}</div>
+        <h2 className="reveal">{t('landing.showTitlePre')} <em>{t('landing.showTitleEm')}</em></h2>
+
+        <div className="appshow-rows">
+          <div className="appshow-row">
+            <div className="appshow-text reveal">
+              <span className="appshow-eyebrow">{t('landing.show1Tag')}</span>
+              <h3 className="appshow-title">{t('landing.show1Title')}</h3>
+              <p className="appshow-sub">{t('landing.show1Sub')}</p>
+            </div>
+            <div className="appshow-phone reveal reveal-delay-1">
+              <PhoneFrame label={t('landing.showPlaceholder')} />
+            </div>
+          </div>
+
+          <div className="appshow-row appshow-row--rev">
+            <div className="appshow-text reveal">
+              <span className="appshow-eyebrow">{t('landing.show2Tag')}</span>
+              <h3 className="appshow-title">{t('landing.show2Title')}</h3>
+              <p className="appshow-sub">{t('landing.show2Sub')}</p>
+            </div>
+            <div className="appshow-phone reveal reveal-delay-1">
+              <PhoneFrame label={t('landing.showPlaceholder')} />
+            </div>
+          </div>
+
+          <div className="appshow-row">
+            <div className="appshow-text reveal">
+              <span className="appshow-eyebrow">{t('landing.show3Tag')}</span>
+              <h3 className="appshow-title">{t('landing.show3Title')}</h3>
+              <p className="appshow-sub">{t('landing.show3Sub')}</p>
+            </div>
+            <div className="appshow-phone reveal reveal-delay-1">
+              <PhoneFrame label={t('landing.showPlaceholder')} />
+            </div>
           </div>
         </div>
       </section>

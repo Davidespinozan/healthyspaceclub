@@ -7299,3 +7299,72 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   font-weight: 600; cursor: pointer; font-family: 'Montserrat', sans-serif;
 }
 .th-espacio-done-btn:hover { border-color: rgba(246,242,234,.4); color: var(--cream); }
+
+/* ═══════════════════════════════════
+   APP SHOWCASE — mockups de iPhone (CSS puro)
+═══════════════════════════════════ */
+.pf-device {
+  width: min(258px, 70vw);
+  border-radius: 38px;
+  padding: 10px;
+  background: linear-gradient(160deg, #1c3b35, #0e2521);
+  box-shadow: 0 0 0 1px rgba(201,169,104,.22), 0 44px 90px rgba(10,25,20,.42), 0 10px 26px rgba(10,25,20,.28);
+  animation: pfFloat 6s ease-in-out infinite;
+}
+.pf-screen {
+  position: relative;
+  border-radius: 30px;
+  overflow: hidden;
+  aspect-ratio: 9 / 19.5;
+  background: #0d1f1c;
+}
+.pf-notch {
+  position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+  width: 36%; height: 18px; border-radius: 999px;
+  background: #0e2521; z-index: 2;
+}
+.pf-shot { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pf-placeholder {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: radial-gradient(ellipse at 50% 22%, #1d3c36 0%, #0d1f1c 70%);
+}
+.pf-placeholder img { width: 60px; height: 60px; opacity: .5; border-radius: 16px; }
+.pf-placeholder span {
+  font-size: .64rem; letter-spacing: .16em; text-transform: uppercase;
+  color: rgba(246,242,234,.4); font-weight: 700;
+}
+@keyframes pfFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+.appshow { padding: 92px 24px; max-width: 1080px; margin: 0 auto; text-align: center; }
+.appshow > h2 {
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem); letter-spacing: -.03em;
+  line-height: 1.08; margin: 8px 0 60px; color: var(--forest);
+}
+.appshow > h2 em { color: var(--amber-deep, #A8864E); font-style: normal; }
+.appshow-rows { display: flex; flex-direction: column; gap: 84px; }
+.appshow-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(28px, 6vw, 80px); text-align: left; flex-wrap: wrap;
+}
+.appshow-row--rev { flex-direction: row-reverse; }
+.appshow-row--rev .pf-device { animation-delay: 1.6s; }
+.appshow-text { flex: 1 1 300px; min-width: 260px; max-width: 420px; }
+.appshow-eyebrow {
+  display: inline-block; font-size: .66rem; font-weight: 800; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--amber-deep, #A8864E); margin-bottom: 13px;
+}
+.appshow-title {
+  font-family: 'Montserrat', sans-serif; font-weight: 700;
+  font-size: clamp(1.5rem, 2.6vw, 2rem); letter-spacing: -.025em; line-height: 1.12;
+  color: var(--forest); margin-bottom: 14px;
+}
+.appshow-sub { font-size: 1.02rem; line-height: 1.75; color: var(--txt2); margin: 0; }
+.appshow-phone { flex: 0 0 auto; display: flex; justify-content: center; }
+@media (prefers-reduced-motion: reduce) { .pf-device { animation: none; } }
+@media (max-width: 720px) {
+  .appshow { padding: 64px 22px; }
+  .appshow-row, .appshow-row--rev { flex-direction: column; text-align: center; gap: 30px; }
+  .appshow-text { max-width: 100%; }
+  .appshow-rows { gap: 64px; }
+}
