@@ -353,10 +353,12 @@ export default function LandingScreen() {
         <div className="faq-in">
           <div className="sec-lbl">{t('landing.faqLbl')}</div>
           <h2>{t('landing.faqTitlePre')} <em>{t('landing.faqTitleEm')}</em></h2>
-          <FaqItem q={t('landing.faq1q')} a={t('landing.faq1a')} />
-          <FaqItem q={t('landing.faq2q')} a={t('landing.faq2a')} />
-          <FaqItem q={t('landing.faq3q')} a={t('landing.faq3a')} />
-          <FaqItem q={t('landing.faq4q')} a={t('landing.faq4a')} />
+          <div className="faq-grid">
+            <FaqItem q={t('landing.faq1q')} a={t('landing.faq1a')} />
+            <FaqItem q={t('landing.faq2q')} a={t('landing.faq2a')} />
+            <FaqItem q={t('landing.faq3q')} a={t('landing.faq3a')} />
+            <FaqItem q={t('landing.faq4q')} a={t('landing.faq4a')} />
+          </div>
         </div>
       </div>
 
