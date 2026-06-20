@@ -74,7 +74,7 @@ const ES_BANK: HSMDimension[] = [
     '¿A qué hora del día eres más disciplinado y cuándo flaqueas?',
     '¿Hubo algo hoy que no tenías ganas de hacer pero hiciste igual?',
   ]},
-  { emoji: '💪', title: 'Cuerpo', color: '#2E4A42', questions: [
+  { emoji: '💪', title: 'Cuerpo', color: '#1C3B35', questions: [
     '¿Cómo trataste a tu cuerpo hoy?',
     '¿Tu alimentación de hoy fue combustible o placer vacío?',
     '¿Dormiste lo suficiente para recuperarte?',
@@ -122,7 +122,7 @@ const ES_BANK: HSMDimension[] = [
     '¿Quién te apoya cuando necesitas levantarte?',
     '¿Por qué empezaste a cuidarte? Cuando sea difícil, esa razón te sostiene.',
   ]},
-  { emoji: '🚀', title: 'Evolución', color: '#153330', questions: [
+  { emoji: '🚀', title: 'Evolución', color: '#0E2521', questions: [
     '¿Qué aprendiste hoy de ti?',
     '¿Cómo eres diferente a quien eras hace un mes?',
     '¿Dedicaste tiempo hoy a aprender algo nuevo?',
@@ -197,7 +197,7 @@ const EN_BANK: HSMDimension[] = [
     'At what time of day are you most disciplined, and when do you falter?',
     "Was there something today you didn't feel like doing but did anyway?",
   ]},
-  { emoji: '💪', title: 'Body', color: '#2E4A42', questions: [
+  { emoji: '💪', title: 'Body', color: '#1C3B35', questions: [
     'How did you treat your body today?',
     'Was your food today fuel, or empty pleasure?',
     'Did you sleep enough to recover?',
@@ -245,7 +245,7 @@ const EN_BANK: HSMDimension[] = [
     'Who supports you when you need to get back up?',
     'Why did you start taking care of yourself? When it gets hard, that reason holds you up.',
   ]},
-  { emoji: '🚀', title: 'Growth', color: '#153330', questions: [
+  { emoji: '🚀', title: 'Growth', color: '#0E2521', questions: [
     'What did you learn about yourself today?',
     'How are you different from who you were a month ago?',
     'Did you spend time today learning something new?',

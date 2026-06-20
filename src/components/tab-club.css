@@ -48,7 +48,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 .clb-feed-tab.is-active {
-  background: linear-gradient(135deg, var(--forest, #153330), #1d3d39);
+  background: linear-gradient(135deg, var(--forest, #0E2521), #1d3d39);
   color: #fff;
   box-shadow: var(--shadow-pro-md);
 }

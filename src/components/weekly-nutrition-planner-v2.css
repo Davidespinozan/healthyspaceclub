@@ -329,8 +329,8 @@
 /* ─── Plan header (forest) ─── */
 .wnp2-header {
   background:
-    radial-gradient(120% 90% at 12% 0%, #2E4A42 0%, transparent 55%),
-    linear-gradient(155deg, #153330 0%, #1b3c37 52%, #102a27 100%);
+    radial-gradient(120% 90% at 12% 0%, #1C3B35 0%, transparent 55%),
+    linear-gradient(155deg, #0E2521 0%, #1b3c37 52%, #102a27 100%);
   border-radius: var(--radius-xl);
   padding: 18px 20px;
   color: var(--sala-surface);

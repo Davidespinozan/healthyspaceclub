@@ -16,9 +16,9 @@
 /* CAPA 1 — fondo multicapa con dirección de luz (tonos derivados de --forest) */
 .th3-hero {
   background:
-    radial-gradient(120% 90% at 12% 0%, #2E4A42 0%, transparent 55%),     /* luz entrando, esquina sup-izq */
+    radial-gradient(120% 90% at 12% 0%, #1C3B35 0%, transparent 55%),     /* luz entrando, esquina sup-izq */
     radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%),    /* profundidad, esquina inf-der */
-    linear-gradient(155deg, #153330 0%, #1b3c37 52%, #102a27 100%);        /* base diagonal unificadora */
+    linear-gradient(155deg, #0E2521 0%, #1b3c37 52%, #102a27 100%);        /* base diagonal unificadora */
   color: var(--sala-surface);
   padding: 30px 22px 22px; /* la safe-area la maneja .app-shell — no duplicar */
   position: relative;
@@ -652,12 +652,12 @@
 .th3-pl-av--2 { margin-left: -10px; }
 .th3-pl-av--fb {
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #2E4A42, #153330);
+  background: linear-gradient(135deg, #1C3B35, #0E2521);
   color: #fff; font-weight: 800; font-size: 13px;
 }
 .th3-partner-live-text {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size: 12.5px; font-weight: 700; color: var(--forest, #153330);
+  font-size: 12.5px; font-weight: 700; color: var(--forest, #0E2521);
 }
 .th3-partner-live-dot {
   width: 8px; height: 8px; border-radius: 50%;
@@ -833,8 +833,8 @@
   /* Card de celebración forest — mismo lenguaje que el player completado y el
      cierre de Tu Espacio (forest + dorado + entrada spring). */
   background:
-    radial-gradient(120% 90% at 50% 0%, #2E4A42 0%, transparent 60%),
-    linear-gradient(160deg, #153330 0%, #1b3c37 55%, #102a27 100%);
+    radial-gradient(120% 90% at 50% 0%, #1C3B35 0%, transparent 60%),
+    linear-gradient(160deg, #0E2521 0%, #1b3c37 55%, #102a27 100%);
   border-radius: var(--radius-3xl);
   padding: 40px 28px 32px;
   max-width: 360px;

@@ -8,7 +8,7 @@
 .pl-av--2 { margin-left: -9px; }
 .pl-av--fb {
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #2E4A42, #153330);
+  background: linear-gradient(135deg, #1C3B35, #0E2521);
   color: #fff; font-weight: 800; font-size: 11px;
 }
 .pl-live-text {
@@ -38,5 +38,5 @@
 .pl-live--plain { justify-content: center; margin: 4px 0 16px; }
 .pl-live--plain .pl-live-text {
   background: none; box-shadow: none; padding: 0;
-  color: var(--forest, #153330); font-size: 13px; font-weight: 700;
+  color: var(--forest, #0E2521); font-size: 13px; font-weight: 700;
 }

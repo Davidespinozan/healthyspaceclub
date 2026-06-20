@@ -46,7 +46,7 @@
 .cms-title {
   font-family: 'Montserrat', sans-serif;
   font-size: 15px; font-weight: 700;
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
   margin: 0;
 }
 .cms-close {
@@ -91,7 +91,7 @@
   background: var(--warm, #e8e1d3);
   display: flex; align-items: center; justify-content: center;
   font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600;
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
 }
 .cms-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cms-body { flex: 1; min-width: 0; }
@@ -99,7 +99,7 @@
 .cms-name {
   font-family: 'Montserrat', sans-serif;
   font-weight: 600; font-size: 13px;
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
 }
 .cms-time {
   font-family: 'Montserrat', sans-serif;
@@ -135,7 +135,7 @@
   padding: 10px 16px;
   font-family: 'Montserrat', sans-serif;
   font-size: 14px;
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
   background: #fff;
   outline: none;
   transition: border-color 0.18s ease;

@@ -4,7 +4,7 @@
    ══════════════════════════════════════════════════════════════ */
 
 .yfp {
-  --yfp-forest: #153330;
+  --yfp-forest: #0E2521;
   /* Inmersivo oscuro, idéntico en nivel al player de fuerza: fondo forest,
      texto claro, dorado vibrante + terracota. */
   --yfp-amber: #C9A968;
@@ -17,7 +17,7 @@
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: linear-gradient(170deg, #153330 0%, #1a3d39 100%);
+  background: linear-gradient(170deg, #0E2521 0%, #1a3d39 100%);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -121,7 +121,7 @@
 .yfp-prep-hero {
   aspect-ratio: 16 / 11;
   border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, #C9A968 0%, #153330 100%);
+  background: linear-gradient(135deg, #C9A968 0%, #0E2521 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -189,7 +189,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to bottom, transparent, #153330 32%);
+  background: linear-gradient(to bottom, transparent, #0E2521 32%);
   padding: 14px 20px;
   padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   border-top: 0.5px solid rgba(255, 255, 255, 0.1);
@@ -235,7 +235,7 @@
 
 .yfp-video-area {
   aspect-ratio: 4 / 3;
-  background: linear-gradient(160deg, #C9A968 0%, #153330 100%);
+  background: linear-gradient(160deg, #C9A968 0%, #0E2521 100%);
   position: relative;
   overflow: hidden;
   cursor: pointer;

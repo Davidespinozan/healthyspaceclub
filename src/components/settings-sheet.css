@@ -349,7 +349,7 @@
   border: 1px solid rgba(168, 134, 78, 0.25);
   font-family: 'Montserrat', sans-serif;
   font-size: 12px; line-height: 1.5;
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
 }
 
 /* Language toggle — i18n Lote 0 */

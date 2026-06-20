@@ -28,7 +28,7 @@
   padding: 14px 22px calc(32px + env(safe-area-inset-bottom, 0px));
   position: relative;
   animation: sh-slide-up 0.28s cubic-bezier(0.23, 1, 0.32, 1);
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
   box-shadow: var(--shadow-pro-2xl);
 }
 @keyframes sh-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -134,7 +134,7 @@
 .sh-p {
   font-size: 0.9rem;
   line-height: 1.6;
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
   margin: 0 0 8px;
 }
 .sh-p--muted { color: rgba(21, 51, 48, 0.65); font-size: 0.85rem; }
@@ -147,7 +147,7 @@
 .sh-list li {
   font-size: 0.9rem;
   line-height: 1.55;
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
   padding: 4px 0 4px 16px;
   position: relative;
 }
@@ -179,7 +179,7 @@
 
 /* ──── ManagePlanSheet ──── */
 .sh-plan-badge {
-  background: linear-gradient(135deg, var(--forest, #153330), #2a4f4a);
+  background: linear-gradient(135deg, var(--forest, #0E2521), #1C3B35);
   color: var(--sala-surface);
   border-radius: var(--radius-lg);
   padding: 18px 20px;
@@ -328,7 +328,7 @@
 
 /* Estado actual */
 .mps-status-card {
-  background: linear-gradient(135deg, var(--forest, #153330), #2a4f4a);
+  background: linear-gradient(135deg, var(--forest, #0E2521), #1C3B35);
   color: var(--sala-surface);
   border-radius: 18px;
   padding: 22px 22px;
@@ -402,7 +402,7 @@
   padding: 14px 16px;
 }
 .mps-pm-brand {
-  background: var(--forest, #153330);
+  background: var(--forest, #0E2521);
   color: var(--sala-surface);
   font-size: 0.65rem;
   font-weight: 700;
@@ -442,14 +442,14 @@
   transition: border-color .15s, box-shadow .15s;
 }
 .mps-plan-card--selected {
-  border-color: var(--forest, #153330);
+  border-color: var(--forest, #0E2521);
   box-shadow: 0 4px 16px rgba(21, 51, 48, 0.08);
 }
 .mps-plan-tag {
   position: absolute;
   top: -10px;
   right: 14px;
-  background: var(--forest, #153330);
+  background: var(--forest, #0E2521);
   color: var(--sala-surface);
   font-size: 0.65rem;
   font-weight: 700;
@@ -479,7 +479,7 @@
 .mps-plan-price {
   font-size: 1.45rem;
   font-weight: 700;
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
   letter-spacing: -0.01em;
 }
 .mps-plan-price-unit {
@@ -503,7 +503,7 @@
   margin-top: 10px;
   background: none;
   border: 1px solid rgba(21, 51, 48, 0.18);
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
   border-radius: 999px;
   padding: 10px 16px;
   font-size: 0.82rem;
@@ -552,9 +552,9 @@
 .mps-history-icon--pending { background: rgba(212, 151, 107, 0.18); color: var(--amber, #d4976b); }
 .mps-history-icon--failed { background: rgba(204, 51, 51, 0.12); color: #cc3333; }
 .mps-history-body { flex: 1; }
-.mps-history-desc { font-size: 0.88rem; color: var(--forest, #153330); }
+.mps-history-desc { font-size: 0.88rem; color: var(--forest, #0E2521); }
 .mps-history-date { font-size: 0.76rem; color: rgba(21, 51, 48, 0.55); margin-top: 2px; }
-.mps-history-amount { font-size: 0.92rem; font-weight: 700; color: var(--forest, #153330); }
+.mps-history-amount { font-size: 0.92rem; font-weight: 700; color: var(--forest, #0E2521); }
 
 /* Cancelar */
 .mps-cancel-btn {
@@ -573,7 +573,7 @@
 }
 .mps-cancel-btn:hover {
   background: rgba(21, 51, 48, 0.04);
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
 }
 
 /* FAQ */
@@ -600,7 +600,7 @@
   text-align: left;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
   cursor: pointer;
   min-height: 44px;
 }
@@ -637,7 +637,7 @@
   padding: 24px;
   max-width: 420px;
   width: 100%;
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
 }
 .mps-modal-title {
   font-size: 1.15rem;
@@ -668,7 +668,7 @@
 }
 .mps-modal-confirm:hover {
   background: rgba(21, 51, 48, 0.06);
-  color: var(--forest, #153330);
+  color: var(--forest, #0E2521);
 }
 .mps-modal-confirm:disabled { opacity: 0.5; cursor: default; }
 

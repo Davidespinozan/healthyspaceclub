@@ -14,9 +14,9 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as 
 const appearance = {
   theme: 'flat' as const,
   variables: {
-    colorPrimary: '#153330',
+    colorPrimary: '#0E2521',
     colorBackground: '#FFFFFF',
-    colorText: '#153330',
+    colorText: '#0E2521',
     colorDanger: '#cc3333',
     fontFamily: 'inherit',
     borderRadius: '10px',

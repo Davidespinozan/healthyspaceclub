@@ -25,13 +25,13 @@
 }
 
 .edp-modal {
-  --edp-forest: #153330;
-  --edp-moss: #2E4A42;
+  --edp-forest: #0E2521;
+  --edp-moss: #1C3B35;
   --edp-amber: #BFA065;
   --edp-terra: #A8864E;
   --edp-warm: #F0EBE0;
   --edp-sand: #E8E1D3;
-  --edp-txt: #153330;
+  --edp-txt: #0E2521;
   --edp-txt2: rgba(21, 51, 48, 0.58);
 
   font-family: 'Montserrat', system-ui, sans-serif;
@@ -87,7 +87,7 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.92);
   border: none;
-  color: var(--edp-forest, #153330);
+  color: var(--edp-forest, #0E2521);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -163,7 +163,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(168deg, #153330 0%, #2E4A42 100%);
+  background: linear-gradient(168deg, #0E2521 0%, #1C3B35 100%);
   gap: 14px;
   position: relative;
 }
@@ -239,7 +239,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: none;
-  color: var(--edp-forest, #153330);
+  color: var(--edp-forest, #0E2521);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -269,7 +269,7 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: none;
-  color: var(--edp-forest, #153330);
+  color: var(--edp-forest, #0E2521);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   display: inline-flex;
