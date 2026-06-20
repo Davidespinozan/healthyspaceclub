@@ -676,22 +676,26 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 15px 16px;
+  padding: 22px 22px;
   margin-top: 14px;
-  background: linear-gradient(135deg, #C9A968, #A8864E);
-  border: 1px solid rgba(168, 134, 78, 0.5);
-  border-radius: var(--radius-base);
-  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
+  min-height: 168px;
+  background:
+    linear-gradient(90deg, rgba(10,22,17,.9) 0%, rgba(10,22,17,.55) 44%, rgba(10,22,17,.12) 74%, transparent 100%),
+    url("/app-pareja.webp") center right / cover no-repeat;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
   cursor: pointer;
   font-family: inherit;
   text-align: left;
   width: 100%;
+  overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, filter var(--duration-base) ease;
 }
 .th3-partner:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(168, 134, 78, 0.34);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.36);
   filter: brightness(1.04);
 }
 .th3-partner:active { transform: scale(0.99); }
@@ -722,12 +726,13 @@
   flex: 1;
   min-width: 0;
   font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 1.2;
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 1.15;
   color: #fff;
   letter-spacing: var(--tracking-tight);
   margin: 0;
+  text-shadow: 0 2px 12px rgba(0,0,0,.4);
 }
 .th3-partner-sub {
   font-family: 'Montserrat', sans-serif;
