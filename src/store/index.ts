@@ -259,6 +259,7 @@ interface AppState {
   subscriptionPeriodEnd: string | null; // fin del período actual (lo persiste el webhook)
   cancelAtPeriodEnd: boolean | null;     // marcada para cancelar al fin del período
   paymentPastDue: boolean;               // pago fallido (dunning): dispara banner; acceso NO cambia. Lo escribe el webhook.
+  isAdmin: boolean;                      // flag is_admin de la DB (regen IA ilimitada). Fresco de DB, NO persistido.
   setSubscriptionPeriodEnd: (v: string | null) => void;
   setCancelAtPeriodEnd: (v: boolean) => void;
 
@@ -1068,6 +1069,7 @@ export const useAppStore = create<AppState>()(
   subscriptionPeriodEnd: null,
   cancelAtPeriodEnd: null,
   paymentPastDue: false,
+  isAdmin: false,
   setSubscriptionPeriodEnd: (v) => set({ subscriptionPeriodEnd: v }),
   setCancelAtPeriodEnd: (v) => set({ cancelAtPeriodEnd: v }),
   // Inicia el trial: userPlan = 'trial' durante el período de prueba.
@@ -1199,6 +1201,7 @@ export const useAppStore = create<AppState>()(
     subscriptionPeriodEnd: null,
     cancelAtPeriodEnd: null,
     paymentPastDue: false,
+    isAdmin: false,
     growthData: {},
     growthCompleted: Array(10).fill(false),
     dailyWorkout: null,

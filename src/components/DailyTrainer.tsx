@@ -90,9 +90,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const todayDayName = new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { weekday: 'long' });
   const todayDateShort = `${new Date().getDate()} ${new Date().toLocaleDateString('es-ES', { month: 'short' })}`;
 
-  // Admin bypass
-  const ADMIN_USERS = ['David', 'Magaly']; // TODO: replace with isAdmin flag when auth exists
-  const isAdmin = ADMIN_USERS.some(a => firstName.toLowerCase().startsWith(a.toLowerCase()));
+  // Admin bypass: flag is_admin REAL de la DB (no por nombre — antes cualquiera
+  // llamado David/Magaly tenía regeneraciones ilimitadas).
+  const isAdmin = useAppStore(s => s.isAdmin);
 
   // Check if we have today's checkin already
   const hasCheckinToday = dailyCheckinDate === today && dailyCheckin !== null;
@@ -315,7 +315,13 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
       // Intentar cache (para TODAS las modalidades)
       const validIds = new Set(exerciseBank.map(e => e.id));
-      const equipmentList: Equipment[] = [selectedEquipment];
+      // El cardio es mayormente peso corporal y casi no hay variantes de cardio
+      // con ligas → un usuario de SOLO bandas pidiendo cardio se quedaba sin
+      // candidatos y el generador tiraba error. Para cardio, a un user de ligas
+      // le damos también peso corporal. (Fuerza sí respeta su equipo exacto.)
+      const equipmentList: Equipment[] = (selectedEquipment === 'ligas' && selectedModality === 'cardio')
+        ? ['ligas', 'cuerpo']
+        : [selectedEquipment];
       // Un ejercicio es válido para el equipo del usuario solo si tiene una
       // variante de ese equipo (o, en yoga, equipment del patrón). Esto evita
       // que la IA (o un cache viejo) cuele ejercicios de máquina a alguien que
