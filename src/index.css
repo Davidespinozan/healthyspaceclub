@@ -330,12 +330,13 @@ nav.landing-nav {
   padding: 0 60px; height:120px;
   padding-top: env(safe-area-inset-top, 0px);
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-  background: #1C3B35;
+  /* Verde profundo con glow superior — mismo lenguaje que el fondo del iPhone */
+  background: radial-gradient(120% 180% at 50% 0%, #1d3c36 0%, transparent 60%), #0d1f1c;
   border-bottom: none;
   transition: all .4s cubic-bezier(.23,1,.32,1);
 }
 nav.landing-nav.scrolled {
-  background: #0E2521;
+  background: #0d1f1c;
   height: 100px;
 }
 .logo { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:0; }
@@ -680,14 +681,15 @@ h1 em::after {
 
 /* Pillars */
 .pillars {
-  padding:50px 60px; background:#1C3B35; position:relative; overflow:hidden;
+  padding:50px 60px; position:relative; overflow:hidden;
+  /* Mismo vignette profundo que el placeholder del iPhone (glow arriba → base muy oscura) */
+  background: radial-gradient(ellipse at 50% 22%, #1d3c36 0%, #0d1f1c 70%);
 }
 .pillars::before {
   content:''; position:absolute; inset:0;
   background:
     radial-gradient(ellipse at 15% 80%, rgba(191,160,101,.08) 0%, transparent 40%),
-    radial-gradient(ellipse at 85% 20%, rgba(191,160,101,.05) 0%, transparent 40%),
-    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.01) 0%, transparent 70%);
+    radial-gradient(ellipse at 85% 20%, rgba(191,160,101,.05) 0%, transparent 40%);
 }
 .pill-grid-bg {
   position:absolute; inset:0; opacity:.02;
