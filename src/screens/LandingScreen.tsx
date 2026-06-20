@@ -135,8 +135,8 @@ export default function LandingScreen() {
   // Cambia estas URLs por imágenes distintas cuando las tengas.
   const HERO_IMAGES = [
     'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero.webp',
-    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero.webp',
-    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/hero.webp',
+    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/workout_s1mccg.webp',
+    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp',
   ];
   const [heroSlide, setHeroSlide] = useState(0);
   const heroTouchX = useRef<number | null>(null);
@@ -257,14 +257,13 @@ export default function LandingScreen() {
       {/* PILLARS */}
       <section className="pillars" id="s-pillars">
         <div className="pill-grid-bg" />
-        <div className="pg">
-          <div className="pillar pillar-gold reveal reveal-delay-1">
-            <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp" alt={t('landing.altNutrition')} /></div>
+        <div className="pillar-phones">
+          <div className="pillar-phone reveal reveal-delay-1">
+            <PhoneFrame label={t('landing.showPlaceholder')} />
             <span className="ptag ptag-lead">{t('landing.pillar1')}</span>
           </div>
-
-          <div className="pillar pillar-gold reveal reveal-delay-2">
-            <div className="pillar-img"><img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/workout_s1mccg.webp" alt={t('landing.altWorkout')} /></div>
+          <div className="pillar-phone reveal reveal-delay-2">
+            <PhoneFrame label={t('landing.showPlaceholder')} />
             <span className="ptag ptag-lead">{t('landing.pillar2')}</span>
           </div>
         </div>
@@ -285,47 +284,6 @@ export default function LandingScreen() {
             <img className="method-icon" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/SISTEMA.png" alt="" aria-hidden="true" />
             <div className="method-title">{t('landing.method3Title')}</div>
             <div className="method-sub">{t('landing.method3Sub')}</div>
-          </div>
-        </div>
-      </section>
-
-      {/* APP SHOWCASE — mírala en acción (mockups de iPhone) */}
-      <section className="appshow" id="s-app">
-        <div className="sec-lbl reveal">{t('landing.showLbl')}</div>
-        <h2 className="reveal">{t('landing.showTitlePre')} <em>{t('landing.showTitleEm')}</em></h2>
-
-        <div className="appshow-rows">
-          <div className="appshow-row">
-            <div className="appshow-text reveal">
-              <span className="appshow-eyebrow">{t('landing.show1Tag')}</span>
-              <h3 className="appshow-title">{t('landing.show1Title')}</h3>
-              <p className="appshow-sub">{t('landing.show1Sub')}</p>
-            </div>
-            <div className="appshow-phone reveal reveal-delay-1">
-              <PhoneFrame label={t('landing.showPlaceholder')} />
-            </div>
-          </div>
-
-          <div className="appshow-row appshow-row--rev">
-            <div className="appshow-text reveal">
-              <span className="appshow-eyebrow">{t('landing.show2Tag')}</span>
-              <h3 className="appshow-title">{t('landing.show2Title')}</h3>
-              <p className="appshow-sub">{t('landing.show2Sub')}</p>
-            </div>
-            <div className="appshow-phone reveal reveal-delay-1">
-              <PhoneFrame label={t('landing.showPlaceholder')} />
-            </div>
-          </div>
-
-          <div className="appshow-row">
-            <div className="appshow-text reveal">
-              <span className="appshow-eyebrow">{t('landing.show3Tag')}</span>
-              <h3 className="appshow-title">{t('landing.show3Title')}</h3>
-              <p className="appshow-sub">{t('landing.show3Sub')}</p>
-            </div>
-            <div className="appshow-phone reveal reveal-delay-1">
-              <PhoneFrame label={t('landing.showPlaceholder')} />
-            </div>
           </div>
         </div>
       </section>
