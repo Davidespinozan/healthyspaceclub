@@ -240,9 +240,6 @@ export default function LandingScreen() {
       {/* SISTEMA — feature row */}
       <section className="sys" id="s-pillars">
         <div className="sys-in">
-          <div className="sys-photo">
-            <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/workout_s1mccg.webp" alt="" loading="lazy" />
-          </div>
           <div className="sys-body">
           <h2 className="sys-title">{t('landing.sysTitlePre')} <em>{t('landing.sysTitleEm')}</em> {t('landing.sysTitlePost')}</h2>
           <div className="sys-grid">
