@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
-import { ChevronDown, Dumbbell, Users, Smartphone, Brain, Salad } from 'lucide-react';
+import { ChevronDown, Dumbbell, Users, Brain, Salad } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { PRICING, detectRegion, type Region } from '../utils/region';
@@ -163,10 +163,7 @@ export default function LandingScreen() {
       <section className="ll" id="s-app">
         <div className="ll-in">
           <div className="ll-text reveal">
-            <p className="ll-kicker">{t('landing.bannerKicker')}</p>
             <h2 className="ll-title">{t('landing.bannerTitlePre')} <em>{t('landing.bannerTitleEm')}</em></h2>
-            <p className="ll-sub">{t('landing.bannerSub')}</p>
-            <span className="ll-soon"><Smartphone size={15} strokeWidth={2} />{t('landing.bannerSoon')}</span>
           </div>
           <div className="ll-phones" aria-hidden="true">
             {/* Pantalla verde = placeholder; luego montamos captura/video encima */}
