@@ -7599,6 +7599,11 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   position:absolute; top:3.2cqw; left:50%; transform:translateX(-50%);
   width:25%; height:5.4cqw; border-radius:999px; background:#000; z-index:5;
 }
+/* Captura real llenando la pantalla del teléfono */
+.pf-big-screen .pf-shot {
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; object-position:top center; display:block;
+}
 /* UI representativa (escala con el ancho de cada pantalla vía cqw) */
 .appui { position:absolute; inset:0; display:flex; flex-direction:column; padding:14cqw 6cqw 0; font-family:'Montserrat',sans-serif; color:var(--cream); }
 .appui-status { display:flex; justify-content:space-between; align-items:center; font-size:3.4cqw; font-weight:600; opacity:.85; margin-bottom:4cqw; }
