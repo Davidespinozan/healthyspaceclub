@@ -7574,34 +7574,65 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 /* Dos móviles lado a lado, sin empalmarse. Diferencia de tamaño sutil.
    Más separación en desktop (sobra espacio horizontal). */
-/* Tres marcos CSS premium (estilo Apple) */
-.ll-phones { display:flex; align-items:center; justify-content:center; gap:18px; }
-.pf3 {
-  flex:0 0 auto; width:205px; position:relative;
-  border-radius:42px; padding:7px;
-  background:linear-gradient(155deg, #2c2c2e 0%, #121214 55%, #0a0a0b 100%);
-  box-shadow:0 40px 70px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.06);
+/* Teléfono principal grande (el producto) — marco titanio + sombra direccional */
+.ll-phones { display:flex; align-items:center; justify-content:center; }
+.pf-big {
+  position:relative; width:338px; flex:0 0 auto;
+  border-radius:58px; padding:9px;
+  background:linear-gradient(150deg, #34343a 0%, #141416 52%, #09090a 100%);
+  box-shadow:
+    0 60px 110px rgba(0,0,0,.6),
+    0 18px 40px rgba(0,0,0,.45),
+    inset 0 0 0 1px rgba(255,255,255,.08);
 }
-.pf3--mid { width:230px; z-index:2; }
-.pf3--side { z-index:1; opacity:.97; }
-.pf3-screen {
-  position:relative; border-radius:36px; overflow:hidden; aspect-ratio:1180/2556;
-  /* Placeholder on-brand; reemplazar por captura/video real */
-  background:radial-gradient(ellipse at 50% 18%, #1d3c36 0%, #0d1f1c 72%);
-  box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.6);
+.pf-big-screen {
+  position:relative; border-radius:50px; overflow:hidden; aspect-ratio:1180/2556;
+  background:linear-gradient(180deg, #102a26 0%, #0d1f1c 60%);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.7);
 }
-.pf3-island {
-  position:absolute; top:11px; left:50%; transform:translateX(-50%);
-  width:30%; height:17px; border-radius:999px; background:#000; z-index:2;
+.pf-big-island {
+  position:absolute; top:14px; left:50%; transform:translateX(-50%);
+  width:30%; height:22px; border-radius:999px; background:#000; z-index:5;
 }
+/* UI representativa de la app (reemplazable por captura real) */
+.appui { position:absolute; inset:0; display:flex; flex-direction:column; padding:46px 18px 0; font-family:'Montserrat',sans-serif; color:var(--cream); }
+.appui-status { display:flex; justify-content:space-between; align-items:center; font-size:11px; font-weight:600; opacity:.85; margin-bottom:14px; }
+.appui-status-r { width:34px; height:11px; border-radius:3px; background:rgba(255,255,255,.5); }
+.appui-head { display:flex; flex-direction:column; margin-bottom:16px; }
+.appui-greet { font-size:26px; font-weight:800; letter-spacing:-.02em; line-height:1; }
+.appui-sub { font-size:11px; color:var(--amber); font-weight:600; margin-top:5px; letter-spacing:.04em; }
+.appui-card {
+  display:flex; align-items:center; gap:12px; padding:11px; margin-bottom:11px;
+  background:linear-gradient(180deg, rgba(28,59,53,.5), rgba(13,31,28,.3));
+  border:1px solid rgba(28,59,53,.8); border-radius:18px;
+}
+.appui-thumb { width:48px; height:48px; border-radius:12px; object-fit:cover; flex-shrink:0; }
+.appui-card-tx { display:flex; flex-direction:column; min-width:0; }
+.appui-card-tx b { font-size:13px; font-weight:700; }
+.appui-card-tx span { font-size:11px; color:rgba(255,255,255,.55); margin-top:2px; }
+.appui-metric {
+  margin-top:4px; padding:13px; border-radius:18px;
+  background:linear-gradient(180deg, rgba(28,59,53,.5), rgba(13,31,28,.3));
+  border:1px solid rgba(28,59,53,.8);
+}
+.appui-metric-row { display:flex; justify-content:space-between; font-size:11px; font-weight:600; margin-bottom:9px; }
+.appui-metric-row span:last-child { color:rgba(255,255,255,.55); }
+.appui-bar { height:6px; border-radius:6px; background:rgba(255,255,255,.1); overflow:hidden; }
+.appui-bar i { display:block; height:100%; width:83%; border-radius:6px; background:linear-gradient(90deg, #C9A968, #A8864E); }
+.appui-tabs { margin-top:auto; display:flex; justify-content:space-around; align-items:center; padding:14px 0 16px; border-top:1px solid rgba(255,255,255,.06); }
+.appui-tabs i { width:18px; height:18px; border-radius:6px; background:rgba(255,255,255,.18); }
+.appui-tabs i.on { background:var(--amber); }
 @media (max-width:860px) {
-  .ll { padding:64px 16px; }
-  .ll-in { grid-template-columns:1fr; gap:36px; text-align:center; }
+  .ll { padding:64px 22px; }
+  .ll-in { grid-template-columns:1fr; gap:40px; text-align:center; }
   .ll-sub { margin-left:auto; margin-right:auto; }
-  .ll-phones { gap:10px; }
-  /* Mismas proporciones que desktop, escaladas (radio de pantalla incluido) */
-  .pf3 { width:108px; border-radius:22px; padding:4px; }
-  .pf3--mid { width:122px; }
-  .pf3-screen { border-radius:18px; }
-  .pf3-island { width:30%; height:9px; top:6px; }
+  .pf-big { width:min(300px,82vw); }
 }
+
+/* ════════════ Grano cinematográfico (profundidad premium) ════════════ */
+.grain {
+  position:fixed; inset:0; z-index:80; pointer-events:none; opacity:.05;
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@media (prefers-reduced-motion: reduce) { .grain { display:none; } }

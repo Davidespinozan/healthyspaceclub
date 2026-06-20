@@ -94,6 +94,8 @@ export default function LandingScreen() {
 
   return (
     <>
+      {/* Grano cinematográfico sutil — profundidad premium sobre toda la landing */}
+      <div className="grain" aria-hidden="true" />
       {/* NAV */}
       <nav id="landing-nav" className="landing-nav">
         <div className="nav-left">
@@ -166,11 +168,33 @@ export default function LandingScreen() {
             <h2 className="ll-title">{t('landing.bannerTitlePre')} <em>{t('landing.bannerTitleEm')}</em></h2>
           </div>
           <div className="ll-phones" aria-hidden="true">
-            {/* Marcos CSS premium — la pantalla (.pf3-screen) queda lista para
-                montar capturas/video reales después. */}
-            <div className="pf3 pf3--side"><div className="pf3-screen"><span className="pf3-island" /></div></div>
-            <div className="pf3 pf3--mid"><div className="pf3-screen"><span className="pf3-island" /></div></div>
-            <div className="pf3 pf3--side"><div className="pf3-screen"><span className="pf3-island" /></div></div>
+            {/* Teléfono principal grande con pantalla legible (UI representativa,
+                reemplazable por captura real de la app). */}
+            <div className="pf-big">
+              <div className="pf-big-screen">
+                <span className="pf-big-island" />
+                <div className="appui">
+                  <div className="appui-status"><span>9:41</span><span className="appui-status-r" /></div>
+                  <div className="appui-head">
+                    <span className="appui-greet">Hoy</span>
+                    <span className="appui-sub">Tu plan del día</span>
+                  </div>
+                  <div className="appui-card">
+                    <img className="appui-thumb" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/mealprep_wfczav.webp" alt="" />
+                    <div className="appui-card-tx"><b>Desayuno</b><span>Avena proteica · 410 kcal</span></div>
+                  </div>
+                  <div className="appui-card">
+                    <img className="appui-thumb" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/workout_s1mccg.webp" alt="" />
+                    <div className="appui-card-tx"><b>Entrenamiento</b><span>Fuerza · Tren superior</span></div>
+                  </div>
+                  <div className="appui-metric">
+                    <div className="appui-metric-row"><span>Pasos</span><span>8,346 / 10,000</span></div>
+                    <div className="appui-bar"><i /></div>
+                  </div>
+                  <div className="appui-tabs"><i /><i /><i className="on" /><i /><i /></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
