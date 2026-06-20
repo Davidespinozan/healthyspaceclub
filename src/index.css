@@ -330,9 +330,8 @@ nav.landing-nav {
   padding: 0 60px; height:120px;
   padding-top: env(safe-area-inset-top, 0px);
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-  /* Transparente sobre el hero (solo un velo sutil arriba para legibilidad).
-     Así la imagen del hero no choca con una banda de fondo del nav. */
-  background: linear-gradient(180deg, rgba(8,20,18,.45) 0%, transparent 100%);
+  /* Totalmente transparente sobre el hero: nada encima de la imagen. */
+  background: transparent;
   border-bottom: none;
   transition: background .4s cubic-bezier(.23,1,.32,1), height .4s cubic-bezier(.23,1,.32,1);
 }
@@ -600,9 +599,7 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
   .hero-bg { left:0; }
   .hero-phones { display:none; }
   .hero-bg-img { object-fit:cover; object-position:center; }
-  .hero-scrim {
-    background:linear-gradient(180deg, rgba(8,20,18,.5) 0%, rgba(8,20,18,.18) 36%, transparent 58%);
-  }
+  .hero-scrim { background:none; }
   .hero--dark .hero-content { max-width:100%; text-align:left; }
 }
 .hero-badge-center {
