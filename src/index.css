@@ -7672,7 +7672,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   position:relative; padding:120px 60px; text-align:center;
   background:
     linear-gradient(180deg, rgba(8,19,18,.82) 0%, rgba(8,19,18,.55) 45%, rgba(8,19,18,.82) 100%),
-    url("https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/seccion3.webp") center / cover no-repeat;
+    url("/cta-banner.webp") center / cover no-repeat;
 }
 .trans-cta { position:relative; z-index:2; max-width:680px; margin:0 auto; }
 .trans-cta-title {
