@@ -99,6 +99,7 @@ export default function LandingScreen() {
       {/* NAV */}
       <nav id="landing-nav" className="landing-nav">
         <div className="nav-left">
+          <img className="nav-iso" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png" alt="Healthy Space Club" />
           <LanguageToggle />
           <span className="nav-login" onClick={() => goTo('login')}>{t('landing.login')}</span>
         </div>
