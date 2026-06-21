@@ -7468,19 +7468,19 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .sys-title em { font-style:italic; color:var(--amber-deep, #A8864E); }
 .sys-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
-/* Cards blancas sobre crema (como las cards del sistema interno) */
+/* Cards oscuras sobre crema (contraste premium) */
 .sys-feat {
-  background:#fff;
-  border:1px solid rgba(46,74,66,.08);
+  background:linear-gradient(160deg, #143029 0%, #0c211d 100%);
+  border:1px solid rgba(255,255,255,.08);
   border-radius:18px; padding:24px 20px;
-  box-shadow:0 6px 22px rgba(46,74,66,.06);
+  box-shadow:0 16px 38px rgba(8,20,18,.22), inset 0 1px 0 rgba(255,255,255,.04);
 }
-.sys-ic { color:var(--amber-deep, #A8864E); margin-bottom:14px; }
+.sys-ic { color:var(--amber); margin-bottom:14px; }
 .sys-feat h3 {
   font-family:'Montserrat',sans-serif; font-size:.96rem; font-weight:700;
-  color:var(--forest); margin:0 0 8px; letter-spacing:-.01em;
+  color:var(--cream); margin:0 0 8px; letter-spacing:-.01em;
 }
-.sys-feat p { font-size:.84rem; line-height:1.6; color:var(--txt2); margin:0; }
+.sys-feat p { font-size:.84rem; line-height:1.6; color:rgba(255,255,255,.6); margin:0; }
 @media (max-width:900px) {
   .sys { padding:72px 24px; }
   .sys-in { grid-template-columns:1fr; gap:28px; }
