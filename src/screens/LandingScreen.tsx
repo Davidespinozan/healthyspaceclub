@@ -220,10 +220,14 @@ export default function LandingScreen() {
             </div>
           </div>
           </div>
+          {/* Banner de transformación (antes/después) contenido en la sección */}
+          <div className="sys-banner">
+            <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/cambios.webp" alt="" loading="lazy" />
+          </div>
         </div>
       </section>
 
-      {/* TRANSFORMACIÓN + CTA FINAL (fusionados) */}
+      {/* CTA FINAL (banner con foto) */}
       <section className="trans">
         <div className="trans-cta">
           <h2 className="trans-cta-title">{t('landing.ctaFinalTitle')}</h2>

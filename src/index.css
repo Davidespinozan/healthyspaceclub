@@ -7717,3 +7717,11 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   .trans-stats div { flex:1; }
 }
 @media (max-width:520px) { .trans-stats { flex-direction:column; } }
+
+/* Banner de transformación (antes/después) contenido en "Un sistema completo" */
+.sys-banner {
+  max-width:1180px; margin:48px auto 0;
+  border-radius:24px; overflow:hidden;
+  box-shadow:0 24px 60px rgba(8,20,18,.28), inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.sys-banner img { width:100%; height:auto; display:block; }
