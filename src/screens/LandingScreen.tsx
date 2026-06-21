@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
-import { ChevronDown, Dumbbell, Users, Brain, Salad, Smartphone } from 'lucide-react';
+import { ChevronDown, Dumbbell, Users, Brain, Salad } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { PRICING, detectRegion, type Region } from '../utils/region';
@@ -220,19 +220,6 @@ export default function LandingScreen() {
             </div>
           </div>
           </div>
-        </div>
-        {/* FRANJA — Lleva tu plan, panel dentro de "Un sistema completo" */}
-        <div className="appbanner-in" id="s-how">
-          <img
-            className="appbanner-logo"
-            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
-            alt="Healthy Space Club"
-          />
-          <div className="appbanner-text">
-            <h3>{t('landing.bannerTitle')}</h3>
-            <p>{t('landing.bannerSub')}</p>
-          </div>
-          <span className="appbanner-soon"><Smartphone size={15} strokeWidth={2} />{t('landing.bannerSoon')}</span>
         </div>
       </section>
 
