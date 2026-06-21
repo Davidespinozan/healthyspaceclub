@@ -222,7 +222,7 @@ export default function LandingScreen() {
           </div>
           {/* Banner de transformación (antes/después) contenido en la sección */}
           <div className="sys-banner">
-            <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/cambios.webp" alt="" loading="lazy" />
+            <img src="/sys-banner.webp" alt="" loading="lazy" />
           </div>
         </div>
       </section>
