@@ -134,8 +134,8 @@ export default function LandingScreen() {
         {/* Imagen de fondo full-bleed: zona oscura a la izq (título) + producto a la der */}
         <div className="hero-bg" aria-hidden="true">
           <picture>
-            <source media="(max-width: 768px)" srcSet="/hero-mobile-v4.webp" />
-            <img className="hero-bg-img" src="/hero-desktop-v2.webp" alt="" loading="eager" />
+            <source media="(max-width: 768px)" srcSet="/hero-mobile-v5.webp" />
+            <img className="hero-bg-img" src="/hero-desktop-v3.webp" alt="" loading="eager" />
           </picture>
         </div>
         {/* Scrim: oscurece la izquierda para que el título resalte, deja ver la imagen a la derecha */}
