@@ -600,7 +600,7 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
      la imagen llena todo el ancho y alto, completa y sin recortar nada. */
   /* Texto más abajo; imagen "bajada" (muestra su parte alta, antes oculta bajo
      el menú) y recortada de abajo para que no quede demasiado larga. */
-  .hero { align-items:flex-start; min-height:0; height:auto; aspect-ratio:1200/2430; padding:244px 24px 0; }
+  .hero { align-items:flex-start; min-height:0; height:auto; aspect-ratio:1200/2195; padding:244px 24px 0; }
   .hero-bg { left:0; }
   .hero-phones { display:none; }
   .hero-bg-img { object-fit:cover; object-position:center top; }
