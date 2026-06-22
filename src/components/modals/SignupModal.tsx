@@ -23,7 +23,7 @@ export default function SignupModal() {
   return (
     <div className="ov open" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
       <div className="login-box">
-        <div className="login-head" style={{ background: 'linear-gradient(135deg,var(--forest),var(--moss))' }}>
+        <div className="login-head" style={{ background: 'linear-gradient(135deg, rgba(28,59,53,.55), rgba(8,19,18,0))' }}>
           <img
             src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
             alt="Healthy Space Club"

@@ -4,7 +4,7 @@ import { Sparkles } from 'lucide-react';
 import { haptics } from '../utils/haptics';
 import './day-celebration.css';
 
-const COLORS = ['#C9A968', '#C75B3A', '#1C3B35', '#A8864E', '#F0E2B8'];
+const COLORS = ['#C9A968', '#6CBFA6', '#1C3B35', '#A8864E', '#F0E2B8'];
 
 // Celebración al cerrar los 3 anillos del día (confetti + mensaje). Auto-cierra.
 export default function DayCelebration({ message, sub, onDone }: {

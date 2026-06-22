@@ -453,6 +453,28 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
   margin:0 auto 16px; box-shadow:0 6px 20px rgba(58,138,92,.3);
 }
 
+/* ── SignupModal en negro premium (cierra el arco welcome; .login-box solo
+   lo usa SignupModal). Mismo patrón que .pay-box. ── */
+.login-box {
+  background: radial-gradient(130% 80% at 50% 0%, rgba(29,60,54,.3) 0%, transparent 58%), #081312;
+  color:#EADFC6; border:1px solid rgba(255,255,255,.08); position:relative;
+}
+.login-box::before {
+  content:''; position:absolute; inset:0 0 auto 0; height:1px; z-index:1;
+  border-radius:28px 28px 0 0; pointer-events:none;
+  background:linear-gradient(90deg, transparent, rgba(191,160,101,.5), transparent);
+}
+.login-box .login-head { border-bottom:1px solid rgba(255,255,255,.06); }
+.login-box .login-title { color:#F6F2EA; }
+.login-box .login-sub { color:rgba(234,223,198,.55); }
+.login-box .login-demo { color:rgba(234,223,198,.4); }
+.login-box .pay-lbl { color:rgba(234,223,198,.62); }
+.login-box .pay-inp { background:rgba(255,255,255,.04); border:1.5px solid rgba(255,255,255,.12); color:#F6F2EA; }
+.login-box .pay-inp::placeholder { color:rgba(234,223,198,.3); }
+.login-box .pay-inp:focus { border-color:var(--amber); background:rgba(255,255,255,.07); }
+.login-box .signup-tos { color:rgba(234,223,198,.6); }
+.login-box .signup-tos input[type="checkbox"] { accent-color:var(--amber); }
+
 /* Sidebar Logout */
 .sb-logout {
   display:flex; align-items:center; gap:8px; padding:10px 11px;
@@ -7181,7 +7203,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .te-progress-fill {
   height: 100%; border-radius: 3px;
-  background: linear-gradient(90deg, #C75B3A, #A8472B);
+  background: linear-gradient(90deg, #C9A968, #A8864E);
   transition: width .5s cubic-bezier(.23,1,.32,1);
 }
 .te-progress-label {
@@ -7207,21 +7229,21 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .te-dim-badge {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 14px; border-radius: 999px;
-  background: var(--terracota-soft);
+  background: rgba(191,160,101,.13);
   width: fit-content;
   margin-bottom: 24px;
 }
 .te-dim-title {
   font-family: 'Montserrat', sans-serif;
   font-size: .72rem; font-weight: 700;
-  color: var(--terracota);
+  color: var(--terra);
   text-transform: none;
   letter-spacing: var(--tracking-kicker);
 }
 .te-dim-ai {
   font-family: 'Montserrat', sans-serif;
   font-size: .58rem; font-weight: 700;
-  background: var(--terracota); color: var(--sala-surface);
+  background: var(--terra); color: var(--sala-surface);
   padding: 2px 6px; border-radius: var(--radius-xs);
   letter-spacing: var(--tracking-kicker);
 }
@@ -7249,7 +7271,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .te-textarea::placeholder { color: rgba(21,51,48,.35); }
 .te-textarea:hover { border-color: var(--sala-border-strong); }
-.te-textarea:focus { border-color: var(--terracota); box-shadow: 0 0 0 3px var(--terracota-soft); }
+.te-textarea:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(191,160,101,.13); }
 
 /* Submit — terracota vibrante (color identidad de "Tu Espacio") + glow */
 .te-submit {
