@@ -328,7 +328,7 @@
   color: var(--forest);
 }
 .th3-card-eyebrow-check {
-  color: var(--terracota);
+  color: var(--forest);
   margin-left: 2px;
 }
 /* Track-3a: footer micro "Última sesión · ayer · 45 min" cuando NO hay
@@ -495,7 +495,7 @@
 }
 .th3-card-alt-activity:active { opacity: .6; }
 .th3-card-alt-activity.logged { color: var(--forest); }
-.th3-card-alt-check { color: var(--terracota); font-weight: 700; }
+.th3-card-alt-check { color: var(--forest); font-weight: 700; }
 /* Cuando el foot sigue a la fila de actividad, NO duplicar borde: un solo
    divisor arriba del bloque (actividad + navegación). Evita el look cargado
    de dos líneas apiladas, sobre todo en mobile. */
@@ -534,18 +534,18 @@
   margin: 22px 0;
 }
 
-/* ═══ Tu Espacio — franja terracota (acceso secundario al flujo HSM) ═══ */
+/* ═══ Tu Espacio — franja dorada (acceso secundario al flujo HSM) ═══ */
 .th3-espacio {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 15px 16px;
   margin-top: 10px;
-  /* Terracota vibrante (no el rosa opaco) — color que pop-ea, texto crema */
-  background: linear-gradient(135deg, #C75B3A, #A8472B);
-  border: 1px solid rgba(199, 91, 58, 0.5);
+  /* Dorado de marca — entrada secundaria, texto crema */
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  border: 1px solid rgba(168, 134, 78, 0.5);
   border-radius: var(--radius-base);
-  box-shadow: 0 8px 22px rgba(199, 91, 58, 0.26);
+  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
   cursor: pointer;
   font-family: inherit;
   text-align: left;
@@ -555,7 +555,7 @@
 }
 .th3-espacio:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(199, 91, 58, 0.34);
+  box-shadow: 0 14px 30px rgba(168, 134, 78, 0.34);
   filter: brightness(1.04);
 }
 .th3-espacio:active { transform: scale(0.99); }
@@ -750,15 +750,15 @@
 
 /* ═══ Reviews (mini día 5 + weekly HSM + daily review when complete) ═══ */
 .th3-review {
-  /* Terracota vibrante — color temático de reflexión (= franja "Tu Espacio") */
-  background: linear-gradient(135deg, #C75B3A, #A8472B);
+  /* Dorado de marca — = franja "Tu Espacio" */
+  background: linear-gradient(135deg, #C9A968, #A8864E);
   border-radius: var(--radius-base);
   padding: 18px 20px;
-  border: 1px solid rgba(199, 91, 58, 0.5);
+  border: 1px solid rgba(168, 134, 78, 0.5);
   margin-top: 16px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 22px rgba(199, 91, 58, 0.26);
+  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
 }
 .th3-review::before {
   content: '"';
