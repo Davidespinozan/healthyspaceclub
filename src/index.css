@@ -7407,6 +7407,43 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .te-complete-btn:active { transform: scale(0.975); }
 
+/* ── Reflexión del Día — pantalla de apertura contextual ── */
+.te-intro {
+  min-height: 100dvh;
+  display: flex; flex-direction: column; justify-content: center;
+  max-width: 520px; margin: 0 auto; width: 100%;
+  padding: calc(60px + env(safe-area-inset-top, 0px)) 28px calc(40px + env(safe-area-inset-bottom, 0px));
+  text-align: left;
+}
+.te-intro-eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .68rem; font-weight: 700; letter-spacing: .18em;
+  color: var(--amber); margin-bottom: 20px;
+}
+.te-intro-message {
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(1.5rem, 5vw, 1.95rem); font-weight: 600; line-height: 1.28;
+  color: #F6F2EA; margin: 0 0 22px; letter-spacing: -.01em;
+}
+.te-intro-question {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem; font-style: italic; line-height: 1.45;
+  color: rgba(234, 223, 198, 0.72); margin: 0 0 38px;
+}
+.te-intro-btn {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 28px; border: none; border-radius: 50px;
+  background: linear-gradient(135deg, #C9A968, #A8864E); color: #fff;
+  font-family: 'Montserrat', sans-serif; font-size: .95rem; font-weight: 700;
+  cursor: pointer; box-shadow: 0 10px 28px rgba(168, 134, 78, 0.38);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.te-intro-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(168,134,78,.5); filter: brightness(1.04); }
+.te-intro-btn:active { transform: scale(.975); }
+@media (prefers-reduced-motion: reduce) { .te-intro-btn { transition: none; } }
+
 /* ── Tu Espacio CTA card in TabHoy ── */
 .th-espacio-cta {
   background: linear-gradient(165deg, #f0f7f2 0%, #e4f0e6 100%);

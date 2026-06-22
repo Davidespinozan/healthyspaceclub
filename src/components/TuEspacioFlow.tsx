@@ -1,20 +1,25 @@
 import { dayKey } from '../utils/localDate';
-import { useState, useEffect, useRef } from 'react';
-import { Sparkles, X } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Sparkles, X, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { callAI } from '../utils/aiProxy';
 import { buildHSMQuestionPrompt } from '../ai/prompts/hsmQuestion';
 import { buildHSMDailyReviewPrompt } from '../ai/prompts/hsmReview';
 import { getHSMBank } from '../data/hsmBank';
+import { buildReflectionOpening } from '../ai/reflection';
 
 interface Props {
   onClose: () => void;
 }
 
+const TE_GREEN_BG =
+  'radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%), radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%), #0d1f1c';
+
 export default function TuEspacioFlow({ onClose }: Props) {
   const { t, locale } = useT();
-  const { dailyHSMResponses, addHSMResponse, subscriptionStatus, markActiveDay } = useAppStore();
+  const { dailyHSMResponses, addHSMResponse, subscriptionStatus, markActiveDay,
+    streakCount, lastActiveDate } = useAppStore();
   // Acceso real = Stripe (subscriptionStatus), no el trial local desincronizado.
   const isPlanActive = subscriptionStatus !== 'none';
 
@@ -28,6 +33,23 @@ export default function TuEspacioFlow({ onClose }: Props) {
   const today = dayKey(new Date());
   const todayResponses = dailyHSMResponses.filter(r => r.date === today);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Reflexión del Día — apertura contextual (motor de estado): abre con un
+  // mensaje + pregunta a la medida del estado del usuario (racha/resbalón/regreso…).
+  const opening = useMemo(
+    () => buildReflectionOpening({
+      today,
+      lastActiveDate,
+      streakCount,
+      trainedToday: false,
+      nutritionDone: false,
+      reflectionDone: todayResponses.length > 0,
+      recentSessions7d: 0,
+    }, locale, new Date().getDate()),
+    [today, lastActiveDate, streakCount, locale, todayResponses.length],
+  );
+  // Solo se muestra la intro si aún no empezó la reflexión de hoy.
+  const [showIntro, setShowIntro] = useState(todayResponses.length === 0);
 
   // Build today's 5 dimensions (same logic as TabHoy)
   const todayDayIndex = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
@@ -134,6 +156,23 @@ export default function TuEspacioFlow({ onClose }: Props) {
 
   const currentIndex = currentDim ? allDimensions.findIndex(d => d.title === currentDim.title) : -1;
   const progressPct = allDimensions.length > 0 ? (answeredCount / allDimensions.length) * 100 : 0;
+
+  // ── Intro contextual (apertura de la reflexión del día) ──
+  if (showIntro && !allDone) {
+    return (
+      <div className="te-flow" style={{ background: TE_GREEN_BG }}>
+        <button className="te-flow-close" onClick={onClose} aria-label={t('common.close')} type="button"><X size={18} strokeWidth={2} /></button>
+        <div className="te-intro">
+          <div className="te-intro-eyebrow">{t('espacio.eyebrowToday')}</div>
+          <p className="te-intro-message">{opening.message}</p>
+          <p className="te-intro-question">{opening.question}</p>
+          <button className="te-intro-btn" onClick={() => setShowIntro(false)} type="button">
+            {t('espacio.begin')} <ArrowRight size={17} strokeWidth={2.2} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Completion screen ──
   if (allDone) {
