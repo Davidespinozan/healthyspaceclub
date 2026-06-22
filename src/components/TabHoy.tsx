@@ -791,7 +791,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             onClick={() => setShowEspacioFlow(true)}
           >
             <span className="th3-espacio-icon">
-              <Sparkles size={18} strokeWidth={1.8} />
+              <Brain size={18} strokeWidth={1.8} />
             </span>
             <div className="th3-espacio-body">
               <p className="th3-espacio-title">{t('hoy.espacioTitle')}</p>
