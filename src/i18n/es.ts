@@ -702,7 +702,7 @@ export const es = {
     bannerTitleEm: 'siempre contigo',
     bannerSub: 'Tu nutriólogo en el bolsillo. Tu entrenador personal 24/7.',
     bannerSoon: 'Próximamente en iOS y Android',
-    ctaFinalTitle: 'No transformas tu vida solo.',
+    ctaFinalTitle: 'Cuando todos avanzan, tú avanzas más rápido.',
     ctaFinalSub: 'Comparte avances, celebra logros y rodéate de personas que van en la misma dirección que tú.',
     transKicker: 'Resultados reales',
     transTitle: 'Transformaciones que inspiran',

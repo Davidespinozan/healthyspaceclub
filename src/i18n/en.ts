@@ -703,7 +703,7 @@ export const en: Translations<typeof es> = {
     bannerTitleEm: 'everywhere with you',
     bannerSub: 'Your nutritionist in your pocket. Your personal trainer 24/7.',
     bannerSoon: 'Coming soon to iOS & Android',
-    ctaFinalTitle: "You don't transform your life alone.",
+    ctaFinalTitle: 'When everyone moves forward, you move faster.',
     ctaFinalSub: 'Share progress, celebrate wins and surround yourself with people heading the same way as you.',
     transKicker: 'Real results',
     transTitle: 'Transformations that inspire',
