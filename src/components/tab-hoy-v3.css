@@ -534,28 +534,32 @@
   margin: 22px 0;
 }
 
-/* ═══ Tu Espacio — franja dorada (acceso secundario al flujo HSM) ═══ */
+/* ═══ Tu Espacio — banner con foto de reflexión (mismo patrón que "Entrena en pareja") ═══ */
 .th3-espacio {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 15px 16px;
-  margin-top: 10px;
-  /* Dorado de marca — entrada secundaria, texto crema */
-  background: linear-gradient(135deg, #C9A968, #A8864E);
-  border: 1px solid rgba(168, 134, 78, 0.5);
-  border-radius: var(--radius-base);
-  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
+  padding: 22px 22px;
+  margin-top: 14px;
+  min-height: 168px;
+  /* Foto de reflexión a la derecha + scrim oscuro a la izquierda (texto crema) */
+  background:
+    linear-gradient(90deg, rgba(10,22,17,.9) 0%, rgba(10,22,17,.55) 44%, rgba(10,22,17,.12) 74%, transparent 100%),
+    url("https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/reflexion.webp") center right / cover no-repeat;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
   cursor: pointer;
   font-family: inherit;
   text-align: left;
   width: 100%;
+  overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, filter var(--duration-base) ease;
 }
 .th3-espacio:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(168, 134, 78, 0.34);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.34);
   filter: brightness(1.04);
 }
 .th3-espacio:active { transform: scale(0.99); }
