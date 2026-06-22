@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../../store';
 import { useT } from '../../i18n';
 import TermsSheet from '../sheets/TermsSheet';
@@ -69,13 +69,13 @@ function AccountPhase({ onAuthed }: { onAuthed: (firstName: string) => void }) {
       </label>
 
       {matchError && (
-        <div style={{ color: '#cc3333', fontSize: '.8rem', margin: '4px 0 10px', textAlign: 'center' }}>
+        <div style={{ color: '#ff8a8a', fontSize: '.8rem', margin: '4px 0 10px', textAlign: 'center' }}>
           {matchError}
         </div>
       )}
 
       {su.error && (
-        <div style={{ color: '#cc3333', fontSize: '.8rem', margin: '4px 0 10px', textAlign: 'center' }}>
+        <div style={{ color: '#ff8a8a', fontSize: '.8rem', margin: '4px 0 10px', textAlign: 'center' }}>
           {su.error}
           {emailTaken && (
             <> <button type="button" className="signup-tos-link" onClick={() => { closeModal(); goTo('login'); }}>
@@ -162,6 +162,13 @@ export default function PaymentModal() {
     return formatBillDate(d, language);
   }, [language]);
 
+  // Cerrar con Escape (estándar de modal + accesibilidad por teclado).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [closeModal]);
+
   function onAuthed(firstName: string) {
     setUserName(firstName);
     setObData('name', firstName);
@@ -192,7 +199,8 @@ export default function PaymentModal() {
 
   return (
     <div className="ov open" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-      <div className="pay-box" style={{ maxHeight: '90vh', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <div className="pay-box" role="dialog" aria-modal="true" aria-label={t('pay.planSelected')}
+        style={{ maxHeight: '90dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div className="pay-head">
           <div>
             <div className="pay-plan-lbl">{t('pay.planSelected')}</div>
@@ -200,7 +208,7 @@ export default function PaymentModal() {
             <div className="pay-plan-price">{priceLabel}</div>
             <div className="pay-plan-period">{periodLabel}</div>
           </div>
-          <button className="pay-x" onClick={closeModal}>✕</button>
+          <button className="pay-x" onClick={closeModal} aria-label={t('common.close')}>✕</button>
         </div>
 
         {/* Selector de ciclo — disponible antes de la tarjeta, en ambas fases */}

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useAppStore } from '../../store';
 import { useT } from '../../i18n';
 import TermsSheet from '../sheets/TermsSheet';
@@ -8,6 +9,13 @@ export default function SignupModal() {
   const { t } = useT();
   const { closeModal, goTo, setUserName, setObData } = useAppStore();
   const su = useEmailSignup();
+
+  // Cerrar con Escape (estándar de modal + accesibilidad por teclado).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [closeModal]);
 
   async function handleSignup() {
     const { outcome } = await su.submit();
@@ -22,14 +30,14 @@ export default function SignupModal() {
 
   return (
     <div className="ov open" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-      <div className="login-box">
+      <div className="login-box" role="dialog" aria-modal="true" aria-label={t('signup.success')}>
         <div className="login-head" style={{ background: 'linear-gradient(135deg, rgba(28,59,53,.55), rgba(8,19,18,0))' }}>
           <img
             src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
             alt="Healthy Space Club"
             className="login-logo"
           />
-          <button className="pay-x" onClick={closeModal}>✕</button>
+          <button className="pay-x" onClick={closeModal} aria-label={t('common.close')}>✕</button>
         </div>
         <div className="login-body">
           <div className="signup-check">✓</div>
@@ -81,7 +89,7 @@ export default function SignupModal() {
             </span>
           </label>
 
-          {su.error && <div style={{ color: '#cc3333', fontSize: '.8rem', margin: '0 0 10px', textAlign: 'center' }}>{su.error}</div>}
+          {su.error && <div style={{ color: '#ff8a8a', fontSize: '.8rem', margin: '0 0 10px', textAlign: 'center' }}>{su.error}</div>}
           {su.loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0' }}>
               <svg width="22" height="22" viewBox="0 0 24 24" style={{ animation: 'spin .8s linear infinite' }}>

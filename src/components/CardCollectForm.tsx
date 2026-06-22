@@ -48,9 +48,14 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Guard síncrono anti doble-submit: setProcessing(true) no se refleja hasta el
+  // próximo render, así que un doble-tap en el mismo tick dispararía confirmSetup
+  // dos veces. El ref corta de inmediato (evita riesgo de doble cobro).
+  const submittingRef = useRef(false);
 
   async function handleConfirm() {
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || submittingRef.current) return;
+    submittingRef.current = true;
     setProcessing(true);
     setError(null);
     try {
@@ -58,7 +63,6 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
       const { error: submitError } = await elements.submit();
       if (submitError) {
         setError(submitError.message ?? t('pay.errCard'));
-        setProcessing(false);
         return;
       }
 
@@ -71,7 +75,6 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
       });
       if (confirmErr) {
         setError(confirmErr.message ?? t('pay.errDeclined'));
-        setProcessing(false);
         return;
       }
 
@@ -79,16 +82,16 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
       const paymentMethodId = typeof pm === 'string' ? pm : pm?.id;
       if (!paymentMethodId) {
         setError(t('pay.errConfirm'));
-        setProcessing(false);
         return;
       }
 
       // El caller decide qué hacer con la PM (crear sub, cambiar tarjeta, etc).
       // Si lanza, mostramos el error y dejamos reintentar.
       await onPaymentMethod(paymentMethodId);
-      setProcessing(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : t('pay.errProcess'));
+    } finally {
+      submittingRef.current = false;
       setProcessing(false);
     }
   }
@@ -98,7 +101,7 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
       <div className="pay-secure">{t('pay.secure')}</div>
       <PaymentElement options={paymentElementOptions} />
       {error && (
-        <div style={{ color: '#cc3333', fontSize: '.8rem', margin: '10px 0', textAlign: 'center' }}>{error}</div>
+        <div style={{ color: '#ff8a8a', fontSize: '.8rem', margin: '10px 0', textAlign: 'center' }}>{error}</div>
       )}
       {processing ? (
         <div style={{ textAlign: 'center', padding: '10px 0' }}>
@@ -142,7 +145,7 @@ export default function CardCollectForm({ ctaLabel, onPaymentMethod }: Props) {
   if (loadErr) {
     return (
       <div style={{ textAlign: 'center', padding: '8px 0' }}>
-        <p style={{ color: '#cc3333', marginBottom: 16 }}>{loadErr}</p>
+        <p style={{ color: '#ff8a8a', marginBottom: 16 }}>{loadErr}</p>
         <button className="btn-pay" onClick={fetchSI}>{t('pay.retry')}</button>
       </div>
     );
