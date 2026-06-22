@@ -750,15 +750,17 @@
 
 /* ═══ Reviews (mini día 5 + weekly HSM + daily review when complete) ═══ */
 .th3-review {
-  /* Dorado de marca — = franja "Tu Espacio" */
-  background: linear-gradient(135deg, #C9A968, #A8864E);
+  /* Foto de reflexión + scrim oscuro (texto claro encima) */
+  background:
+    linear-gradient(135deg, rgba(8,19,18,0.82) 0%, rgba(8,19,18,0.6) 50%, rgba(8,19,18,0.4) 100%),
+    url('https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/reflexion.webp') center / cover no-repeat;
   border-radius: var(--radius-base);
   padding: 18px 20px;
   border: 1px solid rgba(168, 134, 78, 0.5);
   margin-top: 16px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
+  box-shadow: 0 8px 22px rgba(8, 20, 27, 0.28);
 }
 .th3-review::before {
   content: '"';
