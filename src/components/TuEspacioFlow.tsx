@@ -165,7 +165,6 @@ export default function TuEspacioFlow({ onClose }: Props) {
         <div className="te-intro">
           <div className="te-intro-eyebrow">{t('espacio.eyebrowToday')}</div>
           <p className="te-intro-message">{opening.message}</p>
-          <p className="te-intro-question">{opening.question}</p>
           <button className="te-intro-btn" onClick={() => setShowIntro(false)} type="button">
             {t('espacio.begin')} <ArrowRight size={17} strokeWidth={2.2} />
           </button>
