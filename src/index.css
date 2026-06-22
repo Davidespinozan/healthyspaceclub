@@ -7670,18 +7670,19 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 
 /* ════════════ TRANSFORMACIÓN + CTA FINAL (fusionados) ════════════ */
 .trans {
-  position:relative; padding:120px 60px; text-align:center;
+  position:relative; padding:120px 60px; text-align:left;
+  /* Scrim cargado a la IZQUIERDA (texto) → la derecha (4 personas) queda despejada */
   background:
-    linear-gradient(180deg, rgba(8,19,18,.55) 0%, rgba(8,19,18,.25) 45%, rgba(8,19,18,.6) 100%),
+    linear-gradient(95deg, rgba(8,19,18,.9) 0%, rgba(8,19,18,.7) 28%, rgba(8,19,18,.25) 52%, transparent 72%),
     url("/cta-banner.webp") center / cover no-repeat;
 }
-.trans-cta { position:relative; z-index:2; max-width:680px; margin:0 auto; }
+.trans-cta { position:relative; z-index:2; max-width:520px; margin:0; }
 .trans-cta-title {
   font-family:'Montserrat',sans-serif; font-weight:800;
   font-size:clamp(2rem,3.6vw,3rem); letter-spacing:-.03em; line-height:1.08;
-  color:var(--cream); margin:0 0 12px;
+  color:var(--cream); margin:0 0 14px;
 }
-.trans-cta-sub { font-size:1.05rem; color:rgba(255,255,255,.7); margin:0 0 28px; }
+.trans-cta-sub { font-size:1.05rem; color:rgba(255,255,255,.78); line-height:1.6; margin:0 0 28px; }
 .trans-cta .btn-p { display:inline-flex; }
 @media (max-width:680px){ .trans { padding:90px 24px; } }
 .trans-in {
@@ -7740,7 +7741,5 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   box-shadow:inset 0 0 110px 16px rgba(5,7,7,.5);
   background:radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(5,7,7,.28) 100%);
 }
-.trans::after {
-  content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
-  box-shadow:inset 0 0 110px 10px rgba(5,7,7,.3);
-}
+/* Sin viñeta pareja: la derecha (personas) se mantiene despejada; el scrim
+   izquierdo del .trans ya da contraste al texto. */
