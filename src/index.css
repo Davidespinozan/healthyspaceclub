@@ -381,7 +381,10 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
 /* Mobile Menu Overlay */
 .mob-menu {
   position:fixed; inset:0; z-index:290;
-  background:rgba(21,51,48,.97); backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
+  background:
+    radial-gradient(120% 55% at 50% 0%, rgba(29,60,54,.28) 0%, transparent 55%),
+    rgba(8,19,18,.98);
+  backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
   display:flex; align-items:center; justify-content:center;
   opacity:0; pointer-events:none;
   transition:opacity .4s cubic-bezier(.23,1,.32,1);
@@ -393,13 +396,13 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
 }
 .mob-menu-inner a {
   font-family:'Montserrat',sans-serif; font-size:1.6rem; font-weight:600;
-  color:rgba(255,255,255,.7); text-decoration:none; transition:all .3s; cursor: pointer;
+  color:#EADFC6; text-decoration:none; transition:all .3s; cursor: pointer;
 }
-.mob-menu-inner a:hover { color:white; }
+.mob-menu-inner a:hover { color:var(--amber); }
 .mob-menu-login {
   font-family:'Montserrat',sans-serif !important; font-size:.8rem !important;
   font-weight:500 !important; letter-spacing:.1em; text-transform:none;
-  color:rgba(255,255,255,.35) !important; cursor:pointer;
+  color:rgba(234,223,198,.5) !important; cursor:pointer;
   margin-top:12px;
 }
 .mob-menu-cta {
