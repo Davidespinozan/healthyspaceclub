@@ -199,23 +199,19 @@ export default function LandingScreen() {
           <h2 className="sys-title">{t('landing.sysTitlePre')} <em>{t('landing.sysTitleEm')}</em> {t('landing.sysTitlePost')}</h2>
           <div className="sys-grid">
             <div className="sys-feat reveal reveal-delay-1">
-              <Brain className="sys-ic" size={26} strokeWidth={1.6} />
-              <h3>{t('landing.f1Title')}</h3>
+              <div className="sys-feat-head"><Brain className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f1Title')}</h3></div>
               <p>{t('landing.f1Sub')}</p>
             </div>
             <div className="sys-feat reveal reveal-delay-2">
-              <Dumbbell className="sys-ic" size={26} strokeWidth={1.6} />
-              <h3>{t('landing.f2Title')}</h3>
+              <div className="sys-feat-head"><Dumbbell className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f2Title')}</h3></div>
               <p>{t('landing.f2Sub')}</p>
             </div>
             <div className="sys-feat reveal reveal-delay-3">
-              <Salad className="sys-ic" size={26} strokeWidth={1.6} />
-              <h3>{t('landing.f3Title')}</h3>
+              <div className="sys-feat-head"><Salad className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f3Title')}</h3></div>
               <p>{t('landing.f3Sub')}</p>
             </div>
             <div className="sys-feat reveal reveal-delay-4">
-              <Users className="sys-ic" size={26} strokeWidth={1.6} />
-              <h3>{t('landing.f4Title')}</h3>
+              <div className="sys-feat-head"><Users className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f4Title')}</h3></div>
               <p>{t('landing.f4Sub')}</p>
             </div>
           </div>

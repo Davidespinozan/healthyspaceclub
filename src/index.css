@@ -7466,27 +7466,28 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 /* ════════════ SISTEMA — feature row (crema cálido, como el contenido interno) ════════════ */
 .sys {
   background:#F6F2EA;
-  padding:96px 60px;
+  padding:74px 60px;
 }
 .sys-in { max-width:1180px; margin:0 auto; }
 .sys-title {
   font-family:'Montserrat',sans-serif; font-weight:700;
   font-size:clamp(2.1rem,3.4vw,3rem); letter-spacing:-.03em; line-height:1.1;
-  color:var(--forest); margin:0 0 36px; max-width:620px;
+  color:var(--forest); margin:0 0 26px; max-width:620px;
 }
 .sys-title em { font-style:italic; color:var(--amber); }
-.sys-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+.sys-feat-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.sys-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
 /* Cards oscuras sobre crema (contraste premium) */
 .sys-feat {
   background:linear-gradient(160deg, #143029 0%, #0c211d 100%);
   border:1px solid rgba(255,255,255,.08);
-  border-radius:18px; padding:24px 20px;
+  border-radius:18px; padding:20px 18px;
   box-shadow:0 16px 38px rgba(8,20,18,.22), inset 0 1px 0 rgba(255,255,255,.04);
 }
-.sys-ic { color:var(--amber); margin-bottom:14px; }
+.sys-ic { color:var(--amber); flex-shrink:0; }
 .sys-feat h3 {
   font-family:'Montserrat',sans-serif; font-size:.96rem; font-weight:700;
-  color:var(--cream); margin:0 0 8px; letter-spacing:-.01em;
+  color:var(--cream); margin:0; letter-spacing:-.01em;
 }
 .sys-feat p { font-size:.84rem; line-height:1.6; color:rgba(255,255,255,.6); margin:0; }
 @media (max-width:900px) {
