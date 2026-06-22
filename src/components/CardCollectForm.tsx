@@ -12,14 +12,22 @@ import { useT } from '../i18n';
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string);
 
 const appearance = {
-  theme: 'flat' as const,
+  theme: 'night' as const,
   variables: {
-    colorPrimary: '#0E2521',
-    colorBackground: '#FFFFFF',
-    colorText: '#0E2521',
-    colorDanger: '#cc3333',
+    colorPrimary: '#BFA065',
+    colorBackground: '#11201d',
+    colorText: '#F6F2EA',
+    colorTextSecondary: 'rgba(234,223,198,.6)',
+    colorTextPlaceholder: 'rgba(234,223,198,.32)',
+    colorDanger: '#ff6b6b',
     fontFamily: 'inherit',
-    borderRadius: '10px',
+    borderRadius: '12px',
+  },
+  rules: {
+    '.Input': { border: '1.5px solid rgba(255,255,255,.12)', backgroundColor: 'rgba(255,255,255,.04)' },
+    '.Input:focus': { border: '1.5px solid #BFA065', boxShadow: 'none' },
+    '.Tab': { border: '1px solid rgba(255,255,255,.12)', backgroundColor: 'rgba(255,255,255,.04)' },
+    '.Tab--selected': { border: '1.5px solid #BFA065', backgroundColor: 'rgba(191,160,101,.12)' },
   },
 };
 
@@ -95,7 +103,7 @@ function CollectInner({ clientSecret, ctaLabel, onPaymentMethod }: Props & { cli
       {processing ? (
         <div style={{ textAlign: 'center', padding: '10px 0' }}>
           <div className="spinner" />
-          <div style={{ fontSize: '.8rem', color: 'var(--txt2)' }}>{t('pay.processing')}</div>
+          <div style={{ fontSize: '.8rem', color: 'rgba(234,223,198,.55)' }}>{t('pay.processing')}</div>
         </div>
       ) : (
         <button className="btn-pay" onClick={handleConfirm} style={{ marginTop: 14 }}>
@@ -143,7 +151,7 @@ export default function CardCollectForm({ ctaLabel, onPaymentMethod }: Props) {
     return (
       <div style={{ textAlign: 'center', padding: '20px 0' }}>
         <div className="spinner" />
-        <div style={{ fontSize: '.8rem', color: 'var(--txt2)' }}>{t('pay.preparing')}</div>
+        <div style={{ fontSize: '.8rem', color: 'rgba(234,223,198,.55)' }}>{t('pay.preparing')}</div>
       </div>
     );
   }

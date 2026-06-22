@@ -114,8 +114,8 @@ function CycleToggle({ cycle, onChange, savingsPct }: {
     border: '1.5px solid', fontSize: '.85rem', textAlign: 'center', lineHeight: 1.2,
     background: 'transparent', transition: 'all .15s',
   };
-  const on: React.CSSProperties = { ...base, borderColor: 'var(--amber)', background: 'rgba(191,160,101,.14)', color: 'var(--forest)', fontWeight: 600 };
-  const off: React.CSSProperties = { ...base, borderColor: 'rgba(21,51,48,.18)', color: 'var(--txt2)' };
+  const on: React.CSSProperties = { ...base, borderColor: 'var(--amber)', background: 'rgba(191,160,101,.16)', color: '#F6F2EA', fontWeight: 600 };
+  const off: React.CSSProperties = { ...base, borderColor: 'rgba(255,255,255,.14)', color: 'rgba(234,223,198,.55)' };
 
   return (
     <div style={{ display: 'flex', gap: 12, margin: '16px 28px 16px' }}>
