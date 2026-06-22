@@ -765,7 +765,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             <span className="th3-partner-icon">
               <Users size={18} strokeWidth={1.8} />
             </span>
-            <p className="th3-partner-title">{t('hoy.partnerTitle')}</p>
+            <div className="th3-partner-body">
+              <p className="th3-partner-title">{t('hoy.partnerTitle')}</p>
+              <p className="th3-partner-sub">{t('hoy.partnerSub')}</p>
+            </div>
             <span className="th3-partner-arrow">→</span>
           </button>
         )}
@@ -790,7 +793,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             <span className="th3-espacio-icon">
               <Sparkles size={18} strokeWidth={1.8} />
             </span>
-            <p className="th3-espacio-title">{t('hoy.espacioTitle')}</p>
+            <div className="th3-espacio-body">
+              <p className="th3-espacio-title">{t('hoy.espacioTitle')}</p>
+              <p className="th3-espacio-sub">{t('hoy.espacioSubtitle')}</p>
+            </div>
             <span className="th3-espacio-arrow">→</span>
           </button>
         )}
