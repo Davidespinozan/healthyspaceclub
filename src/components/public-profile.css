@@ -289,9 +289,9 @@
   justify-content: center;
   margin: 0 auto;
   border: none;
-  /* Terracota vibrante — igual que los logros desbloqueados del perfil privado */
-  background: linear-gradient(135deg, #C75B3A, #A8472B);
-  box-shadow: 0 6px 16px rgba(199, 91, 58, 0.34);
+  /* Dorado — logro desbloqueado, igual que el perfil privado */
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  box-shadow: 0 6px 16px rgba(168, 134, 78, 0.34);
 }
 
 .pp5-highlight-days {
@@ -348,7 +348,7 @@
   width: 28px;
   height: 28px;
   border: 2px solid rgba(21, 51, 48, 0.15);
-  border-top-color: var(--terracota);
+  border-top-color: var(--amber);
   border-radius: 50%;
   animation: pp5-spin 0.8s linear infinite;
 }

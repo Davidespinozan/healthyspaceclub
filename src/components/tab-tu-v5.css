@@ -366,21 +366,21 @@ button.tt5-stat:active { transform: scale(0.97); }
 
 .tt5-highlight.is-unlocked .tt5-highlight-ring {
   border: none;
-  background: linear-gradient(135deg, #C75B3A, #A8472B);
-  box-shadow: 0 6px 16px rgba(199, 91, 58, 0.34);
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  box-shadow: 0 6px 16px rgba(168, 134, 78, 0.34);
 }
 
 .tt5-highlight.is-next .tt5-highlight-ring {
-  border: 2px solid var(--terracota);
+  border: 2px solid var(--amber);
   border-style: solid;
-  background: rgba(199, 91, 58, 0.08);
-  box-shadow: 0 0 0 2px rgba(199, 91, 58, 0.15);
+  background: rgba(191, 160, 101, 0.08);
+  box-shadow: 0 0 0 2px rgba(191, 160, 101, 0.15);
 }
 
-/* Bloqueados: tint terracota suave (18%) en vez del blanco/dashed neutro */
+/* Bloqueados: tint dorado suave en vez del blanco/dashed neutro */
 .tt5-highlight:not(.is-unlocked):not(.is-next) .tt5-highlight-ring {
-  background: linear-gradient(135deg, rgba(199, 91, 58, 0.18), rgba(124, 98, 50, 0.14));
-  border: 1.5px dashed rgba(199, 91, 58, 0.35);
+  background: linear-gradient(135deg, rgba(191, 160, 101, 0.18), rgba(124, 98, 50, 0.14));
+  border: 1.5px dashed rgba(191, 160, 101, 0.35);
 }
 
 .tt5-highlight-emoji {
@@ -504,10 +504,10 @@ button.tt5-stat:active { transform: scale(0.97); }
   padding: 4px 14px 18px;
 }
 .tt5-reflection {
-  background: linear-gradient(135deg, #C75B3A, #A8472B);
-  border: 1px solid rgba(199, 91, 58, 0.5);
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  border: 1px solid rgba(168, 134, 78, 0.5);
   border-radius: var(--radius-lg);
-  box-shadow: 0 6px 18px rgba(199, 91, 58, 0.20);
+  box-shadow: 0 6px 18px rgba(168, 134, 78, 0.20);
   padding: 14px 16px;
   text-align: left;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
@@ -532,7 +532,7 @@ button.tt5-stat:active { transform: scale(0.97); }
   font-family: 'Montserrat', sans-serif; font-size: 0.9rem;
   color: #fff; line-height: 1.5; margin: 0;
 }
-.tt5-highlight-lock { color: rgba(199, 91, 58, 0.6); }
+.tt5-highlight-lock { color: rgba(191, 160, 101, 0.6); }
 
 /* ═══ Responsive ═════════════════════════════════════════ */
 @media (max-width: 380px) {
