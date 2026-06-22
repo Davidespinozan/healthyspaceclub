@@ -41,6 +41,21 @@ export default function DashboardScreen() {
 
   useEffect(() => { checkTrialExpiry(); }, []);
 
+  // Cerrar el coach al tocar cualquier cosa que NO sea el panel del coach ni su FAB.
+  // (pointerdown deja que el botón tocado igual ejecute su acción: ej. cambiar de tab
+  //  navega Y cierra el coach.) Solo activo mientras el coach está abierto.
+  useEffect(() => {
+    if (!coachOpen) return;
+    const onDown = (e: PointerEvent) => {
+      const el = e.target as Element | null;
+      if (el && !el.closest('.coach-overlay') && !el.closest('.coach-fab')) {
+        setCoachOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', onDown, true);
+    return () => document.removeEventListener('pointerdown', onDown, true);
+  }, [coachOpen, setCoachOpen]);
+
   function navTo(page: DashPage) {
     setDashPage(page);
     window.scrollTo(0, 0);
