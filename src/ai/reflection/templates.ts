@@ -28,24 +28,18 @@ const T: Templates = {
   },
   momentum: {
     es: [
-      {
-        message: '{streak} días seguidos. Eso ya no es motivación, es identidad.',
-        question: '¿Qué parte de ti cambió que la gente todavía no nota?',
-      },
-      {
-        message: 'Llevas {streak} días. La constancia dejó de ser esfuerzo y empezó a ser quién eres.',
-        question: 'Si tu yo de hace un mes te viera hoy, ¿qué pensaría?',
-      },
+      { message: '{streak} días seguidos. Eso ya no es motivación, es identidad.', question: '¿Qué parte de ti cambió que la gente todavía no nota?' },
+      { message: 'Llevas {streak} días. La constancia dejó de ser esfuerzo y empezó a ser quién eres.', question: 'Si tu yo de hace un mes te viera hoy, ¿qué pensaría?' },
+      { message: '{streak} días. La mayoría se rinde antes de llegar aquí — tú no.', question: '¿Qué te dirías a ti mismo del día 1 si pudieras?' },
+      { message: 'La racha de {streak} no es suerte. Es un montón de decisiones pequeñas que sí tomaste.', question: '¿Cuál fue la decisión más difícil de sostener esta semana?' },
+      { message: '{streak} días construyendo a la persona que querías ser. Sigue.', question: '¿Qué hábito ya te sale en automático que antes te costaba?' },
     ],
     en: [
-      {
-        message: '{streak} days in a row. That isn’t motivation anymore — it’s identity.',
-        question: 'What part of you changed that people haven’t noticed yet?',
-      },
-      {
-        message: '{streak} days strong. Consistency stopped being effort and became who you are.',
-        question: 'If you from a month ago saw you today, what would they think?',
-      },
+      { message: '{streak} days in a row. That isn’t motivation anymore — it’s identity.', question: 'What part of you changed that people haven’t noticed yet?' },
+      { message: '{streak} days strong. Consistency stopped being effort and became who you are.', question: 'If you from a month ago saw you today, what would they think?' },
+      { message: '{streak} days. Most people quit before getting here — you didn’t.', question: 'What would you tell your day-1 self if you could?' },
+      { message: 'A {streak}-day streak isn’t luck. It’s a pile of small decisions you actually made.', question: 'What was the hardest one to hold this week?' },
+      { message: '{streak} days building the person you wanted to be. Keep going.', question: 'What habit is now automatic that used to be hard?' },
     ],
   },
   plateau: {
@@ -90,24 +84,22 @@ const T: Templates = {
   },
   stable: {
     es: [
-      {
-        message: 'Un momento para ti. Sin prisa.',
-        question: '¿Cómo llegas hoy, en una frase?',
-      },
-      {
-        message: 'Los días normales son los que construyen. Aquí estás, otra vez.',
-        question: '¿Qué es una cosa que hoy sí está bajo tu control?',
-      },
+      { message: 'Un momento para ti. Sin prisa.', question: '¿Cómo llegas hoy, en una frase?' },
+      { message: 'Los días normales son los que construyen. Aquí estás, otra vez.', question: '¿Qué es una cosa que hoy sí está bajo tu control?' },
+      { message: 'No todo tiene que ser épico. Hoy basta con presentarte.', question: '¿Qué pequeña cosa te haría sentir bien contigo al final del día?' },
+      { message: 'Respira. Estás en el lugar correcto haciendo el trabajo correcto.', question: '¿Qué es lo que más te pesa hoy, y qué tan real es?' },
+      { message: 'El progreso casi nunca se siente como progreso. Se siente como hoy.', question: '¿En qué eres un poco mejor que hace un mes?' },
+      { message: 'Cerrar el día con honestidad ya es un avance.', question: '¿Qué hiciste hoy que tu yo del futuro te agradecería?' },
+      { message: 'No vienes a ser perfecto. Vienes a ser constante.', question: 'Si hoy solo pudieras ganar una cosa, ¿cuál elegirías?' },
     ],
     en: [
-      {
-        message: 'A moment for you. No rush.',
-        question: 'How are you arriving today, in one line?',
-      },
-      {
-        message: 'Ordinary days are the ones that build. Here you are, again.',
-        question: 'What’s one thing that’s within your control today?',
-      },
+      { message: 'A moment for you. No rush.', question: 'How are you arriving today, in one line?' },
+      { message: 'Ordinary days are the ones that build. Here you are, again.', question: 'What’s one thing that’s within your control today?' },
+      { message: 'Not everything has to be epic. Today, just showing up is enough.', question: 'What small thing would make you feel good about yourself by tonight?' },
+      { message: 'Breathe. You’re in the right place doing the right work.', question: 'What’s weighing on you today — and how real is it?' },
+      { message: 'Progress rarely feels like progress. It feels like today.', question: 'Where are you a little better than a month ago?' },
+      { message: 'Closing the day with honesty is already a step forward.', question: 'What did you do today that your future self would thank you for?' },
+      { message: 'You’re not here to be perfect. You’re here to be consistent.', question: 'If you could win just one thing today, which would it be?' },
     ],
   },
 };
