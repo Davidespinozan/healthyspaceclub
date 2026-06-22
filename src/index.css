@@ -608,7 +608,7 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
   /* Móvil: todo centrado y título en mayúsculas */
   .hero--dark .hero-content { max-width:100%; text-align:center; }
   .hero--dark .hero-content .hero-btns { justify-content:center; }
-  .hero--dark .hero-chips { justify-content:center; }
+  .hero--dark .hero-chips { display:none; }
   .hero h1, .hero-tagline { text-transform:uppercase; }
   /* Títulos más grandes en móvil */
   .hero-tagline { font-size:1.69rem; }
