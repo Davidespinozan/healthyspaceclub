@@ -1,6 +1,9 @@
 // Plantillas de apertura de "Reflexión del Día" por estado (MVP: sin IA libre).
-// Cada estado activa un mecanismo conductual distinto (ver docs/reflexion-del-dia.md, Parte 2/5).
-// Copy real, listo para tunear. Interpolación: {name}, {streak}.
+// La reflexión (HSM / "Tu Espacio") es introspección de vida — dimensiones como
+// Identidad, Vocación, Propósito, Metas, Disciplina. Por eso el saludo es
+// CONTEMPLATIVO (prepara para mirar hacia adentro), NO de coach de gym.
+// El "estado" solo modula el tono según si vuelves tras una ausencia, etc.
+// Copy real, listo para tunear. Doc: docs/reflexion-del-dia.md
 
 import type { ReflectionState, ReflectionContext } from './state';
 
@@ -8,120 +11,103 @@ export type Locale = 'es' | 'en';
 
 export interface ReflectionOpening {
   state: ReflectionState;
-  message: string;   // lo que dice el coach (1-2 frases)
-  question: string;  // 1 pregunta para responder
+  message: string;   // saludo contemplativo que abre el espacio (1-2 frases)
+  question: string;  // (no se muestra en la intro; reservado para futuro)
 }
 
 type Variant = { message: string; question: string };
 type Templates = Record<ReflectionState, Record<Locale, Variant[]>>;
 
+// `question` queda como string vacío: las preguntas reales viven en el banco HSM.
+const Q = '';
+
 const T: Templates = {
-  breakthrough: {
-    es: [{
-      message: 'Hoy tu cuerpo respondió. Esto es exactamente lo que se siente progresar — recuérdalo.',
-      question: '¿Cómo se siente ser quien eres hoy comparado con cuando empezaste?',
-    }],
-    en: [{
-      message: 'Your body answered today. This is exactly what progress feels like — remember it.',
-      question: 'How does it feel to be who you are today versus when you started?',
-    }],
+  // Vuelve tras ≥5 días: reencuentro con el espacio, sin culpa.
+  return: {
+    es: [
+      { message: 'Hace tiempo que no te dabas este momento. Bienvenido de vuelta a tu espacio.', question: Q },
+      { message: 'Volviste. No a recuperar lo perdido — a seguir conociéndote desde donde estás hoy.', question: Q },
+    ],
+    en: [
+      { message: 'It’s been a while since you gave yourself this. Welcome back to your space.', question: Q },
+      { message: 'You came back. Not to recover what’s lost — to keep knowing yourself from where you are today.', question: Q },
+    ],
   },
+  // 2-4 días sin pasar: el ritmo se rompió, se retoma con calma.
+  relapse: {
+    es: [
+      { message: 'Unos días sin mirar hacia adentro. Está bien — el silencio también es parte. Retomemos.', question: Q },
+      { message: 'La vida se interpuso. Hoy vuelves a hacerte espacio, y eso ya dice algo de ti.', question: Q },
+    ],
+    en: [
+      { message: 'A few days without looking inward. That’s okay — the quiet is part of it too. Let’s pick it up.', question: Q },
+      { message: 'Life got in the way. Today you make space again, and that already says something about you.', question: Q },
+    ],
+  },
+  // Saltó un día: gentil, retomar el hilo.
+  slip: {
+    es: [
+      { message: 'Ayer no pasaste por aquí. Sin reproches — hoy retomas el hilo contigo.', question: Q },
+      { message: 'Un día de pausa no rompe nada. Aquí sigues, listo para mirar hacia adentro.', question: Q },
+    ],
+    en: [
+      { message: 'You didn’t stop by yesterday. No reproach — today you pick the thread back up with yourself.', question: Q },
+      { message: 'A day’s pause breaks nothing. Here you are, ready to look inward.', question: Q },
+    ],
+  },
+  // Constante: reconoce el hábito de cuidarse, en clave introspectiva.
   momentum: {
     es: [
-      { message: '{streak} días seguidos. Eso ya no es motivación, es identidad.', question: '¿Qué parte de ti cambió que la gente todavía no nota?' },
-      { message: 'Llevas {streak} días. La constancia dejó de ser esfuerzo y empezó a ser quién eres.', question: 'Si tu yo de hace un mes te viera hoy, ¿qué pensaría?' },
-      { message: '{streak} días. La mayoría se rinde antes de llegar aquí — tú no.', question: '¿Qué te dirías a ti mismo del día 1 si pudieras?' },
-      { message: 'La racha de {streak} no es suerte. Es un montón de decisiones pequeñas que sí tomaste.', question: '¿Cuál fue la decisión más difícil de sostener esta semana?' },
-      { message: '{streak} días construyendo a la persona que querías ser. Sigue.', question: '¿Qué hábito ya te sale en automático que antes te costaba?' },
+      { message: 'Vienes cuidando este espacio con constancia. Conocerte se está volviendo un hábito.', question: Q },
+      { message: 'Día tras día eliges mirar hacia adentro. Pocos lo hacen — sigue.', question: Q },
+      { message: 'La constancia con la que vuelves aquí dice mucho de quién te estás volviendo.', question: Q },
     ],
     en: [
-      { message: '{streak} days in a row. That isn’t motivation anymore — it’s identity.', question: 'What part of you changed that people haven’t noticed yet?' },
-      { message: '{streak} days strong. Consistency stopped being effort and became who you are.', question: 'If you from a month ago saw you today, what would they think?' },
-      { message: '{streak} days. Most people quit before getting here — you didn’t.', question: 'What would you tell your day-1 self if you could?' },
-      { message: 'A {streak}-day streak isn’t luck. It’s a pile of small decisions you actually made.', question: 'What was the hardest one to hold this week?' },
-      { message: '{streak} days building the person you wanted to be. Keep going.', question: 'What habit is now automatic that used to be hard?' },
+      { message: 'You keep tending to this space. Knowing yourself is becoming a habit.', question: Q },
+      { message: 'Day after day you choose to look inward. Few do — keep going.', question: Q },
+      { message: 'The consistency with which you return here says a lot about who you’re becoming.', question: Q },
     ],
+  },
+  // (No disparan en el MVP; copy contemplativo genérico por si acaso.)
+  breakthrough: {
+    es: [{ message: 'Algo se movió en ti últimamente. Tómate este momento para entender qué.', question: Q }],
+    en: [{ message: 'Something shifted in you lately. Take this moment to understand what.', question: Q }],
   },
   plateau: {
-    es: [{
-      message: 'El número no se movió, pero tu trabajo sí. La báscula es un solo testigo, y miente a corto plazo.',
-      question: 'Además del número, ¿en qué notas que estás distinto?',
-    }],
-    en: [{
-      message: 'The number didn’t move, but your work did. The scale is one witness, and it lies short-term.',
-      question: 'Beyond the number, where do you notice you’re different?',
-    }],
+    es: [{ message: 'A veces parece que nada cambia, y por dentro está pasando todo. Mira con calma.', question: Q }],
+    en: [{ message: 'Sometimes it feels like nothing changes, while inside everything is. Look closely.', question: Q }],
   },
-  slip: {
-    es: [{
-      message: 'Ayer no entrenaste. Un día no borra lo que construiste — esto no es romper la racha, es ser humano.',
-      question: '¿Qué es lo MÍNIMO que sí puedes hacer hoy para seguir siendo esa persona?',
-    }],
-    en: [{
-      message: 'You missed yesterday. One day doesn’t erase what you built — this isn’t breaking the streak, it’s being human.',
-      question: 'What’s the SMALLEST thing you can do today to stay that person?',
-    }],
-  },
-  relapse: {
-    es: [{
-      message: 'Unos días fuera no borran tu progreso. Lo que define no es la caída, es volver — y aquí estás.',
-      question: '¿Qué se interpuso estos días? Sin juicio, solo para verlo claro.',
-    }],
-    en: [{
-      message: 'A few days off don’t erase your progress. What defines you isn’t the fall, it’s the return — and here you are.',
-      question: 'What got in the way these days? No judgment, just to see it clearly.',
-    }],
-  },
-  return: {
-    es: [{
-      message: 'Volviste. Eso ya dice más de ti que cualquier racha. No vamos a recuperar lo perdido, vamos a empezar desde donde estás.',
-      question: '¿Qué te trajo de vuelta hoy?',
-    }],
-    en: [{
-      message: 'You came back. That says more about you than any streak. We won’t recover what’s lost — we start from where you are.',
-      question: 'What brought you back today?',
-    }],
-  },
+  // Día normal: invitación contemplativa a pausar.
   stable: {
     es: [
-      { message: 'Un momento para ti. Sin prisa.', question: '¿Cómo llegas hoy, en una frase?' },
-      { message: 'Los días normales son los que construyen. Aquí estás, otra vez.', question: '¿Qué es una cosa que hoy sí está bajo tu control?' },
-      { message: 'No todo tiene que ser épico. Hoy basta con presentarte.', question: '¿Qué pequeña cosa te haría sentir bien contigo al final del día?' },
-      { message: 'Respira. Estás en el lugar correcto haciendo el trabajo correcto.', question: '¿Qué es lo que más te pesa hoy, y qué tan real es?' },
-      { message: 'El progreso casi nunca se siente como progreso. Se siente como hoy.', question: '¿En qué eres un poco mejor que hace un mes?' },
-      { message: 'Cerrar el día con honestidad ya es un avance.', question: '¿Qué hiciste hoy que tu yo del futuro te agradecería?' },
-      { message: 'No vienes a ser perfecto. Vienes a ser constante.', question: 'Si hoy solo pudieras ganar una cosa, ¿cuál elegirías?' },
+      { message: 'Este es tu espacio. Un momento para mirar hacia adentro, sin prisa.', question: Q },
+      { message: 'Baja el ritmo un momento. Aquí no hay nada que demostrar, solo algo que entender.', question: Q },
+      { message: 'Un alto en el día para reencontrarte contigo. Respira y empieza cuando estés listo.', question: Q },
+      { message: 'Los momentos de silencio contigo son los que más te enseñan. Aquí tienes uno.', question: Q },
+      { message: 'Hoy no se trata de hacer, sino de notar. ¿Qué hay debajo del ruido?', question: Q },
+      { message: 'Tu mente lleva todo el día hablándote. Es buen momento para escucharla.', question: Q },
+      { message: 'Date permiso de parar un minuto y ser honesto contigo. Eso ya es valiente.', question: Q },
     ],
     en: [
-      { message: 'A moment for you. No rush.', question: 'How are you arriving today, in one line?' },
-      { message: 'Ordinary days are the ones that build. Here you are, again.', question: 'What’s one thing that’s within your control today?' },
-      { message: 'Not everything has to be epic. Today, just showing up is enough.', question: 'What small thing would make you feel good about yourself by tonight?' },
-      { message: 'Breathe. You’re in the right place doing the right work.', question: 'What’s weighing on you today — and how real is it?' },
-      { message: 'Progress rarely feels like progress. It feels like today.', question: 'Where are you a little better than a month ago?' },
-      { message: 'Closing the day with honesty is already a step forward.', question: 'What did you do today that your future self would thank you for?' },
-      { message: 'You’re not here to be perfect. You’re here to be consistent.', question: 'If you could win just one thing today, which would it be?' },
+      { message: 'This is your space. A moment to look inward, no rush.', question: Q },
+      { message: 'Slow down for a moment. Nothing to prove here — just something to understand.', question: Q },
+      { message: 'A pause in the day to meet yourself again. Breathe, and start when you’re ready.', question: Q },
+      { message: 'The quiet moments with yourself teach you the most. Here’s one.', question: Q },
+      { message: 'Today isn’t about doing — it’s about noticing. What’s beneath the noise?', question: Q },
+      { message: 'Your mind has been talking to you all day. Good time to listen.', question: Q },
+      { message: 'Give yourself permission to stop a minute and be honest with you. That’s already brave.', question: Q },
     ],
   },
 };
 
-function interpolate(s: string, ctx: ReflectionContext): string {
-  return s
-    .replace(/\{streak\}/g, String(ctx.streakCount))
-    .replace(/\{name\}/g, '');
-}
-
 /** Devuelve el copy de apertura para un estado. `seed` elige variante de forma determinista. */
 export function getOpeningCopy(
   state: ReflectionState,
-  ctx: ReflectionContext,
+  _ctx: ReflectionContext,
   locale: Locale,
   seed = 0,
 ): ReflectionOpening {
   const variants = T[state][locale];
   const v = variants[Math.abs(seed) % variants.length];
-  return {
-    state,
-    message: interpolate(v.message, ctx),
-    question: interpolate(v.question, ctx),
-  };
+  return { state, message: v.message, question: v.question };
 }
