@@ -846,6 +846,7 @@ export const es = {
     publicEmpty: 'Este perfil aún no tiene contenido público.',
   },
   club: {
+    eyebrow: 'La comunidad',
     title: 'El Club',
     activeOne: '{count} activo hoy',
     activeOther: '{count} activos hoy',

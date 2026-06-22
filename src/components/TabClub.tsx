@@ -139,7 +139,10 @@ export default function TabClub() {
   return (
     <div className="clb-wrap">
       <div className="clb-header">
-        <h1 className="clb-title">{t('club.title')}</h1>
+        <div className="clb-header-main">
+          <p className="clb-eyebrow">{t('club.eyebrow')}</p>
+          <h1 className="clb-title">{t('club.title')}</h1>
+        </div>
         <div className="clb-header-right">
           <span className="clb-meta">
             {plural(activeToday, {

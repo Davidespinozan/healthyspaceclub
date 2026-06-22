@@ -847,6 +847,7 @@ export const en: Translations<typeof es> = {
     publicEmpty: "This profile doesn't have public content yet.",
   },
   club: {
+    eyebrow: 'The community',
     title: 'The Club',
     activeOne: '{count} active today',
     activeOther: '{count} active today',

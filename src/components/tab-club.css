@@ -17,20 +17,55 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 22px 18px 22px;
-  min-height: 160px;
+  padding: 30px 20px 24px;
+  min-height: 150px;
   border-radius: 0 0 26px 26px;
   overflow: hidden;
-  /* Foto de comunidad a la derecha + scrim crema a la izquierda (placeholder: pareja) */
+  color: var(--sala-surface);
+  /* Verde premium + glow (mismo lenguaje que el hero de Hoy) */
   background:
-    linear-gradient(95deg, #F6F2EA 0%, #F6F2EA 32%, rgba(246,242,234,.55) 52%, rgba(246,242,234,0) 76%),
-    url("/app-pareja.webp") center right / cover no-repeat;
+    radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%),
+    radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%),
+    #0d1f1c;
+}
+/* Glow orbs dorados — profundidad premium (como el hero de Hoy) */
+.clb-header::before,
+.clb-header::after {
+  content: '';
+  position: absolute;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(191,160,101,.16) 0%, rgba(191,160,101,0) 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+.clb-header::before { top: -42%; left: -14%; }
+.clb-header::after { bottom: -52%; right: -14%; }
+
+.clb-header-main {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.clb-eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .18em;
+  color: var(--amber);
+  margin: 0;
 }
 .clb-header-right {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 12px;
 }
+.clb-header .clb-bell { color: var(--sala-surface); }
 
 /* Toggle Todos / Siguiendo */
 .clb-feed-toggle {
@@ -64,8 +99,8 @@
 .clb-title {
   font-family: 'Montserrat', sans-serif;
   font-size: 26px;
-  font-weight: 500;
-  color: var(--forest);
+  font-weight: 600;
+  color: #F6F2EA;
   letter-spacing: var(--tracking-tighter);
   margin: 0;
   line-height: 1.1;
