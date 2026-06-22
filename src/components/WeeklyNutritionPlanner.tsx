@@ -1,5 +1,5 @@
 import { dayKey } from '../utils/localDate';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
 import { mealPlans, getMealPlans } from '../data/mealPlan';
 import { scalePlan } from '../utils/scalePlan';
@@ -7,9 +7,10 @@ import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, ChevronDown, Wheat, Milk, Beef, Shell, CircleCheck, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
-import CreatePostModal from './CreatePostModal';
 import { chronoMeals } from '../utils/mealOrder';
 import { callAI } from '../utils/aiProxy';
+
+const CreatePostModal = lazy(() => import('./CreatePostModal'));
 import { buildWeeklyPlanPrompt } from '../ai/prompts/weeklyPlan';
 import { useT } from '../i18n';
 import { plural, formatDate } from '../i18n/format';
@@ -936,11 +937,15 @@ export default function WeeklyNutritionPlanner() {
         }}
       />
 
-      <CreatePostModal
-        open={shareMeal !== null}
-        onClose={() => setShareMeal(null)}
-        context={{ kind: 'meal', mealSummary: shareMeal ?? '' }}
-      />
+      {shareMeal !== null && (
+        <Suspense fallback={null}>
+          <CreatePostModal
+            open={shareMeal !== null}
+            onClose={() => setShareMeal(null)}
+            context={{ kind: 'meal', mealSummary: shareMeal ?? '' }}
+          />
+        </Suspense>
+      )}
 
       {foodLogTarget !== null && (
         <FoodLogSheet

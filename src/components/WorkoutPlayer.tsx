@@ -1,9 +1,10 @@
 import { dayKey } from '../utils/localDate';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera, Info } from 'lucide-react';
-import CreatePostModal from './CreatePostModal';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
+
+const CreatePostModal = lazy(() => import('./CreatePostModal'));
 import { translateMuscle, translateDifficulty } from '../utils/exerciseMeta';
 import { haptics } from '../utils/haptics';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -727,11 +728,15 @@ export default function WorkoutPlayer({
         </div>
       )}
 
-      <CreatePostModal
-        open={shareOpen}
-        onClose={() => setShareOpen(false)}
-        context={{ kind: 'workout' }}
-      />
+      {shareOpen && (
+        <Suspense fallback={null}>
+          <CreatePostModal
+            open={shareOpen}
+            onClose={() => setShareOpen(false)}
+            context={{ kind: 'workout' }}
+          />
+        </Suspense>
+      )}
 
       {/* Specs/técnica del ejercicio actual SIN salir del entrenamiento —
           mismo popout que en Hoy/plan, una sola fuente de verdad. */}

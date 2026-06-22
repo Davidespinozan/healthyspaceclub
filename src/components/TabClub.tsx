@@ -1,5 +1,4 @@
 import { dayKey } from '../utils/localDate';
-import CreatePostModal from './CreatePostModal';
 import PublicProfile from './PublicProfile';
 import PostCard, { type ClubPost } from './club/PostCard';
 import CommentsSheet from './club/CommentsSheet';
@@ -8,10 +7,12 @@ import { useNotifications } from '../hooks/useNotifications';
 import { getFollowingIds } from '../utils/follows';
 import { haptics } from '../utils/haptics';
 import { Bell } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { deleteClubPost } from '../utils/clubPosts';
+
+const CreatePostModal = lazy(() => import('./CreatePostModal'));
 import { useT } from '../i18n';
 import { plural } from '../i18n/format';
 import './tab-club.css';
@@ -204,11 +205,15 @@ export default function TabClub() {
         +
       </button>
 
-      <CreatePostModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onPostCreated={() => fetchFeed()}
-      />
+      {createOpen && (
+        <Suspense fallback={null}>
+          <CreatePostModal
+            open={createOpen}
+            onClose={() => setCreateOpen(false)}
+            onPostCreated={() => fetchFeed()}
+          />
+        </Suspense>
+      )}
 
       <CommentsSheet
         postId={commentsPostId}
