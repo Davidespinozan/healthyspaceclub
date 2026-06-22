@@ -2270,8 +2270,8 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
   .nav-links { display:none !important; }
   .nav-left { display:none !important; }
   .nav-hamburger { display:flex; position:absolute; right:18px; }
-  .logo img { height:40px; }
-  .logo-nav img { height:80px; }
+  .logo img { height:36px; }
+  .logo-nav img { height:72px; }
   .logo-club { font-size:.87rem; letter-spacing:.25em; }
   nav.landing-nav.scrolled { height: calc(92px + env(safe-area-inset-top, 0px)); }
 
