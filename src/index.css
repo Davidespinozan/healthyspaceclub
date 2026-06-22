@@ -7176,7 +7176,12 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .te-flow {
   position: fixed; inset: 0; z-index: 500;
   display: flex; flex-direction: column;
-  background: var(--sala-bg);
+  /* Oscuro inmersivo (santuario contemplativo) — mismo verde que el completado */
+  background:
+    radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%),
+    radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%),
+    #0d1f1c;
+  color: var(--sala-surface);
   animation: teFadeIn .3s ease;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -7189,15 +7194,15 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); right: 16px; z-index: 510;
   width: 40px; height: 40px; padding: 0;
   border-radius: var(--radius-md);
-  background: var(--surface-glass-strong);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(21,51,48,.08);
+  border: 1px solid rgba(255,255,255,.12);
   display: flex; align-items: center; justify-content: center;
-  color: rgba(21, 51, 48, 0.7); cursor: pointer;
+  color: rgba(246, 242, 234, 0.85); cursor: pointer;
   box-shadow: var(--shadow-pro-md);
   transition: transform var(--duration-fast) ease, background var(--duration-fast) ease;
 }
-.te-flow-close:hover { background: rgba(255, 255, 255, 0.85); }
+.te-flow-close:hover { background: rgba(255, 255, 255, 0.18); }
 .te-flow-close:active { transform: scale(0.95); }
 
 /* Progress — barra fina terracota + label minimal junto, sin dots redundantes */
@@ -7208,7 +7213,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .te-progress-bar {
   flex: 1;
-  height: 3px; background: var(--sand); border-radius: 3px;
+  height: 3px; background: rgba(255,255,255,.12); border-radius: 3px;
   overflow: hidden;
 }
 .te-progress-fill {
@@ -7219,7 +7224,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .te-progress-label {
   font-family: 'Montserrat', sans-serif;
   font-size: .68rem; font-weight: 600;
-  color: var(--txt2);
+  color: rgba(234,223,198,.6);
   letter-spacing: var(--tracking-kicker);
   flex-shrink: 0;
 }
@@ -7262,42 +7267,42 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .te-question {
   font-family: 'Montserrat', sans-serif;
   font-size: clamp(1.5rem, 4.5vw, 1.9rem);
-  font-weight: 500; color: var(--forest);
-  line-height: 1.2; margin-bottom: 28px;
+  font-weight: 500; color: #F6F2EA;
+  line-height: 1.25; margin-bottom: 28px;
   letter-spacing: var(--tracking-tighter);
 }
 
 /* Textarea — focus terracota para coherencia con el acento */
 .te-textarea {
   width: 100%; min-height: 120px; padding: 16px 18px;
-  background: var(--sala-surface);
-  border: 1px solid var(--sala-border);
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.14);
   border-radius: var(--radius-md);
   font-family: 'Montserrat', sans-serif;
-  font-size: .92rem; color: var(--forest); line-height: 1.6;
+  font-size: .92rem; color: #F6F2EA; line-height: 1.6;
   resize: none; outline: none;
-  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease, background var(--duration-fast) ease;
   margin-bottom: 16px;
 }
-.te-textarea::placeholder { color: rgba(21,51,48,.35); }
-.te-textarea:hover { border-color: var(--sala-border-strong); }
-.te-textarea:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(191,160,101,.13); }
+.te-textarea::placeholder { color: rgba(234,223,198,.4); }
+.te-textarea:hover { border-color: rgba(255,255,255,.22); }
+.te-textarea:focus { border-color: var(--amber); background: rgba(255,255,255,.07); box-shadow: 0 0 0 3px rgba(191,160,101,.13); }
 
-/* Submit — terracota vibrante (color identidad de "Tu Espacio") + glow */
+/* Submit — dorado de marca + glow */
 .te-submit {
   width: 100%; padding: 15px; border: none;
   border-radius: var(--radius-base);
-  background: linear-gradient(135deg, #C75B3A, #A8472B); color: #fff;
+  background: linear-gradient(135deg, #C9A968, #A8864E); color: #fff;
   font-family: 'Montserrat', sans-serif;
   font-size: .92rem; font-weight: 600;
   letter-spacing: var(--tracking-tight);
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(199, 91, 58, 0.3);
+  box-shadow: 0 10px 24px rgba(168, 134, 78, 0.34);
   transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease, opacity var(--duration-fast) ease, filter var(--duration-fast) ease;
 }
 .te-submit:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 16px 32px rgba(199, 91, 58, 0.42);
+  box-shadow: 0 16px 32px rgba(168, 134, 78, 0.46);
   filter: brightness(1.03);
 }
 .te-submit:active:not(:disabled) { transform: scale(0.98); }
