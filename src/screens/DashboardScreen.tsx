@@ -5,14 +5,15 @@ import { useT } from '../i18n';
 import type { DashPage } from '../types';
 import type { TranslationKey } from '../i18n/es';
 
-import ManagePlanSheet from '../components/sheets/ManagePlanSheet';
-import TabHoy from '../components/TabHoy';
-import TabCoach from '../components/TabCoach';
-// TabMetodo removed — backed up in _hsm_backup/
-import TabClub from '../components/TabClub';
-import TabTu from '../components/TabTu';
-import MiHuella from '../components/MiHuella';
+import TabHoy from '../components/TabHoy'; // default tab → estática (carga instantánea)
 import SubPageLoadingFallback from '../components/SubPageLoadingFallback';
+
+// Tabs/sheets no-default → lazy: solo cargan al entrar a ellas (aligera el chunk del dashboard).
+const ManagePlanSheet = lazy(() => import('../components/sheets/ManagePlanSheet'));
+const TabCoach = lazy(() => import('../components/TabCoach'));
+const TabClub = lazy(() => import('../components/TabClub'));
+const TabTu = lazy(() => import('../components/TabTu'));
+const MiHuella = lazy(() => import('../components/MiHuella'));
 
 // Sub-pages lazy — Split-1: las dos más pesadas salen del initial chunk.
 // DailyTrainer y WeeklyNutritionPlanner solo se cargan al entrar a su
@@ -79,13 +80,21 @@ export default function DashboardScreen() {
           </button>
         </div>
       )}
-      {showPastDuePlan && <ManagePlanSheet onClose={() => setShowPastDuePlan(false)} />}
+      {showPastDuePlan && (
+        <Suspense fallback={null}>
+          <ManagePlanSheet onClose={() => setShowPastDuePlan(false)} />
+        </Suspense>
+      )}
       <main className="app-main">
         {/* Main tabs */}
         {dashPage === 'hoy' && <TabHoy onNav={(p) => navTo(p as DashPage)} />}
-        {dashPage === 'club' && <TabClub />}
+        {dashPage === 'club' && (
+          <Suspense fallback={<SubPageLoadingFallback />}><TabClub /></Suspense>
+        )}
         {/* Método tab removed — HSM questions remain in Tu Espacio */}
-        {dashPage === 'tu' && <TabTu onNav={navTo} />}
+        {dashPage === 'tu' && (
+          <Suspense fallback={<SubPageLoadingFallback />}><TabTu onNav={navTo} /></Suspense>
+        )}
 
         {/* Sub-pages */}
         {dashPage === 'alimentacion' && (
@@ -123,7 +132,9 @@ export default function DashboardScreen() {
         {/* hsm and lifesystem sub-pages removed */}
         {dashPage === 'huella' && (
           <div className="sub-page tab-content">
-            <MiHuella onBack={() => navTo('tu')} />
+            <Suspense fallback={<SubPageLoadingFallback />}>
+              <MiHuella onBack={() => navTo('tu')} />
+            </Suspense>
           </div>
         )}
       </main>
@@ -142,7 +153,9 @@ export default function DashboardScreen() {
       {/* Coach overlay */}
       {coachOpen && (
         <div className="coach-overlay">
-          <TabCoach />
+          <Suspense fallback={<SubPageLoadingFallback />}>
+            <TabCoach />
+          </Suspense>
         </div>
       )}
 
