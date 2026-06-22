@@ -5893,9 +5893,11 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .bnav {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
   display: flex; justify-content: space-around; align-items: center;
-  /* Verde profundo con gradiente + un toque de translucidez (no gris lavado).
-     Alta opacidad para conservar la riqueza del forest; blur sutil para el material. */
-  background: linear-gradient(180deg, rgba(46,74,66,0.95), rgba(21,51,48,0.97));
+  /* Negro premium + glow verde (mismo lenguaje que el rail de desktop y los headers).
+     Translúcido para el material glass sobre el contenido que scrollea. */
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(29,60,54,0.4) 0%, transparent 62%),
+    linear-gradient(180deg, rgba(13,31,28,0.94), rgba(8,19,18,0.98));
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   backdrop-filter: blur(16px) saturate(180%);
   border-top: 1px solid rgba(191,160,101,.18);
