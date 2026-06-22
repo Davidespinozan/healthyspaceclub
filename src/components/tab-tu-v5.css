@@ -19,12 +19,28 @@
 
 /* ═══ HEADER lateral (☰ inline en name-row) ══════════════ */
 .tt5-header {
-  padding: 18px 20px 0;
+  padding: 30px 20px 22px;
   display: flex;
   align-items: center;   /* centrado vertical → balance con el avatar */
   gap: 16px;
   position: relative;    /* ancla del botón de menú (absolute) */
+  overflow: hidden;
+  color: var(--sala-surface);
+  /* Hero verde premium (mismo lenguaje que Hoy/Club) */
+  background:
+    radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%),
+    radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%),
+    #0d1f1c;
 }
+/* Glow orbs dorados — profundidad premium */
+.tt5-header::before, .tt5-header::after {
+  content: ''; position: absolute; width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(191,160,101,.16) 0%, rgba(191,160,101,0) 70%);
+  filter: blur(60px); pointer-events: none; z-index: 0;
+}
+.tt5-header::before { top: -46%; left: -12%; }
+.tt5-header::after { bottom: -52%; right: -12%; }
+.tt5-header > * { position: relative; z-index: 1; }
 
 .tt5-avatar-wrap {
   position: relative;
@@ -87,7 +103,7 @@
 .tt5-name {
   font-family: 'Montserrat', sans-serif;
   font-size: 22px;
-  color: var(--forest);
+  color: #F6F2EA;
   line-height: 1.1;
   margin: 0;
   font-weight: 700;
@@ -106,14 +122,14 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background: var(--surface-glass-strong);
+  background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(21, 51, 48, 0.7);
+  color: rgba(246, 242, 234, 0.88);
   cursor: pointer;
   flex-shrink: 0;
   box-shadow: var(--shadow-pro-lg);
@@ -126,7 +142,7 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 13px;
   font-weight: 700;
-  color: #A8864E;
+  color: #C9A968;
   letter-spacing: 0.01em;
   margin: 2px 0 8px;
 }
@@ -135,7 +151,7 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: rgba(21, 51, 48, 0.6);
+  color: rgba(246, 242, 234, 0.72);
   line-height: 1.35;
   letter-spacing: -0.01em;
   margin: 0 0 9px;
@@ -164,16 +180,17 @@
   padding-bottom: 0;
 }
 .tt5-edit-input {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(21, 51, 48, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 10px;
   padding: 10px 12px;
   font-family: inherit;
   font-size: 14px;
-  color: var(--forest);
+  color: #F6F2EA;
   outline: none;
 }
-.tt5-edit-input:focus { border-color: var(--forest); }
+.tt5-edit-input::placeholder { color: rgba(234, 223, 198, 0.45); }
+.tt5-edit-input:focus { border-color: var(--amber); }
 .tt5-edit-actions {
   display: flex;
   gap: 8px;
@@ -191,14 +208,14 @@
   min-height: 36px;
 }
 .tt5-edit-save {
-  background: var(--forest);
-  color: var(--sala-surface);
+  background: linear-gradient(135deg, #C9A968, #A8864E);
+  color: #fff;
   border: none;
 }
 .tt5-edit-cancel {
   background: none;
-  border: 1px solid rgba(21, 51, 48, 0.18);
-  color: var(--forest);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: rgba(246, 242, 234, 0.85);
 }
 
 /* ═══ ACTIONS ════════════════════════════════════════════ */
