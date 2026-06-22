@@ -7567,7 +7567,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .ll-in {
   max-width:1180px; margin:0 auto;
-  display:grid; grid-template-columns:0.52fr 1.48fr; gap:44px; align-items:center;
+  display:grid; grid-template-columns:0.46fr 1.54fr; gap:40px; align-items:center;
 }
 .ll-kicker {
   font-size:.7rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
@@ -7575,7 +7575,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .ll-title {
   font-family:'Montserrat',sans-serif; font-weight:700;
-  font-size:clamp(2.2rem,3.8vw,3.3rem); line-height:1.08; letter-spacing:-.03em;
+  font-size:clamp(1.95rem,3.35vw,2.9rem); line-height:1.1; letter-spacing:-.03em;
   color:var(--cream); margin:0 0 18px;
 }
 .ll-title em { font-style:normal; color:var(--amber); display:block; }
