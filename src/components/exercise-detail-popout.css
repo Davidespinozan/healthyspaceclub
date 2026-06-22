@@ -580,18 +580,19 @@
 
 .edp-general-tip {
   padding: 14px 16px;
-  background: linear-gradient(135deg, #C75B3A, #A8472B);
+  background: rgba(28, 59, 53, 0.05);
   border-radius: var(--radius-base);
   margin-top: 16px;
-  border: 1px solid rgba(199, 91, 58, 0.5);
-  box-shadow: 0 8px 22px rgba(199, 91, 58, 0.24);
+  border: 1px solid rgba(28, 59, 53, 0.16);
+  border-left: 3px solid #1C3B35;
+  box-shadow: none;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
   animation-delay: 0.18s;
 }
 
 .edp-general-tip-text {
   font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--txt2);
   line-height: 1.55;
   margin: 0;
   font-style: italic;
