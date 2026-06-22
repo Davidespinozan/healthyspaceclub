@@ -2363,7 +2363,9 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
   .logo-club { font-size:.87rem; letter-spacing:.25em; }
   nav.landing-nav.scrolled { height: calc(92px + env(safe-area-inset-top, 0px)); }
 
-  .hero { padding:calc(186px + env(safe-area-inset-top, 0px)) 22px 40px !important; min-height:auto !important; align-items:initial !important; display:block !important; position:relative; }
+  /* padding-top FIJO (sin env safe-area): el notch ya lo maneja la nav. En PWA standalone
+     env(safe-area-inset-top) valía ~50px y bajaba el texto del hero tapando al hombre. */
+  .hero { padding:186px 22px 40px !important; min-height:auto !important; align-items:initial !important; display:block !important; position:relative; }
   .hero::before, .hero::after { display:none !important; }
   .hero-inner { grid-template-columns:1fr !important; gap:28px; position:relative; z-index:2; display:flex !important; flex-direction:column; justify-content:flex-start; min-height:auto; padding:0; }
   .hero-img { position:relative !important; inset:auto; width:100%; height:auto !important; aspect-ratio:1/1; order:0; z-index:0; border-radius:16px; overflow:hidden; }
