@@ -600,7 +600,7 @@ nav.landing-nav.scrolled .logo-club { font-size:.96rem; }
      la imagen llena todo el ancho y alto, completa y sin recortar nada. */
   /* Texto más abajo; imagen "bajada" (muestra su parte alta, antes oculta bajo
      el menú) y recortada de abajo para que no quede demasiado larga. */
-  .hero { align-items:flex-start; min-height:0; height:auto; aspect-ratio:1200/2195; padding:282px 24px 0; }
+  .hero { align-items:flex-start; min-height:0; height:auto; aspect-ratio:1200/2195; padding:210px 24px 0; }
   .hero-bg { left:0; }
   .hero-phones { display:none; }
   .hero-bg-img { object-fit:cover; object-position:center top; }
@@ -2275,7 +2275,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
   .logo-club { font-size:.87rem; letter-spacing:.25em; }
   nav.landing-nav.scrolled { height: calc(92px + env(safe-area-inset-top, 0px)); }
 
-  .hero { padding:calc(140px + env(safe-area-inset-top, 0px)) 22px 40px !important; min-height:auto !important; align-items:initial !important; display:block !important; position:relative; }
+  .hero { padding:calc(210px + env(safe-area-inset-top, 0px)) 22px 40px !important; min-height:auto !important; align-items:initial !important; display:block !important; position:relative; }
   .hero::before, .hero::after { display:none !important; }
   .hero-inner { grid-template-columns:1fr !important; gap:28px; position:relative; z-index:2; display:flex !important; flex-direction:column; justify-content:flex-start; min-height:auto; padding:0; }
   .hero-img { position:relative !important; inset:auto; width:100%; height:auto !important; aspect-ratio:1/1; order:0; z-index:0; border-radius:16px; overflow:hidden; }
