@@ -528,8 +528,6 @@ export const en: Translations<typeof es> = {
     next: 'Next →',
     complete: 'Complete ✦',
     aiTag: 'AI',
-    eyebrowToday: 'Daily reflection',
-    begin: 'Begin',
   },
   media: {
     typeImage: 'Only images allowed (JPG, PNG, WebP).',

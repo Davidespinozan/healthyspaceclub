@@ -527,8 +527,6 @@ export const es = {
     next: 'Siguiente →',
     complete: 'Completar ✦',
     aiTag: 'IA',
-    eyebrowToday: 'Reflexión del día',
-    begin: 'Comenzar',
   },
   media: {
     typeImage: 'Solo se permiten imágenes (JPG, PNG, WebP).',
