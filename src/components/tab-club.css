@@ -19,7 +19,6 @@
   align-items: flex-start;
   padding: 30px 20px 24px;
   min-height: 150px;
-  border-radius: 0 0 26px 26px;
   overflow: hidden;
   color: var(--sala-surface);
   /* Verde premium + glow (mismo lenguaje que el hero de Hoy) */
