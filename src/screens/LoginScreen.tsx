@@ -125,15 +125,15 @@ export default function LoginScreen() {
             </button>
 
             {/* Volver a la landing. Estilo inline a propósito: la clase .ls-back
-                global (index.css:2574, de LifeSystemScreen) la pintaría blanca sobre
-                la card clara → invisible. */}
+                global (index.css, de LifeSystemScreen) tiene otro color → conflicto.
+                Card oscura → texto beige. */}
             <button
               type="button"
               onClick={() => goTo('landing')}
               disabled={loading}
               style={{
                 display: 'block', margin: '20px auto 0', background: 'none', border: 'none',
-                color: 'var(--txt2)', fontSize: '.78rem', cursor: 'pointer',
+                color: 'rgba(234,223,198,.55)', fontSize: '.78rem', cursor: 'pointer',
                 fontFamily: 'inherit', textDecoration: 'none',
               }}
             >

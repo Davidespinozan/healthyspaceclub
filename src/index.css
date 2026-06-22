@@ -1384,6 +1384,45 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 .ls-back { background:none; border:none; color:var(--txt2); font-size:.8rem; cursor:pointer; font-family:inherit; opacity:.6; transition:opacity .2s; }
 .ls-back:hover { opacity:1; }
 
+/* ── Login en negro premium (cierra el arco de bienvenida, mismo lenguaje que
+   el modal de pago). Scoped a .login-screen porque .ls-card/.ls-input colisionan
+   con los componentes de LifeSystem (index.css:2969+). ── */
+.login-screen { background:#06100e; }
+.login-screen .ls-bg {
+  background:
+    radial-gradient(ellipse at 30% 35%, rgba(191,160,101,.16) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 75%, rgba(29,60,54,.5) 0%, transparent 55%);
+}
+.login-screen .ls-card {
+  background: radial-gradient(130% 80% at 50% 0%, rgba(29,60,54,.32) 0%, transparent 58%), #081312;
+  color:#EADFC6; border:1px solid rgba(255,255,255,.08);
+  border-radius:28px; padding:40px 36px; max-width:420px;
+  box-shadow:0 50px 100px rgba(0,0,0,.55); position:relative;
+}
+.login-screen .ls-card::before {
+  content:''; position:absolute; inset:0 0 auto 0; height:1px;
+  border-radius:28px 28px 0 0; pointer-events:none;
+  background:linear-gradient(90deg, transparent, rgba(191,160,101,.5), transparent);
+}
+.login-screen .ls-head h1 { color:#F6F2EA; }
+.login-screen .ls-head p { color:rgba(234,223,198,.55); }
+.login-screen .ls-label { color:rgba(234,223,198,.62); }
+.login-screen .ls-input {
+  background:rgba(255,255,255,.04); border:1.5px solid rgba(255,255,255,.12); color:#F6F2EA;
+}
+.login-screen .ls-input::placeholder { color:rgba(234,223,198,.3); }
+.login-screen .ls-input:focus { border-color:var(--amber); background:rgba(255,255,255,.07); }
+.login-screen .ls-btn {
+  background:linear-gradient(135deg,#C9A968,#A8864E);
+  box-shadow:0 10px 28px rgba(168,134,78,.38);
+}
+.login-screen .ls-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 16px 34px rgba(168,134,78,.5); filter:brightness(1.04); }
+.login-screen .ls-forgot { color:rgba(234,223,198,.55); }
+.login-screen .ls-forgot:hover { color:var(--amber); }
+.login-screen .ls-error { background:rgba(255,107,107,.1); border-color:rgba(255,107,107,.28); color:#ff8a8a; }
+.login-screen .ls-reset-title { color:#F6F2EA; }
+.login-screen .ls-reset-ok p { color:rgba(234,223,198,.55); }
+
 #scr-onboarding.active { display: block; }
 
 /* ══════════════════════════════════════════════════════════════
