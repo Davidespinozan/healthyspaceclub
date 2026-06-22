@@ -221,7 +221,7 @@ export default function LandingScreen() {
           </div>
           </div>
           {/* Banner de transformación (antes/después) contenido en la sección */}
-          <div className="sys-banner">
+          <div className="sys-banner reveal">
             <img src="/sys-banner.webp" alt="" loading="lazy" />
           </div>
         </div>
@@ -229,7 +229,7 @@ export default function LandingScreen() {
 
       {/* CTA FINAL (banner con foto) */}
       <section className="trans">
-        <div className="trans-cta">
+        <div className="trans-cta reveal">
           <h2 className="trans-cta-title">{t('landing.ctaFinalTitle')}</h2>
           <p className="trans-cta-sub">{t('landing.ctaFinalSub')}</p>
           <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>{t('landing.trialCta')}</MagneticBtn>
@@ -244,7 +244,7 @@ export default function LandingScreen() {
 
         <div className="pcards pcards-2">
           {/* MENSUAL */}
-          <div className="pcard">
+          <div className="pcard reveal reveal-delay-1">
             <div className="pname">{t('landing.monthly')}</div>
             <div className="pamount">
               {pricing ? (
@@ -270,7 +270,7 @@ export default function LandingScreen() {
           </div>
 
           {/* ANUAL — destacado (forest) */}
-          <div className="pcard feat">
+          <div className="pcard feat reveal reveal-delay-2">
             <div className="pbadge">{t('landing.popular')}</div>
             <div className="pname">{t('landing.annual')}</div>
             <div className="pamount">
@@ -346,7 +346,7 @@ export default function LandingScreen() {
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className={`fi${open ? ' open' : ''}`} onClick={() => setOpen(!open)}>
+    <div className={`fi reveal${open ? ' open' : ''}`} onClick={() => setOpen(!open)}>
       <div className="fi-q">{q} <ChevronDown className="fi-arr" size={16} strokeWidth={2} /></div>
       <div className="fi-a">{a}</div>
     </div>

@@ -7725,3 +7725,21 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   box-shadow:0 24px 60px rgba(8,20,18,.28), inset 0 0 0 1px rgba(255,255,255,.06);
 }
 .sys-banner img { width:100%; height:auto; display:block; }
+
+/* ════════════ Pulido premium: micro-interacciones + viñeta cine ════════════ */
+/* Hover de cards (lift + borde dorado sutil) */
+.sys-feat { transition:transform .4s cubic-bezier(.23,1,.32,1), border-color .4s ease, box-shadow .4s ease; }
+.sys-feat:hover { transform:translateY(-5px); border-color:rgba(191,160,101,.4); box-shadow:0 26px 54px rgba(8,20,18,.34); }
+.fi { transition:transform .35s cubic-bezier(.23,1,.32,1), border-color .3s, box-shadow .3s; }
+.fi:hover { transform:translateY(-3px); box-shadow:0 18px 40px rgba(8,20,18,.22); }
+/* Viñeta cinematográfica sutil en banners con foto (profundidad + cohesión) */
+.sys-banner { position:relative; }
+.sys-banner::after {
+  content:''; position:absolute; inset:0; border-radius:24px; pointer-events:none;
+  box-shadow:inset 0 0 110px 16px rgba(5,7,7,.5);
+  background:radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(5,7,7,.28) 100%);
+}
+.trans::after {
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
+  box-shadow:inset 0 0 140px 30px rgba(5,7,7,.55);
+}
