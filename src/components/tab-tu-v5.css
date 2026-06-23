@@ -35,8 +35,8 @@
 /* Glow orbs dorados — profundidad premium */
 .tt5-header::before, .tt5-header::after {
   content: ''; position: absolute; width: 300px; height: 300px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(191,160,101,.16) 0%, rgba(191,160,101,0) 70%);
-  filter: blur(60px); pointer-events: none; z-index: 0;
+  background: radial-gradient(circle, rgba(191,160,101,.18) 0%, rgba(191,160,101,0) 70%);
+  filter: blur(70px); opacity: 0.45; pointer-events: none; z-index: 0;
 }
 .tt5-header::before { top: -46%; left: -12%; }
 .tt5-header::after { bottom: -52%; right: -12%; }

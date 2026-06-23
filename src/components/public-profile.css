@@ -89,8 +89,8 @@
 }
 .pp5-header::before, .pp5-header::after {
   content: ''; position: absolute; width: 280px; height: 280px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(191,160,101,.16) 0%, rgba(191,160,101,0) 70%);
-  filter: blur(58px); pointer-events: none; z-index: 0;
+  background: radial-gradient(circle, rgba(191,160,101,.18) 0%, rgba(191,160,101,0) 70%);
+  filter: blur(70px); opacity: 0.45; pointer-events: none; z-index: 0;
 }
 .pp5-header::before { top: -48%; left: -12%; }
 .pp5-header::after { bottom: -54%; right: -12%; }
