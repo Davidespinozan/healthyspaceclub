@@ -402,6 +402,18 @@
   text-decoration: line-through;
   opacity: 0.5;
 }
+/* Miniatura (foto de comida / póster de video) a la izquierda de cada fila */
+.th3-card-list-thumb {
+  width: 40px; height: 40px; border-radius: 9px;
+  object-fit: cover; flex-shrink: 0;
+  background: var(--warm, #efe9dd);
+  border: 0.5px solid var(--sand);
+}
+.th3-card-list-thumb--empty {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--taupe-deep, #7a6f5d);
+}
+.th3-card-list-thumb.is-done { opacity: 0.5; }
 .th3-card-list-check {
   width: 22px; height: 22px;
   border-radius: 6px;

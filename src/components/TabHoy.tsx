@@ -674,8 +674,20 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                           e.stopPropagation();
                           toggleMealCheck(key);
                         }
+                        const mealImg = (meal as { img?: string }).img;
                         return (
                           <li key={i} className="th3-card-list-item">
+                            {mealImg ? (
+                              <img
+                                className={`th3-card-list-thumb${strike ? ' is-done' : ''}`}
+                                src={mealImg} alt="" loading="lazy"
+                                onClick={openDetail}
+                              />
+                            ) : (
+                              <span className={`th3-card-list-thumb th3-card-list-thumb--empty${strike ? ' is-done' : ''}`} aria-hidden="true">
+                                <Utensils size={16} strokeWidth={1.8} />
+                              </span>
+                            )}
                             <button
                               type="button"
                               className={`th3-card-list-name${strike ? ' done' : ''}`}
