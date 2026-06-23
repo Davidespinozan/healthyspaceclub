@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Flame, MessageCircle } from 'lucide-react';
 import { useT } from '../../i18n';
+import ImageViewer from './ImageViewer';
 import { plural } from '../../i18n/format';
 import type { TranslationKey } from '../../i18n/es';
 import './post-card.css';
@@ -66,6 +67,11 @@ export default function PostCard({
 }: Props) {
   const { t } = useT();
   const [menuOpen, setMenuOpen] = useState(false);
+  // Visor de imágenes a pantalla completa (null = cerrado).
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const allPhotos = post.photo_urls && post.photo_urls.length > 1
+    ? post.photo_urls
+    : (post.photo_url ? [post.photo_url] : []);
   const menuRef = useRef<HTMLDivElement>(null);
   const isOwn = currentUserId === post.user_id;
   const streak = post.streak ?? 0;
@@ -195,14 +201,30 @@ export default function PostCard({
       {post.photo_urls && post.photo_urls.length > 1 ? (
         <div className={`post-card-media post-card-media--grid post-card-media--grid-${Math.min(post.photo_urls.length, 3)}`}>
           {post.photo_urls.slice(0, 3).map((url, i) => (
-            <div key={i} className="post-card-media-cell"><img src={url} alt="" loading="lazy" /></div>
+            <button
+              key={i}
+              type="button"
+              className="post-card-media-cell"
+              onClick={(e) => { e.stopPropagation(); setViewerIndex(i); }}
+            >
+              <img src={url} alt="" loading="lazy" />
+            </button>
           ))}
         </div>
       ) : post.photo_url ? (
-        <div className="post-card-media" data-aspect={post.aspect_ratio}>
+        <button
+          type="button"
+          className="post-card-media post-card-media--btn"
+          data-aspect={post.aspect_ratio}
+          onClick={(e) => { e.stopPropagation(); setViewerIndex(0); }}
+        >
           <img src={post.photo_url} alt="" loading="lazy" />
-        </div>
+        </button>
       ) : null}
+
+      {viewerIndex !== null && allPhotos.length > 0 && (
+        <ImageViewer images={allPhotos} index={viewerIndex} onClose={() => setViewerIndex(null)} />
+      )}
 
       {post.text && <p className="post-card-text">{post.text}</p>}
 

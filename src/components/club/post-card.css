@@ -269,8 +269,43 @@
   grid-template-rows: 1fr 1fr;
 }
 .post-card-media--grid-3 .post-card-media-cell:first-child { grid-row: 1 / span 2; }
-.post-card-media-cell { position: relative; overflow: hidden; background: var(--warm); }
+.post-card-media-cell { position: relative; overflow: hidden; background: var(--warm); border: none; padding: 0; cursor: pointer; display: block; width: 100%; -webkit-tap-highlight-color: transparent; }
 .post-card-media-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Foto única como botón (para abrir el visor) */
+.post-card-media--btn { border: none; padding: 0; cursor: pointer; display: block; width: 100%; -webkit-tap-highlight-color: transparent; }
+
+/* ─── Visor de imágenes a pantalla completa ──────────────── */
+.imgv {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,.93);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; -webkit-tap-highlight-color: transparent;
+  animation: imgvFade .15s ease;
+}
+@keyframes imgvFade { from { opacity: 0; } to { opacity: 1; } }
+.imgv-img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; }
+.imgv-close {
+  position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); right: 16px;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,.14); border: none; color: #fff;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.imgv-nav {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,255,255,.14); border: none; color: #fff;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.imgv-prev { left: 12px; }
+.imgv-next { right: 12px; }
+.imgv-dots {
+  position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0;
+  display: flex; justify-content: center; gap: 7px;
+}
+.imgv-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.35); }
+.imgv-dot.on { background: #fff; }
 
 /* ─── Texto del post ─────────────────────────────────────── */
 .post-card-text {
