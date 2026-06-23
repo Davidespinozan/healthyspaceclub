@@ -34,8 +34,9 @@
   position: absolute;
   width: 320px; height: 320px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(191,160,101,.16) 0%, rgba(191,160,101,0) 70%);
-  filter: blur(60px);
+  background: radial-gradient(circle, rgba(191,160,101,.18) 0%, rgba(191,160,101,0) 70%);
+  filter: blur(70px);
+  opacity: 0.45;
   pointer-events: none;
   z-index: 0;
 }
