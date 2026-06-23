@@ -185,6 +185,44 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     todayExerciseIds.every((id) => workoutChecks[`${today}-${id}`]);
   const trainedToday = sessionsToday.length > 0 || allExercisesChecked || activityToday;
   const reflectionDone = todayHSMAnswered > 0;
+
+  // Pósters de video para el preview de ejercicios (card de entreno). La tabla
+  // exercise_videos no tiene thumbnail → usamos el primer frame del video en pausa.
+  // Mapea cada ejercicio base de hoy a un video (suyo o de su variante default).
+  const [exVideoMap, setExVideoMap] = useState<Record<string, string>>({});
+  const todayExIdsKey = todayExerciseIds.join(',');
+  useEffect(() => {
+    if (todayExerciseIds.length === 0) { setExVideoMap({}); return; }
+    const bankMap = new Map(exerciseBank.map(e => [e.id, e]));
+    const baseToCandidates: Record<string, string[]> = {};
+    const allIds = new Set<string>();
+    for (const baseId of todayExerciseIds) {
+      const ex = bankMap.get(baseId);
+      const ids = [baseId, ...((ex?.variants ?? []).map(v => v.id))];
+      baseToCandidates[baseId] = ids;
+      ids.forEach(id => allIds.add(id));
+    }
+    let cancelled = false;
+    supabase.from('exercise_videos')
+      .select('exercise_id, video_url, display_order')
+      .in('exercise_id', Array.from(allIds))
+      .order('display_order', { ascending: true })
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        const firstById: Record<string, string> = {};
+        for (const row of data as Array<{ exercise_id: string; video_url: string }>) {
+          if (!firstById[row.exercise_id]) firstById[row.exercise_id] = row.video_url;
+        }
+        const result: Record<string, string> = {};
+        for (const baseId of todayExerciseIds) {
+          const hit = (baseToCandidates[baseId] ?? [baseId]).find(id => firstById[id]);
+          if (hit) result[baseId] = firstById[hit];
+        }
+        setExVideoMap(result);
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayExIdsKey, locale]);
   const kcalGoal = planGoal > 0 ? planGoal : 0;
   const kcalConsumed = Math.round(dayConsumption.consumedKcal);
   // El anillo de menú refleja la ACCIÓN del usuario: comidas marcadas / total
@@ -576,8 +614,21 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
                           const exCheckKey = `${today}-${exId}`;
                           const exDone = !!workoutChecks[exCheckKey];
+                          const vidUrl = exVideoMap[exId];
                           return (
                             <li key={`${exId}-${i}`} className="th3-card-list-item">
+                              {vidUrl ? (
+                                <video
+                                  className={`th3-card-list-thumb${exDone ? ' is-done' : ''}`}
+                                  src={`${vidUrl}#t=0.1`}
+                                  muted playsInline preload="metadata"
+                                  onClick={goToTraining}
+                                />
+                              ) : (
+                                <span className={`th3-card-list-thumb th3-card-list-thumb--empty${exDone ? ' is-done' : ''}`} aria-hidden="true">
+                                  <Dumbbell size={16} strokeWidth={1.8} />
+                                </span>
+                              )}
                               <button
                                 type="button"
                                 className={`th3-card-list-name${exDone ? ' done' : ''}`}
