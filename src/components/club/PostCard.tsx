@@ -16,6 +16,7 @@ export interface ClubPost {
   streak: number | null;
   workout_summary: string | null;
   photo_url: string | null;
+  photo_urls?: string[] | null;
   text: string | null;
   fire_count: number;
   comments_count: number;
@@ -191,11 +192,17 @@ export default function PostCard({
         </div>
       )}
 
-      {post.photo_url && (
+      {post.photo_urls && post.photo_urls.length > 1 ? (
+        <div className={`post-card-media post-card-media--grid post-card-media--grid-${Math.min(post.photo_urls.length, 3)}`}>
+          {post.photo_urls.slice(0, 3).map((url, i) => (
+            <div key={i} className="post-card-media-cell"><img src={url} alt="" loading="lazy" /></div>
+          ))}
+        </div>
+      ) : post.photo_url ? (
         <div className="post-card-media" data-aspect={post.aspect_ratio}>
           <img src={post.photo_url} alt="" loading="lazy" />
         </div>
-      )}
+      ) : null}
 
       {post.text && <p className="post-card-text">{post.text}</p>}
 

@@ -355,6 +355,19 @@
   object-fit: cover;
   display: block;
 }
+/* Preview de multi-foto (2-3) — grid cuadrado */
+.cpm-composing-grid {
+  display: grid;
+  gap: 4px;
+  height: 200px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-pro-md);
+}
+.cpm-composing-grid--2 { grid-template-columns: 1fr 1fr; }
+.cpm-composing-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
+.cpm-composing-grid-cell { position: relative; overflow: hidden; background: rgba(0,0,0,.04); }
+.cpm-composing-grid-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cpm-composing-input {
   width: 100%;
   min-height: 120px;

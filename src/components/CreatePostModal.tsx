@@ -98,6 +98,10 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
     { value: '3:4', label: 'Vertical' },
   ]);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // Multi-foto (2-3, estilo Twitter): si hay varias, se saltan el cropper y van
+  // a cuadrado en el grid. Una sola foto → flujo de crop de siempre (intacto).
+  const [multiImages, setMultiImages] = useState<{ url: string; file: File }[]>([]);
+  const MAX_PHOTOS = 3;
 
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -157,6 +161,9 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
     setCaption('');
     setUploadError(null);
     setCollab(true);
+    multiImages.forEach(m => URL.revokeObjectURL(m.url));
+    setMultiImages([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // ── Body overflow lock + ESC handler ──────────────────────
@@ -208,18 +215,31 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
    * ya reflejan la orientación visual real (no la del sensor).
    */
   async function handleImageFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files ?? []).slice(0, MAX_PHOTOS);
     e.target.value = ''; // reset para permitir re-seleccionar la misma foto
-    if (!file) return;
-    const check = validateMediaFile(file, false);
-    if (!check.valid) { alert(t(check.errorKey!, check.errorParams)); return; }
-    const url = URL.createObjectURL(file);
-    const { width, height } = await loadImageDimensions(url);
-    setImageSrc(url);
-    setAvailableAspects(getAvailableAspectOptions(width, height));
-    setAspectRatio(getDefaultAspect(width, height));
-    setCroppedAreaPixels(null);
-    setView('cropping');
+    if (files.length === 0) return;
+    for (const f of files) {
+      const check = validateMediaFile(f, false);
+      if (!check.valid) { alert(t(check.errorKey!, check.errorParams)); return; }
+    }
+
+    if (files.length === 1) {
+      // Una sola foto → flujo de crop de siempre (intacto).
+      setMultiImages([]);
+      const url = URL.createObjectURL(files[0]);
+      const { width, height } = await loadImageDimensions(url);
+      setImageSrc(url);
+      setAvailableAspects(getAvailableAspectOptions(width, height));
+      setAspectRatio(getDefaultAspect(width, height));
+      setCroppedAreaPixels(null);
+      setView('cropping');
+      return;
+    }
+
+    // 2-3 fotos → sin cropper, directo a composición (grid cuadrado).
+    setImageSrc(null);
+    setMultiImages(files.map(f => ({ url: URL.createObjectURL(f), file: f })));
+    setView('composing');
   }
 
   // ── Crop callbacks ────────────────────────────────────────
@@ -244,6 +264,10 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
       setView('cropping');
       return;
     }
+    if (multiImages.length > 0) {
+      multiImages.forEach(m => URL.revokeObjectURL(m.url));
+      setMultiImages([]);
+    }
     setView('choose');
   }
 
@@ -254,9 +278,28 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
     setView('uploading');
 
     let photoUrl = '';
+    let photoUrls: string[] = [];
     let imageError: string | null = null;
 
-    if (imageSrc && croppedAreaPixels) {
+    if (multiImages.length > 0) {
+      // Multi-foto: cada una a cuadrado (sin crop manual) → array de URLs.
+      try {
+        for (let i = 0; i < multiImages.length; i++) {
+          const compressed = await compressImage(multiImages[i].file, { aspectRatio: '1:1' });
+          const path = `${userId}_${Date.now()}_${i}.jpg`;
+          const { error: upErr } = await supabase.storage.from('club').upload(path, compressed, {
+            contentType: 'image/jpeg',
+          });
+          if (upErr) throw upErr;
+          photoUrls.push(supabase.storage.from('club').getPublicUrl(path).data.publicUrl);
+        }
+        photoUrl = photoUrls[0] ?? '';
+      } catch (e) {
+        photoUrls = [];
+        imageError = extractErrorMessage(e, t('post.unknownError'));
+        console.error('[CreatePostModal] multi upload failed:', e);
+      }
+    } else if (imageSrc && croppedAreaPixels) {
       try {
         const res = await fetch(imageSrc);
         const blobIn = await res.blob();
@@ -305,9 +348,10 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
         coauthor_username: isCollabPost ? coUsername : '',
         coauthor_avatar_url: isCollabPost ? (partner!.avatar || '') : '',
         photo_url: photoUrl,
+        photo_urls: photoUrls.length > 0 ? photoUrls : null,
         text: caption.trim().slice(0, MAX_CAPTION),
         fire_count: 0,
-        aspect_ratio: aspectRatio,
+        aspect_ratio: multiImages.length > 0 ? '1:1' : aspectRatio,
       });
       if (insertErr) throw insertErr;
       if (imageError) alert(t('post.imageUploadFailed', { error: imageError }));
@@ -343,6 +387,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
           ref={galleryInputRef}
           type="file"
           accept="image/*"
+          multiple
           hidden
           onChange={handleImageFile}
         />
@@ -375,6 +420,7 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
         {view === 'composing' && (
           <ComposingView
             imageSrc={imageSrc}
+            multiImages={multiImages.map(m => m.url)}
             aspectRatio={aspectRatio}
             caption={caption}
             onCaptionChange={setCaption}
@@ -509,11 +555,12 @@ function CroppingView({
 // VIEW: composing
 // ══════════════════════════════════════════════════════════════
 function ComposingView({
-  imageSrc, aspectRatio, caption, onCaptionChange, workoutSummary,
+  imageSrc, multiImages, aspectRatio, caption, onCaptionChange, workoutSummary,
   canCollab, collab, onCollabChange, partnerName,
   onSubmit, onBack, uploadError,
 }: {
   imageSrc: string | null;
+  multiImages: string[];
   aspectRatio: AspectRatio;
   caption: string;
   onCaptionChange: (s: string) => void;
@@ -540,9 +587,16 @@ function ComposingView({
       </header>
 
       <div className="cpm-composing-body">
-        {imageSrc && (
+        {imageSrc && multiImages.length === 0 && (
           <div className="cpm-composing-preview" data-aspect={aspectRatio}>
             <img src={imageSrc} alt="" />
+          </div>
+        )}
+        {multiImages.length > 0 && (
+          <div className={`cpm-composing-grid cpm-composing-grid--${multiImages.length}`}>
+            {multiImages.map((src, i) => (
+              <div key={i} className="cpm-composing-grid-cell"><img src={src} alt="" /></div>
+            ))}
           </div>
         )}
 
@@ -552,7 +606,7 @@ function ComposingView({
           maxLength={MAX_CAPTION}
           value={caption}
           onChange={e => onCaptionChange(e.target.value)}
-          autoFocus={!imageSrc}
+          autoFocus={!imageSrc && multiImages.length === 0}
         />
 
         <div className="cpm-composing-meta">
@@ -585,7 +639,7 @@ function ComposingView({
           type="button"
           className="cpm-btn-primary"
           onClick={onSubmit}
-          disabled={!caption.trim() && !imageSrc}
+          disabled={!caption.trim() && !imageSrc && multiImages.length === 0}
         >
           {t('post.publish')}
         </button>
