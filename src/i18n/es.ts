@@ -1161,6 +1161,18 @@ export const es = {
     welcomeDefault: '¡Hola! Soy tu coach. ¿En qué te ayudo hoy?',
     stripeNotWired: 'Sistema de pagos en activación. Hablá con el coach para gestionar tu plan mientras tanto.',
   },
+  calc: {
+    eyebrow: 'Calculadora',
+    title: 'Busca lo que comiste',
+    searchPlaceholder: 'Ej. pollo, arroz, aguacate…',
+    searching: 'Buscando…',
+    noResults: 'Sin resultados',
+    oneMeasure: '1 {medida} = {g} g',
+    add: 'Agregar a mi día',
+    openBtn: 'Calcular mi comida',
+    back: 'Volver',
+    cancel: 'Cancelar',
+  },
   foodLog: {
     // CTA dentro de MealDetailPopout
     detailQuestion: '¿Comiste otra cosa?',

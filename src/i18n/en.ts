@@ -1162,6 +1162,18 @@ export const en: Translations<typeof es> = {
     welcomeDefault: 'Hi! I’m your coach. How can I help today?',
     stripeNotWired: 'Payments system is being activated. Talk to your coach to manage your plan in the meantime.',
   },
+  calc: {
+    eyebrow: 'Calculator',
+    title: 'Search what you ate',
+    searchPlaceholder: 'e.g. chicken, rice, avocado…',
+    searching: 'Searching…',
+    noResults: 'No results',
+    oneMeasure: '1 {medida} = {g} g',
+    add: 'Add to my day',
+    openBtn: 'Log my own food',
+    back: 'Back',
+    cancel: 'Cancel',
+  },
   foodLog: {
     detailQuestion: 'Ate something else?',
     detailCta: 'Log what I ate →',

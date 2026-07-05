@@ -33,12 +33,14 @@ import { buildHSMProfilePrompt } from '../ai/prompts/hsmProfile';
 import { MILESTONE_STEPS, MILESTONE_ICON, getMilestoneCopy } from '../constants/milestones';
 import { getHSMBank } from '../data/hsmBank';
 import { useT } from '../i18n';
+import CalculadoraSheet from './CalculadoraSheet';
 import { plural } from '../i18n/format';
 import './tab-hoy-v3.css';
 
 
 export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const { t, locale } = useT();
+  const [showCalc, setShowCalc] = useState(false);
   const {
     userName, planGoal, mealPlanKey, shoppingDay,
     mealChecks, toggleMealCheck,
@@ -805,6 +807,15 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   {t('foodLog.detailQuestion')}
                 </button>
               )}
+              {/* Modo B: calcular/registrar comida propia desde el catálogo (siempre disponible) */}
+              <button
+                type="button"
+                className="th3-card-alt-activity"
+                onClick={(e) => { e.stopPropagation(); setShowCalc(true); }}
+              >
+                {t('calc.openBtn')}
+              </button>
+              {showCalc && <CalculadoraSheet onClose={() => setShowCalc(false)} />}
               {/* Pie "Ver completo" SOLO con plan — en vacío el título ya es la
                   acción ("Generar tu plan de hoy →"). */}
               {weeklyPlan && (
