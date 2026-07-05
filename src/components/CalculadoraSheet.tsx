@@ -34,9 +34,22 @@ export default function CalculadoraSheet({ onClose, onLogged }: Props) {
   const [sel, setSel] = useState<FoodRow | null>(null);
   const [grams, setGrams] = useState(100);
   const [saving, setSaving] = useState(false);
+  const [recents, setRecents] = useState<FoodRow[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
+  // Memoria local: lo último registrado, para reusar sin buscar.
+  useEffect(() => {
+    try { setRecents(JSON.parse(localStorage.getItem('hsc_recent_foods') || '[]')); } catch { /* noop */ }
+  }, []);
+
+  function saveRecent(f: FoodRow) {
+    try {
+      const prev: FoodRow[] = JSON.parse(localStorage.getItem('hsc_recent_foods') || '[]');
+      const next = [f, ...prev.filter(p => p.id !== f.id)].slice(0, 12);
+      localStorage.setItem('hsc_recent_foods', JSON.stringify(next));
+    } catch { /* noop */ }
+  }
 
   // Búsqueda debounced en el catálogo.
   useEffect(() => {
@@ -73,6 +86,7 @@ export default function CalculadoraSheet({ onClose, onLogged }: Props) {
     setSaving(true);
     try {
       await addFoodLog({ desc: `${grams} g ${sel.alimento}`, kcal, prot, carbs, fat, source: 'manual' });
+      saveRecent(sel);
       onLogged?.();
       onClose();
     } finally { setSaving(false); }
@@ -98,6 +112,17 @@ export default function CalculadoraSheet({ onClose, onLogged }: Props) {
                 onChange={e => setQ(e.target.value)}
               />
               <div className="calc-results">
+                {q.trim().length < 2 && recents.length > 0 && (
+                  <>
+                    <div className="calc-section">{t('calc.recents')}</div>
+                    {recents.map(f => (
+                      <button key={`r-${f.id}`} className="calc-result" onClick={() => pick(f)}>
+                        <span className="calc-result-name">{f.alimento}</span>
+                        <span className="calc-result-kcal">{Math.round(f.kcal_100g ?? 0)} kcal/100g</span>
+                      </button>
+                    ))}
+                  </>
+                )}
                 {loading && <div className="calc-muted">{t('calc.searching')}</div>}
                 {!loading && q.trim().length >= 2 && results.length === 0 && (
                   <div className="calc-muted">{t('calc.noResults')}</div>

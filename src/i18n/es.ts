@@ -1170,6 +1170,7 @@ export const es = {
     oneMeasure: '1 {medida} = {g} g',
     add: 'Agregar a mi día',
     openBtn: 'Calcular mi comida',
+    recents: 'Recientes',
     back: 'Volver',
     cancel: 'Cancelar',
   },

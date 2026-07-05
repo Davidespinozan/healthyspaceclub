@@ -1171,6 +1171,7 @@ export const en: Translations<typeof es> = {
     oneMeasure: '1 {medida} = {g} g',
     add: 'Add to my day',
     openBtn: 'Log my own food',
+    recents: 'Recent',
     back: 'Back',
     cancel: 'Cancel',
   },

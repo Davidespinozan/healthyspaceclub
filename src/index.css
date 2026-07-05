@@ -1547,6 +1547,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 /* Calculadora (modo B) — buscar alimento + cantidad */
 .calc-results { margin-top: 12px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; }
 .calc-muted { color: var(--txt2); font-size: .82rem; font-style: italic; padding: 10px 2px; }
+.calc-section { font-size: .66rem; text-transform: uppercase; letter-spacing: .08em; color: var(--txt2); font-weight: 700; padding: 8px 2px 4px; }
 .calc-result { display: flex; justify-content: space-between; align-items: center; gap: 10px;
   width: 100%; text-align: left; background: none; border: none; cursor: pointer;
   padding: 11px 4px; border-bottom: 1px solid rgba(21,51,48,.1); font-family: inherit; }
