@@ -29,7 +29,7 @@ describe('computeDayConsumption', () => {
       foodLog: [],
       today: TODAY,
     });
-    expect(r).toEqual({ consumedKcal: 0, completedSlots: 0, totalSlots });
+    expect(r).toMatchObject({ consumedKcal: 0, completedSlots: 0, totalSlots });
   });
 
   it('solo plan: 3 ✓ de 5, sin foodLog → consumed = suma de esas 3, completed: 3', () => {
@@ -61,7 +61,7 @@ describe('computeDayConsumption', () => {
       ],
       today: TODAY,
     });
-    expect(r).toEqual({ consumedKcal: 800, completedSlots: 0, totalSlots });
+    expect(r).toMatchObject({ consumedKcal: 800, completedSlots: 0, totalSlots });
   });
 
   it('solo resueltos: 2 franjas resolved + 2 entries (300+500) → consumed: 800, completed: 2', () => {
@@ -75,7 +75,7 @@ describe('computeDayConsumption', () => {
       ],
       today: TODAY,
     });
-    expect(r).toEqual({ consumedKcal: 800, completedSlots: 2, totalSlots });
+    expect(r).toMatchObject({ consumedKcal: 800, completedSlots: 2, totalSlots });
   });
 
   it('mixto sin solapamiento: 2 ✓ (A,B) + 1 resolved (C) con foodLog 300 → suma 3 + completed 3', () => {
@@ -115,7 +115,7 @@ describe('computeDayConsumption', () => {
       foodLog: [{ date: TODAY, kcal: 300 }],
       today: TODAY,
     });
-    expect(r).toEqual({ consumedKcal: 300, completedSlots: 0, totalSlots });
+    expect(r).toMatchObject({ consumedKcal: 300, completedSlots: 0, totalSlots });
   });
 
   it('foodLog de otra fecha (date=ayer) → NO se cuenta', () => {
@@ -129,7 +129,7 @@ describe('computeDayConsumption', () => {
       ],
       today: TODAY,
     });
-    expect(r).toEqual({ consumedKcal: 0, completedSlots: 0, totalSlots });
+    expect(r).toMatchObject({ consumedKcal: 0, completedSlots: 0, totalSlots });
   });
 
   it('mezcla de fechas: solo cuenta foodLog de today', () => {
@@ -156,7 +156,7 @@ describe('computeDayConsumption', () => {
       today: TODAY,
     });
     // sumPlan=0 (no hay meals), sumFood=250
-    expect(r).toEqual({ consumedKcal: 250, completedSlots: 0, totalSlots: 0 });
+    expect(r).toMatchObject({ consumedKcal: 250, completedSlots: 0, totalSlots: 0 });
   });
 
   it('mealChecks de OTRA fecha no afecta a hoy', () => {
@@ -167,6 +167,6 @@ describe('computeDayConsumption', () => {
       foodLog: [],
       today: TODAY,
     });
-    expect(r).toEqual({ consumedKcal: 0, completedSlots: 0, totalSlots });
+    expect(r).toMatchObject({ consumedKcal: 0, completedSlots: 0, totalSlots });
   });
 });

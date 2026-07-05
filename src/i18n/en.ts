@@ -952,6 +952,7 @@ export const en: Translations<typeof es> = {
     nutritionToday: "Today's plan",
     nutritionConsumed: '{consumed} / {goal} kcal',
     nutritionMeta: '{completed}/{total} · {consumed} / {goal} kcal',
+    nutritionMacros: 'P {p}/{pg}g · C {c}/{cg}g · G {f}/{fg}g',
     coverInMotion: 'in motion',
     coverFromEarth: 'from the earth',
     cardFootPersonalized: 'Personalized today',

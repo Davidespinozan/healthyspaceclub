@@ -951,6 +951,7 @@ export const es = {
     nutritionToday: 'Tu plan de hoy',
     nutritionConsumed: '{consumed} / {goal} kcal',
     nutritionMeta: '{completed}/{total} · {consumed} / {goal} kcal',
+    nutritionMacros: 'P {p}/{pg}g · C {c}/{cg}g · G {f}/{fg}g',
     coverInMotion: 'en movimiento',
     coverFromEarth: 'de la tierra',
     cardFootPersonalized: 'Personalizada hoy',

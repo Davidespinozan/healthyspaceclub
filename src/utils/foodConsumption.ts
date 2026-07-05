@@ -22,19 +22,23 @@
 // (el foodLog gana como ground truth). En la práctica este caso es
 // muy raro: registrar = "no seguí el plan acá", marcar = "sí seguí".
 
-import { calcMealKcal } from './kcalCalc';
+import { calcMealKcal, calcMealMacros } from './kcalCalc';
 
 export interface DayConsumptionInput {
   todayMeals: { portions: string[] }[];
   mealChecks: Record<string, boolean>;
   mealResolvedByLog: Record<string, true>;
-  foodLog: { date: string; kcal: number }[];
+  foodLog: { date: string; kcal: number; prot?: number; carbs?: number; fat?: number }[];
   today: string; // YYYY-MM-DD
 }
 
 export interface DayConsumption {
   /** Total kcal consumido (plan ✓ no-resuelto + todo foodLog del día). */
   consumedKcal: number;
+  /** Macros consumidos (misma regla que kcal): plan ✓ no-resuelto + foodLog. */
+  consumedProt: number;
+  consumedCarbs: number;
+  consumedFat: number;
   /** Franjas con actividad (marcadas ✓ o resueltas por log). */
   completedSlots: number;
   /** Total de franjas del día (todayMeals.length). */
@@ -45,7 +49,7 @@ export function computeDayConsumption(input: DayConsumptionInput): DayConsumptio
   const { todayMeals, mealChecks, mealResolvedByLog, foodLog, today } = input;
   const totalSlots = todayMeals.length;
 
-  let sumPlan = 0;
+  let sumPlan = 0, planProt = 0, planCarbs = 0, planFat = 0;
   let completedSlots = 0;
 
   for (let i = 0; i < totalSlots; i++) {
@@ -59,15 +63,22 @@ export function computeDayConsumption(input: DayConsumptionInput): DayConsumptio
     // Plan suma SOLO si checked AND no resolved (anti-duplicado)
     if (checked && !resolved) {
       sumPlan += calcMealKcal(todayMeals[i].portions);
+      const m = calcMealMacros(todayMeals[i].portions);
+      planProt += m.prot; planCarbs += m.carbs; planFat += m.fat;
     }
   }
 
-  const sumFood = foodLog
-    .filter(e => e.date === today)
-    .reduce((acc, e) => acc + e.kcal, 0);
+  const todayFood = foodLog.filter(e => e.date === today);
+  const sumFood   = todayFood.reduce((a, e) => a + e.kcal, 0);
+  const foodProt  = todayFood.reduce((a, e) => a + (e.prot  ?? 0), 0);
+  const foodCarbs = todayFood.reduce((a, e) => a + (e.carbs ?? 0), 0);
+  const foodFat   = todayFood.reduce((a, e) => a + (e.fat   ?? 0), 0);
 
   return {
-    consumedKcal: Math.round(sumPlan + sumFood),
+    consumedKcal:  Math.round(sumPlan + sumFood),
+    consumedProt:  Math.round(planProt + foodProt),
+    consumedCarbs: Math.round(planCarbs + foodCarbs),
+    consumedFat:   Math.round(planFat + foodFat),
     completedSlots,
     totalSlots,
   };

@@ -34,6 +34,7 @@ import { MILESTONE_STEPS, MILESTONE_ICON, getMilestoneCopy } from '../constants/
 import { getHSMBank } from '../data/hsmBank';
 import { useT } from '../i18n';
 import CalculadoraSheet from './CalculadoraSheet';
+import { computeNutritionTargets } from '../utils/nutritionTargets';
 import { plural } from '../i18n/format';
 import './tab-hoy-v3.css';
 
@@ -150,6 +151,17 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     mealResolvedByLog,
     foodLog,
     today,
+  });
+  // Metas de macros del día (mismo motor que el onboarding, desde obData).
+  const macroTargets = computeNutritionTargets({
+    sexo: String(obData.sex || 'Hombre'),
+    pesoKg: Number(obData.peso) || 70,
+    estaturaCm: Number(obData.estatura) || 170,
+    edad: Number(obData.edad) || 28,
+    activity: String(obData.activity || 'Moderada'),
+    goal: String(obData.goal || ''),
+    grasa: obData.grasa != null && obData.grasa !== '' ? Number(obData.grasa) : null,
+    embarazo: obData.embarazo === 1 || obData.embarazo === 'si',
   });
   // FoodLog-Display: las entradas registradas hoy se muestran como ítems
   // bajo la lista del plan ("REGISTRADO"). Solo display — NO toca
@@ -706,6 +718,13 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                       total: dayConsumption.totalSlots,
                       consumed: dayConsumption.consumedKcal,
                       goal: planGoal,
+                    })}
+                  </p>
+                  <p className="th3-card-meta" style={{ marginTop: 2, opacity: 0.8 }}>
+                    {t('hoy.nutritionMacros', {
+                      p: dayConsumption.consumedProt, pg: macroTargets.protG,
+                      c: dayConsumption.consumedCarbs, cg: macroTargets.carbG,
+                      f: dayConsumption.consumedFat, fg: macroTargets.fatG,
                     })}
                   </p>
                   {(todayMeals.length > 0 || todayFoodLog.length > 0) && (
