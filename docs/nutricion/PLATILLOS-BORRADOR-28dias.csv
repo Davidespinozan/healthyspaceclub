@@ -1,0 +1,662 @@
+platillo,tiempo,dia,theme,food_id,alimento_match,gramos,ingrediente_texto,porcion_original,confianza,nivel,metodo,revisar
+D01 Desayuno · Chilaquiles Ligeros,Desayuno,1,🇲🇽 Mexicana,salsa-de-pimienta-verde,Salsa de pimienta verde,,Salsa verde hecha en casa,Salsa verde hecha en casa,0.622,media,sin-cantidad,SI
+D01 Desayuno · Chilaquiles Ligeros,Desayuno,1,🇲🇽 Mexicana,totopos-de-maiz,Totopos de maíz,1,1 tz totopos horneados,1 tz totopos horneados,0.7,media,~1.0×gramos(1.0g)[unidad≈],SI
+D01 Desayuno · Chilaquiles Ligeros,Desayuno,1,🇲🇽 Mexicana,huevo-frito,Huevo frito,92,2 pz de huevo,2 pz de huevo,0.905,alta,2.0×pieza(46.0g),
+D01 Desayuno · Chilaquiles Ligeros,Desayuno,1,🇲🇽 Mexicana,queso-panela,Queso Panela,60,60 g queso panela o fresco,60 g queso panela o fresco,0.945,alta,gramos-directos,
+D01 Desayuno · Chilaquiles Ligeros,Desayuno,1,🇲🇽 Mexicana,aguacate-hass,Aguacate Hass,63,2/3 pz de aguacate,2/3 pz de aguacate,0.708,media,0.6666666666666666×pieza(93.94g),SI
+D01 Comida · Alambre de Pollo,Comida,1,🇲🇽 Mexicana,pechuga-de-pollo-ahumada,Pechuga de pollo ahumada,200,200 g pechuga de pollo salpimentada,200 g pechuga de pollo salpimentada,0.816,media,gramos-directos,SI
+D01 Comida · Alambre de Pollo,Comida,1,🇲🇽 Mexicana,pimiento-cocido,Pimiento cocido,,"Pimientos, brócoli, chile y cebolla","Pimientos, brócoli, chile y cebolla",0.562,media,sin-cantidad,SI
+D01 Comida · Alambre de Pollo,Comida,1,🇲🇽 Mexicana,queso-mozzarella,Queso Mozzarella,30,30 g queso oaxaca o mozzarella,30 g queso oaxaca o mozzarella,0.806,media,gramos-directos,SI
+D01 Comida · Alambre de Pollo,Comida,1,🇲🇽 Mexicana,arroz-cocido,Arroz cocido,376,2 tz arroz cocido,2 tz arroz cocido,1.0,alta,2.0×taza(188.0g),
+D01 Cena · Ceviche de Panela,Cena,1,🇲🇽 Mexicana,queso-panela,Queso Panela,150,150 g queso panela,150 g queso panela,1.0,alta,gramos-directos,
+D01 Cena · Ceviche de Panela,Cena,1,🇲🇽 Mexicana,chile-jalapeno,Chile jalapeño,,"Chile, cebolla morada, pepino","Chile, cebolla morada, pepino",0.557,media,sin-cantidad,SI
+D01 Cena · Ceviche de Panela,Cena,1,🇲🇽 Mexicana,aguacate-hass,Aguacate Hass,31,1/3 pz de aguacate,1/3 pz de aguacate,0.708,media,0.3333333333333333×pieza(93.94g),SI
+D01 Cena · Ceviche de Panela,Cena,1,🇲🇽 Mexicana,jugo-de-limon,Jugo de limón,,"Jugo de limón, sal y salsa soya","Jugo de limón, sal y salsa soya",0.651,media,sin-cantidad,SI
+D01 Cena · Ceviche de Panela,Cena,1,🇲🇽 Mexicana,totopos-de-maiz,Totopos de maíz,1,1 tz totopos horneados,1 tz totopos horneados,0.7,media,~1.0×gramos(1.0g)[unidad≈],SI
+D01 Snack AM · Snack AM,Snack AM,1,🇲🇽 Mexicana,pan-tostado,Pan tostado,30,2 reb pan,2 reb pan + 1 cda crema de cacahuate + 2 tz mango,0.886,alta,2.0×rebanada(15.0g),
+D01 Snack AM · Snack AM,Snack AM,1,🇲🇽 Mexicana,crema-natural,Crema natural,,1 cda crema de cacahuate,2 reb pan + 1 cda crema de cacahuate + 2 tz mango,0.678,media,REVISAR-medida(cda),SI
+D01 Snack AM · Snack AM,Snack AM,1,🇲🇽 Mexicana,mango-picado,Mango picado,330,2 tz mango,2 reb pan + 1 cda crema de cacahuate + 2 tz mango,0.918,alta,2.0×taza(165.0g),
+D01 Snack PM · Snack PM,Snack PM,1,🇲🇽 Mexicana,yoghurt-natural,Yoghurt natural,454,2 tz yogur natural sin azúcar,2 tz yogur natural sin azúcar + ½ plátano + ½ tz granola sin azúcar + ½ tz avena,0.941,alta,2.0×taza(227.0g),
+D01 Snack PM · Snack PM,Snack PM,1,🇲🇽 Mexicana,platano,Plátano,54,½ plátano,2 tz yogur natural sin azúcar + ½ plátano + ½ tz granola sin azúcar + ½ tz avena,1.0,alta,0.5×pieza(108.0g),
+D01 Snack PM · Snack PM,Snack PM,1,🇲🇽 Mexicana,granola-estandar,Granola estándar,4,½ tz granola sin azúcar,2 tz yogur natural sin azúcar + ½ plátano + ½ tz granola sin azúcar + ½ tz avena,0.716,media,~0.5×cucharada(7.0g)[unidad≈],SI
+D01 Snack PM · Snack PM,Snack PM,1,🇲🇽 Mexicana,avena-cocida,Avena cocida,109,½ tz avena,2 tz yogur natural sin azúcar + ½ plátano + ½ tz granola sin azúcar + ½ tz avena,0.918,alta,0.5×taza(218.67g),
+D02 Desayuno · Omelette,Desayuno,2,🇲🇽 Mexicana,huevo-fresco,Huevo fresco,176,4 huevos,4 huevos,0.933,alta,4.0×pieza(44.0g),
+D02 Desayuno · Omelette,Desayuno,2,🇲🇽 Mexicana,clara-de-huevo,Clara de huevo,25,¾ tz claras de huevo,¾ tz claras de huevo,0.993,alta,~0.75×pieza(33.0g)[unidad≈],SI
+D02 Desayuno · Omelette,Desayuno,2,🇲🇽 Mexicana,pechuga-de-pavo,Pechuga de pavo,85,4 reb pechuga de pavo,4 reb pechuga de pavo,1.0,alta,4.0×rebanada(21.33g),
+D02 Desayuno · Omelette,Desayuno,2,🇲🇽 Mexicana,espinaca-cruda,Espinaca cruda,,Espinaca,"Espinaca + chile, tomate y cebolla",0.945,alta,sin-cantidad,SI
+D02 Desayuno · Omelette,Desayuno,2,🇲🇽 Mexicana,chile-costeno,Chile costeño,,"chile, tomate y cebolla","Espinaca + chile, tomate y cebolla",0.577,media,sin-cantidad,SI
+D02 Desayuno · Omelette,Desayuno,2,🇲🇽 Mexicana,pan-integral,Pan integral,100,4 reb pan integral,4 reb pan integral + 1 tz frutos rojos,1.0,alta,4.0×rebanada(25.0g),
+D02 Desayuno · Omelette,Desayuno,2,🇲🇽 Mexicana,fruto-del-monje,Fruto del monje,2,1 tz frutos rojos,4 reb pan integral + 1 tz frutos rojos,0.619,media,~1.0×cucharadita(2.0g)[unidad≈],SI
+D02 Comida · Caldo de Pollo,Comida,2,🇲🇽 Mexicana,pechuga-de-pollo-molida,Pechuga de pollo molida,200,200 g pechuga de pollo cocida,200 g pechuga de pollo cocida,0.833,media,gramos-directos,SI
+D02 Comida · Caldo de Pollo,Comida,2,🇲🇽 Mexicana,caldo-de-res-enlatado,Caldo de res enlatado,,"Caldo con verduras (chayote, zanahoria, calabaza, ejote)","Caldo con verduras (chayote, zanahoria, calabaza, ejote)",0.495,baja,sin-cantidad,SI
+D02 Comida · Caldo de Pollo,Comida,2,🇲🇽 Mexicana,arroz-cocido,Arroz cocido,564,3 tz arroz blanco cocido,3 tz arroz blanco cocido,0.73,media,3.0×taza(188.0g),SI
+D02 Comida · Caldo de Pollo,Comida,2,🇲🇽 Mexicana,limon,Limón,,Limón y hierbas al gusto,Limón y hierbas al gusto,0.644,media,sin-cantidad,SI
+D02 Cena · Molletes,Cena,2,🇲🇽 Mexicana,pan-integral,Pan integral,75,3 reb pan integral,3 reb pan integral,1.0,alta,3.0×rebanada(25.0g),
+D02 Cena · Molletes,Cena,2,🇲🇽 Mexicana,frijol-promedio-cocido,Frijol promedio cocido,57,⅓ tz frijoles cocidos machacados sin grasa,⅓ tz frijoles cocidos machacados sin grasa,0.595,media,0.3333333333333333×taza(172.0g),SI
+D02 Cena · Molletes,Cena,2,🇲🇽 Mexicana,queso-panela,Queso Panela,100,100 g queso panela o fresco,100 g queso panela o fresco,0.945,alta,gramos-directos,
+D02 Cena · Molletes,Cena,2,🇲🇽 Mexicana,,,,"Pico de gallo (chile, tomate, cebolla, limón","Pico de gallo (chile, tomate, cebolla, limón + sal)",0.229,baja,sin-cantidad,SI
+D02 Cena · Molletes,Cena,2,🇲🇽 Mexicana,sal,Sal,,sal),"Pico de gallo (chile, tomate, cebolla, limón + sal)",1.0,alta,sin-cantidad,SI
+D02 Snack AM · Snack AM,Snack AM,2,🇲🇽 Mexicana,yoghurt-natural,Yoghurt natural,114,½ tz yogur natural sin azúcar,½ tz yogur natural sin azúcar + 1 manzana picada + ½ plátano,0.941,alta,0.5×taza(227.0g),
+D02 Snack AM · Snack AM,Snack AM,2,🇲🇽 Mexicana,manzana-picada,Manzana picada,150,1 manzana picada,½ tz yogur natural sin azúcar + 1 manzana picada + ½ plátano,1.0,alta,1.0×taza(150.0g),
+D02 Snack AM · Snack AM,Snack AM,2,🇲🇽 Mexicana,platano,Plátano,54,½ plátano,½ tz yogur natural sin azúcar + 1 manzana picada + ½ plátano,1.0,alta,0.5×pieza(108.0g),
+D02 Snack PM · Snack PM,Snack PM,2,🇲🇽 Mexicana,semilla-de-calabaza,Semilla de calabaza,10,10 g semillas (8-9 pz ej. cacahuates naturales),10 g semillas (8-9 pz ej. cacahuates naturales),0.603,media,gramos-directos,SI
+D03 Desayuno · Machaca con Nopales,Desayuno,3,🇲🇽 Mexicana,machaca,Machaca,40,40 g machaca de res,40 g machaca de res,0.708,media,gramos-directos,SI
+D03 Desayuno · Machaca con Nopales,Desayuno,3,🇲🇽 Mexicana,clara-de-huevo,Clara de huevo,33,1 taza claras de huevo,1 taza claras de huevo,0.993,alta,~1.0×pieza(33.0g)[unidad≈],SI
+D03 Desayuno · Machaca con Nopales,Desayuno,3,🇲🇽 Mexicana,nopal-crudo,Nopal crudo,,"Nopales en tiras, tomate","Nopales en tiras, tomate + cebolla + chile + cilantro",0.669,media,sin-cantidad,SI
+D03 Desayuno · Machaca con Nopales,Desayuno,3,🇲🇽 Mexicana,cebolla-cocida,Cebolla cocida,,cebolla,"Nopales en tiras, tomate + cebolla + chile + cilantro",0.933,alta,sin-cantidad,SI
+D03 Desayuno · Machaca con Nopales,Desayuno,3,🇲🇽 Mexicana,chile-ancho,Chile ancho,,chile,"Nopales en tiras, tomate + cebolla + chile + cilantro",0.7,media,sin-cantidad,SI
+D03 Desayuno · Machaca con Nopales,Desayuno,3,🇲🇽 Mexicana,cilantro-picado-crudo,Cilantro picado crudo,,cilantro,"Nopales en tiras, tomate + cebolla + chile + cilantro",0.91,alta,sin-cantidad,SI
+D03 Desayuno · Machaca con Nopales,Desayuno,3,🇲🇽 Mexicana,tortilla-de-maiz,Tortilla de maíz,120,4 tortillas de maíz,4 tortillas de maíz,0.994,alta,4.0×pieza(30.0g),
+D03 Desayuno · Machaca con Nopales,Desayuno,3,🇲🇽 Mexicana,aguacate-hass,Aguacate Hass,47,½ aguacate,½ aguacate,0.727,media,0.5×pieza(93.94g),SI
+D03 Desayuno · Machaca con Nopales,Desayuno,3,🇲🇽 Mexicana,naranja,Naranja,76,1 naranja,1 naranja,1.0,alta,1.0×pieza(76.0g),
+D03 Comida · Tacos de Pescado,Comida,3,🇲🇽 Mexicana,filete-de-pescado-blanco-del-nilo,Filete de pescado Blanco del Nilo,160,160 g filete pescado blanco (tilapia),160 g filete pescado blanco (tilapia),0.775,media,gramos-directos,SI
+D03 Comida · Tacos de Pescado,Comida,3,🇲🇽 Mexicana,tortilla-de-maiz,Tortilla de maíz,120,4 tortillas de maíz,4 tortillas de maíz,0.994,alta,4.0×pieza(30.0g),
+D03 Comida · Tacos de Pescado,Comida,3,🇲🇽 Mexicana,,,,"Repollo rallado o lechuga, pepino","Repollo rallado o lechuga, pepino",0.222,baja,sin-cantidad,SI
+D03 Comida · Tacos de Pescado,Comida,3,🇲🇽 Mexicana,aderezo,Aderezo,,Aderezo del recetario,Aderezo del recetario,0.675,media,sin-cantidad,SI
+D03 Comida · Tacos de Pescado,Comida,3,🇲🇽 Mexicana,salsa-de-pimienta-verde,Salsa de pimienta verde,,"Salsa verde o pico de gallo, limón","Salsa verde o pico de gallo, limón",0.579,media,sin-cantidad,SI
+D03 Cena · Enfrijoladas,Cena,3,🇲🇽 Mexicana,tortilla-de-maiz,Tortilla de maíz,120,4 tortillas de maíz,4 tortillas de maíz,0.994,alta,4.0×pieza(30.0g),
+D03 Cena · Enfrijoladas,Cena,3,🇲🇽 Mexicana,frijol-molido,Frijol molido,74,⅓ tz de frijol,⅓ tz de frijol,0.684,media,0.3333333333333333×taza(221.21g),SI
+D03 Cena · Enfrijoladas,Cena,3,🇲🇽 Mexicana,queso-panela,Queso Panela,120,120 g queso panela o fresco,120 g queso panela o fresco,0.945,alta,gramos-directos,
+D03 Cena · Enfrijoladas,Cena,3,🇲🇽 Mexicana,calabacita-alargada-cruda,Calabacita alargada cruda,,Calabacita salteada con cebolla,Calabacita salteada con cebolla,0.636,media,sin-cantidad,SI
+D03 Cena · Enfrijoladas,Cena,3,🇲🇽 Mexicana,salsa-de-anguila,Salsa de anguila,,Salsa de tu preferencia,Salsa de tu preferencia,0.698,media,sin-cantidad,SI
+D03 Snack AM · Snack AM,Snack AM,3,🇲🇽 Mexicana,pechuga-de-pavo,Pechuga de pavo,128,6 reb pechuga de pavo,Sandwich: 6 reb pechuga de pavo + 2 reb pan integral + lechuga y tomate + 1 cda mayonesa,1.0,alta,6.0×rebanada(21.33g),
+D03 Snack AM · Snack AM,Snack AM,3,🇲🇽 Mexicana,pan-integral,Pan integral,50,2 reb pan integral,Sandwich: 6 reb pechuga de pavo + 2 reb pan integral + lechuga y tomate + 1 cda mayonesa,1.0,alta,2.0×rebanada(25.0g),
+D03 Snack AM · Snack AM,Snack AM,3,🇲🇽 Mexicana,lechuga,Lechuga,,lechuga y tomate,Sandwich: 6 reb pechuga de pavo + 2 reb pan integral + lechuga y tomate + 1 cda mayonesa,0.697,media,sin-cantidad,SI
+D03 Snack AM · Snack AM,Snack AM,3,🇲🇽 Mexicana,mayonesa,Mayonesa,,1 cda mayonesa,Sandwich: 6 reb pechuga de pavo + 2 reb pan integral + lechuga y tomate + 1 cda mayonesa,1.0,alta,REVISAR-medida(cda),SI
+D03 Snack PM · Snack PM,Snack PM,3,🇲🇽 Mexicana,sandia-picada,Sandía picada,320,2 tz sandía picada,2 tz sandía picada + 1 tz jicama,1.0,alta,2.0×taza(160.0g),
+D03 Snack PM · Snack PM,Snack PM,3,🇲🇽 Mexicana,jicama-picada,Jícama picada,120,1 tz jicama,2 tz sandía picada + 1 tz jicama,0.926,alta,1.0×taza(120.0g),
+D04 Desayuno · Huevos Rancheros,Desayuno,4,🇲🇽 Mexicana,huevo-fresco,Huevo fresco,264,6 huevos,6 huevos,0.933,alta,6.0×pieza(44.0g),
+D04 Desayuno · Huevos Rancheros,Desayuno,4,🇲🇽 Mexicana,frijol-molido,Frijol molido,147,⅔ taza frijoles cocidos,⅔ taza frijoles cocidos,0.727,media,0.6666666666666666×taza(221.21g),SI
+D04 Desayuno · Huevos Rancheros,Desayuno,4,🇲🇽 Mexicana,nopal-crudo,Nopal crudo,,Nopal picado,Nopal picado,0.957,alta,sin-cantidad,SI
+D04 Desayuno · Huevos Rancheros,Desayuno,4,🇲🇽 Mexicana,tortilla-de-maiz,Tortilla de maíz,30,1 tortilla de maíz,1 tortilla de maíz,1.0,alta,1.0×pieza(30.0g),
+D04 Desayuno · Huevos Rancheros,Desayuno,4,🇲🇽 Mexicana,aguacate-hass,Aguacate Hass,47,½ pz aguacate,½ pz aguacate,0.727,media,0.5×pieza(93.94g),SI
+D04 Desayuno · Huevos Rancheros,Desayuno,4,🇲🇽 Mexicana,salsa-de-chile,Salsa de chile,,"Salsa libre (tomate, cebolla, chile, cilantro)","Salsa libre (tomate, cebolla, chile, cilantro)",0.625,media,sin-cantidad,SI
+D04 Comida · Tinga de Pollo,Comida,4,🇲🇽 Mexicana,pechuga-de-pollo-ahumada,Pechuga de pollo ahumada,230,230 g pechuga de pollo deshebrada,230 g pechuga de pollo deshebrada,0.815,media,gramos-directos,SI
+D04 Comida · Tinga de Pollo,Comida,4,🇲🇽 Mexicana,arroz-cocido,Arroz cocido,564,3 tz arroz blanco cocido,3 tz arroz blanco cocido,0.73,media,3.0×taza(188.0g),SI
+D04 Comida · Tinga de Pollo,Comida,4,🇲🇽 Mexicana,lechuga,Lechuga,,Lechuga,Lechuga + tomate + cebolla,1.0,alta,sin-cantidad,SI
+D04 Comida · Tinga de Pollo,Comida,4,🇲🇽 Mexicana,tomate-verde,Tomate verde,,tomate,Lechuga + tomate + cebolla,0.708,media,sin-cantidad,SI
+D04 Comida · Tinga de Pollo,Comida,4,🇲🇽 Mexicana,cebolla-cocida,Cebolla cocida,,cebolla,Lechuga + tomate + cebolla,0.933,alta,sin-cantidad,SI
+D04 Comida · Tinga de Pollo,Comida,4,🇲🇽 Mexicana,salsa-de-chile,Salsa de chile,,2 cdas salsa chipotle,2 cdas salsa chipotle,0.657,media,REVISAR-medida(cda),SI
+D04 Comida · Tinga de Pollo,Comida,4,🇲🇽 Mexicana,limon,Limón,,Limón,Limón,1.0,alta,sin-cantidad,SI
+D04 Cena · Quesadillas con Champiñones,Cena,4,🇲🇽 Mexicana,tortilla-de-maiz,Tortilla de maíz,60,2 tortillas de maíz,2 tortillas de maíz,0.994,alta,2.0×pieza(30.0g),
+D04 Cena · Quesadillas con Champiñones,Cena,4,🇲🇽 Mexicana,queso-panela,Queso Panela,150,150 g queso panela o fresco,150 g queso panela o fresco,0.945,alta,gramos-directos,
+D04 Cena · Quesadillas con Champiñones,Cena,4,🇲🇽 Mexicana,champinon-crudo-rebanado,Champiñón crudo rebanado,,Champiñones con cebolla,Champiñones con cebolla,0.636,media,sin-cantidad,SI
+D04 Cena · Quesadillas con Champiñones,Cena,4,🇲🇽 Mexicana,salsa-de-pimienta-verde,Salsa de pimienta verde,,Salsa verde,Salsa verde,0.779,media,sin-cantidad,SI
+D04 Cena · Quesadillas con Champiñones,Cena,4,🇲🇽 Mexicana,caldo,Caldo,240,1 taza caldo de verduras,1 taza caldo de verduras,0.666,media,1.0×taza(240.0g),SI
+D04 Snack AM · Snack AM,Snack AM,4,🇲🇽 Mexicana,papaya-picada,Papaya picada,140,1 tz papaya,1 tz papaya + 10 g semillas (almendras),0.926,alta,1.0×taza(140.0g),
+D04 Snack AM · Snack AM,Snack AM,4,🇲🇽 Mexicana,semilla-de-anis,Semilla de anís,10,10 g semillas (almendras),1 tz papaya + 10 g semillas (almendras),0.633,media,gramos-directos,SI
+D04 Snack PM · Snack PM,Snack PM,4,🇲🇽 Mexicana,semilla-de-mostaza,Semilla de mostaza,10,10 g semillas (pistaches),10 g semillas (pistaches) + 1 tz zanahoria picada,0.622,media,gramos-directos,SI
+D04 Snack PM · Snack PM,Snack PM,4,🇲🇽 Mexicana,zanahoria-picada-cruda,Zanahoria picada cruda,128,1 tz zanahoria picada,10 g semillas (pistaches) + 1 tz zanahoria picada,0.968,alta,1.0×taza(128.0g),
+D05 Desayuno · Molletes con Huevo,Desayuno,5,🇲🇽 Mexicana,pan-integral,Pan integral,100,4 reb pan integral,4 reb pan integral,1.0,alta,4.0×rebanada(25.0g),
+D05 Desayuno · Molletes con Huevo,Desayuno,5,🇲🇽 Mexicana,frijol-germinado-crudo,Frijol germinado crudo,69,⅔ tz frijoles machacados sin grasa,⅔ tz frijoles machacados sin grasa,0.602,media,0.6666666666666666×taza(104.0g),SI
+D05 Desayuno · Molletes con Huevo,Desayuno,5,🇲🇽 Mexicana,huevo-frito,Huevo frito,92,2 huevo,2 huevo + ½ tz claras,0.925,alta,2.0×pieza(46.0g),
+D05 Desayuno · Molletes con Huevo,Desayuno,5,🇲🇽 Mexicana,clara-de-huevo,Clara de huevo,16,½ tz claras,2 huevo + ½ tz claras,0.675,media,~0.5×pieza(33.0g)[unidad≈],SI
+D05 Desayuno · Molletes con Huevo,Desayuno,5,🇲🇽 Mexicana,queso-panela,Queso Panela,60,60 g queso panela o fresco,60 g queso panela o fresco,0.945,alta,gramos-directos,
+D05 Desayuno · Molletes con Huevo,Desayuno,5,🇲🇽 Mexicana,,,,"Pico de gallo libre, limón y sal","Pico de gallo libre, limón y sal",0.278,baja,sin-cantidad,SI
+D05 Comida · Asado de Res,Comida,5,🇲🇽 Mexicana,carne-de-res-seca,Carne de res seca,200,200 g carne de res,200 g carne de res,0.816,media,gramos-directos,SI
+D05 Comida · Asado de Res,Comida,5,🇲🇽 Mexicana,papas-fritas-con-crema-acida-y-cebolla,Papas fritas con crema ácida y cebolla,3,"1 pz papa, 2 pz tomate, ½ cebolla, 1 ajo","1 pz papa, 2 pz tomate, ½ cebolla, 1 ajo",0.579,media,1.0×pieza(3.0g),SI
+D05 Comida · Asado de Res,Comida,5,🇲🇽 Mexicana,lechuga-sangria,Lechuga sangría,,"Lechuga, zanahoria, pepino, cebolla curtida","Lechuga, zanahoria, pepino, cebolla curtida",0.52,baja,sin-cantidad,SI
+D05 Comida · Asado de Res,Comida,5,🇲🇽 Mexicana,queso-panela,Queso Panela,30,30 g queso panela,30 g queso panela + ⅓ aguacate,1.0,alta,gramos-directos,
+D05 Comida · Asado de Res,Comida,5,🇲🇽 Mexicana,aguacate-hass,Aguacate Hass,31,⅓ aguacate,30 g queso panela + ⅓ aguacate,0.727,media,0.3333333333333333×pieza(93.94g),SI
+D05 Cena · Ceviche de Atún,Cena,5,🇲🇽 Mexicana,atun-en-agua-drenado,Atún en agua drenado,,2 latas atún en agua,2 latas atún en agua,0.8,media,REVISAR-medida(lata),SI
+D05 Cena · Ceviche de Atún,Cena,5,🇲🇽 Mexicana,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,,Pepino,Pepino + tomate + cebolla y cilantro,0.573,media,sin-cantidad,SI
+D05 Cena · Ceviche de Atún,Cena,5,🇲🇽 Mexicana,tomate-verde,Tomate verde,,tomate,Pepino + tomate + cebolla y cilantro,0.708,media,sin-cantidad,SI
+D05 Cena · Ceviche de Atún,Cena,5,🇲🇽 Mexicana,cebolla-cocida,Cebolla cocida,,cebolla y cilantro,Pepino + tomate + cebolla y cilantro,0.712,media,sin-cantidad,SI
+D05 Cena · Ceviche de Atún,Cena,5,🇲🇽 Mexicana,aguacate-hass,Aguacate Hass,31,⅓ pz aguacate,⅓ pz aguacate,0.727,media,0.3333333333333333×pieza(93.94g),SI
+D05 Cena · Ceviche de Atún,Cena,5,🇲🇽 Mexicana,jugo-de-limon,Jugo de limón,,"Jugo de limón, sal","Jugo de limón, sal",0.823,media,sin-cantidad,SI
+D05 Cena · Ceviche de Atún,Cena,5,🇲🇽 Mexicana,aceite-de-oliva,Aceite de oliva,,1 cdita aceite oliva,1 cdita aceite oliva + 4 reb pan integral tostado,0.978,alta,REVISAR-medida(cdita),SI
+D05 Cena · Ceviche de Atún,Cena,5,🇲🇽 Mexicana,pan-integral,Pan integral,100,4 reb pan integral tostado,1 cdita aceite oliva + 4 reb pan integral tostado,0.95,alta,4.0×rebanada(25.0g),
+D05 Snack AM · Snack AM,Snack AM,5,🇲🇽 Mexicana,uva,Uva,10,2 tz de uvas,2 tz de uvas,0.92,alta,~2.0×pieza(4.78g)[unidad≈],SI
+D05 Snack PM · Snack PM,Snack PM,5,🇲🇽 Mexicana,palomitas-naturales,Palomitas naturales,22,3 tz de palomitas naturales,3 tz de palomitas naturales,0.985,alta,3.0×taza(7.2g),
+D06 Desayuno · Bowl de Amaranto,Desayuno,6,🇲🇽 Mexicana,yoghurt-natural,Yoghurt natural,227,1 tz yogur natural sin azúcar,1 tz yogur natural sin azúcar,0.941,alta,1.0×taza(227.0g),
+D06 Desayuno · Bowl de Amaranto,Desayuno,6,🇲🇽 Mexicana,amaranto-tostado,Amaranto tostado,,2 cda amaranto natural inflado,2 cda amaranto natural inflado,0.93,alta,REVISAR-medida(cda),SI
+D06 Desayuno · Bowl de Amaranto,Desayuno,6,🇲🇽 Mexicana,granola-estandar,Granola estándar,2,¼ tz granola natural sin azúcar,¼ tz granola natural sin azúcar,0.68,media,~0.25×cucharada(7.0g)[unidad≈],SI
+D06 Desayuno · Bowl de Amaranto,Desayuno,6,🇲🇽 Mexicana,mango-picado,Mango picado,41,"¼ tz mango, ¼ tz papaya, ¼ tz piña","¼ tz mango, ¼ tz papaya, ¼ tz piña",0.603,media,0.25×taza(165.0g),SI
+D06 Desayuno · Bowl de Amaranto,Desayuno,6,🇲🇽 Mexicana,miel,Miel,,1 cda miel,1 cda miel,1.0,alta,REVISAR-medida(cda),SI
+D06 Desayuno · Bowl de Amaranto,Desayuno,6,🇲🇽 Mexicana,semilla-de-mostaza,Semilla de mostaza,10,10 g semillas mixtas,10 g semillas mixtas + 4 pz huevo revuelto,0.708,media,gramos-directos,SI
+D06 Desayuno · Bowl de Amaranto,Desayuno,6,🇲🇽 Mexicana,huevo-revuelto,Huevo revuelto,4,4 pz huevo revuelto,10 g semillas mixtas + 4 pz huevo revuelto,1.0,alta,~4.0×gramos(1.0g)[unidad≈],SI
+D06 Comida · Carne Molida con Verduras y Arroz,Comida,6,🇲🇽 Mexicana,carne-molida-popular-de-res,Carne molida popular de res,230,230 g carne molida magra de res,230 g carne molida magra de res,0.857,alta,gramos-directos,
+D06 Comida · Carne Molida con Verduras y Arroz,Comida,6,🇲🇽 Mexicana,arroz-cocido,Arroz cocido,564,3 tz arroz cocido,3 tz arroz cocido,1.0,alta,3.0×taza(188.0g),
+D06 Comida · Carne Molida con Verduras y Arroz,Comida,6,🇲🇽 Mexicana,calabacita-redonda-cruda,Calabacita redonda cruda,,Calabacita,Calabacita + pimiento + zanahoria salteadas,0.693,media,sin-cantidad,SI
+D06 Comida · Carne Molida con Verduras y Arroz,Comida,6,🇲🇽 Mexicana,pimiento-fresco,Pimiento fresco,,pimiento,Calabacita + pimiento + zanahoria salteadas,0.939,alta,sin-cantidad,SI
+D06 Comida · Carne Molida con Verduras y Arroz,Comida,6,🇲🇽 Mexicana,zanahoria-rallada-cruda,Zanahoria rallada cruda,,zanahoria salteadas,Calabacita + pimiento + zanahoria salteadas,0.943,alta,sin-cantidad,SI
+D06 Comida · Carne Molida con Verduras y Arroz,Comida,6,🇲🇽 Mexicana,queso-oaxaca,Queso Oaxaca,60,60 g queso panela o oaxaca,60 g queso panela o oaxaca,0.795,media,gramos-directos,SI
+D06 Comida · Carne Molida con Verduras y Arroz,Comida,6,🇲🇽 Mexicana,sal-de-ajo,Sal de ajo,,"Sal, ajo y hierbas","Sal, ajo y hierbas",0.754,media,sin-cantidad,SI
+D06 Cena · Tacos de Camarón,Cena,6,🇲🇽 Mexicana,camaron-cocido,Camarón cocido,180,180 g camarón limpio,180 g camarón limpio,0.943,alta,gramos-directos,
+D06 Cena · Tacos de Camarón,Cena,6,🇲🇽 Mexicana,tortilla-de-maiz,Tortilla de maíz,120,4 tortillas de maíz,4 tortillas de maíz,0.994,alta,4.0×pieza(30.0g),
+D06 Cena · Tacos de Camarón,Cena,6,🇲🇽 Mexicana,jugo-de-limon,Jugo de limón,,Jugo de limón,Jugo de limón + pizca de sal,1.0,alta,sin-cantidad,SI
+D06 Cena · Tacos de Camarón,Cena,6,🇲🇽 Mexicana,sal,Sal,,pizca de sal,Jugo de limón + pizca de sal,0.88,alta,sin-cantidad,SI
+D06 Cena · Tacos de Camarón,Cena,6,🇲🇽 Mexicana,lechuga-italiana,Lechuga italiana,,"Lechuga rallada, pepino, tomate, cilantro, cebolla","Lechuga rallada, pepino, tomate, cilantro, cebolla",0.515,baja,sin-cantidad,SI
+D06 Cena · Tacos de Camarón,Cena,6,🇲🇽 Mexicana,salsa-de-anguila,Salsa de anguila,,Salsa de tu preferencia,Salsa de tu preferencia,0.698,media,sin-cantidad,SI
+D06 Snack AM · Snack AM,Snack AM,6,🇲🇽 Mexicana,,,,6 rollitos de pechuga de pavo con limón y salsa soya,Rollitos de jamón: 6 rollitos de pechuga de pavo con limón y salsa soya,0.242,baja,REVISAR-medida(?),SI
+D06 Snack PM · Snack PM,Snack PM,6,🇲🇽 Mexicana,semilla-de-anis,Semilla de anís,10,10 g semillas (almendras),10 g semillas (almendras) + 1 plátano,0.633,media,gramos-directos,SI
+D06 Snack PM · Snack PM,Snack PM,6,🇲🇽 Mexicana,platano,Plátano,108,1 plátano,10 g semillas (almendras) + 1 plátano,1.0,alta,1.0×pieza(108.0g),
+D07 Desayuno · Calabacitas,Desayuno,7,🇲🇽 Mexicana,calabacita-redonda-cruda,Calabacita redonda cruda,,"Calabacita en cubos, tomate, cebolla y chile","Calabacita en cubos, tomate, cebolla y chile",0.528,baja,sin-cantidad,SI
+D07 Desayuno · Calabacitas,Desayuno,7,🇲🇽 Mexicana,huevo-frito,Huevo frito,138,3 huevo,3 huevo + ½ taza claras,0.925,alta,3.0×pieza(46.0g),
+D07 Desayuno · Calabacitas,Desayuno,7,🇲🇽 Mexicana,clara-de-huevo,Clara de huevo,16,½ taza claras,3 huevo + ½ taza claras,0.675,media,~0.5×pieza(33.0g)[unidad≈],SI
+D07 Desayuno · Calabacitas,Desayuno,7,🇲🇽 Mexicana,pan-integral,Pan integral,100,4 reb pan integral,4 reb pan integral,1.0,alta,4.0×rebanada(25.0g),
+D07 Desayuno · Calabacitas,Desayuno,7,🇲🇽 Mexicana,sal-de-ajo,Sal de ajo,,"Sal, pimienta y orégano al gusto","Sal, pimienta y orégano al gusto",0.541,baja,sin-cantidad,SI
+D07 Comida · Bistec de Res,Comida,7,🇲🇽 Mexicana,bistec-de-res,Bistec de res,200,200 g bistec de res salpimentado,200 g bistec de res salpimentado,0.933,alta,gramos-directos,
+D07 Comida · Bistec de Res,Comida,7,🇲🇽 Mexicana,salsa-de-manzana,Salsa de manzana,,Salsa de tomate hecha en casa,Salsa de tomate hecha en casa,0.564,media,sin-cantidad,SI
+D07 Comida · Bistec de Res,Comida,7,🇲🇽 Mexicana,arroz-cocido,Arroz cocido,376,2 tz arroz cocido,2 tz arroz cocido,1.0,alta,2.0×taza(188.0g),
+D07 Cena · Ensalada Cremosa de Atún,Cena,7,🇲🇽 Mexicana,atun-en-agua-drenado,Atún en agua drenado,,2 latas atún en agua,2 latas atún en agua,0.8,media,REVISAR-medida(lata),SI
+D07 Cena · Ensalada Cremosa de Atún,Cena,7,🇲🇽 Mexicana,papa-cocida,Papa cocida,272,2 papa cocida,2 papa cocida,1.0,alta,2.0×pieza(136.0g),
+D07 Cena · Ensalada Cremosa de Atún,Cena,7,🇲🇽 Mexicana,lechuga-italiana,Lechuga italiana,,"Lechuga picada, pepino y zanahoria rallada","Lechuga picada, pepino y zanahoria rallada",0.561,media,sin-cantidad,SI
+D07 Cena · Ensalada Cremosa de Atún,Cena,7,🇲🇽 Mexicana,mayonesa-light,Mayonesa light,,1 cdita mayonesa light,1 cdita mayonesa light + 1 cda yogurt natural + limón,1.0,alta,REVISAR-medida(cdita),SI
+D07 Cena · Ensalada Cremosa de Atún,Cena,7,🇲🇽 Mexicana,yoghurt-natural,Yoghurt natural,,1 cda yogurt natural,1 cdita mayonesa light + 1 cda yogurt natural + limón,1.0,alta,REVISAR-medida(cda),SI
+D07 Cena · Ensalada Cremosa de Atún,Cena,7,🇲🇽 Mexicana,limon,Limón,,limón,1 cdita mayonesa light + 1 cda yogurt natural + limón,1.0,alta,sin-cantidad,SI
+D07 Cena · Ensalada Cremosa de Atún,Cena,7,🇲🇽 Mexicana,pan-integral,Pan integral,100,4 reb pan integral,4 reb pan integral,1.0,alta,4.0×rebanada(25.0g),
+D07 Snack AM · Snack AM,Snack AM,7,🇲🇽 Mexicana,pera,Pera,162,1 pz de pera,1 pz de pera,0.945,alta,1.0×pieza(162.0g),
+D07 Snack PM · Snack PM,Snack PM,7,🇲🇽 Mexicana,semilla-de-girasol,Semilla de girasol,15,15 g semillas (cacahuates naturales),15 g semillas (cacahuates naturales),0.611,media,gramos-directos,SI
+D08 Desayuno · Yogurt Coco-Mango,Desayuno,8,🇯🇵 Japonesa,yoghurt-natural,Yoghurt natural,227,1 tz yogurt natural sin azúcar,1 tz yogurt natural sin azúcar,0.941,alta,1.0×taza(227.0g),
+D08 Desayuno · Yogurt Coco-Mango,Desayuno,8,🇯🇵 Japonesa,mango-picado,Mango picado,165,1 taza mango en cubos,1 taza mango en cubos,0.698,media,1.0×taza(165.0g),SI
+D08 Desayuno · Yogurt Coco-Mango,Desayuno,8,🇯🇵 Japonesa,platano,Plátano,54,½ pz plátano,½ pz plátano,1.0,alta,0.5×pieza(108.0g),
+D08 Desayuno · Yogurt Coco-Mango,Desayuno,8,🇯🇵 Japonesa,coco-rallado,Coco rallado,,2 cdas coco rallado natural sin azúcar,2 cdas coco rallado natural sin azúcar,0.912,alta,REVISAR-medida(cda),SI
+D08 Desayuno · Yogurt Coco-Mango,Desayuno,8,🇯🇵 Japonesa,amaranto-cocido,Amaranto cocido,,2 cda amaranto inflado,2 cda amaranto inflado,0.955,alta,REVISAR-medida(cda),SI
+D08 Desayuno · Yogurt Coco-Mango,Desayuno,8,🇯🇵 Japonesa,miel,Miel,,1 cdita miel,1 cdita miel,1.0,alta,REVISAR-medida(cdita),SI
+D08 Comida · Pollo Teriyaki,Comida,8,🇯🇵 Japonesa,pechuga-de-pollo-molida,Pechuga de pollo molida,200,200 g pechuga de pollo,200 g pechuga de pollo,0.814,media,gramos-directos,SI
+D08 Comida · Pollo Teriyaki,Comida,8,🇯🇵 Japonesa,arroz-cocido,Arroz cocido,376,2 tz arroz cocido,2 tz arroz cocido,1.0,alta,2.0×taza(188.0g),
+D08 Comida · Pollo Teriyaki,Comida,8,🇯🇵 Japonesa,brocoli-cocido,Brócoli cocido,,"Brócoli, zanahoria, calabacita o pimiento","Brócoli, zanahoria, calabacita o pimiento",0.553,media,sin-cantidad,SI
+D08 Comida · Pollo Teriyaki,Comida,8,🇯🇵 Japonesa,salsa-teriyaki-2,Salsa Teriyaki,,Salsa teriyaki ligera casera,Salsa teriyaki ligera casera,0.783,media,sin-cantidad,SI
+D08 Comida · Pollo Teriyaki,Comida,8,🇯🇵 Japonesa,,,,½ taza edamames cocidos,½ taza edamames cocidos,0.138,baja,REVISAR-medida(taza),SI
+D08 Cena · Fideos con Verdura,Cena,8,🇯🇵 Japonesa,fideo-cocido,Fideo cocido,80,2 tz fideos cocidos,2 tz fideos cocidos,0.985,alta,2.0×taza(40.0g),
+D08 Cena · Fideos con Verdura,Cena,8,🇯🇵 Japonesa,tofu-firme,"Tofu, firme",180,180 g tofu firme (o 180 g pollo),180 g tofu firme (o 180 g pollo),0.693,media,gramos-directos,SI
+D08 Cena · Fideos con Verdura,Cena,8,🇯🇵 Japonesa,pimiento-fresco,Pimiento fresco,,Pimientos,Pimientos + champiñones + zanahoria + chile cayenna,0.95,alta,sin-cantidad,SI
+D08 Cena · Fideos con Verdura,Cena,8,🇯🇵 Japonesa,champinon-crudo-entero,Champiñón crudo entero,,champiñones,Pimientos + champiñones + zanahoria + chile cayenna,0.696,media,sin-cantidad,SI
+D08 Cena · Fideos con Verdura,Cena,8,🇯🇵 Japonesa,zanahoria-picada-cruda,Zanahoria picada cruda,,zanahoria,Pimientos + champiñones + zanahoria + chile cayenna,0.916,alta,sin-cantidad,SI
+D08 Cena · Fideos con Verdura,Cena,8,🇯🇵 Japonesa,chile-costeno,Chile costeño,,chile cayenna,Pimientos + champiñones + zanahoria + chile cayenna,0.638,media,sin-cantidad,SI
+D08 Cena · Fideos con Verdura,Cena,8,🇯🇵 Japonesa,salsa-de-soya,Salsa de soya,,"Salsa soya ligera, jengibre y limón","Salsa soya ligera, jengibre y limón",0.615,media,sin-cantidad,SI
+D08 Snack AM · Snack AM,Snack AM,8,🇯🇵 Japonesa,,,,½ taza edamames cocidos,½ taza edamames cocidos + sal o soya baja en sodio,0.138,baja,REVISAR-medida(taza),SI
+D08 Snack AM · Snack AM,Snack AM,8,🇯🇵 Japonesa,sal-de-ajo,Sal de ajo,,sal o soya baja en sodio,½ taza edamames cocidos + sal o soya baja en sodio,0.534,baja,sin-cantidad,SI
+D08 Snack PM · Snack PM,Snack PM,8,🇯🇵 Japonesa,camote-al-horno,Camote al horno,212,1 tz camote al horno,1 tz camote al horno + 1 cda miel,1.0,alta,1.0×taza(212.12g),
+D08 Snack PM · Snack PM,Snack PM,8,🇯🇵 Japonesa,miel,Miel,,1 cda miel,1 tz camote al horno + 1 cda miel,1.0,alta,REVISAR-medida(cda),SI
+D09 Desayuno · Bowl,Desayuno,9,🇯🇵 Japonesa,huevo-cocido,Huevo cocido,176,4 huevos cocidos,4 huevos cocidos,0.985,alta,4.0×pieza(44.0g),
+D09 Desayuno · Bowl,Desayuno,9,🇯🇵 Japonesa,queso-fresco-de-cabra,Queso fresco de cabra,30,30 g queso fresco de cabra,30 g queso fresco de cabra,1.0,alta,gramos-directos,
+D09 Desayuno · Bowl,Desayuno,9,🇯🇵 Japonesa,espinaca-cruda,Espinaca cruda,,Espinaca fresca,Espinaca fresca,0.952,alta,sin-cantidad,SI
+D09 Desayuno · Bowl,Desayuno,9,🇯🇵 Japonesa,aguacate-hass,Aguacate Hass,31,⅓ pz de aguacate,⅓ pz de aguacate,0.708,media,0.3333333333333333×pieza(93.94g),SI
+D09 Desayuno · Bowl,Desayuno,9,🇯🇵 Japonesa,blueberries,Blueberries,48,⅓ tz de blueberries,⅓ tz de blueberries,0.976,alta,0.3333333333333333×taza(142.67g),
+D09 Desayuno · Bowl,Desayuno,9,🇯🇵 Japonesa,pan-integral,Pan integral,100,4 pz pan integral tostado,4 pz pan integral tostado,0.95,alta,4.0×rebanada(25.0g),
+D09 Comida · Poké Bowl,Comida,9,🇯🇵 Japonesa,arroz-cocido,Arroz cocido,376,2 tz arroz cocido,2 tz arroz cocido,1.0,alta,2.0×taza(188.0g),
+D09 Comida · Poké Bowl,Comida,9,🇯🇵 Japonesa,pechuga-de-pollo-sin-piel-asada,Pechuga de pollo sin piel asada,200,200 g pechuga de pollo o pescado blanco,200 g pechuga de pollo o pescado blanco,0.68,media,gramos-directos,SI
+D09 Comida · Poké Bowl,Comida,9,🇯🇵 Japonesa,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,,Pepino,Pepino + zanahoria,0.573,media,sin-cantidad,SI
+D09 Comida · Poké Bowl,Comida,9,🇯🇵 Japonesa,zanahoria-picada-cruda,Zanahoria picada cruda,,zanahoria,Pepino + zanahoria,0.916,alta,sin-cantidad,SI
+D09 Comida · Poké Bowl,Comida,9,🇯🇵 Japonesa,queso-crema,Queso crema,30,30 g queso crema,30 g queso crema,1.0,alta,gramos-directos,
+D09 Comida · Poké Bowl,Comida,9,🇯🇵 Japonesa,aguacate-hass,Aguacate Hass,31,⅓ aguacate,⅓ aguacate,0.727,media,0.3333333333333333×pieza(93.94g),SI
+D09 Comida · Poké Bowl,Comida,9,🇯🇵 Japonesa,salsa-de-soya,Salsa de soya,,Salsa soya baja en sodio,Salsa soya baja en sodio + naranja + limón,0.683,media,sin-cantidad,SI
+D09 Comida · Poké Bowl,Comida,9,🇯🇵 Japonesa,naranja,Naranja,,naranja,Salsa soya baja en sodio + naranja + limón,1.0,alta,sin-cantidad,SI
+D09 Comida · Poké Bowl,Comida,9,🇯🇵 Japonesa,limon,Limón,,limón,Salsa soya baja en sodio + naranja + limón,1.0,alta,sin-cantidad,SI
+D09 Cena · Sopa Miso,Cena,9,🇯🇵 Japonesa,caldo,Caldo,240,1 tz caldo de miso natural,1 tz caldo de miso natural,0.652,media,1.0×taza(240.0g),SI
+D09 Cena · Sopa Miso,Cena,9,🇯🇵 Japonesa,tofu-frito,"Tofu, frito",200,200 g tofu o pechuga de pollo,200 g tofu o pechuga de pollo,0.573,media,gramos-directos,SI
+D09 Cena · Sopa Miso,Cena,9,🇯🇵 Japonesa,espinaca-cruda,Espinaca cruda,,Espinaca,Espinaca + champiñones + cebolla,0.945,alta,sin-cantidad,SI
+D09 Cena · Sopa Miso,Cena,9,🇯🇵 Japonesa,champinon-crudo-entero,Champiñón crudo entero,,champiñones,Espinaca + champiñones + cebolla,0.696,media,sin-cantidad,SI
+D09 Cena · Sopa Miso,Cena,9,🇯🇵 Japonesa,cebolla-cocida,Cebolla cocida,,cebolla,Espinaca + champiñones + cebolla,0.933,alta,sin-cantidad,SI
+D09 Cena · Sopa Miso,Cena,9,🇯🇵 Japonesa,fideo-cocido,Fideo cocido,80,2 tz fideos cocidos,2 tz fideos cocidos,0.985,alta,2.0×taza(40.0g),
+D09 Snack AM · Snack AM,Snack AM,9,🇯🇵 Japonesa,semilla-de-anis,Semilla de anís,10,10 g semillas (almendras),10 g semillas (almendras) + 1 plátano,0.633,media,gramos-directos,SI
+D09 Snack AM · Snack AM,Snack AM,9,🇯🇵 Japonesa,platano,Plátano,108,1 plátano,10 g semillas (almendras) + 1 plátano,1.0,alta,1.0×pieza(108.0g),
+D09 Snack PM · Snack PM,Snack PM,9,🇯🇵 Japonesa,fresa-entera,Fresa entera,12,1 tz de fresas,1 tz de fresas,0.67,media,~1.0×pieza(12.0g)[unidad≈],SI
+D10 Desayuno · Avena con Manzana,Desayuno,10,🇯🇵 Japonesa,avena-cocida,Avena cocida,219,1 tz avena,1 tz avena + agua,0.918,alta,1.0×taza(218.67g),
+D10 Desayuno · Avena con Manzana,Desayuno,10,🇯🇵 Japonesa,agua,Agua,,agua,1 tz avena + agua,1.0,alta,sin-cantidad,SI
+D10 Desayuno · Avena con Manzana,Desayuno,10,🇯🇵 Japonesa,leche,Leche,480,2 tz leche,2 tz leche,1.0,alta,2.0×taza(240.0g),
+D10 Desayuno · Avena con Manzana,Desayuno,10,🇯🇵 Japonesa,miel,Miel,,1 cda miel,1 cda miel + canela en polvo,1.0,alta,REVISAR-medida(cda),SI
+D10 Desayuno · Avena con Manzana,Desayuno,10,🇯🇵 Japonesa,canela-en-polvo,Canela en polvo,,canela en polvo,1 cda miel + canela en polvo,1.0,alta,sin-cantidad,SI
+D10 Desayuno · Avena con Manzana,Desayuno,10,🇯🇵 Japonesa,manzana,Manzana,106,1 manzana,1 manzana,1.0,alta,1.0×pieza(106.0g),
+D10 Desayuno · Avena con Manzana,Desayuno,10,🇯🇵 Japonesa,semilla-de-mostaza,Semilla de mostaza,,1 cda semillas mixtas,1 cda semillas mixtas,0.708,media,REVISAR-medida(cda),SI
+D10 Desayuno · Avena con Manzana,Desayuno,10,🇯🇵 Japonesa,huevo-revuelto,Huevo revuelto,5,5 huevos revueltos,5 huevos revueltos,0.762,media,5.0×gramos(1.0g),SI
+D10 Comida · Ramen Ligero,Comida,10,🇯🇵 Japonesa,fideo-cocido,Fideo cocido,120,3 tz fideos cocidos,3 tz fideos cocidos,0.985,alta,3.0×taza(40.0g),
+D10 Comida · Ramen Ligero,Comida,10,🇯🇵 Japonesa,pollo-deshebrado,Pollo deshebrado,200,200 g pollo o tofu firme,200 g pollo o tofu firme,0.582,media,gramos-directos,SI
+D10 Comida · Ramen Ligero,Comida,10,🇯🇵 Japonesa,espinaca-cocida,Espinaca cocida,,"Espinaca, brócoli y champiñones","Espinaca, brócoli y champiñones",0.616,media,sin-cantidad,SI
+D10 Comida · Ramen Ligero,Comida,10,🇯🇵 Japonesa,huevo-cocido,Huevo cocido,88,2 huevo cocido,2 huevo cocido,1.0,alta,2.0×pieza(44.0g),
+D10 Comida · Ramen Ligero,Comida,10,🇯🇵 Japonesa,caldo-de-carne,Caldo de carne,,"Caldo ligero (sal, salsa soya, chile cayena)","Caldo ligero (sal, salsa soya, chile cayena)",0.488,baja,sin-cantidad,SI
+D10 Cena · Dumpling Rolls,Cena,10,🇯🇵 Japonesa,carne-molida-de-pavo,Carne molida de pavo,200,200 g carne molida de res o pavo,200 g carne molida de res o pavo,0.861,alta,gramos-directos,
+D10 Cena · Dumpling Rolls,Cena,10,🇯🇵 Japonesa,zanahoria-picada-cruda,Zanahoria picada cruda,,"Zanahoria, champiñones y cebollín","Zanahoria, champiñones y cebollín",0.604,media,sin-cantidad,SI
+D10 Cena · Dumpling Rolls,Cena,10,🇯🇵 Japonesa,hojas-de-laurel,Hojas de laurel,4,4 hojas grandes de lechuga,4 hojas grandes de lechuga,0.575,media,4.0×pieza(1.0g),SI
+D10 Cena · Dumpling Rolls,Cena,10,🇯🇵 Japonesa,ajonjoli,Ajonjolí,,1 cda de ajonjolí,1 cda de ajonjolí,0.968,alta,REVISAR-medida(cda),SI
+D10 Cena · Dumpling Rolls,Cena,10,🇯🇵 Japonesa,aderezo,Aderezo,,Aderezo chipotle,Aderezo chipotle + salsa soya,0.697,media,sin-cantidad,SI
+D10 Cena · Dumpling Rolls,Cena,10,🇯🇵 Japonesa,salsa-de-soya,Salsa de soya,,salsa soya,Aderezo chipotle + salsa soya,0.974,alta,sin-cantidad,SI
+D10 Cena · Dumpling Rolls,Cena,10,🇯🇵 Japonesa,quinoa-cruda,Quinoa cruda,1,1 tz quinoa cocida,1 tz quinoa cocida,0.96,alta,~1.0×gramos(1.0g)[unidad≈],SI
+D10 Snack AM · Snack AM,Snack AM,10,🇯🇵 Japonesa,pan-integral,Pan integral,75,3 reb pan integral,3 reb pan integral + 2 cdas crema cacahuate + 2 pz pera,1.0,alta,3.0×rebanada(25.0g),
+D10 Snack AM · Snack AM,Snack AM,10,🇯🇵 Japonesa,crema-natural,Crema natural,,2 cdas crema cacahuate,3 reb pan integral + 2 cdas crema cacahuate + 2 pz pera,0.689,media,REVISAR-medida(cda),SI
+D10 Snack AM · Snack AM,Snack AM,10,🇯🇵 Japonesa,pera,Pera,324,2 pz pera,3 reb pan integral + 2 cdas crema cacahuate + 2 pz pera,1.0,alta,2.0×pieza(162.0g),
+D10 Snack PM · Snack PM,Snack PM,10,🇯🇵 Japonesa,camote-al-horno,Camote al horno,424,2 pz camote al horno,2 pz camote al horno + 1 cda miel,1.0,alta,~2.0×taza(212.12g)[unidad≈],SI
+D10 Snack PM · Snack PM,Snack PM,10,🇯🇵 Japonesa,miel,Miel,,1 cda miel,2 pz camote al horno + 1 cda miel,1.0,alta,REVISAR-medida(cda),SI
+D11 Desayuno · Pancakes de Camote,Desayuno,11,🇯🇵 Japonesa,pure-de-camote,Puré de camote,480,2 tz puré de camote,2 tz puré de camote,1.0,alta,2.0×taza(240.0g),
+D11 Desayuno · Pancakes de Camote,Desayuno,11,🇯🇵 Japonesa,huevo-frito,Huevo frito,46,1 huevo,1 huevo + ¼ tz claras,0.925,alta,1.0×pieza(46.0g),
+D11 Desayuno · Pancakes de Camote,Desayuno,11,🇯🇵 Japonesa,clara-de-huevo,Clara de huevo,8,¼ tz claras,1 huevo + ¼ tz claras,0.675,media,~0.25×pieza(33.0g)[unidad≈],SI
+D11 Desayuno · Pancakes de Camote,Desayuno,11,🇯🇵 Japonesa,avena-cocida,Avena cocida,219,1 tz avena molida,1 tz avena molida,0.742,media,1.0×taza(218.67g),SI
+D11 Desayuno · Pancakes de Camote,Desayuno,11,🇯🇵 Japonesa,canela,Canela,,Canela y vainilla,Canela y vainilla,0.679,media,sin-cantidad,SI
+D11 Desayuno · Pancakes de Camote,Desayuno,11,🇯🇵 Japonesa,yoghurt-natural,Yoghurt natural,57,¼ tz yogur natural,¼ tz yogur natural + 1 cdta miel,1.0,alta,0.25×taza(227.0g),
+D11 Desayuno · Pancakes de Camote,Desayuno,11,🇯🇵 Japonesa,,,,1 cdta miel,¼ tz yogur natural + 1 cdta miel,0.348,baja,REVISAR-medida(?),SI
+D11 Desayuno · Pancakes de Camote,Desayuno,11,🇯🇵 Japonesa,huevo-fresco,Huevo fresco,88,2 pz de huevos,2 pz de huevos,0.914,alta,2.0×pieza(44.0g),
+D11 Comida · Salmón al Limón,Comida,11,🇯🇵 Japonesa,salmon-fresco,Salmón fresco,180,180 g salmón al sartén,180 g salmón al sartén,0.685,media,gramos-directos,SI
+D11 Comida · Salmón al Limón,Comida,11,🇯🇵 Japonesa,mantequilla,Mantequilla,,1 cdita mantequilla,1 cdita mantequilla + ajo + limón,1.0,alta,REVISAR-medida(cdita),SI
+D11 Comida · Salmón al Limón,Comida,11,🇯🇵 Japonesa,ajo-en-polvo,Ajo en polvo,,ajo,1 cdita mantequilla + ajo + limón,0.655,media,sin-cantidad,SI
+D11 Comida · Salmón al Limón,Comida,11,🇯🇵 Japonesa,limon,Limón,,limón,1 cdita mantequilla + ajo + limón,1.0,alta,sin-cantidad,SI
+D11 Comida · Salmón al Limón,Comida,11,🇯🇵 Japonesa,papa-cocida,Papa cocida,136,1 pz de papa,1 pz de papa,0.889,alta,1.0×pieza(136.0g),
+D11 Comida · Salmón al Limón,Comida,11,🇯🇵 Japonesa,esparragos,Espárragos,,Espárragos salteados,Espárragos salteados,0.708,media,sin-cantidad,SI
+D11 Comida · Salmón al Limón,Comida,11,🇯🇵 Japonesa,arroz-cocido,Arroz cocido,188,1 tz arroz cocido,1 tz arroz cocido,1.0,alta,1.0×taza(188.0g),
+D11 Cena · Crema de Calabacín,Cena,11,🇯🇵 Japonesa,calabacita-redonda-cruda,Calabacita redonda cruda,79,1 taza calabacita cocida,1 taza calabacita cocida,0.712,media,~1.0×pieza(79.0g)[unidad≈],SI
+D11 Cena · Crema de Calabacín,Cena,11,🇯🇵 Japonesa,cebolla-cocida,Cebolla cocida,53,¼ taza cebolla picada,¼ taza cebolla picada,0.957,alta,0.25×taza(212.0g),
+D11 Cena · Crema de Calabacín,Cena,11,🇯🇵 Japonesa,leche-entera-baja-en-sodio,Leche entera baja en sodio,120,½ taza leche baja en grasa,½ taza leche baja en grasa + 1 taza caldo de verduras,0.663,media,0.5×taza(240.0g),SI
+D11 Cena · Crema de Calabacín,Cena,11,🇯🇵 Japonesa,caldo,Caldo,240,1 taza caldo de verduras,½ taza leche baja en grasa + 1 taza caldo de verduras,0.666,media,1.0×taza(240.0g),SI
+D11 Cena · Crema de Calabacín,Cena,11,🇯🇵 Japonesa,queso-mozzarella-rallado,Queso Mozzarella rallado,120,120 g queso mozzarella rallado,120 g queso mozzarella rallado,1.0,alta,gramos-directos,
+D11 Cena · Crema de Calabacín,Cena,11,🇯🇵 Japonesa,pan-integral,Pan integral,75,3 reb pan integral tostado,3 reb pan integral tostado,0.95,alta,3.0×rebanada(25.0g),
+D11 Snack AM · Snack AM,Snack AM,11,🇯🇵 Japonesa,sandia-picada,Sandía picada,160,1 tz sandía,1 tz sandía + 1 tz pepino picado,0.926,alta,1.0×taza(160.0g),
+D11 Snack AM · Snack AM,Snack AM,11,🇯🇵 Japonesa,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,104,1 tz pepino picado,1 tz sandía + 1 tz pepino picado,0.61,media,1.0×taza(104.0g),SI
+D11 Snack PM · Snack PM,Snack PM,11,🇯🇵 Japonesa,pan-tostado,Pan tostado,30,2 reb pan,2 reb pan + 1 cda crema de cacahuate + 1 plátano,0.886,alta,2.0×rebanada(15.0g),
+D11 Snack PM · Snack PM,Snack PM,11,🇯🇵 Japonesa,crema-natural,Crema natural,,1 cda crema de cacahuate,2 reb pan + 1 cda crema de cacahuate + 1 plátano,0.678,media,REVISAR-medida(cda),SI
+D11 Snack PM · Snack PM,Snack PM,11,🇯🇵 Japonesa,platano,Plátano,108,1 plátano,2 reb pan + 1 cda crema de cacahuate + 1 plátano,1.0,alta,1.0×pieza(108.0g),
+D12 Desayuno · Rice Pudding Japonés,Desayuno,12,🇯🇵 Japonesa,arroz-cocido,Arroz cocido,,Arroz cocido con agua primero,Arroz cocido con agua primero,0.617,media,sin-cantidad,SI
+D12 Desayuno · Rice Pudding Japonés,Desayuno,12,🇯🇵 Japonesa,leche-descremada,Leche descremada,245,1 taza leche (descremada o vegetal),1 taza leche (descremada o vegetal),0.802,media,1.0×taza(245.0g),SI
+D12 Desayuno · Rice Pudding Japonés,Desayuno,12,🇯🇵 Japonesa,canela-en-polvo,Canela en polvo,,"Canela, vainilla y pizca de sal a fuego bajo","Canela, vainilla y pizca de sal a fuego bajo",0.508,baja,sin-cantidad,SI
+D12 Desayuno · Rice Pudding Japonés,Desayuno,12,🇯🇵 Japonesa,arroz-crudo,Arroz crudo,2,2 tz de arroz,2 tz de arroz,0.905,alta,~2.0×gramos(1.0g)[unidad≈],SI
+D12 Desayuno · Rice Pudding Japonés,Desayuno,12,🇯🇵 Japonesa,huevo-frito,Huevo frito,138,3 pz de huevo,3 pz de huevo,0.905,alta,3.0×pieza(46.0g),
+D12 Comida · Bowl de Camote,Comida,12,🇯🇵 Japonesa,pollo-deshebrado,Pollo deshebrado,180,180 g pollo o pescado cocido,180 g pollo o pescado cocido,0.691,media,gramos-directos,SI
+D12 Comida · Bowl de Camote,Comida,12,🇯🇵 Japonesa,camote-cocido,Camote cocido,209,1 pz camote al sartén en cubos,1 pz camote al sartén en cubos,0.595,media,~1.0×taza(209.09g)[unidad≈],SI
+D12 Comida · Bowl de Camote,Comida,12,🇯🇵 Japonesa,quinoa-cruda,Quinoa cruda,2,1 ½ tz quinoa,1 ½ tz quinoa,0.933,alta,~1.5×gramos(1.0g)[unidad≈],SI
+D12 Comida · Bowl de Camote,Comida,12,🇯🇵 Japonesa,espinaca-cruda,Espinaca cruda,,Espinaca y lechuga picada,Espinaca y lechuga picada,0.708,media,sin-cantidad,SI
+D12 Comida · Bowl de Camote,Comida,12,🇯🇵 Japonesa,aguacate-hass,Aguacate Hass,31,⅓ pz aguacate,⅓ pz aguacate,0.727,media,0.3333333333333333×pieza(93.94g),SI
+D12 Comida · Bowl de Camote,Comida,12,🇯🇵 Japonesa,aderezo,Aderezo,,Aderezo del recetario,Aderezo del recetario,0.675,media,sin-cantidad,SI
+D12 Cena · Croquetas de Papa,Cena,12,🇯🇵 Japonesa,papa-cocida,Papa cocida,136,1 tz papa cocida y triturada,1 tz papa cocida y triturada,0.704,media,~1.0×pieza(136.0g)[unidad≈],SI
+D12 Cena · Croquetas de Papa,Cena,12,🇯🇵 Japonesa,pollo-deshebrado,Pollo deshebrado,200,200 g pollo desmenuzado,200 g pollo desmenuzado,0.733,media,gramos-directos,SI
+D12 Cena · Croquetas de Papa,Cena,12,🇯🇵 Japonesa,calabacita-alargada-cruda,Calabacita alargada cruda,,Calabacita y cebolla rallada,Calabacita y cebolla rallada,0.628,media,sin-cantidad,SI
+D12 Cena · Croquetas de Papa,Cena,12,🇯🇵 Japonesa,harina-de-avena,Harina de avena,8,1 tz harina de avena,1 tz harina de avena,1.0,alta,~1.0×cucharada(8.0g)[unidad≈],SI
+D12 Cena · Croquetas de Papa,Cena,12,🇯🇵 Japonesa,huevo-revuelto,Huevo revuelto,1,1 pz huevo revuelto,1 pz huevo revuelto + sal,1.0,alta,~1.0×gramos(1.0g)[unidad≈],SI
+D12 Cena · Croquetas de Papa,Cena,12,🇯🇵 Japonesa,sal,Sal,,sal,1 pz huevo revuelto + sal,1.0,alta,sin-cantidad,SI
+D12 Cena · Croquetas de Papa,Cena,12,🇯🇵 Japonesa,aceite-de-aguacate,Aceite de aguacate,,1 cda aceite de aguacate,1 cda aceite de aguacate,1.0,alta,REVISAR-medida(cda),SI
+D12 Snack AM · Snack AM,Snack AM,12,🇯🇵 Japonesa,,,,"½ taza edamames cocidos, sal o soya","½ taza edamames cocidos, sal o soya",0.234,baja,REVISAR-medida(taza),SI
+D12 Snack PM · Snack PM,Snack PM,12,🇯🇵 Japonesa,fruto-del-monje,Fruto del monje,2,1 tz frutos rojos,1 tz frutos rojos + ½ plátano,0.619,media,~1.0×cucharadita(2.0g)[unidad≈],SI
+D12 Snack PM · Snack PM,Snack PM,12,🇯🇵 Japonesa,platano,Plátano,54,½ plátano,1 tz frutos rojos + ½ plátano,1.0,alta,0.5×pieza(108.0g),
+D13 Desayuno · Smoothie de Plátano,Desayuno,13,🇯🇵 Japonesa,platano,Plátano,108,1 pz plátano,1 pz plátano,1.0,alta,1.0×pieza(108.0g),
+D13 Desayuno · Smoothie de Plátano,Desayuno,13,🇯🇵 Japonesa,espinaca-cruda,Espinaca cruda,60,1 tz espinaca fresca,1 tz espinaca fresca,0.952,alta,1.0×taza(60.0g),
+D13 Desayuno · Smoothie de Plátano,Desayuno,13,🇯🇵 Japonesa,leche,Leche,240,1 tz leche,1 tz leche,1.0,alta,1.0×taza(240.0g),
+D13 Desayuno · Smoothie de Plátano,Desayuno,13,🇯🇵 Japonesa,semilla-de-girasol,Semilla de girasol,,1 cda semillas mixtas (10 g),1 cda semillas mixtas (10 g),0.691,media,REVISAR-medida(cda),SI
+D13 Desayuno · Smoothie de Plátano,Desayuno,13,🇯🇵 Japonesa,agua,Agua,,Agua y hielos,Agua y hielos,0.669,media,sin-cantidad,SI
+D13 Desayuno · Smoothie de Plátano,Desayuno,13,🇯🇵 Japonesa,huevo-fresco,Huevo fresco,88,2 pz de huevos,2 pz de huevos,0.914,alta,2.0×pieza(44.0g),
+D13 Comida · Pollo con Verduras,Comida,13,🇯🇵 Japonesa,pechuga-de-pollo-molida,Pechuga de pollo molida,180,180 g pechuga de pollo,180 g pechuga de pollo,0.814,media,gramos-directos,SI
+D13 Comida · Pollo con Verduras,Comida,13,🇯🇵 Japonesa,brocoli-cocido,Brócoli cocido,,"Brócoli, zanahoria, calabacita y pimientos","Brócoli, zanahoria, calabacita y pimientos",0.551,media,sin-cantidad,SI
+D13 Comida · Pollo con Verduras,Comida,13,🇯🇵 Japonesa,salsa-de-soya,Salsa de soya,,Salsa soya,Salsa soya + ajo + limón + chile cayenna,0.974,alta,sin-cantidad,SI
+D13 Comida · Pollo con Verduras,Comida,13,🇯🇵 Japonesa,ajo-en-polvo,Ajo en polvo,,ajo,Salsa soya + ajo + limón + chile cayenna,0.655,media,sin-cantidad,SI
+D13 Comida · Pollo con Verduras,Comida,13,🇯🇵 Japonesa,limon,Limón,,limón,Salsa soya + ajo + limón + chile cayenna,1.0,alta,sin-cantidad,SI
+D13 Comida · Pollo con Verduras,Comida,13,🇯🇵 Japonesa,chile-costeno,Chile costeño,,chile cayenna,Salsa soya + ajo + limón + chile cayenna,0.638,media,sin-cantidad,SI
+D13 Comida · Pollo con Verduras,Comida,13,🇯🇵 Japonesa,papa-al-horno-con-cascara,Papa al horno con cáscara,312,2 pz papa al horno o cocida,2 pz papa al horno o cocida,0.812,media,2.0×pieza(156.0g),SI
+D13 Cena · Brochetas Yakitori,Cena,13,🇯🇵 Japonesa,carne-deshebrada,Carne deshebrada,180,180 g carne,180 g carne,0.895,alta,gramos-directos,
+D13 Cena · Brochetas Yakitori,Cena,13,🇯🇵 Japonesa,pimiento-fresco,Pimiento fresco,,Pimientos de colores,Pimientos de colores,0.712,media,sin-cantidad,SI
+D13 Cena · Brochetas Yakitori,Cena,13,🇯🇵 Japonesa,salsa-teriyaki-2,Salsa Teriyaki,,Salsa teriyaki casera,Salsa teriyaki casera,0.96,alta,sin-cantidad,SI
+D13 Cena · Brochetas Yakitori,Cena,13,🇯🇵 Japonesa,arroz-cocido,Arroz cocido,376,2 tz arroz cocido,2 tz arroz cocido,1.0,alta,2.0×taza(188.0g),
+D13 Snack AM · Snack AM,Snack AM,13,🇯🇵 Japonesa,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,104,1 taza pepino en rodajas con vinagre de arroz,1 taza pepino en rodajas con vinagre de arroz + ajonjolí,0.517,baja,1.0×taza(104.0g),SI
+D13 Snack AM · Snack AM,Snack AM,13,🇯🇵 Japonesa,ajonjoli,Ajonjolí,,ajonjolí,1 taza pepino en rodajas con vinagre de arroz + ajonjolí,1.0,alta,sin-cantidad,SI
+D13 Snack PM · Snack PM,Snack PM,13,🇯🇵 Japonesa,yoghurt-natural,Yoghurt natural,227,1 taza yogurt natural,1 taza yogurt natural + ½ cdita matcha + 2 reb pan integral + 1 cdita miel,1.0,alta,1.0×taza(227.0g),
+D13 Snack PM · Snack PM,Snack PM,13,🇯🇵 Japonesa,matcha-en-polvo,Matcha en polvo,,½ cdita matcha,1 taza yogurt natural + ½ cdita matcha + 2 reb pan integral + 1 cdita miel,0.689,media,REVISAR-medida(cdita),SI
+D13 Snack PM · Snack PM,Snack PM,13,🇯🇵 Japonesa,pan-integral,Pan integral,50,2 reb pan integral,1 taza yogurt natural + ½ cdita matcha + 2 reb pan integral + 1 cdita miel,1.0,alta,2.0×rebanada(25.0g),
+D13 Snack PM · Snack PM,Snack PM,13,🇯🇵 Japonesa,miel,Miel,,1 cdita miel,1 taza yogurt natural + ½ cdita matcha + 2 reb pan integral + 1 cdita miel,1.0,alta,REVISAR-medida(cdita),SI
+D14 Desayuno · Toast de Huevo,Desayuno,14,🇯🇵 Japonesa,pan-integral,Pan integral,75,3 reb pan integral,3 reb pan integral,1.0,alta,3.0×rebanada(25.0g),
+D14 Desayuno · Toast de Huevo,Desayuno,14,🇯🇵 Japonesa,aguacate-hass,Aguacate Hass,23,¼ pz aguacate,¼ pz aguacate,0.727,media,0.25×pieza(93.94g),SI
+D14 Desayuno · Toast de Huevo,Desayuno,14,🇯🇵 Japonesa,espinaca-cruda,Espinaca cruda,,Espinaca y champiñones,Espinaca y champiñones,0.697,media,sin-cantidad,SI
+D14 Desayuno · Toast de Huevo,Desayuno,14,🇯🇵 Japonesa,huevo-frito,Huevo frito,138,3 huevo,3 huevo + ½ taza claras,0.925,alta,3.0×pieza(46.0g),
+D14 Desayuno · Toast de Huevo,Desayuno,14,🇯🇵 Japonesa,clara-de-huevo,Clara de huevo,16,½ taza claras,3 huevo + ½ taza claras,0.675,media,~0.5×pieza(33.0g)[unidad≈],SI
+D14 Desayuno · Toast de Huevo,Desayuno,14,🇯🇵 Japonesa,yoghurt-natural,Yoghurt natural,170,¾ taza yogurt natural sin azúcar,¾ taza yogurt natural sin azúcar,0.941,alta,0.75×taza(227.0g),
+D14 Desayuno · Toast de Huevo,Desayuno,14,🇯🇵 Japonesa,fruto-del-monje,Fruto del monje,1,½ taza frutos rojos,½ taza frutos rojos + 1 cdita miel,0.619,media,~0.5×cucharadita(2.0g)[unidad≈],SI
+D14 Desayuno · Toast de Huevo,Desayuno,14,🇯🇵 Japonesa,miel,Miel,,1 cdita miel,½ taza frutos rojos + 1 cdita miel,1.0,alta,REVISAR-medida(cdita),SI
+D14 Comida · Bowl de Camarón,Comida,14,🇯🇵 Japonesa,camaron-cocido,Camarón cocido,200,"200 g camarones con mantequilla, ajo, paprika","200 g camarones con mantequilla, ajo, paprika",0.557,media,gramos-directos,SI
+D14 Comida · Bowl de Camarón,Comida,14,🇯🇵 Japonesa,brocoli-crudo,Brócoli crudo,,Brócoli salteado,Brócoli salteado,0.938,alta,sin-cantidad,SI
+D14 Comida · Bowl de Camarón,Comida,14,🇯🇵 Japonesa,salsa-de-soya,Salsa de soya,,Salsa soya,Salsa soya + limón,0.974,alta,sin-cantidad,SI
+D14 Comida · Bowl de Camarón,Comida,14,🇯🇵 Japonesa,limon,Limón,,limón,Salsa soya + limón,1.0,alta,sin-cantidad,SI
+D14 Comida · Bowl de Camarón,Comida,14,🇯🇵 Japonesa,arroz-cocido,Arroz cocido,376,2 tz arroz cocido,2 tz arroz cocido,1.0,alta,2.0×taza(188.0g),
+D14 Cena · Gohan de Salmón y Espinaca,Cena,14,🇯🇵 Japonesa,salmon-cocido,Salmón cocido,200,200 g salmón a la plancha con salsa teriyaki,200 g salmón a la plancha con salsa teriyaki,0.541,baja,gramos-directos,SI
+D14 Cena · Gohan de Salmón y Espinaca,Cena,14,🇯🇵 Japonesa,arroz-cocido,Arroz cocido,376,2 tz arroz cocido,2 tz arroz cocido,1.0,alta,2.0×taza(188.0g),
+D14 Cena · Gohan de Salmón y Espinaca,Cena,14,🇯🇵 Japonesa,aguacate-hass,Aguacate Hass,31,⅓ pz aguacate,⅓ pz aguacate,0.727,media,0.3333333333333333×pieza(93.94g),SI
+D14 Cena · Gohan de Salmón y Espinaca,Cena,14,🇯🇵 Japonesa,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,,Pepino,Pepino + zanahoria,0.573,media,sin-cantidad,SI
+D14 Cena · Gohan de Salmón y Espinaca,Cena,14,🇯🇵 Japonesa,zanahoria-picada-cruda,Zanahoria picada cruda,,zanahoria,Pepino + zanahoria,0.916,alta,sin-cantidad,SI
+D14 Cena · Gohan de Salmón y Espinaca,Cena,14,🇯🇵 Japonesa,salsa-de-soya,Salsa de soya,,Salsa soya,Salsa soya + limón + naranja,0.974,alta,sin-cantidad,SI
+D14 Cena · Gohan de Salmón y Espinaca,Cena,14,🇯🇵 Japonesa,limon,Limón,,limón,Salsa soya + limón + naranja,1.0,alta,sin-cantidad,SI
+D14 Cena · Gohan de Salmón y Espinaca,Cena,14,🇯🇵 Japonesa,naranja,Naranja,,naranja,Salsa soya + limón + naranja,1.0,alta,sin-cantidad,SI
+D14 Cena · Gohan de Salmón y Espinaca,Cena,14,🇯🇵 Japonesa,ajonjoli,Ajonjolí,,1 cdita ajonjolí,1 cdita ajonjolí,1.0,alta,REVISAR-medida(cdita),SI
+D14 Snack AM · Snack AM,Snack AM,14,🇯🇵 Japonesa,uva,Uva,10,2 taza de uvas,2 taza de uvas,0.92,alta,~2.0×pieza(4.78g)[unidad≈],SI
+D14 Snack PM · Snack PM,Snack PM,14,🇯🇵 Japonesa,pan-integral,Pan integral,50,2 reb pan integral,2 reb pan integral + 1 cdita crema de cacahuate,1.0,alta,2.0×rebanada(25.0g),
+D14 Snack PM · Snack PM,Snack PM,14,🇯🇵 Japonesa,crema-natural,Crema natural,,1 cdita crema de cacahuate,2 reb pan integral + 1 cdita crema de cacahuate,0.678,media,REVISAR-medida(cdita),SI
+D15 Desayuno · Ricotta Toast Durazno,Desayuno,15,🇮🇹 Italiana,pan-integral,Pan integral,100,4 reb pan integral,4 reb pan integral,1.0,alta,4.0×rebanada(25.0g),
+D15 Desayuno · Ricotta Toast Durazno,Desayuno,15,🇮🇹 Italiana,,,,½ tz ricotta light,½ tz ricotta light,0.307,baja,REVISAR-medida(taza),SI
+D15 Desayuno · Ricotta Toast Durazno,Desayuno,15,🇮🇹 Italiana,durazno-prisco,Durazno Prisco,44,1 pz durazno,1 pz durazno,0.708,media,1.0×pieza(44.0g),SI
+D15 Desayuno · Ricotta Toast Durazno,Desayuno,15,🇮🇹 Italiana,miel,Miel,,1 cdita miel,1 cdita miel,1.0,alta,REVISAR-medida(cdita),SI
+D15 Desayuno · Ricotta Toast Durazno,Desayuno,15,🇮🇹 Italiana,semilla-de-girasol,Semilla de girasol,,1 cdita semillas (chía o girasol),1 cdita semillas (chía o girasol),0.806,media,REVISAR-medida(cdita),SI
+D15 Comida · Ensalada Griega,Comida,15,🇮🇹 Italiana,pechuga-de-pollo-sin-piel-a-la-plancha,Pechuga de pollo sin piel a la plancha,180,180 g pechuga de pollo a la plancha,180 g pechuga de pollo a la plancha,0.861,alta,gramos-directos,
+D15 Comida · Ensalada Griega,Comida,15,🇮🇹 Italiana,garbanzo-cocido,Garbanzo cocido,164,1 tz garbanzos cocidos,1 tz garbanzos cocidos,0.988,alta,1.0×taza(164.0g),
+D15 Comida · Ensalada Griega,Comida,15,🇮🇹 Italiana,espinaca-cruda,Espinaca cruda,,Espinaca,Espinaca + lechuga + tomate cherry + pepino,0.945,alta,sin-cantidad,SI
+D15 Comida · Ensalada Griega,Comida,15,🇮🇹 Italiana,lechuga,Lechuga,,lechuga,Espinaca + lechuga + tomate cherry + pepino,1.0,alta,sin-cantidad,SI
+D15 Comida · Ensalada Griega,Comida,15,🇮🇹 Italiana,tomate-verde,Tomate verde,,tomate cherry,Espinaca + lechuga + tomate cherry + pepino,0.644,media,sin-cantidad,SI
+D15 Comida · Ensalada Griega,Comida,15,🇮🇹 Italiana,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,,pepino,Espinaca + lechuga + tomate cherry + pepino,0.573,media,sin-cantidad,SI
+D15 Comida · Ensalada Griega,Comida,15,🇮🇹 Italiana,queso-parmesano,Queso Parmesano,,2 cdita queso parmesano,2 cdita queso parmesano,1.0,alta,REVISAR-medida(cdita),SI
+D15 Comida · Ensalada Griega,Comida,15,🇮🇹 Italiana,aceite-de-oliva,Aceite de oliva,,"1 cdita aceite de oliva, limón, orégano","1 cdita aceite de oliva, limón, orégano",0.711,media,REVISAR-medida(cdita),SI
+D15 Comida · Ensalada Griega,Comida,15,🇮🇹 Italiana,arroz-cocido,Arroz cocido,376,2 tz arroz cocido,2 tz arroz cocido,1.0,alta,2.0×taza(188.0g),
+D15 Cena · Minestrone Ligera,Cena,15,🇮🇹 Italiana,caldo,Caldo,,Caldo de verduras,Caldo de verduras,0.666,media,sin-cantidad,SI
+D15 Cena · Minestrone Ligera,Cena,15,🇮🇹 Italiana,pasta-cocida,Pasta cocida,240,2 tz pasta,2 tz pasta,0.918,alta,2.0×taza(120.0g),
+D15 Cena · Minestrone Ligera,Cena,15,🇮🇹 Italiana,calabacita-alargada-cruda,Calabacita alargada cruda,,"Calabacita, zanahoria, apio, tomate","Calabacita, zanahoria, apio, tomate",0.559,media,sin-cantidad,SI
+D15 Cena · Minestrone Ligera,Cena,15,🇮🇹 Italiana,pechuga-de-pollo-molida,Pechuga de pollo molida,90,90 g pechuga de pollo,90 g pechuga de pollo,0.814,media,gramos-directos,SI
+D15 Cena · Minestrone Ligera,Cena,15,🇮🇹 Italiana,frijol-promedio-cocido,Frijol promedio cocido,172,1 tz frijoles o lentejas cocidos,1 tz frijoles o lentejas cocidos,0.622,media,1.0×taza(172.0g),SI
+D15 Cena · Minestrone Ligera,Cena,15,🇮🇹 Italiana,hierbas-finas,Hierbas finas,,Hierbas italianas,Hierbas italianas,0.66,media,sin-cantidad,SI
+D15 Snack AM · Snack AM,Snack AM,15,🇮🇹 Italiana,zanahoria-baby-miniatura-cruda,Zanahoria baby (miniatura) cruda,15,1 taza zanahoria baby con limón,1 taza zanahoria baby con limón,0.694,media,~1.0×pieza(15.0g)[unidad≈],SI
+D15 Snack PM · Snack PM,Snack PM,15,🇮🇹 Italiana,semilla-de-anis,Semilla de anís,10,10 g semillas (almendras),10 g semillas (almendras) + 1 plátano,0.633,media,gramos-directos,SI
+D15 Snack PM · Snack PM,Snack PM,15,🇮🇹 Italiana,platano,Plátano,108,1 plátano,10 g semillas (almendras) + 1 plátano,1.0,alta,1.0×pieza(108.0g),
+D16 Desayuno · Huevos Mediterráneos,Desayuno,16,🇮🇹 Italiana,huevo-frito,Huevo frito,230,5 pz huevo,5 pz huevo + ½ taza claras,0.925,alta,5.0×pieza(46.0g),
+D16 Desayuno · Huevos Mediterráneos,Desayuno,16,🇮🇹 Italiana,clara-de-huevo,Clara de huevo,16,½ taza claras,5 pz huevo + ½ taza claras,0.675,media,~0.5×pieza(33.0g)[unidad≈],SI
+D16 Desayuno · Huevos Mediterráneos,Desayuno,16,🇮🇹 Italiana,tomate-verde,Tomate verde,,"Tomate cherry, cebolla y espinaca","Tomate cherry, cebolla y espinaca",0.531,baja,sin-cantidad,SI
+D16 Desayuno · Huevos Mediterráneos,Desayuno,16,🇮🇹 Italiana,pan-integral,Pan integral,75,"3 reb pan integral, ¼ aguacate","3 reb pan integral, ¼ aguacate",0.72,media,3.0×rebanada(25.0g),SI
+D16 Desayuno · Huevos Mediterráneos,Desayuno,16,🇮🇹 Italiana,queso-panela,Queso Panela,,1 cdita queso feta o panela,1 cdita queso feta o panela,0.805,media,REVISAR-medida(cdita),SI
+D16 Desayuno · Huevos Mediterráneos,Desayuno,16,🇮🇹 Italiana,oregano,Orégano,,"Orégano, albahaca, pimienta","Orégano, albahaca, pimienta",0.588,media,sin-cantidad,SI
+D16 Comida · Filete de Pescado,Comida,16,🇮🇹 Italiana,filete-de-pescado-blanco-del-nilo,Filete de pescado Blanco del Nilo,200,200 g filete de pescado blanco,200 g filete de pescado blanco,0.856,alta,gramos-directos,
+D16 Comida · Filete de Pescado,Comida,16,🇮🇹 Italiana,mantequilla,Mantequilla,,1 cdita mantequilla,1 cdita mantequilla + ajo + limón,1.0,alta,REVISAR-medida(cdita),SI
+D16 Comida · Filete de Pescado,Comida,16,🇮🇹 Italiana,ajo-en-polvo,Ajo en polvo,,ajo,1 cdita mantequilla + ajo + limón,0.655,media,sin-cantidad,SI
+D16 Comida · Filete de Pescado,Comida,16,🇮🇹 Italiana,limon,Limón,,limón,1 cdita mantequilla + ajo + limón,1.0,alta,sin-cantidad,SI
+D16 Comida · Filete de Pescado,Comida,16,🇮🇹 Italiana,arroz-cocido,Arroz cocido,564,3 tz arroz cocido,3 tz arroz cocido,1.0,alta,3.0×taza(188.0g),
+D16 Comida · Filete de Pescado,Comida,16,🇮🇹 Italiana,esparragos,Espárragos,,Espárragos y zanahoria salteados,Espárragos y zanahoria salteados,0.595,media,sin-cantidad,SI
+D16 Cena · Puré de Camote,Cena,16,🇮🇹 Italiana,camote-cocido,Camote cocido,209,1 tz camote cocido y triturado,1 tz camote cocido y triturado,0.712,media,1.0×taza(209.09g),SI
+D16 Cena · Puré de Camote,Cena,16,🇮🇹 Italiana,pechuga-de-pollo-molida,Pechuga de pollo molida,200,200 g pechuga de pollo,200 g pechuga de pollo,0.814,media,gramos-directos,SI
+D16 Cena · Puré de Camote,Cena,16,🇮🇹 Italiana,brocoli-cocido,Brócoli cocido,184,1 tz brócoli cocido,1 tz brócoli cocido,1.0,alta,1.0×taza(184.0g),
+D16 Cena · Puré de Camote,Cena,16,🇮🇹 Italiana,romero-picado,Romero picado,,"romero, sal, ajo en polvo","Especias: romero, sal, ajo en polvo",0.562,media,sin-cantidad,SI
+D16 Snack AM · Snack AM,Snack AM,16,🇮🇹 Italiana,papaya-picada,Papaya picada,140,1 tz papaya,1 tz papaya + 1 plátano + 15 g semillas (nueces),0.926,alta,1.0×taza(140.0g),
+D16 Snack AM · Snack AM,Snack AM,16,🇮🇹 Italiana,platano,Plátano,108,1 plátano,1 tz papaya + 1 plátano + 15 g semillas (nueces),1.0,alta,1.0×pieza(108.0g),
+D16 Snack AM · Snack AM,Snack AM,16,🇮🇹 Italiana,semilla-de-chia,Semilla de chía,15,15 g semillas (nueces),1 tz papaya + 1 plátano + 15 g semillas (nueces),0.633,media,gramos-directos,SI
+D16 Snack PM · Snack PM,Snack PM,16,🇮🇹 Italiana,papa-sal,Papa sal,2,"2 papas, 1 cda aceite oliva, paprika, orégano, ajo, sal y pimienta","Papas al horno: 2 papas, 1 cda aceite oliva, paprika, orégano, ajo, sal y pimienta",0.498,baja,2.0×gramos(1.0g),SI
+D17 Desayuno · Toast,Desayuno,17,🇮🇹 Italiana,pan-integral,Pan integral,50,2 reb pan integral,2 reb pan integral,1.0,alta,2.0×rebanada(25.0g),
+D17 Desayuno · Toast,Desayuno,17,🇮🇹 Italiana,aguacate-hass,Aguacate Hass,31,⅓ pz aguacate,⅓ pz aguacate,0.727,media,0.3333333333333333×pieza(93.94g),SI
+D17 Desayuno · Toast,Desayuno,17,🇮🇹 Italiana,,,,Rodajas de tomate,Rodajas de tomate,0.3,baja,sin-cantidad,SI
+D17 Desayuno · Toast,Desayuno,17,🇮🇹 Italiana,huevo-estrellado,Huevo estrellado,138,3 pz huevo estrellado,3 pz huevo estrellado,1.0,alta,3.0×pieza(46.0g),
+D17 Desayuno · Toast,Desayuno,17,🇮🇹 Italiana,sal-de-potasio,Sal de potasio,,"Sal, limón, pimienta","Sal, limón, pimienta",0.562,media,sin-cantidad,SI
+D17 Desayuno · Toast,Desayuno,17,🇮🇹 Italiana,kiwi,Kiwi,76,1 pz kiwi,1 pz kiwi,1.0,alta,1.0×pieza(76.0g),
+D17 Comida · Bowl de Atún,Comida,17,🇮🇹 Italiana,atun-en-agua-drenado,Atún en agua drenado,,2 lata atún en agua,2 lata atún en agua,0.8,media,REVISAR-medida(lata),SI
+D17 Comida · Bowl de Atún,Comida,17,🇮🇹 Italiana,arroz-cocido,Arroz cocido,564,3 taza arroz cocido,3 taza arroz cocido,1.0,alta,3.0×taza(188.0g),
+D17 Comida · Bowl de Atún,Comida,17,🇮🇹 Italiana,garbanzo-cocido,Garbanzo cocido,82,½ tz garbanzos cocidos,½ tz garbanzos cocidos,0.988,alta,0.5×taza(164.0g),
+D17 Comida · Bowl de Atún,Comida,17,🇮🇹 Italiana,espinaca-cruda,Espinaca cruda,,"Espinaca, tomate, pepino, cebolla morada","Espinaca, tomate, pepino, cebolla morada",0.542,baja,sin-cantidad,SI
+D17 Comida · Bowl de Atún,Comida,17,🇮🇹 Italiana,elotitos-de-cambray,Elotitos de cambray,,2 cdas elotito amarillo,2 cdas elotito amarillo,0.626,media,REVISAR-medida(cda),SI
+D17 Comida · Bowl de Atún,Comida,17,🇮🇹 Italiana,limon-sin-semilla,Limón sin semilla,,"Limón, sal, pimienta, salsa soya","Limón, sal, pimienta, salsa soya",0.521,baja,sin-cantidad,SI
+D17 Cena · Pimientos Rellenos,Cena,17,🇮🇹 Italiana,carne-de-res-semigrasosa,Carne de res semigrasosa,200,200 g carne de res magra salpimentada,200 g carne de res magra salpimentada,0.788,media,gramos-directos,SI
+D17 Cena · Pimientos Rellenos,Cena,17,🇮🇹 Italiana,cebollita-en-salmuera,Cebollita en salmuera,,Cebollita,Cebollita + 1 pz papa + zanahoria,0.695,media,sin-cantidad,SI
+D17 Cena · Pimientos Rellenos,Cena,17,🇮🇹 Italiana,papa-cocida,Papa cocida,136,1 pz papa,Cebollita + 1 pz papa + zanahoria,0.907,alta,1.0×pieza(136.0g),
+D17 Cena · Pimientos Rellenos,Cena,17,🇮🇹 Italiana,zanahoria-picada-cruda,Zanahoria picada cruda,,zanahoria,Cebollita + 1 pz papa + zanahoria,0.916,alta,sin-cantidad,SI
+D17 Cena · Pimientos Rellenos,Cena,17,🇮🇹 Italiana,pimiento-fresco,Pimiento fresco,120,2 pz pimientos,2 pz pimientos,0.95,alta,~2.0×taza(60.0g)[unidad≈],SI
+D17 Cena · Pimientos Rellenos,Cena,17,🇮🇹 Italiana,arroz-cocido,Arroz cocido,94,½ tz arroz cocido,½ tz arroz cocido,1.0,alta,0.5×taza(188.0g),
+D17 Cena · Pimientos Rellenos,Cena,17,🇮🇹 Italiana,aguacate-california,Aguacate California,47,½ pz aguacate con sal y limón,½ pz aguacate con sal y limón,0.602,media,0.5×pieza(93.94g),SI
+D17 Snack AM · Snack AM,Snack AM,17,🇮🇹 Italiana,uva,Uva,10,2 tz uvas,2 tz uvas + 10 g semillas (almendras),0.971,alta,~2.0×pieza(4.78g)[unidad≈],SI
+D17 Snack AM · Snack AM,Snack AM,17,🇮🇹 Italiana,semilla-de-anis,Semilla de anís,10,10 g semillas (almendras),2 tz uvas + 10 g semillas (almendras),0.633,media,gramos-directos,SI
+D17 Snack PM · Snack PM,Snack PM,17,🇮🇹 Italiana,yoghurt-de-vainilla,Yoghurt de vainilla,120,"½ taza yogurt natural, 1 cdita miel, 1 cdita nuez picada, canela y vainilla","½ taza yogurt natural, 1 cdita miel, 1 cdita nuez picada, canela y vainilla",0.584,media,0.5×taza(240.0g),SI
+D18 Desayuno · Bowl de Durazno,Desayuno,18,🇮🇹 Italiana,yoghurt-natural,Yoghurt natural,340,1 ½ taza yogurt natural sin azúcar,1 ½ taza yogurt natural sin azúcar,0.941,alta,1.5×taza(227.0g),
+D18 Desayuno · Bowl de Durazno,Desayuno,18,🇮🇹 Italiana,durazno-con-azucar-congelado,Durazno con azúcar congelado,252,1 tz durazno asado con 1 cda miel,1 tz durazno asado con 1 cda miel,0.577,media,1.0×taza(252.0g),SI
+D18 Desayuno · Bowl de Durazno,Desayuno,18,🇮🇹 Italiana,avena-cocida,Avena cocida,219,1 tz avena,1 tz avena,0.918,alta,1.0×taza(218.67g),
+D18 Desayuno · Bowl de Durazno,Desayuno,18,🇮🇹 Italiana,semilla-de-mostaza,Semilla de mostaza,,1 cdita semillas mixtas,1 cdita semillas mixtas,0.708,media,REVISAR-medida(cdita),SI
+D18 Desayuno · Bowl de Durazno,Desayuno,18,🇮🇹 Italiana,canela,Canela,,Canela y vainilla,Canela y vainilla,0.679,media,sin-cantidad,SI
+D18 Desayuno · Bowl de Durazno,Desayuno,18,🇮🇹 Italiana,pan-integral,Pan integral,75,3 reb pan integral tostado,3 reb pan integral tostado,0.95,alta,3.0×rebanada(25.0g),
+D18 Comida · Lasaña de Calabacín,Comida,18,🇮🇹 Italiana,carne-molida-popular-de-res,Carne molida popular de res,180,180 g carne molida de res magra,180 g carne molida de res magra,0.834,media,gramos-directos,SI
+D18 Comida · Lasaña de Calabacín,Comida,18,🇮🇹 Italiana,pure-de-tomate-enlatado,Puré de tomate enlatado,63,¼ taza puré de tomate natural,¼ taza puré de tomate natural,0.819,media,0.25×taza(252.0g),SI
+D18 Comida · Lasaña de Calabacín,Comida,18,🇮🇹 Italiana,champinon-cocido-rebanado,Champiñón cocido rebanado,,Champiñones y brócoli,Champiñones y brócoli,0.613,media,sin-cantidad,SI
+D18 Comida · Lasaña de Calabacín,Comida,18,🇮🇹 Italiana,calabacita-redonda-cruda,Calabacita redonda cruda,79,1 taza calabacita en láminas,1 taza calabacita en láminas,0.633,media,~1.0×pieza(79.0g)[unidad≈],SI
+D18 Comida · Lasaña de Calabacín,Comida,18,🇮🇹 Italiana,queso-mozzarella,Queso Mozzarella,30,30 g queso ricotta o mozzarella light,30 g queso ricotta o mozzarella light,0.708,media,gramos-directos,SI
+D18 Cena · Wrap de Pollo,Cena,18,🇮🇹 Italiana,tortilla,Tortilla,60,2 pz tortilla integral,2 pz tortilla integral,0.928,alta,2.0×pieza(30.0g),
+D18 Cena · Wrap de Pollo,Cena,18,🇮🇹 Italiana,pechuga-de-pollo-molida,Pechuga de pollo molida,150,150 g pechuga de pollo,150 g pechuga de pollo,0.814,media,gramos-directos,SI
+D18 Cena · Wrap de Pollo,Cena,18,🇮🇹 Italiana,hummus,Hummus,,2 cdita hummus,2 cdita hummus,1.0,alta,REVISAR-medida(cdita),SI
+D18 Cena · Wrap de Pollo,Cena,18,🇮🇹 Italiana,lechuga-italiana,Lechuga italiana,,"Lechuga, tomate, cebollita morada","Lechuga, tomate, cebollita morada",0.551,media,sin-cantidad,SI
+D18 Cena · Wrap de Pollo,Cena,18,🇮🇹 Italiana,papa-al-horno-con-cascara,Papa al horno con cáscara,312,2 pz papa al horno,2 pz papa al horno,0.787,media,2.0×pieza(156.0g),SI
+D18 Snack AM · Snack AM,Snack AM,18,🇮🇹 Italiana,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,104,1 taza pepino,1 taza pepino + 1 taza zanahoria baby + 1 cdita crema de girasol o tahini,0.573,media,1.0×taza(104.0g),SI
+D18 Snack AM · Snack AM,Snack AM,18,🇮🇹 Italiana,zanahoria-baby-miniatura-cruda,Zanahoria baby (miniatura) cruda,15,1 taza zanahoria baby,1 taza pepino + 1 taza zanahoria baby + 1 cdita crema de girasol o tahini,0.777,media,~1.0×pieza(15.0g)[unidad≈],SI
+D18 Snack AM · Snack AM,Snack AM,18,🇮🇹 Italiana,crema-natural,Crema natural,,1 cdita crema de girasol o tahini,1 taza pepino + 1 taza zanahoria baby + 1 cdita crema de girasol o tahini,0.595,media,REVISAR-medida(cdita),SI
+D18 Snack PM · Snack PM,Snack PM,18,🇮🇹 Italiana,melon,Melón,1085,2 tz de melón,2 tz de melón,0.954,alta,~2.0×pieza(542.42g)[unidad≈],SI
+D19 Desayuno · Smoothie de Frutos Rojos,Desayuno,19,🇮🇹 Italiana,yoghurt-natural,Yoghurt natural,114,½ taza yogurt natural sin azúcar,½ taza yogurt natural sin azúcar,0.941,alta,0.5×taza(227.0g),
+D19 Desayuno · Smoothie de Frutos Rojos,Desayuno,19,🇮🇹 Italiana,leche,Leche,240,1 tz leche,1 tz leche,1.0,alta,1.0×taza(240.0g),
+D19 Desayuno · Smoothie de Frutos Rojos,Desayuno,19,🇮🇹 Italiana,fruto-del-monje,Fruto del monje,1,½ taza frutos rojos,½ taza frutos rojos,0.619,media,~0.5×cucharadita(2.0g)[unidad≈],SI
+D19 Desayuno · Smoothie de Frutos Rojos,Desayuno,19,🇮🇹 Italiana,avena-integral,Avena integral,,2 cdas avena natural,2 cdas avena natural,0.963,alta,REVISAR-medida(cda),SI
+D19 Desayuno · Smoothie de Frutos Rojos,Desayuno,19,🇮🇹 Italiana,miel,Miel,,1 cdita miel,1 cdita miel + 1 cdita chía,1.0,alta,REVISAR-medida(cdita),SI
+D19 Desayuno · Smoothie de Frutos Rojos,Desayuno,19,🇮🇹 Italiana,chia,Chía,,1 cdita chía,1 cdita miel + 1 cdita chía,1.0,alta,REVISAR-medida(cdita),SI
+D19 Desayuno · Smoothie de Frutos Rojos,Desayuno,19,🇮🇹 Italiana,huevo-revuelto,Huevo revuelto,2,2 pz huevo revuelto,2 pz huevo revuelto + 4 pz pan tostado,1.0,alta,~2.0×gramos(1.0g)[unidad≈],SI
+D19 Desayuno · Smoothie de Frutos Rojos,Desayuno,19,🇮🇹 Italiana,pan-tostado,Pan tostado,60,4 pz pan tostado,2 pz huevo revuelto + 4 pz pan tostado,1.0,alta,4.0×rebanada(15.0g),
+D19 Comida · Bowl de Garbanzo,Comida,19,🇮🇹 Italiana,quinoa-cruda,Quinoa cruda,1,1 taza quinoa cocida,1 taza quinoa cocida,0.96,alta,~1.0×gramos(1.0g)[unidad≈],SI
+D19 Comida · Bowl de Garbanzo,Comida,19,🇮🇹 Italiana,tomate-verde,Tomate verde,,"Tomate cherry, col morada, zanahoria, espinaca","Tomate cherry, col morada, zanahoria, espinaca",0.494,baja,sin-cantidad,SI
+D19 Comida · Bowl de Garbanzo,Comida,19,🇮🇹 Italiana,garbanzo-cocido,Garbanzo cocido,164,1 taza garbanzos cocidos,1 taza garbanzos cocidos,0.988,alta,1.0×taza(164.0g),
+D19 Comida · Bowl de Garbanzo,Comida,19,🇮🇹 Italiana,pechuga-de-pollo-molida,Pechuga de pollo molida,180,180 g pechuga de pollo,180 g pechuga de pollo,0.814,media,gramos-directos,SI
+D19 Comida · Bowl de Garbanzo,Comida,19,🇮🇹 Italiana,aceite-de-oliva,Aceite de oliva,,"aceite oliva, mostaza, miel, limón, paprika","Aderezo: aceite oliva, mostaza, miel, limón, paprika",0.589,media,sin-cantidad,SI
+D19 Cena · Bowl Balanceado con Pollo,Cena,19,🇮🇹 Italiana,pan-integral,Pan integral,100,4 reb pan integral tostado,4 reb pan integral tostado,0.95,alta,4.0×rebanada(25.0g),
+D19 Cena · Bowl Balanceado con Pollo,Cena,19,🇮🇹 Italiana,requeson-promedio,Requesón promedio,30,30 g requesón o ricotta,30 g requesón o ricotta,0.637,media,gramos-directos,SI
+D19 Cena · Bowl Balanceado con Pollo,Cena,19,🇮🇹 Italiana,huevo-frito,Huevo frito,46,1 pz huevo,1 pz huevo + 60 g pechuga de pollo,0.925,alta,1.0×pieza(46.0g),
+D19 Cena · Bowl Balanceado con Pollo,Cena,19,🇮🇹 Italiana,pechuga-de-pollo-molida,Pechuga de pollo molida,60,60 g pechuga de pollo,1 pz huevo + 60 g pechuga de pollo,0.814,media,gramos-directos,SI
+D19 Cena · Bowl Balanceado con Pollo,Cena,19,🇮🇹 Italiana,lechuga,Lechuga,,Lechuga o espinaca,Lechuga o espinaca,0.687,media,sin-cantidad,SI
+D19 Cena · Bowl Balanceado con Pollo,Cena,19,🇮🇹 Italiana,manzana,Manzana,106,1 pz manzana,1 pz manzana,1.0,alta,1.0×pieza(106.0g),
+D19 Cena · Bowl Balanceado con Pollo,Cena,19,🇮🇹 Italiana,aguacate-hass,Aguacate Hass,31,⅓ aguacate,⅓ aguacate,0.727,media,0.3333333333333333×pieza(93.94g),SI
+D19 Snack AM · Snack AM,Snack AM,19,🇮🇹 Italiana,semilla-de-anis,Semilla de anís,10,10 g semillas (almendras),10 g semillas (almendras) + 1 cdita arándanos deshidratados,0.633,media,gramos-directos,SI
+D19 Snack AM · Snack AM,Snack AM,19,🇮🇹 Italiana,arandano-fresco,Arándano fresco,,1 cdita arándanos deshidratados,10 g semillas (almendras) + 1 cdita arándanos deshidratados,0.701,media,REVISAR-medida(cdita),SI
+D19 Snack PM · Snack PM,Snack PM,19,🇮🇹 Italiana,manzana,Manzana,106,1 pz manzana,1 pz manzana + 10 g semillas (almendras),1.0,alta,1.0×pieza(106.0g),
+D19 Snack PM · Snack PM,Snack PM,19,🇮🇹 Italiana,semilla-de-anis,Semilla de anís,10,10 g semillas (almendras),1 pz manzana + 10 g semillas (almendras),0.633,media,gramos-directos,SI
+D20 Desayuno · Toast de Pera y Maní,Desayuno,20,🇮🇹 Italiana,pan-integral,Pan integral,75,3 reb pan integral,3 reb pan integral,1.0,alta,3.0×rebanada(25.0g),
+D20 Desayuno · Toast de Pera y Maní,Desayuno,20,🇮🇹 Italiana,crema-natural,Crema natural,,1 cdita crema de cacahuate natural,1 cdita crema de cacahuate natural,0.708,media,REVISAR-medida(cdita),SI
+D20 Desayuno · Toast de Pera y Maní,Desayuno,20,🇮🇹 Italiana,pera-picada,Pera picada,150,1 pera en láminas,1 pera en láminas,0.683,media,1.0×taza(150.0g),SI
+D20 Desayuno · Toast de Pera y Maní,Desayuno,20,🇮🇹 Italiana,yoghurt-natural,Yoghurt natural,227,1 taza yogurt griego sin azúcar,1 taza yogurt griego sin azúcar,0.664,media,1.0×taza(227.0g),SI
+D20 Desayuno · Toast de Pera y Maní,Desayuno,20,🇮🇹 Italiana,miel,Miel,,½ cdita miel,½ cdita miel + canela,1.0,alta,REVISAR-medida(cdita),SI
+D20 Desayuno · Toast de Pera y Maní,Desayuno,20,🇮🇹 Italiana,canela,Canela,,canela,½ cdita miel + canela,1.0,alta,sin-cantidad,SI
+D20 Desayuno · Toast de Pera y Maní,Desayuno,20,🇮🇹 Italiana,huevo-frito,Huevo frito,138,3 pz de huevo,3 pz de huevo,0.905,alta,3.0×pieza(46.0g),
+D20 Comida · Pasta con Verduras,Comida,20,🇮🇹 Italiana,pasta-de-tomate,Pasta de tomate,30,2 tz pasta cocida en salsa de tomate,2 tz pasta cocida en salsa de tomate,0.78,media,~2.0×cucharada(15.0g)[unidad≈],SI
+D20 Comida · Pasta con Verduras,Comida,20,🇮🇹 Italiana,pechuga-de-pollo-molida,Pechuga de pollo molida,200,200 g pechuga de pollo,200 g pechuga de pollo,0.814,media,gramos-directos,SI
+D20 Comida · Pasta con Verduras,Comida,20,🇮🇹 Italiana,tomate-verde,Tomate verde,,Tomate cherry y brócoli,Tomate cherry y brócoli,0.565,media,sin-cantidad,SI
+D20 Comida · Pasta con Verduras,Comida,20,🇮🇹 Italiana,ajo-en-polvo,Ajo en polvo,,"Ajo, albahaca y orégano","Ajo, albahaca y orégano",0.533,baja,sin-cantidad,SI
+D20 Comida · Pasta con Verduras,Comida,20,🇮🇹 Italiana,,,,1 cdita parmesano rallado,1 cdita parmesano rallado,0.395,baja,REVISAR-medida(cdita),SI
+D20 Cena · Pan Pizza,Cena,20,🇮🇹 Italiana,pan-pita,Pan pita,139,2 pan pita,2 pan pita,1.0,alta,2.0×pieza(69.7g),
+D20 Cena · Pan Pizza,Cena,20,🇮🇹 Italiana,jamon-de-pavo,Jamón de pavo,168,8 reb jamón de pechuga de pavo,8 reb jamón de pechuga de pavo,0.791,media,8.0×rebanada(21.0g),SI
+D20 Cena · Pan Pizza,Cena,20,🇮🇹 Italiana,salsa-de-manzana,Salsa de manzana,4,¼ tz salsa de tomate casera,¼ tz salsa de tomate casera,0.637,media,~0.25×cucharada(16.0g)[unidad≈],SI
+D20 Cena · Pan Pizza,Cena,20,🇮🇹 Italiana,queso-mozzarella,Queso Mozzarella,90,90 g queso mozzarella light,90 g queso mozzarella light,0.818,media,gramos-directos,SI
+D20 Cena · Pan Pizza,Cena,20,🇮🇹 Italiana,champinon-crudo-rebanado,Champiñón crudo rebanado,,"Champiñones, tomate cherry y albahaca","Champiñones, tomate cherry y albahaca",0.54,baja,sin-cantidad,SI
+D20 Snack AM · Snack AM,Snack AM,20,🇮🇹 Italiana,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,104,1 taza pepino,1 taza pepino + 1 taza sandía + 5 g semillas (pistaches),0.573,media,1.0×taza(104.0g),SI
+D20 Snack AM · Snack AM,Snack AM,20,🇮🇹 Italiana,sandia-picada,Sandía picada,160,1 taza sandía,1 taza pepino + 1 taza sandía + 5 g semillas (pistaches),0.926,alta,1.0×taza(160.0g),
+D20 Snack AM · Snack AM,Snack AM,20,🇮🇹 Italiana,semilla-de-mostaza,Semilla de mostaza,5,5 g semillas (pistaches),1 taza pepino + 1 taza sandía + 5 g semillas (pistaches),0.622,media,gramos-directos,SI
+D20 Snack PM · Snack PM,Snack PM,20,🇮🇹 Italiana,camote-cocido,Camote cocido,209,1 camote,1 camote + ½ tz cottage + 1 cda pistachos + 1 cda semillas de calabaza + 1 cda miel + 1 cda chía + canela,0.926,alta,1.0×taza(209.09g),
+D20 Snack PM · Snack PM,Snack PM,20,🇮🇹 Italiana,,,,½ tz cottage,1 camote + ½ tz cottage + 1 cda pistachos + 1 cda semillas de calabaza + 1 cda miel + 1 cda chía + canela,0.365,baja,REVISAR-medida(taza),SI
+D20 Snack PM · Snack PM,Snack PM,20,🇮🇹 Italiana,,,,1 cda pistachos,1 camote + ½ tz cottage + 1 cda pistachos + 1 cda semillas de calabaza + 1 cda miel + 1 cda chía + canela,0.165,baja,REVISAR-medida(cda),SI
+D20 Snack PM · Snack PM,Snack PM,20,🇮🇹 Italiana,semilla-de-calabaza,Semilla de calabaza,,1 cda semillas de calabaza,1 camote + ½ tz cottage + 1 cda pistachos + 1 cda semillas de calabaza + 1 cda miel + 1 cda chía + canela,0.995,alta,REVISAR-medida(cda),SI
+D20 Snack PM · Snack PM,Snack PM,20,🇮🇹 Italiana,miel,Miel,,1 cda miel,1 camote + ½ tz cottage + 1 cda pistachos + 1 cda semillas de calabaza + 1 cda miel + 1 cda chía + canela,1.0,alta,REVISAR-medida(cda),SI
+D20 Snack PM · Snack PM,Snack PM,20,🇮🇹 Italiana,chia,Chía,,1 cda chía,1 camote + ½ tz cottage + 1 cda pistachos + 1 cda semillas de calabaza + 1 cda miel + 1 cda chía + canela,1.0,alta,REVISAR-medida(cda),SI
+D20 Snack PM · Snack PM,Snack PM,20,🇮🇹 Italiana,canela,Canela,,canela,1 camote + ½ tz cottage + 1 cda pistachos + 1 cda semillas de calabaza + 1 cda miel + 1 cda chía + canela,1.0,alta,sin-cantidad,SI
+D21 Desayuno · Ricotta Toast,Desayuno,21,🇮🇹 Italiana,pan-integral,Pan integral,100,4 reb pan integral,4 reb pan integral,1.0,alta,4.0×rebanada(25.0g),
+D21 Desayuno · Ricotta Toast,Desayuno,21,🇮🇹 Italiana,,,,6 cda ricotta light,6 cda ricotta light,0.307,baja,REVISAR-medida(cda),SI
+D21 Desayuno · Ricotta Toast,Desayuno,21,🇮🇹 Italiana,fresa-rebanada,Fresa rebanada,166,1 tz fresas picadas,1 tz fresas picadas,0.629,media,1.0×taza(166.0g),SI
+D21 Desayuno · Ricotta Toast,Desayuno,21,🇮🇹 Italiana,miel,Miel,,1 cdita miel,1 cdita miel,1.0,alta,REVISAR-medida(cdita),SI
+D21 Desayuno · Ricotta Toast,Desayuno,21,🇮🇹 Italiana,semilla-de-girasol,Semilla de girasol,,2 cdita semillas (chía o girasol),2 cdita semillas (chía o girasol),0.806,media,REVISAR-medida(cdita),SI
+D21 Comida · Pollo al Romero,Comida,21,🇮🇹 Italiana,pechuga-de-pollo-molida,Pechuga de pollo molida,180,180 g pechuga de pollo,180 g pechuga de pollo,0.814,media,gramos-directos,SI
+D21 Comida · Pollo al Romero,Comida,21,🇮🇹 Italiana,papa-cocida,Papa cocida,272,2 papas cocida,2 papas cocida,0.991,alta,2.0×pieza(136.0g),
+D21 Comida · Pollo al Romero,Comida,21,🇮🇹 Italiana,espinaca-cocida,Espinaca cocida,,"Espinaca, tomate cherry y pepino","Espinaca, tomate cherry y pepino",0.558,media,sin-cantidad,SI
+D21 Comida · Pollo al Romero,Comida,21,🇮🇹 Italiana,romero-picado,Romero picado,,"Romero, ajo, limón y pimienta","Romero, ajo, limón y pimienta",0.562,media,sin-cantidad,SI
+D21 Cena · Ensalada Caprese,Cena,21,🇮🇹 Italiana,pechuga-de-pollo-sin-piel-a-la-plancha,Pechuga de pollo sin piel a la plancha,150,150 g pechuga de pollo a la plancha,150 g pechuga de pollo a la plancha,0.861,alta,gramos-directos,
+D21 Cena · Ensalada Caprese,Cena,21,🇮🇹 Italiana,quinoa-cruda,Quinoa cruda,2,1 ½ taza quinoa cocida,1 ½ taza quinoa cocida,0.96,alta,~1.5×gramos(1.0g)[unidad≈],SI
+D21 Cena · Ensalada Caprese,Cena,21,🇮🇹 Italiana,tomate-verde,Tomate verde,,"Tomate cherry, pepino y cebolla morada","Tomate cherry, pepino y cebolla morada",0.507,baja,sin-cantidad,SI
+D21 Cena · Ensalada Caprese,Cena,21,🇮🇹 Italiana,mozzarella-fresco,Mozzarella fresco,0,¼ taza mozzarella light,¼ taza mozzarella light,0.708,media,~0.25×gramos(1.0g)[unidad≈],SI
+D21 Cena · Ensalada Caprese,Cena,21,🇮🇹 Italiana,albahaca-deshidratada,Albahaca deshidratada,,Albahaca fresca y vinagre balsámico,Albahaca fresca y vinagre balsámico,0.562,media,sin-cantidad,SI
+D21 Snack AM · Snack AM,Snack AM,21,🇮🇹 Italiana,garbanzo-cocido,Garbanzo cocido,164,1 tz garbanzo cocido,"1 tz garbanzo cocido + ½ tz pepino + limón, sal, pimienta",1.0,alta,1.0×taza(164.0g),
+D21 Snack AM · Snack AM,Snack AM,21,🇮🇹 Italiana,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,52,½ tz pepino,"1 tz garbanzo cocido + ½ tz pepino + limón, sal, pimienta",0.573,media,0.5×taza(104.0g),SI
+D21 Snack AM · Snack AM,Snack AM,21,🇮🇹 Italiana,limon-sin-semilla,Limón sin semilla,,"limón, sal, pimienta","1 tz garbanzo cocido + ½ tz pepino + limón, sal, pimienta",0.588,media,sin-cantidad,SI
+D21 Snack PM · Snack PM,Snack PM,21,🇮🇹 Italiana,yoghurt-natural,Yoghurt natural,227,1 taza yogurt natural,1 taza yogurt natural + 1 cdita almendras + limón + canela + 1 pera + 2 cda crema de cacahuate,1.0,alta,1.0×taza(227.0g),
+D21 Snack PM · Snack PM,Snack PM,21,🇮🇹 Italiana,almendra,Almendra,,1 cdita almendras,1 taza yogurt natural + 1 cdita almendras + limón + canela + 1 pera + 2 cda crema de cacahuate,0.988,alta,REVISAR-medida(cdita),SI
+D21 Snack PM · Snack PM,Snack PM,21,🇮🇹 Italiana,limon,Limón,,limón,1 taza yogurt natural + 1 cdita almendras + limón + canela + 1 pera + 2 cda crema de cacahuate,1.0,alta,sin-cantidad,SI
+D21 Snack PM · Snack PM,Snack PM,21,🇮🇹 Italiana,canela,Canela,,canela,1 taza yogurt natural + 1 cdita almendras + limón + canela + 1 pera + 2 cda crema de cacahuate,1.0,alta,sin-cantidad,SI
+D21 Snack PM · Snack PM,Snack PM,21,🇮🇹 Italiana,pera,Pera,162,1 pera,1 taza yogurt natural + 1 cdita almendras + limón + canela + 1 pera + 2 cda crema de cacahuate,1.0,alta,1.0×pieza(162.0g),
+D21 Snack PM · Snack PM,Snack PM,21,🇮🇹 Italiana,crema-natural,Crema natural,,2 cda crema de cacahuate,1 taza yogurt natural + 1 cdita almendras + limón + canela + 1 pera + 2 cda crema de cacahuate,0.678,media,REVISAR-medida(cda),SI
+D22 Desayuno · Lemon Overnight Oats,Desayuno,22,🇺🇸 Americana,avena-cocida,Avena cocida,219,1 taza avena,1 taza avena + ½ tz yogurt natural + 1 tz leche,0.918,alta,1.0×taza(218.67g),
+D22 Desayuno · Lemon Overnight Oats,Desayuno,22,🇺🇸 Americana,yoghurt-natural,Yoghurt natural,114,½ tz yogurt natural,1 taza avena + ½ tz yogurt natural + 1 tz leche,1.0,alta,0.5×taza(227.0g),
+D22 Desayuno · Lemon Overnight Oats,Desayuno,22,🇺🇸 Americana,leche,Leche,240,1 tz leche,1 taza avena + ½ tz yogurt natural + 1 tz leche,1.0,alta,1.0×taza(240.0g),
+D22 Desayuno · Lemon Overnight Oats,Desayuno,22,🇺🇸 Americana,semilla-de-chia,Semilla de chía,,1 cdita semillas de chía,1 cdita semillas de chía,0.994,alta,REVISAR-medida(cdita),SI
+D22 Desayuno · Lemon Overnight Oats,Desayuno,22,🇺🇸 Americana,ralladura-de-limon,Ralladura de limón,,Ralladura y jugo de limón,Ralladura y jugo de limón,0.817,media,sin-cantidad,SI
+D22 Desayuno · Lemon Overnight Oats,Desayuno,22,🇺🇸 Americana,miel,Miel,,1 cdita miel o stevia,1 cdita miel o stevia,0.669,media,REVISAR-medida(cdita),SI
+D22 Desayuno · Lemon Overnight Oats,Desayuno,22,🇺🇸 Americana,fruto-del-monje,Fruto del monje,2,1 tz frutos rojos,1 tz frutos rojos,0.619,media,~1.0×cucharadita(2.0g)[unidad≈],SI
+D22 Desayuno · Lemon Overnight Oats,Desayuno,22,🇺🇸 Americana,huevo-revuelto,Huevo revuelto,3,3 pz huevo revuelto,3 pz huevo revuelto,1.0,alta,~3.0×gramos(1.0g)[unidad≈],SI
+D22 Comida · Hamburguesa Ligera,Comida,22,🇺🇸 Americana,carne-molida-regular,Carne molida regular,150,150 g carne molida magra,150 g carne molida magra,0.808,media,gramos-directos,SI
+D22 Comida · Hamburguesa Ligera,Comida,22,🇺🇸 Americana,pan-integral,Pan integral,50,2 reb pan integral,2 reb pan integral,1.0,alta,2.0×rebanada(25.0g),
+D22 Comida · Hamburguesa Ligera,Comida,22,🇺🇸 Americana,aguacate-hass,Aguacate Hass,31,⅓ pz aguacate,⅓ pz aguacate,0.727,media,0.3333333333333333×pieza(93.94g),SI
+D22 Comida · Hamburguesa Ligera,Comida,22,🇺🇸 Americana,queso-mozzarella,Queso Mozzarella,30,30 g queso fresco o mozzarella,30 g queso fresco o mozzarella,0.956,alta,gramos-directos,
+D22 Comida · Hamburguesa Ligera,Comida,22,🇺🇸 Americana,lechuga-italiana,Lechuga italiana,,"Lechuga, tomate, cebolla, pepino","Lechuga, tomate, cebolla, pepino",0.556,media,sin-cantidad,SI
+D22 Comida · Hamburguesa Ligera,Comida,22,🇺🇸 Americana,camote-al-horno,Camote al horno,318,1 ½ taza camote al horno o papa,1 ½ taza camote al horno o papa,0.812,media,1.5×taza(212.12g),SI
+D22 Cena · Carne Asada con Ensalada de Aguacate,Cena,22,🇺🇸 Americana,carne-molida-extra-magra-salteada,Carne molida extra magra salteada,150,150 g carne molida magra salpimentada,150 g carne molida magra salpimentada,0.812,media,gramos-directos,SI
+D22 Cena · Carne Asada con Ensalada de Aguacate,Cena,22,🇺🇸 Americana,platano-macho,Plátano Macho,98,½ pz plátano macho asado,½ pz plátano macho asado + 1 cdita miel,0.963,alta,0.5×pieza(196.0g),
+D22 Cena · Carne Asada con Ensalada de Aguacate,Cena,22,🇺🇸 Americana,miel,Miel,,1 cdita miel,½ pz plátano macho asado + 1 cdita miel,1.0,alta,REVISAR-medida(cdita),SI
+D22 Cena · Carne Asada con Ensalada de Aguacate,Cena,22,🇺🇸 Americana,aguacate-hass,Aguacate Hass,47,½ aguacate,Ensalada: ½ aguacate + pepino + tomate cherry + cilantro + aceite oliva + limón,0.727,media,0.5×pieza(93.94g),SI
+D22 Cena · Carne Asada con Ensalada de Aguacate,Cena,22,🇺🇸 Americana,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,,pepino,Ensalada: ½ aguacate + pepino + tomate cherry + cilantro + aceite oliva + limón,0.573,media,sin-cantidad,SI
+D22 Cena · Carne Asada con Ensalada de Aguacate,Cena,22,🇺🇸 Americana,tomate-verde,Tomate verde,,tomate cherry,Ensalada: ½ aguacate + pepino + tomate cherry + cilantro + aceite oliva + limón,0.644,media,sin-cantidad,SI
+D22 Cena · Carne Asada con Ensalada de Aguacate,Cena,22,🇺🇸 Americana,cilantro-picado-crudo,Cilantro picado crudo,,cilantro,Ensalada: ½ aguacate + pepino + tomate cherry + cilantro + aceite oliva + limón,0.91,alta,sin-cantidad,SI
+D22 Cena · Carne Asada con Ensalada de Aguacate,Cena,22,🇺🇸 Americana,aceite-de-oliva,Aceite de oliva,,aceite oliva,Ensalada: ½ aguacate + pepino + tomate cherry + cilantro + aceite oliva + limón,0.978,alta,sin-cantidad,SI
+D22 Cena · Carne Asada con Ensalada de Aguacate,Cena,22,🇺🇸 Americana,limon,Limón,,limón,Ensalada: ½ aguacate + pepino + tomate cherry + cilantro + aceite oliva + limón,1.0,alta,sin-cantidad,SI
+D22 Cena · Carne Asada con Ensalada de Aguacate,Cena,22,🇺🇸 Americana,arroz-cocido,Arroz cocido,141,¾ tz arroz cocido,¾ tz arroz cocido,1.0,alta,0.75×taza(188.0g),
+D22 Snack AM · Snack AM,Snack AM,22,🇺🇸 Americana,platano,Plátano,108,1 plátano,1 plátano + 2 cda crema de cacahuate + 4 rice cake,1.0,alta,1.0×pieza(108.0g),
+D22 Snack AM · Snack AM,Snack AM,22,🇺🇸 Americana,crema-natural,Crema natural,,2 cda crema de cacahuate,1 plátano + 2 cda crema de cacahuate + 4 rice cake,0.678,media,REVISAR-medida(cda),SI
+D22 Snack AM · Snack AM,Snack AM,22,🇺🇸 Americana,rice-krispies-treats,Rice Krispies Treats,88,4 rice cake,1 plátano + 2 cda crema de cacahuate + 4 rice cake,0.545,baja,4.0×barra(22.0g),SI
+D22 Snack PM · Snack PM,Snack PM,22,🇺🇸 Americana,pan-tostado,Pan tostado,30,2 pz pan tostado con 1 cda mermelada sin azúcar,2 pz pan tostado con 1 cda mermelada sin azúcar,0.583,media,2.0×rebanada(15.0g),SI
+D23 Desayuno · Bagel de Salmón,Desayuno,23,🇺🇸 Americana,bagel-integral,Bagel integral,36,½ bagel integral,½ bagel integral,1.0,alta,0.5×pieza(72.73g),
+D23 Desayuno · Bagel de Salmón,Desayuno,23,🇺🇸 Americana,salmon-ahumado,Salmón ahumado,40,40 g salmón ahumado o pollo a la plancha,40 g salmón ahumado o pollo a la plancha,0.689,media,gramos-directos,SI
+D23 Desayuno · Bagel de Salmón,Desayuno,23,🇺🇸 Americana,queso-crema-light,Queso crema light,,1 cdita queso crema light,1 cdita queso crema light,1.0,alta,REVISAR-medida(cdita),SI
+D23 Desayuno · Bagel de Salmón,Desayuno,23,🇺🇸 Americana,tomate-verde,Tomate verde,,Tomate y pepino en rodajas,Tomate y pepino en rodajas,0.557,media,sin-cantidad,SI
+D23 Desayuno · Bagel de Salmón,Desayuno,23,🇺🇸 Americana,limon,Limón,,"Limón, eneldo y pimienta","Limón, eneldo y pimienta",0.571,media,sin-cantidad,SI
+D23 Comida · Chicken Bowl,Comida,23,🇺🇸 Americana,pechuga-de-pollo-sin-piel-a-la-plancha,Pechuga de pollo sin piel a la plancha,150,150 g pechuga de pollo a la plancha,150 g pechuga de pollo a la plancha,0.861,alta,gramos-directos,
+D23 Comida · Chicken Bowl,Comida,23,🇺🇸 Americana,arroz-cocido,Arroz cocido,376,2 tz arroz cocido,2 tz arroz cocido,1.0,alta,2.0×taza(188.0g),
+D23 Comida · Chicken Bowl,Comida,23,🇺🇸 Americana,frijol-molido,Frijol molido,111,½ tz frijoles,½ tz frijoles,0.689,media,0.5×taza(221.21g),SI
+D23 Comida · Chicken Bowl,Comida,23,🇺🇸 Americana,aguacate-hass,Aguacate Hass,23,¼ pz aguacate,¼ pz aguacate,0.727,media,0.25×pieza(93.94g),SI
+D23 Comida · Chicken Bowl,Comida,23,🇺🇸 Americana,lechuga,Lechuga,,Lechuga,Lechuga + pico de gallo + 1 cda elotito,1.0,alta,sin-cantidad,SI
+D23 Comida · Chicken Bowl,Comida,23,🇺🇸 Americana,,,,pico de gallo,Lechuga + pico de gallo + 1 cda elotito,0.133,baja,sin-cantidad,SI
+D23 Comida · Chicken Bowl,Comida,23,🇺🇸 Americana,elotitos-de-cambray,Elotitos de cambray,,1 cda elotito,Lechuga + pico de gallo + 1 cda elotito,0.683,media,REVISAR-medida(cda),SI
+D23 Comida · Chicken Bowl,Comida,23,🇺🇸 Americana,limon,Limón,,Limón y sal de mar,Limón y sal de mar,0.587,media,sin-cantidad,SI
+D23 Cena · Papa Rellena al Horno,Cena,23,🇺🇸 Americana,carne-molida-extra-magra-salteada,Carne molida extra magra salteada,150,150 g carne molida magra salpimentada,150 g carne molida magra salpimentada,0.812,media,gramos-directos,SI
+D23 Cena · Papa Rellena al Horno,Cena,23,🇺🇸 Americana,papa-al-horno-con-cascara,Papa al horno con cáscara,234,1 ½ pz papa cocida o al horno,1 ½ pz papa cocida o al horno,0.761,media,1.5×pieza(156.0g),SI
+D23 Cena · Papa Rellena al Horno,Cena,23,🇺🇸 Americana,queso-mozzarella,Queso Mozzarella,30,30 g queso mozzarella,30 g queso mozzarella,1.0,alta,gramos-directos,
+D23 Cena · Papa Rellena al Horno,Cena,23,🇺🇸 Americana,,,,Pico de gallo,Pico de gallo,0.133,baja,sin-cantidad,SI
+D23 Cena · Papa Rellena al Horno,Cena,23,🇺🇸 Americana,aderezo,Aderezo,,Aderezo chipotle,Aderezo chipotle,0.697,media,sin-cantidad,SI
+D23 Snack AM · Snack AM,Snack AM,23,🇺🇸 Americana,naranja,Naranja,152,2 pz naranja,2 pz naranja + 10 g semillas (pistaches),1.0,alta,2.0×pieza(76.0g),
+D23 Snack AM · Snack AM,Snack AM,23,🇺🇸 Americana,semilla-de-mostaza,Semilla de mostaza,10,10 g semillas (pistaches),2 pz naranja + 10 g semillas (pistaches),0.622,media,gramos-directos,SI
+D23 Snack PM · Snack PM,Snack PM,23,🇺🇸 Americana,yoghurt-natural,Yoghurt natural,170,¾ taza yogur natural,¾ taza yogur natural + 1 taza fresas + 1 cda crema de cacahuate,1.0,alta,0.75×taza(227.0g),
+D23 Snack PM · Snack PM,Snack PM,23,🇺🇸 Americana,fresa-entera,Fresa entera,12,1 taza fresas,¾ taza yogur natural + 1 taza fresas + 1 cda crema de cacahuate,0.686,media,~1.0×pieza(12.0g)[unidad≈],SI
+D23 Snack PM · Snack PM,Snack PM,23,🇺🇸 Americana,crema-natural,Crema natural,,1 cda crema de cacahuate,¾ taza yogur natural + 1 taza fresas + 1 cda crema de cacahuate,0.678,media,REVISAR-medida(cda),SI
+D24 Desayuno · Toast de Huevo,Desayuno,24,🇺🇸 Americana,pan-integral,Pan integral,50,2 reb pan integral,2 reb pan integral,1.0,alta,2.0×rebanada(25.0g),
+D24 Desayuno · Toast de Huevo,Desayuno,24,🇺🇸 Americana,clara-de-huevo,Clara de huevo,25,¾ taza claras de huevo,¾ taza claras de huevo + 1 huevo entero,0.993,alta,~0.75×pieza(33.0g)[unidad≈],SI
+D24 Desayuno · Toast de Huevo,Desayuno,24,🇺🇸 Americana,huevo-entero-cocido,Huevo entero cocido,44,1 huevo entero,¾ taza claras de huevo + 1 huevo entero,0.955,alta,1.0×pieza(44.0g),
+D24 Desayuno · Toast de Huevo,Desayuno,24,🇺🇸 Americana,aguacate-hass,Aguacate Hass,23,¼ pieza aguacate,¼ pieza aguacate,0.727,media,0.25×pieza(93.94g),SI
+D24 Desayuno · Toast de Huevo,Desayuno,24,🇺🇸 Americana,,,,Rodajas de tomate,Rodajas de tomate + espinaca fresca,0.3,baja,sin-cantidad,SI
+D24 Desayuno · Toast de Huevo,Desayuno,24,🇺🇸 Americana,espinaca-cruda,Espinaca cruda,,espinaca fresca,Rodajas de tomate + espinaca fresca,0.952,alta,sin-cantidad,SI
+D24 Desayuno · Toast de Huevo,Desayuno,24,🇺🇸 Americana,limon-sin-semilla,Limón sin semilla,,"Limón, sal y pimienta","Limón, sal y pimienta",0.581,media,sin-cantidad,SI
+D24 Comida · Ensalada Cobb,Comida,24,🇺🇸 Americana,pechuga-de-pollo-sin-piel-a-la-plancha,Pechuga de pollo sin piel a la plancha,150,150 g pechuga de pavo o pollo a la plancha,150 g pechuga de pavo o pollo a la plancha,0.777,media,gramos-directos,SI
+D24 Comida · Ensalada Cobb,Comida,24,🇺🇸 Americana,huevo-cocido,Huevo cocido,44,1 huevo cocido,1 huevo cocido,1.0,alta,1.0×pieza(44.0g),
+D24 Comida · Ensalada Cobb,Comida,24,🇺🇸 Americana,espinaca-cruda,Espinaca cruda,,Espinaca,Espinaca + lechuga + tomate cherry + 2 cdas elote,0.945,alta,sin-cantidad,SI
+D24 Comida · Ensalada Cobb,Comida,24,🇺🇸 Americana,lechuga,Lechuga,,lechuga,Espinaca + lechuga + tomate cherry + 2 cdas elote,1.0,alta,sin-cantidad,SI
+D24 Comida · Ensalada Cobb,Comida,24,🇺🇸 Americana,tomate-verde,Tomate verde,,tomate cherry,Espinaca + lechuga + tomate cherry + 2 cdas elote,0.644,media,sin-cantidad,SI
+D24 Comida · Ensalada Cobb,Comida,24,🇺🇸 Americana,elote-crudo,Elote crudo,,2 cdas elote,Espinaca + lechuga + tomate cherry + 2 cdas elote,0.925,alta,REVISAR-medida(cda),SI
+D24 Comida · Ensalada Cobb,Comida,24,🇺🇸 Americana,aguacate-hass,Aguacate Hass,23,¼ aguacate,¼ aguacate + 30 g queso panela o feta,0.727,media,0.25×pieza(93.94g),SI
+D24 Comida · Ensalada Cobb,Comida,24,🇺🇸 Americana,queso-panela,Queso Panela,30,30 g queso panela o feta,¼ aguacate + 30 g queso panela o feta,0.805,media,gramos-directos,SI
+D24 Comida · Ensalada Cobb,Comida,24,🇺🇸 Americana,aderezo,Aderezo,,Aderezo del recetario,Aderezo del recetario,0.675,media,sin-cantidad,SI
+D24 Cena · Chicken Honey Mustard Bowl,Cena,24,🇺🇸 Americana,pechuga-de-pollo-molida,Pechuga de pollo molida,150,150 g pechuga de pollo,150 g pechuga de pollo,0.814,media,gramos-directos,SI
+D24 Cena · Chicken Honey Mustard Bowl,Cena,24,🇺🇸 Americana,arroz-cocido,Arroz cocido,376,2 tz arroz cocido,2 tz arroz cocido + ½ tz elote + ½ tz frijoles,1.0,alta,2.0×taza(188.0g),
+D24 Cena · Chicken Honey Mustard Bowl,Cena,24,🇺🇸 Americana,elote-crudo,Elote crudo,27,½ tz elote,2 tz arroz cocido + ½ tz elote + ½ tz frijoles,0.925,alta,~0.5×pieza(54.67g)[unidad≈],SI
+D24 Cena · Chicken Honey Mustard Bowl,Cena,24,🇺🇸 Americana,frijol-molido,Frijol molido,111,½ tz frijoles,2 tz arroz cocido + ½ tz elote + ½ tz frijoles,0.689,media,0.5×taza(221.21g),SI
+D24 Cena · Chicken Honey Mustard Bowl,Cena,24,🇺🇸 Americana,,,,1 cdita honey mustard (miel,1 cdita honey mustard (miel + mostaza Dijon + vinagre de manzana),0.223,baja,REVISAR-medida(cdita),SI
+D24 Cena · Chicken Honey Mustard Bowl,Cena,24,🇺🇸 Americana,mostaza-dijon,Mostaza Dijón,,mostaza Dijon,1 cdita honey mustard (miel + mostaza Dijon + vinagre de manzana),1.0,alta,sin-cantidad,SI
+D24 Cena · Chicken Honey Mustard Bowl,Cena,24,🇺🇸 Americana,vinagre-de-manzana,Vinagre de manzana,,vinagre de manzana),1 cdita honey mustard (miel + mostaza Dijon + vinagre de manzana),1.0,alta,sin-cantidad,SI
+D24 Cena · Chicken Honey Mustard Bowl,Cena,24,🇺🇸 Americana,cebolla-morada-rebanada,Cebolla morada rebanada,,Cebolla morada,Cebolla morada + pimiento + cilantro + limón,0.801,media,sin-cantidad,SI
+D24 Cena · Chicken Honey Mustard Bowl,Cena,24,🇺🇸 Americana,pimiento-fresco,Pimiento fresco,,pimiento,Cebolla morada + pimiento + cilantro + limón,0.939,alta,sin-cantidad,SI
+D24 Cena · Chicken Honey Mustard Bowl,Cena,24,🇺🇸 Americana,cilantro-picado-crudo,Cilantro picado crudo,,cilantro,Cebolla morada + pimiento + cilantro + limón,0.91,alta,sin-cantidad,SI
+D24 Cena · Chicken Honey Mustard Bowl,Cena,24,🇺🇸 Americana,limon,Limón,,limón,Cebolla morada + pimiento + cilantro + limón,1.0,alta,sin-cantidad,SI
+D24 Snack AM · Snack AM,Snack AM,24,🇺🇸 Americana,papaya-picada,Papaya picada,140,1 tz papaya,1 tz papaya + ½ plátano + ½ tz yogurt + ½ tz granola sin azúcar,0.926,alta,1.0×taza(140.0g),
+D24 Snack AM · Snack AM,Snack AM,24,🇺🇸 Americana,platano,Plátano,54,½ plátano,1 tz papaya + ½ plátano + ½ tz yogurt + ½ tz granola sin azúcar,1.0,alta,0.5×pieza(108.0g),
+D24 Snack AM · Snack AM,Snack AM,24,🇺🇸 Americana,yoghurt,Yoghurt,114,½ tz yogurt,1 tz papaya + ½ plátano + ½ tz yogurt + ½ tz granola sin azúcar,1.0,alta,0.5×taza(227.0g),
+D24 Snack AM · Snack AM,Snack AM,24,🇺🇸 Americana,granola-estandar,Granola estándar,4,½ tz granola sin azúcar,1 tz papaya + ½ plátano + ½ tz yogurt + ½ tz granola sin azúcar,0.716,media,~0.5×cucharada(7.0g)[unidad≈],SI
+D24 Snack PM · Snack PM,Snack PM,24,🇺🇸 Americana,rice-krispies-treats,Rice Krispies Treats,44,2 rice cake,2 rice cake + 1 cdita crema de almendra + 1 tz moras + ½ plátano,0.545,baja,2.0×barra(22.0g),SI
+D24 Snack PM · Snack PM,Snack PM,24,🇺🇸 Americana,crema-de-almendras,Crema de almendras,,1 cdita crema de almendra,2 rice cake + 1 cdita crema de almendra + 1 tz moras + ½ plátano,0.994,alta,REVISAR-medida(cdita),SI
+D24 Snack PM · Snack PM,Snack PM,24,🇺🇸 Americana,moras,Moras,144,1 tz moras,2 rice cake + 1 cdita crema de almendra + 1 tz moras + ½ plátano,1.0,alta,1.0×taza(144.0g),
+D24 Snack PM · Snack PM,Snack PM,24,🇺🇸 Americana,platano,Plátano,54,½ plátano,2 rice cake + 1 cdita crema de almendra + 1 tz moras + ½ plátano,1.0,alta,0.5×pieza(108.0g),
+D25 Desayuno · Desayuno Americano,Desayuno,25,🇺🇸 Americana,avena-cocida,Avena cocida,109,½ taza avena molida,Hot cakes: ½ taza avena molida + ½ taza claras + vainilla y canela,0.742,media,0.5×taza(218.67g),SI
+D25 Desayuno · Desayuno Americano,Desayuno,25,🇺🇸 Americana,clara-de-huevo,Clara de huevo,16,½ taza claras,Hot cakes: ½ taza avena molida + ½ taza claras + vainilla y canela,0.675,media,~0.5×pieza(33.0g)[unidad≈],SI
+D25 Desayuno · Desayuno Americano,Desayuno,25,🇺🇸 Americana,vainilla,Vainilla,,vainilla y canela,Hot cakes: ½ taza avena molida + ½ taza claras + vainilla y canela,0.703,media,sin-cantidad,SI
+D25 Desayuno · Desayuno Americano,Desayuno,25,🇺🇸 Americana,fresas-congeladas-sin-azucar,Fresas congeladas sin azúcar,111,½ taza fresas o frutos rojos,Topping: ½ taza fresas o frutos rojos,0.552,media,0.5×taza(222.0g),SI
+D25 Desayuno · Desayuno Americano,Desayuno,25,🇺🇸 Americana,miel,Miel,,1 cdita miel,1 cdita miel,1.0,alta,REVISAR-medida(cdita),SI
+D25 Desayuno · Desayuno Americano,Desayuno,25,🇺🇸 Americana,huevo-frito,Huevo frito,92,2 huevo,2 huevo + 2 reb jamón de pavo asado,0.925,alta,2.0×pieza(46.0g),
+D25 Desayuno · Desayuno Americano,Desayuno,25,🇺🇸 Americana,jamon-de-pavo,Jamón de pavo,42,2 reb jamón de pavo asado,2 huevo + 2 reb jamón de pavo asado,0.963,alta,2.0×rebanada(21.0g),
+D25 Comida · Salmón con Quinoa Bowl,Comida,25,🇺🇸 Americana,salmon-cocido,Salmón cocido,150,150 g salmón a la plancha salpimentada,150 g salmón a la plancha salpimentada,0.664,media,gramos-directos,SI
+D25 Comida · Salmón con Quinoa Bowl,Comida,25,🇺🇸 Americana,quinoa-cruda,Quinoa cruda,2,2 taza quinoa cocida,2 taza quinoa cocida,0.96,alta,~2.0×gramos(1.0g)[unidad≈],SI
+D25 Comida · Salmón con Quinoa Bowl,Comida,25,🇺🇸 Americana,aguacate-hass,Aguacate Hass,47,½ aguacate,½ aguacate,0.727,media,0.5×pieza(93.94g),SI
+D25 Comida · Salmón con Quinoa Bowl,Comida,25,🇺🇸 Americana,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,,"Pepino, cebolla morada, pimientos, tomate cherry","Pepino, cebolla morada, pimientos, tomate cherry",0.484,baja,sin-cantidad,SI
+D25 Comida · Salmón con Quinoa Bowl,Comida,25,🇺🇸 Americana,limon,Limón,,"Limón, sal y ajonjolí","Limón, sal y ajonjolí",0.58,media,sin-cantidad,SI
+D25 Cena · Chicken Tenders Fit,Cena,25,🇺🇸 Americana,pechuga-sin-piel-molida,Pechuga sin piel molida,120,120 g pechuga en tiras empanizadas con ½ tz avena molida,120 g pechuga en tiras empanizadas con ½ tz avena molida + huevo,0.637,media,gramos-directos,SI
+D25 Cena · Chicken Tenders Fit,Cena,25,🇺🇸 Americana,huevo-frito,Huevo frito,,huevo,120 g pechuga en tiras empanizadas con ½ tz avena molida + huevo,0.925,alta,sin-cantidad,SI
+D25 Cena · Chicken Tenders Fit,Cena,25,🇺🇸 Americana,espinaca-cruda,Espinaca cruda,,Espinaca,Espinaca + lechuga + pepino + tomate + cebolla morada,0.945,alta,sin-cantidad,SI
+D25 Cena · Chicken Tenders Fit,Cena,25,🇺🇸 Americana,lechuga,Lechuga,,lechuga,Espinaca + lechuga + pepino + tomate + cebolla morada,1.0,alta,sin-cantidad,SI
+D25 Cena · Chicken Tenders Fit,Cena,25,🇺🇸 Americana,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,,pepino,Espinaca + lechuga + pepino + tomate + cebolla morada,0.573,media,sin-cantidad,SI
+D25 Cena · Chicken Tenders Fit,Cena,25,🇺🇸 Americana,tomate-verde,Tomate verde,,tomate,Espinaca + lechuga + pepino + tomate + cebolla morada,0.708,media,sin-cantidad,SI
+D25 Cena · Chicken Tenders Fit,Cena,25,🇺🇸 Americana,cebolla-morada-rebanada,Cebolla morada rebanada,,cebolla morada,Espinaca + lechuga + pepino + tomate + cebolla morada,0.801,media,sin-cantidad,SI
+D25 Cena · Chicken Tenders Fit,Cena,25,🇺🇸 Americana,aderezo,Aderezo,,Aderezo del recetario,Aderezo del recetario,0.675,media,sin-cantidad,SI
+D25 Cena · Chicken Tenders Fit,Cena,25,🇺🇸 Americana,arroz-cocido,Arroz cocido,94,½ tz arroz cocido,½ tz arroz cocido,1.0,alta,0.5×taza(188.0g),
+D25 Snack AM · Snack AM,Snack AM,25,🇺🇸 Americana,pan-tostado,Pan tostado,30,2 pz pan tostado,2 pz pan tostado + 1 cda mermelada sin azúcar,1.0,alta,2.0×rebanada(15.0g),
+D25 Snack AM · Snack AM,Snack AM,25,🇺🇸 Americana,mermelada,Mermelada,,1 cda mermelada sin azúcar,2 pz pan tostado + 1 cda mermelada sin azúcar,0.924,alta,REVISAR-medida(cda),SI
+D25 Snack PM · Snack PM,Snack PM,25,🇺🇸 Americana,pina-picada,Piña picada,165,1 tz piña,1 tz piña + 1 tz melón,0.907,alta,1.0×taza(165.33g),
+D25 Snack PM · Snack PM,Snack PM,25,🇺🇸 Americana,melon,Melón,542,1 tz melón,1 tz piña + 1 tz melón,1.0,alta,~1.0×pieza(542.42g)[unidad≈],SI
+D26 Desayuno · Wrap,Desayuno,26,🇺🇸 Americana,tortilla,Tortilla,60,2 tortillas integral,2 tortillas integral,0.923,alta,2.0×pieza(30.0g),
+D26 Desayuno · Wrap,Desayuno,26,🇺🇸 Americana,huevo-frito,Huevo frito,46,1 huevo,1 huevo + ½ taza claras,0.925,alta,1.0×pieza(46.0g),
+D26 Desayuno · Wrap,Desayuno,26,🇺🇸 Americana,clara-de-huevo,Clara de huevo,16,½ taza claras,1 huevo + ½ taza claras,0.675,media,~0.5×pieza(33.0g)[unidad≈],SI
+D26 Desayuno · Wrap,Desayuno,26,🇺🇸 Americana,jamon-de-pavo,Jamón de pavo,42,2 reb jamón de pechuga de pavo,2 reb jamón de pechuga de pavo,0.791,media,2.0×rebanada(21.0g),SI
+D26 Desayuno · Wrap,Desayuno,26,🇺🇸 Americana,aguacate-hass,Aguacate Hass,31,⅓ aguacate,⅓ aguacate,0.727,media,0.3333333333333333×pieza(93.94g),SI
+D26 Desayuno · Wrap,Desayuno,26,🇺🇸 Americana,espinaca-cocida,Espinaca cocida,,Espinaca y tomate cherry,Espinaca y tomate cherry,0.613,media,sin-cantidad,SI
+D26 Desayuno · Wrap,Desayuno,26,🇺🇸 Americana,mandarina,Mandarina,64,1 mandarina,1 mandarina,1.0,alta,1.0×pieza(64.0g),
+D26 Comida · Chicken Caesar Bowl,Comida,26,🇺🇸 Americana,pechuga-de-pollo-sin-piel-a-la-plancha,Pechuga de pollo sin piel a la plancha,180,180 g pechuga de pollo a la plancha,180 g pechuga de pollo a la plancha,0.861,alta,gramos-directos,
+D26 Comida · Chicken Caesar Bowl,Comida,26,🇺🇸 Americana,lechuga,Lechuga,,Lechuga,Lechuga + espinaca,1.0,alta,sin-cantidad,SI
+D26 Comida · Chicken Caesar Bowl,Comida,26,🇺🇸 Americana,espinaca-cruda,Espinaca cruda,,espinaca,Lechuga + espinaca,0.945,alta,sin-cantidad,SI
+D26 Comida · Chicken Caesar Bowl,Comida,26,🇺🇸 Americana,,,,2 cdas parmesano rallado,2 cdas parmesano rallado,0.395,baja,REVISAR-medida(cda),SI
+D26 Comida · Chicken Caesar Bowl,Comida,26,🇺🇸 Americana,papa-picada,Papa picada,280,2 pz papa picada,2 pz papa picada,1.0,alta,~2.0×taza(140.0g)[unidad≈],SI
+D26 Comida · Chicken Caesar Bowl,Comida,26,🇺🇸 Americana,aderezo,Aderezo,,Aderezo del recetario,Aderezo del recetario,0.675,media,sin-cantidad,SI
+D26 Cena · Sandwich de Atún,Cena,26,🇺🇸 Americana,atun-en-agua-drenado,Atún en agua drenado,,1 lata atún en agua,1 lata atún en agua + 1 cda mayonesa + limón,0.8,media,REVISAR-medida(lata),SI
+D26 Cena · Sandwich de Atún,Cena,26,🇺🇸 Americana,mayonesa,Mayonesa,,1 cda mayonesa,1 lata atún en agua + 1 cda mayonesa + limón,1.0,alta,REVISAR-medida(cda),SI
+D26 Cena · Sandwich de Atún,Cena,26,🇺🇸 Americana,limon,Limón,,limón,1 lata atún en agua + 1 cda mayonesa + limón,1.0,alta,sin-cantidad,SI
+D26 Cena · Sandwich de Atún,Cena,26,🇺🇸 Americana,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,,"Pepino, cebolla morada, lechuga, espinaca","Pepino, cebolla morada, lechuga, espinaca",0.494,baja,sin-cantidad,SI
+D26 Cena · Sandwich de Atún,Cena,26,🇺🇸 Americana,pan-integral,Pan integral,100,4 reb pan integral (2 sandwiches),4 reb pan integral (2 sandwiches),0.705,media,4.0×rebanada(25.0g),SI
+D26 Cena · Sandwich de Atún,Cena,26,🇺🇸 Americana,aguacate-hass,Aguacate Hass,31,⅓ aguacate,⅓ aguacate,0.727,media,0.3333333333333333×pieza(93.94g),SI
+D26 Cena · Sandwich de Atún,Cena,26,🇺🇸 Americana,papa-cocida,Papa cocida,136,1 tz papas de camote horneadas,1 tz papas de camote horneadas,0.675,media,~1.0×pieza(136.0g)[unidad≈],SI
+D26 Snack AM · Snack AM,Snack AM,26,🇺🇸 Americana,mango-picado,Mango picado,165,1 tz mango,1 tz mango + 1 tz fresas + 1 cda crema de cacahuate,0.918,alta,1.0×taza(165.0g),
+D26 Snack AM · Snack AM,Snack AM,26,🇺🇸 Americana,fresa-entera,Fresa entera,12,1 tz fresas,1 tz mango + 1 tz fresas + 1 cda crema de cacahuate,0.686,media,~1.0×pieza(12.0g)[unidad≈],SI
+D26 Snack AM · Snack AM,Snack AM,26,🇺🇸 Americana,crema-natural,Crema natural,,1 cda crema de cacahuate,1 tz mango + 1 tz fresas + 1 cda crema de cacahuate,0.678,media,REVISAR-medida(cda),SI
+D26 Snack PM · Snack PM,Snack PM,26,🇺🇸 Americana,mezcla-de-verduras-congeladas-cocidas-sin-sal,"Mezcla de verduras congeladas, cocidas sin sal",,1 cda mezcla de nueces y semillas,1 cda mezcla de nueces y semillas + 2 cda pasas o arándanos deshidratados,0.519,baja,REVISAR-medida(cda),SI
+D26 Snack PM · Snack PM,Snack PM,26,🇺🇸 Americana,pasas,Pasas,,2 cda pasas o arándanos deshidratados,1 cda mezcla de nueces y semillas + 2 cda pasas o arándanos deshidratados,0.556,media,REVISAR-medida(cda),SI
+D27 Desayuno · Smoothie de Plátano,Desayuno,27,🇺🇸 Americana,yoghurt-natural,Yoghurt natural,114,½ tz yogur natural sin azúcar,½ tz yogur natural sin azúcar,0.941,alta,0.5×taza(227.0g),
+D27 Desayuno · Smoothie de Plátano,Desayuno,27,🇺🇸 Americana,leche,Leche,240,1 tz leche,1 tz leche,1.0,alta,1.0×taza(240.0g),
+D27 Desayuno · Smoothie de Plátano,Desayuno,27,🇺🇸 Americana,platano,Plátano,54,½ plátano,½ plátano,1.0,alta,0.5×pieza(108.0g),
+D27 Desayuno · Smoothie de Plátano,Desayuno,27,🇺🇸 Americana,,,,2 cditas cacao sin azúcar,2 cditas cacao sin azúcar,0.29,baja,REVISAR-medida(cdita),SI
+D27 Desayuno · Smoothie de Plátano,Desayuno,27,🇺🇸 Americana,crema-natural,Crema natural,,1 cdita crema de cacahuate,1 cdita crema de cacahuate,0.678,media,REVISAR-medida(cdita),SI
+D27 Desayuno · Smoothie de Plátano,Desayuno,27,🇺🇸 Americana,avena-cocida,Avena cocida,,2 cdas avena,2 cdas avena + 1 cdita miel,0.918,alta,REVISAR-medida(cda),SI
+D27 Desayuno · Smoothie de Plátano,Desayuno,27,🇺🇸 Americana,miel,Miel,,1 cdita miel,2 cdas avena + 1 cdita miel,1.0,alta,REVISAR-medida(cdita),SI
+D27 Comida · Shrimp Bowl,Comida,27,🇺🇸 Americana,camaron-pacotilla,Camarón pacotilla,150,"150 g camarones con mantequilla, sal, pimienta y paprika","150 g camarones con mantequilla, sal, pimienta y paprika",0.517,baja,gramos-directos,SI
+D27 Comida · Shrimp Bowl,Comida,27,🇺🇸 Americana,arroz-cocido,Arroz cocido,376,2 tz arroz cocido,2 tz arroz cocido,1.0,alta,2.0×taza(188.0g),
+D27 Comida · Shrimp Bowl,Comida,27,🇺🇸 Americana,aguacate-hass,Aguacate Hass,31,⅓ aguacate,⅓ aguacate,0.727,media,0.3333333333333333×pieza(93.94g),SI
+D27 Comida · Shrimp Bowl,Comida,27,🇺🇸 Americana,tomate-verde,Tomate verde,,Tomate cherry,Tomate cherry + 2 cdas elotito + cebolla morada,0.644,media,sin-cantidad,SI
+D27 Comida · Shrimp Bowl,Comida,27,🇺🇸 Americana,elotitos-de-cambray,Elotitos de cambray,,2 cdas elotito,Tomate cherry + 2 cdas elotito + cebolla morada,0.683,media,REVISAR-medida(cda),SI
+D27 Comida · Shrimp Bowl,Comida,27,🇺🇸 Americana,cebolla-morada-rebanada,Cebolla morada rebanada,,cebolla morada,Tomate cherry + 2 cdas elotito + cebolla morada,0.801,media,sin-cantidad,SI
+D27 Comida · Shrimp Bowl,Comida,27,🇺🇸 Americana,limon-sin-semilla,Limón sin semilla,,"Limón, soya baja en sodio","Limón, soya baja en sodio",0.547,baja,sin-cantidad,SI
+D27 Cena · Sandwich de Guacamole,Cena,27,🇺🇸 Americana,pan-integral,Pan integral,50,2 rebanadas pan integral,2 rebanadas pan integral,1.0,alta,2.0×rebanada(25.0g),
+D27 Cena · Sandwich de Guacamole,Cena,27,🇺🇸 Americana,mayonesa-light,Mayonesa light,,1 cdita mayonesa light,1 cdita mayonesa light,1.0,alta,REVISAR-medida(cdita),SI
+D27 Cena · Sandwich de Guacamole,Cena,27,🇺🇸 Americana,pechuga-de-pollo-molida,Pechuga de pollo molida,150,150 g pechuga de pollo cocida,150 g pechuga de pollo cocida,0.833,media,gramos-directos,SI
+D27 Cena · Sandwich de Guacamole,Cena,27,🇺🇸 Americana,aguacate-hass,Aguacate Hass,23,¼ aguacate,¼ aguacate,0.727,media,0.25×pieza(93.94g),SI
+D27 Cena · Sandwich de Guacamole,Cena,27,🇺🇸 Americana,lechuga,Lechuga,,Lechuga,Lechuga + tomate + pepino,1.0,alta,sin-cantidad,SI
+D27 Cena · Sandwich de Guacamole,Cena,27,🇺🇸 Americana,tomate-verde,Tomate verde,,tomate,Lechuga + tomate + pepino,0.708,media,sin-cantidad,SI
+D27 Cena · Sandwich de Guacamole,Cena,27,🇺🇸 Americana,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,,pepino,Lechuga + tomate + pepino,0.573,media,sin-cantidad,SI
+D27 Snack AM · Snack AM,Snack AM,27,🇺🇸 Americana,kiwi,Kiwi,152,2 pz kiwi,2 pz kiwi + 10 g semillas (almendras),1.0,alta,2.0×pieza(76.0g),
+D27 Snack AM · Snack AM,Snack AM,27,🇺🇸 Americana,semilla-de-anis,Semilla de anís,10,10 g semillas (almendras),2 pz kiwi + 10 g semillas (almendras),0.633,media,gramos-directos,SI
+D27 Snack PM · Snack PM,Snack PM,27,🇺🇸 Americana,rice-krispies-treats,Rice Krispies Treats,44,2 rice cake,2 rice cake + 1 cdita crema de cacahuate + ½ pera,0.545,baja,2.0×barra(22.0g),SI
+D27 Snack PM · Snack PM,Snack PM,27,🇺🇸 Americana,crema-natural,Crema natural,,1 cdita crema de cacahuate,2 rice cake + 1 cdita crema de cacahuate + ½ pera,0.678,media,REVISAR-medida(cdita),SI
+D27 Snack PM · Snack PM,Snack PM,27,🇺🇸 Americana,pera,Pera,81,½ pera,2 rice cake + 1 cdita crema de cacahuate + ½ pera,1.0,alta,0.5×pieza(162.0g),
+D28 Desayuno · Apple Crumble Avena Horneada,Desayuno,28,🇺🇸 Americana,avena-cocida,Avena cocida,219,1 tz avena,1 tz avena,0.918,alta,1.0×taza(218.67g),
+D28 Desayuno · Apple Crumble Avena Horneada,Desayuno,28,🇺🇸 Americana,canela,Canela,,"Canela, vainilla y pizca de sal","Canela, vainilla y pizca de sal",0.567,media,sin-cantidad,SI
+D28 Desayuno · Apple Crumble Avena Horneada,Desayuno,28,🇺🇸 Americana,mantequilla,Mantequilla,,1 cdita mantequilla,1 cdita mantequilla,1.0,alta,REVISAR-medida(cdita),SI
+D28 Desayuno · Apple Crumble Avena Horneada,Desayuno,28,🇺🇸 Americana,manzana-cocida,Manzana cocida,172,1 manzana en cubos,"1 manzana en cubos + canela + 1 cdita miel, hornea todo",0.708,media,1.0×taza(172.0g),SI
+D28 Desayuno · Apple Crumble Avena Horneada,Desayuno,28,🇺🇸 Americana,canela,Canela,,canela,"1 manzana en cubos + canela + 1 cdita miel, hornea todo",1.0,alta,sin-cantidad,SI
+D28 Desayuno · Apple Crumble Avena Horneada,Desayuno,28,🇺🇸 Americana,miel,Miel,,"1 cdita miel, hornea todo","1 manzana en cubos + canela + 1 cdita miel, hornea todo",0.58,media,REVISAR-medida(cdita),SI
+D28 Comida · Tacos Tex Mex,Comida,28,🇺🇸 Americana,tortilla-de-maiz,Tortilla de maíz,90,3 tortillas de maíz,3 tortillas de maíz,0.994,alta,3.0×pieza(30.0g),
+D28 Comida · Tacos Tex Mex,Comida,28,🇺🇸 Americana,carne-molida-regular,Carne molida regular,150,150 g carne molida magra,150 g carne molida magra,0.808,media,gramos-directos,SI
+D28 Comida · Tacos Tex Mex,Comida,28,🇺🇸 Americana,queso-fresco,Queso fresco,30,30 g queso rallado,30 g queso rallado,0.928,alta,gramos-directos,
+D28 Comida · Tacos Tex Mex,Comida,28,🇺🇸 Americana,,,,Pico de gallo y lechuga,Pico de gallo y lechuga,0.243,baja,sin-cantidad,SI
+D28 Comida · Tacos Tex Mex,Comida,28,🇺🇸 Americana,,,,freidora de aire para crujientes,Tip: freidora de aire para crujientes,0.186,baja,sin-cantidad,SI
+D28 Cena · Mac & Cheese Ligero,Cena,28,🇺🇸 Americana,pimiento-fresco,Pimiento fresco,,pimiento,Salsa: pimiento + cebolla + ½ zanahoria + 30 g manchego + 30 g mozzarella + 2 cdas yogurt griego + 2 cdas queso crema,0.939,alta,sin-cantidad,SI
+D28 Cena · Mac & Cheese Ligero,Cena,28,🇺🇸 Americana,cebolla-cocida,Cebolla cocida,,cebolla,Salsa: pimiento + cebolla + ½ zanahoria + 30 g manchego + 30 g mozzarella + 2 cdas yogurt griego + 2 cdas queso crema,0.933,alta,sin-cantidad,SI
+D28 Cena · Mac & Cheese Ligero,Cena,28,🇺🇸 Americana,zanahoria-picada-cruda,Zanahoria picada cruda,64,½ zanahoria,Salsa: pimiento + cebolla + ½ zanahoria + 30 g manchego + 30 g mozzarella + 2 cdas yogurt griego + 2 cdas queso crema,0.916,alta,0.5×taza(128.0g),
+D28 Cena · Mac & Cheese Ligero,Cena,28,🇺🇸 Americana,,,30,30 g manchego,Salsa: pimiento + cebolla + ½ zanahoria + 30 g manchego + 30 g mozzarella + 2 cdas yogurt griego + 2 cdas queso crema,0.37,baja,gramos-directos,SI
+D28 Cena · Mac & Cheese Ligero,Cena,28,🇺🇸 Americana,mozzarella-fresco,Mozzarella fresco,30,30 g mozzarella,Salsa: pimiento + cebolla + ½ zanahoria + 30 g manchego + 30 g mozzarella + 2 cdas yogurt griego + 2 cdas queso crema,0.948,alta,gramos-directos,
+D28 Cena · Mac & Cheese Ligero,Cena,28,🇺🇸 Americana,yoghurt,Yoghurt,,2 cdas yogurt griego,Salsa: pimiento + cebolla + ½ zanahoria + 30 g manchego + 30 g mozzarella + 2 cdas yogurt griego + 2 cdas queso crema,0.693,media,REVISAR-medida(cda),SI
+D28 Cena · Mac & Cheese Ligero,Cena,28,🇺🇸 Americana,queso-crema,Queso crema,,2 cdas queso crema,Salsa: pimiento + cebolla + ½ zanahoria + 30 g manchego + 30 g mozzarella + 2 cdas yogurt griego + 2 cdas queso crema,1.0,alta,REVISAR-medida(cda),SI
+D28 Cena · Mac & Cheese Ligero,Cena,28,🇺🇸 Americana,pasta-cocida,Pasta cocida,240,2 tz pasta cocida,2 tz pasta cocida,1.0,alta,2.0×taza(120.0g),
+D28 Cena · Mac & Cheese Ligero,Cena,28,🇺🇸 Americana,pechuga-sin-piel-desmenuzada,Pechuga sin piel desmenuzada,120,120 g pechuga de pollo desmenuzada,120 g pechuga de pollo desmenuzada,0.739,media,gramos-directos,SI
+D28 Snack AM · Snack AM,Snack AM,28,🇺🇸 Americana,pepino-con-cascara-rebanado,Pepino con cáscara rebanado,104,1 taza pepino,1 taza pepino + zanahoria baby + 2 cdas hummus,0.573,media,1.0×taza(104.0g),SI
+D28 Snack AM · Snack AM,Snack AM,28,🇺🇸 Americana,zanahoria-baby-miniatura-cruda,Zanahoria baby (miniatura) cruda,,zanahoria baby,1 taza pepino + zanahoria baby + 2 cdas hummus,0.777,media,sin-cantidad,SI
+D28 Snack AM · Snack AM,Snack AM,28,🇺🇸 Americana,hummus,Hummus,,2 cdas hummus,1 taza pepino + zanahoria baby + 2 cdas hummus,1.0,alta,REVISAR-medida(cda),SI
+D28 Snack PM · Snack PM,Snack PM,28,🇺🇸 Americana,semilla-de-mostaza,Semilla de mostaza,10,10 g semillas (pistaches),10 g semillas (pistaches) + 1 plátano,0.622,media,gramos-directos,SI
+D28 Snack PM · Snack PM,Snack PM,28,🇺🇸 Americana,platano,Plátano,108,1 plátano,10 g semillas (pistaches) + 1 plátano,1.0,alta,1.0×pieza(108.0g),
