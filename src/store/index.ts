@@ -4,7 +4,8 @@ import { persist } from 'zustand/middleware';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep, CompletedSession } from '../types';
-import { calcTDEE, assignPlan } from '../utils/tdee';
+import { assignPlan } from '../utils/tdee';
+import { computeNutritionTargets } from '../utils/nutritionTargets';
 import type { Region, Currency } from '../utils/region';
 import type { BillingCycle } from '../utils/stripe';
 import { MILESTONE_STEPS } from '../constants/milestones';
@@ -428,15 +429,14 @@ export const useAppStore = create<AppState>()(
     const edad      = Number(obData.edad     || 28);
     const activity  = String(obData.activity || 'Moderada');
     const goal      = String(obData.goal     || '');
+    const grasa     = obData.grasa != null && obData.grasa !== '' ? Number(obData.grasa) : null;
+    const embarazo  = obData.embarazo === 1 || obData.embarazo === 'si';
 
-    const tdee       = calcTDEE(sexo, pesoKg, estatura, edad, activity);
-    const planKey    = assignPlan(tdee, goal);
-
-    let planGoal = tdee;
-    if      (goal === 'Bajar grasa corporal' || goal === 'Bajar grasa' || goal === 'Bajar de peso') planGoal = tdee - 500;
-    else if (goal === 'Subir masa muscular' || goal === 'Ganar músculo') planGoal = tdee + 300;
-    else if (goal === 'Recomposición' || goal === 'Recomponer') planGoal = tdee - 200;
-    // Bienestar integral → maintenance (tdee as-is)
+    // Motor único: déficit/superávit % + piso + modo bienestar (nutritionTargets.ts).
+    const targets    = computeNutritionTargets({ sexo, pesoKg, estaturaCm: estatura, edad, activity, goal, grasa, embarazo });
+    const tdee       = targets.tdee;
+    const planGoal   = targets.planGoal;
+    const planKey    = assignPlan(planGoal);
 
     const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
     const startDateStr = dayKey(new Date());
@@ -1125,14 +1125,14 @@ export const useAppStore = create<AppState>()(
     const edad      = Number(obData.edad     || 28);
     const activity  = String(obData.activity || 'Moderada');
     const goal      = String(obData.goal     || '');
+    const grasa     = obData.grasa != null && obData.grasa !== '' ? Number(obData.grasa) : null;
+    const embarazo  = obData.embarazo === 1 || obData.embarazo === 'si';
 
-    const tdee     = calcTDEE(sexo, pesoKg, estatura, edad, activity);
-    const planKey  = assignPlan(tdee, goal);
-
-    let planGoal = tdee;
-    if      (goal === 'Bajar grasa corporal' || goal === 'Bajar grasa' || goal === 'Bajar de peso') planGoal = tdee - 500;
-    else if (goal === 'Subir masa muscular' || goal === 'Ganar músculo') planGoal = tdee + 300;
-    else if (goal === 'Recomposición' || goal === 'Recomponer') planGoal = tdee - 200;
+    // Motor único (mismo cálculo que finishOnboardingCalc — ya no está duplicado).
+    const targets  = computeNutritionTargets({ sexo, pesoKg, estaturaCm: estatura, edad, activity, goal, grasa, embarazo });
+    const tdee     = targets.tdee;
+    const planGoal = targets.planGoal;
+    const planKey  = assignPlan(planGoal);
 
     set({ mealPlanKey: planKey, tdee, planGoal });
 

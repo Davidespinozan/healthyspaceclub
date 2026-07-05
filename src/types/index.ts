@@ -30,7 +30,7 @@ export interface ExerciseStep {
 
 export type MuscleGroup =
   | 'pecho' | 'espalda' | 'hombros'
-  | 'biceps' | 'triceps'
+  | 'biceps' | 'triceps' | 'antebrazo'
   | 'cuadriceps' | 'isquios' | 'gluteo' | 'pantorrillas'
   | 'core' | 'cardio' | 'cuerpo-completo';
 

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSC — Calculadora</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Montserrat',sans-serif;-webkit-tap-highlight-color:transparent}
+:root{
+ --forest:#0E2521;--moss:#1C3B35;--sage:#3d6359;--green:#4e9d8f;
+ --amber:#BFA065;--amber-deep:#7C6232;--terra:#A8864E;
+ --bg:#FAFAF7;--surface:#fff;--warm:#F0EBE0;--sand:#E8E1D3;--sky:#EDE9E0;
+ --border:rgba(46,74,66,.12);--bdr:rgba(46,74,66,.09);
+ --txt:#0E2521;--txt2:rgba(21,51,48,.58);--muted:rgba(21,51,48,.5);--taupe:#8a8270;--taupe-deep:#6b6359;
+ --terracota:#C75B3A;
+ --grad-amber:linear-gradient(135deg,#C9A968,#A8864E);
+ --shadow-sm:0 2px 4px rgba(21,51,48,.04);--shadow-md:0 8px 16px rgba(21,51,48,.06);
+ --shadow-lg:0 12px 24px rgba(21,51,48,.06);--glow-amber:0 10px 24px rgba(168,134,78,.32);
+ --r:18px;--ease:cubic-bezier(0.22,1,0.36,1);
+}
+body{background:var(--bg);color:var(--txt);min-height:100vh;padding:0 0 50px}
+.wrap{max-width:440px;margin:0 auto;padding:0 18px}
+.top{padding:26px 0 16px;text-align:center}
+.top .logo{font-size:10px;font-weight:700;letter-spacing:.22em;color:var(--amber);text-transform:uppercase}
+.top h1{font-weight:600;font-size:24px;margin-top:6px;letter-spacing:-.02em;color:var(--forest)}
+.top h1 em{font-style:italic;color:var(--amber);font-weight:600}
+.modeswitch{display:flex;gap:6px;background:var(--warm);border-radius:50px;padding:5px;margin:16px 0 20px}
+.modeswitch button{flex:1;border:none;background:transparent;color:var(--taupe-deep);padding:11px;border-radius:50px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s}
+.modeswitch button.on{background:var(--surface);color:var(--forest);box-shadow:var(--shadow-sm)}
+/* hero oscuro con la meta */
+.goalcard{background:radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%),#0d1f1c;border-radius:22px;padding:18px 20px 12px;position:sticky;top:8px;z-index:5;box-shadow:0 12px 30px rgba(8,20,27,.22)}
+.goalcard .lbl{font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--amber);text-transform:uppercase;margin-bottom:12px}
+.kcalrow{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.kcalrow .big{font-size:32px;font-weight:600;letter-spacing:-.03em;color:#fff}
+.kcalrow .big small{font-size:14px;font-weight:400;color:rgba(246,242,234,.55)}
+.kcalrow .goal{font-size:12px;color:rgba(246,242,234,.62);font-style:italic}
+.bar{margin-bottom:11px}
+.bar .brow{display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px}
+.bar .brow .nm{font-weight:500;color:rgba(246,242,234,.9)}.bar .brow .vl{color:rgba(246,242,234,.55)}
+.track{height:5px;background:rgba(246,242,234,.15);border-radius:10px;overflow:hidden}
+.fill{height:100%;border-radius:10px;transition:width .4s var(--ease);width:0;background:var(--grad-amber)}
+.meal{margin-top:14px;background:var(--surface);border:1px solid var(--bdr);border-radius:var(--r);box-shadow:var(--shadow-md);overflow:hidden}
+.mhead{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 13px}
+.mhead .mt{display:flex;align-items:center;gap:10px}
+.mhead .ico{width:34px;height:34px;border-radius:10px;background:var(--warm);display:flex;align-items:center;justify-content:center;color:var(--forest)}
+.mhead .nm{font-size:14.5px;font-weight:700;color:var(--forest)}
+.mhead .sub{font-size:13px;font-weight:700;color:var(--amber-deep)}.mhead .sub small{color:var(--taupe);font-weight:400;font-size:11px}
+.mitems{padding:0 18px}
+.mi{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--bdr)}
+.mi .info{flex:1;cursor:pointer}.mi .info .n{font-size:13px;font-weight:600;color:var(--forest)}
+.mi .info .n .tag{font-size:8.5px;background:var(--grad-amber);color:#fff;padding:2px 7px;border-radius:50px;margin-left:7px;vertical-align:middle;letter-spacing:.5px;font-weight:700}
+.mi .info .m{font-size:11px;color:var(--txt2);margin-top:2px}
+.mi .kc{font-size:13px;font-weight:700;color:var(--amber-deep)}
+.mi .del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:17px;padding:0 2px}
+.subing{padding:3px 0 3px 12px;font-size:10.5px;color:var(--txt2);border-left:2px solid var(--sand);margin:3px 0 3px 2px}
+.addrow{display:flex;gap:8px;padding:13px 18px 16px}
+.addbtn2{flex:1;background:var(--surface);border:1px solid var(--sand);color:var(--forest);padding:11px;border-radius:50px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.addbtn2:hover{border-color:var(--amber)}
+.modal{position:fixed;inset:0;background:rgba(13,31,28,.4);display:none;align-items:flex-end;justify-content:center;z-index:20;backdrop-filter:blur(2px)}
+.modal.show{display:flex}
+.sheet{background:var(--bg);border-radius:24px 24px 0 0;width:100%;max-width:440px;padding:22px 20px 28px;animation:up .28s var(--ease);max-height:90vh;overflow-y:auto}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.stitle{font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--amber);text-transform:uppercase;margin-bottom:14px}
+.search input,.nameinput{width:100%;background:var(--warm);border:1px solid transparent;border-radius:14px;padding:14px 16px;color:var(--forest);font-size:15px;outline:none;transition:.15s}
+.search input::placeholder,.nameinput::placeholder{color:rgba(21,51,48,.4);font-style:italic}
+.search input:focus,.nameinput:focus{border-color:var(--amber);background:#fff}
+.results{margin-top:10px;max-height:320px;overflow-y:auto}
+.ritem{padding:13px 4px;border-bottom:1px solid var(--bdr);cursor:pointer}
+.ritem .nm{font-size:14px;font-weight:600;color:var(--forest)}
+.ritem .nm .tag{font-size:8.5px;background:var(--grad-amber);color:#fff;padding:2px 7px;border-radius:50px;margin-left:7px;letter-spacing:.5px;font-weight:700}
+.ritem .mt{font-size:11px;color:var(--txt2);margin-top:2px}
+.sheet h2{font-size:20px;font-weight:600;letter-spacing:-.015em;color:var(--forest);margin-bottom:3px}
+.sheet .grp{font-size:12px;color:var(--txt2);margin-bottom:22px;font-style:italic}
+.qstepper{display:flex;align-items:center;gap:14px;margin-bottom:18px;justify-content:center}
+.qbtn{width:54px;height:54px;border-radius:50%;background:var(--surface);border:1.5px solid var(--sand);color:var(--forest);font-size:26px;cursor:pointer;line-height:1;transition:.15s;box-shadow:var(--shadow-sm)}
+.qbtn:hover{border-color:var(--amber)}.qbtn:active{transform:scale(.94)}
+.qdisp{flex:1;text-align:center;font-size:28px;font-weight:600;letter-spacing:-.03em;color:var(--forest);min-width:90px}.qdisp small{font-size:14px;color:var(--taupe);font-weight:400}
+.unitsel{display:flex;gap:8px;margin-bottom:22px}
+.unitsel button{flex:1;background:var(--surface);border:1px solid var(--sand);color:var(--forest);padding:12px;border-radius:50px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s}
+.unitsel button.on{background:var(--grad-amber);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(168,134,78,.28)}
+.preview{background:linear-gradient(180deg,#fff,#faf6ef);border:1px solid var(--sand);border-radius:16px;padding:15px 18px;margin-bottom:20px;display:flex;justify-content:space-between;box-shadow:var(--shadow-sm)}
+.preview .pk{font-weight:700;font-size:19px;color:var(--amber-deep)}
+.preview .macros{color:var(--txt2);text-align:right;font-size:13px;line-height:1.5}
+.addbtn{width:100%;padding:15px;background:var(--forest);color:#fff;border:none;border-radius:50px;font-size:13.5px;font-weight:700;letter-spacing:.02em;cursor:pointer;transition:background .15s}
+.addbtn:hover{background:var(--moss)}.addbtn:active{transform:scale(.99)}.addbtn:disabled{opacity:.35}
+.cancel{width:100%;background:none;border:none;color:var(--taupe);padding:13px;margin-top:6px;font-size:13px;cursor:pointer}
+.plings{margin:16px 0}
+.pling{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--bdr)}
+.pling .info{flex:1}.pling .info .n{font-size:13px;font-weight:600;color:var(--forest)}.pling .info .m{font-size:11px;color:var(--txt2);margin-top:1px}
+.pling .kc{font-size:13px;font-weight:700;color:var(--amber-deep)}
+.pling .del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:17px}
+.plempty{text-align:center;color:var(--txt2);font-size:12px;padding:18px 0;line-height:1.6;font-style:italic}
+.pladd{width:100%;background:var(--surface);border:1px solid var(--sand);color:var(--forest);padding:13px;border-radius:50px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px}
+.pladd:hover{border-color:var(--amber)}
+.pltotal{background:linear-gradient(180deg,#fff,#faf3e6);border:1px solid var(--sand);border-radius:16px;padding:15px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 8px 22px rgba(168,134,78,.14)}
+.pltotal .pk{font-size:21px;font-weight:700;color:var(--amber-deep)}
+.pltotal .macros{font-size:12px;color:var(--txt2);text-align:right;line-height:1.5}
+.savechk{display:flex;align-items:center;gap:12px;padding:14px 0;cursor:pointer;font-size:14px;color:var(--forest)}
+.savechk .box{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--sand);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;transition:.15s;flex-shrink:0}
+.savechk .box.on{background:var(--grad-amber);border-color:transparent}
+
+/* ONBOARDING */
+.onb{max-width:440px;margin:0 auto;padding:0 20px;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
+.onb-inner{padding:30px 0}
+.onb .step-lbl{font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--amber);text-transform:uppercase;margin-bottom:10px}
+.onb h2{font-size:24px;font-weight:600;letter-spacing:-.02em;color:var(--forest);margin-bottom:6px}
+.onb h2 em{font-style:italic;color:var(--amber)}
+.onb .sub{font-size:13px;color:var(--txt2);margin-bottom:24px;line-height:1.5}
+.onb .sub em{font-style:italic;color:var(--taupe-deep)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{background:var(--surface);border:1.5px solid var(--sand);border-radius:16px;padding:15px 17px;cursor:pointer;transition:.15s;text-align:left}
+.opt:hover{border-color:var(--amber)}
+.opt.sel{border-color:var(--amber);background:linear-gradient(180deg,#fff,#faf6ef)}
+.opt .ot{font-size:14.5px;font-weight:600;color:var(--forest)}
+.opt .od{font-size:11.5px;color:var(--txt2);margin-top:3px;line-height:1.4}
+.onb-input{width:100%;background:var(--warm);border:1.5px solid transparent;border-radius:14px;padding:15px 16px;color:var(--forest);font-size:17px;outline:none;text-align:center;font-weight:600}
+.onb-input:focus{border-color:var(--amber);background:#fff}
+.onb-row{display:flex;gap:10px}
+.onb-field{flex:1}
+.onb-field label{display:block;font-size:11px;color:var(--taupe-deep);margin-bottom:6px;font-weight:600;text-align:center}
+.onb-next{width:100%;padding:15px;background:var(--forest);color:#fff;border:none;border-radius:50px;font-size:14px;font-weight:700;letter-spacing:.02em;cursor:pointer;margin-top:22px;transition:.15s}
+.onb-next:hover{background:var(--moss)}.onb-next:disabled{opacity:.35}
+.onb-skip{width:100%;background:none;border:none;color:var(--taupe);padding:12px;margin-top:6px;font-size:12.5px;cursor:pointer}
+.onb-opt-tag{font-size:10px;color:var(--amber);font-style:italic;margin-left:6px}
+.onb-progress{display:flex;gap:5px;margin-bottom:28px}
+.onb-dot{flex:1;height:3px;border-radius:2px;background:var(--sand)}
+.onb-dot.on{background:var(--grad-amber)}
+.onb-result{text-align:center}
+.onb-result .kcal-big{font-size:46px;font-weight:700;color:var(--forest);letter-spacing:-.03em;margin:8px 0}
+.onb-result .kcal-big em{font-style:italic;color:var(--amber);font-size:20px;font-weight:400}
+.onb-macros-preview{display:flex;gap:10px;margin:22px 0}
+.onb-macro{flex:1;background:var(--surface);border:1px solid var(--sand);border-radius:14px;padding:14px 8px;box-shadow:var(--shadow-sm)}
+.onb-macro .mv{font-size:19px;font-weight:700;color:var(--amber-deep)}
+.onb-macro .ml{font-size:10px;color:var(--txt2);margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
+.onb-note{font-size:11.5px;color:var(--txt2);font-style:italic;line-height:1.5;margin-top:8px;padding:12px 14px;background:var(--warm);border-radius:12px}
+.hidden{display:none!important}
+
+</style>
+</head>
+<body>
+<div class="onb" id="onb"><div class="onb-inner" id="onb-inner"></div></div>
+
+<div class="wrap hidden" id="app">
+<div class="top"><div class="logo">Healthy Space Club</div><h1>Tu <em>día</em></h1></div>
+<div class="modeswitch"><button class="on">Calculadora</button><button onclick="alert('El modo Plan del día lo armamos en el siguiente paso')">Plan del día</button></div>
+<div class="goalcard">
+<div class="lbl">Meta de hoy</div>
+<div class="kcalrow"><div class="big"><span id="kcal">0</span> <small>/ <span id="kgoal">1800</span> kcal</small></div><div class="goal" id="krest">faltan 1800</div></div>
+<div class="bar"><div class="brow"><span class="nm">Proteína</span><span class="vl"><span id="pv">0</span> / <span id="pg">110</span> g</span></div><div class="track"><div class="fill" id="pf"></div></div></div>
+<div class="bar"><div class="brow"><span class="nm">Carbos</span><span class="vl"><span id="cv">0</span> / <span id="cg">200</span> g</span></div><div class="track"><div class="fill" id="cf"></div></div></div>
+<div class="bar"><div class="brow"><span class="nm">Grasa</span><span class="vl"><span id="fv">0</span> / <span id="fg">55</span> g</span></div><div class="track"><div class="fill" id="ff"></div></div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:11px;border-top:1px solid rgba(246,242,234,.12)"><span style="font-size:11px;color:rgba(246,242,234,.6)">Fibra</span><span style="font-size:11px;color:rgba(246,242,234,.85);font-weight:500"><span id="fibv">0</span> / <span id="fibg">25</span> g</span></div>
+</div>
+<div id="meals"></div>
+</div>
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<script>
+
+// ===== ONBOARDING =====
+const OB={sexo:null,edad:null,peso:null,estatura:null,actividad:null,objetivo:null,embarazo:null,grasa:null,meta:null};
+const ACT=[
+ {id:'Sedentaria',f:1.2,t:'Sedentaria',d:'Poco o nada de ejercicio. Trabajo de escritorio, mayormente sentada.'},
+ {id:'Ligera',f:1.375,t:'Ligera',d:'Ejercicio ligero 1–3 días por semana. Caminatas, algo de movimiento.'},
+ {id:'Moderada',f:1.55,t:'Moderada',d:'Ejercicio 3–5 días por semana. Gym o deporte regular.'},
+ {id:'Alta',f:1.725,t:'Alta',d:'Ejercicio intenso 6–7 días por semana. Entrenas casi diario.'},
+ {id:'Atleta',f:1.9,t:'Atleta',d:'Entrenas muy fuerte, 2 veces al día, o trabajo físico pesado.'},
+];
+const OBJ=[
+ {id:'Bajar grasa',t:'Bajar grasa',d:'Perder grasa cuidando tu músculo.'},
+ {id:'Mantener',t:'Bienestar / mantener',d:'Comer sano y mantenerte.'},
+ {id:'Recomposición',t:'Recomposición',d:'Bajar grasa y tonificar a la vez.'},
+ {id:'Ganar músculo',t:'Ganar músculo',d:'Construir masa muscular.'},
+];
+let obStep=0;
+const OB_STEPS=['sexo','datos','actividad','objetivo','embarazo','opcionales','resultado'];
+function obDot(){let n=OB_STEPS.length;let s='<div class="onb-progress">';for(let i=0;i<n;i++)s+=`<div class="onb-dot ${i<=obStep?'on':''}"></div>`;return s+'</div>'}
+const $o=id=>document.getElementById(id);
+function renderOnb(){
+ const step=OB_STEPS[obStep];const I=$o('onb-inner');
+ // saltar embarazo si es hombre
+ if(step==='embarazo' && OB.sexo==='Hombre'){obStep++;return renderOnb()}
+ if(step==='sexo'){
+  I.innerHTML=obDot()+`<div class="step-lbl">Paso 1</div><h2>¿Cuál es tu <em>sexo</em>?</h2><div class="sub">Lo usamos para calcular tus necesidades con precisión.</div><div class="opts"><button class="opt" onclick="pickSexo('Mujer')"><div class="ot">Mujer</div></button><button class="opt" onclick="pickSexo('Hombre')"><div class="ot">Hombre</div></button></div>`;
+ }else if(step==='datos'){
+  I.innerHTML=obDot()+`<div class="step-lbl">Paso 2</div><h2>Tus <em>datos</em></h2><div class="sub">Para calcular tu metabolismo.</div>
+  <div class="onb-row"><div class="onb-field"><label>Edad</label><input class="onb-input" id="i-edad" type="number" inputmode="numeric" value="${OB.edad||''}" placeholder="28"></div><div class="onb-field"><label>Peso (kg)</label><input class="onb-input" id="i-peso" type="number" inputmode="decimal" value="${OB.peso||''}" placeholder="65"></div><div class="onb-field"><label>Estatura (cm)</label><input class="onb-input" id="i-est" type="number" inputmode="numeric" value="${OB.estatura||''}" placeholder="165"></div></div>
+  <button class="onb-next" onclick="saveDatos()">Continuar</button>`;
+ }else if(step==='actividad'){
+  I.innerHTML=obDot()+`<div class="step-lbl">Paso 3</div><h2>Tu <em>actividad</em></h2><div class="sub">Piensa en tu semana completa, <em>no solo el gym</em>.</div><div class="opts">${ACT.map(a=>`<button class="opt" onclick="pickAct('${a.id}')"><div class="ot">${a.t}</div><div class="od">${a.d}</div></button>`).join('')}</div>`;
+ }else if(step==='objetivo'){
+  I.innerHTML=obDot()+`<div class="step-lbl">Paso 4</div><h2>Tu <em>objetivo</em></h2><div class="sub">¿Qué quieres lograr?</div><div class="opts">${OBJ.map(o=>`<button class="opt" onclick="pickObj('${o.id}')"><div class="ot">${o.t}</div><div class="od">${o.d}</div></button>`).join('')}</div>`;
+ }else if(step==='embarazo'){
+  I.innerHTML=obDot()+`<div class="step-lbl">Paso 5</div><h2>¿Estás <em>embarazada</em> o en lactancia?</h2><div class="sub">Es importante para cuidar tu salud y la de tu bebé.</div><div class="opts"><button class="opt" onclick="pickEmb(true)"><div class="ot">Sí</div></button><button class="opt" onclick="pickEmb(false)"><div class="ot">No</div></button></div>`;
+ }else if(step==='opcionales'){
+  I.innerHTML=obDot()+`<div class="step-lbl">Paso 6 · opcional</div><h2>Datos <em>extra</em> <span class="onb-opt-tag">si los sabes</span></h2><div class="sub">Nos ayudan a afinar tu plan, pero puedes saltarlos.</div>
+  <div class="onb-row"><div class="onb-field"><label>% grasa corporal</label><input class="onb-input" id="i-grasa" type="number" inputmode="decimal" value="${OB.grasa||''}" placeholder="—"></div><div class="onb-field"><label>Peso meta (kg)</label><input class="onb-input" id="i-meta" type="number" inputmode="decimal" value="${OB.meta||''}" placeholder="—"></div></div>
+  <button class="onb-next" onclick="saveOpc()">Continuar</button><button class="onb-skip" onclick="skipOpc()">Saltar este paso</button>`;
+ }else if(step==='resultado'){
+  const r=calcPlan();
+  I.innerHTML=obDot()+`<div class="onb-result"><div class="step-lbl">Tu plan personalizado</div><h2>Tu meta <em>diaria</em></h2><div class="kcal-big">${r.kcal} <em>kcal</em></div>
+  <div class="onb-macros-preview"><div class="onb-macro"><div class="mv">${r.prot}g</div><div class="ml">Proteína</div></div><div class="onb-macro"><div class="mv">${r.carbs}g</div><div class="ml">Carbos</div></div><div class="onb-macro"><div class="mv">${r.grasa}g</div><div class="ml">Grasa</div></div><div class="onb-macro"><div class="mv">${r.fibra}g</div><div class="ml">Fibra</div></div></div>
+  ${r.aviso?`<div class="onb-note">${r.aviso}</div>`:''}${r.metaAviso?`<div class="onb-note" style="border-left:3px solid var(--amber)">${r.metaAviso}</div>`:''}${r.tiempoAviso?`<div class="onb-note">${r.tiempoAviso}</div>`:''}
+  <button class="onb-next" onclick="startApp()">Empezar</button></div>`;
+ }
+}
+function pickSexo(v){OB.sexo=v;obStep++;renderOnb()}
+function saveDatos(){const e=+$o('i-edad').value,p=+$o('i-peso').value,es=+$o('i-est').value;
+ if(!e||!p||!es){alert('Completa los tres datos');return}
+ if(e<15||e>100){alert('Revisa tu edad (15-100 años).');return}
+ if(p<30||p>300){alert('Revisa tu peso (30-300 kg).');return}
+ if(es<120||es>220){alert('Revisa tu estatura (120-220 cm).');return}
+ OB.edad=e;OB.peso=p;OB.estatura=es;obStep++;renderOnb()}
+function pickAct(v){OB.actividad=v;obStep++;renderOnb()}
+function pickObj(v){OB.objetivo=v;obStep++;renderOnb()}
+function pickEmb(v){OB.embarazo=v;obStep++;renderOnb()}
+function saveOpc(){const g=+$o('i-grasa').value||null,m=+$o('i-meta').value||null;
+ if(g!==null){const lo=OB.sexo==='Hombre'?3:8,hi=OB.sexo==='Hombre'?50:55;if(g<lo||g>hi){alert('Revisa tu % de grasa.');return}}
+ if(m!==null&&(m<30||m>300)){alert('Revisa tu peso meta (30-300 kg).');return}
+ OB.grasa=g;OB.meta=m;obStep++;renderOnb()}
+function skipOpc(){obStep++;renderOnb()}
+
+// ===== CÁLCULO (según LOGICA-NUTRICIONAL-HSC.md) =====
+function calcPlan(){
+ const {sexo,edad,peso,estatura,actividad,objetivo,embarazo,grasa}=OB;
+ // BMR: Katch-McArdle si hay % grasa, si no Mifflin-St Jeor
+ let bmr;
+ if(grasa){const lbm=peso*(1-grasa/100);bmr=370+21.6*lbm}
+ else{bmr=10*peso+6.25*estatura-5*edad+(sexo==='Hombre'?5:-161)}
+ bmr=Math.round(bmr);
+ const fact=(ACT.find(a=>a.id===actividad)||{f:1.375}).f;
+ const tdee=Math.round(bmr*fact);
+ // menor de edad o embarazo => sin deficit (modo bienestar)
+ const menor=edad<18;
+ // IMC actual para detectar bajo peso
+ const hMact=estatura/100;const imcActual=peso/(hMact*hMact);
+ const bajoPeso=imcActual<18.5;
+ const quiereBajar=(objetivo==='Bajar grasa'||objetivo==='Recomposición');
+ // bajo peso + querer bajar = riesgo => modo bienestar
+ const riesgoBajoPeso=bajoPeso&&quiereBajar;
+ const bloqueoDeficit=menor||embarazo||riesgoBajoPeso;
+ // objetivo -> % ajuste
+ let target=tdee;let obj=objetivo;
+ if(bloqueoDeficit && (objetivo==='Bajar grasa'||objetivo==='Recomposición')){obj='Mantener'}
+ if(obj==='Bajar grasa')target=tdee*0.80;
+ else if(obj==='Recomposición')target=tdee*0.90;
+ else if(obj==='Ganar músculo')target=tdee*1.12;
+ // piso de seguridad: max(target, piso_sexo, bmr)
+ const piso=sexo==='Hombre'?1500:1200;
+ let kcal=Math.max(target,piso,bmr);
+ let topado=kcal>target+5;
+ kcal=Math.round(kcal);
+ // proteina segun objetivo + actividad
+ const gkgTable={'Bajar grasa':[2.0,2.2,2.4],'Mantener':[1.6,1.8,2.0],'Recomposición':[1.8,2.0,2.2],'Ganar músculo':[1.8,2.0,2.2]};
+ const actIdx=(['Sedentaria','Ligera'].includes(actividad))?0:(actividad==='Moderada'?1:2);
+ let gkg=(gkgTable[obj]||[1.4,1.6,1.8])[actIdx];
+ if(gkg>2.4)gkg=2.4;
+ const prot=Math.round(peso*gkg);
+ // grasa: 25% kcal, piso 0.6 g/kg
+ let grasaG=Math.max(kcal*0.25/9, peso*0.6);grasaG=Math.round(grasaG);
+ // carbos: resto
+ const kcalProt=prot*4, kcalGrasa=grasaG*9;
+ let carbs=Math.round(Math.max(130,(kcal-kcalProt-kcalGrasa)/4));
+ // fibra: 14g/1000kcal
+ const fibra=Math.round(kcal/1000*14);
+ // aviso principal
+ let aviso='';
+ if(menor)aviso='Como eres menor de 18, tu plan es de bienestar (sin restricción calórica). Para objetivos de composición corporal, consulta a un profesional.';
+ else if(embarazo)aviso='En embarazo o lactancia no recomendamos déficit. Tu plan es de mantenimiento. Consulta a tu profesional de salud.';
+ else if(riesgoBajoPeso)aviso='Ajustamos tu plan a modo bienestar. Para objetivos más específicos, un especialista puede ayudarte mejor.';
+ else if(topado)aviso=`Ajustamos tu meta a ${kcal} kcal — bajar más no es seguro sin acompañamiento profesional.`;
+ // validacion del PESO META (IMC + metas por etapas + contexto de % grasa)
+ let metaAviso='';
+ if(OB.meta && estatura){
+  const hM=estatura/100;
+  const imcMeta=OB.meta/(hM*hM);
+  const pctCambio=Math.abs(OB.meta-peso)/peso*100;
+  const subiendo=OB.meta>peso;
+  // umbrales ACE de % grasa saludable/atletico
+  const grasaBaja = grasa && (sexo==='Hombre' ? grasa<18 : grasa<25); // rango atleta/fitness
+  const grasaAlta = grasa && (sexo==='Hombre' ? grasa>=25 : grasa>=32); // obeso ACE
+  if(imcMeta<18.5 && !subiendo){
+   metaAviso='Tu peso meta queda por debajo de un peso saludable para tu estatura. Te sugerimos una meta más segura, o consultar a un profesional de salud.';
+  } else if(subiendo && imcMeta>=25){
+   // quiere SUBIR y el IMC meta sale alto: revisar si es musculo
+   if(grasaBaja){
+    metaAviso='Tu meta te da un IMC alto, pero como tu porcentaje de grasa es bajo, eso es músculo, no grasa. Vas bien — el IMC no aplica para cuerpos musculosos.';
+   } else if(!grasa){
+    metaAviso='Tu meta te da un IMC alto. Ojo: el IMC no distingue músculo de grasa. Si buscas ganar músculo y entrenas fuerte, es normal e ignóralo. Si no, considera tu composición corporal.';
+   } else if(grasaAlta){
+    metaAviso='Para ganar músculo, cuida que el aumento sea gradual: sube despacio para ganar músculo y no grasa de más.';
+   }
+  } else if(pctCambio>10 && !subiendo && !grasaBaja){
+   const etapa=Math.round(peso*0.92);
+   metaAviso=`Tu meta es alcanzable, pero está lejos. Vamos por partes: tu primer objetivo será llegar a ~${etapa} kg (bajar 5-8%). Cuando lo logres, seguimos con el siguiente. Es más sano y sostenible.`;
+  }
+ }
+ // tiempo estimado a un ritmo seguro (0.5-1% peso/semana)
+ let tiempoAviso='';
+ if(OB.meta && OB.meta<peso && !bloqueoDeficit){
+  const kgBajar=peso-OB.meta;
+  const semMax=Math.ceil(kgBajar/(peso*0.01)); // ritmo mas rapido (1%/sem)
+  const semMin=Math.ceil(kgBajar/(peso*0.005)); // ritmo mas lento (0.5%/sem)
+  const mesesMax=Math.round(semMin/4.3),mesesMin=Math.round(semMax/4.3);
+  if(mesesMin>=1) tiempoAviso=`A un ritmo saludable, llegar a tu meta toma aprox. ${mesesMin}-${mesesMax} ${mesesMax===1?'mes':'meses'}. Lo sano toma tiempo, y así se mantiene.`;
+ }
+ return {kcal,prot,carbs,grasa:grasaG,fibra,bmr,tdee,aviso,metaAviso,tiempoAviso};
+}
+function startApp(){
+ const r=calcPlan();
+ META.k=r.kcal;META.p=r.prot;META.c=r.carbs;META.f=r.grasa;META.fib=r.fibra;
+ $o('onb').classList.add('hidden');
+ $o('app').classList.remove('hidden');
+ $o('kgoal').textContent=META.k;$o('pg').textContent=META.p;$o('cg').textContent=META.c;$o('fg').textContent=META.f;
+ if($o('fibg'))$o('fibg').textContent=META.fib;
+ update();
+}
+
+const FOODS =
+[{"id": "arroz-cocido", "nombre": "Arroz cocido", "grupo": "Cereales S/G", "medida": "taza", "g1": 188.0, "porc": 0.25, "k": 60.0, "p": 1.1, "l": 0.1, "h": 13.3, "f": 0.1}, {"id": "arroz-crudo", "nombre": "Arroz crudo", "grupo": "Cereales S/G", "medida": "gramos", "g1": 1.0, "porc": 20, "k": 72.0, "p": 1.3, "l": 0.1, "h": 15.9, "f": null}, {"id": "arroz-inflado-con-cocoa", "nombre": "Arroz inflado con cocoa", "grupo": "Cereales S/G", "medida": "taza", "g1": 34.0, "porc": 0.5, "k": 64.0, "p": 0.9, "l": 0.2, "h": 14.7, "f": 0.1}, {"id": "masa-para-tortillas", "nombre": "Masa para tortillas", "grupo": "Cereales S/G", "medida": "gramos", "g1": 1.0, "porc": 45, "k": 69.0, "p": 1.6, "l": 0.9, "h": 14.3, "f": 1.5}, {"id": "tortilla", "nombre": "Tortilla", "grupo": "Cereales S/G", "medida": "pieza", "g1": 30.0, "porc": 1, "k": 64.0, "p": 1.4, "l": 0.5, "h": 13.6, "f": 0.6}, {"id": "tortilla-burrera", "nombre": "Tortilla burrera", "grupo": "Cereales S/G", "medida": "pieza", "g1": 30.0, "porc": 1, "k": 76.0, "p": 2.3, "l": 0.4, "h": 16.0, "f": 0.8}, {"id": "papilla-de-macarrones-con-pollo", "nombre": "Papilla de macarrones con pollo", "grupo": "Cereales C/G", "medida": "frasco", "g1": 130.0, "porc": 1.5, "k": 101.0, "p": 4.4, "l": 2.9, "h": 14.6, "f": 0.6}, {"id": "alon-de-pollo-sin-piel", "nombre": "Alón de pollo sin piel", "grupo": "AOA MBAG", "medida": "pieza", "g1": 29.0, "porc": 1, "k": 37.0, "p": 6.4, "l": 1.0, "h": 0.0, "f": 0.0}, {"id": "carne-molida-de-pollo", "nombre": "Carne molida de pollo", "grupo": "AOA MBAG", "medida": "gramos", "g1": 1.0, "porc": 30, "k": 34.0, "p": 7.0, "l": 0.5, "h": 0.0, "f": 0.0}, {"id": "pasta-con-huevo", "nombre": "Pasta con huevo", "grupo": "Cereales S/G", "medida": "taza", "g1": 45.5, "porc": 0.33, "k": 57.0, "p": 1.9, "l": 0.6, "h": 11.0, "f": 0.0}, {"id": "clara-de-huevo", "nombre": "Clara de huevo", "grupo": "AOA MBAG", "medida": "pieza", "g1": 33.0, "porc": 2, "k": 32.0, "p": 7.2, "l": 0.1, "h": 0.5, "f": 0.0}, {"id": "clara-de-huevo-en-polvo", "nombre": "Clara de huevo en polvo", "grupo": "AOA MBAG", "medida": "cucharada", "g1": 6.7, "porc": 1.5, "k": 38.0, "p": 8.1, "l": 0.0, "h": 0.8, "f": 0.0}, {"id": "tamal-de-frijol", "nombre": "Tamal de frijol", "grupo": "Cereales C/G", "medida": "pieza", "g1": 200.0, "porc": 0.2, "k": 103.0, "p": 1.5, "l": 7.2, "h": 9.1, "f": 0.4}, {"id": "frijol-germinado-cocido", "nombre": "Frijol germinado cocido", "grupo": "Leguminosas", "medida": "taza", "g1": 124.0, "porc": 1, "k": 97.0, "p": 8.8, "l": 1.0, "h": 18.6, "f": 10.7}, {"id": "frijol-germinado-crudo", "nombre": "Frijol germinado crudo", "grupo": "Leguminosas", "medida": "taza", "g1": 104.0, "porc": 1.5, "k": 105.0, "p": 9.6, "l": 1.1, "h": 20.4, "f": null}, {"id": "jugo-de-manzana-natural-sin-azucar", "nombre": "Jugo de manzana natural sin azúcar", "grupo": "Frutas", "medida": "taza", "g1": 258.0, "porc": 0.5, "k": 59.0, "p": 0.0, "l": 0.0, "h": 15.0, "f": 0.0}, {"id": "manzana", "nombre": "Manzana", "grupo": "Frutas", "medida": "pieza", "g1": 106.0, "porc": 1, "k": 55.0, "p": 0.3, "l": 0.2, "h": 14.7, "f": 2.6}, {"id": "manzana-al-vapor", "nombre": "Manzana al vapor", "grupo": "Frutas", "medida": "taza", "g1": 172.0, "porc": 0.5, "k": 44.0, "p": 2.0, "l": 0.1, "h": 11.7, "f": 2.1}, {"id": "aceite-de-aguacate", "nombre": "Aceite de aguacate", "grupo": "Grasas sin proteínas", "medida": "cucharadita", "g1": 5.0, "porc": 1, "k": 44.0, "p": 0.0, "l": 5.0, "h": 0.0, "f": 0.0}, {"id": "aguacate-california", "nombre": "Aguacate California", "grupo": "Grasas sin proteínas", "medida": "pieza", "g1": 93.9, "porc": 0.33, "k": 54.0, "p": 0.7, "l": 5.3, "h": 2.1, "f": 1.5}, {"id": "aguacate-de-pellejo", "nombre": "Aguacate de pellejo", "grupo": "Grasas sin proteínas", "medida": "pieza", "g1": 24.0, "porc": 1.5, "k": 44.0, "p": 0.5, "l": 4.5, "h": 2.0, "f": 1.3}, {"id": "avena-cocida", "nombre": "Avena cocida", "grupo": "Cereales S/G", "medida": "taza", "g1": 218.7, "porc": 0.75, "k": 66.0, "p": 5.2, "l": 1.3, "h": 18.8, "f": 4.3}, {"id": "avena-con-canela-y-especias", "nombre": "Avena con canela y especias", "grupo": "Cereales S/G", "medida": "sobre", "g1": 45.5, "porc": 0.33, "k": 56.0, "p": 1.3, "l": 0.7, "h": 11.7, "f": 1.0}, {"id": "avena-con-manzana-y-canela", "nombre": "Avena con manzana y canela", "grupo": "Cereales S/G", "medida": "sobre", "g1": 42.4, "porc": 0.33, "k": 53.0, "p": 1.2, "l": 0.7, "h": 10.9, "f": 0.9}, {"id": "fruto-del-pan", "nombre": "Fruto del pan", "grupo": "Frutas", "medida": "gramos", "g1": 0.9, "porc": 85, "k": 60.0, "p": 1.0, "l": 0.4, "h": 14.9, "f": 1.3}, {"id": "harina-de-trigo-para-panificacion", "nombre": "Harina de trigo para panificación", "grupo": "Cereales S/G", "medida": "cucharada", "g1": 8.5, "porc": 2, "k": 62.0, "p": 2.1, "l": 0.3, "h": 12.4, "f": 0.4}, {"id": "palitos-de-pan", "nombre": "Palitos de pan", "grupo": "Cereales S/G", "medida": "pieza", "g1": 6.0, "porc": 3, "k": 74.0, "p": 2.2, "l": 1.7, "h": 12.3, "f": 0.5}, {"id": "proteina-de-suero-de-leche", "nombre": "Proteína de suero de leche", "grupo": "AOA MBAG", "medida": "cucharadita", "g1": 5.0, "porc": 2, "k": 36.0, "p": 5.8, "l": 0.1, "h": 2.9, "f": 0.1}, {"id": "leche-alpura-light-extra", "nombre": "Leche Alpura Light Extra", "grupo": "Leche descremada", "medida": "taza", "g1": 240.0, "porc": 1, "k": 103.0, "p": 8.0, "l": 2.4, "h": 14.0, "f": 2.5}, {"id": "leche-descremada", "nombre": "Leche descremada", "grupo": "Leche descremada", "medida": "taza", "g1": 245.0, "porc": 1, "k": 86.0, "p": 8.4, "l": 0.4, "h": 11.9, "f": 0.0}, {"id": "quaker-sdw-sabor-yogurt-de-fresa", "nombre": "Quaker SDW sabor Yogurt de fresa", "grupo": "Cereales C/G", "medida": "pieza", "g1": 9.6, "porc": 2.5, "k": 101.0, "p": 1.7, "l": 4.1, "h": 14.3, "f": 2.0}, {"id": "helado-de-yogur", "nombre": "Helado de yogur", "grupo": "Leche con azúcar", "medida": "taza", "g1": 158.0, "porc": 1, "k": 201.0, "p": 4.8, "l": 5.7, "h": 34.2, "f": 2.1}, {"id": "helado-de-yogur-de-fresa", "nombre": "Helado de yogur de fresa", "grupo": "Leche con azúcar", "medida": "taza", "g1": 158.0, "porc": 1, "k": 201.0, "p": 4.8, "l": 5.7, "h": 34.2, "f": 2.1}, {"id": "croissant-de-queso", "nombre": "Croissant de queso", "grupo": "Cereales C/G", "medida": "pieza", "g1": 58.0, "porc": 0.5, "k": 118.0, "p": 2.6, "l": 6.0, "h": 13.4, "f": 0.7}, {"id": "cuernito-de-queso", "nombre": "Cuernito de queso", "grupo": "Cereales C/G", "medida": "pieza", "g1": 58.0, "porc": 0.5, "k": 118.0, "p": 2.6, "l": 6.0, "h": 13.4, "f": 7.0}, {"id": "macarron-con-queso", "nombre": "Macarrón con queso", "grupo": "Cereales C/G", "medida": "taza", "g1": 200.0, "porc": 0.25, "k": 108.0, "p": 4.2, "l": 5.6, "h": 10.1, "f": 0.0}, {"id": "chile-cuaresmeno", "nombre": "Chile cuaresmeño", "grupo": "Verduras", "medida": "pieza", "g1": 25.0, "porc": 2, "k": 16.0, "p": 0.8, "l": 0.2, "h": 3.7, "f": 0.5}, {"id": "cabeza-de-pescado", "nombre": "Cabeza de pescado", "grupo": "AOA MBAG", "medida": "gramos", "g1": 0.1, "porc": 400, "k": 40.0, "p": 8.2, "l": 0.5, "h": 0.0, "f": 0.0}, {"id": "filete-de-pescado", "nombre": "Filete de pescado", "grupo": "AOA MBAG", "medida": "gramos", "g1": 1.0, "porc": 40, "k": 36.0, "p": 7.5, "l": 0.5, "h": 0.0, "f": 0.0}, {"id": "filete-de-pescado-blanco-del-nilo", "nombre": "Filete de pescado Blanco del Nilo", "grupo": "AOA MBAG", "medida": "gramos", "g1": 1.0, "porc": 40, "k": 36.0, "p": 7.2, "l": 0.6, "h": 0.4, "f": 0.0}, {"id": "nopal-cocido", "nombre": "Nopal cocido", "grupo": "Verduras", "medida": "taza", "g1": 149.0, "porc": 1, "k": 22.0, "p": 2.0, "l": 0.1, "h": 4.9, "f": 3.0}, {"id": "nopal-crudo", "nombre": "Nopal crudo", "grupo": "Verduras", "medida": "pieza", "g1": 67.0, "porc": 2, "k": 22.0, "p": 1.8, "l": 0.1, "h": 4.5, "f": 3.2}, {"id": "nopal-crudo-de-cambray", "nombre": "Nopal crudo de cambray", "grupo": "Verduras", "medida": "pieza", "g1": 25.0, "porc": 4, "k": 27.0, "p": 1.7, "l": 0.3, "h": 2.9, "f": 3.5}, {"id": "jitomate", "nombre": "Jitomate", "grupo": "Verduras", "medida": "pieza", "g1": 116.0, "porc": 1, "k": 21.0, "p": 1.0, "l": 2.0, "h": 4.5, "f": 1.4}, {"id": "jitomate-bola", "nombre": "Jitomate bola", "grupo": "Verduras", "medida": "pieza", "g1": 108.0, "porc": 1, "k": 19.0, "p": 1.0, "l": 0.2, "h": 4.2, "f": 1.3}, {"id": "jitomate-cereza", "nombre": "Jitomate cereza", "grupo": "Verduras", "medida": "pieza", "g1": 23.8, "porc": 4, "k": 17.0, "p": 0.8, "l": 2.0, "h": 3.7, "f": 1.1}, {"id": "cebolla-blanca-rebanada", "nombre": "Cebolla blanca rebanada", "grupo": "Verduras", "medida": "taza", "g1": 116.0, "porc": 0.5, "k": 23.0, "p": 0.6, "l": 0.1, "h": 5.4, "f": 1.0}, {"id": "cebolla-cocida", "nombre": "Cebolla cocida", "grupo": "Verduras", "medida": "taza", "g1": 212.0, "porc": 0.25, "k": 23.0, "p": 0.7, "l": 0.1, "h": 5.3, "f": 0.7}, {"id": "cebolla-morada-rebanada", "nombre": "Cebolla morada rebanada", "grupo": "Verduras", "medida": "taza", "g1": 116.0, "porc": 0.5, "k": 20.0, "p": 0.5, "l": 0.1, "h": 4.4, "f": 0.7}, {"id": "corazon-de-lechuga-crudo", "nombre": "Corazón de lechuga crudo", "grupo": "Verduras", "medida": "pieza", "g1": 124.0, "porc": 1, "k": 12.0, "p": 1.2, "l": 0.0, "h": 4.4, "f": 1.9}, {"id": "lechuga", "nombre": "Lechuga", "grupo": "Verduras", "medida": "taza", "g1": 45.0, "porc": 3, "k": 23.0, "p": 1.7, "l": 0.4, "h": 4.5, "f": 2.8}, {"id": "lechuga-francesa", "nombre": "lechuga francesa", "grupo": "Verduras", "medida": "taza", "g1": 70.0, "porc": 2, "k": 24.0, "p": 1.7, "l": 0.4, "h": 4.6, "f": 2.9}, {"id": "chicharos-y-zanahorias-congelados", "nombre": "Chícharos y zanahorias congelados", "grupo": "Verduras", "medida": "taza", "g1": 192.0, "porc": 0.25, "k": 25.0, "p": 1.6, "l": 0.2, "h": 5.3, "f": 1.6}, {"id": "jugo-de-zanahorias", "nombre": "Jugo de zanahorias", "grupo": "Verduras", "medida": "taza", "g1": 236.0, "porc": 0.25, "k": 24.0, "p": 0.6, "l": 0.1, "h": 5.5, "f": 0.5}, {"id": "zanahoria-baby-miniatura-cruda", "nombre": "Zanahoria baby (miniatura) cruda", "grupo": "Verduras", "medida": "pieza", "g1": 15.0, "porc": 4, "k": 21.0, "p": 0.4, "l": 0.1, "h": 4.9, "f": 1.7}, {"id": "espinaca-cocida", "nombre": "Espinaca cocida", "grupo": "Verduras", "medida": "taza", "g1": 180.0, "porc": 0.5, "k": 21.0, "p": 2.7, "l": 0.2, "h": 3.4, "f": 3.2}, {"id": "espinaca-cruda", "nombre": "Espinaca cruda", "grupo": "Verduras", "medida": "taza", "g1": 60.0, "porc": 2, "k": 28.0, "p": 3.4, "l": 0.4, "h": 4.4, "f": 2.6}, {"id": "espagueti-con-espinaca-cocido", "nombre": "Espagueti con espinaca cocido", "grupo": "Cereales S/G", "medida": "taza", "g1": 142.4, "porc": 0.33, "k": 61.0, "p": 2.1, "l": 0.3, "h": 12.2, "f": 0.0}, {"id": "papaloquelite-crudo", "nombre": "Papaloquelite crudo", "grupo": "Verduras", "medida": "taza", "g1": 54.0, "porc": 2, "k": 24.0, "p": 1.9, "l": 0.3, "h": 3.1, "f": 1.0}, {"id": "jugo-de-papaya", "nombre": "Jugo de papaya", "grupo": "Frutas", "medida": "taza", "g1": 239.4, "porc": 0.33, "k": 45.0, "p": 0.1, "l": 0.1, "h": 11.5, "f": 0.5}, {"id": "papaya-hawaiana", "nombre": "Papaya Hawaiana", "grupo": "Frutas", "medida": "pieza", "g1": 228.0, "porc": 0.5, "k": 45.0, "p": 0.7, "l": 0.2, "h": 11.2, "f": 2.1}, {"id": "pasta-de-tomate", "nombre": "Pasta de tomate", "grupo": "Verduras", "medida": "cucharada", "g1": 15.0, "porc": 2, "k": 25.0, "p": 1.3, "l": 0.1, "h": 5.7, "f": 1.2}, {"id": "pasta-cocida", "nombre": "Pasta cocida", "grupo": "Cereales S/G", "medida": "taza", "g1": 120.0, "porc": 0.5, "k": 78.0, "p": 3.2, "l": 1.1, "h": 14.0, "f": 0.0}, {"id": "gajos-de-naranja", "nombre": "Gajos de naranja", "grupo": "Frutas", "medida": "taza", "g1": 150.0, "porc": 1, "k": 71.0, "p": 1.4, "l": 0.2, "h": 17.7, "f": 3.6}, {"id": "jugo-de-naranja-natural", "nombre": "Jugo de naranja natural", "grupo": "Frutas", "medida": "taza", "g1": 240.0, "porc": 0.5, "k": 54.0, "p": 8.0, "l": 0.2, "h": 12.5, "f": 0.2}, {"id": "naranja", "nombre": "Naranja", "grupo": "Frutas", "medida": "pieza", "g1": 76.0, "porc": 2, "k": 70.0, "p": 1.4, "l": 0.2, "h": 18.0, "f": 3.7}, {"id": "fresa-entera", "nombre": "Fresa entera", "grupo": "Frutas", "medida": "pieza", "g1": 12.0, "porc": 17, "k": 65.0, "p": 1.4, "l": 0.6, "h": 15.7, "f": 4.1}, {"id": "jugo-de-mango", "nombre": "Jugo de mango", "grupo": "Frutas", "medida": "taza", "g1": 240.0, "porc": 0.5, "k": 61.0, "p": 0.1, "l": 0.1, "h": 15.7, "f": 0.4}, {"id": "mango-ataulfo", "nombre": "Mango Ataúlfo", "grupo": "Frutas", "medida": "pieza", "g1": 124.0, "porc": 0.5, "k": 40.0, "p": 0.3, "l": 0.2, "h": 10.5, "f": 1.1}, {"id": "mango-criollo", "nombre": "Mango Criollo", "grupo": "Frutas", "medida": "pieza", "g1": 108.0, "porc": 1.5, "k": 57.0, "p": 1.3, "l": 0.0, "h": 14.6, "f": 1.8}, {"id": "espagueti-con-espinaca-cocido-2", "nombre": "Espagueti con espinaca cocido", "grupo": "Cereales S/G", "medida": "taza", "g1": 142.4, "porc": 0.33, "k": 61.0, "p": 2.1, "l": 0.3, "h": 12.2, "f": 0.0}, {"id": "pepino-con-cascara-rebanado", "nombre": "Pepino con cáscara rebanado", "grupo": "Verduras", "medida": "taza", "g1": 104.0, "porc": 1, "k": 16.0, "p": 0.7, "l": 0.1, "h": 3.8, "f": 0.5}, {"id": "aderezo-de-yogurt-y-pepino", "nombre": "Aderezo de yogurt y pepino", "grupo": "Grasas con proteínas", "medida": "cucharada", "g1": 14.0, "porc": 4, "k": 74.0, "p": 1.9, "l": 5.6, "h": 3.7, "f": 0.1}, {"id": "chile-ancho", "nombre": "Chile ancho", "grupo": "Verduras", "medida": "gramos", "g1": 1.0, "porc": 6, "k": 20.0, "p": 0.7, "l": 0.6, "h": 3.8, "f": 0.0}, {"id": "chile-chilaca", "nombre": "Chile chilaca", "grupo": "Verduras", "medida": "pieza", "g1": 25.0, "porc": 2, "k": 20.0, "p": 0.8, "l": 0.2, "h": 3.7, "f": 0.5}, {"id": "jitomate-deshidratado", "nombre": "Jitomate deshidratado", "grupo": "Verduras", "medida": "pieza", "g1": 2.0, "porc": 5, "k": 23.0, "p": 1.5, "l": 0.5, "h": 4.3, "f": 2.0}, {"id": "elote-amarillo-cocido", "nombre": "Elote amarillo cocido", "grupo": "Cereales S/G", "medida": "pieza", "g1": 44.0, "porc": 1.5, "k": 71.0, "p": 2.2, "l": 0.8, "h": 16.6, "f": 1.9}, {"id": "elote-amarillo-congelado", "nombre": "Elote amarillo congelado", "grupo": "Cereales S/G", "medida": "pieza", "g1": 47.3, "porc": 1.5, "k": 70.0, "p": 2.3, "l": 0.6, "h": 16.7, "f": 2.0}, {"id": "elote-amarillo-crudo", "nombre": "Elote amarillo crudo", "grupo": "Cereales S/G", "medida": "pieza", "g1": 53.4, "porc": 1.33, "k": 61.0, "p": 2.3, "l": 0.9, "h": 17.7, "f": 2.0}, {"id": "calabaza-de-castilla-cocida", "nombre": "Calabaza de castilla cocida", "grupo": "Verduras", "medida": "taza", "g1": 220.0, "porc": 0.5, "k": 22.0, "p": 0.8, "l": 0.1, "h": 5.4, "f": 1.2}, {"id": "calabaza-zapallo-cocida", "nombre": "Calabaza zapallo cocida", "grupo": "Verduras", "medida": "pieza", "g1": 220.0, "porc": 0.25, "k": 22.0, "p": 0.5, "l": 0.0, "h": 5.8, "f": 1.8}, {"id": "flor-de-calabaza-cocida", "nombre": "Flor de calabaza cocida", "grupo": "Verduras", "medida": "taza", "g1": 134.0, "porc": 1, "k": 20.0, "p": 1.4, "l": 0.2, "h": 4.4, "f": 1.2}, {"id": "chayote-cocido-picado", "nombre": "Chayote cocido picado", "grupo": "Verduras", "medida": "taza", "g1": 160.0, "porc": 0.5, "k": 19.0, "p": 0.5, "l": 0.4, "h": 4.1, "f": 2.2}, {"id": "chayote-crudo", "nombre": "Chayote crudo", "grupo": "Verduras", "medida": "pieza", "g1": 200.0, "porc": 0.5, "k": 19.0, "p": 0.8, "l": 0.1, "h": 4.5, "f": 1.7}, {"id": "raiz-de-chayote", "nombre": "Raíz de chayote", "grupo": "Cereales S/G", "medida": "gramos", "g1": 0.8, "porc": 100, "k": 63.0, "p": 1.6, "l": 2.0, "h": 14.2, "f": 0.3}, {"id": "apio-cocido", "nombre": "Apio cocido", "grupo": "Verduras", "medida": "taza", "g1": 150.0, "porc": 0.5, "k": 14.0, "p": 0.6, "l": 0.1, "h": 3.0, "f": 1.2}, {"id": "apio-crudo", "nombre": "Apio crudo", "grupo": "Verduras", "medida": "taza", "g1": 90.0, "porc": 1, "k": 14.0, "p": 0.6, "l": 0.2, "h": 2.7, "f": 2.5}, {"id": "papilla-de-chabacano-con-tapioca", "nombre": "Papilla de chabacano con tapioca", "grupo": "Frutas", "medida": "frasco", "g1": 130.7, "porc": 0.75, "k": 61.0, "p": 0.3, "l": 0.0, "h": 16.9, "f": 1.5}, {"id": "uva", "nombre": "Uva", "grupo": "Frutas", "medida": "pieza", "g1": 4.8, "porc": 18, "k": 61.0, "p": 0.6, "l": 0.5, "h": 15.3, "f": 1.1}, {"id": "uva-blanca", "nombre": "Uva blanca", "grupo": "Frutas", "medida": "taza", "g1": 87.0, "porc": 1, "k": 59.0, "p": 0.6, "l": 0.3, "h": 15.0, "f": 0.8}, {"id": "uva-con-semilla", "nombre": "Uva con semilla", "grupo": "Frutas", "medida": "taza", "g1": 114.0, "porc": 1, "k": 76.0, "p": 0.7, "l": 0.4, "h": 19.6, "f": 1.0}, {"id": "orejones-de-pera", "nombre": "Orejones de pera", "grupo": "Frutas", "medida": "pieza", "g1": 18.0, "porc": 1, "k": 47.0, "p": 0.3, "l": 0.1, "h": 12.5, "f": 1.3}, {"id": "papilla-de-pera", "nombre": "Papilla de pera", "grupo": "Frutas", "medida": "frasco", "g1": 130.7, "porc": 0.75, "k": 56.0, "p": 0.3, "l": 0.1, "h": 13.3, "f": 1.2}, {"id": "papilla-de-pera-y-pina", "nombre": "Papilla de pera y piña", "grupo": "Frutas", "medida": "frasco", "g1": 130.0, "porc": 1, "k": 57.0, "p": 0.4, "l": 0.3, "h": 14.8, "f": 3.4}, {"id": "durazno-amarillo", "nombre": "Durazno amarillo", "grupo": "Frutas", "medida": "pieza", "g1": 76.5, "porc": 2, "k": 60.0, "p": 1.4, "l": 0.2, "h": 14.6, "f": 2.3}, {"id": "durazno-con-azucar-congelado", "nombre": "Durazno con azúcar congelado", "grupo": "Frutas", "medida": "taza", "g1": 252.0, "porc": 0.25, "k": 59.0, "p": 0.4, "l": 0.1, "h": 15.0, "f": 1.1}, {"id": "durazno-en-almibar", "nombre": "Durazno en almíbar", "grupo": "Frutas", "medida": "taza", "g1": 252.0, "porc": 0.5, "k": 68.0, "p": 0.6, "l": 0.1, "h": 18.3, "f": 1.7}, {"id": "barra-de-cereal-con-fruta", "nombre": "Barra de cereal con fruta", "grupo": "Cereales S/G", "medida": "pieza", "g1": 14.0, "porc": 1.5, "k": 72.0, "p": 1.2, "l": 0.2, "h": 16.3, "f": 1.6}, {"id": "cereal-avena-flakes", "nombre": "Cereal Avena Flakes", "grupo": "Cereales S/G", "medida": "taza", "g1": 25.3, "porc": 0.75, "k": 68.0, "p": 1.9, "l": 1.1, "h": 12.6, "f": 1.9}, {"id": "cereal-chewy-para-ninos-varios-sabores", "nombre": "Cereal Chewy para Niños Varios Sabores", "grupo": "Cereales S/G", "medida": "pieza", "g1": 28.0, "porc": 0.5, "k": 52.0, "p": 0.9, "l": 0.7, "h": 10.5, "f": 1.2}, {"id": "cereal-de-galletas-de-chispa-de-chocolate", "nombre": "Cereal de galletas de chispa de chocolate", "grupo": "Cereales S/G", "medida": "taza", "g1": 30.0, "porc": 0.5, "k": 60.0, "p": 0.5, "l": 0.8, "h": 13.0, "f": 0.6}, {"id": "galleta-de-barras-de-higo", "nombre": "Galleta de barras de higo", "grupo": "Cereales S/G", "medida": "pieza", "g1": 16.0, "porc": 1, "k": 56.0, "p": 0.6, "l": 1.2, "h": 11.3, "f": 0.7}, {"id": "galleta-de-animalito", "nombre": "Galleta de animalito", "grupo": "Cereales S/G", "medida": "pieza", "g1": 2.5, "porc": 6, "k": 68.0, "p": 1.1, "l": 2.1, "h": 11.3, "f": 0.2}, {"id": "cereal-con-almendras-y-pasas", "nombre": "Cereal con almendras y pasas", "grupo": "Cereales S/G", "medida": "taza", "g1": 57.6, "porc": 0.33, "k": 70.0, "p": 1.5, "l": 0.7, "h": 16.5, "f": 1.6}, {"id": "hojuelas-de-avena-endulzadas-con-miel-y-almendras", "nombre": "Hojuelas de avena endulzadas con miel y almendras", "grupo": "Cereales S/G", "medida": "taza", "g1": 42.4, "porc": 0.33, "k": 59.0, "p": 1.1, "l": 1.2, "h": 11.3, "f": 0.7}, {"id": "hojuelas-fortificadas-de-trigo-entero-almendras-nueces-y-miel", "nombre": "Hojuelas fortificadas de trigo entero, almendras, nueces y miel", "grupo": "Cereales S/G", "medida": "taza", "g1": 60.0, "porc": 0.25, "k": 58.0, "p": 1.5, "l": 1.3, "h": 11.4, "f": 1.3}, {"id": "atole-sabor-nuez", "nombre": "Atole sabor nuez", "grupo": "Cereales S/G", "medida": "cucharada", "g1": 9.0, "porc": 2, "k": 68.0, "p": 0.1, "l": 0.8, "h": 15.1, "f": 0.1}, {"id": "barrita-de-granola-con-pasitas-y-nuez", "nombre": "Barrita de granola con pasitas y nuez", "grupo": "Cereales C/G", "medida": "pieza", "g1": 28.0, "porc": 0.75, "k": 97.0, "p": 1.7, "l": 4.4, "h": 13.5, "f": 1.2}, {"id": "bimbo-multigrano-nuez", "nombre": "Bimbo Multigrano Nuez", "grupo": "Cereales C/G", "medida": "pieza", "g1": 34.0, "porc": 0.5, "k": 89.0, "p": 1.5, "l": 5.0, "h": 9.5, "f": 1.0}, {"id": "cereal-de-maiz-reventado-sabor-chocolate-y-crema-de-cacahuate", "nombre": "Cereal de maíz reventado sabor chocolate y crema de cacahuate", "grupo": "Cereales S/G", "medida": "taza", "g1": 42.4, "porc": 0.33, "k": 61.0, "p": 0.9, "l": 1.6, "h": 10.6, "f": 0.6}, {"id": "barra-de-granola-con-cacahuate", "nombre": "Barra de granola con cacahuate", "grupo": "Cereales C/G", "medida": "pieza", "g1": 57.6, "porc": 0.33, "k": 87.0, "p": 1.4, "l": 5.0, "h": 11.0, "f": 0.7}, {"id": "galleta-de-crema-de-cacahuate", "nombre": "Galleta de crema de cacahuate", "grupo": "Cereales C/G", "medida": "pieza", "g1": 15.3, "porc": 1.5, "k": 108.0, "p": 2.1, "l": 5.3, "h": 13.2, "f": 0.5}, {"id": "anchoa-con-aceite", "nombre": "Anchoa con aceite", "grupo": "AOA BAG", "medida": "pieza", "g1": 4.0, "porc": 6, "k": 50.0, "p": 7.0, "l": 2.3, "h": 0.0, "f": 0.0}, {"id": "atun-blanco-en-aceite", "nombre": "Atún blanco en aceite", "grupo": "AOA BAG", "medida": "gramos", "g1": 1.0, "porc": 30, "k": 56.0, "p": 8.0, "l": 2.4, "h": 0.0, "f": 0.0}, {"id": "pera-mantequilla", "nombre": "Pera Mantequilla", "grupo": "Frutas", "medida": "pieza", "g1": 140.0, "porc": 0.5, "k": 41.0, "p": 0.3, "l": 0.1, "h": 10.8, "f": 2.2}, {"id": "galleta-con-chispas-de-chocolate-con-mantequilla-caseras", "nombre": "Galleta con chispas de chocolate con mantequilla caseras", "grupo": "Cereales C/G", "medida": "pieza", "g1": 16.0, "porc": 1.5, "k": 117.0, "p": 1.4, "l": 6.8, "h": 14.0, "f": null}, {"id": "hot-cake-con-mantequilla-congelado", "nombre": "Hot cake con mantequilla congelado", "grupo": "Cereales C/G", "medida": "pieza", "g1": 38.0, "porc": 1, "k": 89.0, "p": 2.0, "l": 2.6, "h": 14.3, "f": 0.4}, {"id": "avena-instantanea-quaker-sabor-fresas-con-crema", "nombre": "Avena Instantánea Quaker Sabor Fresas con Crema", "grupo": "Cereales S/G", "medida": "sobre", "g1": 36.0, "porc": 0.5, "k": 66.0, "p": 2.9, "l": 1.3, "h": 12.2, "f": 1.1}, {"id": "camote-con-miel", "nombre": "Camote con miel", "grupo": "Cereales S/G", "medida": "taza", "g1": 178.8, "porc": 0.33, "k": 59.0, "p": 0.3, "l": 0.0, "h": 14.4, "f": 1.2}, {"id": "anillos-de-trigo-azucarados-de-colores", "nombre": "Anillos de trigo azucarados de colores", "grupo": "Cereales S/G", "medida": "taza", "g1": 32.0, "porc": 0.5, "k": 63.0, "p": 1.0, "l": 0.6, "h": 13.4, "f": 0.2}, {"id": "burbujas-de-maiz-azucaradas", "nombre": "Burbujas de maíz azucaradas", "grupo": "Cereales S/G", "medida": "taza", "g1": 32.0, "porc": 0.5, "k": 59.0, "p": 0.7, "l": 0.1, "h": 14.0, "f": 0.2}, {"id": "galletas-marias-azucaradas", "nombre": "Galletas Marías azucaradas", "grupo": "Cereales S/G", "medida": "pieza", "g1": 4.0, "porc": 4, "k": 63.0, "p": 1.0, "l": 1.5, "h": 11.5, "f": 0.1}, {"id": "atole-sabor-chocolate", "nombre": "Atole sabor chocolate", "grupo": "Cereales S/G", "medida": "cucharada", "g1": 9.0, "porc": 2, "k": 67.0, "p": 0.2, "l": 0.7, "h": 15.0, "f": 0.3}, {"id": "papaya-picada", "nombre": "Papaya picada", "grupo": "Frutas", "medida": "taza", "g1": 140.0, "porc": 1, "k": 55.0, "p": 0.8, "l": 0.1, "h": 13.7, "f": 2.5}, {"id": "guayaba", "nombre": "Guayaba", "grupo": "Frutas", "medida": "pieza", "g1": 41.3, "porc": 3, "k": 63.0, "p": 1.0, "l": 0.7, "h": 14.8, "f": 7.0}, {"id": "guayaba-rosa", "nombre": "Guayaba rosa", "grupo": "Frutas", "medida": "pieza", "g1": 77.0, "porc": 1, "k": 52.0, "p": 2.0, "l": 0.7, "h": 11.0, "f": 4.1}, {"id": "guayabas-en-almibar", "nombre": "Guayabas en almíbar", "grupo": "Frutas", "medida": "pieza", "g1": 45.0, "porc": 1, "k": 40.0, "p": 0.0, "l": 0.0, "h": 12.6, "f": 2.7}, {"id": "gajos-de-mandarina", "nombre": "Gajos de mandarina", "grupo": "Frutas", "medida": "taza", "g1": 105.0, "porc": 1, "k": 56.0, "p": 0.9, "l": 0.3, "h": 140.0, "f": 1.9}, {"id": "jugo-de-mandarina-natural", "nombre": "Jugo de mandarina natural", "grupo": "Frutas", "medida": "taza", "g1": 240.0, "porc": 0.5, "k": 46.0, "p": 0.8, "l": 0.0, "h": 11.3, "f": 1.4}, {"id": "mandarina", "nombre": "Mandarina", "grupo": "Frutas", "medida": "pieza", "g1": 64.0, "porc": 2, "k": 68.0, "p": 1.0, "l": 0.4, "h": 17.0, "f": 2.3}]
+;
+const META={k:1800,p:110,c:200,f:55,fib:25};
+const MEALS=[{id:'des',ico:'sun',nm:'Desayuno'},{id:'com',ico:'utensils',nm:'Comida'},{id:'cen',ico:'moon',nm:'Cena'},{id:'sna',ico:'apple',nm:'Snacks'}];
+
+const ICONS={
+ sun:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+ utensils:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 11v11M11 2v20M11 8c0-3 1.5-6 4-6s4 3 4 6-1 5-4 5v9"/></svg>',
+ moon:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+ apple:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c-1-3-4-4-6-3-2.5 1.3-2.7 5 0 9 1.4 2.1 2.8 4 4.5 4 .8 0 1-.4 1.5-.4s.7.4 1.5.4c1.7 0 3.1-1.9 4.5-4 2.7-4 2.5-7.7 0-9-2-1-5 0-6 3z"/><path d="M12 8c0-2 .5-3.5 2-4.5"/></svg>'
+};
+function ICON(name){return ICONS[name]||''}
+
+let day={des:[],com:[],cen:[],sna:[]};
+let saved=[];
+const $=id=>document.getElementById(id);
+$('kgoal').textContent=META.k;$('pg').textContent=META.p;$('cg').textContent=META.c;$('fg').textContent=META.f;if(document.getElementById('fibg'))document.getElementById('fibg').textContent=META.fib;
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+const STEPS_MED=[0.25,0.33,0.5,0.67,0.75,1,1.25,1.33,1.5,1.67,1.75,2,2.5,3,3.5,4,5];
+function fracStr(v){const w=Math.floor(v+0.001),r=Math.round((v-w)*100)/100;const fr={0.25:'¼',0.33:'⅓',0.5:'½',0.67:'⅔',0.75:'¾'}[r];if(r===0||r<0.05)return String(w);if(w===0)return fr||String(v);return w+(fr||'')}
+function qtyLabel(d){return d.unit==='gramos'?d.qty+' g':fracStr(d.qty)+' '+cap(d.medida)+(d.qty>1?'s':'')}
+function renderMeals(){
+ $('meals').innerHTML=MEALS.map(m=>{
+  const items=day[m.id];let k=0;items.forEach(d=>k+=d.k);
+  const rows=items.map((d,i)=>{
+   if(d.tipo==='platillo'){
+    const sub=d.ings.map(g=>`<div class="subing">${g.nombre} · ${qtyLabel(g)}</div>`).join('');
+    return `<div class="mi"><div class="info" onclick="togglePlato('${m.id}',${i})"><div class="n">${d.nombre}<span class="tag">PLATILLO</span></div><div class="m">${d.ings.length} alimentos · P ${d.p.toFixed(1)} C ${d.c.toFixed(1)} G ${d.f.toFixed(1)}</div>${d.open?sub:''}</div><div class="kc">${Math.round(d.k)}</div><button class="del" onclick="delItem('${m.id}',${i},event)">×</button></div>`;
+   }
+   return `<div class="mi"><div class="info"><div class="n">${d.nombre}</div><div class="m">${qtyLabel(d)} · P ${d.p.toFixed(1)} C ${d.c.toFixed(1)} G ${d.f.toFixed(1)}</div></div><div class="kc">${Math.round(d.k)}</div><button class="del" onclick="delItem('${m.id}',${i},event)">×</button></div>`;
+  }).join('');
+  return `<div class="meal"><div class="mhead"><div class="mt"><span class="ico">${ICON(m.ico)}</span><span class="nm">${m.nm}</span></div><div class="sub">${Math.round(k)} <small>kcal</small></div></div><div class="mitems">${rows}</div><div class="addrow"><button class="addbtn2" onclick="openSearch('${m.id}')">+ Agregar alimento</button><button class="addbtn2" onclick="openPlatilloMenu('${m.id}')">+ Platillo</button></div></div>`;
+ }).join('');
+}
+function togglePlato(m,i){day[m][i].open=!day[m][i].open;renderMeals()}
+let curMeal=null,cur=null,curUnit='medida',curQty=1,targetPlato=null;
+function openSearch(mealId){
+ curMeal=mealId;targetPlato=null;
+ $('sheet').innerHTML=`<div class="stitle">Agregar a ${MEALS.find(m=>m.id===mealId).nm}</div><div class="search"><input id="q" placeholder="Busca un alimento o platillo..." autocomplete="off"></div><div class="results" id="res"></div>`;
+ $('modal').classList.add('show');setTimeout(()=>$('q').focus(),100);
+ $('q').addEventListener('input',doSearch);
+}
+function doSearch(e){
+ const v=e.target.value.toLowerCase().trim();if(v.length<2){$('res').innerHTML='';return}
+ const sp=saved.filter(s=>s.nombre.toLowerCase().includes(v)).map(s=>`<div class="ritem" onclick="addSavedPlato('${s.id}')"><div class="nm">${s.nombre}<span class="tag">MI PLATILLO</span></div><div class="mt">${s.ings.length} alimentos · ${Math.round(s.k)} kcal</div></div>`).join('');
+ const m=FOODS.filter(f=>f.nombre.toLowerCase().includes(v)).slice(0,10);
+ const sf=m.map(f=>`<div class="ritem" onclick="openFood('${f.id}')"><div class="nm">${f.nombre}</div><div class="mt">${cap(f.medida)} · ${Math.round(f.k/(f.g1*f.porc)*f.g1)} kcal por ${f.medida==='gramos'?'100 g':'1 '+f.medida}</div></div>`).join('');
+ $('res').innerHTML=(sp+sf)||'<div class="ritem"><div class="nm">Sin resultados</div></div>';
+}
+function addSavedPlato(id){const s=saved.find(x=>x.id===id);day[curMeal].push(JSON.parse(JSON.stringify({tipo:'platillo',nombre:s.nombre,ings:s.ings,k:s.k,p:s.p,c:s.c,f:s.f,fib:s.fib||0,open:false})));closeM();update()}
+function openFood(id){cur=FOODS.find(f=>f.id===id);curUnit=cur.medida==='gramos'?'gramos':'medida';curQty=cur.medida==='gramos'?100:1;renderFood()}
+function fracDisp(v){return curUnit==='gramos'?v+' <small>g</small>':fracStr(v)}
+function renderFood(){
+ const f=cur,showMedida=f.medida!=='gramos';const ctx=targetPlato!==null?'Agregar al platillo':'Agregar';
+ $('sheet').innerHTML=`<h2>${f.nombre}</h2><div class="grp">${f.grupo.replace(/AOA [A-Z]+/,'Origen animal').replace(' S/G','').replace(' C/G','')}</div><div class="qstepper"><button class="qbtn" onclick="stepQ(-1)">−</button><div class="qdisp" id="qdisp">${fracDisp(curQty)}</div><button class="qbtn" onclick="stepQ(1)">+</button></div><div class="unitsel">${showMedida?`<button id="um" class="${curUnit==='medida'?'on':''}" onclick="setU('medida')">${cap(f.medida)}${curQty>1?'s':''}</button>`:''}<button class="${curUnit==='gramos'?'on':''}" onclick="setU('gramos')">Gramos</button></div><div class="preview"><div class="pk" id="pvk">0 kcal</div><div class="macros" id="pvm"></div></div><button class="addbtn" onclick="confirmFood()">${ctx}</button><button class="cancel" onclick="${targetPlato!==null?'backToPlato()':'closeM()'}">Cancelar</button>`;
+ calc();
+}
+function setU(u){curUnit=u;curQty=u==='gramos'?100:1;renderFood()}
+function stepQ(dir){if(curUnit==='gramos'){curQty=Math.max(5,curQty+dir*10)}else{let i=STEPS_MED.findIndex(x=>Math.abs(x-curQty)<0.02);if(i===-1){i=STEPS_MED.findIndex(x=>x>curQty);if(i===-1)i=STEPS_MED.length-1}else{i=Math.max(0,Math.min(STEPS_MED.length-1,i+dir))}curQty=STEPS_MED[i]}$('qdisp').innerHTML=fracDisp(curQty);const um=$('um');if(um)um.textContent=cap(cur.medida)+(curQty>1?'s':'');calc()}
+function grams(){return curUnit==='gramos'?curQty:curQty*cur.g1}
+function factor(){return grams()/(cur.g1*cur.porc)}
+function calc(){const ft=factor();$('pvk').textContent=Math.round(cur.k*ft)+' kcal';$('pvm').innerHTML=`P ${(cur.p*ft).toFixed(1)} · C ${(cur.h*ft).toFixed(1)} · G ${(cur.l*ft).toFixed(1)}`}
+function mkItem(){const ft=factor();return{nombre:cur.nombre,unit:curUnit,qty:curQty,medida:cur.medida,k:cur.k*ft,p:cur.p*ft,c:cur.h*ft,f:cur.l*ft,fib:(cur.f||0)*ft}}
+function confirmFood(){if(targetPlato!==null){platoIngs.push(mkItem());backToPlato()}else{day[curMeal].push(mkItem());closeM();update()}}
+let platoNombre='',platoIngs=[],platoSave=false;
+function openPlatilloMenu(mealId){
+ curMeal=mealId;
+ $('modal').classList.add('show');
+ const lista=saved.length?saved.map(s=>`<div class="ritem" onclick="addSavedPlato('${s.id}')" style="display:flex;justify-content:space-between;align-items:center"><div><div class="nm">${s.nombre}<span class="tag">PLATILLO</span></div><div class="mt">${s.ings.length} alimentos · P ${s.p.toFixed(1)} C ${s.c.toFixed(1)} G ${s.f.toFixed(1)}</div></div><div class="kc" style="font-size:14px;font-weight:700;color:var(--amber-deep)">${Math.round(s.k)}</div></div>`).join(''):'<div class="plempty">Aún no tienes platillos guardados.<br>Arma uno nuevo y guárdalo para reusarlo.</div>';
+ $('sheet').innerHTML=`<div class="stitle">Platillos · ${MEALS.find(m=>m.id===mealId).nm}</div>
+  <button class="addbtn" onclick="openPlato('${mealId}')" style="margin-bottom:18px">+ Armar platillo nuevo</button>
+  <div style="font-size:11px;color:var(--taupe-deep);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:10px">Mis platillos guardados</div>
+  <div class="results">${lista}</div>
+  <button class="cancel" onclick="closeM()">Cancelar</button>`;
+}
+ function openPlato(mealId){curMeal=mealId;platoNombre='';platoIngs=[];platoSave=false;$('modal').classList.add('show');renderPlato()}
+function renderPlato(){
+ let k=0,p=0,c=0,f=0,fib=0;platoIngs.forEach(d=>{k+=d.k;p+=d.p;c+=d.c;f+=d.f;fib+=(d.fib||0)});
+ const ings=platoIngs.length?platoIngs.map((d,i)=>`<div class="pling"><div class="info"><div class="n">${d.nombre}</div><div class="m">${qtyLabel(d)}</div></div><div class="kc">${Math.round(d.k)}</div><button class="del" onclick="delPlatoIng(${i})">×</button></div>`).join(''):'<div class="plempty">Aún no agregas alimentos.<br>Toca "Agregar alimento" para empezar.</div>';
+ $('sheet').innerHTML=`<div class="stitle">Armar platillo · ${MEALS.find(m=>m.id===curMeal).nm}</div><input class="nameinput" id="pname" placeholder="Nombre del platillo (ej. Mis chilaquiles)" value="${platoNombre}"><div class="plings">${ings}</div><button class="pladd" onclick="platoAddFood()">+ Agregar alimento</button><div class="pltotal"><div><div style="font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:.16em;margin-bottom:4px;font-weight:700">Total del platillo</div><div class="pk">${Math.round(k)} kcal</div></div><div class="macros">P ${p.toFixed(1)}<br>C ${c.toFixed(1)}<br>G ${f.toFixed(1)}</div></div><div class="savechk" onclick="toggleSave()"><div class="box ${platoSave?'on':''}">${platoSave?'✓':''}</div><div>Guardar en Mis platillos<br><span style="font-size:11px;color:var(--txt2);font-style:italic">para reusarlo otro día</span></div></div><button class="addbtn" onclick="finishPlato()" ${platoIngs.length===0?'disabled':''}>Agregar a mi día</button><button class="cancel" onclick="closeM()">Cancelar</button>`;
+ $('pname').addEventListener('input',e=>platoNombre=e.target.value);
+}
+function toggleSave(){platoSave=!platoSave;renderPlato()}
+function platoAddFood(){platoNombre=$('pname').value;targetPlato=true;$('sheet').innerHTML=`<div class="stitle">Agregar al platillo</div><div class="search"><input id="q" placeholder="Busca un alimento..." autocomplete="off"></div><div class="results" id="res"></div>`;setTimeout(()=>$('q').focus(),100);$('q').addEventListener('input',e=>{const v=e.target.value.toLowerCase().trim();if(v.length<2){$('res').innerHTML='';return}const m=FOODS.filter(f=>f.nombre.toLowerCase().includes(v)).slice(0,10);$('res').innerHTML=m.length?m.map(f=>`<div class="ritem" onclick="openFood('${f.id}')"><div class="nm">${f.nombre}</div><div class="mt">${cap(f.medida)} · ${Math.round(f.k/(f.g1*f.porc)*f.g1)} kcal por ${f.medida==='gramos'?'100 g':'1 '+f.medida}</div></div>`).join(''):'<div class="ritem"><div class="nm">Sin resultados</div></div>'})}
+function backToPlato(){targetPlato=null;renderPlato()}
+function delPlatoIng(i){platoIngs.splice(i,1);renderPlato()}
+function finishPlato(){const nombre=($('pname')?$('pname').value:platoNombre)||'Mi platillo';let k=0,p=0,c=0,f=0,fib=0;platoIngs.forEach(d=>{k+=d.k;p+=d.p;c+=d.c;f+=d.f;fib+=(d.fib||0)});const plato={tipo:'platillo',nombre,ings:JSON.parse(JSON.stringify(platoIngs)),k,p,c,f,open:false};day[curMeal].push(plato);if(platoSave){saved.push({id:'sv'+Date.now(),nombre,ings:plato.ings,k,p,c,f})}closeM();update()}
+function delItem(meal,i,ev){if(ev)ev.stopPropagation();day[meal].splice(i,1);update()}
+function closeM(){$('modal').classList.remove('show')}
+function update(){let k=0,p=0,c=0,f=0,fib=0;Object.values(day).forEach(arr=>arr.forEach(d=>{k+=d.k;p+=d.p;c+=d.c;f+=d.f;fib+=(d.fib||0)}));$('kcal').textContent=Math.round(k);const rest=META.k-k;$('krest').textContent=rest>0?`faltan ${Math.round(rest)}`:`+${Math.round(-rest)} de más`;$('pv').textContent=p.toFixed(0);$('cv').textContent=c.toFixed(0);$('fv').textContent=f.toFixed(0);$('pf').style.width=Math.min(100,p/META.p*100)+'%';$('cf').style.width=Math.min(100,c/META.c*100)+'%';$('ff').style.width=Math.min(100,f/META.f*100)+'%';if($('fibv'))$('fibv').textContent=Math.round(fib);renderMeals()}
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeM()});
+renderOnb();
+</script>
+</body>
+</html>

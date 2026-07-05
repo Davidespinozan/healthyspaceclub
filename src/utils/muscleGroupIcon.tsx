@@ -9,6 +9,7 @@ const MUSCLE_GROUP_ICON: Record<MuscleGroup, LucideIcon> = {
   hombros: Dumbbell,
   biceps: Dumbbell,
   triceps: Dumbbell,
+  antebrazo: Dumbbell,
   cuadriceps: Dumbbell,
   isquios: Dumbbell,
   gluteo: Dumbbell,

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { calcPortionKcal, calcMealKcal, calcDayKcal } from '../kcalCalc';
 import { calcTDEE, assignPlan } from '../tdee';
+import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField, mealCalorieSplit } from '../nutritionTargets';
 import { scalePlan } from '../scalePlan';
 import { mealPlans } from '../../data/mealPlan';
 
@@ -33,25 +34,167 @@ describe('calcTDEE', () => {
   });
 });
 
-describe('assignPlan', () => {
-  it('Bajar grasa corporal with high TDEE → planB or higher', () => {
-    const plan = assignPlan(3000, 'Bajar grasa corporal'); // 3000*0.80 = 2400
-    expect(plan).toBe('planB');
+describe('assignPlan (banda por meta YA calculada)', () => {
+  it('2400 → planB', () => expect(assignPlan(2400)).toBe('planB'));
+  it('2860 → planA', () => expect(assignPlan(2860)).toBe('planA'));
+  it('1900 → planC', () => expect(assignPlan(1900)).toBe('planC'));
+  it('1500 → planD', () => expect(assignPlan(1500)).toBe('planD'));
+});
+
+/* ───────────────────────────────────────────── */
+/*  computeNutritionTargets (motor único)        */
+/* ───────────────────────────────────────────── */
+describe('computeNutritionTargets', () => {
+  it('déficit 20% para bajar grasa (sin tocar piso)', () => {
+    const t = computeNutritionTargets({ sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 28, activity: 'Moderada', goal: 'Bajar grasa' });
+    expect(t.planGoal).toBeGreaterThan(2100); // ~2755 × 0.80
+    expect(t.planGoal).toBeLessThan(2300);
+    expect(t.capped).toBe(false);
   });
 
-  it('Subir masa muscular with moderate TDEE → planA', () => {
-    const plan = assignPlan(2600, 'Subir masa muscular'); // 2600*1.10 = 2860
-    expect(plan).toBe('planA');
+  it('superávit +12% para ganar músculo (sobre mantenimiento)', () => {
+    const t = computeNutritionTargets({ sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 28, activity: 'Moderada', goal: 'Ganar músculo' });
+    expect(t.planGoal).toBeGreaterThan(t.tdee);
   });
 
-  it('Recomponer with low TDEE → planC', () => {
-    const plan = assignPlan(2000, 'Recomponer'); // 2000*0.95 = 1900
-    expect(plan).toBe('planC');
+  it('piso 1200 protege a mujer pequeña sedentaria en déficit', () => {
+    const t = computeNutritionTargets({ sexo: 'Mujer', pesoKg: 50, estaturaCm: 155, edad: 25, activity: 'Sedentaria', goal: 'Bajar grasa' });
+    expect(t.planGoal).toBeGreaterThanOrEqual(1200);
+    expect(t.capped).toBe(true);
   });
 
-  it('Mantener peso with 2000 TDEE → planC', () => {
-    const plan = assignPlan(2000, 'Mantener peso');
-    expect(plan).toBe('planC');
+  it('la meta nunca baja del BMR', () => {
+    const t = computeNutritionTargets({ sexo: 'Hombre', pesoKg: 120, estaturaCm: 185, edad: 30, activity: 'Sedentaria', goal: 'Bajar grasa' });
+    expect(t.planGoal).toBeGreaterThanOrEqual(t.bmr);
+  });
+
+  it('factor Atleta (1.9) sube el TDEE vs Alta', () => {
+    const base = { sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 28, goal: 'Bienestar integral' };
+    const alta = computeNutritionTargets({ ...base, activity: 'Alta' });
+    const atleta = computeNutritionTargets({ ...base, activity: 'Atleta' });
+    expect(atleta.tdee).toBeGreaterThan(alta.tdee);
+  });
+
+  it('bienestar integral = mantenimiento (planGoal ≈ tdee)', () => {
+    const t = computeNutritionTargets({ sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 28, activity: 'Moderada', goal: 'Bienestar integral' });
+    expect(t.planGoal).toBe(t.tdee);
+  });
+});
+
+/* ───────────────────────────────────────────── */
+/*  Fase 2 — protecciones y avisos               */
+/* ───────────────────────────────────────────── */
+describe('modo bienestar (sin déficit)', () => {
+  it('menor de 18 que quiere bajar → sin déficit', () => {
+    const t = computeNutritionTargets({ sexo: 'Mujer', pesoKg: 55, estaturaCm: 160, edad: 16, activity: 'Sedentaria', goal: 'Bajar grasa' });
+    expect(t.wellnessMode).toBe(true);
+    expect(t.wellnessReason).toBe('menor');
+    expect(t.planGoal).toBe(t.tdee); // mantenimiento, no tdee×0.80
+  });
+
+  it('embarazo/lactancia → sin déficit', () => {
+    const t = computeNutritionTargets({ sexo: 'Mujer', pesoKg: 65, estaturaCm: 165, edad: 30, activity: 'Moderada', goal: 'Bajar grasa', embarazo: true });
+    expect(t.wellnessMode).toBe(true);
+    expect(t.wellnessReason).toBe('embarazo');
+  });
+
+  it('bajo peso (IMC<18.5) que quiere bajar → sin déficit', () => {
+    const t = computeNutritionTargets({ sexo: 'Mujer', pesoKg: 45, estaturaCm: 165, edad: 25, activity: 'Ligera', goal: 'Bajar grasa' });
+    expect(t.wellnessMode).toBe(true);
+    expect(t.wellnessReason).toBe('bajopeso');
+  });
+
+  it('adulto sano que quiere bajar → SÍ déficit (no bienestar)', () => {
+    const t = computeNutritionTargets({ sexo: 'Hombre', pesoKg: 90, estaturaCm: 180, edad: 30, activity: 'Moderada', goal: 'Bajar grasa' });
+    expect(t.wellnessMode).toBe(false);
+  });
+});
+
+describe('BMR Katch-McArdle (cuando hay %grasa)', () => {
+  it('con %grasa el BMR difiere de Mifflin', () => {
+    const base = { sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 28, activity: 'Moderada', goal: 'Bienestar integral' } as const;
+    const mifflin = computeNutritionTargets(base);
+    const katch = computeNutritionTargets({ ...base, grasa: 15 });
+    expect(katch.bmr).not.toBe(mifflin.bmr);
+  });
+});
+
+describe('targetWeightNotice (peso meta)', () => {
+  it('meta bajo un peso saludable → bandera roja', () => {
+    const n = targetWeightNotice({ sexo: 'Mujer', pesoKg: 60, estaturaCm: 165, edad: 25, activity: 'Ligera', goal: 'Bajar grasa', pesoMeta: 48 });
+    expect(n?.kind).toBe('bajopeso-meta');
+  });
+
+  it('sube con IMC alto pero % grasa bajo = músculo (ok)', () => {
+    const n = targetWeightNotice({ sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 28, activity: 'Alta', goal: 'Ganar músculo', pesoMeta: 95, grasa: 12 });
+    expect(n?.kind).toBe('sube-musculo');
+  });
+
+  it('meta saludable pero lejana bajando → por etapas', () => {
+    const n = targetWeightNotice({ sexo: 'Hombre', pesoKg: 100, estaturaCm: 178, edad: 30, activity: 'Moderada', goal: 'Bajar grasa', pesoMeta: 80 });
+    expect(n?.kind).toBe('meta-etapas');
+    expect(n?.etapaKg).toBe(92);
+  });
+});
+
+describe('estimateTimeMonths', () => {
+  it('bajar 10 kg → rango de meses > 0', () => {
+    const r = estimateTimeMonths({ sexo: 'Hombre', pesoKg: 100, estaturaCm: 178, edad: 30, activity: 'Moderada', goal: 'Bajar grasa', pesoMeta: 90 });
+    expect(r).not.toBeNull();
+    expect(r!.min).toBeGreaterThanOrEqual(1);
+    expect(r!.max).toBeGreaterThanOrEqual(r!.min);
+  });
+});
+
+describe('invalidField (datos imposibles)', () => {
+  const ok = { sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 28 };
+  it('datos válidos → null', () => expect(invalidField(ok)).toBeNull());
+  it('edad fuera de rango', () => expect(invalidField({ ...ok, edad: 12 })).toBe('edad'));
+  it('peso fuera de rango', () => expect(invalidField({ ...ok, pesoKg: 500 })).toBe('peso'));
+  it('% grasa fuera de rango (hombre)', () => expect(invalidField({ ...ok, grasa: 60 })).toBe('grasa'));
+});
+
+/* ───────────────────────────────────────────── */
+/*  Fase 3 — capa de macros                      */
+/* ───────────────────────────────────────────── */
+describe('capa de macros', () => {
+  const base = { sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 28, activity: 'Moderada' } as const;
+
+  it('proteína g/kg por objetivo (bajar grasa, moderada → 2.2)', () => {
+    expect(computeNutritionTargets({ ...base, goal: 'Bajar grasa' }).protG).toBe(176); // 80×2.2
+  });
+  it('techo de proteína 2.4 g/kg', () => {
+    const t = computeNutritionTargets({ sexo: 'Hombre', pesoKg: 100, estaturaCm: 180, edad: 25, activity: 'Atleta', goal: 'Bajar grasa' });
+    expect(t.protG).toBeLessThanOrEqual(Math.round(100 * 2.4));
+  });
+  it('grasa respeta el piso 0.6 g/kg', () => {
+    expect(computeNutritionTargets({ ...base, goal: 'Bajar grasa' }).fatG).toBeGreaterThanOrEqual(Math.round(80 * 0.6));
+  });
+  it('carbos nunca por debajo de 130 g', () => {
+    const t = computeNutritionTargets({ sexo: 'Mujer', pesoKg: 50, estaturaCm: 155, edad: 25, activity: 'Sedentaria', goal: 'Bajar grasa' });
+    expect(t.carbG).toBeGreaterThanOrEqual(130);
+  });
+  it('fibra = 14 g por 1000 kcal', () => {
+    const t = computeNutritionTargets({ ...base, goal: 'Bienestar integral' });
+    expect(t.fiberG).toBe(Math.round(t.planGoal / 1000 * 14));
+  });
+  it('kcal de los macros ≈ meta calórica', () => {
+    const t = computeNutritionTargets({ ...base, goal: 'Bajar grasa' });
+    const kcalMacros = t.protG * 4 + t.carbG * 4 + t.fatG * 9;
+    expect(Math.abs(kcalMacros - t.planGoal)).toBeLessThan(60); // por redondeos
+  });
+  it('modo bienestar usa proteína de mantenimiento', () => {
+    const menor = computeNutritionTargets({ ...base, edad: 16, goal: 'Bajar grasa' });
+    // 'mantener' moderada = 1.8 → 144, no la de déficit (2.2 → 176)
+    expect(menor.protG).toBe(Math.round(80 * 1.8));
+  });
+});
+
+describe('mealCalorieSplit (25/35/25/15)', () => {
+  it('suma la meta y la comida es 35%', () => {
+    const s = mealCalorieSplit(2000);
+    expect(s.desayuno + s.comida + s.cena + s.snacks).toBe(2000);
+    expect(s.comida).toBe(700);
   });
 });
 

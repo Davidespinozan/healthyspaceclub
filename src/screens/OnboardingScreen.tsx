@@ -7,6 +7,7 @@ import type { TranslationKey } from '../i18n/es';
 import { suggestUsername, isValidUsernameFormat, checkUsernameAvailable, claimUsername } from '../utils/username';
 import { validateEmailDeliverable } from '../utils/emailValidation';
 import LanguageToggle from '../components/LanguageToggle';
+import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
 
 const BRAND_ICON = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png';
 
@@ -34,6 +35,11 @@ export default function OnboardingScreen() {
   const [peso, setPeso] = useState('');
   const [estatura, setEstatura] = useState('');
   const [activity, setActivity] = useState('');
+  // Fase 2 — seguridad: embarazo (si mujer) + opcionales
+  const [embarazo, setEmbarazo] = useState<'si' | 'no' | ''>('');
+  const [grasa, setGrasa] = useState('');
+  const [pesoMeta, setPesoMeta] = useState('');
+  const [dataError, setDataError] = useState('');
 
   // @usuario (Step 7) — obligatorio para cuentas nuevas.
   const [handle, setHandle] = useState('');
@@ -184,6 +190,9 @@ export default function OnboardingScreen() {
     setObData('peso', Number(peso) || 70);
     setObData('estatura', Number(estatura) || 170);
     setObData('activity', activity);
+    setObData('embarazo', embarazo === 'si' ? 1 : 0);
+    setObData('grasa', grasa ? Number(grasa) : '');
+    setObData('pesoMeta', pesoMeta ? Number(pesoMeta) : '');
 
     // Animate processing lines
     setProcessingLine(0);
@@ -211,6 +220,27 @@ export default function OnboardingScreen() {
 
   function handleFinish() {
     finishOnboarding();
+  }
+
+  // Valida datos (Punto 9) + exige embarazo si es mujer, antes de continuar.
+  function handleDataContinue() {
+    const inv = invalidField({
+      sexo: sex,
+      pesoKg: Number(peso),
+      estaturaCm: Number(estatura),
+      edad: Number(edad),
+      grasa: grasa ? Number(grasa) : null,
+      pesoMeta: pesoMeta ? Number(pesoMeta) : null,
+    });
+    const invMsg: Record<string, TranslationKey> = {
+      edad: 'onboarding.invalidEdad', peso: 'onboarding.invalidPeso',
+      estatura: 'onboarding.invalidEstatura', grasa: 'onboarding.invalidGrasa',
+      pesoMeta: 'onboarding.invalidPesoMeta',
+    };
+    if (inv) { setDataError(t(invMsg[inv])); return; }
+    if (sex === 'Mujer' && !embarazo) { setDataError(t('onboarding.embarazoRequired')); return; }
+    setDataError('');
+    goNext();
   }
 
   // Progress bar (steps 2-8 = cuenta..procesando, no en 1 ni en 9 listo)
@@ -383,9 +413,47 @@ export default function OnboardingScreen() {
                 <input type="number" inputMode="numeric" placeholder="170" value={estatura} onChange={e => setEstatura(e.target.value)} />
               </div>
             </div>
+            {/* Embarazo/lactancia — solo si mujer (bloquea déficit, Punto 2) */}
+            {sex === 'Mujer' && (
+              <div className="onb-embarazo">
+                <label className="onb-hint">{t('onboarding.embarazoQuestion')}</label>
+                <div className="onb-cards-row">
+                  {(['si', 'no'] as const).map(v => (
+                    <div
+                      key={v}
+                      className={`onb-card-select${embarazo === v ? ' selected' : ''}`}
+                      onClick={() => setEmbarazo(v)}
+                    >
+                      <span className="onb-card-label">{t(v === 'si' ? 'onboarding.embarazoYes' : 'onboarding.embarazoNo')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Opcionales: % grasa (→ Katch-McArdle) + peso meta */}
+            <div className="onb-optional">
+              <div className="onb-hint" style={{ marginTop: 6 }}>
+                {t('onboarding.optionalTitle')} · <em>{t('onboarding.optionalTag')}</em>
+              </div>
+              <div className="onb-inputs-group">
+                <div className="onb-input-field">
+                  <label>{t('onboarding.bodyFat')}</label>
+                  <input type="number" inputMode="decimal" placeholder="—" value={grasa} onChange={e => setGrasa(e.target.value)} />
+                </div>
+                <div className="onb-input-field">
+                  <label>{t('onboarding.targetWeight')}</label>
+                  <input type="number" inputMode="decimal" placeholder="—" value={pesoMeta} onChange={e => setPesoMeta(e.target.value)} />
+                </div>
+              </div>
+            </div>
+
+            {dataError && <div className="onb-error">{dataError}</div>}
+            <p className="onb-hint">{t('onboarding.healthDisclaimer')}</p>
+
             <button
               className="onb-btn-dark"
-              onClick={goNext}
+              onClick={handleDataContinue}
               disabled={!edad || !peso || !estatura}
             >
               {t('onboarding.continue')}
@@ -405,6 +473,7 @@ export default function OnboardingScreen() {
                 { id: 'Ligera', icon: Footprints, titleKey: 'onboarding.actLight', descKey: 'onboarding.actLightDesc' },
                 { id: 'Moderada', icon: Activity, titleKey: 'onboarding.actMod', descKey: 'onboarding.actModDesc' },
                 { id: 'Alta', icon: Dumbbell, titleKey: 'onboarding.actHigh', descKey: 'onboarding.actHighDesc' },
+                { id: 'Atleta', icon: Zap, titleKey: 'onboarding.actAthlete', descKey: 'onboarding.actAthleteDesc' },
               ] as const).map(o => (
                 <div
                   key={o.id}
@@ -501,6 +570,16 @@ export default function OnboardingScreen() {
       {step === 9 && (() => {
         const tdeeVal = useAppStore.getState().tdee;
         const goalVal = useAppStore.getState().planGoal;
+        // Avisos de seguridad (Fase 2): mismo cálculo que el store, para mostrar mensajes.
+        const oi = {
+          sexo: sex, pesoKg: Number(peso) || 70, estaturaCm: Number(estatura) || 170,
+          edad: Number(edad) || 28, activity, goal,
+          grasa: grasa ? Number(grasa) : null, embarazo: embarazo === 'si',
+          pesoMeta: pesoMeta ? Number(pesoMeta) : null,
+        };
+        const targets = computeNutritionTargets(oi);
+        const metaNotice = targetWeightNotice(oi);
+        const tiempo = targets.wellnessMode ? null : estimateTimeMonths(oi);
         return (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
           <div className="onb-center">
@@ -519,8 +598,26 @@ export default function OnboardingScreen() {
                 </div>
               </div>
               <div className="onb-result-plan">{goalLabelKeys[goal] ? t(goalLabelKeys[goal]) : goal}</div>
+              <div className="onb-result-macros">
+                <div className="onb-macro"><span className="onb-macro-v">{targets.protG}g</span><span className="onb-macro-l">{t('onboarding.macroProtein')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{targets.carbG}g</span><span className="onb-macro-l">{t('onboarding.macroCarbs')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{targets.fatG}g</span><span className="onb-macro-l">{t('onboarding.macroFat')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{targets.fiberG}g</span><span className="onb-macro-l">{t('onboarding.macroFiber')}</span></div>
+              </div>
               <div className="onb-result-coach">{t('onboarding.coachKnows')}</div>
             </div>
+            {/* Avisos de seguridad + peso meta (Fase 2) */}
+            {targets.wellnessReason === 'menor' && <div className="onb-notice">{t('onboarding.avisoMenor')}</div>}
+            {targets.wellnessReason === 'embarazo' && <div className="onb-notice">{t('onboarding.avisoEmbarazo')}</div>}
+            {targets.wellnessReason === 'bajopeso' && <div className="onb-notice">{t('onboarding.avisoBajoPeso')}</div>}
+            {!targets.wellnessMode && targets.capped && <div className="onb-notice">{t('onboarding.avisoTopado', { kcal: targets.planGoal.toLocaleString() })}</div>}
+            {metaNotice?.kind === 'bajopeso-meta' && <div className="onb-notice">{t('onboarding.metaBajoPeso')}</div>}
+            {metaNotice?.kind === 'sube-musculo' && <div className="onb-notice">{t('onboarding.metaMusculo')}</div>}
+            {metaNotice?.kind === 'sube-neutro-imc' && <div className="onb-notice">{t('onboarding.metaNeutroImc')}</div>}
+            {metaNotice?.kind === 'sube-gradual' && <div className="onb-notice">{t('onboarding.metaGradual')}</div>}
+            {metaNotice?.kind === 'meta-etapas' && <div className="onb-notice">{t('onboarding.metaEtapas', { etapaKg: String(metaNotice.etapaKg) })}</div>}
+            {tiempo && <div className="onb-notice">{t('onboarding.tiempoEstimado', { min: String(tiempo.min), max: String(tiempo.max) })}</div>}
+
             <button className="onb-btn-gold" onClick={handleFinish}>
               {t('onboarding.enterSpace')}
             </button>

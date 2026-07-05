@@ -9,6 +9,7 @@ const MUSCLE_KEY: Record<string, TranslationKey> = {
   'hombros': 'workout.muscleHombros',
   'biceps': 'workout.muscleBiceps',
   'triceps': 'workout.muscleTriceps',
+  'antebrazo': 'workout.muscleAntebrazo',
   'cuadriceps': 'workout.muscleCuadriceps',
   'isquios': 'workout.muscleIsquios',
   'gluteo': 'workout.muscleGluteo',

@@ -1525,6 +1525,25 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
   text-align: center; line-height: 1.35;
 }
 
+/* Avisos de seguridad / peso meta (onboarding Fase 2) */
+.onb-notice {
+  width: 100%; max-width: 340px; margin: 8px 0 0;
+  padding: 11px 15px; border-radius: 12px;
+  background: rgba(191,160,101,.12); border: 1px solid rgba(191,160,101,.3);
+  color: rgba(246,242,234,.85); font-size: .8rem; line-height: 1.45; text-align: left;
+}
+.onb-embarazo, .onb-optional { width: 100%; max-width: 380px; margin-top: 10px; }
+
+/* Tarjetas de macros en el resultado (onboarding Fase 3) */
+.onb-result-macros { display: flex; gap: 8px; margin: 14px 0 4px; }
+.onb-macro {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 10px 4px; border-radius: 12px;
+  background: rgba(246,242,234,.05); border: 1px solid rgba(246,242,234,.1);
+}
+.onb-macro-v { font-size: 1rem; font-weight: 700; color: var(--amber); }
+.onb-macro-l { font-size: .62rem; letter-spacing: .04em; text-transform: uppercase; color: rgba(246,242,234,.5); }
+
 .onb-btn-dark {
   width: 100%; max-width: 320px; padding: 16px 24px; border: none; border-radius: 50px;
   background: var(--grad-amber); color: #fff; font-size: .95rem; font-weight: 700;

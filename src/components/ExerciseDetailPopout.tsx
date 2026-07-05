@@ -78,10 +78,19 @@ export default function ExerciseDetailPopout({
             exercise.variants?.find(v => v.id === exid)?.name;
           const rows = [...data].sort((a, b) =>
             (a.exercise_id === variant?.id ? -1 : 0) - (b.exercise_id === variant?.id ? -1 : 0));
-          setVideos(rows.map(v => ({
-            url: v.video_url,
-            label: nameOf(v.exercise_id) || v.label || t('workout.execution'),
-          })));
+          setVideos(rows.map(v => {
+            // Un ejercicio puede tener VARIOS clips (ej. curl 21s: completo / parte
+            // superior). El nombre de la variante es igual para todos → si la fila
+            // trae un label propio (no el genérico), lo anexamos para distinguirlos.
+            const vname = nameOf(v.exercise_id);
+            const extra = v.label && v.label !== 'Ejecución' ? v.label : null;
+            return {
+              url: v.video_url,
+              label: extra
+                ? (vname ? `${vname} · ${extra}` : extra)
+                : (vname || v.label || t('workout.execution')),
+            };
+          }));
           setActiveIdx(0); // reset al primer video (evita índice fuera de rango si el set cambió)
         }
       } catch (e) {
