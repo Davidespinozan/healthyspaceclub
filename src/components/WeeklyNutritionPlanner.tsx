@@ -2,7 +2,7 @@ import { dayKey } from '../utils/localDate';
 import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
 import { mealPlans, getMealPlans } from '../data/mealPlan';
-import { scalePlan } from '../utils/scalePlan';
+import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, ChevronDown, Wheat, Milk, Beef, Shell, CircleCheck, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
@@ -661,6 +661,9 @@ export default function WeeklyNutritionPlanner() {
   const dayPlanIdx = scaledPlan.findIndex(d => d.day === weeklyPlan.selectedDays[activeDay]);
   const dayPlan = dayPlanIdx >= 0 ? scaledPlan[dayPlanIdx] : null;
   const dayKcal = dayPlan ? calcDayKcal(dayPlan.meals) : 0;
+  // Factor de escala del día activo (base sin escalar → meta) para el desglose exacto del popout.
+  const baseDay = activeMealPlan.find(d => d.day === weeklyPlan.selectedDays[activeDay]);
+  const activeDayScale = baseDay ? dayScaleFactor(baseDay.meals, planGoal) : 1;
 
   const shoppingTotal = weeklyPlan.shoppingList.length;
   const shoppingDone = weeklyPlan.shoppingList.filter((_, i) => !!mealChecks[`shop-${i}`]).length;
@@ -919,6 +922,7 @@ export default function WeeklyNutritionPlanner() {
 
       <MealDetailPopout
         meal={mealDetail?.meal ?? null}
+        scaleFactor={activeDayScale}
         /* Solo pasamos mealIndex si el user está parado en el día de HOY
            del calendario (activeDay === todayOffset). El foodLog siempre
            se stampa con la fecha actual, así que auto-marcar un meal de

@@ -146,6 +146,18 @@ function scaleSingle(raw: string, factor: number): string {
  * - Factor acotado a [0.40 – 2.50] para evitar distorsiones extremas.
  * - Días con base < 400 kcal (fallo de parseo) se dejan sin cambio.
  */
+/**
+ * Factor de escala de un día (misma regla que scalePlan) — para escalar el
+ * desglose estructurado del platillo a la meta del usuario, coherente con las
+ * porciones de texto ya escaladas. Devuelve 1 si no aplica escala.
+ */
+export function dayScaleFactor(meals: DayPlan['meals'], targetKcal: number): number {
+  const base = calcDayKcal(meals);
+  if (base < 400 || targetKcal <= 0) return 1;
+  const f = Math.max(0.40, Math.min(2.50, targetKcal / base));
+  return Math.abs(f - 1) < 0.04 ? 1 : f;
+}
+
 export function scalePlan(plan: DayPlan[], targetKcal: number): DayPlan[] {
   return plan.map(day => {
     const base = calcDayKcal(day.meals);

@@ -997,6 +997,8 @@ export const en: Translations<typeof es> = {
     viewFullReview: 'View full review',
     milestoneClose: 'Continue',
     popoutIngredients: 'Ingredients',
+    popoutExact: 'exact',
+    popoutPorDefinir: '+{n} to define',
   },
   nutritionPlanner: {
     genError: 'We couldn’t generate your plan. Try again.',

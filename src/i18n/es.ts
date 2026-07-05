@@ -996,6 +996,8 @@ export const es = {
     viewFullReview: 'Ver review completo',
     milestoneClose: 'Continuar',
     popoutIngredients: 'Ingredientes',
+    popoutExact: 'exacto',
+    popoutPorDefinir: '+{n} por definir',
   },
   nutritionPlanner: {
     genError: 'No pudimos generar tu plan. Intenta de nuevo.',

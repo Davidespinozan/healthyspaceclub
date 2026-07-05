@@ -4,7 +4,7 @@ import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight, 
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { getMealPlans } from '../data/mealPlan';
-import { scalePlan } from '../utils/scalePlan';
+import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
@@ -140,6 +140,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const todayDayNum = weeklyPlan ? weeklyPlan.selectedDays[todayOffset] ?? weeklyPlan.selectedDays[0] : null;
   const todayPlanIdx = todayDayNum != null ? scaledPlan.findIndex(d => d.day === todayDayNum) : todayOffset % scaledPlan.length;
   const todayMeals = scaledPlan[todayPlanIdx >= 0 ? todayPlanIdx : 0]?.meals ?? [];
+  // Factor de escala del día de hoy (base sin escalar → meta) para el desglose exacto del popout.
+  const todayScale = (() => {
+    const baseDay = activePlan[todayPlanIdx >= 0 ? todayPlanIdx : 0];
+    return baseDay ? dayScaleFactor(baseDay.meals, planGoal) : 1;
+  })();
   // Food-5: cálculo unificado de consumo del día.
   // Reemplaza el patrón inconsistente previo (Food-3) que solo contaba el
   // foodLog y dejaba al plan ✓ sin sumar kcal. Ahora plan ✓ y foodLog
@@ -918,6 +923,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       <MealDetailPopout
         meal={mealDetail?.meal ?? null}
         mealIndex={mealDetail?.index}
+        scaleFactor={todayScale}
         onClose={() => setMealDetail(null)}
         onLogOther={(time, index) => {
           setMealDetail(null);
