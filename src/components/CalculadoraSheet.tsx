@@ -1,7 +1,10 @@
-// CalculadoraSheet — modo B (calcular lo tuyo, estilo MyFitnessPal).
-// Busca en el catálogo `foods` (2,870, Supabase), eliges cantidad (gramos +
-// medida casera), calcula kcal/macros DETERMINISTA (sin IA) desde kcal_100g y
-// registra en el MISMO food_log que el resto (vía addFoodLog). Un solo sistema.
+// CalculadoraSheet — modo B (calcular lo tuyo, estilo MyFitnessPal + memoria).
+// Busca en el catálogo `foods` (2,870, Supabase), calcula kcal/macros DETERMINISTA
+// desde kcal_100g, y registra en el MISMO food_log (un solo sistema).
+// Incluye:
+//  · Recientes (localStorage) — reusar sin buscar.
+//  · Mis platillos — armar un combo de alimentos, guardarlo (tablas platillos +
+//    platillo_ingredientes) y reusarlo. Sus macros los calcula la vista platillo_macros.
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppStore } from '../store';
@@ -15,40 +18,62 @@ interface FoodRow {
   lip_100g: number | null; fibra_100g: number | null;
   food_measures: Measure | Measure[] | null;
 }
+interface BuildIng { food_id: string; alimento: string; grams: number; kcal: number; prot: number; carbs: number; fat: number }
+interface SavedPlatillo { id: string; nombre: string; kcal: number; prot: number; carbs: number; fat: number }
 
 function getMeasure(f: FoodRow | null): Measure | null {
   if (!f) return null;
   const m = f.food_measures;
   return Array.isArray(m) ? (m[0] ?? null) : m;
 }
+function flat<T>(v: T | T[] | null | undefined): T | null {
+  return Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
+}
 
+type Mode = 'search' | 'food' | 'build';
 interface Props { onClose: () => void; onLogged?: () => void }
 
 export default function CalculadoraSheet({ onClose, onLogged }: Props) {
   const { t } = useT();
   const addFoodLog = useAppStore(s => s.addFoodLog);
+  const session = useAppStore(s => s.session);
+  const uid = session?.user?.id ?? null;
 
+  const [mode, setMode] = useState<Mode>('search');
   const [q, setQ] = useState('');
   const [results, setResults] = useState<FoodRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [recents, setRecents] = useState<FoodRow[]>([]);
+  const [misPlatillos, setMisPlatillos] = useState<SavedPlatillo[]>([]);
+
   const [sel, setSel] = useState<FoodRow | null>(null);
   const [grams, setGrams] = useState(100);
+  const [target, setTarget] = useState<'day' | 'build'>('day'); // dónde va el alimento detallado
   const [saving, setSaving] = useState(false);
-  const [recents, setRecents] = useState<FoodRow[]>([]);
+
+  const [buildName, setBuildName] = useState('');
+  const [buildIngs, setBuildIngs] = useState<BuildIng[]>([]);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
-  // Memoria local: lo último registrado, para reusar sin buscar.
+  useEffect(() => { if (mode === 'search') inputRef.current?.focus(); }, [mode]);
   useEffect(() => {
     try { setRecents(JSON.parse(localStorage.getItem('hsc_recent_foods') || '[]')); } catch { /* noop */ }
+    loadMisPlatillos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function saveRecent(f: FoodRow) {
-    try {
-      const prev: FoodRow[] = JSON.parse(localStorage.getItem('hsc_recent_foods') || '[]');
-      const next = [f, ...prev.filter(p => p.id !== f.id)].slice(0, 12);
-      localStorage.setItem('hsc_recent_foods', JSON.stringify(next));
-    } catch { /* noop */ }
+  async function loadMisPlatillos() {
+    if (!uid) return;
+    const { data } = await supabase
+      .from('platillos')
+      .select('id,nombre,platillo_macros(kcal,prot_g,hc_g,lip_g)')
+      .eq('user_id', uid).eq('es_banco', false)
+      .order('created_at', { ascending: false }).limit(20);
+    setMisPlatillos((data ?? []).map((p: { id: string; nombre: string; platillo_macros: unknown }) => {
+      const m = flat(p.platillo_macros) as { kcal?: number; prot_g?: number; hc_g?: number; lip_g?: number } | null;
+      return { id: p.id, nombre: p.nombre, kcal: m?.kcal ?? 0, prot: m?.prot_g ?? 0, carbs: m?.hc_g ?? 0, fat: m?.lip_g ?? 0 };
+    }));
   }
 
   // Búsqueda debounced en el catálogo.
@@ -60,35 +85,77 @@ export default function CalculadoraSheet({ onClose, onLogged }: Props) {
       const { data } = await supabase
         .from('foods')
         .select('id,alimento,grupo,kcal_100g,prot_100g,hc_100g,lip_100g,fibra_100g,food_measures(medida_nombre,gramos_por_medida)')
-        .ilike('alimento', `%${term}%`)
-        .limit(25);
+        .ilike('alimento', `%${term}%`).limit(25);
       setResults((data as FoodRow[]) ?? []);
       setLoading(false);
     }, 300);
     return () => clearTimeout(id);
   }, [q]);
 
-  function pick(f: FoodRow) {
+  function saveRecent(f: FoodRow) {
+    try {
+      const prev: FoodRow[] = JSON.parse(localStorage.getItem('hsc_recent_foods') || '[]');
+      localStorage.setItem('hsc_recent_foods', JSON.stringify([f, ...prev.filter(p => p.id !== f.id)].slice(0, 12)));
+    } catch { /* noop */ }
+  }
+
+  function pickFood(f: FoodRow) {
     setSel(f);
     const g = getMeasure(f)?.gramos_por_medida;
     setGrams(g && g > 0 ? Math.round(g) : 100);
+    setMode('food');
   }
 
   const factor = sel ? grams / 100 : 0;
-  const r1 = (v: number | null) => Math.round((v ?? 0) * factor * 10) / 10;
+  const r1 = (v: number | null | undefined) => Math.round((v ?? 0) * factor * 10) / 10;
   const kcal = sel ? Math.round((sel.kcal_100g ?? 0) * factor) : 0;
-  const prot = r1(sel?.prot_100g ?? 0);
-  const carbs = r1(sel?.hc_100g ?? 0);
-  const fat = r1(sel?.lip_100g ?? 0);
+  const prot = r1(sel?.prot_100g), carbs = r1(sel?.hc_100g), fat = r1(sel?.lip_100g);
 
-  async function add() {
+  async function confirmFood() {
     if (!sel || saving) return;
+    if (target === 'build') {
+      setBuildIngs(prev => [...prev, { food_id: sel.id, alimento: sel.alimento, grams, kcal, prot, carbs, fat }]);
+      setSel(null); setQ(''); setMode('build');
+      return;
+    }
     setSaving(true);
     try {
       await addFoodLog({ desc: `${grams} g ${sel.alimento}`, kcal, prot, carbs, fat, source: 'manual' });
       saveRecent(sel);
-      onLogged?.();
-      onClose();
+      onLogged?.(); onClose();
+    } finally { setSaving(false); }
+  }
+
+  async function addSaved(p: SavedPlatillo) {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await addFoodLog({ desc: p.nombre, kcal: p.kcal, prot: p.prot, carbs: p.carbs, fat: p.fat, source: 'manual' });
+      onLogged?.(); onClose();
+    } finally { setSaving(false); }
+  }
+
+  const bTot = buildIngs.reduce((a, x) => ({
+    kcal: a.kcal + x.kcal, prot: a.prot + x.prot, carbs: a.carbs + x.carbs, fat: a.fat + x.fat,
+  }), { kcal: 0, prot: 0, carbs: 0, fat: 0 });
+
+  async function saveAndAddPlatillo() {
+    if (!uid || buildIngs.length === 0 || saving) return;
+    const nombre = buildName.trim() || t('calc.myDish');
+    setSaving(true);
+    try {
+      const { data: p, error } = await supabase.from('platillos')
+        .insert({ user_id: uid, nombre, es_banco: false }).select('id').single();
+      if (error || !p) throw error ?? new Error('no id');
+      await supabase.from('platillo_ingredientes').insert(
+        buildIngs.map((ing, i) => ({ platillo_id: (p as { id: string }).id, food_id: ing.food_id, gramos: ing.grams, orden: i })),
+      );
+      await addFoodLog({
+        desc: nombre, kcal: Math.round(bTot.kcal),
+        prot: Math.round(bTot.prot * 10) / 10, carbs: Math.round(bTot.carbs * 10) / 10, fat: Math.round(bTot.fat * 10) / 10,
+        source: 'manual',
+      });
+      onLogged?.(); onClose();
     } finally { setSaving(false); }
   }
 
@@ -99,24 +166,30 @@ export default function CalculadoraSheet({ onClose, onLogged }: Props) {
       <div className="th-popout th-popout-sm" onClick={e => e.stopPropagation()}>
         <div className="th-popout-handle" />
         <div className="th-popout-content">
-          {!sel ? (
+          {/* ── SEARCH ── */}
+          {mode === 'search' && (
             <>
               <div className="th-popout-time">{t('calc.eyebrow')}</div>
-              <div className="th-popout-name">{t('calc.title')}</div>
-              <input
-                ref={inputRef}
-                className="pay-inp"
-                style={{ marginTop: 10 }}
-                placeholder={t('calc.searchPlaceholder')}
-                value={q}
-                onChange={e => setQ(e.target.value)}
-              />
+              <div className="th-popout-name">{target === 'build' ? t('calc.addToDish') : t('calc.title')}</div>
+              <input ref={inputRef} className="pay-inp" style={{ marginTop: 10 }}
+                placeholder={t('calc.searchPlaceholder')} value={q} onChange={e => setQ(e.target.value)} />
               <div className="calc-results">
+                {q.trim().length < 2 && target === 'day' && misPlatillos.length > 0 && (
+                  <>
+                    <div className="calc-section">{t('calc.myDishes')}</div>
+                    {misPlatillos.map(p => (
+                      <button key={p.id} className="calc-result" onClick={() => addSaved(p)}>
+                        <span className="calc-result-name">🍽 {p.nombre}</span>
+                        <span className="calc-result-kcal">{p.kcal} kcal</span>
+                      </button>
+                    ))}
+                  </>
+                )}
                 {q.trim().length < 2 && recents.length > 0 && (
                   <>
                     <div className="calc-section">{t('calc.recents')}</div>
                     {recents.map(f => (
-                      <button key={`r-${f.id}`} className="calc-result" onClick={() => pick(f)}>
+                      <button key={`r-${f.id}`} className="calc-result" onClick={() => pickFood(f)}>
                         <span className="calc-result-name">{f.alimento}</span>
                         <span className="calc-result-kcal">{Math.round(f.kcal_100g ?? 0)} kcal/100g</span>
                       </button>
@@ -124,18 +197,19 @@ export default function CalculadoraSheet({ onClose, onLogged }: Props) {
                   </>
                 )}
                 {loading && <div className="calc-muted">{t('calc.searching')}</div>}
-                {!loading && q.trim().length >= 2 && results.length === 0 && (
-                  <div className="calc-muted">{t('calc.noResults')}</div>
-                )}
+                {!loading && q.trim().length >= 2 && results.length === 0 && <div className="calc-muted">{t('calc.noResults')}</div>}
                 {results.map(f => (
-                  <button key={f.id} className="calc-result" onClick={() => pick(f)}>
+                  <button key={f.id} className="calc-result" onClick={() => pickFood(f)}>
                     <span className="calc-result-name">{f.alimento}</span>
                     <span className="calc-result-kcal">{Math.round(f.kcal_100g ?? 0)} kcal/100g</span>
                   </button>
                 ))}
               </div>
             </>
-          ) : (
+          )}
+
+          {/* ── FOOD DETAIL ── */}
+          {mode === 'food' && sel && (
             <>
               <div className="th-popout-time">{sel.grupo}</div>
               <div className="th-popout-name">{sel.alimento}</div>
@@ -155,15 +229,59 @@ export default function CalculadoraSheet({ onClose, onLogged }: Props) {
               </div>
             </>
           )}
-        </div>
-        <div className="th-popout-footer">
-          {sel ? (
+
+          {/* ── BUILD (armar platillo) ── */}
+          {mode === 'build' && (
             <>
-              <button className="wz-cta" onClick={add} disabled={saving}>{t('calc.add')}</button>
-              <button className="th-popout-close" onClick={() => setSel(null)}>{t('calc.back')}</button>
+              <div className="th-popout-time">{t('calc.buildEyebrow')}</div>
+              <input className="pay-inp" placeholder={t('calc.dishName')} value={buildName} onChange={e => setBuildName(e.target.value)} />
+              <div className="calc-results">
+                {buildIngs.length === 0 && <div className="calc-muted">{t('calc.buildEmpty')}</div>}
+                {buildIngs.map((ing, i) => (
+                  <div key={i} className="calc-build-ing">
+                    <span className="calc-result-name">{ing.grams} g {ing.alimento}</span>
+                    <span className="calc-build-kcal">{ing.kcal}</span>
+                    <button className="calc-del" onClick={() => setBuildIngs(prev => prev.filter((_, j) => j !== i))}>✕</button>
+                  </div>
+                ))}
+              </div>
+              <button className="calc-measure" onClick={() => { setTarget('build'); setQ(''); setResults([]); setMode('search'); }}>
+                + {t('calc.addFood')}
+              </button>
+              {buildIngs.length > 0 && (
+                <div className="calc-preview">
+                  <div className="calc-preview-kcal">{Math.round(bTot.kcal)} kcal</div>
+                  <div className="calc-preview-macros">P {Math.round(bTot.prot)} · C {Math.round(bTot.carbs)} · G {Math.round(bTot.fat)}</div>
+                </div>
+              )}
             </>
-          ) : (
-            <button className="th-popout-close" onClick={onClose}>{t('calc.cancel')}</button>
+          )}
+        </div>
+
+        {/* ── FOOTER ── */}
+        <div className="th-popout-footer">
+          {mode === 'search' && target === 'day' && (
+            <>
+              <button className="wz-cta" onClick={() => { setBuildName(''); setBuildIngs([]); setMode('build'); }}>{t('calc.buildDish')}</button>
+              <button className="th-popout-close" onClick={onClose}>{t('calc.cancel')}</button>
+            </>
+          )}
+          {mode === 'search' && target === 'build' && (
+            <button className="th-popout-close" onClick={() => { setTarget('day'); setMode('build'); }}>{t('calc.back')}</button>
+          )}
+          {mode === 'food' && (
+            <>
+              <button className="wz-cta" onClick={confirmFood} disabled={saving}>
+                {target === 'build' ? t('calc.addToDishBtn') : t('calc.add')}
+              </button>
+              <button className="th-popout-close" onClick={() => { setSel(null); setMode(target === 'build' ? 'search' : 'search'); }}>{t('calc.back')}</button>
+            </>
+          )}
+          {mode === 'build' && (
+            <>
+              <button className="wz-cta" onClick={saveAndAddPlatillo} disabled={saving || buildIngs.length === 0}>{t('calc.saveDish')}</button>
+              <button className="th-popout-close" onClick={() => { setTarget('day'); setMode('search'); }}>{t('calc.cancel')}</button>
+            </>
           )}
         </div>
       </div>

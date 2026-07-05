@@ -1565,6 +1565,10 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
   border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
 .calc-preview-kcal { font-size: 1.25rem; font-weight: 700; color: var(--amber-deep, #7C6232); }
 .calc-preview-macros { font-size: .82rem; color: var(--txt2); }
+.calc-build-ing { display: flex; align-items: center; gap: 8px; padding: 9px 2px; border-bottom: 1px solid rgba(21,51,48,.08); }
+.calc-build-ing .calc-result-name { flex: 1; }
+.calc-build-kcal { font-size: .8rem; font-weight: 700; color: var(--amber-deep, #7C6232); }
+.calc-del { background: none; border: none; color: var(--txt2); cursor: pointer; font-size: 15px; padding: 0 2px; }
 
 .onb-btn-dark {
   width: 100%; max-width: 320px; padding: 16px 24px; border: none; border-radius: 50px;
