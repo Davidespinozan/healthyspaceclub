@@ -725,7 +725,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                         const linked = resolved ? todayFoodLog.filter(e => e.mealIndex === i) : [];
                         const replaced = linked.length > 0;
                         const displayName = replaced ? linked.map(e => e.desc).join(' + ') : meal.name;
-                        const linkedKcal = linked.reduce((s, e) => s + e.kcal, 0);
                         // resolved sin entrada ligada (registros viejos/globales) → dot ámbar (compat).
                         const showResolvedDot = resolved && !done && !replaced;
                         const showCheck = done || replaced;
@@ -756,10 +755,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                               </span>
                             ))}
                             {replaced ? (
-                              <span className="th3-card-list-name">
-                                {displayName}
-                                <span className="th3-log-tag">{t('hoy.foodLogMine')}</span>
-                              </span>
+                              <span className="th3-card-list-name">{displayName}</span>
                             ) : (
                               <button
                                 type="button"
@@ -769,7 +765,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                                 {meal.name}
                               </button>
                             )}
-                            {replaced && <span className="th3-card-list-kcal">~{Math.round(linkedKcal)} kcal</span>}
                             <button
                               type="button"
                               className={`th3-card-list-check${showCheck ? ' checked' : ''}`}

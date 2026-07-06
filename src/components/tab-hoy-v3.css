@@ -405,8 +405,10 @@
   min-height: 0;
 }
 .th3-card-list-item:first-child { border-top: none; }
-/* Snacks: secundarios — sin círculo, texto más chico y suave, un poco indentado. */
-.th3-card-list-item--snack { padding: 4px 0 4px 8px; }
+/* Snacks: secundarios — sin círculo, texto más chico y suave. Se indentan 48px
+   (ancho del círculo 40 + gap 8) para que el nombre quede alineado en la misma
+   columna que las comidas con miniatura → lista limpia, no colgada a la izquierda. */
+.th3-card-list-item--snack { padding: 5px 0 5px 48px; }
 .th3-card-list-item--snack .th3-card-list-name {
   font-size: 0.72rem;
   font-weight: 500;
