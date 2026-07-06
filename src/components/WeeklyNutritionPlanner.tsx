@@ -7,7 +7,7 @@ import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets } from '../utils/nutritionTargets';
 import NutritionMeta from './NutritionMeta';
-import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, ChevronDown, Wheat, Milk, Beef, Shell, CircleCheck, type LucideIcon } from 'lucide-react';
+import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import CalculadoraSheet from './CalculadoraSheet';
@@ -726,70 +726,56 @@ export default function WeeklyNutritionPlanner() {
         mealsTotal={dayConsumption.totalSlots}
       />
 
-      {/* Fila slim (clara): rango de la semana + cambiar plan. Reemplaza el header
-          oscuro "Plan personalizado" — la META de arriba ya es el ancla oscura. */}
-      <div className="wnp2-subhead">
-        <span className="wnp2-subhead-week">
+      {/* Barra slim única: semana + acciones (nota · lista · cambiar plan). Colapsa
+          el subhead + la nota dorada gigante + los tabs Mi Plan/Lista (abrumaban). */}
+      <div className="wnp2-bar">
+        <span className="wnp2-bar-week">
           {t('nutritionPlanner.weekRange', { start: weekStartDate, end: weekEndDate })}
         </span>
-        {regenBlocked ? (
-          <div className="wnp2-regen-blocked" title={t('nutritionPlanner.regenBlocked')}>
-            <Lock size={11} />
-            <span>2/2</span>
-          </div>
-        ) : (
-          <button
-            className="wnp2-regen"
-            onClick={resetQuestionnaire}
-            aria-label={t('nutritionPlanner.ariaRegen')}
-            title={plural(regenLeft, {
-              one: t('nutritionPlanner.regenTitleOne', { n: regenLeft }),
-              other: t('nutritionPlanner.regenTitleOther', { n: regenLeft }),
-            })}
-          >
-            <RefreshCw size={11} />
-            <span>{regenLeft}</span>
-          </button>
-        )}
-      </div>
-
-      {/* Nota del coach — Plan-2: colapsable, default cerrado.
-          Espejo del "POR QUÉ HOY" colapsable del entreno (Plan-1) para
-          coherencia hermana entre las dos pantallas de "plan". */}
-      {weeklyPlan.nota && (!weeklyPlan.lang || weeklyPlan.lang === locale) && (
-        <div className={`wnp2-nota${notaOpen ? ' is-open' : ''}`}>
+        <div className="wnp2-bar-actions">
+          {weeklyPlan.nota && (!weeklyPlan.lang || weeklyPlan.lang === locale) && (
+            <button
+              type="button"
+              className={`wnp2-bar-btn${notaOpen ? ' on' : ''}`}
+              onClick={() => setNotaOpen(o => !o)}
+              aria-label={notaOpen ? t('nutritionPlanner.ariaNotaCollapse') : t('nutritionPlanner.ariaNotaExpand')}
+            >
+              <Leaf size={14} strokeWidth={1.9} />
+            </button>
+          )}
           <button
             type="button"
-            className="wnp2-nota-toggle"
-            onClick={() => setNotaOpen(o => !o)}
-            aria-expanded={notaOpen}
-            aria-label={notaOpen ? t('nutritionPlanner.ariaNotaCollapse') : t('nutritionPlanner.ariaNotaExpand')}
+            className={`wnp2-bar-btn${showShopping ? ' on' : ''}`}
+            onClick={() => setShowShopping(s => !s)}
+            aria-label={t('nutritionPlanner.tabList', { done: shoppingDone, total: shoppingTotal })}
           >
-            <span className="wnp2-nota-icon"><Leaf size={18} strokeWidth={1.5} /></span>
-            <span className="wnp2-nota-label">{t('nutritionPlanner.notaLabel')}</span>
-            <ChevronDown size={14} className="wnp2-nota-chev" />
+            <ShoppingCart size={13} strokeWidth={1.9} /><span>{shoppingDone}/{shoppingTotal}</span>
           </button>
-          {notaOpen && (
-            <p className="wnp2-nota-text">{weeklyPlan.nota}</p>
+          {regenBlocked ? (
+            <div className="wnp2-bar-btn is-blocked" title={t('nutritionPlanner.regenBlocked')}>
+              <Lock size={12} /><span>2/2</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="wnp2-bar-btn"
+              onClick={resetQuestionnaire}
+              aria-label={t('nutritionPlanner.ariaRegen')}
+              title={plural(regenLeft, {
+                one: t('nutritionPlanner.regenTitleOne', { n: regenLeft }),
+                other: t('nutritionPlanner.regenTitleOther', { n: regenLeft }),
+              })}
+            >
+              <RefreshCw size={12} /><span>{regenLeft}</span>
+            </button>
           )}
         </div>
-      )}
-
-      {/* Tabs */}
-      <div className="wnp2-tabs">
-        <button
-          className={`wnp2-tab${!showShopping ? ' on' : ''}`}
-          onClick={() => setShowShopping(false)}
-        >
-          <Calendar size={13} /> {t('nutritionPlanner.tabMyPlan')}
-        </button>
-        <button
-          className={`wnp2-tab${showShopping ? ' on' : ''}`}
-          onClick={() => setShowShopping(true)}
-        >
-          <ShoppingCart size={13} /> {t('nutritionPlanner.tabList', { done: shoppingDone, total: shoppingTotal })}
-        </button>
       </div>
+
+      {/* Nota del coach — inline y sutil solo cuando se abre (ya no barra dorada). */}
+      {notaOpen && weeklyPlan.nota && (!weeklyPlan.lang || weeklyPlan.lang === locale) && (
+        <p className="wnp2-nota-inline">{weeklyPlan.nota}</p>
+      )}
 
       {showShopping ? (
         /* ── Shopping list ── */
