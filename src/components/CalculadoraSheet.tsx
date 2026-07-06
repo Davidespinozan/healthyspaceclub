@@ -26,8 +26,24 @@ interface FoodRow {
   lip_100g: number | null; fibra_100g: number | null;
   food_measures: Measure | Measure[] | null;
 }
-interface BuildIng { food_id: string; alimento: string; grams: number; kcal: number; prot: number; carbs: number; fat: number }
+interface BuildIng { food_id: string; alimento: string; grams: number; label: string; kcal: number; prot: number; carbs: number; fat: number }
 interface SavedPlatillo { id: string; nombre: string; kcal: number; prot: number; carbs: number; fat: number }
+
+// Contar en la medida NATURAL del alimento (piezas/tazas/cucharadas), no en gramos.
+const STEPS_MED = [0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.33, 1.5, 1.67, 1.75, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10];
+const FRAC: Record<number, string> = { 0.25: '¼', 0.33: '⅓', 0.5: '½', 0.67: '⅔', 0.75: '¾' };
+function fracStr(v: number): string {
+  const w = Math.floor(v + 0.001);
+  const r = Math.round((v - w) * 100) / 100;
+  const fr = FRAC[r];
+  if (r < 0.05) return String(w);
+  if (w === 0) return fr ?? String(v);
+  return fr ? `${w} ${fr}` : String(Math.round(v * 10) / 10);
+}
+// Pluraliza la medida ("taza"→"tazas") cuando la cantidad > 1.
+function medidaLabel(medida: string, qty: number): string {
+  return qty > 1 && !medida.endsWith('s') ? `${medida}s` : medida;
+}
 
 function getMeasure(f: FoodRow | null): Measure | null {
   if (!f) return null;
@@ -76,7 +92,9 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
   const [misPlatillos, setMisPlatillos] = useState<SavedPlatillo[]>([]);
 
   const [sel, setSel] = useState<FoodRow | null>(null);
-  const [grams, setGrams] = useState(100);
+  // Cantidad en la medida natural (curUnit='medida') o en gramos.
+  const [curUnit, setCurUnit] = useState<'medida' | 'gramos'>('medida');
+  const [curQty, setCurQty] = useState(1);
   const [saving, setSaving] = useState(false);
 
   const [buildName, setBuildName] = useState('');
@@ -122,20 +140,38 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
 
   function pickFood(f: FoodRow) {
     setSel(f);
-    const g = getMeasure(f)?.gramos_por_medida;
-    setGrams(g && g > 0 ? Math.round(g) : 100);
+    const m = getMeasure(f);
+    // Default: cuenta en la medida natural (1 pieza / 1 taza…) si existe; si no, gramos.
+    if (m?.gramos_por_medida && m.gramos_por_medida > 0) { setCurUnit('medida'); setCurQty(1); }
+    else { setCurUnit('gramos'); setCurQty(100); }
     setMode('food');
   }
 
+  const selMeasure = getMeasure(sel);
+  const gPerMedida = selMeasure?.gramos_por_medida ?? null;
+  // Gramos reales según la unidad elegida (medida × gramos, o gramos directos).
+  const grams = curUnit === 'medida' && gPerMedida ? Math.round(curQty * gPerMedida) : Math.round(curQty);
+  // Etiqueta legible: "2 tazas" / "1 ½ piezas" / "150 g".
+  const qtyLabel = curUnit === 'medida' && selMeasure?.medida_nombre
+    ? `${fracStr(curQty)} ${medidaLabel(selMeasure.medida_nombre, curQty)}`
+    : `${grams} g`;
   const factor = sel ? grams / 100 : 0;
   const r1 = (v: number | null | undefined) => Math.round((v ?? 0) * factor * 10) / 10;
   const kcal = sel ? Math.round((sel.kcal_100g ?? 0) * factor) : 0;
   const prot = r1(sel?.prot_100g), carbs = r1(sel?.hc_100g), fat = r1(sel?.lip_100g);
 
+  // ± en la medida elegida: fracciones para medida casera, ±10 para gramos.
+  function stepQty(dir: 1 | -1) {
+    if (curUnit === 'gramos') { setCurQty(g => Math.max(5, g + dir * 10)); return; }
+    const i = STEPS_MED.findIndex(x => Math.abs(x - curQty) < 0.02);
+    const next = i === -1 ? (dir > 0 ? 1 : 0.5) : STEPS_MED[Math.max(0, Math.min(STEPS_MED.length - 1, i + dir))];
+    setCurQty(next);
+  }
+
   // Agregar el alimento a tu comida y volver a la pantalla principal.
   function confirmFood() {
     if (!sel) return;
-    setBuildIngs(prev => [...prev, { food_id: sel.id, alimento: sel.alimento, grams, kcal, prot, carbs, fat }]);
+    setBuildIngs(prev => [...prev, { food_id: sel.id, alimento: sel.alimento, grams, label: qtyLabel, kcal, prot, carbs, fat }]);
     setSel(null); setQ(''); setMode('search');
   }
 
@@ -175,8 +211,6 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
       onLogged?.(); onClose();
     } finally { setSaving(false); }
   }
-
-  const measure = getMeasure(sel);
 
   return createPortal(
     <div className="th-popout-backdrop" onClick={onClose}>
@@ -229,7 +263,7 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
                         <div className="calc-section">{t('calc.yourMeal')}</div>
                         {buildIngs.map((ing, i) => (
                           <div key={i} className="calc-build-ing">
-                            <span className="calc-result-name">{ing.grams} g {ing.alimento}</span>
+                            <span className="calc-result-name"><b>{ing.label}</b> {ing.alimento}</span>
                             <span className="calc-build-kcal">{ing.kcal}</span>
                             <button className="calc-del" onClick={() => setBuildIngs(prev => prev.filter((_, j) => j !== i))}>✕</button>
                           </div>
@@ -260,21 +294,44 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
             </>
           )}
 
-          {/* ── FOOD DETAIL ── */}
+          {/* ── CANTIDAD (en medida natural: piezas/tazas… o gramos) ── */}
           {mode === 'food' && sel && (
             <>
               <div className="th-popout-time">{sel.grupo}</div>
               <div className="th-popout-name">{sel.alimento}</div>
+
+              {/* Cuánto: cuenta en la medida natural del alimento */}
               <div className="calc-qty">
-                <button className="calc-step" onClick={() => setGrams(g => Math.max(5, g - 10))}>−</button>
-                <div className="calc-qty-val">{grams} <small>g</small></div>
-                <button className="calc-step" onClick={() => setGrams(g => g + 10)}>+</button>
+                <button className="calc-step" onClick={() => stepQty(-1)}>−</button>
+                <div className="calc-qty-val">
+                  {curUnit === 'medida' && selMeasure?.medida_nombre
+                    ? <>{fracStr(curQty)} <small>{medidaLabel(selMeasure.medida_nombre, curQty)}</small></>
+                    : <>{grams} <small>g</small></>}
+                </div>
+                <button className="calc-step" onClick={() => stepQty(1)}>+</button>
               </div>
-              {measure?.gramos_por_medida ? (
-                <button className="calc-measure" onClick={() => setGrams(Math.round(measure.gramos_por_medida!))}>
-                  {t('calc.oneMeasure', { medida: measure.medida_nombre ?? '', g: String(Math.round(measure.gramos_por_medida)) })}
-                </button>
-              ) : null}
+
+              {/* Toggle unidad + equivalencia (para que nadie tenga que pensar en gramos) */}
+              {gPerMedida && selMeasure?.medida_nombre && (
+                <>
+                  <div className="calc-unitsel">
+                    <button className={curUnit === 'medida' ? 'on' : ''}
+                      onClick={() => { setCurUnit('medida'); setCurQty(1); }}>
+                      {medidaLabel(selMeasure.medida_nombre, 2)}
+                    </button>
+                    <button className={curUnit === 'gramos' ? 'on' : ''}
+                      onClick={() => { setCurUnit('gramos'); setCurQty(gPerMedida); }}>
+                      {t('calc.gramsUnit')}
+                    </button>
+                  </div>
+                  <div className="calc-equiv">
+                    {curUnit === 'medida'
+                      ? t('calc.equivGrams', { g: String(grams) })
+                      : t('calc.equivMeasure', { qty: fracStr(Math.round((grams / gPerMedida) * 100) / 100), medida: medidaLabel(selMeasure.medida_nombre, grams / gPerMedida) })}
+                  </div>
+                </>
+              )}
+
               <div className="calc-preview">
                 <div className="calc-preview-kcal">{kcal} kcal</div>
                 <div className="calc-preview-macros">P {prot} · C {carbs} · G {fat}</div>
