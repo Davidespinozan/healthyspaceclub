@@ -606,8 +606,8 @@
 
 /* ─── Meal card (layout A: círculo a la izquierda) ─── */
 .wnp2-meal {
-  background: linear-gradient(135deg, #1C3B35, #0E2521);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
+  border: 1px solid var(--sala-border, var(--sand));
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   display: flex;
@@ -615,7 +615,8 @@
   gap: 14px;
   cursor: pointer;
   position: relative;
-  transition: transform var(--duration-base) var(--ease-out-soft);
+  box-shadow: var(--shadow-pro-lg), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease;
   -webkit-tap-highlight-color: transparent;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
 }
@@ -626,7 +627,8 @@
 .wnp2-meal:nth-child(5) { animation-delay: 0.24s; }
 .wnp2-meal:nth-child(6) { animation-delay: 0.29s; }
 .wnp2-meal:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-pro-xl);
 }
 .wnp2-meal:active { transform: scale(0.98); }
 .wnp2-meal.done {
@@ -648,9 +650,9 @@
   background-size: cover;
   background-position: center;
   flex-shrink: 0;
-  border: 2px solid rgba(255,255,255,0.12);
-  background-color: rgba(255,255,255,0.06);
-  color: #EFEADD;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(21,51,48,0.1);
+  background-color: var(--warm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -674,7 +676,7 @@
 .wnp2-meal-name {
   font-size: 14px;
   font-weight: 700;
-  color: #F3EEE1;
+  color: var(--forest);
   line-height: 1.2;
   margin-bottom: 6px;
   letter-spacing: var(--tracking-tight);
@@ -690,12 +692,12 @@
 .wnp2-meal-chip {
   font-size: 12px;
   padding: 3px 8px;
-  background: rgba(255,255,255,0.08);
-  color: rgba(243,238,225,0.7);
+  background: var(--warm);
+  color: var(--txt2);
   border-radius: 50px;
 }
 .wnp2-meal-chip.more {
-  background: rgba(255,255,255,0.12);
+  background: var(--sand);
 }
 .wnp2-meal-right {
   display: flex;
@@ -707,8 +709,8 @@
 .wnp2-meal-kcal {
   font-size: 10px;
   font-weight: 700;
-  color: #BFA065;
-  background: rgba(255,255,255,0.08);
+  color: var(--moss);
+  background: var(--warm);
   padding: 3px 9px;
   border-radius: 8px;
   font-variant-numeric: tabular-nums;
@@ -717,8 +719,8 @@
   width: 28px; height: 28px;
   min-width: 28px; min-height: 28px;
   border-radius: 9px;
-  border: 1.5px solid rgba(255,255,255,0.28);
-  background: rgba(255,255,255,0.05);
+  border: 1.5px solid var(--sala-border-strong, var(--sand));
+  background: var(--sala-surface, white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -729,9 +731,9 @@
 }
 .wnp2-meal-check:active { transform: scale(0.9); }
 .wnp2-meal-check.checked {
-  background: #BFA065;
-  border-color: #BFA065;
-  color: #0E2521;
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--amber);
 }
 /* ─── Snack: misma tarjeta cream que las comidas, pero más delgada ───
    Sin foto (icono pequeño), una sola línea. Mantiene el accent amber

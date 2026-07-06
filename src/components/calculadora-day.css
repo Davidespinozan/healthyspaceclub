@@ -8,22 +8,23 @@
   padding: 11px; border-radius: 50px; font-size: 12.5px; font-weight: 600;
   cursor: pointer; font-family: 'Montserrat', sans-serif; transition: .2s;
 }
-.cday-switch button.on { background: var(--forest, #0E2521); color: #fff; }
+.cday-switch button.on { background: var(--surface, #fff); color: var(--forest, #0E2521); box-shadow: 0 2px 4px rgba(21, 51, 48, .04); }
 
-/* CalculadoraDay — "Tu día". Cards OSCURAS sobre fondo claro, planas (sin sombra). */
+/* CalculadoraDay — pantalla "Tu día" estilo Magaly. Paleta HSC. */
 .cday {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   font-family: 'Montserrat', sans-serif;
 }
 
-/* ── META card ── */
+/* ── META card (oscura) ── */
 .cday-meta {
   background: radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%), #0d1f1c;
-  border-radius: 20px;
+  border-radius: 22px;
   padding: 18px 20px 16px;
   color: #fff;
+  box-shadow: 0 12px 30px rgba(8, 20, 27, .22);
 }
 .cday-meta-lbl {
   font-size: 10px; font-weight: 700; letter-spacing: .16em;
@@ -55,36 +56,37 @@
   font-size: 12.5px; font-weight: 600; line-height: 1.4;
 }
 
-/* ── Tarjetas de comida (OSCURAS, planas) ── */
+/* ── Tarjetas de comida ── */
 .cday-meal {
-  background: linear-gradient(135deg, #1C3B35, #0E2521);
-  border: 1px solid rgba(255, 255, 255, .06);
+  background: var(--surface, #fff);
+  border: 1px solid rgba(14, 37, 33, .08);
   border-radius: 18px;
+  box-shadow: 0 1px 3px rgba(14, 37, 33, .07), 0 14px 30px -8px rgba(14, 37, 33, .16);
   overflow: hidden;
 }
 .cday-meal-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px 12px; }
 .cday-meal-title { display: flex; align-items: center; gap: 10px; }
 .cday-meal-ico {
-  width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 255, 255, .07);
-  display: flex; align-items: center; justify-content: center; color: #EFEADD;
+  width: 34px; height: 34px; border-radius: 10px; background: var(--warm, #F0EBE0);
+  display: flex; align-items: center; justify-content: center; color: var(--forest, #0E2521);
 }
-.cday-meal-name { font-size: 14.5px; font-weight: 700; color: #F3EEE1; }
-.cday-meal-kcal { font-size: 13px; font-weight: 700; color: #BFA065; font-variant-numeric: tabular-nums; }
-.cday-meal-kcal small { color: rgba(243, 238, 225, .5); font-weight: 400; font-size: 11px; }
+.cday-meal-name { font-size: 14.5px; font-weight: 700; color: var(--forest, #0E2521); }
+.cday-meal-kcal { font-size: 13px; font-weight: 700; color: var(--amber-deep, #7C6232); font-variant-numeric: tabular-nums; }
+.cday-meal-kcal small { color: var(--taupe, #8a8270); font-weight: 400; font-size: 11px; }
 
 .cday-items { padding: 0 18px; }
 .cday-item {
   display: flex; align-items: center; gap: 10px; padding: 10px 0;
-  border-top: 1px solid rgba(255, 255, 255, .08);
+  border-top: 1px solid rgba(46, 74, 66, .09);
 }
-.cday-item-name { flex: 1; font-size: 13px; font-weight: 600; color: rgba(243, 238, 225, .9); }
-.cday-item-kcal { font-size: 13px; font-weight: 700; color: #BFA065; font-variant-numeric: tabular-nums; }
-.cday-item-del { background: none; border: none; color: rgba(243, 238, 225, .4); cursor: pointer; font-size: 15px; padding: 0 2px; }
+.cday-item-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--forest, #0E2521); }
+.cday-item-kcal { font-size: 13px; font-weight: 700; color: var(--amber-deep, #7C6232); font-variant-numeric: tabular-nums; }
+.cday-item-del { background: none; border: none; color: rgba(21, 51, 48, .4); cursor: pointer; font-size: 15px; padding: 0 2px; }
 
 .cday-meal-actions { display: flex; gap: 8px; padding: 13px 18px 16px; }
 .cday-add {
-  flex: 1; background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .16);
-  color: #F3EEE1; padding: 11px; border-radius: 50px;
+  flex: 1; background: var(--surface, #fff); border: 1px solid var(--sand, #E8E1D3);
+  color: var(--forest, #0E2521); padding: 11px; border-radius: 50px;
   font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: border-color .15s;
 }
-.cday-add:hover { border-color: #BFA065; }
+.cday-add:hover { border-color: var(--amber, #BFA065); }

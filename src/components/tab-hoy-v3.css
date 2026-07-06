@@ -240,18 +240,20 @@
   align-items: stretch;
 }
 .th3-card {
-  background: linear-gradient(135deg, #1C3B35, #0E2521);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: var(--sala-surface);
+  border: 1px solid var(--sala-border);
   border-radius: var(--radius-xl);
   overflow: hidden;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   -webkit-tap-highlight-color: transparent;
-  transition: transform var(--duration-base) var(--ease-out-soft);
+  box-shadow: var(--shadow-pro-xl);
+  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease;
 }
 .th3-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-pro-2xl);
 }
 .th3-card:active { transform: scale(0.97); }
 
@@ -318,15 +320,15 @@
   font-weight: 600;
   letter-spacing: var(--tracking-kicker);
   text-transform: none;
-  color: var(--amber);
+  color: var(--amber-deep);
   margin: 0;
 }
 /* Track-3a: eyebrow celebra "Entrenaste hoy ✓" si hay sesión completada. */
 .th3-card-eyebrow--done {
-  color: #BFA065;
+  color: var(--forest);
 }
 .th3-card-eyebrow-check {
-  color: #BFA065;
+  color: var(--forest);
   margin-left: 2px;
 }
 /* Track-3a: footer micro "Última sesión · ayer · 45 min" cuando NO hay
@@ -343,7 +345,7 @@
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
   font-size: 18px;
-  color: #F3EEE1;
+  color: var(--forest);
   line-height: 1.12;
   letter-spacing: var(--tracking-tighter);
   margin: 0;
@@ -353,13 +355,13 @@
   display: inline-block;
   vertical-align: -3px;
   margin-left: 7px;
-  color: var(--amber);
+  color: var(--amber-deep);
 }
 .th3-card-meta {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.7rem;
   font-weight: 500;
-  color: rgba(243,238,225,0.5);
+  color: rgba(21,51,48,0.5);
   margin: 0;
   line-height: 1.3;
 }
@@ -399,7 +401,7 @@
   align-items: center;
   gap: 8px;
   padding: 5px 0;
-  border-top: 0.5px solid rgba(255,255,255,0.08);
+  border-top: 0.5px solid var(--sand);
   min-height: 0;
 }
 .th3-card-list-item:first-child { border-top: none; }
@@ -408,14 +410,14 @@
 .th3-card-list-item--snack .th3-card-list-name {
   font-size: 0.72rem;
   font-weight: 500;
-  color: rgba(243,238,225,0.55);
+  color: var(--txt2, rgba(21,51,48,.55));
 }
 .th3-card-list-name {
   flex: 1;
   font-family: 'Montserrat', sans-serif;
   font-size: 0.78rem;
   font-weight: 500;
-  color: #F3EEE1;
+  color: var(--forest);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -435,19 +437,19 @@
 .th3-card-list-thumb {
   width: 40px; height: 40px; border-radius: 50%;
   object-fit: cover; flex-shrink: 0;
-  background: rgba(255,255,255,0.07);
-  border: 0.5px solid rgba(255,255,255,0.12);
+  background: var(--warm, #efe9dd);
+  border: 0.5px solid var(--sand);
 }
 .th3-card-list-thumb--empty {
   display: flex; align-items: center; justify-content: center;
-  color: rgba(243,238,225,0.7);
+  color: var(--taupe-deep, #7a6f5d);
 }
 .th3-card-list-thumb.is-done { opacity: 0.5; }
 .th3-card-list-check {
   width: 22px; height: 22px;
   border-radius: 6px;
-  border: 1.5px solid rgba(255,255,255,0.28);
-  background: rgba(255,255,255,0.05);
+  border: 1.5px solid var(--sand);
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -461,9 +463,9 @@
   -webkit-tap-highlight-color: transparent;
 }
 .th3-card-list-check.checked {
-  background: #BFA065;
-  border-color: #BFA065;
-  color: #0E2521;
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--amber);
 }
 
 /* FoodLog-Display — sub-eyebrow "REGISTRADO" + filas de ítems registrados.
@@ -489,7 +491,7 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 0.66rem;
   font-weight: 600;
-  color: #BFA065;
+  color: var(--amber-deep);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
   white-space: nowrap;
@@ -503,7 +505,7 @@
   gap: 8px;
   margin-top: auto;
   padding-top: 10px;
-  border-top: 0.5px solid rgba(255,255,255,0.08);
+  border-top: 0.5px solid var(--sand);
 }
 .th3-card-foot--arrow-only { justify-content: flex-end; }
 /* "¿Hiciste otra actividad?" — fila propia justo donde termina el plan,
@@ -518,13 +520,13 @@
   padding: 11px 0 0;
   background: none;
   border: none;
-  border-top: 0.5px solid rgba(255,255,255,0.08);
+  border-top: 0.5px solid var(--sand);
   text-align: left;
   font-family: 'Montserrat', sans-serif;
   font-size: 0.72rem;
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: var(--amber);
+  color: var(--amber-deep);
   cursor: pointer;
   /* min-width:0 deja que el botón encoja dentro de la tarjeta (sin esto, un
      flex item no baja de su contenido y un texto largo —EN— se sale del borde).
@@ -535,7 +537,7 @@
   transition: opacity .2s var(--ease-out-soft);
 }
 .th3-card-alt-activity:active { opacity: .6; }
-.th3-card-alt-activity.logged { color: #BFA065; }
+.th3-card-alt-activity.logged { color: var(--forest); }
 .th3-card-alt-check { color: var(--forest); font-weight: 700; }
 /* Cuando el foot sigue a la fila de actividad, NO duplicar borde: un solo
    divisor arriba del bloque (actividad + navegación). Evita el look cargado
@@ -550,7 +552,7 @@
   font-style: italic;
   font-size: 0.7rem;
   font-weight: 400;
-  color: rgba(243,238,225,0.55);
+  color: rgba(21,51,48,0.55);
 }
 .th3-card-arrow {
   font-family: 'Montserrat', sans-serif;

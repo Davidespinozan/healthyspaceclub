@@ -48,7 +48,7 @@
   --terracota-soft: rgba(199, 91, 58, 0.12);
 
   /* Sala — sistema de superficies (introducido en refactor TabTu, reemplaza progresivamente a --cream) */
-  --sala-bg: #FAFAF7;            /* Fondo principal cream cálido (página entera) */
+  --sala-bg: #F2F0E8;            /* Fondo cream cálido, un poco más profundo que el blanco de las cards → despegan */
   --sala-surface: #FFFFFF;       /* Cards, modales, sidebar, inputs */
   --sala-border: #E8E6E0;        /* Bordes sutiles */
   --sala-border-strong: #D4D0C8; /* Bordes con más presencia (inputs hover, secondary CTAs) */
@@ -67,12 +67,13 @@
      - Duration: --duration-{fast,base,slow} para transitions.
      ==================================================== */
 
-  /* Pro — sombras lift (basado en forest, más sutiles que las legacy) */
-  --shadow-pro-sm: 0 2px 4px rgba(21, 51, 48, 0.04);
-  --shadow-pro-md: 0 8px 16px rgba(21, 51, 48, 0.06);
-  --shadow-pro-lg: 0 12px 24px rgba(21, 51, 48, 0.06);
-  --shadow-pro-xl: 0 14px 32px rgba(21, 51, 48, 0.10);
-  --shadow-pro-2xl: 0 24px 56px rgba(21, 51, 48, 0.16);
+  /* Pro — sombras lift de 2 capas (borde crujiente + flote suave) → las cards
+     resaltan con profundidad en vez de verse planas. */
+  --shadow-pro-sm: 0 1px 2px rgba(14, 37, 33, 0.06);
+  --shadow-pro-md: 0 1px 2px rgba(14, 37, 33, 0.06), 0 8px 20px -6px rgba(14, 37, 33, 0.13);
+  --shadow-pro-lg: 0 1px 3px rgba(14, 37, 33, 0.07), 0 14px 30px -8px rgba(14, 37, 33, 0.16);
+  --shadow-pro-xl: 0 2px 5px rgba(14, 37, 33, 0.08), 0 20px 44px -12px rgba(14, 37, 33, 0.22);
+  --shadow-pro-2xl: 0 3px 8px rgba(14, 37, 33, 0.10), 0 32px 64px -16px rgba(14, 37, 33, 0.28);
   --shadow-pro-lift-forest: 0 10px 20px rgba(8, 20, 27, 0.16);
   --shadow-pro-lift-terracota: 0 10px 20px rgba(199, 91, 58, 0.16);
 
