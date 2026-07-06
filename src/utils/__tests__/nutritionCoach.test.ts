@@ -40,15 +40,25 @@ describe('computeCoach', () => {
     expect(c.macros.find(m => m.key === 'prot')!.status).toBe('watch');
   });
 
-  it('exceso de kcal → headline "over", tono over', () => {
+  it('exceso con comidas por delante → overEarly (no alarmar aún), tono watch', () => {
     const c = computeCoach({
       consumed: { kcal: 2300, prot: 150, carbs: 260, fat: 70 },
       target, mealsDone: 2, mealsTotal: 3,
     });
+    expect(c.headline).toBe('overEarly');
+    expect(c.tone).toBe('watch');
+    expect(c.over).toBe(true);
+    expect(c.kcalLeft).toBeLessThan(0);
+  });
+
+  it('exceso con el día ya cerrado → headline "over", tono over', () => {
+    const c = computeCoach({
+      consumed: { kcal: 2300, prot: 150, carbs: 260, fat: 70 },
+      target, mealsDone: 3, mealsTotal: 3,
+    });
     expect(c.headline).toBe('over');
     expect(c.tone).toBe('over');
     expect(c.over).toBe(true);
-    expect(c.kcalLeft).toBeLessThan(0);
   });
 
   it('día cerrado en meta con buena proteína → doneGood', () => {

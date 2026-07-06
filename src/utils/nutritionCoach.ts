@@ -18,7 +18,7 @@ export interface CoachInput {
 export type MacroStatus = 'good' | 'watch' | 'over';
 export type CoachTone = 'good' | 'watch' | 'over';
 /** Código del titular — la UI lo mapea a una frase i18n con los números. */
-export type CoachHeadline = 'start' | 'good' | 'protein' | 'over' | 'doneGood' | 'doneShort';
+export type CoachHeadline = 'start' | 'good' | 'protein' | 'over' | 'overEarly' | 'doneGood' | 'doneShort';
 
 export interface MacroRead {
   key: 'prot' | 'carbs' | 'fat';
@@ -96,7 +96,10 @@ export function computeCoach(input: CoachInput): Coach {
     // algo sin marcar comida del plan, el número ya no es 0 → no contradecir.
     tone = 'good'; headline = 'start';
   } else if (over) {
-    tone = 'over'; headline = 'over';
+    // Con comidas por delante NO alarmar con "mañana ajustamos": guía a cuidar
+    // las próximas. El "te pasaste" contundente se reserva para el cierre del día.
+    if (mealsLeft > 0) { tone = 'watch'; headline = 'overEarly'; }
+    else { tone = 'over'; headline = 'over'; }
   } else if (proteinBehind) {
     tone = 'watch'; headline = 'protein';
   } else {

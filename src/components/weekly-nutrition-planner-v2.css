@@ -1096,3 +1096,38 @@
   font-size: 12px; font-style: italic; line-height: 1.5; color: var(--txt2, rgba(21,51,48,.6));
   margin: 2px 4px 0; padding: 0 2px;
 }
+
+/* Registrado aparte: antojos que suman a la META pero no sustituyen comida del plan. */
+.wnp2-extras { margin-top: 14px; }
+.wnp2-extras-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: var(--tracking-kicker, .08em);
+  text-transform: uppercase; color: var(--amber-deep, #9a7b2e);
+  padding: 0 4px 6px;
+}
+.wnp2-extra {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; margin-bottom: 8px;
+  background: #fff; border-radius: 14px;
+  box-shadow: var(--shadow-pro-sm, 0 1px 3px rgba(14,37,33,.07));
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform .12s;
+}
+.wnp2-extra:active { transform: scale(0.985); }
+.wnp2-extra-name {
+  flex: 1; font-size: 14px; font-weight: 600; color: var(--forest);
+  line-height: 1.2; letter-spacing: var(--tracking-tight);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wnp2-extra-kcal {
+  font-size: 12px; font-weight: 600; color: var(--txt2, rgba(21,51,48,.55));
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+.wnp2-extra-del {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px;
+  border: none; background: none; cursor: pointer;
+  color: var(--txt2, rgba(21,51,48,.4)); font-size: 13px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.wnp2-extra-del:hover { color: var(--terra, #C75B3A); }

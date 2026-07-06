@@ -578,11 +578,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       }
       setPhase('plan');
     } catch (e) {
+      // El motivo técnico (rate limit, timeout, IA caída) va SOLO a consola para
+      // diagnóstico; al usuario siempre un mensaje amable y localizado, nunca el
+      // string crudo del proveedor de IA.
       console.error('[DailyTrainer] generation failed:', e);
-      // Mostramos el motivo REAL (rate limit, timeout, IA caída, etc.) en vez de
-      // un genérico — así el error es accionable y diagnosticable.
-      const real = e instanceof Error && e.message ? e.message : '';
-      const msg = real || t('wizard.genErrFallback');
+      const msg = t('wizard.genErrFallback');
       setError(msg);
       // If we had a previous plan, go back to it instead of modality
       if (plan) {

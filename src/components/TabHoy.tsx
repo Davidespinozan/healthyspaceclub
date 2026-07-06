@@ -802,7 +802,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                               className="th3-card-list-item th3-card-list-item--log"
                             >
                               <span className="th3-card-list-name">{entry.desc}</span>
-                              <span className="th3-card-list-kcal">~{entry.kcal} kcal</span>
+                              <span className="th3-card-list-kcal">{entry.source === 'ai' ? '~' : ''}{entry.kcal} kcal</span>
                             </li>
                           ))}
                         </>

@@ -34,6 +34,7 @@ export default function NutritionMeta({ consumed, goalKcal, targets, mealsDone, 
       case 'good':      return t('hoy.coachGood', { kcal: Math.max(0, coach.kcalLeft), meals: coachMealsLabel });
       case 'protein':   return t('hoy.coachProtein', { prot: coach.protLeft });
       case 'over':      return t('hoy.coachOver', { kcal: Math.abs(coach.kcalLeft) });
+      case 'overEarly': return t('hoy.coachOverEarly', { meals: coachMealsLabel });
       case 'doneGood':  return t('hoy.coachDoneGood');
       case 'doneShort': return t('hoy.coachDoneShort', { prot: coach.protLeft });
     }

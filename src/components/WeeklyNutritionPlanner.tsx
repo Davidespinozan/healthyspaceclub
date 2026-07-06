@@ -980,6 +980,42 @@ export default function WeeklyNutritionPlanner() {
           ) : (
             <div className="wnp2-empty-day">{t('nutritionPlanner.emptyDay')}</div>
           )}
+
+          {/* Registrado aparte: antojos que la META ya cuenta pero que no sustituyen
+              ninguna comida del plan. Antes eran kcal "fantasma" (contaban sin verse).
+              Aquí se ven, se editan (reabre la calculadora) y se pueden quitar. */}
+          {activeDay === todayOffset && (() => {
+            const extras = foodLog.filter(e => e.date === todayKey && e.mealIndex == null);
+            if (extras.length === 0) return null;
+            return (
+              <div className="wnp2-extras">
+                <div className="wnp2-extras-label">{t('nutritionPlanner.extrasLabel')}</div>
+                {extras.map(e => (
+                  <div
+                    key={e.id}
+                    className="wnp2-extra"
+                    onClick={() => {
+                      const items = (e.items && e.items.length > 0)
+                        ? e.items
+                        : [{ food_id: '', alimento: e.desc, grams: 0, label: '', kcal: e.kcal, prot: e.prot ?? 0, carbs: e.carbs ?? 0, fat: e.fat ?? 0 }];
+                      setCalcTarget({ editEntryIds: [e.id], initialItems: items, initialName: e.desc });
+                    }}
+                  >
+                    <span className="wnp2-extra-name">{e.desc}</span>
+                    <span className="wnp2-extra-kcal">{e.source === 'ai' ? '~' : ''}{Math.round(e.kcal)} kcal</span>
+                    <button
+                      type="button"
+                      className="wnp2-extra-del"
+                      aria-label={t('nutritionPlanner.ariaRemoveLog')}
+                      onClick={(ev) => { ev.stopPropagation(); removeFoodLog(e.id).catch(() => {}); }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </>
       )}
 

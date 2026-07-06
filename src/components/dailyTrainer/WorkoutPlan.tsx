@@ -163,7 +163,11 @@ export default function WorkoutPlan({
               <Clock size={11} /> {t('workout.exercisesCount', { n: plan.exercises.length })}
             </span>
             <span className="dt2-meta-chip">
-              <Zap size={11} /> {plan.intensity}
+              <Zap size={11} /> {({
+                baja: t('workout.intensityLow'),
+                media: t('workout.intensityMid'),
+                alta: t('workout.intensityHigh'),
+              } as Record<string, string>)[plan.intensity] ?? plan.intensity}
             </span>
           </div>
         </div>
