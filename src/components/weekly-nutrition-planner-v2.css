@@ -631,9 +631,7 @@
   box-shadow: var(--shadow-pro-xl);
 }
 .wnp2-meal:active { transform: scale(0.98); }
-.wnp2-meal.done {
-  opacity: 0.55;
-}
+/* Hecho: NO se atenúa ni tacha — la palomita basta. Se queda normal. */
 @media (prefers-reduced-motion: reduce) { .wnp2-meal { animation: none; } }
 .wnp2-meal::before {
   content: '';
@@ -683,9 +681,6 @@
   line-height: 1.2;
   margin-bottom: 6px;
   letter-spacing: var(--tracking-tight);
-}
-.wnp2-meal.done .wnp2-meal-name {
-  text-decoration: line-through;
 }
 .wnp2-meal-chips {
   display: flex;

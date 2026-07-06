@@ -728,7 +728,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                         // resolved sin entrada ligada (registros viejos/globales) → dot ámbar (compat).
                         const showResolvedDot = resolved && !done && !replaced;
                         const showCheck = done || replaced;
-                        const strike = (done || resolved) && !replaced; // lo tuyo NO se tacha
                         function openDetail(e: React.MouseEvent) {
                           e.stopPropagation();
                           setMealDetail({ meal, index: i });
@@ -745,12 +744,12 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                           <li key={i} className={`th3-card-list-item${isSnack ? ' th3-card-list-item--snack' : ''}`}>
                             {!isSnack && (mealImg && !replaced ? (
                               <img
-                                className={`th3-card-list-thumb${strike ? ' is-done' : ''}`}
+                                className="th3-card-list-thumb"
                                 src={mealImg} alt="" loading="lazy"
                                 onClick={openDetail}
                               />
                             ) : (
-                              <span className={`th3-card-list-thumb th3-card-list-thumb--empty${showCheck ? ' is-done' : ''}`} aria-hidden="true">
+                              <span className="th3-card-list-thumb th3-card-list-thumb--empty" aria-hidden="true">
                                 <Utensils size={16} strokeWidth={1.8} />
                               </span>
                             ))}
@@ -759,7 +758,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                             ) : (
                               <button
                                 type="button"
-                                className={`th3-card-list-name${strike ? ' done' : ''}`}
+                                className="th3-card-list-name"
                                 onClick={openDetail}
                               >
                                 {meal.name}
