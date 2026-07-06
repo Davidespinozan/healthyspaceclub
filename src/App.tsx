@@ -205,6 +205,11 @@ export default function App() {
         // Hidratar profile en background. setTimeout(0) saca la query del lock
         // del callback de onAuthStateChange — evita deadlock en supabase-js v2.
         setTimeout(async () => {
+          // Guardia anti-carrera: si mientras las queries vuelan cambió el dueño
+          // de los datos (otro login o un logout), abortamos para no escribir los
+          // datos de ESTE usuario sobre la sesión de otro. dataOwnerId se reclama
+          // síncronamente en ensureDataOwner al firmar, así que es la señal fiable.
+          const isStillCurrentUser = () => useAppStore.getState().dataOwnerId === session.user.id;
           try {
             const { data: profile } = await supabase
               .from('user_profiles')
@@ -223,11 +228,12 @@ export default function App() {
                 .eq('user_id', session.user.id)
                 .maybeSingle();
               handle = (u as { username?: string | null } | null)?.username ?? null;
-              if (handle) {
+              if (handle && isStillCurrentUser()) {
                 useAppStore.setState({ username: handle });
               }
             } catch { /* columna username inexistente (pre-migración) → ignora */ }
 
+            if (!isStillCurrentUser()) return; // cambió de cuenta mientras cargaba
             if (profile) {
               useAppStore.setState({
                 // Si el perfil no tiene display_name, caemos al @usuario (que
@@ -305,6 +311,7 @@ export default function App() {
               .select('date, kg')
               .eq('user_id', session.user.id)
               .order('date', { ascending: true });
+            if (!isStillCurrentUser()) return;
             if (weights) {
               useAppStore.setState({
                 weightLog: weights.map(w => ({ date: w.date, kg: Number(w.kg) })),
@@ -326,6 +333,7 @@ export default function App() {
               .eq('user_id', session.user.id)
               .gte('date', cutoff)
               .order('date', { ascending: true });
+            if (!isStillCurrentUser()) return;
             if (foods) {
               useAppStore.setState({
                 foodLog: foods.map(f => ({
@@ -360,6 +368,7 @@ export default function App() {
               .eq('user_id', session.user.id)
               .gte('date_local', cutoff)
               .order('completed_at', { ascending: true });
+            if (!isStillCurrentUser()) return;
             if (workouts) {
               const remoteSessions = (workouts as WorkoutLogRow[]).map(mapWorkoutLogRowToSession);
               const localState = useAppStore.getState();
@@ -385,6 +394,7 @@ export default function App() {
               .select('date, meal_index, checked, resolved_by_log')
               .eq('user_id', session.user.id)
               .gte('date', cutoff);
+            if (!isStillCurrentUser()) return;
             if (rows) {
               const localState = useAppStore.getState();
               const { merged } = mergeMealProgress(
@@ -418,6 +428,7 @@ export default function App() {
               .select('milestone_days, unlocked_at')
               .eq('user_id', session.user.id)
               .order('unlocked_at', { ascending: true });
+            if (!isStillCurrentUser()) return;
             if (milestones) {
               useAppStore.setState({ userMilestones: milestones });
             }
