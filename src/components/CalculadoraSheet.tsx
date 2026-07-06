@@ -155,10 +155,12 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
   // en "Mis platillos" para reusarlo después.
   async function addBuiltDish() {
     if (buildIngs.length === 0 || saving) return;
-    const nombre = buildName.trim() || t('calc.myDish');
+    const named = buildName.trim();
+    const nombre = named || t('calc.myDish');
     setSaving(true);
     try {
-      if (uid) {
+      // Guardar como platillo REUSABLE solo si le pusiste nombre (si no, solo se registra).
+      if (uid && named) {
         const { data: p } = await supabase.from('platillos')
           .insert({ user_id: uid, nombre, es_banco: false }).select('id').single();
         if (p) await supabase.from('platillo_ingredientes').insert(
@@ -187,7 +189,7 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
               <div className="th-popout-time">
                 {mealLabel ? t('calc.registerFor', { meal: mealLabel }) : t('calc.eyebrow')}
               </div>
-              <div className="th-popout-name">{t('calc.whatDidYouEat')}</div>
+              <div className="th-popout-name">{t('calc.buildTitle')}</div>
               <input ref={inputRef} className="pay-inp" style={{ marginTop: 8 }}
                 placeholder={t('calc.searchPlaceholder')} value={q} onChange={e => setQ(e.target.value)} />
               {onDescribe && (
