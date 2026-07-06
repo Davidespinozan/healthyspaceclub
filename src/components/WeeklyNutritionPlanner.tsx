@@ -264,7 +264,7 @@ export default function WeeklyNutritionPlanner() {
   const [notaOpen, setNotaOpen] = useState(false);
   const [mealDetail, setMealDetail] = useState<{ meal: PopoutMeal; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
-  const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number; editEntryId?: string; initialItems?: import('../store').FoodLogItem[]; initialName?: string } | null>(null);
+  const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number; editEntryIds?: string[]; initialItems?: import('../store').FoodLogItem[]; initialName?: string } | null>(null);
   const [shareMeal, setShareMeal] = useState<string | null>(null);
 
   const localizedMealPlans = getMealPlans(locale);
@@ -896,9 +896,19 @@ export default function WeeklyNutritionPlanner() {
                   className={`wnp2-meal${(checked || resolved) && !replaced ? ' done' : ''}${isSnack ? ' wnp2-meal--snack' : ''}`}
                   onClick={() => {
                     if (replaced) {
-                      // Abrir lo que registraste para ver/editar/agregar más.
-                      const e = linked[0];
-                      setCalcTarget({ mealTime: meal.time, mealIndex: i, editEntryId: e.id, initialItems: e.items, initialName: e.desc });
+                      // Abrir lo que registraste para ver/editar/agregar más. Registros viejos
+                      // sin `items` se reconstruyen como un total desde sus macros (no abren vacío).
+                      const items = linked.flatMap(en =>
+                        (en.items && en.items.length > 0)
+                          ? en.items
+                          : [{ food_id: '', alimento: en.desc, grams: 0, label: '', kcal: en.kcal, prot: en.prot ?? 0, carbs: en.carbs ?? 0, fat: en.fat ?? 0 }]
+                      );
+                      setCalcTarget({
+                        mealTime: meal.time, mealIndex: i,
+                        editEntryIds: linked.map(en => en.id),
+                        initialItems: items,
+                        initialName: linked.map(en => en.desc).join(' + '),
+                      });
                     } else {
                       setMealDetail({ meal, index: i });
                     }
@@ -999,7 +1009,7 @@ export default function WeeklyNutritionPlanner() {
         <CalculadoraSheet
           mealTime={calcTarget.mealTime}
           mealIndex={calcTarget.mealIndex}
-          editEntryId={calcTarget.editEntryId}
+          editEntryIds={calcTarget.editEntryIds}
           initialItems={calcTarget.initialItems}
           initialName={calcTarget.initialName}
           onClose={() => setCalcTarget(null)}

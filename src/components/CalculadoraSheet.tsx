@@ -69,13 +69,13 @@ interface Props {
   mealIndex?: number;
   /** Plan B: "no lo encuentro, descríbelo" → abre el registro de texto libre. */
   onDescribe?: () => void;
-  /** Editar un registro existente: se precargan sus alimentos y al guardar lo reemplaza. */
-  editEntryId?: string;
+  /** Editar registro(s) existentes de esa comida: se precargan sus alimentos y al guardar los reemplaza. */
+  editEntryIds?: string[];
   initialItems?: BuildIng[];
   initialName?: string;
 }
 
-export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealIndex, onDescribe, editEntryId, initialItems, initialName }: Props) {
+export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealIndex, onDescribe, editEntryIds, initialItems, initialName }: Props) {
   const { t } = useT();
   const addFoodLog = useAppStore(s => s.addFoodLog);
   const removeFoodLog = useAppStore(s => s.removeFoodLog);
@@ -87,8 +87,8 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
   // Registra en food_log ligado a su comida (mealTime siempre; mealIndex solo si
   // sustituye un platillo del plan → lo marca resuelto). Un solo sistema, tablas nuevas.
   async function logEntry(e: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual'; items?: BuildIng[] }) {
-    // Editando: reemplaza el registro anterior (borra y vuelve a agregar).
-    if (editEntryId) await removeFoodLog(editEntryId).catch(() => {});
+    // Editando: reemplaza el/los registro(s) anteriores de esa comida (borra y vuelve a agregar).
+    if (editEntryIds) for (const id of editEntryIds) await removeFoodLog(id).catch(() => {});
     await addFoodLog({
       ...e,
       ...(mealTime !== undefined ? { mealTime } : {}),
@@ -210,11 +210,12 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
     setSaving(true);
     try {
       // Guardar como platillo REUSABLE solo si activaste el toggle.
-      if (uid && saveDish) {
+      const realIngs = buildIngs.filter(ing => ing.food_id); // los totales reconstruidos (sin food_id) no son ingredientes reusables
+      if (uid && saveDish && realIngs.length > 0) {
         const { data: p } = await supabase.from('platillos')
           .insert({ user_id: uid, nombre, es_banco: false }).select('id').single();
         if (p) await supabase.from('platillo_ingredientes').insert(
-          buildIngs.map((ing, i) => ({ platillo_id: (p as { id: string }).id, food_id: ing.food_id, gramos: ing.grams, orden: i })),
+          realIngs.map((ing, i) => ({ platillo_id: (p as { id: string }).id, food_id: ing.food_id, gramos: ing.grams, orden: i })),
         );
       }
       await logEntry({
