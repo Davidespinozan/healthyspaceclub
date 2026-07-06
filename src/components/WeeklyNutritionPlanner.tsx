@@ -884,8 +884,6 @@ export default function WeeklyNutritionPlanner() {
               const linked = resolved ? foodLog.filter(e => e.date === todayKey && e.mealIndex === i) : [];
               const replaced = linked.length > 0;
               const linkedKcal = linked.reduce((s, e) => s + e.kcal, 0);
-              const portionsToShow = meal.portions.slice(0, 3);
-              const extraCount = meal.portions.length - portionsToShow.length;
               const isSnack = meal.time.startsWith('Snack');
               const Ic = MEAL_ICON[meal.time] ?? Leaf;
               const planName = isSnack ? (meal.portions[0] ?? meal.name) : meal.name;
@@ -918,16 +916,6 @@ export default function WeeklyNutritionPlanner() {
                       {displayName}
                       {replaced && <span className="th3-log-tag">{t('hoy.foodLogMine')}</span>}
                     </div>
-                    {!isSnack && !replaced && (
-                      <div className="wnp2-meal-chips">
-                        {portionsToShow.map((p, j) => (
-                          <span key={j} className="wnp2-meal-chip">{p}</span>
-                        ))}
-                        {extraCount > 0 && (
-                          <span className="wnp2-meal-chip more">+{extraCount}</span>
-                        )}
-                      </div>
-                    )}
                     {/* "Registra tu propia comida" — solo para HOY y si aún no la
                         sustituiste. Abre la calculadora atribuida a este tiempo. */}
                     {!replaced && activeDay === todayOffset && (
