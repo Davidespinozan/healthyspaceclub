@@ -1,6 +1,7 @@
-// NutritionMeta — la tarjeta "META DE HOY" (oscura): kcal + barras de macros +
-// fibra + voz del coach. Reutilizable: vive arriba de la pantalla de nutrición y
-// se llena con lo consumido REAL del día (comas del plan o lo tuyo — todo cuenta).
+// NutritionMeta — la tarjeta "META DE HOY" (oscura): kcal + barras de macros
+// (proteína/carbos/grasa) + voz del coach. Solo mostramos lo que medimos con
+// confianza; la fibra no está en los datos del plan, así que no la fingimos.
+// Se llena con lo consumido REAL del día (comas del plan o lo tuyo — todo cuenta).
 import { useT } from '../i18n';
 import { computeCoach } from '../utils/nutritionCoach';
 import { plural } from '../i18n/format';
@@ -64,10 +65,6 @@ export default function NutritionMeta({ consumed, goalKcal, targets, mealsDone, 
           <div className="cday-track"><i style={{ width: `${pct(m.v, m.g)}%` }} /></div>
         </div>
       ))}
-      <div className="cday-fibra">
-        <span>{t('onboarding.macroFiber')}</span>
-        <span className="cday-bar-v">{t('calc.goalOnly', { n: targets.fiberG })}</span>
-      </div>
 
       {coachText && <p className="cday-coach" style={{ color: coachColor }}>{coachText}</p>}
     </div>
