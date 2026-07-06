@@ -227,13 +227,8 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
           {/* ── PANTALLA PRINCIPAL: registrar tu comida (buscar + tu lista) ── */}
           {mode === 'search' && (
             <>
-              <div className="th-popout-time">
-                {mealLabel ? t('calc.registerFor', { meal: mealLabel }) : t('calc.eyebrow')}
-              </div>
-              <div className="th-popout-name">{t('calc.buildTitle')}</div>
-              <div className="calc-hint">{t('calc.buildHint')}</div>
-              <div className="calc-addlabel">{t('calc.addFoodLabel')}</div>
-              <input ref={inputRef} className="pay-inp"
+              <div className="th-popout-name">{mealLabel ? t('calc.buildForMeal', { meal: mealLabel }) : t('calc.buildTitle')}</div>
+              <input ref={inputRef} className="pay-inp" style={{ marginTop: 12 }}
                 placeholder={t('calc.searchPlaceholder')} value={q} onChange={e => setQ(e.target.value)} />
               {onDescribe && (
                 <button className="calc-describe" onClick={onDescribe}>{t('calc.describeInstead')}</button>
