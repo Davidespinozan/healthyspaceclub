@@ -72,16 +72,14 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
     if (mealIndex !== undefined) setMealResolvedByLog(`meal-${dayKey(new Date())}-${mealIndex}`);
   }
 
-  const [mode, setMode] = useState<Mode>(initialMode ?? 'search');
+  const [mode, setMode] = useState<Mode>(initialMode ?? 'build');
   const [q, setQ] = useState('');
   const [results, setResults] = useState<FoodRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [recents, setRecents] = useState<FoodRow[]>([]);
   const [misPlatillos, setMisPlatillos] = useState<SavedPlatillo[]>([]);
 
   const [sel, setSel] = useState<FoodRow | null>(null);
   const [grams, setGrams] = useState(100);
-  const [target, setTarget] = useState<'day' | 'build'>('day'); // dónde va el alimento detallado
   const [saving, setSaving] = useState(false);
 
   const [buildName, setBuildName] = useState('');
@@ -91,7 +89,6 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
 
   useEffect(() => { if (mode === 'search') inputRef.current?.focus(); }, [mode]);
   useEffect(() => {
-    try { setRecents(JSON.parse(localStorage.getItem('hsc_recent_foods') || '[]')); } catch { /* noop */ }
     loadMisPlatillos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -125,13 +122,6 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
     return () => clearTimeout(id);
   }, [q]);
 
-  function saveRecent(f: FoodRow) {
-    try {
-      const prev: FoodRow[] = JSON.parse(localStorage.getItem('hsc_recent_foods') || '[]');
-      localStorage.setItem('hsc_recent_foods', JSON.stringify([f, ...prev.filter(p => p.id !== f.id)].slice(0, 12)));
-    } catch { /* noop */ }
-  }
-
   function pickFood(f: FoodRow) {
     setSel(f);
     const g = getMeasure(f)?.gramos_por_medida;
@@ -144,19 +134,11 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
   const kcal = sel ? Math.round((sel.kcal_100g ?? 0) * factor) : 0;
   const prot = r1(sel?.prot_100g), carbs = r1(sel?.hc_100g), fat = r1(sel?.lip_100g);
 
-  async function confirmFood() {
-    if (!sel || saving) return;
-    if (target === 'build') {
-      setBuildIngs(prev => [...prev, { food_id: sel.id, alimento: sel.alimento, grams, kcal, prot, carbs, fat }]);
-      setSel(null); setQ(''); setMode('build');
-      return;
-    }
-    setSaving(true);
-    try {
-      await logEntry({ desc: `${grams} g ${sel.alimento}`, kcal, prot, carbs, fat, source: 'manual' });
-      saveRecent(sel);
-      onLogged?.(); onClose();
-    } finally { setSaving(false); }
+  // Agregar el alimento como INGREDIENTE del platillo que se está armando.
+  function confirmFood() {
+    if (!sel) return;
+    setBuildIngs(prev => [...prev, { food_id: sel.id, alimento: sel.alimento, grams, kcal, prot, carbs, fat }]);
+    setSel(null); setQ(''); setMode('build');
   }
 
   async function addSaved(p: SavedPlatillo) {
@@ -172,17 +154,20 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
     kcal: a.kcal + x.kcal, prot: a.prot + x.prot, carbs: a.carbs + x.carbs, fat: a.fat + x.fat,
   }), { kcal: 0, prot: 0, carbs: 0, fat: 0 });
 
-  async function saveAndAddPlatillo() {
-    if (!uid || buildIngs.length === 0 || saving) return;
+  // Agrega el platillo armado a tu día (lo registra) y, si hay sesión, lo guarda
+  // en "Mis platillos" para reusarlo después.
+  async function addBuiltDish() {
+    if (buildIngs.length === 0 || saving) return;
     const nombre = buildName.trim() || t('calc.myDish');
     setSaving(true);
     try {
-      const { data: p, error } = await supabase.from('platillos')
-        .insert({ user_id: uid, nombre, es_banco: false }).select('id').single();
-      if (error || !p) throw error ?? new Error('no id');
-      await supabase.from('platillo_ingredientes').insert(
-        buildIngs.map((ing, i) => ({ platillo_id: (p as { id: string }).id, food_id: ing.food_id, gramos: ing.grams, orden: i })),
-      );
+      if (uid) {
+        const { data: p } = await supabase.from('platillos')
+          .insert({ user_id: uid, nombre, es_banco: false }).select('id').single();
+        if (p) await supabase.from('platillo_ingredientes').insert(
+          buildIngs.map((ing, i) => ({ platillo_id: (p as { id: string }).id, food_id: ing.food_id, gramos: ing.grams, orden: i })),
+        );
+      }
       await logEntry({
         desc: nombre, kcal: Math.round(bTot.kcal),
         prot: Math.round(bTot.prot * 10) / 10, carbs: Math.round(bTot.carbs * 10) / 10, fat: Math.round(bTot.fat * 10) / 10,
@@ -199,43 +184,16 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
       <div className="th-popout th-popout-sm" onClick={e => e.stopPropagation()}>
         <div className="th-popout-handle" />
         <div className="th-popout-content">
-          {/* ── SEARCH ── */}
+          {/* ── SEARCH (solo para agregar un ingrediente al platillo) ── */}
           {mode === 'search' && (
             <>
-              <div className="th-popout-time">
-                {mealIndex !== undefined ? t('calc.insteadOf', { meal: mealLabel ?? '' })
-                  : mealTime !== undefined ? t('calc.addTo', { meal: mealLabel ?? '' })
-                  : t('calc.eyebrow')}
-              </div>
-              <div className="th-popout-name">{target === 'build' ? t('calc.addToDish') : t('calc.title')}</div>
-              <input ref={inputRef} className="pay-inp" style={{ marginTop: 10 }}
+              <div className="th-popout-time">{t('calc.addToDish')}</div>
+              <input ref={inputRef} className="pay-inp" style={{ marginTop: 8 }}
                 placeholder={t('calc.searchPlaceholder')} value={q} onChange={e => setQ(e.target.value)} />
-              {onDescribe && target === 'day' && (
+              {onDescribe && (
                 <button className="calc-describe" onClick={onDescribe}>{t('calc.describeInstead')}</button>
               )}
               <div className="calc-results">
-                {q.trim().length < 2 && target === 'day' && misPlatillos.length > 0 && (
-                  <>
-                    <div className="calc-section">{t('calc.myDishes')}</div>
-                    {misPlatillos.map(p => (
-                      <button key={p.id} className="calc-result" onClick={() => addSaved(p)}>
-                        <span className="calc-result-name">🍽 {p.nombre}</span>
-                        <span className="calc-result-kcal">{p.kcal} kcal</span>
-                      </button>
-                    ))}
-                  </>
-                )}
-                {q.trim().length < 2 && recents.length > 0 && (
-                  <>
-                    <div className="calc-section">{t('calc.recents')}</div>
-                    {recents.map(f => (
-                      <button key={`r-${f.id}`} className="calc-result" onClick={() => pickFood(f)}>
-                        <span className="calc-result-name">{f.alimento}</span>
-                        <span className="calc-result-kcal">{Math.round(f.kcal_100g ?? 0)} kcal/100g</span>
-                      </button>
-                    ))}
-                  </>
-                )}
                 {loading && <div className="calc-muted">{t('calc.searching')}</div>}
                 {!loading && q.trim().length >= 2 && results.length === 0 && <div className="calc-muted">{t('calc.noResults')}</div>}
                 {results.map(f => (
@@ -270,10 +228,28 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
             </>
           )}
 
-          {/* ── BUILD (armar platillo) ── */}
+          {/* ── ARMAR TU COMIDA (único flujo) ── */}
           {mode === 'build' && (
             <>
-              <div className="th-popout-time">{t('calc.buildEyebrow')}</div>
+              <div className="th-popout-time">
+                {mealLabel ? t('calc.registerFor', { meal: mealLabel }) : t('calc.buildEyebrow')}
+              </div>
+              <div className="th-popout-name">{t('calc.buildTitle')}</div>
+
+              {/* Reusar un platillo guardado (rápido) */}
+              {buildIngs.length === 0 && misPlatillos.length > 0 && (
+                <div className="calc-mydishes">
+                  <div className="calc-section">{t('calc.myDishes')}</div>
+                  {misPlatillos.map(p => (
+                    <button key={p.id} className="calc-result" onClick={() => addSaved(p)}>
+                      <span className="calc-result-name">🍽 {p.nombre}</span>
+                      <span className="calc-result-kcal">{p.kcal} kcal</span>
+                    </button>
+                  ))}
+                  <div className="calc-or">{t('calc.orBuildNew')}</div>
+                </div>
+              )}
+
               <input className="pay-inp" placeholder={t('calc.dishName')} value={buildName} onChange={e => setBuildName(e.target.value)} />
               <div className="calc-results">
                 {buildIngs.length === 0 && <div className="calc-muted">{t('calc.buildEmpty')}</div>}
@@ -285,7 +261,7 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
                   </div>
                 ))}
               </div>
-              <button className="calc-measure" onClick={() => { setTarget('build'); setQ(''); setResults([]); setMode('search'); }}>
+              <button className="calc-measure" onClick={() => { setQ(''); setResults([]); setMode('search'); }}>
                 + {t('calc.addFood')}
               </button>
               {buildIngs.length > 0 && (
@@ -300,27 +276,19 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
 
         {/* ── FOOTER ── */}
         <div className="th-popout-footer">
-          {mode === 'search' && target === 'day' && (
-            <>
-              <button className="wz-cta" onClick={() => { setBuildName(''); setBuildIngs([]); setMode('build'); }}>{t('calc.buildDish')}</button>
-              <button className="th-popout-close" onClick={onClose}>{t('calc.cancel')}</button>
-            </>
-          )}
-          {mode === 'search' && target === 'build' && (
-            <button className="th-popout-close" onClick={() => { setTarget('day'); setMode('build'); }}>{t('calc.back')}</button>
+          {mode === 'search' && (
+            <button className="th-popout-close" onClick={() => setMode('build')}>{t('calc.back')}</button>
           )}
           {mode === 'food' && (
             <>
-              <button className="wz-cta" onClick={confirmFood} disabled={saving}>
-                {target === 'build' ? t('calc.addToDishBtn') : t('calc.add')}
-              </button>
-              <button className="th-popout-close" onClick={() => { setSel(null); setMode(target === 'build' ? 'search' : 'search'); }}>{t('calc.back')}</button>
+              <button className="wz-cta" onClick={confirmFood}>{t('calc.addToDishBtn')}</button>
+              <button className="th-popout-close" onClick={() => { setSel(null); setMode('search'); }}>{t('calc.back')}</button>
             </>
           )}
           {mode === 'build' && (
             <>
-              <button className="wz-cta" onClick={saveAndAddPlatillo} disabled={saving || buildIngs.length === 0}>{t('calc.saveDish')}</button>
-              <button className="th-popout-close" onClick={() => { setTarget('day'); setMode('search'); }}>{t('calc.cancel')}</button>
+              <button className="wz-cta" onClick={addBuiltDish} disabled={saving || buildIngs.length === 0}>{t('calc.addToDay')}</button>
+              <button className="th-popout-close" onClick={onClose}>{t('calc.cancel')}</button>
             </>
           )}
         </div>

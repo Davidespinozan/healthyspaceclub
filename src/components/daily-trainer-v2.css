@@ -152,10 +152,10 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
+  background: var(--sala-surface, #fff);
   border: 1px solid var(--sala-border, var(--sand));
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-pro-lg), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-pro-lg);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
   cursor: pointer;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
@@ -372,10 +372,10 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
+  background: var(--sala-surface, #fff);
   border: 1px solid var(--sala-border, var(--sand));
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-pro-lg), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-pro-lg);
   overflow: hidden;
 }
 .dt2-skel-ex::before {

@@ -606,7 +606,7 @@
 
 /* ─── Meal card (layout A: círculo a la izquierda) ─── */
 .wnp2-meal {
-  background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
+  background: var(--sala-surface, #fff);
   border: 1px solid var(--sala-border, var(--sand));
   border-radius: var(--radius-lg);
   padding: 14px 16px;
@@ -615,7 +615,7 @@
   gap: 14px;
   cursor: pointer;
   position: relative;
-  box-shadow: var(--shadow-pro-lg), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-pro-lg);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease;
   -webkit-tap-highlight-color: transparent;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;

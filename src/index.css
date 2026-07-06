@@ -7918,3 +7918,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 /* Sin viñeta pareja: la derecha (personas) se mantiene despejada; el scrim
    izquierdo del .trans ya da contraste al texto. */
+
+/* Divisor "o arma una nueva" en la calculadora (armar tu comida). */
+.calc-or { text-align: center; font-size: .72rem; font-style: italic; color: var(--txt2, rgba(21,51,48,.5)); margin: 12px 0 4px; }
+.calc-mydishes { margin-bottom: 4px; }
