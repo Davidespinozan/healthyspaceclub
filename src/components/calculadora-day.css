@@ -57,7 +57,7 @@
 
 /* ── Tarjetas de comida (OSCURAS, planas) ── */
 .cday-meal {
-  background: #17322b;
+  background: linear-gradient(135deg, #1C3B35, #0E2521);
   border: 1px solid rgba(255, 255, 255, .06);
   border-radius: 18px;
   overflow: hidden;
