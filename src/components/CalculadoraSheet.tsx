@@ -289,7 +289,7 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
                 <>
                   <div className="calc-preview">
                     <div className="calc-preview-kcal">{Math.round(bTot.kcal)} kcal</div>
-                    <div className="calc-preview-macros">P {Math.round(bTot.prot)} · C {Math.round(bTot.carbs)} · G {Math.round(bTot.fat)}</div>
+                    <div className="calc-preview-macros">{t('calc.abbrProt')} {Math.round(bTot.prot)} · {t('calc.abbrCarb')} {Math.round(bTot.carbs)} · {t('calc.abbrFat')} {Math.round(bTot.fat)}</div>
                   </div>
                   <button type="button" className={`calc-savechk${saveDish ? ' on' : ''}`} onClick={() => setSaveDish(v => !v)}>
                     <span className="calc-savechk-box">{saveDish ? '✓' : ''}</span>
@@ -344,7 +344,7 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
 
               <div className="calc-preview">
                 <div className="calc-preview-kcal">{kcal} kcal</div>
-                <div className="calc-preview-macros">P {prot} · C {carbs} · G {fat}</div>
+                <div className="calc-preview-macros">{t('calc.abbrProt')} {prot} · {t('calc.abbrCarb')} {carbs} · {t('calc.abbrFat')} {fat}</div>
               </div>
             </>
           )}

@@ -91,7 +91,9 @@ export function computeCoach(input: CoachInput): Coach {
     if (over) { tone = 'over'; headline = 'over'; }
     else if (proteinBehind) { tone = 'watch'; headline = 'doneShort'; }
     else { tone = 'good'; headline = 'doneGood'; }
-  } else if (mealsDone === 0) {
+  } else if (mealsDone === 0 && consumed.kcal < target.kcal * 0.05) {
+    // "Arranca tu día" solo si de verdad no has consumido nada; si registraste
+    // algo sin marcar comida del plan, el número ya no es 0 → no contradecir.
     tone = 'good'; headline = 'start';
   } else if (over) {
     tone = 'over'; headline = 'over';

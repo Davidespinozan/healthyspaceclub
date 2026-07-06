@@ -627,19 +627,19 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                             <li key={`${exId}-${i}`} className="th3-card-list-item">
                               {vidUrl ? (
                                 <video
-                                  className={`th3-card-list-thumb${exDone ? ' is-done' : ''}`}
+                                  className="th3-card-list-thumb"
                                   src={`${vidUrl}#t=0.1`}
                                   muted playsInline preload="metadata"
                                   onClick={goToTraining}
                                 />
                               ) : (
-                                <span className={`th3-card-list-thumb th3-card-list-thumb--empty${exDone ? ' is-done' : ''}`} aria-hidden="true">
+                                <span className="th3-card-list-thumb th3-card-list-thumb--empty" aria-hidden="true">
                                   <Dumbbell size={16} strokeWidth={1.8} />
                                 </span>
                               )}
                               <button
                                 type="button"
-                                className={`th3-card-list-name${exDone ? ' done' : ''}`}
+                                className="th3-card-list-name"
                                 onClick={goToTraining}
                               >
                                 {displayName}
@@ -648,7 +648,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                                 type="button"
                                 className={`th3-card-list-check${exDone ? ' checked' : ''}`}
                                 onClick={(e) => { e.stopPropagation(); toggleWorkoutCheck(exCheckKey); }}
-                                aria-label={exDone ? t('hoy.ariaMealUncheck') : t('hoy.ariaMealCheck')}
+                                aria-label={exDone ? t('hoy.ariaExerciseUncheck') : t('hoy.ariaExerciseCheck')}
                               >
                                 {exDone ? '✓' : ''}
                               </button>
