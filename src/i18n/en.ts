@@ -1201,6 +1201,8 @@ export const en: Translations<typeof es> = {
     recents: 'Recent',
     myDishes: 'My dishes',
     buildTitle: 'Build your meal',
+    buildHint: 'Add the foods you ate, one by one.',
+    addFoodLabel: '＋ Add a food',
     registerFor: 'Log your {meal}',
     orBuildNew: '— or build a new one —',
     addToDay: 'Add to my day',

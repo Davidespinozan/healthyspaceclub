@@ -1200,6 +1200,8 @@ export const es = {
     recents: 'Recientes',
     myDishes: 'Mis platillos',
     buildTitle: 'Arma tu comida',
+    buildHint: 'Agrégale los alimentos que comiste, uno por uno.',
+    addFoodLabel: '＋ Agregar alimento',
     registerFor: 'Registra tu {meal}',
     orBuildNew: '— o arma una nueva —',
     addToDay: 'Agregar a mi día',

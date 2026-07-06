@@ -190,7 +190,9 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
                 {mealLabel ? t('calc.registerFor', { meal: mealLabel }) : t('calc.eyebrow')}
               </div>
               <div className="th-popout-name">{t('calc.buildTitle')}</div>
-              <input ref={inputRef} className="pay-inp" style={{ marginTop: 8 }}
+              <div className="calc-hint">{t('calc.buildHint')}</div>
+              <div className="calc-addlabel">{t('calc.addFoodLabel')}</div>
+              <input ref={inputRef} className="pay-inp"
                 placeholder={t('calc.searchPlaceholder')} value={q} onChange={e => setQ(e.target.value)} />
               {onDescribe && (
                 <button className="calc-describe" onClick={onDescribe}>{t('calc.describeInstead')}</button>
