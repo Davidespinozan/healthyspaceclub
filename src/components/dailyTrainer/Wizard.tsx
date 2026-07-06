@@ -152,7 +152,7 @@ export default function Wizard({
         </div>
 
         <button className="wz-cta" onClick={handleModalityNext}>
-          {t('wizard.next')}
+          {t('wizard.next')} <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
         </button>
       </div>
     );
@@ -230,7 +230,7 @@ export default function Wizard({
         )}
 
         <button className="wz-cta" onClick={handlePhysicalNext}>
-          {t('wizard.next')}
+          {t('wizard.next')} <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
         </button>
 
         <div className="wz-back">

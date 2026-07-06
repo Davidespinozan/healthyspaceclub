@@ -7,7 +7,7 @@ import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets } from '../utils/nutritionTargets';
 import NutritionMeta from './NutritionMeta';
-import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, Shuffle, AlertTriangle, Check, X, type LucideIcon } from 'lucide-react';
+import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, Shuffle, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import CalculadoraSheet from './CalculadoraSheet';
@@ -601,7 +601,7 @@ export default function WeeklyNutritionPlanner() {
               setFreeText('');
             }}
           >
-            {freeText.trim() ? t('nutritionPlanner.continue') : t('nutritionPlanner.skip')}
+            {freeText.trim() ? t('nutritionPlanner.continue') : t('nutritionPlanner.skip')} <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
           </button>
         );
       }
@@ -610,13 +610,13 @@ export default function WeeklyNutritionPlanner() {
           <button className="wz-cta" onClick={confirmMulti}>
             {multiSel.length === 0
               ? t('nutritionPlanner.mixAll')
-              : t('nutritionPlanner.confirmCount', { count: multiSel.length })}
+              : t('nutritionPlanner.confirmCount', { count: multiSel.length })} <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
           </button>
         );
       }
       return (
         <button className="wz-cta" disabled={!singleSel} onClick={confirmSingle}>
-          {t('nutritionPlanner.next')}
+          {t('nutritionPlanner.next')} <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
         </button>
       );
     };
@@ -654,7 +654,7 @@ export default function WeeklyNutritionPlanner() {
               }
             }}
           >
-            {t('nutritionPlanner.previous')}
+<ArrowLeft size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('nutritionPlanner.previous')}
           </button>
         </div>
       </div>
@@ -956,7 +956,7 @@ export default function WeeklyNutritionPlanner() {
                           clearMealResolvedByLog(checkKey);
                         }}
                       >
-                        {t('nutritionPlanner.changeMine')}
+<RotateCcw size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('nutritionPlanner.changeMine')}
                       </button>
                     )}
                   </div>

@@ -2,6 +2,7 @@ import { dayKey } from '../utils/localDate';
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
+import { ArrowRight } from 'lucide-react';
 import { callAIStream } from '../utils/aiProxy';
 import { buildCoachSystemPrompt } from '../ai/prompts/coach';
 import ManagePlanSheet from './sheets/ManagePlanSheet';
@@ -164,6 +165,7 @@ export default function TabCoach() {
                   onClick={() => handleAction(action)}
                 >
                   {ACTION_LABELS[action]}
+                  <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden />
                 </button>
               )}
             </div>

@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
-import { Camera } from 'lucide-react';
+import { Camera, ArrowRight } from 'lucide-react';
 import { useT } from '../i18n';
 import { calcMealKcal } from '../utils/kcalCalc';
 import { supabase } from '../lib/supabase';
@@ -178,6 +178,7 @@ export default function MealDetailPopout({ meal, mealIndex, scaleFactor = 1, onC
                 }}
               >
                 {t('foodLog.detailCta')}
+                <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden />
               </button>
             </>
           )}

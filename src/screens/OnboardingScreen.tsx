@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity, AtSign, Check, Loader2, X } from 'lucide-react';
+import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity, AtSign, Check, Loader2, X, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
@@ -456,7 +456,7 @@ export default function OnboardingScreen() {
               onClick={handleDataContinue}
               disabled={!edad || !peso || !estatura}
             >
-              {t('onboarding.continue')}
+              {t('onboarding.continue')} <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -530,7 +530,7 @@ export default function OnboardingScreen() {
               onClick={handleUsernameContinue}
               disabled={handleStatus !== 'available' || handleSaving}
             >
-              {handleSaving ? t('username.saving') : t('onboarding.continue')}
+              {handleSaving ? t('username.saving') : t('onboarding.continue')} <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
             </button>
           </div>
         </div>

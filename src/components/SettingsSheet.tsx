@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronRight, Loader2 } from 'lucide-react';
+import { X, ChevronRight, Loader2, ArrowRight, Check } from 'lucide-react';
 import { useAppStore } from '../store';
 import { pushSupported, getPushEnabled, enablePush, disablePush, pushNeedsInstall } from '../utils/push';
 import { supabase } from '../lib/supabase';
@@ -193,6 +193,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
               onClick={() => setShowManagePlan(true)}
             >
               {t('settings.managePlan')}
+              <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden />
             </button>
           </div>
         </section>
@@ -246,6 +247,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
             onClick={() => setShowEditData(true)}
           >
             {t('settings.editData')}
+            <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden />
           </button>
         </section>
 
@@ -269,6 +271,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
               onClick={() => setShowUsernameEdit(true)}
             >
               {username ? t('settings.changeUsername') : t('settings.chooseUsername')}
+              <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden />
             </button>
             {!showPwForm && (
               <button
@@ -277,6 +280,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
                 onClick={() => setShowPwForm(true)}
               >
                 {t('settings.changePassword')}
+                <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden />
               </button>
             )}
           </div>
@@ -284,7 +288,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
             <div className="ss-pw-form">
               {pwSuccess ? (
                 <>
-                  <p className="ss-pw-msg ss-pw-msg--ok">{t('settings.pwSuccess')}</p>
+                  <p className="ss-pw-msg ss-pw-msg--ok"><Check size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden />{t('settings.pwSuccess')}</p>
                   <div className="ss-pw-actions">
                     <button type="button" className="ss-pw-save" onClick={resetPwForm}>
                       {t('common.close')}

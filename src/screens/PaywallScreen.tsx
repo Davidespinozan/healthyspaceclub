@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Lock } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { getPriceInfo, formatPrice, type BillingCycle } from '../utils/stripe';
@@ -70,6 +70,7 @@ export default function PaywallScreen() {
         </div>
 
         <button className="pw-cta" onClick={handleStart}>
+          <Lock size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden />
           {t('paywall.start')}
         </button>
 

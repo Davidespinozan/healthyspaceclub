@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CreditCard, CheckCircle, AlertCircle, XCircle, ChevronDown } from 'lucide-react';
+import { X, CreditCard, CheckCircle, AlertCircle, XCircle, ChevronDown, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
 import { useT } from '../../i18n';
@@ -272,6 +272,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
               {canSwitchCycle && currentCycle === 'monthly' && (
                 <button type="button" className="sh-cta mps-plan-cta-primary" disabled={busy} onClick={() => handleChangeCycle('yearly')}>
                   {t('managePlan.switchToYearly')}
+                  <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden />
                 </button>
               )}
             </div>

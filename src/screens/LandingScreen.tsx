@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
-import { ChevronDown, Dumbbell, Users, Brain, Salad } from 'lucide-react';
+import { ChevronDown, Dumbbell, Users, Brain, Salad, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { PRICING, detectRegion, type Region } from '../utils/region';
@@ -125,7 +125,7 @@ export default function LandingScreen() {
           <a href="#s-pillars" onClick={toggleMobileMenu}>{t('landing.navHow')}</a>
           <a href="#s-pricing" onClick={toggleMobileMenu}>{t('landing.navPlans')}</a>
           <span className="mob-menu-login" onClick={() => { toggleMobileMenu(); goTo('login'); }}>{t('landing.login')}</span>
-          <button className="mob-menu-cta" onClick={() => { toggleMobileMenu(); openAnnualCheckout(); }}>{t('landing.navJoinArrow')}</button>
+          <button className="mob-menu-cta" onClick={() => { toggleMobileMenu(); openAnnualCheckout(); }}>{t('landing.navJoinArrow')}<ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden /></button>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export default function LandingScreen() {
             <p className="hero-tagline">{t('landing.heroTagline')}</p>
             <h1><span className="h1-gold">{t('landing.heroH1a')}</span><br /><span className="h1-accent">{t('landing.heroH1b')} <em>{t('landing.heroH1bEm')}</em></span></h1>
             <div className="hero-btns">
-              <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>{t('landing.trialCta')}</MagneticBtn>
+              <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>{t('landing.trialCta')}<ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden /></MagneticBtn>
             </div>
             <ul className="hero-chips" aria-label="Healthy Space Club">
               <li><Salad size={14} strokeWidth={2} />{t('landing.heroChip1')}</li>
@@ -228,7 +228,7 @@ export default function LandingScreen() {
         <div className="trans-cta reveal">
           <h2 className="trans-cta-title">{t('landing.ctaFinalTitle')}</h2>
           <p className="trans-cta-sub">{t('landing.ctaFinalSub')}</p>
-          <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>{t('landing.trialCta')}</MagneticBtn>
+          <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>{t('landing.trialCta')}<ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden /></MagneticBtn>
         </div>
       </section>
 
@@ -262,7 +262,7 @@ export default function LandingScreen() {
               <li>{t('landing.mFeat3')}</li>
               <li>{t('landing.mFeat4')}</li>
             </ul>
-            <MagneticBtn className="btn-join" onClick={openMonthlyCheckout}>{t('landing.trialCta')}</MagneticBtn>
+            <MagneticBtn className="btn-join" onClick={openMonthlyCheckout}>{t('landing.trialCta')}<ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden /></MagneticBtn>
           </div>
 
           {/* ANUAL — destacado (forest) */}
@@ -293,7 +293,7 @@ export default function LandingScreen() {
               <li>{t('landing.aFeat3')}</li>
               <li>{t('landing.aFeat4')}</li>
             </ul>
-            <MagneticBtn className="btn-join" onClick={openAnnualCheckout}>{t('landing.trialCta')}</MagneticBtn>
+            <MagneticBtn className="btn-join" onClick={openAnnualCheckout}>{t('landing.trialCta')}<ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden /></MagneticBtn>
           </div>
         </div>
       </section>

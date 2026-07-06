@@ -15,7 +15,7 @@
 
 import { lazy, Suspense, useRef, useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useT } from '../../i18n';
 import { getExerciseIcon } from '../../utils/muscleGroupIcon';
@@ -354,7 +354,7 @@ export default function WorkoutPlan({
       {!plan.partnerMode && (
         <button type="button" className="dt2-alt-activity" onClick={() => setActivityOpen(true)}>
           <span className="dt2-alt-activity-q">{t('activityLog.detailQuestion')}</span>
-          <span className="dt2-alt-activity-cta">{t('activityLog.detailCta')}</span>
+          <span className="dt2-alt-activity-cta">{t('activityLog.detailCta')}<ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden /></span>
         </button>
       )}
 
