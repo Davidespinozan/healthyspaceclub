@@ -211,6 +211,7 @@ interface AppState {
   // Solo localStorage (igual que mealChecks), no Supabase.
   mealResolvedByLog: Record<string, true>; // { 'meal-2026-05-25-0': true }
   setMealResolvedByLog: (key: string) => void;
+  clearMealResolvedByLog: (key: string) => void;
 
   // Welcome video closed
   welcomeVidClosed: boolean;
@@ -685,6 +686,31 @@ export const useAppStore = create<AppState>()(
       }, { onConflict: 'user_id,date,meal_index' })
       .then(({ error }) => {
         if (error) console.error('[setMealResolvedByLog] supabase upsert failed:', error);
+      });
+  },
+  // Revertir una comida sustituida al plan (des-resolver). Preserva el check.
+  clearMealResolvedByLog: (key) => {
+    const state = get();
+    if (!state.mealResolvedByLog[key]) return;
+    const next = { ...state.mealResolvedByLog };
+    delete next[key];
+    set({ mealResolvedByLog: next });
+
+    const userId = state.user?.id;
+    if (!userId) return;
+    const parsed = extractDateAndIndex(key);
+    if (!parsed) return;
+    supabase.from('meal_progress')
+      .upsert({
+        user_id: userId,
+        date: parsed.date,
+        meal_index: parsed.index,
+        checked: !!state.mealChecks[key],
+        resolved_by_log: false,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,date,meal_index' })
+      .then(({ error }) => {
+        if (error) console.error('[clearMealResolvedByLog] supabase upsert failed:', error);
       });
   },
 

@@ -228,7 +228,7 @@ export default function WeeklyNutritionPlanner() {
     weeklyPlan, saveWeeklyPlan, clearWeeklyPlan,
     mealPlanKey, planGoal, obData, userName,
     mealChecks, toggleMealCheck,
-    mealResolvedByLog, foodLog,
+    mealResolvedByLog, clearMealResolvedByLog, foodLog, removeFoodLog,
     planRegenCount, incrementPlanRegen,
   } = useAppStore();
   const todayKey = dayKey(new Date());
@@ -951,6 +951,20 @@ export default function WeeklyNutritionPlanner() {
                         onClick={(e) => { e.stopPropagation(); setCalcTarget({ mealTime: meal.time, mealIndex: i }); }}
                       >
                         {t('nutritionPlanner.registerMine')}
+                      </button>
+                    )}
+                    {/* Ya sustituida → poder cambiarla: quita tu registro y vuelve al plan. */}
+                    {replaced && activeDay === todayOffset && (
+                      <button
+                        type="button"
+                        className="wnp2-meal-register wnp2-meal-register--change"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          linked.forEach(en => { removeFoodLog(en.id).catch(() => {}); });
+                          clearMealResolvedByLog(checkKey);
+                        }}
+                      >
+                        {t('nutritionPlanner.changeMine')}
                       </button>
                     )}
                   </div>

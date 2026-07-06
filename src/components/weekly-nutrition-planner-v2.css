@@ -1079,3 +1079,4 @@
 .wnp2-subhead .wnp2-regen-blocked {
   background: var(--warm, #F0EBE0); color: var(--taupe-deep, #6b6359);
 }
+.wnp2-meal-register--change { color: var(--txt2, rgba(21,51,48,.55)); }

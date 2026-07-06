@@ -1072,6 +1072,7 @@ export const en: Translations<typeof es> = {
     shopEmpty: 'No shopping list yet.',
     todayChip: 'Today',
     registerMine: '+ Log your own meal',
+    changeMine: '↺ Change',
     emptyDay: 'No meals assigned for this day.',
     regenTitleOne: 'Regenerate plan ({n} left)',
     regenTitleOther: 'Regenerate plan ({n} left)',
