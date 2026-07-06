@@ -346,8 +346,20 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // Fuerza/cardio/auto: cache válido. Reordena individuales por músculo
         // (por si fue cacheado antes de esta regla).
         cached.exercises = clusterIndividualsByMuscle(cached.exercises, exerciseBank);
+        // Pareja: la rutina cacheada TAMBIÉN debe llevar los metadatos de pareja y
+        // entregarse al compañero. Sin esto, un cache-hit dejaba al compañero sin
+        // rutina y A veía el plan como "solo" (sin cabecera ni formato juntos/alternado).
+        if (partnerMode) {
+          (cached as CachedWorkout).partnerMode = true;
+          (cached as CachedWorkout).partnerName = partnerName.trim() || t('wizard.partnerNamePlaceholder');
+          (cached as CachedWorkout).partnerAvatar = pendingPartner?.avatarUrl ?? null;
+          (cached as CachedWorkout).partnerId = pendingPartner?.id ?? null;
+        }
         setPlan(cached);
         await saveDailyWorkout(cached as any);
+        if (partnerMode && pendingPartner?.id) {
+          deliverPartnerWorkout(pendingPartner.id, cached).catch(() => {});
+        }
         setPhase('plan');
         return;
       }

@@ -297,7 +297,16 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
   const { startDate: userStartDate } = useAppStore();
   const isDay1 = userStartDate === today;
-  const daysSinceStart = userStartDate ? Math.floor((Date.now() - new Date(userStartDate).getTime()) / 86400000) : 0;
+  // Diferencia de días entre dos dayKeys LOCALes ("YYYY-MM-DD"). Parsear con
+  // new Date("YYYY-MM-DD") las trata como UTC → de noche en husos negativos daba
+  // un día de más. Se parsean a medianoche local y se redondea (DST-safe).
+  const daysSinceStart = (() => {
+    if (!userStartDate) return 0;
+    const [sy, sm, sd] = userStartDate.split('-').map(Number);
+    const [ty, tm, td] = today.split('-').map(Number);
+    if (!sy || !ty) return 0;
+    return Math.round((new Date(ty, tm - 1, td).getTime() - new Date(sy, sm - 1, sd).getTime()) / 86400000);
+  })();
 
   useEffect(() => {
     // Regenera si no hay briefing de hoy O si el idioma cacheado no coincide

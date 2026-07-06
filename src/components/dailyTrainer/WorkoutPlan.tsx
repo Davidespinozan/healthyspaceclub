@@ -39,6 +39,7 @@ import PartnerLiveHeader from '../PartnerLiveHeader';
 import PlayerLoadingFallback from '../PlayerLoadingFallback';
 import type { TranslationKey } from '../../i18n/es';
 import { translateDayLabel } from '../../utils/dayTypeLabel';
+import { dayKey } from '../../utils/localDate';
 
 const WorkoutPlayer = lazy(() => import('../WorkoutPlayer'));
 
@@ -394,7 +395,9 @@ export default function WorkoutPlan({
 
             // Sync con la card de Hoy: marcar como hecho cada ejercicio realizado
             // (no skipeado). Comparte workoutChecks → los ✓ aparecen en la card.
-            const checkDay = completedAtIso.split('T')[0];
+            // OJO: fecha LOCAL (dayKey), no UTC de toISOString — si no, de noche en
+            // husos negativos el ✓ quedaba bajo la llave de "mañana" y no se veía.
+            const checkDay = dayKey(new Date());
             const setWorkoutCheck = useAppStore.getState().setWorkoutCheck;
 
             const exercisesLog: ExerciseLogItem[] = plan.exercises.map((ex, i) => {

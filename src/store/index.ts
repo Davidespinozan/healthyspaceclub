@@ -795,6 +795,10 @@ export const useAppStore = create<AppState>()(
           items: entry.items ?? null,
         });
       if (error) {
+        // Rollback del optimista: si el insert falla, quitamos la entrada local
+        // para que no quede una kcal fantasma que la META cuenta y luego, al
+        // rehidratar de Supabase, desaparece.
+        set((state) => ({ foodLog: state.foodLog.filter(e => e.id !== id) }));
         console.error('[addFoodLog] supabase insert failed:', error);
         throw error;
       }
@@ -802,6 +806,7 @@ export const useAppStore = create<AppState>()(
   },
   removeFoodLog: async (id) => {
     const userId = get().user?.id;
+    const removed = get().foodLog.find(e => e.id === id);
     set((state) => ({ foodLog: state.foodLog.filter(e => e.id !== id) }));
     if (userId) {
       const { error } = await supabase
@@ -810,6 +815,9 @@ export const useAppStore = create<AppState>()(
         .eq('user_id', userId)
         .eq('id', id);
       if (error) {
+        // Rollback: si el delete falla, restauramos la entrada. Sin esto,
+        // desaparecía de la UI pero seguía en la DB → resucitaba al recargar.
+        if (removed) set((state) => ({ foodLog: [...state.foodLog, removed] }));
         console.error('[removeFoodLog] supabase delete failed:', error);
         throw error;
       }
@@ -869,8 +877,14 @@ export const useAppStore = create<AppState>()(
         },
         today,
       );
+      // Los checks de la lista de compras usan llaves `shop-${i}` por índice, sin
+      // fecha ni semana → al regenerar, la nueva lista mostraba los primeros ítems
+      // ya palomeados. Se limpian junto con el prune del plan.
+      const cleanedMealChecks = Object.fromEntries(
+        Object.entries(pruned.mealChecks).filter(([k]) => !k.startsWith('shop-')),
+      );
       set({
-        mealChecks: pruned.mealChecks,
+        mealChecks: cleanedMealChecks,
         mealResolvedByLog: pruned.mealResolvedByLog,
       });
       // Fire-and-forget DELETE en Supabase de hoy+futuro
@@ -1221,6 +1235,7 @@ export const useAppStore = create<AppState>()(
     habitsDate: '',
     weightLog: [],
     mealChecks: {},
+    workoutChecks: {}, // ← faltaba: sin esto, los ✓ de ejercicios de una cuenta se veían en la siguiente (mismo dispositivo)
     mealResolvedByLog: {},
     welcomeVidClosed: false,
     mealPlanKey: 'planA',
