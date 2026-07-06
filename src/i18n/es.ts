@@ -1175,6 +1175,8 @@ export const es = {
   },
   calc: {
     eyebrow: 'Calculadora',
+    insteadOf: 'En vez de {meal}',
+    describeInstead: '¿No lo encuentras? Descríbelo',
     title: 'Busca lo que comiste',
     searchPlaceholder: 'Ej. pollo, arroz, aguacate…',
     searching: 'Buscando…',

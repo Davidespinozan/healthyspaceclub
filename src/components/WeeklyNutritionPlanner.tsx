@@ -7,6 +7,7 @@ import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, ChevronDown, Wheat, Milk, Beef, Shell, CircleCheck, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
+import CalculadoraSheet from './CalculadoraSheet';
 import { chronoMeals } from '../utils/mealOrder';
 import { callAI } from '../utils/aiProxy';
 
@@ -260,6 +261,7 @@ export default function WeeklyNutritionPlanner() {
   const [notaOpen, setNotaOpen] = useState(false);
   const [mealDetail, setMealDetail] = useState<{ meal: PopoutMeal; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
+  const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number } | null>(null);
   const [shareMeal, setShareMeal] = useState<string | null>(null);
 
   const localizedMealPlans = getMealPlans(locale);
@@ -945,14 +947,28 @@ export default function WeeklyNutritionPlanner() {
         mealIndex={activeDay === todayOffset ? mealDetail?.index : undefined}
         onClose={() => setMealDetail(null)}
         onLogOther={(time, index) => {
+          // "Registrar la mía" → calculadora del catálogo atribuida a ese tiempo.
           setMealDetail(null);
-          setFoodLogTarget({ time, index });
+          setCalcTarget({ mealTime: time, mealIndex: index });
         }}
         onShare={(summary) => {
           setMealDetail(null);
           setShareMeal(summary);
         }}
       />
+
+      {calcTarget !== null && (
+        <CalculadoraSheet
+          mealTime={calcTarget.mealTime}
+          mealIndex={calcTarget.mealIndex}
+          onClose={() => setCalcTarget(null)}
+          onDescribe={() => {
+            const c = calcTarget;
+            setCalcTarget(null);
+            setFoodLogTarget({ time: c.mealTime ?? '', index: c.mealIndex });
+          }}
+        />
+      )}
 
       {shareMeal !== null && (
         <Suspense fallback={null}>

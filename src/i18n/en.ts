@@ -1176,6 +1176,8 @@ export const en: Translations<typeof es> = {
   },
   calc: {
     eyebrow: 'Calculator',
+    insteadOf: 'Instead of {meal}',
+    describeInstead: "Can't find it? Describe it",
     title: 'Search what you ate',
     searchPlaceholder: 'e.g. chicken, rice, avocado…',
     searching: 'Searching…',

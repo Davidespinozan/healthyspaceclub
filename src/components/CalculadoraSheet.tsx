@@ -10,6 +10,14 @@ import { createPortal } from 'react-dom';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { supabase } from '../lib/supabase';
+import { dayKey } from '../utils/localDate';
+import type { TranslationKey } from '../i18n/es';
+
+// Etiqueta del tiempo de comida (para "En vez de {Desayuno}").
+const MEAL_TIME_KEYS: Record<string, TranslationKey> = {
+  'Desayuno': 'mealTime.desayuno', 'Snack AM': 'mealTime.snackAm',
+  'Comida': 'mealTime.comida', 'Snack PM': 'mealTime.snackPm', 'Cena': 'mealTime.cena',
+};
 
 interface Measure { medida_nombre: string | null; gramos_por_medida: number | null }
 interface FoodRow {
@@ -31,13 +39,32 @@ function flat<T>(v: T | T[] | null | undefined): T | null {
 }
 
 type Mode = 'search' | 'food' | 'build';
-interface Props { onClose: () => void; onLogged?: () => void }
+interface Props {
+  onClose: () => void;
+  onLogged?: () => void;
+  /** Si se abre "en vez de" una comida del plan, su tiempo + índice. El registro
+   *  queda ligado a ESE lugar (lo sustituye) y marca la comida como resuelta. */
+  mealTime?: string;
+  mealIndex?: number;
+  /** Plan B: "no lo encuentro, descríbelo" → abre el registro de texto libre. */
+  onDescribe?: () => void;
+}
 
-export default function CalculadoraSheet({ onClose, onLogged }: Props) {
+export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealIndex, onDescribe }: Props) {
   const { t } = useT();
   const addFoodLog = useAppStore(s => s.addFoodLog);
+  const setMealResolvedByLog = useAppStore(s => s.setMealResolvedByLog);
   const session = useAppStore(s => s.session);
   const uid = session?.user?.id ?? null;
+  const forMeal = mealIndex !== undefined;
+  const mealLabel = mealTime && MEAL_TIME_KEYS[mealTime] ? t(MEAL_TIME_KEYS[mealTime]) : mealTime;
+
+  // Registra en food_log; si es "en vez de" una comida, la liga a ese lugar y
+  // la marca resuelta (la sustituye). Un solo sistema, mismas tablas nuevas.
+  async function logEntry(e: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' }) {
+    await addFoodLog(forMeal ? { ...e, mealTime, mealIndex } : e);
+    if (forMeal) setMealResolvedByLog(`meal-${dayKey(new Date())}-${mealIndex}`);
+  }
 
   const [mode, setMode] = useState<Mode>('search');
   const [q, setQ] = useState('');
@@ -120,7 +147,7 @@ export default function CalculadoraSheet({ onClose, onLogged }: Props) {
     }
     setSaving(true);
     try {
-      await addFoodLog({ desc: `${grams} g ${sel.alimento}`, kcal, prot, carbs, fat, source: 'manual' });
+      await logEntry({ desc: `${grams} g ${sel.alimento}`, kcal, prot, carbs, fat, source: 'manual' });
       saveRecent(sel);
       onLogged?.(); onClose();
     } finally { setSaving(false); }
@@ -130,7 +157,7 @@ export default function CalculadoraSheet({ onClose, onLogged }: Props) {
     if (saving) return;
     setSaving(true);
     try {
-      await addFoodLog({ desc: p.nombre, kcal: p.kcal, prot: p.prot, carbs: p.carbs, fat: p.fat, source: 'manual' });
+      await logEntry({ desc: p.nombre, kcal: p.kcal, prot: p.prot, carbs: p.carbs, fat: p.fat, source: 'manual' });
       onLogged?.(); onClose();
     } finally { setSaving(false); }
   }
@@ -150,7 +177,7 @@ export default function CalculadoraSheet({ onClose, onLogged }: Props) {
       await supabase.from('platillo_ingredientes').insert(
         buildIngs.map((ing, i) => ({ platillo_id: (p as { id: string }).id, food_id: ing.food_id, gramos: ing.grams, orden: i })),
       );
-      await addFoodLog({
+      await logEntry({
         desc: nombre, kcal: Math.round(bTot.kcal),
         prot: Math.round(bTot.prot * 10) / 10, carbs: Math.round(bTot.carbs * 10) / 10, fat: Math.round(bTot.fat * 10) / 10,
         source: 'manual',
@@ -169,10 +196,15 @@ export default function CalculadoraSheet({ onClose, onLogged }: Props) {
           {/* ── SEARCH ── */}
           {mode === 'search' && (
             <>
-              <div className="th-popout-time">{t('calc.eyebrow')}</div>
+              <div className="th-popout-time">
+                {forMeal ? t('calc.insteadOf', { meal: mealLabel ?? '' }) : t('calc.eyebrow')}
+              </div>
               <div className="th-popout-name">{target === 'build' ? t('calc.addToDish') : t('calc.title')}</div>
               <input ref={inputRef} className="pay-inp" style={{ marginTop: 10 }}
                 placeholder={t('calc.searchPlaceholder')} value={q} onChange={e => setQ(e.target.value)} />
+              {onDescribe && target === 'day' && (
+                <button className="calc-describe" onClick={onDescribe}>{t('calc.describeInstead')}</button>
+              )}
               <div className="calc-results">
                 {q.trim().length < 2 && target === 'day' && misPlatillos.length > 0 && (
                   <>

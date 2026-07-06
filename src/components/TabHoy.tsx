@@ -42,7 +42,8 @@ import './tab-hoy-v3.css';
 
 export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const { t, locale } = useT();
-  const [showCalc, setShowCalc] = useState(false);
+  // Calculadora abierta "en vez de" una comida (slot). null = cerrada.
+  const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number } | null>(null);
   const {
     userName, planGoal, mealPlanKey, shoppingDay,
     mealChecks, toggleMealCheck,
@@ -860,27 +861,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   )}
                 </>
               )}
-              {/* "¿Comiste otra cosa?" — mismo look que "¿Hiciste otra actividad?"
-                  de entreno. El log de comida es por-comida; aquí lleva al plan
-                  completo donde se toca la comida a reemplazar. */}
-              {weeklyPlan && (
-                <button
-                  type="button"
-                  className="th3-card-alt-activity"
-                  onClick={(e) => { e.stopPropagation(); onNav('alimentacion'); }}
-                >
-                  {t('foodLog.detailQuestion')}
-                </button>
-              )}
-              {/* Modo B: calcular/registrar comida propia desde el catálogo (siempre disponible) */}
-              <button
-                type="button"
-                className="th3-card-alt-activity"
-                onClick={(e) => { e.stopPropagation(); setShowCalc(true); }}
-              >
-                {t('calc.openBtn')}
-              </button>
-              {showCalc && <CalculadoraSheet onClose={() => setShowCalc(false)} />}
+              {/* Sin botones sueltos de "calcular/registrar": UNA sola puerta,
+                  por comida. Tocas la comida → "registrar la mía" → calculadora
+                  del catálogo, atribuida a ESE tiempo (lo sustituye). */}
               {/* Pie "Ver completo" SOLO con plan — en vacío el título ya es la
                   acción ("Generar tu plan de hoy →"). */}
               {weeklyPlan && (
@@ -967,12 +950,28 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
         scaleFactor={todayScale}
         onClose={() => setMealDetail(null)}
         onLogOther={(time, index) => {
+          // "Registrar la mía": abre la calculadora del catálogo atribuida a
+          // ESE tiempo (la sustituye). Una sola puerta, sobre las tablas nuevas.
           setMealDetail(null);
-          setFoodLogTarget({ time, index });
+          setCalcTarget({ mealTime: time, mealIndex: index });
         }}
       />
 
-      {/* ── Food log sheet (Food-2 + Food-4): captura texto libre + IA estima macros ── */}
+      {/* ── Calculadora "en vez de" una comida (catálogo → gramos → macros exactas) ── */}
+      {calcTarget !== null && (
+        <CalculadoraSheet
+          mealTime={calcTarget.mealTime}
+          mealIndex={calcTarget.mealIndex}
+          onClose={() => setCalcTarget(null)}
+          onDescribe={() => {
+            const c = calcTarget;
+            setCalcTarget(null);
+            setFoodLogTarget({ time: c.mealTime ?? '', index: c.mealIndex });
+          }}
+        />
+      )}
+
+      {/* ── Plan B: texto libre + IA (cuando el alimento no está en el catálogo) ── */}
       {foodLogTarget !== null && (
         <FoodLogSheet
           mealTime={foodLogTarget.time}

@@ -1561,6 +1561,10 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 .calc-measure { display: block; width: 100%; background: none; border: 1px solid rgba(21,51,48,.15);
   border-radius: 50px; padding: 9px; font-size: .8rem; font-weight: 600; color: var(--txt, #0E2521);
   cursor: pointer; margin-bottom: 12px; font-family: inherit; }
+/* Plan B: "no lo encuentro, descríbelo" — abre el registro de texto libre. */
+.calc-describe { display: block; width: 100%; background: none; border: none; color: var(--txt2, rgba(21,51,48,.58));
+  font-size: .76rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px;
+  cursor: pointer; margin-top: 10px; padding: 4px; font-family: inherit; }
 .calc-preview { background: rgba(191,160,101,.1); border: 1px solid rgba(191,160,101,.25);
   border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
 .calc-preview-kcal { font-size: 1.25rem; font-weight: 700; color: var(--amber-deep, #7C6232); }
