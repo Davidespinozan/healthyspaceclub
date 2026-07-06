@@ -241,9 +241,13 @@
 
 /* ─── Media — aspect ratio honesto ───────────────────────── */
 .post-card-media {
-  margin: 0;
+  /* Full-bleed estilo Instagram: la imagen rompe el padding lateral de 16px de la
+     card y va de borde a borde, sin esquinas redondeadas → más grande, menos
+     espacio blanco, más protagonista. El espacio vertical lo dan los vecinos
+     (head margin-bottom / text margin-top). */
+  margin: 0 -16px;
   background: var(--warm);
-  border-radius: var(--radius-md);
+  border-radius: 0;
   overflow: hidden;
 }
 .post-card-media[data-aspect="1:1"]  { aspect-ratio: 1 / 1; }
