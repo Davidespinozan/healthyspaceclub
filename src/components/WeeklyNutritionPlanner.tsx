@@ -915,7 +915,6 @@ export default function WeeklyNutritionPlanner() {
                       <span>{MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time}</span>
                     </div>
                     <div className="wnp2-meal-name">
-                      {replaced && <><span className="th3-plan-was">{planName}</span><span className="th3-swap-arrow">→</span></>}
                       {displayName}
                       {replaced && <span className="th3-log-tag">{t('hoy.foodLogMine')}</span>}
                     </div>

@@ -803,8 +803,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                             ))}
                             {replaced ? (
                               <span className="th3-card-list-name">
-                                <span className="th3-plan-was">{meal.name}</span>
-                                <span className="th3-swap-arrow">→</span>
                                 {displayName}
                                 <span className="th3-log-tag">{t('hoy.foodLogMine')}</span>
                               </span>
