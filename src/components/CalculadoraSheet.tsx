@@ -81,6 +81,7 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
 
   const [buildName, setBuildName] = useState('');
   const [buildIngs, setBuildIngs] = useState<BuildIng[]>([]);
+  const [saveDish, setSaveDish] = useState(false); // guardar lo armado como platillo reusable
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -155,12 +156,11 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
   // en "Mis platillos" para reusarlo después.
   async function addBuiltDish() {
     if (buildIngs.length === 0 || saving) return;
-    const named = buildName.trim();
-    const nombre = named || t('calc.myDish');
+    const nombre = buildName.trim() || t('calc.myDish');
     setSaving(true);
     try {
-      // Guardar como platillo REUSABLE solo si le pusiste nombre (si no, solo se registra).
-      if (uid && named) {
+      // Guardar como platillo REUSABLE solo si activaste el toggle.
+      if (uid && saveDish) {
         const { data: p } = await supabase.from('platillos')
           .insert({ user_id: uid, nombre, es_banco: false }).select('id').single();
         if (p) await supabase.from('platillo_ingredientes').insert(
@@ -238,15 +238,21 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
                 )}
               </div>
 
-              {/* Total + nombre opcional (para guardarlo). Solo con ingredientes. */}
+              {/* Total + guardar como platillo (armar tu platillo reusable). */}
               {buildIngs.length > 0 && q.trim().length < 2 && (
                 <>
                   <div className="calc-preview">
                     <div className="calc-preview-kcal">{Math.round(bTot.kcal)} kcal</div>
                     <div className="calc-preview-macros">P {Math.round(bTot.prot)} · C {Math.round(bTot.carbs)} · G {Math.round(bTot.fat)}</div>
                   </div>
-                  <input className="pay-inp" style={{ marginTop: 8 }} placeholder={t('calc.nameOptional')}
-                    value={buildName} onChange={e => setBuildName(e.target.value)} />
+                  <button type="button" className={`calc-savechk${saveDish ? ' on' : ''}`} onClick={() => setSaveDish(v => !v)}>
+                    <span className="calc-savechk-box">{saveDish ? '✓' : ''}</span>
+                    <span>{t('calc.saveAsDish')}</span>
+                  </button>
+                  {saveDish && (
+                    <input className="pay-inp" style={{ marginTop: 8 }} placeholder={t('calc.dishName')}
+                      value={buildName} onChange={e => setBuildName(e.target.value)} autoFocus />
+                  )}
                 </>
               )}
             </>

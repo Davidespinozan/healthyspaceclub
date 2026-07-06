@@ -1208,6 +1208,7 @@ export const en: Translations<typeof es> = {
     yourMeal: 'Your meal',
     nameOptional: 'Name it to save it (optional)',
     addToDayKcal: 'Add to my day · {kcal} kcal',
+    saveAsDish: 'Save as a dish (to reuse)',
     myDish: 'My dish',
     buildDish: '＋ Build a dish',
     buildEyebrow: 'Build a dish',

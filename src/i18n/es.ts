@@ -1207,6 +1207,7 @@ export const es = {
     yourMeal: 'Tu comida',
     nameOptional: 'Nómbrala para guardarla (opcional)',
     addToDayKcal: 'Agregar a mi día · {kcal} kcal',
+    saveAsDish: 'Guardar como platillo (para reusar)',
     myDish: 'Mi platillo',
     buildDish: '＋ Armar platillo',
     buildEyebrow: 'Armar platillo',
