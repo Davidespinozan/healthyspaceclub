@@ -161,6 +161,16 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // bajo la lista del plan ("REGISTRADO"). Solo display — NO toca
   // computeDayConsumption (Food-5) ni el dot ámbar (Food-4).
   const todayFoodLog = foodLog.filter(e => e.date === today);
+  // Extras = registros de hoy que NO se muestran en una franja del plan: antojos
+  // (mealIndex null) y huérfanos con mealIndex fuera de rango tras regenerar el
+  // plan. Sin esto sumarían kcal a la META sin aparecer en ningún lado.
+  const shownLogIds = new Set<string>();
+  for (let i = 0; i < todayMeals.length; i++) {
+    if (mealResolvedByLog[`meal-${today}-${i}`]) {
+      todayFoodLog.forEach(e => { if (e.mealIndex === i) shownLogIds.add(e.id); });
+    }
+  }
+  const extraFoodLog = todayFoodLog.filter(e => !shownLogIds.has(e.id));
 
   // Track-3a: derivar estado de sesiones para la card de Rutina.
   // sessionsToday → si hay alguna, eyebrow muta a "Entrenaste hoy ✓".
@@ -789,14 +799,14 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                       {/* Extras sueltos: registros que NO sustituyen una comida del
                           plan (antojo/snack fuera de lugar). Los ligados a una comida
                           ya se muestran EN su renglón arriba, no se repiten aquí. */}
-                      {todayFoodLog.filter(e => e.mealIndex == null).length > 0 && (
+                      {extraFoodLog.length > 0 && (
                         <>
                           <li className="th3-card-list-sep">
                             <span className="th3-card-list-sep-label">
                               {t('hoy.foodLogSection')}
                             </span>
                           </li>
-                          {todayFoodLog.filter(e => e.mealIndex == null).map(entry => (
+                          {extraFoodLog.map(entry => (
                             <li
                               key={entry.id}
                               className="th3-card-list-item th3-card-list-item--log"

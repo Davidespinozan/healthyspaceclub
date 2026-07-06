@@ -984,8 +984,18 @@ export default function WeeklyNutritionPlanner() {
           {/* Registrado aparte: antojos que la META ya cuenta pero que no sustituyen
               ninguna comida del plan. Antes eran kcal "fantasma" (contaban sin verse).
               Aquí se ven, se editan (reabre la calculadora) y se pueden quitar. */}
-          {activeDay === todayOffset && (() => {
-            const extras = foodLog.filter(e => e.date === todayKey && e.mealIndex == null);
+          {dayPlan && activeDay === todayOffset && (() => {
+            // "Extras" = TODO registro de hoy que NO se está mostrando ya en una
+            // franja del plan. Cubre antojos (mealIndex null) y también huérfanos:
+            // entradas con mealIndex fuera de rango tras regenerar el plan, que si
+            // no, sumarían kcal a la META sin verse en ningún lado (kcal fantasma).
+            const shown = new Set<string>();
+            for (let i = 0; i < dayPlan.meals.length; i++) {
+              if (mealResolvedByLog[`meal-${todayKey}-${i}`]) {
+                foodLog.forEach(e => { if (e.date === todayKey && e.mealIndex === i) shown.add(e.id); });
+              }
+            }
+            const extras = foodLog.filter(e => e.date === todayKey && !shown.has(e.id));
             if (extras.length === 0) return null;
             return (
               <div className="wnp2-extras">
