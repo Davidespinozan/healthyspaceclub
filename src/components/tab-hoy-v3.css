@@ -444,10 +444,10 @@
    que resalte donde iría la imagen, en vez de un ícono gris apagado. */
 .th3-card-list-thumb--empty {
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(140deg, #4e9d8f 0%, #2f6d5a 100%);
+  background: linear-gradient(135deg, var(--moss, #1C3B35), var(--forest, #0E2521));
   border: none;
   color: #F4EFE3;
-  box-shadow: 0 2px 6px -1px rgba(28, 59, 53, 0.4);
+  box-shadow: 0 2px 6px -1px rgba(14, 37, 33, 0.35);
 }
 .th3-card-list-thumb.is-done { opacity: 0.5; }
 .th3-card-list-check {

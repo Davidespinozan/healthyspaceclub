@@ -4,11 +4,13 @@ import { useAppStore } from '../store';
 import { mealPlans, getMealPlans } from '../data/mealPlan';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
+import { computeDayConsumption } from '../utils/foodConsumption';
+import { computeNutritionTargets } from '../utils/nutritionTargets';
+import NutritionMeta from './NutritionMeta';
 import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, ChevronDown, Wheat, Milk, Beef, Shell, CircleCheck, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import CalculadoraSheet from './CalculadoraSheet';
-import CalculadoraDay from './CalculadoraDay';
 import { chronoMeals } from '../utils/mealOrder';
 import { callAI } from '../utils/aiProxy';
 
@@ -263,8 +265,6 @@ export default function WeeklyNutritionPlanner() {
   const [mealDetail, setMealDetail] = useState<{ meal: PopoutMeal; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
   const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number } | null>(null);
-  // Switch de dos modos (estilo Magaly): seguir el plan o calcular tu día libre.
-  const [dayMode, setDayMode] = useState<'plan' | 'calc'>('plan');
   const [shareMeal, setShareMeal] = useState<string | null>(null);
 
   const localizedMealPlans = getMealPlans(locale);
@@ -674,7 +674,23 @@ export default function WeeklyNutritionPlanner() {
   // del plan sustituye (mismo índice que usa mealResolvedByLog en Plan del día).
   const todayNum = weeklyPlan.selectedDays[todayOffset >= 0 ? todayOffset : 0] ?? weeklyPlan.selectedDays[0];
   const todayDayPlan = scaledPlan.find(d => d.day === todayNum);
-  const todayPlanSlots = (todayDayPlan?.meals ?? []).map((m, i) => ({ time: m.time, index: i }));
+
+  // Consumo REAL de hoy para la META: suma comidas del plan marcadas ✓ Y lo que
+  // registraste tú (food_log). Una sola libreta — todo cuenta (regla 3).
+  const dayConsumption = computeDayConsumption({
+    todayMeals: todayDayPlan?.meals ?? [],
+    mealChecks, mealResolvedByLog, foodLog, today: todayKey,
+  });
+  const macroTargets = computeNutritionTargets({
+    sexo: String(obData.sex || 'Hombre'),
+    pesoKg: Number(obData.peso) || 70,
+    estaturaCm: Number(obData.estatura) || 170,
+    edad: Number(obData.edad) || 28,
+    activity: String(obData.activity || 'Moderada'),
+    goal: String(obData.goal || ''),
+    grasa: obData.grasa != null && obData.grasa !== '' ? Number(obData.grasa) : null,
+    embarazo: obData.embarazo === 1 || obData.embarazo === 'si',
+  });
 
   const shoppingTotal = weeklyPlan.shoppingList.length;
   const shoppingDone = weeklyPlan.shoppingList.filter((_, i) => !!mealChecks[`shop-${i}`]).length;
@@ -697,46 +713,44 @@ export default function WeeklyNutritionPlanner() {
 
   return (
     <div className="wnp2-wrap">
-      {/* Switch dos modos: Plan del día · Calculadora (misma meta, misma libreta) */}
-      <div className="cday-switch">
-        <button className={dayMode === 'plan' ? 'on' : ''} onClick={() => setDayMode('plan')}>{t('calc.modePlan')}</button>
-        <button className={dayMode === 'calc' ? 'on' : ''} onClick={() => setDayMode('calc')}>{t('calc.modeCalc')}</button>
-      </div>
+      {/* META DE HOY — la libreta única: se llena con lo del plan que marcaste ✓
+          Y con lo que registraste tú. Arriba de todo, siempre visible. */}
+      <NutritionMeta
+        consumed={{
+          kcal: dayConsumption.consumedKcal, prot: dayConsumption.consumedProt,
+          carbs: dayConsumption.consumedCarbs, fat: dayConsumption.consumedFat,
+        }}
+        goalKcal={planGoal}
+        targets={{ protG: macroTargets.protG, carbG: macroTargets.carbG, fatG: macroTargets.fatG, fiberG: macroTargets.fiberG }}
+        mealsDone={dayConsumption.completedSlots}
+        mealsTotal={dayConsumption.totalSlots}
+      />
 
-      {dayMode === 'calc' ? <CalculadoraDay planSlots={todayPlanSlots} /> : (
-      <>
-      {/* Header */}
-      <div className="wnp2-header">
-        <div className="wnp2-header-top">
-          <div style={{ flex: 1 }}>
-            <div className="wnp2-header-badge">
-              <span className="wnp2-header-badge-dot" />
-              <span className="wnp2-header-badge-text">
-                {t('nutritionPlanner.weekRange', { start: weekStartDate, end: weekEndDate })}
-              </span>
-            </div>
-            <h3 className="wnp2-header-title">{t('nutritionPlanner.planTitle')}</h3>
+      {/* Fila slim (clara): rango de la semana + cambiar plan. Reemplaza el header
+          oscuro "Plan personalizado" — la META de arriba ya es el ancla oscura. */}
+      <div className="wnp2-subhead">
+        <span className="wnp2-subhead-week">
+          {t('nutritionPlanner.weekRange', { start: weekStartDate, end: weekEndDate })}
+        </span>
+        {regenBlocked ? (
+          <div className="wnp2-regen-blocked" title={t('nutritionPlanner.regenBlocked')}>
+            <Lock size={11} />
+            <span>2/2</span>
           </div>
-          {regenBlocked ? (
-            <div className="wnp2-regen-blocked" title={t('nutritionPlanner.regenBlocked')}>
-              <Lock size={11} />
-              <span>2/2</span>
-            </div>
-          ) : (
-            <button
-              className="wnp2-regen"
-              onClick={resetQuestionnaire}
-              aria-label={t('nutritionPlanner.ariaRegen')}
-              title={plural(regenLeft, {
-                one: t('nutritionPlanner.regenTitleOne', { n: regenLeft }),
-                other: t('nutritionPlanner.regenTitleOther', { n: regenLeft }),
-              })}
-            >
-              <RefreshCw size={11} />
-              <span>{regenLeft}</span>
-            </button>
-          )}
-        </div>
+        ) : (
+          <button
+            className="wnp2-regen"
+            onClick={resetQuestionnaire}
+            aria-label={t('nutritionPlanner.ariaRegen')}
+            title={plural(regenLeft, {
+              one: t('nutritionPlanner.regenTitleOne', { n: regenLeft }),
+              other: t('nutritionPlanner.regenTitleOther', { n: regenLeft }),
+            })}
+          >
+            <RefreshCw size={11} />
+            <span>{regenLeft}</span>
+          </button>
+        )}
       </div>
 
       {/* Nota del coach — Plan-2: colapsable, default cerrado.
@@ -928,6 +942,17 @@ export default function WeeklyNutritionPlanner() {
                         )}
                       </div>
                     )}
+                    {/* "Registra tu propia comida" — solo para HOY y si aún no la
+                        sustituiste. Abre la calculadora atribuida a este tiempo. */}
+                    {!replaced && activeDay === todayOffset && (
+                      <button
+                        type="button"
+                        className="wnp2-meal-register"
+                        onClick={(e) => { e.stopPropagation(); setCalcTarget({ mealTime: meal.time, mealIndex: i }); }}
+                      >
+                        {t('nutritionPlanner.registerMine')}
+                      </button>
+                    )}
                   </div>
                   <div className="wnp2-meal-right">
                     {(replaced ? linkedKcal > 0 : mkcal > 0) && (
@@ -1003,8 +1028,6 @@ export default function WeeklyNutritionPlanner() {
           mealIndex={foodLogTarget.index}
           onClose={() => setFoodLogTarget(null)}
         />
-      )}
-      </>
       )}
     </div>
   );

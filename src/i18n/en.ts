@@ -1071,6 +1071,7 @@ export const en: Translations<typeof es> = {
     shopTitle: '{done} of {total} checked',
     shopEmpty: 'No shopping list yet.',
     todayChip: 'Today',
+    registerMine: '+ Log your own meal',
     emptyDay: 'No meals assigned for this day.',
     regenTitleOne: 'Regenerate plan ({n} left)',
     regenTitleOther: 'Regenerate plan ({n} left)',
