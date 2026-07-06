@@ -53,6 +53,11 @@ function getMeasure(f: FoodRow | null): Measure | null {
 function flat<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
 }
+// ¿El alimento tiene una medida casera REAL (pieza/taza/cda…) y no "gramos"?
+function isRealMeasure(m: Measure | null): boolean {
+  return !!(m?.gramos_por_medida && m.gramos_por_medida > 1.05
+    && m.medida_nombre && m.medida_nombre.toLowerCase().trim() !== 'gramos');
+}
 
 type Mode = 'search' | 'food';
 interface Props {
@@ -140,15 +145,17 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
 
   function pickFood(f: FoodRow) {
     setSel(f);
-    const m = getMeasure(f);
-    // Default: cuenta en la medida natural (1 pieza / 1 taza…) si existe; si no, gramos.
-    if (m?.gramos_por_medida && m.gramos_por_medida > 0) { setCurUnit('medida'); setCurQty(1); }
+    // Default: cuenta en la medida natural (1 pieza / 1 taza…) si es una medida
+    // REAL (no "gramos" ni g≈1); si no, cuenta en gramos.
+    if (isRealMeasure(getMeasure(f))) { setCurUnit('medida'); setCurQty(1); }
     else { setCurUnit('gramos'); setCurQty(100); }
     setMode('food');
   }
 
   const selMeasure = getMeasure(sel);
   const gPerMedida = selMeasure?.gramos_por_medida ?? null;
+  // ¿Tiene una medida casera real (pieza/taza/cda…), no "gramos"?
+  const hasMedida = isRealMeasure(selMeasure);
   // Gramos reales según la unidad elegida (medida × gramos, o gramos directos).
   const grams = curUnit === 'medida' && gPerMedida ? Math.round(curQty * gPerMedida) : Math.round(curQty);
   // Etiqueta legible: "2 tazas" / "1 ½ piezas" / "150 g".
@@ -300,19 +307,19 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
               <div className="th-popout-time">{sel.grupo}</div>
               <div className="th-popout-name">{sel.alimento}</div>
 
-              {/* Cuánto: cuenta en la medida natural del alimento */}
+              {/* Cuánto: cuenta en la medida natural del alimento (o gramos) */}
               <div className="calc-qty">
                 <button className="calc-step" onClick={() => stepQty(-1)}>−</button>
                 <div className="calc-qty-val">
-                  {curUnit === 'medida' && selMeasure?.medida_nombre
-                    ? <>{fracStr(curQty)} <small>{medidaLabel(selMeasure.medida_nombre, curQty)}</small></>
+                  {curUnit === 'medida' && hasMedida
+                    ? <>{fracStr(curQty)} <small>{medidaLabel(selMeasure!.medida_nombre!, curQty)}</small></>
                     : <>{grams} <small>g</small></>}
                 </div>
                 <button className="calc-step" onClick={() => stepQty(1)}>+</button>
               </div>
 
-              {/* Toggle unidad + equivalencia (para que nadie tenga que pensar en gramos) */}
-              {gPerMedida && selMeasure?.medida_nombre && (
+              {/* Toggle unidad + equivalencia — solo si hay medida casera real (no "gramos") */}
+              {hasMedida && gPerMedida && selMeasure?.medida_nombre && (
                 <>
                   <div className="calc-unitsel">
                     <button className={curUnit === 'medida' ? 'on' : ''}
