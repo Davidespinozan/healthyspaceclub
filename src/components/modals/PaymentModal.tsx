@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { X } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useT } from '../../i18n';
 import TermsSheet from '../sheets/TermsSheet';
@@ -208,7 +209,7 @@ export default function PaymentModal() {
             <div className="pay-plan-price">{priceLabel}</div>
             <div className="pay-plan-period">{periodLabel}</div>
           </div>
-          <button className="pay-x" onClick={closeModal} aria-label={t('common.close')}>✕</button>
+          <button className="pay-x" onClick={closeModal} aria-label={t('common.close')}><X size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /></button>
         </div>
 
         {/* Selector de ciclo — disponible antes de la tarjeta, en ambas fases */}

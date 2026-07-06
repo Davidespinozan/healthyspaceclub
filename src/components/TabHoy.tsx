@@ -569,9 +569,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   alguna sesión completada hoy. Sutil, sin romper layout. */}
               <p className={`th3-card-eyebrow${(sessionsToday.length > 0 || activityToday) ? ' th3-card-eyebrow--done' : ''}`}>
                 {sessionsToday.length > 0 ? (
-                  <>{t('hoy.entrenasteHoy')} <span className="th3-card-eyebrow-check">✓</span></>
+                  <>{t('hoy.entrenasteHoy')} <span className="th3-card-eyebrow-check"><Check size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span></>
                 ) : activityToday ? (
-                  <>{t('hoy.movedToday')} <span className="th3-card-eyebrow-check">✓</span></>
+                  <>{t('hoy.movedToday')} <span className="th3-card-eyebrow-check"><Check size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span></>
                 ) : (
                   t('hoy.cardEyebrowTraining')
                 )}
@@ -669,7 +669,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                                 onClick={(e) => { e.stopPropagation(); toggleWorkoutCheck(exCheckKey); }}
                                 aria-label={exDone ? t('hoy.ariaExerciseUncheck') : t('hoy.ariaExerciseCheck')}
                               >
-                                {exDone ? '✓' : ''}
+                                {exDone ? <Check size={14} strokeWidth={2} /> : ''}
                               </button>
                             </li>
                           );
@@ -690,7 +690,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 >
                   {lastActivityToday ? (
                     <>
-                      <span className="th3-card-alt-check" aria-hidden="true">✓</span>
+                      <span className="th3-card-alt-check" aria-hidden="true"><Check size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span>
                       {lastActivityToday.activity}{fmtActivityDur(lastActivityToday.durationMin)}
                     </>
                   ) : (
@@ -703,7 +703,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               {todayWorkoutPlan && (
                 <div className="th3-card-foot">
                   <span className="th3-card-foot-text">{t('hoy.viewFullRoutine')}</span>
-                  <span className="th3-card-arrow">→</span>
+                  <span className="th3-card-arrow"><ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span>
                 </div>
               )}
             </div>
@@ -800,7 +800,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                                 cursor: 'default',
                               } : undefined}
                             >
-                              {showCheck ? '✓' : showResolvedDot ? '·' : ''}
+                              {showCheck ? <Check size={14} strokeWidth={2} /> : showResolvedDot ? '·' : ''}
                             </button>
                           </li>
                         );
@@ -838,7 +838,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               {weeklyPlan && (
                 <div className="th3-card-foot">
                   <span className="th3-card-foot-text">{t('hoy.viewFullPlan')}</span>
-                  <span className="th3-card-arrow">→</span>
+                  <span className="th3-card-arrow"><ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span>
                 </div>
               )}
             </div>
@@ -860,7 +860,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               <p className="th3-partner-title">{t('hoy.partnerTitle')}</p>
               <p className="th3-partner-sub">{t('hoy.partnerSub')}</p>
             </div>
-            <span className="th3-partner-arrow">→</span>
+            <span className="th3-partner-arrow"><ArrowRight size={18} strokeWidth={1.8} style={{ verticalAlign: '-3px', flexShrink: 0 }} /></span>
           </button>
         )}
 
@@ -888,7 +888,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               <p className="th3-espacio-title">{t('hoy.espacioTitle')}</p>
               <p className="th3-espacio-sub">{t('hoy.espacioSubtitle')}</p>
             </div>
-            <span className="th3-espacio-arrow">→</span>
+            <span className="th3-espacio-arrow"><ArrowRight size={18} strokeWidth={1.8} style={{ verticalAlign: '-3px', flexShrink: 0 }} /></span>
           </button>
         )}
 

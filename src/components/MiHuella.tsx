@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
 import { uploadAvatar } from '../utils/uploadAvatar';
+import { ArrowLeft } from 'lucide-react';
 import { useT } from '../i18n';
 
 export default function MiHuella({ onBack }: { onBack: () => void }) {
@@ -101,7 +102,7 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="hu-wrap">
-      <button className="sub-back" onClick={onBack}>← {t('common.back')}</button>
+      <button className="sub-back" onClick={onBack}><ArrowLeft size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('common.back')}</button>
 
       <div className="hu-header">
         <label className="hu-avatar-wrap">

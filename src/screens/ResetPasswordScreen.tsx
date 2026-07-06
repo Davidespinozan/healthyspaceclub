@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
@@ -62,7 +63,7 @@ export default function ResetPasswordScreen() {
 
         {success ? (
           <div className="ls-reset-ok">
-            <div className="ls-reset-icon">✓</div>
+            <div className="ls-reset-icon"><Check size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /></div>
             <div className="ls-reset-title">{t('resetPassword.okTitle')}</div>
             <p>{t('resetPassword.okBody')}</p>
           </div>

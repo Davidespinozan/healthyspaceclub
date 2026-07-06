@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Maximize2, Play } from 'lucide-react';
+import { X, Maximize2, Play, Lightbulb, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Exercise, ExerciseVideo, Equipment } from '../types';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
@@ -279,7 +279,7 @@ export default function ExerciseDetailPopout({
                       onClick={() => setActiveIdx(i => i - 1)}
                       aria-label={t('exerciseDetail.prev')}
                     >
-                      ‹
+                      <ChevronLeft size={20} strokeWidth={2} aria-hidden="true" />
                     </button>
                   )}
                   {activeIdx < videos.length - 1 && (
@@ -288,7 +288,7 @@ export default function ExerciseDetailPopout({
                       onClick={() => setActiveIdx(i => i + 1)}
                       aria-label={t('exerciseDetail.next')}
                     >
-                      ›
+                      <ChevronRight size={20} strokeWidth={2} aria-hidden="true" />
                     </button>
                   )}
                 </>
@@ -361,7 +361,7 @@ export default function ExerciseDetailPopout({
           {/* General tip */}
           {exercise.tip && (
             <div className="edp-general-tip">
-              <p className="edp-general-tip-text">💡 {exercise.tip}</p>
+              <p className="edp-general-tip-text"><Lightbulb size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {exercise.tip}</p>
             </div>
           )}
         </div>

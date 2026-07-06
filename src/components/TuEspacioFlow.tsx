@@ -181,7 +181,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
   return (
     <div className="te-flow">
       {/* Close */}
-      <div className="te-flow-close" onClick={onClose}>✕</div>
+      <div className="te-flow-close" onClick={onClose}><X size={18} strokeWidth={2} aria-hidden="true" /></div>
 
       {/* Progress */}
       <div className="te-progress">

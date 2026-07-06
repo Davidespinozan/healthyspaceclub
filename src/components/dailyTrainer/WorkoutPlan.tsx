@@ -15,7 +15,7 @@
 
 import { lazy, Suspense, useRef, useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useT } from '../../i18n';
 import { getExerciseIcon } from '../../utils/muscleGroupIcon';
@@ -207,7 +207,7 @@ export default function WorkoutPlan({
             setWorkoutPlayerOpen(true);
           }}
         >
-          <span className="dt2-cta-play" aria-hidden="true">▶</span>
+          <span className="dt2-cta-play" aria-hidden="true"><Play size={14} strokeWidth={2} fill="currentColor" /></span>
           {t('workout.startWorkout')}
         </button>
       )}

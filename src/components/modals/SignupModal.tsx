@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { X, Check } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useT } from '../../i18n';
 import TermsSheet from '../sheets/TermsSheet';
@@ -37,10 +38,10 @@ export default function SignupModal() {
             alt="Healthy Space Club"
             className="login-logo"
           />
-          <button className="pay-x" onClick={closeModal} aria-label={t('common.close')}>✕</button>
+          <button className="pay-x" onClick={closeModal} aria-label={t('common.close')}><X size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /></button>
         </div>
         <div className="login-body">
-          <div className="signup-check">✓</div>
+          <div className="signup-check"><Check size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /></div>
           <h3 className="login-title" style={{ textAlign: 'center' }}>{t('signup.success')}</h3>
           <p className="login-sub" style={{ textAlign: 'center' }}>{t('signup.subtitle')}</p>
           <div className="pay-lbl">{t('signup.nameLabel')}</div>

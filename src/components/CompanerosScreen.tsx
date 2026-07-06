@@ -8,7 +8,7 @@
 //   - Siempre: "Entrenar con un invitado" (modo invitado, no requiere cuenta).
 
 import { useEffect, useState, useCallback } from 'react';
-import { Search, UserPlus, Check, X, Dumbbell, AtSign, Clock, Loader2 } from 'lucide-react';
+import { Search, UserPlus, Check, X, Dumbbell, AtSign, Clock, Loader2, Flame, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
@@ -131,7 +131,7 @@ export default function CompanerosScreen() {
             <p className="comp-identity-title">{t('partners.setUsernameTitle')}</p>
             <p className="comp-identity-sub">{t('partners.setUsernameSub')}</p>
           </div>
-          <span className="comp-identity-arrow">→</span>
+          <span className="comp-identity-arrow"><ArrowRight size={18} strokeWidth={2} aria-hidden="true" /></span>
         </button>
       )}
 
@@ -165,7 +165,7 @@ export default function CompanerosScreen() {
                     <Avatar name={u.display_name || u.username} url={u.avatar_url} />
                     <div className="comp-row-body">
                       <span className="comp-row-name">{u.display_name || `@${u.username}`}</span>
-                      <span className="comp-row-handle">@{u.username}{typeof u.streak_count === 'number' && u.streak_count > 0 ? ` · 🔥 ${u.streak_count}` : ''}</span>
+                      <span className="comp-row-handle">@{u.username}{typeof u.streak_count === 'number' && u.streak_count > 0 ? <> · <Flame size={13} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {u.streak_count}</> : ''}</span>
                     </div>
                     {connected ? (
                       <span className="comp-row-tag comp-row-tag--ok"><Check size={13} /> {t('partners.connected')}</span>

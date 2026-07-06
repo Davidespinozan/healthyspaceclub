@@ -10,7 +10,7 @@
 // se carga cuando se renderiza esta vista).
 
 import { lazy, Suspense, useRef, useState } from 'react';
-import { RefreshCw, Clock, Lock } from 'lucide-react';
+import { RefreshCw, Clock, Lock, Flower2, Play } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { getExerciseIcon } from '../../utils/muscleGroupIcon';
 import { useT } from '../../i18n';
@@ -60,7 +60,7 @@ export default function YogaPlan({
               <Clock size={11} /> {t('yoga.minTotal', { n: Math.round(yogaPlan.totalDuration / 60) })}
             </span>
             <span className="dt2-meta-chip">
-              🧘 {t('yoga.posesCount', { n: yogaPlan.poses.length })}
+              <Flower2 size={11} /> {t('yoga.posesCount', { n: yogaPlan.poses.length })}
             </span>
           </div>
         </div>
@@ -83,7 +83,7 @@ export default function YogaPlan({
           setPlayerOpen(true);
         }}
       >
-        <span className="dt2-cta-play" aria-hidden="true">▶</span>
+        <span className="dt2-cta-play" aria-hidden="true"><Play size={14} strokeWidth={2} fill="currentColor" /></span>
         {t('yoga.startFlow')}
       </button>
 

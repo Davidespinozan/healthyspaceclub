@@ -1,4 +1,5 @@
 import { dayKey } from '../utils/localDate';
+import { ArrowDown, ArrowUp, Check } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
@@ -128,7 +129,9 @@ export default function WeightTrackingCard() {
           </span>
           {showChip && deltaInfo && (
             <span className={`weight-row-delta ${chipDirection}`}>
-              {deltaInfo.value < 0 ? '↓' : '↑'} {Math.abs(deltaInfo.value)} kg
+              {deltaInfo.value < 0
+                ? <ArrowDown size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
+                : <ArrowUp size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />} {Math.abs(deltaInfo.value)} kg
             </span>
           )}
         </div>
@@ -138,7 +141,7 @@ export default function WeightTrackingCard() {
 
       {showToast && toastValue !== null && (
         <div className="weight-toast" role="status" aria-live="polite">
-          <div className="weight-toast-check" aria-hidden="true">✓</div>
+          <div className="weight-toast-check" aria-hidden="true"><Check size={16} strokeWidth={2.5} /></div>
           <div className="weight-toast-text">{t('weight.toastSaved')} {toastValue} kg</div>
         </div>
       )}

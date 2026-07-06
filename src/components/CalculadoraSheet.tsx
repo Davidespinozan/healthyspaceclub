@@ -7,6 +7,7 @@
 //    platillo_ingredientes) y reusarlo. Sus macros los calcula la vista platillo_macros.
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { Utensils, X, Check } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { supabase } from '../lib/supabase';
@@ -261,7 +262,7 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
                         <div className="calc-section">{t('calc.myDishes')}</div>
                         {misPlatillos.map(p => (
                           <button key={p.id} className="calc-result" onClick={() => addSaved(p)}>
-                            <span className="calc-result-name">🍽 {p.nombre}</span>
+                            <span className="calc-result-name"><Utensils size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /> {p.nombre}</span>
                             <span className="calc-result-kcal">{p.kcal} kcal</span>
                           </button>
                         ))}
@@ -275,7 +276,7 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
                           <div key={i} className="calc-build-ing">
                             <span className="calc-result-name"><b>{ing.label}</b> {ing.alimento}</span>
                             <span className="calc-build-kcal">{ing.kcal}</span>
-                            <button className="calc-del" onClick={() => setBuildIngs(prev => prev.filter((_, j) => j !== i))}>✕</button>
+                            <button className="calc-del" onClick={() => setBuildIngs(prev => prev.filter((_, j) => j !== i))}><X size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></button>
                           </div>
                         ))}
                       </>
@@ -292,7 +293,7 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
                     <div className="calc-preview-macros">{t('calc.abbrProt')} {Math.round(bTot.prot)} · {t('calc.abbrCarb')} {Math.round(bTot.carbs)} · {t('calc.abbrFat')} {Math.round(bTot.fat)}</div>
                   </div>
                   <button type="button" className={`calc-savechk${saveDish ? ' on' : ''}`} onClick={() => setSaveDish(v => !v)}>
-                    <span className="calc-savechk-box">{saveDish ? '✓' : ''}</span>
+                    <span className="calc-savechk-box">{saveDish ? <Check size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /> : ''}</span>
                     <span>{t('calc.saveAsDish')}</span>
                   </button>
                   {saveDish && (

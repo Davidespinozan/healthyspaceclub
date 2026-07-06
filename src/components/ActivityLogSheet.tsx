@@ -10,22 +10,23 @@
 
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Activity, Footprints, Waves, Bike, Music, Mountain, Dumbbell, type LucideIcon } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n/es';
 
-const PRESET_ACTIVITIES: { key: TranslationKey; emoji: string }[] = [
-  { key: 'activityLog.actBasket', emoji: '🏀' },
-  { key: 'activityLog.actSoccer', emoji: '⚽' },
-  { key: 'activityLog.actVolley', emoji: '🏐' },
-  { key: 'activityLog.actHiking', emoji: '🥾' },
-  { key: 'activityLog.actSurf', emoji: '🏄' },
-  { key: 'activityLog.actSwim', emoji: '🏊' },
-  { key: 'activityLog.actCycling', emoji: '🚴' },
-  { key: 'activityLog.actDance', emoji: '💃' },
-  { key: 'activityLog.actWalk', emoji: '🚶' },
-  { key: 'activityLog.actTennis', emoji: '🎾' },
-  { key: 'activityLog.actClimb', emoji: '🧗' },
+const PRESET_ACTIVITIES: { key: TranslationKey; icon: LucideIcon }[] = [
+  { key: 'activityLog.actBasket', icon: Activity },
+  { key: 'activityLog.actSoccer', icon: Activity },
+  { key: 'activityLog.actVolley', icon: Activity },
+  { key: 'activityLog.actHiking', icon: Footprints },
+  { key: 'activityLog.actSurf', icon: Waves },
+  { key: 'activityLog.actSwim', icon: Waves },
+  { key: 'activityLog.actCycling', icon: Bike },
+  { key: 'activityLog.actDance', icon: Music },
+  { key: 'activityLog.actWalk', icon: Footprints },
+  { key: 'activityLog.actTennis', icon: Activity },
+  { key: 'activityLog.actClimb', icon: Mountain },
 ];
 
 const DURATIONS = [15, 30, 45, 60, 90];
@@ -83,7 +84,7 @@ export default function ActivityLogSheet({ onClose, onLogged }: Props) {
                       className={`al-chip${active ? ' active' : ''}`}
                       onClick={() => setActivity(active ? '' : label)}
                     >
-                      <span className="al-chip-emoji" aria-hidden="true">{a.emoji}</span>{label}
+                      <span className="al-chip-emoji" aria-hidden="true"><a.icon size={16} strokeWidth={2} style={{ verticalAlign: '-3px', flexShrink: 0 }} /></span>{label}
                     </button>
                   );
                 })}
@@ -115,7 +116,7 @@ export default function ActivityLogSheet({ onClose, onLogged }: Props) {
 
           {phase === 'done' && (
             <div className="al-done">
-              <div className="al-done-emoji" aria-hidden="true">💪</div>
+              <div className="al-done-emoji" aria-hidden="true"><Dumbbell size={40} strokeWidth={1.5} /></div>
               <div className="th-popout-name">{t('activityLog.doneTitle')}</div>
               <div className="al-done-activity">
                 {activity.trim()}{duration ? ` · ${durationLabel(duration)}` : ''}

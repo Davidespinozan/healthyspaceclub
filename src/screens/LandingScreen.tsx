@@ -329,7 +329,7 @@ export default function LandingScreen() {
                 onClick={() => setRegion(r, true)}
                 aria-pressed={active}
               >
-                <span className="rs-flag">{p.flag}</span> {p.currency}
+                {p.currency}
               </button>
             );
           })}

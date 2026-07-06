@@ -1,5 +1,6 @@
 import { dayKey } from '../utils/localDate';
 import { useState, useMemo, useEffect } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { getExercises } from '../data/exercises';
@@ -668,7 +669,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     return (
       <div className="wz-root">
         <div className="wz-error">
-          <p className="wz-error-text">⚠️ {error}</p>
+          <p className="wz-error-text"><AlertTriangle size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {error}</p>
           <button className="wz-error-btn" onClick={() => setPhase('modality')}>{t('wizard.genErrBack')}</button>
         </div>
       </div>

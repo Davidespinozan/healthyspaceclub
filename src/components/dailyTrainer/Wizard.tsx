@@ -9,7 +9,7 @@
 // - Las selecciones (modality/time/equipment/etc.) viven en el padre para que
 //   estén disponibles después de generar (regen + WorkoutPlayer)
 
-import { Lock, Users } from 'lucide-react';
+import { Lock, Users, Check, ArrowRight } from 'lucide-react';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
 import type { Modality, Equipment, MuscleGroup } from '../../types';
@@ -145,7 +145,7 @@ export default function Wizard({
                   </div>
                   <div className="wz-option-sub">{locked ? t('wizard.comingSoon') : subLabel}</div>
                 </div>
-                {isSelected && !locked && <div className="wz-option-check">✓</div>}
+                {isSelected && !locked && <div className="wz-option-check"><Check size={14} strokeWidth={2} aria-hidden="true" /></div>}
               </button>
             );
           })}
@@ -341,7 +341,7 @@ export default function Wizard({
         )}
 
         <button className="wz-cta" onClick={onGenerate}>
-          {t('wizard.generatePre')} <em>{t('wizard.routine')}</em> →
+          {t('wizard.generatePre')} <em>{t('wizard.routine')}</em> <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
         </button>
 
         <div className="wz-back">

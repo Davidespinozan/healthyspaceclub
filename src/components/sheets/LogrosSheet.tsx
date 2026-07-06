@@ -4,6 +4,7 @@ import { ArrowLeft, Lock, X } from 'lucide-react';
 import { useAppStore } from '../../store';
 import {
   MILESTONE_STEPS,
+  MILESTONE_ICON,
   getMilestoneCopy,
   getMilestoneLabel,
 } from '../../constants/milestones';
@@ -85,7 +86,9 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
             </button>
 
             <div className={`ls-detail-emoji${focusedMilestone.isUnlocked ? '' : ' ls-detail-emoji--locked'}`} aria-hidden="true">
-              {focusedMilestone.isUnlocked ? focusedMilestone.copy.emoji : <Lock size={30} strokeWidth={1.8} />}
+              {focusedMilestone.isUnlocked
+                ? (() => { const Ico = MILESTONE_ICON[focusedMilestone.days] ?? Lock; return <Ico size={30} strokeWidth={1.8} />; })()
+                : <Lock size={30} strokeWidth={1.8} />}
             </div>
 
             <h2 className="ls-detail-title">{focusedMilestone.copy.title}</h2>
@@ -126,7 +129,7 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
                   style={{ animationDelay: `${idx * 50}ms` }}
                 >
                   <div className="ls-card-emoji" aria-hidden="true">
-                    {m.isUnlocked ? m.copy.emoji : '🔒'}
+                    {(() => { const Ico = m.isUnlocked ? (MILESTONE_ICON[m.days] ?? Lock) : Lock; return <Ico size={24} strokeWidth={1.8} />; })()}
                   </div>
                   <div className="ls-card-title">{m.copy.title}</div>
                   <div className="ls-card-sub">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Mail } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import LanguageToggle from '../components/LanguageToggle';
@@ -77,7 +78,7 @@ export default function LoginScreen() {
 
         {resetSent ? (
           <div className="ls-reset-ok">
-            <div className="ls-reset-icon">✉️</div>
+            <div className="ls-reset-icon"><Mail size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /></div>
             <div className="ls-reset-title">{t('login.resetTitle')}</div>
             <p>{t('login.resetBody')}</p>
             <button className="ls-btn" onClick={() => setResetSent(false)}>{t('login.resetBack')}</button>

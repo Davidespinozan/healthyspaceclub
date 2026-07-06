@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Sparkles } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { getPriceInfo, formatPrice, type BillingCycle } from '../utils/stripe';
@@ -35,7 +36,7 @@ export default function PaywallScreen() {
     <div className="pw-pilot">
       <LanguageToggle className="lang-toggle--corner-left" />
       <div className="pw-card">
-        <div className="pw-mark">✦</div>
+        <div className="pw-mark"><Sparkles size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /></div>
         <h1 className="pw-title">{t('paywall.title')}</h1>
         <p className="pw-body">{t('paywall.body')}</p>
 

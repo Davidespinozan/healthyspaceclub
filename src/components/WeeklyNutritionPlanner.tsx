@@ -7,7 +7,7 @@ import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets } from '../utils/nutritionTargets';
 import NutritionMeta from './NutritionMeta';
-import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, type LucideIcon } from 'lucide-react';
+import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, Shuffle, AlertTriangle, Check, X, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import CalculadoraSheet from './CalculadoraSheet';
@@ -91,18 +91,18 @@ const QUESTIONS: Array<{
   multi: boolean;
   freeText?: boolean;
   placeholderKey?: TranslationKey;
-  options: Array<{ value: string; icon: string | LucideIcon }>;
+  options: Array<{ value: string; icon: LucideIcon }>;
 }> = [
   {
     id: 'cuisines',
     hintKey: 'nutritionPlanner.hCuisines',
     multi: true,
     options: [
-      { value: 'mexicana',  icon: '🇲🇽' },
-      { value: 'japonesa',  icon: '🇯🇵' },
-      { value: 'italiana',  icon: '🇮🇹' },
-      { value: 'americana', icon: '🇺🇸' },
-      { value: 'todas',     icon: '🎲' },
+      { value: 'mexicana',  icon: Utensils },
+      { value: 'japonesa',  icon: Utensils },
+      { value: 'italiana',  icon: Utensils },
+      { value: 'americana', icon: Utensils },
+      { value: 'todas',     icon: Shuffle },
     ],
   },
   {
@@ -481,7 +481,7 @@ export default function WeeklyNutritionPlanner() {
     return (
       <div className="wz-root">
         <div className="wz-error wz-error--alert">
-          <p className="wz-error-text">⚠️ {error}</p>
+          <p className="wz-error-text"><AlertTriangle size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /> {error}</p>
           <button className="wz-error-btn" onClick={resetQuestionnaire}>
             {t('nutritionPlanner.errorRetry')}
           </button>
@@ -551,13 +551,13 @@ export default function WeeklyNutritionPlanner() {
                   onClick={() => handleOption(opt.value)}
                 >
                   <div className="wz-option-thumb">
-                    {typeof opt.icon === 'string' ? opt.icon : <opt.icon size={22} strokeWidth={1.5} />}
+                    <opt.icon size={22} strokeWidth={1.5} />
                   </div>
                   <div className="wz-option-body">
                     <div className="wz-option-label">{optionLabel(opt.value)}</div>
                     {sub && <div className="wz-option-sub">{sub}</div>}
                   </div>
-                  {isSelected && <div className="wz-option-check">✓</div>}
+                  {isSelected && <div className="wz-option-check"><Check size={14} strokeWidth={2} /></div>}
                 </button>
               );
             })}
@@ -577,13 +577,13 @@ export default function WeeklyNutritionPlanner() {
                 onClick={() => handleOption(opt.value)}
               >
                 <div className="wz-option-thumb">
-                  {typeof opt.icon === 'string' ? opt.icon : <opt.icon size={22} strokeWidth={1.5} />}
+                  <opt.icon size={22} strokeWidth={1.5} />
                 </div>
                 <div className="wz-option-body">
                   <div className="wz-option-label">{optionLabel(opt.value)}</div>
                   {sub && <div className="wz-option-sub">{sub}</div>}
                 </div>
-                {isSelected && <div className="wz-option-check">✓</div>}
+                {isSelected && <div className="wz-option-check"><Check size={14} strokeWidth={2} /></div>}
               </button>
             );
           })}
@@ -811,7 +811,7 @@ export default function WeeklyNutritionPlanner() {
                     onClick={() => toggleMealCheck(key)}
                   >
                     <div className={`wnp2-shop-item-check${checked ? ' checked' : ''}`}>
-                      {checked ? '✓' : ''}
+                      {checked ? <Check size={14} strokeWidth={2} /> : ''}
                     </div>
                     <span className="wnp2-shop-item-text">{item}</span>
                   </div>
@@ -971,7 +971,7 @@ export default function WeeklyNutritionPlanner() {
                         if (!replaced) toggleMealCheck(checkKey);
                       }}
                     >
-                      {showCheck ? '✓' : ''}
+                      {showCheck ? <Check size={14} strokeWidth={2} /> : ''}
                     </div>
                   </div>
                 </div>
@@ -1019,7 +1019,7 @@ export default function WeeklyNutritionPlanner() {
                       aria-label={t('nutritionPlanner.ariaRemoveLog')}
                       onClick={(ev) => { ev.stopPropagation(); removeFoodLog(e.id).catch(() => {}); }}
                     >
-                      ✕
+                      <X size={14} strokeWidth={2} />
                     </button>
                   </div>
                 ))}

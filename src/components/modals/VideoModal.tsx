@@ -1,3 +1,4 @@
+import { X, Play, Pause, Dumbbell, ChefHat, Lightbulb, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { useT } from '../../i18n';
 
@@ -14,13 +15,17 @@ export default function VideoModal() {
       <div className="vid-box">
         {/* Player */}
         <div className="vid-player" onClick={() => setVideoPlaying(!videoState.playing)}>
-          <button className="vid-x" onClick={(e) => { e.stopPropagation(); closeVideo(); }}>✕</button>
+          <button className="vid-x" onClick={(e) => { e.stopPropagation(); closeVideo(); }}><X size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /></button>
           <div className="vp-emoji">{emoji}</div>
           <div className="vp-btn">
-            {videoState.playing ? '⏸' : '▶'}
+            {videoState.playing
+              ? <Pause size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
+              : <Play size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />}
           </div>
           <div className="vp-label">{t('video.step', { n: currentStep + 1, total: steps.length })}</div>
-          <div className="vp-badge">{videoState.type === 'exercise' ? `💪 ${t('video.exercise')}` : `🍳 ${t('video.recipe')}`}</div>
+          <div className="vp-badge">{videoState.type === 'exercise'
+            ? <><Dumbbell size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('video.exercise')}</>
+            : <><ChefHat size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('video.recipe')}</>}</div>
         </div>
 
         {/* Body */}
@@ -42,7 +47,7 @@ export default function VideoModal() {
               <div className="sc">
                 <h6>{step.title}</h6>
                 <p>{step.desc}</p>
-                {step.tip && <div className="s-tip">💡 {step.tip}</div>}
+                {step.tip && <div className="s-tip"><Lightbulb size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {step.tip}</div>}
               </div>
             </div>
           ))}
@@ -56,7 +61,7 @@ export default function VideoModal() {
             disabled={currentStep === 0}
             style={{ opacity: currentStep === 0 ? 0.35 : 1 }}
           >
-            ← {t('common.back')}
+            <ArrowLeft size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('common.back')}
           </button>
           <button
             className="btn-next"

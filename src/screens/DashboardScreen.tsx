@@ -1,5 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
-import { Home, User, MessageCircle, Users, AlertCircle, X } from 'lucide-react';
+import { Home, User, MessageCircle, Users, AlertCircle, X, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import type { DashPage } from '../types';
@@ -99,7 +99,7 @@ export default function DashboardScreen() {
         {/* Sub-pages */}
         {dashPage === 'alimentacion' && (
           <div className="sub-page tab-content">
-            <button className="sub-back" onClick={() => navTo('hoy')}>← {t('common.back')}</button>
+            <button className="sub-back" onClick={() => navTo('hoy')}><ArrowLeft size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('common.back')}</button>
             <Suspense fallback={<SubPageLoadingFallback />}>
               <WeeklyNutritionPlanner />
             </Suspense>
@@ -107,7 +107,7 @@ export default function DashboardScreen() {
         )}
         {dashPage === 'entrenamiento' && (
           <div className="sub-page tab-content">
-            <button className="sub-back" onClick={() => navTo('hoy')}>← {t('common.back')}</button>
+            <button className="sub-back" onClick={() => navTo('hoy')}><ArrowLeft size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('common.back')}</button>
             <Suspense fallback={<SubPageLoadingFallback />}>
               <DailyTrainer onPhaseChange={setTrainerPhase} />
             </Suspense>
@@ -115,7 +115,7 @@ export default function DashboardScreen() {
         )}
         {dashPage === 'companeros' && (
           <div className="sub-page tab-content">
-            <button className="sub-back" onClick={() => navTo('hoy')}>← {t('common.back')}</button>
+            <button className="sub-back" onClick={() => navTo('hoy')}><ArrowLeft size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('common.back')}</button>
             <Suspense fallback={<SubPageLoadingFallback />}>
               <CompanerosScreen />
             </Suspense>
@@ -123,7 +123,7 @@ export default function DashboardScreen() {
         )}
         {dashPage === 'entrenamiento-pareja' && (
           <div className="sub-page tab-content">
-            <button className="sub-back" onClick={() => navTo('companeros')}>← {t('common.back')}</button>
+            <button className="sub-back" onClick={() => navTo('companeros')}><ArrowLeft size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('common.back')}</button>
             <Suspense fallback={<SubPageLoadingFallback />}>
               <DailyTrainer onPhaseChange={setTrainerPhase} partnerMode />
             </Suspense>

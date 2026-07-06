@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -39,7 +40,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           justifyContent: 'center',
           gap: '16px',
         }}>
-          <div style={{ fontSize: '48px' }}>⚠️</div>
+          <div style={{ fontSize: '48px' }}><AlertTriangle size={48} strokeWidth={2} aria-hidden="true" /></div>
           <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>Algo salió mal</h2>
           <p style={{ fontSize: '13px', color: 'rgba(21,51,48,0.6)', margin: 0, maxWidth: '280px', lineHeight: 1.5 }}>
             {this.state.error?.message || 'Error inesperado'}
