@@ -1,0 +1,92 @@
+/* Switch de dos modos (Plan · Calculadora). */
+.cday-switch {
+  display: flex; gap: 6px; background: var(--warm, #F0EBE0);
+  border-radius: 50px; padding: 5px; margin-bottom: 16px;
+}
+.cday-switch button {
+  flex: 1; border: none; background: transparent; color: var(--taupe-deep, #6b6359);
+  padding: 11px; border-radius: 50px; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; font-family: 'Montserrat', sans-serif; transition: .2s;
+}
+.cday-switch button.on { background: var(--surface, #fff); color: var(--forest, #0E2521); box-shadow: 0 2px 4px rgba(21, 51, 48, .04); }
+
+/* CalculadoraDay — pantalla "Tu día" estilo Magaly. Paleta HSC. */
+.cday {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* ── META card (oscura) ── */
+.cday-meta {
+  background: radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%), #0d1f1c;
+  border-radius: 22px;
+  padding: 18px 20px 16px;
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(8, 20, 27, .22);
+}
+.cday-meta-lbl {
+  font-size: 10px; font-weight: 700; letter-spacing: .16em;
+  color: var(--amber, #BFA065); text-transform: uppercase; margin-bottom: 12px;
+}
+.cday-kcal {
+  display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px;
+}
+.cday-kcal-big { font-size: 32px; font-weight: 600; letter-spacing: -.03em; color: #fff; font-variant-numeric: tabular-nums; }
+.cday-kcal-big small { font-size: 14px; font-weight: 400; color: rgba(246, 242, 234, .55); }
+.cday-kcal-rest { font-size: 12px; color: rgba(246, 242, 234, .62); font-style: italic; }
+
+.cday-bar { margin-bottom: 11px; }
+.cday-bar-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; }
+.cday-bar-row span:first-child { font-weight: 500; color: rgba(246, 242, 234, .9); }
+.cday-bar-v { color: rgba(246, 242, 234, .55); font-variant-numeric: tabular-nums; }
+.cday-track { height: 5px; background: rgba(246, 242, 234, .15); border-radius: 10px; overflow: hidden; }
+.cday-track > i { display: block; height: 100%; border-radius: 10px; background: linear-gradient(135deg, #C9A968, #A8864E); transition: width .4s cubic-bezier(.22, 1, .36, 1); }
+
+.cday-fibra {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 12px; padding-top: 11px; border-top: 1px solid rgba(246, 242, 234, .12);
+  font-size: 11px;
+}
+.cday-fibra span:first-child { color: rgba(246, 242, 234, .6); }
+
+.cday-coach {
+  margin: 14px 0 0; padding-top: 12px; border-top: 1px solid rgba(246, 242, 234, .12);
+  font-size: 12.5px; font-weight: 600; line-height: 1.4;
+}
+
+/* ── Tarjetas de comida ── */
+.cday-meal {
+  background: var(--surface, #fff);
+  border: 1px solid rgba(46, 74, 66, .09);
+  border-radius: 18px;
+  box-shadow: 0 8px 16px rgba(21, 51, 48, .06);
+  overflow: hidden;
+}
+.cday-meal-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px 12px; }
+.cday-meal-title { display: flex; align-items: center; gap: 10px; }
+.cday-meal-ico {
+  width: 34px; height: 34px; border-radius: 10px; background: var(--warm, #F0EBE0);
+  display: flex; align-items: center; justify-content: center; color: var(--forest, #0E2521);
+}
+.cday-meal-name { font-size: 14.5px; font-weight: 700; color: var(--forest, #0E2521); }
+.cday-meal-kcal { font-size: 13px; font-weight: 700; color: var(--amber-deep, #7C6232); font-variant-numeric: tabular-nums; }
+.cday-meal-kcal small { color: var(--taupe, #8a8270); font-weight: 400; font-size: 11px; }
+
+.cday-items { padding: 0 18px; }
+.cday-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 0;
+  border-top: 1px solid rgba(46, 74, 66, .09);
+}
+.cday-item-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--forest, #0E2521); }
+.cday-item-kcal { font-size: 13px; font-weight: 700; color: var(--amber-deep, #7C6232); font-variant-numeric: tabular-nums; }
+.cday-item-del { background: none; border: none; color: rgba(21, 51, 48, .4); cursor: pointer; font-size: 15px; padding: 0 2px; }
+
+.cday-meal-actions { display: flex; gap: 8px; padding: 13px 18px 16px; }
+.cday-add {
+  flex: 1; background: var(--surface, #fff); border: 1px solid var(--sand, #E8E1D3);
+  color: var(--forest, #0E2521); padding: 11px; border-radius: 50px;
+  font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: border-color .15s;
+}
+.cday-add:hover { border-color: var(--amber, #BFA065); }

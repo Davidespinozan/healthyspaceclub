@@ -8,6 +8,7 @@ import { RefreshCw, ShoppingCart, Calendar, Lock, Sunrise, Apple, Utensils, Nut,
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import CalculadoraSheet from './CalculadoraSheet';
+import CalculadoraDay from './CalculadoraDay';
 import { chronoMeals } from '../utils/mealOrder';
 import { callAI } from '../utils/aiProxy';
 
@@ -262,6 +263,8 @@ export default function WeeklyNutritionPlanner() {
   const [mealDetail, setMealDetail] = useState<{ meal: PopoutMeal; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
   const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number } | null>(null);
+  // Switch de dos modos (estilo Magaly): seguir el plan o calcular tu día libre.
+  const [dayMode, setDayMode] = useState<'plan' | 'calc'>('plan');
   const [shareMeal, setShareMeal] = useState<string | null>(null);
 
   const localizedMealPlans = getMealPlans(locale);
@@ -689,6 +692,14 @@ export default function WeeklyNutritionPlanner() {
 
   return (
     <div className="wnp2-wrap">
+      {/* Switch dos modos: Plan del día · Calculadora (misma meta, misma libreta) */}
+      <div className="cday-switch">
+        <button className={dayMode === 'plan' ? 'on' : ''} onClick={() => setDayMode('plan')}>{t('calc.modePlan')}</button>
+        <button className={dayMode === 'calc' ? 'on' : ''} onClick={() => setDayMode('calc')}>{t('calc.modeCalc')}</button>
+      </div>
+
+      {dayMode === 'calc' ? <CalculadoraDay /> : (
+      <>
       {/* Header */}
       <div className="wnp2-header">
         <div className="wnp2-header-top">
@@ -986,6 +997,8 @@ export default function WeeklyNutritionPlanner() {
           mealIndex={foodLogTarget.index}
           onClose={() => setFoodLogTarget(null)}
         />
+      )}
+      </>
       )}
     </div>
   );

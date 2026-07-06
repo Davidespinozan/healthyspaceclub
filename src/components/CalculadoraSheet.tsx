@@ -42,31 +42,37 @@ type Mode = 'search' | 'food' | 'build';
 interface Props {
   onClose: () => void;
   onLogged?: () => void;
-  /** Si se abre "en vez de" una comida del plan, su tiempo + índice. El registro
-   *  queda ligado a ESE lugar (lo sustituye) y marca la comida como resuelta. */
+  /** Tiempo de comida al que se atribuye el registro (Desayuno/Comida/…). */
   mealTime?: string;
+  /** Índice de la comida del plan que SUSTITUYE (solo modo Plan): la marca
+   *  resuelta. En modo Calculadora puro se omite (solo se agrupa por mealTime). */
   mealIndex?: number;
+  /** Modo inicial: 'search' (agregar alimento) o 'build' (armar platillo). */
+  initialMode?: Mode;
   /** Plan B: "no lo encuentro, descríbelo" → abre el registro de texto libre. */
   onDescribe?: () => void;
 }
 
-export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealIndex, onDescribe }: Props) {
+export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealIndex, initialMode, onDescribe }: Props) {
   const { t } = useT();
   const addFoodLog = useAppStore(s => s.addFoodLog);
   const setMealResolvedByLog = useAppStore(s => s.setMealResolvedByLog);
   const session = useAppStore(s => s.session);
   const uid = session?.user?.id ?? null;
-  const forMeal = mealIndex !== undefined;
   const mealLabel = mealTime && MEAL_TIME_KEYS[mealTime] ? t(MEAL_TIME_KEYS[mealTime]) : mealTime;
 
-  // Registra en food_log; si es "en vez de" una comida, la liga a ese lugar y
-  // la marca resuelta (la sustituye). Un solo sistema, mismas tablas nuevas.
+  // Registra en food_log ligado a su comida (mealTime siempre; mealIndex solo si
+  // sustituye un platillo del plan → lo marca resuelto). Un solo sistema, tablas nuevas.
   async function logEntry(e: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' }) {
-    await addFoodLog(forMeal ? { ...e, mealTime, mealIndex } : e);
-    if (forMeal) setMealResolvedByLog(`meal-${dayKey(new Date())}-${mealIndex}`);
+    await addFoodLog({
+      ...e,
+      ...(mealTime !== undefined ? { mealTime } : {}),
+      ...(mealIndex !== undefined ? { mealIndex } : {}),
+    });
+    if (mealIndex !== undefined) setMealResolvedByLog(`meal-${dayKey(new Date())}-${mealIndex}`);
   }
 
-  const [mode, setMode] = useState<Mode>('search');
+  const [mode, setMode] = useState<Mode>(initialMode ?? 'search');
   const [q, setQ] = useState('');
   const [results, setResults] = useState<FoodRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -197,7 +203,9 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
           {mode === 'search' && (
             <>
               <div className="th-popout-time">
-                {forMeal ? t('calc.insteadOf', { meal: mealLabel ?? '' }) : t('calc.eyebrow')}
+                {mealIndex !== undefined ? t('calc.insteadOf', { meal: mealLabel ?? '' })
+                  : mealTime !== undefined ? t('calc.addTo', { meal: mealLabel ?? '' })
+                  : t('calc.eyebrow')}
               </div>
               <div className="th-popout-name">{target === 'build' ? t('calc.addToDish') : t('calc.title')}</div>
               <input ref={inputRef} className="pay-inp" style={{ marginTop: 10 }}
