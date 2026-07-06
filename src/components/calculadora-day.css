@@ -41,7 +41,7 @@
 .cday-bar-row span:first-child { font-weight: 500; color: rgba(246, 242, 234, .9); }
 .cday-bar-v { color: rgba(246, 242, 234, .55); font-variant-numeric: tabular-nums; }
 .cday-track { height: 5px; background: rgba(246, 242, 234, .15); border-radius: 10px; overflow: hidden; }
-.cday-track > i { display: block; height: 100%; border-radius: 10px; background: linear-gradient(135deg, #5FB89F, #2F7D68); transition: width .4s cubic-bezier(.22, 1, .36, 1); }
+.cday-track > i { display: block; height: 100%; border-radius: 10px; background: linear-gradient(135deg, #C9A968, #A8864E); transition: width .4s cubic-bezier(.22, 1, .36, 1); }
 
 .cday-fibra {
   display: flex; justify-content: space-between; align-items: center;
@@ -69,7 +69,7 @@
   display: flex; align-items: center; justify-content: center; color: #EFEADD;
 }
 .cday-meal-name { font-size: 14.5px; font-weight: 700; color: #F3EEE1; }
-.cday-meal-kcal { font-size: 13px; font-weight: 700; color: #6BC2A8; font-variant-numeric: tabular-nums; }
+.cday-meal-kcal { font-size: 13px; font-weight: 700; color: #BFA065; font-variant-numeric: tabular-nums; }
 .cday-meal-kcal small { color: rgba(243, 238, 225, .5); font-weight: 400; font-size: 11px; }
 
 .cday-items { padding: 0 18px; }
@@ -78,7 +78,7 @@
   border-top: 1px solid rgba(255, 255, 255, .08);
 }
 .cday-item-name { flex: 1; font-size: 13px; font-weight: 600; color: rgba(243, 238, 225, .9); }
-.cday-item-kcal { font-size: 13px; font-weight: 700; color: #6BC2A8; font-variant-numeric: tabular-nums; }
+.cday-item-kcal { font-size: 13px; font-weight: 700; color: #BFA065; font-variant-numeric: tabular-nums; }
 .cday-item-del { background: none; border: none; color: rgba(243, 238, 225, .4); cursor: pointer; font-size: 15px; padding: 0 2px; }
 
 .cday-meal-actions { display: flex; gap: 8px; padding: 13px 18px 16px; }
@@ -87,4 +87,4 @@
   color: #F3EEE1; padding: 11px; border-radius: 50px;
   font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: border-color .15s;
 }
-.cday-add:hover { border-color: #6BC2A8; }
+.cday-add:hover { border-color: #BFA065; }

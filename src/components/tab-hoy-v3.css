@@ -323,10 +323,10 @@
 }
 /* Track-3a: eyebrow celebra "Entrenaste hoy ✓" si hay sesión completada. */
 .th3-card-eyebrow--done {
-  color: #6BC2A8;
+  color: #BFA065;
 }
 .th3-card-eyebrow-check {
-  color: #6BC2A8;
+  color: #BFA065;
   margin-left: 2px;
 }
 /* Track-3a: footer micro "Última sesión · ayer · 45 min" cuando NO hay
@@ -461,8 +461,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 .th3-card-list-check.checked {
-  background: #6BC2A8;
-  border-color: #6BC2A8;
+  background: #BFA065;
+  border-color: #BFA065;
   color: #0E2521;
 }
 
@@ -489,7 +489,7 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 0.66rem;
   font-weight: 600;
-  color: #6BC2A8;
+  color: #BFA065;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
   white-space: nowrap;
@@ -535,7 +535,7 @@
   transition: opacity .2s var(--ease-out-soft);
 }
 .th3-card-alt-activity:active { opacity: .6; }
-.th3-card-alt-activity.logged { color: #6BC2A8; }
+.th3-card-alt-activity.logged { color: #BFA065; }
 .th3-card-alt-check { color: var(--forest); font-weight: 700; }
 /* Cuando el foot sigue a la fila de actividad, NO duplicar borde: un solo
    divisor arriba del bloque (actividad + navegación). Evita el look cargado

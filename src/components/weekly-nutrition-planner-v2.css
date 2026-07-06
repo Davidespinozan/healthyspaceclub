@@ -707,7 +707,7 @@
 .wnp2-meal-kcal {
   font-size: 10px;
   font-weight: 700;
-  color: #6BC2A8;
+  color: #BFA065;
   background: rgba(255,255,255,0.08);
   padding: 3px 9px;
   border-radius: 8px;
@@ -729,8 +729,8 @@
 }
 .wnp2-meal-check:active { transform: scale(0.9); }
 .wnp2-meal-check.checked {
-  background: #6BC2A8;
-  border-color: #6BC2A8;
+  background: #BFA065;
+  border-color: #BFA065;
   color: #0E2521;
 }
 /* ─── Snack: misma tarjeta cream que las comidas, pero más delgada ───

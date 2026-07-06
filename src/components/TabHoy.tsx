@@ -195,9 +195,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       case 'doneShort': return t('hoy.coachDoneShort', { prot: coach.protLeft });
     }
   })();
-  // Colores claros: la card de Hoy es oscura → el texto del coach debe contrastar.
-  const coachColor = coach.tone === 'over' ? '#E9A17C'
-    : coach.tone === 'watch' ? '#E6C36B' : '#8FD8C0';
+  // Card de Hoy oscura → coach en los 3 roles de la marca: verde=bien, dorado=ojo, terracota=alerta.
+  const coachColor = coach.tone === 'over' ? 'var(--terracota, #C75B3A)'
+    : coach.tone === 'watch' ? 'var(--amber, #BFA065)' : 'var(--green, #4e9d8f)';
 
   // FoodLog-Display: las entradas registradas hoy se muestran como ítems
   // bajo la lista del plan ("REGISTRADO"). Solo display — NO toca
