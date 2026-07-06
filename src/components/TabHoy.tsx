@@ -918,7 +918,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
         <CalculadoraSheet
           mealTime={calcTarget.mealTime}
           mealIndex={calcTarget.mealIndex}
-          initialMode="build"
           onClose={() => setCalcTarget(null)}
           onDescribe={() => {
             const c = calcTarget;

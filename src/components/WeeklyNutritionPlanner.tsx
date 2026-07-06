@@ -1017,7 +1017,6 @@ export default function WeeklyNutritionPlanner() {
         <CalculadoraSheet
           mealTime={calcTarget.mealTime}
           mealIndex={calcTarget.mealIndex}
-          initialMode="build"
           onClose={() => setCalcTarget(null)}
           onDescribe={() => {
             const c = calcTarget;
