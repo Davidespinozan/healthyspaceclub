@@ -34,8 +34,6 @@ import { MILESTONE_STEPS, MILESTONE_ICON, getMilestoneCopy } from '../constants/
 import { getHSMBank } from '../data/hsmBank';
 import { useT } from '../i18n';
 import CalculadoraSheet from './CalculadoraSheet';
-import { computeNutritionTargets } from '../utils/nutritionTargets';
-import { computeCoach } from '../utils/nutritionCoach';
 import { plural } from '../i18n/format';
 import './tab-hoy-v3.css';
 
@@ -159,45 +157,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     foodLog,
     today,
   });
-  // Metas de macros del día (mismo motor que el onboarding, desde obData).
-  const macroTargets = computeNutritionTargets({
-    sexo: String(obData.sex || 'Hombre'),
-    pesoKg: Number(obData.peso) || 70,
-    estaturaCm: Number(obData.estatura) || 170,
-    edad: Number(obData.edad) || 28,
-    activity: String(obData.activity || 'Moderada'),
-    goal: String(obData.goal || ''),
-    grasa: obData.grasa != null && obData.grasa !== '' ? Number(obData.grasa) : null,
-    embarazo: obData.embarazo === 1 || obData.embarazo === 'si',
-  });
-  // Coach: lee lo consumido vs la meta y decide qué decir / qué priorizar.
-  // Le da igual si la comida fue del plan o propia — solo lee los números.
-  const coach = computeCoach({
-    consumed: {
-      kcal: dayConsumption.consumedKcal, prot: dayConsumption.consumedProt,
-      carbs: dayConsumption.consumedCarbs, fat: dayConsumption.consumedFat,
-    },
-    target: { kcal: planGoal, prot: macroTargets.protG, carbs: macroTargets.carbG, fat: macroTargets.fatG },
-    mealsDone: dayConsumption.completedSlots,
-    mealsTotal: dayConsumption.totalSlots,
-  });
-  const coachMealsLabel = plural(coach.mealsLeft, {
-    one: t('hoy.coachMealsOne'),
-    other: t('hoy.coachMealsOther', { n: coach.mealsLeft }),
-  });
-  const coachText = (() => {
-    switch (coach.headline) {
-      case 'start':     return t('hoy.coachStart', { kcal: coach.kcalTarget, prot: macroTargets.protG });
-      case 'good':      return t('hoy.coachGood', { kcal: Math.max(0, coach.kcalLeft), meals: coachMealsLabel });
-      case 'protein':   return t('hoy.coachProtein', { prot: coach.protLeft });
-      case 'over':      return t('hoy.coachOver', { kcal: Math.abs(coach.kcalLeft) });
-      case 'doneGood':  return t('hoy.coachDoneGood');
-      case 'doneShort': return t('hoy.coachDoneShort', { prot: coach.protLeft });
-    }
-  })();
-  const coachColor = coach.tone === 'over' ? 'var(--terracota)'
-    : coach.tone === 'watch' ? 'var(--amber-deep)' : 'var(--forest)';
-
   // FoodLog-Display: las entradas registradas hoy se muestran como ítems
   // bajo la lista del plan ("REGISTRADO"). Solo display — NO toca
   // computeDayConsumption (Food-5) ni el dot ámbar (Food-4).
@@ -754,11 +713,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                       consumed: dayConsumption.consumedKcal,
                       goal: planGoal,
                     })}
-                  </p>
-                  {/* Coach: qué te queda / si vas bien / qué priorizar. Reemplaza
-                      la línea cruda de macros — habla en vez de solo numerar. */}
-                  <p className="th3-card-coach" style={{ marginTop: 4, color: coachColor }}>
-                    {coachText}
                   </p>
                   {(todayMeals.length > 0 || todayFoodLog.length > 0) && (
                     <ul className="th3-card-list">
