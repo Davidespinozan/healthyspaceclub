@@ -786,9 +786,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                           toggleMealCheck(key);
                         }
                         const mealImg = (meal as { img?: string }).img;
+                        // Los snacks son secundarios: sin círculo de imagen, jerarquía menor.
+                        const isSnack = meal.time.startsWith('Snack');
                         return (
-                          <li key={i} className="th3-card-list-item">
-                            {mealImg && !replaced ? (
+                          <li key={i} className={`th3-card-list-item${isSnack ? ' th3-card-list-item--snack' : ''}`}>
+                            {!isSnack && (mealImg && !replaced ? (
                               <img
                                 className={`th3-card-list-thumb${strike ? ' is-done' : ''}`}
                                 src={mealImg} alt="" loading="lazy"
@@ -798,7 +800,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                               <span className={`th3-card-list-thumb th3-card-list-thumb--empty${showCheck ? ' is-done' : ''}`} aria-hidden="true">
                                 <Utensils size={16} strokeWidth={1.8} />
                               </span>
-                            )}
+                            ))}
                             {replaced ? (
                               <span className="th3-card-list-name">
                                 <span className="th3-plan-was">{meal.name}</span>

@@ -409,6 +409,13 @@
   min-height: 0;
 }
 .th3-card-list-item:first-child { border-top: none; }
+/* Snacks: secundarios — sin círculo, texto más chico y suave, un poco indentado. */
+.th3-card-list-item--snack { padding: 4px 0 4px 8px; }
+.th3-card-list-item--snack .th3-card-list-name {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--txt2, rgba(21,51,48,.55));
+}
 .th3-card-list-name {
   flex: 1;
   font-family: 'Montserrat', sans-serif;

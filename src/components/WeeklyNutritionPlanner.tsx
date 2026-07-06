@@ -898,16 +898,17 @@ export default function WeeklyNutritionPlanner() {
                   className={`wnp2-meal${(checked || resolved) && !replaced ? ' done' : ''}${isSnack ? ' wnp2-meal--snack' : ''}`}
                   onClick={() => { if (!replaced) setMealDetail({ meal, index: i }); }}
                 >
-                  {meal.img && !isSnack && !replaced ? (
+                  {/* Snacks sin círculo: jerarquía menor que las comidas principales. */}
+                  {!isSnack && (meal.img && !replaced ? (
                     <div
                       className="wnp2-meal-circle"
                       style={{ backgroundImage: `url(${meal.img})` }}
                     />
                   ) : (
                     <div className="wnp2-meal-circle">
-                      <Ic size={isSnack ? 18 : 28} strokeWidth={1.5} />
+                      <Ic size={28} strokeWidth={1.5} />
                     </div>
-                  )}
+                  ))}
                   <div className="wnp2-meal-body">
                     <div className="wnp2-meal-time">
                       {!isSnack && <Ic size={14} strokeWidth={1.5} />}
