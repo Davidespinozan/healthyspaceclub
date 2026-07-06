@@ -652,7 +652,10 @@
   flex-shrink: 0;
   border: 2px solid white;
   box-shadow: 0 2px 8px rgba(21,51,48,0.1);
-  background-color: var(--warm);
+  /* Sin foto → verde de marca (resalta donde iría la imagen). Las que tienen
+     foto la ponen inline y cubren este color. */
+  background-color: #2f6d5a;
+  color: #F4EFE3;
   display: flex;
   align-items: center;
   justify-content: center;

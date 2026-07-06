@@ -440,9 +440,14 @@
   background: var(--warm, #efe9dd);
   border: 0.5px solid var(--sand);
 }
+/* Placeholder sin foto (comida propia / snack) → círculo verde de marca para
+   que resalte donde iría la imagen, en vez de un ícono gris apagado. */
 .th3-card-list-thumb--empty {
   display: flex; align-items: center; justify-content: center;
-  color: var(--taupe-deep, #7a6f5d);
+  background: linear-gradient(140deg, #4e9d8f 0%, #2f6d5a 100%);
+  border: none;
+  color: #F4EFE3;
+  box-shadow: 0 2px 6px -1px rgba(28, 59, 53, 0.4);
 }
 .th3-card-list-thumb.is-done { opacity: 0.5; }
 .th3-card-list-check {
