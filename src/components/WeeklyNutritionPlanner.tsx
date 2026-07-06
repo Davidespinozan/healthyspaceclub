@@ -250,6 +250,10 @@ export default function WeeklyNutritionPlanner() {
     }
   );
   const [step, setStep] = useState(0);
+  // ¿La selección de día del súper es parte de ESTE flujo? Solo si arrancó sin
+  // día elegido (usuario nuevo). Si ya tenía día (regenera), el cuestionario NO
+  // debe numerar desde 2: las preguntas son paso 1/2/3, no 2/3/4.
+  const [includeSetup] = useState(() => shoppingDay === null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [multiSel, setMultiSel] = useState<string[]>([]);
   const [freeText, setFreeText] = useState('');
@@ -493,10 +497,13 @@ export default function WeeklyNutritionPlanner() {
   /* ═══ QUESTIONS ═══ */
   if (phase === 'questions') {
     const q = QUESTIONS[step];
-    // Stepper: barra 1 = setup-day (siempre done), barras 2-4 = questions step 0-2
+    // Stepper: si el setup-day fue parte del flujo, la barra 0 es ese paso (done)
+    // y las 3 preguntas son las barras 1-3 (4 barras total). Si se saltó (ya había
+    // día), solo hay 3 barras = las 3 preguntas.
+    const stepperBars = includeSetup ? 4 : QUESTIONS.length;
     const stepperClass = (i: number) => {
-      if (i === 0) return 'wz-stepper-bar done';                // setup-day already done
-      const qIdx = i - 1;                                       // 0 = cuisines, 1 = cravings, 2 = avoid
+      const qIdx = includeSetup ? i - 1 : i;                    // barra→índice de pregunta
+      if (includeSetup && i === 0) return 'wz-stepper-bar done'; // setup-day ya hecho
       if (qIdx < step) return 'wz-stepper-bar done';
       if (qIdx === step) return 'wz-stepper-bar active';
       return 'wz-stepper-bar';
@@ -625,14 +632,13 @@ export default function WeeklyNutritionPlanner() {
       <div className="wz-root">
         <div className="wz-hero">
           <div className="wz-stepper">
-            <div className={stepperClass(0)} />
-            <div className={stepperClass(1)} />
-            <div className={stepperClass(2)} />
-            <div className={stepperClass(3)} />
+            {Array.from({ length: stepperBars }).map((_, i) => (
+              <div key={i} className={stepperClass(i)} />
+            ))}
           </div>
           <p className="wz-eyebrow">
             {t('nutritionPlanner.stepEyebrowQuestion', {
-              step: step + 2,
+              step: includeSetup ? step + 2 : step + 1,
               label: t(EYEBROW_KEYS_Q[step]),
             })}
           </p>
@@ -643,20 +649,23 @@ export default function WeeklyNutritionPlanner() {
         {renderBody()}
         {renderCta()}
 
-        <div className="wz-back">
-          <button
-            className="wz-back-link"
-            onClick={() => {
-              if (step === 0) {
-                setPhase('setup-day');
-              } else {
-                setStep(s => s - 1);
-              }
-            }}
-          >
-<ArrowLeft size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('nutritionPlanner.previous')}
-          </button>
-        </div>
+        {/* En la 1ª pregunta solo hay "volver" si el setup-day fue parte del flujo. */}
+        {(step > 0 || includeSetup) && (
+          <div className="wz-back">
+            <button
+              className="wz-back-link"
+              onClick={() => {
+                if (step === 0) {
+                  setPhase('setup-day');
+                } else {
+                  setStep(s => s - 1);
+                }
+              }}
+            >
+              <ArrowLeft size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {t('nutritionPlanner.previous')}
+            </button>
+          </div>
+        )}
       </div>
     );
   }
