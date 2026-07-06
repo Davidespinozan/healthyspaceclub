@@ -241,8 +241,10 @@ interface AppState {
 
   // Food log (manual + AI). Lote Food-1: sync con Supabase tabla food_log.
   // Shape `desc` en cliente ↔ columna `description` en SQL (mapeo al borde).
-  foodLog: { id: string; date: string; desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' }[];
-  addFoodLog: (entry: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' }) => Promise<void>;
+  // mealTime/mealIndex: si el registro sustituye una comida del plan (ej. "otra
+  // cosa en el desayuno"), queda ligado a ESE lugar para mostrarse ahí. Sueltos = extra.
+  foodLog: { id: string; date: string; desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai'; mealTime?: string; mealIndex?: number }[];
+  addFoodLog: (entry: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai'; mealTime?: string; mealIndex?: number }) => Promise<void>;
   removeFoodLog: (id: string) => Promise<void>;
 
   // Plan / Trial
@@ -756,6 +758,8 @@ export const useAppStore = create<AppState>()(
           carbs: entry.carbs,
           fat: entry.fat,
           source: entry.source,
+          meal_time: entry.mealTime ?? null,
+          meal_index: entry.mealIndex ?? null,
         });
       if (error) {
         console.error('[addFoodLog] supabase insert failed:', error);

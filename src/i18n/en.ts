@@ -979,6 +979,7 @@ export const en: Translations<typeof es> = {
     ariaWhyExpand: 'Show why',
     ariaWhyCollapse: 'Hide why',
     foodLogSection: 'Logged',
+    foodLogMine: 'yours',
     entrenasteHoy: 'Trained today',
     movedToday: 'You moved today',
     viewFullRoutine: 'See your full routine',

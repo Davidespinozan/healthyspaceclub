@@ -978,6 +978,7 @@ export const es = {
     ariaWhyExpand: 'Mostrar por qué',
     ariaWhyCollapse: 'Ocultar por qué',
     foodLogSection: 'Registrado',
+    foodLogMine: 'tuya',
     entrenasteHoy: 'Entrenaste hoy',
     movedToday: 'Te moviste hoy',
     viewFullRoutine: 'Ver tu rutina completa',

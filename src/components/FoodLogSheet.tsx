@@ -82,7 +82,11 @@ export default function FoodLogSheet({ mealTime, mealIndex, onClose, onLogged }:
       }
 
       const entry = sanitizeFoodEntry(parsed, trimmed, 'ai');
-      await addFoodLog(entry);
+      // Ligar el registro a la comida del plan que sustituye (si vino con slot),
+      // para mostrarse EN ese lugar y no en una sección aparte.
+      await addFoodLog(
+        mealIndex !== undefined ? { ...entry, mealTime, mealIndex } : entry,
+      );
 
       // Food-4: marcar el meal del plan como resuelto por log (señal visual
       // distinta al check ✓ "seguí el plan"). Solo si vino con mealIndex.

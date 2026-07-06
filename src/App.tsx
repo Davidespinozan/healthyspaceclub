@@ -322,7 +322,7 @@ export default function App() {
             const cutoff = dayKey(new Date(Date.now() - 14 * 86400000));
             const { data: foods } = await supabase
               .from('food_log')
-              .select('id, date, description, kcal, prot, carbs, fat, source')
+              .select('id, date, description, kcal, prot, carbs, fat, source, meal_time, meal_index')
               .eq('user_id', session.user.id)
               .gte('date', cutoff)
               .order('date', { ascending: true });
@@ -337,6 +337,8 @@ export default function App() {
                   carbs: Number(f.carbs),
                   fat: Number(f.fat),
                   source: f.source as 'manual' | 'ai',
+                  ...(f.meal_time != null ? { mealTime: f.meal_time as string } : {}),
+                  ...(f.meal_index != null ? { mealIndex: Number(f.meal_index) } : {}),
                 })),
               });
             }

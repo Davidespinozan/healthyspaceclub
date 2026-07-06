@@ -765,46 +765,60 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                         const key = mealKey(i);
                         const done = !!mealChecks[key];
                         const resolved = !!mealResolvedByLog[key];
-                        // Visual: checked gana sobre resolved (edge case: el
-                        // user marcó ✓ Y registró comida — el ✓ es el gesto
-                        // más explícito). resolved aplica solo si !done.
-                        const showResolvedDot = resolved && !done;
-                        const strike = done || resolved;
+                        // Comida sustituida por lo que el user registró en ESE lugar:
+                        // se muestra su comida (no el platillo del plan) + palomita ✓.
+                        const linked = resolved ? todayFoodLog.filter(e => e.mealIndex === i) : [];
+                        const replaced = linked.length > 0;
+                        const displayName = replaced ? linked.map(e => e.desc).join(' + ') : meal.name;
+                        const linkedKcal = linked.reduce((s, e) => s + e.kcal, 0);
+                        // resolved sin entrada ligada (registros viejos/globales) → dot ámbar (compat).
+                        const showResolvedDot = resolved && !done && !replaced;
+                        const showCheck = done || replaced;
+                        const strike = (done || resolved) && !replaced; // lo tuyo NO se tacha
                         function openDetail(e: React.MouseEvent) {
                           e.stopPropagation();
                           setMealDetail({ meal, index: i });
                         }
                         function handleToggle(e: React.MouseEvent) {
                           e.stopPropagation();
+                          if (replaced) return; // lo registrado no se destacha desde aquí
                           toggleMealCheck(key);
                         }
                         const mealImg = (meal as { img?: string }).img;
                         return (
                           <li key={i} className="th3-card-list-item">
-                            {mealImg ? (
+                            {mealImg && !replaced ? (
                               <img
                                 className={`th3-card-list-thumb${strike ? ' is-done' : ''}`}
                                 src={mealImg} alt="" loading="lazy"
                                 onClick={openDetail}
                               />
                             ) : (
-                              <span className={`th3-card-list-thumb th3-card-list-thumb--empty${strike ? ' is-done' : ''}`} aria-hidden="true">
+                              <span className={`th3-card-list-thumb th3-card-list-thumb--empty${showCheck ? ' is-done' : ''}`} aria-hidden="true">
                                 <Utensils size={16} strokeWidth={1.8} />
                               </span>
                             )}
+                            {replaced ? (
+                              <span className="th3-card-list-name">
+                                {displayName}
+                                <span className="th3-log-tag">{t('hoy.foodLogMine')}</span>
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className={`th3-card-list-name${strike ? ' done' : ''}`}
+                                onClick={openDetail}
+                              >
+                                {meal.name}
+                              </button>
+                            )}
+                            {replaced && <span className="th3-card-list-kcal">~{Math.round(linkedKcal)} kcal</span>}
                             <button
                               type="button"
-                              className={`th3-card-list-name${strike ? ' done' : ''}`}
-                              onClick={openDetail}
-                            >
-                              {meal.name}
-                            </button>
-                            <button
-                              type="button"
-                              className={`th3-card-list-check${done ? ' checked' : ''}`}
+                              className={`th3-card-list-check${showCheck ? ' checked' : ''}`}
                               onClick={handleToggle}
                               aria-label={
-                                done ? t('hoy.ariaMealUncheck')
+                                showCheck ? t('hoy.ariaMealUncheck')
                                   : showResolvedDot ? t('hoy.ariaMealResolvedByLog')
                                   : t('hoy.ariaMealCheck')
                               }
@@ -816,22 +830,22 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                                 cursor: 'default',
                               } : undefined}
                             >
-                              {done ? '✓' : showResolvedDot ? '·' : ''}
+                              {showCheck ? '✓' : showResolvedDot ? '·' : ''}
                             </button>
                           </li>
                         );
                       })}
-                      {/* FoodLog-Display: lo que el user registró hoy aparece
-                          listado bajo el plan. Sub-eyebrow "REGISTRADO" +
-                          desc + ~kcal. No tappable, solo display. */}
-                      {todayFoodLog.length > 0 && (
+                      {/* Extras sueltos: registros que NO sustituyen una comida del
+                          plan (antojo/snack fuera de lugar). Los ligados a una comida
+                          ya se muestran EN su renglón arriba, no se repiten aquí. */}
+                      {todayFoodLog.filter(e => e.mealIndex == null).length > 0 && (
                         <>
                           <li className="th3-card-list-sep">
                             <span className="th3-card-list-sep-label">
                               {t('hoy.foodLogSection')}
                             </span>
                           </li>
-                          {todayFoodLog.map(entry => (
+                          {todayFoodLog.filter(e => e.mealIndex == null).map(entry => (
                             <li
                               key={entry.id}
                               className="th3-card-list-item th3-card-list-item--log"

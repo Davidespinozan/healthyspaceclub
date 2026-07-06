@@ -224,9 +224,10 @@ export default function WeeklyNutritionPlanner() {
     weeklyPlan, saveWeeklyPlan, clearWeeklyPlan,
     mealPlanKey, planGoal, obData, userName,
     mealChecks, toggleMealCheck,
-    mealResolvedByLog,
+    mealResolvedByLog, foodLog,
     planRegenCount, incrementPlanRegen,
   } = useAppStore();
+  const todayKey = dayKey(new Date());
 
   const weekStart = (() => {
     const d = new Date();
@@ -861,18 +862,25 @@ export default function WeeklyNutritionPlanner() {
               // .done (strikethrough) — el dot ámbar distintivo solo está en
               // TabHoy donde el row es más compacto.
               const resolved = activeDay === todayOffset && !!mealResolvedByLog[checkKey];
+              // Comida sustituida por lo que el user registró en ESE lugar (solo hoy).
+              const linked = resolved ? foodLog.filter(e => e.date === todayKey && e.mealIndex === i) : [];
+              const replaced = linked.length > 0;
+              const linkedKcal = linked.reduce((s, e) => s + e.kcal, 0);
               const portionsToShow = meal.portions.slice(0, 3);
               const extraCount = meal.portions.length - portionsToShow.length;
               const isSnack = meal.time.startsWith('Snack');
               const Ic = MEAL_ICON[meal.time] ?? Leaf;
+              const planName = isSnack ? (meal.portions[0] ?? meal.name) : meal.name;
+              const displayName = replaced ? linked.map(e => e.desc).join(' + ') : planName;
+              const showCheck = checked || replaced;
 
               return (
                 <div
                   key={i}
-                  className={`wnp2-meal${checked || resolved ? ' done' : ''}${isSnack ? ' wnp2-meal--snack' : ''}`}
-                  onClick={() => setMealDetail({ meal, index: i })}
+                  className={`wnp2-meal${(checked || resolved) && !replaced ? ' done' : ''}${isSnack ? ' wnp2-meal--snack' : ''}`}
+                  onClick={() => { if (!replaced) setMealDetail({ meal, index: i }); }}
                 >
-                  {meal.img && !isSnack ? (
+                  {meal.img && !isSnack && !replaced ? (
                     <div
                       className="wnp2-meal-circle"
                       style={{ backgroundImage: `url(${meal.img})` }}
@@ -887,8 +895,11 @@ export default function WeeklyNutritionPlanner() {
                       {!isSnack && <Ic size={14} strokeWidth={1.5} />}
                       <span>{MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time}</span>
                     </div>
-                    <div className="wnp2-meal-name">{isSnack ? (meal.portions[0] ?? meal.name) : meal.name}</div>
-                    {!isSnack && (
+                    <div className="wnp2-meal-name">
+                      {displayName}
+                      {replaced && <span className="th3-log-tag">{t('hoy.foodLogMine')}</span>}
+                    </div>
+                    {!isSnack && !replaced && (
                       <div className="wnp2-meal-chips">
                         {portionsToShow.map((p, j) => (
                           <span key={j} className="wnp2-meal-chip">{p}</span>
@@ -900,15 +911,17 @@ export default function WeeklyNutritionPlanner() {
                     )}
                   </div>
                   <div className="wnp2-meal-right">
-                    {mkcal > 0 && <span className="wnp2-meal-kcal">{mkcal}</span>}
+                    {(replaced ? linkedKcal > 0 : mkcal > 0) && (
+                      <span className="wnp2-meal-kcal">{replaced ? Math.round(linkedKcal) : mkcal}</span>
+                    )}
                     <div
-                      className={`wnp2-meal-check${checked ? ' checked' : ''}`}
+                      className={`wnp2-meal-check${showCheck ? ' checked' : ''}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleMealCheck(checkKey);
+                        if (!replaced) toggleMealCheck(checkKey);
                       }}
                     >
-                      {checked ? '✓' : ''}
+                      {showCheck ? '✓' : ''}
                     </div>
                   </div>
                 </div>

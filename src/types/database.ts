@@ -344,6 +344,8 @@ export type Database = {
           fat: number
           id: string
           kcal: number
+          meal_index: number | null
+          meal_time: string | null
           prot: number
           source: string
           user_id: string
@@ -356,6 +358,8 @@ export type Database = {
           fat?: number
           id?: string
           kcal: number
+          meal_index?: number | null
+          meal_time?: string | null
           prot?: number
           source: string
           user_id: string
