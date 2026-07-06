@@ -10,6 +10,12 @@ import type { Region, Currency } from '../utils/region';
 import type { BillingCycle } from '../utils/stripe';
 import { MILESTONE_STEPS } from '../constants/milestones';
 import { computeStreak } from '../utils/streak';
+
+// Alimento de un registro armado (para reabrir y editar lo que comiste).
+export interface FoodLogItem {
+  food_id: string; alimento: string; grams: number; label: string;
+  kcal: number; prot: number; carbs: number; fat: number;
+}
 import { extractDateAndIndex, pruneMealProgressFromDate } from '../utils/mealProgressSync';
 
 export interface MilestoneEntry {
@@ -244,8 +250,8 @@ interface AppState {
   // Shape `desc` en cliente ↔ columna `description` en SQL (mapeo al borde).
   // mealTime/mealIndex: si el registro sustituye una comida del plan (ej. "otra
   // cosa en el desayuno"), queda ligado a ESE lugar para mostrarse ahí. Sueltos = extra.
-  foodLog: { id: string; date: string; desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai'; mealTime?: string; mealIndex?: number }[];
-  addFoodLog: (entry: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai'; mealTime?: string; mealIndex?: number }) => Promise<void>;
+  foodLog: { id: string; date: string; desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai'; mealTime?: string; mealIndex?: number; items?: FoodLogItem[] }[];
+  addFoodLog: (entry: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai'; mealTime?: string; mealIndex?: number; items?: FoodLogItem[] }) => Promise<void>;
   removeFoodLog: (id: string) => Promise<void>;
 
   // Plan / Trial
@@ -786,6 +792,7 @@ export const useAppStore = create<AppState>()(
           source: entry.source,
           meal_time: entry.mealTime ?? null,
           meal_index: entry.mealIndex ?? null,
+          items: entry.items ?? null,
         });
       if (error) {
         console.error('[addFoodLog] supabase insert failed:', error);

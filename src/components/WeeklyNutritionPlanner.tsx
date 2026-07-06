@@ -264,7 +264,7 @@ export default function WeeklyNutritionPlanner() {
   const [notaOpen, setNotaOpen] = useState(false);
   const [mealDetail, setMealDetail] = useState<{ meal: PopoutMeal; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
-  const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number } | null>(null);
+  const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number; editEntryId?: string; initialItems?: import('../store').FoodLogItem[]; initialName?: string } | null>(null);
   const [shareMeal, setShareMeal] = useState<string | null>(null);
 
   const localizedMealPlans = getMealPlans(locale);
@@ -894,7 +894,15 @@ export default function WeeklyNutritionPlanner() {
                 <div
                   key={i}
                   className={`wnp2-meal${(checked || resolved) && !replaced ? ' done' : ''}${isSnack ? ' wnp2-meal--snack' : ''}`}
-                  onClick={() => { if (!replaced) setMealDetail({ meal, index: i }); }}
+                  onClick={() => {
+                    if (replaced) {
+                      // Abrir lo que registraste para ver/editar/agregar más.
+                      const e = linked[0];
+                      setCalcTarget({ mealTime: meal.time, mealIndex: i, editEntryId: e.id, initialItems: e.items, initialName: e.desc });
+                    } else {
+                      setMealDetail({ meal, index: i });
+                    }
+                  }}
                 >
                   {/* Snacks sin círculo: jerarquía menor que las comidas principales. */}
                   {!isSnack && (meal.img && !replaced ? (
@@ -991,6 +999,9 @@ export default function WeeklyNutritionPlanner() {
         <CalculadoraSheet
           mealTime={calcTarget.mealTime}
           mealIndex={calcTarget.mealIndex}
+          editEntryId={calcTarget.editEntryId}
+          initialItems={calcTarget.initialItems}
+          initialName={calcTarget.initialName}
           onClose={() => setCalcTarget(null)}
           onDescribe={() => {
             const c = calcTarget;

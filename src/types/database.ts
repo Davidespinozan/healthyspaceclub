@@ -343,6 +343,7 @@ export type Database = {
           description: string
           fat: number
           id: string
+          items: Json | null
           kcal: number
           meal_index: number | null
           meal_time: string | null
@@ -357,6 +358,7 @@ export type Database = {
           description: string
           fat?: number
           id?: string
+          items?: Json | null
           kcal: number
           meal_index?: number | null
           meal_time?: string | null

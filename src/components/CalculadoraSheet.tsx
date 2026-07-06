@@ -69,11 +69,16 @@ interface Props {
   mealIndex?: number;
   /** Plan B: "no lo encuentro, descríbelo" → abre el registro de texto libre. */
   onDescribe?: () => void;
+  /** Editar un registro existente: se precargan sus alimentos y al guardar lo reemplaza. */
+  editEntryId?: string;
+  initialItems?: BuildIng[];
+  initialName?: string;
 }
 
-export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealIndex, onDescribe }: Props) {
+export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealIndex, onDescribe, editEntryId, initialItems, initialName }: Props) {
   const { t } = useT();
   const addFoodLog = useAppStore(s => s.addFoodLog);
+  const removeFoodLog = useAppStore(s => s.removeFoodLog);
   const setMealResolvedByLog = useAppStore(s => s.setMealResolvedByLog);
   const session = useAppStore(s => s.session);
   const uid = session?.user?.id ?? null;
@@ -81,7 +86,9 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
 
   // Registra en food_log ligado a su comida (mealTime siempre; mealIndex solo si
   // sustituye un platillo del plan → lo marca resuelto). Un solo sistema, tablas nuevas.
-  async function logEntry(e: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' }) {
+  async function logEntry(e: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual'; items?: BuildIng[] }) {
+    // Editando: reemplaza el registro anterior (borra y vuelve a agregar).
+    if (editEntryId) await removeFoodLog(editEntryId).catch(() => {});
     await addFoodLog({
       ...e,
       ...(mealTime !== undefined ? { mealTime } : {}),
@@ -102,8 +109,8 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
   const [curQty, setCurQty] = useState(1);
   const [saving, setSaving] = useState(false);
 
-  const [buildName, setBuildName] = useState('');
-  const [buildIngs, setBuildIngs] = useState<BuildIng[]>([]);
+  const [buildName, setBuildName] = useState(initialName ?? '');
+  const [buildIngs, setBuildIngs] = useState<BuildIng[]>(initialItems ?? []);
   const [saveDish, setSaveDish] = useState(false); // guardar lo armado como platillo reusable
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -213,7 +220,7 @@ export default function CalculadoraSheet({ onClose, onLogged, mealTime, mealInde
       await logEntry({
         desc: nombre, kcal: Math.round(bTot.kcal),
         prot: Math.round(bTot.prot * 10) / 10, carbs: Math.round(bTot.carbs * 10) / 10, fat: Math.round(bTot.fat * 10) / 10,
-        source: 'manual',
+        source: 'manual', items: buildIngs,
       });
       onLogged?.(); onClose();
     } finally { setSaving(false); }

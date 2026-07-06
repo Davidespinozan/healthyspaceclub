@@ -1071,7 +1071,7 @@ export const es = {
     shopEmpty: 'Aún no hay lista de compras.',
     todayChip: 'Hoy',
     registerMine: '+ Registra tu propia comida',
-    changeMine: '↺ Cambiar',
+    changeMine: '↩ Volver al plan',
     emptyDay: 'Sin comidas asignadas para este día.',
     regenTitleOne: 'Regenerar plan ({n} restante)',
     regenTitleOther: 'Regenerar plan ({n} restantes)',
