@@ -28,6 +28,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
   const today = dayKey(new Date());
   const todayResponses = dailyHSMResponses.filter(r => r.date === today);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const submittingRef = useRef(false); // guard anti doble-submit (ventana de 300ms de la animación)
 
   // Build today's 5 dimensions (same logic as TabHoy)
   const todayDayIndex = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
@@ -41,7 +42,11 @@ export default function TuEspacioFlow({ onClose }: Props) {
 
   // 5th question: AI or fallback
   const [aiQuestion, setAiQuestion] = useState<{ emoji: string; title: string; color: string; q: string } | null>(null);
-  const last7Responses = dailyHSMResponses.filter(r => new Date(r.date).getTime() > Date.now() - 7 * 86400000);
+  // Ventana "últimos 7 días" por dayKeys LOCALes (comparación de string). Antes
+  // new Date(r.date) parseaba la fecha local como UTC → de noche en husos negativos
+  // incluía/excluía mal las del borde y disparaba la 5ª pregunta IA a destiempo.
+  const cutoff7 = dayKey(new Date(Date.now() - 6 * 86400000));
+  const last7Responses = dailyHSMResponses.filter(r => r.date >= cutoff7);
 
   useEffect(() => {
     if (aiQuestion) return;
@@ -119,6 +124,8 @@ export default function TuEspacioFlow({ onClose }: Props) {
 
   function handleSubmit() {
     if (!currentDim || !inputVal.trim()) return;
+    if (submittingRef.current) return; // ya hay un envío en curso (evita respuesta duplicada)
+    submittingRef.current = true;
     addHSMResponse({ dimension: currentDim.title, question: currentDim.q, response: inputVal.trim() });
 
     // Animate out, then move to next
@@ -129,6 +136,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
       const nextUnanswered = allDimensions.filter(d => !updatedResponses.some(r => r.dimension === d.title));
       setCurrentDim(nextUnanswered[0] || null);
       setAnimState('in');
+      submittingRef.current = false;
     }, 300);
   }
 

@@ -299,6 +299,21 @@ export default function App() {
               if (decRegen === 'use_remote' && remoteRegen) {
                 useAppStore.setState({ dailyWorkoutRegenCount: remoteRegen });
               }
+
+              // Racha: leer remote→local. Sin esto, un dispositivo nuevo arrancaba
+              // en 0 y al entrenar SOBRESCRIBÍA la racha real de la DB (pérdida de
+              // dato). Tomamos la más avanzada por lastActiveDate (dayKeys locales,
+              // comparables como string); si local va por delante (entrenó offline
+              // más reciente), se respeta local.
+              const remoteStreak = (profile as { streak_count?: number }).streak_count ?? 0;
+              const remoteLastActive = (profile as { last_active_date?: string | null }).last_active_date ?? null;
+              if (remoteLastActive && (
+                !localState.lastActiveDate ||
+                remoteLastActive > localState.lastActiveDate ||
+                (remoteLastActive === localState.lastActiveDate && remoteStreak > localState.streakCount)
+              )) {
+                useAppStore.setState({ streakCount: remoteStreak, lastActiveDate: remoteLastActive });
+              }
             }
           } catch (e) {
             console.error('[auth] failed to hydrate profile:', e);

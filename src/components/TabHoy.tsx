@@ -351,10 +351,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const [aiQuestion, setAiQuestion] = useState<{ emoji: string; title: string; q: string } | null>(null);
   const [dailyReview, setDailyReview] = useState<string | null>(null);
 
-  const last7Responses = dailyHSMResponses.filter(r => {
-    const d = new Date(r.date);
-    return d.getTime() > Date.now() - 7 * 86400000;
-  });
+  // Ventana "últimos 7 días" por dayKeys LOCALes (string compare). new Date(r.date)
+  // parseaba la fecha local como UTC → borde mal contado de noche en husos negativos.
+  const cutoff7 = dayKey(new Date(Date.now() - 6 * 86400000));
+  const last7Responses = dailyHSMResponses.filter(r => r.date >= cutoff7);
   const todayResponses = dailyHSMResponses.filter(r => r.date === today);
 
   useEffect(() => {

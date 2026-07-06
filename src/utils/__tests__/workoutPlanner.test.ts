@@ -6,6 +6,7 @@ import {
   analyzeWorkoutHistory,
 } from '../workoutPlanner';
 import { exercises } from '../../data/exercises';
+import { dayKey } from '../localDate';
 import type { CompletedSession } from '../../types';
 
 describe('workoutPlanner', () => {
@@ -198,7 +199,7 @@ describe('workoutPlanner', () => {
 
   describe('analyzeWorkoutHistory (con completedSessions)', () => {
     it('back-compat: comportamiento idéntico cuando completedSessions=[] (caso usuarios existentes)', () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = dayKey(new Date());
       const workoutLog = [
         { date: today, exercise: 'press-horizontal', sets: [{ reps: 8, kg: 60 }] },
       ];
@@ -215,7 +216,7 @@ describe('workoutPlanner', () => {
     });
 
     it('lee completedSessions: una sesión hoy registra músculos y restDays=0', () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = dayKey(new Date());
       const sessions: CompletedSession[] = [{
         date: today,
         completedAtIso: new Date().toISOString(),
@@ -232,7 +233,7 @@ describe('workoutPlanner', () => {
     });
 
     it('detecta restDays correctamente leyendo ambas fuentes', () => {
-      const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0];
+      const threeDaysAgo = dayKey(new Date(Date.now() - 3 * 86400000));
       // Última sesión hace 3 días
       const sessions: CompletedSession[] = [{
         date: threeDaysAgo,

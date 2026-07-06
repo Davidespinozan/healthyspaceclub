@@ -18,6 +18,15 @@ export interface FoodLogItem {
 }
 import { extractDateAndIndex, pruneMealProgressFromDate } from '../utils/mealProgressSync';
 
+// crypto.randomUUID lanza en contextos no-seguros / iOS Safari < 15.4. Fallback
+// para que registrar comida/actividad nunca truene en dispositivos viejos.
+function genId(): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  } catch { /* no disponible → fallback */ }
+  return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export interface MilestoneEntry {
   milestone_days: number;
   unlocked_at: string;
@@ -755,7 +764,7 @@ export const useAppStore = create<AppState>()(
   activityLog: [],
   addActivityLog: async (entry) => {
     const today = dayKey(new Date());
-    const id = crypto.randomUUID();
+    const id = genId();
     set((state) => ({
       activityLog: [
         ...state.activityLog,
@@ -771,7 +780,7 @@ export const useAppStore = create<AppState>()(
   foodLog: [],
   addFoodLog: async (entry) => {
     const today = dayKey(new Date());
-    const id = crypto.randomUUID();
+    const id = genId();
     const userId = get().user?.id;
 
     // Optimistic local primero (UX responsiva, modo offline OK)
@@ -1094,7 +1103,13 @@ export const useAppStore = create<AppState>()(
     set({ streakCount: newStreak, lastActiveDate: today });
     const unlocked = await tryUnlockMilestones(streakCount, newStreak, user?.id);
     if (unlocked.length > 0) {
-      set((s) => ({ userMilestones: [...s.userMilestones, ...unlocked] }));
+      // Dedup por milestone_days: si la racha se rompió y se re-cruzó el umbral,
+      // no duplicar la entry local (la DB ya lo ignora por onConflict).
+      set((s) => {
+        const have = new Set(s.userMilestones.map(m => m.milestone_days));
+        const fresh = unlocked.filter(m => !have.has(m.milestone_days));
+        return fresh.length > 0 ? { userMilestones: [...s.userMilestones, ...fresh] } : s;
+      });
     }
     await persistStreakToProfile(user?.id, newStreak, today);
   },

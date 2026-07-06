@@ -90,8 +90,10 @@ export default function TabCoach() {
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
     try {
       const state = useAppStore.getState();
-      const chatDate = state.coachChatDate === today ? state.coachChatHistory : [];
-      const allMsgs = [...chatDate, { role: 'user' as const, content: text, timestamp: '' }];
+      // addCoachMessage('user', text) ya agregó el mensaje al historial de hoy;
+      // NO lo re-anexes o la IA recibe el mismo user-message DOS veces (tokens
+      // desperdiciados + respuesta degradada).
+      const allMsgs = state.coachChatDate === today ? state.coachChatHistory : [];
       // Streaming: el texto aparece en vivo conforme la IA lo genera.
       const full = await callAIStream(
         {
