@@ -29,14 +29,28 @@ function bucketOf(mealTime?: string): string {
   return 'Snacks';
 }
 
-export default function CalculadoraDay() {
+interface Props {
+  /** Comidas del plan de HOY con su índice, para que registrar en un bucket
+   *  sustituya el platillo correcto del plan (marca resuelto ese slot). */
+  planSlots?: Array<{ time: string; index: number }>;
+}
+
+export default function CalculadoraDay({ planSlots = [] }: Props) {
   const { t } = useT();
   const foodLog = useAppStore(s => s.foodLog);
   const removeFoodLog = useAppStore(s => s.removeFoodLog);
   const obData = useAppStore(s => s.obData);
   const planGoal = useAppStore(s => s.planGoal);
 
-  const [calcTarget, setCalcTarget] = useState<{ mealTime: string; initialMode?: 'search' | 'build' } | null>(null);
+  // Índice del platillo del plan que corresponde a un bucket (para sustituirlo).
+  function slotIndexFor(bucketKey: string): number | undefined {
+    const slot = planSlots.find(s =>
+      bucketKey === 'Snacks' ? s.time.startsWith('Snack') : s.time === bucketKey,
+    );
+    return slot?.index;
+  }
+
+  const [calcTarget, setCalcTarget] = useState<{ mealTime: string; mealIndex?: number; initialMode?: 'search' | 'build' } | null>(null);
   const [describeTarget, setDescribeTarget] = useState<{ mealTime: string } | null>(null);
 
   const today = dayKey(new Date());
@@ -147,10 +161,10 @@ export default function CalculadoraDay() {
             )}
 
             <div className="cday-meal-actions">
-              <button className="cday-add" onClick={() => setCalcTarget({ mealTime: b.key, initialMode: 'search' })}>
+              <button className="cday-add" onClick={() => setCalcTarget({ mealTime: b.key, mealIndex: slotIndexFor(b.key), initialMode: 'search' })}>
                 {t('calc.addFoodBtn')}
               </button>
-              <button className="cday-add" onClick={() => setCalcTarget({ mealTime: b.key, initialMode: 'build' })}>
+              <button className="cday-add" onClick={() => setCalcTarget({ mealTime: b.key, mealIndex: slotIndexFor(b.key), initialMode: 'build' })}>
                 {t('calc.addDishBtn')}
               </button>
             </div>
@@ -161,6 +175,7 @@ export default function CalculadoraDay() {
       {calcTarget && (
         <CalculadoraSheet
           mealTime={calcTarget.mealTime}
+          mealIndex={calcTarget.mealIndex}
           initialMode={calcTarget.initialMode}
           onClose={() => setCalcTarget(null)}
           onDescribe={() => {

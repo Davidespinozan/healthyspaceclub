@@ -375,6 +375,10 @@
   line-height: 1.35;
 }
 
+/* Reemplazo "platillo del plan → tu comida" con flecha. */
+.th3-plan-was { text-decoration: line-through; opacity: .45; font-weight: 500; margin-right: 5px; }
+.th3-swap-arrow { color: var(--amber, #BFA065); font-weight: 700; margin-right: 5px; }
+
 /* Tag "tuya" en una comida sustituida por lo que el user registró. */
 .th3-log-tag {
   display: inline-block;

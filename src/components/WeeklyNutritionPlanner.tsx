@@ -670,6 +670,11 @@ export default function WeeklyNutritionPlanner() {
   // Factor de escala del día activo (base sin escalar → meta) para el desglose exacto del popout.
   const baseDay = activeMealPlan.find(d => d.day === weeklyPlan.selectedDays[activeDay]);
   const activeDayScale = baseDay ? dayScaleFactor(baseDay.meals, planGoal) : 1;
+  // Comidas del plan de HOY con su índice — para que la Calculadora sepa QUÉ platillo
+  // del plan sustituye (mismo índice que usa mealResolvedByLog en Plan del día).
+  const todayNum = weeklyPlan.selectedDays[todayOffset >= 0 ? todayOffset : 0] ?? weeklyPlan.selectedDays[0];
+  const todayDayPlan = scaledPlan.find(d => d.day === todayNum);
+  const todayPlanSlots = (todayDayPlan?.meals ?? []).map((m, i) => ({ time: m.time, index: i }));
 
   const shoppingTotal = weeklyPlan.shoppingList.length;
   const shoppingDone = weeklyPlan.shoppingList.filter((_, i) => !!mealChecks[`shop-${i}`]).length;
@@ -698,7 +703,7 @@ export default function WeeklyNutritionPlanner() {
         <button className={dayMode === 'calc' ? 'on' : ''} onClick={() => setDayMode('calc')}>{t('calc.modeCalc')}</button>
       </div>
 
-      {dayMode === 'calc' ? <CalculadoraDay /> : (
+      {dayMode === 'calc' ? <CalculadoraDay planSlots={todayPlanSlots} /> : (
       <>
       {/* Header */}
       <div className="wnp2-header">
@@ -909,6 +914,7 @@ export default function WeeklyNutritionPlanner() {
                       <span>{MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time}</span>
                     </div>
                     <div className="wnp2-meal-name">
+                      {replaced && <><span className="th3-plan-was">{planName}</span><span className="th3-swap-arrow">→</span></>}
                       {displayName}
                       {replaced && <span className="th3-log-tag">{t('hoy.foodLogMine')}</span>}
                     </div>
