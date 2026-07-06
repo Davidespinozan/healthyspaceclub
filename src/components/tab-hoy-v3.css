@@ -491,7 +491,7 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 0.66rem;
   font-weight: 600;
-  color: var(--amber-deep);
+  color: var(--sage, #3d6359);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
   white-space: nowrap;
