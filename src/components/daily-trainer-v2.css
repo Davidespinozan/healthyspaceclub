@@ -152,11 +152,10 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #faf6ef 100%);
-  border: 1px solid var(--sala-border, var(--sand));
+  background: linear-gradient(135deg, #1C3B35, #0E2521);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-pro-lg), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
+  transition: transform var(--duration-base) var(--ease-out-soft), border-color var(--duration-base) ease;
   cursor: pointer;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
   overflow: hidden;
@@ -179,8 +178,7 @@
 .dt2-ex:nth-child(7) { animation-delay: 0.34s; }
 .dt2-ex:nth-child(8) { animation-delay: 0.39s; }
 .dt2-ex:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-pro-xl);
+  transform: translateY(-2px);
   border-color: rgba(191, 160, 101, 0.4);
 }
 .dt2-ex:active { transform: scale(0.98); }
@@ -191,8 +189,8 @@
   width: 63px;
   height: 63px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(191, 160, 101, 0.22), rgba(168, 134, 78, 0.14));
-  color: var(--amber-deep);
+  background: rgba(255, 255, 255, 0.06);
+  color: #EFEADD;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -224,14 +222,14 @@
 .dt2-ex-name {
   font-size: 13px;
   font-weight: 600;
-  color: var(--forest);
+  color: #F3EEE1;
   margin-bottom: 2px;
   line-height: 1.25;
 }
 
 .dt2-ex-stats {
   font-size: 11px;
-  color: var(--txt2);
+  color: rgba(243, 238, 225, 0.6);
   display: flex;
   gap: 6px;
   align-items: center;
@@ -241,12 +239,12 @@
    de la rutina deja de ser metadata secundaria. El "·" y "Ns descanso"
    quedan en txt2 (default del contenedor), preservando jerarquía. */
 .dt2-ex-stats > span:first-child {
-  color: var(--forest);
+  color: #F3EEE1;
   font-weight: 500;
 }
 
 .dt2-ex-dot {
-  color: var(--sand);
+  color: rgba(243, 238, 225, 0.3);
 }
 
 /* Superserie/biserie/triserie — bloque de ejercicios encadenados (sin descanso
