@@ -155,6 +155,7 @@ export const en: Translations<typeof es> = {
     faq5a: 'Talk to the coach or email support@stryvstudio.com. We process deletion within 30 days under GDPR / LFPDPPP.',
     cancelTitle: 'Are you sure you want to cancel?',
     cancelIntro: 'If you cancel:',
+    cancelStreak: "You're on a {n}-day streak. Don't lose the momentum you've built.",
     cancelKeepAccess: 'You keep access until',
     cancelKeepAccessFallback: 'the end of the period',
     cancelLoseAi: "After that, you won't be able to generate AI routines or plans.",

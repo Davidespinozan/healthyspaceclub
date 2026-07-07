@@ -41,7 +41,7 @@ const FAQ_KEYS = [
 export default function ManagePlanSheet({ onClose }: Props) {
   const userId = useCurrentUserId();
   const { t } = useT();
-  const { trialEndsAt: storeTrialEndsAt } = useAppStore(useShallow((s) => ({ trialEndsAt: s.trialEndsAt })));
+  const { trialEndsAt: storeTrialEndsAt, streakCount } = useAppStore(useShallow((s) => ({ trialEndsAt: s.trialEndsAt, streakCount: s.streakCount })));
 
   function planDisplayName(plan: SubscriptionInfo['plan']): string {
     if (plan === 'trial') return t('managePlan.planTrial');
@@ -352,6 +352,9 @@ export default function ManagePlanSheet({ onClose }: Props) {
           <div className="mps-modal-overlay" onClick={() => !busy && setShowCancelConfirm(false)}>
             <div className="mps-modal" onClick={e => e.stopPropagation()}>
               <h3 className="mps-modal-title">{t('managePlan.cancelTitle')}</h3>
+              {streakCount >= 3 && (
+                <div className="mps-cancel-streak">{t('managePlan.cancelStreak', { n: streakCount })}</div>
+              )}
               <p className="mps-modal-p">{t('managePlan.cancelIntro')}</p>
               <ul className="sh-list">
                 <li>{t('managePlan.cancelKeepAccess')} {renewalDate ? formatRenewalDate(renewalDate) : t('managePlan.cancelKeepAccessFallback')}.</li>

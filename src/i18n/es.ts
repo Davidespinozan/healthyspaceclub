@@ -154,6 +154,7 @@ export const es = {
     faq5a: 'Hablá con el coach o escribí a soporte@stryvstudio.com. Procesamos eliminación dentro de 30 días según GDPR / LFPDPPP.',
     cancelTitle: '¿Estás seguro de que querés cancelar?',
     cancelIntro: 'Si cancelás:',
+    cancelStreak: 'Llevas {n} días de racha. No pierdas el impulso que ya construiste.',
     cancelKeepAccess: 'Mantenés acceso hasta',
     cancelKeepAccessFallback: 'el final del período',
     cancelLoseAi: 'Después no podrás generar rutinas ni planes con IA.',
