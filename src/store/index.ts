@@ -245,6 +245,11 @@ interface AppState {
   addWorkoutEntry: (exercise: string, sets: { reps: number; kg: number }[]) => void;
   removeWorkoutEntry: (date: string, exercise: string) => void;
 
+  // Último desempeño por ejercicio (para mostrar "la vez pasada: NkgxR" en el player
+  // y dar sensación de progresión). Se llena al terminar sesión y se hidrata de la DB.
+  lastExercisePerformance: Record<string, { date: string; sets: { reps: number; kg: number }[] }>;
+  recordExercisePerformance: (records: { exerciseId: string; date: string; sets: { reps: number; kg: number }[] }[]) => void;
+
   // Completed sessions (per-session: nuevo, escrito por finishWorkoutSession al terminar player)
   completedSessions: CompletedSession[];
   addCompletedSession: (session: CompletedSession) => void;
@@ -728,6 +733,19 @@ export const useAppStore = create<AppState>()(
     set((state) => ({
       workoutLog: state.workoutLog.filter(e => !(e.date === date && e.exercise === exercise)),
     })),
+
+  lastExercisePerformance: {},
+  recordExercisePerformance: (records) =>
+    set((state) => {
+      const next = { ...state.lastExercisePerformance };
+      for (const r of records) {
+        if (r.sets.length === 0) continue;
+        const prev = next[r.exerciseId];
+        // Solo actualiza si es igual o más reciente (por fecha local YYYY-MM-DD).
+        if (!prev || r.date >= prev.date) next[r.exerciseId] = { date: r.date, sets: r.sets };
+      }
+      return { lastExercisePerformance: next };
+    }),
 
   // Completed sessions (per-session: nuevo, escrito por finishWorkoutSession)
   completedSessions: [],
@@ -1214,6 +1232,7 @@ export const useAppStore = create<AppState>()(
     tdee: 0,
     planGoal: 0,
     workoutLog: [],
+    lastExercisePerformance: {},
     completedSessions: [],
     activityLog: [],
     foodLog: [],
@@ -1283,6 +1302,7 @@ export const useAppStore = create<AppState>()(
     tdee: state.tdee,
     planGoal: state.planGoal,
     workoutLog: state.workoutLog,
+    lastExercisePerformance: state.lastExercisePerformance,
     completedSessions: state.completedSessions,
     activityLog: state.activityLog,
     foodLog: state.foodLog,

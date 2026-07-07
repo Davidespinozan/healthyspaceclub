@@ -395,6 +395,30 @@ export default function App() {
               // Solo lectura remote→local. NO auto-backfill local→DB en
               // hidratación (evita re-insertar sesiones cacheadas en cada reload).
               useAppStore.setState({ completedSessions: merged });
+
+              // Último desempeño por ejercicio (para "la vez pasada" en el player).
+              // Las filas vienen ascendentes por completed_at → la última gana.
+              const perf: Record<string, { date: string; sets: { reps: number; kg: number }[] }> = {};
+              for (const w of workouts as Array<WorkoutLogRow & { date_local: string; exercises: unknown }>) {
+                const exs = Array.isArray(w.exercises) ? w.exercises : [];
+                for (const ex of exs as Array<{ exercise_id?: string; performed?: { sets?: Array<{ reps: number; kg: number } | null>; skipped?: boolean } }>) {
+                  if (!ex || typeof ex.exercise_id !== 'string' || !ex.performed || ex.performed.skipped) continue;
+                  const sets = (ex.performed.sets ?? []).filter((s): s is { reps: number; kg: number } => !!s && (s.reps > 0 || s.kg > 0));
+                  if (sets.length === 0) continue;
+                  perf[ex.exercise_id] = { date: w.date_local, sets };
+                }
+              }
+              if (Object.keys(perf).length > 0) {
+                // Merge: la DB manda para el historial; lo local (sesión recién hecha
+                // aún no sincronizada) se conserva si es más reciente por fecha.
+                useAppStore.setState((s) => {
+                  const next = { ...perf };
+                  for (const [id, local] of Object.entries(s.lastExercisePerformance)) {
+                    if (!next[id] || local.date > next[id].date) next[id] = local;
+                  }
+                  return { lastExercisePerformance: next };
+                });
+              }
             }
           } catch (e) {
             console.error('[auth] failed to hydrate workout_log:', e);

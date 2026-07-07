@@ -31,6 +31,7 @@ import type {
   Modality,
   WorkoutDayDecision,
   CompletedSession,
+  LoggedSet,
 } from '../../types';
 import type { CachedWorkout } from '../../utils/workoutCache';
 import ExerciseDetailPopout from '../ExerciseDetailPopout';
@@ -422,6 +423,19 @@ export default function WorkoutPlan({
                 }),
               };
             });
+
+            // Guarda el desempeño por ejercicio (para "la vez pasada: NkgxR" en el
+            // próximo entreno). Solo series con carga/reps reales (no saltadas).
+            const perfRecords = exercisesLog
+              .filter(e => e.performed && !e.performed.skipped)
+              .map(e => ({
+                exerciseId: e.exercise_id,
+                date: checkDay,
+                sets: (e.performed!.sets.filter((s): s is LoggedSet => s != null) as LoggedSet[])
+                  .filter(s => s.reps > 0 || s.kg > 0),
+              }))
+              .filter(r => r.sets.length > 0);
+            if (perfRecords.length > 0) useAppStore.getState().recordExercisePerformance(perfRecords);
 
             finishWorkoutSession({
               userId,

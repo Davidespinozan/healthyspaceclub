@@ -1,7 +1,7 @@
 import { dayKey } from '../utils/localDate';
 import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera, Info } from 'lucide-react';
+import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera, Info, History } from 'lucide-react';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 
 const CreatePostModal = lazy(() => import('./CreatePostModal'));
@@ -163,6 +163,15 @@ export default function WorkoutPlayer({
   const DisplayIcon = getExerciseIcon(currentBank);
   const totalSetsForCurrent = currentEx?.sets || 1;
   const setsRegisteredForCurrent = setsDoneForExercise(loggedByExercise, currentExerciseIndex);
+
+  // "La vez pasada": mejor serie del último registro de este ejercicio.
+  const lastExercisePerformance = useAppStore(s => s.lastExercisePerformance);
+  const lastPerfLabel = (() => {
+    const sets = currentEx ? lastExercisePerformance[currentEx.id]?.sets : undefined;
+    if (!sets || sets.length === 0) return null;
+    const top = sets.reduce((a, b) => (b.kg > a.kg || (b.kg === a.kg && b.reps > a.reps) ? b : a));
+    return top.kg > 0 ? `${top.kg} kg × ${top.reps}` : `× ${top.reps}`;
+  })();
 
   // Límites de bloque (superserie = run del mismo `group`; o ejercicio suelto).
   const isBlockEnd = (stepIdx: number): boolean => {
@@ -607,6 +616,12 @@ export default function WorkoutPlayer({
                 {Math.min(setsRegisteredForCurrent, totalSetsForCurrent)} {t('workout.of')} {totalSetsForCurrent}
               </span>
             </div>
+            {lastPerfLabel && (
+              <div className="wp-last-perf">
+                <History size={12} strokeWidth={2} aria-hidden="true" />
+                <span>{t('workout.lastTime')}: <b>{lastPerfLabel}</b></span>
+              </div>
+            )}
             <div className="wp-set-rows">
               {Array.from({ length: totalSetsForCurrent }).map((_, setIdx) => {
                 const entry = (loggedByExercise[currentExerciseIndex] || [])[setIdx];
