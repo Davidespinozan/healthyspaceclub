@@ -11,7 +11,10 @@
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--surface-glass-border);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  /* Sin padding horizontal: la imagen va full-width (Instagram). El padding de 16px
+     lo llevan los bloques de texto (head/text/actions), no la card. */
+  padding: 16px 0;
+  overflow: hidden;
   margin-bottom: 14px;
   box-shadow: var(--shadow-pro-md);
   transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
@@ -28,7 +31,8 @@
   align-items: flex-start;
   gap: 8px;
   margin-bottom: 12px;
-  padding-right: 36px; /* reserva espacio para el kebab absoluto en top-right */
+  padding-left: 16px;
+  padding-right: 36px; /* 16px + espacio para el kebab absoluto en top-right */
 }
 
 .post-card-author {
@@ -119,6 +123,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
+  margin: 0 16px; /* inset como el resto, ahora que la card no tiene padding lateral */
 }
 .post-card-collab-avs { display: flex; flex-shrink: 0; }
 .post-card-collab-av {
@@ -241,11 +246,10 @@
 
 /* ─── Media — aspect ratio honesto ───────────────────────── */
 .post-card-media {
-  /* Full-bleed estilo Instagram: la imagen rompe el padding lateral de 16px de la
-     card y va de borde a borde, sin esquinas redondeadas → más grande, menos
-     espacio blanco, más protagonista. El espacio vertical lo dan los vecinos
-     (head margin-bottom / text margin-top). */
-  margin: 0 -16px;
+  /* Full-width real: la card ya no tiene padding horizontal, así que la imagen
+     llena de borde a borde sin trucos de margen negativo (que causaban overflow
+     y desalineación). Sin esquinas redondeadas → estilo Instagram. */
+  margin: 0;
   background: var(--warm);
   border-radius: 0;
   overflow: hidden;
@@ -320,6 +324,7 @@
   line-height: 1.5;
   letter-spacing: var(--tracking-tight);
   margin: 12px 0 0;
+  padding: 0 16px;
 }
 
 /* ─── Acciones (fire + comments) ─────────────────────────── */
@@ -328,6 +333,7 @@
   align-items: center;
   gap: 18px;
   margin-top: 10px;
+  padding: 0 16px;
 }
 
 .post-card-fire,
