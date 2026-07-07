@@ -1,6 +1,21 @@
 import type { DayPlan, CuisineTheme } from '../types';
 import type { AppLanguage } from '../store';
-import { mealNamesEn, mealDescEn, portionsEn } from './mealPlan.en';
+
+// Overlay EN cargado bajo demanda → fuera del bundle inicial (usuarios ES no lo bajan).
+let mealNamesEn: Record<string, string> = {};
+let mealDescEn: Record<string, string> = {};
+let portionsEn: Record<string, string> = {};
+let _mealEnLoaded = false;
+
+export async function loadMealPlanEn(): Promise<void> {
+  if (_mealEnLoaded) return;
+  const m = await import('./mealPlan.en');
+  mealNamesEn = m.mealNamesEn;
+  mealDescEn = m.mealDescEn;
+  portionsEn = m.portionsEn;
+  _mealEnLoaded = true;
+  _mealPlansEnCache = null; // recomputa con los dicts reales (evita cachear el fallback ES)
+}
 
 export const cuisineThemes: CuisineTheme[] = [
   { label: 'Mexicana',  flag: '🇲🇽',  days: [1, 7]   },

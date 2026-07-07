@@ -1,6 +1,28 @@
 import type { Exercise } from '../types';
 import type { AppLanguage } from '../store';
-import { exercisesEn, stepTitleEn, stepDescEn, variantNameEn, variantNotesEn } from './exercises.en';
+import type { ExerciseOverlay } from './exercises.en';
+
+// Overlay EN cargado bajo demanda (import dinámico) → NO va en el bundle inicial.
+// Para usuarios ES (mayoría) nunca se descarga. getExercises('en') usa optional
+// chaining / `?? fallback`, así que si aún no cargó, cae a ES sin crashear
+// (la compuerta en App evita ese caso para EN).
+let exercisesEn: Record<string, ExerciseOverlay> = {};
+let stepTitleEn: Record<string, string> = {};
+let stepDescEn: Record<string, string> = {};
+let variantNameEn: Record<string, string> = {};
+let variantNotesEn: Record<string, string> = {};
+let _exEnLoaded = false;
+
+export async function loadExercisesEn(): Promise<void> {
+  if (_exEnLoaded) return;
+  const m = await import('./exercises.en');
+  exercisesEn = m.exercisesEn;
+  stepTitleEn = m.stepTitleEn;
+  stepDescEn = m.stepDescEn;
+  variantNameEn = m.variantNameEn;
+  variantNotesEn = m.variantNotesEn;
+  _exEnLoaded = true;
+}
 
 // ════════════════════════════════════════════════════════════════
 // BANCO DE EJERCICIOS — Modelo "Patrón + Variantes"

@@ -1,5 +1,6 @@
 import { dayKey } from './utils/localDate';
 import { identify } from './utils/analytics';
+import { ensureLocaleAssets } from './utils/localeAssets';
 import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore } from './store';
 import { useShallow } from 'zustand/react/shallow';
@@ -37,8 +38,21 @@ export default function App() {
   const subscriptionPeriodEnd = useAppStore(s => s.subscriptionPeriodEnd);
   const cancelAtPeriodEnd = useAppStore(s => s.cancelAtPeriodEnd);
   const paymentPastDue = useAppStore(s => s.paymentPastDue);
+  const language = useAppStore(s => s.language);
   // "loaded" keyado por usuario: solo cuenta si el status cargado es del user actual.
   const subscriptionStatusLoaded = !!user && subscriptionStatusLoadedFor === user.id;
+
+  // Contenido EN (ejercicios/comidas) se carga bajo demanda → no en el bundle inicial.
+  // Esperamos a que esté antes de montar el dashboard en EN (evita flash de ES).
+  const [assetsReady, setAssetsReady] = useState(() => useAppStore.getState().language !== 'en');
+  useEffect(() => {
+    if (language === 'en') {
+      setAssetsReady(false);
+      ensureLocaleAssets('en').then(() => setAssetsReady(true)).catch(() => setAssetsReady(true));
+    } else {
+      setAssetsReady(true);
+    }
+  }, [language]);
 
   // Tope de seguridad por period_end (independiente de la zona horaria del user
   // — comparamos instantes UTC). Si la suscripción está CANCELADA-al-fin-de-ciclo
@@ -558,6 +572,22 @@ export default function App() {
           borderTopColor: 'transparent',
           borderRadius: '50%',
           animation: 'spin 0.6s linear infinite',
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // Compuerta: el dashboard en EN espera el overlay de contenido (ejercicios/comidas).
+  if (currentScreen === 'dashboard' && !assetsReady) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, display: 'flex', alignItems: 'center',
+        justifyContent: 'center', background: 'var(--sala-bg)',
+      }}>
+        <div style={{
+          width: 32, height: 32, border: '2px solid #BFA065', borderTopColor: 'transparent',
+          borderRadius: '50%', animation: 'spin 0.6s linear infinite',
         }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
