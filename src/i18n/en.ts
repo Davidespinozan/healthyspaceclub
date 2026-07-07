@@ -812,6 +812,7 @@ export const en: Translations<typeof es> = {
     errInvalid: 'Enter a weight between 30 and 300 kg.',
     errSave: "Couldn't save. Try again.",
     toastSaved: 'Weight logged ·',
+    trendAria: 'Your weight trend over time',
     metaSinceFirst: 'since your first entry',
     metaThisWeek: 'logged this week',
     metaWeeklyTip: 'weigh yourself once a week, same day',

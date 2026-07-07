@@ -1,15 +1,16 @@
 import { dayKey } from '../utils/localDate';
-import { ArrowDown, ArrowUp, Check } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
+import WeightTrend from './WeightTrend';
 import './weight-tracking-card.css';
 
 export default function WeightTrackingCard() {
   const weightLog = useAppStore(s => s.weightLog);
   const addWeight = useAppStore(s => s.addWeight);
   const obData = useAppStore(s => s.obData);
-  const { t } = useT();
+  const { t, locale } = useT();
 
   const [showModal, setShowModal] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -135,9 +136,11 @@ export default function WeightTrackingCard() {
             </span>
           )}
         </div>
-        <span className="weight-row-chevron" aria-hidden="true">›</span>
+        <span className="weight-row-chevron" aria-hidden="true"><ChevronRight size={18} strokeWidth={2} /></span>
       </button>
       <div className="weight-row-meta">{metaText}</div>
+
+      {sorted.length >= 2 && <WeightTrend data={sorted} locale={locale} />}
 
       {showToast && toastValue !== null && (
         <div className="weight-toast" role="status" aria-live="polite">

@@ -811,6 +811,7 @@ export const es = {
     errInvalid: 'Ingresá un peso entre 30 y 300 kg.',
     errSave: 'No se pudo guardar. Intentá de nuevo.',
     toastSaved: 'Peso registrado ·',
+    trendAria: 'Tendencia de tu peso en el tiempo',
     metaSinceFirst: 'desde tu primer registro',
     metaThisWeek: 'registrado esta semana',
     metaWeeklyTip: 'pesate 1 vez por semana, mismo día',
