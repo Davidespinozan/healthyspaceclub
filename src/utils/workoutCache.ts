@@ -112,7 +112,10 @@ export async function saveWorkoutToCache(params: {
         workout_json: workoutWithVersion,
         hits: 1,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'config_hash' });
+        // INSERT-only: si ya existe esa config, NO se sobrescribe (ignoreDuplicates).
+        // La caché es compartida; permitir UPDATE dejaba que cualquier usuario
+        // envenenara la entrada de otros. El primero que la genera la fija.
+      }, { onConflict: 'config_hash', ignoreDuplicates: true });
   } catch (e) {
     console.warn('[cache] write failed:', e);
   }
