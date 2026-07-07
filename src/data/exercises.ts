@@ -13,7 +13,6 @@ export const exercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   {
     id: 'press-horizontal',
-    emoji: '💪',
     name: 'Press Horizontal',
     desc: 'Empuje desde el pecho en banco plano — patrón fundamental para masa de pectoral medio.',
     muscleGroup: 'pecho',
@@ -48,7 +47,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'press-inclinado',
-    emoji: '💪',
     name: 'Press Inclinado',
     desc: 'Empuje en banco a 30-45° — enfatiza el pectoral clavicular (superior).',
     muscleGroup: 'pecho',
@@ -79,7 +77,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'press-declinado',
-    emoji: '💪',
     name: 'Press Declinado',
     desc: 'Empuje en banco con declive — enfatiza pectoral inferior y tríceps.',
     muscleGroup: 'pecho',
@@ -109,7 +106,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'aperturas',
-    emoji: '💪',
     name: 'Aperturas',
     desc: 'Brazos extendidos cruzando al frente — estiramiento profundo y aislamiento de pecho.',
     muscleGroup: 'pecho',
@@ -139,7 +135,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'fondos-paralelas',
-    emoji: '💪',
     name: 'Fondos en Paralelas',
     desc: 'Empuje hacia abajo con cuerpo suspendido — pecho, tríceps y hombros.',
     muscleGroup: 'pecho',
@@ -170,7 +165,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'flexiones-diamante',
-    emoji: '💪',
     name: 'Flexiones Diamante',
     desc: 'Flexión con manos juntas formando diamante — tríceps y pecho interno.',
     muscleGroup: 'pecho',
@@ -199,7 +193,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'flexiones-archer',
-    emoji: '💪',
     name: 'Flexiones Archer',
     desc: 'Flexión unilateral con un brazo extendido — paso avanzado hacia la flexión a una mano.',
     muscleGroup: 'pecho',
@@ -231,7 +224,6 @@ export const exercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   {
     id: 'traccion-vertical-polea',
-    emoji: '🏋️',
     name: 'Tracción Vertical',
     desc: 'Jalar el cuerpo o la carga desde arriba — patrón rey de espalda (dominadas o jalón).',
     muscleGroup: 'espalda',
@@ -267,7 +259,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'remo-horizontal-pesado',
-    emoji: '🏋️',
     name: 'Remo Horizontal Pesado',
     desc: 'Jalar peso hacia el abdomen — masa y grosor para toda la espalda.',
     muscleGroup: 'espalda',
@@ -302,7 +293,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'remo-unilateral',
-    emoji: '🏋️',
     name: 'Remo Unilateral',
     desc: 'Jalar peso unilateral hacia la cadera — corrige asimetrías y reclutamiento profundo.',
     muscleGroup: 'espalda',
@@ -331,7 +321,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'remo-invertido',
-    emoji: '🏋️',
     name: 'Remo Invertido',
     desc: 'Remo con cuerpo suspendido — equivalente bodyweight del remo horizontal.',
     muscleGroup: 'espalda',
@@ -361,7 +350,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'pullover',
-    emoji: '🏋️',
     name: 'Pullover',
     desc: 'Brazos extendidos llevando peso desde atrás de la cabeza al frente — conecta pecho y dorsal.',
     muscleGroup: 'espalda',
@@ -390,7 +378,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'hiperextensiones',
-    emoji: '🏋️',
     name: 'Hiperextensiones',
     desc: 'Extensión de espalda baja — fortalece la cadena posterior y previene dolor lumbar.',
     muscleGroup: 'espalda',
@@ -421,7 +408,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'face-pull',
-    emoji: '🏋️',
     name: 'Face Pull',
     desc: 'Jalar cuerda hacia la cara — salud de hombros y postura.',
     muscleGroup: 'espalda',
@@ -450,7 +436,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'shrugs',
-    emoji: '🏋️',
     name: 'Shrugs (Encogimientos)',
     desc: 'Elevación de trapecios — desarrollo del trapecio superior.',
     muscleGroup: 'espalda',
@@ -485,7 +470,6 @@ export const exercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   {
     id: 'press-vertical',
-    emoji: '💪',
     name: 'Press Vertical',
     desc: 'Empuje desde hombros hacia arriba — patrón rey del deltoide.',
     muscleGroup: 'hombros',
@@ -523,7 +507,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'elevacion-lateral',
-    emoji: '💪',
     name: 'Elevación Lateral',
     desc: 'Brazo recto subiendo a un lado — aislamiento del deltoide medio.',
     muscleGroup: 'hombros',
@@ -554,7 +537,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'elevacion-frontal',
-    emoji: '💪',
     name: 'Elevación Frontal',
     desc: 'Brazo recto subiendo al frente — aislamiento del deltoide anterior.',
     muscleGroup: 'hombros',
@@ -584,7 +566,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'vuelo-posterior',
-    emoji: '💪',
     name: 'Vuelo Posterior',
     desc: 'Brazos abriendo hacia atrás — aislamiento del deltoide posterior, clave para postura.',
     muscleGroup: 'hombros',
@@ -615,7 +596,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'upright-row',
-    emoji: '💪',
     name: 'Upright Row',
     desc: 'Jalar peso pegado al cuerpo hacia la barbilla — trapecio superior y deltoide lateral.',
     muscleGroup: 'hombros',
@@ -649,7 +629,6 @@ export const exercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   {
     id: 'curl-pie',
-    emoji: '💪',
     name: 'Curl de Pie',
     desc: 'Flexión de codo con palmas arriba — patrón clásico de bíceps.',
     muscleGroup: 'biceps',
@@ -685,7 +664,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'curl-martillo',
-    emoji: '💪',
     name: 'Curl Martillo',
     desc: 'Flexión con palmas neutras — bíceps y braquial (engrosa el brazo).',
     muscleGroup: 'biceps',
@@ -715,7 +693,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'curl-predicador',
-    emoji: '💪',
     name: 'Curl Predicador',
     desc: 'Curl con brazo apoyado — máxima concentración en bíceps sin trampa de hombro.',
     muscleGroup: 'biceps',
@@ -744,7 +721,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'curl-concentrado',
-    emoji: '💪',
     name: 'Curl Concentrado',
     desc: 'Curl con codo apoyado en muslo — aislamiento total del bíceps.',
     muscleGroup: 'biceps',
@@ -771,7 +747,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'curl-muneca',
-    emoji: '💪',
     name: 'Curl de Muñeca',
     desc: 'Flexión y extensión de muñeca con barra — desarrollo directo del antebrazo.',
     muscleGroup: 'antebrazo',
@@ -803,7 +778,6 @@ export const exercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   {
     id: 'press-frances',
-    emoji: '💪',
     name: 'Press Francés',
     desc: 'Extensión de codos acostado — patrón base para masa del tríceps.',
     muscleGroup: 'triceps',
@@ -833,7 +807,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'extensiones-sobre-cabeza',
-    emoji: '💪',
     name: 'Extensiones Sobre Cabeza',
     desc: 'Extensión con brazos en alto — máximo estiramiento de la cabeza larga del tríceps.',
     muscleGroup: 'triceps',
@@ -863,7 +836,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'triceps-push-down',
-    emoji: '💪',
     name: 'Tríceps Push-down',
     desc: 'Empuje desde arriba con codos fijos — clásico para definir tríceps.',
     muscleGroup: 'triceps',
@@ -893,7 +865,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'patada-triceps',
-    emoji: '💪',
     name: 'Patada de Tríceps (Kickback)',
     desc: 'Extensión con brazo paralelo al torso — aislamiento puro del tríceps.',
     muscleGroup: 'triceps',
@@ -921,7 +892,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'fondos-triceps',
-    emoji: '💪',
     name: 'Fondos de Tríceps',
     desc: 'Empuje hacia abajo con torso vertical — patrón dominante de tríceps.',
     muscleGroup: 'triceps',
@@ -951,7 +921,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'press-cerrado',
-    emoji: '💪',
     name: 'Press Cerrado',
     desc: 'Empuje con manos juntas — dominante de tríceps con asistencia de pecho.',
     muscleGroup: 'triceps',
@@ -983,7 +952,6 @@ export const exercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   {
     id: 'sentadilla-bilateral',
-    emoji: '🦵',
     name: 'Sentadilla Bilateral',
     desc: 'Flexión simultánea de ambas rodillas con peso — patrón rey del tren inferior.',
     muscleGroup: 'cuadriceps',
@@ -1021,7 +989,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'sentadilla-unilateral',
-    emoji: '🦵',
     name: 'Sentadilla Unilateral',
     desc: 'Flexión sobre una pierna — corrige asimetrías y construye estabilidad de cadera.',
     muscleGroup: 'cuadriceps',
@@ -1052,7 +1019,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'zancada',
-    emoji: '🦵',
     name: 'Zancada (Lunge)',
     desc: 'Paso largo con flexión de ambas piernas — desarrollo de cuádriceps y glúteo unilateral.',
     muscleGroup: 'cuadriceps',
@@ -1084,7 +1050,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'prensa-piernas',
-    emoji: '🦵',
     name: 'Prensa de Piernas',
     desc: 'Empuje horizontal/inclinado con piernas — máxima carga sin demanda axial.',
     muscleGroup: 'cuadriceps',
@@ -1113,7 +1078,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'step-up',
-    emoji: '🦵',
     name: 'Step-up',
     desc: 'Subir a plataforma con una pierna — fuerza unilateral funcional.',
     muscleGroup: 'cuadriceps',
@@ -1143,7 +1107,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'extension-cuadriceps',
-    emoji: '🦵',
     name: 'Extensión de Cuádriceps',
     desc: 'Extensión aislada de rodilla — aislamiento puro del cuádriceps.',
     muscleGroup: 'cuadriceps',
@@ -1171,7 +1134,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'sissy-squat',
-    emoji: '🦵',
     name: 'Sissy Squat',
     desc: 'Inclinación atrás con rodillas adelante — estiramiento extremo del cuádriceps.',
     muscleGroup: 'cuadriceps',
@@ -1199,7 +1161,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'sentadilla-pliometrica',
-    emoji: '🦵',
     name: 'Sentadilla Pliométrica',
     desc: 'Explosivo desde sentadilla — potencia y reclutamiento de fibras rápidas.',
     muscleGroup: 'cuadriceps',
@@ -1232,7 +1193,6 @@ export const exercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   {
     id: 'peso-muerto-convencional',
-    emoji: '🦵',
     name: 'Peso Muerto Convencional',
     desc: 'Tracción vertical desde suelo — patrón rey de la cadena posterior.',
     muscleGroup: 'gluteo',
@@ -1262,7 +1222,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'peso-muerto-rumano',
-    emoji: '🦵',
     name: 'Peso Muerto Rumano (RDL)',
     desc: 'Bisagra de cadera con rodillas casi fijas — máximo estiramiento de isquios.',
     muscleGroup: 'isquios',
@@ -1292,7 +1251,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'peso-muerto-sumo',
-    emoji: '🦵',
     name: 'Peso Muerto Sumo',
     desc: 'Peso muerto con pies anchos — enfatiza glúteo medio y aductores.',
     muscleGroup: 'gluteo',
@@ -1320,7 +1278,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'peso-muerto-unilateral',
-    emoji: '🦵',
     name: 'Peso Muerto Unilateral',
     desc: 'Bisagra de cadera sobre una pierna — equilibrio, estabilidad y simetría.',
     muscleGroup: 'isquios',
@@ -1350,7 +1307,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'hip-thrust',
-    emoji: '🍑',
     name: 'Hip Thrust',
     desc: 'Extensión de cadera horizontal — patrón rey del glúteo.',
     muscleGroup: 'gluteo',
@@ -1383,7 +1339,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'curl-femoral',
-    emoji: '🦵',
     name: 'Curl Femoral',
     desc: 'Flexión aislada de rodilla — masa para los isquios.',
     muscleGroup: 'isquios',
@@ -1413,7 +1368,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'good-morning',
-    emoji: '🦵',
     name: 'Good Morning',
     desc: 'Bisagra de cadera con barra en hombros — fortaleza de cadena posterior.',
     muscleGroup: 'isquios',
@@ -1442,7 +1396,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'patada-gluteo',
-    emoji: '🍑',
     name: 'Patada de Glúteo',
     desc: 'Extensión de cadera unilateral en cuadrupedia — aislamiento puro del glúteo.',
     muscleGroup: 'gluteo',
@@ -1472,7 +1425,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'hiperextension-gluteo',
-    emoji: '🍑',
     name: 'Hiperextensión de Glúteo',
     desc: 'Extensión de cadera en banco a 45° con la espalda redondeada — enfoca el glúteo (no la espalda baja).',
     muscleGroup: 'gluteo',
@@ -1499,7 +1451,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'abduccion-cadera',
-    emoji: '🍑',
     name: 'Abducción de Cadera',
     desc: 'Separar pierna del centro — aislamiento del glúteo medio.',
     muscleGroup: 'gluteo',
@@ -1528,7 +1479,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'caminata-lateral-monstruo',
-    emoji: '🍑',
     name: 'Caminata Lateral/Monster Walk',
     desc: 'Pasos laterales con tensión en banda — activación de glúteo medio.',
     muscleGroup: 'gluteo',
@@ -1555,7 +1505,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'aduccion-cadera',
-    emoji: '🦵',
     name: 'Aducción de Cadera',
     desc: 'Juntar las piernas contra resistencia — aísla los aductores (cara interna del muslo).',
     muscleGroup: 'cuadriceps',
@@ -1582,7 +1531,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'elevacion-talones',
-    emoji: '🦵',
     name: 'Elevación de Talones',
     desc: 'Empuje a través del antepié para desarrollar los gemelos y el sóleo (pantorrilla).',
     muscleGroup: 'pantorrillas',
@@ -1613,7 +1561,6 @@ export const exercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   {
     id: 'anti-extension-isometrica',
-    emoji: '🎯',
     name: 'Anti-extensión Isométrica',
     desc: 'Mantener cuerpo en línea recta resistiendo la extensión lumbar — base de la estabilidad de core.',
     muscleGroup: 'core',
@@ -1643,7 +1590,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'anti-lateral',
-    emoji: '🎯',
     name: 'Anti-lateral',
     desc: 'Mantener postura resistiendo flexión lateral del torso — estabilidad oblicua.',
     muscleGroup: 'core',
@@ -1672,7 +1618,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'anti-rotacion',
-    emoji: '🎯',
     name: 'Anti-rotación',
     desc: 'Resistir la rotación del torso ante carga lateral — fuerza funcional profunda.',
     muscleGroup: 'core',
@@ -1701,7 +1646,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'flexion-espinal-pesada',
-    emoji: '🎯',
     name: 'Flexión Espinal con Carga',
     desc: 'Encoger torso hacia caderas con resistencia — hipertrofia clásica de recto abdominal.',
     muscleGroup: 'core',
@@ -1731,7 +1675,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'levantamiento-piernas',
-    emoji: '🎯',
     name: 'Levantamiento de Piernas',
     desc: 'Flexión de cadera con piernas — abdomen bajo y flexores de cadera.',
     muscleGroup: 'core',
@@ -1761,7 +1704,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'rotacion-con-peso',
-    emoji: '🎯',
     name: 'Rotación con Peso',
     desc: 'Rotación de torso contra resistencia — oblicuos dinámicos.',
     muscleGroup: 'core',
@@ -1791,7 +1733,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'anti-flexion-rollouts',
-    emoji: '🎯',
     name: 'Anti-flexión (Rollouts)',
     desc: 'Extensión controlada del torso resistiendo flexión — fuerza máxima del recto abdominal.',
     muscleGroup: 'core',
@@ -1820,7 +1761,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'core-dinamico',
-    emoji: '🎯',
     name: 'Core Dinámico',
     desc: 'Movimientos explosivos del core — resistencia, coordinación y demanda metabólica.',
     muscleGroup: 'core',
@@ -1853,7 +1793,6 @@ export const exercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   {
     id: 'burpee-sprawl',
-    emoji: '🔥',
     name: 'Burpee / Sprawl',
     desc: 'Caer al suelo y volver de pie — patrón clásico de cuerpo completo.',
     muscleGroup: 'cardio',
@@ -1884,7 +1823,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'saltos-basicos',
-    emoji: '🔥',
     name: 'Saltos Básicos',
     desc: 'Saltos coordinando brazos y piernas — fundamento del cardio sin equipo.',
     muscleGroup: 'cardio',
@@ -1913,7 +1851,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'running-drills',
-    emoji: '🔥',
     name: 'Running Drills',
     desc: 'Correr en el lugar con énfasis específico — coordinación y resistencia.',
     muscleGroup: 'cardio',
@@ -1941,7 +1878,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'skater-jumps',
-    emoji: '🔥',
     name: 'Skater Jumps',
     desc: 'Salto explosivo lateral imitando patinaje — potencia frontal y estabilidad.',
     muscleGroup: 'cardio',
@@ -1970,7 +1906,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'box-jumps',
-    emoji: '🔥',
     name: 'Box Jumps',
     desc: 'Salto vertical a plataforma — potencia explosiva del tren inferior.',
     muscleGroup: 'cardio',
@@ -2000,7 +1935,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'mountain-climbers',
-    emoji: '🔥',
     name: 'Mountain Climbers',
     desc: 'Alternar rodillas al pecho en plancha — cardio + core dinámico.',
     muscleGroup: 'cardio',
@@ -2029,7 +1963,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'kettlebell-swings',
-    emoji: '🔥',
     name: 'Kettlebell Swings',
     desc: 'Bisagra de cadera explosiva con impulso — potencia y resistencia de cadena posterior.',
     muscleGroup: 'cardio',
@@ -2059,7 +1992,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'battle-ropes',
-    emoji: '🔥',
     name: 'Battle Ropes',
     desc: 'Ondas con cuerda gruesa — cardio explosivo con énfasis en tren superior.',
     muscleGroup: 'cardio',
@@ -2088,7 +2020,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'carries',
-    emoji: '🔥',
     name: 'Carries (Caminatas con Peso)',
     desc: 'Caminar con peso pesado — fuerza funcional global, agarre y core.',
     muscleGroup: 'cardio',
@@ -2118,7 +2049,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'cardio-maquina',
-    emoji: '🔥',
     name: 'Cardio en Máquina',
     desc: 'Cardio sostenido en equipo del gym — intervalos o estado estable.',
     muscleGroup: 'cardio',
@@ -2154,7 +2084,6 @@ export const exercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   {
     id: 'sun-salutation-a',
-    emoji: '🌞',
     name: 'Sun Salutation A',
     desc: 'Flow básico de yoga — movilidad completa.',
     muscleGroup: 'cuerpo-completo',
@@ -2180,7 +2109,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'sun-salutation-b',
-    emoji: '☀️',
     name: 'Sun Salutation B',
     desc: 'Flow intermedio con Warrior I y Chair Pose — más intenso que el A.',
     muscleGroup: 'cuerpo-completo',
@@ -2206,7 +2134,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'warrior-i',
-    emoji: '⚔️',
     name: 'Warrior I',
     desc: 'Fuerza y apertura de cadera — postura fundamental.',
     muscleGroup: 'cuerpo-completo',
@@ -2232,7 +2159,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'warrior-ii',
-    emoji: '⚔️',
     name: 'Warrior II',
     desc: 'Apertura de cadera y fuerza — postura abierta.',
     muscleGroup: 'cuerpo-completo',
@@ -2259,7 +2185,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'reverse-warrior',
-    emoji: '🙌',
     name: 'Reverse Warrior',
     desc: 'Apertura lateral desde Warrior II.',
     muscleGroup: 'cuerpo-completo',
@@ -2285,7 +2210,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'warrior-iii',
-    emoji: '🕊️',
     name: 'Warrior III',
     desc: 'Equilibrio sobre una pierna — fuerza y foco.',
     muscleGroup: 'cuerpo-completo',
@@ -2312,7 +2236,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'triangle-pose',
-    emoji: '🔺',
     name: 'Triangle Pose (Trikonasana)',
     desc: 'Apertura lateral profunda con piernas extendidas.',
     muscleGroup: 'cuerpo-completo',
@@ -2338,7 +2261,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'chair-pose',
-    emoji: '🪑',
     name: 'Chair Pose (Utkatasana)',
     desc: 'Sentadilla de yoga — fuerza de piernas y core.',
     muscleGroup: 'cuerpo-completo',
@@ -2365,7 +2287,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'downward-dog',
-    emoji: '🐕',
     name: 'Downward Dog',
     desc: 'Estiramiento posterior completo — fundamental.',
     muscleGroup: 'cuerpo-completo',
@@ -2391,7 +2312,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'pigeon-pose',
-    emoji: '🕊️',
     name: 'Pigeon Pose',
     desc: 'Apertura profunda de cadera y glúteo.',
     muscleGroup: 'cuerpo-completo',
@@ -2418,7 +2338,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'cat-cow',
-    emoji: '🐈',
     name: 'Cat-Cow',
     desc: 'Movilidad espinal — calentamiento básico.',
     muscleGroup: 'cuerpo-completo',
@@ -2444,7 +2363,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'lizard-lunge',
-    emoji: '🦎',
     name: 'Lizard Lunge',
     desc: 'Apertura profunda de cadera — flexores.',
     muscleGroup: 'cuerpo-completo',
@@ -2470,7 +2388,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'low-lunge',
-    emoji: '🙇',
     name: 'Low Lunge',
     desc: 'Apertura de flexores de cadera — rodilla trasera apoyada.',
     muscleGroup: 'cuerpo-completo',
@@ -2496,7 +2413,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'cobra-pose',
-    emoji: '🐍',
     name: 'Cobra Pose',
     desc: 'Extensión de columna — apertura de pecho.',
     muscleGroup: 'cuerpo-completo',
@@ -2523,7 +2439,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'bridge-pose',
-    emoji: '🌉',
     name: 'Bridge Pose',
     desc: 'Apertura de pecho y cadera — fortalece espalda baja.',
     muscleGroup: 'cuerpo-completo',
@@ -2550,7 +2465,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'puppy-pose',
-    emoji: '🐶',
     name: 'Puppy Pose',
     desc: 'Apertura de hombros y espalda alta.',
     muscleGroup: 'cuerpo-completo',
@@ -2577,7 +2491,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'seated-forward-fold',
-    emoji: '🙏',
     name: 'Seated Forward Fold',
     desc: 'Estiramiento profundo de isquios y espalda.',
     muscleGroup: 'cuerpo-completo',
@@ -2604,7 +2517,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'standing-forward-fold',
-    emoji: '🙇',
     name: 'Standing Forward Fold (Uttanasana)',
     desc: 'Estiramiento posterior de piernas desde de pie.',
     muscleGroup: 'cuerpo-completo',
@@ -2631,7 +2543,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'wide-leg-forward-fold',
-    emoji: '🤸',
     name: 'Wide-Leg Forward Fold',
     desc: 'Apertura de aductores e isquios — estiramiento profundo.',
     muscleGroup: 'cuerpo-completo',
@@ -2658,7 +2569,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'happy-baby',
-    emoji: '👶',
     name: 'Happy Baby',
     desc: 'Apertura de cadera y espalda baja — relajante.',
     muscleGroup: 'cuerpo-completo',
@@ -2684,7 +2594,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'supine-twist',
-    emoji: '🌀',
     name: 'Supine Twist',
     desc: 'Rotación espinal — liberación lumbar.',
     muscleGroup: 'cuerpo-completo',
@@ -2710,7 +2619,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'child-pose',
-    emoji: '🧘',
     name: "Child's Pose",
     desc: 'Postura de descanso — reset del sistema nervioso.',
     muscleGroup: 'cuerpo-completo',
@@ -2736,7 +2644,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'savasana',
-    emoji: '😌',
     name: 'Savasana',
     desc: 'Descanso final — integración del sistema nervioso.',
     muscleGroup: 'cuerpo-completo',
@@ -2762,7 +2669,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'chaturanga',
-    emoji: '🧎',
     name: 'Chaturanga Dandasana',
     desc: 'Flexión de brazos baja — conexión clave entre poses en el vinyasa.',
     muscleGroup: 'cuerpo-completo',
@@ -2788,7 +2694,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'upward-dog',
-    emoji: '🐕',
     name: 'Upward Facing Dog',
     desc: 'Apertura de pecho desde chaturanga — tercera parte del vinyasa.',
     muscleGroup: 'cuerpo-completo',
@@ -2814,7 +2719,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'high-plank-yoga',
-    emoji: '🛸',
     name: 'High Plank (Phalakasana)',
     desc: 'Plancha alta — base de fuerza para transiciones de vinyasa.',
     muscleGroup: 'core',
@@ -2840,7 +2744,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'crescent-lunge',
-    emoji: '🌙',
     name: 'Crescent Lunge (Anjaneyasana)',
     desc: 'Zancada alta con brazos al cielo — apertura profunda de cadera flexora.',
     muscleGroup: 'cuadriceps',
@@ -2867,7 +2770,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'half-moon',
-    emoji: '🌓',
     name: 'Half Moon (Ardha Chandrasana)',
     desc: 'Pose de equilibrio lateral que demanda concentración total.',
     muscleGroup: 'cuerpo-completo',
@@ -2894,7 +2796,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'side-plank-yoga',
-    emoji: '📐',
     name: 'Side Plank (Vasisthasana)',
     desc: 'Plancha lateral — fuerza oblicua y estabilidad de hombro.',
     muscleGroup: 'core',
@@ -2920,7 +2821,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'crow-pose',
-    emoji: '🪶',
     name: 'Crow Pose (Bakasana)',
     desc: 'Pose de equilibrio sobre brazos — fuerza de core y concentración.',
     muscleGroup: 'core',
@@ -2947,7 +2847,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'camel-pose',
-    emoji: '🐪',
     name: 'Camel Pose (Ustrasana)',
     desc: 'Backbend profundo — apertura total de pecho y cadera flexora.',
     muscleGroup: 'cuerpo-completo',
@@ -2974,7 +2873,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'boat-pose',
-    emoji: '⛵',
     name: 'Boat Pose (Navasana)',
     desc: 'Pose sentada que activa core profundo y cadera flexora.',
     muscleGroup: 'core',
@@ -3001,7 +2899,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'seated-twist',
-    emoji: '🌀',
     name: 'Seated Twist (Ardha Matsyendrasana)',
     desc: 'Twist sentado — masaje profundo a órganos y movilidad espinal.',
     muscleGroup: 'core',
@@ -3028,7 +2925,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'wheel-pose',
-    emoji: '🎡',
     name: 'Wheel Pose (Urdhva Dhanurasana)',
     desc: 'Backbend completo — apertura máxima de pecho, hombros y cadera.',
     muscleGroup: 'cuerpo-completo',
@@ -3055,7 +2951,6 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'revolved-chair',
-    emoji: '💺',
     name: 'Revolved Chair (Parivrtta Utkatasana)',
     desc: 'Silla con twist — fuerza de pierna + desintoxicación espinal.',
     muscleGroup: 'cuadriceps',

@@ -256,7 +256,6 @@ export default function WorkoutPlan({
                 const fallback: Exercise = {
                   id: ex.id || `ex-${i}`,
                   name: bank?.name || ex.id || 'Ejercicio',
-                  emoji: '💪',
                   desc: '',
                   muscleGroup: 'cuerpo-completo',
                   equipment: ['gym'],

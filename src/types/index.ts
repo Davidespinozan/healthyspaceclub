@@ -118,7 +118,6 @@ export interface ExerciseVariant {
 export interface Exercise {
   id: string;
   name: string;
-  emoji: string;
   desc: string;
 
   muscleGroup: MuscleGroup;

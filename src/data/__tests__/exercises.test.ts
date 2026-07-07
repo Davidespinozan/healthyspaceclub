@@ -11,7 +11,6 @@ describe('Banco de ejercicios', () => {
       exercises.forEach((ex, i) => {
         expect(ex.id, `Exercise[${i}] sin id`).toBeTruthy();
         expect(ex.name, `Exercise ${ex.id} sin name`).toBeTruthy();
-        expect(ex.emoji, `Exercise ${ex.id} sin emoji`).toBeTruthy();
         expect(ex.desc, `Exercise ${ex.id} sin desc`).toBeTruthy();
         expect(ex.muscleGroup, `Exercise ${ex.id} sin muscleGroup`).toBeTruthy();
         expect(ex.equipment, `Exercise ${ex.id} sin equipment`).toBeTruthy();
