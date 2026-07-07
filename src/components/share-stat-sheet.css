@@ -1,0 +1,96 @@
+/* ShareStatSheet — preview del overlay + acciones. Overlay oscuro, card centrada. */
+.sss-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(6, 20, 16, 0.72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.sss {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  background: var(--forest, #0E2521);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+}
+.sss-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(244, 239, 227, 0.14);
+  color: #F4EFE3;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sss-input { display: none; }
+.sss-preview {
+  display: block;
+  width: 100%;
+  border-radius: 14px;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.3);
+}
+.sss-state {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: rgba(244, 239, 227, 0.75);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  text-align: center;
+}
+.sss-spin { animation: sss-rot 0.9s linear infinite; color: var(--amber, #D8B064); }
+@keyframes sss-rot { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .sss-spin { animation: none; } }
+
+.sss-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.sss-btn-ghost,
+.sss-btn-primary {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 13px 14px;
+  border-radius: 12px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.sss-btn-ghost {
+  flex: 0 0 auto;
+  background: rgba(244, 239, 227, 0.12);
+  color: #F4EFE3;
+}
+.sss-btn-primary {
+  background: var(--amber, #D8B064);
+  color: #14312B;
+}
+.sss-btn-primary:active,
+.sss-btn-ghost:active { transform: scale(0.97); }

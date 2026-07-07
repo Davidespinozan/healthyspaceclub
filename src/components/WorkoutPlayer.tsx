@@ -5,6 +5,7 @@ import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, C
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 
 const CreatePostModal = lazy(() => import('./CreatePostModal'));
+const ShareStatSheet = lazy(() => import('./ShareStatSheet'));
 import { translateMuscle, translateDifficulty } from '../utils/exerciseMeta';
 import { haptics } from '../utils/haptics';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -136,6 +137,7 @@ export default function WorkoutPlayer({
     () => (!savedProgress && (workout as CachedWorkout).warmup ? 'warmup' : 'exercise'),
   );
   const [shareOpen, setShareOpen] = useState(false);
+  const [shareStatOpen, setShareStatOpen] = useState(false);
   const [showSpecs, setShowSpecs] = useState(false); // popout de técnica/specs encima del player
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
   const [videoAspect, setVideoAspect] = useState<number | null>(null);
@@ -732,8 +734,11 @@ export default function WorkoutPlayer({
             </div>
           )}
           <div className="wp-cta-wrap">
-            <button className="wp-share-cta" onClick={() => setShareOpen(true)}>
+            <button className="wp-share-cta" onClick={() => setShareStatOpen(true)}>
               <Camera size={18} strokeWidth={2} />
+              {t('post.shareOutCta')}
+            </button>
+            <button className="wp-share-cta wp-share-cta--club" onClick={() => setShareOpen(true)}>
               {t('post.shareFromWorkout')}
             </button>
             <button className="wp-cta" onClick={onClose}>
@@ -741,6 +746,22 @@ export default function WorkoutPlayer({
             </button>
           </div>
         </div>
+      )}
+
+      {shareStatOpen && (
+        <Suspense fallback={null}>
+          <ShareStatSheet
+            headline={t('post.shareHeadlineWorkout')}
+            stats={[
+              { big: String(completedStats.minutes), label: 'min' },
+              { big: String(completedStats.totalSetsCompleted), label: t('workout.setsLower') },
+              completedStats.totalKg > 0
+                ? { big: String(completedStats.totalKg), label: t('workout.kgTotal') }
+                : { big: String(completedStats.exercisesCompleted), label: t('workout.exercisesLower') },
+            ]}
+            onClose={() => setShareStatOpen(false)}
+          />
+        </Suspense>
       )}
 
       {shareOpen && (

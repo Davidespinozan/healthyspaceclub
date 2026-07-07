@@ -315,6 +315,16 @@
   background: rgba(255, 255, 255, 0.14);
   transform: translateY(-1px);
 }
+/* Publicar al Club: acción secundaria y discreta bajo el share externo. */
+.wp-share-cta--club {
+  background: transparent;
+  border-color: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  padding: 8px 24px;
+  min-width: 0;
+}
+.wp-share-cta--club:hover { background: rgba(255, 255, 255, 0.06); transform: none; }
 
 .wp-cta:active {
   transform: scale(0.98);
