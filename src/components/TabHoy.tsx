@@ -1,5 +1,5 @@
 import { dayKey } from '../utils/localDate';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight, Flame, X } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
@@ -132,7 +132,12 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   }, [streakCount, lastStreakMilestone]);
 
   const activePlan = mealPlans[weeklyPlan?.mealPlanKey ?? mealPlanKey] ?? mealPlans['planA'];
-  const scaledPlan = planGoal > 0 ? scalePlan(activePlan, planGoal) : activePlan;
+  // scalePlan recorre el plan semanal — memoizar evita recalcularlo en CADA render
+  // (TabHoy se re-renderiza con cualquier cambio del store).
+  const scaledPlan = useMemo(
+    () => (planGoal > 0 ? scalePlan(activePlan, planGoal) : activePlan),
+    [activePlan, planGoal],
+  );
   const anchor = shoppingDay ?? 0;
 
   const todayDow = new Date().getDay();
@@ -150,13 +155,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // foodLog y dejaba al plan ✓ sin sumar kcal. Ahora plan ✓ y foodLog
   // alimentan el mismo número, con mealResolvedByLog como llave
   // anti-duplicado (franja resuelta por log no duplica el plan).
-  const dayConsumption = computeDayConsumption({
-    todayMeals,
-    mealChecks,
-    mealResolvedByLog,
-    foodLog,
-    today,
-  });
+  const dayConsumption = useMemo(
+    () => computeDayConsumption({ todayMeals, mealChecks, mealResolvedByLog, foodLog, today }),
+    [todayMeals, mealChecks, mealResolvedByLog, foodLog, today],
+  );
   // FoodLog-Display: las entradas registradas hoy se muestran como ítems
   // bajo la lista del plan ("REGISTRADO"). Solo display — NO toca
   // computeDayConsumption (Food-5) ni el dot ámbar (Food-4).
