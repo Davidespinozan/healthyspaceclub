@@ -50,11 +50,12 @@ export async function checkRateLimit(
     .eq('success', true)
     .gte('created_at', startOfDay.toISOString());
 
-  // Si el conteo falla, permitimos la request (fail-open) — no bloqueamos
-  // al usuario por un problema de infra. Se loguea para debugging.
+  // Si el conteo falla, NEGAMOS (fail-closed): antes era fail-open, lo que
+  // desactivaba el tope anti-abuso ante un fallo de infra y dejaba quemar el
+  // presupuesto de IA. Preferimos bloquear brevemente que dejar la puerta abierta.
   if (error) {
-    console.error('[rateLimit] count query failed:', error.message);
-    return { allowed: true, limit, used: 0 };
+    console.error('[rateLimit] count query failed → fail-closed:', error.message);
+    return { allowed: false, reason: 'rate_check_failed', limit, used: 0 };
   }
 
   const used = count ?? 0;

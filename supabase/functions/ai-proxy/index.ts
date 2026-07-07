@@ -155,6 +155,21 @@ Deno.serve(async (req: Request) => {
     return json({ message: 'Falta el campo messages' }, 400);
   }
 
+  // ── 4b. Anti-abuso de COSTO: limitar el input ───────────────
+  // El max_tokens de SALIDA ya se capa, pero el input era ilimitado y Anthropic
+  // cobra por tokens de entrada. Un usuario pro (150/día) podía mandar contexto
+  // enorme en cada request y quemar presupuesto. Topes holgados para uso normal
+  // (chat del coach, prompts de plan) que bloquean el abuso.
+  const MAX_MESSAGES = 50;
+  const MAX_INPUT_CHARS = 100_000; // ~25k tokens
+  if (body.messages.length > MAX_MESSAGES) {
+    return json({ message: 'La conversación es demasiado larga.' }, 400);
+  }
+  const inputChars = JSON.stringify(body.messages).length + (body.system ? String(body.system).length : 0);
+  if (inputChars > MAX_INPUT_CHARS) {
+    return json({ message: 'El mensaje es demasiado grande.' }, 400);
+  }
+
   // ── 5. Fetch a Anthropic con key server-side ────────────────
   // Anti-amplificación de costo: el cliente NO elige libremente modelo ni
   // max_tokens. Solo se permiten los modelos que la app usa de verdad; cualquier
@@ -226,13 +241,16 @@ Deno.serve(async (req: Request) => {
       const errorCode = `anthropic_${aRes.status}`;
       const errText = await aRes.text();
       await logUsage(supabaseAdmin, user.id, model, null, null, false, errorCode, Date.now() - startedAt);
+      // El cuerpo de error de Anthropic va SOLO a logs (puede filtrar internos/prompt);
+      // al cliente, mensaje genérico.
+      console.error('[ai-proxy] anthropic error:', aRes.status, errText.slice(0, 500));
       console.log(JSON.stringify({
         user_id: user.id, action: 'ai-proxy', plan: access.plan,
         allowed: true, success: false, error_code: errorCode,
         latency_ms: Date.now() - startedAt,
       }));
       return json(
-        { message: `El servicio de IA tuvo un problema (${aRes.status}). Intenta de nuevo.`, detail: errText.slice(0, 200) },
+        { message: `El servicio de IA tuvo un problema (${aRes.status}). Intenta de nuevo.` },
         502,
       );
     }
