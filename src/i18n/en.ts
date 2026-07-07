@@ -866,6 +866,7 @@ export const en: Translations<typeof es> = {
     referralCta: 'Invite',
     referralCount: "You've invited {n}",
     referralShareText: 'Train with me on Healthy Space Club and we both get 1 month free:',
+    shareProgress: 'Share my progress',
     share: 'Share',
     viewPublic: 'View public profile',
     shareTitle: 'My HSC profile',
@@ -1149,6 +1150,7 @@ export const en: Translations<typeof es> = {
     sharePickPhoto: 'Choose photo',
     shareHeadlineWorkout: 'Trained today',
     shareHeadlineStreak: 'My streak',
+    shareHeadlineProgress: 'My progress',
   },
   comments: {
     title: 'Comments',

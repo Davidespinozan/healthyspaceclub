@@ -865,6 +865,7 @@ export const es = {
     referralCta: 'Invitar',
     referralCount: 'Has invitado a {n}',
     referralShareText: 'Entrena conmigo en Healthy Space Club y ganamos 1 mes gratis los dos:',
+    shareProgress: 'Compartir mi progreso',
     share: 'Compartir',
     viewPublic: 'Ver perfil público',
     shareTitle: 'Mi perfil HSC',
@@ -1148,6 +1149,7 @@ export const es = {
     sharePickPhoto: 'Elegir foto',
     shareHeadlineWorkout: 'Entrené hoy',
     shareHeadlineStreak: 'Mi racha',
+    shareHeadlineProgress: 'Mi progreso',
   },
   comments: {
     title: 'Comentarios',

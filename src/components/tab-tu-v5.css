@@ -570,3 +570,25 @@ button.tt5-stat:active { transform: scale(0.97); }
 @media (prefers-reduced-motion: reduce) {
   .tt5-header, .tt5-stats, .tt5-grid { animation: none; }
 }
+
+/* Compartir progreso (estilo Strava) — botón visible bajo los stats del perfil. */
+.tt5-share-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: calc(100% - 44px);
+  margin: 0 22px 14px;
+  padding: 13px 16px;
+  background: var(--forest, #0E2521);
+  color: #F4EFE3;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+.tt5-share-progress:active { transform: scale(0.98); }

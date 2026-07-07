@@ -1,5 +1,6 @@
-import { useMemo, useEffect, useState } from 'react';
-import { Menu, Flame, Lock } from 'lucide-react';
+import { useMemo, useEffect, useState, lazy, Suspense } from 'react';
+import { Menu, Flame, Lock, Camera } from 'lucide-react';
+const ShareStatSheet = lazy(() => import('./ShareStatSheet'));
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
@@ -38,6 +39,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   const [postCount, setPostCount] = useState(0);
   const [userPosts, setUserPosts] = useState<{ id: string; photo_url: string }[]>([]);
   const [editing, setEditing] = useState(false);
+  const [shareProgressOpen, setShareProgressOpen] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
   const [saving, setSaving] = useState(false);
@@ -240,6 +242,25 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
             </div>
           </div>
         </div>
+      )}
+
+      {/* COMPARTIR PROGRESO — estilo Strava, siempre disponible (no solo al terminar entreno) */}
+      {!editing && streakCount >= 1 && (
+        <button type="button" className="tt5-share-progress" onClick={() => setShareProgressOpen(true)}>
+          <Camera size={17} strokeWidth={2} /> {t('profile.shareProgress')}
+        </button>
+      )}
+      {shareProgressOpen && (
+        <Suspense fallback={null}>
+          <ShareStatSheet
+            headline={t('post.shareHeadlineProgress')}
+            stats={[
+              { big: String(streakCount), label: t('logros.dayOther') },
+              { big: String(achievementsCount), label: t('profile.statLogros') },
+            ]}
+            onClose={() => setShareProgressOpen(false)}
+          />
+        </Suspense>
       )}
 
       {/* WEIGHT */}
