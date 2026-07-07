@@ -634,9 +634,14 @@ export const useAppStore = create<AppState>()(
     const currentResolved = !!state.mealResolvedByLog[key];
     set({ mealChecks: { ...state.mealChecks, [key]: newChecked } });
 
+    const parsed = extractDateAndIndex(key);
+    // Nutrición cuenta para la racha: completar una comida de HOY marca el día activo.
+    if (newChecked && parsed && parsed.date === dayKey(new Date())) {
+      get().markActiveDay().catch(() => {});
+    }
+
     const userId = state.user?.id;
     if (!userId) return;
-    const parsed = extractDateAndIndex(key);
     if (!parsed) return; // ignorar keys legacy tipo 'shop-N'
     supabase.from('meal_progress')
       .upsert({
@@ -779,6 +784,9 @@ export const useAppStore = create<AppState>()(
 
     // Optimistic local primero (UX responsiva, modo offline OK)
     set((state) => ({ foodLog: [...state.foodLog, { id, date: today, ...entry }] }));
+
+    // Nutrición cuenta para la racha: registrar comida marca el día activo.
+    get().markActiveDay().catch(() => {});
 
     if (userId) {
       const { error } = await supabase
