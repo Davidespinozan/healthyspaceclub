@@ -17,6 +17,7 @@ import {
   countSessionsWith, type UserSearchResult, type Partnership,
 } from '../utils/partners';
 import UsernameSetupSheet from './UsernameSetupSheet';
+import { inviteLink } from '../utils/referral';
 import './companeros.css';
 
 function Avatar({ name, url }: { name: string | null; url: string | null }) {
@@ -137,6 +138,18 @@ export default function CompanerosScreen() {
 
       {username && (
         <>
+          {/* Invita a alguien que AÚN no está en la app (adquisición) — comparte tu link. */}
+          <button className="comp-invite" onClick={async () => {
+            const link = inviteLink(username);
+            try {
+              if (navigator.share) await navigator.share({ text: t('partners.inviteText'), url: link });
+              else { await navigator.clipboard.writeText(link); }
+            } catch { /* canceló el share nativo */ }
+          }}>
+            <UserPlus size={17} strokeWidth={2} />
+            {t('partners.inviteFriend')}
+          </button>
+
           {/* Buscador */}
           <div className="comp-search">
             <Search size={17} className="comp-search-icon" strokeWidth={2} />

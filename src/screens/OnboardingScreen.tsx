@@ -9,6 +9,7 @@ import { validateEmailDeliverable } from '../utils/emailValidation';
 import LanguageToggle from '../components/LanguageToggle';
 import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
 import { track } from '../utils/analytics';
+import { recordReferralIfAny } from '../utils/referral';
 
 const BRAND_ICON = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png';
 
@@ -169,6 +170,7 @@ export default function OnboardingScreen() {
         return;
       }
 
+      recordReferralIfAny(); // atribuye el referido si vino por un invite-link
       const displayName = signupName.trim().split(' ')[0];
       setUserName(displayName);
       setObData('name', displayName);

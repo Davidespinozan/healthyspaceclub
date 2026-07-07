@@ -481,6 +481,8 @@ export const en: Translations<typeof es> = {
     setUsernameTitle: 'Choose your @username',
     setUsernameSub: 'You need it so partners can find you.',
     searchPlaceholder: 'Search by @username or name',
+    inviteFriend: 'Invite a friend',
+    inviteText: 'Train with me on Healthy Space Club:',
     noResults: 'No one found. Try another name.',
     connected: 'Connected',
     pending: 'Pending',

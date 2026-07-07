@@ -68,6 +68,23 @@
 .comp-identity-arrow, .comp-guest-arrow { color: #fff; font-size: 1.05rem; flex-shrink: 0; }
 
 /* Buscador */
+.comp-invite {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 13px 16px;
+  background: var(--forest, #0E2521);
+  color: #F4EFE3;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+.comp-invite:active { transform: scale(0.98); }
 .comp-search {
   display: flex; align-items: center; gap: 9px;
   padding: 12px 14px;

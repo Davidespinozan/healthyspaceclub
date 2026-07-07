@@ -480,6 +480,8 @@ export const es = {
     setUsernameTitle: 'Elige tu @usuario',
     setUsernameSub: 'Lo necesitas para que tus compañeros te encuentren.',
     searchPlaceholder: 'Buscar por @usuario o nombre',
+    inviteFriend: 'Invitar a un amigo',
+    inviteText: 'Entrena conmigo en Healthy Space Club:',
     noResults: 'Nadie encontrado. Prueba otro nombre.',
     connected: 'Conectado',
     pending: 'Pendiente',

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { recordReferralIfAny } from '../utils/referral';
 import { useT } from '../i18n';
 import { validateEmailDeliverable } from '../utils/emailValidation';
 
@@ -60,6 +61,7 @@ export function useEmailSignup() {
       }
 
       if (data.session) {
+        recordReferralIfAny(); // atribuye el referido si vino por un invite-link
         // Dejamos loading=true: el caller navega/avanza (igual que el SignupModal original).
         return { outcome: 'session' };
       }
