@@ -56,25 +56,15 @@ function notifyUser(userId: string, event: string) {
   } catch { /* noop */ }
 }
 
-/** Inserta una notificación in-app para `recipientId` con el actor = usuario
- *  actual (resuelve su username/avatar). No notifica si te lo haces a ti mismo. */
+/** Crea una notificación in-app para `recipientId` vía RPC seguro: el servidor
+ *  deriva actor_username/avatar (no se puede suplantar) y exige que exista una
+ *  relación de pareja entre ambos. */
 async function pushNotification(
   recipientId: string,
   type: 'partner_invite' | 'partner_accept',
 ) {
   try {
-    const { data: auth } = await supabase.auth.getUser();
-    const me = auth?.user?.id;
-    if (!me || me === recipientId) return;
-    const { data: prof } = await supabase
-      .from('user_profiles').select('username, avatar_url').eq('user_id', me).single();
-    await supabase.from('notifications').insert({
-      user_id: recipientId,
-      actor_id: me,
-      actor_username: prof?.username ?? '',
-      actor_avatar_url: prof?.avatar_url ?? '',
-      type,
-    });
+    await supabase.rpc('notify_partner', { recipient: recipientId, notif_type: type });
   } catch { /* noop */ }
 }
 
