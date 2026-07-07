@@ -21,7 +21,7 @@ function parseAction(content: string): { text: string; action: CoachAction | nul
 export default function TabCoach() {
   const { t, locale } = useT();
   const { coachChatHistory, coachChatDate, addCoachMessage,
-    foodLog, dailyWorkout, streakCount, dailyCheckin, planGoal,
+    foodLog, dailyWorkout, streakCount, planGoal,
     coachPrefilledMessage, setCoachPrefilledMessage } = useAppStore();
 
   const QUICK_CHIPS = [
@@ -74,7 +74,6 @@ export default function TabCoach() {
     if (streakCount >= 7) return t('coach.welcomeStreak', { streak: streakCount });
     if (todayKcal > 0 && planGoal > 0) return t('coach.welcomeKcal', { kcal: todayKcal, goal: planGoal });
     if (hasWorkout) return t('coach.welcomeWorkout');
-    if (dailyCheckin === 'cansado') return t('coach.welcomeTired');
     return t('coach.welcomeDefault');
   })();
 

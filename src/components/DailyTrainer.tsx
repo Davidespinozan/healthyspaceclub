@@ -71,9 +71,6 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const userName = useAppStore(s => s.userName);
   const obData = useAppStore(s => s.obData);
   const workoutLog = useAppStore(s => s.workoutLog);
-  const dailyCheckIn = useAppStore(s => s.dailyCheckIn);
-  const dailyCheckin = useAppStore(s => s.dailyCheckin);
-  const dailyCheckinDate = useAppStore(s => s.dailyCheckinDate);
   const storedWorkout = useAppStore(s => s.dailyWorkout);
   const saveDailyWorkout = useAppStore(s => s.saveDailyWorkout);
   const regenCount = useAppStore(s => s.dailyWorkoutRegenCount);
@@ -95,10 +92,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // llamado David/Magaly tenía regeneraciones ilimitadas).
   const isAdmin = useAppStore(s => s.isAdmin);
 
-  // Check if we have today's checkin already
-  const hasCheckinToday = dailyCheckinDate === today && dailyCheckin !== null;
   const hasWorkoutToday = workoutLog.some(e => e.date === today);
-  const skipPhysical = hasCheckinToday || hasWorkoutToday;
+  const skipPhysical = hasWorkoutToday;
 
   // Modality counts
   const modalityCounts = useMemo(() => countByModality(exerciseBank), []);
@@ -107,20 +102,17 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const suggestion = useMemo(() => suggestModality({
     workoutLog: workoutLog || [],
     exercises: exerciseBank,
-    dailyEnergy: dailyCheckin || undefined,
     streakCount,
     completedSessions,
-  }), [workoutLog, dailyCheckin, streakCount, completedSessions]);
+  }), [workoutLog, streakCount, completedSessions]);
 
   // Auto decision
   const todayDecision: WorkoutDayDecision = useMemo(() => decideTodayWorkout({
     userObjective: String(obData?.goal || ''),
     workoutLog: workoutLog || [],
     exercises: exerciseBank,
-    dailyEnergy: dailyCheckIn?.date === today ? dailyCheckIn.feeling as any : undefined,
-    dailySleep: dailyCheckIn?.date === today ? dailyCheckIn.sleep as any : undefined,
     completedSessions,
-  }), [obData, workoutLog, dailyCheckIn, today, completedSessions]);
+  }), [obData, workoutLog, completedSessions]);
 
   // ── State
   const [phase, setPhase] = useState<Phase>(() => {
@@ -201,11 +193,6 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     };
     const goalLabel = obData?.goal && GOAL_KEY[obData.goal] ? t(GOAL_KEY[obData.goal]) : (obData?.goal || 'general');
     bullets.push(t('wizard.genGoal', { goal: goalLabel }));
-
-    if (hasCheckinToday && dailyCheckin) {
-      const ENERGY_KEY: Record<string, TranslationKey> = { cansado: 'wizard.energyTired', regular: 'wizard.energyRegular', energia: 'wizard.energyHigh' };
-      bullets.push(t('wizard.genEnergy', { level: t(ENERGY_KEY[dailyCheckin]) }));
-    }
 
     const modOpt = MODALITY_OPTIONS.find(m => m.value === selectedModality);
     const modalityLabel = modOpt?.label || 'auto'; // español — contexto del prompt + mensaje de error
@@ -303,7 +290,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         dayType: dayTypeKey,
         schemaVersion: SCHEMA_VERSIONS[schemaType],
         modality: selectedModality,
-        energy: dailyCheckin || undefined,
+        energy: undefined,
         objective: String(obData?.goal || ''),
         priorExercise,
         discomfort,
@@ -505,7 +492,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
       // Reduce intensity if prior heavy exercise or tired
       let intensity = todayDecision.intensity;
-      if (priorExercise === 'heavy' || dailyCheckin === 'cansado') intensity = 'baja';
+      if (priorExercise === 'heavy') intensity = 'baja';
       else if (priorExercise === 'light' || discomfort === 'mild') intensity = 'media';
 
       // Guardia defensiva: filterWithProgressiveRelaxation nivel 3 SIEMPRE devuelve

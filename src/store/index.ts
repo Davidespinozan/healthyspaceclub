@@ -324,11 +324,6 @@ interface AppState {
   dailyWorkoutRegenCount: { date: string; countByModality: Record<string, number>; updatedAt?: string };
   incrementDailyWorkoutRegen: (modality: string) => void;
 
-  // Daily check-in + streak
-  // dailyCheckIn: campo persistido (consumers lo leen en DailyTrainer para
-  // sugerir intensidad). saveDailyCheckIn fue purgada en Lote Racha-2 — era
-  // zombie sin caller. El campo se queda por seguridad de hidratación.
-  dailyCheckIn: { date: string; feeling: string; sleep: string } | null;
   streakCount: number;
   lastActiveDate: string | null;
   /**
@@ -350,11 +345,6 @@ interface AppState {
   userMilestones: MilestoneEntry[];
   setUserMilestones: (m: MilestoneEntry[]) => void;
 
-  // Daily energy check-in (Hoy tab) — campos persistidos, mutator purgado
-  // en Lote Racha-2 (era zombie). Consumers vivos: DailyTrainer, TabCoach.
-  dailyCheckin: 'cansado' | 'regular' | 'energia' | null;
-  dailyCheckinDate: string;
-
   // Daily HSM micro-responses
   dailyHSMResponses: { date: string; dimension: string; question: string; response: string }[];
   addHSMResponse: (entry: { dimension: string; question: string; response: string }) => void;
@@ -373,11 +363,6 @@ interface AppState {
 
   // Recalcular TDEE/planGoal/mealPlanKey desde obData actual
   recalcFromObData: () => Promise<void>;
-
-  // Active HSM dimension + unlock tracking
-  activeHSMDimension: number;
-  setActiveHSMDimension: (n: number) => void;
-  hsmUnlockDays: number[];
 
   // Cumulative HSM profile (updated weekly by AI)
   hsmProfile: { text: string; updatedAt: string } | null;
@@ -1087,8 +1072,7 @@ export const useAppStore = create<AppState>()(
   userMilestones: [],
   setUserMilestones: (m) => set({ userMilestones: m }),
 
-  // Daily check-in + streak
-  dailyCheckIn: null,
+  // Streak
   streakCount: 0,
   lastActiveDate: null,
   // Punto único de actualización de racha (Lote Racha-1).
@@ -1148,11 +1132,6 @@ export const useAppStore = create<AppState>()(
   selectPlan: () => set({ userPlan: 'pro', trialEndsAt: null }),
 
   // Daily energy check-in (Hoy tab) — campos persistidos.
-  // setDailyCheckin fue purgada en Lote Racha-2 (zombie sin caller).
-  // Los campos quedan por seguridad de hidratación + consumers vivos
-  // (DailyTrainer + TabCoach leen `dailyCheckin` para sugerir intensidad).
-  dailyCheckin: null,
-  dailyCheckinDate: '',
 
   // Daily HSM micro-responses
   dailyHSMResponses: [],
@@ -1220,10 +1199,6 @@ export const useAppStore = create<AppState>()(
     }
   },
 
-  // Active HSM dimension + unlock tracking
-  activeHSMDimension: 0,
-  setActiveHSMDimension: (n) => set({ activeHSMDimension: n }),
-  hsmUnlockDays: [],
 
   // Cumulative HSM profile
   hsmProfile: null,
@@ -1274,7 +1249,6 @@ export const useAppStore = create<AppState>()(
     dailyWorkout: null,
     shoppingDay: null,
     weeklyPlan: null,
-    dailyCheckIn: null,
     streakCount: 0,
     lastActiveDate: null,
     planRegenCount: null,
@@ -1283,13 +1257,9 @@ export const useAppStore = create<AppState>()(
     dailyBriefing: null,
     lastStreakMilestone: 0,
     userMilestones: [],
-    dailyCheckin: null,
-    dailyCheckinDate: '',
     dailyHSMResponses: [],
     coachChatHistory: [],
     coachChatDate: '',
-    activeHSMDimension: 0,
-    hsmUnlockDays: [],
     hsmProfile: null,
   }),
 
@@ -1347,7 +1317,6 @@ export const useAppStore = create<AppState>()(
     shoppingDay: state.shoppingDay,
     weeklyPlan: state.weeklyPlan,
     dailyWorkout: state.dailyWorkout,
-    dailyCheckIn: state.dailyCheckIn,
     streakCount: state.streakCount,
     lastActiveDate: state.lastActiveDate,
     planRegenCount: state.planRegenCount,
@@ -1356,13 +1325,9 @@ export const useAppStore = create<AppState>()(
     dailyBriefing: state.dailyBriefing,
     lastStreakMilestone: state.lastStreakMilestone,
     userMilestones: state.userMilestones,
-    dailyCheckin: state.dailyCheckin,
-    dailyCheckinDate: state.dailyCheckinDate,
     dailyHSMResponses: state.dailyHSMResponses,
     coachChatHistory: state.coachChatHistory,
     coachChatDate: state.coachChatDate,
-    activeHSMDimension: state.activeHSMDimension,
-    hsmUnlockDays: state.hsmUnlockDays,
     hsmProfile: state.hsmProfile,
   }),
 }

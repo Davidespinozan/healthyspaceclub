@@ -19,7 +19,7 @@ export function buildCoachSystemPrompt(
   locale: AppLanguage = 'es',
 ): string {
   const { userName, obData, tdee, planGoal, habits, weightLog, foodLog, workoutLog,
-    dailyCheckin, activeHSMDimension, streakCount, weeklyPlan, mealPlanKey,
+    streakCount, weeklyPlan, mealPlanKey,
     dailyHSMResponses, dailyWorkout, hsmProfile } = store;
 
   const today = dayKey(new Date());
@@ -36,8 +36,6 @@ export function buildCoachSystemPrompt(
     `${e.date} — ${e.exercise}: ${e.sets.map(s => `${s.reps}×${s.kg}kg`).join(', ')}`
   ).join('\n') || 'Sin registros';
 
-  const HSM_DIMS = ['Identidad','Vocación','Propósito','Metas','Disciplina','Cuerpo','Entorno y Relaciones','Control Emocional','Resiliencia','Evolución Constante'];
-  const energyMap: Record<string, string> = { energia: 'Con energía', regular: 'Regular', cansado: 'Cansado' };
   const todayHSMs = dailyHSMResponses.filter(r => r.date === today);
   const recentHSMs = dailyHSMResponses.slice(-30); // last 30 responses for deep context
   const workoutDone = dailyWorkout?.date === today;
@@ -55,7 +53,6 @@ ${obData.goal === 'Ganar músculo' ? 'ENFOQUE NUTRICIONAL: Superávit +300 kcal.
 ${obData.goal === 'Bajar grasa' ? 'ENFOQUE NUTRICIONAL: Déficit -500 kcal. Mantener proteína alta para preservar músculo. Priorizar saciedad.' : ''}
 ${obData.goal === 'Recomposición' ? 'ENFOQUE NUTRICIONAL: Déficit leve -200 kcal. Proteína muy alta (2g/kg). Combinar fuerza + cardio. Proceso lento pero sostenible.' : ''}
 ${obData.goal === 'Bienestar integral' ? 'ENFOQUE NUTRICIONAL: Mantenimiento. Alimentación equilibrada sin restricciones extremas. Priorizar energía, sueño y estrés.' : ''}
-Dimensión HSM activa: ${HSM_DIMS[activeHSMDimension] || 'Identidad'}
 Racha actual: ${streakCount} días
 ${hsmProfile?.text ? `
 ═══════════════════════════════
@@ -65,7 +62,6 @@ ${hsmProfile.text}
 (Actualizado: ${hsmProfile.updatedAt})
 ` : ''}
 HOY:
-- Energía al despertar: ${dailyCheckin ? energyMap[dailyCheckin] : 'Sin registrar'}
 - Calorías consumidas: ${todayKcal} de ${planGoal} (P:${todayProt}g C:${todayCarbs}g G:${todayFat}g)
 - Alimentos: ${todayFood.map(e => e.desc).join(', ') || 'Ninguno registrado'}
 - Hábitos: ${habitsDone}/4

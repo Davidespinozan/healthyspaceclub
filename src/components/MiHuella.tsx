@@ -8,7 +8,7 @@ import { useT } from '../i18n';
 
 export default function MiHuella({ onBack }: { onBack: () => void }) {
   const { t } = useT();
-  const { userName, setUserName, streakCount, hsmUnlockDays } = useAppStore();
+  const { userName, setUserName, streakCount } = useAppStore();
   const userId = useCurrentUserId();
 
   const [profile, setProfile] = useState({ display_name: '', bio: '', avatar_url: '' });
@@ -148,10 +148,6 @@ export default function MiHuella({ onBack }: { onBack: () => void }) {
         <div className="hu-stat">
           <div className="hu-stat-val">{streakCount}</div>
           <div className="hu-stat-lbl">{t('profile.statStreak')}</div>
-        </div>
-        <div className="hu-stat">
-          <div className="hu-stat-val">{hsmUnlockDays.length}</div>
-          <div className="hu-stat-lbl">{t('profile.activeDays')}</div>
         </div>
         <div className="hu-stat">
           <div className="hu-stat-val">{postCount}</div>
