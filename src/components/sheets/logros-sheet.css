@@ -191,6 +191,24 @@
   background: rgba(191, 160, 101, 0.13);
   border-radius: 999px;
 }
+.ls-detail-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 999px;
+  background: var(--forest, #0E2521);
+  color: #F4EFE3;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+.ls-detail-share:active { transform: scale(0.97); }
 .ls-detail-pending {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.95rem;

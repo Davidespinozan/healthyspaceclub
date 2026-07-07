@@ -1,7 +1,8 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Lock, X } from 'lucide-react';
+import { ArrowLeft, Lock, X, Camera } from 'lucide-react';
 import { useAppStore } from '../../store';
+const ShareStatSheet = lazy(() => import('../ShareStatSheet'));
 import {
   MILESTONE_STEPS,
   MILESTONE_ICON,
@@ -25,6 +26,7 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
   const { t, locale } = useT();
 
   const [focused, setFocused] = useState<number | null>(initialMilestoneDay ?? null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   // Reset focused milestone cuando el sheet se abre con un initialMilestoneDay distinto
   useEffect(() => {
@@ -109,6 +111,11 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
               </p>
             )}
 
+            {focusedMilestone.isUnlocked && (
+              <button type="button" className="ls-detail-share" onClick={() => setShareOpen(true)}>
+                <Camera size={16} strokeWidth={2} /> {t('logros.shareCta')}
+              </button>
+            )}
           </div>
         ) : (
           <>
@@ -150,6 +157,16 @@ export default function LogrosSheet({ isOpen, onClose, initialMilestoneDay }: Pr
           </>
         )}
       </div>
+
+      {shareOpen && focusedMilestone?.isUnlocked && (
+        <Suspense fallback={null}>
+          <ShareStatSheet
+            headline={t('post.shareHeadlineStreak')}
+            stats={[{ big: String(focusedMilestone.days), label: t('logros.dayOther') }]}
+            onClose={() => setShareOpen(false)}
+          />
+        </Suspense>
+      )}
     </div>,
     document.body,
   );

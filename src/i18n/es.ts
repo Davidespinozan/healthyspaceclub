@@ -822,6 +822,7 @@ export const es = {
     progressSuffix: 'desbloqueados',
     backLabel: 'Volver al grid',
     unlockedOn: 'Desbloqueado el',
+    shareCta: 'Compartir mi logro',
     availableToday: 'Disponible hoy',
     // Plurales de palabras sueltas (componente las arma con plural())
     dayOne: 'día',
@@ -1134,6 +1135,7 @@ export const es = {
     sharePickPrompt: 'Elige una foto para presumir tu entreno',
     sharePickPhoto: 'Elegir foto',
     shareHeadlineWorkout: 'Entrené hoy',
+    shareHeadlineStreak: 'Mi racha',
   },
   comments: {
     title: 'Comentarios',

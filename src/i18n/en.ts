@@ -823,6 +823,7 @@ export const en: Translations<typeof es> = {
     progressSuffix: 'unlocked',
     backLabel: 'Back to grid',
     unlockedOn: 'Unlocked on',
+    shareCta: 'Share my milestone',
     availableToday: 'Available today',
     dayOne: 'day',
     dayOther: 'days',
@@ -1135,6 +1136,7 @@ export const en: Translations<typeof es> = {
     sharePickPrompt: 'Pick a photo to show off your workout',
     sharePickPhoto: 'Choose photo',
     shareHeadlineWorkout: 'Trained today',
+    shareHeadlineStreak: 'My streak',
   },
   comments: {
     title: 'Comments',
