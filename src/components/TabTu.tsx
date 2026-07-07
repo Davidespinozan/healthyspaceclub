@@ -10,6 +10,7 @@ import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
 import WeekAdherence from './WeekAdherence';
+import ReferralCard from './ReferralCard';
 import AmbientGlow from './AmbientGlow';
 import {
   MILESTONE_STEPS,
@@ -246,6 +247,9 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
 
       {/* CONSTANCIA — últimos 7 días activos */}
       {!editing && <WeekAdherence />}
+
+      {/* REFERIDOS — invita y ganen 1 mes gratis */}
+      {!editing && <ReferralCard username={username} userId={userId} />}
 
       {/* HIGHLIGHTS — scroll horizontal */}
       {!editing && (

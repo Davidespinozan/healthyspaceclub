@@ -1,0 +1,62 @@
+/* ReferralCard — invita y ganen 1 mes gratis. Card oscura de marca (feel de premio). */
+.refc {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 2px 22px 14px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, var(--moss, #1C3B35), var(--forest, #0E2521));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pro-md, 0 10px 24px -12px rgba(14,37,33,.4));
+}
+.refc-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(216, 176, 100, 0.18);
+  color: var(--amber, #D8B064);
+}
+.refc-body { flex: 1; min-width: 0; }
+.refc-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #F4EFE3;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-tight);
+}
+.refc-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  color: rgba(244, 239, 227, 0.62);
+  margin-top: 2px;
+  line-height: 1.35;
+}
+.refc-count {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber, #D8B064);
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.refc-cta {
+  flex-shrink: 0;
+  align-self: center;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--amber, #D8B064);
+  color: #14312B;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+.refc-cta:active { transform: scale(0.96); }
