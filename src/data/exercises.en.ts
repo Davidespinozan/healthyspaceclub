@@ -42,6 +42,7 @@ export const exercisesEn: Record<string, ExerciseOverlay> = {
   'curl-martillo': { name: 'Hammer Curl', desc: 'Curl with neutral palms — biceps and brachialis (thickens the arm).', tip: 'If you want to thicken the arm (not just the biceps peak), prioritize this one.' },
   'curl-predicador': { name: 'Preacher Curl', desc: 'Curl with the arm supported — maximum biceps focus without shoulder cheating.', tip: 'Don’t fully extend the elbow at the bottom — keep a slight bend to protect the tendon.' },
   'curl-concentrado': { name: 'Concentration Curl', desc: 'Curl with the elbow braced on the thigh — total biceps isolation.', tip: 'Ideal to finish a biceps workout — chase the mind-muscle connection.' },
+  'curl-muneca': { name: 'Wrist Curl', desc: 'Wrist flexion and extension with a bar — direct forearm development.' },
   // ── BRAZO (tríceps) ──
   'press-frances': { name: 'Lying Triceps Extension', desc: 'Elbow extension lying down — the base pattern for triceps mass.', tip: 'The elbows do NOT flare — point them at the ceiling the whole way to protect the joint.' },
   'extensiones-sobre-cabeza': { name: 'Overhead Triceps Extension', desc: 'Extension with arms overhead — maximum stretch of the long head of the triceps.', tip: 'The long head only stretches when the arm is overhead — include this pattern every week.' },
