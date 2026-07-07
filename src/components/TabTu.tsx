@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useState } from 'react';
 import { Menu, Flame, Lock } from 'lucide-react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
@@ -25,7 +26,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   const {
     userName, setUserName, streakCount, userMilestones,
     dailyHSMResponses, username,
-  } = useAppStore();
+  } = useAppStore(useShallow((s) => ({ userName: s.userName, setUserName: s.setUserName, streakCount: s.streakCount, userMilestones: s.userMilestones, dailyHSMResponses: s.dailyHSMResponses, username: s.username })));
   const reflections = useMemo(() => [...dailyHSMResponses].reverse(), [dailyHSMResponses]);
 
   const userId = useCurrentUserId();

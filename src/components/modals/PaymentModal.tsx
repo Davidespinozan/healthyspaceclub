@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../../i18n';
 import TermsSheet from '../sheets/TermsSheet';
 import PrivacySheet from '../sheets/PrivacySheet';
@@ -140,7 +141,7 @@ function CycleToggle({ cycle, onChange, savingsPct }: {
 export default function PaymentModal() {
   const { t } = useT();
   const language = useAppStore(s => s.language);
-  const { payInfo, user, region, closeModal, goTo, setUserName, setObData } = useAppStore();
+  const { payInfo, user, region, closeModal, goTo, setUserName, setObData } = useAppStore(useShallow((s) => ({ payInfo: s.payInfo, user: s.user, region: s.region, closeModal: s.closeModal, goTo: s.goTo, setUserName: s.setUserName, setObData: s.setObData })));
   // Si ya hay sesión activa, arrancamos directo en la fase de tarjeta.
   const [phase, setPhase] = useState<'account' | 'card'>(user ? 'card' : 'account');
   // Ciclo seleccionable en el modal — ANUAL preseleccionado.

@@ -2,6 +2,7 @@ import { dayKey } from '../utils/localDate';
 import { useState, useEffect, useRef } from 'react';
 import { Sparkles, X } from 'lucide-react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
 import { callAI } from '../utils/aiProxy';
 import { buildHSMQuestionPrompt } from '../ai/prompts/hsmQuestion';
@@ -14,7 +15,7 @@ interface Props {
 
 export default function TuEspacioFlow({ onClose }: Props) {
   const { t, locale } = useT();
-  const { dailyHSMResponses, addHSMResponse, subscriptionStatus, markActiveDay } = useAppStore();
+  const { dailyHSMResponses, addHSMResponse, subscriptionStatus, markActiveDay } = useAppStore(useShallow((s) => ({ dailyHSMResponses: s.dailyHSMResponses, addHSMResponse: s.addHSMResponse, subscriptionStatus: s.subscriptionStatus, markActiveDay: s.markActiveDay })));
   // Acceso real = Stripe (subscriptionStatus), no el trial local desincronizado.
   const isPlanActive = subscriptionStatus !== 'none';
 

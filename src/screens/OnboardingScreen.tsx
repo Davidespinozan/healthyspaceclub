@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity, AtSign, Check, Loader2, X, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n/es';
@@ -17,7 +18,7 @@ const TOTAL_STEPS = 9;
 
 export default function OnboardingScreen() {
   const { t } = useT();
-  const { userName, setUserName, setObData, setUsername, finishOnboardingCalc, finishOnboarding, addWeight } = useAppStore();
+  const { userName, setUserName, setObData, setUsername, finishOnboardingCalc, finishOnboarding, addWeight } = useAppStore(useShallow((s) => ({ userName: s.userName, setUserName: s.setUserName, setObData: s.setObData, setUsername: s.setUsername, finishOnboardingCalc: s.finishOnboardingCalc, finishOnboarding: s.finishOnboarding, addWeight: s.addWeight })));
 
   const [step, setStep] = useState(1);
   const [dir, setDir] = useState<'next' | 'prev'>('next');

@@ -5,6 +5,7 @@ import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { Camera, Image as ImageIcon, FileText, X, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
@@ -81,7 +82,7 @@ function loadImageDimensions(url: string): Promise<{ width: number; height: numb
 
 export default function CreatePostModal({ open, onClose, onPostCreated, context }: Props) {
   const { t } = useT();
-  const { userName, streakCount, dailyWorkout } = useAppStore();
+  const { userName, streakCount, dailyWorkout } = useAppStore(useShallow((s) => ({ userName: s.userName, streakCount: s.streakCount, dailyWorkout: s.dailyWorkout })));
   const userId = useCurrentUserId();
 
   const [userAvatarUrl, setUserAvatarUrl] = useState('');

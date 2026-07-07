@@ -1,6 +1,7 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { Home, User, MessageCircle, Users, AlertCircle, X, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
 import type { DashPage } from '../types';
 import type { TranslationKey } from '../i18n/es';
@@ -31,7 +32,7 @@ const TABS: { id: DashPage; icon: typeof Home; labelKey: TranslationKey }[] = [
 ];
 
 export default function DashboardScreen() {
-  const { dashPage, setDashPage, checkTrialExpiry, coachOpen, setCoachOpen, paymentPastDue } = useAppStore();
+  const { dashPage, setDashPage, checkTrialExpiry, coachOpen, setCoachOpen, paymentPastDue } = useAppStore(useShallow((s) => ({ dashPage: s.dashPage, setDashPage: s.setDashPage, checkTrialExpiry: s.checkTrialExpiry, coachOpen: s.coachOpen, setCoachOpen: s.setCoachOpen, paymentPastDue: s.paymentPastDue })));
   const { t } = useT();
   const [showPastDuePlan, setShowPastDuePlan] = useState(false);
   // El cuestionario (Trainer/Nutrición) ya emite su propio hero forest compacto,

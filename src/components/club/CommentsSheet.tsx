@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Send } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
 import './comments-sheet.css';
@@ -40,7 +41,7 @@ function timeAgo(dateStr: string, t: TFn): string {
 
 export default function CommentsSheet({ postId, currentUserId, onClose, onCountChange, onAuthorTap }: Props) {
   const { t } = useT();
-  const { userName } = useAppStore();
+  const { userName } = useAppStore(useShallow((s) => ({ userName: s.userName })));
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState('');

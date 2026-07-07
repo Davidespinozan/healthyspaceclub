@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
 import { uploadAvatar } from '../utils/uploadAvatar';
@@ -8,7 +9,7 @@ import { useT } from '../i18n';
 
 export default function MiHuella({ onBack }: { onBack: () => void }) {
   const { t } = useT();
-  const { userName, setUserName, streakCount } = useAppStore();
+  const { userName, setUserName, streakCount } = useAppStore(useShallow((s) => ({ userName: s.userName, setUserName: s.setUserName, streakCount: s.streakCount })));
   const userId = useCurrentUserId();
 
   const [profile, setProfile] = useState({ display_name: '', bio: '', avatar_url: '' });

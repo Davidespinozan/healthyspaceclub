@@ -1,6 +1,7 @@
 import { dayKey } from '../utils/localDate';
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
 import { ChevronRight, Flame, BarChart3, Salad, Dumbbell, Brain, TrendingDown, TrendingUp } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -47,7 +48,7 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
     weightLog, growthCompleted, obData,
     markWeeklyReviewDone, clearWeeklyPlan,
     addWeight,
-  } = useAppStore();
+  } = useAppStore(useShallow((s) => ({ userName: s.userName, mealChecks: s.mealChecks, completedSessions: s.completedSessions, streakCount: s.streakCount, weightLog: s.weightLog, growthCompleted: s.growthCompleted, obData: s.obData, markWeeklyReviewDone: s.markWeeklyReviewDone, clearWeeklyPlan: s.clearWeeklyPlan, addWeight: s.addWeight })));
 
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, CreditCard, CheckCircle, AlertCircle, XCircle, ChevronDown, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
 import { useT } from '../../i18n';
 import CardCollectForm from '../CardCollectForm';
@@ -40,7 +41,7 @@ const FAQ_KEYS = [
 export default function ManagePlanSheet({ onClose }: Props) {
   const userId = useCurrentUserId();
   const { t } = useT();
-  const { trialEndsAt: storeTrialEndsAt } = useAppStore();
+  const { trialEndsAt: storeTrialEndsAt } = useAppStore(useShallow((s) => ({ trialEndsAt: s.trialEndsAt })));
 
   function planDisplayName(plan: SubscriptionInfo['plan']): string {
     if (plan === 'trial') return t('managePlan.planTrial');

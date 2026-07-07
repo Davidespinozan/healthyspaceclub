@@ -1,10 +1,11 @@
 import { X, Play, Pause, Dumbbell, ChefHat, Lightbulb, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../../i18n';
 
 export default function VideoModal() {
   const { t } = useT();
-  const { videoState, closeVideo, vidNavNext, vidNavPrev, setVideoPlaying, setVideoStep } = useAppStore();
+  const { videoState, closeVideo, vidNavNext, vidNavPrev, setVideoPlaying, setVideoStep } = useAppStore(useShallow((s) => ({ videoState: s.videoState, closeVideo: s.closeVideo, vidNavNext: s.vidNavNext, vidNavPrev: s.vidNavPrev, setVideoPlaying: s.setVideoPlaying, setVideoStep: s.setVideoStep })));
   if (!videoState) return null;
 
   const { title, desc, emoji, steps, currentStep } = videoState;

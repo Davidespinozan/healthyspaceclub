@@ -1,6 +1,7 @@
 import { dayKey } from '../utils/localDate';
 import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { mealPlans, getMealPlans } from '../data/mealPlan';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
@@ -230,7 +231,7 @@ export default function WeeklyNutritionPlanner() {
     mealChecks, toggleMealCheck,
     mealResolvedByLog, clearMealResolvedByLog, foodLog, removeFoodLog,
     planRegenCount, incrementPlanRegen,
-  } = useAppStore();
+  } = useAppStore(useShallow((s) => ({ shoppingDay: s.shoppingDay, setShoppingDay: s.setShoppingDay, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, clearWeeklyPlan: s.clearWeeklyPlan, mealPlanKey: s.mealPlanKey, planGoal: s.planGoal, obData: s.obData, userName: s.userName, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, mealResolvedByLog: s.mealResolvedByLog, clearMealResolvedByLog: s.clearMealResolvedByLog, foodLog: s.foodLog, removeFoodLog: s.removeFoodLog, planRegenCount: s.planRegenCount, incrementPlanRegen: s.incrementPlanRegen })));
   const todayKey = dayKey(new Date());
 
   const weekStart = (() => {

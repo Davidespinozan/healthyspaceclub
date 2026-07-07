@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { isHealthAvailable, requestHealthPermissions, getTodayHealthData, type HealthDayData } from '../utils/healthKit';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 
 export interface HealthKitState {
   available: boolean;
@@ -19,7 +20,7 @@ export function useHealthKit(): HealthKitState {
   const [data, setData] = useState<HealthDayData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const { habits, toggleHabit } = useAppStore();
+  const { habits, toggleHabit } = useAppStore(useShallow((s) => ({ habits: s.habits, toggleHabit: s.toggleHabit })));
 
   useEffect(() => {
     async function init() {

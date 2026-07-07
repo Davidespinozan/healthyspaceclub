@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
 import { ChevronDown, Dumbbell, Users, Brain, Salad, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
 import { PRICING, detectRegion, type Region } from '../utils/region';
 import { track } from '../utils/analytics';
@@ -53,7 +54,7 @@ function MagneticBtn({ children, className, onClick, style }: {
 
 export default function LandingScreen() {
   const { t } = useT();
-  const { openPay, goTo, mobileMenuOpen, toggleMobileMenu, region, setRegion } = useAppStore();
+  const { openPay, goTo, mobileMenuOpen, toggleMobileMenu, region, setRegion } = useAppStore(useShallow((s) => ({ openPay: s.openPay, goTo: s.goTo, mobileMenuOpen: s.mobileMenuOpen, toggleMobileMenu: s.toggleMobileMenu, region: s.region, setRegion: s.setRegion })));
 
   // Analítica: tope del funnel.
   useEffect(() => { track('landing_viewed'); }, []);

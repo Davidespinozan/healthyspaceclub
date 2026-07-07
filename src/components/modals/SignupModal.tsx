@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { X, Check } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../../i18n';
 import TermsSheet from '../sheets/TermsSheet';
 import PrivacySheet from '../sheets/PrivacySheet';
@@ -8,7 +9,7 @@ import { useEmailSignup } from '../../hooks/useEmailSignup';
 
 export default function SignupModal() {
   const { t } = useT();
-  const { closeModal, goTo, setUserName, setObData } = useAppStore();
+  const { closeModal, goTo, setUserName, setObData } = useAppStore(useShallow((s) => ({ closeModal: s.closeModal, goTo: s.goTo, setUserName: s.setUserName, setObData: s.setObData })));
   const su = useEmailSignup();
 
   // Cerrar con Escape (estándar de modal + accesibilidad por teclado).

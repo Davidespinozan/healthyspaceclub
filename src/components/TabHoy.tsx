@@ -2,6 +2,7 @@ import { dayKey } from '../utils/localDate';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight, Flame, X } from 'lucide-react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { getMealPlans } from '../data/mealPlan';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
@@ -59,7 +60,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     hsmProfile, setHSMProfile,
     subscriptionStatus,
     username,
-  } = useAppStore();
+  } = useAppStore(useShallow((s) => ({ userName: s.userName, planGoal: s.planGoal, mealPlanKey: s.mealPlanKey, shoppingDay: s.shoppingDay, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, workoutChecks: s.workoutChecks, toggleWorkoutCheck: s.toggleWorkoutCheck, mealResolvedByLog: s.mealResolvedByLog, foodLog: s.foodLog, completedSessions: s.completedSessions, activityLog: s.activityLog, dailyWorkout: s.dailyWorkout, weeklyPlan: s.weeklyPlan, lastWeeklyReview: s.lastWeeklyReview, streakCount: s.streakCount, obData: s.obData, dailyBriefing: s.dailyBriefing, setDailyBriefing: s.setDailyBriefing, dailyHSMResponses: s.dailyHSMResponses, lastStreakMilestone: s.lastStreakMilestone, setLastStreakMilestone: s.setLastStreakMilestone, hsmProfile: s.hsmProfile, setHSMProfile: s.setHSMProfile, subscriptionStatus: s.subscriptionStatus, username: s.username })));
 
   // Acceso real = estado de Stripe (subscriptionStatus), NO el trial local
   // (userPlan/trialEndsAt), que se expira solo sin mirar Stripe y desincronizaba
@@ -297,7 +298,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     } catch { /* noop */ }
   }, [allCoreDone, today]);
 
-  const { startDate: userStartDate } = useAppStore();
+  const { startDate: userStartDate } = useAppStore(useShallow((s) => ({ startDate: s.startDate })));
   const isDay1 = userStartDate === today;
   // Diferencia de días entre dos dayKeys LOCALes ("YYYY-MM-DD"). Parsear con
   // new Date("YYYY-MM-DD") las trata como UTC → de noche en husos negativos daba

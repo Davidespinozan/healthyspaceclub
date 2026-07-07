@@ -1,6 +1,7 @@
 import { dayKey } from '../utils/localDate';
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
 import { ArrowRight } from 'lucide-react';
 import { callAIStream } from '../utils/aiProxy';
@@ -22,7 +23,7 @@ export default function TabCoach() {
   const { t, locale } = useT();
   const { coachChatHistory, coachChatDate, addCoachMessage,
     foodLog, dailyWorkout, streakCount, planGoal,
-    coachPrefilledMessage, setCoachPrefilledMessage } = useAppStore();
+    coachPrefilledMessage, setCoachPrefilledMessage } = useAppStore(useShallow((s) => ({ coachChatHistory: s.coachChatHistory, coachChatDate: s.coachChatDate, addCoachMessage: s.addCoachMessage, foodLog: s.foodLog, dailyWorkout: s.dailyWorkout, streakCount: s.streakCount, planGoal: s.planGoal, coachPrefilledMessage: s.coachPrefilledMessage, setCoachPrefilledMessage: s.setCoachPrefilledMessage })));
 
   const QUICK_CHIPS = [
     t('coach.chip1'),

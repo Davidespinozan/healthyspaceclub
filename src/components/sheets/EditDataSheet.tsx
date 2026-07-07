@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
 import './sheet-base.css';
@@ -34,7 +35,7 @@ const GOAL_KEYS: Record<string, TranslationKey> = {
 };
 
 export default function EditDataSheet({ onClose }: Props) {
-  const { obData, setObData, recalcFromObData, addWeight, tdee, planGoal } = useAppStore();
+  const { obData, setObData, recalcFromObData, addWeight, tdee, planGoal } = useAppStore(useShallow((s) => ({ obData: s.obData, setObData: s.setObData, recalcFromObData: s.recalcFromObData, addWeight: s.addWeight, tdee: s.tdee, planGoal: s.planGoal })));
   const { t } = useT();
 
   const [form, setForm] = useState({

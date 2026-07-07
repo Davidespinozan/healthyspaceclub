@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronRight, Loader2, ArrowRight, Check } from 'lucide-react';
 import { useAppStore } from '../store';
+import { useShallow } from 'zustand/react/shallow';
 import { pushSupported, getPushEnabled, enablePush, disablePush, pushNeedsInstall } from '../utils/push';
 import { supabase } from '../lib/supabase';
 import { openCoachWith } from '../utils/openCoach';
@@ -42,7 +43,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
   // Plan/prueba desde el estado REAL de Stripe (subscriptionStatus/PeriodEnd),
   // no del trial local (userPlan/trialEndsAt), que se expiraba solo y mostraba
   // "prueba expirada" aunque la suscripción siguiera activa.
-  const { subscriptionStatus, subscriptionPeriodEnd, obData, tdee, planGoal, logout } = useAppStore();
+  const { subscriptionStatus, subscriptionPeriodEnd, obData, tdee, planGoal, logout } = useAppStore(useShallow((s) => ({ subscriptionStatus: s.subscriptionStatus, subscriptionPeriodEnd: s.subscriptionPeriodEnd, obData: s.obData, tdee: s.tdee, planGoal: s.planGoal, logout: s.logout })));
   const user = useAppStore(s => s.user);
   const language = useAppStore(s => s.language);
   const setLanguage = useAppStore(s => s.setLanguage);

@@ -2,6 +2,7 @@ import { dayKey } from './utils/localDate';
 import { identify } from './utils/analytics';
 import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore } from './store';
+import { useShallow } from 'zustand/react/shallow';
 import { supabase } from './lib/supabase';
 import { shouldUseRemotePlan } from './utils/planSync';
 import { shouldUseRemoteWorkout } from './utils/dailyWorkoutSync';
@@ -25,7 +26,7 @@ const SignupModal = lazy(() => import('./components/modals/SignupModal'));
 const VideoModal = lazy(() => import('./components/modals/VideoModal'));
 
 export default function App() {
-  const { currentScreen, activeModal } = useAppStore();
+  const { currentScreen, activeModal } = useAppStore(useShallow((s) => ({ currentScreen: s.currentScreen, activeModal: s.activeModal })));
   const setSession = useAppStore(s => s.setSession);
   const setAuthReady = useAppStore(s => s.setAuthReady);
   const authReady = useAppStore(s => s.authReady);
