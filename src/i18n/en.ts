@@ -421,6 +421,7 @@ export const en: Translations<typeof es> = {
     howToDoIt: 'How to do it right',
     planMicro: 'your routine',
     exercisesCount: '{n} exercises',
+    exercisesCountOne: '{n} exercise',
     intensityLow: 'Low intensity',
     intensityMid: 'Medium intensity',
     intensityHigh: 'High intensity',
@@ -531,6 +532,7 @@ export const en: Translations<typeof es> = {
     planMicro: 'your flow',
     minTotal: '{n} min total',
     posesCount: '{n} poses',
+    posesCountOne: '{n} pose',
   },
   exerciseDetail: {
     close: 'Close',

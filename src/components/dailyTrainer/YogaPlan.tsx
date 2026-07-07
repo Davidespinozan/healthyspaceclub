@@ -12,6 +12,8 @@
 import { lazy, Suspense, useRef, useState } from 'react';
 import { RefreshCw, Clock, Lock, Flower2, Play } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { plural } from '../../i18n/format';
+import { humanizeExerciseId } from '../../utils/exerciseMeta';
 import { getExerciseIcon } from '../../utils/muscleGroupIcon';
 import { useT } from '../../i18n';
 import { translateDayLabel } from '../../utils/dayTypeLabel';
@@ -60,7 +62,10 @@ export default function YogaPlan({
               <Clock size={11} /> {t('yoga.minTotal', { n: Math.round(yogaPlan.totalDuration / 60) })}
             </span>
             <span className="dt2-meta-chip">
-              <Flower2 size={11} /> {t('yoga.posesCount', { n: yogaPlan.poses.length })}
+              <Flower2 size={11} /> {plural(yogaPlan.poses.length, {
+                one: t('yoga.posesCountOne', { n: yogaPlan.poses.length }),
+                other: t('yoga.posesCount', { n: yogaPlan.poses.length }),
+              })}
             </span>
           </div>
         </div>
@@ -116,7 +121,7 @@ export default function YogaPlan({
               <div className="dt2-yoga-num">{i + 1}</div>
               <div className="dt2-yoga-emoji"><PoseIcon size={22} strokeWidth={1.5} /></div>
               <div className="dt2-yoga-body">
-                <div className="dt2-yoga-name">{bank?.name || pose.id}</div>
+                <div className="dt2-yoga-name">{bank?.name || humanizeExerciseId(pose.id)}</div>
                 <div className="dt2-yoga-meta">
                   <span>{durationLabel}</span>
                   {pose.repetitions && (<><span className="dt2-ex-dot">·</span><span>{pose.repetitions}x</span></>)}

@@ -17,6 +17,8 @@ import { lazy, Suspense, useRef, useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { plural } from '../../i18n/format';
+import { humanizeExerciseId } from '../../utils/exerciseMeta';
 import { useT } from '../../i18n';
 import { getExerciseIcon } from '../../utils/muscleGroupIcon';
 import {
@@ -162,7 +164,10 @@ export default function WorkoutPlan({
           </h2>
           <div className="dt2-plan-meta">
             <span className="dt2-meta-chip">
-              <Clock size={11} /> {t('workout.exercisesCount', { n: plan.exercises.length })}
+              <Clock size={11} /> {plural(plan.exercises.length, {
+                one: t('workout.exercisesCountOne', { n: plan.exercises.length }),
+                other: t('workout.exercisesCount', { n: plan.exercises.length }),
+              })}
             </span>
             <span className="dt2-meta-chip">
               <Zap size={11} /> {({
@@ -256,7 +261,7 @@ export default function WorkoutPlan({
               onClick={() => {
                 const fallback: Exercise = {
                   id: ex.id || `ex-${i}`,
-                  name: bank?.name || ex.id || 'Ejercicio',
+                  name: bank?.name || (ex.id ? humanizeExerciseId(ex.id) : 'Ejercicio'),
                   desc: '',
                   muscleGroup: 'cuerpo-completo',
                   equipment: ['gym'],
@@ -296,7 +301,7 @@ export default function WorkoutPlan({
                 )}
               </div>
               <div className="dt2-ex-body">
-                <div className="dt2-ex-name">{bank?.name || ex.id}</div>
+                <div className="dt2-ex-name">{bank?.name || humanizeExerciseId(ex.id)}</div>
                 {/* Vista previa COMPACTA: solo músculo (+ formato en pareja). Las
                     series/reps/descanso se ven por ejercicio dentro del player. */}
                 <div className="dt2-ex-stats">

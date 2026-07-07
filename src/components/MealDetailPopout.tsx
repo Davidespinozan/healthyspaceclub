@@ -120,7 +120,8 @@ export default function MealDetailPopout({ meal, mealIndex, scaleFactor = 1, onC
             <>
               <div className="th-popout-label">
                 {t('hoy.popoutIngredients')}
-                <span className="th-popout-exact">{t('hoy.popoutExact')}</span>
+                {/* "exacto" solo si NO hay ingredientes por definir (si no, se contradice). */}
+                {dish.ing_por_definir === 0 && <span className="th-popout-exact">{t('hoy.popoutExact')}</span>}
               </div>
               <div className="th-popout-ings">
                 {ingredients.map((ing, i) => (

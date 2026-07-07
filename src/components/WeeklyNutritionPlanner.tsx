@@ -965,15 +965,19 @@ export default function WeeklyNutritionPlanner() {
                     {(replaced ? linkedKcal > 0 : mkcal > 0) && (
                       <span className="wnp2-meal-kcal">{replaced ? Math.round(linkedKcal) : mkcal}</span>
                     )}
-                    <div
-                      className={`wnp2-meal-check${showCheck ? ' checked' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!replaced) toggleMealCheck(checkKey);
-                      }}
-                    >
-                      {showCheck ? <Check size={14} strokeWidth={2} /> : ''}
-                    </div>
+                    {/* Solo se completa la comida de HOY (marcar un día futuro/pasado
+                        dejaba palomitas fantasma y no afecta la meta ni la racha). */}
+                    {activeDay === todayOffset && (
+                      <div
+                        className={`wnp2-meal-check${showCheck ? ' checked' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!replaced) toggleMealCheck(checkKey);
+                        }}
+                      >
+                        {showCheck ? <Check size={14} strokeWidth={2} /> : ''}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

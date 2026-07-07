@@ -36,3 +36,9 @@ export function translateDifficulty(value: string, t: TFn): string {
   const key = DIFFICULTY_KEY[value];
   return key ? t(key) : value;
 }
+
+// Fallback legible cuando un ejercicio no tiene entrada en el banco (id crudo):
+// 'press-horizontal' → 'Press Horizontal'. Evita mostrar el slug tal cual.
+export function humanizeExerciseId(id: string): string {
+  return id.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+}

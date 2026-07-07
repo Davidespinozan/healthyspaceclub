@@ -420,6 +420,7 @@ export const es = {
     howToDoIt: 'Cómo hacerlo bien',
     planMicro: 'tu rutina',
     exercisesCount: '{n} ejercicios',
+    exercisesCountOne: '{n} ejercicio',
     intensityLow: 'Intensidad baja',
     intensityMid: 'Intensidad media',
     intensityHigh: 'Intensidad alta',
@@ -530,6 +531,7 @@ export const es = {
     planMicro: 'tu flow',
     minTotal: '{n} min total',
     posesCount: '{n} poses',
+    posesCountOne: '{n} pose',
   },
   exerciseDetail: {
     close: 'Cerrar',
