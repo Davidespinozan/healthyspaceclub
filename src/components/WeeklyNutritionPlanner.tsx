@@ -5,7 +5,7 @@ import { mealPlans, getMealPlans } from '../data/mealPlan';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
 import { computeDayConsumption } from '../utils/foodConsumption';
-import { computeNutritionTargets } from '../utils/nutritionTargets';
+import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
 import NutritionMeta from './NutritionMeta';
 import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, Shuffle, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
@@ -690,16 +690,7 @@ export default function WeeklyNutritionPlanner() {
     todayMeals: todayDayPlan?.meals ?? [],
     mealChecks, mealResolvedByLog, foodLog, today: todayKey,
   });
-  const macroTargets = computeNutritionTargets({
-    sexo: String(obData.sex || 'Hombre'),
-    pesoKg: Number(obData.peso) || 70,
-    estaturaCm: Number(obData.estatura) || 170,
-    edad: Number(obData.edad) || 28,
-    activity: String(obData.activity || 'Moderada'),
-    goal: String(obData.goal || ''),
-    grasa: obData.grasa != null && obData.grasa !== '' ? Number(obData.grasa) : null,
-    embarazo: obData.embarazo === 1 || obData.embarazo === 'si',
-  });
+  const macroTargets = computeNutritionTargets(parseObData(obData));
 
   const shoppingTotal = weeklyPlan.shoppingList.length;
   const shoppingDone = weeklyPlan.shoppingList.filter((_, i) => !!mealChecks[`shop-${i}`]).length;

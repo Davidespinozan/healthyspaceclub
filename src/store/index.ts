@@ -5,7 +5,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep, CompletedSession } from '../types';
 import { assignPlan } from '../utils/tdee';
-import { computeNutritionTargets } from '../utils/nutritionTargets';
+import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
 import type { Region, Currency } from '../utils/region';
 import type { BillingCycle } from '../utils/stripe';
 import { MILESTONE_STEPS } from '../constants/milestones';
@@ -426,17 +426,8 @@ export const useAppStore = create<AppState>()(
     const resolvedName = String(obData.name || get().username || '').trim();
     if (resolvedName) setUserName(resolvedName);
 
-    const sexo      = String(obData.sex      || 'Hombre');
-    const pesoKg    = Number(obData.peso     || 70);
-    const estatura  = Number(obData.estatura || 170);
-    const edad      = Number(obData.edad     || 28);
-    const activity  = String(obData.activity || 'Moderada');
-    const goal      = String(obData.goal     || '');
-    const grasa     = obData.grasa != null && obData.grasa !== '' ? Number(obData.grasa) : null;
-    const embarazo  = obData.embarazo === 1 || obData.embarazo === 'si';
-
     // Motor único: déficit/superávit % + piso + modo bienestar (nutritionTargets.ts).
-    const targets    = computeNutritionTargets({ sexo, pesoKg, estaturaCm: estatura, edad, activity, goal, grasa, embarazo });
+    const targets    = computeNutritionTargets(parseObData(obData));
     const tdee       = targets.tdee;
     const planGoal   = targets.planGoal;
     const planKey    = assignPlan(planGoal);
@@ -1164,17 +1155,8 @@ export const useAppStore = create<AppState>()(
 
   recalcFromObData: async () => {
     const { obData } = get();
-    const sexo      = String(obData.sex      || 'Hombre');
-    const pesoKg    = Number(obData.peso     || 70);
-    const estatura  = Number(obData.estatura || 170);
-    const edad      = Number(obData.edad     || 28);
-    const activity  = String(obData.activity || 'Moderada');
-    const goal      = String(obData.goal     || '');
-    const grasa     = obData.grasa != null && obData.grasa !== '' ? Number(obData.grasa) : null;
-    const embarazo  = obData.embarazo === 1 || obData.embarazo === 'si';
-
     // Motor único (mismo cálculo que finishOnboardingCalc — ya no está duplicado).
-    const targets  = computeNutritionTargets({ sexo, pesoKg, estaturaCm: estatura, edad, activity, goal, grasa, embarazo });
+    const targets  = computeNutritionTargets(parseObData(obData));
     const tdee     = targets.tdee;
     const planGoal = targets.planGoal;
     const planKey  = assignPlan(planGoal);

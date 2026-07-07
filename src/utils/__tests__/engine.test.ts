@@ -1,9 +1,27 @@
 import { describe, it, expect } from 'vitest';
 import { calcPortionKcal, calcMealKcal, calcDayKcal } from '../kcalCalc';
 import { calcTDEE, assignPlan } from '../tdee';
-import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField, mealCalorieSplit } from '../nutritionTargets';
+import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField, mealCalorieSplit, parseObData } from '../nutritionTargets';
 import { scalePlan } from '../scalePlan';
 import { mealPlans } from '../../data/mealPlan';
+
+/* ───────────────────────────────────────────── */
+/*  parseObData — única coerción obData → ObInput */
+/* ───────────────────────────────────────────── */
+describe('parseObData', () => {
+  it('coacciona valores reales', () => {
+    const oi = parseObData({ sex: 'Mujer', peso: '62', estatura: '165', edad: '30', activity: 'Alta', goal: 'Bajar grasa', grasa: '22', embarazo: 'si', pesoMeta: '58' });
+    expect(oi).toMatchObject({ sexo: 'Mujer', pesoKg: 62, estaturaCm: 165, edad: 30, activity: 'Alta', goal: 'Bajar grasa', grasa: 22, embarazo: true, pesoMeta: 58 });
+  });
+  it('aplica los defaults canónicos cuando faltan campos', () => {
+    const oi = parseObData({});
+    expect(oi).toMatchObject({ sexo: 'Hombre', pesoKg: 70, estaturaCm: 170, edad: 28, activity: 'Moderada', goal: '', grasa: null, embarazo: false, pesoMeta: null });
+  });
+  it('embarazo acepta 1 numérico y grasa vacía → null', () => {
+    expect(parseObData({ embarazo: 1 }).embarazo).toBe(true);
+    expect(parseObData({ grasa: '' }).grasa).toBeNull();
+  });
+});
 
 /* ───────────────────────────────────────────── */
 /*  TDEE & Plan Assignment                       */

@@ -30,6 +30,26 @@ export interface ObInput {
   pesoMeta?: number | null;     // peso meta (opcional) → avisos/tiempo
 }
 
+/**
+ * Único punto de coerción de obData (Record<string, string|number>) → ObInput
+ * tipado, con los defaults canónicos. Antes esta lógica estaba duplicada y con
+ * pequeñas variaciones en el store (x2) y en WeeklyNutritionPlanner, con riesgo
+ * de drift de defaults y de nombres de clave. Centralizar evita ese footgun.
+ */
+export function parseObData(ob: Record<string, string | number>): ObInput {
+  return {
+    sexo: String(ob.sex || 'Hombre'),
+    pesoKg: Number(ob.peso || 70),
+    estaturaCm: Number(ob.estatura || 170),
+    edad: Number(ob.edad || 28),
+    activity: String(ob.activity || 'Moderada'),
+    goal: String(ob.goal || ''),
+    grasa: ob.grasa != null && ob.grasa !== '' ? Number(ob.grasa) : null,
+    embarazo: ob.embarazo === 1 || ob.embarazo === 'si',
+    pesoMeta: ob.pesoMeta != null && ob.pesoMeta !== '' ? Number(ob.pesoMeta) : null,
+  };
+}
+
 export type WellnessReason = 'menor' | 'embarazo' | 'bajopeso' | null;
 
 export interface NutritionTargets {
