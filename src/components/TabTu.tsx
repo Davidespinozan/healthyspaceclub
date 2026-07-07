@@ -9,6 +9,7 @@ import { uploadAvatar } from '../utils/uploadAvatar';
 import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
+import WeekAdherence from './WeekAdherence';
 import AmbientGlow from './AmbientGlow';
 import {
   MILESTONE_STEPS,
@@ -242,6 +243,9 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
 
       {/* WEIGHT */}
       {!editing && <WeightTrackingCard />}
+
+      {/* CONSTANCIA — últimos 7 días activos */}
+      {!editing && <WeekAdherence />}
 
       {/* HIGHLIGHTS — scroll horizontal */}
       {!editing && (

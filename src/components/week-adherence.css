@@ -1,0 +1,64 @@
+/* WeekAdherence — tira de constancia de 7 días. */
+.wadh {
+  margin: 2px 22px 14px;
+  padding: 14px 16px 12px;
+  background: var(--surface-glass-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pro-sm, 0 1px 3px rgba(14,37,33,.06));
+}
+.wadh-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.wadh-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-kicker, .08em);
+  text-transform: uppercase;
+  color: var(--forest);
+}
+.wadh-count {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--amber-deep, #9a7b2e);
+  font-variant-numeric: tabular-nums;
+}
+.wadh-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.wadh-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.wadh-dot {
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 34px;
+  border-radius: 10px;
+  background: var(--sand, rgba(21,51,48,.08));
+}
+.wadh-dot.on {
+  background: linear-gradient(135deg, var(--moss, #1C3B35), var(--forest, #0E2521));
+}
+.wadh-dot.today {
+  outline: 2px solid var(--amber, #C9A24B);
+  outline-offset: 2px;
+}
+.wadh-letter {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--txt2, rgba(21,51,48,.5));
+  text-transform: uppercase;
+}

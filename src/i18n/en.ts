@@ -858,6 +858,8 @@ export const en: Translations<typeof es> = {
     editProfile: 'Edit profile',
     change: 'Change',
     activeDays: 'Active days',
+    adherenceTitle: 'Your consistency',
+    adherenceDays: '{n}/7 active days',
     share: 'Share',
     viewPublic: 'View public profile',
     shareTitle: 'My HSC profile',

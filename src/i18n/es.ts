@@ -857,6 +857,8 @@ export const es = {
     editProfile: 'Editar perfil',
     change: 'Cambiar',
     activeDays: 'Días activos',
+    adherenceTitle: 'Tu constancia',
+    adherenceDays: '{n}/7 días activos',
     share: 'Compartir',
     viewPublic: 'Ver perfil público',
     shareTitle: 'Mi perfil HSC',
