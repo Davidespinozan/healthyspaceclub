@@ -180,7 +180,8 @@ export default function App() {
 
     // Escuchar cambios de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[auth]', event, session?.user?.email ?? 'no user');
+      // No loguear el email (PII de una app de salud). Solo el evento y si hay usuario.
+      console.log('[auth]', event, session?.user ? 'user' : 'no user');
       setSession(session);
 
       if (event === 'PASSWORD_RECOVERY') {

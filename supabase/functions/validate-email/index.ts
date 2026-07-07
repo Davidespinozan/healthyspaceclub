@@ -43,6 +43,11 @@ Deno.serve(async (req) => {
     if (!m) return json({ valid: false, reason: 'format' });
 
     const domain = m[1];
+    // Acota el input de DNS a hostnames reales (solo [a-z0-9.-], ≤253 chars):
+    // evita usar el endpoint como resolver de DNS arbitrario con payloads raros.
+    if (domain.length > 253 || !/^[a-z0-9.-]+$/.test(domain)) {
+      return json({ valid: false, reason: 'format' });
+    }
     if (DISPOSABLE.has(domain)) return json({ valid: false, reason: 'disposable' });
 
     let exists: boolean;
