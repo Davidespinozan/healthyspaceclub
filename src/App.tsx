@@ -1,4 +1,5 @@
 import { dayKey } from './utils/localDate';
+import { identify } from './utils/analytics';
 import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore } from './store';
 import { supabase } from './lib/supabase';
@@ -190,6 +191,7 @@ export default function App() {
       }
 
       if (event === 'SIGNED_IN' && session) {
+        identify(session.user.id);
         // Anti-fuga: reseteá datos de otro user ANTES de rutear/hidratar.
         // Efecto: si el dueño del cache no es este user, resetea + reclama
         // dataOwnerId (guard anti-leak). Ya no se backfillea local→DB, así que

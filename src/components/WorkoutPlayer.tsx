@@ -7,6 +7,7 @@ import ExerciseDetailPopout from './ExerciseDetailPopout';
 const CreatePostModal = lazy(() => import('./CreatePostModal'));
 const ShareStatSheet = lazy(() => import('./ShareStatSheet'));
 import { translateMuscle, translateDifficulty } from '../utils/exerciseMeta';
+import { track } from '../utils/analytics';
 import { haptics } from '../utils/haptics';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { usePartnerPresence } from '../hooks/usePartnerPresence';
@@ -424,6 +425,10 @@ export default function WorkoutPlayer({
 
   function finishSession(logged: LoggedByExercise) {
     const payload = buildOnCompletePayload(flattenByExercise(logged), startedAt, Date.now(), exercises);
+    track('workout_completed', {
+      exercises: payload.exercisesCompleted,
+      minutes: Math.round(payload.durationSeconds / 60),
+    });
     localStorage.removeItem(PROGRESS_KEY);
     haptics.success();
     setPhase('completed');

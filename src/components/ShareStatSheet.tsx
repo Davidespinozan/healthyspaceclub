@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { X, Camera, Share2, Loader2 } from 'lucide-react';
 import { useT } from '../i18n';
 import { composeStatPhoto, shareImage } from '../utils/photoOverlay';
+import { track } from '../utils/analytics';
 import './share-stat-sheet.css';
 
 // Estilo Strava: elige tu foto → le montamos stats + logo → compártela afuera.
@@ -40,7 +41,9 @@ export default function ShareStatSheet({ headline, stats, onClose }: Props) {
   }
 
   async function doShare() {
-    if (blob) await shareImage(blob, t('post.shareText'), window.location.origin);
+    if (!blob) return;
+    track('shared', { headline });
+    await shareImage(blob, t('post.shareText'), window.location.origin);
   }
 
   return (

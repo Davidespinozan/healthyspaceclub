@@ -6,6 +6,7 @@ import TermsSheet from '../sheets/TermsSheet';
 import PrivacySheet from '../sheets/PrivacySheet';
 import { useEmailSignup } from '../../hooks/useEmailSignup';
 import { createSubscription, getPriceInfo, formatPrice, type BillingCycle } from '../../utils/stripe';
+import { track } from '../../utils/analytics';
 import { getCachedRegion, regionFromLanguage } from '../../utils/region';
 import CardCollectForm from '../CardCollectForm';
 
@@ -181,6 +182,7 @@ export default function PaymentModal() {
     const resolvedRegion = region ?? getCachedRegion() ?? regionFromLanguage();
     try {
       const { status } = await createSubscription({ region: resolvedRegion, cycle, paymentMethodId });
+      track('trial_started', { cycle, status });
       // ⚠️ Protección 2 (carrera con webhook): set optimista del status.
       useAppStore.setState({
         subscriptionStatus: status === 'active' ? 'pro' : 'trial',

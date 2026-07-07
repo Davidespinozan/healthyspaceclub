@@ -3,6 +3,7 @@ import { ChevronDown, Dumbbell, Users, Brain, Salad, ArrowRight } from 'lucide-r
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { PRICING, detectRegion, type Region } from '../utils/region';
+import { track } from '../utils/analytics';
 import LanguageToggle from '../components/LanguageToggle';
 // trust stats removed
 
@@ -54,6 +55,9 @@ export default function LandingScreen() {
   const { t } = useT();
   const { openPay, goTo, mobileMenuOpen, toggleMobileMenu, region, setRegion } = useAppStore();
 
+  // Analítica: tope del funnel.
+  useEffect(() => { track('landing_viewed'); }, []);
+
   // ── Region detection (IP → cache → navigator.language fallback) ────────────
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +72,7 @@ export default function LandingScreen() {
   const pricing = region ? PRICING[region] : null;
   const openAnnualCheckout = useCallback(() => {
     if (!pricing) return;
+    track('checkout_started', { cycle: 'yearly' });
     openPay(
       t('paywall.cycleYearly'),
       `${pricing.symbol}${fmtPrice(pricing.annual)} ${pricing.currency}`,
@@ -79,6 +84,7 @@ export default function LandingScreen() {
   }, [openPay, pricing, t]);
   const openMonthlyCheckout = useCallback(() => {
     if (!pricing) return;
+    track('checkout_started', { cycle: 'monthly' });
     openPay(
       t('paywall.cycleMonthly'),
       `${pricing.symbol}${fmtPrice(pricing.monthly)} ${pricing.currency}`,

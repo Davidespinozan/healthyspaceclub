@@ -4,6 +4,7 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 import { useAppStore } from './store'
+import { initAnalytics } from './utils/analytics'
 import './index.css'
 import './styles/wizard.css'
 
@@ -60,6 +61,10 @@ useAppStore.getState().setTriggerUpdate(() => {
   // trae el bundle nuevo.
   setTimeout(() => { if (!swRefreshing) window.location.reload() }, 2500)
 })
+
+// Analítica: resuelve el proveedor (si pegaste el snippet de PostHog/Segment) y
+// vacía los eventos encolados. No-op si no hay ninguno.
+initAnalytics()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

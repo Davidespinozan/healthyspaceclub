@@ -21,6 +21,7 @@ import {
   type PaymentHistoryEntry,
 } from '../../utils/stripe';
 import { getCachedRegion, regionFromLanguage } from '../../utils/region';
+import { track } from '../../utils/analytics';
 import './sheet-base.css';
 
 interface Props {
@@ -115,6 +116,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
     setBusy(true);
     try {
       const res = await cancelSubscription();
+      track('subscription_canceled');
       const store = useAppStore.getState();
       store.setCancelAtPeriodEnd(true);
       if (res.cancelAt) store.setSubscriptionPeriodEnd(res.cancelAt);

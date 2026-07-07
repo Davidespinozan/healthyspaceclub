@@ -8,6 +8,7 @@ import { suggestUsername, isValidUsernameFormat, checkUsernameAvailable, claimUs
 import { validateEmailDeliverable } from '../utils/emailValidation';
 import LanguageToggle from '../components/LanguageToggle';
 import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
+import { track } from '../utils/analytics';
 
 const BRAND_ICON = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png';
 
@@ -219,6 +220,7 @@ export default function OnboardingScreen() {
   }, [step]);
 
   function handleFinish() {
+    track('onboarding_completed');
     finishOnboarding();
   }
 
