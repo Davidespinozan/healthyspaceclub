@@ -228,3 +228,6 @@
 @media (prefers-reduced-motion: reduce) {
   .clb-header, .clb-feed { animation: none; }
 }
+
+/* Sentinel de infinite scroll (invisible, dispara la carga). */
+.clb-sentinel { height: 1px; width: 100%; }

@@ -7,7 +7,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import { getFollowingIds } from '../utils/follows';
 import { haptics } from '../utils/haptics';
 import { Bell } from 'lucide-react';
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { deleteClubPost } from '../utils/clubPosts';
@@ -22,6 +22,8 @@ export default function TabClub() {
   const { t } = useT();
 
   const [posts, setPosts] = useState<ClubPost[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [feedMode, setFeedMode] = useState<'all' | 'following'>('all');
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [activeToday, setActiveToday] = useState(0);
@@ -62,22 +64,71 @@ export default function TabClub() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedMode, followingIds]);
 
+  // Infinite scroll: el sentinel al final dispara loadMore. loadMoreRef evita
+  // stale closures sin re-crear el observer en cada render.
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      entries => { if (entries[0].isIntersecting) loadMoreRef.current(); },
+      { rootMargin: '500px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Paginación: se carga por páginas (infinite scroll) en vez de 50 posts +
+  // todas sus imágenes de golpe. Menos DOM, menos datos móviles, TTI más rápido.
+  const PAGE = 12;
+
+  function feedQuery(before?: string) {
+    let query = supabase
+      .from('club_posts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(PAGE);
+    if (before) query = query.lt('created_at', before);
+    if (feedMode === 'following') {
+      // Posts de quienes sigues + los tuyos. Sin seguidos → lista vacía.
+      const ids = [...followingIds, userId].filter(Boolean);
+      query = query.in('user_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
+    }
+    return query;
+  }
+
   async function fetchFeed() {
     try {
-      let query = supabase
-        .from('club_posts')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      if (feedMode === 'following') {
-        // Posts de quienes sigues + los tuyos. Sin seguidos → lista vacía.
-        const ids = [...followingIds, userId].filter(Boolean);
-        query = query.in('user_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
+      const { data } = await feedQuery();
+      if (data) {
+        setPosts(data as ClubPost[]);
+        setHasMore(data.length === PAGE);
       }
-      const { data } = await query;
-      if (data) setPosts(data as ClubPost[]);
     } catch (e) {
       console.warn('[TabClub] fetchFeed failed:', e);
+    }
+  }
+
+  async function loadMore() {
+    if (loadingMore || !hasMore || posts.length === 0) return;
+    setLoadingMore(true);
+    try {
+      const cursor = posts[posts.length - 1].created_at;
+      const { data } = await feedQuery(cursor);
+      if (data) {
+        // Dedup defensivo por id (por si llega un post repetido en el borde).
+        setPosts(prev => {
+          const seen = new Set(prev.map(p => p.id));
+          return [...prev, ...(data as ClubPost[]).filter(p => !seen.has(p.id))];
+        });
+        setHasMore(data.length === PAGE);
+      }
+    } catch (e) {
+      console.warn('[TabClub] loadMore failed:', e);
+    } finally {
+      setLoadingMore(false);
     }
   }
 
@@ -197,6 +248,7 @@ export default function TabClub() {
             onDelete={deletePost}
           />
         ))}
+        {hasMore && posts.length > 0 && <div ref={sentinelRef} className="clb-sentinel" aria-hidden="true" />}
       </section>
 
       <button
