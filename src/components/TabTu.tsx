@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from 'react';
-import { Menu, Flame, Lock } from 'lucide-react';
+import { Menu, Flame } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
@@ -9,15 +9,13 @@ import { uploadAvatar } from '../utils/uploadAvatar';
 import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
-import WeekAdherence from './WeekAdherence';
 import ReferralCard from './ReferralCard';
-import PerfectDaysCard from './PerfectDaysCard';
+import ProgressCard from './ProgressCard';
+import LogrosSheet from './sheets/LogrosSheet';
 import AmbientGlow from './AmbientGlow';
 import {
   MILESTONE_STEPS,
-  getMilestoneLabel,
   getAchievementsCount,
-  getNextMilestone,
 } from '../constants/milestones';
 import { useT } from '../i18n';
 import { formatDate } from '../i18n/format';
@@ -27,9 +25,9 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   void _onNav;
   const { t, locale } = useT();
   const {
-    userName, setUserName, streakCount, userMilestones,
+    userName, setUserName, streakCount,
     dailyHSMResponses, username,
-  } = useAppStore(useShallow((s) => ({ userName: s.userName, setUserName: s.setUserName, streakCount: s.streakCount, userMilestones: s.userMilestones, dailyHSMResponses: s.dailyHSMResponses, username: s.username })));
+  } = useAppStore(useShallow((s) => ({ userName: s.userName, setUserName: s.setUserName, streakCount: s.streakCount, dailyHSMResponses: s.dailyHSMResponses, username: s.username })));
   const reflections = useMemo(() => [...dailyHSMResponses].reverse(), [dailyHSMResponses]);
 
   const userId = useCurrentUserId();
@@ -44,22 +42,13 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   const [saving, setSaving] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [logrosOpen, setLogrosOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'reflexiones'>('posts');
 
 
   const achievementsCount = useMemo(
     () => getAchievementsCount(streakCount),
     [streakCount]
-  );
-
-  const nextMilestone = useMemo(
-    () => getNextMilestone(streakCount),
-    [streakCount]
-  );
-
-  const unlockedDays = useMemo(
-    () => new Set(userMilestones.map(m => m.milestone_days)),
-    [userMilestones]
   );
 
   async function refreshUserPosts() {
@@ -234,61 +223,26 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
             <div className="tt5-stat-label">{t('profile.statStreak')}</div>
             <div className="tt5-stat-num">{streakCount} <Flame size={20} strokeWidth={1.6} /></div>
           </div>
-          <div className="tt5-stat tt5-stat--logros">
+          <button type="button" className="tt5-stat tt5-stat--logros" onClick={() => setLogrosOpen(true)}>
             <div className="tt5-stat-label">{t('profile.statLogros')}</div>
             <div className="tt5-stat-num">
               {achievementsCount}<span className="tt5-stat-num-total">/{MILESTONE_STEPS.length}</span>
             </div>
-          </div>
+          </button>
         </div>
       )}
 
       {/* Compartir tu día/progreso vive ahora en Hoy ("Compartir mi día") — es algo del día. */}
 
-      {/* DÍAS COMPLETOS — excelencia (3 anillos): racha + récord + total */}
-      {!editing && <PerfectDaysCard />}
+      {/* PROGRESO — card única: constancia 7 días + días completos + próximo logro.
+          Reemplaza 3 cards sueltas + la fila de círculos (evita el abrumamiento). */}
+      {!editing && <ProgressCard onOpenLogros={() => setLogrosOpen(true)} />}
 
       {/* WEIGHT */}
       {!editing && <WeightTrackingCard />}
 
-      {/* CONSTANCIA — últimos 7 días activos */}
-      {!editing && <WeekAdherence />}
-
       {/* REFERIDOS — invita y ganen 1 mes gratis */}
       {!editing && <ReferralCard username={username} userId={userId} />}
-
-      {/* HIGHLIGHTS — scroll horizontal */}
-      {!editing && (
-        <div className="tt5-highlights">
-          {MILESTONE_STEPS.map((days, idx) => {
-            const isUnlocked = unlockedDays.has(days);
-            const isNext = !isUnlocked && days === nextMilestone;
-            const futureOpacity = !isUnlocked && !isNext ? 1 - idx * 0.08 : undefined;
-            const remaining = Math.max(0, days - streakCount);
-            return (
-              <div
-                key={days}
-                className={`tt5-highlight${isUnlocked ? ' is-unlocked' : ''}${isNext ? ' is-next' : ''}`}
-                style={futureOpacity !== undefined ? { opacity: futureOpacity } : undefined}
-              >
-                <div className="tt5-highlight-ring">
-                  <div className="tt5-highlight-emoji" aria-hidden="true">
-                    {isUnlocked ? <span className="tt5-highlight-days">{days}d</span> : <Lock size={16} strokeWidth={2} className="tt5-highlight-lock" />}
-                  </div>
-                </div>
-                {!isUnlocked && (
-                  <div className="tt5-highlight-label">
-                    {isNext ? t('profile.nextLabel') : getMilestoneLabel(days, locale)}
-                  </div>
-                )}
-                {isNext && (
-                  <div className="tt5-highlight-sub">{t('profile.nextSub', { n: remaining })}</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       {/* TABS */}
       {!editing && (
@@ -373,6 +327,8 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
           }}
         />
       )}
+
+      <LogrosSheet isOpen={logrosOpen} onClose={() => setLogrosOpen(false)} />
 
       </div>
     </div>

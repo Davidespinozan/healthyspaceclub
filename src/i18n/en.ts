@@ -883,6 +883,7 @@ export const en: Translations<typeof es> = {
     perfectTitle: 'Complete days',
     perfectSub: 'You closed training, nutrition and reflection',
     perfectEmpty: 'Close training, nutrition and reflection on the same day to start',
+    perfectEmptyShort: 'Close all 3 rings',
     perfectStreak: '{n} in a row',
     perfectBest: 'best {n}',
     perfectTotal: 'total',

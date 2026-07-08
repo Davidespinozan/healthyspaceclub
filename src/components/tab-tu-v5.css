@@ -341,104 +341,6 @@ button.tt5-stat:active { transform: scale(0.97); }
   margin-left: 2px;
 }
 
-/* ═══ HIGHLIGHTS — scroll horizontal ════════════════════ */
-.tt5-highlights {
-  padding: 8px 20px 18px;
-  display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  scroll-padding-left: 20px;
-  scroll-snap-type: x proximity;
-}
-.tt5-highlights::-webkit-scrollbar { display: none; }
-
-.tt5-highlight {
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-align: center;
-  scroll-snap-align: start;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s ease;
-  min-width: 64px;
-}
-.tt5-highlight:active { transform: scale(0.94); }
-
-.tt5-highlight-ring {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 6px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1.5px dashed rgba(21, 51, 48, 0.2);
-  transition: box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-}
-
-.tt5-highlight.is-unlocked .tt5-highlight-ring {
-  border: none;
-  background: linear-gradient(135deg, #C9A968, #A8864E);
-  box-shadow: 0 6px 16px rgba(168, 134, 78, 0.34);
-}
-
-.tt5-highlight.is-next .tt5-highlight-ring {
-  border: 2px solid var(--amber);
-  border-style: solid;
-  background: rgba(191, 160, 101, 0.08);
-  box-shadow: 0 0 0 2px rgba(191, 160, 101, 0.15);
-}
-
-/* Bloqueados: tint dorado suave en vez del blanco/dashed neutro */
-.tt5-highlight:not(.is-unlocked):not(.is-next) .tt5-highlight-ring {
-  background: linear-gradient(135deg, rgba(191, 160, 101, 0.18), rgba(124, 98, 50, 0.14));
-  border: 1.5px dashed rgba(191, 160, 101, 0.35);
-}
-
-.tt5-highlight-emoji {
-  font-size: 24px;
-  line-height: 1;
-}
-/* Logro desbloqueado: contador de días dentro del anillo (no emoji) */
-.tt5-highlight-days {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-  font-size: 18px;
-  letter-spacing: var(--tracking-tight);
-  color: #fff;
-  line-height: 1;
-}
-.tt5-highlight:not(.is-unlocked):not(.is-next) .tt5-highlight-emoji {
-  font-size: 16px;
-  color: rgba(21, 51, 48, 0.35);
-}
-
-.tt5-highlight-label {
-  font-family: 'Montserrat', sans-serif;
-  font-style: italic;
-  font-size: 11px;
-  color: var(--forest);
-  line-height: 1.2;
-}
-.tt5-highlight:not(.is-unlocked):not(.is-next) .tt5-highlight-label {
-  color: rgba(21, 51, 48, 0.5);
-}
-
-.tt5-highlight-sub {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 9px;
-  color: var(--terracota);
-  text-transform: none;
-  letter-spacing: 0.5px;
-  margin-top: 2px;
-  font-weight: 600;
-}
-
 /* ═══ TABS ═══════════════════════════════════════════════ */
 .tt5-tabs {
   display: flex;
@@ -549,7 +451,6 @@ button.tt5-stat:active { transform: scale(0.97); }
   font-family: 'Montserrat', sans-serif; font-size: 0.9rem;
   color: #fff; line-height: 1.5; margin: 0;
 }
-.tt5-highlight-lock { color: rgba(191, 160, 101, 0.6); }
 
 /* ═══ Responsive ═════════════════════════════════════════ */
 @media (max-width: 380px) {
@@ -560,7 +461,6 @@ button.tt5-stat:active { transform: scale(0.97); }
   .tt5-stats { padding: 0 14px 14px; gap: 8px; }
   .tt5-stat { padding: 12px 8px; }
   .tt5-stat-num { font-size: 22px; }
-  .tt5-highlights { padding: 8px 14px 18px; gap: 12px; }
 }
 
 /* ═══ Modernización: entrada escalonada (reusa la fundación :root) ═══ */
