@@ -10,8 +10,7 @@
  * Cada día se escala de forma independiente usando su propia base de kcal.
  */
 
-import { calcDayKcal, calcMealMacros } from './kcalCalc';
-import { computeNutritionTargets, parseObData } from './nutritionTargets';
+import { calcDayKcal } from './kcalCalc';
 import type { DayPlan } from '../types';
 
 // ── Fracciones unicode disponibles ──────────────────────────────────────────
@@ -173,112 +172,4 @@ export function scalePlan(plan: DayPlan[], targetKcal: number): DayPlan[] {
       })),
     };
   });
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Ajuste de MACROS — la IA acomoda las porciones para pegarle a los targets de
-// proteína/carbos/grasa, no solo a las kcal. scalePlan acierta las calorías pero
-// conserva la proporción del plan base (alto en proteína) → sobrepasa proteína.
-// Esta 2ª pasada mueve las cantidades: menos ingredientes proteicos, más de
-// carbos, etc. Correr DESPUÉS de scalePlan (factores cerca de 1 → nudge suave).
-// ═══════════════════════════════════════════════════════════════════════════
-
-export interface MacroTargets { protG: number; carbG: number; fatG: number }
-
-type Bucket = 'prot' | 'carb' | 'fat';
-
-// Clasifica una porción por su macro DOMINANTE (por aporte calórico).
-function portionBucket(portion: string): Bucket | null {
-  const m = calcMealMacros([portion]);
-  const kp = m.prot * 4, kc = m.carbs * 4, kf = m.fat * 9;
-  if (kp + kc + kf < 1) return null; // sin macros conocidos → no se toca
-  if (kp >= kc && kp >= kf) return 'prot';
-  if (kc >= kf) return 'carb';
-  return 'fat';
-}
-
-// Resuelve A·x = b (3×3) por Cramer. null si es singular (bucket vacío, etc.).
-function solve3(A: number[][], b: number[]): number[] | null {
-  const det = (M: number[][]) =>
-    M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1])
-    - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0])
-    + M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
-  const d = det(A);
-  if (Math.abs(d) < 1e-6) return null;
-  const withCol = (i: number) => A.map((row, r) => row.map((v, c) => (c === i ? b[r] : v)));
-  return [det(withCol(0)) / d, det(withCol(1)) / d, det(withCol(2)) / d];
-}
-
-/** Una pasada de ajuste por buckets (nudge suave acotado). */
-function adjustOnce(day: DayPlan, targets: MacroTargets): DayPlan {
-  // Aporte (prot, carb, fat) de cada bucket con las porciones actuales.
-  const B: Record<Bucket, { p: number; c: number; f: number }> = {
-    prot: { p: 0, c: 0, f: 0 }, carb: { p: 0, c: 0, f: 0 }, fat: { p: 0, c: 0, f: 0 },
-  };
-  for (const meal of day.meals) {
-    for (const portion of meal.portions) {
-      const bucket = portionBucket(portion);
-      if (!bucket) continue;
-      const m = calcMealMacros([portion]);
-      B[bucket].p += m.prot; B[bucket].c += m.carbs; B[bucket].f += m.fat;
-    }
-  }
-
-  // [Pp Pc Pf; Cp Cc Cf; Fp Fc Ff] · [sp sc sf]ᵀ = [tP tC tF]
-  const A = [
-    [B.prot.p, B.carb.p, B.fat.p],
-    [B.prot.c, B.carb.c, B.fat.c],
-    [B.prot.f, B.carb.f, B.fat.f],
-  ];
-  const sol = solve3(A, [targets.protG, targets.carbG, targets.fatG]);
-  if (!sol) return day;
-
-  // Tope ESTRICTO: ninguna porción se mueve más de ±22 % de su valor ya escalado.
-  // Prioriza que el platillo quede realista (una Tinga no puede volverse "5 tz de
-  // arroz + 65 g pollo") aunque los macros no queden perfectos.
-  const step = (x: number) => Math.max(0.78, Math.min(1.22, x));
-  const s: Record<Bucket, number> = { prot: step(sol[0]), carb: step(sol[1]), fat: step(sol[2]) };
-  // Nada relevante que ajustar.
-  if (Math.abs(s.prot - 1) < 0.03 && Math.abs(s.carb - 1) < 0.03 && Math.abs(s.fat - 1) < 0.03) return day;
-
-  return {
-    ...day,
-    meals: day.meals.map(meal => ({
-      ...meal,
-      portions: meal.portions.map(p => {
-        const b = portionBucket(p);
-        return b ? scaleSingle(p, s[b]) : p;
-      }),
-    })),
-  };
-}
-
-/** Ajusta las porciones de UN día para acercar sus macros a los targets. */
-export function adjustDayMacros(day: DayPlan, targets: MacroTargets): DayPlan {
-  if (calcDayKcal(day.meals) < 400) return day;
-  // `> 0` (no `<= 0`) también descarta NaN (obData incompleto).
-  if (!(targets.protG > 0) || !(targets.carbG > 0) || !(targets.fatG > 0)) return day;
-  // Una sola pasada suave: mejora los macros SIN deformar los platillos. No busca
-  // perfección (eso requeriría recetas más balanceadas), sino un nudge realista.
-  return adjustOnce(day, targets);
-}
-
-/** Ajusta todo el plan a los targets de macros (después de scalePlan). */
-export function adjustPlanMacros(plan: DayPlan[], targets: MacroTargets): DayPlan[] {
-  return plan.map(day => adjustDayMacros(day, targets));
-}
-
-/**
- * scalePlan (kcal) + adjustPlanMacros (macros) en un paso — punto único para
- * TabHoy y WeeklyNutritionPlanner. Si obData está incompleto, solo escala kcal.
- */
-export function scaleAndAdjustPlan(
-  plan: DayPlan[],
-  planGoal: number,
-  obData: Record<string, string | number>,
-): DayPlan[] {
-  const scaled = planGoal > 0 ? scalePlan(plan, planGoal) : plan;
-  if (!obData || Object.keys(obData).length === 0) return scaled;
-  const t = computeNutritionTargets(parseObData(obData));
-  return adjustPlanMacros(scaled, { protG: t.protG, carbG: t.carbG, fatG: t.fatG });
 }
