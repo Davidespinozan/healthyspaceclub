@@ -135,8 +135,20 @@ function scorePair(qTokens: string[], cTokens: string[]): number {
 const OK_THRESHOLD = 0.72;
 const REVIEW_THRESHOLD = 0.48;
 
-/** Resuelve un ingrediente al mejor alimento del catálogo, con confianza + estado. */
+/** Resuelve un ingrediente al mejor alimento. Si trae paréntesis con la
+ *  aclaración del alimento ("semillas (almendras)"), también prueba ESE y se
+ *  queda con el de mayor confianza — el paréntesis suele ser el alimento real. */
 export function matchFood(rawName: string, foods: FoodRef[]): MatchResult {
+  const best = matchOne(rawName, foods);
+  const paren = rawName.match(/\(([^)]+)\)/);
+  if (paren && !paren[1].includes(',')) {
+    const alt = matchOne(paren[1], foods);
+    if (alt.confidence > best.confidence) return alt;
+  }
+  return best;
+}
+
+function matchOne(rawName: string, foods: FoodRef[]): MatchResult {
   const aliased = applyAlias(rawName);
   const qTokens = tokenize(aliased);
   if (qTokens.length === 0) {
