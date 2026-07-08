@@ -1,5 +1,5 @@
 import { dayKey } from '../utils/localDate';
-import { ArrowDown, ArrowUp, Check, ChevronRight } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronRight, Scale } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
@@ -121,24 +121,26 @@ export default function WeightTrackingCard() {
   return (
     <>
       <button type="button" className="weight-row" onClick={openModal}>
-        <div className="weight-row-left">
-          <span className="weight-row-label">{t('weight.label')}</span>
-          <span className="weight-row-value">
-            {currentWeight !== null && currentWeight !== undefined
-              ? <>{currentWeight} <span className="weight-row-unit">kg</span></>
-              : t('weight.unset')}
-          </span>
-          {showChip && deltaInfo && (
-            <span className={`weight-row-delta ${chipDirection}`}>
-              {deltaInfo.value < 0
-                ? <ArrowDown size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
-                : <ArrowUp size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />} {Math.abs(deltaInfo.value)} kg
+        <span className="weight-row-icon" aria-hidden="true"><Scale size={21} strokeWidth={2} /></span>
+        <div className="weight-row-body">
+          <div className="weight-row-top">
+            <span className="weight-row-value">
+              {currentWeight !== null && currentWeight !== undefined
+                ? <>{currentWeight} <span className="weight-row-unit">kg</span></>
+                : t('weight.unset')}
             </span>
-          )}
+            {showChip && deltaInfo && (
+              <span className={`weight-row-delta ${chipDirection}`}>
+                {deltaInfo.value < 0
+                  ? <ArrowDown size={13} strokeWidth={2.4} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
+                  : <ArrowUp size={13} strokeWidth={2.4} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />} {Math.abs(deltaInfo.value)} kg
+              </span>
+            )}
+          </div>
+          <span className="weight-row-hint">{metaText}</span>
         </div>
         <span className="weight-row-chevron" aria-hidden="true"><ChevronRight size={18} strokeWidth={2} /></span>
       </button>
-      <div className="weight-row-meta">{metaText}</div>
 
       {sorted.length >= 2 && <WeightTrend data={sorted} locale={locale} />}
 

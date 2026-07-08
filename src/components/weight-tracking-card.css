@@ -28,47 +28,68 @@
   box-shadow: var(--shadow-pro-xl);
 }
 
-.weight-row-left {
+/* Ícono terracota (peso = progreso corporal, por sistema de color) */
+.weight-row-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 0;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--terracota-soft);
+  color: var(--terracota);
 }
 
-.weight-row-label {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 9px;
-  color: rgba(21, 51, 48, 0.5);
-  text-transform: none;
-  letter-spacing: var(--tracking-kicker-loose);
-  font-weight: 600;
-  flex-shrink: 0;
+.weight-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.weight-row-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .weight-row-value {
   font-family: 'Montserrat', sans-serif;
-  font-size: 20px;
-  font-weight: 400;
+  font-size: 22px;
+  font-weight: 700;
   color: var(--forest);
   line-height: 1;
   letter-spacing: var(--tracking-tighter);
 }
 .weight-row-unit {
   font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   color: rgba(21, 51, 48, 0.5);
 }
 
 .weight-row-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   font-family: 'Montserrat', sans-serif;
-  font-style: italic;
   font-size: 11px;
+  font-weight: 700;
   padding: 2px 8px;
   border-radius: 999px;
   background: var(--terracota-soft);
   color: var(--terracota);
   flex-shrink: 0;
+}
+
+/* Nota integrada (antes colgaba huérfana en gris debajo) */
+.weight-row-hint {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--taupe);
+  line-height: 1.3;
 }
 
 .weight-row-chevron {
@@ -77,18 +98,6 @@
   flex-shrink: 0;
 }
 
-/* Meta contextual debajo del row (no clickeable, info-only) */
-.weight-row-meta {
-  margin: -4px 20px 14px;
-  font-family: 'Montserrat', sans-serif;
-  font-style: italic;
-  font-size: 11px;
-  color: var(--taupe);
-  line-height: 1.3;
-}
-@media (max-width: 380px) {
-  .weight-row-meta { margin: -4px 14px 14px; }
-}
 
 /* ═══ Modal de registro ═══════════════════════════════════ */
 .weight-modal-overlay {
