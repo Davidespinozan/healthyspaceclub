@@ -16,8 +16,19 @@ export default function PerfectDaysCard() {
     total: s.perfectDaysTotal,
   })));
 
-  // Sin días completos aún: nada que mostrar (los anillos de Hoy enseñan la meta).
-  if (total <= 0) return null;
+  // Estado aspiracional (aún sin días completos): visible desde el inicio para
+  // enseñar la meta — cerrar los 3 anillos el mismo día.
+  if (total <= 0) {
+    return (
+      <div className="pdc pdc--empty">
+        <div className="pdc-icon" aria-hidden="true"><Gem size={20} strokeWidth={2} /></div>
+        <div className="pdc-body">
+          <div className="pdc-title">{t('profile.perfectTitle')}</div>
+          <div className="pdc-sub">{t('profile.perfectEmpty')}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pdc">
