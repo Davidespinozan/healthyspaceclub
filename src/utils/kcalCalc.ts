@@ -273,6 +273,24 @@ function findSmeEntry(text: string): SmeNutrientEntry | null {
   return null;
 }
 
+// Fuente de macros con MISMO fallback que kcal: SME primero, luego nutritionDB.
+// Antes los macros solo miraban el SME → alimentos del fallback (huevo, pollo,
+// queso…) sumaban kcal pero 0 macros. nutritionDB ahora trae prot/cho/fat.
+function findMacroSource(text: string): SmeNutrientEntry | null {
+  const sme = findSmeEntry(text);
+  if (sme) return sme;
+  // Mismo matching que findEntry() para nutritionDB (clave más larga primero).
+  for (const key of Object.keys(nutritionDB).sort((a, b) => b.length - a.length)) {
+    if (text.includes(key)) {
+      const e = nutritionDB[key];
+      if (e.prot != null && e.cho != null && e.fat != null) {
+        return { kcal: e.kcal, prot: e.prot, cho: e.cho, fat: e.fat, units: e.units };
+      }
+    }
+  }
+  return null;
+}
+
 // Calcula macros de gramos dada una entrada SME
 function macrosFromGrams(entry: SmeNutrientEntry, grams: number): Macros {
   return {
@@ -285,7 +303,7 @@ function macrosFromGrams(entry: SmeNutrientEntry, grams: number): Macros {
 // Calcula macros de un ingrediente sin cantidad (bare)
 function calcBareMacros(text: string): Macros {
   const cleaned = cleanIngredient(text);
-  const entry = findSmeEntry(cleaned) ?? findSmeEntry(text);
+  const entry = findMacroSource(cleaned) ?? findMacroSource(text);
   if (!entry) return ZERO_MACROS;
   if (entry.units?.cda) return macrosFromGrams(entry, entry.units.cda * 3);
   if (entry.units?.tz)  return macrosFromGrams(entry, entry.units.tz * 0.5);
@@ -303,7 +321,7 @@ export function calcPortionMacros(raw: string): Macros {
     const amount = parseAmount(m[1]);
     const unit = m[2] as 'g' | 'tz' | 'pz' | 'cda' | 'cdita' | 'reb' | 'lata';
     const ingredient = cleanIngredient(m[3]);
-    const entry = findSmeEntry(ingredient) ?? findSmeEntry(m[3]);
+    const entry = findMacroSource(ingredient) ?? findMacroSource(m[3]);
     if (entry) {
       let grams = 0;
       if (unit === 'g') grams = amount;
@@ -326,7 +344,7 @@ export function calcPortionMacros(raw: string): Macros {
     }
     if (!rawIng.includes(',')) {
       const ingredient = cleanIngredient(rawIng);
-      const entry = findSmeEntry(ingredient) ?? findSmeEntry(rawIng);
+      const entry = findMacroSource(ingredient) ?? findMacroSource(rawIng);
       if (entry?.units?.pz) return macrosFromGrams(entry, amount * entry.units.pz);
       if (entry?.units?.tz) return macrosFromGrams(entry, amount * 20);
     }
