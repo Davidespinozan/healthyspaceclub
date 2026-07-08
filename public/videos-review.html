@@ -26,6 +26,7 @@
   .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;margin-top:8px}
   .badge.ok{background:rgba(46,125,87,.14);color:var(--ok)}
   .badge.warn{background:rgba(199,122,42,.16);color:var(--warn)}
+  .badge.flow{background:rgba(58,90,140,.14);color:#3A5A8C}
   .hidden{display:none}
 </style>
 </head>
@@ -71,27 +72,16 @@ const LIGAS = [
   ['rotacion-core-banda','woodchopper-banda'],
   ['sentadilla-banda','sentadilla-con-banda'],
 ];
+// [archivo, mapeo, estado?]  estado: 'ok'(default si hay mapeo) | 'flow' | 'new-pose' | 'unknown'
 const YOGA = [
+  // ── Poses sueltas (van a su pose) ──
   ['boat-pose','boat-pose'],
   ['bridge-pose','bridge-pose'],
   ['camel-pose','camel-pose'],
   ['cat-cow','cat-cow'],
   ['child-pose','child-pose'],
   ['child-pose2','child-pose (2º video)'],
-  ['flow-chair-revolvedchair','chair-pose (flow)'],
-  ['flow-cierre-kneestochest','child-pose (cierre)'],
-  ['flow-happybaby-supinetwist','supine-twist (flow)'],
-  ['flow-lowlunge-revolvedlunge','low-lunge (flow)'],
-  ['flow-shoulderstand-plowpose-earpressurepose',null],
-  ['flow-sunsalutation-warrior1-warrior2-reversewarrior-','sun-salutation-b'],
-  ['flow-warrior','warrior-i (flow)'],
-  ['flow-warrior1-warrio2-reversewarrior-extendedsideangle-boundsideanglepose','warrior-ii (flow)'],
-  ['IMG_2711',null],
-  ['IMG_2723',null],
-  ['IMG_2725',null],
-  ['IMG_2734',null],
   ['lizard-lunge','lizard-lunge'],
-  ['locust-pose',null],
   ['pigeon-pose','pigeon-pose'],
   ['pigeon-pose2','pigeon-pose (2º video)'],
   ['puppy-pose','puppy-pose'],
@@ -99,32 +89,57 @@ const YOGA = [
   ['seated-forward-fold','seated-forward-fold'],
   ['seated-twist','seated-twist'],
   ['side-plank-yoga','side-plank-yoga'],
-  ['standing-side-bend',null],
+  ['triangle-pose','triangle-pose'],
+  ['wheel-pose','wheel-pose'],
+  // ── Saludo al sol (flow → entrada de flow del banco) ──
   ['sun-salutation','sun-salutation-a'],
   ['sun-salutation2','sun-salutation-a (2º)'],
   ['sun-salutation3','sun-salutation-a (3º)'],
-  ['triangle-pose','triangle-pose'],
-  ['warrior1-sun-salutation','sun-salutation-a (4º)'],
-  ['warrior1-warrior2-reversewarrior-.mov','reverse-warrior'],
-  ['wheel-pose','wheel-pose'],
+  // ── FLOWS (secuencias de varias poses) — NO caben en una sola pose ──
+  ['flow-warrior','flujo de guerreros','flow'],
+  ['flow-warrior1-warrio2-reversewarrior-extendedsideangle-boundsideanglepose','flujo guerreros largo','flow'],
+  ['warrior1-warrior2-reversewarrior-.mov','flujo de guerreros','flow'],
+  ['warrior1-sun-salutation','saludo al sol + guerrero','flow'],
+  ['flow-sunsalutation-warrior1-warrior2-reversewarrior-','saludo al sol + guerreros','flow'],
+  ['flow-lowlunge-revolvedlunge','flujo de zancadas','flow'],
+  ['flow-chair-revolvedchair','flujo de silla','flow'],
+  ['flow-happybaby-supinetwist','flujo de cierre (suelo)','flow'],
+  ['flow-cierre-kneestochest','flujo de cierre','flow'],
+  ['flow-shoulderstand-plowpose-earpressurepose','flujo de inversiones','flow'],
+  // ── Poses sueltas que NO existen aún en el banco ──
+  ['locust-pose','langosta','new-pose'],
+  ['standing-side-bend','flexión lateral de pie','new-pose'],
+  // ── Sin identificar ──
+  ['IMG_2711',null],
+  ['IMG_2723',null],
+  ['IMG_2725',null],
+  ['IMG_2734',null],
 ];
-function card(folder, file, mapped){
+const STATUS = {
+  ok:        ['ok',   'Conectado'],
+  flow:      ['flow', 'FLOW (secuencia) — ¿cómo lo conecto?'],
+  'new-pose':['warn', 'Pose nueva — ¿la creo?'],
+  unknown:   ['warn', 'PENDIENTE — dime qué es'],
+};
+function card(folder, file, mapped, status){
   const url = BASE + folder + '/' + encodeURIComponent(file) + '.mp4';
-  const ok = !!mapped;
-  return `<div class="card" data-file="${file.toLowerCase()}" data-map="${(mapped||'').toLowerCase()}" data-warn="${ok?0:1}">
+  status = status || (mapped ? 'ok' : 'unknown');
+  const [cls, label] = STATUS[status];
+  const done = status === 'ok';
+  return `<div class="card" data-file="${file.toLowerCase()}" data-map="${(mapped||'').toLowerCase()}" data-warn="${done?0:1}">
     <video src="${url}" preload="metadata" controls playsinline muted></video>
     <div class="meta">
       <div class="file">${folder}/${file}.mp4</div>
-      <div class="arrow">↓ mapeado a</div>
-      <div class="map">${ok?mapped:'—'}</div>
-      <span class="badge ${ok?'ok':'warn'}">${ok?'Conectado':'PENDIENTE — dime a qué va'}</span>
+      <div class="arrow">↓ ${done?'mapeado a':'propuesta'}</div>
+      <div class="map">${mapped||'—'}</div>
+      <span class="badge ${cls}">${label}</span>
     </div>
   </div>`;
 }
 const app = document.getElementById('app');
 app.innerHTML =
-  `<h2>Ligas / banda · ${LIGAS.length}</h2><div class="grid" data-sec="ligas">${LIGAS.map(([f,m])=>card('LIGAS',f,m)).join('')}</div>`
-+ `<h2>Yoga · ${YOGA.length}</h2><div class="grid" data-sec="yoga">${YOGA.map(([f,m])=>card('YOGA',f,m)).join('')}</div>`;
+  `<h2>Ligas / banda · ${LIGAS.length}</h2><div class="grid" data-sec="ligas">${LIGAS.map(([f,m,s])=>card('LIGAS',f,m,s)).join('')}</div>`
++ `<h2>Yoga · ${YOGA.length}</h2><div class="grid" data-sec="yoga">${YOGA.map(([f,m,s])=>card('YOGA',f,m,s)).join('')}</div>`;
 
 let filter='all', q='';
 function apply(){
