@@ -1,8 +1,8 @@
-/* ProgressCard — card única de progreso (constancia + días completos + próximo
-   logro). Clara/crema para no competir con la card oscura de Invita. */
+/* ProgressCard — card única de progreso (constancia 7 días + días completos).
+   Clara/crema para no competir con la card oscura de Invita. */
 .prog {
   margin: 2px 22px 14px;
-  padding: 14px 16px 12px;
+  padding: 15px 16px 14px;
   background: var(--surface-glass-light);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -11,12 +11,12 @@
   box-shadow: var(--shadow-pro-sm, 0 1px 3px rgba(14, 37, 33, .06));
 }
 
-/* Constancia (heredado de WeekAdherence) */
+/* ── Constancia ── */
 .prog-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 11px;
 }
 .prog-title {
   font-family: 'Montserrat', sans-serif;
@@ -37,90 +37,110 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
+  justify-items: center;
 }
-.prog-day { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.prog-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
 .prog-dot {
   width: 100%;
   aspect-ratio: 1;
-  max-width: 34px;
-  border-radius: 10px;
-  background: var(--sand, rgba(21, 51, 48, .08));
+  max-width: 28px;
+  border-radius: 8px;
+  background: rgba(21, 51, 48, 0.07);
 }
 .prog-dot.on { background: linear-gradient(135deg, var(--moss, #1C3B35), var(--forest, #0E2521)); }
-.prog-dot.today { outline: 2px solid var(--amber, #C9A24B); outline-offset: 2px; }
+.prog-dot.today {
+  outline: 2px solid var(--amber, #C9A24B);
+  outline-offset: 2px;
+}
 .prog-letter {
   font-family: 'Montserrat', sans-serif;
   font-size: 10px;
   font-weight: 600;
-  color: var(--txt2, rgba(21, 51, 48, .5));
+  color: var(--txt2, rgba(21, 51, 48, .45));
   text-transform: uppercase;
 }
 
-/* Separador */
+/* ── Separador ── */
 .prog-sep {
   height: 1px;
   background: var(--surface-glass-border, rgba(21, 51, 48, .1));
-  margin: 12px 0 4px;
+  margin: 13px -2px 11px;
 }
 
-/* Líneas: días completos + próximo logro */
-.prog-line {
+/* ── Días completos (mini-stat) ── */
+.prog-perfect {
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 8px 0;
-  background: none;
-  border: none;
-  text-align: left;
-  font-family: inherit;
+  gap: 11px;
 }
-.prog-line-btn { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.prog-line-btn:active { opacity: .6; }
-.prog-line-icon {
+.prog-perfect-icon {
   flex-shrink: 0;
-  width: 30px; height: 30px;
+  width: 34px; height: 34px;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 9px;
+  border-radius: 10px;
+  background: rgba(201, 169, 104, 0.16);
+  color: var(--amber-deep, #9a7b2e);
 }
-.prog-icon-gem { background: rgba(201, 169, 104, 0.16); color: var(--amber-deep, #9a7b2e); }
-.prog-icon-trophy { background: rgba(199, 91, 58, 0.14); color: var(--terracotta, #C75B3A); }
-.prog-line-label {
+.prog-perfect-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.prog-perfect-label {
   font-family: 'Montserrat', sans-serif;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--forest, #0E2521);
-  white-space: nowrap;
+  line-height: 1.2;
 }
-.prog-line-val {
-  margin-left: auto;
+.prog-perfect-sub {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-.prog-line-hint {
+  gap: 4px;
   font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--txt2, rgba(21, 51, 48, .5));
-}
-.prog-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--amber-deep, #9a7b2e);
   font-variant-numeric: tabular-nums;
-  color: var(--amber-deep, #9a7b2e);
+  line-height: 1.3;
 }
-.prog-chip svg { color: var(--terracotta, #C75B3A); flex-shrink: 0; }
-.prog-chip-muted { color: var(--txt2, rgba(21, 51, 48, .45)); }
-.prog-chip-strong {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(201, 169, 104, 0.18);
-  color: var(--amber-deep, #9a7b2e);
+.prog-perfect-sub.is-empty {
+  display: block;
+  font-weight: 500;
+  color: var(--txt2, rgba(21, 51, 48, .55));
 }
-.prog-chevron { color: var(--txt2, rgba(21, 51, 48, .35)); flex-shrink: 0; }
+.prog-flame { color: var(--terracotta, #C75B3A); flex-shrink: 0; }
+.prog-perfect-best { color: var(--txt2, rgba(21, 51, 48, .45)); font-weight: 600; }
+.prog-perfect-total {
+  flex-shrink: 0;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.prog-perfect-num {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--amber-deep, #9a7b2e);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tightest, -0.02em);
+}
+.prog-perfect-cap {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--txt2, rgba(21, 51, 48, .45));
+  margin-top: 3px;
+}

@@ -236,7 +236,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
 
       {/* PROGRESO — card única: constancia 7 días + días completos + próximo logro.
           Reemplaza 3 cards sueltas + la fila de círculos (evita el abrumamiento). */}
-      {!editing && <ProgressCard onOpenLogros={() => setLogrosOpen(true)} />}
+      {!editing && <ProgressCard />}
 
       {/* WEIGHT */}
       {!editing && <WeightTrackingCard />}
