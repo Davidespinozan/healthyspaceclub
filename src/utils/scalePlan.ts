@@ -233,9 +233,10 @@ function adjustOnce(day: DayPlan, targets: MacroTargets): DayPlan {
   const sol = solve3(A, [targets.protG, targets.carbG, targets.fatG]);
   if (!sol) return day;
 
-  // Nudge acotado por paso: cada bucket se mueve máx ±30 % por iteración; varias
-  // pasadas compuestas alcanzan más lejos manteniendo porciones sensatas.
-  const step = (x: number) => Math.max(0.7, Math.min(1.3, x));
+  // Tope ESTRICTO: ninguna porción se mueve más de ±22 % de su valor ya escalado.
+  // Prioriza que el platillo quede realista (una Tinga no puede volverse "5 tz de
+  // arroz + 65 g pollo") aunque los macros no queden perfectos.
+  const step = (x: number) => Math.max(0.78, Math.min(1.22, x));
   const s: Record<Bucket, number> = { prot: step(sol[0]), carb: step(sol[1]), fat: step(sol[2]) };
   // Nada relevante que ajustar.
   if (Math.abs(s.prot - 1) < 0.03 && Math.abs(s.carb - 1) < 0.03 && Math.abs(s.fat - 1) < 0.03) return day;
@@ -257,14 +258,9 @@ export function adjustDayMacros(day: DayPlan, targets: MacroTargets): DayPlan {
   if (calcDayKcal(day.meals) < 400) return day;
   // `> 0` (no `<= 0`) también descarta NaN (obData incompleto).
   if (!(targets.protG > 0) || !(targets.carbG > 0) || !(targets.fatG > 0)) return day;
-  // Iterar: cada pasada re-clasifica y da un nudge; converge en pocas rondas.
-  let cur = day;
-  for (let i = 0; i < 6; i++) {
-    const next = adjustOnce(cur, targets);
-    if (next === cur) break; // sin cambios → convergió
-    cur = next;
-  }
-  return cur;
+  // Una sola pasada suave: mejora los macros SIN deformar los platillos. No busca
+  // perfección (eso requeriría recetas más balanceadas), sino un nudge realista.
+  return adjustOnce(day, targets);
 }
 
 /** Ajusta todo el plan a los targets de macros (después de scalePlan). */
