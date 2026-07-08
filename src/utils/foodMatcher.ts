@@ -71,6 +71,10 @@ function stripAccents(s: string): string {
 const IRREGULAR_SG: Record<string, string> = {
   nueces: 'nuez', peces: 'pez', lapices: 'lapiz', raices: 'raiz',
   luces: 'luz', voces: 'voz',
+  // vocal + s (plural simple) que la regla de "-es" cortaría mal:
+  pistaches: 'pistache', pistachos: 'pistacho', totopos: 'totopo',
+  cacahuates: 'cacahuate', jitomates: 'jitomate', tomates: 'tomate',
+  aguacates: 'aguacate', elotes: 'elote', frijoles: 'frijol',
 };
 function singularize(w: string): string {
   if (IRREGULAR_SG[w]) return IRREGULAR_SG[w];

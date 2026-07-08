@@ -10,6 +10,8 @@
 // ─────────────────────────────────────────────────────────────────────────
 import { planFoods, type PlanFood } from '../data/planFoods';
 import { matchFood, type FoodRef } from './foodMatcher';
+import { scalePlan } from './scalePlan';
+import { computeNutritionTargets, parseObData } from './nutritionTargets';
 import type { DayPlan } from '../types';
 
 export interface MacroTargets { protG: number; carbG: number; fatG: number }
@@ -80,7 +82,10 @@ function parsePortion(raw: string): ParsedPortion {
 const DISPLAY_FRACS: [number, string][] = [[.25, '¼'], [1 / 3, '⅓'], [.5, '½'], [2 / 3, '⅔'], [.75, '¾']];
 function itemToText(it: Item): string {
   const name = it.food.name.toLowerCase();
-  if (it.food.unit === 'g' || !it.food.ug) return `${Math.max(5, Math.round(it.grams / 5) * 5)} g ${name}`;
+  // Unidad en gramos, o piezas diminutas (almendra, semilla ~1-8 g) → gramos.
+  if (it.food.unit === 'g' || !it.food.ug || (it.food.unit === 'pz' && it.food.ug < 10)) {
+    return `${Math.max(5, Math.round(it.grams / 5) * 5)} g ${name}`;
+  }
   const amt = it.grams / it.food.ug;
   const whole = Math.floor(amt), frac = amt - whole;
   let q: string;
@@ -123,10 +128,12 @@ export function adjustDayToMeta(day: DayPlan, t: MacroTargets): DayPlan {
   const pick = (name: string) => { const m = matchFood(name, REFS); return m.foodId ? BY_ID.get(m.foodId)! : null; };
   const adds: Item[] = [];
   const withAdds = () => { const m = macros(); for (const a of adds) { m.p += a.food.p * a.grams / 100; m.c += a.food.c * a.grams / 100; m.f += a.food.f * a.grams / 100; } return m; };
-  const tryAdd = (fd: PlanFood | null, grams: number) => { if (fd && grams >= 8) adds.push({ food: fd, grams: clamp(grams, 8, 60), bucket: bucketOf(fd) }); };
-  let gap = t.fatG - withAdds().f; if (gap > 4) tryAdd(pick('almendras') ?? pick('nuez'), gap / ((pick('almendras')?.f ?? 50) / 100));
-  gap = t.carbG - withAdds().c; if (gap > 10) tryAdd(pick('manzana') ?? pick('platano'), gap / ((pick('manzana')?.c ?? 14) / 100));
-  gap = t.protG - withAdds().p; if (gap > 8) tryAdd(pick('yogurt griego') ?? pick('huevo'), gap / ((pick('yogurt griego')?.p ?? 10) / 100));
+  const tryAdd = (fd: PlanFood | null, grams: number, min: number, max: number) => { if (fd && grams >= min) adds.push({ food: fd, grams: clamp(grams, min, max), bucket: bucketOf(fd) }); };
+  // Orden importa: proteína y carbos PRIMERO (arrastran algo de grasa), y la
+  // grasa AL FINAL cierra lo que quede — así ningún macro se pasa.
+  let gap = t.protG - withAdds().p; { const fd = pick('huevo') ?? pick('yogurt griego'); if (gap > 8 && fd) tryAdd(fd, gap / (fd.p / 100), 30, 200); }
+  gap = t.carbG - withAdds().c; { const fd = pick('platano') ?? pick('avena') ?? pick('manzana'); if (gap > 10 && fd) tryAdd(fd, gap / (fd.c / 100), 30, 220); }
+  gap = t.fatG - withAdds().f; { const fd = pick('almendras') ?? pick('nuez'); if (gap > 4 && fd) tryAdd(fd, gap / (fd.f / 100), 8, 50); }
 
   // Reescribir porciones (unidades caseras) + agregados al último snack.
   const meals = day.meals.map((m, mi) => ({
@@ -142,4 +149,21 @@ export function adjustDayToMeta(day: DayPlan, t: MacroTargets): DayPlan {
     meals[si] = { ...meals[si], portions: [...meals[si].portions, ...adds.map(itemToText)] };
   }
   return { ...day, meals };
+}
+
+/**
+ * Personaliza el plan: escala a las kcal del usuario (scalePlan) y ajusta cada
+ * día a sus macros (adjustDayToMeta). Punto único para TabHoy y WeeklyNutritionPlanner.
+ * Si obData está incompleto, solo escala kcal.
+ */
+export function personalizePlan(
+  plan: DayPlan[],
+  planGoal: number,
+  obData: Record<string, string | number>,
+): DayPlan[] {
+  const scaled = planGoal > 0 ? scalePlan(plan, planGoal) : plan;
+  if (!obData || Object.keys(obData).length === 0) return scaled;
+  const t = computeNutritionTargets(parseObData(obData));
+  const targets = { protG: t.protG, carbG: t.carbG, fatG: t.fatG };
+  return scaled.map(d => adjustDayToMeta(d, targets));
 }
