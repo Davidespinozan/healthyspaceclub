@@ -4,8 +4,7 @@ import { Sparkles, Dumbbell, Utensils, Brain, Check, Users, ArrowRight, Flame, X
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
-import { dayScaleFactor } from '../utils/scalePlan';
-import { personalizePlan } from '../utils/adjustToMeta';
+import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
@@ -137,8 +136,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // scalePlan recorre el plan semanal — memoizar evita recalcularlo en CADA render
   // (TabHoy se re-renderiza con cualquier cambio del store).
   const scaledPlan = useMemo(
-    () => personalizePlan(activePlan, planGoal, obData),
-    [activePlan, planGoal, obData],
+    () => (planGoal > 0 ? scalePlan(activePlan, planGoal) : activePlan),
+    [activePlan, planGoal],
   );
   const anchor = shoppingDay ?? 0;
 

@@ -3,8 +3,7 @@ import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { mealPlans, getMealPlans } from '../data/mealPlan';
-import { dayScaleFactor } from '../utils/scalePlan';
-import { personalizePlan } from '../utils/adjustToMeta';
+import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { mealKcal, dayNutrition } from '../utils/mealNutrition';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
@@ -276,8 +275,8 @@ export default function WeeklyNutritionPlanner() {
   const localizedMealPlans = getMealPlans(locale);
   const activeMealPlan = localizedMealPlans[mealPlanKey] ?? localizedMealPlans['planA'];
   const scaledPlan = useMemo(
-    () => personalizePlan(activeMealPlan, planGoal, obData),
-    [activeMealPlan, planGoal, obData],
+    () => planGoal > 0 ? scalePlan(activeMealPlan, planGoal) : activeMealPlan,
+    [activeMealPlan, planGoal],
   );
   const todayOffset = shoppingDay !== null ? (new Date().getDay() - shoppingDay + 7) % 7 : -1;
   const firstName = userName?.split(' ')[0] || '';
