@@ -1,0 +1,85 @@
+/* PerfectDaysCard — "Días completos". Card oscura premium (feel de prestigio):
+   la racha normal es constancia mínima; esto es excelencia sostenida. */
+.pdc {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 2px 22px 14px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, var(--moss, #1C3B35), var(--forest, #0E2521));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pro-md, 0 10px 24px -12px rgba(14, 37, 33, .4));
+}
+.pdc-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(216, 176, 100, 0.18);
+  color: var(--amber, #D8B064);
+}
+.pdc-body { flex: 1; min-width: 0; }
+.pdc-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #F4EFE3;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-tight);
+}
+.pdc-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  color: rgba(244, 239, 227, 0.62);
+  margin-top: 2px;
+  line-height: 1.35;
+}
+.pdc-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 7px;
+}
+.pdc-streak,
+.pdc-best {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tight);
+}
+.pdc-streak { color: var(--amber, #D8B064); }
+.pdc-streak svg { color: var(--terracotta, #C75B3A); flex-shrink: 0; }
+.pdc-best { color: rgba(244, 239, 227, 0.5); }
+.pdc-best svg { flex-shrink: 0; }
+.pdc-total {
+  flex-shrink: 0;
+  align-self: center;
+  text-align: center;
+  padding-left: 14px;
+  border-left: 1px solid rgba(244, 239, 227, 0.12);
+}
+.pdc-total-num {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--amber, #D8B064);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tightest, -0.02em);
+}
+.pdc-total-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(244, 239, 227, 0.5);
+  margin-top: 4px;
+}

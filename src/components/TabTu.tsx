@@ -11,6 +11,7 @@ import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
 import WeekAdherence from './WeekAdherence';
 import ReferralCard from './ReferralCard';
+import PerfectDaysCard from './PerfectDaysCard';
 import AmbientGlow from './AmbientGlow';
 import {
   MILESTONE_STEPS,
@@ -243,6 +244,9 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
       )}
 
       {/* Compartir tu día/progreso vive ahora en Hoy ("Compartir mi día") — es algo del día. */}
+
+      {/* DÍAS COMPLETOS — excelencia (3 anillos): racha + récord + total */}
+      {!editing && <PerfectDaysCard />}
 
       {/* WEIGHT */}
       {!editing && <WeightTrackingCard />}

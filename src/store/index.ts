@@ -338,6 +338,17 @@ interface AppState {
    */
   markActiveDay: () => Promise<void>;
 
+  /** Días completos = cerraste los 3 anillos core (entreno + nutrición + reflexión). */
+  perfectDayStreak: number;       // racha ACTUAL de días completos consecutivos
+  perfectDayBest: number;         // récord de racha completa (pico histórico, nunca baja)
+  perfectDaysTotal: number;       // total acumulado de días completos (nunca baja)
+  lastPerfectDate: string | null; // último día completo (idempotencia)
+  /**
+   * Registra el día actual como "completo" (3 anillos core). Idempotente por día:
+   * si ya se registró hoy, no hace nada. Sube el total y actualiza la racha completa.
+   */
+  markPerfectDay: () => void;
+
   // Daily AI briefing (cached per day)
   dailyBriefing: { date: string; message: string; lang: 'es' | 'en' } | null;
   setDailyBriefing: (b: { date: string; message: string; lang: 'es' | 'en' }) => void;
@@ -1115,6 +1126,25 @@ export const useAppStore = create<AppState>()(
     await persistStreakToProfile(user?.id, newStreak, today);
   },
 
+  perfectDayStreak: 0,
+  perfectDayBest: 0,
+  perfectDaysTotal: 0,
+  lastPerfectDate: null,
+  markPerfectDay: () => {
+    const today = dayKey(new Date());
+    const { perfectDayStreak, lastPerfectDate } = get();
+    // Idempotente por día: un día completo cuenta una sola vez.
+    if (lastPerfectDate === today) return;
+    // Reutiliza la lógica de racha (consecutivo → +1, gap → reset a 1).
+    const { newStreak } = computeStreak(perfectDayStreak, lastPerfectDate, today);
+    set((s) => ({
+      perfectDayStreak: newStreak,
+      perfectDayBest: Math.max(s.perfectDayBest, newStreak),
+      perfectDaysTotal: s.perfectDaysTotal + 1,
+      lastPerfectDate: today,
+    }));
+  },
+
   // Growth Plan (Healthy Space Method)
   growthData: {},
   growthCompleted: Array(10).fill(false),
@@ -1260,6 +1290,10 @@ export const useAppStore = create<AppState>()(
     weeklyPlan: null,
     streakCount: 0,
     lastActiveDate: null,
+    perfectDayStreak: 0,
+    perfectDayBest: 0,
+    perfectDaysTotal: 0,
+    lastPerfectDate: null,
     planRegenCount: null,
     dailyWorkoutRegenCount: { date: '', countByModality: {} },
     lastWeeklyReview: null,
@@ -1329,6 +1363,10 @@ export const useAppStore = create<AppState>()(
     dailyWorkout: state.dailyWorkout,
     streakCount: state.streakCount,
     lastActiveDate: state.lastActiveDate,
+    perfectDayStreak: state.perfectDayStreak,
+    perfectDayBest: state.perfectDayBest,
+    perfectDaysTotal: state.perfectDaysTotal,
+    lastPerfectDate: state.lastPerfectDate,
     planRegenCount: state.planRegenCount,
     dailyWorkoutRegenCount: state.dailyWorkoutRegenCount,
     lastWeeklyReview: state.lastWeeklyReview,

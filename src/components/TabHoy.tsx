@@ -291,14 +291,16 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
   // Celebración al cerrar los 3 anillos core (una vez al día).
   const [showCelebration, setShowCelebration] = useState(false);
+  const markPerfectDay = useAppStore((s) => s.markPerfectDay);
   useEffect(() => {
     if (!allCoreDone) return;
+    markPerfectDay(); // idempotente por día en el store (sube total + racha completa)
     try {
       if (localStorage.getItem('day-complete-celebrated') === today) return;
       localStorage.setItem('day-complete-celebrated', today);
       setShowCelebration(true);
     } catch { /* noop */ }
-  }, [allCoreDone, today]);
+  }, [allCoreDone, today, markPerfectDay]);
 
   const { startDate: userStartDate } = useAppStore(useShallow((s) => ({ startDate: s.startDate })));
   const isDay1 = userStartDate === today;
