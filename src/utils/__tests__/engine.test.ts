@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calcPortionKcal, calcMealKcal, calcDayKcal } from '../kcalCalc';
+import { dayNutrition } from '../mealNutrition';
 import { calcTDEE, assignPlan } from '../tdee';
 import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField, mealCalorieSplit, parseObData } from '../nutritionTargets';
 import { scalePlan } from '../scalePlan';
@@ -277,7 +278,7 @@ describe('scalePlan', () => {
   it('scaling to 3000 kcal keeps accuracy within 8%', () => {
     const scaled = scalePlan(planA, 3000);
     for (const day of scaled.slice(0, 5)) {
-      const kcal = calcDayKcal(day.meals);
+      const kcal = dayNutrition(day.meals).kcal;
       const err = Math.abs(kcal - 3000) / 3000;
       expect(err).toBeLessThan(0.08);
     }
@@ -286,7 +287,7 @@ describe('scalePlan', () => {
   it('scaling to 1800 kcal keeps accuracy within 10%', () => {
     const scaled = scalePlan(planA, 1800);
     for (const day of scaled.slice(0, 5)) {
-      const kcal = calcDayKcal(day.meals);
+      const kcal = dayNutrition(day.meals).kcal;
       const err = Math.abs(kcal - 1800) / 1800;
       expect(err).toBeLessThan(0.10);
     }
@@ -295,7 +296,7 @@ describe('scalePlan', () => {
   it('scaling to 2400 kcal keeps accuracy within 8%', () => {
     const scaled = scalePlan(planA, 2400);
     for (const day of scaled.slice(0, 5)) {
-      const kcal = calcDayKcal(day.meals);
+      const kcal = dayNutrition(day.meals).kcal;
       const err = Math.abs(kcal - 2400) / 2400;
       expect(err).toBeLessThan(0.08);
     }

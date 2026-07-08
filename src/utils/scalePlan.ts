@@ -10,8 +10,11 @@
  * Cada día se escala de forma independiente usando su propia base de kcal.
  */
 
-import { calcDayKcal } from './kcalCalc';
+import { dayNutrition } from './mealNutrition';
 import type { DayPlan } from '../types';
+
+// Base kcal del día desde la base de Magaly (consistente con lo que se muestra).
+const calcDayKcal = (meals: DayPlan['meals']): number => dayNutrition(meals).kcal;
 
 // ── Fracciones unicode disponibles ──────────────────────────────────────────
 const FRAC_MAP: Record<string, number> = {

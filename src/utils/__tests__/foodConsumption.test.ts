@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { computeDayConsumption } from '../foodConsumption';
-import { calcMealKcal } from '../kcalCalc';
+import { mealNutrition } from '../mealNutrition';
+const mkcal = (p: string[]) => mealNutrition(p).kcal;
 
 const TODAY = '2026-05-26';
 const YESTERDAY = '2026-05-25';
@@ -41,9 +42,9 @@ describe('computeDayConsumption', () => {
       today: TODAY,
     });
     const expected = Math.round(
-      calcMealKcal(meals[0].portions) +
-      calcMealKcal(meals[2].portions) +
-      calcMealKcal(meals[4].portions),
+      mkcal(meals[0].portions) +
+      mkcal(meals[2].portions) +
+      mkcal(meals[4].portions),
     );
     expect(r.consumedKcal).toBe(expected);
     expect(r.completedSlots).toBe(3);
@@ -87,8 +88,8 @@ describe('computeDayConsumption', () => {
       today: TODAY,
     });
     const expected = Math.round(
-      calcMealKcal(meals[0].portions) +
-      calcMealKcal(meals[1].portions) +
+      mkcal(meals[0].portions) +
+      mkcal(meals[1].portions) +
       300,
     );
     expect(r.consumedKcal).toBe(expected);

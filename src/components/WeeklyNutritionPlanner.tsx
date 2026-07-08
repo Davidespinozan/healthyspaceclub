@@ -4,7 +4,7 @@ import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { mealPlans, getMealPlans } from '../data/mealPlan';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
-import { calcMealKcal, calcDayKcal } from '../utils/kcalCalc';
+import { mealKcal, dayNutrition } from '../utils/mealNutrition';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
 import NutritionMeta from './NutritionMeta';
@@ -676,7 +676,7 @@ export default function WeeklyNutritionPlanner() {
 
   const dayPlanIdx = scaledPlan.findIndex(d => d.day === weeklyPlan.selectedDays[activeDay]);
   const dayPlan = dayPlanIdx >= 0 ? scaledPlan[dayPlanIdx] : null;
-  const dayKcal = dayPlan ? calcDayKcal(dayPlan.meals) : 0;
+  const dayKcal = dayPlan ? Math.round(dayNutrition(dayPlan.meals).kcal) : 0;
   // Factor de escala del día activo (base sin escalar → meta) para el desglose exacto del popout.
   const baseDay = activeMealPlan.find(d => d.day === weeklyPlan.selectedDays[activeDay]);
   const activeDayScale = baseDay ? dayScaleFactor(baseDay.meals, planGoal) : 1;
@@ -870,7 +870,7 @@ export default function WeeklyNutritionPlanner() {
           {dayPlan ? (
             chronoMeals(dayPlan.meals)
               .map(({ meal, i }) => {
-              const mkcal = calcMealKcal(meal.portions);
+              const mkcal = mealKcal(meal.portions);
               const dayDate = dayKey(new Date(
                 Date.now() + (activeDay - (todayOffset >= 0 ? todayOffset : 0)) * 86400000
               ));
