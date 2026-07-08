@@ -29,3 +29,10 @@ INSERT INTO exercise_videos (exercise_id, video_url, display_order) VALUES
   ('upright-row-banda',               'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/remo-vertical-banda.mp4', 0),
   ('woodchopper-banda',               'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/rotacion-core-banda.mp4', 0),
   ('sentadilla-con-banda',            'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/sentadilla-banda.mp4', 0);
+
+-- 4 variantes nuevas de banda (agregadas al banco en exercises.ts).
+INSERT INTO exercise_videos (exercise_id, video_url, display_order) VALUES
+  ('curl-pie-banda-unilateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/curl-biceps-unilateral-banda.mp4', 0),
+  ('elevacion-diagonal-banda',  'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/elevacion-diagonal-banda.mp4', 0),
+  ('remo-horizontal-banda',     'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/remo-banda.mp4', 0),
+  ('remo-inclinado-banda',      'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/remo-inclinado-banda.mp4', 0);
