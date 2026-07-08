@@ -17,7 +17,7 @@ INSERT INTO exercise_videos (exercise_id, video_url, display_order) VALUES
   ('elevacion-frontal-banda',         'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/elevaciones-frontales-banda.mp4', 0),
   ('elevacion-lateral-banda',         'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/elevaciones-laterales-banda.mp4', 0),
   ('extension-cuadriceps-banda',      'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/extension-pierna-sentado-banda.mp4', 0),
-  ('triceps-push-down-banda',         'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/extension-triceps-unilateral-banda.mp4', 0),
+  ('extensiones-banda-anclada',       'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/extension-triceps-unilateral-banda.mp4', 0),
   ('face-pull-banda',                 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/face-pull-banda.mp4', 0),
   ('patada-gluteo-banda',             'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/patada-gluteo-banda.mp4', 0),
   ('patada-triceps-banda',            'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/patada-triceps-banda.mp4', 0),
@@ -33,6 +33,6 @@ INSERT INTO exercise_videos (exercise_id, video_url, display_order) VALUES
 -- 4 variantes nuevas de banda (agregadas al banco en exercises.ts).
 INSERT INTO exercise_videos (exercise_id, video_url, display_order) VALUES
   ('curl-pie-banda-unilateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/curl-biceps-unilateral-banda.mp4', 0),
-  ('elevacion-diagonal-banda',  'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/elevacion-diagonal-banda.mp4', 0),
+  ('shrugs-banda',              'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/elevacion-diagonal-banda.mp4', 0),
   ('remo-horizontal-banda',     'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/remo-banda.mp4', 0),
   ('remo-inclinado-banda',      'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/remo-inclinado-banda.mp4', 0);
