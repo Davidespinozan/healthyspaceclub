@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Revisión de videos — HSC</title>
+<style>
+  :root{ --bg:#F2F0E8; --ink:#0E2521; --ok:#2E7D57; --warn:#C77A2A; --card:#fff; --line:rgba(21,51,48,.12); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:20px 16px 60px}
+  header{max-width:1200px;margin:0 auto 20px}
+  h1{font-size:22px;font-weight:800}
+  .sub{color:rgba(21,51,48,.6);font-size:14px;margin-top:4px}
+  .tools{max-width:1200px;margin:0 auto 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  input[type=search]{flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
+  .pill{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;cursor:pointer}
+  .pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  h2{max-width:1200px;margin:26px auto 12px;font-size:16px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:rgba(21,51,48,.7)}
+  .grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(14,37,33,.06)}
+  .card video{width:100%;aspect-ratio:1/1;object-fit:cover;background:#000;display:block}
+  .meta{padding:12px 14px}
+  .file{font-family:ui-monospace,monospace;font-size:12px;color:rgba(21,51,48,.55);word-break:break-all}
+  .arrow{margin:6px 0 2px;font-size:12px;color:rgba(21,51,48,.4)}
+  .map{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;margin-top:8px}
+  .badge.ok{background:rgba(46,125,87,.14);color:var(--ok)}
+  .badge.warn{background:rgba(199,122,42,.16);color:var(--warn)}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Revisión de videos</h1>
+  <div class="sub">Cada video con su <b>archivo</b> (como está guardado) y a qué <b>ejercicio</b> lo mapeé. Verde = conectado · Ámbar = pendiente. Toca play para verlo.</div>
+</header>
+<div class="tools">
+  <input type="search" id="q" placeholder="Buscar (archivo o ejercicio)…" />
+  <span class="pill on" data-f="all">Todos</span>
+  <span class="pill" data-f="ligas">Ligas</span>
+  <span class="pill" data-f="yoga">Yoga</span>
+  <span class="pill" data-f="warn">Pendientes</span>
+</div>
+<div id="app"></div>
+
+<script>
+const BASE = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/';
+const LIGAS = [
+  ['abduccion-cadera-pie-banda','abduccion-cadera-banda-tobillos'],
+  ['aperturas-pecho-banda','aperturas-banda'],
+  ['buenos-dias-banda','good-morning-banda'],
+  ['curl-biceps-banda','curl-pie-banda'],
+  ['curl-biceps-concentrado-banda','curl-concentrado-banda'],
+  ['curl-biceps-unilateral-banda','curl-pie-banda-unilateral'],
+  ['elevacion-diagonal-banda','elevacion-diagonal-banda'],
+  ['elevaciones-frontales-banda','elevacion-frontal-banda'],
+  ['elevaciones-laterales-banda','elevacion-lateral-banda'],
+  ['extension-pierna-sentado-banda','extension-cuadriceps-banda'],
+  ['extension-triceps-unilateral-banda','triceps-push-down-banda'],
+  ['face-pull-banda','face-pull-banda'],
+  ['patada-gluteo-banda','patada-gluteo-banda'],
+  ['patada-triceps-banda','patada-triceps-banda'],
+  ['peso-muerto-banda','peso-muerto-rumano-banda'],
+  ['peso-muerto-unilateral-banda','peso-muerto-unilateral-banda'],
+  ['press-militar-unilateral-banda','press-banda'],
+  ['press-pecho-banda','press-horizontal-banda'],
+  ['pull-apart-banda','vuelo-posterior-banda'],
+  ['remo-banda','remo-horizontal-banda'],
+  ['remo-inclinado-banda','remo-inclinado-banda'],
+  ['remo-vertical-banda','upright-row-banda'],
+  ['rotacion-core-banda','woodchopper-banda'],
+  ['sentadilla-banda','sentadilla-con-banda'],
+];
+const YOGA = [
+  ['boat-pose','boat-pose'],
+  ['bridge-pose','bridge-pose'],
+  ['camel-pose','camel-pose'],
+  ['cat-cow','cat-cow'],
+  ['child-pose','child-pose'],
+  ['child-pose2','child-pose (2º video)'],
+  ['flow-chair-revolvedchair','chair-pose (flow)'],
+  ['flow-cierre-kneestochest','child-pose (cierre)'],
+  ['flow-happybaby-supinetwist','supine-twist (flow)'],
+  ['flow-lowlunge-revolvedlunge','low-lunge (flow)'],
+  ['flow-shoulderstand-plowpose-earpressurepose',null],
+  ['flow-sunsalutation-warrior1-warrior2-reversewarrior-','sun-salutation-b'],
+  ['flow-warrior','warrior-i (flow)'],
+  ['flow-warrior1-warrio2-reversewarrior-extendedsideangle-boundsideanglepose','warrior-ii (flow)'],
+  ['IMG_2711',null],
+  ['IMG_2723',null],
+  ['IMG_2725',null],
+  ['IMG_2734',null],
+  ['lizard-lunge','lizard-lunge'],
+  ['locust-pose',null],
+  ['pigeon-pose','pigeon-pose'],
+  ['pigeon-pose2','pigeon-pose (2º video)'],
+  ['puppy-pose','puppy-pose'],
+  ['revolved-chair','revolved-chair'],
+  ['seated-forward-fold','seated-forward-fold'],
+  ['seated-twist','seated-twist'],
+  ['side-plank-yoga','side-plank-yoga'],
+  ['standing-side-bend',null],
+  ['sun-salutation','sun-salutation-a'],
+  ['sun-salutation2','sun-salutation-a (2º)'],
+  ['sun-salutation3','sun-salutation-a (3º)'],
+  ['triangle-pose','triangle-pose'],
+  ['warrior1-sun-salutation','sun-salutation-a (4º)'],
+  ['warrior1-warrior2-reversewarrior-.mov','reverse-warrior'],
+  ['wheel-pose','wheel-pose'],
+];
+function card(folder, file, mapped){
+  const url = BASE + folder + '/' + encodeURIComponent(file) + '.mp4';
+  const ok = !!mapped;
+  return `<div class="card" data-file="${file.toLowerCase()}" data-map="${(mapped||'').toLowerCase()}" data-warn="${ok?0:1}">
+    <video src="${url}" preload="metadata" controls playsinline muted></video>
+    <div class="meta">
+      <div class="file">${folder}/${file}.mp4</div>
+      <div class="arrow">↓ mapeado a</div>
+      <div class="map">${ok?mapped:'—'}</div>
+      <span class="badge ${ok?'ok':'warn'}">${ok?'Conectado':'PENDIENTE — dime a qué va'}</span>
+    </div>
+  </div>`;
+}
+const app = document.getElementById('app');
+app.innerHTML =
+  `<h2>Ligas / banda · ${LIGAS.length}</h2><div class="grid" data-sec="ligas">${LIGAS.map(([f,m])=>card('LIGAS',f,m)).join('')}</div>`
++ `<h2>Yoga · ${YOGA.length}</h2><div class="grid" data-sec="yoga">${YOGA.map(([f,m])=>card('YOGA',f,m)).join('')}</div>`;
+
+let filter='all', q='';
+function apply(){
+  document.querySelectorAll('.card').forEach(c=>{
+    const sec = c.closest('.grid').dataset.sec;
+    const matchF = filter==='all' || (filter==='warn'? c.dataset.warn==='1' : filter===sec);
+    const matchQ = !q || c.dataset.file.includes(q) || c.dataset.map.includes(q);
+    c.classList.toggle('hidden', !(matchF && matchQ));
+  });
+  document.querySelectorAll('h2, .grid').forEach(el=>{
+    if(el.classList.contains('grid')){ el.classList.toggle('hidden', !el.querySelector('.card:not(.hidden)')); }
+  });
+}
+document.getElementById('q').addEventListener('input', e=>{ q=e.target.value.trim().toLowerCase(); apply(); });
+document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click', ()=>{
+  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on')); p.classList.add('on');
+  filter=p.dataset.f; apply();
+}));
+</script>
+</body>
+</html>
