@@ -880,6 +880,7 @@ export const en: Translations<typeof es> = {
     statPosts: 'Posts',
     statStreak: 'Streak',
     statLogros: 'Achievements',
+    statPerfect: 'Complete',
     perfectTitle: 'Complete days',
     perfectSub: 'You closed training, nutrition and reflection',
     perfectEmpty: 'Close training, nutrition and reflection on the same day to start',

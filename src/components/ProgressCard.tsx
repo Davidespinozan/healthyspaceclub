@@ -1,27 +1,21 @@
 import { useMemo } from 'react';
-import { Gem, Flame } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { dayKey } from '../utils/localDate';
 import { useT } from '../i18n';
 import './progress-card.css';
 
-// Card única de progreso: constancia de 7 días (arriba) + días completos
-// (abajo, como mini-stat). Clara/crema para no competir con la card oscura
-// de Invita. Los logros/milestones viven en el stat "Logros" (tappable), no acá.
+// Constancia: patrón de los últimos 7 días activos (entreno / comida / reflexión).
+// Card clara/crema. Los días completos viven en el stat "Días completos" y la
+// racha en su stat — acá solo el ritmo visual de la semana.
 export default function ProgressCard() {
   const { t, locale } = useT();
-  const { completedSessions, foodLog, dailyHSMResponses, pStreak, pBest, pTotal } =
-    useAppStore(useShallow((s) => ({
-      completedSessions: s.completedSessions,
-      foodLog: s.foodLog,
-      dailyHSMResponses: s.dailyHSMResponses,
-      pStreak: s.perfectDayStreak,
-      pBest: s.perfectDayBest,
-      pTotal: s.perfectDaysTotal,
-    })));
+  const { completedSessions, foodLog, dailyHSMResponses } = useAppStore(useShallow((s) => ({
+    completedSessions: s.completedSessions,
+    foodLog: s.foodLog,
+    dailyHSMResponses: s.dailyHSMResponses,
+  })));
 
-  // Constancia: últimos 7 días activos (entreno / comida / reflexión).
   const days = useMemo(() => {
     const active = new Set<string>();
     for (const s of completedSessions) active.add(s.date);
@@ -40,7 +34,6 @@ export default function ProgressCard() {
 
   return (
     <div className="prog">
-      {/* Constancia */}
       <div className="prog-head">
         <span className="prog-title">{t('profile.adherenceTitle')}</span>
         <span className="prog-count">{t('profile.adherenceDays', { n: activeCount })}</span>
@@ -52,33 +45,6 @@ export default function ProgressCard() {
             <span className="prog-letter">{d.letter}</span>
           </div>
         ))}
-      </div>
-
-      <div className="prog-sep" />
-
-      {/* Días completos — mini-stat de excelencia (3 anillos cerrados) */}
-      <div className="prog-perfect">
-        <span className="prog-perfect-icon" aria-hidden="true"><Gem size={17} strokeWidth={2} /></span>
-        <div className="prog-perfect-text">
-          <span className="prog-perfect-label">{t('profile.perfectTitle')}</span>
-          <span className={`prog-perfect-sub${pTotal <= 0 ? ' is-empty' : ''}`}>
-            {pTotal <= 0 ? (
-              t('profile.perfectEmpty')
-            ) : (
-              <>
-                <Flame size={11} strokeWidth={2.6} className="prog-flame" />
-                {t('profile.perfectStreak', { n: pStreak })}
-                {pBest > pStreak && <span className="prog-perfect-best"> · {t('profile.perfectBest', { n: pBest })}</span>}
-              </>
-            )}
-          </span>
-        </div>
-        {pTotal > 0 && (
-          <div className="prog-perfect-total">
-            <span className="prog-perfect-num">{pTotal}</span>
-            <span className="prog-perfect-cap">{t('profile.perfectTotal')}</span>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from 'react';
-import { Menu, Flame } from 'lucide-react';
+import { Menu, Flame, Gem } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
@@ -11,12 +11,7 @@ import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
 import ReferralCard from './ReferralCard';
 import ProgressCard from './ProgressCard';
-import LogrosSheet from './sheets/LogrosSheet';
 import AmbientGlow from './AmbientGlow';
-import {
-  MILESTONE_STEPS,
-  getAchievementsCount,
-} from '../constants/milestones';
 import { useT } from '../i18n';
 import { formatDate } from '../i18n/format';
 import './tab-tu-v5.css';
@@ -25,9 +20,9 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   void _onNav;
   const { t, locale } = useT();
   const {
-    userName, setUserName, streakCount,
+    userName, setUserName, streakCount, perfectDaysTotal,
     dailyHSMResponses, username,
-  } = useAppStore(useShallow((s) => ({ userName: s.userName, setUserName: s.setUserName, streakCount: s.streakCount, dailyHSMResponses: s.dailyHSMResponses, username: s.username })));
+  } = useAppStore(useShallow((s) => ({ userName: s.userName, setUserName: s.setUserName, streakCount: s.streakCount, perfectDaysTotal: s.perfectDaysTotal, dailyHSMResponses: s.dailyHSMResponses, username: s.username })));
   const reflections = useMemo(() => [...dailyHSMResponses].reverse(), [dailyHSMResponses]);
 
   const userId = useCurrentUserId();
@@ -42,14 +37,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   const [saving, setSaving] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [logrosOpen, setLogrosOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'reflexiones'>('posts');
-
-
-  const achievementsCount = useMemo(
-    () => getAchievementsCount(streakCount),
-    [streakCount]
-  );
 
   async function refreshUserPosts() {
     try {
@@ -223,12 +211,10 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
             <div className="tt5-stat-label">{t('profile.statStreak')}</div>
             <div className="tt5-stat-num">{streakCount} <Flame size={20} strokeWidth={1.6} /></div>
           </div>
-          <button type="button" className="tt5-stat tt5-stat--logros" onClick={() => setLogrosOpen(true)}>
-            <div className="tt5-stat-label">{t('profile.statLogros')}</div>
-            <div className="tt5-stat-num">
-              {achievementsCount}<span className="tt5-stat-num-total">/{MILESTONE_STEPS.length}</span>
-            </div>
-          </button>
+          <div className="tt5-stat tt5-stat--logros">
+            <div className="tt5-stat-label">{t('profile.statPerfect')}</div>
+            <div className="tt5-stat-num">{perfectDaysTotal} <Gem size={18} strokeWidth={1.8} /></div>
+          </div>
         </div>
       )}
 
@@ -327,8 +313,6 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
           }}
         />
       )}
-
-      <LogrosSheet isOpen={logrosOpen} onClose={() => setLogrosOpen(false)} />
 
       </div>
     </div>

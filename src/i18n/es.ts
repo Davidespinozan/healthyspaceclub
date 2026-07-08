@@ -879,6 +879,7 @@ export const es = {
     statPosts: 'Posts',
     statStreak: 'Racha',
     statLogros: 'Logros',
+    statPerfect: 'Completos',
     perfectTitle: 'Días completos',
     perfectSub: 'Cerraste entreno, nutrición y reflexión',
     perfectEmpty: 'Cierra entreno, nutrición y reflexión el mismo día para empezar',

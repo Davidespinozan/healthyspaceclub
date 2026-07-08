@@ -1,9 +1,8 @@
 import { dayKey } from '../utils/localDate';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight, Flame, X, Share2 } from 'lucide-react';
+import { Sparkles, Dumbbell, Utensils, Brain, Check, Users, ArrowRight, Flame, X, Share2 } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
-import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { getMealPlans } from '../data/mealPlan';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { computeDayConsumption } from '../utils/foodConsumption';
@@ -259,24 +258,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const nutritionDone = mealSlotsTotal > 0
     ? mealSlotsDone >= mealSlotsTotal
     : (kcalGoal > 0 ? kcalConsumed / kcalGoal >= 0.8 : kcalConsumed > 0);
-  const [postedToday, setPostedToday] = useState(false);
-  const userId = useCurrentUserId();
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const { supabase } = await import('../lib/supabase');
-        const { count } = await supabase
-          .from('club_posts')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .gte('created_at', today + 'T00:00:00');
-        if (!cancelled) setPostedToday((count ?? 0) > 0);
-      } catch { /* bonus check — silencioso si falla */ }
-    })();
-    return () => { cancelled = true; };
-  }, [userId, today]);
   const coreDoneCount = [trainedToday, nutritionDone, reflectionDone].filter(Boolean).length;
   const allCoreDone = coreDoneCount === 3;
   const animatedStreak = useCountUp(streakCount);
@@ -286,7 +267,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     { key: 'train', progress: trainedToday ? 1 : 0, done: trainedToday, label: t('hoy.checkTraining'), color: '#C9A968', icon: <Dumbbell size={15} strokeWidth={2} /> },
     { key: 'meal', progress: nutritionPct, done: nutritionDone, label: t('hoy.checkNutrition'), color: '#C75B3A', icon: <Utensils size={15} strokeWidth={2} /> },
     { key: 'reflect', progress: reflectionDone ? 1 : 0, done: reflectionDone, label: t('hoy.checkReflection'), color: '#6CBFA6', icon: <Brain size={15} strokeWidth={2} /> },
-    { key: 'share', progress: postedToday ? 1 : 0, done: postedToday, label: t('hoy.checkShare'), color: '#E0C074', icon: <Camera size={15} strokeWidth={2} /> },
   ];
 
   // Celebración al cerrar los 3 anillos core (una vez al día).
