@@ -1,6 +1,6 @@
 import { dayKey } from '../utils/localDate';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight, Flame, X } from 'lucide-react';
+import { Sparkles, Dumbbell, Utensils, Brain, Camera, Check, Users, ArrowRight, Flame, X, Share2 } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
@@ -14,6 +14,7 @@ import MealDetailPopout from './MealDetailPopout';
 import { chronoMeals } from '../utils/mealOrder';
 import { translateDayLabel } from '../utils/dayTypeLabel';
 import DailyRings, { type RingItem } from './DailyRings';
+import ShareStatSheet from './ShareStatSheet';
 import DayCelebration from './DayCelebration';
 import { useCountUp } from '../hooks/useCountUp';
 import FoodLogSheet from './FoodLogSheet';
@@ -190,6 +191,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const [mealDetail, setMealDetail] = useState<{ meal: typeof todayMeals[0]; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [shareDayOpen, setShareDayOpen] = useState(false);
 
   const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
 
@@ -527,6 +529,12 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           <div className="th3-day-rings">
             <DailyRings items={ringItems} />
           </div>
+          {(streakCount >= 1 || trainedToday || kcalConsumed > 0 || reflectionDone) && (
+            <button type="button" className="th3-share-day" onClick={() => setShareDayOpen(true)}>
+              <Share2 size={15} strokeWidth={2.2} />
+              <span>{t('hoy.shareDayCta')}</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -954,6 +962,18 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
       {/* ── Activity log sheet: movimiento alterno cuenta como día activo ── */}
       {activityOpen && <ActivityLogSheet onClose={() => setActivityOpen(false)} />}
+
+      {/* ── Compartir mi día (estilo Strava: tu foto + tus stats de hoy) ── */}
+      {shareDayOpen && (
+        <ShareStatSheet
+          headline={t('hoy.shareDayHeadline')}
+          stats={[
+            { big: String(streakCount), label: plural(streakCount, { one: t('hoy.shareStreakLabelOne'), other: t('hoy.shareStreakLabelOther') }) },
+            ...(kcalConsumed > 0 ? [{ big: kcalConsumed.toLocaleString(), label: t('hoy.shareKcalLabel') }] : []),
+          ]}
+          onClose={() => setShareDayOpen(false)}
+        />
+      )}
       {showCelebration && (
         <DayCelebration
           message={t('hoy.dayCloseTitle')}

@@ -184,6 +184,26 @@
 .th3-day.is-complete .th3-day-status { color: var(--amber); }
 
 .th3-day-rings { margin-top: 2px; }
+
+/* Compartir mi día — Strava-style: tu foto + tus stats de hoy */
+.th3-share-day {
+  margin-top: 12px;
+  width: 100%;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 14px;
+  border: 1px solid rgba(246, 242, 234, 0.16);
+  border-radius: 12px;
+  background: rgba(246, 242, 234, 0.05);
+  color: rgba(246, 242, 234, 0.9);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.74rem; font-weight: 700;
+  letter-spacing: var(--tracking-kicker);
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .12s ease;
+}
+.th3-share-day svg { color: var(--amber); flex-shrink: 0; }
+.th3-share-day:hover { background: rgba(246, 242, 234, 0.09); border-color: rgba(191, 160, 101, 0.4); }
+.th3-share-day:active { transform: scale(0.98); }
 .th3-day-checks { display: flex; gap: 6px; }
 .th3-check { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .th3-check-ring {
