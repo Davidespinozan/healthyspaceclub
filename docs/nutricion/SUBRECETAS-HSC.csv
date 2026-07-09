@@ -1,0 +1,75 @@
+subreceta,alimento,nombre_visible,gramos,rol,nota
+Salsa verde,Tomate verde,Tomatillo,85,principal,
+Salsa verde,Cebolla blanca rebanada,Cebolla,29,principal,
+Salsa verde,Chile serrano,Chile serrano,10,principal,
+Salsa verde,Cilantro picado crudo,Cilantro,6,condimento,
+Salsa verde,Sal,Pizca de sal,1,condimento,cuenta cero - solo receta
+Pico de gallo,Jitomate bola,Jitomate,90,principal,
+Pico de gallo,Cebolla blanca rebanada,Cebolla,30,principal,
+Pico de gallo,Chile serrano,Chile serrano,8,principal,
+Pico de gallo,Cilantro picado crudo,Cilantro,6,condimento,
+Pico de gallo,Sal,Pizca de sal,1,condimento,cuenta cero - solo receta
+Salsa roja,Jitomate,Jitomate,232,principal,
+Salsa roja,Pimiento fresco,Pimiento,30,principal,
+Salsa roja,Cebolla blanca rebanada,Cebolla,58,principal,
+Salsa roja,Sal,Pizca de sal,1,condimento,cuenta cero - solo receta
+Salsa roja,Chile cayena en polvo,Chile cayena en polvo,1,condimento,PENDIENTE crear en catalogo
+Guacamole,,Aguacate Hass,94,principal
+Guacamole,,Jitomate bola,40,principal
+Guacamole,,Cebolla blanca rebanada,20,principal
+Guacamole,,Chile serrano,8,condimento
+Guacamole,,Limón,5,condimento
+Guacamole,,Sal,1,condimento
+Guacamole,,Chile cayena en polvo,1,condimento
+Glaseado de miel y soya,,Miel,20,principal
+Glaseado de miel y soya,,Salsa de soya,15,condimento
+Glaseado de miel y soya,,Mostaza,10,condimento
+Glaseado de miel y soya,,Maicena,5,principal
+Glaseado de miel y soya,,Sal,1,condimento
+Glaseado de miel y soya,,Chile cayena en polvo,1,condimento
+Aderezo Chipotle,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",15,principal
+Aderezo Chipotle,,Mayonesa light,5,condimento
+Aderezo Chipotle,,Chile chipotle adobado,5,condimento
+Aderezo Chipotle,,Salsa sriracha,5,condimento
+Aderezo Chipotle,,Salsa de soya,15,condimento
+Aderezo César,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",180,principal
+Aderezo César,,Mayonesa light,14,condimento
+Aderezo César,,Queso parmesano,6,principal
+Aderezo César,,Limón,3,condimento
+Aderezo César,,Mostaza Dijón,3,condimento
+Aderezo César,,Ajo en polvo,1,condimento
+Aderezo César,,Sal,1,condimento
+Salsa Tinga,,Jitomate bola,200,principal
+Salsa Tinga,,Cebolla blanca rebanada,58,principal
+Salsa Tinga,,Ajo,5,condimento
+Salsa Tinga,,Chile chipotle adobado,8,condimento
+Salsa Tinga,,Caldo de pollo,60,principal
+Salsa Tinga,,Orégano,1,condimento
+Salsa Tinga,,Sal,1,condimento
+Aderezo de hamburguesa,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",30,principal
+Aderezo de hamburguesa,,Mayonesa light,10,condimento
+Aderezo de hamburguesa,,Salsa catsup,10,condimento
+Aderezo de hamburguesa,,Mostaza Dijón,5,condimento
+Aderezo de hamburguesa,,Sal,1,condimento
+Chimichurri,,Aceite de oliva,60,principal
+Chimichurri,,Ajo,5,condimento
+Chimichurri,,Perejil crudo picado,20,principal
+Chimichurri,,Limón,15,condimento
+Chimichurri,,Orégano,3,condimento
+Chimichurri,,Sal,1,condimento
+Vinagreta Balsámica,,Aceite de oliva,20,principal
+Vinagreta Balsámica,,Vinagre balsámico,15,condimento
+Vinagreta Balsámica,,Miel,7,principal
+Vinagreta Balsámica,,Mostaza Dijón,3,condimento
+Vinagreta Balsámica,,Sal,1,condimento
+Arepa,,Harina de maíz,60,principal
+Arepa,,Sal,1,condimento
+Aderezo Parmesano,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",30,principal
+Aderezo Parmesano,,Mayonesa light,5,condimento
+Aderezo Parmesano,,Aceite de oliva,5,principal
+Aderezo Parmesano,,Mostaza Dijón,5,condimento
+Aderezo Parmesano,,Limón,15,condimento
+Aderezo Parmesano,,Ajo,3,condimento
+Aderezo Parmesano,,Vinagre balsámico,3,condimento
+Aderezo Parmesano,,Queso parmesano,6,principal
+Aderezo Parmesano,,Sal,1,condimento
