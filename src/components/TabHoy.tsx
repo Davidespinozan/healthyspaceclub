@@ -34,8 +34,18 @@ import { buildHSMProfilePrompt } from '../ai/prompts/hsmProfile';
 import { MILESTONE_STEPS, MILESTONE_ICON, getMilestoneCopy } from '../constants/milestones';
 import { getHSMBank } from '../data/hsmBank';
 import { useT } from '../i18n';
+import type { TranslationKey } from '../i18n/es';
 import CalculadoraSheet from './CalculadoraSheet';
 import { plural } from '../i18n/format';
+
+// Etiquetas de tiempo (tag) por comida — mismas llaves que MealDetailPopout.
+const MEAL_TIME_KEYS: Record<string, TranslationKey> = {
+  'Desayuno': 'mealTime.desayuno',
+  'Snack AM': 'mealTime.snackAm',
+  'Comida': 'mealTime.comida',
+  'Snack PM': 'mealTime.snackPm',
+  'Cena': 'mealTime.cena',
+};
 import './tab-hoy-v3.css';
 
 
@@ -752,11 +762,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                           toggleMealCheck(key);
                         }
                         const mealImg = (meal as { img?: string }).img;
-                        // Los snacks son secundarios: sin círculo de imagen, jerarquía menor.
                         const isSnack = meal.time.startsWith('Snack');
+                        const timeLabel = MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time;
                         return (
                           <li key={i} className={`th3-card-list-item${isSnack ? ' th3-card-list-item--snack' : ''}`}>
-                            {!isSnack && (mealImg && !replaced ? (
+                            {mealImg && !replaced ? (
                               <img
                                 className="th3-card-list-thumb"
                                 src={mealImg} alt="" loading="lazy"
@@ -766,18 +776,21 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                               <span className="th3-card-list-thumb th3-card-list-thumb--empty" aria-hidden="true">
                                 <Utensils size={16} strokeWidth={1.8} />
                               </span>
-                            ))}
-                            {replaced ? (
-                              <span className="th3-card-list-name">{displayName}</span>
-                            ) : (
-                              <button
-                                type="button"
-                                className="th3-card-list-name"
-                                onClick={openDetail}
-                              >
-                                {meal.name}
-                              </button>
                             )}
+                            <div className="th3-card-list-body">
+                              <span className="th3-card-list-time">{timeLabel}</span>
+                              {replaced ? (
+                                <span className="th3-card-list-name">{displayName}</span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="th3-card-list-name"
+                                  onClick={openDetail}
+                                >
+                                  {meal.name}
+                                </button>
+                              )}
+                            </div>
                             <button
                               type="button"
                               className={`th3-card-list-check${showCheck ? ' checked' : ''}`}

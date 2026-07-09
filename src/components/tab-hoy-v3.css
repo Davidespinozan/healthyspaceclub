@@ -428,11 +428,25 @@
 /* Snacks: secundarios — sin círculo, texto más chico y suave. Se indentan 48px
    (ancho del círculo 40 + gap 8) para que el nombre quede alineado en la misma
    columna que las comidas con miniatura → lista limpia, no colgada a la izquierda. */
-.th3-card-list-item--snack { padding: 5px 0 5px 48px; }
 .th3-card-list-item--snack .th3-card-list-name {
   font-size: 0.72rem;
   font-weight: 500;
   color: var(--txt2, rgba(21,51,48,.55));
+}
+/* Columna nombre: tag de tiempo (eyebrow) + nombre del platillo */
+.th3-card-list-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.th3-card-list-time {
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--terracota);
 }
 .th3-card-list-name {
   flex: 1;

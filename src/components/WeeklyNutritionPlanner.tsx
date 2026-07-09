@@ -840,8 +840,8 @@ export default function WeeklyNutritionPlanner() {
                     }
                   }}
                 >
-                  {/* Snacks sin círculo: jerarquía menor que las comidas principales. */}
-                  {!isSnack && (meal.img && !replaced ? (
+                  {/* Snacks del banco ya traen foto → mismo círculo que las comidas. */}
+                  {meal.img && !replaced ? (
                     <div
                       className="wnp2-meal-circle"
                       style={{ backgroundImage: `url(${meal.img})` }}
@@ -850,7 +850,7 @@ export default function WeeklyNutritionPlanner() {
                     <div className="wnp2-meal-circle">
                       <Ic size={28} strokeWidth={1.5} />
                     </div>
-                  ))}
+                  )}
                   <div className="wnp2-meal-body">
                     <div className="wnp2-meal-time">
                       {!isSnack && <Ic size={14} strokeWidth={1.5} />}

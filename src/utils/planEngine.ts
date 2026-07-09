@@ -132,11 +132,31 @@ function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>
   };
 }
 
+// Fusiona varios platillos (snacks combinados) en UNA sola comida — un solo card,
+// no el snack repetido. Suma macros, junta ingredientes, usa la 1ª foto disponible.
+function mergeItems(items: MealItem[], label: string): MealItem {
+  const macros = { kcal: 0, prot: 0, fat: 0, carb: 0 };
+  for (const it of items) {
+    macros.kcal += it.macros?.kcal ?? 0; macros.prot += it.macros?.prot ?? 0;
+    macros.fat += it.macros?.fat ?? 0; macros.carb += it.macros?.carb ?? 0;
+  }
+  return {
+    time: label,
+    name: items.map((i) => i.name).join(' + '),
+    desc: items.map((i) => i.desc).filter(Boolean).join(' · '),
+    img: items.find((i) => i.img)?.img,
+    portions: items.flatMap((i) => i.portions),
+    macros,
+    ings: items.flatMap((i) => i.ings ?? []),
+  };
+}
+
 // Busca el mejor conjunto de `n` platillos de `pool` para pegar el target de ESTE
 // tiempo, y devuelve sus MealItem (ya ajustados). needVeg exige guarnición (comida/cena).
+// merge=true → devuelve UNA comida combinada (snacks: los dos dentro del mismo).
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
-  rng: () => number, avoid: (d: BancoDish) => boolean, trials: number,
+  rng: () => number, avoid: (d: BancoDish) => boolean, trials: number, merge = false,
 ): MealItem[] {
   const pickDish = () => { for (let i = 0; i < 20; i++) { const d = pick(pool, rng); if (!avoid(d)) return d; } return pick(pool, rng); };
   const pickN = () => { const out: BancoDish[] = []; let g = 0; while (out.length < n && g++ < 40) { const d = pickDish(); if (!out.includes(d)) out.push(d); } return out; };
@@ -154,7 +174,8 @@ function fitSlot(
   void fixed;
   const gOf = new Map<BancoIng, number>();
   for (const v of vars) gOf.set(v.ing, v.g);
-  return dishes.map((d) => mealItemFrom(d, label, gOf));
+  const items = dishes.map((d) => mealItemFrom(d, label, gOf));
+  return merge && items.length > 1 ? [mergeItems(items, label)] : items;
 }
 
 // Reparto de Magaly por comida (LOGICA 3.5). Proteína pareja en las 3 principales
@@ -174,9 +195,9 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   const MT = mealTargets(T);
   const meals: MealItem[] = [
     ...fitSlot(BY_TIME.Desayuno, 'Desayuno', MT.desayuno, 1, rng, avoid, 90),
-    ...fitSlot(BY_TIME.Snack, 'Snack AM', MT.snackSlot, nSnack, rng, avoid, 70),
+    ...fitSlot(BY_TIME.Snack, 'Snack AM', MT.snackSlot, nSnack, rng, avoid, 70, true),
     ...fitSlot(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, 'Comida', MT.comida, 1, rng, avoid, 90),
-    ...fitSlot(BY_TIME.Snack, 'Snack PM', MT.snackSlot, nSnack, rng, avoid, 70),
+    ...fitSlot(BY_TIME.Snack, 'Snack PM', MT.snackSlot, nSnack, rng, avoid, 70, true),
     ...fitSlot(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, 'Cena', MT.cena, 1, rng, avoid, 90),
   ];
   return { day: dayNum, theme: '', meals };

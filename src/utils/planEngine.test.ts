@@ -49,13 +49,16 @@ describe('planEngine — ajuste a la meta', () => {
     }
   });
 
-  it('estructura de 5 tiempos (Snack AM + PM), combina snacks en meta alta', () => {
+  it('5 tiempos; snack AM/PM aparecen UNA vez; combina 2 snacks dentro del mismo', () => {
     const low = buildWeeklyPlan(CASES[0], { seed: 1 })[0];
     const high = buildWeeklyPlan(CASES[3], { seed: 1 })[0];
-    const times = (d: typeof low) => d.meals.map((m) => m.time);
-    expect(times(low)).toContain('Snack AM');
-    expect(times(low)).toContain('Snack PM');
-    // meta alta: 2 snacks por slot → más comidas que la meta baja
-    expect(high.meals.length).toBeGreaterThan(low.meals.length);
+    const amCount = (d: typeof low) => d.meals.filter((m) => m.time === 'Snack AM').length;
+    // Snack AM aparece exactamente 1 vez en ambos (no duplicado), aunque combine.
+    expect(amCount(low)).toBe(1);
+    expect(amCount(high)).toBe(1);
+    expect(low.meals.map((m) => m.time)).toContain('Snack PM');
+    // Meta alta: el snack combinado trae más ingredientes que el de meta baja.
+    const amIngs = (d: typeof low) => d.meals.find((m) => m.time === 'Snack AM')!.ings!.length;
+    expect(amIngs(high)).toBeGreaterThan(amIngs(low));
   });
 });
