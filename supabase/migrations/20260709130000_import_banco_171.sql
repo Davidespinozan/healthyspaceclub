@@ -24,7 +24,7 @@ create table public.platillos_ingredientes (
   gramos numeric, max_g numeric, rol text, seccion text, nota text,
   image_filename text, orden int,
   image_url text generated always as
-    ('https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/platillos/'||image_filename) stored
+    ('https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PLATILLOS%20BANCO/'||image_filename) stored
 );
 
 insert into public.platillos_ingredientes (platillo,tiempo,tipo,banda,sabor,mult_max,alimento,nombre_visible,gramos,max_g,rol,seccion,nota,image_filename,orden) values
