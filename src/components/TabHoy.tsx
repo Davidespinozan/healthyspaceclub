@@ -762,11 +762,18 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                           toggleMealCheck(key);
                         }
                         const mealImg = (meal as { img?: string }).img;
+                        const mealImgs = (meal as { imgs?: string[] }).imgs ?? [];
                         const isSnack = meal.time.startsWith('Snack');
                         const timeLabel = MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time;
                         return (
                           <li key={i} className={`th3-card-list-item${isSnack ? ' th3-card-list-item--snack' : ''}`}>
-                            {mealImg && !replaced ? (
+                            {!replaced && mealImgs.length > 1 ? (
+                              <span className="th3-card-list-thumb th3-card-list-thumb--split" onClick={openDetail}>
+                                {mealImgs.slice(0, 2).map((src, ix) => (
+                                  <img key={ix} src={src} alt="" loading="lazy" />
+                                ))}
+                              </span>
+                            ) : mealImg && !replaced ? (
                               <img
                                 className="th3-card-list-thumb"
                                 src={mealImg} alt="" loading="lazy"

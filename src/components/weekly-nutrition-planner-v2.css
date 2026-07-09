@@ -659,6 +659,14 @@
   justify-content: center;
   font-size: 26px;
 }
+/* Snack combinado: dos fotos dentro del mismo círculo (medias lunas). */
+.wnp2-meal-circle--split { padding: 0; overflow: hidden; }
+.wnp2-meal-circle--split span {
+  flex: 1;
+  align-self: stretch;
+  background-size: cover;
+  background-position: center;
+}
 .wnp2-meal-body {
   flex: 1;
   min-width: 0;

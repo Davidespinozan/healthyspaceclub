@@ -15,6 +15,8 @@ export interface PopoutMeal {
   portions?: string[];
   // Motor (banco): macros exactos ya ajustados a la meta.
   macros?: { kcal: number; prot: number; fat: number; carb: number };
+  // Snack combinado: las fotos de los platillos que van dentro.
+  imgs?: string[];
 }
 
 const MEAL_TIME_KEYS: Record<string, TranslationKey> = {
@@ -68,7 +70,18 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther,
 
         {/* Scrolleable: imagen + info + ingredientes */}
         <div className="th-popout-content">
-          {meal.img && (
+          {meal.imgs && meal.imgs.length > 1 ? (
+            <div style={{ display: 'flex', gap: 6 }}>
+              {meal.imgs.map((src, ix) => (
+                <img
+                  key={ix} src={src} alt=""
+                  className="th-popout-img"
+                  style={{ flex: 1, minWidth: 0 }}
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              ))}
+            </div>
+          ) : meal.img && (
             <img
               src={meal.img}
               alt=""

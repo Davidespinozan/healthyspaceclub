@@ -486,6 +486,9 @@
   box-shadow: 0 2px 6px -1px rgba(14, 37, 33, 0.35);
 }
 .th3-card-list-thumb.is-done { opacity: 0.5; }
+/* Snack combinado: dos fotos dentro de la misma miniatura redonda (medias lunas). */
+.th3-card-list-thumb--split { display: flex; padding: 0; overflow: hidden; background: none; cursor: pointer; }
+.th3-card-list-thumb--split img { width: 50%; height: 100%; object-fit: cover; display: block; }
 .th3-card-list-check {
   width: 22px; height: 22px;
   border-radius: 6px;

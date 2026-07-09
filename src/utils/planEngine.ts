@@ -140,11 +140,13 @@ function mergeItems(items: MealItem[], label: string): MealItem {
     macros.kcal += it.macros?.kcal ?? 0; macros.prot += it.macros?.prot ?? 0;
     macros.fat += it.macros?.fat ?? 0; macros.carb += it.macros?.carb ?? 0;
   }
+  const imgs = items.map((i) => i.img).filter((s): s is string => !!s);
   return {
     time: label,
     name: items.map((i) => i.name).join(' + '),
     desc: items.map((i) => i.desc).filter(Boolean).join(' · '),
-    img: items.find((i) => i.img)?.img,
+    img: imgs[0],
+    imgs,
     portions: items.flatMap((i) => i.portions),
     macros,
     ings: items.flatMap((i) => i.ings ?? []),

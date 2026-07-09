@@ -840,8 +840,15 @@ export default function WeeklyNutritionPlanner() {
                     }
                   }}
                 >
-                  {/* Snacks del banco ya traen foto → mismo círculo que las comidas. */}
-                  {meal.img && !replaced ? (
+                  {/* Snacks del banco ya traen foto. Snack combinado → círculo partido
+                      con las dos fotos (los dos snacks dentro del mismo). */}
+                  {!replaced && (meal.imgs?.length ?? 0) > 1 ? (
+                    <div className="wnp2-meal-circle wnp2-meal-circle--split">
+                      {meal.imgs!.slice(0, 2).map((src, ix) => (
+                        <span key={ix} style={{ backgroundImage: `url(${src})` }} />
+                      ))}
+                    </div>
+                  ) : meal.img && !replaced ? (
                     <div
                       className="wnp2-meal-circle"
                       style={{ backgroundImage: `url(${meal.img})` }}
