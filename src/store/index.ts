@@ -306,6 +306,9 @@ interface AppState {
     nota: string;
     preferences: string;
     lang?: 'es' | 'en';        // idioma en que se generó la nota IA
+    // Motor (banco de Magaly): 7 días ya compuestos y ajustados a la meta.
+    // Si viene, TabHoy/Planner lo usan tal cual (day = 1..7); si no, plan viejo.
+    days?: import('../types').DayPlan[];
   } | null;
   saveWeeklyPlan: (plan: NonNullable<AppState['weeklyPlan']>) => Promise<void>;
   clearWeeklyPlan: () => Promise<void>;

@@ -2,21 +2,20 @@ import { dayKey } from '../utils/localDate';
 import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
-import { mealPlans, getMealPlans } from '../data/mealPlan';
+import { getMealPlans } from '../data/mealPlan';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { mealKcal, dayNutrition } from '../utils/mealNutrition';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
+import { buildWeeklyPlan } from '../utils/planEngine';
 import NutritionMeta from './NutritionMeta';
 import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, Shuffle, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import CalculadoraSheet from './CalculadoraSheet';
 import { chronoMeals } from '../utils/mealOrder';
-import { callAI } from '../utils/aiProxy';
 
 const CreatePostModal = lazy(() => import('./CreatePostModal'));
-import { buildWeeklyPlanPrompt } from '../ai/prompts/weeklyPlan';
 import { useT } from '../i18n';
 import { plural, formatDate } from '../i18n/format';
 import type { TranslationKey } from '../i18n/es';
@@ -142,86 +141,6 @@ const MEAL_ICON: Record<string, LucideIcon> = {
   'Cena': Moon,
 };
 
-const CUISINES_MAP = [
-  { id: 'mexicana',  label: 'Mexicana',  days: [1, 7]   },
-  { id: 'japonesa',  label: 'Japonesa',  days: [8, 14]  },
-  { id: 'italiana',  label: 'Italiana',  days: [15, 21] },
-  { id: 'americana', label: 'Americana', days: [22, 28] },
-];
-
-function buildMealList(planKey: string): string {
-  const plan = mealPlans[planKey] ?? mealPlans['planA'];
-  return plan.map(day => {
-    const main = day.meals.filter(m =>
-      m.time.includes('Desayuno') || m.time.includes('Comida') || m.time.includes('Cena')
-    );
-    const names = main.map(m => m.name).join(', ');
-    const cuisine = CUISINES_MAP.find(c => day.day >= c.days[0] && day.day <= c.days[1]);
-    return `Día ${day.day} (${cuisine?.label ?? ''}): ${names}`;
-  }).join('\n');
-}
-
-async function generateWeeklyPlan(params: {
-  planKey: string;
-  planGoal: number;
-  obData: Record<string, string | number>;
-  userName: string;
-  answers: Record<string, string>;
-  locale: 'es' | 'en';
-}): Promise<{ selectedDays: number[]; shoppingList: string[]; nota: string }> {
-  const mealList = buildMealList(params.planKey);
-
-  const goalLabel: Record<string, string> = {
-    'perder-peso': 'perder grasa — priorizar déficit calórico y comidas ligeras',
-    'ganar-musculo': 'ganar músculo — alto en proteína, comidas abundantes',
-    'mantener': 'mantener peso — balance calórico, variedad',
-    'recomposicion': 'recomposición corporal — alto proteína, moderado carbohidrato',
-  };
-  const styleFromGoal = goalLabel[String(params.obData.goal)] ?? 'variada y balanceada';
-
-  const prompt = buildWeeklyPlanPrompt({
-    userName: params.userName,
-    obData: params.obData,
-    planGoal: params.planGoal,
-    answers: params.answers,
-    styleFromGoal,
-    mealList,
-    locale: params.locale,
-  });
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60_000);
-
-  try {
-    const data = await callAI(
-      // 2000 (antes 1200) para que la lista de compras + nota no corte el JSON.
-      { max_tokens: 2000, messages: [{ role: 'user', content: prompt }] },
-      controller.signal,
-    );
-    const raw = data.content?.[0]?.text ?? '{}';
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-    let parsed;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      throw new Error('No se pudo generar el plan completo. Intenta de nuevo.');
-    }
-    // Si el JSON es válido pero le falta selectedDays, el .map posterior
-    // reventaría: validamos la forma mínima esperada.
-    if (!parsed || !Array.isArray(parsed.selectedDays)) {
-      throw new Error('No se pudo generar el plan completo. Intenta de nuevo.');
-    }
-    return parsed;
-  } catch (e) {
-    if ((e as Error).name === 'AbortError') {
-      throw new Error('La generación del plan semanal tardó demasiado. Intenta de nuevo.');
-    }
-    throw e;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
 export default function WeeklyNutritionPlanner() {
   const { t, locale } = useT();
   const {
@@ -274,9 +193,11 @@ export default function WeeklyNutritionPlanner() {
 
   const localizedMealPlans = getMealPlans(locale);
   const activeMealPlan = localizedMealPlans[mealPlanKey] ?? localizedMealPlans['planA'];
+  // Si el plan viene del motor (banco), ya está ajustado: se usa tal cual (day = 1..7).
+  // Si no, plan viejo escalado por regex.
   const scaledPlan = useMemo(
-    () => planGoal > 0 ? scalePlan(activeMealPlan, planGoal) : activeMealPlan,
-    [activeMealPlan, planGoal],
+    () => weeklyPlan?.days ?? (planGoal > 0 ? scalePlan(activeMealPlan, planGoal) : activeMealPlan),
+    [weeklyPlan?.days, activeMealPlan, planGoal],
   );
   const todayOffset = shoppingDay !== null ? (new Date().getDay() - shoppingDay + 7) % 7 : -1;
   const firstName = userName?.split(' ')[0] || '';
@@ -321,26 +242,30 @@ export default function WeeklyNutritionPlanner() {
     setPhase('generating');
     setError('');
     try {
-      const result = await generateWeeklyPlan({
-        planKey: mealPlanKey,
-        planGoal,
-        obData: obData as Record<string, string | number>,
-        userName,
-        answers: newAnswers,
-        locale,
-      });
-      const valid = result.selectedDays
-        .map(d => Math.max(1, Math.min(28, d)))
-        .slice(0, 7);
-      while (valid.length < 7) valid.push(valid[valid.length - 1] ?? 1);
+      // Deja pintar el spinner antes del cómputo síncrono del motor.
+      await new Promise((r) => setTimeout(r, 30));
+      const targets = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
+      const avoidRaw = (newAnswers.avoid ?? '').toLowerCase();
+      const avoid = /ningun|nada|todas|todo/.test(avoidRaw)
+        ? []
+        : avoidRaw.split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
+      const days = buildWeeklyPlan(
+        { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG },
+        { seed: Date.now() & 0x7fffffff, avoid },
+      );
+      // Lista de compras: ingredientes únicos (sin condimentos), del banco ya ajustado.
+      const shopSet = new Set<string>();
+      for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])
+        if (ing.rol !== 'condimento' && ing.rol !== 'sub-receta') shopSet.add(ing.nv);
       await saveWeeklyPlan({
         generatedAt: new Date().toISOString(),
         mealPlanKey,
-        selectedDays: valid,
-        shoppingList: result.shoppingList ?? [],
-        nota: result.nota ?? '',
+        selectedDays: [1, 2, 3, 4, 5, 6, 7],
+        shoppingList: [...shopSet],
+        nota: '',
         preferences: [newAnswers.cuisines, newAnswers.cravings, newAnswers.avoid].filter(Boolean).join(' · '),
         lang: locale,
+        days,
       });
       setActiveDay(todayOffset >= 0 ? todayOffset : 0);
       setPhase('plan');
@@ -677,9 +602,9 @@ export default function WeeklyNutritionPlanner() {
   const dayPlanIdx = scaledPlan.findIndex(d => d.day === weeklyPlan.selectedDays[activeDay]);
   const dayPlan = dayPlanIdx >= 0 ? scaledPlan[dayPlanIdx] : null;
   const dayKcal = dayPlan ? Math.round(dayNutrition(dayPlan.meals).kcal) : 0;
-  // Factor de escala del día activo (base sin escalar → meta) para el desglose exacto del popout.
+  // Factor de escala del día activo. Con motor (banco) ya viene ajustado → 1.
   const baseDay = activeMealPlan.find(d => d.day === weeklyPlan.selectedDays[activeDay]);
-  const activeDayScale = baseDay ? dayScaleFactor(baseDay.meals, planGoal) : 1;
+  const activeDayScale = weeklyPlan.days ? 1 : (baseDay ? dayScaleFactor(baseDay.meals, planGoal) : 1);
   // Comidas del plan de HOY con su índice — para que la Calculadora sepa QUÉ platillo
   // del plan sustituye (mismo índice que usa mealResolvedByLog en Plan del día).
   const todayNum = weeklyPlan.selectedDays[todayOffset >= 0 ? todayOffset : 0] ?? weeklyPlan.selectedDays[0];
@@ -870,7 +795,7 @@ export default function WeeklyNutritionPlanner() {
           {dayPlan ? (
             chronoMeals(dayPlan.meals)
               .map(({ meal, i }) => {
-              const mkcal = mealKcal(meal.portions);
+              const mkcal = meal.macros ? meal.macros.kcal : mealKcal(meal.portions);
               const dayDate = dayKey(new Date(
                 Date.now() + (activeDay - (todayOffset >= 0 ? todayOffset : 0)) * 86400000
               ));
