@@ -137,13 +137,16 @@ function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>
     portions.push(portionStr(ing, g));
     ings.push({ nv: ing.nv, g, rol: ing.rol });
   }
+  // kcal derivado de las macros (Atwater 4/4/9), no el kcal crudo del alimento →
+  // así el total cuadra con la meta (que también es Atwater) y el usuario lo verifica.
+  const prot = Math.round(m[1]), fat = Math.round(m[2]), carb = Math.round(m[3]);
   return {
     time: label,
     name: dish.nombre,
     desc: dish.ings.filter((i) => i.rol === 'principal').slice(0, 3).map((i) => i.nv).join(' · '),
     img: IMG_BASE + dish.img,
     portions,
-    macros: { kcal: Math.round(m[0]), prot: Math.round(m[1]), fat: Math.round(m[2]), carb: Math.round(m[3]) },
+    macros: { kcal: Math.round(prot * 4 + carb * 4 + fat * 9), prot, fat, carb },
     ings,
   };
 }
@@ -153,9 +156,10 @@ function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>
 function mergeItems(items: MealItem[], label: string): MealItem {
   const macros = { kcal: 0, prot: 0, fat: 0, carb: 0 };
   for (const it of items) {
-    macros.kcal += it.macros?.kcal ?? 0; macros.prot += it.macros?.prot ?? 0;
+    macros.prot += it.macros?.prot ?? 0;
     macros.fat += it.macros?.fat ?? 0; macros.carb += it.macros?.carb ?? 0;
   }
+  macros.kcal = Math.round(macros.prot * 4 + macros.carb * 4 + macros.fat * 9); // Atwater, cuadra con macros
   const imgs = items.map((i) => i.img).filter((s): s is string => !!s);
   return {
     time: label,
