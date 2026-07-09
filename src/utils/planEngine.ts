@@ -1,7 +1,8 @@
 // Motor del plan de nutrición: arma días de 5 tiempos del banco de Magaly y ajusta
-// las porciones (solo `principal`) a la meta del usuario. Reglas: fijo/guarnición/
-// sub-receta/condimento quietos; `bloque` escala completo; `max_g` es tope duro.
-// Portado de scripts/plan_engine.py (mismo solver de mínimos cuadrados acotados).
+// las porciones (solo `principal`) a la meta del usuario, RESPETANDO el reparto de
+// Magaly por comida (LOGICA 3.5): calorías 25/35/25/15, proteína pareja en las 3
+// principales (snacks menos), carbos/grasa siguen el reparto, verduras en comida+cena.
+// Reglas: fijo/guarnición/sub-receta/condimento quietos; `bloque` escala completo; `max_g` tope.
 import { BANCO, type BancoDish, type BancoIng } from '../data/banco';
 import type { DayPlan, MealItem } from '../types';
 
@@ -12,6 +13,10 @@ export interface PlanTarget { kcal: number; protG: number; fatG: number; carbG: 
 
 const BY_TIME: Record<string, BancoDish[]> = { Desayuno: [], Comida: [], Cena: [], Snack: [] };
 for (const d of BANCO) (BY_TIME[d.tiempo] ??= []).push(d);
+const hasVeg = (d: BancoDish) => d.ings.some((i) => i.rol === 'guarnicion');
+// Verduras SIEMPRE en comida y cena (Magaly). Prefiere platillos con guarnición.
+const COMIDA_VEG = BY_TIME.Comida.filter(hasVeg);
+const CENA_VEG = BY_TIME.Cena.filter(hasVeg);
 
 // RNG determinista (mismo plan para misma semilla)
 function mulberry32(seed: number): () => number {
@@ -24,27 +29,28 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-interface Var { a: number[]; g: number; g0: number; lo: number; hi: number; blk: number | null; slot: number; ing: BancoIng }
+interface Var { a: number[]; g: number; g0: number; lo: number; hi: number; blk: number | null; ing: BancoIng }
 
 const W = [1.5, 0.8, 1.0]; // pesos P, F, C (proteína prioridad)
 const IDX = [1, 2, 3];     // posición de P,F,C en el vector [kcal,P,F,C]
 
-function prepDay(slots: { dish: BancoDish }[]): { fixed: number[]; vars: Var[] } {
+function prep(dishes: BancoDish[]): { fixed: number[]; vars: Var[] } {
   const fixed = [0, 0, 0, 0];
   const vars: Var[] = [];
-  slots.forEach((s, si) => {
-    const bloque = s.dish.tipo === 'bloque';
-    for (let i = 0; i < 4; i++) fixed[i] += s.dish.fixed[i];
-    for (const ing of s.dish.ings) {
+  dishes.forEach((d, si) => {
+    const bloque = d.tipo === 'bloque';
+    for (let i = 0; i < 4; i++) fixed[i] += d.fixed[i];
+    for (const ing of d.ings) {
       if (ing.rol === 'principal' && ing.a) {
         const hi = ing.max && ing.max > 0 ? ing.max : Math.round(ing.g0 * 2.5);
-        vars.push({ a: ing.a, g: ing.g0, g0: ing.g0, lo: ing.g0 * 0.4, hi, blk: bloque ? si : null, slot: si, ing });
+        vars.push({ a: ing.a, g: ing.g0, g0: ing.g0, lo: ing.g0 * 0.4, hi, blk: bloque ? si : null, ing });
       }
     }
   });
   return { fixed, vars };
 }
 
+// Ajusta las porciones (vars) para acercar el total a T=[kcal,P,F,C] (fitea P,F,C).
 function solve(fixed: number[], vars: Var[], T: number[], iters = 160): void {
   const blocks = new Map<number, Var[]>();
   for (const v of vars) if (v.blk !== null) (blocks.get(v.blk) ?? blocks.set(v.blk, []).get(v.blk)!).push(v);
@@ -57,12 +63,11 @@ function solve(fixed: number[], vars: Var[], T: number[], iters = 160): void {
     for (const v of vars) {
       if (v.blk !== null) continue;
       const X = totals();
-      const base = [0, 0, 0, 0];
-      for (let k = 0; k < 4; k++) base[k] = X[k] - v.a[k] * v.g;
       let nu = 0, de = 0;
       for (let j = 0; j < 3; j++) {
         const kk = IDX[j];
-        nu += W[j] * v.a[kk] * (base[kk] - T[kk]);
+        const base = X[kk] - v.a[kk] * v.g;
+        nu += W[j] * v.a[kk] * (base - T[kk]);
         de += W[j] * v.a[kk] * v.a[kk];
       }
       v.g = Math.max(v.lo, Math.min(v.hi, -nu / (de || 1e-9)));
@@ -71,12 +76,12 @@ function solve(fixed: number[], vars: Var[], T: number[], iters = 160): void {
       const X = totals();
       const bk = [0, 0, 0, 0];
       for (const g of grp) for (let k = 0; k < 4; k++) bk[k] += g.a[k] * g.g0;
-      const base = [0, 0, 0, 0];
-      for (let k = 0; k < 4; k++) { let sub = 0; for (const g of grp) sub += g.a[k] * g.g; base[k] = X[k] - sub; }
       let nu = 0, de = 0;
       for (let j = 0; j < 3; j++) {
         const kk = IDX[j];
-        nu += W[j] * bk[kk] * (base[kk] - T[kk]);
+        let sub = 0; for (const g of grp) sub += g.a[kk] * g.g;
+        const base = X[kk] - sub;
+        nu += W[j] * bk[kk] * (base - T[kk]);
         de += W[j] * bk[kk] * bk[kk];
       }
       const s = Math.max(0.5, Math.min(1.5, -nu / (de || 1e-9)));
@@ -89,32 +94,11 @@ function errMax(fixed: number[], vars: Var[], T: number[]): number {
   const x = [fixed[0], fixed[1], fixed[2], fixed[3]];
   for (const v of vars) for (let k = 0; k < 4; k++) x[k] += v.a[k] * v.g;
   let e = 0;
-  for (let k = 0; k < 4; k++) e = Math.max(e, Math.abs(x[k] - T[k]) / Math.max(T[k], 1));
+  for (let j = 0; j < 3; j++) { const kk = IDX[j]; e = Math.max(e, Math.abs(x[kk] - T[kk]) / Math.max(T[kk], 1)); }
   return e * 100;
 }
 
 function pick<T>(arr: T[], rng: () => number): T { return arr[Math.floor(rng() * arr.length)]; }
-
-function assemble(T: number[], rng: () => number, avoid: (d: BancoDish) => boolean): { label: string; dish: BancoDish }[] {
-  const n = T[0] > 2200 ? 2 : 1;
-  const pickFrom = (pool: BancoDish[]) => {
-    for (let tries = 0; tries < 20; tries++) { const d = pick(pool, rng); if (!avoid(d)) return d; }
-    return pick(pool, rng);
-  };
-  const snacks = (k: number) => {
-    const out: BancoDish[] = [];
-    let guard = 0;
-    while (out.length < k && guard++ < 40) { const s = pickFrom(BY_TIME.Snack); if (!out.includes(s)) out.push(s); }
-    return out;
-  };
-  return [
-    { label: 'Desayuno', dish: pickFrom(BY_TIME.Desayuno) },
-    ...snacks(n).map((d) => ({ label: 'Snack AM', dish: d })),
-    { label: 'Comida', dish: pickFrom(BY_TIME.Comida) },
-    ...snacks(n).map((d) => ({ label: 'Snack PM', dish: d })),
-    { label: 'Cena', dish: pickFrom(BY_TIME.Cena) },
-  ];
-}
 
 function portionStr(ing: BancoIng, g: number | null): string {
   if (ing.rol === 'condimento') return `${ing.nv} al gusto`;
@@ -122,51 +106,85 @@ function portionStr(ing: BancoIng, g: number | null): string {
   return `${Math.round(g ?? ing.g0)} g ${ing.nv}`;
 }
 
-function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, trials = 140): DayPlan {
-  let best: { e: number; slots: { label: string; dish: BancoDish }[] } | null = null;
-  const seen = new Set<string>();
-  for (let t = 0; t < trials; t++) {
-    const slots = assemble(T, rng, avoid);
-    const key = slots.map((s) => s.dish.nombre).join('|');
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const { fixed, vars } = prepDay(slots);
-    solve(fixed, vars, T, 120);
-    const e = errMax(fixed, vars, T);
-    if (!best || e < best.e) best = { e, slots };
+function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>): MealItem {
+  const m = [dish.fixed[0], dish.fixed[1], dish.fixed[2], dish.fixed[3]];
+  const portions: string[] = [];
+  const ings: { nv: string; g: number | null; rol: string }[] = [];
+  for (const ing of dish.ings) {
+    let g: number | null;
+    if (ing.rol === 'principal' && gOf.has(ing)) {
+      g = gOf.get(ing)!;
+      if (ing.a) for (let k = 0; k < 4; k++) m[k] += ing.a[k] * g;
+      g = Math.round(g);
+    } else if (ing.rol === 'condimento') g = null;
+    else g = ing.g0;
+    portions.push(portionStr(ing, g));
+    ings.push({ nv: ing.nv, g, rol: ing.rol });
   }
-  const slots = best!.slots;
-  const { fixed, vars } = prepDay(slots);
-  solve(fixed, vars, T, 220);
+  return {
+    time: label,
+    name: dish.nombre,
+    desc: dish.ings.filter((i) => i.rol === 'principal').slice(0, 3).map((i) => i.nv).join(' · '),
+    img: IMG_BASE + dish.img,
+    portions,
+    macros: { kcal: Math.round(m[0]), prot: Math.round(m[1]), fat: Math.round(m[2]), carb: Math.round(m[3]) },
+    ings,
+  };
+}
+
+// Busca el mejor conjunto de `n` platillos de `pool` para pegar el target de ESTE
+// tiempo, y devuelve sus MealItem (ya ajustados). needVeg exige guarnición (comida/cena).
+function fitSlot(
+  pool: BancoDish[], label: string, target: number[], n: number,
+  rng: () => number, avoid: (d: BancoDish) => boolean, trials: number,
+): MealItem[] {
+  const pickDish = () => { for (let i = 0; i < 20; i++) { const d = pick(pool, rng); if (!avoid(d)) return d; } return pick(pool, rng); };
+  const pickN = () => { const out: BancoDish[] = []; let g = 0; while (out.length < n && g++ < 40) { const d = pickDish(); if (!out.includes(d)) out.push(d); } return out; };
+  let best: { dishes: BancoDish[]; e: number } | null = null;
+  for (let t = 0; t < trials; t++) {
+    const dishes = pickN();
+    const { fixed, vars } = prep(dishes);
+    solve(fixed, vars, target, 100);
+    const e = errMax(fixed, vars, target);
+    if (!best || e < best.e) best = { dishes, e };
+  }
+  const dishes = best!.dishes;
+  const { fixed, vars } = prep(dishes);
+  solve(fixed, vars, target, 220);
+  void fixed;
   const gOf = new Map<BancoIng, number>();
   for (const v of vars) gOf.set(v.ing, v.g);
+  return dishes.map((d) => mealItemFrom(d, label, gOf));
+}
 
-  const meals: MealItem[] = slots.map((s) => {
-    const m = [s.dish.fixed[0], s.dish.fixed[1], s.dish.fixed[2], s.dish.fixed[3]];
-    for (const v of vars) if (v.slot === slots.indexOf(s)) for (let k = 0; k < 4; k++) m[k] += v.a[k] * v.g;
-    const portions: string[] = [];
-    const ings: { nv: string; g: number | null; rol: string }[] = [];
-    for (const ing of s.dish.ings) {
-      const g = ing.rol === 'principal' && gOf.has(ing) ? Math.round(gOf.get(ing)!) : ing.rol === 'condimento' ? null : ing.g0;
-      portions.push(portionStr(ing, g));
-      ings.push({ nv: ing.nv, g, rol: ing.rol });
-    }
-    return {
-      time: s.label,
-      name: s.dish.nombre,
-      desc: s.dish.ings.filter((i) => i.rol === 'principal').slice(0, 3).map((i) => i.nv).join(' · '),
-      img: IMG_BASE + s.dish.img,
-      portions,
-      macros: { kcal: Math.round(m[0]), prot: Math.round(m[1]), fat: Math.round(m[2]), carb: Math.round(m[3]) },
-      ings,
-    };
-  });
+// Reparto de Magaly por comida (LOGICA 3.5). Proteína pareja en las 3 principales
+// (0.30 c/u) y menos en snacks (0.10 total); carbos y grasa siguen el reparto calórico.
+function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena: number[]; snackSlot: number[] } {
+  const [, P, F, C] = T;
+  return {
+    desayuno:  [0, 0.30 * P, 0.25 * F, 0.25 * C],
+    comida:    [0, 0.30 * P, 0.35 * F, 0.35 * C],
+    cena:      [0, 0.30 * P, 0.25 * F, 0.25 * C],
+    snackSlot: [0, 0.05 * P, 0.075 * F, 0.075 * C], // por slot (AM y PM); 2 slots = 0.10P/0.15F/0.15C
+  };
+}
+
+function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean): DayPlan {
+  const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
+  const MT = mealTargets(T);
+  const meals: MealItem[] = [
+    ...fitSlot(BY_TIME.Desayuno, 'Desayuno', MT.desayuno, 1, rng, avoid, 90),
+    ...fitSlot(BY_TIME.Snack, 'Snack AM', MT.snackSlot, nSnack, rng, avoid, 70),
+    ...fitSlot(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, 'Comida', MT.comida, 1, rng, avoid, 90),
+    ...fitSlot(BY_TIME.Snack, 'Snack PM', MT.snackSlot, nSnack, rng, avoid, 70),
+    ...fitSlot(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, 'Cena', MT.cena, 1, rng, avoid, 90),
+  ];
   return { day: dayNum, theme: '', meals };
 }
 
 export interface BuildOpts { seed?: number; avoid?: string[] }
 
-/** Genera 7 días ajustados a la meta del usuario. */
+/** Genera 7 días ajustados a la meta del usuario, con el reparto por comida de Magaly. */
 export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPlan[] {
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const rng = mulberry32(opts.seed ?? 12345);

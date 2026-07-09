@@ -36,6 +36,19 @@ describe('planEngine — ajuste a la meta', () => {
     });
   }
 
+  it('respeta el reparto de Magaly: comida es la más grande, cena ≤ comida', () => {
+    const T = CASES[2];
+    for (const d of buildWeeklyPlan(T, { seed: 7 })) {
+      const kcalOf = (time: string) =>
+        d.meals.filter((m) => m.time === time).reduce((a, m) => a + (m.macros?.kcal ?? 0), 0);
+      const des = kcalOf('Desayuno'), com = kcalOf('Comida'), cen = kcalOf('Cena');
+      const snacks = kcalOf('Snack AM') + kcalOf('Snack PM');
+      expect(com).toBeGreaterThanOrEqual(des);   // comida (35%) ≥ desayuno (25%)
+      expect(com).toBeGreaterThanOrEqual(cen);   // comida (35%) ≥ cena (25%)
+      expect(snacks).toBeLessThan(com);          // snacks (15%) < comida
+    }
+  });
+
   it('estructura de 5 tiempos (Snack AM + PM), combina snacks en meta alta', () => {
     const low = buildWeeklyPlan(CASES[0], { seed: 1 })[0];
     const high = buildWeeklyPlan(CASES[3], { seed: 1 })[0];
