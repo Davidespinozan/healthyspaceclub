@@ -186,6 +186,7 @@ export default function App() {
     // Verificar sesión inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) ensureDataOwner(session.user.id);
+      useAppStore.getState().setUserEmail(session?.user?.email ?? '');
       setSession(session);
       // Si el usuario aterriza en /reset-password (link de recovery), forzamos esa pantalla.
       if (typeof window !== 'undefined' && window.location.pathname.includes('reset-password')) {
@@ -207,6 +208,7 @@ export default function App() {
 
       if (event === 'SIGNED_IN' && session) {
         identify(session.user.id);
+        useAppStore.getState().setUserEmail(session.user.email ?? '');
         // Anti-fuga: reseteá datos de otro user ANTES de rutear/hidratar.
         // Efecto: si el dueño del cache no es este user, resetea + reclama
         // dataOwnerId (guard anti-leak). Ya no se backfillea local→DB, así que

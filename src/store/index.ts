@@ -126,6 +126,8 @@ interface AppState {
   // User
   userName: string;
   setUserName: (name: string) => void;
+  userEmail: string;                 // email de la sesión (para bypass de pruebas)
+  setUserEmail: (email: string) => void;
   // Handle social público (@usuario). null = aún no lo ha elegido. Fase 1A.
   username: string | null;
   setUsername: (handle: string | null) => void;
@@ -416,6 +418,8 @@ export const useAppStore = create<AppState>()(
   // User
   userName: '',
   setUserName: (name) => set({ userName: name }),
+  userEmail: '',
+  setUserEmail: (email) => set({ userEmail: email }),
   username: null,
   setUsername: (handle) => set({ username: handle }),
   avatarUrl: null,

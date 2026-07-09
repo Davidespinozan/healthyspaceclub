@@ -149,8 +149,8 @@ export default function WeeklyNutritionPlanner() {
     mealPlanKey, planGoal, obData, userName,
     mealChecks, toggleMealCheck,
     mealResolvedByLog, clearMealResolvedByLog, foodLog, removeFoodLog,
-    planRegenCount, incrementPlanRegen,
-  } = useAppStore(useShallow((s) => ({ shoppingDay: s.shoppingDay, setShoppingDay: s.setShoppingDay, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, clearWeeklyPlan: s.clearWeeklyPlan, mealPlanKey: s.mealPlanKey, planGoal: s.planGoal, obData: s.obData, userName: s.userName, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, mealResolvedByLog: s.mealResolvedByLog, clearMealResolvedByLog: s.clearMealResolvedByLog, foodLog: s.foodLog, removeFoodLog: s.removeFoodLog, planRegenCount: s.planRegenCount, incrementPlanRegen: s.incrementPlanRegen })));
+    planRegenCount, incrementPlanRegen, userEmail,
+  } = useAppStore(useShallow((s) => ({ shoppingDay: s.shoppingDay, setShoppingDay: s.setShoppingDay, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, clearWeeklyPlan: s.clearWeeklyPlan, mealPlanKey: s.mealPlanKey, planGoal: s.planGoal, obData: s.obData, userName: s.userName, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, mealResolvedByLog: s.mealResolvedByLog, clearMealResolvedByLog: s.clearMealResolvedByLog, foodLog: s.foodLog, removeFoodLog: s.removeFoodLog, planRegenCount: s.planRegenCount, incrementPlanRegen: s.incrementPlanRegen, userEmail: s.userEmail })));
   const todayKey = dayKey(new Date());
 
   const weekStart = (() => {
@@ -159,8 +159,11 @@ export default function WeeklyNutritionPlanner() {
     return dayKey(d);
   })();
   const regenThisWeek = planRegenCount?.weekStart === weekStart ? planRegenCount.count : 0;
-  const regenBlocked = regenThisWeek >= 2;
-  const regenLeft = Math.max(0, 2 - regenThisWeek);
+  // Correos de PRUEBA con regeneración ilimitada (temporal, para testing).
+  const REGEN_UNLIMITED = new Set(['daen97@hotmail.com']);
+  const regenUnlimited = REGEN_UNLIMITED.has((userEmail || '').toLowerCase());
+  const regenBlocked = !regenUnlimited && regenThisWeek >= 2;
+  const regenLeft = regenUnlimited ? 99 : Math.max(0, 2 - regenThisWeek);
 
   const [phase, setPhase] = useState<'setup-day' | 'questions' | 'generating' | 'plan' | 'error'>(
     () => {
