@@ -49,6 +49,13 @@ describe('planEngine — ajuste a la meta', () => {
     }
   });
 
+  it('sesga por cocina: elegir italiana → comidas italianas', () => {
+    const days = buildWeeklyPlan(CASES[1], { seed: 3, cuisines: ['italiana'] });
+    const comidas = days.map((d) => d.meals.find((m) => m.time === 'Comida')!.name.toLowerCase());
+    const italian = comidas.filter((n) => /pasta|espagueti|bolo|pizza/.test(n)).length;
+    expect(italian).toBeGreaterThanOrEqual(5); // la mayoría de las 7 comidas
+  });
+
   it('5 tiempos; snack AM/PM aparecen UNA vez; combina 2 snacks dentro del mismo', () => {
     const low = buildWeeklyPlan(CASES[0], { seed: 1 })[0];
     const high = buildWeeklyPlan(CASES[3], { seed: 1 })[0];

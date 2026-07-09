@@ -18,6 +18,22 @@ const hasVeg = (d: BancoDish) => d.ings.some((i) => i.rol === 'guarnicion');
 const COMIDA_VEG = BY_TIME.Comida.filter(hasVeg);
 const CENA_VEG = BY_TIME.Cena.filter(hasVeg);
 
+// Cocina por nombre del platillo (heurística). El resto = mexicana (base del banco).
+function cuisineOf(d: BancoDish): string {
+  const n = d.nombre.toLowerCase();
+  if (/ramen|yakimeshi|gohan|poke|noodles|tallarin|edamame/.test(n)) return 'japonesa';
+  if (/pasta|espagueti|bolo|pizza|lasa/.test(n)) return 'italiana';
+  if (/burger|bagel|waffle|french toast|hot cake|pancake/.test(n)) return 'americana';
+  return 'mexicana';
+}
+// Sesga el pool hacia las cocinas elegidas; si quedan <2 (ej. no hay desayuno
+// japonés), cae al pool completo para no quedarse sin variedad.
+function biasPool(pool: BancoDish[], cuisines: string[]): BancoDish[] {
+  if (!cuisines.length) return pool;
+  const f = pool.filter((d) => cuisines.includes(cuisineOf(d)));
+  return f.length >= 2 ? f : pool;
+}
+
 // RNG determinista (mismo plan para misma semilla)
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
@@ -192,20 +208,23 @@ function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena:
   };
 }
 
-function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean): DayPlan {
+function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[]): DayPlan {
   const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
   const MT = mealTargets(T);
+  const des = biasPool(BY_TIME.Desayuno, cuisines);
+  const com = biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines);
+  const cen = biasPool(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, cuisines);
   const meals: MealItem[] = [
-    ...fitSlot(BY_TIME.Desayuno, 'Desayuno', MT.desayuno, 1, rng, avoid, 90),
+    ...fitSlot(des, 'Desayuno', MT.desayuno, 1, rng, avoid, 90),
     ...fitSlot(BY_TIME.Snack, 'Snack AM', MT.snackSlot, nSnack, rng, avoid, 70, true),
-    ...fitSlot(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, 'Comida', MT.comida, 1, rng, avoid, 90),
+    ...fitSlot(com, 'Comida', MT.comida, 1, rng, avoid, 90),
     ...fitSlot(BY_TIME.Snack, 'Snack PM', MT.snackSlot, nSnack, rng, avoid, 70, true),
-    ...fitSlot(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, 'Cena', MT.cena, 1, rng, avoid, 90),
+    ...fitSlot(cen, 'Cena', MT.cena, 1, rng, avoid, 90),
   ];
   return { day: dayNum, theme: '', meals };
 }
 
-export interface BuildOpts { seed?: number; avoid?: string[] }
+export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[] }
 
 /** Genera 7 días ajustados a la meta del usuario, con el reparto por comida de Magaly. */
 export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPlan[] {
@@ -215,7 +234,8 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   const avoid = (d: BancoDish) =>
     avoidTerms.length > 0 &&
     avoidTerms.some((t) => d.nombre.toLowerCase().includes(t) || d.ings.some((i) => i.nv.toLowerCase().includes(t)));
+  const cuisines = (opts.cuisines ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean);
   const days: DayPlan[] = [];
-  for (let i = 1; i <= 7; i++) days.push(buildDay(i, T, rng, avoid));
+  for (let i = 1; i <= 7; i++) days.push(buildDay(i, T, rng, avoid, cuisines));
   return days;
 }

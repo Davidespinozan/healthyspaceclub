@@ -252,9 +252,13 @@ export default function WeeklyNutritionPlanner() {
       const avoid = /ningun|nada|todas|todo/.test(avoidRaw)
         ? []
         : avoidRaw.split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
+      const cuisinesRaw = (newAnswers.cuisines ?? '').toLowerCase();
+      const cuisines = /todas|todo/.test(cuisinesRaw)
+        ? []
+        : cuisinesRaw.split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
       const days = buildWeeklyPlan(
         { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG },
-        { seed: Date.now() & 0x7fffffff, avoid },
+        { seed: Date.now() & 0x7fffffff, avoid, cuisines },
       );
       // Lista de compras: ingredientes únicos (sin condimentos), del banco ya ajustado.
       const shopSet = new Set<string>();
