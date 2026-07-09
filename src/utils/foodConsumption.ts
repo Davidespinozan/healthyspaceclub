@@ -22,7 +22,7 @@
 // (el foodLog gana como ground truth). En la práctica este caso es
 // muy raro: registrar = "no seguí el plan acá", marcar = "sí seguí".
 
-import { mealNutrition } from './mealNutrition';
+import { mealMacros } from './mealNutrition';
 
 export interface DayConsumptionInput {
   todayMeals: { portions: string[] }[];
@@ -63,7 +63,7 @@ export function computeDayConsumption(input: DayConsumptionInput): DayConsumptio
     // Plan suma SOLO si checked AND no resolved (anti-duplicado).
     // Números REALES de la base de Magaly (mealNutrition), no el estimador viejo.
     if (checked && !resolved) {
-      const n = mealNutrition(todayMeals[i].portions);
+      const n = mealMacros(todayMeals[i]);
       sumPlan += n.kcal;
       planProt += n.prot; planCarbs += n.carbs; planFat += n.fat;
     }

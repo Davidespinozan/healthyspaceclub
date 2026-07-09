@@ -4,6 +4,10 @@ export interface MealItem {
   desc: string;
   img?: string;
   portions: string[];
+  // Opcionales: presentes cuando el plan viene del motor (banco de Magaly).
+  // Macros exactos ya ajustados a la meta + ingredientes estructurados.
+  macros?: { kcal: number; prot: number; fat: number; carb: number };
+  ings?: { nv: string; g: number | null; rol: string }[];
 }
 
 export interface DayPlan {

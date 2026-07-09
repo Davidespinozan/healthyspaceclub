@@ -70,10 +70,19 @@ export function mealKcal(portions: string[]): number {
   return Math.round(mealNutrition(portions).kcal);
 }
 
+/** Macros de una comida: usa los EXACTOS del motor (banco) si vienen; si no, los
+ *  calcula desde las porciones. Punto único para plan viejo (strings) y nuevo (motor). */
+export function mealMacros(meal: { portions?: string[]; macros?: { kcal: number; prot: number; fat: number; carb: number } }): MealNutrition {
+  if (meal.macros) {
+    return { kcal: meal.macros.kcal, prot: meal.macros.prot, carbs: meal.macros.carb, fat: meal.macros.fat, fiber: 0, misses: [] };
+  }
+  return mealNutrition(meal.portions ?? []);
+}
+
 /** Macros de un día completo (varias comidas). */
-export function dayNutrition(meals: { portions: string[] }[]): MealNutrition {
+export function dayNutrition(meals: { portions: string[]; macros?: { kcal: number; prot: number; fat: number; carb: number } }[]): MealNutrition {
   return meals.reduce<MealNutrition>((a, m) => {
-    const n = mealNutrition(m.portions);
+    const n = mealMacros(m);
     return { kcal: a.kcal + n.kcal, prot: a.prot + n.prot, carbs: a.carbs + n.carbs, fat: a.fat + n.fat, fiber: a.fiber + n.fiber, misses: [...a.misses, ...n.misses] };
   }, { kcal: 0, prot: 0, carbs: 0, fat: 0, fiber: 0, misses: [] });
 }

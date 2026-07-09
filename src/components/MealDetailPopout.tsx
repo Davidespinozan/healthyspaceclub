@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import { Camera, ArrowRight } from 'lucide-react';
 import { useT } from '../i18n';
 import { formatPortion } from '../utils/kcalCalc';
-import { mealNutrition } from '../utils/mealNutrition';
+import { mealMacros } from '../utils/mealNutrition';
 import type { TranslationKey } from '../i18n/es';
 
 // Shape mínimo de un meal — compatible con MealItem (data/mealPlan) y con los
@@ -13,6 +13,8 @@ export interface PopoutMeal {
   desc?: string;
   img?: string;
   portions?: string[];
+  // Motor (banco): macros exactos ya ajustados a la meta.
+  macros?: { kcal: number; prot: number; fat: number; carb: number };
 }
 
 const MEAL_TIME_KEYS: Record<string, TranslationKey> = {
@@ -54,7 +56,7 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther,
   // Mismo motor que la card (estimador sobre las porciones ya escaladas) → los
   // números coinciden. Porciones en unidades caseras (6 huevos, ⅔ taza), no gramos.
   const portions = meal.portions ?? [];
-  const n = portions.length ? mealNutrition(portions) : null;
+  const n = (meal.macros || portions.length) ? mealMacros(meal) : null;
   const kcal = n ? Math.round(n.kcal) : 0;
   const macros = n ? { prot: n.prot, carbs: n.carbs, fat: n.fat } : null;
   const timeLabel = MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time;

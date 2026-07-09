@@ -135,9 +135,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const activePlan = mealPlans[weeklyPlan?.mealPlanKey ?? mealPlanKey] ?? mealPlans['planA'];
   // scalePlan recorre el plan semanal — memoizar evita recalcularlo en CADA render
   // (TabHoy se re-renderiza con cualquier cambio del store).
+  // Motor (banco): días ya ajustados a la meta → tal cual. Si no, plan viejo escalado.
   const scaledPlan = useMemo(
-    () => (planGoal > 0 ? scalePlan(activePlan, planGoal) : activePlan),
-    [activePlan, planGoal],
+    () => weeklyPlan?.days ?? (planGoal > 0 ? scalePlan(activePlan, planGoal) : activePlan),
+    [weeklyPlan?.days, activePlan, planGoal],
   );
   const anchor = shoppingDay ?? 0;
 
@@ -148,6 +149,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const todayMeals = scaledPlan[todayPlanIdx >= 0 ? todayPlanIdx : 0]?.meals ?? [];
   // Factor de escala del día de hoy (base sin escalar → meta) para el desglose exacto del popout.
   const todayScale = (() => {
+    if (weeklyPlan?.days) return 1; // motor: ya ajustado
     const baseDay = activePlan[todayPlanIdx >= 0 ? todayPlanIdx : 0];
     return baseDay ? dayScaleFactor(baseDay.meals, planGoal) : 1;
   })();
