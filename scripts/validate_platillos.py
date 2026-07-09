@@ -145,9 +145,10 @@ def main():
                 continue
             if rol and rol not in ROLES_VALIDOS:
                 problemas["Sub-receta: rol inválido"].append(f"L{ln} {sname}: «{rol}»")
-            res = cross(alimento)
-            if res != "ok":
-                problemas["Sub-receta: ingrediente no cruza catálogo"].append(f"L{ln} {sname}: «{alimento}» — {res}")
+            if rol in ("principal", "fijo", "guarnicion"):  # condimento cuenta cero
+                res = cross(alimento)
+                if res != "ok":
+                    problemas["Sub-receta: ingrediente no cruza catálogo"].append(f"L{ln} {sname}: «{alimento}» — {res}")
 
     # ---- Subrecetas huérfanas ----
     for s in subreceta_names:
