@@ -145,7 +145,11 @@ export function computeNutritionTargets(o: ObInput): NutritionTargets {
   let gkg = (GKG[objKey] || [1.4, 1.6, 1.8])[actIdx];
   if (gkg > 2.4) gkg = 2.4;                                          // techo de seguridad
   const protG = Math.round(o.pesoKg * gkg);
-  const fatG = Math.round(Math.max(planGoal * 0.25 / 9, o.pesoKg * 0.6)); // 25% kcal, piso 0.6 g/kg
+  // Grasa 20–35% kcal (Magaly 3.2): déficit en la parte baja, media en mantener/ganar.
+  // Piso de seguridad 0.6 g/kg (protege función hormonal aunque el % quede bajo).
+  const FAT_PCT: Record<string, number> = { bajar: 0.22, recomp: 0.25, mantener: 0.28, ganar: 0.30 };
+  const fatPct = FAT_PCT[objKey] ?? 0.27;
+  const fatG = Math.round(Math.max(planGoal * fatPct / 9, o.pesoKg * 0.6));
   const carbG = Math.round(Math.max(130, (planGoal - protG * 4 - fatG * 9) / 4)); // resto, mín 130 g
   const fiberG = Math.round(planGoal / 1000 * 14);                  // 14 g / 1000 kcal
 
