@@ -202,6 +202,7 @@ export interface WorkoutDayDecision {
   muscleGroups: MuscleGroup[];
   intensity: 'baja' | 'media' | 'alta';
   reason: string;         // "Ayer hiciste Upper..."
+  deload?: boolean;       // semana de descarga (fatiga acumulada) → menos volumen/intensidad
 }
 
 export interface WorkoutEntry {

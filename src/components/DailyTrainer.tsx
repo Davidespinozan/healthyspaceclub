@@ -497,6 +497,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       let intensity = todayDecision.intensity;
       if (priorExercise === 'heavy') intensity = 'baja';
       else if (priorExercise === 'light' || discomfort === 'mild') intensity = 'media';
+      if (todayDecision.deload) intensity = 'baja'; // descarga: intensidad baja siempre
 
       // Guardia defensiva: filterWithProgressiveRelaxation nivel 3 SIEMPRE devuelve
       // candidatos si el equipo coincide con algún ejercicio. Si llegamos a 0 acá,
@@ -509,7 +510,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         throw new Error(msg);
       }
 
-      const targetCount = Math.min(exerciseCountForDuration(selectedTime), candidates.length);
+      let targetCount = Math.min(exerciseCountForDuration(selectedTime), candidates.length);
+      if (todayDecision.deload) {
+        targetCount = Math.max(3, targetCount - 2); // descarga: menos ejercicios
+        bullets.push('SEMANA DE DELOAD (descarga planificada por fatiga acumulada): baja el volumen ~40% — menos series por ejercicio (2 en vez de 3-4), deja 2-3 reps en reserva (RPE bajo), mismas técnicas. Es recuperación para seguir creciendo; explícaselo en la nota.');
+      }
 
       const contextStr = bullets.join('\n- ');
       const workout = await orchestrateWorkout({

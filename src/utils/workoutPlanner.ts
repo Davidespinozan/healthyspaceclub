@@ -232,6 +232,28 @@ export function splitTypesForFrequency(freq: number): WorkoutDayType[] {
   return ['push', 'pull', 'legs', 'upper', 'lower'];
 }
 
+/** ¿Toca semana de descarga (deload)? Detecta 4+ semanas COMPLETAS seguidas de entreno
+ *  duro (≥3 sesiones/sem) sin una semana ligera de por medio → fatiga acumulada. */
+export function deloadCheck(
+  completedSessions: CompletedSession[],
+  workoutLog: WorkoutEntry[] = [],
+): { deload: boolean; weeksAccumulated: number } {
+  const weekSessions = (w: number): number => {
+    const newer = dayKey(new Date(Date.now() - (w * 7 - 6) * 86400000)); // límite reciente
+    const older = dayKey(new Date(Date.now() - w * 7 * 86400000));       // límite viejo
+    const set = new Set<string>();
+    const inRange = (d: string) => d >= older && d <= newer;
+    for (const x of completedSessions) if (inRange(x.date)) set.add(x.date);
+    for (const x of workoutLog) if (inRange(x.date)) set.add(x.date);
+    return set.size;
+  };
+  let weeks = 0;
+  for (let w = 1; w <= 8; w++) { // semanas completas hacia atrás (excluye la en curso)
+    if (weekSessions(w) >= 3) weeks++; else break;
+  }
+  return { deload: weeks >= 4, weeksAccumulated: weeks };
+}
+
 /** Entre varios tipos de día, elige el que más DÉFICIT de volumen tiene esta semana
  *  (músculos que van cortos vs la meta), evitando repetir los de ayer. */
 export function pickByVolumeDeficit(
@@ -285,13 +307,18 @@ export function decideTodayWorkout(params: {
     todayType = pickByVolumeDeficit(preferred, vol, history.yesterday);
   }
 
-  // Determine intensity from check-in
-  const intensity = determineIntensity(dailyEnergy, dailySleep, history.restDays);
+  // Fase 5 — deload: si llevas 4+ semanas duras seguidas, toca descarga.
+  const { deload } = deloadCheck(completedSessions, workoutLog);
+
+  // Determine intensity from check-in (deload fuerza intensidad baja).
+  let intensity = determineIntensity(dailyEnergy, dailySleep, history.restDays);
+  if (deload) intensity = 'baja';
 
   // Build reason
-  const reason = buildReason(todayType, history, objectiveKey);
+  let reason = buildReason(todayType, history, objectiveKey);
+  if (deload) reason = `Semana de descarga: llevas varias semanas entrenando fuerte, así que bajamos el volumen y la intensidad para que recuperes y sigas progresando. ${reason}`;
 
-  return buildDecision(todayType, reason, intensity);
+  return buildDecision(todayType, reason, intensity, deload);
 }
 
 function normalizeObjective(obj: string): string {
@@ -405,7 +432,8 @@ function summarizeMuscles(muscles: MuscleGroup[]): string {
 function buildDecision(
   type: WorkoutDayType,
   reason: string,
-  intensity: 'baja' | 'media' | 'alta'
+  intensity: 'baja' | 'media' | 'alta',
+  deload = false,
 ): WorkoutDayDecision {
   const config = DAY_TYPE_CONFIG[type];
   return {
@@ -415,6 +443,7 @@ function buildDecision(
     muscleGroups: config.muscleGroups,
     intensity,
     reason,
+    deload,
   };
 }
 
