@@ -9,7 +9,7 @@ import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
 import { buildWeeklyPlan } from '../utils/planEngine';
 import NutritionMeta from './NutritionMeta';
-import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, Shuffle, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, type LucideIcon } from 'lucide-react';
+import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, Shuffle, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import CalculadoraSheet from './CalculadoraSheet';
@@ -60,6 +60,11 @@ const AVOID_LABEL_KEYS: Record<string, TranslationKey> = {
   'lacteos': 'nutritionPlanner.avoidDairy',
   'carne-roja': 'nutritionPlanner.avoidRedMeat',
   'mariscos': 'nutritionPlanner.avoidSeafood',
+  'huevo': 'nutritionPlanner.avoidEgg',
+  'frutos-secos': 'nutritionPlanner.avoidNuts',
+  'cacahuate': 'nutritionPlanner.avoidPeanut',
+  'soya': 'nutritionPlanner.avoidSoy',
+  'pescado': 'nutritionPlanner.avoidFish',
   'nada': 'nutritionPlanner.avoidNone',
 };
 const AVOID_SUB_KEYS: Record<string, TranslationKey> = {
@@ -67,6 +72,11 @@ const AVOID_SUB_KEYS: Record<string, TranslationKey> = {
   'lacteos': 'nutritionPlanner.avoidDairySub',
   'carne-roja': 'nutritionPlanner.avoidRedMeatSub',
   'mariscos': 'nutritionPlanner.avoidSeafoodSub',
+  'huevo': 'nutritionPlanner.avoidEggSub',
+  'frutos-secos': 'nutritionPlanner.avoidNutsSub',
+  'cacahuate': 'nutritionPlanner.avoidPeanutSub',
+  'soya': 'nutritionPlanner.avoidSoySub',
+  'pescado': 'nutritionPlanner.avoidFishSub',
   'nada': 'nutritionPlanner.avoidNoneSub',
 };
 
@@ -116,13 +126,18 @@ const QUESTIONS: Array<{
   {
     id: 'avoid',
     hintKey: 'nutritionPlanner.hAvoid',
-    multi: false,
+    multi: true,
     options: [
-      { value: 'gluten',     icon: Wheat },
-      { value: 'lacteos',    icon: Milk },
-      { value: 'carne-roja', icon: Beef },
-      { value: 'mariscos',   icon: Shell },
-      { value: 'nada',       icon: CircleCheck },
+      { value: 'gluten',       icon: Wheat },
+      { value: 'lacteos',      icon: Milk },
+      { value: 'huevo',        icon: Egg },
+      { value: 'frutos-secos', icon: Nut },
+      { value: 'cacahuate',    icon: Bean },
+      { value: 'soya',         icon: Sprout },
+      { value: 'pescado',      icon: Fish },
+      { value: 'mariscos',     icon: Shell },
+      { value: 'carne-roja',   icon: Beef },
+      { value: 'nada',         icon: CircleCheck },
     ],
   },
 ];
@@ -208,13 +223,13 @@ export default function WeeklyNutritionPlanner() {
   function handleOption(value: string) {
     const q = QUESTIONS[step];
     if (q.multi) {
-      if (value === 'todas') {
-        const next = multiSel.includes('todas') ? [] : ['todas'];
-        setMultiSel(next);
+      // Opciones exclusivas: 'todas' (cocinas) y 'nada' (evitar) → limpian el resto.
+      if (value === 'todas' || value === 'nada') {
+        setMultiSel(multiSel.includes(value) ? [] : [value]);
         return;
       }
       setMultiSel(prev =>
-        prev.includes(value) ? prev.filter(v => v !== value) : [...prev.filter(v => v !== 'todas'), value]
+        prev.includes(value) ? prev.filter(v => v !== value) : [...prev.filter(v => v !== 'todas' && v !== 'nada'), value]
       );
       return;
     }
@@ -248,10 +263,8 @@ export default function WeeklyNutritionPlanner() {
       // Deja pintar el spinner antes del cómputo síncrono del motor.
       await new Promise((r) => setTimeout(r, 30));
       const targets = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
-      const avoidRaw = (newAnswers.avoid ?? '').toLowerCase();
-      const avoid = /ningun|nada|todas|todo/.test(avoidRaw)
-        ? []
-        : avoidRaw.split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
+      // Categorías/alergias tal cual (el motor mapea a alimentos y descarta 'nada'/'todas').
+      const avoid = (newAnswers.avoid ?? '').toLowerCase().split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
       const cuisinesRaw = (newAnswers.cuisines ?? '').toLowerCase();
       const cuisines = /todas|todo/.test(cuisinesRaw)
         ? []

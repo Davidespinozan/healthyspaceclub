@@ -58,6 +58,12 @@ describe('planEngine — ajuste a la meta', () => {
     for (const d of days) for (const m of d.meals) expect(rm.test(mealText(m))).toBe(false);
   });
 
+  it('alergias: evitar huevo + cacahuate → no aparecen en el plan', () => {
+    const days = buildWeeklyPlan(CASES[1], { seed: 4, avoid: ['huevo', 'cacahuate'] });
+    const bad = /\b(huevo|huevos|cacahuate|cacahuates)\b/;
+    for (const d of days) for (const m of d.meals) expect(bad.test(mealText(m))).toBe(false);
+  });
+
   it('antojo "pollo" → prefiere platillos con pollo', () => {
     const cnt = (days: ReturnType<typeof buildWeeklyPlan>) =>
       days.reduce((a, d) => a + d.meals.filter((m) => /pollo/.test(mealText(m))).length, 0);

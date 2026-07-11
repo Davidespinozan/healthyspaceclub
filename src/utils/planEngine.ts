@@ -48,16 +48,24 @@ function dishMatches(d: BancoDish, term: string): boolean {
 }
 const dishMatchesAny = (d: BancoDish, terms: string[]) => terms.some((t) => dishMatches(d, t));
 
-// Categorías de "evitar" → alimentos/palabras reales del banco (mapeo, no texto literal).
+// Categorías de "evitar" / alergias → alimentos/palabras reales del banco.
 const AVOID_MAP: Record<string, string[]> = {
   gluten: ['pan', 'pasta', 'espagueti', 'bagel', 'waffle', 'waffles', 'pita', 'tallarines', 'noodles', 'galleta', 'galletas', 'crutones', 'cereal', 'tortilla de harina', 'hot cake', 'hot cakes', 'corn flakes'],
   lacteos: ['leche', 'queso', 'yogur', 'yoghurt', 'yogurt', 'requeson', 'ricotta', 'cottage', 'panela', 'oaxaca', 'feta', 'mozzarella', 'parmesano', 'crema acida'],
   'carne-roja': ['res', 'sirloin', 'bistec', 'falda', 'molida', 'machaca', 'chambarete', 'arrachera'],
   mariscos: ['camaron', 'camarones', 'marisco', 'mariscos'],
+  // Alergias:
+  huevo: ['huevo', 'huevos'],
+  'frutos-secos': ['nuez', 'nueces', 'almendra', 'almendras', 'pistache', 'pistaches', 'avellana', 'avellanas'],
+  cacahuate: ['cacahuate', 'cacahuates'],
+  soya: ['soya', 'edamame', 'edamames'],
+  pescado: ['pescado', 'salmon', 'atun', 'tilapia', 'bacalao'],
+  ajonjoli: ['ajonjoli', 'sesamo'],
 };
 function expandAvoid(raw: string[]): string[] {
+  const skip = new Set(['nada', 'ninguno', 'ninguna', 'todas', 'todo', 'todos']);
   const out: string[] = [];
-  for (const a of raw) { if (a === 'nada' || a === 'ninguno') continue; out.push(...(AVOID_MAP[a] ?? [a])); }
+  for (const a of raw) { if (skip.has(a)) continue; out.push(...(AVOID_MAP[a] ?? [a])); }
   return out.map(norm);
 }
 const STOP = new Set(['algo', 'con', 'sin', 'del', 'los', 'las', 'una', 'uno', 'que', 'por', 'para', 'muy', 'mas', 'antoja', 'antojo', 'quiero', 'comer', 'tipo', 'como', 'mucho', 'poco']);
@@ -209,11 +217,11 @@ function mergeItems(items: MealItem[], label: string): MealItem {
 // merge=true → devuelve UNA comida combinada (snacks: los dos dentro del mismo).
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
-  rng: () => number, avoid: (d: BancoDish) => boolean, trials: number,
+  rng: () => number, trials: number,
   used: Set<string>, craving: string[], merge = false,
 ): MealItem[] {
-  const pickDish = () => { for (let i = 0; i < 20; i++) { const d = pick(pool, rng); if (!avoid(d)) return d; } return pick(pool, rng); };
-  const pickN = () => { const out: BancoDish[] = []; let g = 0; while (out.length < n && g++ < 40) { const d = pickDish(); if (!out.includes(d)) out.push(d); } return out; };
+  // El pool ya viene filtrado por alergia (buildDay) → aquí no se cuela ningún alérgeno.
+  const pickN = () => { const out: BancoDish[] = []; let g = 0; while (out.length < n && g++ < 40) { const d = pick(pool, rng); if (!out.includes(d)) out.push(d); } return out; };
   const cands: { dishes: BancoDish[]; e: number; used: number; craves: number }[] = [];
   for (let t = 0; t < trials; t++) {
     const dishes = pickN();
@@ -256,18 +264,22 @@ function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena:
 function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[]): DayPlan {
   const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
   const MT = mealTargets(T);
-  const des = biasPool(BY_TIME.Desayuno, cuisines);
-  const com = biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines);
+  // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno). Si un tiempo
+  // se quedara sin opciones (varias alergias juntas), cae al pool original para no romper.
+  const clean = (pool: BancoDish[]) => { const f = pool.filter((d) => !avoid(d)); return f.length ? f : pool; };
+  const des = clean(biasPool(BY_TIME.Desayuno, cuisines));
+  const com = clean(biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines));
   // Cena: solo 21 platillos (ligeros) → a metas altas casi ninguno llega. Se amplía
   // con las comidas (con verdura): una comida sirve de cena. A metas bajas el ajuste
   // prefiere las cenas ligeras solo (las comidas se pasan del target y puntúan peor).
-  const cen = biasPool([...(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena), ...COMIDA_VEG], cuisines);
+  const cen = clean(biasPool([...(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena), ...COMIDA_VEG], cuisines));
+  const snack = clean(BY_TIME.Snack);
   const meals: MealItem[] = [
-    ...fitSlot(des, 'Desayuno', MT.desayuno, 1, rng, avoid, 90, used, craving),
-    ...fitSlot(BY_TIME.Snack, 'Snack AM', MT.snackSlot, nSnack, rng, avoid, 70, used, craving, true),
-    ...fitSlot(com, 'Comida', MT.comida, 1, rng, avoid, 90, used, craving),
-    ...fitSlot(BY_TIME.Snack, 'Snack PM', MT.snackSlot, nSnack, rng, avoid, 70, used, craving, true),
-    ...fitSlot(cen, 'Cena', MT.cena, 1, rng, avoid, 90, used, craving),
+    ...fitSlot(des, 'Desayuno', MT.desayuno, 1, rng, 90, used, craving),
+    ...fitSlot(snack, 'Snack AM', MT.snackSlot, nSnack, rng, 70, used, craving, true),
+    ...fitSlot(com, 'Comida', MT.comida, 1, rng, 90, used, craving),
+    ...fitSlot(snack, 'Snack PM', MT.snackSlot, nSnack, rng, 70, used, craving, true),
+    ...fitSlot(cen, 'Cena', MT.cena, 1, rng, 90, used, craving),
   ];
   return { day: dayNum, theme: '', meals };
 }
