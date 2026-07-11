@@ -405,6 +405,23 @@ function buildDecision(
 // FILTRADO DE EJERCICIOS (pre-IA)
 // ══════════════════════════════════════════════════════════════
 
+export type TrainingLevel = 'principiante' | 'intermedio' | 'avanzado';
+
+/** Nivel de entrenamiento derivado del factor de actividad del onboarding. */
+export function levelFromActivity(activity?: string): TrainingLevel {
+  const a = (activity ?? '').toLowerCase();
+  if (a.includes('sedentar') || a.includes('liger')) return 'principiante';
+  if (a.includes('atleta') || a.includes('alta')) return 'avanzado';
+  return 'intermedio';
+}
+
+/** Nivel del usuario: explícito (obData.nivel) si existe, si no derivado de actividad. */
+export function levelFromObData(ob?: Record<string, string | number>): TrainingLevel {
+  const explicit = String(ob?.nivel ?? '').toLowerCase();
+  if (explicit === 'principiante' || explicit === 'intermedio' || explicit === 'avanzado') return explicit;
+  return levelFromActivity(String(ob?.activity ?? ''));
+}
+
 export function filterExercisesForWorkout(params: {
   exercises: Exercise[];
   equipment: Equipment[];
@@ -417,7 +434,9 @@ export function filterExercisesForWorkout(params: {
   // bíceps como secundario. Los splits/auto sí aceptan secundarios (compuestos).
   primaryOnly?: boolean;
 }): Exercise[] {
-  const { exercises, equipment, muscleGroups, goal, excludeMuscles = [], primaryOnly = false } = params;
+  const { exercises, equipment, muscleGroups, goal, excludeMuscles = [], primaryOnly = false, difficulty } = params;
+  const RANK: Record<string, number> = { principiante: 1, intermedio: 2, avanzado: 3 };
+  const ceiling = difficulty ? (difficulty === 'principiante' ? 2 : 3) : 3; // principiante: sin avanzados
 
   return exercises.filter(ex => {
     // Filter 1: equipment
@@ -442,6 +461,10 @@ export function filterExercisesForWorkout(params: {
 
     // Filter 4: exclude overworked muscles (primary only)
     if (excludeMuscles.includes(ex.muscleGroup)) return false;
+
+    // Filter 5: nivel del usuario (techo de dificultad). Un principiante NO recibe
+    // ejercicios avanzados (seguridad + adecuación); intermedio/avanzado reciben todo.
+    if ((RANK[ex.difficulty] ?? 2) > ceiling) return false;
 
     return true;
   });
@@ -509,11 +532,13 @@ export function filterWithProgressiveRelaxation(params: {
   excludeMuscles: MuscleGroup[];
   minCandidates?: number;
   primaryOnly?: boolean;
+  difficulty?: 'principiante' | 'intermedio' | 'avanzado';
 }): FilterResult {
   const minRequired = params.minCandidates ?? 3;
   const primaryOnly = params.primaryOnly ?? false;
+  const difficulty = params.difficulty;
 
-  // NIVEL 0 — filtro estricto
+  // NIVEL 0 — filtro estricto (incluye techo de nivel)
   let candidates = filterExercisesForWorkout({
     exercises: params.exercises,
     equipment: params.equipment,
@@ -521,12 +546,13 @@ export function filterWithProgressiveRelaxation(params: {
     goal: params.goal,
     excludeMuscles: params.excludeMuscles,
     primaryOnly,
+    difficulty,
   });
   if (candidates.length >= minRequired) {
     return { exercises: candidates, relaxationLevel: 0, relaxedConstraints: [] };
   }
 
-  // NIVEL 1 — drop excludeMuscles
+  // NIVEL 1 — drop excludeMuscles (mantiene techo de nivel)
   candidates = filterExercisesForWorkout({
     exercises: params.exercises,
     equipment: params.equipment,
@@ -534,6 +560,7 @@ export function filterWithProgressiveRelaxation(params: {
     goal: params.goal,
     excludeMuscles: [],
     primaryOnly,
+    difficulty,
   });
   if (candidates.length >= minRequired) {
     return {

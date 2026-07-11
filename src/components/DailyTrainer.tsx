@@ -15,6 +15,7 @@ import {
   suggestModality,
   DAY_TYPE_CONFIG,
   restDaysFromLastTrained,
+  levelFromObData,
 } from '../utils/workoutPlanner';
 import {
   getCachedWorkout,
@@ -463,6 +464,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           // Foco específico → solo músculo primario (no traer espalda por tener
           // bíceps secundario). Presets/auto sí aprovechan los compuestos.
           primaryOnly: selectedModality === 'fuerza' && focus === 'specific',
+          // Fase 3 — nivel: principiante no recibe ejercicios avanzados.
+          difficulty: levelFromObData(obData),
         });
         candidates = filterResult.exercises;
 
