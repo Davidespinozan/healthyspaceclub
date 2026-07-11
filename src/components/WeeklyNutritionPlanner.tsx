@@ -64,6 +64,7 @@ const AVOID_LABEL_KEYS: Record<string, TranslationKey> = {
   'frutos-secos': 'nutritionPlanner.avoidNuts',
   'cacahuate': 'nutritionPlanner.avoidPeanut',
   'soya': 'nutritionPlanner.avoidSoy',
+  'ajonjoli': 'nutritionPlanner.avoidSesame',
   'pescado': 'nutritionPlanner.avoidFish',
   'nada': 'nutritionPlanner.avoidNone',
 };
@@ -76,6 +77,7 @@ const AVOID_SUB_KEYS: Record<string, TranslationKey> = {
   'frutos-secos': 'nutritionPlanner.avoidNutsSub',
   'cacahuate': 'nutritionPlanner.avoidPeanutSub',
   'soya': 'nutritionPlanner.avoidSoySub',
+  'ajonjoli': 'nutritionPlanner.avoidSesameSub',
   'pescado': 'nutritionPlanner.avoidFishSub',
   'nada': 'nutritionPlanner.avoidNoneSub',
 };
@@ -134,6 +136,7 @@ const QUESTIONS: Array<{
       { value: 'frutos-secos', icon: Nut },
       { value: 'cacahuate',    icon: Bean },
       { value: 'soya',         icon: Sprout },
+      { value: 'ajonjoli',     icon: Leaf },
       { value: 'pescado',      icon: Fish },
       { value: 'mariscos',     icon: Shell },
       { value: 'carne-roja',   icon: Beef },

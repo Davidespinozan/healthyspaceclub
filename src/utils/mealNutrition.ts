@@ -72,9 +72,9 @@ export function mealKcal(portions: string[]): number {
 
 /** Macros de una comida: usa los EXACTOS del motor (banco) si vienen; si no, los
  *  calcula desde las porciones. Punto único para plan viejo (strings) y nuevo (motor). */
-export function mealMacros(meal: { portions?: string[]; macros?: { kcal: number; prot: number; fat: number; carb: number } }): MealNutrition {
+export function mealMacros(meal: { portions?: string[]; macros?: { kcal: number; prot: number; fat: number; carb: number; fiber?: number } }): MealNutrition {
   if (meal.macros) {
-    return { kcal: meal.macros.kcal, prot: meal.macros.prot, carbs: meal.macros.carb, fat: meal.macros.fat, fiber: 0, misses: [] };
+    return { kcal: meal.macros.kcal, prot: meal.macros.prot, carbs: meal.macros.carb, fat: meal.macros.fat, fiber: meal.macros.fiber ?? 0, misses: [] };
   }
   return mealNutrition(meal.portions ?? []);
 }

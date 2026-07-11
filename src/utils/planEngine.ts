@@ -36,6 +36,9 @@ function biasPool(pool: BancoDish[], cuisines: string[]): BancoDish[] {
 
 // ── Texto de cada platillo (nombre + ingredientes), sin acentos, para "evitar"/"antojo" ──
 const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+// Clave de ingrediente para rotación: 1ª palabra (agrupa "Aguacate"/"Aguacate machacado"
+// y "Pollo deshebrado"/"Pollo en trozos") → penaliza repetir la misma base en la semana.
+const ingKey = (nv: string) => norm(nv).split(/\s+/)[0] || nv;
 const DTEXT = new Map<BancoDish, { text: string; words: Set<string> }>();
 for (const d of BANCO) {
   const text = norm(d.nombre + ' ' + d.ings.map((i) => i.nv).join(' '));
@@ -90,14 +93,16 @@ const W = [1.5, 0.8, 1.0]; // pesos P, F, C (proteína prioridad)
 const IDX = [1, 2, 3];     // posición de P,F,C en el vector [kcal,P,F,C]
 
 function prep(dishes: BancoDish[]): { fixed: number[]; vars: Var[] } {
-  const fixed = [0, 0, 0, 0];
+  const fixed = [0, 0, 0, 0, 0]; // kcal, P, F, C, fibra
   const vars: Var[] = [];
   dishes.forEach((d, si) => {
     const bloque = d.tipo === 'bloque';
-    for (let i = 0; i < 4; i++) fixed[i] += d.fixed[i];
+    for (let i = 0; i < 5; i++) fixed[i] += d.fixed[i];
     for (const ing of d.ings) {
       if (ing.rol === 'principal' && ing.a) {
-        const hi = ing.max && ing.max > 0 ? ing.max : Math.round(ing.g0 * 2.5);
+        // Tope: almidones (carbo-dominantes) más ajustados (2.0×) → evita porciones enormes.
+        const carbDom = ing.a[3] > ing.a[1] && ing.a[3] > ing.a[2];
+        const hi = ing.max && ing.max > 0 ? ing.max : Math.round(ing.g0 * (carbDom ? 2.0 : 2.5));
         vars.push({ a: ing.a, g: ing.g0, g0: ing.g0, lo: ing.g0 * 0.4, hi, blk: bloque ? si : null, ing });
       }
     }
@@ -110,8 +115,8 @@ function solve(fixed: number[], vars: Var[], T: number[], iters = 160): void {
   const blocks = new Map<number, Var[]>();
   for (const v of vars) if (v.blk !== null) (blocks.get(v.blk) ?? blocks.set(v.blk, []).get(v.blk)!).push(v);
   const totals = () => {
-    const x = [fixed[0], fixed[1], fixed[2], fixed[3]];
-    for (const v of vars) for (let k = 0; k < 4; k++) x[k] += v.a[k] * v.g;
+    const x = [fixed[0], fixed[1], fixed[2], fixed[3], fixed[4]];
+    for (const v of vars) for (let k = 0; k < 5; k++) x[k] += v.a[k] * v.g;
     return x;
   };
   for (let it = 0; it < iters; it++) {
@@ -146,8 +151,8 @@ function solve(fixed: number[], vars: Var[], T: number[], iters = 160): void {
 }
 
 function errMax(fixed: number[], vars: Var[], T: number[]): number {
-  const x = [fixed[0], fixed[1], fixed[2], fixed[3]];
-  for (const v of vars) for (let k = 0; k < 4; k++) x[k] += v.a[k] * v.g;
+  const x = [fixed[0], fixed[1], fixed[2], fixed[3], fixed[4]];
+  for (const v of vars) for (let k = 0; k < 5; k++) x[k] += v.a[k] * v.g;
   let e = 0;
   for (let j = 0; j < 3; j++) { const kk = IDX[j]; e = Math.max(e, Math.abs(x[kk] - T[kk]) / Math.max(T[kk], 1)); }
   return e * 100;
@@ -162,14 +167,14 @@ function portionStr(ing: BancoIng, g: number | null): string {
 }
 
 function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>): MealItem {
-  const m = [dish.fixed[0], dish.fixed[1], dish.fixed[2], dish.fixed[3]];
+  const m = [dish.fixed[0], dish.fixed[1], dish.fixed[2], dish.fixed[3], dish.fixed[4]];
   const portions: string[] = [];
   const ings: { nv: string; g: number | null; rol: string }[] = [];
   for (const ing of dish.ings) {
     let g: number | null;
     if (ing.rol === 'principal' && gOf.has(ing)) {
       g = gOf.get(ing)!;
-      if (ing.a) for (let k = 0; k < 4; k++) m[k] += ing.a[k] * g;
+      if (ing.a) for (let k = 0; k < 5; k++) m[k] += ing.a[k] * g;
       g = Math.round(g);
     } else if (ing.rol === 'condimento') g = null;
     else g = ing.g0;
@@ -185,7 +190,7 @@ function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>
     desc: dish.ings.filter((i) => i.rol === 'principal').slice(0, 3).map((i) => i.nv).join(' · '),
     img: IMG_BASE + dish.img,
     portions,
-    macros: { kcal: Math.round(prot * 4 + carb * 4 + fat * 9), prot, fat, carb },
+    macros: { kcal: Math.round(prot * 4 + carb * 4 + fat * 9), prot, fat, carb, fiber: Math.round(m[4]) },
     ings,
   };
 }
@@ -193,10 +198,11 @@ function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>
 // Fusiona varios platillos (snacks combinados) en UNA sola comida — un solo card,
 // no el snack repetido. Suma macros, junta ingredientes, usa la 1ª foto disponible.
 function mergeItems(items: MealItem[], label: string): MealItem {
-  const macros = { kcal: 0, prot: 0, fat: 0, carb: 0 };
+  const macros = { kcal: 0, prot: 0, fat: 0, carb: 0, fiber: 0 };
   for (const it of items) {
     macros.prot += it.macros?.prot ?? 0;
     macros.fat += it.macros?.fat ?? 0; macros.carb += it.macros?.carb ?? 0;
+    macros.fiber += it.macros?.fiber ?? 0;
   }
   macros.kcal = Math.round(macros.prot * 4 + macros.carb * 4 + macros.fat * 9); // Atwater, cuadra con macros
   const imgs = items.map((i) => i.img).filter((s): s is string => !!s);
@@ -218,28 +224,39 @@ function mergeItems(items: MealItem[], label: string): MealItem {
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
   rng: () => number, trials: number,
-  used: Set<string>, usedToday: Set<string>, craving: string[], merge = false,
+  used: Set<string>, usedToday: Set<string>, craving: string[],
+  ingFreq: Map<string, number>, merge = false,
 ): MealItem[] {
   // El pool ya viene filtrado por alergia (buildDay) → aquí no se cuela ningún alérgeno.
   const pickN = () => { const out: BancoDish[] = []; let g = 0; while (out.length < n && g++ < 40) { const d = pick(pool, rng); if (!out.includes(d)) out.push(d); } return out; };
-  const cands: { dishes: BancoDish[]; e: number; used: number; craves: number }[] = [];
+  const princKeys = (d: BancoDish) => d.ings.filter((i) => i.rol === 'principal').map((i) => ingKey(i.nv));
+  const cands: { dishes: BancoDish[]; e: number; used: number; craves: number; ingScore: number; fib: number }[] = [];
   for (let t = 0; t < trials; t++) {
     const dishes = pickN();
     const { fixed, vars } = prep(dishes);
     solve(fixed, vars, target, 100);
     const e = errMax(fixed, vars, target);
     const craves = craving.length ? dishes.filter((d) => dishMatchesAny(d, craving)).length : 0;
-    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length, craves });
+    // ingScore = qué tan repetidos están los ingredientes de este candidato en la semana.
+    let ingScore = 0;
+    for (const d of dishes) for (const k of princKeys(d)) ingScore += ingFreq.get(k) ?? 0;
+    let fib = fixed[4]; for (const v of vars) fib += v.a[4] * v.g;
+    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length, craves, ingScore, fib });
   }
-  // Aceptables = los que pegan razonable (error ≤ 12%; holgura porque cada tiempo es
-  // ~¼ del día). Entre ellos: primero el ANTOJO, luego variedad (menos repetido),
-  // luego mejor ajuste. Si ninguno llega al 12%, el mejor.
+  // Aceptables = los que pegan razonable (error ≤ 12%; holgura porque cada tiempo es ~¼
+  // del día). Entre ellos: 1) ANTOJO, 2) variedad (platillo e INGREDIENTE menos repetidos
+  // → rota el aguacate/pollo), 3) más FIBRA, 4) mejor ajuste.
   const minE = Math.min(...cands.map((c) => c.e));
   const cap = Math.max(12, minE + 2);
   const acceptable = cands.filter((c) => c.e <= cap);
-  acceptable.sort((a, b) => (b.craves - a.craves) || (a.used - b.used) || (a.e - b.e));
+  acceptable.sort((a, b) =>
+    (b.craves - a.craves) ||
+    ((a.used * 50 + a.ingScore) - (b.used * 50 + b.ingScore)) ||
+    (b.fib - a.fib) ||
+    (a.e - b.e),
+  );
   const dishes = acceptable[0].dishes;
-  for (const d of dishes) { used.add(d.nombre); usedToday.add(d.nombre); }
+  for (const d of dishes) { used.add(d.nombre); usedToday.add(d.nombre); for (const k of princKeys(d)) ingFreq.set(k, (ingFreq.get(k) ?? 0) + 1); }
   const { fixed, vars } = prep(dishes);
   solve(fixed, vars, target, 220);
   void fixed;
@@ -261,7 +278,7 @@ function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena:
   };
 }
 
-function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[]): DayPlan {
+function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>): DayPlan {
   const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
   const MT = mealTargets(T);
   // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno). Si un tiempo
@@ -279,11 +296,11 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   const usedToday = new Set<string>();
   const avail = (pool: BancoDish[]) => { const f = pool.filter((d) => !usedToday.has(d.nombre)); return f.length ? f : pool; };
   const meals: MealItem[] = [
-    ...fitSlot(avail(des), 'Desayuno', MT.desayuno, 1, rng, 90, used, usedToday, craving),
-    ...fitSlot(avail(snack), 'Snack AM', MT.snackSlot, nSnack, rng, 70, used, usedToday, craving, true),
-    ...fitSlot(avail(com), 'Comida', MT.comida, 1, rng, 90, used, usedToday, craving),
-    ...fitSlot(avail(snack), 'Snack PM', MT.snackSlot, nSnack, rng, 70, used, usedToday, craving, true),
-    ...fitSlot(avail(cen), 'Cena', MT.cena, 1, rng, 90, used, usedToday, craving),
+    ...fitSlot(avail(des), 'Desayuno', MT.desayuno, 1, rng, 90, used, usedToday, craving, ingFreq),
+    ...fitSlot(avail(snack), 'Snack AM', MT.snackSlot, nSnack, rng, 70, used, usedToday, craving, ingFreq, true),
+    ...fitSlot(avail(com), 'Comida', MT.comida, 1, rng, 90, used, usedToday, craving, ingFreq),
+    ...fitSlot(avail(snack), 'Snack PM', MT.snackSlot, nSnack, rng, 70, used, usedToday, craving, ingFreq, true),
+    ...fitSlot(avail(cen), 'Cena', MT.cena, 1, rng, 90, used, usedToday, craving, ingFreq),
   ];
   return { day: dayNum, theme: '', meals };
 }
@@ -299,8 +316,9 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   const avoid = (d: BancoDish) => avoidTerms.length > 0 && dishMatchesAny(d, avoidTerms);
   const cuisines = (opts.cuisines ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean);
   const craving = cravingTerms(opts.craving ?? ''); // "antojo": prefiere platillos que lo tengan
-  const used = new Set<string>(); // platillos ya usados en la semana → variedad entre días
+  const used = new Set<string>();          // platillos ya usados en la semana → variedad entre días
+  const ingFreq = new Map<string, number>(); // ingredientes ya usados → rota fuentes (aguacate/pollo)
   const days: DayPlan[] = [];
-  for (let i = 1; i <= 7; i++) days.push(buildDay(i, T, rng, avoid, cuisines, used, craving));
+  for (let i = 1; i <= 7; i++) days.push(buildDay(i, T, rng, avoid, cuisines, used, craving, ingFreq));
   return days;
 }

@@ -1090,6 +1090,9 @@ export const es = {
     avoidPeanutSub: 'Alergia al cacahuate',
     avoidSoy: 'Soya',
     avoidSoySub: 'Soya y edamame',
+    avoidSesame: 'Sésamo',
+    avoidSesameSub: 'Ajonjolí, sésamo',
+
     avoidFish: 'Pescado',
     avoidFishSub: 'Salmón, atún, pescado',
     avoidNone: 'Nada en especial',

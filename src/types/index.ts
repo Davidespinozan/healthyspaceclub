@@ -6,7 +6,7 @@ export interface MealItem {
   portions: string[];
   // Opcionales: presentes cuando el plan viene del motor (banco de Magaly).
   // Macros exactos ya ajustados a la meta + ingredientes estructurados.
-  macros?: { kcal: number; prot: number; fat: number; carb: number };
+  macros?: { kcal: number; prot: number; fat: number; carb: number; fiber?: number };
   ings?: { nv: string; g: number | null; rol: string }[];
   // Snack combinado: las fotos de los 2+ platillos que van dentro del mismo card.
   imgs?: string[];

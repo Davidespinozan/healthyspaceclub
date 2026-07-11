@@ -1091,6 +1091,9 @@ export const en: Translations<typeof es> = {
     avoidPeanutSub: 'Peanut allergy',
     avoidSoy: 'Soy',
     avoidSoySub: 'Soy and edamame',
+    avoidSesame: 'Sesame',
+    avoidSesameSub: 'Sesame seeds',
+
     avoidFish: 'Fish',
     avoidFishSub: 'Salmon, tuna, fish',
     avoidNone: 'Nothing in particular',
