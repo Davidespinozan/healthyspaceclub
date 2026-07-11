@@ -41,4 +41,18 @@ describe('volumen semanal', () => {
     const pick = pickByVolumeDeficit(['push', 'pull', 'legs'], vol, ['espalda', 'biceps']);
     expect(pick).not.toBe('pull');
   });
+  it('cuenta workoutLog legacy en fechas sin completedSession (usuario viejo)', () => {
+    const yest = dayKey(new Date(Date.now() - 86400000));
+    const wlog = [{ date: yest, exercise: 'press', sets: [{ reps: 8, kg: 40 }, { reps: 8, kg: 40 }] }] as any;
+    const vol = computeWeeklyVolume([], EX, 7, wlog);
+    expect(vol.pecho).toBe(2); // 2 series logueadas
+    expect(vol.triceps).toBe(1); // secundario a la mitad
+  });
+
+  it('NO duplica cuando completedSession y workoutLog caen el mismo día', () => {
+    const wlog = [{ date: today, exercise: 'press', sets: [{ reps: 8, kg: 40 }] }] as any;
+    const vol = computeWeeklyVolume([sess(today, ['press'])], EX, 7, wlog);
+    expect(vol.pecho).toBe(4); // solo la sesión (defaultSets 4), no 4+1
+  });
+
 });

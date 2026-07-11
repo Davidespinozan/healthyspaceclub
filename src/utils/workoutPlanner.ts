@@ -190,19 +190,34 @@ export function computeWeeklyVolume(
   completedSessions: CompletedSession[],
   exercises: Exercise[],
   days = 7,
+  workoutLog: WorkoutEntry[] = [],
 ): Record<string, number> {
   const exerciseMap = new Map(exercises.map((e) => [e.id, e]));
+  const byName = new Map(exercises.filter((e) => e.name).map((e) => [e.name.toLowerCase(), e]));
+  const findEx = (nameOrId: string) => exerciseMap.get(nameOrId) || byName.get(nameOrId.toLowerCase());
   const since = dayKey(new Date(Date.now() - (days - 1) * 86400000));
   const vol: Record<string, number> = {};
+  const add = (ex: Exercise, sets: number) => {
+    vol[ex.muscleGroup] = (vol[ex.muscleGroup] ?? 0) + sets;
+    for (const m of ex.secondaryMuscles ?? []) vol[m] = (vol[m] ?? 0) + sets * 0.5;
+  };
+  const covered = new Set<string>();
   for (const s of completedSessions) {
     if (s.date < since) continue;
+    covered.add(s.date);
     for (const id of s.exerciseIds) {
       const ex = exerciseMap.get(id);
       if (!ex || ex.type === 'cardio') continue;
-      const sets = ex.defaultSets && ex.defaultSets > 0 ? ex.defaultSets : 3;
-      vol[ex.muscleGroup] = (vol[ex.muscleGroup] ?? 0) + sets;
-      for (const m of ex.secondaryMuscles ?? []) vol[m] = (vol[m] ?? 0) + sets * 0.5;
+      add(ex, ex.defaultSets && ex.defaultSets > 0 ? ex.defaultSets : 3);
     }
+  }
+  // workoutLog es legacy: cuéntalo solo en fechas NO cubiertas por completedSessions
+  // (evita doble conteo) para que usuarios con historial viejo no queden con volumen ciego.
+  for (const e of workoutLog) {
+    if (e.date < since || covered.has(e.date)) continue;
+    const ex = findEx(e.exercise);
+    if (!ex || ex.type === 'cardio') continue;
+    add(ex, e.sets && e.sets.length > 0 ? e.sets.length : (ex.defaultSets && ex.defaultSets > 0 ? ex.defaultSets : 3));
   }
   return vol;
 }
@@ -319,7 +334,7 @@ export function decideTodayWorkout(params: {
   if (STRENGTH_TYPES.includes(todayType)) {
     const freq = trainingFrequency(completedSessions, workoutLog);
     const preferred = splitTypesForFrequency(freq);
-    const vol = computeWeeklyVolume(completedSessions, exercises);
+    const vol = computeWeeklyVolume(completedSessions, exercises, 7, workoutLog);
     todayType = pickByVolumeDeficit(preferred, vol, history.yesterday);
   }
 
@@ -802,13 +817,16 @@ export function suggestModality(params: {
     return { modality: 'yoga', reasonKey: 'wizard.reasonTired' };
   }
 
-  // 4+ consecutive strength days → suggest yoga
+  // 4+ días de FUERZA seguidos (ayer hacia atrás; hoy aún no está logueado al planear)
+  // → sugiere yoga de recuperación. Mira ambas fuentes: workoutLog (legacy) y
+  // completedSessions (actual, excluye yoga/cardio).
+  const strengthDates = new Set<string>();
+  for (const e of workoutLog) strengthDates.add(e.date);
+  for (const s of completedSessions) if (s.modality !== 'yoga' && s.modality !== 'cardio') strengthDates.add(s.date);
   const last4Dates = Array.from({ length: 4 }, (_, i) =>
-    dayKey(new Date(Date.now() - i * 86400000))
+    dayKey(new Date(Date.now() - (i + 1) * 86400000))
   );
-  const consecutiveStrength = last4Dates.every(date =>
-    workoutLog.some(e => e.date === date)
-  );
+  const consecutiveStrength = last4Dates.every(date => strengthDates.has(date));
   if (consecutiveStrength) {
     return { modality: 'yoga', reasonKey: 'wizard.reasonRecovery' };
   }
