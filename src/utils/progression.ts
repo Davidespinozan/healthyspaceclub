@@ -5,7 +5,7 @@
 export interface ProgressionTarget {
   kg: number | null;                 // peso objetivo (null = sin dato / peso corporal / banda)
   reps: string;                      // meta de reps ("8-10", "10")
-  action: 'first-time' | 'add-weight' | 'add-reps' | 'add-tension' | 'hold';
+  action: 'first-time' | 'add-weight' | 'add-reps' | 'add-tension' | 'add-difficulty' | 'hold';
   note: string;                      // cue corto para el usuario (2ª persona)
 }
 
@@ -48,9 +48,10 @@ export function computeProgression(
   }
 
   if (refKg <= 0) {
-    // Peso corporal: progresa en reps.
-    if (repsAtRef >= hi) return { kg: 0, reps: `${repsAtRef + 2}`, action: 'add-reps',
-      note: `Dominaste ${repsAtRef} reps — busca ${repsAtRef + 2} o una variante más difícil.` };
+    // Peso corporal: doble progresión sobre la DIFICULTAD. Al tope de reps → hazlo más
+    // difícil (tempo, pausa, variante más dura), no sumar reps al infinito.
+    if (repsAtRef >= hi) return { kg: 0, reps: `${lo}-${hi}`, action: 'add-difficulty',
+      note: `Dominaste ${repsAtRef} reps — hazlo más difícil: tempo más lento, pausa abajo, o una variante más dura.` };
     return { kg: 0, reps: `${Math.min(repsAtRef + 1, hi)}-${hi}`, action: 'add-reps',
       note: `Busca ${hi} reps limpias (la vez pasada ${repsAtRef}).` };
   }

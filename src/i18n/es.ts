@@ -389,6 +389,7 @@ export const es = {
     lastTime: 'La vez pasada',
     todayTarget: 'Objetivo hoy',
     harderBand: 'liga más dura',
+    harder: 'hazlo más difícil',
     set: 'Serie',
     skipped: 'saltada',
     tapToMark: 'tocá para marcar',

@@ -35,11 +35,16 @@ describe('progression — doble progresión', () => {
     expect(t.kg).toBe(50);
   });
 
-  it('peso corporal → progresa en reps', () => {
+  it('peso corporal: al tope de reps → hazlo más difícil (no +reps infinito)', () => {
     const t = computeProgression([{ reps: 12, kg: 0 }], '8-12', 2.5);
-    expect(t.action).toBe('add-reps');
+    expect(t.action).toBe('add-difficulty');
     expect(t.kg).toBe(0);
-    expect(t.reps).toBe('14');
+    expect(t.reps).toBe('8-12');
+  });
+
+  it('peso corporal: sin llegar al tope → más reps', () => {
+    const t = computeProgression([{ reps: 9, kg: 0 }], '8-12', 2.5);
+    expect(t.action).toBe('add-reps');
   });
 
   it('bandas: al tope de reps → sube TENSIÓN (no peso)', () => {

@@ -644,13 +644,15 @@ export default function WorkoutPlayer({
               </div>
             )}
             {progLabel && (() => {
-              const up = progression?.action === 'add-weight' || progression?.action === 'add-tension';
+              const a = progression?.action;
+              const up = a === 'add-weight' || a === 'add-tension' || a === 'add-difficulty';
               return (
                 <div className={`wp-prog${up ? ' wp-prog--up' : ''}`}>
                   <TrendingUp size={12} strokeWidth={2.2} aria-hidden="true" />
                   <span>{t('workout.todayTarget')}: <b>{progLabel}</b>
-                    {progression?.action === 'add-weight' ? ' ↑' : ''}
-                    {progression?.action === 'add-tension' ? <> · {t('workout.harderBand')} ↑</> : ''}
+                    {a === 'add-weight' ? ' ↑' : ''}
+                    {a === 'add-tension' ? <> · {t('workout.harderBand')} ↑</> : ''}
+                    {a === 'add-difficulty' ? <> · {t('workout.harder')} ↑</> : ''}
                   </span>
                 </div>
               );

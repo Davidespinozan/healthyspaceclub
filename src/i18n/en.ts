@@ -390,6 +390,7 @@ export const en: Translations<typeof es> = {
     lastTime: 'Last time',
     todayTarget: "Today's target",
     harderBand: 'harder band',
+    harder: 'make it harder',
     set: 'Set',
     skipped: 'skipped',
     tapToMark: 'tap to mark',
