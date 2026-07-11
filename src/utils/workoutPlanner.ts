@@ -209,6 +209,22 @@ export function computeWeeklyVolume(
 
 const STRENGTH_TYPES: WorkoutDayType[] = ['upper', 'lower', 'full-body', 'push', 'pull', 'legs'];
 
+/** IDs de ejercicios usados en las últimas `nSessions` sesiones (para rotación/variedad). */
+export function recentExerciseIds(completedSessions: CompletedSession[], nSessions = 2): Set<string> {
+  const sorted = [...completedSessions].sort((a, b) =>
+    (b.completedAtIso || b.date).localeCompare(a.completedAtIso || a.date));
+  const ids = new Set<string>();
+  for (const s of sorted.slice(0, nSessions)) for (const id of s.exerciseIds) ids.add(id);
+  return ids;
+}
+
+/** Rota ACCESORIOS (aislamiento) para variedad: manda al final los de aislamiento ya
+ *  usados hace poco. Los COMPUESTOS NO se tocan (deben repetirse para progresar carga). */
+export function orderCandidatesForVariety(candidates: Exercise[], recentIds: Set<string>): Exercise[] {
+  const stale = (e: Exercise) => (e.type === 'aislamiento' && recentIds.has(e.id) ? 1 : 0);
+  return [...candidates].sort((a, b) => stale(a) - stale(b)); // sort estable (V8): resto preserva orden
+}
+
 /** Frecuencia real de entreno (días/semana) de las últimas 2 semanas. Sin historial
  *  suficiente → 3 (default seguro: full-body). */
 export function trainingFrequency(

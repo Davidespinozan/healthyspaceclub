@@ -16,6 +16,8 @@ import {
   DAY_TYPE_CONFIG,
   restDaysFromLastTrained,
   levelFromObData,
+  recentExerciseIds,
+  orderCandidatesForVariety,
 } from '../utils/workoutPlanner';
 import {
   getCachedWorkout,
@@ -468,6 +470,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           difficulty: levelFromObData(obData),
         });
         candidates = filterResult.exercises;
+        // Variedad: rota los accesorios (aislamiento) usados en las últimas sesiones
+        // al final → la IA (que ve los primeros) elige frescos. Los compuestos no se
+        // mueven (deben repetirse para progresar carga).
+        candidates = orderCandidatesForVariety(candidates, recentExerciseIds(completedSessions));
 
         // Si el coach relajó constraints, informarle a la IA en el contexto
         // para que pueda explicar al usuario por qué la rutina no es "perfecta".
