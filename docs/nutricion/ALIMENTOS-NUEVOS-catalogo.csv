@@ -1,5 +1,5 @@
 ID,Categoria,Alimento,Cantidad sugerida,Unidad,Peso bruto (g),Peso neto (g),Energía (kcal),Proteína (g),Lípidos (g),Hidratos de carbono (g),AG saturados (g),AG monoinsaturados (g),AG poliinsaturados (g),Colesterol (mg),Azúcar (g),Fibra (g),Vitamina A (mg RE),Ácido ascórbico (mg)
-2871,Cereales,Quinoa cocida,0.5,taza,150,150,74,2.8,1.2,12.8,0.1,0.3,0.7,0,0.4,2.8,0,0
+2871,Cereales,Quinoa cocida,0.33,taza,60,60,74,2.8,1.2,12.8,0.1,0.3,0.7,0,0.4,2.8,0,0
 2872,Verduras,Verduras mixtas,1,taza,100,100,35,2.0,0.3,7.0,0.1,0,0.1,0,3.0,3.5,150,15
 2873,Semillas,Cacao nibs,1,cucharada,12,12,65,1.5,5.2,3.5,3.1,1.7,0.2,0,0.1,3.5,0,0
 2874,Cereales,Galleta de arroz,1,pieza,9,9,35,0.7,0.3,7.3,0.1,0.1,0.1,0,0.1,0.4,0,0
