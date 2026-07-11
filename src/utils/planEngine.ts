@@ -161,27 +161,32 @@ function errMax(fixed: number[], vars: Var[], T: number[]): number {
 
 function pick<T>(arr: T[], rng: () => number): T { return arr[Math.floor(rng() * arr.length)]; }
 
-const FRAC: Record<string, string> = { '0.5': '½', '1.5': '1½', '2.5': '2½', '3.5': '3½', '4.5': '4½', '5.5': '5½' };
 function fmtCount(n: number): string {
-  return FRAC[String(n)] ?? String(n);
+  if (Number.isInteger(n)) return String(n);
+  const whole = Math.floor(n); // n siempre en pasos de 0.5 → parte fraccionaria = ½
+  return (whole ? String(whole) : '') + '½';
 }
 function pluralNoun(un: string, n: number): string {
   if (n <= 1) return un; // "1 huevo", "½ manzana"
   const [head, ...rest] = un.split(' ');
   if (/s$/i.test(head)) return un; // ya plural (espárragos)
-  const p = /[aeiouáéíóú]$/i.test(head) ? head + 's' : head + 'es'; // huevo→huevos, pan→panes
+  // vocal → +s (huevo→huevos); consonante → +es quitando acento agudo final (melón→melones)
+  const p = /[aeiouáéíóú]$/i.test(head)
+    ? head + 's'
+    : head.replace(/ó(?=n$)/, 'o').replace(/á(?=n$)/, 'a').replace(/é(?=n$)/, 'e') + 'es';
   return [p, ...rest].join(' ');
 }
 // La gente cuenta huevos/tortillas, no los pesa. Si el alimento trae medida casera
 // (pu = g por pieza) y la cantidad cae en un conteo limpio y creíble (0.5–8 piezas,
-// error ≤30%), se muestra "2 huevos" en vez de "88 g". Si no, se queda en gramos.
+// error ≤20% para que el conteo no engañe sobre la porción), se muestra "2 huevos"
+// en vez de "88 g". Si no, se queda en gramos.
 function portionStr(ing: BancoIng, g: number | null): string {
   if (ing.rol === 'condimento') return `${ing.nv} al gusto`;
   if (ing.rol === 'sub-receta') return ing.nv;
   const grams = Math.round(g ?? ing.g0);
   if (ing.pu && ing.un && grams > 0) {
     const n = Math.max(0.5, Math.round((grams / ing.pu) * 2) / 2);
-    if (n <= 8 && Math.abs(n * ing.pu - grams) <= 0.30 * grams) {
+    if (n <= 8 && Math.abs(n * ing.pu - grams) <= 0.20 * grams) {
       return `${fmtCount(n)} ${pluralNoun(ing.un, n)}`;
     }
   }
@@ -310,9 +315,15 @@ function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena:
 function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>): DayPlan {
   const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
   const MT = mealTargets(T);
-  // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno). Si un tiempo
-  // se quedara sin opciones (varias alergias juntas), cae al pool original para no romper.
-  const clean = (pool: BancoDish[]) => { const f = pool.filter((d) => !avoid(d)); return f.length ? f : pool; };
+  // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno). Si un tiempo se
+  // queda sin opciones (varias alergias juntas), JAMÁS cae al alérgeno: usa cualquier
+  // platillo compatible del banco (una comida sirve de desayuno). Solo si NADA en las 175
+  // recetas cumple (imposible en la práctica) usa el pool para no romper.
+  const anyCompliant = BANCO.filter((d) => !avoid(d));
+  const clean = (pool: BancoDish[]) => {
+    const f = pool.filter((d) => !avoid(d));
+    return f.length ? f : (anyCompliant.length ? anyCompliant : pool);
+  };
   const des = clean(biasPool(BY_TIME.Desayuno, cuisines));
   const com = clean(biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines));
   // Cena: solo 21 platillos (ligeros) → a metas altas casi ninguno llega. Se amplía

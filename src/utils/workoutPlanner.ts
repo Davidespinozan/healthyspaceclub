@@ -605,6 +605,11 @@ export function filterWithProgressiveRelaxation(params: {
   const minRequired = params.minCandidates ?? 3;
   const primaryOnly = params.primaryOnly ?? false;
   const difficulty = params.difficulty;
+  // Techo de nivel (mismo que filterExercisesForWorkout): un principiante NUNCA recibe
+  // avanzados, ni siquiera en los niveles de relajación 2/3 (seguridad).
+  const RANK: Record<string, number> = { principiante: 1, intermedio: 2, avanzado: 3 };
+  const ceiling = difficulty === 'principiante' ? 2 : 3;
+  const withinLevel = (ex: { difficulty: string }) => (RANK[ex.difficulty] ?? 2) <= ceiling;
 
   // NIVEL 0 — filtro estricto (incluye techo de nivel)
   let candidates = filterExercisesForWorkout({
@@ -647,7 +652,7 @@ export function filterWithProgressiveRelaxation(params: {
       ? params.muscleGroups.includes(ex.muscleGroup)
       : (params.muscleGroups.includes(ex.muscleGroup) ||
          (ex.secondaryMuscles?.some(m => params.muscleGroups.includes(m)) ?? false));
-    return matchesEquipment && matchesMuscle;
+    return matchesEquipment && matchesMuscle && withinLevel(ex);
   });
   if (candidates.length >= minRequired) {
     return {
@@ -657,11 +662,11 @@ export function filterWithProgressiveRelaxation(params: {
     };
   }
 
-  // NIVEL 3 — solo equipment (último recurso)
+  // NIVEL 3 — solo equipment (último recurso), pero manteniendo el techo de nivel
   candidates = params.exercises.filter(ex =>
-    ex.isYoga
+    withinLevel(ex) && (ex.isYoga
       ? ex.equipment.some(e => params.equipment.includes(e))
-      : (ex.variants?.some(v => v.equipment.some(e => params.equipment.includes(e))) ?? false)
+      : (ex.variants?.some(v => v.equipment.some(e => params.equipment.includes(e))) ?? false))
   );
   return {
     exercises: candidates,
