@@ -178,19 +178,31 @@ function mergeItems(items: MealItem[], label: string): MealItem {
 // merge=true → devuelve UNA comida combinada (snacks: los dos dentro del mismo).
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
-  rng: () => number, avoid: (d: BancoDish) => boolean, trials: number, merge = false,
+  rng: () => number, avoid: (d: BancoDish) => boolean, trials: number,
+  used: Set<string>, merge = false,
 ): MealItem[] {
   const pickDish = () => { for (let i = 0; i < 20; i++) { const d = pick(pool, rng); if (!avoid(d)) return d; } return pick(pool, rng); };
   const pickN = () => { const out: BancoDish[] = []; let g = 0; while (out.length < n && g++ < 40) { const d = pickDish(); if (!out.includes(d)) out.push(d); } return out; };
-  let best: { dishes: BancoDish[]; e: number } | null = null;
+  // Primero PRECISIÓN: junta candidatos con su error. Luego, entre los que pegan
+  // bien (dentro de minError+4pp), elige el MENOS repetido esta semana → variedad
+  // sin sacrificar el ajuste. Si el pool se agota, permite repetir.
+  const cands: { dishes: BancoDish[]; e: number; used: number }[] = [];
   for (let t = 0; t < trials; t++) {
     const dishes = pickN();
     const { fixed, vars } = prep(dishes);
     solve(fixed, vars, target, 100);
     const e = errMax(fixed, vars, target);
-    if (!best || e < best.e) best = { dishes, e };
+    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length });
   }
-  const dishes = best!.dishes;
+  // Aceptables = platillos que pegan razonable (error ≤ 12%, tope de día 12% con
+  // holgura porque cada tiempo es solo ~¼ del día). Entre ellos, MAXIMIZA variedad
+  // (menos repetidos primero), luego mejor ajuste. Si ninguno llega, el mejor.
+  const minE = Math.min(...cands.map((c) => c.e));
+  const cap = Math.max(12, minE + 2);
+  const acceptable = cands.filter((c) => c.e <= cap);
+  acceptable.sort((a, b) => (a.used - b.used) || (a.e - b.e));
+  const dishes = acceptable[0].dishes;
+  for (const d of dishes) used.add(d.nombre);
   const { fixed, vars } = prep(dishes);
   solve(fixed, vars, target, 220);
   void fixed;
@@ -212,18 +224,21 @@ function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena:
   };
 }
 
-function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[]): DayPlan {
+function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>): DayPlan {
   const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
   const MT = mealTargets(T);
   const des = biasPool(BY_TIME.Desayuno, cuisines);
   const com = biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines);
-  const cen = biasPool(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, cuisines);
+  // Cena: solo 21 platillos (ligeros) → a metas altas casi ninguno llega. Se amplía
+  // con las comidas (con verdura): una comida sirve de cena. A metas bajas el ajuste
+  // prefiere las cenas ligeras solo (las comidas se pasan del target y puntúan peor).
+  const cen = biasPool([...(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena), ...COMIDA_VEG], cuisines);
   const meals: MealItem[] = [
-    ...fitSlot(des, 'Desayuno', MT.desayuno, 1, rng, avoid, 90),
-    ...fitSlot(BY_TIME.Snack, 'Snack AM', MT.snackSlot, nSnack, rng, avoid, 70, true),
-    ...fitSlot(com, 'Comida', MT.comida, 1, rng, avoid, 90),
-    ...fitSlot(BY_TIME.Snack, 'Snack PM', MT.snackSlot, nSnack, rng, avoid, 70, true),
-    ...fitSlot(cen, 'Cena', MT.cena, 1, rng, avoid, 90),
+    ...fitSlot(des, 'Desayuno', MT.desayuno, 1, rng, avoid, 90, used),
+    ...fitSlot(BY_TIME.Snack, 'Snack AM', MT.snackSlot, nSnack, rng, avoid, 70, used, true),
+    ...fitSlot(com, 'Comida', MT.comida, 1, rng, avoid, 90, used),
+    ...fitSlot(BY_TIME.Snack, 'Snack PM', MT.snackSlot, nSnack, rng, avoid, 70, used, true),
+    ...fitSlot(cen, 'Cena', MT.cena, 1, rng, avoid, 90, used),
   ];
   return { day: dayNum, theme: '', meals };
 }
@@ -239,7 +254,8 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
     avoidTerms.length > 0 &&
     avoidTerms.some((t) => d.nombre.toLowerCase().includes(t) || d.ings.some((i) => i.nv.toLowerCase().includes(t)));
   const cuisines = (opts.cuisines ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean);
+  const used = new Set<string>(); // platillos ya usados en la semana → variedad entre días
   const days: DayPlan[] = [];
-  for (let i = 1; i <= 7; i++) days.push(buildDay(i, T, rng, avoid, cuisines));
+  for (let i = 1; i <= 7; i++) days.push(buildDay(i, T, rng, avoid, cuisines, used));
   return days;
 }

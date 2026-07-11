@@ -49,6 +49,15 @@ describe('planEngine — ajuste a la meta', () => {
     }
   });
 
+  it('variedad: los 7 días no repiten el mismo desayuno/comida/cena', () => {
+    const days = buildWeeklyPlan(CASES[1], { seed: 5 });
+    for (const time of ['Desayuno', 'Comida', 'Cena']) {
+      const names = days.map((d) => d.meals.find((m) => m.time === time)!.name);
+      const distintos = new Set(names).size;
+      expect(distintos).toBeGreaterThanOrEqual(6); // casi todos distintos (de 7)
+    }
+  });
+
   it('sesga por cocina: elegir italiana → comidas italianas', () => {
     const days = buildWeeklyPlan(CASES[1], { seed: 3, cuisines: ['italiana'] });
     const comidas = days.map((d) => d.meals.find((m) => m.time === 'Comida')!.name.toLowerCase());
