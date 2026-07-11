@@ -141,6 +141,13 @@ export interface Exercise {
   type: ExerciseType;
   difficulty: Difficulty;
 
+  /**
+   * Familia de movimiento. Ejercicios separados por AGARRE (mismo patrón) comparten
+   * familia — ej. 'traccion-vertical' agrupa las versiones pronada/supina/neutra.
+   * El planner limita cuántos de la misma familia entran en un día (balance de patrones).
+   */
+  movementFamily?: string;
+
   /** Defaults del patrón. Usados si la variante seleccionada no tiene override. */
   defaultSets: number;
   defaultReps: string;

@@ -18,6 +18,7 @@ import {
   levelFromObData,
   recentExerciseIds,
   orderCandidatesForVariety,
+  capByMovementFamily,
 } from '../utils/workoutPlanner';
 import {
   getCachedWorkout,
@@ -474,6 +475,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // al final → la IA (que ve los primeros) elige frescos. Los compuestos no se
         // mueven (deben repetirse para progresar carga).
         candidates = orderCandidatesForVariety(candidates, recentExerciseIds(completedSessions));
+        // Balance de patrones: máx 2 del mismo movimiento (agarres distintos) por día,
+        // para que no salgan 3 jalones y cero remo. Días cortos → solo 1.
+        candidates = capByMovementFamily(candidates, selectedTime <= 30 ? 1 : 2);
 
         // Si el coach relajó constraints, informarle a la IA en el contexto
         // para que pueda explicar al usuario por qué la rutina no es "perfecta".

@@ -240,6 +240,26 @@ export function orderCandidatesForVariety(candidates: Exercise[], recentIds: Set
   return [...candidates].sort((a, b) => stale(a) - stale(b)); // sort estable (V8): resto preserva orden
 }
 
+/**
+ * Balance de patrones: los ejercicios separados por AGARRE comparten movementFamily
+ * (ej. tracción vertical pronada/supina/neutra). Sin límite, la IA podría meter 3
+ * jalones el mismo día y descuidar otros patrones. Deja como máximo `maxPerFamily`
+ * candidatos de cada familia (preserva el orden → los primeros/frescos sobreviven).
+ * Ejercicios sin familia no se tocan.
+ */
+export function capByMovementFamily(candidates: Exercise[], maxPerFamily = 2): Exercise[] {
+  const seen = new Map<string, number>();
+  const out: Exercise[] = [];
+  for (const e of candidates) {
+    if (!e.movementFamily) { out.push(e); continue; }
+    const n = seen.get(e.movementFamily) ?? 0;
+    if (n >= maxPerFamily) continue;
+    seen.set(e.movementFamily, n + 1);
+    out.push(e);
+  }
+  return out;
+}
+
 /** Frecuencia real de entreno (días/semana) de las últimas 2 semanas. Sin historial
  *  suficiente → 3 (default seguro: full-body). */
 export function trainingFrequency(
