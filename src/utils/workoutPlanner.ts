@@ -209,6 +209,29 @@ export function computeWeeklyVolume(
 
 const STRENGTH_TYPES: WorkoutDayType[] = ['upper', 'lower', 'full-body', 'push', 'pull', 'legs'];
 
+/** Frecuencia real de entreno (días/semana) de las últimas 2 semanas. Sin historial
+ *  suficiente → 3 (default seguro: full-body). */
+export function trainingFrequency(
+  completedSessions: CompletedSession[],
+  workoutLog: WorkoutEntry[] = [],
+  windowDays = 14,
+): number {
+  const since = dayKey(new Date(Date.now() - (windowDays - 1) * 86400000));
+  const days = new Set<string>();
+  for (const s of completedSessions) if (s.date >= since) days.add(s.date);
+  for (const e of workoutLog) if (e.date >= since) days.add(e.date);
+  if (days.size < 3) return 3; // cold start / muy poco historial → full-body
+  return Math.max(2, Math.min(6, Math.round((days.size * 7) / windowDays)));
+}
+
+/** Estructura de split según la frecuencia (regla estándar de programación):
+ *  ≤3 días → full-body; 4 → upper/lower; ≥5 → push/pull/legs (+ upper/lower). */
+export function splitTypesForFrequency(freq: number): WorkoutDayType[] {
+  if (freq <= 3) return ['full-body'];
+  if (freq === 4) return ['upper', 'lower'];
+  return ['push', 'pull', 'legs', 'upper', 'lower'];
+}
+
 /** Entre varios tipos de día, elige el que más DÉFICIT de volumen tiene esta semana
  *  (músculos que van cortos vs la meta), evitando repetir los de ayer. */
 export function pickByVolumeDeficit(
@@ -251,15 +274,15 @@ export function decideTodayWorkout(params: {
   // Pick next in cycle, avoiding yesterday's muscles
   let todayType = pickNextInCycle(cycle, history);
 
-  // Fase 2 — volumen semanal: en días de FUERZA, prioriza el split cuyos músculos
-  // van más CORTOS esta semana (self-balancing: mucho pecho → te lleva a espalda/pierna).
-  // Los días de cardio/movilidad se respetan tal cual (recuperación).
+  // Fases 2+4 — en días de FUERZA: la FRECUENCIA define la estructura del split
+  // (pocos días → full-body; muchos → push/pull/legs), y dentro de esa estructura se
+  // prioriza el split cuyos músculos van más CORTOS esta semana (self-balancing),
+  // evitando repetir los de ayer. Cardio/movilidad se respetan (recuperación).
   if (STRENGTH_TYPES.includes(todayType)) {
-    const strengthInCycle = [...new Set(cycle.filter((t) => STRENGTH_TYPES.includes(t)))];
-    if (strengthInCycle.length > 1) {
-      const vol = computeWeeklyVolume(completedSessions, exercises);
-      todayType = pickByVolumeDeficit(strengthInCycle, vol, history.yesterday);
-    }
+    const freq = trainingFrequency(completedSessions, workoutLog);
+    const preferred = splitTypesForFrequency(freq);
+    const vol = computeWeeklyVolume(completedSessions, exercises);
+    todayType = pickByVolumeDeficit(preferred, vol, history.yesterday);
   }
 
   // Determine intensity from check-in
