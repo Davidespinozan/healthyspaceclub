@@ -986,40 +986,29 @@ Esquite Fit,Snack,suelto,medio,salado,,Chile cayena en polvo,Chile en polvo,1,,c
 Esquite Fit,Snack,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,esquite-fit.jpg
 Manzana Horneada con Canela,Snack,suelto,ligero,dulce,,Manzana,Manzana,150,220,principal,plato,horneada,manzana-horneada-con-canela.jpg
 Manzana Horneada con Canela,Snack,suelto,ligero,dulce,,Canela en polvo,Canela,2,,condimento,plato,,manzana-horneada-con-canela.jpg
-Bowl Griego de Pollo,Cena,suelto,medio,salado,,Quinoa cruda,Quinoa cocida,55,120,principal,plato,peso crudo rinde ~150g cocida,bowl-griego-de-pollo.jpg
+Bowl Griego de Pollo,Cena,suelto,medio,salado,,Quinoa cocida,Quinoa cocida,150,350,principal,plato,,bowl-griego-de-pollo.jpg
 Bowl Griego de Pollo,Cena,suelto,medio,salado,,Pechuga de pollo sin piel a la plancha,Pollo a la plancha,140,350,principal,plato,,bowl-griego-de-pollo.jpg
-Bowl Griego de Pollo,Cena,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,60,,guarnicion,plato,,bowl-griego-de-pollo.jpg
-Bowl Griego de Pollo,Cena,suelto,medio,salado,,Jitomate cereza,Jitomate cherry,60,,guarnicion,plato,,bowl-griego-de-pollo.jpg
-Bowl Griego de Pollo,Cena,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,20,,guarnicion,plato,,bowl-griego-de-pollo.jpg
+Bowl Griego de Pollo,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, jitomate cherry, cebolla morada)",140,,guarnicion,plato,,bowl-griego-de-pollo.jpg
 Bowl Griego de Pollo,Cena,suelto,medio,salado,,Queso Feta,Queso feta,40,60,principal,plato,,bowl-griego-de-pollo.jpg
 Bowl Griego de Pollo,Cena,suelto,medio,salado,,Aceituna negra sin hueso,Aceitunas negras,15,,fijo,plato,,bowl-griego-de-pollo.jpg
 Bowl Griego de Pollo,Cena,suelto,medio,salado,,Aderezo de yogurt y pepino,Tzatziki,40,,fijo,plato,,bowl-griego-de-pollo.jpg
-Bowl de Res y Hummus,Cena,suelto,medio,salado,,Quinoa cruda,Quinoa cocida,55,120,principal,plato,peso crudo rinde ~150g cocida,bowl-de-res-y-hummus.jpg
+Bowl de Res y Hummus,Cena,suelto,medio,salado,,Quinoa cocida,Quinoa cocida,150,350,principal,plato,,bowl-de-res-y-hummus.jpg
 Bowl de Res y Hummus,Cena,suelto,medio,salado,,Sirloin,Sirloin a la plancha,150,300,principal,plato,,bowl-de-res-y-hummus.jpg
-Bowl de Res y Hummus,Cena,suelto,medio,salado,,Jitomate cereza,Jitomate cherry,50,,guarnicion,plato,,bowl-de-res-y-hummus.jpg
-Bowl de Res y Hummus,Cena,suelto,medio,salado,,Pimiento fresco,Pimiento rojo,50,,guarnicion,plato,,bowl-de-res-y-hummus.jpg
-Bowl de Res y Hummus,Cena,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,20,,guarnicion,plato,,bowl-de-res-y-hummus.jpg
+Bowl de Res y Hummus,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (jitomate cherry, pimiento rojo, cebolla morada)",120,,guarnicion,plato,,bowl-de-res-y-hummus.jpg
 Bowl de Res y Hummus,Cena,suelto,medio,salado,,Hummus,Hummus,50,75,principal,plato,,bowl-de-res-y-hummus.jpg
 Bowl de Res y Hummus,Cena,suelto,medio,salado,,Aceite de oliva,Aceite de oliva,5,,fijo,plato,,bowl-de-res-y-hummus.jpg
 Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Arroz cocido,Arroz blanco,150,450,principal,plato,,bowl-de-camaron-mediterraneo.jpg
 Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Camarón cocido,Camarón cocido,150,320,principal,plato,,bowl-de-camaron-mediterraneo.jpg
-Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,60,,guarnicion,plato,,bowl-de-camaron-mediterraneo.jpg
-Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Jitomate cereza,Jitomate cherry,50,,guarnicion,plato,,bowl-de-camaron-mediterraneo.jpg
-Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Elote amarillo desgranado cocido,Elote,50,,guarnicion,plato,,bowl-de-camaron-mediterraneo.jpg
+Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, jitomate cherry, elote)",160,,guarnicion,plato,,bowl-de-camaron-mediterraneo.jpg
 Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,50,94,principal,plato,,bowl-de-camaron-mediterraneo.jpg
 Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Aderezo de yogurt y pepino,Tzatziki,40,,fijo,plato,,bowl-de-camaron-mediterraneo.jpg
 Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Arroz cocido,Arroz blanco,120,450,principal,plato,,bowl-de-pescado-blanco-y-verdes.jpg
 Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Filete de pescado,Pescado blanco a la plancha,160,350,principal,plato,,bowl-de-pescado-blanco-y-verdes.jpg
-Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Lechuga romana,Lechuga romana,40,,guarnicion,plato,,bowl-de-pescado-blanco-y-verdes.jpg
-Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Espinaca cruda,Espinaca,30,,guarnicion,plato,,bowl-de-pescado-blanco-y-verdes.jpg
-Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Jitomate cereza,Jitomate cherry,50,,guarnicion,plato,,bowl-de-pescado-blanco-y-verdes.jpg
-Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Pimiento fresco,Pimiento rojo,40,,guarnicion,plato,,bowl-de-pescado-blanco-y-verdes.jpg
+Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Verduras mixtas,"Verduras (lechuga romana, espinaca, jitomate cherry, pimiento rojo)",160,,guarnicion,plato,,bowl-de-pescado-blanco-y-verdes.jpg
 Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Queso Feta,Queso feta,30,60,principal,plato,,bowl-de-pescado-blanco-y-verdes.jpg
 Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Aderezo de yogurt,Aderezo de yogurt,40,,fijo,plato,,bowl-de-pescado-blanco-y-verdes.jpg
 Bowl de Res y Elote,Cena,suelto,medio,salado,,Arroz cocido,Arroz blanco,150,450,principal,plato,,bowl-de-res-y-elote.jpg
 Bowl de Res y Elote,Cena,suelto,medio,salado,,Falda de res,Falda de res a la plancha,150,300,principal,plato,,bowl-de-res-y-elote.jpg
-Bowl de Res y Elote,Cena,suelto,medio,salado,,Elote amarillo desgranado cocido,Elote,60,,guarnicion,plato,,bowl-de-res-y-elote.jpg
-Bowl de Res y Elote,Cena,suelto,medio,salado,,Jitomate bola,Jitomate,60,,guarnicion,plato,,bowl-de-res-y-elote.jpg
-Bowl de Res y Elote,Cena,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,20,,guarnicion,plato,,bowl-de-res-y-elote.jpg
+Bowl de Res y Elote,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (elote, jitomate, cebolla morada)",140,,guarnicion,plato,,bowl-de-res-y-elote.jpg
 Bowl de Res y Elote,Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,bowl-de-res-y-elote.jpg
 Bowl de Res y Elote,Cena,suelto,medio,salado,,Aderezo de yogurt,Aderezo de yogurt,40,,fijo,plato,,bowl-de-res-y-elote.jpg
