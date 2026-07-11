@@ -387,6 +387,7 @@ export const es = {
     videoSoon: 'Video próximamente',
     setsLabel: 'SERIES',
     lastTime: 'La vez pasada',
+    todayTarget: 'Objetivo hoy',
     set: 'Serie',
     skipped: 'saltada',
     tapToMark: 'tocá para marcar',

@@ -1,7 +1,7 @@
 import { dayKey } from '../utils/localDate';
 import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera, Info, History } from 'lucide-react';
+import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera, Info, History, TrendingUp } from 'lucide-react';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 
 const CreatePostModal = lazy(() => import('./CreatePostModal'));
@@ -17,6 +17,7 @@ import { useT } from '../i18n';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
 import { parseRepsToNumber } from '../utils/workoutLogger';
+import { computeProgression, incrementForMuscle } from '../utils/progression';
 import {
   buildExecutionSequence,
   initLoggedByExercise,
@@ -175,6 +176,15 @@ export default function WorkoutPlayer({
     const top = sets.reduce((a, b) => (b.kg > a.kg || (b.kg === a.kg && b.reps > a.reps) ? b : a));
     return top.kg > 0 ? `${top.kg} kg × ${top.reps}` : `× ${top.reps}`;
   })();
+  // Sobrecarga progresiva (doble progresión) a partir del historial + reps prescritas.
+  const progression = (() => {
+    const sets = currentEx ? lastExercisePerformance[currentEx.id]?.sets : undefined;
+    if (!currentEx || !sets || sets.length === 0) return null;
+    return computeProgression(sets, currentEx.reps, incrementForMuscle(currentBank?.muscleGroup));
+  })();
+  const progLabel = progression
+    ? (progression.kg != null && progression.kg > 0 ? `${progression.kg} kg × ${progression.reps}` : `× ${progression.reps}`)
+    : null;
 
   // Límites de bloque (superserie = run del mismo `group`; o ejercicio suelto).
   const isBlockEnd = (stepIdx: number): boolean => {
@@ -371,9 +381,12 @@ export default function WorkoutPlayer({
     if (partnerTurn) return;
     if (!step || currentSetMarked || !currentEx) return;
     haptics.tap();
+    // Peso: si ya registraste una serie de este ejercicio HOY, arrastra ese peso;
+    // si es la primera, arranca en el OBJETIVO de progresión (peso a superar).
+    const sessionKg = lastKgForExercise(loggedByExercise, currentExerciseIndex);
     const entry: LoggedSet = {
       reps: parseRepsToNumber(currentEx.reps),
-      kg: lastKgForExercise(loggedByExercise, currentExerciseIndex),
+      kg: sessionKg > 0 ? sessionKg : (progression?.kg != null && progression.kg > 0 ? progression.kg : sessionKg),
     };
     setLoggedByExercise(prev => setLogAt(prev, currentExerciseIndex, currentSetNum - 1, entry));
     // Marca el ejercicio como hecho en Hoy en cuanto se completa (en vivo, no
@@ -627,6 +640,12 @@ export default function WorkoutPlayer({
               <div className="wp-last-perf">
                 <History size={12} strokeWidth={2} aria-hidden="true" />
                 <span>{t('workout.lastTime')}: <b>{lastPerfLabel}</b></span>
+              </div>
+            )}
+            {progLabel && (
+              <div className={`wp-prog${progression?.action === 'add-weight' ? ' wp-prog--up' : ''}`}>
+                <TrendingUp size={12} strokeWidth={2.2} aria-hidden="true" />
+                <span>{t('workout.todayTarget')}: <b>{progLabel}</b>{progression?.action === 'add-weight' ? ' ↑' : ''}</span>
               </div>
             )}
             <div className="wp-set-rows">

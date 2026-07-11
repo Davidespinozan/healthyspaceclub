@@ -520,6 +520,22 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+/* Objetivo de hoy (sobrecarga progresiva) */
+.wp-prog {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -6px 0 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(46,125,87,.16);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  color: var(--wp-text, #fff);
+}
+.wp-prog svg { color: #7fd1a6; flex-shrink: 0; }
+.wp-prog b { font-weight: 800; font-variant-numeric: tabular-nums; }
+.wp-prog--up { background: rgba(46,125,87,.26); }
 
 .wp-sets-label {
   font-family: 'Montserrat', sans-serif;

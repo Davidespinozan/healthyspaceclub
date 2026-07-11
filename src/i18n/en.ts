@@ -388,6 +388,7 @@ export const en: Translations<typeof es> = {
     videoSoon: 'Video coming soon',
     setsLabel: 'SETS',
     lastTime: 'Last time',
+    todayTarget: "Today's target",
     set: 'Set',
     skipped: 'skipped',
     tapToMark: 'tap to mark',
