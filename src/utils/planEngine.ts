@@ -218,7 +218,7 @@ function mergeItems(items: MealItem[], label: string): MealItem {
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
   rng: () => number, trials: number,
-  used: Set<string>, craving: string[], merge = false,
+  used: Set<string>, usedToday: Set<string>, craving: string[], merge = false,
 ): MealItem[] {
   // El pool ya viene filtrado por alergia (buildDay) → aquí no se cuela ningún alérgeno.
   const pickN = () => { const out: BancoDish[] = []; let g = 0; while (out.length < n && g++ < 40) { const d = pick(pool, rng); if (!out.includes(d)) out.push(d); } return out; };
@@ -239,7 +239,7 @@ function fitSlot(
   const acceptable = cands.filter((c) => c.e <= cap);
   acceptable.sort((a, b) => (b.craves - a.craves) || (a.used - b.used) || (a.e - b.e));
   const dishes = acceptable[0].dishes;
-  for (const d of dishes) used.add(d.nombre);
+  for (const d of dishes) { used.add(d.nombre); usedToday.add(d.nombre); }
   const { fixed, vars } = prep(dishes);
   solve(fixed, vars, target, 220);
   void fixed;
@@ -274,12 +274,16 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   // prefiere las cenas ligeras solo (las comidas se pasan del target y puntúan peor).
   const cen = clean(biasPool([...(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena), ...COMIDA_VEG], cuisines));
   const snack = clean(BY_TIME.Snack);
+  // Regla dura: NADA se repite dentro del mismo día (ni comida ni snack, ni una comida
+  // como cena). avail() saca del pool lo ya usado hoy; fitSlot va llenando usedToday.
+  const usedToday = new Set<string>();
+  const avail = (pool: BancoDish[]) => { const f = pool.filter((d) => !usedToday.has(d.nombre)); return f.length ? f : pool; };
   const meals: MealItem[] = [
-    ...fitSlot(des, 'Desayuno', MT.desayuno, 1, rng, 90, used, craving),
-    ...fitSlot(snack, 'Snack AM', MT.snackSlot, nSnack, rng, 70, used, craving, true),
-    ...fitSlot(com, 'Comida', MT.comida, 1, rng, 90, used, craving),
-    ...fitSlot(snack, 'Snack PM', MT.snackSlot, nSnack, rng, 70, used, craving, true),
-    ...fitSlot(cen, 'Cena', MT.cena, 1, rng, 90, used, craving),
+    ...fitSlot(avail(des), 'Desayuno', MT.desayuno, 1, rng, 90, used, usedToday, craving),
+    ...fitSlot(avail(snack), 'Snack AM', MT.snackSlot, nSnack, rng, 70, used, usedToday, craving, true),
+    ...fitSlot(avail(com), 'Comida', MT.comida, 1, rng, 90, used, usedToday, craving),
+    ...fitSlot(avail(snack), 'Snack PM', MT.snackSlot, nSnack, rng, 70, used, usedToday, craving, true),
+    ...fitSlot(avail(cen), 'Cena', MT.cena, 1, rng, 90, used, usedToday, craving),
   ];
   return { day: dayNum, theme: '', meals };
 }

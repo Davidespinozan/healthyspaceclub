@@ -72,6 +72,16 @@ describe('planEngine — ajuste a la meta', () => {
     expect(withCrave).toBeGreaterThan(without);
   });
 
+  it('dentro de un día NADA se repite (ni comida ni snack)', () => {
+    for (const T of CASES) {
+      for (const d of buildWeeklyPlan(T, { seed: 6 })) {
+        // los snacks combinados llevan nombre "A + B" → separar para checar cada platillo
+        const items = d.meals.flatMap((m) => m.name.split(' + '));
+        expect(new Set(items).size).toBe(items.length);
+      }
+    }
+  });
+
   it('variedad: los 7 días no repiten el mismo desayuno/comida/cena', () => {
     const days = buildWeeklyPlan(CASES[1], { seed: 5 });
     for (const time of ['Desayuno', 'Comida', 'Cena']) {
