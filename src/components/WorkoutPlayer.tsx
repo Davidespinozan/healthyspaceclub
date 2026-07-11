@@ -636,6 +636,7 @@ export default function WorkoutPlayer({
                 {isSuperset
                   ? t('workout.supersetRound', { n: currentSetNum, total: totalSetsForCurrent })
                   : <>{t('workout.setsLabel')} · {totalSetsForCurrent} × {currentEx.reps}</>}
+                {currentEx.tecnica && <span className="wp-sets-tecnica">{currentEx.tecnica}</span>}
               </span>
               <span className="wp-sets-counter">
                 {Math.min(setsRegisteredForCurrent, totalSetsForCurrent)} {t('workout.of')} {totalSetsForCurrent}

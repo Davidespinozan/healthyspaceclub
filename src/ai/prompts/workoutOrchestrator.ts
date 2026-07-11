@@ -94,17 +94,30 @@ ORDEN DE EJERCICIOS (crítico — la secuencia debe ser inteligente, no aleatori
 
 - Si el foco son VARIOS músculos específicos (ej. "Bíceps + Tríceps"): repártelos parejo pero AGRUPADOS por músculo (bloque de uno, luego el otro), no intercalados ejercicio por ejercicio.
 
-SUPERSERIES / BISERIES (técnica de coach pro — úsalas con criterio, NO en todo):
-- Marca ejercicios con el MISMO valor en "group" (ej. "A", "B") para que se hagan ENCADENADOS: sin descanso entre ellos, el descanso va al cerrar la vuelta. Sin "group" = serie recta normal.
-- Los compuestos PESADOS principales (press de banca, sentadilla, peso muerto, dominadas, remo pesado) van como SERIE RECTA (sin group) — máxima fuerza, técnica y seguridad. NUNCA los superserías.
-- Agrupa ACCESORIOS y AISLAMIENTO para densidad e intensidad:
-  · Push: biserie de tríceps al final, o superserie de aislamiento (aperturas + elevación lateral).
-  · Pull: superserie de accesorio de espalda + bíceps, o biserie de bíceps al final.
-  · Legs: superserie de aislamiento (extensiones + curl femoral; o cuádriceps + pantorrillas).
-  · Full body / Upper: superserie de ANTAGONISTAS (pecho + espalda, o bíceps + tríceps).
-- Empareja los ejercicios del MISMO group con el MISMO número de sets, y el mismo "rest" (el descanso se aplica al cerrar la vuelta).
-- Si el tiempo es CORTO (25 min), usa más superseries para meter volumen en menos tiempo.
-- Regla de oro: 1-2 grupos por sesión es lo normal. NO superserías toda la rutina; la mayoría son series rectas.
+ESTRUCTURA DE LA SESIÓN (piensa como COACH que arma la mejor rutina para ESTE usuario, NO como fórmula):
+El formato lo decides TÚ según goal, nivel, tiempo, día y músculos — NO hay un número fijo de superseries. Toma en cuenta todas las variables del usuario y arma lo mejor. Estructuras válidas según el caso:
+- Fuerza / principiante: casi todo SERIES RECTAS (foco en técnica y carga), quizá 1 biserie ligera al final.
+- Hipertrofia / intermedio-avanzado: mezcla rica — compuestos rectos + VARIAS biseries y hasta una triserie de accesorios. En una misma sesión pueden ir perfectamente 3 biseries + 1 triserie.
+- Poco tiempo (≤30 min), acondicionamiento o quema de grasa: puedes armar CASI TODA la rutina como superseries, giant sets o circuito para meter volumen en menos tiempo. Sí, es válido que TODA la rutina sea una superserie/circuito si eso sirve al usuario.
+- Antagonistas (pecho/espalda, bíceps/tríceps, cuádriceps/isquios) son ideales para biserie: uno descansa mientras el otro trabaja.
+
+Cómo marcar: ejercicios con el MISMO "group" (A, B, C…) se hacen ENCADENADOS sin descanso; el descanso va al cerrar la vuelta. Sin "group" = serie recta. Biserie = 2 mismo group; triserie = 3; giant set = 4+.
+Reglas duras:
+- Los compuestos PESADOS principales (press de banca, sentadilla, peso muerto, dominadas/remo pesado) van SIEMPRE como SERIE RECTA (sin group) — máxima fuerza, técnica y seguridad. NUNCA los superserías.
+- Empareja los ejercicios del MISMO group con el MISMO número de sets y el mismo "rest" (se aplica al cerrar la vuelta).
+- Las biseries son la forma correcta de intercalar músculos sin enfriarlos (respeta el anti-enfriamiento de arriba).
+
+TÉCNICAS DE INTENSIDAD (arsenal de coach — colócalas en AISLAMIENTO/accesorios, NUNCA en compuestos pesados; más en hipertrofia/avanzado, con moderación en principiante):
+Marca la técnica en el campo "tecnica" del ejercicio y explícala breve en tip_personalizado. Opciones:
+- "21s": 7 reps mitad inferior + 7 mitad superior + 7 completas (clásico de bíceps y elevaciones laterales).
+- "Drop set": al fallo, baja el peso ~30% y sigue sin descanso (1-2 bajadas) — última serie de un aislamiento.
+- "Rest-pause": llega al fallo, descansa 15s, saca más reps; repite 2-3 mini-tandas.
+- "Myo-reps": una serie de activación al fallo + mini-series de 3-5 reps con 5-10s de pausa.
+- "Parciales": al fallar las reps completas, sigue con parciales en el rango de mayor tensión.
+- "Tempo": baja lento 3-4s enfatizando la fase excéntrica.
+- "Isométrico": mantén la contracción en el punto de máxima tensión unos segundos.
+- "Giant set": 3-4 ejercicios del mismo músculo encadenados (mismo "group").
+Criterio: 1-3 técnicas bien colocadas por sesión valen más que llenar todo. Deben servir al goal del usuario. En días de fuerza pura o principiante, casi ninguna.
 ${partnerSection}
 ${getVoiceRules(locale, 'default')}
 
@@ -114,7 +127,7 @@ deben hablarle en 2da persona (tú/te/tu), sin usar su nombre, sin "el usuario".
 TAREA:
 1. Selecciona exactamente ${p.targetCount} IDs de la lista y ORDÉNALOS aplicando las reglas de "ORDEN DE EJERCICIOS" de arriba (agrupar con lógica en días enfocados; alternar SOLO en full body).
    ⚠️ OBLIGATORIO: usa ÚNICAMENTE los "id" EXACTOS que aparecen en la lista de EJERCICIOS DISPONIBLES. NO inventes ids, NO uses ejercicios que no estén en la lista, NO sustituyas por equivalentes. La lista ya está filtrada por el equipo del usuario — cualquier id fuera de ella se RECHAZA.
-2. Ajusta sets/reps/rest según el goal (fuerza: reps bajas 4-6, descansos 120s; hipertrofia: 8-12 reps, 60-90s; condicion: circuito 15+ reps, 30-45s; movilidad: tiempos largos).
+2. Ajusta sets/reps/rest según el goal (fuerza: reps bajas 4-6, descansos 120s; hipertrofia: 8-12 reps, 60-90s; condicion: circuito 15+ reps, 30-45s; movilidad: tiempos largos). Diseña la ESTRUCTURA (series rectas / biseries / triseries / giant sets / circuito) y las TÉCNICAS de intensidad según las secciones de arriba — como coach, no por fórmula.
 3. Escribe tip_personalizado breve (máx 15 palabras) por ejercicio, dirigido al usuario en 2da persona.
 4. Escribe warmup y cooldown breves (1 oración cada uno), en 2da persona.
 5. Escribe "note": mensaje motivador breve (1-2 oraciones), hablándole directo (ej. "tu próximo paso es..." NO "X, tu próximo paso...").
@@ -131,7 +144,7 @@ Responde SOLO este JSON, sin markdown:
     { "id": "accesorio-1", "sets": 3, "reps": "12-15", "rest": 60, "format": "juntos", "group": "A", "tip_personalizado": "..." }`
       : `{ "id": "exercise-id", "sets": 4, "reps": "8-10", "rest": 90, "tip_personalizado": "tip breve" },
     { "id": "accesorio-1", "sets": 3, "reps": "10-12", "rest": 60, "group": "A", "tip_personalizado": "..." },
-    { "id": "accesorio-2", "sets": 3, "reps": "10-12", "rest": 60, "group": "A", "tip_personalizado": "..." }`}
+    { "id": "accesorio-2", "sets": 3, "reps": "10-12", "rest": 60, "group": "A", "tecnica": "Drop set", "tip_personalizado": "en la última serie baja el peso 30% y sigue al fallo" }`}
   ],
   "warmup": "...",
   "cooldown": "...",

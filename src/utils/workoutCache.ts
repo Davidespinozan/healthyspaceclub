@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 7, // v7: anti-enfriamiento + excepción biseries que emparejan músculos
+  workout: 8, // v8: estructura libre (biseries/triseries/circuito según usuario) + técnicas de intensidad
 } as const;
 
 // Formato de coordinación de un ejercicio cuando se entrena en pareja:
@@ -24,6 +24,10 @@ export interface CachedWorkout {
     // `group` (ej. "A") se hacen encadenados (sin descanso entre ellos, descanso
     // al cerrar la vuelta). Ausente = serie recta.
     group?: string;
+    // Técnica de intensidad opcional (aislamiento/accesorios): "21s", "Drop set",
+    // "Rest-pause", "Myo-reps", "Parciales", "Tempo", "Isométrico", "Giant set".
+    // Se muestra como chip; la explicación va en tip_personalizado.
+    tecnica?: string;
     // ── Modo pareja (solo presentes cuando partnerMode = true) ──
     // Mismos ejercicios para ambos; la IA ajusta la PRESCRIPCIÓN por persona.
     // `reps`/`tip_personalizado` son los de quien usa el dispositivo (persona A).
