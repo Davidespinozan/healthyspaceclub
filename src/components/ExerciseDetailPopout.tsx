@@ -36,7 +36,10 @@ export default function ExerciseDetailPopout({
   const { t } = useT();
   // Variante específica del equipo del usuario (si aplica)
   const variant = userEquipment ? selectVariantForEquipment(exercise, userEquipment) : null;
-  const displayName = variant ? `${exercise.name} — ${variant.name}` : exercise.name;
+  // Gym: el implemento no importa y el agarre ya va en el nombre → no lo muestra en el
+  // título. Cuerpo/ligas: la variante nombra el movimiento real, se conserva.
+  const varIsGymImpl = !!variant && variant.equipment.length === 1 && variant.equipment[0] === 'gym';
+  const displayName = variant && !varIsGymImpl ? `${exercise.name} — ${variant.name}` : exercise.name;
   const [videos, setVideos] = useState<ExerciseVideo[]>(exercise.videos || []);
   const [activeIdx, setActiveIdx] = useState(0);
   const [loading, setLoading] = useState(true);

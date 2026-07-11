@@ -161,8 +161,12 @@ export default function WorkoutPlayer({
   const currentEx = exercises[currentExerciseIndex];
   const currentBank = currentEx ? exerciseMap.get(currentEx.id) : undefined;
   const variant = currentBank ? selectVariantForEquipment(currentBank, userEquipment) : null;
+  // En gym el implemento (barra/mancuerna/máquina) NO importa y el agarre ya va en el
+  // nombre del ejercicio → el título NO muestra la variante de gym. En cuerpo/ligas la
+  // variante sí nombra el movimiento real (flexiones, con banda), así que se conserva.
+  const varIsGymImpl = !!variant && variant.equipment.length === 1 && variant.equipment[0] === 'gym';
   const displayName = currentBank
-    ? (variant ? `${currentBank.name} — ${variant.name}` : currentBank.name)
+    ? (variant && !varIsGymImpl ? `${currentBank.name} — ${variant.name}` : currentBank.name)
     : currentEx?.id || '';
   const DisplayIcon = getExerciseIcon(currentBank);
   const totalSetsForCurrent = currentEx?.sets || 1;
