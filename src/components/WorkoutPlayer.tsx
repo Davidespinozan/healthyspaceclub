@@ -177,10 +177,11 @@ export default function WorkoutPlayer({
     return top.kg > 0 ? `${top.kg} kg × ${top.reps}` : `× ${top.reps}`;
   })();
   // Sobrecarga progresiva (doble progresión) a partir del historial + reps prescritas.
+  const isBandExercise = variant ? variant.equipment.includes('ligas') : userEquipment.includes('ligas');
   const progression = (() => {
     const sets = currentEx ? lastExercisePerformance[currentEx.id]?.sets : undefined;
     if (!currentEx || !sets || sets.length === 0) return null;
-    return computeProgression(sets, currentEx.reps, incrementForMuscle(currentBank?.muscleGroup));
+    return computeProgression(sets, currentEx.reps, incrementForMuscle(currentBank?.muscleGroup), isBandExercise);
   })();
   const progLabel = progression
     ? (progression.kg != null && progression.kg > 0 ? `${progression.kg} kg × ${progression.reps}` : `× ${progression.reps}`)
@@ -642,12 +643,18 @@ export default function WorkoutPlayer({
                 <span>{t('workout.lastTime')}: <b>{lastPerfLabel}</b></span>
               </div>
             )}
-            {progLabel && (
-              <div className={`wp-prog${progression?.action === 'add-weight' ? ' wp-prog--up' : ''}`}>
-                <TrendingUp size={12} strokeWidth={2.2} aria-hidden="true" />
-                <span>{t('workout.todayTarget')}: <b>{progLabel}</b>{progression?.action === 'add-weight' ? ' ↑' : ''}</span>
-              </div>
-            )}
+            {progLabel && (() => {
+              const up = progression?.action === 'add-weight' || progression?.action === 'add-tension';
+              return (
+                <div className={`wp-prog${up ? ' wp-prog--up' : ''}`}>
+                  <TrendingUp size={12} strokeWidth={2.2} aria-hidden="true" />
+                  <span>{t('workout.todayTarget')}: <b>{progLabel}</b>
+                    {progression?.action === 'add-weight' ? ' ↑' : ''}
+                    {progression?.action === 'add-tension' ? <> · {t('workout.harderBand')} ↑</> : ''}
+                  </span>
+                </div>
+              );
+            })()}
             <div className="wp-set-rows">
               {Array.from({ length: totalSetsForCurrent }).map((_, setIdx) => {
                 const entry = (loggedByExercise[currentExerciseIndex] || [])[setIdx];

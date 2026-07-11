@@ -3,9 +3,9 @@
 // dura, subes el peso y reinicias al piso del rango. Si no, mantienes el peso y buscas
 // más reps. Usa el historial que la app YA guarda (lastExercisePerformance).
 export interface ProgressionTarget {
-  kg: number | null;                 // peso objetivo (null = sin dato / peso corporal sin carga)
+  kg: number | null;                 // peso objetivo (null = sin dato / peso corporal / banda)
   reps: string;                      // meta de reps ("8-10", "10")
-  action: 'first-time' | 'add-weight' | 'add-reps' | 'hold';
+  action: 'first-time' | 'add-weight' | 'add-reps' | 'add-tension' | 'hold';
   note: string;                      // cue corto para el usuario (2ª persona)
 }
 
@@ -25,16 +25,27 @@ export function computeProgression(
   lastSets: { reps: number; kg: number }[] | undefined,
   repRange: string,
   incrementKg: number,
+  isBand = false,
 ): ProgressionTarget {
   const [lo, hi] = parseRepRange(repRange);
   const working = (lastSets ?? []).filter((s) => s.reps > 0);
   if (working.length === 0) {
     return { kg: null, reps: `${lo}-${hi}`, action: 'first-time',
-      note: `Primera vez: encuentra un peso donde llegues a ${hi} reps con buena técnica.` };
+      note: isBand
+        ? `Primera vez: elige una liga donde llegues a ${hi} reps con buena técnica.`
+        : `Primera vez: encuentra un peso donde llegues a ${hi} reps con buena técnica.` };
   }
   const refKg = Math.max(...working.map((s) => s.kg));
   // serie más dura al peso de referencia = la de menos reps a ese kg
   const repsAtRef = Math.min(...working.filter((s) => s.kg === refKg).map((s) => s.reps));
+
+  // BANDAS: no hay kg → doble progresión sobre la TENSIÓN. Al tope de reps → liga más dura.
+  if (isBand) {
+    if (repsAtRef >= hi) return { kg: null, reps: `${lo}-${hi}`, action: 'add-tension',
+      note: `Dominaste ${repsAtRef} reps — sube a una liga más dura (o dóblala) y vuelve a ${lo}.` };
+    return { kg: null, reps: `${Math.min(repsAtRef + 1, hi)}-${hi}`, action: 'add-reps',
+      note: `Busca ${hi} reps limpias con la misma liga (la vez pasada ${repsAtRef}).` };
+  }
 
   if (refKg <= 0) {
     // Peso corporal: progresa en reps.

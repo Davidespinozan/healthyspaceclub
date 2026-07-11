@@ -42,6 +42,25 @@ describe('progression — doble progresión', () => {
     expect(t.reps).toBe('14');
   });
 
+  it('bandas: al tope de reps → sube TENSIÓN (no peso)', () => {
+    const t = computeProgression([{ reps: 12, kg: 0 }], '8-12', 2.5, true);
+    expect(t.action).toBe('add-tension');
+    expect(t.kg).toBeNull();
+    expect(t.reps).toBe('8-12');
+  });
+
+  it('bandas: sin llegar al tope → misma liga, más reps', () => {
+    const t = computeProgression([{ reps: 9, kg: 0 }], '8-12', 2.5, true);
+    expect(t.action).toBe('add-reps');
+    expect(t.kg).toBeNull();
+  });
+
+  it('bandas: primera vez → habla de liga, no de peso', () => {
+    const t = computeProgression(undefined, '8-12', 2.5, true);
+    expect(t.action).toBe('first-time');
+    expect(t.note.toLowerCase()).toContain('liga');
+  });
+
   it('incremento: tren inferior/compuesto grande sube 5, resto 2.5', () => {
     expect(incrementForMuscle('cuadriceps')).toBe(5);
     expect(incrementForMuscle('espalda')).toBe(5);

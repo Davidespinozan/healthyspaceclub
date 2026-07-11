@@ -389,6 +389,7 @@ export const en: Translations<typeof es> = {
     setsLabel: 'SETS',
     lastTime: 'Last time',
     todayTarget: "Today's target",
+    harderBand: 'harder band',
     set: 'Set',
     skipped: 'skipped',
     tapToMark: 'tap to mark',

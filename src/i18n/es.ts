@@ -388,6 +388,7 @@ export const es = {
     setsLabel: 'SERIES',
     lastTime: 'La vez pasada',
     todayTarget: 'Objetivo hoy',
+    harderBand: 'liga más dura',
     set: 'Serie',
     skipped: 'saltada',
     tapToMark: 'tocá para marcar',
