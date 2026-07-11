@@ -178,6 +178,56 @@ export function analyzeWorkoutHistory(
 }
 
 // ══════════════════════════════════════════════════════════════
+// VOLUMEN SEMANAL POR MÚSCULO (series/músculo en los últimos 7 días)
+// Estándar de hipertrofia: 10-20 series efectivas por músculo por semana.
+// ══════════════════════════════════════════════════════════════
+
+export const WEEKLY_SET_TARGET = 14; // meta media (dentro de 10-20) que buscamos alcanzar
+
+/** Series aproximadas por grupo muscular en los últimos `days` días.
+ *  Primario = series completas del ejercicio; secundarios = media serie. */
+export function computeWeeklyVolume(
+  completedSessions: CompletedSession[],
+  exercises: Exercise[],
+  days = 7,
+): Record<string, number> {
+  const exerciseMap = new Map(exercises.map((e) => [e.id, e]));
+  const since = dayKey(new Date(Date.now() - (days - 1) * 86400000));
+  const vol: Record<string, number> = {};
+  for (const s of completedSessions) {
+    if (s.date < since) continue;
+    for (const id of s.exerciseIds) {
+      const ex = exerciseMap.get(id);
+      if (!ex || ex.type === 'cardio') continue;
+      const sets = ex.defaultSets && ex.defaultSets > 0 ? ex.defaultSets : 3;
+      vol[ex.muscleGroup] = (vol[ex.muscleGroup] ?? 0) + sets;
+      for (const m of ex.secondaryMuscles ?? []) vol[m] = (vol[m] ?? 0) + sets * 0.5;
+    }
+  }
+  return vol;
+}
+
+const STRENGTH_TYPES: WorkoutDayType[] = ['upper', 'lower', 'full-body', 'push', 'pull', 'legs'];
+
+/** Entre varios tipos de día, elige el que más DÉFICIT de volumen tiene esta semana
+ *  (músculos que van cortos vs la meta), evitando repetir los de ayer. */
+export function pickByVolumeDeficit(
+  types: WorkoutDayType[],
+  vol: Record<string, number>,
+  yesterdayMuscles: MuscleGroup[],
+): WorkoutDayType {
+  const yesterday = new Set(yesterdayMuscles);
+  const scored = types.map((t) => {
+    const mgs = DAY_TYPE_CONFIG[t].muscleGroups;
+    const deficit = mgs.reduce((a, m) => a + Math.max(0, WEEKLY_SET_TARGET - (vol[m] ?? 0)), 0);
+    const overlap = mgs.some((m) => yesterday.has(m));
+    return { t, deficit, overlap };
+  });
+  scored.sort((a, b) => (Number(a.overlap) - Number(b.overlap)) || (b.deficit - a.deficit));
+  return scored[0].t;
+}
+
+// ══════════════════════════════════════════════════════════════
 // DECISIÓN DE QUÉ TOCA HOY
 // ══════════════════════════════════════════════════════════════
 
@@ -199,7 +249,18 @@ export function decideTodayWorkout(params: {
   const history = analyzeWorkoutHistory(workoutLog, exercises, completedSessions);
 
   // Pick next in cycle, avoiding yesterday's muscles
-  const todayType = pickNextInCycle(cycle, history);
+  let todayType = pickNextInCycle(cycle, history);
+
+  // Fase 2 — volumen semanal: en días de FUERZA, prioriza el split cuyos músculos
+  // van más CORTOS esta semana (self-balancing: mucho pecho → te lleva a espalda/pierna).
+  // Los días de cardio/movilidad se respetan tal cual (recuperación).
+  if (STRENGTH_TYPES.includes(todayType)) {
+    const strengthInCycle = [...new Set(cycle.filter((t) => STRENGTH_TYPES.includes(t)))];
+    if (strengthInCycle.length > 1) {
+      const vol = computeWeeklyVolume(completedSessions, exercises);
+      todayType = pickByVolumeDeficit(strengthInCycle, vol, history.yesterday);
+    }
+  }
 
   // Determine intensity from check-in
   const intensity = determineIntensity(dailyEnergy, dailySleep, history.restDays);
