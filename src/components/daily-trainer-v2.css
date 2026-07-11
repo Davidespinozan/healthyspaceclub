@@ -190,7 +190,7 @@
   flex-shrink: 0;
   width: 63px;
   height: 63px;
-  border-radius: 50%;
+  border-radius: 12px;
   background: linear-gradient(135deg, rgba(191, 160, 101, 0.22), rgba(168, 134, 78, 0.14));
   color: var(--amber-deep);
   display: inline-flex;
@@ -204,7 +204,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  border-radius: 50%;
+  border-radius: 12px;
 }
 
 /* Desktop tiene más espacio → preview aún más grande y visual. */

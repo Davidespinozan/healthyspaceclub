@@ -39,6 +39,7 @@ const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,
 // Clave de ingrediente para rotación: 1ª palabra (agrupa "Aguacate"/"Aguacate machacado"
 // y "Pollo deshebrado"/"Pollo en trozos") → penaliza repetir la misma base en la semana.
 const ingKey = (nv: string) => norm(nv).split(/\s+/)[0] || nv;
+const dishPrincKeys = (d: BancoDish) => d.ings.filter((i) => i.rol === 'principal').map((i) => ingKey(i.nv));
 const DTEXT = new Map<BancoDish, { text: string; words: Set<string> }>();
 for (const d of BANCO) {
   const text = norm(d.nombre + ' ' + d.ings.map((i) => i.nv).join(' '));
@@ -160,10 +161,31 @@ function errMax(fixed: number[], vars: Var[], T: number[]): number {
 
 function pick<T>(arr: T[], rng: () => number): T { return arr[Math.floor(rng() * arr.length)]; }
 
+const FRAC: Record<string, string> = { '0.5': '½', '1.5': '1½', '2.5': '2½', '3.5': '3½', '4.5': '4½', '5.5': '5½' };
+function fmtCount(n: number): string {
+  return FRAC[String(n)] ?? String(n);
+}
+function pluralNoun(un: string, n: number): string {
+  if (n <= 1) return un; // "1 huevo", "½ manzana"
+  const [head, ...rest] = un.split(' ');
+  if (/s$/i.test(head)) return un; // ya plural (espárragos)
+  const p = /[aeiouáéíóú]$/i.test(head) ? head + 's' : head + 'es'; // huevo→huevos, pan→panes
+  return [p, ...rest].join(' ');
+}
+// La gente cuenta huevos/tortillas, no los pesa. Si el alimento trae medida casera
+// (pu = g por pieza) y la cantidad cae en un conteo limpio y creíble (0.5–8 piezas,
+// error ≤30%), se muestra "2 huevos" en vez de "88 g". Si no, se queda en gramos.
 function portionStr(ing: BancoIng, g: number | null): string {
   if (ing.rol === 'condimento') return `${ing.nv} al gusto`;
   if (ing.rol === 'sub-receta') return ing.nv;
-  return `${Math.round(g ?? ing.g0)} g ${ing.nv}`;
+  const grams = Math.round(g ?? ing.g0);
+  if (ing.pu && ing.un && grams > 0) {
+    const n = Math.max(0.5, Math.round((grams / ing.pu) * 2) / 2);
+    if (n <= 8 && Math.abs(n * ing.pu - grams) <= 0.30 * grams) {
+      return `${fmtCount(n)} ${pluralNoun(ing.un, n)}`;
+    }
+  }
+  return `${grams} g ${ing.nv}`;
 }
 
 function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>): MealItem {
@@ -224,39 +246,46 @@ function mergeItems(items: MealItem[], label: string): MealItem {
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
   rng: () => number, trials: number,
-  used: Set<string>, usedToday: Set<string>, craving: string[],
+  used: Set<string>, usedToday: Set<string>, usedTodayIng: Set<string>, craving: string[],
   ingFreq: Map<string, number>, merge = false,
 ): MealItem[] {
   // El pool ya viene filtrado por alergia (buildDay) → aquí no se cuela ningún alérgeno.
-  const pickN = () => { const out: BancoDish[] = []; let g = 0; while (out.length < n && g++ < 40) { const d = pick(pool, rng); if (!out.includes(d)) out.push(d); } return out; };
   const princKeys = (d: BancoDish) => d.ings.filter((i) => i.rol === 'principal').map((i) => ingKey(i.nv));
-  const cands: { dishes: BancoDish[]; e: number; used: number; craves: number; ingScore: number; fib: number }[] = [];
+  // pickN nunca junta en el MISMO slot dos platillos que compartan ingrediente principal
+  // (ej. "zanahoria y pepino con hummus" + "bastones de zanahoria" → el snack se repetía).
+  const shares = (a: BancoDish, b: BancoDish) => { const ka = new Set(princKeys(a)); return princKeys(b).some((k) => ka.has(k)); };
+  const pickN = () => { const out: BancoDish[] = []; let g = 0; while (out.length < n && g++ < 60) { const d = pick(pool, rng); if (out.includes(d) || out.some((o) => shares(o, d))) continue; out.push(d); } return out; };
+  const cands: { dishes: BancoDish[]; e: number; used: number; craves: number; ingScore: number; dayIng: number; fib: number }[] = [];
   for (let t = 0; t < trials; t++) {
     const dishes = pickN();
     const { fixed, vars } = prep(dishes);
     solve(fixed, vars, target, 100);
     const e = errMax(fixed, vars, target);
     const craves = craving.length ? dishes.filter((d) => dishMatchesAny(d, craving)).length : 0;
-    // ingScore = qué tan repetidos están los ingredientes de este candidato en la semana.
-    let ingScore = 0;
-    for (const d of dishes) for (const k of princKeys(d)) ingScore += ingFreq.get(k) ?? 0;
+    // ingScore = repetición en la SEMANA; dayIng = ingrediente principal ya usado HOY
+    // en otro tiempo (evita zanahoria en snack AM y otra vez en PM, pollo en comida y cena).
+    let ingScore = 0, dayIng = 0;
+    for (const d of dishes) for (const k of princKeys(d)) { ingScore += ingFreq.get(k) ?? 0; if (usedTodayIng.has(k)) dayIng++; }
     let fib = fixed[4]; for (const v of vars) fib += v.a[4] * v.g;
-    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length, craves, ingScore, fib });
+    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length, craves, ingScore, dayIng, fib });
   }
   // Aceptables = los que pegan razonable (error ≤ 12%; holgura porque cada tiempo es ~¼
-  // del día). Entre ellos: 1) ANTOJO, 2) variedad (platillo e INGREDIENTE menos repetidos
-  // → rota el aguacate/pollo), 3) más FIBRA, 4) mejor ajuste.
+  // del día). Entre ellos: 1) ANTOJO, 2) NO repetir ingrediente el mismo día, 3) variedad
+  // semanal (platillo e ingrediente menos repetidos → rota aguacate/pollo), 4) fibra, 5) ajuste.
   const minE = Math.min(...cands.map((c) => c.e));
   const cap = Math.max(12, minE + 2);
   const acceptable = cands.filter((c) => c.e <= cap);
   acceptable.sort((a, b) =>
     (b.craves - a.craves) ||
-    ((a.used * 50 + a.ingScore) - (b.used * 50 + b.ingScore)) ||
+    // variedad: platillo repetido en la semana (50) pesa más que ingrediente repetido
+    // hoy (30) — así la cena (pool chico) no repite platillos entre días, pero cuando hay
+    // opción fresca (score 0) se prefiere no repetir ingrediente el mismo día.
+    ((a.used * 50 + a.dayIng * 30 + a.ingScore) - (b.used * 50 + b.dayIng * 30 + b.ingScore)) ||
     (b.fib - a.fib) ||
     (a.e - b.e),
   );
   const dishes = acceptable[0].dishes;
-  for (const d of dishes) { used.add(d.nombre); usedToday.add(d.nombre); for (const k of princKeys(d)) ingFreq.set(k, (ingFreq.get(k) ?? 0) + 1); }
+  for (const d of dishes) { used.add(d.nombre); usedToday.add(d.nombre); for (const k of princKeys(d)) { ingFreq.set(k, (ingFreq.get(k) ?? 0) + 1); usedTodayIng.add(k); } }
   const { fixed, vars } = prep(dishes);
   solve(fixed, vars, target, 220);
   void fixed;
@@ -294,13 +323,21 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   // Regla dura: NADA se repite dentro del mismo día (ni comida ni snack, ni una comida
   // como cena). avail() saca del pool lo ya usado hoy; fitSlot va llenando usedToday.
   const usedToday = new Set<string>();
+  const usedTodayIng = new Set<string>(); // ingredientes principales ya usados hoy → no repetir en el día
   const avail = (pool: BancoDish[]) => { const f = pool.filter((d) => !usedToday.has(d.nombre)); return f.length ? f : pool; };
+  // Snacks: regla DURA de ingrediente. Un snack casi ES su ingrediente (yogurt, zanahoria),
+  // así que dos snacks del mismo ingrediente en el día se sienten repetidos aunque el
+  // platillo sea distinto. Excluye del pool los que compartan principal con lo ya usado hoy.
+  const availSnack = (pool: BancoDish[]) => {
+    const fresh = pool.filter((d) => !usedToday.has(d.nombre) && !dishPrincKeys(d).some((k) => usedTodayIng.has(k)));
+    return fresh.length ? fresh : pool.filter((d) => !usedToday.has(d.nombre));
+  };
   const meals: MealItem[] = [
-    ...fitSlot(avail(des), 'Desayuno', MT.desayuno, 1, rng, 90, used, usedToday, craving, ingFreq),
-    ...fitSlot(avail(snack), 'Snack AM', MT.snackSlot, nSnack, rng, 70, used, usedToday, craving, ingFreq, true),
-    ...fitSlot(avail(com), 'Comida', MT.comida, 1, rng, 90, used, usedToday, craving, ingFreq),
-    ...fitSlot(avail(snack), 'Snack PM', MT.snackSlot, nSnack, rng, 70, used, usedToday, craving, ingFreq, true),
-    ...fitSlot(avail(cen), 'Cena', MT.cena, 1, rng, 90, used, usedToday, craving, ingFreq),
+    ...fitSlot(avail(des), 'Desayuno', MT.desayuno, 1, rng, 90, used, usedToday, usedTodayIng, craving, ingFreq),
+    ...fitSlot(availSnack(snack), 'Snack AM', MT.snackSlot, nSnack, rng, 70, used, usedToday, usedTodayIng, craving, ingFreq, true),
+    ...fitSlot(avail(com), 'Comida', MT.comida, 1, rng, 90, used, usedToday, usedTodayIng, craving, ingFreq),
+    ...fitSlot(availSnack(snack), 'Snack PM', MT.snackSlot, nSnack, rng, 70, used, usedToday, usedTodayIng, craving, ingFreq, true),
+    ...fitSlot(avail(cen), 'Cena', MT.cena, 1, rng, 90, used, usedToday, usedTodayIng, craving, ingFreq),
   ];
   return { day: dayNum, theme: '', meals };
 }
