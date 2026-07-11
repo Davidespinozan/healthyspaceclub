@@ -34,6 +34,37 @@ function biasPool(pool: BancoDish[], cuisines: string[]): BancoDish[] {
   return f.length >= 2 ? f : pool;
 }
 
+// ── Texto de cada platillo (nombre + ingredientes), sin acentos, para "evitar"/"antojo" ──
+const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const DTEXT = new Map<BancoDish, { text: string; words: Set<string> }>();
+for (const d of BANCO) {
+  const text = norm(d.nombre + ' ' + d.ings.map((i) => i.nv).join(' '));
+  DTEXT.set(d, { text, words: new Set(text.split(/[^a-z0-9]+/).filter(Boolean)) });
+}
+// term con espacio → substring; palabra suelta → límite de palabra (evita "pan" en "panela").
+function dishMatches(d: BancoDish, term: string): boolean {
+  const e = DTEXT.get(d)!;
+  return term.includes(' ') ? e.text.includes(term) : e.words.has(term);
+}
+const dishMatchesAny = (d: BancoDish, terms: string[]) => terms.some((t) => dishMatches(d, t));
+
+// Categorías de "evitar" → alimentos/palabras reales del banco (mapeo, no texto literal).
+const AVOID_MAP: Record<string, string[]> = {
+  gluten: ['pan', 'pasta', 'espagueti', 'bagel', 'waffle', 'waffles', 'pita', 'tallarines', 'noodles', 'galleta', 'galletas', 'crutones', 'cereal', 'tortilla de harina', 'hot cake', 'hot cakes', 'corn flakes'],
+  lacteos: ['leche', 'queso', 'yogur', 'yoghurt', 'yogurt', 'requeson', 'ricotta', 'cottage', 'panela', 'oaxaca', 'feta', 'mozzarella', 'parmesano', 'crema acida'],
+  'carne-roja': ['res', 'sirloin', 'bistec', 'falda', 'molida', 'machaca', 'chambarete', 'arrachera'],
+  mariscos: ['camaron', 'camarones', 'marisco', 'mariscos'],
+};
+function expandAvoid(raw: string[]): string[] {
+  const out: string[] = [];
+  for (const a of raw) { if (a === 'nada' || a === 'ninguno') continue; out.push(...(AVOID_MAP[a] ?? [a])); }
+  return out.map(norm);
+}
+const STOP = new Set(['algo', 'con', 'sin', 'del', 'los', 'las', 'una', 'uno', 'que', 'por', 'para', 'muy', 'mas', 'antoja', 'antojo', 'quiero', 'comer', 'tipo', 'como', 'mucho', 'poco']);
+function cravingTerms(text: string): string[] {
+  return norm(text).split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !STOP.has(w));
+}
+
 // RNG determinista (mismo plan para misma semilla)
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
@@ -179,28 +210,26 @@ function mergeItems(items: MealItem[], label: string): MealItem {
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
   rng: () => number, avoid: (d: BancoDish) => boolean, trials: number,
-  used: Set<string>, merge = false,
+  used: Set<string>, craving: string[], merge = false,
 ): MealItem[] {
   const pickDish = () => { for (let i = 0; i < 20; i++) { const d = pick(pool, rng); if (!avoid(d)) return d; } return pick(pool, rng); };
   const pickN = () => { const out: BancoDish[] = []; let g = 0; while (out.length < n && g++ < 40) { const d = pickDish(); if (!out.includes(d)) out.push(d); } return out; };
-  // Primero PRECISIÓN: junta candidatos con su error. Luego, entre los que pegan
-  // bien (dentro de minError+4pp), elige el MENOS repetido esta semana → variedad
-  // sin sacrificar el ajuste. Si el pool se agota, permite repetir.
-  const cands: { dishes: BancoDish[]; e: number; used: number }[] = [];
+  const cands: { dishes: BancoDish[]; e: number; used: number; craves: number }[] = [];
   for (let t = 0; t < trials; t++) {
     const dishes = pickN();
     const { fixed, vars } = prep(dishes);
     solve(fixed, vars, target, 100);
     const e = errMax(fixed, vars, target);
-    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length });
+    const craves = craving.length ? dishes.filter((d) => dishMatchesAny(d, craving)).length : 0;
+    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length, craves });
   }
-  // Aceptables = platillos que pegan razonable (error ≤ 12%, tope de día 12% con
-  // holgura porque cada tiempo es solo ~¼ del día). Entre ellos, MAXIMIZA variedad
-  // (menos repetidos primero), luego mejor ajuste. Si ninguno llega, el mejor.
+  // Aceptables = los que pegan razonable (error ≤ 12%; holgura porque cada tiempo es
+  // ~¼ del día). Entre ellos: primero el ANTOJO, luego variedad (menos repetido),
+  // luego mejor ajuste. Si ninguno llega al 12%, el mejor.
   const minE = Math.min(...cands.map((c) => c.e));
   const cap = Math.max(12, minE + 2);
   const acceptable = cands.filter((c) => c.e <= cap);
-  acceptable.sort((a, b) => (a.used - b.used) || (a.e - b.e));
+  acceptable.sort((a, b) => (b.craves - a.craves) || (a.used - b.used) || (a.e - b.e));
   const dishes = acceptable[0].dishes;
   for (const d of dishes) used.add(d.nombre);
   const { fixed, vars } = prep(dishes);
@@ -224,7 +253,7 @@ function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena:
   };
 }
 
-function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>): DayPlan {
+function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[]): DayPlan {
   const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
   const MT = mealTargets(T);
   const des = biasPool(BY_TIME.Desayuno, cuisines);
@@ -234,28 +263,28 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   // prefiere las cenas ligeras solo (las comidas se pasan del target y puntúan peor).
   const cen = biasPool([...(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena), ...COMIDA_VEG], cuisines);
   const meals: MealItem[] = [
-    ...fitSlot(des, 'Desayuno', MT.desayuno, 1, rng, avoid, 90, used),
-    ...fitSlot(BY_TIME.Snack, 'Snack AM', MT.snackSlot, nSnack, rng, avoid, 70, used, true),
-    ...fitSlot(com, 'Comida', MT.comida, 1, rng, avoid, 90, used),
-    ...fitSlot(BY_TIME.Snack, 'Snack PM', MT.snackSlot, nSnack, rng, avoid, 70, used, true),
-    ...fitSlot(cen, 'Cena', MT.cena, 1, rng, avoid, 90, used),
+    ...fitSlot(des, 'Desayuno', MT.desayuno, 1, rng, avoid, 90, used, craving),
+    ...fitSlot(BY_TIME.Snack, 'Snack AM', MT.snackSlot, nSnack, rng, avoid, 70, used, craving, true),
+    ...fitSlot(com, 'Comida', MT.comida, 1, rng, avoid, 90, used, craving),
+    ...fitSlot(BY_TIME.Snack, 'Snack PM', MT.snackSlot, nSnack, rng, avoid, 70, used, craving, true),
+    ...fitSlot(cen, 'Cena', MT.cena, 1, rng, avoid, 90, used, craving),
   ];
   return { day: dayNum, theme: '', meals };
 }
 
-export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[] }
+export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
 
 /** Genera 7 días ajustados a la meta del usuario, con el reparto por comida de Magaly. */
 export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPlan[] {
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const rng = mulberry32(opts.seed ?? 12345);
-  const avoidTerms = (opts.avoid ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean);
-  const avoid = (d: BancoDish) =>
-    avoidTerms.length > 0 &&
-    avoidTerms.some((t) => d.nombre.toLowerCase().includes(t) || d.ings.some((i) => i.nv.toLowerCase().includes(t)));
+  // "Evitar": categoría (gluten/lácteos/…) → alimentos reales del banco; excluye esos platillos.
+  const avoidTerms = expandAvoid((opts.avoid ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean));
+  const avoid = (d: BancoDish) => avoidTerms.length > 0 && dishMatchesAny(d, avoidTerms);
   const cuisines = (opts.cuisines ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean);
+  const craving = cravingTerms(opts.craving ?? ''); // "antojo": prefiere platillos que lo tengan
   const used = new Set<string>(); // platillos ya usados en la semana → variedad entre días
   const days: DayPlan[] = [];
-  for (let i = 1; i <= 7; i++) days.push(buildDay(i, T, rng, avoid, cuisines, used));
+  for (let i = 1; i <= 7; i++) days.push(buildDay(i, T, rng, avoid, cuisines, used, craving));
   return days;
 }

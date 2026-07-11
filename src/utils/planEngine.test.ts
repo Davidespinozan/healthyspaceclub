@@ -49,6 +49,23 @@ describe('planEngine — ajuste a la meta', () => {
     }
   });
 
+  const mealText = (m: { name: string; ings?: { nv: string }[] }) =>
+    (m.name + ' ' + (m.ings ?? []).map((i) => i.nv).join(' ')).toLowerCase();
+
+  it('evitar carne-roja → no aparece res en el plan', () => {
+    const days = buildWeeklyPlan(CASES[2], { seed: 9, avoid: ['carne-roja'] });
+    const rm = /\b(res|sirloin|bistec|falda|molida|machaca|chambarete)\b/;
+    for (const d of days) for (const m of d.meals) expect(rm.test(mealText(m))).toBe(false);
+  });
+
+  it('antojo "pollo" → prefiere platillos con pollo', () => {
+    const cnt = (days: ReturnType<typeof buildWeeklyPlan>) =>
+      days.reduce((a, d) => a + d.meals.filter((m) => /pollo/.test(mealText(m))).length, 0);
+    const withCrave = cnt(buildWeeklyPlan(CASES[1], { seed: 2, craving: 'pollo' }));
+    const without = cnt(buildWeeklyPlan(CASES[1], { seed: 2 }));
+    expect(withCrave).toBeGreaterThan(without);
+  });
+
   it('variedad: los 7 días no repiten el mismo desayuno/comida/cena', () => {
     const days = buildWeeklyPlan(CASES[1], { seed: 5 });
     for (const time of ['Desayuno', 'Comida', 'Cena']) {
