@@ -7,7 +7,7 @@ import { BANCO, type BancoDish, type BancoIng } from '../data/banco';
 import type { DayPlan, MealItem } from '../types';
 
 const IMG_BASE =
-  'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PLATILLOS%20BANCO/';
+  'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/platillos/';
 
 export interface PlanTarget { kcal: number; protG: number; fatG: number; carbG: number }
 
