@@ -12,6 +12,9 @@ export interface ExerciseOverlay {
 }
 
 export const exercisesEn: Record<string, ExerciseOverlay> = {
+  'curl-barra-z': { name: 'EZ-Bar Curl', desc: 'Curl with an EZ (Z) bar — a semi-supinated grip that is easier on wrists and elbows than the straight bar.', tip: 'The bend of the EZ bar reduces wrist strain — ideal if the straight bar bothers you.' },
+  'curl-polea-alta': { name: 'High Cable Curl', desc: 'Curl with the cables at shoulder height (double-biceps pose) — peak and maximum biceps contraction.', tip: 'Keep your elbows high and fixed — the movement is only from the forearm, chasing the biceps peak.' },
+  'curl-martillo-scott': { name: 'Scott Bench Hammer Curl', desc: 'Hammer curl (neutral grip) with your arm on a Scott bench — brachialis and brachioradialis with no shoulder cheating.', tip: 'The Scott bench removes shoulder momentum — go full but don\'t bounce at the stretch.' },
   // ── PECHO ──
   'press-horizontal': { name: 'Horizontal Press', desc: 'Chest push on a flat bench — the foundational pattern for mid-chest mass.', tip: 'Keep your shoulder blades retracted for the whole set to protect your shoulders and maximize chest activation.' },
   'press-inclinado': { name: 'Incline Press', desc: 'Press on a 30–45° bench — emphasizes the upper (clavicular) chest.', tip: "Don't set the angle too high — past 45° it becomes an overhead press and you lose the chest." },
@@ -318,7 +321,8 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
-  'Flexión pike': 'Pike push-up',
+  'Agarre normal': 'Standard grip',
+    'Flexión pike': 'Pike push-up',
   'Empuje de trineo': 'Sled push',
   'Press en el piso, mancuernas': 'Dumbbell floor press',
   'Dominada supina en barra': 'Chin-up on bar',
