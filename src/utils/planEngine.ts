@@ -219,7 +219,12 @@ function pluralNoun(un: string, n: number): string {
 // error ≤20% para que el conteo no engañe sobre la porción), se muestra "2 huevos"
 // en vez de "88 g". Si no, se queda en gramos.
 function portionStr(ing: BancoIng, g: number | null): string {
-  if (ing.rol === 'condimento') return `${ing.nv} al gusto`;
+  // Despliegue por rol. IMPORTANTE: esto es SOLO lo que se pinta — el motor sigue
+  // usando los gramos reales para macros/fibra/kcal (van en meal.macros, no aquí).
+  // guarnicion = verdura que nadie pesa → nombre + "al gusto" (sin gramos).
+  if (ing.rol === 'guarnicion') return `${ing.nv} al gusto`;
+  // condimento (sal, especias) → solo el nombre, sin cantidad.
+  if (ing.rol === 'condimento') return ing.nv;
   if (ing.rol === 'sub-receta') return ing.nv;
   const grams = Math.round(g ?? ing.g0);
   // Granos/leguminosas/pasta → tazas (si el ingrediente no trae ya otra medida casera).
