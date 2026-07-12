@@ -150,7 +150,10 @@ export function computeNutritionTargets(o: ObInput): NutritionTargets {
   const FAT_PCT: Record<string, number> = { bajar: 0.22, recomp: 0.25, mantener: 0.28, ganar: 0.30 };
   const fatPct = FAT_PCT[objKey] ?? 0.27;
   const fatG = Math.round(Math.max(planGoal * fatPct / 9, o.pesoKg * 0.6));
-  const carbG = Math.round(Math.max(130, (planGoal - protG * 4 - fatG * 9) / 4)); // resto, mín 130 g
+  // Carbos = el RESTO (así las macros suman EXACTO la meta calórica, no la exceden).
+  // Piso bajo (50 g) solo para casos extremos; a metas bajas rellena el resto en vez de
+  // forzar 130 g, que hacía que el plan se pasara ~14% de la meta (déficit de mujer chica).
+  const carbG = Math.round(Math.max(50, (planGoal - protG * 4 - fatG * 9) / 4));
   const fiberG = Math.round(planGoal / 1000 * 14);                  // 14 g / 1000 kcal
 
   return {

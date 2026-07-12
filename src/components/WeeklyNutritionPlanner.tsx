@@ -164,14 +164,15 @@ export default function WeeklyNutritionPlanner() {
     if (!weeklyPlan?.days || !weeklyPlan.gen) return;
     if ((weeklyPlan.engineVersion ?? 0) >= PLAN_ENGINE_VERSION) return;
     const g = weeklyPlan.gen;
-    const days = buildWeeklyPlan(
-      { kcal: g.kcal, protG: g.protG, fatG: g.fatG, carbG: g.carbG },
-      { seed: Date.now() & 0x7fffffff, avoid: g.avoid, craving: g.craving },
-    );
+    // Recalcula la meta desde el perfil actual (así los arreglos de macros llegan a
+    // usuarios existentes); preserva solo alergias/antojo del plan guardado.
+    const t = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
+    const target = { kcal: t.planGoal, protG: t.protG, fatG: t.fatG, carbG: t.carbG };
+    const days = buildWeeklyPlan(target, { seed: Date.now() & 0x7fffffff, avoid: g.avoid, craving: g.craving });
     const shopSet = new Set<string>();
     for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])
       if (ing.rol !== 'condimento' && ing.rol !== 'sub-receta') shopSet.add(ing.nv);
-    saveWeeklyPlan({ ...weeklyPlan, generatedAt: new Date().toISOString(), engineVersion: PLAN_ENGINE_VERSION, shoppingList: [...shopSet], days })
+    saveWeeklyPlan({ ...weeklyPlan, generatedAt: new Date().toISOString(), engineVersion: PLAN_ENGINE_VERSION, shoppingList: [...shopSet], days, gen: { ...target, avoid: g.avoid, craving: g.craving } })
       .catch((e) => console.error('[auto-regen] failed:', e));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weeklyPlan?.engineVersion]);
