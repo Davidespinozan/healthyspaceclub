@@ -241,7 +241,11 @@ function portionStr(ing: BancoIng, g: number | null): string {
       : WHOLE_ONLY.has(ing.un)
         ? Math.max(1, Math.round(raw))
         : Math.max(0.5, Math.round(raw * 2) / 2);
-    if (n <= 8 && Math.abs(n * ing.pu - grams) <= 0.20 * grams) {
+    // Tope de piezas por porción según lo ligera que sea la pieza: una tostada pesa 10 g,
+    // así que una porción normal son 8-12 tostadas (no gramos). Piezas pesadas (huevo,
+    // tortilla) rara vez pasan de 8. Techo por peso: hasta ~150 g de piezas.
+    const maxN = Math.max(8, Math.ceil(150 / ing.pu));
+    if (n <= maxN && Math.abs(n * ing.pu - grams) <= 0.20 * grams) {
       return `${fmtCount(n)} ${pluralNoun(ing.un, n)}`;
     }
   }
@@ -422,7 +426,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 10;
+export const PLAN_ENGINE_VERSION = 11;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
 
