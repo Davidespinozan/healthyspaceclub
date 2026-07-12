@@ -62,7 +62,7 @@ export async function orchestrateWeeklyPlan(
         snacks,
       });
     }
-    const plan = assembleFromSelection(target, days);
+    const plan = assembleFromSelection(target, days, avoid);
     return plan.length === 7 ? plan : null;
   } catch (e) {
     console.error('[orchestrateWeeklyPlan] falló, uso motor de código:', e);
