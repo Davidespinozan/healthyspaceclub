@@ -170,6 +170,23 @@ function pick<T>(arr: T[], rng: () => number): T { return arr[Math.floor(rng() *
 const DIVISIBLE = new Set(['aguacate', 'plátano', 'mango', 'papaya', 'melón', 'toronja']);
 // Nunca se parten: se cuentan enteros SIEMPRE (no existe medio huevo).
 const WHOLE_ONLY = new Set(['huevo']);
+// Granos, leguminosas y pasta se miden en TAZAS (cocidos), no en gramos. gramos por
+// taza (cocido, referencia USDA). Se muestran "1½ tazas de arroz" con fracciones ¼⅓½⅔¾.
+const CUP_G: Array<[RegExp, number]> = [
+  [/espagueti|espageti|pasta|fideo|macarr|coditos/i, 140],
+  [/lenteja/i, 198],
+  [/garbanzo/i, 164],
+  [/alubia|frijol/i, 172],
+  [/quinoa/i, 185],
+  [/arroz/i, 158], // arroz cocido (excluye galletas/inflado más abajo)
+];
+// nv que llevan "arroz"/"pasta" pero NO son el grano cocido (no van en tazas).
+const CUP_EXCLUDE = /galleta|inflad|harina|tortita|crema de|leche de/i;
+function cupGrams(nv: string): number | null {
+  if (CUP_EXCLUDE.test(nv)) return null;
+  for (const [re, g] of CUP_G) if (re.test(nv)) return g;
+  return null;
+}
 // Fracciones naturales que la gente usa (⅓ aguacate, ¾ de plátano…), no solo medios.
 const FRACS: Array<[number, string]> = [[0, ''], [0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾']];
 // Redondea a la fracción natural más cercana (o al entero de arriba si está muy cerca).
@@ -205,6 +222,16 @@ function portionStr(ing: BancoIng, g: number | null): string {
   if (ing.rol === 'condimento') return `${ing.nv} al gusto`;
   if (ing.rol === 'sub-receta') return ing.nv;
   const grams = Math.round(g ?? ing.g0);
+  // Granos/leguminosas/pasta → tazas (si el ingrediente no trae ya otra medida casera).
+  if (!ing.pu && grams > 0) {
+    const cg = cupGrams(ing.nv);
+    if (cg) {
+      const n = Math.max(0.25, snapCount(grams / cg));
+      if (n <= 6 && Math.abs(n * cg - grams) <= 0.20 * grams) {
+        return `${fmtCount(n)} ${pluralNoun('taza', n)} de ${ing.nv.toLowerCase()}`;
+      }
+    }
+  }
   if (ing.pu && ing.un && grams > 0) {
     const raw = grams / ing.pu;
     // Cortables (se parten en fracción real: ⅓ aguacate, ¾ plátano) → fracciones finas.
@@ -395,7 +422,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 9;
+export const PLAN_ENGINE_VERSION = 10;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
 
