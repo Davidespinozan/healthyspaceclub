@@ -34,7 +34,6 @@ PERFIL DEL USUARIO:
 - Meta calórica: ${p.planGoal} kcal/día
 
 PREFERENCIAS ESTA SEMANA:
-- Cocinas: ${p.answers.cuisines || 'todas'}
 - Preferencias de comida: ${p.answers.cravings || 'sin preferencias específicas'}
 - Evitar: ${p.answers.avoid || 'nada'}
 

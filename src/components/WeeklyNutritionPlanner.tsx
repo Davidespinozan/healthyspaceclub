@@ -9,7 +9,7 @@ import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
 import { buildWeeklyPlan } from '../utils/planEngine';
 import NutritionMeta from './NutritionMeta';
-import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, Shuffle, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, type LucideIcon } from 'lucide-react';
+import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import CalculadoraSheet from './CalculadoraSheet';
@@ -41,20 +41,6 @@ const MEAL_TIME_KEYS: Record<string, TranslationKey> = {
 };
 
 // Quiz options stay con stored values en ES (data layer). Display via map.
-const CUISINE_LABEL_KEYS: Record<string, TranslationKey> = {
-  'mexicana': 'nutritionPlanner.cuisineMexican',
-  'japonesa': 'nutritionPlanner.cuisineJapanese',
-  'italiana': 'nutritionPlanner.cuisineItalian',
-  'americana': 'nutritionPlanner.cuisineAmerican',
-  'todas': 'nutritionPlanner.cuisineMix',
-};
-const CUISINE_SUB_KEYS: Record<string, TranslationKey> = {
-  'mexicana': 'nutritionPlanner.cuisineMexicanSub',
-  'japonesa': 'nutritionPlanner.cuisineJapaneseSub',
-  'italiana': 'nutritionPlanner.cuisineItalianSub',
-  'americana': 'nutritionPlanner.cuisineAmericanSub',
-  'todas': 'nutritionPlanner.cuisineMixSub',
-};
 const AVOID_LABEL_KEYS: Record<string, TranslationKey> = {
   'gluten': 'nutritionPlanner.avoidGluten',
   'lacteos': 'nutritionPlanner.avoidDairy',
@@ -106,18 +92,6 @@ const QUESTIONS: Array<{
   options: Array<{ value: string; icon: LucideIcon }>;
 }> = [
   {
-    id: 'cuisines',
-    hintKey: 'nutritionPlanner.hCuisines',
-    multi: true,
-    options: [
-      { value: 'mexicana',  icon: Utensils },
-      { value: 'japonesa',  icon: Utensils },
-      { value: 'italiana',  icon: Utensils },
-      { value: 'americana', icon: Utensils },
-      { value: 'todas',     icon: Shuffle },
-    ],
-  },
-  {
     id: 'cravings',
     hintKey: 'nutritionPlanner.hCravings',
     multi: false,
@@ -146,7 +120,6 @@ const QUESTIONS: Array<{
 ];
 
 const EYEBROW_KEYS_Q: TranslationKey[] = [
-  'nutritionPlanner.eyebrowCuisines',
   'nutritionPlanner.eyebrowCravings',
   'nutritionPlanner.eyebrowAvoid',
 ];
@@ -268,13 +241,11 @@ export default function WeeklyNutritionPlanner() {
       const targets = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
       // Categorías/alergias tal cual (el motor mapea a alimentos y descarta 'nada'/'todas').
       const avoid = (newAnswers.avoid ?? '').toLowerCase().split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
-      const cuisinesRaw = (newAnswers.cuisines ?? '').toLowerCase();
-      const cuisines = /todas|todo/.test(cuisinesRaw)
-        ? []
-        : cuisinesRaw.split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
+      // Sin selector de cocina: forzar cocina reducía el pool a 2-3 platillos (ej.
+      // "americana" = Burger Fit + Hot Cakes) y los repetía a diario. Mezcla libre.
       const days = buildWeeklyPlan(
         { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG },
-        { seed: Date.now() & 0x7fffffff, avoid, cuisines, craving: newAnswers.cravings ?? '' },
+        { seed: Date.now() & 0x7fffffff, avoid, craving: newAnswers.cravings ?? '' },
       );
       // Lista de compras: ingredientes únicos (sin condimentos), del banco ya ajustado.
       const shopSet = new Set<string>();
@@ -286,7 +257,7 @@ export default function WeeklyNutritionPlanner() {
         selectedDays: [1, 2, 3, 4, 5, 6, 7],
         shoppingList: [...shopSet],
         nota: '',
-        preferences: [newAnswers.cuisines, newAnswers.cravings, newAnswers.avoid].filter(Boolean).join(' · '),
+        preferences: [newAnswers.cravings, newAnswers.avoid].filter(Boolean).join(' · '),
         lang: locale,
         days,
       });
@@ -374,19 +345,6 @@ export default function WeeklyNutritionPlanner() {
   /* ═══ GENERATING ═══ */
   if (phase === 'generating') {
     const bullets: string[] = [];
-    const cuisinesAns = answers.cuisines;
-    if (cuisinesAns && cuisinesAns !== 'todas') {
-      // cuisines stored as comma-joined values (e.g. "mexicana, japonesa"). Map each
-      // to its translated label; unknown values pass through (no-op).
-      const parts = cuisinesAns.split(',').map(s => s.trim()).filter(Boolean);
-      const labels = parts.map(v => {
-        const k = CUISINE_LABEL_KEYS[v];
-        return k ? t(k) : v;
-      }).join(', ');
-      bullets.push(`${t('nutritionPlanner.genBulletCuisines')} ${labels}`);
-    } else {
-      bullets.push(`${t('nutritionPlanner.genBulletCuisines')} ${t('nutritionPlanner.genCuisinesVariedFallback')}`);
-    }
     const cravingsAns = answers.cravings;
     if (cravingsAns && cravingsAns !== 'sin preferencias específicas') {
       bullets.push(`${t('nutritionPlanner.genBulletCravings')} ${cravingsAns}`);
@@ -460,15 +418,10 @@ export default function WeeklyNutritionPlanner() {
 
     // Resolve option label/sub via question-id-specific maps.
     const optionLabel = (value: string): string => {
-      if (q.id === 'cuisines') return t(CUISINE_LABEL_KEYS[value] ?? 'nutritionPlanner.cuisineMix');
       if (q.id === 'avoid') return t(AVOID_LABEL_KEYS[value] ?? 'nutritionPlanner.avoidNone');
       return value;
     };
     const optionSub = (value: string): string | undefined => {
-      if (q.id === 'cuisines') {
-        const k = CUISINE_SUB_KEYS[value];
-        return k ? t(k) : undefined;
-      }
       if (q.id === 'avoid') {
         const k = AVOID_SUB_KEYS[value];
         return k ? t(k) : undefined;
@@ -477,8 +430,7 @@ export default function WeeklyNutritionPlanner() {
     };
 
     const titleKey: TranslationKey =
-      q.id === 'cuisines' ? 'nutritionPlanner.qCuisines'
-      : q.id === 'cravings' ? 'nutritionPlanner.qCravings'
+      q.id === 'cravings' ? 'nutritionPlanner.qCravings'
       : 'nutritionPlanner.qAvoid';
 
     const renderBody = () => {
