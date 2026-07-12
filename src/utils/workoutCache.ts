@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 9, // v9: análisis-primero (la IA razona la estructura para ESTE usuario, no copia ejemplos)
+  workout: 10, // v10: full body con compuestos primero + aislamientos agrupados (no sueltos que se enfrían)
 } as const;
 
 // Formato de coordinación de un ejercicio cuando se entrena en pareja:

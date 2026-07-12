@@ -84,8 +84,10 @@ ORDEN DE EJERCICIOS (crítico — la secuencia debe ser inteligente, no aleatori
   · MAL (revuelto): pecho, hombro, pecho, hombro, pecho, tríceps, pecho.
   · BIEN (agrupado): pecho, pecho, hombro, aislamiento pecho, aislamiento hombro, tríceps.
 
-- FULL BODY: aquí SÍ alterna — intercala tren inferior ↔ superior y empuje ↔ tracción para no fatigar el mismo músculo seguido. No encadenes 3+ del mismo grupo. Distribuye.
-  · BIEN (full body): pierna, empuje, tracción, pierna, empuje, tracción, core.
+- FULL BODY: los COMPUESTOS van PRIMERO y son los que se alternan por patrón (pierna → empuje → tracción → pierna…). Cada compuesto es un movimiento distinto, así rota sin fatigar lo mismo seguido y NADIE se enfría. NUNCA empieces un full body con aislamientos.
+  Los AISLAMIENTOS van DESPUÉS y JAMÁS sueltos alternando músculos distintos (aislado de pecho, luego de espalda, luego de hombro = cada músculo se enfría antes de volver a él). Si metes aislamientos: agrúpalos consecutivos del MISMO músculo, o mételos en BISERIE/TRISERIE (mismo "group") para que roten sin enfriarse.
+  · BIEN (full body): sentadilla → press banca → remo → peso muerto rumano → [triserie: curl bíceps + extensión tríceps + elevación lateral] → core.
+  · MAL (lo que NO debes hacer): aislamiento de pecho, aislamiento de espalda, aislamiento de hombro… (3 aislados sueltos alternando músculo, y encima arrancando sin compuestos).
 
 - REGLA ANTI-ENFRIAMIENTO (crítica, aplica SIEMPRE): NUNCA separes dos ejercicios del MISMO músculo con 2 o MÁS ejercicios de otro músculo en medio — el músculo se enfría y pierde el estímulo acumulado. Entre dos ejercicios del mismo músculo, máximo UN ejercicio de otro músculo.
   · MAL (pecho se enfría): pecho, espalda, espalda, pecho.
