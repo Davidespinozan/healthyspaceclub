@@ -314,7 +314,7 @@ interface AppState {
     // Versión del motor con que se generó + inputs, para auto-regenerar cuando
     // el motor cambia (preservando meta y alergias del usuario).
     engineVersion?: number;
-    gen?: { kcal: number; protG: number; fatG: number; carbG: number; avoid: string[]; craving: string };
+    gen?: { kcal: number; protG: number; fatG: number; carbG: number; avoid: string[]; craving: string; shake?: { slots: ('am' | 'pm')[]; type: 'regular' | 'vegana' | 'massgainer'; protG: number } };
   } | null;
   saveWeeklyPlan: (plan: NonNullable<AppState['weeklyPlan']>) => Promise<void>;
   clearWeeklyPlan: () => Promise<void>;

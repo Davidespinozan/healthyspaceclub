@@ -10,7 +10,8 @@ import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets'
 import { PLAN_ENGINE_VERSION } from '../utils/planEngine';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
-import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, type LucideIcon } from 'lucide-react';
+import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, Dumbbell, type LucideIcon } from 'lucide-react';
+import type { ProteinShake } from '../utils/planEngine';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import FoodLogSheet from './FoodLogSheet';
 import CalculadoraSheet from './CalculadoraSheet';
@@ -118,11 +119,18 @@ const QUESTIONS: Array<{
       { value: 'nada',         icon: CircleCheck },
     ],
   },
+  {
+    id: 'protein',
+    hintKey: 'nutritionPlanner.hProtein',
+    multi: false,
+    options: [], // UI custom (cuándo + tipo + gramos)
+  },
 ];
 
 const EYEBROW_KEYS_Q: TranslationKey[] = [
   'nutritionPlanner.eyebrowCravings',
   'nutritionPlanner.eyebrowAvoid',
+  'nutritionPlanner.eyebrowProtein',
 ];
 
 const MEAL_ICON: Record<string, LucideIcon> = {
@@ -173,14 +181,15 @@ export default function WeeklyNutritionPlanner() {
     const AVOID_KEYS = ['gluten', 'lacteos', 'carne-roja', 'mariscos', 'huevo', 'frutos-secos', 'cacahuate', 'soya', 'pescado', 'ajonjoli'];
     const avoid = weeklyPlan.gen?.avoid ?? AVOID_KEYS.filter((k) => (weeklyPlan.preferences || '').includes(k));
     const craving = weeklyPlan.gen?.craving ?? '';
+    const shake = weeklyPlan.gen?.shake as ProteinShake | undefined; // preserva el batido al regenerar
     let cancelled = false;
     (async () => {
-      const { days } = await generateWeeklyPlan(target, avoid, craving, Date.now() & 0x7fffffff);
+      const { days } = await generateWeeklyPlan(target, avoid, craving, Date.now() & 0x7fffffff, shake);
       if (cancelled || !weeklyPlan) return;
       const shopSet = new Set<string>();
       for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])
         if (ing.rol !== 'condimento' && ing.rol !== 'sub-receta') shopSet.add(ing.nv);
-      saveWeeklyPlan({ ...weeklyPlan, generatedAt: new Date().toISOString(), engineVersion: PLAN_ENGINE_VERSION, shoppingList: [...shopSet], days, gen: { ...target, avoid, craving } })
+      saveWeeklyPlan({ ...weeklyPlan, generatedAt: new Date().toISOString(), engineVersion: PLAN_ENGINE_VERSION, shoppingList: [...shopSet], days, gen: { ...target, avoid, craving, shake } })
         .catch((e) => console.error('[auto-regen] failed:', e));
     })();
     return () => { cancelled = true; };
@@ -203,6 +212,12 @@ export default function WeeklyNutritionPlanner() {
   const [multiSel, setMultiSel] = useState<string[]>([]);
   const [freeText, setFreeText] = useState('');
   const [singleSel, setSingleSel] = useState<string>('');
+  // Batido de proteína (paso 'protein'): cuándo, tipo y gramos.
+  const [shakeWhen, setShakeWhen] = useState<'' | 'am' | 'pm' | 'both'>('');
+  const [shakeType, setShakeType] = useState<'regular' | 'vegana' | 'massgainer'>('regular');
+  const [shakeGrams, setShakeGrams] = useState(25);
+  const buildShake = (): ProteinShake | undefined =>
+    shakeWhen ? { slots: shakeWhen === 'both' ? ['am', 'pm'] : [shakeWhen], type: shakeType, protG: shakeGrams } : undefined;
   const [error, setError] = useState('');
   const [activeDay, setActiveDay] = useState(() =>
     shoppingDay !== null ? (new Date().getDay() - shoppingDay + 7) % 7 : 0
@@ -275,7 +290,8 @@ export default function WeeklyNutritionPlanner() {
       // Híbrido: la IA selecciona los platillos (variedad/antojo/tiempos) y el código
       // ajusta porciones + garantiza alergias. Si la IA falla, cae al motor determinista.
       const target = { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG };
-      const { days } = await generateWeeklyPlan(target, avoid, newAnswers.cravings ?? '', Date.now() & 0x7fffffff);
+      const shake = buildShake();
+      const { days } = await generateWeeklyPlan(target, avoid, newAnswers.cravings ?? '', Date.now() & 0x7fffffff, shake);
       // Lista de compras: ingredientes únicos (sin condimentos), del banco ya ajustado.
       const shopSet = new Set<string>();
       for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])
@@ -290,7 +306,7 @@ export default function WeeklyNutritionPlanner() {
         lang: locale,
         days,
         engineVersion: PLAN_ENGINE_VERSION,
-        gen: { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, craving: newAnswers.cravings ?? '' },
+        gen: { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, craving: newAnswers.cravings ?? '', shake },
       });
       setActiveDay(todayOffset >= 0 ? todayOffset : 0);
       setPhase('plan');
@@ -462,9 +478,57 @@ export default function WeeklyNutritionPlanner() {
 
     const titleKey: TranslationKey =
       q.id === 'cravings' ? 'nutritionPlanner.qCravings'
+      : q.id === 'protein' ? 'nutritionPlanner.qProtein'
       : 'nutritionPlanner.qAvoid';
 
+    const pill = (on: boolean): React.CSSProperties => ({
+      padding: '9px 15px', borderRadius: 10, cursor: 'pointer', fontSize: '.85rem',
+      fontWeight: 600, fontFamily: 'inherit',
+      border: on ? '1.5px solid var(--forest)' : '1px solid rgba(120,120,120,.3)',
+      background: on ? 'var(--forest)' : 'transparent', color: on ? '#fff' : 'var(--txt2)',
+    });
+
     const renderBody = () => {
+      if (q.id === 'protein') {
+        const WHEN: Array<{ v: '' | 'am' | 'pm' | 'both'; k: TranslationKey }> = [
+          { v: '', k: 'nutritionPlanner.proteinNo' },
+          { v: 'am', k: 'nutritionPlanner.proteinAm' },
+          { v: 'pm', k: 'nutritionPlanner.proteinPm' },
+          { v: 'both', k: 'nutritionPlanner.proteinBoth' },
+        ];
+        const TYPES: Array<{ v: 'regular' | 'vegana' | 'massgainer'; k: TranslationKey }> = [
+          { v: 'regular', k: 'nutritionPlanner.proteinRegular' },
+          { v: 'vegana', k: 'nutritionPlanner.proteinVegan' },
+          { v: 'massgainer', k: 'nutritionPlanner.proteinGainer' },
+        ];
+        return (
+          <div className="wz-options">
+            {WHEN.map(o => (
+              <button key={o.v || 'no'} className={`wz-option${shakeWhen === o.v ? ' selected' : ''}`} onClick={() => setShakeWhen(o.v)}>
+                <div className="wz-option-thumb"><Dumbbell size={22} strokeWidth={1.5} /></div>
+                <div className="wz-option-body"><div className="wz-option-label">{t(o.k)}</div></div>
+                {shakeWhen === o.v && <div className="wz-option-check"><Check size={14} strokeWidth={2} /></div>}
+              </button>
+            ))}
+            {shakeWhen && (
+              <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div className="wz-option-sub" style={{ fontWeight: 600 }}>{t('nutritionPlanner.proteinType')}</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {TYPES.map(o => (
+                    <button key={o.v} style={pill(shakeType === o.v)} onClick={() => setShakeType(o.v)}>{t(o.k)}</button>
+                  ))}
+                </div>
+                <div className="wz-option-sub" style={{ fontWeight: 600 }}>{t('nutritionPlanner.proteinGrams')}</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {[15, 20, 25, 30, 35].map(g => (
+                    <button key={g} style={pill(shakeGrams === g)} onClick={() => setShakeGrams(g)}>{g} g</button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
       if (q.freeText) {
         return (
           <textarea
@@ -531,6 +595,13 @@ export default function WeeklyNutritionPlanner() {
     };
 
     const renderCta = () => {
+      if (q.id === 'protein') {
+        return (
+          <button className="wz-cta" onClick={() => advance({ ...answers, protein: shakeWhen || 'no' })}>
+            {t('nutritionPlanner.generatePlan')} <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
+          </button>
+        );
+      }
       if (q.freeText) {
         return (
           <button
