@@ -41,6 +41,16 @@ function buildPartnerProfileBlock(partner: PartnerInput): string {
   return lines.length ? lines.join('\n') : '- Sin datos adicionales (asume nivel similar al usuario)';
 }
 
+/** Resume el último rendimiento de un ejercicio para el prompt: "22.5kg×10,10,8"
+ *  (peso libre), "×12,12,10" (peso corporal/banda) o "" si no hay registro. */
+export function formatLastPerf(sets?: { reps: number; kg: number }[]): string {
+  const done = (sets ?? []).filter((s) => s.reps > 0);
+  if (!done.length) return '';
+  const kg = Math.max(...done.map((s) => s.kg));
+  const reps = done.map((s) => s.reps).join(',');
+  return kg > 0 ? `${kg}kg×${reps}` : `×${reps}`;
+}
+
 export async function orchestrateWorkout(params: {
   candidates: Exercise[];
   equipment: Equipment[];
@@ -53,8 +63,11 @@ export async function orchestrateWorkout(params: {
   userProfile?: UserProfile;
   locale?: AppLanguage;
   partner?: PartnerInput;
+  // Último rendimiento por exercise-id (para sobrecarga progresiva: la IA ve lo que
+  // levantaste la última vez y prescribe una progresión, no reps genéricas).
+  lastPerf?: Record<string, { sets: { reps: number; kg: number }[] }>;
 }): Promise<CachedWorkout & { razon?: string }> {
-  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context, userProfile, locale, partner } = params;
+  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context, userProfile, locale, partner, lastPerf } = params;
   const profileBlock = buildUserProfileBlock(userProfile);
 
   // Para cada candidato, seleccionar la variante específica que aplica al equipo
@@ -65,7 +78,10 @@ export async function orchestrateWorkout(params: {
     const effectiveSets = variant?.defaultSets ?? c.defaultSets;
     const effectiveReps = variant?.defaultReps ?? c.defaultReps;
     const effectiveRest = variant?.defaultRest ?? c.defaultRest;
-    return `${c.id} | ${effectiveName} | ${c.muscleGroup} | ${c.type} | sets:${effectiveSets} reps:${effectiveReps} rest:${effectiveRest}s`;
+    // Sobrecarga progresiva: adjunta el último rendimiento real si existe.
+    const perf = formatLastPerf(lastPerf?.[c.id]?.sets);
+    const perfStr = perf ? ` | última vez: ${perf}` : '';
+    return `${c.id} | ${effectiveName} | ${c.muscleGroup} | ${c.type} | sets:${effectiveSets} reps:${effectiveReps} rest:${effectiveRest}s${perfStr}`;
   }).join('\n');
 
   const intensityInstruction = intensity === 'baja'

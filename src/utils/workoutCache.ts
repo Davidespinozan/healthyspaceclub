@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 10, // v10: full body con compuestos primero + aislamientos agrupados (no sueltos que se enfrían)
+  workout: 11, // v11: sobrecarga progresiva (feed de "última vez") + RIR + volumen + reps por tipo + warmup con aproximación
 } as const;
 
 // Formato de coordinación de un ejercicio cuando se entrena en pareja:

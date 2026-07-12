@@ -81,6 +81,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const incrementRegen = useAppStore(s => s.incrementDailyWorkoutRegen);
   const streakCount = useAppStore(s => s.streakCount);
   const completedSessions = useAppStore(s => s.completedSessions);
+  const lastExercisePerformance = useAppStore(s => s.lastExercisePerformance);
   const addCompletedSession = useAppStore(s => s.addCompletedSession);
   const markActiveDay = useAppStore(s => s.markActiveDay);
   // Compañero conectado elegido en la pantalla Compañeros (modo pareja). Si está
@@ -541,6 +542,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         context: `- ${contextStr}`,
         userProfile,
         locale,
+        lastPerf: lastExercisePerformance,
         partner: partnerMode
           ? {
               name: partnerName.trim() || t('wizard.partnerNamePlaceholder'),

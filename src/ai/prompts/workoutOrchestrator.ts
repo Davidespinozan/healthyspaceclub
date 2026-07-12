@@ -74,6 +74,21 @@ PARÁMETROS:
 - Goal del día: ${p.goal}
 - ${p.intensityInstruction}
 
+SOBRECARGA PROGRESIVA (el MOTOR del progreso — aplícalo SIEMPRE que haya dato):
+- Algunos ejercicios de la lista traen "última vez: 22.5kg×10,10,8" = lo que el usuario levantó su última sesión (peso máx × reps de cada serie). ÚSALO:
+  · Prescribe reps dentro de un rango de DOBLE PROGRESIÓN. Si la última vez llegó al TOPE del rango en su serie más dura, empuja (busca más reps; el sistema subirá la carga sólo). Si no, mantén el rango y pídele 1-2 reps más que la vez pasada.
+  · Di la progresión CONCRETA en tip_personalizado, citando el dato (ej. "la vez pasada 8 reps con 20kg — hoy busca 9-10" o "dominaste el rango, sube a 22.5kg").
+  · En la SELECCIÓN: en compuestos clave prioriza REPETIR el ejercicio con historial (así progresa la carga); no lo cambies sólo por variar. La variedad va en accesorios.
+- Sin "última vez" (primera vez con ese ejercicio): prescribe un rango y dile que encuentre un peso donde llegue al tope con buena técnica.
+
+ESFUERZO / CERCANÍA AL FALLO (RIR = reps en reserva; calíbralo al nivel — indícalo en tips cuando aporte):
+- Compuestos pesados / fuerza: 2-3 RIR (NUNCA al fallo — técnica y seguridad).
+- Aislamiento / hipertrofia: 1-2 RIR; la ÚLTIMA serie de un aislamiento puede ir a 0-1 RIR o al fallo.
+- Principiante: 2-4 RIR siempre (primero técnica). Deload: 3-4 RIR (recuperación).
+
+VOLUMEN (dosifica, no infles):
+- Referencia semanal por músculo: ~10-20 series efectivas. Hoy, dale al músculo principal del día volumen suficiente (entre compuesto + accesorios), sin relleno. Menos ejercicios BIEN dosificados valen más que muchos a medias.
+
 ORDEN DE EJERCICIOS (crítico — la secuencia debe ser inteligente, no aleatoria):
 - Regla base: compuestos pesados y los movimientos más técnicos PRIMERO (más energía al inicio); aislamiento después; core/abdominales al FINAL.
 
@@ -134,9 +149,13 @@ TAREA:
    Escribe ese razonamiento breve en el campo "analisis" (interno). El resto de la rutina DEBE ser coherente con tu análisis.
 1. Selecciona exactamente ${p.targetCount} IDs de la lista y ORDÉNALOS aplicando las reglas de "ORDEN DE EJERCICIOS" de arriba (agrupar con lógica en días enfocados; alternar SOLO en full body).
    ⚠️ OBLIGATORIO: usa ÚNICAMENTE los "id" EXACTOS que aparecen en la lista de EJERCICIOS DISPONIBLES. NO inventes ids, NO uses ejercicios que no estén en la lista, NO sustituyas por equivalentes. La lista ya está filtrada por el equipo del usuario — cualquier id fuera de ella se RECHAZA.
-2. Ajusta sets/reps/rest según el goal (fuerza: reps bajas 4-6, descansos 120s; hipertrofia: 8-12 reps, 60-90s; condicion: circuito 15+ reps, 30-45s; movilidad: tiempos largos). Diseña la ESTRUCTURA (series rectas / biseries / triseries / giant sets / circuito) y las TÉCNICAS de intensidad según las secciones de arriba — como coach, no por fórmula.
+2. Ajusta sets/reps/rest según el goal Y EL TIPO de ejercicio:
+   - Compuestos pesados: reps más bajas (fuerza 3-6, hipertrofia 6-10), descansos 90-150s.
+   - Aislamiento: reps más altas (10-20), descansos 45-75s.
+   - Condición/quema: circuito 15+ reps, 30-45s. Movilidad: tiempos largos.
+   Aplica la SOBRECARGA PROGRESIVA y el RIR de las secciones de arriba. Diseña la ESTRUCTURA (series rectas / biseries / triseries / giant sets / circuito) y las TÉCNICAS de intensidad como coach, no por fórmula.
 3. Escribe tip_personalizado breve (máx 15 palabras) por ejercicio, dirigido al usuario en 2da persona.
-4. Escribe warmup y cooldown breves (1 oración cada uno), en 2da persona.
+4. Escribe warmup y cooldown breves (1 oración cada uno), en 2da persona. El warmup debe incluir APROXIMACIÓN: movilidad general + 2-3 series de aproximación subiendo carga en tu PRIMER compuesto pesado antes de las series efectivas (no arranques en frío al peso de trabajo).
 5. Escribe "note": mensaje motivador breve (1-2 oraciones), hablándole directo (ej. "tu próximo paso es..." NO "X, tu próximo paso...").
 6. Escribe "razon": por qué elegiste esta rutina, hablándole al usuario en 2da persona, citando al menos 2 piezas del contexto. Ejemplo: "Elegí esta rutina porque tienes 7 días de descanso y buscas hipertrofia" — NO "Elegí esta rutina porque {nombre} tiene...".${partner ? `
 7. PAREJA: a cada ejercicio agrégale "format" ("juntos" | "alternado" | "asistido"). Si el compañero debe hacer reps distintas, agrega "repsB"; si aporta, agrega "tipB" (cue para el compañero). Pon "partnerMode": true y "partnerName": "${partner.name}".` : ''}
