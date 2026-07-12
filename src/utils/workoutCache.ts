@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 8, // v8: estructura libre (biseries/triseries/circuito según usuario) + técnicas de intensidad
+  workout: 9, // v9: análisis-primero (la IA razona la estructura para ESTE usuario, no copia ejemplos)
 } as const;
 
 // Formato de coordinación de un ejercicio cuando se entrena en pareja:

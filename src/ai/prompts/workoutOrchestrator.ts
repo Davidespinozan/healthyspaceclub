@@ -125,6 +125,11 @@ Los campos "note" y "razon" del JSON se muestran AL USUARIO directamente —
 deben hablarle en 2da persona (tú/te/tu), sin usar su nombre, sin "el usuario".
 
 TAREA:
+0. ANALIZA PRIMERO (obligatorio — razona como coach ANTES de elegir nada). Los ejemplos de estructura y técnicas de arriba son ILUSTRACIONES del principio, NO plantillas para copiar. Tu trabajo es DERIVAR la mejor rutina de ESTE usuario en concreto, no elegir el ejemplo que más se parezca. Revisa TODO el perfil y contexto (goal, NIVEL de entrenamiento, edad, sexo, tiempo disponible, días de descanso, qué entrenó ayer, molestias/dolor, deload) y DECIDE, justificándolo desde SUS variables:
+   a) la ESTRUCTURA óptima para él hoy: cuántas series rectas vs biseries/triseries/giant sets/circuito, y por qué le sirve (no hay respuesta "por defecto" — dos usuarios distintos reciben estructuras distintas);
+   b) qué TÉCNICAS de intensidad (si alguna) le convienen HOY y en qué ejercicios exactos (recuerda: solo aislamiento/accesorios, calibradas a su nivel);
+   c) el reparto de volumen/intensidad.
+   Escribe ese razonamiento breve en el campo "analisis" (interno). El resto de la rutina DEBE ser coherente con tu análisis.
 1. Selecciona exactamente ${p.targetCount} IDs de la lista y ORDÉNALOS aplicando las reglas de "ORDEN DE EJERCICIOS" de arriba (agrupar con lógica en días enfocados; alternar SOLO en full body).
    ⚠️ OBLIGATORIO: usa ÚNICAMENTE los "id" EXACTOS que aparecen en la lista de EJERCICIOS DISPONIBLES. NO inventes ids, NO uses ejercicios que no estén en la lista, NO sustituyas por equivalentes. La lista ya está filtrada por el equipo del usuario — cualquier id fuera de ella se RECHAZA.
 2. Ajusta sets/reps/rest según el goal (fuerza: reps bajas 4-6, descansos 120s; hipertrofia: 8-12 reps, 60-90s; condicion: circuito 15+ reps, 30-45s; movilidad: tiempos largos). Diseña la ESTRUCTURA (series rectas / biseries / triseries / giant sets / circuito) y las TÉCNICAS de intensidad según las secciones de arriba — como coach, no por fórmula.
@@ -134,8 +139,9 @@ TAREA:
 6. Escribe "razon": por qué elegiste esta rutina, hablándole al usuario en 2da persona, citando al menos 2 piezas del contexto. Ejemplo: "Elegí esta rutina porque tienes 7 días de descanso y buscas hipertrofia" — NO "Elegí esta rutina porque {nombre} tiene...".${partner ? `
 7. PAREJA: a cada ejercicio agrégale "format" ("juntos" | "alternado" | "asistido"). Si el compañero debe hacer reps distintas, agrega "repsB"; si aporta, agrega "tipB" (cue para el compañero). Pon "partnerMode": true y "partnerName": "${partner.name}".` : ''}
 
-Responde SOLO este JSON, sin markdown:
+Responde SOLO este JSON, sin markdown (el "analisis" va PRIMERO — razona antes de construir):
 {
+  "analisis": "razonamiento coach: qué estructura y técnicas convienen a ESTE usuario hoy y por qué, derivado de sus variables",
   "type": "${p.dayLabel}",
   "intensity": "${p.intensity}",
   "exercises": [

@@ -197,6 +197,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     };
     const goalLabel = obData?.goal && GOAL_KEY[obData.goal] ? t(GOAL_KEY[obData.goal]) : (obData?.goal || 'general');
     bullets.push(t('wizard.genGoal', { goal: goalLabel }));
+    // Nivel de entrenamiento → la IA lo necesita para calibrar estructura y técnicas
+    // (más superseries/técnicas de intensidad a mayor nivel; principiante casi ninguna).
+    bullets.push(`Nivel de entrenamiento: ${levelFromObData(obData)}`);
 
     const modOpt = MODALITY_OPTIONS.find(m => m.value === selectedModality);
     const modalityLabel = modOpt?.label || 'auto'; // español — contexto del prompt + mensaje de error
