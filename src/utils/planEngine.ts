@@ -40,6 +40,10 @@ const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,
 // y "Pollo deshebrado"/"Pollo en trozos") → penaliza repetir la misma base en la semana.
 const ingKey = (nv: string) => norm(nv).split(/\s+/)[0] || nv;
 const dishPrincKeys = (d: BancoDish) => d.ings.filter((i) => i.rol === 'principal').map((i) => ingKey(i.nv));
+// Antojo: cuántas veces ya salió cada platillo antojado en ESTA semana (tope 2).
+// Se reinicia al inicio de cada buildWeeklyPlan (no es reentrante).
+const CRAVED_MAX = 2;
+const cravedCount = new Map<string, number>();
 const DTEXT = new Map<BancoDish, { text: string; words: Set<string> }>();
 for (const d of BANCO) {
   const text = norm(d.nombre + ' ' + d.ings.map((i) => i.nv).join(' '));
@@ -286,7 +290,8 @@ function fitSlot(
     const { fixed, vars } = prep(dishes);
     solve(fixed, vars, target, 100);
     const e = errMax(fixed, vars, target);
-    const craves = craving.length ? dishes.filter((d) => dishMatchesAny(d, craving)).length : 0;
+    // Antojo cuenta solo si el platillo aún no llegó al tope (2) → sale 1-2 veces, no más.
+    const craves = craving.length ? dishes.filter((d) => dishMatchesAny(d, craving) && (cravedCount.get(d.nombre) ?? 0) < CRAVED_MAX).length : 0;
     // ingScore = repetición en la SEMANA; dayIng = ingrediente principal ya usado HOY
     // en otro tiempo (evita zanahoria en snack AM y otra vez en PM, pollo en comida y cena).
     let ingScore = 0, dayIng = 0;
@@ -305,17 +310,21 @@ function fitSlot(
     ? Math.max(30, minE + 12)
     : (pool.length < 30 ? Math.max(22, minE + 8) : Math.max(12, minE + 2));
   const acceptable = cands.filter((c) => c.e <= cap);
+  // Un solo score de variedad: platillo repetido en la semana (50) > ingrediente repetido
+  // hoy (30). El ANTOJO es un BONO (-55) que NO manda absoluto: el platillo antojado sale
+  // 1-2 veces y luego la penalización semanal (used) deja que rote — no las 7 cenas iguales.
+  const vscore = (c: typeof acceptable[number]) => c.used * 50 + c.dayIng * 30 + c.ingScore - c.craves * 55;
   acceptable.sort((a, b) =>
-    (b.craves - a.craves) ||
-    // variedad: platillo repetido en la semana (50) pesa más que ingrediente repetido
-    // hoy (30) — así la cena (pool chico) no repite platillos entre días, pero cuando hay
-    // opción fresca (score 0) se prefiere no repetir ingrediente el mismo día.
-    ((a.used * 50 + a.dayIng * 30 + a.ingScore) - (b.used * 50 + b.dayIng * 30 + b.ingScore)) ||
+    (vscore(a) - vscore(b)) ||
     (b.fib - a.fib) ||
     (a.e - b.e),
   );
   const dishes = acceptable[0].dishes;
-  for (const d of dishes) { used.add(d.nombre); usedToday.add(d.nombre); for (const k of princKeys(d)) { ingFreq.set(k, (ingFreq.get(k) ?? 0) + 1); usedTodayIng.add(k); } }
+  for (const d of dishes) {
+    used.add(d.nombre); usedToday.add(d.nombre);
+    if (craving.length && dishMatchesAny(d, craving)) cravedCount.set(d.nombre, (cravedCount.get(d.nombre) ?? 0) + 1);
+    for (const k of princKeys(d)) { ingFreq.set(k, (ingFreq.get(k) ?? 0) + 1); usedTodayIng.add(k); }
+  }
   const { fixed, vars } = prep(dishes);
   solve(fixed, vars, target, 220);
   void fixed;
@@ -379,12 +388,13 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 6;
+export const PLAN_ENGINE_VERSION = 7;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
 
 /** Genera 7 días ajustados a la meta del usuario, con el reparto por comida de Magaly. */
 export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPlan[] {
+  cravedCount.clear(); // tope de antojo por semana
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const rng = mulberry32(opts.seed ?? 12345);
   // "Evitar": categoría (gluten/lácteos/…) → alimentos reales del banco; excluye esos platillos.
