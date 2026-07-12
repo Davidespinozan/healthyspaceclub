@@ -324,12 +324,11 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
     const f = pool.filter((d) => !avoid(d));
     return f.length ? f : (anyCompliant.length ? anyCompliant : pool);
   };
+  // Cada tiempo usa SOLO los platillos que Magaly designó para ese tiempo —
+  // desayuno=Desayuno, comida=Comida, cena=Cena. NO se revuelven entre sí.
   const des = clean(biasPool(BY_TIME.Desayuno, cuisines));
   const com = clean(biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines));
-  // Cena: solo 21 platillos (ligeros) → a metas altas casi ninguno llega. Se amplía
-  // con las comidas (con verdura): una comida sirve de cena. A metas bajas el ajuste
-  // prefiere las cenas ligeras solo (las comidas se pasan del target y puntúan peor).
-  const cen = clean(biasPool([...(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena), ...COMIDA_VEG], cuisines));
+  const cen = clean(biasPool(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, cuisines));
   const snack = clean(BY_TIME.Snack);
   // Regla dura: NADA se repite dentro del mismo día (ni comida ni snack, ni una comida
   // como cena). avail() saca del pool lo ya usado hoy; fitSlot va llenando usedToday.
