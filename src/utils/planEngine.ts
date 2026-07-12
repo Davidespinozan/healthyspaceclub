@@ -302,7 +302,9 @@ function mergeItems(items: MealItem[], label: string): MealItem {
     macros.fiber += it.macros?.fiber ?? 0;
   }
   macros.kcal = Math.round(macros.prot * 4 + macros.carb * 4 + macros.fat * 9); // Atwater, cuadra con macros
-  const imgs = items.map((i) => i.img).filter((s): s is string => !!s);
+  // Preserva TODAS las fotos, incluso al re-combinar un snack que ya venía combinado
+  // (toma i.imgs si existe, si no su i.img) → el card muestra todas.
+  const imgs = [...new Set(items.flatMap((i) => i.imgs ?? (i.img ? [i.img] : [])))];
   return {
     time: label,
     name: items.map((i) => i.name).join(' + '),
@@ -315,30 +317,9 @@ function mergeItems(items: MealItem[], label: string): MealItem {
   };
 }
 
-// ── Corrector de macros: cierra el hueco a ≤2% agregando un poco de un alimento
-// denso — lo que haría un coach: "te falta grasa → un pedazo de aguacate o unas
-// nueces". Con un banco tan grande no hay excusa para dejar el macro corto. ──
-// a=[kcal,P,F,C,fibra] por gramo. `avoid` = categorías de alergia/evitar que lo EXCLUYEN
-// (nunca se agrega un alérgeno del usuario). Aguacate/plátano/arroz no tienen alérgenos comunes.
-interface AdjFood { nv: string; a: number[]; pu?: number; un?: string; avoid?: string[] }
-const ADJ_FAT: AdjFood[] = [
-  { nv: 'Aguacate', a: [1.742, 0.0226, 0.171, 0.0677, 0.0484], pu: 94, un: 'aguacate' },
-  { nv: 'Nueces', a: [6.54, 0.153, 0.654, 0.137, 0.067], avoid: ['frutos-secos'] },
-  { nv: 'Almendras', a: [5.79, 0.212, 0.499, 0.216, 0.125], avoid: ['frutos-secos'] },
-  { nv: 'Crema de cacahuate', a: [5.88, 0.25, 0.50, 0.20, 0.06], avoid: ['cacahuate'] },
-  { nv: 'Aceite de oliva', a: [8.84, 0, 1.0, 0, 0] }, // grasa pura, sin alérgeno
-];
-const ADJ_CARB: AdjFood[] = [
-  { nv: 'Plátano', a: [0.89, 0.011, 0.003, 0.229, 0.026], pu: 120, un: 'plátano' },
-  { nv: 'Arroz blanco', a: [1.30, 0.027, 0.003, 0.28, 0.004] },
-  { nv: 'Avena', a: [3.89, 0.169, 0.069, 0.663, 0.106], avoid: ['gluten'] },
-];
-const ADJ_PROT: AdjFood[] = [
-  { nv: 'Pechuga de pollo', a: [1.65, 0.31, 0.036, 0, 0] },
-  { nv: 'Yogurt griego', a: [0.59, 0.10, 0, 0.036, 0], avoid: ['lacteos'] },
-  { nv: 'Claras de huevo', a: [0.52, 0.11, 0.002, 0.007, 0], avoid: ['huevo'] },
-];
-
+// ── Corrector de macros: cierra el hueco a ≤2% agregando un SNACK REAL del banco
+// (con su foto), denso en el macro que falta — no ingredientes sueltos. Lo que haría
+// un coach: "te falta grasa → súmale un puñado de nueces o un yogurt griego". ──
 function macroSum(meals: MealItem[]): number[] {
   const t = [0, 0, 0, 0, 0]; // kcal, P, F, C, fibra
   for (const m of meals) if (m.macros) { t[1] += m.macros.prot; t[2] += m.macros.fat; t[3] += m.macros.carb; t[4] += m.macros.fiber ?? 0; }
@@ -346,51 +327,56 @@ function macroSum(meals: MealItem[]): number[] {
   return t;
 }
 
-/** Agrega alimentos de ajuste a un día para que P/F/C queden a ≤2% de la meta.
- *  Greedy: llena el macro más corto con su alimento denso, sin pasarse de kcal.
- *  RESPETA la lista de evitar/alergias — jamás agrega un alérgeno del usuario. */
+// Clasifica cada snack por su macro DOMINANTE (base del platillo) → así el corrector
+// elige un snack que de verdad aporta lo que falta (nueces=grasa, fruta=carbo, yogurt=proteína).
+function snackClass(d: BancoDish): 'F' | 'P' | 'C' {
+  const m = [...d.fixed];
+  for (const ing of d.ings) if (ing.rol === 'principal' && ing.a) for (let k = 0; k < 5; k++) m[k] += ing.a[k] * ing.g0;
+  const f = m[2] * 9, p = m[1] * 4, c = m[3] * 4;
+  return f >= p && f >= c ? 'F' : p >= c ? 'P' : 'C';
+}
+const SNACK_BY_MACRO: Record<'F' | 'P' | 'C', BancoDish[]> = { F: [], P: [], C: [] };
+for (const d of BY_TIME.Snack) SNACK_BY_MACRO[snackClass(d)].push(d);
+
+/** Mete un snack extra al slot de snack (AM o PM) con menos items, como "2 en 1" —
+ *  mergeItems junta nombres, porciones, macros Y fotos (imgs) para el card. */
+function mergeIntoSnack(meals: MealItem[], extra: MealItem): void {
+  const amIdx = meals.findIndex((m) => m.time === 'Snack AM');
+  const pmIdx = meals.findIndex((m) => m.time === 'Snack PM');
+  const count = (i: number) => (i < 0 ? Infinity : (meals[i].ings?.length ?? 1));
+  const idx = count(pmIdx) <= count(amIdx) ? pmIdx : amIdx;
+  if (idx >= 0) meals[idx] = mergeItems([meals[idx], { ...extra, time: meals[idx].time }], meals[idx].time);
+  else meals.push({ ...extra, time: 'Snack PM' });
+}
+
+/** Cierra el hueco de macros a ≤2% agregando snacks reales del banco (con foto),
+ *  densos en el macro que falta. RESPETA la lista de evitar/alergias (banco filtrado). */
 function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: string[] = []): void {
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const kcalCap = target.kcal * 1.02;
-  const avoidSet = new Set(avoidCats);
-  const ok = (f: AdjFood) => !f.avoid?.some((c) => avoidSet.has(c)); // no agregar alérgenos
-  const FAT = ADJ_FAT.filter(ok), CARB = ADJ_CARB.filter(ok), PROT = ADJ_PROT.filter(ok);
-  const added = new Map<AdjFood, number>();
-  for (let iter = 0; iter < 12; iter++) {
+  const avoid = makeAvoidFilter(avoidCats);
+  const safe = (l: BancoDish[]) => l.filter((d) => !avoid(d)); // nunca un snack con alérgeno
+  const pools: Record<'F' | 'P' | 'C', BancoDish[]> = { F: safe(SNACK_BY_MACRO.F), P: safe(SNACK_BY_MACRO.P), C: safe(SNACK_BY_MACRO.C) };
+  const used = new Set<string>(meals.map((m) => m.name)); // no repetir el mismo snack en el día
+  const isUsed = (n: string) => [...used].some((u) => u.includes(n));
+  for (let iter = 0; iter < 3; iter++) {
     const cur = macroSum(meals);
-    for (const [f, g] of added) for (let k = 0; k < 5; k++) cur[k] += f.a[k] * g;
+    if (cur[0] >= kcalCap) break;                    // ya no hay espacio calórico
     const rel = (i: number) => (T[i] - cur[i]) / T[i];
     const rp = rel(1), rf = rel(2), rc = rel(3);
     const worst = Math.max(rp, rf, rc);
-    if (worst <= 0.02) break;                 // ya está todo a ≤2%
-    const headroom = kcalCap - cur[0];
-    if (headroom <= 5) break;                 // no hay espacio calórico para agregar
-    const [pool, idx] = rf === worst ? [FAT, 2] : rc === worst ? [CARB, 3] : [PROT, 1];
-    if (!(pool as AdjFood[]).length) break;   // no hay alimento seguro para ese macro
-    const food = (pool as AdjFood[]).find((f) => !added.has(f)) ?? (pool as AdjFood[])[0];
-    const need = T[idx as number] - cur[idx as number];
-    let g = need / food.a[idx as number];
-    g = Math.min(g, headroom / food.a[0]);    // no rebasar el tope de kcal
-    g = Math.round(Math.max(0, g));
-    if (g < 3) break;                         // porción demasiado chica → parar
-    added.set(food, (added.get(food) ?? 0) + g);
+    if (worst <= 0.02) break;                          // todo a ≤2%
+    const [cls, idx]: ['F' | 'P' | 'C', number] = rf === worst ? ['F', 2] : rc === worst ? ['C', 3] : ['P', 1];
+    const dish = pools[cls].find((d) => !isUsed(d.nombre)) ?? pools[cls][0];
+    if (!dish) break;                                  // no hay snack seguro para ese macro
+    const slotT = [0, 0, 0, 0];
+    slotT[idx] = T[idx] - cur[idx];                    // el snack se escala para llenar ese macro
+    const item = solveSlot([dish], 'Snack', slotT)[0];
+    if (!item?.macros || item.macros.kcal < 20) break;
+    if (cur[0] + item.macros.kcal > kcalCap + 60) break; // no dispares las kcal
+    mergeIntoSnack(meals, item);
+    used.add(dish.nombre);
   }
-  if (!added.size) return;
-  // Construye los items de ajuste y los mete al Snack PM (o como tiempo propio).
-  const adjItems: MealItem[] = [];
-  for (const [f, g] of added) {
-    const ing = { nv: f.nv, rol: 'principal', g0: g, ...(f.pu ? { pu: f.pu, un: f.un } : {}) } as BancoIng;
-    const prot = Math.round(f.a[1] * g), fat = Math.round(f.a[2] * g), carb = Math.round(f.a[3] * g);
-    adjItems.push({
-      time: 'Snack PM', name: f.nv, desc: '',
-      portions: [portionStr(ing, g)],
-      macros: { kcal: Math.round(prot * 4 + carb * 4 + fat * 9), prot, fat, carb, fiber: Math.round(f.a[4] * g) },
-      ings: [{ nv: f.nv, g, rol: 'principal' }],
-    });
-  }
-  const pmIdx = meals.map((m) => m.time).lastIndexOf('Snack PM');
-  if (pmIdx >= 0) meals[pmIdx] = mergeItems([meals[pmIdx], ...adjItems], 'Snack PM');
-  else meals.push(mergeItems(adjItems, 'Snack PM'));
 }
 
 // Busca el mejor conjunto de `n` platillos de `pool` para pegar el target de ESTE
@@ -512,7 +498,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 15;
+export const PLAN_ENGINE_VERSION = 16;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
 
