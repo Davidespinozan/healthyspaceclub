@@ -311,6 +311,10 @@ interface AppState {
     // Motor (banco de Magaly): 7 días ya compuestos y ajustados a la meta.
     // Si viene, TabHoy/Planner lo usan tal cual (day = 1..7); si no, plan viejo.
     days?: import('../types').DayPlan[];
+    // Versión del motor con que se generó + inputs, para auto-regenerar cuando
+    // el motor cambia (preservando meta y alergias del usuario).
+    engineVersion?: number;
+    gen?: { kcal: number; protG: number; fatG: number; carbG: number; avoid: string[]; craving: string };
   } | null;
   saveWeeklyPlan: (plan: NonNullable<AppState['weeklyPlan']>) => Promise<void>;
   clearWeeklyPlan: () => Promise<void>;

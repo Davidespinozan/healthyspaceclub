@@ -355,6 +355,10 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   return { day: dayNum, theme: '', meals };
 }
 
+// Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
+// pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
+export const PLAN_ENGINE_VERSION = 3;
+
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
 
 /** Genera 7 días ajustados a la meta del usuario, con el reparto por comida de Magaly. */

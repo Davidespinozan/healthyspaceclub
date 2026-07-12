@@ -1,5 +1,5 @@
 import { dayKey } from '../utils/localDate';
-import { useState, useMemo, lazy, Suspense } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
@@ -7,7 +7,7 @@ import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { mealKcal, dayNutrition } from '../utils/mealNutrition';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
-import { buildWeeklyPlan } from '../utils/planEngine';
+import { buildWeeklyPlan, PLAN_ENGINE_VERSION } from '../utils/planEngine';
 import NutritionMeta from './NutritionMeta';
 import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
@@ -156,6 +156,26 @@ export default function WeeklyNutritionPlanner() {
   const regenBlocked = !regenUnlimited && regenThisWeek >= 2;
   const regenLeft = regenUnlimited ? 99 : Math.max(0, 2 - regenThisWeek);
 
+  // Auto-regeneración: si el plan guardado se generó con una versión ANTERIOR del
+  // motor, lo regenera con los MISMOS inputs (meta + alergias) → el usuario nunca ve
+  // datos viejos tras una mejora del motor. Sin inputs guardados (planes muy viejos),
+  // no toca nada (regeneración manual).
+  useEffect(() => {
+    if (!weeklyPlan?.days || !weeklyPlan.gen) return;
+    if ((weeklyPlan.engineVersion ?? 0) >= PLAN_ENGINE_VERSION) return;
+    const g = weeklyPlan.gen;
+    const days = buildWeeklyPlan(
+      { kcal: g.kcal, protG: g.protG, fatG: g.fatG, carbG: g.carbG },
+      { seed: Date.now() & 0x7fffffff, avoid: g.avoid, craving: g.craving },
+    );
+    const shopSet = new Set<string>();
+    for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])
+      if (ing.rol !== 'condimento' && ing.rol !== 'sub-receta') shopSet.add(ing.nv);
+    saveWeeklyPlan({ ...weeklyPlan, generatedAt: new Date().toISOString(), engineVersion: PLAN_ENGINE_VERSION, shoppingList: [...shopSet], days })
+      .catch((e) => console.error('[auto-regen] failed:', e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weeklyPlan?.engineVersion]);
+
   const [phase, setPhase] = useState<'setup-day' | 'questions' | 'generating' | 'plan' | 'error'>(
     () => {
       if (shoppingDay === null) return 'setup-day';
@@ -260,6 +280,8 @@ export default function WeeklyNutritionPlanner() {
         preferences: [newAnswers.cravings, newAnswers.avoid].filter(Boolean).join(' · '),
         lang: locale,
         days,
+        engineVersion: PLAN_ENGINE_VERSION,
+        gen: { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, craving: newAnswers.cravings ?? '' },
       });
       setActiveDay(todayOffset >= 0 ? todayOffset : 0);
       setPhase('plan');
