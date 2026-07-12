@@ -40,10 +40,15 @@ for r in csv.DictReader(open(os.path.join(BASE, "food_measures.csv"), encoding="
     gpm = num(r.get("gramos_por_medida"))
     if fid and gpm > 0 and fid not in MEAS: MEAS[fid] = (gpm, med)
 SUB = {}
+SUB_YIELD = {}  # rendimiento total (g) de cada sub-receta = suma de TODOS sus ingredientes (incl. condimentos)
 for r in csv.DictReader(open(os.path.join(BASE, "SUBRECETAS-HSC.csv"), encoding="utf-8-sig")):
-    s = r["subreceta"].strip(); SUB.setdefault(s, [0, 0, 0, 0, 0])
+    s = r["subreceta"].strip(); SUB.setdefault(s, [0, 0, 0, 0, 0]); SUB_YIELD.setdefault(s, 0.0)
+    SUB_YIELD[s] += num(r["gramos"])  # el rendimiento incluye condimentos (suman gramos, no macros)
     if (r.get("rol") or "").strip() == "condimento": continue
-    m = CAT.get((r.get("alimento") or "").strip())
+    # El nombre SMAE va en 'alimento'; en v2 las 13 sub-recetas viejas lo dejaron en
+    # 'nombre_visible' con 'alimento' vacío (solo "Salsa de naranja" lo trae bien) → fallback.
+    al_sub = (r.get("alimento") or "").strip() or (r.get("nombre_visible") or "").strip()
+    m = CAT.get(al_sub)
     if m:
         g = num(r["gramos"]) / 100
         for i in range(5): SUB[s][i] += m[i] * g
@@ -71,9 +76,12 @@ for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), enco
         else:
             ing["pend"] = True
     elif rol == "sub-receta":
-        t = SUB.get(al)
-        if t:
-            for i in range(5): d["fixed"][i] += t[i]
+        # El platillo usa g gramos de una sub-receta que RINDE SUB_YIELD[al] gramos.
+        # Aporta las macros de la receta completa × factor (g / rendimiento). No escala.
+        t = SUB.get(al); y = SUB_YIELD.get(al)
+        if t and y and y > 0:
+            factor = g / y
+            for i in range(5): d["fixed"][i] += t[i] * factor
     elif rol in ("guarnicion", "fijo"):
         m = CAT.get(al)
         if m:

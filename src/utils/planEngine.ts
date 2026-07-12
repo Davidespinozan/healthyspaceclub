@@ -225,7 +225,8 @@ function portionStr(ing: BancoIng, g: number | null): string {
   if (ing.rol === 'guarnicion') return `${ing.nv} al gusto`;
   // condimento (sal, especias) → solo el nombre, sin cantidad.
   if (ing.rol === 'condimento') return ing.nv;
-  if (ing.rol === 'sub-receta') return ing.nv;
+  // sub-receta (guacamole, salsas) → nombre + gramos (no escala; sus macros van en fixed).
+  if (ing.rol === 'sub-receta') return `${ing.nv} — ${Math.round(g ?? ing.g0)} g`;
   const grams = Math.round(g ?? ing.g0);
   // Granos/leguminosas/pasta → tazas (si el ingrediente no trae ya otra medida casera).
   if (!ing.pu && grams > 0) {
@@ -431,7 +432,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 12;
+export const PLAN_ENGINE_VERSION = 13;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
 
