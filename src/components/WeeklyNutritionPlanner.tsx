@@ -7,7 +7,8 @@ import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { mealKcal, dayNutrition } from '../utils/mealNutrition';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
-import { buildWeeklyPlan, PLAN_ENGINE_VERSION } from '../utils/planEngine';
+import { PLAN_ENGINE_VERSION } from '../utils/planEngine';
+import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
 import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, type LucideIcon } from 'lucide-react';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
@@ -172,12 +173,17 @@ export default function WeeklyNutritionPlanner() {
     const AVOID_KEYS = ['gluten', 'lacteos', 'carne-roja', 'mariscos', 'huevo', 'frutos-secos', 'cacahuate', 'soya', 'pescado', 'ajonjoli'];
     const avoid = weeklyPlan.gen?.avoid ?? AVOID_KEYS.filter((k) => (weeklyPlan.preferences || '').includes(k));
     const craving = weeklyPlan.gen?.craving ?? '';
-    const days = buildWeeklyPlan(target, { seed: Date.now() & 0x7fffffff, avoid, craving });
-    const shopSet = new Set<string>();
-    for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])
-      if (ing.rol !== 'condimento' && ing.rol !== 'sub-receta') shopSet.add(ing.nv);
-    saveWeeklyPlan({ ...weeklyPlan, generatedAt: new Date().toISOString(), engineVersion: PLAN_ENGINE_VERSION, shoppingList: [...shopSet], days, gen: { ...target, avoid, craving } })
-      .catch((e) => console.error('[auto-regen] failed:', e));
+    let cancelled = false;
+    (async () => {
+      const { days } = await generateWeeklyPlan(target, avoid, craving, Date.now() & 0x7fffffff);
+      if (cancelled || !weeklyPlan) return;
+      const shopSet = new Set<string>();
+      for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])
+        if (ing.rol !== 'condimento' && ing.rol !== 'sub-receta') shopSet.add(ing.nv);
+      saveWeeklyPlan({ ...weeklyPlan, generatedAt: new Date().toISOString(), engineVersion: PLAN_ENGINE_VERSION, shoppingList: [...shopSet], days, gen: { ...target, avoid, craving } })
+        .catch((e) => console.error('[auto-regen] failed:', e));
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weeklyPlan?.engineVersion]);
 
@@ -266,12 +272,10 @@ export default function WeeklyNutritionPlanner() {
       const targets = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
       // Categorías/alergias tal cual (el motor mapea a alimentos y descarta 'nada'/'todas').
       const avoid = (newAnswers.avoid ?? '').toLowerCase().split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
-      // Sin selector de cocina: forzar cocina reducía el pool a 2-3 platillos (ej.
-      // "americana" = Burger Fit + Hot Cakes) y los repetía a diario. Mezcla libre.
-      const days = buildWeeklyPlan(
-        { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG },
-        { seed: Date.now() & 0x7fffffff, avoid, craving: newAnswers.cravings ?? '' },
-      );
+      // Híbrido: la IA selecciona los platillos (variedad/antojo/tiempos) y el código
+      // ajusta porciones + garantiza alergias. Si la IA falla, cae al motor determinista.
+      const target = { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG };
+      const { days } = await generateWeeklyPlan(target, avoid, newAnswers.cravings ?? '', Date.now() & 0x7fffffff);
       // Lista de compras: ingredientes únicos (sin condimentos), del banco ya ajustado.
       const shopSet = new Set<string>();
       for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])

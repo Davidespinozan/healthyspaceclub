@@ -388,11 +388,66 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 7;
+export const PLAN_ENGINE_VERSION = 8;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
 
 /** Genera 7 días ajustados a la meta del usuario, con el reparto por comida de Magaly. */
+// ════════════════════════════════════════════════════════════════════════
+// API para el HÍBRIDO IA: la IA SELECCIONA los platillos (variedad/antojo/tiempos)
+// y el código AJUSTA las porciones a la meta + garantiza tiempos y alergias.
+// ════════════════════════════════════════════════════════════════════════
+
+/** Filtro de alergia/evitar (categoría → alimentos reales del banco). */
+export function makeAvoidFilter(avoidCats: string[]): (d: BancoDish) => boolean {
+  const terms = expandAvoid(avoidCats.map((s) => s.toLowerCase().trim()).filter(Boolean));
+  return (d: BancoDish) => (terms.length ? dishMatchesAny(d, terms) : false);
+}
+
+/** Banco agrupado por tiempo, ya SIN alérgenos (nunca vacío: cae al pool completo). */
+export function safeBankByTiempo(avoidCats: string[]): Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]> {
+  const avoid = makeAvoidFilter(avoidCats);
+  const pick = (t: string) => { const f = (BY_TIME[t] ?? []).filter((d) => !avoid(d)); return f.length ? f : (BY_TIME[t] ?? []); };
+  return { Desayuno: pick('Desayuno'), Comida: pick('Comida'), Cena: pick('Cena'), Snack: pick('Snack') };
+}
+
+/** Ajusta las porciones de UNOS platillos dados a `target` y devuelve sus MealItem. */
+export function solveSlot(dishes: BancoDish[], label: string, target: number[], merge = false): MealItem[] {
+  if (!dishes.length) return [];
+  const { fixed, vars } = prep(dishes);
+  solve(fixed, vars, target, 220);
+  void fixed;
+  const gOf = new Map<BancoIng, number>();
+  for (const v of vars) gOf.set(v.ing, v.g);
+  const items = dishes.map((d) => mealItemFrom(d, label, gOf));
+  return merge && items.length > 1 ? [mergeItems(items, label)] : items;
+}
+
+export interface DaySelection { desayuno: string; comida: string; cena: string; snacks: string[] }
+
+/** Arma los 7 días a partir de la SELECCIÓN de la IA (nombres de platillo), con el
+ *  reparto de Magaly y las porciones ajustadas por el solver. */
+export function assembleFromSelection(target: PlanTarget, days: DaySelection[]): DayPlan[] {
+  const T = [target.kcal, target.protG, target.fatG, target.carbG];
+  const MT = mealTargets(T);
+  const byName = new Map(BANCO.map((d) => [d.nombre, d]));
+  const out: DayPlan[] = [];
+  days.forEach((sel, i) => {
+    const des = byName.get(sel.desayuno), com = byName.get(sel.comida), cen = byName.get(sel.cena);
+    if (!des || !com || !cen) return; // el orquestador ya validó; salta por seguridad
+    const snacks = (sel.snacks ?? []).map((n) => byName.get(n)).filter((d): d is BancoDish => !!d);
+    const meals: MealItem[] = [
+      ...solveSlot([des], 'Desayuno', MT.desayuno),
+      ...(snacks[0] ? solveSlot([snacks[0]], 'Snack AM', MT.snackSlot) : []),
+      ...solveSlot([com], 'Comida', MT.comida),
+      ...(snacks[1] ? solveSlot([snacks[1]], 'Snack PM', MT.snackSlot) : []),
+      ...solveSlot([cen], 'Cena', MT.cena),
+    ];
+    out.push({ day: i + 1, theme: '', meals });
+  });
+  return out;
+}
+
 export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPlan[] {
   cravedCount.clear(); // tope de antojo por semana
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
