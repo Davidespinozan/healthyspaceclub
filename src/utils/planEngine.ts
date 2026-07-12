@@ -278,7 +278,10 @@ function fitSlot(
   // del día). Entre ellos: 1) ANTOJO, 2) NO repetir ingrediente el mismo día, 3) variedad
   // semanal (platillo e ingrediente menos repetidos → rota aguacate/pollo), 4) fibra, 5) ajuste.
   const minE = Math.min(...cands.map((c) => c.e));
-  const cap = Math.max(12, minE + 2);
+  // Snacks (merge): banda MÁS ancha. Son ~5% del día, la precisión importa poco y
+  // pocas opciones pegan el target exacto → sin holgura se repiten los mismos 4-5.
+  // Con banda ancha entran más snacks y la variedad (used/ingFreq) los rota.
+  const cap = merge ? Math.max(30, minE + 12) : Math.max(12, minE + 2);
   const acceptable = cands.filter((c) => c.e <= cap);
   acceptable.sort((a, b) =>
     (b.craves - a.craves) ||
