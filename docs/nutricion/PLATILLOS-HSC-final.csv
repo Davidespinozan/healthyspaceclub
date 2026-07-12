@@ -258,8 +258,7 @@ Enfrijoladas,Desayuno,suelto,medio,salado,,Frijol molido,Frijol molido,150,250,p
 Enfrijoladas,Desayuno,suelto,medio,salado,,Queso fresco,Queso fresco,40,60,principal,plato,,enfrijoladas.jpg
 Enfrijoladas,Desayuno,suelto,medio,salado,,Crema ácida,Crema,15,24,fijo,plato,1 cucharada,enfrijoladas.jpg
 Enfrijoladas,Desayuno,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,acompañamiento,,enfrijoladas.jpg
-Enfrijoladas,Desayuno,suelto,medio,salado,,Lechuga,Lechuga fresca,30,,guarnicion,plato,,enfrijoladas.jpg
-Enfrijoladas,Desayuno,suelto,medio,salado,,Cebolla blanca rebanada,Cebolla,20,,guarnicion,plato,,enfrijoladas.jpg
+Enfrijoladas,Desayuno,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga fresca, cebolla)",50,,guarnicion,plato,,enfrijoladas.jpg
 Tacos de Machaca,Desayuno,suelto,medio,salado,,Machaca,Machaca de res,50,60,principal,plato,,tacos-de-machaca.jpg
 Tacos de Machaca,Desayuno,suelto,medio,salado,,Tortilla de maíz,Tortilla de maíz,90,180,principal,plato,,tacos-de-machaca.jpg
 Tacos de Machaca,Desayuno,suelto,medio,salado,,Verduras mixtas,"Verduras (jitomate, cebolla, chile)",90,,guarnicion,plato,PENDIENTE crear Verduras mixtas,tacos-de-machaca.jpg
@@ -329,9 +328,7 @@ Sándwich de Pavo y Aguacate,Desayuno,suelto,medio,salado,,Aguacate Hass,Aguacat
 Sándwich de Pavo y Aguacate,Desayuno,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga, jitomate)",60,,guarnicion,plato,PENDIENTE crear Verduras mixtas,sandwich-de-pavo-y-aguacate.jpg
 Sándwich de Pavo y Aguacate,Desayuno,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,sandwich-de-pavo-y-aguacate.jpg
 Pollo Salteado Asiático con Verduras,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo en trozos,150,350,principal,plato,,pollo-salteado-asiatico-con-verduras.jpg
-Pollo Salteado Asiático con Verduras,Comida,suelto,medio,salado,,Brócoli cocido,Brócoli,90,,guarnicion,plato,,pollo-salteado-asiatico-con-verduras.jpg
-Pollo Salteado Asiático con Verduras,Comida,suelto,medio,salado,,Pimiento fresco,"Pimientos (verde, rojo, amarillo)",80,,guarnicion,plato,,pollo-salteado-asiatico-con-verduras.jpg
-Pollo Salteado Asiático con Verduras,Comida,suelto,medio,salado,,Cebolla blanca rebanada,Cebolla,20,,guarnicion,plato,,pollo-salteado-asiatico-con-verduras.jpg
+Pollo Salteado Asiático con Verduras,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (brócoli, pimientos (verde, rojo, amarillo), cebolla)",190,,guarnicion,plato,,pollo-salteado-asiatico-con-verduras.jpg
 Pollo Salteado Asiático con Verduras,Comida,suelto,medio,salado,,Cacahuate,Cacahuate,15,24,fijo,plato,,pollo-salteado-asiatico-con-verduras.jpg
 Pollo Salteado Asiático con Verduras,Comida,suelto,medio,salado,,Miel,Miel,10,15,fijo,plato,,pollo-salteado-asiatico-con-verduras.jpg
 Pollo Salteado Asiático con Verduras,Comida,suelto,medio,salado,,Salsa de soya,Salsa de soya,10,,condimento,plato,,pollo-salteado-asiatico-con-verduras.jpg
@@ -360,17 +357,14 @@ Camote Relleno de Carne Molida,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,c
 Salmón Bowl,Comida,suelto,medio,salado,,Filete de salmón,Salmón a la plancha,150,300,principal,plato,,salmon-bowl.jpg
 Salmón Bowl,Comida,suelto,medio,salado,,Arroz cocido,Arroz blanco,150,450,principal,plato,,salmon-bowl.jpg
 Salmón Bowl,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,,salmon-bowl.jpg
-Salmón Bowl,Comida,suelto,medio,salado,,Jitomate bola,Jitomate cherry,60,,guarnicion,plato,,salmon-bowl.jpg
-Salmón Bowl,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,60,,guarnicion,plato,,salmon-bowl.jpg
+Salmón Bowl,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (jitomate cherry, pepino, espinaca)",150,,guarnicion,plato,,salmon-bowl.jpg
 Salmón Bowl,Comida,suelto,medio,salado,,Elote amarillo desgranado cocido,Elote,50,,guarnicion,plato,,salmon-bowl.jpg
-Salmón Bowl,Comida,suelto,medio,salado,,Espinaca cruda,Espinaca,30,,guarnicion,plato,,salmon-bowl.jpg
 Salmón Bowl,Comida,suelto,medio,salado,,Aceite de oliva,Aceite de oliva,5,,fijo,plato,,salmon-bowl.jpg
 Salmón Bowl,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,salmon-bowl.jpg
 Bowl de Pollo con Glaseado de Miel,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo en trozos,150,350,principal,plato,,bowl-de-pollo-con-glaseado-de-miel.jpg
 Bowl de Pollo con Glaseado de Miel,Comida,suelto,medio,salado,,Arroz cocido,Arroz blanco,150,450,principal,plato,,bowl-de-pollo-con-glaseado-de-miel.jpg
-Bowl de Pollo con Glaseado de Miel,Comida,suelto,medio,salado,,Brócoli cocido,Brócoli,100,,guarnicion,plato,,bowl-de-pollo-con-glaseado-de-miel.jpg
+Bowl de Pollo con Glaseado de Miel,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (brócoli, pepino)",160,,guarnicion,plato,,bowl-de-pollo-con-glaseado-de-miel.jpg
 Bowl de Pollo con Glaseado de Miel,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,bowl-de-pollo-con-glaseado-de-miel.jpg
-Bowl de Pollo con Glaseado de Miel,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,60,,guarnicion,plato,,bowl-de-pollo-con-glaseado-de-miel.jpg
 Bowl de Pollo con Glaseado de Miel,Comida,suelto,medio,salado,,Glaseado de miel y soya,Glaseado de miel y soya,30,,sub-receta,plato,,bowl-de-pollo-con-glaseado-de-miel.jpg
 Filete de Pescado con Papas y Ensalada,Comida,suelto,medio,salado,,Filete de pescado,Filete de pescado,180,350,principal,plato,,filete-de-pescado-con-papas-y-ensalada.jpg
 Filete de Pescado con Papas y Ensalada,Comida,suelto,medio,salado,,Papa de cambray,Papas cambray al perejil,150,400,principal,plato,,filete-de-pescado-con-papas-y-ensalada.jpg
@@ -392,14 +386,11 @@ Pasta Cremosa con Pollo y Brócoli,Comida,suelto,medio,salado,,Pimienta,Pimienta
 Pasta Fría con Pollo y Aderezo Chipotle,Comida,suelto,medio,salado,,Pasta cocida,Pasta,180,400,principal,plato,,pasta-fria-con-pollo-y-aderezo-chipotle.jpg
 Pasta Fría con Pollo y Aderezo Chipotle,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo en trozos,130,350,principal,plato,,pasta-fria-con-pollo-y-aderezo-chipotle.jpg
 Pasta Fría con Pollo y Aderezo Chipotle,Comida,suelto,medio,salado,,Elote amarillo desgranado cocido,Elote,60,,guarnicion,plato,,pasta-fria-con-pollo-y-aderezo-chipotle.jpg
-Pasta Fría con Pollo y Aderezo Chipotle,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,60,,guarnicion,plato,,pasta-fria-con-pollo-y-aderezo-chipotle.jpg
-Pasta Fría con Pollo y Aderezo Chipotle,Comida,suelto,medio,salado,,Pimiento fresco,Pimiento,50,,guarnicion,plato,,pasta-fria-con-pollo-y-aderezo-chipotle.jpg
-Pasta Fría con Pollo y Aderezo Chipotle,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,20,,guarnicion,plato,,pasta-fria-con-pollo-y-aderezo-chipotle.jpg
+Pasta Fría con Pollo y Aderezo Chipotle,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, pimiento, cebolla morada)",130,,guarnicion,plato,,pasta-fria-con-pollo-y-aderezo-chipotle.jpg
 Pasta Fría con Pollo y Aderezo Chipotle,Comida,suelto,medio,salado,,Aderezo Chipotle,Aderezo chipotle,45,,sub-receta,plato,,pasta-fria-con-pollo-y-aderezo-chipotle.jpg
 Pasta César con Pollo,Comida,suelto,medio,salado,,Pasta cocida,Pasta,180,400,principal,plato,,pasta-cesar-con-pollo.jpg
 Pasta César con Pollo,Comida,suelto,medio,salado,,Pechuga de pollo sin piel a la plancha,Pollo a la plancha,150,350,principal,plato,,pasta-cesar-con-pollo.jpg
-Pasta César con Pollo,Comida,suelto,medio,salado,,Lechuga romana,Lechuga romana,80,,guarnicion,plato,,pasta-cesar-con-pollo.jpg
-Pasta César con Pollo,Comida,suelto,medio,salado,,Jitomate bola,Jitomate cherry,50,,guarnicion,plato,,pasta-cesar-con-pollo.jpg
+Pasta César con Pollo,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga romana, jitomate cherry)",130,,guarnicion,plato,,pasta-cesar-con-pollo.jpg
 Pasta César con Pollo,Comida,suelto,medio,salado,,Aderezo César,Aderezo César,50,,sub-receta,plato,,pasta-cesar-con-pollo.jpg
 Pasta César con Pollo,Comida,suelto,medio,salado,,Queso Parmesano,Parmesano,10,20,fijo,plato,,pasta-cesar-con-pollo.jpg
 Pasta César con Pollo,Comida,suelto,medio,salado,,Pimienta,Pimienta,1,,condimento,plato,,pasta-cesar-con-pollo.jpg
@@ -410,10 +401,8 @@ Picadillo de Res con Verduras,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,co
 Picadillo de Res con Verduras,Comida,suelto,medio,salado,,Pimienta,Pimienta,1,,condimento,plato,,picadillo-de-res-con-verduras.jpg
 Picadillo de Res con Verduras,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,acompañamiento,,picadillo-de-res-con-verduras.jpg
 Ensalada de Atún Picada,Comida,suelto,medio,salado,,Atún en agua drenado,Atún,130,200,principal,plato,,ensalada-de-atun-picada.jpg
-Ensalada de Atún Picada,Comida,suelto,medio,salado,,Lechuga,Lechuga picada,80,,guarnicion,plato,,ensalada-de-atun-picada.jpg
+Ensalada de Atún Picada,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga picada, pepino, cebolla morada)",160,,guarnicion,plato,,ensalada-de-atun-picada.jpg
 Ensalada de Atún Picada,Comida,suelto,medio,salado,,Elote amarillo desgranado cocido,Elote,60,,guarnicion,plato,,ensalada-de-atun-picada.jpg
-Ensalada de Atún Picada,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,60,,guarnicion,plato,,ensalada-de-atun-picada.jpg
-Ensalada de Atún Picada,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,20,,guarnicion,plato,,ensalada-de-atun-picada.jpg
 Ensalada de Atún Picada,Comida,suelto,medio,salado,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego natural,40,300,principal,plato,,ensalada-de-atun-picada.jpg
 Ensalada de Atún Picada,Comida,suelto,medio,salado,,Mayonesa light,Mayonesa light,15,24,fijo,plato,,ensalada-de-atun-picada.jpg
 Ensalada de Atún Picada,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,ensalada-de-atun-picada.jpg
@@ -424,8 +413,7 @@ Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Arroz cocido,Arro
 Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Glaseado de miel y soya,Glaseado de miel y soya,30,,sub-receta,plato,,bowl-de-salmon-glaseado-con-mango.jpg
 Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Mango picado,Mango,80,200,principal,plato,,bowl-de-salmon-glaseado-con-mango.jpg
 Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,bowl-de-salmon-glaseado-con-mango.jpg
-Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,20,,guarnicion,plato,,bowl-de-salmon-glaseado-con-mango.jpg
-Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Lechuga,Lechuga,30,,guarnicion,plato,,bowl-de-salmon-glaseado-con-mango.jpg
+Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (cebolla morada, lechuga)",50,,guarnicion,plato,,bowl-de-salmon-glaseado-con-mango.jpg
 Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Chile serrano,Chile serrano,5,,condimento,plato,,bowl-de-salmon-glaseado-con-mango.jpg
 Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Limón,Limón,5,,condimento,plato,,bowl-de-salmon-glaseado-con-mango.jpg
 Salmón con Ensalada de Papa,Comida,suelto,medio,salado,,Filete de salmón,Salmón a la plancha,150,300,principal,plato,,salmon-con-ensalada-de-papa.jpg
@@ -441,8 +429,7 @@ Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Filete de pescado,Fil
 Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Quinoa cocida,Quinoa,150,350,principal,plato,PENDIENTE crear (cruda/3 aprox),pescado-con-ensalada-de-quinoa.jpg
 Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,pescado-con-ensalada-de-quinoa.jpg
 Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Zanahoria rallada cruda,Zanahoria,40,,guarnicion,plato,,pescado-con-ensalada-de-quinoa.jpg
-Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Jitomate bola,Jitomate,50,,guarnicion,plato,,pescado-con-ensalada-de-quinoa.jpg
-Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Pimiento fresco,Pimiento,40,,guarnicion,plato,,pescado-con-ensalada-de-quinoa.jpg
+Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (jitomate, pimiento)",90,,guarnicion,plato,,pescado-con-ensalada-de-quinoa.jpg
 Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Cilantro picado crudo,Cilantro,5,,condimento,plato,,pescado-con-ensalada-de-quinoa.jpg
 Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Limón,Limón,5,,condimento,plato,,pescado-con-ensalada-de-quinoa.jpg
 Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Aceite de oliva,Aceite de oliva,5,,fijo,plato,,pescado-con-ensalada-de-quinoa.jpg
@@ -485,16 +472,13 @@ Burger Bowl,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,bu
 Tacos de Salmón,Comida,suelto,medio,salado,,Tortilla de maíz,Tortilla de maíz,90,180,principal,plato,,tacos-de-salmon.jpg
 Tacos de Salmón,Comida,suelto,medio,salado,,Filete de salmón,Salmón a la plancha,150,300,principal,plato,,tacos-de-salmon.jpg
 Tacos de Salmón,Comida,suelto,medio,salado,,Guacamole,Guacamole,90,,sub-receta,plato,,tacos-de-salmon.jpg
-Tacos de Salmón,Comida,suelto,medio,salado,,Col cruda picada,Col rallada,80,,guarnicion,plato,,tacos-de-salmon.jpg
-Tacos de Salmón,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,50,,guarnicion,plato,,tacos-de-salmon.jpg
+Tacos de Salmón,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (col rallada, pepino)",130,,guarnicion,plato,,tacos-de-salmon.jpg
 Tacos de Salmón,Comida,suelto,medio,salado,,Limón,Limón,10,,condimento,plato,,tacos-de-salmon.jpg
 Tacos de Salmón,Comida,suelto,medio,salado,,Eneldo,Eneldo,1,,condimento,plato,,tacos-de-salmon.jpg
 Tacos de Camarón,Comida,suelto,medio,salado,,Tortilla de maíz,Tortilla de maíz,90,180,principal,plato,,tacos-de-camaron.jpg
 Tacos de Camarón,Comida,suelto,medio,salado,,Camarón cocido,Camarones,150,320,principal,plato,,tacos-de-camaron.jpg
-Tacos de Camarón,Comida,suelto,medio,salado,,Col morada cruda pciada,Col morada,60,,guarnicion,plato,,tacos-de-camaron.jpg
-Tacos de Camarón,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,50,,guarnicion,plato,,tacos-de-camaron.jpg
+Tacos de Camarón,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (col morada, pepino, cebolla)",130,,guarnicion,plato,,tacos-de-camaron.jpg
 Tacos de Camarón,Comida,suelto,medio,salado,,Zanahoria rallada cruda,Zanahoria,30,,guarnicion,plato,,tacos-de-camaron.jpg
-Tacos de Camarón,Comida,suelto,medio,salado,,Cebolla blanca rebanada,Cebolla,20,,guarnicion,plato,,tacos-de-camaron.jpg
 Tacos de Camarón,Comida,suelto,medio,salado,,Cilantro picado crudo,Cilantro,5,,condimento,plato,,tacos-de-camaron.jpg
 Tacos de Camarón,Comida,suelto,medio,salado,,Limón,Limón,10,,condimento,plato,,tacos-de-camaron.jpg
 Bistec con Chimichurri,Comida,suelto,denso,salado,,Sirloin,Bistec de res,180,300,principal,plato,,bistec-con-chimichurri.jpg
@@ -533,8 +517,7 @@ Milanesa de Pollo al Horno con Ensalada,Comida,suelto,medio,salado,,Aceite de ol
 Milanesa de Pollo al Horno con Ensalada,Comida,suelto,medio,salado,,Limón,Limón,5,,condimento,plato,,milanesa-de-pollo-al-horno-con-ensalada.jpg
 Milanesa de Pollo al Horno con Ensalada,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,milanesa-de-pollo-al-horno-con-ensalada.jpg
 Alambre de Pollo,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo en trozos,160,350,principal,plato,,alambre-de-pollo.jpg
-Alambre de Pollo,Comida,suelto,medio,salado,,Pimiento fresco,"Pimientos (verde, rojo, amarillo)",90,,guarnicion,plato,,alambre-de-pollo.jpg
-Alambre de Pollo,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,40,,guarnicion,plato,,alambre-de-pollo.jpg
+Alambre de Pollo,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (pimientos (verde, rojo, amarillo), cebolla morada)",130,,guarnicion,plato,,alambre-de-pollo.jpg
 Alambre de Pollo,Comida,suelto,medio,salado,,Queso Oaxaca,Queso Oaxaca gratinado,40,60,principal,plato,,alambre-de-pollo.jpg
 Alambre de Pollo,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,alambre-de-pollo.jpg
 Alambre de Pollo,Comida,suelto,medio,salado,,Tortilla de maíz,Tortilla de maíz,90,180,principal,acompañamiento,,alambre-de-pollo.jpg
@@ -545,10 +528,9 @@ Arepas de Reina Pepiada,Comida,suelto,medio,salado,,Mayonesa light,Mayonesa ligh
 Arepas de Reina Pepiada,Comida,suelto,medio,salado,,Cilantro picado crudo,Cilantro,5,,condimento,plato,,arepas-de-reina-pepiada.jpg
 Arepas de Reina Pepiada,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,arepas-de-reina-pepiada.jpg
 Pollo en Salsa de Champiñones,Comida,suelto,medio,salado,,Pechuga de pollo sin piel a la plancha,Pechuga de pollo,170,350,principal,plato,,pollo-en-salsa-de-champinones.jpg
-Pollo en Salsa de Champiñones,Comida,suelto,medio,salado,,Champiñón cocido rebanado,Champiñones,100,,guarnicion,plato,,pollo-en-salsa-de-champinones.jpg
+Pollo en Salsa de Champiñones,Comida,suelto,medio,salado,,Champiñón cocido rebanado,Champiñones,120,,guarnicion,plato,,pollo-en-salsa-de-champinones.jpg
 Pollo en Salsa de Champiñones,Comida,suelto,medio,salado,,Queso crema light,Queso crema light,30,45,principal,plato,,pollo-en-salsa-de-champinones.jpg
 Pollo en Salsa de Champiñones,Comida,suelto,medio,salado,,Leche descremada,Leche,60,350,principal,plato,,pollo-en-salsa-de-champinones.jpg
-Pollo en Salsa de Champiñones,Comida,suelto,medio,salado,,Cebolla blanca rebanada,Cebolla,20,,guarnicion,plato,,pollo-en-salsa-de-champinones.jpg
 Pollo en Salsa de Champiñones,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,pollo-en-salsa-de-champinones.jpg
 Pollo en Salsa de Champiñones,Comida,suelto,medio,salado,,Pimienta,Pimienta,1,,condimento,plato,,pollo-en-salsa-de-champinones.jpg
 Pollo en Salsa de Champiñones,Comida,suelto,medio,salado,,Papa al horno con cáscara,Papas al horno,150,400,principal,acompañamiento,,pollo-en-salsa-de-champinones.jpg
@@ -557,15 +539,12 @@ Pollo en Salsa de Champiñones,Comida,suelto,medio,salado,,Aguacate Hass,Aguacat
 Wrap de Pollo,Comida,suelto,medio,salado,,Tortilla de harina integral,Tortilla de harina integral,84,168,principal,plato,,wrap-de-pollo.jpg
 Wrap de Pollo,Comida,suelto,medio,salado,,Pechuga de pollo sin piel a la plancha,Pollo a la plancha,150,350,principal,plato,,wrap-de-pollo.jpg
 Wrap de Pollo,Comida,suelto,medio,salado,,Hummus,Hummus,40,60,principal,plato,,wrap-de-pollo.jpg
-Wrap de Pollo,Comida,suelto,medio,salado,,Espinaca cruda,Espinaca,40,,guarnicion,plato,,wrap-de-pollo.jpg
+Wrap de Pollo,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (espinaca, pepino)",80,,guarnicion,plato,,wrap-de-pollo.jpg
 Wrap de Pollo,Comida,suelto,medio,salado,,Zanahoria rallada cruda,Zanahoria,40,,guarnicion,plato,,wrap-de-pollo.jpg
-Wrap de Pollo,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,40,,guarnicion,plato,,wrap-de-pollo.jpg
 Wrap de Pollo,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,wrap-de-pollo.jpg
 Ensalada Mediterránea con Pollo,Comida,suelto,medio,salado,,Pechuga de pollo sin piel a la plancha,Pollo a la plancha,150,350,principal,plato,,ensalada-mediterranea-con-pollo.jpg
 Ensalada Mediterránea con Pollo,Comida,suelto,medio,salado,,Garbanzo cocido,Garbanzos,120,250,principal,plato,,ensalada-mediterranea-con-pollo.jpg
-Ensalada Mediterránea con Pollo,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,80,,guarnicion,plato,,ensalada-mediterranea-con-pollo.jpg
-Ensalada Mediterránea con Pollo,Comida,suelto,medio,salado,,Jitomate bola,Jitomate cherry,80,,guarnicion,plato,,ensalada-mediterranea-con-pollo.jpg
-Ensalada Mediterránea con Pollo,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,20,,guarnicion,plato,,ensalada-mediterranea-con-pollo.jpg
+Ensalada Mediterránea con Pollo,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, jitomate cherry, cebolla morada)",180,,guarnicion,plato,,ensalada-mediterranea-con-pollo.jpg
 Ensalada Mediterránea con Pollo,Comida,suelto,medio,salado,,Queso Feta,Queso feta,40,60,principal,plato,,ensalada-mediterranea-con-pollo.jpg
 Ensalada Mediterránea con Pollo,Comida,suelto,medio,salado,,Aceituna negra sin hueso,Aceitunas,20,,fijo,plato,,ensalada-mediterranea-con-pollo.jpg
 Ensalada Mediterránea con Pollo,Comida,suelto,medio,salado,,Aceite de oliva,Aceite de oliva,5,,fijo,plato,,ensalada-mediterranea-con-pollo.jpg
@@ -579,9 +558,7 @@ Espagueti a la Boloñesa,Comida,suelto,medio,salado,,Cebolla blanca rebanada,Ceb
 Espagueti a la Boloñesa,Comida,suelto,medio,salado,,Queso Parmesano,Parmesano,10,20,fijo,plato,,espagueti-a-la-bolonesa.jpg
 Espagueti a la Boloñesa,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,espagueti-a-la-bolonesa.jpg
 Salpicón de Res,Comida,suelto,medio,salado,,Falda de res,Res deshebrada,150,300,principal,plato,,salpicon-de-res.jpg
-Salpicón de Res,Comida,suelto,medio,salado,,Lechuga,Lechuga,100,,guarnicion,plato,,salpicon-de-res.jpg
-Salpicón de Res,Comida,suelto,medio,salado,,Jitomate bola,Jitomate,80,,guarnicion,plato,,salpicon-de-res.jpg
-Salpicón de Res,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,40,,guarnicion,plato,,salpicon-de-res.jpg
+Salpicón de Res,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga, jitomate, cebolla morada)",220,,guarnicion,plato,,salpicon-de-res.jpg
 Salpicón de Res,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,salpicon-de-res.jpg
 Salpicón de Res,Comida,suelto,medio,salado,,Cilantro picado crudo,Cilantro,5,,condimento,plato,,salpicon-de-res.jpg
 Salpicón de Res,Comida,suelto,medio,salado,,Chile serrano,Chile serrano,5,,condimento,plato,,salpicon-de-res.jpg
@@ -604,9 +581,7 @@ Pescado Empapelado con Verduras,Comida,suelto,medio,salado,,Pimienta,Pimienta,1,
 Pescado Empapelado con Verduras,Comida,suelto,medio,salado,,Arroz cocido,Arroz blanco,150,450,principal,acompañamiento,,pescado-empapelado-con-verduras.jpg
 Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Atún fresco,Atún,150,300,principal,plato,,ceviche-de-atun-con-mango.jpg
 Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Mango picado,Mango,80,200,principal,plato,,ceviche-de-atun-con-mango.jpg
-Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,60,,guarnicion,plato,,ceviche-de-atun-con-mango.jpg
-Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Jitomate bola,Jitomate,60,,guarnicion,plato,,ceviche-de-atun-con-mango.jpg
-Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla,30,,guarnicion,plato,,ceviche-de-atun-con-mango.jpg
+Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, jitomate, cebolla)",150,,guarnicion,plato,,ceviche-de-atun-con-mango.jpg
 Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Jugo de tomate,Jugo de tomate,80,,fijo,plato,,ceviche-de-atun-con-mango.jpg
 Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,ceviche-de-atun-con-mango.jpg
 Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Chile serrano,Chile serrano,8,,condimento,plato,,ceviche-de-atun-con-mango.jpg
@@ -616,9 +591,7 @@ Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Limón,Limón,15,,condime
 Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,ceviche-de-atun-con-mango.jpg
 Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,acompañamiento,,ceviche-de-atun-con-mango.jpg
 Ceviche de Pescado,Comida,suelto,medio,salado,,Filete de pescado,Pescado,150,350,principal,plato,,ceviche-de-pescado.jpg
-Ceviche de Pescado,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,60,,guarnicion,plato,,ceviche-de-pescado.jpg
-Ceviche de Pescado,Comida,suelto,medio,salado,,Jitomate bola,Jitomate,60,,guarnicion,plato,,ceviche-de-pescado.jpg
-Ceviche de Pescado,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla,30,,guarnicion,plato,,ceviche-de-pescado.jpg
+Ceviche de Pescado,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, jitomate, cebolla)",150,,guarnicion,plato,,ceviche-de-pescado.jpg
 Ceviche de Pescado,Comida,suelto,medio,salado,,Jugo de tomate,Jugo de tomate,80,,fijo,plato,,ceviche-de-pescado.jpg
 Ceviche de Pescado,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,ceviche-de-pescado.jpg
 Ceviche de Pescado,Comida,suelto,medio,salado,,Chile serrano,Chile serrano,8,,condimento,plato,,ceviche-de-pescado.jpg
@@ -628,9 +601,7 @@ Ceviche de Pescado,Comida,suelto,medio,salado,,Limón,Limón,15,,condimento,plat
 Ceviche de Pescado,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,ceviche-de-pescado.jpg
 Ceviche de Pescado,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,acompañamiento,,ceviche-de-pescado.jpg
 Ceviche de Camarón,Comida,suelto,medio,salado,,Camarón cocido,Camarón,150,320,principal,plato,,ceviche-de-camaron.jpg
-Ceviche de Camarón,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,60,,guarnicion,plato,,ceviche-de-camaron.jpg
-Ceviche de Camarón,Comida,suelto,medio,salado,,Jitomate bola,Jitomate,60,,guarnicion,plato,,ceviche-de-camaron.jpg
-Ceviche de Camarón,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla,30,,guarnicion,plato,,ceviche-de-camaron.jpg
+Ceviche de Camarón,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, jitomate, cebolla)",150,,guarnicion,plato,,ceviche-de-camaron.jpg
 Ceviche de Camarón,Comida,suelto,medio,salado,,Jugo de tomate,Jugo de tomate,80,,fijo,plato,,ceviche-de-camaron.jpg
 Ceviche de Camarón,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,ceviche-de-camaron.jpg
 Ceviche de Camarón,Comida,suelto,medio,salado,,Chile serrano,Chile serrano,8,,condimento,plato,,ceviche-de-camaron.jpg
@@ -659,8 +630,7 @@ Yakimeshi de Pollo,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,pl
 Ramen Ligero,Comida,suelto,medio,salado,,Tallarines estilo japónes,Fideos ramen,120,350,principal,plato,,ramen-ligero.jpg
 Ramen Ligero,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo,120,350,principal,plato,,ramen-ligero.jpg
 Ramen Ligero,Comida,suelto,medio,salado,,Huevo entero cocido,Huevo cocido,44,300,principal,plato,,ramen-ligero.jpg
-Ramen Ligero,Comida,suelto,medio,salado,,Champiñón cocido rebanado,Champiñones,60,,guarnicion,plato,,ramen-ligero.jpg
-Ramen Ligero,Comida,suelto,medio,salado,,Espinaca cocida,Espinaca,60,,guarnicion,plato,,ramen-ligero.jpg
+Ramen Ligero,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (champiñones, espinaca)",120,,guarnicion,plato,,ramen-ligero.jpg
 Ramen Ligero,Comida,suelto,medio,salado,,Caldo de pollo,Caldo de pollo,300,500,principal,plato,,ramen-ligero.jpg
 Ramen Ligero,Comida,suelto,medio,salado,,Cebollín,Cebollín,10,,condimento,plato,,ramen-ligero.jpg
 Ramen Ligero,Comida,suelto,medio,salado,,Salsa de soya,Salsa de soya,10,,condimento,plato,,ramen-ligero.jpg
@@ -668,9 +638,8 @@ Ramen Ligero,Comida,suelto,medio,salado,,Chile cayena en polvo,Chile cayena en p
 Ramen Ligero,Comida,suelto,medio,salado,,Ajonjolí,Ajonjolí,5,,fijo,plato,,ramen-ligero.jpg
 Noodles Salteados con Pollo,Comida,suelto,medio,salado,,Tallarines estilo japónes,Noodles,150,350,principal,plato,,noodles-salteados-con-pollo.jpg
 Noodles Salteados con Pollo,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo en tiras,140,350,principal,plato,,noodles-salteados-con-pollo.jpg
-Noodles Salteados con Pollo,Comida,suelto,medio,salado,,Pimiento fresco,Pimiento rojo,60,,guarnicion,plato,,noodles-salteados-con-pollo.jpg
+Noodles Salteados con Pollo,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (pimiento rojo, brócoli)",120,,guarnicion,plato,,noodles-salteados-con-pollo.jpg
 Noodles Salteados con Pollo,Comida,suelto,medio,salado,,Zanahoria rallada cruda,Zanahoria,50,,guarnicion,plato,,noodles-salteados-con-pollo.jpg
-Noodles Salteados con Pollo,Comida,suelto,medio,salado,,Brócoli cocido,Brócoli,60,,guarnicion,plato,,noodles-salteados-con-pollo.jpg
 Noodles Salteados con Pollo,Comida,suelto,medio,salado,,Salsa de soya,Salsa de soya,15,,condimento,plato,,noodles-salteados-con-pollo.jpg
 Noodles Salteados con Pollo,Comida,suelto,medio,salado,,Miel,Miel,5,10,fijo,plato,,noodles-salteados-con-pollo.jpg
 Noodles Salteados con Pollo,Comida,suelto,medio,salado,,Cebollín,Cebollín,10,,condimento,plato,,noodles-salteados-con-pollo.jpg
@@ -678,10 +647,7 @@ Noodles Salteados con Pollo,Comida,suelto,medio,salado,,Ajonjolí,Ajonjolí,5,,f
 Noodles Salteados con Pollo,Comida,suelto,medio,salado,,Chile cayena en polvo,Chile cayena en polvo,1,,condimento,plato,PENDIENTE crear,noodles-salteados-con-pollo.jpg
 Kebab de Pollo en Pan Pita,Comida,suelto,medio,salado,,Pan pita,Pan pita,60,135,principal,plato,,kebab-de-pollo-en-pan-pita.jpg
 Kebab de Pollo en Pan Pita,Comida,suelto,medio,salado,,Pechuga de pollo sin piel a la plancha,Pollo en tiras sazonado,160,350,principal,plato,,kebab-de-pollo-en-pan-pita.jpg
-Kebab de Pollo en Pan Pita,Comida,suelto,medio,salado,,Lechuga,Lechuga,50,,guarnicion,plato,,kebab-de-pollo-en-pan-pita.jpg
-Kebab de Pollo en Pan Pita,Comida,suelto,medio,salado,,Jitomate bola,Jitomate,50,,guarnicion,plato,,kebab-de-pollo-en-pan-pita.jpg
-Kebab de Pollo en Pan Pita,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,40,,guarnicion,plato,,kebab-de-pollo-en-pan-pita.jpg
-Kebab de Pollo en Pan Pita,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,20,,guarnicion,plato,,kebab-de-pollo-en-pan-pita.jpg
+Kebab de Pollo en Pan Pita,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga, jitomate, pepino, cebolla morada)",160,,guarnicion,plato,,kebab-de-pollo-en-pan-pita.jpg
 Kebab de Pollo en Pan Pita,Comida,suelto,medio,salado,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Salsa de yogurt,50,300,principal,plato,,kebab-de-pollo-en-pan-pita.jpg
 Kebab de Pollo en Pan Pita,Comida,suelto,medio,salado,,Mayonesa light,Mayonesa light,10,15,fijo,plato,,kebab-de-pollo-en-pan-pita.jpg
 Kebab de Pollo en Pan Pita,Comida,suelto,medio,salado,,Comino,Comino,1,,condimento,plato,,kebab-de-pollo-en-pan-pita.jpg
@@ -735,19 +701,16 @@ Caldo Tlalpeño,Comida,suelto,medio,salado,,Chile chipotle adobado,Chile chipotl
 Caldo Tlalpeño,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,caldo-tlalpeno.jpg
 Asado de Res,Comida,suelto,medio,salado,,Falda de res,Res en trozos,160,300,principal,plato,,asado-de-res.jpg
 Asado de Res,Comida,suelto,medio,salado,,Papa cocida,Papa,120,400,principal,plato,,asado-de-res.jpg
-Asado de Res,Comida,suelto,medio,salado,,Jitomate bola,Jitomate,80,,guarnicion,plato,,asado-de-res.jpg
-Asado de Res,Comida,suelto,medio,salado,,Cebolla blanca rebanada,Cebolla,30,,guarnicion,plato,,asado-de-res.jpg
 Asado de Res,Comida,suelto,medio,salado,,Caldo de res,Caldo de res,200,500,principal,plato,,asado-de-res.jpg
 Asado de Res,Comida,suelto,medio,salado,,Ajo,Ajo,3,,condimento,plato,,asado-de-res.jpg
 Asado de Res,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,asado-de-res.jpg
 Asado de Res,Comida,suelto,medio,salado,,Pimienta,Pimienta,1,,condimento,plato,,asado-de-res.jpg
-Asado de Res,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga, zanahoria, pepino, cebolla curtida)",120,,guarnicion,plato,PENDIENTE crear Verduras mixtas,asado-de-res.jpg
+Asado de Res,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga, zanahoria, pepino, cebolla curtida, jitomate, cebolla)",230,,guarnicion,plato,PENDIENTE crear Verduras mixtas,asado-de-res.jpg
 Asado de Res,Comida,suelto,medio,salado,,Queso Panela,Queso panela,40,60,principal,plato,,asado-de-res.jpg
 Asado de Res,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,asado-de-res.jpg
 Salmón con Puré de Camote,Comida,suelto,medio,salado,,Filete de salmón,Salmón a la plancha,160,300,principal,plato,,salmon-con-pure-de-camote.jpg
 Salmón con Puré de Camote,Comida,suelto,medio,salado,,Puré de camote,Puré de camote,180,350,principal,plato,,salmon-con-pure-de-camote.jpg
-Salmón con Puré de Camote,Comida,suelto,medio,salado,,Espárragos,Espárragos,90,,guarnicion,plato,,salmon-con-pure-de-camote.jpg
-Salmón con Puré de Camote,Comida,suelto,medio,salado,,Brócoli cocido,Brócoli,70,,guarnicion,plato,,salmon-con-pure-de-camote.jpg
+Salmón con Puré de Camote,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (espárragos, brócoli)",160,,guarnicion,plato,,salmon-con-pure-de-camote.jpg
 Salmón con Puré de Camote,Comida,suelto,medio,salado,,Aceite de oliva,Aceite de oliva,5,,fijo,plato,,salmon-con-pure-de-camote.jpg
 Salmón con Puré de Camote,Comida,suelto,medio,salado,,Limón,Limón,10,,condimento,plato,,salmon-con-pure-de-camote.jpg
 Salmón con Puré de Camote,Comida,suelto,medio,salado,,Chile cayena en polvo,Chile cayena en polvo,1,,condimento,plato,PENDIENTE crear,salmon-con-pure-de-camote.jpg
@@ -762,12 +725,10 @@ Pizza de Pan Pita,Cena,suelto,ligero,salado,,Pan pita,Pan pita,60,135,principal,
 Pizza de Pan Pita,Cena,suelto,ligero,salado,,Puré de jitomate,Salsa de tomate,40,200,principal,plato,,pizza-de-pan-pita.jpg
 Pizza de Pan Pita,Cena,suelto,ligero,salado,,Queso Mozzarella semidescremado,Queso mozzarella,50,70,principal,plato,,pizza-de-pan-pita.jpg
 Pizza de Pan Pita,Cena,suelto,ligero,salado,,Pechuga de pavo,Jamón de pechuga de pavo,63,180,principal,plato,,pizza-de-pan-pita.jpg
-Pizza de Pan Pita,Cena,suelto,ligero,salado,,Champiñón cocido rebanado,Champiñones,40,,guarnicion,plato,,pizza-de-pan-pita.jpg
-Pizza de Pan Pita,Cena,suelto,ligero,salado,,Pimiento fresco,Pimiento,30,,guarnicion,plato,,pizza-de-pan-pita.jpg
+Pizza de Pan Pita,Cena,suelto,ligero,salado,,Verduras mixtas,"Verduras (champiñones, pimiento)",70,,guarnicion,plato,,pizza-de-pan-pita.jpg
 Pizza de Pan Pita,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,pizza-de-pan-pita.jpg
 Ceviche de Panela,Cena,suelto,ligero,salado,,Queso Panela,Queso panela en cubos,120,160,principal,plato,,ceviche-de-panela.jpg
-Ceviche de Panela,Cena,suelto,ligero,salado,,Pepino con cáscara rebanado,Pepino,80,,guarnicion,plato,,ceviche-de-panela.jpg
-Ceviche de Panela,Cena,suelto,ligero,salado,,Cebolla morada rebanada,Cebolla morada,30,,guarnicion,plato,,ceviche-de-panela.jpg
+Ceviche de Panela,Cena,suelto,ligero,salado,,Verduras mixtas,"Verduras (pepino, cebolla morada)",110,,guarnicion,plato,,ceviche-de-panela.jpg
 Ceviche de Panela,Cena,suelto,ligero,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,ceviche-de-panela.jpg
 Ceviche de Panela,Cena,suelto,ligero,salado,,Chile serrano,Chile serrano,8,,condimento,plato,,ceviche-de-panela.jpg
 Ceviche de Panela,Cena,suelto,ligero,salado,,Cilantro picado crudo,Cilantro,5,,condimento,plato,,ceviche-de-panela.jpg
@@ -777,18 +738,15 @@ Ceviche de Panela,Cena,suelto,ligero,salado,,Tostada de maíz horneada,Tostadas 
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Pan Thin,Pan thin,42,84,principal,plato,,burger-fit-con-pan-thins.jpg
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Molida de sirloin,Carne molida magra,120,300,principal,plato,,burger-fit-con-pan-thins.jpg
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Queso Panela,Queso panela asado,40,60,principal,plato,,burger-fit-con-pan-thins.jpg
-Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Lechuga,Lechuga,30,,guarnicion,plato,,burger-fit-con-pan-thins.jpg
-Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Jitomate bola,Jitomate,40,,guarnicion,plato,,burger-fit-con-pan-thins.jpg
-Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Cebolla morada rebanada,Cebolla morada,20,,guarnicion,plato,,burger-fit-con-pan-thins.jpg
+Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Verduras mixtas,"Verduras (lechuga, jitomate, cebolla morada)",90,,guarnicion,plato,,burger-fit-con-pan-thins.jpg
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,burger-fit-con-pan-thins.jpg
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,burger-fit-con-pan-thins.jpg
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Pimienta,Pimienta,1,,condimento,plato,,burger-fit-con-pan-thins.jpg
 Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Tostada de maíz horneada,Tostaditas horneadas,40,100,principal,plato,,tostaditas-de-tinga-de-atun.jpg
 Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Atún en agua drenado,Atún,100,200,principal,plato,,tostaditas-de-tinga-de-atun.jpg
 Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Salsa Tinga,Salsa tinga,60,,sub-receta,plato,,tostaditas-de-tinga-de-atun.jpg
-Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Lechuga,Lechuga,30,,guarnicion,plato,,tostaditas-de-tinga-de-atun.jpg
+Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Verduras mixtas,"Verduras (lechuga, cebolla)",45,,guarnicion,plato,,tostaditas-de-tinga-de-atun.jpg
 Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,tostaditas-de-tinga-de-atun.jpg
-Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Cebolla blanca rebanada,Cebolla,15,,guarnicion,plato,,tostaditas-de-tinga-de-atun.jpg
 Bowl de Pollo Camote y Guacamole,Cena,suelto,ligero,salado,,Pechuga de pollo sin piel a la plancha,Pollo a la plancha,140,350,principal,plato,,bowl-de-pollo-camote-y-guacamole.jpg
 Bowl de Pollo Camote y Guacamole,Cena,suelto,ligero,salado,,Camote al horno,Camote al horno,130,350,principal,plato,,bowl-de-pollo-camote-y-guacamole.jpg
 Bowl de Pollo Camote y Guacamole,Cena,suelto,ligero,salado,,Espinaca cruda,Espinacas,40,,guarnicion,plato,,bowl-de-pollo-camote-y-guacamole.jpg
@@ -877,8 +835,7 @@ Tacos de Carne Asada,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,p
 Tacos de Medallón de Atún,Cena,suelto,ligero,salado,,Atún fresco,Medallón de atún,150,300,principal,plato,,tacos-de-medallon-de-atun.jpg
 Tacos de Medallón de Atún,Cena,suelto,ligero,salado,,Tortilla de maíz,Tortilla de maíz,90,180,principal,plato,,tacos-de-medallon-de-atun.jpg
 Tacos de Medallón de Atún,Cena,suelto,ligero,salado,,Guacamole,Guacamole,80,,sub-receta,plato,,tacos-de-medallon-de-atun.jpg
-Tacos de Medallón de Atún,Cena,suelto,ligero,salado,,Lechuga,Lechuga,40,,guarnicion,plato,,tacos-de-medallon-de-atun.jpg
-Tacos de Medallón de Atún,Cena,suelto,ligero,salado,,Pepino con cáscara rebanado,Pepino,40,,guarnicion,plato,,tacos-de-medallon-de-atun.jpg
+Tacos de Medallón de Atún,Cena,suelto,ligero,salado,,Verduras mixtas,"Verduras (lechuga, pepino)",80,,guarnicion,plato,,tacos-de-medallon-de-atun.jpg
 Tacos de Medallón de Atún,Cena,suelto,ligero,salado,,Limón,Limón,5,,condimento,plato,,tacos-de-medallon-de-atun.jpg
 Tacos de Medallón de Atún,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,tacos-de-medallon-de-atun.jpg
 Frijoles en Caldo con Nopales y Queso Fresco,Cena,suelto,ligero,salado,,Frijol promedio cocido,Frijoles de la olla,180,300,principal,plato,,frijoles-en-caldo-con-nopales-y-queso-fresco.jpg
@@ -915,6 +872,7 @@ Ciruela,Snack,suelto,ligero,dulce,,Ciruela negra,Ciruela,130,180,principal,plato
 Pepino con Limón y Chile,Snack,suelto,ligero,salado,,Pepino con cáscara rebanado,Pepino,150,200,principal,plato,con limón y chile,pepino-con-limon-y-chile.jpg
 Jícama con Limón y Chile,Snack,suelto,ligero,salado,,Jícama picada,Jícama,150,200,principal,plato,con limón y chile,jicama-con-limon-y-chile.jpg
 Bastones de Zanahoria,Snack,suelto,ligero,salado,,Zanahoria rallada cruda,Zanahoria en bastones,120,150,principal,plato,,bastones-de-zanahoria.jpg
+Apio,Snack,suelto,ligero,salado,,Apio crudo,Apio,120,150,principal,plato,,apio.jpg
 Puñado de Cacahuates,Snack,suelto,denso,salado,,Cacahuate,Cacahuates,30,40,principal,plato,,punado-de-cacahuates.jpg
 Puñado de Nueces,Snack,suelto,denso,dulce,,Nuez,Nueces,25,35,principal,plato,,punado-de-nueces.jpg
 Puñado de Almendras,Snack,suelto,denso,dulce,,Almendra,Almendras,25,35,principal,plato,,punado-de-almendras.jpg
