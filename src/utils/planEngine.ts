@@ -161,10 +161,25 @@ function errMax(fixed: number[], vars: Var[], T: number[]): number {
 
 function pick<T>(arr: T[], rng: () => number): T { return arr[Math.floor(rng() * arr.length)]; }
 
+// Alimentos que se PARTEN en fracción real (se corta ⅓ de aguacate, ¾ de plátano).
+// El resto son contables (huevo, tortilla, pan, tostada) → solo entero o medio.
+const DIVISIBLE = new Set(['aguacate', 'plátano', 'mango', 'papaya', 'melón', 'toronja']);
+// Fracciones naturales que la gente usa (⅓ aguacate, ¾ de plátano…), no solo medios.
+const FRACS: Array<[number, string]> = [[0, ''], [0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾']];
+// Redondea a la fracción natural más cercana (o al entero de arriba si está muy cerca).
+function snapCount(x: number): number {
+  const whole = Math.floor(x);
+  const frac = x - whole;
+  let best = FRACS[0];
+  for (const f of FRACS) if (Math.abs(f[0] - frac) < Math.abs(best[0] - frac)) best = f;
+  return 1 - frac < Math.abs(best[0] - frac) ? whole + 1 : whole + best[0];
+}
 function fmtCount(n: number): string {
-  if (Number.isInteger(n)) return String(n);
-  const whole = Math.floor(n); // n siempre en pasos de 0.5 → parte fraccionaria = ½
-  return (whole ? String(whole) : '') + '½';
+  const whole = Math.floor(n + 1e-9);
+  const frac = n - whole;
+  let sym = '', bestd = 0.06; // tolerancia para casar la fracción
+  for (const [v, s] of FRACS) { const d = Math.abs(v - frac); if (s && d < bestd) { bestd = d; sym = s; } }
+  return sym ? (whole ? String(whole) : '') + sym : String(whole);
 }
 function pluralNoun(un: string, n: number): string {
   if (n <= 1) return un; // "1 huevo", "½ manzana"
@@ -185,7 +200,12 @@ function portionStr(ing: BancoIng, g: number | null): string {
   if (ing.rol === 'sub-receta') return ing.nv;
   const grams = Math.round(g ?? ing.g0);
   if (ing.pu && ing.un && grams > 0) {
-    const n = Math.max(0.5, Math.round((grams / ing.pu) * 2) / 2);
+    const raw = grams / ing.pu;
+    // Cortables (se parten en fracción real: ⅓ aguacate, ¾ plátano) → fracciones finas.
+    // Contables (huevo, tortilla, pan, tostada, fruta chica) → solo entero/medio.
+    const n = DIVISIBLE.has(ing.un)
+      ? Math.max(0.25, snapCount(raw))
+      : Math.max(0.5, Math.round(raw * 2) / 2);
     if (n <= 8 && Math.abs(n * ing.pu - grams) <= 0.20 * grams) {
       return `${fmtCount(n)} ${pluralNoun(ing.un, n)}`;
     }
@@ -357,7 +377,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 3;
+export const PLAN_ENGINE_VERSION = 4;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
 
