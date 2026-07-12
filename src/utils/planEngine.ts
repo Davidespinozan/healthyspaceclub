@@ -349,6 +349,44 @@ function mergeIntoSnack(meals: MealItem[], extra: MealItem): void {
   else meals.push({ ...extra, time: 'Snack PM' });
 }
 
+// ── Batido de proteína (opción del usuario) ──────────────────────────────────
+// El usuario elige tomar proteína en polvo en el snack AM, PM o ambos, su tipo y
+// gramos. El batido REEMPLAZA el snack de ese slot; el corrector de macros agrega
+// después la mezcla que haga falta (plátano si faltan carbos, crema de cacahuate si
+// falta grasa, o sola si va justo) — por eso reduce la meta de los principales antes.
+export interface ProteinShake { slots: ('am' | 'pm')[]; type: 'regular' | 'vegana' | 'massgainer'; protG: number }
+
+/** Macros de UN batido según tipo y gramos de proteína. Cada tipo rinde distinto:
+ *  regular (whey) casi pura proteína; vegana un poco más de carbo/grasa; mass gainer
+ *  con muchos carbos. */
+export function shakeMacros(s: ProteinShake): { kcal: number; prot: number; fat: number; carb: number } {
+  const [cf, ff] = s.type === 'massgainer' ? [1.5, 0.15] : s.type === 'vegana' ? [0.18, 0.11] : [0.12, 0.06];
+  const prot = s.protG, carb = Math.round(prot * cf), fat = Math.round(prot * ff);
+  return { kcal: Math.round(prot * 4 + carb * 4 + fat * 9), prot, fat, carb };
+}
+function shakeItem(s: ProteinShake, label: string): MealItem {
+  const m = shakeMacros(s);
+  const tag = s.type === 'massgainer' ? ' (mass gainer)' : s.type === 'vegana' ? ' (vegana)' : '';
+  return {
+    time: label, name: 'Batido de Proteína', desc: `${s.protG} g proteína${tag}`,
+    img: IMG_BASE + 'batido-de-proteina.jpg', // si no existe la foto, el card la oculta solo
+    portions: [`1 scoop de proteína${tag} — ${s.protG} g proteína`],
+    macros: { ...m, fiber: 0 },
+    ings: [{ nv: 'Proteína en polvo', g: 0, rol: 'principal' }],
+  };
+}
+
+/** Coloca el batido en el/los snack(s) elegido(s), reemplazando el snack normal de
+ *  ese slot (ya se redujo la meta de los principales para hacerle espacio). */
+function applyShake(meals: MealItem[], shake: ProteinShake): void {
+  for (const slot of shake.slots) {
+    const label = slot === 'am' ? 'Snack AM' : 'Snack PM';
+    const item = shakeItem(shake, label);
+    const idx = meals.findIndex((m) => m.time === label);
+    if (idx >= 0) meals[idx] = item; else meals.push(item);
+  }
+}
+
 /** Cierra el hueco de macros a ≤2% agregando snacks reales del banco (con foto),
  *  densos en el macro que falta. RESPETA la lista de evitar/alergias (banco filtrado). */
 function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: string[] = []): void {
@@ -498,9 +536,22 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 16;
+export const PLAN_ENGINE_VERSION = 17;
 
-export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
+export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
+
+/** Resta las macros del batido a la meta del día, para que los principales se
+ *  construyan contra el remanente y el total (con batido) caiga en la meta. */
+function reduceForShake(T: number[], shake?: ProteinShake): number[] {
+  if (!shake?.slots?.length) return T;
+  const m = shakeMacros(shake), n = shake.slots.length;
+  return [
+    Math.max(T[0] * 0.5, T[0] - m.kcal * n),
+    Math.max(T[1] * 0.4, T[1] - m.prot * n),
+    Math.max(T[2] * 0.4, T[2] - m.fat * n),
+    Math.max(T[3] * 0.4, T[3] - m.carb * n),
+  ];
+}
 
 /** Genera 7 días ajustados a la meta del usuario, con el reparto por comida de Magaly. */
 // ════════════════════════════════════════════════════════════════════════
@@ -587,9 +638,9 @@ export function snacksPerSlot(kcal: number): number { return kcal > 2200 ? 2 : 1
  *  Magaly; los SNACKS RELLENAN lo que falte para pegar la meta exacta (así el día no
  *  queda bajo aunque los platillos que eligió la IA no escalen tanto), con nSnack
  *  combinados por slot para tener capacidad. */
-export function assembleFromSelection(target: PlanTarget, days: DaySelection[], avoidCats: string[] = []): DayPlan[] {
+export function assembleFromSelection(target: PlanTarget, days: DaySelection[], avoidCats: string[] = [], shake?: ProteinShake): DayPlan[] {
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
-  const MT = mealTargets(T);
+  const MT = mealTargets(reduceForShake(T, shake)); // principales contra la meta MENOS el batido
   const nSnack = snacksPerSlot(target.kcal);
   const byName = new Map(BANCO.map((d) => [d.nombre, d]));
   const out: DayPlan[] = [];
@@ -607,7 +658,8 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
       ...(pmSnacks.length ? solveSlot(pmSnacks, 'Snack PM', MT.snackSlot, true) : []),
       ...solveSlot([cen], 'Cena', MT.cena),
     ];
-    topUpMeals(meals, target, avoidCats); // cierra el hueco de macros a ≤2% (aguacate/nueces/etc.)
+    if (shake) applyShake(meals, shake); // batido reemplaza el snack del slot elegido
+    topUpMeals(meals, target, avoidCats); // cierra a ≤2% y agrega la mezcla si falta
     out.push({ day: i + 1, theme: '', meals });
   });
   return out;
@@ -616,6 +668,7 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
 export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPlan[] {
   cravedCount.clear(); // tope de antojo por semana
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
+  const buildT = reduceForShake(T, opts.shake); // los principales van contra la meta MENOS el batido
   const rng = mulberry32(opts.seed ?? 12345);
   // "Evitar": categoría (gluten/lácteos/…) → alimentos reales del banco; excluye esos platillos.
   const avoidTerms = expandAvoid((opts.avoid ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean));
@@ -626,8 +679,9 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   const ingFreq = new Map<string, number>(); // ingredientes ya usados → rota fuentes (aguacate/pollo)
   const days: DayPlan[] = [];
   for (let i = 1; i <= 7; i++) {
-    const day = buildDay(i, T, rng, avoid, cuisines, used, craving, ingFreq);
-    topUpMeals(day.meals, target, opts.avoid ?? []); // cierra el hueco de macros a ≤2%
+    const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq);
+    if (opts.shake) applyShake(day.meals, opts.shake); // batido reemplaza el snack del slot elegido
+    topUpMeals(day.meals, target, opts.avoid ?? []); // cierra a ≤2% y agrega la mezcla si falta
     days.push(day);
   }
   return days;
