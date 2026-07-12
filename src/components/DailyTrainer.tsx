@@ -33,7 +33,7 @@ import {
 } from '../utils/workoutValidation';
 import { stretchToTargetDuration } from '../utils/yogaPostProcess';
 import { orchestrateWorkout, orchestratePowerVinyasa } from '../utils/workoutOrchestration';
-import { clusterIndividualsByMuscle } from '../utils/exerciseOrder';
+import { repairWorkoutStructure } from '../utils/exerciseOrder';
 import { deliverPartnerWorkout, getPartnerRecentDaytypes } from '../utils/partners';
 import type {
   Exercise,
@@ -339,9 +339,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       if (selectedModality === 'yoga') {
         // Skip cache for yoga — fall through to generation
       } else if (cached && validateWorkout(cached, validIds) && fitsEquipment(cached)) {
-        // Fuerza/cardio/auto: cache válido. Reordena individuales por músculo
-        // (por si fue cacheado antes de esta regla).
-        cached.exercises = clusterIndividualsByMuscle(cached.exercises, exerciseBank);
+        // Fuerza/cardio/auto: cache válido. Aplica el reparador estructural
+        // (por si fue cacheado antes de estas reglas).
+        cached.exercises = repairWorkoutStructure(cached.exercises, exerciseBank).exercises;
         // Pareja: la rutina cacheada TAMBIÉN debe llevar los metadatos de pareja y
         // entregarse al compañero. Sin esto, un cache-hit dejaba al compañero sin
         // rutina y A veía el plan como "solo" (sin cabecera ni formato juntos/alternado).
@@ -558,11 +558,19 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         throw new Error(t('wizard.genErrInvalid'));
       }
 
-      // Anti-enfriamiento determinista: agrupa individuales del mismo músculo
-      // (la IA a veces los intercala). Las biseries/superseries quedan intactas.
-      (workout as CachedWorkout).exercises = clusterIndividualsByMuscle(
-        (workout as CachedWorkout).exercises, exerciseBank,
-      );
+      // Validador estructural + auto-reparación determinista: garantiza las reglas de
+      // coach de élite que la IA a veces incumple (compuestos primero, core al final,
+      // pesados fuera de superserie, técnica solo en aislamiento, superseries con
+      // sets/rest iguales, anti-enfriamiento). Sin costo ni llamadas extra.
+      {
+        const repaired = repairWorkoutStructure(
+          (workout as CachedWorkout).exercises, exerciseBank,
+        );
+        (workout as CachedWorkout).exercises = repaired.exercises;
+        if (repaired.fixes.length) {
+          console.info('[workout] reparación estructural:', repaired.fixes);
+        }
+      }
 
       const strictValidation = validateWorkoutPlanStrict(workout, validIds);
       if (!strictValidation.valid) {
