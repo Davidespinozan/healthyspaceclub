@@ -1084,7 +1084,7 @@ export const es = {
     avoidRedMeat: 'Carne roja',
     avoidRedMeatSub: 'Sin res, cerdo, cordero',
     avoidSeafood: 'Mariscos',
-    avoidSeafoodSub: 'Sin camarón ni mariscos',
+    avoidSeafoodSub: 'Sin pescado, camarón ni mariscos',
     avoidEgg: 'Huevo',
     avoidEggSub: 'Alergia al huevo',
     avoidNuts: 'Frutos secos',
