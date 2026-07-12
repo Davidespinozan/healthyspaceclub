@@ -166,8 +166,10 @@ function errMax(fixed: number[], vars: Var[], T: number[]): number {
 function pick<T>(arr: T[], rng: () => number): T { return arr[Math.floor(rng() * arr.length)]; }
 
 // Alimentos que se PARTEN en fracción real (se corta ⅓ de aguacate, ¾ de plátano).
-// El resto son contables (huevo, tortilla, pan, tostada) → solo entero o medio.
+// El resto son contables (tortilla, pan, tostada) → entero o medio.
 const DIVISIBLE = new Set(['aguacate', 'plátano', 'mango', 'papaya', 'melón', 'toronja']);
+// Nunca se parten: se cuentan enteros SIEMPRE (no existe medio huevo).
+const WHOLE_ONLY = new Set(['huevo']);
 // Fracciones naturales que la gente usa (⅓ aguacate, ¾ de plátano…), no solo medios.
 const FRACS: Array<[number, string]> = [[0, ''], [0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾']];
 // Redondea a la fracción natural más cercana (o al entero de arriba si está muy cerca).
@@ -206,10 +208,12 @@ function portionStr(ing: BancoIng, g: number | null): string {
   if (ing.pu && ing.un && grams > 0) {
     const raw = grams / ing.pu;
     // Cortables (se parten en fracción real: ⅓ aguacate, ¾ plátano) → fracciones finas.
-    // Contables (huevo, tortilla, pan, tostada, fruta chica) → solo entero/medio.
+    // Huevo → SIEMPRE entero (nunca medio huevo). Resto contable (tortilla, pan, tostada) → entero/medio.
     const n = DIVISIBLE.has(ing.un)
       ? Math.max(0.25, snapCount(raw))
-      : Math.max(0.5, Math.round(raw * 2) / 2);
+      : WHOLE_ONLY.has(ing.un)
+        ? Math.max(1, Math.round(raw))
+        : Math.max(0.5, Math.round(raw * 2) / 2);
     if (n <= 8 && Math.abs(n * ing.pu - grams) <= 0.20 * grams) {
       return `${fmtCount(n)} ${pluralNoun(ing.un, n)}`;
     }
@@ -225,6 +229,9 @@ function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>
     let g: number | null;
     if (ing.rol === 'principal' && gOf.has(ing)) {
       g = gOf.get(ing)!;
+      // Huevo: cuadra los gramos a piezas ENTERAS (nunca medio huevo) ANTES de sumar
+      // macros, para que lo que se ve ("2 huevos") sea exactamente lo que aporta.
+      if (ing.pu && ing.un && WHOLE_ONLY.has(ing.un)) g = Math.max(ing.pu, Math.round(g / ing.pu) * ing.pu);
       if (ing.a) for (let k = 0; k < 5; k++) m[k] += ing.a[k] * g;
       g = Math.round(g);
     } else if (ing.rol === 'condimento') g = null;
