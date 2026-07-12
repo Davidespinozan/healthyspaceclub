@@ -670,7 +670,7 @@ export const exercises: Exercise[] = [
   },
   {
     id: 'shrugs',
-    name: 'Shrugs (Encogimientos)',
+    name: 'Encogimientos',
     desc: 'Elevación de trapecios — desarrollo del trapecio superior.',
     muscleGroup: 'espalda',
     secondaryMuscles: ['hombros'],
