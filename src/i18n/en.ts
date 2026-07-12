@@ -714,7 +714,7 @@ export const en: Translations<typeof es> = {
     heroMicro: 'No commitment · Cancel anytime',
     heroChip1: 'Pocket nutritionist',
     heroChip2: 'Coach 24/7',
-    heroChip3: 'Fitness social network',
+    heroChip3: 'Fitness community',
     heroChip4: 'Coming soon to iOS & Android',
     scrollAria: 'Scroll down',
     scroll: 'Scroll',
