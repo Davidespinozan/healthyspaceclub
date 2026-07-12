@@ -4,7 +4,7 @@
 // o se pasa de tiempo, cae al motor determinista (buildWeeklyPlan).
 import { callAI } from './aiProxy';
 import {
-  safeBankByTiempo, assembleFromSelection, buildWeeklyPlan,
+  adequateBankByTiempo, assembleFromSelection, buildWeeklyPlan, snacksPerSlot,
   type DaySelection, type PlanTarget,
 } from './planEngine';
 import { buildWeeklyPlanSelectPrompt } from '../ai/prompts/weeklyPlanSelect';
@@ -15,8 +15,11 @@ import type { DayPlan } from '../types';
 export async function orchestrateWeeklyPlan(
   target: PlanTarget, avoid: string[], craving: string,
 ): Promise<DayPlan[] | null> {
-  const bank = safeBankByTiempo(avoid);
-  const prompt = buildWeeklyPlanSelectPrompt({ target, craving, bank });
+  // Banco filtrado a platillos que CUADRAN las macros del slot (P/F/C) — así la IA
+  // elige por variedad/antojo y las macros siempre pegan. Sin alérgenos + antojo forzado.
+  const bank = adequateBankByTiempo(avoid, target, craving);
+  const snacksPerDay = 2 * snacksPerSlot(target.kcal); // metas altas: 4 snacks/día (2 AM, 2 PM)
+  const prompt = buildWeeklyPlanSelectPrompt({ target, craving, bank, snacksPerDay });
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60_000);
   try {
@@ -46,10 +49,11 @@ export async function orchestrateWeeklyPlan(
     for (let i = 0; i < 7; i++) {
       const d = parsed.dias?.[i] ?? {};
       const snacks: string[] = [];
-      for (const s of (d.snacks ?? []).slice(0, 2)) if (s && snackNames.includes(s) && !snacks.includes(s)) snacks.push(s);
-      while (snacks.length < 2 && snackNames.length) {
-        const s = snackNames[(i * 3 + snacks.length * 5) % snackNames.length];
-        snacks.push(s); // relleno determinista si la IA dio pocos
+      for (const s of (d.snacks ?? []).slice(0, snacksPerDay)) if (s && snackNames.includes(s) && !snacks.includes(s)) snacks.push(s);
+      let g = 0;
+      while (snacks.length < snacksPerDay && snackNames.length && g++ < 50) {
+        const s = snackNames[(i * 3 + snacks.length * 5 + g) % snackNames.length];
+        if (!snacks.includes(s)) snacks.push(s); // relleno determinista, sin repetir en el día
       }
       days.push({
         desayuno: pickMain(d.desayuno, mapD, usedD),

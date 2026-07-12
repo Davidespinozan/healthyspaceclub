@@ -6,7 +6,9 @@ export function buildWeeklyPlanSelectPrompt(p: {
   target: { kcal: number; protG: number; fatG: number; carbG: number };
   craving: string;
   bank: Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]>;
+  snacksPerDay: number;
 }): string {
+  const nAM = Math.ceil(p.snacksPerDay / 2), nPM = p.snacksPerDay - nAM;
   const list = (dishes: BancoDish[]) =>
     dishes.map((d) => {
       const princ = d.ings.filter((i) => i.rol === 'principal').slice(0, 3).map((i) => i.nv).join(', ');
@@ -22,7 +24,7 @@ ${craving
   : 'El usuario no pidió antojos específicos.'}
 
 REGLAS (críticas):
-- Cada día lleva EXACTAMENTE: 1 desayuno, 1 comida, 1 cena, y 2 snacks (uno de mañana, uno de tarde).
+- Cada día lleva EXACTAMENTE: 1 desayuno, 1 comida, 1 cena, y ${p.snacksPerDay} snacks (${nAM} para la mañana y ${nPM} para la tarde)${p.snacksPerDay > 2 ? '. Como la meta calórica es alta, van 2 snacks combinados por momento (mañana y tarde) para alcanzarla' : ''}.
 - Elige SOLO platillos de las listas de abajo, con su nombre EXACTO. NO inventes, NO cambies ni traduzcas nombres.
 - Cada tiempo se elige de SU lista (el desayuno de DESAYUNOS, la comida de COMIDAS, etc.).
 - VARIEDAD OBLIGATORIA: los 7 desayunos TODOS distintos entre sí; las 7 comidas TODAS distintas; las 7 cenas TODAS distintas. Snacks lo más variados posible (no repitas el mismo más de 2 veces en la semana).
@@ -40,8 +42,8 @@ ${list(p.bank.Cena)}
 SNACKS:
 ${list(p.bank.Snack)}
 
-Responde SOLO este JSON (sin markdown), con los 7 días en orden:
+Responde SOLO este JSON (sin markdown), con los 7 días en orden (el array "snacks" con ${p.snacksPerDay} nombres):
 { "dias": [
-  { "desayuno": "nombre exacto", "comida": "nombre exacto", "cena": "nombre exacto", "snacks": ["nombre exacto", "nombre exacto"] }
+  { "desayuno": "nombre exacto", "comida": "nombre exacto", "cena": "nombre exacto", "snacks": [${Array.from({ length: p.snacksPerDay }, () => '"nombre exacto"').join(', ')}] }
 ] }`;
 }

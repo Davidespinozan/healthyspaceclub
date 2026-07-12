@@ -388,7 +388,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 8;
+export const PLAN_ENGINE_VERSION = 9;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
 
@@ -423,24 +423,78 @@ export function solveSlot(dishes: BancoDish[], label: string, target: number[], 
   return merge && items.length > 1 ? [mergeItems(items, label)] : items;
 }
 
+/** Error relativo total (P/F/C) de un platillo ajustado al target de un slot. Menor = mejor
+ *  encaje. Es el mismo criterio del motor de código: no basta la proteína, debe cuadrar
+ *  también grasa y carbos (un platillo magro pega proteína pero se queda corto en grasa). */
+function slotFit(d: BancoDish, slotTarget: number[]): number {
+  const it = solveSlot([d], 'x', slotTarget);
+  const p = it.reduce((s, x) => s + (x.macros?.prot ?? 0), 0);
+  const f = it.reduce((s, x) => s + (x.macros?.fat ?? 0), 0);
+  const c = it.reduce((s, x) => s + (x.macros?.carb ?? 0), 0);
+  const [, tp, tf, tc] = slotTarget;
+  const e = (v: number, t: number) => (t > 0 ? Math.abs(v - t) / t : 0);
+  return e(p, tp) * 1.2 + e(f, tf) + e(c, tc); // proteína pesa un poco más (prioridad del plan)
+}
+
+/** Banco por tiempo filtrado a platillos que SÍ cuadran las macros del slot bajo el
+ *  reparto de Magaly (P/F/C, no solo proteína). Así, elija lo que elija la IA (variedad/
+ *  antojo), las macros pegan. Los principales de un antojo se fuerzan aunque encajen peor
+ *  (1-2 días al máximo). Snacks pasan completos (rellenan el share chico). */
+export function adequateBankByTiempo(
+  avoidCats: string[], target: PlanTarget, cravingText = '',
+): Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]> {
+  const safe = safeBankByTiempo(avoidCats);
+  const T = [target.kcal, target.protG, target.fatG, target.carbG];
+  const MT = mealTargets(T);
+  const craveTerms = cravingTerms(cravingText);
+  const filt = (pool: BancoDish[], slotTarget: number[]): BancoDish[] => {
+    const scored = pool.map((d) => ({ d, e: slotFit(d, slotTarget) })).sort((a, b) => a.e - b.e);
+    const ok = scored.filter((s) => s.e <= 0.35).map((s) => s.d); // encaje bueno en P/F/C
+    // Garantiza ≥10 opciones para variedad (7 días distintos + margen); si no llegan,
+    // toma los de mejor encaje.
+    const base = ok.length >= 10 ? ok : scored.slice(0, Math.min(scored.length, 10)).map((s) => s.d);
+    // Fuerza los platillos del antojo (aunque encajen peor) para que la IA pueda usarlos.
+    const cravedInPool = craveTerms.length ? pool.filter((d) => dishMatchesAny(d, craveTerms)) : [];
+    const set = new Map(base.map((d) => [d.nombre, d]));
+    for (const d of cravedInPool) set.set(d.nombre, d);
+    return [...set.values()];
+  };
+  return {
+    Desayuno: filt(safe.Desayuno, MT.desayuno),
+    Comida: filt(safe.Comida, MT.comida),
+    Cena: filt(safe.Cena, MT.cena),
+    Snack: safe.Snack,
+  };
+}
+
 export interface DaySelection { desayuno: string; comida: string; cena: string; snacks: string[] }
 
-/** Arma los 7 días a partir de la SELECCIÓN de la IA (nombres de platillo), con el
- *  reparto de Magaly y las porciones ajustadas por el solver. */
+/** Nº de snacks por slot: metas altas (>2200 kcal) usan 2 combinados para alcanzar
+ *  el target del snack (uno solo se queda corto). Igual que el motor de código. */
+export function snacksPerSlot(kcal: number): number { return kcal > 2200 ? 2 : 1; }
+
+/** Arma los 7 días desde la SELECCIÓN de la IA. Los 3 principales van al reparto de
+ *  Magaly; los SNACKS RELLENAN lo que falte para pegar la meta exacta (así el día no
+ *  queda bajo aunque los platillos que eligió la IA no escalen tanto), con nSnack
+ *  combinados por slot para tener capacidad. */
 export function assembleFromSelection(target: PlanTarget, days: DaySelection[]): DayPlan[] {
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const MT = mealTargets(T);
+  const nSnack = snacksPerSlot(target.kcal);
   const byName = new Map(BANCO.map((d) => [d.nombre, d]));
   const out: DayPlan[] = [];
   days.forEach((sel, i) => {
     const des = byName.get(sel.desayuno), com = byName.get(sel.comida), cen = byName.get(sel.cena);
     if (!des || !com || !cen) return; // el orquestador ya validó; salta por seguridad
     const snacks = (sel.snacks ?? []).map((n) => byName.get(n)).filter((d): d is BancoDish => !!d);
+    // Reparto de Magaly: cada tiempo a su share (proteína pareja en los 3 principales,
+    // menos en snacks). Snacks: nSnack combinados por slot para tener capacidad a metas altas.
+    const amSnacks = snacks.slice(0, nSnack), pmSnacks = snacks.slice(nSnack, 2 * nSnack);
     const meals: MealItem[] = [
       ...solveSlot([des], 'Desayuno', MT.desayuno),
-      ...(snacks[0] ? solveSlot([snacks[0]], 'Snack AM', MT.snackSlot) : []),
+      ...(amSnacks.length ? solveSlot(amSnacks, 'Snack AM', MT.snackSlot, true) : []),
       ...solveSlot([com], 'Comida', MT.comida),
-      ...(snacks[1] ? solveSlot([snacks[1]], 'Snack PM', MT.snackSlot) : []),
+      ...(pmSnacks.length ? solveSlot(pmSnacks, 'Snack PM', MT.snackSlot, true) : []),
       ...solveSlot([cen], 'Cena', MT.cena),
     ];
     out.push({ day: i + 1, theme: '', meals });
