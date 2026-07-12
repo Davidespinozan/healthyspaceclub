@@ -298,10 +298,12 @@ function fitSlot(
   // del día). Entre ellos: 1) ANTOJO, 2) NO repetir ingrediente el mismo día, 3) variedad
   // semanal (platillo e ingrediente menos repetidos → rota aguacate/pollo), 4) fibra, 5) ajuste.
   const minE = Math.min(...cands.map((c) => c.e));
-  // Snacks (merge): banda MÁS ancha. Son ~5% del día, la precisión importa poco y
-  // pocas opciones pegan el target exacto → sin holgura se repiten los mismos 4-5.
-  // Con banda ancha entran más snacks y la variedad (used/ingFreq) los rota.
-  const cap = merge ? Math.max(30, minE + 12) : Math.max(12, minE + 2);
+  // Snacks (merge): banda MÁS ancha (son ~5% del día). Pools CHICOS (cena: 26 platillos)
+  // también: a metas bajas casi nada cae en la banda estrecha y se repite la misma cena
+  // a diario. Banda más ancha → entran más opciones y la variedad (used/ingFreq) las rota.
+  const cap = merge
+    ? Math.max(30, minE + 12)
+    : (pool.length < 30 ? Math.max(22, minE + 8) : Math.max(12, minE + 2));
   const acceptable = cands.filter((c) => c.e <= cap);
   acceptable.sort((a, b) =>
     (b.craves - a.craves) ||
@@ -377,7 +379,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 4;
+export const PLAN_ENGINE_VERSION = 5;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string }
 
