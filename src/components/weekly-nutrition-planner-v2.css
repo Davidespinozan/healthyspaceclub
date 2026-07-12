@@ -644,7 +644,7 @@
 .wnp2-meal-circle {
   width: 64px;
   height: 64px;
-  border-radius: 50%;
+  border-radius: 12px;
   background-size: cover;
   background-position: center;
   flex-shrink: 0;
