@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 12, // v12: prompt consciente del equipo (ligas/peso corporal → progresión por tensión/dificultad, no peso); reparador no rompe circuitos sin pesas
+  workout: 13, // v13: bloque de equipo consciente del goal (cardio sin pesas → progresión por intensidad, no tempo)
 } as const;
 
 // Formato de coordinación de un ejercicio cuando se entrena en pareja:

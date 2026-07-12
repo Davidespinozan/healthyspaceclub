@@ -69,18 +69,25 @@ Reglas de pareja (críticas):
   const eq = p.equipment ?? [];
   const hasGym = eq.includes('gym'), hasBands = eq.includes('ligas'), hasBody = eq.includes('cuerpo');
   const noWeights = !hasGym && (hasBands || hasBody);
+  const isCardio = /condici|cardio/i.test(p.goal) || /cardio/i.test(p.dayLabel);
+  // Sin pesas, la progresión cambia según el goal: CARDIO progresa por intensidad
+  // (rondas/velocidad/menos descanso), NO por tempo lento como en hipertrofia.
+  const noWeightNote = isCardio
+    ? `
+⚠️ SIN PESAS + CARDIO: la progresión es por INTENSIDAD, no por peso ni tempo lento. Más rondas, menos descanso, ejecución más explosiva/rápida, o trabajo por tiempo (30-45s). NUNCA digas "sube el peso".`
+    : `
+⚠️ SIN PESAS: la sobrecarga progresiva NO es por kilos. NUNCA digas "sube el peso".
+- LIGAS → progresa por TENSIÓN: más reps, tempo lento, pausa; al dominar el rango, liga más dura o dóblala.
+- PESO CORPORAL → progresa por DIFICULTAD: más reps, tempo excéntrico lento, pausas, mayor rango, o una variante más difícil (unilateral, pies elevados).
+- Usa rangos de reps MÁS ALTOS (12-25) y apóyate en tempo/isométricos/parciales — no en cargas de fuerza pura (3-6).
+- En los tips habla de reps, tempo, tensión o variante — jamás de kilos.`;
   const equipBlock = eq.length ? `
 EQUIPO DEL USUARIO: ${
     hasGym ? 'GIMNASIO — pesas (barra, mancuernas, máquinas, poleas). Progresión por CARGA.'
     : hasBands && hasBody ? 'CASA — ligas + peso corporal (SIN pesas).'
     : hasBands ? 'LIGAS / bandas de resistencia (SIN pesas).'
     : 'PESO CORPORAL (SIN pesas ni ligas).'
-  }${noWeights ? `
-⚠️ SIN PESAS: la sobrecarga progresiva NO es por kilos. NUNCA digas "sube el peso".
-- LIGAS → progresa por TENSIÓN: más reps, tempo lento, pausa; al dominar el rango, liga más dura o dóblala.
-- PESO CORPORAL → progresa por DIFICULTAD: más reps, tempo excéntrico lento, pausas, mayor rango, o una variante más difícil (unilateral, pies elevados).
-- Usa rangos de reps MÁS ALTOS (12-25) y apóyate en tempo/isométricos/parciales — no en cargas de fuerza pura (3-6).
-- En los tips habla de reps, tempo, tensión o variante — jamás de kilos.` : ''}
+  }${noWeights ? noWeightNote : ''}
 ` : '';
 
   return `Orquesta una sesión de ${p.dayLabel} ${partner ? 'para DOS personas (un usuario y su compañero) entrenando juntas' : 'para el usuario'}.
