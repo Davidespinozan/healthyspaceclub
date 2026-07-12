@@ -92,7 +92,7 @@ export async function orchestrateWorkout(params: {
 
   const prompt = buildWorkoutOrchestratorPrompt({
     dayLabel, userName, profileBlock, context, candidatesCompact,
-    targetCount, goal, intensityInstruction, intensity, locale,
+    targetCount, goal, intensityInstruction, intensity, locale, equipment,
     partner: partner
       ? { name: partner.name, profileBlock: buildPartnerProfileBlock(partner) }
       : undefined,

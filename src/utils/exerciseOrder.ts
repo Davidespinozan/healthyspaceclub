@@ -92,7 +92,12 @@ function phaseRank(type: string | undefined, muscle: string | undefined): number
 export function repairWorkoutStructure<T extends WorkoutExercise>(
   exercises: T[],
   bank: Exercise[],
+  opts: { hasWeights?: boolean } = {},
 ): { exercises: T[]; fixes: string[] } {
+  // hasWeights: la regla "compuesto pesado nunca en superserie" es por SEGURIDAD con
+  // carga externa (barra/mancuerna). En peso corporal/ligas NO aplica — ahí los
+  // circuitos y superseries de sentadillas/dominadas son válidos y deseables.
+  const hasWeights = opts.hasWeights ?? true;
   const meta = new Map(bank.map(e => [e.id, e]));
   const typeOf = (ex: T): string | undefined => meta.get(ex.id)?.type;
   const muscleOf = (ex: T): string | undefined => meta.get(ex.id)?.muscleGroup;
@@ -101,8 +106,8 @@ export function repairWorkoutStructure<T extends WorkoutExercise>(
 
   let work = exercises.map(e => ({ ...e }));
 
-  // (2) Compuesto pesado en superserie → sácalo del group (serie recta).
-  for (const ex of work) {
+  // (2) Compuesto pesado en superserie → sácalo del group (serie recta). Solo con pesas.
+  if (hasWeights) for (const ex of work) {
     const isCompound = typeOf(ex) === 'compuesto';
     const isHeavy = HEAVY_COMPOUND.test(ex.id) || HEAVY_COMPOUND.test(nameOf(ex));
     if (ex.group && isCompound && isHeavy) {

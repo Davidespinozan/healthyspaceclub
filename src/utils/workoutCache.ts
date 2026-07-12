@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 2,
-  workout: 11, // v11: sobrecarga progresiva (feed de "última vez") + RIR + volumen + reps por tipo + warmup con aproximación
+  workout: 12, // v12: prompt consciente del equipo (ligas/peso corporal → progresión por tensión/dificultad, no peso); reparador no rompe circuitos sin pesas
 } as const;
 
 // Formato de coordinación de un ejercicio cuando se entrena en pareja:

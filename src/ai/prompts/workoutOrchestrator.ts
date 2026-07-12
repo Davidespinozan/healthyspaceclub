@@ -7,6 +7,7 @@
 // al usuario.
 
 import type { AppLanguage } from '../../store';
+import type { Equipment } from '../../types';
 import { getVoiceRules, getOutputLanguageDirective } from '../voice';
 
 interface WorkoutParams {
@@ -20,6 +21,7 @@ interface WorkoutParams {
   intensityInstruction: string;
   intensity: string;
   locale?: AppLanguage;
+  equipment?: Equipment[];
   // ── Modo pareja (opcional): si presente, la rutina se diseña para DOS personas
   // entrenando juntas. Mismos ejercicios; la IA ajusta la prescripción por persona.
   partner?: {
@@ -61,6 +63,26 @@ Reglas de pareja (críticas):
 - El "note" y la "razon" deben mencionar que es una sesión para los dos, hablándole a la persona A en 2da persona ("tú y ${partner.name}...").
 ` : '';
 
+  // Modalidad según el equipo del usuario. SIN pesas (ligas/peso corporal), la
+  // sobrecarga progresiva NO es por peso — es por tensión (ligas) o dificultad
+  // (peso corporal). Sin esto la IA escribiría "sube el peso" en una lagartija.
+  const eq = p.equipment ?? [];
+  const hasGym = eq.includes('gym'), hasBands = eq.includes('ligas'), hasBody = eq.includes('cuerpo');
+  const noWeights = !hasGym && (hasBands || hasBody);
+  const equipBlock = eq.length ? `
+EQUIPO DEL USUARIO: ${
+    hasGym ? 'GIMNASIO — pesas (barra, mancuernas, máquinas, poleas). Progresión por CARGA.'
+    : hasBands && hasBody ? 'CASA — ligas + peso corporal (SIN pesas).'
+    : hasBands ? 'LIGAS / bandas de resistencia (SIN pesas).'
+    : 'PESO CORPORAL (SIN pesas ni ligas).'
+  }${noWeights ? `
+⚠️ SIN PESAS: la sobrecarga progresiva NO es por kilos. NUNCA digas "sube el peso".
+- LIGAS → progresa por TENSIÓN: más reps, tempo lento, pausa; al dominar el rango, liga más dura o dóblala.
+- PESO CORPORAL → progresa por DIFICULTAD: más reps, tempo excéntrico lento, pausas, mayor rango, o una variante más difícil (unilateral, pies elevados).
+- Usa rangos de reps MÁS ALTOS (12-25) y apóyate en tempo/isométricos/parciales — no en cargas de fuerza pura (3-6).
+- En los tips habla de reps, tempo, tensión o variante — jamás de kilos.` : ''}
+` : '';
+
   return `Orquesta una sesión de ${p.dayLabel} ${partner ? 'para DOS personas (un usuario y su compañero) entrenando juntas' : 'para el usuario'}.
 ${p.profileBlock}
 CONTEXTO DEL USUARIO:
@@ -73,11 +95,11 @@ PARÁMETROS:
 - Cantidad objetivo: ${p.targetCount} ejercicios
 - Goal del día: ${p.goal}
 - ${p.intensityInstruction}
-
+${equipBlock}
 SOBRECARGA PROGRESIVA (el MOTOR del progreso — aplícalo SIEMPRE que haya dato):
 - Algunos ejercicios de la lista traen "última vez: 22.5kg×10,10,8" = lo que el usuario levantó su última sesión (peso máx × reps de cada serie). ÚSALO:
-  · Prescribe reps dentro de un rango de DOBLE PROGRESIÓN. Si la última vez llegó al TOPE del rango en su serie más dura, empuja (busca más reps; el sistema subirá la carga sólo). Si no, mantén el rango y pídele 1-2 reps más que la vez pasada.
-  · Di la progresión CONCRETA en tip_personalizado, citando el dato (ej. "la vez pasada 8 reps con 20kg — hoy busca 9-10" o "dominaste el rango, sube a 22.5kg").
+  · Prescribe reps dentro de un rango de DOBLE PROGRESIÓN. Si la última vez llegó al TOPE del rango en su serie más dura, empuja para progresar (con pesas → el sistema sube la carga; con ligas → más tensión; peso corporal → más difícil). Si no, mantén y pídele 1-2 reps más que la vez pasada.
+  · Di la progresión CONCRETA en tip_personalizado, citando el dato y en la unidad correcta del equipo (con pesas "la vez pasada 8 con 20kg — hoy 9-10"; sin pesas "la vez pasada 12 — hoy busca 14, bajando lento").
   · En la SELECCIÓN: en compuestos clave prioriza REPETIR el ejercicio con historial (así progresa la carga); no lo cambies sólo por variar. La variedad va en accesorios.
 - Sin "última vez" (primera vez con ese ejercicio): prescribe un rango y dile que encuentre un peso donde llegue al tope con buena técnica.
 

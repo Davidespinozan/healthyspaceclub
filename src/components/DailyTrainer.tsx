@@ -341,7 +341,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       } else if (cached && validateWorkout(cached, validIds) && fitsEquipment(cached)) {
         // Fuerza/cardio/auto: cache válido. Aplica el reparador estructural
         // (por si fue cacheado antes de estas reglas).
-        cached.exercises = repairWorkoutStructure(cached.exercises, exerciseBank).exercises;
+        cached.exercises = repairWorkoutStructure(cached.exercises, exerciseBank, { hasWeights: equipmentList.includes('gym') }).exercises;
         // Pareja: la rutina cacheada TAMBIÉN debe llevar los metadatos de pareja y
         // entregarse al compañero. Sin esto, un cache-hit dejaba al compañero sin
         // rutina y A veía el plan como "solo" (sin cabecera ni formato juntos/alternado).
@@ -565,6 +565,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       {
         const repaired = repairWorkoutStructure(
           (workout as CachedWorkout).exercises, exerciseBank,
+          { hasWeights: equipmentList.includes('gym') },
         );
         (workout as CachedWorkout).exercises = repaired.exercises;
         if (repaired.fixes.length) {
