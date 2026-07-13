@@ -99,6 +99,13 @@ interface Var { a: number[]; g: number; g0: number; lo: number; hi: number; blk:
 const W = [1.5, 0.8, 1.0]; // pesos P, F, C (proteína prioridad)
 const IDX = [1, 2, 3];     // posición de P,F,C en el vector [kcal,P,F,C]
 
+// Tope REALISTA de piezas para alimentos contables — nadie se come 6 tortillas.
+// El solver jamás pasa de esto aunque el max_g del banco sea mayor (obvio, no un
+// límite arbitrario: es lo que una persona de verdad come de ese alimento).
+const PIECE_MAX: Record<string, number> = {
+  'tortilla': 4, 'rebanada de pan': 4, 'tostada': 6, 'huevo': 4,
+  'pan pita': 2, 'pan thin': 2, 'bagel': 1.5, 'tortilla de harina': 3,
+};
 function prep(dishes: BancoDish[]): { fixed: number[]; vars: Var[] } {
   const fixed = [0, 0, 0, 0, 0]; // kcal, P, F, C, fibra
   const vars: Var[] = [];
@@ -109,7 +116,10 @@ function prep(dishes: BancoDish[]): { fixed: number[]; vars: Var[] } {
       if (ing.rol === 'principal' && ing.a) {
         // Tope: almidones (carbo-dominantes) más ajustados (2.0×) → evita porciones enormes.
         const carbDom = ing.a[3] > ing.a[1] && ing.a[3] > ing.a[2];
-        const hi = ing.max && ing.max > 0 ? ing.max : Math.round(ing.g0 * (carbDom ? 2.0 : 2.5));
+        let hi = ing.max && ing.max > 0 ? ing.max : Math.round(ing.g0 * (carbDom ? 2.0 : 2.5));
+        // Contables: nunca más de N piezas realistas (tortilla ≤4, pan ≤4, etc.).
+        const pieceMax = ing.pu && ing.un ? PIECE_MAX[ing.un] : undefined;
+        if (pieceMax && ing.pu) hi = Math.min(hi, Math.round(pieceMax * ing.pu));
         vars.push({ a: ing.a, g: ing.g0, g0: ing.g0, lo: ing.g0 * 0.4, hi, blk: bloque ? si : null, ing });
       }
     }
@@ -181,9 +191,12 @@ const CUP_G: Array<[RegExp, number]> = [
   [/alubia|frijol/i, 172],
   [/quinoa/i, 185],
   [/arroz/i, 158], // arroz cocido (excluye galletas/inflado más abajo)
+  [/leche/i, 240],  // líquidos también se miden en tazas (1 taza ≈ 240 ml)
+  [/yogur|yoghur/i, 245],
+  [/avena cocida/i, 234], // avena cocida (la seca en hojuelas se queda en gramos)
 ];
-// nv que llevan "arroz"/"pasta" pero NO son el grano cocido (no van en tazas).
-const CUP_EXCLUDE = /galleta|inflad|harina|tortita|crema de|leche de/i;
+// nv que llevan "arroz"/"pasta"/"leche" pero NO son el grano/líquido base (no van en tazas).
+const CUP_EXCLUDE = /galleta|inflad|harina|tortita|crema de|leche de|congelad/i;
 function cupGrams(nv: string): number | null {
   if (CUP_EXCLUDE.test(nv)) return null;
   for (const [re, g] of CUP_G) if (re.test(nv)) return g;
@@ -387,34 +400,32 @@ function applyShake(meals: MealItem[], shake: ProteinShake): void {
   }
 }
 
-/** Cierra el hueco de macros a ≤2% agregando snacks reales del banco (con foto),
- *  densos en el macro que falta. RESPETA la lista de evitar/alergias (banco filtrado). */
-function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: string[] = []): void {
+/** Corrector MÍNIMO: solo si un macro (grasa o carbo) quedó MUY corto (>5%) tras armar
+ *  el día, agrega UN solo snack real de ese macro. La proteína NO se corrige aquí (la
+ *  cargan los principales — subir gramos de una comida, no apilar snacks). Rota en la
+ *  semana (weekUsed) para no repetir el mismo. RESPETA alergias. */
+function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: string[] = [], weekUsed?: Set<string>): void {
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
-  const kcalCap = target.kcal * 1.02;
+  const cur = macroSum(meals);
+  if (cur[0] >= target.kcal * 1.02) return;            // sin espacio calórico
+  const rel = (i: number) => (T[i] - cur[i]) / T[i];
+  const rf = rel(2), rc = rel(3);                      // solo grasa/carbo (proteína = principales)
+  const worst = Math.max(rf, rc);
+  if (worst <= 0.05) return;                            // hueco chico → se deja (nada de apilar)
   const avoid = makeAvoidFilter(avoidCats);
-  const safe = (l: BancoDish[]) => l.filter((d) => !avoid(d)); // nunca un snack con alérgeno
-  const pools: Record<'F' | 'P' | 'C', BancoDish[]> = { F: safe(SNACK_BY_MACRO.F), P: safe(SNACK_BY_MACRO.P), C: safe(SNACK_BY_MACRO.C) };
-  const used = new Set<string>(meals.map((m) => m.name)); // no repetir el mismo snack en el día
-  const isUsed = (n: string) => [...used].some((u) => u.includes(n));
-  for (let iter = 0; iter < 3; iter++) {
-    const cur = macroSum(meals);
-    if (cur[0] >= kcalCap) break;                    // ya no hay espacio calórico
-    const rel = (i: number) => (T[i] - cur[i]) / T[i];
-    const rp = rel(1), rf = rel(2), rc = rel(3);
-    const worst = Math.max(rp, rf, rc);
-    if (worst <= 0.02) break;                          // todo a ≤2%
-    const [cls, idx]: ['F' | 'P' | 'C', number] = rf === worst ? ['F', 2] : rc === worst ? ['C', 3] : ['P', 1];
-    const dish = pools[cls].find((d) => !isUsed(d.nombre)) ?? pools[cls][0];
-    if (!dish) break;                                  // no hay snack seguro para ese macro
-    const slotT = [0, 0, 0, 0];
-    slotT[idx] = T[idx] - cur[idx];                    // el snack se escala para llenar ese macro
-    const item = solveSlot([dish], 'Snack', slotT)[0];
-    if (!item?.macros || item.macros.kcal < 20) break;
-    if (cur[0] + item.macros.kcal > kcalCap + 60) break; // no dispares las kcal
-    mergeIntoSnack(meals, item);
-    used.add(dish.nombre);
-  }
+  const [cls, idx]: ['F' | 'C', number] = rf === worst ? ['F', 2] : ['C', 3];
+  const pool = SNACK_BY_MACRO[cls].filter((d) => !avoid(d)); // nunca un alérgeno
+  const dayNames = new Set(meals.map((m) => m.name));
+  // Prefiere uno NO usado en la semana ni hoy; si no hay, el menos repetido.
+  const dish = pool.find((d) => !weekUsed?.has(d.nombre) && ![...dayNames].some((n) => n.includes(d.nombre)))
+    ?? pool.find((d) => ![...dayNames].some((n) => n.includes(d.nombre)));
+  if (!dish) return;
+  const slotT = [0, 0, 0, 0];
+  slotT[idx] = T[idx] - cur[idx];
+  const item = solveSlot([dish], 'Snack', slotT)[0];
+  if (!item?.macros || item.macros.kcal < 20 || cur[0] + item.macros.kcal > target.kcal * 1.05) return;
+  mergeIntoSnack(meals, item);
+  weekUsed?.add(dish.nombre);
 }
 
 // Busca el mejor conjunto de `n` platillos de `pool` para pegar el target de ESTE
@@ -454,7 +465,13 @@ function fitSlot(
   // Snacks (merge): banda MÁS ancha (son ~5% del día). Pools CHICOS (cena: 26 platillos)
   // también: a metas bajas casi nada cae en la banda estrecha y se repite la misma cena
   // a diario. Banda más ancha → entran más opciones y la variedad (used/ingFreq) las rota.
-  const cap = merge
+  // Snacks: banda MUY ancha (son ~5-10% del día → el error ahí casi no mueve el total,
+  // y lo que importa es la VARIEDAD). Así caben fruta, nueces y yogurt por igual y el
+  // score de variedad (used/ingFreq) los rota en vez de repetir el mismo a diario.
+  const isSnack = label.startsWith('Snack');
+  const cap = isSnack
+    ? Math.max(50, minE + 35)
+    : merge
     ? Math.max(30, minE + 12)
     : (pool.length < 30 ? Math.max(22, minE + 8) : Math.max(12, minE + 2));
   const acceptable = cands.filter((c) => c.e <= cap);
@@ -486,11 +503,15 @@ function fitSlot(
 // (0.30 c/u) y menos en snacks (0.10 total); carbos y grasa siguen el reparto calórico.
 function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena: number[]; snackSlot: number[] } {
   const [, P, F, C] = T;
+  // Los PRINCIPALES cargan casi toda la proteína y grasa (donde de verdad va: pollo,
+  // pescado, huevo, aceite). Los SNACKS quedan ligeros y sobre todo carbo (fruta) →
+  // así caben MUCHOS snacks distintos y rotan (antes el snack pedía tanta proteína
+  // que solo 1-2 balanceados cabían y se repetían todos los días).
   return {
-    desayuno:  [0, 0.30 * P, 0.25 * F, 0.25 * C],
-    comida:    [0, 0.30 * P, 0.35 * F, 0.35 * C],
-    cena:      [0, 0.30 * P, 0.25 * F, 0.25 * C],
-    snackSlot: [0, 0.05 * P, 0.075 * F, 0.075 * C], // por slot (AM y PM); 2 slots = 0.10P/0.15F/0.15C
+    desayuno:  [0, 0.32 * P, 0.30 * F, 0.28 * C],
+    comida:    [0, 0.32 * P, 0.38 * F, 0.33 * C],
+    cena:      [0, 0.32 * P, 0.28 * F, 0.27 * C],
+    snackSlot: [0, 0.02 * P, 0.02 * F, 0.06 * C], // ligero (fruta); 2 slots = 0.04P/0.04F/0.12C
   };
 }
 
@@ -536,7 +557,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 17;
+export const PLAN_ENGINE_VERSION = 18;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 
@@ -643,6 +664,7 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
   const MT = mealTargets(reduceForShake(T, shake)); // principales contra la meta MENOS el batido
   const nSnack = snacksPerSlot(target.kcal);
   const byName = new Map(BANCO.map((d) => [d.nombre, d]));
+  const corrUsed = new Set<string>(); // corrector no repite el mismo snack en la semana
   const out: DayPlan[] = [];
   days.forEach((sel, i) => {
     const des = byName.get(sel.desayuno), com = byName.get(sel.comida), cen = byName.get(sel.cena);
@@ -659,7 +681,7 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
       ...solveSlot([cen], 'Cena', MT.cena),
     ];
     if (shake) applyShake(meals, shake); // batido reemplaza el snack del slot elegido
-    topUpMeals(meals, target, avoidCats); // cierra a ≤2% y agrega la mezcla si falta
+    topUpMeals(meals, target, avoidCats, corrUsed); // cierra hueco grande (1 snack, rota en semana)
     out.push({ day: i + 1, theme: '', meals });
   });
   return out;
@@ -677,11 +699,12 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   const craving = cravingTerms(opts.craving ?? ''); // "antojo": prefiere platillos que lo tengan
   const used = new Set<string>();          // platillos ya usados en la semana → variedad entre días
   const ingFreq = new Map<string, number>(); // ingredientes ya usados → rota fuentes (aguacate/pollo)
+  const corrUsed = new Set<string>();      // corrector no repite el mismo snack en la semana
   const days: DayPlan[] = [];
   for (let i = 1; i <= 7; i++) {
     const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq);
     if (opts.shake) applyShake(day.meals, opts.shake); // batido reemplaza el snack del slot elegido
-    topUpMeals(day.meals, target, opts.avoid ?? []); // cierra a ≤2% y agrega la mezcla si falta
+    topUpMeals(day.meals, target, opts.avoid ?? [], corrUsed); // cierra hueco grande (1 snack, rota)
     days.push(day);
   }
   return days;
