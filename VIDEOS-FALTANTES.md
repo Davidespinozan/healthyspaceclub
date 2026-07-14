@@ -1,6 +1,8 @@
 # Videos de ejercicios que faltan (SIN yoga)
 
-## A) SIN NINGÚN VIDEO — el ejercicio no muestra nada (CRÍTICO): 29 patrones
+_Estado real de la DB (`exercise_videos`) al día de hoy._
+
+## A) SIN NINGÚN VIDEO — no muestran nada (CRÍTICO): 25 patrones
 
 ### CARDIO
 - [ ] Battle Ropes (gym) `battle-ropes` — 3 variantes
@@ -23,19 +25,15 @@
 ### CUADRICEPS
 - [ ] Sentadilla Pliométrica (cuerpo) `sentadilla-pliometrica` — 3 variantes
 - [ ] Sentadilla Sissy (gym) `sissy-squat` — 3 variantes
-- [ ] Sentadilla Unilateral (gym/cuerpo) `sentadilla-unilateral` — 5 variantes
-- [ ] Step-up (gym) `step-up` — 4 variantes
 
 ### ESPALDA
 - [ ] Pullover (gym/ligas) `pullover` — 3 variantes
-- [ ] Remo con Banda (ligas) `remo-con-banda` — 2 variantes
 - [ ] Remo Invertido (gym/cuerpo) `remo-invertido` — 4 variantes
 - [ ] Remo Unilateral (gym) `remo-unilateral` — 3 variantes
 - [ ] Tracción Vertical Supina (gym) `traccion-vertical-supina` — 2 variantes
 
 ### GLUTEO
 - [ ] Caminata Lateral (ligas) `caminata-lateral-monstruo` — 2 variantes
-- [ ] Hiperextensión de Glúteo (gym/ligas) `hiperextension-gluteo` — 2 variantes
 - [ ] Peso Muerto Sumo (gym) `peso-muerto-sumo` — 2 variantes
 
 ### PECHO
@@ -44,19 +42,14 @@
 - [ ] Fondos en Paralelas (gym/cuerpo) `fondos-paralelas` — 5 variantes
 
 
-## B) Variante sin video propio (cae al del patrón, no es el exacto): 131
+## B) Variante sin video propio (cae al del patrón): 128
 
 ### BICEPS
-- [ ] Curl Concentrado — Mancuerna (gym) `curl-concentrado-mancuerna`
-- [ ] Curl de Pie — Mancuernas alternado (gym) `curl-pie-mancuernas-alternado`
-- [ ] Curl de Pie — Mancuernas simultáneo (gym) `curl-pie-mancuernas-simultaneo`
 - [ ] Curl de Pie — Polea unilateral (gym) `curl-pie-polea-unilateral`
-- [ ] Curl de Pie — Unilateral con banda (ligas) `curl-pie-banda-unilateral`
 - [ ] Curl de Pie — Mochila pesada (cuerpo) `curl-pie-mochila-pesada`
 - [ ] Curl Martillo — Polea con cuerda (gym) `curl-martillo-polea-cuerda`
 - [ ] Curl Martillo — Con banda (ligas) `curl-martillo-banda`
 - [ ] Curl Martillo — Cruzado al pecho (gym) `curl-martillo-cruzado-pecho`
-- [ ] Curl Predicador — Curl araña (banco inclinado) (gym) `curl-predicador-spider`
 
 ### CARDIO
 - [ ] Cardio en Máquina — Remo (ergómetro) (gym) `remo-ergometro`
@@ -91,6 +84,12 @@
 - [ ] Sentadilla Bilateral — Goblet con kettlebell (gym) `sentadilla-goblet-kb`
 - [ ] Sentadilla Bilateral — Sentadilla hack en máquina (gym) `sentadilla-hack`
 - [ ] Sentadilla Bilateral — Sentadilla al aire (cuerpo) `sentadilla-al-aire`
+- [ ] Sentadilla Unilateral — Búlgara con barra (gym) `sentadilla-bulgara-barra`
+- [ ] Sentadilla Unilateral — Sentadilla pistol (cuerpo) `sentadilla-pistol`
+- [ ] Sentadilla Unilateral — Step-up alto (gym) `sentadilla-step-up-alto`
+- [ ] Sentadilla Unilateral — Zancada inversa (gym) `sentadilla-zancada-inversa`
+- [ ] Step-up — Barra atrás (gym) `step-up-barra`
+- [ ] Step-up — Lateral (gym) `step-up-lateral`
 - [ ] Zancada — Caminando con mancuernas (gym) `zancada-caminando-mancuernas`
 - [ ] Zancada — Caminando con barra (gym) `zancada-caminando-barra`
 - [ ] Zancada — Reversa (gym) `zancada-reversa`
@@ -100,14 +99,12 @@
 - [ ] Encogimientos — Mancuernas (gym) `shrugs-mancuernas`
 - [ ] Encogimientos — Máquina shrug (gym) `shrugs-maquina`
 - [ ] Encogimientos — Polea baja (gym) `shrugs-polea`
-- [ ] Encogimientos — Con banda (ligas) `shrugs-banda`
 - [ ] Hiperextensiones — Banco romano (gym) `hiperextensiones-banco-romano`
 - [ ] Hiperextensiones — Con peso adicional (gym) `hiperextensiones-con-peso`
 - [ ] Hiperextensiones — Superman en suelo (cuerpo) `superman-suelo`
 - [ ] Hiperextensiones — Hiperextensión inversa (gym) `reverse-hyper`
 - [ ] Jalón a la Cara — Polea con cuerda (gym) `face-pull-polea-cuerda`
 - [ ] Jalón a la Cara — Pec deck invertido (gym) `face-pull-reverse-pec-deck`
-- [ ] Remo Neutro — T-bar (maneral neutro) (gym) `remo-t-bar`
 - [ ] Remo Pronado Cerrado — Con barra (Pendlay) (gym) `remo-barra-pendlay`
 - [ ] Tracción Vertical Neutra — Dominada en barra (gym) `dominadas-neutras`
 - [ ] Tracción Vertical Pronada Abierta — Dominada en barra (gym) `dominadas-pronadas`
@@ -123,6 +120,7 @@
 - [ ] Empuje de Cadera — Glute bridge en piso (cuerpo) `glute-bridge-piso`
 - [ ] Empuje de Cadera — Glute bridge unilateral (cuerpo) `glute-bridge-unilateral`
 - [ ] Empuje de Cadera — Con banda (ligas) `hip-thrust-con-banda`
+- [ ] Hiperextensión de Glúteo — Con banda (ligas) `hiperextension-gluteo-banda`
 - [ ] Patada de Glúteo — Polea baja (gym) `patada-gluteo-polea`
 - [ ] Patada de Glúteo — Cuadrupedia bodyweight (cuerpo) `patada-gluteo-cuadrupedia-sin-peso`
 - [ ] Patada de Glúteo — Máquina glute kickback (gym) `patada-gluteo-maquina`
@@ -142,7 +140,6 @@
 - [ ] Press Vertical — Z-press (sentado piso) (gym) `z-press`
 - [ ] Press Vertical — Flexión pike (cuerpo) `pike-push-up`
 - [ ] Press Vertical — Wall handstand hold (cuerpo) `wall-handstand-hold`
-- [ ] Remo al Mentón — Mancuernas (gym) `upright-row-mancuernas`
 - [ ] Remo al Mentón — Polea baja (gym) `upright-row-polea`
 - [ ] Vuelo Posterior — Mancuernas inclinado (gym) `vuelo-posterior-mancuernas-inclinado`
 - [ ] Vuelo Posterior — Mancuernas sentado inclinado (gym) `vuelo-posterior-mancuernas-sentado`
@@ -178,7 +175,6 @@
 - [ ] Press Horizontal — Flexiones (cuerpo) `press-horizontal-flexiones`
 - [ ] Press Horizontal — Flexiones declinadas (cuerpo) `press-horizontal-flexiones-declinadas`
 - [ ] Press Horizontal — Press en el piso, mancuernas (gym) `press-horizontal-mancuernas-piso`
-- [ ] Press Inclinado — Con mancuernas (gym) `press-inclinado-mancuernas`
 - [ ] Press Inclinado — En Smith (gym) `press-inclinado-smith`
 - [ ] Press Inclinado — Flexiones inclinadas (cuerpo) `press-inclinado-flexiones`
 
@@ -191,7 +187,6 @@
 - [ ] Fondos de Tríceps — Paralelas estricto (gym) `fondos-triceps-paralelas-estricto`
 - [ ] Fondos de Tríceps — Banco con peso (gym) `fondos-triceps-banco-con-peso`
 - [ ] Fondos de Tríceps — Entre sillas (cuerpo) `fondos-triceps-entre-sillas`
-- [ ] Patada de Tríceps (Kickback) — Mancuerna con banco (gym) `patada-triceps-mancuerna-banco`
 - [ ] Patada de Tríceps (Kickback) — Polea baja (gym) `patada-triceps-polea`
 - [ ] Press Cerrado — Flexiones cerradas (cuerpo) `press-cerrado-flexiones`
 - [ ] Press Francés — Barra recta (gym) `press-frances-barra-recta`
