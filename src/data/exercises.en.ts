@@ -55,6 +55,7 @@ export const exercisesEn: Record<string, ExerciseOverlay> = {
   'curl-martillo': { name: 'Hammer Curl', desc: 'Curl with neutral palms — biceps and brachialis (thickens the arm).', tip: 'If you want to thicken the arm (not just the biceps peak), prioritize this one.' },
   'curl-predicador': { name: 'Preacher Curl', desc: 'Curl with the arm supported — maximum biceps focus without shoulder cheating.', tip: 'Don’t fully extend the elbow at the bottom — keep a slight bend to protect the tendon.' },
   'curl-concentrado': { name: 'Concentration Curl', desc: 'Curl with the elbow braced on the thigh — total biceps isolation.', tip: 'Ideal to finish a biceps workout — chase the mind-muscle connection.' },
+  'curl-inclinado': { name: 'Incline Curl', desc: 'Curl on an incline bench with the arms hanging back — maximum biceps stretch.', tip: 'The arm hanging behind you puts the biceps in its most stretched position — it hits the long head hard.' },
   'curl-muneca': { name: 'Wrist Curl', desc: 'Wrist flexion and extension with a bar — direct forearm development.', tip: 'Short but strict range — the forearm responds to high reps and constant tension.' },
   // ── BRAZO (tríceps) ──
   'press-frances': { name: 'Lying Triceps Extension', desc: 'Elbow extension lying down — the base pattern for triceps mass.', tip: 'The elbows do NOT flare — point them at the ceiling the whole way to protect the joint.' },
@@ -321,6 +322,12 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Mancuernas (supino)': 'Dumbbells (supinated)',
+  'Martillo (agarre neutro)': 'Hammer (neutral grip)',
+  'Mancuernas con isométrico': 'Dumbbells with isometric hold',
+  'Mancuerna a una mano (copa)': 'Single-arm dumbbell (cup grip)',
+  'Landmine a una mano': 'Single-arm landmine',
+  'Sumo con landmine': 'Sumo with landmine',
   'Agarre normal': 'Standard grip',
     'Flexión pike': 'Pike push-up',
   'Empuje de trineo': 'Sled push',
@@ -566,6 +573,10 @@ export const variantNameEn: Record<string, string> = {
 // natural en inglés; poses de yoga conservan su nombre (Warrior, chaturanga,
 // Dandasana, upward/downward dog). Mapeado por texto ES → EN.
 export const stepDescEn: Record<string, string> = {
+  'Recostado en banco inclinado a 45-60°, brazos colgando por detrás del torso.': 'Lie back on a 45-60° incline bench, arms hanging behind your torso.',
+  'Flexiona los codos sin adelantar el hombro — el codo se queda atrás.': 'Bend the elbows without letting the shoulder drift forward — the elbow stays back.',
+  'Aprieta arriba 1 segundo.': 'Squeeze at the top for 1 second.',
+  'Baja lento hasta el estiramiento completo del bíceps.': 'Lower slowly into a full biceps stretch.',
   'Antebrazos apoyados (en banco o muslos) con la barra colgando de las muñecas.': 'Forearms supported (on a bench or your thighs) with the bar hanging from your wrists.',
   'Flexiona o extiende solo la muñeca, sin mover el antebrazo.': 'Flex or extend only your wrist, without moving your forearm.',
   'Baja controlado hasta el estiramiento completo de la muñeca.': 'Lower under control to a full wrist stretch.',
@@ -1033,6 +1044,12 @@ export const stepDescEn: Record<string, string> = {
 // A2b-3 — notas de variantes (prosa explicativa). Cierra el contenido i18n.
 // Terminología fitness natural en inglés. Mapeado por texto ES → EN.
 export const variantNotesEn: Record<string, string> = {
+  'Palmas al frente — máximo estiramiento de la cabeza larga.': 'Palms forward — maximum stretch on the long head.',
+  'Palmas enfrentadas — carga braquial y braquiorradial en estiramiento.': 'Palms facing each other — loads the brachialis and brachioradialis under stretch.',
+  'Un brazo sostiene arriba mientras el otro sube — tensión constante brutal.': 'One arm holds at the top while the other curls — brutal constant tension.',
+  'Una sola mano sostiene la mancuerna en copa — corrige asimetrías y aísla más.': 'One hand cups the dumbbell — fixes asymmetries and isolates more.',
+  'Barra en landmine, empuje diagonal — amable con el hombro y exige mucho core.': 'Barbell in a landmine, diagonal press — shoulder-friendly and very core-demanding.',
+  'Pies muy abiertos, barra en landmine al pecho — más aductor y glúteo, fácil de aprender.': 'Wide stance, landmine bar at the chest — more adductor and glute, easy to learn.',
   'Acostado en el piso — el rango se limita al tocar codos, protege el hombro y enfatiza el bloqueo de tríceps.': 'Lying on the floor — the range stops when your elbows touch, protecting the shoulder and emphasizing triceps lockout.',
   'Agarre amplio, codos hacia afuera.': 'Wide grip, elbows out.',
   'Agarre cerrado pronado, codos pegados.': 'Close pronated grip, elbows tucked.',
