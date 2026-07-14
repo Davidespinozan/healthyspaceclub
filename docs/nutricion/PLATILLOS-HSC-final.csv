@@ -5,7 +5,7 @@ Huevo a la Mexicana,Desayuno,suelto,ligero,salado,,Aguacate Hass,Aguacate,47,94,
 Huevo a la Mexicana,Desayuno,suelto,ligero,salado,,Verduras mixtas,"Verduras (jitomate, cebolla, chile)",60,,guarnicion,plato,PENDIENTE crear Verduras mixtas ~30kcal/100g,huevo-a-la-mexicana.jpg
 Huevo a la Mexicana,Desayuno,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,cuenta cero - solo receta,huevo-a-la-mexicana.jpg
 Omelette de Champiñones y Espinacas,Desayuno,suelto,medio,salado,,Huevo entero fresco,Huevo,132,300,principal,plato,,omelette-de-champinones-y-espinacas.jpg
-Omelette de Champiñones y Espinacas,Desayuno,suelto,medio,salado,,Queso Panela,Queso panela,30,60,principal,plato,,omelette-de-champinones-y-espinacas.jpg
+Omelette de Champiñones y Espinacas,Desayuno,suelto,medio,salado,,Queso fresco de cabra,Queso fresco de cabra,30,160,principal,plato,,omelette-de-champinones-y-espinacas.jpg
 Omelette de Champiñones y Espinacas,Desayuno,suelto,medio,salado,,Pan de caja,Pan de caja,27,81,principal,plato,,omelette-de-champinones-y-espinacas.jpg
 Omelette de Champiñones y Espinacas,Desayuno,suelto,medio,salado,,Verduras mixtas,"Verduras (champiñón, espinaca)",80,,guarnicion,plato,PENDIENTE crear Verduras mixtas ~30kcal/100g,omelette-de-champinones-y-espinacas.jpg
 Omelette de Champiñones y Espinacas,Desayuno,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,cuenta cero - solo receta,omelette-de-champinones-y-espinacas.jpg
@@ -15,7 +15,7 @@ Toast de Aguacate y Requesón,Desayuno,suelto,ligero,neutral,,Requesón promedio
 Toast de Aguacate y Requesón,Desayuno,suelto,ligero,neutral,,Miel,Miel,7,7,fijo,plato,,toast-de-aguacate-y-requeson.jpg
 Toast de Aguacate y Requesón,Desayuno,suelto,ligero,neutral,,Chile cayena en polvo,Chile cayena en polvo,1,,condimento,plato,PENDIENTE crear en catalogo (Libres en energia),toast-de-aguacate-y-requeson.jpg
 Toast de Aguacate y Requesón,Desayuno,suelto,ligero,neutral,,Huevo entero fresco,Huevo,88,300,principal,acompañamiento,,toast-de-aguacate-y-requeson.jpg
-Chilaquiles Verdes,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Totopos horneados,30,100,principal,plato,,chilaquiles-verdes.jpg
+Chilaquiles Verdes,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Totopos horneados,30,52,principal,plato,,chilaquiles-verdes.jpg
 Chilaquiles Verdes,Desayuno,suelto,medio,salado,,Huevo entero fresco,Huevo,88,300,principal,plato,,chilaquiles-verdes.jpg
 Chilaquiles Verdes,Desayuno,suelto,medio,salado,,Queso fresco,Queso fresco,30,60,principal,plato,,chilaquiles-verdes.jpg
 Chilaquiles Verdes,Desayuno,suelto,medio,salado,,Aguacate Hass,Aguacate,31,94,principal,acompañamiento,,chilaquiles-verdes.jpg
@@ -68,7 +68,7 @@ Bagel de Huevo Tocino y Queso Crema,Desayuno,suelto,medio,salado,,Tocino,Tocino,
 Bagel de Huevo Tocino y Queso Crema,Desayuno,suelto,medio,salado,,Queso crema light,Queso crema light,30,45,principal,plato,,bagel-de-huevo-tocino-y-queso-crema.jpg
 Bagel de Huevo Tocino y Queso Crema,Desayuno,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,bagel-de-huevo-tocino-y-queso-crema.jpg
 Bagel de Huevo Tocino y Queso Crema,Desayuno,suelto,medio,salado,,Pimienta,Pimienta,1,,condimento,plato,,bagel-de-huevo-tocino-y-queso-crema.jpg
-Tostada de Frijol con Huevo,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Tostada horneada,30,100,principal,plato,,tostada-de-frijol-con-huevo.jpg
+Tostada de Frijol con Huevo,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Tostada horneada,30,52,principal,plato,,tostada-de-frijol-con-huevo.jpg
 Tostada de Frijol con Huevo,Desayuno,suelto,medio,salado,,Frijol molido,Frijoles machacados,90,250,principal,plato,,tostada-de-frijol-con-huevo.jpg
 Tostada de Frijol con Huevo,Desayuno,suelto,medio,salado,,Huevo entero fresco,Huevo revuelto,88,300,principal,plato,,tostada-de-frijol-con-huevo.jpg
 Tostada de Frijol con Huevo,Desayuno,suelto,medio,salado,,Salsa roja,Salsa roja,60,,sub-receta,plato,NO ESCALA - ver sub-receta Salsa roja,tostada-de-frijol-con-huevo.jpg
@@ -85,16 +85,16 @@ French Toast,Desayuno,bloque,medio,dulce,1.5,Arándano fresco,Arándanos,40,120,
 Toast de Pavo y Queso Gratinado,Desayuno,suelto,medio,salado,,Pan de caja,Pan tostado,54,81,principal,plato,,toast-de-pavo-y-queso-gratinado.jpg
 Toast de Pavo y Queso Gratinado,Desayuno,suelto,medio,salado,,Requesón promedio,Requesón,30,60,principal,plato,,toast-de-pavo-y-queso-gratinado.jpg
 Toast de Pavo y Queso Gratinado,Desayuno,suelto,medio,salado,,Pechuga de pavo,Jamón de pechuga de pavo,42,180,principal,plato,,toast-de-pavo-y-queso-gratinado.jpg
-Toast de Pavo y Queso Gratinado,Desayuno,suelto,medio,salado,,Queso Oaxaca,Queso Oaxaca gratinado,30,45,principal,plato,,toast-de-pavo-y-queso-gratinado.jpg
+Toast de Pavo y Queso Gratinado,Desayuno,suelto,medio,salado,,Queso Mozzarella semidescremado,Queso mozzarella,30,120,principal,plato,,toast-de-pavo-y-queso-gratinado.jpg
 Toast de Pavo y Queso Gratinado,Desayuno,suelto,medio,salado,,Arúgula,Arúgula,20,,guarnicion,plato,,toast-de-pavo-y-queso-gratinado.jpg
 Toast de Pavo y Queso Gratinado,Desayuno,suelto,medio,salado,,Chile cayena en polvo,Chile cayena en polvo,1,,condimento,plato,PENDIENTE crear en catalogo,toast-de-pavo-y-queso-gratinado.jpg
 Toast de Pavo y Queso Gratinado,Desayuno,suelto,medio,salado,,Orégano,Orégano,1,,condimento,plato,,toast-de-pavo-y-queso-gratinado.jpg
 Toast de Aguacate Pavo y Huevo con Parfait,Desayuno,suelto,denso,salado,,Pan de caja,Pan tostado,54,81,principal,plato,,toast-de-aguacate-pavo-y-huevo-con-parfait.jpg
 Toast de Aguacate Pavo y Huevo con Parfait,Desayuno,suelto,denso,salado,,Aguacate Hass,Aguacate machacado,47,94,principal,plato,,toast-de-aguacate-pavo-y-huevo-con-parfait.jpg
 Toast de Aguacate Pavo y Huevo con Parfait,Desayuno,suelto,denso,salado,,Pechuga de pavo,Jamón de pechuga de pavo,42,180,principal,plato,,toast-de-aguacate-pavo-y-huevo-con-parfait.jpg
-Toast de Aguacate Pavo y Huevo con Parfait,Desayuno,suelto,denso,salado,,Queso Panela,Queso panela,30,45,principal,plato,,toast-de-aguacate-pavo-y-huevo-con-parfait.jpg
+Toast de Aguacate Pavo y Huevo con Parfait,Desayuno,suelto,denso,salado,,Queso fresco de cabra,Queso fresco de cabra,30,160,principal,plato,,toast-de-aguacate-pavo-y-huevo-con-parfait.jpg
 Toast de Aguacate Pavo y Huevo con Parfait,Desayuno,suelto,denso,salado,,Huevo estrellado,Huevo estrellado,46,300,principal,plato,,toast-de-aguacate-pavo-y-huevo-con-parfait.jpg
-Toast de Aguacate Pavo y Huevo con Parfait,Desayuno,suelto,denso,salado,,Jitomate,Jitomate,40,,guarnicion,plato,,toast-de-aguacate-pavo-y-huevo-con-parfait.jpg
+Toast de Aguacate Pavo y Huevo con Parfait,Desayuno,suelto,denso,salado,,Verduras mixtas,Verduras (jitomate),40,,guarnicion,plato,,toast-de-aguacate-pavo-y-huevo-con-parfait.jpg
 Toast de Aguacate Pavo y Huevo con Parfait,Desayuno,suelto,denso,salado,,Chile cayena en polvo,Chile cayena en polvo,1,,condimento,plato,PENDIENTE crear en catalogo,toast-de-aguacate-pavo-y-huevo-con-parfait.jpg
 Toast de Aguacate Pavo y Huevo con Parfait,Desayuno,suelto,denso,salado,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego natural,120,300,principal,acompañamiento,,toast-de-aguacate-pavo-y-huevo-con-parfait.jpg
 Toast de Aguacate Pavo y Huevo con Parfait,Desayuno,suelto,denso,salado,,Plátano,Plátano,54,180,principal,acompañamiento,,toast-de-aguacate-pavo-y-huevo-con-parfait.jpg
@@ -116,7 +116,7 @@ Huevo Revuelto con Toast de Cacahuate y Aguacate,Desayuno,suelto,medio,salado,,F
 Huevo Revuelto con Toast de Cacahuate y Aguacate,Desayuno,suelto,medio,salado,,Arándano fresco,Arándanos,40,120,principal,acompañamiento,,huevo-revuelto-con-toast-de-cacahuate-y-aguacate.jpg
 Sándwich de Jamón y Queso con Huevo,Desayuno,suelto,denso,salado,,Pan de caja,Pan tostado,54,81,principal,plato,,sandwich-de-jamon-y-queso-con-huevo.jpg
 Sándwich de Jamón y Queso con Huevo,Desayuno,suelto,denso,salado,,Pechuga de pavo,Jamón de pechuga de pavo,42,180,principal,plato,,sandwich-de-jamon-y-queso-con-huevo.jpg
-Sándwich de Jamón y Queso con Huevo,Desayuno,suelto,denso,salado,,Queso Oaxaca,Queso Oaxaca,30,45,principal,plato,,sandwich-de-jamon-y-queso-con-huevo.jpg
+Sándwich de Jamón y Queso con Huevo,Desayuno,suelto,denso,salado,,Queso Mozzarella semidescremado,Queso mozzarella,30,120,principal,plato,,sandwich-de-jamon-y-queso-con-huevo.jpg
 Sándwich de Jamón y Queso con Huevo,Desayuno,suelto,denso,salado,,Huevo entero fresco,Huevo revuelto,132,300,principal,acompañamiento,,sandwich-de-jamon-y-queso-con-huevo.jpg
 Sándwich de Jamón y Queso con Huevo,Desayuno,suelto,denso,salado,,Durazno amarillo,Durazno,76,200,principal,acompañamiento,,sandwich-de-jamon-y-queso-con-huevo.jpg
 Pollo Deshebrado con Alubias,Desayuno,suelto,denso,salado,,Pechuga de pollo deshuesada sin piel,Pollo deshebrado,120,350,principal,plato,,pollo-deshebrado-con-alubias.jpg
@@ -222,8 +222,8 @@ Bowl de Frijoles con Aguacate,Desayuno,suelto,medio,salado,,Queso fresco,Queso f
 Bowl de Frijoles con Aguacate,Desayuno,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,bowl-de-frijoles-con-aguacate.jpg
 Bowl de Frijoles con Aguacate,Desayuno,suelto,medio,salado,,Pico de gallo,Pico de gallo,60,,sub-receta,plato,,bowl-de-frijoles-con-aguacate.jpg
 Bowl de Frijoles con Aguacate,Desayuno,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,bowl-de-frijoles-con-aguacate.jpg
-Bowl de Frijoles con Aguacate,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Tostada horneada,40,100,principal,acompañamiento,,bowl-de-frijoles-con-aguacate.jpg
-Tostadas de Atún,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Tostada horneada,40,100,principal,plato,,tostadas-de-atun.jpg
+Bowl de Frijoles con Aguacate,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Tostada horneada,40,52,principal,acompañamiento,,bowl-de-frijoles-con-aguacate.jpg
+Tostadas de Atún,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Tostada horneada,40,52,principal,plato,,tostadas-de-atun.jpg
 Tostadas de Atún,Desayuno,suelto,medio,salado,,Atún en agua drenado,Atún,100,200,principal,plato,,tostadas-de-atun.jpg
 Tostadas de Atún,Desayuno,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,tostadas-de-atun.jpg
 Tostadas de Atún,Desayuno,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga, jitomate, cebolla)",80,,guarnicion,plato,PENDIENTE crear Verduras mixtas,tostadas-de-atun.jpg
@@ -251,7 +251,7 @@ Crepas Saladas de Jamón y Queso,Desayuno,bloque,medio,salado,1.5,Leche descrema
 Crepas Saladas de Jamón y Queso,Desayuno,bloque,medio,salado,1.5,Huevo entero fresco,Huevo,88,300,principal,plato,BLOQUE ligante masa,crepas-saladas-de-jamon-y-queso.jpg
 Crepas Saladas de Jamón y Queso,Desayuno,bloque,medio,salado,1.5,Sal,Pizca de sal,1,,condimento,plato,,crepas-saladas-de-jamon-y-queso.jpg
 Crepas Saladas de Jamón y Queso,Desayuno,bloque,medio,salado,1.5,Pechuga de pavo,Jamón de pechuga de pavo,63,180,principal,acompañamiento,,crepas-saladas-de-jamon-y-queso.jpg
-Crepas Saladas de Jamón y Queso,Desayuno,bloque,medio,salado,1.5,Queso Oaxaca,Queso Oaxaca,45,60,principal,acompañamiento,,crepas-saladas-de-jamon-y-queso.jpg
+Crepas Saladas de Jamón y Queso,Desayuno,bloque,medio,salado,1.5,Queso Mozzarella semidescremado,Queso mozzarella,45,120,principal,acompañamiento,,crepas-saladas-de-jamon-y-queso.jpg
 Crepas Saladas de Jamón y Queso,Desayuno,bloque,medio,salado,1.5,Verduras mixtas,"Verduras (champiñón, espinaca)",80,,guarnicion,acompañamiento,PENDIENTE crear Verduras mixtas,crepas-saladas-de-jamon-y-queso.jpg
 Enfrijoladas,Desayuno,suelto,medio,salado,,Tortilla de maíz,Tortilla de maíz,90,180,principal,plato,,enfrijoladas.jpg
 Enfrijoladas,Desayuno,suelto,medio,salado,,Frijol molido,Frijol molido,150,250,principal,plato,frijol licuado que baña,enfrijoladas.jpg
@@ -270,18 +270,18 @@ Panela a la Plancha con Salsa,Desayuno,suelto,medio,salado,,Frijol promedio coci
 Panela a la Plancha con Salsa,Desayuno,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,acompañamiento,,panela-a-la-plancha-con-salsa.jpg
 Panela a la Plancha con Salsa,Desayuno,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,panela-a-la-plancha-con-salsa.jpg
 Panela a la Plancha con Salsa,Desayuno,suelto,medio,salado,,Tortilla de maíz,Tortilla de maíz,60,180,principal,acompañamiento,,panela-a-la-plancha-con-salsa.jpg
-Chilaquiles con Pollo,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Totopos horneados,40,100,principal,plato,,chilaquiles-con-pollo.jpg
+Chilaquiles con Pollo,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Totopos horneados,40,52,principal,plato,,chilaquiles-con-pollo.jpg
 Chilaquiles con Pollo,Desayuno,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo deshebrado,90,350,principal,plato,,chilaquiles-con-pollo.jpg
 Chilaquiles con Pollo,Desayuno,suelto,medio,salado,,Queso fresco,Queso fresco,30,60,principal,plato,,chilaquiles-con-pollo.jpg
 Chilaquiles con Pollo,Desayuno,suelto,medio,salado,,Salsa verde,Salsa verde,90,,sub-receta,plato,,chilaquiles-con-pollo.jpg
 Chilaquiles con Pollo,Desayuno,suelto,medio,salado,,Crema ácida,Crema,15,24,fijo,plato,,chilaquiles-con-pollo.jpg
 Chilaquiles con Pollo,Desayuno,suelto,medio,salado,,Aguacate Hass,Aguacate,31,94,principal,acompañamiento,,chilaquiles-con-pollo.jpg
-Chilaquiles con Pollo,Desayuno,suelto,medio,salado,,Cebolla blanca rebanada,Cebolla,20,,guarnicion,plato,,chilaquiles-con-pollo.jpg
-Reina Pepiada de Atún en Tostadas,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,plato,,reina-pepiada-de-atun-en-tostadas.jpg
+Chilaquiles con Pollo,Desayuno,suelto,medio,salado,,Verduras mixtas,Verduras (cebolla),20,,guarnicion,plato,,chilaquiles-con-pollo.jpg
+Reina Pepiada de Atún en Tostadas,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,52,principal,plato,,reina-pepiada-de-atun-en-tostadas.jpg
 Reina Pepiada de Atún en Tostadas,Desayuno,suelto,medio,salado,,Atún en agua drenado,Atún,100,200,principal,plato,,reina-pepiada-de-atun-en-tostadas.jpg
 Reina Pepiada de Atún en Tostadas,Desayuno,suelto,medio,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,,reina-pepiada-de-atun-en-tostadas.jpg
 Reina Pepiada de Atún en Tostadas,Desayuno,suelto,medio,salado,,Mayonesa light,Mayonesa light,15,20,fijo,plato,,reina-pepiada-de-atun-en-tostadas.jpg
-Reina Pepiada de Atún en Tostadas,Desayuno,suelto,medio,salado,,Cebolla blanca rebanada,Cebolla,15,,guarnicion,plato,,reina-pepiada-de-atun-en-tostadas.jpg
+Reina Pepiada de Atún en Tostadas,Desayuno,suelto,medio,salado,,Verduras mixtas,Verduras (cebolla),15,,guarnicion,plato,,reina-pepiada-de-atun-en-tostadas.jpg
 Reina Pepiada de Atún en Tostadas,Desayuno,suelto,medio,salado,,Cilantro picado crudo,Cilantro,5,,condimento,plato,,reina-pepiada-de-atun-en-tostadas.jpg
 Reina Pepiada de Atún en Tostadas,Desayuno,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,reina-pepiada-de-atun-en-tostadas.jpg
 Huevos Rancheros,Desayuno,suelto,medio,salado,,Tortilla de maíz,Tortilla de maíz,60,180,principal,plato,,huevos-rancheros.jpg
@@ -295,20 +295,20 @@ Huevos Divorciados,Desayuno,suelto,medio,salado,,Huevo entero fresco,Huevo estre
 Huevos Divorciados,Desayuno,suelto,medio,salado,,Salsa roja,Salsa roja,60,,sub-receta,plato,,huevos-divorciados.jpg
 Huevos Divorciados,Desayuno,suelto,medio,salado,,Salsa verde,Salsa verde,60,,sub-receta,plato,,huevos-divorciados.jpg
 Huevos Divorciados,Desayuno,suelto,medio,salado,,Frijol promedio cocido,Frijoles de la olla,120,300,principal,acompañamiento,,huevos-divorciados.jpg
-Huevos Divorciados,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Totopos horneados,20,100,principal,plato,,huevos-divorciados.jpg
+Huevos Divorciados,Desayuno,suelto,medio,salado,,Tostada de maíz horneada,Totopos horneados,20,52,principal,plato,,huevos-divorciados.jpg
 Huevos Pochados sobre Toast de Aguacate,Desayuno,suelto,medio,salado,,Pan de caja integral,Pan tostado integral,50,75,principal,plato,,huevos-pochados-sobre-toast-de-aguacate.jpg
 Huevos Pochados sobre Toast de Aguacate,Desayuno,suelto,medio,salado,,Aguacate Hass,Aguacate machacado,47,94,principal,plato,,huevos-pochados-sobre-toast-de-aguacate.jpg
 Huevos Pochados sobre Toast de Aguacate,Desayuno,suelto,medio,salado,,Huevo entero fresco,Huevo pochado,88,300,principal,plato,,huevos-pochados-sobre-toast-de-aguacate.jpg
 Huevos Pochados sobre Toast de Aguacate,Desayuno,suelto,medio,salado,,Verduras mixtas,"Verduras (espinaca, jitomate cherry)",60,,guarnicion,plato,PENDIENTE crear Verduras mixtas,huevos-pochados-sobre-toast-de-aguacate.jpg
 Huevos Pochados sobre Toast de Aguacate,Desayuno,suelto,medio,salado,,Chile cayena en polvo,Chile cayena en polvo,1,,condimento,plato,PENDIENTE crear en catalogo,huevos-pochados-sobre-toast-de-aguacate.jpg
 Huevos Pochados sobre Toast de Aguacate,Desayuno,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,huevos-pochados-sobre-toast-de-aguacate.jpg
-Entomatadas de Pollo,Desayuno,suelto,medio,salado,,Tortilla de maíz,Tortilla de maíz,90,180,principal,plato,,entomatadas-de-pollo.jpg
-Entomatadas de Pollo,Desayuno,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo deshebrado,90,350,principal,plato,,entomatadas-de-pollo.jpg
-Entomatadas de Pollo,Desayuno,suelto,medio,salado,,Salsa roja,Salsa roja,120,,sub-receta,plato,usa salsa roja existente (es salsa de jitomate),entomatadas-de-pollo.jpg
-Entomatadas de Pollo,Desayuno,suelto,medio,salado,,Queso fresco,Queso fresco,40,60,principal,plato,,entomatadas-de-pollo.jpg
-Entomatadas de Pollo,Desayuno,suelto,medio,salado,,Crema ácida,Crema,15,24,fijo,plato,,entomatadas-de-pollo.jpg
-Entomatadas de Pollo,Desayuno,suelto,medio,salado,,Cebolla blanca rebanada,Cebolla,20,,guarnicion,plato,,entomatadas-de-pollo.jpg
-Entomatadas de Pollo,Desayuno,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,acompañamiento,,entomatadas-de-pollo.jpg
+Entomatadas de Pollo,Comida,suelto,medio,salado,,Tortilla de maíz,Tortilla de maíz,90,180,principal,plato,,entomatadas-de-pollo.jpg
+Entomatadas de Pollo,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo deshebrado,90,350,principal,plato,,entomatadas-de-pollo.jpg
+Entomatadas de Pollo,Comida,suelto,medio,salado,,Salsa roja,Salsa roja,120,,sub-receta,plato,usa salsa roja existente (es salsa de jitomate),entomatadas-de-pollo.jpg
+Entomatadas de Pollo,Comida,suelto,medio,salado,,Queso fresco,Queso fresco,40,60,principal,plato,,entomatadas-de-pollo.jpg
+Entomatadas de Pollo,Comida,suelto,medio,salado,,Crema ácida,Crema,15,24,fijo,plato,,entomatadas-de-pollo.jpg
+Entomatadas de Pollo,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (cebolla, lechuga)",60,,guarnicion,plato,,entomatadas-de-pollo.jpg
+Entomatadas de Pollo,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,acompañamiento,,entomatadas-de-pollo.jpg
 Ensalada de Fruta con Yogurt,Desayuno,suelto,ligero,dulce,,Papaya picada,Papaya,70,250,principal,plato,,ensalada-de-fruta-con-yogurt.jpg
 Ensalada de Fruta con Yogurt,Desayuno,suelto,ligero,dulce,,Piña picada,Piña,60,200,principal,plato,,ensalada-de-fruta-con-yogurt.jpg
 Ensalada de Fruta con Yogurt,Desayuno,suelto,ligero,dulce,,Fresa rebanada,Fresas,60,250,principal,plato,,ensalada-de-fruta-con-yogurt.jpg
@@ -323,7 +323,7 @@ Pan Pita con Hummus y Pollo,Desayuno,suelto,medio,salado,,Aceite de oliva,Aceite
 Pan Pita con Hummus y Pollo,Desayuno,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,pan-pita-con-hummus-y-pollo.jpg
 Sándwich de Pavo y Aguacate,Desayuno,suelto,medio,salado,,Pan de caja integral,Pan integral,50,75,principal,plato,,sandwich-de-pavo-y-aguacate.jpg
 Sándwich de Pavo y Aguacate,Desayuno,suelto,medio,salado,,Pechuga de pavo,Jamón de pechuga de pavo,63,180,principal,plato,,sandwich-de-pavo-y-aguacate.jpg
-Sándwich de Pavo y Aguacate,Desayuno,suelto,medio,salado,,Queso Panela,Queso panela,40,60,principal,plato,,sandwich-de-pavo-y-aguacate.jpg
+Sándwich de Pavo y Aguacate,Desayuno,suelto,medio,salado,,Queso fresco de cabra,Queso fresco de cabra,40,160,principal,plato,,sandwich-de-pavo-y-aguacate.jpg
 Sándwich de Pavo y Aguacate,Desayuno,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,sandwich-de-pavo-y-aguacate.jpg
 Sándwich de Pavo y Aguacate,Desayuno,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga, jitomate)",60,,guarnicion,plato,PENDIENTE crear Verduras mixtas,sandwich-de-pavo-y-aguacate.jpg
 Sándwich de Pavo y Aguacate,Desayuno,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,sandwich-de-pavo-y-aguacate.jpg
@@ -337,12 +337,12 @@ Pollo Salteado Asiático con Verduras,Comida,suelto,medio,salado,,Sal,Pizca de s
 Pollo Salteado Asiático con Verduras,Comida,suelto,medio,salado,,Arroz cocido,Arroz blanco,150,450,principal,acompañamiento,,pollo-salteado-asiatico-con-verduras.jpg
 Corte de Res con Papas y Espárragos,Comida,suelto,denso,salado,,Sirloin,Corte de res (sirloin),180,300,principal,plato,,corte-de-res-con-papas-y-esparragos.jpg
 Corte de Res con Papas y Espárragos,Comida,suelto,denso,salado,,Papa al horno con cáscara,Papas gajo al horno,150,400,principal,plato,,corte-de-res-con-papas-y-esparragos.jpg
-Corte de Res con Papas y Espárragos,Comida,suelto,denso,salado,,Espárragos,Espárragos,90,,guarnicion,plato,,corte-de-res-con-papas-y-esparragos.jpg
+Corte de Res con Papas y Espárragos,Comida,suelto,denso,salado,,Verduras mixtas,Verduras (espárragos),90,,guarnicion,plato,,corte-de-res-con-papas-y-esparragos.jpg
 Corte de Res con Papas y Espárragos,Comida,suelto,denso,salado,,Aceite de oliva,Aceite de oliva,5,,fijo,plato,,corte-de-res-con-papas-y-esparragos.jpg
 Corte de Res con Papas y Espárragos,Comida,suelto,denso,salado,,Sal,Pizca de sal,1,,condimento,plato,,corte-de-res-con-papas-y-esparragos.jpg
 Corte de Res con Papas y Espárragos,Comida,suelto,denso,salado,,Pimienta,Pimienta,1,,condimento,plato,,corte-de-res-con-papas-y-esparragos.jpg
 Camarones al Ajillo con Brócoli y Arroz,Comida,suelto,medio,salado,,Camarón cocido,Camarones,160,320,principal,plato,,camarones-al-ajillo-con-brocoli-y-arroz.jpg
-Camarones al Ajillo con Brócoli y Arroz,Comida,suelto,medio,salado,,Brócoli cocido,Brócoli,120,,guarnicion,plato,,camarones-al-ajillo-con-brocoli-y-arroz.jpg
+Camarones al Ajillo con Brócoli y Arroz,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (brócoli),120,,guarnicion,plato,,camarones-al-ajillo-con-brocoli-y-arroz.jpg
 Camarones al Ajillo con Brócoli y Arroz,Comida,suelto,medio,salado,,Aceite de oliva,Aceite de oliva,5,,fijo,plato,,camarones-al-ajillo-con-brocoli-y-arroz.jpg
 Camarones al Ajillo con Brócoli y Arroz,Comida,suelto,medio,salado,,Ajo,Ajo,5,,condimento,plato,,camarones-al-ajillo-con-brocoli-y-arroz.jpg
 Camarones al Ajillo con Brócoli y Arroz,Comida,suelto,medio,salado,,Limón,Limón,10,,condimento,plato,,camarones-al-ajillo-con-brocoli-y-arroz.jpg
@@ -376,7 +376,7 @@ Filete de Pescado con Papas y Ensalada,Comida,suelto,medio,salado,,Verduras mixt
 Filete de Pescado con Papas y Ensalada,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,31,94,principal,acompañamiento,,filete-de-pescado-con-papas-y-ensalada.jpg
 Pasta Cremosa con Pollo y Brócoli,Comida,suelto,medio,salado,,Pasta cocida,Pasta,180,400,principal,plato,,pasta-cremosa-con-pollo-y-brocoli.jpg
 Pasta Cremosa con Pollo y Brócoli,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo en trozos,130,350,principal,plato,,pasta-cremosa-con-pollo-y-brocoli.jpg
-Pasta Cremosa con Pollo y Brócoli,Comida,suelto,medio,salado,,Brócoli cocido,Brócoli,90,,guarnicion,plato,,pasta-cremosa-con-pollo-y-brocoli.jpg
+Pasta Cremosa con Pollo y Brócoli,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (brócoli),90,,guarnicion,plato,,pasta-cremosa-con-pollo-y-brocoli.jpg
 Pasta Cremosa con Pollo y Brócoli,Comida,suelto,medio,salado,,Elote amarillo desgranado cocido,Elote,50,,guarnicion,plato,,pasta-cremosa-con-pollo-y-brocoli.jpg
 Pasta Cremosa con Pollo y Brócoli,Comida,suelto,medio,salado,,Queso crema light,Queso crema light,35,45,principal,plato,,pasta-cremosa-con-pollo-y-brocoli.jpg
 Pasta Cremosa con Pollo y Brócoli,Comida,suelto,medio,salado,,Leche descremada,Leche,60,350,principal,plato,,pasta-cremosa-con-pollo-y-brocoli.jpg
@@ -399,7 +399,7 @@ Picadillo de Res con Verduras,Comida,suelto,medio,salado,,Verduras mixtas,"Verdu
 Picadillo de Res con Verduras,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,acompañamiento,,picadillo-de-res-con-verduras.jpg
 Picadillo de Res con Verduras,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,picadillo-de-res-con-verduras.jpg
 Picadillo de Res con Verduras,Comida,suelto,medio,salado,,Pimienta,Pimienta,1,,condimento,plato,,picadillo-de-res-con-verduras.jpg
-Picadillo de Res con Verduras,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,acompañamiento,,picadillo-de-res-con-verduras.jpg
+Picadillo de Res con Verduras,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,52,principal,acompañamiento,,picadillo-de-res-con-verduras.jpg
 Ensalada de Atún Picada,Comida,suelto,medio,salado,,Atún en agua drenado,Atún,130,200,principal,plato,,ensalada-de-atun-picada.jpg
 Ensalada de Atún Picada,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga picada, pepino, cebolla morada)",160,,guarnicion,plato,,ensalada-de-atun-picada.jpg
 Ensalada de Atún Picada,Comida,suelto,medio,salado,,Elote amarillo desgranado cocido,Elote,60,,guarnicion,plato,,ensalada-de-atun-picada.jpg
@@ -407,7 +407,7 @@ Ensalada de Atún Picada,Comida,suelto,medio,salado,,"Yoghurt Oikos estilo grieg
 Ensalada de Atún Picada,Comida,suelto,medio,salado,,Mayonesa light,Mayonesa light,15,24,fijo,plato,,ensalada-de-atun-picada.jpg
 Ensalada de Atún Picada,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,ensalada-de-atun-picada.jpg
 Ensalada de Atún Picada,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,94,140,principal,acompañamiento,,ensalada-de-atun-picada.jpg
-Ensalada de Atún Picada,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,acompañamiento,,ensalada-de-atun-picada.jpg
+Ensalada de Atún Picada,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,52,principal,acompañamiento,,ensalada-de-atun-picada.jpg
 Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Filete de salmón,Salmón glaseado,150,300,principal,plato,,bowl-de-salmon-glaseado-con-mango.jpg
 Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Arroz cocido,Arroz blanco,150,450,principal,plato,,bowl-de-salmon-glaseado-con-mango.jpg
 Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Glaseado de miel y soya,Glaseado de miel y soya,30,,sub-receta,plato,,bowl-de-salmon-glaseado-con-mango.jpg
@@ -419,7 +419,7 @@ Bowl de Salmón Glaseado con Mango,Comida,suelto,medio,salado,,Limón,Limón,5,,
 Salmón con Ensalada de Papa,Comida,suelto,medio,salado,,Filete de salmón,Salmón a la plancha,150,300,principal,plato,,salmon-con-ensalada-de-papa.jpg
 Salmón con Ensalada de Papa,Comida,suelto,medio,salado,,Papa de cambray,Papa cambray en cubos,180,400,principal,plato,,salmon-con-ensalada-de-papa.jpg
 Salmón con Ensalada de Papa,Comida,suelto,medio,salado,,Arúgula,Arúgula,30,,guarnicion,plato,,salmon-con-ensalada-de-papa.jpg
-Salmón con Ensalada de Papa,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,20,,guarnicion,plato,,salmon-con-ensalada-de-papa.jpg
+Salmón con Ensalada de Papa,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (cebolla morada),20,,guarnicion,plato,,salmon-con-ensalada-de-papa.jpg
 Salmón con Ensalada de Papa,Comida,suelto,medio,salado,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego natural,60,300,principal,plato,,salmon-con-ensalada-de-papa.jpg
 Salmón con Ensalada de Papa,Comida,suelto,medio,salado,,Mayonesa light,Mayonesa light,15,24,fijo,plato,,salmon-con-ensalada-de-papa.jpg
 Salmón con Ensalada de Papa,Comida,suelto,medio,salado,,Mostaza Dijón,Mostaza Dijón,5,,condimento,plato,,salmon-con-ensalada-de-papa.jpg
@@ -434,19 +434,19 @@ Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Cilantro picado crudo
 Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Limón,Limón,5,,condimento,plato,,pescado-con-ensalada-de-quinoa.jpg
 Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Aceite de oliva,Aceite de oliva,5,,fijo,plato,,pescado-con-ensalada-de-quinoa.jpg
 Pescado con Ensalada de Quinoa,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,pescado-con-ensalada-de-quinoa.jpg
-Tostadas de Pollo,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,60,100,principal,plato,,tostadas-de-pollo.jpg
+Tostadas de Pollo,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,60,52,principal,plato,,tostadas-de-pollo.jpg
 Tostadas de Pollo,Comida,suelto,medio,salado,,Frijol molido,Frijoles molidos,90,250,principal,plato,,tostadas-de-pollo.jpg
 Tostadas de Pollo,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo deshebrado,120,350,principal,plato,,tostadas-de-pollo.jpg
-Tostadas de Pollo,Comida,suelto,medio,salado,,Lechuga,Lechuga,40,,guarnicion,plato,,tostadas-de-pollo.jpg
+Tostadas de Pollo,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (lechuga),40,,guarnicion,plato,,tostadas-de-pollo.jpg
 Tostadas de Pollo,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,tostadas-de-pollo.jpg
 Tostadas de Pollo,Comida,suelto,medio,salado,,Queso fresco,Queso fresco rallado,30,60,principal,plato,,tostadas-de-pollo.jpg
 Tostadas de Pollo,Comida,suelto,medio,salado,,Crema ácida,Crema,15,24,fijo,plato,,tostadas-de-pollo.jpg
 Tostadas de Pollo,Comida,suelto,medio,salado,,Salsa verde,Salsa verde,60,,sub-receta,plato,,tostadas-de-pollo.jpg
-Tostadas de Tinga de Pollo,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,60,100,principal,plato,,tostadas-de-tinga-de-pollo.jpg
+Tostadas de Tinga de Pollo,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,60,52,principal,plato,,tostadas-de-tinga-de-pollo.jpg
 Tostadas de Tinga de Pollo,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo deshebrado,130,350,principal,plato,,tostadas-de-tinga-de-pollo.jpg
 Tostadas de Tinga de Pollo,Comida,suelto,medio,salado,,Salsa Tinga,Salsa tinga,80,,sub-receta,plato,,tostadas-de-tinga-de-pollo.jpg
 Tostadas de Tinga de Pollo,Comida,suelto,medio,salado,,Guacamole,Guacamole,80,,sub-receta,plato,,tostadas-de-tinga-de-pollo.jpg
-Tostadas de Tinga de Pollo,Comida,suelto,medio,salado,,Lechuga,Lechuga,40,,guarnicion,plato,,tostadas-de-tinga-de-pollo.jpg
+Tostadas de Tinga de Pollo,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (lechuga),40,,guarnicion,plato,,tostadas-de-tinga-de-pollo.jpg
 Tostadas de Tinga de Pollo,Comida,suelto,medio,salado,,Queso fresco,Queso fresco,30,60,principal,plato,,tostadas-de-tinga-de-pollo.jpg
 Tostadas de Tinga de Pollo,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,tostadas-de-tinga-de-pollo.jpg
 Sopa de Lentejas con Pollo,Comida,suelto,medio,salado,,Lenteja cocida,Lentejas,150,300,principal,plato,,sopa-de-lentejas-con-pollo.jpg
@@ -459,11 +459,11 @@ Pimientos Rellenos al Horno,Comida,suelto,denso,salado,,Pimiento fresco,Pimiento
 Pimientos Rellenos al Horno,Comida,suelto,denso,salado,,Molida de sirloin,Carne molida magra,150,300,principal,plato,relleno,pimientos-rellenos-al-horno.jpg
 Pimientos Rellenos al Horno,Comida,suelto,denso,salado,,Arroz cocido,Arroz blanco,120,450,principal,plato,en el relleno,pimientos-rellenos-al-horno.jpg
 Pimientos Rellenos al Horno,Comida,suelto,denso,salado,,Verduras mixtas,"Verduras (jitomate, cebolla, elote)",80,,guarnicion,plato,PENDIENTE crear Verduras mixtas,pimientos-rellenos-al-horno.jpg
-Pimientos Rellenos al Horno,Comida,suelto,denso,salado,,Queso Oaxaca,Queso Oaxaca gratinado,40,60,principal,plato,,pimientos-rellenos-al-horno.jpg
+Pimientos Rellenos al Horno,Comida,suelto,denso,salado,,Queso Mozzarella semidescremado,Queso mozzarella,40,120,principal,plato,,pimientos-rellenos-al-horno.jpg
 Pimientos Rellenos al Horno,Comida,suelto,denso,salado,,Sal,Pizca de sal,1,,condimento,plato,,pimientos-rellenos-al-horno.jpg
 Pimientos Rellenos al Horno,Comida,suelto,denso,salado,,Arroz cocido,Arroz blanco,150,450,principal,acompañamiento,al lado,pimientos-rellenos-al-horno.jpg
 Burger Bowl,Comida,suelto,medio,salado,,Molida de sirloin,Carne molida magra,150,300,principal,plato,,burger-bowl.jpg
-Burger Bowl,Comida,suelto,medio,salado,,Espinaca cruda,Espinaca,60,,guarnicion,plato,,burger-bowl.jpg
+Burger Bowl,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (espinaca),60,,guarnicion,plato,,burger-bowl.jpg
 Burger Bowl,Comida,suelto,medio,salado,,Papa al horno con cáscara,Papas gajo al horno,150,400,principal,plato,,burger-bowl.jpg
 Burger Bowl,Comida,suelto,medio,salado,,Pico de gallo,Pico de gallo,60,,sub-receta,plato,,burger-bowl.jpg
 Burger Bowl,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,,burger-bowl.jpg
@@ -487,7 +487,7 @@ Bistec con Chimichurri,Comida,suelto,denso,salado,,Plátano Macho rebanado,Plát
 Bistec con Chimichurri,Comida,suelto,denso,salado,,Verduras mixtas,"Verduras (lechuga, jitomate, pepino)",100,,guarnicion,acompañamiento,PENDIENTE crear Verduras mixtas,bistec-con-chimichurri.jpg
 Bistec con Chimichurri,Comida,suelto,denso,salado,,Aguacate Hass,Aguacate,47,94,principal,acompañamiento,,bistec-con-chimichurri.jpg
 Ensalada de Pollo y Fresas,Comida,suelto,medio,salado,,Pechuga de pollo sin piel a la plancha,Pollo a la plancha,150,350,principal,plato,,ensalada-de-pollo-y-fresas.jpg
-Ensalada de Pollo y Fresas,Comida,suelto,medio,salado,,Lechuga,Mezcla de lechugas,120,,guarnicion,plato,,ensalada-de-pollo-y-fresas.jpg
+Ensalada de Pollo y Fresas,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (mezcla de lechugas),120,,guarnicion,plato,,ensalada-de-pollo-y-fresas.jpg
 Ensalada de Pollo y Fresas,Comida,suelto,medio,salado,,Fresa rebanada,Fresas,100,250,principal,plato,,ensalada-de-pollo-y-fresas.jpg
 Ensalada de Pollo y Fresas,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,,ensalada-de-pollo-y-fresas.jpg
 Ensalada de Pollo y Fresas,Comida,suelto,medio,salado,,Queso Feta,Queso feta,40,60,principal,plato,,ensalada-de-pollo-y-fresas.jpg
@@ -496,7 +496,7 @@ Ensalada de Pollo y Fresas,Comida,suelto,medio,salado,,Vinagreta Balsámica,Vina
 Poke Bowl de Atún,Comida,suelto,medio,salado,,Atún fresco,Atún fresco,150,300,principal,plato,,poke-bowl-de-atun.jpg
 Poke Bowl de Atún,Comida,suelto,medio,salado,,Arroz cocido,Arroz blanco,150,450,principal,plato,,poke-bowl-de-atun.jpg
 Poke Bowl de Atún,Comida,suelto,medio,salado,,Mango picado,Mango,70,200,principal,plato,,poke-bowl-de-atun.jpg
-Poke Bowl de Atún,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,60,,guarnicion,plato,,poke-bowl-de-atun.jpg
+Poke Bowl de Atún,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (pepino),60,,guarnicion,plato,,poke-bowl-de-atun.jpg
 Poke Bowl de Atún,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,,poke-bowl-de-atun.jpg
 Poke Bowl de Atún,Comida,suelto,medio,salado,,Mayonesa light,Mayonesa light,15,24,fijo,plato,,poke-bowl-de-atun.jpg
 Poke Bowl de Atún,Comida,suelto,medio,salado,,Salsa sriracha,Sriracha,5,,condimento,plato,PENDIENTE crear,poke-bowl-de-atun.jpg
@@ -505,7 +505,7 @@ Camarones Glaseados con Puré,Comida,suelto,medio,salado,,Camarón cocido,Camaro
 Camarones Glaseados con Puré,Comida,suelto,medio,salado,,Glaseado de miel y soya,Glaseado de miel y soya,30,,sub-receta,plato,,camarones-glaseados-con-pure.jpg
 Camarones Glaseados con Puré,Comida,suelto,medio,salado,,Puré de papa,Puré de papa,180,400,principal,plato,,camarones-glaseados-con-pure.jpg
 Camarones Glaseados con Puré,Comida,suelto,medio,salado,,Elote amarillo cocido,Elote,80,,guarnicion,plato,,camarones-glaseados-con-pure.jpg
-Camarones Glaseados con Puré,Comida,suelto,medio,salado,,Ejotes cocidos picados,Ejotes,70,,guarnicion,plato,,camarones-glaseados-con-pure.jpg
+Camarones Glaseados con Puré,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (ejotes),70,,guarnicion,plato,,camarones-glaseados-con-pure.jpg
 Camarones Glaseados con Puré,Comida,suelto,medio,salado,,Paprika,Paprika,1,,condimento,plato,,camarones-glaseados-con-pure.jpg
 Camarones Glaseados con Puré,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,camarones-glaseados-con-pure.jpg
 Milanesa de Pollo al Horno con Ensalada,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Milanesa de pollo,160,350,principal,plato,,milanesa-de-pollo-al-horno-con-ensalada.jpg
@@ -553,7 +553,7 @@ Espagueti a la Boloñesa,Comida,suelto,medio,salado,,Espagueti cocido,Espagueti,
 Espagueti a la Boloñesa,Comida,suelto,medio,salado,,Molida de sirloin,Carne molida magra,130,300,principal,plato,,espagueti-a-la-bolonesa.jpg
 Espagueti a la Boloñesa,Comida,suelto,medio,salado,,Puré de jitomate,Salsa de tomate,120,200,principal,plato,,espagueti-a-la-bolonesa.jpg
 Espagueti a la Boloñesa,Comida,suelto,medio,salado,,Zanahoria rallada cruda,Zanahoria,30,,guarnicion,plato,,espagueti-a-la-bolonesa.jpg
-Espagueti a la Boloñesa,Comida,suelto,medio,salado,,Cebolla blanca rebanada,Cebolla,30,,guarnicion,plato,,espagueti-a-la-bolonesa.jpg
+Espagueti a la Boloñesa,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (cebolla),30,,guarnicion,plato,,espagueti-a-la-bolonesa.jpg
 Espagueti a la Boloñesa,Comida,suelto,medio,salado,,Queso Parmesano,Parmesano,10,20,fijo,plato,,espagueti-a-la-bolonesa.jpg
 Espagueti a la Boloñesa,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,espagueti-a-la-bolonesa.jpg
 Salpicón de Res,Comida,suelto,medio,salado,,Falda de res,Res deshebrada,150,300,principal,plato,,salpicon-de-res.jpg
@@ -563,7 +563,7 @@ Salpicón de Res,Comida,suelto,medio,salado,,Cilantro picado crudo,Cilantro,5,,c
 Salpicón de Res,Comida,suelto,medio,salado,,Chile serrano,Chile serrano,5,,condimento,plato,,salpicon-de-res.jpg
 Salpicón de Res,Comida,suelto,medio,salado,,Limón,Limón,10,,condimento,plato,,salpicon-de-res.jpg
 Salpicón de Res,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,salpicon-de-res.jpg
-Salpicón de Res,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,acompañamiento,,salpicon-de-res.jpg
+Salpicón de Res,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,52,principal,acompañamiento,,salpicon-de-res.jpg
 Caldo de Res con Verduras,Comida,suelto,medio,salado,,Chambarete de res,Res en trozos,150,320,principal,plato,,caldo-de-res-con-verduras.jpg
 Caldo de Res con Verduras,Comida,suelto,medio,salado,,Elote amarillo cocido,Elote en mazorca,80,,guarnicion,plato,,caldo-de-res-con-verduras.jpg
 Caldo de Res con Verduras,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (zanahoria, calabacita, papa, chayote)",200,,guarnicion,plato,PENDIENTE crear Verduras mixtas,caldo-de-res-con-verduras.jpg
@@ -588,7 +588,7 @@ Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Chile cayena en polvo,Chi
 Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Cilantro picado crudo,Cilantro,3,,condimento,plato,,ceviche-de-atun-con-mango.jpg
 Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Limón,Limón,15,,condimento,plato,,ceviche-de-atun-con-mango.jpg
 Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,ceviche-de-atun-con-mango.jpg
-Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,acompañamiento,,ceviche-de-atun-con-mango.jpg
+Ceviche de Atún con Mango,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,52,principal,acompañamiento,,ceviche-de-atun-con-mango.jpg
 Ceviche de Pescado,Comida,suelto,medio,salado,,Filete de pescado,Pescado,150,350,principal,plato,,ceviche-de-pescado.jpg
 Ceviche de Pescado,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, jitomate, cebolla)",150,,guarnicion,plato,,ceviche-de-pescado.jpg
 Ceviche de Pescado,Comida,suelto,medio,salado,,Jugo de tomate,Jugo de tomate,80,,fijo,plato,,ceviche-de-pescado.jpg
@@ -598,7 +598,7 @@ Ceviche de Pescado,Comida,suelto,medio,salado,,Chile cayena en polvo,Chile cayen
 Ceviche de Pescado,Comida,suelto,medio,salado,,Cilantro picado crudo,Cilantro,3,,condimento,plato,,ceviche-de-pescado.jpg
 Ceviche de Pescado,Comida,suelto,medio,salado,,Limón,Limón,15,,condimento,plato,,ceviche-de-pescado.jpg
 Ceviche de Pescado,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,ceviche-de-pescado.jpg
-Ceviche de Pescado,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,acompañamiento,,ceviche-de-pescado.jpg
+Ceviche de Pescado,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,52,principal,acompañamiento,,ceviche-de-pescado.jpg
 Ceviche de Camarón,Comida,suelto,medio,salado,,Camarón cocido,Camarón,150,320,principal,plato,,ceviche-de-camaron.jpg
 Ceviche de Camarón,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, jitomate, cebolla)",150,,guarnicion,plato,,ceviche-de-camaron.jpg
 Ceviche de Camarón,Comida,suelto,medio,salado,,Jugo de tomate,Jugo de tomate,80,,fijo,plato,,ceviche-de-camaron.jpg
@@ -608,19 +608,19 @@ Ceviche de Camarón,Comida,suelto,medio,salado,,Chile cayena en polvo,Chile caye
 Ceviche de Camarón,Comida,suelto,medio,salado,,Cilantro picado crudo,Cilantro,3,,condimento,plato,,ceviche-de-camaron.jpg
 Ceviche de Camarón,Comida,suelto,medio,salado,,Limón,Limón,15,,condimento,plato,,ceviche-de-camaron.jpg
 Ceviche de Camarón,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,ceviche-de-camaron.jpg
-Ceviche de Camarón,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,acompañamiento,,ceviche-de-camaron.jpg
+Ceviche de Camarón,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,52,principal,acompañamiento,,ceviche-de-camaron.jpg
 Gohan Bowl de Camarón,Comida,suelto,medio,salado,,Camarón cocido,Camarón,150,320,principal,plato,,gohan-bowl-de-camaron.jpg
 Gohan Bowl de Camarón,Comida,suelto,medio,salado,,Arroz cocido,Arroz blanco,150,450,principal,plato,,gohan-bowl-de-camaron.jpg
 Gohan Bowl de Camarón,Comida,suelto,medio,salado,,Edamame,Edamames,60,200,principal,plato,,gohan-bowl-de-camaron.jpg
 Gohan Bowl de Camarón,Comida,suelto,medio,salado,,Zanahoria rallada cruda,Zanahoria,40,,guarnicion,plato,,gohan-bowl-de-camaron.jpg
-Gohan Bowl de Camarón,Comida,suelto,medio,salado,,Pepino con cáscara rebanado,Pepino,50,,guarnicion,plato,,gohan-bowl-de-camaron.jpg
+Gohan Bowl de Camarón,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (pepino),50,,guarnicion,plato,,gohan-bowl-de-camaron.jpg
 Gohan Bowl de Camarón,Comida,suelto,medio,salado,,Queso crema light,Queso crema,30,45,fijo,plato,,gohan-bowl-de-camaron.jpg
 Gohan Bowl de Camarón,Comida,suelto,medio,salado,,Aderezo Chipotle,Aderezo chipotle,20,,sub-receta,plato,,gohan-bowl-de-camaron.jpg
 Gohan Bowl de Camarón,Comida,suelto,medio,salado,,Salsa de soya,Salsa de soya,5,,condimento,plato,,gohan-bowl-de-camaron.jpg
 Gohan Bowl de Camarón,Comida,suelto,medio,salado,,Ajonjolí,Ajonjolí,5,,fijo,plato,,gohan-bowl-de-camaron.jpg
 Yakimeshi de Pollo,Comida,suelto,medio,salado,,Pechuga de pollo deshuesada sin piel,Pollo en trozos,150,350,principal,plato,,yakimeshi-de-pollo.jpg
 Yakimeshi de Pollo,Comida,suelto,medio,salado,,Arroz cocido,Arroz blanco,180,450,principal,plato,,yakimeshi-de-pollo.jpg
-Yakimeshi de Pollo,Comida,suelto,medio,salado,,Calabacita alargada cruda,Calabacita,60,,guarnicion,plato,,yakimeshi-de-pollo.jpg
+Yakimeshi de Pollo,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (calabacita),60,,guarnicion,plato,,yakimeshi-de-pollo.jpg
 Yakimeshi de Pollo,Comida,suelto,medio,salado,,Zanahoria rallada cruda,Zanahoria,40,,guarnicion,plato,,yakimeshi-de-pollo.jpg
 Yakimeshi de Pollo,Comida,suelto,medio,salado,,Queso crema light,Queso crema,30,45,fijo,plato,,yakimeshi-de-pollo.jpg
 Yakimeshi de Pollo,Comida,suelto,medio,salado,,Salsa de soya,Salsa de soya,10,,condimento,plato,,yakimeshi-de-pollo.jpg
@@ -659,7 +659,7 @@ Kebab de Pollo en Pan Pita,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condi
 Tostadas de Champiñones y Espinaca,Cena,suelto,ligero,salado,,Tortilla de maíz,Tortilla de maíz,90,180,principal,plato,,tostadas-de-champinones-y-espinaca.jpg
 Tostadas de Champiñones y Espinaca,Cena,suelto,ligero,salado,,Frijol molido,Frijoles molidos,100,250,principal,plato,,tostadas-de-champinones-y-espinaca.jpg
 Tostadas de Champiñones y Espinaca,Cena,suelto,ligero,salado,,Verduras mixtas,"Verduras (champiñones, espinaca)",150,,guarnicion,plato,,tostadas-de-champinones-y-espinaca.jpg
-Tostadas de Champiñones y Espinaca,Cena,suelto,ligero,salado,,Queso fresco,Queso fresco,40,60,principal,plato,,tostadas-de-champinones-y-espinaca.jpg
+Tostadas de Champiñones y Espinaca,Cena,suelto,ligero,salado,,Queso fresco de cabra,Queso fresco de cabra,40,160,principal,plato,,tostadas-de-champinones-y-espinaca.jpg
 Tostadas de Champiñones y Espinaca,Cena,suelto,ligero,salado,,Crema ácida,Crema,15,24,fijo,plato,,tostadas-de-champinones-y-espinaca.jpg
 Tostadas de Champiñones y Espinaca,Cena,suelto,ligero,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,tostadas-de-champinones-y-espinaca.jpg
 Tostadas de Champiñones y Espinaca,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,tostadas-de-champinones-y-espinaca.jpg
@@ -669,18 +669,18 @@ Enchiladas Suizas,Comida,suelto,medio,salado,,Salsa verde,Salsa verde,100,,sub-r
 Enchiladas Suizas,Comida,suelto,medio,salado,,Leche descremada,Leche,40,350,principal,plato,salsa suiza cremosa,enchiladas-suizas.jpg
 Enchiladas Suizas,Comida,suelto,medio,salado,,Queso Oaxaca,Queso Oaxaca gratinado,40,60,principal,plato,,enchiladas-suizas.jpg
 Enchiladas Suizas,Comida,suelto,medio,salado,,Crema ácida,Crema,15,24,fijo,plato,,enchiladas-suizas.jpg
-Enchiladas Suizas,Comida,suelto,medio,salado,,Cebolla blanca rebanada,Cebolla,20,,guarnicion,plato,,enchiladas-suizas.jpg
+Enchiladas Suizas,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (cebolla),20,,guarnicion,plato,,enchiladas-suizas.jpg
 Enchiladas Suizas,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,enchiladas-suizas.jpg
-Tostadas de Camarón con Pico de Piña,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,60,100,principal,plato,,tostadas-de-camaron-con-pico-de-pina.jpg
+Tostadas de Camarón con Pico de Piña,Comida,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,60,52,principal,plato,,tostadas-de-camaron-con-pico-de-pina.jpg
 Tostadas de Camarón con Pico de Piña,Comida,suelto,medio,salado,,Camarón cocido,Camarones,150,320,principal,plato,,tostadas-de-camaron-con-pico-de-pina.jpg
 Tostadas de Camarón con Pico de Piña,Comida,suelto,medio,salado,,Guacamole,Guacamole,90,,sub-receta,plato,,tostadas-de-camaron-con-pico-de-pina.jpg
 Tostadas de Camarón con Pico de Piña,Comida,suelto,medio,salado,,Piña picada,Piña,50,200,principal,plato,,tostadas-de-camaron-con-pico-de-pina.jpg
 Tostadas de Camarón con Pico de Piña,Comida,suelto,medio,salado,,Mango picado,Mango,40,200,principal,plato,,tostadas-de-camaron-con-pico-de-pina.jpg
-Tostadas de Camarón con Pico de Piña,Comida,suelto,medio,salado,,Cebolla morada rebanada,Cebolla morada,20,,guarnicion,plato,,tostadas-de-camaron-con-pico-de-pina.jpg
+Tostadas de Camarón con Pico de Piña,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (cebolla morada),20,,guarnicion,plato,,tostadas-de-camaron-con-pico-de-pina.jpg
 Tostadas de Camarón con Pico de Piña,Comida,suelto,medio,salado,,Chile serrano,Chile serrano,5,,condimento,plato,,tostadas-de-camaron-con-pico-de-pina.jpg
 Tostadas de Camarón con Pico de Piña,Comida,suelto,medio,salado,,Limón,Limón,5,,condimento,plato,,tostadas-de-camaron-con-pico-de-pina.jpg
 Ensalada César con Pollo,Comida,suelto,medio,salado,,Pechuga de pollo sin piel a la plancha,Pollo a la plancha,160,350,principal,plato,,ensalada-cesar-con-pollo.jpg
-Ensalada César con Pollo,Comida,suelto,medio,salado,,Lechuga romana,Lechuga romana,150,,guarnicion,plato,,ensalada-cesar-con-pollo.jpg
+Ensalada César con Pollo,Comida,suelto,medio,salado,,Verduras mixtas,Verduras (lechuga romana),150,,guarnicion,plato,,ensalada-cesar-con-pollo.jpg
 Ensalada César con Pollo,Comida,suelto,medio,salado,,Aderezo César,Aderezo César,50,,sub-receta,plato,,ensalada-cesar-con-pollo.jpg
 Ensalada César con Pollo,Comida,suelto,medio,salado,,Pan de caja integral,Pan integral en cubos (crutones al horno),40,75,principal,plato,se hornea con el aceite/ajo/orégano de abajo,ensalada-cesar-con-pollo.jpg
 Ensalada César con Pollo,Comida,suelto,medio,salado,,Aceite de oliva,Aceite de oliva,3,,fijo,plato,para los crutones,ensalada-cesar-con-pollo.jpg
@@ -694,7 +694,7 @@ Caldo Tlalpeño,Comida,suelto,medio,salado,,Garbanzo cocido,Garbanzos,90,250,pri
 Caldo Tlalpeño,Comida,suelto,medio,salado,,Caldo de pollo,Caldo de pollo,300,500,principal,plato,,caldo-tlalpeno.jpg
 Caldo Tlalpeño,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (zanahoria, calabacita)",120,,guarnicion,plato,PENDIENTE crear Verduras mixtas,caldo-tlalpeno.jpg
 Caldo Tlalpeño,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,caldo-tlalpeno.jpg
-Caldo Tlalpeño,Comida,suelto,medio,salado,,Queso fresco,Queso fresco,30,60,principal,plato,,caldo-tlalpeno.jpg
+Caldo Tlalpeño,Comida,suelto,medio,salado,,Queso fresco de cabra,Queso fresco de cabra,30,160,principal,plato,,caldo-tlalpeno.jpg
 Caldo Tlalpeño,Comida,suelto,medio,salado,,Chile chipotle adobado,Chile chipotle,8,,condimento,plato,PENDIENTE crear,caldo-tlalpeno.jpg
 Caldo Tlalpeño,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,caldo-tlalpeno.jpg
 Asado de Res,Comida,suelto,medio,salado,,Falda de res,Res en trozos,160,300,principal,plato,,asado-de-res.jpg
@@ -704,7 +704,7 @@ Asado de Res,Comida,suelto,medio,salado,,Ajo,Ajo,3,,condimento,plato,,asado-de-r
 Asado de Res,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,asado-de-res.jpg
 Asado de Res,Comida,suelto,medio,salado,,Pimienta,Pimienta,1,,condimento,plato,,asado-de-res.jpg
 Asado de Res,Comida,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga, zanahoria, pepino, cebolla curtida, jitomate, cebolla)",230,,guarnicion,plato,PENDIENTE crear Verduras mixtas,asado-de-res.jpg
-Asado de Res,Comida,suelto,medio,salado,,Queso Panela,Queso panela,40,60,principal,plato,,asado-de-res.jpg
+Asado de Res,Comida,suelto,medio,salado,,Queso fresco de cabra,Queso fresco de cabra,40,160,principal,plato,,asado-de-res.jpg
 Asado de Res,Comida,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,asado-de-res.jpg
 Salmón con Puré de Camote,Comida,suelto,medio,salado,,Filete de salmón,Salmón a la plancha,160,300,principal,plato,,salmon-con-pure-de-camote.jpg
 Salmón con Puré de Camote,Comida,suelto,medio,salado,,Puré de camote,Puré de camote,180,350,principal,plato,,salmon-con-pure-de-camote.jpg
@@ -714,7 +714,7 @@ Salmón con Puré de Camote,Comida,suelto,medio,salado,,Limón,Limón,10,,condim
 Salmón con Puré de Camote,Comida,suelto,medio,salado,,Chile cayena en polvo,Chile cayena en polvo,1,,condimento,plato,PENDIENTE crear,salmon-con-pure-de-camote.jpg
 Salmón con Puré de Camote,Comida,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,salmon-con-pure-de-camote.jpg
 Salmón con Puré de Camote,Comida,suelto,medio,salado,,Pimienta,Pimienta,1,,condimento,plato,,salmon-con-pure-de-camote.jpg
-Tostadas de Panela,Cena,suelto,ligero,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,plato,,tostadas-de-panela.jpg
+Tostadas de Panela,Cena,suelto,ligero,salado,,Tostada de maíz horneada,Tostadas horneadas,40,52,principal,plato,,tostadas-de-panela.jpg
 Tostadas de Panela,Cena,suelto,ligero,salado,,Frijol molido,Frijoles molidos,100,250,principal,plato,,tostadas-de-panela.jpg
 Tostadas de Panela,Cena,suelto,ligero,salado,,Queso Panela,Queso panela asado,80,120,principal,plato,,tostadas-de-panela.jpg
 Tostadas de Panela,Cena,suelto,ligero,salado,,Pico de gallo,Pico de gallo,60,,sub-receta,plato,,tostadas-de-panela.jpg
@@ -732,22 +732,22 @@ Ceviche de Panela,Cena,suelto,ligero,salado,,Chile serrano,Chile serrano,8,,cond
 Ceviche de Panela,Cena,suelto,ligero,salado,,Cilantro picado crudo,Cilantro,5,,condimento,plato,,ceviche-de-panela.jpg
 Ceviche de Panela,Cena,suelto,ligero,salado,,Limón,Limón,20,,condimento,plato,,ceviche-de-panela.jpg
 Ceviche de Panela,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,ceviche-de-panela.jpg
-Ceviche de Panela,Cena,suelto,ligero,salado,,Tostada de maíz horneada,Tostadas horneadas,40,100,principal,acompañamiento,,ceviche-de-panela.jpg
+Ceviche de Panela,Cena,suelto,ligero,salado,,Tostada de maíz horneada,Tostadas horneadas,40,52,principal,acompañamiento,,ceviche-de-panela.jpg
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Pan Thin,Pan thin,42,84,principal,plato,,burger-fit-con-pan-thins.jpg
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Molida de sirloin,Carne molida magra,120,300,principal,plato,,burger-fit-con-pan-thins.jpg
-Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Queso Panela,Queso panela asado,40,60,principal,plato,,burger-fit-con-pan-thins.jpg
+Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Queso fresco de cabra,Queso fresco de cabra,40,160,principal,plato,,burger-fit-con-pan-thins.jpg
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Verduras mixtas,"Verduras (lechuga, jitomate, cebolla morada)",90,,guarnicion,plato,,burger-fit-con-pan-thins.jpg
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,burger-fit-con-pan-thins.jpg
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,burger-fit-con-pan-thins.jpg
 Burger Fit con Pan Thins,Cena,suelto,ligero,salado,,Pimienta,Pimienta,1,,condimento,plato,,burger-fit-con-pan-thins.jpg
-Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Tostada de maíz horneada,Tostaditas horneadas,40,100,principal,plato,,tostaditas-de-tinga-de-atun.jpg
+Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Tostada de maíz horneada,Tostaditas horneadas,40,52,principal,plato,,tostaditas-de-tinga-de-atun.jpg
 Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Atún en agua drenado,Atún,100,200,principal,plato,,tostaditas-de-tinga-de-atun.jpg
 Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Salsa Tinga,Salsa tinga,60,,sub-receta,plato,,tostaditas-de-tinga-de-atun.jpg
 Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Verduras mixtas,"Verduras (lechuga, cebolla)",45,,guarnicion,plato,,tostaditas-de-tinga-de-atun.jpg
 Tostaditas de Tinga de Atún,Cena,suelto,ligero,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,tostaditas-de-tinga-de-atun.jpg
 Bowl de Pollo Camote y Guacamole,Cena,suelto,ligero,salado,,Pechuga de pollo sin piel a la plancha,Pollo a la plancha,140,350,principal,plato,,bowl-de-pollo-camote-y-guacamole.jpg
 Bowl de Pollo Camote y Guacamole,Cena,suelto,ligero,salado,,Camote al horno,Camote al horno,130,350,principal,plato,,bowl-de-pollo-camote-y-guacamole.jpg
-Bowl de Pollo Camote y Guacamole,Cena,suelto,ligero,salado,,Espinaca cruda,Espinacas,40,,guarnicion,plato,,bowl-de-pollo-camote-y-guacamole.jpg
+Bowl de Pollo Camote y Guacamole,Cena,suelto,ligero,salado,,Verduras mixtas,Verduras (espinacas),40,,guarnicion,plato,,bowl-de-pollo-camote-y-guacamole.jpg
 Bowl de Pollo Camote y Guacamole,Cena,suelto,ligero,salado,,Guacamole,Guacamole,90,,sub-receta,plato,,bowl-de-pollo-camote-y-guacamole.jpg
 Bowl de Pollo Camote y Guacamole,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,bowl-de-pollo-camote-y-guacamole.jpg
 Yogurt con Frutos Rojos y Almendras,Cena,suelto,ligero,dulce,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego natural,180,300,principal,plato,,yogurt-con-frutos-rojos-y-almendras.jpg
@@ -757,11 +757,11 @@ Yogurt con Frutos Rojos y Almendras,Cena,suelto,ligero,dulce,,Arándano fresco,A
 Yogurt con Frutos Rojos y Almendras,Cena,suelto,ligero,dulce,,Granola estándar,Granola,20,45,principal,acompañamiento,,yogurt-con-frutos-rojos-y-almendras.jpg
 Yogurt con Frutos Rojos y Almendras,Cena,suelto,ligero,dulce,,Almendra,Almendras,12,20,fijo,acompañamiento,,yogurt-con-frutos-rojos-y-almendras.jpg
 Yogurt con Frutos Rojos y Almendras,Cena,suelto,ligero,dulce,,Miel,Miel,7,7,fijo,plato,,yogurt-con-frutos-rojos-y-almendras.jpg
-Toast de Guacamole Jamón y Panela Asada,Cena,suelto,ligero,salado,,Pan de caja integral,Pan tostado integral,50,75,principal,plato,,toast-de-guacamole-jamon-y-panela-asada.jpg
-Toast de Guacamole Jamón y Panela Asada,Cena,suelto,ligero,salado,,Guacamole,Guacamole,80,,sub-receta,plato,,toast-de-guacamole-jamon-y-panela-asada.jpg
-Toast de Guacamole Jamón y Panela Asada,Cena,suelto,ligero,salado,,Pechuga de pavo,Jamón de pechuga de pavo,63,180,principal,plato,,toast-de-guacamole-jamon-y-panela-asada.jpg
-Toast de Guacamole Jamón y Panela Asada,Cena,suelto,ligero,salado,,Queso Panela,Queso panela asado,60,90,principal,plato,,toast-de-guacamole-jamon-y-panela-asada.jpg
-Toast de Guacamole Jamón y Panela Asada,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,toast-de-guacamole-jamon-y-panela-asada.jpg
+"Toast de Guacamole, Jamón y Queso de Cabra",Cena,suelto,ligero,salado,,Pan de caja integral,Pan tostado integral,50,75,principal,plato,,toast-de-guacamole-jamon-y-queso-de-cabra.jpg
+"Toast de Guacamole, Jamón y Queso de Cabra",Cena,suelto,ligero,salado,,Guacamole,Guacamole,80,,sub-receta,plato,,toast-de-guacamole-jamon-y-queso-de-cabra.jpg
+"Toast de Guacamole, Jamón y Queso de Cabra",Cena,suelto,ligero,salado,,Pechuga de pavo,Jamón de pechuga de pavo,63,180,principal,plato,,toast-de-guacamole-jamon-y-queso-de-cabra.jpg
+"Toast de Guacamole, Jamón y Queso de Cabra",Cena,suelto,ligero,salado,,Queso fresco de cabra,Queso fresco de cabra,60,160,principal,plato,,toast-de-guacamole-jamon-y-queso-de-cabra.jpg
+"Toast de Guacamole, Jamón y Queso de Cabra",Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,toast-de-guacamole-jamon-y-queso-de-cabra.jpg
 Crepas Dulces de Plátano y Cacahuate,Cena,bloque,ligero,dulce,1.5,Avena en hojuelas,Avena,80,120,principal,plato,BLOQUE masa,crepas-dulces-de-platano-y-cacahuate.jpg
 Crepas Dulces de Plátano y Cacahuate,Cena,bloque,ligero,dulce,1.5,Leche descremada,Leche,245,350,principal,plato,BLOQUE menos leche,crepas-dulces-de-platano-y-cacahuate.jpg
 Crepas Dulces de Plátano y Cacahuate,Cena,bloque,ligero,dulce,1.5,Huevo entero fresco,Huevo,88,300,principal,plato,BLOQUE,crepas-dulces-de-platano-y-cacahuate.jpg
@@ -775,15 +775,15 @@ Crepas de Espinaca con Pollo,Cena,bloque,ligero,salado,1.5,Huevo entero fresco,H
 Crepas de Espinaca con Pollo,Cena,bloque,ligero,salado,1.5,Espinaca cruda,Espinaca (para la masa verde),60,150,principal,plato,BLOQUE licuada en masa,crepas-de-espinaca-con-pollo.jpg
 Crepas de Espinaca con Pollo,Cena,bloque,ligero,salado,1.5,Sal,Pizca de sal,1,,condimento,plato,,crepas-de-espinaca-con-pollo.jpg
 Crepas de Espinaca con Pollo,Cena,bloque,ligero,salado,1.5,Pechuga de pollo deshuesada sin piel,Pollo deshebrado,120,350,principal,acompañamiento,,crepas-de-espinaca-con-pollo.jpg
-Crepas de Espinaca con Pollo,Cena,bloque,ligero,salado,1.5,Queso Oaxaca,Queso Oaxaca,40,60,principal,acompañamiento,,crepas-de-espinaca-con-pollo.jpg
-Crepas de Espinaca con Pollo,Cena,bloque,ligero,salado,1.5,Champiñón cocido rebanado,Champiñones,50,,guarnicion,acompañamiento,,crepas-de-espinaca-con-pollo.jpg
+Crepas de Espinaca con Pollo,Cena,bloque,ligero,salado,1.5,Queso Mozzarella semidescremado,Queso mozzarella,40,120,principal,acompañamiento,,crepas-de-espinaca-con-pollo.jpg
+Crepas de Espinaca con Pollo,Cena,bloque,ligero,salado,1.5,Verduras mixtas,Verduras (champiñones),50,,guarnicion,acompañamiento,,crepas-de-espinaca-con-pollo.jpg
 Crepas de Champiñón Queso y Jamón,Cena,bloque,ligero,salado,1.5,Avena en hojuelas,Avena,80,120,principal,plato,BLOQUE masa,crepas-de-champinon-queso-y-jamon.jpg
 Crepas de Champiñón Queso y Jamón,Cena,bloque,ligero,salado,1.5,Leche descremada,Leche,245,350,principal,plato,BLOQUE,crepas-de-champinon-queso-y-jamon.jpg
 Crepas de Champiñón Queso y Jamón,Cena,bloque,ligero,salado,1.5,Huevo entero fresco,Huevo,88,300,principal,plato,BLOQUE,crepas-de-champinon-queso-y-jamon.jpg
 Crepas de Champiñón Queso y Jamón,Cena,bloque,ligero,salado,1.5,Sal,Pizca de sal,1,,condimento,plato,,crepas-de-champinon-queso-y-jamon.jpg
 Crepas de Champiñón Queso y Jamón,Cena,bloque,ligero,salado,1.5,Pechuga de pavo,Jamón de pechuga de pavo,63,180,principal,acompañamiento,,crepas-de-champinon-queso-y-jamon.jpg
-Crepas de Champiñón Queso y Jamón,Cena,bloque,ligero,salado,1.5,Queso Oaxaca,Queso Oaxaca,40,60,principal,acompañamiento,,crepas-de-champinon-queso-y-jamon.jpg
-Crepas de Champiñón Queso y Jamón,Cena,bloque,ligero,salado,1.5,Champiñón cocido rebanado,Champiñones,70,,guarnicion,acompañamiento,,crepas-de-champinon-queso-y-jamon.jpg
+Crepas de Champiñón Queso y Jamón,Cena,bloque,ligero,salado,1.5,Queso Mozzarella semidescremado,Queso mozzarella,40,120,principal,acompañamiento,,crepas-de-champinon-queso-y-jamon.jpg
+Crepas de Champiñón Queso y Jamón,Cena,bloque,ligero,salado,1.5,Verduras mixtas,Verduras (champiñones),70,,guarnicion,acompañamiento,,crepas-de-champinon-queso-y-jamon.jpg
 Hot Cakes de Zanahoria,Cena,bloque,ligero,dulce,1.5,Harina de avena,Harina de avena,45,100,principal,plato,BLOQUE tu receta,hot-cakes-de-zanahoria.jpg
 Hot Cakes de Zanahoria,Cena,bloque,ligero,dulce,1.5,Zanahoria rallada cruda,Zanahoria (en la masa),60,150,principal,plato,BLOQUE,hot-cakes-de-zanahoria.jpg
 Hot Cakes de Zanahoria,Cena,bloque,ligero,dulce,1.5,Huevo entero fresco,Huevo,44,300,principal,plato,BLOQUE,hot-cakes-de-zanahoria.jpg
@@ -826,7 +826,7 @@ Toast de Frijol Huevo y Aguacate,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,
 Tacos de Carne Asada,Cena,suelto,ligero,salado,,Bistec de res,Carne asada,150,300,principal,plato,,tacos-de-carne-asada.jpg
 Tacos de Carne Asada,Cena,suelto,ligero,salado,,Tortilla de maíz,Tortilla de maíz,90,180,principal,plato,,tacos-de-carne-asada.jpg
 Tacos de Carne Asada,Cena,suelto,ligero,salado,,Guacamole,Guacamole,80,,sub-receta,plato,,tacos-de-carne-asada.jpg
-Tacos de Carne Asada,Cena,suelto,ligero,salado,,Cebolla blanca rebanada,Cebolla,20,,guarnicion,plato,,tacos-de-carne-asada.jpg
+Tacos de Carne Asada,Cena,suelto,ligero,salado,,Verduras mixtas,Verduras (cebolla),20,,guarnicion,plato,,tacos-de-carne-asada.jpg
 Tacos de Carne Asada,Cena,suelto,ligero,salado,,Cilantro picado crudo,Cilantro,5,,condimento,plato,,tacos-de-carne-asada.jpg
 Tacos de Carne Asada,Cena,suelto,ligero,salado,,Limón,Limón,5,,condimento,plato,,tacos-de-carne-asada.jpg
 Tacos de Carne Asada,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,tacos-de-carne-asada.jpg
@@ -839,14 +839,14 @@ Tacos de Medallón de Atún,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condi
 Frijoles en Caldo con Nopales y Queso Fresco,Cena,suelto,ligero,salado,,Frijol promedio cocido,Frijoles de la olla,180,300,principal,plato,,frijoles-en-caldo-con-nopales-y-queso-fresco.jpg
 Frijoles en Caldo con Nopales y Queso Fresco,Cena,suelto,ligero,salado,,Nopal cocido,Nopales,120,,guarnicion,plato,,frijoles-en-caldo-con-nopales-y-queso-fresco.jpg
 Frijoles en Caldo con Nopales y Queso Fresco,Cena,suelto,ligero,salado,,Queso fresco,Queso fresco,60,90,principal,plato,,frijoles-en-caldo-con-nopales-y-queso-fresco.jpg
-Frijoles en Caldo con Nopales y Queso Fresco,Cena,suelto,ligero,salado,,Cebolla blanca rebanada,Cebolla,20,,guarnicion,plato,,frijoles-en-caldo-con-nopales-y-queso-fresco.jpg
+Frijoles en Caldo con Nopales y Queso Fresco,Cena,suelto,ligero,salado,,Verduras mixtas,Verduras (cebolla),20,,guarnicion,plato,,frijoles-en-caldo-con-nopales-y-queso-fresco.jpg
 Frijoles en Caldo con Nopales y Queso Fresco,Cena,suelto,ligero,salado,,Cilantro picado crudo,Cilantro,5,,condimento,plato,,frijoles-en-caldo-con-nopales-y-queso-fresco.jpg
 Frijoles en Caldo con Nopales y Queso Fresco,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,frijoles-en-caldo-con-nopales-y-queso-fresco.jpg
 Frijoles en Caldo con Nopales y Queso Fresco,Cena,suelto,ligero,salado,,Tortilla de maíz,Tortilla de maíz,60,180,principal,acompañamiento,,frijoles-en-caldo-con-nopales-y-queso-fresco.jpg
 Tortitas de Atún y Papa,Cena,suelto,ligero,salado,,Atún en agua drenado,Atún,120,200,principal,plato,,tortitas-de-atun-y-papa.jpg
 Tortitas de Atún y Papa,Cena,suelto,ligero,salado,,Papa cocida,Papa molida,120,400,principal,plato,,tortitas-de-atun-y-papa.jpg
 Tortitas de Atún y Papa,Cena,suelto,ligero,salado,,Huevo entero fresco,Huevo,44,,fijo,plato,,tortitas-de-atun-y-papa.jpg
-Tortitas de Atún y Papa,Cena,suelto,ligero,salado,,Queso Oaxaca,Queso para derretir,40,60,principal,plato,,tortitas-de-atun-y-papa.jpg
+Tortitas de Atún y Papa,Cena,suelto,ligero,salado,,Queso Mozzarella semidescremado,Queso mozzarella,40,120,principal,plato,,tortitas-de-atun-y-papa.jpg
 Tortitas de Atún y Papa,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,tortitas-de-atun-y-papa.jpg
 Tortitas de Atún y Papa,Cena,suelto,ligero,salado,,Verduras mixtas,"Verduras (lechuga, jitomate, zanahoria, cebolla)",135,,guarnicion,acompañamiento,PENDIENTE crear Verduras mixtas,tortitas-de-atun-y-papa.jpg
 Tortitas de Atún y Papa,Cena,suelto,ligero,salado,,Aguacate Hass,Aguacate,47,94,principal,acompañamiento,,tortitas-de-atun-y-papa.jpg
@@ -878,7 +878,7 @@ Yogurt Griego,Snack,suelto,medio,dulce,,"Yoghurt Oikos estilo griego sabor natur
 Huevo Cocido,Snack,suelto,medio,salado,,Huevo entero cocido,Huevo cocido,88,300,principal,plato,,huevo-cocido.jpg
 Requesón con Fruta,Snack,suelto,medio,dulce,,Requesón promedio,Requesón,120,200,principal,plato,,requeson-con-fruta.jpg
 Requesón con Fruta,Snack,suelto,medio,dulce,,Fresa rebanada,Fresas,80,250,principal,plato,,requeson-con-fruta.jpg
-Queso Panela en Cubos,Snack,suelto,medio,salado,,Queso Panela,Queso panela en cubos,80,160,principal,plato,,queso-panela-en-cubos.jpg
+Queso Fresco en Cubos,Snack,suelto,medio,salado,,Queso fresco de cabra,Queso fresco de cabra,80,160,principal,plato,,queso-fresco-en-cubos.jpg
 Edamames,Snack,suelto,medio,salado,,Edamame,Edamames,100,200,principal,plato,,edamames.jpg
 Plátano con Crema de Cacahuate,Snack,suelto,medio,dulce,,Plátano,Plátano,120,180,principal,plato,,platano-con-crema-de-cacahuate.jpg
 Plátano con Crema de Cacahuate,Snack,suelto,medio,dulce,,Mantequilla de cacahuate,Crema de cacahuate,20,30,fijo,plato,,platano-con-crema-de-cacahuate.jpg
@@ -934,7 +934,7 @@ Frozen Yogurt Bites,Snack,suelto,medio,dulce,,Frambuesa,Frambuesa,50,120,princip
 Frozen Yogurt Bites,Snack,suelto,medio,dulce,,Miel,Miel,7,,fijo,plato,,frozen-yogurt-bites.jpg
 Palomitas Naturales,Snack,suelto,ligero,salado,,Palomitas naturales,Palomitas naturales,25,45,principal,plato,hechas en olla o aire,palomitas-naturales.jpg
 Rollitos de Jamón de Pavo con Queso,Snack,suelto,medio,salado,,Pechuga de pavo,Jamón de pechuga de pavo,63,180,principal,plato,,rollitos-de-jamon-de-pavo-con-queso.jpg
-Rollitos de Jamón de Pavo con Queso,Snack,suelto,medio,salado,,Queso Panela,Queso panela,60,160,principal,plato,en bastones para enrollar,rollitos-de-jamon-de-pavo-con-queso.jpg
+Rollitos de Jamón de Pavo con Queso,Snack,suelto,medio,salado,,Queso fresco de cabra,Queso fresco de cabra,60,160,principal,plato,en bastones para enrollar,rollitos-de-jamon-de-pavo-con-queso.jpg
 Esquite Fit,Snack,suelto,medio,salado,,Elote amarillo desgranado cocido,Elote desgranado,120,180,principal,plato,con limón y chile,esquite-fit.jpg
 Esquite Fit,Snack,suelto,medio,salado,,Limón,Limón,5,,condimento,plato,,esquite-fit.jpg
 Esquite Fit,Snack,suelto,medio,salado,,Chile cayena en polvo,Chile en polvo,1,,condimento,plato,PENDIENTE crear,esquite-fit.jpg
@@ -946,7 +946,7 @@ Bowl Griego de Pollo,Cena,suelto,medio,salado,,Pechuga de pollo sin piel a la pl
 Bowl Griego de Pollo,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, jitomate cherry, cebolla morada)",140,,guarnicion,plato,,bowl-griego-de-pollo.jpg
 Bowl Griego de Pollo,Cena,suelto,medio,salado,,Queso Feta,Queso feta,40,60,principal,plato,,bowl-griego-de-pollo.jpg
 Bowl Griego de Pollo,Cena,suelto,medio,salado,,Aceituna negra sin hueso,Aceitunas negras,15,,fijo,plato,,bowl-griego-de-pollo.jpg
-Bowl Griego de Pollo,Cena,suelto,medio,salado,,Aderezo de yogurt y pepino,Tzatziki,40,,fijo,plato,,bowl-griego-de-pollo.jpg
+Bowl Griego de Pollo,Cena,suelto,medio,salado,,Tzatziki,Tzatziki,40,,sub-receta,plato,,bowl-griego-de-pollo.jpg
 Bowl de Res y Hummus,Cena,suelto,medio,salado,,Quinoa cocida,Quinoa cocida,150,350,principal,plato,,bowl-de-res-y-hummus.jpg
 Bowl de Res y Hummus,Cena,suelto,medio,salado,,Sirloin,Sirloin a la plancha,150,300,principal,plato,,bowl-de-res-y-hummus.jpg
 Bowl de Res y Hummus,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (jitomate cherry, pimiento rojo, cebolla morada)",120,,guarnicion,plato,,bowl-de-res-y-hummus.jpg
@@ -956,7 +956,7 @@ Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Arroz cocido,Arroz blan
 Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Camarón cocido,Camarón cocido,150,320,principal,plato,,bowl-de-camaron-mediterraneo.jpg
 Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, jitomate cherry, elote)",160,,guarnicion,plato,,bowl-de-camaron-mediterraneo.jpg
 Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,50,94,principal,plato,,bowl-de-camaron-mediterraneo.jpg
-Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Aderezo de yogurt y pepino,Tzatziki,40,,fijo,plato,,bowl-de-camaron-mediterraneo.jpg
+Bowl de Camarón Mediterráneo,Cena,suelto,medio,salado,,Tzatziki,Tzatziki,40,,sub-receta,plato,,bowl-de-camaron-mediterraneo.jpg
 Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Arroz cocido,Arroz blanco,120,450,principal,plato,,bowl-de-pescado-blanco-y-verdes.jpg
 Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Filete de pescado,Pescado blanco a la plancha,160,350,principal,plato,,bowl-de-pescado-blanco-y-verdes.jpg
 Bowl de Pescado Blanco y Verdes,Cena,suelto,ligero,salado,,Verduras mixtas,"Verduras (lechuga romana, espinaca, jitomate cherry, pimiento rojo)",160,,guarnicion,plato,,bowl-de-pescado-blanco-y-verdes.jpg
@@ -971,7 +971,7 @@ Sopa de Lentejas,Cena,suelto,medio,salado,,Lenteja cocida,Lentejas cocidas,200,3
 Sopa de Lentejas,Cena,suelto,medio,salado,,Caldo de pollo,Caldo de pollo,250,,principal,plato,,sopa-de-lentejas.jpg
 Sopa de Lentejas,Cena,suelto,medio,salado,,Zanahoria picada cruda,Zanahoria,50,,guarnicion,plato,,sopa-de-lentejas.jpg
 Sopa de Lentejas,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (jitomate, cebolla, apio)",100,,guarnicion,plato,,sopa-de-lentejas.jpg
-Sopa de Lentejas,Cena,suelto,medio,salado,,Queso Panela,Queso panela,40,160,principal,plato,,sopa-de-lentejas.jpg
+Sopa de Lentejas,Cena,suelto,medio,salado,,Queso fresco de cabra,Queso fresco de cabra,40,160,principal,plato,,sopa-de-lentejas.jpg
 Sopa de Lentejas,Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,sopa-de-lentejas.jpg
 Sopa de Lentejas,Cena,suelto,medio,salado,,Aceite de oliva,Aceite de oliva,5,,fijo,plato,,sopa-de-lentejas.jpg
 Sopa de Lentejas,Cena,suelto,medio,salado,,Ajo,Ajo,3,,condimento,plato,,sopa-de-lentejas.jpg
@@ -1001,7 +1001,7 @@ Sopa de Fideo con Pollo,Cena,suelto,medio,salado,,Pasta cruda para sopa,Fideo,40
 Sopa de Fideo con Pollo,Cena,suelto,medio,salado,,Caldo de pollo,Caldo de pollo,280,,principal,plato,,sopa-de-fideo-con-pollo.jpg
 Sopa de Fideo con Pollo,Cena,suelto,medio,salado,,Puré de jitomate,Puré de jitomate,80,,principal,plato,,sopa-de-fideo-con-pollo.jpg
 Sopa de Fideo con Pollo,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (cebolla, apio)",60,,guarnicion,plato,,sopa-de-fideo-con-pollo.jpg
-Sopa de Fideo con Pollo,Cena,suelto,medio,salado,,Queso Panela,Queso panela,40,160,principal,plato,,sopa-de-fideo-con-pollo.jpg
+Sopa de Fideo con Pollo,Cena,suelto,medio,salado,,Queso fresco de cabra,Queso fresco de cabra,40,160,principal,plato,,sopa-de-fideo-con-pollo.jpg
 Sopa de Fideo con Pollo,Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,sopa-de-fideo-con-pollo.jpg
 Sopa de Fideo con Pollo,Cena,suelto,medio,salado,,Ajo,Ajo,3,,condimento,plato,,sopa-de-fideo-con-pollo.jpg
 Sopa de Fideo con Pollo,Cena,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,sopa-de-fideo-con-pollo.jpg
@@ -1017,21 +1017,20 @@ Ensalada Cobb Fit,Cena,suelto,medio,salado,,Pimienta,Pimienta,1,,condimento,plat
 Pasta Primavera con Pollo,Cena,suelto,medio,salado,,Pasta cocida,Pasta cocida,150,400,principal,plato,,pasta-primavera-con-pollo.jpg
 Pasta Primavera con Pollo,Cena,suelto,medio,salado,,Pechuga de pollo sin piel a la plancha,Pollo a la plancha,140,350,principal,plato,,pasta-primavera-con-pollo.jpg
 Pasta Primavera con Pollo,Cena,suelto,medio,salado,,Zanahoria picada cruda,Zanahoria,50,,guarnicion,plato,,pasta-primavera-con-pollo.jpg
-Pasta Primavera con Pollo,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (calabacita, brócoli, pimiento, cebolla)",150,,guarnicion,plato,,pasta-primavera-con-pollo.jpg
-Pasta Primavera con Pollo,Cena,suelto,medio,salado,,Jitomate cereza,Jitomate cherry,60,,guarnicion,plato,,pasta-primavera-con-pollo.jpg
+Pasta Primavera con Pollo,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (calabacita, brócoli, pimiento, cebolla, jitomate cherry)",210,,guarnicion,plato,,pasta-primavera-con-pollo.jpg
 Pasta Primavera con Pollo,Cena,suelto,medio,salado,,Queso Parmesano rallado,Queso Parmesano,18,,fijo,plato,,pasta-primavera-con-pollo.jpg
 Pasta Primavera con Pollo,Cena,suelto,medio,salado,,Aceite de oliva,Aceite de oliva,8,,fijo,plato,,pasta-primavera-con-pollo.jpg
 Pasta Primavera con Pollo,Cena,suelto,medio,salado,,Ajo,Ajo,3,,condimento,plato,,pasta-primavera-con-pollo.jpg
 Pasta Primavera con Pollo,Cena,suelto,medio,salado,,Albahaca molida,Albahaca,2,,condimento,plato,,pasta-primavera-con-pollo.jpg
 Pasta Primavera con Pollo,Cena,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,pasta-primavera-con-pollo.jpg
-"Bagel de Pavo, Panela y Espinaca",Cena,suelto,medio,salado,,Bagel,Bagel,90,135,principal,plato,,bagel-de-pavo-panela-y-espinaca.jpg
-"Bagel de Pavo, Panela y Espinaca",Cena,suelto,medio,salado,,Pechuga de pavo,Pavo en rebanadas,90,180,principal,plato,,bagel-de-pavo-panela-y-espinaca.jpg
-"Bagel de Pavo, Panela y Espinaca",Cena,suelto,medio,salado,,Queso Panela,Queso panela,60,160,principal,plato,,bagel-de-pavo-panela-y-espinaca.jpg
-"Bagel de Pavo, Panela y Espinaca",Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (espinaca, jitomate, cebolla morada)",80,,guarnicion,plato,,bagel-de-pavo-panela-y-espinaca.jpg
-"Bagel de Pavo, Panela y Espinaca",Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,bagel-de-pavo-panela-y-espinaca.jpg
-"Bagel de Pavo, Panela y Espinaca",Cena,suelto,medio,salado,,Mayonesa light,Mayonesa light,10,,fijo,plato,,bagel-de-pavo-panela-y-espinaca.jpg
-"Bagel de Pavo, Panela y Espinaca",Cena,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,bagel-de-pavo-panela-y-espinaca.jpg
-"Bagel de Pavo, Panela y Espinaca",Cena,suelto,medio,salado,,Pimienta,Pimienta,1,,condimento,plato,,bagel-de-pavo-panela-y-espinaca.jpg
+"Bagel de Pavo, Queso de Cabra y Espinaca",Cena,suelto,medio,salado,,Bagel,Bagel,90,135,principal,plato,,bagel-de-pavo-queso-de-cabra-y-espinaca.jpg
+"Bagel de Pavo, Queso de Cabra y Espinaca",Cena,suelto,medio,salado,,Pechuga de pavo,Pavo en rebanadas,90,180,principal,plato,,bagel-de-pavo-queso-de-cabra-y-espinaca.jpg
+"Bagel de Pavo, Queso de Cabra y Espinaca",Cena,suelto,medio,salado,,Queso fresco de cabra,Queso fresco de cabra,60,160,principal,plato,,bagel-de-pavo-queso-de-cabra-y-espinaca.jpg
+"Bagel de Pavo, Queso de Cabra y Espinaca",Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (espinaca, jitomate, cebolla morada)",80,,guarnicion,plato,,bagel-de-pavo-queso-de-cabra-y-espinaca.jpg
+"Bagel de Pavo, Queso de Cabra y Espinaca",Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,bagel-de-pavo-queso-de-cabra-y-espinaca.jpg
+"Bagel de Pavo, Queso de Cabra y Espinaca",Cena,suelto,medio,salado,,Mayonesa light,Mayonesa light,10,,fijo,plato,,bagel-de-pavo-queso-de-cabra-y-espinaca.jpg
+"Bagel de Pavo, Queso de Cabra y Espinaca",Cena,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,bagel-de-pavo-queso-de-cabra-y-espinaca.jpg
+"Bagel de Pavo, Queso de Cabra y Espinaca",Cena,suelto,medio,salado,,Pimienta,Pimienta,1,,condimento,plato,,bagel-de-pavo-queso-de-cabra-y-espinaca.jpg
 Bagel Caprese,Cena,suelto,medio,salado,,Bagel,Bagel,90,135,principal,plato,,bagel-caprese.jpg
 Bagel Caprese,Cena,suelto,medio,salado,,Queso Mozzarella semidescremado,Queso mozzarella,90,120,principal,plato,,bagel-caprese.jpg
 Bagel Caprese,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (jitomate en rodajas, arúgula, cebolla morada)",120,,guarnicion,plato,,bagel-caprese.jpg
@@ -1055,15 +1054,15 @@ Alambre de Camarón con Calabacita,Cena,suelto,ligero,salado,,Aguacate Hass,Agua
 Alambre de Camarón con Calabacita,Cena,suelto,ligero,salado,,Limón,Limón,5,,condimento,plato,,alambre-de-camaron-con-calabacita.jpg
 Alambre de Camarón con Calabacita,Cena,suelto,ligero,salado,,Ajo,Ajo,3,,condimento,plato,,alambre-de-camaron-con-calabacita.jpg
 Alambre de Camarón con Calabacita,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,alambre-de-camaron-con-calabacita.jpg
-Tostadas de Res Deshebrada,Cena,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,80,principal,plato,,tostadas-de-res-deshebrada.jpg
+Tostadas de Res Deshebrada,Cena,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,52,principal,plato,,tostadas-de-res-deshebrada.jpg
 Tostadas de Res Deshebrada,Cena,suelto,medio,salado,,Falda de res,Res deshebrada,150,300,principal,plato,,tostadas-de-res-deshebrada.jpg
 Tostadas de Res Deshebrada,Cena,suelto,medio,salado,,Frijol molido,Frijoles molidos,80,250,principal,plato,,tostadas-de-res-deshebrada.jpg
 Tostadas de Res Deshebrada,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (lechuga, jitomate, cebolla)",90,,guarnicion,plato,,tostadas-de-res-deshebrada.jpg
-Tostadas de Res Deshebrada,Cena,suelto,medio,salado,,Queso Panela,Queso panela,40,160,principal,plato,,tostadas-de-res-deshebrada.jpg
+Tostadas de Res Deshebrada,Cena,suelto,medio,salado,,Queso fresco de cabra,Queso fresco de cabra,40,160,principal,plato,,tostadas-de-res-deshebrada.jpg
 Tostadas de Res Deshebrada,Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,tostadas-de-res-deshebrada.jpg
 Tostadas de Res Deshebrada,Cena,suelto,medio,salado,,Salsa verde,Salsa verde,30,,sub-receta,plato,,tostadas-de-res-deshebrada.jpg
 Tostadas de Res Deshebrada,Cena,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,tostadas-de-res-deshebrada.jpg
-Tostadas de Salmón con Pepino,Cena,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,80,principal,plato,,tostadas-de-salmon-con-pepino.jpg
+Tostadas de Salmón con Pepino,Cena,suelto,medio,salado,,Tostada de maíz horneada,Tostadas horneadas,40,52,principal,plato,,tostadas-de-salmon-con-pepino.jpg
 Tostadas de Salmón con Pepino,Cena,suelto,medio,salado,,Filete de salmón,Salmón a la plancha,150,300,principal,plato,,tostadas-de-salmon-con-pepino.jpg
 Tostadas de Salmón con Pepino,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (pepino, cebolla morada, col morada)",110,,guarnicion,plato,,tostadas-de-salmon-con-pepino.jpg
 Tostadas de Salmón con Pepino,Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,62,94,principal,plato,,tostadas-de-salmon-con-pepino.jpg
@@ -1074,7 +1073,7 @@ Tostadas de Salmón con Pepino,Cena,suelto,medio,salado,,Salsa de soya,Salsa de 
 Tostadas de Salmón con Pepino,Cena,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento,plato,,tostadas-de-salmon-con-pepino.jpg
 Quesadillas de Camarón,Cena,suelto,medio,salado,,Tortilla de maíz,Tortillas de maíz,90,180,principal,plato,,quesadillas-de-camaron.jpg
 Quesadillas de Camarón,Cena,suelto,medio,salado,,Camarón crudo mediano,Camarón salteado,160,320,principal,plato,,quesadillas-de-camaron.jpg
-Quesadillas de Camarón,Cena,suelto,medio,salado,,Queso Panela,Queso panela,60,160,principal,plato,,quesadillas-de-camaron.jpg
+Quesadillas de Camarón,Cena,suelto,medio,salado,,Queso Mozzarella semidescremado,Queso mozzarella,60,120,principal,plato,,quesadillas-de-camaron.jpg
 Quesadillas de Camarón,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (pimiento, cebolla, champiñón)",100,,guarnicion,plato,,quesadillas-de-camaron.jpg
 Quesadillas de Camarón,Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,62,94,principal,plato,,quesadillas-de-camaron.jpg
 Quesadillas de Camarón,Cena,suelto,medio,salado,,Pico de gallo,Pico de gallo,40,,sub-receta,plato,,quesadillas-de-camaron.jpg
@@ -1083,7 +1082,7 @@ Quesadillas de Camarón,Cena,suelto,medio,salado,,Sal,Pizca de sal,1,,condimento
 Nachos Fit de Pollo,Cena,suelto,medio,salado,,Totopos de maíz,Totopos horneados,50,100,principal,plato,,nachos-fit-de-pollo.jpg
 Nachos Fit de Pollo,Cena,suelto,medio,salado,,Pechuga de pollo sin piel a la plancha,Pollo deshebrado,150,350,principal,plato,,nachos-fit-de-pollo.jpg
 Nachos Fit de Pollo,Cena,suelto,medio,salado,,Frijol promedio cocido,Frijoles,100,300,principal,plato,,nachos-fit-de-pollo.jpg
-Nachos Fit de Pollo,Cena,suelto,medio,salado,,Queso Panela,Queso panela,60,160,principal,plato,,nachos-fit-de-pollo.jpg
+Nachos Fit de Pollo,Cena,suelto,medio,salado,,Queso fresco de cabra,Queso fresco de cabra,60,160,principal,plato,,nachos-fit-de-pollo.jpg
 Nachos Fit de Pollo,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (jitomate, cebolla morada, chile jalapeño)",90,,guarnicion,plato,,nachos-fit-de-pollo.jpg
 Nachos Fit de Pollo,Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,62,94,principal,plato,,nachos-fit-de-pollo.jpg
 Nachos Fit de Pollo,Cena,suelto,medio,salado,,Crema Lala Light,Crema light,30,,fijo,plato,,nachos-fit-de-pollo.jpg
@@ -1156,10 +1155,9 @@ Atún Sellado con Ensalada de Pepino,Cena,suelto,ligero,salado,,Salsa de soya,Sa
 Atún Sellado con Ensalada de Pepino,Cena,suelto,ligero,salado,,Limón,Limón,5,,condimento,plato,,atun-sellado-con-ensalada-de-pepino.jpg
 Atún Sellado con Ensalada de Pepino,Cena,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,,atun-sellado-con-ensalada-de-pepino.jpg
 Calabacitas Rellenas de Pollo,Cena,suelto,medio,salado,,Pechuga de pollo sin piel a la plancha,Pollo deshebrado,160,350,principal,plato,,calabacitas-rellenas-de-pollo.jpg
-Calabacitas Rellenas de Pollo,Cena,suelto,medio,salado,,Calabacita alargada cruda,Calabacitas,200,,guarnicion,plato,,calabacitas-rellenas-de-pollo.jpg
 Calabacitas Rellenas de Pollo,Cena,suelto,medio,salado,,Arroz cocido,Arroz blanco,100,450,principal,plato,,calabacitas-rellenas-de-pollo.jpg
 Calabacitas Rellenas de Pollo,Cena,suelto,medio,salado,,Puré de jitomate,Salsa de jitomate,80,,principal,plato,,calabacitas-rellenas-de-pollo.jpg
-Calabacitas Rellenas de Pollo,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (cebolla, champiñón, pimiento)",80,,guarnicion,plato,,calabacitas-rellenas-de-pollo.jpg
+Calabacitas Rellenas de Pollo,Cena,suelto,medio,salado,,Verduras mixtas,"Verduras (cebolla, champiñón, pimiento, calabacitas)",280,,guarnicion,plato,,calabacitas-rellenas-de-pollo.jpg
 Calabacitas Rellenas de Pollo,Cena,suelto,medio,salado,,Queso Mozzarella semidescremado,Queso mozzarella gratinado,50,120,principal,plato,,calabacitas-rellenas-de-pollo.jpg
 Calabacitas Rellenas de Pollo,Cena,suelto,medio,salado,,Aguacate Hass,Aguacate,47,94,principal,plato,,calabacitas-rellenas-de-pollo.jpg
 Calabacitas Rellenas de Pollo,Cena,suelto,medio,salado,,Ajo,Ajo,3,,condimento,plato,,calabacitas-rellenas-de-pollo.jpg

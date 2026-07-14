@@ -41,10 +41,14 @@ for r in csv.DictReader(open(os.path.join(BASE, "food_measures.csv"), encoding="
     if fid and gpm > 0 and fid not in MEAS: MEAS[fid] = (gpm, med)
 SUB = {}
 SUB_YIELD = {}  # rendimiento total (g) de cada sub-receta = suma de TODOS sus ingredientes (incl. condimentos)
+SUB_ING = {}    # ingredientes visibles de cada sub-receta → la app MUESTRA la receta de la salsa
 for r in csv.DictReader(open(os.path.join(BASE, "SUBRECETAS-HSC.csv"), encoding="utf-8-sig")):
     s = r["subreceta"].strip(); SUB.setdefault(s, [0, 0, 0, 0, 0]); SUB_YIELD.setdefault(s, 0.0)
     SUB_YIELD[s] += num(r["gramos"])  # el rendimiento incluye condimentos (suman gramos, no macros)
-    if (r.get("rol") or "").strip() == "condimento": continue
+    rol_sub = (r.get("rol") or "").strip()
+    nv_sub = (r.get("nombre_visible") or "").strip() or (r.get("alimento") or "").strip()
+    SUB_ING.setdefault(s, []).append({"nv": nv_sub, "g": num(r["gramos"]), "rol": rol_sub})
+    if rol_sub == "condimento": continue
     # El nombre SMAE va en 'alimento'; en v2 las 13 sub-recetas viejas lo dejaron en
     # 'nombre_visible' con 'alimento' vacío (solo "Salsa de naranja" lo trae bien) → fallback.
     al_sub = (r.get("alimento") or "").strip() or (r.get("nombre_visible") or "").strip()
@@ -96,5 +100,12 @@ ts += "// ings principales traen a=[por-gramo kcal,P,F,C,fibra] y max para ajust
 ts += "export interface BancoIng { nv: string; rol: string; g0: number; max?: number; a?: number[]; pend?: boolean; pu?: number; un?: string }\n"
 ts += "export interface BancoDish { nombre: string; tiempo: string; tipo: string; multMax: number; img: string; fixed: number[]; ings: BancoIng[] }\n"
 ts += "export const BANCO: BancoDish[] = " + json.dumps(banco, ensure_ascii=False) + ";\n"
+# Recetas de las sub-recetas (guacamole, salsas, aderezos) → la app las MUESTRA al abrir
+# el platillo. `rinde` = gramos que rinde la receta completa.
+subs = {s: {"rinde": round(SUB_YIELD[s]), "ings": SUB_ING[s]} for s in sorted(SUB_ING)}
+ts += "\n// Recetas de las sub-recetas (salsas/aderezos): la app muestra sus ingredientes.\n"
+ts += "export interface SubIng { nv: string; g: number; rol: string }\n"
+ts += "export interface SubReceta { rinde: number; ings: SubIng[] }\n"
+ts += "export const SUBRECETAS: Record<string, SubReceta> = " + json.dumps(subs, ensure_ascii=False) + ";\n"
 open(os.path.join(os.path.dirname(__file__), "..", "src", "data", "banco.ts"), "w", encoding="utf-8").write(ts)
-print(f"src/data/banco.ts: {len(banco)} platillos")
+print(f"src/data/banco.ts: {len(banco)} platillos, {len(subs)} sub-recetas")

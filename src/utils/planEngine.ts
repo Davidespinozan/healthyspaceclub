@@ -103,7 +103,7 @@ const IDX = [1, 2, 3];     // posición de P,F,C en el vector [kcal,P,F,C]
 // El solver jamás pasa de esto aunque el max_g del banco sea mayor (obvio, no un
 // límite arbitrario: es lo que una persona de verdad come de ese alimento).
 const PIECE_MAX: Record<string, number> = {
-  'tortilla': 4, 'rebanada de pan': 4, 'tostada': 6, 'huevo': 4,
+  'tortilla': 4, 'rebanada de pan': 4, 'tostada': 4, 'huevo': 4,
   'pan pita': 2, 'pan thin': 2, 'bagel': 1.5, 'tortilla de harina': 3,
 };
 function prep(dishes: BancoDish[]): { fixed: number[]; vars: Var[] } {
@@ -120,7 +120,17 @@ function prep(dishes: BancoDish[]): { fixed: number[]; vars: Var[] } {
         // Contables: nunca más de N piezas realistas (tortilla ≤4, pan ≤4, etc.).
         const pieceMax = ing.pu && ing.un ? PIECE_MAX[ing.un] : undefined;
         if (pieceMax && ing.pu) hi = Math.min(hi, Math.round(pieceMax * ing.pu));
-        vars.push({ a: ing.a, g: ing.g0, g0: ing.g0, lo: ing.g0 * 0.4, hi, blk: bloque ? si : null, ing });
+        // PISO (Magaly): el motor tenía techo pero NO piso, y exprimía la carne a 80 g
+        // para luego meter proteína suelta en el snack. Ahora una FUENTE DE PROTEÍNA
+        // (carne/pollo/pescado/huevo) nunca baja de ~110 g ni del 70% de la receta base.
+        // El piso va SOLO en la proteína: los demás principales (aguacate, aceite, arroz)
+        // conservan holgura para que el solver siga pudiendo cuadrar grasa y carbos.
+        const protDom = ing.a[1] * 4 >= ing.a[2] * 9 && ing.a[1] * 4 >= ing.a[3] * 4;
+        let lo = protDom
+          ? Math.max(ing.g0 * 0.7, Math.min(ing.g0, 110))
+          : ing.g0 * 0.4;
+        lo = Math.min(lo, hi); // nunca por encima del techo
+        vars.push({ a: ing.a, g: ing.g0, g0: ing.g0, lo, hi, blk: bloque ? si : null, ing });
       }
     }
   });
@@ -194,9 +204,27 @@ const CUP_G: Array<[RegExp, number]> = [
   [/leche/i, 240],  // líquidos también se miden en tazas (1 taza ≈ 240 ml)
   [/yogur|yoghur/i, 245],
   [/avena cocida/i, 234], // avena cocida (la seca en hojuelas se queda en gramos)
+  // Fruta y verdura CORTADA (no cuentan por pieza) → tazas. (Magaly: fruta en tazas o piezas)
+  [/fresa|frambuesa|zarzamora|mora|ar[aá]ndano/i, 150],
+  [/mango|pi[nñ]a|papaya|sand[ií]a|mel[oó]n/i, 160],
+  [/uva|cereza/i, 150],
+  [/j[ií]cama|apio|pepino|zanahoria en bastones|jitomate cherry/i, 130],
+  [/jugo de tomate|caldo de/i, 240], // líquidos
 ];
 // nv que llevan "arroz"/"pasta"/"leche" pero NO son el grano/líquido base (no van en tazas).
 const CUP_EXCLUDE = /galleta|inflad|harina|tortita|crema de|leche de|congelad/i;
+// Salsas / aderezos / sub-recetas → cucharadas o tazas, nunca gramos (Magaly).
+// 1 cda = 15 g · 1 taza = 240 g. Cantidades chicas en cdas; grandes en tazas.
+const SAUCE_RE = /salsa|aderezo|guacamole|pico de gallo|chimichurri|vinagreta|tzatziki|glaseado|hummus|mayonesa|crema|mostaza|miel|pur[eé] de jitomate/i;
+function sauceStr(nv: string, grams: number): string {
+  if (grams <= 0) return nv;
+  if (grams < 60) { // chico → cucharadas (1 cda = 15 g)
+    const n = Math.max(0.5, Math.round((grams / 15) * 2) / 2);
+    return `${fmtCount(n)} ${n <= 1 ? 'cda' : 'cdas'} de ${nv.toLowerCase()}`;
+  }
+  const n = Math.max(0.25, snapCount(grams / 240)); // grande → tazas
+  return `${fmtCount(n)} ${pluralNoun('taza', n)} de ${nv.toLowerCase()}`;
+}
 function cupGrams(nv: string): number | null {
   if (CUP_EXCLUDE.test(nv)) return null;
   for (const [re, g] of CUP_G) if (re.test(nv)) return g;
@@ -240,9 +268,20 @@ function portionStr(ing: BancoIng, g: number | null): string {
   if (ing.rol === 'guarnicion') return `${ing.nv} al gusto`;
   // condimento (sal, especias) → solo el nombre, sin cantidad.
   if (ing.rol === 'condimento') return ing.nv;
-  // sub-receta (guacamole, salsas) → nombre + gramos (no escala; sus macros van en fixed).
-  if (ing.rol === 'sub-receta') return `${ing.nv} — ${Math.round(g ?? ing.g0)} g`;
   const grams = Math.round(g ?? ing.g0);
+  // Salsas, aderezos y sub-recetas → cucharadas (chicas) o tazas (grandes). Nadie pesa
+  // el guacamole: "2 cdas de tzatziki", "⅓ taza de guacamole". (Magaly)
+  if (ing.rol === 'sub-receta' || SAUCE_RE.test(ing.nv)) return sauceStr(ing.nv, grams);
+  // Aceites → CUCHARADAS (1 cda = 10 g). Nadie pesa el aceite. (Magaly)
+  if (/aceite/i.test(ing.nv)) {
+    const n = Math.max(0.5, Math.round((grams / 10) * 2) / 2);
+    return `${fmtCount(n)} ${n <= 1 ? 'cda' : 'cdas'} de ${ing.nv.toLowerCase()}`;
+  }
+  // Jamón / pavo → REBANADAS (1 rebanada = 30 g). (Magaly)
+  if (/jam[oó]n|pavo/i.test(ing.nv) && grams > 0) {
+    const n = Math.max(1, Math.round(grams / 30));
+    return `${n} ${n === 1 ? 'rebanada' : 'rebanadas'} de ${ing.nv.toLowerCase()}`;
+  }
   // Granos/leguminosas/pasta → tazas (si el ingrediente no trae ya otra medida casera).
   if (!ing.pu && grams > 0) {
     const cg = cupGrams(ing.nv);
@@ -557,7 +596,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 18;
+export const PLAN_ENGINE_VERSION = 19;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 

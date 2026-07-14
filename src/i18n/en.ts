@@ -1045,6 +1045,8 @@ export const en: Translations<typeof es> = {
     viewFullReview: 'View full review',
     milestoneClose: 'Continue',
     popoutIngredients: 'Ingredients',
+    popoutRecipeOf: 'Recipe for',
+    popoutYields: 'makes {g} g',
     popoutExact: 'exact',
     popoutPorDefinir: '+{n} to define',
   },

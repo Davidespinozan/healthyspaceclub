@@ -1044,6 +1044,8 @@ export const es = {
     viewFullReview: 'Ver review completo',
     milestoneClose: 'Continuar',
     popoutIngredients: 'Ingredientes',
+    popoutRecipeOf: 'Receta de',
+    popoutYields: 'rinde {g} g',
     popoutExact: 'exacto',
     popoutPorDefinir: '+{n} por definir',
   },

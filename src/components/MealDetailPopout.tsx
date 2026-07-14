@@ -1,8 +1,10 @@
 import { createPortal } from 'react-dom';
-import { Camera, ArrowRight } from 'lucide-react';
+import { Camera, ArrowRight, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import { useT } from '../i18n';
 import { formatPortion } from '../utils/kcalCalc';
 import { mealMacros } from '../utils/mealNutrition';
+import { SUBRECETAS } from '../data/banco';
 import type { TranslationKey } from '../i18n/es';
 
 // Shape mínimo de un meal — compatible con MealItem (data/mealPlan) y con los
@@ -17,6 +19,9 @@ export interface PopoutMeal {
   macros?: { kcal: number; prot: number; fat: number; carb: number };
   // Snack combinado: las fotos de los platillos que van dentro.
   imgs?: string[];
+  // Ingredientes con su rol → detectamos las SUB-RECETAS (salsas/aderezos) para
+  // mostrarle al usuario cómo se hacen (Magaly: no basta con "Guacamole 80 g").
+  ings?: Array<{ nv: string; g: number | null; rol: string }>;
 }
 
 const MEAL_TIME_KEYS: Record<string, TranslationKey> = {
@@ -52,8 +57,14 @@ interface Props {
 // Clases CSS .th-popout-* viven en index.css (globales por historial).
 export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther, onShare }: Props) {
   const { t } = useT();
+  const [openRecipe, setOpenRecipe] = useState<string | null>(null);
 
   if (!meal) return null;
+
+  // Sub-recetas del platillo (guacamole, salsas, aderezos) → mostramos su receta.
+  const subs = (meal.ings ?? [])
+    .filter((i) => i.rol === 'sub-receta' && SUBRECETAS[i.nv])
+    .map((i) => ({ nombre: i.nv, receta: SUBRECETAS[i.nv] }));
 
   // Mismo motor que la card (estimador sobre las porciones ya escaladas) → los
   // números coinciden. Porciones en unidades caseras (6 huevos, ⅔ taza), no gramos.
@@ -101,6 +112,44 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther,
               <div key={i} className="th-popout-portion">{formatPortion(p)}</div>
             ))}
           </div>
+
+          {/* Recetas de las salsas/aderezos del platillo — expandibles */}
+          {subs.map(({ nombre, receta }) => {
+            const open = openRecipe === nombre;
+            return (
+              <div key={nombre} style={{ marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setOpenRecipe(open ? null : nombre)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '9px 12px', borderRadius: 10, cursor: 'pointer',
+                    border: '1px solid rgba(120,120,120,.25)', background: 'transparent',
+                    color: 'var(--txt2)', font: 'inherit', fontSize: '.82rem', fontWeight: 600,
+                    textAlign: 'left',
+                  }}
+                >
+                  <ChevronDown
+                    size={14} strokeWidth={2} aria-hidden
+                    style={{ flexShrink: 0, transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform .15s' }}
+                  />
+                  {t('hoy.popoutRecipeOf')} {nombre.toLowerCase()}
+                  <span style={{ marginLeft: 'auto', fontWeight: 400, opacity: .65, fontSize: '.75rem' }}>
+                    {t('hoy.popoutYields', { g: String(receta.rinde) })}
+                  </span>
+                </button>
+                {open && (
+                  <div style={{ padding: '8px 12px 2px 30px' }}>
+                    {receta.ings.map((ing, k) => (
+                      <div key={k} className="th-popout-portion" style={{ opacity: ing.rol === 'condimento' ? .7 : 1 }}>
+                        {ing.rol === 'condimento' ? ing.nv : `${Math.round(ing.g)} g ${ing.nv}`}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {macros && (macros.prot + macros.carbs + macros.fat) > 0 && (
             <div className="th-popout-macros">
               <div className="th-popout-macro"><b>{Math.round(macros.prot)}g</b>{t('onboarding.macroProtein')}</div>
