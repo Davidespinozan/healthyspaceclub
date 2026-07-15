@@ -299,6 +299,10 @@
   display: block;
   width: 100%;
   height: auto;
+  /* Tope de altura: el viewBox es 320×96 (ancho), así que a 100% de ancho la altura
+     crece proporcional y en pantallas anchas (web/desktop) se veía gigante. Con el
+     tope, en móvil no cambia (~110px) y en ancho queda acotada y centrada. */
+  max-height: 130px;
   overflow: visible;
 }
 .wt-trend-tip {
