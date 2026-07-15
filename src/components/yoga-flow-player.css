@@ -676,3 +676,13 @@
   34%, 66% { background: var(--yfp-amber); }
   67%, 100% { background: rgba(191, 160, 101, 0.3); }
 }
+
+/* Subtítulo del flow: la pose que va sonando dentro del video, sin cortar el flow. */
+.yfp-flow-segment{
+  position:absolute; left:50%; bottom:64px; transform:translateX(-50%);
+  padding:7px 16px; border-radius:999px;
+  background:rgba(14,37,33,.72); color:#F2F0E8; backdrop-filter:blur(6px);
+  font-size:15px; font-weight:700; letter-spacing:.01em; white-space:nowrap;
+  animation:yfpSegIn .3s ease;
+}
+@keyframes yfpSegIn{ from{opacity:0; transform:translate(-50%,6px)} to{opacity:1; transform:translate(-50%,0)} }

@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
-  yoga: 2,
+  yoga: 3, // v3: Power Vinyasa por FLOWS (video corrido + poses sostenidas), determinista
   workout: 13, // v13: bloque de equipo consciente del goal (cardio sin pesas → progresión por intensidad, no tempo)
 } as const;
 

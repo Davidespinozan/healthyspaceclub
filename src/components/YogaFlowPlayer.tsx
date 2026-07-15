@@ -6,6 +6,7 @@ import { useWakeLock } from '../hooks/useWakeLock';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { useT } from '../i18n';
 import { useAppStore } from '../store';
+import { supabase } from '../lib/supabase';
 import type { Exercise, YogaPlan, YogaPose } from '../types';
 import './yoga-flow-player.css';
 
@@ -31,6 +32,25 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
   const poses = plan.poses;
   const totalPoses = poses.length;
+
+  // Videos de poses Y flows desde exercise_videos (el banco no los hidrata → antes
+  // el yoga NUNCA mostraba video). Una sola consulta por todos los ids del plan.
+  const [videoMap, setVideoMap] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const ids = [...new Set(poses.map(p => p.id))];
+    if (!ids.length) return;
+    let active = true;
+    supabase.from('exercise_videos').select('exercise_id, video_url, display_order')
+      .in('exercise_id', ids).order('display_order', { ascending: true })
+      .then(({ data }) => {
+        if (!active || !data) return;
+        const m: Record<string, string> = {};
+        for (const r of data) if (!m[r.exercise_id]) m[r.exercise_id] = r.video_url;
+        setVideoMap(m);
+      });
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const todayDayName = new Date().toLocaleDateString(dateLocale, { weekday: 'long' });
   const todayDate = new Date().getDate();
   const todayMonth = new Date().toLocaleDateString(dateLocale, { month: 'short' });
@@ -419,7 +439,19 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   // RENDER: PLAYING / PAUSED
   // ══════════════════════════════════════════════════════════════
 
-  const firstVideoUrl = currentBank?.videos?.[0]?.url;
+  const firstVideoUrl = videoMap[currentPose?.id ?? ''] ?? currentBank?.videos?.[0]?.url;
+  // Nombre a mostrar: los FLOWS no están en el banco → traen su propio `name`.
+  const currentName = currentPose?.name ?? currentBank?.name ?? currentPose?.id;
+  // Subtítulo del flow: qué pose va sonando ahora (según la posición dentro de la vuelta).
+  const flowSegment = (() => {
+    if (!currentPose?.isFlow || !currentPose.segments?.length) return null;
+    const round = currentPose.roundSec || currentPose.duration;
+    const elapsed = currentPose.duration - secondsRemaining;
+    const inRound = round > 0 ? elapsed % round : elapsed;
+    let cur = currentPose.segments[0].label;
+    for (const s of currentPose.segments) if (inRound >= s.atSec) cur = s.label;
+    return cur;
+  })();
   const sideLabel = getSideLabel();
   const roundLabel = getRoundLabel();
   const nextPose = currentIndex < poses.length - 1 ? poses[currentIndex + 1] : null;
@@ -456,9 +488,12 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
               <div className="yfp-video-emoji">
                 {(() => { const Ic = getExerciseIcon(currentBank); return <Ic size={56} strokeWidth={1.5} />; })()}
               </div>
-              <span className="yfp-video-label">{t('workout.videoSoon')} · {currentBank?.name}</span>
+              <span className="yfp-video-label">{t('workout.videoSoon')} · {currentName}</span>
             </div>
           )}
+
+          {/* Subtítulo del flow: la pose que va sonando ahora, corriendo con el video */}
+          {flowSegment && <div className="yfp-flow-segment">{flowSegment}</div>}
 
           {sideLabel && <div className="yfp-side-badge">{sideLabel}</div>}
           {roundLabel && <div className="yfp-round-badge">{roundLabel}</div>}
@@ -466,7 +501,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           {/* Info overlay on tap */}
           {infoOverlay && (
             <div className="yfp-info-overlay">
-              <div className="yfp-info-name">{currentBank?.name || currentPose?.id}</div>
+              <div className="yfp-info-name">{currentName}</div>
               <div className="yfp-info-time">{formatTime(secondsRemaining)}</div>
               {nextBank && (
                 <div className="yfp-info-next">{t('yoga.next')}: {nextBank.name}</div>

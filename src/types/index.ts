@@ -183,6 +183,11 @@ export interface YogaPose {
   repetitions?: number;
   sides?: 'both' | 'left' | 'right';
   tip_personalizado?: string;
+  // ── FLOW (video de secuencia que se reproduce corrido) ──
+  isFlow?: boolean;
+  name?: string;                                    // flows no están en el banco de poses
+  roundSec?: number;                                // duración de una vuelta (para ubicar el subtítulo)
+  segments?: Array<{ label: string; atSec: number }>; // subtítulos que van saliendo en el flow
 }
 
 export interface YogaPlan {

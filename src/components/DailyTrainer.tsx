@@ -28,11 +28,10 @@ import {
   type CachedWorkout,
 } from '../utils/workoutCache';
 import {
-  validatePowerVinyasaPlan,
   validateWorkoutPlanStrict,
 } from '../utils/workoutValidation';
-import { stretchToTargetDuration } from '../utils/yogaPostProcess';
-import { orchestrateWorkout, orchestratePowerVinyasa } from '../utils/workoutOrchestration';
+import { orchestrateWorkout } from '../utils/workoutOrchestration';
+import { buildYogaFlowPlan } from '../utils/yogaBuilder';
 import { repairWorkoutStructure } from '../utils/exerciseOrder';
 import { deliverPartnerWorkout, getPartnerRecentDaytypes } from '../utils/partners';
 import type {
@@ -362,43 +361,15 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
       // ── Rama YOGA: generar Power Vinyasa fresh
       if (selectedModality === 'yoga') {
-        const yogaCandidates = filterByModality(exerciseBank, 'yoga');
-
-        if (yogaCandidates.length < 15) {
-          throw new Error(t('wizard.genErrYoga', { n: yogaCandidates.length }));
-        }
-
         const targetDurationSeconds = selectedTime * 60;
-        const contextStr = bullets.join('\n- ');
-
-        const orchParams = {
-          candidates: yogaCandidates,
-          targetDurationSeconds,
-          userName,
-          context: `- ${contextStr}`,
-          painArea: discomfort === 'pain' ? painArea : undefined,
-          userProfile,
+        // Power Vinyasa por FLOWS (video corrido) + poses sostenidas, DETERMINISTA:
+        // un ritual no necesita IA, y así el yoga se siente fluido (no pose por pose).
+        const level = levelFromObData(obData);
+        const adjustedPlan = buildYogaFlowPlan(
+          targetDurationSeconds, level,
+          discomfort === 'pain' ? painArea : undefined,
           locale,
-        };
-
-        let yogaPlan = await orchestratePowerVinyasa(orchParams);
-
-        const yogaIds = new Set(exerciseBank.filter(e => e.isYoga).map(e => e.id));
-        let validation = validatePowerVinyasaPlan(yogaPlan, targetDurationSeconds, yogaIds);
-
-        if (!validation.valid) {
-          console.warn('[yoga] validación fallida, reintentando:', validation.errors);
-          yogaPlan = await orchestratePowerVinyasa(orchParams);
-          validation = validatePowerVinyasaPlan(yogaPlan, targetDurationSeconds, yogaIds);
-          if (!validation.valid) {
-            console.error('[yoga] segundo intento falló:', validation.errors);
-            // NO incrementar contador — generación falló
-            throw new Error('No pudimos generar una nueva rutina. Intenta en un momento.');
-          }
-        }
-
-        // Stretch duration to match target
-        const adjustedPlan = stretchToTargetDuration(yogaPlan, targetDurationSeconds);
+        );
 
         // Save to cache
         saveWorkoutToCache({
