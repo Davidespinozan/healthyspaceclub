@@ -596,20 +596,33 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 19;
+export const PLAN_ENGINE_VERSION = 20;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 
 /** Resta las macros del batido a la meta del día, para que los principales se
- *  construyan contra el remanente y el total (con batido) caiga en la meta. */
+ *  construyan contra el remanente y el total (con batido) caiga en la meta.
+ *
+ *  Clave: el batido REEMPLAZA el snack de su slot, así que ese snack normal ya no se
+ *  sirve. Descontar el batido completo dejaba el día corto por el snack perdido (los
+ *  snacks son casi puro carbo, 0.06·C por slot) → desfase fuerte en carbos/grasa con
+ *  metas altas + batido. Se descuenta el NETO (batido − snack reemplazado). */
 function reduceForShake(T: number[], shake?: ProteinShake): number[] {
   if (!shake?.slots?.length) return T;
   const m = shakeMacros(shake), n = shake.slots.length;
+  // 1ª pasada: meta reducida por el batido completo (≈ meta de los principales).
+  const [k0, p0, f0, c0] = [T[0] - m.kcal * n, T[1] - m.prot * n, T[2] - m.fat * n, T[3] - m.carb * n];
+  // Asignación del snack que se PIERDE al reemplazarlo (mismos shares que mealTargets.snackSlot),
+  // estimada sobre la meta reducida y por cada slot ocupado por un batido.
+  const back = {
+    prot: 0.02 * p0 * n, fat: 0.02 * f0 * n, carb: 0.06 * c0 * n,
+  };
+  const backKcal = back.prot * 4 + back.fat * 9 + back.carb * 4;
   return [
-    Math.max(T[0] * 0.5, T[0] - m.kcal * n),
-    Math.max(T[1] * 0.4, T[1] - m.prot * n),
-    Math.max(T[2] * 0.4, T[2] - m.fat * n),
-    Math.max(T[3] * 0.4, T[3] - m.carb * n),
+    Math.max(T[0] * 0.5, k0 + backKcal),
+    Math.max(T[1] * 0.4, p0 + back.prot),
+    Math.max(T[2] * 0.4, f0 + back.fat),
+    Math.max(T[3] * 0.4, c0 + back.carb),
   ];
 }
 

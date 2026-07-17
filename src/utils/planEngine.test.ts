@@ -36,6 +36,26 @@ describe('planEngine — ajuste a la meta', () => {
     });
   }
 
+  // Metas ALTAS (volumen) CON batido de proteína. Antes, el batido reemplazaba el snack
+  // pero reduceForShake solo descontaba el batido (no reintegraba el snack perdido, casi
+  // puro carbo) → desfase fuerte en carbos/grasa. Estos casos lo blindan.
+  const HIGH_SHAKE: { T: PlanTarget; shake: import('./planEngine').ProteinShake }[] = [
+    { T: { kcal: 3500, protG: 187, fatG: 117, carbG: 425 }, shake: { slots: ['am', 'pm'], type: 'massgainer', protG: 50 } },
+    { T: { kcal: 3500, protG: 220, fatG: 117, carbG: 391 }, shake: { slots: ['am', 'pm'], type: 'vegana', protG: 30 } },
+    { T: { kcal: 3200, protG: 176, fatG: 107, carbG: 396 }, shake: { slots: ['am'], type: 'regular', protG: 40 } },
+    { T: { kcal: 3000, protG: 190, fatG: 90, carbG: 360 }, shake: { slots: ['am', 'pm'], type: 'massgainer', protG: 40 } },
+  ];
+  for (const { T, shake } of HIGH_SHAKE) {
+    it(`meta alta ${T.kcal} + batido ${shake.type} pega carbos/grasa`, () => {
+      for (const d of buildWeeklyPlan(T, { seed: 42, shake })) {
+        const tot = dayTotals(d.meals);
+        expect(Math.abs(tot.kcal - T.kcal) / T.kcal).toBeLessThan(0.10);
+        expect(Math.abs(tot.carb - T.carbG) / T.carbG).toBeLessThan(0.10);
+        expect(Math.abs(tot.fat - T.fatG) / T.fatG).toBeLessThan(0.10);
+      }
+    });
+  }
+
   it('respeta el reparto de Magaly: comida es la más grande, cena ≤ comida', () => {
     const T = CASES[2];
     for (const d of buildWeeklyPlan(T, { seed: 7 })) {
