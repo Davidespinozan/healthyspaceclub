@@ -106,12 +106,12 @@ export default function LandingScreen() {
       {/* NAV */}
       <nav id="landing-nav" className="landing-nav">
         <div className="nav-left">
-          <img className="nav-iso" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png" alt="Healthy Space Club" />
+          <img className="nav-iso" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp" alt="Healthy Space Club" />
           <LanguageToggle />
           <span className="nav-login" onClick={() => goTo('login')}>{t('landing.login')}</span>
         </div>
         <div className="logo logo-nav">
-          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" />
+          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscprincipalsinfondo.webp" alt="Healthy Space Club" />
         </div>
         <div className="nav-links">
           <a href="#s-app">{t('landing.navClub')}</a>
@@ -322,7 +322,7 @@ export default function LandingScreen() {
       {/* FOOTER */}
       <footer>
         <div className="logo">
-          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" />
+          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscprincipalsinfondo.webp" alt="Healthy Space Club" />
         </div>
         <p>{t('landing.copyright')}</p>
         <div className="region-selector" aria-label={t('landing.regionAria')}>

@@ -35,7 +35,7 @@ export default function SignupModal() {
       <div className="login-box" role="dialog" aria-modal="true" aria-label={t('signup.success')}>
         <div className="login-head" style={{ background: 'linear-gradient(135deg, rgba(28,59,53,.55), rgba(8,19,18,0))' }}>
           <img
-            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
+            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp"
             alt="Healthy Space Club"
             className="login-logo"
           />

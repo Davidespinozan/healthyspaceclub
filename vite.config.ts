@@ -31,8 +31,8 @@ export default defineConfig({
         theme_color: '#153330',
         orientation: 'any',
         icons: [
-          { src: 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' }
+          { src: 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp', sizes: '192x192', type: 'image/webp', purpose: 'any' },
+          { src: 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp', sizes: '512x512', type: 'image/webp', purpose: 'any' }
         ],
         categories: ['health', 'fitness', 'lifestyle'],
         lang: 'es',

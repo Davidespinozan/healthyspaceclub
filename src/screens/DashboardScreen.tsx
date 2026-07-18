@@ -163,8 +163,8 @@ export default function DashboardScreen() {
       {/* Bottom Navigation */}
       <nav className="bnav">
         <div className="bnav-brand">
-          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png" alt="HSC" className="bnav-logo" />
-          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png" alt="Healthy Space Club" className="bnav-wordmark" />
+          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp" alt="HSC" className="bnav-logo" />
+          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscprincipalsinfondo.webp" alt="Healthy Space Club" className="bnav-wordmark" />
         </div>
         {TABS.map(tab => {
           const Icon = tab.icon;

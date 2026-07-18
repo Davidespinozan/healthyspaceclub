@@ -12,7 +12,7 @@ import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invali
 import { track } from '../utils/analytics';
 import { recordReferralIfAny } from '../utils/referral';
 
-const BRAND_ICON = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png';
+const BRAND_ICON = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp';
 
 const TOTAL_STEPS = 9;
 
@@ -287,12 +287,12 @@ export default function OnboardingScreen() {
           <div className="onb-center">
             <div className="onb-brand-logos">
               <img
-                src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
+                src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp"
                 alt=""
                 className="onb-brand-icon"
               />
               <img
-                src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logo_ohaica.png"
+                src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscprincipalsinfondo.webp"
                 alt="Healthy Space Club"
                 className="onb-brand-wordmark"
               />

@@ -51,7 +51,7 @@ export default function ResetPasswordScreen() {
       <div className="ls-card">
         <div className="ls-logo">
           <img
-            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-512.png"
+            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp"
             alt="Healthy Space Club"
           />
         </div>

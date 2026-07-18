@@ -421,7 +421,7 @@ function shakeItem(s: ProteinShake, label: string): MealItem {
   const tag = s.type === 'massgainer' ? ' (mass gainer)' : s.type === 'vegana' ? ' (vegana)' : '';
   return {
     time: label, name: 'Batido de Proteína', desc: `${s.protG} g proteína${tag}`,
-    img: IMG_BASE + 'batido-de-proteina.jpg', // si no existe la foto, el card la oculta solo
+    img: IMG_BASE + 'batido-de-proteina.webp', // si no existe la foto, el card la oculta solo
     portions: [`1 scoop de proteína${tag} — ${s.protG} g proteína`],
     macros: { ...m, fiber: 0 },
     ings: [{ nv: 'Proteína en polvo', g: 0, rol: 'principal' }],
