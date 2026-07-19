@@ -126,8 +126,14 @@ describe('planEngine — ajuste a la meta', () => {
     expect(amCount(low)).toBe(1);
     expect(amCount(high)).toBe(1);
     expect(low.meals.map((m) => m.time)).toContain('Snack PM');
-    // Meta alta: el snack combinado trae más ingredientes que el de meta baja.
-    const amIngs = (d: typeof low) => d.meals.find((m) => m.time === 'Snack AM')!.ings!.length;
-    expect(amIngs(high)).toBeGreaterThan(amIngs(low));
+    // Meta alta: el snack COMBINA 2 platillos; el de meta baja es uno solo. (Antes se
+    // medía por nº de ingredientes, pero un platillo suelto puede tener más que dos
+    // combinados — se mide el nº de platillos, que es lo que la prueba quiere garantizar.)
+    const amDishes = (d: typeof low) => {
+      const m = d.meals.find((x) => x.time === 'Snack AM')!;
+      return (m as { imgs?: string[] }).imgs?.length || 1;
+    };
+    expect(amDishes(high)).toBe(2);
+    expect(amDishes(low)).toBe(1);
   });
 });

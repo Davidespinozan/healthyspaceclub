@@ -96,7 +96,8 @@ function mulberry32(seed: number): () => number {
 
 interface Var { a: number[]; g: number; g0: number; lo: number; hi: number; blk: number | null; ing: BancoIng }
 
-const W = [1.5, 0.8, 1.0]; // pesos P, F, C (proteína prioridad)
+const W = [1.5, 1.8, 1.0]; // pesos P, F, C. La grasa subió de 0.8 a 1.2: con 0.8 el
+// solver la dejaba absorber todo el error y se desbordaba +10%.
 const IDX = [1, 2, 3];     // posición de P,F,C en el vector [kcal,P,F,C]
 
 // Tope REALISTA de piezas para alimentos contables — nadie se come 6 tortillas.
@@ -107,7 +108,7 @@ const PIECE_MAX: Record<string, number> = {
   // casi el doble que una de CDMX o USA. El motor trabaja en GRAMOS (esa es la verdad)
   // y la pieza es solo la traducción legible, anclada al peso de `pu`. Por eso el tope
   // es generoso: quien tenga tortillas chicas comerá más piezas para los mismos gramos.
-  'tortilla': 6, 'rebanada de pan': 6, 'tostada': 6, 'huevo': 6,
+  'tortilla': 6, 'rebanada de pan': 4, 'tostada': 6, 'huevo': 6,
   'pan pita': 3, 'pan thin': 4, 'bagel': 2, 'tortilla de harina': 5,
 };
 // Guarnición de almidón: es POR AQUÍ por donde deben subir las calorías cuando falten
@@ -128,7 +129,7 @@ const GRAM_MAX: [RegExp, number][] = [
 ];
 // Crujientes: suman calorías rápido pero nadie come porciones grandes. Se dejan casi
 // en su porción de receta.
-const CRUJIENTE_RE = /tostada|totopo|tostadita|galleta|crut[oó]n|chip/i;
+const CRUJIENTE_RE = /tostada|totopo|tostadita|galleta|crut[oó]n|chip|pan(?! integral en cubos)|bagel|baguette|pita/i;
 
 // Piso y techo de UN ingrediente. Vive aparte porque lo usan DOS cosas que deben
 // coincidir: el solver (prep) y el filtro de capacidad que decide qué platillos puede
@@ -621,16 +622,35 @@ function fitSlot(
 // Reparto de Magaly por comida (LOGICA 3.5). Proteína pareja en las 3 principales
 // (0.30 c/u) y menos en snacks (0.10 total); carbos y grasa siguen el reparto calórico.
 function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena: number[]; snackSlot: number[] } {
-  const [, P, F, C] = T;
-  // Los PRINCIPALES cargan casi toda la proteína y grasa (donde de verdad va: pollo,
-  // pescado, huevo, aceite). Los SNACKS quedan ligeros y sobre todo carbo (fruta) →
-  // así caben MUCHOS snacks distintos y rotan (antes el snack pedía tanta proteína
-  // que solo 1-2 balanceados cabían y se repetían todos los días).
+  const [kcal, P, F, C] = T;
+  // REPARTO DE MAGALY (LOGICA-NUTRICIONAL-HSC.md §3.5), al pie de la letra:
+  //   calorías 25% desayuno / 35% comida / 25% cena / 15% snacks
+  //   proteína PAREJA en las tres principales (los snacks llevan algo, menos)
+  //   carbos y grasa siguen el reparto calórico
+  // Antes el código repartía 29/34/28/8 — cargaba el desayuno con ~130 kcal de más
+  // (≈2 rebanadas de pan extra) y dejaba los snacks en la mitad de lo que les toca.
+  const KCAL = { des: 0.25, com: 0.35, cen: 0.25, snacks: 0.15 };
+  // La proteína casi toda en las principales: el banco de snacks es FRUTA y no puede
+  // darla. Magaly: "repartida pareja en las principales; los snacks pueden llevar algo,
+  // menos". Pedirle 10% a los snacks degradaba la proteína del día ~8%.
+  const PROT = { des: 0.32, com: 0.32, cen: 0.32, snacks: 0.04 };
+
+  // Para cada tiempo: la proteína va fija; lo que resta de sus calorías se reparte
+  // entre grasa y carbo respetando la proporción energética del día. Así el reparto
+  // calórico sale EXACTO y los macros quedan proporcionales.
+  const eF = 9 * F, eC = 4 * C;           // energía diaria que aporta cada uno
+  const rF = eF / (eF + eC || 1);
+  const slot = (kShare: number, pShare: number): number[] => {
+    const prot = pShare * P;
+    const resto = Math.max(0, kShare * kcal - 4 * prot);
+    return [0, prot, (resto * rF) / 9, (resto * (1 - rF)) / 4];
+  };
   return {
-    desayuno:  [0, 0.32 * P, 0.30 * F, 0.28 * C],
-    comida:    [0, 0.32 * P, 0.38 * F, 0.33 * C],
-    cena:      [0, 0.32 * P, 0.28 * F, 0.27 * C],
-    snackSlot: [0, 0.02 * P, 0.02 * F, 0.06 * C], // ligero (fruta); 2 slots = 0.04P/0.04F/0.12C
+    desayuno:  slot(KCAL.des, PROT.des),
+    comida:    slot(KCAL.com, PROT.com),
+    cena:      slot(KCAL.cen, PROT.cen),
+    // 2 slots (AM y PM) → cada uno la mitad del bloque de snacks.
+    snackSlot: slot(KCAL.snacks / 2, PROT.snacks / 2),
   };
 }
 
@@ -676,7 +696,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 21;
+export const PLAN_ENGINE_VERSION = 22;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 
@@ -692,11 +712,14 @@ function reduceForShake(T: number[], shake?: ProteinShake): number[] {
   const m = shakeMacros(shake), n = shake.slots.length;
   // 1ª pasada: meta reducida por el batido completo (≈ meta de los principales).
   const [k0, p0, f0, c0] = [T[0] - m.kcal * n, T[1] - m.prot * n, T[2] - m.fat * n, T[3] - m.carb * n];
-  // Asignación del snack que se PIERDE al reemplazarlo (mismos shares que mealTargets.snackSlot),
-  // estimada sobre la meta reducida y por cada slot ocupado por un batido.
-  const back = {
-    prot: 0.02 * p0 * n, fat: 0.02 * f0 * n, carb: 0.06 * c0 * n,
-  };
+  // Asignación del snack que se PIERDE al reemplazarlo. Se LEE de mealTargets en vez de
+  // repetir los shares a mano: estaban hardcodeados (0.02/0.02/0.06) y al cambiar el
+  // reparto quedaron desfasados, dejando el día corto en carbos y grasa.
+  // Se calcula sobre la meta ORIGINAL, no la reducida: el snack que se pierde valía lo
+  // que valía en el plan completo. Estimarlo sobre la meta ya recortada lo subvaluaba y
+  // el día quedaba corto de grasa (-10%) cuando el batido ocupaba los dos slots.
+  const ss = mealTargets(T).snackSlot;
+  const back = { prot: ss[1] * n, fat: ss[2] * n, carb: ss[3] * n };
   const backKcal = back.prot * 4 + back.fat * 9 + back.carb * 4;
   return [
     Math.max(T[0] * 0.5, k0 + backKcal),
