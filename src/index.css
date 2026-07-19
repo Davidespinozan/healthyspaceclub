@@ -8000,6 +8000,8 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .bw-sheet{width:100%;max-width:520px;max-height:88vh;overflow-y:auto;background:#F2F0E8;
   border-radius:22px 22px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
 .bw-sheet-head{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+/* La flama del encabezado acompaña al título, no lo domina. */
+.bw-logo{width:22px;height:22px;object-fit:contain;flex:0 0 auto}
 .bw-sheet-head h3{font-size:17px;font-weight:900;letter-spacing:-.02em;color:#14201D}
 .bw-x{margin-left:auto;width:32px;height:32px;border-radius:999px;background:rgba(21,51,48,.07);
   display:grid;place-items:center;color:#5B6B66;border:0}
