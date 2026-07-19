@@ -8022,3 +8022,8 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .bw-foot-note{font-size:12.5px;color:#5B6B66;line-height:1.45}
 .bw-cta{display:block;text-align:center;margin-top:11px;padding:14px;border-radius:13px;
   background:#BFA065;color:#0E2521;font-size:14.5px;font-weight:800;text-decoration:none}
+.bw-foot-label{font-size:12px;font-weight:800;color:#14201D;margin-bottom:7px}
+.bw-slots{display:flex;gap:7px;margin-bottom:11px}
+.bw-slot{flex:1;padding:10px 8px;border-radius:11px;border:1.5px solid rgba(21,51,48,.12);
+  background:#fff;font-size:13px;font-weight:700;color:#5B6B66;cursor:pointer;font-family:inherit}
+.bw-slot.on{background:#0E2521;border-color:#0E2521;color:#F6F2EA}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, X } from 'lucide-react';
 import { fetchBowlsDisponibles, FLAMA_URL, linkPedido, type BowlClub } from '../data/bowlsClub';
-import type { PlanTarget } from '../utils/planEngine';
+import type { PlanTarget, Slot } from '../utils/planEngine';
 
 /**
  * Widget "hoy no cocino" dentro de la pestaña Hoy.
@@ -14,14 +14,21 @@ import type { PlanTarget } from '../utils/planEngine';
  * widget no se pinta. No hay condicional de ciudad en el cliente porque un `if` se
  * puede saltar; aquí simplemente no hay datos que mostrar.
  */
+const TIEMPOS: { slot: Slot; label: string }[] = [
+  { slot: 'Desayuno', label: 'Desayuno' },
+  { slot: 'Comida', label: 'Comida' },
+  { slot: 'Cena', label: 'Cena' },
+];
+
 export function BowlWidget({ target, onElegir }: {
   target: PlanTarget | null;
-  /** Se dispara al confirmar: el plan del día debe rearmarse alrededor del bowl. */
-  onElegir?: (bowl: BowlClub) => void;
+  /** Se dispara al confirmar: el plan del día se rearma alrededor del bowl. */
+  onElegir?: (bowl: BowlClub, slot: Slot) => void;
 }) {
   const [bowls, setBowls] = useState<BowlClub[]>([]);
   const [abierto, setAbierto] = useState(false);
   const [sel, setSel] = useState<BowlClub | null>(null);
+  const [slot, setSlot] = useState<Slot>('Comida');
 
   useEffect(() => { void fetchBowlsDisponibles().then(setBowls); }, []);
 
@@ -97,12 +104,20 @@ export function BowlWidget({ target, onElegir }: {
 
             {sel && (
               <footer className="bw-foot">
+                <p className="bw-foot-label">¿Cuál comida sustituye?</p>
+                <div className="bw-slots">
+                  {TIEMPOS.map((t) => (
+                    <button key={t.slot}
+                      className={`bw-slot${slot === t.slot ? ' on' : ''}`}
+                      onClick={() => setSlot(t.slot)}>{t.label}</button>
+                  ))}
+                </div>
                 <p className="bw-foot-note">
-                  Tu plan de hoy se va a reacomodar alrededor del <b>{sel.name}</b>.
-                  Puedes deshacerlo cuando quieras.
+                  Tu <b>{slot.toLowerCase()}</b> de hoy pasa a ser el <b>{sel.name}</b> y el
+                  resto del día se reacomoda para cumplir tus macros. Puedes deshacerlo.
                 </p>
                 <a className="bw-cta" href={linkPedido(sel.id)} target="_blank" rel="noopener noreferrer"
-                  onClick={() => { onElegir?.(sel); setAbierto(false); }}>
+                  onClick={() => { onElegir?.(sel, slot); setAbierto(false); setSel(null); }}>
                   Pedirlo — ${Math.round(sel.price)}
                 </a>
               </footer>

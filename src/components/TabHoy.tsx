@@ -5,6 +5,8 @@ import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
 import { BowlWidget } from './BowlWidget';
+import { buildDayWithFixed, type Slot } from '../utils/planEngine';
+import type { BowlClub } from '../data/bowlsClub';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
@@ -55,7 +57,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // Calculadora abierta "en vez de" una comida (slot). null = cerrada.
   const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number } | null>(null);
   const {
-    userName, planGoal, mealPlanKey, shoppingDay,
+    userName, planGoal, mealPlanKey, shoppingDay, saveWeeklyPlan,
     mealChecks, toggleMealCheck,
     workoutChecks, toggleWorkoutCheck,
     mealResolvedByLog,
@@ -71,7 +73,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     hsmProfile, setHSMProfile,
     subscriptionStatus,
     username,
-  } = useAppStore(useShallow((s) => ({ userName: s.userName, planGoal: s.planGoal, mealPlanKey: s.mealPlanKey, shoppingDay: s.shoppingDay, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, workoutChecks: s.workoutChecks, toggleWorkoutCheck: s.toggleWorkoutCheck, mealResolvedByLog: s.mealResolvedByLog, foodLog: s.foodLog, completedSessions: s.completedSessions, activityLog: s.activityLog, dailyWorkout: s.dailyWorkout, weeklyPlan: s.weeklyPlan, lastWeeklyReview: s.lastWeeklyReview, streakCount: s.streakCount, obData: s.obData, dailyBriefing: s.dailyBriefing, setDailyBriefing: s.setDailyBriefing, dailyHSMResponses: s.dailyHSMResponses, lastStreakMilestone: s.lastStreakMilestone, setLastStreakMilestone: s.setLastStreakMilestone, hsmProfile: s.hsmProfile, setHSMProfile: s.setHSMProfile, subscriptionStatus: s.subscriptionStatus, username: s.username })));
+  } = useAppStore(useShallow((s) => ({ userName: s.userName, planGoal: s.planGoal, mealPlanKey: s.mealPlanKey, shoppingDay: s.shoppingDay, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, workoutChecks: s.workoutChecks, toggleWorkoutCheck: s.toggleWorkoutCheck, mealResolvedByLog: s.mealResolvedByLog, foodLog: s.foodLog, completedSessions: s.completedSessions, activityLog: s.activityLog, dailyWorkout: s.dailyWorkout, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, lastWeeklyReview: s.lastWeeklyReview, streakCount: s.streakCount, obData: s.obData, dailyBriefing: s.dailyBriefing, setDailyBriefing: s.setDailyBriefing, dailyHSMResponses: s.dailyHSMResponses, lastStreakMilestone: s.lastStreakMilestone, setLastStreakMilestone: s.setLastStreakMilestone, hsmProfile: s.hsmProfile, setHSMProfile: s.setHSMProfile, subscriptionStatus: s.subscriptionStatus, username: s.username })));
 
   // Acceso real = estado de Stripe (subscriptionStatus), NO el trial local
   // (userPlan/trialEndsAt), que se expira solo sin mirar Stripe y desincronizaba
@@ -863,7 +865,27 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           {/* Widget del food truck. Se pinta SOLO si el socio es de una ciudad con
               cobertura: el servidor no le manda bowls a nadie más, así que aquí no hay
               condicional de ciudad — sin datos, el componente devuelve null. */}
-          <BowlWidget target={weeklyPlan?.gen ?? null} />
+          <BowlWidget
+            target={weeklyPlan?.gen ?? null}
+            onElegir={(bowl: BowlClub, slot: Slot) => {
+              // Rearma HOY alrededor del bowl: ocupa el tiempo elegido y las demás
+              // comidas se recalculan contra lo que sobra, para que el día siga
+              // cumpliendo la meta. El motor elige platillos LIGEROS si queda poco
+              // margen (un bowl puede ser la mitad del día en una meta baja).
+              const g = weeklyPlan?.gen;
+              if (!g || !weeklyPlan?.days?.length) return;
+              const idx = new Date().getDay();                 // 0=domingo
+              const i = Math.min(idx, weeklyPlan.days.length - 1);
+              const nuevo = buildDayWithFixed(
+                { kcal: g.kcal, protG: g.protG, fatG: g.fatG, carbG: g.carbG },
+                { slot, name: bowl.name, kcal: bowl.kcal, prot: bowl.prot, fat: bowl.fat, carb: bowl.carb, img: bowl.img ?? undefined, desc: bowl.tagline ?? 'Bowl de Healthy Space' },
+                { avoid: g.avoid, craving: g.craving },
+                weeklyPlan.days[i].day,
+              );
+              const days = weeklyPlan.days.map((d, k) => (k === i ? nuevo : d));
+              void saveWeeklyPlan({ ...weeklyPlan, days });
+            }}
+          />
         </div>
 
         {/* ── Entrenar en pareja — se oculta si ya hay rutina de pareja hoy
