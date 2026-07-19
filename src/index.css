@@ -7994,35 +7994,50 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   color:rgba(246,242,234,.82);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 
-/* Hoja de selección */
-.bw-sheet-bg{position:fixed;inset:0;z-index:200;background:rgba(8,19,18,.55);
+/* Hoja de selección — mismo lenguaje que el menú de la app del food truck:
+   foto grande arriba, nombre + precio, tagline y macros con separadores. */
+.bw-sheet-bg{position:fixed;inset:0;z-index:200;background:rgba(8,19,18,.6);
   backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center}
-.bw-sheet{width:100%;max-width:520px;max-height:88vh;overflow-y:auto;background:#F2F0E8;
-  border-radius:22px 22px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
-.bw-sheet-head{display:flex;align-items:center;gap:10px;margin-bottom:13px}
-/* La flama del encabezado acompaña al título, no lo domina. */
-.bw-logo{width:22px;height:22px;object-fit:contain;flex:0 0 auto}
-.bw-sheet-head h3{font-size:17px;font-weight:900;letter-spacing:-.02em;color:#14201D}
-.bw-x{margin-left:auto;width:32px;height:32px;border-radius:999px;background:rgba(21,51,48,.07);
-  display:grid;place-items:center;color:#5B6B66;border:0}
-.bw-list{display:grid;gap:9px}
-.bw-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
-  background:#fff;border:1.5px solid rgba(21,51,48,.1);border-radius:15px;padding:10px;cursor:pointer}
-.bw-item.best{border-color:rgba(78,122,69,.45)}
-.bw-item.on{border-color:#BFA065;box-shadow:0 0 0 3px rgba(191,160,101,.16)}
-.bw-item-img{width:62px;height:62px;border-radius:12px;object-fit:cover;flex:0 0 auto}
-.bw-item-body{display:grid;gap:2px;min-width:0;flex:1}
-.bw-item-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.bw-item-top b{font-size:15px;font-weight:800;color:#14201D}
-.bw-tag{font-size:9px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;
-  background:#4E7A45;color:#fff;padding:2px 7px;border-radius:999px}
-.bw-item-macros{font-size:11.5px;color:#5B6B66;font-variant-numeric:tabular-nums}
-.bw-item-tag{font-size:11.5px;color:#95A19C;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bw-item-price{margin-left:auto;font-size:13px;font-weight:800;color:#5B6B66;flex:0 0 auto}
-.bw-foot{margin-top:14px;padding-top:13px;border-top:1px solid rgba(21,51,48,.1)}
-.bw-foot-note{font-size:12.5px;color:#5B6B66;line-height:1.45}
-.bw-cta{display:block;text-align:center;margin-top:11px;padding:14px;border-radius:13px;
-  background:#BFA065;color:#0E2521;font-size:14.5px;font-weight:800;text-decoration:none}
+.bw-sheet{position:relative;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;
+  background:#F2F0E8;border-radius:24px 24px 0 0;
+  padding:20px 18px calc(18px + env(safe-area-inset-bottom))}
+.bw-x{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:999px;
+  background:rgba(21,51,48,.08);display:grid;place-items:center;color:#5B6B66;border:0;z-index:2}
+
+/* Contexto del negocio */
+.bw-intro{text-align:center;padding:4px 8px 18px}
+.bw-logo{width:38px;height:38px;object-fit:contain;margin:0 auto 8px;display:block}
+.bw-intro h3{font-size:15px;font-weight:900;letter-spacing:-.02em;color:#14201D;line-height:1.25}
+.bw-intro p{font-size:12.5px;color:#5B6B66;line-height:1.5;margin-top:7px}
+.bw-intro-meta{display:inline-block;margin-top:10px;font-size:10.5px;font-weight:800;
+  letter-spacing:.1em;text-transform:uppercase;color:#8A7B52;
+  background:rgba(191,160,101,.16);padding:5px 11px;border-radius:999px}
+
+.bw-list{display:grid;gap:14px}
+.bw-card{display:block;width:100%;text-align:left;background:#fff;border:0;padding:0;
+  border-radius:18px;overflow:hidden;cursor:pointer;font-family:inherit;
+  box-shadow:0 2px 10px rgba(14,37,33,.07);outline:2px solid transparent;transition:outline-color .15s}
+.bw-card.on{outline-color:#BFA065}
+.bw-card-photo{position:relative;display:block;width:100%;aspect-ratio:16/10;overflow:hidden}
+.bw-card-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.bw-best{position:absolute;top:11px;left:11px;font-style:normal;font-size:10px;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;background:#4E7A45;color:#fff;
+  padding:5px 10px;border-radius:999px}
+.bw-card-body{display:block;padding:14px 16px 16px}
+.bw-card-top{display:flex;align-items:baseline;gap:8px}
+.bw-card-top b{flex:1;font-size:18px;font-weight:900;letter-spacing:-.025em;color:#14201D}
+.bw-card-top i{font-style:normal;font-size:16px;font-weight:800;color:#8A7B52}
+.bw-card-tag{display:block;font-size:12.5px;color:#5B6B66;line-height:1.4;margin:5px 0 13px}
+.bw-card-macros{display:flex;align-items:center;padding-top:13px;border-top:1px solid rgba(21,51,48,.09)}
+.bw-card-macros>span{flex:1;display:grid;gap:1px;position:relative}
+.bw-card-macros>span+span::before{content:'';position:absolute;left:0;top:2px;width:1px;height:22px;
+  background:rgba(21,51,48,.1)}
+.bw-card-macros>span+span{padding-left:12px}
+.bw-card-macros b{font-size:15px;font-weight:800;letter-spacing:-.02em;color:#14201D;
+  font-variant-numeric:tabular-nums}
+.bw-card-macros i{font-style:normal;font-size:10.5px;color:#95A19C;font-weight:600}
+
+.bw-foot{margin-top:18px;padding-top:15px;border-top:1px solid rgba(21,51,48,.1)}
 .bw-foot-label{font-size:12px;font-weight:800;color:#14201D;margin-bottom:7px}
 .bw-slots{display:flex;gap:7px;margin-bottom:11px}
 .bw-slot{flex:1;padding:10px 8px;border-radius:11px;border:1.5px solid rgba(21,51,48,.12);

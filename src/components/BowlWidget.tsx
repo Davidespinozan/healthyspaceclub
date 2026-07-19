@@ -72,31 +72,44 @@ export function BowlWidget({ target, onElegir }: {
       {abierto && (
         <div className="bw-sheet-bg" onClick={() => { setAbierto(false); setSel(null); }}>
           <div className="bw-sheet" onClick={(e) => e.stopPropagation()}>
-            <header className="bw-sheet-head">
+            <button className="bw-x" onClick={() => { setAbierto(false); setSel(null); }} aria-label="Cerrar">
+              <X size={18} />
+            </button>
+
+            {/* Contexto: el socio del Club puede no saber qué es Healthy Space Culiacán.
+                Sin esto solo ve un "pídelo" y no entiende de dónde sale la comida. */}
+            <header className="bw-intro">
               <img className="bw-logo" src={FLAMA_URL} alt="" />
-              <h3>Elige tu bowl</h3>
-              <button className="bw-x" onClick={() => { setAbierto(false); setSel(null); }} aria-label="Cerrar">
-                <X size={18} />
-              </button>
+              <h3>Healthy Space · Mexican Grill &amp; Bowls</h3>
+              <p>
+                Nuestros food trucks en Culiacán. Proteínas de <b>cocción lenta</b> —
+                chamberete braseado 8 horas, pollo y cerdo lentos — con ingredientes frescos.
+              </p>
+              <span className="bw-intro-meta">Recoge en el remolque o pide a domicilio</span>
             </header>
 
             <div className="bw-list">
               {ordenados.map((b, i) => (
                 <button key={b.id}
-                  className={`bw-item${sel?.id === b.id ? ' on' : ''}${i === 0 ? ' best' : ''}`}
+                  className={`bw-card${sel?.id === b.id ? ' on' : ''}`}
                   onClick={() => setSel(b)}>
-                  {b.img && <img className="bw-item-img" src={b.img} alt="" loading="lazy" />}
-                  <span className="bw-item-body">
-                    <span className="bw-item-top">
-                      <b>{b.name}</b>
-                      {i === 0 && <span className="bw-tag">El que mejor te queda</span>}
-                    </span>
-                    <span className="bw-item-macros">
-                      {Math.round(b.kcal)} kcal · {Math.round(b.prot)} P · {Math.round(b.carb)} C · {Math.round(b.fat)} G
-                    </span>
-                    {b.tagline && <span className="bw-item-tag">{b.tagline}</span>}
+                  <span className="bw-card-photo" style={{ background: b.accent ?? '#16302B' }}>
+                    {b.img && <img src={b.img} alt={b.name} loading="lazy" />}
+                    {i === 0 && <em className="bw-best">El que mejor te queda</em>}
                   </span>
-                  <span className="bw-item-price">${Math.round(b.price)}</span>
+                  <span className="bw-card-body">
+                    <span className="bw-card-top">
+                      <b>{b.name}</b>
+                      <i>${Math.round(b.price)}</i>
+                    </span>
+                    {b.tagline && <span className="bw-card-tag">{b.tagline}</span>}
+                    <span className="bw-card-macros">
+                      <span><b>{Math.round(b.kcal)}</b><i>kcal</i></span>
+                      <span><b>{Math.round(b.prot)}g</b><i>prot</i></span>
+                      <span><b>{Math.round(b.carb)}g</b><i>carb</i></span>
+                      <span><b>{Math.round(b.fat)}g</b><i>grasa</i></span>
+                    </span>
+                  </span>
                 </button>
               ))}
             </div>
@@ -113,7 +126,7 @@ export function BowlWidget({ target, onElegir }: {
                 </div>
                 <p className="bw-foot-note">
                   Tu <b>{slot.toLowerCase()}</b> de hoy pasa a ser el <b>{sel.name}</b> y el
-                  resto del día se reacomoda para cumplir tus macros. Puedes deshacerlo.
+                  resto del día se reacomoda para cumplir tus macros.
                 </p>
                 <a className="bw-cta" href={linkPedido(sel.id)} target="_blank" rel="noopener noreferrer"
                   onClick={() => { onElegir?.(sel, slot); setAbierto(false); setSel(null); }}>
