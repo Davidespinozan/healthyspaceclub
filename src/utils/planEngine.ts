@@ -103,9 +103,79 @@ const IDX = [1, 2, 3];     // posición de P,F,C en el vector [kcal,P,F,C]
 // El solver jamás pasa de esto aunque el max_g del banco sea mayor (obvio, no un
 // límite arbitrario: es lo que una persona de verdad come de ese alimento).
 const PIECE_MAX: Record<string, number> = {
-  'tortilla': 4, 'rebanada de pan': 4, 'tostada': 4, 'huevo': 4,
-  'pan pita': 2, 'pan thin': 2, 'bagel': 1.5, 'tortilla de harina': 3,
+  // OJO: la pieza NO es una medida estable. Una tortilla de Sinaloa recién hecha pesa
+  // casi el doble que una de CDMX o USA. El motor trabaja en GRAMOS (esa es la verdad)
+  // y la pieza es solo la traducción legible, anclada al peso de `pu`. Por eso el tope
+  // es generoso: quien tenga tortillas chicas comerá más piezas para los mismos gramos.
+  'tortilla': 6, 'rebanada de pan': 6, 'tostada': 6, 'huevo': 6,
+  'pan pita': 3, 'pan thin': 4, 'bagel': 2, 'tortilla de harina': 5,
 };
+// Guarnición de almidón: es POR AQUÍ por donde deben subir las calorías cuando falten
+// (Magaly). Crecen holgado porque una porción grande de arroz o papa es perfectamente
+// normal en una meta alta.
+const ALMIDON_RE = /arroz|papa|camote|pasta|espagueti|fideo|macarr|quinoa|avena|cusc[uú]s|bulgur|frijol|lenteja|garbanzo|elote|pur[eé]|tub[eé]rculo|yuca|pl[aá]tano macho/i;
+// TECHO ABSOLUTO en gramos por alimento. Un multiplicador solo se dispara cuando la
+// receta base ya era grande (4× de 175 g = 700 g de papa). Esto es lo que de verdad
+// cabe en un plato: al llegar aquí el alimento DEJA de crecer y el solver busca las
+// calorías en otro lado.
+const GRAM_MAX: [RegExp, number][] = [
+  [/avena/i, 100],                                  // en seco: 100 g ya es un tazón grande
+  [/arroz|quinoa|cusc[uú]s|bulgur/i, 300],          // ~2 tazas cocido
+  [/pasta|espagueti|fideo|macarr/i, 280],
+  [/papa|camote|yuca|pl[aá]tano macho/i, 320],
+  [/frijol|lenteja|garbanzo/i, 250],
+  [/elote/i, 200],
+];
+// Crujientes: suman calorías rápido pero nadie come porciones grandes. Se dejan casi
+// en su porción de receta.
+const CRUJIENTE_RE = /tostada|totopo|tostadita|galleta|crut[oó]n|chip/i;
+
+// Piso y techo de UN ingrediente. Vive aparte porque lo usan DOS cosas que deben
+// coincidir: el solver (prep) y el filtro de capacidad que decide qué platillos puede
+// elegir la IA. Si se desincronizan, la IA vuelve a recibir platillos imposibles.
+function ingBounds(ing: BancoIng): { lo: number; hi: number } {
+  const a = ing.a!;
+  // Techo por tipo de alimento. Regla de Magaly: cuando faltan calorías, que suba la
+  // GUARNICIÓN DE ALMIDÓN (arroz, papa, camote, pasta, avena, leguminosas) — no las
+  // tostadas. Una porción grande de arroz es normal; 8 tostadas no. La GRASA se aprieta
+  // porque es la que se desborda (el solver la pondera al final, W=0.8).
+  const fatDom = a[2] * 9 > a[1] * 4 && a[2] * 9 > a[3] * 4;
+  const mult = fatDom ? 2.0
+    : CRUJIENTE_RE.test(ing.nv) ? 1.5      // tostada/totopo/galleta: casi no crece
+    : ALMIDON_RE.test(ing.nv) ? 3.0        // arroz/papa/camote/pasta: aquí sube
+    : 3.0;
+  let hi = Math.max(ing.max && ing.max > 0 ? ing.max : 0, Math.round(ing.g0 * mult));
+  // Contables: nunca más de N piezas realistas (tortilla ≤6, huevo ≤6, tostada ≤6…).
+  const pieceMax = ing.pu && ing.un ? PIECE_MAX[ing.un] : undefined;
+  if (pieceMax && ing.pu) hi = Math.min(hi, Math.round(pieceMax * ing.pu));
+  // Techo absoluto por alimento: aquí se detiene el crecimiento, para que no salgan
+  // 525 g de papa (Magaly: que suba el arroz/papa, pero sin porciones desproporcionadas).
+  for (const [rx, gmax] of GRAM_MAX) if (rx.test(ing.nv)) { hi = Math.min(hi, gmax); break; }
+  // Guardia: había ingredientes con `max` MENOR que su porción base (p.ej. tostadas
+  // horneadas 60 g base / 52 g max) — el motor no podía ni servir la receta original.
+  hi = Math.max(hi, ing.g0);
+  // PISO (Magaly): el motor tenía techo pero NO piso, y exprimía la carne a 80 g para
+  // luego meter proteína suelta en el snack. Una FUENTE DE PROTEÍNA nunca baja de ~110 g
+  // ni del 70% de la receta. Los demás principales conservan holgura para cuadrar G y C.
+  const protDom = a[1] * 4 >= a[2] * 9 && a[1] * 4 >= a[3] * 4;
+  const lo = Math.min(protDom ? Math.max(ing.g0 * 0.7, Math.min(ing.g0, 110)) : ing.g0 * 0.4, hi);
+  return { lo, hi };
+}
+
+/** Macros MÁXIMOS que un platillo puede alcanzar con todo servido a su techo.
+ *  Es el "hasta dónde da" real: si esto no llega a la meta del tiempo de comida,
+ *  ese platillo NO puede cuadrar por más que el solver lo escale. */
+export function dishMaxMacros(d: BancoDish): number[] {
+  const t = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
+  for (const ing of d.ings) {
+    if (ing.rol === 'principal' && ing.a) {
+      const { hi } = ingBounds(ing);
+      for (let k = 0; k < 4; k++) t[k] += ing.a[k] * hi;
+    }
+  }
+  return t;
+}
+
 function prep(dishes: BancoDish[]): { fixed: number[]; vars: Var[] } {
   const fixed = [0, 0, 0, 0, 0]; // kcal, P, F, C, fibra
   const vars: Var[] = [];
@@ -114,22 +184,7 @@ function prep(dishes: BancoDish[]): { fixed: number[]; vars: Var[] } {
     for (let i = 0; i < 5; i++) fixed[i] += d.fixed[i];
     for (const ing of d.ings) {
       if (ing.rol === 'principal' && ing.a) {
-        // Tope: almidones (carbo-dominantes) más ajustados (2.0×) → evita porciones enormes.
-        const carbDom = ing.a[3] > ing.a[1] && ing.a[3] > ing.a[2];
-        let hi = ing.max && ing.max > 0 ? ing.max : Math.round(ing.g0 * (carbDom ? 2.0 : 2.5));
-        // Contables: nunca más de N piezas realistas (tortilla ≤4, pan ≤4, etc.).
-        const pieceMax = ing.pu && ing.un ? PIECE_MAX[ing.un] : undefined;
-        if (pieceMax && ing.pu) hi = Math.min(hi, Math.round(pieceMax * ing.pu));
-        // PISO (Magaly): el motor tenía techo pero NO piso, y exprimía la carne a 80 g
-        // para luego meter proteína suelta en el snack. Ahora una FUENTE DE PROTEÍNA
-        // (carne/pollo/pescado/huevo) nunca baja de ~110 g ni del 70% de la receta base.
-        // El piso va SOLO en la proteína: los demás principales (aguacate, aceite, arroz)
-        // conservan holgura para que el solver siga pudiendo cuadrar grasa y carbos.
-        const protDom = ing.a[1] * 4 >= ing.a[2] * 9 && ing.a[1] * 4 >= ing.a[3] * 4;
-        let lo = protDom
-          ? Math.max(ing.g0 * 0.7, Math.min(ing.g0, 110))
-          : ing.g0 * 0.4;
-        lo = Math.min(lo, hi); // nunca por encima del techo
+        const { lo, hi } = ingBounds(ing);
         vars.push({ a: ing.a, g: ing.g0, g0: ing.g0, lo, hi, blk: bloque ? si : null, ing });
       }
     }
@@ -257,6 +312,23 @@ function pluralNoun(un: string, n: number): string {
     : head.replace(/ó(?=n$)/, 'o').replace(/á(?=n$)/, 'a').replace(/é(?=n$)/, 'e') + 'es';
   return [p, ...rest].join(' ');
 }
+// Pluraliza una FRASE (sustantivo + adjetivos): "huevo revuelto" → "huevos revueltos".
+// Se detiene en preposición o paréntesis: "tortilla de maíz" → "tortillas de maíz".
+const STOP_PLURAL = new Set(['de', 'del', 'con', 'a', 'al', 'en', 'para', 'y', 'sin', 'tipo', 'pita', 'thin', 'light']);
+function pluralWord(w: string): string {
+  if (/s$/i.test(w)) return w;
+  return /[aeiouáéíóú]$/i.test(w)
+    ? w + 's'
+    : w.replace(/ó(?=n$)/, 'o').replace(/á(?=n$)/, 'a').replace(/é(?=n$)/, 'e') + 'es';
+}
+function pluralPhrase(txt: string, n: number): string {
+  if (n <= 1) return txt;
+  let stop = false;
+  return txt.split(' ').map((w) => {
+    if (stop || w.startsWith('(') || STOP_PLURAL.has(w.toLowerCase())) { stop = true; return w; }
+    return pluralWord(w);
+  }).join(' ');
+}
 // La gente cuenta huevos/tortillas, no los pesa. Si el alimento trae medida casera
 // (pu = g por pieza) y la cantidad cae en un conteo limpio y creíble (0.5–8 piezas,
 // error ≤20% para que el conteo no engañe sobre la porción), se muestra "2 huevos"
@@ -306,7 +378,15 @@ function portionStr(ing: BancoIng, g: number | null): string {
     // tortilla) rara vez pasan de 8. Techo por peso: hasta ~150 g de piezas.
     const maxN = Math.max(8, Math.ceil(150 / ing.pu));
     if (n <= maxN && Math.abs(n * ing.pu - grams) <= 0.20 * grams) {
-      return `${fmtCount(n)} ${pluralNoun(ing.un, n)}`;
+      // Magaly: la pieza debe decir QUÉ es, no la unidad genérica. El dato ya trae el
+      // nombre bueno ("Tostadas horneadas", "Tortilla de maíz") pero se pintaba la
+      // unidad ("4 tostadas"), que se presta a confusión — una tostada frita y una
+      // horneada no son lo mismo. Si el nombre ya contiene la unidad, se usa el nombre.
+      // "rebanada de pan" es un CONTENEDOR, no el alimento → "3 rebanadas de pan integral".
+      if (ing.un.startsWith('rebanada')) return `${fmtCount(n)} ${pluralPhrase('rebanada', n)} de ${ing.nv.toLowerCase()}`;
+      // El resto de unidades SON el alimento → se usa su nombre real, no la unidad
+      // genérica: "10 totopos horneados", no "10 tostadas".
+      return `${fmtCount(n)} ${pluralPhrase(ing.nv, n).toLowerCase()}`;
     }
   }
   return `${grams} g ${ing.nv}`;
@@ -596,7 +676,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 20;
+export const PLAN_ENGINE_VERSION = 21;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 
@@ -682,10 +762,29 @@ export function adequateBankByTiempo(
   const MT = mealTargets(T);
   const craveTerms = cravingTerms(cravingText);
   const filt = (pool: BancoDish[], slotTarget: number[]): BancoDish[] => {
-    const scored = pool.map((d) => ({ d, e: slotFit(d, slotTarget) })).sort((a, b) => a.e - b.e);
-    const ok = scored.filter((s) => s.e <= 0.35).map((s) => s.d); // encaje bueno en P/F/C
-    // Garantiza ≥10 opciones para variedad (7 días distintos + margen); si no llegan,
-    // toma los de mejor encaje.
+    // CAPACIDAD antes que encaje. El filtro validaba solo la FORMA de los macros y le
+    // ofrecía a la IA platillos que no llegan a la meta ni servidos al tope: a 3500 kcal
+    // sin lácteos le daba "Huevo a la Mexicana" (tope 43 g de proteína, el huevo topa en
+    // 6 piezas) cuando en el mismo banco había "Pollo Deshebrado" (85 g ✓). La IA elegía
+    // de buena fe y el motor ya no podía cuadrarlo. Ahora el que no alcanza va al final.
+    // Capacidad sobre TODA la comida, no solo proteína: filtrar por proteína sola elegía
+    // platillos proteicos y secos, y los carbos se desplomaban (-16%). Se pide que el
+    // platillo alcance el TAMAÑO del slot (kcal implícitas de P/F/C) y su proteína.
+    const slotKcal = 4 * slotTarget[1] + 9 * slotTarget[2] + 4 * slotTarget[3];
+    const alcanza = (d: BancoDish) => {
+      const m = dishMaxMacros(d);
+      return m[1] >= slotTarget[1] * 0.9 && 4 * m[1] + 9 * m[2] + 4 * m[3] >= slotKcal * 0.95;
+    };
+    const scored = pool.map((d) => ({ d, e: slotFit(d, slotTarget), cap: alcanza(d) }))
+      .sort((a, b) => a.e - b.e);
+    // Entre los que YA encajan bien, primero los que además alcanzan la meta. Así la IA
+    // ve arriba los que pueden cuadrar, sin perder ninguna opción ni empeorar el encaje.
+    const ok = scored.filter((s) => s.e <= 0.35)
+      .sort((a, b) => (a.cap === b.cap ? a.e - b.e : a.cap ? -1 : 1))
+      .map((s) => s.d);
+    // Garantiza ≥10 opciones para variedad (7 días distintos + margen). Se completan
+    // primero con los capaces aunque encajen peor, y solo al final con los incapaces
+    // (mejor un platillo que no cuadra fino que un plan sin opciones).
     const base = ok.length >= 10 ? ok : scored.slice(0, Math.min(scored.length, 10)).map((s) => s.d);
     // Fuerza los platillos del antojo (aunque encajen peor) para que la IA pueda usarlos.
     const cravedInPool = craveTerms.length ? pool.filter((d) => dishMatchesAny(d, craveTerms)) : [];
