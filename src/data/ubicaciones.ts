@@ -59,9 +59,12 @@ export const ESTADOS_MX: Opcion[] = [
 ];
 
 /**
- * Ciudades con lista cerrada. Solo hacen falta donde el slug debe coincidir EXACTO
- * con la cobertura del food truck — hoy Sinaloa. En el resto se escribe libre, porque
- * ahí la ciudad es solo dato demográfico y un dedazo no rompe nada.
+ * Ciudades por estado. NUNCA texto libre: si alguien escribe "Culiacan, Sin." el gate
+ * falla cerrado y no vería la función aunque viva enfrente del remolque.
+ *
+ * Solo están los estados donde hace falta precisión de ciudad (hoy Sinaloa, que es
+ * donde hay remolques). En el resto se queda en el estado — no vale la pena cargar un
+ * padrón de 2,500 municipios para un dato que solo usamos como demografía.
  */
 export const CIUDADES: Record<string, Opcion[]> = {
   'mx/sinaloa': [
@@ -78,12 +81,16 @@ export const CIUDADES: Record<string, Opcion[]> = {
   ],
 };
 
+/** Estados: solo México los desglosa. Otros países se quedan en el país — cada uno tiene
+ *  su propio modelo (España son comunidades, no estados) y no aporta nada forzarlo. */
 export const estadosDe = (pais: string): Opcion[] => (pais === 'mx' ? ESTADOS_MX : []);
+
+/** Ciudades: solo donde hay lista cerrada. Vacío = no se pregunta. */
 export const ciudadesDe = (pais: string, estado: string): Opcion[] => CIUDADES[`${pais}/${estado}`] ?? [];
 
 /** Mismo normalizado que `slug_ciudad()` en la base: sin acentos, minúsculas, con guiones. */
 export function aSlug(txt: string): string {
   return txt.trim().toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, '-');
 }

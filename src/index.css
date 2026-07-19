@@ -7938,3 +7938,25 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .calc-unitsel button { flex: 1; background: var(--surface, #fff); border: 1px solid var(--sand, #E8E1D3); color: var(--forest, #0E2521); padding: 10px; border-radius: 50px; font-size: .8rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: .15s; -webkit-tap-highlight-color: transparent; }
 .calc-unitsel button.on { background: var(--forest, #0E2521); border-color: var(--forest, #0E2521); color: #fff; }
 .calc-equiv { text-align: center; font-size: .78rem; color: var(--txt2, rgba(21,51,48,.5)); font-style: italic; margin-bottom: 12px; }
+
+/* ── Selector de ubicación (país → estado → ciudad) ───────────────────────── */
+.ubic { display: grid; gap: 12px; }
+.ubic-campo { display: grid; gap: 6px; }
+.ubic-label {
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  font-weight: 800; color: var(--gold, #BFA065);
+}
+.ubic-select {
+  width: 100%; padding: 13px 14px; border-radius: 12px;
+  border: 1px solid rgba(21,51,48,.14); background: #fff; color: #14201D;
+  font-size: 15px; font-weight: 600; font-family: inherit;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235B6B66' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+}
+.ubic-select:focus-visible { outline: 2px solid var(--gold, #BFA065); outline-offset: 2px; }
+/* Sobre fondo oscuro (onboarding) */
+.ubic[data-dark] .ubic-select {
+  background-color: rgba(255,255,255,.07); border-color: rgba(255,255,255,.16); color: #F6F2EA;
+}
+.ubic[data-dark] .ubic-select option { color: #14201D; }
