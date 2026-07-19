@@ -7961,24 +7961,39 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .ubic[data-dark] .ubic-select option { color: #14201D; }
 
-/* ── Widget de bowls del food truck dentro de Hoy ─────────────────────────── */
-.bw{
-  position:relative; overflow:hidden; cursor:pointer;
+/* ── Widget de bowls del food truck dentro de Hoy ─────────────────────────
+   MISMO TAMAÑO que .th3-partner ("Entrenar en pareja") — 168 px de alto, mismo
+   padding, radio y margen — para que Hoy quede alineado. El diseño es propio:
+   la flama del truck y las fotos de los bowls. */
+.th3-bowl{
+  display:flex; flex-direction:column; justify-content:space-between; gap:12px;
+  padding:22px; margin-top:14px; min-height:168px;
   background:linear-gradient(150deg,#16302B,#0E2521);
-  border-radius:20px; padding:16px 16px 14px; color:#F6F2EA;
-  box-shadow:0 10px 28px rgba(8,20,27,.22); border:1px solid rgba(191,160,101,.22);
+  border:1px solid rgba(191,160,101,.22); border-radius:var(--radius-lg, 20px);
+  box-shadow:0 12px 30px rgba(0,0,0,.28);
+  cursor:pointer; font-family:inherit; text-align:left; width:100%; overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
 }
-.bw-head{display:flex;align-items:center;gap:11px}
-.bw-logo{width:34px;height:34px;object-fit:contain;flex:0 0 auto}
-.bw-eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#BFA065;font-weight:800}
-.bw-title{font-size:17px;font-weight:900;letter-spacing:-.02em;margin-top:2px;color:#F6F2EA}
-.bw-arrow{margin-left:auto;color:#BFA065;flex:0 0 auto}
-.bw-sub{font-size:13px;color:rgba(246,242,234,.68);margin:8px 0 13px;line-height:1.4}
-.bw-rail{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.bw-rail::-webkit-scrollbar{display:none}
-.bw-thumb{flex:0 0 auto;width:76px;margin:0}
-.bw-thumb img,.bw-thumb span{display:block;width:76px;height:76px;border-radius:14px;object-fit:cover;background:rgba(255,255,255,.06)}
-.bw-thumb figcaption{font-size:11px;font-weight:700;text-align:center;margin-top:5px;color:rgba(246,242,234,.85)}
+.th3-bowl-head{display:flex;align-items:center;gap:12px;width:100%}
+.th3-bowl-flama{width:34px;height:34px;object-fit:contain;flex-shrink:0}
+.th3-bowl-txt{display:flex;flex-direction:column;min-width:0;flex:1}
+.th3-bowl-eyebrow{
+  font-size:.6rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:#BFA065;
+}
+.th3-bowl-title{font-weight:800;font-size:19px;line-height:1.15;color:#fff;letter-spacing:-.02em;margin-top:2px}
+.th3-bowl-arrow{color:#BFA065;flex-shrink:0}
+.th3-bowl-rail{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.th3-bowl-rail::-webkit-scrollbar{display:none}
+.th3-bowl-thumb{flex:0 0 auto;width:58px;display:flex;flex-direction:column;gap:4px}
+.th3-bowl-thumb img,.th3-bowl-thumb i{
+  display:block;width:58px;height:58px;border-radius:13px;object-fit:cover;
+  background:rgba(255,255,255,.07);
+}
+.th3-bowl-thumb em{
+  font-style:normal;font-size:10.5px;font-weight:700;text-align:center;
+  color:rgba(246,242,234,.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
 
 /* Hoja de selección */
 .bw-sheet-bg{position:fixed;inset:0;z-index:200;background:rgba(8,19,18,.55);

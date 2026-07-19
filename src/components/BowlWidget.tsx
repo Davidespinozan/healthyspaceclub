@@ -41,25 +41,27 @@ export function BowlWidget({ target, onElegir }: {
 
   return (
     <>
-      <article className="bw" onClick={() => setAbierto(true)}>
-        <div className="bw-head">
-          <img className="bw-logo" src={FLAMA_URL} alt="" />
-          <div>
-            <p className="bw-eyebrow">Healthy Space · Culiacán</p>
-            <h2 className="bw-title">¿Hoy no quieres cocinar?</h2>
-          </div>
-          <ArrowRight size={18} strokeWidth={2.2} className="bw-arrow" />
-        </div>
-        <p className="bw-sub">Pide un bowl y tu día se reacomoda solo para cumplir tus macros.</p>
-        <div className="bw-rail">
+      {/* Mismo TAMAÑO que "Entrenar en pareja" y "Reflexión del día" (168 px de alto,
+          mismo padding, radio y margen) para que Hoy quede alineado — pero con su
+          propia identidad: la flama del food truck y las fotos reales de los bowls. */}
+      <button type="button" className="th3-bowl" onClick={() => setAbierto(true)}>
+        <span className="th3-bowl-head">
+          <img className="th3-bowl-flama" src={FLAMA_URL} alt="" />
+          <span className="th3-bowl-txt">
+            <span className="th3-bowl-eyebrow">Healthy Space · Culiacán</span>
+            <span className="th3-bowl-title">¿Hoy no quieres cocinar?</span>
+          </span>
+          <ArrowRight size={18} strokeWidth={2} className="th3-bowl-arrow" />
+        </span>
+        <span className="th3-bowl-rail">
           {ordenados.slice(0, 5).map((b) => (
-            <figure key={b.id} className="bw-thumb">
-              {b.img ? <img src={b.img} alt={b.name} loading="lazy" /> : <span />}
-              <figcaption>{b.name}</figcaption>
-            </figure>
+            <span key={b.id} className="th3-bowl-thumb">
+              {b.img ? <img src={b.img} alt={b.name} loading="lazy" /> : <i />}
+              <em>{b.name}</em>
+            </span>
           ))}
-        </div>
-      </article>
+        </span>
+      </button>
 
       {abierto && (
         <div className="bw-sheet-bg" onClick={() => { setAbierto(false); setSel(null); }}>
