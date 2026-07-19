@@ -4,6 +4,7 @@ import { Sparkles, Dumbbell, Utensils, Brain, Check, Users, ArrowRight, Flame, X
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
+import { BowlWidget } from './BowlWidget';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
@@ -858,6 +859,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               )}
             </div>
           </article>
+
+          {/* Widget del food truck. Se pinta SOLO si el socio es de una ciudad con
+              cobertura: el servidor no le manda bowls a nadie más, así que aquí no hay
+              condicional de ciudad — sin datos, el componente devuelve null. */}
+          <BowlWidget target={weeklyPlan?.gen ?? null} />
         </div>
 
         {/* ── Entrenar en pareja — se oculta si ya hay rutina de pareja hoy
