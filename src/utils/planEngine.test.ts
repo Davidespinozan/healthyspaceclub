@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildWeeklyPlan, type PlanTarget } from './planEngine';
+import { buildWeeklyPlan, buildDayWithFixed, type PlanTarget, type FixedMeal } from './planEngine';
 
 function dayTotals(meals: { macros?: { kcal: number; prot: number; fat: number; carb: number } }[]) {
   return meals.reduce(
@@ -135,5 +135,35 @@ describe('planEngine — ajuste a la meta', () => {
     };
     expect(amDishes(high)).toBe(2);
     expect(amDishes(low)).toBe(1);
+  });
+
+  // ── Sustituir una comida por un bowl del food truck (o cualquier alimento fijo) ──
+  // El día debe seguir cerrando en la meta. El caso duro es la mujer en déficit: un bowl
+  // es la mitad de su día, así que el resto tiene que armarse con platillos LIGEROS.
+  describe('sustitución por alimento fijo (bowl)', () => {
+    const VERDE: FixedMeal = { slot: 'Comida', name: 'Bowl Verde', kcal: 737, prot: 59, fat: 31, carb: 64 };
+    const PERFILES: PlanTarget[] = [
+      { kcal: 1450, protG: 110, fatG: 50, carbG: 140 },  // mujer déficit — el más apretado
+      { kcal: 1800, protG: 120, fatG: 55, carbG: 190 },
+      { kcal: 2873, protG: 154, fatG: 96, carbG: 348 },
+      { kcal: 3500, protG: 263, fatG: 117, carbG: 350 },
+    ];
+    for (const T of PERFILES) {
+      it(`día de ${T.kcal} kcal cierra en la meta con un bowl en la comida`, () => {
+        for (let seed = 1; seed <= 5; seed++) {
+          const day = buildDayWithFixed(T, VERDE, { seed });
+          const tot = dayTotals(day.meals);
+          expect(Math.abs(tot.kcal - T.kcal) / T.kcal).toBeLessThan(0.10);
+          expect(Math.abs(tot.prot - T.protG) / T.protG).toBeLessThan(0.12);
+          // El bowl va servido tal cual, sin escalar.
+          const bowl = day.meals.find((m) => m.name === 'Bowl Verde')!;
+          expect(bowl.macros!.kcal).toBe(737);
+          expect(bowl.time).toBe('Comida');
+          // Nada repetido en el día.
+          const names = day.meals.map((m) => m.name);
+          expect(new Set(names).size).toBe(names.length);
+        }
+      });
+    }
   });
 });

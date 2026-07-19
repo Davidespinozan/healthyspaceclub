@@ -163,6 +163,20 @@ function ingBounds(ing: BancoIng): { lo: number; hi: number } {
   return { lo, hi };
 }
 
+/** Macros MÍNIMOS de un platillo (todo servido a su piso). Es el "hasta dónde baja":
+ *  si esto ya se pasa del presupuesto del tiempo, ese platillo NO cabe por más que el
+ *  solver lo encoja. Se usa cuando queda poco margen — p.ej. tras meter un bowl. */
+export function dishMinMacros(d: BancoDish): number[] {
+  const t = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
+  for (const ing of d.ings) {
+    if (ing.rol === 'principal' && ing.a) {
+      const { lo } = ingBounds(ing);
+      for (let k = 0; k < 4; k++) t[k] += ing.a[k] * lo;
+    }
+  }
+  return t;
+}
+
 /** Macros MÁXIMOS que un platillo puede alcanzar con todo servido a su techo.
  *  Es el "hasta dónde da" real: si esto no llega a la meta del tiempo de comida,
  *  ese platillo NO puede cuadrar por más que el solver lo escale. */
@@ -625,37 +639,43 @@ function fitSlot(
 
 // Reparto de Magaly por comida (LOGICA 3.5). Proteína pareja en las 3 principales
 // (0.30 c/u) y menos en snacks (0.10 total); carbos y grasa siguen el reparto calórico.
-function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena: number[]; snackSlot: number[] } {
-  const [kcal, P, F, C] = T;
-  // REPARTO DE MAGALY (LOGICA-NUTRICIONAL-HSC.md §3.5), al pie de la letra:
-  //   calorías 25% desayuno / 35% comida / 25% cena / 15% snacks
-  //   proteína PAREJA en las tres principales (los snacks llevan algo, menos)
-  //   carbos y grasa siguen el reparto calórico
-  // Antes el código repartía 29/34/28/8 — cargaba el desayuno con ~130 kcal de más
-  // (≈2 rebanadas de pan extra) y dejaba los snacks en la mitad de lo que les toca.
-  const KCAL = { des: 0.25, com: 0.35, cen: 0.25, snacks: 0.15 };
-  // La proteína casi toda en las principales: el banco de snacks es FRUTA y no puede
-  // darla. Magaly: "repartida pareja en las principales; los snacks pueden llevar algo,
-  // menos". Pedirle 10% a los snacks degradaba la proteína del día ~8%.
-  const PROT = { des: 0.32, com: 0.32, cen: 0.32, snacks: 0.04 };
+/** Slots del día. */
+export type Slot = 'Desayuno' | 'Comida' | 'Cena' | 'Snack AM' | 'Snack PM';
 
-  // Para cada tiempo: la proteína va fija; lo que resta de sus calorías se reparte
-  // entre grasa y carbo respetando la proporción energética del día. Así el reparto
-  // calórico sale EXACTO y los macros quedan proporcionales.
-  const eF = 9 * F, eC = 4 * C;           // energía diaria que aporta cada uno
+// REPARTO DE MAGALY (LOGICA-NUTRICIONAL-HSC.md §3.5): calorías 25/35/25/15 y proteína
+// pareja en las principales. Vive aparte para poder REDISTRIBUIRLO cuando un tiempo
+// queda ocupado por un alimento fijo (p.ej. un bowl comprado en el food truck).
+const SHARE_KCAL: Record<Slot, number> = {
+  'Desayuno': 0.25, 'Comida': 0.35, 'Cena': 0.25, 'Snack AM': 0.075, 'Snack PM': 0.075,
+};
+// La proteína casi toda en las principales: el banco de snacks es FRUTA y no puede
+// darla. Magaly: "pareja en las principales; los snacks pueden llevar algo, menos".
+const SHARE_PROT: Record<Slot, number> = {
+  'Desayuno': 0.32, 'Comida': 0.32, 'Cena': 0.32, 'Snack AM': 0.02, 'Snack PM': 0.02,
+};
+
+/** Meta [_, P, F, C] de cada slot. `omit` = slots ya ocupados (su parte se reparte
+ *  proporcionalmente entre los que quedan, para que el día siga cerrando en la meta). */
+function slotTargets(T: number[], omit: Slot[] = []): Record<Slot, number[]> {
+  const [kcal, P, F, C] = T;
+  const live = (Object.keys(SHARE_KCAL) as Slot[]).filter((s) => !omit.includes(s));
+  const sumK = live.reduce((a, s) => a + SHARE_KCAL[s], 0) || 1;
+  const sumP = live.reduce((a, s) => a + SHARE_PROT[s], 0) || 1;
+  const eF = 9 * F, eC = 4 * C;
   const rF = eF / (eF + eC || 1);
-  const slot = (kShare: number, pShare: number): number[] => {
-    const prot = pShare * P;
-    const resto = Math.max(0, kShare * kcal - 4 * prot);
-    return [0, prot, (resto * rF) / 9, (resto * (1 - rF)) / 4];
-  };
-  return {
-    desayuno:  slot(KCAL.des, PROT.des),
-    comida:    slot(KCAL.com, PROT.com),
-    cena:      slot(KCAL.cen, PROT.cen),
-    // 2 slots (AM y PM) → cada uno la mitad del bloque de snacks.
-    snackSlot: slot(KCAL.snacks / 2, PROT.snacks / 2),
-  };
+  const out = {} as Record<Slot, number[]>;
+  for (const s of Object.keys(SHARE_KCAL) as Slot[]) {
+    if (omit.includes(s)) { out[s] = [0, 0, 0, 0]; continue; }
+    const prot = (SHARE_PROT[s] / sumP) * P;
+    const resto = Math.max(0, (SHARE_KCAL[s] / sumK) * kcal - 4 * prot);
+    out[s] = [0, prot, (resto * rF) / 9, (resto * (1 - rF)) / 4];
+  }
+  return out;
+}
+
+function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena: number[]; snackSlot: number[] } {
+  const t = slotTargets(T);
+  return { desayuno: t['Desayuno'], comida: t['Comida'], cena: t['Cena'], snackSlot: t['Snack AM'] };
 }
 
 function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>): DayPlan {
@@ -863,6 +883,86 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
     out.push({ day: i + 1, theme: '', meals });
   });
   return out;
+}
+
+/** Un alimento de FUERA con macros conocidas que ocupa un tiempo del día: hoy un bowl
+ *  del food truck; mañana cualquier cosa que el usuario registre. Es el mismo patrón
+ *  del batido de proteína, generalizado a cualquier tiempo. */
+export interface FixedMeal {
+  slot: Slot;
+  name: string;
+  kcal: number; prot: number; fat: number; carb: number;
+  img?: string;
+  desc?: string;
+}
+
+/** Rearma UN día alrededor de un alimento fijo: el bowl ocupa su tiempo y los demás se
+ *  recalculan contra lo que sobra, para que el día siga cerrando en la meta.
+ *
+ *  Clave: cuando lo que sobra es POCO (una mujer en déficit tras un bowl se queda con
+ *  ~19 g de grasa para desayuno y cena), se eligen los platillos MÁS LIGEROS del banco.
+ *  Con el filtro normal metería platillos medianos y se pasaría de grasa. */
+export function buildDayWithFixed(
+  target: PlanTarget, fixed: FixedMeal, opts: BuildOpts = {}, dayNum = 1,
+): DayPlan {
+  const T = [target.kcal, target.protG, target.fatG, target.carbG];
+  // Lo que queda para el resto del día, una vez servido el alimento fijo.
+  const rest = [
+    Math.max(0, T[0] - fixed.kcal), Math.max(0, T[1] - fixed.prot),
+    Math.max(0, T[2] - fixed.fat), Math.max(0, T[3] - fixed.carb),
+  ];
+  const MT = slotTargets(rest, [fixed.slot]);
+  const avoid = makeAvoidFilter(opts.avoid ?? []);
+  const rng = mulberry32(opts.seed ?? 12345);
+  const used = new Set<string>(), usedToday = new Set<string>(), usedIng = new Set<string>();
+  const craving = cravingTerms(opts.craving ?? '');
+  const ingFreq = new Map<string, number>();
+
+  const anyOk = BANCO.filter((d) => !avoid(d));
+  const clean = (pool: BancoDish[]) => { const f = pool.filter((d) => !avoid(d)); return f.length ? f : anyOk; };
+  // Solo los que CABEN por debajo del presupuesto del tiempo (con 15% de holgura, que
+  // el solver puede cuadrar). Si ninguno cabe, se toman los más ligeros.
+  const cabe = (pool: BancoDish[], slotT: number[]) => {
+    const kMax = 4 * slotT[1] + 9 * slotT[2] + 4 * slotT[3];
+    const ok = pool.filter((d) => { const m = dishMinMacros(d); return 4 * m[1] + 9 * m[2] + 4 * m[3] <= kMax * 1.15; });
+    if (ok.length) return ok;
+    return [...pool].sort((a, b) => {
+      const ma = dishMinMacros(a), mb = dishMinMacros(b);
+      return (4 * ma[1] + 9 * ma[2] + 4 * ma[3]) - (4 * mb[1] + 9 * mb[2] + 4 * mb[3]);
+    }).slice(0, 10);
+  };
+
+  const nSnack = rest[0] > 2200 ? 2 : 1;
+  const meals: MealItem[] = [];
+  const add = (slot: Slot, pool: BancoDish[], n: number, tol: number) => {
+    if (slot === fixed.slot) {
+      meals.push({
+        time: slot, name: fixed.name, desc: fixed.desc ?? '', img: fixed.img,
+        portions: [fixed.name],
+        macros: { kcal: fixed.kcal, prot: fixed.prot, fat: fixed.fat, carb: fixed.carb },
+        ings: [],
+      });
+      return;
+    }
+    const t = MT[slot];
+    // Nada se repite dentro del día. En snacks la regla es por INGREDIENTE: un snack casi
+    // ES su ingrediente, así que dos del mismo se sienten repetidos aunque el platillo cambie.
+    const esSnack = slot.startsWith('Snack');
+    const libre = (p: BancoDish[]) => {
+      const f = esSnack
+        ? p.filter((d) => !usedToday.has(d.nombre) && !dishPrincKeys(d).some((k) => usedIng.has(k)))
+        : p.filter((d) => !usedToday.has(d.nombre));
+      return f.length ? f : p.filter((d) => !usedToday.has(d.nombre));
+    };
+    const pool2 = libre(cabe(clean(pool), t));
+    meals.push(...fitSlot(pool2.length ? pool2 : cabe(clean(pool), t), slot, t, n, rng, tol, used, usedToday, usedIng, craving, ingFreq, esSnack));
+  };
+  add('Desayuno', BY_TIME.Desayuno, 1, 90);
+  add('Snack AM', BY_TIME.Snack, nSnack, 70);
+  add('Comida', COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, 1, 90);
+  add('Snack PM', BY_TIME.Snack, nSnack, 70);
+  add('Cena', CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, 1, 90);
+  return { day: dayNum, theme: '', meals };
 }
 
 export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPlan[] {
