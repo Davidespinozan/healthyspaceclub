@@ -378,7 +378,11 @@ function portionStr(ing: BancoIng, g: number | null): string {
     // así que una porción normal son 8-12 tostadas (no gramos). Piezas pesadas (huevo,
     // tortilla) rara vez pasan de 8. Techo por peso: hasta ~150 g de piezas.
     const maxN = Math.max(8, Math.ceil(150 / ing.pu));
-    if (n <= maxN && Math.abs(n * ing.pu - grams) <= 0.20 * grams) {
+    // Los CORTABLES (aguacate, plátano, mango…) van SIEMPRE en fracción de pieza, nunca
+    // en gramos: nadie pesa medio aguacate, lo parte a ojo. Para el resto se exige que
+    // el conteo case con los gramos (±20%), si no engañaría sobre la porción real.
+    const cortable = DIVISIBLE.has(ing.un);
+    if (n <= maxN && (cortable || Math.abs(n * ing.pu - grams) <= 0.20 * grams)) {
       // Magaly: la pieza debe decir QUÉ es, no la unidad genérica. El dato ya trae el
       // nombre bueno ("Tostadas horneadas", "Tortilla de maíz") pero se pintaba la
       // unidad ("4 tostadas"), que se presta a confusión — una tostada frita y una
