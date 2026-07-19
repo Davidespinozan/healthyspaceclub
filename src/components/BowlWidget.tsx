@@ -46,27 +46,33 @@ export function BowlWidget({ target, onElegir }: {
 
   if (!bowls.length) return null;   // sin cobertura → el widget no existe
 
+  const hero = ordenados[0];
+
   return (
     <>
-      {/* Mismo TAMAÑO que "Entrenar en pareja" y "Reflexión del día" (168 px de alto,
-          mismo padding, radio y margen) para que Hoy quede alineado — pero con su
-          propia identidad: la flama del food truck y las fotos reales de los bowls. */}
-      <button type="button" className="th3-bowl" onClick={() => setAbierto(true)}>
-        <span className="th3-bowl-head">
-          <img className="th3-bowl-flama" src={FLAMA_URL} alt="" />
-          <span className="th3-bowl-txt">
+      {/* Mismo tamaño y ancho completo que "Entrenar en pareja" / "Reflexión del día".
+          La foto del bowl que mejor le queda va de fondo a la derecha, con degradado
+          encima para que el texto siempre se lea. */}
+      <button
+        type="button"
+        className="th3-bowl"
+        onClick={() => setAbierto(true)}
+        style={hero?.img ? { backgroundImage:
+          `linear-gradient(100deg, #0E2521 0%, rgba(14,37,33,.94) 38%, rgba(14,37,33,.55) 62%, rgba(14,37,33,.15) 100%), url("${hero.img}")` } : undefined}
+      >
+        <span className="th3-bowl-l">
+          <span className="th3-bowl-brand">
+            <img className="th3-bowl-flama" src={FLAMA_URL} alt="" />
             <span className="th3-bowl-eyebrow">Healthy Space · Culiacán</span>
-            <span className="th3-bowl-title">¿Hoy no quieres cocinar?</span>
           </span>
-          <ArrowRight size={18} strokeWidth={2} className="th3-bowl-arrow" />
-        </span>
-        <span className="th3-bowl-rail">
-          {ordenados.slice(0, 5).map((b) => (
-            <span key={b.id} className="th3-bowl-thumb">
-              {b.img ? <img src={b.img} alt={b.name} loading="lazy" /> : <i />}
-              <em>{b.name}</em>
-            </span>
-          ))}
+          <span className="th3-bowl-title">¿Hoy no quieres cocinar?</span>
+          <span className="th3-bowl-sub">
+            Pide un bowl y tu día se reacomoda solo para cumplir tus macros.
+          </span>
+          <span className="th3-bowl-cta">
+            Ver los bowls
+            <ArrowRight size={15} strokeWidth={2.4} />
+          </span>
         </span>
       </button>
 

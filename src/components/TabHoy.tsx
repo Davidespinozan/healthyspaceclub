@@ -862,31 +862,32 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             </div>
           </article>
 
-          {/* Widget del food truck. Se pinta SOLO si el socio es de una ciudad con
-              cobertura: el servidor no le manda bowls a nadie más, así que aquí no hay
-              condicional de ciudad — sin datos, el componente devuelve null. */}
-          <BowlWidget
-            target={weeklyPlan?.gen ?? null}
-            onElegir={(bowl: BowlClub, slot: Slot) => {
-              // Rearma HOY alrededor del bowl: ocupa el tiempo elegido y las demás
-              // comidas se recalculan contra lo que sobra, para que el día siga
-              // cumpliendo la meta. El motor elige platillos LIGEROS si queda poco
-              // margen (un bowl puede ser la mitad del día en una meta baja).
-              const g = weeklyPlan?.gen;
-              if (!g || !weeklyPlan?.days?.length) return;
-              const idx = new Date().getDay();                 // 0=domingo
-              const i = Math.min(idx, weeklyPlan.days.length - 1);
-              const nuevo = buildDayWithFixed(
-                { kcal: g.kcal, protG: g.protG, fatG: g.fatG, carbG: g.carbG },
-                { slot, name: bowl.name, kcal: bowl.kcal, prot: bowl.prot, fat: bowl.fat, carb: bowl.carb, img: bowl.img ?? undefined, desc: bowl.tagline ?? 'Bowl de Healthy Space' },
-                { avoid: g.avoid, craving: g.craving },
-                weeklyPlan.days[i].day,
-              );
-              const days = weeklyPlan.days.map((d, k) => (k === i ? nuevo : d));
-              void saveWeeklyPlan({ ...weeklyPlan, days });
-            }}
-          />
         </div>
+
+          {/* Widget del food truck. Se pinta SOLO si el socio es de una ciudad con
+            cobertura: el servidor no le manda bowls a nadie más, así que aquí no hay
+            condicional de ciudad — sin datos, el componente devuelve null. */}
+        <BowlWidget
+          target={weeklyPlan?.gen ?? null}
+          onElegir={(bowl: BowlClub, slot: Slot) => {
+            // Rearma HOY alrededor del bowl: ocupa el tiempo elegido y las demás
+            // comidas se recalculan contra lo que sobra, para que el día siga
+            // cumpliendo la meta. El motor elige platillos LIGEROS si queda poco
+            // margen (un bowl puede ser la mitad del día en una meta baja).
+            const g = weeklyPlan?.gen;
+            if (!g || !weeklyPlan?.days?.length) return;
+            const idx = new Date().getDay();                 // 0=domingo
+            const i = Math.min(idx, weeklyPlan.days.length - 1);
+            const nuevo = buildDayWithFixed(
+              { kcal: g.kcal, protG: g.protG, fatG: g.fatG, carbG: g.carbG },
+              { slot, name: bowl.name, kcal: bowl.kcal, prot: bowl.prot, fat: bowl.fat, carb: bowl.carb, img: bowl.img ?? undefined, desc: bowl.tagline ?? 'Bowl de Healthy Space' },
+              { avoid: g.avoid, craving: g.craving },
+              weeklyPlan.days[i].day,
+            );
+            const days = weeklyPlan.days.map((d, k) => (k === i ? nuevo : d));
+            void saveWeeklyPlan({ ...weeklyPlan, days });
+          }}
+        />
 
         {/* ── Entrenar en pareja — se oculta si ya hay rutina de pareja hoy
               (ya estás enlazado y generaron la rutina; el botón sobra). ── */}
