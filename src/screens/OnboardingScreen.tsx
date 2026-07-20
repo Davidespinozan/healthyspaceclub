@@ -1,3 +1,4 @@
+import { UbicacionPicker, type Ubicacion } from '../components/UbicacionPicker';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity, AtSign, Check, Loader2, X, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
@@ -37,6 +38,10 @@ export default function OnboardingScreen() {
   const [edad, setEdad] = useState('');
   const [peso, setPeso] = useState('');
   const [estatura, setEstatura] = useState('');
+  // Ubicación: va aquí y no en un paso aparte para no sumar fricción donde la gente
+  // abandona. Además de demografía, decide qué contenido local ve (los bowls del
+  // food truck solo aparecen donde hay cobertura).
+  const [ubic, setUbic] = useState<Ubicacion>({ country: '', state: '', city: '' });
   const [activity, setActivity] = useState('');
   // Fase 2 — seguridad: embarazo (si mujer) + opcionales
   const [embarazo, setEmbarazo] = useState<'si' | 'no' | ''>('');
@@ -197,6 +202,19 @@ export default function OnboardingScreen() {
     setObData('embarazo', embarazo === 'si' ? 1 : 0);
     setObData('grasa', grasa ? Number(grasa) : '');
     setObData('pesoMeta', pesoMeta ? Number(pesoMeta) : '');
+
+    // Ubicación → user_profiles. Es lo que decide si el socio ve contenido local
+    // (los bowls del food truck). Si la dejó incompleta se guarda lo que haya: el
+    // gate falla cerrado, así que en el peor caso simplemente no ve la función.
+    if (ubic.country) {
+      void supabase.auth.getUser().then(({ data }) => {
+        if (!data.user) return;
+        void supabase.from('user_profiles').upsert(
+          { user_id: data.user.id, country: ubic.country, state: ubic.state || null, city: ubic.city || null },
+          { onConflict: 'user_id' },
+        );
+      });
+    }
 
     // Animate processing lines
     setProcessingLine(0);
@@ -417,6 +435,9 @@ export default function OnboardingScreen() {
                 <label>{t('onboarding.heightCm')}</label>
                 <input type="number" inputMode="numeric" placeholder="170" value={estatura} onChange={e => setEstatura(e.target.value)} />
               </div>
+            </div>
+            <div className="onb-ubic">
+              <UbicacionPicker value={ubic} onChange={setUbic} dark />
             </div>
             {/* Embarazo/lactancia — solo si mujer (bloquea déficit, Punto 2) */}
             {sex === 'Mujer' && (
