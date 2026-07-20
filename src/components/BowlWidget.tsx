@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, X } from 'lucide-react';
-import { fetchBowlsDisponibles, FLAMA_URL, linkPedido, type BowlClub } from '../data/bowlsClub';
+import { fetchBowlsDisponibles, FLAMA_URL, linkPedido, linkMenu, linkArmar, type BowlClub } from '../data/bowlsClub';
 import type { PlanTarget, Slot } from '../utils/planEngine';
 
 /**
@@ -128,6 +128,19 @@ export function BowlWidget({ target, onElegir }: {
                   </span>
                 </button>
               ))}
+            </div>
+
+            {/* Salidas que NO obligan a elegir: armar el suyo o solo mirar el menú.
+                Sin esto la hoja te encierra hasta que escojas un bowl. */}
+            <div className="bw-otras">
+              <a className="bw-otra" href={linkArmar()} target="_blank" rel="noopener noreferrer">
+                <b>Armar mi bowl</b>
+                <i>Elige proteína, base y salsa</i>
+              </a>
+              <a className="bw-otra" href={linkMenu()} target="_blank" rel="noopener noreferrer">
+                <b>Ver el menú completo</b>
+                <i>Bowls, aguas frescas y extras</i>
+              </a>
             </div>
 
             {sel && (

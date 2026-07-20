@@ -50,6 +50,15 @@ export async function fetchBowlsDisponibles(): Promise<BowlClub[]> {
 export const FLAMA_URL =
   'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logofuegohsc.webp';
 
-/** Deep link al food truck con el bowl ya seleccionado. */
-export const linkPedido = (bowlId: string) =>
-  `https://healthyspaceculiacan.netlify.app/?bowl=${encodeURIComponent(bowlId)}&from=club`;
+const TRUCK = 'https://healthyspaceculiacan.netlify.app';
+
+/** Deep link con el bowl ya seleccionado: llega y está en el carrito. */
+export const linkPedido = (bowlId: string) => `${TRUCK}/?bowl=${encodeURIComponent(bowlId)}&from=club`;
+
+/** Solo mirar el menú, sin comprometerse a nada. Obligar a elegir un bowl para poder
+ *  salir de la hoja es una trampa: mucha gente entra a ver qué hay. */
+export const linkMenu = () => `${TRUCK}/?ir=menu&from=club`;
+
+/** Armar su propio bowl, igual que en la app del truck. Aquí el plan NO se reajusta
+ *  solo: hasta que no lo arma no sabemos sus macros. */
+export const linkArmar = () => `${TRUCK}/?ir=build&from=club`;
