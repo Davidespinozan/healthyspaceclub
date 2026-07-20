@@ -14,10 +14,13 @@ import type { PlanTarget, Slot } from '../utils/planEngine';
  * widget no se pinta. No hay condicional de ciudad en el cliente porque un `if` se
  * puede saltar; aquí simplemente no hay datos que mostrar.
  */
-const TIEMPOS: { slot: Slot; label: string }[] = [
-  { slot: 'Desayuno', label: 'Desayuno' },
-  { slot: 'Comida', label: 'Comida' },
-  { slot: 'Cena', label: 'Cena' },
+// Reparto de Magaly: 25% desayuno / 35% comida / 25% cena. Se muestra cuánto vale
+// cada tiempo para que elegir no sea a ciegas — si el bowl trae 737 kcal, ver que su
+// comida son 1003 y su desayuno 718 le dice sola cuál tiene sentido.
+const TIEMPOS: { slot: Slot; label: string; share: number }[] = [
+  { slot: 'Desayuno', label: 'Desayuno', share: 0.25 },
+  { slot: 'Comida', label: 'Comida', share: 0.35 },
+  { slot: 'Cena', label: 'Cena', share: 0.25 },
 ];
 
 export function BowlWidget({ target, onElegir }: {
@@ -51,11 +54,13 @@ export function BowlWidget({ target, onElegir }: {
       {/* Ancho completo y 168 px de alto, igual que "Entrenar en pareja" — pero con
           las fotos reales de los bowls, que es lo que hace que se antoje. */}
       <button type="button" className="th3-bowl" onClick={() => setAbierto(true)}>
+        {/* La carátula tiene que decir QUÉ es antes que qué hace. Solo "¿hoy no quieres
+            cocinar?" con fotos no comunica que hay un negocio real detrás. */}
         <span className="th3-bowl-head">
           <img className="th3-bowl-flama" src={FLAMA_URL} alt="" />
           <span className="th3-bowl-txt">
-            <span className="th3-bowl-eyebrow">Healthy Space · Culiacán</span>
-            <span className="th3-bowl-title">¿Hoy no quieres cocinar?</span>
+            <span className="th3-bowl-brand">Healthy Space · Mexican Grill &amp; Bowls</span>
+            <span className="th3-bowl-place">Nuestros food trucks en Culiacán</span>
           </span>
           <ArrowRight size={18} strokeWidth={2.2} className="th3-bowl-arrow" />
         </span>
@@ -66,6 +71,9 @@ export function BowlWidget({ target, onElegir }: {
               <em>{b.name}</em>
             </span>
           ))}
+        </span>
+        <span className="th3-bowl-foot">
+          ¿Hoy no quieres cocinar? Pide un bowl y tu día se reacomoda solo.
         </span>
       </button>
 
@@ -92,7 +100,15 @@ export function BowlWidget({ target, onElegir }: {
               {ordenados.map((b, i) => (
                 <button key={b.id}
                   className={`bw-card${sel?.id === b.id ? ' on' : ''}`}
-                  onClick={() => setSel(b)}>
+                  onClick={() => {
+                    setSel(b);
+                    // Preselecciona el tiempo donde ese bowl encaja mejor.
+                    if (target) {
+                      const mejor = [...TIEMPOS].sort((x, y) =>
+                        Math.abs(b.kcal - target.kcal * x.share) - Math.abs(b.kcal - target.kcal * y.share))[0];
+                      setSlot(mejor.slot);
+                    }
+                  }}>
                   <span className="bw-card-photo" style={{ background: b.accent ?? '#16302B' }}>
                     {b.img && <img src={b.img} alt={b.name} loading="lazy" />}
                     {i === 0 && <em className="bw-best">El que mejor te queda</em>}
@@ -116,13 +132,19 @@ export function BowlWidget({ target, onElegir }: {
 
             {sel && (
               <footer className="bw-foot">
-                <p className="bw-foot-label">¿Cuál comida sustituye?</p>
+                <p className="bw-foot-label">¿En qué comida te lo vas a comer?</p>
                 <div className="bw-slots">
-                  {TIEMPOS.map((t) => (
-                    <button key={t.slot}
-                      className={`bw-slot${slot === t.slot ? ' on' : ''}`}
-                      onClick={() => setSlot(t.slot)}>{t.label}</button>
-                  ))}
+                  {TIEMPOS.map((t) => {
+                    const kcal = target ? Math.round(target.kcal * t.share) : null;
+                    return (
+                      <button key={t.slot}
+                        className={`bw-slot${slot === t.slot ? ' on' : ''}`}
+                        onClick={() => setSlot(t.slot)}>
+                        <b>{t.label}</b>
+                        {kcal && <i>hoy son {kcal} kcal</i>}
+                      </button>
+                    );
+                  })}
                 </div>
                 <p className="bw-foot-note">
                   Tu <b>{slot.toLowerCase()}</b> de hoy pasa a ser el <b>{sel.name}</b> y el
