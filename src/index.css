@@ -7996,7 +7996,11 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 
 /* Hoja de selección — mismo lenguaje que el menú de la app del food truck:
    foto grande arriba, nombre + precio, tagline y macros con separadores. */
-.bw-sheet-bg{position:fixed;inset:0;z-index:200;background:rgba(8,19,18,.6);
+/* La hoja se monta con portal en <body>: en Hoy hay ancestros con backdrop-filter y
+   animaciones con transform, y eso convierte al ancestro en el contenedor del
+   position:fixed — la hoja quedaba atrapada dentro de la tarjeta en vez de cubrir la
+   pantalla, y se transparentaba el velo oscuro por debajo del contenido. */
+.bw-sheet-bg{position:fixed;inset:0;z-index:2000;background:rgba(8,19,18,.6);
   backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center}
 .bw-sheet{position:relative;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;
   background:#F2F0E8;border-radius:24px 24px 0 0;

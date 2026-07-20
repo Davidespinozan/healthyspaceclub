@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowRight, X } from 'lucide-react';
 import { fetchBowlsDisponibles, FLAMA_URL, linkPedido, linkMenu, linkArmar, type BowlClub } from '../data/bowlsClub';
 import type { PlanTarget, Slot } from '../utils/planEngine';
@@ -77,7 +78,7 @@ export function BowlWidget({ target, onElegir }: {
         </span>
       </button>
 
-      {abierto && (
+      {abierto && createPortal(
         <div className="bw-sheet-bg" onClick={() => { setAbierto(false); setSel(null); }}>
           <div className="bw-sheet" onClick={(e) => e.stopPropagation()}>
             <button className="bw-x" onClick={() => { setAbierto(false); setSel(null); }} aria-label="Cerrar">
@@ -170,7 +171,8 @@ export function BowlWidget({ target, onElegir }: {
               </footer>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
