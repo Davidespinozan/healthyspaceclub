@@ -8048,3 +8048,17 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .bw-slot.on{background:#0E2521;border-color:#0E2521}
 .bw-slot.on b{color:#F6F2EA}
 .bw-slot.on i{color:rgba(246,242,234,.6)}
+
+/* Nota y botón del pie. Sin estas reglas el <a> se pintaba como link azul del
+   navegador y el texto quedaba centrado y enorme. */
+.bw-foot-note{
+  font-size:12.5px; line-height:1.45; color:#5B6B66; text-align:left; margin-top:12px;
+}
+.bw-foot-note b{color:#14201D; font-weight:800}
+.bw-cta{
+  display:block; width:100%; text-align:center; margin-top:12px;
+  padding:14px 18px; border-radius:13px;
+  background:#BFA065; color:#0E2521;
+  font-size:14.5px; font-weight:800; text-decoration:none; font-family:inherit;
+}
+.bw-cta:hover{filter:brightness(1.04)}
