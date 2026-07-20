@@ -1,5 +1,6 @@
 import { dayKey } from './utils/localDate';
 import { identify } from './utils/analytics';
+import { sincronizarPush } from './utils/push';
 import { ensureLocaleAssets } from './utils/localeAssets';
 import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore } from './store';
@@ -82,6 +83,17 @@ export default function App() {
       }
     }
   }, []);
+
+  // ── Reconciliar la suscripción de push ────────────────────────────────────
+  // El navegador puede rotar el endpoint por su cuenta. El service worker lo
+  // mueve en cuanto pasa, pero no todos los navegadores entregan la suscripción
+  // vieja, y sin ella no sabe qué fila mover. Aquí ya hay sesión, así que se
+  // resuelve sin ambigüedad. Sin esto la fila apunta a un buzón muerto y la
+  // persona deja de recibir notificaciones sin que nada lo diga.
+  useEffect(() => {
+    if (!authReady || !user) return;
+    void sincronizarPush();
+  }, [authReady, user]);
 
   // ── Reroute: si profile hidrata después y trae startDate, salir de onboarding ──
   useEffect(() => {

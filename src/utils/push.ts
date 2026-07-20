@@ -97,3 +97,53 @@ export async function disablePush(): Promise<void> {
     }
   } catch (e) { console.warn('[push] disable failed:', e); }
 }
+
+/**
+ * Reconcilia la suscripción del navegador con la que está guardada.
+ *
+ * El navegador puede rotar el endpoint por su cuenta. El service worker intenta
+ * moverlo en cuanto pasa (`pushsubscriptionchange`), pero no siempre puede: hay
+ * navegadores que no entregan `oldSubscription`, y entonces no hay forma de saber
+ * qué fila mover. Aquí sí hay sesión, así que se resuelve sin ambigüedad.
+ *
+ * Se llama al abrir la app. Si el endpoint vivo no está guardado, se guarda y se
+ * borran los del mismo usuario que ya no existen — son los que hacen que
+ * `push-send` intente entregar a un buzón muerto.
+ */
+export async function sincronizarPush(): Promise<void> {
+  if (!pushSupported()) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return;                       // no está suscrito: nada que reconciliar
+
+    const json = sub.toJSON();
+    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return;
+
+    const { data: auth } = await supabase.auth.getUser();
+    const me = auth?.user?.id;
+    if (!me) return;
+
+    const { data: guardadas, error } = await supabase
+      .from('push_subscriptions').select('endpoint').eq('user_id', me);
+    if (error) { console.warn('[push] sync: no pude leer suscripciones:', error.message); return; }
+
+    const vigente = (guardadas ?? []).some((s) => s.endpoint === json.endpoint);
+    if (!vigente) {
+      await supabase.from('push_subscriptions').upsert({
+        user_id: me, endpoint: json.endpoint,
+        p256dh: json.keys.p256dh, auth: json.keys.auth,
+      }, { onConflict: 'endpoint' });
+    }
+
+    // Los endpoints viejos de este mismo usuario ya no reciben nada: solo hacen
+    // que cada envío falle en silencio.
+    const muertos = (guardadas ?? []).map((s) => s.endpoint).filter((e) => e !== json.endpoint);
+    if (muertos.length) {
+      await supabase.from('push_subscriptions').delete().in('endpoint', muertos);
+    }
+  } catch (e) {
+    console.warn('[push] sync falló:', e);
+  }
+}
