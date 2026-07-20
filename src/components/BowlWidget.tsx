@@ -80,7 +80,8 @@ export function BowlWidget({ target, onElegir }: {
 
       {abierto && createPortal(
         <div className="bw-sheet-bg" onClick={() => { setAbierto(false); setSel(null); }}>
-          <div className="bw-sheet" onClick={(e) => e.stopPropagation()}>
+          <div className="bw-sheet" onClick={(e) => e.stopPropagation()}
+            style={{ background: '#F2F0E8', color: '#14201D' }}>
             <button className="bw-x" onClick={() => { setAbierto(false); setSel(null); }} aria-label="Cerrar">
               <X size={18} />
             </button>
@@ -146,7 +147,7 @@ export function BowlWidget({ target, onElegir }: {
 
             {sel && (
               <footer className="bw-foot">
-                <p className="bw-foot-label">¿En qué comida te lo vas a comer?</p>
+                <p className="bw-foot-label" style={{ color: '#14201D' }}>¿En qué comida te lo vas a comer?</p>
                 <div className="bw-slots">
                   {TIEMPOS.map((t) => {
                     const kcal = target ? Math.round(target.kcal * t.share) : null;
