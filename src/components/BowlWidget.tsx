@@ -60,7 +60,7 @@ export function BowlWidget({ target, onElegir }: {
           <img className="th3-bowl-flama" src={FLAMA_URL} alt="" />
           <span className="th3-bowl-txt">
             <span className="th3-bowl-brand">Healthy Space · Mexican Grill &amp; Bowls</span>
-            <span className="th3-bowl-place">Nuestros food trucks en Culiacán</span>
+            <span className="th3-bowl-place">Cocción lenta · Culiacán</span>
           </span>
           <ArrowRight size={18} strokeWidth={2.2} className="th3-bowl-arrow" />
         </span>
@@ -90,10 +90,10 @@ export function BowlWidget({ target, onElegir }: {
               <img className="bw-logo" src={FLAMA_URL} alt="" />
               <h3>Healthy Space · Mexican Grill &amp; Bowls</h3>
               <p>
-                Nuestros food trucks en Culiacán. Proteínas de <b>cocción lenta</b> —
-                chamberete braseado 8 horas, pollo y cerdo lentos — con ingredientes frescos.
+                Proteínas de <b>cocción lenta</b> en Culiacán: chamberete braseado 8 horas,
+                pollo y cerdo lentos. Pocas, pero inolvidables.
               </p>
-              <span className="bw-intro-meta">Recoge en el remolque o pide a domicilio</span>
+              <span className="bw-intro-meta">Recoge o pide a domicilio</span>
             </header>
 
             <div className="bw-list">
