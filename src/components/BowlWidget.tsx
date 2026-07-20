@@ -80,15 +80,14 @@ export function BowlWidget({ target, onElegir }: {
 
       {abierto && createPortal(
         <div className="bw-sheet-bg" onClick={() => { setAbierto(false); setSel(null); }}>
-          <div className="bw-sheet" onClick={(e) => e.stopPropagation()}
-            style={{ background: '#F2F0E8', color: '#14201D' }}>
+          <div className="bw-sheet" onClick={(e) => e.stopPropagation()}>
             <button className="bw-x" onClick={() => { setAbierto(false); setSel(null); }} aria-label="Cerrar">
               <X size={18} />
             </button>
 
             {/* Contexto: el socio del Club puede no saber qué es Healthy Space Culiacán.
                 Sin esto solo ve un "pídelo" y no entiende de dónde sale la comida. */}
-            <header className="bw-intro">
+            <div className="bw-intro">
               <img className="bw-logo" src={FLAMA_URL} alt="" />
               <h3>Healthy Space · Mexican Grill &amp; Bowls</h3>
               <p>
@@ -96,7 +95,7 @@ export function BowlWidget({ target, onElegir }: {
                 pollo y cerdo lentos. Pocas, pero inolvidables.
               </p>
               <span className="bw-intro-meta">Recoge o pide a domicilio</span>
-            </header>
+            </div>
 
             <div className="bw-list">
               {ordenados.map((b, i) => (
@@ -146,8 +145,8 @@ export function BowlWidget({ target, onElegir }: {
             </div>
 
             {sel && (
-              <footer className="bw-foot">
-                <p className="bw-foot-label" style={{ color: '#14201D' }}>¿En qué comida te lo vas a comer?</p>
+              <div className="bw-foot">
+                <p className="bw-foot-label">¿En qué comida te lo vas a comer?</p>
                 <div className="bw-slots">
                   {TIEMPOS.map((t) => {
                     const kcal = target ? Math.round(target.kcal * t.share) : null;
@@ -169,7 +168,7 @@ export function BowlWidget({ target, onElegir }: {
                   onClick={() => { onElegir?.(sel, slot); setAbierto(false); setSel(null); }}>
                   Pedirlo — ${Math.round(sel.price)}
                 </a>
-              </footer>
+              </div>
             )}
           </div>
         </div>,

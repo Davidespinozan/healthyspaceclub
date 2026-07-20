@@ -8041,7 +8041,10 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   font-variant-numeric:tabular-nums}
 .bw-card-macros i{font-style:normal;font-size:10.5px;color:#95A19C;font-weight:600}
 
-.bw-foot{margin-top:18px;padding-top:15px;border-top:1px solid rgba(21,51,48,.1)}
+/* OJO: no usar <footer> aquí. La landing define una regla GLOBAL `footer{}` con fondo
+   verde oscuro, centrado y padding enorme, y se colaba en la hoja. Va como div. */
+.bw-foot{margin-top:18px;padding-top:15px;border-top:1px solid rgba(21,51,48,.1);
+  background:transparent;display:block;padding-left:0;padding-right:0;text-align:left}
 .bw-foot-label{font-size:12px;font-weight:800;color:#14201D;margin-bottom:7px}
 .bw-slots{display:flex;gap:7px;margin-bottom:11px}
 .bw-slot{flex:1;display:grid;gap:2px;padding:11px 8px;border-radius:12px;
