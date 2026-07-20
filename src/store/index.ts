@@ -266,8 +266,8 @@ interface AppState {
   // Shape `desc` en cliente ↔ columna `description` en SQL (mapeo al borde).
   // mealTime/mealIndex: si el registro sustituye una comida del plan (ej. "otra
   // cosa en el desayuno"), queda ligado a ESE lugar para mostrarse ahí. Sueltos = extra.
-  foodLog: { id: string; date: string; desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai'; mealTime?: string; mealIndex?: number; items?: FoodLogItem[] }[];
-  addFoodLog: (entry: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai'; mealTime?: string; mealIndex?: number; items?: FoodLogItem[] }) => Promise<void>;
+  foodLog: { id: string; date: string; desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' | 'bowl'; mealTime?: string; mealIndex?: number; items?: FoodLogItem[]; img?: string; ref?: string }[];
+  addFoodLog: (entry: { desc: string; kcal: number; prot: number; carbs: number; fat: number; source: 'manual' | 'ai' | 'bowl'; mealTime?: string; mealIndex?: number; items?: FoodLogItem[]; img?: string; ref?: string }) => Promise<void>;
   removeFoodLog: (id: string) => Promise<void>;
 
   // Plan / Trial

@@ -7,6 +7,7 @@ import { getMealPlans } from '../data/mealPlan';
 import { BowlWidget } from './BowlWidget';
 import { buildDayWithFixed, type Slot } from '../utils/planEngine';
 import type { BowlClub } from '../data/bowlsClub';
+import { fetchMisPedidos, fetchBowlsRef, macrosDePedido } from '../data/pedidosTruck';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
@@ -57,7 +58,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // Calculadora abierta "en vez de" una comida (slot). null = cerrada.
   const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number } | null>(null);
   const {
-    userName, planGoal, mealPlanKey, shoppingDay, saveWeeklyPlan,
+    userName, planGoal, mealPlanKey, shoppingDay, saveWeeklyPlan, addFoodLog,
     mealChecks, toggleMealCheck,
     workoutChecks, toggleWorkoutCheck,
     mealResolvedByLog,
@@ -73,7 +74,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     hsmProfile, setHSMProfile,
     subscriptionStatus,
     username,
-  } = useAppStore(useShallow((s) => ({ userName: s.userName, planGoal: s.planGoal, mealPlanKey: s.mealPlanKey, shoppingDay: s.shoppingDay, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, workoutChecks: s.workoutChecks, toggleWorkoutCheck: s.toggleWorkoutCheck, mealResolvedByLog: s.mealResolvedByLog, foodLog: s.foodLog, completedSessions: s.completedSessions, activityLog: s.activityLog, dailyWorkout: s.dailyWorkout, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, lastWeeklyReview: s.lastWeeklyReview, streakCount: s.streakCount, obData: s.obData, dailyBriefing: s.dailyBriefing, setDailyBriefing: s.setDailyBriefing, dailyHSMResponses: s.dailyHSMResponses, lastStreakMilestone: s.lastStreakMilestone, setLastStreakMilestone: s.setLastStreakMilestone, hsmProfile: s.hsmProfile, setHSMProfile: s.setHSMProfile, subscriptionStatus: s.subscriptionStatus, username: s.username })));
+  } = useAppStore(useShallow((s) => ({ userName: s.userName, planGoal: s.planGoal, mealPlanKey: s.mealPlanKey, shoppingDay: s.shoppingDay, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, workoutChecks: s.workoutChecks, toggleWorkoutCheck: s.toggleWorkoutCheck, mealResolvedByLog: s.mealResolvedByLog, foodLog: s.foodLog, addFoodLog: s.addFoodLog, completedSessions: s.completedSessions, activityLog: s.activityLog, dailyWorkout: s.dailyWorkout, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, lastWeeklyReview: s.lastWeeklyReview, streakCount: s.streakCount, obData: s.obData, dailyBriefing: s.dailyBriefing, setDailyBriefing: s.setDailyBriefing, dailyHSMResponses: s.dailyHSMResponses, lastStreakMilestone: s.lastStreakMilestone, setLastStreakMilestone: s.setLastStreakMilestone, hsmProfile: s.hsmProfile, setHSMProfile: s.setHSMProfile, subscriptionStatus: s.subscriptionStatus, username: s.username })));
 
   // Acceso real = estado de Stripe (subscriptionStatus), NO el trial local
   // (userPlan/trialEndsAt), que se expira solo sin mirar Stripe y desincronizaba
@@ -260,6 +261,35 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayExIdsKey, locale]);
+  // ── Pedidos del food truck → se registran SOLOS en el plan ──────────────
+  // Es lo que cumple la promesa de vincular la cuenta: "no vuelves a capturar
+  // nada". Cada pedido entra como un registro más (igual que cuando ella registra
+  // su comida), pero con la FOTO y el nombre del bowl que compró.
+  // `ref` en foodLog evita duplicar: si ese pedido ya se registró, no se repite.
+  useEffect(() => {
+    let vivo = true;
+    void (async () => {
+      const [pedidos, ref] = await Promise.all([fetchMisPedidos(), fetchBowlsRef()]);
+      if (!vivo || !pedidos.length) return;
+      const hoy = dayKey(new Date());
+      const yaRegistrados = new Set(foodLog.filter(e => e.ref).map(e => e.ref));
+      for (const p of pedidos) {
+        if (yaRegistrados.has(p.code)) continue;
+        if (dayKey(new Date(p.created_at)) !== hoy) continue;   // solo lo de hoy
+        const m = macrosDePedido(p, ref);
+        if (!m.kcal) continue;                                   // sin macros no se registra
+        await addFoodLog({
+          desc: m.desc, kcal: Math.round(m.kcal), prot: Math.round(m.prot),
+          carbs: Math.round(m.carb), fat: Math.round(m.fat),
+          source: 'bowl', img: m.foto ?? undefined, ref: p.code,
+        });
+      }
+    })();
+    return () => { vivo = false; };
+    // Solo al montar: no queremos re-consultar en cada cambio del log.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const kcalGoal = planGoal > 0 ? planGoal : 0;
   const kcalConsumed = Math.round(dayConsumption.consumedKcal);
   // El anillo de menú refleja la ACCIÓN del usuario: comidas marcadas / total
@@ -752,6 +782,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                         const linked = resolved ? todayFoodLog.filter(e => e.mealIndex === i) : [];
                         const replaced = linked.length > 0;
                         const displayName = replaced ? linked.map(e => e.desc).join(' + ') : meal.name;
+                        // Un bowl comprado trae su propia foto: se muestra igual que el
+                        // platillo del plan, no con el ícono de "registro sin imagen".
+                        const logImg = linked.find(e => e.img)?.img;
                         // resolved sin entrada ligada (registros viejos/globales) → dot ámbar (compat).
                         const showResolvedDot = resolved && !done && !replaced;
                         const showCheck = done || replaced;
@@ -776,6 +809,12 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                                   <img key={ix} src={src} alt="" loading="lazy" />
                                 ))}
                               </span>
+                            ) : logImg ? (
+                              <img
+                                className="th3-card-list-thumb"
+                                src={logImg} alt="" loading="lazy"
+                                onClick={openDetail}
+                              />
                             ) : mealImg && !replaced ? (
                               <img
                                 className="th3-card-list-thumb"
