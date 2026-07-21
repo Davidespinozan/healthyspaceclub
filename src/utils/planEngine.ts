@@ -746,7 +746,7 @@ function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
   return meals;
 }
 
-function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>): DayPlan {
+function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>, relax = 0): DayPlan {
   const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
   const MT = mealTargets(T);
   // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno). Si un tiempo se
@@ -760,12 +760,33 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   };
   // Cada tiempo usa SOLO los platillos que Magaly designó para ese tiempo —
   // desayuno=Desayuno, comida=Comida, cena=Cena. NO se revuelven entre sí.
-  const des = clean(biasPool(BY_TIME.Desayuno, cuisines));
-  const com = clean(biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines));
-  const cen = clean(biasPool(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, cuisines));
+  // DEGRADACIÓN GRADUAL. Las macros son la restricción DURA; que cada platillo
+  // esté en su tiempo es BLANDA. En relax≥1 (cuando lo estricto no alcanzó la
+  // meta —típico con exclusiones pesadas que dejan 6 cenas altas en carbo) las
+  // comidas fuertes tiran de TODO el banco compatible: una comida puede servir de
+  // cena. Se prefiere un plan EXACTO con una comida movida de tiempo, a uno
+  // "ordenado" que falla las macros. Es lo que pidió David.
+  let allMains = clean(biasPool(BANCO.filter((d) => d.tiempo !== 'Snack'), cuisines));
+  // relax≥2 + meta densa en carbo: prioriza los platillos con más CAPACIDAD de
+  // carbo. El día carb-corto elegía platillos de carne y dejaba fuera los bowls de
+  // arroz/noodles que sí llegan. Duplicarlos al frente del pool los hace probables.
+  if (relax >= 2) {
+    const carbCap = (d: BancoDish) => d.fixed[3] + d.ings.reduce((a, ing) => a + (ing.rol === 'principal' && ing.a ? ing.a[3] * ingBounds(ing).hi : 0), 0);
+    const densos = [...allMains].sort((a, b) => carbCap(b) - carbCap(a)).slice(0, 12);
+    allMains = [...densos, ...densos, ...allMains];   // más peso a los densos en el pickN aleatorio
+  }
+  const des = relax >= 1 ? allMains : clean(biasPool(BY_TIME.Desayuno, cuisines));
+  const com = relax >= 1 ? allMains : clean(biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines));
+  const cen = relax >= 1 ? allMains : clean(biasPool(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, cuisines));
   const snack = clean(BY_TIME.Snack);
   // Regla dura: NADA se repite dentro del mismo día (ni comida ni snack, ni una comida
   // como cena). avail() saca del pool lo ya usado hoy; fitSlot va llenando usedToday.
+  // relax≥2: la selección ignora el historial de la semana → puede repetir un
+  // platillo en otro día. Es el último recurso cuando el banco compatible es tan
+  // chico que 21 espacios de comida no caben en los ~11 platillos altos en carbo
+  // que quedan tras las exclusiones. Repetir un plato es preferible a fallar la
+  // meta. usedToday NO se relaja: nunca el mismo platillo dos veces el MISMO día.
+  const usedSel = relax >= 2 ? new Set<string>() : used;
   const usedToday = new Set<string>();
   const usedTodayIng = new Set<string>(); // ingredientes principales ya usados hoy → no repetir en el día
   const avail = (pool: BancoDish[]) => { const f = pool.filter((d) => !usedToday.has(d.nombre)); return f.length ? f : pool; };
@@ -777,11 +798,11 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
     return fresh.length ? fresh : pool.filter((d) => !usedToday.has(d.nombre));
   };
   const meals: MealItem[] = [
-    ...fitSlot(avail(des), 'Desayuno', MT.desayuno, 1, rng, 90, used, usedToday, usedTodayIng, craving, ingFreq),
-    ...fitSlot(availSnack(snack), 'Snack AM', MT.snackSlot, nSnack, rng, 70, used, usedToday, usedTodayIng, craving, ingFreq, true),
-    ...fitSlot(avail(com), 'Comida', MT.comida, 1, rng, 90, used, usedToday, usedTodayIng, craving, ingFreq),
-    ...fitSlot(availSnack(snack), 'Snack PM', MT.snackSlot, nSnack, rng, 70, used, usedToday, usedTodayIng, craving, ingFreq, true),
-    ...fitSlot(avail(cen), 'Cena', MT.cena, 1, rng, 90, used, usedToday, usedTodayIng, craving, ingFreq),
+    ...fitSlot(avail(des), 'Desayuno', MT.desayuno, 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq),
+    ...fitSlot(availSnack(snack), 'Snack AM', MT.snackSlot, nSnack, rng, 70, usedSel, usedToday, usedTodayIng, craving, ingFreq, true),
+    ...fitSlot(avail(com), 'Comida', MT.comida, 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq),
+    ...fitSlot(availSnack(snack), 'Snack PM', MT.snackSlot, nSnack, rng, 70, usedSel, usedToday, usedTodayIng, craving, ingFreq, true),
+    ...fitSlot(avail(cen), 'Cena', MT.cena, 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq),
   ];
   return { day: dayNum, theme: '', meals: topUpDay(meals, T) };
 }
@@ -808,7 +829,14 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // rango alcanzable —reachabilidad— y (b) resuelve los ingredientes de las 3
 // comidas fuertes JUNTOS contra la meta del día. Exactitud de macros <1%: de 5%
 // de los días a 84%, medido con scorecard. Reglas de porción de la v22 intactas.
-export const PLAN_ENGINE_VERSION = 27;
+// v28: DEGRADACIÓN GRADUAL para todo perfil. Las macros son la restricción DURA;
+// variedad y 'cada platillo en su tiempo' son BLANDAS. Si con las reglas estrictas
+// no se alcanza la meta (típico con exclusiones pesadas que dejan pocos platillos
+// altos en carbo), el reintento afloja por niveles: cross-time (una comida sirve
+// de cena), luego repetir en la semana, luego sesgar a platillos densos en carbo.
+// Exactitud de macros <1%: 87% → 98% de los días; orden 100%. Reglas de porción
+// de la v22 intactas.
+export const PLAN_ENGINE_VERSION = 28;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 
@@ -1089,11 +1117,15 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
     const preU = new Set(used), preI = new Map(ingFreq), preC = new Map(cravedCount);
     let best: DayPlan | null = null, bestErr = Infinity;
     let bU = preU, bI = preI, bC = preC;
-    for (let a = 0; a < 16; a++) {
+    for (let a = 0; a < 24; a++) {
       used.clear(); preU.forEach((x) => used.add(x));
       ingFreq.clear(); preI.forEach((v, k) => ingFreq.set(k, v));
       cravedCount.clear(); preC.forEach((v, k) => cravedCount.set(k, v));
-      const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq);
+      // Escala la relajación: los primeros intentos son estrictos (variedad y cada
+      // platillo en su tiempo). Si ninguno cerró, los siguientes permiten cross-time
+      // para expandir el pool y ALCANZAR la meta. Lo blando cede a lo duro.
+      const relax = a < 8 ? 0 : a < 16 ? 1 : 2;
+      const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax);
       if (opts.shake) applyShake(day.meals, opts.shake);
       const com = kcalDe(day, 'Comida');
       const desorden = (com < kcalDe(day, 'Desayuno') ? 1 : 0) + (com < kcalDe(day, 'Cena') ? 1 : 0);
