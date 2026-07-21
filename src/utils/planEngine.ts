@@ -727,7 +727,12 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // se habría quedado congelado con las reglas malas para siempre. Subir a 24 los
 // regenera con las reglas buenas. Regla que se deriva de esto: al revertir un
 // cambio del motor NO basta con revertir el código — hay que subir la versión.
-export const PLAN_ENGINE_VERSION = 24;
+// v25: las fotos del banco pasaron de .jpg (que dejaba 42 platillos sin imagen,
+// aunque la foto existía en .webp) a .webp, y se quitó el Apio. La URL de la foto
+// se hornea dentro del plan guardado, así que sin subir la versión un plan ya
+// generado seguiría pidiendo los .jpg viejos. Las REGLAS del motor no cambian:
+// siguen siendo las de la v22.
+export const PLAN_ENGINE_VERSION = 25;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 

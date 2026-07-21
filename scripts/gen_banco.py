@@ -9,6 +9,15 @@ def num(s):
     try: return float((s or "").strip())
     except: return 0.0
 
+def _webp(fn):
+    """Fuerza .webp. El CSV de Magaly escribe .jpg, pero TODAS las fotos del banco
+    están en storage como .webp (David: 'ninguna en jpg, todas webp'). Apuntar a
+    .jpg dejaba 42 platillos sin imagen aunque la foto SÍ existía — solo con la
+    extensión equivocada."""
+    fn=(fn or "").strip()
+    import os
+    return os.path.splitext(fn)[0]+".webp" if fn else fn
+
 # ── Sinónimos: nombre del banco → nombre exacto en SMAE ────────────────────
 # El banco de Magaly usa nombres genéricos ("Fresa", "Avena") que no existen
 # literales en el catálogo, que los tiene desagregados ("Fresa entera", "Avena
@@ -98,7 +107,7 @@ dishes = {}
 for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), encoding="utf-8-sig")):
     p = r["platillo"].strip()
     d = dishes.setdefault(p, {"nombre": p, "tiempo": r["tiempo"].strip(), "tipo": r["tipo"].strip(),
-        "multMax": num(r["mult_max"]) or 1.5, "img": r["image_filename"].strip(), "fixed": [0, 0, 0, 0, 0], "ings": []})
+        "multMax": num(r["mult_max"]) or 1.5, "img": _webp(r["image_filename"]), "fixed": [0, 0, 0, 0, 0], "ings": []})
     rol = (r.get("rol") or "").strip(); al = (r.get("alimento") or "").strip(); g = num(r["gramos"])
     ing = {"nv": r["nombre_visible"].strip(), "rol": rol, "g0": g}
     # Medida casera contable (pieza/rebanada) para mostrar "2 huevos", no "88 g".
