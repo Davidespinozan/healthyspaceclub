@@ -801,7 +801,12 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
     ...fitSlot(availSnack(snack), 'Snack PM', MT.snackSlot, nSnack, rng, 70, usedSel, usedToday, usedTodayIng, craving, ingFreq, true),
     ...fitSlot(avail(cen), 'Cena', MT.cena, 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq),
   ];
-  return { day: dayNum, theme: '', meals: topUpDay(meals, T) };
+  // NO se cuadra aquí: el cuadre del día (topUpDay) corre DESPUÉS del batido, en
+  // buildWeeklyPlan, contra la meta COMPLETA menos lo que de verdad aportan los
+  // snacks (batido incluido). Cuadrar aquí, antes del batido, dejaba las comidas
+  // resueltas contra los snacks normales y luego el batido los reemplazaba y
+  // descuadraba el día (proteína de más, carbos de menos).
+  return { day: dayNum, theme: '', meals };
 }
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
@@ -838,7 +843,11 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // degradación ahora solo repite platillos DENTRO de su tiempo, y solo cuando lo
 // estricto quedó >2% (el rincón). Casos comunes: <1% con variedad completa y
 // desayunos puros. Reglas de porción de la v22 intactas.
-export const PLAN_ENGINE_VERSION = 29;
+// v30: el cuadre del día (topUpDay) corría ANTES de aplicar el batido, así que la
+// proteína del batido caía ENCIMA de un día que ya llegaba a la meta (+25 g). Se
+// movió DESPUÉS del batido, contra la meta completa menos lo que aportan los
+// snacks (batido incluido). Con 1 batido: kcal y macros a ±0.5-0.7%.
+export const PLAN_ENGINE_VERSION = 30;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 
@@ -1132,7 +1141,10 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
         ingFreq.clear(); preI.forEach((v, k) => ingFreq.set(k, v));
         cravedCount.clear(); preC.forEach((v, k) => cravedCount.set(k, v));
         const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax);
-        if (opts.shake) applyShake(day.meals, opts.shake);
+        if (opts.shake) applyShake(day.meals, opts.shake);   // batido reemplaza el snack de su slot
+        // Cuadre del día contra la meta COMPLETA (T), ya con el batido puesto: las
+        // comidas absorben lo que el batido aporta o deja faltando.
+        topUpDay(day.meals, T);
         const com = kcalDe(day, 'Comida');
         const desorden = (com < kcalDe(day, 'Desayuno') ? 1 : 0) + (com < kcalDe(day, 'Cena') ? 1 : 0);
         const score = dayErr(day) + desorden * 0.08;
