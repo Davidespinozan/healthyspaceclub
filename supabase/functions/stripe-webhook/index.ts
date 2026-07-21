@@ -134,6 +134,11 @@ Deno.serve(async (req: Request) => {
         const inv = event.data.object as any;
         const customerId: string = typeof inv.customer === 'string' ? inv.customer : inv.customer?.id;
         if (customerId) await applyToUser(admin, stripe, customerId, inv, { payment_past_due: false });
+
+        // Y registrar el COBRO. Hasta acá el monto llegaba dentro del evento y
+        // se descartaba: no había forma de saber cuánto factura el Club. Ni
+        // MRR, ni LTV, ni ingreso mensual — todo vivía solo en Stripe.
+        await registrarCobro(admin, inv, customerId);
         break;
       }
       default:
@@ -150,6 +155,65 @@ Deno.serve(async (req: Request) => {
 
   return new Response(JSON.stringify({ received: true }), { status: 200 });
 });
+
+// Asienta un cobro en el libro contable del Club.
+//
+// Idempotente por el id de la factura: Stripe reintenta la entrega, y sin esa
+// llave cada reintento sumaría el ingreso otra vez, en silencio. El error 23505
+// (llave duplicada) es el caso ESPERADO en un reintento, no una falla.
+//
+// NO revienta el webhook si algo sale mal: el cobro ya ocurrió en Stripe y lo
+// importante es no perder el resto del procesamiento (limpiar `past_due`). Se
+// loguea y sigue — un ingreso que falta se recupera después con el backfill,
+// pero un banner de impago que no se limpia lo ve el socio en pantalla.
+// deno-lint-ignore no-explicit-any
+async function registrarCobro(admin: any, inv: any, customerId: string | null) {
+  try {
+    const centavos = typeof inv?.amount_paid === 'number' ? inv.amount_paid : 0;
+    if (centavos <= 0 || !inv?.id) return;
+
+    let userId: string | null = null;
+    if (customerId) {
+      const { data } = await admin
+        .from('user_profiles')
+        .select('user_id')
+        .eq('stripe_customer_id', customerId)
+        .maybeSingle();
+      userId = data?.user_id ?? null;
+    }
+
+    // La fecha del PAGO, no la del webhook: si Stripe reintenta la entrega dos
+    // días después, el ingreso sigue perteneciendo al mes en que se cobró.
+    const pagadoEn = typeof inv?.status_transitions?.paid_at === 'number'
+      ? new Date(inv.status_transitions.paid_at * 1000).toISOString()
+      : new Date().toISOString();
+
+    const { error } = await admin.from('movimientos_dinero').insert({
+      negocio: 'hsc',
+      ocurrido_en: pagadoEn,
+      monto_centavos: centavos,
+      // Lo que diga Stripe. No se asume la moneda: si el Club cobra en más de
+      // una, cada factura queda con la suya y el libro nace derecho.
+      moneda: (inv.currency || 'mxn').toUpperCase(),
+      concepto: 'suscripcion',
+      metodo: 'stripe',
+      referencia_externa: inv.id,
+      cliente_id: userId,
+      metadata: {
+        stripe_customer: customerId,
+        numero_factura: inv.number ?? null,
+        periodo_inicio: inv.period_start ? new Date(inv.period_start * 1000).toISOString() : null,
+        periodo_fin: inv.period_end ? new Date(inv.period_end * 1000).toISOString() : null,
+      },
+    });
+
+    if (error && error.code !== '23505') {
+      console.error('[stripe-webhook] no se pudo asentar el cobro', inv.id, ':', error.message);
+    }
+  } catch (e) {
+    console.error('[stripe-webhook] registrarCobro:', e instanceof Error ? e.message : e);
+  }
+}
 
 // Busca el user por stripe_customer_id; si no hay match, cae al metadata del customer.
 // deno-lint-ignore no-explicit-any
