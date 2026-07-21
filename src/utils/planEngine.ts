@@ -722,6 +722,21 @@ function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
   }
   solve(fixed, vars, target, 400);
 
+  // El huevo se sirve en piezas ENTERAS, pero el solve lo movió continuo. Al
+  // redondearlo después queda un residual que descuadra el día. Se fija el huevo
+  // a su pieza entera y se REABSORBE ese residual con los ingredientes continuos
+  // (arroz, pollo…), que sí se mueven fino. Así lo mostrado = lo contado y el día
+  // cierra exacto.
+  let fijado = false;
+  for (const v of vars) {
+    if (v.ing.pu && v.ing.un && WHOLE_ONLY.has(v.ing.un)) {
+      v.g = Math.max(v.ing.pu, Math.round(v.g / v.ing.pu) * v.ing.pu);
+      v.lo = v.g; v.hi = v.g;   // congelado: ya no lo mueve el re-solve
+      fijado = true;
+    }
+  }
+  if (fijado) solve(fixed, vars, target, 300);   // lo continuo absorbe el redondeo
+
   const gPorPlato = mains.map(() => new Map<BancoIng, number>());
   for (const v of vars) {
     const di = mains.findIndex((x) => x.dish.ings.includes(v.ing));
