@@ -9,8 +9,40 @@ def num(s):
     try: return float((s or "").strip())
     except: return 0.0
 
+# ── Sinónimos: nombre del banco → nombre exacto en SMAE ────────────────────
+# El banco de Magaly usa nombres genéricos ("Fresa", "Avena") que no existen
+# literales en el catálogo, que los tiene desagregados ("Fresa entera", "Avena
+# en hojuelas"). Sin esto el cruce falla en silencio: el ingrediente se marca
+# `pend`, sus macros NO se suman y el platillo entero queda mal calculado sin
+# que nada lo advierta.
+#
+# Va aquí y no editando el CSV, porque el CSV se reemplaza cada vez que Magaly
+# manda una versión nueva y la corrección se perdería.
+#
+# ⚠️ AVENA: 'Avena cocida' son 40 kcal/100g y 'Avena en hojuelas' 365 — nueve
+# veces. Con las porciones del banco (30-50 g) solo tiene sentido la CRUDA:
+# 50 g secos = 183 kcal, un desayuno normal; cocidos serían 20 kcal, tres
+# cucharadas. Se mapea a hojuelas. CONFIRMAR CON MAGALY.
+ALIAS = {
+    "Fresa":            "Fresa entera",
+    "Fresas":           "Fresa entera",
+    "Piña":             "Piña picada",
+    "Piña en cubos":    "Piña picada",
+    "Avena":            "Avena en hojuelas",
+    "Avena cocida":     "Avena en hojuelas",
+    "Granola":          "Granola estándar",
+    "Granola de avena": "Granola con avena y miel",
+}
+
 CAT = {}
 IDOF = {}  # alimento -> id (para cruzar con medidas caseras)
+def cat(nombre):
+    """Macros por 100g de un alimento, resolviendo sinónimos."""
+    n = (nombre or "").strip()
+    return CAT.get(n) if n in CAT else CAT.get(ALIAS.get(n, ""))
+def idof(nombre):
+    n = (nombre or "").strip()
+    return IDOF.get(n) or IDOF.get(ALIAS.get(n, ""), "")
 for r in csv.DictReader(open(os.path.join(BASE, "foods.csv"), encoding="utf-8-sig")):
     a = (r.get("alimento") or "").strip()
     if not a or a in CAT: continue
@@ -52,7 +84,7 @@ for r in csv.DictReader(open(os.path.join(BASE, "SUBRECETAS-HSC.csv"), encoding=
     # El nombre SMAE va en 'alimento'; en v2 las 13 sub-recetas viejas lo dejaron en
     # 'nombre_visible' con 'alimento' vacío (solo "Salsa de naranja" lo trae bien) → fallback.
     al_sub = (r.get("alimento") or "").strip() or (r.get("nombre_visible") or "").strip()
-    m = CAT.get(al_sub)
+    m = cat(al_sub)
     if m:
         g = num(r["gramos"]) / 100
         for i in range(5): SUB[s][i] += m[i] * g
@@ -65,7 +97,7 @@ for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), enco
     rol = (r.get("rol") or "").strip(); al = (r.get("alimento") or "").strip(); g = num(r["gramos"])
     ing = {"nv": r["nombre_visible"].strip(), "rol": rol, "g0": g}
     # Medida casera contable (pieza/rebanada) para mostrar "2 huevos", no "88 g".
-    meas = MEAS.get(IDOF.get(al, "")) if rol != "condimento" else None
+    meas = MEAS.get(idof(al)) if rol != "condimento" else None
     if meas:
         un = _noun(meas[1], al)
         # "rebanada" solo aplica a pan (tocino/jamón también traen rebanada en el catálogo,
@@ -73,7 +105,7 @@ for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), enco
         ok = un not in NO_PIEZA and not (meas[1] == "rebanada" and not al.strip().lower().startswith("pan"))
         if ok: ing["pu"] = meas[0]; ing["un"] = un
     if rol == "principal":
-        m = CAT.get(al)
+        m = cat(al)
         if m:
             ing["max"] = num(r["max_g"]) if num(r["max_g"]) > 0 else round(g * 2.5)
             ing["a"] = [round(m[i] / 100, 5) for i in range(5)]  # por gramo: [kcal,P,F,C,fibra]
@@ -87,7 +119,7 @@ for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), enco
             factor = g / y
             for i in range(5): d["fixed"][i] += t[i] * factor
     elif rol in ("guarnicion", "fijo"):
-        m = CAT.get(al)
+        m = cat(al)
         if m:
             for i in range(5): d["fixed"][i] += m[i] * g / 100
     d["ings"].append(ing)
