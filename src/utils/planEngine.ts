@@ -693,50 +693,41 @@ function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena:
  * no con más fruta en el snack.
  */
 function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
-  const dayKcal = () => meals.reduce((s, m) => s + (m.macros?.kcal ?? 0), 0);
-  const gap = T[0] - dayKcal();
-  if (gap <= 20) return meals;            // ya está en la meta (o encima)
-
-  // Las 3 comidas fuertes son de un solo platillo (los snacks se fusionan).
-  const fuertes = meals.map((m, i) => ({ m, i })).filter(({ m }) => !m.time.startsWith('Snack'));
-  const porComida = new Map<number, { dish: BancoDish; gOf: Map<BancoIng, number> }>();
-  const palancas: { idx: number; ing: BancoIng; hi: number }[] = [];
-
-  for (const { m, i } of fuertes) {
+  // Cierre del día a nivel DÍA (no comida por comida). Junta los ingredientes de
+  // las 3 comidas fuertes y los resuelve JUNTOS contra la meta del día menos lo
+  // que aportan los snacks. Bidireccional: si el día se pasó, baja; si se quedó
+  // corto, sube — moviendo los ingredientes que YA están en el plato, dentro de
+  // sus límites (ingBounds). El orden de Magaly lo cuida el reintento de
+  // buildWeeklyPlan, que prefiere las composiciones que lo respetan.
+  const mains: { dish: BancoDish; idx: number }[] = [];
+  const snack = [0, 0, 0, 0];
+  meals.forEach((m, i) => {
+    if (m.time.startsWith('Snack')) {
+      snack[1] += m.macros?.prot ?? 0; snack[2] += m.macros?.fat ?? 0; snack[3] += m.macros?.carb ?? 0;
+      return;
+    }
     const dish = BANCO.find((d) => d.nombre === m.name);
-    if (!dish) continue;
-    const gOf = new Map<BancoIng, number>();
-    for (const ing of dish.ings) {
-      if (ing.rol === 'principal' && ing.a) {
-        const cur = m.ings?.find((x) => x.nv === ing.nv)?.g;
-        if (typeof cur === 'number') gOf.set(ing, cur);
-      }
-    }
-    porComida.set(i, { dish, gOf });
-    for (const ing of dish.ings) {
-      if (ing.rol !== 'principal' || !ing.a) continue;
-      if (!ALMIDON_RE.test(ing.nv) || CRUJIENTE_RE.test(ing.nv)) continue;   // solo almidón, no crujiente
-      const { hi } = ingBounds(ing);
-      const cur = gOf.get(ing) ?? 0;
-      if (hi > cur + 1) palancas.push({ idx: i, ing, hi });
-    }
-  }
-  if (!palancas.length) return meals;
+    if (dish) mains.push({ dish, idx: i });
+  });
+  if (!mains.length) return meals;
 
-  // Capacidad en KCAL de cada palanca = kcal/g × gramos que aún puede subir.
-  const capKcal = (l: typeof palancas[number]) =>
-    l.ing.a![0] * (l.hi - (porComida.get(l.idx)!.gOf.get(l.ing) ?? 0));
-  const capTotal = palancas.reduce((s, l) => s + capKcal(l), 0);
-  if (capTotal <= 0) return meals;
-
-  // Reparte el hueco a prorrata de la capacidad; si no alcanza, sube todo al tope.
-  const factor = Math.min(1, gap / capTotal);
-  for (const l of palancas) {
-    const g = porComida.get(l.idx)!.gOf;
-    const cur = g.get(l.ing) ?? 0;
-    g.set(l.ing, cur + (l.hi - cur) * factor);
+  const target = [T[0], T[1] - snack[1], T[2] - snack[2], T[3] - snack[3]];
+  const { fixed, vars } = prep(mains.map((x) => x.dish));
+  // Sembrar con lo ya resuelto en la selección (arranca cerca, no de g0).
+  for (const v of vars) {
+    const di = mains.findIndex((x) => x.dish.ings.includes(v.ing));
+    if (di < 0) continue;
+    const g = meals[mains[di].idx].ings?.find((x) => x.nv === v.ing.nv)?.g;
+    if (typeof g === 'number') v.g = Math.max(v.lo, Math.min(v.hi, g));
   }
-  for (const [i, { dish, gOf }] of porComida) meals[i] = mealItemFrom(dish, meals[i].time, gOf);
+  solve(fixed, vars, target, 400);
+
+  const gPorPlato = mains.map(() => new Map<BancoIng, number>());
+  for (const v of vars) {
+    const di = mains.findIndex((x) => x.dish.ings.includes(v.ing));
+    if (di >= 0) gPorPlato[di].set(v.ing, v.g);
+  }
+  mains.forEach((x, k) => { meals[x.idx] = mealItemFrom(x.dish, meals[x.idx].time, gPorPlato[k]); });
   return meals;
 }
 
@@ -797,7 +788,12 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // v26: paso de cierre (topUpDay) que sube los almidones con margen hasta cuadrar
 // el día, y la auto-regeneración movida a nivel de app (antes solo corría dentro
 // de Nutrición, así que la tarjeta de Inicio se quedaba con el plan viejo).
-export const PLAN_ENGINE_VERSION = 26;
+// v27: cuadre a nivel DÍA. El motor selecciona platillos por comida (variedad) y
+// luego (a) elige entre varias composiciones la que SÍ contiene la meta en su
+// rango alcanzable —reachabilidad— y (b) resuelve los ingredientes de las 3
+// comidas fuertes JUNTOS contra la meta del día. Exactitud de macros <1%: de 5%
+// de los días a 84%, medido con scorecard. Reglas de porción de la v22 intactas.
+export const PLAN_ENGINE_VERSION = 27;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 
@@ -1056,10 +1052,48 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   const ingFreq = new Map<string, number>(); // ingredientes ya usados → rota fuentes (aguacate/pollo)
   const corrUsed = new Set<string>();      // corrector no repite el mismo snack en la semana
   const days: DayPlan[] = [];
+  // Error del día = máx % en P/F/C (kcal es implícito por Atwater).
+  const dayErr = (d: DayPlan): number => {
+    const s = d.meals.reduce((a, m) => ({
+      p: a.p + (m.macros?.prot ?? 0), f: a.f + (m.macros?.fat ?? 0), c: a.c + (m.macros?.carb ?? 0),
+    }), { p: 0, f: 0, c: 0 });
+    return Math.max(Math.abs(s.p - T[1]) / Math.max(T[1], 1),
+                    Math.abs(s.f - T[2]) / Math.max(T[2], 1),
+                    Math.abs(s.c - T[3]) / Math.max(T[3], 1));
+  };
+  const kcalDe = (d: DayPlan, t: string) => d.meals.filter((m) => m.time === t).reduce((a, m) => a + (m.macros?.kcal ?? 0), 0);
+
   for (let i = 1; i <= 7; i++) {
-    const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq);
-    if (opts.shake) applyShake(day.meals, opts.shake); // batido reemplaza el snack del slot elegido
-    topUpMeals(day.meals, target, opts.avoid ?? [], corrUsed); // cierra hueco grande (1 snack, rota)
+    // REACHABILIDAD. El solver ya converge; cuando el día queda lejos de la meta es
+    // porque los 5 platillos elegidos no la CONTIENEN en su rango. Se arman varias
+    // composiciones y se ACEPTA la primera que da en la meta y respeta el orden de
+    // Magaly (comida la más grande). "Aceptar la primera buena" —no cazar la óptima—
+    // conserva la variedad: los días rotan en vez de converger al mismo platillo.
+    // Cada intento parte del estado de variedad LIMPIO del día (si no, el intento
+    // descartado deja sus platillos marcados como usados y colapsa la variedad).
+    const preU = new Set(used), preI = new Map(ingFreq), preC = new Map(cravedCount);
+    let best: DayPlan | null = null, bestErr = Infinity;
+    let bU = preU, bI = preI, bC = preC;
+    for (let a = 0; a < 16; a++) {
+      used.clear(); preU.forEach((x) => used.add(x));
+      ingFreq.clear(); preI.forEach((v, k) => ingFreq.set(k, v));
+      cravedCount.clear(); preC.forEach((v, k) => cravedCount.set(k, v));
+      const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq);
+      if (opts.shake) applyShake(day.meals, opts.shake);
+      const com = kcalDe(day, 'Comida');
+      const desorden = (com < kcalDe(day, 'Desayuno') ? 1 : 0) + (com < kcalDe(day, 'Cena') ? 1 : 0);
+      const score = dayErr(day) + desorden * 0.08;   // multa por romper el orden
+      if (score < bestErr) {
+        bestErr = score; best = day;
+        bU = new Set(used); bI = new Map(ingFreq); bC = new Map(cravedCount);
+      }
+      if (bestErr <= 0.01) break;   // exacto y ordenado: parar (conserva variedad)
+    }
+    used.clear(); bU.forEach((x) => used.add(x));
+    ingFreq.clear(); bI.forEach((v, k) => ingFreq.set(k, v));
+    cravedCount.clear(); bC.forEach((v, k) => cravedCount.set(k, v));
+    const day = best!;
+    topUpMeals(day.meals, target, opts.avoid ?? [], corrUsed);
     days.push(day);
   }
   return days;
