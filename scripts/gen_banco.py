@@ -32,6 +32,11 @@ ALIAS = {
     "Avena cocida":     "Avena en hojuelas",
     "Granola":          "Granola estándar",
     "Granola de avena": "Granola con avena y miel",
+    # Diferencia de MAYÚSCULA: el banco escribe "Queso parmesano" y SMAE "Queso
+    # Parmesano". El cruce es exacto, así que 4 platillos y los aderezos César y
+    # Parmesano estaban perdiendo 417 kcal/100 g en silencio.
+    "Queso parmesano":  "Queso Parmesano",
+    "Chocolate negro sin azúcar": "Chocolate amargo",
 }
 
 CAT = {}
