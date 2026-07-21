@@ -994,6 +994,7 @@ export const es = {
     coachOver: 'Te pasaste {kcal} kcal — mañana ajustamos, sin drama.',
     coachOverEarly: 'Vas alto en calorías — cuida las próximas {meals}.',
     coachDoneGood: 'Cerraste tu día en tu meta',
+    coachDoneShortKcal: 'Cerraste tu día {kcal} kcal por debajo de tu meta',
     coachDoneShort: 'Cerraste el día — te faltó algo de proteína ({prot}g).',
     coachMealsOne: '1 comida',
     coachMealsOther: '{n} comidas',

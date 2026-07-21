@@ -18,7 +18,7 @@ export interface CoachInput {
 export type MacroStatus = 'good' | 'watch' | 'over';
 export type CoachTone = 'good' | 'watch' | 'over';
 /** Código del titular — la UI lo mapea a una frase i18n con los números. */
-export type CoachHeadline = 'start' | 'good' | 'protein' | 'over' | 'overEarly' | 'doneGood' | 'doneShort';
+export type CoachHeadline = 'start' | 'good' | 'protein' | 'over' | 'overEarly' | 'doneGood' | 'doneShort' | 'doneShortKcal';
 
 export interface MacroRead {
   key: 'prot' | 'carbs' | 'fat';
@@ -88,8 +88,14 @@ export function computeCoach(input: CoachInput): Coach {
   let tone: CoachTone;
   let headline: CoachHeadline;
   if (dayDone) {
+    // Al cerrar se miraba si te PASASTE y si faltó proteína, pero nunca si te
+    // quedaste corto de calorías. Por eso un día de 3701 sobre una meta de 3982
+    // decía "cerraste tu día en tu meta" con 281 kcal de menos y el propio
+    // renglón de arriba diciendo "faltan 281". La tarjeta se contradecía sola.
+    const cortoKcal = target.kcal > 0 && consumed.kcal < target.kcal * 0.95;
     if (over) { tone = 'over'; headline = 'over'; }
     else if (proteinBehind) { tone = 'watch'; headline = 'doneShort'; }
+    else if (cortoKcal) { tone = 'watch'; headline = 'doneShortKcal'; }
     else { tone = 'good'; headline = 'doneGood'; }
   } else if (mealsDone === 0 && consumed.kcal < target.kcal * 0.05) {
     // "Arranca tu día" solo si de verdad no has consumido nada; si registraste

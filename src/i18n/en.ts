@@ -995,6 +995,7 @@ export const en: Translations<typeof es> = {
     coachOver: "You're {kcal} kcal over — we'll adjust tomorrow, no stress.",
     coachOverEarly: "You're running high on calories — go easy on your next {meals}.",
     coachDoneGood: 'You closed your day on target',
+    coachDoneShortKcal: 'You closed your day {kcal} kcal below target',
     coachDoneShort: 'Day closed — you came up a little short on protein ({prot}g).',
     coachMealsOne: '1 meal',
     coachMealsOther: '{n} meals',

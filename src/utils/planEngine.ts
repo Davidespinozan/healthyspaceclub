@@ -720,7 +720,14 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 22;
+// v24 = las reglas de la v22 (las que están escritas aquí abajo). El salto 23→24
+// NO es un cambio de reglas: la v23 fue un experimento mío que empeoró las macros
+// y se revirtió, pero alcanzó a desplegarse y a generar planes. Como el planner
+// solo regenera cuando la versión guardada es MENOR que ésta, un plan marcado 23
+// se habría quedado congelado con las reglas malas para siempre. Subir a 24 los
+// regenera con las reglas buenas. Regla que se deriva de esto: al revertir un
+// cambio del motor NO basta con revertir el código — hay que subir la versión.
+export const PLAN_ENGINE_VERSION = 24;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 

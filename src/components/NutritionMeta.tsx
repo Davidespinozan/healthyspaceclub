@@ -37,6 +37,7 @@ export default function NutritionMeta({ consumed, goalKcal, targets, mealsDone, 
       case 'overEarly': return t('hoy.coachOverEarly', { meals: coachMealsLabel });
       case 'doneGood':  return t('hoy.coachDoneGood');
       case 'doneShort': return t('hoy.coachDoneShort', { prot: coach.protLeft });
+      case 'doneShortKcal': return t('hoy.coachDoneShortKcal', { kcal: Math.max(0, coach.kcalLeft) });
     }
   })();
   // Sobre la card oscura: verde=bien · dorado=ojo · terracota=alerta.
