@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { buildWeeklyPlan, buildDayWithFixed, type PlanTarget, type FixedMeal } from './planEngine';
-import { BANCO } from '../data/banco';
 
 function dayTotals(meals: { macros?: { kcal: number; prot: number; fat: number; carb: number } }[]) {
   return meals.reduce(
@@ -165,80 +164,6 @@ describe('planEngine — ajuste a la meta', () => {
           expect(new Set(names).size).toBe(names.length);
         }
       });
-    }
-  });
-});
-// ── Piso de porciones (correcciones de Magaly, julio 2026) ──────────────────
-// Magaly reportó dos cosas: porciones de carne ridículas (80 g) y proteína suelta
-// de relleno en los snacks. Lo primero se había arreglado con un piso; lo que
-// seguía vivo era el huevo, porque por CALORÍAS el huevo es grasa (90 kcal de
-// grasa contra 50 de proteína por 100 g) y se llevaba el piso flojo. De ahí salía
-// un omelette de UN huevo sobre una receta de tres.
-describe('porciones mínimas realistas', () => {
-  const PROT_RE = /(?:^|[ (])(pollo|res|carne|at[uú]n|salm[oó]n|pescado|camar[oó]n|pavo|jam[oó]n|cerdo|bistec|arrachera|tilapia|lomo|milanesa)/i;
-  const metas = [1400, 1900, 2500, 3200];
-
-  it('ninguna fuente de proteína baja del piso de su receta', () => {
-    for (const kcal of metas) {
-      const t = { kcal, protG: Math.round(kcal * 0.3 / 4), fatG: Math.round(kcal * 0.28 / 9), carbG: Math.round(kcal * 0.42 / 4) };
-      for (const seed of [1, 7, 21]) {
-        for (const d of buildWeeklyPlan(t, { seed })) {
-          for (const m of d.meals) {
-            if (m.time.startsWith('Snack')) continue;
-            for (const i of (m.ings ?? [])) {
-              // El caldo de una sopa no es una porción de proteína.
-              if (i.rol !== 'principal' || i.g === null) continue;
-              if (!PROT_RE.test(i.nv) || /caldo|consom/i.test(i.nv)) continue;
-              // Relativo a la receta, no absoluto: si Magaly puso 63 g de jamón en una
-              // pizza de pan pita, exigir 100 g sería exigir más de lo que ella escribió.
-              const ing = BANCO.find((x) => x.nombre === m.name)?.ings.find((x) => x.nv === i.nv);
-              const base = ing?.g0 ?? 0, a = ing?.a ?? [0, 0, 0, 0];
-              // Magra (la proteína domina sus calorías) → piso fuerte. Grasa (salmón,
-              // queso) → 60%: es la palanca de grasa del solver y apretarla descuadra
-              // las macros. Los dos casos son porciones razonables, no de 80 g.
-              const magra = a[1] * 4 >= a[2] * 9 && a[1] * 4 >= a[3] * 4;
-              const piso = magra ? Math.max(base * 0.7, Math.min(base, 110)) : base * 0.6;
-              expect(i.g, `${kcal} kcal · ${m.name} · ${i.nv} (receta ${base} g)`).toBeGreaterThanOrEqual(Math.floor(piso));
-            }
-          }
-        }
-      }
-    }
-  });
-
-  it('el huevo nunca queda en 1 pieza cuando la receta trae más', () => {
-    // El omelette de 3 huevos (132 g) puede bajar a 2, nunca a 1.
-    for (const kcal of metas) {
-      const t = { kcal, protG: Math.round(kcal * 0.3 / 4), fatG: Math.round(kcal * 0.28 / 9), carbG: Math.round(kcal * 0.42 / 4) };
-      for (const seed of [1, 7, 21]) {
-        for (const d of buildWeeklyPlan(t, { seed })) {
-          for (const m of d.meals) {
-            const receta = BANCO.find((x) => x.nombre === m.name);
-            for (const i of (m.ings ?? [])) {
-              if (i.g === null || !/^huevo/i.test(i.nv)) continue;
-              const base = receta?.ings.find((x) => x.nv === i.nv)?.g0 ?? 0;
-              if (base >= 88) expect(i.g, `${m.name} · ${i.nv} (receta ${base} g)`).toBeGreaterThanOrEqual(88);
-            }
-          }
-        }
-      }
-    }
-  });
-
-  it('no mete proteína suelta en los snacks', () => {
-    for (const kcal of metas) {
-      const t = { kcal, protG: Math.round(kcal * 0.3 / 4), fatG: Math.round(kcal * 0.28 / 9), carbG: Math.round(kcal * 0.42 / 4) };
-      for (const seed of [1, 7, 21]) {
-        for (const d of buildWeeklyPlan(t, { seed })) {
-          for (const m of d.meals) {
-            if (!m.time.startsWith('Snack')) continue;
-            for (const i of (m.ings ?? [])) {
-              if (i.rol !== 'principal' || i.g === null) continue;
-              expect(PROT_RE.test(i.nv), `${kcal} kcal · snack ${m.name} trae ${i.nv}`).toBe(false);
-            }
-          }
-        }
-      }
     }
   });
 });

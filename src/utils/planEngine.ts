@@ -134,8 +134,6 @@ const CRUJIENTE_RE = /tostada|totopo|tostadita|galleta|crut[oó]n|chip|pan(?! in
 // Piso y techo de UN ingrediente. Vive aparte porque lo usan DOS cosas que deben
 // coincidir: el solver (prep) y el filtro de capacidad que decide qué platillos puede
 // elegir la IA. Si se desincronizan, la IA vuelve a recibir platillos imposibles.
-const WHOLE_ONLY = new Set(['huevo']);
-
 function ingBounds(ing: BancoIng): { lo: number; hi: number } {
   const a = ing.a!;
   // Techo por tipo de alimento. Regla de Magaly: cuando faltan calorías, que suba la
@@ -161,24 +159,7 @@ function ingBounds(ing: BancoIng): { lo: number; hi: number } {
   // luego meter proteína suelta en el snack. Una FUENTE DE PROTEÍNA nunca baja de ~110 g
   // ni del 70% de la receta. Los demás principales conservan holgura para cuadrar G y C.
   const protDom = a[1] * 4 >= a[2] * 9 && a[1] * 4 >= a[3] * 4;
-  const protRico = a[1] >= 0.10 && a[3] < 0.15;
-  const esProteina = protDom || protRico;
-  const porPiezas = !!(ing.pu && ing.un && WHOLE_ONLY.has(ing.un));
-  // Tres pisos, y la diferencia importa:
-  //  · Lo que se sirve POR PIEZAS no se encoge: el 70% de una receta de 2 huevos es
-  //    1.4, que redondeado a pieza entera da UNO. Medio huevo no existe, así que
-  //    "un poco menos" no es una opción real — o son 2 o es medio platillo.
-  //  · La proteína MAGRA (pollo, res, atún, pavo: la proteína domina sus calorías)
-  //    es donde Magaly vio los 80 g. Piso de 110 g o el 70% de la receta.
-  //  · La proteína GRASA (salmón, queso, huevo) se queda en el 60%. Es también la
-  //    principal palanca de grasa del solver: subirle el piso dispara el error de
-  //    grasa de 5.7% a 7.8% y rompe la prueba de topupSnack, que exige <6%. Medido
-  //    bisecando cambio por cambio, no supuesto.
-  const piso = porPiezas && esProteina ? ing.g0
-    : protDom ? Math.max(ing.g0 * 0.7, Math.min(ing.g0, 110))
-    : esProteina ? ing.g0 * 0.6
-    : ing.g0 * 0.4;
-  const lo = Math.min(piso, hi);
+  const lo = Math.min(protDom ? Math.max(ing.g0 * 0.7, Math.min(ing.g0, 110)) : ing.g0 * 0.4, hi);
   return { lo, hi };
 }
 
@@ -260,10 +241,7 @@ function solve(fixed: number[], vars: Var[], T: number[], iters = 160): void {
         nu += W[j] * bk[kk] * (base - T[kk]);
         de += W[j] * bk[kk] * bk[kk];
       }
-      let sLo = 0.5, sHi = 1.5;
-      for (const g of grp) { if (g.g0 <= 0) continue; sLo = Math.max(sLo, g.lo / g.g0); sHi = Math.min(sHi, g.hi / g.g0); }
-      if (sLo > sHi) sHi = sLo;
-      const s = Math.max(sLo, Math.min(sHi, -nu / (de || 1e-9)));
+      const s = Math.max(0.5, Math.min(1.5, -nu / (de || 1e-9)));
       for (const g of grp) g.g = g.g0 * s;
     }
   }
@@ -283,6 +261,7 @@ function pick<T>(arr: T[], rng: () => number): T { return arr[Math.floor(rng() *
 // El resto son contables (tortilla, pan, tostada) → entero o medio.
 const DIVISIBLE = new Set(['aguacate', 'plátano', 'mango', 'papaya', 'melón', 'toronja']);
 // Nunca se parten: se cuentan enteros SIEMPRE (no existe medio huevo).
+const WHOLE_ONLY = new Set(['huevo']);
 // Granos, leguminosas y pasta se miden en TAZAS (cocidos), no en gramos. gramos por
 // taza (cocido, referencia USDA). Se muestran "1½ tazas de arroz" con fracciones ¼⅓½⅔¾.
 const CUP_G: Array<[RegExp, number]> = [
@@ -741,7 +720,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
 // pools…): los planes guardados con versión menor se auto-regeneran al abrir nutrición.
-export const PLAN_ENGINE_VERSION = 23;
+export const PLAN_ENGINE_VERSION = 22;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 
