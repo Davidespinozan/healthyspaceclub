@@ -678,6 +678,68 @@ function mealTargets(T: number[]): { desayuno: number[]; comida: number[]; cena:
   return { desayuno: t['Desayuno'], comida: t['Comida'], cena: t['Cena'], snackSlot: t['Snack AM'] };
 }
 
+/**
+ * Cierre del día. El motor cuadra comida por comida, así que cuando las
+ * exclusiones (sin gluten, sin lácteos…) dejan al banco sin platillos altos en
+ * carbo, cada comida sale un poco corta y el DÍA termina corto —hasta 450 kcal—
+ * sin que nadie lo compense. Medido: en el 100% de esos días cortos hay un
+ * almidón (arroz, papa, camote, pasta) que TODAVÍA puede subir dentro de su
+ * tope. Este paso lo sube hasta cerrar el hueco. Es justo lo que pidió David:
+ * ajustar cada platillo hasta que el día quede alineado con la meta.
+ *
+ * Solo sube almidones (nunca proteína ni grasa), solo hacia la meta (nunca la
+ * pasa), y respeta el tope de cada alimento (nada de 500 g de arroz). Toca las 3
+ * comidas fuertes, no los snacks: el hueco se cierra con más arroz en la comida,
+ * no con más fruta en el snack.
+ */
+function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
+  const dayKcal = () => meals.reduce((s, m) => s + (m.macros?.kcal ?? 0), 0);
+  const gap = T[0] - dayKcal();
+  if (gap <= 20) return meals;            // ya está en la meta (o encima)
+
+  // Las 3 comidas fuertes son de un solo platillo (los snacks se fusionan).
+  const fuertes = meals.map((m, i) => ({ m, i })).filter(({ m }) => !m.time.startsWith('Snack'));
+  const porComida = new Map<number, { dish: BancoDish; gOf: Map<BancoIng, number> }>();
+  const palancas: { idx: number; ing: BancoIng; hi: number }[] = [];
+
+  for (const { m, i } of fuertes) {
+    const dish = BANCO.find((d) => d.nombre === m.name);
+    if (!dish) continue;
+    const gOf = new Map<BancoIng, number>();
+    for (const ing of dish.ings) {
+      if (ing.rol === 'principal' && ing.a) {
+        const cur = m.ings?.find((x) => x.nv === ing.nv)?.g;
+        if (typeof cur === 'number') gOf.set(ing, cur);
+      }
+    }
+    porComida.set(i, { dish, gOf });
+    for (const ing of dish.ings) {
+      if (ing.rol !== 'principal' || !ing.a) continue;
+      if (!ALMIDON_RE.test(ing.nv) || CRUJIENTE_RE.test(ing.nv)) continue;   // solo almidón, no crujiente
+      const { hi } = ingBounds(ing);
+      const cur = gOf.get(ing) ?? 0;
+      if (hi > cur + 1) palancas.push({ idx: i, ing, hi });
+    }
+  }
+  if (!palancas.length) return meals;
+
+  // Capacidad en KCAL de cada palanca = kcal/g × gramos que aún puede subir.
+  const capKcal = (l: typeof palancas[number]) =>
+    l.ing.a![0] * (l.hi - (porComida.get(l.idx)!.gOf.get(l.ing) ?? 0));
+  const capTotal = palancas.reduce((s, l) => s + capKcal(l), 0);
+  if (capTotal <= 0) return meals;
+
+  // Reparte el hueco a prorrata de la capacidad; si no alcanza, sube todo al tope.
+  const factor = Math.min(1, gap / capTotal);
+  for (const l of palancas) {
+    const g = porComida.get(l.idx)!.gOf;
+    const cur = g.get(l.ing) ?? 0;
+    g.set(l.ing, cur + (l.hi - cur) * factor);
+  }
+  for (const [i, { dish, gOf }] of porComida) meals[i] = mealItemFrom(dish, meals[i].time, gOf);
+  return meals;
+}
+
 function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>): DayPlan {
   const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
   const MT = mealTargets(T);
@@ -715,7 +777,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
     ...fitSlot(availSnack(snack), 'Snack PM', MT.snackSlot, nSnack, rng, 70, used, usedToday, usedTodayIng, craving, ingFreq, true),
     ...fitSlot(avail(cen), 'Cena', MT.cena, 1, rng, 90, used, usedToday, usedTodayIng, craving, ingFreq),
   ];
-  return { day: dayNum, theme: '', meals };
+  return { day: dayNum, theme: '', meals: topUpDay(meals, T) };
 }
 
 // Versión del motor de nutrición. Súbela al cambiar la lógica (tiempos, variedad,
@@ -732,7 +794,10 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // se hornea dentro del plan guardado, así que sin subir la versión un plan ya
 // generado seguiría pidiendo los .jpg viejos. Las REGLAS del motor no cambian:
 // siguen siendo las de la v22.
-export const PLAN_ENGINE_VERSION = 25;
+// v26: paso de cierre (topUpDay) que sube los almidones con margen hasta cuadrar
+// el día, y la auto-regeneración movida a nivel de app (antes solo corría dentro
+// de Nutrición, así que la tarjeta de Inicio se quedaba con el plan viejo).
+export const PLAN_ENGINE_VERSION = 26;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
 

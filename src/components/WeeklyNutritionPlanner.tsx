@@ -1,5 +1,5 @@
 import { dayKey } from '../utils/localDate';
-import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
@@ -165,36 +165,8 @@ export default function WeeklyNutritionPlanner() {
   const regenBlocked = !regenUnlimited && regenThisWeek >= 2;
   const regenLeft = regenUnlimited ? 99 : Math.max(0, 2 - regenThisWeek);
 
-  // Auto-regeneración: si el plan guardado se generó con una versión ANTERIOR del
-  // motor, lo regenera con los MISMOS inputs (meta + alergias) → el usuario nunca ve
-  // datos viejos tras una mejora del motor. Sin inputs guardados (planes muy viejos),
-  // no toca nada (regeneración manual).
-  useEffect(() => {
-    if (!weeklyPlan?.days) return;
-    if ((weeklyPlan.engineVersion ?? 0) >= PLAN_ENGINE_VERSION) return;
-    // Recalcula la meta desde el perfil actual (así los arreglos de macros llegan a
-    // TODOS los usuarios, incluso planes viejos). Alergias: del `gen` si existe; si el
-    // plan es viejo (sin gen), se recuperan del texto de preferencias guardado. Errar
-    // hacia MÁS restricción es seguro: jamás se sirve un alérgeno de menos.
-    const t = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
-    const target = { kcal: t.planGoal, protG: t.protG, fatG: t.fatG, carbG: t.carbG };
-    const AVOID_KEYS = ['gluten', 'lacteos', 'carne-roja', 'mariscos', 'huevo', 'frutos-secos', 'cacahuate', 'soya', 'pescado', 'ajonjoli'];
-    const avoid = weeklyPlan.gen?.avoid ?? AVOID_KEYS.filter((k) => (weeklyPlan.preferences || '').includes(k));
-    const craving = weeklyPlan.gen?.craving ?? '';
-    const shake = weeklyPlan.gen?.shake as ProteinShake | undefined; // preserva el batido al regenerar
-    let cancelled = false;
-    (async () => {
-      const { days } = await generateWeeklyPlan(target, avoid, craving, Date.now() & 0x7fffffff, shake);
-      if (cancelled || !weeklyPlan) return;
-      const shopSet = new Set<string>();
-      for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])
-        if (ing.rol !== 'condimento' && ing.rol !== 'sub-receta') shopSet.add(ing.nv);
-      saveWeeklyPlan({ ...weeklyPlan, generatedAt: new Date().toISOString(), engineVersion: PLAN_ENGINE_VERSION, shoppingList: [...shopSet], days, gen: { ...target, avoid, craving, shake } })
-        .catch((e) => console.error('[auto-regen] failed:', e));
-    })();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weeklyPlan?.engineVersion]);
+  // (La auto-regeneración se movió a useAutoRegenPlan(), montado en App, para
+  // que corra desde cualquier pantalla y no solo aquí.)
 
   const [phase, setPhase] = useState<'setup-day' | 'questions' | 'generating' | 'plan' | 'error'>(
     () => {
