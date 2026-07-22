@@ -96,6 +96,29 @@ export const YOGA_FLOWS: YogaFlow[] = [
       { label: 'Torsión supina', labelEn: 'Supine twist', atSec: 30 },
     ],
   },
+  {
+    id: 'flow-inversiones', name: 'Inversiones (vela → arado)', nameEn: 'Inversions (shoulderstand → plow)',
+    phase: 'peak', roundSec: 75, bothSides: false, video: 'flow-shoulderstand-plowpose-earpressurepose.mp4',
+    segments: [
+      { label: 'Vela (parada de hombros)', labelEn: 'Shoulderstand', atSec: 0 },
+      { label: 'Arado', labelEn: 'Plow pose', atSec: 30 },
+      { label: 'Presión de oídos', labelEn: 'Ear pressure pose', atSec: 55 },
+    ],
+  },
+  {
+    id: 'flow-langosta', name: 'Langosta (extensión)', nameEn: 'Locust (backbend)',
+    phase: 'peak', roundSec: 40, bothSides: false, video: 'locust-pose.mp4',
+    segments: [
+      { label: 'Langosta', labelEn: 'Locust pose', atSec: 0 },
+    ],
+  },
+  {
+    id: 'flow-flexion-lateral-de-pie', name: 'Flexión Lateral de Pie', nameEn: 'Standing Side Bend',
+    phase: 'standing', roundSec: 30, bothSides: true, video: 'standing-side-bend.mp4',
+    segments: [
+      { label: 'Flexión lateral de pie', labelEn: 'Standing side bend', atSec: 0 },
+    ],
+  },
 ];
 
 export const FLOW_BY_ID: Record<string, YogaFlow> = Object.fromEntries(YOGA_FLOWS.map((f) => [f.id, f]));
