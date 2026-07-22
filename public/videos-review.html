@@ -1,163 +1,643 @@
-<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Revisión de videos — HSC</title>
+<!doctype html><html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Videos de ejercicios — HSC</title>
 <style>
-  :root{ --bg:#F2F0E8; --ink:#0E2521; --ok:#2E7D57; --warn:#C77A2A; --card:#fff; --line:rgba(21,51,48,.12); }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:20px 16px 60px}
-  header{max-width:1200px;margin:0 auto 20px}
-  h1{font-size:22px;font-weight:800}
-  .sub{color:rgba(21,51,48,.6);font-size:14px;margin-top:4px}
-  .tools{max-width:1200px;margin:0 auto 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  input[type=search]{flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
-  .pill{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;cursor:pointer}
-  .pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-  h2{max-width:1200px;margin:26px auto 12px;font-size:16px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:rgba(21,51,48,.7)}
-  .grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(14,37,33,.06)}
-  .card video{width:100%;aspect-ratio:1/1;object-fit:cover;background:#000;display:block}
-  .meta{padding:12px 14px}
-  .file{font-family:ui-monospace,monospace;font-size:12px;color:rgba(21,51,48,.55);word-break:break-all}
-  .arrow{margin:6px 0 2px;font-size:12px;color:rgba(21,51,48,.4)}
-  .map{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px}
-  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;margin-top:8px}
-  .badge.ok{background:rgba(46,125,87,.14);color:var(--ok)}
-  .badge.warn{background:rgba(199,122,42,.16);color:var(--warn)}
-  .badge.flow{background:rgba(58,90,140,.14);color:#3A5A8C}
-  .hidden{display:none}
-</style>
-</head>
-<body>
-<header>
-  <h1>Revisión de videos</h1>
-  <div class="sub">Cada video con su <b>archivo</b> (como está guardado) y a qué <b>ejercicio</b> lo mapeé. Verde = conectado · Ámbar = pendiente. Toca play para verlo.</div>
-</header>
-<div class="tools">
-  <input type="search" id="q" placeholder="Buscar (archivo o ejercicio)…" />
-  <span class="pill on" data-f="all">Todos</span>
-  <span class="pill" data-f="ligas">Ligas</span>
-  <span class="pill" data-f="yoga">Yoga</span>
-  <span class="pill" data-f="warn">Pendientes</span>
+:root{--bg:#F2F0E8;--ink:#12302b;--ink2:#5f6b64;--gold:#9a7f45;--ok:#2E7D57;--warn:#C77A2A;--terra:#B4453C;--card:#fff;--line:rgba(21,51,48,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:22px 16px 70px;line-height:1.5}
+.w{max-width:1180px;margin:0 auto}
+h1{font-size:24px;font-weight:900;letter-spacing:-.02em}
+.sub{color:var(--ink2);font-size:14px;margin-top:5px}
+.stats{display:flex;gap:20px;flex-wrap:wrap;margin:18px 0 8px}
+.stat b{font-size:26px;font-weight:900} .stat span{color:var(--ink2);font-size:12.5px;display:block}
+h2{font-size:19px;font-weight:900;margin:30px 0 4px}
+h2.grab{color:var(--terra)}
+.note{color:var(--ink2);font-size:13.5px;margin:2px 0 14px;max-width:70ch}
+.card2{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:6px 16px;margin-bottom:12px}
+.card2.esencial{border-left:3px solid var(--terra)}
+.card2 h4{font-size:14px;font-weight:800;padding:11px 0 4px}
+.frow{display:flex;gap:12px;padding:7px 0;border-top:1px solid var(--line);font-size:13.5px;align-items:baseline}
+.frow:first-of-type{border-top:none}
+.fmg{min-width:98px;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--gold)}
+.fname{font-weight:600} .fname i{color:var(--ink2);font-weight:500}
+.frow.p1 .fname{font-weight:700}
+details{margin-top:10px} summary{cursor:pointer;font-weight:800;font-size:14px;color:var(--ink2);padding:6px 0}
+.tools{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:16px 0}
+input[type=search]{flex:1;min-width:220px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
+.pill{padding:7px 13px;border-radius:999px;font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;cursor:pointer;user-select:none}
+.pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mgh{font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);margin:24px 0 10px;display:flex;gap:8px;align-items:baseline}
+.mgn{font-size:11px;color:var(--gold)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card[data-warn="1"]{border:2px solid var(--warn)}
+.card video{width:100%;aspect-ratio:1/1;object-fit:cover;background:#000;display:block}
+.meta{padding:11px 13px}
+.map{font-size:14px;font-weight:800}
+.file{font-family:ui-monospace,monospace;font-size:11px;color:var(--ink2);word-break:break-all;margin-top:3px}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;margin-top:8px}
+.badge.ok{background:rgba(46,125,87,.13);color:var(--ok)}
+.badge.warn{background:rgba(199,122,42,.16);color:var(--warn)}
+.hidden{display:none}
+</style></head><body><div class="w">
+<h1>Videos de ejercicios</h1>
+<div class="sub">Cada video con su ejercicio, y la lista de lo que falta grabar. Toca ▶ para verlo. Actualizado 22 jul 2026.</div>
+<div class="stats">
+  <div class="stat"><b>184</b><span>conectados</span></div>
+  <div class="stat"><b style="color:var(--terra)">16</b><span>esenciales por grabar</span></div>
+  <div class="stat"><b>4</b><span>por identificar</span></div>
 </div>
-<div id="app"></div>
+
+<h2 class="grab">⚠️ Faltan por grabar</h2>
+<div class="card2 esencial">
+  <h4>🎯 Esenciales para LANZAR — 16</h4>
+  <div class="note">Estos ejercicios hoy salen SIN ningún video. Son la prioridad: con uno de cada uno, ningún ejercicio queda vacío.</div>
+  <div class="frow p1"><span class="fmg">Pecho</span><span class="fname">Fondos en Paralelas</span></div><div class="frow p1"><span class="fmg">Pecho</span><span class="fname">Flexiones Archer</span></div><div class="frow p1"><span class="fmg">Espalda</span><span class="fname">Tracción Vertical Supina</span></div><div class="frow p1"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Sissy</span></div><div class="frow p1"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Pliométrica</span></div><div class="frow p1"><span class="fmg">Glúteo</span><span class="fname">Peso Muerto Sumo</span></div><div class="frow p1"><span class="fmg">Glúteo</span><span class="fname">Caminata Lateral</span></div><div class="frow p1"><span class="fmg">Core</span><span class="fname">Anti-rotación</span></div><div class="frow p1"><span class="fmg">Core</span><span class="fname">Anti-flexión (Rollouts)</span></div><div class="frow p1"><span class="fmg">Cardio</span><span class="fname">Saltos Básicos</span></div><div class="frow p1"><span class="fmg">Cardio</span><span class="fname">Running Drills</span></div><div class="frow p1"><span class="fmg">Cardio</span><span class="fname">Saltos de Patinador</span></div><div class="frow p1"><span class="fmg">Cardio</span><span class="fname">Saltos al Cajón</span></div><div class="frow p1"><span class="fmg">Cardio</span><span class="fname">Escaladores</span></div><div class="frow p1"><span class="fmg">Cardio</span><span class="fname">Kettlebell Swings</span></div><div class="frow p1"><span class="fmg">Cardio</span><span class="fname">Carries (Caminatas con Peso)</span></div>
+</div>
+
+<div class="card2">
+  <h4>Todo lo demás que se puede grabar (variantes)</h4>
+  <div class="note">Son agarres o equipos alternos de patrones que ya tienen su demo — no urgen, pero mientras más, mejor.</div>
+  <details><summary>Con mancuerna / barra / máquina · 107</summary><div class="frow"><span class="fmg">Pecho</span><span class="fname">Press Horizontal — <i>Con mancuernas</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Press Horizontal — <i>En Smith</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Press Horizontal — <i>En pec deck</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Press Horizontal — <i>Press en el piso, mancuernas</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Press Inclinado — <i>En Smith</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Press Declinado — <i>Con mancuernas</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Press Declinado — <i>En máquina</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Aperturas — <i>Mancuernas plana</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Aperturas — <i>Mancuernas inclinada</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Aperturas — <i>Pec deck</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Tracción Vertical Pronada Abierta — <i>Dominada en barra</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Tracción Vertical Pronada Abierta — <i>Dominada con peso</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Tracción Vertical Pronada Abierta — <i>Dominada asistida (banda)</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Tracción Vertical Pronada Abierta — <i>Dominada asistida (máquina)</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Tracción Vertical Neutra — <i>Dominada en barra</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Remo Pronado Cerrado — <i>Con barra (Pendlay)</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Remo Unilateral — <i>Mancuerna en banco</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Remo Unilateral — <i>Mancuerna con rack</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Remo Unilateral — <i>Polea baja unilateral</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Remo Invertido — <i>Barra baja en rack</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Remo Invertido — <i>En anillas</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Pullover — <i>Polea alta de pie</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Hiperextensiones — <i>Banco romano</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Hiperextensiones — <i>Con peso adicional</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Hiperextensiones — <i>Hiperextensión inversa</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Jalón a la Cara — <i>Polea con cuerda</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Jalón a la Cara — <i>Pec deck invertido</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Encogimientos — <i>Mancuernas</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Encogimientos — <i>Máquina shrug</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Encogimientos — <i>Polea baja</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Press Vertical — <i>Press militar sentado (barra)</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Press Vertical — <i>Press con mancuernas</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Press Vertical — <i>Press Arnold</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Press Vertical — <i>Press con impulso</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Press Vertical — <i>Z-press (sentado piso)</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Elevación Lateral — <i>Polea unilateral</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Elevación Lateral — <i>Leaning (inclinada)</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Elevación Frontal — <i>Barra</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Elevación Frontal — <i>Polea baja</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Elevación Frontal — <i>Con disco</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Vuelo Posterior — <i>Mancuernas inclinado</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Vuelo Posterior — <i>Mancuernas sentado inclinado</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Vuelo Posterior — <i>Polea cruzada</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Remo al Mentón — <i>Polea baja</i></span></div><div class="frow"><span class="fmg">Bíceps</span><span class="fname">Curl de Pie — <i>Polea unilateral</i></span></div><div class="frow"><span class="fmg">Bíceps</span><span class="fname">Curl Martillo — <i>Polea con cuerda</i></span></div><div class="frow"><span class="fmg">Bíceps</span><span class="fname">Curl Martillo — <i>Cruzado al pecho</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Press Francés — <i>Barra recta</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Press Francés — <i>Mancuerna a dos manos</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Press Francés — <i>Mancuernas individuales</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Press Francés — <i>Polea con cuerda (skullcrusher)</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Extensiones Sobre Cabeza — <i>Mancuerna de pie</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Extensión de Tríceps en Polea — <i>Barra recta</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Extensión de Tríceps en Polea — <i>Barra V</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Extensión de Tríceps en Polea — <i>Unilateral (un brazo)</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Patada de Tríceps (Kickback) — <i>Polea baja</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Fondos de Tríceps — <i>Paralelas estricto</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Fondos de Tríceps — <i>Banco con peso</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Bilateral — <i>Barra alta (high-bar)</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Bilateral — <i>Barra baja (low-bar)</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Bilateral — <i>Sentadilla frontal</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Bilateral — <i>Zercher</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Bilateral — <i>Goblet con mancuerna</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Bilateral — <i>Goblet con kettlebell</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Bilateral — <i>Sentadilla hack en máquina</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Unilateral — <i>Búlgara con barra</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Unilateral — <i>Step-up alto</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Unilateral — <i>Zancada inversa</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Zancada — <i>Caminando con mancuernas</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Zancada — <i>Caminando con barra</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Zancada — <i>Reversa</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Zancada — <i>Lateral</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Prensa de Piernas — <i>Hack invertido</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Step-up — <i>Barra atrás</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Step-up — <i>Lateral</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Extensión de Cuádriceps — <i>Máquina bilateral</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Extensión de Cuádriceps — <i>Máquina unilateral</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Peso Muerto Convencional — <i>Con mancuernas</i></span></div><div class="frow"><span class="fmg">Isquios</span><span class="fname">Peso Muerto Rumano (RDL) — <i>Con barra</i></span></div><div class="frow"><span class="fmg">Isquios</span><span class="fname">Peso Muerto Rumano (RDL) — <i>Con mancuernas</i></span></div><div class="frow"><span class="fmg">Isquios</span><span class="fname">Peso Muerto Rumano (RDL) — <i>Trap bar</i></span></div><div class="frow"><span class="fmg">Isquios</span><span class="fname">Peso Muerto Unilateral — <i>Con mancuerna</i></span></div><div class="frow"><span class="fmg">Isquios</span><span class="fname">Peso Muerto Unilateral — <i>Con kettlebell</i></span></div><div class="frow"><span class="fmg">Isquios</span><span class="fname">Peso Muerto Unilateral — <i>Con apoyo</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Empuje de Cadera — <i>Con mancuerna</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Empuje de Cadera — <i>Unilateral</i></span></div><div class="frow"><span class="fmg">Isquios</span><span class="fname">Buenos Días — <i>Con barra</i></span></div><div class="frow"><span class="fmg">Isquios</span><span class="fname">Buenos Días — <i>Mancuerna al pecho</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Patada de Glúteo — <i>Polea baja</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Patada de Glúteo — <i>Máquina glute kickback</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Abducción de Cadera — <i>Polea baja unilateral</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Anti-extensión Isométrica — <i>Plancha TRX</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Anti-lateral — <i>Carga tipo maleta</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Flexión Espinal con Carga — <i>Crunch con disco</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Flexión Espinal con Carga — <i>Abdominal declinado</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Levantamiento de Piernas — <i>Colgado en barra</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Rotación con Peso — <i>Russian twist (peso)</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Rotación con Peso — <i>Russian twist (balón)</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Rotación con Peso — <i>Woodchopper polea alta</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Rotación con Peso — <i>Woodchopper polea baja</i></span></div><div class="frow"><span class="fmg">Cardio</span><span class="fname">Burpee / Sprawl — <i>Devil press</i></span></div><div class="frow"><span class="fmg">Cardio</span><span class="fname">Battle Ropes — <i>Doble onda</i></span></div><div class="frow"><span class="fmg">Cardio</span><span class="fname">Battle Ropes — <i>Onda alterna</i></span></div><div class="frow"><span class="fmg">Cardio</span><span class="fname">Battle Ropes — <i>Slams</i></span></div><div class="frow"><span class="fmg">Cardio</span><span class="fname">Cardio en Máquina — <i>Remo (ergómetro)</i></span></div><div class="frow"><span class="fmg">Cardio</span><span class="fname">Cardio en Máquina — <i>Air bike (assault)</i></span></div><div class="frow"><span class="fmg">Cardio</span><span class="fname">Cardio en Máquina — <i>Empuje de trineo</i></span></div></details>
+  <details><summary>Con ligas / banda · 8</summary><div class="frow"><span class="fmg">Espalda</span><span class="fname">Pullover — <i>Con banda</i></span></div><div class="frow"><span class="fmg">Bíceps</span><span class="fname">Curl Martillo — <i>Con banda</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Extensión de Tríceps en Polea — <i>Con banda</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Empuje de Cadera — <i>Con banda</i></span></div><div class="frow"><span class="fmg">Isquios</span><span class="fname">Curl Femoral — <i>Con banda</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Hiperextensión de Glúteo — <i>Con banda</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Abducción de Cadera — <i>Banda rodillas</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Aducción de Cadera — <i>Con banda</i></span></div></details>
+  <details><summary>En casa / peso corporal · 34</summary><div class="frow"><span class="fmg">Pecho</span><span class="fname">Press Horizontal — <i>Flexiones declinadas</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Press Inclinado — <i>Flexiones inclinadas</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Press Declinado — <i>Flexiones con pies arriba</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Flexiones Diamante — <i>Declinadas</i></span></div><div class="frow"><span class="fmg">Pecho</span><span class="fname">Flexiones Diamante — <i>En rodillas</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Remo Invertido — <i>Bajo mesa</i></span></div><div class="frow"><span class="fmg">Espalda</span><span class="fname">Hiperextensiones — <i>Superman en suelo</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Press Vertical — <i>Flexión pike</i></span></div><div class="frow"><span class="fmg">Hombros</span><span class="fname">Press Vertical — <i>Wall handstand hold</i></span></div><div class="frow"><span class="fmg">Bíceps</span><span class="fname">Curl de Pie — <i>Mochila pesada</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Fondos de Tríceps — <i>Entre sillas</i></span></div><div class="frow"><span class="fmg">Tríceps</span><span class="fname">Press Cerrado — <i>Flexiones cerradas</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Bilateral — <i>Sentadilla al aire</i></span></div><div class="frow"><span class="fmg">Cuádriceps</span><span class="fname">Sentadilla Unilateral — <i>Sentadilla pistol</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Empuje de Cadera — <i>Glute bridge en piso</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Empuje de Cadera — <i>Glute bridge unilateral</i></span></div><div class="frow"><span class="fmg">Isquios</span><span class="fname">Curl Femoral — <i>Curl nórdico</i></span></div><div class="frow"><span class="fmg">Isquios</span><span class="fname">Curl Femoral — <i>Pelota de estabilidad</i></span></div><div class="frow"><span class="fmg">Glúteo</span><span class="fname">Patada de Glúteo — <i>Cuadrupedia bodyweight</i></span></div><div class="frow"><span class="fmg">Pantorrillas</span><span class="fname">Elevación de Talones — <i>Peso corporal</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Anti-extensión Isométrica — <i>Plancha RKC (tensa)</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Anti-extensión Isométrica — <i>Elevación de brazo</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Anti-extensión Isométrica — <i>Elevación de pierna</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Anti-lateral — <i>Plancha lateral</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Anti-lateral — <i>Lateral con elevación de pierna</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Levantamiento de Piernas — <i>L-sit</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Levantamiento de Piernas — <i>Knee raises</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Core Dinámico — <i>Escaladores</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Core Dinámico — <i>Hollow rock</i></span></div><div class="frow"><span class="fmg">Core</span><span class="fname">Core Dinámico — <i>V-ups</i></span></div><div class="frow"><span class="fmg">Cardio</span><span class="fname">Burpee / Sprawl — <i>Burpee con flexión</i></span></div><div class="frow"><span class="fmg">Cardio</span><span class="fname">Burpee / Sprawl — <i>Burpee sin flexión</i></span></div><div class="frow"><span class="fmg">Cardio</span><span class="fname">Burpee / Sprawl — <i>Sprawl</i></span></div><div class="frow"><span class="fmg">Cardio</span><span class="fname">Burpee / Sprawl — <i>Burpee con salto al cajón</i></span></div></details>
+</div>
+
+<h2>❓ Videos por identificar — 4</h2><div class="note">No sé qué postura son (se llaman IMG_...). <b>Míralos y dime cuál es cada uno.</b></div><div class="grid"><div class="card" data-q="img_2711.mp4 " data-warn="1">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/IMG_2711.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map"><i>Sin identificar</i></div><div class="file">IMG_2711.mp4</div><span class="badge warn">? Dime qué es</span></div>
+  </div><div class="card" data-q="img_2723.mp4 " data-warn="1">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/IMG_2723.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map"><i>Sin identificar</i></div><div class="file">IMG_2723.mp4</div><span class="badge warn">? Dime qué es</span></div>
+  </div><div class="card" data-q="img_2725.mp4 " data-warn="1">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/IMG_2725.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map"><i>Sin identificar</i></div><div class="file">IMG_2725.mp4</div><span class="badge warn">? Dime qué es</span></div>
+  </div><div class="card" data-q="img_2734.mp4 " data-warn="1">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/IMG_2734.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map"><i>Sin identificar</i></div><div class="file">IMG_2734.mp4</div><span class="badge warn">? Dime qué es</span></div>
+  </div></div>
+
+<h2>✓ Videos conectados — 184</h2>
+<div class="tools"><input type="search" id="q" placeholder="Buscar ejercicio o archivo…"><span class="pill on" data-f="all">Todos</span></div>
+<div id="app"><h3 class="mgh">Pecho <span class="mgn">12</span></h3><div class="grid"><div class="card" data-q="cristos-pec-fly-espalda-maquina.mp4 cruces en polea" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cristos-pec-fly-espalda-maquina.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Cruces en polea</div><div class="file">cristos-pec-fly-espalda-maquina.mp4</div><span class="badge ok">✓ Pecho</span></div>
+  </div><div class="card" data-q="aperturas-pecho-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/aperturas-pecho-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">aperturas-pecho-banda.mp4</div><span class="badge ok">✓ Pecho</span></div>
+  </div><div class="card" data-q="lagartijas-diamante-pecho-tricep-abdomen.mov estándar" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-diamante-pecho-tricep-abdomen.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Estándar</div><div class="file">lagartijas-diamante-pecho-tricep-abdomen.mov</div><span class="badge ok">✓ Pecho</span></div>
+  </div><div class="card" data-q="press-declinado-barra-pecho.mp4 con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-declinado-barra-pecho.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con barra</div><div class="file">press-declinado-barra-pecho.mp4</div><span class="badge ok">✓ Pecho</span></div>
+  </div><div class="card" data-q="flexiones-lagartijas-modificada-con-rodillas-abdomen.mp4 flexiones" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/flexiones-lagartijas-modificada-con-rodillas-abdomen.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Flexiones</div><div class="file">flexiones-lagartijas-modificada-con-rodillas-abdomen.mp4</div><span class="badge ok">✓ Pecho</span></div>
+  </div><div class="card" data-q="lagartija-estricta-o-flexion-clasica-completa-core-hombros.mov flexiones" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartija-estricta-o-flexion-clasica-completa-core-hombros.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Flexiones</div><div class="file">lagartija-estricta-o-flexion-clasica-completa-core-hombros.mov</div><span class="badge ok">✓ Pecho</span></div>
+  </div><div class="card" data-q="press-horizontal-barra-pecho.mp4 con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-horizontal-barra-pecho.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con barra</div><div class="file">press-horizontal-barra-pecho.mp4</div><span class="badge ok">✓ Pecho</span></div>
+  </div><div class="card" data-q="press-horizontal-maquina-pecho.mp4 en máquina" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-horizontal-maquina-pecho.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En máquina</div><div class="file">press-horizontal-maquina-pecho.mp4</div><span class="badge ok">✓ Pecho</span></div>
+  </div><div class="card" data-q="press-pecho-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/press-pecho-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">press-pecho-banda.mp4</div><span class="badge ok">✓ Pecho</span></div>
+  </div><div class="card" data-q="press-inclinado-barra-pecho.mp4 con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-inclinado-barra-pecho.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con barra</div><div class="file">press-inclinado-barra-pecho.mp4</div><span class="badge ok">✓ Pecho</span></div>
+  </div><div class="card" data-q="press-inclinado-maquina-pecho.mp4 en máquina" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-inclinado-maquina-pecho.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En máquina</div><div class="file">press-inclinado-maquina-pecho.mp4</div><span class="badge ok">✓ Pecho</span></div>
+  </div><div class="card" data-q="press-pecho-mancuerna-inclinado.mp4 con mancuernas" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-pecho-mancuerna-inclinado.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con mancuernas</div><div class="file">press-pecho-mancuerna-inclinado.mp4</div><span class="badge ok">✓ Pecho</span></div>
+  </div></div><h3 class="mgh">Espalda <span class="mgn">23</span></h3><div class="grid"><div class="card" data-q="encojimientos-trapecio-barra.mp4 barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/encojimientos-trapecio-barra.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Barra</div><div class="file">encojimientos-trapecio-barra.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="shrugs-encojimientos-trap-bar.mp4 trap bar" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/shrugs-encojimientos-trap-bar.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Trap bar</div><div class="file">shrugs-encojimientos-trap-bar.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="elevacion-diagonal-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/elevacion-diagonal-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">elevacion-diagonal-banda.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="extension-espalda-baja-maquina-core.mp4 en máquina" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/extension-espalda-baja-maquina-core.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En máquina</div><div class="file">extension-espalda-baja-maquina-core.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="hiperextensiones-maquina-espalda-baja.mp4 en máquina" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/hiperextensiones-maquina-espalda-baja.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En máquina</div><div class="file">hiperextensiones-maquina-espalda-baja.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="face-pull-en-trx-agarre-prono-hombro-posterior-espalda-alta.mov jalón a la cara" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/face-pull-en-trx-agarre-prono-hombro-posterior-espalda-alta.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Jalón a la Cara</div><div class="file">face-pull-en-trx-agarre-prono-hombro-posterior-espalda-alta.mov</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="face-pull-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/face-pull-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">face-pull-banda.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="pullover-con-mancuerna-en-banco-pecho-dorsal-ancho.mp4 mancuerna en banco" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pullover-con-mancuerna-en-banco-pecho-dorsal-ancho.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuerna en banco</div><div class="file">pullover-con-mancuerna-en-banco-pecho-dorsal-ancho.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-banda.mp4 inclinado" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/remo-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Inclinado</div><div class="file">remo-banda.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-inclinado-banda.mp4 de pie" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/remo-inclinado-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">De pie</div><div class="file">remo-inclinado-banda.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-maquina-espalda-sentado.mp4 en máquina" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-maquina-espalda-sentado.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En máquina</div><div class="file">remo-maquina-espalda-sentado.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-invertido-en-trx-agarre-neutro-espalda-alta-biceps.mov en trx" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-invertido-en-trx-agarre-neutro-espalda-alta-biceps.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En TRX</div><div class="file">remo-invertido-en-trx-agarre-neutro-espalda-alta-biceps.mov</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-bajo-polea-espalda.mp4 polea baja (barra v)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-bajo-polea-espalda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Polea baja (barra V)</div><div class="file">remo-bajo-polea-espalda.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-en-punta-con-agarre-estrecho-espalda.mp4 t-bar (maneral neutro)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-en-punta-con-agarre-estrecho-espalda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">T-bar (maneral neutro)</div><div class="file">remo-en-punta-con-agarre-estrecho-espalda.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-sentado-agarre-neutro-maquina-espalda.mp4 en máquina" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-sentado-agarre-neutro-maquina-espalda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En máquina</div><div class="file">remo-sentado-agarre-neutro-maquina-espalda.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-codoshaciaafuera-agarreabierto-espalda-trapecio.mp4 con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-codoshaciaafuera-agarreabierto-espalda-trapecio.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con barra</div><div class="file">remo-codoshaciaafuera-agarreabierto-espalda-trapecio.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-sentado-agarre-prono.mp4 en máquina" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-sentado-agarre-prono.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En máquina</div><div class="file">remo-sentado-agarre-prono.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-enpronacion-barra-espalda-agarrecerrado-espaldamediabaja.mp4 con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-enpronacion-barra-espalda-agarrecerrado-espaldamediabaja.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con barra</div><div class="file">remo-enpronacion-barra-espalda-agarrecerrado-espaldamediabaja.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-barra-agarre-supino-palmashaciaarriba-espalda.mp4 con barra (yates)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-barra-agarre-supino-palmashaciaarriba-espalda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con barra (Yates)</div><div class="file">remo-barra-agarre-supino-palmashaciaarriba-espalda.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="remo-con-mancuerna-una-mano-bicep-espalda.mp4 remo unilateral" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-con-mancuerna-una-mano-bicep-espalda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Remo Unilateral</div><div class="file">remo-con-mancuerna-una-mano-bicep-espalda.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="jalon-neutro-amplio-espalda-maquina.mp4 en polea" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/jalon-neutro-amplio-espalda-maquina.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En polea</div><div class="file">jalon-neutro-amplio-espalda-maquina.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="jalon-frontal-maquina-espalda-abierto.mp4 en polea" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/jalon-frontal-maquina-espalda-abierto.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En polea</div><div class="file">jalon-frontal-maquina-espalda-abierto.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div><div class="card" data-q="jalon-frontal-triangulo-maquina-espalda.mp4 en polea" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/jalon-frontal-triangulo-maquina-espalda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En polea</div><div class="file">jalon-frontal-triangulo-maquina-espalda.mp4</div><span class="badge ok">✓ Espalda</span></div>
+  </div></div><h3 class="mgh">Hombros <span class="mgn">19</span></h3><div class="grid"><div class="card" data-q="elevaciones-frontales-mancuernas.mp4 mancuernas alternadas" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-frontales-mancuernas.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuernas alternadas</div><div class="file">elevaciones-frontales-mancuernas.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="elevaciones-frontales-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/elevaciones-frontales-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">elevaciones-frontales-banda.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="elevaciones-laterales-mancuernas.mp4 con mancuernas" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-laterales-mancuernas.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con mancuernas</div><div class="file">elevaciones-laterales-mancuernas.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="elevaciones-laterales-polea-trapecio-hombro-lateral.mp4 polea baja" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-laterales-polea-trapecio-hombro-lateral.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Polea baja</div><div class="file">elevaciones-laterales-polea-trapecio-hombro-lateral.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="laterales-hombro-maquina.mp4 máquina lateral" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/laterales-hombro-maquina.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Máquina lateral</div><div class="file">laterales-hombro-maquina.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="elevaciones-laterales-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/elevaciones-laterales-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">elevaciones-laterales-banda.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="ladminepress-conunamano-hombro.mp4 landmine a una mano" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/ladminepress-conunamano-hombro.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Landmine a una mano</div><div class="file">ladminepress-conunamano-hombro.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="press-militar-barra.mp4 press militar de pie (barra)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-barra.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Press militar de pie (barra)</div><div class="file">press-militar-barra.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="press-militar-hombro-smith.mp4 en smith" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-hombro-smith.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En Smith</div><div class="file">press-militar-hombro-smith.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="press-militar-hombros-maquina.mp4 máquina de hombros" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-hombros-maquina.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Máquina de hombros</div><div class="file">press-militar-hombros-maquina.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="press-militar-unilateral-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/press-militar-unilateral-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">press-militar-unilateral-banda.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="press-militar-barra-agarresupino-hombro.mp4 barra, agarre supino" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-barra-agarresupino-hombro.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Barra, agarre supino</div><div class="file">press-militar-barra-agarresupino-hombro.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="remo-al-cuello-barra-hombro-trapecio.mp4 con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-al-cuello-barra-hombro-trapecio.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con barra</div><div class="file">remo-al-cuello-barra-hombro-trapecio.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="remo-al-menton-con-mancuernas.mp4 mancuernas" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-al-menton-con-mancuernas.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuernas</div><div class="file">remo-al-menton-con-mancuernas.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="upright-row-barra-al-pecho.mp4 con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/upright-row-barra-al-pecho.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con barra</div><div class="file">upright-row-barra-al-pecho.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="remo-vertical-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/remo-vertical-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">remo-vertical-banda.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="elevaciones-posteriores-laterales-con-mancuerna-hombro-trapecio.mp4 vuelo posterior" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-posteriores-laterales-con-mancuerna-hombro-trapecio.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Vuelo Posterior</div><div class="file">elevaciones-posteriores-laterales-con-mancuerna-hombro-trapecio.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="pajaros-en-maquina-trapecio-espalda-alta.mp4 pec deck invertido" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pajaros-en-maquina-trapecio-espalda-alta.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Pec deck invertido</div><div class="file">pajaros-en-maquina-trapecio-espalda-alta.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div><div class="card" data-q="pull-apart-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/pull-apart-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">pull-apart-banda.mp4</div><span class="badge ok">✓ Hombros</span></div>
+  </div></div><h3 class="mgh">Bíceps <span class="mgn">23</span></h3><div class="grid"><div class="card" data-q="curl-barraz-agarrecerrado-bicep.mp4 agarre cerrado" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-barraz-agarrecerrado-bicep.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Agarre cerrado</div><div class="file">curl-barraz-agarrecerrado-bicep.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-bicep-barraz.mp4 agarre normal" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-bicep-barraz.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Agarre normal</div><div class="file">curl-bicep-barraz.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="concentrado-mancuerna-bicep.mp4 mancuerna" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/concentrado-mancuerna-bicep.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuerna</div><div class="file">concentrado-mancuerna-bicep.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-biceps-concentrado-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/curl-biceps-concentrado-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">curl-biceps-concentrado-banda.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="bicep-barra-curl-completo.mp4 barra recta" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/bicep-barra-curl-completo.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Barra recta</div><div class="file">bicep-barra-curl-completo.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="bicep-barra-superior-curl.mp4 barra recta" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/bicep-barra-superior-curl.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Barra recta</div><div class="file">bicep-barra-superior-curl.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-de-bicep-con-isometrico.mp4 mancuernas con isométrico" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/Curl-de-bicep-con-isometrico.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuernas con isométrico</div><div class="file">Curl-de-bicep-con-isometrico.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-de-bicep-parado-con-mancuernas-al-ismo-tiempo.mp4 mancuernas simultáneo" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/Curl-de-bicep-parado-con-mancuernas-al-ismo-tiempo.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuernas simultáneo</div><div class="file">Curl-de-bicep-parado-con-mancuernas-al-ismo-tiempo.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-de-bicep-parado-con-mancurna-uno-por-uno.mp4 mancuernas alternado" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/Curl-de-bicep-parado-con-mancurna-uno-por-uno.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuernas alternado</div><div class="file">Curl-de-bicep-parado-con-mancurna-uno-por-uno.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-de-biceps-con-mancuernas.mp4 curl de pie" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-biceps-con-mancuernas.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Curl de Pie</div><div class="file">curl-de-biceps-con-mancuernas.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-polea-maquina-bicep.mp4 polea baja con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-polea-maquina-bicep.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Polea baja con barra</div><div class="file">curl-polea-maquina-bicep.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-biceps-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/curl-biceps-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">curl-biceps-banda.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-biceps-unilateral-banda.mp4 unilateral con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/curl-biceps-unilateral-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Unilateral con banda</div><div class="file">curl-biceps-unilateral-banda.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-doblepolea-estilodoble-bicep.mp4 doble polea alta" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-doblepolea-estilodoble-bicep.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Doble polea alta</div><div class="file">curl-doblepolea-estilodoble-bicep.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-de-bicep-en-banco-inclinado.mp4 mancuernas (supino)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-bicep-en-banco-inclinado.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuernas (supino)</div><div class="file">curl-de-bicep-en-banco-inclinado.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-martillo-biceps-con-apoyo-en-banco-inclinado.mp4 martillo (agarre neutro)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-biceps-con-apoyo-en-banco-inclinado.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Martillo (agarre neutro)</div><div class="file">curl-martillo-biceps-con-apoyo-en-banco-inclinado.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-martillo-alterno-conisometrico-a90grados-pausaisometrica-bicep.mp4 mancuernas" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-alterno-conisometrico-a90grados-pausaisometrica-bicep.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuernas</div><div class="file">curl-martillo-alterno-conisometrico-a90grados-pausaisometrica-bicep.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="martillo-bicep-parado-uno-por-uno.mp4 mancuernas" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/martillo-bicep-parado-uno-por-uno.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuernas</div><div class="file">martillo-bicep-parado-uno-por-uno.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-banco-curlscott-neutro-mancuerna-curlmartilloenscott.mp4 mancuerna" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-banco-curlscott-neutro-mancuerna-curlmartilloenscott.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuerna</div><div class="file">curl-banco-curlscott-neutro-mancuerna-curlmartilloenscott.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-bicep-mancuerna-curlscott-banco-unamano.mp4 banca scott con mancuerna" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-bicep-mancuerna-curlscott-banco-unamano.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Banca Scott con mancuerna</div><div class="file">curl-bicep-mancuerna-curlscott-banco-unamano.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-de-biceps-con-apoyo-en-banco-inclinado.mp4 curl araña (banco inclinado)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-biceps-con-apoyo-en-banco-inclinado.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Curl araña (banco inclinado)</div><div class="file">curl-de-biceps-con-apoyo-en-banco-inclinado.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-predicador-barraz-bicep-curlscott.mp4 banca scott con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-predicador-barraz-bicep-curlscott.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Banca Scott con barra</div><div class="file">curl-predicador-barraz-bicep-curlscott.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div><div class="card" data-q="curl-predicador-maquina-bicep.mp4 máquina predicador" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-predicador-maquina-bicep.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Máquina predicador</div><div class="file">curl-predicador-maquina-bicep.mp4</div><span class="badge ok">✓ Bíceps</span></div>
+  </div></div><h3 class="mgh">Tríceps <span class="mgn">13</span></h3><div class="grid"><div class="card" data-q="extension-tricep-polea-alta.mp4 extensión de tríceps en polea" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/extension-tricep-polea-alta.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Extensión de Tríceps en Polea</div><div class="file">extension-tricep-polea-alta.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="triceps-push-down-cuerda.mp4 con cuerda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/triceps-push-down-cuerda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con cuerda</div><div class="file">triceps-push-down-cuerda.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="copa-dosmanos-tricep-mancuerna.mp4 mancuerna sentado" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/copa-dosmanos-tricep-mancuerna.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuerna sentado</div><div class="file">copa-dosmanos-tricep-mancuerna.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="copa-una-mano-triceps.mp4 mancuerna a una mano (copa)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/copa-una-mano-triceps.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuerna a una mano (copa)</div><div class="file">copa-una-mano-triceps.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="extension-tricep-trasnuca-barra-.mp4 barra tras nuca" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/extension-tricep-trasnuca-barra-.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Barra tras nuca</div><div class="file">extension-tricep-trasnuca-barra-.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="extension-tricep-trasnuca-polea-alta.mp4 polea con cuerda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/extension-tricep-trasnuca-polea-alta.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Polea con cuerda</div><div class="file">extension-tricep-trasnuca-polea-alta.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="extension-triceps-unilateral-banda.mp4 banda anclada" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/extension-triceps-unilateral-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Banda anclada</div><div class="file">extension-triceps-unilateral-banda.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="fondos-libres-en-banco-tricep.mp4 fondos de tríceps" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/fondos-libres-en-banco-tricep.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Fondos de Tríceps</div><div class="file">fondos-libres-en-banco-tricep.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="fondos-triceps-maquina.mp4 en máquina (asistida)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/fondos-triceps-maquina.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En máquina (asistida)</div><div class="file">fondos-triceps-maquina.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="patada-mancuerna-tricep.mp4 mancuerna con banco" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patada-mancuerna-tricep.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuerna con banco</div><div class="file">patada-mancuerna-tricep.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="patada-triceps-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/patada-triceps-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">patada-triceps-banda.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="press-horizontal-maquina-agarre-neutral-pecho-tricep.mp4 barra en banca (agarre cerrado)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-horizontal-maquina-agarre-neutral-pecho-tricep.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Barra en banca (agarre cerrado)</div><div class="file">press-horizontal-maquina-agarre-neutral-pecho-tricep.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div><div class="card" data-q="press-frances-tricep-barraz.mp4 barra z (ez)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-frances-tricep-barraz.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Barra Z (EZ)</div><div class="file">press-frances-tricep-barraz.mp4</div><span class="badge ok">✓ Tríceps</span></div>
+  </div></div><h3 class="mgh">Antebrazo <span class="mgn">5</span></h3><div class="grid"><div class="card" data-q="curl-de-muneca-sentado-pronacion.mp4 extensión con barra (prono)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-muneca-sentado-pronacion.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Extensión con barra (prono)</div><div class="file">curl-de-muneca-sentado-pronacion.mp4</div><span class="badge ok">✓ Antebrazo</span></div>
+  </div><div class="card" data-q="curl-de-muneca-sentado-supinacion.mp4 flexión con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-muneca-sentado-supinacion.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Flexión con barra</div><div class="file">curl-de-muneca-sentado-supinacion.mp4</div><span class="badge ok">✓ Antebrazo</span></div>
+  </div><div class="card" data-q="curl-muneca-barra-atrasdeespalda.mp4 flexión con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-muneca-barra-atrasdeespalda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Flexión con barra</div><div class="file">curl-muneca-barra-atrasdeespalda.mp4</div><span class="badge ok">✓ Antebrazo</span></div>
+  </div><div class="card" data-q="curl-muneca-enpronacion-barra-parado.mp4 extensión con barra (prono)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-muneca-enpronacion-barra-parado.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Extensión con barra (prono)</div><div class="file">curl-muneca-enpronacion-barra-parado.mp4</div><span class="badge ok">✓ Antebrazo</span></div>
+  </div><div class="card" data-q="curl-bicep-barra-agarreinvertido-curlprono.mp4 barra, agarre prono" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-bicep-barra-agarreinvertido-curlprono.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Barra, agarre prono</div><div class="file">curl-bicep-barra-agarreinvertido-curlprono.mp4</div><span class="badge ok">✓ Antebrazo</span></div>
+  </div></div><h3 class="mgh">Cuádriceps <span class="mgn">14</span></h3><div class="grid"><div class="card" data-q="aduccion-interna-pierna-maquina.mp4 en máquina" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/aduccion-interna-pierna-maquina.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En máquina</div><div class="file">aduccion-interna-pierna-maquina.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="extension-pierna-sentado-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/extension-pierna-sentado-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">extension-pierna-sentado-banda.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="prensa-horizontal-pierna-maquina.mp4 prensa horizontal" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/prensa-horizontal-pierna-maquina.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Prensa horizontal</div><div class="file">prensa-horizontal-pierna-maquina.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="prensa-maquina-pierna.mp4 prensa 45°" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/prensa-maquina-pierna.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Prensa 45°</div><div class="file">prensa-maquina-pierna.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="revolved-chair.mp4 revolved chair (parivrtta utkatasana)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/revolved-chair.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Revolved Chair (Parivrtta Utkatasana)</div><div class="file">revolved-chair.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="sentadilla-en-sumo-con-mina.terrestre.mp4 sumo con landmine" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla-en-sumo-con-mina.terrestre.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Sumo con landmine</div><div class="file">sentadilla-en-sumo-con-mina.terrestre.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="sentadilla-isometrica.mp4 isométrica (hold)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla-isometrica.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Isométrica (hold)</div><div class="file">sentadilla-isometrica.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="sentadilla-smith-barra-pierna.mp4 en smith" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla-smith-barra-pierna.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En Smith</div><div class="file">sentadilla-smith-barra-pierna.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="sentadilla-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/sentadilla-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">sentadilla-banda.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="sentadilla.bulgara.mp4 búlgara con mancuernas" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla.bulgara.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Búlgara con mancuernas</div><div class="file">sentadilla.bulgara.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="setup-consalto-o-subida-a-banco-con-salto.mp4 explosivo" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/setup-consalto-o-subida-a-banco-con-salto.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Explosivo</div><div class="file">setup-consalto-o-subida-a-banco-con-salto.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="setup-pierna-con-banco-con-mancuerna.mp4 mancuernas" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/setup-pierna-con-banco-con-mancuerna.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Mancuernas</div><div class="file">setup-pierna-con-banco-con-mancuerna.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="zancada-estatica-desplantes-barra-pierna.mp4 estática con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/zancada-estatica-desplantes-barra-pierna.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Estática con barra</div><div class="file">zancada-estatica-desplantes-barra-pierna.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div><div class="card" data-q="zancada-estatica-desplantes-mancuernas-piernas.mp4 estática con mancuernas" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/zancada-estatica-desplantes-mancuernas-piernas.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Estática con mancuernas</div><div class="file">zancada-estatica-desplantes-mancuernas-piernas.mp4</div><span class="badge ok">✓ Cuádriceps</span></div>
+  </div></div><h3 class="mgh">Isquios <span class="mgn">5</span></h3><div class="grid"><div class="card" data-q="buenos-dias-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/buenos-dias-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">buenos-dias-banda.mp4</div><span class="badge ok">✓ Isquios</span></div>
+  </div><div class="card" data-q="curl-femoral-acostado-maquina-pierna.mp4 acostado en máquina" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-femoral-acostado-maquina-pierna.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Acostado en máquina</div><div class="file">curl-femoral-acostado-maquina-pierna.mp4</div><span class="badge ok">✓ Isquios</span></div>
+  </div><div class="card" data-q="extension-femoral-sentado-pierna-maquina.mp4 sentado en máquina" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/extension-femoral-sentado-pierna-maquina.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Sentado en máquina</div><div class="file">extension-femoral-sentado-pierna-maquina.mp4</div><span class="badge ok">✓ Isquios</span></div>
+  </div><div class="card" data-q="peso-muerto-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/peso-muerto-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">peso-muerto-banda.mp4</div><span class="badge ok">✓ Isquios</span></div>
+  </div><div class="card" data-q="peso-muerto-unilateral-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/peso-muerto-unilateral-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">peso-muerto-unilateral-banda.mp4</div><span class="badge ok">✓ Isquios</span></div>
+  </div></div><h3 class="mgh">Glúteo <span class="mgn">7</span></h3><div class="grid"><div class="card" data-q="abduccion-cadera-maquina-pierna.mp4 máquina" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abduccion-cadera-maquina-pierna.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Máquina</div><div class="file">abduccion-cadera-maquina-pierna.mp4</div><span class="badge ok">✓ Glúteo</span></div>
+  </div><div class="card" data-q="abduccion-cadera-pie-banda.mp4 banda tobillos" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/abduccion-cadera-pie-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Banda tobillos</div><div class="file">abduccion-cadera-pie-banda.mp4</div><span class="badge ok">✓ Glúteo</span></div>
+  </div><div class="card" data-q="hip-thrust-barra-gluteo.mp4 con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/hip-thrust-barra-gluteo.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con barra</div><div class="file">hip-thrust-barra-gluteo.mp4</div><span class="badge ok">✓ Glúteo</span></div>
+  </div><div class="card" data-q="hiperextensiones-gluteo-maquina.mp4 banco 45°" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/hiperextensiones-gluteo-maquina.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Banco 45°</div><div class="file">hiperextensiones-gluteo-maquina.mp4</div><span class="badge ok">✓ Glúteo</span></div>
+  </div><div class="card" data-q="patada-gluteo-banda.mp4 con banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/patada-gluteo-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con banda</div><div class="file">patada-gluteo-banda.mp4</div><span class="badge ok">✓ Glúteo</span></div>
+  </div><div class="card" data-q="peso-muerto-convencional-barra-pierna.mp4 con barra" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/peso-muerto-convencional-barra-pierna.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Con barra</div><div class="file">peso-muerto-convencional-barra-pierna.mp4</div><span class="badge ok">✓ Glúteo</span></div>
+  </div><div class="card" data-q="peso-muerto-trap-bar-hex-pierna.mp4 trap bar (hex)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/peso-muerto-trap-bar-hex-pierna.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Trap bar (hex)</div><div class="file">peso-muerto-trap-bar-hex-pierna.mp4</div><span class="badge ok">✓ Glúteo</span></div>
+  </div></div><h3 class="mgh">Pantorrillas <span class="mgn">2</span></h3><div class="grid"><div class="card" data-q="elevacion-talones-smith-pantorrilla-pierna.mp4 en smith" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevacion-talones-smith-pantorrilla-pierna.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">En Smith</div><div class="file">elevacion-talones-smith-pantorrilla-pierna.mp4</div><span class="badge ok">✓ Pantorrillas</span></div>
+  </div><div class="card" data-q="pantorrilla-maquina-parada.mp4 máquina de pie" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pantorrilla-maquina-parada.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Máquina de pie</div><div class="file">pantorrilla-maquina-parada.mp4</div><span class="badge ok">✓ Pantorrillas</span></div>
+  </div></div><h3 class="mgh">Core <span class="mgn">21</span></h3><div class="grid"><div class="card" data-q="plancha.mov plancha frontal" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/plancha.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Plancha frontal</div><div class="file">plancha.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="flexion-lateral-de-tronco-con-discos-oblicuos.mov inclinación lateral (mancuerna)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/flexion-lateral-de-tronco-con-discos-oblicuos.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Inclinación lateral (mancuerna)</div><div class="file">flexion-lateral-de-tronco-con-discos-oblicuos.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="boat-pose.mp4 boat pose (navasana)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/boat-pose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Boat Pose (Navasana)</div><div class="file">boat-pose.mp4</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="abdominales-bicicleta-abdomen-oblicuos-core.mov abdominal bicicleta" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abdominales-bicicleta-abdomen-oblicuos-core.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Abdominal bicicleta</div><div class="file">abdominales-bicicleta-abdomen-oblicuos-core.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="sit-out-o-patada-sentado-abdomen-core-coordinacion.mov sit-out (patada sentado)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sit-out-o-patada-sentado-abdomen-core-coordinacion.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Sit-out (patada sentado)</div><div class="file">sit-out-o-patada-sentado-abdomen-core-coordinacion.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="abdominales-crunch-con-piernas-elevadas-estaticas-abdomen-alto-core.mov crunch con piernas elevadas" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abdominales-crunch-con-piernas-elevadas-estaticas-abdomen-alto-core.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Crunch con piernas elevadas</div><div class="file">abdominales-crunch-con-piernas-elevadas-estaticas-abdomen-alto-core.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="abdominales-in-and-out-apoyando-manos-abdomen-inferior-core.mov in &amp; out (manos apoyadas)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abdominales-in-and-out-apoyando-manos-abdomen-inferior-core.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">In &amp; out (manos apoyadas)</div><div class="file">abdominales-in-and-out-apoyando-manos-abdomen-inferior-core.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="abdominales-in-and-out-por-encima-de-mancuerna-abdomen-inferior-core.mov in &amp; out sobre mancuerna" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abdominales-in-and-out-por-encima-de-mancuerna-abdomen-inferior-core.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">In &amp; out sobre mancuerna</div><div class="file">abdominales-in-and-out-por-encima-de-mancuerna-abdomen-inferior-core.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="abdominales-tijera-con-toque-cruzado-oblicuos-core.mov tijera con toque cruzado" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abdominales-tijera-con-toque-cruzado-oblicuos-core.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Tijera con toque cruzado</div><div class="file">abdominales-tijera-con-toque-cruzado-oblicuos-core.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="abdominales-toques-de-puntas-con-piernas-elevadas-abdomen-alto-core.mov toques de puntas" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abdominales-toques-de-puntas-con-piernas-elevadas-abdomen-alto-core.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Toques de puntas</div><div class="file">abdominales-toques-de-puntas-con-piernas-elevadas-abdomen-alto-core.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="patadas-de-aleteo-verticales-acostado-abdomen-inferior-core.mov aleteo vertical" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patadas-de-aleteo-verticales-acostado-abdomen-inferior-core.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Aleteo vertical</div><div class="file">patadas-de-aleteo-verticales-acostado-abdomen-inferior-core.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="patadas-de-tijera-horizontales-acostado-abdomen-inferior-core.mov tijera horizontal" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patadas-de-tijera-horizontales-acostado-abdomen-inferior-core.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Tijera horizontal</div><div class="file">patadas-de-tijera-horizontales-acostado-abdomen-inferior-core.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="abdominales-completos-con-peso-o-sit-ups-con-mancuerna.mov abdominal con peso" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abdominales-completos-con-peso-o-sit-ups-con-mancuerna.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Abdominal con peso</div><div class="file">abdominales-completos-con-peso-o-sit-ups-con-mancuerna.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="cable-crunch-core.mp4 crunch en polea" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cable-crunch-core.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Crunch en polea</div><div class="file">cable-crunch-core.mp4</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="crunch-abdominal-en-maquina-abdomen.mov máquina abdominal" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/crunch-abdominal-en-maquina-abdomen.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Máquina abdominal</div><div class="file">crunch-abdominal-en-maquina-abdomen.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="elevaciones-de-piernas-acostado-abdomen-inferior-core.mov acostado en piso" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-de-piernas-acostado-abdomen-inferior-core.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Acostado en piso</div><div class="file">elevaciones-de-piernas-acostado-abdomen-inferior-core.mov</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="levantamiento-piernas-core-maquina.mp4 paralelas (captain chair)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/levantamiento-piernas-core-maquina.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Paralelas (captain chair)</div><div class="file">levantamiento-piernas-core-maquina.mp4</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="rotacion-torso-en-maquina-abdomen.mp4 rotación con peso" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/rotacion-torso-en-maquina-abdomen.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Rotación con Peso</div><div class="file">rotacion-torso-en-maquina-abdomen.mp4</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="rotacion-core-banda.mp4 woodchopper banda" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/LIGAS/rotacion-core-banda.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Woodchopper banda</div><div class="file">rotacion-core-banda.mp4</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="seated-twist.mp4 seated twist (ardha matsyendrasana)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/seated-twist.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Seated Twist (Ardha Matsyendrasana)</div><div class="file">seated-twist.mp4</div><span class="badge ok">✓ Core</span></div>
+  </div><div class="card" data-q="side-plank-yoga.mp4 side plank (vasisthasana)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/side-plank-yoga.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Side Plank (Vasisthasana)</div><div class="file">side-plank-yoga.mp4</div><span class="badge ok">✓ Core</span></div>
+  </div></div><h3 class="mgh">Cardio <span class="mgn">6</span></h3><div class="grid"><div class="card" data-q="cuerdas-de-batalla-en-sentadilla-hombros-core-piernas.mov battle ropes" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cuerdas-de-batalla-en-sentadilla-hombros-core-piernas.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Battle Ropes</div><div class="file">cuerdas-de-batalla-en-sentadilla-hombros-core-piernas.mov</div><span class="badge ok">✓ Cardio</span></div>
+  </div><div class="card" data-q="burpees.mov burpee / sprawl" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/burpees.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Burpee / Sprawl</div><div class="file">burpees.mov</div><span class="badge ok">✓ Cardio</span></div>
+  </div><div class="card" data-q="cardio-bici-engym.mp4 bicicleta estática" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cardio-bici-engym.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Bicicleta estática</div><div class="file">cardio-bici-engym.mp4</div><span class="badge ok">✓ Cardio</span></div>
+  </div><div class="card" data-q="cardio-caminadora.mp4 caminadora" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cardio-caminadora.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Caminadora</div><div class="file">cardio-caminadora.mp4</div><span class="badge ok">✓ Cardio</span></div>
+  </div><div class="card" data-q="cardio-eliptica.mp4 elíptica" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cardio-eliptica.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Elíptica</div><div class="file">cardio-eliptica.mp4</div><span class="badge ok">✓ Cardio</span></div>
+  </div><div class="card" data-q="sentadilla-con-salto-y-lanzamiento-de-balon-medicional-piernas-gluteos-hombros.mov wall balls" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla-con-salto-y-lanzamiento-de-balon-medicional-piernas-gluteos-hombros.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Wall balls</div><div class="file">sentadilla-con-salto-y-lanzamiento-de-balon-medicional-piernas-gluteos-hombros.mov</div><span class="badge ok">✓ Cardio</span></div>
+  </div></div><h3 class="mgh">Cuerpo completo <span class="mgn">25</span></h3><div class="grid"><div class="card" data-q="bridge-pose.mp4 bridge pose" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/bridge-pose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Bridge Pose</div><div class="file">bridge-pose.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="camel-pose.mp4 camel pose (ustrasana)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/camel-pose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Camel Pose (Ustrasana)</div><div class="file">camel-pose.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="cat-cow.mp4 cat-cow" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/cat-cow.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Cat-Cow</div><div class="file">cat-cow.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="flow-chair-revolvedchair.mp4 chair pose (utkatasana)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-chair-revolvedchair.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Chair Pose (Utkatasana)</div><div class="file">flow-chair-revolvedchair.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="child-pose.mp4 child-pose" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/child-pose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">child-pose</div><div class="file">child-pose.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="child-pose2.mp4 child-pose" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/child-pose2.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">child-pose</div><div class="file">child-pose2.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="flow-cierre-kneestochest.mp4 child-pose" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-cierre-kneestochest.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">child-pose</div><div class="file">flow-cierre-kneestochest.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="cluster-con-barra-piernas-gluteos-hombros.mov cluster completo" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cluster-con-barra-piernas-gluteos-hombros.mov" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Cluster completo</div><div class="file">cluster-con-barra-piernas-gluteos-hombros.mov</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="lizard-lunge.mp4 lizard lunge" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/lizard-lunge.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Lizard Lunge</div><div class="file">lizard-lunge.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="flow-lowlunge-revolvedlunge.mp4 low lunge" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-lowlunge-revolvedlunge.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Low Lunge</div><div class="file">flow-lowlunge-revolvedlunge.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="pigeon-pose.mp4 pigeon pose" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/pigeon-pose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Pigeon Pose</div><div class="file">pigeon-pose.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="pigeon-pose2.mp4 pigeon pose" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/pigeon-pose2.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Pigeon Pose</div><div class="file">pigeon-pose2.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="puppy-pose.mp4 puppy pose" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/puppy-pose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Puppy Pose</div><div class="file">puppy-pose.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="warrior1-warrior2-reversewarrior-.mov.mp4 reverse warrior" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/warrior1-warrior2-reversewarrior-.mov.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Reverse Warrior</div><div class="file">warrior1-warrior2-reversewarrior-.mov.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="seated-forward-fold.mp4 seated forward fold" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/seated-forward-fold.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Seated Forward Fold</div><div class="file">seated-forward-fold.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="sun-salutation.mp4 sun salutation a" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/sun-salutation.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Sun Salutation A</div><div class="file">sun-salutation.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="sun-salutation2.mp4 sun salutation a" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/sun-salutation2.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Sun Salutation A</div><div class="file">sun-salutation2.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="sun-salutation3.mp4 sun salutation a" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/sun-salutation3.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Sun Salutation A</div><div class="file">sun-salutation3.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="warrior1-sun-salutation.mp4 sun salutation a" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/warrior1-sun-salutation.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Sun Salutation A</div><div class="file">warrior1-sun-salutation.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="flow-sunsalutation-warrior1-warrior2-reversewarrior-.mp4 sun salutation b" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-sunsalutation-warrior1-warrior2-reversewarrior-.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Sun Salutation B</div><div class="file">flow-sunsalutation-warrior1-warrior2-reversewarrior-.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="flow-happybaby-supinetwist.mp4 supine twist" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-happybaby-supinetwist.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Supine Twist</div><div class="file">flow-happybaby-supinetwist.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="triangle-pose.mp4 triangle pose (trikonasana)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/triangle-pose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Triangle Pose (Trikonasana)</div><div class="file">triangle-pose.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="flow-warrior.mp4 warrior i" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-warrior.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Warrior I</div><div class="file">flow-warrior.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="flow-warrior1-warrio2-reversewarrior-extendedsideangle-boundsideanglepose.mp4 warrior ii" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-warrior1-warrio2-reversewarrior-extendedsideangle-boundsideanglepose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Warrior II</div><div class="file">flow-warrior1-warrio2-reversewarrior-extendedsideangle-boundsideanglepose.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div><div class="card" data-q="wheel-pose.mp4 wheel pose (urdhva dhanurasana)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/wheel-pose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Wheel Pose (Urdhva Dhanurasana)</div><div class="file">wheel-pose.mp4</div><span class="badge ok">✓ Cuerpo completo</span></div>
+  </div></div><h3 class="mgh">Yoga <span class="mgn">9</span></h3><div class="grid"><div class="card" data-q="flow-chair-revolvedchair.mp4 silla y torsión" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-chair-revolvedchair.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Silla y Torsión</div><div class="file">flow-chair-revolvedchair.mp4</div><span class="badge ok">✓ Yoga</span></div>
+  </div><div class="card" data-q="flow-happybaby-supinetwist.mp4 enfriamiento en el suelo" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-happybaby-supinetwist.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Enfriamiento en el Suelo</div><div class="file">flow-happybaby-supinetwist.mp4</div><span class="badge ok">✓ Yoga</span></div>
+  </div><div class="card" data-q="flow-lowlunge-revolvedlunge.mp4 zancada y torsión" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-lowlunge-revolvedlunge.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Zancada y Torsión</div><div class="file">flow-lowlunge-revolvedlunge.mp4</div><span class="badge ok">✓ Yoga</span></div>
+  </div><div class="card" data-q="flow-shoulderstand-plowpose-earpressurepose.mp4 inversiones (vela → arado)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-shoulderstand-plowpose-earpressurepose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Inversiones (vela → arado)</div><div class="file">flow-shoulderstand-plowpose-earpressurepose.mp4</div><span class="badge ok">✓ Yoga</span></div>
+  </div><div class="card" data-q="flow-sunsalutation-warrior1-warrior2-reversewarrior-.mp4 saludo al sol b" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-sunsalutation-warrior1-warrior2-reversewarrior-.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Saludo al Sol B</div><div class="file">flow-sunsalutation-warrior1-warrior2-reversewarrior-.mp4</div><span class="badge ok">✓ Yoga</span></div>
+  </div><div class="card" data-q="flow-warrior1-warrio2-reversewarrior-extendedsideangle-boundsideanglepose.mp4 serie de guerreros" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/flow-warrior1-warrio2-reversewarrior-extendedsideangle-boundsideanglepose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Serie de Guerreros</div><div class="file">flow-warrior1-warrio2-reversewarrior-extendedsideangle-boundsideanglepose.mp4</div><span class="badge ok">✓ Yoga</span></div>
+  </div><div class="card" data-q="locust-pose.mp4 langosta (extensión)" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/locust-pose.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Langosta (extensión)</div><div class="file">locust-pose.mp4</div><span class="badge ok">✓ Yoga</span></div>
+  </div><div class="card" data-q="standing-side-bend.mp4 flexión lateral de pie" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/standing-side-bend.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Flexión Lateral de Pie</div><div class="file">standing-side-bend.mp4</div><span class="badge ok">✓ Yoga</span></div>
+  </div><div class="card" data-q="sun-salutation.mp4 saludo al sol a" data-warn="0">
+    <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/YOGA/sun-salutation.mp4" preload="none" controls playsinline muted></video>
+    <div class="meta"><div class="map">Saludo al Sol A</div><div class="file">sun-salutation.mp4</div><span class="badge ok">✓ Yoga</span></div>
+  </div></div></div>
 
 <script>
-const BASE = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/';
-const LIGAS = [
-  ['abduccion-cadera-pie-banda','abduccion-cadera-banda-tobillos'],
-  ['aperturas-pecho-banda','aperturas-banda'],
-  ['buenos-dias-banda','good-morning-banda'],
-  ['curl-biceps-banda','curl-pie-banda'],
-  ['curl-biceps-concentrado-banda','curl-concentrado-banda'],
-  ['curl-biceps-unilateral-banda','curl-pie-banda-unilateral'],
-  ['elevacion-diagonal-banda','shrugs-banda (encogimientos trapecio)'],
-  ['elevaciones-frontales-banda','elevacion-frontal-banda'],
-  ['elevaciones-laterales-banda','elevacion-lateral-banda'],
-  ['extension-pierna-sentado-banda','extension-cuadriceps-banda'],
-  ['extension-triceps-unilateral-banda','extensiones-banda-anclada (tríceps copa/sobre cabeza)'],
-  ['face-pull-banda','face-pull-banda'],
-  ['patada-gluteo-banda','patada-gluteo-banda'],
-  ['patada-triceps-banda','patada-triceps-banda'],
-  ['peso-muerto-banda','peso-muerto-rumano-banda'],
-  ['peso-muerto-unilateral-banda','peso-muerto-unilateral-banda'],
-  ['press-militar-unilateral-banda','press-banda'],
-  ['press-pecho-banda','press-horizontal-banda'],
-  ['pull-apart-banda','vuelo-posterior-banda'],
-  ['remo-banda','remo-inclinado-banda'],
-  ['remo-inclinado-banda','remo-horizontal-banda'],
-  ['remo-vertical-banda','upright-row-banda'],
-  ['rotacion-core-banda','woodchopper-banda'],
-  ['sentadilla-banda','sentadilla-con-banda'],
-];
-// [archivo, mapeo, estado?]  estado: 'ok'(default si hay mapeo) | 'flow' | 'new-pose' | 'unknown'
-const YOGA = [
-  // ── Poses sueltas (van a su pose) ──
-  ['boat-pose','boat-pose'],
-  ['bridge-pose','bridge-pose'],
-  ['camel-pose','camel-pose'],
-  ['cat-cow','cat-cow'],
-  ['child-pose','child-pose'],
-  ['child-pose2','child-pose (2º video)'],
-  ['lizard-lunge','lizard-lunge'],
-  ['pigeon-pose','pigeon-pose'],
-  ['pigeon-pose2','pigeon-pose (2º video)'],
-  ['puppy-pose','puppy-pose'],
-  ['revolved-chair','revolved-chair'],
-  ['seated-forward-fold','seated-forward-fold'],
-  ['seated-twist','seated-twist'],
-  ['side-plank-yoga','side-plank-yoga'],
-  ['triangle-pose','triangle-pose'],
-  ['wheel-pose','wheel-pose'],
-  // ── Saludo al sol (flow → entrada de flow del banco) ──
-  ['sun-salutation','sun-salutation-a'],
-  ['sun-salutation2','sun-salutation-a (2º)'],
-  ['sun-salutation3','sun-salutation-a (3º)'],
-  // ── FLOWS (secuencias de varias poses) — NO caben en una sola pose ──
-  ['flow-warrior','flujo de guerreros','flow'],
-  ['flow-warrior1-warrio2-reversewarrior-extendedsideangle-boundsideanglepose','flujo guerreros largo','flow'],
-  ['warrior1-warrior2-reversewarrior-.mov','flujo de guerreros','flow'],
-  ['warrior1-sun-salutation','saludo al sol + guerrero','flow'],
-  ['flow-sunsalutation-warrior1-warrior2-reversewarrior-','saludo al sol + guerreros','flow'],
-  ['flow-lowlunge-revolvedlunge','flujo de zancadas','flow'],
-  ['flow-chair-revolvedchair','flujo de silla','flow'],
-  ['flow-happybaby-supinetwist','flujo de cierre (suelo)','flow'],
-  ['flow-cierre-kneestochest','flujo de cierre','flow'],
-  ['flow-shoulderstand-plowpose-earpressurepose','flujo de inversiones','flow'],
-  // ── Poses sueltas que NO existen aún en el banco ──
-  ['locust-pose','langosta','new-pose'],
-  ['standing-side-bend','flexión lateral de pie','new-pose'],
-  // ── Sin identificar ──
-  ['IMG_2711',null],
-  ['IMG_2723',null],
-  ['IMG_2725',null],
-  ['IMG_2734',null],
-];
-const STATUS = {
-  ok:        ['ok',   'Conectado'],
-  flow:      ['flow', 'FLOW (secuencia) — ¿cómo lo conecto?'],
-  'new-pose':['warn', 'Pose nueva — ¿la creo?'],
-  unknown:   ['warn', 'PENDIENTE — dime qué es'],
-};
-function card(folder, file, mapped, status){
-  const url = BASE + folder + '/' + encodeURIComponent(file) + '.mp4';
-  status = status || (mapped ? 'ok' : 'unknown');
-  const [cls, label] = STATUS[status];
-  const done = status === 'ok';
-  return `<div class="card" data-file="${file.toLowerCase()}" data-map="${(mapped||'').toLowerCase()}" data-warn="${done?0:1}">
-    <video src="${url}" preload="metadata" controls playsinline muted></video>
-    <div class="meta">
-      <div class="file">${folder}/${file}.mp4</div>
-      <div class="arrow">↓ ${done?'mapeado a':'propuesta'}</div>
-      <div class="map">${mapped||'—'}</div>
-      <span class="badge ${cls}">${label}</span>
-    </div>
-  </div>`;
-}
-const app = document.getElementById('app');
-app.innerHTML =
-  `<h2>Ligas / banda · ${LIGAS.length}</h2><div class="grid" data-sec="ligas">${LIGAS.map(([f,m,s])=>card('LIGAS',f,m,s)).join('')}</div>`
-+ `<h2>Yoga · ${YOGA.length}</h2><div class="grid" data-sec="yoga">${YOGA.map(([f,m,s])=>card('YOGA',f,m,s)).join('')}</div>`;
-
-let filter='all', q='';
-function apply(){
-  document.querySelectorAll('.card').forEach(c=>{
-    const sec = c.closest('.grid').dataset.sec;
-    const matchF = filter==='all' || (filter==='warn'? c.dataset.warn==='1' : filter===sec);
-    const matchQ = !q || c.dataset.file.includes(q) || c.dataset.map.includes(q);
-    c.classList.toggle('hidden', !(matchF && matchQ));
-  });
-  document.querySelectorAll('h2, .grid').forEach(el=>{
-    if(el.classList.contains('grid')){ el.classList.toggle('hidden', !el.querySelector('.card:not(.hidden)')); }
-  });
-}
-document.getElementById('q').addEventListener('input', e=>{ q=e.target.value.trim().toLowerCase(); apply(); });
-document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click', ()=>{
-  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on')); p.classList.add('on');
-  filter=p.dataset.f; apply();
-}));
+const q=document.getElementById('q');
+q.addEventListener('input',()=>{const t=q.value.trim().toLowerCase();
+  document.querySelectorAll('#app .card').forEach(c=>c.classList.toggle('hidden',t&&!c.dataset.q.includes(t)));
+  document.querySelectorAll('#app .mgh,#app .grid').forEach(el=>{if(el.classList.contains('grid'))el.classList.toggle('hidden',!el.querySelector('.card:not(.hidden)'))});
+});
 </script>
-</body>
-</html>
+</div></body></html>
