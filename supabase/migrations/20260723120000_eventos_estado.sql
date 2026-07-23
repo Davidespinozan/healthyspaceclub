@@ -126,7 +126,8 @@ COMMENT ON TABLE eventos_estado IS
 -- ============================================================================
 -- Sin esto, los socios creados antes de esta migración nunca tendrían evento de
 -- alta y quedarían fuera de toda cohorte. Se les siembra una transición
--- NULL→estado_actual fechada en su inicio real (start_date › created_at).
+-- NULL→estado_actual fechada en la creación de la cuenta (created_at, siempre
+-- presente y timestamptz — start_date es text y semánticamente es otra cosa).
 -- Idempotente: solo siembra a quien no tenga ya un evento de suscripción.
 INSERT INTO eventos_estado (negocio, entidad, entidad_id, de_estado, a_estado, motivo, ocurrido_en, metadata)
 SELECT
@@ -136,7 +137,7 @@ SELECT
   NULL,
   up.subscription_status,
   'backfill_lanzamiento',
-  COALESCE(up.start_date, up.created_at, now()),
+  COALESCE(up.created_at, now()),
   jsonb_build_object('backfill', true)
 FROM user_profiles up
 WHERE up.subscription_status IN ('trial', 'pro')
