@@ -1,0 +1,142 @@
+/* Panel admin de HSC — estilos AISLADOS del design system del socio.
+   Todo cuelga de .adm-root (el panel es una raíz de render aparte, montada en
+   /admin desde main.tsx), y las clases usan prefijo adm- para no colisionar con
+   index.css (que se importa global). Look: SaaS admin sobrio, sidebar oscuro +
+   contenido claro, acento verde del Club. Soporta modo oscuro del sistema. */
+
+.adm-root {
+  --adm-bg: #f4f6f5;
+  --adm-surface: #ffffff;
+  --adm-border: #e3e7e5;
+  --adm-ink: #17211d;
+  --adm-ink2: #5c6b64;
+  --adm-ink3: #8a978f;
+  --adm-accent: #1f5c46;      /* verde bosque del Club */
+  --adm-accent-soft: #e6f0ec;
+  --adm-side: #14261f;        /* sidebar oscuro */
+  --adm-side-ink: #cdd8d2;
+  --adm-side-ink2: #7e918a;
+  --adm-danger: #b4432f;
+  --adm-good: #2f7d5b;
+  --adm-warn: #b8862f;
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  background: var(--adm-bg);
+  color: var(--adm-ink);
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .adm-root {
+    --adm-bg: #0f1613;
+    --adm-surface: #17211d;
+    --adm-border: #26332d;
+    --adm-ink: #eaf0ed;
+    --adm-ink2: #9fb0a8;
+    --adm-ink3: #6f817a;
+    --adm-accent: #3f9b74;
+    --adm-accent-soft: #16302b;
+    --adm-side: #0b120f;
+    --adm-side-ink: #cdd8d2;
+    --adm-side-ink2: #6f817a;
+  }
+}
+
+/* ── Boot / gate ─────────────────────────────────────────────────────────── */
+.adm-boot {
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+  padding: 24px;
+}
+.adm-boot h1 { font-size: 1.15rem; font-weight: 700; margin: 0; }
+.adm-boot p { color: var(--adm-ink2); margin: 0; max-width: 34ch; }
+.adm-boot button {
+  margin-top: 6px; padding: 10px 18px; border-radius: 10px; border: none;
+  background: var(--adm-accent); color: #fff; font: inherit; font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.adm-side {
+  width: 232px;
+  flex-shrink: 0;
+  background: var(--adm-side);
+  color: var(--adm-side-ink);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 12px;
+  overflow-y: auto;
+}
+.adm-side-brand {
+  display: flex; align-items: center; gap: 9px;
+  padding: 4px 8px 18px;
+  font-weight: 800; letter-spacing: .2px; font-size: 1rem; color: #fff;
+}
+.adm-side-brand small {
+  display: block; font-size: .62rem; font-weight: 600; letter-spacing: 1.5px;
+  color: var(--adm-side-ink2); text-transform: uppercase; margin-top: 2px;
+}
+.adm-side-group {
+  font-size: .62rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--adm-side-ink2); padding: 16px 10px 6px;
+}
+.adm-nav {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 9px;
+  color: var(--adm-side-ink); text-decoration: none; font-weight: 600; font-size: .84rem;
+  transition: background .13s, color .13s;
+}
+.adm-nav:hover { background: rgba(255,255,255,.05); color: #fff; }
+.adm-nav.active { background: var(--adm-accent); color: #fff; }
+.adm-nav svg { flex-shrink: 0; }
+
+.adm-side-foot {
+  margin-top: auto; padding: 14px 10px 4px; border-top: 1px solid rgba(255,255,255,.07);
+  font-size: .72rem; color: var(--adm-side-ink2); word-break: break-word;
+}
+.adm-side-foot b { display: block; color: var(--adm-side-ink); font-weight: 600; }
+.adm-side-foot a { color: var(--adm-side-ink2); text-decoration: underline; cursor: pointer; }
+
+/* ── Main ────────────────────────────────────────────────────────────────── */
+.adm-main { flex: 1; overflow-y: auto; padding: 26px 30px 60px; }
+.adm-page-head { margin-bottom: 22px; }
+.adm-page-head h1 { font-size: 1.4rem; font-weight: 800; margin: 0 0 4px; letter-spacing: -.2px; }
+.adm-page-head p { color: var(--adm-ink2); margin: 0; }
+
+/* Placeholder de fase futura */
+.adm-soon {
+  background: var(--adm-surface); border: 1px dashed var(--adm-border); border-radius: 14px;
+  padding: 40px 28px; text-align: center; color: var(--adm-ink2); max-width: 640px;
+}
+.adm-soon .adm-soon-tag {
+  display: inline-block; font-size: .66rem; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--adm-accent); background: var(--adm-accent-soft);
+  padding: 4px 10px; border-radius: 20px; margin-bottom: 12px;
+}
+.adm-soon h2 { color: var(--adm-ink); font-size: 1.05rem; margin: 0 0 8px; }
+.adm-soon ul { text-align: left; margin: 14px auto 0; max-width: 44ch; padding-left: 18px; }
+.adm-soon li { margin: 5px 0; }
+
+/* Cards / grid — usable ya por las fases 2+ */
+.adm-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+.adm-card {
+  background: var(--adm-surface); border: 1px solid var(--adm-border); border-radius: 14px;
+  padding: 16px 18px;
+}
+.adm-card-label { font-size: .7rem; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--adm-ink3); }
+.adm-card-value { font-size: 1.7rem; font-weight: 800; margin-top: 6px; letter-spacing: -.5px; font-variant-numeric: tabular-nums; }
+.adm-card-sub { font-size: .78rem; color: var(--adm-ink2); margin-top: 3px; }
+
+@media (max-width: 720px) {
+  .adm-side { position: absolute; z-index: 20; height: 100%; transform: translateX(-100%); transition: transform .2s; box-shadow: 0 0 40px rgba(0,0,0,.3); }
+  .adm-side.open { transform: none; }
+  .adm-main { padding: 20px 16px 60px; }
+}
