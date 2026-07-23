@@ -2406,7 +2406,10 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 @media (max-width:768px) {
   nav.landing-nav { padding:0 18px; padding-top: env(safe-area-inset-top, 0px); height: calc(100px + env(safe-area-inset-top, 0px)); display:flex; justify-content:center; align-items:center; position:fixed; }
   .nav-links { display:none !important; }
-  .nav-left { display:none !important; }
+  /* En móvil, del nav-left solo se muestra el toggle ES/EN, a la izquierda de la
+     barra (espejo del hamburguesa a la derecha). El isotipo y "Entrar" se ocultan. */
+  .nav-left { display:flex !important; position:absolute; left:18px; gap:0; }
+  .nav-left .nav-iso, .nav-left .nav-login { display:none; }
   .nav-hamburger { display:flex; position:absolute; right:18px; }
   .logo img { height:30px; }
   .logo-nav img { height:43px; }

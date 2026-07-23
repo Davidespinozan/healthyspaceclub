@@ -127,7 +127,6 @@ export default function LandingScreen() {
       {/* MOBILE MENU */}
       <div className={`mob-menu${mobileMenuOpen ? ' open' : ''}`}>
         <div className="mob-menu-inner">
-          <LanguageToggle className="lang-toggle--mob-menu" />
           <a href="#s-app" onClick={toggleMobileMenu}>{t('landing.navClub')}</a>
           <a href="#s-pillars" onClick={toggleMobileMenu}>{t('landing.navHow')}</a>
           <a href="#s-pricing" onClick={toggleMobileMenu}>{t('landing.navPlans')}</a>
