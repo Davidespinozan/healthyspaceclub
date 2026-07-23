@@ -4,6 +4,7 @@ import StatusBadge from '../components/StatusBadge';
 import StatCard from '../components/StatCard';
 import { money, num, fecha, fechaHora, monedasPorVolumen } from '../lib/format';
 import { nombreDe } from './Socios';
+import NotasInternas from '../components/NotasInternas';
 import { ArrowLeft } from 'lucide-react';
 
 const METODO: Record<string, string> = { stripe: 'Stripe', efectivo: 'Efectivo', transferencia: 'Transferencia', terminal: 'Terminal', cortesia: 'Cortesía' };
@@ -106,11 +107,14 @@ export default function SocioDetalle() {
         </div>
       </div>
 
-      {/* Acciones (Fase 3b) */}
+      {/* Notas internas (Fase 3b) */}
+      <NotasInternas key={p.user_id} socioId={p.user_id} inicial={d.nota} />
+
+      {/* Acciones de billing (Fase 3c) */}
       <div className="adm-soon" style={{ marginTop: 16 }}>
-        <span className="adm-soon-tag">Fase 3b</span>
-        <h2>Acciones sobre el socio</h2>
-        <p>Aquí irán, por RPC seguro + bitácora: cambiar estado, dar cortesía/meses gratis, notas internas y enviar aviso.</p>
+        <span className="adm-soon-tag">Fase 3c</span>
+        <h2>Acciones de billing</h2>
+        <p>Cortesía / meses gratis y cambios de plan van por Stripe (cupón o crédito), nunca tocando el estado en la base — si no, se desincroniza. Necesitan su edge function; se arman contigo.</p>
       </div>
     </>
   );

@@ -28,16 +28,17 @@ export interface SocioDetalle {
   ltv: Record<string, number>;   // moneda → centavos netos de por vida
   pagos: Pago[];
   eventos: EventoEstado[];
+  nota: string;
 }
 
 export function useSocioDetalle(userId: string | undefined): SocioDetalle {
-  const [d, setD] = useState<SocioDetalle>({ loading: true, error: null, perfil: null, ltv: {}, pagos: [], eventos: [] });
+  const [d, setD] = useState<SocioDetalle>({ loading: true, error: null, perfil: null, ltv: {}, pagos: [], eventos: [], nota: '' });
 
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
     (async () => {
-      const [perfRes, movRes, evtRes] = await Promise.all([
+      const [perfRes, movRes, evtRes, notaRes] = await Promise.all([
         supabase.from('user_profiles')
           .select('user_id,display_name,username,avatar_url,subscription_status,payment_past_due,billing_cycle,plan_id,subscription_period_end,trial_ends_at,created_at,start_date,last_active_date,streak_count,fire_count')
           .eq('user_id', userId).maybeSingle(),
@@ -47,10 +48,11 @@ export function useSocioDetalle(userId: string | undefined): SocioDetalle {
         supabase.from('eventos_estado')
           .select('de_estado,a_estado,motivo,ocurrido_en')
           .eq('negocio', 'hsc').eq('entidad', 'suscripcion').eq('entidad_id', userId).order('ocurrido_en', { ascending: false }),
+        supabase.from('notas_socio').select('nota').eq('socio_id', userId).maybeSingle(),
       ]);
       if (cancelled) return;
       const err = perfRes.error || movRes.error || evtRes.error;
-      if (err) { setD({ loading: false, error: err.message, perfil: null, ltv: {}, pagos: [], eventos: [] }); return; }
+      if (err) { setD({ loading: false, error: err.message, perfil: null, ltv: {}, pagos: [], eventos: [], nota: '' }); return; }
 
       const pagos = (movRes.data ?? []) as Pago[];
       const ltv: Record<string, number> = {};
@@ -61,8 +63,9 @@ export function useSocioDetalle(userId: string | undefined): SocioDetalle {
         perfil: (perfRes.data ?? null) as SocioPerfil | null,
         ltv, pagos,
         eventos: (evtRes.data ?? []) as EventoEstado[],
+        nota: (notaRes.data?.nota as string | undefined) ?? '',
       });
-    })().catch((e) => { if (!cancelled) setD({ loading: false, error: e instanceof Error ? e.message : 'Error', perfil: null, ltv: {}, pagos: [], eventos: [] }); });
+    })().catch((e) => { if (!cancelled) setD({ loading: false, error: e instanceof Error ? e.message : 'Error', perfil: null, ltv: {}, pagos: [], eventos: [], nota: '' }); });
     return () => { cancelled = true; };
   }, [userId]);
 

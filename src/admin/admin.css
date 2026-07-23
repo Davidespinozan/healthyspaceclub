@@ -245,6 +245,24 @@
 .adm-cohort-bar { width: 90px; height: 7px; border-radius: 4px; background: var(--adm-accent-soft); overflow: hidden; }
 .adm-cohort-bar span { display: block; height: 100%; background: var(--adm-accent); }
 
+/* Notas / formularios de acción */
+.adm-textarea {
+  width: 100%; min-height: 90px; margin-top: 10px; padding: 11px 13px; border-radius: 10px;
+  border: 1px solid var(--adm-border); background: var(--adm-bg); color: var(--adm-ink);
+  font: inherit; font-size: .86rem; line-height: 1.5; resize: vertical;
+}
+.adm-textarea::placeholder { color: var(--adm-ink3); }
+.adm-actions { display: flex; align-items: center; gap: 12px; margin-top: 11px; }
+.adm-btn {
+  padding: 9px 18px; border-radius: 9px; border: none; background: var(--adm-accent); color: #fff;
+  font: inherit; font-weight: 600; font-size: .84rem; cursor: pointer;
+}
+.adm-btn:disabled { opacity: .45; cursor: default; }
+.adm-ok { color: var(--adm-good); font-size: .82rem; font-weight: 600; }
+.adm-err { color: var(--adm-danger); font-size: .82rem; font-weight: 600; }
+.adm-link { color: var(--adm-accent); text-decoration: none; font-weight: 600; }
+.adm-link:hover { text-decoration: underline; }
+
 @media (max-width: 720px) {
   .adm-side { position: absolute; z-index: 20; height: 100%; transform: translateX(-100%); transition: transform .2s; box-shadow: 0 0 40px rgba(0,0,0,.3); }
   .adm-side.open { transform: none; }
