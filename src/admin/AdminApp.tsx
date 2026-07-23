@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Ingresos from './pages/Ingresos';
 import Reportes from './pages/Reportes';
 import Socios from './pages/Socios';
+import SocioDetalle from './pages/SocioDetalle';
 import Bitacora from './pages/Bitacora';
 import Equipo from './pages/Equipo';
 import Ajustes from './pages/Ajustes';
@@ -49,6 +50,7 @@ export default function AdminApp() {
           <Route path="ingresos" element={<Ingresos />} />
           <Route path="reportes" element={<Reportes />} />
           <Route path="socios" element={<Socios />} />
+          <Route path="socios/:id" element={<SocioDetalle />} />
           <Route path="bitacora" element={<Bitacora />} />
           <Route path="equipo" element={<Equipo />} />
           <Route path="ajustes" element={<Ajustes />} />

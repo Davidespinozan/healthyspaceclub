@@ -174,6 +174,64 @@
 /* Scroll horizontal de la tabla de movimientos en móvil */
 .adm-card { overflow-x: auto; }
 
+/* Toolbar de lista (buscador + filtros) */
+.adm-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.adm-search {
+  flex: 1; min-width: 200px; padding: 9px 13px; border-radius: 10px;
+  border: 1px solid var(--adm-border); background: var(--adm-surface); color: var(--adm-ink);
+  font: inherit; font-size: .86rem;
+}
+.adm-search::placeholder { color: var(--adm-ink3); }
+.adm-toolbar .adm-pills { margin: 0; }
+
+/* Filas clicables */
+.adm-row-link { cursor: pointer; transition: background .1s; }
+.adm-row-link:hover { background: var(--adm-accent-soft); }
+
+/* Badges de estado */
+.adm-badge {
+  display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: .72rem; font-weight: 700;
+  letter-spacing: .2px;
+}
+.adm-badge.good { background: #e2f1ea; color: #216c4c; }
+.adm-badge.accent { background: var(--adm-accent-soft); color: var(--adm-accent); }
+.adm-badge.warn { background: #f6ecd6; color: #8a6416; }
+.adm-badge.danger { background: #f7ddd5; color: #a2402c; }
+.adm-badge.muted { background: rgba(130,140,135,.16); color: var(--adm-ink2); }
+@media (prefers-color-scheme: dark) {
+  .adm-badge.good { background: #16302b; color: #5cc79a; }
+  .adm-badge.accent { background: #16302b; color: #5cc79a; }
+  .adm-badge.warn { background: #2e2410; color: #d9ad57; }
+  .adm-badge.danger { background: #2a1712; color: #e08a72; }
+  .adm-badge.muted { background: rgba(160,176,168,.14); color: var(--adm-ink2); }
+}
+
+/* Botón volver */
+.adm-back {
+  display: inline-flex; align-items: center; gap: 6px; background: none; border: none;
+  color: var(--adm-ink2); font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer;
+  padding: 0; margin-bottom: 16px;
+}
+.adm-back:hover { color: var(--adm-accent); }
+
+/* Hero de la ficha */
+.adm-hero { display: flex; gap: 16px; align-items: center; margin-bottom: 22px; }
+.adm-hero-av { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.adm-hero-av--empty {
+  display: flex; align-items: center; justify-content: center; background: var(--adm-accent);
+  color: #fff; font-size: 1.5rem; font-weight: 800;
+}
+.adm-hero h1 { font-size: 1.4rem; font-weight: 800; margin: 0 0 5px; }
+.adm-hero-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: var(--adm-ink2); font-size: .82rem; }
+
+.adm-sub2 { color: var(--adm-ink3); font-size: .78rem; }
+
+/* Timeline de estados */
+.adm-timeline { list-style: none; margin: 10px 0 0; padding: 0; }
+.adm-timeline li { display: flex; gap: 11px; padding: 7px 0; }
+.adm-tl-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--adm-accent); margin-top: 5px; flex-shrink: 0; }
+.adm-timeline b { font-size: .84rem; font-weight: 600; }
+
 @media (max-width: 720px) {
   .adm-side { position: absolute; z-index: 20; height: 100%; transform: translateX(-100%); transition: transform .2s; box-shadow: 0 0 40px rgba(0,0,0,.3); }
   .adm-side.open { transform: none; }
