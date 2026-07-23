@@ -135,6 +135,45 @@
 .adm-card-value { font-size: 1.7rem; font-weight: 800; margin-top: 6px; letter-spacing: -.5px; font-variant-numeric: tabular-nums; }
 .adm-card-sub { font-size: .78rem; color: var(--adm-ink2); margin-top: 3px; }
 
+/* Estados */
+.adm-muted { color: var(--adm-ink2); padding: 8px 0; }
+.adm-alert {
+  background: #fdeee9; border: 1px solid #eccabf; color: var(--adm-danger);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: .84rem;
+}
+@media (prefers-color-scheme: dark) { .adm-alert { background: #2a1712; border-color: #52281c; } }
+
+/* Tendencia */
+.adm-trend { margin-top: 16px; }
+.adm-bars { width: 100%; height: 130px; display: block; margin-top: 12px; }
+
+/* Pills de período */
+.adm-pills { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.adm-pill {
+  padding: 7px 14px; border-radius: 20px; border: 1px solid var(--adm-border);
+  background: var(--adm-surface); color: var(--adm-ink2); font: inherit; font-size: .8rem;
+  font-weight: 600; cursor: pointer;
+}
+.adm-pill.on { background: var(--adm-accent); border-color: var(--adm-accent); color: #fff; }
+
+/* Dos columnas para los desgloses */
+.adm-cols { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; margin-top: 16px; }
+@media (max-width: 720px) { .adm-cols { grid-template-columns: 1fr; } }
+
+/* Tablas */
+.adm-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: .84rem; }
+.adm-table td, .adm-table th { padding: 7px 6px; text-align: left; }
+.adm-table th {
+  font-size: .66rem; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+  color: var(--adm-ink3); border-bottom: 1px solid var(--adm-border);
+}
+.adm-table--rows tr + tr td { border-top: 1px solid var(--adm-border); }
+.adm-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.adm-ref { color: var(--adm-ink3); font-size: .74rem; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Scroll horizontal de la tabla de movimientos en móvil */
+.adm-card { overflow-x: auto; }
+
 @media (max-width: 720px) {
   .adm-side { position: absolute; z-index: 20; height: 100%; transform: translateX(-100%); transition: transform .2s; box-shadow: 0 0 40px rgba(0,0,0,.3); }
   .adm-side.open { transform: none; }
