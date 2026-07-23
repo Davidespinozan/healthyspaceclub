@@ -104,7 +104,11 @@ BEGIN
   VALUES (v_actor, v_nombre, p_accion, p_socio_id, p_socio_nombre, p_resumen, coalesce(p_detalle, '{}'::jsonb));
 END; $$;
 
-REVOKE ALL ON FUNCTION public._bitacora_log(text, uuid, text, text, jsonb) FROM PUBLIC;
+-- Helper interno: lo llaman otras funciones SECURITY DEFINER (que corren como
+-- owner y no necesitan grant). Nadie del cliente debe poder llamarlo directo →
+-- se revoca a todos, incluido authenticated. (Supabase auto-otorga a anon; hay
+-- que quitarlo explícito, REVOKE FROM PUBLIC no basta.)
+REVOKE ALL ON FUNCTION public._bitacora_log(text, uuid, text, text, jsonb) FROM PUBLIC, anon, authenticated;
 
 -- ─── 4. RPC: guardar nota interna ───────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.admin_guardar_nota(p_user_id uuid, p_nota text)
@@ -129,7 +133,8 @@ BEGIN
     jsonb_build_object('largo', length(coalesce(p_nota, ''))));
 END; $$;
 
-REVOKE ALL ON FUNCTION public.admin_guardar_nota(uuid, text) FROM PUBLIC;
+-- Revocar anon explícito (Supabase lo auto-otorga; REVOKE FROM PUBLIC no basta).
+REVOKE ALL ON FUNCTION public.admin_guardar_nota(uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.admin_guardar_nota(uuid, text) TO authenticated;
 
 -- ============================================================================

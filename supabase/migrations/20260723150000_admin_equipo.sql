@@ -54,7 +54,9 @@ BEGIN
     jsonb_build_object('es_admin', p_es_admin));
 END; $$;
 
-REVOKE ALL ON FUNCTION public.admin_set_admin(uuid, boolean) FROM PUBLIC;
+-- Supabase, por default privileges, otorga EXECUTE a anon en funciones nuevas
+-- del schema public. Revocar PUBLIC no basta: hay que quitar a anon explícito.
+REVOKE ALL ON FUNCTION public.admin_set_admin(uuid, boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.admin_set_admin(uuid, boolean) TO authenticated;
 
 -- ============================================================================
