@@ -49,6 +49,7 @@ export const en: Translations<typeof es> = {
     privacy: 'Privacy',
     logout: 'Log out',
     logoutConfirm: 'Log out? You\'ll need to sign in again to access your account.',
+    viewAsAdmin: 'View as admin',
     managePlan: 'Manage plan',
     planPro: 'Pro',
     planTrial: 'Free trial',

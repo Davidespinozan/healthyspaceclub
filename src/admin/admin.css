@@ -63,6 +63,13 @@
   background: var(--adm-accent); color: #fff; font: inherit; font-weight: 600;
   cursor: pointer;
 }
+.adm-login {
+  display: flex; flex-direction: column; gap: 11px; width: 100%; max-width: 320px;
+  text-align: left;
+}
+.adm-login h1 { text-align: center; }
+.adm-login p { text-align: center; margin-bottom: 4px; }
+.adm-login .adm-btn { margin-top: 4px; justify-content: center; }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
 .adm-side {
@@ -98,8 +105,16 @@
 .adm-nav.active { background: var(--adm-accent); color: #fff; }
 .adm-nav svg { flex-shrink: 0; }
 
+.adm-verapp {
+  margin-top: auto; display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px; border-radius: 9px; border: 1px solid rgba(255,255,255,.14);
+  background: transparent; color: var(--adm-side-ink); font: inherit; font-size: .82rem;
+  font-weight: 600; cursor: pointer; width: 100%;
+}
+.adm-verapp:hover { background: rgba(255,255,255,.06); color: #fff; }
+
 .adm-side-foot {
-  margin-top: auto; padding: 14px 10px 4px; border-top: 1px solid rgba(255,255,255,.07);
+  padding: 14px 10px 4px; border-top: 1px solid rgba(255,255,255,.07);
   font-size: .72rem; color: var(--adm-side-ink2); word-break: break-word;
 }
 .adm-side-foot b { display: block; color: var(--adm-side-ink); font-weight: 600; }

@@ -45,6 +45,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
   // "prueba expirada" aunque la suscripción siguiera activa.
   const { subscriptionStatus, subscriptionPeriodEnd, obData, tdee, planGoal, logout } = useAppStore(useShallow((s) => ({ subscriptionStatus: s.subscriptionStatus, subscriptionPeriodEnd: s.subscriptionPeriodEnd, obData: s.obData, tdee: s.tdee, planGoal: s.planGoal, logout: s.logout })));
   const user = useAppStore(s => s.user);
+  const isAdmin = useAppStore(s => s.isAdmin);
   const language = useAppStore(s => s.language);
   const setLanguage = useAppStore(s => s.setLanguage);
   const { t } = useT();
@@ -398,6 +399,14 @@ export default function SettingsSheet({ open, onClose }: Props) {
             </button>
           </div>
         </section>
+
+        {/* Ver como admin — solo para el dueño/administradores. Mismo login y
+            misma sesión; solo cambia de vista al panel del negocio. */}
+        {isAdmin && (
+          <button className="ss-admin-link" onClick={() => { window.location.href = '/admin'; }} type="button">
+            {t('settings.viewAsAdmin')}
+          </button>
+        )}
 
         {/* Sección 4: Logout */}
         <button className="ss-logout" onClick={handleLogout} type="button">

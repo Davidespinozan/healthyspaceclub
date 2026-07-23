@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, Wallet, BarChart3, ScrollText, UserCog, Settings, LogOut,
+  LayoutDashboard, Users, Wallet, BarChart3, ScrollText, UserCog, Settings, LogOut, Eye,
   type LucideIcon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -56,6 +56,10 @@ export default function Sidebar({ email }: { email: string | null }) {
           })}
         </div>
       ))}
+
+      <button className="adm-verapp" onClick={() => { window.location.href = '/'; }}>
+        <Eye size={15} strokeWidth={2} /> Ver como usuario
+      </button>
 
       <div className="adm-side-foot">
         <b>{email ?? '—'}</b>

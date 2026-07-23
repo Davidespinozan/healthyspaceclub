@@ -388,6 +388,25 @@
 }
 
 /* Logout */
+.ss-admin-link {
+  width: 100%;
+  padding: 13px;
+  background: var(--forest);
+  border: none;
+  border-radius: 50px;
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: var(--shadow-pro-md);
+  margin-bottom: 12px;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.18s ease;
+}
+.ss-admin-link:hover { opacity: 0.9; }
+
 .ss-logout {
   width: 100%;
   padding: 13px;

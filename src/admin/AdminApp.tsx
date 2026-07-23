@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './admin.css';
 import { useAdminGuard } from './useAdminGuard';
+import AdminLogin from './AdminLogin';
 import AdminLayout from './AdminLayout';
 import Dashboard from './pages/Dashboard';
 import Ingresos from './pages/Ingresos';
@@ -24,13 +25,7 @@ export default function AdminApp() {
     return <div className="adm-root adm-boot"><p>Cargando…</p></div>;
   }
   if (state === 'no-auth') {
-    return (
-      <div className="adm-root adm-boot">
-        <h1>Panel del Club</h1>
-        <p>Necesitas iniciar sesión con tu cuenta de administrador.</p>
-        <button onClick={() => { window.location.href = '/'; }}>Ir a iniciar sesión</button>
-      </div>
-    );
+    return <AdminLogin />;
   }
   if (state === 'not-admin') {
     return (

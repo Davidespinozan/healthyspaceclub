@@ -48,6 +48,7 @@ export const es = {
     privacy: 'Privacidad',
     logout: 'Cerrar sesión',
     logoutConfirm: '¿Cerrar sesión? Tendrás que volver a iniciar sesión para acceder a tu cuenta.',
+    viewAsAdmin: 'Ver como admin',
     managePlan: 'Gestionar plan',
     planPro: 'Pro',
     planTrial: 'Prueba gratuita',
