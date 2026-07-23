@@ -98,7 +98,7 @@ Deno.serve(async (req: Request) => {
         const periodEnd = periodEndISO(sub);
 
         const eventAt = new Date(event.created * 1000).toISOString();
-        const updated = await applyToUser(admin, stripe, customerId, sub, {
+        const { ok, userId, applied } = await applyToUser(admin, stripe, customerId, sub, {
           subscription_status: plan,
           subscription_period_end: periodEnd,
           plan_id: planId,
@@ -112,9 +112,42 @@ Deno.serve(async (req: Request) => {
           last_sub_event_at: eventAt,
         }, eventAt);
 
-        if (!updated) {
+        if (!ok || !userId) {
           console.error('[stripe-webhook] no se encontró user para customer', customerId);
           // 200 igual: reintentar no ayudaría (el user no existe en nuestra DB).
+          break;
+        }
+
+        // ── Historial de estados ──────────────────────────────────────────
+        // a_estado captura lo que subscription_status NO puede: past_due
+        // (impago en curso) y cancelada (baja definitiva) son estados propios,
+        // no valores de none|trial|pro.
+        const aEstado = event.type === 'customer.subscription.deleted'
+          ? 'cancelada'
+          : (sub.status === 'past_due' || sub.status === 'unpaid')
+            ? 'past_due'
+            : plan; // 'trial' | 'pro' | 'none'
+        const deEstado = await ultimoEstadoSub(admin, userId);
+        // Solo se asienta si (a) el update se APLICÓ —un evento fuera de orden
+        // se ignoró y no debe inventar transición— y (b) de verdad CAMBIÓ de
+        // estado. Una renovación (subscription.updated sin cambio de status) es
+        // un movimiento de dinero, no un evento de estado.
+        if (applied && aEstado !== deEstado) {
+          const motivo = aEstado === 'cancelada'
+            ? 'cancelacion'
+            : (deEstado == null || deEstado === 'none')
+              ? 'alta'
+              : (deEstado === 'trial' && aEstado === 'pro')
+                ? 'conversion_trial'
+                : aEstado === 'past_due'
+                  ? 'pago_fallido'
+                  : deEstado === 'past_due'
+                    ? 'pago_recuperado'
+                    : 'cambio_estado';
+          await registrarEvento(admin, {
+            userId, de: deEstado, a: aEstado, motivo,
+            referencia: event.id, ocurridoEn: eventAt,
+          });
         }
         break;
       }
@@ -229,7 +262,7 @@ async function applyToUser(
   // Si viene, se ignora el evento cuando es MÁS VIEJO que el último de
   // suscripción ya aplicado (anti out-of-order). Solo para eventos de sub.
   guardEventAt?: string,
-): Promise<boolean> {
+): Promise<{ ok: boolean; userId: string | null; applied: boolean }> {
   // 1) match directo por customer_id
   const { data: byCustomer } = await admin
     .from('user_profiles')
@@ -243,7 +276,7 @@ async function applyToUser(
   // (reintento/entrega tardía) no debe pisar el estado fresco.
   if (guardEventAt && byCustomer?.last_sub_event_at
       && new Date(guardEventAt) <= new Date(byCustomer.last_sub_event_at)) {
-    return true; // "manejado" (intencionalmente ignorado)
+    return { ok: true, userId, applied: false }; // "manejado" (intencionalmente ignorado)
   }
 
   // 2) fallback: leer metadata.supabase_user_id del customer en Stripe
@@ -262,7 +295,7 @@ async function applyToUser(
     }
   }
 
-  if (!userId) return false;
+  if (!userId) return { ok: false, userId: null, applied: false };
 
   const { error } = await admin
     .from('user_profiles')
@@ -273,5 +306,53 @@ async function applyToUser(
     console.error('[stripe-webhook] update user_profiles falló:', error.message);
     throw new Error(error.message);
   }
-  return true;
+  return { ok: true, userId, applied: true };
+}
+
+// ── Historial de estados (eventos_estado) ───────────────────────────────────
+// El último a_estado registrado para el socio = su estado ANTERIOR. Se usa la
+// propia tabla de historial como fuente de "de dónde venía", porque past_due y
+// cancelada NO viven en user_profiles.subscription_status (que solo es
+// none|trial|pro): reconstruirlos desde ahí sería imposible.
+async function ultimoEstadoSub(
+  // deno-lint-ignore no-explicit-any
+  admin: any,
+  userId: string,
+): Promise<string | null> {
+  const { data } = await admin
+    .from('eventos_estado')
+    .select('a_estado')
+    .eq('negocio', 'hsc').eq('entidad', 'suscripcion').eq('entidad_id', userId)
+    .order('ocurrido_en', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.a_estado ?? null;
+}
+
+// Asienta una transición de estado. Idempotente por referencia_externa (el
+// event.id de Stripe): un reintento no duplica. No revienta el webhook si algo
+// sale mal — el estado ya quedó aplicado en user_profiles; el historial es
+// medición, no operación.
+async function registrarEvento(
+  // deno-lint-ignore no-explicit-any
+  admin: any,
+  args: { userId: string; de: string | null; a: string; motivo: string; referencia: string; ocurridoEn: string },
+): Promise<void> {
+  try {
+    const { error } = await admin.from('eventos_estado').insert({
+      negocio: 'hsc',
+      entidad: 'suscripcion',
+      entidad_id: args.userId,
+      de_estado: args.de,
+      a_estado: args.a,
+      motivo: args.motivo,
+      referencia_externa: args.referencia,
+      ocurrido_en: args.ocurridoEn,
+    });
+    if (error && error.code !== '23505') {
+      console.error('[stripe-webhook] eventos_estado falló:', error.message);
+    }
+  } catch (e) {
+    console.error('[stripe-webhook] eventos_estado excepción:', e instanceof Error ? e.message : e);
+  }
 }
