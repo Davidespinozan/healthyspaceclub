@@ -12,6 +12,8 @@ export interface ExerciseOverlay {
 }
 
 export const exercisesEn: Record<string, ExerciseOverlay> = {
+  'core-suelo-piernas': { name: 'Floor Core (Legs)', desc: 'Lower abs and obliques with leg movements lying on the floor — no equipment, control and endurance.', tip: 'If you feel your lower back, raise your legs a little or tuck your hands under your glutes — protect the lumbar.' },
+  'cluster-barra': { name: 'Barbell Cluster', desc: 'Combined barbell lift — legs, glutes and shoulders in one full-body movement.', tip: "It's a technical lift — start light and master the coordination before adding weight." },
   'curl-barra-z': { name: 'EZ-Bar Curl', desc: 'Curl with an EZ (Z) bar — a semi-supinated grip that is easier on wrists and elbows than the straight bar.', tip: 'The bend of the EZ bar reduces wrist strain — ideal if the straight bar bothers you.' },
   'curl-polea-alta': { name: 'High Cable Curl', desc: 'Curl with the cables at shoulder height (double-biceps pose) — peak and maximum biceps contraction.', tip: 'Keep your elbows high and fixed — the movement is only from the forearm, chasing the biceps peak.' },
   'curl-martillo-scott': { name: 'Scott Bench Hammer Curl', desc: 'Hammer curl (neutral grip) with your arm on a Scott bench — brachialis and brachioradialis with no shoulder cheating.', tip: 'The Scott bench removes shoulder momentum — go full but don\'t bounce at the stretch.' },
@@ -322,6 +324,15 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Sit-out (patada sentado)': 'Sit-out (seated kick-through)',
+  'Crunch con piernas elevadas': 'Crunch with legs raised',
+  'In & out (manos apoyadas)': 'In & out (hands supported)',
+  'In & out sobre mancuerna': 'In & out over a dumbbell',
+  'Toques de puntas': 'Toe touches',
+  'Tijera con toque cruzado': 'Scissor with cross-touch',
+  'Aleteo vertical': 'Flutter kicks',
+  'Tijera horizontal': 'Horizontal scissors',
+  'Cluster completo': 'Full cluster',
   'Mancuernas (supino)': 'Dumbbells (supinated)',
   'Martillo (agarre neutro)': 'Hammer (neutral grip)',
   'Mancuernas con isométrico': 'Dumbbells with isometric hold',
@@ -573,6 +584,14 @@ export const variantNameEn: Record<string, string> = {
 // natural en inglés; poses de yoga conservan su nombre (Warrior, chaturanga,
 // Dandasana, upward/downward dog). Mapeado por texto ES → EN.
 export const stepDescEn: Record<string, string> = {
+  'Acostado boca arriba, zona lumbar pegada al piso, manos a los lados o bajo los glúteos.': 'Lying face up, lower back pressed to the floor, hands at your sides or under your glutes.',
+  'Aprieta el abdomen y despega ligeramente los hombros o mantén la lumbar firme.': 'Squeeze your abs and lift your shoulders slightly, or keep your lower back firm.',
+  'Mueve las piernas con control según la variante — sin arquear la espalda baja.': 'Move your legs with control depending on the variation — without arching your lower back.',
+  'Exhala en el esfuerzo, mantén el ritmo constante y técnico.': 'Exhale on the effort, keep a steady, controlled pace.',
+  'Barra al frente a la altura de los hombros o colgando, pies a la anchura de cadera.': 'Bar in front at shoulder height or hanging, feet hip-width apart.',
+  'Baja en sentadilla con la espalda recta y el pecho arriba.': 'Descend into a squat with a straight back and chest up.',
+  'Sube explosivo y usa el impulso para llevar la barra por encima de la cabeza.': 'Drive up explosively and use the momentum to bring the bar overhead.',
+  'Baja la barra con control a la posición inicial antes de la siguiente repetición.': 'Lower the bar with control to the starting position before the next rep.',
   'Recostado en banco inclinado a 45-60°, brazos colgando por detrás del torso.': 'Lie back on a 45-60° incline bench, arms hanging behind your torso.',
   'Flexiona los codos sin adelantar el hombro — el codo se queda atrás.': 'Bend the elbows without letting the shoulder drift forward — the elbow stays back.',
   'Aprieta arriba 1 segundo.': 'Squeeze at the top for 1 second.',
@@ -1044,6 +1063,17 @@ export const stepDescEn: Record<string, string> = {
 // A2b-3 — notas de variantes (prosa explicativa). Cierra el contenido i18n.
 // Terminología fitness natural en inglés. Mapeado por texto ES → EN.
 export const variantNotesEn: Record<string, string> = {
+  'Manos juntas — mayor énfasis en la cabeza externa del bíceps.': 'Hands together — more emphasis on the outer head of the biceps.',
+  'Dos poleas altas a los lados — pico y contracción máxima.': 'Two high cables at your sides — peak and maximum contraction.',
+  'Desde plancha, pasa una pierna por debajo del cuerpo y patea al frente — core + coordinación y movilidad de cadera.': 'From a plank, pass one leg under your body and kick forward — core + coordination and hip mobility.',
+  'Piernas arriba estáticas, despega los hombros hacia ellas — abdomen alto.': 'Legs up and static, lift your shoulders toward them — upper abs.',
+  'Sentado con manos apoyadas atrás, encoges y estiras las piernas — abdomen inferior.': 'Seated with hands behind you, tuck and extend your legs — lower abs.',
+  'Igual pero pasando las piernas por encima de una mancuerna — más rango y control.': 'Same, but passing your legs over a dumbbell — more range and control.',
+  'Piernas elevadas, subes a tocar las puntas de los pies — abdomen alto.': 'Legs raised, reach up to touch your toes — upper abs.',
+  'Tijeras cruzando pierna sobre pierna con toque — oblicuos.': 'Scissors crossing leg over leg with a touch — obliques.',
+  'Piernas arriba, pequeños aleteos verticales acostado — abdomen inferior, resistencia.': 'Legs up, small vertical flutters lying down — lower abs, endurance.',
+  'Piernas bajas, tijeras horizontales cruzando — abdomen inferior.': 'Legs low, crossing horizontal scissors — lower abs.',
+  'Sentadilla + empuje sobre la cabeza encadenados — potencia de cuerpo completo.': 'Chained squat + overhead press — full-body power.',
   'Palmas al frente — máximo estiramiento de la cabeza larga.': 'Palms forward — maximum stretch on the long head.',
   'Palmas enfrentadas — carga braquial y braquiorradial en estiramiento.': 'Palms facing each other — loads the brachialis and brachioradialis under stretch.',
   'Un brazo sostiene arriba mientras el otro sube — tensión constante brutal.': 'One arm holds at the top while the other curls — brutal constant tension.',

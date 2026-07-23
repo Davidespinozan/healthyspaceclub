@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ArrowRight, X } from 'lucide-react';
 import { fetchBowlsDisponibles, FLAMA_URL, linkPedido, linkMenu, linkArmar, type BowlClub } from '../data/bowlsClub';
 import type { PlanTarget, Slot } from '../utils/planEngine';
+import { useT } from '../i18n';
 
 /**
  * Widget "hoy no cocino" dentro de la pestaña Hoy.
@@ -18,10 +19,10 @@ import type { PlanTarget, Slot } from '../utils/planEngine';
 // Reparto de Magaly: 25% desayuno / 35% comida / 25% cena. Se muestra cuánto vale
 // cada tiempo para que elegir no sea a ciegas — si el bowl trae 737 kcal, ver que su
 // comida son 1003 y su desayuno 718 le dice sola cuál tiene sentido.
-const TIEMPOS: { slot: Slot; label: string; share: number }[] = [
-  { slot: 'Desayuno', label: 'Desayuno', share: 0.25 },
-  { slot: 'Comida', label: 'Comida', share: 0.35 },
-  { slot: 'Cena', label: 'Cena', share: 0.25 },
+const TIEMPOS: { slot: Slot; labelKey: 'bowl.slotDesayuno' | 'bowl.slotComida' | 'bowl.slotCena'; share: number }[] = [
+  { slot: 'Desayuno', labelKey: 'bowl.slotDesayuno', share: 0.25 },
+  { slot: 'Comida', labelKey: 'bowl.slotComida', share: 0.35 },
+  { slot: 'Cena', labelKey: 'bowl.slotCena', share: 0.25 },
 ];
 
 export function BowlWidget({ target, onElegir }: {
@@ -29,6 +30,7 @@ export function BowlWidget({ target, onElegir }: {
   /** Se dispara al confirmar: el plan del día se rearma alrededor del bowl. */
   onElegir?: (bowl: BowlClub, slot: Slot) => void;
 }) {
+  const { t } = useT();
   const [bowls, setBowls] = useState<BowlClub[]>([]);
   const [abierto, setAbierto] = useState(false);
   const [sel, setSel] = useState<BowlClub | null>(null);
@@ -61,7 +63,7 @@ export function BowlWidget({ target, onElegir }: {
           <img className="th3-bowl-flama" src={FLAMA_URL} alt="" />
           <span className="th3-bowl-txt">
             <span className="th3-bowl-brand">Healthy Space · Mexican Grill &amp; Bowls</span>
-            <span className="th3-bowl-place">Cocción lenta · Culiacán</span>
+            <span className="th3-bowl-place">{t('bowl.place')}</span>
           </span>
           <ArrowRight size={18} strokeWidth={2.2} className="th3-bowl-arrow" />
         </span>
@@ -74,14 +76,14 @@ export function BowlWidget({ target, onElegir }: {
           ))}
         </span>
         <span className="th3-bowl-foot">
-          ¿Hoy no quieres cocinar? Pide un bowl y tu día se reacomoda solo.
+          {t('bowl.foot')}
         </span>
       </button>
 
       {abierto && createPortal(
         <div className="bw-sheet-bg" onClick={() => { setAbierto(false); setSel(null); }}>
           <div className="bw-sheet" onClick={(e) => e.stopPropagation()}>
-            <button className="bw-x" onClick={() => { setAbierto(false); setSel(null); }} aria-label="Cerrar">
+            <button className="bw-x" onClick={() => { setAbierto(false); setSel(null); }} aria-label={t('bowl.close')}>
               <X size={18} />
             </button>
 
@@ -90,11 +92,8 @@ export function BowlWidget({ target, onElegir }: {
             <div className="bw-intro">
               <img className="bw-logo" src={FLAMA_URL} alt="" />
               <h3>Healthy Space · Mexican Grill &amp; Bowls</h3>
-              <p>
-                Proteínas de <b>cocción lenta</b> en Culiacán: chamberete braseado 8 horas,
-                pollo y cerdo lentos. Pocas, pero inolvidables.
-              </p>
-              <span className="bw-intro-meta">Recoge o pide a domicilio</span>
+              <p>{t('bowl.introText')}</p>
+              <span className="bw-intro-meta">{t('bowl.introMeta')}</span>
             </div>
 
             <div className="bw-list">
@@ -112,7 +111,7 @@ export function BowlWidget({ target, onElegir }: {
                   }}>
                   <span className="bw-card-photo" style={{ background: b.accent ?? '#16302B' }}>
                     {b.img && <img src={b.img} alt={b.name} loading="lazy" />}
-                    {i === 0 && <em className="bw-best">El que mejor te queda</em>}
+                    {i === 0 && <em className="bw-best">{t('bowl.best')}</em>}
                   </span>
                   <span className="bw-card-body">
                     <span className="bw-card-top">
@@ -123,8 +122,8 @@ export function BowlWidget({ target, onElegir }: {
                     <span className="bw-card-macros">
                       <span><b>{Math.round(b.kcal)}</b><i>kcal</i></span>
                       <span><b>{Math.round(b.prot)}g</b><i>prot</i></span>
-                      <span><b>{Math.round(b.carb)}g</b><i>carb</i></span>
-                      <span><b>{Math.round(b.fat)}g</b><i>grasa</i></span>
+                      <span><b>{Math.round(b.carb)}g</b><i>{t('bowl.macroCarb')}</i></span>
+                      <span><b>{Math.round(b.fat)}g</b><i>{t('bowl.macroFat')}</i></span>
                     </span>
                   </span>
                 </button>
@@ -135,38 +134,41 @@ export function BowlWidget({ target, onElegir }: {
                 Sin esto la hoja te encierra hasta que escojas un bowl. */}
             <div className="bw-otras">
               <a className="bw-otra" href={linkArmar()} target="_blank" rel="noopener noreferrer">
-                <b>Armar mi bowl</b>
-                <i>Elige proteína, base y salsa</i>
+                <b>{t('bowl.buildTitle')}</b>
+                <i>{t('bowl.buildSub')}</i>
               </a>
               <a className="bw-otra" href={linkMenu()} target="_blank" rel="noopener noreferrer">
-                <b>Ver el menú completo</b>
-                <i>Bowls, aguas frescas y extras</i>
+                <b>{t('bowl.menuTitle')}</b>
+                <i>{t('bowl.menuSub')}</i>
               </a>
             </div>
 
             {sel && (
               <div className="bw-foot">
-                <p className="bw-foot-label">¿En qué comida te lo vas a comer?</p>
+                <p className="bw-foot-label">{t('bowl.slotQ')}</p>
                 <div className="bw-slots">
-                  {TIEMPOS.map((t) => {
-                    const kcal = target ? Math.round(target.kcal * t.share) : null;
+                  {TIEMPOS.map((ti) => {
+                    const kcal = target ? Math.round(target.kcal * ti.share) : null;
                     return (
-                      <button key={t.slot}
-                        className={`bw-slot${slot === t.slot ? ' on' : ''}`}
-                        onClick={() => setSlot(t.slot)}>
-                        <b>{t.label}</b>
-                        {kcal && <i>hoy son {kcal} kcal</i>}
+                      <button key={ti.slot}
+                        className={`bw-slot${slot === ti.slot ? ' on' : ''}`}
+                        onClick={() => setSlot(ti.slot)}>
+                        <b>{t(ti.labelKey)}</b>
+                        {kcal && <i>{t('bowl.slotKcal', { kcal })}</i>}
                       </button>
                     );
                   })}
                 </div>
-                <p className="bw-foot-note">
-                  Tu <b>{slot.toLowerCase()}</b> de hoy pasa a ser el <b>{sel.name}</b> y el
-                  resto del día se reacomoda para cumplir tus macros.
-                </p>
+                <p className="bw-foot-note">{(() => {
+                  // {slot} = el tiempo traducido en minúscula; {name} va en negritas,
+                  // así que se parte la plantilla alrededor de {name} y se intercala <b>.
+                  const slotLabel = t(('bowl.slot' + slot) as 'bowl.slotComida').toLowerCase();
+                  const [antes, despues] = t('bowl.replaceNote', { slot: slotLabel, name: ' ' }).split(' ');
+                  return (<>{antes}<b>{sel.name}</b>{despues}</>);
+                })()}</p>
                 <a className="bw-cta" href={linkPedido(sel.id)} target="_blank" rel="noopener noreferrer"
                   onClick={() => { onElegir?.(sel, slot); setAbierto(false); setSel(null); }}>
-                  Pedirlo — ${Math.round(sel.price)}
+                  {t('bowl.order', { price: '$' + Math.round(sel.price) })}
                 </a>
               </div>
             )}

@@ -119,7 +119,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
         }
       } catch (e: any) {
         console.warn('[public-profile] load failed:', e);
-        setError(e.message || 'No se pudo cargar el perfil');
+        setError(e.message || t('profile.loadError'));
       } finally {
         setLoading(false);
       }

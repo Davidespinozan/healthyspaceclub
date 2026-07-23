@@ -645,7 +645,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                     <>
                       <h2 className="th3-card-title">{t('hoy.routineFlow')}</h2>
                       <p className="th3-card-meta">
-                        {wType} · {poses.length} poses{totalMin > 0 ? ` · ${totalMin} min` : ''}
+                        {wType} · {t('yoga.posesCount', { n: poses.length })}{totalMin > 0 ? ` · ${totalMin} min` : ''}
                       </p>
                     </>
                   );
@@ -667,7 +667,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                         {exList.slice(0, 6).map((ex, i) => {
                           const exId = String(ex.id ?? `ex-${i}`);
                           const bank = exerciseMap.get(exId);
-                          const displayName = String(bank?.name || ex.name || 'Ejercicio');
+                          const displayName = String(bank?.name || ex.name || t('video.exercise'));
 
                           // Hoy es tablero: el detalle del ejercicio (con video y
                           // técnica) vive en Entrenamiento. Tocar el ejercicio aquí
@@ -919,7 +919,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             const i = Math.min(idx, weeklyPlan.days.length - 1);
             const nuevo = buildDayWithFixed(
               { kcal: g.kcal, protG: g.protG, fatG: g.fatG, carbG: g.carbG },
-              { slot, name: bowl.name, kcal: bowl.kcal, prot: bowl.prot, fat: bowl.fat, carb: bowl.carb, img: bowl.img ?? undefined, desc: bowl.tagline ?? 'Bowl de Healthy Space' },
+              { slot, name: bowl.name, kcal: bowl.kcal, prot: bowl.prot, fat: bowl.fat, carb: bowl.carb, img: bowl.img ?? undefined, desc: bowl.tagline ?? t('bowl.genericDesc') },
               { avoid: g.avoid, craving: g.craving },
               weeklyPlan.days[i].day,
             );

@@ -421,7 +421,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           <h1 className="yfp-done-title">Namasté.</h1>
           <p className="yfp-done-sub">{t('yoga.completedVinyasa')}</p>
           <p className="yfp-done-stats">
-            {totalMinutes} min · {totalPoses} poses
+            {totalMinutes} min · {t('yoga.posesCount', { n: totalPoses })}
           </p>
           <button className="yfp-done-cta" onClick={handleComplete}>
             {t('yoga.markDone')}

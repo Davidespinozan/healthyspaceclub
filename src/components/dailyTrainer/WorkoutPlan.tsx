@@ -261,7 +261,7 @@ export default function WorkoutPlan({
               onClick={() => {
                 const fallback: Exercise = {
                   id: ex.id || `ex-${i}`,
-                  name: bank?.name || (ex.id ? humanizeExerciseId(ex.id) : 'Ejercicio'),
+                  name: bank?.name || (ex.id ? humanizeExerciseId(ex.id) : t('video.exercise')),
                   desc: '',
                   muscleGroup: 'cuerpo-completo',
                   equipment: ['gym'],

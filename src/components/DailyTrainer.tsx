@@ -90,7 +90,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const today = dayKey(new Date());
   const firstName = userName?.split(' ')[0] || '';
   const todayDayName = new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { weekday: 'long' });
-  const todayDateShort = `${new Date().getDate()} ${new Date().toLocaleDateString('es-ES', { month: 'short' })}`;
+  const todayDateShort = `${new Date().getDate()} ${new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'short' })}`;
 
   // Admin bypass: flag is_admin REAL de la DB (no por nombre — antes cualquiera
   // llamado David/Magaly tenía regeneraciones ilimitadas).
@@ -199,7 +199,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     bullets.push(t('wizard.genGoal', { goal: goalLabel }));
     // Nivel de entrenamiento → la IA lo necesita para calibrar estructura y técnicas
     // (más superseries/técnicas de intensidad a mayor nivel; principiante casi ninguna).
-    bullets.push(`Nivel de entrenamiento: ${levelFromObData(obData)}`);
+    const lvl = levelFromObData(obData);
+    const lvlKey = lvl === 'principiante' ? 'wizard.levelBeginner' : lvl === 'avanzado' ? 'wizard.levelAdvanced' : 'wizard.levelIntermediate';
+    bullets.push(t('wizard.genLevel', { level: t(lvlKey) }));
 
     const modOpt = MODALITY_OPTIONS.find(m => m.value === selectedModality);
     const modalityLabel = modOpt?.label || 'auto'; // español — contexto del prompt + mensaje de error

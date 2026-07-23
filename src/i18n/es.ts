@@ -20,6 +20,7 @@ export const es = {
     you: 'Tú',
   },
   settings: {
+    madeIn: 'hecho con cariño en Valencia',
     language: 'Idioma',
     languageEs: 'Español',
     languageEn: 'Inglés',
@@ -535,6 +536,7 @@ export const es = {
     planMicro: 'tu flow',
     minTotal: '{n} min total',
     posesCount: '{n} poses',
+    vinyasasCount: '{n} vinyasas',
     posesCountOne: '{n} pose',
   },
   exerciseDetail: {
@@ -672,6 +674,10 @@ export const es = {
     genRestDays: '{n} días sin entrenar',
     genTrainedYesterday: 'Entrenó ayer',
     genGoal: 'Objetivo: {goal}',
+    genLevel: 'Nivel de entrenamiento: {level}',
+    levelBeginner: 'principiante',
+    levelIntermediate: 'intermedio',
+    levelAdvanced: 'avanzado',
     genEnergy: 'Energía: {level}',
     genModality: 'Modalidad: {mod}',
     genTimeEquip: '{min} min · {equip}',
@@ -858,6 +864,7 @@ export const es = {
     onlySpanishNotice: 'Este documento solo está disponible en español por ahora.',
   },
   profile: {
+    loadError: 'No se pudo cargar el perfil',
     editProfile: 'Editar perfil',
     change: 'Cambiar',
     activeDays: 'Días activos',
@@ -1376,6 +1383,30 @@ export const es = {
     actTennis: 'Tenis',
     actClimb: 'Escalada',
     actOther: 'Otro',
+  },
+
+  // Widget "hoy no cocino" (bowls de Culiacán) dentro de la pestaña Hoy.
+  bowl: {
+    genericDesc: 'Bowl de Healthy Space',
+    place: 'Cocción lenta · Culiacán',
+    foot: '¿Hoy no quieres cocinar? Pide un bowl y tu día se reacomoda solo.',
+    close: 'Cerrar',
+    introText: 'Proteínas de cocción lenta en Culiacán: chamberete braseado 8 horas, pollo y cerdo lentos. Pocas, pero inolvidables.',
+    introMeta: 'Recoge o pide a domicilio',
+    best: 'El que mejor te queda',
+    macroCarb: 'carb',
+    macroFat: 'grasa',
+    buildTitle: 'Armar mi bowl',
+    buildSub: 'Elige proteína, base y salsa',
+    menuTitle: 'Ver el menú completo',
+    menuSub: 'Bowls, aguas frescas y extras',
+    slotQ: '¿En qué comida te lo vas a comer?',
+    slotKcal: 'hoy son {kcal} kcal',
+    replaceNote: 'Tu {slot} de hoy pasa a ser el {name} y el resto del día se reacomoda para cumplir tus macros.',
+    order: 'Pedirlo — {price}',
+    slotDesayuno: 'Desayuno',
+    slotComida: 'Comida',
+    slotCena: 'Cena',
   },
 } as const;
 

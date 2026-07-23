@@ -404,7 +404,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
           {t('settings.logout')}
         </button>
 
-        <p className="ss-version">HSC v1.2.0 · made with care in Valencia</p>
+        <p className="ss-version">HSC v1.2.0 · {t('settings.madeIn')}</p>
       </div>
 
       {showManagePlan && <ManagePlanSheet onClose={() => setShowManagePlan(false)} />}
