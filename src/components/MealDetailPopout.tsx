@@ -5,6 +5,7 @@ import { useT } from '../i18n';
 import { formatPortion } from '../utils/kcalCalc';
 import { mealMacros } from '../utils/mealNutrition';
 import { SUBRECETAS } from '../data/banco';
+import { tDishName, tIngName, tSubName, tPortion, tDesc } from '../utils/nutritionI18n';
 import type { TranslationKey } from '../i18n/es';
 
 // Shape mínimo de un meal — compatible con MealItem (data/mealPlan) y con los
@@ -56,7 +57,7 @@ interface Props {
 // desc + ingredientes + close. Reutilizado desde TabHoy y WeeklyNutritionPlanner.
 // Clases CSS .th-popout-* viven en index.css (globales por historial).
 export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther, onShare }: Props) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const [openRecipe, setOpenRecipe] = useState<string | null>(null);
 
   if (!meal) return null;
@@ -104,12 +105,12 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther,
             <div className="th-popout-time">{timeLabel}</div>
             <div className="th-popout-kcal">{kcal} kcal</div>
           </div>
-          <div className="th-popout-name">{meal.name}</div>
-          {meal.desc && <div className="th-popout-desc">{meal.desc}</div>}
+          <div className="th-popout-name">{tDishName(meal.name, locale)}</div>
+          {meal.desc && <div className="th-popout-desc">{tDesc(meal.desc, locale)}</div>}
           <div className="th-popout-label">{t('hoy.popoutIngredients')}</div>
           <div className="th-popout-portions">
             {portions.map((p, i) => (
-              <div key={i} className="th-popout-portion">{formatPortion(p)}</div>
+              <div key={i} className="th-popout-portion">{formatPortion(tPortion(p, meal.ings?.[i], locale))}</div>
             ))}
           </div>
 
@@ -133,7 +134,7 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther,
                     size={14} strokeWidth={2} aria-hidden
                     style={{ flexShrink: 0, transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform .15s' }}
                   />
-                  {t('hoy.popoutRecipeOf')} {nombre.toLowerCase()}
+                  {t('hoy.popoutRecipeOf')} {tSubName(nombre, locale).toLowerCase()}
                   <span style={{ marginLeft: 'auto', fontWeight: 400, opacity: .65, fontSize: '.75rem' }}>
                     {t('hoy.popoutYields', { g: String(receta.rinde) })}
                   </span>
@@ -142,7 +143,7 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther,
                   <div style={{ padding: '8px 12px 2px 30px' }}>
                     {receta.ings.map((ing, k) => (
                       <div key={k} className="th-popout-portion" style={{ opacity: ing.rol === 'condimento' ? .7 : 1 }}>
-                        {ing.rol === 'condimento' ? ing.nv : `${Math.round(ing.g)} g ${ing.nv}`}
+                        {ing.rol === 'condimento' ? tIngName(ing.nv, locale) : `${Math.round(ing.g)} g ${tIngName(ing.nv, locale)}`}
                       </div>
                     ))}
                   </div>
@@ -190,7 +191,7 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther,
             <button
               type="button"
               className="th-popout-share"
-              onClick={() => onShare(`${timeLabel} · ${meal.name}`)}
+              onClick={() => onShare(`${timeLabel} · ${tDishName(meal.name, locale)}`)}
             >
               <Camera size={17} strokeWidth={2} />
               {t('post.shareFromWorkout')}

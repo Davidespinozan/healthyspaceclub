@@ -14,6 +14,7 @@ import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
 import { getExercises } from '../data/exercises';
 import MealDetailPopout from './MealDetailPopout';
+import { tDishName } from '../utils/nutritionI18n';
 import { chronoMeals } from '../utils/mealOrder';
 import { translateDayLabel } from '../utils/dayTypeLabel';
 import DailyRings, { type RingItem } from './DailyRings';
@@ -836,7 +837,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                                   className="th3-card-list-name"
                                   onClick={openDetail}
                                 >
-                                  {meal.name}
+                                  {tDishName(meal.name, locale)}
                                 </button>
                               )}
                             </div>

@@ -13,6 +13,7 @@ import NutritionMeta from './NutritionMeta';
 import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, Dumbbell, type LucideIcon } from 'lucide-react';
 import type { ProteinShake } from '../utils/planEngine';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
+import { tDishName, tIngName, tPortion } from '../utils/nutritionI18n';
 import FoodLogSheet from './FoodLogSheet';
 import CalculadoraSheet from './CalculadoraSheet';
 import { chronoMeals } from '../utils/mealOrder';
@@ -788,7 +789,7 @@ export default function WeeklyNutritionPlanner() {
                     <div className={`wnp2-shop-item-check${checked ? ' checked' : ''}`}>
                       {checked ? <Check size={14} strokeWidth={2} /> : ''}
                     </div>
-                    <span className="wnp2-shop-item-text">{item}</span>
+                    <span className="wnp2-shop-item-text">{tIngName(item, locale)}</span>
                   </div>
                 );
               })}
@@ -861,7 +862,9 @@ export default function WeeklyNutritionPlanner() {
               const linkedKcal = linked.reduce((s, e) => s + e.kcal, 0);
               const isSnack = meal.time.startsWith('Snack');
               const Ic = MEAL_ICON[meal.time] ?? Leaf;
-              const planName = isSnack ? (meal.portions[0] ?? meal.name) : meal.name;
+              const planName = isSnack
+                ? (meal.portions[0] ? tPortion(meal.portions[0], meal.ings?.[0], locale) : tDishName(meal.name, locale))
+                : tDishName(meal.name, locale);
               const displayName = replaced ? linked.map(e => e.desc).join(' + ') : planName;
               const showCheck = checked || replaced;
 
