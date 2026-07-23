@@ -27,9 +27,9 @@ for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue
   side+=`<div class="side-mg">${MG[mg]}</div>`;
   for(const p of ps){
     const pv = p.con>0?'✓':'';
-    side+=`<div class="s-pat" data-q="${esc(p.patron.toLowerCase())}"><span class="s-name azul">${esc(p.patron)}</span><span class="s-chk">${pv}</span></div>`;
+    side+=`<div class="s-pat" data-q="${esc((p.patron+' '+p.id).toLowerCase())}"><span class="s-name azul">${esc(p.patron)}</span><span class="s-chk">${pv}</span></div>`;
     for(const v of p.vars){ if(v.name==='General'||v.name==='(único)')continue;
-      side+=`<div class="s-var" data-q="${esc(v.name.toLowerCase())}"><span class="s-name rojo">${esc(v.name)}</span><span class="s-chk">${v.tiene?'✓':''}</span></div>`;
+      side+=`<div class="s-var" data-q="${esc((v.name+' '+v.id).toLowerCase())}"><span class="s-name rojo">${esc(v.name)}<code class="s-file">${esc(v.id)}.mp4</code></span><span class="s-chk">${v.tiene?'✓':''}</span></div>`;
     }
   }
 }
@@ -69,7 +69,7 @@ h2.mg{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:upperca
 .s-name{flex:1;font-size:12.5px}
 .s-pat .s-name.azul{font-weight:800;color:#2c62c9}
 .s-var .s-name.rojo{color:var(--terra);font-weight:600}
-.s-chk{color:var(--ok);font-weight:900;font-size:12px}
+.s-chk{color:var(--ok);font-weight:900;font-size:12px}\n.s-file{display:block;font-family:ui-monospace,monospace;font-size:9.5px;color:var(--ink2);margin-top:1px}
 @media(max-width:900px){.layout{grid-template-columns:1fr}.col-side{position:static;max-height:none;order:-1}.side-body{max-height:340px}}
 .hidden{display:none}footer{margin-top:34px;color:var(--ink2);font-size:12px}
 </style></head><body><div class="w">
