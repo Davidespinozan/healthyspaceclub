@@ -57,7 +57,6 @@ export const exercises: Exercise[] = [
       { id: 'press-horizontal-barra', name: 'Con barra', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Permite cargar más peso, pero requiere spotter para ir al fallo.' },
       { id: 'press-horizontal-mancuernas', name: 'Con mancuernas', equipment: ['gym'], difficulty: 'intermedio', notes: 'Mayor rango de movimiento y corrige asimetrías entre brazos.' },
       { id: 'press-horizontal-smith', name: 'En Smith', equipment: ['gym'], difficulty: 'principiante', notes: 'Trayectoria fija — ideal si entrenas sin spotter o buscas alto volumen.' },
-      { id: 'press-horizontal-pec-deck', name: 'En pec deck', equipment: ['gym'], difficulty: 'principiante', notes: 'Aísla el pecho sin demanda de estabilización — útil al final del entrenamiento.' },
       { id: 'press-horizontal-banda', name: 'Con banda', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '12-15', notes: 'En casa o de viaje — ancla la banda detrás de ti a la altura del torso.' },
       { id: 'press-horizontal-flexiones', name: 'Flexiones', equipment: ['cuerpo'], difficulty: 'principiante', defaultSets: 4, defaultReps: '12-15', defaultRest: 60, notes: 'Sin equipo. Mantén core firme — la cadera no debe hundirse.' },
       { id: 'press-horizontal-flexiones-declinadas', name: 'Flexiones declinadas', equipment: ['cuerpo'], difficulty: 'intermedio', defaultSets: 4, defaultReps: '10-12', defaultRest: 60, notes: 'Pies elevados en silla o banco - mayor estrés en pecho superior.' },
