@@ -43,7 +43,6 @@ const gymOrphans=[
   ['abduccion-de-cadera-acostada-de-lado-con-banda-gluteo-medio','Abducción acostada de lado','no hay variante "acostada de lado"'],
   ['buenos-dias-en-maquina-smith-gluteos-femorales-espalda-baja','Buenos días en Smith','Buenos Días no tiene variante Smith'],
   ['patada-lateral-en-cuadrupedia-con-banda-gluteo-medio','Patada lateral en cuadrupedia','no existe "fire hydrant"'],
-  ['lagartijas-diamante-triceps-pecho-medio-neutral','Lagartija diamante neutral','¿duplica el diamante estándar?'],
   ['dominadas-asistidas-en-maquina-agarre-neutro-dorsales-biceps','Dominada asistida agarre neutro','tracción neutra no tiene asistida-máquina'],
   ['saltos-de-boxeador-cardio-pantorrillas-coordinacion','Saltos de boxeador','no existe en el banco'],
   ['saltos-en-puntas-de-pies-cardio-pantorrillas','Saltos en puntas (pogo)','no existe en el banco'],

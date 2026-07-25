@@ -324,6 +324,7 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Agarre neutral': 'Neutral grip',
   'Sit-out (patada sentado)': 'Sit-out (seated kick-through)',
   'Crunch con piernas elevadas': 'Crunch with legs raised',
   'In & out (manos apoyadas)': 'In & out (hands supported)',
@@ -1064,6 +1065,7 @@ export const stepDescEn: Record<string, string> = {
 // Terminología fitness natural en inglés. Mapeado por texto ES → EN.
 export const variantNotesEn: Record<string, string> = {
   'Regresión de la flexión: apoya las rodillas para bajar la carga. Mantén la línea hombros-cadera-rodillas.': 'Push-up regression: rest your knees to lower the load. Keep a straight line from shoulders to hips to knees.',
+  'Manos en agarre neutral (dedos al frente) en vez del diamante cerrado — mismo tríceps y pecho medio, más amable con las muñecas.': 'Hands in a neutral grip (fingers forward) instead of a closed diamond — same triceps and mid-chest, easier on the wrists.',
   'Manos juntas — mayor énfasis en la cabeza externa del bíceps.': 'Hands together — more emphasis on the outer head of the biceps.',
   'Dos poleas altas a los lados — pico y contracción máxima.': 'Two high cables at your sides — peak and maximum contraction.',
   'Desde plancha, pasa una pierna por debajo del cuerpo y patea al frente — core + coordinación y movilidad de cadera.': 'From a plank, pass one leg under your body and kick forward — core + coordination and hip mobility.',

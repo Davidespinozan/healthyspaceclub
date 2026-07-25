@@ -207,6 +207,7 @@ export const exercises: Exercise[] = [
     tip: 'Si te duelen las muñecas, abre ligeramente las manos — la fricción interna del diamante no es lo esencial.',
     variants: [
       { id: 'flexiones-diamante-estandar', name: 'Estándar', equipment: ['cuerpo'], difficulty: 'intermedio', isDefault: true, notes: 'Versión completa — fundamental para tríceps sin equipo.' },
+      { id: 'flexiones-diamante-neutral', name: 'Agarre neutral', equipment: ['cuerpo'], difficulty: 'intermedio', defaultReps: '10-12', notes: 'Manos en agarre neutral (dedos al frente) en vez del diamante cerrado — mismo tríceps y pecho medio, más amable con las muñecas.' },
       { id: 'flexiones-diamante-declinada', name: 'Declinadas', equipment: ['cuerpo'], difficulty: 'avanzado', defaultReps: '8-12', notes: 'Pies elevados en banco/silla — mayor dificultad y carga relativa.' },
       { id: 'flexiones-diamante-rodillas', name: 'En rodillas', equipment: ['cuerpo'], difficulty: 'principiante', defaultReps: '12-15', notes: 'Regresión — ideal si no completas 8 reps estándar.' },
     ],
