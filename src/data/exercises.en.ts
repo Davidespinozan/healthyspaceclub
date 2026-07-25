@@ -325,6 +325,10 @@ export const stepTitleEn: Record<string, string> = {
 
 export const variantNameEn: Record<string, string> = {
   'Agarre neutral': 'Neutral grip',
+  'Acostada de lado': 'Side-lying',
+  'Patada lateral (cuadrupedia)': 'Side kick (quadruped)',
+  'Saltos de boxeador': 'Boxer jumps',
+  'Saltos en puntas (pogo)': 'Pogo jumps',
   'Sit-out (patada sentado)': 'Sit-out (seated kick-through)',
   'Crunch con piernas elevadas': 'Crunch with legs raised',
   'In & out (manos apoyadas)': 'In & out (hands supported)',
@@ -1066,6 +1070,12 @@ export const stepDescEn: Record<string, string> = {
 export const variantNotesEn: Record<string, string> = {
   'Regresión de la flexión: apoya las rodillas para bajar la carga. Mantén la línea hombros-cadera-rodillas.': 'Push-up regression: rest your knees to lower the load. Keep a straight line from shoulders to hips to knees.',
   'Manos en agarre neutral (dedos al frente) en vez del diamante cerrado — mismo tríceps y pecho medio, más amable con las muñecas.': 'Hands in a neutral grip (fingers forward) instead of a closed diamond — same triceps and mid-chest, easier on the wrists.',
+  'Acostado de lado con banda en rodillas o tobillos — sube la pierna de arriba, aísla el glúteo medio.': 'Lying on your side with a band around your knees or ankles — raise the top leg, isolating the gluteus medius.',
+  'En cuadrupedia, abre la pierna al lado con la rodilla doblada (fire hydrant) — glúteo medio.': 'On all fours, open your leg out to the side with the knee bent (fire hydrant) — gluteus medius.',
+  'Barra en Smith sobre los trapecios — bisagra de cadera con trayectoria guiada, más control en la espalda baja.': 'Smith bar across your traps — hip hinge on a guided path, more control for the lower back.',
+  'Máquina de asistencia con agarre neutro (palmas enfrentadas) — construye fuerza hacia la dominada neutra.': 'Assisted machine with a neutral grip (palms facing) — builds strength toward the neutral pull-up.',
+  'Rebotes ligeros de lado a lado sobre las puntas — cardio y coordinación, bajo impacto.': 'Light side-to-side bounces on the balls of your feet — cardio and coordination, low impact.',
+  'Saltos pequeños y rápidos con piernas rígidas, empujando desde el tobillo — pantorrillas y reactividad.': 'Small, fast jumps with stiff legs, pushing from the ankle — calves and reactivity.',
   'Manos juntas — mayor énfasis en la cabeza externa del bíceps.': 'Hands together — more emphasis on the outer head of the biceps.',
   'Dos poleas altas a los lados — pico y contracción máxima.': 'Two high cables at your sides — peak and maximum contraction.',
   'Desde plancha, pasa una pierna por debajo del cuerpo y patea al frente — core + coordinación y movilidad de cadera.': 'From a plank, pass one leg under your body and kick forward — core + coordination and hip mobility.',

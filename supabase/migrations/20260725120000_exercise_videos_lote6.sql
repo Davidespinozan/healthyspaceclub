@@ -1,18 +1,16 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- LOTE 6: 38 videos nuevos que subió Magaly al bucket GYM (.mp4).
+-- LOTE 6: los 44 videos nuevos que subió Magaly al bucket GYM (.mp4), conectados.
 --
--- Todos con match CLARO a una variante/patrón que YA existe en el banco
--- (src/data/exercises.ts) — ninguno de estos exercise_id tenía video antes, así
--- que no hay duplicados. Idempotente por video_url.
+-- 38 con match a una variante/patrón que YA existía. Los otros 6 no tenían
+-- variante equivalente, así que se crearon en el banco (src/data/exercises.ts):
+--   · abduccion-cadera-acostada-lado        Abducción · Acostada de lado
+--   · abduccion-cadera-cuadrupedia          Abducción · Patada lateral (fire hydrant)
+--   · good-morning-smith                    Buenos Días · En Smith
+--   · dominadas-asistidas-maquina-neutra    Tracción Neutra · Dominada asistida (máquina)
+--   · boxer-jumps                           Saltos Básicos · Saltos de boxeador
+--   · pogo-jumps                            Saltos Básicos · Saltos en puntas (pogo)
 --
--- 6 videos MÁS quedaron SIN conectar porque el banco no tiene la variante exacta
--- (necesitan decisión de Magaly para agregar el ejercicio, no adivinar el match):
---   · abduccion-de-cadera-acostada-de-lado-con-banda   (no hay variante "acostada de lado")
---   · buenos-dias-en-maquina-smith                     (good-morning no tiene variante "En Smith")
---   · patada-lateral-en-cuadrupedia-con-banda          (no hay "fire hydrant")
---   · dominadas-asistidas-...-agarre-neutro            (tracción neutra no tiene asistida-máquina)
---   · saltos-de-boxeador                               (no hay "boxer jumps")
---   · saltos-en-puntas-de-pies                         (no hay "pogo/saltos en puntas")
+-- Ninguno tenía video antes → sin duplicados. Idempotente por video_url.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 insert into public.exercise_videos (exercise_id, variant_id, video_url, label, display_order)
@@ -55,6 +53,12 @@ select v.ex, null, v.url, v.label, v.orden
   ('burpee-con-flexion', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/burpees-con-salto-full-body-cardio-resistencia.mp4', 'Ejecución', 0),
   ('jump-squat', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla-con-salto-y-toque-de-suelo-intercalado-piernas-gluteos-cardio.mp4', 'Ejecución', 0),
   ('high-knees', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/skipping-alto-o-tijeras-con-salto-en-el-aire-cardio-piernas-abdomen.mp4', 'Ejecución', 0),
-  ('superman-suelo', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/superman-espalda-baja-gluteos.mp4', 'Ejecución', 0)
+  ('superman-suelo', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/superman-espalda-baja-gluteos.mp4', 'Ejecución', 0),
+  ('abduccion-cadera-acostada-lado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abduccion-de-cadera-acostada-de-lado-con-banda-gluteo-medio.mp4', 'Ejecución', 0),
+  ('good-morning-smith', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/buenos-dias-en-maquina-smith-gluteos-femorales-espalda-baja.mp4', 'Ejecución', 0),
+  ('abduccion-cadera-cuadrupedia', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patada-lateral-en-cuadrupedia-con-banda-gluteo-medio.mp4', 'Ejecución', 0),
+  ('dominadas-asistidas-maquina-neutra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/dominadas-asistidas-en-maquina-agarre-neutro-dorsales-biceps.mp4', 'Ejecución', 0),
+  ('boxer-jumps', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/saltos-de-boxeador-cardio-pantorrillas-coordinacion.mp4', 'Ejecución', 0),
+  ('pogo-jumps', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/saltos-en-puntas-de-pies-cardio-pantorrillas.mp4', 'Ejecución', 0)
   ) as v(ex, url, label, orden)
  where not exists (select 1 from public.exercise_videos e where e.video_url = v.url);

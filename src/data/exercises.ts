@@ -355,6 +355,7 @@ export const exercises: Exercise[] = [
     variants: [
       { id: 'jalon-neutro', name: 'En polea', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Palmas enfrentadas (barra V) — amigable con codos y hombros.' },
       { id: 'dominadas-neutras', name: 'Dominada en barra', equipment: ['gym'], difficulty: 'avanzado', notes: 'Peso corporal, palmas enfrentadas — amigable con los hombros.' },
+      { id: 'dominadas-asistidas-maquina-neutra', name: 'Dominada asistida (máquina)', equipment: ['gym'], difficulty: 'principiante', notes: 'Máquina de asistencia con agarre neutro (palmas enfrentadas) — construye fuerza hacia la dominada neutra.' },
     ],
     category: '4 series',
     bg: 'linear-gradient(135deg,#E8E1D3,#D9D0BE)',
@@ -1782,6 +1783,7 @@ export const exercises: Exercise[] = [
       { id: 'good-morning-barra', name: 'Con barra', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Versión clásica — primera carga conservadora.' },
       { id: 'good-morning-banda', name: 'Con banda', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '12-15', defaultRest: 45, notes: 'Banda sobre trapecio pisada con pies — versión casera con curva ascendente.' },
       { id: 'good-morning-mancuerna-pecho', name: 'Mancuerna al pecho', equipment: ['gym'], difficulty: 'principiante', defaultReps: '10-12', defaultRest: 60, notes: 'Mancuerna abrazada al pecho — sustituto cuando no quieres cargar sobre trapecio.' },
+      { id: 'good-morning-smith', name: 'En Smith', equipment: ['gym'], difficulty: 'intermedio', notes: 'Barra en Smith sobre los trapecios — bisagra de cadera con trayectoria guiada, más control en la espalda baja.' },
     ],
     category: '3 series',
     bg: 'linear-gradient(135deg,#E8E0D0,#D6CCB8)',
@@ -1863,6 +1865,8 @@ export const exercises: Exercise[] = [
     variants: [
       { id: 'abduccion-cadera-maquina', name: 'Máquina', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Versión clásica sentada — máxima carga con aislamiento.' },
       { id: 'abduccion-cadera-banda-rodillas', name: 'Banda rodillas', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '15-20', notes: 'Banda alrededor de rodillas — activación rápida pre-pierna.' },
+      { id: 'abduccion-cadera-acostada-lado', name: 'Acostada de lado', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '15-20 por lado', notes: 'Acostado de lado con banda en rodillas o tobillos — sube la pierna de arriba, aísla el glúteo medio.' },
+      { id: 'abduccion-cadera-cuadrupedia', name: 'Patada lateral (cuadrupedia)', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '15-20 por lado', notes: 'En cuadrupedia, abre la pierna al lado con la rodilla doblada (fire hydrant) — glúteo medio.' },
       { id: 'abduccion-cadera-banda-tobillos', name: 'Banda tobillos', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '15-20', notes: 'Banda alrededor de tobillos — mayor brazo de palanca.' },
       { id: 'abduccion-cadera-polea', name: 'Polea baja unilateral', equipment: ['gym'], difficulty: 'principiante', defaultReps: '12-15 por lado', notes: 'Tobillera en polea baja — máximo rango unilateral.' },
     ],
@@ -2295,6 +2299,8 @@ export const exercises: Exercise[] = [
       { id: 'plank-jacks', name: 'Plancha con aperturas', equipment: ['cuerpo'], difficulty: 'intermedio', notes: 'Jumping jacks en posición de plancha — añade demanda de core.' },
       { id: 'star-jumps', name: 'Star jumps', equipment: ['cuerpo'], difficulty: 'intermedio', defaultReps: '20-30 seg', notes: 'Saltos en forma de X con piernas y brazos extendidos — más explosivo.' },
       { id: 'cross-jacks', name: 'Cross jacks', equipment: ['cuerpo'], difficulty: 'principiante', notes: 'Cruzas piernas alternando enfrente — variante con activación de aductores.' },
+      { id: 'boxer-jumps', name: 'Saltos de boxeador', equipment: ['cuerpo'], difficulty: 'principiante', defaultReps: '30-45 seg', notes: 'Rebotes ligeros de lado a lado sobre las puntas — cardio y coordinación, bajo impacto.' },
+      { id: 'pogo-jumps', name: 'Saltos en puntas (pogo)', equipment: ['cuerpo'], difficulty: 'intermedio', defaultReps: '20-30 seg', notes: 'Saltos pequeños y rápidos con piernas rígidas, empujando desde el tobillo — pantorrillas y reactividad.' },
     ],
     category: '3 series',
     bg: 'linear-gradient(135deg,#EFE9DC,#E0D7C3)',
