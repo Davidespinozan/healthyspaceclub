@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- LOTE 6: 36 videos nuevos que subió Magaly al bucket GYM (.mp4).
+-- LOTE 6: 37 videos nuevos que subió Magaly al bucket GYM (.mp4).
 --
 -- Todos con match CLARO a una variante/patrón que YA existe en el banco
 -- (src/data/exercises.ts) — ninguno de estos exercise_id tenía video antes, así
@@ -11,7 +11,6 @@
 --   · buenos-dias-en-maquina-smith                     (good-morning no tiene variante "En Smith")
 --   · patada-lateral-en-cuadrupedia-con-banda          (no hay "fire hydrant")
 --   · lagartijas-diamante-...-pecho-medio-neutral      (duplica el diamante estándar)
---   · lagartijas-modificadas-pecho-triceps             (no hay flexión "en rodillas" estándar)
 --   · dominadas-asistidas-...-agarre-neutro            (tracción neutra no tiene asistida-máquina)
 --   · saltos-de-boxeador                               (no hay "boxer jumps")
 --   · saltos-en-puntas-de-pies                         (no hay "pogo/saltos en puntas")
@@ -44,6 +43,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('flexiones-diamante-rodillas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-diamante-modificadas-pecho-triceps.mp4', 'Ejecución', 0),
   ('flexiones-diamante-estandar', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-diamante-triceps-pecho-medio.mp4', 'Ejecución', 0),
   ('press-inclinado-flexiones', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-inclinadas-pecho-inferior-triceps.mp4', 'Ejecución', 0),
+  ('press-horizontal-flexiones-rodillas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-modificadas-pecho-triceps.mp4', 'Ejecución', 0),
   ('aperturas-polea-cruce', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cruces-de-polea-alta-a-baja-pecho-inferior-hombros.mp4', 'Ejecución', 0),
   ('press-declinado-mancuernas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-banca-declinado-con-mancuernas-pecho-bajo-triceps.mp4', 'Ejecución', 0),
   ('press-inclinado-smith', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-banca-inclinado-en-maquina-smith-agarre-supino-pecho-alto-triceps.mp4', 'Ejecución', 0),

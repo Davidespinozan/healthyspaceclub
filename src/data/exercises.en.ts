@@ -1063,6 +1063,7 @@ export const stepDescEn: Record<string, string> = {
 // A2b-3 — notas de variantes (prosa explicativa). Cierra el contenido i18n.
 // Terminología fitness natural en inglés. Mapeado por texto ES → EN.
 export const variantNotesEn: Record<string, string> = {
+  'Regresión de la flexión: apoya las rodillas para bajar la carga. Mantén la línea hombros-cadera-rodillas.': 'Push-up regression: rest your knees to lower the load. Keep a straight line from shoulders to hips to knees.',
   'Manos juntas — mayor énfasis en la cabeza externa del bíceps.': 'Hands together — more emphasis on the outer head of the biceps.',
   'Dos poleas altas a los lados — pico y contracción máxima.': 'Two high cables at your sides — peak and maximum contraction.',
   'Desde plancha, pasa una pierna por debajo del cuerpo y patea al frente — core + coordinación y movilidad de cadera.': 'From a plank, pass one leg under your body and kick forward — core + coordination and hip mobility.',
