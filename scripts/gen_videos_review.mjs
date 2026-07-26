@@ -9,18 +9,24 @@ const MG={pecho:'Pecho',espalda:'Espalda',hombros:'Hombros',biceps:'Bíceps',tri
 const orden=['pecho','espalda','hombros','biceps','triceps','antebrazo','cuadriceps','isquios','gluteo','pantorrillas','core','cardio','cuerpo-completo'];
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const BASE='https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/';
-function vcard(v){
+// Links de referencia (para saber qué es una variante que aún no grabamos).
+function refLinks(q){
+  const e=encodeURIComponent(q.trim().replace(/\s+/g,' '));
+  return `<div class="refs"><a href="https://www.google.com/search?tbm=isch&q=${e}" target="_blank" rel="noopener">🔍 Google</a><a href="https://www.youtube.com/results?search_query=${e}" target="_blank" rel="noopener">▶️ YouTube</a><a href="https://www.tiktok.com/search?q=${e}" target="_blank" rel="noopener">TikTok</a></div>`;
+}
+function vcard(v, patron){
   const eqtag=v.equipo&&v.equipo!=='—'?`<span class="eq eq-${v.equipo.toLowerCase()}">${esc(v.equipo)}</span>`:'';
   if(v.tiene){const nombre=v.file.replace(/^(GYM|YOGA|LIGAS)\//,'');
     const url=BASE+v.file.split('/').map(encodeURIComponent).join('/')+'#t=0.1';
     return `<div class="vc ok" data-falta="0" data-q="${esc((v.name+' '+nombre).toLowerCase())}"><video src="${url}" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">${esc(v.name)} ${eqtag}</div><div class="vf">${esc(nombre)}</div></div></div>`;}
-  return `<div class="vc falta" data-falta="1" data-q="${esc(v.name.toLowerCase())}"><div class="ghost">🎥<span>Falta grabar</span></div><div class="vm"><div class="vn">${esc(v.name)} ${eqtag}</div></div></div>`;
+  const q=`${patron||''} ${v.name}`;
+  return `<div class="vc falta" data-falta="1" data-q="${esc((v.name+' '+(patron||'')).toLowerCase())}"><div class="ghost">🎥<span>Falta grabar</span></div><div class="vm"><div class="vn">${esc(v.name)} ${eqtag}</div>${refLinks(q)}</div></div>`;
 }
 let body='';
 for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue;
   body+=`<h2 class="mg">${MG[mg]}</h2>`;
   for(const p of ps){const f=p.tot-p.con;const badge=f===0?`<span class="pb full">completo</span>`:`<span class="pb"><b>${f}</b> por grabar</span>`;
-    body+=`<section class="pat" data-faltan="${f}"><div class="ph"><h3>${esc(p.patron)}</h3><span class="pcount">${p.con}/${p.tot}</span>${badge}</div><div class="vgrid">${p.vars.map(vcard).join('')}</div></section>`;}}
+    body+=`<section class="pat" data-faltan="${f}"><div class="ph"><h3>${esc(p.patron)}</h3><span class="pcount">${p.con}/${p.tot}</span>${badge}</div><div class="vgrid">${p.vars.map(v=>vcard(v,p.patron)).join('')}</div></section>`;}}
 // ── Lista completa (sidebar): movimientos (azul=necesarios) + variantes (rojo=extra) ──
 let side='';
 for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue;
@@ -78,7 +84,7 @@ const propuestaCardio=[
 ];
 const propCards=propuestaCardio.map(([grupo,eq,items])=>
   `<section class="pat"><div class="ph"><h3>${esc(grupo)}</h3><span class="eq eq-${eq.startsWith('casa')?'casa':'gym'}">${esc(eq)}</span></div><div class="vgrid">`+
-  items.map(([n,d])=>`<div class="vc falta"><div class="ghost">🎥<span>Por grabar</span></div><div class="vm"><div class="vn">${esc(n)}</div><div class="vf" style="word-break:normal">${esc(d)}</div></div></div>`).join('')+
+  items.map(([n,d])=>`<div class="vc falta"><div class="ghost">🎥<span>Por grabar</span></div><div class="vm"><div class="vn">${esc(n)}</div><div class="vf" style="word-break:normal">${esc(d)}</div>${refLinks(grupo+' '+n)}</div></div>`).join('')+
   `</div></section>`).join('');
 const propSection=`<h2 class="mg" style="color:var(--gold)">Propuesta · Cardio funcional a grabar (aún no en el banco)</h2>${propCards}`;
 const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Videos por movimiento — HSC</title><style>
@@ -98,6 +104,7 @@ h2.mg{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:upperca
 .vc video{width:100%;aspect-ratio:1/1;object-fit:cover;background:#000;display:block}
 .ghost{aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--warn);font-size:30px}.ghost span{font-size:12px;font-weight:800}
 .vm{padding:9px 11px}.vn{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.vf{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--ink2);margin-top:3px;word-break:break-all}
+.refs{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}.refs a{font-size:10px;font-weight:800;color:#2c62c9;text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:2px 7px;background:#fff;white-space:nowrap}.refs a:hover{background:var(--bg);border-color:#2c62c9}
 .eq{font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:999px}.eq-gym{background:rgba(21,51,48,.1);color:var(--ink2)}.eq-liga{background:rgba(58,90,140,.14);color:#3A5A8C}.eq-casa{background:rgba(46,125,87,.13);color:var(--ok)}
 .layout{display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start}
 .col-side{position:sticky;top:64px;max-height:calc(100vh - 80px);display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
