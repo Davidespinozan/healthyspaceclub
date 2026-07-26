@@ -42,6 +42,45 @@ const imgCards=imgs.map(i=>`<div class="vc falta" style="border-color:var(--warn
 const gymOrphans=[];
 const gymOrphanCards=gymOrphans.map(([slug,nom,nota])=>`<div class="vc falta" style="border-color:var(--warn)"><video src="${BASE}GYM/${encodeURIComponent(slug)}.mp4#t=0.1" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">${esc(nom)}</div><div class="vf">${esc(nota)}</div><div class="vf">${esc(slug)}.mp4</div></div></div>`).join('');
 const gymOrphanSection=gymOrphanCards?`<h2 class="mg" style="color:var(--warn)">Sin conectar — falta decidir a qué ejercicio va (o crear uno nuevo)</h2><section class="pat"><div class="vgrid">${gymOrphanCards}</div></section>`:'';
+
+// ── PROPUESTA: cardio funcional a grabar (aún NO en el banco) ──────────────
+// Llena los dos huecos medidos: cardio (22% con video) y peso corporal/casa (40%).
+// Casi todo es casa/sin equipo → alto impacto para el socio que entrena en casa.
+const propuestaCardio=[
+  ['Cuerda (saltar la cuerda)','casa',[
+    ['Salto básico','Ritmo constante a dos pies — el cardio funcional más accesible.'],
+    ['Dobles (double-unders)','La cuerda pasa dos veces por salto — potencia y coordinación.'],
+    ['Alternando un pie','Como trotar sobre la cuerda — impacto más bajo.'],
+    ['Rodillas altas','Sube las rodillas en cada salto — más intensidad.'],
+  ]],
+  ['Locomoción animal','casa',[
+    ['Caminata del oso (bear crawl)','En 4 apoyos con rodillas despegadas — full-body y core.'],
+    ['Caminata de cangrejo','Boca arriba en 4 apoyos, avanza — hombros, tríceps y glúteo.'],
+    ['Gusano (inchworm)','Camina las manos al frente hasta plancha y regresa — movilidad + core.'],
+    ['Oso lateral','Bear crawl desplazándote de lado — coordinación y hombros.'],
+  ]],
+  ['Thruster y complejos','casa/gym (mancuerna)',[
+    ['Thruster con mancuernas','Sentadilla + press arriba en un solo movimiento — mucho gasto.'],
+    ['Man maker','Flexión con remo + thruster — el metcon completo.'],
+    ['Clean & press con mancuerna','Del piso al hombro y arriba — potencia de cuerpo entero.'],
+  ]],
+  ['Balón medicinal','gym/casa (balón)',[
+    ['Slams (azota-balón)','Levanta y azota el balón al piso — descarga y potencia.'],
+    ['Pase de pecho a la pared','Empuja el balón contra la pared y recíbelo — pecho y ritmo.'],
+    ['Lanzamiento rotacional','Gira y lanza a la pared de lado — core y potencia rotacional.'],
+    ['Lanzamiento sobre la cabeza','Lanza el balón hacia arriba/atrás — cadena posterior explosiva.'],
+  ]],
+  ['Agilidad y desplazamientos','casa/exterior',[
+    ['Shuttle runs (ida y vuelta)','Corre a un punto y regresa tocando el piso — cambios de dirección.'],
+    ['Cariocas (paso cruzado)','Desplazamiento lateral cruzando piernas — cadera y coordinación.'],
+    ['Saltos laterales sobre línea','Salta de lado a lado sobre una línea/cono — reactividad.'],
+  ]],
+];
+const propCards=propuestaCardio.map(([grupo,eq,items])=>
+  `<section class="pat"><div class="ph"><h3>${esc(grupo)}</h3><span class="eq eq-${eq.startsWith('casa')?'casa':'gym'}">${esc(eq)}</span></div><div class="vgrid">`+
+  items.map(([n,d])=>`<div class="vc falta"><div class="ghost">🎥<span>Por grabar</span></div><div class="vm"><div class="vn">${esc(n)}</div><div class="vf" style="word-break:normal">${esc(d)}</div></div></div>`).join('')+
+  `</div></section>`).join('');
+const propSection=`<h2 class="mg" style="color:var(--gold)">Propuesta · Cardio funcional a grabar (aún no en el banco)</h2>${propCards}`;
 const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Videos por movimiento — HSC</title><style>
 :root{--bg:#F2F0E8;--ink:#12302b;--ink2:#5f6b64;--gold:#9a7f45;--ok:#2E7D57;--warn:#C77A2A;--terra:#B4453C;--card:#fff;--line:rgba(21,51,48,.13)}
 *{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:22px 16px 80px;line-height:1.45}
@@ -81,7 +120,7 @@ h2.mg{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:upperca
 <h1>Videos por movimiento</h1><div class="sub">Cada movimiento con TODAS sus variantes: las que ya tienen video (verde, reproducible) y las que faltan (punteado ámbar). Usa "Solo faltan" para ver de un vistazo qué grabar de cada uno.</div>
 <div class="stats"><div class="stat"><b>${totCon}</b><span>variantes con video</span></div><div class="stat"><b style="color:var(--terra)">${totVar-totCon}</b><span>variantes por grabar</span></div><div class="stat"><b>${pats.length}</b><span>movimientos</span></div></div>
 <div class="tools"><input type="search" id="q" placeholder="Buscar movimiento, variante o archivo…"><span class="pill on" data-f="all">Todo</span><span class="pill warn" data-f="falta">Solo faltan</span><span class="pill" data-f="ok">Solo con video</span></div>
-<div class="layout"><main class="col-main"><div id="app">${body}${gymOrphanSection}<h2 class="mg" style="color:var(--terra)">Por identificar — dime qué postura es cada uno</h2><section class="pat"><div class="vgrid">${imgCards}</div></section></div></main><aside class="col-side"><div class="side-hd">Lista completa<div class="side-legend"><span class="lg azul">● Movimiento (necesario)</span><span class="lg rojo">● Variante extra</span><span class="lg">✓ ya con video</span></div><input type="search" id="qs" placeholder="Filtrar lista…"></div><div class="side-body">${side}</div></aside></div>
+<div class="layout"><main class="col-main"><div id="app">${body}${gymOrphanSection}${propSection}<h2 class="mg" style="color:var(--terra)">Por identificar — dime qué postura es cada uno</h2><section class="pat"><div class="vgrid">${imgCards}</div></section></div></main><aside class="col-side"><div class="side-hd">Lista completa<div class="side-legend"><span class="lg azul">● Movimiento (necesario)</span><span class="lg rojo">● Variante extra</span><span class="lg">✓ ya con video</span></div><input type="search" id="qs" placeholder="Filtrar lista…"></div><div class="side-body">${side}</div></aside></div>
 ${yfalta.length?`<footer>Yoga: falta grabar el flow <b>${esc(yfalta.map(f=>f.name).join(', '))}</b>.</footer>`:''}
 <script>const q=document.getElementById('q');let filter='all';function apply(){const t=q.value.trim().toLowerCase();document.querySelectorAll('.vc').forEach(c=>{const mf=filter==='all'||(filter==='falta'?c.dataset.falta==='1':c.dataset.falta==='0');const mq=!t||c.dataset.q.includes(t);c.classList.toggle('hidden',!(mf&&mq));});document.querySelectorAll('.pat').forEach(p=>p.classList.toggle('hidden',!p.querySelector('.vc:not(.hidden)')));document.querySelectorAll('h2.mg').forEach(h=>{let n=h.nextElementSibling,vis=false;while(n&&!n.classList.contains('mg')){if(n.classList.contains('pat')&&!n.classList.contains('hidden'))vis=true;n=n.nextElementSibling;}h.classList.toggle('hidden',!vis);});}q.addEventListener('input',apply);const qs=document.getElementById('qs');qs.addEventListener('input',()=>{const t=qs.value.trim().toLowerCase();document.querySelectorAll('.s-pat,.s-var').forEach(r=>r.classList.toggle('hidden',t&&!r.dataset.q.includes(t)));document.querySelectorAll('.side-mg').forEach(h=>{let n=h.nextElementSibling,vis=false;while(n&&!n.classList.contains('side-mg')){if(!n.classList.contains('hidden')){vis=true;break;}n=n.nextElementSibling;}h.classList.toggle('hidden',!vis);});});document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');filter=p.dataset.f;apply();}));</script>
 </div></body></html>`;
