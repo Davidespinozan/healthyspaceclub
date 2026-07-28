@@ -325,6 +325,10 @@ export const stepTitleEn: Record<string, string> = {
 
 export const variantNameEn: Record<string, string> = {
   'Agarre neutral': 'Neutral grip',
+  'Polea alta, agarre neutro': 'High pulley, neutral grip',
+  'Polea alta, agarre prono': 'High pulley, pronated grip',
+  'Polea baja, agarre supino': 'Low pulley, supinated grip',
+  'Polea baja, apertura': 'Low pulley, fly',
   'Acostada de lado': 'Side-lying',
   'Patada lateral (cuadrupedia)': 'Side kick (quadruped)',
   'Saltos de boxeador': 'Boxer jumps',
@@ -1067,6 +1071,10 @@ export const stepDescEn: Record<string, string> = {
 // A2b-3 — notas de variantes (prosa explicativa). Cierra el contenido i18n.
 // Terminología fitness natural en inglés. Mapeado por texto ES → EN.
 export const variantNotesEn: Record<string, string> = {
+  'Poleas arriba, cruzas hacia abajo con agarre neutro — pecho medio.': 'Pulleys high, cross down with a neutral grip — mid chest.',
+  'Poleas arriba, cruzas hacia abajo con agarre prono — pecho inferior.': 'Pulleys high, cross down with a pronated grip — lower chest.',
+  'Poleas abajo, cruzas hacia arriba con agarre supino — pecho superior.': 'Pulleys low, cross up with a supinated grip — upper chest.',
+  'Poleas abajo, apertura hacia arriba — pecho superior.': 'Pulleys low, fly upward — upper chest.',
   'Regresión de la flexión: apoya las rodillas para bajar la carga. Mantén la línea hombros-cadera-rodillas.': 'Push-up regression: rest your knees to lower the load. Keep a straight line from shoulders to hips to knees.',
   'Manos en agarre neutral (dedos al frente) en vez del diamante cerrado — mismo tríceps y pecho medio, más amable con las muñecas.': 'Hands in a neutral grip (fingers forward) instead of a closed diamond — same triceps and mid-chest, easier on the wrists.',
   'Acostado de lado con banda en rodillas o tobillos — sube la pierna de arriba, aísla el glúteo medio.': 'Lying on your side with a band around your knees or ankles — raise the top leg, isolating the gluteus medius.',
