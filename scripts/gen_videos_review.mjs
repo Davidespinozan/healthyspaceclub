@@ -5,8 +5,11 @@ import fs from 'fs';
 const S=process.argv[2];
 const pats=JSON.parse(fs.readFileSync(S+'/porpatron.json','utf8'));
 const yoga=JSON.parse(fs.readFileSync(S+'/yoga.json','utf8'));
-const MG={pecho:'Pecho',espalda:'Espalda',hombros:'Hombros',biceps:'Bíceps',triceps:'Tríceps',antebrazo:'Antebrazo',cuadriceps:'Cuádriceps',isquios:'Isquios',gluteo:'Glúteo',pantorrillas:'Pantorrillas',core:'Core',cardio:'Cardio','cuerpo-completo':'Cuerpo completo'};
-const orden=['pecho','espalda','hombros','biceps','triceps','antebrazo','cuadriceps','isquios','gluteo','pantorrillas','core','cardio','cuerpo-completo'];
+const MG={pecho:'Pecho',espalda:'Espalda',hombros:'Hombros',biceps:'Bíceps',triceps:'Tríceps',antebrazo:'Antebrazo',cuadriceps:'Cuádriceps',isquios:'Isquios',gluteo:'Glúteo',pantorrillas:'Pantorrillas',core:'Core',cardio:'Cardio','cuerpo-completo':'Cuerpo completo',yoga:'Yoga'};
+const orden=['pecho','espalda','hombros','biceps','triceps','antebrazo','cuadriceps','isquios','gluteo','pantorrillas','core','cardio','cuerpo-completo','yoga'];
+// ── Pestañas (regiones) para segmentar el URL ──
+const REGION={pecho:'superior',espalda:'superior',hombros:'superior',biceps:'superior',triceps:'superior',antebrazo:'superior',cuadriceps:'inferior',isquios:'inferior',gluteo:'inferior',pantorrillas:'inferior',core:'core',cardio:'cardio','cuerpo-completo':'cardio',yoga:'yoga'};
+const TABS=[['todos','Todos'],['superior','Tren superior'],['inferior','Tren inferior'],['core','Core'],['cardio','Cardio'],['yoga','Yoga'],['casa','En casa (ligas)']];
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const BASE='https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/';
 // Links de referencia (para saber qué es una variante que aún no grabamos).
@@ -25,17 +28,18 @@ function vcard(v, patron){
       const url=BASE+file.split('/').map(encodeURIComponent).join('/')+'#t=0.1';
       const warn=dup?`<span class="dupb" title="Hay ${files.length} videos en esta misma card — revisa si alguno está mal asignado">⚠ ${i+1}/${files.length}</span>`:'';
       const cls=dup?'vc ok dup':'vc ok';
-      return `<div class="${cls}" data-falta="0" data-q="${esc((v.name+' '+nombre).toLowerCase())}"><video src="${url}" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">${esc(v.name)} ${eqtag} ${warn}</div><div class="vf">${esc(nombre)}</div></div></div>`;
+      return `<div class="${cls}" data-falta="0" data-eq="${esc((v.equipo||'').toLowerCase())}" data-q="${esc((v.name+' '+nombre).toLowerCase())}"><video src="${url}" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">${esc(v.name)} ${eqtag} ${warn}</div><div class="vf">${esc(nombre)}</div></div></div>`;
     }).join('');
   }
   const q=`${patron||''} ${v.name}`;
-  return `<div class="vc falta" data-falta="1" data-q="${esc((v.name+' '+(patron||'')).toLowerCase())}"><div class="ghost">🎥<span>Falta grabar</span></div><div class="vm"><div class="vn">${esc(v.name)} ${eqtag}</div>${refLinks(q)}</div></div>`;
+  return `<div class="vc falta" data-falta="1" data-eq="${esc((v.equipo||'').toLowerCase())}" data-q="${esc((v.name+' '+(patron||'')).toLowerCase())}"><div class="ghost">🎥<span>Falta grabar</span></div><div class="vm"><div class="vn">${esc(v.name)} ${eqtag}</div>${refLinks(q)}</div></div>`;
 }
 let body='';
 for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue;
-  body+=`<h2 class="mg">${MG[mg]}</h2>`;
+  const rg=REGION[mg]||'otros';
+  body+=`<h2 class="mg" data-region="${rg}">${MG[mg]}</h2>`;
   for(const p of ps){const f=p.tot-p.con;const badge=f===0?`<span class="pb full">completo</span>`:`<span class="pb"><b>${f}</b> por grabar</span>`;
-    body+=`<section class="pat" data-faltan="${f}"><div class="ph"><h3>${esc(p.patron)}</h3><span class="pcount">${p.con}/${p.tot}</span>${badge}</div><div class="vgrid">${p.vars.map(v=>vcard(v,p.patron)).join('')}</div></section>`;}}
+    body+=`<section class="pat" data-region="${rg}" data-faltan="${f}"><div class="ph"><h3>${esc(p.patron)}</h3><span class="pcount">${p.con}/${p.tot}</span>${badge}</div><div class="vgrid">${p.vars.map(v=>vcard(v,p.patron)).join('')}</div></section>`;}}
 // ── Lista completa (sidebar): movimientos (azul=necesarios) + variantes (rojo=extra) ──
 let side='';
 for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue;
@@ -61,7 +65,7 @@ const gymOrphans=[
   ['step-ups-con-elevacion-de-rodilla-piernas-y-gluteo','Step-up con elevación de rodilla','→ variante nueva de Step-up'],
 ];
 const gymOrphanCards=gymOrphans.map(([slug,nom,nota])=>`<div class="vc falta" style="border-color:var(--warn)"><video src="${BASE}GYM/${encodeURIComponent(slug)}.mp4#t=0.1" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">${esc(nom)}</div><div class="vf">${esc(nota)}</div><div class="vf">${esc(slug)}.mp4</div></div></div>`).join('');
-const gymOrphanSection=gymOrphanCards?`<h2 class="mg" style="color:var(--warn)">Sin conectar — falta decidir a qué ejercicio va (o crear uno nuevo)</h2><section class="pat"><div class="vgrid">${gymOrphanCards}</div></section>`:'';
+const gymOrphanSection=gymOrphanCards?`<h2 class="mg" data-region="otros" style="color:var(--warn)">Sin conectar — falta decidir a qué ejercicio va (o crear uno nuevo)</h2><section class="pat" data-region="otros"><div class="vgrid">${gymOrphanCards}</div></section>`:'';
 
 // ── PROPUESTA: cardio funcional a grabar (aún NO en el banco) ──────────────
 // Llena los dos huecos medidos: cardio (22% con video) y peso corporal/casa (40%).
@@ -97,16 +101,20 @@ const propuestaCardio=[
   ]],
 ];
 const propCards=propuestaCardio.map(([grupo,eq,items])=>
-  `<section class="pat"><div class="ph"><h3>${esc(grupo)}</h3><span class="eq eq-${eq.startsWith('casa')?'casa':'gym'}">${esc(eq)}</span></div><div class="vgrid">`+
-  items.map(([n,d])=>`<div class="vc falta"><div class="ghost">🎥<span>Por grabar</span></div><div class="vm"><div class="vn">${esc(n)}</div><div class="vf" style="word-break:normal">${esc(d)}</div>${refLinks(grupo+' '+n)}</div></div>`).join('')+
+  `<section class="pat" data-region="cardio"><div class="ph"><h3>${esc(grupo)}</h3><span class="eq eq-${eq.startsWith('casa')?'casa':'gym'}">${esc(eq)}</span></div><div class="vgrid">`+
+  items.map(([n,d])=>`<div class="vc falta" data-falta="1" data-eq="casa"><div class="ghost">🎥<span>Por grabar</span></div><div class="vm"><div class="vn">${esc(n)}</div><div class="vf" style="word-break:normal">${esc(d)}</div>${refLinks(grupo+' '+n)}</div></div>`).join('')+
   `</div></section>`).join('');
-const propSection=`<h2 class="mg" style="color:var(--gold)">Propuesta · Cardio funcional a grabar (aún no en el banco)</h2>${propCards}`;
+const propSection=`<h2 class="mg" data-region="cardio" style="color:var(--gold)">Propuesta · Cardio funcional a grabar (aún no en el banco)</h2>${propCards}`;
 const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Videos por movimiento — HSC</title><style>
 :root{--bg:#F2F0E8;--ink:#12302b;--ink2:#5f6b64;--gold:#9a7f45;--ok:#2E7D57;--warn:#C77A2A;--terra:#B4453C;--card:#fff;--line:rgba(21,51,48,.13)}
 *{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:22px 16px 80px;line-height:1.45}
 .w{max-width:1180px;margin:0 auto}h1{font-size:24px;font-weight:900;letter-spacing:-.02em}.sub{color:var(--ink2);font-size:14px;margin-top:5px;max-width:74ch}
 .stats{display:flex;gap:22px;flex-wrap:wrap;margin:16px 0 6px}.stat b{font-size:25px;font-weight:900}.stat span{color:var(--ink2);font-size:12px;display:block}
-.tools{position:sticky;top:0;background:var(--bg);padding:12px 0;z-index:5;display:flex;gap:9px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line);margin-bottom:6px}
+.stickyhead{position:sticky;top:0;z-index:6;background:var(--bg)}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;padding:10px 0 8px}
+.tab{padding:8px 15px;border-radius:999px;font-size:13.5px;font-weight:800;border:1px solid var(--line);background:#fff;cursor:pointer;user-select:none;white-space:nowrap}
+.tab.on{background:var(--gold);color:#fff;border-color:var(--gold)}.tab .tc{font-size:11px;opacity:.75;margin-left:5px;font-weight:700}
+.tools{background:var(--bg);padding:6px 0 12px;display:flex;gap:9px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line);margin-bottom:6px}
 input[type=search]{flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
 .pill{padding:8px 14px;border-radius:999px;font-size:13px;font-weight:800;border:1px solid var(--line);background:#fff;cursor:pointer;user-select:none}.pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}.pill.on.warn{background:var(--terra);border-color:var(--terra)}
 h2.mg{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:30px 0 4px;padding-top:8px}
@@ -141,10 +149,18 @@ h2.mg{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:upperca
 </style></head><body><div class="w">
 <h1>Videos por movimiento</h1><div class="sub">Cada movimiento con TODAS sus variantes: las que ya tienen video (verde, reproducible) y las que faltan (punteado ámbar). Usa "Solo faltan" para ver de un vistazo qué grabar de cada uno.</div>
 <div class="stats"><div class="stat"><b>${totVid}</b><span>videos conectados (todos visibles)</span></div><div class="stat"><b>${totCon}</b><span>variantes con video</span></div><div class="stat"><b style="color:var(--terra)">${totVar-totCon}</b><span>variantes por grabar</span></div>${totDup?`<div class="stat"><b style="color:var(--warn)">${totDup}</b><span>en cards con 2+ videos ⚠</span></div>`:''}<div class="stat"><b>${pats.length}</b><span>movimientos</span></div></div>
-<div class="tools"><input type="search" id="q" placeholder="Buscar movimiento, variante o archivo…"><span class="pill on" data-f="all">Todo</span><span class="pill warn" data-f="falta">Solo faltan</span><span class="pill" data-f="ok">Solo con video</span></div>
-<div class="layout"><main class="col-main"><div id="app">${body}${gymOrphanSection}${propSection}<h2 class="mg" style="color:var(--terra)">Por identificar — dime qué postura es cada uno</h2><section class="pat"><div class="vgrid">${imgCards}</div></section></div></main><aside class="col-side"><div class="side-hd">Lista completa<div class="side-legend"><span class="lg azul">● Movimiento (necesario)</span><span class="lg rojo">● Variante extra</span><span class="lg">✓ ya con video</span></div><input type="search" id="qs" placeholder="Filtrar lista…"></div><div class="side-body">${side}</div></aside></div>
+<div class="stickyhead"><div class="tabs">${TABS.map(([id,label],i)=>`<span class="tab${i===0?' on':''}" data-tab="${id}">${esc(label)}<span class="tc" data-tabcount="${id}"></span></span>`).join('')}</div>
+<div class="tools"><input type="search" id="q" placeholder="Buscar movimiento, variante o archivo…"><span class="pill on" data-f="all">Todo</span><span class="pill warn" data-f="falta">Solo faltan</span><span class="pill" data-f="ok">Solo con video</span></div></div>
+<div class="layout"><main class="col-main"><div id="app">${body}${gymOrphanSection}${propSection}<h2 class="mg" data-region="yoga" style="color:var(--terra)">Por identificar — dime qué postura es cada uno</h2><section class="pat" data-region="yoga"><div class="vgrid">${imgCards}</div></section></div></main><aside class="col-side"><div class="side-hd">Lista completa<div class="side-legend"><span class="lg azul">● Movimiento (necesario)</span><span class="lg rojo">● Variante extra</span><span class="lg">✓ ya con video</span></div><input type="search" id="qs" placeholder="Filtrar lista…"></div><div class="side-body">${side}</div></aside></div>
 ${yfalta.length?`<footer>Yoga: falta grabar el flow <b>${esc(yfalta.map(f=>f.name).join(', '))}</b>.</footer>`:''}
-<script>const q=document.getElementById('q');let filter='all';function apply(){const t=q.value.trim().toLowerCase();document.querySelectorAll('.vc').forEach(c=>{const mf=filter==='all'||(filter==='falta'?c.dataset.falta==='1':c.dataset.falta==='0');const mq=!t||c.dataset.q.includes(t);c.classList.toggle('hidden',!(mf&&mq));});document.querySelectorAll('.pat').forEach(p=>p.classList.toggle('hidden',!p.querySelector('.vc:not(.hidden)')));document.querySelectorAll('h2.mg').forEach(h=>{let n=h.nextElementSibling,vis=false;while(n&&!n.classList.contains('mg')){if(n.classList.contains('pat')&&!n.classList.contains('hidden'))vis=true;n=n.nextElementSibling;}h.classList.toggle('hidden',!vis);});}q.addEventListener('input',apply);const qs=document.getElementById('qs');qs.addEventListener('input',()=>{const t=qs.value.trim().toLowerCase();document.querySelectorAll('.s-pat,.s-var').forEach(r=>r.classList.toggle('hidden',t&&!r.dataset.q.includes(t)));document.querySelectorAll('.side-mg').forEach(h=>{let n=h.nextElementSibling,vis=false;while(n&&!n.classList.contains('side-mg')){if(!n.classList.contains('hidden')){vis=true;break;}n=n.nextElementSibling;}h.classList.toggle('hidden',!vis);});});document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');filter=p.dataset.f;apply();}));</script>
+<script>const q=document.getElementById('q');let filter='all',tab='todos';
+function regOf(c){const s=c.closest('[data-region]');return s?s.dataset.region:'otros';}
+function tabOk(c){if(tab==='todos')return true;if(tab==='casa')return c.dataset.eq==='liga'||c.dataset.eq==='casa';return regOf(c)===tab;}
+function apply(){const t=q.value.trim().toLowerCase();document.querySelectorAll('.vc').forEach(c=>{const mf=filter==='all'||(filter==='falta'?c.dataset.falta==='1':c.dataset.falta==='0');const mq=!t||(c.dataset.q||'').includes(t);c.classList.toggle('hidden',!(mf&&mq&&tabOk(c)));});document.querySelectorAll('.pat').forEach(p=>p.classList.toggle('hidden',!p.querySelector('.vc:not(.hidden)')));document.querySelectorAll('h2.mg').forEach(h=>{let n=h.nextElementSibling,vis=false;while(n&&!n.classList.contains('mg')){if(n.classList.contains('pat')&&!n.classList.contains('hidden'))vis=true;n=n.nextElementSibling;}h.classList.toggle('hidden',!vis);});}
+// contador por pestaña: cuántos movimientos (cards) hay en cada región
+(function tabCounts(){const cards=[...document.querySelectorAll('.vc')];document.querySelectorAll('.tab').forEach(tb=>{const id=tb.dataset.tab;const n=id==='todos'?cards.length:id==='casa'?cards.filter(c=>c.dataset.eq==='liga'||c.dataset.eq==='casa').length:cards.filter(c=>regOf(c)===id).length;const s=tb.querySelector('.tc');if(s)s.textContent=n;});})();
+document.querySelectorAll('.tab').forEach(tb=>tb.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));tb.classList.add('on');tab=tb.dataset.tab;window.scrollTo(0,0);apply();}));
+q.addEventListener('input',apply);const qs=document.getElementById('qs');qs.addEventListener('input',()=>{const t=qs.value.trim().toLowerCase();document.querySelectorAll('.s-pat,.s-var').forEach(r=>r.classList.toggle('hidden',t&&!r.dataset.q.includes(t)));document.querySelectorAll('.side-mg').forEach(h=>{let n=h.nextElementSibling,vis=false;while(n&&!n.classList.contains('side-mg')){if(!n.classList.contains('hidden')){vis=true;break;}n=n.nextElementSibling;}h.classList.toggle('hidden',!vis);});});document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');filter=p.dataset.f;apply();}));</script>
 </div></body></html>`;
 fs.writeFileSync('public/videos-review.html',html);
 console.log('página regenerada:',pats.length,'movimientos,',totCon,'con video,',totVar-totCon,'faltan');

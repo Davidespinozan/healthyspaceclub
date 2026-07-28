@@ -16,12 +16,14 @@ for (let i = 0; i < src.length; i++) {
   const l = src[i];
   const pm = l.match(/^\s{2,6}id:\s*'([^']+)'/);
   if (pm) {
-    let nm = '', mg = '';
+    let nm = '', mg = '', yoga = false;
     for (let j = i; j < i + 22 && j < src.length; j++) {
       const n = src[j].match(/^\s*name:\s*'([^']+)'/); if (n && !nm) nm = n[1];
       const m = src[j].match(/muscleGroup:\s*'([^']+)'/); if (m) mg = m[1];
+      if (/isYoga:\s*true/.test(src[j])) yoga = true;
       if (/variants:\s*\[/.test(src[j])) break;
     }
+    if (yoga) mg = 'yoga'; // las posturas de yoga van a su propia pestaña
     cur = { id: pm[1], patron: nm, mg, vars: [] }; pats.push(cur); continue;
   }
   const vm = l.match(/\{\s*id:\s*'([^']+)',\s*name:\s*'([^']+)'/);
