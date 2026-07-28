@@ -744,6 +744,7 @@ export const exercises: Exercise[] = [
       { id: 'upright-row-barra', name: 'Con barra', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Versión clásica — usa agarre amplio para proteger hombros.' },
       { id: 'upright-row-mancuernas', name: 'Mancuernas', equipment: ['gym'], difficulty: 'intermedio', notes: 'Libertad de muñeca — más amigable si la barra molesta.' },
       { id: 'upright-row-polea', name: 'Polea baja', equipment: ['gym'], difficulty: 'principiante', notes: 'Tensión constante — más fácil mantener técnica limpia.' },
+      { id: 'upright-row-smith', name: 'En Smith', equipment: ['gym'], difficulty: 'principiante', notes: 'Barra guiada en Smith — trayectoria fija, más fácil mantener técnica limpia.' },
       { id: 'upright-row-banda', name: 'Con banda', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '12-15', notes: 'Pisa banda y sube — opción casera con curva de fuerza ascendente.' },
     ],
     category: '3 series',
