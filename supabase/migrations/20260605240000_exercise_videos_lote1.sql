@@ -88,8 +88,6 @@ SELECT 'remo-bajo-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/o
 WHERE NOT EXISTS (SELECT 1 FROM exercise_videos WHERE exercise_id = 'remo-bajo-polea');
 
 INSERT INTO exercise_videos (exercise_id, video_url, display_order)
-SELECT 'remo-maquina-sentado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-maquina-sentado.mp4', 0
-WHERE NOT EXISTS (SELECT 1 FROM exercise_videos WHERE exercise_id = 'remo-maquina-sentado');
 
 INSERT INTO exercise_videos (exercise_id, video_url, display_order)
 SELECT 'jalon-neutro', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/jalon-frontal-triangulo.mp4', 0
