@@ -29,7 +29,6 @@ select v.ex, null, v.url, v.label, v.orden
   ('peso-muerto-sumo-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/peso-muerto-sumo-con-barra-gluteos-aductores-piernas.mp4', 'Ejecución', 0),
   ('hip-thrust-con-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/puente-de-gluteo-con-banda-de-resistencia-gluteos-isquiotibiales.mp4', 'Ejecución', 0),
   ('sentadilla-goblet-mancuerna', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla-sumo-con-mancuerna-gluteos-aductores-piernas.mp4', 'Ejecución', 0),
-  ('curl-pie-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-biceps-con-liga-agarre-supino-biceps.mp4', 'Ejecución', 0),
   ('curl-martillo-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-con-liga-biceps-antebrazos.mp4', 'Ejecución', 0),
   ('extensiones-banda-anclada', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/extension-de-triceps-atras-con-liga-triceps.mp4', 'Ejecución', 0),
   ('pullover-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pullover-con-liga-dorsal.mp4', 'Ejecución', 0),
