@@ -12,7 +12,7 @@ update public.exercise_videos set exercise_id='remo-mancuerna-banco' where video
 update public.exercise_videos set exercise_id='hiperextensiones-maquina' where video_url='https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/extension-espalda-baja-maquina-core.mp4' and exercise_id is distinct from 'hiperextensiones';
 update public.exercise_videos set exercise_id='hiperextensiones-banco-romano' where video_url='https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/hiperextensiones-banco-romano-espalda-baja.mp4' and exercise_id is distinct from 'hiperextensiones-banco-romano';
 update public.exercise_videos set exercise_id='curl-martillo-mancuernas-isometrico' where video_url='https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-alterno-conisometrico-a90grados-pausaisometrica-bicep.mp4' and exercise_id is distinct from 'curl-martillo-mancuernas-isometrico';
-update public.exercise_videos set exercise_id='press-cerrado' where video_url='https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-horizontal-maquina-agarre-neutral-pecho-tricep.mp4' and exercise_id is distinct from 'press-cerrado';
+update public.exercise_videos set exercise_id='press-horizontal-maquina' where video_url='https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-horizontal-maquina-agarre-neutral-pecho-tricep.mp4' and exercise_id is distinct from 'press-cerrado';
 
 insert into public.exercise_videos (exercise_id, variant_id, video_url, label, display_order)
 select v.ex, null, v.url, 'Ejecución', 0 from (values
