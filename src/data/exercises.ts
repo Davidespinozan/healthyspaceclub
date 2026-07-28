@@ -1813,8 +1813,7 @@ export const exercises: Exercise[] = [
     ],
     tip: 'Ideal antes de entrenar piernas o tren inferior — despierta el glúteo medio para estabilizar cadera.',
     variants: [
-      { id: 'caminata-lateral', name: 'Caminata lateral', equipment: ['ligas'], difficulty: 'principiante', isDefault: true, notes: 'Pasos solo a los lados — activación clásica de glúteo medio.' },
-      { id: 'caminata-monstruo', name: 'Caminata lateral', equipment: ['ligas'], difficulty: 'principiante', notes: 'Pasos al frente y atrás en zigzag — activación más global de la cadera.' },
+      { id: 'caminata-monstruo', name: 'Caminata lateral', equipment: ['ligas'], difficulty: 'principiante', isDefault: true, notes: 'Banda en rodillas o tobillos, pasos laterales en semisentadilla — activación de glúteo medio.' },
     ],
     category: '3 series',
     bg: 'linear-gradient(135deg,#E8E0D0,#D6CCB8)',
