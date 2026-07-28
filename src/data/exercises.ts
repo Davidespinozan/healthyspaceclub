@@ -148,8 +148,6 @@ export const exercises: Exercise[] = [
       { id: 'aperturas-mancuernas-plana', name: 'Mancuernas plana', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Clásico — máximo estiramiento del pecho medio.' },
       { id: 'aperturas-mancuernas-inclinada', name: 'Mancuernas inclinada', equipment: ['gym'], difficulty: 'intermedio', notes: 'Banco a 30° — enfatiza pecho superior.' },
       { id: 'aperturas-polea-cruce', name: 'Cruces en polea', equipment: ['gym'], difficulty: 'principiante', notes: 'Tensión constante todo el rango — mejor para sentir el pecho.' },
-      { id: 'aperturas-cruce-alta-neutro', name: 'Polea alta, agarre neutro', equipment: ['gym'], difficulty: 'principiante', notes: 'Poleas arriba, cruzas hacia abajo con agarre neutro — pecho medio.' },
-      { id: 'aperturas-cruce-alta-prono', name: 'Polea alta, agarre prono', equipment: ['gym'], difficulty: 'principiante', notes: 'Poleas arriba, cruzas hacia abajo con agarre prono — pecho inferior.' },
       { id: 'aperturas-cruce-baja-apertura', name: 'Polea baja, apertura', equipment: ['gym'], difficulty: 'principiante', notes: 'Poleas abajo, apertura hacia arriba — pecho superior.' },
       { id: 'aperturas-pec-deck', name: 'Pec deck', equipment: ['gym'], difficulty: 'principiante', notes: 'Sentado en máquina — ideal para drop sets sin riesgo.' },
       { id: 'aperturas-banda', name: 'Con banda', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '15-20', notes: 'Ancla la banda atrás a la altura del pecho — versión casera.' },
@@ -209,41 +207,12 @@ export const exercises: Exercise[] = [
     tip: 'Si te duelen las muñecas, abre ligeramente las manos — la fricción interna del diamante no es lo esencial.',
     variants: [
       { id: 'flexiones-diamante-estandar', name: 'Estándar', equipment: ['cuerpo'], difficulty: 'intermedio', isDefault: true, notes: 'Versión completa — fundamental para tríceps sin equipo.' },
-      { id: 'flexiones-diamante-neutral', name: 'Agarre neutral', equipment: ['cuerpo'], difficulty: 'intermedio', defaultReps: '10-12', notes: 'Manos en agarre neutral (dedos al frente) en vez del diamante cerrado — mismo tríceps y pecho medio, más amable con las muñecas.' },
       { id: 'flexiones-diamante-declinada', name: 'Declinadas', equipment: ['cuerpo'], difficulty: 'avanzado', defaultReps: '8-12', notes: 'Pies elevados en banco/silla — mayor dificultad y carga relativa.' },
       { id: 'flexiones-diamante-rodillas', name: 'En rodillas', equipment: ['cuerpo'], difficulty: 'principiante', defaultReps: '12-15', notes: 'Regresión — ideal si no completas 8 reps estándar.' },
     ],
     category: '3 series',
     bg: 'linear-gradient(135deg,#EDE9E0,#E0D9CA)',
   },
-  {
-    id: 'flexiones-archer',
-    name: 'Flexiones Archer',
-    desc: 'Flexión unilateral con un brazo extendido — paso avanzado hacia la flexión a una mano.',
-    muscleGroup: 'pecho',
-    secondaryMuscles: ['triceps', 'hombros', 'core'],
-    equipment: ['cuerpo'],
-    goals: ['fuerza', 'hipertrofia'],
-    type: 'compuesto',
-    difficulty: 'avanzado',
-    defaultSets: 3,
-    defaultReps: '6-8 por lado',
-    defaultRest: 75,
-    steps: [
-      { title: 'Posición inicial', desc: 'Plancha alta con manos muy amplias (más allá de los hombros).' },
-      { title: 'Bajada lateral', desc: 'Baja hacia un lado flexionando solo ese brazo, el otro queda casi recto.' },
-      { title: 'Pausa abajo', desc: 'Pecho casi tocando la mano que trabaja, el otro brazo extendido a tensión.' },
-      { title: 'Empuje y alterna', desc: 'Empuja y repite del otro lado — el ritmo es lento y controlado.' },
-    ],
-    tip: 'Si no puedes mantener el brazo extendido recto, todavía no estás listo — entrena flexiones diamante declinadas primero.',
-    variants: [
-      { id: 'flexiones-archer-estandar', name: 'Estándar', equipment: ['cuerpo'], difficulty: 'avanzado', isDefault: true, notes: 'Versión completa — paso previo a la flexión a una mano.' },
-      { id: 'flexiones-archer-asistida', name: 'Asistida (banda)', equipment: ['cuerpo'], difficulty: 'intermedio', defaultReps: '8-10 por lado', notes: 'Banda alrededor de espalda y muñecas — reduce dificultad mientras dominas el patrón.' },
-    ],
-    category: '3 series',
-    bg: 'linear-gradient(135deg,#EDE9E0,#E0D9CA)',
-  },
-
   // ══════════════════════════════════════════════════════════════
   // ESPALDA (9 patrones)
   // ══════════════════════════════════════════════════════════════
@@ -271,8 +240,6 @@ export const exercises: Exercise[] = [
     variants: [
       { id: 'jalon-amplio', name: 'En polea', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Jalón amplio en polea alta — clásico para dorsal.' },
       { id: 'dominadas-pronadas', name: 'Dominada en barra', equipment: ['gym'], difficulty: 'avanzado', notes: 'Peso corporal, palmas adelante — máximo enfoque en dorsal.' },
-      { id: 'dominadas-con-peso', name: 'Dominada con peso', equipment: ['gym'], difficulty: 'avanzado', notes: 'Cinturón con discos — progresión cuando 12+ peso corporal son fáciles.' },
-      { id: 'dominadas-asistidas-banda', name: 'Dominada asistida (banda)', equipment: ['gym'], difficulty: 'intermedio', notes: 'Banda bajo el pie — reduce dificultad sin perder el patrón.' },
       { id: 'dominadas-asistidas-maquina', name: 'Dominada asistida (máquina)', equipment: ['gym'], difficulty: 'principiante', notes: 'Plataforma con contrapeso — ideal para construir fuerza inicial.' },
     ],
     category: '4 series',
@@ -580,7 +547,6 @@ export const exercises: Exercise[] = [
     variants: [
       { id: 'remo-invertido-barra-baja', name: 'Barra baja en rack', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Versión estándar — ajusta la altura para escalar dificultad.' },
       { id: 'remo-invertido-trx', name: 'En TRX', equipment: ['gym'], difficulty: 'intermedio', notes: 'Agarre rotante — más demanda de estabilizadores.' },
-      { id: 'remo-invertido-anillas', name: 'En anillas', equipment: ['gym'], difficulty: 'avanzado', notes: 'Anillas oscilan libremente — máxima demanda de estabilización.' },
       { id: 'remo-invertido-mesa', name: 'Bajo mesa', equipment: ['cuerpo'], difficulty: 'intermedio', notes: 'Mesa firme y resistente al peso — versión casera del remo invertido.' },
     ],
     category: '3 series',
@@ -636,9 +602,7 @@ export const exercises: Exercise[] = [
     tip: 'No "hiperextiendas" pese al nombre — sube solo hasta línea recta para proteger la lumbar.',
     variants: [
       { id: 'hiperextensiones-banco-romano', name: 'Banco romano', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Versión estándar — la mayoría de gyms tienen este aparato.' },
-      { id: 'hiperextensiones-con-peso', name: 'Con peso adicional', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '10-12', notes: 'Disco al pecho — progresión cuando bodyweight es fácil.' },
       { id: 'superman-suelo', name: 'Superman en suelo', equipment: ['cuerpo'], difficulty: 'principiante', defaultReps: '15-20', notes: 'Acostado boca abajo — versión casera sin equipo.' },
-      { id: 'reverse-hyper', name: 'Hiperextensión inversa', equipment: ['gym'], difficulty: 'intermedio', notes: 'Torso fijo, piernas se mueven — opción amigable con espalda lastimada.' },
       { id: 'hiperextensiones-maquina', name: 'En máquina', equipment: ['gym'], difficulty: 'principiante', notes: 'Máquina de extensión lumbar sentado — carga progresiva controlada para la espalda baja.' },
     ],
     category: '3 series',

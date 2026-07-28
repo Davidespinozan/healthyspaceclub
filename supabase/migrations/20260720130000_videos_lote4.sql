@@ -38,11 +38,10 @@ select v.ex, null, v.url, v.label, v.orden
   ('press-horizontal-flexiones', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartija-estricta-o-flexion-clasica-completa-core-hombros.mov', 'Ejecución', 0),
   ('press-horizontal-flexiones', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/flexiones-lagartijas-modificada-con-rodillas-abdomen.mp4', 'En rodillas (modificada)', 1),
   ('fondos-triceps', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/fondos-libres-en-banco-tricep.mp4', 'En banco', 0),
-  ('flexiones-diamante-estandar', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-diamante-pecho-tricep-abdomen.mov', 'Ejecución', 0),
   ('vuelo-posterior-reverse-pec-deck', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pajaros-en-maquina-trapecio-espalda-alta.mp4', 'Ejecución', 0),
   ('plancha-frontal', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/plancha.mov', 'Ejecución', 0),
   ('pullover-mancuerna-banco', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pullover-con-mancuerna-en-banco-pecho-dorsal-ancho.mp4', 'Ejecución', 0),
-  ('remo-unilateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-con-mancuerna-una-mano-bicep-espalda.mp4', 'Con mancuerna', 0),
+  ('remo-mancuerna-banco', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-con-mancuerna-una-mano-bicep-espalda.mp4', 'Con mancuerna', 0),
   ('remo-invertido-trx', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-invertido-en-trx-agarre-neutro-espalda-alta-biceps.mov', 'Ejecución', 0),
   ('rotacion-con-peso', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/rotacion-torso-en-maquina-abdomen.mp4', 'En máquina', 0),
   ('wall-balls', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla-con-salto-y-lanzamiento-de-balon-medicional-piernas-gluteos-hombros.mov', 'Con lanzamiento de balón', 0)
