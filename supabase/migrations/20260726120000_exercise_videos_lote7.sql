@@ -31,7 +31,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('dominadas-neutras', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/dominadas-agarre-neutro-espalda-y-biceps.mp4', 'Ejecución', 0),
   ('knee-raises', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-de-rodillas-colgado-abdomen.mp4', 'Ejecución', 0),
   ('elevacion-frontal-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-frontales-con-barra-recta-en-polea-baja-en-maquina-hombros.mp4', 'Ejecución', 0),
-  ('curl-martillo-polea-cuerda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-laterales-a-una-mano-en-polea-baja-en-maquina-hombro.mp4', 'Ejecución', 0),
+  ('curl-martillo-polea-cuerda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-con-cuerda-en-polea-baja-biceps.mp4', 'Ejecución', 0),
   ('vuelo-posterior-mancuernas-sentado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-posteriores-con-mancuernas-en-banco-hombro-posterior.mp4', 'Ejecución', 0),
   ('jalon-supinado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/jalon-al-pecho-agarre-supino-en-maquina-espalda-y-biceps.mp4', 'Ejecución', 0),
   ('swing-americano', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/kettlebell-swing-americano-hombro-y-gluteo.mp4', 'Ejecución', 0),
