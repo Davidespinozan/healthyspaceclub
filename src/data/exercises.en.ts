@@ -322,6 +322,7 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Agarre supino': 'Underhand grip',
   'En polea (cruce alto)': 'On cable (high crossover)',
   'Con pausa isométrica': 'With isometric hold',
   'Triángulo al pecho': 'Triangle to chest',

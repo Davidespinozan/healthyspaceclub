@@ -466,6 +466,7 @@ export const exercises: Exercise[] = [
     tip: 'Más horizontal = más difícil. Empieza con barra alta y baja la altura conforme progreses.',
     variants: [
       { id: 'remo-invertido-barra-baja', name: 'Barra baja en rack', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Versión estándar — ajusta la altura para escalar dificultad.' },
+      { id: 'remo-invertido-supino', name: 'Agarre supino', equipment: ['gym'], difficulty: 'intermedio', notes: 'Barra fija (rack o Smith) con palmas hacia ti — más bíceps y dorsal bajo.' },
       { id: 'remo-invertido-trx', name: 'En TRX', equipment: ['gym'], difficulty: 'intermedio', notes: 'Agarre rotante — más demanda de estabilizadores.' },
       { id: 'remo-invertido-mesa', name: 'Bajo mesa', equipment: ['cuerpo'], difficulty: 'intermedio', notes: 'Mesa firme y resistente al peso — versión casera del remo invertido.' },
     ],
