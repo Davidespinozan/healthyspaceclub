@@ -16,9 +16,18 @@ function refLinks(q){
 }
 function vcard(v, patron){
   const eqtag=v.equipo&&v.equipo!=='—'?`<span class="eq eq-${v.equipo.toLowerCase()}">${esc(v.equipo)}</span>`:'';
-  if(v.tiene){const nombre=v.file.replace(/^(GYM|YOGA|LIGAS)\//,'');
-    const url=BASE+v.file.split('/').map(encodeURIComponent).join('/')+'#t=0.1';
-    return `<div class="vc ok" data-falta="0" data-q="${esc((v.name+' '+nombre).toLowerCase())}"><video src="${url}" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">${esc(v.name)} ${eqtag}</div><div class="vf">${esc(nombre)}</div></div></div>`;}
+  if(v.tiene){
+    // TODOS los videos de esta card (uno por archivo). Si hay 2+, se avisa para revisar mapeo.
+    const files=v.files&&v.files.length?v.files:[v.file];
+    const dup=files.length>1;
+    return files.map((file,i)=>{
+      const nombre=file.replace(/^(GYM|YOGA|LIGAS)\//,'');
+      const url=BASE+file.split('/').map(encodeURIComponent).join('/')+'#t=0.1';
+      const warn=dup?`<span class="dupb" title="Hay ${files.length} videos en esta misma card — revisa si alguno está mal asignado">⚠ ${i+1}/${files.length}</span>`:'';
+      const cls=dup?'vc ok dup':'vc ok';
+      return `<div class="${cls}" data-falta="0" data-q="${esc((v.name+' '+nombre).toLowerCase())}"><video src="${url}" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">${esc(v.name)} ${eqtag} ${warn}</div><div class="vf">${esc(nombre)}</div></div></div>`;
+    }).join('');
+  }
   const q=`${patron||''} ${v.name}`;
   return `<div class="vc falta" data-falta="1" data-q="${esc((v.name+' '+(patron||'')).toLowerCase())}"><div class="ghost">🎥<span>Falta grabar</span></div><div class="vm"><div class="vn">${esc(v.name)} ${eqtag}</div>${refLinks(q)}</div></div>`;
 }
@@ -41,6 +50,8 @@ for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue
 }
 const yfalta=yoga.filter(f=>f.falta);
 const totCon=pats.reduce((a,p)=>a+p.con,0),totVar=pats.reduce((a,p)=>a+p.tot,0);
+const totVid=pats.reduce((a,p)=>a+(p.nvid||0),0);
+const totDup=pats.reduce((a,p)=>a+p.vars.reduce((b,v)=>b+((v.files&&v.files.length>1)?v.files.length:0),0),0);
 const imgs=['YOGA/IMG_2711.mp4','YOGA/IMG_2723.mp4','YOGA/IMG_2725.mp4','YOGA/IMG_2734.mp4'];
 const imgCards=imgs.map(i=>`<div class="vc falta" style="border-color:var(--warn)"><video src="${BASE}${i}#t=0.1" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">¿Qué es?</div><div class="vf">${i.split('/').pop()}</div></div></div>`).join('');
 // Videos de Magaly sin variante equivalente en el banco → falta decidir a qué
@@ -115,6 +126,7 @@ h2.mg{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:upperca
 .vm{padding:9px 11px}.vn{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.vf{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--ink2);margin-top:3px;word-break:break-all}
 .refs{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}.refs a{font-size:10px;font-weight:800;color:#2c62c9;text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:2px 7px;background:#fff;white-space:nowrap}.refs a:hover{background:var(--bg);border-color:#2c62c9}
 .eq{font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:999px}.eq-gym{background:rgba(21,51,48,.1);color:var(--ink2)}.eq-liga{background:rgba(58,90,140,.14);color:#3A5A8C}.eq-casa{background:rgba(46,125,87,.13);color:var(--ok)}
+.vc.dup{border:2px solid var(--warn)}.dupb{font-size:9.5px;font-weight:900;color:#fff;background:var(--warn);padding:1px 6px;border-radius:999px;white-space:nowrap}
 .layout{display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start}
 .col-side{position:sticky;top:64px;max-height:calc(100vh - 80px);display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .side-hd{padding:13px 14px 10px;border-bottom:1px solid var(--line)}
@@ -134,7 +146,7 @@ h2.mg{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:upperca
 .hidden{display:none}footer{margin-top:34px;color:var(--ink2);font-size:12px}
 </style></head><body><div class="w">
 <h1>Videos por movimiento</h1><div class="sub">Cada movimiento con TODAS sus variantes: las que ya tienen video (verde, reproducible) y las que faltan (punteado ámbar). Usa "Solo faltan" para ver de un vistazo qué grabar de cada uno.</div>
-<div class="stats"><div class="stat"><b>${totCon}</b><span>variantes con video</span></div><div class="stat"><b style="color:var(--terra)">${totVar-totCon}</b><span>variantes por grabar</span></div><div class="stat"><b>${pats.length}</b><span>movimientos</span></div></div>
+<div class="stats"><div class="stat"><b>${totVid}</b><span>videos conectados (todos visibles)</span></div><div class="stat"><b>${totCon}</b><span>variantes con video</span></div><div class="stat"><b style="color:var(--terra)">${totVar-totCon}</b><span>variantes por grabar</span></div>${totDup?`<div class="stat"><b style="color:var(--warn)">${totDup}</b><span>en cards con 2+ videos ⚠</span></div>`:''}<div class="stat"><b>${pats.length}</b><span>movimientos</span></div></div>
 <div class="tools"><input type="search" id="q" placeholder="Buscar movimiento, variante o archivo…"><span class="pill on" data-f="all">Todo</span><span class="pill warn" data-f="falta">Solo faltan</span><span class="pill" data-f="ok">Solo con video</span></div>
 <div class="layout"><main class="col-main"><div id="app">${body}${gymOrphanSection}${propSection}<h2 class="mg" style="color:var(--terra)">Por identificar — dime qué postura es cada uno</h2><section class="pat"><div class="vgrid">${imgCards}</div></section></div></main><aside class="col-side"><div class="side-hd">Lista completa<div class="side-legend"><span class="lg azul">● Movimiento (necesario)</span><span class="lg rojo">● Variante extra</span><span class="lg">✓ ya con video</span></div><input type="search" id="qs" placeholder="Filtrar lista…"></div><div class="side-body">${side}</div></aside></div>
 ${yfalta.length?`<footer>Yoga: falta grabar el flow <b>${esc(yfalta.map(f=>f.name).join(', '))}</b>.</footer>`:''}

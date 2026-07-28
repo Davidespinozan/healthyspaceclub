@@ -40,14 +40,18 @@ for (const f of fs.readdirSync(migDir)) {
   if (!f.endsWith('.sql')) continue;
   const t = fs.readFileSync(migDir + '/' + f, 'utf8');
   const re = /\(\s*'([a-z0-9-]+)'\s*,\s*'https:\/\/[^']*\/public\/healthyspaceclub\/([^']+?)(?:#[^']*)?'/g;
-  let m; while ((m = re.exec(t))) { if (!fileByEx[m[1]]) fileByEx[m[1]] = m[2]; }
+  let m; while ((m = re.exec(t))) {
+    (fileByEx[m[1]] ||= []);
+    if (!fileByEx[m[1]].includes(m[2])) fileByEx[m[1]].push(m[2]); // TODOS los videos, no solo el primero
+  }
 }
 
-// ── 3. Marcar ──
+// ── 3. Marcar (cada card puede tener VARIOS videos → se muestran todos) ──
 for (const p of pats) {
-  for (const v of p.vars) if (fileByEx[v.id]) { v.tiene = true; v.file = fileByEx[v.id]; }
-  if (fileByEx[p.id]) p.vars.unshift({ id: p.id, name: '(único)', equipo: '—', tiene: true, file: fileByEx[p.id] });
+  for (const v of p.vars) if (fileByEx[v.id]) { v.tiene = true; v.files = fileByEx[v.id]; v.file = fileByEx[v.id][0]; }
+  if (fileByEx[p.id]) p.vars.unshift({ id: p.id, name: '(único)', equipo: '—', tiene: true, files: fileByEx[p.id], file: fileByEx[p.id][0] });
   p.tot = p.vars.length; p.con = p.vars.filter(v => v.tiene).length;
+  p.nvid = p.vars.reduce((a, v) => a + (v.files ? v.files.length : 0), 0); // total de videos reales
 }
 
 fs.writeFileSync(S + '/porpatron.json', JSON.stringify(pats));
