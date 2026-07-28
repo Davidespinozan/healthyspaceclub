@@ -321,6 +321,8 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Banco inclinado, agarre normal': 'Incline bench, standard grip',
+  'Banco inclinado, martillo': 'Incline bench, hammer',
   'Barra, agarre cerrado': 'Barbell, close grip',
   'Banco inclinado (mancuerna)': 'Incline bench (dumbbell)',
   'En máquina (discos)': 'On machine (plate-loaded)',

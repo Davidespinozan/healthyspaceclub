@@ -29,7 +29,7 @@ INSERT INTO exercise_videos (exercise_id, video_url, display_order) VALUES
   ('curl-concentrado-mancuerna',     'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/concentrado-mancuerna-bicep.mp4', 0),
   ('curl-pie-mancuernas-simultaneo', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/Curl-de-bicep-parado-con-mancuernas-al-ismo-tiempo.mp4', 0),
   ('curl-pie-mancuernas-alternado',  'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/Curl-de-bicep-parado-con-mancurna-uno-por-uno.mp4', 0),
-  ('curl-predicador-spider',         'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-biceps-con-apoyo-en-banco-inclinado.mp4', 0),
+  ('curl-predicador-banco-inclinado-supino',         'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-biceps-con-apoyo-en-banco-inclinado.mp4', 0),
   ('curl-martillo-mancuernas',       'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/martillo-bicep-parado-uno-por-uno.mp4', 0),
   ('patada-triceps-mancuerna-banco', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patada-mancuerna-tricep.mp4', 0),
   ('press-inclinado-mancuernas',     'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-pecho-mancuerna-inclinado.mp4', 0),
