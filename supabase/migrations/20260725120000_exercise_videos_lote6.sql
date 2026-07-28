@@ -32,7 +32,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('curl-pie-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-biceps-con-liga-agarre-supino-biceps.mp4', 'Ejecución', 0),
   ('curl-martillo-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-con-liga-biceps-antebrazos.mp4', 'Ejecución', 0),
   ('extensiones-banda-anclada', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/extension-de-triceps-atras-con-liga-triceps.mp4', 'Ejecución', 0),
-  ('pullover-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/jalon-de-triceps-con-liga-triceps-core.mp4', 'Ejecución', 0),
+  ('pullover-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pullover-con-liga-dorsal.mp4', 'Ejecución', 0),
   ('fondos-triceps-maquina', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/fondos-maquina-tricep.mp4', 'Ejecución', 0),
   ('pike-push-up', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/flexiones-en-pica-hombros-triceps.mp4', 'Ejecución', 0),
   ('flexiones-diamante-declinada', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-declinadas-diamante-en-escalones-triceps-pecho-alto.mp4', 'Ejecución', 0),

@@ -5,3 +5,5 @@ update public.exercise_videos set video_url=replace(video_url,'cruces-de-polea-a
 update public.exercise_videos set video_url=replace(video_url,'remo-al-menton-con-barra-recta-en-polea-baja-en-maquina-hombros-y-trapecio.mp4','remo-al-menton-con-barra-z-en-polea-baja-hombros-trapecio.mp4') where video_url like '%remo-al-menton-con-barra-recta-en-polea-baja-en-maquina-hombros-y-trapecio.mp4%';
 update public.exercise_videos set video_url=replace(video_url,'extension-tricep-polea-alta.mp4','extension-triceps-polea-unilateral-un-brazo.mp4') where video_url like '%extension-tricep-polea-alta.mp4%';
 update public.exercise_videos set video_url=replace(video_url,'fondos-triceps-maquina.mp4','press-triceps-sentado-en-maquina-triceps.mp4') where video_url like '%fondos-triceps-maquina.mp4%';
+-- #7 (llegó tarde): jalon-de-triceps-con-liga-triceps-core → pullover-con-liga-dorsal (Pullover con banda).
+update public.exercise_videos set video_url=replace(video_url,'jalon-de-triceps-con-liga-triceps-core.mp4','pullover-con-liga-dorsal.mp4') where video_url like '%jalon-de-triceps-con-liga-triceps-core.mp4%';
