@@ -1276,6 +1276,32 @@ export const exercises: Exercise[] = [
     category: '4 series',
     bg: 'linear-gradient(135deg,#E9E2D2,#D5CBB7)',
   },
+  {
+    id: 'press-triceps-maquina',
+    name: 'Press de Tríceps en Máquina',
+    desc: 'Máquina sentada de empuje para tríceps — similar a los fondos pero guiado. Máquina poco común.',
+    muscleGroup: 'triceps',
+    secondaryMuscles: ['pecho', 'hombros'],
+    equipment: ['gym'],
+    goals: ['fuerza', 'hipertrofia'],
+    type: 'compuesto',
+    difficulty: 'principiante',
+    defaultSets: 3,
+    defaultReps: '10-12',
+    defaultRest: 75,
+    steps: [
+      { title: 'Posición', desc: 'Sentado con espalda apoyada y manos en las palancas a la altura del pecho.' },
+      { title: 'Empuje', desc: 'Empuja hacia abajo/al frente extendiendo los codos, torso firme.' },
+      { title: 'Pausa', desc: 'Aprieta el tríceps en la extensión sin bloquear del todo.' },
+      { title: 'Regreso', desc: 'Sube controlado hasta sentir estiramiento en el tríceps.' },
+    ],
+    tip: 'Es una máquina que no todos los gimnasios tienen — si no está, sustituye por fondos de tríceps o push-down.',
+    variants: [
+      { id: 'press-triceps-maquina-sentado', name: 'Sentado en máquina', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Empuje guiado sentado — aísla el tríceps con carga ajustable, sin cargar todo el peso corporal.' },
+    ],
+    category: '3 series',
+    bg: 'linear-gradient(135deg,#E9E2D2,#D5CBB7)',
+  },
 
   // ══════════════════════════════════════════════════════════════
   // CUÁDRICEPS (8 patrones)

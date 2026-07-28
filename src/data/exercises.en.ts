@@ -12,6 +12,7 @@ export interface ExerciseOverlay {
 }
 
 export const exercisesEn: Record<string, ExerciseOverlay> = {
+  'press-triceps-maquina': { name: 'Machine Triceps Press', desc: 'Seated machine pressing for triceps — like dips but guided. Uncommon machine.', tip: 'Not every gym has this machine — if unavailable, swap for triceps dips or push-downs.' },
   'core-suelo-piernas': { name: 'Floor Core (Legs)', desc: 'Lower abs and obliques with leg movements lying on the floor — no equipment, control and endurance.', tip: 'If you feel your lower back, raise your legs a little or tuck your hands under your glutes — protect the lumbar.' },
   'cluster-barra': { name: 'Barbell Cluster', desc: 'Combined barbell lift — legs, glutes and shoulders in one full-body movement.', tip: "It's a technical lift — start light and master the coordination before adding weight." },
   'curl-barra-z': { name: 'EZ-Bar Curl', desc: 'Curl with an EZ (Z) bar — a semi-supinated grip that is easier on wrists and elbows than the straight bar.', tip: 'The bend of the EZ bar reduces wrist strain — ideal if the straight bar bothers you.' },
