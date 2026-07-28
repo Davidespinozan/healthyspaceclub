@@ -28,7 +28,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('burpee-box-jump', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/burpee-con-salto-al-cajon-piernas-y-cardio.mp4', 'Ejecución', 0),
   ('curl-pie-polea-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-biceps-con-barra-recta-en-polea-baja-en-maquina-biceps.mp4', 'Ejecución', 0),
   ('dominadas-pronadas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/dominadas-agarre-prono-espalda.mp4', 'Ejecución', 0),
-  ('dominadas-neutras', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/dominadas-agarre-supino-espalda-y-biceps.mp4', 'Ejecución', 0),
+  ('dominadas-neutras', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/dominadas-agarre-neutro-espalda-y-biceps.mp4', 'Ejecución', 0),
   ('knee-raises', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-de-rodillas-colgado-abdomen.mp4', 'Ejecución', 0),
   ('elevacion-frontal-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-frontales-con-barra-recta-en-polea-baja-en-maquina-hombros.mp4', 'Ejecución', 0),
   ('curl-martillo-polea-cuerda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-laterales-a-una-mano-en-polea-baja-en-maquina-hombro.mp4', 'Ejecución', 0),

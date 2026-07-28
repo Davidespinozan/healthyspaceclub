@@ -5,7 +5,7 @@
 -- solo se muestran a usuarios de gym (en casa se respeta el equipo).
 --
 -- hiperextensiones (extension-espalda-baja-maquina-core.mp4) → hiperextensiones-maquina
---   (display_order 1; el 0 ya lo tiene hiperextensiones-maquina-espalda-baja.mp4).
+--   (display_order 1; el 0 ya lo tiene hiperextensiones-banco-romano-espalda-baja.mp4).
 -- press-cerrado (agarre neutro máquina) → press-cerrado-barra-banca (variante gym).
 
 UPDATE exercise_videos

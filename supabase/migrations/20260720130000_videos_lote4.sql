@@ -41,7 +41,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('vuelo-posterior-reverse-pec-deck', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pajaros-en-maquina-trapecio-espalda-alta.mp4', 'Ejecución', 0),
   ('plancha-frontal', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/plancha.mov', 'Ejecución', 0),
   ('pullover-mancuerna-banco', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pullover-con-mancuerna-en-banco-pecho-dorsal-ancho.mp4', 'Ejecución', 0),
-  ('remo-mancuerna-banco', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-con-mancuerna-una-mano-bicep-espalda.mp4', 'Con mancuerna', 0),
+  ('remo-mancuerna-banco', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-unilateral-mancuerna-en-banco-espalda.mp4', 'Con mancuerna', 0),
   ('remo-invertido-trx', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-invertido-en-trx-agarre-neutro-espalda-alta-biceps.mov', 'Ejecución', 0),
   ('rotacion-con-peso', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/rotacion-torso-en-maquina-abdomen.mp4', 'En máquina', 0),
   ('wall-balls', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla-con-salto-y-lanzamiento-de-balon-medicional-piernas-gluteos-hombros.mov', 'Con lanzamiento de balón', 0)

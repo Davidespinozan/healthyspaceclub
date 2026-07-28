@@ -38,7 +38,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('flexiones-diamante-declinada', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-declinadas-diamante-en-escalones-triceps-pecho-alto.mp4', 'Ejecución', 0),
   ('press-declinado-flexiones-declinadas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-declinadas-en-escalon-pecho-alto-hombros.mp4', 'Ejecución', 0),
   ('flexiones-diamante-rodillas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-diamante-modificadas-pecho-triceps.mp4', 'Ejecución', 0),
-  ('flexiones-diamante-estandar', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-diamante-triceps-pecho-medio-neutral.mp4', 'Ejecución', 0),
+  ('flexiones-diamante-estandar', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/flexiones-diamante-estandar-pecho-triceps.mp4', 'Ejecución', 0),
   ('press-inclinado-flexiones', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-inclinadas-pecho-inferior-triceps.mp4', 'Ejecución', 0),
   ('press-horizontal-flexiones-rodillas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartijas-modificadas-pecho-triceps.mp4', 'Ejecución', 0),
   ('press-declinado-mancuernas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-banca-declinado-con-mancuernas-pecho-bajo-triceps.mp4', 'Ejecución', 0),
