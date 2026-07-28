@@ -36,7 +36,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('face-pull', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/face-pull-en-trx-agarre-prono-hombro-posterior-espalda-alta.mov', 'En TRX', 0),
   ('side-bend-mancuerna', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/flexion-lateral-de-tronco-con-discos-oblicuos.mov', 'Con discos', 0),
   ('press-horizontal-flexiones', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartija-estricta-o-flexion-clasica-completa-core-hombros.mov', 'Ejecución', 0),
-  ('fondos-triceps', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/fondos-libres-en-banco-tricep.mp4', 'En banco', 0),
+  ('fondos-triceps-entre-sillas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/fondos-libres-en-banco-tricep.mp4', 'En banco', 0),
   ('vuelo-posterior-reverse-pec-deck', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pajaros-en-maquina-trapecio-espalda-alta.mp4', 'Ejecución', 0),
   ('plancha-frontal', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/plancha.mov', 'Ejecución', 0),
   ('pullover-mancuerna-banco', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pullover-con-mancuerna-en-banco-pecho-dorsal-ancho.mp4', 'Ejecución', 0),
