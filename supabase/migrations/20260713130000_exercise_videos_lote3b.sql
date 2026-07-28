@@ -22,7 +22,7 @@ DELETE FROM exercise_videos WHERE exercise_id IN (
 
 INSERT INTO exercise_videos (exercise_id, video_url, display_order) VALUES
   ('curl-inclinado-mancuernas',        'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-bicep-en-banco-inclinado.mp4', 0),
-  ('curl-inclinado-martillo',          'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-biceps-con-apoyo-en-banco-inclinado.mp4', 0),
+  ('curl-predicador-banco-inclinado',          'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-biceps-con-apoyo-en-banco-inclinado.mp4', 0),
   ('curl-pie-mancuernas-isometrico',   'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/Curl-de-bicep-con-isometrico.mp4', 0),
   ('extensiones-mancuerna-unilateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/copa-una-mano-triceps.mp4', 0),
   ('press-landmine-unilateral',        'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/ladminepress-conunamano-hombro.mp4', 0),

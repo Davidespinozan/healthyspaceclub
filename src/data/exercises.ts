@@ -941,6 +941,7 @@ export const exercises: Exercise[] = [
       { id: 'curl-predicador-banca-scott-barra', name: 'Banca Scott con barra', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Clásico — máximo peso bilateral con brazos fijos.' },
       { id: 'curl-predicador-banca-scott-mancuerna', name: 'Banca Scott con mancuerna', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '10-12 por lado', notes: 'Un brazo a la vez — corrige asimetrías.' },
       { id: 'curl-predicador-spider', name: 'Curl araña (banco inclinado)', equipment: ['gym'], difficulty: 'intermedio', notes: 'Pecho apoyado en banco a 60° con brazos colgando — máximo estiramiento del bíceps.' },
+      { id: 'curl-predicador-banco-inclinado', name: 'Banco inclinado (mancuerna)', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '10-12 por lado', notes: 'Recargas el brazo en el respaldo de una banca inclinada, un brazo a la vez — variación del banca Scott con mancuerna.' },
       { id: 'curl-predicador-maquina', name: 'Máquina predicador', equipment: ['gym'], difficulty: 'principiante', notes: 'Trayectoria fija — ideal para drop sets o cargas pesadas seguras.' },
     ],
     category: '3 series',
@@ -1080,7 +1081,6 @@ export const exercises: Exercise[] = [
     variants: [
       { id: 'extensiones-mancuerna-unilateral', name: 'Mancuerna a una mano (copa)', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '10-12 por lado', notes: 'Una sola mano sostiene la mancuerna en copa — corrige asimetrías y aísla más.' },
       { id: 'extensiones-mancuerna-sentado', name: 'Mancuerna sentado', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Sentado con espalda apoyada — máxima estabilidad y rango.' },
-      { id: 'extensiones-mancuerna-pie', name: 'Mancuerna de pie', equipment: ['gym'], difficulty: 'intermedio', notes: 'De pie con core apretado — más demanda de estabilizadores.' },
       { id: 'extensiones-barra', name: 'Barra tras nuca', equipment: ['gym'], difficulty: 'intermedio', notes: 'Barra sobre la cabeza bajando tras la nuca — máximo estiramiento de la cabeza larga.' },
       { id: 'extensiones-polea-cuerda', name: 'Polea con cuerda', equipment: ['gym'], difficulty: 'principiante', defaultReps: '12-15', notes: 'Tensión constante todo el rango — mejor para sentir el estiramiento.' },
       { id: 'extensiones-banda-anclada', name: 'Banda anclada', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '15-20', notes: 'Banda anclada en suelo — versión casera del cable.' },

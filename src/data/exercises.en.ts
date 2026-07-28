@@ -321,6 +321,7 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Banco inclinado (mancuerna)': 'Incline bench (dumbbell)',
   'En máquina (discos)': 'On machine (plate-loaded)',
   'En máquina (polea)': 'On machine (cable)',
   'Agarre supino': 'Underhand grip',
@@ -508,7 +509,6 @@ export const variantNameEn: Record<string, string> = {
   'Mancuerna a dos manos': 'Dumbbell two hands',
   'Mancuerna al pecho': 'Dumbbell at chest',
   'Mancuerna con banco': 'Dumbbell with bench',
-  'Mancuerna de pie': 'Dumbbell standing',
   'Mancuerna sentado': 'Dumbbell seated',
   'Mancuernas': 'Dumbbells',
   'Mancuernas alternadas': 'Alternating dumbbells',
