@@ -37,7 +37,7 @@ select v.ex, null, v.url, 'Ejecución', 0 from (values
   ('patada-gluteo-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patada-de-gluteo-en-polea-baja-en-maquina-gluteo.mp4'),
   ('renegade-row', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-en-plancha-con-mancuernas-espalda-y-abdomen.mp4'),
   ('knee-raises', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-de-rodillas-colgado-abdomen.mp4'),
-  ('burpee-sin-flexion', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/medio-burpee-con-salto-abdomen-y-piernas.mp4'),
+  ('sprawl', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/medio-burpee-con-salto-abdomen-y-piernas.mp4'),
   ('burpee-box-jump', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/burpee-con-salto-al-cajon-piernas-y-cardio.mp4'),
   ('devil-press', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/burpee-con-mancuernas-y-press-de-hombro-todo-el-cuerpo.mp4'),
   ('swing-ruso', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/kettlebell-swing-gluteo-y-piernas.mp4'),

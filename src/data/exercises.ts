@@ -1978,7 +1978,6 @@ export const exercises: Exercise[] = [
     tip: 'El movimiento es la flexión de columna — la cadera permanece fija, no haces sit-up completo desde la cadera.',
     variants: [
       { id: 'cable-crunch', name: 'Crunch en polea', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Arrodillado bajo polea alta — máximo rango y carga progresiva del recto abdominal.' },
-      { id: 'crunch-con-peso', name: 'Crunch con disco', equipment: ['gym'], difficulty: 'principiante', notes: 'Acostado con disco en pecho — versión simple para casa o gym.' },
       { id: 'sit-up-con-peso', name: 'Abdominal con peso', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '10-12', notes: 'Sit-up completo con disco — más demanda del flexor de cadera.' },
       { id: 'decline-sit-up', name: 'Abdominal declinado', equipment: ['gym'], difficulty: 'intermedio', notes: 'Banco con declive — mayor rango y resistencia gravitacional.' },
       { id: 'crunch-maquina', name: 'Máquina abdominal', equipment: ['gym'], difficulty: 'principiante', notes: 'Aparato dedicado — carga progresiva sin demanda técnica.' },

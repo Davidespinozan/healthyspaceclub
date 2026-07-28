@@ -37,7 +37,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('swing-americano', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/kettlebell-swing-americano-hombro-y-gluteo.mp4', 'Ejecución', 0),
   ('swing-ruso', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/kettlebell-swing-gluteo-y-piernas.mp4', 'Ejecución', 0),
   ('swing-unilateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/kettlebell-swing-unilateral-intercalado-gluteo-y-piernas.mp4', 'Ejecución', 0),
-  ('burpee-sin-flexion', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/medio-burpee-con-salto-abdomen-y-piernas.mp4', 'Ejecución', 0),
+  ('sprawl', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/medio-burpee-con-salto-abdomen-y-piernas.mp4', 'Ejecución', 0),
   ('patada-gluteo-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patada-de-gluteo-en-polea-baja-en-maquina-gluteo.mp4', 'Ejecución', 0),
   ('patada-triceps-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patada-de-triceps-a-una-mano-en-polea-baja-en-maquina-triceps.mp4', 'Ejecución', 0),
   ('press-frances-barra-recta', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-frances-con-barra-en-banco-triceps.mp4', 'Ejecución', 0),

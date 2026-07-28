@@ -478,7 +478,6 @@ export const variantNameEn: Record<string, string> = {
   'Con mancuernas': 'With dumbbells',
   'Con peso adicional': 'With added weight',
   'Cruces en polea': 'Cable crossovers',
-  'Crunch con disco': 'Crunch with plate',
   'Cruzado al pecho': 'Crossed to chest',
   'Cuadrupedia bodyweight': 'Quadruped bodyweight',
   'Declinadas': 'Declined',

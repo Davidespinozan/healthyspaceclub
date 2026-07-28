@@ -16,7 +16,7 @@
 insert into public.exercise_videos (exercise_id, variant_id, video_url, label, display_order)
 select v.ex, null, v.url, v.label, v.orden
   from (values
-  ('crunch-con-peso', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abdominales-crunch-declinado-con-disco-abdomen-alto-core.mp4', 'Ejecución', 0),
+  ('decline-sit-up', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abdominales-crunch-declinado-con-disco-abdomen-alto-core.mp4', 'Ejecución', 0),
   ('core-mountain-climbers', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/escaladores-abdominales-abdomen-core-cardio.mp4', 'Ejecución', 0),
   ('russian-twist-balon', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/giros-rusos-con-balon-medicinal-oblicuos-abdomen-core.mp4', 'Ejecución', 0),
   ('abduccion-cadera-banda-tobillos', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abduccion-de-cadera-de-pie-con-banda-gluteo-medio-estabilidad.mp4', 'Ejecución', 0),
