@@ -24,7 +24,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('sit-up-con-peso', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abdominales-completos-con-peso-o-sit-ups-con-mancuerna.mov', 'Ejecución', 0),
   ('burpee-sprawl', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/burpees.mov', 'Ejecución', 0),
   ('crunch-maquina', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/crunch-abdominal-en-maquina-abdomen.mov', 'Ejecución', 0),
-  ('battle-ropes', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cuerdas-de-batalla-en-sentadilla-hombros-core-piernas.mov', 'En sentadilla', 0),
+  ('battle-ropes-onda-alterna', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cuerdas-de-batalla-en-sentadilla-hombros-core-piernas.mov', 'En sentadilla', 0),
   ('curl-martillo-mancuernas-isometrico', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-alterno-conisometrico-a90grados-pausaisometrica-bicep.mp4', 'Con pausa isométrica a 90°', 1),
   ('curl-muneca-flexion-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-muneca-barra-atrasdeespalda.mp4', 'De pie, barra tras la espalda', 1),
   ('curl-muneca-extension-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-muneca-enpronacion-barra-parado.mp4', 'De pie', 1),

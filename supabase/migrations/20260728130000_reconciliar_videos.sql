@@ -43,6 +43,6 @@ select v.ex, null, v.url, 'Ejecución', 0 from (values
   ('swing-ruso', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/kettlebell-swing-gluteo-y-piernas.mp4'),
   ('swing-americano', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/kettlebell-swing-americano-hombro-y-gluteo.mp4'),
   ('swing-unilateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/kettlebell-swing-unilateral-intercalado-gluteo-y-piernas.mp4'),
-  ('battle-ropes-doble-onda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/simultaneo-cuerdas-de-batalla-con-ambas-manos-todo-el-cuerpo-y-cardio.mp4')
+  ('battle-ropes-slams', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/simultaneo-cuerdas-de-batalla-con-ambas-manos-todo-el-cuerpo-y-cardio.mp4')
   ) as v(ex, url)
  where not exists (select 1 from public.exercise_videos e where e.video_url = v.url);

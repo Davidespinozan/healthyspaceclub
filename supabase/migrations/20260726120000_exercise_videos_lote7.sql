@@ -49,6 +49,6 @@ select v.ex, null, v.url, v.label, v.orden
   ('renegade-row', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-en-plancha-con-mancuernas-espalda-y-abdomen.mp4', 'Ejecución', 0),
   ('remo-invertido-barra-baja', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-invertido-agarre-prono-en-maquina-smith-espalda.mp4', 'Ejecución', 0),
   ('remo-polea-bajo-unilateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-unilateral-en-polea-baja-agarre-neutro-en-maquina-espalda.mp4', 'Ejecución', 0),
-  ('battle-ropes-doble-onda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/simultaneo-cuerdas-de-batalla-con-ambas-manos-todo-el-cuerpo-y-cardio.mp4', 'Ejecución', 0)
+  ('battle-ropes-slams', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/simultaneo-cuerdas-de-batalla-con-ambas-manos-todo-el-cuerpo-y-cardio.mp4', 'Ejecución', 0)
   ) as v(ex, url, label, orden)
  where not exists (select 1 from public.exercise_videos e where e.video_url = v.url);

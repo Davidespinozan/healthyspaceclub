@@ -2384,8 +2384,7 @@ export const exercises: Exercise[] = [
     ],
     tip: 'La fuerza viene de la rotación de hombro, no de los brazos — relaja los hombros y trabaja desde el dorsal.',
     variants: [
-      { id: 'battle-ropes-doble-onda', name: 'Doble onda', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Ambas manos a la vez — máximo trabajo simultáneo.' },
-      { id: 'battle-ropes-onda-alterna', name: 'Onda alterna', equipment: ['gym'], difficulty: 'principiante', notes: 'Una mano sube cuando la otra baja — más sostenible para sesiones largas.' },
+      { id: 'battle-ropes-onda-alterna', name: 'Onda alterna', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Una mano sube cuando la otra baja — más sostenible para sesiones largas.' },
       { id: 'battle-ropes-slams', name: 'Slams', equipment: ['gym'], difficulty: 'avanzado', defaultReps: '20-30 seg', notes: 'Cuerda arriba con ambas manos y golpea el piso explosivamente — máxima potencia.' },
     ],
     category: '3 series',
