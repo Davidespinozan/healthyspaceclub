@@ -43,9 +43,20 @@ const yfalta=yoga.filter(f=>f.falta);
 const totCon=pats.reduce((a,p)=>a+p.con,0),totVar=pats.reduce((a,p)=>a+p.tot,0);
 const imgs=['YOGA/IMG_2711.mp4','YOGA/IMG_2723.mp4','YOGA/IMG_2725.mp4','YOGA/IMG_2734.mp4'];
 const imgCards=imgs.map(i=>`<div class="vc falta" style="border-color:var(--warn)"><video src="${BASE}${i}#t=0.1" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">¿Qué es?</div><div class="vf">${i.split('/').pop()}</div></div></div>`).join('');
-// Videos de Magaly sin variante equivalente en el banco → falta decidir. Ya
-// están todos conectados (lote 6 creó las variantes), así que la lista va vacía.
-const gymOrphans=[];
+// Videos de Magaly sin variante equivalente en el banco → falta decidir a qué
+// ejercicio van (o crear variante nueva). Del lote 7.
+const gymOrphans=[
+  ['cruces-de-polea-alta-agarre-neutro-en-maquina-pecho-medio','Cruces polea alta · agarre neutro','Aperturas: variante nueva (pecho medio)'],
+  ['cruces-de-polea-alta-agarre-prono-en-maquina-pecho-inferior','Cruces polea alta · agarre prono','Aperturas: variante nueva (pecho inferior)'],
+  ['cruces-de-polea-baja-agarre-supino-en-maquina-pecho-superior','Cruces polea baja · agarre supino','Aperturas: variante nueva (pecho superior)'],
+  ['cruces-de-polea-baja-apertura-en-maquina-pecho-superior','Cruces polea baja · apertura','Aperturas: variante nueva (pecho superior)'],
+  ['remo-con-barra-agarre-prono-en-maquina-smith-espalda','Remo barra prono en Smith','Remo: variante Smith (no existe)'],
+  ['remo-con-barra-agarre-supino-en-maquina-smith-espalda','Remo barra supino en Smith','Remo: variante Smith supino (no existe)'],
+  ['remo-invertido-agarre-supino-en-maquina-smith-espalda-y-biceps','Remo invertido supino en Smith','Remo invertido: variante supino (no existe)'],
+  ['remo-pendlay-agarre-supino-espalda-y-biceps','Remo pendlay supino','El pendlay del banco es prono — ¿variante supino?'],
+  ['sentadilla-con-press-unilateral-con-kettlebell-piernas-y-hombros','Sentadilla con press (thruster KB)','Thruster: no está en el banco'],
+  ['step-ups-con-elevacion-de-rodilla-piernas-y-gluteo','Step-up con elevación de rodilla','Step-up: variante nueva'],
+];
 const gymOrphanCards=gymOrphans.map(([slug,nom,nota])=>`<div class="vc falta" style="border-color:var(--warn)"><video src="${BASE}GYM/${encodeURIComponent(slug)}.mp4#t=0.1" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">${esc(nom)}</div><div class="vf">${esc(nota)}</div><div class="vf">${esc(slug)}.mp4</div></div></div>`).join('');
 const gymOrphanSection=gymOrphanCards?`<h2 class="mg" style="color:var(--warn)">Sin conectar — falta decidir a qué ejercicio va (o crear uno nuevo)</h2><section class="pat"><div class="vgrid">${gymOrphanCards}</div></section>`:'';
 
