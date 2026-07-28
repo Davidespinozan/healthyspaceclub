@@ -321,6 +321,8 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'En máquina (discos)': 'On machine (plate-loaded)',
+  'En máquina (polea)': 'On machine (cable)',
   'Agarre supino': 'Underhand grip',
   'En polea (cruce alto)': 'On cable (high crossover)',
   'Con pausa isométrica': 'With isometric hold',

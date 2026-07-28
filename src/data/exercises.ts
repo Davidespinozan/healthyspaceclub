@@ -357,7 +357,8 @@ export const exercises: Exercise[] = [
     variants: [
       { id: 'remo-bajo-polea', name: 'Polea baja (barra V)', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Tensión constante todo el rango.' },
       { id: 'remo-t-bar', name: 'T-bar (maneral neutro)', equipment: ['gym'], difficulty: 'intermedio', notes: 'Apoyo torácico o barra fija — protege la espalda baja.' },
-      { id: 'remo-maquina-sentado-neutro', name: 'En máquina', equipment: ['gym'], difficulty: 'principiante', notes: 'Palmas enfrentadas — dorsal y parte media.' },
+      { id: 'remo-maquina-sentado-neutro', name: 'En máquina (discos)', equipment: ['gym'], difficulty: 'principiante', notes: 'Máquina de placas/discos, palmas enfrentadas — dorsal y parte media.' },
+      { id: 'remo-maquina-neutro-polea', name: 'En máquina (polea)', equipment: ['gym'], difficulty: 'principiante', notes: 'Máquina de polea sentado con pecho apoyado, palmas enfrentadas — tensión constante.' },
     ],
     category: '4 series',
     bg: 'linear-gradient(135deg,#E8E1D3,#D9D0BE)',
