@@ -1,0 +1,7 @@
+-- David renombró 6 archivos más (mal nombrados, ya bien ubicados). Reescribe URLs.
+update public.exercise_videos set video_url=replace(video_url,'curl-de-biceps-con-barra-recta-en-polea-baja-en-maquina-biceps.mp4','encogimientos-trapecio-en-polea-baja.mp4') where video_url like '%curl-de-biceps-con-barra-recta-en-polea-baja-en-maquina-biceps.mp4%';
+update public.exercise_videos set video_url=replace(video_url,'patada-de-gluteo-en-cuadrupedia-gluteos-isquiotibiales.mp4','patada-lateral-cuadrupedia-fire-hydrant.mp4') where video_url like '%patada-de-gluteo-en-cuadrupedia-gluteos-isquiotibiales.mp4%';
+update public.exercise_videos set video_url=replace(video_url,'cruces-de-polea-baja-agarre-supino-en-maquina-pecho-superior.mp4','woodchopper-polea-baja-oblicuos-core.mp4') where video_url like '%cruces-de-polea-baja-agarre-supino-en-maquina-pecho-superior.mp4%';
+update public.exercise_videos set video_url=replace(video_url,'cruces-de-polea-alta-a-baja-pecho-inferior-hombros.mp4','woodchopper-polea-alta-oblicuos-core.mp4') where video_url like '%cruces-de-polea-alta-a-baja-pecho-inferior-hombros.mp4%';
+update public.exercise_videos set video_url=replace(video_url,'cuerdas-de-batalla-en-sentadilla-hombros-core-piernas.mov','battle-ropes-onda-alterna.mov') where video_url like '%cuerdas-de-batalla-en-sentadilla-hombros-core-piernas.mov%';
+update public.exercise_videos set video_url=replace(video_url,'upright-row-barra-al-pecho.mp4','remo-al-menton-en-smith-hombros-trapecio.mp4') where video_url like '%upright-row-barra-al-pecho.mp4%';

@@ -48,7 +48,7 @@ INSERT INTO exercise_videos (exercise_id, video_url, label, display_order) VALUE
 -- ── Espalda / remo ──────────────────────────────────────────────
 ('remo-barra-yates', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-barra-agarre-supino-palmashaciaarriba-espalda.mp4', 'Ejecución', 0),
 ('remo-barra-abierto', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-codoshaciaafuera-agarreabierto-espalda-trapecio.mp4', 'Ejecución', 0),
-('upright-row-smith', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/upright-row-barra-al-pecho.mp4', 'Al pecho', 0),
+('upright-row-smith', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-al-menton-en-smith-hombros-trapecio.mp4', 'Al pecho', 0),
 ('upright-row-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-al-cuello-barra-hombro-trapecio.mp4', 'Al cuello', 1),
 -- ── Glúteo / pierna / cardio ────────────────────────────────────
 ('hip-thrust-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/hip-thrust-barra-gluteo.mp4', 'Ejecución', 0),

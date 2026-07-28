@@ -26,7 +26,7 @@ select v.ex, null, v.url, v.label, v.orden
   from (values
   ('devil-press', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/burpee-con-mancuernas-y-press-de-hombro-todo-el-cuerpo.mp4', 'Ejecución', 0),
   ('burpee-box-jump', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/burpee-con-salto-al-cajon-piernas-y-cardio.mp4', 'Ejecución', 0),
-  ('shrugs-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-biceps-con-barra-recta-en-polea-baja-en-maquina-biceps.mp4', 'Ejecución', 0),
+  ('shrugs-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/encogimientos-trapecio-en-polea-baja.mp4', 'Ejecución', 0),
   ('dominadas-pronadas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/dominadas-agarre-prono-espalda.mp4', 'Ejecución', 0),
   ('dominadas-neutras', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/dominadas-agarre-neutro-espalda-y-biceps.mp4', 'Ejecución', 0),
   ('knee-raises', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-de-rodillas-colgado-abdomen.mp4', 'Ejecución', 0),

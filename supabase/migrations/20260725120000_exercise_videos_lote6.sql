@@ -24,7 +24,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('caminata-monstruo', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/caminata-lateral-en-sentadilla-con-banda-gluteos-piernas.mp4', 'Ejecución', 0),
   ('curl-femoral-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-femoral-acostado-con-banda-elactica-isquiotibiales-gluteos.mp4', 'Ejecución', 0),
   ('patada-gluteo-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patada-de-gluteo-en-cuadrupedia-con-banda-gluteos-isquiotibiales.mp4', 'Ejecución', 0),
-  ('abduccion-cadera-cuadrupedia', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patada-de-gluteo-en-cuadrupedia-gluteos-isquiotibiales.mp4', 'Ejecución', 0),
+  ('abduccion-cadera-cuadrupedia', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patada-lateral-cuadrupedia-fire-hydrant.mp4', 'Ejecución', 0),
   ('peso-muerto-sumo-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/peso-muerto-sumo-con-barra-gluteos-aductores-piernas.mp4', 'Ejecución', 0),
   ('hip-thrust-con-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/puente-de-gluteo-con-banda-de-resistencia-gluteos-isquiotibiales.mp4', 'Ejecución', 0),
   ('sentadilla-goblet-mancuerna', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla-sumo-con-mancuerna-gluteos-aductores-piernas.mp4', 'Ejecución', 0),
