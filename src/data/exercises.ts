@@ -60,7 +60,6 @@ export const exercises: Exercise[] = [
       { id: 'press-horizontal-banda', name: 'Con banda', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '12-15', notes: 'En casa o de viaje — ancla la banda detrás de ti a la altura del torso.' },
       { id: 'press-horizontal-flexiones', name: 'Flexiones', equipment: ['cuerpo'], difficulty: 'principiante', defaultSets: 4, defaultReps: '12-15', defaultRest: 60, notes: 'Sin equipo. Mantén core firme — la cadera no debe hundirse.' },
       { id: 'press-horizontal-flexiones-rodillas', name: 'En rodillas', equipment: ['cuerpo'], difficulty: 'principiante', defaultSets: 4, defaultReps: '12-15', defaultRest: 60, notes: 'Regresión de la flexión: apoya las rodillas para bajar la carga. Mantén la línea hombros-cadera-rodillas.' },
-      { id: 'press-horizontal-flexiones-declinadas', name: 'Flexiones declinadas', equipment: ['cuerpo'], difficulty: 'intermedio', defaultSets: 4, defaultReps: '10-12', defaultRest: 60, notes: 'Pies elevados en silla o banco - mayor estrés en pecho superior.' },
       { id: 'press-horizontal-maquina', name: 'En máquina', equipment: ['gym'], difficulty: 'principiante', notes: 'Chest press sentado — trayectoria guiada, ideal para principiantes o alto volumen sin spotter.' },
       { id: 'press-horizontal-mancuernas-piso', name: 'Press en el piso, mancuernas', equipment: ['gym'], difficulty: 'intermedio', notes: 'Acostado en el piso — el rango se limita al tocar codos, protege el hombro y enfatiza el bloqueo de tríceps.' },
     ],
