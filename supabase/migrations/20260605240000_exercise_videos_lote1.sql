@@ -126,7 +126,7 @@ SELECT 'press-horizontal-mancuernas-piso', 'https://ltveorvqvvlyivjwxjlc.supabas
 WHERE NOT EXISTS (SELECT 1 FROM exercise_videos WHERE exercise_id = 'press-horizontal-mancuernas-piso');
 
 INSERT INTO exercise_videos (exercise_id, video_url, display_order)
-SELECT 'press-triceps-maquina-sentado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/fondos-triceps-maquina.mp4', 0
+SELECT 'press-triceps-maquina-sentado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-triceps-sentado-en-maquina-triceps.mp4', 0
 WHERE NOT EXISTS (SELECT 1 FROM exercise_videos WHERE exercise_id = 'press-triceps-maquina-sentado');
 
 INSERT INTO exercise_videos (exercise_id, video_url, display_order)

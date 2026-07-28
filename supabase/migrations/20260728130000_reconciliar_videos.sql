@@ -26,7 +26,7 @@ select v.ex, null, v.url, 'Ejecución', 0 from (values
   ('remo-invertido-barra-baja', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-invertido-agarre-prono-en-maquina-smith-espalda.mp4'),
   ('elevacion-frontal-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-frontales-con-barra-recta-en-polea-baja-en-maquina-hombros.mp4'),
   ('vuelo-posterior-mancuernas-inclinado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-posteriores-con-mancuernas-en-banco-hombro-posterior.mp4'),
-  ('upright-row-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-al-menton-con-barra-recta-en-polea-baja-en-maquina-hombros-y-trapecio.mp4'),
+  ('upright-row-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-al-menton-con-barra-z-en-polea-baja-hombros-trapecio.mp4'),
   ('curl-pie-polea-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-biceps-con-barra-recta-en-polea-baja-en-maquina-biceps.mp4'),
   ('curl-martillo-polea-cuerda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-con-cuerda-en-polea-baja-biceps.mp4'),
   ('press-frances-barra-recta', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-frances-con-barra-en-banco-triceps.mp4'),

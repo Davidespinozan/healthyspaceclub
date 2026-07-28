@@ -31,7 +31,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('levantamiento-piernas-acostado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-de-piernas-acostado-abdomen-inferior-core.mov', 'Ejecución', 0),
   ('elevacion-lateral-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-laterales-polea-trapecio-hombro-lateral.mp4', 'Ejecución', 0),
   ('vuelo-posterior-mancuernas-sentado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-posteriores-laterales-con-mancuerna-hombro-trapecio.mp4', 'Con mancuernas', 0),
-  ('triceps-push-down-unilateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/extension-tricep-polea-alta.mp4', 'Ejecución', 0),
+  ('triceps-push-down-unilateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/extension-triceps-polea-unilateral-un-brazo.mp4', 'Ejecución', 0),
   ('face-pull-trx', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/face-pull-en-trx-agarre-prono-hombro-posterior-espalda-alta.mov', 'En TRX', 0),
   ('side-bend-mancuerna', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/flexion-lateral-de-tronco-con-discos-oblicuos.mov', 'Con discos', 0),
   ('press-horizontal-flexiones', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/lagartija-estricta-o-flexion-clasica-completa-core-hombros.mov', 'Ejecución', 0),

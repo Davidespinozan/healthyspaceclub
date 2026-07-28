@@ -44,7 +44,7 @@ INSERT INTO exercise_videos (exercise_id, video_url, label, display_order) VALUE
 ('elevacion-frontal-mancuernas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-frontales-mancuernas.mp4', 'Ejecución', 0),
 ('elevacion-lateral-mancuernas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-laterales-mancuernas.mp4', 'Ejecución', 0),
 ('press-militar-pie-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-barra.mp4', 'Ejecución', 0),
-('press-militar-cerrado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-barra-agarresupino-hombro.mp4', 'Ejecución', 0),
+('press-militar-cerrado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-barra-agarre-cerrado-hombro.mp4', 'Ejecución', 0),
 -- ── Espalda / remo ──────────────────────────────────────────────
 ('remo-barra-yates', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-barra-agarre-supino-palmashaciaarriba-espalda.mp4', 'Ejecución', 0),
 ('remo-barra-abierto', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-codoshaciaafuera-agarreabierto-espalda-trapecio.mp4', 'Ejecución', 0),

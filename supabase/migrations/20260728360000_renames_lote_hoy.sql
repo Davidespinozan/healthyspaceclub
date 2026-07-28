@@ -1,0 +1,7 @@
+-- David renombró en storage 6 archivos mal nombrados (ya bien ubicados). Reescribe URLs.
+update public.exercise_videos set video_url=replace(video_url,'press-militar-barra-agarresupino-hombro.mp4','press-militar-barra-agarre-cerrado-hombro.mp4') where video_url like '%press-militar-barra-agarresupino-hombro.mp4%';
+update public.exercise_videos set video_url=replace(video_url,'triceps-push-down-cuerda.mp4','triceps-push-down-barra-recta.mp4') where video_url like '%triceps-push-down-cuerda.mp4%';
+update public.exercise_videos set video_url=replace(video_url,'cruces-de-polea-alta-agarre-prono-en-maquina-pecho-inferior.mp4','press-declinado-en-polea-alta-pecho-inferior.mp4') where video_url like '%cruces-de-polea-alta-agarre-prono-en-maquina-pecho-inferior.mp4%';
+update public.exercise_videos set video_url=replace(video_url,'remo-al-menton-con-barra-recta-en-polea-baja-en-maquina-hombros-y-trapecio.mp4','remo-al-menton-con-barra-z-en-polea-baja-hombros-trapecio.mp4') where video_url like '%remo-al-menton-con-barra-recta-en-polea-baja-en-maquina-hombros-y-trapecio.mp4%';
+update public.exercise_videos set video_url=replace(video_url,'extension-tricep-polea-alta.mp4','extension-triceps-polea-unilateral-un-brazo.mp4') where video_url like '%extension-tricep-polea-alta.mp4%';
+update public.exercise_videos set video_url=replace(video_url,'fondos-triceps-maquina.mp4','press-triceps-sentado-en-maquina-triceps.mp4') where video_url like '%fondos-triceps-maquina.mp4%';
