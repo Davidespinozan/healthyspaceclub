@@ -12,6 +12,7 @@ export interface ExerciseOverlay {
 }
 
 export const exercisesEn: Record<string, ExerciseOverlay> = {
+  'curl-21s': { name: '21s Curl (barbell)', desc: '21s method: 7 lower-half reps + 7 upper-half + 7 full, no rest — brutal biceps pump.', tip: 'Use less weight than you think — 21 straight reps pile up a lot of fatigue.' },
   'press-triceps-maquina': { name: 'Machine Triceps Press', desc: 'Seated machine pressing for triceps — like dips but guided. Uncommon machine.', tip: 'Not every gym has this machine — if unavailable, swap for triceps dips or push-downs.' },
   'core-suelo-piernas': { name: 'Floor Core (Legs)', desc: 'Lower abs and obliques with leg movements lying on the floor — no equipment, control and endurance.', tip: 'If you feel your lower back, raise your legs a little or tuck your hands under your glutes — protect the lumbar.' },
   'cluster-barra': { name: 'Barbell Cluster', desc: 'Combined barbell lift — legs, glutes and shoulders in one full-body movement.', tip: "It's a technical lift — start light and master the coordination before adding weight." },
@@ -321,6 +322,7 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Fase superior': 'Top half', 'Fase inferior': 'Bottom half', 'Completo': 'Full range',
   'Banco inclinado, agarre normal': 'Incline bench, standard grip',
   'Banco inclinado, martillo': 'Incline bench, hammer',
   'Barra, agarre cerrado': 'Barbell, close grip',

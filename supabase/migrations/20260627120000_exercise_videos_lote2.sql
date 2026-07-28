@@ -27,7 +27,7 @@ DELETE FROM exercise_videos WHERE exercise_id IN (
 INSERT INTO exercise_videos (exercise_id, video_url, label, display_order) VALUES
 -- ── Bíceps ──────────────────────────────────────────────────────
 ('curl-pie-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/bicep-barra-curl-completo.mp4', 'Completo', 0),
-('curl-pie-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/bicep-barra-superior-curl.mp4', 'Parte superior (21s)', 1),
+('curl-21s-superior', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/bicep-barra-superior-curl.mp4', 'Parte superior (21s)', 1),
 ('curl-pie-barra-z', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-bicep-barraz.mp4', 'Ejecución', 0),
 ('curl-pie-barra-z-cerrado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-barraz-agarrecerrado-bicep.mp4', 'Ejecución', 0),
 ('curl-pie-barra-invertido', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-bicep-barra-agarreinvertido-curlprono.mp4', 'Ejecución', 0),

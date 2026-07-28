@@ -22,7 +22,6 @@ select v.ex, null, v.url, v.label, v.orden
   ('abduccion-cadera-banda-tobillos', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abduccion-de-cadera-de-pie-con-banda-gluteo-medio-estabilidad.mp4', 'Ejecución', 0),
   ('abduccion-cadera-banda-rodillas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/abduccion-de-cadera-sentado-con-banda-gluteo-medio-aductores.mp4', 'Ejecución', 0),
   ('caminata-monstruo', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/caminata-lateral-en-sentadilla-con-banda-gluteos-piernas.mp4', 'Ejecución', 0),
-  ('caminata-lateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/caminata-lateral-en-sentadilla-gluteos-piernas.mp4', 'Ejecución', 0),
   ('curl-femoral-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-femoral-acostado-con-banda-elactica-isquiotibiales-gluteos.mp4', 'Ejecución', 0),
   ('patada-gluteo-banda', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patada-de-gluteo-en-cuadrupedia-con-banda-gluteos-isquiotibiales.mp4', 'Ejecución', 0),
   ('patada-gluteo-cuadrupedia-sin-peso', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/patada-de-gluteo-en-cuadrupedia-gluteos-isquiotibiales.mp4', 'Ejecución', 0),
