@@ -323,6 +323,7 @@ export const exercises: Exercise[] = [
     tip: 'El agarre neutro es el más amigable con hombros y codos — ideal si te molestan.',
     variants: [
       { id: 'jalon-neutro', name: 'En polea', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Palmas enfrentadas (barra V) — amigable con codos y hombros.' },
+      { id: 'jalon-neutro-triangulo', name: 'Triángulo al pecho', equipment: ['gym'], difficulty: 'principiante', notes: 'Agarre neutro cerrado con barra en triángulo (barra V) — jala al pecho, enfatiza dorsales bajos.' },
       { id: 'dominadas-neutras', name: 'Dominada en barra', equipment: ['gym'], difficulty: 'avanzado', notes: 'Peso corporal, palmas enfrentadas — amigable con los hombros.' },
       { id: 'dominadas-asistidas-maquina-neutra', name: 'Dominada asistida (máquina)', equipment: ['gym'], difficulty: 'principiante', notes: 'Máquina de asistencia con agarre neutro (palmas enfrentadas) — construye fuerza hacia la dominada neutra.' },
     ],
