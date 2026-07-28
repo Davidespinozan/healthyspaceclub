@@ -18,7 +18,7 @@ DELETE FROM exercise_videos WHERE exercise_id IN (
   'curl-predicador-banca-scott-barra', 'curl-predicador-banca-scott-mancuerna',
   'press-frances-barra-z', 'extensiones-polea-cuerda', 'extensiones-barra', 'extensiones-mancuerna-sentado',
   'elevacion-frontal-mancuernas', 'elevacion-lateral-mancuernas',
-  'press-militar-pie-barra', 'press-militar-supino',
+  'press-militar-pie-barra', 'press-militar-cerrado',
   'remo-barra-yates', 'remo-barra-abierto', 'remo-barra-pronado', 'upright-row-barra',
   'hip-thrust-barra', 'sentadilla-isometrica', 'cardio-bici',
   'curl-muneca-flexion-barra', 'curl-muneca-extension-barra'
@@ -44,7 +44,7 @@ INSERT INTO exercise_videos (exercise_id, video_url, label, display_order) VALUE
 ('elevacion-frontal-mancuernas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-frontales-mancuernas.mp4', 'Ejecución', 0),
 ('elevacion-lateral-mancuernas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-laterales-mancuernas.mp4', 'Ejecución', 0),
 ('press-militar-pie-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-barra.mp4', 'Ejecución', 0),
-('press-militar-supino', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-barra-agarresupino-hombro.mp4', 'Ejecución', 0),
+('press-militar-cerrado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-barra-agarresupino-hombro.mp4', 'Ejecución', 0),
 -- ── Espalda / remo ──────────────────────────────────────────────
 ('remo-barra-yates', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-barra-agarre-supino-palmashaciaarriba-espalda.mp4', 'Ejecución', 0),
 ('remo-barra-abierto', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-codoshaciaafuera-agarreabierto-espalda-trapecio.mp4', 'Ejecución', 0),

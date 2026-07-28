@@ -43,7 +43,7 @@ export const exercisesEn: Record<string, ExerciseOverlay> = {
   'shrugs': { name: 'Shrugs', desc: 'Trap elevation — upper trapezius development.', tip: 'Do NOT roll your shoulders — the movement is strictly vertical, up and down.' },
   // ── HOMBRO ──
   'press-vertical': { name: 'Overhead Press', desc: 'Pressing from the shoulders straight up — the king of delt patterns.', tip: 'Your face passes under the bar as you press — if you arch your back a lot, drop the weight.' },
-  'press-vertical-supino': { name: 'Supinated Overhead Press', desc: 'Pressing overhead with a supinated grip (palms facing you) — more front delt and shoulder friendly.', tip: 'The underhand grip loads the front delt more and usually feels easier on the shoulder.' },
+  'press-vertical-cerrado': { name: 'Close-Grip Overhead Press', desc: 'Pressing overhead with a close grip (shoulder width) — more triceps and front delt.', tip: 'The close grip loads the triceps more — keep elbows pointing forward, not flared.' },
   'elevacion-lateral': { name: 'Lateral Raise', desc: 'Straight arm raising out to the side — side-delt isolation.', tip: 'Imagine pouring out a pitcher of water with each hand — pinky up isolates the side delt better.' },
   'elevacion-frontal': { name: 'Front Raise', desc: 'Straight arm raising to the front — front-delt isolation.', tip: 'Don’t swing — if you need to push with your hips to lift, drop the weight.' },
   'vuelo-posterior': { name: 'Rear Delt Fly', desc: 'Arms opening to the back — rear-delt isolation, key for posture.', tip: 'Imagine opening closet doors — hands away from your body, not behind it.' },
@@ -321,6 +321,7 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Barra, agarre cerrado': 'Barbell, close grip',
   'Banco inclinado (mancuerna)': 'Incline bench (dumbbell)',
   'En máquina (discos)': 'On machine (plate-loaded)',
   'En máquina (polea)': 'On machine (cable)',
