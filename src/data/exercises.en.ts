@@ -322,6 +322,7 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'En Smith, de pie': 'On Smith, standing', 'En Smith, sentado': 'On Smith, seated',
   'Patada lateral (cuadrupedia, banda)': 'Fire hydrant (banded)',
   'Fase superior': 'Top half', 'Fase inferior': 'Bottom half', 'Completo': 'Full range',
   'Banco inclinado, agarre normal': 'Incline bench, standard grip',

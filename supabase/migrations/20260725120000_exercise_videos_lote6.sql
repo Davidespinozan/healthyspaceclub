@@ -43,7 +43,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('press-inclinado-smith', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-banca-inclinado-en-maquina-smith-agarre-supino-pecho-alto-triceps.mp4', 'Ejecución', 0),
   ('press-horizontal-smith', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-banca-plano-en-maquina-smith-agarre-supino-pecho-medio-triceps.mp4', 'Ejecución', 0),
   ('elevacion-frontal-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-frontales-con-barra-agarre-prono-hombro-anterior.mp4', 'Ejecución', 0),
-  ('press-smith', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-sentado-en-maquina-smith-hombros-triceps.mp4', 'Ejecución', 0),
+  ('press-smith-sentado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-militar-sentado-en-maquina-smith-hombros-triceps.mp4', 'Ejecución', 0),
   ('dominadas-asistidas-maquina', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/dominadas-asistidas-en-maquina-agarre-prono-espalda-alta-biceps.mp4', 'Ejecución', 0),
   ('remo-ergometro', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-en-simulador-de-remo-cardio-espalda-piernas.mp4', 'Ejecución', 0),
   ('burpee-con-flexion', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/burpees-con-salto-full-body-cardio-resistencia.mp4', 'Ejecución', 0),
