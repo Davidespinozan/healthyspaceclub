@@ -322,6 +322,7 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Flexión con barra (de pie)': 'Barbell flexion (standing)', 'Flexión con barra (sentado)': 'Barbell flexion (seated)', 'Extensión con barra (de pie)': 'Barbell extension (standing)', 'Extensión con barra (sentado)': 'Barbell extension (seated)',
   'En Smith, de pie': 'On Smith, standing', 'En Smith, sentado': 'On Smith, seated',
   'Patada lateral (cuadrupedia, banda)': 'Fire hydrant (banded)',
   'Fase superior': 'Top half', 'Fase inferior': 'Bottom half', 'Completo': 'Full range',

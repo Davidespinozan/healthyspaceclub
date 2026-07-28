@@ -1050,8 +1050,10 @@ export const exercises: Exercise[] = [
     ],
     tip: 'Rango corto pero estricto — el antebrazo responde a repeticiones altas y tensión constante.',
     variants: [
-      { id: 'curl-muneca-flexion-barra', name: 'Flexión con barra', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Palmas hacia arriba flexionando la muñeca — trabaja los flexores del antebrazo.' },
-      { id: 'curl-muneca-extension-barra', name: 'Extensión con barra (prono)', equipment: ['gym'], difficulty: 'principiante', notes: 'Palmas hacia abajo extendiendo la muñeca — trabaja los extensores del antebrazo.' },
+      { id: 'curl-muneca-flexion-barra', name: 'Flexión con barra (de pie)', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'De pie con barra tras la espalda, palmas atrás flexionando la muñeca — flexores del antebrazo.' },
+      { id: 'curl-muneca-flexion-barra-sentado', name: 'Flexión con barra (sentado)', equipment: ['gym'], difficulty: 'principiante', notes: 'Sentado con antebrazos en los muslos, palmas arriba flexionando la muñeca — flexores del antebrazo.' },
+      { id: 'curl-muneca-extension-barra', name: 'Extensión con barra (de pie)', equipment: ['gym'], difficulty: 'principiante', notes: 'De pie, palmas al frente en pronación extendiendo la muñeca — extensores del antebrazo.' },
+      { id: 'curl-muneca-extension-barra-sentado', name: 'Extensión con barra (sentado)', equipment: ['gym'], difficulty: 'principiante', notes: 'Sentado con antebrazos en los muslos, palmas abajo extendiendo la muñeca — extensores del antebrazo.' },
     ],
     category: '3 series',
     bg: 'linear-gradient(135deg,#EDE9E0,#DDD3BE)',

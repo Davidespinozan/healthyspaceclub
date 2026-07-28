@@ -13,5 +13,5 @@ DELETE FROM exercise_videos WHERE exercise_id IN (
 );
 
 INSERT INTO exercise_videos (exercise_id, video_url, display_order) VALUES
-  ('curl-muneca-flexion-barra',   'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-muneca-sentado-supinacion.mp4', 0),
-  ('curl-muneca-extension-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-muneca-sentado-pronacion.mp4', 0);
+  ('curl-muneca-flexion-barra-sentado',   'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-muneca-sentado-supinacion.mp4', 0),
+  ('curl-muneca-extension-barra-sentado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-muneca-sentado-pronacion.mp4', 0);
