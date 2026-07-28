@@ -30,3 +30,5 @@ update public.exercise_videos set exercise_id='dominadas-neutras'
   where video_url like '%dominadas-agarre-supino-espalda-y-biceps%' and exercise_id='dominadas-supinadas';
 delete from public.exercise_videos where video_url like '%lagartijas-diamante-pecho-tricep-abdomen%';
 update public.exercise_videos set exercise_id='flexiones-diamante-estandar' where video_url like '%lagartijas-diamante-triceps-pecho-medio-neutral%';
+update public.exercise_videos set exercise_id='jalon-neutro'
+  where video_url like '%jalon-frontal-triangulo-maquina-espalda%' and exercise_id='jalon-cerrado';
