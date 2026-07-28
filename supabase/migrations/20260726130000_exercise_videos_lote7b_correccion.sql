@@ -32,3 +32,5 @@ delete from public.exercise_videos where video_url like '%lagartijas-diamante-pe
 update public.exercise_videos set exercise_id='flexiones-diamante-estandar' where video_url like '%lagartijas-diamante-triceps-pecho-medio-neutral%';
 update public.exercise_videos set exercise_id='jalon-neutro-triangulo'
   where video_url like '%jalon-frontal-triangulo-maquina-espalda%' and exercise_id <> 'jalon-neutro-triangulo';
+-- David: cruces-de-polea-alta-a-baja no es pec deck → desconectar (queda "sin conectar" hasta decidir).
+delete from public.exercise_videos where video_url like '%cruces-de-polea-alta-a-baja-pecho-inferior-hombros%';

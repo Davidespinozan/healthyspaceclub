@@ -65,6 +65,7 @@ const gymOrphans=[
   ['remo-pendlay-agarre-supino-espalda-y-biceps','Remo pendlay supino','→ crear variante supino (el pendlay del banco es prono)'],
   ['sentadilla-con-press-unilateral-con-kettlebell-piernas-y-hombros','Thruster con kettlebell','→ ejercicio nuevo (sentadilla + press, no está)'],
   ['step-ups-con-elevacion-de-rodilla-piernas-y-gluteo','Step-up con elevación de rodilla','→ variante nueva de Step-up'],
+  ['cruces-de-polea-alta-a-baja-pecho-inferior-hombros','Cruce de polea de alta a baja (pecho inferior)','→ David: no es pec deck; decidir a qué cruce/apertura va'],
 ];
 const gymOrphanCards=gymOrphans.map(([slug,nom,nota])=>`<div class="vc falta" style="border-color:var(--warn)"><video src="${BASE}GYM/${encodeURIComponent(slug)}.mp4#t=0.1" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">${esc(nom)}</div><div class="vf">${esc(nota)}</div><div class="vf">${esc(slug)}.mp4</div></div></div>`).join('');
 const gymOrphanSection=gymOrphanCards?`<h2 class="mg" style="color:var(--warn)">Sin conectar — falta decidir a qué ejercicio va (o crear uno nuevo)</h2><section class="pat"><div class="vgrid">${gymOrphanCards}</div></section>`:'';
