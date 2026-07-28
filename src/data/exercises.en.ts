@@ -324,6 +324,7 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Con pausa isométrica': 'With isometric hold',
   'Triángulo al pecho': 'Triangle to chest',
   'Agarre neutral': 'Neutral grip',
   'Polea alta, agarre neutro': 'High pulley, neutral grip',

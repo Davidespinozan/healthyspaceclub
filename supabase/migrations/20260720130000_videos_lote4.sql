@@ -26,7 +26,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('crunch-maquina', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/crunch-abdominal-en-maquina-abdomen.mov', 'Ejecución', 0),
   ('battle-ropes', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cuerdas-de-batalla-en-sentadilla-hombros-core-piernas.mov', 'En sentadilla', 0),
   ('curl-pie', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-biceps-con-mancuernas.mp4', 'Con mancuernas', 0),
-  ('curl-martillo-mancuernas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-alterno-conisometrico-a90grados-pausaisometrica-bicep.mp4', 'Con pausa isométrica a 90°', 1),
+  ('curl-martillo-mancuernas-isometrico', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-alterno-conisometrico-a90grados-pausaisometrica-bicep.mp4', 'Con pausa isométrica a 90°', 1),
   ('curl-muneca-flexion-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-muneca-barra-atrasdeespalda.mp4', 'De pie, barra tras la espalda', 1),
   ('curl-muneca-extension-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-muneca-enpronacion-barra-parado.mp4', 'De pie', 1),
   ('levantamiento-piernas-acostado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-de-piernas-acostado-abdomen-inferior-core.mov', 'Ejecución', 0),

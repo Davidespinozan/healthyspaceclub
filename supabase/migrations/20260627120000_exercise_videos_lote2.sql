@@ -32,7 +32,7 @@ INSERT INTO exercise_videos (exercise_id, video_url, label, display_order) VALUE
 ('curl-pie-barra-z-cerrado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-barraz-agarrecerrado-bicep.mp4', 'Ejecución', 0),
 ('curl-pie-barra-invertido', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-bicep-barra-agarreinvertido-curlprono.mp4', 'Ejecución', 0),
 ('curl-polea-doble', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-doblepolea-estilodoble-bicep.mp4', 'Ejecución', 0),
-('curl-martillo-mancuernas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-alterno-conisometrico-a90grados-pausaisometrica-bicep.mp4', 'Ejecución', 0),
+('curl-martillo-mancuernas-isometrico', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-martillo-alterno-conisometrico-a90grados-pausaisometrica-bicep.mp4', 'Ejecución', 0),
 ('curl-martillo-scott', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-banco-curlscott-neutro-mancuerna-curlmartilloenscott.mp4', 'Ejecución', 0),
 ('curl-predicador-banca-scott-barra', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-predicador-barraz-bicep-curlscott.mp4', 'Ejecución', 0),
 ('curl-predicador-banca-scott-mancuerna', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-bicep-mancuerna-curlscott-banco-unamano.mp4', 'Ejecución', 0),
