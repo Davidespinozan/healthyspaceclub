@@ -322,6 +322,7 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Patada lateral (cuadrupedia, banda)': 'Fire hydrant (banded)',
   'Fase superior': 'Top half', 'Fase inferior': 'Bottom half', 'Completo': 'Full range',
   'Banco inclinado, agarre normal': 'Incline bench, standard grip',
   'Banco inclinado, martillo': 'Incline bench, hammer',
