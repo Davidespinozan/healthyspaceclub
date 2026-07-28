@@ -58,10 +58,7 @@ const imgCards=imgs.map(i=>`<div class="vc falta" style="border-color:var(--warn
 // ejercicio van (o crear variante nueva). Del lote 7.
 const gymOrphans=[
   ['cruces-de-polea-baja-agarre-supino-en-maquina-pecho-superior','Es de ABDOMEN (mal etiquetado)','→ David: acomodar en core'],
-  ['remo-con-barra-agarre-prono-en-maquina-smith-espalda','Remo barra prono en Smith','→ crear variante "En Smith" en Remo Pronado'],
-  ['remo-con-barra-agarre-supino-en-maquina-smith-espalda','Remo barra supino en Smith','→ crear variante "En Smith" en Remo Supino'],
   ['remo-invertido-agarre-supino-en-maquina-smith-espalda-y-biceps','Remo invertido supino en Smith','→ crear variante "Agarre supino" en Remo Invertido'],
-  ['remo-pendlay-agarre-supino-espalda-y-biceps','Remo pendlay supino','→ crear variante supino (el pendlay del banco es prono)'],
   ['sentadilla-con-press-unilateral-con-kettlebell-piernas-y-hombros','Thruster con kettlebell','→ ejercicio nuevo (sentadilla + press, no está)'],
   ['step-ups-con-elevacion-de-rodilla-piernas-y-gluteo','Step-up con elevación de rodilla','→ variante nueva de Step-up'],
   ['cruces-de-polea-alta-a-baja-pecho-inferior-hombros','Cruce de polea de alta a baja (pecho inferior)','→ David: no es pec deck; decidir a qué cruce/apertura va'],
