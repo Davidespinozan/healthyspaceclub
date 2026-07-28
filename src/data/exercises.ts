@@ -526,7 +526,7 @@ export const exercises: Exercise[] = [
     variants: [
       { id: 'face-pull-polea-cuerda', name: 'Polea con cuerda', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Versión clásica — cuerda permite el twist final en muñecas.' },
       { id: 'face-pull-banda', name: 'Con banda', equipment: ['ligas'], difficulty: 'principiante', notes: 'Banda anclada en alto — versión casera para warm-up de hombros.' },
-      { id: 'face-pull-reverse-pec-deck', name: 'Pec deck invertido', equipment: ['gym'], difficulty: 'principiante', notes: 'Pec deck invertido — sustituto si no hay polea libre.' },
+      { id: 'face-pull-trx', name: 'En TRX', equipment: ['gym'], difficulty: 'intermedio', notes: 'Con TRX/anillas, agarre prono, jalas hacia la cara — hombro posterior y espalda alta.' },
     ],
     category: '3 series',
     bg: 'linear-gradient(135deg,#E8E1D3,#D9D0BE)',
