@@ -58,7 +58,6 @@ const imgCards=imgs.map(i=>`<div class="vc falta" style="border-color:var(--warn
 // ejercicio van (o crear variante nueva). Del lote 7.
 const gymOrphans=[
   ['cruces-de-polea-baja-agarre-supino-en-maquina-pecho-superior','Es de ABDOMEN (mal etiquetado)','→ David: acomodar en core'],
-  ['cruces-de-polea-alta-agarre-prono-en-maquina-pecho-inferior','Es un PRESS de pecho en polea (no apertura)','→ David: ¿press inclinado o declinado?'],
   ['remo-con-barra-agarre-prono-en-maquina-smith-espalda','Remo barra prono en Smith','→ crear variante "En Smith" en Remo Pronado'],
   ['remo-con-barra-agarre-supino-en-maquina-smith-espalda','Remo barra supino en Smith','→ crear variante "En Smith" en Remo Supino'],
   ['remo-invertido-agarre-supino-en-maquina-smith-espalda-y-biceps','Remo invertido supino en Smith','→ crear variante "Agarre supino" en Remo Invertido'],

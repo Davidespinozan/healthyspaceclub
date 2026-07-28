@@ -120,6 +120,7 @@ export const exercises: Exercise[] = [
       { id: 'press-declinado-barra', name: 'Con barra', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Versión clásica — cuida la salida si entrenas sin spotter.' },
       { id: 'press-declinado-mancuernas', name: 'Con mancuernas', equipment: ['gym'], difficulty: 'intermedio', notes: 'Mayor rango y menor estrés en hombros que la barra.' },
       { id: 'press-declinado-maquina', name: 'En máquina', equipment: ['gym'], difficulty: 'principiante', notes: 'Aísla el pecho inferior sin necesidad de equilibrar carga.' },
+      { id: 'press-declinado-polea', name: 'En polea (cruce alto)', equipment: ['gym'], difficulty: 'principiante', notes: 'De pie, poleas altas: empujas hacia abajo y al frente simulando el press con mancuernas — énfasis en pecho inferior.' },
       { id: 'press-declinado-flexiones-declinadas', name: 'Flexiones con pies arriba', equipment: ['cuerpo'], difficulty: 'intermedio', defaultSets: 4, defaultReps: '10-12', defaultRest: 60, notes: 'Pies en superficie alta (silla, banco) — equivalente bodyweight del declinado.' },
     ],
     category: '4 series',
