@@ -45,7 +45,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('press-frances-mancuerna', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-frances-con-mancuerna-a-dos-manos-en-banco-triceps.mp4', 'Ejecución', 0),
   ('press-frances-mancuernas-individuales', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-frances-unilateral-con-mancuerna-en-banco-triceps.mp4', 'Ejecución', 0),
   ('upright-row-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-al-menton-con-barra-recta-en-polea-baja-en-maquina-hombros-y-trapecio.mp4', 'Ejecución', 0),
-  ('remo-barra-abierto', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-con-barra-agarre-prono-espalda.mp4', 'Ejecución', 0),
+  ('remo-barra-pendlay', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-con-barra-agarre-prono-espalda.mp4', 'Ejecución', 0),
   ('renegade-row', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-en-plancha-con-mancuernas-espalda-y-abdomen.mp4', 'Ejecución', 0),
   ('remo-invertido-barra-baja', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-invertido-agarre-prono-en-maquina-smith-espalda.mp4', 'Ejecución', 0),
   ('remo-polea-bajo-unilateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-unilateral-en-polea-baja-agarre-neutro-en-maquina-espalda.mp4', 'Ejecución', 0),

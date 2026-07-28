@@ -21,7 +21,7 @@ select v.ex, null, v.url, 'Ejecución', 0 from (values
   ('dominadas-pronadas', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/dominadas-agarre-prono-espalda.mp4'),
   ('jalon-supinado', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/jalon-al-pecho-agarre-supino-en-maquina-espalda-y-biceps.mp4'),
   ('dominadas-neutras', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/dominadas-agarre-neutro-espalda-y-biceps.mp4'),
-  ('remo-barra-abierto', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-con-barra-agarre-prono-espalda.mp4'),
+  ('remo-barra-pendlay', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-con-barra-agarre-prono-espalda.mp4'),
   ('remo-polea-bajo-unilateral', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-unilateral-en-polea-baja-agarre-neutro-en-maquina-espalda.mp4'),
   ('remo-invertido-barra-baja', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/remo-invertido-agarre-prono-en-maquina-smith-espalda.mp4'),
   ('elevacion-frontal-polea', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/elevaciones-frontales-con-barra-recta-en-polea-baja-en-maquina-hombros.mp4'),
