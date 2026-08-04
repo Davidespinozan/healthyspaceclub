@@ -60,3 +60,17 @@ fs.writeFileSync(S + '/porpatron.json', JSON.stringify(pats));
 fs.writeFileSync(S + '/yoga.json', '[]');
 const totCon = pats.reduce((a, p) => a + p.con, 0), totVar = pats.reduce((a, p) => a + p.tot, 0);
 console.log(`porpatron.json: ${pats.length} patrones · ${totVar} variantes · ${totCon} con video`);
+
+// ── 4. Emitir el set de variantes CON VIDEO (para que el generador de rutina
+//      prefiera variantes que sí tienen clip y evite el "video próximamente").
+//      Misma fuente que el review → se regenera con este script en cada cambio.
+const withVideo = [...new Set(pats.flatMap((p) => p.vars.filter((v) => v.tiene).map((v) => v.id)))].sort();
+const ts = `// GENERADO por scripts/build_videos_review_data.mjs — NO editar a mano.
+// Set de ids de ejercicio/variante que tienen al menos un video conectado.
+// Lo usa selectVariantForEquipment para preferir variantes con clip.
+export const VIDEO_VARIANT_IDS: ReadonlySet<string> = new Set([
+${withVideo.map((id) => `  '${id}',`).join('\n')}
+]);
+`;
+fs.writeFileSync('src/data/videoAvailability.ts', ts);
+console.log(`videoAvailability.ts: ${withVideo.length} variantes con video`);

@@ -1,4 +1,5 @@
 import { dayKey } from './localDate';
+import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
 import type {
   Exercise,
   ExerciseVariant,
@@ -588,7 +589,7 @@ export function filterExercisesForWorkout(params: {
  */
 export function selectVariantForEquipment(
   exercise: Exercise,
-  userEquipment: Equipment[]
+  userEquipment: Equipment[],
 ): ExerciseVariant | null {
   if (!exercise.variants || exercise.variants.length === 0) return null;
 
@@ -599,12 +600,20 @@ export function selectVariantForEquipment(
 
   if (applicable.length === 0) return null;
 
-  // Preferir la default si está entre las aplicables
-  const defaultApplicable = applicable.find(v => v.isDefault === true);
-  if (defaultApplicable) return defaultApplicable;
+  // Preferimos variantes que YA tienen video (evita mostrar "video próximamente"
+  // cuando hay una hermana aplicable con clip). VIDEO_VARIANT_IDS se regenera desde
+  // las migraciones con scripts/build_videos_review_data.mjs. Si el set no cubre una
+  // variante (recién grabada, aún sin regenerar), simplemente no la prioriza: cae al
+  // comportamiento anterior. Nunca elige una variante que NO aplica al equipo.
+  const withVideo = applicable.filter(v => VIDEO_VARIANT_IDS.has(v.id));
+  const pool = withVideo.length > 0 ? withVideo : applicable;
 
-  // Si no hay default aplicable, devolver la primera
-  return applicable[0];
+  // Preferir la default si está entre las del pool
+  const defaultInPool = pool.find(v => v.isDefault === true);
+  if (defaultInPool) return defaultInPool;
+
+  // Si no hay default en el pool, devolver la primera del pool
+  return pool[0];
 }
 
 // ══════════════════════════════════════════════════════════════
