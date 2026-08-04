@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { track } from '../utils/analytics';
 
 interface Props {
   children: ReactNode;
@@ -20,6 +21,11 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('[ErrorBoundary] caught:', error, info.componentStack);
+    // Observabilidad: reporta el crash al sink (PostHog) para verlo en producción.
+    track('react_crash', {
+      message: String(error?.message || error),
+      stack: String(error?.stack || '').slice(0, 500),
+    });
   }
 
   render() {

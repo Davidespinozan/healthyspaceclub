@@ -11,7 +11,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 const isAdminRoute = window.location.pathname.startsWith('/admin')
 const AdminApp = React.lazy(() => import('./admin/AdminApp'))
 import { useAppStore } from './store'
-import { initAnalytics } from './utils/analytics'
+import { initAnalytics, track } from './utils/analytics'
 import { captureRefFromUrl } from './utils/referral'
 import './index.css'
 import './styles/wizard.css'
@@ -78,6 +78,25 @@ useAppStore.getState().setTriggerUpdate(() => {
 // Analítica: resuelve el proveedor (si pegaste el snippet de PostHog/Segment) y
 // vacía los eventos encolados. No-op si no hay ninguno.
 initAnalytics()
+
+// Observabilidad: captura de errores no atrapados y promesas rechazadas. Se
+// reportan vía track() → quedan encolados hasta que exista un sink (PostHog) y
+// entonces se vacían. Sin esto, un crash o un fallo en el flujo de pago solo iba
+// a console.error y el equipo nunca se enteraba (Stripe en LIVE).
+window.addEventListener('error', (e) => {
+  track('client_error', {
+    message: String(e.message || 'error'),
+    source: `${e.filename || ''}:${e.lineno || 0}`,
+    screen: (() => { try { return useAppStore.getState().currentScreen } catch { return '' } })(),
+  })
+})
+window.addEventListener('unhandledrejection', (e) => {
+  const r = (e as PromiseRejectionEvent).reason
+  track('client_unhandled_rejection', {
+    message: String(r?.message || r || 'rejection'),
+    screen: (() => { try { return useAppStore.getState().currentScreen } catch { return '' } })(),
+  })
+})
 // Referido: si la app se abrió con ?ref=<@usuario>, lo guarda para atribuir al registrarse.
 captureRefFromUrl()
 
