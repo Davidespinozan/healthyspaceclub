@@ -478,11 +478,20 @@ export const useAppStore = create<AppState>()(
     if (user?.id) {
       try {
         const state = get();
+        // Red de seguridad anti pérdida de historial: si el perfil remoto YA tiene
+        // start_date (socio existente que reaparece en un dispositivo limpio y vuelve
+        // a pasar por onboarding), NO lo pisamos con hoy — preservamos el original.
+        const { data: existing } = await supabase
+          .from('user_profiles')
+          .select('start_date')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        const preservedStart = (existing as { start_date?: string | null } | null)?.start_date || startDateStr;
         await supabase.from('user_profiles').upsert({
           user_id: user.id,
           display_name: state.userName,
           ob_data: state.obData,
-          start_date: startDateStr,
+          start_date: preservedStart,
           tdee: state.tdee,
           plan_goal: state.planGoal,
           meal_plan_key: state.mealPlanKey,

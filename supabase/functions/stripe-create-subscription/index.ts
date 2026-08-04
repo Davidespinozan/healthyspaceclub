@@ -97,6 +97,13 @@ Deno.serve(async (req: Request) => {
       metadata: { supabase_user_id: user.id, ...(promoRaw ? { promo_code: promoRaw } : {}) },
       // deno-lint-ignore no-explicit-any
       ...(discounts ? { discounts } as any : {}),
+    }, {
+      // Anti doble-cobro: un doble-clic en "pagar" o un retry del cliente en red lenta
+      // reenvía el MISMO paymentMethodId; la idempotencyKey hace que Stripe colapse las
+      // creaciones repetidas en una sola suscripción (ventana de 24h). Se incluye el PM
+      // (no solo el user.id) para no romper un re-alta legítimo dentro de 24h: ese usaría
+      // un PM nuevo → key distinta → Stripe no lo rechaza por "key reusada con otros params".
+      idempotencyKey: `sub_create_${user.id}_${body.paymentMethodId}`,
     });
 
     return json({ status: sub.status, subscriptionId: sub.id }, 200);

@@ -247,11 +247,25 @@ export default function App() {
           // síncronamente en ensureDataOwner al firmar, así que es la señal fiable.
           const isStillCurrentUser = () => useAppStore.getState().dataOwnerId === session.user.id;
           try {
-            const { data: profile } = await supabase
-              .from('user_profiles')
-              .select('display_name, avatar_url, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date, weekly_plan, weekly_plan_updated_at, shopping_day, daily_workout, daily_workout_updated_at, daily_workout_regen, daily_workout_regen_updated_at')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
+            // Hidratación con reintento: un socio existente que reaparece en un
+            // dispositivo limpio arranca en 'onboarding' (startDate=''); solo el
+            // perfil hidratado lo reencamina a dashboard. Si la query falla de forma
+            // transitoria (red/RLS/timeout) NO debe quedar atrapado en onboarding, así
+            // que reintentamos con backoff. Un usuario NUEVO genuino (data:null sin
+            // error) corta de inmediato y sí va a onboarding.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let profile: any = null;
+            for (let attempt = 0; attempt < 3; attempt++) {
+              const { data, error } = await supabase
+                .from('user_profiles')
+                .select('display_name, avatar_url, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date, weekly_plan, weekly_plan_updated_at, shopping_day, daily_workout, daily_workout_updated_at, daily_workout_regen, daily_workout_regen_updated_at')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+              if (!isStillCurrentUser()) return;
+              if (data) { profile = data; break; }
+              if (!error) break; // sin error y sin fila → usuario nuevo real
+              await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+            }
 
             // @usuario (Fase 1A) — query aparte y tolerante: si la migración aún
             // no está desplegada, la columna no existe y el error se ignora sin
