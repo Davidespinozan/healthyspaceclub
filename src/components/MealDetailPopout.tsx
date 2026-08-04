@@ -5,6 +5,15 @@ import { useT } from '../i18n';
 import { formatPortion } from '../utils/kcalCalc';
 import { mealMacros } from '../utils/mealNutrition';
 import { SUBRECETAS } from '../data/banco';
+
+// Índice case-insensitive de sub-recetas: en ~7 platillos el nombre del
+// ingrediente (i.nv) viene con distinta capitalización que la llave de
+// SUBRECETAS ("Aderezo Chipotle" vs "aderezo chipotle"), lo que hacía que la
+// receta de la salsa/aderezo nunca se mostrara. Normalizamos la búsqueda.
+const SUBRECETAS_LC: Record<string, (typeof SUBRECETAS)[string]> = Object.fromEntries(
+  Object.entries(SUBRECETAS).map(([k, v]) => [k.toLowerCase().trim(), v]),
+);
+const findSub = (nv: string) => SUBRECETAS_LC[(nv || '').toLowerCase().trim()];
 import { tDishName, tIngName, tSubName, tPortion, tDesc } from '../utils/nutritionI18n';
 import type { TranslationKey } from '../i18n/es';
 
@@ -64,8 +73,8 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther,
 
   // Sub-recetas del platillo (guacamole, salsas, aderezos) → mostramos su receta.
   const subs = (meal.ings ?? [])
-    .filter((i) => i.rol === 'sub-receta' && SUBRECETAS[i.nv])
-    .map((i) => ({ nombre: i.nv, receta: SUBRECETAS[i.nv] }));
+    .filter((i) => i.rol === 'sub-receta' && findSub(i.nv))
+    .map((i) => ({ nombre: i.nv, receta: findSub(i.nv) }));
 
   // Mismo motor que la card (estimador sobre las porciones ya escaladas) → los
   // números coinciden. Porciones en unidades caseras (6 huevos, ⅔ taza), no gramos.
