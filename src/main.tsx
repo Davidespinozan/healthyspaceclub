@@ -37,9 +37,14 @@ if ('serviceWorker' in navigator) {
 
 const updateSW = registerSW({
   onNeedRefresh() {
-    // Auto-actualización: en cuanto se detecta una versión nueva, aplicamos el
-    // SW (skipWaiting) y recargamos solos — sin banner ni botón. El controllerchange
-    // de arriba dispara la recarga; el setTimeout es respaldo para desktop.
+    // Si el usuario está a mitad de un flujo sensible (onboarding, paywall o el modal
+    // de pago abierto), NO recargamos solos — perderíamos el formulario de tarjeta de
+    // Stripe / los campos de onboarding (estado React no persistido). Mostramos el
+    // banner no-destructivo y él recarga cuando termine.
+    const { currentScreen, activeModal, setUpdateReady } = useAppStore.getState()
+    const sensitive = currentScreen === 'onboarding' || currentScreen === 'paywall' || activeModal === 'pay'
+    if (sensitive) { setUpdateReady(true); return }
+    // Fuera de un flujo sensible: auto-actualización inmediata (skipWaiting + reload).
     Promise.resolve(updateSW(true)).catch(() => {})
     setTimeout(() => { if (!swRefreshing) window.location.reload() }, 3000)
   },

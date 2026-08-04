@@ -14,6 +14,7 @@ export const en: Translations<typeof es> = {
     retry: 'Try again.',
     anonymous: 'Anonymous',
     done: 'Done',
+    offline: 'No connection — showing your last saved data.',
   },
   nav: {
     today: 'Today',

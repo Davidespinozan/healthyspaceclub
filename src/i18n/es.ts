@@ -13,6 +13,7 @@ export const es = {
     retry: 'Intentá de nuevo.',
     anonymous: 'Anónimo',
     done: 'Listo',
+    offline: 'Sin conexión — mostrando lo último guardado.',
   },
   nav: {
     today: 'Hoy',
