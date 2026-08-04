@@ -426,10 +426,19 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         } catch { /* noop */ }
       }
 
+      // Modo bajo impacto (adultos mayores / movilidad reducida): excluye saltos,
+      // pliometría y sprints (impact:'high'/fallRisk) sin importar la dificultad. La
+      // seguridad es un filtro DURO, tanto en fuerza como en cardio. Derivado de la
+      // edad (>=60); a futuro también de la movilidad capturada en onboarding.
+      const lowImpactMode = Number(obData?.edad ?? 0) >= 60;
+
       let candidates: Exercise[];
       if (selectedModality === 'cardio') {
+        // Antes: la rama de cardio filtraba SOLO por equipo → entregaba burpees/saltos/
+        // sprints a cualquier edad. Ahora respeta el modo bajo impacto.
         candidates = modalityFiltered.filter(ex =>
-          ex.equipment.some(e => equipmentList.includes(e))
+          ex.equipment.some(e => equipmentList.includes(e)) &&
+          !(lowImpactMode && (ex.impact === 'high' || ex.fallRisk === true))
         );
       } else {
         const filterResult = filterWithProgressiveRelaxation({
@@ -446,6 +455,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           primaryOnly: selectedModality === 'fuerza' && focus === 'specific',
           // Fase 3 — nivel: principiante no recibe ejercicios avanzados.
           difficulty: levelFromObData(obData),
+          lowImpactMode,
         });
         candidates = filterResult.exercises;
         // Variedad: rota los accesorios (aislamiento) usados en las últimas sesiones

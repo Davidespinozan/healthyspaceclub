@@ -142,6 +142,16 @@ export interface Exercise {
   difficulty: Difficulty;
 
   /**
+   * Seguridad / impacto articular. Independiente de `difficulty`: un salto puede ser
+   * "principiante" y aun así ser de ALTO impacto y con riesgo de caída. Se usa para
+   * el modo bajo-impacto (adultos mayores / movilidad reducida), que excluye estos
+   * ejercicios sin importar su dificultad. Ausente = se trata como bajo impacto.
+   */
+  impact?: 'none' | 'low' | 'high';
+  /** Riesgo de caída/lesión (saltos, pliometría, sprints). Excluido en modo bajo-impacto. */
+  fallRisk?: boolean;
+
+  /**
    * Familia de movimiento. Ejercicios separados por AGARRE (mismo patrón) comparten
    * familia — ej. 'traccion-vertical' agrupa las versiones pronada/supina/neutra.
    * El planner limita cuántos de la misma familia entran en un día (balance de patrones).

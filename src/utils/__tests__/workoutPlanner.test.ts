@@ -249,4 +249,22 @@ describe('workoutPlanner', () => {
       expect(result.restDays).toBe(3);
     });
   });
+
+  describe('modo bajo impacto (seguridad adultos mayores)', () => {
+    it('excluye ejercicios high-impact/fallRisk cuando lowImpactMode', () => {
+      const conImpacto = filterExercisesForWorkout({
+        exercises, equipment: ['cuerpo'], muscleGroups: ['cardio', 'cuerpo-completo'],
+        goal: 'condicion', lowImpactMode: false,
+      });
+      const bajoImpacto = filterExercisesForWorkout({
+        exercises, equipment: ['cuerpo'], muscleGroups: ['cardio', 'cuerpo-completo'],
+        goal: 'condicion', lowImpactMode: true,
+      });
+      // El modo bajo impacto nunca debe incluir un ejercicio marcado high-impact/fallRisk
+      expect(bajoImpacto.every(e => e.impact !== 'high' && e.fallRisk !== true)).toBe(true);
+      // Y debe filtrar al menos uno que sí aparecía sin el modo (saltos/burpees existen)
+      expect(bajoImpacto.length).toBeLessThan(conImpacto.length);
+    });
+  });
+
 });

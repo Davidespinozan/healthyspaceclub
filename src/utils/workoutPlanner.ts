@@ -537,12 +537,19 @@ export function filterExercisesForWorkout(params: {
   // músculo PRIMARIO esté en la selección — no traer espalda solo porque tiene
   // bíceps como secundario. Los splits/auto sí aceptan secundarios (compuestos).
   primaryOnly?: boolean;
+  // Modo bajo impacto (adultos mayores / movilidad reducida): excluye ejercicios
+  // de ALTO impacto o con riesgo de caída (saltos, pliometría, sprints) sin importar
+  // su dificultad. La seguridad es un filtro DURO, nunca se delega a la IA.
+  lowImpactMode?: boolean;
 }): Exercise[] {
-  const { exercises, equipment, muscleGroups, goal, excludeMuscles = [], primaryOnly = false, difficulty } = params;
+  const { exercises, equipment, muscleGroups, goal, excludeMuscles = [], primaryOnly = false, difficulty, lowImpactMode = false } = params;
   const RANK: Record<string, number> = { principiante: 1, intermedio: 2, avanzado: 3 };
   const ceiling = difficulty ? (difficulty === 'principiante' ? 2 : 3) : 3; // principiante: sin avanzados
 
   return exercises.filter(ex => {
+    // Filter 0 (seguridad DURA): en modo bajo impacto, fuera saltos/pliometría/sprints.
+    if (lowImpactMode && (ex.impact === 'high' || ex.fallRisk === true)) return false;
+
     // Filter 1: equipment
     // Yoga sigue mirando exercise.equipment plano (no tiene variants).
     // Patrones: mirar si al menos UNA variante aplica al equipo del usuario.
@@ -645,15 +652,22 @@ export function filterWithProgressiveRelaxation(params: {
   minCandidates?: number;
   primaryOnly?: boolean;
   difficulty?: 'principiante' | 'intermedio' | 'avanzado';
+  lowImpactMode?: boolean;
 }): FilterResult {
   const minRequired = params.minCandidates ?? 3;
   const primaryOnly = params.primaryOnly ?? false;
   const difficulty = params.difficulty;
+  const lowImpactMode = params.lowImpactMode ?? false;
   // Techo de nivel (mismo que filterExercisesForWorkout): un principiante NUNCA recibe
   // avanzados, ni siquiera en los niveles de relajación 2/3 (seguridad).
   const RANK: Record<string, number> = { principiante: 1, intermedio: 2, avanzado: 3 };
   const ceiling = difficulty === 'principiante' ? 2 : 3;
-  const withinLevel = (ex: { difficulty: string }) => (RANK[ex.difficulty] ?? 2) <= ceiling;
+  // Seguridad DURA de bajo impacto: se mantiene en TODOS los niveles de relajación,
+  // incluso el último recurso — jamás se cuela un salto por relajar constraints.
+  const safeImpact = (ex: { impact?: string; fallRisk?: boolean }) =>
+    !lowImpactMode || !(ex.impact === 'high' || ex.fallRisk === true);
+  const withinLevel = (ex: { difficulty: string; impact?: string; fallRisk?: boolean }) =>
+    (RANK[ex.difficulty] ?? 2) <= ceiling && safeImpact(ex);
 
   // NIVEL 0 — filtro estricto (incluye techo de nivel)
   let candidates = filterExercisesForWorkout({
@@ -664,6 +678,7 @@ export function filterWithProgressiveRelaxation(params: {
     excludeMuscles: params.excludeMuscles,
     primaryOnly,
     difficulty,
+      lowImpactMode,
   });
   if (candidates.length >= minRequired) {
     return { exercises: candidates, relaxationLevel: 0, relaxedConstraints: [] };
@@ -678,6 +693,7 @@ export function filterWithProgressiveRelaxation(params: {
     excludeMuscles: [],
     primaryOnly,
     difficulty,
+      lowImpactMode,
   });
   if (candidates.length >= minRequired) {
     return {
