@@ -185,4 +185,24 @@ describe('Banco de ejercicios', () => {
       });
     });
   });
+
+  describe('Overlay EN de pasos (steps)', () => {
+    it('cada step del banco tiene traducción en stepTitleEn / stepDescEn', async () => {
+      const { stepTitleEn, stepDescEn } = await import('../exercises.en');
+      const faltanTitle: string[] = [];
+      const faltanDesc: string[] = [];
+      const acento = /[áéíóúñ¿¡]/i;
+      exercises.forEach((ex) => {
+        (ex.steps ?? []).forEach((st: { title: string; desc: string }) => {
+          // Solo exigimos overlay cuando el texto origen está en español (tiene
+          // acentos/ñ); pasos ya en inglés (nombres de posturas) renderizan bien.
+          if (acento.test(st.title) && !(st.title in stepTitleEn)) faltanTitle.push(st.title);
+          if (acento.test(st.desc) && !(st.desc in stepDescEn)) faltanDesc.push(st.desc);
+        });
+      });
+      expect(faltanTitle, `Titulos de step sin EN: ${faltanTitle.join(' | ')}`).toHaveLength(0);
+      expect(faltanDesc, `Descripciones de step sin EN: ${faltanDesc.join(' | ')}`).toHaveLength(0);
+    });
+  });
+
 });
