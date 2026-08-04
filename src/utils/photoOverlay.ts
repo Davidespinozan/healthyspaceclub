@@ -94,7 +94,7 @@ export async function composeStatPhoto(photo: Blob, opts: OverlayOpts): Promise<
   return blob;
 }
 
-export type ShareResult = 'shared' | 'unsupported';
+export type ShareResult = 'shared' | 'downloaded';
 
 export async function shareImage(blob: Blob, text: string, url: string): Promise<ShareResult> {
   const file = new File([blob], 'hsc.jpg', { type: 'image/jpeg' });
@@ -111,5 +111,18 @@ export async function shareImage(blob: Blob, text: string, url: string): Promise
   } catch {
     return 'shared'; // canceló el sheet nativo → no es error
   }
-  return 'unsupported';
+  // Sin Web Share API (escritorio: Firefox, algunos Chrome): en vez de no hacer
+  // nada, descargamos el JPEG compuesto y copiamos el link al portapapeles.
+  try {
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    a.download = 'healthy-space-club.jpg';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(objUrl), 4000);
+  } catch { /* descarga bloqueada → seguimos, al menos intentamos copiar el link */ }
+  try { await navigator.clipboard?.writeText(url); } catch { /* sin permiso de portapapeles */ }
+  return 'downloaded';
 }

@@ -18,6 +18,7 @@ export default function ShareStatSheet({ headline, stats, onClose }: Props) {
   const [blob, setBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState('');
 
   // Abre el selector de foto al entrar (una sola vez).
   useEffect(() => { inputRef.current?.click(); }, []);
@@ -43,7 +44,10 @@ export default function ShareStatSheet({ headline, stats, onClose }: Props) {
   async function doShare() {
     if (!blob) return;
     track('shared', { headline });
-    await shareImage(blob, t('post.shareText'), window.location.origin);
+    const res = await shareImage(blob, t('post.shareText'), window.location.origin);
+    // En escritorio sin Web Share API se descarga la imagen + se copia el link:
+    // avisamos para que el usuario no crea que no pasó nada.
+    if (res === 'downloaded') setNote(t('post.shareDownloaded'));
   }
 
   return (
@@ -65,6 +69,7 @@ export default function ShareStatSheet({ headline, stats, onClose }: Props) {
                 <Share2 size={16} strokeWidth={2} /> {t('post.shareCardCta')}
               </button>
             </div>
+            {note && <div className="sss-note">{note}</div>}
           </>
         ) : (
           <div className="sss-state sss-empty">

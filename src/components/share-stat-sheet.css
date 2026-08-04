@@ -94,3 +94,11 @@
 }
 .sss-btn-primary:active,
 .sss-btn-ghost:active { transform: scale(0.97); }
+
+.sss-note {
+  margin-top: 10px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--ok, #2E7D57);
+  font-weight: 600;
+}
