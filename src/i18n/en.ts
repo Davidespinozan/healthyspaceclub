@@ -266,6 +266,7 @@ export const en: Translations<typeof es> = {
     alreadySub: 'You already have an active subscription.',
     goToApp: 'Go to the app',
     cta: 'Start free trial · {price}/after',
+    promoPlaceholder: 'Promo code (optional)',
     secure: 'Secure payment — your card is processed by Stripe.',
     processing: 'Processing…',
     preparing: 'Preparing secure payment…',

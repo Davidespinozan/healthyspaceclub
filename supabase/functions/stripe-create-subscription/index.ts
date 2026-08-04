@@ -16,6 +16,7 @@ interface SubBody {
   region?: string;
   cycle?: string;
   paymentMethodId?: string;
+  promoCode?: string; // código promocional opcional (ej. Club 100)
 }
 
 const BLOCKING_STATUSES = new Set(['trialing', 'active', 'past_due', 'unpaid']);
@@ -68,6 +69,20 @@ Deno.serve(async (req: Request) => {
 
     const priceId = await resolvePriceId(stripe, lookupKey);
 
+    // Código promocional opcional (Club 100, etc.): se valida contra los
+    // promotion codes ACTIVOS de Stripe. Si viene un código y es inválido,
+    // se rechaza para que el usuario lo corrija (el campo es opcional).
+    let discounts: { promotion_code: string }[] | undefined;
+    const promoRaw = (body.promoCode ?? '').trim();
+    if (promoRaw) {
+      const found = await stripe.promotionCodes.list({ code: promoRaw, active: true, limit: 1 });
+      const promo = found.data[0];
+      if (!promo) {
+        return json({ message: 'Código promocional inválido o expirado', code: 'invalid_promo' }, 400);
+      }
+      discounts = [{ promotion_code: promo.id }];
+    }
+
     // PM como default del customer (ya quedó adjunto al confirmar el SetupIntent).
     await stripe.customers.update(customerId, {
       invoice_settings: { default_payment_method: body.paymentMethodId },
@@ -79,7 +94,9 @@ Deno.serve(async (req: Request) => {
       trial_period_days: 3,
       default_payment_method: body.paymentMethodId,
       trial_settings: { end_behavior: { missing_payment_method: 'cancel' } },
-      metadata: { supabase_user_id: user.id },
+      metadata: { supabase_user_id: user.id, ...(promoRaw ? { promo_code: promoRaw } : {}) },
+      // deno-lint-ignore no-explicit-any
+      ...(discounts ? { discounts } as any : {}),
     });
 
     return json({ status: sub.status, subscriptionId: sub.id }, 200);

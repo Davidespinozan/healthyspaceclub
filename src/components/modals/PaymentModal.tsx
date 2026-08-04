@@ -147,6 +147,7 @@ export default function PaymentModal() {
   // Ciclo seleccionable en el modal — ANUAL preseleccionado.
   const [cycle, setCycle] = useState<BillingCycle>(payInfo.cycle ?? 'yearly');
   const [alreadySub, setAlreadySub] = useState(false);
+  const [promo, setPromo] = useState('');
 
   // Precios derivados de region.ts (vía getPriceInfo) — no hardcodeados.
   const priceInfo = useMemo(() => getPriceInfo(payInfo.currency), [payInfo.currency]);
@@ -182,7 +183,7 @@ export default function PaymentModal() {
   async function handleSubscribe(paymentMethodId: string) {
     const resolvedRegion = region ?? getCachedRegion() ?? regionFromLanguage();
     try {
-      const { status } = await createSubscription({ region: resolvedRegion, cycle, paymentMethodId });
+      const { status } = await createSubscription({ region: resolvedRegion, cycle, paymentMethodId, promoCode: promo });
       track('trial_started', { cycle, status });
       // ⚠️ Protección 2 (carrera con webhook): set optimista del status.
       useAppStore.setState({
@@ -246,10 +247,24 @@ export default function PaymentModal() {
               <button className="btn-pay" onClick={() => { closeModal(); goTo('onboarding'); }}>{t('pay.goToApp')}</button>
             </div>
           ) : (
-            <CardCollectForm
-              ctaLabel={t('pay.cta', { price: priceLabel })}
-              onPaymentMethod={handleSubscribe}
-            />
+            <>
+              <input
+                className="pay-inp"
+                type="text"
+                inputMode="text"
+                autoCapitalize="characters"
+                autoComplete="off"
+                placeholder={t('pay.promoPlaceholder')}
+                value={promo}
+                onChange={(e) => setPromo(e.target.value.toUpperCase())}
+                style={{ marginBottom: 10 }}
+                aria-label={t('pay.promoPlaceholder')}
+              />
+              <CardCollectForm
+                ctaLabel={t('pay.cta', { price: priceLabel })}
+                onPaymentMethod={handleSubscribe}
+              />
+            </>
           )}
         </div>
       </div>

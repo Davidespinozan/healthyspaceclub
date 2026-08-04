@@ -265,6 +265,7 @@ export const es = {
     alreadySub: 'Ya tenés una suscripción activa.',
     goToApp: 'Ir a la app',
     cta: 'Empezar trial gratis · {price}/después',
+    promoPlaceholder: 'Código promocional (opcional)',
     secure: 'Pago seguro — la tarjeta la procesa Stripe.',
     processing: 'Procesando…',
     preparing: 'Preparando el pago seguro…',

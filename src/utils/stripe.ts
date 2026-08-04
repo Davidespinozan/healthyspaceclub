@@ -239,10 +239,16 @@ export async function createSubscription(p: {
   region: Region;
   cycle: BillingCycle;
   paymentMethodId: string;
+  promoCode?: string;
 }): Promise<{ status: string; subscriptionId: string }> {
   const cycle = p.cycle === 'yearly' ? 'annual' : 'monthly';
   const { data, error } = await supabase.functions.invoke('stripe-create-subscription', {
-    body: { region: p.region, cycle, paymentMethodId: p.paymentMethodId },
+    body: {
+      region: p.region,
+      cycle,
+      paymentMethodId: p.paymentMethodId,
+      ...(p.promoCode?.trim() ? { promoCode: p.promoCode.trim() } : {}),
+    },
   });
   if (error) throw new Error(error.message || 'No se pudo crear la suscripción');
   return { status: data.status as string, subscriptionId: data.subscriptionId as string };
