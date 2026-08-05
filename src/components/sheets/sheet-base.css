@@ -300,6 +300,37 @@
   margin: 6px 0 10px;
 }
 
+/* Chips de selección (single o multi) — reutilizados por EditDataSheet para
+   movilidad, condiciones y alergias. Mismo lenguaje visual que .sh-input. */
+.sh-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sh-chip {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 8px 14px;
+  min-height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--sala-border);
+  background: var(--sala-surface);
+  color: var(--forest);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+.sh-chip:hover { border-color: var(--sala-border-strong); }
+.sh-chip[aria-pressed="true"] {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: #fff;
+}
+.sh-field-hint {
+  font-size: 0.78rem;
+  color: rgba(21, 51, 48, 0.5);
+  margin: 2px 0 0;
+}
+
 .sh-saved {
   background: rgba(45, 122, 79, 0.08);
   border: 1px solid rgba(45, 122, 79, 0.2);

@@ -100,6 +100,10 @@ export const es = {
     goalSubirMasaMuscular: 'Subir masa muscular',
     goalRecomposicion: 'Recomposición',
     goalBienestarIntegral: 'Bienestar integral',
+    location: 'País',
+    locationHint: 'Lo usamos para mostrarte comida que sí consigues donde vives.',
+    healthSection: 'Salud y preferencias',
+    healthHint: 'Opcional. Ajusta tu entrenamiento y comida a tu situación.',
   },
   managePlan: {
     title: 'Mi Plan',

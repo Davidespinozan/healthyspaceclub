@@ -101,6 +101,10 @@ export const en: Translations<typeof es> = {
     goalSubirMasaMuscular: 'Gain muscle',
     goalRecomposicion: 'Recomposition',
     goalBienestarIntegral: 'Holistic wellness',
+    location: 'Country',
+    locationHint: 'We use it to show you food you can actually get where you live.',
+    healthSection: 'Health & preferences',
+    healthHint: 'Optional. Tailors your training and food to your situation.',
   },
   managePlan: {
     title: 'My Plan',

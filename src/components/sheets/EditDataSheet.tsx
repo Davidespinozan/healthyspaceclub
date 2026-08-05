@@ -5,6 +5,7 @@ import { useAppStore } from '../../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
+import { PAISES } from '../../data/ubicaciones';
 import './sheet-base.css';
 
 interface Props {
@@ -34,6 +35,14 @@ const GOAL_KEYS: Record<string, TranslationKey> = {
   'Bienestar integral': 'editData.goalBienestarIntegral',
 };
 
+// Salud/preferencias (opcionales) — mismos slugs y claves i18n que el onboarding,
+// para que editar aquí y capturar allá escriban exactamente el mismo dato.
+const MOBILITY_OPTS = ['ninguna', 'articular', 'equilibrio', 'apoyo'] as const;
+const CONDITION_OPTS = ['diabetes', 'hipertension', 'renal', 'colesterol'] as const;
+const RESTRICTION_OPTS = ['gluten', 'lacteos', 'huevo', 'frutos-secos', 'cacahuate', 'mariscos', 'vegetariano', 'vegano'] as const;
+
+const splitCsv = (v: unknown): string[] => String(v || '').split(',').map(s => s.trim()).filter(Boolean);
+
 export default function EditDataSheet({ onClose }: Props) {
   const { obData, setObData, recalcFromObData, addWeight, tdee, planGoal } = useAppStore(useShallow((s) => ({ obData: s.obData, setObData: s.setObData, recalcFromObData: s.recalcFromObData, addWeight: s.addWeight, tdee: s.tdee, planGoal: s.planGoal })));
   const { t } = useT();
@@ -45,7 +54,12 @@ export default function EditDataSheet({ onClose }: Props) {
     estatura: String(obData.estatura || obData.altura || ''),
     activity: String(obData.activity || obData.actividad || ''),
     goal: String(obData.goal || ''),
+    country: String(obData.country || ''),
+    movilidad: String(obData.movilidad || ''),
   });
+  // Multi-selección: se guardan como CSV en obData ('conditions', 'avoid').
+  const [conditions, setConditions] = useState<string[]>(() => splitCsv(obData.conditions));
+  const [avoid, setAvoid] = useState<string[]>(() => splitCsv(obData.avoid));
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
@@ -64,6 +78,16 @@ export default function EditDataSheet({ onClose }: Props) {
   function update<K extends keyof typeof form>(key: K, value: string) {
     setForm(prev => ({ ...prev, [key]: value }));
     setSaved(false);
+  }
+
+  function toggleIn(list: string[], set: (v: string[]) => void, slug: string) {
+    set(list.includes(slug) ? list.filter(s => s !== slug) : [...list, slug]);
+    setSaved(false);
+  }
+
+  // movilidad es single-select: volver a tocar el chip activo lo deselecciona.
+  function pickMobility(slug: string) {
+    update('movilidad', form.movilidad === slug ? '' : slug);
   }
 
   async function handleSave() {
@@ -87,6 +111,12 @@ export default function EditDataSheet({ onClose }: Props) {
     setObData('estatura', estaturaN);
     setObData('activity', form.activity);
     setObData('goal', form.goal);
+    // Ubicación + salud/preferencias (opcionales). Se persisten ANTES del recalc
+    // porque 'renal' baja el tope de proteína en computeNutritionTargets.
+    setObData('country', form.country);
+    setObData('movilidad', form.movilidad);
+    setObData('conditions', conditions.join(','));
+    setObData('avoid', avoid.join(','));
 
     try {
       if (pesoChanged) {
@@ -204,6 +234,75 @@ export default function EditDataSheet({ onClose }: Props) {
               {GOAL_OPTIONS.map(o => <option key={o} value={o}>{t(GOAL_KEYS[o])}</option>)}
             </select>
           </label>
+
+          <label className="sh-field">
+            <span className="sh-field-label">{t('editData.location')}</span>
+            <select
+              className="sh-input"
+              value={form.country}
+              onChange={e => update('country', e.target.value)}
+            >
+              <option value="">—</option>
+              {PAISES.map(p => <option key={p.slug} value={p.slug}>{p.label}</option>)}
+            </select>
+            <p className="sh-field-hint">{t('editData.locationHint')}</p>
+          </label>
+        </div>
+
+        <div className="sh-section">
+          <p className="sh-heading">{t('editData.healthSection')}</p>
+          <p className="sh-field-hint" style={{ marginTop: -6, marginBottom: 12 }}>{t('editData.healthHint')}</p>
+
+          <div className="sh-field">
+            <span className="sh-field-label">{t('onboarding.mobilityTitle')}</span>
+            <div className="sh-chips">
+              {MOBILITY_OPTS.map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  className="sh-chip"
+                  aria-pressed={form.movilidad === v}
+                  onClick={() => pickMobility(v)}
+                >
+                  {t(`onboarding.mobility_${v}` as TranslationKey)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="sh-field" style={{ marginTop: 14 }}>
+            <span className="sh-field-label">{t('onboarding.conditionsTitle')}</span>
+            <div className="sh-chips">
+              {CONDITION_OPTS.map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  className="sh-chip"
+                  aria-pressed={conditions.includes(v)}
+                  onClick={() => toggleIn(conditions, setConditions, v)}
+                >
+                  {t(`onboarding.condition_${v}` as TranslationKey)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="sh-field" style={{ marginTop: 14 }}>
+            <span className="sh-field-label">{t('onboarding.restrictionsTitle')}</span>
+            <div className="sh-chips">
+              {RESTRICTION_OPTS.map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  className="sh-chip"
+                  aria-pressed={avoid.includes(v)}
+                  onClick={() => toggleIn(avoid, setAvoid, v)}
+                >
+                  {t(`onboarding.restr_${v}` as TranslationKey)}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {error && <p className="sh-error">{error}</p>}
