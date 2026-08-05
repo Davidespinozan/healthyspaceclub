@@ -604,6 +604,18 @@ export const en: Translations<typeof es> = {
     next: 'Next',
     complete: 'Complete',
     aiTag: 'AI',
+    threadLabel: 'The last thing you wrote here',
+  },
+  retrato: {
+    kicker: 'Your portrait · living',
+    title: 'Who you are, by what you reflect on',
+    you: 'YOU',
+    tapHint: 'Tap a dimension to see it',
+    reflectionOne: 'reflection',
+    reflectionMany: 'reflections',
+    explored: "You've explored {n} of 10 dimensions of yourself",
+    synthesis: 'Synthesis',
+    synthesisEmpty: 'Keep reflecting: once the app knows you a bit more, your synthesis of who you are will appear here.',
   },
   media: {
     typeImage: 'Only images allowed (JPG, PNG, WebP).',

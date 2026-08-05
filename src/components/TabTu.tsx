@@ -11,6 +11,7 @@ import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
 import ReferralCard from './ReferralCard';
 import ProgressCard from './ProgressCard';
+import RetratoHSM from './RetratoHSM';
 import AmbientGlow from './AmbientGlow';
 import { useT } from '../i18n';
 import { formatDate } from '../i18n/format';
@@ -282,6 +283,8 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
           </div>
         ) : (
           <div className="tt5-reflections">
+            {/* El retrato — el output como héroe — encabeza tus reflexiones pasadas. */}
+            <RetratoHSM />
             {reflections.map((r, i) => (
               <div key={`${r.date}-${r.dimension}-${i}`} className="tt5-reflection">
                 <div className="tt5-reflection-head">

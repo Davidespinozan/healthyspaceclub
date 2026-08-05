@@ -7352,6 +7352,22 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   letter-spacing: var(--tracking-tighter);
 }
 
+/* El hilo — "lo último que escribiste aquí": continuidad con tu reflexión pasada. */
+.te-thread {
+  border-left: 2px solid var(--gold, #c8a86a);
+  background: rgba(200,168,106,.07);
+  border-radius: 0 12px 12px 0;
+  padding: 10px 14px; margin-bottom: 18px;
+}
+.te-thread-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .6rem; font-weight: 700; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--gold, #c8a86a); margin-bottom: 4px;
+}
+.te-thread-text {
+  font-size: .92rem; line-height: 1.45; color: rgba(246,242,234,.8); font-style: italic;
+}
+
 /* Textarea — focus terracota para coherencia con el acento */
 .te-textarea {
   width: 100%; min-height: 120px; padding: 16px 18px;

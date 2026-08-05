@@ -603,6 +603,18 @@ export const es = {
     next: 'Siguiente',
     complete: 'Completar',
     aiTag: 'IA',
+    threadLabel: 'Lo último que escribiste aquí',
+  },
+  retrato: {
+    kicker: 'Tu retrato · vivo',
+    title: 'Quién eres, según lo que reflexionas',
+    you: 'TÚ',
+    tapHint: 'Toca una dimensión para verla',
+    reflectionOne: 'reflexión',
+    reflectionMany: 'reflexiones',
+    explored: 'Has explorado {n} de 10 dimensiones de ti',
+    synthesis: 'Síntesis',
+    synthesisEmpty: 'Sigue reflexionando: cuando la app te conozca un poco más, aquí aparece la síntesis de quién eres.',
   },
   media: {
     typeImage: 'Solo se permiten imágenes (JPG, PNG, WebP).',

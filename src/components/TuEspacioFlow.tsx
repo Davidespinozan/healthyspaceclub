@@ -1,5 +1,5 @@
 import { dayKey } from '../utils/localDate';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Sparkles, X } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
@@ -91,6 +91,17 @@ export default function TuEspacioFlow({ onClose }: Props) {
   const [currentDim, setCurrentDim] = useState(unansweredDims[0] || null);
   const [inputVal, setInputVal] = useState('');
   const [animState, setAnimState] = useState<'in' | 'out'>('in');
+
+  // El hilo: la respuesta MÁS RECIENTE de esta dimensión en días anteriores. Da
+  // continuidad ("la app me recuerda") y el usuario no siente que repite preguntas.
+  const lastInDim = useMemo(() => {
+    if (!currentDim) return null;
+    for (let i = dailyHSMResponses.length - 1; i >= 0; i--) {
+      const r = dailyHSMResponses[i];
+      if (r.dimension === currentDim.title && r.date !== today) return r.response;
+    }
+    return null;
+  }, [currentDim, dailyHSMResponses, today]);
 
   // Daily review
   const [dailyReview, setDailyReview] = useState<string | null>(null);
@@ -201,6 +212,14 @@ export default function TuEspacioFlow({ onClose }: Props) {
             <span className="te-dim-ai">{t('espacio.aiTag')}</span>
           )}
         </div>
+
+        {/* El hilo — lo último que escribió en esta dimensión (continuidad). */}
+        {lastInDim && (
+          <div className="te-thread">
+            <div className="te-thread-label">{t('espacio.threadLabel')}</div>
+            <div className="te-thread-text">“{lastInDim}”</div>
+          </div>
+        )}
 
         {/* The question */}
         <div className="te-question">{currentDim.q}</div>

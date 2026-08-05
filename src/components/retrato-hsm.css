@@ -1,0 +1,28 @@
+/* Tu retrato (HSM) — card oscura inmersiva dentro de la app crema (mismo lenguaje
+   que el ritual de reflexión, para que "tu espacio interior" se sienta aparte). */
+.rt-card{
+  border-radius:20px;
+  padding:20px 18px 18px;
+  margin:4px 0 18px;
+  background:
+    radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%),
+    radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%),
+    #0d1f1c;
+  color:#f1ede1;
+  box-shadow:0 12px 30px -14px rgba(0,0,0,.5);
+}
+.rt-head{text-align:center;margin-bottom:2px}
+.rt-kicker{font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#c8a86a}
+.rt-title{font-size:1.06rem;font-weight:700;letter-spacing:-.01em;margin:4px 0 0;color:#f1ede1}
+.rt-svg{width:100%;max-width:280px;aspect-ratio:1;display:block;margin:6px auto 0}
+.rt-tip{font-size:.74rem;color:rgba(241,237,225,.56);text-align:center;margin:2px 0 0;min-height:16px}
+.rt-progress{
+  text-align:center;font-size:.82rem;font-weight:600;color:#c8a86a;
+  margin:12px auto 0;padding:8px 14px;border-radius:999px;
+  background:rgba(200,168,106,.12);display:inline-block;width:auto;
+}
+.rt-progress-wrap{text-align:center}
+.rt-syn{border:1px solid rgba(241,237,225,.1);border-radius:14px;padding:13px 14px;background:rgba(241,237,225,.03);margin-top:14px}
+.rt-syn-label{font-size:.58rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(241,237,225,.56);margin-bottom:6px}
+.rt-syn-text{margin:0;font-size:.88rem;line-height:1.55;color:rgba(241,237,225,.9)}
+.rt-syn-empty{margin:0;font-size:.85rem;line-height:1.5;color:rgba(241,237,225,.5);font-style:italic}
