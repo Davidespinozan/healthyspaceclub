@@ -606,6 +606,21 @@ export function equipmentFromPlan(plan: unknown): Equipment | null {
   return eq === 'ligas' || eq === 'cuerpo' || eq === 'gym' ? eq : null;
 }
 
+/** Modalidad sellada en el plan al guardar (misma razón que equipmentFromPlan): sin
+ *  esto, al recargar la modalidad volvía a una sugerencia y una sesión de cardio se
+ *  registraba como fuerza al completarla. null si no hay sello válido. */
+export function modalityFromPlan(plan: unknown): Modality | null {
+  const m = (plan as { userModality?: unknown } | null)?.userModality;
+  return m === 'auto' || m === 'fuerza' || m === 'yoga' || m === 'cardio' ? m : null;
+}
+
+/** Duración (min) sellada en el plan al guardar; sin esto el timer volvía a 45 min al
+ *  recargar aunque la rutina se hubiera hecho para otra duración. null si no es válida. */
+export function durationFromPlan(plan: unknown): number | null {
+  const d = (plan as { userDuration?: unknown } | null)?.userDuration;
+  return typeof d === 'number' && d > 0 && d <= 240 ? d : null;
+}
+
 export function selectVariantForEquipment(
   exercise: Exercise,
   userEquipment: Equipment[],

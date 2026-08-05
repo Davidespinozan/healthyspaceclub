@@ -20,6 +20,8 @@ import {
   orderCandidatesForVariety,
   capByMovementFamily,
   equipmentFromPlan,
+  modalityFromPlan,
+  durationFromPlan,
 } from '../utils/workoutPlanner';
 import {
   getCachedWorkout,
@@ -132,14 +134,22 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   );
   const [error, setError] = useState('');
 
-  // Flow state
-  const [selectedModality, setSelectedModality] = useState<Modality>(suggestion.modality);
+  // Flow state. La modalidad, igual que el equipo, se RESTAURA de la rutina guardada
+  // al recargar (si no, volvía a una sugerencia y la sesión se registraba con la
+  // modalidad equivocada al completarla).
+  const [selectedModality, setSelectedModality] = useState<Modality>(() => {
+    const stored = (!partnerMode && storedWorkout?.date === today) ? modalityFromPlan(storedWorkout.plan) : null;
+    return stored ?? suggestion.modality;
+  });
   // priorExercise quedó como contexto legacy (ya no se pregunta; lo reemplazó
   // lastTrained). Se mantiene fijo en 'none' para no romper bullets/configHash.
   const [priorExercise] = useState('none');
   const [discomfort, setDiscomfort] = useState('none');
   const [painArea, setPainArea] = useState('');
-  const [selectedTime, setSelectedTime] = useState(45);
+  const [selectedTime, setSelectedTime] = useState(() => {
+    const stored = (!partnerMode && storedWorkout?.date === today) ? durationFromPlan(storedWorkout.plan) : null;
+    return stored ?? 45;
+  });
   // Al recargar hay que RESTAURAR el equipo con el que se generó la rutina de hoy.
   // El plan (JSON del AI) no lo trae, y WorkoutPlan re-elige la variante a mostrar
   // con selectedEquipment en cada render → si esto arrancaba en 'gym' fijo, una
@@ -182,6 +192,18 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   }, [today, storedWorkout]);
 
   // Nav handlers entre pasos del wizard viven dentro de Wizard.tsx (DT-B).
+
+  // Sella en el plan las entradas de generación que afectan cómo se MUESTRA/registra
+  // al recargar (equipo → variante mostrada; modalidad → cómo se loguea la sesión;
+  // duración → target del timer). El plan (JSON del AI) no las trae; sin el sello,
+  // al recargar volvían a su default y divergían de lo generado. Se leen de vuelta
+  // con equipmentFromPlan/modalityFromPlan/durationFromPlan al montar.
+  function sealPlan(p: unknown) {
+    const seal = p as { userEquipment?: Equipment; userModality?: Modality; userDuration?: number };
+    seal.userEquipment = selectedEquipment;
+    seal.userModality = selectedModality;
+    seal.userDuration = selectedTime;
+  }
 
   // ── Generate
   async function handleGenerate() {
@@ -364,7 +386,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           (cached as CachedWorkout).partnerId = pendingPartner?.id ?? null;
         }
         setPlan(cached);
-        (cached as { userEquipment?: Equipment }).userEquipment = selectedEquipment;
+        sealPlan(cached);
         await saveDailyWorkout(cached as any);
         if (partnerMode && pendingPartner?.id) {
           deliverPartnerWorkout(pendingPartner.id, cached).catch(() => {});
@@ -408,7 +430,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
         // Save plan FIRST, then increment counter
         setPlan(adjustedPlan as any);
-        (adjustedPlan as { userEquipment?: Equipment }).userEquipment = selectedEquipment;
+        sealPlan(adjustedPlan);
         await saveDailyWorkout(adjustedPlan as any);
         setPhase('plan');
 
@@ -602,7 +624,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       }
 
       setPlan(workout);
-      (workout as { userEquipment?: Equipment }).userEquipment = selectedEquipment;
+      sealPlan(workout);
       await saveDailyWorkout(workout as any);
       // Sesión compartida: entrega la MISMA rutina al compañero (no genera él).
       if (partnerMode && pendingPartner?.id) {

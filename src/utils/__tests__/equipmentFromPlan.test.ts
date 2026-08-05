@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { equipmentFromPlan } from '../workoutPlanner';
+import { equipmentFromPlan, modalityFromPlan, durationFromPlan } from '../workoutPlanner';
 
 // Contrato: al guardar la rutina se sella `userEquipment` en el plan; al recargar
 // se recupera con equipmentFromPlan para restaurar selectedEquipment. Sin esto, la
@@ -23,5 +23,30 @@ describe('equipmentFromPlan', () => {
   it('valor inválido → null (nunca inventa un equipo)', () => {
     expect(equipmentFromPlan({ userEquipment: 'marte' })).toBeNull();
     expect(equipmentFromPlan({ userEquipment: 123 })).toBeNull();
+  });
+});
+
+describe('modalityFromPlan', () => {
+  it('recupera la modalidad sellada', () => {
+    expect(modalityFromPlan({ userModality: 'cardio' })).toBe('cardio');
+    expect(modalityFromPlan({ userModality: 'yoga' })).toBe('yoga');
+    expect(modalityFromPlan({ userModality: 'auto' })).toBe('auto');
+  });
+  it('sin sello o inválida → null', () => {
+    expect(modalityFromPlan({})).toBeNull();
+    expect(modalityFromPlan(null)).toBeNull();
+    expect(modalityFromPlan({ userModality: 'pilates' })).toBeNull();
+  });
+});
+
+describe('durationFromPlan', () => {
+  it('recupera la duración sellada', () => {
+    expect(durationFromPlan({ userDuration: 30 })).toBe(30);
+  });
+  it('sin sello o fuera de rango → null', () => {
+    expect(durationFromPlan({})).toBeNull();
+    expect(durationFromPlan({ userDuration: 0 })).toBeNull();
+    expect(durationFromPlan({ userDuration: 999 })).toBeNull();
+    expect(durationFromPlan({ userDuration: '30' })).toBeNull();
   });
 });
