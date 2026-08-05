@@ -1013,7 +1013,7 @@ export const es = {
     routineGenerate: 'Genera tu rutina',
     generate: 'Generar',
     routineGenerateTitle: 'Generar tu rutina de hoy',
-    nutritionGenerateTitle: 'Generar tu plan de hoy',
+    nutritionGenerateTitle: 'Arma tu plan de la semana',
     routineGenerateMeta: 'Personalizada según cómo te sientas.',
     routineFlow: 'Tu flow de hoy',
     routineToday: 'Tu rutina de hoy',

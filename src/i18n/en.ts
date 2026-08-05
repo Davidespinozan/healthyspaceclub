@@ -1014,7 +1014,7 @@ export const en: Translations<typeof es> = {
     routineGenerate: 'Generate your routine',
     generate: 'Generate',
     routineGenerateTitle: 'Generate your routine',
-    nutritionGenerateTitle: 'Generate your plan',
+    nutritionGenerateTitle: "Build this week's plan",
     routineGenerateMeta: 'Built around how you feel.',
     routineFlow: "Today's flow",
     routineToday: "Today's routine",
