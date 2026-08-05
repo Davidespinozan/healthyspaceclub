@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 import { monthStartISO, daysAgoISO } from '../lib/format';
 
 export type Periodo = 'mes' | '30d' | '90d';
@@ -33,10 +34,10 @@ export function useIngresos(periodo: Periodo): IngresosData {
     let cancelled = false;
     (async () => {
       const desde = desdeISO(periodo, new Date());
-      const { data: rows, error } = await supabase.from('movimientos_dinero')
+      const { data: rows, error } = await withTimeout(supabase.from('movimientos_dinero')
         .select('monto_centavos,moneda,concepto,metodo,ocurrido_en,cliente_id,referencia_externa')
         .eq('negocio', 'hsc').gte('ocurrido_en', desde)
-        .order('ocurrido_en', { ascending: false });
+        .order('ocurrido_en', { ascending: false }), 12_000, 'ingresos');
       if (cancelled) return;
       if (error) { setData((d) => ({ ...d, loading: false, error: error.message })); return; }
 

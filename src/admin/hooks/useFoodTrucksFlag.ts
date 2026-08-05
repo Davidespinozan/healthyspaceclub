@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 
 /**
  * Bandera `food_trucks_enabled` de `app_config`: enciende/apaga el widget de food
@@ -12,11 +13,11 @@ export function useFoodTrucksFlag() {
   const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
-    const { data, error } = await supabase
+    const { data, error } = await withTimeout(supabase
       .from('app_config')
       .select('value')
       .eq('key', 'food_trucks_enabled')
-      .maybeSingle();
+      .maybeSingle(), 12_000, 'food_trucks_flag');
     if (error) { setError(error.message); setLoading(false); return; }
     setError(null);
     // Sin fila (pre-migración) → default encendido, igual que el member app.

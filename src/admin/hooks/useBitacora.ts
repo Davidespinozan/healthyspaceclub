@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 
 export interface BitacoraRow {
   id: string;
@@ -20,9 +21,9 @@ export function useBitacora(): { loading: boolean; error: string | null; filas: 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase.from('bitacora_admin')
+      const { data, error } = await withTimeout(supabase.from('bitacora_admin')
         .select('id,actor_nombre,accion,socio_id,socio_nombre,resumen,detalle,creado_en')
-        .order('creado_en', { ascending: false }).limit(200);
+        .order('creado_en', { ascending: false }).limit(200), 12_000, 'bitacora');
       if (cancelled) return;
       if (error) { setState({ loading: false, error: error.message, filas: [] }); return; }
       setState({ loading: false, error: null, filas: (data ?? []) as BitacoraRow[] });

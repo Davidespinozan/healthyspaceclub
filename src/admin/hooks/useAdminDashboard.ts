@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 import { monthStartISO, daysAgoISO } from '../lib/format';
 
 // Datos del Dashboard. Todo se filtra a negocio='hsc' y respeta la regla de
@@ -41,23 +42,23 @@ export function useAdminDashboard(): DashData {
 
       const [movRes, mrrRes, perfRes, evtRes] = await Promise.all([
         // Movimientos recientes → ingreso del mes + tendencia 30d.
-        supabase.from('movimientos_dinero')
+        withTimeout(supabase.from('movimientos_dinero')
           .select('monto_centavos,moneda,concepto,ocurrido_en,cliente_id')
-          .eq('negocio', 'hsc').gte('ocurrido_en', d35),
+          .eq('negocio', 'hsc').gte('ocurrido_en', d35), 12_000, 'dashboard.mov'),
         // Cobros de suscripción del último año → MRR realizado (el último cobro
         // de cada socio pro, normalizado a mensual). Un anual pudo cobrarse hace
         // meses, por eso la ventana es amplia.
-        supabase.from('movimientos_dinero')
+        withTimeout(supabase.from('movimientos_dinero')
           .select('monto_centavos,moneda,cliente_id,ocurrido_en')
           .eq('negocio', 'hsc').eq('concepto', 'suscripcion')
-          .gte('ocurrido_en', d400).order('ocurrido_en', { ascending: false }),
+          .gte('ocurrido_en', d400).order('ocurrido_en', { ascending: false }), 12_000, 'dashboard.mrr'),
         // Perfiles → activos, pro/trial, past_due, MAU.
-        supabase.from('user_profiles')
-          .select('user_id,subscription_status,payment_past_due,last_active_date,billing_cycle'),
+        withTimeout(supabase.from('user_profiles')
+          .select('user_id,subscription_status,payment_past_due,last_active_date,billing_cycle'), 12_000, 'dashboard.perf'),
         // Eventos del mes → altas y bajas.
-        supabase.from('eventos_estado')
+        withTimeout(supabase.from('eventos_estado')
           .select('a_estado,de_estado,ocurrido_en')
-          .eq('negocio', 'hsc').eq('entidad', 'suscripcion').gte('ocurrido_en', mesISO),
+          .eq('negocio', 'hsc').eq('entidad', 'suscripcion').gte('ocurrido_en', mesISO), 12_000, 'dashboard.evt'),
       ]);
       if (cancelled) return;
 

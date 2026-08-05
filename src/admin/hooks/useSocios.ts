@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 
 export interface SocioRow {
   user_id: string;
@@ -22,9 +23,9 @@ export function useSocios(): { loading: boolean; error: string | null; socios: S
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase.from('user_profiles')
+      const { data, error } = await withTimeout(supabase.from('user_profiles')
         .select('user_id,display_name,username,subscription_status,payment_past_due,billing_cycle,plan_id,created_at,last_active_date,streak_count')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }), 12_000, 'socios');
       if (cancelled) return;
       if (error) { setState({ loading: false, error: error.message, socios: [] }); return; }
       setState({ loading: false, error: null, socios: (data ?? []) as SocioRow[] });

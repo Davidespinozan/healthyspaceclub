@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 import { daysAgoISO, monthStartISO } from '../lib/format';
 
 export type PeriodoRep = '30d' | '90d' | 'mes';
@@ -52,12 +53,12 @@ export function useReportes(periodo: PeriodoRep): ReportesData {
       const d90ISO = daysAgoISO(90, now);
 
       const [perfRes, evtRes, subRes] = await Promise.all([
-        supabase.from('user_profiles').select('user_id,subscription_status,last_active_date,billing_cycle'),
-        supabase.from('eventos_estado').select('de_estado,a_estado,motivo,ocurrido_en,entidad_id')
-          .eq('negocio', 'hsc').eq('entidad', 'suscripcion'),
-        supabase.from('movimientos_dinero').select('monto_centavos,moneda,cliente_id,ocurrido_en')
+        withTimeout(supabase.from('user_profiles').select('user_id,subscription_status,last_active_date,billing_cycle'), 12_000, 'reportes.perf'),
+        withTimeout(supabase.from('eventos_estado').select('de_estado,a_estado,motivo,ocurrido_en,entidad_id')
+          .eq('negocio', 'hsc').eq('entidad', 'suscripcion'), 12_000, 'reportes.evt'),
+        withTimeout(supabase.from('movimientos_dinero').select('monto_centavos,moneda,cliente_id,ocurrido_en')
           .eq('negocio', 'hsc').eq('concepto', 'suscripcion').gte('ocurrido_en', daysAgoISO(400, now))
-          .order('ocurrido_en', { ascending: false }),
+          .order('ocurrido_en', { ascending: false }), 12_000, 'reportes.sub'),
       ]);
       if (cancelled) return;
       const err = perfRes.error || evtRes.error || subRes.error;

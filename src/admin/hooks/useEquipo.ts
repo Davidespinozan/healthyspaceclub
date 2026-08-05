@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 
 export interface PersonaRow {
   user_id: string;
@@ -14,9 +15,9 @@ export function useEquipo() {
   const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
-    const { data, error } = await supabase.from('user_profiles')
+    const { data, error } = await withTimeout(supabase.from('user_profiles')
       .select('user_id,display_name,username,is_admin')
-      .order('display_name', { ascending: true });
+      .order('display_name', { ascending: true }), 12_000, 'equipo');
     if (error) { setError(error.message); setLoading(false); return; }
     setError(null);
     setPersonas((data ?? []) as PersonaRow[]);

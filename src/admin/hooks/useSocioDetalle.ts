@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { withTimeout } from '../lib/withTimeout';
 
 export interface SocioPerfil {
   user_id: string;
@@ -39,16 +40,16 @@ export function useSocioDetalle(userId: string | undefined): SocioDetalle {
     let cancelled = false;
     (async () => {
       const [perfRes, movRes, evtRes, notaRes] = await Promise.all([
-        supabase.from('user_profiles')
+        withTimeout(supabase.from('user_profiles')
           .select('user_id,display_name,username,avatar_url,subscription_status,payment_past_due,billing_cycle,plan_id,subscription_period_end,trial_ends_at,created_at,start_date,last_active_date,streak_count,fire_count')
-          .eq('user_id', userId).maybeSingle(),
-        supabase.from('movimientos_dinero')
+          .eq('user_id', userId).maybeSingle(), 12_000, 'socio.perf'),
+        withTimeout(supabase.from('movimientos_dinero')
           .select('monto_centavos,moneda,concepto,metodo,ocurrido_en,referencia_externa')
-          .eq('negocio', 'hsc').eq('cliente_id', userId).order('ocurrido_en', { ascending: false }),
-        supabase.from('eventos_estado')
+          .eq('negocio', 'hsc').eq('cliente_id', userId).order('ocurrido_en', { ascending: false }), 12_000, 'socio.mov'),
+        withTimeout(supabase.from('eventos_estado')
           .select('de_estado,a_estado,motivo,ocurrido_en')
-          .eq('negocio', 'hsc').eq('entidad', 'suscripcion').eq('entidad_id', userId).order('ocurrido_en', { ascending: false }),
-        supabase.from('notas_socio').select('nota').eq('socio_id', userId).maybeSingle(),
+          .eq('negocio', 'hsc').eq('entidad', 'suscripcion').eq('entidad_id', userId).order('ocurrido_en', { ascending: false }), 12_000, 'socio.evt'),
+        withTimeout(supabase.from('notas_socio').select('nota').eq('socio_id', userId).maybeSingle(), 12_000, 'socio.nota'),
       ]);
       if (cancelled) return;
       const err = perfRes.error || movRes.error || evtRes.error;
