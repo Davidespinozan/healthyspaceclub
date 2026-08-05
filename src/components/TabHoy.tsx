@@ -8,6 +8,7 @@ import { BowlWidget } from './BowlWidget';
 import { buildDayWithFixed, type Slot } from '../utils/planEngine';
 import type { BowlClub } from '../data/bowlsClub';
 import { fetchMisPedidos, fetchBowlsRef, macrosDePedido } from '../data/pedidosTruck';
+import { fetchFoodTrucksEnabled } from '../data/appConfig';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { regionalizeStaticPlan } from '../data/regionFood';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
@@ -227,6 +228,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
   const [activityOpen, setActivityOpen] = useState(false);
   const [shareDayOpen, setShareDayOpen] = useState(false);
+  // Kill-switch de food trucks (bowls) desde el panel admin. Default true (fail-open);
+  // si el admin lo apaga, el widget no se pinta aunque el socio tenga cobertura.
+  const [foodTrucksEnabled, setFoodTrucksEnabled] = useState(true);
+  useEffect(() => { void fetchFoodTrucksEnabled().then(setFoodTrucksEnabled); }, []);
 
   const todayHSMAnswered = dailyHSMResponses.filter(r => r.date === today).length;
 
@@ -923,9 +928,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
 
         </div>
 
-          {/* Widget del food truck. Se pinta SOLO si el socio es de una ciudad con
-            cobertura: el servidor no le manda bowls a nadie más, así que aquí no hay
-            condicional de ciudad — sin datos, el componente devuelve null. */}
+          {/* Widget del food truck. Se pinta SOLO si (a) el admin no lo apagó
+            (kill-switch mientras los remolques no abren) y (b) el socio es de una
+            ciudad con cobertura: el servidor no le manda bowls a nadie más, así que
+            sin datos el componente devuelve null. */}
+        {foodTrucksEnabled && (
         <BowlWidget
           target={weeklyPlan?.gen ?? null}
           onElegir={(bowl: BowlClub, slot: Slot) => {
@@ -947,6 +954,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             void saveWeeklyPlan({ ...weeklyPlan, days });
           }}
         />
+        )}
 
         {/* ── Entrenar en pareja — se oculta si ya hay rutina de pareja hoy
               (ya estás enlazado y generaron la rutina; el botón sobra). ── */}
