@@ -83,12 +83,22 @@ export default function TuEspacioFlow({ onClose }: Props) {
 
   const allDimensions = aiQuestion ? [...fixedDimensions, aiQuestion] : fixedDimensions;
 
-  // Find the first unanswered question
-  const unansweredDims = allDimensions.filter(d => !todayResponses.some(r => r.dimension === d.title));
-  const answeredCount = allDimensions.length - unansweredDims.length;
-  const allDone = unansweredDims.length === 0 && allDimensions.length > 0;
+  // 1 obligatoria + 4 opcionales: solo la PRIMERA del día es requerida; las demás
+  // se saltan o el usuario termina cuando quiera. Se hace en Fase 3 —ya que el
+  // premio existe—: bajar el muro sin quitar profundidad ni contenido.
+  const [skipped, setSkipped] = useState<Set<string>>(new Set());
+  const [finished, setFinished] = useState(false);
+  const [introSeen, setIntroSeen] = useState(false);
 
-  const [currentDim, setCurrentDim] = useState(unansweredDims[0] || null);
+  const isAnswered = (d: { title: string }) => todayResponses.some(r => r.dimension === d.title);
+  const answeredCount = allDimensions.filter(isAnswered).length;
+  const isMandatory = answeredCount === 0; // la pregunta actual es la esencial del día
+  const pendingDims = allDimensions.filter(d => !isAnswered(d) && !skipped.has(d.title));
+  const alreadyDoneToday = hsmDailyReview?.date === today;
+  // Completo: ya hay reseña de hoy, o respondió ≥1 y (no quedan pendientes o pulsó Terminar).
+  const complete = allDimensions.length > 0 && (alreadyDoneToday || (answeredCount >= 1 && (pendingDims.length === 0 || finished)));
+
+  const [currentDim, setCurrentDim] = useState(pendingDims[0] || null);
   const [inputVal, setInputVal] = useState('');
   const [animState, setAnimState] = useState<'in' | 'out'>('in');
 
@@ -116,7 +126,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
 
   // Generar reseña al completar (una vez por día).
   useEffect(() => {
-    if (!allDone || dailyReview) return;
+    if (!complete || dailyReview) return;
     // Racha por "HSM del día". Idempotente por día.
     markActiveDay().catch(() => {});
 
@@ -147,7 +157,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
       .finally(() => { clearTimeout(timeoutId); setReviewLoading(false); });
     return () => { clearTimeout(timeoutId); controller.abort(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allDone]);
+  }, [complete]);
 
   // Focus textarea when question changes
   useEffect(() => {
@@ -167,18 +177,47 @@ export default function TuEspacioFlow({ onClose }: Props) {
     setTimeout(() => {
       setInputVal('');
       const updatedResponses = [...todayResponses, { date: today, dimension: currentDim.title, question: currentDim.q, response: inputVal.trim() }];
-      const nextUnanswered = allDimensions.filter(d => !updatedResponses.some(r => r.dimension === d.title));
-      setCurrentDim(nextUnanswered[0] || null);
+      const nextPending = allDimensions.filter(d => !updatedResponses.some(r => r.dimension === d.title) && !skipped.has(d.title));
+      setCurrentDim(nextPending[0] || null);
       setAnimState('in');
       submittingRef.current = false;
+    }, 300);
+  }
+
+  // Saltar la pregunta actual (solo opcionales): avanza sin registrar.
+  function skipCurrent() {
+    if (!currentDim) return;
+    const title = currentDim.title;
+    setAnimState('out');
+    setTimeout(() => {
+      const nextSkipped = new Set(skipped); nextSkipped.add(title);
+      setSkipped(nextSkipped);
+      setInputVal('');
+      const next = allDimensions.filter(d => !isAnswered(d) && !nextSkipped.has(d.title));
+      setCurrentDim(next[0] || null);
+      setAnimState('in');
     }, 300);
   }
 
   const currentIndex = currentDim ? allDimensions.findIndex(d => d.title === currentDim.title) : -1;
   const progressPct = allDimensions.length > 0 ? (answeredCount / allDimensions.length) * 100 : 0;
 
+  // ── Intro / significado (solo primera vez: 0 reflexiones) ──
+  if (!complete && dailyHSMResponses.length === 0 && !introSeen) {
+    return (
+      <div className="te-flow">
+        <button className="te-flow-close" onClick={onClose} aria-label={t('common.close')} type="button"><X size={18} strokeWidth={2} /></button>
+        <div className="te-intro">
+          <div className="te-intro-title">{t('espacio.introTitle')}</div>
+          <p className="te-intro-body">{t('espacio.introBody')}</p>
+          <button className="te-submit" onClick={() => setIntroSeen(true)}>{t('espacio.introCta')}</button>
+        </div>
+      </div>
+    );
+  }
+
   // ── Completion screen ──
-  if (allDone) {
+  if (complete) {
     return (
       <div
         className="te-flow"
@@ -233,6 +272,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
         {/* Dimension badge — acento terracota único, sin emoji ni color-por-dimensión */}
         <div className="te-dim-badge">
           <span className="te-dim-title">{currentDim.title}</span>
+          <span className="te-dim-tag">{isMandatory ? t('espacio.essential') : t('espacio.optional')}</span>
           {currentIndex === allDimensions.length - 1 && aiQuestion && (
             <span className="te-dim-ai">{t('espacio.aiTag')}</span>
           )}
@@ -266,8 +306,19 @@ export default function TuEspacioFlow({ onClose }: Props) {
           onClick={handleSubmit}
           disabled={!inputVal.trim()}
         >
-          {answeredCount + 1 < allDimensions.length ? t('espacio.next') : t('espacio.complete')}
+          {pendingDims.length > 1 ? t('espacio.next') : t('espacio.complete')}
         </button>
+
+        {isMandatory ? (
+          <p className="te-optnote">{t('espacio.optionalHint')}</p>
+        ) : (
+          <div className="te-flow-actions">
+            {pendingDims.length > 1 && (
+              <button type="button" className="te-skip" onClick={skipCurrent}>{t('espacio.skip')}</button>
+            )}
+            <button type="button" className="te-finish" onClick={() => setFinished(true)}>{t('espacio.finish')}</button>
+          </div>
+        )}
       </div>
     </div>
   );

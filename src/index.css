@@ -7368,6 +7368,35 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   font-size: .92rem; line-height: 1.45; color: rgba(246,242,234,.8); font-style: italic;
 }
 
+/* Fase 3 — 1 obligatoria + 4 opcionales: badge esencial/opcional, saltar, terminar. */
+.te-dim-tag {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .58rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(200,168,106,.9); margin-left: 8px;
+}
+.te-optnote { text-align: center; font-size: .76rem; color: rgba(246,242,234,.5); margin: 14px 0 0; }
+.te-flow-actions { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+.te-skip {
+  background: none; border: none; color: rgba(246,242,234,.5); font-size: .85rem;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 3px; font-family: inherit;
+}
+.te-skip:hover { color: rgba(246,242,234,.8); }
+.te-finish {
+  background: none; border: 1px solid rgba(246,242,234,.2); color: rgba(246,242,234,.85);
+  font-size: .85rem; padding: 9px 18px; border-radius: 999px; cursor: pointer;
+  font-family: inherit; font-weight: 600; transition: border-color .15s ease, color .15s ease;
+}
+.te-finish:hover { border-color: rgba(200,168,106,.6); color: #f1ede1; }
+
+/* Pantalla de significado (primera vez) */
+.te-intro { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; padding: 0 4px; }
+.te-intro-title {
+  font-family: 'Montserrat', sans-serif; font-size: clamp(1.4rem, 5vw, 1.7rem);
+  font-weight: 600; color: #F6F2EA; line-height: 1.25; margin-bottom: 16px;
+  letter-spacing: var(--tracking-tighter);
+}
+.te-intro-body { font-size: .98rem; color: rgba(246,242,234,.75); line-height: 1.6; margin: 0 auto 28px; max-width: 30ch; }
+
 /* Textarea — focus terracota para coherencia con el acento */
 .te-textarea {
   width: 100%; min-height: 120px; padding: 16px 18px;
