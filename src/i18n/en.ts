@@ -617,6 +617,7 @@ export const en: Translations<typeof es> = {
     optionalHint: 'One is enough. The rest, if you want.',
     skip: 'Skip this one',
     finish: 'Finish for today',
+    portraitHint: 'Your portrait grew. See it in your profile → Reflections.',
   },
   retrato: {
     kicker: 'Your portrait · living',
@@ -1094,8 +1095,8 @@ export const en: Translations<typeof es> = {
     espacioSubtitle: 'Take a moment for yourself',
     espacioPromptInitial: 'Reflect for 5 minutes so your coach can get to know you better.',
     espacioPromptProgress: "You've written {answered}. {remaining} to go.",
-    reviewCompleteTitle: "Today's 5, done.",
-    reviewCompleteSub: 'Your coach read your answers.',
+    reviewCompleteTitle: 'Done for today.',
+    reviewCompleteSub: 'One more stroke in your portrait.',
     reviewAnalyzing: 'Analyzing your answers...',
     reviewBackToHoy: 'Back to Today',
     reviewLabelToday: "Today's reflection",

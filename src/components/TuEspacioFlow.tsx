@@ -97,6 +97,9 @@ export default function TuEspacioFlow({ onClose }: Props) {
   const alreadyDoneToday = hsmDailyReview?.date === today;
   // Completo: ya hay reseña de hoy, o respondió ≥1 y (no quedan pendientes o pulsó Terminar).
   const complete = allDimensions.length > 0 && (alreadyDoneToday || (answeredCount >= 1 && (pendingDims.length === 0 || finished)));
+  // Progreso por AUTOCONOCIMIENTO (no racha-culpa): cuántas de las 10 dimensiones has
+  // tocado alguna vez. Refuerza competencia (SDT) y cierra el lazo con el retrato.
+  const exploredCount = HSM_BANK.filter(d => dailyHSMResponses.some(r => r.dimension === d.title)).length;
 
   const [currentDim, setCurrentDim] = useState(pendingDims[0] || null);
   const [inputVal, setInputVal] = useState('');
@@ -245,6 +248,8 @@ export default function TuEspacioFlow({ onClose }: Props) {
               )}
             </div>
           ) : null}
+          <div className="te-complete-progress">🪞 {t('retrato.explored', { n: exploredCount })}</div>
+          <p className="te-complete-hint">{t('espacio.portraitHint')}</p>
           <button className="te-complete-btn" onClick={onClose}>{t('hoy.reviewBackToHoy')}</button>
         </div>
       </div>

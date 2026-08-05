@@ -7474,6 +7474,17 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
   animation-delay: 0.14s;
 }
+/* Fase 4 — progreso por autoconocimiento (no racha-culpa) + gancho al retrato. */
+.te-complete-progress {
+  display: inline-block;
+  font-size: .82rem; font-weight: 600; color: #c8a86a;
+  background: rgba(200,168,106,.12);
+  padding: 8px 16px; border-radius: 999px; margin: 4px auto 0;
+}
+.te-complete-hint {
+  font-size: .74rem; color: rgba(246,242,234,.45);
+  margin: 12px 0 22px; line-height: 1.4;
+}
 
 /* Review */
 .te-review {

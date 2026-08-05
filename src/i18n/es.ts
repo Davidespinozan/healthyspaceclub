@@ -616,6 +616,7 @@ export const es = {
     optionalHint: 'Con una basta. Lo demás, si quieres.',
     skip: 'Saltar esta',
     finish: 'Terminar por hoy',
+    portraitHint: 'Tu retrato creció. Míralo en tu perfil → Reflexiones.',
   },
   retrato: {
     kicker: 'Tu retrato · vivo',
@@ -1093,8 +1094,8 @@ export const es = {
     espacioSubtitle: 'Tómate un momento para ti',
     espacioPromptInitial: 'Reflexiona 5 minutos para que tu coach te conozca mejor.',
     espacioPromptProgress: 'Ya escribiste {answered}. Faltan {remaining}.',
-    reviewCompleteTitle: 'Las 5 de hoy, listas.',
-    reviewCompleteSub: 'Tu coach leyó tus respuestas.',
+    reviewCompleteTitle: 'Listo por hoy.',
+    reviewCompleteSub: 'Un trazo más en tu retrato.',
     reviewAnalyzing: 'Analizando tus respuestas...',
     reviewBackToHoy: 'Volver a Hoy',
     reviewLabelToday: 'Tu observación de hoy',
