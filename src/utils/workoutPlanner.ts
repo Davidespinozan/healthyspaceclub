@@ -594,6 +594,18 @@ export function filterExercisesForWorkout(params: {
  * 3. Primera variante que aplique al equipo del usuario
  * 4. null si ninguna variante aplica (no debería pasar si filterExercisesForWorkout filtró antes)
  */
+/**
+ * Recupera el equipo con el que se generó una rutina guardada. El plan (JSON del AI)
+ * no lo trae, así que al guardar sellamos `userEquipment` en el objeto del plan; aquí
+ * lo leemos y validamos. Devuelve null si no hay uno válido (rutina vieja sin sello) →
+ * el llamador cae a su default. Sin esto, al recargar se re-elegía la variante con el
+ * equipo default ('gym') y una rutina de ligas se repintaba como gym.
+ */
+export function equipmentFromPlan(plan: unknown): Equipment | null {
+  const eq = (plan as { userEquipment?: unknown } | null)?.userEquipment;
+  return eq === 'ligas' || eq === 'cuerpo' || eq === 'gym' ? eq : null;
+}
+
 export function selectVariantForEquipment(
   exercise: Exercise,
   userEquipment: Equipment[],

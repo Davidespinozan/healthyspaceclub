@@ -19,6 +19,7 @@ import {
   recentExerciseIds,
   orderCandidatesForVariety,
   capByMovementFamily,
+  equipmentFromPlan,
 } from '../utils/workoutPlanner';
 import {
   getCachedWorkout,
@@ -139,7 +140,17 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const [discomfort, setDiscomfort] = useState('none');
   const [painArea, setPainArea] = useState('');
   const [selectedTime, setSelectedTime] = useState(45);
-  const [selectedEquipment, setSelectedEquipment] = useState<Equipment>('gym');
+  // Al recargar hay que RESTAURAR el equipo con el que se generó la rutina de hoy.
+  // El plan (JSON del AI) no lo trae, y WorkoutPlan re-elige la variante a mostrar
+  // con selectedEquipment en cada render → si esto arrancaba en 'gym' fijo, una
+  // rutina hecha con ligas se repintaba con variantes de gym al dar refresh. Lo
+  // sellamos en el plan al guardar (userEquipment) y lo leemos aquí.
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment>(() => {
+    const stored = (!partnerMode && storedWorkout?.date === today)
+      ? equipmentFromPlan(storedWorkout.plan)
+      : null;
+    return stored ?? 'gym';
+  });
   // Foco de fuerza (qué entrenar) + historia (cuándo entrenó por última vez).
   const [focus, setFocus] = useState<FocusValue>('auto');
   const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>([]);
@@ -353,6 +364,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           (cached as CachedWorkout).partnerId = pendingPartner?.id ?? null;
         }
         setPlan(cached);
+        (cached as { userEquipment?: Equipment }).userEquipment = selectedEquipment;
         await saveDailyWorkout(cached as any);
         if (partnerMode && pendingPartner?.id) {
           deliverPartnerWorkout(pendingPartner.id, cached).catch(() => {});
@@ -396,6 +408,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
         // Save plan FIRST, then increment counter
         setPlan(adjustedPlan as any);
+        (adjustedPlan as { userEquipment?: Equipment }).userEquipment = selectedEquipment;
         await saveDailyWorkout(adjustedPlan as any);
         setPhase('plan');
 
@@ -589,6 +602,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       }
 
       setPlan(workout);
+      (workout as { userEquipment?: Equipment }).userEquipment = selectedEquipment;
       await saveDailyWorkout(workout as any);
       // Sesión compartida: entrega la MISMA rutina al compañero (no genera él).
       if (partnerMode && pendingPartner?.id) {
