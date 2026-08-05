@@ -73,6 +73,23 @@ const AVOID_MAP: Record<string, string[]> = {
   soya: ['soya', 'edamame', 'edamames'],
   pescado: ['pescado', 'salmon', 'atun', 'tilapia', 'bacalao'],
   ajonjoli: ['ajonjoli', 'sesamo'],
+  // Aves y cerdo (faltaban): sin esto un vegetariano no podía sacar el pollo/pavo/cerdo.
+  pollo: ['pollo', 'pechuga'],
+  pavo: ['pavo'],
+  cerdo: ['cerdo', 'chorizo', 'tocino', 'lomo', 'jamon'],
+  // Dietas: expanden a TODA la proteína animal. Vegano suma huevo y lácteos.
+  vegetariano: [
+    'pollo', 'pechuga', 'pavo', 'cerdo', 'chorizo', 'tocino', 'lomo', 'jamon',
+    'res', 'sirloin', 'bistec', 'falda', 'molida', 'machaca', 'arrachera', 'chambarete',
+    'camaron', 'camarones', 'marisco', 'mariscos', 'pescado', 'salmon', 'atun', 'tilapia', 'bacalao',
+  ],
+  vegano: [
+    'pollo', 'pechuga', 'pavo', 'cerdo', 'chorizo', 'tocino', 'lomo', 'jamon',
+    'res', 'sirloin', 'bistec', 'falda', 'molida', 'machaca', 'arrachera', 'chambarete',
+    'camaron', 'camarones', 'marisco', 'mariscos', 'pescado', 'salmon', 'atun', 'tilapia', 'bacalao',
+    'huevo', 'huevos', 'leche', 'queso', 'yogur', 'yoghurt', 'yogurt', 'requeson', 'ricotta',
+    'cottage', 'panela', 'oaxaca', 'feta', 'mozzarella', 'parmesano', 'crema', 'miel',
+  ],
 };
 function expandAvoid(raw: string[]): string[] {
   const skip = new Set(['nada', 'ninguno', 'ninguna', 'todas', 'todo', 'todos']);

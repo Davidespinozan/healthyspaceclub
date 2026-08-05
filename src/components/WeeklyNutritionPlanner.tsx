@@ -11,7 +11,7 @@ import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets'
 import { PLAN_ENGINE_VERSION } from '../utils/planEngine';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
-import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, Dumbbell, type LucideIcon } from 'lucide-react';
+import { RefreshCw, Salad, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, Dumbbell, type LucideIcon } from 'lucide-react';
 import type { ProteinShake } from '../utils/planEngine';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import { tDishName, tIngName, tPortion } from '../utils/nutritionI18n';
@@ -56,6 +56,8 @@ const AVOID_LABEL_KEYS: Record<string, TranslationKey> = {
   'soya': 'nutritionPlanner.avoidSoy',
   'ajonjoli': 'nutritionPlanner.avoidSesame',
   'pescado': 'nutritionPlanner.avoidFish',
+  'vegetariano': 'nutritionPlanner.avoidVegetarian',
+  'vegano': 'nutritionPlanner.avoidVegan',
   'nada': 'nutritionPlanner.avoidNone',
 };
 const AVOID_SUB_KEYS: Record<string, TranslationKey> = {
@@ -118,6 +120,8 @@ const QUESTIONS: Array<{
       { value: 'pescado',      icon: Fish },
       { value: 'mariscos',     icon: Shell },
       { value: 'carne-roja',   icon: Beef },
+      { value: 'vegetariano',  icon: Salad },
+      { value: 'vegano',       icon: Sprout },
       { value: 'nada',         icon: CircleCheck },
     ],
   },
