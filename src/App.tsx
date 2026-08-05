@@ -3,7 +3,8 @@ import { identify } from './utils/analytics';
 import { sincronizarPush } from './utils/push';
 import { useAutoRegenPlan, useWeeklyPlanReset } from './utils/useAutoRegenPlan';
 import { ensureLocaleAssets } from './utils/localeAssets';
-import { useEffect, useState, useRef, lazy, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 import { useAppStore } from './store';
 import { useShallow } from 'zustand/react/shallow';
 import { supabase } from './lib/supabase';
@@ -20,14 +21,14 @@ import LandingScreen from './screens/LandingScreen';
 import UpdatePrompt from './components/UpdatePrompt';
 import OfflineBanner from './components/OfflineBanner';
 
-const LoginScreen = lazy(() => import('./screens/LoginScreen'));
-const OnboardingScreen = lazy(() => import('./screens/OnboardingScreen'));
-const DashboardScreen = lazy(() => import('./screens/DashboardScreen'));
-const ResetPasswordScreen = lazy(() => import('./screens/ResetPasswordScreen'));
-const PaywallScreen = lazy(() => import('./screens/PaywallScreen'));
-const PaymentModal = lazy(() => import('./components/modals/PaymentModal'));
-const SignupModal = lazy(() => import('./components/modals/SignupModal'));
-const VideoModal = lazy(() => import('./components/modals/VideoModal'));
+const LoginScreen = lazyWithRetry(() => import('./screens/LoginScreen'), 'LoginScreen');
+const OnboardingScreen = lazyWithRetry(() => import('./screens/OnboardingScreen'), 'OnboardingScreen');
+const DashboardScreen = lazyWithRetry(() => import('./screens/DashboardScreen'), 'DashboardScreen');
+const ResetPasswordScreen = lazyWithRetry(() => import('./screens/ResetPasswordScreen'), 'ResetPasswordScreen');
+const PaywallScreen = lazyWithRetry(() => import('./screens/PaywallScreen'), 'PaywallScreen');
+const PaymentModal = lazyWithRetry(() => import('./components/modals/PaymentModal'), 'PaymentModal');
+const SignupModal = lazyWithRetry(() => import('./components/modals/SignupModal'), 'SignupModal');
+const VideoModal = lazyWithRetry(() => import('./components/modals/VideoModal'), 'VideoModal');
 
 export default function App() {
   const { currentScreen, activeModal } = useAppStore(useShallow((s) => ({ currentScreen: s.currentScreen, activeModal: s.activeModal })));
@@ -53,12 +54,16 @@ export default function App() {
   // Esperamos a que esté antes de montar el dashboard en EN (evita flash de ES).
   const [assetsReady, setAssetsReady] = useState(() => useAppStore.getState().language !== 'en');
   useEffect(() => {
-    if (language === 'en') {
-      setAssetsReady(false);
-      ensureLocaleAssets('en').then(() => setAssetsReady(true)).catch(() => setAssetsReady(true));
-    } else {
-      setAssetsReady(true);
-    }
+    if (language !== 'en') { setAssetsReady(true); return; }
+    setAssetsReady(false);
+    let done = false;
+    const open = () => { if (!done) { done = true; setAssetsReady(true); } };
+    // Failsafe: .catch cubre un RECHAZO, pero si loadExercisesEn/loadMealPlanEn se
+    // CUELGAN (chunk viejo tras redeploy, red estancada) nunca settlean → dashboard
+    // en spinner infinito. A los 6s abrimos el gate igual (peor caso: nombres en ES).
+    const t = setTimeout(open, 6000);
+    ensureLocaleAssets('en').then(open).catch(open).finally(() => clearTimeout(t));
+    return () => clearTimeout(t);
   }, [language]);
 
   // Tope de seguridad por period_end (independiente de la zona horaria del user
@@ -122,12 +127,25 @@ export default function App() {
       // paga en el paywall sin forma de reintentar. Reintentamos hasta que la DB
       // responda; solo entonces fijamos el estado.
       for (let attempt = 0; !cancelled; attempt++) {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('subscription_status, stripe_customer_id, subscription_period_end, cancel_at_period_end, payment_past_due, is_admin')
-          .eq('user_id', uid)
-          .maybeSingle();
+        // Timeout por-intento: supabase-js NO pone timeout al fetch, así que un socket
+        // estancado dejaría este await colgado PARA SIEMPRE y el loop nunca itera →
+        // spinner infinito en el dashboard (el mismo bug que colgó la app hoy). Lo
+        // carreamos contra 10s; un timeout cuenta como error y reintenta con backoff.
+        // Así se conserva el reintento infinito en error persistente (no varar a quien
+        // paga) SIN el riesgo de congelarse por una conexión que nunca responde.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const res = await Promise.race([
+          supabase
+            .from('user_profiles')
+            .select('subscription_status, stripe_customer_id, subscription_period_end, cancel_at_period_end, payment_past_due, is_admin')
+            .eq('user_id', uid)
+            .maybeSingle(),
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ data: null, error: { message: 'timeout (10s)' } }), 10_000)),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ]) as { data: any; error: { message: string } | null };
         if (cancelled) return;
+        const { data, error } = res;
         if (error) {
           console.warn(`[sub] fetch subscription_status falló (intento ${attempt + 1}), reintentando:`, error.message);
           await new Promise(r => setTimeout(r, Math.min(1000 * 2 ** attempt, 15_000)));

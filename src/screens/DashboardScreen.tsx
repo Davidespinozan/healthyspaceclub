@@ -1,4 +1,5 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { Home, User, MessageCircle, Users, AlertCircle, X, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
@@ -10,19 +11,19 @@ import TabHoy from '../components/TabHoy'; // default tab → estática (carga i
 import SubPageLoadingFallback from '../components/SubPageLoadingFallback';
 
 // Tabs/sheets no-default → lazy: solo cargan al entrar a ellas (aligera el chunk del dashboard).
-const ManagePlanSheet = lazy(() => import('../components/sheets/ManagePlanSheet'));
-const TabCoach = lazy(() => import('../components/TabCoach'));
-const TabClub = lazy(() => import('../components/TabClub'));
-const TabTu = lazy(() => import('../components/TabTu'));
-const MiHuella = lazy(() => import('../components/MiHuella'));
+const ManagePlanSheet = lazyWithRetry(() => import('../components/sheets/ManagePlanSheet'), 'ManagePlanSheet');
+const TabCoach = lazyWithRetry(() => import('../components/TabCoach'), 'TabCoach');
+const TabClub = lazyWithRetry(() => import('../components/TabClub'), 'TabClub');
+const TabTu = lazyWithRetry(() => import('../components/TabTu'), 'TabTu');
+const MiHuella = lazyWithRetry(() => import('../components/MiHuella'), 'MiHuella');
 
 // Sub-pages lazy — Split-1: las dos más pesadas salen del initial chunk.
 // DailyTrainer y WeeklyNutritionPlanner solo se cargan al entrar a su
 // sub-page (/entrenamiento, /alimentacion). exercises.ts y mealPlan.ts
 // siguen viajando con TabHoy (eager) — eso es Split-1b futuro.
-const WeeklyNutritionPlanner = lazy(() => import('../components/WeeklyNutritionPlanner'));
-const DailyTrainer = lazy(() => import('../components/DailyTrainer'));
-const CompanerosScreen = lazy(() => import('../components/CompanerosScreen'));
+const WeeklyNutritionPlanner = lazyWithRetry(() => import('../components/WeeklyNutritionPlanner'), 'WeeklyNutritionPlanner');
+const DailyTrainer = lazyWithRetry(() => import('../components/DailyTrainer'), 'DailyTrainer');
+const CompanerosScreen = lazyWithRetry(() => import('../components/CompanerosScreen'), 'CompanerosScreen');
 // GrowthPlan + LifeSystemScreen removed — backed up in _hsm_backup/
 
 const TABS: { id: DashPage; icon: typeof Home; labelKey: TranslationKey }[] = [

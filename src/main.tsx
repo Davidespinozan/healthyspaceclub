@@ -3,13 +3,14 @@ import ReactDOM from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
+import { lazyWithRetry } from './utils/lazyWithRetry'
 
 // Panel admin del Club: raíz de render SEPARADA, montada solo cuando la URL
 // empieza con /admin. Lazy → la PWA del socio nunca descarga el bundle del
 // panel. El SPA fallback de Netlify (/* → index.html) hace que /admin/socios
 // también sirva esta misma app.
 const isAdminRoute = window.location.pathname.startsWith('/admin')
-const AdminApp = React.lazy(() => import('./admin/AdminApp'))
+const AdminApp = lazyWithRetry(() => import('./admin/AdminApp'), 'AdminApp')
 import { useAppStore } from './store'
 import { initAnalytics, track } from './utils/analytics'
 import { captureRefFromUrl } from './utils/referral'
