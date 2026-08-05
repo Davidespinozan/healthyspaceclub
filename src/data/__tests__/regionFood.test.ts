@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dishIsGloballyAvailable, renameForCountry, shouldFilterAvailability } from '../regionFood';
+import { dishIsGloballyAvailable, renameForCountry, shouldFilterAvailability, regionalizeStaticPlan } from '../regionFood';
 import { BANCO } from '../banco';
 
 describe('regionFood — localización de comida por país', () => {
@@ -36,6 +36,26 @@ describe('regionFood — localización de comida por país', () => {
       expect(shouldFilterAvailability('LATAM')).toBe(false);
       expect(shouldFilterAvailability('EUROPE')).toBe(true);
       expect(shouldFilterAvailability('REST')).toBe(true);
+    });
+  });
+
+  describe('regionalizeStaticPlan (plan por defecto)', () => {
+    const plan = [
+      { day: 1, theme: '🇲🇽 Mexicana', meals: [{ name: 'Chilaquiles', portions: ['totopos'] }] },
+      { day: 2, theme: '🇯🇵 Japonesa', meals: [{ name: 'Sushi Bowl', portions: ['arroz', 'salmón'] }] },
+      { day: 3, theme: '🇮🇹 Italiana', meals: [{ name: 'Pasta', portions: ['pasta'] }] },
+    ];
+    it('LATAM: no cambia el plan', () => {
+      expect(regionalizeStaticPlan(plan, 'LATAM')).toHaveLength(3);
+    });
+    it('EUROPE: quita los días mexicanos, conserva japonés/italiano', () => {
+      const r = regionalizeStaticPlan(plan, 'EUROPE');
+      expect(r).toHaveLength(2);
+      expect(r.some((d) => d.theme.includes('🇲🇽'))).toBe(false);
+    });
+    it('nunca deja al usuario sin comida (si todo se filtra, devuelve el original)', () => {
+      const soloMx = [{ day: 1, theme: '🇲🇽 Mexicana', meals: [{ name: 'Tacos' }] }];
+      expect(regionalizeStaticPlan(soloMx, 'EUROPE')).toHaveLength(1);
     });
   });
 

@@ -57,6 +57,38 @@ export function shouldFilterAvailability(region: Region): boolean {
   return region !== 'LATAM';
 }
 
+// ── Plan estático por defecto (planA–D): regionalizar ──
+// El plan estático es contenido curado con la SEMANA 1 mexicana (chilaquiles, alambre,
+// ceviche de panela…). Un usuario fuera de LATAM lo veía el Día 1 antes de generar nada.
+// Las otras semanas (japonesa/italiana/americana) SÍ son globales, así que para no-LATAM
+// simplemente quitamos los días mexicanos y dejamos que el ciclo recorra los demás.
+
+interface PlanDayLike { theme?: string; meals?: { name?: string; portions?: string[] }[] }
+
+/** ¿Este día del plan estático es apto fuera de LATAM? (por tema y por nombre de platillo). */
+function planDayIsGlobal(day: PlanDayLike): boolean {
+  const theme = norm(day.theme || '');
+  if (theme.includes('mexican') || (day.theme || '').includes('🇲🇽')) return false;
+  for (const m of day.meals ?? []) {
+    const n = norm(m.name || '');
+    if (LATAM_ONLY_DISH.some((d) => n.includes(norm(d)))) return false;
+    const port = norm((m.portions ?? []).join(' '));
+    if (LATAM_ONLY_ING.some((t) => new RegExp(`\\b${norm(t)}\\b`).test(port))) return false;
+  }
+  return true;
+}
+
+/**
+ * Devuelve el plan estático apto para la región. Fuera de LATAM, filtra los días
+ * mexicanos; si por lo que sea quedara vacío, devuelve el plan original (nunca deja
+ * al usuario sin comida). Dentro de LATAM, no cambia nada.
+ */
+export function regionalizeStaticPlan<T extends PlanDayLike>(plan: T[], region?: Region): T[] {
+  if (!region || !shouldFilterAvailability(region)) return plan;
+  const filtered = plan.filter(planDayIsGlobal);
+  return filtered.length > 0 ? filtered : plan;
+}
+
 // ── Renombrado de ingredientes por región (cosmético, alto impacto) ──
 // Solo cambia CÓMO se muestra el nombre, no el ingrediente. Elimina el
 // "olor a México" inmediato (jitomate→tomate) sin tocar el motor.

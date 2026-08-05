@@ -9,6 +9,8 @@ import { buildDayWithFixed, type Slot } from '../utils/planEngine';
 import type { BowlClub } from '../data/bowlsClub';
 import { fetchMisPedidos, fetchBowlsRef, macrosDePedido } from '../data/pedidosTruck';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
+import { regionalizeStaticPlan } from '../data/regionFood';
+import { getCachedRegion, regionFromCountry } from '../utils/region';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
@@ -147,7 +149,13 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     if (reached > lastStreakMilestone) { setMilestone(reached); setLastStreakMilestone(reached); }
   }, [streakCount, lastStreakMilestone]);
 
-  const activePlan = mealPlans[weeklyPlan?.mealPlanKey ?? mealPlanKey] ?? mealPlans['planA'];
+  // Región del usuario (país declarado > IP) para regionalizar el plan estático por
+  // defecto: fuera de LATAM no mostramos la semana mexicana (chilaquiles el Día 1).
+  const region = obData?.country ? regionFromCountry(String(obData.country)) : (getCachedRegion() ?? undefined);
+  const activePlan = regionalizeStaticPlan(
+    mealPlans[weeklyPlan?.mealPlanKey ?? mealPlanKey] ?? mealPlans['planA'],
+    region,
+  );
   // scalePlan recorre el plan semanal — memoizar evita recalcularlo en CADA render
   // (TabHoy se re-renderiza con cualquier cambio del store).
   // Motor (banco): días ya ajustados a la meta → tal cual. Si no, plan viejo escalado.
