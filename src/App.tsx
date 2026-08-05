@@ -200,6 +200,18 @@ export default function App() {
       return trusted;
     }
 
+    // Failsafe: getSession() es lo ÚNICO que abre el gate (authReady). Si se cuelga
+    // (token corrupto en storage, refresh de red que nunca resuelve, localStorage
+    // bloqueado) o se rechaza sin catch, la app quedaría en spinner infinito y ni el
+    // hard-refresh lo cura (el token sigue en storage). A los 8s abrimos el gate a la
+    // fuerza: sin sesión válida cae a landing/login, que es recuperable.
+    const gateFailsafe = setTimeout(() => {
+      if (!useAppStore.getState().authReady) {
+        console.warn('[auth] getSession no resolvió en 8s — abriendo gate (failsafe)');
+        setAuthReady(true);
+      }
+    }, 8000);
+
     // Verificar sesión inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) ensureDataOwner(session.user.id);
@@ -209,6 +221,13 @@ export default function App() {
       if (typeof window !== 'undefined' && window.location.pathname.includes('reset-password')) {
         useAppStore.setState({ currentScreen: 'reset-password' });
       }
+      clearTimeout(gateFailsafe);
+      setAuthReady(true);
+    }).catch((e) => {
+      // getSession rechazó (p.ej. refresh token inválido). Fail-open: NO dejamos la
+      // app colgada — abrimos el gate y que auth/landing maneje el estado sin sesión.
+      console.error('[auth] getSession falló, abriendo gate igual:', e);
+      clearTimeout(gateFailsafe);
       setAuthReady(true);
     });
 
@@ -539,6 +558,7 @@ export default function App() {
     });
 
     return () => {
+      clearTimeout(gateFailsafe);
       subscription.unsubscribe();
     };
   }, [setSession, setAuthReady]);
