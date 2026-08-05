@@ -97,6 +97,19 @@ function expandAvoid(raw: string[]): string[] {
   for (const a of raw) { if (skip.has(a)) continue; out.push(...(AVOID_MAP[a] ?? [a])); }
   return out.map(norm);
 }
+
+/** Expande categorías de "evitar" (gluten, cacahuate, vegetariano…) a términos de
+ *  ingrediente. Reutilizable fuera del motor (ej. filtrar el plan estático). */
+export function expandAvoidCats(cats: string[]): string[] {
+  return expandAvoid(cats.map((s) => s.toLowerCase().trim()).filter(Boolean));
+}
+
+/** ¿El texto (nombre/porción) contiene alguno de los términos de "evitar"? Por palabra. */
+export function textMatchesAvoid(text: string, terms: string[]): boolean {
+  if (!terms.length) return false;
+  const t = norm(text || '');
+  return terms.some((term) => term && new RegExp(`\\b${term}\\b`).test(t));
+}
 const STOP = new Set(['algo', 'con', 'sin', 'del', 'los', 'las', 'una', 'uno', 'que', 'por', 'para', 'muy', 'mas', 'antoja', 'antojo', 'quiero', 'comer', 'tipo', 'como', 'mucho', 'poco']);
 function cravingTerms(text: string): string[] {
   return norm(text).split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !STOP.has(w));

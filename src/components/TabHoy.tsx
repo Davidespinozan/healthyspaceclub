@@ -11,6 +11,7 @@ import { fetchMisPedidos, fetchBowlsRef, macrosDePedido } from '../data/pedidosT
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
 import { regionalizeStaticPlan } from '../data/regionFood';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
+import { expandAvoidCats, textMatchesAvoid } from '../utils/planEngine';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
@@ -152,10 +153,20 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // Región del usuario (país declarado > IP) para regionalizar el plan estático por
   // defecto: fuera de LATAM no mostramos la semana mexicana (chilaquiles el Día 1).
   const region = obData?.country ? regionFromCountry(String(obData.country)) : (getCachedRegion() ?? undefined);
-  const activePlan = regionalizeStaticPlan(
+  const regionPlan = regionalizeStaticPlan(
     mealPlans[weeklyPlan?.mealPlanKey ?? mealPlanKey] ?? mealPlans['planA'],
     region,
   );
+  // Seguridad: filtrar del plan estático por defecto los días con alérgenos/restricciones
+  // capturados en onboarding (el plan dinámico ya los respeta; el estático no lo hacía).
+  // Nunca deja al usuario sin comida (fallback al plan regionalizado).
+  const activePlan = (() => {
+    const terms = expandAvoidCats(String(obData?.avoid ?? '').split(',').map(s => s.trim()).filter(Boolean));
+    if (!terms.length) return regionPlan;
+    const safe = regionPlan.filter(d => !(d.meals ?? []).some(m =>
+      textMatchesAvoid(m.name || '', terms) || (m.portions ?? []).some(p => textMatchesAvoid(p, terms))));
+    return safe.length ? safe : regionPlan;
+  })();
   // scalePlan recorre el plan semanal — memoizar evita recalcularlo en CADA render
   // (TabHoy se re-renderiza con cualquier cambio del store).
   // Motor (banco): días ya ajustados a la meta → tal cual. Si no, plan viejo escalado.

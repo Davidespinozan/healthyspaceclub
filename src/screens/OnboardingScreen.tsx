@@ -51,6 +51,9 @@ export default function OnboardingScreen() {
   const [conditions, setConditions] = useState<string[]>([]);
   const toggleCondition = (c: string) =>
     setConditions(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev.filter(x => x !== 'ninguna'), c]);
+  const [restricciones, setRestricciones] = useState<string[]>([]);
+  const toggleRestriccion = (r: string) =>
+    setRestricciones(prev => prev.includes(r) ? prev.filter(x => x !== r) : [...prev, r]);
   const [grasa, setGrasa] = useState('');
   const [pesoMeta, setPesoMeta] = useState('');
   const [dataError, setDataError] = useState('');
@@ -208,6 +211,7 @@ export default function OnboardingScreen() {
     setObData('embarazo', embarazo === 'si' ? 1 : 0);
     setObData('movilidad', movilidad);
     setObData('conditions', conditions.filter(c => c !== 'ninguna').join(','));
+    setObData('avoid', restricciones.join(','));
     // País → perfil de nutrición: habilita la localización de comida por país
     // (filtro de disponibilidad). Antes solo se guardaba en user_profiles para el
     // gate del food truck; ahora también viaja con obData.
@@ -505,6 +509,18 @@ export default function OnboardingScreen() {
                 {(['diabetes', 'hipertension', 'renal', 'colesterol'] as const).map(v => (
                   <div key={v} className={`onb-card-select${conditions.includes(v) ? ' selected' : ''}`} onClick={() => toggleCondition(v)}>
                     <span className="onb-card-label">{t(`onboarding.condition_${v}`)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Restricciones/alergias (opcional, multi) — se respetan desde el 1er plan */}
+            <div className="onb-optional">
+              <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.restrictionsTitle')} · <em>{t('onboarding.optionalTag')}</em></div>
+              <div className="onb-cards-row" style={{ flexWrap: 'wrap' }}>
+                {(['gluten', 'lacteos', 'huevo', 'frutos-secos', 'cacahuate', 'mariscos', 'vegetariano', 'vegano'] as const).map(v => (
+                  <div key={v} className={`onb-card-select${restricciones.includes(v) ? ' selected' : ''}`} onClick={() => toggleRestriccion(v)}>
+                    <span className="onb-card-label">{t(`onboarding.restr_${v}`)}</span>
                   </div>
                 ))}
               </div>
