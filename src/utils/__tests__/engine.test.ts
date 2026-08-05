@@ -336,3 +336,14 @@ describe('seguridad nutricional por edad (adultos mayores)', () => {
     expect(gkg).toBeGreaterThanOrEqual(1.5);
   });
 });
+
+describe('condición renal (tope de proteína)', () => {
+  it('renal → proteína <= 1.0 g/kg (protector ERC), aunque el objetivo pida más', () => {
+    const t = computeNutritionTargets({ sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 55, activity: 'Alta', goal: 'Bajar grasa', conditions: ['renal'] });
+    expect(t.protG / 80).toBeLessThanOrEqual(1.0);
+  });
+  it('sin renal → proteína normal (más alta)', () => {
+    const t = computeNutritionTargets({ sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 55, activity: 'Alta', goal: 'Bajar grasa' });
+    expect(t.protG / 80).toBeGreaterThan(1.0);
+  });
+});

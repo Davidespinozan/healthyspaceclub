@@ -28,6 +28,7 @@ export interface ObInput {
   grasa?: number | null;        // % grasa corporal (opcional) → Katch-McArdle
   embarazo?: boolean;           // embarazo/lactancia → bloquea déficit
   pesoMeta?: number | null;     // peso meta (opcional) → avisos/tiempo
+  conditions?: string[];        // condiciones de salud (renal → tope de proteína, etc.)
 }
 
 /**
@@ -47,6 +48,9 @@ export function parseObData(ob: Record<string, string | number>): ObInput {
     grasa: ob.grasa != null && ob.grasa !== '' ? Number(ob.grasa) : null,
     embarazo: ob.embarazo === 1 || ob.embarazo === 'si',
     pesoMeta: ob.pesoMeta != null && ob.pesoMeta !== '' ? Number(ob.pesoMeta) : null,
+    conditions: typeof ob.conditions === 'string' && ob.conditions
+      ? String(ob.conditions).split(',').map(s => s.trim()).filter(Boolean)
+      : [],
   };
 }
 
@@ -155,6 +159,11 @@ export function computeNutritionTargets(o: ObInput): NutritionTargets {
   // anti-sarcopenia (1.6) pero evita 2.2-2.4 g/kg, que sin diagnóstico renal puede
   // forzar el riñón en una demografía con enfermedad renal crónica frecuente.
   if (mayor70 && gkg > 2.0) gkg = 2.0;
+  // Enfermedad renal capturada: tope de proteína a 1.0 g/kg (rango protector para ERC).
+  // Prevalece sobre todo lo anterior — la seguridad renal manda. La UI refuerza el
+  // 'consulta a tu médico/nefrólogo' con el disclaimer.
+  const renal = (o.conditions ?? []).includes('renal');
+  if (renal && gkg > 1.0) gkg = 1.0;
   const protG = Math.round(o.pesoKg * gkg);
   // Grasa 20–35% kcal (Magaly 3.2): déficit en la parte baja, media en mantener/ganar.
   // Piso de seguridad 0.6 g/kg (protege función hormonal aunque el % quede bajo).

@@ -429,8 +429,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // Modo bajo impacto (adultos mayores / movilidad reducida): excluye saltos,
       // pliometría y sprints (impact:'high'/fallRisk) sin importar la dificultad. La
       // seguridad es un filtro DURO, tanto en fuerza como en cardio. Derivado de la
-      // edad (>=60); a futuro también de la movilidad capturada en onboarding.
-      const lowImpactMode = Number(obData?.edad ?? 0) >= 60;
+      // edad (>=60) O de la movilidad capturada en onboarding (molestia articular,
+      // equilibrio/caídas, o uso de apoyo/silla).
+      const mov = String(obData?.movilidad ?? '');
+      const lowImpactMode = Number(obData?.edad ?? 0) >= 60
+        || mov === 'articular' || mov === 'equilibrio' || mov === 'apoyo';
 
       let candidates: Exercise[];
       if (selectedModality === 'cardio') {

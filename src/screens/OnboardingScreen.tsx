@@ -45,6 +45,12 @@ export default function OnboardingScreen() {
   const [activity, setActivity] = useState('');
   // Fase 2 — seguridad: embarazo (si mujer) + opcionales
   const [embarazo, setEmbarazo] = useState<'si' | 'no' | ''>('');
+  // Fase 3 — salud/movilidad (opcionales): habilitan modo bajo impacto y ajustes de
+  // nutrición (tope de proteína renal, filtros suaves). Default vacío = sin fricción.
+  const [movilidad, setMovilidad] = useState('');
+  const [conditions, setConditions] = useState<string[]>([]);
+  const toggleCondition = (c: string) =>
+    setConditions(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev.filter(x => x !== 'ninguna'), c]);
   const [grasa, setGrasa] = useState('');
   const [pesoMeta, setPesoMeta] = useState('');
   const [dataError, setDataError] = useState('');
@@ -200,6 +206,8 @@ export default function OnboardingScreen() {
     setObData('estatura', Number(estatura) || 170);
     setObData('activity', activity);
     setObData('embarazo', embarazo === 'si' ? 1 : 0);
+    setObData('movilidad', movilidad);
+    setObData('conditions', conditions.filter(c => c !== 'ninguna').join(','));
     // País → perfil de nutrición: habilita la localización de comida por país
     // (filtro de disponibilidad). Antes solo se guardaba en user_profiles para el
     // gate del food truck; ahora también viaja con obData.
@@ -475,6 +483,30 @@ export default function OnboardingScreen() {
                   <label>{t('onboarding.targetWeight')}</label>
                   <input type="number" inputMode="decimal" placeholder="—" value={pesoMeta} onChange={e => setPesoMeta(e.target.value)} />
                 </div>
+              </div>
+            </div>
+
+            {/* Movilidad (opcional) — deriva el modo bajo impacto en entrenamiento */}
+            <div className="onb-optional">
+              <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.mobilityTitle')} · <em>{t('onboarding.optionalTag')}</em></div>
+              <div className="onb-cards-row" style={{ flexWrap: 'wrap' }}>
+                {(['ninguna', 'articular', 'equilibrio', 'apoyo'] as const).map(v => (
+                  <div key={v} className={`onb-card-select${movilidad === v ? ' selected' : ''}`} onClick={() => setMovilidad(v)}>
+                    <span className="onb-card-label">{t(`onboarding.mobility_${v}`)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Condiciones de salud (opcional, multi) — ajustes suaves de nutrición */}
+            <div className="onb-optional">
+              <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.conditionsTitle')} · <em>{t('onboarding.optionalTag')}</em></div>
+              <div className="onb-cards-row" style={{ flexWrap: 'wrap' }}>
+                {(['diabetes', 'hipertension', 'renal', 'colesterol'] as const).map(v => (
+                  <div key={v} className={`onb-card-select${conditions.includes(v) ? ' selected' : ''}`} onClick={() => toggleCondition(v)}>
+                    <span className="onb-card-label">{t(`onboarding.condition_${v}`)}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
