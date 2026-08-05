@@ -605,6 +605,10 @@ export const en: Translations<typeof es> = {
     complete: 'Complete',
     aiTag: 'AI',
     threadLabel: 'The last thing you wrote here',
+    baseReviewA: 'Today you paused to look inward. Most people never do. Quietly, that is already changing you.',
+    baseReviewB: 'What you wrote stays — not for anyone else, for you. Tomorrow your portrait gains one more stroke.',
+    baseReviewC: 'There are no right answers here, only honesty. And today you gave yourself some. That is enough.',
+    proNote: 'With Pro, your AI coach writes this reflection from what you actually reflected on.',
   },
   retrato: {
     kicker: 'Your portrait · living',

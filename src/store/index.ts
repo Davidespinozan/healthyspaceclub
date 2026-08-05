@@ -392,6 +392,11 @@ interface AppState {
   // Cumulative HSM profile (updated weekly by AI)
   hsmProfile: { text: string; updatedAt: string } | null;
   setHSMProfile: (text: string) => void;
+  // Reseña del día de la reflexión (HSM). Persistida por día: NO se regenera al
+  // reabrir (evita re-llamar la IA) y sobrevive cerrar la app. `source` distingue
+  // la de IA (Pro) de la base (free / fallback si la IA falla).
+  hsmDailyReview: { date: string; text: string; source: 'ai' | 'base' } | null;
+  setHSMDailyReview: (r: { date: string; text: string; source: 'ai' | 'base' }) => void;
 
   // Logout / namespacing de datos por usuario
   logout: () => void;
@@ -1261,6 +1266,8 @@ export const useAppStore = create<AppState>()(
   // Cumulative HSM profile
   hsmProfile: null,
   setHSMProfile: (text) => set({ hsmProfile: { text, updatedAt: dayKey(new Date()) } }),
+  hsmDailyReview: null,
+  setHSMDailyReview: (r) => set({ hsmDailyReview: r }),
 
   // Night check-in eliminado en Lote Racha-2. La racha vive en markActiveDay
   // (Racha-1) y se dispara desde workout/yoga/HSM completo.
@@ -1324,6 +1331,7 @@ export const useAppStore = create<AppState>()(
     coachChatHistory: [],
     coachChatDate: '',
     hsmProfile: null,
+    hsmDailyReview: null,
   }),
 
   logout: () => {
@@ -1397,6 +1405,7 @@ export const useAppStore = create<AppState>()(
     coachChatHistory: state.coachChatHistory,
     coachChatDate: state.coachChatDate,
     hsmProfile: state.hsmProfile,
+    hsmDailyReview: state.hsmDailyReview,
   }),
 }
   )

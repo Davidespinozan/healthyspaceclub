@@ -15,7 +15,7 @@ interface Props {
 
 export default function TuEspacioFlow({ onClose }: Props) {
   const { t, locale } = useT();
-  const { dailyHSMResponses, addHSMResponse, subscriptionStatus, markActiveDay } = useAppStore(useShallow((s) => ({ dailyHSMResponses: s.dailyHSMResponses, addHSMResponse: s.addHSMResponse, subscriptionStatus: s.subscriptionStatus, markActiveDay: s.markActiveDay })));
+  const { dailyHSMResponses, addHSMResponse, subscriptionStatus, markActiveDay, hsmDailyReview, setHSMDailyReview } = useAppStore(useShallow((s) => ({ dailyHSMResponses: s.dailyHSMResponses, addHSMResponse: s.addHSMResponse, subscriptionStatus: s.subscriptionStatus, markActiveDay: s.markActiveDay, hsmDailyReview: s.hsmDailyReview, setHSMDailyReview: s.setHSMDailyReview })));
   // Acceso real = Stripe (subscriptionStatus), no el trial local desincronizado.
   const isPlanActive = subscriptionStatus !== 'none';
 
@@ -103,28 +103,50 @@ export default function TuEspacioFlow({ onClose }: Props) {
     return null;
   }, [currentDim, dailyHSMResponses, today]);
 
-  // Daily review
-  const [dailyReview, setDailyReview] = useState<string | null>(null);
+  // Daily review — PERSISTIDA por día (no se regenera al reabrir).
+  const dailyReview = hsmDailyReview?.date === today ? hsmDailyReview : null;
   const [reviewLoading, setReviewLoading] = useState(false);
 
-  // Generate review when all done
+  // Reseña base (cálida, determinista): premio para TODOS — el usuario free la
+  // recibe igual, y es el fallback si la IA falla. Rota por día para que no canse.
+  const baseReview = (): string => {
+    const keys = ['espacio.baseReviewA', 'espacio.baseReviewB', 'espacio.baseReviewC'] as const;
+    return t(keys[todayDayIndex % keys.length]);
+  };
+
+  // Generar reseña al completar (una vez por día).
   useEffect(() => {
-    if (!allDone || dailyReview || !isPlanActive) return;
-    // Marcar racha por "HSM completo del día" (Lote Racha-1).
-    // Idempotente por día — si el usuario ya entrenó hoy, no duplica.
+    if (!allDone || dailyReview) return;
+    // Racha por "HSM del día". Idempotente por día.
     markActiveDay().catch(() => {});
+
+    const base = baseReview();
+    // Free: reseña cálida al instante, sin costo de IA.
+    if (!isPlanActive) { setHSMDailyReview({ date: today, text: base, source: 'base' }); return; }
+
+    // Pro: reseña de IA con contexto del pasado (para notar evolución). Si falla o
+    // se cuelga, cae a la base — NUNCA pantalla vacía (antes era .catch(()=>{}) mudo).
     setReviewLoading(true);
     const todaySummary = todayResponses.map(r => `${r.dimension}: "${r.response}"`).join('\n');
+    const pastSummary = dailyHSMResponses
+      .filter(r => r.date !== today)
+      .slice(-15)
+      .map(r => `[${r.date}] ${r.dimension}: "${r.response}"`)
+      .join('\n');
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
     callAI({
-      max_tokens: 200,
-      messages: [{ role: 'user', content: buildHSMDailyReviewPrompt(todaySummary, locale) }],
+      max_tokens: 220,
+      messages: [{ role: 'user', content: buildHSMDailyReviewPrompt(todaySummary, locale, pastSummary || undefined) }],
     }, controller.signal)
-      .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyReview(t); })
-      .catch(() => {})
+      .then(data => {
+        const txt = data.content?.[0]?.text?.trim();
+        setHSMDailyReview({ date: today, text: txt || base, source: txt ? 'ai' : 'base' });
+      })
+      .catch(() => { setHSMDailyReview({ date: today, text: base, source: 'base' }); })
       .finally(() => { clearTimeout(timeoutId); setReviewLoading(false); });
     return () => { clearTimeout(timeoutId); controller.abort(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allDone]);
 
   // Focus textarea when question changes
@@ -178,7 +200,10 @@ export default function TuEspacioFlow({ onClose }: Props) {
           ) : dailyReview ? (
             <div className="te-review">
               <div className="te-review-label">{t('hoy.reviewLabelToday')}</div>
-              <p className="te-review-text">{dailyReview}</p>
+              <p className="te-review-text">{dailyReview.text}</p>
+              {dailyReview.source === 'base' && !isPlanActive && (
+                <p className="te-review-pro">{t('espacio.proNote')}</p>
+              )}
             </div>
           ) : null}
           <button className="te-complete-btn" onClick={onClose}>{t('hoy.reviewBackToHoy')}</button>

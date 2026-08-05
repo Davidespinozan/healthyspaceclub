@@ -604,6 +604,10 @@ export const es = {
     complete: 'Completar',
     aiTag: 'IA',
     threadLabel: 'Lo último que escribiste aquí',
+    baseReviewA: 'Hoy te detuviste a mirar hacia adentro. La mayoría nunca lo hace. En silencio, eso ya te está cambiando.',
+    baseReviewB: 'Lo que escribiste queda — no para nadie más, para ti. Mañana tu retrato tendrá un trazo más.',
+    baseReviewC: 'Aquí no hay respuestas correctas, solo honestidad. Y hoy te la diste. Con eso basta.',
+    proNote: 'Con Pro, esta reseña la escribe tu coach IA leyendo lo que reflexionaste.',
   },
   retrato: {
     kicker: 'Tu retrato · vivo',
