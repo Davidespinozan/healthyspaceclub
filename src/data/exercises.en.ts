@@ -12,6 +12,11 @@ export interface ExerciseOverlay {
 }
 
 export const exercisesEn: Record<string, ExerciseOverlay> = {
+  'marcha-en-lugar': { name: 'March in Place', desc: 'Gentle no-impact cardio — lift your knees marching in place.', tip: 'No rush: the goal is continuous movement, not knee height.' },
+  'sentarse-pararse': { name: 'Sit-to-Stand', desc: 'Functional leg strength and fall prevention — stand up from the chair without hands.', tip: 'The slow descent is what builds the most strength — do not drop into the chair.' },
+  'paso-lateral': { name: 'Side Step', desc: 'Low-impact cardio that works hips and balance — step side to side.', tip: 'One foot always on the floor — cardio without jumps, safe for knees and balance.' },
+  'flexion-pared': { name: 'Wall Push-Up', desc: 'Gentle chest press with hands on the wall — a safe push-up regression.', tip: 'The farther your feet from the wall, the harder — adjust to your level.' },
+  'equilibrio-un-pie': { name: 'Single-Leg Balance', desc: 'Train balance and prevent falls — hold on one leg with support.', tip: 'Always keep support nearby — the goal is to train safely, not risk a fall.' },
   'curl-21s': { name: '21s Curl (barbell)', desc: '21s method: 7 lower-half reps + 7 upper-half + 7 full, no rest — brutal biceps pump.', tip: 'Use less weight than you think — 21 straight reps pile up a lot of fatigue.' },
   'press-triceps-maquina': { name: 'Machine Triceps Press', desc: 'Seated machine pressing for triceps — like dips but guided. Uncommon machine.', tip: 'Not every gym has this machine — if unavailable, swap for triceps dips or push-downs.' },
   'core-suelo-piernas': { name: 'Floor Core (Legs)', desc: 'Lower abs and obliques with leg movements lying on the floor — no equipment, control and endurance.', tip: 'If you feel your lower back, raise your legs a little or tuck your hands under your glutes — protect the lumbar.' },
@@ -149,6 +154,13 @@ export const exercisesEn: Record<string, ExerciseOverlay> = {
 // Yoga poses y terminología fitness ya-inglesa se mantienen (omitidas aquí);
 // las cues/equipo en español se traducen funcional. Mapeado por texto ES → EN.
 export const stepTitleEn: Record<string, string> = {
+  'Marcha': 'March',
+  'Levántate': 'Stand up',
+  'Baja con control': 'Lower with control',
+  'Baja': 'Lower',
+  'Empuja': 'Push',
+  'Sube el pie': 'Lift the foot',
+  'Progresa': 'Progress',
   'Completas': 'Full reps',
   'Control': 'Control',
   'Fase inferior': 'Bottom half',
@@ -327,6 +339,9 @@ export const stepTitleEn: Record<string, string> = {
 };
 
 export const variantNameEn: Record<string, string> = {
+  'Con silla': 'With a chair',
+  'Con peso': 'Weighted',
+  'En pared': 'On the wall',
   'Flexión con barra (de pie)': 'Barbell flexion (standing)', 'Flexión con barra (sentado)': 'Barbell flexion (seated)', 'Extensión con barra (de pie)': 'Barbell extension (standing)', 'Extensión con barra (sentado)': 'Barbell extension (seated)',
   'En Smith, de pie': 'On Smith, standing', 'En Smith, sentado': 'On Smith, seated',
   'Patada lateral (cuadrupedia, banda)': 'Fire hydrant (banded)',
@@ -603,6 +618,21 @@ export const variantNameEn: Record<string, string> = {
 // natural en inglés; poses de yoga conservan su nombre (Warrior, chaturanga,
 // Dandasana, upward/downward dog). Mapeado por texto ES → EN.
 export const stepDescEn: Record<string, string> = {
+  'De pie, erguido, mirada al frente. Ten una silla o pared cerca por si necesitas apoyo.': 'Stand tall, gaze forward. Keep a chair or wall nearby in case you need support.',
+  'Levanta una rodilla a la altura cómoda y bájala; alterna con ritmo constante.': 'Lift one knee to a comfortable height and lower it; alternate at a steady pace.',
+  'Acompaña con los brazos como al caminar para subir un poco el ritmo cardíaco.': 'Swing your arms as if walking to raise your heart rate a little.',
+  'Sentado en una silla firme, pies apoyados al ancho de cadera, pecho arriba.': 'Seated on a firm chair, feet planted hip-width, chest up.',
+  'Empuja con los talones y ponte de pie sin usar las manos (o con apoyo ligero si hace falta).': 'Push through your heels and stand up without using your hands (or with light support if needed).',
+  'Siéntate despacio controlando el descenso, sin dejarte caer.': 'Sit down slowly, controlling the descent, without dropping.',
+  'De pie, rodillas suaves, cerca de una pared por si quieres apoyo.': 'Standing, knees soft, near a wall in case you want support.',
+  'Da un paso amplio a un lado y junta el otro pie; luego al otro lado.': 'Take a wide step to one side and bring the other foot together; then to the other side.',
+  'Mantén un vaivén constante; suma los brazos para más intensidad.': 'Keep a steady sway; add your arms for more intensity.',
+  'De pie frente a una pared, manos apoyadas a la altura del pecho, un poco más anchas que los hombros.': 'Standing facing a wall, hands on it at chest height, slightly wider than shoulders.',
+  'Flexiona los codos acercando el pecho a la pared, cuerpo recto.': 'Bend your elbows bringing your chest toward the wall, body straight.',
+  'Empuja hasta estirar los brazos sin bloquear del todo.': 'Push until your arms are extended without fully locking out.',
+  'De pie junto a una silla o pared, apoya una mano ligeramente.': 'Standing beside a chair or wall, rest one hand lightly.',
+  'Levanta un pie del suelo y sostén el equilibrio sobre la otra pierna.': 'Lift one foot off the floor and balance on the other leg.',
+  'Con el tiempo, apoya solo un dedo o suelta la mano unos segundos.': 'Over time, use just one finger or let go for a few seconds.',
   '7 reps de rango completo, encadenadas sin soltar la barra.': '7 full-range reps, chained without letting go of the bar.',
   '7 reps desde la extensión hasta la mitad (codo a 90°).': '7 reps from full extension to halfway (elbow at 90°).',
   '7 reps desde la mitad (90°) hasta la contracción máxima.': '7 reps from halfway (90°) to peak contraction.',
