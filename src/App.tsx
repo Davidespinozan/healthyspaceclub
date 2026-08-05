@@ -1,7 +1,7 @@
 import { dayKey } from './utils/localDate';
 import { identify } from './utils/analytics';
 import { sincronizarPush } from './utils/push';
-import { useAutoRegenPlan } from './utils/useAutoRegenPlan';
+import { useAutoRegenPlan, useWeeklyPlanReset } from './utils/useAutoRegenPlan';
 import { ensureLocaleAssets } from './utils/localeAssets';
 import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useAppStore } from './store';
@@ -34,6 +34,7 @@ export default function App() {
   // Regenera el plan si quedó guardado con un motor viejo — desde cualquier
   // pantalla, no solo desde Nutrición (ahí la tarjeta de Inicio se quedaba vieja).
   useAutoRegenPlan();
+  useWeeklyPlanReset();
   const setSession = useAppStore(s => s.setSession);
   const setAuthReady = useAppStore(s => s.setAuthReady);
   const authReady = useAppStore(s => s.authReady);

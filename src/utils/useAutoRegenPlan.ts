@@ -4,7 +4,51 @@ import { useShallow } from 'zustand/react/shallow';
 import { computeNutritionTargets, parseObData } from './nutritionTargets';
 import { PLAN_ENGINE_VERSION } from './planEngine';
 import { generateWeeklyPlan } from './planOrchestration';
+import { dayKey } from './localDate';
 import type { ProteinShake } from './planEngine';
+
+/** Domingo (inicio de semana) de una fecha, como 'YYYY-MM-DD'. Mismo cálculo que
+ *  el planner (weekStart) para que reset y UI coincidan. */
+export function weekStartKey(d: Date): string {
+  const s = new Date(d);
+  s.setDate(s.getDate() - s.getDay());
+  return dayKey(s);
+}
+
+/** ¿El plan generado en `generatedAt` es de una semana anterior a `now`? Pura y
+ *  testeable. Fecha inválida/ausente → false (nunca borra por las dudas). */
+export function shouldResetWeekly(generatedAt: string | null | undefined, now: Date): boolean {
+  if (!generatedAt) return false;
+  const gen = new Date(generatedAt);
+  if (Number.isNaN(gen.getTime())) return false;
+  return weekStartKey(gen) < weekStartKey(now);
+}
+
+/**
+ * Reset semanal del plan: al entrar en una semana nueva, borra el plan de la
+ * semana anterior para que el socio lo vuelva a armar respondiendo el cuestionario
+ * ("¿qué se te antoja esta semana?"). Decisión de producto: el ritual semanal se
+ * siente más premium y personal que un regen silencioso — y de paso estrena la
+ * localización/motor vigentes.
+ *
+ * Idempotente: solo borra si el plan guardado es de una semana ANTERIOR a la
+ * actual. Una vez borrado (o ya re-armado esta semana) es no-op — no toca un plan
+ * hecho a mitad de semana. clearWeeklyPlan persiste null en la DB, así que el reset
+ * es consistente entre dispositivos.
+ */
+export function useWeeklyPlanReset(): void {
+  const { generatedAt, clearWeeklyPlan } = useAppStore(useShallow((s) => ({
+    generatedAt: s.weeklyPlan?.generatedAt ?? null,
+    clearWeeklyPlan: s.clearWeeklyPlan,
+  })));
+
+  useEffect(() => {
+    if (shouldResetWeekly(generatedAt, new Date())) {
+      void clearWeeklyPlan();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generatedAt]);
+}
 
 /**
  * Regenera el plan de la semana cuando el guardado se hizo con una versión ANTERIOR
