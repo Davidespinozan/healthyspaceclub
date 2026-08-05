@@ -314,3 +314,25 @@ describe('scalePlan', () => {
     }
   });
 });
+
+describe('seguridad nutricional por edad (adultos mayores)', () => {
+  it('adulto >=70 que quiere bajar → modo bienestar (sin déficit agresivo)', () => {
+    const t = computeNutritionTargets({ sexo: 'Hombre', pesoKg: 75, estaturaCm: 172, edad: 78, activity: 'Ligera', goal: 'Bajar grasa' });
+    expect(t.wellnessMode).toBe(true);
+    expect(t.wellnessReason).toBe('adultoMayor');
+    expect(t.planGoal).toBe(t.tdee);
+  });
+
+  it('adulto 65-69 que quiere bajar → déficit SUAVE (máx -10%)', () => {
+    const t = computeNutritionTargets({ sexo: 'Hombre', pesoKg: 85, estaturaCm: 175, edad: 67, activity: 'Moderada', goal: 'Bajar grasa' });
+    expect(t.wellnessMode).toBe(false);
+    expect(t.planGoal).toBeGreaterThanOrEqual(Math.round(t.tdee * 0.88));
+  });
+
+  it('adulto >=70 → proteína tope 2.0 g/kg pero >= anti-sarcopenia', () => {
+    const t = computeNutritionTargets({ sexo: 'Hombre', pesoKg: 80, estaturaCm: 175, edad: 82, activity: 'Alta', goal: 'Bajar grasa' });
+    const gkg = t.protG / 80;
+    expect(gkg).toBeLessThanOrEqual(2.0);
+    expect(gkg).toBeGreaterThanOrEqual(1.5);
+  });
+});

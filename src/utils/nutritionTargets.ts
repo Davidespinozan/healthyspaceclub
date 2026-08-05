@@ -50,7 +50,7 @@ export function parseObData(ob: Record<string, string | number>): ObInput {
   };
 }
 
-export type WellnessReason = 'menor' | 'embarazo' | 'bajopeso' | null;
+export type WellnessReason = 'menor' | 'embarazo' | 'bajopeso' | 'adultoMayor' | null;
 
 export interface NutritionTargets {
   bmr: number;                  // metabolismo basal (Mifflin o Katch-McArdle)
@@ -113,18 +113,25 @@ export function computeNutritionTargets(o: ObInput): NutritionTargets {
   const factor = ACTIVITY_FACTORS[o.activity] ?? 1.375;
   const tdee = Math.round(bmr * factor);
 
-  // Modo bienestar (SIN déficit): menor de 18, embarazo/lactancia, o bajo peso queriendo bajar.
+  // Modo bienestar (SIN déficit): menor de 18, embarazo/lactancia, bajo peso queriendo
+  // bajar, o ADULTO MAYOR (>=70). En frágiles, un déficit acelera la pérdida de masa
+  // muscular/ósea; se prioriza mantener y nutrir (proteína anti-sarcopenia), no bajar.
   const menor = o.edad < 18;
+  const mayor70 = o.edad >= 70;
+  const mayor65 = o.edad >= 65;
   const hM = o.estaturaCm / 100;
   const imc = hM > 0 ? o.pesoKg / (hM * hM) : 0;
   const bajoPeso = imc > 0 && imc < 18.5;
   const riesgoBajoPeso = bajoPeso && wantsToLose(o.goal);
-  const wellnessMode = menor || !!o.embarazo || riesgoBajoPeso;
+  const wellnessMode = menor || !!o.embarazo || riesgoBajoPeso || mayor70;
   const wellnessReason: WellnessReason =
-    menor ? 'menor' : o.embarazo ? 'embarazo' : riesgoBajoPeso ? 'bajopeso' : null;
+    menor ? 'menor' : o.embarazo ? 'embarazo' : riesgoBajoPeso ? 'bajopeso'
+    : mayor70 ? 'adultoMayor' : null;
 
-  // En modo bienestar → mantenimiento (factor 1.0), nunca déficit.
-  const target = tdee * (wellnessMode ? 1.0 : goalFactor(o.goal));
+  // Déficit suave para 65-69 (no-bienestar): máx -10% en vez de -20%, para no perder
+  // masa magra de forma agresiva. En bienestar → mantenimiento (factor 1.0).
+  const gf = mayor65 ? Math.max(goalFactor(o.goal), 0.90) : goalFactor(o.goal);
+  const target = tdee * (wellnessMode ? 1.0 : gf);
 
   // Piso de seguridad (Punto 1): nunca por debajo de max(piso_sexo, BMR).
   const floor = Math.max(sexFloor(o.sexo), bmr);
@@ -144,6 +151,10 @@ export function computeNutritionTargets(o: ObInput): NutritionTargets {
   };
   let gkg = (GKG[objKey] || [1.4, 1.6, 1.8])[actIdx];
   if (gkg > 2.4) gkg = 2.4;                                          // techo de seguridad
+  // Adulto mayor (>=70): tope de proteína a 2.0 g/kg. Sigue por encima del piso
+  // anti-sarcopenia (1.6) pero evita 2.2-2.4 g/kg, que sin diagnóstico renal puede
+  // forzar el riñón en una demografía con enfermedad renal crónica frecuente.
+  if (mayor70 && gkg > 2.0) gkg = 2.0;
   const protG = Math.round(o.pesoKg * gkg);
   // Grasa 20–35% kcal (Magaly 3.2): déficit en la parte baja, media en mantener/ganar.
   // Piso de seguridad 0.6 g/kg (protege función hormonal aunque el % quede bajo).

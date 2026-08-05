@@ -353,6 +353,7 @@ export const es = {
     avisoMenor: 'Como eres menor de 18, tu plan es de bienestar, sin restricción calórica. Para objetivos de composición corporal, consulta a un profesional.',
     avisoEmbarazo: 'En embarazo o lactancia no recomendamos déficit. Tu plan es de mantenimiento. Consulta a tu profesional de salud.',
     avisoBajoPeso: 'Ajustamos tu plan a modo bienestar. Para objetivos más específicos, un especialista puede ayudarte mejor.',
+    avisoAdultoMayor: 'A tu edad priorizamos mantener tu masa muscular y ósea, con proteína suficiente y sin déficits agresivos. Consulta a tu médico ante cualquier condición.',
     avisoTopado: 'Ajustamos tu meta a {kcal} kcal — bajar más no es seguro sin acompañamiento profesional.',
     metaBajoPeso: 'Tu peso meta queda por debajo de un peso saludable para tu estatura. Te sugerimos una meta más segura, o consultar a un profesional.',
     metaMusculo: 'Tu meta te da un IMC alto, pero como tu porcentaje de grasa es bajo, eso es músculo, no grasa. Vas bien.',

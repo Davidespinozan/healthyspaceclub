@@ -354,6 +354,7 @@ export const en: Translations<typeof es> = {
     avisoMenor: 'Since you are under 18, your plan is wellness mode, with no calorie restriction. For body-composition goals, consult a professional.',
     avisoEmbarazo: 'During pregnancy or breastfeeding we do not recommend a deficit. Your plan is maintenance. Consult your health professional.',
     avisoBajoPeso: 'We set your plan to wellness mode. For more specific goals, a specialist can help you better.',
+    avisoAdultoMayor: 'At your age we prioritize keeping your muscle and bone mass, with enough protein and no aggressive deficits. Check with your doctor about any condition.',
     avisoTopado: 'We adjusted your target to {kcal} kcal — going lower is not safe without professional guidance.',
     metaBajoPeso: 'Your target weight is below a healthy weight for your height. We suggest a safer target, or consulting a health professional.',
     metaMusculo: 'Your target gives a high BMI, but since your body fat is low, that is muscle, not fat. You are on track.',

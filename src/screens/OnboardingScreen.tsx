@@ -640,6 +640,7 @@ export default function OnboardingScreen() {
             {targets.wellnessReason === 'menor' && <div className="onb-notice">{t('onboarding.avisoMenor')}</div>}
             {targets.wellnessReason === 'embarazo' && <div className="onb-notice">{t('onboarding.avisoEmbarazo')}</div>}
             {targets.wellnessReason === 'bajopeso' && <div className="onb-notice">{t('onboarding.avisoBajoPeso')}</div>}
+            {targets.wellnessReason === 'adultoMayor' && <div className="onb-notice">{t('onboarding.avisoAdultoMayor')}</div>}
             {!targets.wellnessMode && targets.capped && <div className="onb-notice">{t('onboarding.avisoTopado', { kcal: targets.planGoal.toLocaleString() })}</div>}
             {metaNotice?.kind === 'bajopeso-meta' && <div className="onb-notice">{t('onboarding.metaBajoPeso')}</div>}
             {metaNotice?.kind === 'sube-musculo' && <div className="onb-notice">{t('onboarding.metaMusculo')}</div>}
