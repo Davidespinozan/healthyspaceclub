@@ -49,11 +49,13 @@ export function pricingForCurrency(currency: Currency): RegionPricing {
   return PRICING[CURRENCY_TO_REGION[currency]];
 }
 
-const LATAM_CODES = new Set([
+// Exportados para que un test garantice que PAISES (el picker) cubre cada código
+// reconocido; si no, el pre-llenado por IP caería en "otro" en un país conocido.
+export const LATAM_CODES = new Set([
   'MX','CO','AR','CL','PE','EC','UY','PY','BO','VE',
   'GT','SV','HN','NI','CR','PA','DO','CU','PR',
 ]);
-const EUROPE_CODES = new Set([
+export const EUROPE_CODES = new Set([
   'ES','FR','DE','IT','PT','GB','IE','NL','BE','AT',
   'CH','SE','NO','DK','FI','PL','GR','CZ','HU','RO',
 ]);

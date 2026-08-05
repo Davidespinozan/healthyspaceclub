@@ -9,16 +9,57 @@
 
 export interface Opcion { slug: string; label: string }
 
-/** Países. México primero por obvias razones; el resto ordenado. `otro` cubre la cola larga. */
+/**
+ * Países. México primero (casa); el resto alfabético por etiqueta; `otro` cierra la
+ * cola larga. La lista cubre TODOS los códigos que region.ts reconoce (LATAM + Europa)
+ * más los mercados grandes, para que el pre-llenado por IP nunca caiga en "otro" en un
+ * país conocido. Fuera de México no hay estado/ciudad: es solo demografía (el gate del
+ * remolque solo aplica a MX/Sinaloa).
+ */
 export const PAISES: Opcion[] = [
   { slug: 'mx', label: 'México' },
-  { slug: 'us', label: 'Estados Unidos' },
-  { slug: 'es', label: 'España' },
+  { slug: 'de', label: 'Alemania' },
   { slug: 'ar', label: 'Argentina' },
+  { slug: 'au', label: 'Australia' },
+  { slug: 'at', label: 'Austria' },
+  { slug: 'be', label: 'Bélgica' },
+  { slug: 'bo', label: 'Bolivia' },
+  { slug: 'br', label: 'Brasil' },
+  { slug: 'ca', label: 'Canadá' },
+  { slug: 'cz', label: 'Chequia' },
   { slug: 'cl', label: 'Chile' },
   { slug: 'co', label: 'Colombia' },
+  { slug: 'cr', label: 'Costa Rica' },
+  { slug: 'cu', label: 'Cuba' },
+  { slug: 'dk', label: 'Dinamarca' },
+  { slug: 'ec', label: 'Ecuador' },
+  { slug: 'sv', label: 'El Salvador' },
+  { slug: 'es', label: 'España' },
+  { slug: 'us', label: 'Estados Unidos' },
+  { slug: 'fi', label: 'Finlandia' },
+  { slug: 'fr', label: 'Francia' },
+  { slug: 'gr', label: 'Grecia' },
+  { slug: 'gt', label: 'Guatemala' },
+  { slug: 'hn', label: 'Honduras' },
+  { slug: 'hu', label: 'Hungría' },
+  { slug: 'ie', label: 'Irlanda' },
+  { slug: 'it', label: 'Italia' },
+  { slug: 'ni', label: 'Nicaragua' },
+  { slug: 'no', label: 'Noruega' },
+  { slug: 'nl', label: 'Países Bajos' },
+  { slug: 'pa', label: 'Panamá' },
+  { slug: 'py', label: 'Paraguay' },
   { slug: 'pe', label: 'Perú' },
-  { slug: 'ca', label: 'Canadá' },
+  { slug: 'pl', label: 'Polonia' },
+  { slug: 'pt', label: 'Portugal' },
+  { slug: 'pr', label: 'Puerto Rico' },
+  { slug: 'gb', label: 'Reino Unido' },
+  { slug: 'do', label: 'República Dominicana' },
+  { slug: 'ro', label: 'Rumanía' },
+  { slug: 'se', label: 'Suecia' },
+  { slug: 'ch', label: 'Suiza' },
+  { slug: 'uy', label: 'Uruguay' },
+  { slug: 've', label: 'Venezuela' },
   { slug: 'otro', label: 'Otro país' },
 ];
 
