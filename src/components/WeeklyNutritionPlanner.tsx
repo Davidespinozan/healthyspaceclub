@@ -1,6 +1,7 @@
 import { dayKey } from '../utils/localDate';
 import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
+import { getCachedRegion, regionFromCountry } from '../utils/region';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
 import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
@@ -264,7 +265,8 @@ export default function WeeklyNutritionPlanner() {
       // ajusta porciones + garantiza alergias. Si la IA falla, cae al motor determinista.
       const target = { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG };
       const shake = buildShake();
-      const { days } = await generateWeeklyPlan(target, avoid, newAnswers.cravings ?? '', Date.now() & 0x7fffffff, shake);
+      const region = obData.country ? regionFromCountry(String(obData.country)) : (getCachedRegion() ?? undefined);
+      const { days } = await generateWeeklyPlan(target, avoid, newAnswers.cravings ?? '', Date.now() & 0x7fffffff, shake, region);
       // Lista de compras: ingredientes únicos (sin condimentos), del banco ya ajustado.
       const shopSet = new Set<string>();
       for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])

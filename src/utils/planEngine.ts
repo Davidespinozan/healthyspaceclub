@@ -5,6 +5,8 @@
 // Reglas: fijo/guarnición/sub-receta/condimento quietos; `bloque` escala completo; `max_g` tope.
 import { BANCO, type BancoDish, type BancoIng } from '../data/banco';
 import type { DayPlan, MealItem } from '../types';
+import type { Region } from './region';
+import { dishIsGloballyAvailable, shouldFilterAvailability } from '../data/regionFood';
 
 const IMG_BASE =
   'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PLATILLOS%20BANCO/';
@@ -849,7 +851,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // snacks (batido incluido). Con 1 batido: kcal y macros a ±0.5-0.7%.
 export const PLAN_ENGINE_VERSION = 30;
 
-export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake }
+export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 
 /** Resta las macros del batido a la meta del día, para que los principales se
  *  construyan contra el remanente y el total (con batido) caiga en la meta.
@@ -929,9 +931,19 @@ function slotFit(d: BancoDish, slotTarget: number[]): number {
  *  antojo), las macros pegan. Los principales de un antojo se fuerzan aunque encajen peor
  *  (1-2 días al máximo). Snacks pasan completos (rellenan el share chico). */
 export function adequateBankByTiempo(
-  avoidCats: string[], target: PlanTarget, cravingText = '',
+  avoidCats: string[], target: PlanTarget, cravingText = '', region?: Region,
 ): Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]> {
-  const safe = safeBankByTiempo(avoidCats);
+  const safeRaw = safeBankByTiempo(avoidCats);
+  // Filtro DURO de disponibilidad por país: fuera de LATAM se descartan los platillos
+  // inconseguibles (mole, nopal, tinga…). La VARIEDAD se conserva (sushi/pasta/poke sí
+  // pasan); esto NO sesga por cocina, solo quita lo que no se consigue.
+  const av = region && shouldFilterAvailability(region)
+    ? (p: BancoDish[]) => p.filter(dishIsGloballyAvailable)
+    : (p: BancoDish[]) => p;
+  const safe = {
+    Desayuno: av(safeRaw.Desayuno), Comida: av(safeRaw.Comida),
+    Cena: av(safeRaw.Cena), Snack: av(safeRaw.Snack),
+  };
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const MT = mealTargets(T);
   const craveTerms = cravingTerms(cravingText);
@@ -1099,7 +1111,13 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   const rng = mulberry32(opts.seed ?? 12345);
   // "Evitar": categoría (gluten/lácteos/…) → alimentos reales del banco; excluye esos platillos.
   const avoidTerms = expandAvoid((opts.avoid ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean));
-  const avoid = (d: BancoDish) => avoidTerms.length > 0 && dishMatchesAny(d, avoidTerms);
+  // El predicado 'avoid' ya excluye alérgenos; le sumamos la disponibilidad por país
+  // (filtro DURO fuera de LATAM) para que el fallback determinista tampoco arme mole
+  // en España. La variedad se conserva: solo se quita lo inconseguible.
+  const filterAvail = !!(opts.region && shouldFilterAvailability(opts.region));
+  const avoid = (d: BancoDish) =>
+    (avoidTerms.length > 0 && dishMatchesAny(d, avoidTerms)) ||
+    (filterAvail && !dishIsGloballyAvailable(d));
   const cuisines = (opts.cuisines ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean);
   const craving = cravingTerms(opts.craving ?? ''); // "antojo": prefiere platillos que lo tengan
   const used = new Set<string>();          // platillos ya usados en la semana → variedad entre días

@@ -200,6 +200,10 @@ export default function OnboardingScreen() {
     setObData('estatura', Number(estatura) || 170);
     setObData('activity', activity);
     setObData('embarazo', embarazo === 'si' ? 1 : 0);
+    // País → perfil de nutrición: habilita la localización de comida por país
+    // (filtro de disponibilidad). Antes solo se guardaba en user_profiles para el
+    // gate del food truck; ahora también viaja con obData.
+    if (ubic.country) setObData('country', ubic.country);
     setObData('grasa', grasa ? Number(grasa) : '');
     setObData('pesoMeta', pesoMeta ? Number(pesoMeta) : '');
 

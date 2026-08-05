@@ -9,15 +9,17 @@ import {
 } from './planEngine';
 import { buildWeeklyPlanSelectPrompt } from '../ai/prompts/weeklyPlanSelect';
 import type { DayPlan } from '../types';
+import type { Region } from './region';
 
 /** Pide a la IA que seleccione los platillos de la semana. Devuelve los 7 días
  *  (porciones ya ajustadas) o null si falla (para caer al motor de código). */
 export async function orchestrateWeeklyPlan(
-  target: PlanTarget, avoid: string[], craving: string, shake?: ProteinShake,
+  target: PlanTarget, avoid: string[], craving: string, shake?: ProteinShake, region?: Region,
 ): Promise<DayPlan[] | null> {
   // Banco filtrado a platillos que CUADRAN las macros del slot (P/F/C) — así la IA
   // elige por variedad/antojo y las macros siempre pegan. Sin alérgenos + antojo forzado.
-  const bank = adequateBankByTiempo(avoid, target, craving);
+  // region: fuera de LATAM se descartan platillos inconseguibles (mole/nopal/tinga…).
+  const bank = adequateBankByTiempo(avoid, target, craving, region);
   const snacksPerDay = 2 * snacksPerSlot(target.kcal); // metas altas: 4 snacks/día (2 AM, 2 PM)
   const prompt = buildWeeklyPlanSelectPrompt({ target, craving, bank, snacksPerDay });
   const controller = new AbortController();
@@ -75,9 +77,9 @@ export async function orchestrateWeeklyPlan(
 /** Genera el plan semanal: IA (mejor variedad/antojo) con FALLBACK al motor
  *  determinista si la IA falla. Siempre devuelve 7 días válidos. */
 export async function generateWeeklyPlan(
-  target: PlanTarget, avoid: string[], craving: string, seed: number, shake?: ProteinShake,
+  target: PlanTarget, avoid: string[], craving: string, seed: number, shake?: ProteinShake, region?: Region,
 ): Promise<{ days: DayPlan[]; source: 'ia' | 'codigo' }> {
-  const ai = await orchestrateWeeklyPlan(target, avoid, craving, shake).catch(() => null);
+  const ai = await orchestrateWeeklyPlan(target, avoid, craving, shake, region).catch(() => null);
   if (ai && ai.length === 7) return { days: ai, source: 'ia' };
-  return { days: buildWeeklyPlan(target, { seed, avoid, craving, shake }), source: 'codigo' };
+  return { days: buildWeeklyPlan(target, { seed, avoid, craving, shake, region }), source: 'codigo' };
 }
