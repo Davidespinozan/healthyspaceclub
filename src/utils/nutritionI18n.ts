@@ -13,33 +13,50 @@
 // usa el nv y lo re-emite en inglés.
 
 import type { AppLanguage } from '../store';
+import { useAppStore } from '../store';
 import { dishNamesEn, ingredientNamesEn, subrecetaNamesEn } from '../data/banco.en';
+import { renameForCountry } from '../data/regionFood';
 
 type Ing = { nv: string; g: number | null; rol: string };
+
+// Renombrado regional (jitomate→tomate, aguacate→palta): aplica según el PAÍS del
+// usuario, en cualquier idioma. Ortogonal al ES↔EN — para un usuario EN el texto ya
+// está en inglés, así que es no-op; para un usuario ES en España/Argentina cambia los
+// mexicanismos. Lee el país del store (sin threading).
+function rr(text: string): string {
+  if (!text) return text;
+  let c = '';
+  try { c = String(useAppStore.getState().obData?.country ?? ''); } catch { /* noop */ }
+  return c ? renameForCountry(text, c) : text;
+}
 
 // ── Nombres ────────────────────────────────────────────────────────────────
 /** Nombre de platillo. Los snacks combinados vienen unidos con " + " → traduce cada parte. */
 export function tDishName(name: string, lang: AppLanguage): string {
-  if (lang !== 'en' || !name) return name;
-  return name.split(' + ').map((p) => dishNamesEn[p.trim()] ?? p.trim()).join(' + ');
+  if (!name) return name;
+  const t = lang !== 'en' ? name : name.split(' + ').map((p) => dishNamesEn[p.trim()] ?? p.trim()).join(' + ');
+  return rr(t);
 }
 
 /** Nombre visible de un ingrediente (lista de compras, sub-recetas). */
 export function tIngName(nv: string, lang: AppLanguage): string {
-  if (lang !== 'en' || !nv) return nv;
-  return ingredientNamesEn[nv] ?? nv;
+  if (!nv) return nv;
+  const t = lang !== 'en' ? nv : (ingredientNamesEn[nv] ?? nv);
+  return rr(t);
 }
 
 /** desc del platillo = lista de nv separada por " · " → traduce cada parte. */
 export function tDesc(desc: string, lang: AppLanguage): string {
-  if (lang !== 'en' || !desc) return desc;
-  return desc.split(' · ').map((p) => tIngName(p.trim(), lang)).join(' · ');
+  if (!desc) return desc;
+  const t = lang !== 'en' ? desc : desc.split(' · ').map((p) => tIngName(p.trim(), lang)).join(' · ');
+  return rr(t);
 }
 
 /** Nombre de una sub-receta (salsa/aderezo). */
 export function tSubName(nombre: string, lang: AppLanguage): string {
-  if (lang !== 'en' || !nombre) return nombre;
-  return subrecetaNamesEn[nombre] ?? nombre;
+  if (!nombre) return nombre;
+  const t = lang !== 'en' ? nombre : (subrecetaNamesEn[nombre] ?? nombre);
+  return rr(t);
 }
 
 // ── Porciones ────────────────────────────────────────────────────────────────
@@ -76,6 +93,9 @@ function pluralizeEn(name: string, qty: number): string {
  * `ing` puede faltar en planes legacy (mealPlan.ts) → cae a devolver el string tal cual.
  */
 export function tPortion(str: string, ing: Ing | undefined, lang: AppLanguage): string {
+  return rr(tPortionRaw(str, ing, lang));
+}
+function tPortionRaw(str: string, ing: Ing | undefined, lang: AppLanguage): string {
   if (lang !== 'en' || !str) return str;
   const en = ing ? tIngName(ing.nv, lang) : null;
 
