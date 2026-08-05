@@ -311,6 +311,7 @@ export const en: Translations<typeof es> = {
     age: 'Age',
     weightKg: 'Weight (kg)',
     heightCm: 'Height (cm)',
+    locationHint: 'Where do you live? We use it to show food you can actually buy near you (you can change it).',
     continue: 'Continue',
     activityQuestion: 'How active are you normally?',
     actSed: 'Sedentary',

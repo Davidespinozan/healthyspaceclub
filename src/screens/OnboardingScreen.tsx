@@ -1,4 +1,6 @@
 import { UbicacionPicker, type Ubicacion } from '../components/UbicacionPicker';
+import { PAISES } from '../data/ubicaciones';
+import { detectCountry } from '../utils/region';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity, AtSign, Check, Loader2, X, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
@@ -57,6 +59,20 @@ export default function OnboardingScreen() {
   const [grasa, setGrasa] = useState('');
   const [pesoMeta, setPesoMeta] = useState('');
   const [dataError, setDataError] = useState('');
+
+  // Pre-llenar el país por IP (default editable). Determina la DISPONIBILIDAD de
+  // comida (dónde compras), no la nacionalidad: un mexicano en España ve 'España'
+  // puesto (correcto, no consigue nopal allá) y puede cambiarlo si viaja. Sube la
+  // tasa de país capturado → la localización de comida dispara para más gente.
+  useEffect(() => {
+    let alive = true;
+    detectCountry().then((code) => {
+      if (!alive || !code) return;
+      const slug = PAISES.some((p) => p.slug === code) ? code : 'otro';
+      setUbic((prev) => prev.country ? prev : { ...prev, country: slug });
+    });
+    return () => { alive = false; };
+  }, []);
 
   // @usuario (Step 7) — obligatorio para cuentas nuevas.
   const [handle, setHandle] = useState('');
@@ -453,6 +469,7 @@ export default function OnboardingScreen() {
               </div>
             </div>
             <div className="onb-ubic">
+              <label className="onb-hint">{t('onboarding.locationHint')}</label>
               <UbicacionPicker value={ubic} onChange={setUbic} dark />
             </div>
             {/* Embarazo/lactancia — solo si mujer (bloquea déficit, Punto 2) */}

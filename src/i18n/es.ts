@@ -310,6 +310,7 @@ export const es = {
     age: 'Edad',
     weightKg: 'Peso (kg)',
     heightCm: 'Altura (cm)',
+    locationHint: '¿Dónde vives? Lo usamos para mostrarte comida que sí consigues en tu súper (puedes cambiarlo).',
     continue: 'Continuar',
     activityQuestion: '¿Qué tan activo eres normalmente?',
     actSed: 'Sedentaria',

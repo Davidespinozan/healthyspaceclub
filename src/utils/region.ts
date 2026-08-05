@@ -124,7 +124,28 @@ export async function detectRegion(): Promise<Region> {
   if (cached) return cached;
 
   const code = await fetchCountryCode();
+  if (code) saveCountry(code);
   const region: Region = code ? regionFromCountry(code) : regionFromLanguage();
   saveRegion(region, false);
   return region;
+}
+
+// ── País detectado por IP (para pre-llenar el onboarding) ──────────────────
+// Distinto de la región: aquí guardamos el CÓDIGO de país (mx/es/ar…) porque el
+// renombrado de ingredientes y el picker lo necesitan exacto, no solo la región.
+const COUNTRY_KEY = 'hsc_country';
+function saveCountry(code: string): void {
+  try { localStorage.setItem(COUNTRY_KEY, code.toLowerCase()); } catch { /* noop */ }
+}
+/** País cacheado por IP (código ISO en minúsculas, ej. 'es'), o null. */
+export function getCachedCountry(): string | null {
+  try { return localStorage.getItem(COUNTRY_KEY); } catch { return null; }
+}
+/** Detecta el país por IP (cachea). Usa el cache si existe. */
+export async function detectCountry(): Promise<string | null> {
+  const cached = getCachedCountry();
+  if (cached) return cached;
+  const code = await fetchCountryCode();
+  if (code) saveCountry(code);
+  return code ? code.toLowerCase() : null;
 }
