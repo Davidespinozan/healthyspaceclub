@@ -104,18 +104,27 @@ export function saveRegion(region: Region, manual = false): void {
   }
 }
 
-async function fetchCountryCode(timeoutMs = 3000): Promise<string | null> {
+async function fetchFrom(url: string, timeoutMs: number): Promise<string | null> {
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-    const res = await fetch('https://ipapi.co/json/', { signal: ctrl.signal });
+    const res = await fetch(url, { signal: ctrl.signal });
     clearTimeout(timer);
     if (!res.ok) return null;
     const data = await res.json();
-    return typeof data?.country_code === 'string' ? data.country_code : null;
+    return typeof data?.country_code === 'string' && data.country_code ? data.country_code : null;
   } catch {
     return null;
   }
+}
+
+// Detecta el país por IP. Primero /api/geo (Netlify Edge Function: la IP se
+// resuelve dentro de nuestra propia red, nunca sale a un tercero). Si eso falla
+// (dev local, otro hosting), cae a ipapi.co como red de seguridad.
+async function fetchCountryCode(timeoutMs = 3000): Promise<string | null> {
+  const own = await fetchFrom('/api/geo', timeoutMs);
+  if (own) return own;
+  return fetchFrom('https://ipapi.co/json/', timeoutMs);
 }
 
 // Public: resolves to a Region. Uses cache when fresh, else IP, else language.

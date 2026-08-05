@@ -1,6 +1,6 @@
 import type { LegalSection } from './terms';
 
-export const PRIVACY_LAST_UPDATED = '14 de mayo de 2026';
+export const PRIVACY_LAST_UPDATED = '5 de agosto de 2026';
 
 export const PRIVACY_INTRO = 'Tu privacidad importa. Esta política explica qué datos recogemos, cómo los usamos y qué derechos tenés.';
 
@@ -16,6 +16,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
       'Registros de uso: workout logs, food logs, respuestas HSM, racha, hábitos.',
       'Datos de pago: cuando los pagos vía Stripe estén activos, Stripe gestiona los datos de tarjeta. Nosotros solo guardamos identificadores de suscripción.',
       'Datos técnicos: tipo de dispositivo, idioma, errores de la app (para diagnóstico).',
+      'Ubicación aproximada: derivamos tu país a partir de tu dirección IP (nivel país, no ubicación precisa) para mostrar la moneda correcta y pre-rellenar tu país. No usamos el GPS ni te pedimos permiso de ubicación; el país sugerido es editable.',
     ],
   },
   {
@@ -36,7 +37,8 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     bullets: [
       'Supabase: base de datos, autenticación y almacenamiento.',
       'Anthropic (Claude): procesamiento de IA para el coach y generadores de planes. Los prompts incluyen tu perfil resumido; no se usa para entrenar modelos.',
-      'Netlify: hosting de la aplicación.',
+      'Netlify: hosting de la aplicación y geolocalización aproximada por IP (a nivel país, en su propia red).',
+      'ipapi.co: geolocalización aproximada por IP, solo como respaldo si la de Netlify no está disponible.',
       'Stripe: procesamiento de pagos (cuando esté activo).',
     ],
   },
