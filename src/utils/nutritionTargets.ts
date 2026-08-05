@@ -189,7 +189,7 @@ export function mealCalorieSplit(planGoal: number): { desayuno: number; comida: 
 export function invalidField(
   o: Pick<ObInput, 'sexo' | 'pesoKg' | 'estaturaCm' | 'edad' | 'grasa' | 'pesoMeta'>,
 ): 'edad' | 'peso' | 'estatura' | 'grasa' | 'pesoMeta' | null {
-  if (o.edad < 15 || o.edad > 100) return 'edad';
+  if (o.edad < 13 || o.edad > 100) return 'edad';
   if (o.pesoKg < 30 || o.pesoKg > 300) return 'peso';
   if (o.estaturaCm < 120 || o.estaturaCm > 220) return 'estatura';
   if (o.grasa != null) {
