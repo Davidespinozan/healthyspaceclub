@@ -4,6 +4,8 @@ import { Home, User, MessageCircle, Users, AlertCircle, X, ArrowLeft } from 'luc
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
+import { supabase } from '../lib/supabase';
+import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import type { DashPage } from '../types';
 import type { TranslationKey } from '../i18n/es';
 
@@ -12,6 +14,7 @@ import SubPageLoadingFallback from '../components/SubPageLoadingFallback';
 
 // Tabs/sheets no-default → lazy: solo cargan al entrar a ellas (aligera el chunk del dashboard).
 const ManagePlanSheet = lazyWithRetry(() => import('../components/sheets/ManagePlanSheet'), 'ManagePlanSheet');
+const PublicProfile = lazyWithRetry(() => import('../components/PublicProfile'), 'PublicProfile');
 const TabCoach = lazyWithRetry(() => import('../components/TabCoach'), 'TabCoach');
 const TabClub = lazyWithRetry(() => import('../components/TabClub'), 'TabClub');
 const TabTu = lazyWithRetry(() => import('../components/TabTu'), 'TabTu');
@@ -35,7 +38,11 @@ const TABS: { id: DashPage; icon: typeof Home; labelKey: TranslationKey }[] = [
 export default function DashboardScreen() {
   const { dashPage, setDashPage, checkTrialExpiry, coachOpen, setCoachOpen, paymentPastDue } = useAppStore(useShallow((s) => ({ dashPage: s.dashPage, setDashPage: s.setDashPage, checkTrialExpiry: s.checkTrialExpiry, coachOpen: s.coachOpen, setCoachOpen: s.setCoachOpen, paymentPastDue: s.paymentPastDue })));
   const { t } = useT();
+  const myId = useCurrentUserId();
   const [showPastDuePlan, setShowPastDuePlan] = useState(false);
+  // Deep-link a perfil: /u/<usuario> compartido → abre ese perfil. Se consume AQUÍ
+  // (ya autenticado y montado), fuera del gate de arranque, para no arriesgarlo.
+  const [deepProfile, setDeepProfile] = useState<string | null>(null);
   // El cuestionario (Trainer/Nutrición) ya emite su propio hero forest compacto,
   // así que ya no montamos la card intro `.sec-hero` (era una segunda cabecera
   // que duplicaba contexto y robaba media pantalla). setTrainerPhase se mantiene
@@ -43,6 +50,25 @@ export default function DashboardScreen() {
   const [, setTrainerPhase] = useState<string>('modality');
 
   useEffect(() => { checkTrialExpiry(); }, []);
+
+  // Consumir un deep-link /u/<usuario> (compartido). Resuelve el username → user_id
+  // y abre su perfil. Limpia el path para que no reabra al navegar. Falla-silencio.
+  useEffect(() => {
+    const m = window.location.pathname.match(/^\/u\/([a-z0-9_.]{2,30})$/i);
+    if (!m) return;
+    const uname = m[1];
+    let alive = true;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('public_profiles').select('user_id').ilike('username', uname).maybeSingle();
+        if (alive && data?.user_id) setDeepProfile(data.user_id as string);
+      } catch { /* noop */ } finally {
+        try { window.history.replaceState({}, '', '/'); } catch { /* noop */ }
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   // Cerrar el coach al tocar cualquier cosa que NO sea el panel del coach ni su FAB.
   // (pointerdown deja que el botón tocado igual ejecute su acción: ej. cambiar de tab
@@ -85,6 +111,11 @@ export default function DashboardScreen() {
       {showPastDuePlan && (
         <Suspense fallback={null}>
           <ManagePlanSheet onClose={() => setShowPastDuePlan(false)} />
+        </Suspense>
+      )}
+      {deepProfile && (
+        <Suspense fallback={null}>
+          <PublicProfile userId={deepProfile} currentUserId={myId} onClose={() => setDeepProfile(null)} />
         </Suspense>
       )}
       <main className="app-main">

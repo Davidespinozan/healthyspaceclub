@@ -33,10 +33,20 @@ export async function recordReferralIfAny(): Promise<void> {
   } catch { /* noop — no bloquear el signup por esto */ }
 }
 
-/** Link de invitación para compartir. */
+/** Link de invitación para compartir (aterriza en la raíz + atribuye). */
 export function inviteLink(username: string): string {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   return `${origin}/?ref=${encodeURIComponent(username)}`;
+}
+
+/** Deep-link al perfil del usuario (+ atribución). Para compartir: el que recibe
+ *  aterriza en TU perfil (contenido real), no en la app genérica. Lo consume el
+ *  dashboard tras autenticar; un no-usuario cae al landing con el ?ref capturado y,
+ *  al registrarse, llega al perfil. */
+export function profileLink(username: string): string {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const u = encodeURIComponent(username);
+  return `${origin}/u/${u}?ref=${u}`;
 }
 
 export interface ReferrerInfo {

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { X, Camera, Share2, Loader2 } from 'lucide-react';
 import { useT } from '../i18n';
 import { composeStatPhoto, shareImage } from '../utils/photoOverlay';
-import { inviteLink } from '../utils/referral';
+import { profileLink } from '../utils/referral';
 import { useAppStore } from '../store';
 import { track } from '../utils/analytics';
 import './share-stat-sheet.css';
@@ -50,9 +50,9 @@ export default function ShareStatSheet({ headline, stats, onClose }: Props) {
   async function doShare() {
     if (!blob) return;
     track('shared', { headline });
-    // Comparte con el link de invitación (?ref=) → cada compartir es adquisición
-    // atribuida. Sin username aún, cae al origin (mejor que nada).
-    const url = username ? inviteLink(username) : window.location.origin;
+    // Comparte con el deep-link a tu perfil (+?ref=) → el que recibe aterriza en tu
+    // perfil (contenido real) y queda atribuido. Sin username aún, cae al origin.
+    const url = username ? profileLink(username) : window.location.origin;
     const res = await shareImage(blob, t('post.shareText'), url);
     // En escritorio sin Web Share API se descarga la imagen + se copia el link:
     // avisamos para que el usuario no crea que no pasó nada.
