@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Flame, Share2, Link2, Check, Sprout } from 'lucide-react';
+import { X, Flame, Share2, Link2, Check, Sprout, Dumbbell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import PostCard, { type ClubPost } from './club/PostCard';
 import CommentsSheet from './club/CommentsSheet';
 import { deleteClubPost } from '../utils/clubPosts';
 import { followUser, unfollowUser, isFollowing, getFollowCounts } from '../utils/follows';
+import { sendInvite } from '../utils/partners';
 import { inviteLink } from '../utils/referral';
 import { MILESTONE_STEPS } from '../constants/milestones';
 import { useT } from '../i18n';
@@ -47,6 +48,16 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
   const [following, setFollowing] = useState(false);
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
   const [followBusy, setFollowBusy] = useState(false);
+  // Puente follows ↔ partnerships: invitar a entrenar desde el perfil (antes no había
+  // forma de pasar de "veo a alguien" a "entreno con esa persona").
+  const [inviteState, setInviteState] = useState<'idle' | 'sending' | 'sent' | 'exists'>('idle');
+
+  async function handleInviteTrain() {
+    if (inviteState !== 'idle') return;
+    setInviteState('sending');
+    const res = await sendInvite(userId);
+    setInviteState(res === 'sent' ? 'sent' : res === 'exists' ? 'exists' : 'idle');
+  }
 
   function bumpCommentCount(postId: string, delta: number) {
     setPosts(p => p.map(post => post.id === postId
@@ -300,14 +311,27 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
                   <strong>{followCounts.following}</strong> {t('profile.followingLabel')}
                 </p>
                 {!isOwnProfile && (
-                  <button
-                    type="button"
-                    className={`pp5-follow-btn${following ? ' is-following' : ''}`}
-                    onClick={handleFollow}
-                    disabled={followBusy}
-                  >
-                    {following ? t('profile.following') : t('profile.follow')}
-                  </button>
+                  <div className="pp5-actions">
+                    <button
+                      type="button"
+                      className={`pp5-follow-btn${following ? ' is-following' : ''}`}
+                      onClick={handleFollow}
+                      disabled={followBusy}
+                    >
+                      {following ? t('profile.following') : t('profile.follow')}
+                    </button>
+                    <button
+                      type="button"
+                      className="pp5-train-btn"
+                      onClick={handleInviteTrain}
+                      disabled={inviteState !== 'idle'}
+                    >
+                      <Dumbbell size={15} strokeWidth={2} />
+                      {inviteState === 'sent' ? t('profile.inviteSent')
+                        : inviteState === 'exists' ? t('profile.inviteExists')
+                        : t('profile.inviteTrain')}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

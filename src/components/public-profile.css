@@ -207,6 +207,19 @@
   box-shadow: none;
 }
 .pp5-follow-btn:disabled { opacity: 0.6; cursor: default; }
+.pp5-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.pp5-train-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 9px 22px; border-radius: 999px; cursor: pointer;
+  font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 700;
+  background: rgba(255, 255, 255, 0.08); color: #F6F2EA;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: transform 0.15s ease, background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.pp5-train-btn:hover { background: rgba(255, 255, 255, 0.14); }
+.pp5-train-btn:active { transform: scale(0.96); }
+.pp5-train-btn:disabled { opacity: 0.6; cursor: default; }
 
 .pp5-year-chip {
   display: inline-flex;
