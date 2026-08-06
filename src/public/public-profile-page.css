@@ -1,0 +1,64 @@
+/* Página pública /u/<usuario> — superficie de venta/adquisición (dark premium,
+   como el landing), no la app crema. Un extraño la ve; la meta es que se una. */
+.pub {
+  min-height: 100vh;
+  background:
+    radial-gradient(120% 70% at 15% -5%, #1d3c36 0%, transparent 52%),
+    #0b1a17;
+  color: #f1ede1;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: 26px 20px 120px;
+  max-width: 520px;
+  margin: 0 auto;
+  position: relative;
+}
+.pub-brand {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 0.66rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(241,237,225,0.55); margin-bottom: 26px;
+}
+.pub-flame {
+  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px;
+  background: radial-gradient(circle at 40% 35%, #e6c48a, #c8a86a); color: #1a0f09;
+}
+
+.pub-center { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 60vh; gap: 8px; }
+.pub-spin { width: 30px; height: 30px; border: 2px solid #c8a86a; border-top-color: transparent; border-radius: 50%; animation: pubspin 0.7s linear infinite; }
+@keyframes pubspin { to { transform: rotate(360deg); } }
+.pub-notfound h1 { font-size: 1.4rem; font-weight: 750; margin: 0 0 8px; }
+.pub-notfound p { color: rgba(241,237,225,0.6); margin: 0 0 22px; max-width: 30ch; }
+
+.pub-hero { text-align: center; }
+.pub-av {
+  width: 92px; height: 92px; border-radius: 50%; margin: 0 auto 14px; overflow: hidden;
+  display: grid; place-items: center; font-size: 2.2rem; font-weight: 700; color: #1a0f09;
+  background: linear-gradient(135deg, #cf7a54, #a8864e); box-shadow: 0 0 0 3px rgba(200,168,106,0.3);
+}
+.pub-av img { width: 100%; height: 100%; object-fit: cover; }
+.pub-name { font-size: 1.5rem; font-weight: 750; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.pub-handle { font-size: 0.85rem; color: rgba(241,237,225,0.55); margin: 3px 0 0; }
+.pub-bio { font-size: 0.9rem; color: rgba(241,237,225,0.75); margin: 10px auto 0; max-width: 34ch; line-height: 1.45; }
+.pub-stats { display: flex; justify-content: center; gap: 28px; margin: 18px 0 2px; }
+.pub-stat .b { font-size: 1.3rem; font-weight: 750; }
+.pub-stat .b .fire { color: #e0703c; }
+.pub-stat .l { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(241,237,225,0.5); margin-top: 2px; }
+
+.pub-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin: 24px 0 12px; }
+@media (max-width: 380px) { .pub-grid { grid-template-columns: 1fr 1fr; } }
+.pub-post { aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #14302a; border: 1px solid rgba(241,237,225,0.08); }
+.pub-post img { width: 100%; height: 100%; object-fit: cover; }
+.pub-lock { text-align: center; font-size: 0.76rem; color: rgba(241,237,225,0.45); margin: 4px 0 0; }
+
+.pub-cta-bar {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  padding: 16px 20px 22px; max-width: 520px; margin: 0 auto;
+  background: linear-gradient(0deg, #07120e 60%, transparent);
+}
+.pub-cta {
+  width: 100%; border: none; border-radius: 14px; padding: 15px;
+  background: #cf7a54; color: #1a0f09; font-family: inherit; font-size: 0.98rem; font-weight: 750; cursor: pointer;
+  box-shadow: 0 10px 30px -8px rgba(207,122,84,0.5); transition: filter 0.15s ease;
+}
+.pub-cta:hover { filter: brightness(1.06); }
+.pub-cta-sub { text-align: center; font-size: 0.7rem; color: rgba(241,237,225,0.5); margin: 9px 0 0; }

@@ -51,20 +51,31 @@ export default function DashboardScreen() {
 
   useEffect(() => { checkTrialExpiry(); }, []);
 
-  // Consumir un deep-link /u/<usuario> (compartido). Resuelve el username → user_id
-  // y abre su perfil. Limpia el path para que no reabra al navegar. Falla-silencio.
+  // Consumir un deep-link a perfil: viene por sessionStorage (handoff de la página
+  // pública /u/<usuario> cuando ya hay sesión) o por el path (compat). Resuelve el
+  // username → user_id y abre su perfil. Falla-silencio.
   useEffect(() => {
-    const m = window.location.pathname.match(/^\/u\/([a-z0-9_.]{2,30})$/i);
-    if (!m) return;
-    const uname = m[1];
+    let uname: string | null = null;
+    try {
+      const stashed = sessionStorage.getItem('hsc_open_profile');
+      if (stashed) { uname = stashed; sessionStorage.removeItem('hsc_open_profile'); }
+    } catch { /* noop */ }
+    if (!uname) {
+      const m = window.location.pathname.match(/^\/u\/([a-z0-9_.]{2,30})$/i);
+      if (m) uname = m[1];
+    }
+    if (!uname) return;
+    const target = uname;
     let alive = true;
     (async () => {
       try {
         const { data } = await supabase
-          .from('public_profiles').select('user_id').ilike('username', uname).maybeSingle();
+          .from('public_profiles').select('user_id').ilike('username', target).maybeSingle();
         if (alive && data?.user_id) setDeepProfile(data.user_id as string);
       } catch { /* noop */ } finally {
-        try { window.history.replaceState({}, '', '/'); } catch { /* noop */ }
+        if (window.location.pathname.startsWith('/u/')) {
+          try { window.history.replaceState({}, '', '/'); } catch { /* noop */ }
+        }
       }
     })();
     return () => { alive = false; };

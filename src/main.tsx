@@ -11,6 +11,11 @@ import { lazyWithRetry } from './utils/lazyWithRetry'
 // también sirva esta misma app.
 const isAdminRoute = window.location.pathname.startsWith('/admin')
 const AdminApp = lazyWithRetry(() => import('./admin/AdminApp'), 'AdminApp')
+// Perfil público /u/<usuario>: árbol aparte SIN el gate de sesión, para que un
+// extraño aterrice en el perfil real (prueba social + CTA de registro). Si ya hay
+// sesión, PublicProfilePage redirige a la app y lo abre ahí (fase 1).
+const isPublicProfileRoute = /^\/u\/[a-z0-9_.]{2,30}$/i.test(window.location.pathname)
+const PublicProfilePage = lazyWithRetry(() => import('./public/PublicProfilePage'), 'PublicProfilePage')
 import { useAppStore } from './store'
 import { initAnalytics, track } from './utils/analytics'
 import { captureRefFromUrl } from './utils/referral'
@@ -106,6 +111,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       {isAdminRoute
         ? <React.Suspense fallback={null}><AdminApp /></React.Suspense>
+        : isPublicProfileRoute
+        ? <React.Suspense fallback={null}><PublicProfilePage /></React.Suspense>
         : <App />}
     </ErrorBoundary>
   </React.StrictMode>
