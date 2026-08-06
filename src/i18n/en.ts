@@ -1099,7 +1099,7 @@ export const en: Translations<typeof es> = {
     reviewCompleteSub: 'One more stroke in your portrait.',
     reviewAnalyzing: 'Analyzing your answers...',
     reviewBackToHoy: 'Back to Today',
-    reviewLabelToday: "Today's reflection",
+    reviewLabelToday: 'What I see in you',
     reviewLabelCoach: 'Your coach knows you',
     reviewLabelWeeklyHsm: 'Weekly HSM review',
     reviewFallback: 'All 5 done today. Your coach has read your answers.',

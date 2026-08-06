@@ -143,13 +143,13 @@ export default function TuEspacioFlow({ onClose }: Props) {
     const todaySummary = todayResponses.map(r => `${r.dimension}: "${r.response}"`).join('\n');
     const pastSummary = dailyHSMResponses
       .filter(r => r.date !== today)
-      .slice(-15)
+      .slice(-30)
       .map(r => `[${r.date}] ${r.dimension}: "${r.response}"`)
       .join('\n');
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
     callAI({
-      max_tokens: 220,
+      max_tokens: 800,
       messages: [{ role: 'user', content: buildHSMDailyReviewPrompt(todaySummary, locale, pastSummary || undefined) }],
     }, controller.signal)
       .then(data => {

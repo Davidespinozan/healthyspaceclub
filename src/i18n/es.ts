@@ -1098,7 +1098,7 @@ export const es = {
     reviewCompleteSub: 'Un trazo más en tu retrato.',
     reviewAnalyzing: 'Analizando tus respuestas...',
     reviewBackToHoy: 'Volver a Hoy',
-    reviewLabelToday: 'Tu observación de hoy',
+    reviewLabelToday: 'Lo que veo en ti',
     reviewLabelCoach: 'Tu coach te conoce',
     reviewLabelWeeklyHsm: 'Resumen semanal HSM',
     reviewFallback: 'Las 5 de hoy, listas. Tu coach ya analizó tus respuestas.',
