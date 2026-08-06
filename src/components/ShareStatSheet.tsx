@@ -2,8 +2,13 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { X, Camera, Share2, Loader2 } from 'lucide-react';
 import { useT } from '../i18n';
 import { composeStatPhoto, shareImage } from '../utils/photoOverlay';
+import { inviteLink } from '../utils/referral';
+import { useAppStore } from '../store';
 import { track } from '../utils/analytics';
 import './share-stat-sheet.css';
+
+// Dominio limpio para el CTA de los píxeles (sin www ni puerto de dev).
+const SHARE_HOST = typeof window !== 'undefined' ? window.location.host.replace(/^www\./, '') : 'healthyspaceclub.com';
 
 // Estilo Strava: elige tu foto → le montamos stats + logo → compártela afuera.
 interface Props {
@@ -14,6 +19,7 @@ interface Props {
 
 export default function ShareStatSheet({ headline, stats, onClose }: Props) {
   const { t } = useT();
+  const username = useAppStore(s => s.username);
   const inputRef = useRef<HTMLInputElement>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -30,7 +36,7 @@ export default function ShareStatSheet({ headline, stats, onClose }: Props) {
     if (!file) return;
     setBusy(true);
     try {
-      const out = await composeStatPhoto(file, { brand: 'Healthy Space Club', headline, stats });
+      const out = await composeStatPhoto(file, { brand: 'Healthy Space Club', headline, stats, cta: SHARE_HOST });
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setBlob(out);
       setPreviewUrl(URL.createObjectURL(out));
@@ -44,7 +50,10 @@ export default function ShareStatSheet({ headline, stats, onClose }: Props) {
   async function doShare() {
     if (!blob) return;
     track('shared', { headline });
-    const res = await shareImage(blob, t('post.shareText'), window.location.origin);
+    // Comparte con el link de invitación (?ref=) → cada compartir es adquisición
+    // atribuida. Sin username aún, cae al origin (mejor que nada).
+    const url = username ? inviteLink(username) : window.location.origin;
+    const res = await shareImage(blob, t('post.shareText'), url);
     // En escritorio sin Web Share API se descarga la imagen + se copia el link:
     // avisamos para que el usuario no crea que no pasó nada.
     if (res === 'downloaded') setNote(t('post.shareDownloaded'));

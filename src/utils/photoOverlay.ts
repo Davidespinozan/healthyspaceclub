@@ -6,6 +6,7 @@ export interface OverlayOpts {
   brand: string;                              // "HEALTHY SPACE CLUB"
   headline: string;                           // "ENTRENÉ HOY"
   stats: { big: string; label: string }[];    // [{big:'45', label:'MIN'}, ...]
+  cta?: string;                               // "healthyspaceclub.com" — join hook en los píxeles
 }
 
 const FONT = "'Montserrat', -apple-system, 'Helvetica Neue', Arial, sans-serif";
@@ -71,6 +72,13 @@ export async function composeStatPhoto(photo: Blob, opts: OverlayOpts): Promise<
   // línea dorada bajo la marca
   ctx.fillStyle = gold;
   ctx.fillRect(PAD, 108, 66, 4);
+  // CTA de "únete" grabado en los píxeles: sobrevive al screenshot (que borra el
+  // texto/link del share). Sin esto, una repost no trae a nadie de vuelta.
+  if (opts.cta) {
+    ctx.fillStyle = soft;
+    ctx.font = `600 26px ${FONT}`;
+    trackedLeft(ctx, opts.cta, PAD, 150, 2);
+  }
 
   // 4) Bloque de stats abajo-izquierda (estilo Strava).
   ctx.fillStyle = gold;
@@ -99,9 +107,13 @@ export type ShareResult = 'shared' | 'downloaded';
 export async function shareImage(blob: Blob, text: string, url: string): Promise<ShareResult> {
   const file = new File([blob], 'hsc.jpg', { type: 'image/jpeg' });
   const nav = navigator as Navigator & { canShare?: (data?: ShareData) => boolean };
+  // En móvil el share con `files` NO manda el campo `url` — solo `text`. Así que el
+  // link (con ?ref= para atribución) DEBE ir pegado al texto, o cada compartir sale
+  // sin invitación ni crédito para quien comparte.
+  const textWithLink = url ? `${text} ${url}` : text;
   try {
     if (nav.canShare?.({ files: [file] })) {
-      await nav.share({ files: [file], text });
+      await nav.share({ files: [file], text: textWithLink });
       return 'shared';
     }
     if (nav.share) {

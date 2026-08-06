@@ -1105,6 +1105,7 @@ export const en: Translations<typeof es> = {
     reviewFallback: 'All 5 done today. Your coach has read your answers.',
     viewFullReview: 'View full review',
     milestoneClose: 'Continue',
+    milestoneShare: 'Share my streak',
     popoutIngredients: 'Ingredients',
     popoutRecipeOf: 'Recipe for',
     popoutYields: 'makes {g} g',

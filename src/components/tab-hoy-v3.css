@@ -984,8 +984,9 @@
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
   animation-delay: 0.24s;
 }
-.th3-milestone-close {
-  padding: 13px 32px;
+.th3-milestone-share {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 30px;
   background: var(--grad-amber);
   color: #fff;
   border: none;
@@ -999,10 +1000,26 @@
   -webkit-tap-highlight-color: transparent;
   transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
-  animation-delay: 0.30s;
+  animation-delay: 0.28s;
 }
-.th3-milestone-close:hover { filter: brightness(1.04); transform: translateY(-2px); box-shadow: 0 16px 32px rgba(168, 134, 78, 0.4); }
-.th3-milestone-close:active { transform: scale(0.97); }
+.th3-milestone-share:hover { filter: brightness(1.04); transform: translateY(-2px); box-shadow: 0 16px 32px rgba(168, 134, 78, 0.4); }
+.th3-milestone-share:active { transform: scale(0.97); }
+.th3-milestone-close {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: transparent;
+  color: rgba(120, 100, 70, 0.75);
+  border: none;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--duration-fast) ease;
+  animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  animation-delay: 0.32s;
+}
+.th3-milestone-close:hover { color: rgba(120, 100, 70, 1); }
 @media (prefers-reduced-motion: reduce) {
   .th3-milestone-inner,
   .th3-milestone-emoji,

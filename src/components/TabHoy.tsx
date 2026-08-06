@@ -228,6 +228,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
   const [activityOpen, setActivityOpen] = useState(false);
   const [shareDayOpen, setShareDayOpen] = useState(false);
+  const [shareStreak, setShareStreak] = useState<number | null>(null);
   // Kill-switch de food trucks (bowls) desde el panel admin. Default true (fail-open);
   // si el admin lo apaga, el widget no se pinta aunque el socio tenga cobertura.
   const [foodTrucksEnabled, setFoodTrucksEnabled] = useState(true);
@@ -542,6 +543,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             </div>
             <h2 className="th3-milestone-title">{mileCopy.title}</h2>
             <p className="th3-milestone-sub">{mileCopy.sub}</p>
+            {/* Pico emocional → compartir: el momento exacto para presumir la racha
+                (y traer gente). Antes solo se podía cerrar. */}
+            <button className="th3-milestone-share" onClick={() => { const m = milestone; setMilestone(null); setShareStreak(m); }}>
+              <Share2 size={15} strokeWidth={2} /> {t('hoy.milestoneShare')}
+            </button>
             <button className="th3-milestone-close" onClick={() => setMilestone(null)}>{t('hoy.milestoneClose')}</button>
           </div>
         </div>
@@ -1072,6 +1078,15 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             ...(kcalConsumed > 0 ? [{ big: kcalConsumed.toLocaleString(), label: t('hoy.shareKcalLabel') }] : []),
           ]}
           onClose={() => setShareDayOpen(false)}
+        />
+      )}
+      {shareStreak != null && (
+        <ShareStatSheet
+          headline={t('post.shareHeadlineStreak')}
+          stats={[
+            { big: String(shareStreak), label: plural(shareStreak, { one: t('hoy.shareStreakLabelOne'), other: t('hoy.shareStreakLabelOther') }) },
+          ]}
+          onClose={() => setShareStreak(null)}
         />
       )}
       {showCelebration && (

@@ -1104,6 +1104,7 @@ export const es = {
     reviewFallback: 'Las 5 de hoy, listas. Tu coach ya analizó tus respuestas.',
     viewFullReview: 'Ver review completo',
     milestoneClose: 'Continuar',
+    milestoneShare: 'Compartir mi racha',
     popoutIngredients: 'Ingredientes',
     popoutRecipeOf: 'Receta de',
     popoutYields: 'rinde {g} g',

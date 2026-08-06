@@ -6,6 +6,7 @@ import PostCard, { type ClubPost } from './club/PostCard';
 import CommentsSheet from './club/CommentsSheet';
 import { deleteClubPost } from '../utils/clubPosts';
 import { followUser, unfollowUser, isFollowing, getFollowCounts } from '../utils/follows';
+import { inviteLink } from '../utils/referral';
 import { MILESTONE_STEPS } from '../constants/milestones';
 import { useT } from '../i18n';
 import './public-profile.css';
@@ -52,7 +53,9 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
       ? { ...post, comments_count: Math.max(0, post.comments_count + delta) }
       : post));
   }
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+  // Compartir el perfil con el link de invitación (?ref=) → atribuido. Sin deep-link
+  // aún, el ?ref= al menos acredita a quien comparte (mejor que el URL raíz).
+  const shareUrl = profile?.username ? inviteLink(profile.username) : (typeof window !== 'undefined' ? window.location.href : '');
   const shareMsg = `${t('profile.shareText')} ${shareUrl}`;
   const nativeShareAvailable = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
   function shareWhatsApp() {
