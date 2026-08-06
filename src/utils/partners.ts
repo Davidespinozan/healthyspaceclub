@@ -119,6 +119,16 @@ export async function respondInvite(
   return 'error';
 }
 
+/** Borra una conexión (cancelar invitación enviada, o desvincular una aceptada).
+ *  DELETE directo — la RLS ya permite borrar filas donde eres requester o addressee.
+ *  Borrar la fila también DESBLOQUEA re-invitar (antes un 'declined' quedaba para
+ *  siempre y send_partner_invite devolvía 'exists'). */
+export async function removePartnership(partnershipId: string): Promise<boolean> {
+  const { error } = await supabase.from('user_partnerships').delete().eq('id', partnershipId);
+  if (error) { console.warn('[partners] remove failed:', error.message); return false; }
+  return true;
+}
+
 /** Lista todas mis conexiones (aceptadas + pendientes, entrantes y salientes). */
 export async function listPartnerships(): Promise<Partnership[]> {
   const { data, error } = await supabase.rpc('list_partnerships');

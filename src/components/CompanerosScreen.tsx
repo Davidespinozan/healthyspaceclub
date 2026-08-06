@@ -14,7 +14,7 @@ import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import {
   searchUsers, sendInvite, respondInvite, listPartnerships, getPartnerTrainingProfile,
-  countSessionsWith, type UserSearchResult, type Partnership,
+  countSessionsWith, removePartnership, type UserSearchResult, type Partnership,
 } from '../utils/partners';
 import UsernameSetupSheet from './UsernameSetupSheet';
 import { inviteLink, getMyReferrer, type ReferrerInfo } from '../utils/referral';
@@ -128,6 +128,17 @@ export default function CompanerosScreen() {
 
   async function handleRespond(p: Partnership, accept: boolean) {
     await respondInvite(p.partnership_id, accept, p.other_id);
+    refresh();
+  }
+
+  async function cancelInvite(p: Partnership) {
+    await removePartnership(p.partnership_id);
+    refresh();
+  }
+
+  async function unlinkPartner(p: Partnership) {
+    if (!window.confirm(t('partners.unlinkConfirm', { name: displayName(p.other_name, p.other_username) }))) return;
+    await removePartnership(p.partnership_id);
     refresh();
   }
 
@@ -297,6 +308,9 @@ export default function CompanerosScreen() {
                       ) : (
                         <span className="comp-row-tag">{t('partners.hostsRoutine')}</span>
                       )}
+                      <button className="comp-unlink" onClick={() => unlinkPartner(p)} aria-label={t('partners.unlink')} title={t('partners.unlink')}>
+                        <X size={14} strokeWidth={2} />
+                      </button>
                     </div>
                   );
                 })}
@@ -309,6 +323,9 @@ export default function CompanerosScreen() {
                       {p.other_username && <span className="comp-row-handle">@{p.other_username}</span>}
                     </div>
                     <span className="comp-row-tag"><Clock size={13} /> {t('partners.pending')}</span>
+                    <button className="comp-unlink" onClick={() => cancelInvite(p)} aria-label={t('partners.cancel')} title={t('partners.cancel')}>
+                      <X size={14} strokeWidth={2} />
+                    </button>
                   </div>
                 ))}
               </div>
