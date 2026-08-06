@@ -17,8 +17,10 @@ import {
   countSessionsWith, type UserSearchResult, type Partnership,
 } from '../utils/partners';
 import UsernameSetupSheet from './UsernameSetupSheet';
-import { inviteLink } from '../utils/referral';
+import { inviteLink, getMyReferrer, type ReferrerInfo } from '../utils/referral';
 import './companeros.css';
+
+const NUDGE_KEY = 'hsc_ref_nudge_done';
 
 function Avatar({ name, url }: { name: string | null; url: string | null }) {
   if (url) return <img className="comp-avatar" src={url} alt="" />;
@@ -39,6 +41,17 @@ export default function CompanerosScreen() {
   const [searching, setSearching] = useState(false);
   const [invited, setInvited] = useState<Set<string>>(new Set());
   const [counts, setCounts] = useState<Record<string, number>>({});
+  // Empujón al referido: si me trajo alguien (?ref=), invitarlo a entrenar cierra
+  // el handoff "invitación → togetherness" (hoy el referido entra como usuario suelto).
+  const [referrer, setReferrer] = useState<ReferrerInfo | null>(null);
+  const [nudgeHidden, setNudgeHidden] = useState(() => {
+    try { return localStorage.getItem(NUDGE_KEY) === '1'; } catch { return false; }
+  });
+  useEffect(() => { getMyReferrer().then(setReferrer); }, []);
+  function dismissNudge() {
+    setNudgeHidden(true);
+    try { localStorage.setItem(NUDGE_KEY, '1'); } catch { /* noop */ }
+  }
 
   const refresh = useCallback(async () => {
     const parts = await listPartnerships();
@@ -87,6 +100,23 @@ export default function CompanerosScreen() {
   const outgoingPending = new Set(outgoing.map(p => p.other_id));
   const connectedIds = new Set(accepted.map(p => p.other_id));
 
+  // Nudge del referidor: solo si me trajo alguien, aún no estamos ligados, y no lo cerré.
+  const referrerName = referrer
+    ? (referrer.displayName || (referrer.username ? `@${referrer.username}` : t('partners.aPartner')))
+    : '';
+  const alreadyLinked = referrer
+    ? connectedIds.has(referrer.id) || outgoingPending.has(referrer.id) || incoming.some(p => p.other_id === referrer.id)
+    : false;
+  const showReferrerNudge = !!referrer && !nudgeHidden && !alreadyLinked;
+
+  async function connectWithReferrer() {
+    if (!referrer) return;
+    setInvited(prev => new Set(prev).add(referrer.id));
+    await sendInvite(referrer.id);
+    dismissNudge();
+    refresh();
+  }
+
   async function handleInvite(u: UserSearchResult) {
     setInvited(prev => new Set(prev).add(u.user_id));
     const res = await sendInvite(u.user_id);
@@ -123,6 +153,23 @@ export default function CompanerosScreen() {
         <p className="comp-eyebrow">{t('partners.eyebrow')}</p>
         <h1 className="comp-title">{t('partners.title')}</h1>
       </div>
+
+      {/* Empujón al referido: conéctate con quien te trajo a la app. */}
+      {showReferrerNudge && referrer && (
+        <div className="comp-referrer">
+          <button className="comp-referrer-x" onClick={dismissNudge} aria-label={t('common.close')}><X size={15} strokeWidth={2} /></button>
+          <div className="comp-referrer-head">
+            <Avatar name={referrer.displayName || referrer.username} url={referrer.avatarUrl} />
+            <div className="comp-referrer-body">
+              <p className="comp-referrer-title">{t('partners.referrerCardTitle', { name: referrerName })}</p>
+              <p className="comp-referrer-sub">{t('partners.referrerCardSub')}</p>
+            </div>
+          </div>
+          <button className="comp-referrer-cta" onClick={connectWithReferrer}>
+            <Dumbbell size={15} strokeWidth={2} /> {t('partners.referrerCardCta')}
+          </button>
+        </div>
+      )}
 
       {/* Gate de identidad: sin @usuario no hay búsqueda/conexión. */}
       {!username && (

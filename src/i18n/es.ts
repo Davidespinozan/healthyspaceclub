@@ -511,6 +511,9 @@ export const es = {
   partners: {
     eyebrow: 'Entrenar en pareja',
     title: 'Tus compañeros',
+    referrerCardTitle: '{name} te trajo a Healthy Space Club',
+    referrerCardSub: 'Devuélvele el gesto: conéctense y entrenen juntos.',
+    referrerCardCta: 'Entrenar juntos',
     setUsernameTitle: 'Elige tu @usuario',
     setUsernameSub: 'Lo necesitas para que tus compañeros te encuentren.',
     searchPlaceholder: 'Buscar por @usuario o nombre',

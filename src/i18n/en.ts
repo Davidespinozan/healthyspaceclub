@@ -512,6 +512,9 @@ export const en: Translations<typeof es> = {
   partners: {
     eyebrow: 'Train with a partner',
     title: 'Your partners',
+    referrerCardTitle: '{name} brought you to Healthy Space Club',
+    referrerCardSub: 'Return the gesture: connect and train together.',
+    referrerCardCta: 'Train together',
     setUsernameTitle: 'Choose your @username',
     setUsernameSub: 'You need it so partners can find you.',
     searchPlaceholder: 'Search by @username or name',

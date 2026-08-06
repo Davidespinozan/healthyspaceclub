@@ -38,3 +38,39 @@ export function inviteLink(username: string): string {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   return `${origin}/?ref=${encodeURIComponent(username)}`;
 }
+
+export interface ReferrerInfo {
+  id: string;
+  username: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+}
+
+/** Quién me invitó a la app (si me registré por un ?ref=). Sirve para empujar al
+ *  referido a conectarse/entrenar con quien lo trajo — cerrando el handoff
+ *  "invitación → togetherness". null si no fui referido. */
+export async function getMyReferrer(): Promise<ReferrerInfo | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data: row } = await supabase
+      .from('referrals')
+      .select('referrer_id')
+      .eq('referee_id', user.id)
+      .maybeSingle();
+    if (!row?.referrer_id) return null;
+    const { data: prof } = await supabase
+      .from('public_profiles')
+      .select('user_id, username, display_name, avatar_url')
+      .eq('user_id', row.referrer_id)
+      .maybeSingle();
+    return {
+      id: row.referrer_id,
+      username: prof?.username ?? null,
+      displayName: prof?.display_name ?? null,
+      avatarUrl: prof?.avatar_url ?? null,
+    };
+  } catch {
+    return null;
+  }
+}

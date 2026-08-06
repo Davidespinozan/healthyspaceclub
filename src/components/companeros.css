@@ -161,3 +161,40 @@
 .comp-row-tag--ok { color: #3C7E52; }
 
 .comp-row--muted { opacity: 0.6; }
+
+/* Empujón al referido: tarjeta destacada "X te trajo — entrenen juntos". */
+.comp-referrer {
+  position: relative;
+  background: linear-gradient(135deg, rgba(201,169,104,0.14), rgba(168,134,78,0.08));
+  border: 1px solid rgba(168,134,78,0.3);
+  border-radius: 16px;
+  padding: 16px 16px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.comp-referrer-head { display: flex; align-items: center; gap: 12px; }
+.comp-referrer-body { min-width: 0; }
+.comp-referrer-title {
+  margin: 0; font-family: 'Montserrat', sans-serif;
+  font-size: 0.95rem; font-weight: 700; color: var(--forest, #153330); line-height: 1.3;
+}
+.comp-referrer-sub { margin: 3px 0 0; font-size: 0.82rem; color: rgba(21,51,48,0.6); line-height: 1.35; }
+.comp-referrer-cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; padding: 11px; border: none; border-radius: 12px; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #1C3B35, #0E2521);
+  box-shadow: 0 4px 12px rgba(21,51,48,0.2);
+  transition: transform 0.12s, filter 0.15s;
+}
+.comp-referrer-cta:hover { filter: brightness(1.08); }
+.comp-referrer-cta:active { transform: scale(0.98); }
+.comp-referrer-x {
+  position: absolute; top: 10px; right: 10px;
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border: none; background: rgba(21,51,48,0.06); color: rgba(21,51,48,0.5);
+  border-radius: 50%; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.comp-referrer-x:hover { background: rgba(21,51,48,0.12); color: rgba(21,51,48,0.8); }
