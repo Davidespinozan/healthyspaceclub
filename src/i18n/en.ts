@@ -518,6 +518,7 @@ export const en: Translations<typeof es> = {
     cancel: 'Cancel invite',
     unlink: 'Unlink',
     unlinkConfirm: 'Unlink {name}? You can reconnect anytime.',
+    partnerHasOwn: "Your partner already built their own routine today — we didn't replace it.",
     setUsernameTitle: 'Choose your @username',
     setUsernameSub: 'You need it so partners can find you.',
     searchPlaceholder: 'Search by @username or name',

@@ -517,6 +517,7 @@ export const es = {
     cancel: 'Cancelar invitación',
     unlink: 'Desvincular',
     unlinkConfirm: '¿Desvincular a {name}? Podrán volver a conectarse cuando quieran.',
+    partnerHasOwn: 'Tu compañero ya había armado su rutina de hoy — no se la reemplazamos.',
     setUsernameTitle: 'Elige tu @usuario',
     setUsernameSub: 'Lo necesitas para que tus compañeros te encuentren.',
     searchPlaceholder: 'Buscar por @usuario o nombre',

@@ -36,7 +36,7 @@ import {
 import { orchestrateWorkout } from '../utils/workoutOrchestration';
 import { buildYogaFlowPlan } from '../utils/yogaBuilder';
 import { repairWorkoutStructure } from '../utils/exerciseOrder';
-import { deliverPartnerWorkout, getPartnerRecentDaytypes } from '../utils/partners';
+import { deliverPartnerWorkout, getPartnerRecentDaytypes, type DeliverResult } from '../utils/partners';
 import type {
   Exercise,
   Equipment,
@@ -203,6 +203,12 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     seal.userEquipment = selectedEquipment;
     seal.userModality = selectedModality;
     seal.userDuration = selectedTime;
+  }
+
+  // Al entregar la rutina al compañero: si él ya tenía SU rutina de hoy, el server
+  // NO se la pisa (guard anti-clobber) y avisamos al host en vez de fallar mudo.
+  function surfaceDeliver(r: DeliverResult) {
+    if (r === 'has-own') { try { window.alert(t('partners.partnerHasOwn')); } catch { /* noop */ } }
   }
 
   // ── Generate
@@ -389,7 +395,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         sealPlan(cached);
         await saveDailyWorkout(cached as any);
         if (partnerMode && pendingPartner?.id) {
-          deliverPartnerWorkout(pendingPartner.id, cached).catch(() => {});
+          deliverPartnerWorkout(pendingPartner.id, cached).then(surfaceDeliver).catch(() => {});
         }
         setPhase('plan');
         return;
@@ -436,7 +442,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
         // Sesión compartida: entrega el MISMO flow al compañero (no genera él).
         if (partnerMode && pendingPartner?.id) {
-          deliverPartnerWorkout(pendingPartner.id, adjustedPlan).catch(() => {});
+          deliverPartnerWorkout(pendingPartner.id, adjustedPlan).then(surfaceDeliver).catch(() => {});
         }
 
         // Increment ONLY after successful save
@@ -628,7 +634,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       await saveDailyWorkout(workout as any);
       // Sesión compartida: entrega la MISMA rutina al compañero (no genera él).
       if (partnerMode && pendingPartner?.id) {
-        deliverPartnerWorkout(pendingPartner.id, workout).catch(() => {});
+        deliverPartnerWorkout(pendingPartner.id, workout).then(surfaceDeliver).catch(() => {});
       }
       setPhase('plan');
     } catch (e) {

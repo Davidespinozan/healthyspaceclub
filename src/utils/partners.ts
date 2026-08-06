@@ -147,21 +147,26 @@ export interface PartnerTrainingProfile {
   equipment?: string[];
 }
 
+export type DeliverResult = 'delivered' | 'has-own' | 'not-connected' | 'error';
+
 /** Entrega la rutina de pareja al daily_workout del compañero (sesión compartida).
- *  Solo surte efecto si están conectados (la función lo valida). */
-export async function deliverPartnerWorkout(partnerId: string, plan: unknown): Promise<boolean> {
+ *  Solo surte efecto si están conectados (la función lo valida). Devuelve el
+ *  resultado para que el host se entere: 'has-own' = el compañero ya tenía SU
+ *  rutina de hoy y NO se la pisamos (fin del fallo mudo). */
+export async function deliverPartnerWorkout(partnerId: string, plan: unknown): Promise<DeliverResult> {
   // day_local: dayKey local del host → la fecha del daily_workout entregado coincide
   // con lo que el cliente compara (evita que de noche no aparezca hoy).
   const { data, error } = await supabase.rpc('deliver_partner_workout', { partner: partnerId, plan, day_local: dayKey(new Date()) });
   if (error) {
     console.warn('[partners] deliver failed:', error.message);
-    return false;
+    return 'error';
   }
   if (data === 'delivered') {
     // Avisa al compañero para que su rutina de hoy aparezca al instante.
     notifyUser(partnerId, 'partner_workout');
+    return 'delivered';
   }
-  return data === 'delivered';
+  return (data === 'has-own' || data === 'not-connected') ? data : 'error';
 }
 
 /** day_type recientes del compañero (últimas ~36h) — para evitar sus músculos
