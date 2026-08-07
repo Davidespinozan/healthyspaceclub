@@ -511,6 +511,13 @@ export const es = {
   partners: {
     eyebrow: 'Entrenar en pareja',
     title: 'Tus compañeros',
+    promise: 'Entrena con alguien — no lo hagas solo. Hay dos formas:',
+    mode1Title: 'Juntos, en vivo',
+    mode1Body: 'La misma sesión, por turnos. Se ven avanzar en tiempo real.',
+    mode2Title: 'A distancia',
+    mode2Body: 'Cada quien entrena lo suyo, pero se empujan a no fallar.',
+    emptyTitle: 'Todo es mejor con alguien al lado',
+    emptyBody: 'Conecta con un amigo: entrenar acompañado te hace aparecer los días que solo no lo harías.',
     referrerCardTitle: '{name} te trajo a Healthy Space Club',
     referrerCardSub: 'Devuélvele el gesto: conéctense y entrenen juntos.',
     referrerCardCta: 'Entrenar juntos',

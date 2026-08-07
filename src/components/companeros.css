@@ -208,3 +208,25 @@
   transition: background 0.15s, color 0.15s;
 }
 .comp-unlink:hover { background: rgba(204,51,51,0.12); color: #c33; }
+
+/* Marco "qué es entrenar en pareja" — las dos formas + estado vacío con valor. */
+.comp-promise {
+  font-size: 0.92rem; color: rgba(21,51,48,0.72); line-height: 1.45;
+  margin: 2px 0 12px; max-width: 60ch;
+}
+.comp-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+@media (max-width: 420px) { .comp-modes { grid-template-columns: 1fr; } }
+.comp-mode {
+  border: 1px solid rgba(21,51,48,0.1); border-radius: 14px; padding: 14px;
+  background: rgba(255,255,255,0.5);
+}
+.comp-mode-emoji { font-size: 1.3rem; display: block; margin-bottom: 6px; }
+.comp-mode-t { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.92rem; color: var(--forest, #153330); margin-bottom: 3px; }
+.comp-mode-b { font-size: 0.8rem; color: rgba(21,51,48,0.6); line-height: 1.4; }
+
+.comp-empty-rich {
+  border: 1px dashed rgba(21,51,48,0.16); border-radius: 14px; padding: 18px 16px;
+  background: rgba(255,255,255,0.4); text-align: center;
+}
+.comp-empty-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.98rem; color: var(--forest, #153330); margin: 0 0 6px; }
+.comp-empty-body { font-size: 0.86rem; color: rgba(21,51,48,0.6); line-height: 1.45; margin: 0; max-width: 42ch; margin-left: auto; margin-right: auto; }

@@ -512,6 +512,13 @@ export const en: Translations<typeof es> = {
   partners: {
     eyebrow: 'Train with a partner',
     title: 'Your partners',
+    promise: "Train with someone — don't do it alone. Two ways:",
+    mode1Title: 'Together, live',
+    mode1Body: 'Same session, taking turns. You watch each other progress in real time.',
+    mode2Title: 'At a distance',
+    mode2Body: 'Each trains their own, but you push each other not to skip.',
+    emptyTitle: 'Everything is better with someone beside you',
+    emptyBody: 'Connect with a friend: training with company makes you show up on the days you wouldn\'t alone.',
     referrerCardTitle: '{name} brought you to Healthy Space Club',
     referrerCardSub: 'Return the gesture: connect and train together.',
     referrerCardCta: 'Train together',

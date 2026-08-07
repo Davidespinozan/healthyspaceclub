@@ -165,6 +165,22 @@ export default function CompanerosScreen() {
         <h1 className="comp-title">{t('partners.title')}</h1>
       </div>
 
+      {/* Qué es y qué te da: las dos formas de entrenar en pareja (marco, para que
+          se ENTIENDA la feature — antes abrías a un buscador sin contexto). */}
+      <p className="comp-promise">{t('partners.promise')}</p>
+      <div className="comp-modes">
+        <div className="comp-mode">
+          <span className="comp-mode-emoji">🤝</span>
+          <div className="comp-mode-t">{t('partners.mode1Title')}</div>
+          <div className="comp-mode-b">{t('partners.mode1Body')}</div>
+        </div>
+        <div className="comp-mode">
+          <span className="comp-mode-emoji">🔥</span>
+          <div className="comp-mode-t">{t('partners.mode2Title')}</div>
+          <div className="comp-mode-b">{t('partners.mode2Body')}</div>
+        </div>
+      </div>
+
       {/* Empujón al referido: conéctate con quien te trajo a la app. */}
       {showReferrerNudge && referrer && (
         <div className="comp-referrer">
@@ -283,7 +299,10 @@ export default function CompanerosScreen() {
           <div className="comp-section">
             <p className="comp-section-label">{t('partners.yourPartners')}</p>
             {accepted.length === 0 && outgoing.length === 0 ? (
-              <p className="comp-empty">{t('partners.noPartners')}</p>
+              <div className="comp-empty-rich">
+                <p className="comp-empty-title">{t('partners.emptyTitle')}</p>
+                <p className="comp-empty-body">{t('partners.emptyBody')}</p>
+              </div>
             ) : (
               <div className="comp-list">
                 {/* Conectados → SOLO el que invitó (requester) genera la rutina;
