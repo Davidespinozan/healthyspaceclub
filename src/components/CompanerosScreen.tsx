@@ -14,11 +14,15 @@ import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import {
   searchUsers, sendInvite, respondInvite, listPartnerships, getPartnerTrainingProfile,
-  countSessionsWith, removePartnership, type UserSearchResult, type Partnership,
+  countSessionsWith, removePartnership, getPartnerTodayStatus, type UserSearchResult, type Partnership,
 } from '../utils/partners';
 import UsernameSetupSheet from './UsernameSetupSheet';
+import ShareStatSheet from './ShareStatSheet';
 import { inviteLink, getMyReferrer, type ReferrerInfo } from '../utils/referral';
+import { dayKey } from '../utils/localDate';
 import './companeros.css';
+
+type DuoStatus = { trainedToday: boolean; streak: number };
 
 const NUDGE_KEY = 'hsc_ref_nudge_done';
 
@@ -33,6 +37,10 @@ export default function CompanerosScreen() {
   const username = useAppStore(s => s.username);
   const setDashPage = useAppStore(s => s.setDashPage);
   const setPendingPartner = useAppStore(s => s.setPendingPartner);
+  const lastActiveDate = useAppStore(s => s.lastActiveDate);
+  const streakCount = useAppStore(s => s.streakCount);
+  const today = dayKey(new Date());
+  const iTrainedToday = lastActiveDate === today;
 
   const [showUsernameSetup, setShowUsernameSetup] = useState(false);
   const [partnerships, setPartnerships] = useState<Partnership[]>([]);
@@ -41,6 +49,8 @@ export default function CompanerosScreen() {
   const [searching, setSearching] = useState(false);
   const [invited, setInvited] = useState<Set<string>>(new Set());
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [statuses, setStatuses] = useState<Record<string, DuoStatus>>({});
+  const [shareDuo, setShareDuo] = useState<string | null>(null);
   // Empujón al referido: si me trajo alguien (?ref=), invitarlo a entrenar cierra
   // el handoff "invitación → togetherness" (hoy el referido entra como usuario suelto).
   const [referrer, setReferrer] = useState<ReferrerInfo | null>(null);
@@ -62,6 +72,11 @@ export default function CompanerosScreen() {
       acc.map(async p => [p.other_id, await countSessionsWith(p.other_id)] as const),
     );
     setCounts(Object.fromEntries(entries));
+    // Reto del día (a distancia): ¿ya entrenó cada compañero hoy?
+    const st = await Promise.all(
+      acc.map(async p => [p.other_id, await getPartnerTodayStatus(p.other_id, dayKey(new Date()))] as const),
+    );
+    setStatuses(Object.fromEntries(st.filter((e): e is [string, DuoStatus] => e[1] != null)));
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -309,27 +324,52 @@ export default function CompanerosScreen() {
                     el otro la recibe (evita que ambos generen rutinas distintas). */}
                 {accepted.map(p => {
                   const iHost = p.direction === 'outgoing';
+                  const st = statuses[p.other_id];
+                  const theirName = (p.other_name || p.other_username || '').split(' ')[0] || t('partners.aPartner');
+                  const bothDone = iTrainedToday && !!st?.trainedToday;
                   return (
-                    <div className="comp-row" key={p.partnership_id}>
-                      <Avatar name={p.other_name || p.other_username} url={p.other_avatar} />
-                      <div className="comp-row-body">
-                        <span className="comp-row-name">{displayName(p.other_name, p.other_username)}</span>
-                        <span className="comp-row-handle">
-                          {counts[p.other_id] > 0
-                            ? t('partners.together', { n: counts[p.other_id] })
-                            : (p.other_username ? `@${p.other_username}` : '')}
-                        </span>
-                      </div>
-                      {iHost ? (
-                        <button className="comp-train-btn" onClick={() => trainWith(p)}>
-                          <Dumbbell size={14} strokeWidth={2} /> {t('partners.train')}
+                    <div className="comp-duo-wrap" key={p.partnership_id}>
+                      <div className="comp-row">
+                        <Avatar name={p.other_name || p.other_username} url={p.other_avatar} />
+                        <div className="comp-row-body">
+                          <span className="comp-row-name">{displayName(p.other_name, p.other_username)}</span>
+                          <span className="comp-row-handle">
+                            {counts[p.other_id] > 0
+                              ? t('partners.together', { n: counts[p.other_id] })
+                              : (p.other_username ? `@${p.other_username}` : '')}
+                          </span>
+                        </div>
+                        {iHost ? (
+                          <button className="comp-train-btn" onClick={() => trainWith(p)}>
+                            <Dumbbell size={14} strokeWidth={2} /> {t('partners.train')}
+                          </button>
+                        ) : (
+                          <span className="comp-row-tag">{t('partners.hostsRoutine')}</span>
+                        )}
+                        <button className="comp-unlink" onClick={() => unlinkPartner(p)} aria-label={t('partners.unlink')} title={t('partners.unlink')}>
+                          <X size={14} strokeWidth={2} />
                         </button>
-                      ) : (
-                        <span className="comp-row-tag">{t('partners.hostsRoutine')}</span>
+                      </div>
+                      {/* Reto del día (a distancia): estado de hoy de los dos + payoff. */}
+                      {st && (
+                        <div className="comp-duo">
+                          <div className="comp-duo-pills">
+                            <span className={`comp-duo-pill${iTrainedToday ? ' on' : ''}`}>{iTrainedToday ? '✓' : '○'} {t('partners.duoYou')}</span>
+                            <span className={`comp-duo-pill${st.trainedToday ? ' on' : ''}`}>{st.trainedToday ? '✓' : '○'} {theirName}</span>
+                          </div>
+                          <p className="comp-duo-line">
+                            {bothDone ? t('partners.duoBoth')
+                              : st.trainedToday ? t('partners.duoTheyDone', { name: theirName })
+                              : iTrainedToday ? t('partners.duoYouDone', { name: theirName })
+                              : t('partners.duoNeither', { name: theirName })}
+                          </p>
+                          {bothDone && (
+                            <button className="comp-duo-share" onClick={() => setShareDuo(String(streakCount))}>
+                              <Flame size={13} strokeWidth={2} /> {t('partners.duoShare')}
+                            </button>
+                          )}
+                        </div>
                       )}
-                      <button className="comp-unlink" onClick={() => unlinkPartner(p)} aria-label={t('partners.unlink')} title={t('partners.unlink')}>
-                        <X size={14} strokeWidth={2} />
-                      </button>
                     </div>
                   );
                 })}
@@ -357,6 +397,14 @@ export default function CompanerosScreen() {
         <UsernameSetupSheet
           onClose={() => setShowUsernameSetup(false)}
           onDone={() => setShowUsernameSetup(false)}
+        />
+      )}
+
+      {shareDuo != null && (
+        <ShareStatSheet
+          headline={t('partners.duoHeadline')}
+          stats={[{ big: shareDuo, label: t('partners.duoStatLabel') }]}
+          onClose={() => setShareDuo(null)}
         />
       )}
     </div>

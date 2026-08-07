@@ -139,6 +139,16 @@ export async function listPartnerships(): Promise<Partnership[]> {
   return (data ?? []) as Partnership[];
 }
 
+/** Estado de HOY de un compañero conectado (¿ya entrenó?) para el reto del día a
+ *  distancia. Solo con conexión aceptada (lo valida la RPC). `today` = dayKey local. */
+export async function getPartnerTodayStatus(partnerId: string, today: string): Promise<{ trainedToday: boolean; streak: number } | null> {
+  const { data, error } = await supabase.rpc('partner_today_status', { partner: partnerId });
+  if (error || !data) return null;
+  const row = (Array.isArray(data) ? data[0] : data) as { last_active_date: string | null; streak_count: number | null } | undefined;
+  if (!row) return null;
+  return { trainedToday: row.last_active_date === today, streak: row.streak_count ?? 0 };
+}
+
 /** Perfil de entrenamiento de un compañero conectado (nivel/equipo), para que la
  *  IA genere la rutina de pareja con datos reales. Lee user_preferences del otro
  *  usuario — requiere que la conexión esté aceptada (RLS / perfil público). */

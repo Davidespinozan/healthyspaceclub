@@ -230,3 +230,23 @@
 }
 .comp-empty-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.98rem; color: var(--forest, #153330); margin: 0 0 6px; }
 .comp-empty-body { font-size: 0.86rem; color: rgba(21,51,48,0.6); line-height: 1.45; margin: 0; max-width: 42ch; margin-left: auto; margin-right: auto; }
+
+/* Reto del día (a distancia) — estado de hoy de los dos + payoff. */
+.comp-duo-wrap { border: 1px solid rgba(21,51,48,0.08); border-radius: 14px; overflow: hidden; background: rgba(255,255,255,0.4); }
+.comp-duo-wrap .comp-row { border: none; }
+.comp-duo { padding: 0 14px 12px; }
+.comp-duo-pills { display: flex; gap: 8px; margin-bottom: 6px; }
+.comp-duo-pill {
+  font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+  background: rgba(21,51,48,0.06); color: rgba(21,51,48,0.5);
+}
+.comp-duo-pill.on { background: rgba(45,122,79,0.14); color: #2d7a4f; }
+.comp-duo-line { font-size: 0.84rem; color: rgba(21,51,48,0.72); line-height: 1.4; margin: 0; }
+.comp-duo-share {
+  margin-top: 10px; display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: none; border-radius: 999px; cursor: pointer;
+  font-family: inherit; font-size: 12.5px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #e0703c, #c9531f);
+  box-shadow: 0 4px 12px rgba(224,112,60,0.28);
+}
+.comp-duo-share:active { transform: scale(0.96); }
