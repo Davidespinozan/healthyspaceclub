@@ -250,3 +250,11 @@
   box-shadow: 0 4px 12px rgba(224,112,60,0.28);
 }
 .comp-duo-share:active { transform: scale(0.96); }
+
+/* Racha de dúo (a distancia). */
+.comp-duo-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.comp-duo-streak {
+  display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
+  font-size: 0.72rem; font-weight: 800; color: #c9531f;
+  background: rgba(224,112,60,0.12); padding: 3px 9px; border-radius: 999px;
+}

@@ -22,7 +22,7 @@ import { inviteLink, getMyReferrer, type ReferrerInfo } from '../utils/referral'
 import { dayKey } from '../utils/localDate';
 import './companeros.css';
 
-type DuoStatus = { trainedToday: boolean; streak: number };
+type DuoStatus = { trainedToday: boolean; streak: number; duoStreak: number };
 
 const NUDGE_KEY = 'hsc_ref_nudge_done';
 
@@ -72,9 +72,11 @@ export default function CompanerosScreen() {
       acc.map(async p => [p.other_id, await countSessionsWith(p.other_id)] as const),
     );
     setCounts(Object.fromEntries(entries));
-    // Reto del día (a distancia): ¿ya entrenó cada compañero hoy?
+    // Reto del día (a distancia): ¿ya entrenó cada compañero hoy? + racha de dúo.
+    const td = dayKey(new Date());
+    const yd = dayKey(new Date(Date.now() - 86400000));
     const st = await Promise.all(
-      acc.map(async p => [p.other_id, await getPartnerTodayStatus(p.other_id, dayKey(new Date()))] as const),
+      acc.map(async p => [p.other_id, await getPartnerTodayStatus(p.other_id, td, yd)] as const),
     );
     setStatuses(Object.fromEntries(st.filter((e): e is [string, DuoStatus] => e[1] != null)));
   }, []);
@@ -353,9 +355,14 @@ export default function CompanerosScreen() {
                       {/* Reto del día (a distancia): estado de hoy de los dos + payoff. */}
                       {st && (
                         <div className="comp-duo">
-                          <div className="comp-duo-pills">
-                            <span className={`comp-duo-pill${iTrainedToday ? ' on' : ''}`}>{iTrainedToday ? '✓' : '○'} {t('partners.duoYou')}</span>
-                            <span className={`comp-duo-pill${st.trainedToday ? ' on' : ''}`}>{st.trainedToday ? '✓' : '○'} {theirName}</span>
+                          <div className="comp-duo-top">
+                            <div className="comp-duo-pills">
+                              <span className={`comp-duo-pill${iTrainedToday ? ' on' : ''}`}>{iTrainedToday ? '✓' : '○'} {t('partners.duoYou')}</span>
+                              <span className={`comp-duo-pill${st.trainedToday ? ' on' : ''}`}>{st.trainedToday ? '✓' : '○'} {theirName}</span>
+                            </div>
+                            {st.duoStreak > 0 && (
+                              <span className="comp-duo-streak"><Flame size={12} strokeWidth={2.5} /> {t('partners.duoStreak', { n: st.duoStreak })}</span>
+                            )}
                           </div>
                           <p className="comp-duo-line">
                             {bothDone ? t('partners.duoBoth')
@@ -364,7 +371,7 @@ export default function CompanerosScreen() {
                               : t('partners.duoNeither', { name: theirName })}
                           </p>
                           {bothDone && (
-                            <button className="comp-duo-share" onClick={() => setShareDuo(String(streakCount))}>
+                            <button className="comp-duo-share" onClick={() => setShareDuo(String(st.duoStreak > 0 ? st.duoStreak : streakCount))}>
                               <Flame size={13} strokeWidth={2} /> {t('partners.duoShare')}
                             </button>
                           )}

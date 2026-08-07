@@ -1138,6 +1138,10 @@ export const useAppStore = create<AppState>()(
     const { newStreak, changed } = computeStreak(streakCount, lastActiveDate, today);
     if (!changed) return;
     set({ streakCount: newStreak, lastActiveDate: today });
+    // Reto del día a distancia: como esto solo corre la 1ª vez que te vuelves activo
+    // hoy, avisamos a tus compañeros (push) y subimos la racha de dúo si el compa
+    // también entrenó hoy. Fire-and-forget: no bloquear la racha por esto.
+    if (user?.id) { try { void supabase.rpc('partner_on_active', { day_local: today }); } catch { /* noop */ } }
     const unlocked = await tryUnlockMilestones(streakCount, newStreak, user?.id);
     if (unlocked.length > 0) {
       // Dedup por milestone_days: si la racha se rompió y se re-cruzó el umbral,

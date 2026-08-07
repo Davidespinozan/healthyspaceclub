@@ -33,6 +33,7 @@ function iconFor(type: AppNotification['type']) {
     case 'collab': return <Users size={15} strokeWidth={2} />;
     case 'partner_invite': return <UserPlus size={15} strokeWidth={2} />;
     case 'partner_accept': return <Check size={15} strokeWidth={2} />;
+    case 'partner_trained': return <Flame size={15} strokeWidth={2} />;
     case 'follow': return <UserCheck size={15} strokeWidth={2} />;
     case 'reminder': return <Bell size={15} strokeWidth={2} />;
   }
@@ -45,6 +46,7 @@ function textFor(n: AppNotification, t: TFn): string {
     case 'collab': return t('notif.collab');
     case 'partner_invite': return t('notif.partnerInvite');
     case 'partner_accept': return t('notif.partnerAccept');
+    case 'partner_trained': return t('notif.partnerTrained');
     case 'follow': return t('notif.follow');
     case 'reminder': return n.preview || '';
   }
