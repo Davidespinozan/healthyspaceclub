@@ -225,6 +225,37 @@ export function computeWeeklyVolume(
 
 const STRENGTH_TYPES: WorkoutDayType[] = ['upper', 'lower', 'full-body', 'push', 'pull', 'legs'];
 
+/**
+ * "Juntos de verdad" — foco fresco para AMBOS. Dado el día de fuerza que el motor
+ * eligió para el host y los músculos recientes de los dos (los del compañero vía sus
+ * day-types recientes), escoge el día de fuerza que MENOS solapa con lo que cualquiera
+ * ya entrenó (ej. host hizo pierna, compa hombro → hoy un día de tirón/espalda).
+ * ADITIVO Y SEGURO: si el día NO es de fuerza, o no hay músculos recientes, o el del
+ * host ya es el de menor solape, lo devuelve IGUAL (nunca peor que hoy).
+ */
+export function reconcilePartnerDayType(
+  hostType: WorkoutDayType,
+  hostRecentMuscles: MuscleGroup[],
+  partnerRecentDaytypes: string[],
+): WorkoutDayType {
+  if (!STRENGTH_TYPES.includes(hostType)) return hostType;
+  const recent = new Set<MuscleGroup>(hostRecentMuscles);
+  for (const dt of partnerRecentDaytypes) {
+    const cfg = DAY_TYPE_CONFIG[dt as WorkoutDayType];
+    if (cfg) for (const m of cfg.muscleGroups) recent.add(m);
+  }
+  if (recent.size === 0) return hostType;
+  const overlap = (ty: WorkoutDayType) =>
+    DAY_TYPE_CONFIG[ty].muscleGroups.reduce((n, m) => n + (recent.has(m) ? 1 : 0), 0);
+  let best = hostType;
+  let bestOv = overlap(hostType);
+  for (const ty of STRENGTH_TYPES) {
+    const ov = overlap(ty);
+    if (ov < bestOv) { best = ty; bestOv = ov; }
+  }
+  return best;
+}
+
 /** IDs de ejercicios usados en las últimas `nSessions` sesiones (para rotación/variedad). */
 export function recentExerciseIds(completedSessions: CompletedSession[], nSessions = 2): Set<string> {
   const sorted = [...completedSessions].sort((a, b) =>

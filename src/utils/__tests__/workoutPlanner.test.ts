@@ -268,3 +268,27 @@ describe('workoutPlanner', () => {
   });
 
 });
+
+import { reconcilePartnerDayType } from '../workoutPlanner';
+import type { WorkoutDayType } from '../../types';
+
+describe('reconcilePartnerDayType (juntos de verdad — foco fresco para ambos)', () => {
+  it('host hizo pierna, compa hizo push → elige pull (0 solape)', () => {
+    const r = reconcilePartnerDayType('legs', ['cuadriceps', 'isquios', 'gluteo', 'pantorrillas'], ['push']);
+    expect(r).toBe('pull');
+  });
+
+  it('sin músculos recientes → devuelve el día del host igual', () => {
+    expect(reconcilePartnerDayType('legs', [], [])).toBe('legs');
+  });
+
+  it('día NO de fuerza → no lo toca', () => {
+    expect(reconcilePartnerDayType('cardio' as WorkoutDayType, ['cuadriceps'], ['push'])).toBe('cardio');
+  });
+
+  it('ambos hicieron lo mismo (legs) → cambia a algo fresco (no legs/lower)', () => {
+    const r = reconcilePartnerDayType('legs', ['cuadriceps', 'gluteo'], ['legs']);
+    expect(r).not.toBe('legs');
+    expect(r).not.toBe('lower');
+  });
+});

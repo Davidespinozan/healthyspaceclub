@@ -22,6 +22,7 @@ import {
   equipmentFromPlan,
   modalityFromPlan,
   durationFromPlan,
+  reconcilePartnerDayType,
 } from '../utils/workoutPlanner';
 import {
   getCachedWorkout,
@@ -302,6 +303,24 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     };
 
     try {
+      // "Juntos de verdad": day-types recientes del compañero → (a) reconciliar el
+      // foco para que quede fresco para AMBOS, (b) excluir sus músculos. Una sola vez.
+      let partnerRecentDts: string[] = [];
+      if (partnerMode && pendingPartner?.id) {
+        try { partnerRecentDts = await getPartnerRecentDaytypes(pendingPartner.id); } catch { /* noop */ }
+      }
+      // Solo reconciliamos cuando el motor decide el día (auto / fuerza-auto); si el
+      // host eligió un foco específico, se respeta. Aditivo: reconcilePartnerDayType
+      // devuelve el mismo día si no hay mejora → sin cambio de comportamiento.
+      const reconciledType: WorkoutDayType = (partnerMode
+        && (selectedModality === 'auto' || (selectedModality === 'fuerza' && focus === 'auto')))
+        ? reconcilePartnerDayType(todayDecision.type, history.yesterday, partnerRecentDts)
+        : todayDecision.type;
+      const reconciled = reconciledType !== todayDecision.type;
+      if (reconciled) {
+        bullets.push(`FOCO DE PAREJA: hoy ${DAY_TYPE_CONFIG[reconciledType].focus} — elegido para que quede FRESCO para los dos (${partnerName || 'tu compañero'} y tú entrenaron otras cosas hace poco). Esta rutina se genera para ambos.`);
+      }
+
       // Determine day type and goal based on modality
       let dayLabel: string;
       let goal: Goal;
@@ -311,6 +330,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         dayLabel = todayDecision.label;
         goal = todayDecision.type === 'movilidad' ? 'movilidad' : todayDecision.type === 'cardio' ? 'condicion' : 'hipertrofia';
         muscleGroups = todayDecision.muscleGroups;
+        if (reconciled) { const c = DAY_TYPE_CONFIG[reconciledType]; dayLabel = c.label; muscleGroups = c.muscleGroups; }
       } else if (selectedModality === 'yoga') {
         dayLabel = 'Yoga / Recovery';
         goal = 'movilidad';
@@ -325,6 +345,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         if (focus === 'auto') {
           dayLabel = todayDecision.label;
           muscleGroups = todayDecision.muscleGroups;
+          if (reconciled) { const c = DAY_TYPE_CONFIG[reconciledType]; dayLabel = c.label; muscleGroups = c.muscleGroups; }
         } else if (focus === 'specific') {
           muscleGroups = selectedMuscles.length > 0 ? selectedMuscles : todayDecision.muscleGroups;
           dayLabel = muscleGroups.map(m => { const o = MUSCLE_OPTIONS.find(x => x.value === m); return o ? t(o.labelKey) : m; }).join(' + ');
@@ -340,9 +361,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // para que distinto foco (push vs pull vs músculos específicos) NO colisione
       // en el caché y devuelva la misma rutina.
       const dayTypeKey = selectedModality === 'auto'
-        ? todayDecision.type
+        ? reconciledType
         : selectedModality === 'fuerza'
-          ? (focus === 'specific' ? `specific:${[...selectedMuscles].sort().join(',')}` : `fuerza:${focus}`)
+          ? (focus === 'specific' ? `specific:${[...selectedMuscles].sort().join(',')}` : `fuerza:${focus === 'auto' && reconciled ? reconciledType : focus}`)
           : selectedModality;
       const schemaType = selectedModality === 'yoga' ? 'yoga' : 'workout' as const;
       const configHash = buildConfigHash({
@@ -470,15 +491,14 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
       // Sesión de pareja: el entrenador evita también los músculos que el
       // COMPAÑERO entrenó recientemente (si él hizo pierna ayer, hoy no toca).
+      // Reusa los day-types ya traídos arriba (no doble fetch). Excluye los músculos
+      // que el compañero entrenó — belt & suspenders junto a la reconciliación del foco.
       let partnerExcludeMuscles: MuscleGroup[] = [];
-      if (partnerMode && pendingPartner?.id) {
-        try {
-          const dts = await getPartnerRecentDaytypes(pendingPartner.id);
-          partnerExcludeMuscles = [...new Set(dts.flatMap(dt => DAY_TYPE_CONFIG[dt as WorkoutDayType]?.muscleGroups ?? []))];
-          if (partnerExcludeMuscles.length) {
-            bullets.push(`${partnerName} entrenó recientemente ${partnerExcludeMuscles.join(', ')} — no repitas esos músculos hoy (descanso para los dos)`);
-          }
-        } catch { /* noop */ }
+      if (partnerMode && partnerRecentDts.length) {
+        partnerExcludeMuscles = [...new Set(partnerRecentDts.flatMap(dt => DAY_TYPE_CONFIG[dt as WorkoutDayType]?.muscleGroups ?? []))];
+        if (partnerExcludeMuscles.length) {
+          bullets.push(`${partnerName} entrenó recientemente ${partnerExcludeMuscles.join(', ')} — no repitas esos músculos hoy (descanso para los dos)`);
+        }
       }
 
       // Modo bajo impacto (adultos mayores / movilidad reducida): excluye saltos,
