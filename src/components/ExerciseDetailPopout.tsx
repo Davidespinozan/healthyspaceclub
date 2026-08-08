@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Maximize2, Play, Lightbulb, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Maximize2, Play, Lightbulb, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Exercise, ExerciseVideo, Equipment } from '../types';
 import { selectVariantForEquipment } from '../utils/workoutPlanner';
@@ -340,7 +340,7 @@ export default function ExerciseDetailPopout({
           {/* Personalized tip */}
           {planData.tip_personalizado && (
             <div className="edp-tip">
-              <div className="edp-tip-label">{t('workout.coachSays')}</div>
+              <div className="edp-tip-label"><Sparkles size={13} strokeWidth={2} /> {t('workout.coachSays')}</div>
               <p className="edp-tip-text">{planData.tip_personalizado}</p>
             </div>
           )}

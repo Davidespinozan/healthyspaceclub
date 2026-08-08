@@ -435,11 +435,9 @@
   gap: 2px;
   margin-bottom: 18px;
   padding: 16px 10px;
-  background: var(--surface-glass-light);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: #ffffff;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--surface-glass-border);
+  border: 1px solid var(--edp-sand);
   box-shadow: var(--shadow-pro-md);
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
   animation-delay: 0.06s;
@@ -458,7 +456,7 @@
 .edp-stat-val {
   font-family: 'Montserrat', sans-serif;
   font-size: 25px;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--edp-forest);
   line-height: 1;
   margin-bottom: 6px;
@@ -478,33 +476,36 @@
 
 .edp-tip {
   padding: 14px 16px 15px;
-  background: linear-gradient(135deg, #C9A968, #A8864E);
-  border: 1px solid rgba(168, 134, 78, 0.5);
+  background: #F5EFE2;
+  border: 1px solid rgba(168, 134, 78, 0.24);
   border-radius: var(--radius-base);
   margin-bottom: 18px;
-  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
+  box-shadow: none;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
   animation-delay: 0.1s;
 }
 
 .edp-tip-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-family: 'Montserrat', sans-serif;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: var(--tracking-kicker-loose);
-  text-transform: none;
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--amber-deep);
+  margin-bottom: 6px;
 }
+.edp-tip-label svg { color: var(--amber); flex-shrink: 0; }
 
 .edp-tip-text {
   font-family: 'Montserrat', sans-serif;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.96);
+  color: var(--edp-forest);
   line-height: 1.55;
   letter-spacing: var(--tracking-tight);
   margin: 0;
-  font-style: italic;
 }
 
 /* ── Pedagogical steps ─────────────────────── */
@@ -545,15 +546,15 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #C9A968, #A8864E);
+  background: var(--amber);
   color: var(--edp-forest);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-top: 1px;
-  box-shadow: 0 4px 10px rgba(168, 134, 78, 0.32);
+  box-shadow: 0 4px 10px rgba(191, 160, 101, 0.28);
 }
 
 .edp-step-body {
