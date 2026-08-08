@@ -1025,6 +1025,7 @@ export const es = {
     emptyTitle: 'Aún no hay publicaciones del club.',
     emptySub: 'Comparte tu primer logro para empezar.',
     ariaCreate: 'Crear publicación',
+    deletePost: 'Borrar post',
     deletePostConfirm: '¿Eliminar este post?',
     deletePostFailed: 'No se pudo borrar el post.',
     feedAll: 'Todos',

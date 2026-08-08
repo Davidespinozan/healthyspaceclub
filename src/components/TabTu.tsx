@@ -1,11 +1,12 @@
 import { useMemo, useEffect, useState } from 'react';
-import { Menu, Flame, Gem } from 'lucide-react';
+import { Menu, Flame, Gem, Trash2 } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
 import { uploadAvatar } from '../utils/uploadAvatar';
+import { deleteClubPost } from '../utils/clubPosts';
 import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
@@ -55,6 +56,20 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
         .limit(9);
       if (data) setUserPosts(data as { id: string; photo_url: string }[]);
     } catch (e) { console.warn('[TabTu] fetchUserPosts failed:', e); }
+  }
+
+  // Borrar un post propio desde tu perfil (aquí es donde vives tus posts; en el
+  // Club se pierden en el feed). Optimista: lo quita de la grid y baja el conteo.
+  async function handleDeletePost(postId: string, photoUrl: string | null) {
+    if (!window.confirm(t('club.deletePostConfirm'))) return;
+    try {
+      await deleteClubPost(postId, photoUrl ?? null);
+      setUserPosts(prev => prev.filter(p => p.id !== postId));
+      setPostCount(c => Math.max(0, c - 1));
+    } catch (e) {
+      console.warn('[TabTu] deletePost failed:', e);
+      alert(t('club.deletePostFailed'));
+    }
   }
 
   useEffect(() => {
@@ -257,15 +272,24 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
         return (
           <div className="tt5-grid">
             {userPosts.map(post => (
-              <button
-                key={post.id}
-                type="button"
-                className="tt5-grid-item"
-                onClick={() => setProfileOpen(true)}
-                aria-label={t('profile.ariaViewPosts')}
-              >
-                <img src={post.photo_url} alt="" loading="lazy" />
-              </button>
+              <div key={post.id} className="tt5-grid-item">
+                <button
+                  type="button"
+                  className="tt5-grid-view"
+                  onClick={() => setProfileOpen(true)}
+                  aria-label={t('profile.ariaViewPosts')}
+                >
+                  <img src={post.photo_url} alt="" loading="lazy" />
+                </button>
+                <button
+                  type="button"
+                  className="tt5-grid-del"
+                  onClick={() => handleDeletePost(post.id, post.photo_url)}
+                  aria-label={t('club.deletePost')}
+                >
+                  <Trash2 size={14} strokeWidth={2} />
+                </button>
+              </div>
             ))}
             {Array.from({ length: placeholders }, (_, i) => (
               <div key={`ph-${i}`} className="tt5-grid-item tt5-grid-item--empty" aria-hidden="true" />

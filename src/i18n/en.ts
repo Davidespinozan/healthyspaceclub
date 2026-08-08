@@ -1026,6 +1026,7 @@ export const en: Translations<typeof es> = {
     emptyTitle: 'No club posts yet.',
     emptySub: 'Share your first achievement to get started.',
     ariaCreate: 'Create post',
+    deletePost: 'Delete post',
     deletePostConfirm: 'Delete this post?',
     deletePostFailed: "Couldn't delete the post.",
     feedAll: 'All',
