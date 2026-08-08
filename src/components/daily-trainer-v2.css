@@ -146,28 +146,29 @@
   margin-bottom: 16px;
 }
 
-/* Foto protagonista: el video/foto del ejercicio cubre toda la tarjeta, con el
-   nombre y el músculo encima sobre un degradado oscuro. */
 .dt2-ex {
-  display: block;
+  display: flex;
   position: relative;
-  min-height: 156px;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--sala-surface, #fff);
+  border: 1px solid var(--sala-border, var(--sand));
   border-radius: var(--radius-lg);
-  overflow: hidden;
-  background: var(--forest);
   box-shadow: var(--shadow-pro-lg);
-  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease;
+  transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
   cursor: pointer;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
+  overflow: hidden;
 }
-/* Scrim inferior para que el texto blanco resalte sobre la foto */
-.dt2-ex::after {
+/* Barra de acento a la izquierda — rima visual con las cards de comida (wnp2-meal) */
+.dt2-ex::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(8,20,18,.90) 0%, rgba(8,20,18,.48) 32%, rgba(8,20,18,0) 60%);
-  pointer-events: none;
-  z-index: 1;
+  left: 0; top: 12px; bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--amber);
 }
 .dt2-ex:nth-child(1) { animation-delay: 0.04s; }
 .dt2-ex:nth-child(2) { animation-delay: 0.09s; }
@@ -180,59 +181,57 @@
 .dt2-ex:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-pro-xl);
+  border-color: rgba(191, 160, 101, 0.4);
 }
-.dt2-ex:active { transform: scale(0.985); }
+.dt2-ex:active { transform: scale(0.98); }
 @media (prefers-reduced-motion: reduce) { .dt2-ex { animation: none; } }
 
-/* Media que cubre toda la tarjeta (o degradado forest de fallback + ícono). */
 .dt2-ex-emoji {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #1c3f37, #0E2521);
-  color: rgba(255, 255, 255, 0.5);
-  display: flex;
+  flex-shrink: 0;
+  width: 63px;
+  height: 63px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(191, 160, 101, 0.22), rgba(168, 134, 78, 0.14));
+  color: var(--amber-deep);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
+  font-size: 26px;
   overflow: hidden;
-  z-index: 0;
 }
-.dt2-ex-video,
-.dt2-ex-emoji img {
+.dt2-ex-video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 12px;
 }
 
+/* Desktop tiene más espacio → preview aún más grande y visual. */
 @media (min-width: 640px) {
-  .dt2-ex { min-height: 190px; }
+  .dt2-ex-emoji {
+    width: 84px;
+    height: 84px;
+    font-size: 34px;
+  }
 }
 
-/* Nombre + músculo, sobre la foto (abajo-izquierda). */
 .dt2-ex-body {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
-  padding: 14px 16px;
+  flex: 1;
   min-width: 0;
 }
 
 .dt2-ex-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 7px;
-  line-height: 1.2;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--forest);
+  margin-bottom: 2px;
+  line-height: 1.25;
 }
 
 .dt2-ex-stats {
   font-size: 11px;
+  color: var(--txt2);
   display: flex;
   gap: 6px;
   align-items: center;
@@ -333,9 +332,9 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: none;
-  color: #fff;
-  background: var(--terracota);
-  padding: 2px 8px;
+  color: var(--amber-deep);
+  background: rgba(191, 160, 101, 0.14);
+  padding: 2px 7px;
   border-radius: 50px;
   margin-right: 2px;
   flex-shrink: 0;
@@ -350,13 +349,8 @@
 }
 
 .dt2-ex-arrow {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 2;
-  color: #fff;
-  opacity: 0.9;
-  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.5));
+  flex-shrink: 0;
+  color: var(--amber);
 }
 
 /* ══════════════════════════════════════════════════════════
