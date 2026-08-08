@@ -830,6 +830,23 @@ export const en: Translations<typeof es> = {
     f2More: 'Gym, home or bands: the routine adapts to what you have, with video and form on every exercise. Short on time or something aches? It adjusts.',
     f3More: 'A weekly plan with food you can actually get where you live. Log or calculate what you eat and the coach tracks your macros for you.',
     f4More: 'Share your wins, challenge a friend, and train with a partner on a duo streak neither of you wants to break. You are not alone.',
+    // Real numbers — what's inside
+    stat1Num: '237', stat1Lbl: 'meals with photos and macros',
+    stat2Num: '197', stat2Lbl: 'gym exercises on video',
+    stat3Num: '37', stat3Lbl: 'yoga sessions',
+    stat4Num: '24/7', stat4Lbl: 'coach that answers instantly',
+    // How you start — 3 steps
+    stepsLbl: 'Getting started is simple',
+    stepsTitlePre: 'Your plan, ready in',
+    stepsTitleEm: '3 steps',
+    step1Title: 'Tell us about you',
+    step1Sub: 'A short onboarding: your goal, your level, the equipment you have and the food you like.',
+    step2Title: 'Get your plan',
+    step2Sub: 'Training and nutrition calculated to your goal, ready from day 1.',
+    step3Title: 'Progress and it adapts',
+    step3Sub: 'You train, you eat, and the app recalibrates with you. And with your partner if you want.',
+    // Guarantee line under the plans
+    guaranteeLine: 'No risk, no lock-in: try 3 days free, we warn you before any charge, and you cancel in 1 click.',
     bannerKicker: 'Your trainer in your pocket',
     bannerTitle: 'Take your plan everywhere',
     bannerTitlePre: 'Your coach, nutritionist and community',

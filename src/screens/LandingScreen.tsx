@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, type MouseEvent as RMouseEvent } from 'react';
-import { ChevronDown, Dumbbell, Users, Brain, Salad, ArrowRight } from 'lucide-react';
+import { ChevronDown, Dumbbell, Users, Brain, Salad, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
@@ -267,6 +267,13 @@ export default function LandingScreen() {
               <p className="sys-feat-more">{t('landing.f4More')}</p>
             </div>
           </div>
+          {/* Números reales — lo que trae adentro (prueba de profundidad) */}
+          <div className="stats reveal">
+            <div className="stat"><span className="stat-num">{t('landing.stat1Num')}</span><span className="stat-lbl">{t('landing.stat1Lbl')}</span></div>
+            <div className="stat"><span className="stat-num">{t('landing.stat2Num')}</span><span className="stat-lbl">{t('landing.stat2Lbl')}</span></div>
+            <div className="stat"><span className="stat-num">{t('landing.stat3Num')}</span><span className="stat-lbl">{t('landing.stat3Lbl')}</span></div>
+            <div className="stat"><span className="stat-num">{t('landing.stat4Num')}</span><span className="stat-lbl">{t('landing.stat4Lbl')}</span></div>
+          </div>
           </div>
         </div>
       </section>
@@ -294,6 +301,19 @@ export default function LandingScreen() {
           <h2 className="trans-cta-title">{t('landing.ctaFinalTitle')}</h2>
           <p className="trans-cta-sub">{t('landing.ctaFinalSub')}</p>
           <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>{t('landing.trialCta')}<ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden /></MagneticBtn>
+        </div>
+      </section>
+
+      {/* CÓMO EMPIEZAS — 3 pasos (quita el "¿y después de pagar qué?") */}
+      <section className="steps" id="s-steps">
+        <div className="steps-in">
+          <div className="sec-lbl reveal">{t('landing.stepsLbl')}</div>
+          <h2 className="steps-title reveal">{t('landing.stepsTitlePre')} <em>{t('landing.stepsTitleEm')}</em></h2>
+          <div className="steps-grid">
+            <div className="step reveal reveal-delay-1"><span className="step-n">1</span><h3>{t('landing.step1Title')}</h3><p>{t('landing.step1Sub')}</p></div>
+            <div className="step reveal reveal-delay-2"><span className="step-n">2</span><h3>{t('landing.step2Title')}</h3><p>{t('landing.step2Sub')}</p></div>
+            <div className="step reveal reveal-delay-3"><span className="step-n">3</span><h3>{t('landing.step3Title')}</h3><p>{t('landing.step3Sub')}</p></div>
+          </div>
         </div>
       </section>
 
@@ -361,6 +381,7 @@ export default function LandingScreen() {
             <MagneticBtn className="btn-join" onClick={openAnnualCheckout}>{t('landing.trialCta')}<ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden /></MagneticBtn>
           </div>
         </div>
+        <p className="pguarantee reveal"><ShieldCheck size={15} strokeWidth={2} aria-hidden />{t('landing.guaranteeLine')}</p>
       </section>
 
       {/* FAQ */}

@@ -7743,6 +7743,52 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 @keyframes band-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @media (max-width: 600px) { .band-item { width: 220px; height: 150px; } }
 @media (prefers-reduced-motion: reduce) { .band-track { animation: none; } }
+
+/* ── Números reales (dentro de .sys, bajo los pilares) ─────────────────────── */
+.stats {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
+  margin-top:40px; padding-top:34px; border-top:1px solid rgba(14,37,33,.1);
+}
+.stat { text-align:center; }
+.stat-num {
+  display:block; font-family:'Montserrat',sans-serif; font-weight:800;
+  font-size:clamp(2rem,3.4vw,2.9rem); letter-spacing:-.02em; line-height:1; color:var(--forest);
+}
+.stat-lbl { display:block; margin-top:9px; font-size:.82rem; line-height:1.35; color:var(--txt2); }
+@media (max-width:720px){ .stats { grid-template-columns:repeat(2,1fr); gap:26px 14px; } }
+
+/* ── Cómo empiezas en 3 pasos (sección crema) ──────────────────────────────── */
+.steps { background:#F6F2EA; padding:88px 60px; }
+.steps-in { max-width:1100px; margin:0 auto; text-align:center; }
+.steps-title {
+  font-family:'Montserrat',sans-serif; font-weight:700;
+  font-size:clamp(2rem,3.2vw,2.8rem); letter-spacing:-.03em; line-height:1.1;
+  color:var(--forest); margin:0 0 44px;
+}
+.steps-title em { font-style:italic; color:var(--amber); }
+.steps-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+.step {
+  text-align:left; padding:30px 26px; background:#fff; border-radius:18px;
+  border:1px solid rgba(14,37,33,.06); box-shadow:0 12px 30px rgba(8,20,18,.06);
+}
+.step-n {
+  display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px;
+  border-radius:50%; background:var(--forest); color:var(--cream);
+  font-family:'Montserrat',sans-serif; font-weight:800; font-size:1.05rem; margin-bottom:16px;
+}
+.step h3 { font-family:'Montserrat',sans-serif; font-weight:700; font-size:1.1rem; color:var(--forest); margin:0 0 8px; }
+.step p { font-size:.92rem; line-height:1.5; color:var(--txt2); margin:0; }
+@media (max-width:820px){ .steps { padding:64px 24px; } .steps-grid { grid-template-columns:1fr; gap:16px; } }
+
+/* ── Línea de garantía bajo los planes (dentro de .pricing, fondo oscuro) ───── */
+.pguarantee {
+  display:flex; align-items:center; justify-content:center; gap:9px;
+  max-width:660px; margin:36px auto 0; position:relative; z-index:2;
+  font-size:.86rem; line-height:1.45; color:rgba(255,255,255,.62);
+}
+.pguarantee svg { color:var(--amber); flex-shrink:0; }
+@media (max-width:600px){ .pguarantee { font-size:.8rem; padding:0 10px; } }
+
 /* Cards oscuras sobre crema (contraste premium) */
 .sys-feat {
   background:linear-gradient(160deg, #143029 0%, #0c211d 100%);

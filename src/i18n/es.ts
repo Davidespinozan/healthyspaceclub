@@ -829,6 +829,23 @@ export const es = {
     f2More: 'Gym, casa o ligas: la rutina se adapta a lo que tengas, con video y técnica en cada ejercicio. ¿Poco tiempo o una molestia? Se ajusta.',
     f3More: 'Plan semanal con comida que de verdad consigues donde vives. Registra o calcula lo que comes y el coach lleva tus macros por ti.',
     f4More: 'Comparte tus logros, reta a un amigo y entrena en pareja con una racha de dúo que ninguno quiere romper. No lo haces solo.',
+    // Tira de números reales — lo que trae adentro
+    stat1Num: '237', stat1Lbl: 'platillos con foto y macros',
+    stat2Num: '197', stat2Lbl: 'ejercicios de gym en video',
+    stat3Num: '37', stat3Lbl: 'sesiones de yoga',
+    stat4Num: '24/7', stat4Lbl: 'coach que te responde al instante',
+    // Cómo empiezas en 3 pasos
+    stepsLbl: 'Empezar es simple',
+    stepsTitlePre: 'Tu plan, listo en',
+    stepsTitleEm: '3 pasos',
+    step1Title: 'Cuéntanos de ti',
+    step1Sub: 'Un onboarding corto: tu meta, tu nivel, el equipo que tienes y la comida que te gusta.',
+    step2Title: 'Recibes tu plan',
+    step2Sub: 'Entrenamiento y nutrición calculados a tu meta, listos desde el día 1.',
+    step3Title: 'Avanzas y se ajusta',
+    step3Sub: 'Entrenas, comes y la app se recalibra contigo. Y si quieres, con tu pareja.',
+    // Línea de garantía bajo los planes
+    guaranteeLine: 'Sin riesgo y sin permanencia: pruebas 3 días gratis, te avisamos antes de cualquier cobro y cancelas en 1 click.',
     bannerKicker: 'Tu entrenador en el bolsillo',
     bannerTitle: 'Lleva tu plan siempre contigo',
     bannerTitlePre: 'Tu entrenador, nutriólogo y comunidad',
