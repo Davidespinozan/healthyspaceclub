@@ -151,11 +151,11 @@
   position: relative;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
-  background: var(--sala-surface, #fff);
-  border: 1px solid var(--sala-border, var(--sand));
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #1C3B35, #0E2521);
+  border: 1px solid rgba(21, 51, 48, 0.5);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-pro-lg);
+  box-shadow: 0 10px 26px rgba(8, 20, 18, 0.28);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
   cursor: pointer;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
@@ -188,15 +188,15 @@
 
 .dt2-ex-emoji {
   flex-shrink: 0;
-  width: 63px;
-  height: 63px;
+  width: 78px;
+  height: 78px;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(191, 160, 101, 0.22), rgba(168, 134, 78, 0.14));
-  color: var(--amber-deep);
+  background: linear-gradient(135deg, rgba(191, 160, 101, 0.28), rgba(168, 134, 78, 0.16));
+  color: var(--amber);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  font-size: 30px;
   overflow: hidden;
 }
 .dt2-ex-video {
@@ -210,9 +210,9 @@
 /* Desktop tiene más espacio → preview aún más grande y visual. */
 @media (min-width: 640px) {
   .dt2-ex-emoji {
-    width: 84px;
-    height: 84px;
-    font-size: 34px;
+    width: 92px;
+    height: 92px;
+    font-size: 38px;
   }
 }
 
@@ -222,16 +222,16 @@
 }
 
 .dt2-ex-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--forest);
-  margin-bottom: 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--sala-surface, #fff);
+  margin-bottom: 5px;
   line-height: 1.25;
 }
 
 .dt2-ex-stats {
   font-size: 11px;
-  color: var(--txt2);
+  color: rgba(246, 242, 234, 0.6);
   display: flex;
   gap: 6px;
   align-items: center;
@@ -241,8 +241,8 @@
    de la rutina deja de ser metadata secundaria. El "·" y "Ns descanso"
    quedan en txt2 (default del contenedor), preservando jerarquía. */
 .dt2-ex-stats > span:first-child {
-  color: var(--forest);
-  font-weight: 500;
+  color: rgba(246, 242, 234, 0.92);
+  font-weight: 600;
 }
 
 .dt2-ex-dot {
@@ -329,12 +329,12 @@
 /* Tag de músculo primario — qué trabaja el ejercicio, de un vistazo */
 .dt2-ex-muscle {
   font-size: 9.5px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: none;
-  color: var(--amber-deep);
-  background: rgba(191, 160, 101, 0.14);
-  padding: 2px 7px;
+  color: var(--forest);
+  background: var(--amber);
+  padding: 2px 9px;
   border-radius: 50px;
   margin-right: 2px;
   flex-shrink: 0;
