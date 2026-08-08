@@ -40,12 +40,18 @@ export default function ExerciseDetailPopout({
   // título. Cuerpo/ligas: la variante nombra el movimiento real, se conserva.
   const varIsGymImpl = !!variant && variant.equipment.length === 1 && variant.equipment[0] === 'gym';
   const displayName = variant && !varIsGymImpl ? `${exercise.name} — ${variant.name}` : exercise.name;
-  // Variante específica (ligas/cuerpo, no el implemento por defecto): su técnica
-  // manda. Si no trae la suya, NO caemos a la del patrón (que describe la máquina)
-  // → mejor mostrar poco y correcto que técnica del implemento equivocado.
-  const isSpecificVariant = !!variant && !varIsGymImpl;
-  const shownSteps = variant?.steps ?? (isSpecificVariant ? undefined : exercise.steps);
-  const shownTip = variant?.tip ?? (isSpecificVariant ? undefined : exercise.tip);
+  // Técnica correcta por equipo:
+  //  · Si la variante trae su propia técnica (steps/tip), manda esa.
+  //  · Si no, solo caemos a la del patrón base cuando NO hay mismatch de implemento:
+  //    el patrón describe la máquina/barra únicamente cuando su equipo agregado
+  //    incluye 'gym'. Para una variante no-gym (ligas/cuerpo) de un patrón gym,
+  //    ocultamos el base (evita "técnica de máquina" en ligas) y dejamos la nota
+  //    de la variante + el coach tip de IA (equipment-aware).
+  //    Para patrones NATIVOS de cuerpo/ligas (sin 'gym'), el base SÍ es correcto.
+  const baseIsGymOriented = exercise.equipment.includes('gym');
+  const mismatchGymBase = !!variant && !varIsGymImpl && baseIsGymOriented;
+  const shownSteps = variant?.steps ?? (mismatchGymBase ? undefined : exercise.steps);
+  const shownTip = variant?.tip ?? (mismatchGymBase ? undefined : exercise.tip);
   const [videos, setVideos] = useState<ExerciseVideo[]>(exercise.videos || []);
   const [activeIdx, setActiveIdx] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -320,7 +326,7 @@ export default function ExerciseDetailPopout({
             {translateMuscle(exercise.muscleGroup, t)} · {translateDifficulty(exercise.difficulty, t)}
           </p>
           <h2 className="edp-name">{displayName}</h2>
-          {!compact && !isSpecificVariant && <p className="edp-desc">{exercise.desc}</p>}
+          {!compact && !mismatchGymBase && <p className="edp-desc">{exercise.desc}</p>}
           {variant?.notes && (
             <p className="edp-variant-notes">{variant.notes}</p>
           )}
