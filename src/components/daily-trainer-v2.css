@@ -481,12 +481,23 @@
    ══════════════════════════════════════════════════════════ */
 
 .dt2-note {
-  padding: 16px 18px;
-  background: linear-gradient(135deg, #C9A968, #A8864E);
-  border: 1px solid rgba(168, 134, 78, 0.5);
+  position: relative;
+  padding: 16px 18px 16px 24px;
+  /* Forest como el header/secciones (cohesivo) + barra dorada de acento. */
+  background: linear-gradient(135deg, #1C3B35, #0E2521);
+  border: 1px solid rgba(21, 51, 48, 0.5);
   border-radius: var(--radius-base);
-  box-shadow: 0 8px 22px rgba(168, 134, 78, 0.26);
+  box-shadow: 0 10px 26px rgba(8, 20, 18, 0.28);
   margin-bottom: 16px;
+  overflow: hidden;
+}
+.dt2-note::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 14px; bottom: 14px;
+  width: 3px;
+  background: var(--amber);
+  border-radius: 0 3px 3px 0;
 }
 
 .dt2-note-text {
@@ -672,15 +683,17 @@
   padding: 13px 30px;
   margin: 14px auto 18px;
   border-radius: 50px;
-  background: linear-gradient(135deg, #C9A867, var(--amber, #BFA065));
+  /* Dorado con dimensión (luz arriba → profundidad abajo) + brillo superior:
+     se lee como botón premium, no como mostaza plano. */
+  background: linear-gradient(160deg, #EAC87C 0%, #C9A868 52%, #B58F51 100%);
   color: var(--forest, #0E2521);
   font-size: 15.5px;
-  font-style: italic;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.01em;
   border: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 10px 26px rgba(191, 160, 101, 0.38);
+  box-shadow: 0 12px 30px rgba(168, 134, 78, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.42);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, filter var(--duration-base) ease;
   display: flex;
   align-items: center;
