@@ -460,6 +460,7 @@ export const en: Translations<typeof es> = {
     todayGoal: "Today's goal",
     supersetHow: 'No rest between them',
     restAtEnd: 'rest at the end',
+    ctaHint: 'Follow the exercise order',
     exercisesCountOne: '{n} exercise',
     intensityLow: 'Low intensity',
     intensityMid: 'Medium intensity',

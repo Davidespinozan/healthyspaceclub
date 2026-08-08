@@ -459,6 +459,7 @@ export const es = {
     todayGoal: 'Objetivo de hoy',
     supersetHow: 'Sin descanso entre ellos',
     restAtEnd: 'descanso al finalizar',
+    ctaHint: 'Sigue el orden de los ejercicios',
     exercisesCountOne: '{n} ejercicio',
     intensityLow: 'Intensidad baja',
     intensityMid: 'Intensidad media',

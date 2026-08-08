@@ -767,11 +767,22 @@
 .dt2-lang-mismatch button:disabled { opacity: 0.5; cursor: default; }
 
 .dt2-yoga-start-cta,
+.dt2-cta-wrap { margin: 16px 0 18px; }
+.dt2-cta-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 9px 0 0;
+  font-size: 11.5px;
+  color: var(--txt2);
+}
+.dt2-cta-sub svg { color: var(--amber-deep); flex-shrink: 0; }
 .dt2-start-workout-cta {
-  width: auto;
-  align-self: center;
-  padding: 13px 30px;
-  margin: 14px auto 18px;
+  width: 100%;
+  padding: 15px 28px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   border-radius: 50px;
   /* Dorado con dimensión (luz arriba → profundidad abajo) + brillo superior:
      se lee como botón premium, no como mostaza plano. */

@@ -228,16 +228,19 @@ export default function WorkoutPlan({
 
       {/* CTA para abrir player — ARRIBA, visible sin scroll. Solo si hay ejercicios. */}
       {plan.exercises.length > 0 && (
-        <button
-          className="dt2-start-workout-cta"
-          onClick={() => {
-            playerStartedAtRef.current = Date.now();
-            setWorkoutPlayerOpen(true);
-          }}
-        >
-          <span className="dt2-cta-play" aria-hidden="true"><Play size={14} strokeWidth={2} fill="currentColor" /></span>
-          {t('workout.startWorkout')}
-        </button>
+        <div className="dt2-cta-wrap">
+          <button
+            className="dt2-start-workout-cta"
+            onClick={() => {
+              playerStartedAtRef.current = Date.now();
+              setWorkoutPlayerOpen(true);
+            }}
+          >
+            <span className="dt2-cta-play" aria-hidden="true"><Play size={15} strokeWidth={2} fill="currentColor" /></span>
+            {t('workout.startWorkout')}
+          </button>
+          <p className="dt2-cta-sub"><Clock size={12} strokeWidth={2} /> {t('workout.ctaHint')}</p>
+        </div>
       )}
 
       {/* Cabecera de pareja — los dos avatares + "Entrenando con X" (igual que Hoy). */}
