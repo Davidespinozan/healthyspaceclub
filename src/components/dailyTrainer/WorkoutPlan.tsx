@@ -15,7 +15,7 @@
 
 import { lazy, Suspense, useRef, useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight, Sparkles } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight, Sparkles, Dumbbell, BarChart3 } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { plural } from '../../i18n/format';
 import { humanizeExerciseId } from '../../utils/exerciseMeta';
@@ -154,28 +154,50 @@ export default function WorkoutPlan({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plan.exercises.map(e => e.id).join(','), selectedEquipment]);
 
+  // Header: progreso (ejercicios completados hoy) + tiempo estimado del plan.
+  const workoutChecks = useAppStore(s => s.workoutChecks);
+  const headerCheckDay = dayKey(new Date());
+  const totalExercises = plan.exercises.length;
+  const completedCount = plan.exercises.filter(ex => workoutChecks[`${headerCheckDay}-${ex.id}`]).length;
+  const progressPct = totalExercises ? Math.round((completedCount / totalExercises) * 100) : 0;
+  const estMinutes = Math.max(1, Math.round(plan.exercises.reduce((sum, ex) => {
+    const sets = typeof ex.sets === 'number' ? ex.sets : parseInt(String(ex.sets)) || 3;
+    const rest = typeof ex.rest === 'number' ? ex.rest : parseInt(String(ex.rest)) || 60;
+    return sum + sets * (40 + rest);   // ~40s de trabajo por serie + descanso
+  }, 0) / 60));
+
   return (
     <div className="wz-root">
       <div className="dt2-plan-header">
-        <div>
-          <p className="dt2-plan-micro">{t('workout.planMicro')} · {todayDayName} {todayDateShort}</p>
-          <h2 className="dt2-plan-title">
-            <em>{translateDayLabel(plan.type, t)}</em>
-          </h2>
+        <div className="dt2-plan-head-main">
+          <p className="dt2-plan-micro">
+            <span className="dt2-plan-tag">{t('workout.planMicro')}</span> · {todayDayName} {todayDateShort}
+          </p>
+          <h2 className="dt2-plan-title">{translateDayLabel(plan.type, t)}</h2>
           <div className="dt2-plan-meta">
             <span className="dt2-meta-chip">
-              <Clock size={11} /> {plural(plan.exercises.length, {
+              <Dumbbell size={12} /> {plural(plan.exercises.length, {
                 one: t('workout.exercisesCountOne', { n: plan.exercises.length }),
                 other: t('workout.exercisesCount', { n: plan.exercises.length }),
               })}
             </span>
+            <span className="dt2-meta-chip"><Clock size={12} /> {t('workout.minApprox', { n: estMinutes })}</span>
             <span className="dt2-meta-chip">
-              <Zap size={11} /> {({
+              <BarChart3 size={12} /> {({
                 baja: t('workout.intensityLow'),
                 media: t('workout.intensityMid'),
                 alta: t('workout.intensityHigh'),
               } as Record<string, string>)[plan.intensity] ?? plan.intensity}
             </span>
+          </div>
+          <div className="dt2-plan-progress">
+            <div className="dt2-plan-progress-row">
+              <span className="dt2-plan-progress-lbl"><strong>{completedCount}</strong> / {totalExercises} {t('workout.exercisesCompleted')}</span>
+              <span className="dt2-plan-progress-pct">{progressPct}%</span>
+            </div>
+            <div className="dt2-plan-progress-track">
+              <div className="dt2-plan-progress-fill" style={{ width: `${progressPct}%` }} />
+            </div>
           </div>
         </div>
         {/* Sesión de pareja amarra el día: la rutina de pareja NO se regenera en

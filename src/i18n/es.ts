@@ -454,6 +454,8 @@ export const es = {
     planMicro: 'tu rutina',
     exercisesCount: '{n} ejercicios',
     exercisesSection: 'Ejercicios',
+    minApprox: '{n} min aprox.',
+    exercisesCompleted: 'ejercicios completados',
     exercisesCountOne: '{n} ejercicio',
     intensityLow: 'Intensidad baja',
     intensityMid: 'Intensidad media',

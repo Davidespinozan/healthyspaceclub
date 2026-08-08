@@ -29,28 +29,58 @@
   box-shadow: 0 12px 30px rgba(8, 20, 27, 0.22);
 }
 
+.dt2-plan-head-main { flex: 1; min-width: 0; }
+
 .dt2-plan-micro {
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: none;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(246, 242, 234, 0.5);
+  margin: 0 0 9px;
+}
+.dt2-plan-tag {
+  background: rgba(191, 160, 101, 0.20);
   color: var(--amber);
-  margin: 0 0 5px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
 }
 
 .dt2-plan-title {
-  font-size: 27px;
+  font-size: 28px;
   font-weight: 800;
-  letter-spacing: var(--tracking-tighter);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
   color: var(--sala-surface);
-  margin: 0 0 10px;
-  line-height: 1.1;
+  margin: 0 0 12px;
+  line-height: 1.05;
 }
 
-.dt2-plan-title em {
-  font-style: italic;
-  font-weight: 600;
-  color: var(--amber);
+/* Barra de progreso del entreno (completados / total). */
+.dt2-plan-progress { margin-top: 15px; }
+.dt2-plan-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 7px;
+}
+.dt2-plan-progress-lbl { font-size: 12px; color: rgba(246, 242, 234, 0.72); }
+.dt2-plan-progress-lbl strong { color: #fff; font-weight: 800; }
+.dt2-plan-progress-pct {
+  font-size: 13px; font-weight: 800; color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+.dt2-plan-progress-track {
+  height: 7px; border-radius: 50px;
+  background: rgba(246, 242, 234, 0.14);
+  overflow: hidden;
+}
+.dt2-plan-progress-fill {
+  height: 100%; border-radius: 50px;
+  background: linear-gradient(90deg, #C9A868, var(--amber));
+  transition: width 0.4s var(--ease-out-soft);
 }
 
 .dt2-plan-meta {
