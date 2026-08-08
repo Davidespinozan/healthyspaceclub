@@ -81,7 +81,13 @@ export default function ExerciseDetailPopout({
         const variantIds = (exercise.variants ?? [])
           .filter(v => !userEquipment || v.equipment.some(e => userEquipment.includes(e)))
           .map(v => v.id);
-        const ids = [exercise.id, ...variantIds];
+        // El clip del patrón base suele ser el del implemento gym. Para una variante
+        // no-gym de un patrón gym, NO lo incluimos (evita colar máquina en ligas),
+        // salvo que no haya videos de la variante del usuario → entonces sí, como
+        // último recurso para no dejar la ficha sin nada.
+        const ids = (mismatchGymBase && variantIds.length > 0)
+          ? variantIds
+          : [exercise.id, ...variantIds];
         const { data, error } = await supabase
           .from('exercise_videos')
           .select('exercise_id, video_url, label, display_order')
