@@ -292,6 +292,42 @@
   box-shadow: 0 14px 32px rgba(191, 160, 101, 0.44);
 }
 
+/* CTA protagonista de ejecución: COMPLETAR SERIE (dos líneas, dorado, texto
+   forest para contraste premium). Es la acción principal del brief. */
+.wp-complete-cta {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 15px 24px;
+  border: none;
+  border-radius: 16px;
+  background: var(--wp-grad-gold);
+  color: var(--wp-bg, #0E2521);
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(191, 160, 101, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease, filter var(--duration-fast) ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.wp-complete-cta:hover { transform: translateY(-1px); filter: brightness(1.04); }
+.wp-complete-cta:active { transform: scale(0.985); }
+.wp-complete-cta:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.wp-complete-cta-main {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+.wp-complete-cta-sub {
+  font-size: 11.5px;
+  font-weight: 700;
+  opacity: 0.72;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Botón secundario "Compartir foto" en la pantalla de completado. */
 .wp-share-cta {
   background: rgba(255, 255, 255, 0.08);

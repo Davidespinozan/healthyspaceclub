@@ -416,6 +416,7 @@ export const en: Translations<typeof es> = {
     of: 'of',
     videoSoon: 'Video coming soon',
     setsLabel: 'SETS',
+    completeSet: 'Complete set',
     lastTime: 'Last time',
     todayTarget: "Today's target",
     harderBand: 'harder band',

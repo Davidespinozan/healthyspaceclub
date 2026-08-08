@@ -713,16 +713,30 @@ export default function WorkoutPlayer({
           </div>
 
           <div className="wp-cta-wrap">
-            {/* No se avanza de ejercicio hasta terminar TODOS los sets (solo y
-                pareja); en pareja, además hasta que el compañero alcance. */}
-            <button
-              className={`wp-cta${(!blockComplete || partnerTurn) ? ' wp-cta-locked' : ''}`}
-              onClick={goToNextExercise}
-              disabled={!blockComplete || partnerTurn}
-            >
-              {isLastBlock ? t('workout.finishSession') : t('workout.nextExercise')}
-              <ChevronRight size={18} />
-            </button>
+            {/* Jerarquía de acción (brief): COMPLETAR SERIE es el CTA protagonista
+                mientras hay serie activa; al terminar el bloque pasa a SIGUIENTE
+                EJERCICIO. Durante el descanso, la rest-bar toma el mando. */}
+            {blockComplete ? (
+              <button
+                className={`wp-cta${partnerTurn ? ' wp-cta-locked' : ''}`}
+                onClick={goToNextExercise}
+                disabled={partnerTurn}
+              >
+                {isLastBlock ? t('workout.finishSession') : t('workout.nextExercise')}
+                <ChevronRight size={18} />
+              </button>
+            ) : !restState ? (
+              <button
+                className="wp-complete-cta"
+                onClick={markCurrentSet}
+                disabled={partnerTurn}
+              >
+                <span className="wp-complete-cta-main">{t('workout.completeSet')}</span>
+                <span className="wp-complete-cta-sub">
+                  {t('workout.set')} {currentSetNum} {t('workout.of')} {totalSetsForCurrent} · {currentEx.reps} {t('workout.repsLower')}
+                </span>
+              </button>
+            ) : null}
           </div>
         </div>
       )}

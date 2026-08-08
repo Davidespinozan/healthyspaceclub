@@ -415,6 +415,7 @@ export const es = {
     of: 'de',
     videoSoon: 'Video próximamente',
     setsLabel: 'SERIES',
+    completeSet: 'Completar serie',
     lastTime: 'La vez pasada',
     todayTarget: 'Objetivo hoy',
     harderBand: 'liga más dura',
