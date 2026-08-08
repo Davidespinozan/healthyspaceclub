@@ -18,7 +18,7 @@
   background:
     radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%),     /* luz entrando, esquina sup-izq */
     radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%),    /* profundidad, esquina inf-der */
-    #0d1f1c;        /* base diagonal unificadora */
+    #081312;        /* base — igual que la landing (consistencia venta ↔ app) */
   color: var(--sala-surface);
   padding: 30px 22px 22px; /* la safe-area la maneja .app-shell — no duplicar */
   position: relative;
