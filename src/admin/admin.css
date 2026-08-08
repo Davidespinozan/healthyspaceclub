@@ -54,6 +54,7 @@
   display: flex; flex-direction: column; gap: 11px; width: 100%; max-width: 320px;
   text-align: left;
 }
+.adm-login-iso { width: 72px; height: 72px; border-radius: 16px; display: block; margin: 0 auto 8px; }
 .adm-login h1 { text-align: center; }
 .adm-login p { text-align: center; margin-bottom: 4px; }
 .adm-login .adm-btn { margin-top: 4px; justify-content: center; }
@@ -70,13 +71,13 @@
   overflow-y: auto;
 }
 .adm-side-brand {
-  display: flex; align-items: center; gap: 9px;
-  padding: 4px 8px 18px;
-  font-weight: 800; letter-spacing: .2px; font-size: 1rem; color: #fff;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 8px 20px;
 }
+.adm-side-logo { width: 100%; max-width: 150px; height: auto; display: block; }
 .adm-side-brand small {
-  display: block; font-size: .62rem; font-weight: 700; letter-spacing: 2px;
-  color: var(--adm-accent); text-transform: uppercase; margin-top: 2px;
+  font-size: .6rem; font-weight: 700; letter-spacing: 3px;
+  color: var(--adm-accent); text-transform: uppercase;
 }
 .adm-side-group {
   font-size: .62rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;

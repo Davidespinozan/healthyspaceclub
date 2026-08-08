@@ -23,6 +23,11 @@ export default function AdminLogin() {
   return (
     <div className="adm-root adm-boot">
       <form className="adm-login" onSubmit={entrar}>
+        <img
+          className="adm-login-iso"
+          src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp"
+          alt="Healthy Space Club"
+        />
         <h1>Panel del Club</h1>
         <p>Entra con tu cuenta de Healthy Space.</p>
         <input

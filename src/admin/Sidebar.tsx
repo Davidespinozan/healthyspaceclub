@@ -37,8 +37,12 @@ export default function Sidebar({ email }: { email: string | null }) {
   return (
     <aside className="adm-side">
       <div className="adm-side-brand">
-        Healthy Space
-        <small>Club · Admin</small>
+        <img
+          className="adm-side-logo"
+          src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscprincipalsinfondo.webp"
+          alt="Healthy Space Club"
+        />
+        <small>Admin</small>
       </div>
 
       {GROUPS.map((g) => (
