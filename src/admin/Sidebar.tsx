@@ -58,7 +58,7 @@ export default function Sidebar({ email }: { email: string | null }) {
       ))}
 
       <button className="adm-verapp" onClick={() => { window.location.href = '/'; }}>
-        <Eye size={15} strokeWidth={2} /> Ver como usuario
+        <Eye size={15} strokeWidth={2} /> Ver como miembro
       </button>
 
       <div className="adm-side-foot">
