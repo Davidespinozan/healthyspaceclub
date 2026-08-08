@@ -13,7 +13,7 @@
   --wp-txt: var(--sala-surface);
   --wp-txt2: rgba(255, 255, 255, 0.65);
   --wp-txt3: rgba(255, 255, 255, 0.4);
-  --wp-grad-gold: linear-gradient(135deg, #C9A968, #A8864E);
+  --wp-grad-gold: linear-gradient(160deg, #EAC87C 0%, #C9A868 52%, #B58F51 100%);
 }
 
 .wp {
@@ -143,7 +143,7 @@
   display: flex; align-items: center; gap: 11px;
   margin: 12px 16px; padding: 12px 16px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #C9A968, #A8864E);
+  background: var(--wp-grad-gold);
   box-shadow: 0 6px 20px rgba(168, 134, 78, 0.4);
   animation: wp-turn-in 0.3s ease;
 }
@@ -444,7 +444,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #fff;
-  background: linear-gradient(135deg, #C9A968, #A8864E);
+  background: var(--wp-grad-gold);
   box-shadow: 0 2px 10px rgba(168, 134, 78, 0.35);
 }
 .wp-superset-badge svg { display: block; }
@@ -1053,7 +1053,7 @@
   border: 1px solid rgba(201, 169, 104, 0.45);
   border-radius: 999px;
   background: rgba(201, 169, 104, 0.10);
-  color: #A8864E;
+  color: #B58F51;
   font-family: 'Montserrat', sans-serif;
   font-size: 0.78rem;
   font-weight: 700;
