@@ -367,11 +367,24 @@ export default function WorkoutPlan({
                 const label = b.items.length === 2 ? t('workout.biset')
                   : b.items.length === 3 ? t('workout.triset')
                   : t('workout.superset');
+                const supersetOrdinal = blocks.slice(0, bi + 1).filter(x => x.group && x.items.length >= 2).length;
+                const blockRest = b.items[b.items.length - 1].ex.rest;
                 return (
                   <div key={`grp-${bi}`} className="dt2-superset">
-                    <div className="dt2-superset-badge"><Zap size={11} strokeWidth={2.5} /> {label}</div>
+                    <div className="dt2-superset-head">
+                      <span className="dt2-superset-badge"><Zap size={11} strokeWidth={2.5} /> {label} {String(supersetOrdinal).padStart(2, '0')}</span>
+                      <span className="dt2-superset-how">{t('workout.supersetHow')}</span>
+                      {blockRest != null && (
+                        <span className="dt2-superset-rest">{blockRest}s {t('workout.restAtEnd')}</span>
+                      )}
+                    </div>
                     <div className="dt2-superset-items">
-                      {b.items.map(({ ex, i }) => renderCard(ex, i))}
+                      {b.items.map(({ ex, i }, idx) => (
+                        <div className="dt2-superset-row" key={i}>
+                          <span className="dt2-superset-num">{String(idx + 1).padStart(2, '0')}</span>
+                          {renderCard(ex, i)}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
