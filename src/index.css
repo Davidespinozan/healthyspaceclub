@@ -7988,30 +7988,12 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 @media (max-width:520px) { .trans-stats { flex-direction:column; } }
 
-/* Banner de transformación (antes/después) contenido en "Un sistema completo" */
-.sys-banner {
-  max-width:1180px; margin:48px auto 0;
-  border-radius:24px; overflow:hidden;
-  box-shadow:0 24px 60px rgba(8,20,18,.28), inset 0 0 0 1px rgba(255,255,255,.06);
-}
-.sys-banner img { width:100%; height:auto; display:block; }
-
 /* ════════════ Pulido premium: micro-interacciones + viñeta cine ════════════ */
 /* Hover de cards (lift + borde dorado sutil) */
 .sys-feat { transition:transform .4s cubic-bezier(.23,1,.32,1), border-color .4s ease, box-shadow .4s ease; }
 .sys-feat:hover { transform:translateY(-5px); border-color:rgba(191,160,101,.4); box-shadow:0 26px 54px rgba(8,20,18,.34); }
 .fi { transition:transform .35s cubic-bezier(.23,1,.32,1), border-color .3s, box-shadow .3s; }
 .fi:hover { transform:translateY(-3px); box-shadow:0 18px 40px rgba(8,20,18,.22); }
-/* Viñeta cinematográfica sutil en banners con foto (profundidad + cohesión) */
-.sys-banner { position:relative; }
-.sys-banner::after {
-  content:''; position:absolute; inset:0; border-radius:24px; pointer-events:none;
-  box-shadow:inset 0 0 110px 16px rgba(5,7,7,.5);
-  background:radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(5,7,7,.28) 100%);
-}
-/* Sin viñeta pareja: la derecha (personas) se mantiene despejada; el scrim
-   izquierdo del .trans ya da contraste al texto. */
-
 /* Divisor "o arma una nueva" en la calculadora (armar tu comida). */
 .calc-or { text-align: center; font-size: .72rem; font-style: italic; color: var(--txt2, rgba(21,51,48,.5)); margin: 12px 0 4px; }
 .calc-mydishes { margin-bottom: 4px; }

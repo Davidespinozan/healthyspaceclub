@@ -268,10 +268,6 @@ export default function LandingScreen() {
             </div>
           </div>
           </div>
-          {/* Banner de transformación (antes/después) contenido en la sección */}
-          <div className="sys-banner reveal">
-            <img src="/sys-banner.webp" alt="" loading="lazy" />
-          </div>
         </div>
       </section>
 
