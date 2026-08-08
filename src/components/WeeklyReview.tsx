@@ -131,11 +131,11 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
       .finally(() => setLoading(false));
   }, []);
 
-  const STATS: Array<{ icon: ReactNode; label: string; value: string; good: boolean }> = [
-    { icon: <Salad size={20} strokeWidth={1.6} />, label: t('weeklyReview.statMeals'),    value: `${mealDays}/7`,          good: mealDays >= 5 },
-    { icon: <Dumbbell size={20} strokeWidth={1.6} />, label: t('weeklyReview.statWorkouts'),  value: t('weeklyReview.daysValue', { n: workoutDays }),    good: workoutDays >= 3 },
-    { icon: <Flame size={20} strokeWidth={1.6} />, label: t('weeklyReview.statStreak'), value: t('weeklyReview.daysValue', { n: streakCount }), good: streakCount >= 5 },
-    { icon: <Brain size={20} strokeWidth={1.6} />, label: t('weeklyReview.statModules'),   value: `${completedModules}/10`, good: completedModules > 0 },
+  const STATS: Array<{ icon: ReactNode; label: string; cur: number; total: number; unit: string; sub: string; streak?: boolean }> = [
+    { icon: <Salad size={18} strokeWidth={1.8} />, label: t('weeklyReview.statMeals'), cur: mealDays, total: 7, unit: t('weeklyReview.unitDaysLogged'), sub: mealDays >= 7 ? t('weeklyReview.doneWeek') : t('weeklyReview.remainingDays', { n: 7 - mealDays }) },
+    { icon: <Dumbbell size={18} strokeWidth={1.8} />, label: t('weeklyReview.statWorkouts'), cur: workoutDays, total: 3, unit: t('weeklyReview.unitWorkouts'), sub: workoutDays >= 3 ? t('weeklyReview.doneWeek') : t('weeklyReview.remainingWorkouts', { n: Math.max(0, 3 - workoutDays) }) },
+    { icon: <Flame size={18} strokeWidth={1.8} />, label: t('weeklyReview.statStreak'), cur: streakCount, total: 7, unit: t('weeklyReview.unitDays'), sub: t('weeklyReview.keepGoing'), streak: true },
+    { icon: <Brain size={18} strokeWidth={1.8} />, label: t('weeklyReview.statModules'), cur: completedModules, total: 10, unit: t('weeklyReview.unitCompleted'), sub: completedModules >= 10 ? t('weeklyReview.doneWeek') : t('weeklyReview.remainingModules', { n: 10 - completedModules }) },
   ];
 
   function handlePlanNextWeek() {
@@ -207,13 +207,30 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
           </div>
         )}
 
-        {/* Stats grid */}
+        {/* Stats grid — tarjetas ricas (ícono + número/total + barra + restante) */}
         <div className="wr-stats">
           {STATS.map(s => (
-            <div key={s.label} className={`wr-stat${s.good ? ' good' : ''}`}>
-              <div className="wr-stat-icon">{s.icon}</div>
-              <div className="wr-stat-val">{s.value}</div>
-              <div className="wr-stat-label">{s.label}</div>
+            <div key={s.label} className="wr-stat">
+              <div className="wr-stat-top">
+                <span className="wr-stat-icon">{s.icon}</span>
+                <span className="wr-stat-label">{s.label}</span>
+              </div>
+              <div className="wr-stat-val">
+                <b>{s.cur}</b>{!s.streak && <span className="wr-stat-total"> / {s.total}</span>}
+                <span className="wr-stat-unit">{s.unit}</span>
+              </div>
+              {s.streak ? (
+                <div className="wr-stat-dots">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <span key={i} className={`wr-stat-dot${i < Math.min(s.cur, 7) ? ' on' : ''}`} />
+                  ))}
+                </div>
+              ) : (
+                <div className="wr-stat-bar">
+                  <div className="wr-stat-bar-fill" style={{ width: `${Math.min(100, (s.cur / s.total) * 100)}%` }} />
+                </div>
+              )}
+              <div className="wr-stat-sub">{s.sub}</div>
             </div>
           ))}
         </div>

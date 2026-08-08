@@ -5744,23 +5744,36 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 
 /* Stats grid */
 .wr-stats {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
 }
 .wr-stat {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 16px 10px; border-radius: var(--radius-md);
-  background: var(--surface-glass-light);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--surface-glass-border);
-  text-align: center;
-  box-shadow: var(--shadow-pro-md);
+  display: flex; flex-direction: column; gap: 9px;
+  padding: 16px 15px; border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(21, 51, 48, 0.07);
+  box-shadow: 0 8px 22px rgba(8, 20, 18, 0.05);
+  text-align: left;
 }
-.wr-stat.good { border-color: color-mix(in srgb, var(--green) 40%, transparent); background: color-mix(in srgb, var(--green) 8%, transparent); }
-.wr-stat-icon { color: var(--forest); display: flex; align-items: center; justify-content: center; }
-.wr-stat.good .wr-stat-icon { color: var(--green); }
-.wr-stat-val  { font-family: 'Montserrat', sans-serif; font-size: 1.4rem; font-weight: 400; color: var(--txt1); line-height: 1; letter-spacing: var(--tracking-tightest); }
-.wr-stat.good .wr-stat-val { color: var(--green); }
-.wr-stat-label { font-family: 'Montserrat', sans-serif; font-size: .65rem; color: var(--txt2); text-transform: none; letter-spacing: var(--tracking-kicker); font-weight: 600; margin-top: 4px; }
+.wr-stat-top { display: flex; align-items: center; gap: 9px; }
+.wr-stat-icon {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(191, 160, 101, 0.15); color: var(--amber-deep);
+  display: flex; align-items: center; justify-content: center;
+}
+.wr-stat-label {
+  font-family: 'Montserrat', sans-serif; font-size: .82rem; font-weight: 700;
+  color: var(--forest); text-transform: none; letter-spacing: 0;
+}
+.wr-stat-val { font-family: 'Montserrat', sans-serif; color: var(--txt2); }
+.wr-stat-val b { font-size: 1.9rem; font-weight: 800; color: var(--forest); line-height: 1; letter-spacing: -.02em; }
+.wr-stat-total { font-size: 1rem; font-weight: 700; color: var(--txt2); }
+.wr-stat-unit { display: block; font-size: .72rem; color: var(--txt2); margin-top: 4px; }
+.wr-stat-bar { height: 6px; border-radius: 50px; background: rgba(21, 51, 48, 0.08); overflow: hidden; }
+.wr-stat-bar-fill { height: 100%; border-radius: 50px; background: var(--amber); transition: width .4s ease; }
+.wr-stat-dots { display: flex; gap: 5px; align-items: center; }
+.wr-stat-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(21, 51, 48, 0.12); }
+.wr-stat-dot.on { background: var(--green, #2f7d5b); }
+.wr-stat-sub { font-size: .72rem; color: var(--txt2); }
 
 /* Weight badge */
 .wr-weight {
