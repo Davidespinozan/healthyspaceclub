@@ -724,6 +724,9 @@
 }
 
 .wp-set-row.future .wp-set-row-icon { color: var(--wp-txt3); }
+/* Lápiz de editar en series ya marcadas: tono claro neutro (el dorado apagado
+   se leía verdoso sobre el fondo verde). */
+.wp-set-row.done .wp-set-row-icon { color: var(--wp-txt2); }
 
 /* ── Rest bar flotante (sticky bottom, no-bloqueante) ── */
 
