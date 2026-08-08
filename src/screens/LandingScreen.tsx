@@ -310,9 +310,9 @@ export default function LandingScreen() {
           <div className="sec-lbl reveal">{t('landing.stepsLbl')}</div>
           <h2 className="steps-title reveal">{t('landing.stepsTitlePre')} <em>{t('landing.stepsTitleEm')}</em></h2>
           <div className="steps-grid">
-            <div className="step reveal reveal-delay-1"><span className="step-n">1</span><h3>{t('landing.step1Title')}</h3><p>{t('landing.step1Sub')}</p></div>
-            <div className="step reveal reveal-delay-2"><span className="step-n">2</span><h3>{t('landing.step2Title')}</h3><p>{t('landing.step2Sub')}</p></div>
-            <div className="step reveal reveal-delay-3"><span className="step-n">3</span><h3>{t('landing.step3Title')}</h3><p>{t('landing.step3Sub')}</p></div>
+            <div className="step reveal reveal-delay-1"><div className="step-head"><span className="step-n">1</span><h3>{t('landing.step1Title')}</h3></div><p>{t('landing.step1Sub')}</p></div>
+            <div className="step reveal reveal-delay-2"><div className="step-head"><span className="step-n">2</span><h3>{t('landing.step2Title')}</h3></div><p>{t('landing.step2Sub')}</p></div>
+            <div className="step reveal reveal-delay-3"><div className="step-head"><span className="step-n">3</span><h3>{t('landing.step3Title')}</h3></div><p>{t('landing.step3Sub')}</p></div>
           </div>
         </div>
       </section>

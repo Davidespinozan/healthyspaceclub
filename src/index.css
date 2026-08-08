@@ -2412,7 +2412,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
   .nav-left .nav-iso, .nav-left .nav-login { display:none; }
   .nav-hamburger { display:flex; position:absolute; right:18px; }
   .logo img { height:30px; }
-  .logo-nav img { height:43px; }
+  .logo-nav img { height:34px; } /* móvil: 20% más chico que 43px */
   .logo-club { font-size:.87rem; letter-spacing:.25em; }
   nav.landing-nav.scrolled { height: calc(92px + env(safe-area-inset-top, 0px)); }
 
@@ -7771,12 +7771,13 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   text-align:left; padding:30px 26px; background:#fff; border-radius:18px;
   border:1px solid rgba(14,37,33,.06); box-shadow:0 12px 30px rgba(8,20,18,.06);
 }
+.step-head { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
 .step-n {
-  display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px;
+  display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px; flex-shrink:0;
   border-radius:50%; background:var(--forest); color:var(--cream);
-  font-family:'Montserrat',sans-serif; font-weight:800; font-size:1.05rem; margin-bottom:16px;
+  font-family:'Montserrat',sans-serif; font-weight:800; font-size:1.05rem;
 }
-.step h3 { font-family:'Montserrat',sans-serif; font-weight:700; font-size:1.1rem; color:var(--forest); margin:0 0 8px; }
+.step h3 { font-family:'Montserrat',sans-serif; font-weight:700; font-size:1.1rem; color:var(--forest); margin:0; }
 .step p { font-size:.92rem; line-height:1.5; color:var(--txt2); margin:0; }
 @media (max-width:820px){ .steps { padding:64px 24px; } .steps-grid { grid-template-columns:1fr; gap:16px; } }
 
