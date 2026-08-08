@@ -1181,7 +1181,8 @@ h1 em::after {
 }
 .pcard:hover { border-color:rgba(29,60,54,.9); box-shadow:0 24px 60px rgba(8,20,18,.4); transform:translateY(-8px); }
 .pcard.feat {
-  background:radial-gradient(120% 90% at 50% 0%, rgba(168,134,78,.15) 0%, transparent 58%), #081312;
+  /* Toda la ficha en verde bajito (no se desvanece al negro) → resalta los precios */
+  background:radial-gradient(120% 95% at 50% 0%, #234a41 0%, #17322c 62%), #17322c;
   border:2px solid rgba(168,134,78,.45);
   box-shadow:0 20px 60px rgba(10,30,28,.4), 0 0 28px rgba(168,134,78,.2);
 }
