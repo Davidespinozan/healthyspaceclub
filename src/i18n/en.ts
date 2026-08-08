@@ -832,7 +832,7 @@ export const en: Translations<typeof es> = {
     f4More: 'Share your wins, challenge a friend, and train with a partner on a duo streak neither of you wants to break. You are not alone.',
     // Real numbers — what's inside
     stat1Num: '237', stat1Lbl: 'meals with photos and macros',
-    stat2Num: '197', stat2Lbl: 'gym exercises on video',
+    stat2Num: '197', stat2Lbl: 'exercises on video (gym, home or bands)',
     stat3Num: '37', stat3Lbl: 'yoga sessions',
     stat4Num: '24/7', stat4Lbl: 'coach that answers instantly',
     // How you start — 3 steps

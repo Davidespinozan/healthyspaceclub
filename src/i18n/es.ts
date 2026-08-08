@@ -831,7 +831,7 @@ export const es = {
     f4More: 'Comparte tus logros, reta a un amigo y entrena en pareja con una racha de dúo que ninguno quiere romper. No lo haces solo.',
     // Tira de números reales — lo que trae adentro
     stat1Num: '237', stat1Lbl: 'platillos con foto y macros',
-    stat2Num: '197', stat2Lbl: 'ejercicios de gym en video',
+    stat2Num: '197', stat2Lbl: 'ejercicios en video (gym, casa o ligas)',
     stat3Num: '37', stat3Lbl: 'sesiones de yoga',
     stat4Num: '24/7', stat4Lbl: 'coach que te responde al instante',
     // Cómo empiezas en 3 pasos
