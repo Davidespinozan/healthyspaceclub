@@ -188,11 +188,11 @@
 
 .dt2-ex-emoji {
   flex-shrink: 0;
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
+  width: 72px;
+  height: 72px;
+  border-radius: 13px;
   border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(21, 51, 48, 0.1);
+  box-shadow: 0 4px 12px rgba(21, 51, 48, 0.14);
   /* Sin foto → verde moss de marca + ícono crema, igual que la card de comida. */
   background-color: var(--moss, #1C3B35);
   color: #F4EFE3;
@@ -213,9 +213,9 @@
 /* Desktop tiene más espacio → preview aún más grande y visual. */
 @media (min-width: 640px) {
   .dt2-ex-emoji {
-    width: 84px;
-    height: 84px;
-    font-size: 34px;
+    width: 88px;
+    height: 88px;
+    font-size: 36px;
   }
 }
 
@@ -378,7 +378,11 @@
 
 .dt2-ex-arrow {
   flex-shrink: 0;
-  color: var(--amber);
+  color: var(--amber-deep);
+  background: var(--warm);
+  border-radius: 50%;
+  padding: 6px;
+  box-sizing: content-box;
 }
 
 /* ══════════════════════════════════════════════════════════
