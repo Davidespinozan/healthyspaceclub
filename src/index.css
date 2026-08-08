@@ -1173,7 +1173,7 @@ h1 em::after {
 .pay-trial-notes { list-style:none; padding:0; margin:8px 0 0; display:flex; flex-direction:column; gap:4px; font-size:.72rem; color:rgba(234,223,198,.62); }
 .pay-trial-notes li::before { content:'· '; color:var(--amber); font-weight:700; }
 .pcard {
-  background:radial-gradient(120% 90% at 50% 0%, rgba(29,60,54,.24) 0%, transparent 60%), #081312;
+  background:radial-gradient(120% 90% at 50% 0%, rgba(29,60,54,.22) 0%, transparent 60%), #111f1c;
   border:1px solid rgba(255,255,255,.09); color:var(--cream);
   border-radius:32px; padding:52px 40px; text-align:left;
   position:relative; transition:all .5s cubic-bezier(.23,1,.32,1);
