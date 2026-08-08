@@ -290,50 +290,51 @@ button.tt5-stat { cursor: pointer; }
 .tt5-stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-pro-2xl); }
 button.tt5-stat:active { transform: scale(0.97); }
 
-/* Tinte de gradiente vibrante por stat — más color, mismo aire premium. */
+/* Color pleno y vívido por stat (los 3 roles de la marca), texto claro encima. */
 .tt5-stat--posts {
-  background: linear-gradient(165deg, rgba(46, 74, 66, 0.12), var(--surface-glass-light) 70%);
-  border-color: rgba(46, 74, 66, 0.2);
+  background: var(--forest);
+  border-color: transparent;
+  box-shadow: 0 12px 26px rgba(14, 37, 33, 0.24);
 }
 .tt5-stat--racha {
-  background: linear-gradient(165deg, rgba(199, 91, 58, 0.16), var(--surface-glass-light) 70%);
-  border-color: rgba(199, 91, 58, 0.28);
-  box-shadow: 0 12px 26px rgba(199, 91, 58, 0.14);
+  background: var(--terracota);
+  border-color: transparent;
+  box-shadow: 0 12px 26px rgba(199, 91, 58, 0.30);
 }
 .tt5-stat--logros {
-  background: linear-gradient(165deg, rgba(201, 169, 104, 0.18), var(--surface-glass-light) 70%);
-  border-color: rgba(168, 134, 78, 0.3);
-  box-shadow: 0 12px 26px rgba(168, 134, 78, 0.14);
+  background: var(--amber);
+  border-color: transparent;
+  box-shadow: 0 12px 26px rgba(191, 160, 101, 0.30);
 }
 
 .tt5-stat-label {
   font-family: 'Montserrat', sans-serif;
   font-size: 9px;
-  color: rgba(21, 51, 48, 0.45);
   text-transform: none;
   letter-spacing: var(--tracking-kicker-loose);
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 8px;
 }
-.tt5-stat--racha .tt5-stat-label { color: rgba(199, 91, 58, 0.65); }
-.tt5-stat--logros .tt5-stat-label { color: rgba(124, 98, 50, 0.65); }
+.tt5-stat--posts  .tt5-stat-label { color: rgba(255, 255, 255, 0.62); }
+.tt5-stat--racha  .tt5-stat-label { color: rgba(255, 255, 255, 0.82); }
+.tt5-stat--logros .tt5-stat-label { color: rgba(14, 37, 33, 0.55); }
 
 .tt5-stat-num {
   font-family: 'Montserrat', sans-serif;
   font-size: 26px;
   line-height: 1;
-  color: var(--forest);
   font-weight: 800;
   letter-spacing: var(--tracking-tightest);
 }
-.tt5-stat--racha .tt5-stat-num {
-  color: var(--terracota);
+.tt5-stat--posts  .tt5-stat-num { color: #fff; }
+.tt5-stat--racha  .tt5-stat-num {
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
 }
-.tt5-stat--logros .tt5-stat-num { color: var(--amber-deep); }
+.tt5-stat--logros .tt5-stat-num { color: var(--forest); }
 
 .tt5-stat-num-total {
   font-size: 14px;
