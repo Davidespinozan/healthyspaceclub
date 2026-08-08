@@ -15,7 +15,7 @@
 
 import { lazy, Suspense, useRef, useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight, Sparkles } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { plural } from '../../i18n/format';
 import { humanizeExerciseId } from '../../utils/exerciseMeta';
@@ -238,8 +238,8 @@ export default function WorkoutPlan({
             aria-expanded={whyOpen}
             aria-label={whyOpen ? t('hoy.ariaWhyCollapse') : t('hoy.ariaWhyExpand')}
           >
-            <span className="dt2-card-why-label">{t('workout.whyToday')}</span>
-            <ChevronDown size={14} className="dt2-card-why-chev" />
+            <span className="dt2-card-why-label"><Sparkles size={13} strokeWidth={2} />{t('workout.whyToday')}</span>
+            <ChevronDown size={15} className="dt2-card-why-chev" />
           </button>
           {whyOpen && (
             <p className="dt2-card-why-text">{(plan as { razon?: string }).razon}</p>
