@@ -21,6 +21,7 @@ import MealDetailPopout from './MealDetailPopout';
 import { tDishName } from '../utils/nutritionI18n';
 import { chronoMeals } from '../utils/mealOrder';
 import { translateDayLabel } from '../utils/dayTypeLabel';
+import { equipmentFromPlan, selectVariantForEquipment } from '../utils/workoutPlanner';
 import DailyRings, { type RingItem } from './DailyRings';
 import ShareStatSheet from './ShareStatSheet';
 import DayCelebration from './DayCelebration';
@@ -245,6 +246,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
         .slice(0, 6)
         .map((ex, i) => String(ex.id ?? `ex-${i}`)))
     : [];
+  // Equipo sellado en el plan de hoy → el preview usa la variante de ese equipo
+  // (mismo criterio que el player), no el video base/gym.
+  const workoutEquipment = equipmentFromPlan(todayWorkoutPlan);
   const allExercisesChecked = todayExerciseIds.length > 0 &&
     todayExerciseIds.every((id) => workoutChecks[`${today}-${id}`]);
   const trainedToday = sessionsToday.length > 0 || allExercisesChecked || activityToday;
@@ -262,7 +266,14 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     const allIds = new Set<string>();
     for (const baseId of todayExerciseIds) {
       const ex = bankMap.get(baseId);
-      const ids = [baseId, ...((ex?.variants ?? []).map(v => v.id))];
+      const chosen = workoutEquipment && ex ? selectVariantForEquipment(ex, [workoutEquipment]) : null;
+      const variantIds = (ex?.variants ?? []).map(v => v.id);
+      // La variante del equipo del usuario PRIMERO; base/gym y demás solo como
+      // fallback si esa variante no tuviera video. Evita colar el clip de gym en
+      // una rutina de ligas/cuerpo.
+      const ids = chosen
+        ? [chosen.id, baseId, ...variantIds.filter(id => id !== chosen.id)]
+        : [baseId, ...variantIds];
       baseToCandidates[baseId] = ids;
       ids.forEach(id => allIds.add(id));
     }
@@ -286,7 +297,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayExIdsKey, locale]);
+  }, [todayExIdsKey, locale, workoutEquipment]);
   // ── Pedidos del food truck → se registran SOLOS en el plan ──────────────
   // Es lo que cumple la promesa de vincular la cuenta: "no vuelves a capturar
   // nada". Cada pedido entra como un registro más (igual que cuando ella registra
