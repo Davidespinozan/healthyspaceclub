@@ -5775,6 +5775,33 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .wr-stat-dot.on { background: var(--green, #2f7d5b); }
 .wr-stat-sub { font-size: .72rem; color: var(--txt2); }
 
+/* Tarjeta de peso con mini-gráfica */
+.wr-weightcard {
+  background: var(--cream, #F6F2EA); border-radius: 18px; padding: 16px 16px 14px;
+  border: 1px solid rgba(21, 51, 48, 0.06);
+}
+.wr-weightcard-head { display: flex; align-items: center; gap: 9px; font-size: .82rem; font-weight: 700; color: var(--forest); margin-bottom: 8px; }
+.wr-weightcard-hicon { width: 28px; height: 28px; border-radius: 8px; background: rgba(21,51,48,.06); color: var(--forest); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wr-weightcard-mid { display: flex; align-items: center; gap: 16px; }
+.wr-weightcard-num { font-family: 'Montserrat', sans-serif; font-size: .9rem; color: var(--txt2); white-space: nowrap; }
+.wr-weightcard-num b { font-size: 2.1rem; font-weight: 800; color: var(--forest); letter-spacing: -.02em; }
+.wr-spark { flex: 1; height: 40px; min-width: 0; }
+.wr-weightcard-foot { margin-top: 11px; }
+.wr-weightcard-pill { display: inline-flex; align-items: center; gap: 5px; font-size: .74rem; font-weight: 700; padding: 4px 11px; border-radius: 50px; }
+.wr-weightcard-pill--stable, .wr-weightcard-pill--down { background: rgba(47,125,91,.14); color: #2f7d5b; }
+.wr-weightcard-pill--up { background: rgba(199,91,58,.14); color: var(--terracota, #C75B3A); }
+
+/* Tu siguiente paso — mensaje del coach */
+.wr-nextstep {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--cream, #F6F2EA); border-radius: 18px; padding: 16px;
+  border: 1px solid rgba(21, 51, 48, 0.06);
+}
+.wr-nextstep-icon { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; background: var(--forest); color: var(--amber); display: flex; align-items: center; justify-content: center; }
+.wr-nextstep-body { flex: 1; min-width: 0; }
+.wr-nextstep-label { font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--amber-deep); margin-bottom: 4px; }
+.wr-nextstep-text { font-size: .88rem; color: var(--txt1); line-height: 1.6; margin: 0; }
+
 /* Weight badge */
 .wr-weight {
   display: flex; align-items: center; gap: 10px;
@@ -5797,11 +5824,11 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 /* Actions */
 .wr-actions { display: flex; flex-direction: column; gap: 10px; }
 .wr-btn-primary {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 15px; border-radius: var(--radius-base);
-  background: var(--forest); color: var(--sala-surface);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 16px; border-radius: 50px;
+  background: var(--forest); color: var(--amber);
   font-family: 'Montserrat', sans-serif;
-  font-size: .92rem; font-weight: 500; letter-spacing: var(--tracking-tight);
+  font-size: .92rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
   cursor: pointer;
   box-shadow: var(--shadow-pro-lift-forest);
   transition: transform var(--duration-fast) ease, filter var(--duration-fast) ease, box-shadow var(--duration-fast) ease;

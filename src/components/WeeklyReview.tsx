@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
-import { ChevronRight, Flame, BarChart3, Salad, Dumbbell, Brain, TrendingDown, TrendingUp } from 'lucide-react';
+import { ChevronRight, Flame, BarChart3, Salad, Dumbbell, Brain, TrendingDown, TrendingUp, Scale, Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { callAI } from '../utils/aiProxy';
 import { buildWeeklyReviewMessagePrompt } from '../ai/prompts/weeklyReview';
@@ -115,6 +115,21 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
     ? +(currentWeight - weekAgoWeight).toFixed(1)
     : null;
 
+  // Mini-gráfica de tendencia (últimos puntos de peso) + estado.
+  const sparkPts = (() => {
+    const vals = sorted.slice(-8).map(e => e.kg);
+    if (vals.length < 2) return null;
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const range = max - min || 1;
+    return vals.map((v, i) => {
+      const x = (i / (vals.length - 1)) * 100;
+      const y = 3 + (1 - (v - min) / range) * 22;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+  })();
+  const weightTrend: 'stable' | 'down' | 'up' =
+    weightChange == null || Math.abs(weightChange) < 0.5 ? 'stable' : weightChange < 0 ? 'down' : 'up';
+
   const completedModules = growthCompleted.filter(Boolean).length;
   const goal = String((obData as Record<string, unknown>)?.goal ?? '');
   const firstName = userName?.split(' ')[0] || '';
@@ -165,6 +180,30 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
             </div>
           </div>
         </div>
+
+        {/* Tarjeta de peso con mini-gráfica de tendencia */}
+        {currentWeight != null && (
+          <div className="wr-weightcard">
+            <div className="wr-weightcard-head">
+              <span className="wr-weightcard-hicon"><Scale size={15} strokeWidth={2} /></span>
+              {t('weeklyReview.weightThisWeek')}
+            </div>
+            <div className="wr-weightcard-mid">
+              <div className="wr-weightcard-num"><b>{currentWeight}</b> kg</div>
+              {sparkPts && (
+                <svg className="wr-spark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline points={sparkPts} fill="none" stroke="var(--green, #2f7d5b)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                </svg>
+              )}
+            </div>
+            <div className="wr-weightcard-foot">
+              <span className={`wr-weightcard-pill wr-weightcard-pill--${weightTrend}`}>
+                {weightTrend === 'up' ? <TrendingUp size={13} strokeWidth={2} /> : <TrendingDown size={13} strokeWidth={2} />}
+                {weightTrend === 'stable' ? t('weeklyReview.weightStablePill') : weightTrend === 'down' ? t('weeklyReview.weightDownPill') : t('weeklyReview.weightUpPill')}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Weight prompt (solo si no registró esta semana y no skip) */}
         {showWeightPrompt && (
@@ -235,28 +274,20 @@ export default function WeeklyReview({ onClose, onPlanNextWeek }: {
           ))}
         </div>
 
-        {/* Weight change */}
-        {weightChange !== null && (
-          <div className={`wr-weight${weightChange <= 0 ? ' down' : ' up'}`}>
-            <span className="wr-weight-icon">{weightChange <= 0 ? <TrendingDown size={18} strokeWidth={2} /> : <TrendingUp size={18} strokeWidth={2} />}</span>
-            <span>
-              {weightChange === 0 ? t('weeklyReview.weightStable') :
-               weightChange < 0 ? t('weeklyReview.weightDown', { n: Math.abs(weightChange) }) :
-               t('weeklyReview.weightUp', { n: weightChange })}
-            </span>
+        {/* Tu siguiente paso — mensaje del coach de IA en tarjeta */}
+        <div className="wr-nextstep">
+          <span className="wr-nextstep-icon"><Sparkles size={16} strokeWidth={2} /></span>
+          <div className="wr-nextstep-body">
+            <div className="wr-nextstep-label">{t('weeklyReview.nextStep')}</div>
+            {loading ? (
+              <div className="wr-loading">
+                <div className="wr-spinner" />
+                <span>{t('weeklyReview.analyzing')}</span>
+              </div>
+            ) : message ? (
+              <p className="wr-nextstep-text">{message}</p>
+            ) : null}
           </div>
-        )}
-
-        {/* AI coach message */}
-        <div className="wr-message">
-          {loading ? (
-            <div className="wr-loading">
-              <div className="wr-spinner" />
-              <span>{t('weeklyReview.analyzing')}</span>
-            </div>
-          ) : message ? (
-            <p>{message}</p>
-          ) : null}
         </div>
 
         {/* Actions */}
