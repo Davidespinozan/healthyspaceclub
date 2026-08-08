@@ -184,11 +184,12 @@ export default function MealDetailPopout({ meal, mealIndex, onClose, onLogOther,
                 type="button"
                 onClick={() => onLogOther(meal.time, mealIndex)}
                 style={{
-                  width: '100%', padding: 12, borderRadius: 10,
-                  background: 'transparent', color: 'var(--forest)',
-                  border: '1px solid var(--forest)',
-                  fontSize: '.84rem', fontWeight: 600, cursor: 'pointer',
+                  width: '100%', padding: 13, borderRadius: 12,
+                  background: 'var(--forest)', color: 'var(--cream)',
+                  border: 'none',
+                  fontSize: '.86rem', fontWeight: 700, cursor: 'pointer',
                   fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
               >
                 {t('foodLog.detailCta')}
