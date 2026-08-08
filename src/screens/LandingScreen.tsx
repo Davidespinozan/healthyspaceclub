@@ -208,6 +208,7 @@ export default function LandingScreen() {
             <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </a>
+        <img className="hero-iso" src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp" alt="" aria-hidden="true" />
       </section>
 
       {/* LLEVA TU PLAN — banner con móviles (sección 2, después del hero) */}
