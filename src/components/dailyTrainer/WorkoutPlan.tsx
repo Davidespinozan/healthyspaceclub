@@ -302,14 +302,23 @@ export default function WorkoutPlan({
               </div>
               <div className="dt2-ex-body">
                 <div className="dt2-ex-name">{bank?.name || humanizeExerciseId(ex.id)}</div>
-                {/* Vista previa COMPACTA: solo músculo (+ formato en pareja). Las
-                    series/reps/descanso se ven por ejercicio dentro del player. */}
+                {/* Vista previa: músculo + prescripción (series · reps · descanso),
+                    para que la tarjeta traiga info como las de nutrición. */}
                 <div className="dt2-ex-stats">
                   {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
                     <span className="dt2-ex-muscle">{t(MUSCLE_LABEL_KEY[bank.muscleGroup])}</span>
                   )}
                   {plan.partnerMode && ex.format && PARTNER_FMT_KEY[ex.format] && (
                     <span className="dt2-ex-fmt">{t(PARTNER_FMT_KEY[ex.format])}</span>
+                  )}
+                  {(ex.reps != null || ex.sets != null) && (
+                    <span className="dt2-ex-presc">
+                      {[
+                        ex.sets != null ? `${ex.sets} ${t('workout.setsLower')}` : null,
+                        ex.reps != null ? `${ex.reps} ${t('workout.repsLower')}` : null,
+                        ex.rest != null ? `${ex.rest}s ${t('workout.statRest')}` : null,
+                      ].filter(Boolean).join(' · ')}
+                    </span>
                   )}
                 </div>
               </div>

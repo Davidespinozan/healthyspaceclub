@@ -151,11 +151,11 @@
   position: relative;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
-  background: linear-gradient(135deg, #1C3B35, #0E2521);
-  border: 1px solid rgba(21, 51, 48, 0.5);
+  padding: 14px 16px;
+  background: var(--sala-surface, #fff);
+  border: 1px solid var(--sala-border, var(--sand));
   border-radius: var(--radius-lg);
-  box-shadow: 0 10px 26px rgba(8, 20, 18, 0.28);
+  box-shadow: var(--shadow-pro-lg);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
   cursor: pointer;
   animation: riseIn 0.5s var(--ease-out-soft) backwards;
@@ -188,15 +188,15 @@
 
 .dt2-ex-emoji {
   flex-shrink: 0;
-  width: 78px;
-  height: 78px;
+  width: 63px;
+  height: 63px;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(191, 160, 101, 0.28), rgba(168, 134, 78, 0.16));
-  color: var(--amber);
+  background: linear-gradient(135deg, rgba(191, 160, 101, 0.22), rgba(168, 134, 78, 0.14));
+  color: var(--amber-deep);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  font-size: 26px;
   overflow: hidden;
 }
 .dt2-ex-video {
@@ -210,9 +210,9 @@
 /* Desktop tiene más espacio → preview aún más grande y visual. */
 @media (min-width: 640px) {
   .dt2-ex-emoji {
-    width: 92px;
-    height: 92px;
-    font-size: 38px;
+    width: 84px;
+    height: 84px;
+    font-size: 34px;
   }
 }
 
@@ -222,27 +222,39 @@
 }
 
 .dt2-ex-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--sala-surface, #fff);
-  margin-bottom: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--forest);
+  margin-bottom: 2px;
   line-height: 1.25;
 }
 
 .dt2-ex-stats {
   font-size: 11px;
-  color: rgba(246, 242, 234, 0.6);
+  color: var(--txt2);
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 5px 6px;
   align-items: center;
+}
+
+/* Prescripción (series · reps · descanso) en su propio renglón, destacada —
+   le da cuerpo a la tarjeta como los macros/kcal en nutrición. */
+.dt2-ex-presc {
+  flex-basis: 100%;
+  margin-top: 2px;
+  color: var(--forest);
+  font-weight: 600;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Color-1: sets×reps (primer span) destacados — la data principal
    de la rutina deja de ser metadata secundaria. El "·" y "Ns descanso"
    quedan en txt2 (default del contenedor), preservando jerarquía. */
 .dt2-ex-stats > span:first-child {
-  color: rgba(246, 242, 234, 0.92);
-  font-weight: 600;
+  color: var(--forest);
+  font-weight: 500;
 }
 
 .dt2-ex-dot {
@@ -329,12 +341,12 @@
 /* Tag de músculo primario — qué trabaja el ejercicio, de un vistazo */
 .dt2-ex-muscle {
   font-size: 9.5px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: none;
-  color: var(--forest);
-  background: var(--amber);
-  padding: 2px 9px;
+  color: var(--amber-deep);
+  background: rgba(191, 160, 101, 0.14);
+  padding: 2px 7px;
   border-radius: 50px;
   margin-right: 2px;
   flex-shrink: 0;
