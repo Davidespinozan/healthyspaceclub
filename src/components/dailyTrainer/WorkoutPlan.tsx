@@ -301,16 +301,16 @@ export default function WorkoutPlan({
                 )}
               </div>
               <div className="dt2-ex-body">
+                {/* Mismo tratamiento que las tarjetas de comida: eyebrow dorado con
+                    ícono (músculo) → nombre → prescripción (series·reps·descanso). */}
+                {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
+                  <div className="dt2-ex-eyebrow">
+                    {(() => { const Ic = getExerciseIcon(bank); return <Ic size={12} strokeWidth={2.2} />; })()}
+                    {t(MUSCLE_LABEL_KEY[bank.muscleGroup])}
+                  </div>
+                )}
                 <div className="dt2-ex-name">{bank?.name || humanizeExerciseId(ex.id)}</div>
-                {/* Vista previa: músculo + prescripción (series · reps · descanso),
-                    para que la tarjeta traiga info como las de nutrición. */}
                 <div className="dt2-ex-stats">
-                  {bank?.muscleGroup && MUSCLE_LABEL_KEY[bank.muscleGroup] && (
-                    <span className="dt2-ex-muscle">{t(MUSCLE_LABEL_KEY[bank.muscleGroup])}</span>
-                  )}
-                  {plan.partnerMode && ex.format && PARTNER_FMT_KEY[ex.format] && (
-                    <span className="dt2-ex-fmt">{t(PARTNER_FMT_KEY[ex.format])}</span>
-                  )}
                   {(ex.reps != null || ex.sets != null) && (
                     <span className="dt2-ex-presc">
                       {[
@@ -319,6 +319,9 @@ export default function WorkoutPlan({
                         ex.rest != null ? `${ex.rest}s ${t('workout.statRest')}` : null,
                       ].filter(Boolean).join(' · ')}
                     </span>
+                  )}
+                  {plan.partnerMode && ex.format && PARTNER_FMT_KEY[ex.format] && (
+                    <span className="dt2-ex-fmt">{t(PARTNER_FMT_KEY[ex.format])}</span>
                   )}
                 </div>
               </div>

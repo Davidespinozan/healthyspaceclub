@@ -188,11 +188,14 @@
 
 .dt2-ex-emoji {
   flex-shrink: 0;
-  width: 63px;
-  height: 63px;
+  width: 64px;
+  height: 64px;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(191, 160, 101, 0.22), rgba(168, 134, 78, 0.14));
-  color: var(--amber-deep);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(21, 51, 48, 0.1);
+  /* Sin foto → verde moss de marca + ícono crema, igual que la card de comida. */
+  background-color: var(--moss, #1C3B35);
+  color: #F4EFE3;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -221,12 +224,25 @@
   min-width: 0;
 }
 
+/* Eyebrow dorado con ícono (músculo) — mismo tratamiento que el "meal-time" de
+   las tarjetas de comida (wnp2-meal-time). */
+.dt2-ex-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--amber);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
 .dt2-ex-name {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--forest);
-  margin-bottom: 2px;
-  line-height: 1.25;
+  margin-bottom: 6px;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-tight);
 }
 
 .dt2-ex-stats {
