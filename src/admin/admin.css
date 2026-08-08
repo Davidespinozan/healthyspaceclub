@@ -5,20 +5,23 @@
    contenido claro, acento verde del Club. Soporta modo oscuro del sistema. */
 
 .adm-root {
-  --adm-bg: #f4f6f5;
+  /* Mismos tokens que la app: forest + dorado + crema (index.css) */
+  --adm-bg: #F6F2EA;                     /* crema (secciones claras de la app) */
   --adm-surface: #ffffff;
-  --adm-border: #e3e7e5;
-  --adm-ink: #17211d;
-  --adm-ink2: #5c6b64;
-  --adm-ink3: #8a978f;
-  --adm-accent: #1f5c46;      /* verde bosque del Club */
-  --adm-accent-soft: #e6f0ec;
-  --adm-side: #14261f;        /* sidebar oscuro */
-  --adm-side-ink: #cdd8d2;
-  --adm-side-ink2: #7e918a;
-  --adm-danger: #b4432f;
+  --adm-border: rgba(14,37,33,.10);
+  --adm-ink: #0E2521;                    /* --forest */
+  --adm-ink2: rgba(21,51,48,.60);
+  --adm-ink3: rgba(21,51,48,.42);
+  --adm-accent: #BFA065;                 /* --gold/--amber */
+  --adm-accent-strong: #7C6232;          /* --amber-deep: dorado accesible sobre claro */
+  --adm-accent-soft: rgba(191,160,101,.15);
+  --adm-on-accent: #0E2521;              /* texto forest sobre dorado */
+  --adm-side: #0E2521;                   /* --forest (sidebar) */
+  --adm-side-ink: #EDE7D8;               /* crema */
+  --adm-side-ink2: rgba(237,231,216,.48);
+  --adm-danger: #C75B3A;                 /* --terracota */
   --adm-good: #2f7d5b;
-  --adm-warn: #b8862f;
+  --adm-warn: #7C6232;
 
   position: fixed;
   inset: 0;
@@ -29,22 +32,6 @@
   font-size: 14px;
   line-height: 1.45;
   overflow: hidden;
-}
-
-@media (prefers-color-scheme: dark) {
-  .adm-root {
-    --adm-bg: #0f1613;
-    --adm-surface: #17211d;
-    --adm-border: #26332d;
-    --adm-ink: #eaf0ed;
-    --adm-ink2: #9fb0a8;
-    --adm-ink3: #6f817a;
-    --adm-accent: #3f9b74;
-    --adm-accent-soft: #16302b;
-    --adm-side: #0b120f;
-    --adm-side-ink: #cdd8d2;
-    --adm-side-ink2: #6f817a;
-  }
 }
 
 /* ── Boot / gate ─────────────────────────────────────────────────────────── */
@@ -60,7 +47,7 @@
 .adm-boot p { color: var(--adm-ink2); margin: 0; max-width: 34ch; }
 .adm-boot button {
   margin-top: 6px; padding: 10px 18px; border-radius: 10px; border: none;
-  background: var(--adm-accent); color: #fff; font: inherit; font-weight: 600;
+  background: var(--adm-accent); color: var(--adm-on-accent); font: inherit; font-weight: 700;
   cursor: pointer;
 }
 .adm-login {
@@ -88,8 +75,8 @@
   font-weight: 800; letter-spacing: .2px; font-size: 1rem; color: #fff;
 }
 .adm-side-brand small {
-  display: block; font-size: .62rem; font-weight: 600; letter-spacing: 1.5px;
-  color: var(--adm-side-ink2); text-transform: uppercase; margin-top: 2px;
+  display: block; font-size: .62rem; font-weight: 700; letter-spacing: 2px;
+  color: var(--adm-accent); text-transform: uppercase; margin-top: 2px;
 }
 .adm-side-group {
   font-size: .62rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
@@ -102,7 +89,7 @@
   transition: background .13s, color .13s;
 }
 .adm-nav:hover { background: rgba(255,255,255,.05); color: #fff; }
-.adm-nav.active { background: var(--adm-accent); color: #fff; }
+.adm-nav.active { background: var(--adm-accent); color: var(--adm-on-accent); }
 .adm-nav svg { flex-shrink: 0; }
 
 .adm-verapp {
@@ -133,7 +120,7 @@
 }
 .adm-soon .adm-soon-tag {
   display: inline-block; font-size: .66rem; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; color: var(--adm-accent); background: var(--adm-accent-soft);
+  text-transform: uppercase; color: var(--adm-accent-strong); background: var(--adm-accent-soft);
   padding: 4px 10px; border-radius: 20px; margin-bottom: 12px;
 }
 .adm-soon h2 { color: var(--adm-ink); font-size: 1.05rem; margin: 0 0 8px; }
@@ -156,7 +143,6 @@
   background: #fdeee9; border: 1px solid #eccabf; color: var(--adm-danger);
   border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: .84rem;
 }
-@media (prefers-color-scheme: dark) { .adm-alert { background: #2a1712; border-color: #52281c; } }
 
 /* Tendencia */
 .adm-trend { margin-top: 16px; }
@@ -169,7 +155,7 @@
   background: var(--adm-surface); color: var(--adm-ink2); font: inherit; font-size: .8rem;
   font-weight: 600; cursor: pointer;
 }
-.adm-pill.on { background: var(--adm-accent); border-color: var(--adm-accent); color: #fff; }
+.adm-pill.on { background: var(--adm-accent); border-color: var(--adm-accent); color: var(--adm-on-accent); }
 
 /* Dos columnas para los desgloses */
 .adm-cols { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; margin-top: 16px; }
@@ -209,32 +195,24 @@
   letter-spacing: .2px;
 }
 .adm-badge.good { background: #e2f1ea; color: #216c4c; }
-.adm-badge.accent { background: var(--adm-accent-soft); color: var(--adm-accent); }
+.adm-badge.accent { background: var(--adm-accent-soft); color: var(--adm-accent-strong); }
 .adm-badge.warn { background: #f6ecd6; color: #8a6416; }
 .adm-badge.danger { background: #f7ddd5; color: #a2402c; }
 .adm-badge.muted { background: rgba(130,140,135,.16); color: var(--adm-ink2); }
-@media (prefers-color-scheme: dark) {
-  .adm-badge.good { background: #16302b; color: #5cc79a; }
-  .adm-badge.accent { background: #16302b; color: #5cc79a; }
-  .adm-badge.warn { background: #2e2410; color: #d9ad57; }
-  .adm-badge.danger { background: #2a1712; color: #e08a72; }
-  .adm-badge.muted { background: rgba(160,176,168,.14); color: var(--adm-ink2); }
-}
-
 /* Botón volver */
 .adm-back {
   display: inline-flex; align-items: center; gap: 6px; background: none; border: none;
   color: var(--adm-ink2); font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer;
   padding: 0; margin-bottom: 16px;
 }
-.adm-back:hover { color: var(--adm-accent); }
+.adm-back:hover { color: var(--adm-accent-strong); }
 
 /* Hero de la ficha */
 .adm-hero { display: flex; gap: 16px; align-items: center; margin-bottom: 22px; }
 .adm-hero-av { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .adm-hero-av--empty {
   display: flex; align-items: center; justify-content: center; background: var(--adm-accent);
-  color: #fff; font-size: 1.5rem; font-weight: 800;
+  color: var(--adm-on-accent); font-size: 1.5rem; font-weight: 800;
 }
 .adm-hero h1 { font-size: 1.4rem; font-weight: 800; margin: 0 0 5px; }
 .adm-hero-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: var(--adm-ink2); font-size: .82rem; }
@@ -269,13 +247,13 @@
 .adm-textarea::placeholder { color: var(--adm-ink3); }
 .adm-actions { display: flex; align-items: center; gap: 12px; margin-top: 11px; }
 .adm-btn {
-  padding: 9px 18px; border-radius: 9px; border: none; background: var(--adm-accent); color: #fff;
-  font: inherit; font-weight: 600; font-size: .84rem; cursor: pointer;
+  padding: 9px 18px; border-radius: 9px; border: none; background: var(--adm-accent); color: var(--adm-on-accent);
+  font: inherit; font-weight: 700; font-size: .84rem; cursor: pointer;
 }
 .adm-btn:disabled { opacity: .45; cursor: default; }
 .adm-ok { color: var(--adm-good); font-size: .82rem; font-weight: 600; }
 .adm-err { color: var(--adm-danger); font-size: .82rem; font-weight: 600; }
-.adm-link { color: var(--adm-accent); text-decoration: none; font-weight: 600; }
+.adm-link { color: var(--adm-accent-strong); text-decoration: none; font-weight: 600; }
 .adm-link:hover { text-decoration: underline; }
 
 /* Botón secundario (acciones de fila) */
@@ -284,7 +262,7 @@
   border: 1px solid var(--adm-border); background: var(--adm-surface); color: var(--adm-ink2);
   font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; white-space: nowrap;
 }
-.adm-btn-ghost:hover:not(:disabled) { border-color: var(--adm-accent); color: var(--adm-accent); }
+.adm-btn-ghost:hover:not(:disabled) { border-color: var(--adm-accent); color: var(--adm-accent-strong); }
 .adm-btn-ghost:disabled { opacity: .4; cursor: default; }
 
 @media (max-width: 720px) {
