@@ -7323,7 +7323,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   background:
     radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%),
     radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%),
-    #0d1f1c;
+    #081312;
   color: var(--sala-surface);
   animation: teFadeIn .3s ease;
   overflow-y: auto;

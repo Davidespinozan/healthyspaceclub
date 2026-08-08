@@ -21,7 +21,7 @@
   /* Hero forest — ancla de color (como el hero de Hoy / header de nutrición) */
   background:
     radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%),
-    #0d1f1c;
+    #081312;
   border-radius: var(--radius-xl);
   padding: 20px;
   margin-bottom: 18px;

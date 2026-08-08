@@ -112,7 +112,7 @@
   width: 100%;
   aspect-ratio: 4 / 5;
   max-height: 520px;
-  background: #0d1f1c;
+  background: #081312;
   position: relative;
   border-radius: 24px 24px 0 0;
   overflow: hidden;
@@ -151,7 +151,7 @@
      El hero se adapta al aspecto real del video vía inline style, así que casi
      nunca hay barras; contain solo protege contra recortes. */
   object-fit: contain;
-  background: #0d1f1c;
+  background: #081312;
   display: block;
   cursor: pointer;
 }
