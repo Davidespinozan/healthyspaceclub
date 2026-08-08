@@ -145,7 +145,7 @@ export default function WorkoutPlayer({
   const [videoAspect, setVideoAspect] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState(() => savedProgress?.currentStep ?? 0);
   const [loggedByExercise, setLoggedByExercise] = useState<LoggedByExercise>(() => savedProgress?.loggedByExercise ?? initLoggedByExercise(exercises));
-  const [restState, setRestState] = useState<{ secondsLeft: number } | null>(null);
+  const [restState, setRestState] = useState<{ secondsLeft: number; total: number } | null>(null);
   const [editingSet, setEditingSet] = useState<{ exerciseIndex: number; setIndex: number } | null>(null);
   const [editValues, setEditValues] = useState<LoggedSet>({ reps: 0, kg: 0 });
   const [startedAt, setStartedAt] = useState<number>(() => savedProgress?.startedAt ?? Date.now());
@@ -404,7 +404,7 @@ export default function WorkoutPlayer({
       setRestState(null);
     } else {
       setCurrentStep(currentStep + 1);
-      setRestState(step.restAfter > 0 ? { secondsLeft: step.restAfter } : null);
+      setRestState(step.restAfter > 0 ? { secondsLeft: step.restAfter, total: step.restAfter } : null);
     }
   }
 
@@ -843,15 +843,27 @@ export default function WorkoutPlayer({
         />
       )}
 
-      {/* Rest bar flotante (no-bloqueante, sticky bottom) */}
+      {/* Rest bar flotante (no-bloqueante, sticky bottom) — contador circular. */}
       {phase === 'exercise' && restState && (
         <div className="wp-rest-bar" role="status" aria-live="polite">
-          <span className="wp-rest-bar-label">
-            <span className="wp-rest-bar-dot" />
-            {t('workout.resting', { time: formatTime(restState.secondsLeft) })}
-          </span>
+          <div className="wp-rest-ring">
+            <svg className="wp-rest-ring-svg" viewBox="0 0 44 44" aria-hidden="true">
+              <circle className="wp-rest-ring-track" cx="22" cy="22" r="19" />
+              <circle
+                className="wp-rest-ring-fill" cx="22" cy="22" r="19"
+                style={{ strokeDasharray: 119.4, strokeDashoffset: 119.4 * (1 - restState.secondsLeft / Math.max(1, restState.total)) }}
+              />
+            </svg>
+            <span className="wp-rest-ring-num">{restState.secondsLeft}</span>
+          </div>
+          <div className="wp-rest-bar-info">
+            <span className="wp-rest-bar-label">{t('workout.restLabel')}</span>
+            {currentSetNum <= totalSetsForCurrent && (
+              <span className="wp-rest-bar-sub">{t('workout.nextSetShort', { n: currentSetNum, total: totalSetsForCurrent })}</span>
+            )}
+          </div>
           <button className="wp-rest-bar-skip" onClick={skipRest} type="button">
-            {t('workout.skip')}
+            {t('workout.skipRest')}
           </button>
         </div>
       )}
