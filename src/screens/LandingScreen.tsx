@@ -3,7 +3,6 @@ import { ChevronDown, Dumbbell, Users, Brain, Salad, ArrowRight } from 'lucide-r
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
-import { supabase } from '../lib/supabase';
 import { PRICING, detectRegion, type Region } from '../utils/region';
 import { track } from '../utils/analytics';
 import LanguageToggle from '../components/LanguageToggle';
@@ -21,6 +20,21 @@ const DISH_IMGS: string[] = [
   'atun-sellado-con-ensalada-de-pepino.webp', 'arroz-cremoso-con-champinones-y-pollo.webp',
   'bowl-de-garbanzo-quinoa-y-feta.webp', 'asado-de-res.webp', 'baguette-de-pollo-y-aguacate.webp',
 ].map(f => DISH_BASE + f);
+
+// Videos de entreno CURADOS a mano — un movimiento por familia para que se vean
+// DISTINTOS (glúteo, pecho, espalda, cardio, pierna, hombro…). El fetch crudo
+// agarraba las primeras filas y salían 6 curls de bícep iguales.
+const GYM_BASE = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/';
+const GYM_VIDS: string[] = [
+  'hip-thrust-barra-gluteo.mp4',
+  'press-banca-declinado-con-mancuernas-pecho-bajo-triceps.mp4',
+  'dominadas-agarre-neutro-espalda-y-biceps.mp4',
+  'burpees-con-salto-full-body-cardio-resistencia.mp4',
+  'zancada-estatica-desplantes-barra-pierna.mp4',
+  'press-militar-barra-agarre-cerrado-hombro.mp4',
+  'skipping-alto-o-tijeras-con-salto-en-el-aire-cardio-piernas-abdomen.mp4',
+  'jalon-al-pecho-agarre-supino-en-maquina-espalda-y-biceps.mp4',
+].map(f => GYM_BASE + encodeURIComponent(f));
 
 // Inline check icon (no emojis) for trial feature lists
 function CheckIcon() {
@@ -81,23 +95,11 @@ export default function LandingScreen() {
     return () => { cancelled = true; };
   }, [setRegion]);
 
-  // Banda: videos de ejercicio REALES en loop (exercise_videos). Se traen al vuelo;
-  // hasta que llegan, la banda corre solo con los platillos.
-  const [bandVids, setBandVids] = useState<string[]>([]);
-  useEffect(() => {
-    let alive = true;
-    supabase.from('exercise_videos').select('video_url').limit(12).then(({ data }) => {
-      if (!alive || !data) return;
-      const urls = [...new Set((data as { video_url: string | null }[]).map((r) => r.video_url).filter((u): u is string => !!u))].slice(0, 6);
-      setBandVids(urls);
-    });
-    return () => { alive = false; };
-  }, []);
   // Alterna platillo ↔ entreno para que la banda cuente las dos mitades de la app.
   const bandItems: { type: 'img' | 'video'; src: string }[] = [];
-  for (let i = 0; i < Math.max(DISH_IMGS.length, bandVids.length); i++) {
+  for (let i = 0; i < Math.max(DISH_IMGS.length, GYM_VIDS.length); i++) {
     if (DISH_IMGS[i]) bandItems.push({ type: 'img', src: DISH_IMGS[i] });
-    if (bandVids[i]) bandItems.push({ type: 'video', src: bandVids[i] });
+    if (GYM_VIDS[i]) bandItems.push({ type: 'video', src: GYM_VIDS[i] });
   }
 
   const pricing = region ? PRICING[region] : null;
