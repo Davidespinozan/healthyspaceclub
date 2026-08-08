@@ -168,7 +168,7 @@
   left: 0; top: 12px; bottom: 12px;
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: var(--amber);
+  background: var(--terracota);
 }
 .dt2-ex:nth-child(1) { animation-delay: 0.04s; }
 .dt2-ex:nth-child(2) { animation-delay: 0.09s; }
@@ -332,8 +332,8 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: none;
-  color: var(--amber-deep);
-  background: rgba(191, 160, 101, 0.14);
+  color: var(--terracota);
+  background: rgba(199, 91, 58, 0.12);
   padding: 2px 7px;
   border-radius: 50px;
   margin-right: 2px;
