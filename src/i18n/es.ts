@@ -943,6 +943,8 @@ export const es = {
   weight: {
     label: 'Peso',
     unset: 'Sin registrar',
+    cardTitle: 'Tu peso',
+    sinceLastWeek: 'desde la semana pasada',
     modalTitle: 'Registrar peso',
     modalIntro: 'Idealmente, pesate en la mañana después del baño, en ayunas y sin ropa.',
     placeholder: '70.5',

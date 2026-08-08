@@ -1,5 +1,5 @@
 import { dayKey } from '../utils/localDate';
-import { ArrowDown, ArrowUp, Check, ChevronRight, Scale } from 'lucide-react';
+import { Check, ChevronRight, Calendar } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
@@ -120,29 +120,35 @@ export default function WeightTrackingCard() {
 
   return (
     <>
-      <button type="button" className="weight-row" onClick={openModal}>
-        <span className="weight-row-icon" aria-hidden="true"><Scale size={21} strokeWidth={2} /></span>
-        <div className="weight-row-body">
-          <div className="weight-row-top">
-            <span className="weight-row-value">
-              {currentWeight !== null && currentWeight !== undefined
-                ? <>{currentWeight} <span className="weight-row-unit">kg</span></>
-                : t('weight.unset')}
-            </span>
-            {showChip && deltaInfo && (
-              <span className={`weight-row-delta ${chipDirection}`}>
-                {deltaInfo.value < 0
-                  ? <ArrowDown size={13} strokeWidth={2.4} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
-                  : <ArrowUp size={13} strokeWidth={2.4} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />} {Math.abs(deltaInfo.value)} kg
+      <div className="weight-card">
+        <div className="weight-card-label">{t('weight.cardTitle')}</div>
+        <div className="weight-card-main">
+          <div className="weight-card-info">
+            <button type="button" className="weight-card-top" onClick={openModal}>
+              <span className="weight-card-value">
+                {currentWeight !== null && currentWeight !== undefined
+                  ? <>{currentWeight}<span className="weight-card-unit">kg</span></>
+                  : t('weight.unset')}
               </span>
+              {showChip && deltaInfo && (
+                <span className={`weight-card-delta ${chipDirection}`}>
+                  {deltaInfo.value < 0 ? '−' : '+'}{Math.abs(deltaInfo.value)} kg
+                  <ChevronRight size={13} strokeWidth={2.4} aria-hidden="true" />
+                </span>
+              )}
+            </button>
+            {deltaInfo?.label === 'semana' && (
+              <span className="weight-card-since">{t('weight.sinceLastWeek')}</span>
             )}
+            <span className="weight-card-tip">
+              <Calendar size={13} strokeWidth={2} aria-hidden="true" /> {metaText}
+            </span>
           </div>
-          <span className="weight-row-hint">{metaText}</span>
+          {sorted.length >= 2 && (
+            <div className="weight-card-chart"><WeightTrend data={sorted} locale={locale} /></div>
+          )}
         </div>
-        <span className="weight-row-chevron" aria-hidden="true"><ChevronRight size={18} strokeWidth={2} /></span>
-      </button>
-
-      {sorted.length >= 2 && <WeightTrend data={sorted} locale={locale} />}
+      </div>
 
       {showToast && toastValue !== null && (
         <div className="weight-toast" role="status" aria-live="polite">

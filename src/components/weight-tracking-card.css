@@ -3,6 +3,47 @@
    Prefijos: .weight-row-*, .weight-modal-*, .weight-toast-*
    ═════════════════════════════════════════════════════════════ */
 
+/* ═══ Tarjeta "Tu peso" — label + peso/delta (izq) + gráfica (der) ═══ */
+.weight-card {
+  margin: 2px 22px 14px;
+  padding: 16px 16px 14px;
+  background: #fff;
+  border: 1px solid rgba(21, 51, 48, 0.06);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(8, 20, 18, 0.05);
+}
+.weight-card-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--txt2, rgba(21, 51, 48, .5)); margin-bottom: 8px;
+}
+.weight-card-main { display: flex; align-items: center; gap: 14px; }
+.weight-card-info { flex-shrink: 0; display: flex; flex-direction: column; gap: 5px; }
+.weight-card-top {
+  display: inline-flex; align-items: baseline; gap: 9px;
+  background: none; border: none; padding: 0; cursor: pointer; font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.weight-card-value {
+  font-family: 'Montserrat', sans-serif; font-size: 2rem; font-weight: 800;
+  color: var(--forest); letter-spacing: -.02em; line-height: 1;
+}
+.weight-card-unit { font-size: .9rem; font-weight: 700; color: var(--txt2); margin-left: 2px; }
+.weight-card-delta {
+  display: inline-flex; align-items: center; gap: 2px;
+  font-size: .75rem; font-weight: 700; padding: 3px 8px; border-radius: 50px;
+  background: rgba(191, 160, 101, 0.18); color: var(--amber-deep);
+  white-space: nowrap;
+}
+.weight-card-delta.down { background: rgba(47, 125, 91, .14); color: #2f7d5b; }
+.weight-card-since { font-size: .72rem; color: var(--txt2, rgba(21, 51, 48, .5)); }
+.weight-card-tip { display: inline-flex; align-items: center; gap: 5px; font-size: .72rem; color: var(--txt2, rgba(21, 51, 48, .5)); }
+.weight-card-tip svg { color: var(--amber-deep); flex-shrink: 0; }
+.weight-card-chart { flex: 1; min-width: 0; }
+@media (max-width: 380px) {
+  .weight-card-main { flex-direction: column; align-items: stretch; gap: 10px; }
+}
+
 /* ═══ Fila compacta Pro (glass + lift) ═══════════════════ */
 .weight-row {
   display: flex;

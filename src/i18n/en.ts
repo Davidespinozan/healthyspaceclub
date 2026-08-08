@@ -944,6 +944,8 @@ export const en: Translations<typeof es> = {
   weight: {
     label: 'Weight',
     unset: 'Not logged',
+    cardTitle: 'Your weight',
+    sinceLastWeek: 'since last week',
     modalTitle: 'Log weight',
     modalIntro: 'Ideally, weigh yourself first thing in the morning, after using the bathroom, on an empty stomach and without clothes.',
     placeholder: '70.5',
