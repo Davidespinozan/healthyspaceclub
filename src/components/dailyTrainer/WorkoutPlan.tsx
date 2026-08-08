@@ -15,7 +15,7 @@
 
 import { lazy, Suspense, useRef, useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight, Sparkles, Dumbbell, BarChart3 } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight, Dumbbell, BarChart3, Target } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { plural } from '../../i18n/format';
 import { humanizeExerciseId } from '../../utils/exerciseMeta';
@@ -252,21 +252,20 @@ export default function WorkoutPlan({
       {/* Razón del coach — Plan-1: colapsable, default cerrado.
           El plan arranca limpio; el usuario lo abre si le interesa. */}
       {(plan as { razon?: string }).razon && (
-        <div className={`dt2-card-why${whyOpen ? ' is-open' : ''}`}>
-          <button
-            type="button"
-            className="dt2-card-why-toggle"
-            onClick={() => setWhyOpen(o => !o)}
-            aria-expanded={whyOpen}
-            aria-label={whyOpen ? t('hoy.ariaWhyCollapse') : t('hoy.ariaWhyExpand')}
-          >
-            <span className="dt2-card-why-label"><Sparkles size={13} strokeWidth={2} />{t('workout.whyToday')}</span>
-            <ChevronDown size={15} className="dt2-card-why-chev" />
-          </button>
-          {whyOpen && (
-            <p className="dt2-card-why-text">{(plan as { razon?: string }).razon}</p>
-          )}
-        </div>
+        <button
+          type="button"
+          className={`dt2-goal${whyOpen ? ' is-open' : ''}`}
+          onClick={() => setWhyOpen(o => !o)}
+          aria-expanded={whyOpen}
+          aria-label={whyOpen ? t('hoy.ariaWhyCollapse') : t('hoy.ariaWhyExpand')}
+        >
+          <span className="dt2-goal-icon"><Target size={18} strokeWidth={2} /></span>
+          <span className="dt2-goal-main">
+            <span className="dt2-goal-title">{t('workout.todayGoal')}</span>
+            <span className="dt2-goal-text">{(plan as { razon?: string }).razon}</span>
+          </span>
+          <ChevronDown size={16} className="dt2-goal-chev" />
+        </button>
       )}
 
       {/* Calentamiento y enfriamiento se MUESTRAN dentro del player (flujo guiado),
