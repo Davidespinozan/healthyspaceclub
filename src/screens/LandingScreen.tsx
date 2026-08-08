@@ -105,6 +105,10 @@ export default function LandingScreen() {
     return () => { cancelled = true; };
   }, [setRegion]);
 
+  // Pop-out de los 4 pilares: en móvil (sin hover) se abre al tocar, no siempre visible.
+  const [openFeat, setOpenFeat] = useState<number | null>(null);
+  const toggleFeat = (n: number) => setOpenFeat((prev) => (prev === n ? null : n));
+
   // Alterna platillo ↔ entreno (y los entrenos ya alternan gym↔yoga en MOVE_VIDS).
   const bandItems: { type: 'img' | 'video'; src: string }[] = [];
   for (let i = 0; i < Math.max(DISH_IMGS.length, MOVE_VIDS.length); i++) {
@@ -246,23 +250,23 @@ export default function LandingScreen() {
           <div className="sys-body">
           <h2 className="sys-title">{t('landing.sysTitlePre')} <em>{t('landing.sysTitleEm')}</em> {t('landing.sysTitlePost')}</h2>
           <div className="sys-grid">
-            <div className="sys-feat sys-feat--pop reveal reveal-delay-1">
-              <div className="sys-feat-head"><Brain className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f1Title')}</h3></div>
+            <div className={`sys-feat sys-feat--pop reveal reveal-delay-1${openFeat === 1 ? ' is-open' : ''}`} onClick={() => toggleFeat(1)}>
+              <div className="sys-feat-head"><Brain className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f1Title')}</h3><ChevronDown className="sys-feat-chev" size={18} aria-hidden /></div>
               <p>{t('landing.f1Sub')}</p>
               <p className="sys-feat-more">{t('landing.f1More')}</p>
             </div>
-            <div className="sys-feat sys-feat--pop reveal reveal-delay-2">
-              <div className="sys-feat-head"><Dumbbell className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f2Title')}</h3></div>
+            <div className={`sys-feat sys-feat--pop reveal reveal-delay-2${openFeat === 2 ? ' is-open' : ''}`} onClick={() => toggleFeat(2)}>
+              <div className="sys-feat-head"><Dumbbell className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f2Title')}</h3><ChevronDown className="sys-feat-chev" size={18} aria-hidden /></div>
               <p>{t('landing.f2Sub')}</p>
               <p className="sys-feat-more">{t('landing.f2More')}</p>
             </div>
-            <div className="sys-feat sys-feat--pop reveal reveal-delay-3">
-              <div className="sys-feat-head"><Salad className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f3Title')}</h3></div>
+            <div className={`sys-feat sys-feat--pop reveal reveal-delay-3${openFeat === 3 ? ' is-open' : ''}`} onClick={() => toggleFeat(3)}>
+              <div className="sys-feat-head"><Salad className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f3Title')}</h3><ChevronDown className="sys-feat-chev" size={18} aria-hidden /></div>
               <p>{t('landing.f3Sub')}</p>
               <p className="sys-feat-more">{t('landing.f3More')}</p>
             </div>
-            <div className="sys-feat sys-feat--pop reveal reveal-delay-4">
-              <div className="sys-feat-head"><Users className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f4Title')}</h3></div>
+            <div className={`sys-feat sys-feat--pop reveal reveal-delay-4${openFeat === 4 ? ' is-open' : ''}`} onClick={() => toggleFeat(4)}>
+              <div className="sys-feat-head"><Users className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f4Title')}</h3><ChevronDown className="sys-feat-chev" size={18} aria-hidden /></div>
               <p>{t('landing.f4Sub')}</p>
               <p className="sys-feat-more">{t('landing.f4More')}</p>
             </div>

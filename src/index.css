@@ -7734,11 +7734,18 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   color: rgba(246,242,234,.66); font-size: .88rem; line-height: 1.5;
   transition: max-height .32s ease, opacity .28s ease, margin-top .32s ease;
 }
-.sys-feat--pop:hover .sys-feat-more { max-height: 200px; opacity: 1; margin-top: 10px; }
-/* Touch (sin hover): siempre visible la descripción profunda. */
+.sys-feat--pop:hover .sys-feat-more,
+.sys-feat--pop.is-open .sys-feat-more { max-height: 200px; opacity: 1; margin-top: 10px; }
+/* Chevron indicador: solo en touch (en desktop se revela con hover). */
+.sys-feat-chev { margin-left: auto; flex-shrink: 0; color: var(--amber); opacity: .7; transition: transform .3s ease; display: none; }
+/* Touch (sin hover): NO siempre abierto. Colapsado por defecto, se abre al tocar. */
 @media (hover: none) {
-  .sys-feat-more { max-height: 200px; opacity: 1; margin-top: 10px; }
+  .sys-feat--pop { cursor: pointer; }
+  .sys-feat-chev { display: block; }
+  .sys-feat--pop.is-open .sys-feat-chev { transform: rotate(180deg); }
   .sys-feat--pop:hover { transform: none; }
+  .sys-feat--pop:hover .sys-feat-more { max-height: 0; opacity: 0; margin-top: 0; }
+  .sys-feat--pop.is-open .sys-feat-more { max-height: 200px; opacity: 1; margin-top: 10px; }
 }
 
 /* Banda en movimiento — platillos ↔ entrenamientos. */
