@@ -40,6 +40,12 @@ export default function ExerciseDetailPopout({
   // título. Cuerpo/ligas: la variante nombra el movimiento real, se conserva.
   const varIsGymImpl = !!variant && variant.equipment.length === 1 && variant.equipment[0] === 'gym';
   const displayName = variant && !varIsGymImpl ? `${exercise.name} — ${variant.name}` : exercise.name;
+  // Variante específica (ligas/cuerpo, no el implemento por defecto): su técnica
+  // manda. Si no trae la suya, NO caemos a la del patrón (que describe la máquina)
+  // → mejor mostrar poco y correcto que técnica del implemento equivocado.
+  const isSpecificVariant = !!variant && !varIsGymImpl;
+  const shownSteps = variant?.steps ?? (isSpecificVariant ? undefined : exercise.steps);
+  const shownTip = variant?.tip ?? (isSpecificVariant ? undefined : exercise.tip);
   const [videos, setVideos] = useState<ExerciseVideo[]>(exercise.videos || []);
   const [activeIdx, setActiveIdx] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -314,7 +320,7 @@ export default function ExerciseDetailPopout({
             {translateMuscle(exercise.muscleGroup, t)} · {translateDifficulty(exercise.difficulty, t)}
           </p>
           <h2 className="edp-name">{displayName}</h2>
-          {!compact && <p className="edp-desc">{exercise.desc}</p>}
+          {!compact && !isSpecificVariant && <p className="edp-desc">{exercise.desc}</p>}
           {variant?.notes && (
             <p className="edp-variant-notes">{variant.notes}</p>
           )}
@@ -346,10 +352,10 @@ export default function ExerciseDetailPopout({
           )}
 
           {/* Pedagogical steps */}
-          {exercise.steps && exercise.steps.length > 0 && (
+          {shownSteps && shownSteps.length > 0 && (
             <div className="edp-steps">
               <div className="edp-steps-label">{t('workout.howToDoIt')}</div>
-              {exercise.steps.map((step, i) => (
+              {shownSteps.map((step, i) => (
                 <div key={i} className="edp-step">
                   <div className="edp-step-num">{i + 1}</div>
                   <div className="edp-step-body">
@@ -362,9 +368,9 @@ export default function ExerciseDetailPopout({
           )}
 
           {/* General tip */}
-          {exercise.tip && (
+          {shownTip && (
             <div className="edp-general-tip">
-              <p className="edp-general-tip-text"><Lightbulb size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {exercise.tip}</p>
+              <p className="edp-general-tip-text"><Lightbulb size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" /> {shownTip}</p>
             </div>
           )}
         </div>
