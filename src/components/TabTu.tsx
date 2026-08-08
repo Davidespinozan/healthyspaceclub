@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from 'react';
-import { Menu, Flame, Gem, Trash2 } from 'lucide-react';
+import { Menu, Flame, Trash2, Dumbbell, FileText } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useCurrentUserId } from '../hooks/useCurrentUserId';
@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
 import { uploadAvatar } from '../utils/uploadAvatar';
 import { deleteClubPost } from '../utils/clubPosts';
+import { dayKey } from '../utils/localDate';
 import SettingsSheet from './SettingsSheet';
 import PublicProfile from './PublicProfile';
 import WeightTrackingCard from './WeightTrackingCard';
@@ -22,9 +23,19 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   void _onNav;
   const { t, locale } = useT();
   const {
-    userName, setUserName, streakCount, perfectDaysTotal,
+    userName, setUserName, streakCount,
     dailyHSMResponses, username,
-  } = useAppStore(useShallow((s) => ({ userName: s.userName, setUserName: s.setUserName, streakCount: s.streakCount, perfectDaysTotal: s.perfectDaysTotal, dailyHSMResponses: s.dailyHSMResponses, username: s.username })));
+    completedSessions,
+  } = useAppStore(useShallow((s) => ({ userName: s.userName, setUserName: s.setUserName, streakCount: s.streakCount, perfectDaysTotal: s.perfectDaysTotal, dailyHSMResponses: s.dailyHSMResponses, username: s.username, completedSessions: s.completedSessions })));
+
+  // Entrenamientos de esta semana (últimos 7 días) — para el stat "de 3 esta semana".
+  const workoutsThisWeek = useMemo(() => {
+    const since = new Date();
+    since.setDate(since.getDate() - 6);
+    const sinceKey = dayKey(since);
+    const days = new Set(completedSessions.filter(s => s.date >= sinceKey).map(s => s.date));
+    return days.size;
+  }, [completedSessions]);
   const reflections = useMemo(() => [...dailyHSMResponses].reverse(), [dailyHSMResponses]);
 
   const userId = useCurrentUserId();
@@ -219,17 +230,28 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
       {/* STATS */}
       {!editing && (
         <div className="tt5-stats">
-          <div className="tt5-stat tt5-stat--posts">
+          <div className="tt5-stat">
             <div className="tt5-stat-label">{t('profile.statPosts')}</div>
-            <div className="tt5-stat-num">{postCount}</div>
+            <div className="tt5-stat-row">
+              <span className="tt5-stat-icon"><FileText size={15} strokeWidth={2} /></span>
+              <span className="tt5-stat-num">{postCount}</span>
+            </div>
           </div>
-          <div className="tt5-stat tt5-stat--racha">
+          <div className="tt5-stat">
             <div className="tt5-stat-label">{t('profile.statStreak')}</div>
-            <div className="tt5-stat-num">{streakCount} <Flame size={20} strokeWidth={1.6} /></div>
+            <div className="tt5-stat-row">
+              <span className="tt5-stat-icon"><Flame size={16} strokeWidth={2} /></span>
+              <span className="tt5-stat-num">{streakCount}</span>
+            </div>
+            <div className="tt5-stat-sub">{t('profile.statDaysUnit')}</div>
           </div>
-          <div className="tt5-stat tt5-stat--logros">
-            <div className="tt5-stat-label">{t('profile.statPerfect')}</div>
-            <div className="tt5-stat-num">{perfectDaysTotal} <Gem size={18} strokeWidth={1.8} /></div>
+          <div className="tt5-stat">
+            <div className="tt5-stat-label">{t('profile.statWorkouts')}</div>
+            <div className="tt5-stat-row">
+              <span className="tt5-stat-icon"><Dumbbell size={15} strokeWidth={2} /></span>
+              <span className="tt5-stat-num">{workoutsThisWeek}</span>
+            </div>
+            <div className="tt5-stat-sub">{t('profile.ofThreeWeek', { n: 3 })}</div>
           </div>
         </div>
       )}

@@ -272,23 +272,29 @@
 
 .tt5-stat {
   flex: 1;
-  border: 1px solid var(--surface-glass-border);
+  min-width: 0;
+  border: 1px solid rgba(21, 51, 48, 0.06);
   border-radius: var(--radius-xl);
-  padding: 16px 10px;
+  padding: 15px 12px 14px;
   text-align: center;
   cursor: default;
   font-family: inherit;
   color: inherit;
-  background: var(--surface-glass-light);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-pro-xl);
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(8, 20, 18, 0.05);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease;
   -webkit-tap-highlight-color: transparent;
 }
 button.tt5-stat { cursor: pointer; }
-.tt5-stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-pro-2xl); }
+.tt5-stat:hover { transform: translateY(-3px); box-shadow: 0 16px 32px rgba(8, 20, 18, 0.08); }
 button.tt5-stat:active { transform: scale(0.97); }
+.tt5-stat-row { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.tt5-stat-icon {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  background: var(--forest); color: var(--amber);
+  display: flex; align-items: center; justify-content: center;
+}
+.tt5-stat-sub { font-size: 11px; color: var(--txt2, rgba(21,51,48,.5)); margin-top: 6px; }
 
 /* Color pleno y vívido por stat (los 3 roles de la marca), texto claro encima. */
 .tt5-stat--posts {
@@ -310,10 +316,11 @@ button.tt5-stat:active { transform: scale(0.97); }
 .tt5-stat-label {
   font-family: 'Montserrat', sans-serif;
   font-size: 9px;
-  text-transform: none;
+  text-transform: uppercase;
   letter-spacing: var(--tracking-kicker-loose);
   font-weight: 700;
-  margin-bottom: 8px;
+  color: var(--txt2, rgba(21, 51, 48, .5));
+  margin-bottom: 10px;
 }
 .tt5-stat--posts  .tt5-stat-label { color: rgba(255, 255, 255, 0.62); }
 .tt5-stat--racha  .tt5-stat-label { color: rgba(255, 255, 255, 0.82); }
@@ -324,6 +331,7 @@ button.tt5-stat:active { transform: scale(0.97); }
   font-size: 26px;
   line-height: 1;
   font-weight: 800;
+  color: var(--forest);
   letter-spacing: var(--tracking-tightest);
 }
 .tt5-stat--posts  .tt5-stat-num { color: #fff; }
