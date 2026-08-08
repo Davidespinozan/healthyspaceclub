@@ -3,6 +3,7 @@ import { ChevronDown, Dumbbell, Users, Brain, Salad, ArrowRight } from 'lucide-r
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
+import { supabase } from '../lib/supabase';
 import { PRICING, detectRegion, type Region } from '../utils/region';
 import { track } from '../utils/analytics';
 import LanguageToggle from '../components/LanguageToggle';
@@ -11,18 +12,15 @@ import LanguageToggle from '../components/LanguageToggle';
 const REGION_OPTIONS: Region[] = ['LATAM', 'EUROPE', 'REST'];
 const fmtPrice = (n: number) => n.toLocaleString('en-US');
 
-// Banda en movimiento — alterna platillos ↔ entrenamientos. Empieza con las fotos
-// que ya hay; David suelta más en /public (food-*.webp, train-*.webp) y se agregan
-// aquí. Si una URL no existe, la imagen se oculta sola (onError) — nunca se ve rota.
-const HERO_BOWL = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/INGREDIENTES%20BOWLS/HEROS%20BOWLS';
-const BAND_IMGS: string[] = [
-  `${HERO_BOWL}/hero1.webp`,   // platillo
-  '/hero-desktop-v3.webp',     // entreno
-  `${HERO_BOWL}/hero2.webp`,   // platillo
-  '/sys-banner.webp',          // entreno
-  `${HERO_BOWL}/hero3.webp`,   // platillo
-  '/hero-desktop-v3.webp',     // entreno
-];
+// Banda en movimiento — CONTENIDO REAL de la app: platillos de NUTRICIÓN (bucket
+// PLATILLOS BANCO, no los bowls del truck) + videos de ejercicio en LOOP
+// (exercise_videos). Alterna comida ↔ entreno. Si una imagen falla, se oculta sola.
+const DISH_BASE = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PLATILLOS%20BANCO/';
+const DISH_IMGS: string[] = [
+  'alambre-de-pollo.webp', 'bistec-con-chimichurri.webp', 'bowl-de-camaron-mediterraneo.webp',
+  'atun-sellado-con-ensalada-de-pepino.webp', 'arroz-cremoso-con-champinones-y-pollo.webp',
+  'bowl-de-garbanzo-quinoa-y-feta.webp', 'asado-de-res.webp', 'baguette-de-pollo-y-aguacate.webp',
+].map(f => DISH_BASE + f);
 
 // Inline check icon (no emojis) for trial feature lists
 function CheckIcon() {
@@ -82,6 +80,25 @@ export default function LandingScreen() {
     });
     return () => { cancelled = true; };
   }, [setRegion]);
+
+  // Banda: videos de ejercicio REALES en loop (exercise_videos). Se traen al vuelo;
+  // hasta que llegan, la banda corre solo con los platillos.
+  const [bandVids, setBandVids] = useState<string[]>([]);
+  useEffect(() => {
+    let alive = true;
+    supabase.from('exercise_videos').select('video_url').limit(12).then(({ data }) => {
+      if (!alive || !data) return;
+      const urls = [...new Set((data as { video_url: string | null }[]).map((r) => r.video_url).filter((u): u is string => !!u))].slice(0, 6);
+      setBandVids(urls);
+    });
+    return () => { alive = false; };
+  }, []);
+  // Alterna platillo ↔ entreno para que la banda cuente las dos mitades de la app.
+  const bandItems: { type: 'img' | 'video'; src: string }[] = [];
+  for (let i = 0; i < Math.max(DISH_IMGS.length, bandVids.length); i++) {
+    if (DISH_IMGS[i]) bandItems.push({ type: 'img', src: DISH_IMGS[i] });
+    if (bandVids[i]) bandItems.push({ type: 'video', src: bandVids[i] });
+  }
 
   const pricing = region ? PRICING[region] : null;
   const openAnnualCheckout = useCallback(() => {
@@ -246,13 +263,18 @@ export default function LandingScreen() {
         </div>
       </section>
 
-      {/* BANDA EN MOVIMIENTO — platillos ↔ entrenamientos (aditivo) */}
+      {/* BANDA EN MOVIMIENTO — platillos de nutrición ↔ videos de entreno en loop (real) */}
       <section className="band" aria-hidden="true">
         <div className="band-track">
-          {[...BAND_IMGS, ...BAND_IMGS].map((src, i) => (
+          {[...bandItems, ...bandItems].map((it, i) => (
             <div className="band-item" key={i}>
-              <img src={src} alt="" loading="lazy"
-                onError={(e) => { const el = (e.currentTarget.closest('.band-item') as HTMLElement | null); if (el) el.style.display = 'none'; }} />
+              {it.type === 'video' ? (
+                <video src={it.src} autoPlay loop muted playsInline preload="metadata"
+                  onError={(e) => { const el = (e.currentTarget.closest('.band-item') as HTMLElement | null); if (el) el.style.display = 'none'; }} />
+              ) : (
+                <img src={it.src} alt="" loading="lazy"
+                  onError={(e) => { const el = (e.currentTarget.closest('.band-item') as HTMLElement | null); if (el) el.style.display = 'none'; }} />
+              )}
             </div>
           ))}
         </div>
