@@ -11,6 +11,19 @@ import LanguageToggle from '../components/LanguageToggle';
 const REGION_OPTIONS: Region[] = ['LATAM', 'EUROPE', 'REST'];
 const fmtPrice = (n: number) => n.toLocaleString('en-US');
 
+// Banda en movimiento — alterna platillos ↔ entrenamientos. Empieza con las fotos
+// que ya hay; David suelta más en /public (food-*.webp, train-*.webp) y se agregan
+// aquí. Si una URL no existe, la imagen se oculta sola (onError) — nunca se ve rota.
+const HERO_BOWL = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/INGREDIENTES%20BOWLS/HEROS%20BOWLS';
+const BAND_IMGS: string[] = [
+  `${HERO_BOWL}/hero1.webp`,   // platillo
+  '/hero-desktop-v3.webp',     // entreno
+  `${HERO_BOWL}/hero2.webp`,   // platillo
+  '/sys-banner.webp',          // entreno
+  `${HERO_BOWL}/hero3.webp`,   // platillo
+  '/hero-desktop-v3.webp',     // entreno
+];
+
 // Inline check icon (no emojis) for trial feature lists
 function CheckIcon() {
   return (
@@ -204,21 +217,25 @@ export default function LandingScreen() {
           <div className="sys-body">
           <h2 className="sys-title">{t('landing.sysTitlePre')} <em>{t('landing.sysTitleEm')}</em> {t('landing.sysTitlePost')}</h2>
           <div className="sys-grid">
-            <div className="sys-feat reveal reveal-delay-1">
+            <div className="sys-feat sys-feat--pop reveal reveal-delay-1">
               <div className="sys-feat-head"><Brain className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f1Title')}</h3></div>
               <p>{t('landing.f1Sub')}</p>
+              <p className="sys-feat-more">{t('landing.f1More')}</p>
             </div>
-            <div className="sys-feat reveal reveal-delay-2">
+            <div className="sys-feat sys-feat--pop reveal reveal-delay-2">
               <div className="sys-feat-head"><Dumbbell className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f2Title')}</h3></div>
               <p>{t('landing.f2Sub')}</p>
+              <p className="sys-feat-more">{t('landing.f2More')}</p>
             </div>
-            <div className="sys-feat reveal reveal-delay-3">
+            <div className="sys-feat sys-feat--pop reveal reveal-delay-3">
               <div className="sys-feat-head"><Salad className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f3Title')}</h3></div>
               <p>{t('landing.f3Sub')}</p>
+              <p className="sys-feat-more">{t('landing.f3More')}</p>
             </div>
-            <div className="sys-feat reveal reveal-delay-4">
+            <div className="sys-feat sys-feat--pop reveal reveal-delay-4">
               <div className="sys-feat-head"><Users className="sys-ic" size={20} strokeWidth={1.8} /><h3>{t('landing.f4Title')}</h3></div>
               <p>{t('landing.f4Sub')}</p>
+              <p className="sys-feat-more">{t('landing.f4More')}</p>
             </div>
           </div>
           </div>
@@ -226,6 +243,18 @@ export default function LandingScreen() {
           <div className="sys-banner reveal">
             <img src="/sys-banner.webp" alt="" loading="lazy" />
           </div>
+        </div>
+      </section>
+
+      {/* BANDA EN MOVIMIENTO — platillos ↔ entrenamientos (aditivo) */}
+      <section className="band" aria-hidden="true">
+        <div className="band-track">
+          {[...BAND_IMGS, ...BAND_IMGS].map((src, i) => (
+            <div className="band-item" key={i}>
+              <img src={src} alt="" loading="lazy"
+                onError={(e) => { const el = (e.currentTarget.closest('.band-item') as HTMLElement | null); if (el) el.style.display = 'none'; }} />
+            </div>
+          ))}
         </div>
       </section>
 
