@@ -453,6 +453,7 @@ export const es = {
     howToDoIt: 'Cómo hacerlo bien',
     planMicro: 'tu rutina',
     exercisesCount: '{n} ejercicios',
+    exercisesSection: 'Ejercicios',
     exercisesCountOne: '{n} ejercicio',
     intensityLow: 'Intensidad baja',
     intensityMid: 'Intensidad media',

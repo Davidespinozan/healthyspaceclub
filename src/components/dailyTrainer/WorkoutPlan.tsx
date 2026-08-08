@@ -311,13 +311,12 @@ export default function WorkoutPlan({
                 )}
                 <div className="dt2-ex-name">{bank?.name || humanizeExerciseId(ex.id)}</div>
                 <div className="dt2-ex-stats">
-                  {(ex.reps != null || ex.sets != null) && (
+                  {ex.reps != null && (
                     <span className="dt2-ex-presc">
-                      {[
-                        ex.sets != null ? `${ex.sets} ${t('workout.setsLower')}` : null,
-                        ex.reps != null ? `${ex.reps} ${t('workout.repsLower')}` : null,
-                        ex.rest != null ? `${ex.rest}s ${t('workout.statRest')}` : null,
-                      ].filter(Boolean).join(' · ')}
+                      {ex.sets != null ? `${ex.sets} × ${ex.reps}` : ex.reps}
+                      {ex.rest != null && (
+                        <span className="dt2-ex-rest"> · {ex.rest}s {t('workout.statRest')}</span>
+                      )}
                     </span>
                   )}
                   {plan.partnerMode && ex.format && PARTNER_FMT_KEY[ex.format] && (
@@ -339,6 +338,8 @@ export default function WorkoutPlan({
         });
 
         return (
+          <>
+          <div className="dt2-exercises-label">{t('workout.exercisesSection')}</div>
           <div className="dt2-exercises">
             {blocks.map((b, bi) => {
               if (b.group && b.items.length >= 2) {
@@ -357,6 +358,7 @@ export default function WorkoutPlan({
               return b.items.map(({ ex, i }) => renderCard(ex, i));
             })}
           </div>
+          </>
         );
       })()}
 

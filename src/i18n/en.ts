@@ -454,6 +454,7 @@ export const en: Translations<typeof es> = {
     howToDoIt: 'How to do it right',
     planMicro: 'your routine',
     exercisesCount: '{n} exercises',
+    exercisesSection: 'Exercises',
     exercisesCountOne: '{n} exercise',
     intensityLow: 'Low intensity',
     intensityMid: 'Medium intensity',
