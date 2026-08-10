@@ -7,6 +7,7 @@ import type {
   Equipment,
   Goal,
   Modality,
+  CardioStyle,
   WorkoutDayType,
   WorkoutDayDecision
 } from '../types';
@@ -692,6 +693,44 @@ export function hasPlayableVariant(exercise: Exercise, equipment: Equipment[]): 
   // sería peor). El requisito de video aplica a fuerza/cardio, que es donde importa.
   if (exercise.isYoga) return exercise.equipment.some(e => equipment.includes(e));
   return exercise.variants?.some(v => v.equipment.some(e => equipment.includes(e)) && VIDEO_VARIANT_IDS.has(v.id)) ?? false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// CARDIO — estilo (bucket UX) y equipo efectivo (Fase 2)
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * Equipo efectivo para CARDIO. El peso corporal es UNIVERSAL: correr, saltar o marchar
+ * no dependen de una banda ni del gym. Un usuario de ligas/casa hace cardio de 'cuerpo';
+ * el de gym además tiene las máquinas. Arregla que "cardio + bandas" saliera vacío
+ * (el cardio no tiene variantes 'ligas', así que el filtro normal lo dejaba en cero).
+ */
+export function cardioEquipmentFor(equipment: Equipment[]): Equipment[] {
+  return equipment.includes('gym') ? ['gym', 'cuerpo'] : ['cuerpo'];
+}
+
+/**
+ * Estilo de cardio por DEFECTO según el objetivo del usuario. Es la capa híbrida: el
+ * motor infiere, y la UI (Fase 4) deja al usuario cambiarlo. `lowImpactMode` (edad /
+ * articulaciones) MANDA — seguridad sobre preferencia.
+ */
+export function defaultCardioStyle(objective: string, lowImpactMode = false): CardioStyle {
+  if (lowImpactMode) return 'lowImpact';
+  const o = (objective || '').toLowerCase();
+  if (/atlet|potencia|explos|rendimiento|deporte/.test(o)) return 'explosividad';
+  if (/grasa|perder|adelgaz|quemar|definir/.test(o)) return 'funcional';
+  if (/m[uú]sculo|ganar|hipertrof|fuerza/.test(o)) return 'lowImpact';
+  if (/manten|salud|bienestar|general|resist|condic/.test(o)) return 'correr';
+  return 'funcional';
+}
+
+/**
+ * ¿Este ejercicio de cardio pertenece al estilo? Considera el override por variante
+ * (cardio-maquina: caminadora='correr', bici/elíptica='lowImpact', remo='funcional').
+ */
+export function matchesCardioStyle(exercise: Exercise, style: CardioStyle): boolean {
+  if (exercise.cardioStyle === style) return true;
+  return exercise.variants?.some(v => v.cardioStyle === style) ?? false;
 }
 
 // ══════════════════════════════════════════════════════════════

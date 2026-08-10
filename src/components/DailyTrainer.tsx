@@ -13,6 +13,9 @@ import {
   filterByModality,
   countByModality,
   suggestModality,
+  cardioEquipmentFor,
+  defaultCardioStyle,
+  matchesCardioStyle,
   DAY_TYPE_CONFIG,
   restDaysFromLastTrained,
   levelFromObData,
@@ -513,12 +516,26 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
       let candidates: Exercise[];
       if (selectedModality === 'cardio') {
-        // Antes: la rama de cardio filtraba SOLO por equipo → entregaba burpees/saltos/
-        // sprints a cualquier edad. Ahora respeta el modo bajo impacto.
-        candidates = modalityFiltered.filter(ex =>
-          ex.equipment.some(e => equipmentList.includes(e)) &&
+        // Cardio NO hereda el eje de equipo de la fuerza. Dos arreglos (Fase 2):
+        // 1) EQUIPO: el peso corporal es universal → un usuario de ligas/casa hace
+        //    cardio de 'cuerpo'; el de gym además tiene máquinas. Antes, "cardio +
+        //    bandas" salía VACÍO porque el cardio no tiene variantes 'ligas'.
+        // 2) ESTILO: el cardio se elige por intención (explosividad/correr/bajo
+        //    impacto/funcional), inferida del objetivo. lowImpactMode manda (seguridad).
+        const cardioEq = cardioEquipmentFor(equipmentList);
+        const targetStyle = defaultCardioStyle(String(obData?.goal ?? ''), lowImpactMode);
+        const pool = modalityFiltered.filter(ex =>
+          ex.equipment.some(e => cardioEq.includes(e)) &&
           !(lowImpactMode && (ex.impact === 'high' || ex.fallRisk === true))
         );
+        // Filtro por estilo, priorizando la intención: los del estilo van PRIMERO
+        // (la selección downstream prefiere los primeros). Si el estilo no llega a 3
+        // (ej. 'correr' en casa = solo running-drills), se rellena con el resto del
+        // pool en vez de descartar el estilo — mantiene la intención sin quedar corto.
+        const styled = pool.filter(ex => matchesCardioStyle(ex, targetStyle));
+        candidates = styled.length >= 3
+          ? styled
+          : [...styled, ...pool.filter(ex => !styled.includes(ex))];
       } else {
         const filterResult = filterWithProgressiveRelaxation({
           exercises: modalityFiltered.length > 0 ? modalityFiltered : exerciseBank,
