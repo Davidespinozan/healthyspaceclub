@@ -64,9 +64,30 @@ const covCell=c=>{
   return `<div class="cov-c green" title="Completo">✓ ${c.c}</div>`;
 };
 const covHtml=`<section class="cov"><h2 class="cov-title">Huecos de cobertura — qué grabar y qué crear</h2>
-<p class="cov-sub"><b class="cl red">Crear</b> = no existe ni el ejercicio para ese equipo (hay que proponerlo). <b class="cl amber">Grabar N</b> = ya hay N variantes, faltan sus videos. <b class="cl green">✓</b> = con video.</p>
+<p class="cov-sub"><b class="cl red">Crear</b> = no existe ni el ejercicio para ese equipo (abajo la propuesta + ejemplos). <b class="cl amber">Grabar N</b> = ya hay N variantes, faltan sus videos. <b class="cl green">✓</b> = con video.</p>
 <div class="cov-grid"><div class="cov-h"></div><div class="cov-h">Gym</div><div class="cov-h">Ligas</div><div class="cov-h">Cuerpo</div>
 ${covRows.map(r=>`<div class="cov-mg">${esc(MG[r.mg]||r.mg)}</div>`+r.cells.map(covCell).join('')).join('')}</div></section>`;
+
+// ── Propuestas para los huecos "Crear": nombre sugerido + links de ejemplos ──
+const PROP={
+  'pantorrillas|LIGAS':'Elevación de talón de pie con banda',
+  'pantorrillas|CUERPO':'Elevación de talón a una pierna (peso corporal)',
+  'antebrazo|LIGAS':'Curl de muñeca con banda',
+  'antebrazo|CUERPO':'Colgado en barra (dead hang) para agarre',
+  'cuerpo-completo|LIGAS':'Thruster con banda (sentadilla + press)',
+  'cuerpo-completo|CUERPO':'Burpee (peso corporal)',
+  'biceps|CUERPO':'Curl de bíceps con mochila cargada',
+  'isquios|CUERPO':'Curl femoral nórdico (peso corporal)',
+  'cardio|LIGAS':'Golpes de cuerda / battle rope con banda',
+};
+const gaps=[];
+for(const r of covRows) r.cells.forEach((c,i)=>{ if(c.t===0) gaps.push({mg:r.mg,eq:EQS[i][0],eqLabel:EQS[i][1]}); });
+const propHtml = gaps.length ? `<section class="cov"><h2 class="cov-title">Faltan por crear — propuesta + ejemplos</h2>
+<p class="cov-sub">Estos músculo×equipo no tienen NINGUNA variante en el banco. Aquí va una propuesta de qué grabar y links para ver ejemplos. Cuando me digas cuáles quieres, las agrego al banco.</p>
+<div class="prop-list">${gaps.map(g=>{
+  const name=PROP[g.mg+'|'+g.eq]||(MG[g.mg]+' con '+g.eqLabel.toLowerCase());
+  return `<div class="prop-row"><div class="prop-hd"><span class="prop-mg">${esc(MG[g.mg])} · ${g.eqLabel}</span><span class="prop-name">${esc(name)}</span></div>${refLinks(name)}</div>`;
+}).join('')}</div></section>` : '';
 // ── Lista completa (sidebar): movimientos (azul=necesarios) + variantes (rojo=extra) ──
 let side='';
 for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue;
@@ -196,12 +217,17 @@ h2.mg{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:upperca
 .cov-c.amber2{background:rgba(199,122,42,.09);color:var(--warn)}
 .cov-c.green{background:rgba(46,125,87,.12);color:var(--ok)}
 @media(max-width:520px){.cov-c{font-size:.68rem;padding:8px 2px}.cov-mg{font-size:.74rem}}
+.prop-list{display:flex;flex-direction:column;gap:10px}
+.prop-row{border:1px solid var(--line);border-left:3px solid var(--terra);border-radius:10px;padding:11px 13px}
+.prop-hd{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin-bottom:7px}
+.prop-mg{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--terra)}
+.prop-name{font-size:.92rem;font-weight:700;color:var(--ink)}
 </style></head><body><div class="w">
 <h1>Videos por movimiento</h1><div class="sub">Cada movimiento con TODAS sus variantes: las que ya tienen video (verde, reproducible) y las que faltan (punteado ámbar). Usa "Solo faltan" para ver de un vistazo qué grabar de cada uno.</div>
 <div class="stats"><div class="stat"><b>${totVid}</b><span>videos conectados (todos visibles)</span></div><div class="stat"><b>${totCon}</b><span>variantes con video</span></div><div class="stat"><b style="color:var(--terra)">${totVar-totCon}</b><span>variantes por grabar</span></div>${totDup?`<div class="stat"><b style="color:var(--warn)">${totDup}</b><span>en cards con 2+ videos ⚠</span></div>`:''}<div class="stat"><b>${pats.length}</b><span>movimientos</span></div></div>
 <div class="stickyhead"><div class="tabs">${TABS.map(([id,label],i)=>`<span class="tab${i===0?' on':''}" data-tab="${id}">${esc(label)}<span class="tc" data-tabcount="${id}"></span></span>`).join('')}</div>
 <div class="tools"><input type="search" id="q" placeholder="Buscar movimiento, variante o archivo…"><span class="pill on" data-f="all">Todo</span><span class="pill warn" data-f="falta">Solo faltan</span><span class="pill" data-f="ok">Solo con video</span></div></div>
-<div class="layout"><main class="col-main"><div id="app">${covHtml}${body}${gymOrphanSection}${propSection}${mgGroup('yoga','Por identificar — dime qué postura es cada uno',`<section class="pat" data-region="yoga"><div class="vgrid">${imgCards}</div></section>`,0,0,' style="color:var(--terra)"')}</div></main><aside class="col-side"><div class="side-hd">Lista completa<div class="side-legend"><span class="lg azul">● Movimiento (necesario)</span><span class="lg rojo">● Variante extra</span><span class="lg">✓ ya con video</span></div><input type="search" id="qs" placeholder="Filtrar lista…"></div><div class="side-body">${side}</div></aside></div>
+<div class="layout"><main class="col-main"><div id="app">${covHtml}${propHtml}${body}${gymOrphanSection}${propSection}${mgGroup('yoga','Por identificar — dime qué postura es cada uno',`<section class="pat" data-region="yoga"><div class="vgrid">${imgCards}</div></section>`,0,0,' style="color:var(--terra)"')}</div></main><aside class="col-side"><div class="side-hd">Lista completa<div class="side-legend"><span class="lg azul">● Movimiento (necesario)</span><span class="lg rojo">● Variante extra</span><span class="lg">✓ ya con video</span></div><input type="search" id="qs" placeholder="Filtrar lista…"></div><div class="side-body">${side}</div></aside></div>
 ${yfalta.length?`<footer>Yoga: falta grabar el flow <b>${esc(yfalta.map(f=>f.name).join(', '))}</b>.</footer>`:''}
 <script>const q=document.getElementById('q');let filter='all',tab='todos';
 function regOf(c){const s=c.closest('[data-region]');return s?s.dataset.region:'otros';}
