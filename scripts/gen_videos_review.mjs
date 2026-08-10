@@ -48,6 +48,25 @@ for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue
     inner+=`<section class="pat" data-region="${rg}" data-faltan="${f}"><div class="ph"><h3>${esc(p.patron)}</h3><span class="pcount">${p.con}/${p.tot}</span>${badge}</div><div class="vgrid">${p.vars.map(v=>vcard(v,p.patron)).join('')}</div></section>`;}
   const tot=ps.reduce((a,p)=>a+p.tot,0),con=ps.reduce((a,p)=>a+p.con,0);
   body+=mgGroup(rg,MG[mg],inner,tot,con);}
+
+// ── HUECOS DE COBERTURA — matriz músculo × equipo (qué grabar / crear) ──
+const EQS=[['GYM','Gym'],['LIGAS','Ligas'],['CUERPO','Cuerpo']];
+const covRows=orden.filter(mg=>mg!=='yoga').map(mg=>{
+  const ps=pats.filter(p=>p.mg===mg);
+  if(!ps.length) return null;
+  const cells=EQS.map(([eq])=>{let t=0,c=0;for(const p of ps)for(const v of p.vars)if(v.equipo===eq){t++;if(v.tiene)c++;}return {t,c};});
+  return {mg,cells};
+}).filter(Boolean);
+const covCell=c=>{
+  if(c.t===0) return `<div class="cov-c red" title="No hay ninguna variante — hay que proponer/crear el ejercicio">Crear</div>`;
+  if(c.c===0) return `<div class="cov-c amber" title="La variante existe, falta grabar su video">Grabar ${c.t}</div>`;
+  if(c.c<c.t) return `<div class="cov-c amber2" title="Algunas con video, faltan ${c.t-c.c}">${c.c}/${c.t}</div>`;
+  return `<div class="cov-c green" title="Completo">✓ ${c.c}</div>`;
+};
+const covHtml=`<section class="cov"><h2 class="cov-title">Huecos de cobertura — qué grabar y qué crear</h2>
+<p class="cov-sub"><b class="cl red">Crear</b> = no existe ni el ejercicio para ese equipo (hay que proponerlo). <b class="cl amber">Grabar N</b> = ya hay N variantes, faltan sus videos. <b class="cl green">✓</b> = con video.</p>
+<div class="cov-grid"><div class="cov-h"></div><div class="cov-h">Gym</div><div class="cov-h">Ligas</div><div class="cov-h">Cuerpo</div>
+${covRows.map(r=>`<div class="cov-mg">${esc(MG[r.mg]||r.mg)}</div>`+r.cells.map(covCell).join('')).join('')}</div></section>`;
 // ── Lista completa (sidebar): movimientos (azul=necesarios) + variantes (rojo=extra) ──
 let side='';
 for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue;
@@ -163,12 +182,26 @@ h2.mg{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:upperca
 .s-chk{color:var(--ok);font-weight:900;font-size:12px}\n.s-file{display:block;font-family:ui-monospace,monospace;font-size:9.5px;color:var(--ink2);margin-top:1px}
 @media(max-width:900px){.layout{grid-template-columns:1fr}.col-side{position:static;max-height:none;order:-1}.side-body{max-height:340px}}
 .hidden{display:none}footer{margin-top:34px;color:var(--ink2);font-size:12px}
+.cov{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 20px}
+.cov-title{font-size:1.05rem;font-weight:800;margin-bottom:6px;color:var(--ink)}
+.cov-sub{font-size:.78rem;color:var(--ink2);margin-bottom:14px;line-height:1.55}
+.cl{padding:1px 6px;border-radius:5px;font-weight:800;font-size:.72rem}
+.cl.red{background:rgba(180,69,60,.14);color:var(--terra)}.cl.amber{background:rgba(199,122,42,.16);color:var(--warn)}.cl.green{background:rgba(46,125,87,.14);color:var(--ok)}
+.cov-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:6px}
+.cov-h{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);padding:2px 4px;text-align:center}
+.cov-mg{font-size:.82rem;font-weight:700;display:flex;align-items:center;text-transform:capitalize;color:var(--ink)}
+.cov-c{text-align:center;font-size:.76rem;font-weight:800;padding:9px 4px;border-radius:9px}
+.cov-c.red{background:rgba(180,69,60,.15);color:var(--terra)}
+.cov-c.amber{background:rgba(199,122,42,.18);color:var(--warn)}
+.cov-c.amber2{background:rgba(199,122,42,.09);color:var(--warn)}
+.cov-c.green{background:rgba(46,125,87,.12);color:var(--ok)}
+@media(max-width:520px){.cov-c{font-size:.68rem;padding:8px 2px}.cov-mg{font-size:.74rem}}
 </style></head><body><div class="w">
 <h1>Videos por movimiento</h1><div class="sub">Cada movimiento con TODAS sus variantes: las que ya tienen video (verde, reproducible) y las que faltan (punteado ámbar). Usa "Solo faltan" para ver de un vistazo qué grabar de cada uno.</div>
 <div class="stats"><div class="stat"><b>${totVid}</b><span>videos conectados (todos visibles)</span></div><div class="stat"><b>${totCon}</b><span>variantes con video</span></div><div class="stat"><b style="color:var(--terra)">${totVar-totCon}</b><span>variantes por grabar</span></div>${totDup?`<div class="stat"><b style="color:var(--warn)">${totDup}</b><span>en cards con 2+ videos ⚠</span></div>`:''}<div class="stat"><b>${pats.length}</b><span>movimientos</span></div></div>
 <div class="stickyhead"><div class="tabs">${TABS.map(([id,label],i)=>`<span class="tab${i===0?' on':''}" data-tab="${id}">${esc(label)}<span class="tc" data-tabcount="${id}"></span></span>`).join('')}</div>
 <div class="tools"><input type="search" id="q" placeholder="Buscar movimiento, variante o archivo…"><span class="pill on" data-f="all">Todo</span><span class="pill warn" data-f="falta">Solo faltan</span><span class="pill" data-f="ok">Solo con video</span></div></div>
-<div class="layout"><main class="col-main"><div id="app">${body}${gymOrphanSection}${propSection}${mgGroup('yoga','Por identificar — dime qué postura es cada uno',`<section class="pat" data-region="yoga"><div class="vgrid">${imgCards}</div></section>`,0,0,' style="color:var(--terra)"')}</div></main><aside class="col-side"><div class="side-hd">Lista completa<div class="side-legend"><span class="lg azul">● Movimiento (necesario)</span><span class="lg rojo">● Variante extra</span><span class="lg">✓ ya con video</span></div><input type="search" id="qs" placeholder="Filtrar lista…"></div><div class="side-body">${side}</div></aside></div>
+<div class="layout"><main class="col-main"><div id="app">${covHtml}${body}${gymOrphanSection}${propSection}${mgGroup('yoga','Por identificar — dime qué postura es cada uno',`<section class="pat" data-region="yoga"><div class="vgrid">${imgCards}</div></section>`,0,0,' style="color:var(--terra)"')}</div></main><aside class="col-side"><div class="side-hd">Lista completa<div class="side-legend"><span class="lg azul">● Movimiento (necesario)</span><span class="lg rojo">● Variante extra</span><span class="lg">✓ ya con video</span></div><input type="search" id="qs" placeholder="Filtrar lista…"></div><div class="side-body">${side}</div></aside></div>
 ${yfalta.length?`<footer>Yoga: falta grabar el flow <b>${esc(yfalta.map(f=>f.name).join(', '))}</b>.</footer>`:''}
 <script>const q=document.getElementById('q');let filter='all',tab='todos';
 function regOf(c){const s=c.closest('[data-region]');return s?s.dataset.region:'otros';}
