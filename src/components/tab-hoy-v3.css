@@ -260,8 +260,10 @@
   align-items: stretch;
 }
 .th3-card {
-  background: var(--sala-surface);
-  border: 1px solid var(--sala-border);
+  /* Cuerpo en verde oscuro #081312 (igual que el hero y la landing) → la card se
+     lee como un objeto premium continuo con su foto, y despega del fondo cream. */
+  background: #081312;
+  border: 1px solid rgba(246,242,234,0.09);
   border-radius: var(--radius-xl);
   overflow: hidden;
   cursor: pointer;
@@ -271,6 +273,28 @@
   box-shadow: var(--shadow-pro-xl);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease;
 }
+/* ═══ Inversión de textos sobre el verde oscuro de la card ═══ */
+.th3-card-title { color: #F4EFE3; }
+.th3-card-title-arrow { color: var(--amber); }
+.th3-card-eyebrow { color: var(--amber); }
+.th3-card-eyebrow--done,
+.th3-card-eyebrow-check { color: #8FD8C0; }
+.th3-card-meta { color: rgba(246,242,234,0.52); }
+.th3-card-last-session { color: rgba(246,242,234,0.52); }
+.th3-card-list-item { border-top-color: rgba(246,242,234,0.10); }
+.th3-card-list-name { color: #F4EFE3; }
+.th3-card-list-item--snack .th3-card-list-name { color: rgba(246,242,234,0.6); }
+.th3-card-list-thumb { border-color: rgba(246,242,234,0.12); }
+.th3-card-list-check { background: rgba(246,242,234,0.06); border-color: rgba(246,242,234,0.28); }
+.th3-card-list-check.checked { background: var(--amber); border-color: var(--amber); color: #081312; }
+.th3-card-list-sep-label,
+.th3-card-list-kcal { color: var(--amber); }
+.th3-card-foot { border-top-color: rgba(246,242,234,0.10); }
+.th3-card-foot-text { color: rgba(246,242,234,0.58); }
+.th3-card-arrow { color: var(--amber); background: rgba(191,160,101,0.18); }
+.th3-card-alt-activity { color: var(--amber); border-top-color: rgba(246,242,234,0.10); }
+.th3-card-alt-activity.logged,
+.th3-card-alt-check { color: #8FD8C0; }
 .th3-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-pro-2xl);
