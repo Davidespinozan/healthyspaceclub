@@ -1273,7 +1273,7 @@ export const variantNotesEn: Record<string, string> = {
   'Barra hexagonal — más amigable con espalda baja.': 'Hex bar — kinder on your lower back.',
   'Barra sobre caderas con pad — máxima carga del patrón.': 'Bar over your hips with a pad — maximum load for the pattern.',
   'Barra sobre trapecio medio — más cadena posterior, permite cargar más peso.': 'Bar on your mid traps — more posterior chain, lets you load more weight.',
-  'Barra sobre trapecio superior — más cuádriceps y torso vertical.': 'Bar on your upper traps — more quads and a more upright torso.',
+  'Barra sobre la espalda alta — la sentadilla clásica con barra.': 'Barbell across the upper back — the classic barbell squat.',
   'Bicicleta de ventilador con brazos — intervalos brutales.': 'Fan bike with arms — brutal intervals.',
   'Brazos cruzando frente al torso — tensión constante en todo el arco.': 'Arms crossing in front of your torso — constant tension through the whole arc.',
   'Burpee con mancuernas terminando en press vertical — uno de los movimientos más completos.': 'Burpee with dumbbells finishing in an overhead press — one of the most complete movements.',

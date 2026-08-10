@@ -1281,8 +1281,7 @@ export const exercises: Exercise[] = [
     ],
     tip: 'Las rodillas siguen la dirección de las puntas de los pies — no las dejes colapsar hacia adentro.',
     variants: [
-      { id: 'sentadilla-barra-alta', name: 'Barra alta (high-bar)', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Barra sobre trapecio superior — más cuádriceps y torso vertical.' },
-      { id: 'sentadilla-barra-baja', name: 'Barra baja (low-bar)', equipment: ['gym'], difficulty: 'avanzado', notes: 'Barra sobre trapecio medio — más cadena posterior, permite cargar más peso.' },
+      { id: 'sentadilla-barra', name: 'Con barra', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Barra sobre la espalda alta — la sentadilla clásica con barra.' },
       { id: 'sentadilla-sumo-landmine', name: 'Sumo con landmine', equipment: ['gym'], difficulty: 'intermedio', notes: 'Pies muy abiertos, barra en landmine al pecho — más aductor y glúteo, fácil de aprender.' },
       { id: 'sentadilla-frontal', name: 'Sentadilla frontal', equipment: ['gym'], difficulty: 'avanzado', notes: 'Barra al frente sobre clavículas — máxima demanda de cuádriceps y core.' },
       { id: 'sentadilla-zercher', name: 'Zercher', equipment: ['gym'], difficulty: 'avanzado', notes: 'Barra cargada en pliegue de los codos — alternativa cuando no puedes cargar atrás.' },
