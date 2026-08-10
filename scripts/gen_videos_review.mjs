@@ -50,7 +50,7 @@ for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue
   body+=mgGroup(rg,MG[mg],inner,tot,con);}
 
 // ── HUECOS DE COBERTURA — matriz músculo × equipo (qué grabar / crear) ──
-const EQS=[['GYM','Gym'],['LIGAS','Ligas'],['CUERPO','Cuerpo']];
+const EQS=[['GYM','Gym'],['Liga','Ligas'],['Casa','Cuerpo']];
 const covRows=orden.filter(mg=>mg!=='yoga').map(mg=>{
   const ps=pats.filter(p=>p.mg===mg);
   if(!ps.length) return null;
@@ -70,15 +70,15 @@ ${covRows.map(r=>`<div class="cov-mg">${esc(MG[r.mg]||r.mg)}</div>`+r.cells.map(
 
 // ── Propuestas para los huecos "Crear": nombre sugerido + links de ejemplos ──
 const PROP={
-  'pantorrillas|LIGAS':'Elevación de talón de pie con banda',
-  'pantorrillas|CUERPO':'Elevación de talón a una pierna (peso corporal)',
-  'antebrazo|LIGAS':'Curl de muñeca con banda',
-  'antebrazo|CUERPO':'Colgado en barra (dead hang) para agarre',
-  'cuerpo-completo|LIGAS':'Thruster con banda (sentadilla + press)',
-  'cuerpo-completo|CUERPO':'Burpee (peso corporal)',
-  'biceps|CUERPO':'Curl de bíceps con mochila cargada',
-  'isquios|CUERPO':'Curl femoral nórdico (peso corporal)',
-  'cardio|LIGAS':'Golpes de cuerda / battle rope con banda',
+  'pantorrillas|Liga':'Elevación de talón de pie con banda',
+  'pantorrillas|Casa':'Elevación de talón a una pierna (peso corporal)',
+  'antebrazo|Liga':'Curl de muñeca con banda',
+  'antebrazo|Casa':'Colgado en barra (dead hang) para agarre',
+  'cuerpo-completo|Liga':'Thruster con banda (sentadilla + press)',
+  'cuerpo-completo|Casa':'Burpee (peso corporal)',
+  'biceps|Casa':'Curl de bíceps con mochila cargada',
+  'isquios|Casa':'Curl femoral nórdico (peso corporal)',
+  'cardio|Liga':'Golpes de cuerda / battle rope con banda',
 };
 const gaps=[];
 for(const r of covRows) r.cells.forEach((c,i)=>{ if(c.t===0) gaps.push({mg:r.mg,eq:EQS[i][0],eqLabel:EQS[i][1]}); });
