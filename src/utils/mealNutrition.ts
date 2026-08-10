@@ -44,10 +44,33 @@ function grams(amount: number, unit: string | null, fd: PlanFood): number {
   return amount * (GENERIC[u] ?? fd.ug);                // fallback genérico (bajo impacto)
 }
 
+// Batido de proteína: el motor guarda sus macros exactos en el meal, pero un plan
+// GUARDADO antes de que se persistieran (o cualquier reparse) llega aquí solo con el
+// texto `1 scoop de proteína (…) — 25 g proteína`, que no matchea ningún alimento del
+// banco → daba 0 y descuadraba el día. Reconstruimos sus macros con el MISMO modelo del
+// motor (shakeMacros: cf/ff por tipo). Único punto donde el texto del batido se resuelve.
+const SHAKE_GRAMS_RE = /(\d+(?:\.\d+)?)\s*g\s+prote/i;
+function shakeMacrosFromText(portion: string): { kcal: number; prot: number; carbs: number; fat: number } | null {
+  if (!/scoop|prote[íi]na|protein/i.test(portion)) return null;
+  const m = portion.match(SHAKE_GRAMS_RE);
+  if (!m) return null;
+  const prot = parseFloat(m[1]);
+  if (!(prot > 0)) return null;
+  // Mismos coeficientes que shakeMacros (planEngine): [carboFactor, fatFactor] por tipo.
+  const [cf, ff] = /mass\s*gainer/i.test(portion) ? [1.5, 0.15]
+    : /vegana|vegan/i.test(portion) ? [0.18, 0.11]
+    : [0.12, 0.06];
+  const carb = Math.round(prot * cf), fat = Math.round(prot * ff);
+  return { kcal: Math.round(prot * 4 + carb * 4 + fat * 9), prot, carbs: carb, fat };
+}
+
 /** Calcula kcal + macros de una comida (array de porciones del plan). */
 export function mealNutrition(portions: string[]): MealNutrition {
   const acc: MealNutrition = { kcal: 0, prot: 0, carbs: 0, fat: 0, fiber: 0, misses: [] };
   for (const raw of portions ?? []) {
+    // Batido de proteína (plan sin macros guardados): resolver por su modelo, no por banco.
+    const shake = shakeMacrosFromText(raw);
+    if (shake) { acc.kcal += shake.kcal; acc.prot += shake.prot; acc.carbs += shake.carbs; acc.fat += shake.fat; continue; }
     for (const sub of raw.replace(/^[^:]+:\s*/, '').split(/\s+\+\s+/)) {
       const s = sub.trim(); if (!s) continue;
       let amount = 1, unit: string | null = null, ing = s;
