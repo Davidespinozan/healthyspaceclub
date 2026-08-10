@@ -553,7 +553,6 @@ export const exercises: Exercise[] = [
     variants: [
       { id: 'shrugs-mancuernas', name: 'Mancuernas', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Versión estándar — máximo rango de movimiento.' },
       { id: 'shrugs-barra', name: 'Barra', equipment: ['gym'], difficulty: 'principiante', notes: 'Permite cargar más peso pero rango ligeramente menor.' },
-      { id: 'shrugs-maquina', name: 'Máquina shrug', equipment: ['gym'], difficulty: 'principiante', notes: 'Trayectoria fija — útil para cargas pesadas sin demanda de agarre.' },
       { id: 'shrugs-polea', name: 'Polea baja', equipment: ['gym'], difficulty: 'principiante', notes: 'Tensión constante todo el rango — mejor sensación.' },
       { id: 'shrugs-trap-bar', name: 'Trap bar', equipment: ['gym'], difficulty: 'principiante', notes: 'Encogimientos con barra hexagonal — agarre neutro, cómodo para cargas altas.' },
       { id: 'shrugs-banda', name: 'Con banda', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '15-20', notes: 'Pisa la banda y encoge los hombros — versión casera del encogimiento.' },
