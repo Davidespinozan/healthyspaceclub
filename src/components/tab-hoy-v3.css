@@ -260,9 +260,13 @@
   align-items: stretch;
 }
 .th3-card {
-  /* Cuerpo en verde oscuro #081312 (igual que el hero y la landing) → la card se
-     lee como un objeto premium continuo con su foto, y despega del fondo cream. */
-  background: #081312;
+  /* Mismo fondo multicapa que el hero (.th3-hero) para que los verdes se vean
+     IDÉNTICOS en toda la página: radiales de luz + profundidad sobre la base
+     #081312. La foto cubre la parte alta; el cuerpo hereda el mismo verde. */
+  background:
+    radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%),
+    radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%),
+    #081312;
   border: 1px solid rgba(246,242,234,0.09);
   border-radius: var(--radius-xl);
   overflow: hidden;
