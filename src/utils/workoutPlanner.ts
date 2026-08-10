@@ -581,13 +581,13 @@ export function filterExercisesForWorkout(params: {
     // Filter 0 (seguridad DURA): en modo bajo impacto, fuera saltos/pliometría/sprints.
     if (lowImpactMode && (ex.impact === 'high' || ex.fallRisk === true)) return false;
 
-    // Filter 1: equipment
-    // Yoga sigue mirando exercise.equipment plano (no tiene variants).
-    // Patrones: mirar si al menos UNA variante aplica al equipo del usuario.
-    const hasEquipment = ex.isYoga
-      ? ex.equipment.some(e => equipment.includes(e))
-      : (ex.variants?.some(v => v.equipment.some(e => equipment.includes(e))) ?? false);
-    if (!hasEquipment) return false;
+    // Filter 1: equipment + VIDEO.
+    // David: SOLO se programan ejercicios que ya tienen video conectado. Un
+    // ejercicio es elegible si tiene una variante que (a) aplica al equipo del
+    // usuario y (b) tiene clip (VIDEO_VARIANT_IDS). Conforme se conectan más
+    // videos (regenerando videoAvailability.ts desde las migraciones), esos
+    // ejercicios entran solos. Yoga: el propio id de la pose debe tener video.
+    if (!hasPlayableVariant(ex, equipment)) return false;
 
     // Filter 2: muscle group match (primary; secondary solo si no es primaryOnly)
     const primaryMatch = muscleGroups.includes(ex.muscleGroup);
@@ -679,6 +679,19 @@ export function selectVariantForEquipment(
 
   // Si no hay default en el pool, devolver la primera del pool
   return pool[0];
+}
+
+/**
+ * ¿El ejercicio tiene una variante APLICABLE al equipo del usuario y CON video?
+ * (Yoga: el propio id de la pose debe tener video.) Es la regla de "solo se
+ * programa lo que ya se puede ver" — se usa tanto al filtrar candidatos como al
+ * validar un workout cacheado.
+ */
+export function hasPlayableVariant(exercise: Exercise, equipment: Equipment[]): boolean {
+  // Yoga: flujos curados en secuencia → NO se filtra por video (romper la secuencia
+  // sería peor). El requisito de video aplica a fuerza/cardio, que es donde importa.
+  if (exercise.isYoga) return exercise.equipment.some(e => equipment.includes(e));
+  return exercise.variants?.some(v => v.equipment.some(e => equipment.includes(e)) && VIDEO_VARIANT_IDS.has(v.id)) ?? false;
 }
 
 // ══════════════════════════════════════════════════════════════

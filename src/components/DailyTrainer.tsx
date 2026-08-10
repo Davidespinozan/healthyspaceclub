@@ -23,6 +23,7 @@ import {
   modalityFromPlan,
   durationFromPlan,
   reconcilePartnerDayType,
+  hasPlayableVariant,
 } from '../utils/workoutPlanner';
 import {
   getCachedWorkout,
@@ -400,12 +401,12 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // banco, NO el equipo — por eso se colaban.
       const fitsEquipment = (w: { exercises?: Array<{ id?: string }> } | null): boolean => {
         if (!w || !Array.isArray(w.exercises)) return false;
+        // Además del equipo, exige VIDEO: un cache viejo con ejercicios sin clip
+        // se rechaza y se regenera con el filtro nuevo (solo-video).
         return w.exercises.every(ex => {
           const b = exerciseBank.find(e => e.id === ex.id);
           if (!b) return false;
-          return b.isYoga
-            ? b.equipment.some(e => equipmentList.includes(e))
-            : (b.variants?.some(v => v.equipment.some(e => equipmentList.includes(e))) ?? false);
+          return hasPlayableVariant(b, equipmentList);
         });
       };
       const cached = await getCachedWorkout(configHash, schemaType);
