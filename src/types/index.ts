@@ -53,6 +53,21 @@ export type Difficulty = 'principiante' | 'intermedio' | 'avanzado';
 export type Modality = 'auto' | 'fuerza' | 'yoga' | 'cardio';
 
 /**
+ * Estilo de cardio: capa UX de 4 botones que el usuario entiende en 2 segundos.
+ * NO es una taxonomía científica — un box-jump sigue siendo `type: 'cardio'`/plyo;
+ * solo PERTENECE al bucket 'explosividad'. Separa la etiqueta que ve el usuario de
+ * la fisiología real del ejercicio.
+ */
+export type CardioStyle = 'explosividad' | 'correr' | 'lowImpact' | 'funcional';
+
+/**
+ * Rol de un ejercicio dentro de la SESIÓN (sesiones = bloques). Un mismo ejercicio
+ * puede servir a varios: la bici es 'warmup' | 'main' | 'finisher'. Independiente de
+ * `impact` (seguridad) y de `cardioStyle` (bucket UX).
+ */
+export type SessionRole = 'warmup' | 'main' | 'finisher';
+
+/**
  * Perfil crónico del usuario derivado del onboarding. Todos los campos son opcionales
  * porque el onboarding puede no estar completo o porque históricamente algunos campos
  * pueden faltar. Usado por los orchestrators de IA para personalizar la rutina.
@@ -119,6 +134,12 @@ export interface ExerciseVariant {
   defaultReps?: string;
   /** Override de rest. */
   defaultRest?: number;
+
+  /** CARDIO (Fase 1) — override del bucket UX del patrón (ej. cardio-maquina: la
+   *  caminadora es 'correr', la bici 'lowImpact', el remo 'funcional'). */
+  cardioStyle?: CardioStyle;
+  /** CARDIO (Fase 1) — override de los roles de sesión del patrón. */
+  roles?: SessionRole[];
 }
 
 export interface Exercise {
@@ -157,6 +178,19 @@ export interface Exercise {
    * El planner limita cuántos de la misma familia entran en un día (balance de patrones).
    */
   movementFamily?: string;
+
+  /**
+   * CARDIO (Fase 1) — bucket UX al que pertenece este cardio. Solo en ejercicios de
+   * cardio. Es la etiqueta que el usuario elige, NO la fisiología (ver CardioStyle).
+   * En patrones cuyas variantes difieren (cardio-maquina: caminadora vs bici), se
+   * define por variante y esto queda como default del patrón.
+   */
+  cardioStyle?: CardioStyle;
+  /**
+   * CARDIO (Fase 1) — en qué momentos de la sesión sirve este ejercicio. El motor de
+   * bloques (Fase 3) lo usa para calentamiento/principal/finisher. Override por variante.
+   */
+  roles?: SessionRole[];
 
   /** Defaults del patrón. Usados si la variante seleccionada no tiene override. */
   defaultSets: number;
