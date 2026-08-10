@@ -940,7 +940,7 @@ export const exercises: Exercise[] = [
       { id: 'curl-martillo-mancuernas-isometrico', name: 'Con pausa isométrica', equipment: ['gym'], difficulty: 'intermedio', notes: 'Mancuernas con pausa isométrica a 90° — más tiempo bajo tensión en el braquial.' },
       { id: 'curl-martillo-polea-cuerda', name: 'Polea con cuerda', equipment: ['gym'], difficulty: 'principiante', notes: 'Tensión constante — agarra cuerda con palmas neutras.' },
       { id: 'curl-martillo-banda', name: 'Con banda', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '12-15', notes: 'Pisa banda con palmas neutras — opción casera.' },
-      { id: 'curl-martillo-cruzado-pecho', name: 'Cruzado al pecho', equipment: ['gym'], difficulty: 'principiante', defaultReps: '10-12 por lado', notes: 'Mancuerna cruzando hacia el hombro opuesto — más activación del braquial.' },
+      { id: 'curl-martillo-cruzado-pecho', name: 'Cruzado al pecho', equipment: ['gym'], difficulty: 'principiante', defaultReps: '10-12 por lado', notes: 'Cruza la mano hacia el hombro opuesto — más braquial. Mismo movimiento con mancuerna o en polea con cuerda.' },
     ],
     category: '3 series',
     bg: 'linear-gradient(135deg,#EDE9E0,#DDD3BE)',

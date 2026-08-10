@@ -50,6 +50,7 @@ export const VIDEO_VARIANT_IDS: ReadonlySet<string> = new Set([
   'curl-femoral-sentado-maquina',
   'curl-inclinado-mancuernas',
   'curl-martillo-banda',
+  'curl-martillo-cruzado-pecho',
   'curl-martillo-mancuernas',
   'curl-martillo-mancuernas-isometrico',
   'curl-martillo-polea-cuerda',

@@ -1315,7 +1315,7 @@ export const variantNotesEn: Record<string, string> = {
   'Mancuerna abrazada al pecho — buen entry-level del patrón sumo.': 'Dumbbell hugged to your chest — a good entry point to the sumo pattern.',
   'Mancuerna abrazada al pecho — ideal para aprender el patrón.': 'Dumbbell hugged to your chest — ideal for learning the pattern.',
   'Mancuerna abrazada al pecho — sustituto cuando no quieres cargar sobre trapecio.': 'Dumbbell hugged to your chest — a substitute when you don\'t want to load your traps.',
-  'Mancuerna cruzando hacia el hombro opuesto — más activación del braquial.': 'Dumbbell crossing toward the opposite shoulder — more brachialis activation.',
+  'Cruza la mano hacia el hombro opuesto — más braquial. Mismo movimiento con mancuerna o en polea con cuerda.': 'Cross your hand toward the opposite shoulder — more brachialis. Same movement with a dumbbell or a cable rope.',
   'Mancuerna sobre la cadera — versión accesible con menos carga.': 'Dumbbell over your hip — accessible version with less load.',
   'Mancuernas a los lados — buen punto de partida si nunca lo has hecho.': 'Dumbbells at your sides — a good starting point if you\'ve never done it.',
   'Mancuernas a los lados — más fácil de aprender que la barra.': 'Dumbbells at your sides — easier to learn than the barbell.',
