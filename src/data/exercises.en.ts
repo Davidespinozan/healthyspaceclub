@@ -512,6 +512,9 @@ export const variantNameEn: Record<string, string> = {
   'En anillas': 'On rings',
   'En máquina': 'On machine',
   'Máquina agarre neutro': 'Machine, neutral grip',
+  'En máquina (sentado)': 'On machine (seated)',
+  'En máquina (acostado)': 'On machine (lying)',
+  'En máquina (agarre neutro)': 'On machine (neutral grip)',
   'Polea baja (una en cada mano)': 'Low pulley (one in each hand)',
   'En pec deck': 'On pec deck',
   'En rodillas': 'On knees',
@@ -1143,6 +1146,8 @@ export const stepDescEn: Record<string, string> = {
 export const variantNotesEn: Record<string, string> = {
   'Palmas enfrentadas en la máquina — más amigable con hombros y con más tríceps que el agarre prono.': 'Palms facing each other on the machine — easier on the shoulders and more triceps than a pronated grip.',
   'Una polea baja en cada mano, como mancuernas — tensión constante y ambos brazos parejos sin barra.': 'A low pulley in each hand, like dumbbells — constant tension and both arms even, without a bar.',
+  'Máquina con banca horizontal, empujas acostado — trayectoria guiada con el torso plano.': 'Machine with a flat bench, pressing while lying down — guided path with a flat torso.',
+  'Palmas enfrentadas en la máquina — más amigable con hombros y con algo más de tríceps.': 'Palms facing each other on the machine — easier on the shoulders and slightly more triceps.',
   'Poleas arriba, cruzas hacia abajo con agarre neutro — pecho medio.': 'Pulleys high, cross down with a neutral grip — mid chest.',
   'Poleas arriba, cruzas hacia abajo con agarre prono — pecho inferior.': 'Pulleys high, cross down with a pronated grip — lower chest.',
   'Poleas abajo, apertura hacia arriba — pecho superior.': 'Pulleys low, fly upward — upper chest.',

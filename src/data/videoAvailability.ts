@@ -155,6 +155,8 @@ export const VIDEO_VARIANT_IDS: ReadonlySet<string> = new Set([
   'press-horizontal-flexiones',
   'press-horizontal-flexiones-rodillas',
   'press-horizontal-maquina',
+  'press-horizontal-maquina-acostado',
+  'press-horizontal-maquina-neutro',
   'press-horizontal-smith',
   'press-inclinado-barra',
   'press-inclinado-flexiones',
