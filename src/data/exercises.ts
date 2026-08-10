@@ -780,6 +780,7 @@ export const exercises: Exercise[] = [
       { id: 'curl-pie-mancuernas-isometrico', name: 'Mancuernas con isométrico', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '8-10 por lado', notes: 'Un brazo sostiene arriba mientras el otro sube — tensión constante brutal.' },
       { id: 'curl-pie-polea-barra', name: 'Polea baja con barra', equipment: ['gym'], difficulty: 'principiante', notes: 'Tensión constante todo el rango — mejor para sentir el músculo.' },
       { id: 'curl-pie-polea-unilateral', name: 'Polea unilateral', equipment: ['gym'], difficulty: 'principiante', defaultReps: '10-12 por lado', notes: 'Polea baja un brazo a la vez — máxima concentración.' },
+      { id: 'curl-pie-polea-doble-mano', name: 'Polea baja (una en cada mano)', equipment: ['gym'], difficulty: 'principiante', notes: 'Una polea baja en cada mano, como mancuernas — tensión constante y ambos brazos parejos sin barra.' },
       { id: 'curl-pie-banda', name: 'Con banda', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '12-15', notes: 'Pisa banda y sube — versión casera con curva ascendente.' },
       { id: 'curl-pie-banda-unilateral', name: 'Unilateral con banda', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '12-15 por lado', notes: 'Un brazo a la vez pisando la banda — corrige asimetrías en casa.' },
       { id: 'curl-pie-mochila-pesada', name: 'Mochila pesada', equipment: ['cuerpo'], difficulty: 'principiante', defaultReps: '15-20', notes: 'Mochila cargada con libros — opción sin equipo cuando estás viajando.' },

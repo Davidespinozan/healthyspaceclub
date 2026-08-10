@@ -11,8 +11,9 @@
 --   · press-inclinado-maquina-neutro   Press Inclinado · Máquina agarre neutro (variante NUEVA)
 --   · pullover-polea-pie               Pull-over · Polea alta de pie
 --   · sentadilla-hack                  Sentadilla · Hack en máquina
+--   · curl-pie-polea-doble-mano        Curl de Pie · Polea baja una en cada mano (variante NUEVA)
 --
--- Idempotente por video_url (on conflict do nothing).
+-- Idempotente por video_url (where not exists).
 -- ═══════════════════════════════════════════════════════════════════════════
 
 insert into public.exercise_videos (exercise_id, variant_id, video_url, label, display_order)
@@ -23,6 +24,7 @@ select v.ex, null, v.url, v.label, v.orden
   ('face-pull-polea-cuerda',         'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/jalon-a-la-cara-polea-con-cuerda.mp4', 'Ejecución', 0),
   ('press-inclinado-maquina-neutro', 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-inclinado-agarre-neutro-en-maquina-pecho.mp4', 'Ejecución', 0),
   ('pullover-polea-pie',             'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/pull-over-polea-alta-de-pie.mp4', 'Ejecución', 0),
-  ('sentadilla-hack',                'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla-hack-en-maquina.mp4', 'Ejecución', 0)
+  ('sentadilla-hack',                'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/sentadilla-hack-en-maquina.mp4', 'Ejecución', 0),
+  ('curl-pie-polea-doble-mano',      'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/curl-de-bicep-en-polea-baja.mp4', 'Ejecución', 0)
   ) as v(ex, url, label, orden)
  where not exists (select 1 from public.exercise_videos e where e.video_url = v.url);

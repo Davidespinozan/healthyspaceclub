@@ -512,6 +512,7 @@ export const variantNameEn: Record<string, string> = {
   'En anillas': 'On rings',
   'En máquina': 'On machine',
   'Máquina agarre neutro': 'Machine, neutral grip',
+  'Polea baja (una en cada mano)': 'Low pulley (one in each hand)',
   'En pec deck': 'On pec deck',
   'En rodillas': 'On knees',
   'Entre sillas': 'Between chairs',
@@ -1141,6 +1142,7 @@ export const stepDescEn: Record<string, string> = {
 // Terminología fitness natural en inglés. Mapeado por texto ES → EN.
 export const variantNotesEn: Record<string, string> = {
   'Palmas enfrentadas en la máquina — más amigable con hombros y con más tríceps que el agarre prono.': 'Palms facing each other on the machine — easier on the shoulders and more triceps than a pronated grip.',
+  'Una polea baja en cada mano, como mancuernas — tensión constante y ambos brazos parejos sin barra.': 'A low pulley in each hand, like dumbbells — constant tension and both arms even, without a bar.',
   'Poleas arriba, cruzas hacia abajo con agarre neutro — pecho medio.': 'Pulleys high, cross down with a neutral grip — mid chest.',
   'Poleas arriba, cruzas hacia abajo con agarre prono — pecho inferior.': 'Pulleys high, cross down with a pronated grip — lower chest.',
   'Poleas abajo, apertura hacia arriba — pecho superior.': 'Pulleys low, fly upward — upper chest.',
