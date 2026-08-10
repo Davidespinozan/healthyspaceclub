@@ -69,6 +69,7 @@ export const VIDEO_VARIANT_IDS: ReadonlySet<string> = new Set([
   'curl-pie-mancuernas-isometrico',
   'curl-pie-mancuernas-simultaneo',
   'curl-pie-polea-barra',
+  'curl-pie-polea-cuerda',
   'curl-pie-polea-doble-mano',
   'curl-polea-doble',
   'curl-predicador-banca-scott-barra',

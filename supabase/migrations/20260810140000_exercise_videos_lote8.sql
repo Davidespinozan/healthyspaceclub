@@ -13,6 +13,7 @@
 --   · triceps-push-down-cuerda           Tríceps Polea · Con cuerda (estaba por grabar, sin clip)
 --   · press-horizontal-maquina-acostado  Press Horizontal · Máquina acostado (variante NUEVA)
 --   · press-horizontal-maquina-neutro    Press Horizontal · Máquina agarre neutro (se separa del sentado)
+--   · curl-pie-polea-cuerda              Curl de Pie · Polea baja con cuerda a dos manos (BÍCEPS, mal etiquetado)
 --
 -- Descartados por David (el clip actual es mejor): barra-tricep-polea (queda
 -- triceps-push-down-barra-recta) y press-inclinado-con-maquina (queda el actual).
@@ -39,6 +40,8 @@ select v.ex, null, v.url, v.label, v.orden
   ('triceps-push-down-cuerda',           'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cuerda-tricep-polea.mp4', 'Ejecución', 0),
   -- Press Horizontal máquina: el SENTADO se queda en press-horizontal-maquina; ACOSTADO y NEUTRO son variantes propias.
   ('press-horizontal-maquina-acostado',  'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-maquina-pecho.mp4', 'Ejecución', 0),
-  ('press-horizontal-maquina-neutro',    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-horizontal-maquina-agarre-neutral-pecho-tricep.mp4', 'Ejecución', 0)
+  ('press-horizontal-maquina-neutro',    'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-horizontal-maquina-agarre-neutral-pecho-tricep.mp4', 'Ejecución', 0),
+  -- Magaly etiquetó tricep-polea-baja-con-cuerda.mp4 como tríceps: es BÍCEPS, cuerda a dos manos.
+  ('curl-pie-polea-cuerda',              'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/tricep-polea-baja-con-cuerda.mp4', 'Ejecución', 0)
   ) as v(ex, url, label, orden)
  where not exists (select 1 from public.exercise_videos e where e.video_url = v.url);
