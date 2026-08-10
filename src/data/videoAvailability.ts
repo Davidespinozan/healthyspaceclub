@@ -226,6 +226,7 @@ export const VIDEO_VARIANT_IDS: ReadonlySet<string> = new Set([
   'triangle-pose',
   'triceps-push-down-banda',
   'triceps-push-down-barra-recta',
+  'triceps-push-down-cuerda',
   'triceps-push-down-unilateral',
   'upright-row-banda',
   'upright-row-barra',

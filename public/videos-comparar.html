@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comparar videos — actual vs nuevo</title>
+<style>
+  :root{
+    --bg:#081312; --card:#0f1f1c; --card2:#0b1917; --line:#1c322d;
+    --cream:#EDE9E0; --muted:#9db3ac; --gold:#C9A24B; --terra:#E9A17C; --green:#8FD8C0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--cream);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.5}
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 18px 80px}
+  header h1{font-size:24px;margin:0 0 6px;letter-spacing:-.01em}
+  header p{color:var(--muted);margin:0 0 4px;font-size:14px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0 26px;font-size:13px}
+  .legend span{display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .dot.act{background:var(--muted)} .dot.new{background:var(--gold)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:18px 18px 20px;margin-bottom:20px}
+  .card-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+  .card-h .mg{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold)}
+  .card-h h2{font-size:18px;margin:0;letter-spacing:-.01em}
+  .vid-id{font-size:12px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;margin-bottom:14px}
+  .note{font-size:13px;color:var(--muted);margin:0 0 14px}
+  .note b{color:var(--green);font-weight:600}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.cols{grid-template-columns:1fr}}
+  .col{background:var(--card2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .col-lbl{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:13px;font-weight:600;
+    border-bottom:1px solid var(--line)}
+  .col-lbl.act{color:var(--muted)} .col-lbl.new{color:var(--gold)}
+  .col video{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:#000}
+  .col .fn{padding:8px 12px;font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;
+    word-break:break-all;border-top:1px solid var(--line)}
+  .empty{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;
+    color:var(--muted);font-size:13px;text-align:center;padding:20px}
+  .extra{margin-top:10px;font-size:12px;color:var(--muted)}
+  .extra video{width:calc(50% - 6px);aspect-ratio:1/1;object-fit:cover;border-radius:8px;background:#000;margin-top:6px}
+  footer{color:var(--muted);font-size:13px;text-align:center;margin-top:36px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Comparar videos — actual vs nuevo</h1>
+    <p>El clip que ya está conectado (izquierda) contra tu clip nuevo (derecha). Dime en cada uno: <b>reemplazar</b>, <b>dejar como está</b>, o <b>es otra variante</b> (lo separo).</p>
+    <div class="legend">
+      <span><i class="dot act"></i> Actual (conectado hoy)</span>
+      <span><i class="dot new"></i> Nuevo (lo que subiste)</span>
+    </div>
+  </header>
+
+  <!-- 1 -->
+  <div class="card">
+    <div class="card-h"><span class="mg">Tríceps</span><h2>Extensión en Polea · Barra recta</h2></div>
+    <div class="vid-id">triceps-push-down-barra-recta</div>
+    <p class="note">Mismo movimiento aparente. Si tu nuevo se ve mejor → reemplazo.</p>
+    <div class="cols">
+      <div class="col"><div class="col-lbl act">Actual</div>
+        <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/triceps-push-down-barra-recta.mp4" muted loop playsinline controls preload="metadata"></video>
+        <div class="fn">triceps-push-down-barra-recta.mp4</div></div>
+      <div class="col"><div class="col-lbl new">Nuevo</div>
+        <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/barra-tricep-polea.mp4" muted loop playsinline controls preload="metadata"></video>
+        <div class="fn">barra-tricep-polea.mp4</div></div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="card">
+    <div class="card-h"><span class="mg">Tríceps</span><h2>Extensión en Polea · Con cuerda</h2></div>
+    <div class="vid-id">triceps-push-down-cuerda</div>
+    <p class="note"><b>No tiene clip actual</b> (quedaba por grabar). Tu cuerda es cobertura nueva → lo conecto directo, sin decisión.</p>
+    <div class="cols">
+      <div class="col"><div class="col-lbl act">Actual</div>
+        <div class="empty">Sin clip — estaba pendiente de grabar</div></div>
+      <div class="col"><div class="col-lbl new">Nuevo</div>
+        <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/cuerda-tricep-polea.mp4" muted loop playsinline controls preload="metadata"></video>
+        <div class="fn">cuerda-tricep-polea.mp4</div></div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="card">
+    <div class="card-h"><span class="mg">Pecho</span><h2>Press Inclinado · En máquina</h2></div>
+    <div class="vid-id">press-inclinado-maquina</div>
+    <p class="note">Nombres casi idénticos — probablemente re-grabación del mismo. ¿Reemplazo?</p>
+    <div class="cols">
+      <div class="col"><div class="col-lbl act">Actual</div>
+        <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-inclinado-maquina-pecho.mp4" muted loop playsinline controls preload="metadata"></video>
+        <div class="fn">press-inclinado-maquina-pecho.mp4</div></div>
+      <div class="col"><div class="col-lbl new">Nuevo</div>
+        <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-inclinado-con-maquina-pecho.mp4" muted loop playsinline controls preload="metadata"></video>
+        <div class="fn">press-inclinado-con-maquina-pecho.mp4</div></div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="card">
+    <div class="card-h"><span class="mg">Pecho</span><h2>Press Horizontal · En máquina</h2></div>
+    <div class="vid-id">press-horizontal-maquina</div>
+    <p class="note">Esta variante hoy tiene <b>DOS</b> clips (agarre normal + agarre neutro). Si reemplazo con el tuyo, se va el de agarre neutro plano — ¿lo quieres como su propia variante (como hice con el inclinado)?</p>
+    <div class="cols">
+      <div class="col"><div class="col-lbl act">Actual (normal)</div>
+        <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-horizontal-maquina-pecho.mp4" muted loop playsinline controls preload="metadata"></video>
+        <div class="fn">press-horizontal-maquina-pecho.mp4</div></div>
+      <div class="col"><div class="col-lbl new">Nuevo</div>
+        <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-maquina-pecho.mp4" muted loop playsinline controls preload="metadata"></video>
+        <div class="fn">press-maquina-pecho.mp4</div></div>
+    </div>
+    <div class="extra">Segundo clip actual en esta misma variante (agarre neutro):<br>
+      <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/press-horizontal-maquina-agarre-neutral-pecho-tricep.mp4" muted loop playsinline controls preload="metadata"></video>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="card">
+    <div class="card-h"><span class="mg">Tríceps</span><h2>Extensión sobre la cabeza · Polea con cuerda</h2></div>
+    <div class="vid-id">extensiones-polea-cuerda</div>
+    <p class="note">Ojo: el actual es <b>polea ALTA (tras nuca)</b> y el tuyo es <b>polea BAJA</b>. Puede que sean variantes distintas — dime si lo separo en dos.</p>
+    <div class="cols">
+      <div class="col"><div class="col-lbl act">Actual (polea alta)</div>
+        <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/extension-tricep-trasnuca-polea-alta.mp4" muted loop playsinline controls preload="metadata"></video>
+        <div class="fn">extension-tricep-trasnuca-polea-alta.mp4</div></div>
+      <div class="col"><div class="col-lbl new">Nuevo (polea baja)</div>
+        <video src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/GYM/tricep-polea-baja-con-cuerda.mp4" muted loop playsinline controls preload="metadata"></video>
+        <div class="fn">tricep-polea-baja-con-cuerda.mp4</div></div>
+    </div>
+  </div>
+
+  <footer>
+    Toca cada video para reproducir. Si alguno no carga, es que el archivo aún no está en el bucket con ese nombre exacto.<br>
+    Dime por número qué hago con cada uno y lo dejo listo.
+  </footer>
+</div>
+</body>
+</html>
