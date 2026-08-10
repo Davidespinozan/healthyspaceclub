@@ -1,6 +1,14 @@
-import { describe, it, expect } from 'vitest';
-import { levelFromActivity, levelFromObData, filterExercisesForWorkout } from './workoutPlanner';
+import { describe, it, expect, vi } from 'vitest';
 import type { Exercise } from '../types';
+
+// Este test aísla el filtro por NIVEL. El gate only-video (VIDEO_VARIANT_IDS) es
+// ortogonal aquí: mockeamos que las variantes mock SÍ tienen clip para no cruzar
+// ambas reglas. La cobertura real del gate de video vive en su propio test.
+vi.mock('../data/videoAvailability', () => ({
+  VIDEO_VARIANT_IDS: new Set(['facil-v', 'medio-v', 'duro-v']),
+}));
+
+import { levelFromActivity, levelFromObData, filterExercisesForWorkout } from './workoutPlanner';
 
 describe('nivel del usuario', () => {
   it('deriva nivel del factor de actividad', () => {

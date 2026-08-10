@@ -91,6 +91,7 @@ export const exercises: Exercise[] = [
       { id: 'press-inclinado-mancuernas', name: 'Con mancuernas', equipment: ['gym'], difficulty: 'intermedio', notes: 'Mayor estiramiento y libertad de trayectoria — corrige asimetrías.' },
       { id: 'press-inclinado-smith', name: 'En Smith', equipment: ['gym'], difficulty: 'principiante', notes: 'Trayectoria guiada — bueno para enfocarse en sensación sin preocuparse por la barra.' },
       { id: 'press-inclinado-maquina', name: 'En máquina', equipment: ['gym'], difficulty: 'principiante', notes: 'Mínima estabilización — ideal para drop sets o trabajo a alto volumen.' },
+      { id: 'press-inclinado-maquina-neutro', name: 'Máquina agarre neutro', equipment: ['gym'], difficulty: 'principiante', notes: 'Palmas enfrentadas en la máquina — más amigable con hombros y con más tríceps que el agarre prono.' },
       { id: 'press-inclinado-flexiones', name: 'Flexiones inclinadas', equipment: ['cuerpo'], difficulty: 'intermedio', defaultSets: 4, defaultReps: '10-12', defaultRest: 60, notes: 'Manos elevadas en banco/escalón — versión accesible sin pesas.' },
     ],
     category: '4 series',

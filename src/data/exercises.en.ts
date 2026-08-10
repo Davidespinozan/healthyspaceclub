@@ -511,6 +511,7 @@ export const variantNameEn: Record<string, string> = {
   'En TRX': 'On TRX',
   'En anillas': 'On rings',
   'En máquina': 'On machine',
+  'Máquina agarre neutro': 'Machine, neutral grip',
   'En pec deck': 'On pec deck',
   'En rodillas': 'On knees',
   'Entre sillas': 'Between chairs',
@@ -1139,6 +1140,7 @@ export const stepDescEn: Record<string, string> = {
 // A2b-3 — notas de variantes (prosa explicativa). Cierra el contenido i18n.
 // Terminología fitness natural en inglés. Mapeado por texto ES → EN.
 export const variantNotesEn: Record<string, string> = {
+  'Palmas enfrentadas en la máquina — más amigable con hombros y con más tríceps que el agarre prono.': 'Palms facing each other on the machine — easier on the shoulders and more triceps than a pronated grip.',
   'Poleas arriba, cruzas hacia abajo con agarre neutro — pecho medio.': 'Pulleys high, cross down with a neutral grip — mid chest.',
   'Poleas arriba, cruzas hacia abajo con agarre prono — pecho inferior.': 'Pulleys high, cross down with a pronated grip — lower chest.',
   'Poleas abajo, apertura hacia arriba — pecho superior.': 'Pulleys low, fly upward — upper chest.',
