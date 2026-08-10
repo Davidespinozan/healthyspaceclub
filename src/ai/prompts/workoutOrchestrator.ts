@@ -80,6 +80,7 @@ Reglas de pareja (críticas):
 - LIGAS → progresa por TENSIÓN: más reps, tempo lento, pausa; al dominar el rango, liga más dura o dóblala.
 - PESO CORPORAL → progresa por DIFICULTAD: más reps, tempo excéntrico lento, pausas, mayor rango, o una variante más difícil (unilateral, pies elevados).
 - Usa rangos de reps MÁS ALTOS (12-25) y apóyate en tempo/isométricos/parciales — no en cargas de fuerza pura (3-6).
+- Si un movimiento suele necesitar rack o barra fija (ej. remo invertido) y el usuario no tiene gym, aclara en el tip la versión casera: remo invertido → bajo una mesa firme y resistente, cuerpo recto.
 - En los tips habla de reps, tempo, tensión o variante — jamás de kilos.`;
   const equipBlock = eq.length ? `
 EQUIPO DEL USUARIO: ${
