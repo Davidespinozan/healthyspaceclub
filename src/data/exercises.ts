@@ -1317,8 +1317,7 @@ export const exercises: Exercise[] = [
     ],
     tip: 'La rodilla delantera no debe colapsar hacia adentro — sigue la línea del segundo dedo del pie.',
     variants: [
-      { id: 'sentadilla-bulgara-mancuernas', name: 'Búlgara con mancuernas', equipment: ['gym'], difficulty: 'intermedio', isDefault: true, notes: 'Pie trasero en banco, mancuernas a los lados — versión clásica.' },
-      { id: 'sentadilla-bulgara-barra', name: 'Búlgara con barra', equipment: ['gym'], difficulty: 'avanzado', defaultReps: '6-8 por lado', notes: 'Barra atrás como en sentadilla — máxima carga unilateral.' },
+      { id: 'sentadilla-bulgara-mancuernas', name: 'Búlgara', equipment: ['gym', 'cuerpo'], difficulty: 'intermedio', isDefault: true, notes: 'Pie trasero en banco — con barra, mancuernas o solo peso corporal.' },
       { id: 'sentadilla-pistol', name: 'Sentadilla pistol', equipment: ['cuerpo'], difficulty: 'avanzado', defaultReps: '5-8 por lado', notes: 'Sentadilla a una pierna con la otra extendida — máxima movilidad y fuerza relativa.' },
       { id: 'sentadilla-step-up-alto', name: 'Step-up alto', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '8-12 por lado', defaultRest: 75, notes: 'Plataforma a la altura de rodilla o más — patrón unilateral con menor demanda de estabilidad.' },
       { id: 'sentadilla-zancada-inversa', name: 'Zancada inversa', equipment: ['gym'], difficulty: 'principiante', defaultReps: '10-12 por lado', defaultRest: 60, notes: 'Da paso atrás y flexiona — más amigable con rodillas que la zancada adelante.' },

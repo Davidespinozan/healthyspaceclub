@@ -82,6 +82,7 @@ Reglas de pareja (críticas):
 - Usa rangos de reps MÁS ALTOS (12-25) y apóyate en tempo/isométricos/parciales — no en cargas de fuerza pura (3-6).
 - Si un movimiento suele necesitar rack o barra fija (ej. remo invertido) y el usuario no tiene gym, aclara en el tip la versión casera: remo invertido → bajo una mesa firme y resistente, cuerpo recto.
 - Para aislamientos que necesitan carga y el usuario entrena SIN equipo (peso corporal), la carga en casa es una MOCHILA con peso (libros): dilo en el tip. Ej. curl de bíceps → sujeta una mochila cargada. Solo cuando entrena en casa/peso corporal, nunca en gym.
+- Muchos ejercicios admiten varios implementos (ej. búlgara: barra, mancuernas o solo peso corporal). Cuando aplique, menciona en el tip la opción que encaje con el equipo del usuario — sin peso si entrena en casa.
 - En los tips habla de reps, tempo, tensión o variante — jamás de kilos.`;
   const equipBlock = eq.length ? `
 EQUIPO DEL USUARIO: ${
