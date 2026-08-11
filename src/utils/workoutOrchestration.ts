@@ -18,6 +18,8 @@ import {
   buildYogaOrchestratorPrompt,
 } from '../ai/prompts/workoutOrchestrator';
 import { callAI } from './aiProxy';
+import { prescribeLoad } from './loadEngine';
+import type { IntensityBias } from './mesocycle';
 import type { Exercise, Equipment, Goal, UserProfile, YogaPlan } from '../types';
 import type { AppLanguage } from '../store';
 import type { CachedWorkout } from './workoutCache';
@@ -66,8 +68,10 @@ export async function orchestrateWorkout(params: {
   // Último rendimiento por exercise-id (para sobrecarga progresiva: la IA ve lo que
   // levantaste la última vez y prescribe una progresión, no reps genéricas).
   lastPerf?: Record<string, { sets: { reps: number; kg: number }[] }>;
+  // P2 · sesgo de carga de la fase del mesociclo (para sugerir el peso de hoy).
+  loadBias?: IntensityBias;
 }): Promise<CachedWorkout & { razon?: string }> {
-  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context, userProfile, locale, partner, lastPerf } = params;
+  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context, userProfile, locale, partner, lastPerf, loadBias = 'equilibrio' } = params;
   const profileBlock = buildUserProfileBlock(userProfile);
 
   // Para cada candidato, seleccionar la variante específica que aplica al equipo
@@ -81,7 +85,10 @@ export async function orchestrateWorkout(params: {
     // Sobrecarga progresiva: adjunta el último rendimiento real si existe.
     const perf = formatLastPerf(lastPerf?.[c.id]?.sets);
     const perfStr = perf ? ` | última vez: ${perf}` : '';
-    return `${c.id} | ${effectiveName} | ${c.muscleGroup} | ${c.type} | sets:${effectiveSets} reps:${effectiveReps} rest:${effectiveRest}s${perfStr}`;
+    // P2 · carga sugerida de HOY desde el e1RM y la fase (serie tope + backoff, con RIR).
+    const load = prescribeLoad(lastPerf?.[c.id]?.sets, String(effectiveReps), loadBias);
+    const loadStr = load ? ` | 1RM~${load.e1RM}kg → HOY ${load.topKg}kg×${load.reps} (RIR ${load.rir}; backoff ${load.backoffKg}kg)` : '';
+    return `${c.id} | ${effectiveName} | ${c.muscleGroup} | ${c.type} | sets:${effectiveSets} reps:${effectiveReps} rest:${effectiveRest}s${perfStr}${loadStr}`;
   }).join('\n');
 
   const intensityInstruction = intensity === 'baja'

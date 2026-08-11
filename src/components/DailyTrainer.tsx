@@ -38,6 +38,7 @@ import { composeSession } from '../utils/sessionBlocks';
 import {
   deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
 } from '../utils/mesocycle';
+import { e1RMTrend } from '../utils/loadEngine';
 import {
   getCachedWorkout,
   saveWorkoutToCache,
@@ -292,11 +293,16 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       for (const s of completedSessions) if (s.date >= since(7)) last7Days.add(s.date);
       for (const w of (workoutLog || [])) if (w.date >= since(7)) last7Days.add(w.date);
       const freq = trainingFrequency(completedSessions, workoutLog || []);
+      // Rendimiento REAL (P2): tendencia de FUERZA (e1RM del mismo ejercicio, 14d vs
+      // 14-28d). Si no hay dato de carga comparable, cae a la tendencia de volumen.
+      const recentLog = (workoutLog || []).filter(w => w.date >= since(14));
+      const olderLog = (workoutLog || []).filter(w => w.date < since(14) && w.date >= since(28));
+      const strengthTrend = e1RMTrend(recentLog, olderLog);
       return deriveMesocycleState({
         weeksAccumulated,
         recovery: recoveryFromCheckin(String(obData?.energy ?? ''), String(obData?.sleep ?? '')),
         adherence: adherenceFrom(last7Days.size, freq),
-        performance: volumeTrend(setsLast7, setsPrev7),
+        performance: strengthTrend ?? volumeTrend(setsLast7, setsPrev7),
       });
     })();
     // El mesociclo es AUTORITATIVO sobre el deload (ventana 4-6 + adelantable).
@@ -720,6 +726,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         userProfile,
         locale,
         lastPerf: lastExercisePerformance,
+        loadBias: meso.intensityBias, // P2 · el peso sugerido sigue la fase del mesociclo
         partner: partnerMode
           ? {
               name: partnerName.trim() || t('wizard.partnerNamePlaceholder'),
