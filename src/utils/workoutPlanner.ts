@@ -1,6 +1,7 @@
 import { dayKey } from './localDate';
 import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
 import { variantAllowedByGear, type Implement } from './equipmentImplement';
+import { computeVolumeTargets, targetsToMap, type Level } from './volumeLandmarks';
 import type {
   Exercise,
   ExerciseVariant,
@@ -225,6 +226,30 @@ export function computeWeeklyVolume(
   return vol;
 }
 
+/**
+ * P3 — Serie de volumen SEMANA a SEMANA por músculo (reciente → viejo), derivada de
+ * diferenciar computeWeeklyVolume en ventanas acumuladas (7, 14, 21…). La usa
+ * volumeLandmarks para el baseline (mediana robusta al deload). No persiste nada.
+ */
+export function weeklyVolumeSeries(
+  completedSessions: CompletedSession[],
+  exercises: Exercise[],
+  workoutLog: WorkoutEntry[] = [],
+  weeks = 4,
+): Record<string, number>[] {
+  const series: Record<string, number>[] = [];
+  let prev: Record<string, number> = {};
+  for (let w = 1; w <= weeks; w++) {
+    const cum = computeWeeklyVolume(completedSessions, exercises, w * 7, workoutLog);
+    const wk: Record<string, number> = {};
+    const keys = new Set([...Object.keys(cum), ...Object.keys(prev)]);
+    for (const m of keys) { const v = (cum[m] ?? 0) - (prev[m] ?? 0); if (v > 0.001) wk[m] = v; }
+    series.push(wk);
+    prev = cum;
+  }
+  return series;
+}
+
 const STRENGTH_TYPES: WorkoutDayType[] = ['upper', 'lower', 'full-body', 'push', 'pull', 'legs'];
 
 /**
@@ -376,11 +401,13 @@ export function pickByVolumeDeficit(
   types: WorkoutDayType[],
   vol: Record<string, number>,
   yesterdayMuscles: MuscleGroup[],
+  target?: Record<string, number>, // P3: target POR MÚSCULO. Sin él → 14 plano (compat).
 ): WorkoutDayType {
   const yesterday = new Set(yesterdayMuscles);
+  const t_ = (m: string) => target?.[m] ?? WEEKLY_SET_TARGET;
   const scored = types.map((t) => {
     const mgs = DAY_TYPE_CONFIG[t].muscleGroups;
-    const deficit = mgs.reduce((a, m) => a + Math.max(0, WEEKLY_SET_TARGET - (vol[m] ?? 0)), 0);
+    const deficit = mgs.reduce((a, m) => a + Math.max(0, t_(m) - (vol[m] ?? 0)), 0);
     const overlap = mgs.some((m) => yesterday.has(m));
     return { t, deficit, overlap };
   });
@@ -399,6 +426,7 @@ export function decideTodayWorkout(params: {
   dailyEnergy?: 'bien' | 'regular' | 'cansado';
   dailySleep?: 'muy bien' | 'normal' | 'mal';
   completedSessions?: CompletedSession[];
+  level?: Level; // P3: para el target de volumen personalizado (default intermedio → compat)
 }): WorkoutDayDecision {
   const { userObjective, workoutLog, exercises, dailyEnergy, dailySleep, completedSessions = [] } = params;
 
@@ -420,7 +448,19 @@ export function decideTodayWorkout(params: {
     const freq = trainingFrequency(completedSessions, workoutLog);
     const preferred = splitTypesForFrequency(freq);
     const vol = computeWeeklyVolume(completedSessions, exercises, 7, workoutLog);
-    todayType = pickByVolumeDeficit(preferred, vol, history.yesterday);
+    // P3: la selección de día compara contra el target PERSONALIZADO por músculo
+    // (baseline individual), no contra el 14 plano. Aquí va el baseline (sin meso/
+    // señales) porque para ELEGIR el día importa la distribución entre músculos, que
+    // es uniforme al multiplicador; la modulación del mesociclo afecta la magnitud.
+    const series = weeklyVolumeSeries(completedSessions, exercises, workoutLog, 4);
+    const weeksOfHistory = series.filter(wk => Object.keys(wk).length > 0).length;
+    const targets = computeVolumeTargets({
+      weeklyVolumes: series,
+      level: params.level ?? 'intermedio',
+      weeksOfHistory,
+      longPause: history.restDays >= 14,
+    });
+    todayType = pickByVolumeDeficit(preferred, vol, history.yesterday, targetsToMap(targets));
   }
 
   // Fase 5 — deload: si llevas 4+ semanas duras seguidas, toca descarga.

@@ -31,9 +31,11 @@ import {
   hasPlayableVariant,
   deloadCheck,
   computeWeeklyVolume,
+  weeklyVolumeSeries,
   trainingFrequency,
   determineIntensity,
 } from '../utils/workoutPlanner';
+import { computeVolumeTargets } from '../utils/volumeLandmarks';
 import { composeSession } from '../utils/sessionBlocks';
 import {
   deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
@@ -136,6 +138,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     workoutLog: workoutLog || [],
     exercises: exerciseBank,
     completedSessions,
+    level: levelFromObData(obData), // P3: target de volumen personalizado por nivel
   }), [obData, workoutLog, completedSessions]);
 
   // ── State
@@ -711,6 +714,27 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           : meso.progression === 'retroceder' ? 'RETROCEDE un punto hoy (recuperación/rendimiento a la baja) — sostén técnica, no fuerces'
           : 'MANTÉN el nivel de la última vez (consolida)';
         bullets.push(`MESOCICLO — semana ${meso.week} del bloque, fase ${faseTxt}. Progresión: ${dirTxt}. Es un plan que avanza en el tiempo; que la nota refleje en qué punto va.`);
+      }
+
+      // P3 · VOLUMEN OBJETIVO personalizado por músculo (baseline individual × mesociclo
+      // × señales, acotado al rango operativo del nivel). Se le dice a la IA la meta
+      // SEMANAL de los músculos de hoy para que dosifique compuesto+accesorios hacia ella.
+      if (!isCardioDay) {
+        const series = weeklyVolumeSeries(completedSessions, exerciseBank, workoutLog || [], 4);
+        const targets = computeVolumeTargets({
+          weeklyVolumes: series,
+          level: levelFromObData(obData),
+          weeksOfHistory: series.filter(wk => Object.keys(wk).length > 0).length,
+          longPause: history.restDays >= 14,
+          recovery: meso.signals.recovery,
+          performance: meso.signals.performance,
+          adherence: meso.signals.adherence,
+          volumeMultiplier: meso.volumeMultiplier,
+          isDeload: mesoDeload,
+        });
+        const primary = muscleGroups.filter(m => m !== 'cuerpo-completo' && m !== 'cardio');
+        const list = primary.map(m => `${m} ${targets[m]?.target ?? '-'}`).join(', ');
+        if (list) bullets.push(`VOLUMEN OBJETIVO (personalizado, semanal) — ${list} series efectivas. Dosifica HOY hacia esa meta (compuesto + accesorios), sin pasarte del rango; es individual, no un número plano.`);
       }
 
       const contextStr = bullets.join('\n- ');
