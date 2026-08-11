@@ -279,6 +279,10 @@ export default function WorkoutPlayer({
   const partnerMode = !!workout.partnerMode;
   const partnerId = (workout.partnerId as string | null) ?? null;
   const partnerName = workout.partnerName || '';
+  // #2 — Un solo móvil: modo compañero SIN dispositivo conectado (invitado). No hay
+  // sync en vivo ni turnos; se hace la rutina de LOS DOS en este teléfono, mostrando
+  // ambas prescripciones (Tú / Compa) y avanzando juntos.
+  const singleDevice = partnerMode && !partnerId;
   const partnerAvatar = (workout.partnerAvatar as string | null) ?? null;
   const partnerLive = usePartnerPresence(partnerMode, myId, partnerId, {
     exIndex: currentExerciseIndex,
@@ -785,6 +789,23 @@ export default function WorkoutPlayer({
             {currentEx.tip_personalizado && (
               <p className="wp-ex-tip">{currentEx.tip_personalizado}</p>
             )}
+            {/* #2 — Un solo móvil: prescripción de los DOS. Mismo ejercicio y series;
+                las reps (y el cue) pueden diferir por persona. */}
+            {singleDevice && currentEx.repsB && (
+              <div className="wp-duo">
+                <div className="wp-duo-row">
+                  <span className="wp-duo-who wp-duo-you">{t('workout.duoYou')}</span>
+                  <span className="wp-duo-reps">{totalSetsForCurrent} × {currentEx.reps}</span>
+                </div>
+                <div className="wp-duo-row">
+                  <span className="wp-duo-who">{partnerName || t('workout.duoPartner')}</span>
+                  <span className="wp-duo-reps">{totalSetsForCurrent} × {currentEx.repsB}</span>
+                </div>
+                {currentEx.tipB && (
+                  <p className="wp-duo-tip">{partnerName ? `${partnerName}: ` : ''}{currentEx.tipB}</p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="wp-sets">
@@ -792,7 +813,7 @@ export default function WorkoutPlayer({
               <span className="wp-sets-label">
                 {isSuperset
                   ? t('workout.supersetRound', { n: currentSetNum, total: totalSetsForCurrent })
-                  : <>{t('workout.setsLabel')} · {totalSetsForCurrent} × {currentEx.reps}</>}
+                  : <>{t('workout.setsLabel')} · {totalSetsForCurrent}{singleDevice && currentEx.repsB ? '' : ` × ${currentEx.reps}`}</>}
                 {currentEx.tecnica && <span className="wp-sets-tecnica">{currentEx.tecnica}</span>}
               </span>
               <span className="wp-sets-counter">

@@ -1172,6 +1172,16 @@
 }
 .wp-ex-swap { color: var(--wp-terra, #E9A17C); }
 
+/* #2 — Un solo móvil: prescripción de los dos. */
+.wp-duo { display: flex; flex-direction: column; gap: 6px; margin-top: 10px;
+  padding: 12px 14px; border-radius: 12px; background: rgba(246,242,234,.05); }
+.wp-duo-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.wp-duo-who { font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--wp-txt-dim, rgba(246,242,234,.6)); }
+.wp-duo-who.wp-duo-you { color: var(--wp-amber, #C9A24B); }
+.wp-duo-reps { font-size: 15px; font-weight: 600; color: var(--wp-txt); font-variant-numeric: tabular-nums; }
+.wp-duo-tip { font-size: 12px; color: var(--wp-txt-dim, rgba(246,242,234,.55)); line-height: 1.4; margin: 2px 0 0; }
+
 .wp-ex-technique {
   display: inline-flex;
   align-items: center;

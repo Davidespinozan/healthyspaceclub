@@ -397,6 +397,8 @@ export const en: Translations<typeof es> = {
   workout: {
     seeTechnique: 'See technique',
     swapExercise: 'Swap',
+    duoYou: 'You',
+    duoPartner: 'Partner',
     dayTypeUpper: 'Upper body',
     dayTypeLower: 'Lower body',
     dayTypeFullBody: 'Full body',
