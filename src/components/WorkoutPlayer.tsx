@@ -1,5 +1,5 @@
 import { dayKey } from '../utils/localDate';
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera, Info, History, TrendingUp } from 'lucide-react';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
@@ -269,6 +269,27 @@ export default function WorkoutPlayer({
   const partnerTurn = !!hasLivePartner && !myTurn;
   // Mostramos el indicador de turno a AMBOS mientras el compañero esté en vivo.
   const showTurnStrip = partnerMode && !!hasLivePartner && phase === 'exercise';
+
+  // ── Reanudar A LA PAR (fix): si te saliste de la app y reabres, no empieces
+  // desde el inicio. Al montar, la PRIMERA señal en vivo del compañero nos pone a
+  // su altura si va adelante (reabriste a media sesión). Una sola vez por sesión;
+  // en un arranque fresco (ambos en 0) no salta. Usa el broadcast que ya existe,
+  // sin depender de DB — si realtime no conecta, cae al resume local de siempre.
+  const caughtUpRef = useRef(false);
+  useEffect(() => {
+    if (!partnerMode || caughtUpRef.current || !partnerLive || partnerLive.done) return;
+    if (partnerLive.exIndex > currentExerciseIndex) {
+      const target = sequence.findIndex(s => s.exIndex === partnerLive.exIndex);
+      if (target >= 0) {
+        caughtUpRef.current = true;
+        setCurrentStep(target);
+        setPhase(p => (p === 'warmup' ? 'exercise' : p)); // ya calentó; no lo mandes al warmup
+      }
+    } else {
+      // Ya vamos a la par o adelante en la primera lectura → no re-saltar esta sesión.
+      caughtUpRef.current = true;
+    }
+  }, [partnerMode, partnerLive, currentExerciseIndex, sequence]);
   const isSuperset = currentBlockMembers.length > 1;
   const blockBadge = currentBlockMembers.length >= 4
     ? t('workout.superset')
