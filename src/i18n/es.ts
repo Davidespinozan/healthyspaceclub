@@ -395,6 +395,7 @@ export const es = {
   },
   workout: {
     seeTechnique: 'Ver técnica',
+    swapExercise: 'Cambiar',
     dayTypeUpper: 'Tren superior',
     dayTypeLower: 'Tren inferior',
     dayTypeFullBody: 'Cuerpo completo',

@@ -1162,13 +1162,15 @@
 .wp-ex-microrow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px 10px;
   margin-bottom: 8px;
 }
 .wp-ex-microrow .wp-ex-micro {
-  margin: 0;
+  margin: 0 auto 0 0; /* empuja los botones (técnica + cambiar) a la derecha */
 }
+.wp-ex-swap { color: var(--wp-terra, #E9A17C); }
 
 .wp-ex-technique {
   display: inline-flex;

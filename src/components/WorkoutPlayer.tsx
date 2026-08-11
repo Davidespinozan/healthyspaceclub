@@ -1,7 +1,7 @@
 import { dayKey } from '../utils/localDate';
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera, Info, History, TrendingUp } from 'lucide-react';
+import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera, Info, History, TrendingUp, RefreshCw } from 'lucide-react';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 
 const CreatePostModal = lazy(() => import('./CreatePostModal'));
@@ -15,7 +15,8 @@ import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
-import { selectVariantForEquipment } from '../utils/workoutPlanner';
+import { selectVariantForEquipment, hasPlayableVariant } from '../utils/workoutPlanner';
+import type { WorkoutExercise } from '../utils/workoutSession';
 import { parseRepsToNumber } from '../utils/workoutLogger';
 import { computeProgression, incrementForMuscle } from '../utils/progression';
 import {
@@ -65,6 +66,19 @@ function buildPlanHash(workout: CachedWorkout): string {
   return workout.exercises.map(e => e.id).join(',');
 }
 
+/** #3 — Alternativa para "Cambiar este ejercicio": mismo grupo muscular, con video
+ *  para el equipo del usuario, que no esté ya en la rutina. null si no hay opción. */
+function pickSwapAlternative(bank: Exercise[], currentId: string, equipment: Equipment[], usedIds: Set<string>): Exercise | null {
+  const cur = bank.find(e => e.id === currentId);
+  if (!cur) return null;
+  const pool = bank.filter(ex =>
+    ex.id !== currentId && !usedIds.has(ex.id) &&
+    ex.muscleGroup === cur.muscleGroup && !ex.isYoga &&
+    hasPlayableVariant(ex, equipment),
+  );
+  return pool[0] ?? null;
+}
+
 export default function WorkoutPlayer({
   workout,
   exerciseBank,
@@ -77,7 +91,7 @@ export default function WorkoutPlayer({
     () => new Map(exerciseBank.map(e => [e.id, e])),
     [exerciseBank],
   );
-  const exercises = workout.exercises;
+  const baseExercises = workout.exercises;
   const planHash = buildPlanHash(workout);
   // Fase 3 — bloques de la sesión (opcionales; rutinas viejas no los traen).
   const warmupBlock = (workout as CachedWorkout).warmupBlock;
@@ -86,10 +100,10 @@ export default function WorkoutPlayer({
   // Secuencia de ejecución (intercala superseries por vuelta). El player camina
   // por `currentStep`; las series se guardan POR EJERCICIO (2D) y se aplanan al
   // finalizar → el contrato downstream (racha/Supabase) queda idéntico.
-  const sequence = useMemo(() => buildExecutionSequence(exercises), [exercises]);
+  const sequence = useMemo(() => buildExecutionSequence(baseExercises), [baseExercises]);
   const blockId = useMemo(
-    () => (exIndex: number) => exercises[exIndex]?.group || `__solo_${exIndex}`,
-    [exercises],
+    () => (exIndex: number) => baseExercises[exIndex]?.group || `__solo_${exIndex}`,
+    [baseExercises],
   );
 
   // Bloques de la sesión: cada estación es un run de ejercicios CONSECUTIVOS con
@@ -98,12 +112,12 @@ export default function WorkoutPlayer({
   const blocks = useMemo(() => {
     const result: number[][] = [];
     let i = 0;
-    while (i < exercises.length) {
-      const g = exercises[i].group;
+    while (i < baseExercises.length) {
+      const g = baseExercises[i].group;
       if (g) {
         const run: number[] = [];
         let j = i;
-        while (j < exercises.length && exercises[j].group === g) { run.push(j); j++; }
+        while (j < baseExercises.length && baseExercises[j].group === g) { run.push(j); j++; }
         result.push(run);
         i = j;
       } else {
@@ -112,7 +126,7 @@ export default function WorkoutPlayer({
       }
     }
     return result;
-  }, [exercises]);
+  }, [baseExercises]);
   const totalBlocks = blocks.length;
 
   // Auto-resume: lee el progreso guardado (mismo plan/día) UNA vez para
@@ -127,7 +141,7 @@ export default function WorkoutPlayer({
       if (d && d.version === 2 && d.workoutDate === today && d.planHash === planHash
           && typeof d.currentStep === 'number' && d.currentStep >= 0
           && d.currentStep < sequence.length && Array.isArray(d.loggedByExercise)) {
-        return d as { currentStep: number; loggedByExercise: LoggedByExercise; startedAt?: number };
+        return d as { currentStep: number; loggedByExercise: LoggedByExercise; startedAt?: number; swaps?: Record<number, WorkoutExercise> };
       }
     } catch { /* noop */ }
     return null;
@@ -162,7 +176,14 @@ export default function WorkoutPlayer({
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
   const [videoAspect, setVideoAspect] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState(() => savedProgress?.currentStep ?? 0);
-  const [loggedByExercise, setLoggedByExercise] = useState<LoggedByExercise>(() => savedProgress?.loggedByExercise ?? initLoggedByExercise(exercises));
+  const [loggedByExercise, setLoggedByExercise] = useState<LoggedByExercise>(() => savedProgress?.loggedByExercise ?? initLoggedByExercise(baseExercises));
+  // #3 — "Cambiar este ejercicio": override por índice. La estructura (secuencia/
+  // bloques) sale de baseExercises; el render usa `exercises` con los overrides.
+  const [swaps, setSwaps] = useState<Record<number, WorkoutExercise>>(() => savedProgress?.swaps ?? {});
+  const exercises = useMemo(
+    () => baseExercises.map((e, i) => swaps[i] ?? e),
+    [baseExercises, swaps],
+  );
   const [restState, setRestState] = useState<{ secondsLeft: number; total: number } | null>(null);
   const [editingSet, setEditingSet] = useState<{ exerciseIndex: number; setIndex: number } | null>(null);
   const [editValues, setEditValues] = useState<LoggedSet>({ reps: 0, kg: 0 });
@@ -189,6 +210,20 @@ export default function WorkoutPlayer({
   const DisplayIcon = getExerciseIcon(currentBank);
   const totalSetsForCurrent = currentEx?.sets || 1;
   const setsRegisteredForCurrent = setsDoneForExercise(loggedByExercise, currentExerciseIndex);
+
+  // #3 — "Cambiar este ejercicio": alternativa del mismo grupo (con video, apto al
+  // equipo, no repetida). Reemplaza SIN avanzar; resetea las series de ese ejercicio.
+  const swapAlt = currentEx
+    ? pickSwapAlternative(exerciseBank, currentEx.id, userEquipment, new Set(exercises.map(e => e.id)))
+    : null;
+  const canSwap = phase === 'exercise' && !!swapAlt;
+  function swapCurrentExercise() {
+    if (!swapAlt || !currentEx) return;
+    const newEx: WorkoutExercise = { ...currentEx, id: swapAlt.id, tecnica: undefined, tip_personalizado: undefined };
+    setSwaps(prev => ({ ...prev, [currentExerciseIndex]: newEx }));
+    setLoggedByExercise(prev => { const c = [...prev]; c[currentExerciseIndex] = []; return c; });
+    haptics.tap();
+  }
 
   // "La vez pasada": mejor serie del último registro de este ejercicio.
   const lastExercisePerformance = useAppStore(s => s.lastExercisePerformance);
@@ -379,10 +414,11 @@ export default function WorkoutPlayer({
         currentStep,
         loggedByExercise,
         startedAt,
+        swaps,
       }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, currentStep, loggedByExercise]);
+  }, [phase, currentStep, loggedByExercise, swaps]);
 
   // ── Rest countdown (non-blocking, solo informa)
   useEffect(() => {
@@ -733,6 +769,12 @@ export default function WorkoutPlayer({
                 <button type="button" className="wp-ex-technique" onClick={() => setShowSpecs(true)}>
                   <Info size={14} strokeWidth={2} />
                   <span>{t('workout.seeTechnique')}</span>
+                </button>
+              )}
+              {canSwap && (
+                <button type="button" className="wp-ex-technique wp-ex-swap" onClick={swapCurrentExercise}>
+                  <RefreshCw size={14} strokeWidth={2} />
+                  <span>{t('workout.swapExercise')}</span>
                 </button>
               )}
             </div>
