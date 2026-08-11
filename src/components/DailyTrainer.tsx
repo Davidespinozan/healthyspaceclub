@@ -29,8 +29,15 @@ import {
   cardioStyleFromPlan,
   reconcilePartnerDayType,
   hasPlayableVariant,
+  deloadCheck,
+  computeWeeklyVolume,
+  trainingFrequency,
+  determineIntensity,
 } from '../utils/workoutPlanner';
 import { composeSession } from '../utils/sessionBlocks';
+import {
+  deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
+} from '../utils/mesocycle';
 import {
   getCachedWorkout,
   saveWorkoutToCache,
@@ -270,6 +277,30 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     } else {
       bullets.push(t('wizard.genTrainedYesterday'));
     }
+
+    // ── P1 · MESOCICLO (capa de planificación longitudinal) ──────────────────
+    // Todo DERIVADO de lo que ya existe (deloadCheck, volumen, frecuencia, check-in):
+    // semana del bloque, recuperación, adherencia, rendimiento → dirección + deload
+    // autorregulados. No persiste nada; se recalcula aquí.
+    const meso = (() => {
+      const { weeksAccumulated } = deloadCheck(completedSessions, workoutLog || []);
+      const sum = (v: Record<string, number>) => Object.values(v).reduce((a, b) => a + b, 0);
+      const setsLast7 = sum(computeWeeklyVolume(completedSessions, exerciseBank, 7, workoutLog || []));
+      const setsPrev7 = sum(computeWeeklyVolume(completedSessions, exerciseBank, 14, workoutLog || [])) - setsLast7;
+      const since = (d: number) => dayKey(new Date(Date.now() - d * 86400000));
+      const last7Days = new Set<string>();
+      for (const s of completedSessions) if (s.date >= since(7)) last7Days.add(s.date);
+      for (const w of (workoutLog || [])) if (w.date >= since(7)) last7Days.add(w.date);
+      const freq = trainingFrequency(completedSessions, workoutLog || []);
+      return deriveMesocycleState({
+        weeksAccumulated,
+        recovery: recoveryFromCheckin(String(obData?.energy ?? ''), String(obData?.sleep ?? '')),
+        adherence: adherenceFrom(last7Days.size, freq),
+        performance: volumeTrend(setsLast7, setsPrev7),
+      });
+    })();
+    // El mesociclo es AUTORITATIVO sobre el deload (ventana 4-6 + adelantable).
+    const mesoDeload = meso.deload;
 
     const GOAL_KEY: Record<string, TranslationKey> = {
       'Ganar músculo': 'onboarding.goalGain',
@@ -633,11 +664,18 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         }
       }
 
-      // Reduce intensity if prior heavy exercise or tired
-      let intensity = todayDecision.intensity;
+      // Intensidad: base por readiness (energía/sueño/descanso) COMPUESTA con el sesgo
+      // del mesociclo (intensificación sube, descarga baja) — la recuperación manda
+      // (a un cansado no lo empuja). Luego la ajustan prior/discomfort.
+      const baseIntensity = determineIntensity(
+        obData?.energy as 'bien' | 'regular' | 'cansado' | undefined,
+        obData?.sleep as 'muy bien' | 'normal' | 'mal' | undefined,
+        restDays,
+      );
+      let intensity = composeIntensity(baseIntensity, meso.intensityBias);
       if (priorExercise === 'heavy') intensity = 'baja';
       else if (priorExercise === 'light' || discomfort === 'mild') intensity = 'media';
-      if (todayDecision.deload) intensity = 'baja'; // descarga: intensidad baja siempre
+      if (mesoDeload) intensity = 'baja'; // descarga: intensidad baja siempre
 
       // Guardia defensiva: filterWithProgressiveRelaxation nivel 3 SIEMPRE devuelve
       // candidatos si el equipo coincide con algún ejercicio. Si llegamos a 0 acá,
@@ -651,11 +689,22 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       }
 
       // El bloque principal se dimensiona por SU presupuesto (no el total): el
-      // calentamiento y el finisher ya reservaron su tiempo (Fase 3).
-      let targetCount = Math.min(exerciseCountForDuration(sessionPlan.budget.main), candidates.length);
-      if (todayDecision.deload) {
-        targetCount = Math.max(3, targetCount - 2); // descarga: menos ejercicios
-        bullets.push('SEMANA DE DELOAD (descarga planificada por fatiga acumulada): baja el volumen ~40% — menos series por ejercicio (2 en vez de 3-4), deja 2-3 reps en reserva (RPE bajo), mismas técnicas. Es recuperación para seguir creciendo; explícaselo en la nota.');
+      // calentamiento y el finisher ya reservaron su tiempo (Fase 3). El MESOCICLO
+      // escala ese volumen: semanas de acumulación suben, deload baja.
+      const mainCount = exerciseCountForDuration(sessionPlan.budget.main);
+      let targetCount = Math.min(Math.round(mainCount * meso.volumeMultiplier), candidates.length);
+      targetCount = Math.max(3, targetCount);
+      if (mesoDeload) {
+        bullets.push('SEMANA DE DELOAD (descarga — planeada o adelantada por las señales de recuperación): baja el volumen ~40% (menos series por ejercicio, 2 en vez de 3-4), deja 3-4 reps en reserva (RPE bajo), mismas técnicas. Es recuperación para seguir creciendo; explícaselo en la nota.');
+      } else {
+        // Contexto del mesociclo para que la IA dosifique Y se lo explique al usuario.
+        const faseTxt = meso.phase === 'intensificacion'
+          ? 'INTENSIFICACIÓN (acércate al pico): sube la intensidad —menos reps, más carga/dificultad, RIR 1-2 en compuestos— y sostén el volumen'
+          : 'ACUMULACIÓN (construyendo volumen): prioriza volumen de calidad, RIR 2-3, técnica impecable';
+        const dirTxt = meso.progression === 'avanzar' ? 'vas AVANZANDO (empuja 1-2 reps/algo de carga sobre la última vez)'
+          : meso.progression === 'retroceder' ? 'RETROCEDE un punto hoy (recuperación/rendimiento a la baja) — sostén técnica, no fuerces'
+          : 'MANTÉN el nivel de la última vez (consolida)';
+        bullets.push(`MESOCICLO — semana ${meso.week} del bloque, fase ${faseTxt}. Progresión: ${dirTxt}. Es un plan que avanza en el tiempo; que la nota refleje en qué punto va.`);
       }
 
       const contextStr = bullets.join('\n- ');
@@ -695,7 +744,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // (avanzado en descarga baja a 2). Evita rutinas flojas sin importar la IA.
         const isStrengthGoal = goal === 'hipertrofia' || goal === 'fuerza';
         const notBeginner = levelFromObData(obData) !== 'principiante';
-        const compoundSetFloor = isStrengthGoal && notBeginner && !todayDecision.deload ? 3 : 0;
+        // Piso de series escalado por el mesociclo: acumulación/intensificación altas
+        // → 4 series de piso; semanas normales 3; deload → sin piso.
+        const compoundSetFloor = isStrengthGoal && notBeginner && !mesoDeload
+          ? Math.max(3, Math.round(3 * meso.volumeMultiplier)) : 0;
         const repaired = repairWorkoutStructure(
           (workout as CachedWorkout).exercises, exerciseBank,
           { hasWeights: equipmentList.includes('gym'), compoundSetFloor },

@@ -475,7 +475,7 @@ function pickNextInCycle(
   return suggested;
 }
 
-function determineIntensity(
+export function determineIntensity(
   energy?: 'bien' | 'regular' | 'cansado',
   sleep?: 'muy bien' | 'normal' | 'mal',
   restDays: number = 0
