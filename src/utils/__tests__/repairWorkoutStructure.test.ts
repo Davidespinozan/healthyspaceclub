@@ -11,6 +11,9 @@ const bank = [
   { id: 'extension-triceps', name: 'Extensión de Tríceps', type: 'aislamiento', muscleGroup: 'triceps' },
   { id: 'plancha', name: 'Plancha', type: 'aislamiento', muscleGroup: 'core' },
   { id: 'elevacion-lateral', name: 'Elevación Lateral', type: 'aislamiento', muscleGroup: 'hombros' },
+  { id: 'peso-muerto-rumano', name: 'Peso Muerto Rumano', type: 'compuesto', muscleGroup: 'isquios' },
+  { id: 'remo-mancuerna', name: 'Remo con Mancuerna', type: 'compuesto', muscleGroup: 'espalda' },
+  { id: 'zancada-mancuerna', name: 'Zancada con Mancuerna', type: 'compuesto', muscleGroup: 'cuadriceps' },
 ] as unknown as Exercise[];
 
 const ids = (r: { exercises: { id: string }[] }) => r.exercises.map(e => e.id);
@@ -59,5 +62,32 @@ describe('repairWorkoutStructure', () => {
        { id: 'extension-triceps', sets: 3, rest: 60, group: 'A' }], bank);
     expect(r.exercises.filter(e => e.group === 'A')).toHaveLength(2);
     expect(ids(r)[0]).toBe('sentadilla-barra'); // compuesto primero
+  });
+
+  it('full body NO rebota: tren inferior queda junto (no leg → upper → leg)', () => {
+    // Entrada desordenada como la mandaría la IA: pierna, upper, upper, pierna.
+    const r = repairWorkoutStructure(
+      [{ id: 'sentadilla-barra' }, { id: 'press-banca-barra' },
+       { id: 'remo-mancuerna' }, { id: 'peso-muerto-rumano' }], bank);
+    const order = ids(r);
+    const cuad = order.indexOf('sentadilla-barra');
+    const isq = order.indexOf('peso-muerto-rumano');
+    expect(Math.abs(cuad - isq)).toBe(1);       // las dos de pierna, adyacentes
+    expect(cuad).toBeLessThan(order.indexOf('press-banca-barra')); // inferior antes que superior
+  });
+
+  it('rompe una superserie que mezcla tren superior e inferior (con pesas)', () => {
+    const r = repairWorkoutStructure(
+      [{ id: 'zancada-mancuerna', group: 'B' },      // inferior
+       { id: 'elevacion-lateral', group: 'B' }], bank); // superior
+    expect(r.exercises.every(e => e.group === undefined)).toBe(true);
+    expect(r.fixes.some(f => /tren superior e inferior/i.test(f))).toBe(true);
+  });
+
+  it('SIN pesas (circuito) NO rompe una mezcla de tren superior/inferior', () => {
+    const r = repairWorkoutStructure(
+      [{ id: 'zancada-mancuerna', group: 'B' },
+       { id: 'elevacion-lateral', group: 'B' }], bank, { hasWeights: false });
+    expect(r.exercises.filter(e => e.group === 'B')).toHaveLength(2);
   });
 });
