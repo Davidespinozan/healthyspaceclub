@@ -955,7 +955,9 @@ export function buildConfigHash(params: {
 export function exerciseCountForDuration(minutes: number): number {
   if (minutes <= 25) return 5;
   if (minutes <= 45) return 7;
-  return 9;
+  if (minutes <= 65) return 9;
+  if (minutes <= 95) return 11;
+  return 13;
 }
 
 // ══════════════════════════════════════════════════════════════

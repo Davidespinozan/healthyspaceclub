@@ -143,8 +143,8 @@ export function allocateTime(input: {
   if (input.isYogaDay) return { warmup: 0, main: total, finisher: 0 };
 
   let warmup = input.isStrengthDay
-    ? clamp(Math.round(total * 0.15), 5, 10)
-    : clamp(Math.round(total * 0.10), 3, 6);
+    ? clamp(Math.round(total * 0.14), 5, 15)
+    : clamp(Math.round(total * 0.10), 3, 8);
 
   // Finisher solo en días de FUERZA (en un día de cardio, el cardio ES el main).
   let finisher = 0;

@@ -80,9 +80,11 @@ export const MODALITY_OPTIONS: Array<{
 ];
 
 export const TIME_OPTIONS = [
-  { value: 25, label: '25 min' },
+  { value: 30, label: '30 min' },
   { value: 45, label: '45 min' },
-  { value: 60, label: '60+ min' },
+  { value: 60, label: '60 min' },
+  { value: 90, label: '90 min' },
+  { value: 120, label: '120 min' },
 ];
 
 // Nivel del compañero (modo pareja / invitado). `value` es el término que viaja
