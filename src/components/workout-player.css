@@ -250,6 +250,20 @@
   margin: 0;
 }
 
+/* ── Fase 3: warm-up RAMP + finisher ── */
+.wp-ramp { display: flex; flex-direction: column; gap: 11px; margin: 4px 0 16px; }
+.wp-ramp-phase { display: flex; gap: 12px; align-items: flex-start; }
+.wp-ramp-tag {
+  flex-shrink: 0; min-width: 64px;
+  font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--wp-amber); padding-top: 2px;
+}
+.wp-ramp-body { flex: 1; min-width: 0; }
+.wp-ramp-name { font-size: 13.5px; font-weight: 600; color: var(--wp-txt); margin-bottom: 2px; }
+.wp-ramp-note { font-size: 12.5px; color: var(--wp-txt-dim, rgba(246,242,234,.6)); line-height: 1.45; }
+.wp-finisher .wp-prep-section-label { color: var(--wp-terra, #E9A17C); }
+
 /* ── CTA wrap (fixed bottom en paused/completed; inline en exercise) ── */
 
 .wp-cta-wrap {

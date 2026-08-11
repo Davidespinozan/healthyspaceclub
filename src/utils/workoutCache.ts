@@ -38,6 +38,19 @@ export interface CachedWorkout {
   warmup: string;
   cooldown: string;
   note: string;
+  // ── Sesión por bloques (Fase 3) — render-ready, nombres ya localizados ──
+  // Deterministas (código, no IA). Opcionales: rutinas viejas no los traen.
+  warmupBlock?: {
+    minutes: number;
+    phases: Array<{ phase: string; name: string | null; note: string }>;
+  };
+  finisherBlock?: {
+    minutes: number;
+    cardioStyle: string;
+    format: string;      // 'steady' | 'intervals'
+    name: string;
+    prescription: string;
+  };
   // ── Metadatos de modo pareja ──
   partnerMode?: boolean;
   partnerName?: string;

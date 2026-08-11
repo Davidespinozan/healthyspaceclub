@@ -28,6 +28,7 @@ import {
   reconcilePartnerDayType,
   hasPlayableVariant,
 } from '../utils/workoutPlanner';
+import { composeSession } from '../utils/sessionBlocks';
 import {
   getCachedWorkout,
   saveWorkoutToCache,
@@ -514,6 +515,24 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       const lowImpactMode = Number(obData?.edad ?? 0) >= 60
         || mov === 'articular' || mov === 'equilibrio' || mov === 'apoyo';
 
+      // Fase 3 — Sesión por bloques. El motor determinista reparte el tiempo entre
+      // calentamiento (RAMP) / principal / finisher. `budget.main` dimensiona cuántos
+      // ejercicios se piden al bloque principal (así el total respeta el presupuesto).
+      // (Yoga sale por un early-return antes de aquí → sólo llegan fuerza/cardio/auto.)
+      const effDayType = reconciled ? reconciledType : todayDecision.type;
+      const isYogaDay = selectedModality === 'auto' && effDayType === 'movilidad';
+      const isCardioDay = selectedModality === 'cardio' || (selectedModality === 'auto' && effDayType === 'cardio');
+      const sessionPlan = composeSession({
+        totalMinutes: selectedTime,
+        isStrengthDay: !isYogaDay && !isCardioDay,
+        isYogaDay,
+        objective: String(obData?.goal ?? ''),
+        dayMuscles: muscleGroups,
+        equipment: equipmentList,
+        lowImpactMode,
+        bank: exerciseBank,
+      });
+
       let candidates: Exercise[];
       if (selectedModality === 'cardio') {
         // Cardio NO hereda el eje de equipo de la fuerza. Dos arreglos (Fase 2):
@@ -603,7 +622,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         throw new Error(msg);
       }
 
-      let targetCount = Math.min(exerciseCountForDuration(selectedTime), candidates.length);
+      // El bloque principal se dimensiona por SU presupuesto (no el total): el
+      // calentamiento y el finisher ya reservaron su tiempo (Fase 3).
+      let targetCount = Math.min(exerciseCountForDuration(sessionPlan.budget.main), candidates.length);
       if (todayDecision.deload) {
         targetCount = Math.max(3, targetCount - 2); // descarga: menos ejercicios
         bullets.push('SEMANA DE DELOAD (descarga planificada por fatiga acumulada): baja el volumen ~40% — menos series por ejercicio (2 en vez de 3-4), deja 2-3 reps en reserva (RPE bajo), mismas técnicas. Es recuperación para seguir creciendo; explícaselo en la nota.');
@@ -655,6 +676,27 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       const strictValidation = validateWorkoutPlanStrict(workout, validIds);
       if (!strictValidation.valid) {
         console.warn('[workout] validación estricta:', strictValidation.errors);
+      }
+
+      // Fase 3 — adjuntar los bloques al workout (nombres ya localizados desde el
+      // banco activo), para que WorkoutPlayer los renderice sin re-resolver ids.
+      {
+        const w = workout as CachedWorkout;
+        const nameOf = (id: string | null) => (id ? (exerciseBank.find(e => e.id === id)?.name ?? null) : null);
+        if (sessionPlan.warmup) {
+          w.warmupBlock = {
+            minutes: sessionPlan.warmup.minutes,
+            phases: sessionPlan.warmup.phases.map(p => ({ phase: p.phase, name: nameOf(p.exerciseId), note: p.note })),
+          };
+        }
+        if (sessionPlan.finisher) {
+          const f = sessionPlan.finisher;
+          const ex = f.exercises[0];
+          w.finisherBlock = {
+            minutes: f.minutes, cardioStyle: f.cardioStyle, format: f.format,
+            name: nameOf(ex?.id ?? null) ?? '', prescription: ex?.prescription ?? '',
+          };
+        }
       }
 
       saveWorkoutToCache({

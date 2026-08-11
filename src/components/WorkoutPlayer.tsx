@@ -79,6 +79,9 @@ export default function WorkoutPlayer({
   );
   const exercises = workout.exercises;
   const planHash = buildPlanHash(workout);
+  // Fase 3 — bloques de la sesión (opcionales; rutinas viejas no los traen).
+  const warmupBlock = (workout as CachedWorkout).warmupBlock;
+  const finisherBlock = (workout as CachedWorkout).finisherBlock;
 
   // Secuencia de ejecución (intercala superseries por vuelta). El player camina
   // por `currentStep`; las series se guardan POR EJERCICIO (2D) y se aplanan al
@@ -540,8 +543,24 @@ export default function WorkoutPlayer({
       {phase === 'warmup' && (
         <div className="wp-prep">
           <div className="wp-prep-card">
-            <div className="wp-prep-section-label">{t('workout.warmup')}</div>
-            <p className="wp-prep-section-text">{(workout as CachedWorkout).warmup}</p>
+            <div className="wp-prep-section-label">
+              {t('workout.warmup')}{warmupBlock ? ` · ${warmupBlock.minutes} min` : ''}
+            </div>
+            {warmupBlock ? (
+              <div className="wp-ramp">
+                {warmupBlock.phases.map((ph, i) => (
+                  <div className="wp-ramp-phase" key={i}>
+                    <span className="wp-ramp-tag">{t(`workout.ramp.${ph.phase}` as Parameters<typeof t>[0])}</span>
+                    <div className="wp-ramp-body">
+                      {ph.name && <div className="wp-ramp-name">{ph.name}</div>}
+                      <div className="wp-ramp-note">{ph.note}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="wp-prep-section-text">{(workout as CachedWorkout).warmup}</p>
+            )}
             <button className="wp-cta" onClick={startExercises}>
               {t('workout.warmupCta')}
             </button>
@@ -779,6 +798,16 @@ export default function WorkoutPlayer({
               <div className="wp-completed-stat-lbl">{t('workout.kgTotal')}</div>
             </div>
           </div>
+          {finisherBlock && (
+            <div className="wp-prep-section wp-finisher">
+              <div className="wp-prep-section-label">
+                {t('workout.finisher')} · {finisherBlock.minutes} min · {t(`workout.finisherFmt.${finisherBlock.format}` as Parameters<typeof t>[0])}
+              </div>
+              <p className="wp-prep-section-text">
+                <strong>{finisherBlock.name}</strong> — {finisherBlock.prescription}
+              </p>
+            </div>
+          )}
           {workout.cooldown && (
             <div className="wp-prep-section">
               <div className="wp-prep-section-label">{t('workout.cooldown')}</div>

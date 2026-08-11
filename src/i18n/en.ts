@@ -440,6 +440,16 @@ export const en: Translations<typeof es> = {
     cooldown: 'Cooldown',
     warmup: 'Warm-up',
     warmupCta: "Ready, let's train",
+    finisher: 'Finisher',
+    ramp: {
+      raise: 'Raise',
+      mobilise: 'Mobilise',
+      potentiate: 'Activate',
+    },
+    finisherFmt: {
+      steady: 'steady pace',
+      intervals: 'intervals',
+    },
     whyToday: 'Why today',
     startWorkout: 'start workout',
     finish: 'Finish',

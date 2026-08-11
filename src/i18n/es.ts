@@ -439,6 +439,16 @@ export const es = {
     cooldown: 'Enfriamiento',
     warmup: 'Calentamiento',
     warmupCta: 'Listo, a entrenar',
+    finisher: 'Finisher',
+    ramp: {
+      raise: 'Eleva',
+      mobilise: 'Moviliza',
+      potentiate: 'Activa',
+    },
+    finisherFmt: {
+      steady: 'ritmo sostenido',
+      intervals: 'intervalos',
+    },
     whyToday: 'Por qué hoy',
     startWorkout: 'comenzar entrenamiento',
     finish: 'Terminar',
