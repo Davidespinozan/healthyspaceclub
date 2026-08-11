@@ -119,7 +119,13 @@ ESFUERZO / CERCANÍA AL FALLO (RIR = reps en reserva; calíbralo al nivel — in
 - Principiante: 2-4 RIR siempre (primero técnica). Deload: 3-4 RIR (recuperación).
 
 VOLUMEN (dosifica, no infles):
-- Referencia semanal por músculo: ~10-20 series efectivas. Hoy, dale al músculo principal del día volumen suficiente (entre compuesto + accesorios), sin relleno. Menos ejercicios BIEN dosificados valen más que muchos a medias.
+- Referencia semanal por músculo: ~10-20 series efectivas. Hoy, dale al músculo principal del día volumen suficiente (entre compuesto + accesorios), sin relleno.
+
+DOSIS POR EJERCICIO (ancla CONCRETA — la queja #1 es que las rutinas salen FLOJAS; no subdosifiques):
+- SERIES efectivas: compuesto principal 3-4 · accesorio/aislamiento 2-3. Principiante: 2-3 en compuestos (técnica primero). En fuerza/hipertrofia el compuesto CLAVE del día NUNCA baja de 3 series.
+- REPS por goal: fuerza 3-6 · hipertrofia 6-12 (compuestos 6-10, aislamientos 10-15) · acondicionamiento/quema 12-20. En fuerza/hipertrofia NO uses rangos de resistencia (15-25) — eso es lo que hace sentir la rutina "ligera".
+- DESCANSO por goal: compuesto pesado/fuerza 120-180s · hipertrofia compuesto 90-120s, aislamiento 45-75s · circuito/quema 20-45s.
+- La sesión debe SENTIRSE retadora para el NIVEL del usuario. Un intermedio/avanzado con pocas series o reps altas se aburre y no progresa — dosifica en serio, cerca del fallo controlado (respetando el RIR de arriba).
 
 ORDEN DE EJERCICIOS (crítico — la secuencia debe ser inteligente, no aleatoria):
 - Regla base: compuestos pesados y los movimientos más técnicos PRIMERO (más energía al inicio); aislamiento después; core/abdominales al FINAL.

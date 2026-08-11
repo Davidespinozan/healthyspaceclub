@@ -691,9 +691,14 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // pesados fuera de superserie, técnica solo en aislamiento, superseries con
       // sets/rest iguales, anti-enfriamiento). Sin costo ni llamadas extra.
       {
+        // Piso de series en compuestos (B): fuerza/hipertrofia + no principiante → 3
+        // (avanzado en descarga baja a 2). Evita rutinas flojas sin importar la IA.
+        const isStrengthGoal = goal === 'hipertrofia' || goal === 'fuerza';
+        const notBeginner = levelFromObData(obData) !== 'principiante';
+        const compoundSetFloor = isStrengthGoal && notBeginner && !todayDecision.deload ? 3 : 0;
         const repaired = repairWorkoutStructure(
           (workout as CachedWorkout).exercises, exerciseBank,
-          { hasWeights: equipmentList.includes('gym') },
+          { hasWeights: equipmentList.includes('gym'), compoundSetFloor },
         );
         (workout as CachedWorkout).exercises = repaired.exercises;
         if (repaired.fixes.length) {

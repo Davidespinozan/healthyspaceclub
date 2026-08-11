@@ -90,4 +90,19 @@ describe('repairWorkoutStructure', () => {
        { id: 'elevacion-lateral', group: 'B' }], bank, { hasWeights: false });
     expect(r.exercises.filter(e => e.group === 'B')).toHaveLength(2);
   });
+
+  it('piso de series: sube compuestos flojos al mínimo (aislamiento no se toca)', () => {
+    const r = repairWorkoutStructure(
+      [{ id: 'sentadilla-barra', sets: 2 }, { id: 'apertura-mancuerna', sets: 2 }],
+      bank, { compoundSetFloor: 3 });
+    const sent = r.exercises.find(e => e.id === 'sentadilla-barra')!;
+    const aper = r.exercises.find(e => e.id === 'apertura-mancuerna')!;
+    expect(sent.sets).toBe(3);   // compuesto subido al piso
+    expect(aper.sets).toBe(2);   // aislamiento intacto
+  });
+
+  it('sin piso (compoundSetFloor 0) no cambia las series', () => {
+    const r = repairWorkoutStructure([{ id: 'sentadilla-barra', sets: 2 }], bank);
+    expect(r.exercises[0].sets).toBe(2);
+  });
 });

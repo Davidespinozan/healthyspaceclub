@@ -110,7 +110,7 @@ function phaseRank(type: string | undefined, muscle: string | undefined): number
 export function repairWorkoutStructure<T extends WorkoutExercise>(
   exercises: T[],
   bank: Exercise[],
-  opts: { hasWeights?: boolean } = {},
+  opts: { hasWeights?: boolean; compoundSetFloor?: number } = {},
 ): { exercises: T[]; fixes: string[] } {
   // hasWeights: la regla "compuesto pesado nunca en superserie" es por SEGURIDAD con
   // carga externa (barra/mancuerna). En peso corporal/ligas NO aplica — ahí los
@@ -150,6 +150,17 @@ export function repairWorkoutStructure<T extends WorkoutExercise>(
         for (const ex of work) if (ex.group === g) delete ex.group;
         fixes.push(`Superserie ${g}: mezclaba tren superior e inferior → deshecha (series rectas)`);
       }
+    }
+  }
+
+  // (2c) Piso de series en COMPUESTOS (B): la queja "rutinas flojas" — un compuesto
+  // con 1-2 series subdosifica a un intermedio/avanzado. En fuerza/hipertrofia se sube
+  // al piso. Red de seguridad determinista sobre lo que mande la IA.
+  const setFloor = opts.compoundSetFloor ?? 0;
+  if (setFloor > 0) for (const ex of work) {
+    if (typeOf(ex) === 'compuesto' && (ex.sets ?? 0) < setFloor) {
+      ex.sets = setFloor;
+      fixes.push(`"${nameOf(ex)}": series subidas a ${setFloor} (piso de compuesto)`);
     }
   }
 
