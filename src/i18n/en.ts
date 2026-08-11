@@ -449,6 +449,13 @@ export const en: Translations<typeof es> = {
     finisherFmt: {
       steady: 'steady pace',
       intervals: 'intervals',
+      circuit: 'circuit',
+    },
+    circuitRounds: '{n} rounds · 40 s per station · 20 s rest',
+    circuit: {
+      resistencia: 'Resistance',
+      cardio: 'Cardio',
+      explosividad: 'Explosive',
     },
     finisherDone: 'Done',
     finisherSkip: 'Skip finisher',

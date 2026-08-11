@@ -283,6 +283,14 @@
   background: var(--wp-amber, #C9A24B); color: #081312;
 }
 .wp-fin-play:active { transform: scale(.94); }
+.wp-fin-rounds { font-weight: 600; color: var(--wp-txt); margin-bottom: 16px; }
+.wp-fin-stations { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; text-align: left; }
+.wp-fin-station { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; background: rgba(246,242,234,.05); }
+.wp-fin-station-tag {
+  flex-shrink: 0; min-width: 84px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--wp-terra, #E9A17C);
+}
+.wp-fin-station-name { font-size: 14px; font-weight: 600; color: var(--wp-txt); }
 .wp-fin-actions { display: flex; flex-direction: column; gap: 10px; }
 .wp-fin-skip {
   background: none; border: none; cursor: pointer; padding: 8px;

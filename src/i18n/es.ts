@@ -448,6 +448,13 @@ export const es = {
     finisherFmt: {
       steady: 'ritmo sostenido',
       intervals: 'intervalos',
+      circuit: 'circuito',
+    },
+    circuitRounds: '{n} rondas · 40 s por estación · 20 s de descanso',
+    circuit: {
+      resistencia: 'Resistencia',
+      cardio: 'Cardio',
+      explosividad: 'Explosividad',
     },
     finisherDone: 'Hecho',
     finisherSkip: 'Saltar finisher',

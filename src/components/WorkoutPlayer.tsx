@@ -594,8 +594,28 @@ export default function WorkoutPlayer({
             <div className="wp-prep-section-label wp-fin-lbl">
               {t('workout.finisher')} · {t(`workout.finisherFmt.${finisherBlock.format}` as Parameters<typeof t>[0])}
             </div>
-            <div className="wp-fin-name">{finisherBlock.name}</div>
-            <div className="wp-fin-presc">{finisherBlock.prescription}</div>
+            {finisherBlock.format === 'circuit' ? (
+              <>
+                <div className="wp-fin-presc wp-fin-rounds">
+                  {t('workout.circuitRounds', { n: finisherBlock.rounds ?? 3 })}
+                </div>
+                <div className="wp-fin-stations">
+                  {finisherBlock.stations.map((s, i) => (
+                    <div className="wp-fin-station" key={i}>
+                      <span className="wp-fin-station-tag">
+                        {s.label ? t(`workout.circuit.${s.label}` as Parameters<typeof t>[0]) : `${i + 1}`}
+                      </span>
+                      <span className="wp-fin-station-name">{s.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="wp-fin-name">{finisherBlock.stations[0]?.name}</div>
+                <div className="wp-fin-presc">{finisherBlock.stations[0]?.prescription}</div>
+              </>
+            )}
             {finisherBlock.format === 'intervals' && finRunning && finLeft > 0 && (
               <div className={`wp-fin-interval ${finHard ? 'is-hard' : 'is-easy'}`}>
                 {finHard ? t('workout.intervalHard') : t('workout.intervalEasy')}

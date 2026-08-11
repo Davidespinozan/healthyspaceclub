@@ -86,17 +86,46 @@ describe('sessionBlocks — finisher', () => {
     expect(buildFinisher(4, base())).toBeNull();
   });
 
-  it('perder grasa con poco tiempo → intervalos; con más → steady', () => {
-    const corto = buildFinisher(12, base({ objective: 'perder-grasa' }));
+  it('perder grasa: poco tiempo → intervalos; con tiempo → circuito', () => {
+    const corto = buildFinisher(8, base({ objective: 'perder-grasa' }));
     const largo = buildFinisher(25, base({ objective: 'perder-grasa' }));
-    expect(corto?.format).toBe('intervals');
-    expect(largo?.format).toBe('steady');
+    expect(corto?.format).toBe('intervals');   // <10 min → no alcanza para circuito
+    expect(largo?.format).toBe('circuit');
   });
 
-  it('lowImpactMode fuerza estilo lowImpact e intensidad no-alta', () => {
+  it('mantener → steady (no circuito)', () => {
+    const f = buildFinisher(18, base({ objective: 'mantener' }));
+    expect(f?.format).toBe('steady');
+  });
+
+  it('lowImpactMode fuerza estilo lowImpact, intensidad no-alta y NADA de circuito', () => {
     const f = buildFinisher(20, base({ objective: 'perder-grasa', lowImpactMode: true }));
     expect(f?.cardioStyle).toBe('lowImpact');
     expect(f?.intensity).not.toBe('alta');
+    expect(f?.format).not.toBe('circuit'); // seguridad: sin explosividad
+  });
+});
+
+describe('sessionBlocks — circuito multiformato (Fase 5)', () => {
+  it('perder grasa + tiempo + gym → circuito con 2-3 estaciones y rondas', () => {
+    const f = buildFinisher(24, base({ objective: 'perder-grasa', equipment: ['gym'] }));
+    expect(f?.format).toBe('circuit');
+    expect(f?.exercises.length).toBeGreaterThanOrEqual(2);
+    expect(f?.rounds).toBeGreaterThanOrEqual(3);
+    // estaciones etiquetadas (resistencia/cardio/explosividad)
+    expect(f?.exercises.every(e => !!e.label)).toBe(true);
+  });
+
+  it('circuito también funciona con BANDAS (peso corporal universal)', () => {
+    const f = buildFinisher(24, base({ objective: 'perder-grasa', equipment: ['ligas'] }));
+    expect(f?.format).toBe('circuit');
+    expect(f?.exercises.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('no repite el mismo ejercicio en dos estaciones', () => {
+    const f = buildFinisher(24, base({ objective: 'perder-grasa', equipment: ['gym'] }));
+    const ids = (f?.exercises ?? []).map(e => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
 

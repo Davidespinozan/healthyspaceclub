@@ -714,10 +714,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         }
         if (sessionPlan.finisher) {
           const f = sessionPlan.finisher;
-          const ex = f.exercises[0];
           w.finisherBlock = {
-            minutes: f.minutes, cardioStyle: f.cardioStyle, format: f.format,
-            name: nameOf(ex?.id ?? null) ?? '', prescription: ex?.prescription ?? '',
+            minutes: f.minutes, cardioStyle: f.cardioStyle, format: f.format, rounds: f.rounds,
+            stations: f.exercises.map(e => ({
+              name: nameOf(e.id) ?? '', label: e.label, prescription: e.prescription,
+            })),
           };
         }
       }

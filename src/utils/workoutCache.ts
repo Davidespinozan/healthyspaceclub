@@ -47,9 +47,10 @@ export interface CachedWorkout {
   finisherBlock?: {
     minutes: number;
     cardioStyle: string;
-    format: string;      // 'steady' | 'intervals'
-    name: string;
-    prescription: string;
+    format: string;      // 'steady' | 'intervals' | 'circuit'
+    rounds?: number;     // circuito multiformato (Fase 5)
+    // 1 estación (steady/intervals) o 2-3 encadenadas (circuit). Nombres localizados.
+    stations: Array<{ name: string; label?: string; prescription?: string }>;
   };
   // ── Metadatos de modo pareja ──
   partnerMode?: boolean;

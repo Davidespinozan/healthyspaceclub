@@ -17,15 +17,17 @@
 //  · Todo respeta el PRESUPUESTO TOTAL de tiempo (el main nunca baja de su piso).
 // ─────────────────────────────────────────────────────────────────────────
 import type { CardioStyle, Equipment, Exercise, MuscleGroup, SessionRole } from '../types';
-import { cardioEquipmentFor, defaultCardioStyle, matchesCardioStyle } from './workoutPlanner';
+import { cardioEquipmentFor, defaultCardioStyle, matchesCardioStyle, hasPlayableVariant } from './workoutPlanner';
 
 export type BlockIntensity = 'baja' | 'media' | 'alta';
 export type RampPhase = 'raise' | 'mobilise' | 'potentiate';
 
 export interface BlockExercise {
   id: string;
-  /** Prescripción sugerida (cardio va por tiempo, no reps). */
-  prescription: string;
+  /** Prescripción sugerida (cardio va por tiempo, no reps). Single finisher. */
+  prescription?: string;
+  /** Rol de la estación en un circuito multiformato ('resistencia'|'cardio'|'explosividad'). */
+  label?: string;
 }
 
 export interface WarmupBlock {
@@ -41,7 +43,10 @@ export interface FinisherBlock {
   minutes: number;
   intensity: BlockIntensity;
   cardioStyle: CardioStyle;
-  format: 'steady' | 'intervals';
+  format: 'steady' | 'intervals' | 'circuit';
+  /** Circuito multiformato: nº de rondas (Fase 5). Ausente en steady/intervals. */
+  rounds?: number;
+  /** 1 estación (steady/intervals) o 2-3 estaciones encadenadas (circuit). */
   exercises: BlockExercise[];
 }
 
@@ -226,20 +231,67 @@ function finisherStyle(objective: string, lowImpactMode: boolean): CardioStyle {
   return defaultCardioStyle(objective, false);
 }
 
+/** Estación de RESISTENCIA para un circuito: un compuesto/funcional (banda o peso
+ *  corporal) con variante jugable para el equipo del usuario. */
+function pickStrengthForCircuit(bank: Exercise[], equipment: Equipment[], dayMuscles: MuscleGroup[], lowImpact: boolean): Exercise | null {
+  const isDay = (ex: Exercise) =>
+    dayMuscles.includes(ex.muscleGroup) || (ex.secondaryMuscles ?? []).some(m => dayMuscles.includes(m)) || ex.muscleGroup === 'cuerpo-completo';
+  const pool = bank.filter(ex =>
+    (ex.type === 'compuesto' || ex.type === 'funcional') &&
+    ex.muscleGroup !== 'cardio' && !ex.isYoga &&
+    hasPlayableVariant(ex, equipment) &&
+    !(lowImpact && (ex.impact === 'high' || ex.fallRisk === true)),
+  );
+  return (dayMuscles.length ? pool.find(isDay) : null) ?? pool[0] ?? null;
+}
+
 /**
- * Finisher de cardio tras el bloque principal. Duración por presupuesto; formato
- * por objetivo (grasa con poco tiempo → intervalos; el resto → steady/zona 2).
+ * CIRCUITO MULTIFORMATO (Fase 5): encadena resistencia (banda/peso) → cardio
+ * funcional → explosividad, por rondas. Metcon de cuerpo entero — pega fuerte en
+ * perder grasa y funciona igual con bandas (no necesita gym). null si no arma ≥2
+ * estaciones válidas.
+ */
+export function buildCircuitFinisher(minutes: number, input: SessionInput, style: CardioStyle): FinisherBlock | null {
+  const { bank, equipment, dayMuscles } = input;
+  const resistencia = pickStrengthForCircuit(bank, equipment, dayMuscles, false);
+  const cardio = pickCardio(bank, 'finisher', equipment, false, 'funcional')
+    ?? pickCardio(bank, 'main', equipment, false, 'funcional');
+  const explosividad = pickCardio(bank, 'main', equipment, false, 'explosividad');
+
+  const raw: Array<[Exercise | null, string]> = [
+    [resistencia, 'resistencia'], [cardio, 'cardio'], [explosividad, 'explosividad'],
+  ];
+  const stations = raw.filter(([ex]) => !!ex).map(([ex, label]) => ({ id: ex!.id, label }));
+  // Evita duplicar el mismo ejercicio en dos estaciones.
+  const uniq = stations.filter((s, i) => stations.findIndex(x => x.id === s.id) === i);
+  if (uniq.length < 2) return null;
+
+  const rounds = Math.max(3, Math.min(5, Math.round(minutes / 4)));
+  return { kind: 'finisher', minutes, intensity: 'alta', cardioStyle: style, format: 'circuit', rounds, exercises: uniq };
+}
+
+/**
+ * Finisher tras el bloque principal. Duración por presupuesto; formato por objetivo:
+ * grasa + funcional + tiempo → CIRCUITO multiformato; grasa con poco tiempo →
+ * intervalos; el resto → steady/zona 2.
  */
 export function buildFinisher(minutes: number, input: SessionInput): FinisherBlock | null {
   if (minutes < 5) return null;
   const { bank, equipment, objective, lowImpactMode = false } = input;
   const style = finisherStyle(objective, lowImpactMode);
+  const o = (objective || '').toLowerCase();
+  const fatLoss = /grasa|perder|adelgaz|quemar|definir/.test(o);
+
+  // Circuito multiformato: metcon para perder grasa, sin bajo impacto y con tiempo.
+  if (fatLoss && style === 'funcional' && minutes >= 10 && !lowImpactMode) {
+    const circuit = buildCircuitFinisher(minutes, input, style);
+    if (circuit) return circuit;
+  }
+
   const pick = pickCardio(bank, 'finisher', equipment, lowImpactMode, style)
     ?? pickCardio(bank, 'finisher', equipment, lowImpactMode);
   if (!pick) return null;
 
-  const o = (objective || '').toLowerCase();
-  const fatLoss = /grasa|perder|adelgaz|quemar|definir/.test(o);
   const format: FinisherBlock['format'] = fatLoss && minutes <= 15 ? 'intervals' : 'steady';
   const intensity: BlockIntensity = format === 'intervals' ? 'alta' : (lowImpactMode ? 'baja' : 'media');
   const prescription = format === 'intervals'
