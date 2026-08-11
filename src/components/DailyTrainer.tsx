@@ -21,6 +21,7 @@ import {
   levelFromObData,
   recentExerciseIds,
   orderCandidatesForVariety,
+  orderByChallenge,
   capByMovementFamily,
   equipmentFromPlan,
   modalityFromPlan,
@@ -600,6 +601,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // al final → la IA (que ve los primeros) elige frescos. Los compuestos no se
         // mueven (deben repetirse para progresar carga).
         candidates = orderCandidatesForVariety(candidates, recentExerciseIds(completedSessions));
+        // Challenge-match (B): sin carga externa, prioriza ejercicios a la ALTURA del
+        // nivel (un avanzado no quiere hip-thrust sin peso; quiere desplante). Con gym
+        // no cambia nada (la carga da el estímulo).
+        candidates = orderByChallenge(candidates, levelFromObData(obData), equipmentList);
         // Balance de patrones: máx 2 del mismo movimiento (agarres distintos) por día,
         // para que no salgan 3 jalones y cero remo. Días cortos → solo 1.
         candidates = capByMovementFamily(candidates, selectedTime <= 30 ? 1 : 2);

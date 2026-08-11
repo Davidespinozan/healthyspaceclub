@@ -273,6 +273,37 @@ export function orderCandidatesForVariety(candidates: Exercise[], recentIds: Set
   return [...candidates].sort((a, b) => stale(a) - stale(b)); // sort estable (V8): resto preserva orden
 }
 
+/** Dificultad EFECTIVA para el equipo del usuario: la de la variante que se usará (si
+ *  existe), si no la del patrón. Un hip-thrust "peso corporal" es principiante; una
+ *  búlgara peso corporal es intermedia — por eso importa la VARIANTE, no solo el patrón. */
+function effectiveDifficulty(ex: Exercise, equipment: Equipment[]): string {
+  const v = selectVariantForEquipment(ex, equipment);
+  return v?.difficulty ?? ex.difficulty;
+}
+
+/**
+ * CHALLENGE-MATCH (B): sin carga externa (peso corporal / ligas), un ejercicio fácil
+ * es casi inútil para alguien con experiencia — un hip thrust sin peso no reta a un
+ * avanzado, un desplante sí. Ordena los candidatos para que el que ESTÁ A LA ALTURA de
+ * su nivel salga primero (la IA prefiere los primeros). Con gym NO aplica: ahí la CARGA
+ * da el estímulo, así que no hay que sesgar por dificultad técnica. Sort estable →
+ * dentro del mismo fit se conserva el orden de variedad.
+ */
+export function orderByChallenge(candidates: Exercise[], level: TrainingLevel, equipment: Equipment[]): Exercise[] {
+  if (equipment.includes('gym')) return candidates; // con carga externa, el peso manda
+  const DR: Record<string, number> = { principiante: 1, intermedio: 2, avanzado: 3 };
+  const fit = (ex: Exercise): number => {
+    const d = DR[effectiveDifficulty(ex, equipment)] ?? 2;
+    if (level === 'avanzado') return 3 - d;        // 0 avz (mejor) · 1 int · 2 princ
+    if (level === 'intermedio') return d >= 2 ? 0 : 1; // int/avz primero, princ después
+    return d <= 1 ? 0 : 1;                          // principiante: aprende el movimiento primero
+  };
+  return candidates
+    .map((e, i) => ({ e, i }))
+    .sort((a, b) => fit(a.e) - fit(b.e) || a.i - b.i)
+    .map(x => x.e);
+}
+
 /**
  * Balance de patrones: los ejercicios separados por AGARRE comparten movementFamily
  * (ej. tracción vertical pronada/supina/neutra). Sin límite, la IA podría meter 3
