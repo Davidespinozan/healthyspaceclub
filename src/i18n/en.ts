@@ -744,7 +744,7 @@ export const en: Translations<typeof es> = {
     modCardio: 'Cardio',
     modCardioSub: 'HIIT, intervals, walking',
     eqGym: 'At the gym',
-    eqHome: 'At home',
+    eqHome: 'No gym',
     eqBands: 'With bands',
     priorNone: "No, this is the first",
     priorLight: 'Yes, something light',

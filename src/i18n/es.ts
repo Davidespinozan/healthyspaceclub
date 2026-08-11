@@ -743,7 +743,7 @@ export const es = {
     modCardio: 'Cardio',
     modCardioSub: 'HIIT, intervalos, walking',
     eqGym: 'En el gym',
-    eqHome: 'En casa',
+    eqHome: 'Sin gimnasio',
     eqBands: 'Con bandas',
     priorNone: 'No, este es el primero',
     priorLight: 'Sí, algo ligero',
