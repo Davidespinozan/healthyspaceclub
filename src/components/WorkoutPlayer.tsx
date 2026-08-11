@@ -37,7 +37,7 @@ import './workout-player.css';
 // con toda la info (lista, tips, calentamiento, POR QUÉ HOY, enfriamiento).
 // El player abre directo en 'exercise'. Si hay resume state, se detecta
 // en el useEffect de mount (no en una pantalla intermedia).
-type PlayerPhase = 'warmup' | 'exercise' | 'paused' | 'completed';
+type PlayerPhase = 'warmup' | 'exercise' | 'paused' | 'finisher' | 'completed';
 
 interface Props {
   workout: CachedWorkout;
@@ -141,6 +141,21 @@ export default function WorkoutPlayer({
   const [phase, setPhase] = useState<PlayerPhase>(
     () => (!savedProgress && (workout as CachedWorkout).warmup ? 'warmup' : 'exercise'),
   );
+  // Cronómetro del finisher (fase guiada, saltable). Debe ir DESPUÉS de `phase`.
+  const [finRunning, setFinRunning] = useState(false);
+  const [finLeft, setFinLeft] = useState(0);
+  useEffect(() => {
+    if (phase === 'finisher' && finisherBlock) { setFinLeft(finisherBlock.minutes * 60); setFinRunning(true); }
+  }, [phase, finisherBlock]);
+  useEffect(() => {
+    if (phase !== 'finisher' || !finRunning) return;
+    const id = setInterval(() => setFinLeft(s => (s <= 1 ? 0 : s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [phase, finRunning]);
+  // Intervalos: alterna Fuerte/Suave cada 30 s del tiempo transcurrido.
+  const finTotal = finisherBlock ? finisherBlock.minutes * 60 : 0;
+  const finHard = Math.floor((finTotal - finLeft) / 30) % 2 === 0;
+  const finClock = `${Math.floor(finLeft / 60)}:${String(finLeft % 60).padStart(2, '0')}`;
   const [shareOpen, setShareOpen] = useState(false);
   const [shareStatOpen, setShareStatOpen] = useState(false);
   const [showSpecs, setShowSpecs] = useState(false); // popout de técnica/specs encima del player
@@ -264,7 +279,7 @@ export default function WorkoutPlayer({
 
   // ── Wake lock + body scroll lock + ESC handler
 
-  useWakeLock(phase === 'exercise');
+  useWakeLock(phase === 'exercise' || phase === 'finisher');
 
   // Video del ejercicio actual: del bank si lo trae, si no de exercise_videos
   // (la tabla). Antes el player SIEMPRE mostraba 'video próximamente'.
@@ -452,7 +467,9 @@ export default function WorkoutPlayer({
     });
     localStorage.removeItem(PROGRESS_KEY);
     haptics.success();
-    setPhase('completed');
+    // El trabajo principal queda registrado ya (onComplete). Si hay finisher, lo
+    // hacemos como fase guiada ANTES de la pantalla de cierre; si no, directo a completed.
+    setPhase(finisherBlock ? 'finisher' : 'completed');
     onComplete(payload);
   }
 
@@ -511,7 +528,9 @@ export default function WorkoutPlayer({
             ? <em>{t('workout.completed')}</em>
             : phase === 'warmup'
               ? <em>{t('workout.warmup')}</em>
-              : <>{t('workout.exercise')} {currentBlockNumber} <span className="wp-header-of">{t('workout.of')}</span> {totalBlocks}</>}
+              : phase === 'finisher'
+                ? <em>{t('workout.finisher')}</em>
+                : <>{t('workout.exercise')} {currentBlockNumber} <span className="wp-header-of">{t('workout.of')}</span> {totalBlocks}</>}
         </div>
         <div className="wp-header-counter">
           {phase === 'exercise' || phase === 'paused' ? (
@@ -564,6 +583,42 @@ export default function WorkoutPlayer({
             <button className="wp-cta" onClick={startExercises}>
               {t('workout.warmupCta')}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── PHASE: FINISHER (cardio guiado tras el bloque principal, saltable) ── */}
+      {phase === 'finisher' && finisherBlock && (
+        <div className="wp-prep">
+          <div className="wp-prep-card wp-fin-card">
+            <div className="wp-prep-section-label wp-fin-lbl">
+              {t('workout.finisher')} · {t(`workout.finisherFmt.${finisherBlock.format}` as Parameters<typeof t>[0])}
+            </div>
+            <div className="wp-fin-name">{finisherBlock.name}</div>
+            <div className="wp-fin-presc">{finisherBlock.prescription}</div>
+            {finisherBlock.format === 'intervals' && finRunning && finLeft > 0 && (
+              <div className={`wp-fin-interval ${finHard ? 'is-hard' : 'is-easy'}`}>
+                {finHard ? t('workout.intervalHard') : t('workout.intervalEasy')}
+              </div>
+            )}
+            <div className="wp-fin-timer">
+              <span className="wp-fin-clock">{finClock}</span>
+              <button
+                className="wp-fin-play"
+                onClick={() => setFinRunning(r => !r)}
+                aria-label={finRunning ? t('workout.pause') : t('workout.resume')}
+              >
+                {finRunning ? <Pause size={20} /> : <Play size={20} />}
+              </button>
+            </div>
+            <div className="wp-fin-actions">
+              <button className="wp-cta" onClick={() => setPhase('completed')}>
+                {t('workout.finisherDone')}
+              </button>
+              <button className="wp-fin-skip" onClick={() => setPhase('completed')}>
+                {t('workout.finisherSkip')}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -798,16 +853,6 @@ export default function WorkoutPlayer({
               <div className="wp-completed-stat-lbl">{t('workout.kgTotal')}</div>
             </div>
           </div>
-          {finisherBlock && (
-            <div className="wp-prep-section wp-finisher">
-              <div className="wp-prep-section-label">
-                {t('workout.finisher')} · {finisherBlock.minutes} min · {t(`workout.finisherFmt.${finisherBlock.format}` as Parameters<typeof t>[0])}
-              </div>
-              <p className="wp-prep-section-text">
-                <strong>{finisherBlock.name}</strong> — {finisherBlock.prescription}
-              </p>
-            </div>
-          )}
           {workout.cooldown && (
             <div className="wp-prep-section">
               <div className="wp-prep-section-label">{t('workout.cooldown')}</div>

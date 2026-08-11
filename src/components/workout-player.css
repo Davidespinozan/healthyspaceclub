@@ -264,6 +264,33 @@
 .wp-ramp-note { font-size: 12.5px; color: var(--wp-txt-dim, rgba(246,242,234,.6)); line-height: 1.45; }
 .wp-finisher .wp-prep-section-label { color: var(--wp-terra, #E9A17C); }
 
+/* Fase guiada del finisher */
+.wp-fin-card { text-align: center; }
+.wp-fin-lbl { color: var(--wp-terra, #E9A17C); text-align: center; }
+.wp-fin-name { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 700; color: var(--wp-txt); margin: 6px 0 4px; }
+.wp-fin-presc { font-size: 13.5px; color: var(--wp-txt-dim, rgba(246,242,234,.6)); line-height: 1.5; margin-bottom: 22px; }
+.wp-fin-interval {
+  display: inline-block; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; padding: 5px 16px; border-radius: 999px; margin-bottom: 14px;
+}
+.wp-fin-interval.is-hard { background: rgba(233,161,124,.16); color: var(--wp-terra, #E9A17C); }
+.wp-fin-interval.is-easy { background: rgba(143,216,192,.16); color: #8FD8C0; }
+.wp-fin-timer { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 26px; }
+.wp-fin-clock { font-family: 'Montserrat', sans-serif; font-size: 52px; font-weight: 700; color: var(--wp-txt); font-variant-numeric: tabular-nums; line-height: 1; }
+.wp-fin-play {
+  width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--wp-amber, #C9A24B); color: #081312;
+}
+.wp-fin-play:active { transform: scale(.94); }
+.wp-fin-actions { display: flex; flex-direction: column; gap: 10px; }
+.wp-fin-skip {
+  background: none; border: none; cursor: pointer; padding: 8px;
+  font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600;
+  color: var(--wp-txt-dim, rgba(246,242,234,.55));
+}
+.wp-fin-skip:active { opacity: .6; }
+
 /* ── CTA wrap (fixed bottom en paused/completed; inline en exercise) ── */
 
 .wp-cta-wrap {
