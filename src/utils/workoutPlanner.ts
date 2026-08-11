@@ -653,6 +653,13 @@ export function durationFromPlan(plan: unknown): number | null {
   return typeof d === 'number' && d > 0 && d <= 240 ? d : null;
 }
 
+/** Estilo de cardio sellado en el plan (Fase 4). 'auto' = seguir el objetivo. null si
+ *  no hay sello válido → el llamador cae a 'auto'. */
+export function cardioStyleFromPlan(plan: unknown): CardioStyle | 'auto' | null {
+  const s = (plan as { userCardioStyle?: unknown } | null)?.userCardioStyle;
+  return s === 'auto' || s === 'explosividad' || s === 'correr' || s === 'lowImpact' || s === 'funcional' ? s : null;
+}
+
 export function selectVariantForEquipment(
   exercise: Exercise,
   userEquipment: Equipment[],

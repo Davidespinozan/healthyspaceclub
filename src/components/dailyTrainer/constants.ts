@@ -6,10 +6,10 @@
 import {
   Bot, Dumbbell, Flower2, Activity, PersonStanding, Cable,
   Footprints, AlertTriangle, Bandage, CircleCheck,
-  Flame, Calendar, Sprout, SlidersHorizontal,
+  Flame, Calendar, Sprout, SlidersHorizontal, Zap, Bike,
   type LucideIcon,
 } from 'lucide-react';
-import type { Equipment, Modality, MuscleGroup } from '../../types';
+import type { CardioStyle, Equipment, Modality, MuscleGroup } from '../../types';
 import type { TranslationKey } from '../../i18n/es';
 
 export type WizardPhase = 'modality' | 'physical' | 'logistics';
@@ -30,6 +30,15 @@ export const FOCUS_OPTIONS: Array<{ value: FocusValue; labelKey: TranslationKey;
 
 // Músculos individuales para el modo "específico" (multi-select). Excluye
 // cardio/cuerpo-completo (no son músculos a aislar). value = MuscleGroup interno.
+// Estilo de cardio (Fase 4): capa UX de 4 botones. El default se infiere del
+// objetivo (híbrido); el usuario puede cambiarlo. Ver CardioStyle en types.
+export const CARDIO_STYLE_OPTIONS: Array<{ value: CardioStyle; labelKey: TranslationKey; icon: LucideIcon }> = [
+  { value: 'explosividad', labelKey: 'wizard.cardioStyleExplosividad', icon: Zap },
+  { value: 'correr', labelKey: 'wizard.cardioStyleCorrer', icon: Footprints },
+  { value: 'lowImpact', labelKey: 'wizard.cardioStyleLowImpact', icon: Bike },
+  { value: 'funcional', labelKey: 'wizard.cardioStyleFuncional', icon: Flame },
+];
+
 export const MUSCLE_OPTIONS: Array<{ value: MuscleGroup; labelKey: TranslationKey }> = [
   { value: 'pecho', labelKey: 'wizard.musclePecho' },
   { value: 'espalda', labelKey: 'wizard.muscleEspalda' },

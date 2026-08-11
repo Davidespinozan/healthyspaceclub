@@ -12,7 +12,7 @@
 import { Lock, Users, Check, ArrowRight } from 'lucide-react';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
-import type { Modality, Equipment, MuscleGroup } from '../../types';
+import type { Modality, Equipment, MuscleGroup, CardioStyle } from '../../types';
 import {
   MODALITY_OPTIONS,
   TIME_OPTIONS,
@@ -21,6 +21,7 @@ import {
   PAIN_AREAS,
   FOCUS_OPTIONS,
   MUSCLE_OPTIONS,
+  CARDIO_STYLE_OPTIONS,
   LAST_TRAINED_OPTIONS,
   type WizardPhase,
   type FocusValue,
@@ -42,6 +43,10 @@ interface WizardProps {
   // Selecciones controladas (padre dueño del state — sobreviven al wizard)
   selectedModality: Modality;
   setSelectedModality: (m: Modality) => void;
+  // Estilo de cardio (Fase 4). 'auto' = seguir el objetivo (híbrido).
+  selectedCardioStyle: CardioStyle | 'auto';
+  setSelectedCardioStyle: (s: CardioStyle | 'auto') => void;
+  inferredCardioStyle: CardioStyle; // el que el objetivo recomienda (para resaltar en 'auto')
   discomfort: string;
   setDiscomfort: (v: string) => void;
   painArea: string;
@@ -73,6 +78,7 @@ export default function Wizard({
   firstName, todayDayName, todayDateShort,
   suggestion, modalityCounts, skipPhysical,
   selectedModality, setSelectedModality,
+  selectedCardioStyle, setSelectedCardioStyle, inferredCardioStyle,
   discomfort, setDiscomfort,
   painArea, setPainArea,
   selectedTime, setSelectedTime,
@@ -304,6 +310,30 @@ export default function Wizard({
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Estilo de cardio — solo modalidad cardio. Híbrido: el objetivo pre-
+            selecciona uno (inferido); el usuario puede cambiarlo. */}
+        {selectedModality === 'cardio' && (
+          <div className="wz-q">
+            <p className="wz-q-label">{t('wizard.cardioStyleQ')}</p>
+            <div className="wz-chips wz-chips-col">
+              {CARDIO_STYLE_OPTIONS.map(opt => {
+                const active = (selectedCardioStyle === 'auto' ? inferredCardioStyle : selectedCardioStyle) === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    className={`wz-chip wz-chip-block${active ? ' on' : ''}`}
+                    onClick={() => setSelectedCardioStyle(opt.value)}
+                  >
+                    <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
+                    <span>{t(opt.labelKey)}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="wz-q-hint">{t('wizard.cardioStyleHint')}</p>
           </div>
         )}
 

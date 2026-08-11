@@ -25,6 +25,7 @@ import {
   equipmentFromPlan,
   modalityFromPlan,
   durationFromPlan,
+  cardioStyleFromPlan,
   reconcilePartnerDayType,
   hasPlayableVariant,
 } from '../utils/workoutPlanner';
@@ -49,6 +50,7 @@ import type {
   Goal,
   MuscleGroup,
   Modality,
+  CardioStyle,
   UserProfile,
   WorkoutDayDecision,
   YogaPlan,
@@ -147,6 +149,18 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     const stored = (!partnerMode && storedWorkout?.date === today) ? modalityFromPlan(storedWorkout.plan) : null;
     return stored ?? suggestion.modality;
   });
+  // Estilo de cardio (Fase 4). 'auto' = seguir el objetivo (híbrido). Se sella en el plan.
+  const [selectedCardioStyle, setSelectedCardioStyle] = useState<CardioStyle | 'auto'>(() => {
+    const stored = (!partnerMode && storedWorkout?.date === today) ? cardioStyleFromPlan(storedWorkout.plan) : null;
+    return stored ?? 'auto';
+  });
+  // Estilo que el objetivo recomienda (para pre-resaltar en 'auto'). lowImpact manda.
+  const lowImpactUser = Number(obData?.edad ?? 0) >= 60
+    || ['articular', 'equilibrio', 'apoyo'].includes(String(obData?.movilidad ?? ''));
+  const inferredCardioStyle = defaultCardioStyle(String(obData?.goal ?? ''), lowImpactUser);
+  // Estilo efectivo: la elección del usuario si no es 'auto' (y salvo seguridad).
+  const effectiveCardioStyle: CardioStyle =
+    selectedCardioStyle !== 'auto' && !lowImpactUser ? selectedCardioStyle : inferredCardioStyle;
   // priorExercise quedó como contexto legacy (ya no se pregunta; lo reemplazó
   // lastTrained). Se mantiene fijo en 'none' para no romper bullets/configHash.
   const [priorExercise] = useState('none');
@@ -154,8 +168,15 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const [painArea, setPainArea] = useState('');
   const [selectedTime, setSelectedTime] = useState(() => {
     const stored = (!partnerMode && storedWorkout?.date === today) ? durationFromPlan(storedWorkout.plan) : null;
-    return stored ?? 45;
+    if (stored) return stored;
+    // Preferencia recordada de tiempo por sesión (Fase 4): el picker deja de volver
+    // siempre a 45 y arranca en lo que el usuario suele elegir.
+    const pref = Number(localStorage.getItem('hsc_session_min'));
+    return pref > 0 && pref <= 240 ? pref : 45;
   });
+  useEffect(() => {
+    try { localStorage.setItem('hsc_session_min', String(selectedTime)); } catch { /* storage lleno/denegado */ }
+  }, [selectedTime]);
   // Al recargar hay que RESTAURAR el equipo con el que se generó la rutina de hoy.
   // El plan (JSON del AI) no lo trae, y WorkoutPlan re-elige la variante a mostrar
   // con selectedEquipment en cada render → si esto arrancaba en 'gym' fijo, una
@@ -205,10 +226,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // al recargar volvían a su default y divergían de lo generado. Se leen de vuelta
   // con equipmentFromPlan/modalityFromPlan/durationFromPlan al montar.
   function sealPlan(p: unknown) {
-    const seal = p as { userEquipment?: Equipment; userModality?: Modality; userDuration?: number };
+    const seal = p as { userEquipment?: Equipment; userModality?: Modality; userDuration?: number; userCardioStyle?: CardioStyle | 'auto' };
     seal.userEquipment = selectedEquipment;
     seal.userModality = selectedModality;
     seal.userDuration = selectedTime;
+    seal.userCardioStyle = selectedCardioStyle;
   }
 
   // Al entregar la rutina al compañero: si él ya tenía SU rutina de hoy, el server
@@ -542,7 +564,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // 2) ESTILO: el cardio se elige por intención (explosividad/correr/bajo
         //    impacto/funcional), inferida del objetivo. lowImpactMode manda (seguridad).
         const cardioEq = cardioEquipmentFor(equipmentList);
-        const targetStyle = defaultCardioStyle(String(obData?.goal ?? ''), lowImpactMode);
+        // Estilo efectivo: elección del usuario (Fase 4) o el inferido; lowImpact manda.
+        const targetStyle = effectiveCardioStyle;
         const pool = modalityFiltered.filter(ex =>
           ex.equipment.some(e => cardioEq.includes(e)) &&
           !(lowImpactMode && (ex.impact === 'high' || ex.fallRisk === true))
@@ -835,6 +858,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         skipPhysical={skipPhysical}
         selectedModality={selectedModality}
         setSelectedModality={setSelectedModality}
+        selectedCardioStyle={selectedCardioStyle}
+        setSelectedCardioStyle={setSelectedCardioStyle}
+        inferredCardioStyle={inferredCardioStyle}
         discomfort={discomfort}
         setDiscomfort={setDiscomfort}
         painArea={painArea}

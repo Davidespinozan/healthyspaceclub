@@ -750,6 +750,12 @@ export const en: Translations<typeof es> = {
     // Strength focus (what to train today)
     focusQ: 'What do you want to train?',
     focusAuto: 'Let my coach decide',
+    cardioStyleQ: 'What kind of cardio?',
+    cardioStyleHint: 'Recommended for your goal — you can change it',
+    cardioStyleExplosividad: 'Explosive',
+    cardioStyleCorrer: 'Running',
+    cardioStyleLowImpact: 'Low impact',
+    cardioStyleFuncional: 'Functional',
     focusFull: 'Full body',
     focusUpper: 'Upper body',
     focusLower: 'Legs',
