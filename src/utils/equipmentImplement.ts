@@ -18,7 +18,8 @@ import type { ExerciseVariant } from '../types';
 
 export type Implement =
   | 'barbell' | 'dumbbell' | 'machine' | 'cable' | 'pullup'
-  | 'kettlebell' | 'bodyweight' | 'band' | 'gym-other';
+  | 'kettlebell' | 'bodyweight' | 'band' | 'gym-other'
+  | 'bench'; // no lo DEVUELVE variantImplement — es un flag de capacidad en el set del gear.
 
 /** Lo que el usuario declara tener (multi-select). location-agnostic. */
 export type Gear = 'gym' | 'mancuernas' | 'barra' | 'banco' | 'dominadas' | 'ligas' | 'cuerpo';
@@ -44,27 +45,36 @@ export function variantImplement(variant: ExerciseVariant, parentName = ''): Imp
   return 'gym-other';
 }
 
-/** Los implementos que desbloquea el equipo declarado. El peso corporal es UNIVERSAL
- *  (siempre disponible). 'banco' es un modificador (habilita ejercicios de banco) que
- *  se maneja aparte, no como implemento. */
+// Ejercicios que EXIGEN un banco (press de banca, inclinado/declinado, banca scott).
+// El peso corporal (flexiones inclinadas) NO cuenta — ese usa un escalón, no un banco.
+const BENCH_RE = /inclinad|declinad|press.?de.?banca|banca.?scott|banco.?(plano|inclinad|declinad)/i;
+export function needsBench(variant: ExerciseVariant, parentName = ''): boolean {
+  if (variant.equipment.includes('cuerpo') && !variant.equipment.includes('gym')) return false;
+  return BENCH_RE.test(`${variant.id} ${variant.name} ${parentName}`.toLowerCase());
+}
+
+/** Los implementos que desbloquea el equipo declarado. El peso corporal es UNIVERSAL.
+ *  'bench' es un flag de capacidad (tiene banco), lo da 'gym' o 'banco'. */
 export function gearToImplements(gear: Gear[]): Set<Implement> {
   const out = new Set<Implement>(['bodyweight']);
   const has = (g: Gear) => gear.includes(g);
   if (has('gym')) {
-    (['barbell', 'dumbbell', 'machine', 'cable', 'pullup', 'kettlebell', 'gym-other'] as Implement[]).forEach(i => out.add(i));
+    (['barbell', 'dumbbell', 'machine', 'cable', 'pullup', 'kettlebell', 'gym-other', 'bench'] as Implement[]).forEach(i => out.add(i));
   } else {
     if (has('mancuernas')) { out.add('dumbbell'); out.add('kettlebell'); } // una mancuerna sustituye al KB
     if (has('barra')) out.add('barbell');
     if (has('dominadas')) out.add('pullup');
   }
+  if (has('banco')) out.add('bench');
   if (has('ligas')) out.add('band');
   return out;
 }
 
 /** ¿Se puede hacer esta variante con lo que el usuario tiene? El peso corporal siempre;
- *  el resto según los implementos desbloqueados. */
+ *  el resto según los implementos desbloqueados; y si exige banco, hay que tener banco. */
 export function variantAllowedByGear(variant: ExerciseVariant, allowed: Set<Implement>, parentName = ''): boolean {
   const im = variantImplement(variant, parentName);
-  if (im === 'bodyweight') return true;
-  return allowed.has(im);
+  if (im !== 'bodyweight' && !allowed.has(im)) return false;
+  if (needsBench(variant, parentName) && !allowed.has('bench')) return false;
+  return true;
 }

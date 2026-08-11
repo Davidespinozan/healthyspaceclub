@@ -1,5 +1,6 @@
 import { dayKey } from './localDate';
 import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
+import { variantAllowedByGear, type Implement } from './equipmentImplement';
 import type {
   Exercise,
   ExerciseVariant,
@@ -276,8 +277,8 @@ export function orderCandidatesForVariety(candidates: Exercise[], recentIds: Set
 /** Dificultad EFECTIVA para el equipo del usuario: la de la variante que se usará (si
  *  existe), si no la del patrón. Un hip-thrust "peso corporal" es principiante; una
  *  búlgara peso corporal es intermedia — por eso importa la VARIANTE, no solo el patrón. */
-function effectiveDifficulty(ex: Exercise, equipment: Equipment[]): string {
-  const v = selectVariantForEquipment(ex, equipment);
+function effectiveDifficulty(ex: Exercise, equipment: Equipment[], allowed?: Set<Implement>): string {
+  const v = selectVariantForEquipment(ex, equipment, allowed);
   return v?.difficulty ?? ex.difficulty;
 }
 
@@ -289,11 +290,11 @@ function effectiveDifficulty(ex: Exercise, equipment: Equipment[]): string {
  * da el estímulo, así que no hay que sesgar por dificultad técnica. Sort estable →
  * dentro del mismo fit se conserva el orden de variedad.
  */
-export function orderByChallenge(candidates: Exercise[], level: TrainingLevel, equipment: Equipment[]): Exercise[] {
+export function orderByChallenge(candidates: Exercise[], level: TrainingLevel, equipment: Equipment[], allowed?: Set<Implement>): Exercise[] {
   if (equipment.includes('gym')) return candidates; // con carga externa, el peso manda
   const DR: Record<string, number> = { principiante: 1, intermedio: 2, avanzado: 3 };
   const fit = (ex: Exercise): number => {
-    const d = DR[effectiveDifficulty(ex, equipment)] ?? 2;
+    const d = DR[effectiveDifficulty(ex, equipment, allowed)] ?? 2;
     if (level === 'avanzado') return 3 - d;        // 0 avz (mejor) · 1 int · 2 princ
     if (level === 'intermedio') return d >= 2 ? 0 : 1; // int/avz primero, princ después
     return d <= 1 ? 0 : 1;                          // principiante: aprende el movimiento primero
@@ -604,8 +605,12 @@ export function filterExercisesForWorkout(params: {
   // de ALTO impacto o con riesgo de caída (saltos, pliometría, sprints) sin importar
   // su dificultad. La seguridad es un filtro DURO, nunca se delega a la IA.
   lowImpactMode?: boolean;
+  // Equipo granular (Fase C): implementos que el usuario tiene (mancuerna/barra/…).
+  // Sin esto = como antes (cualquier variante del equipo base). Con esto, una variante
+  // solo cuenta si su implemento está desbloqueado.
+  allowedImplements?: Set<Implement>;
 }): Exercise[] {
-  const { exercises, equipment, muscleGroups, goal, excludeMuscles = [], primaryOnly = false, difficulty, lowImpactMode = false } = params;
+  const { exercises, equipment, muscleGroups, goal, excludeMuscles = [], primaryOnly = false, difficulty, lowImpactMode = false, allowedImplements } = params;
   const RANK: Record<string, number> = { principiante: 1, intermedio: 2, avanzado: 3 };
   const ceiling = difficulty ? (difficulty === 'principiante' ? 2 : 3) : 3; // principiante: sin avanzados
 
@@ -619,7 +624,7 @@ export function filterExercisesForWorkout(params: {
     // usuario y (b) tiene clip (VIDEO_VARIANT_IDS). Conforme se conectan más
     // videos (regenerando videoAvailability.ts desde las migraciones), esos
     // ejercicios entran solos. Yoga: el propio id de la pose debe tener video.
-    if (!hasPlayableVariant(ex, equipment)) return false;
+    if (!hasPlayableVariant(ex, equipment, allowedImplements)) return false;
 
     // Filter 2: muscle group match (primary; secondary solo si no es primaryOnly)
     const primaryMatch = muscleGroups.includes(ex.muscleGroup);
@@ -694,12 +699,15 @@ export function cardioStyleFromPlan(plan: unknown): CardioStyle | 'auto' | null 
 export function selectVariantForEquipment(
   exercise: Exercise,
   userEquipment: Equipment[],
+  allowed?: Set<Implement>,
 ): ExerciseVariant | null {
   if (!exercise.variants || exercise.variants.length === 0) return null;
 
-  // Variantes que aplican al equipo del usuario
+  // Variantes que aplican al equipo del usuario Y, si se pasó el equipo granular
+  // (Fase C), al IMPLEMENTO que tiene (mancuerna/barra/…). Sin `allowed` = como antes.
   const applicable = exercise.variants.filter(v =>
-    v.equipment.some(e => userEquipment.includes(e))
+    v.equipment.some(e => userEquipment.includes(e)) &&
+    (!allowed || variantAllowedByGear(v, allowed, exercise.name))
   );
 
   if (applicable.length === 0) return null;
@@ -726,11 +734,15 @@ export function selectVariantForEquipment(
  * programa lo que ya se puede ver" — se usa tanto al filtrar candidatos como al
  * validar un workout cacheado.
  */
-export function hasPlayableVariant(exercise: Exercise, equipment: Equipment[]): boolean {
+export function hasPlayableVariant(exercise: Exercise, equipment: Equipment[], allowed?: Set<Implement>): boolean {
   // Yoga: flujos curados en secuencia → NO se filtra por video (romper la secuencia
   // sería peor). El requisito de video aplica a fuerza/cardio, que es donde importa.
   if (exercise.isYoga) return exercise.equipment.some(e => equipment.includes(e));
-  return exercise.variants?.some(v => v.equipment.some(e => equipment.includes(e)) && VIDEO_VARIANT_IDS.has(v.id)) ?? false;
+  return exercise.variants?.some(v =>
+    v.equipment.some(e => equipment.includes(e)) &&
+    VIDEO_VARIANT_IDS.has(v.id) &&
+    (!allowed || variantAllowedByGear(v, allowed, exercise.name)),
+  ) ?? false;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -801,11 +813,18 @@ export function filterWithProgressiveRelaxation(params: {
   primaryOnly?: boolean;
   difficulty?: 'principiante' | 'intermedio' | 'avanzado';
   lowImpactMode?: boolean;
+  allowedImplements?: Set<Implement>;
 }): FilterResult {
   const minRequired = params.minCandidates ?? 3;
   const primaryOnly = params.primaryOnly ?? false;
   const difficulty = params.difficulty;
   const lowImpactMode = params.lowImpactMode ?? false;
+  const allowedImplements = params.allowedImplements;
+  // Equipo base + implemento granular (Fase C). Usado en los niveles 2/3 (inline).
+  const equipOk = (ex: Exercise): boolean => ex.isYoga
+    ? ex.equipment.some(e => params.equipment.includes(e))
+    : (ex.variants?.some(v => v.equipment.some(e => params.equipment.includes(e)) &&
+        (!allowedImplements || variantAllowedByGear(v, allowedImplements, ex.name))) ?? false);
   // Techo de nivel (mismo que filterExercisesForWorkout): un principiante NUNCA recibe
   // avanzados, ni siquiera en los niveles de relajación 2/3 (seguridad).
   const RANK: Record<string, number> = { principiante: 1, intermedio: 2, avanzado: 3 };
@@ -827,6 +846,7 @@ export function filterWithProgressiveRelaxation(params: {
     primaryOnly,
     difficulty,
       lowImpactMode,
+      allowedImplements,
   });
   if (candidates.length >= minRequired) {
     return { exercises: candidates, relaxationLevel: 0, relaxedConstraints: [] };
@@ -842,6 +862,7 @@ export function filterWithProgressiveRelaxation(params: {
     primaryOnly,
     difficulty,
       lowImpactMode,
+      allowedImplements,
   });
   if (candidates.length >= minRequired) {
     return {
@@ -853,14 +874,11 @@ export function filterWithProgressiveRelaxation(params: {
 
   // NIVEL 2 — drop goal (acepta cualquier goal)
   candidates = params.exercises.filter(ex => {
-    const matchesEquipment = ex.isYoga
-      ? ex.equipment.some(e => params.equipment.includes(e))
-      : (ex.variants?.some(v => v.equipment.some(e => params.equipment.includes(e))) ?? false);
     const matchesMuscle = primaryOnly
       ? params.muscleGroups.includes(ex.muscleGroup)
       : (params.muscleGroups.includes(ex.muscleGroup) ||
          (ex.secondaryMuscles?.some(m => params.muscleGroups.includes(m)) ?? false));
-    return matchesEquipment && matchesMuscle && withinLevel(ex);
+    return equipOk(ex) && matchesMuscle && withinLevel(ex);
   });
   if (candidates.length >= minRequired) {
     return {
@@ -871,11 +889,7 @@ export function filterWithProgressiveRelaxation(params: {
   }
 
   // NIVEL 3 — solo equipment (último recurso), pero manteniendo el techo de nivel
-  candidates = params.exercises.filter(ex =>
-    withinLevel(ex) && (ex.isYoga
-      ? ex.equipment.some(e => params.equipment.includes(e))
-      : (ex.variants?.some(v => v.equipment.some(e => params.equipment.includes(e))) ?? false))
-  );
+  candidates = params.exercises.filter(ex => withinLevel(ex) && equipOk(ex));
   return {
     exercises: candidates,
     relaxationLevel: 3,

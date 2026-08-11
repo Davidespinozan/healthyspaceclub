@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { variantImplement, gearToImplements, variantAllowedByGear } from '../equipmentImplement';
+import { variantImplement, gearToImplements, variantAllowedByGear, needsBench } from '../equipmentImplement';
 import { exercises } from '../../data/exercises';
 import type { ExerciseVariant } from '../../types';
 
@@ -54,6 +54,17 @@ describe('equipmentImplement — variantAllowedByGear', () => {
     expect(variantAllowedByGear(v('x-mancuernas', 'Con mancuernas', ['gym']), allowed)).toBe(true);
     expect(variantAllowedByGear(v('x-barra', 'Con barra', ['gym']), allowed)).toBe(false);
     expect(variantAllowedByGear(v('x-cuerpo', 'Flexión', ['cuerpo']), allowed)).toBe(true); // peso corporal universal
+  });
+
+  it('gate de banco: incline press necesita banco; sin banco no se permite', () => {
+    expect(needsBench(v('press-inclinado-mancuernas', 'Con mancuernas', ['gym']), 'Press Inclinado')).toBe(true);
+    expect(needsBench(v('sentadilla-barra', 'Con barra', ['gym']), 'Sentadilla')).toBe(false);
+    // mancuernas SIN banco → no incline; CON banco → sí
+    const sinBanco = gearToImplements(['mancuernas']);
+    const conBanco = gearToImplements(['mancuernas', 'banco']);
+    const incline = v('press-inclinado-mancuernas', 'Con mancuernas', ['gym']);
+    expect(variantAllowedByGear(incline, sinBanco, 'Press Inclinado')).toBe(false);
+    expect(variantAllowedByGear(incline, conBanco, 'Press Inclinado')).toBe(true);
   });
 
   it('cobertura sana del banco real: <10% cae a gym-other', () => {
