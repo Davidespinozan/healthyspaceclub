@@ -113,6 +113,7 @@ SOBRECARGA PROGRESIVA (el MOTOR del progreso — aplícalo SIEMPRE que haya dato
   · En la SELECCIÓN: en compuestos clave prioriza REPETIR el ejercicio con historial (así progresa la carga); no lo cambies sólo por variar. La variedad va en accesorios.
 - Sin "última vez" (primera vez con ese ejercicio): prescribe un rango y dile que encuentre un peso donde llegue al tope con buena técnica.
 - CARGA SUGERIDA (P2): si el ejercicio trae "HOY {peso}kg×{reps} (RIR ...; backoff ...)", ese peso ya está calculado desde su 1RM estimado y la fase del mesociclo — ÚSALO como ancla en tip_personalizado (di el peso concreto de la serie tope y el de backoff). Es una guía inicial: dile que ajuste ±2.5 kg si el RIR no cuadra. Nunca contradigas ese número con reps de otro rango.
+- SERIES/REPS/DESCANSO los FIJA el sistema (motor determinista), NO tú. Pon los que trae cada ejercicio en la lista; tu tip habla de TÉCNICA, carga/RIR y motivación — NO repitas ni cambies los números de series/reps/descanso en el tip.
 
 ESFUERZO / CERCANÍA AL FALLO (RIR = reps en reserva; calíbralo al nivel — indícalo en tips cuando aporte):
 - Compuestos pesados / fuerza: 2-3 RIR (NUNCA al fallo — técnica y seguridad).

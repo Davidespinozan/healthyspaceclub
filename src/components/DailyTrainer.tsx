@@ -33,9 +33,11 @@ import {
   computeWeeklyVolume,
   weeklyVolumeSeries,
   trainingFrequency,
+  splitTypesForFrequency,
   determineIntensity,
 } from '../utils/workoutPlanner';
-import { computeVolumeTargets } from '../utils/volumeLandmarks';
+import { computeVolumeTargets, targetsToMap } from '../utils/volumeLandmarks';
+import { allocateSessionVolume, prescribeSession, categorize } from '../utils/sessionPrescription';
 import { composeSession } from '../utils/sessionBlocks';
 import {
   deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
@@ -786,6 +788,68 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         (workout as CachedWorkout).exercises = repaired.exercises;
         if (repaired.fixes.length) {
           console.info('[workout] reparación estructural:', repaired.fixes);
+        }
+      }
+
+      // ── P4 · PRESCRIPCIÓN ESTRUCTURADA (determinista) ──────────────────────
+      // La IA ya eligió los ejercicios; ahora el motor fija series/reps/descanso desde
+      // la cadena mesociclo→target semanal(P3)→déficit→dosis de hoy→esquema (con carga
+      // de P2). La IA deja de decidir estos números. No aplica a cardio/yoga.
+      if (!isCardioDay) {
+        const w = workout as CachedWorkout;
+        const bankById = new Map(exerciseBank.map(e => [e.id, { id: e.id, name: e.name, type: e.type }]));
+        const muscleOf = (id: string) => exerciseBank.find(e => e.id === id)?.muscleGroup ?? 'core';
+        const exsWithMuscle = w.exercises.map(x => ({ id: x.id, muscleGroup: muscleOf(x.id) }));
+        // P3 · target semanal individual + volumen hecho esta semana
+        const series = weeklyVolumeSeries(completedSessions, exerciseBank, workoutLog || [], 4);
+        const targets = computeVolumeTargets({
+          weeklyVolumes: series, level: levelFromObData(obData),
+          weeksOfHistory: series.filter(wk => Object.keys(wk).length > 0).length,
+          longPause: history.restDays >= 14,
+          recovery: meso.signals.recovery, performance: meso.signals.performance,
+          adherence: meso.signals.adherence, volumeMultiplier: meso.volumeMultiplier, isDeload: mesoDeload,
+        });
+        const done7 = computeWeeklyVolume(completedSessions, exerciseBank, 7, workoutLog || []);
+        const freq = trainingFrequency(completedSessions, workoutLog || []);
+        const muscleWeeklyFreq: Record<string, number> = {};
+        for (const dt of splitTypesForFrequency(freq))
+          for (const m of (DAY_TYPE_CONFIG[dt]?.muscleGroups ?? [])) muscleWeeklyFreq[m] = (muscleWeeklyFreq[m] ?? 0) + 1;
+        const wkAgo = dayKey(new Date(Date.now() - 6 * 86400000));
+        const sessionsThisWeekDone = new Set(
+          [...completedSessions.map(s => s.date), ...(workoutLog || []).map(x => x.date)].filter(d => d >= wkAgo),
+        ).size;
+        const primaryMuscles = [...new Set(
+          exsWithMuscle.filter(e => categorize(bankById.get(e.id) ?? { id: e.id, name: e.id, type: 'compuesto' }) === 'main-compound').map(e => e.muscleGroup),
+        )];
+        const allocation = allocateSessionVolume({
+          weeklyTarget: targetsToMap(targets), doneThisWeek: done7,
+          dayMuscles: [...new Set(exsWithMuscle.map(e => e.muscleGroup))], primaryMuscles,
+          freqTarget: freq, sessionsThisWeekDone, muscleWeeklyFreq,
+          recovery: meso.signals.recovery, isDeload: mesoDeload,
+        });
+        const items = prescribeSession({
+          exercises: exsWithMuscle, bankById, allocation, objective: String(goal),
+          phase: meso.phase, mainMinutes: sessionPlan.budget.main, lastPerf: lastExercisePerformance,
+        });
+        const byId = new Map(items.map(it => [it.ex.id, it]));
+        for (const exOut of w.exercises) {
+          const it = byId.get(exOut.id);
+          if (!it) continue;
+          const orig = String(exOut.reps ?? '');
+          if (/seg|respiraci|\d\s*s\b/i.test(orig)) continue; // trabajo por TIEMPO → no tocar
+          exOut.sets = it.prescription.sets;
+          exOut.reps = /por lado/i.test(orig) ? `${it.prescription.reps} por lado` : it.prescription.reps;
+          exOut.rest = it.prescription.rest;
+        }
+        // Integridad de superserie: mismo group → mismas series (máx).
+        const groups = new Map<string, typeof w.exercises>();
+        for (const exOut of w.exercises) if (exOut.group) {
+          if (!groups.has(exOut.group)) groups.set(exOut.group, [] as typeof w.exercises);
+          groups.get(exOut.group)!.push(exOut);
+        }
+        for (const members of groups.values()) {
+          const mx = Math.max(...members.map(m => m.sets ?? 0));
+          for (const m of members) m.sets = mx;
         }
       }
 

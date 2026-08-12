@@ -63,7 +63,7 @@ export function clusterIndividualsByMuscle<T extends WorkoutExercise>(
 // Compuestos PESADOS que NUNCA deben ir en superserie (barra principal): press de
 // banca, sentadilla, peso muerto, dominada, press militar, remo con barra/pesado.
 // Se detectan por id o nombre; si no matchea, se deja como está (no hay daño).
-const HEAVY_COMPOUND = /sentadilla|peso.?muerto|press.?(de.?)?(banca|militar|hombro.*barra)|dominada|remo.*(barra|pendlay|pesad)/i;
+export const HEAVY_COMPOUND = /sentadilla|peso.?muerto|press.?(de.?)?(banca|militar|hombro.*barra)|dominada|remo.*(barra|pendlay|pesad)/i;
 
 // Orden de músculo/región para que la sesión FLUYA y no rebote (pierna → upper →
 // pierna). Tren inferior junto → superior grande → brazos → core al final. Fijo, NO
