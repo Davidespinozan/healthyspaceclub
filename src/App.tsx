@@ -486,12 +486,13 @@ export default function App() {
 
               // Último desempeño por ejercicio (para "la vez pasada" en el player).
               // Las filas vienen ascendentes por completed_at → la última gana.
-              const perf: Record<string, { date: string; sets: { reps: number; kg: number }[] }> = {};
+              const perf: Record<string, { date: string; sets: { reps: number; kg: number; rir?: number }[] }> = {};
               for (const w of workouts as Array<WorkoutLogRow & { date_local: string; exercises: unknown }>) {
                 const exs = Array.isArray(w.exercises) ? w.exercises : [];
-                for (const ex of exs as Array<{ exercise_id?: string; performed?: { sets?: Array<{ reps: number; kg: number } | null>; skipped?: boolean } }>) {
+                for (const ex of exs as Array<{ exercise_id?: string; performed?: { sets?: Array<{ reps: number; kg: number; rir?: number } | null>; skipped?: boolean } }>) {
                   if (!ex || typeof ex.exercise_id !== 'string' || !ex.performed || ex.performed.skipped) continue;
-                  const sets = (ex.performed.sets ?? []).filter((s): s is { reps: number; kg: number } => !!s && (s.reps > 0 || s.kg > 0));
+                  // BLOQUE 2 · conserva el RIR real del set (para la e1RM RIR-aware que prescribe carga).
+                  const sets = (ex.performed.sets ?? []).filter((s): s is { reps: number; kg: number; rir?: number } => !!s && (s.reps > 0 || s.kg > 0));
                   if (sets.length === 0) continue;
                   perf[ex.exercise_id] = { date: w.date_local, sets };
                 }

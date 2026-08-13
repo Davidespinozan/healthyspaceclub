@@ -249,8 +249,10 @@ interface AppState {
 
   // Último desempeño por ejercicio (para mostrar "la vez pasada: NkgxR" en el player
   // y dar sensación de progresión). Se llena al terminar sesión y se hidrata de la DB.
-  lastExercisePerformance: Record<string, { date: string; sets: { reps: number; kg: number }[] }>;
-  recordExercisePerformance: (records: { exerciseId: string; date: string; sets: { reps: number; kg: number }[] }[]) => void;
+  // BLOQUE 2 · los sets guardan también el RIR real (cuando se capturó) → la e1RM RIR-aware
+  // que prescribe la carga no decae. undefined = no se capturó (cae a Epley).
+  lastExercisePerformance: Record<string, { date: string; sets: { reps: number; kg: number; rir?: number }[] }>;
+  recordExercisePerformance: (records: { exerciseId: string; date: string; sets: { reps: number; kg: number; rir?: number }[] }[]) => void;
 
   // Completed sessions (per-session: nuevo, escrito por finishWorkoutSession al terminar player)
   completedSessions: CompletedSession[];

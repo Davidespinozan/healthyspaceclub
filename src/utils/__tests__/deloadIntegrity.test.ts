@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { estimate1RM, e1RMTrend } from '../loadEngine';
-import { loadCalibration } from '../rirFeedback';
+import { estimate1RM, e1RMTrend, prescribeLoad } from '../loadEngine';
 import { prescribeExercise, prescribeSession, allocateSessionVolume } from '../sessionPrescription';
 import { computeVolumeTargets, targetsToMap } from '../volumeLandmarks';
 import { applyMusclePriority, resolvePriorities } from '../musclePriority';
@@ -36,13 +35,14 @@ describe('DELOAD · no contamina el aprendizaje', () => {
     expect(e1RMTrend(recienteContaminado, older)).toBe('baja');
   });
 
-  it('RIR del deload NO recalibra P2: sin observaciones de deload, la calibración queda neutra', () => {
-    // Las series de deload no piden RIR (rirRelevant=false) y se omiten al registrar →
-    // loadCalibration no recibe esos sets fáciles. Con rirLog vacío → factor 1.0 (sin cambio).
-    expect(loadCalibration({ observations: [] }).factor).toBe(1);
-    // Un set fácil de deload, SI se colara, empujaría a subir carga — por eso se excluye:
-    const siEntrara = loadCalibration({ observations: [{ prescribedRir: 4, actualRir: 4 }, { prescribedRir: 4, actualRir: 4 }] });
-    expect(siEntrara.factor).toBeGreaterThanOrEqual(1); // (queda documentado por qué se excluye)
+  it('RIR del deload NO recalibra la carga: la e1RM RIR-aware solo ve los sets REALES', () => {
+    // BLOQUE 2 · el RIR corrige la carga por la e1RM (loadEngine), no por una calibración aparte.
+    // Las series de deload no se registran en lastExercisePerformance (gateo en WorkoutPlan), así
+    // que NO entran a prescribeLoad. La carga se prescribe desde el último set de TRABAJO real.
+    const trabajo = prescribeLoad([{ reps: 5, kg: 100, rir: 2 }], '5', 'equilibrio')!;
+    // Si el set LIGERO de deload (82.5×8 @RIR4) hubiera entrado, la e1RM/carga sería MENOR.
+    const siEntrara = prescribeLoad([{ reps: 8, kg: 82.5, rir: 4 }], '5', 'equilibrio')!;
+    expect(trabajo.topKg).toBeGreaterThan(siEntrara.topKg); // por eso se excluye el deload
   });
 });
 

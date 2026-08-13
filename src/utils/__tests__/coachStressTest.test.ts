@@ -228,9 +228,9 @@ describe('ESCENARIOS ADVERSARIALES', () => {
     performAndFeedback(P.C, hidden, state, today, antes, r, { rirAnomaly: 4 }); today += 2;
     const despues = coachDay(P.C, state, today, ['cuadriceps'], { energy: 'normal', sleep: 'normal' });
     const kgDespues = despues.items.find(i => i.ex.id === 'sentadilla-barra')?.prescription.topKg ?? 0;
-    // TODO(bloque 2 · F4): con la carga inestable (decay de topKg) una calibración aislada
-    // oscila hasta ~10%. Tras unificar la carga + e1RM RIR-aware (bloque 2), RE-ENDURECER a 0.08.
-    if (kgAntes > 0 && kgDespues > 0) expect(Math.abs(kgDespues - kgAntes) / kgAntes).toBeLessThan(0.12);
+    // BLOQUE 2 · el RIR entra por la e1RM (canal único) con guardrail de ±10%/sesión → un RIR
+    // aislado no dispara la carga; la cota dura es ~10% (auto-corrige si fue falso).
+    if (kgAntes > 0 && kgDespues > 0) expect(Math.abs(kgDespues - kgAntes) / kgAntes).toBeLessThanOrEqual(0.11);
   });
 });
 

@@ -245,11 +245,14 @@ export default function WorkoutPlayer({
     if (!currentEx || !sets || sets.length === 0) return null;
     return computeProgression(sets, currentEx.reps, incrementForMuscle(currentBank?.muscleGroup), isBandExercise);
   })();
-  // P1 · en descarga, la carga recomendada es la REDUCIDA (deloadKg), no el objetivo de
-  // progresión normal. Domina la etiqueta y el autocompletado de peso.
+  // BLOQUE 2 · FUENTE ÚNICA DE CARGA: el peso de trabajo mostrado sale de la MISMA prescripción
+  // (topKg RIR-aware) que usan IA/trace/deload — no de un cálculo aparte del player. Prioridad:
+  // deloadKg (descarga) → topKg (compuesto con carga) → computeProgression (bandas/corporal/accesorio).
   const deloadKg = currentEx?.deloadKg;
-  const progLabel = deloadKg != null && deloadKg > 0
-    ? `${deloadKg} kg × ${currentEx?.reps ?? ''}`
+  const prescribedKg = deloadKg != null && deloadKg > 0 ? deloadKg
+    : (currentEx?.topKg != null && currentEx.topKg > 0 ? currentEx.topKg : null);
+  const progLabel = prescribedKg != null
+    ? `${prescribedKg} kg × ${currentEx?.reps ?? ''}`
     : progression
       ? (progression.kg != null && progression.kg > 0 ? `${progression.kg} kg × ${progression.reps}` : `× ${progression.reps}`)
       : null;
@@ -478,10 +481,10 @@ export default function WorkoutPlayer({
     // Peso: si ya registraste una serie de este ejercicio HOY, arrastra ese peso;
     // si es la primera, arranca en el OBJETIVO de progresión (peso a superar).
     const sessionKg = lastKgForExercise(loggedByExercise, currentExerciseIndex);
-    // Peso: la serie previa de HOY manda; si es la primera, en descarga usa la carga reducida
-    // (deloadKg), si no el objetivo de progresión normal.
-    const suggestedKg = deloadKg != null && deloadKg > 0
-      ? deloadKg
+    // Peso: la serie previa de HOY manda; si es la primera, usa la carga PRESCRITA (misma fuente
+    // única: deloadKg/topKg); si no hay, cae a la progresión (bandas/corporal/accesorio).
+    const suggestedKg = prescribedKg != null
+      ? prescribedKg
       : (progression?.kg != null && progression.kg > 0 ? progression.kg : sessionKg);
     const entry: LoggedSet = {
       reps: parseRepsToNumber(currentEx.reps),

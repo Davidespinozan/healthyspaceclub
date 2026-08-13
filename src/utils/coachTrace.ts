@@ -42,7 +42,7 @@ export interface CoachTraceInput {
   allocation: Record<string, number>;   // series por músculo hoy
   items: Array<{
     id: string; muscle: string; category: string; sets: number; reps: string;
-    rest: number; rir: number; topKg?: number; backoffKg?: number; calibration?: number;
+    rest: number; rir: number; topKg?: number; backoffKg?: number;
   }>;
   cutsByTime: string[];                  // qué se recortó por presupuesto de tiempo
   notes: string[];                       // decisiones relevantes ad-hoc
@@ -74,8 +74,7 @@ export function formatCoachTrace(t: CoachTraceInput): string[] {
 
   L.push('P4/P2 PRESCRIPCIÓN (ejercicio → series×reps @RIR, descanso, carga):');
   for (const it of t.items) {
-    const calib = it.calibration != null ? Math.round(it.calibration * 100) / 100 : 1;
-    const load = it.topKg != null ? ` · ${it.topKg}kg top / ${it.backoffKg}kg backoff${calib !== 1 ? ` (calib ×${calib})` : ''}` : ' · carga por progresión (sin top-set)';
+    const load = it.topKg != null ? ` · ${it.topKg}kg top / ${it.backoffKg}kg backoff` : ' · carga por progresión (sin top-set)';
     L.push(`   ${it.id} [${it.muscle}/${it.category}]: ${it.sets}×${it.reps} @${it.rir}RIR, ${it.rest}s${load}`);
   }
 

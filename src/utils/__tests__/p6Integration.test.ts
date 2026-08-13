@@ -1,38 +1,35 @@
 import { describe, it, expect } from 'vitest';
 import { prescribeLoad } from '../loadEngine';
-import { loadCalibration } from '../rirFeedback';
 import { computeReadiness, readinessToRecovery, chronicRecoveryTrend } from '../readiness';
 import { deriveMesocycleState } from '../mesocycle';
 import { resolvePriorities, applyMusclePriority } from '../musclePriority';
 import { allocateSessionVolume } from '../sessionPrescription';
 import { computeVolumeTargets, targetsToMap } from '../volumeLandmarks';
 
-describe('P6 · integración P2 — calibración de carga por RIR (sin saltos grandes)', () => {
-  const last = [{ reps: 8, kg: 100 }];
-  it('RIR muy cerca del fallo (real 0 vs prescrito 2) → baja la carga, pero POCO', () => {
-    const cal = loadCalibration({ observations: Array.from({ length: 4 }, () => ({ prescribedRir: 2, actualRir: 0 })) });
-    const base = prescribeLoad(last, '8', 'equilibrio', 2.5, 1)!;
-    const calibrado = prescribeLoad(last, '8', 'equilibrio', 2.5, cal.factor)!;
-    expect(calibrado.topKg).toBeLessThan(base.topKg);
-    expect(base.topKg - calibrado.topKg).toBeLessThanOrEqual(base.topKg * 0.06); // ≤ ~6% (redondeo)
-  });
-  it('un solo RIR NO produce un salto grande de carga', () => {
-    const cal = loadCalibration({ observations: [{ prescribedRir: 2, actualRir: 4 }] }); // 1 obs → confianza baja
-    const base = prescribeLoad(last, '8', 'equilibrio', 2.5, 1)!;
-    const calibrado = prescribeLoad(last, '8', 'equilibrio', 2.5, cal.factor)!;
-    expect(Math.abs(calibrado.topKg - base.topKg)).toBeLessThanOrEqual(base.topKg * 0.03);
-  });
-  it('BANDAS / peso corporal (sin kg) → prescribeLoad null (fallback, no calibra carga)', () => {
-    expect(prescribeLoad([{ reps: 15, kg: 0 }], '12', 'equilibrio', 2.5, 0.95)).toBeNull();
-  });
-  it('RIR corrige la carga por UN SOLO canal (calibración), no dos: prescribeLoad ignora el rir del set', () => {
-    // El rir dentro del set NO altera prescribeLoad (evita doble conteo con la calibración).
+// BLOQUE 2 · el RIR corrige la carga por UN SOLO canal: la e1RM RIR-aware. No hay calibración
+// aparte. El paso es ACOTADO (±1 incremento/sesión) → un RIR aislado no dispara la carga.
+describe('BLOQUE 2 · carga RIR-aware, canal único, paso acotado', () => {
+  const INC = 2.5;
+  it('el RIR del set SÍ entra por la e1RM (antes lo ignoraba): fácil (RIR alto) → sube, no baja', () => {
     const sinRir = prescribeLoad([{ reps: 8, kg: 100 }], '8', 'equilibrio')!;
-    const conRirEnSet = prescribeLoad([{ reps: 8, kg: 100, rir: 3 }], '8', 'equilibrio')!;
-    expect(conRirEnSet.topKg).toBe(sinRir.topKg); // mismo: el RIR no entra por el e1RM
-    // La corrección por RIR llega SOLO por el factor de calibración (canal único).
-    const calibrado = prescribeLoad([{ reps: 8, kg: 100 }], '8', 'equilibrio', 2.5, 1.05)!;
-    expect(calibrado.topKg).toBeGreaterThan(sinRir.topKg);
+    const facil = prescribeLoad([{ reps: 8, kg: 100, rir: 4 }], '8', 'equilibrio')!;
+    expect(facil.topKg).toBeGreaterThan(sinRir.topKg); // el RIR real informa la capacidad
+  });
+  it('un solo RIR (fácil o falso) NO dispara la carga: el rango del RIR (0-4) la acota a ~±5%', () => {
+    const facil = prescribeLoad([{ reps: 8, kg: 100, rir: 4 }], '8', 'equilibrio')!;
+    // RIR 4 vs objetivo 2 → +2 reps de reserva → ~+5% (auto-corrige cuando el peso queda a tono).
+    expect(Math.abs(facil.topKg - 100)).toBeLessThanOrEqual(100 * 0.06 + INC);
+    expect(facil.topKg).toBeGreaterThan(100); // sube (era demasiado fácil), no baja
+    void INC;
+  });
+  it('NO decae: con RIR en el set, el peso de trabajo se sostiene (no cae sesión a sesión)', () => {
+    // performed 100×8 @ RIR2, objetivo 8@RIR2 → capacidad implica ~100 → se sostiene (±1 inc).
+    const p = prescribeLoad([{ reps: 8, kg: 100, rir: 2 }], '8', 'equilibrio')!;
+    expect(p.topKg).toBeGreaterThanOrEqual(100 - INC);
+    expect(p.topKg).toBeLessThanOrEqual(100 + INC);
+  });
+  it('BANDAS / peso corporal (sin kg) → null (progresión por dificultad/tensión, no kg)', () => {
+    expect(prescribeLoad([{ reps: 15, kg: 0 }], '12', 'equilibrio')).toBeNull();
   });
 });
 

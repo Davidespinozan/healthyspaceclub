@@ -27,7 +27,7 @@ import { resolvePriorities, applyMusclePriority, possibleWeakPoint } from '../..
 import { computeReadiness, readinessToRecovery, chronicRecoveryTrend, chronicToRecovery, type ReadinessState } from '../../readiness';
 import { allocateSessionVolume, prescribeSession, categorize } from '../../sessionPrescription';
 import { allocateTime } from '../../sessionBlocks';
-import { loadCalibration, rirError, type RirObservation } from '../../rirFeedback';
+import { rirError, type RirObservation } from '../../rirFeedback';
 import { e1RMTrend } from '../../loadEngine';
 void _lvl;
 type MatRir = RirObservation & { exerciseId: string };
@@ -205,14 +205,10 @@ export function coachDay(p: Profile, state: SimState, today: number, dayMuscles:
     weeklyTarget: targetsToMap(targets), doneThisWeek: done7, dayMuscles, primaryMuscles,
     freqTarget: freq, sessionsThisWeekDone, muscleWeeklyFreq, recovery: dosingRecovery as never, isDeload: mesoDeload,
   });
-  const isNewUser = workoutLog.length < 6; // SIEMPRE true en producción (workoutLog vacío)
-  const rirByEx = new Map<string, RirObservation[]>();
-  for (const o of rirLog) { (rirByEx.get(o.exerciseId) ?? rirByEx.set(o.exerciseId, []).get(o.exerciseId)!).push(o); }
-  const calibration: Record<string, number> = {};
-  for (const [id, obs] of rirByEx) calibration[id] = loadCalibration({ observations: obs, isNewUser }).factor;
+  // BLOQUE 2 · carga = una sola autoridad (prescribeLoad RIR-aware); ya no hay calibración aparte.
   const items = prescribeSession({
     exercises: exsWithMuscle, bankById, allocation, objective: p.goal, phase: meso.phase,
-    mainMinutes: time.main, lastPerf, calibration,
+    mainMinutes: time.main, lastPerf,
   });
   void obData;
   return { meso, readiness, chronic, targets, priorities, allocation, time, items, dayMuscles, dosingRecovery };

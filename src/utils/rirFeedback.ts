@@ -16,7 +16,6 @@ export interface RirObservation {
   date?: string;           // reciente pesa más
 }
 
-export type Confidence = 'baja' | 'media' | 'alta';
 
 /** rirError = real − prescrito. Negativo = más agresivo de lo planeado (más cerca del
  *  fallo); positivo = quedó fácil (capacidad de sobra). */
@@ -24,53 +23,10 @@ export function rirError(o: { prescribedRir: number; actualRir: number }): numbe
   return o.actualRir - o.prescribedRir;
 }
 
-/**
- * Error de RIR AGREGADO — media ponderada por recencia con protección de outliers: cada
- * error se acota a [−3,3] (una percepción rara no domina) y las observaciones recientes
- * pesan más (decay geométrico). Confianza por nº de observaciones (y penaliza usuario nuevo).
- */
-export function aggregateRirError(
-  observations: RirObservation[],
-  opts: { isNewUser?: boolean } = {},
-): { meanError: number; n: number; confidence: Confidence } {
-  const obs = observations.filter(o => Number.isFinite(o.actualRir) && Number.isFinite(o.prescribedRir));
-  const n = obs.length;
-  if (n === 0) return { meanError: 0, n: 0, confidence: 'baja' };
-
-  // recientes primero (si hay fecha); decay 0.85 por posición.
-  const ordered = [...obs].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
-  let wsum = 0, acc = 0;
-  ordered.forEach((o, i) => {
-    const w = Math.pow(0.85, i);
-    const e = Math.max(-3, Math.min(3, rirError(o))); // clamp outlier
-    acc += e * w; wsum += w;
-  });
-  const meanError = wsum > 0 ? acc / wsum : 0;
-
-  let confidence: Confidence = n >= 4 ? 'alta' : n >= 2 ? 'media' : 'baja';
-  if (opts.isNewUser) confidence = confidence === 'alta' ? 'media' : 'baja'; // usuario nuevo → menos confianza
-  return { meanError: Math.round(meanError * 100) / 100, n, confidence };
-}
-
-const CONF_WEIGHT: Record<Confidence, number> = { baja: 0.3, media: 0.7, alta: 1.0 };
-
-/**
- * Calibración del motor de carga desde el RIR real → multiplicador ACOTADO para la próxima
- * prescripción. error>0 (quedó fácil) → sube; error<0 (muy cerca del fallo) → baja. Escalado
- * por confianza; tope ±5% (nunca saltos grandes); usuario nuevo / pocas obs → ajuste mínimo.
- * Sin observaciones → factor 1.0 (no cambia nada, fallback puro).
- */
-export function loadCalibration(input: {
-  observations: RirObservation[];
-  isNewUser?: boolean;
-}): { factor: number; confidence: Confidence; meanError: number } {
-  const { meanError, n, confidence } = aggregateRirError(input.observations, { isNewUser: input.isNewUser });
-  if (n === 0) return { factor: 1, confidence, meanError: 0 };
-  // 2% por unidad de RIR, escalado por confianza, acotado a ±5%.
-  const raw = meanError * 0.02 * CONF_WEIGHT[confidence];
-  const factor = 1 + Math.max(-0.05, Math.min(0.05, raw));
-  return { factor: Math.round(factor * 1000) / 1000, confidence, meanError };
-}
+// BLOQUE 2 · loadCalibration/aggregateRirError ELIMINADOS: eran un SEGUNDO mecanismo que
+// corregía la carga por RIR además de la e1RM. Ahora el RIR corrige la carga por UN SOLO canal
+// —la e1RM RIR-aware (loadEngine.prescribeLoad)— así que la calibración era redundante
+// (double-dipping). El error de RIR sigue disponible (rirError) para la tendencia crónica (P6).
 
 /**
  * Autoajuste ENTRE series: tras una serie claramente fuera del RIR objetivo, sugiere un

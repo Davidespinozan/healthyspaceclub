@@ -5,7 +5,6 @@ import { resolvePriorities, applyMusclePriority } from '../musclePriority';
 import { computeReadiness, readinessToRecovery } from '../readiness';
 import { allocateSessionVolume, prescribeSession, type PrescribedItem } from '../sessionPrescription';
 import { allocateTime } from '../sessionBlocks';
-import { loadCalibration } from '../rirFeedback';
 import type { Exercise } from '../../types';
 
 // ── Banco mínimo determinista (compuestos principales + accesorios por músculo) ──
@@ -86,16 +85,15 @@ function simulate(s: Scenario): SimResult {
     recovery: dosingRecovery, isDeload: meso.deload,
   });
 
-  const calibration: Record<string, number> = {};
-  if (s.rirObs) { const f = loadCalibration({ observations: s.rirObs.map(o => ({ ...o })) }).factor; for (const e of exsWithMuscle) calibration[e.id] = f; }
-
-  // lastPerf: solo con carga comparable (gym). Bandas/peso corporal → sin kg.
-  const lastPerf: Record<string, { sets: { reps: number; kg: number }[] }> = {};
-  if (s.hasLoad) for (const e of exsWithMuscle) lastPerf[e.id] = { sets: [{ reps: 6, kg: 100 }] };
+  // BLOQUE 2 · el RIR real entra por el HISTORIAL (lastPerf), no por una calibración aparte:
+  // la e1RM RIR-aware lo consume. lastPerf solo con carga comparable (gym); bandas/corporal sin kg.
+  const avgActualRir = s.rirObs && s.rirObs.length ? s.rirObs.reduce((a, o) => a + o.actualRir, 0) / s.rirObs.length : undefined;
+  const lastPerf: Record<string, { sets: { reps: number; kg: number; rir?: number }[] }> = {};
+  if (s.hasLoad) for (const e of exsWithMuscle) lastPerf[e.id] = { sets: [{ reps: 6, kg: 100, ...(avgActualRir != null && { rir: avgActualRir }) }] };
 
   const items = prescribeSession({
     exercises: exsWithMuscle, bankById, allocation, objective: s.objective,
-    phase: meso.phase, mainMinutes: time.main, lastPerf, calibration,
+    phase: meso.phase, mainMinutes: time.main, lastPerf,
   });
   return { meso, time, targets, allocation, items, readinessState: readiness.state };
 }
@@ -200,7 +198,9 @@ describe('SIMULACIONES end-to-end P1–P6 (¿tiene sentido como coach?)', () => 
     const base = simulate({ name: 'Jbase', level: 'avanzado', objective: 'fuerza', daysPerWeek: 4, weeksAccumulated: 3, recovery: 'buena', adherence: 'alta', performance: 'sube', minutes: 75, hasLoad: true, dayExercises: ['sentadilla-barra'], sessionsThisWeekDone: 0, weeklyVolumes: [{ cuadriceps: 16 }], weeksOfHistory: 3 });
     const jTop = facil.items[0].prescription.topKg!;
     const bTop = base.items[0].prescription.topKg!;
-    expect(jTop).toBeGreaterThan(bTop);                    // "quedó fácil" → sube algo
-    expect(jTop - bTop).toBeLessThanOrEqual(bTop * 0.06);  // pero POCO (≤ ~5% + redondeo)
+    // BLOQUE 2 · el RIR fácil sube la capacidad estimada (RIR-aware) → carga ≥ base; el
+    // guardrail de ±10%/sesión evita un salto grande de una sola observación.
+    expect(jTop).toBeGreaterThanOrEqual(bTop);
+    expect(jTop - bTop).toBeLessThanOrEqual(bTop * 0.11); // acotado (~≤10% + redondeo)
   });
 });

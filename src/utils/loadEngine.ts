@@ -56,8 +56,10 @@ export function robustE1RM(sets?: { reps: number; kg: number; rir?: number }[]):
     .filter(s => s.kg > 0 && s.reps > 0 && s.rir != null)
     .map(s => estimate1RMFromSet(s)!)
     .sort((a, b) => a - b);
-  if (withRir.length >= 2) {
-    // mediana (par → promedio de los dos centrales) → robusta al outlier
+  if (withRir.length >= 1) {
+    // Mediana (par → promedio de los dos centrales; 1 dato → ese valor) → RIR-aware, robusta al
+    // outlier. Basta 1 set con RIR (el top set): la robustez ante un dato aislado la da el PASO
+    // ACOTADO de prescribeLoad (±1 incremento), no el exigir ≥2 sets aquí (eso perdía el RIR real).
     const mid = Math.floor(withRir.length / 2);
     const median = withRir.length % 2 ? withRir[mid] : (withRir[mid - 1] + withRir[mid]) / 2;
     return { e1RM: Math.round(median * 10) / 10, ridCount: withRir.length };
@@ -103,28 +105,46 @@ export function rirForBias(bias: IntensityBias): number {
 }
 
 /**
- * Prescribe el PESO de trabajo desde el historial. La serie tope se calcula para llegar
- * a (reps + RIR) al fallo → deja el RIR de la fase; los backoffs van ~10% más ligeros.
- * null si no hay e1RM (peso corporal/banda → la progresión va por dificultad/tensión).
+ * Prescribe el PESO de trabajo desde el historial — ÚNICA autoridad de carga (bloque 2).
+ *
+ * CAPACIDAD (e1RM) RIR-AWARE, canal ÚNICO: la e1RM se estima con reps + RIR real
+ * (robustE1RM) porque el atleta deja reps en reserva; Epley sobre reps-sin-RIR subestimaba y
+ * hacía DECAER el peso sesión tras sesión (F4). Con RIR-aware la carga es ESTABLE: si hiciste
+ * `kg × reps @ RIR` y hoy el objetivo es el mismo (reps@RIR), el peso de trabajo vuelve al
+ * mismo kg (no decae); si mejoras (más reps o más RIR al mismo peso) → sube. NO hay segundo
+ * multiplicador de calibración: el RIR corrige la carga SOLO vía la e1RM (sin double-dipping).
+ * null si no hay carga comparable (peso corporal/banda → progresión por dificultad/tensión).
  */
 export function prescribeLoad(
   lastSets: { reps: number; kg: number; rir?: number }[] | undefined,
   repRange: string,
   bias: IntensityBias,
   inc = 2.5,
-  calibration = 1,   // P6 · factor de calibración por RIR real (acotado ±5% aguas arriba)
 ): LoadPrescription | null {
-  // e1RM MEDIDO (Epley del mejor set) escalado por la calibración de RIR (P6). El RIR real
-  // corrige la carga por UN SOLO canal — la calibración— para no doble-contar: NO se vuelve a
-  // meter el RIR en el propio e1RM aquí (blendE1RM/robustE1RM quedan para métrica de capacidad,
-  // fuera de la prescripción de carga). Sin calibración (=1) → idéntico al comportamiento base.
-  const e1RM0 = estimate1RM(lastSets);
-  if (e1RM0 == null) return null;
-  const e1RM = e1RM0 * calibration;
+  // TOP SET de referencia: el más pesado (a ese kg, el de menos reps = el más duro).
+  const work = (lastSets ?? []).filter(s => s.kg > 0 && s.reps > 0);
+  if (work.length === 0) return null; // sin carga comparable → progresión por dificultad/tensión
+  const refKg = Math.max(...work.map(s => s.kg));
+  const ref = work.filter(s => s.kg === refKg).reduce((a, b) => (b.reps < a.reps ? b : a));
   const reps = targetRepsForPhase(repRange, bias);
   const rir = rirForBias(bias);
-  const topKg = roundToIncrement(loadForReps(e1RM, reps + rir), inc);
+  // PESO = último top set ESCALADO por el ratio de esfuerzo (RIR-aware). El "potencial" de una
+  // serie = reps + RIR (reps que quedaban): si hoy el objetivo pide el MISMO esfuerzo que la vez
+  // pasada, el peso vuelve al mismo kg (NO decae — arregla F4); si el objetivo pide menos reps
+  // (intensificación) sube, más reps (acumulación) baja; y como el RIR real va 0-4, un RIR aislado
+  // mueve la carga solo ~±5% (no dispara saltos). Sin RIR en el set → se asume al fallo (RIR 0),
+  // conservador. Canal ÚNICO: el RIR corrige la carga aquí, sin calibración aparte.
+  const performedPotential = ref.reps + Math.max(0, ref.rir ?? 0);
+  const targetPotential = reps + rir;
+  const raw = refKg * (1 + performedPotential / 30) / (1 + targetPotential / 30);
+  // GUARDRAIL de ±10%/sesión: ni un RIR aislado (falso o no) ni un cambio de fase disparan la
+  // carga de golpe; las transiciones de fase se completan en ~2 sesiones (gradual) y varias
+  // observaciones coherentes de RIR refinan acumulando. En estado estable (mismo esfuerzo) el
+  // ratio es 1 → no toca la cota → sin decay.
+  const workingKg = Math.max(refKg * 0.90, Math.min(refKg * 1.10, raw));
+  const topKg = roundToIncrement(workingKg, inc);
   const backoffKg = roundToIncrement(topKg * 0.9, inc);
+  const e1RM = refKg * (1 + performedPotential / 30); // e1RM RIR-aware (informativo, trace/IA)
   return { e1RM: Math.round(e1RM * 10) / 10, reps, rir, topKg, backoffKg };
 }
 

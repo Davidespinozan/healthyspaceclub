@@ -24,8 +24,12 @@ export interface CachedWorkout {
     // de compuesto principal con carga). El player solo prompta RIR donde rirRelevant.
     rir?: number;
     rirRelevant?: boolean;
-    // P1 · carga de DESCARGA reducida (kg) para este ejercicio: el player la muestra en vez
-    // del objetivo de progresión normal. Solo en semana de deload y con carga comparable.
+    // BLOQUE 2 · FUENTE ÚNICA DE CARGA (P2): peso de trabajo (top set) y backoff, RIR-aware.
+    // El player, la IA, el trace y el deload consumen ESTOS valores — no hay un segundo motor.
+    topKg?: number;
+    backoffKg?: number;
+    // P1 · carga de DESCARGA reducida (kg): el player la muestra en vez de la progresión
+    // normal. Solo en semana de deload y con carga comparable (= topKg × 0.875).
     deloadKg?: number;
     // Agrupación para superseries/biseries/triseries. Ejercicios con el mismo
     // `group` (ej. "A") se hacen encadenados (sin descanso entre ellos, descanso

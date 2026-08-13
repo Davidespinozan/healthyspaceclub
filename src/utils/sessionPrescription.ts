@@ -135,8 +135,7 @@ export function prescribeExercise(input: {
   sets: number;              // series asignadas por el reparto (ya distribuidas)
   objective: string;
   phase: Phase;
-  lastSets?: { reps: number; kg: number; rir?: number }[]; // P2 (+RIR real de P6)
-  calibration?: number;      // P6 · factor de carga por RIR real (default 1 = sin cambio)
+  lastSets?: { reps: number; kg: number; rir?: number }[]; // P2 — historial CON RIR real (canal único)
 }): ExercisePrescription {
   const { category, objective, phase } = input;
   const sets = Math.max(2, input.sets);
@@ -148,7 +147,7 @@ export function prescribeExercise(input: {
 
   if (scheme === 'top-backoff') {
     const bias = phase === 'intensificacion' ? 'intensidad' : 'equilibrio';
-    const load = prescribeLoad(input.lastSets, reps, bias, 2.5, input.calibration ?? 1);
+    const load = prescribeLoad(input.lastSets, reps, bias); // RIR-aware, sin calibración (canal único)
     const backoffs = clamp(sets - 1, 1, 3);
     return {
       sets, reps, rest, rir, scheme,
@@ -157,11 +156,10 @@ export function prescribeExercise(input: {
     };
   }
   // DELOAD con carga comparable: reduce EXPLÍCITAMENTE la carga de trabajo (~87.5% de la
-  // normal) en series rectas. Reutiliza P2: parte del peso normal de trabajo y lo baja. Sin
-  // top-set agresivo (scheme recto, RIR alto). Sin carga comparable (bandas/corporal) → recto
-  // sin kg (no se inventan placas). NO altera e1RM/baseline: esto es solo la prescripción de hoy.
+  // normal) en series rectas. MISMA fuente de carga (prescribeLoad RIR-aware) que el resto → el
+  // deload y el trabajo normal no divergen. Sin carga comparable (bandas/corporal) → recto sin kg.
   if (phase === 'deload' && hasLoad) {
-    const normal = prescribeLoad(input.lastSets, reps, 'equilibrio', 2.5, input.calibration ?? 1);
+    const normal = prescribeLoad(input.lastSets, reps, 'equilibrio');
     if (normal) {
       const deloadKg = roundToIncrement(normal.topKg * DELOAD_LOAD_FACTOR, 2.5);
       return {
@@ -195,7 +193,6 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
   phase: Phase;
   mainMinutes: number;                             // presupuesto del bloque principal
   lastPerf?: Record<string, { sets: { reps: number; kg: number; rir?: number }[] }>;
-  calibration?: Record<string, number>;            // P6 · factor de carga por ejercicio (RIR real)
 }): PrescribedItem<T>[] {
   const CAT_WEIGHT: Record<Category, number> = { 'main-compound': 1.6, 'secondary-compound': 1.2, isolation: 1.0 };
   const items: PrescribedItem<T>[] = [];
@@ -229,7 +226,6 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
       objective: input.objective,
       phase: input.phase,
       lastSets: input.lastPerf?.[ex.id]?.sets,
-      calibration: input.calibration?.[ex.id] ?? 1,
     });
     items.push({ ex, category: cat, prescription });
   }

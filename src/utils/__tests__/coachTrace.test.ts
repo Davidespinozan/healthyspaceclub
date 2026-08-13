@@ -13,7 +13,7 @@ const base: CoachTraceInput = {
   sessionsLeftInWeek: 2,
   allocation: { pecho: 5, gluteo: 6 },
   items: [
-    { id: 'press-banca', muscle: 'pecho', category: 'main-compound', sets: 4, reps: '6-10', rest: 150, rir: 2, topKg: 92.5, backoffKg: 82.5, calibration: 0.97 },
+    { id: 'press-banca', muscle: 'pecho', category: 'main-compound', sets: 4, reps: '6-10', rest: 150, rir: 2, topKg: 92.5, backoffKg: 82.5 },
     { id: 'hip-thrust', muscle: 'gluteo', category: 'main-compound', sets: 4, reps: '8-12', rest: 90, rir: 2 },
   ],
   cutsByTime: ['aperturas: −1 serie por tiempo'],
@@ -31,7 +31,6 @@ describe('coachTrace — formato auditable', () => {
     expect(out).toContain('P3 TARGET SEMANAL');
     expect(out).toContain('P4/P2 PRESCRIPCIÓN');
     expect(out).toContain('92.5kg top');
-    expect(out).toContain('calib ×0.97');
     expect(out).toContain('RECORTES POR TIEMPO');
   });
 

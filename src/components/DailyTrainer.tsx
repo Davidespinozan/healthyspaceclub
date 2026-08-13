@@ -46,7 +46,7 @@ import {
 import { e1RMTrend, bestE1RMByMuscle } from '../utils/loadEngine';
 import { resolvePriorities, applyMusclePriority, possibleWeakPoint } from '../utils/musclePriority';
 import { computeReadiness, readinessToRecovery, chronicRecoveryTrend, chronicToRecovery } from '../utils/readiness';
-import { loadCalibration, rirError, type RirObservation } from '../utils/rirFeedback';
+import { rirError } from '../utils/rirFeedback';
 import { formatCoachTrace } from '../utils/coachTrace';
 import {
   getCachedWorkout,
@@ -974,20 +974,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           freqTarget: freq, sessionsThisWeekDone, muscleWeeklyFreq,
           recovery: dosingRecovery, isDeload: mesoDeload,
         });
-        // P6 · calibración de carga por RIR real (P2): factor acotado por ejercicio desde
-        // el histórico de RIR. Usuario nuevo (poco historial) → confianza baja → ajuste mínimo.
-        const isNewUser = (workoutLog || []).length < 6;
-        const rirByEx = new Map<string, RirObservation[]>();
-        for (const o of rirLog) {
-          if (!rirByEx.has(o.exerciseId)) rirByEx.set(o.exerciseId, []);
-          rirByEx.get(o.exerciseId)!.push(o);
-        }
-        const calibration: Record<string, number> = {};
-        for (const [exId, obsList] of rirByEx) calibration[exId] = loadCalibration({ observations: obsList, isNewUser }).factor;
+        // BLOQUE 2 · La carga es UNA sola autoridad (prescribeLoad RIR-aware). Ya NO hay
+        // calibración por RIR aparte (canal único: el RIR entra vía la e1RM del historial).
         const items = prescribeSession({
           exercises: exsWithMuscle, bankById, allocation, objective: String(goal),
           phase: meso.phase, mainMinutes: sessionPlan.budget.main, lastPerf: lastExercisePerformance,
-          calibration,
         });
         const byId = new Map(items.map(it => [it.ex.id, it]));
         for (const exOut of w.exercises) {
@@ -998,12 +989,12 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           exOut.sets = it.prescription.sets;
           exOut.reps = /por lado/i.test(orig) ? `${it.prescription.reps} por lado` : it.prescription.reps;
           exOut.rest = it.prescription.rest;
-          // P6 · lleva el RIR prescrito al player. Solo se pide feedback de RIR en series
-          // RELEVANTES (compuesto principal con carga: top set / calibra P2) → mínima fricción.
           exOut.rir = it.prescription.rir;
           exOut.rirRelevant = it.category === 'main-compound' && it.prescription.scheme === 'top-backoff';
-          // P1 · carga de descarga reducida (si aplica) → el player la muestra en vez de la
-          // progresión normal. Nunca en RIR relevante (en deload no hay top-set agresivo).
+          // BLOQUE 2 · FUENTE ÚNICA DE CARGA: el player, la IA, el trace y el deload consumen
+          // el MISMO topKg/backoffKg/deloadKg de la prescripción (no un cálculo aparte).
+          if (it.prescription.topKg != null) exOut.topKg = it.prescription.topKg;
+          if (it.prescription.backoffKg != null) exOut.backoffKg = it.prescription.backoffKg;
           if (it.prescription.isDeloadLoad && it.prescription.topKg) exOut.deloadKg = it.prescription.topKg;
         }
         // P1 · marca la sesión como descarga para el player (aviso + cargas reducidas) y para
@@ -1043,7 +1034,6 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
                 id: it.ex.id, muscle: it.ex.muscleGroup, category: it.category,
                 sets: it.prescription.sets, reps: it.prescription.reps, rest: it.prescription.rest,
                 rir: it.prescription.rir, topKg: it.prescription.topKg, backoffKg: it.prescription.backoffKg,
-                calibration: calibration[it.ex.id],
               })),
               cutsByTime: [], notes: priorityMuscleSet.size ? [`prioridad activa: ${[...priorityMuscleSet].join(', ')}`] : [],
             });
