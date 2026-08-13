@@ -274,6 +274,14 @@ export interface WorkoutEntry {
 export interface LoggedSet {
   reps: number;
   kg: number;
+  /**
+   * P6 · RIR real percibido (reps en reserva) que el usuario reporta tras una serie
+   * RELEVANTE (top set, último working set, cambio de carga). undefined = no se capturó
+   * (la mayoría de series) → el motor cae al método sin RIR. Percepción subjetiva, con error.
+   */
+  rir?: number;
+  /** P6 · RIR que P4 prescribió para esa serie, para computar rirError = rir − prescribedRir. */
+  prescribedRir?: number;
 }
 
 /**

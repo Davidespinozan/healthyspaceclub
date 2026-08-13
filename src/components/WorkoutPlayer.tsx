@@ -18,6 +18,7 @@ import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { selectVariantForEquipment, hasPlayableVariant } from '../utils/workoutPlanner';
 import type { WorkoutExercise } from '../utils/workoutSession';
 import { parseRepsToNumber } from '../utils/workoutLogger';
+import { nextSetSuggestion } from '../utils/rirFeedback';
 import { computeProgression, incrementForMuscle } from '../utils/progression';
 import {
   buildExecutionSequence,
@@ -185,6 +186,10 @@ export default function WorkoutPlayer({
     [baseExercises, swaps],
   );
   const [restState, setRestState] = useState<{ secondsLeft: number; total: number } | null>(null);
+  // P6 · prompt de RIR real tras una serie RELEVANTE (top set de compuesto principal).
+  // Mínima fricción: solo aparece ahí, un tap y listo. `suggestion` = pista de autoajuste.
+  const [rirPrompt, setRirPrompt] = useState<{ exerciseIndex: number; setIndex: number; prescribedRir: number; topKg: number } | null>(null);
+  const [rirSuggestion, setRirSuggestion] = useState<string | null>(null);
   const [editingSet, setEditingSet] = useState<{ exerciseIndex: number; setIndex: number } | null>(null);
   const [editValues, setEditValues] = useState<LoggedSet>({ reps: 0, kg: 0 });
   const [startedAt, setStartedAt] = useState<number>(() => savedProgress?.startedAt ?? Date.now());
@@ -473,6 +478,11 @@ export default function WorkoutPlayer({
       kg: sessionKg > 0 ? sessionKg : (progression?.kg != null && progression.kg > 0 ? progression.kg : sessionKg),
     };
     setLoggedByExercise(prev => setLogAt(prev, currentExerciseIndex, currentSetNum - 1, entry));
+    // P6 · pide RIR real SOLO en la serie relevante (top set del compuesto principal con
+    // carga): es donde calibra el motor de carga. Una sola vez por ejercicio, un tap.
+    if (currentEx.rirRelevant && currentSetNum === 1 && currentEx.rir != null) {
+      setRirPrompt({ exerciseIndex: currentExerciseIndex, setIndex: currentSetNum - 1, prescribedRir: currentEx.rir, topKg: entry.kg });
+    }
     // Marca el ejercicio como hecho en Hoy en cuanto se completa (en vivo, no
     // solo al terminar la sesión) — así la lista de Hoy refleja el avance.
     if (setsRegisteredForCurrent + 1 >= totalSetsForCurrent && currentEx.id) {
@@ -485,6 +495,27 @@ export default function WorkoutPlayer({
       setCurrentStep(currentStep + 1);
       setRestState(step.restAfter > 0 ? { secondsLeft: step.restAfter, total: step.restAfter } : null);
     }
+  }
+
+  // P6 · registra el RIR real elegido en la serie relevante y, si quedó claramente fuera
+  // del objetivo, sugiere un ajuste PEQUEÑO para la siguiente (nunca cambia toda la sesión).
+  function pickRir(value: number) {
+    if (!rirPrompt) return;
+    haptics.tap();
+    setLoggedByExercise(prev => {
+      const cur = prev[rirPrompt.exerciseIndex]?.[rirPrompt.setIndex];
+      if (!cur) return prev;
+      return setLogAt(prev, rirPrompt.exerciseIndex, rirPrompt.setIndex, { ...cur, rir: value, prescribedRir: rirPrompt.prescribedRir });
+    });
+    const sug = nextSetSuggestion({ prescribedRir: rirPrompt.prescribedRir, actualRir: value, topKg: rirPrompt.topKg });
+    if (sug.action === 'reduce') {
+      setRirSuggestion(sug.nextKg ? t('workout.rirReduceKg', { kg: sug.nextKg }) : t('workout.rirReduce'));
+    } else if (sug.action === 'increase') {
+      setRirSuggestion(sug.nextKg ? t('workout.rirIncreaseKg', { kg: sug.nextKg }) : t('workout.rirIncrease'));
+    } else {
+      setRirSuggestion(null);
+    }
+    setRirPrompt(null);
   }
 
   function openEditSet(exerciseIdx: number, setIdx: number) {
@@ -890,6 +921,24 @@ export default function WorkoutPlayer({
             </div>
           </div>
 
+          {/* P6 · captura de RIR real — un tap, solo en la serie relevante. */}
+          {rirPrompt && (
+            <div className="wp-rir-prompt">
+              <span className="wp-rir-q">{t('workout.rirQ')}</span>
+              <div className="wp-rir-chips">
+                {[0, 1, 2, 3, 4].map(v => (
+                  <button key={v} className="wp-rir-chip" onClick={() => pickRir(v)}>
+                    {v === 4 ? '4+' : v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {rirSuggestion && !rirPrompt && (
+            <div className="wp-rir-suggestion" onClick={() => setRirSuggestion(null)}>
+              <Zap size={14} strokeWidth={2} /> {rirSuggestion}
+            </div>
+          )}
           <div className="wp-cta-wrap">
             {/* Jerarquía de acción (brief): COMPLETAR SERIE es el CTA protagonista
                 mientras hay serie activa; al terminar el bloque pasa a SIGUIENTE

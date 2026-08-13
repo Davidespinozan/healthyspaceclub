@@ -493,6 +493,22 @@ export default function WorkoutPlan({
               .filter(r => r.sets.length > 0);
             if (perfRecords.length > 0) useAppStore.getState().recordExercisePerformance(perfRecords);
 
+            // P6 · extrae observaciones de RIR real (solo series donde el usuario lo
+            // reportó) → alimenta la calibración de carga (P2) y la tendencia crónica.
+            const rirObs = plan.exercises.flatMap((ex, i) =>
+              (performedByExercise[i] || [])
+                .filter((s): s is LoggedSet => s != null && s.rir != null)
+                .map(s => ({
+                  date: checkDay,
+                  exerciseId: ex.id,
+                  prescribedRir: s.prescribedRir ?? ex.rir ?? 0,
+                  actualRir: s.rir!,
+                  reps: s.reps,
+                  kg: s.kg,
+                })),
+            );
+            if (rirObs.length > 0) useAppStore.getState().addRirObservations(rirObs);
+
             finishWorkoutSession({
               userId,
               modality: sessionModality,

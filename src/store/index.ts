@@ -256,6 +256,14 @@ interface AppState {
   completedSessions: CompletedSession[];
   addCompletedSession: (session: CompletedSession) => void;
 
+  // P6 · readiness + RIR real (cierre del loop PERFORM→OBSERVE→ADAPT).
+  todayCheckin: { date: string; energy?: string; sleep?: string; soreness?: string; sorenessMuscles?: string[] } | null;
+  setTodayCheckin: (c: AppState['todayCheckin']) => void;
+  rirLog: { date: string; exerciseId: string; prescribedRir: number; actualRir: number; reps: number; kg: number }[];
+  addRirObservations: (obs: AppState['rirLog']) => void;
+  readinessLog: { date: string; state: 'low' | 'normal' | 'high' }[];
+  recordReadiness: (entry: { date: string; state: 'low' | 'normal' | 'high' }) => void;
+
   // Activity log (movimiento alterno: básquet, hiking, surf…). Premia el
   // movimiento aunque no se haya hecho la rutina prescrita. addActivityLog
   // dispara markActiveDay → el día cuenta para la racha. Local only por ahora.
@@ -793,6 +801,25 @@ export const useAppStore = create<AppState>()(
   addCompletedSession: (session) =>
     set((state) => ({ completedSessions: [...state.completedSessions, session] })),
 
+  // P6 · Check-in de readiness de HOY (energía/sueño/soreness). Válido solo para su fecha;
+  // el generador lo ignora si es de otro día. Se sobrescribe si se recaptura.
+  todayCheckin: null,
+  setTodayCheckin: (c) => set(() => ({ todayCheckin: c })),
+
+  // P6 · Bitácora de RIR real (append-only, tope 100). Fuente de verdad para la calibración
+  // de carga (P2) y la tendencia crónica. Cada obs: prescrito vs real por ejercicio+fecha.
+  rirLog: [],
+  addRirObservations: (obs) =>
+    set((state) => ({ rirLog: [...state.rirLog, ...obs].slice(-100) })),
+
+  // P6 · Estado de readiness por sesión (append/replace por día, tope 30). Alimenta la
+  // tendencia CRÓNICA (fatiga persistente) sin que un mal día reescriba el plan.
+  readinessLog: [],
+  recordReadiness: (entry) =>
+    set((state) => ({
+      readinessLog: [...state.readinessLog.filter((e) => e.date !== entry.date), entry].slice(-30),
+    })),
+
   // Activity log (movimiento alterno). Optimistic local + markActiveDay para
   // que el día cuente en la racha. Sin Supabase por ahora (la racha ya persiste
   // server-side vía persistStreakToProfile dentro de markActiveDay).
@@ -1303,6 +1330,9 @@ export const useAppStore = create<AppState>()(
     workoutLog: [],
     lastExercisePerformance: {},
     completedSessions: [],
+    todayCheckin: null,
+    rirLog: [],
+    readinessLog: [],
     activityLog: [],
     foodLog: [],
     userPlan: 'none',
@@ -1378,6 +1408,9 @@ export const useAppStore = create<AppState>()(
     workoutLog: state.workoutLog,
     lastExercisePerformance: state.lastExercisePerformance,
     completedSessions: state.completedSessions,
+    todayCheckin: state.todayCheckin,      // P6
+    rirLog: state.rirLog,                  // P6
+    readinessLog: state.readinessLog,      // P6
     activityLog: state.activityLog,
     foodLog: state.foodLog,
     currentScreen: state.currentScreen === 'landing' ? 'landing' : state.currentScreen,

@@ -20,6 +20,10 @@ export interface CachedWorkout {
     reps: string;
     rest: number;
     tip_personalizado?: string;
+    // P6 · RIR prescrito (P4) y si esta serie es RELEVANTE para pedir RIR real (top set
+    // de compuesto principal con carga). El player solo prompta RIR donde rirRelevant.
+    rir?: number;
+    rirRelevant?: boolean;
     // Agrupación para superseries/biseries/triseries. Ejercicios con el mismo
     // `group` (ej. "A") se hacen encadenados (sin descanso entre ellos, descanso
     // al cerrar la vuelta). Ausente = serie recta.

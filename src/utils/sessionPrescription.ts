@@ -130,7 +130,8 @@ export function prescribeExercise(input: {
   sets: number;              // series asignadas por el reparto (ya distribuidas)
   objective: string;
   phase: Phase;
-  lastSets?: { reps: number; kg: number }[]; // P2
+  lastSets?: { reps: number; kg: number; rir?: number }[]; // P2 (+RIR real de P6)
+  calibration?: number;      // P6 · factor de carga por RIR real (default 1 = sin cambio)
 }): ExercisePrescription {
   const { category, objective, phase } = input;
   const sets = Math.max(2, input.sets);
@@ -142,7 +143,7 @@ export function prescribeExercise(input: {
 
   if (scheme === 'top-backoff') {
     const bias = phase === 'intensificacion' ? 'intensidad' : 'equilibrio';
-    const load = prescribeLoad(input.lastSets, reps, bias);
+    const load = prescribeLoad(input.lastSets, reps, bias, 2.5, input.calibration ?? 1);
     const backoffs = clamp(sets - 1, 1, 3);
     return {
       sets, reps, rest, rir, scheme,
@@ -173,7 +174,8 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
   objective: string;
   phase: Phase;
   mainMinutes: number;                             // presupuesto del bloque principal
-  lastPerf?: Record<string, { sets: { reps: number; kg: number }[] }>;
+  lastPerf?: Record<string, { sets: { reps: number; kg: number; rir?: number }[] }>;
+  calibration?: Record<string, number>;            // P6 · factor de carga por ejercicio (RIR real)
 }): PrescribedItem<T>[] {
   const CAT_WEIGHT: Record<Category, number> = { 'main-compound': 1.6, 'secondary-compound': 1.2, isolation: 1.0 };
   const items: PrescribedItem<T>[] = [];
@@ -207,6 +209,7 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
       objective: input.objective,
       phase: input.phase,
       lastSets: input.lastPerf?.[ex.id]?.sets,
+      calibration: input.calibration?.[ex.id] ?? 1,
     });
     items.push({ ex, category: cat, prescription });
   }

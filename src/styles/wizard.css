@@ -593,3 +593,22 @@
 /* Sub-bloque de músculos específicos (foco custom) */
 .wz-muscle-grid { margin-top: 14px; }
 .wz-muscle-label { margin-bottom: 8px; }
+
+/* P6 · check-in de readiness — filas compactas etiqueta + chips pequeños */
+.wz-checkin-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.wz-checkin-label {
+  flex: 0 0 66px;
+  font-size: 13px;
+  opacity: 0.75;
+}
+.wz-checkin-row .wz-chips { flex: 1 1 auto; }
+.wz-chip-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}

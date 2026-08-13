@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   estimate1RM, loadForReps, roundToIncrement,
   targetRepsForPhase, rirForBias, prescribeLoad, aggregateE1RM, e1RMTrend,
+  estimate1RMFromSet, robustE1RM, blendE1RM,
 } from '../loadEngine';
 
 describe('loadEngine — e1RM', () => {
@@ -89,5 +90,48 @@ describe('loadEngine — aggregateE1RM (señal de fuerza)', () => {
     expect(e1RMTrend(bajando, older)).toBe('baja');
     // sin ejercicios comparables → null (el llamador cae a volumen)
     expect(e1RMTrend([{ exercise: 'otro', sets: [{ reps: 5, kg: 50 }] }], older)).toBeNull();
+  });
+});
+
+describe('loadEngine — P6 · e1RM ajustado por RIR', () => {
+  it('estimate1RMFromSet usa reps + RIR (mayor capacidad que asumir fallo)', () => {
+    // 100×8 @0 RIR (al fallo) = 100*(1+8/30)=126.7
+    const alFallo = estimate1RMFromSet({ reps: 8, kg: 100, rir: 0 })!;
+    // 100×8 @2 RIR (quedaban 2) → potencial 10 → 100*(1+10/30)=133.3 → capacidad mayor
+    const conReserva = estimate1RMFromSet({ reps: 8, kg: 100, rir: 2 })!;
+    expect(Math.round(alFallo)).toBe(127);
+    expect(conReserva).toBeGreaterThan(alFallo);
+  });
+  it('sin carga (peso corporal / banda) → null', () => {
+    expect(estimate1RMFromSet({ reps: 12, kg: 0, rir: 2 })).toBeNull();
+  });
+  it('robustE1RM con ≥2 series con RIR → mediana (protege del outlier)', () => {
+    const r = robustE1RM([
+      { reps: 8, kg: 100, rir: 2 }, { reps: 8, kg: 100, rir: 2 }, { reps: 8, kg: 200, rir: 2 }, // outlier
+    ])!;
+    expect(r.ridCount).toBe(3);
+    expect(r.e1RM).toBeLessThan(estimate1RMFromSet({ reps: 8, kg: 200, rir: 2 })!); // el outlier no gana
+  });
+  it('FALLBACK Epley: sin RIR en las series → cae a estimate1RM (ridCount 0)', () => {
+    const r = robustE1RM([{ reps: 8, kg: 100 }, { reps: 8, kg: 100 }])!;
+    expect(r.ridCount).toBe(0);
+    expect(r.e1RM).toBeCloseTo(estimate1RM([{ reps: 8, kg: 100 }])!, 1);
+  });
+  it('robustE1RM sin datos → null', () => {
+    expect(robustE1RM([])).toBeNull();
+    expect(robustE1RM([{ reps: 10, kg: 0 }])).toBeNull();
+  });
+  it('blendE1RM: sin RIR → 100% medido; con más exposiciones → más peso al RIR (tope 0.5)', () => {
+    const measured = 120;
+    expect(blendE1RM(measured, { e1RM: 140, ridCount: 0 })).toBe(120); // sin RIR → medido
+    const una = blendE1RM(measured, { e1RM: 140, ridCount: 1 })!;
+    const varias = blendE1RM(measured, { e1RM: 140, ridCount: 5 })!;
+    expect(una).toBeGreaterThan(120);
+    expect(varias).toBeGreaterThan(una);         // más evidencia → más ajuste
+    expect(varias).toBeLessThanOrEqual((120 + 140) / 2); // pero nunca lo domina (w≤0.5)
+  });
+  it('blendE1RM sin nada medido pero con RIR → usa el RIR', () => {
+    expect(blendE1RM(null, { e1RM: 140, ridCount: 2 })).toBe(140);
+    expect(blendE1RM(null, { e1RM: 140, ridCount: 0 })).toBeNull();
   });
 });

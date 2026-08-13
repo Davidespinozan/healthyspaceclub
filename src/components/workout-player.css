@@ -301,6 +301,53 @@
 
 /* ── CTA wrap (fixed bottom en paused/completed; inline en exercise) ── */
 
+/* P6 · prompt de RIR real — barra fija justo encima del CTA, un tap y desaparece. */
+.wp-rir-prompt,
+.wp-rir-suggestion {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  z-index: 6;
+  width: min(440px, calc(100% - 32px));
+}
+.wp-rir-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--wp-card, rgba(255, 255, 255, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+.wp-rir-q { font-size: 14px; font-weight: 600; text-align: center; }
+.wp-rir-chips { display: flex; gap: 8px; justify-content: center; }
+.wp-rir-chip {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.wp-rir-chip:active { transform: scale(0.96); }
+.wp-rir-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 13px;
+  cursor: pointer;
+}
+
 .wp-cta-wrap {
   position: fixed;
   bottom: 0;

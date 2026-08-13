@@ -63,6 +63,13 @@ interface WizardProps {
   setSelectedMuscles: (m: MuscleGroup[]) => void;
   selectedPriority: MuscleGroup[];
   setSelectedPriority: (m: MuscleGroup[]) => void;
+  // P6 · check-in de readiness (rápido, opcional). '' = sin responder.
+  energy: string;
+  setEnergy: (v: string) => void;
+  sleep: string;
+  setSleep: (v: string) => void;
+  soreness: string;
+  setSoreness: (v: string) => void;
   lastTrained: string;
   setLastTrained: (v: string) => void;
   hasSystemHistory: boolean;
@@ -88,6 +95,7 @@ export default function Wizard({
   focus, setFocus,
   selectedMuscles, setSelectedMuscles,
   selectedPriority, setSelectedPriority,
+  energy, setEnergy, sleep, setSleep, soreness, setSoreness,
   lastTrained, setLastTrained,
   hasSystemHistory,
   partnerMode, partnerName,
@@ -204,6 +212,32 @@ export default function Wizard({
             </div>
           </div>
         )}
+
+        {/* P6 · Check-in de readiness — "¿cómo llegas hoy?". Segundos, todo opcional
+            (clic de nuevo deselecciona). Modifica SOLO la dosis de hoy, no el plan. */}
+        <div className="wz-q">
+          <p className="wz-q-label">{t('wizard.checkinQ')}</p>
+          {([
+            { label: t('wizard.ckEnergyLabel'), val: energy, set: setEnergy, opts: [['baja', t('wizard.ckEnergyLow')], ['normal', t('wizard.ckEnergyMid')], ['alta', t('wizard.ckEnergyHigh')]] },
+            { label: t('wizard.ckSleepLabel'), val: sleep, set: setSleep, opts: [['malo', t('wizard.ckSleepBad')], ['normal', t('wizard.ckSleepMid')], ['bueno', t('wizard.ckSleepGood')]] },
+            { label: t('wizard.ckSorenessLabel'), val: soreness, set: setSoreness, opts: [['ninguna', t('wizard.ckSorenessNone')], ['leve', t('wizard.ckSorenessMild')], ['alta', t('wizard.ckSorenessHigh')]] },
+          ] as const).map(row => (
+            <div key={row.label} className="wz-checkin-row">
+              <span className="wz-checkin-label">{row.label}</span>
+              <div className="wz-chips">
+                {row.opts.map(([v, lbl]) => (
+                  <button
+                    key={v}
+                    className={`wz-chip wz-chip-sm${row.val === v ? ' on' : ''}`}
+                    onClick={() => row.set(row.val === v ? '' : v)}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
 
         <div className="wz-q">
           <p className="wz-q-label">{t('wizard.discomfortQ')}</p>

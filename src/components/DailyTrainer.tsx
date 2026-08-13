@@ -44,6 +44,8 @@ import {
 } from '../utils/mesocycle';
 import { e1RMTrend, bestE1RMByMuscle } from '../utils/loadEngine';
 import { resolvePriorities, applyMusclePriority, possibleWeakPoint } from '../utils/musclePriority';
+import { computeReadiness, readinessToRecovery, chronicRecoveryTrend, chronicToRecovery } from '../utils/readiness';
+import { loadCalibration, rirError, type RirObservation } from '../utils/rirFeedback';
 import {
   getCachedWorkout,
   saveWorkoutToCache,
@@ -106,6 +108,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const streakCount = useAppStore(s => s.streakCount);
   const completedSessions = useAppStore(s => s.completedSessions);
   const lastExercisePerformance = useAppStore(s => s.lastExercisePerformance);
+  const todayCheckin = useAppStore(s => s.todayCheckin);           // P6 · readiness aguda
+  const rirLog = useAppStore(s => s.rirLog);                       // P6 · RIR real
+  const readinessLog = useAppStore(s => s.readinessLog);           // P6 · tendencia crónica
+  const recordReadiness = useAppStore(s => s.recordReadiness);
   const addCompletedSession = useAppStore(s => s.addCompletedSession);
   const markActiveDay = useAppStore(s => s.markActiveDay);
   // Compañero conectado elegido en la pantalla Compañeros (modo pareja). Si está
@@ -181,6 +187,13 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const [priorExercise] = useState('none');
   const [discomfort, setDiscomfort] = useState('none');
   const [painArea, setPainArea] = useState('');
+  // P6 · check-in de readiness (energía/sueño/soreness). Prellenado con el de hoy si ya
+  // existe, para no re-preguntar. '' = sin responder (neutro).
+  const setTodayCheckin = useAppStore(s => s.setTodayCheckin);
+  const ci = todayCheckin?.date === today ? todayCheckin : null;
+  const [energy, setEnergy] = useState(ci?.energy ?? '');
+  const [sleep, setSleep] = useState(ci?.sleep ?? '');
+  const [soreness, setSoreness] = useState(ci?.soreness ?? '');
   const [selectedTime, setSelectedTime] = useState(() => {
     const stored = (!partnerMode && storedWorkout?.date === today) ? durationFromPlan(storedWorkout.plan) : null;
     if (stored) return stored;
@@ -298,6 +311,25 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     // Todo DERIVADO de lo que ya existe (deloadCheck, volumen, frecuencia, check-in):
     // semana del bloque, recuperación, adherencia, rendimiento → dirección + deload
     // autorregulados. No persiste nada; se recalcula aquí.
+    // ── P6 · READINESS AGUDA (hoy) vs RECUPERACIÓN CRÓNICA (tendencia) ─────────
+    // La aguda (check-in de hoy) modifica SOLO la dosis de hoy; la crónica (varias
+    // sesiones) es la que alimenta la planificación del mesociclo. Un mal día no
+    // reescribe el plan. Si el check-in es de otro día, se ignora (→ NORMAL).
+    // Check-in FRESCO de este flujo (local) si el usuario respondió algo; si no, el
+    // persistido de hoy; si tampoco, null (→ readiness NORMAL, nunca bloquea).
+    const freshCheckin = (energy || sleep || soreness)
+      ? { date: today, energy: energy || undefined, sleep: sleep || undefined, soreness: soreness || undefined }
+      : (todayCheckin?.date === today ? todayCheckin : null);
+    const checkinToday = freshCheckin;
+    const readiness = computeReadiness({
+      energy: checkinToday?.energy as 'baja' | 'normal' | 'alta' | undefined,
+      sleep: checkinToday?.sleep as 'malo' | 'normal' | 'bueno' | undefined,
+      soreness: checkinToday?.soreness as 'ninguna' | 'leve' | 'alta' | undefined,
+    });
+    // Persiste el check-in de hoy (para la tendencia crónica y para no re-preguntar).
+    if (freshCheckin && freshCheckin !== todayCheckin) setTodayCheckin(freshCheckin);
+    const todayRecovery = readinessToRecovery(readiness.state); // dosis de HOY
+
     const meso = (() => {
       const { weeksAccumulated } = deloadCheck(completedSessions, workoutLog || []);
       const sum = (v: Record<string, number>) => Object.values(v).reduce((a, b) => a + b, 0);
@@ -313,15 +345,34 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       const recentLog = (workoutLog || []).filter(w => w.date >= since(14));
       const olderLog = (workoutLog || []).filter(w => w.date < since(14) && w.date >= since(28));
       const strengthTrend = e1RMTrend(recentLog, olderLog);
+      const performance = strengthTrend ?? volumeTrend(setsLast7, setsPrev7);
+
+      // P6 · La recovery del MESOCICLO viene de la tendencia CRÓNICA (no de un día). Errores
+      // de RIR por sesión (media) + estados de readiness recientes + performance. Fallback: el
+      // check-in previo (comportamiento P1 anterior) si aún no hay evidencia longitudinal.
+      const rirBySession = new Map<string, number[]>();
+      for (const o of rirLog) {
+        if (!rirBySession.has(o.date)) rirBySession.set(o.date, []);
+        rirBySession.get(o.date)!.push(rirError(o));
+      }
+      const rirErrors = [...rirBySession.entries()].sort((a, b) => b[0].localeCompare(a[0]))
+        .map(([, errs]) => errs.reduce((a, b) => a + b, 0) / errs.length);
+      const chronic = chronicRecoveryTrend({
+        recentReadiness: [...readinessLog].sort((a, b) => b.date.localeCompare(a.date)).map(r => r.state),
+        rirErrors, performance,
+      });
+      const fallbackRecovery = recoveryFromCheckin(String(obData?.energy ?? ''), String(obData?.sleep ?? ''));
       return deriveMesocycleState({
         weeksAccumulated,
-        recovery: recoveryFromCheckin(String(obData?.energy ?? ''), String(obData?.sleep ?? '')),
+        recovery: chronicToRecovery(chronic, fallbackRecovery),
         adherence: adherenceFrom(last7Days.size, freq),
-        performance: strengthTrend ?? volumeTrend(setsLast7, setsPrev7),
+        performance,
       });
     })();
     // El mesociclo es AUTORITATIVO sobre el deload (ventana 4-6 + adelantable).
     const mesoDeload = meso.deload;
+    // Registra la readiness de hoy (para la tendencia crónica de las próximas sesiones).
+    if (checkinToday) recordReadiness({ date: today, state: readiness.state });
 
     const GOAL_KEY: Record<string, TranslationKey> = {
       'Ganar músculo': 'onboarding.goalGain',
@@ -685,14 +736,17 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         }
       }
 
-      // Intensidad: base por readiness (energía/sueño/descanso) COMPUESTA con el sesgo
-      // del mesociclo (intensificación sube, descarga baja) — la recuperación manda
-      // (a un cansado no lo empuja). Luego la ajustan prior/discomfort.
-      const baseIntensity = determineIntensity(
-        obData?.energy as 'bien' | 'regular' | 'cansado' | undefined,
-        obData?.sleep as 'muy bien' | 'normal' | 'mal' | undefined,
-        restDays,
-      );
+      // Intensidad: base por READINESS AGUDA de hoy (P6) COMPUESTA con el sesgo del
+      // mesociclo (intensificación sube, descarga baja) — la recuperación manda (a un
+      // cansado no lo empuja). Sin check-in de hoy, cae al camino previo (obData). Luego
+      // la ajustan prior/discomfort.
+      const baseIntensity = checkinToday
+        ? (readiness.state === 'low' ? 'baja' : readiness.state === 'high' ? 'alta' : determineIntensity(undefined, undefined, restDays))
+        : determineIntensity(
+            obData?.energy as 'bien' | 'regular' | 'cansado' | undefined,
+            obData?.sleep as 'muy bien' | 'normal' | 'mal' | undefined,
+            restDays,
+          );
       let intensity = composeIntensity(baseIntensity, meso.intensityBias);
       if (priorExercise === 'heavy') intensity = 'baja';
       else if (priorExercise === 'light' || discomfort === 'mild') intensity = 'media';
@@ -726,6 +780,16 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           : meso.progression === 'retroceder' ? 'RETROCEDE un punto hoy (recuperación/rendimiento a la baja) — sostén técnica, no fuerces'
           : 'MANTÉN el nivel de la última vez (consolida)';
         bullets.push(`MESOCICLO — semana ${meso.week} del bloque, fase ${faseTxt}. Progresión: ${dirTxt}. Es un plan que avanza en el tiempo; que la nota refleje en qué punto va.`);
+      }
+
+      // P6 · READINESS de hoy → la IA solo EXPLICA (los motores ya ajustaron dosis/carga).
+      // Un día bajo mantiene el peso/afloja HOY; NO cambia la fase ni el plan. Solo si hay
+      // check-in real (sin él, no se menciona para no inventar).
+      if (checkinToday && readiness.state !== 'normal') {
+        const factorTxt = readiness.factors.length ? ` (${readiness.factors.join(', ')})` : '';
+        bullets.push(readiness.state === 'low'
+          ? `READINESS BAJA hoy${factorTxt}: hoy mantenemos/aflojamos ligeramente carga y volumen para respetar la recuperación — explícalo en una frase corta. El plan sigue igual; es solo el ajuste de hoy.`
+          : `READINESS ALTA hoy${factorTxt}: buen día para empujar dentro de lo prescrito; no te pases del rango. Explícalo brevemente.`);
       }
 
       // P3 · target semanal personalizado + P5 · prioridad (explícita + inferida) →
@@ -855,15 +919,30 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           ...exsWithMuscle.filter(e => categorize(bankById.get(e.id) ?? { id: e.id, name: e.id, type: 'compuesto' }) === 'main-compound').map(e => e.muscleGroup),
           ...[...priorityMuscleSet].filter(m => exsWithMuscle.some(e => e.muscleGroup === m)),
         ])];
+        // P6 · la dosis de HOY usa la PEOR entre readiness aguda y recuperación crónica
+        // (un mal día baja hoy; la fatiga persistente también, vía el mesociclo).
+        const rank: Record<string, number> = { mala: 0, media: 1, buena: 2 };
+        const dosingRecovery = rank[todayRecovery] <= rank[meso.signals.recovery] ? todayRecovery : meso.signals.recovery;
         const allocation = allocateSessionVolume({
           weeklyTarget: targetsToMap(targets), doneThisWeek: done7,
           dayMuscles: [...new Set(exsWithMuscle.map(e => e.muscleGroup))], primaryMuscles,
           freqTarget: freq, sessionsThisWeekDone, muscleWeeklyFreq,
-          recovery: meso.signals.recovery, isDeload: mesoDeload,
+          recovery: dosingRecovery, isDeload: mesoDeload,
         });
+        // P6 · calibración de carga por RIR real (P2): factor acotado por ejercicio desde
+        // el histórico de RIR. Usuario nuevo (poco historial) → confianza baja → ajuste mínimo.
+        const isNewUser = (workoutLog || []).length < 6;
+        const rirByEx = new Map<string, RirObservation[]>();
+        for (const o of rirLog) {
+          if (!rirByEx.has(o.exerciseId)) rirByEx.set(o.exerciseId, []);
+          rirByEx.get(o.exerciseId)!.push(o);
+        }
+        const calibration: Record<string, number> = {};
+        for (const [exId, obsList] of rirByEx) calibration[exId] = loadCalibration({ observations: obsList, isNewUser }).factor;
         const items = prescribeSession({
           exercises: exsWithMuscle, bankById, allocation, objective: String(goal),
           phase: meso.phase, mainMinutes: sessionPlan.budget.main, lastPerf: lastExercisePerformance,
+          calibration,
         });
         const byId = new Map(items.map(it => [it.ex.id, it]));
         for (const exOut of w.exercises) {
@@ -874,6 +953,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           exOut.sets = it.prescription.sets;
           exOut.reps = /por lado/i.test(orig) ? `${it.prescription.reps} por lado` : it.prescription.reps;
           exOut.rest = it.prescription.rest;
+          // P6 · lleva el RIR prescrito al player. Solo se pide feedback de RIR en series
+          // RELEVANTES (compuesto principal con carga: top set / calibra P2) → mínima fricción.
+          exOut.rir = it.prescription.rir;
+          exOut.rirRelevant = it.category === 'main-compound' && it.prescription.scheme === 'top-backoff';
         }
         // Integridad de superserie: mismo group → mismas series (máx).
         const groups = new Map<string, typeof w.exercises>();
@@ -1067,6 +1150,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         setSelectedMuscles={setSelectedMuscles}
         selectedPriority={selectedPriority}
         setSelectedPriority={setSelectedPriority}
+        energy={energy} setEnergy={setEnergy}
+        sleep={sleep} setSleep={setSleep}
+        soreness={soreness} setSoreness={setSoreness}
         lastTrained={lastTrained}
         setLastTrained={setLastTrained}
         hasSystemHistory={hasSystemHistory}

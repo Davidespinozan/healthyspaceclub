@@ -32,6 +32,53 @@ export function loadForReps(e1RM: number, reps: number): number {
   return e1RM / (1 + reps / 30);
 }
 
+/**
+ * P6 · 1RM estimado APROVECHANDO el RIR real. Epley asume que la serie fue AL FALLO;
+ * si el usuario dejó RIR reps en reserva, su capacidad real corresponde a
+ * repsPotential = repsCompletadas + RIR. Sin `rir` cae al Epley normal (fallo asumido).
+ * null si no hay peso (corporal/banda). NO reemplaza el e1RM medido — se COMBINA (blendE1RM).
+ */
+export function estimate1RMFromSet(s: { reps: number; kg: number; rir?: number }): number | null {
+  if (s.kg <= 0 || s.reps <= 0) return null;
+  const repsPotential = s.reps + Math.max(0, s.rir ?? 0);
+  return s.kg * (1 + repsPotential / 30); // Epley sobre reps potenciales
+}
+
+/**
+ * P6 · e1RM ROBUSTO desde varias series (RIR-aware, con protección de outliers). Toma la
+ * MEDIANA de las estimaciones por serie con RIR — menos sensible a una serie rara que el
+ * máx. Con <2 estimaciones con RIR, o ninguna, cae a `estimate1RM` (fallback Epley sin RIR).
+ * Devuelve además cuántas exposiciones con RIR respaldan el número (para modular confianza).
+ */
+export function robustE1RM(sets?: { reps: number; kg: number; rir?: number }[]): { e1RM: number; ridCount: number } | null {
+  const list = sets ?? [];
+  const withRir = list
+    .filter(s => s.kg > 0 && s.reps > 0 && s.rir != null)
+    .map(s => estimate1RMFromSet(s)!)
+    .sort((a, b) => a - b);
+  if (withRir.length >= 2) {
+    // mediana (par → promedio de los dos centrales) → robusta al outlier
+    const mid = Math.floor(withRir.length / 2);
+    const median = withRir.length % 2 ? withRir[mid] : (withRir[mid - 1] + withRir[mid]) / 2;
+    return { e1RM: Math.round(median * 10) / 10, ridCount: withRir.length };
+  }
+  const plain = estimate1RM(list); // fallback: Epley sin RIR (fallo asumido)
+  return plain == null ? null : { e1RM: Math.round(plain * 10) / 10, ridCount: 0 };
+}
+
+/**
+ * P6 · Combina el e1RM MEDIDO (histórico, sin RIR) con el estimado por RIR, ponderando por
+ * evidencia: sin exposiciones con RIR → 100% medido (fallback); más exposiciones con RIR →
+ * más peso al RIR, tope 0.5 (nunca lo dominan). Protege de saltos por una sola percepción.
+ */
+export function blendE1RM(measured: number | null, rirBased: { e1RM: number; ridCount: number } | null): number | null {
+  if (rirBased == null) return measured;
+  if (measured == null) return rirBased.ridCount > 0 ? rirBased.e1RM : null;
+  if (rirBased.ridCount === 0) return measured;                 // no hay RIR → confía en lo medido
+  const w = Math.min(0.5, 0.2 + 0.1 * rirBased.ridCount);       // 1 exp→0.3, 2→0.4, ≥3→0.5
+  return Math.round((measured * (1 - w) + rirBased.e1RM * w) * 10) / 10;
+}
+
 /** Redondea al incremento real del gym (placas). Tren inferior/compuestos → 5;
  *  el resto → 2.5. */
 export function roundToIncrement(kg: number, inc = 2.5): number {
@@ -61,13 +108,18 @@ export function rirForBias(bias: IntensityBias): number {
  * null si no hay e1RM (peso corporal/banda → la progresión va por dificultad/tensión).
  */
 export function prescribeLoad(
-  lastSets: { reps: number; kg: number }[] | undefined,
+  lastSets: { reps: number; kg: number; rir?: number }[] | undefined,
   repRange: string,
   bias: IntensityBias,
   inc = 2.5,
+  calibration = 1,   // P6 · factor de calibración por RIR real (acotado ±5% aguas arriba)
 ): LoadPrescription | null {
-  const e1RM = estimate1RM(lastSets);
-  if (e1RM == null) return null;
+  // e1RM base medido, COMBINADO con el estimado por RIR real (robusto, fallback Epley), y
+  // escalado por la calibración de RIR (P6). Sin RIR ni calibración → idéntico a antes.
+  const measured = estimate1RM(lastSets);
+  const e1RMBlended = blendE1RM(measured, robustE1RM(lastSets));
+  if (e1RMBlended == null) return null;
+  const e1RM = e1RMBlended * calibration;
   const reps = targetRepsForPhase(repRange, bias);
   const rir = rirForBias(bias);
   const topKg = roundToIncrement(loadForReps(e1RM, reps + rir), inc);
