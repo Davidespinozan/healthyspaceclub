@@ -46,6 +46,7 @@ import { e1RMTrend, bestE1RMByMuscle } from '../utils/loadEngine';
 import { resolvePriorities, applyMusclePriority, possibleWeakPoint } from '../utils/musclePriority';
 import { computeReadiness, readinessToRecovery, chronicRecoveryTrend, chronicToRecovery } from '../utils/readiness';
 import { loadCalibration, rirError, type RirObservation } from '../utils/rirFeedback';
+import { formatCoachTrace } from '../utils/coachTrace';
 import {
   getCachedWorkout,
   saveWorkoutToCache,
@@ -329,6 +330,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     // Persiste el check-in de hoy (para la tendencia crónica y para no re-preguntar).
     if (freshCheckin && freshCheckin !== todayCheckin) setTodayCheckin(freshCheckin);
     const todayRecovery = readinessToRecovery(readiness.state); // dosis de HOY
+    let chronicTrend: 'declining' | 'stable' | 'improving' = 'stable'; // se asigna en el meso (para trace)
 
     const meso = (() => {
       const { weeksAccumulated } = deloadCheck(completedSessions, workoutLog || []);
@@ -361,6 +363,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         recentReadiness: [...readinessLog].sort((a, b) => b.date.localeCompare(a.date)).map(r => r.state),
         rirErrors, performance,
       });
+      chronicTrend = chronic;
       const fallbackRecovery = recoveryFromCheckin(String(obData?.energy ?? ''), String(obData?.sleep ?? ''));
       return deriveMesocycleState({
         weeksAccumulated,
@@ -656,6 +659,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         dayMuscles: muscleGroups,
         equipment: equipmentList,
         lowImpactMode,
+        isDeload: mesoDeload,   // P1 · descarga recorta el finisher (no re-meter fatiga)
         bank: exerciseBank,
       });
 
@@ -967,6 +971,37 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         for (const members of groups.values()) {
           const mx = Math.max(...members.map(m => m.sets ?? 0));
           for (const m of members) m.sets = mx;
+        }
+
+        // ── TRAZABILIDAD (dev) · registro auditable de la sesión compuesta ──────
+        if (import.meta.env?.DEV) {
+          try {
+            const trace = formatCoachTrace({
+              objective: String(goal), level: levelFromObData(obData), equipment: equipmentList,
+              hasLoadHistory: equipmentList.includes('gym'),
+              time: { total: selectedTime, warmup: sessionPlan.budget.warmup, main: sessionPlan.budget.main, finisher: sessionPlan.budget.finisher },
+              meso: {
+                week: meso.week, phase: meso.phase, progression: meso.progression, deload: mesoDeload,
+                volumeMultiplier: meso.volumeMultiplier, recovery: meso.signals.recovery,
+                adherence: meso.signals.adherence, performance: meso.signals.performance,
+              },
+              chronic: chronicTrend,
+              readiness: { state: readiness.state, factors: readiness.factors, captured: !!checkinToday, dosingRecovery },
+              targets: prioritizedTargets ?? {},
+              priorities: sessionPriorities,
+              doneThisWeek: done7,
+              sessionsLeftInWeek: Math.max(1, freq - sessionsThisWeekDone),
+              allocation,
+              items: items.map(it => ({
+                id: it.ex.id, muscle: it.ex.muscleGroup, category: it.category,
+                sets: it.prescription.sets, reps: it.prescription.reps, rest: it.prescription.rest,
+                rir: it.prescription.rir, topKg: it.prescription.topKg, backoffKg: it.prescription.backoffKg,
+                calibration: calibration[it.ex.id],
+              })),
+              cutsByTime: [], notes: priorityMuscleSet.size ? [`prioridad activa: ${[...priorityMuscleSet].join(', ')}`] : [],
+            });
+            console.info(trace.join('\n'));
+          } catch { /* trace no debe romper la generación */ }
         }
       }
 

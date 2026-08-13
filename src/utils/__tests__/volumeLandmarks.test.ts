@@ -110,6 +110,23 @@ describe('volumeLandmarks — integración', () => {
     expect(alto.pecho.target).toBeCloseTo(12 * 1.2, 1);
   });
 
+  it('PRESUPUESTO DE PROGRESIÓN (auditoría): meso×adapt NO se apila sin cota', () => {
+    const wk = [{ pecho: 10 }, { pecho: 10 }, { pecho: 10 }];
+    // señal "mala" apilaría meso(retroceder) × adapt(0.92); el combinado se acota a 0.80.
+    const abajo = computeVolumeTargets({ weeklyVolumes: wk, level: 'intermedio', weeksOfHistory: 3, volumeMultiplier: 0.70, recovery: 'mala', performance: 'baja' });
+    expect(abajo.pecho.target).toBeCloseTo(10 * 0.80, 1); // no baja hasta 10*0.70*0.92=6.44
+    // arriba: buena señal apilaría 1.2 × 1.05 = 1.26; se acota a 1.25.
+    const arriba = computeVolumeTargets({ weeklyVolumes: wk, level: 'intermedio', weeksOfHistory: 3, volumeMultiplier: 1.20, recovery: 'buena', performance: 'sube', adherence: 'alta' });
+    expect(arriba.pecho.target).toBeCloseTo(10 * 1.25, 1);
+  });
+
+  it('el presupuesto NO aplica en DELOAD (la descarga sí debe cortar fuerte)', () => {
+    const wk = [{ pecho: 12 }, { pecho: 12 }];
+    const deload = computeVolumeTargets({ weeklyVolumes: wk, level: 'intermedio', weeksOfHistory: 2, volumeMultiplier: 0.55, isDeload: true });
+    // 12*0.55=6.6 → cae al piso operativo (min 8), MÁS bajo que lo que dejaría el budget (0.80→9.6).
+    expect(deload.pecho.target).toBe(8);
+  });
+
   it('pickByVolumeDeficit compara contra el target PERSONALIZADO (cambia la decisión vs plano)', () => {
     // Sin volumen aún esta semana. Con target personalizado ALTO en pierna y bajo en
     // torso → elige 'lower'. Con el plano (14 parejo) elegiría 'upper' (tiene 5 músculos).

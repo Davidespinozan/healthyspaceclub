@@ -78,6 +78,8 @@ export interface SessionInput {
   equipment: Equipment[];
   /** Seguridad: edad/articulaciones → sin alto impacto ni riesgo de caída. */
   lowImpactMode?: boolean;
+  /** P1 · semana de descarga → el finisher se recorta (no debe re-meter la fatiga ahorrada). */
+  isDeload?: boolean;
   /** Banco completo (para elegir cardio/activación de warm-up y finisher). */
   bank: Exercise[];
 }
@@ -138,6 +140,7 @@ export function allocateTime(input: {
   isStrengthDay: boolean;
   isYogaDay?: boolean;
   objective: string;
+  isDeload?: boolean;
 }): { warmup: number; main: number; finisher: number } {
   const total = Math.max(10, Math.round(input.totalMinutes));
   if (input.isYogaDay) return { warmup: 0, main: total, finisher: 0 };
@@ -149,8 +152,12 @@ export function allocateTime(input: {
   // Finisher solo en días de FUERZA (en un día de cardio, el cardio ES el main).
   let finisher = 0;
   if (input.isStrengthDay) {
-    finisher = Math.round((total - warmup) * finisherShare(input.objective));
-    finisher = finisher < 5 ? 0 : Math.min(finisher, 30); // <5 → se omite; 30 = tope de FATIGA, no de meta
+    // DELOAD: el finisher re-mete fatiga que la descarga intenta ahorrar → se recorta a la
+    // mitad y con tope bajo (queda algo de trabajo aeróbico ligero solo si el objetivo lo pide).
+    const share = finisherShare(input.objective) * (input.isDeload ? 0.5 : 1);
+    finisher = Math.round((total - warmup) * share);
+    const cap = input.isDeload ? 10 : 30;
+    finisher = finisher < 5 ? 0 : Math.min(finisher, cap); // <5 → se omite; tope = FATIGA, no meta
   }
 
   let main = total - warmup - finisher;

@@ -25,11 +25,14 @@ describe('P6 · integración P2 — calibración de carga por RIR (sin saltos gr
   it('BANDAS / peso corporal (sin kg) → prescribeLoad null (fallback, no calibra carga)', () => {
     expect(prescribeLoad([{ reps: 15, kg: 0 }], '12', 'equilibrio', 2.5, 0.95)).toBeNull();
   });
-  it('e1RM ajustado por RIR: series con RIR elevan la capacidad estimada usada', () => {
-    // mismas reps/kg, pero con RIR alto (quedaban 3) → mayor topKg que asumir fallo
+  it('RIR corrige la carga por UN SOLO canal (calibración), no dos: prescribeLoad ignora el rir del set', () => {
+    // El rir dentro del set NO altera prescribeLoad (evita doble conteo con la calibración).
     const sinRir = prescribeLoad([{ reps: 8, kg: 100 }], '8', 'equilibrio')!;
-    const conRir = prescribeLoad([{ reps: 8, kg: 100, rir: 3 }, { reps: 8, kg: 100, rir: 3 }], '8', 'equilibrio')!;
-    expect(conRir.topKg).toBeGreaterThan(sinRir.topKg);
+    const conRirEnSet = prescribeLoad([{ reps: 8, kg: 100, rir: 3 }], '8', 'equilibrio')!;
+    expect(conRirEnSet.topKg).toBe(sinRir.topKg); // mismo: el RIR no entra por el e1RM
+    // La corrección por RIR llega SOLO por el factor de calibración (canal único).
+    const calibrado = prescribeLoad([{ reps: 8, kg: 100 }], '8', 'equilibrio', 2.5, 1.05)!;
+    expect(calibrado.topKg).toBeGreaterThan(sinRir.topKg);
   });
 });
 

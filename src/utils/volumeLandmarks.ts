@@ -94,6 +94,12 @@ export function computeVolumeTargets(input: {
     adherence: input.adherence ?? 'media',
     isDeload: input.isDeload ?? false,
   });
+  // PRESUPUESTO DE PROGRESIÓN (guardrail anti doble-conteo): el multiplicador del mesociclo
+  // (P1) y el factor de adaptación (P3) leen señales que se solapan (recuperación/rendimiento).
+  // Su producto se acota a una banda por semana para que UNA misma señal no reduzca (ni suba)
+  // el volumen dos veces de forma no acotada. En DELOAD no aplica: la descarga SÍ debe cortar
+  // fuerte. Banda = límite de software, no fisiología.
+  const combined = (input.isDeload ?? false) ? meso * adapt : clamp(meso * adapt, 0.80, 1.25);
 
   // Músculos: los del historial + los mayores (para cold start completo).
   const muscles = new Set<string>(MAJOR_MUSCLES);
@@ -110,7 +116,7 @@ export function computeVolumeTargets(input: {
       if (weeksOfHistory < 2) baseline = Math.min(baseline, cold); // poco historial → conservador
     }
     baseline = clamp(baseline, min, max);
-    const target = clamp(baseline * meso * adapt, min, max);
+    const target = clamp(baseline * combined, min, max);
     out[m] = { baseline: Math.round(baseline * 10) / 10, target: Math.round(target * 10) / 10, min, max };
   }
   return out;

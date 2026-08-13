@@ -47,6 +47,14 @@ describe('sessionBlocks — presupuesto de tiempo', () => {
     expect(a.finisher).toBeGreaterThan(0);
   });
 
+  it('DELOAD (auditoría): recorta el finisher para no re-meter la fatiga ahorrada', () => {
+    const normal = allocateTime({ totalMinutes: 75, isStrengthDay: true, objective: 'perder-grasa' });
+    const deload = allocateTime({ totalMinutes: 75, isStrengthDay: true, objective: 'perder-grasa', isDeload: true });
+    expect(deload.finisher).toBeLessThan(normal.finisher);
+    expect(deload.finisher).toBeLessThanOrEqual(10); // tope bajo en descarga
+    expect(deload.main).toBeGreaterThanOrEqual(normal.main); // el tiempo vuelve al principal
+  });
+
   it('día de yoga = una sola pieza (sin warm-up/finisher)', () => {
     const a = allocateTime({ totalMinutes: 60, isStrengthDay: false, isYogaDay: true, objective: 'mantener' });
     expect(a).toEqual({ warmup: 0, main: 60, finisher: 0 });

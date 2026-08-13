@@ -114,12 +114,13 @@ export function prescribeLoad(
   inc = 2.5,
   calibration = 1,   // P6 · factor de calibración por RIR real (acotado ±5% aguas arriba)
 ): LoadPrescription | null {
-  // e1RM base medido, COMBINADO con el estimado por RIR real (robusto, fallback Epley), y
-  // escalado por la calibración de RIR (P6). Sin RIR ni calibración → idéntico a antes.
-  const measured = estimate1RM(lastSets);
-  const e1RMBlended = blendE1RM(measured, robustE1RM(lastSets));
-  if (e1RMBlended == null) return null;
-  const e1RM = e1RMBlended * calibration;
+  // e1RM MEDIDO (Epley del mejor set) escalado por la calibración de RIR (P6). El RIR real
+  // corrige la carga por UN SOLO canal — la calibración— para no doble-contar: NO se vuelve a
+  // meter el RIR en el propio e1RM aquí (blendE1RM/robustE1RM quedan para métrica de capacidad,
+  // fuera de la prescripción de carga). Sin calibración (=1) → idéntico al comportamiento base.
+  const e1RM0 = estimate1RM(lastSets);
+  if (e1RM0 == null) return null;
+  const e1RM = e1RM0 * calibration;
   const reps = targetRepsForPhase(repRange, bias);
   const rir = rirForBias(bias);
   const topKg = roundToIncrement(loadForReps(e1RM, reps + rir), inc);
