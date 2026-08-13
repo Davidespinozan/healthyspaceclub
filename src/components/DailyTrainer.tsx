@@ -42,7 +42,8 @@ import { composeSession } from '../utils/sessionBlocks';
 import {
   deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
 } from '../utils/mesocycle';
-import { e1RMTrend } from '../utils/loadEngine';
+import { e1RMTrend, bestE1RMByMuscle } from '../utils/loadEngine';
+import { resolvePriorities, applyMusclePriority, possibleWeakPoint } from '../utils/musclePriority';
 import {
   getCachedWorkout,
   saveWorkoutToCache,
@@ -205,6 +206,15 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // Foco de fuerza (qué entrenar) + historia (cuándo entrenó por última vez).
   const [focus, setFocus] = useState<FocusValue>('auto');
   const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>([]);
+  // P5 · músculos PRIORITARIOS (explícitos). Preferencia estable → se persiste local
+  // (no había campo en perfil/onboarding). La prioridad inferida se deriva del historial.
+  const [selectedPriority, setSelectedPriority] = useState<MuscleGroup[]>(() => {
+    try { const r = JSON.parse(localStorage.getItem('hsc_priority_muscles') || '[]'); return Array.isArray(r) ? r : []; }
+    catch { return []; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('hsc_priority_muscles', JSON.stringify(selectedPriority)); } catch { /* storage lleno/denegado */ }
+  }, [selectedPriority]);
   const [lastTrained, setLastTrained] = useState('');
   // Modo pareja: compañero conectado y matcheado, prellenado con sus datos reales.
   const [partnerName] = useState(() => pendingPartner?.name ?? '');
@@ -718,25 +728,47 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         bullets.push(`MESOCICLO — semana ${meso.week} del bloque, fase ${faseTxt}. Progresión: ${dirTxt}. Es un plan que avanza en el tiempo; que la nota refleje en qué punto va.`);
       }
 
-      // P3 · VOLUMEN OBJETIVO personalizado por músculo (baseline individual × mesociclo
-      // × señales, acotado al rango operativo del nivel). Se le dice a la IA la meta
-      // SEMANAL de los músculos de hoy para que dosifique compuesto+accesorios hacia ella.
+      // P3 · target semanal personalizado + P5 · prioridad (explícita + inferida) →
+      // prioritizedTargets. Se computa UNA vez y se reusa en repair (orden) y P4 (volumen).
+      let prioritizedTargets: ReturnType<typeof computeVolumeTargets> | null = null;
+      let sessionPriorities: Record<string, 'none' | 'moderate' | 'high'> = {};
+      const priorityMuscleSet = new Set<string>();
       if (!isCardioDay) {
         const series = weeklyVolumeSeries(completedSessions, exerciseBank, workoutLog || [], 4);
-        const targets = computeVolumeTargets({
+        const p3targets = computeVolumeTargets({
           weeklyVolumes: series,
           level: levelFromObData(obData),
           weeksOfHistory: series.filter(wk => Object.keys(wk).length > 0).length,
           longPause: history.restDays >= 14,
-          recovery: meso.signals.recovery,
-          performance: meso.signals.performance,
-          adherence: meso.signals.adherence,
-          volumeMultiplier: meso.volumeMultiplier,
-          isDeload: mesoDeload,
+          recovery: meso.signals.recovery, performance: meso.signals.performance,
+          adherence: meso.signals.adherence, volumeMultiplier: meso.volumeMultiplier, isDeload: mesoDeload,
         });
+        // P5 · inferencia conservadora de rezago: e1RM por músculo por semana (14d + 3 previas).
+        const muscleOfId = (id: string) => exerciseBank.find(e => e.id === id)?.muscleGroup;
+        const muscleE1RM: Record<string, number[]> = {};
+        for (let wk = 1; wk <= 4; wk++) {
+          const hi = dayKey(new Date(Date.now() - (wk * 7 - 7) * 86400000));
+          const lo = dayKey(new Date(Date.now() - wk * 7 * 86400000));
+          const entries = (workoutLog || []).filter(e => e.date > lo && e.date <= hi);
+          const byM = bestE1RMByMuscle(entries, muscleOfId);
+          for (const m of Object.keys(byM)) { (muscleE1RM[m] ??= []).push(byM[m]); }
+        }
+        const painMap: Record<string, MuscleGroup[]> = { hombro: ['hombros', 'pecho'], rodilla: ['cuadriceps', 'isquios'], espalda: ['espalda', 'core'], cuello: ['hombros'], otro: [] };
+        const painMuscles = discomfort === 'pain' && painArea ? (painMap[painArea] ?? []) : [];
+        const inferred = possibleWeakPoint({
+          series, targets: targetsToMap(p3targets), muscleE1RM, adherence: meso.signals.adherence,
+        });
+        sessionPriorities = resolvePriorities({
+          explicit: selectedPriority, inferred, recovery: meso.signals.recovery,
+          isDeload: mesoDeload, painMuscles, shortSession: selectedTime <= 35,
+        });
+        for (const m of Object.keys(sessionPriorities)) priorityMuscleSet.add(m);
+        prioritizedTargets = applyMusclePriority(p3targets, sessionPriorities);
+
         const primary = muscleGroups.filter(m => m !== 'cuerpo-completo' && m !== 'cardio');
-        const list = primary.map(m => `${m} ${targets[m]?.target ?? '-'}`).join(', ');
-        if (list) bullets.push(`VOLUMEN OBJETIVO (personalizado, semanal) — ${list} series efectivas. Dosifica HOY hacia esa meta (compuesto + accesorios), sin pasarte del rango; es individual, no un número plano.`);
+        const list = primary.map(m => `${m} ${prioritizedTargets![m]?.target ?? '-'}${priorityMuscleSet.has(m) ? '★' : ''}`).join(', ');
+        if (list) bullets.push(`VOLUMEN OBJETIVO (personalizado, semanal) — ${list} series efectivas (★ = prioritario). Dosifica HOY hacia esa meta, sin pasarte del rango.`);
+        if (priorityMuscleSet.size) bullets.push(`PRIORIDAD: hoy se está priorizando ${[...priorityMuscleSet].join(', ')} — recibe su trabajo primero y más series; explícaselo. No abandones el resto del cuerpo.`);
       }
 
       const contextStr = bullets.join('\n- ');
@@ -783,7 +815,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           ? Math.max(3, Math.round(3 * meso.volumeMultiplier)) : 0;
         const repaired = repairWorkoutStructure(
           (workout as CachedWorkout).exercises, exerciseBank,
-          { hasWeights: equipmentList.includes('gym'), compoundSetFloor },
+          { hasWeights: equipmentList.includes('gym'), compoundSetFloor, priorityMuscles: priorityMuscleSet },
         );
         (workout as CachedWorkout).exercises = repaired.exercises;
         if (repaired.fixes.length) {
@@ -800,12 +832,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         const bankById = new Map(exerciseBank.map(e => [e.id, { id: e.id, name: e.name, type: e.type }]));
         const muscleOf = (id: string) => exerciseBank.find(e => e.id === id)?.muscleGroup ?? 'core';
         const exsWithMuscle = w.exercises.map(x => ({ id: x.id, muscleGroup: muscleOf(x.id) }));
-        // P3 · target semanal individual + volumen hecho esta semana
-        const series = weeklyVolumeSeries(completedSessions, exerciseBank, workoutLog || [], 4);
-        const targets = computeVolumeTargets({
-          weeklyVolumes: series, level: levelFromObData(obData),
-          weeksOfHistory: series.filter(wk => Object.keys(wk).length > 0).length,
-          longPause: history.restDays >= 14,
+        // P3+P5 · target semanal individual YA PRIORIZADO (computado arriba una vez) →
+        // no hay segundo motor de volumen; la prioridad ya está horneada en el target.
+        const targets = prioritizedTargets ?? computeVolumeTargets({
+          weeklyVolumes: weeklyVolumeSeries(completedSessions, exerciseBank, workoutLog || [], 4),
+          level: levelFromObData(obData), weeksOfHistory: 0, longPause: history.restDays >= 14,
           recovery: meso.signals.recovery, performance: meso.signals.performance,
           adherence: meso.signals.adherence, volumeMultiplier: meso.volumeMultiplier, isDeload: mesoDeload,
         });
@@ -818,9 +849,12 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         const sessionsThisWeekDone = new Set(
           [...completedSessions.map(s => s.date), ...(workoutLog || []).map(x => x.date)].filter(d => d >= wkAgo),
         ).size;
-        const primaryMuscles = [...new Set(
-          exsWithMuscle.filter(e => categorize(bankById.get(e.id) ?? { id: e.id, name: e.id, type: 'compuesto' }) === 'main-compound').map(e => e.muscleGroup),
-        )];
+        // primaryMuscles = músculos de los compuestos principales de hoy ∪ prioritarios (P5):
+        // el músculo prioritario recibe reparto de PRINCIPAL aunque hoy no lidere un compuesto.
+        const primaryMuscles = [...new Set([
+          ...exsWithMuscle.filter(e => categorize(bankById.get(e.id) ?? { id: e.id, name: e.id, type: 'compuesto' }) === 'main-compound').map(e => e.muscleGroup),
+          ...[...priorityMuscleSet].filter(m => exsWithMuscle.some(e => e.muscleGroup === m)),
+        ])];
         const allocation = allocateSessionVolume({
           weeklyTarget: targetsToMap(targets), doneThisWeek: done7,
           dayMuscles: [...new Set(exsWithMuscle.map(e => e.muscleGroup))], primaryMuscles,
@@ -1031,6 +1065,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         setFocus={setFocus}
         selectedMuscles={selectedMuscles}
         setSelectedMuscles={setSelectedMuscles}
+        selectedPriority={selectedPriority}
+        setSelectedPriority={setSelectedPriority}
         lastTrained={lastTrained}
         setLastTrained={setLastTrained}
         hasSystemHistory={hasSystemHistory}

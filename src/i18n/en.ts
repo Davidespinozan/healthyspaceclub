@@ -774,6 +774,7 @@ export const en: Translations<typeof es> = {
     focusLegs: 'Legs',
     focusSpecific: 'Specific muscles',
     focusSpecificQ: 'Pick the muscles',
+    priorityQ: 'Priority muscle (optional, max 2) — gets more volume and goes first every session',
     musclePecho: 'Chest',
     muscleEspalda: 'Back',
     muscleHombros: 'Shoulders',

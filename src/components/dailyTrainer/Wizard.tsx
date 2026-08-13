@@ -61,6 +61,8 @@ interface WizardProps {
   setFocus: (f: FocusValue) => void;
   selectedMuscles: MuscleGroup[];
   setSelectedMuscles: (m: MuscleGroup[]) => void;
+  selectedPriority: MuscleGroup[];
+  setSelectedPriority: (m: MuscleGroup[]) => void;
   lastTrained: string;
   setLastTrained: (v: string) => void;
   hasSystemHistory: boolean;
@@ -85,6 +87,7 @@ export default function Wizard({
   selectedEquipment, setSelectedEquipment,
   focus, setFocus,
   selectedMuscles, setSelectedMuscles,
+  selectedPriority, setSelectedPriority,
   lastTrained, setLastTrained,
   hasSystemHistory,
   partnerMode, partnerName,
@@ -310,6 +313,28 @@ export default function Wizard({
                 </div>
               </div>
             )}
+            {/* P5 · MÚSCULO PRIORITARIO (preferencia persistente, no solo hoy): sesga
+                volumen, orden y selección hacia 1-2 músculos en CADA sesión. Máx 2 para
+                que el sesgo no se diluya; seguridad/recuperación lo bajan solos. */}
+            <div className="wz-muscle-grid">
+              <p className="wz-q-label wz-muscle-label">{t('wizard.priorityQ')}</p>
+              <div className="wz-chips">
+                {MUSCLE_OPTIONS.map(m => {
+                  const on = selectedPriority.includes(m.value);
+                  const full = selectedPriority.length >= 2 && !on;
+                  return (
+                    <button
+                      key={m.value}
+                      className={`wz-chip${on ? ' on' : ''}`}
+                      disabled={full}
+                      onClick={() => setSelectedPriority(on ? selectedPriority.filter(x => x !== m.value) : [...selectedPriority, m.value])}
+                    >
+                      {t(m.labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 

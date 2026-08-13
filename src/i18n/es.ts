@@ -773,6 +773,7 @@ export const es = {
     focusLegs: 'Piernas',
     focusSpecific: 'Músculos específicos',
     focusSpecificQ: 'Elige los músculos',
+    priorityQ: 'Músculo prioritario (opcional, máx 2) — recibe más volumen y va primero cada sesión',
     musclePecho: 'Pecho',
     muscleEspalda: 'Espalda',
     muscleHombros: 'Hombros',

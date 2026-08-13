@@ -23,9 +23,12 @@ interface WorkoutExercise {
 export function clusterIndividualsByMuscle<T extends WorkoutExercise>(
   exercises: T[],
   bank: Exercise[],
+  priorityMuscles?: Set<string>,
 ): T[] {
   const muscleById = new Map(bank.map(e => [e.id, e.muscleGroup]));
   const muscleOf = (ex: T): string => muscleById.get(ex.id) ?? 'zzz';
+  // P5: el músculo prioritario va PRIMERO dentro de su fase (rank − 100).
+  const mrankOf = (m: string) => muscleRank(m) - (priorityMuscles?.has(m) ? 100 : 0);
 
   const result: T[] = [];
   let i = 0;
@@ -52,8 +55,9 @@ export function clusterIndividualsByMuscle<T extends WorkoutExercise>(
         byMuscle.get(m)!.push(ex);
       }
       // Orden de músculo FIJO (región coherente), no primera aparición → el tren
-      // inferior queda junto y el superior junto, sin rebotar entre ellos.
-      order.sort((a, b) => muscleRank(a) - muscleRank(b));
+      // inferior queda junto y el superior junto, sin rebotar entre ellos. El músculo
+      // prioritario (P5) se adelanta.
+      order.sort((a, b) => mrankOf(a) - mrankOf(b));
       for (const m of order) result.push(...byMuscle.get(m)!);
     }
   }
@@ -110,12 +114,15 @@ function phaseRank(type: string | undefined, muscle: string | undefined): number
 export function repairWorkoutStructure<T extends WorkoutExercise>(
   exercises: T[],
   bank: Exercise[],
-  opts: { hasWeights?: boolean; compoundSetFloor?: number } = {},
+  opts: { hasWeights?: boolean; compoundSetFloor?: number; priorityMuscles?: Set<string> } = {},
 ): { exercises: T[]; fixes: string[] } {
   // hasWeights: la regla "compuesto pesado nunca en superserie" es por SEGURIDAD con
   // carga externa (barra/mancuerna). En peso corporal/ligas NO aplica — ahí los
   // circuitos y superseries de sentadillas/dominadas son válidos y deseables.
   const hasWeights = opts.hasWeights ?? true;
+  const priority = opts.priorityMuscles;
+  // P5: rank de músculo con sesgo de prioridad (el prioritario se adelanta en su fase).
+  const mrankP = (m: string | undefined): number => muscleRank(m) - (m && priority?.has(m) ? 100 : 0);
   const meta = new Map(bank.map(e => [e.id, e]));
   const typeOf = (ex: T): string | undefined => meta.get(ex.id)?.type;
   const muscleOf = (ex: T): string | undefined => meta.get(ex.id)?.muscleGroup;
@@ -201,10 +208,10 @@ export function repairWorkoutStructure<T extends WorkoutExercise>(
       seen.add(ex.group);
       const items = work.filter(e => e.group === ex.group);
       const rank = Math.min(...items.map(e => phaseRank(typeOf(e), muscleOf(e))));
-      const mrank = Math.min(...items.map(e => muscleRank(muscleOf(e))));
+      const mrank = Math.min(...items.map(e => mrankP(muscleOf(e))));
       units.push({ items, rank, mrank });
     } else {
-      units.push({ items: [ex], rank: phaseRank(typeOf(ex), muscleOf(ex)), mrank: muscleRank(muscleOf(ex)) });
+      units.push({ items: [ex], rank: phaseRank(typeOf(ex), muscleOf(ex)), mrank: mrankP(muscleOf(ex)) });
     }
   }
   const before = work.map(e => e.id).join('|');
@@ -220,7 +227,7 @@ export function repairWorkoutStructure<T extends WorkoutExercise>(
   work = sorted;
 
   // (5) Anti-enfriamiento: aislados del mismo músculo consecutivos (dentro de fase).
-  work = clusterIndividualsByMuscle(work, bank);
+  work = clusterIndividualsByMuscle(work, bank, priority);
 
   return { exercises: work, fixes };
 }

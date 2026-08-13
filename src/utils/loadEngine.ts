@@ -86,6 +86,22 @@ export function bestE1RMByExercise(entries: { exercise: string; sets: { reps: nu
   return best;
 }
 
+/** Mejor e1RM por MÚSCULO (máx e1RM entre sus ejercicios). Para la señal de fuerza por
+ *  grupo que usa la inferencia de punto débil (P5). Ignora músculos sin carga. */
+export function bestE1RMByMuscle(
+  entries: { exercise: string; sets: { reps: number; kg: number }[] }[],
+  muscleOf: (exerciseId: string) => string | undefined,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const e of entries) {
+    const est = estimate1RM(e.sets);
+    const m = muscleOf(e.exercise);
+    if (est == null || !m) continue;
+    out[m] = Math.max(out[m] ?? 0, est);
+  }
+  return out;
+}
+
 /** Suma del mejor e1RM por ejercicio — señal AGREGADA de fuerza. */
 export function aggregateE1RM(entries: { exercise: string; sets: { reps: number; kg: number }[] }[]): number {
   let sum = 0;
