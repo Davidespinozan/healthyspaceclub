@@ -311,6 +311,14 @@ export interface CompletedSession {
    * deload). undefined/false = sesión normal.
    */
   isDeload?: boolean;
+  /**
+   * BLOQUE 3 (D5) · Sets PERFORMED por ejercicio (misma estructura que viaja a Supabase). Es la
+   * VISTA por-ejercicio de `loggedSets` (misma fuente, escrita en el mismo evento) — permite el
+   * historial de fuerza que necesitan la tendencia de rendimiento (P1·e1RMTrend) y el punto débil
+   * inferido (P5). Sustituye al `workoutLog` legacy (vacío en producción). Ausente en sesiones
+   * viejas / sin tracking.
+   */
+  exercises?: Array<{ id: string; sets: { reps: number; kg: number; rir?: number }[] }>;
 }
 
 export interface RecipeStep {

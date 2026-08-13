@@ -125,6 +125,20 @@ export async function finishWorkoutSession(
     exercisesTotal: payload.exercisesTotal,
     ...(payload.loggedSets && payload.loggedSets.length > 0 && { loggedSets: payload.loggedSets }),
     ...(payload.isDeload && { isDeload: true }),
+    // BLOQUE 3 (D5) · sets performed por ejercicio (para el historial de fuerza que consumen
+    // P1·e1RMTrend y P5·weak-point). Misma fuente que loggedSets, vista por-ejercicio.
+    ...(() => {
+      const perEx = payload.exercises
+        .filter(e => e.performed && !e.performed.skipped)
+        .map(e => ({
+          id: e.exercise_id,
+          sets: (e.performed!.sets.filter((s): s is LoggedSet => s != null) as LoggedSet[])
+            .filter(s => s.reps > 0 || s.kg > 0)
+            .map(s => ({ reps: s.reps, kg: s.kg, ...(s.rir != null && { rir: s.rir }) })),
+        }))
+        .filter(e => e.sets.length > 0);
+      return perEx.length > 0 ? { exercises: perEx } : {};
+    })(),
   };
   addCompletedSession(session);
 

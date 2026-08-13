@@ -28,7 +28,7 @@ import { computeReadiness, readinessToRecovery, chronicRecoveryTrend, chronicToR
 import { allocateSessionVolume, prescribeSession, categorize } from '../../sessionPrescription';
 import { allocateTime } from '../../sessionBlocks';
 import { rirError, type RirObservation } from '../../rirFeedback';
-import { e1RMTrend } from '../../loadEngine';
+import { e1RMTrend, bestE1RMByMuscle } from '../../loadEngine';
 void _lvl;
 type MatRir = RirObservation & { exerciseId: string };
 
@@ -95,7 +95,7 @@ function newAthlete(p: Profile, r: () => number): Hidden {
 }
 
 // ── Estado persistente (mismas formas que la app) ─────────────────────────────
-interface SimSession { simDay: number; exerciseIds: string[]; loggedSets: (LoggedSet | null)[]; durationSeconds: number; isDeload: boolean; }
+interface SimSession { simDay: number; exerciseIds: string[]; loggedSets: (LoggedSet | null)[]; durationSeconds: number; isDeload: boolean; exercises: { id: string; sets: LoggedSet[] }[]; }
 export interface SimState {
   sessions: SimSession[];
   lastPerf: Record<string, { simDay: number; sets: LoggedSet[] }>;
@@ -111,6 +111,7 @@ function materialize(state: SimState, today: number, bank: Exercise[]) {
     modality: 'fuerza' as const, exerciseIds: s.exerciseIds, durationSeconds: s.durationSeconds,
     exercisesCompleted: s.exerciseIds.length, exercisesTotal: s.exerciseIds.length, loggedSets: s.loggedSets,
     isDeload: s.isDeload, // P1 · fuente de verdad del inicio de bloque
+    exercises: s.exercises, // D5 · historial por-ejercicio (P1·e1RMTrend / P5·weak-point)
   }));
   const lastPerf: Record<string, { sets: { reps: number; kg: number; rir?: number }[] }> = {};
   for (const [id, v] of Object.entries(state.lastPerf)) lastPerf[id] = { sets: v.sets };
@@ -152,7 +153,12 @@ export function coachDay(p: Profile, state: SimState, today: number, dayMuscles:
   const setsPrev7 = sum(computeWeeklyVolume(completedSessions, SIM_BANK, 14, workoutLog)) - setsLast7;
   const last7 = new Set(completedSessions.filter(s => s.date > dayKeyOffset(7)).map(s => s.date));
   const freq = trainingFrequency(completedSessions, workoutLog);
-  const performance = e1RMTrend([], []) ?? volumeTrend(setsLast7, setsPrev7);
+  // D5 · tendencia de FUERZA real desde completedSessions[].exercises (excluye deload), como en
+  // producción; cae a volumen si no hay carga comparable.
+  const strengthEntries = (loDays: number, hiDays: number) => completedSessions
+    .filter(s => !s.isDeload && s.date >= dayKeyOffset(hiDays) && (loDays === 0 || s.date < dayKeyOffset(loDays)))
+    .flatMap(s => (s.exercises ?? []).map(e => ({ exercise: e.id, sets: e.sets })));
+  const performance = e1RMTrend(strengthEntries(0, 14), strengthEntries(14, 28)) ?? volumeTrend(setsLast7, setsPrev7);
   const rirBySession = new Map<string, number[]>();
   for (const o of rirLog) { const k = (o as { date: string }).date; (rirBySession.get(k) ?? rirBySession.set(k, []).get(k)!).push(rirError(o)); }
   const rirErrors = [...rirBySession.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([, e]) => e.reduce((a, b) => a + b, 0) / e.length);
@@ -170,7 +176,17 @@ export function coachDay(p: Profile, state: SimState, today: number, dayMuscles:
     recovery: meso.signals.recovery, performance: meso.signals.performance, adherence: meso.signals.adherence,
     volumeMultiplier: meso.volumeMultiplier, isDeload: mesoDeload,
   });
-  const inferred = possibleWeakPoint({ series, targets: targetsToMap(p3), muscleE1RM: {}, adherence: meso.signals.adherence }); // workoutLog vacío → []
+  // D5 · e1RM por músculo por semana desde el historial real (completedSessions[].exercises).
+  const muscleOfId = (id: string) => SIM_BANK.find(e => e.id === id)?.muscleGroup;
+  const muscleE1RM: Record<string, number[]> = {};
+  for (let wk = 1; wk <= 4; wk++) {
+    const hi = dayKeyOffset(wk * 7 - 7), lo = dayKeyOffset(wk * 7);
+    const entries = completedSessions.filter(s => !s.isDeload && s.date > lo && s.date <= hi)
+      .flatMap(s => (s.exercises ?? []).map(e => ({ exercise: e.id, sets: e.sets })));
+    const byM = bestE1RMByMuscle(entries, muscleOfId);
+    for (const m of Object.keys(byM)) (muscleE1RM[m] ??= []).push(byM[m]);
+  }
+  const inferred = possibleWeakPoint({ series, targets: targetsToMap(p3), muscleE1RM, adherence: meso.signals.adherence });
   const priorities = resolvePriorities({ explicit: p.priorities ?? [], inferred, recovery: meso.signals.recovery, isDeload: mesoDeload, shortSession: p.minutes <= 35 });
   const targets = applyMusclePriority(p3, priorities);
   const priorityMuscles = new Set(Object.keys(priorities));
@@ -255,19 +271,21 @@ export function performAndFeedback(p: Profile, hidden: Hidden, state: SimState, 
     loggedSets.push(...perfSets);
   }
 
-  // Persistencia con el MISMO gateo que la app (deload no contamina baseline/rirLog).
-  state.sessions.push({ simDay: today, exerciseIds, loggedSets, durationSeconds: day.time.main * 60, isDeload });
-  if (!isDeload) {
-    // lastPerf: última serie por ejercicio (agrupada) — gateado: en deload NO se escribe.
-    let cursor = 0;
-    for (const it of day.items) {
-      const n = it.prescription.sets;
-      const slice = loggedSets.slice(cursor, cursor + n).filter((x): x is LoggedSet => !!x && (x.reps > 0 || x.kg > 0));
-      cursor += n;
+  // Vista por-ejercicio de la sesión (D5 · misma fuente que loggedSets) — se guarda SIEMPRE
+  // (el consumidor P1/P5 filtra deload). lastPerf/rirLog sí se gatean (deload no contamina).
+  const sessionExercises: { id: string; sets: LoggedSet[] }[] = [];
+  let cursor = 0;
+  for (const it of day.items) {
+    const n = it.prescription.sets;
+    const slice = loggedSets.slice(cursor, cursor + n).filter((x): x is LoggedSet => !!x && (x.reps > 0 || x.kg > 0));
+    cursor += n;
+    if (slice.length) sessionExercises.push({ id: it.ex.id, sets: slice });
+    if (!isDeload) {
       if (slice.length) state.lastPerf[it.ex.id] = { simDay: today, sets: slice };
       for (const st of slice) if (st.rir != null) state.rirLog.push({ simDay: today, exerciseId: it.ex.id, prescribedRir: st.prescribedRir ?? it.prescription.rir, actualRir: st.rir, reps: st.reps, kg: st.kg });
     }
   }
+  state.sessions.push({ simDay: today, exerciseIds, loggedSets, durationSeconds: day.time.main * 60, isDeload, exercises: sessionExercises });
   state.readinessLog.push({ simDay: today, state: day.readiness.state });
   state.rirLog = state.rirLog.slice(-100);
   state.readinessLog = state.readinessLog.slice(-30);

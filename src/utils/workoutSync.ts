@@ -96,6 +96,17 @@ export function mapWorkoutLogRowToSession(row: WorkoutLogRow): CompletedSession 
     exercisesTotal: row.exercises_total,
   };
   if (anyPerformed) session.loggedSets = flat;
+  // BLOQUE 3 (D5) · vista por-ejercicio (para el historial de fuerza de P1/P5). Conserva RIR.
+  const perEx = exercises
+    .filter(e => e.performed) // sin sets reales → cae por el guard de abajo (skipped incluido)
+    .map(e => ({
+      id: e.exercise_id,
+      sets: (Array.isArray(e.performed!.sets) ? e.performed!.sets : [])
+        .filter((s): s is LoggedSet => !!s && (s.reps > 0 || s.kg > 0))
+        .map(s => ({ reps: s.reps, kg: s.kg, ...((s as LoggedSet).rir != null && { rir: (s as LoggedSet).rir }) })),
+    }))
+    .filter(e => e.sets.length > 0);
+  if (perEx.length > 0) session.exercises = perEx;
   return session;
 }
 

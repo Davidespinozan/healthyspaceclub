@@ -344,11 +344,14 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       for (const s of completedSessions) if (s.date >= since(7)) last7Days.add(s.date);
       for (const w of (workoutLog || [])) if (w.date >= since(7)) last7Days.add(w.date);
       const freq = trainingFrequency(completedSessions, workoutLog || []);
-      // Rendimiento REAL (P2): tendencia de FUERZA (e1RM del mismo ejercicio, 14d vs
-      // 14-28d). Si no hay dato de carga comparable, cae a la tendencia de volumen.
-      const recentLog = (workoutLog || []).filter(w => w.date >= since(14));
-      const olderLog = (workoutLog || []).filter(w => w.date < since(14) && w.date >= since(28));
-      const strengthTrend = e1RMTrend(recentLog, olderLog);
+      // Rendimiento REAL (P2): tendencia de FUERZA (e1RM del mismo ejercicio, 14d vs 14-28d).
+      // BLOQUE 3 (D5) · lee el historial por-ejercicio de completedSessions (fuente real), no el
+      // workoutLog legacy (vacío en producción). Excluye deload (su carga ligera NO es caída de
+      // fuerza). Si no hay dato de carga comparable, cae a la tendencia de volumen.
+      const strengthEntries = (loDays: number, hiDays: number) => completedSessions
+        .filter(s => !s.isDeload && s.date >= since(hiDays) && (loDays === 0 || s.date < since(loDays)))
+        .flatMap(s => (s.exercises ?? []).map(e => ({ exercise: e.id, sets: e.sets })));
+      const strengthTrend = e1RMTrend(strengthEntries(0, 14), strengthEntries(14, 28));
       const performance = strengthTrend ?? volumeTrend(setsLast7, setsPrev7);
 
       // P6 · La recovery del MESOCICLO viene de la tendencia CRÓNICA (no de un día). Errores
@@ -838,11 +841,16 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         });
         // P5 · inferencia conservadora de rezago: e1RM por músculo por semana (14d + 3 previas).
         const muscleOfId = (id: string) => exerciseBank.find(e => e.id === id)?.muscleGroup;
+        // BLOQUE 3 (D5) · e1RM por músculo por semana desde completedSessions (fuente real, no
+        // workoutLog vacío) → el punto débil inferido de P5 ya PUEDE dispararse con evidencia real.
+        // Excluye deload (carga ligera no es debilidad).
         const muscleE1RM: Record<string, number[]> = {};
         for (let wk = 1; wk <= 4; wk++) {
           const hi = dayKey(new Date(Date.now() - (wk * 7 - 7) * 86400000));
           const lo = dayKey(new Date(Date.now() - wk * 7 * 86400000));
-          const entries = (workoutLog || []).filter(e => e.date > lo && e.date <= hi);
+          const entries = completedSessions
+            .filter(s => !s.isDeload && s.date > lo && s.date <= hi)
+            .flatMap(s => (s.exercises ?? []).map(e => ({ exercise: e.id, sets: e.sets })));
           const byM = bestE1RMByMuscle(entries, muscleOfId);
           for (const m of Object.keys(byM)) { (muscleE1RM[m] ??= []).push(byM[m]); }
         }
