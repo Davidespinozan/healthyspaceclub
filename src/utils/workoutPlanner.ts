@@ -785,6 +785,24 @@ export function hasPlayableVariant(exercise: Exercise, equipment: Equipment[], a
   ) ?? false;
 }
 
+/**
+ * ¿Esta ESTACIÓN de warm-up/finisher es reproducible por el usuario? Más correcto que
+ * exigir video a todo: una estación es reproducible si
+ *   (A) tiene variante con VIDEO (demostración) para el equipo — obligatorio en movimientos
+ *       técnicos; o
+ *   (B) es una estación TEMPORAL autoexplicativa: cardio steady-state de BAJA demanda técnica
+ *       (bici, caminadora, elíptica, remo, marcha) → instrucciones + duración bastan.
+ * Un movimiento técnico sin video (burpee, box jump, KB swing) NO es reproducible como estación.
+ */
+export function isReproducibleStation(exercise: Exercise, equipment: Equipment[]): boolean {
+  if (hasPlayableVariant(exercise, equipment)) return true; // (A) demostración en video
+  // (B) estación temporal autoexplicativa: cardio de ritmo sostenido y bajo riesgo técnico.
+  const steady = exercise.muscleGroup === 'cardio' &&
+    (matchesCardioStyle(exercise, 'correr') || matchesCardioStyle(exercise, 'lowImpact'));
+  const lowTechnicalDemand = exercise.impact !== 'high' && exercise.fallRisk !== true;
+  return steady && lowTechnicalDemand;
+}
+
 // ══════════════════════════════════════════════════════════════
 // CARDIO — estilo (bucket UX) y equipo efectivo (Fase 2)
 // ══════════════════════════════════════════════════════════════

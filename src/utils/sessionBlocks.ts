@@ -17,7 +17,7 @@
 //  · Todo respeta el PRESUPUESTO TOTAL de tiempo (el main nunca baja de su piso).
 // ─────────────────────────────────────────────────────────────────────────
 import type { CardioStyle, Equipment, Exercise, MuscleGroup, SessionRole } from '../types';
-import { cardioEquipmentFor, defaultCardioStyle, matchesCardioStyle, hasPlayableVariant } from './workoutPlanner';
+import { cardioEquipmentFor, defaultCardioStyle, matchesCardioStyle, hasPlayableVariant, isReproducibleStation } from './workoutPlanner';
 
 export type BlockIntensity = 'baja' | 'media' | 'alta';
 export type RampPhase = 'raise' | 'mobilise' | 'potentiate';
@@ -102,6 +102,9 @@ function cardioByRole(
     if (!ex.equipment.some(e => eq.includes(e))) return false;
     if (lowImpactMode && (ex.impact === 'high' || ex.fallRisk === true)) return false;
     if (style && !matchesCardioStyle(ex, style)) return false;
+    // REPRODUCIBILIDAD: un movimiento técnico sin video no debe llegar como estación de
+    // warm-up/finisher. Se admite con video (demo) o si es cardio steady-state autoexplicativo.
+    if (!isReproducibleStation(ex, eq)) return false;
     return true;
   });
 }

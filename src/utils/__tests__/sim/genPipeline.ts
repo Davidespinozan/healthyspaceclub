@@ -62,7 +62,10 @@ export function selectStrengthCandidates(input: {
   c = capByMovementFamily(c, input.time <= 30 ? 1 : 2);
   // INVARIANTE selection⊆validation (igual que el fix en DailyTrainer): solo jugables.
   c = c.filter(ex => hasPlayableVariant(ex, input.equipmentList));
-  return c;
+  // ELEGIBILIDAD: el yoga no entra como sustituto NORMAL de fuerza; se admite solo como
+  // último recurso si sin él quedan <3 (banco de peso corporal escaso). Mirror del fix real.
+  const nonYoga = c.filter(ex => !ex.isYoga);
+  return nonYoga.length >= 3 ? nonYoga : c;
 }
 
 export function selectCardioCandidates(input: {

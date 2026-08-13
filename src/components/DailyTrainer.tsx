@@ -730,6 +730,13 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // video → sin esto, la IA podía elegir un ejercicio que luego fitsEquipment rechaza
         // (genErrInvalid). Si esto vacía el pool, el guard de abajo da un mensaje claro.
         candidates = candidates.filter(ex => hasPlayableVariant(ex, equipmentList));
+        // ELEGIBILIDAD (decisión aprobada): el YOGA no entra como sustituto NORMAL de un
+        // ejercicio de fuerza solo por compartir metadata de hipertrofia/isométrico (evita
+        // p.ej. "pull day → warrior II"). Se admite SOLO como último recurso si sin él quedan
+        // <3 candidatos (banco de peso corporal escaso) — un working set vale más que un error.
+        // El yoga participa normalmente por su propia modalidad/movilidad y en el warm-up.
+        const nonYoga = candidates.filter(ex => !ex.isYoga);
+        if (nonYoga.length >= 3) candidates = nonYoga;
 
         // Si el coach relajó constraints, informarle a la IA en el contexto
         // para que pueda explicar al usuario por qué la rutina no es "perfecta".
@@ -855,8 +862,13 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       }
 
       const contextStr = bullets.join('\n- ');
+      // Universo permitido para la IA: SOLO los candidatos que ya pasaron TODOS los filtros
+      // (equipo/video, dolor/restricción, nivel, bajo-impacto, músculos de ayer). La IA puede
+      // ELEGIR y componer dentro de este set, pero NO escapar de él.
+      const aiCandidates = candidates.slice(0, 15);
+      const candidateIds = new Set(aiCandidates.map(c => c.id));
       const workout = await orchestrateWorkout({
-        candidates: candidates.slice(0, 15),
+        candidates: aiCandidates,
         equipment: equipmentList,
         targetCount,
         goal,
@@ -881,6 +893,17 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
       if (!validateWorkout(workout, validIds) || !fitsEquipment(workout)) {
         throw new Error(t('wizard.genErrInvalid'));
+      }
+      // SEGURIDAD SOBREVIVE A LA IA: todo ejercicio devuelto debe pertenecer al universo de
+      // candidatos (que ya excluyó dolor/restricción/nivel/alto-impacto/equipo-sin-video). Un id
+      // del banco fuera de candidatos —aunque exista— reintroduciría un movimiento filtrado por
+      // seguridad → se rechaza. La IA elige/compone DENTRO del universo, no escapa de él.
+      {
+        const escaped = (workout as CachedWorkout).exercises.find(ex => !candidateIds.has(ex.id));
+        if (escaped) {
+          console.warn('[workout] la IA devolvió un ejercicio fuera de candidatos:', escaped.id);
+          throw new Error(t('wizard.genErrInvalid'));
+        }
       }
 
       // Validador estructural + auto-reparación determinista: garantiza las reglas de
