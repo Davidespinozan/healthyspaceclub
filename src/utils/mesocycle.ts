@@ -103,11 +103,18 @@ export function deriveMesocycleState(input: {
     : (week >= 4 || (week === 3 && recovery === 'buena')) ? 'intensificacion' : 'acumulacion';
 
   // ── Progresión (avanzar / mantener / retroceder) ─────────────────────────
+  // BLOQUE 4 (D3) · principio: "AUSENCIA de señales negativas + evidencia suficiente de
+  // TOLERANCIA" → avanza. NO se exige readiness HIGH sostenida (recovery 'buena' + adherencia
+  // 'alta' a la vez) como antes; eso hacía que 'avanzar' casi nunca ocurriera. Se conservan
+  // intactos los frenos: mala recuperación / rendimiento cayendo → retroceder; señal ambigua o
+  // insuficiente → mantener; fatiga crónica → deload (arriba).
   const progression: Progression = deload
     ? 'deload'
     : (recovery === 'mala' || performance === 'baja') ? 'retroceder'
-    // aquí ya sabemos: recovery ≠ mala y performance ≠ baja.
-    : (recovery === 'buena' && adherence === 'alta') ? 'avanzar'
+    // aquí: recovery ∈ {buena, media}, performance ∈ {sube, estable}.
+    // Avanza si la adherencia no es baja (entrena consistente) Y hay evidencia de tolerancia:
+    // buena recuperación O el rendimiento subiendo. Basta con "va bien", no "todo excepcional".
+    : (adherence !== 'baja' && (recovery === 'buena' || performance === 'sube')) ? 'avanzar'
     : 'mantener';
 
   // ── Factores que aplica el generador ─────────────────────────────────────

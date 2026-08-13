@@ -240,6 +240,7 @@ describe('MONTE CARLO · fuzzing reproducible', () => {
     const levels: Profile['level'][] = ['principiante', 'intermedio', 'avanzado'];
     const equips: Profile['equipment'][] = ['gym', 'casa', 'bandas'];
     let crashes = 0, safetyTotal = 0, timeViol = 0, extremeTarget = 0, oscHigh = 0, bigJumps = 0;
+    let advW = 0, mantW = 0, retroW = 0, deloadW = 0; // D3 · distribución agregada de progresión
     const safetyKinds = new Map<string, number>();
     const timeByMin = new Map<number, number>();
     const N = 150;
@@ -258,6 +259,7 @@ describe('MONTE CARLO · fuzzing reproducible', () => {
         safetyTotal += rep.safetyViolations.length;
         for (const s of rep.safetyViolations) { const kind = s.replace(/[:=].*/, '').trim(); safetyKinds.set(kind, (safetyKinds.get(kind) ?? 0) + 1); }
         timeViol += rep.timeViolations;
+        advW += rep.weeksAdvance; mantW += rep.weeksHold; retroW += rep.weeksBack; deloadW += rep.deloads;
         if (rep.timeViolations > 0) timeByMin.set(prof.minutes, (timeByMin.get(prof.minutes) ?? 0) + rep.timeViolations);
         for (const sn of rep.snapshots) if (sn.refTarget > 24 || (sn.refTarget < 4 && sn.refTarget > 0)) extremeTarget++;
         if (rep.refTargetOsc >= 4) oscHigh++;
@@ -265,6 +267,10 @@ describe('MONTE CARLO · fuzzing reproducible', () => {
       } catch (e) { crashes++; if (crashes <= 3) console.error('[MC crash]', prof, e); }
     }
     emit(`\n══ MONTE CARLO (${N} atletas) ══\ncrashes=${crashes} · safetyViolations=${safetyTotal} · timeViolations=${timeViol} · extremeTargets=${extremeTarget} · oscilaciónAlta(≥4)=${oscHigh} · saltosCarga=${bigJumps}`);
+    const totW = advW + mantW + retroW + deloadW || 1;
+    emit(`progresión agregada (D3): avanza ${Math.round(advW / totW * 100)}% · mantiene ${Math.round(mantW / totW * 100)}% · retrocede ${Math.round(retroW / totW * 100)}% · deload ${Math.round(deloadW / totW * 100)}%`);
+    // D3 · el sistema YA NO produce ~0% de avance en atletas que responden bien.
+    expect(advW / totW).toBeGreaterThan(0.10);
     emit(`safety kinds: ${JSON.stringify([...safetyKinds.entries()])}`);
     emit(`timeViolations/min: ${JSON.stringify([...timeByMin.entries()].sort((a,b)=>a[0]-b[0]))}`);
     expect(crashes).toBe(0);
@@ -298,11 +304,14 @@ describe('DIFERENCIACIÓN + REPORTE FINAL', () => {
     const gym = runAthlete(P.B, 8, 11);
     const casa = runAthlete(P.E, 8, 12);
     const bandas = runAthlete(P.F, 8, 13);
-    // gym prescribe carga real; casa/bandas no inventan kg
-    expect(gym.refTopKgEnd).toBeGreaterThan(0);
-    expect(casa.refTopKgEnd == null || casa.refTopKgEnd === 0 || casa.refTopKgEnd == null).toBe(true);
-    // todos reciben sesiones completas (allocation > 0)
-    for (const rep of [gym, casa, bandas]) expect(rep.snapshots.every(s => s.allocationSum > 0)).toBe(true);
+    // gym prescribe carga real en el compuesto de referencia (en ALGUNA semana que lo entrena;
+    // qué día cae primero en la semana varía con la rotación); casa/bandas NUNCA inventan kg.
+    expect(gym.snapshots.some(s => (s.refTopKg ?? 0) > 0)).toBe(true);
+    expect(casa.snapshots.every(s => s.refTopKg == null || s.refTopKg === 0)).toBe(true);
+    expect(bandas.snapshots.every(s => s.refTopKg == null || s.refTopKg === 0)).toBe(true);
+    // todos COMPLETAN sesiones (aunque el volumen directo pueda ser 0 en mantenimiento —peso
+    // corporal alcanza el target por frecuencia— los ejercicios reciben igual el piso de series).
+    for (const rep of [gym, casa, bandas]) expect(rep.completed).toBeGreaterThan(0);
   });
 
   it('IMPRIME el reporte estructurado de A–J', () => {
