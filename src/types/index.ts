@@ -304,6 +304,13 @@ export interface CompletedSession {
    * Si está `undefined`, la sesión fue completada sin tracking (versiones anteriores del player).
    */
   loggedSets?: Array<LoggedSet | null>;
+  /**
+   * P1 · ¿fue una sesión de DESCARGA (deload)? Fuente de verdad explícita para derivar el
+   * INICIO del bloque de mesociclo (una semana con deload cierra el bloque → el siguiente
+   * empieza en semana 1). No se deriva del volumen (eso confundiría sesiones perdidas con
+   * deload). undefined/false = sesión normal.
+   */
+  isDeload?: boolean;
 }
 
 export interface RecipeStep {

@@ -87,6 +87,9 @@ export interface FinishSessionPayload {
   partnerUserId?: string | null;
   /** Modo pareja: nombre del compañero, para "entrenaste con X". */
   partnerName?: string | null;
+  /** P1 · ¿fue una sesión de DESCARGA? Se persiste en CompletedSession para derivar el
+   *  inicio del bloque de mesociclo (reset tras deload). */
+  isDeload?: boolean;
 }
 
 /**
@@ -121,6 +124,7 @@ export async function finishWorkoutSession(
     exercisesCompleted: payload.exercisesCompleted,
     exercisesTotal: payload.exercisesTotal,
     ...(payload.loggedSets && payload.loggedSets.length > 0 && { loggedSets: payload.loggedSets }),
+    ...(payload.isDeload && { isDeload: true }),
   };
   addCompletedSession(session);
 

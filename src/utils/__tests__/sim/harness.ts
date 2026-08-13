@@ -13,9 +13,10 @@
 // isNewUser dependen de él). El volumen se mide como en la app: exerciseIds × defaultSets.
 // ─────────────────────────────────────────────────────────────────────────
 import type { CompletedSession, Exercise, LoggedSet } from '../../../types';
+import { dayKey } from '../../localDate';
 import {
   computeWeeklyVolume, weeklyVolumeSeries, trainingFrequency,
-  splitTypesForFrequency, DAY_TYPE_CONFIG, deloadCheck, exerciseCountForDuration,
+  splitTypesForFrequency, DAY_TYPE_CONFIG, deloadCheck, inDeloadWeek, exerciseCountForDuration,
   levelFromObData as _lvl,
 } from '../../workoutPlanner';
 import {
@@ -41,9 +42,13 @@ export function rng(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const REAL_NOW = Date.parse('2026-08-10T12:00:00Z'); // fijo → reproducible (no Date.now())
-const dayKeyOffset = (daysAgo: number): string =>
-  new Date(REAL_NOW - daysAgo * 86400000).toISOString().slice(0, 10);
+// ANCLA al reloj REAL (capturada una vez): los motores del coach usan Date.now()/dayKey
+// internamente (deloadCheck, computeWeeklyVolume, inDeloadWeek…), así que el harness DEBE
+// datar su historial relativo a ese mismo reloj o las ventanas se desalinean. La
+// reproducibilidad la da el PRNG por seed, no una fecha fija. Se usa el MISMO dayKey que los
+// motores para que las comparaciones de strings de fecha coincidan exactamente.
+const REAL_NOW = Date.now();
+const dayKeyOffset = (daysAgo: number): string => dayKey(new Date(REAL_NOW - daysAgo * 86400000));
 
 // ── Banco sintético mínimo (1 compuesto + 1 accesorio por músculo) ────────────
 const ex = (id: string, type: string, muscleGroup: string, defaultSets = 3): Exercise =>
@@ -105,6 +110,7 @@ function materialize(state: SimState, today: number, bank: Exercise[]) {
     date: dayKeyOffset(today - s.simDay), completedAtIso: new Date(REAL_NOW - (today - s.simDay) * 86400000).toISOString(),
     modality: 'fuerza' as const, exerciseIds: s.exerciseIds, durationSeconds: s.durationSeconds,
     exercisesCompleted: s.exerciseIds.length, exercisesTotal: s.exerciseIds.length, loggedSets: s.loggedSets,
+    isDeload: s.isDeload, // P1 · fuente de verdad del inicio de bloque
   }));
   const lastPerf: Record<string, { sets: { reps: number; kg: number; rir?: number }[] }> = {};
   for (const [id, v] of Object.entries(state.lastPerf)) lastPerf[id] = { sets: v.sets };
@@ -137,8 +143,10 @@ export function coachDay(p: Profile, state: SimState, today: number, dayMuscles:
   const readiness = computeReadiness({ energy: checkin.energy as never, sleep: checkin.sleep as never, soreness: checkin.soreness as never });
   const todayRecovery = readinessToRecovery(readiness.state);
 
-  // Mesociclo (crónico)
+  // Mesociclo (crónico) — weeksAccumulated ya resetea tras un deload; inDeloadWeek mantiene
+  // la descarga durante su semana.
   const { weeksAccumulated } = deloadCheck(completedSessions, workoutLog);
+  const inDeload = inDeloadWeek(completedSessions);
   const sum = (v: Record<string, number>) => Object.values(v).reduce((a, b) => a + b, 0);
   const setsLast7 = sum(computeWeeklyVolume(completedSessions, SIM_BANK, 7, workoutLog));
   const setsPrev7 = sum(computeWeeklyVolume(completedSessions, SIM_BANK, 14, workoutLog)) - setsLast7;
@@ -151,7 +159,7 @@ export function coachDay(p: Profile, state: SimState, today: number, dayMuscles:
   const chronic = chronicRecoveryTrend({ recentReadiness: [...readinessLog].sort((a, b) => b.date.localeCompare(a.date)).map(r => r.state), rirErrors, performance });
   const meso = deriveMesocycleState({
     weeksAccumulated, recovery: chronicToRecovery(chronic, recoveryFromCheckin('', '')),
-    adherence: adherenceFrom(last7.size, freq), performance,
+    adherence: adherenceFrom(last7.size, freq), performance, inDeloadWeek: inDeload,
   });
   const mesoDeload = meso.deload;
 

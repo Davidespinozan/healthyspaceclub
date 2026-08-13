@@ -379,20 +379,48 @@ export function deloadCheck(
   completedSessions: CompletedSession[],
   workoutLog: WorkoutEntry[] = [],
 ): { deload: boolean; weeksAccumulated: number } {
-  const weekSessions = (w: number): number => {
+  // Info por semana (w hacia atrás): nº de días entrenados y si hubo una sesión de DESCARGA.
+  const weekInfo = (w: number): { count: number; hasDeload: boolean } => {
     const newer = dayKey(new Date(Date.now() - (w * 7 - 6) * 86400000)); // límite reciente
     const older = dayKey(new Date(Date.now() - w * 7 * 86400000));       // límite viejo
     const set = new Set<string>();
+    let hasDeload = false;
     const inRange = (d: string) => d >= older && d <= newer;
-    for (const x of completedSessions) if (inRange(x.date)) set.add(x.date);
+    for (const x of completedSessions) if (inRange(x.date)) { set.add(x.date); if (x.isDeload) hasDeload = true; }
     for (const x of workoutLog) if (inRange(x.date)) set.add(x.date);
-    return set.size;
+    return { count: set.size, hasDeload };
   };
+  // Semanas DURAS acumuladas del bloque EN CURSO: cuenta hacia atrás hasta un hueco (<3
+  // sesiones) O hasta una semana de DESCARGA. La semana de deload es la FRONTERA del bloque
+  // → no se cuenta ella ni lo anterior. Así un bloque real dura 4-6 semanas y RESETEA tras el
+  // deload (arregla el deload perpetuo del entrenador consistente).
   let weeks = 0;
-  for (let w = 1; w <= 8; w++) { // semanas completas hacia atrás (excluye la en curso)
-    if (weekSessions(w) >= 3) weeks++; else break;
+  for (let w = 1; w <= 8; w++) {
+    const { count, hasDeload } = weekInfo(w);
+    if (count < 3 || hasDeload) break;
+    weeks++;
   }
   return { deload: weeks >= 4, weeksAccumulated: weeks };
+}
+
+/**
+ * ¿Estamos DENTRO de la semana de descarga en curso? El deload dura ~1 semana desde su
+ * INICIO (primera sesión de deload de la racha más reciente). Mientras no hayan pasado 7 días
+ * desde ese inicio, el deload se mantiene (no se corta a mitad de semana); pasados 7 días, el
+ * bloque nuevo arranca en semana 1. Anclado al INICIO de la racha (no al final) para que un
+ * deload repartido en la semana no lo prolongue indefinidamente.
+ */
+export function inDeloadWeek(completedSessions: CompletedSession[]): boolean {
+  const desc = [...completedSessions].sort((a, b) => (b.completedAtIso || b.date).localeCompare(a.completedAtIso || a.date));
+  const firstDeloadIdx = desc.findIndex(s => s.isDeload);
+  if (firstDeloadIdx < 0) return false;
+  let streakStart = desc[firstDeloadIdx].date;
+  for (let j = firstDeloadIdx; j < desc.length; j++) {
+    if (desc[j].isDeload) streakStart = desc[j].date; // desc = más nuevo→viejo: extiende al más antiguo de la racha
+    else break;
+  }
+  const days = Math.floor((Date.now() - Date.parse(streakStart + 'T00:00:00Z')) / 86400000);
+  return days < 7;
 }
 
 /** Entre varios tipos de día, elige el que más DÉFICIT de volumen tiene esta semana

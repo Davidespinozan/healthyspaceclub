@@ -30,6 +30,7 @@ import {
   reconcilePartnerDayType,
   hasPlayableVariant,
   deloadCheck,
+  inDeloadWeek,
   computeWeeklyVolume,
   weeklyVolumeSeries,
   trainingFrequency,
@@ -334,6 +335,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
     const meso = (() => {
       const { weeksAccumulated } = deloadCheck(completedSessions, workoutLog || []);
+      const inDeload = inDeloadWeek(completedSessions); // P1 · seguimos en la semana de descarga
       const sum = (v: Record<string, number>) => Object.values(v).reduce((a, b) => a + b, 0);
       const setsLast7 = sum(computeWeeklyVolume(completedSessions, exerciseBank, 7, workoutLog || []));
       const setsPrev7 = sum(computeWeeklyVolume(completedSessions, exerciseBank, 14, workoutLog || [])) - setsLast7;
@@ -370,6 +372,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         recovery: chronicToRecovery(chronic, fallbackRecovery),
         adherence: adherenceFrom(last7Days.size, freq),
         performance,
+        inDeloadWeek: inDeload,
       });
     })();
     // El mesociclo es AUTORITATIVO sobre el deload (ventana 4-6 + adelantable).

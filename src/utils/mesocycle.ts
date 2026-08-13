@@ -76,18 +76,23 @@ const rampFor = (week: number): number => RAMP[Math.min(Math.max(week, 1), 6) - 
  * factores que el generador aplica (volumen/intensidad).
  */
 export function deriveMesocycleState(input: {
-  weeksAccumulated: number;               // semanas duras completas (deloadCheck)
+  weeksAccumulated: number;               // semanas duras del bloque EN CURSO (deloadCheck, reset-aware)
   recovery: Recovery;
   adherence: Adherence;
   performance: Trend;
+  inDeloadWeek?: boolean;                  // P1 · seguimos dentro de la semana de descarga en curso
 }): MesocycleState {
   const { recovery, adherence, performance } = input;
   const week = Math.max(1, input.weeksAccumulated + 1); // semana EN CURSO del bloque
 
-  // ── Deload autorregulado (ventana 4-6, adelantable) ──────────────────────
+  // ── Deload autorregulado (ventana 4-6, adelantable) + CONTINUIDAD ────────
+  // inDeloadWeek mantiene la descarga durante su semana (deloadCheck ya reseteó weeksAccumulated
+  // al detectar el deload, así que sin esto la descarga se cortaría a mitad de semana). Tras esa
+  // semana, weeksAccumulated=0 → week 1 → BLOQUE NUEVO (no más deload perpetuo).
   const overreached = recovery === 'mala' && performance === 'baja';
   const deload =
-    week >= 6 ? true                                       // tope duro: nunca más de 6 sin descarga
+    input.inDeloadWeek === true ? true                     // continúa la descarga en curso
+    : week >= 6 ? true                                     // tope duro: nunca más de 6 sin descarga
     : week >= 4 && (recovery !== 'buena' || performance === 'baja') ? true // 4-5: descarga si el cuerpo lo pide
     : week >= 3 && overreached ? true                      // adelantada si hay sobre-alcance claro
     : false;

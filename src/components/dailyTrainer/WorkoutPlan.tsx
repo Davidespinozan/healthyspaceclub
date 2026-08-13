@@ -530,6 +530,7 @@ export default function WorkoutPlan({
               coachReason: (plan as { razon?: string }).razon,
               generationMethod: 'ai_generated',
               loggedSets: data.loggedSets,
+              isDeload: (plan as { isDeload?: boolean }).isDeload === true, // P1 · marca la sesión de descarga
               // Fase 3 · crédito compartido: liga la sesión al compañero (del plan,
               // que lleva partnerId/partnerName — robusto venga de donde venga).
               partnerUserId: plan.partnerMode ? ((plan as { partnerId?: string | null }).partnerId ?? null) : null,
