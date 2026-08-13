@@ -230,19 +230,37 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
     items.push({ ex, category: cat, prescription });
   }
 
-  // 3) TIEMPO: si no cabe, recorta series de menor prioridad (aislamiento → secundario),
-  //    nunca por debajo de 2 series; jamás toca compuestos principales primero.
+  // 3) TIEMPO (BLOQUE 5 · D2/F2): "TIEMPO CORTO → MENOS COSAS, NO TODO HECHO PEOR".
+  // Jerarquía de recorte: (a) bajar series de menor prioridad hacia el piso; (b) ELIMINAR
+  // ejercicios completos (aislamiento → secundario → compuesto de menos series como último
+  // recurso), preservando ≥1 compuesto y el trabajo importante. JAMÁS se recorta el descanso
+  // crítico de un compuesto para fingir que cabe. Tolerancia pequeña y EXPLÍCITA.
   const PRIORITY: Record<Category, number> = { isolation: 0, 'secondary-compound': 1, 'main-compound': 2 };
-  let total = items.reduce((a, it) => a + minutesOf(it.prescription), 0);
+  const TIME_TOLERANCE = 2; // minutos — cota explícita, no un colchón que esconda el problema
+  const recompute = () => items.reduce((a, it) => a + minutesOf(it.prescription), 0);
+  let total = recompute();
+
+  // (a) baja series (nunca <2) empezando por lo de menor prioridad y más series.
   let guard = 200;
   while (total > input.mainMinutes && guard-- > 0) {
-    // candidato a recortar: menor prioridad, con más series
     const cand = items
       .filter(it => it.prescription.sets > 2)
       .sort((a, b) => PRIORITY[a.category] - PRIORITY[b.category] || b.prescription.sets - a.prescription.sets)[0];
     if (!cand) break;
     cand.prescription.sets -= 1;
-    total = items.reduce((a, it) => a + minutesOf(it.prescription), 0);
+    total = recompute();
+  }
+
+  // (b) si aún no cabe (todos en el piso de series), ELIMINA ejercicios completos: primero
+  // aislamiento, luego secundario; solo como ÚLTIMO recurso un compuesto (el de MENOS series,
+  // que ≈ el menos prioritario — el priorizado recibió más dosis), preservando siempre ≥1.
+  guard = 200;
+  while (total > input.mainMinutes + TIME_TOLERANCE && items.length > 1 && guard-- > 0) {
+    const nonMain = items.filter(it => it.category !== 'main-compound');
+    const pool = nonMain.length > 0 ? nonMain : items; // solo-compuestos → recorta el menor
+    const victim = pool.sort((a, b) => PRIORITY[a.category] - PRIORITY[b.category] || a.prescription.sets - b.prescription.sets)[0];
+    items.splice(items.indexOf(victim), 1);
+    total = recompute();
   }
   return items;
 }

@@ -187,12 +187,9 @@ describe('STRESS TEST · perfiles A–J longitudinales', () => {
     it(`${P[key].name} · ${weeks} semanas · SIN violaciones de seguridad`, () => {
       const rep = runAthlete(P[key], weeks, seed, ev);
       REPORTS.push(rep);
-      // TODO(bloque 5 · F2): las sesiones ≤35′ aún pueden desbordar el tiempo (finisher +
-      // descansos de compuesto). Es el hallazgo F2, que se corrige en el bloque 5 permitiendo
-      // que prescribeSession ELIMINE ejercicios. Hasta entonces se tolera SOLO en ≤35′; cualquier
-      // otra violación de seguridad sigue rompiendo el test.
-      const hardViolations = rep.safetyViolations.filter(v => !(P[key].minutes <= 35 && v.startsWith('sesión no cabe en tiempo')));
-      expect(hardViolations, `safety: ${hardViolations.join(' | ')}`).toEqual([]);
+      // BLOQUE 5 (F2) corregido: prescribeSession elimina ejercicios en sesiones cortas → NINGUNA
+      // violación de seguridad (incluida la de tiempo) es tolerada ya.
+      expect(rep.safetyViolations, `safety: ${rep.safetyViolations.join(' | ')}`).toEqual([]);
       expect(rep.completed).toBeGreaterThan(0);
     });
   }
@@ -276,13 +273,10 @@ describe('MONTE CARLO · fuzzing reproducible', () => {
     expect(crashes).toBe(0);
     // El ÚNICO tipo de violación de seguridad tolerado es el desbordo de tiempo a 30′ (HALLAZGO
     // documentado, no bug numérico). Cualquier clase NUEVA (NaN/negativo/cap/target) rompe el test.
-    const kinds = [...safetyKinds.keys()];
-    expect(kinds.filter(k => k !== 'sesión no cabe en tiempo')).toEqual([]);
-    // Las violaciones de tiempo son el hallazgo F2 (prescribeSession aún no ELIMINA ejercicios).
-    // Se concentran en sesiones cortas, con un long-tail marginal hasta 60′ (D5 subió la
-    // progresión → más volumen). TODO(bloque 5): al permitir eliminar ejercicios, RE-ENDURECER a
-    // `every ≤ 35` / idealmente 0 overflows. El desglose se imprime arriba (no se oculta).
-    expect([...timeByMin.keys()].every(m => m <= 60)).toBe(true);
+    // BLOQUE 5 (F2) corregido: CERO violaciones de seguridad, incluidas las de tiempo (las
+    // sesiones cortas caben eliminando ejercicios, no recortando descanso).
+    expect([...safetyKinds.keys()]).toEqual([]);
+    expect([...timeByMin.keys()]).toEqual([]);
   });
 });
 

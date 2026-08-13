@@ -1005,6 +1005,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           if (it.prescription.backoffKg != null) exOut.backoffKg = it.prescription.backoffKg;
           if (it.prescription.isDeloadLoad && it.prescription.topKg) exOut.deloadKg = it.prescription.topKg;
         }
+        // BLOQUE 5 (D2/F2) · en sesiones cortas prescribeSession ELIMINA ejercicios que no caben
+        // (aislamiento/secundario primero) → hay que quitarlos del workout real. Los de trabajo
+        // por TIEMPO (calentamiento/específicos con "seg") se conservan (no los prescribe P4).
+        const keepIds = new Set(items.map(it => it.ex.id));
+        w.exercises = w.exercises.filter(ex => keepIds.has(ex.id) || /seg|respiraci|\d\s*s\b/i.test(String(ex.reps ?? '')));
         // P1 · marca la sesión como descarga para el player (aviso + cargas reducidas) y para
         // que el registro NO contamine el baseline de fuerza.
         w.isDeload = mesoDeload;
