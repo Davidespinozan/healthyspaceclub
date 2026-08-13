@@ -539,7 +539,12 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         return w.exercises.every(ex => {
           const b = exerciseBank.find(e => e.id === ex.id);
           if (!b) return false;
-          return hasPlayableVariant(b, equipmentList);
+          // Los ejercicios de CARDIO se seleccionan con el equipo EXPANDIDO (peso corporal
+          // universal, vía cardioEquipmentFor). La validación debe usar el MISMO equipo, o
+          // el cardio de 'cuerpo' se rechaza siempre para gym/casa/ligas → genErrInvalid.
+          const isCardioEx = b.muscleGroup === 'cardio' || b.type === 'cardio';
+          const eq = isCardioEx ? cardioEquipmentFor(equipmentList) : equipmentList;
+          return hasPlayableVariant(b, eq);
         });
       };
       const cached = await getCachedWorkout(configHash, schemaType);
@@ -676,7 +681,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         const targetStyle = effectiveCardioStyle;
         const pool = modalityFiltered.filter(ex =>
           ex.equipment.some(e => cardioEq.includes(e)) &&
-          !(lowImpactMode && (ex.impact === 'high' || ex.fallRisk === true))
+          !(lowImpactMode && (ex.impact === 'high' || ex.fallRisk === true)) &&
+          // Solo cardio JUGABLE (con variante de video) para el equipo de cardio: así lo que
+          // elija la IA pasa fitsEquipment (que también exige video). Evita el genErrInvalid.
+          hasPlayableVariant(ex, cardioEq)
         );
         // Filtro por estilo, priorizando la intención: los del estilo van PRIMERO
         // (la selección downstream prefiere los primeros). Si el estilo no llega a 3
