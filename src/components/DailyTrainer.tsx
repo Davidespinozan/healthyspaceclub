@@ -541,9 +541,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           if (!b) return false;
           // Los ejercicios de CARDIO se seleccionan con el equipo EXPANDIDO (peso corporal
           // universal, vía cardioEquipmentFor). La validación debe usar el MISMO equipo, o
-          // el cardio de 'cuerpo' se rechaza siempre para gym/casa/ligas → genErrInvalid.
-          const isCardioEx = b.muscleGroup === 'cardio' || b.type === 'cardio';
-          const eq = isCardioEx ? cardioEquipmentFor(equipmentList) : equipmentList;
+          // el cardio de 'cuerpo' se rechaza siempre → genErrInvalid. En una SESIÓN de cardio,
+          // TODOS los ejercicios (incl. acondicionamiento tipo pliometría, cuyo muscleGroup no
+          // es 'cardio') se validan con el equipo expandido, igual que se seleccionaron.
+          const useCardioEq = selectedModality === 'cardio' || b.muscleGroup === 'cardio' || b.type === 'cardio';
+          const eq = useCardioEq ? cardioEquipmentFor(equipmentList) : equipmentList;
           return hasPlayableVariant(b, eq);
         });
       };
@@ -723,6 +725,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // Balance de patrones: máx 2 del mismo movimiento (agarres distintos) por día,
         // para que no salgan 3 jalones y cero remo. Días cortos → solo 1.
         candidates = capByMovementFamily(candidates, selectedTime <= 30 ? 1 : 2);
+        // INVARIANTE selection⊆validation: solo candidatos JUGABLES (con variante de video
+        // para el equipo). filterWithProgressiveRelaxation empareja por equipo pero NO exige
+        // video → sin esto, la IA podía elegir un ejercicio que luego fitsEquipment rechaza
+        // (genErrInvalid). Si esto vacía el pool, el guard de abajo da un mensaje claro.
+        candidates = candidates.filter(ex => hasPlayableVariant(ex, equipmentList));
 
         // Si el coach relajó constraints, informarle a la IA en el contexto
         // para que pueda explicar al usuario por qué la rutina no es "perfecta".
