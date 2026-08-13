@@ -961,7 +961,13 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           // RELEVANTES (compuesto principal con carga: top set / calibra P2) → mínima fricción.
           exOut.rir = it.prescription.rir;
           exOut.rirRelevant = it.category === 'main-compound' && it.prescription.scheme === 'top-backoff';
+          // P1 · carga de descarga reducida (si aplica) → el player la muestra en vez de la
+          // progresión normal. Nunca en RIR relevante (en deload no hay top-set agresivo).
+          if (it.prescription.isDeloadLoad && it.prescription.topKg) exOut.deloadKg = it.prescription.topKg;
         }
+        // P1 · marca la sesión como descarga para el player (aviso + cargas reducidas) y para
+        // que el registro NO contamine el baseline de fuerza.
+        w.isDeload = mesoDeload;
         // Integridad de superserie: mismo group → mismas series (máx).
         const groups = new Map<string, typeof w.exercises>();
         for (const exOut of w.exercises) if (exOut.group) {

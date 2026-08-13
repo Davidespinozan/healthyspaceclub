@@ -245,9 +245,14 @@ export default function WorkoutPlayer({
     if (!currentEx || !sets || sets.length === 0) return null;
     return computeProgression(sets, currentEx.reps, incrementForMuscle(currentBank?.muscleGroup), isBandExercise);
   })();
-  const progLabel = progression
-    ? (progression.kg != null && progression.kg > 0 ? `${progression.kg} kg × ${progression.reps}` : `× ${progression.reps}`)
-    : null;
+  // P1 · en descarga, la carga recomendada es la REDUCIDA (deloadKg), no el objetivo de
+  // progresión normal. Domina la etiqueta y el autocompletado de peso.
+  const deloadKg = currentEx?.deloadKg;
+  const progLabel = deloadKg != null && deloadKg > 0
+    ? `${deloadKg} kg × ${currentEx?.reps ?? ''}`
+    : progression
+      ? (progression.kg != null && progression.kg > 0 ? `${progression.kg} kg × ${progression.reps}` : `× ${progression.reps}`)
+      : null;
 
   // Límites de bloque (superserie = run del mismo `group`; o ejercicio suelto).
   const isBlockEnd = (stepIdx: number): boolean => {
@@ -473,9 +478,14 @@ export default function WorkoutPlayer({
     // Peso: si ya registraste una serie de este ejercicio HOY, arrastra ese peso;
     // si es la primera, arranca en el OBJETIVO de progresión (peso a superar).
     const sessionKg = lastKgForExercise(loggedByExercise, currentExerciseIndex);
+    // Peso: la serie previa de HOY manda; si es la primera, en descarga usa la carga reducida
+    // (deloadKg), si no el objetivo de progresión normal.
+    const suggestedKg = deloadKg != null && deloadKg > 0
+      ? deloadKg
+      : (progression?.kg != null && progression.kg > 0 ? progression.kg : sessionKg);
     const entry: LoggedSet = {
       reps: parseRepsToNumber(currentEx.reps),
-      kg: sessionKg > 0 ? sessionKg : (progression?.kg != null && progression.kg > 0 ? progression.kg : sessionKg),
+      kg: sessionKg > 0 ? sessionKg : suggestedKg,
     };
     setLoggedByExercise(prev => setLogAt(prev, currentExerciseIndex, currentSetNum - 1, entry));
     // P6 · pide RIR real SOLO en la serie relevante (top set del compuesto principal con
@@ -757,6 +767,10 @@ export default function WorkoutPlayer({
       {/* ── PHASE: EXERCISE (1 pantalla por ejercicio con filas de series) ── */}
       {phase === 'exercise' && currentEx && (
         <div className={`wp-active${restState ? ' has-rest' : ''}`} key={`ex-${currentExerciseIndex}`}>
+          {/* P1 · aviso de descarga — mensaje simple, sin tecnicismos de e1RM/mesociclo. */}
+          {workout.isDeload && (
+            <div className="wp-deload-banner">{t('workout.deloadBanner')}</div>
+          )}
           <div
             className="wp-video-area"
             style={videoAspect ? { aspectRatio: String(Math.min(1.9, Math.max(0.5, videoAspect))) } : undefined}

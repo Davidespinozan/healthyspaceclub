@@ -419,6 +419,7 @@ export const es = {
     videoSoon: 'Video próximamente',
     setsLabel: 'SERIES',
     completeSet: 'Completar serie',
+    deloadBanner: 'Semana de descarga · hoy bajamos carga y volumen para recuperar.',
     rirQ: '¿Cuántas más podías hacer?',
     rirReduce: 'Quedó más cerca del fallo de lo planeado — afloja un poco la siguiente.',
     rirReduceKg: 'Quedó más cerca del fallo — baja a ~{kg}kg en la siguiente.',

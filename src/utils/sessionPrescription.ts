@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { Exercise } from '../types';
 import { HEAVY_COMPOUND } from './exerciseOrder';
-import { prescribeLoad } from './loadEngine';
+import { prescribeLoad, roundToIncrement } from './loadEngine';
 import type { Recovery } from './mesocycle';
 
 export type Category = 'main-compound' | 'secondary-compound' | 'isolation';
@@ -24,10 +24,15 @@ export interface ExercisePrescription {
   rest: number;       // segundos
   rir: number;
   scheme: SetScheme;
-  topKg?: number;     // solo top-backoff con historial de carga (P2)
+  topKg?: number;     // top-backoff con historial de carga (P2); o carga recta reducida en deload
   backoffKg?: number;
   schemeNote?: string; // ej. "1 top set + 2 backoffs"
+  isDeloadLoad?: boolean; // P1 · topKg es una carga de descarga reducida (todas las series igual)
 }
+
+// DELOAD: factor de reducción de la carga de trabajo (guardrail/default, ~12.5% menos → ~87.5%
+// de la carga normal). No es ley universal; reduce fatiga manteniendo práctica técnica.
+export const DELOAD_LOAD_FACTOR = 0.875;
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
@@ -150,6 +155,21 @@ export function prescribeExercise(input: {
       topKg: load?.topKg, backoffKg: load?.backoffKg,
       schemeNote: `1 serie tope + ${backoffs} backoff${backoffs > 1 ? 's' : ''}`,
     };
+  }
+  // DELOAD con carga comparable: reduce EXPLÍCITAMENTE la carga de trabajo (~87.5% de la
+  // normal) en series rectas. Reutiliza P2: parte del peso normal de trabajo y lo baja. Sin
+  // top-set agresivo (scheme recto, RIR alto). Sin carga comparable (bandas/corporal) → recto
+  // sin kg (no se inventan placas). NO altera e1RM/baseline: esto es solo la prescripción de hoy.
+  if (phase === 'deload' && hasLoad) {
+    const normal = prescribeLoad(input.lastSets, reps, 'equilibrio', 2.5, input.calibration ?? 1);
+    if (normal) {
+      const deloadKg = roundToIncrement(normal.topKg * DELOAD_LOAD_FACTOR, 2.5);
+      return {
+        sets, reps, rest, rir, scheme: 'straight',
+        topKg: deloadKg, isDeloadLoad: true,
+        schemeNote: 'descarga: carga reducida (~12% menos), mismas series',
+      };
+    }
   }
   return { sets, reps, rest, rir, scheme: 'straight' };
 }

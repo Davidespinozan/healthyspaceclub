@@ -480,6 +480,13 @@ export default function WorkoutPlan({
               };
             });
 
+            // P1 · DELOAD: la sesión de descarga es una intervención planeada con carga
+            // reducida a propósito. NO debe contaminar las capas de aprendizaje:
+            //  · no actualiza lastExercisePerformance (baseline/e1RM/"peso a batir") → el
+            //    regreso post-deload retoma el peso real previo, no el ligero de la descarga;
+            //  · no registra RIR para calibración (un set fácil a propósito no es evidencia).
+            const isDeloadSession = (plan as { isDeload?: boolean }).isDeload === true;
+
             // Guarda el desempeño por ejercicio (para "la vez pasada: NkgxR" en el
             // próximo entreno). Solo series con carga/reps reales (no saltadas).
             const perfRecords = exercisesLog
@@ -491,11 +498,12 @@ export default function WorkoutPlan({
                   .filter(s => s.reps > 0 || s.kg > 0),
               }))
               .filter(r => r.sets.length > 0);
-            if (perfRecords.length > 0) useAppStore.getState().recordExercisePerformance(perfRecords);
+            if (!isDeloadSession && perfRecords.length > 0) useAppStore.getState().recordExercisePerformance(perfRecords);
 
             // P6 · extrae observaciones de RIR real (solo series donde el usuario lo
             // reportó) → alimenta la calibración de carga (P2) y la tendencia crónica.
-            const rirObs = plan.exercises.flatMap((ex, i) =>
+            // En deload NO se capturan (rirRelevant=false) y aquí se omite por seguridad.
+            const rirObs = isDeloadSession ? [] : plan.exercises.flatMap((ex, i) =>
               (performedByExercise[i] || [])
                 .filter((s): s is LoggedSet => s != null && s.rir != null)
                 .map(s => ({

@@ -420,6 +420,7 @@ export const en: Translations<typeof es> = {
     videoSoon: 'Video coming soon',
     setsLabel: 'SETS',
     completeSet: 'Complete set',
+    deloadBanner: 'Deload week · today we lower load and volume to recover.',
     rirQ: 'How many more could you do?',
     rirReduce: 'That was closer to failure than planned — ease off a bit next set.',
     rirReduceKg: 'Closer to failure than planned — drop to ~{kg}kg next set.',

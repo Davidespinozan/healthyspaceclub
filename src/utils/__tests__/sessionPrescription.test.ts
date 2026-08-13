@@ -116,6 +116,44 @@ describe('sessionPrescription — esquema top-backoff solo donde aplica', () => 
   });
 });
 
+describe('sessionPrescription — DELOAD de carga (P1, reutiliza P2)', () => {
+  const loaded = [{ reps: 6, kg: 100 }];
+
+  it('deload con carga comparable → carga recta REDUCIDA (~87.5% de la normal), sin top-set', () => {
+    const normal = prescribeExercise({ category: 'main-compound', sets: 4, objective: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
+    const deload = prescribeExercise({ category: 'main-compound', sets: 3, objective: 'hipertrofia', phase: 'deload', lastSets: loaded });
+    expect(deload.scheme).toBe('straight');       // sin top-set agresivo
+    expect(deload.backoffKg).toBeUndefined();
+    expect(deload.isDeloadLoad).toBe(true);
+    expect(deload.topKg!).toBeGreaterThan(0);
+    expect(deload.topKg!).toBeLessThan(normal.topKg!); // más ligero que el trabajo normal
+    // reducción razonable: entre ~10% y ~15% bajo el peso normal
+    const ratio = deload.topKg! / normal.topKg!;
+    expect(ratio).toBeGreaterThan(0.83);
+    expect(ratio).toBeLessThan(0.92);
+  });
+
+  it('deload → RIR alto (lejos del fallo)', () => {
+    const deload = prescribeExercise({ category: 'main-compound', sets: 3, objective: 'hipertrofia', phase: 'deload', lastSets: loaded });
+    expect(deload.rir).toBeGreaterThanOrEqual(3);
+  });
+
+  it('deload SIN carga comparable (bandas/peso corporal) → recto sin kg (no inventa placas)', () => {
+    const deload = prescribeExercise({ category: 'main-compound', sets: 3, objective: 'hipertrofia', phase: 'deload', lastSets: [{ reps: 15, kg: 0 }] });
+    expect(deload.scheme).toBe('straight');
+    expect(deload.topKg).toBeUndefined();
+    expect(deload.isDeloadLoad).toBeUndefined();
+  });
+
+  it('REGRESO post-deload: con el MISMO historial previo, la carga normal se recupera intacta', () => {
+    // El deload no toca lastExercisePerformance (se gatea en el registro), así que la siguiente
+    // sesión normal parte del MISMO historial → misma prescripción que antes del deload.
+    const antes = prescribeExercise({ category: 'main-compound', sets: 4, objective: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
+    const despues = prescribeExercise({ category: 'main-compound', sets: 4, objective: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
+    expect(despues.topKg).toBe(antes.topKg); // sin caída aprendida
+  });
+});
+
 describe('sessionPrescription — prescribeSession (reparto + tiempo)', () => {
   const bank = new Map([
     ['sentadilla-barra', ex('sentadilla-barra', 'Sentadilla con Barra', 'compuesto', 'cuadriceps')],

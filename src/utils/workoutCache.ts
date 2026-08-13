@@ -24,6 +24,9 @@ export interface CachedWorkout {
     // de compuesto principal con carga). El player solo prompta RIR donde rirRelevant.
     rir?: number;
     rirRelevant?: boolean;
+    // P1 · carga de DESCARGA reducida (kg) para este ejercicio: el player la muestra en vez
+    // del objetivo de progresión normal. Solo en semana de deload y con carga comparable.
+    deloadKg?: number;
     // Agrupación para superseries/biseries/triseries. Ejercicios con el mismo
     // `group` (ej. "A") se hacen encadenados (sin descanso entre ellos, descanso
     // al cerrar la vuelta). Ausente = serie recta.
@@ -42,6 +45,9 @@ export interface CachedWorkout {
   warmup: string;
   cooldown: string;
   note: string;
+  // P1 · sesión de DESCARGA (deload): el player muestra el aviso y las cargas reducidas, y
+  // el registro NO actualiza el baseline de fuerza (no enseñar "pérdida" al sistema).
+  isDeload?: boolean;
   // ── Sesión por bloques (Fase 3) — render-ready, nombres ya localizados ──
   // Deterministas (código, no IA). Opcionales: rutinas viejas no los traen.
   warmupBlock?: {

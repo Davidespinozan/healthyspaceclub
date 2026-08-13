@@ -158,6 +158,11 @@ describe('SIMULACIONES end-to-end P1–P6 (¿tiene sentido como coach?)', () => 
     // RIR alto y sin top-backoff (carga no agresiva)
     expect(deload.items.every(it => it.prescription.rir >= 3)).toBe(true);
     expect(deload.items.every(it => it.prescription.scheme === 'straight')).toBe(true);
+    // carga EXPLÍCITAMENTE reducida en el compuesto con carga (deloadKg), más ligera que lo normal
+    const dPress = deload.items.find(i => i.ex.id === 'press-banca')!;
+    const nPress = normal.items.find(i => i.ex.id === 'press-banca')!;
+    expect(dPress.prescription.isDeloadLoad).toBe(true);
+    expect(dPress.prescription.topKg!).toBeLessThan(nPress.prescription.topKg!);
     // finisher recortado pese a objetivo "perder grasa" (share alto) — la descarga manda
     expect(deload.time.finisher).toBeLessThanOrEqual(10);
   });
