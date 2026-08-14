@@ -818,6 +818,15 @@
   font-style: italic;
 }
 
+/* FASE 7 · esquema top/backoff por serie: top destaca (acento), backoff atenuado */
+.wp-set-row-scheme {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.wp-set-row-scheme--top { color: var(--wp-amber); }
+.wp-set-row-scheme--backoff { color: var(--wp-txt2); font-weight: 500; }
+
 /* Cue encadenado: "sin descanso · ahora [B]" — marca ritmo de superserie */
 .wp-set-row-hint--chain {
   color: var(--wp-amber);

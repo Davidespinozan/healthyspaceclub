@@ -24,8 +24,13 @@ export type Priorities = Record<string, PriorityLevel>;
 /** Máx de músculos que se priorizan de verdad a la vez (más = se diluye el sesgo). */
 export const MAX_EFFECTIVE_PRIORITIES = 2;
 
-/** Multiplicador de volumen por nivel — moderado y acotado (no abandona el resto). */
-export function priorityMultiplier(level: PriorityLevel): number {
+/**
+ * Multiplicador de volumen por prioridad — moderado y acotado (no abandona el resto). Fase 6 · el
+ * AVANZADO especializa MÁS (§5): sesga con más fuerza hacia el músculo prioritario (más volumen →
+ * más slots → aparece antes), sin llegar a monopolizar. Principiante/intermedio: baseline validado.
+ */
+export function priorityMultiplier(level: PriorityLevel, trainingLevel?: string): number {
+  if (trainingLevel === 'avanzado') return level === 'high' ? 1.28 : level === 'moderate' ? 1.15 : 1.0;
   return level === 'high' ? 1.18 : level === 'moderate' ? 1.10 : 1.0;
 }
 
@@ -75,11 +80,11 @@ export function resolvePriorities(input: {
  * prioritarios (acotado al rango operativo); el resto queda intacto → priorizar no es
  * abandonar. Reutiliza los rangos min/max de P3.
  */
-export function applyMusclePriority(targets: VolumeTargets, priorities: Priorities): VolumeTargets {
+export function applyMusclePriority(targets: VolumeTargets, priorities: Priorities, trainingLevel?: string): VolumeTargets {
   const out: VolumeTargets = {};
   for (const m of Object.keys(targets)) {
     const t = targets[m];
-    const mult = priorityMultiplier(priorities[m] ?? 'none');
+    const mult = priorityMultiplier(priorities[m] ?? 'none', trainingLevel);
     const target = Math.min(t.max, Math.round(t.target * mult * 10) / 10);
     out[m] = { ...t, target };
   }

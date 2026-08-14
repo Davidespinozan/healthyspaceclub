@@ -35,12 +35,15 @@ import {
   weeklyVolumeSeries,
   trainingFrequency,
   splitTypesForFrequency,
+  supportedSplitsForEquipment,
   determineIntensity,
   resolveTrainingGoal,
   trainingGoalFromPlan,
 } from '../utils/workoutPlanner';
 import { computeVolumeTargets, targetsToMap } from '../utils/volumeLandmarks';
-import { allocateSessionVolume, prescribeSession, categorize } from '../utils/sessionPrescription';
+import { allocateSessionVolume, prescribeSession, prescribeExercise, categorize } from '../utils/sessionPrescription';
+import { allocateHeadroom } from '../utils/headroom';
+import { assignTechniques } from '../utils/techniques';
 import { composeSession } from '../utils/sessionBlocks';
 import {
   deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
@@ -66,8 +69,11 @@ import { buildYogaFlowPlan } from '../utils/yogaBuilder';
 import { repairWorkoutStructure } from '../utils/exerciseOrder';
 import { currentBlockId, resolveBlockAnchors, enforceAnchors, type AnchorTraceItem } from '../utils/blockAnchors';
 import { buildSessionSlots, requiredPatterns, applySessionStructure, type Slot } from '../utils/sessionSlots';
+import { requiredRegions as computeRequiredRegions, regionExposure, selectFullBodyAnchors, type Region } from '../utils/regionalCoverage';
 import { movementPatternOf, type MovementPattern } from '../utils/movementPattern';
 import { buildGroups } from '../utils/supersetEngine';
+import { applyFatigueBudget, fatigueBudget as computeFatigueBudget } from '../utils/fatigueBudget';
+import { rankCandidates } from '../utils/exerciseQuality';
 import { deliverPartnerWorkout, getPartnerRecentDaytypes, type DeliverResult } from '../utils/partners';
 import type {
   Exercise,
@@ -521,6 +527,30 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         }
       }
 
+      // ── FASE 7 · GUARD DE SPLIT POR CAPACIDAD DEL EQUIPO ────────────────────
+      // Si el split (auto o preset de fuerza) no lo sostiene el banco con el gear actual —p.ej.
+      // "pull"/"legs" en peso corporal, con ~1 candidato válido con video— se DEGRADA a full-body
+      // (fallback seguro con cobertura upper+lower). Coherente en muscleGroups/label/dayType/anchors.
+      // No toca yoga/cardio/músculos-específicos. No inventa ejercicios ni relaja filtros de gear/pain.
+      const STRENGTH_SPLITS: WorkoutDayType[] = ['full-body', 'upper', 'lower', 'push', 'pull', 'legs'];
+      const requestedSplit: WorkoutDayType | null =
+        selectedModality === 'auto' ? (reconciled ? reconciledType : (todayDecision.type as WorkoutDayType))
+        : (selectedModality === 'fuerza' && focus !== 'specific')
+          ? (focus === 'auto' ? (reconciled ? reconciledType : (todayDecision.type as WorkoutDayType)) : (focus as WorkoutDayType))
+          : null;
+      let guardedSplit: WorkoutDayType | null = requestedSplit;
+      if (requestedSplit && STRENGTH_SPLITS.includes(requestedSplit)) {
+        const supported = supportedSplitsForEquipment({
+          exercises: exerciseBank, equipment: caps.equipmentList, allowedImplements: caps.allowedImplements,
+          goal, difficulty: levelFromObData(obData), lowImpactMode: lowImpactUser, candidates: [requestedSplit],
+        });
+        if (!supported.includes(requestedSplit)) {
+          const fb = DAY_TYPE_CONFIG['full-body'];
+          muscleGroups = fb.muscleGroups; dayLabel = fb.label; guardedSplit = 'full-body';
+          console.info(`[split-guard] "${requestedSplit}" sin soporte con el gear actual → full-body`);
+        }
+      }
+
       // TRAINING GOAL de resistencia (Fase 2): viene del ESTADO del wizard (elegible en UI).
       // Persiste como preferencia durable del perfil para que la próxima sesión la recuerde.
       if (String(obData?.trainingGoal ?? '') !== trainingGoal) setObData('trainingGoal', trainingGoal);
@@ -529,9 +559,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // para que distinto foco (push vs pull vs músculos específicos) NO colisione
       // en el caché y devuelva la misma rutina.
       const dayTypeKey = selectedModality === 'auto'
-        ? reconciledType
+        ? (guardedSplit ?? reconciledType)  // Fase 7 · refleja el split degradado en la clave de caché
         : selectedModality === 'fuerza'
-          ? (focus === 'specific' ? `specific:${[...selectedMuscles].sort().join(',')}` : `fuerza:${focus === 'auto' && reconciled ? reconciledType : focus}`)
+          ? (focus === 'specific' ? `specific:${[...selectedMuscles].sort().join(',')}` : `fuerza:${guardedSplit ?? (focus === 'auto' && reconciled ? reconciledType : focus)}`)
           : selectedModality;
       const schemaType = selectedModality === 'yoga' ? 'yoga' : 'workout' as const;
       const configHash = buildConfigHash({
@@ -766,6 +796,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // video → sin esto, la IA podía elegir un ejercicio que luego fitsEquipment rechaza
         // (genErrInvalid). Si esto vacía el pool, el guard de abajo da un mensaje claro.
         candidates = candidates.filter(ex => hasPlayableVariant(ex, equipmentList, caps.allowedImplements));
+        // Fase 5C · CALIDAD PRIMERO: reordena el pool por calidad contextual (estable/progresable/
+        // no-pliométrico según objetivo/nivel) preservando el orden previo (recencia) ante empate →
+        // anchors/slots/reemplazos eligen la MEJOR opción, no la primera; variedad es desempate.
+        candidates = rankCandidates(candidates, { trainingGoal, level: levelFromObData(obData) });
         // ELEGIBILIDAD (decisión aprobada): el YOGA no entra como sustituto NORMAL de un
         // ejercicio de fuerza solo por compartir metadata de hipertrofia/isométrico (evita
         // p.ej. "pull day → warrior II"). Se admite SOLO como último recurso si sin él quedan
@@ -828,16 +862,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // El bloque principal se dimensiona por SU presupuesto (no el total): el
       // calentamiento y el finisher ya reservaron su tiempo (Fase 3). El MESOCICLO
       // escala ese volumen: semanas de acumulación suben, deload baja.
-      const mainCount = exerciseCountForDuration(sessionPlan.budget.main);
-      let targetCount = Math.min(Math.round(mainCount * meso.volumeMultiplier), candidates.length);
-      if (trainingGoal === 'fuerza') {
-        // FUERZA · menos movimientos, más calidad por movimiento. La duración extra se va en
-        // DESCANSO y series de calidad (top-set/backoff), no en añadir ejercicios: ~0.6× y tope 6
-        // → 30' ~2-3, 60' ~5, 90' ~6 (no 9-13). Piso 2 (un compuesto principal + 1 puede bastar).
-        targetCount = Math.max(2, Math.min(6, Math.round(targetCount * 0.6)));
-      } else {
-        targetCount = Math.max(3, targetCount);
-      }
+      // Fase 5A/5A.1 · el tiempo es CAPACIDAD (tope), NO la orden de cuántos ejercicios. El nº real
+      // = slots.length (dose-driven, desde UNA sola allocation P4). Se computan tras los slots.
+      const timeCapCount = Math.round(exerciseCountForDuration(sessionPlan.budget.main) * meso.volumeMultiplier);
+      let targetCount = 0;
+      let sessionAllocation: Record<string, number> = {};
       if (mesoDeload) {
         bullets.push('SEMANA DE DELOAD (descarga — planeada o adelantada por las señales de recuperación): baja el volumen ~40% (menos series por ejercicio, 2 en vez de 3-4), deja 3-4 reps en reserva (RPE bajo), mismas técnicas. Es recuperación para seguir creciendo; explícaselo en la nota.');
       } else {
@@ -901,12 +930,38 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           isDeload: mesoDeload, painMuscles, shortSession: selectedTime <= 35,
         });
         for (const m of Object.keys(sessionPriorities)) priorityMuscleSet.add(m);
-        prioritizedTargets = applyMusclePriority(p3targets, sessionPriorities);
+        prioritizedTargets = applyMusclePriority(p3targets, sessionPriorities, levelFromObData(obData));
 
         const primary = muscleGroups.filter(m => m !== 'cuerpo-completo' && m !== 'cardio');
         const list = primary.map(m => `${m} ${prioritizedTargets![m]?.target ?? '-'}${priorityMuscleSet.has(m) ? '★' : ''}`).join(', ');
         if (list) bullets.push(`VOLUMEN OBJETIVO (personalizado, semanal) — ${list} series efectivas (★ = prioritario). Dosifica HOY hacia esa meta, sin pasarte del rango.`);
         if (priorityMuscleSet.size) bullets.push(`PRIORIDAD: hoy se está priorizando ${[...priorityMuscleSet].join(', ')} — recibe su trabajo primero y más series; explícaselo. No abandones el resto del cuerpo.`);
+
+        // ── Fase 5A.1 · ALLOCATION ÚNICA (P4) — fuente de verdad para SLOTS, COUNT y prescripción ──
+        // Se computa UNA vez aquí y se reusa tal cual en prescribeSession (no hay estimación aparte).
+        // La dosis real por músculo dirige cuántos slots/ejercicios pide cada músculo (dose-driven).
+        {
+          const done7c = computeWeeklyVolume(completedSessions, exerciseBank, 7, workoutLog || []);
+          const freqc = trainingFrequency(completedSessions, workoutLog || []);
+          const mwfc: Record<string, number> = {};
+          for (const dt of splitTypesForFrequency(freqc))
+            for (const m of (DAY_TYPE_CONFIG[dt]?.muscleGroups ?? [])) mwfc[m] = (mwfc[m] ?? 0) + 1;
+          const wkAgoC = dayKey(new Date(Date.now() - 6 * 86400000));
+          const sessThisWeekC = new Set([...completedSessions.map(s => s.date), ...(workoutLog || []).map(x => x.date)].filter(d => d >= wkAgoC)).size;
+          const rankR: Record<string, number> = { mala: 0, media: 1, buena: 2 };
+          const dosingRecoveryC = rankR[todayRecovery] <= rankR[meso.signals.recovery] ? todayRecovery : meso.signals.recovery;
+          const dayMusclesC = muscleGroups.filter(m => m !== 'cardio');
+          // primaryMuscles = grandes (que llevan compuesto) ∪ prioritarios; brazos/pantorrillas/core
+          // se amortiguan (aislamiento) — coincide con la primaryMuscles real de la selección.
+          const SMALL_ACCESSORY = new Set<MuscleGroup>(['biceps', 'triceps', 'antebrazo', 'pantorrillas', 'core']);
+          const primaryMusclesC = dayMusclesC.filter(m => !SMALL_ACCESSORY.has(m as MuscleGroup) || priorityMuscleSet.has(m));
+          sessionAllocation = allocateSessionVolume({
+            weeklyTarget: targetsToMap(prioritizedTargets!), doneThisWeek: done7c,
+            dayMuscles: dayMusclesC, primaryMuscles: primaryMusclesC,
+            freqTarget: freqc, sessionsThisWeekDone: sessThisWeekC, muscleWeeklyFreq: mwfc,
+            recovery: dosingRecoveryC, isDeload: mesoDeload,
+          });
+        }
       }
 
       const contextStr = bullets.join('\n- ');
@@ -917,11 +972,27 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // elige nuevas del ranking del motor. El pool `candidates` YA está filtrado por seguridad+
       // gear → "usable" = estar en el pool. Persiste la referencia mínima y deja trace.
       const isResistanceDay = !isCardioDay && !isYogaDay;
-      const anchorDayType: string = selectedModality === 'auto'
+      // Fase 7 · el split degradado (guardedSplit) manda para anchors + cobertura regional (isFullBody),
+      // así una sesión degradada a full-body recibe su cobertura upper+lower y su scope de continuidad.
+      const anchorDayType: string = guardedSplit ?? (selectedModality === 'auto'
         ? String(effDayType)
         : selectedModality === 'fuerza'
           ? (focus === 'auto' ? String(effDayType) : String(focus))
-          : String(effDayType);
+          : String(effDayType));
+      // ── FASE 5D · PLAN DE COBERTURA REGIONAL (solo full-body) ────────────────────
+      // Full-body debe entrenar ≥1 upper mayor + ≥1 lower mayor; el énfasis (push/pull, knee/hinge)
+      // rota por DÉFICIT de las últimas ~2 semanas (menos entrenado → primero), no por Math.random.
+      // Estas regiones (a) reparten los anchors entre funciones complementarias y (b) reservan slots
+      // de cobertura antes de los cosméticos. En upper/lower/PPL no aplica (no se toca su política).
+      const isFullBody = anchorDayType === 'full-body';
+      let fbRequiredRegions: Region[] = [];
+      if (isResistanceDay && isFullBody) {
+        const bankByIdR = new Map(exerciseBank.map(e => [e.id, e]));
+        const since = dayKey(new Date(Date.now() - 13 * 86400000));
+        const exposure = regionExposure(completedSessions, bankByIdR, since);
+        fbRequiredRegions = computeRequiredRegions({ timeMinutes: selectedTime, trainingGoal, exposure });
+      }
+
       let anchorIds: string[] = [];
       let anchorTrace: AnchorTraceItem[] = [];
       let groupTrace: Array<{ ids: string[]; type: string; quality: string; reasons: string[] }> = [];
@@ -931,6 +1002,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           stored: blockAnchors, blockId: currentBlockId(completedSessions),
           dayType: anchorDayType, trainingGoal, candidates,
           isUsable: (id) => candIdSet.has(id), today,
+          // Full-body: anchors repartidos por región complementaria (evita bench+OHP+dips como 3 anclas).
+          selectFresh: isFullBody
+            ? (cands, tg, count, exclude) => selectFullBodyAnchors(cands, tg, count, fbRequiredRegions, exclude)
+            : undefined,
         });
         anchorIds = res.anchorIds;
         anchorTrace = res.trace;
@@ -938,11 +1013,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         if (JSON.stringify(res.anchors) !== JSON.stringify(blockAnchors)) setBlockAnchors(res.anchors);
       }
 
-      // ── FASE 3 · SLOTS (diseñar la sesión antes de llenarla) ───────────────────
-      // Los slots son las FUNCIONES que la sesión necesita (patrones), derivadas de día +
-      // objetivo + tiempo (targetCount) + anchors (los satisfacen, no se duplican) + déficit +
-      // prioridad. P3/P4 siguen decidiendo CUÁNTO; los slots deciden QUÉ cubrir. Guían a la IA y
-      // el motor GARANTIZA cobertura + anti-redundancia tras la respuesta (applySessionStructure).
+      // ── FASE 3/5A.1 · SLOTS DOSE-DRIVEN (diseñar la sesión antes de llenarla) ───
+      // Los slots son las FUNCIONES que la sesión necesita, dimensionadas por la DOSIS real por
+      // músculo (sessionAllocation, única fuente): un músculo con más volumen abre más slots (con
+      // patrón complementario), topado por el tiempo. El nº de ejercicios = slots.length.
       let sessionSlots: Slot[] = [];
       let requiredPats: MovementPattern[] = [];
       if (isResistanceDay && candidates.length > 0) {
@@ -954,13 +1028,17 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
             role: ex ? categorize(ex) : 'secondary-compound' as const,
           };
         });
-        const deficitByMuscle: Record<string, number> = {};
-        if (prioritizedTargets) for (const m of Object.keys(prioritizedTargets)) deficitByMuscle[m] = prioritizedTargets[m]?.target ?? 0;
         sessionSlots = buildSessionSlots({
-          dayMuscles: muscleGroups, trainingGoal, targetCount,
-          anchors: anchorsMeta, priorityMuscles: priorityMuscleSet, deficitByMuscle,
+          dayMuscles: muscleGroups, trainingGoal, allocation: sessionAllocation,
+          anchors: anchorsMeta, priorityMuscles: priorityMuscleSet, timeCap: timeCapCount,
+          requiredRegions: fbRequiredRegions,   // Fase 5D · cobertura mayor (solo full-body; [] en el resto)
         });
         requiredPats = requiredPatterns(sessionSlots);
+        // El nº de ejercicios de la sesión SALE de los slots (single source; no hay count aparte).
+        targetCount = Math.min(Math.max(sessionSlots.length, anchorIds.length), candidates.length);
+      } else {
+        // Cardio/yoga u otros: cae a la capacidad de tiempo (no hay slots de resistencia).
+        targetCount = Math.max(trainingGoal === 'fuerza' ? 2 : 3, Math.min(timeCapCount, candidates.length));
       }
       // Resumen legible de slots para la IA (funciones a cubrir; elige DENTRO de cada patrón).
       const slotSummary = sessionSlots.length
@@ -1062,6 +1140,29 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         }
       }
 
+      // ── FASE 5B · PRESUPUESTO DE FATIGA SISTÉMICA (la sesión como CONJUNTO) ─────
+      // movementPattern distinto ≠ fatiga compatible. Si el conjunto apila demasiados compuestos
+      // duros, el motor reemplaza el compuesto más demandante por una alternativa MENOS sistémica
+      // del mismo músculo (preserva dosis) o elimina el slot opcional. Nunca toca anchors ni la
+      // cobertura de patrones requeridos. Contextual (goal/nivel/tiempo/readiness/fase).
+      if (isResistanceDay && requiredPats.length) {
+        const w = workout as CachedWorkout;
+        const bankByIdF = new Map(exerciseBank.map(e => [e.id, e]));
+        const fat = applyFatigueBudget({
+          exercises: w.exercises, anchorIds, requiredPatterns: requiredPats,
+          candidates, bankById: bankByIdF,
+          ctx: { trainingGoal, level: levelFromObData(obData), timeMinutes: selectedTime, readinessLow: readiness.state === 'low', phase: meso.phase },
+          makeItem: (id) => {
+            const b = exerciseBank.find(e => e.id === id);
+            return b ? { id, sets: b.defaultSets, reps: b.defaultReps, rest: b.defaultRest, tip_personalizado: '' } : null;
+          },
+        });
+        if (fat.fixes.length) {
+          console.info(`[workout] fatiga sistémica ${fat.total}/${fat.budget} · ${fat.replaced} reemplazos, ${fat.dropped} quitados:`, fat.fixes);
+          w.exercises = fat.exercises;
+        }
+      }
+
       // ── FASE 4 · MOTOR DE SUPERSERIES/TRISERIES (el motor decide, no la IA) ─────
       // Se descartan los `group` que haya puesto la IA y el MOTOR arma las agrupaciones que
       // MEJORAN la sesión (antagonistas/complementarias/time-saver) sin tocar anchors/mains,
@@ -1113,46 +1214,56 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         const bankById = new Map(exerciseBank.map(e => [e.id, { id: e.id, name: e.name, type: e.type }]));
         const muscleOf = (id: string) => exerciseBank.find(e => e.id === id)?.muscleGroup ?? 'core';
         const exsWithMuscle = w.exercises.map(x => ({ id: x.id, muscleGroup: muscleOf(x.id) }));
-        // P3+P5 · target semanal individual YA PRIORIZADO (computado arriba una vez) →
-        // no hay segundo motor de volumen; la prioridad ya está horneada en el target.
-        const targets = prioritizedTargets ?? computeVolumeTargets({
-          weeklyVolumes: weeklyVolumeSeries(completedSessions, exerciseBank, workoutLog || [], 4),
-          level: levelFromObData(obData), weeksOfHistory: 0, longPause: history.restDays >= 14,
-          recovery: meso.signals.recovery, performance: meso.signals.performance,
-          adherence: meso.signals.adherence, volumeMultiplier: meso.volumeMultiplier, isDeload: mesoDeload,
-        });
-        const done7 = computeWeeklyVolume(completedSessions, exerciseBank, 7, workoutLog || []);
-        const freq = trainingFrequency(completedSessions, workoutLog || []);
-        const muscleWeeklyFreq: Record<string, number> = {};
-        for (const dt of splitTypesForFrequency(freq))
-          for (const m of (DAY_TYPE_CONFIG[dt]?.muscleGroups ?? [])) muscleWeeklyFreq[m] = (muscleWeeklyFreq[m] ?? 0) + 1;
-        const wkAgo = dayKey(new Date(Date.now() - 6 * 86400000));
-        const sessionsThisWeekDone = new Set(
-          [...completedSessions.map(s => s.date), ...(workoutLog || []).map(x => x.date)].filter(d => d >= wkAgo),
-        ).size;
-        // primaryMuscles = músculos de los compuestos principales de hoy ∪ prioritarios (P5):
-        // el músculo prioritario recibe reparto de PRINCIPAL aunque hoy no lidere un compuesto.
-        const primaryMuscles = [...new Set([
-          ...exsWithMuscle.filter(e => categorize(bankById.get(e.id) ?? { id: e.id, name: e.id, type: 'compuesto' }) === 'main-compound').map(e => e.muscleGroup),
-          ...[...priorityMuscleSet].filter(m => exsWithMuscle.some(e => e.muscleGroup === m)),
-        ])];
-        // P6 · la dosis de HOY usa la PEOR entre readiness aguda y recuperación crónica
-        // (un mal día baja hoy; la fatiga persistente también, vía el mesociclo).
-        const rank: Record<string, number> = { mala: 0, media: 1, buena: 2 };
-        const dosingRecovery = rank[todayRecovery] <= rank[meso.signals.recovery] ? todayRecovery : meso.signals.recovery;
-        const allocation = allocateSessionVolume({
-          weeklyTarget: targetsToMap(targets), doneThisWeek: done7,
-          dayMuscles: [...new Set(exsWithMuscle.map(e => e.muscleGroup))], primaryMuscles,
-          freqTarget: freq, sessionsThisWeekDone, muscleWeeklyFreq,
-          recovery: dosingRecovery, isDeload: mesoDeload,
-        });
+        // Fase 5A.1 · FUENTE ÚNICA: la MISMA allocation P4 que dimensionó slots/count dosifica aquí.
+        // No hay segundo cálculo de volumen (se acabó la divergencia count↔prescripción de Fase 5A).
+        const allocation = sessionAllocation;
         // BLOQUE 2 · La carga es UNA sola autoridad (prescribeLoad RIR-aware). Ya NO hay
         // calibración por RIR aparte (canal único: el RIR entra vía la e1RM del historial).
         const items = prescribeSession({
           exercises: exsWithMuscle, bankById, allocation, trainingGoal,
-          phase: meso.phase, mainMinutes: sessionPlan.budget.main, lastPerf: lastExercisePerformance,
+          phase: meso.phase, level: levelFromObData(obData), mainMinutes: sessionPlan.budget.main, lastPerf: lastExercisePerformance,
         });
-        const byId = new Map(items.map(it => [it.ex.id, it]));
+
+        // ── FASE 5E · ESCALADO VOLUMEN ↔ TIEMPO (headroom, solo HIPERTROFIA) ─────
+        // Si tras prescribir sobra tiempo útil, se PROFUNDIZA (más series a mains/secondary — fatiga
+        // sistémica neutra) y, solo si un role cap ya bloquea y hay dosis pendiente, se añade un
+        // ejercicio complementario. Todo dentro de P3 (semanal)/P4 (dosis hoy); fuerza/deload/
+        // readiness-baja no rellenan; el semanal nunca se supera. Series ANTES que ejercicios.
+        let hItems = items;
+        if (trainingGoal === 'hipertrofia' && !mesoDeload) {
+          const done7h = computeWeeklyVolume(completedSessions, exerciseBank, 7, workoutLog || []);
+          const weeklyRemaining: Record<string, number> = {};
+          for (const m of muscleGroups) {
+            const target = prioritizedTargets?.[m]?.target ?? 0;
+            weeklyRemaining[m] = Math.max(0, target - (done7h[m] ?? 0));
+          }
+          const fullBank = new Map(exerciseBank.map(e => [e.id, e]));
+          const readinessKey = readiness.state === 'low' ? 'low' : readiness.state === 'high' ? 'high' : 'normal';
+          const fatBudgetVal = computeFatigueBudget({ trainingGoal, level: levelFromObData(obData), timeMinutes: selectedTime, readinessLow: readiness.state === 'low', phase: meso.phase });
+          const hr = allocateHeadroom({
+            items, bankById: fullBank, allocation, weeklyRemaining,
+            availableMainMinutes: sessionPlan.budget.main, trainingGoal, phase: meso.phase,
+            readiness: readinessKey, priorityMuscles: priorityMuscleSet, anchorIds: new Set(anchorIds),
+            candidates, fatigueBudgetValue: fatBudgetVal,
+            ctxQuality: { trainingGoal, level: levelFromObData(obData) },
+            makeItem: (id, cat, sets) => {
+              const b = exerciseBank.find(e => e.id === id);
+              if (!b) return null;
+              const prescription = prescribeExercise({ category: cat, sets, trainingGoal, phase: meso.phase, lastSets: lastExercisePerformance?.[id]?.sets });
+              return { ex: { id, muscleGroup: b.muscleGroup }, category: cat, prescription };
+            },
+          });
+          hItems = hr.items;
+          // Los ejercicios AÑADIDOS por headroom deben entrar al workout real (defaults del banco).
+          const presentIds = new Set(w.exercises.map(e => e.id));
+          for (const it of hItems) {
+            if (presentIds.has(it.ex.id)) continue;
+            const b = exerciseBank.find(e => e.id === it.ex.id);
+            if (b) w.exercises.push({ id: it.ex.id, sets: b.defaultSets, reps: b.defaultReps, rest: b.defaultRest, tip_personalizado: '' });
+          }
+          if (hr.decisions.length) console.info(`[workout] headroom ${Math.round(hr.headroomMin)}min (de ${Math.round(hr.availableMin)}), +${hr.addedSets} series/+${hr.addedExercises} ej${hr.endedEarly ? ' · fin anticipado intencional' : ''}:`, hr.decisions);
+        }
+        const byId = new Map(hItems.map(it => [it.ex.id, it]));
         for (const exOut of w.exercises) {
           const it = byId.get(exOut.id);
           if (!it) continue;
@@ -1172,7 +1283,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // BLOQUE 5 (D2/F2) · en sesiones cortas prescribeSession ELIMINA ejercicios que no caben
         // (aislamiento/secundario primero) → hay que quitarlos del workout real. Los de trabajo
         // por TIEMPO (calentamiento/específicos con "seg") se conservan (no los prescribe P4).
-        const keepIds = new Set(items.map(it => it.ex.id));
+        const keepIds = new Set(hItems.map(it => it.ex.id));
         w.exercises = w.exercises.filter(ex => keepIds.has(ex.id) || /seg|respiraci|\d\s*s\b/i.test(String(ex.reps ?? '')));
         // P1 · marca la sesión como descarga para el player (aviso + cargas reducidas) y para
         // que el registro NO contamine el baseline de fuerza.
@@ -1188,9 +1299,46 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           for (const m of members) m.sets = mx;
         }
 
+        // ── FASE 6 · TÉCNICAS DE INTENSIDAD (avanzado, gated, deterministas) ────
+        // El MOTOR es la autoridad (no la IA): se descarta cualquier `tecnica` que la IA pusiera
+        // (evita drop sets en principiantes/mains) y solo el AVANZADO en hipertrofia, fuera de
+        // deload/readiness-low, recibe 0–2 técnicas en aislamientos/secundarios NO-anchor, no
+        // agrupados. Se renderiza por el canal existente (chip `tecnica` + instrucción en tip).
+        for (const exOut of w.exercises) delete (exOut as { tecnica?: string }).tecnica;
+        if (trainingGoal === 'hipertrofia') {
+          const bankByIdT = new Map(exerciseBank.map(e => [e.id, e]));
+          const techItems = w.exercises
+            .filter(ex => !/seg|respiraci|\d\s*s\b/i.test(String(ex.reps ?? '')))
+            .map(ex => ({ id: ex.id, category: categorize(bankByIdT.get(ex.id) ?? { id: ex.id, name: ex.id, type: 'compuesto' }), sets: ex.sets ?? 0, grouped: !!ex.group }));
+          const techs = assignTechniques({
+            items: techItems,
+            ctx: {
+              level: levelFromObData(obData), trainingGoal, phase: meso.phase,
+              readiness: readiness.state === 'low' ? 'low' : readiness.state === 'high' ? 'high' : 'normal',
+              anchorIds: new Set(anchorIds), timeMinutes: selectedTime, fatigueHeadroom: true,
+            },
+          });
+          if (techs.size) {
+            for (const exOut of w.exercises) {
+              const t = techs.get(exOut.id);
+              if (!t) continue;
+              exOut.tecnica = t.label;
+              exOut.tip_personalizado = exOut.tip_personalizado ? `${t.note} ${exOut.tip_personalizado}` : t.note;
+            }
+            console.info('[workout] técnicas de intensidad (avanzado):', [...techs.entries()].map(([id, t]) => `${id}:${t.label}`));
+          }
+        }
+
         // ── TRAZABILIDAD (dev) · registro auditable de la sesión compuesta ──────
         if (import.meta.env?.DEV) {
           try {
+            // Métricas dev (recomputadas aquí; la allocation real es sessionAllocation).
+            const done7 = computeWeeklyVolume(completedSessions, exerciseBank, 7, workoutLog || []);
+            const freq = trainingFrequency(completedSessions, workoutLog || []);
+            const wkAgo = dayKey(new Date(Date.now() - 6 * 86400000));
+            const sessionsThisWeekDone = new Set([...completedSessions.map(s => s.date), ...(workoutLog || []).map(x => x.date)].filter(d => d >= wkAgo)).size;
+            const rankD: Record<string, number> = { mala: 0, media: 1, buena: 2 };
+            const dosingRecovery = rankD[todayRecovery] <= rankD[meso.signals.recovery] ? todayRecovery : meso.signals.recovery;
             const trace = formatCoachTrace({
               objective: String(goal), trainingGoal, level: levelFromObData(obData), equipment: equipmentList,
               anchors: anchorTrace.map(a => ({ exerciseId: a.exerciseId, status: a.status, from: a.from, reason: a.reason })),

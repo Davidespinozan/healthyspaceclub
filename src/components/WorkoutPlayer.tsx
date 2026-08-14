@@ -30,6 +30,8 @@ import {
   setsDoneForExercise,
   computeSessionStats,
   buildOnCompletePayload,
+  hasTopBackoffScheme,
+  setLoadForIndex,
   type LoggedByExercise,
 } from '../utils/workoutSession';
 import type { Exercise, Equipment, LoggedSet } from '../types';
@@ -256,6 +258,11 @@ export default function WorkoutPlayer({
   const deloadKg = currentEx?.deloadKg;
   const prescribedKg = deloadKg != null && deloadKg > 0 ? deloadKg
     : (currentEx?.topKg != null && currentEx.topKg > 0 ? currentEx.topKg : null);
+  // FASE 7 · TOP/BACKOFF por serie: el motor prescribe 1 top set (topKg) + N backoff (backoffKg).
+  // La carga ya llega al player; aquí se REPRESENTA por serie (lógica pura en workoutSession).
+  const hasTopBackoff = currentEx ? hasTopBackoffScheme(currentEx) : false;
+  const targetKgForSet = (setIdx: number): number | null =>
+    currentEx ? setLoadForIndex(currentEx, prescribedKg, setIdx).kg : prescribedKg;
   const progLabel = prescribedKg != null
     ? `${prescribedKg} kg × ${currentEx?.reps ?? ''}`
     : progression
@@ -486,14 +493,22 @@ export default function WorkoutPlayer({
     // Peso: si ya registraste una serie de este ejercicio HOY, arrastra ese peso;
     // si es la primera, arranca en el OBJETIVO de progresión (peso a superar).
     const sessionKg = lastKgForExercise(loggedByExercise, currentExerciseIndex);
-    // Peso: la serie previa de HOY manda; si es la primera, usa la carga PRESCRITA (misma fuente
-    // única: deloadKg/topKg); si no hay, cae a la progresión (bandas/corporal/accesorio).
-    const suggestedKg = prescribedKg != null
-      ? prescribedKg
-      : (progression?.kg != null && progression.kg > 0 ? progression.kg : sessionKg);
+    // FASE 7 · con TOP/BACKOFF, cada serie pre-rellena su carga OBJETIVO (top→topKg, backoff→backoffKg)
+    // en vez de arrastrar la del top set. Sin top/backoff: comportamiento IDÉNTICO al anterior (la
+    // serie previa de HOY manda; si es la primera, carga prescrita; si no, progresión).
+    const perSetTarget = targetKgForSet(currentSetNum - 1);
+    let kg: number;
+    if (hasTopBackoff && perSetTarget != null && perSetTarget > 0) {
+      kg = perSetTarget;
+    } else {
+      const suggestedKg = prescribedKg != null
+        ? prescribedKg
+        : (progression?.kg != null && progression.kg > 0 ? progression.kg : sessionKg);
+      kg = sessionKg > 0 ? sessionKg : suggestedKg;
+    }
     const entry: LoggedSet = {
       reps: parseRepsToNumber(currentEx.reps),
-      kg: sessionKg > 0 ? sessionKg : suggestedKg,
+      kg,
     };
     setLoggedByExercise(prev => setLogAt(prev, currentExerciseIndex, currentSetNum - 1, entry));
     // P6 · pide RIR real SOLO en la serie relevante (top set del compuesto principal con
@@ -921,6 +936,12 @@ export default function WorkoutPlayer({
                     </span>
                     <span className="wp-set-row-label">
                       {t('workout.set')} {setIdx + 1}
+                      {/* FASE 7 · TOP/BACKOFF: distingue la serie tope de las backoff con su carga objetivo. */}
+                      {hasTopBackoff && !isDone && (
+                        <span className={`wp-set-row-scheme wp-set-row-scheme--${setIdx === 0 ? 'top' : 'backoff'}`}>
+                          {' · '}{setIdx === 0 ? t('workout.topSet') : t('workout.backoffSet')} {targetKgForSet(setIdx)}kg
+                        </span>
+                      )}
                       {isDone && entry && (
                         <span className="wp-set-row-vals"> · {entry.reps} {t('workout.repsLower')} · {entry.kg}kg</span>
                       )}

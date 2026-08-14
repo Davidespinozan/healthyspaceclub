@@ -109,8 +109,12 @@ export function resolveBlockAnchors(input: {
   candidates: Exercise[];                 // pool VÁLIDO (ya filtrado por gear/pain/lowImpact/goal)
   isUsable: (exerciseId: string) => boolean; // reproducible con gear + seguro HOY
   today: string;
+  // Fase 5D · elección de anchors NUEVOS. Por defecto = ranking del motor (selectAnchors). Full-body
+  // pasa un selector que reparte las anclas entre regiones complementarias (no todas upper/lower).
+  selectFresh?: (candidates: Exercise[], trainingGoal: TrainingGoal, count: number, exclude: Set<string>) => string[];
 }): { anchorIds: string[]; anchors: BlockAnchor[]; trace: AnchorTraceItem[] } {
   const { stored, blockId, dayType, trainingGoal, candidates, isUsable, today } = input;
+  const selectFresh = input.selectFresh ?? selectAnchors;
   const count = anchorCountForDayType(dayType);
   const inBank = new Set(candidates.map(e => e.id));
   const trace: AnchorTraceItem[] = [];
@@ -135,8 +139,8 @@ export function resolveBlockAnchors(input: {
         reason: isFreshBlock ? 'continuidad entre bloques' : a.reason });
       trace.push({ exerciseId: a.exerciseId, status: 'reused', dayType, reason: isFreshBlock ? 'continuidad entre bloques' : undefined });
     } else {
-      // REEMPLAZAR con motivo: sustituto válido del ranking del motor.
-      const sub = selectAnchors(candidates, trainingGoal, 1, used)[0];
+      // REEMPLAZAR con motivo: sustituto válido (ranking del motor, o región complementaria en full-body).
+      const sub = selectFresh(candidates, trainingGoal, 1, used)[0];
       if (sub) {
         const reason = !isUsable(a.exerciseId)
           ? 'anchor no reproducible/seguro con el contexto actual (gear/dolor/lowImpact)'
@@ -151,7 +155,7 @@ export function resolveBlockAnchors(input: {
 
   // Completar hasta `count` con NUEVOS del ranking (primera vez, o si el reemplazo dejó huecos).
   if (anchorIds.length < count) {
-    const fresh = selectAnchors(candidates, trainingGoal, count - anchorIds.length, used);
+    const fresh = selectFresh(candidates, trainingGoal, count - anchorIds.length, used);
     for (const id of fresh) {
       used.add(id);
       anchorIds.push(id);

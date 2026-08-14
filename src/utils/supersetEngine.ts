@@ -39,7 +39,7 @@ export interface SupersetContext {
 }
 
 // Setup físico aproximado (logística CONSERVADORA: solo lo obviamente molesto). Por id.
-function setupClass(id: string): ExMeta['setup'] {
+export function setupClass(id: string): ExMeta['setup'] {
   const s = id.toLowerCase();
   if (/banda|liga/.test(s)) return 'band';
   if (/polea|push-down|maquina|prensa|jal|cable/.test(s)) return 'machine-cable';
@@ -180,7 +180,11 @@ function groupBudget(ctx: SupersetContext): number {
   const t = ctx.timeMinutes;
   if (ctx.trainingGoal === 'fuerza') return t <= 30 ? 1 : 0;      // fuerza: casi nunca
   if (ctx.level === 'principiante') return t <= 45 ? 1 : 0;        // principiante: menos densidad
-  return t <= 30 ? 2 : t <= 45 ? 2 : t <= 60 ? 1 : 0;             // hipertrofia
+  // AVANZADO (Fase 6 · §16): algo MÁS densidad que intermedio (sesiones largas 90min: 1 vs 0), pero
+  // SIN monopolizar los aislamientos — deja accesorios libres para las técnicas de intensidad (§6),
+  // que son el diferenciador principal. Nunca main/anchors ni bad pairs (lo garantiza buildGroups).
+  if (ctx.level === 'avanzado') return t <= 45 ? 2 : t <= 90 ? 1 : 0;
+  return t <= 30 ? 2 : t <= 45 ? 2 : t <= 60 ? 1 : 0;             // hipertrofia (intermedio)
 }
 
 /**

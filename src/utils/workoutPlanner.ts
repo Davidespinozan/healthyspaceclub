@@ -390,6 +390,59 @@ export function splitTypesForFrequency(freq: number): WorkoutDayType[] {
   return ['push', 'pull', 'legs', 'upper', 'lower'];
 }
 
+const UPPER_MUSCLES = new Set<MuscleGroup>(['pecho', 'espalda', 'hombros', 'biceps', 'triceps']);
+const LOWER_MUSCLES = new Set<MuscleGroup>(['cuadriceps', 'isquios', 'gluteo', 'pantorrillas']);
+
+/**
+ * FASE 7 · ¿Qué splits SOSTIENE el banco actual con este equipo? Deriva de la CAPACIDAD REAL (no
+ * de "if bodyweight => full-body"): para cada tipo de día cuenta los ejercicios REPRODUCIBLES (mismo
+ * filtro de gear + video + seguridad que la sesión) sobre los músculos de ese split, y lo conserva
+ * solo si hay ≥ `minPerSplit`. Full-body exige además ≥1 upper y ≥1 lower (entrenar todo el cuerpo).
+ * `full-body` es el fallback seguro y siempre se evalúa. No inventa ejercicios ni relaja filtros.
+ */
+export function supportedSplitsForEquipment(input: {
+  exercises: Exercise[];
+  equipment: Equipment[];
+  allowedImplements?: Set<Implement>;
+  goal: Goal;
+  difficulty?: TrainingLevel;
+  lowImpactMode?: boolean;
+  candidates?: WorkoutDayType[];
+  minPerSplit?: number;
+}): WorkoutDayType[] {
+  const min = input.minPerSplit ?? 3;
+  const types = input.candidates ?? (['full-body', 'upper', 'lower', 'push', 'pull', 'legs'] as WorkoutDayType[]);
+  const out: WorkoutDayType[] = [];
+  for (const t of types) {
+    const cfg = DAY_TYPE_CONFIG[t];
+    if (!cfg) continue;
+    const pool = filterExercisesForWorkout({
+      exercises: input.exercises, equipment: input.equipment, muscleGroups: cfg.muscleGroups,
+      goal: input.goal, difficulty: input.difficulty, lowImpactMode: input.lowImpactMode,
+      allowedImplements: input.allowedImplements,
+    });
+    if (pool.length < min) continue;
+    if (t === 'full-body') {
+      const hasUpper = pool.some(e => UPPER_MUSCLES.has(e.muscleGroup));
+      const hasLower = pool.some(e => LOWER_MUSCLES.has(e.muscleGroup));
+      if (!hasUpper || !hasLower) continue;   // full-body debe cubrir upper Y lower
+    }
+    out.push(t);
+  }
+  return out;
+}
+
+/** Degrada un split a una alternativa SOPORTADA por el equipo (preferentemente full-body). Si el
+ *  split pedido está soportado lo conserva; si no, cae a full-body (o al primer soportado). */
+export function degradeToSupportedSplit(
+  requested: WorkoutDayType,
+  supported: WorkoutDayType[],
+): WorkoutDayType {
+  if (supported.includes(requested)) return requested;
+  if (supported.includes('full-body')) return 'full-body';
+  return supported[0] ?? 'full-body';
+}
+
 /** ¿Toca semana de descarga (deload)? Detecta 4+ semanas COMPLETAS seguidas de entreno
  *  duro (≥3 sesiones/sem) sin una semana ligera de por medio → fatiga acumulada. */
 export function deloadCheck(
@@ -472,6 +525,10 @@ export function decideTodayWorkout(params: {
   dailySleep?: 'muy bien' | 'normal' | 'mal';
   completedSessions?: CompletedSession[];
   level?: Level; // P3: para el target de volumen personalizado (default intermedio → compat)
+  // FASE 7 · equipo actual → AUTO nunca elige un split que el banco no sostiene con este gear.
+  equipment?: Equipment[];
+  allowedImplements?: Set<Implement>;
+  lowImpactMode?: boolean;
 }): WorkoutDayDecision {
   const { userObjective, workoutLog, exercises, dailyEnergy, dailySleep, completedSessions = [] } = params;
 
@@ -493,7 +550,18 @@ export function decideTodayWorkout(params: {
   // evitando repetir los de ayer. Cardio/movilidad se respetan (recuperación).
   if (STRENGTH_TYPES.includes(todayType)) {
     const freq = trainingFrequency(completedSessions, workoutLog);
-    const preferred = splitTypesForFrequency(freq);
+    let preferred = splitTypesForFrequency(freq);
+    // FASE 7 · GUARD DE CAPACIDAD: descarta los splits que el equipo actual no sostiene (p.ej.
+    // pull/legs en peso corporal). Si ninguno de los preferidos queda soportado → full-body (fallback
+    // seguro). AUTO nunca selecciona un split incompatible.
+    if (params.equipment) {
+      const supported = supportedSplitsForEquipment({
+        exercises, equipment: params.equipment, allowedImplements: params.allowedImplements,
+        goal: DAY_TYPE_CONFIG[todayType].defaultGoal, difficulty: params.level, lowImpactMode: params.lowImpactMode,
+        candidates: preferred,
+      });
+      preferred = supported.length ? supported : ['full-body'];
+    }
     const vol = computeWeeklyVolume(completedSessions, exercises, 7, workoutLog);
     // P3: la selección de día compara contra el target PERSONALIZADO por músculo
     // (baseline individual), no contra el 14 plano. Aquí va el baseline (sin meso/
@@ -1085,6 +1153,9 @@ export function exerciseCountForDuration(minutes: number): number {
   if (minutes <= 95) return 11;
   return 13;
 }
+
+// Fase 5A.1 · el nº de ejercicios ya NO se calcula aparte: SALE de los slots dose-driven
+// (buildSessionSlots), que consumen la MISMA allocation P4. Una sola fuente de verdad.
 
 // ══════════════════════════════════════════════════════════════
 // MODALITY HELPERS

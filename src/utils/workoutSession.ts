@@ -6,6 +6,32 @@ import { parseRepsToNumber } from './workoutLogger';
 // Linkeo al source-of-truth para que si el shape cambia, TS lo flaguea.
 export type WorkoutExercise = CachedWorkout['exercises'][number];
 
+// ── FASE 7 · TOP/BACKOFF por serie (contrato player) ─────────────────────────
+export type SetScheme = 'top' | 'backoff' | 'deload' | 'straight';
+export interface SetLoad { kg: number | null; scheme: SetScheme; }
+
+/** ¿El ejercicio tiene esquema top/backoff REAL (top+backoff con carga y DISTINTOS)? Deload/
+ *  corporal/banda/topKg===backoffKg → false (serie recta, sin distinción por serie). */
+export function hasTopBackoffScheme(ex: { topKg?: number; backoffKg?: number; deloadKg?: number }): boolean {
+  if (ex.deloadKg != null && ex.deloadKg > 0) return false;
+  return ex.topKg != null && ex.topKg > 0 && ex.backoffKg != null && ex.backoffKg > 0 && ex.backoffKg !== ex.topKg;
+}
+
+/**
+ * Carga OBJETIVO de la serie `setIdx` (0-based). Serie 1 = TOP (topKg), series 2..N = BACKOFF
+ * (backoffKg); deload → deloadKg en todas; sin top/backoff → la carga prescrita única (`prescribedKg`,
+ * que puede ser null en corporal/banda → sin kg). Fuente ÚNICA: no recalcula carga, solo la reparte.
+ */
+export function setLoadForIndex(
+  ex: { topKg?: number; backoffKg?: number; deloadKg?: number },
+  prescribedKg: number | null,
+  setIdx: number,
+): SetLoad {
+  if (ex.deloadKg != null && ex.deloadKg > 0) return { kg: ex.deloadKg, scheme: 'deload' };
+  if (hasTopBackoffScheme(ex)) return setIdx === 0 ? { kg: ex.topKg!, scheme: 'top' } : { kg: ex.backoffKg!, scheme: 'backoff' };
+  return { kg: prescribedKg, scheme: 'straight' };
+}
+
 /**
  * Posición plana en `loggedSets` donde comienzan los sets del ejercicio dado.
  * loggedSets es plano en orden de ejecución: [ex0-s0, ex0-s1, ..., ex1-s0, ...].

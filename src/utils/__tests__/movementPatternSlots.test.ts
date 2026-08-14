@@ -134,7 +134,7 @@ describe('SLOTS · diseñar la sesión antes de llenarla', () => {
   it('§6 · el anchor SATISFACE su slot (filledBy), no se duplica el patrón', () => {
     const slots = buildSessionSlots({
       dayMuscles: ['pecho', 'espalda', 'hombros'] as MuscleGroup[], trainingGoal: 'hipertrofia',
-      targetCount: 5, anchors: [anchor('press-horizontal')],
+      allocation: { pecho: 4, espalda: 6, hombros: 4 }, timeCap: 9, anchors: [anchor('press-horizontal')],
     });
     const filled = slots.find(s => s.filledBy === 'press-horizontal');
     expect(filled).toBeTruthy();
@@ -144,16 +144,16 @@ describe('SLOTS · diseñar la sesión antes de llenarla', () => {
     expect(others.every(s => !s.patterns.includes('horizontal-push'))).toBe(true);
   });
 
-  it('§7 · FUERZA: menos slots de aislamiento que hipertrofia (mismo día/tiempo)', () => {
-    const args = { dayMuscles: ['pecho', 'espalda', 'hombros', 'biceps', 'triceps'] as MuscleGroup[], targetCount: 6, anchors: [anchor('press-horizontal')] };
+  it('§7 · FUERZA: menos slots de aislamiento que hipertrofia (mismo día/dosis)', () => {
+    const args = { dayMuscles: ['pecho', 'espalda', 'hombros', 'biceps', 'triceps'] as MuscleGroup[], allocation: { pecho: 6, espalda: 6, hombros: 5, biceps: 3, triceps: 3 }, timeCap: 9, anchors: [anchor('press-horizontal')] };
     const iso = (tg: TrainingGoal) => buildSessionSlots({ ...args, trainingGoal: tg }).filter(s => s.role === 'isolation').length;
     expect(iso('fuerza')).toBeLessThanOrEqual(iso('hipertrofia'));
   });
 
-  it('§14 · 30 min (targetCount bajo) → estructura compacta; 90 → más cobertura', () => {
-    const args = { dayMuscles: ['pecho', 'espalda', 'hombros', 'biceps', 'triceps'] as MuscleGroup[], trainingGoal: 'hipertrofia' as TrainingGoal, anchors: [anchor('press-horizontal')] };
-    const s30 = buildSessionSlots({ ...args, targetCount: 3 });
-    const s90 = buildSessionSlots({ ...args, targetCount: 8 });
+  it('§14 · 30 min (timeCap bajo) → estructura compacta; 90 → más cobertura', () => {
+    const args = { dayMuscles: ['pecho', 'espalda', 'hombros', 'biceps', 'triceps'] as MuscleGroup[], trainingGoal: 'hipertrofia' as TrainingGoal, allocation: { pecho: 6, espalda: 6, hombros: 6, biceps: 4, triceps: 4 }, anchors: [anchor('press-horizontal')] };
+    const s30 = buildSessionSlots({ ...args, timeCap: 3 });
+    const s90 = buildSessionSlots({ ...args, timeCap: 11 });
     expect(s30.length).toBeLessThan(s90.length);
     expect(s30.length).toBeLessThanOrEqual(3);
   });
@@ -161,7 +161,7 @@ describe('SLOTS · diseñar la sesión antes de llenarla', () => {
   it('§13 · P5 prioridad: el músculo prioritario recibe slot antes', () => {
     const slots = buildSessionSlots({
       dayMuscles: ['pecho', 'espalda', 'hombros'] as MuscleGroup[], trainingGoal: 'hipertrofia',
-      targetCount: 4, anchors: [], priorityMuscles: new Set(['espalda']),
+      allocation: { pecho: 4, espalda: 4, hombros: 4 }, timeCap: 4, anchors: [], priorityMuscles: new Set(['espalda']),
     });
     const firstNonAnchor = slots.find(s => !s.filledBy);
     expect(firstNonAnchor!.muscle).toBe('espalda'); // prioridad va primero
@@ -170,7 +170,7 @@ describe('SLOTS · diseñar la sesión antes de llenarla', () => {
   it('requiredPatterns: extrae los patrones de los slots requeridos', () => {
     const slots = buildSessionSlots({
       dayMuscles: ['pecho', 'espalda'] as MuscleGroup[], trainingGoal: 'fuerza',
-      targetCount: 3, anchors: [anchor('press-horizontal')],
+      allocation: { pecho: 4, espalda: 6 }, timeCap: 5, anchors: [anchor('press-horizontal')],
     });
     const req = requiredPatterns(slots);
     expect(req).toContain('horizontal-push'); // del anchor

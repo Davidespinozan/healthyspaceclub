@@ -434,6 +434,8 @@ export const es = {
     harder: 'hazlo más difícil',
     set: 'Serie',
     skipped: 'saltada',
+    topSet: 'Top',
+    backoffSet: 'Backoff',
     tapToMark: 'tocá para marcar',
     finishSession: 'Terminar sesión',
     nextExercise: 'Siguiente ejercicio',

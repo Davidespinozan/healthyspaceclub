@@ -435,6 +435,8 @@ export const en: Translations<typeof es> = {
     harder: 'make it harder',
     set: 'Set',
     skipped: 'skipped',
+    topSet: 'Top',
+    backoffSet: 'Backoff',
     tapToMark: 'tap to mark',
     finishSession: 'Finish session',
     nextExercise: 'Next exercise',

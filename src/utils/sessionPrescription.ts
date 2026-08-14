@@ -18,6 +18,8 @@ import type { Recovery } from './mesocycle';
 export type Category = 'main-compound' | 'secondary-compound' | 'isolation';
 export type SetScheme = 'top-backoff' | 'straight';
 export type Phase = 'acumulacion' | 'intensificacion' | 'deload';
+/** Nivel de entrenamiento (Fase 6). String laxo para no acoplar con workoutPlanner (evita ciclo). */
+export type TrainingLevelLike = 'principiante' | 'intermedio' | 'avanzado' | string;
 
 export interface ExercisePrescription {
   sets: number;
@@ -119,7 +121,7 @@ export function restFor(cat: Category, trainingGoal: TrainingGoal, phase: Phase)
   return 60; // isolation
 }
 
-export function rirFor(cat: Category, trainingGoal: TrainingGoal, phase: Phase): number {
+export function rirFor(cat: Category, trainingGoal: TrainingGoal, phase: Phase, level?: TrainingLevelLike): number {
   // Invariante: un compuesto principal NUNCA va a RIR 0 rutinariamente (mín 2 en intensificación).
   if (phase === 'deload') return cat === 'isolation' && trainingGoal === 'fuerza' ? 3 : 4; // lejos del fallo
   if (trainingGoal === 'fuerza') {
@@ -127,9 +129,14 @@ export function rirFor(cat: Category, trainingGoal: TrainingGoal, phase: Phase):
     if (cat === 'secondary-compound') return 2;
     return 1;                                                                   // isolation puede acercarse al fallo
   }
-  // HIPERTROFIA (sin cambios)
-  if (phase === 'intensificacion') return cat === 'isolation' ? 1 : 2;
-  return cat === 'main-compound' ? 3 : 2;                 // acumulación conservadora
+  // HIPERTROFIA — baseline (intermedio / sin nivel): SIN CAMBIOS respecto a la línea validada.
+  let rir = phase === 'intensificacion' ? (cat === 'isolation' ? 1 : 2) : (cat === 'main-compound' ? 3 : 2);
+  // FASE 6 · matiz por NIVEL (solo hipertrofia, fuera de deload). Pequeño y acotado (§10):
+  //  · PRINCIPIANTE → más conservador en COMPUESTOS (aprende con margen); el main jamás al fallo.
+  //  · AVANZADO → aislamiento/secundario ALGO más cerca del fallo cuando corresponde; el main protegido.
+  if (level === 'principiante' && cat !== 'isolation') rir += 1;                // margen técnico en compuestos
+  else if (level === 'avanzado' && cat !== 'main-compound') rir = Math.max(0, rir - 1); // acerca aislamiento/2rio
+  return rir;
 }
 
 // ── Esquema + prescripción por ejercicio ─────────────────────────────────────
@@ -147,13 +154,14 @@ export function prescribeExercise(input: {
   sets: number;              // series asignadas por el reparto (ya distribuidas)
   trainingGoal: TrainingGoal; // Fase 0 · reps de resistencia salen SOLO de aquí (no body goal)
   phase: Phase;
+  level?: TrainingLevelLike; // Fase 6 · matiz de RIR por nivel (solo hipertrofia; main protegido)
   lastSets?: { reps: number; kg: number; rir?: number }[]; // P2 — historial CON RIR real (canal único)
 }): ExercisePrescription {
   const { category, trainingGoal, phase } = input;
   const sets = Math.max(2, input.sets);
   const reps = repRangeFor(category, trainingGoal, phase);
   const rest = restFor(category, trainingGoal, phase);
-  const rir = rirFor(category, trainingGoal, phase);
+  const rir = rirFor(category, trainingGoal, phase, input.level);
   const hasLoad = (input.lastSets ?? []).some(s => s.kg > 0);
   const scheme = schemeFor(category, hasLoad, phase);
   // BLOQUE 2 · el sesgo de carga se calcula UNA vez y alimenta AMBAS ramas (top-backoff y deload)
@@ -207,6 +215,7 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
   allocation: Record<string, number>;             // series por músculo (allocateSessionVolume)
   trainingGoal: TrainingGoal;                      // Fase 0 · reps por adaptación de resistencia (no body goal)
   phase: Phase;
+  level?: TrainingLevelLike;                        // Fase 6 · matiz de RIR por nivel
   mainMinutes: number;                             // presupuesto del bloque principal
   lastPerf?: Record<string, { sets: { reps: number; kg: number; rir?: number }[] }>;
 }): PrescribedItem<T>[] {
@@ -234,7 +243,11 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
     const totalW = cats.reduce((a, c) => a + CAT_WEIGHT[c], 0);
     exs.forEach((e, i) => {
       const raw = totalW > 0 ? budget * (CAT_WEIGHT[cats[i]] / totalW) : budget / exs.length;
-      setsByEx.set(e.id, clamp(Math.round(raw), 2, 6));
+      // Fase 5A · cap por ROL: evita concentración absurda (un solo ejercicio con 6-7 series
+      // porque quedó solo). main ≤5, secondary/isolation ≤4. Si sobra dosis, el nº de ejercicios
+      // (sessionExerciseCount) ya añadió un segundo movimiento compatible — no se infla aquí.
+      const roleMax = cats[i] === 'main-compound' ? 5 : 4;
+      setsByEx.set(e.id, clamp(Math.round(raw), 2, roleMax));
     });
   }
 
@@ -246,6 +259,7 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
       sets: setsByEx.get(ex.id) ?? 3,
       trainingGoal: input.trainingGoal,
       phase: input.phase,
+      level: input.level,
       lastSets: input.lastPerf?.[ex.id]?.sets,
     });
     items.push({ ex, category: cat, prescription });

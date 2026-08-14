@@ -16,6 +16,7 @@
 import type { Exercise, MuscleGroup, TrainingGoal } from '../types';
 import type { Category } from './sessionPrescription';
 import { movementPatternOf, type MovementPattern } from './movementPattern';
+import { regionsOfPattern, REGION_SLOT, type Region } from './regionalCoverage';
 
 export interface Slot {
   role: Category;                 // main-compound / secondary-compound / isolation
@@ -47,70 +48,131 @@ export function patternCap(trainingGoal: TrainingGoal): number {
   return trainingGoal === 'fuerza' ? 1 : 2;
 }
 
+const clampN = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+/** Cuántos ejercicios pide la DOSIS de un músculo (Fase 5A.1). HIPERTROFIA reparte (~3 series/ej,
+ *  abre un 2º estímulo cuando la dosis lo justifica); FUERZA concentra (el main absorbe). */
+function exercisesForDose(dose: number, trainingGoal: TrainingGoal): number {
+  if (!(dose > 0)) return 0;
+  return trainingGoal === 'fuerza'
+    ? clampN(Math.round(dose / 5), 1, 2)   // concentra en el main lift
+    : clampN(Math.round(dose / 3), 1, 3);  // distribuye el estímulo
+}
+
 /**
- * Construye los SLOTS de la sesión (funciones a cubrir), en orden (main primero). No es una
- * plantilla fija: depende de día, objetivo, tiempo (targetCount), anchors, déficit y prioridad.
- * Los anchors SATISFACEN su slot (filledBy) → nunca se crea un slot duplicado del patrón del anchor.
+ * Construye los SLOTS de la sesión (funciones a cubrir), en orden (main primero). Fase 5A.1:
+ * DOSE-DRIVEN — la DOSIS REAL por músculo (P4 allocation, ÚNICA fuente) decide cuántos slots pide
+ * cada músculo. Un músculo con dosis alta abre un 2º slot ÚTIL (patrón complementario), en vez de
+ * concentrar 5 series en un ejercicio. HIPERTROFIA distribuye; FUERZA conserva su relleno compacto
+ * de Fase 1. Los anchors satisfacen su slot (filledBy) y CONSUMEN parte de la dosis del músculo.
+ * El nº de ejercicios de la sesión = slots.length (no hay cálculo de count aparte).
  */
 export function buildSessionSlots(input: {
   dayMuscles: MuscleGroup[];
   trainingGoal: TrainingGoal;
-  targetCount: number;
+  allocation: Record<string, number>;   // dosis HOY por músculo (P4) — ÚNICA fuente de verdad
   anchors: Array<{ id: string; muscle: MuscleGroup; pattern: MovementPattern | null; role: Category }>;
   priorityMuscles?: Set<string>;
-  deficitByMuscle?: Record<string, number>; // mayor = más corto de volumen (más slots)
+  timeCap: number;                       // tope de ejercicios por tiempo (capacidad, no objetivo)
+  requiredRegions?: Region[];            // Fase 5D · funciones MAYORES que la sesión DEBE cubrir (full-body)
 }): Slot[] {
-  const { dayMuscles, trainingGoal, targetCount, anchors, priorityMuscles, deficitByMuscle } = input;
+  const { dayMuscles, trainingGoal, allocation, anchors, priorityMuscles, timeCap, requiredRegions } = input;
+  // Tope total: FUERZA compacto (Fase 1, sin cambios); HIPERTROFIA usa la capacidad de tiempo.
+  const maxSlots = trainingGoal === 'fuerza'
+    ? clampN(Math.round(timeCap * 0.6), 2, 6)
+    : Math.max(3, timeCap);
+
   const slots: Slot[] = [];
   const coveredPatterns = new Set<MovementPattern>();
+  const perMuscle = new Map<MuscleGroup, number>();
+  const bump = (m: MuscleGroup) => perMuscle.set(m, (perMuscle.get(m) ?? 0) + 1);
 
-  // 1) ANCHORS primero: cada uno satisface un slot (no se duplica su patrón).
+  // 1) ANCHORS primero: satisfacen su slot (no se duplica su patrón) y consumen 1 ejercicio del músculo.
   for (const a of anchors) {
     if (a.pattern) coveredPatterns.add(a.pattern);
     slots.push({ role: a.role, muscle: a.muscle, patterns: a.pattern ? [a.pattern] : [], filledBy: a.id, required: true });
+    bump(a.muscle);
   }
 
-  // 2) Músculos del día, ordenados por PRIORIDAD (P5) y luego DÉFICIT de volumen (P3).
+  // 1.5) COBERTURA REGIONAL (Fase 5D · full-body): antes de cualquier slot dose-driven/cosmético,
+  // reserva las funciones MAYORES requeridas que el/los anchor(s) aún no cubren (≥1 upper + ≥1 lower,
+  // + push/pull o knee/hinge según tiempo/déficit). Garantiza que "full-body" entrene todo el cuerpo
+  // sin depender del orden del pool; el gear/pain limita las opciones (si no hay muscle/patrón, se
+  // omite y se reporta como content-gap aguas arriba). No apila un patrón ya cubierto (§21).
+  if (requiredRegions?.length) {
+    const anchorRegions = new Set<Region>(anchors.flatMap(a => regionsOfPattern(a.pattern)));
+    const isCovered = (region: Region) =>
+      anchorRegions.has(region) || [...coveredPatterns].some(p => regionsOfPattern(p).includes(region));
+    for (const region of requiredRegions) {
+      if (slots.length >= maxSlots) break;
+      if (isCovered(region)) continue;
+      for (const opt of REGION_SLOT[region]) {
+        if (!dayMuscles.includes(opt.muscle) || !MUSCLE_SLOT_PATTERNS[opt.muscle]) continue;
+        const pat = opt.patterns.find(p => !coveredPatterns.has(p));
+        if (!pat) continue;
+        slots.push({ role: 'secondary-compound', muscle: opt.muscle, patterns: [pat], required: true });
+        coveredPatterns.add(pat); bump(opt.muscle);
+        break;
+      }
+    }
+  }
+
+  // Músculos del día, ordenados por PRIORIDAD (P5) y luego DOSIS desc (más volumen → antes).
   const muscles = dayMuscles.filter(m => m !== 'cardio' && MUSCLE_SLOT_PATTERNS[m]);
-  const rank = (m: MuscleGroup) =>
-    (priorityMuscles?.has(m) ? -1000 : 0) - (deficitByMuscle?.[m] ?? 0);
-  const ordered = [...muscles].sort((a, b) => rank(a) - rank(b));
+  const doseOf = (m: MuscleGroup) => allocation[m] ?? 0;
+  const ordered = [...muscles].sort((a, b) =>
+    ((priorityMuscles?.has(a) ? -1000 : 0) - doseOf(a)) - ((priorityMuscles?.has(b) ? -1000 : 0) - doseOf(b)));
 
-  // 3) Ronda de PRIMARIOS (compuestos): un slot de patrón principal por músculo, salvo que un
-  //    anchor ya cubra ese patrón. En FUERZA se prioriza esta ronda y se limita la de aislamiento.
-  const addPrimary = () => {
-    for (const m of ordered) {
-      if (slots.length >= targetCount) return;
-      const conf = MUSCLE_SLOT_PATTERNS[m]!;
-      const pats = conf.primary.filter(p => !coveredPatterns.has(p));
-      if (!pats.length) continue;
-      slots.push({ role: 'secondary-compound', muscle: m, patterns: pats, required: true });
-      coveredPatterns.add(pats[0]);
-    }
-  };
-  // 4) Ronda de AISLAMIENTOS: rellena el resto del presupuesto con funciones de aislamiento del día.
-  //    FUERZA limita el aislamiento (menos accesorios, más foco en el/los main lift); HIPERTROFIA
-  //    lo permite libremente hasta el presupuesto (más cobertura/variedad).
-  let isoAdded = 0;
-  const isoLimit = trainingGoal === 'fuerza' ? 1 : Number.POSITIVE_INFINITY;
-  const addIsolation = () => {
-    for (const m of ordered) {
-      if (slots.length >= targetCount || isoAdded >= isoLimit) return;
-      const conf = MUSCLE_SLOT_PATTERNS[m]!;
-      const pats = conf.isolation.filter(p => !coveredPatterns.has(p));
-      if (!pats.length) continue;
-      slots.push({ role: 'isolation', muscle: m, patterns: pats, required: false });
-      coveredPatterns.add(pats[0]);
-      isoAdded++;
-    }
+  // Siguiente PATRÓN para un músculo (diversidad §5): SIEMPRE prioriza un PRIMARIO no cubierto
+  // (el 2º compuesto de espalda = remo horizontal, de cuádriceps = lunge — complementario y
+  // esencial), y solo después un AISLAMIENTO no cubierto. Nunca apila el mismo patrón.
+  const nextPattern = (m: MuscleGroup): { pat: MovementPattern; role: Category } | null => {
+    const conf = MUSCLE_SLOT_PATTERNS[m]!;
+    const primaryNew = conf.primary.find(p => !coveredPatterns.has(p));
+    if (primaryNew) return { pat: primaryNew, role: 'secondary-compound' };
+    const isoNew = conf.isolation.find(p => !coveredPatterns.has(p));
+    if (isoNew) return { pat: isoNew, role: 'isolation' };
+    return null;
   };
 
-  addPrimary();
-  addPrimary(); // segunda pasada de compuestos (p.ej. el 2º patrón de espalda) antes que aislamiento
-  addIsolation();
-  if (slots.length < targetCount) addIsolation();
+  // 2) Cobertura esencial: garantiza el PRIMARIO de cada músculo con dosis (patrones del día).
+  for (const m of ordered) {
+    if (slots.length >= maxSlots) break;
+    if (doseOf(m) <= 0 || (perMuscle.get(m) ?? 0) >= 1) continue;
+    const np = nextPattern(m);
+    if (!np) continue;
+    slots.push({ role: np.role, muscle: m, patterns: [np.pat], required: true });
+    coveredPatterns.add(np.pat); bump(m);
+  }
 
-  return slots.slice(0, Math.max(targetCount, anchors.length));
+  // 3) Slots ADICIONALES según DOSIS: hipertrofia abre un 2º/3º estímulo cuando la dosis lo pide;
+  //    fuerza casi no (concentra). Baja dosis → sin slots basura. Todo topado por tiempo.
+  let progressed = true;
+  while (progressed && slots.length < maxSlots) {
+    progressed = false;
+    for (const m of ordered) {
+      if (slots.length >= maxSlots) break;
+      const have = perMuscle.get(m) ?? 0;
+      if (have >= exercisesForDose(doseOf(m), trainingGoal)) continue;
+      const np = nextPattern(m);
+      if (!np) continue;
+      slots.push({ role: np.role, muscle: m, patterns: [np.pat], required: false });
+      coveredPatterns.add(np.pat); bump(m);
+      progressed = true;
+    }
+  }
+
+  // FUERZA: si aún cabe (poca dosis distribuida), rellena con 1 aislamiento (paridad con Fase 1).
+  if (trainingGoal === 'fuerza' && slots.length < maxSlots) {
+    for (const m of ordered) {
+      if (slots.length >= maxSlots) break;
+      const conf = MUSCLE_SLOT_PATTERNS[m]!;
+      const iso = conf.isolation.find(p => !coveredPatterns.has(p));
+      if (iso) { slots.push({ role: 'isolation', muscle: m, patterns: [iso], required: false }); coveredPatterns.add(iso); break; }
+    }
+  }
+
+  return slots;
 }
 
 /** Patrones REQUERIDOS por la sesión (de los slots required). Para validar cobertura. */
