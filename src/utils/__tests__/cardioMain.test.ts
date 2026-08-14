@@ -142,3 +142,45 @@ describe('CARDIO-MAIN · gear (§13)', () => {
     expect(p.intenseMinutes).toBe(0);
   });
 });
+
+// ── BUG 120→~30 · el plan ES la sesión ejecutable (no un panel) ─────────
+import { cardioBlocksToExercises, cardioPlayableMinutes } from '../cardioMain';
+import { hasPlayableVariant } from '../workoutPlanner';
+
+describe('CARDIO-MAIN · playableMinutes ≈ plannedMinutes (regresión bug 120→~30)', () => {
+  // Reproduce el pool de cardio como DailyTrainer (estilo + video + gear).
+  function cardioPool(style: CardioStyle, gear: Equipment[]) {
+    const eq = cardioEquipmentFor(gear);
+    const p = exercises.filter(e => e.muscleGroup === 'cardio' && e.equipment.some(x => eq.includes(x)) && hasPlayableVariant(e, eq, undefined));
+    const styled = p.filter(e => matchesCardioStyle(e, style));
+    return styled.length >= 3 ? styled : [...styled, ...p.filter(e => !styled.includes(e))];
+  }
+
+  it('lowImpact 120: la sesión EJECUTABLE cubre el plan (~112), no la lista corta de la IA (~37)', () => {
+    const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'lowImpact', level: 'intermedio', pool: cardioPool('lowImpact', ['gym']) });
+    const exs = cardioBlocksToExercises(p);
+    // cada bloque es un ejercicio ejecutable (gatea la finalización)
+    expect(exs.length).toBe(p.blocks.length);
+    // playable ≈ planned (el bug daba ~37 con la lista de la IA)
+    expect(cardioPlayableMinutes(p)).toBe(p.totalMinutes);
+    expect(cardioPlayableMinutes(p)).toBeGreaterThan(90);   // ≫ 37
+  });
+
+  it('todas las modalidades: playable == planned (contenido ejecutable = plan)', () => {
+    for (const s of STYLES) for (const t of [30, 60, 90, 120]) for (const l of LEVELS) {
+      const p = buildCardioMain({ mainBudgetMinutes: mainBudget(t), style: s, level: l, pool: cardioPool(s, ['gym']) });
+      const exs = cardioBlocksToExercises(p);
+      expect(exs.length).toBe(p.blocks.length);
+      expect(cardioPlayableMinutes(p)).toBe(p.totalMinutes);
+      // los ejercicios ejecutables cubren el plan: no queda un atajo de lista corta
+      for (const e of exs) { expect(e.id).toBeTruthy(); expect(e.reps).toMatch(/min|seg/); }
+    }
+  });
+
+  it('explosividad 120: playable = planned = early-end (coherente: 120 pedido, ~30-45 ejecutado)', () => {
+    const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'explosividad', level: 'avanzado', pool: cardioPool('explosividad', ['gym']) });
+    expect(cardioPlayableMinutes(p)).toBe(p.totalMinutes);
+    expect(p.earlyEnd).toBe(true);          // requested 120, planned=playable≈37 → intencional
+    expect(p.totalMinutes).toBeLessThan(65);
+  });
+});

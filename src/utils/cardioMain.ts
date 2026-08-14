@@ -217,3 +217,22 @@ export function buildCardioMain(input: {
 
   return { style, budgetMinutes: budget, totalMinutes: total, intenseMinutes, steadyMinutes, earlyEnd, earlyEndReason, blocks };
 }
+
+/**
+ * Convierte el CardioMainPlan en la lista de EJERCICIOS EJECUTABLES del workout (lo que el player
+ * corre y lo que gatea la finalización). Cada bloque = un "ejercicio" TIME-BASED: steady/recovery/
+ * drills → 1 serie por tiempo ("{min} min · Zona 2"); intervals/power → `rounds` series con work/rest.
+ * CLAVE del fix: sin esto, el día de cardio ejecutaba la lista corta de la IA (~37 min) e ignoraba
+ * el plan (112 min) — el bloque era solo un panel. Ahora el plan ES la sesión.
+ */
+export function cardioBlocksToExercises(plan: CardioMainPlan): Array<{ id: string; sets: number; reps: string; rest: number; tip_personalizado: string }> {
+  return plan.blocks.filter(b => b.stationId).map(b => {
+    if (b.kind === 'intervals' || b.kind === 'power') {
+      return { id: b.stationId, sets: Math.max(1, b.rounds ?? 1), reps: `${b.workSec ?? 30} seg`, rest: b.restSec ?? 30, tip_personalizado: b.cue ?? '' };
+    }
+    return { id: b.stationId, sets: 1, reps: `${b.minutes} min${b.zone ? ` · ${b.zone}` : ''}`, rest: 0, tip_personalizado: b.cue ?? '' };
+  });
+}
+
+/** Minutos que el player REALMENTE guía a ejecutar (suma de los bloques del plan). */
+export const cardioPlayableMinutes = (plan: CardioMainPlan): number => plan.blocks.reduce((a, b) => a + b.minutes, 0);

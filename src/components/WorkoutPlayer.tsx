@@ -15,7 +15,7 @@ import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
-import { selectVariantForEquipment, hasPlayableVariant } from '../utils/workoutPlanner';
+import { selectVariantForEquipment, hasPlayableVariant, exerciseVideoCandidateIds, pickExerciseVideo } from '../utils/workoutPlanner';
 import type { Implement } from '../utils/equipmentImplement';
 import type { WorkoutExercise } from '../utils/workoutSession';
 import { parseRepsToNumber } from '../utils/workoutLogger';
@@ -385,20 +385,20 @@ export default function WorkoutPlayer({
         //   → cualquier variante de gym sirve (el movimiento manda).
         // - En casa/ligas NO: solo variantes que coincidan con su equipo (no le
         //   mostramos un video de máquina a quien entrena en casa).
-        const matchEquip = (currentBank?.variants ?? [])
-          .filter(v => v.equipment.some(e => userEquipment.includes(e)))
-          .map(v => v.id);
-        const ids = [exId, ...matchEquip];
+        // FUENTE ÚNICA de media (misma que Hoy/plan/detalle): variante del equipo → base → cualquier
+        // variante como fallback, para no dejar el player sin video cuando el clip vive en otra variante.
+        const ids = currentBank ? exerciseVideoCandidateIds(currentBank, userEquipment) : [exId];
         const { data } = await supabase
           .from('exercise_videos')
           .select('exercise_id, video_url, display_order')
           .in('exercise_id', ids)
           .order('display_order', { ascending: true });
         if (!active || !data || data.length === 0) return;
-        const row = (varId && data.find(r => r.exercise_id === varId))
-          || data.find(r => r.exercise_id === exId)
-          || data[0];
-        if (row?.video_url) setCurrentVideoUrl(row.video_url);
+        const byId: Record<string, string> = {};
+        for (const r of data as { exercise_id: string; video_url: string }[]) if (!byId[r.exercise_id]) byId[r.exercise_id] = r.video_url;
+        // Preferencia: la variante mostrada → luego el orden de candidatos (equipo → base → resto).
+        const url = (varId && byId[varId]) || pickExerciseVideo(ids, byId);
+        if (url) setCurrentVideoUrl(url);
       } catch { /* noop */ }
     })();
     return () => { active = false; };
@@ -795,31 +795,10 @@ export default function WorkoutPlayer({
           {workout.isDeload && (
             <div className="wp-deload-banner">{t('workout.deloadBanner')}</div>
           )}
-          {/* FASE CARDIO MAIN · plan determinista guiado (duración/intensidad/work-rest los fija el
-              motor, no la IA). El usuario ejecuta cada bloque leyéndolo (como el finisher). */}
-          {cardioMain && cardioMain.blocks.length > 0 && (
-            <div className="wp-cardio-plan">
-              <div className="wp-cardio-plan-head">
-                {t('workout.cardioMain.title')} · {t('workout.cardioMain.planned', { n: cardioMain.totalMinutes })}
-                {cardioMain.intenseMinutes > 0 ? ` · ${t('workout.cardioMain.intense', { n: cardioMain.intenseMinutes })}` : ''}
-              </div>
-              {cardioMain.blocks.map((b, i) => (
-                <div className={`wp-cardio-block wp-cardio-block--${b.intensity}`} key={i}>
-                  <span className="wp-cardio-block-min">{b.minutes}′</span>
-                  <span className="wp-cardio-block-body">
-                    <span className="wp-cardio-block-name">
-                      {t(`workout.cardioMain.blocks.${b.labelKey.split('.')[1]}` as Parameters<typeof t>[0])}
-                      {b.stationName ? ` · ${b.stationName}` : ''}
-                    </span>
-                    <span className="wp-cardio-block-detail">
-                      {b.rounds ? t('workout.cardioMain.rounds', { n: b.rounds, work: b.workSec ?? 0, rest: b.restSec ?? 0 }) : (b.zone ?? '')}
-                      {b.cue ? ` — ${b.cue}` : ''}
-                    </span>
-                  </span>
-                </div>
-              ))}
-              {cardioMain.earlyEnd && <div className="wp-cardio-early">{t('workout.cardioMain.earlyEnd')}</div>}
-            </div>
+          {/* FASE CARDIO MAIN · nota de fin intencional (explosividad/principiante). Los BLOQUES del
+              plan son ahora los EJERCICIOS de la sesión (el player los ejecuta paso a paso). */}
+          {cardioMain && cardioMain.earlyEnd && currentExerciseIndex === 0 && (
+            <div className="wp-cardio-early">{t('workout.cardioMain.earlyEnd')}</div>
           )}
           <div
             className="wp-video-area"

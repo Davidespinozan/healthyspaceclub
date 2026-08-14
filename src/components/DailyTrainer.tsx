@@ -44,7 +44,7 @@ import { computeVolumeTargets, targetsToMap } from '../utils/volumeLandmarks';
 import { allocateSessionVolume, prescribeSession, prescribeExercise, categorize } from '../utils/sessionPrescription';
 import { allocateHeadroom } from '../utils/headroom';
 import { assignTechniques } from '../utils/techniques';
-import { buildCardioMain } from '../utils/cardioMain';
+import { buildCardioMain, cardioBlocksToExercises } from '../utils/cardioMain';
 import { composeSession } from '../utils/sessionBlocks';
 import {
   deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
@@ -627,6 +627,18 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           (cached as CachedWorkout).partnerName = partnerName.trim() || t('wizard.partnerNamePlaceholder');
           (cached as CachedWorkout).partnerAvatar = pendingPartner?.avatarUrl ?? null;
           (cached as CachedWorkout).partnerId = pendingPartner?.id ?? null;
+        }
+        // [HSC TIME TRACE] · CACHE HIT (DEV) — si ves una rutina corta reutilizada, aparece aquí.
+        if (import.meta.env?.DEV) {
+          const cw = cached as CachedWorkout;
+          const workMin = (cw.exercises ?? []).reduce((a, ex) => a + (ex.sets ?? 0) * (0.7 + (typeof ex.rest === 'number' ? ex.rest : 0) / 60), 0);
+          console.info('[HSC TIME TRACE]', JSON.stringify({
+            requestedMinutes: selectedTime, selectedModality, trainingGoal, focus, dayType: dayTypeKey,
+            gear, level: levelFromObData(obData), exerciseCount: cw.exercises?.length ?? 0,
+            totalSets: (cw.exercises ?? []).reduce((a, ex) => a + (ex.sets ?? 0), 0),
+            playableMinutes: cw.cardioMainBlock ? cw.cardioMainBlock.totalMinutes : Math.round(workMin),
+            cacheHit: true, configHash,
+          }, null, 2));
         }
         setPlan(cached);
         sealPlan(cached);
@@ -1420,8 +1432,40 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
               workSec: b.workSec, restSec: b.restSec, rounds: b.rounds, cue: b.cue,
             })),
           };
-          console.info(`[cardio-main] ${cardioPlan.style} · ${cardioPlan.totalMinutes}/${sessionPlan.budget.main}min · intenso ${cardioPlan.intenseMinutes} · ${cardioPlan.blocks.length} bloques${cardioPlan.earlyEnd ? ' · fin intencional: ' + cardioPlan.earlyEndReason : ''}`);
+          // FIX BUG 120→~30: el plan ES la sesión ejecutable, no un panel. Sustituye la lista corta
+          // de la IA (~37 min) por los BLOQUES del plan (time-based) → el player los corre y la
+          // finalización queda gateada por ellos. playableMinutes ≈ plannedMinutes.
+          const cardioExs = cardioBlocksToExercises(cardioPlan);
+          if (cardioExs.length) w.exercises = cardioExs;
+          console.info(`[cardio-main] ${cardioPlan.style} · plan ${cardioPlan.totalMinutes}/${sessionPlan.budget.main}min · ${cardioPlan.blocks.length} bloques ejecutables (playable=${cardioPlan.blocks.reduce((a, b) => a + b.minutes, 0)}m)${cardioPlan.earlyEnd ? ' · fin intencional: ' + cardioPlan.earlyEndReason : ''}`);
         }
+      }
+
+      // ── [HSC TIME TRACE] · instrumentación DEV temporal (bug 120→corto) ──────────────
+      // Imprime, en cada generación real, los minutos REALES vs pedidos para capturar el caso manual.
+      // Solo en desarrollo; no permanente. requested vs planned vs PLAYABLE (lo que el player ejecuta).
+      if (import.meta.env?.DEV) {
+        try {
+          const w = workout as CachedWorkout;
+          const parseRest = (r: unknown) => (typeof r === 'number' ? r : 0);
+          const workMin = (w.exercises ?? []).reduce((a, ex) => a + (ex.sets ?? 0) * (0.7 + parseRest(ex.rest) / 60), 0);
+          const totalSets = (w.exercises ?? []).reduce((a, ex) => a + (ex.sets ?? 0), 0);
+          const playable = isCardioDay && w.cardioMainBlock
+            ? sessionPlan.budget.warmup + w.cardioMainBlock.totalMinutes
+            : sessionPlan.budget.warmup + workMin + sessionPlan.budget.finisher;
+          console.info('[HSC TIME TRACE]', JSON.stringify({
+            requestedMinutes: selectedTime,
+            selectedModality, trainingGoal, focus, dayType: dayTypeKey,
+            muscleGroups, gear, level: levelFromObData(obData),
+            budget: { warmup: sessionPlan.budget.warmup, main: sessionPlan.budget.main, finisher: sessionPlan.budget.finisher },
+            phase: meso.phase, isDeload: mesoDeload, readiness: readiness.state,
+            sessionAllocation, slots: sessionSlots.length, targetCount,
+            candidateCount: candidates.length, exerciseCount: w.exercises?.length ?? 0, totalSets,
+            plannedMinutes: isCardioDay ? (w.cardioMainBlock?.totalMinutes ?? null) : Math.round(sessionPlan.budget.main),
+            playableMinutes: Math.round(playable),
+            cacheHit: false,
+          }, null, 2));
+        } catch (e) { console.warn('[HSC TIME TRACE] error', e); }
       }
 
       saveWorkoutToCache({

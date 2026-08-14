@@ -21,7 +21,7 @@ import MealDetailPopout from './MealDetailPopout';
 import { tDishName } from '../utils/nutritionI18n';
 import { chronoMeals } from '../utils/mealOrder';
 import { translateDayLabel } from '../utils/dayTypeLabel';
-import { equipmentFromPlan, selectVariantForEquipment } from '../utils/workoutPlanner';
+import { equipmentFromPlan, exerciseVideoCandidateIds, pickExerciseVideo } from '../utils/workoutPlanner';
 import DailyRings, { type RingItem } from './DailyRings';
 import ShareStatSheet from './ShareStatSheet';
 import DayCelebration from './DayCelebration';
@@ -266,14 +266,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     const allIds = new Set<string>();
     for (const baseId of todayExerciseIds) {
       const ex = bankMap.get(baseId);
-      const chosen = workoutEquipment && ex ? selectVariantForEquipment(ex, [workoutEquipment]) : null;
-      const variantIds = (ex?.variants ?? []).map(v => v.id);
-      // La variante del equipo del usuario PRIMERO; base/gym y demás solo como
-      // fallback si esa variante no tuviera video. Evita colar el clip de gym en
-      // una rutina de ligas/cuerpo.
-      const ids = chosen
-        ? [chosen.id, baseId, ...variantIds.filter(id => id !== chosen.id)]
-        : [baseId, ...variantIds];
+      // FUENTE ÚNICA de resolución de media (misma que plan/detalle/player): variante del equipo →
+      // base → cualquier variante como fallback. Evita el placeholder por divergencia entre vistas.
+      const ids = ex
+        ? exerciseVideoCandidateIds(ex, workoutEquipment ? [workoutEquipment] : undefined)
+        : [baseId];
       baseToCandidates[baseId] = ids;
       ids.forEach(id => allIds.add(id));
     }
@@ -290,8 +287,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
         }
         const result: Record<string, string> = {};
         for (const baseId of todayExerciseIds) {
-          const hit = (baseToCandidates[baseId] ?? [baseId]).find(id => firstById[id]);
-          if (hit) result[baseId] = firstById[hit];
+          const url = pickExerciseVideo(baseToCandidates[baseId] ?? [baseId], firstById);
+          if (url) result[baseId] = url;
         }
         setExVideoMap(result);
       });

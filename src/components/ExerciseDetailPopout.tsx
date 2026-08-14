@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Maximize2, Play, Lightbulb, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Exercise, ExerciseVideo, Equipment } from '../types';
-import { selectVariantForEquipment } from '../utils/workoutPlanner';
+import { selectVariantForEquipment, exerciseVideoCandidateIds } from '../utils/workoutPlanner';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { useT } from '../i18n';
 import { translateMuscle, translateDifficulty } from '../utils/exerciseMeta';
@@ -78,16 +78,11 @@ export default function ExerciseDetailPopout({
         // en gym los implementos son intercambiables (se ven todas las de gym);
         // en casa/ligas solo las de ese equipo (no le mostramos máquina a quien
         // entrena en casa). Si no se pasa equipo, se muestran todas.
-        const variantIds = (exercise.variants ?? [])
-          .filter(v => !userEquipment || v.equipment.some(e => userEquipment.includes(e)))
-          .map(v => v.id);
-        // El clip del patrón base suele ser el del implemento gym. Para una variante
-        // no-gym de un patrón gym, NO lo incluimos (evita colar máquina en ligas),
-        // salvo que no haya videos de la variante del usuario → entonces sí, como
-        // último recurso para no dejar la ficha sin nada.
-        const ids = (mismatchGymBase && variantIds.length > 0)
-          ? variantIds
-          : [exercise.id, ...variantIds];
+        // FUENTE ÚNICA (fix imagen inconsistente): mismos candidatos que "Hoy"/plan — variante del
+        // equipo → base → CUALQUIER variante. Así la ficha resuelve el mismo clip que Hoy y nunca
+        // cae al placeholder cuando existe un video (§4). El orden de PREFERENCIA en el carrusel se
+        // mantiene abajo (la variante del usuario primero); esto solo evita que el clip se pierda.
+        const ids = exerciseVideoCandidateIds(exercise, userEquipment);
         const { data, error } = await supabase
           .from('exercise_videos')
           .select('exercise_id, video_url, label, display_order')

@@ -901,6 +901,28 @@ export function selectVariantForEquipment(
 }
 
 /**
+ * FUENTE ÚNICA de resolución de MEDIA de un ejercicio. Devuelve los `exercise_id` candidatos —para
+ * consultar `exercise_videos`— ORDENADOS por preferencia: (1) la variante del equipo del usuario,
+ * (2) el id BASE del ejercicio, (3) CUALQUIER otra variante como fallback. El fallback a variantes
+ * de otro equipo es CLAVE: evita el placeholder cuando el único clip vive en una variante que no
+ * coincide con el gear (p.ej. "Fondos de Tríceps": el base no tiene clip; el video está en la
+ * variante casera/máquina). Todas las vistas (Hoy / plan / detalle / player) deben usar ESTA lista
+ * para resolver el MISMO video para el mismo id — antes cada vista construía la suya y divergían.
+ */
+export function exerciseVideoCandidateIds(exercise: Exercise, equipment?: Equipment[], allowed?: Set<Implement>): string[] {
+  const chosen = equipment ? selectVariantForEquipment(exercise, equipment, allowed) : null;
+  const variantIds = (exercise.variants ?? []).map(v => v.id);
+  const ordered = chosen ? [chosen.id, exercise.id, ...variantIds] : [exercise.id, ...variantIds];
+  return [...new Set(ordered)];   // dedupe conservando el orden de preferencia
+}
+
+/** Primer video disponible entre los candidatos (mapa exercise_id → url). null si ninguno tiene. */
+export function pickExerciseVideo(candidateIds: string[], byId: Record<string, string>): string | null {
+  for (const id of candidateIds) { const u = byId[id]; if (u) return u; }
+  return null;
+}
+
+/**
  * ¿El ejercicio tiene una variante APLICABLE al equipo del usuario y CON video?
  * (Yoga: el propio id de la pose debe tener video.) Es la regla de "solo se
  * programa lo que ya se puede ver" — se usa tanto al filtrar candidatos como al

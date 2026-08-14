@@ -26,7 +26,7 @@ import {
   groupLoggedSetsByExercise,
   type ExerciseLogItem,
 } from '../../utils/workoutLogger';
-import { selectVariantForEquipment } from '../../utils/workoutPlanner';
+import { exerciseVideoCandidateIds, pickExerciseVideo } from '../../utils/workoutPlanner';
 import type { Implement } from '../../utils/equipmentImplement';
 import type {
   Exercise,
@@ -119,20 +119,16 @@ export default function WorkoutPlan({
   // movimiento (así casi siempre se ve un demo, aunque no sea exacto al equipo).
   const [videoByEx, setVideoByEx] = useState<Record<string, string>>({});
   useEffect(() => {
+    // FUENTE ÚNICA (fix imagen inconsistente): la MISMA lista de candidatos que usa "Hoy" — variante
+    // del equipo → base → CUALQUIER variante. Así detalle resuelve el mismo video que Hoy (antes esta
+    // vista filtraba por equipo y caía al placeholder si el clip vivía en otra variante).
     const pairs = plan.exercises
       .map(e => {
         const ex = exerciseMap.get(e.id);
-        const v = ex ? selectVariantForEquipment(ex, [selectedEquipment], allowedImplements) : null;
-        // Solo variantes que coinciden con el equipo elegido: en gym los
-        // implementos son intercambiables; en casa/ligas no se muestra el video
-        // de otro equipo (peso corporal ve peso corporal, ligas ve ligas).
-        const variantIds = (ex?.variants ?? [])
-          .filter(vv => vv.equipment.includes(selectedEquipment))
-          .map(vv => vv.id);
-        return { baseId: e.id, varId: v?.id, variantIds };
+        return { baseId: e.id, candidates: ex ? exerciseVideoCandidateIds(ex, [selectedEquipment], allowedImplements) : [e.id] };
       })
       .filter(p => p.baseId);
-    const ids = Array.from(new Set(pairs.flatMap(p => [p.baseId, ...p.variantIds])));
+    const ids = Array.from(new Set(pairs.flatMap(p => p.candidates)));
     if (ids.length === 0) return;
     let active = true;
     (async () => {
@@ -149,8 +145,7 @@ export default function WorkoutPlan({
         }
         const map: Record<string, string> = {};
         for (const p of pairs) {
-          const url = (p.varId && byId[p.varId]) || byId[p.baseId]
-            || p.variantIds.map(id => byId[id]).find(Boolean);
+          const url = pickExerciseVideo(p.candidates, byId);
           if (url) map[p.baseId] = url;
         }
         setVideoByEx(map);
