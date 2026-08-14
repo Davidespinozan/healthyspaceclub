@@ -27,6 +27,7 @@ import {
   type ExerciseLogItem,
 } from '../../utils/workoutLogger';
 import { selectVariantForEquipment } from '../../utils/workoutPlanner';
+import type { Implement } from '../../utils/equipmentImplement';
 import type {
   Exercise,
   Equipment,
@@ -67,6 +68,10 @@ interface Props {
   regenBlocked: boolean;
   regensLeft: number;
   selectedEquipment: Equipment;
+  // GEAR granular · autoridad fina de elegibilidad de variante. La vista y el player
+  // resuelven la variante A MOSTRAR con esto → nunca enseñan una de máquina a quien
+  // solo tiene mancuernas (reproducibilidad = respeta el gear).
+  allowedImplements?: Set<Implement>;
   selectedModality: Modality;
   selectedTime: number;
   todayDecision: WorkoutDayDecision;
@@ -83,6 +88,7 @@ export default function WorkoutPlan({
   regenBlocked,
   regensLeft,
   selectedEquipment,
+  allowedImplements,
   selectedModality,
   selectedTime,
   todayDecision,
@@ -116,7 +122,7 @@ export default function WorkoutPlan({
     const pairs = plan.exercises
       .map(e => {
         const ex = exerciseMap.get(e.id);
-        const v = ex ? selectVariantForEquipment(ex, [selectedEquipment]) : null;
+        const v = ex ? selectVariantForEquipment(ex, [selectedEquipment], allowedImplements) : null;
         // Solo variantes que coinciden con el equipo elegido: en gym los
         // implementos son intercambiables; en casa/ligas no se muestra el video
         // de otro equipo (peso corporal ve peso corporal, ligas ve ligas).
@@ -152,7 +158,7 @@ export default function WorkoutPlan({
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan.exercises.map(e => e.id).join(','), selectedEquipment]);
+  }, [plan.exercises.map(e => e.id).join(','), selectedEquipment, allowedImplements]);
 
   // Header: progreso (ejercicios completados hoy) + tiempo estimado del plan.
   const workoutChecks = useAppStore(s => s.workoutChecks);
@@ -432,6 +438,7 @@ export default function WorkoutPlan({
           workout={plan}
           exerciseBank={exerciseBank}
           userEquipment={[selectedEquipment]}
+          allowedImplements={allowedImplements}
           onClose={() => setWorkoutPlayerOpen(false)}
           onComplete={(data) => {
             // Mapear modality: si 'auto', derivar del todayDecision.type

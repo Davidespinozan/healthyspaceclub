@@ -14,7 +14,7 @@
 // (aparato que de verdad pide gimnasio: T-bar, banco romano, battle ropes) → se
 // trata como "requiere gym", que es el default CONSERVADOR y seguro.
 // ─────────────────────────────────────────────────────────────────────────
-import type { ExerciseVariant } from '../types';
+import type { ExerciseVariant, Equipment } from '../types';
 
 export type Implement =
   | 'barbell' | 'dumbbell' | 'machine' | 'cable' | 'pullup'
@@ -77,4 +77,43 @@ export function variantAllowedByGear(variant: ExerciseVariant, allowed: Set<Impl
   if (im !== 'bodyweight' && !allowed.has(im)) return false;
   if (needsBench(variant, parentName) && !allowed.has('bench')) return false;
   return true;
+}
+
+// ── CONFIGURACIÓN CANÓNICA → CAPACIDADES DERIVADAS ────────────────────────────
+// UNA sola fuente de verdad: el `gear` declarado. Todo lo demás (allowedImplements, buckets
+// gruesos, hasFullGym, hasWeights) se DERIVA — no son fuentes independientes. Conceptualmente:
+// 'gym' es ACCESO (desbloquea el set completo), NO un implemento (variantImplement nunca lo
+// devuelve). Peso corporal siempre implícito.
+export interface EquipmentCapabilities {
+  allowedImplements: Set<Implement>; // AUTORIDAD FINA de elegibilidad de variante
+  equipmentList: Equipment[];        // bucket GRUESO (compat); qué categorías de variante mirar
+  hasFullGym: boolean;               // acceso a gimnasio completo
+  hasWeights: boolean;               // ¿puede usar carga externa cuantificable? (gym/mancuernas/barra)
+}
+
+/** Deriva TODAS las capacidades desde el gear canónico. Único punto de derivación. */
+export function deriveCapabilities(gear: Gear[]): EquipmentCapabilities {
+  const has = (g: Gear) => gear.includes(g);
+  const allowedImplements = gearToImplements(gear);
+  const hasFullGym = has('gym');
+  const hasWeights = has('gym') || has('mancuernas') || has('barra');
+  // Bucket grueso: 'cuerpo' siempre; 'gym' si hay CUALQUIER implemento de ese bucket
+  // (mancuernas/barra/máquina… están etiquetados 'gym' en el banco); 'ligas' si hay bandas.
+  const equipmentList: Equipment[] = ['cuerpo'];
+  if (hasFullGym || has('mancuernas') || has('barra') || has('banco') || has('dominadas')) equipmentList.push('gym');
+  if (has('ligas')) equipmentList.push('ligas');
+  return { allowedImplements, equipmentList, hasFullGym, hasWeights };
+}
+
+/** Firma CANÓNICA del gear para el configHash (orden estable → mismo hash sin importar el
+ *  orden de selección). [dumbbell,bench] y [bench,dumbbell] → misma firma. */
+export function gearSignature(gear: Gear[]): string {
+  return [...new Set(gear)].sort().join('+') || 'cuerpo';
+}
+
+/** Migración de usuarios/planes existentes (Equipment plano → gear canónico). */
+export function gearFromLegacyEquipment(eq: Equipment | string | null | undefined): Gear[] {
+  if (eq === 'gym') return ['gym'];
+  if (eq === 'ligas') return ['ligas'];
+  return []; // 'cuerpo'/desconocido → solo peso corporal (implícito)
 }

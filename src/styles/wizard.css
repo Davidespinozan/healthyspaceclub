@@ -244,6 +244,30 @@
   color: var(--txt2);
 }
 
+/* GEAR granular · sub-pregunta de implementos (paso 2, con propio equipo) */
+.wz-subq {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--sand);
+}
+.wz-q-sublabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--forest);
+  margin: 0 0 4px;
+}
+.wz-q-hint-block {
+  display: block;
+  margin: 0 0 10px;
+}
+/* Ícono legible sobre el chip seleccionado (fondo dorado) */
+.wz-chip.on .wz-chip-icon svg { color: #fff; }
+
+/* Chip con título + subtítulo (training goal) */
+.wz-chip-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+.wz-chip-sub { font-size: 10px; font-weight: 500; opacity: 0.72; }
+
 /* ── Chips ─────────────────────────────────────────────────────── */
 
 .wz-chips {

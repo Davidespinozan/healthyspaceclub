@@ -1,4 +1,4 @@
-import type { Exercise } from '../types';
+import type { Exercise, TrainingGoal } from '../types';
 
 interface WorkoutExercise {
   id: string;
@@ -114,12 +114,15 @@ function phaseRank(type: string | undefined, muscle: string | undefined): number
 export function repairWorkoutStructure<T extends WorkoutExercise>(
   exercises: T[],
   bank: Exercise[],
-  opts: { hasWeights?: boolean; compoundSetFloor?: number; priorityMuscles?: Set<string> } = {},
+  opts: { hasWeights?: boolean; compoundSetFloor?: number; priorityMuscles?: Set<string>; trainingGoal?: TrainingGoal } = {},
 ): { exercises: T[]; fixes: string[] } {
   // hasWeights: la regla "compuesto pesado nunca en superserie" es por SEGURIDAD con
-  // carga externa (barra/mancuerna). En peso corporal/ligas NO aplica — ahí los
+  // carga externa (barra/mancuerna). En peso corporal/ligas NO aplica para HIPERTROFIA — ahí los
   // circuitos y superseries de sentadillas/dominadas son válidos y deseables.
   const hasWeights = opts.hasWeights ?? true;
+  // FUERZA (Fase 1): el trabajo principal se protege SIEMPRE, independiente de hasWeights —
+  // el rendimiento del lift principal manda aunque sea peso corporal/bandas. Nunca en superserie.
+  const protectMainCompound = hasWeights || opts.trainingGoal === 'fuerza';
   const priority = opts.priorityMuscles;
   // P5: rank de músculo con sesgo de prioridad (el prioritario se adelanta en su fase).
   const mrankP = (m: string | undefined): number => muscleRank(m) - (m && priority?.has(m) ? 100 : 0);
@@ -131,8 +134,9 @@ export function repairWorkoutStructure<T extends WorkoutExercise>(
 
   let work = exercises.map(e => ({ ...e }));
 
-  // (2) Compuesto pesado en superserie → sácalo del group (serie recta). Solo con pesas.
-  if (hasWeights) for (const ex of work) {
+  // (2) Compuesto pesado en superserie → sácalo del group (serie recta). Con pesas SIEMPRE,
+  // y en FUERZA aunque sea peso corporal/bandas (protección del lift principal, indep. de hasWeights).
+  if (protectMainCompound) for (const ex of work) {
     const isCompound = typeOf(ex) === 'compuesto';
     const isHeavy = HEAVY_COMPOUND.test(ex.id) || HEAVY_COMPOUND.test(nameOf(ex));
     if (ex.group && isCompound && isHeavy) {

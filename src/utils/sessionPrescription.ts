@@ -9,8 +9,9 @@
 //
 // La IA solo ELIGE candidatos, explica y da cues. La lógica crítica es determinista.
 // ─────────────────────────────────────────────────────────────────────────
-import type { Exercise } from '../types';
+import type { Exercise, TrainingGoal } from '../types';
 import { HEAVY_COMPOUND } from './exerciseOrder';
+import { roleOf, roleToCategory } from './exerciseRole';
 import { prescribeLoad, roundToIncrement } from './loadEngine';
 import type { Recovery } from './mesocycle';
 
@@ -36,13 +37,11 @@ export const DELOAD_LOAD_FACTOR = 0.875;
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-// ── Categoría (rol) desde la taxonomía existente del banco ───────────────────
-export function categorize(ex: Pick<Exercise, 'id' | 'name' | 'type'>): Category {
-  if (ex.type === 'aislamiento') return 'isolation';
-  if (ex.type === 'compuesto' || ex.type === 'funcional') {
-    return (HEAVY_COMPOUND.test(ex.id) || HEAVY_COMPOUND.test(ex.name)) ? 'main-compound' : 'secondary-compound';
-  }
-  return 'isolation'; // activación/otros → se tratan como aislamiento (bajo desgaste)
+// ── Categoría (rol) — Fase 3.1: AUTORIDAD = metadata explícita (exerciseRole), NO el nombre ──
+// `roleOf` resuelve rol explícito → mapa del banco → fallback legacy (type + HEAVY_COMPOUND) SOLO
+// para contenido nuevo no etiquetado. Renombrar un ejercicio ya no cambia su categoría.
+export function categorize(ex: Pick<Exercise, 'id' | 'name' | 'type'> & { exerciseRole?: string }): Category {
+  return roleToCategory(roleOf(ex, HEAVY_COMPOUND));
 }
 
 // ── REPARTO DE VOLUMEN (el corazón de P4) ────────────────────────────────────
@@ -87,35 +86,48 @@ export function allocateSessionVolume(input: {
   return out;
 }
 
-// ── Reps / RIR / descanso por categoría × objetivo × fase ────────────────────
-/** Rango de reps. Objetivo marca la base; la fase la desplaza (intensificación baja el
- *  rango en movimientos apropiados; acumulación lo sube). Anclado a lo que usa el banco. */
-export function repRangeFor(cat: Category, objective: string, phase: Phase): string {
-  const o = (objective || '').toLowerCase();
-  const fuerza = /fuerza/.test(o), condic = /condic|resist|grasa|perder/.test(o);
-  if (cat === 'main-compound') {
-    if (fuerza) return phase === 'intensificacion' ? '3-5' : '4-6';
-    if (condic) return '8-12';
-    return phase === 'intensificacion' ? '5-7' : '6-10';   // hipertrofia
+// ── Reps / RIR / descanso por categoría × TRAINING GOAL × fase ───────────────
+/** Rango de reps. Depende SOLO del TRAINING GOAL tipado (hipertrofia|fuerza) — nunca del
+ *  body goal: un string de composición corporal ("perder grasa") NO puede cambiar las reps
+ *  de resistencia (Fase 0). La fase desplaza el rango (intensificación lo baja). */
+export function repRangeFor(cat: Category, trainingGoal: TrainingGoal, phase: Phase): string {
+  // FUERZA (Fase 1): rangos por ROL. El aislamiento NO se convierte en 3-5 — sigue moderado/alto
+  // (soporte muscular, no fuerza máxima). HIPERTROFIA conserva su filosofía validada.
+  if (trainingGoal === 'fuerza') {
+    if (cat === 'main-compound') return phase === 'intensificacion' ? '3-5' : '4-6';     // deload: 4-6 (carga reducida)
+    if (cat === 'secondary-compound') return phase === 'intensificacion' ? '5-7' : '6-8';
+    // isolation: acumulación 8-12 · intensificación 8-10 · deload 10-15
+    return phase === 'deload' ? '10-15' : phase === 'intensificacion' ? '8-10' : '8-12';
   }
-  if (cat === 'secondary-compound') {
-    if (fuerza) return '5-8';
-    if (condic) return '10-15';
-    return phase === 'intensificacion' ? '7-10' : '8-12';
-  }
-  // isolation
-  if (condic) return '15-20';
-  return phase === 'intensificacion' ? '10-12' : '12-15';
+  // HIPERTROFIA (sin cambios respecto a la línea base validada)
+  if (cat === 'main-compound') return phase === 'intensificacion' ? '5-7' : '6-10';
+  if (cat === 'secondary-compound') return phase === 'intensificacion' ? '7-10' : '8-12';
+  return phase === 'intensificacion' ? '10-12' : '12-15'; // isolation
 }
 
-export function restFor(cat: Category, phase: Phase): number {
+export function restFor(cat: Category, trainingGoal: TrainingGoal, phase: Phase): number {
+  // FUERZA: descansos largos para preservar rendimiento en las series pesadas (nunca se recortan
+  // por tiempo aquí — el recorte de sesión corta elimina EJERCICIOS, no el descanso crítico).
+  if (trainingGoal === 'fuerza') {
+    if (cat === 'main-compound') return phase === 'deload' ? 150 : phase === 'intensificacion' ? 240 : 210; // 180-300
+    if (cat === 'secondary-compound') return phase === 'deload' ? 120 : 150;                                 // 120-180
+    return 90; // isolation 60-120
+  }
+  // HIPERTROFIA (sin cambios)
   if (cat === 'main-compound') return phase === 'deload' ? 120 : phase === 'intensificacion' ? 180 : 150;
   if (cat === 'secondary-compound') return 90;
   return 60; // isolation
 }
 
-export function rirFor(cat: Category, phase: Phase): number {
-  if (phase === 'deload') return 4;                       // lejos del fallo
+export function rirFor(cat: Category, trainingGoal: TrainingGoal, phase: Phase): number {
+  // Invariante: un compuesto principal NUNCA va a RIR 0 rutinariamente (mín 2 en intensificación).
+  if (phase === 'deload') return cat === 'isolation' && trainingGoal === 'fuerza' ? 3 : 4; // lejos del fallo
+  if (trainingGoal === 'fuerza') {
+    if (cat === 'main-compound') return phase === 'intensificacion' ? 2 : 3;   // 1-2 / 2-3 (calidad del lift)
+    if (cat === 'secondary-compound') return 2;
+    return 1;                                                                   // isolation puede acercarse al fallo
+  }
+  // HIPERTROFIA (sin cambios)
   if (phase === 'intensificacion') return cat === 'isolation' ? 1 : 2;
   return cat === 'main-compound' ? 3 : 2;                 // acumulación conservadora
 }
@@ -133,20 +145,24 @@ export function schemeFor(cat: Category, hasLoadedHistory: boolean, phase: Phase
 export function prescribeExercise(input: {
   category: Category;
   sets: number;              // series asignadas por el reparto (ya distribuidas)
-  objective: string;
+  trainingGoal: TrainingGoal; // Fase 0 · reps de resistencia salen SOLO de aquí (no body goal)
   phase: Phase;
   lastSets?: { reps: number; kg: number; rir?: number }[]; // P2 — historial CON RIR real (canal único)
 }): ExercisePrescription {
-  const { category, objective, phase } = input;
+  const { category, trainingGoal, phase } = input;
   const sets = Math.max(2, input.sets);
-  const reps = repRangeFor(category, objective, phase);
-  const rest = restFor(category, phase);
-  const rir = rirFor(category, phase);
+  const reps = repRangeFor(category, trainingGoal, phase);
+  const rest = restFor(category, trainingGoal, phase);
+  const rir = rirFor(category, trainingGoal, phase);
   const hasLoad = (input.lastSets ?? []).some(s => s.kg > 0);
   const scheme = schemeFor(category, hasLoad, phase);
+  // BLOQUE 2 · el sesgo de carga se calcula UNA vez y alimenta AMBAS ramas (top-backoff y deload)
+  // → misma fuente, el deload nunca diverge del trabajo normal. FUERZA · el compuesto principal
+  // sesga a INTENSIDAD (serie tope más pesada) aun en acumulación; HIPERTROFIA sigue el sesgo por fase.
+  const bias = (phase === 'intensificacion' || (trainingGoal === 'fuerza' && category === 'main-compound'))
+    ? 'intensidad' : 'equilibrio';
 
   if (scheme === 'top-backoff') {
-    const bias = phase === 'intensificacion' ? 'intensidad' : 'equilibrio';
     const load = prescribeLoad(input.lastSets, reps, bias); // RIR-aware, sin calibración (canal único)
     const backoffs = clamp(sets - 1, 1, 3);
     return {
@@ -159,7 +175,7 @@ export function prescribeExercise(input: {
   // normal) en series rectas. MISMA fuente de carga (prescribeLoad RIR-aware) que el resto → el
   // deload y el trabajo normal no divergen. Sin carga comparable (bandas/corporal) → recto sin kg.
   if (phase === 'deload' && hasLoad) {
-    const normal = prescribeLoad(input.lastSets, reps, 'equilibrio');
+    const normal = prescribeLoad(input.lastSets, reps, bias); // MISMO sesgo que el trabajo normal
     if (normal) {
       const deloadKg = roundToIncrement(normal.topKg * DELOAD_LOAD_FACTOR, 2.5);
       return {
@@ -189,12 +205,17 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
   exercises: T[];                                  // con id + muscleGroup (del banco)
   bankById: Map<string, Pick<Exercise, 'id' | 'name' | 'type'>>;
   allocation: Record<string, number>;             // series por músculo (allocateSessionVolume)
-  objective: string;
+  trainingGoal: TrainingGoal;                      // Fase 0 · reps por adaptación de resistencia (no body goal)
   phase: Phase;
   mainMinutes: number;                             // presupuesto del bloque principal
   lastPerf?: Record<string, { sets: { reps: number; kg: number; rir?: number }[] }>;
 }): PrescribedItem<T>[] {
-  const CAT_WEIGHT: Record<Category, number> = { 'main-compound': 1.6, 'secondary-compound': 1.2, isolation: 1.0 };
+  // Distribución de series por rol. FUERZA concentra MÁS en el compuesto principal y menos en
+  // accesorios (menos volumen accesorio, más calidad en el lift); es un factor pequeño, acotado
+  // y testeado — NO un segundo motor de volumen (P3/P4 siguen fijando el total por músculo).
+  const CAT_WEIGHT: Record<Category, number> = input.trainingGoal === 'fuerza'
+    ? { 'main-compound': 2.0, 'secondary-compound': 1.1, isolation: 0.7 }
+    : { 'main-compound': 1.6, 'secondary-compound': 1.2, isolation: 1.0 };
   const items: PrescribedItem<T>[] = [];
 
   // 1) Series por ejercicio: repartir la dosis del músculo entre sus ejercicios por peso
@@ -223,7 +244,7 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
     const prescription = prescribeExercise({
       category: cat,
       sets: setsByEx.get(ex.id) ?? 3,
-      objective: input.objective,
+      trainingGoal: input.trainingGoal,
       phase: input.phase,
       lastSets: input.lastPerf?.[ex.id]?.sets,
     });

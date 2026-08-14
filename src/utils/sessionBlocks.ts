@@ -16,7 +16,7 @@
 //    artificial; perder grasa → más. La preferencia del usuario (Fase 4) mandará.
 //  · Todo respeta el PRESUPUESTO TOTAL de tiempo (el main nunca baja de su piso).
 // ─────────────────────────────────────────────────────────────────────────
-import type { CardioStyle, Equipment, Exercise, MuscleGroup, SessionRole } from '../types';
+import type { CardioStyle, Equipment, Exercise, MuscleGroup, SessionRole, TrainingGoal } from '../types';
 import { cardioEquipmentFor, defaultCardioStyle, matchesCardioStyle, hasPlayableVariant, isReproducibleStation } from './workoutPlanner';
 
 export type BlockIntensity = 'baja' | 'media' | 'alta';
@@ -71,8 +71,12 @@ export interface SessionInput {
   isStrengthDay: boolean;
   /** Día de yoga/recovery: sesión de una pieza, sin warm-up/finisher de cardio. */
   isYogaDay?: boolean;
-  /** Objetivo del usuario (obData.goal) → default de finisher y estilo. */
+  /** BODY GOAL crudo (obData.goal) → SOLO la DOSIS/estilo de cardio del finisher (dimensión
+   *  cardio), acotada. NUNCA decide reps/estructura de resistencia (Fase 0). */
   objective: string;
+  /** TRAINING GOAL de resistencia. Driver PRINCIPAL del finisher: 'fuerza' protege más el
+   *  main lift (finisher menor, sin metcon). Default hipertrofia. */
+  trainingGoal?: TrainingGoal;
   /** Músculos del día → warm-up específico (RAMP: activar lo que se va a usar). */
   dayMuscles: MuscleGroup[];
   equipment: Equipment[];
@@ -80,6 +84,8 @@ export interface SessionInput {
   lowImpactMode?: boolean;
   /** P1 · semana de descarga → el finisher se recorta (no debe re-meter la fatiga ahorrada). */
   isDeload?: boolean;
+  /** P6 · readiness aguda BAJA → recorta el finisher (no añadir fatiga en un mal día). */
+  readinessLow?: boolean;
   /** Banco completo (para elegir cardio/activación de warm-up y finisher). */
   bank: Exercise[];
 }
@@ -129,13 +135,27 @@ function pickCardio(
  * (protege el estímulo prioritario): si falta tiempo, se recorta primero el
  * finisher, luego el warm-up — nunca el main por debajo de su piso.
  */
-export function finisherShare(objective: string): number {
+export function finisherShare(
+  objective: string,
+  trainingGoal: TrainingGoal = 'hipertrofia',
+  readinessLow = false,
+): number {
+  // BODY GOAL → DOSIS de cardio del finisher (acotada). El cut recibe MÁS cardio que ganar
+  // músculo, pero NUNCA de forma desproporcionada: el main block siempre domina (antes el cut
+  // llegaba a 0.35 = casi metcon; ahora tope 0.22 → el principal es ≥78% del tiempo útil).
   const o = (objective || '').toLowerCase();
-  if (/grasa|perder|adelgaz|quemar|definir/.test(o)) return 0.35;
-  if (/manten|salud|resist|condic/.test(o)) return 0.20;
-  if (/bienestar|general/.test(o)) return 0.22;
-  if (/m[uú]sculo|ganar|hipertrof|fuerza/.test(o)) return 0.10; // poco, pero SIN tope duro
-  return 0.15;
+  let share =
+    /grasa|perder|adelgaz|quemar|definir/.test(o) ? 0.22
+    : /manten|salud|resist|condic/.test(o) ? 0.18
+    : /bienestar|general/.test(o) ? 0.20
+    : /m[uú]sculo|ganar|hipertrof/.test(o) ? 0.10
+    : 0.15;
+  // TRAINING GOAL manda sobre el body goal: en FUERZA se protege más el main lift → finisher
+  // a la mitad (nunca comprometer el levantamiento principal por meter cardio).
+  if (trainingGoal === 'fuerza') share *= 0.5;
+  // P6 · readiness aguda baja → menos finisher (no re-meter fatiga en un mal día).
+  if (readinessLow) share *= 0.7;
+  return share;
 }
 
 export function allocateTime(input: {
@@ -143,6 +163,8 @@ export function allocateTime(input: {
   isStrengthDay: boolean;
   isYogaDay?: boolean;
   objective: string;
+  trainingGoal?: TrainingGoal;
+  readinessLow?: boolean;
   isDeload?: boolean;
 }): { warmup: number; main: number; finisher: number } {
   const total = Math.max(10, Math.round(input.totalMinutes));
@@ -157,7 +179,8 @@ export function allocateTime(input: {
   if (input.isStrengthDay) {
     // DELOAD: el finisher re-mete fatiga que la descarga intenta ahorrar → se recorta a la
     // mitad y con tope bajo (queda algo de trabajo aeróbico ligero solo si el objetivo lo pide).
-    const share = finisherShare(input.objective) * (input.isDeload ? 0.5 : 1);
+    const share = finisherShare(input.objective, input.trainingGoal ?? 'hipertrofia', input.readinessLow ?? false)
+      * (input.isDeload ? 0.5 : 1);
     finisher = Math.round((total - warmup) * share);
     const cap = input.isDeload ? 10 : 30;
     finisher = finisher < 5 ? 0 : Math.min(finisher, cap); // <5 → se omite; tope = FATIGA, no meta
@@ -291,9 +314,13 @@ export function buildFinisher(minutes: number, input: SessionInput): FinisherBlo
   const style = finisherStyle(objective, lowImpactMode);
   const o = (objective || '').toLowerCase();
   const fatLoss = /grasa|perder|adelgaz|quemar|definir/.test(o);
+  // El TRAINING GOAL gatea el metcon: en FUERZA nunca se convierte el finisher en circuito
+  // (protege el main lift). Así el body goal ya NO decide POR SÍ SOLO "= metcon" (Fase 0).
+  const isStrength = (input.trainingGoal ?? 'hipertrofia') === 'fuerza';
 
-  // Circuito multiformato: metcon para perder grasa, sin bajo impacto y con tiempo.
-  if (fatLoss && style === 'funcional' && minutes >= 10 && !lowImpactMode) {
+  // Circuito multiformato: metcon para perder grasa (training goal hipertrofia), sin bajo
+  // impacto y con tiempo. En fuerza, jamás.
+  if (fatLoss && !isStrength && style === 'funcional' && minutes >= 10 && !lowImpactMode) {
     const circuit = buildCircuitFinisher(minutes, input, style);
     if (circuit) return circuit;
   }

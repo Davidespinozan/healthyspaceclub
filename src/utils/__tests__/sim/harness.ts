@@ -17,7 +17,7 @@ import { dayKey } from '../../localDate';
 import {
   computeWeeklyVolume, weeklyVolumeSeries, trainingFrequency,
   splitTypesForFrequency, DAY_TYPE_CONFIG, deloadCheck, inDeloadWeek, exerciseCountForDuration,
-  levelFromObData as _lvl,
+  levelFromObData as _lvl, normalizeTrainingGoal,
 } from '../../workoutPlanner';
 import {
   deriveMesocycleState, recoveryFromCheckin, adherenceFrom, volumeTrend,
@@ -223,7 +223,7 @@ export function coachDay(p: Profile, state: SimState, today: number, dayMuscles:
   });
   // BLOQUE 2 · carga = una sola autoridad (prescribeLoad RIR-aware); ya no hay calibración aparte.
   const items = prescribeSession({
-    exercises: exsWithMuscle, bankById, allocation, objective: p.goal, phase: meso.phase,
+    exercises: exsWithMuscle, bankById, allocation, trainingGoal: normalizeTrainingGoal(p.goal), phase: meso.phase,
     mainMinutes: time.main, lastPerf,
   });
   void obData;

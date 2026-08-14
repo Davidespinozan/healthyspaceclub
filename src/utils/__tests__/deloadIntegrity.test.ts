@@ -65,7 +65,7 @@ describe('DELOAD · interacción con prioridad y readiness', () => {
     });
     const items = prescribeSession({
       exercises: [{ id: 'hip-thrust', muscleGroup: 'gluteo' }], bankById, allocation: alloc,
-      objective: 'hipertrofia', phase: 'deload', mainMinutes: 999,
+      trainingGoal: 'hipertrofia', phase: 'deload', mainMinutes: 999,
       lastPerf: { 'hip-thrust': { sets: loaded } },
     });
     const it = items[0].prescription;
@@ -74,7 +74,7 @@ describe('DELOAD · interacción con prioridad y readiness', () => {
   });
 
   it('READINESS baja + deload: la carga reducida NO se hunde a algo absurdo (sigue siendo práctica técnica)', () => {
-    const deload = prescribeExercise({ category: 'main-compound', sets: 3, objective: 'hipertrofia', phase: 'deload', lastSets: loaded });
+    const deload = prescribeExercise({ category: 'main-compound', sets: 3, trainingGoal: 'hipertrofia', phase: 'deload', lastSets: loaded });
     // readiness baja modula VOLUMEN/dosis (allocate), no vuelve a multiplicar la CARGA del deload.
     expect(readinessToRecovery('low')).toBe('mala');
     expect(deload.topKg!).toBeGreaterThan(loaded[0].kg * 0.7); // ~87.5%, no un desplome

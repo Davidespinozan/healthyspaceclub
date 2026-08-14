@@ -16,6 +16,7 @@ import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { selectVariantForEquipment, hasPlayableVariant } from '../utils/workoutPlanner';
+import type { Implement } from '../utils/equipmentImplement';
 import type { WorkoutExercise } from '../utils/workoutSession';
 import { parseRepsToNumber } from '../utils/workoutLogger';
 import { nextSetSuggestion } from '../utils/rirFeedback';
@@ -45,6 +46,9 @@ interface Props {
   workout: CachedWorkout;
   exerciseBank: Exercise[];
   userEquipment: Equipment[];
+  // GEAR granular · autoridad fina de elegibilidad. Resuelve la variante a MOSTRAR y
+  // filtra los swaps → nunca ofrece una variante que el usuario no puede ejecutar.
+  allowedImplements?: Set<Implement>;
   onComplete: (data: {
     exercisesCompleted: number;
     totalSetsCompleted: number;
@@ -69,13 +73,13 @@ function buildPlanHash(workout: CachedWorkout): string {
 
 /** #3 — Alternativa para "Cambiar este ejercicio": mismo grupo muscular, con video
  *  para el equipo del usuario, que no esté ya en la rutina. null si no hay opción. */
-function pickSwapAlternative(bank: Exercise[], currentId: string, equipment: Equipment[], usedIds: Set<string>): Exercise | null {
+function pickSwapAlternative(bank: Exercise[], currentId: string, equipment: Equipment[], usedIds: Set<string>, allowed?: Set<Implement>): Exercise | null {
   const cur = bank.find(e => e.id === currentId);
   if (!cur) return null;
   const pool = bank.filter(ex =>
     ex.id !== currentId && !usedIds.has(ex.id) &&
     ex.muscleGroup === cur.muscleGroup && !ex.isYoga &&
-    hasPlayableVariant(ex, equipment),
+    hasPlayableVariant(ex, equipment, allowed),
   );
   return pool[0] ?? null;
 }
@@ -84,6 +88,7 @@ export default function WorkoutPlayer({
   workout,
   exerciseBank,
   userEquipment,
+  allowedImplements,
   onComplete,
   onClose,
 }: Props) {
@@ -204,7 +209,7 @@ export default function WorkoutPlayer({
   const currentSetNum = step?.setNum ?? 1;
   const currentEx = exercises[currentExerciseIndex];
   const currentBank = currentEx ? exerciseMap.get(currentEx.id) : undefined;
-  const variant = currentBank ? selectVariantForEquipment(currentBank, userEquipment) : null;
+  const variant = currentBank ? selectVariantForEquipment(currentBank, userEquipment, allowedImplements) : null;
   // En gym el implemento (barra/mancuerna/máquina) NO importa y el agarre ya va en el
   // nombre del ejercicio → el título NO muestra la variante de gym. En cuerpo/ligas la
   // variante sí nombra el movimiento real (flexiones, con banda), así que se conserva.
@@ -219,7 +224,7 @@ export default function WorkoutPlayer({
   // #3 — "Cambiar este ejercicio": alternativa del mismo grupo (con video, apto al
   // equipo, no repetida). Reemplaza SIN avanzar; resetea las series de ese ejercicio.
   const swapAlt = currentEx
-    ? pickSwapAlternative(exerciseBank, currentEx.id, userEquipment, new Set(exercises.map(e => e.id)))
+    ? pickSwapAlternative(exerciseBank, currentEx.id, userEquipment, new Set(exercises.map(e => e.id)), allowedImplements)
     : null;
   const canSwap = phase === 'exercise' && !!swapAlt;
   function swapCurrentExercise() {

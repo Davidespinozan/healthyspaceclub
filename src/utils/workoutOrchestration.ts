@@ -12,6 +12,7 @@
 // Ambas son top-level y puras respecto a React (cero hooks, cero store).
 
 import { selectVariantForEquipment } from './workoutPlanner';
+import type { Implement } from './equipmentImplement';
 import { buildUserProfileBlock } from '../ai/profile';
 import {
   buildWorkoutOrchestratorPrompt,
@@ -20,7 +21,7 @@ import {
 import { callAI } from './aiProxy';
 import { prescribeLoad } from './loadEngine';
 import type { IntensityBias } from './mesocycle';
-import type { Exercise, Equipment, Goal, UserProfile, YogaPlan } from '../types';
+import type { Exercise, Equipment, Goal, TrainingGoal, UserProfile, YogaPlan } from '../types';
 import type { AppLanguage } from '../store';
 import type { CachedWorkout } from './workoutCache';
 
@@ -58,6 +59,15 @@ export async function orchestrateWorkout(params: {
   equipment: Equipment[];
   targetCount: number;
   goal: Goal;
+  // Fase 1 · adaptación de resistencia (hipertrofia|fuerza). La IA la usa para CUES y SELECCIÓN
+  // (sesión de fuerza = pocos movimientos, compuesto principal protagonista); NO para fijar números.
+  trainingGoal?: TrainingGoal;
+  // Fase 2 · anclas del bloque: ids que DEBEN aparecer (continuidad). El motor las garantiza aunque
+  // la IA las omita; aquí solo se informan para que las coloque temprano y las trate como principales.
+  requiredAnchorIds?: string[];
+  // Fase 3 · SLOTS: funciones (patrones) que la sesión debe cubrir. La IA elige DENTRO de cada
+  // patrón; el motor garantiza cobertura + anti-redundancia. Guía, no números.
+  slotSummary?: string;
   intensity: 'baja' | 'media' | 'alta';
   userName: string;
   dayLabel: string;
@@ -70,14 +80,17 @@ export async function orchestrateWorkout(params: {
   lastPerf?: Record<string, { sets: { reps: number; kg: number }[] }>;
   // P2 · sesgo de carga de la fase del mesociclo (para sugerir el peso de hoy).
   loadBias?: IntensityBias;
+  // GEAR granular · implementos que el usuario puede ejecutar → la IA solo ve la variante
+  // realmente disponible (no una de máquina si solo tiene mancuernas).
+  allowedImplements?: Set<Implement>;
 }): Promise<CachedWorkout & { razon?: string }> {
-  const { candidates, equipment, targetCount, goal, intensity, userName, dayLabel, context, userProfile, locale, partner, lastPerf, loadBias = 'equilibrio' } = params;
+  const { candidates, equipment, targetCount, goal, trainingGoal = 'hipertrofia', requiredAnchorIds = [], slotSummary = '', intensity, userName, dayLabel, context, userProfile, locale, partner, lastPerf, loadBias = 'equilibrio', allowedImplements } = params;
   const profileBlock = buildUserProfileBlock(userProfile);
 
-  // Para cada candidato, seleccionar la variante específica que aplica al equipo
-  // del usuario. Si tiene overrides (sets/reps/rest), usar esos en vez de los del patrón.
+  // Para cada candidato, seleccionar la variante específica que aplica al equipo Y a los
+  // implementos del usuario. Si tiene overrides (sets/reps/rest), usar esos.
   const candidatesCompact = candidates.map(c => {
-    const variant = selectVariantForEquipment(c, equipment);
+    const variant = selectVariantForEquipment(c, equipment, allowedImplements);
     const effectiveName = variant ? `${c.name} — ${variant.name}` : c.name;
     const effectiveSets = variant?.defaultSets ?? c.defaultSets;
     const effectiveReps = variant?.defaultReps ?? c.defaultReps;
@@ -99,7 +112,7 @@ export async function orchestrateWorkout(params: {
 
   const prompt = buildWorkoutOrchestratorPrompt({
     dayLabel, userName, profileBlock, context, candidatesCompact,
-    targetCount, goal, intensityInstruction, intensity, locale, equipment,
+    targetCount, goal, trainingGoal, requiredAnchorIds, slotSummary, intensityInstruction, intensity, locale, equipment,
     partner: partner
       ? { name: partner.name, profileBlock: buildPartnerProfileBlock(partner) }
       : undefined,

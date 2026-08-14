@@ -44,6 +44,18 @@ export type Equipment = 'gym' | 'cuerpo' | 'ligas';
 
 export type Goal = 'fuerza' | 'hipertrofia' | 'condicion' | 'movilidad';
 
+// ── Separación semántica (Fase 0) ────────────────────────────────────────────
+// Tres conceptos que ANTES colisionaban en un solo `goal`:
+//  · BODY GOAL      → qué quiere cambiar la persona en su cuerpo (perder grasa /
+//                     mantener·recomposición / ganar músculo). Vive como string libre
+//                     en `obData.goal`. Alimenta nutrición y la DOSIS global de cardio.
+//                     NUNCA decide reps/RIR/estructura de resistencia.
+//  · TRAINING GOAL  → qué adaptación busca el entrenamiento de RESISTENCIA. Tipado.
+//                     Default hipertrofia; fuerza cuando exista preferencia explícita.
+//  · MODALITY       → qué tipo de sesión toca hoy (resistance/cardio/yoga). Ya existe
+//                     como `Modality`/selección del wizard; NO es sinónimo de trainingGoal.
+export type TrainingGoal = 'hipertrofia' | 'fuerza';
+
 export type ExerciseType =
   | 'compuesto' | 'aislamiento' | 'funcional'
   | 'cardio' | 'movilidad' | 'activacion';
@@ -176,8 +188,23 @@ export interface Exercise {
    * Familia de movimiento. Ejercicios separados por AGARRE (mismo patrón) comparten
    * familia — ej. 'traccion-vertical' agrupa las versiones pronada/supina/neutra.
    * El planner limita cuántos de la misma familia entran en un día (balance de patrones).
+   * @deprecated Fase 3 · subsumido por `movementPattern` (autoridad de patrón). Se conserva
+   * el campo por compat de datos, pero el planner ya NO lo usa (ver movementPattern.ts).
    */
   movementFamily?: string;
+
+  /**
+   * Fase 3 · PATRÓN DE MOVIMIENTO explícito (autoridad de función mecánica, no el nombre).
+   * Opcional: si está, gana sobre la clasificación por id. Valores = MovementPattern
+   * (src/utils/movementPattern.ts). Base de SLOTS y ANTI-REDUNDANCIA.
+   */
+  movementPattern?: string;
+
+  /**
+   * Fase 3.1 · ROL ESTRUCTURAL explícito (main|secondary|isolation|conditioning). Autoridad de
+   * "qué función cumple" — reemplaza al regex de nombre. Si está, gana. Ver src/utils/exerciseRole.ts.
+   */
+  exerciseRole?: string;
 
   /**
    * CARDIO (Fase 1) — bucket UX al que pertenece este cardio. Solo en ejercicios de

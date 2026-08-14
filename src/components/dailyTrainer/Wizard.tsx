@@ -12,11 +12,14 @@
 import { Lock, Users, Check, ArrowRight } from 'lucide-react';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
-import type { Modality, Equipment, MuscleGroup, CardioStyle } from '../../types';
+import type { Modality, MuscleGroup, CardioStyle, TrainingGoal } from '../../types';
+import type { Gear } from '../../utils/equipmentImplement';
 import {
   MODALITY_OPTIONS,
   TIME_OPTIONS,
-  EQUIPMENT_OPTIONS,
+  GEAR_ENV_OPTIONS,
+  GEAR_OPTIONS,
+  TRAINING_GOAL_OPTIONS,
   DISCOMFORT_OPTIONS,
   PAIN_AREAS,
   FOCUS_OPTIONS,
@@ -53,8 +56,13 @@ interface WizardProps {
   setPainArea: (v: string) => void;
   selectedTime: number;
   setSelectedTime: (t: number) => void;
-  selectedEquipment: Equipment;
-  setSelectedEquipment: (e: Equipment) => void;
+  // GEAR granular (2 pasos): el usuario declara acceso + implementos. Peso corporal
+  // implícito. El padre deriva TODO (allowedImplements, buckets, hasFullGym/hasWeights).
+  gear: Gear[];
+  setGear: (g: Gear[]) => void;
+  // TRAINING GOAL (Fase 2): qué adaptación de resistencia. Solo se pregunta en resistencia.
+  trainingGoal: TrainingGoal;
+  setTrainingGoal: (g: TrainingGoal) => void;
 
   // Foco de fuerza + historia
   focus: FocusValue;
@@ -91,7 +99,8 @@ export default function Wizard({
   discomfort, setDiscomfort,
   painArea, setPainArea,
   selectedTime, setSelectedTime,
-  selectedEquipment, setSelectedEquipment,
+  gear, setGear,
+  trainingGoal, setTrainingGoal,
   focus, setFocus,
   selectedMuscles, setSelectedMuscles,
   selectedPriority, setSelectedPriority,
@@ -413,16 +422,72 @@ export default function Wizard({
 
         {selectedModality !== 'yoga' && (
           <div className="wz-q">
-            <p className="wz-q-label">{t('wizard.equipmentQ')}</p>
+            {/* Paso 1 · entorno (acceso). Gimnasio completo = set estándar; propio equipo
+                = declara implementos abajo. */}
+            <p className="wz-q-label">{t('wizard.gearEnvQ')}</p>
             <div className="wz-chips wz-chips-col">
-              {EQUIPMENT_OPTIONS.map(opt => (
+              {GEAR_ENV_OPTIONS.map(opt => {
+                const isGymEnv = gear.includes('gym');
+                const on = opt.value === 'gym' ? isGymEnv : !isGymEnv;
+                return (
+                  <button
+                    key={opt.value}
+                    className={`wz-chip wz-chip-block${on ? ' on' : ''}`}
+                    // gym → set canónico ['gym']; propio equipo → conserva lo ya elegido
+                    // sin gym (o vacío = solo peso corporal).
+                    onClick={() => setGear(opt.value === 'gym' ? ['gym'] : gear.filter(g => g !== 'gym'))}
+                  >
+                    <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
+                    <span>{t(opt.labelKey)}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Paso 2 · implementos (solo con propio equipo). Multi-select; peso corporal
+                implícito (nada marcado = solo peso corporal). */}
+            {!gear.includes('gym') && (
+              <div className="wz-subq">
+                <p className="wz-q-sublabel">{t('wizard.gearOwnQ')}</p>
+                <p className="wz-q-hint wz-q-hint-block">{t('wizard.gearOwnHint')}</p>
+                <div className="wz-chips">
+                  {GEAR_OPTIONS.map(opt => {
+                    const on = gear.includes(opt.value);
+                    return (
+                      <button
+                        key={opt.value}
+                        className={`wz-chip${on ? ' on' : ''}`}
+                        onClick={() => setGear(on ? gear.filter(g => g !== opt.value) : [...gear, opt.value])}
+                      >
+                        <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
+                        <span>{t(opt.labelKey)}</span>
+                        {on && <Check size={13} strokeWidth={2.5} style={{ marginLeft: 'auto', flexShrink: 0 }} aria-hidden="true" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TRAINING GOAL (Fase 2) · solo en RESISTENCIA (fuerza o auto). NO en cardio dedicado ni
+            yoga. Separado del body goal: "perder grasa" no decide esto. Default hipertrofia. */}
+        {(selectedModality === 'fuerza' || selectedModality === 'auto') && (
+          <div className="wz-q">
+            <p className="wz-q-label">{t('wizard.trainingGoalQ')}</p>
+            <div className="wz-chips wz-chips-col">
+              {TRAINING_GOAL_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
-                  className={`wz-chip wz-chip-block${selectedEquipment === opt.value ? ' on' : ''}`}
-                  onClick={() => setSelectedEquipment(opt.value)}
+                  className={`wz-chip wz-chip-block${trainingGoal === opt.value ? ' on' : ''}`}
+                  onClick={() => setTrainingGoal(opt.value)}
                 >
                   <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
-                  <span>{t(opt.labelKey)}</span>
+                  <span className="wz-chip-stack">
+                    <span>{t(opt.labelKey)}</span>
+                    <span className="wz-chip-sub">{t(opt.subKey)}</span>
+                  </span>
                 </button>
               ))}
             </div>

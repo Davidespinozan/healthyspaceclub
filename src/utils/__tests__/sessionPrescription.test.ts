@@ -78,14 +78,14 @@ describe('sessionPrescription — reps/RIR/descanso por fase', () => {
     const acum = repRangeFor('main-compound', 'hipertrofia', 'acumulacion');
     const inten = repRangeFor('main-compound', 'hipertrofia', 'intensificacion');
     expect(parseInt(inten)).toBeLessThanOrEqual(parseInt(acum));
-    expect(restFor('main-compound', 'intensificacion')).toBeGreaterThan(restFor('main-compound', 'acumulacion'));
+    expect(restFor('main-compound', 'hipertrofia', 'intensificacion')).toBeGreaterThan(restFor('main-compound', 'hipertrofia', 'acumulacion'));
   });
   it('aislamiento: más reps y menos descanso que el compuesto', () => {
-    expect(restFor('isolation', 'acumulacion')).toBeLessThan(restFor('main-compound', 'acumulacion'));
+    expect(restFor('isolation', 'hipertrofia', 'acumulacion')).toBeLessThan(restFor('main-compound', 'hipertrofia', 'acumulacion'));
   });
   it('RIR: intensificación más cerca del fallo que acumulación; deload lejos', () => {
-    expect(rirFor('main-compound', 'intensificacion')).toBeLessThan(rirFor('main-compound', 'acumulacion'));
-    expect(rirFor('isolation', 'deload')).toBeGreaterThanOrEqual(3);
+    expect(rirFor('main-compound', 'hipertrofia', 'intensificacion')).toBeLessThan(rirFor('main-compound', 'hipertrofia', 'acumulacion'));
+    expect(rirFor('isolation', 'hipertrofia', 'deload')).toBeGreaterThanOrEqual(3);
   });
 });
 
@@ -103,14 +103,14 @@ describe('sessionPrescription — esquema top-backoff solo donde aplica', () => 
     expect(schemeFor('main-compound', true, 'deload')).toBe('straight');
   });
   it('prescribeExercise integra P2: top-backoff trae topKg + backoffKg', () => {
-    const p = prescribeExercise({ category: 'main-compound', sets: 4, objective: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
+    const p = prescribeExercise({ category: 'main-compound', sets: 4, trainingGoal: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
     expect(p.scheme).toBe('top-backoff');
     expect(p.topKg).toBeGreaterThan(0);
     expect(p.backoffKg).toBeGreaterThan(0);
     expect(p.topKg!).toBeGreaterThanOrEqual(p.backoffKg!);
   });
   it('peso corporal (sin kg) → recto, sin topKg', () => {
-    const p = prescribeExercise({ category: 'isolation', sets: 3, objective: 'hipertrofia', phase: 'acumulacion', lastSets: [{ reps: 15, kg: 0 }] });
+    const p = prescribeExercise({ category: 'isolation', sets: 3, trainingGoal: 'hipertrofia', phase: 'acumulacion', lastSets: [{ reps: 15, kg: 0 }] });
     expect(p.scheme).toBe('straight');
     expect(p.topKg).toBeUndefined();
   });
@@ -120,8 +120,8 @@ describe('sessionPrescription — DELOAD de carga (P1, reutiliza P2)', () => {
   const loaded = [{ reps: 6, kg: 100 }];
 
   it('deload con carga comparable → carga recta REDUCIDA (~87.5% de la normal), sin top-set', () => {
-    const normal = prescribeExercise({ category: 'main-compound', sets: 4, objective: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
-    const deload = prescribeExercise({ category: 'main-compound', sets: 3, objective: 'hipertrofia', phase: 'deload', lastSets: loaded });
+    const normal = prescribeExercise({ category: 'main-compound', sets: 4, trainingGoal: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
+    const deload = prescribeExercise({ category: 'main-compound', sets: 3, trainingGoal: 'hipertrofia', phase: 'deload', lastSets: loaded });
     expect(deload.scheme).toBe('straight');       // sin top-set agresivo
     expect(deload.backoffKg).toBeUndefined();
     expect(deload.isDeloadLoad).toBe(true);
@@ -134,12 +134,12 @@ describe('sessionPrescription — DELOAD de carga (P1, reutiliza P2)', () => {
   });
 
   it('deload → RIR alto (lejos del fallo)', () => {
-    const deload = prescribeExercise({ category: 'main-compound', sets: 3, objective: 'hipertrofia', phase: 'deload', lastSets: loaded });
+    const deload = prescribeExercise({ category: 'main-compound', sets: 3, trainingGoal: 'hipertrofia', phase: 'deload', lastSets: loaded });
     expect(deload.rir).toBeGreaterThanOrEqual(3);
   });
 
   it('deload SIN carga comparable (bandas/peso corporal) → recto sin kg (no inventa placas)', () => {
-    const deload = prescribeExercise({ category: 'main-compound', sets: 3, objective: 'hipertrofia', phase: 'deload', lastSets: [{ reps: 15, kg: 0 }] });
+    const deload = prescribeExercise({ category: 'main-compound', sets: 3, trainingGoal: 'hipertrofia', phase: 'deload', lastSets: [{ reps: 15, kg: 0 }] });
     expect(deload.scheme).toBe('straight');
     expect(deload.topKg).toBeUndefined();
     expect(deload.isDeloadLoad).toBeUndefined();
@@ -148,8 +148,8 @@ describe('sessionPrescription — DELOAD de carga (P1, reutiliza P2)', () => {
   it('REGRESO post-deload: con el MISMO historial previo, la carga normal se recupera intacta', () => {
     // El deload no toca lastExercisePerformance (se gatea en el registro), así que la siguiente
     // sesión normal parte del MISMO historial → misma prescripción que antes del deload.
-    const antes = prescribeExercise({ category: 'main-compound', sets: 4, objective: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
-    const despues = prescribeExercise({ category: 'main-compound', sets: 4, objective: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
+    const antes = prescribeExercise({ category: 'main-compound', sets: 4, trainingGoal: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
+    const despues = prescribeExercise({ category: 'main-compound', sets: 4, trainingGoal: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
     expect(despues.topKg).toBe(antes.topKg); // sin caída aprendida
   });
 });
@@ -170,7 +170,7 @@ describe('sessionPrescription — prescribeSession (reparto + tiempo)', () => {
   it('el compuesto principal se lleva MÁS series que el aislamiento', () => {
     const items = prescribeSession({
       exercises: exs, bankById: bank, allocation: { cuadriceps: 9 },
-      objective: 'hipertrofia', phase: 'acumulacion', mainMinutes: 999,
+      trainingGoal: 'hipertrofia', phase: 'acumulacion', mainMinutes: 999,
     });
     const sent = items.find(i => i.ex.id === 'sentadilla-barra')!;
     const ext = items.find(i => i.ex.id === 'extension-cuad')!;
@@ -180,7 +180,7 @@ describe('sessionPrescription — prescribeSession (reparto + tiempo)', () => {
   it('TIEMPO amplio: no recorta', () => {
     const items = prescribeSession({
       exercises: exs, bankById: bank, allocation: { cuadriceps: 9 },
-      objective: 'hipertrofia', phase: 'acumulacion', mainMinutes: 999,
+      trainingGoal: 'hipertrofia', phase: 'acumulacion', mainMinutes: 999,
     });
     const totalSets = items.reduce((a, i) => a + i.prescription.sets, 0);
     expect(totalSets).toBeGreaterThanOrEqual(6);
@@ -189,7 +189,7 @@ describe('sessionPrescription — prescribeSession (reparto + tiempo)', () => {
   it('POCO tiempo: recorta accesorios ANTES que el compuesto principal', () => {
     const items = prescribeSession({
       exercises: exs, bankById: bank, allocation: { cuadriceps: 12 },
-      objective: 'hipertrofia', phase: 'acumulacion', mainMinutes: 15, // muy apretado
+      trainingGoal: 'hipertrofia', phase: 'acumulacion', mainMinutes: 15, // muy apretado
     });
     const totalMin = items.reduce((a, i) => a + i.prescription.sets * (0.7 + i.prescription.rest / 60), 0);
     expect(totalMin).toBeLessThanOrEqual(15 + 3); // cabe (con margen de redondeo)

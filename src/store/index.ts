@@ -10,6 +10,7 @@ import type { Region, Currency } from '../utils/region';
 import type { BillingCycle } from '../utils/stripe';
 import { MILESTONE_STEPS } from '../constants/milestones';
 import { computeStreak } from '../utils/streak';
+import type { BlockAnchor } from '../utils/blockAnchors';
 
 // Alimento de un registro armado (para reabrir y editar lo que comiste).
 export interface FoodLogItem {
@@ -257,6 +258,12 @@ interface AppState {
   // Completed sessions (per-session: nuevo, escrito por finishWorkoutSession al terminar player)
   completedSessions: CompletedSession[];
   addCompletedSession: (session: CompletedSession) => void;
+
+  // Fase 2 · BLOCK ANCHORS (continuidad de movimientos principales por mesociclo). Referencia
+  // mínima persistente; el resto se deriva. setBlockAnchors REEMPLAZA el conjunto (la resolución
+  // determinista devuelve el estado completo actualizado — no acumula duplicados).
+  blockAnchors: BlockAnchor[];
+  setBlockAnchors: (anchors: BlockAnchor[]) => void;
 
   // P6 · readiness + RIR real (cierre del loop PERFORM→OBSERVE→ADAPT).
   todayCheckin: { date: string; energy?: string; sleep?: string; soreness?: string; sorenessMuscles?: string[] } | null;
@@ -803,6 +810,10 @@ export const useAppStore = create<AppState>()(
   addCompletedSession: (session) =>
     set((state) => ({ completedSessions: [...state.completedSessions, session] })),
 
+  // Fase 2 · block anchors (continuidad de movimientos principales por mesociclo).
+  blockAnchors: [],
+  setBlockAnchors: (anchors) => set({ blockAnchors: anchors }),
+
   // P6 · Check-in de readiness de HOY (energía/sueño/soreness). Válido solo para su fecha;
   // el generador lo ignora si es de otro día. Se sobrescribe si se recaptura.
   todayCheckin: null,
@@ -1332,6 +1343,7 @@ export const useAppStore = create<AppState>()(
     workoutLog: [],
     lastExercisePerformance: {},
     completedSessions: [],
+    blockAnchors: [],
     todayCheckin: null,
     rirLog: [],
     readinessLog: [],
@@ -1410,6 +1422,7 @@ export const useAppStore = create<AppState>()(
     workoutLog: state.workoutLog,
     lastExercisePerformance: state.lastExercisePerformance,
     completedSessions: state.completedSessions,
+    blockAnchors: state.blockAnchors,      // Fase 2 · continuidad de anchors entre recargas
     todayCheckin: state.todayCheckin,      // P6
     rirLog: state.rirLog,                  // P6
     readinessLog: state.readinessLog,      // P6

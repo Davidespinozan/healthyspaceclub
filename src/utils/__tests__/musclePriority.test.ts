@@ -163,7 +163,7 @@ describe('musclePriority — integración con P3/P4', () => {
     ]);
     const items = prescribeSession({
       exercises: [{ id: 'hip-thrust', muscleGroup: 'gluteo' }], bankById: bank,
-      allocation: alloc, objective: 'hipertrofia', phase: 'acumulacion', mainMinutes: 999,
+      allocation: alloc, trainingGoal: 'hipertrofia', phase: 'acumulacion', mainMinutes: 999,
     });
     expect(items[0].prescription.sets).toBeGreaterThanOrEqual(2);
   });

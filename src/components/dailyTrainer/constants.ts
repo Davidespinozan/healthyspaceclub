@@ -7,9 +7,11 @@ import {
   Bot, Dumbbell, Flower2, Activity, PersonStanding, Cable,
   Footprints, AlertTriangle, Bandage, CircleCheck,
   Flame, Calendar, Sprout, SlidersHorizontal, Zap, Bike,
+  Building2, Home, Weight, Armchair, Grip,
   type LucideIcon,
 } from 'lucide-react';
-import type { CardioStyle, Equipment, Modality, MuscleGroup } from '../../types';
+import type { CardioStyle, Equipment, Modality, MuscleGroup, TrainingGoal } from '../../types';
+import type { Gear } from '../../utils/equipmentImplement';
 import type { TranslationKey } from '../../i18n/es';
 
 export type WizardPhase = 'modality' | 'physical' | 'logistics';
@@ -99,6 +101,30 @@ export const EQUIPMENT_OPTIONS: Array<{ value: Equipment; labelKey: TranslationK
   { value: 'gym', labelKey: 'wizard.eqGym', icon: Dumbbell },
   { value: 'cuerpo', labelKey: 'wizard.eqHome', icon: PersonStanding },
   { value: 'ligas', labelKey: 'wizard.eqBands', icon: Cable },
+];
+
+// GEAR granular (2 pasos) · Paso 1: ¿dónde entrenas? (entorno/acceso, NO implemento).
+export const GEAR_ENV_OPTIONS: Array<{ value: 'gym' | 'own'; labelKey: TranslationKey; icon: LucideIcon }> = [
+  { value: 'gym', labelKey: 'wizard.gearEnvGym', icon: Building2 },
+  { value: 'own', labelKey: 'wizard.gearEnvOwn', icon: Home },
+];
+
+// Paso 2 (solo si "con mi propio equipo") · implementos multi-select. El peso corporal
+// es IMPLÍCITO (nada seleccionado → solo peso corporal). 'gym' NO va aquí: es acceso, no
+// implemento. Las bandas SÍ (cardio con bandas no aplica — se filtra aparte).
+export const GEAR_OPTIONS: Array<{ value: Gear; labelKey: TranslationKey; icon: LucideIcon }> = [
+  { value: 'mancuernas', labelKey: 'wizard.gearDumbbells', icon: Dumbbell },
+  { value: 'barra', labelKey: 'wizard.gearBarbell', icon: Weight },
+  { value: 'banco', labelKey: 'wizard.gearBench', icon: Armchair },
+  { value: 'dominadas', labelKey: 'wizard.gearPullup', icon: Grip },
+  { value: 'ligas', labelKey: 'wizard.gearBands', icon: Cable },
+];
+
+// TRAINING GOAL (Fase 2 · activación en UI) · qué adaptación busca la RESISTENCIA. Separado del
+// body goal (nutrición) y de la modalidad. Solo se pregunta en días de resistencia. Default hipertrofia.
+export const TRAINING_GOAL_OPTIONS: Array<{ value: TrainingGoal; labelKey: TranslationKey; subKey: TranslationKey; icon: LucideIcon }> = [
+  { value: 'hipertrofia', labelKey: 'wizard.tgMuscle', subKey: 'wizard.tgMuscleSub', icon: Dumbbell },
+  { value: 'fuerza', labelKey: 'wizard.tgStrength', subKey: 'wizard.tgStrengthSub', icon: Flame },
 ];
 
 export const PRIOR_EXERCISE_OPTIONS: Array<{ value: string; labelKey: TranslationKey; icon: LucideIcon }> = [

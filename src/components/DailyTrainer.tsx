@@ -23,7 +23,7 @@ import {
   orderCandidatesForVariety,
   orderByChallenge,
   capByMovementFamily,
-  equipmentFromPlan,
+  gearFromPlan,
   modalityFromPlan,
   durationFromPlan,
   cardioStyleFromPlan,
@@ -36,6 +36,8 @@ import {
   trainingFrequency,
   splitTypesForFrequency,
   determineIntensity,
+  resolveTrainingGoal,
+  trainingGoalFromPlan,
 } from '../utils/workoutPlanner';
 import { computeVolumeTargets, targetsToMap } from '../utils/volumeLandmarks';
 import { allocateSessionVolume, prescribeSession, categorize } from '../utils/sessionPrescription';
@@ -48,6 +50,7 @@ import { resolvePriorities, applyMusclePriority, possibleWeakPoint } from '../ut
 import { computeReadiness, readinessToRecovery, chronicRecoveryTrend, chronicToRecovery } from '../utils/readiness';
 import { rirError } from '../utils/rirFeedback';
 import { formatCoachTrace } from '../utils/coachTrace';
+import { deriveCapabilities, gearSignature, type Gear } from '../utils/equipmentImplement';
 import {
   getCachedWorkout,
   saveWorkoutToCache,
@@ -61,11 +64,16 @@ import {
 import { orchestrateWorkout } from '../utils/workoutOrchestration';
 import { buildYogaFlowPlan } from '../utils/yogaBuilder';
 import { repairWorkoutStructure } from '../utils/exerciseOrder';
+import { currentBlockId, resolveBlockAnchors, enforceAnchors, type AnchorTraceItem } from '../utils/blockAnchors';
+import { buildSessionSlots, requiredPatterns, applySessionStructure, type Slot } from '../utils/sessionSlots';
+import { movementPatternOf, type MovementPattern } from '../utils/movementPattern';
+import { buildGroups } from '../utils/supersetEngine';
 import { deliverPartnerWorkout, getPartnerRecentDaytypes, type DeliverResult } from '../utils/partners';
 import type {
   Exercise,
   Equipment,
   Goal,
+  TrainingGoal,
   MuscleGroup,
   Modality,
   CardioStyle,
@@ -102,6 +110,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const exerciseBank = getExercises(locale);
   const userName = useAppStore(s => s.userName);
   const obData = useAppStore(s => s.obData);
+  const setObData = useAppStore(s => s.setObData);
+  const blockAnchors = useAppStore(s => s.blockAnchors);       // Fase 2 · continuidad de anclas
+  const setBlockAnchors = useAppStore(s => s.setBlockAnchors);
   const workoutLog = useAppStore(s => s.workoutLog);
   const storedWorkout = useAppStore(s => s.dailyWorkout);
   const saveDailyWorkout = useAppStore(s => s.saveDailyWorkout);
@@ -212,12 +223,23 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // con selectedEquipment en cada render → si esto arrancaba en 'gym' fijo, una
   // rutina hecha con ligas se repintaba con variantes de gym al dar refresh. Lo
   // sellamos en el plan al guardar (userEquipment) y lo leemos aquí.
-  const [selectedEquipment, setSelectedEquipment] = useState<Equipment>(() => {
-    const stored = (!partnerMode && storedWorkout?.date === today)
-      ? equipmentFromPlan(storedWorkout.plan)
-      : null;
-    return stored ?? 'gym';
+  // GEAR CANÓNICO (equipo granular). Fuente ÚNICA de verdad; todo lo demás se DERIVA
+  // (deriveCapabilities). 'gym' = ACCESO completo (no un implemento). Restaura de userGear;
+  // plan legacy → migra userEquipment. Default 'gym' (comportamiento previo).
+  const [gear, setGear] = useState<Gear[]>(() => {
+    const stored = (!partnerMode && storedWorkout?.date === today) ? gearFromPlan(storedWorkout.plan) : null;
+    return stored ?? ['gym'];
   });
+  const caps = useMemo(() => deriveCapabilities(gear), [gear]);
+  // TRAINING GOAL (Fase 2 · UI): qué adaptación de resistencia. Restaura del plan sellado;
+  // si no, cae a la preferencia del perfil (obData.trainingGoal → hipertrofia por default).
+  // Se pregunta en el wizard SOLO en resistencia; el generador siempre lee este estado.
+  const [trainingGoal, setTrainingGoal] = useState<TrainingGoal>(() => {
+    const stored = (!partnerMode && storedWorkout?.date === today) ? trainingGoalFromPlan(storedWorkout.plan) : null;
+    return stored ?? resolveTrainingGoal(obData);
+  });
+  // Etiqueta gruesa LEGACY (para seal/store/analytics; la generación usa caps, no esto).
+  const selectedEquipment: Equipment = caps.hasFullGym ? 'gym' : (gear.includes('ligas') && !caps.hasWeights ? 'ligas' : caps.hasWeights ? 'gym' : 'cuerpo');
   // Foco de fuerza (qué entrenar) + historia (cuándo entrenó por última vez).
   const [focus, setFocus] = useState<FocusValue>('auto');
   const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>([]);
@@ -265,11 +287,13 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // al recargar volvían a su default y divergían de lo generado. Se leen de vuelta
   // con equipmentFromPlan/modalityFromPlan/durationFromPlan al montar.
   function sealPlan(p: unknown) {
-    const seal = p as { userEquipment?: Equipment; userModality?: Modality; userDuration?: number; userCardioStyle?: CardioStyle | 'auto' };
-    seal.userEquipment = selectedEquipment;
+    const seal = p as { userGear?: Gear[]; userEquipment?: Equipment; userModality?: Modality; userDuration?: number; userCardioStyle?: CardioStyle | 'auto'; userTrainingGoal?: TrainingGoal };
+    seal.userGear = gear;                 // GEAR canónico (restore preferente)
+    seal.userEquipment = selectedEquipment; // legacy plano (compat / analytics)
     seal.userModality = selectedModality;
     seal.userDuration = selectedTime;
     seal.userCardioStyle = selectedCardioStyle;
+    seal.userTrainingGoal = trainingGoal; // Fase 2 · restore de la preferencia al recargar
   }
 
   // Al entregar la rutina al compañero: si él ya tenía SU rutina de hoy, el server
@@ -497,6 +521,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         }
       }
 
+      // TRAINING GOAL de resistencia (Fase 2): viene del ESTADO del wizard (elegible en UI).
+      // Persiste como preferencia durable del perfil para que la próxima sesión la recuerde.
+      if (String(obData?.trainingGoal ?? '') !== trainingGoal) setObData('trainingGoal', trainingGoal);
+
       // Hash con TODAS las variables del contexto. El foco se codifica en dayType
       // para que distinto foco (push vs pull vs músculos específicos) NO colisione
       // en el caché y devuelva la misma rutina.
@@ -508,8 +536,14 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       const schemaType = selectedModality === 'yoga' ? 'yoga' : 'workout' as const;
       const configHash = buildConfigHash({
         duration: selectedTime,
-        equipment: selectedEquipment,
+        // Firma CANÓNICA del gear (orden estable) → cambiar de equipo invalida un plan
+        // incompatible; [mancuernas,banco] y [banco,mancuernas] dan el mismo hash.
+        equipment: gearSignature(gear),
         goal,
+        // Fase 0 · el hash keyea los TRES conceptos por separado: modality (arriba),
+        // bodyGoal (objective, abajo) y trainingGoal → cambiar el training goal invalida
+        // una rutina de resistencia incompatible sin colisionar con body goal ni modalidad.
+        trainingGoal,
         dayType: dayTypeKey,
         schemaVersion: SCHEMA_VERSIONS[schemaType],
         modality: selectedModality,
@@ -526,33 +560,23 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
       // Intentar cache (para TODAS las modalidades)
       const validIds = new Set(exerciseBank.map(e => e.id));
-      // El cardio es mayormente peso corporal y casi no hay variantes de cardio
-      // con ligas → un usuario de SOLO bandas pidiendo cardio se quedaba sin
-      // candidatos y el generador tiraba error. Para cardio, a un user de ligas
-      // le damos también peso corporal. (Fuerza sí respeta su equipo exacto.)
-      const equipmentList: Equipment[] = (selectedEquipment === 'ligas' && selectedModality === 'cardio')
-        ? ['ligas', 'cuerpo']
-        : [selectedEquipment];
-      // Un ejercicio es válido para el equipo del usuario solo si tiene una
-      // variante de ese equipo (o, en yoga, equipment del patrón). Esto evita
-      // que la IA (o un cache viejo) cuele ejercicios de máquina a alguien que
-      // entrena en casa: validateWorkout solo checa que el id exista en el
-      // banco, NO el equipo — por eso se colaban.
+      // GEAR GRANULAR: `equipmentList` es el filtro GRUESO (qué buckets mirar); la AUTORIDAD
+      // FINA es `caps.allowedImplements` (qué implementos concretos puede ejecutar). Ambos se
+      // DERIVAN del gear canónico. CARDIO: sus capacidades derivan de hasFullGym (máquinas solo
+      // con gym completo); las bandas NO amplían el pool de cardio.
+      const equipmentList: Equipment[] = caps.equipmentList;
+      const cardioEqBase: Equipment[] = caps.hasFullGym ? ['gym'] : ['cuerpo'];
+      // Un ejercicio es válido solo si tiene una variante JUGABLE (con video) que el usuario
+      // pueda EJECUTAR con su gear (allowedImplements). Misma semántica que la selección → la
+      // IA/cache no pueden colar un ejercicio con implementos que el usuario no tiene.
       const fitsEquipment = (w: { exercises?: Array<{ id?: string }> } | null): boolean => {
         if (!w || !Array.isArray(w.exercises)) return false;
-        // Además del equipo, exige VIDEO: un cache viejo con ejercicios sin clip
-        // se rechaza y se regenera con el filtro nuevo (solo-video).
         return w.exercises.every(ex => {
           const b = exerciseBank.find(e => e.id === ex.id);
           if (!b) return false;
-          // Los ejercicios de CARDIO se seleccionan con el equipo EXPANDIDO (peso corporal
-          // universal, vía cardioEquipmentFor). La validación debe usar el MISMO equipo, o
-          // el cardio de 'cuerpo' se rechaza siempre → genErrInvalid. En una SESIÓN de cardio,
-          // TODOS los ejercicios (incl. acondicionamiento tipo pliometría, cuyo muscleGroup no
-          // es 'cardio') se validan con el equipo expandido, igual que se seleccionaron.
           const useCardioEq = selectedModality === 'cardio' || b.muscleGroup === 'cardio' || b.type === 'cardio';
-          const eq = useCardioEq ? cardioEquipmentFor(equipmentList) : equipmentList;
-          return hasPlayableVariant(b, eq);
+          const eq = useCardioEq ? cardioEquipmentFor(cardioEqBase) : equipmentList;
+          return hasPlayableVariant(b, eq, caps.allowedImplements);
         });
       };
       const cached = await getCachedWorkout(configHash, schemaType);
@@ -563,7 +587,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       } else if (cached && validateWorkout(cached, validIds) && fitsEquipment(cached)) {
         // Fuerza/cardio/auto: cache válido. Aplica el reparador estructural
         // (por si fue cacheado antes de estas reglas).
-        cached.exercises = repairWorkoutStructure(cached.exercises, exerciseBank, { hasWeights: equipmentList.includes('gym') }).exercises;
+        cached.exercises = repairWorkoutStructure(cached.exercises, exerciseBank, { hasWeights: caps.hasWeights, trainingGoal }).exercises;
         // Pareja: la rutina cacheada TAMBIÉN debe llevar los metadatos de pareja y
         // entregarse al compañero. Sin esto, un cache-hit dejaba al compañero sin
         // rutina y A veía el plan como "solo" (sin cabecera ni formato juntos/alternado).
@@ -668,7 +692,12 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         totalMinutes: selectedTime,
         isStrengthDay: !isYogaDay && !isCardioDay,
         isYogaDay,
+        // BODY GOAL crudo → SOLO dosis/estilo de cardio del finisher (dimensión cardio).
         objective: String(obData?.goal ?? ''),
+        // TRAINING GOAL → driver del finisher (fuerza protege el main; sin metcon).
+        trainingGoal,
+        // P6 · readiness aguda baja recorta el finisher (no añadir fatiga en un mal día).
+        readinessLow: readiness.state === 'low',
         dayMuscles: muscleGroups,
         equipment: equipmentList,
         lowImpactMode,
@@ -684,15 +713,15 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         //    bandas" salía VACÍO porque el cardio no tiene variantes 'ligas'.
         // 2) ESTILO: el cardio se elige por intención (explosividad/correr/bajo
         //    impacto/funcional), inferida del objetivo. lowImpactMode manda (seguridad).
-        const cardioEq = cardioEquipmentFor(equipmentList);
+        // CARDIO deriva de hasFullGym (máquinas solo con gym completo); las bandas NO amplían
+        // el pool. La elegibilidad fina usa allowedImplements (una banda no habilita cardio).
+        const cardioEq = cardioEquipmentFor(cardioEqBase);
         // Estilo efectivo: elección del usuario (Fase 4) o el inferido; lowImpact manda.
         const targetStyle = effectiveCardioStyle;
         const pool = modalityFiltered.filter(ex =>
           ex.equipment.some(e => cardioEq.includes(e)) &&
           !(lowImpactMode && (ex.impact === 'high' || ex.fallRisk === true)) &&
-          // Solo cardio JUGABLE (con variante de video) para el equipo de cardio: así lo que
-          // elija la IA pasa fitsEquipment (que también exige video). Evita el genErrInvalid.
-          hasPlayableVariant(ex, cardioEq)
+          hasPlayableVariant(ex, cardioEq, caps.allowedImplements)
         );
         // Filtro por estilo, priorizando la intención: los del estilo van PRIMERO
         // (la selección downstream prefiere los primeros). Si el estilo no llega a 3
@@ -718,6 +747,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           // Fase 3 — nivel: principiante no recibe ejercicios avanzados.
           difficulty: levelFromObData(obData),
           lowImpactMode,
+          allowedImplements: caps.allowedImplements, // GEAR es restricción DURA en la selección
         });
         candidates = filterResult.exercises;
         // Variedad: rota los accesorios (aislamiento) usados en las últimas sesiones
@@ -727,7 +757,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // Challenge-match (B): sin carga externa, prioriza ejercicios a la ALTURA del
         // nivel (un avanzado no quiere hip-thrust sin peso; quiere desplante). Con gym
         // no cambia nada (la carga da el estímulo).
-        candidates = orderByChallenge(candidates, levelFromObData(obData), equipmentList);
+        candidates = orderByChallenge(candidates, levelFromObData(obData), equipmentList, caps.allowedImplements);
         // Balance de patrones: máx 2 del mismo movimiento (agarres distintos) por día,
         // para que no salgan 3 jalones y cero remo. Días cortos → solo 1.
         candidates = capByMovementFamily(candidates, selectedTime <= 30 ? 1 : 2);
@@ -735,7 +765,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // para el equipo). filterWithProgressiveRelaxation empareja por equipo pero NO exige
         // video → sin esto, la IA podía elegir un ejercicio que luego fitsEquipment rechaza
         // (genErrInvalid). Si esto vacía el pool, el guard de abajo da un mensaje claro.
-        candidates = candidates.filter(ex => hasPlayableVariant(ex, equipmentList));
+        candidates = candidates.filter(ex => hasPlayableVariant(ex, equipmentList, caps.allowedImplements));
         // ELEGIBILIDAD (decisión aprobada): el YOGA no entra como sustituto NORMAL de un
         // ejercicio de fuerza solo por compartir metadata de hipertrofia/isométrico (evita
         // p.ej. "pull day → warrior II"). Se admite SOLO como último recurso si sin él quedan
@@ -800,7 +830,14 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // escala ese volumen: semanas de acumulación suben, deload baja.
       const mainCount = exerciseCountForDuration(sessionPlan.budget.main);
       let targetCount = Math.min(Math.round(mainCount * meso.volumeMultiplier), candidates.length);
-      targetCount = Math.max(3, targetCount);
+      if (trainingGoal === 'fuerza') {
+        // FUERZA · menos movimientos, más calidad por movimiento. La duración extra se va en
+        // DESCANSO y series de calidad (top-set/backoff), no en añadir ejercicios: ~0.6× y tope 6
+        // → 30' ~2-3, 60' ~5, 90' ~6 (no 9-13). Piso 2 (un compuesto principal + 1 puede bastar).
+        targetCount = Math.max(2, Math.min(6, Math.round(targetCount * 0.6)));
+      } else {
+        targetCount = Math.max(3, targetCount);
+      }
       if (mesoDeload) {
         bullets.push('SEMANA DE DELOAD (descarga — planeada o adelantada por las señales de recuperación): baja el volumen ~40% (menos series por ejercicio, 2 en vez de 3-4), deja 3-4 reps en reserva (RPE bajo), mismas técnicas. Es recuperación para seguir creciendo; explícaselo en la nota.');
       } else {
@@ -873,16 +910,84 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       }
 
       const contextStr = bullets.join('\n- ');
+
+      // ── FASE 2 · BLOCK ANCHORS (continuidad de movimientos principales) ──────────
+      // Solo en RESISTENCIA. Resuelve qué anclas usar este bloque+día: reutiliza las válidas,
+      // reemplaza con motivo las que ya no son reproducibles/seguras (gear/dolor/lowImpact), o
+      // elige nuevas del ranking del motor. El pool `candidates` YA está filtrado por seguridad+
+      // gear → "usable" = estar en el pool. Persiste la referencia mínima y deja trace.
+      const isResistanceDay = !isCardioDay && !isYogaDay;
+      const anchorDayType: string = selectedModality === 'auto'
+        ? String(effDayType)
+        : selectedModality === 'fuerza'
+          ? (focus === 'auto' ? String(effDayType) : String(focus))
+          : String(effDayType);
+      let anchorIds: string[] = [];
+      let anchorTrace: AnchorTraceItem[] = [];
+      let groupTrace: Array<{ ids: string[]; type: string; quality: string; reasons: string[] }> = [];
+      if (isResistanceDay && candidates.length > 0) {
+        const candIdSet = new Set(candidates.map(c => c.id));
+        const res = resolveBlockAnchors({
+          stored: blockAnchors, blockId: currentBlockId(completedSessions),
+          dayType: anchorDayType, trainingGoal, candidates,
+          isUsable: (id) => candIdSet.has(id), today,
+        });
+        anchorIds = res.anchorIds;
+        anchorTrace = res.trace;
+        // Persiste solo si cambió (evita writes/renders innecesarios).
+        if (JSON.stringify(res.anchors) !== JSON.stringify(blockAnchors)) setBlockAnchors(res.anchors);
+      }
+
+      // ── FASE 3 · SLOTS (diseñar la sesión antes de llenarla) ───────────────────
+      // Los slots son las FUNCIONES que la sesión necesita (patrones), derivadas de día +
+      // objetivo + tiempo (targetCount) + anchors (los satisfacen, no se duplican) + déficit +
+      // prioridad. P3/P4 siguen decidiendo CUÁNTO; los slots deciden QUÉ cubrir. Guían a la IA y
+      // el motor GARANTIZA cobertura + anti-redundancia tras la respuesta (applySessionStructure).
+      let sessionSlots: Slot[] = [];
+      let requiredPats: MovementPattern[] = [];
+      if (isResistanceDay && candidates.length > 0) {
+        const anchorsMeta = anchorIds.map(id => {
+          const ex = exerciseBank.find(e => e.id === id);
+          return {
+            id, muscle: (ex?.muscleGroup ?? 'cuerpo-completo') as MuscleGroup,
+            pattern: ex ? movementPatternOf(ex) : null,
+            role: ex ? categorize(ex) : 'secondary-compound' as const,
+          };
+        });
+        const deficitByMuscle: Record<string, number> = {};
+        if (prioritizedTargets) for (const m of Object.keys(prioritizedTargets)) deficitByMuscle[m] = prioritizedTargets[m]?.target ?? 0;
+        sessionSlots = buildSessionSlots({
+          dayMuscles: muscleGroups, trainingGoal, targetCount,
+          anchors: anchorsMeta, priorityMuscles: priorityMuscleSet, deficitByMuscle,
+        });
+        requiredPats = requiredPatterns(sessionSlots);
+      }
+      // Resumen legible de slots para la IA (funciones a cubrir; elige DENTRO de cada patrón).
+      const slotSummary = sessionSlots.length
+        ? sessionSlots.map(s => `${s.filledBy ? `[ancla ${s.filledBy}] ` : ''}${s.role === 'isolation' ? 'aislamiento' : 'principal'} ${s.muscle}: ${s.patterns.join('/')}`).join(' | ')
+        : '';
+
       // Universo permitido para la IA: SOLO los candidatos que ya pasaron TODOS los filtros
       // (equipo/video, dolor/restricción, nivel, bajo-impacto, músculos de ayer). La IA puede
-      // ELEGIR y componer dentro de este set, pero NO escapar de él.
-      const aiCandidates = candidates.slice(0, 15);
+      // ELEGIR y componer dentro de este set, pero NO escapar de él. Los ANCHORS van al FRENTE
+      // (garantiza que entren en los 15 y con prioridad).
+      const aiCandidates = (() => {
+        const base = candidates.slice(0, 15);
+        if (!anchorIds.length) return base;
+        const anchorExs = anchorIds.map(id => candidates.find(c => c.id === id)).filter((x): x is Exercise => !!x);
+        const rest = base.filter(c => !anchorIds.includes(c.id));
+        return [...anchorExs, ...rest];
+      })();
       const candidateIds = new Set(aiCandidates.map(c => c.id));
       const workout = await orchestrateWorkout({
         candidates: aiCandidates,
         equipment: equipmentList,
+        allowedImplements: caps.allowedImplements, // la IA solo ve la variante EJECUTABLE con el gear
         targetCount,
         goal,
+        trainingGoal, // Fase 1 · la IA sabe si es sesión de FUERZA (cues/selección), pero NO fija números
+        requiredAnchorIds: anchorIds, // Fase 2 · anclas OBLIGATORIAS (restricción, no sugerencia)
+        slotSummary, // Fase 3 · funciones (patrones) que la sesión debe cubrir; la IA elige DENTRO
         intensity,
         userName,
         dayLabel,
@@ -917,6 +1022,65 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         }
       }
 
+      // FASE 2 · GARANTÍA DE ANCHOR (determinista, no dependemos del prompt): si la IA omitió una
+      // ancla válida, se inyecta (con defaults del banco; prescribeSession fija los números luego)
+      // y se recorta un accesorio del final para respetar el presupuesto. Reproducibilidad de la
+      // continuidad sin retry.
+      if (anchorIds.length) {
+        const w = workout as CachedWorkout;
+        const res = enforceAnchors(
+          w.exercises, anchorIds,
+          (id) => {
+            const b = exerciseBank.find(e => e.id === id);
+            return b ? { id, sets: b.defaultSets, reps: b.defaultReps, rest: b.defaultRest, tip_personalizado: '' } : null;
+          },
+          targetCount,
+        );
+        if (res.injected.length) {
+          console.info('[workout] anchors reinyectadas (la IA las omitió):', res.injected);
+          w.exercises = res.exercises;
+        }
+      }
+
+      // FASE 3 · ESTRUCTURA DETERMINISTA: anti-redundancia (cap por patrón; fuerza más estricta) +
+      // cobertura de patrones requeridos. Mata "bench+incline+DB+smith" y garantiza que la sesión
+      // cubra las funciones del día, sin depender del prompt. Reparación, no nueva generación.
+      if (isResistanceDay && requiredPats.length) {
+        const w = workout as CachedWorkout;
+        const bankById = new Map(exerciseBank.map(e => [e.id, e]));
+        const struct = applySessionStructure({
+          exercises: w.exercises, anchorIds, requiredPatterns: requiredPats,
+          candidates, bankById, trainingGoal, targetCount,
+          makeItem: (id) => {
+            const b = exerciseBank.find(e => e.id === id);
+            return b ? { id, sets: b.defaultSets, reps: b.defaultReps, rest: b.defaultRest, tip_personalizado: '' } : null;
+          },
+        });
+        if (struct.fixes.length) {
+          console.info('[workout] estructura de patrones:', struct.fixes);
+          w.exercises = struct.exercises;
+        }
+      }
+
+      // ── FASE 4 · MOTOR DE SUPERSERIES/TRISERIES (el motor decide, no la IA) ─────
+      // Se descartan los `group` que haya puesto la IA y el MOTOR arma las agrupaciones que
+      // MEJORAN la sesión (antagonistas/complementarias/time-saver) sin tocar anchors/mains,
+      // según objetivo/tiempo/fase/readiness/gear. Si no hay buena pareja: sin groups.
+      if (isResistanceDay) {
+        const w = workout as CachedWorkout;
+        for (const ex of w.exercises) delete (ex as { group?: string }).group; // IA ya no decide groups
+        const bankByIdG = new Map(exerciseBank.map(e => [e.id, e]));
+        const grp = buildGroups(
+          w.exercises.map(e => e.id), bankByIdG,
+          { trainingGoal, timeMinutes: selectedTime, phase: meso.phase,
+            readinessLow: readiness.state === 'low', anchorIds: new Set(anchorIds),
+            level: levelFromObData(obData) },
+        );
+        for (const ex of w.exercises) { const g = grp.groups[ex.id]; if (g) (ex as { group?: string }).group = g; }
+        groupTrace = grp.trace;
+        if (grp.trace.length) console.info('[workout] superseries del motor:', grp.trace.map(t => `${t.ids.join('+')} (${t.type}/${t.quality})`));
+      }
+
       // Validador estructural + auto-reparación determinista: garantiza las reglas de
       // coach de élite que la IA a veces incumple (compuestos primero, core al final,
       // pesados fuera de superserie, técnica solo en aislamiento, superseries con
@@ -932,7 +1096,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           ? Math.max(3, Math.round(3 * meso.volumeMultiplier)) : 0;
         const repaired = repairWorkoutStructure(
           (workout as CachedWorkout).exercises, exerciseBank,
-          { hasWeights: equipmentList.includes('gym'), compoundSetFloor, priorityMuscles: priorityMuscleSet },
+          { hasWeights: caps.hasWeights, compoundSetFloor, priorityMuscles: priorityMuscleSet, trainingGoal },
         );
         (workout as CachedWorkout).exercises = repaired.exercises;
         if (repaired.fixes.length) {
@@ -985,7 +1149,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // BLOQUE 2 · La carga es UNA sola autoridad (prescribeLoad RIR-aware). Ya NO hay
         // calibración por RIR aparte (canal único: el RIR entra vía la e1RM del historial).
         const items = prescribeSession({
-          exercises: exsWithMuscle, bankById, allocation, objective: String(goal),
+          exercises: exsWithMuscle, bankById, allocation, trainingGoal,
           phase: meso.phase, mainMinutes: sessionPlan.budget.main, lastPerf: lastExercisePerformance,
         });
         const byId = new Map(items.map(it => [it.ex.id, it]));
@@ -1028,8 +1192,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         if (import.meta.env?.DEV) {
           try {
             const trace = formatCoachTrace({
-              objective: String(goal), level: levelFromObData(obData), equipment: equipmentList,
-              hasLoadHistory: equipmentList.includes('gym'),
+              objective: String(goal), trainingGoal, level: levelFromObData(obData), equipment: equipmentList,
+              anchors: anchorTrace.map(a => ({ exerciseId: a.exerciseId, status: a.status, from: a.from, reason: a.reason })),
+              block: { id: currentBlockId(completedSessions), week: meso.week },
+              groups: groupTrace,
+              hasLoadHistory: caps.hasWeights,
               time: { total: selectedTime, warmup: sessionPlan.budget.warmup, main: sessionPlan.budget.main, finisher: sessionPlan.budget.finisher },
               meso: {
                 week: meso.week, phase: meso.phase, progression: meso.progression, deload: mesoDeload,
@@ -1227,8 +1394,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         setPainArea={setPainArea}
         selectedTime={selectedTime}
         setSelectedTime={setSelectedTime}
-        selectedEquipment={selectedEquipment}
-        setSelectedEquipment={setSelectedEquipment}
+        gear={gear}
+        setGear={setGear}
+        trainingGoal={trainingGoal}
+        setTrainingGoal={setTrainingGoal}
         focus={focus}
         setFocus={setFocus}
         selectedMuscles={selectedMuscles}
@@ -1277,6 +1446,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         regenBlocked={regenBlocked}
         regensLeft={regensLeft}
         selectedEquipment={selectedEquipment}
+        allowedImplements={caps.allowedImplements}
         selectedModality={selectedModality}
         selectedTime={selectedTime}
         todayDecision={todayDecision}

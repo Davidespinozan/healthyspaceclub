@@ -45,8 +45,8 @@ describe('FUENTE ÚNICA · deload, player, IA, trace, next-set parten del MISMO 
   const loaded = [{ reps: 5, kg: 120, rir: 2 }];
 
   it('deload = topKg normal × factor (misma fuente, no un cálculo aparte)', () => {
-    const normal = prescribeExercise({ category: 'main-compound', sets: 4, objective: 'fuerza', phase: 'acumulacion', lastSets: loaded });
-    const deload = prescribeExercise({ category: 'main-compound', sets: 3, objective: 'fuerza', phase: 'deload', lastSets: loaded });
+    const normal = prescribeExercise({ category: 'main-compound', sets: 4, trainingGoal: 'fuerza', phase: 'acumulacion', lastSets: loaded });
+    const deload = prescribeExercise({ category: 'main-compound', sets: 3, trainingGoal: 'fuerza', phase: 'deload', lastSets: loaded });
     expect(deload.isDeloadLoad).toBe(true);
     // el deload sale del MISMO prescribeLoad, reducido por el factor
     const expected = Math.round((normal.topKg! * DELOAD_LOAD_FACTOR) / 2.5) * 2.5;
@@ -54,7 +54,7 @@ describe('FUENTE ÚNICA · deload, player, IA, trace, next-set parten del MISMO 
   });
 
   it('player/IA/trace: el topKg del ejercicio ES el de la prescripción (una sola cifra)', () => {
-    const pr = prescribeExercise({ category: 'main-compound', sets: 4, objective: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
+    const pr = prescribeExercise({ category: 'main-compound', sets: 4, trainingGoal: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
     // el player muestra prescription.topKg; la IA/trace usan prescription.topKg → mismo valor.
     expect(pr.topKg).toBeGreaterThan(0);
     expect(pr.backoffKg).toBeGreaterThan(0);
@@ -62,14 +62,14 @@ describe('FUENTE ÚNICA · deload, player, IA, trace, next-set parten del MISMO 
   });
 
   it('next-set suggestion parte del MISMO topKg prescrito', () => {
-    const pr = prescribeExercise({ category: 'main-compound', sets: 4, objective: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
+    const pr = prescribeExercise({ category: 'main-compound', sets: 4, trainingGoal: 'hipertrofia', phase: 'acumulacion', lastSets: loaded });
     const sug = nextSetSuggestion({ prescribedRir: pr.rir, actualRir: 0, topKg: pr.topKg }); // más duro de lo esperado
     expect(sug.action).toBe('reduce');
     expect(sug.nextKg!).toBeLessThan(pr.topKg!); // ajusta relativo al peso prescrito
   });
 
   it('bandas/peso corporal → sin topKg (progresión por dificultad/tensión, no kg inventados)', () => {
-    const pr = prescribeExercise({ category: 'main-compound', sets: 3, objective: 'hipertrofia', phase: 'acumulacion', lastSets: [{ reps: 12, kg: 0 }] });
+    const pr = prescribeExercise({ category: 'main-compound', sets: 3, trainingGoal: 'hipertrofia', phase: 'acumulacion', lastSets: [{ reps: 12, kg: 0 }] });
     expect(pr.topKg).toBeUndefined();
   });
 });

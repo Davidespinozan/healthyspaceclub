@@ -5,6 +5,7 @@ import { resolvePriorities, applyMusclePriority } from '../musclePriority';
 import { computeReadiness, readinessToRecovery } from '../readiness';
 import { allocateSessionVolume, prescribeSession, type PrescribedItem } from '../sessionPrescription';
 import { allocateTime } from '../sessionBlocks';
+import { normalizeTrainingGoal } from '../workoutPlanner';
 import type { Exercise } from '../../types';
 
 // ── Banco mínimo determinista (compuestos principales + accesorios por músculo) ──
@@ -92,7 +93,7 @@ function simulate(s: Scenario): SimResult {
   if (s.hasLoad) for (const e of exsWithMuscle) lastPerf[e.id] = { sets: [{ reps: 6, kg: 100, ...(avgActualRir != null && { rir: avgActualRir }) }] };
 
   const items = prescribeSession({
-    exercises: exsWithMuscle, bankById, allocation, objective: s.objective,
+    exercises: exsWithMuscle, bankById, allocation, trainingGoal: normalizeTrainingGoal(s.objective),
     phase: meso.phase, mainMinutes: time.main, lastPerf,
   });
   return { meso, time, targets, allocation, items, readinessState: readiness.state };

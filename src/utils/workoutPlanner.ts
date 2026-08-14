@@ -1,6 +1,6 @@
 import { dayKey } from './localDate';
 import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
-import { variantAllowedByGear, type Implement } from './equipmentImplement';
+import { variantAllowedByGear, gearFromLegacyEquipment, type Implement, type Gear } from './equipmentImplement';
 import { computeVolumeTargets, targetsToMap, type Level } from './volumeLandmarks';
 import type {
   Exercise,
@@ -8,6 +8,7 @@ import type {
   MuscleGroup,
   Equipment,
   Goal,
+  TrainingGoal,
   Modality,
   CardioStyle,
   WorkoutDayType,
@@ -20,17 +21,33 @@ import type { TranslationKey } from '../i18n/es';
 // CICLADO BASE POR OBJETIVO
 // ══════════════════════════════════════════════════════════════
 
-// Ciclos semanales por objetivo. El 7mo día (y 6to en bienestar) era 'descanso'
-// rígido — reemplazado por 'movilidad' en Lote Descanso→Movilidad. Filosofía
-// HSC "adaptive not strict": siempre hay algo suave que mover, descanso forzado
-// no es la única opción de recuperación.
-const CYCLES: Record<string, WorkoutDayType[]> = {
-  'ganar-musculo': ['upper', 'lower', 'upper', 'lower', 'full-body', 'movilidad', 'movilidad'],
-  'perder-grasa': ['full-body', 'lower', 'upper', 'cardio', 'full-body', 'movilidad', 'movilidad'],
-  'recomposicion': ['upper', 'lower', 'full-body', 'upper', 'lower', 'movilidad', 'movilidad'],
-  'mantener': ['full-body', 'movilidad', 'upper', 'lower', 'cardio', 'movilidad', 'movilidad'],
-  'bienestar': ['full-body', 'movilidad', 'cardio', 'full-body', 'movilidad', 'movilidad', 'movilidad'],
-};
+// Ciclo semanal NEUTRAL de resistencia (Fase 0 · separación semántica). ANTES había un
+// ciclo por BODY GOAL, y 'perder-grasa'/'mantener' inyectaban un día 'cardio' que
+// REEMPLAZABA un día de resistencia y sesgaban la semana a full-body → eso mezclaba
+// "qué quiere la persona en su cuerpo" con "cómo se programa el entrenamiento".
+//
+// Ahora el split de resistencia NO depende del body goal: los días de FUERZA se re-derivan
+// por FRECUENCIA real + déficit semanal (ver `splitTypesForFrequency`/`pickByVolumeDeficit`
+// más abajo), y este ciclo solo fija el patrón esfuerzo/recuperación (5 fuerza + 2 movilidad).
+// El cardio deja de ser un día impuesto por el body goal: es una dimensión COMPLEMENTARIA
+// (el finisher acotado, o que el usuario elija modalidad cardio). El body goal sigue
+// alimentando nutrición y la dosis de cardio — no la estructura de resistencia.
+const RESISTANCE_CYCLE: WorkoutDayType[] =
+  ['upper', 'lower', 'full-body', 'upper', 'lower', 'movilidad', 'movilidad'];
+
+/** Normaliza cualquier entrada a un TRAINING GOAL tipado. Solo 'fuerza' es explícito;
+ *  cualquier otra cosa (incluido un body goal como "perder grasa") → hipertrofia.
+ *  Blindaje: es IMPOSIBLE que un string de composición corporal produzca reps de fuerza. */
+export function normalizeTrainingGoal(x: string | null | undefined): TrainingGoal {
+  return /fuerza|strength/i.test(String(x || '')) ? 'fuerza' : 'hipertrofia';
+}
+
+/** Resuelve el TRAINING GOAL de resistencia desde el perfil. Lee SOLO una preferencia
+ *  explícita de entrenamiento (`obData.trainingGoal`), NUNCA el body goal. Sin preferencia
+ *  → hipertrofia (default de la Fase 0; la fisiología de fuerza real llega en Fase 1). */
+export function resolveTrainingGoal(obData?: Record<string, unknown> | null): TrainingGoal {
+  return normalizeTrainingGoal(obData?.trainingGoal as string | undefined);
+}
 
 export const DAY_TYPE_CONFIG: Record<WorkoutDayType, {
   label: string;
@@ -458,9 +475,11 @@ export function decideTodayWorkout(params: {
 }): WorkoutDayDecision {
   const { userObjective, workoutLog, exercises, dailyEnergy, dailySleep, completedSessions = [] } = params;
 
-  // Normalize objective to cycle key
+  // BODY GOAL → solo para la NARRACIÓN ("por qué hoy"), ya NO para elegir el ciclo.
   const objectiveKey = normalizeObjective(userObjective);
-  const cycle = CYCLES[objectiveKey] || CYCLES['recomposicion'];
+  // El ciclo de resistencia es NEUTRAL al body goal (Fase 0): los días de fuerza se
+  // re-derivan por frecuencia/déficit abajo; el body goal no impone cardio ni full-body.
+  const cycle = RESISTANCE_CYCLE;
 
   // Analyze history (incluye completedSessions si existen)
   const history = analyzeWorkoutHistory(workoutLog, exercises, completedSessions);
@@ -742,12 +761,29 @@ export function equipmentFromPlan(plan: unknown): Equipment | null {
   return eq === 'ligas' || eq === 'cuerpo' || eq === 'gym' ? eq : null;
 }
 
+const VALID_GEAR = new Set(['gym', 'mancuernas', 'barra', 'banco', 'dominadas', 'ligas', 'cuerpo']);
+/** Restaura el GEAR canónico de un plan: prefiere `userGear`; si es un plan LEGACY (solo
+ *  `userEquipment` plano), lo MIGRA. Un usuario existente nunca queda sin poder generar. */
+export function gearFromPlan(plan: unknown): Gear[] | null {
+  const g = (plan as { userGear?: unknown } | null)?.userGear;
+  if (Array.isArray(g)) { const f = g.filter((x): x is Gear => typeof x === 'string' && VALID_GEAR.has(x)); return f.length ? f : []; }
+  const legacy = equipmentFromPlan(plan);
+  return legacy != null ? gearFromLegacyEquipment(legacy) : null;
+}
+
 /** Modalidad sellada en el plan al guardar (misma razón que equipmentFromPlan): sin
  *  esto, al recargar la modalidad volvía a una sugerencia y una sesión de cardio se
  *  registraba como fuerza al completarla. null si no hay sello válido. */
 export function modalityFromPlan(plan: unknown): Modality | null {
   const m = (plan as { userModality?: unknown } | null)?.userModality;
   return m === 'auto' || m === 'fuerza' || m === 'yoga' || m === 'cardio' ? m : null;
+}
+
+/** Restaura el TRAINING GOAL sellado en el plan (Fase 2 · UI). Sin sello → null (el llamador
+ *  cae a la preferencia del perfil vía resolveTrainingGoal → hipertrofia por default). */
+export function trainingGoalFromPlan(plan: unknown): TrainingGoal | null {
+  const g = (plan as { userTrainingGoal?: unknown } | null)?.userTrainingGoal;
+  return g === 'fuerza' || g === 'hipertrofia' ? g : null;
 }
 
 /** Duración (min) sellada en el plan al guardar; sin esto el timer volvía a 45 min al
@@ -991,6 +1027,9 @@ export function buildConfigHash(params: {
   duration: number;
   equipment: string;
   goal: string;
+  /** Fase 0 · TRAINING GOAL de resistencia (hipertrofia|fuerza). Separado del session `goal`
+   *  y del body goal (`objective`): cambiarlo invalida una rutina de resistencia incompatible. */
+  trainingGoal?: string;
   dayType: string;
   schemaVersion?: number;
   modality?: string;
@@ -1014,6 +1053,7 @@ export function buildConfigHash(params: {
     params.duration,
     params.equipment,
     params.goal,
+    params.trainingGoal || 'hipertrofia',
     params.dayType,
     params.modality || 'auto',
     params.energy || 'none',

@@ -25,6 +25,7 @@ export const DECISION_HIERARCHY: readonly string[] = [
 
 export interface CoachTraceInput {
   objective: string;
+  trainingGoal?: string;                // Fase 1 · qué adaptación de resistencia (hipertrofia|fuerza)
   level: string;
   equipment: string[];
   hasLoadHistory: boolean;              // ¿hay kg comparable? (gym vs bandas/peso corporal)
@@ -46,6 +47,11 @@ export interface CoachTraceInput {
   }>;
   cutsByTime: string[];                  // qué se recortó por presupuesto de tiempo
   notes: string[];                       // decisiones relevantes ad-hoc
+  // Fase 2 · anclas del bloque (continuidad de movimientos principales)
+  anchors?: Array<{ exerciseId: string; status: 'reused' | 'new' | 'replaced'; from?: string; reason?: string }>;
+  block?: { id: string; week: number };
+  // Fase 4 · superseries/triseries decididas por el motor
+  groups?: Array<{ ids: string[]; type: string; quality: string; reasons: string[] }>;
 }
 
 const round = (n: number) => Math.round(n * 10) / 10;
@@ -54,11 +60,25 @@ const round = (n: number) => Math.round(n * 10) / 10;
 export function formatCoachTrace(t: CoachTraceInput): string[] {
   const L: string[] = [];
   L.push('══ COACH TRACE (P1–P6) ══');
-  L.push(`OBJETIVO: ${t.objective} · nivel ${t.level} · equipo [${t.equipment.join(',')}] · carga comparable: ${t.hasLoadHistory ? 'sí' : 'no (bandas/peso corporal)'}`);
+  L.push(`OBJETIVO: ${t.objective}${t.trainingGoal ? ` · training goal ${t.trainingGoal}` : ''} · nivel ${t.level} · equipo [${t.equipment.join(',')}] · carga comparable: ${t.hasLoadHistory ? 'sí' : 'no (bandas/peso corporal)'}`);
   L.push(`TIEMPO: total ${t.time.total}′ → warm-up ${t.time.warmup}′ / principal ${t.time.main}′ / finisher ${t.time.finisher}′`);
   L.push(`P1 MESOCICLO: semana ${t.meso.week}, fase ${t.meso.phase}, progresión ${t.meso.progression}${t.meso.deload ? ' · DELOAD' : ''} · volMult ${round(t.meso.volumeMultiplier)}`);
   L.push(`   señales → recuperación(crónica) ${t.meso.recovery}, adherencia ${t.meso.adherence}, rendimiento ${t.meso.performance} · tendencia crónica: ${t.chronic}`);
   L.push(`P6 READINESS HOY: ${t.readiness.captured ? t.readiness.state.toUpperCase() : 'sin check-in → NORMAL'}${t.readiness.factors.length ? ` (${t.readiness.factors.join(', ')})` : ''} · recovery de dosis hoy: ${t.readiness.dosingRecovery}`);
+  if (t.anchors && t.anchors.length) {
+    L.push(`ANCHORS (continuidad del bloque${t.block ? ` ${t.block.id}, semana ${t.block.week}` : ''}):`);
+    for (const a of t.anchors) {
+      L.push(a.status === 'replaced'
+        ? `   ↻ REEMPLAZADO ${a.from} → ${a.exerciseId}${a.reason ? ` · ${a.reason}` : ''}`
+        : `   ${a.status === 'reused' ? '✓ REUSADO' : '＋ NUEVO'} ${a.exerciseId}${a.reason ? ` · ${a.reason}` : ''}`);
+    }
+  }
+  if (t.groups && t.groups.length) {
+    L.push('SUPERSERIES (decididas por el motor):');
+    for (const g of t.groups) L.push(`   ${g.ids.join(' + ')} · ${g.type}/${g.quality}${g.reasons.length ? ` · ${g.reasons[0]}` : ''}`);
+  } else {
+    L.push('SUPERSERIES: ninguna (no hacer superset es una decisión válida)');
+  }
 
   const prkeys = Object.keys(t.priorities);
   L.push(`P5 PRIORIDAD: ${prkeys.length ? prkeys.map(m => `${m}:${t.priorities[m]}`).join(', ') : '—'}`);

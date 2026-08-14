@@ -7,7 +7,7 @@
 // al usuario.
 
 import type { AppLanguage } from '../../store';
-import type { Equipment } from '../../types';
+import type { Equipment, TrainingGoal } from '../../types';
 import { getVoiceRules, getOutputLanguageDirective } from '../voice';
 
 interface WorkoutParams {
@@ -18,6 +18,9 @@ interface WorkoutParams {
   candidatesCompact: string;
   targetCount: number;
   goal: string;
+  trainingGoal?: TrainingGoal;
+  requiredAnchorIds?: string[];
+  slotSummary?: string;
   intensityInstruction: string;
   intensity: string;
   locale?: AppLanguage;
@@ -43,6 +46,32 @@ export function buildWorkoutOrchestratorPrompt(p: WorkoutParams): string {
   void p.userName;
   const locale = p.locale ?? 'es';
   const partner = p.partner;
+  // Fase 1 · sesión de FUERZA: el motor ya fijó reps bajas, descansos largos y menos ejercicios.
+  // La IA solo lo refleja en la SELECCIÓN (compuesto principal como eje) y en los CUES técnicos —
+  // NUNCA en los números. Bloque informativo, no una orden de prescripción.
+  // Fase 2 · anclas del bloque: movimientos de continuidad que DEBEN ir en la sesión (el motor
+  // los garantiza igual; aquí se piden para que la IA no los omita y los ponga temprano/como main).
+  const anchorBlock = (p.requiredAnchorIds && p.requiredAnchorIds.length) ? `
+MOVIMIENTOS ANCLA (OBLIGATORIOS — continuidad del mesociclo, para poder progresar la carga):
+- DEBES incluir estos ids EXACTOS en la sesión, colocados TEMPRANO (son movimientos principales del bloque): ${p.requiredAnchorIds.join(', ')}.
+- No los sustituyas por variantes "parecidas" ni los muevas al final. El resto de la sesión lo eliges tú.
+` : '';
+  // Fase 3 · SLOTS: la sesión ya está DISEÑADA por funciones (patrones). La IA elige DENTRO de cada
+  // función, sin duplicar patrones ni omitir funciones. El motor lo garantiza igual tras la respuesta.
+  const slotBlock = p.slotSummary ? `
+ESTRUCTURA DE LA SESIÓN (funciones a cubrir — ya diseñada; NO la rediseñes):
+${p.slotSummary}
+- Cada "función" es un PATRÓN de movimiento. Elige UN ejercicio por función, de un patrón que encaje.
+- NO llenes varias funciones con el MISMO patrón (ej. no 3 empujes horizontales/press de pecho parecidos): eso es redundante y se rechaza.
+- NO omitas una función principal. Las anclas YA cubren su función (no añadas otro ejercicio del mismo patrón).
+` : '';
+  const strengthBlock = p.trainingGoal === 'fuerza' ? `
+ENFOQUE DE FUERZA (trainingGoal = fuerza): esta sesión busca RENDIMIENTO en el compuesto principal, no bombeo.
+- Elige POCOS movimientos de calidad: 1 compuesto principal pesado como eje + accesorios que lo soporten. No metas relleno.
+- El compuesto principal SIEMPRE serie recta (jamás superserie): máxima carga y técnica.
+- Los cues hablan de técnica del patrón, aproximación al peso de trabajo y consistencia — no de "quemar" ni de fallo en el compuesto.
+- Los accesorios/aislamientos pueden ir a reps moderadas/altas (el motor ya lo fijó); no los conviertas en fuerza máxima.
+` : '';
 
   // Bloque de reglas de pareja — solo cuando hay compañero. La rutina se diseña
   // para DOS entrenando juntos: mismos ejercicios, prescripción ajustada por
@@ -105,15 +134,14 @@ PARÁMETROS:
 - Cantidad objetivo: ${p.targetCount} ejercicios
 - Goal del día: ${p.goal}
 - ${p.intensityInstruction}
-${equipBlock}
-SOBRECARGA PROGRESIVA (el MOTOR del progreso — aplícalo SIEMPRE que haya dato):
-- Algunos ejercicios de la lista traen "última vez: 22.5kg×10,10,8" = lo que el usuario levantó su última sesión (peso máx × reps de cada serie). ÚSALO:
-  · Prescribe reps dentro de un rango de DOBLE PROGRESIÓN. Si la última vez llegó al TOPE del rango en su serie más dura, empuja para progresar (con pesas → el sistema sube la carga; con ligas → más tensión; peso corporal → más difícil). Si no, mantén y pídele 1-2 reps más que la vez pasada.
-  · Di la progresión CONCRETA en tip_personalizado, citando el dato y en la unidad correcta del equipo (con pesas "la vez pasada 8 con 20kg — hoy 9-10"; sin pesas "la vez pasada 12 — hoy busca 14, bajando lento").
+${equipBlock}${anchorBlock}${slotBlock}${strengthBlock}
+SOBRECARGA PROGRESIVA (para tus CUES — el motor ya fijó los números; tú narras el progreso):
+- Algunos ejercicios de la lista traen "última vez: 22.5kg×10,10,8" = lo que el usuario levantó su última sesión (peso máx × reps de cada serie). ÚSALO SOLO en el tip_personalizado:
+  · Explica la progresión CONCRETA citando el dato, en la unidad correcta del equipo (con pesas "la vez pasada 8 con 20kg — hoy busca superarlo"; sin pesas "la vez pasada 12 — hoy busca más, bajando lento"). NO inventes reps: usa las que el motor ya puso en el ejercicio.
   · En la SELECCIÓN: en compuestos clave prioriza REPETIR el ejercicio con historial (así progresa la carga); no lo cambies sólo por variar. La variedad va en accesorios.
-- Sin "última vez" (primera vez con ese ejercicio): prescribe un rango y dile que encuentre un peso donde llegue al tope con buena técnica.
-- CARGA SUGERIDA (P2): si el ejercicio trae "HOY {peso}kg×{reps} (RIR ...; backoff ...)", ese peso ya está calculado desde su 1RM estimado y la fase del mesociclo — ÚSALO como ancla en tip_personalizado (di el peso concreto de la serie tope y el de backoff). Es una guía inicial: dile que ajuste ±2.5 kg si el RIR no cuadra. Nunca contradigas ese número con reps de otro rango.
-- SERIES/REPS/DESCANSO los FIJA el sistema (motor determinista), NO tú. Pon los que trae cada ejercicio en la lista; tu tip habla de TÉCNICA, carga/RIR y motivación — NO repitas ni cambies los números de series/reps/descanso en el tip.
+- Sin "última vez" (primera vez con ese ejercicio): en el tip dile que encuentre un peso donde llegue al tope del rango con buena técnica.
+- CARGA SUGERIDA (P2): si el ejercicio trae "HOY {peso}kg×{reps} (RIR ...; backoff ...)", ese peso ya está calculado desde su 1RM estimado y la fase del mesociclo — ÚSALO como ancla en tip_personalizado (di el peso concreto de la serie tope y el de backoff). Es una guía inicial: dile que ajuste ±2.5 kg si el RIR no cuadra.
+- AUTORIDAD ÚNICA: SERIES/REPS/DESCANSO/RIR/kg los FIJA el sistema (motor determinista), NO tú. NUNCA los propongas ni los cambies — ni en el JSON ni en el tip. Tu trabajo es ELEGIR ejercicios, ORDENAR, dar CUES de técnica/carga y motivar.
 
 ESFUERZO / CERCANÍA AL FALLO (RIR = reps en reserva; calíbralo al nivel — indícalo en tips cuando aporte):
 - Compuestos pesados / fuerza: 2-3 RIR (NUNCA al fallo — técnica y seguridad).
@@ -151,18 +179,12 @@ ORDEN DE EJERCICIOS (crítico — la secuencia debe ser inteligente, no aleatori
 
 - Si el foco son VARIOS músculos específicos (ej. "Bíceps + Tríceps"): repártelos parejo pero AGRUPADOS por músculo (bloque de uno, luego el otro), no intercalados ejercicio por ejercicio.
 
-ESTRUCTURA DE LA SESIÓN (piensa como COACH que arma la mejor rutina para ESTE usuario, NO como fórmula):
-El formato lo decides TÚ según goal, nivel, tiempo, día y músculos — NO hay un número fijo de superseries. Toma en cuenta todas las variables del usuario y arma lo mejor. Estructuras válidas según el caso:
-- Fuerza / principiante: casi todo SERIES RECTAS (foco en técnica y carga), quizá 1 biserie ligera al final.
-- Hipertrofia / intermedio-avanzado: mezcla rica — compuestos rectos + VARIAS biseries y hasta una triserie de accesorios. En una misma sesión pueden ir perfectamente 3 biseries + 1 triserie.
-- Poco tiempo (≤30 min), acondicionamiento o quema de grasa: puedes armar CASI TODA la rutina como superseries, giant sets o circuito para meter volumen en menos tiempo. Sí, es válido que TODA la rutina sea una superserie/circuito si eso sirve al usuario.
-- Antagonistas (pecho/espalda, bíceps/tríceps, cuádriceps/isquios) son ideales para biserie: uno descansa mientras el otro trabaja.
-
-Cómo marcar: ejercicios con el MISMO "group" (A, B, C…) se hacen ENCADENADOS sin descanso; el descanso va al cerrar la vuelta. Sin "group" = serie recta. Biserie = 2 mismo group; triserie = 3; giant set = 4+.
-Reglas duras:
-- Los compuestos PESADOS principales (press de banca, sentadilla, peso muerto, dominadas/remo pesado) van SIEMPRE como SERIE RECTA (sin group) — máxima fuerza, técnica y seguridad. NUNCA los superserías.
-- Empareja los ejercicios del MISMO group con el MISMO número de sets y el mismo "rest" (se aplica al cerrar la vuelta).
-- Las biseries son la forma correcta de intercalar músculos sin enfriarlos (respeta el anti-enfriamiento de arriba).
+SUPERSERIES/BISERIES/TRISERIES: NO las decides tú. El MOTOR determina qué ejercicios se agrupan
+(antagonistas/complementarios/ahorro de tiempo) según objetivo, tiempo, fatiga, logística y anchors,
+y lo hace DESPUÉS de tu respuesta. Por eso:
+- NO uses el campo "group". Devuelve todos los ejercicios como series rectas (sin group).
+- No intentes "armar biseries interesantes": si una agrupación mejora la sesión, el motor la crea; si no, no la hay (no hacer superset es válido).
+- Tú solo ELIGES los ejercicios (uno por función), los ORDENAS (compuestos primero) y escribes cues.
 
 TÉCNICAS DE INTENSIDAD (arsenal de coach — colócalas en AISLAMIENTO/accesorios, NUNCA en compuestos pesados; más en hipertrofia/avanzado, con moderación en principiante):
 Marca la técnica en el campo "tecnica" del ejercicio y explícala breve en tip_personalizado. Opciones:
@@ -189,11 +211,7 @@ TAREA:
    Escribe ese razonamiento breve en el campo "analisis" (interno). El resto de la rutina DEBE ser coherente con tu análisis.
 1. Selecciona exactamente ${p.targetCount} IDs de la lista y ORDÉNALOS aplicando las reglas de "ORDEN DE EJERCICIOS" de arriba (agrupar con lógica en días enfocados; alternar SOLO en full body).
    ⚠️ OBLIGATORIO: usa ÚNICAMENTE los "id" EXACTOS que aparecen en la lista de EJERCICIOS DISPONIBLES. NO inventes ids, NO uses ejercicios que no estén en la lista, NO sustituyas por equivalentes. La lista ya está filtrada por el equipo del usuario — cualquier id fuera de ella se RECHAZA.
-2. Ajusta sets/reps/rest según el goal Y EL TIPO de ejercicio:
-   - Compuestos pesados: reps más bajas (fuerza 3-6, hipertrofia 6-10), descansos 90-150s.
-   - Aislamiento: reps más altas (10-20), descansos 45-75s.
-   - Condición/quema: circuito 15+ reps, 30-45s. Movilidad: tiempos largos.
-   Aplica la SOBRECARGA PROGRESIVA y el RIR de las secciones de arriba. Diseña la ESTRUCTURA (series rectas / biseries / triseries / giant sets / circuito) y las TÉCNICAS de intensidad como coach, no por fórmula.
+2. Pon en cada ejercicio los sets/reps/rest que TRAE en la lista y devuélvelos como SERIES RECTAS (sin "group"). NO ajustes números ni armes superseries: el MOTOR reescribe sets/reps/rest/RIR/kg y decide las agrupaciones. Tú solo puedes marcar alguna TÉCNICA de intensidad (solo en aislamiento/accesorios) si aporta.
 3. Escribe tip_personalizado breve (máx 15 palabras) por ejercicio, dirigido al usuario en 2da persona.
 4. Escribe warmup y cooldown breves (1 oración cada uno), en 2da persona. El warmup debe incluir APROXIMACIÓN: movilidad general + 2-3 series de aproximación subiendo carga en tu PRIMER compuesto pesado antes de las series efectivas (no arranques en frío al peso de trabajo).
 5. Escribe "note": mensaje motivador breve (1-2 oraciones), hablándole directo (ej. "tu próximo paso es..." NO "X, tu próximo paso...").
@@ -208,10 +226,10 @@ Responde SOLO este JSON, sin markdown (el "analisis" va PRIMERO — razona antes
   "exercises": [
     ${partner
       ? `{ "id": "exercise-id", "sets": 4, "reps": "8-10", "rest": 90, "format": "alternado", "repsB": "10-12", "tip_personalizado": "tip breve", "tipB": "cue para el compañero" },
-    { "id": "accesorio-1", "sets": 3, "reps": "12-15", "rest": 60, "format": "juntos", "group": "A", "tip_personalizado": "..." }`
+    { "id": "accesorio-1", "sets": 3, "reps": "12-15", "rest": 60, "format": "juntos", "tip_personalizado": "..." }`
       : `{ "id": "exercise-id", "sets": 4, "reps": "8-10", "rest": 90, "tip_personalizado": "tip breve" },
-    { "id": "accesorio-1", "sets": 3, "reps": "10-12", "rest": 60, "group": "A", "tip_personalizado": "..." },
-    { "id": "accesorio-2", "sets": 3, "reps": "10-12", "rest": 60, "group": "A", "tecnica": "Drop set", "tip_personalizado": "en la última serie baja el peso 30% y sigue al fallo" }`}
+    { "id": "accesorio-1", "sets": 3, "reps": "10-12", "rest": 60, "tip_personalizado": "..." },
+    { "id": "accesorio-2", "sets": 3, "reps": "10-12", "rest": 60, "tecnica": "Drop set", "tip_personalizado": "en la última serie baja el peso 30% y sigue al fallo" }`}
   ],
   "warmup": "...",
   "cooldown": "...",

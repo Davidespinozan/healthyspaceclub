@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { exercises } from '../../data/exercises';
 import { allocateSessionVolume, prescribeSession, categorize } from '../sessionPrescription';
 import { allocateTime } from '../sessionBlocks';
+import { normalizeTrainingGoal } from '../workoutPlanner';
 import type { MuscleGroup, Equipment, Exercise } from '../../types';
 
 // BLOQUE 5 (D2/F2) · sesiones ≤35′: "MENOS COSAS, NO TODO HECHO PEOR". prescribeSession elimina
@@ -41,7 +42,7 @@ function runSession(input: {
     freqTarget: 4, sessionsThisWeekDone: 0, muscleWeeklyFreq, isDeload: input.isDeload,
   });
   const items = prescribeSession({
-    exercises: exs, bankById, allocation, objective: input.goal, phase: input.isDeload ? 'deload' : 'acumulacion',
+    exercises: exs, bankById, allocation, trainingGoal: normalizeTrainingGoal(input.goal), phase: input.isDeload ? 'deload' : 'acumulacion',
     mainMinutes: time.main, lastPerf: Object.fromEntries(exs.map(e => [e.id, { sets: [{ reps: 6, kg: 100, rir: 2 }] }])),
   });
   const estMain = items.reduce((a, it) => a + minutesOf(it.prescription.sets, it.prescription.rest), 0);
