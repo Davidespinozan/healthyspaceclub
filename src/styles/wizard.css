@@ -328,6 +328,25 @@
 
 .wz-chip-icon svg { color: var(--forest); }
 
+/* Cardio capability gate: modalidad sin contenido reproducible → deshabilitada + nota */
+.wz-chip-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.wz-chip-disabled:hover { transform: none; }
+.wz-chip-soon {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--forest);
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
 /* Confirmador del compañero conectado (modo pareja) */
 .wz-partner-confirm {
   display: flex;

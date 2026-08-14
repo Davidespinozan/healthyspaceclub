@@ -49,6 +49,7 @@ interface WizardProps {
   // Estilo de cardio (Fase 4). 'auto' = seguir el objetivo (híbrido).
   selectedCardioStyle: CardioStyle | 'auto';
   setSelectedCardioStyle: (s: CardioStyle | 'auto') => void;
+  cardioCapabilities: { correr: boolean; funcional: boolean; lowImpact: boolean; explosividad: boolean };
   inferredCardioStyle: CardioStyle; // el que el objetivo recomienda (para resaltar en 'auto')
   discomfort: string;
   setDiscomfort: (v: string) => void;
@@ -95,7 +96,7 @@ export default function Wizard({
   firstName, todayDayName, todayDateShort,
   suggestion, modalityCounts, skipPhysical,
   selectedModality, setSelectedModality,
-  selectedCardioStyle, setSelectedCardioStyle, inferredCardioStyle,
+  selectedCardioStyle, setSelectedCardioStyle, inferredCardioStyle, cardioCapabilities,
   discomfort, setDiscomfort,
   painArea, setPainArea,
   selectedTime, setSelectedTime,
@@ -388,15 +389,25 @@ export default function Wizard({
             <p className="wz-q-label">{t('wizard.cardioStyleQ')}</p>
             <div className="wz-chips wz-chips-col">
               {CARDIO_STYLE_OPTIONS.map(opt => {
-                const active = (selectedCardioStyle === 'auto' ? inferredCardioStyle : selectedCardioStyle) === opt.value;
+                // 1ª defensa: solo se puede elegir una modalidad con CONTENIDO real (video) para el
+                // equipo actual. Explosividad (0 videos) → siempre "Próximamente". Bajo impacto sin
+                // gym → "Requiere gimnasio". La fuente es getCardioCapabilities (no hardcode local).
+                const available = cardioCapabilities[opt.value];
+                const active = available && (selectedCardioStyle === 'auto' ? inferredCardioStyle : selectedCardioStyle) === opt.value;
+                const note = !available
+                  ? (opt.value === 'lowImpact' ? t('wizard.cardioRequiresGym') : t('wizard.cardioSoon'))
+                  : null;
                 return (
                   <button
                     key={opt.value}
-                    className={`wz-chip wz-chip-block${active ? ' on' : ''}`}
-                    onClick={() => setSelectedCardioStyle(opt.value)}
+                    className={`wz-chip wz-chip-block${active ? ' on' : ''}${!available ? ' wz-chip-disabled' : ''}`}
+                    disabled={!available}
+                    aria-disabled={!available}
+                    onClick={() => { if (available) setSelectedCardioStyle(opt.value); }}
                   >
                     <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
                     <span>{t(opt.labelKey)}</span>
+                    {note && <span className="wz-chip-soon">{note}</span>}
                   </button>
                 );
               })}
@@ -438,15 +449,20 @@ export default function Wizard({
                     onClick={() => setGear(opt.value === 'gym' ? ['gym'] : gear.filter(g => g !== 'gym'))}
                   >
                     <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
-                    <span>{t(opt.labelKey)}</span>
+                    {/* CARDIO: "propio equipo" no pregunta implementos → el copy real es "sin equipo /
+                        en casa" (peso corporal). Fuerza/hipertrofia conservan su wording. */}
+                    <span>{opt.value === 'own' && selectedModality === 'cardio' ? t('wizard.gearEnvOwnCardio') : t(opt.labelKey)}</span>
                   </button>
                 );
               })}
             </div>
 
             {/* Paso 2 · implementos (solo con propio equipo). Multi-select; peso corporal
-                implícito (nada marcado = solo peso corporal). */}
-            {!gear.includes('gym') && (
+                implícito (nada marcado = solo peso corporal). NO en CARDIO: mancuernas/barra/banco/
+                dominadas/bandas no cambian una sesión de cardio (el banco solo distingue gym-vs-no,
+                auditado) → eran botones decorativos. La distinción útil de cardio (gym → máquinas/
+                kettlebell) ya la da el Paso 1. En fuerza/hipertrofia el selector se mantiene igual. */}
+            {!gear.includes('gym') && selectedModality !== 'cardio' && (
               <div className="wz-subq">
                 <p className="wz-q-sublabel">{t('wizard.gearOwnQ')}</p>
                 <p className="wz-q-hint wz-q-hint-block">{t('wizard.gearOwnHint')}</p>

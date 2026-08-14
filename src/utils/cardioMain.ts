@@ -14,7 +14,8 @@
 // NO toca fuerza/hipertrofia/P1–P6 de resistencia. Reutiliza ideas del finisher (zona2/intervalos)
 // SIN heredar sus caps (el finisher es un complemento; esto es el main).
 // ─────────────────────────────────────────────────────────────────────────
-import type { Exercise, CardioStyle } from '../types';
+import type { Exercise, CardioStyle, Equipment } from '../types';
+import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
 
 export type CardioBlockKind = 'steady' | 'intervals' | 'drills' | 'power' | 'recovery';
 export type CardioIntensity = 'baja' | 'media' | 'alta';
@@ -80,6 +81,22 @@ function pickStation(pool: Exercise[], idx: number, preferLowImpact: boolean): s
   return list[idx % list.length].id;
 }
 
+/** ¿La estación coincide REALMENTE con un estilo de cardio (a nivel ejercicio o variante)? Fuente de
+ *  la IDENTIDAD ESTRICTA de cada modalidad: cada main usa SOLO estaciones de su estilo, nunca el
+ *  fallback genérico del caller (que mezcla burpees/kettlebells/máquinas de otras modalidades). */
+const matchesStyle = (e: Exercise, style: CardioStyle): boolean =>
+  e.cardioStyle === style || (e.variants ?? []).some(v => v.cardioStyle === style);
+function isRunningStation(e: Exercise): boolean { return matchesStyle(e, 'correr'); }
+function isFunctionalStation(e: Exercise): boolean { return matchesStyle(e, 'funcional'); }
+function isExplosiveStation(e: Exercise): boolean { return matchesStyle(e, 'explosividad'); }
+/** Bajo impacto: estilo lowImpact Y NUNCA alto impacto/riesgo de caída (seguridad dura). */
+function isLowImpactStation(e: Exercise): boolean {
+  return e.impact !== 'high' && !e.fallRisk && matchesStyle(e, 'lowImpact');
+}
+// Estación de carrera canónica (existe en el banco, peso corporal → gear-independiente): si el pool
+// no trae ninguna estación de correr, el main de running se construye igual con esta (nunca genérica).
+const RUN_FALLBACK_STATION = 'running-drills';
+
 const mkSteady = (minutes: number, stationId: string, intensity: CardioIntensity, labelKey: string, cue?: string): CardioBlock =>
   ({ kind: labelKey === 'cardio.recovery' ? 'recovery' : 'steady', minutes: round(minutes), stationId, intensity, labelKey, zone: ZONE[intensity], rpe: RPE[intensity], cue });
 
@@ -126,78 +143,97 @@ export function buildCardioMain(input: {
   const blocks: CardioBlock[] = [];
   let earlyEnd = false; let earlyEndReason: string | undefined;
   const pool = input.pool;
+  // Plan de CONTENT GAP: si el banco no tiene estaciones REALES de esta modalidad para este equipo,
+  // NO se rellena con estaciones de otra modalidad (§13). Se reporta honestamente.
+  const contentGap = (reason: string): CardioMainPlan =>
+    ({ style, budgetMinutes: budget, totalMinutes: 0, intenseMinutes: 0, steadyMinutes: 0, earlyEnd: true, earlyEndReason: `content gap: ${reason}`, blocks: [] });
 
-  if (!pool.length) {
-    return { style, budgetMinutes: budget, totalMinutes: 0, intenseMinutes: 0, steadyMinutes: 0, earlyEnd: true, earlyEndReason: 'sin estaciones de cardio reproducibles con este equipo (content gap)', blocks: [] };
-  }
+  if (!pool.length) return contentGap('sin estaciones de cardio reproducibles con este equipo');
 
   if (style === 'lowImpact') {
-    // Todo sostenible (Zona 2). Ventana larga → 1-2 bloques largos (cambio de estación opcional).
+    // IDENTIDAD ESTRICTA: SOLO estaciones de bajo impacto (cinta inclinada/bici/elíptica/marcha),
+    // NUNCA alto impacto (saltos/burpees). Todo sostenible (Zona 2); ventana larga → bloques largos.
+    const stn = pool.filter(isLowImpactStation);
+    if (!stn.length) return contentGap('sin estaciones de bajo impacto reproducibles con este equipo (p.ej. peso corporal sin máquinas sostenibles con video)');
     const zone: CardioIntensity = 'baja';
     if (budget <= 40) {
-      blocks.push(mkSteady(budget, pickStation(pool, 0, true), zone, 'cardio.steady', 'Ritmo sostenible, podrías mantener una conversación.'));
+      blocks.push(mkSteady(budget, pickStation(stn, 0, true), zone, 'cardio.steady', 'Ritmo sostenible, podrías mantener una conversación.'));
     } else {
       const half = budget / 2;
-      blocks.push(mkSteady(half, pickStation(pool, 0, true), zone, 'cardio.steady', 'Zona 2 sostenible.'));
-      blocks.push(mkSteady(budget - round(half), pickStation(pool, 1, true), L === 'avanzado' ? 'media' : zone, 'cardio.steady', L === 'avanzado' ? 'Bloque tempo controlado, sigue de bajo impacto.' : 'Segundo bloque sostenible, cambia de estación si quieres.'));
+      blocks.push(mkSteady(half, pickStation(stn, 0, true), zone, 'cardio.steady', 'Zona 2 sostenible.'));
+      blocks.push(mkSteady(budget - round(half), pickStation(stn, 1, true), L === 'avanzado' ? 'media' : zone, 'cardio.steady', L === 'avanzado' ? 'Bloque tempo controlado, sigue de bajo impacto.' : 'Segundo bloque sostenible, cambia de estación si quieres.'));
     }
   } else if (style === 'correr') {
+    // IDENTIDAD ESTRICTA: el main de CORRER se construye SOLO con estaciones de carrera (cinta/
+    // caminadora/running-drills), NUNCA con el banco genérico. La inteligencia está en cómo/cuánto/a
+    // qué intensidad correr (easy/tempo/intervalos/recovery), no en buscar ejercicios para llenar.
+    const runStations = pool.filter(isRunningStation);
+    const runPick = (i: number) => runStations.length ? runStations[i % runStations.length].id : RUN_FALLBACK_STATION;
     const cap = TOTAL_CAP.correr(L);
     const planned = Math.min(budget, cap);
     if (planned < budget) { earlyEnd = true; earlyEndReason = 'principiante: volumen de carrera acotado por seguridad'; }
-    // Drills cortos + bloque de calidad acotado + easy dominante.
+    // Drills breves de técnica de carrera + bloque de calidad acotado + easy/Zone 2 DOMINANTE.
     let remaining = planned;
     const drillsMin = Math.min(remaining, L === 'principiante' ? 4 : 5);
-    blocks.push(mkDrills(drillsMin, pickStation(pool, 0, false), 'cardio.drills', 'Técnica de carrera: skipping, talones, zancada.')); remaining -= drillsMin;
-    // Bloque de calidad acotado al TECHO intenso (crece con el nivel): avanzado = intervalos,
-    // principiante/intermedio = tempo continuo. El resto del volumen es EASY dominante.
+    blocks.push(mkDrills(drillsMin, runPick(0), 'cardio.drills', 'Técnica de carrera: skipping, talones, zancada.')); remaining -= drillsMin;
+    // Bloque de calidad acotado al TECHO intenso (crece con el nivel): avanzado = intervalos de
+    // carrera, principiante/intermedio = tempo continuo. El resto del volumen es EASY dominante.
     const qMin = Math.min(intenseAllow, Math.max(0, remaining - 3));
     if (qMin >= 4) {
-      // Avanzado = intervalos, PERO solo si cabe su tiempo total (work+rest); si no, tempo (encaja
-      // mejor la misma dosis intensa en menos ventana). Garantiza planned ≤ budget.
       const useIntervals = L === 'avanzado' && remaining >= qMin * 1.5 + 3;
       if (useIntervals) {
         const rounds = clamp(round(qMin), 3, 20);   // ~60s trabajo/round → work ≈ qMin (techo intenso)
-        const b = mkIntervals('intervals', rounds, 60, 30, pickStation(pool, 1, false), 'cardio.intervals', 'Series a ritmo fuerte, recupera trotando.');
+        const b = mkIntervals('intervals', rounds, 60, 30, runPick(1), 'cardio.intervals', 'Series a ritmo fuerte, recupera trotando.');
         blocks.push(b); remaining -= b.minutes;
       } else {
-        blocks.push(mkSteady(qMin, pickStation(pool, 1, false), 'alta', 'cardio.tempo', 'Bloque tempo: cómodamente duro.')); remaining -= qMin;
+        blocks.push(mkSteady(qMin, runPick(1), 'alta', 'cardio.tempo', 'Bloque tempo: cómodamente duro.')); remaining -= qMin;
       }
     }
-    if (remaining >= 3) blocks.push(mkSteady(remaining, pickStation(pool, 2, false), 'baja', 'cardio.steady', 'Rodaje suave, la mayor parte del volumen es fácil.'));
+    // Principiante: el resto es run/walk suave; el volumen largo viene de easy/Zone 2, no de intensidad.
+    if (remaining >= 3) blocks.push(mkSteady(remaining, runPick(2), 'baja', 'cardio.steady', L === 'principiante' ? 'Alterna trote suave y caminata; la mayor parte es fácil.' : 'Rodaje suave, la mayor parte del volumen es fácil.'));
   } else if (style === 'explosividad') {
+    // IDENTIDAD ESTRICTA: SOLO estaciones explosivas (saltos/bounds/box jumps). NUNCA circuito
+    // funcional genérico para "rellenar" tiempo. Sin contenido explosivo real → content gap (§3).
+    const stn = pool.filter(isExplosiveStation);
+    if (!stn.length) return contentGap('sin estaciones de explosividad reproducibles (el banco no tiene saltos/potencia con video)');
     const cap = TOTAL_CAP.explosividad(L);
     const planned = Math.min(budget, cap);
     if (planned < budget) { earlyEnd = true; earlyEndReason = 'explosividad = calidad/potencia, no volumen: dosis útil completada, el resto sería contraproducente'; }
     let remaining = planned;
     // Warm-up drills / técnica.
     const drillsMin = Math.min(remaining, L === 'principiante' ? 6 : 8);
-    blocks.push(mkDrills(drillsMin, pickStation(pool, 0, false), 'cardio.drills', 'Preparación neural: saltos suaves, movilidad, técnica.')); remaining -= drillsMin;
+    blocks.push(mkDrills(drillsMin, pickStation(stn, 0, false), 'cardio.drills', 'Preparación neural: saltos suaves, movilidad, técnica.')); remaining -= drillsMin;
     // Trabajo de potencia: work corto, descanso LARGO (calidad). Rounds acotados por el techo intenso.
     const roundsByCap = Math.floor((intenseAllow * 60) / 10);          // work ~10s por round
     const rounds = clamp(roundsByCap, L === 'principiante' ? 3 : 4, L === 'avanzado' ? 12 : 8);
-    const power = mkIntervals('power', rounds, 10, L === 'principiante' ? 90 : 75, pickStation(pool, 1, false), 'cardio.power', 'Máxima calidad por repetición; descansa completo entre esfuerzos.');
+    const power = mkIntervals('power', rounds, 10, L === 'principiante' ? 90 : 75, pickStation(stn, 1, false), 'cardio.power', 'Máxima calidad por repetición; descansa completo entre esfuerzos.');
     if (power.minutes <= remaining) { blocks.push(power); remaining -= power.minutes; }
-    // Recuperación suave / técnica con el tiempo restante (NO más contactos).
-    if (remaining >= 4) blocks.push(mkSteady(Math.min(remaining, 12), pickStation(pool, 2, true), 'baja', 'cardio.recovery', 'Recuperación activa y movilidad; no más saltos.'));
+    // Recuperación suave / técnica con el tiempo restante (NO más contactos). Prefiere una estación
+    // de bajo impacto para la recuperación si existe; si no, la propia explosiva (a ritmo suave).
+    const recStn = pool.filter(isLowImpactStation);
+    if (remaining >= 4) blocks.push(mkSteady(Math.min(remaining, 12), pickStation(recStn.length ? recStn : stn, 0, true), 'baja', 'cardio.recovery', 'Recuperación activa y movilidad; no más saltos.'));
   } else { // funcional
-    // Bloques: circuito intervalado (acotado) → recuperación → 2º circuito → steady/cooldown.
+    // IDENTIDAD ESTRICTA: circuitos con estaciones FUNCIONALES (kettlebell/battle-ropes/carries/
+    // burpees/mountain-climbers…). Aquí el EQUIPO sí cambia el contenido (gym vs peso corporal).
+    const stn = pool.filter(isFunctionalStation);
+    if (!stn.length) return contentGap('sin estaciones funcionales reproducibles con este equipo');
     let remaining = budget;
     const perCircuitIntense = Math.max(4, round(intenseAllow / 2));
-    const circuit = (i: number) => mkIntervals('intervals', clamp(round(perCircuitIntense * 2), 4, 12), 40, 20, pickStation(pool, i, false), 'cardio.circuit', 'Circuito: 40s trabajo / 20s transición, técnica sólida.');
+    const circuit = (i: number) => mkIntervals('intervals', clamp(round(perCircuitIntense * 2), 4, 12), 40, 20, pickStation(stn, i, false), 'cardio.circuit', 'Circuito: 40s trabajo / 20s transición, técnica sólida.');
     let intenseUsed = 0;
     for (let i = 0; i < 2 && remaining > 8 && intenseUsed < intenseAllow; i++) {
       const c = circuit(i);
       if (c.minutes > remaining) break;
       blocks.push(c); remaining -= c.minutes; intenseUsed += intenseOf(c);
-      // Recuperación entre circuitos (steady baja).
+      // Recuperación entre circuitos (steady baja) — bajo impacto si hay, si no una estación funcional suave.
       if (remaining > 6 && (i === 0)) {
+        const recStn = pool.filter(isLowImpactStation);
         const rec = Math.min(remaining, Math.max(4, round(c.minutes * 0.6)));
-        blocks.push(mkSteady(rec, pickStation(pool, i + 3, true), 'baja', 'cardio.recovery', 'Recuperación activa entre bloques.')); remaining -= rec;
+        blocks.push(mkSteady(rec, pickStation(recStn.length ? recStn : stn, i + 3, true), 'baja', 'cardio.recovery', 'Recuperación activa entre bloques.')); remaining -= rec;
       }
     }
     // Cooldown / steady con el resto (densidad controlada, no más rounds).
-    if (remaining >= 4) blocks.push(mkSteady(remaining, pickStation(pool, 5, true), 'baja', 'cardio.steady', 'Trabajo sostenible para cerrar; baja pulsaciones.'));
+    if (remaining >= 4) { const recStn = pool.filter(isLowImpactStation); blocks.push(mkSteady(remaining, pickStation(recStn.length ? recStn : stn, 5, true), 'baja', 'cardio.steady', 'Trabajo sostenible para cerrar; baja pulsaciones.')); }
     if (budget - blocks.reduce((a, b) => a + b.minutes, 0) > budget * 0.15) { earlyEnd = true; earlyEndReason = 'dosis funcional útil alcanzada; densidad controlada'; }
   }
 
@@ -236,3 +272,30 @@ export function cardioBlocksToExercises(plan: CardioMainPlan): Array<{ id: strin
 
 /** Minutos que el player REALMENTE guía a ejecutar (suma de los bloques del plan). */
 export const cardioPlayableMinutes = (plan: CardioMainPlan): number => plan.blocks.reduce((a, b) => a + b.minutes, 0);
+
+// ── CAPABILITY GATE POR CONTENIDO REAL (§1) ──────────────────────────────────
+export interface CardioCapabilities { correr: boolean; funcional: boolean; lowImpact: boolean; explosividad: boolean; }
+
+/** ¿Existe una estación REPRODUCIBLE de este estilo para este equipo? Estricto: una VARIANTE con
+ *  (a) video (VIDEO_VARIANT_IDS), (b) equipo compatible, (c) que sea de ESE estilo (variante o
+ *  ejercicio). Para lowImpact, además el ejercicio nunca de alto impacto. "Existe en el catálogo"
+ *  NO basta — sin media no es capacidad disponible. */
+function styleStationAvailable(e: Exercise, style: CardioStyle, equipment: Equipment[]): boolean {
+  if (style === 'lowImpact' && (e.impact === 'high' || e.fallRisk)) return false;
+  return (e.variants ?? []).some(v =>
+    VIDEO_VARIANT_IDS.has(v.id) &&
+    (v.equipment ?? []).some(x => equipment.includes(x)) &&
+    (v.cardioStyle === style || (e.cardioStyle === style && !v.cardioStyle)));
+}
+
+/**
+ * FUENTE ÚNICA de disponibilidad de modalidades de cardio, derivada del CONTENIDO REAL con video.
+ * `cardioEquipment` = los buckets ya reducidos (cardioEquipmentFor: ['gym','cuerpo'] o ['cuerpo']).
+ * La UI (deshabilitar/ocultar) y el guard de generación deben consultar ESTO — sin hardcodes
+ * dispersos. Añadir videos compatibles al banco habilita la capability sola (§8.10).
+ */
+export function getCardioCapabilities(bank: Exercise[], cardioEquipment: Equipment[]): CardioCapabilities {
+  const cardio = bank.filter(e => e.muscleGroup === 'cardio');
+  const avail = (style: CardioStyle) => cardio.some(e => styleStationAvailable(e, style, cardioEquipment));
+  return { correr: avail('correr'), funcional: avail('funcional'), lowImpact: avail('lowImpact'), explosividad: avail('explosividad') };
+}

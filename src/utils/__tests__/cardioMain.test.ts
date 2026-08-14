@@ -26,10 +26,16 @@ describe('CARDIO-MAIN · invariantes globales (§24)', () => {
     for (const s of STYLES) for (const t of TIMES) for (const l of LEVELS) {
       const p = plan(s, t, l);
       expect(p.totalMinutes).toBeLessThanOrEqual(p.budgetMinutes + 0.5);
-      expect(p.totalMinutes).toBeGreaterThan(0);
       expect(Number.isFinite(p.totalMinutes)).toBe(true);
       expect(p.intenseMinutes).toBeGreaterThanOrEqual(0);
-      for (const b of p.blocks) { expect(b.minutes).toBeGreaterThan(0); expect(b.stationId).toBeTruthy(); }
+      if (p.blocks.length === 0) {
+        // content gap legítimo (el banco no tiene estaciones de esa modalidad con video) — se reporta
+        expect(p.earlyEnd).toBe(true);
+        expect(p.earlyEndReason).toMatch(/content gap/);
+      } else {
+        expect(p.totalMinutes).toBeGreaterThan(0);
+        for (const b of p.blocks) { expect(b.minutes).toBeGreaterThan(0); expect(b.stationId).toBeTruthy(); }
+      }
     }
   });
   it('intensityMinutes ≤ techo de la modalidad (nunca explota)', () => {
@@ -136,10 +142,19 @@ describe('CARDIO-MAIN · gear (§13)', () => {
     expect(p.earlyEnd).toBe(true);
     expect(p.earlyEndReason).toMatch(/content gap|sin estaciones/);
   });
-  it('bodyweight lowImpact 120 sigue produciendo sesión sostenible', () => {
+  it('bodyweight lowImpact: sin máquinas sostenibles con video → CONTENT GAP (no se rellena con alto impacto)', () => {
+    // El banco no tiene bajo impacto de peso corporal CON VIDEO (marcha/paso-lateral sin clip) →
+    // se reporta content gap en vez de degenerar a burpees/saltos (identidad estricta §4/§13).
     const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'lowImpact', level: 'intermedio', pool: pool('lowImpact', ['cuerpo']) });
-    expect(p.totalMinutes).toBeGreaterThan(60);
+    expect(p.blocks.length).toBe(0);
+    expect(p.earlyEnd).toBe(true);
+    expect(p.earlyEndReason).toMatch(/content gap/);
+  });
+  it('GYM lowImpact 120: sí sostiene la ventana con máquinas (bici/elíptica), 0 intenso, 0 alto impacto', () => {
+    const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'lowImpact', level: 'intermedio', pool: pool('lowImpact', ['gym']) });
+    expect(p.totalMinutes).toBeGreaterThan(90);
     expect(p.intenseMinutes).toBe(0);
+    for (const b of p.blocks) { const ex = exercises.find(e => e.id === b.stationId); expect(ex?.impact === 'high').toBeFalsy(); }
   });
 });
 
@@ -182,5 +197,98 @@ describe('CARDIO-MAIN · playableMinutes ≈ plannedMinutes (regresión bug 120�
     expect(cardioPlayableMinutes(p)).toBe(p.totalMinutes);
     expect(p.earlyEnd).toBe(true);          // requested 120, planned=playable≈37 → intencional
     expect(p.totalMinutes).toBeLessThan(65);
+  });
+});
+
+// ── CORRER · identidad estricta: main SOLO de estaciones de carrera ─────
+describe('CARDIO-MAIN · running usa solo estaciones de carrera (identidad estricta)', () => {
+  const GENERIC = new Set(['burpee-sprawl', 'kettlebell-swings', 'battle-ropes', 'saltos-basicos']);
+  const isRun = (id: string) => {
+    const e = exercises.find(x => x.id === id);
+    return !!e && (e.cardioStyle === 'correr' || (e.variants ?? []).some(v => v.cardioStyle === 'correr')) || id === 'running-drills';
+  };
+  // pool CONTAMINADO como el caller (styled<3 → fallback genérico)
+  function pollutedRunPool(gear: Equipment[]) {
+    const eq = cardioEquipmentFor(gear);
+    const p = exercises.filter(e => e.muscleGroup === 'cardio' && (e.variants ?? []).some(v => VIDEO_VARIANT_IDS.has(v.id) && (v.equipment ?? []).some(x => eq.includes(x))));
+    const styled = p.filter(e => matchesCardioStyle(e, 'correr'));
+    return styled.length >= 3 ? styled : [...styled, ...p.filter(e => !styled.includes(e))];
+  }
+  it('ningún bloque de correr usa estación genérica/funcional/explosiva (todos los gear, 60/90/120)', () => {
+    for (const gear of [['cuerpo'], ['gym'], ['ligas']] as Equipment[][]) {
+      for (const t of [60, 90, 120]) {
+        const plan = buildCardioMain({ mainBudgetMinutes: mainBudget(t), style: 'correr', level: 'intermedio', pool: pollutedRunPool(gear) });
+        for (const b of plan.blocks) {
+          expect(GENERIC.has(b.stationId)).toBe(false);   // nunca burpee/kettlebell/battle-ropes/saltos
+          expect(isRun(b.stationId)).toBe(true);          // siempre una estación de carrera real
+        }
+      }
+    }
+  });
+  it('misma FILOSOFÍA/estructura de running independiente del gear (solo cambia treadmill si hay gym)', () => {
+    const shape = (gear: Equipment[]) => buildCardioMain({ mainBudgetMinutes: mainBudget(90), style: 'correr', level: 'intermedio', pool: pollutedRunPool(gear) })
+      .blocks.map(b => `${b.kind}:${b.minutes}`).join('|');
+    // bodyweight, bands y (sin treadmill) producen la MISMA estructura de bloques
+    expect(shape(['cuerpo'])).toBe(shape(['ligas']));
+    // gym mantiene la misma estructura (mismos bloques); solo puede diferir la estación
+    expect(shape(['gym'])).toBe(shape(['cuerpo']));
+  });
+  it('running largo: el volumen extra es EASY/steady, no intervalos (§ volumen)', () => {
+    const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'correr', level: 'avanzado', pool: pollutedRunPool(['gym']) });
+    expect(p.steadyMinutes).toBeGreaterThan(p.intenseMinutes * 2);   // easy domina
+  });
+});
+
+// ── IDENTIDAD ESTRICTA de modalidades (§3/§4/§5/§9) ─────────────────────
+describe('CARDIO-MAIN · identidad estricta por modalidad', () => {
+  const HIGH = new Set(exercises.filter(e => e.impact === 'high' || e.fallRisk).map(e => e.id));
+  const isFuncOnly = (id: string) => { const e = exercises.find(x => x.id === id); return !!e && (e.cardioStyle === 'funcional' || (e.variants ?? []).some(v => v.cardioStyle === 'funcional')) && !(e.cardioStyle === 'lowImpact' || (e.variants ?? []).some(v => v.cardioStyle === 'lowImpact')); };
+
+  it('lowImpact NUNCA usa una estación de alto impacto (gym, todas las duraciones)', () => {
+    for (const t of [45, 60, 90, 120]) {
+      const p = buildCardioMain({ mainBudgetMinutes: mainBudget(t), style: 'lowImpact', level: 'intermedio', pool: pool('lowImpact', ['gym']) });
+      for (const b of p.blocks) expect(HIGH.has(b.stationId)).toBe(false);
+    }
+  });
+  it('explosividad NO degenera a circuito funcional genérico (sin contenido explosivo → content gap)', () => {
+    // con el banco actual (0 explosivo con video) → content gap, NUNCA kettlebell/battle-ropes
+    const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'explosividad', level: 'avanzado', pool: pool('explosividad', ['gym']) });
+    for (const b of p.blocks) expect(isFuncOnly(b.stationId)).toBe(false);
+    expect(p.blocks.length === 0 || p.earlyEnd).toBeTruthy();
+  });
+  it('explosividad CON contenido real → estructura de potencia (drills+power), capada, early-end a 120', () => {
+    const jump = { id: 'test-jump', name: 'Jump', muscleGroup: 'cardio', cardioStyle: 'explosividad', impact: 'high', fallRisk: true, variants: [] } as never;
+    const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'explosividad', level: 'avanzado', pool: [jump] });
+    expect(p.blocks.some(b => b.kind === 'power')).toBe(true);
+    expect(p.blocks.every(b => ['drills', 'power', 'recovery'].includes(b.kind))).toBe(true);
+    expect(p.earlyEnd).toBe(true);                 // 120 pedido, dosis de potencia acotada
+    expect(p.totalMinutes).toBeLessThan(70);
+    expect(p.blocks.map(b => b.stationId)).toContain('test-jump');
+  });
+  it('estructuralmente diferentes: lowImpact = solo steady; funcional = tiene circuitos (intervals)', () => {
+    const li = buildCardioMain({ mainBudgetMinutes: mainBudget(60), style: 'lowImpact', level: 'intermedio', pool: pool('lowImpact', ['gym']) });
+    const fn = buildCardioMain({ mainBudgetMinutes: mainBudget(60), style: 'funcional', level: 'intermedio', pool: pool('funcional', ['gym']) });
+    expect(li.blocks.every(b => b.kind === 'steady' || b.kind === 'recovery')).toBe(true);
+    expect(li.blocks.some(b => b.kind === 'intervals')).toBe(false);
+    expect(fn.blocks.some(b => b.kind === 'intervals')).toBe(true);   // circuitos distinguen funcional
+  });
+  it('funcional bodyweight ≠ funcional gym (el equipo cambia materialmente las estaciones)', () => {
+    const bw = new Set(buildCardioMain({ mainBudgetMinutes: mainBudget(60), style: 'funcional', level: 'intermedio', pool: pool('funcional', ['cuerpo']) }).blocks.map(b => b.stationId));
+    const gy = new Set(buildCardioMain({ mainBudgetMinutes: mainBudget(60), style: 'funcional', level: 'intermedio', pool: pool('funcional', ['gym']) }).blocks.map(b => b.stationId));
+    // gym trae estaciones que bodyweight no (kettlebell/battle-ropes/máquina)
+    const gymOnly = [...gy].filter(id => !bw.has(id));
+    expect(gymOnly.length).toBeGreaterThan(0);
+  });
+});
+
+// ── TIEMPO: no regresar el bug 120→corto (§11) ──────────────────────────
+describe('CARDIO-MAIN · tiempo preservado por modalidad con contenido (§11)', () => {
+  it('lowImpact 120 gym: playable ≈ planned y cerca de la ventana', () => {
+    const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'lowImpact', level: 'intermedio', pool: pool('lowImpact', ['gym']) });
+    expect(p.totalMinutes).toBeGreaterThan(mainBudget(120) * 0.9);
+  });
+  it('funcional 120 gym: playable ≈ planned y cerca de la ventana', () => {
+    const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'funcional', level: 'intermedio', pool: pool('funcional', ['gym']) });
+    expect(p.totalMinutes).toBeGreaterThan(mainBudget(120) * 0.75);
   });
 });
