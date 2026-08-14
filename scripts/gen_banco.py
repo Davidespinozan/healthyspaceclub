@@ -103,11 +103,24 @@ for r in csv.DictReader(open(os.path.join(BASE, "SUBRECETAS-HSC.csv"), encoding=
         g = num(r["gramos"]) / 100
         for i in range(5): SUB[s][i] += m[i] * g
 
+def region_of(nota):
+    """Marca de región de un platillo desde la columna `nota` (ej. "region:ES").
+    La columna `nota` YA se usa para mil cosas (BLOQUE, PENDIENTE, notas de cocina…),
+    así que SOLO extraemos el token que empieza con "region:" y todo lo demás se ignora.
+    Sin marca ⇒ platillo del banco normal, visible para todos."""
+    for part in (nota or "").replace(",", ";").split(";"):
+        part = part.strip()
+        if part.lower().startswith("region:"):
+            return part.split(":", 1)[1].strip().upper()  # "ES"
+    return ""
+
 dishes = {}
 for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), encoding="utf-8-sig")):
     p = r["platillo"].strip()
     d = dishes.setdefault(p, {"nombre": p, "tiempo": r["tiempo"].strip(), "tipo": r["tipo"].strip(),
         "multMax": num(r["mult_max"]) or 1.5, "img": _webp(r["image_filename"]), "fixed": [0, 0, 0, 0, 0], "ings": []})
+    reg = region_of(r.get("nota"))
+    if reg and not d.get("region"): d["region"] = reg  # segmentación por región (mismo bucket que precios)
     rol = (r.get("rol") or "").strip(); al = (r.get("alimento") or "").strip(); g = num(r["gramos"])
     ing = {"nv": r["nombre_visible"].strip(), "rol": rol, "g0": g}
     # Medida casera contable (pieza/rebanada) para mostrar "2 huevos", no "88 g".
@@ -144,7 +157,7 @@ ts = "// AUTO-GENERADO por scripts/gen_banco.py desde el banco de Magaly. No edi
 ts += "// Cada platillo: fixed = [kcal,P,F,C,fibra] de todo lo NO-principal (ya sumado);\n"
 ts += "// ings principales traen a=[por-gramo kcal,P,F,C,fibra] y max para ajustar la porción.\n"
 ts += "export interface BancoIng { nv: string; rol: string; g0: number; max?: number; a?: number[]; pend?: boolean; pu?: number; un?: string }\n"
-ts += "export interface BancoDish { nombre: string; tiempo: string; tipo: string; multMax: number; img: string; fixed: number[]; ings: BancoIng[] }\n"
+ts += "export interface BancoDish { nombre: string; tiempo: string; tipo: string; multMax: number; img: string; fixed: number[]; ings: BancoIng[]; region?: string }\n"
 ts += "export const BANCO: BancoDish[] = " + json.dumps(banco, ensure_ascii=False) + ";\n"
 # Recetas de las sub-recetas (guacamole, salsas, aderezos) → la app las MUESTRA al abrir
 # el platillo. `rinde` = gramos que rinde la receta completa.

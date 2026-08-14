@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dishIsGloballyAvailable, renameForCountry, shouldFilterAvailability, regionalizeStaticPlan } from '../regionFood';
+import { dishIsGloballyAvailable, renameForCountry, shouldFilterAvailability, regionalizeStaticPlan, dishMatchesRegion, dishAllowedInRegion } from '../regionFood';
 import { BANCO } from '../banco';
 
 describe('regionFood — localización de comida por país', () => {
@@ -36,6 +36,46 @@ describe('regionFood — localización de comida por país', () => {
       expect(shouldFilterAvailability('LATAM')).toBe(false);
       expect(shouldFilterAvailability('EUROPE')).toBe(true);
       expect(shouldFilterAvailability('REST')).toBe(true);
+    });
+  });
+
+  describe('dishMatchesRegion (segmentación por marca region:ES)', () => {
+    const es = { region: 'ES' };
+    const global = {}; // banco normal, sin marca
+
+    it('platillo sin marca: visible para TODOS (cualquier región o ninguna)', () => {
+      for (const r of ['LATAM', 'EUROPE', 'REST'] as const) expect(dishMatchesRegion(global, r)).toBe(true);
+      expect(dishMatchesRegion(global, undefined)).toBe(true);
+    });
+    it('platillo region:ES: SOLO visible en EUROPE (España cae en el bucket EUROPE)', () => {
+      expect(dishMatchesRegion(es, 'EUROPE')).toBe(true);
+      expect(dishMatchesRegion(es, 'LATAM')).toBe(false);
+      expect(dishMatchesRegion(es, 'REST')).toBe(false);
+      expect(dishMatchesRegion(es, undefined)).toBe(false); // opt-in: sin región no se muestra
+    });
+    it('marca en minúscula/espacios también matchea', () => {
+      expect(dishMatchesRegion({ region: ' es ' }, 'EUROPE')).toBe(true);
+    });
+  });
+
+  describe('dishAllowedInRegion (predicado único: marca + disponibilidad LATAM)', () => {
+    it('los 20 platillos de España solo aparecen en EUROPE', () => {
+      const esDishes = BANCO.filter((d) => d.region === 'ES');
+      expect(esDishes.length).toBe(20);
+      for (const d of esDishes) {
+        expect(dishAllowedInRegion(d, 'EUROPE'), `${d.nombre} debe verse en EUROPE`).toBe(true);
+        expect(dishAllowedInRegion(d, 'LATAM'), `${d.nombre} NO en LATAM`).toBe(false);
+        expect(dishAllowedInRegion(d, 'REST'), `${d.nombre} NO en REST`).toBe(false);
+      }
+    });
+    it('un platillo global sigue combinando el filtro DURO de LATAM', () => {
+      const chilaquiles = BANCO.find((d) => d.nombre === 'Chilaquiles Verdes');
+      if (chilaquiles) {
+        expect(dishAllowedInRegion(chilaquiles, 'LATAM')).toBe(true);   // en LATAM sí
+        expect(dishAllowedInRegion(chilaquiles, 'EUROPE')).toBe(false); // fuera no (inconseguible)
+      }
+      const global = BANCO.find((d) => d.nombre === 'Overnight Oats');
+      if (global) for (const r of ['LATAM', 'EUROPE', 'REST'] as const) expect(dishAllowedInRegion(global, r)).toBe(true);
     });
   });
 

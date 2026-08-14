@@ -57,6 +57,46 @@ export function shouldFilterAvailability(region: Region): boolean {
   return region !== 'LATAM';
 }
 
+// ── Segmentación por región (platillos exclusivos de un mercado) ──
+// Distinto del filtro DURO de arriba: eso QUITA lo inconseguible de un banco global.
+// Esto es lo INVERSO — platillos marcados para MOSTRARSE SOLO en un mercado (ej. los
+// 20 platillos de España). La marca vive en la columna `nota` del CSV como "region:ES"
+// y gen_banco.py la copia al campo `region` del platillo. Un platillo SIN marca = banco
+// normal, visible para todos.
+//
+// Se usa EL MISMO criterio de bucket que los precios (LATAM / EUROPE / REST): España
+// cae en EUROPE, así que un platillo "region:ES" se muestra a los usuarios de EUROPE.
+const REGION_MARKER_BUCKET: Record<string, Region> = { ES: 'EUROPE' };
+
+interface RegionTagged { region?: string }
+
+/**
+ * ¿Es visible este platillo para la región del usuario según su marca?
+ *  • Sin marca            → true (banco normal, para todos).
+ *  • Marca reconocida     → solo si el bucket coincide (region:ES ⇒ EUROPE).
+ *  • Marca desconocida    → true (ante la duda, disponible: la regla de oro del archivo).
+ * Nota: un platillo marcado se OCULTA si no sabemos la región (region undefined),
+ * porque es contenido de opt-in para un mercado concreto.
+ */
+export function dishMatchesRegion(dish: RegionTagged, region?: Region): boolean {
+  const mark = (dish.region || '').trim().toUpperCase();
+  if (!mark) return true;
+  const bucket = REGION_MARKER_BUCKET[mark];
+  if (!bucket) return true;
+  return region === bucket;
+}
+
+/**
+ * Predicado ÚNICO de visibilidad de un platillo para una región: combina la
+ * segmentación por marca (arriba) con el filtro DURO de disponibilidad LATAM.
+ * El motor de plan usa esto en vez de llamar a los dos por separado.
+ */
+export function dishAllowedInRegion(dish: DishLike & RegionTagged, region?: Region): boolean {
+  if (!dishMatchesRegion(dish, region)) return false;
+  if (region && shouldFilterAvailability(region) && !dishIsGloballyAvailable(dish)) return false;
+  return true;
+}
+
 // ── Plan estático por defecto (planA–D): regionalizar ──
 // El plan estático es contenido curado con la SEMANA 1 mexicana (chilaquiles, alambre,
 // ceviche de panela…). Un usuario fuera de LATAM lo veía el Día 1 antes de generar nada.
