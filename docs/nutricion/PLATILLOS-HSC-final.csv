@@ -1527,3 +1527,335 @@ Pan con Tomate,Snack,suelto,ligero,salado,,Aceite de oliva,Aceite de oliva,6,,fi
 Pan con Tomate,Snack,suelto,ligero,salado,,Sal,Pizca de sal,1,,condimento,plato,region:ES,pan-con-tomate.webp
 Membrillo con Queso Fresco,Snack,suelto,ligero,dulce,,Queso fresco de cabra,Queso fresco,60,150,principal,plato,region:ES,membrillo-con-queso-fresco.webp
 Membrillo con Queso Fresco,Snack,suelto,ligero,dulce,,Membrillo,Ate de membrillo,30,60,principal,plato,region:ES,membrillo-con-queso-fresco.webp
+"Bowl de Yogur, Granola, Crema de Cacahuate y Plátano",Snack,suelto,denso,dulce,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,200,400,principal,plato,snack_denso,bowl-denso-de-yogur-granola-cacahuate-y-platano.webp
+"Bowl de Yogur, Granola, Crema de Cacahuate y Plátano",Snack,suelto,denso,dulce,,Granola estándar,Granola,50,100,principal,plato,snack_denso,bowl-denso-de-yogur-granola-cacahuate-y-platano.webp
+"Bowl de Yogur, Granola, Crema de Cacahuate y Plátano",Snack,suelto,denso,dulce,,Mantequilla de cacahuate,Crema de cacahuate,32,48,fijo,plato,snack_denso,bowl-denso-de-yogur-granola-cacahuate-y-platano.webp
+"Bowl de Yogur, Granola, Crema de Cacahuate y Plátano",Snack,suelto,denso,dulce,,Plátano,Plátano en rodajas,100,,principal,plato,snack_denso,bowl-denso-de-yogur-granola-cacahuate-y-platano.webp
+"Bowl de Yogur, Granola, Crema de Cacahuate y Plátano",Snack,suelto,denso,dulce,,Nuez entera,Nueces,20,45,fijo,plato,snack_denso,bowl-denso-de-yogur-granola-cacahuate-y-platano.webp
+"Bowl de Yogur, Granola, Crema de Cacahuate y Plátano",Snack,suelto,denso,dulce,,Miel,Miel,12,,fijo,plato,snack_denso,bowl-denso-de-yogur-granola-cacahuate-y-platano.webp
+"Bowl de Requesón, Avena, Nuez y Dátil",Snack,suelto,denso,dulce,,Requesón promedio,Requesón,200,300,principal,plato,snack_denso,bowl-denso-de-requeson-avena-nuez-y-datil.webp
+"Bowl de Requesón, Avena, Nuez y Dátil",Snack,suelto,denso,dulce,,Avena,Avena,40,80,principal,plato,snack_denso,bowl-denso-de-requeson-avena-nuez-y-datil.webp
+"Bowl de Requesón, Avena, Nuez y Dátil",Snack,suelto,denso,dulce,,Nuez entera,Nueces,25,45,fijo,plato,snack_denso,bowl-denso-de-requeson-avena-nuez-y-datil.webp
+"Bowl de Requesón, Avena, Nuez y Dátil",Snack,suelto,denso,dulce,,Dátil seco,Dátiles,34,60,principal,plato,snack_denso,bowl-denso-de-requeson-avena-nuez-y-datil.webp
+"Bowl de Requesón, Avena, Nuez y Dátil",Snack,suelto,denso,dulce,,Crema de almendras,Crema de almendra,24,45,fijo,plato,snack_denso,bowl-denso-de-requeson-avena-nuez-y-datil.webp
+"Bowl de Requesón, Avena, Nuez y Dátil",Snack,suelto,denso,dulce,,Miel,Miel,10,,fijo,plato,snack_denso,bowl-denso-de-requeson-avena-nuez-y-datil.webp
+"Bowl de Requesón, Avena, Nuez y Dátil",Snack,suelto,denso,dulce,,Canela,Canela,1,,condimento,plato,snack_denso,bowl-denso-de-requeson-avena-nuez-y-datil.webp
+"Bowl de Cottage, Piña, Granola y Almendra",Snack,suelto,denso,dulce,,Queso Cottage,Queso cottage,200,300,principal,plato,snack_denso,bowl-denso-de-cottage-pina-granola-y-almendra.webp
+"Bowl de Cottage, Piña, Granola y Almendra",Snack,suelto,denso,dulce,,Piña,Piña en cubos,120,,principal,plato,snack_denso,bowl-denso-de-cottage-pina-granola-y-almendra.webp
+"Bowl de Cottage, Piña, Granola y Almendra",Snack,suelto,denso,dulce,,Granola con almendras,Granola,45,100,principal,plato,snack_denso,bowl-denso-de-cottage-pina-granola-y-almendra.webp
+"Bowl de Cottage, Piña, Granola y Almendra",Snack,suelto,denso,dulce,,Almendra,Almendras,25,45,fijo,plato,snack_denso,bowl-denso-de-cottage-pina-granola-y-almendra.webp
+"Bowl de Cottage, Piña, Granola y Almendra",Snack,suelto,denso,dulce,,Miel,Miel,10,,fijo,plato,snack_denso,bowl-denso-de-cottage-pina-granola-y-almendra.webp
+"Bowl de Cottage, Piña, Granola y Almendra",Snack,suelto,denso,dulce,,Coco seco,Coco en hojuelas,10,,fijo,plato,snack_denso,bowl-denso-de-cottage-pina-granola-y-almendra.webp
+"Bowl de Yogur, Frutos Secos, Cacao y Coco",Snack,suelto,denso,dulce,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,200,400,principal,plato,snack_denso,bowl-denso-de-yogur-frutos-secos-cacao-y-coco.webp
+"Bowl de Yogur, Frutos Secos, Cacao y Coco",Snack,suelto,denso,dulce,,Nuez entera,Nueces,20,45,fijo,plato,snack_denso,bowl-denso-de-yogur-frutos-secos-cacao-y-coco.webp
+"Bowl de Yogur, Frutos Secos, Cacao y Coco",Snack,suelto,denso,dulce,,Almendra,Almendras,20,45,fijo,plato,snack_denso,bowl-denso-de-yogur-frutos-secos-cacao-y-coco.webp
+"Bowl de Yogur, Frutos Secos, Cacao y Coco",Snack,suelto,denso,dulce,,Cacao nibs,Cacao nibs,12,,fijo,plato,snack_denso,bowl-denso-de-yogur-frutos-secos-cacao-y-coco.webp
+"Bowl de Yogur, Frutos Secos, Cacao y Coco",Snack,suelto,denso,dulce,,Coco seco,Coco en hojuelas,15,,fijo,plato,snack_denso,bowl-denso-de-yogur-frutos-secos-cacao-y-coco.webp
+"Bowl de Yogur, Frutos Secos, Cacao y Coco",Snack,suelto,denso,dulce,,Granola con almendras,Granola,40,100,principal,plato,snack_denso,bowl-denso-de-yogur-frutos-secos-cacao-y-coco.webp
+"Bowl de Yogur, Frutos Secos, Cacao y Coco",Snack,suelto,denso,dulce,,Chocolate amargo,Chocolate amargo,14,30,fijo,plato,snack_denso,bowl-denso-de-yogur-frutos-secos-cacao-y-coco.webp
+"Bowl de Yogur, Frutos Secos, Cacao y Coco",Snack,suelto,denso,dulce,,Miel,Miel,10,,fijo,plato,snack_denso,bowl-denso-de-yogur-frutos-secos-cacao-y-coco.webp
+"Bowl de Yogur, Plátano, Cacao y Cacahuate",Snack,suelto,denso,dulce,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,200,400,principal,plato,snack_denso,bowl-denso-de-yogur-platano-cacao-y-cacahuate.webp
+"Bowl de Yogur, Plátano, Cacao y Cacahuate",Snack,suelto,denso,dulce,,Plátano,Plátano en rodajas,100,,principal,plato,snack_denso,bowl-denso-de-yogur-platano-cacao-y-cacahuate.webp
+"Bowl de Yogur, Plátano, Cacao y Cacahuate",Snack,suelto,denso,dulce,,Avena,Avena,40,80,principal,plato,snack_denso,bowl-denso-de-yogur-platano-cacao-y-cacahuate.webp
+"Bowl de Yogur, Plátano, Cacao y Cacahuate",Snack,suelto,denso,dulce,,Mantequilla de cacahuate,Crema de cacahuate,32,48,fijo,plato,snack_denso,bowl-denso-de-yogur-platano-cacao-y-cacahuate.webp
+"Bowl de Yogur, Plátano, Cacao y Cacahuate",Snack,suelto,denso,dulce,,Cacao en polvo sin azúcar,Cacao en polvo,8,,fijo,plato,snack_denso,bowl-denso-de-yogur-platano-cacao-y-cacahuate.webp
+"Bowl de Yogur, Plátano, Cacao y Cacahuate",Snack,suelto,denso,dulce,,Cacao nibs,Cacao nibs,10,,fijo,plato,snack_denso,bowl-denso-de-yogur-platano-cacao-y-cacahuate.webp
+"Bowl de Yogur, Plátano, Cacao y Cacahuate",Snack,suelto,denso,dulce,,Miel,Miel,10,,fijo,plato,snack_denso,bowl-denso-de-yogur-platano-cacao-y-cacahuate.webp
+"Bowl de Yogur Griego, Dátil, Almendra y Cacao",Snack,suelto,denso,dulce,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,220,400,principal,plato,snack_denso,bowl-denso-de-yogur-datil-almendra-y-cacao.webp
+"Bowl de Yogur Griego, Dátil, Almendra y Cacao",Snack,suelto,denso,dulce,,Dátil seco,Dátiles,40,60,principal,plato,snack_denso,bowl-denso-de-yogur-datil-almendra-y-cacao.webp
+"Bowl de Yogur Griego, Dátil, Almendra y Cacao",Snack,suelto,denso,dulce,,Almendra,Almendras,25,45,fijo,plato,snack_denso,bowl-denso-de-yogur-datil-almendra-y-cacao.webp
+"Bowl de Yogur Griego, Dátil, Almendra y Cacao",Snack,suelto,denso,dulce,,Cacao en polvo sin azúcar,Cacao en polvo,8,,fijo,plato,snack_denso,bowl-denso-de-yogur-datil-almendra-y-cacao.webp
+"Bowl de Yogur Griego, Dátil, Almendra y Cacao",Snack,suelto,denso,dulce,,Cacao nibs,Cacao nibs,10,,fijo,plato,snack_denso,bowl-denso-de-yogur-datil-almendra-y-cacao.webp
+"Bowl de Yogur Griego, Dátil, Almendra y Cacao",Snack,suelto,denso,dulce,,Avena,Avena,30,80,principal,plato,snack_denso,bowl-denso-de-yogur-datil-almendra-y-cacao.webp
+"Bowl de Requesón, Higo, Nuez y Miel",Snack,suelto,denso,dulce,,Requesón promedio,Requesón,200,300,principal,plato,snack_denso,bowl-denso-de-requeson-higo-nuez-y-miel.webp
+"Bowl de Requesón, Higo, Nuez y Miel",Snack,suelto,denso,dulce,,Higo,Higos frescos,120,,principal,plato,snack_denso,bowl-denso-de-requeson-higo-nuez-y-miel.webp
+"Bowl de Requesón, Higo, Nuez y Miel",Snack,suelto,denso,dulce,,Nuez entera,Nueces,30,45,fijo,plato,snack_denso,bowl-denso-de-requeson-higo-nuez-y-miel.webp
+"Bowl de Requesón, Higo, Nuez y Miel",Snack,suelto,denso,dulce,,Granola con almendras,Granola,40,100,principal,plato,snack_denso,bowl-denso-de-requeson-higo-nuez-y-miel.webp
+"Bowl de Requesón, Higo, Nuez y Miel",Snack,suelto,denso,dulce,,Miel,Miel,12,,fijo,plato,snack_denso,bowl-denso-de-requeson-higo-nuez-y-miel.webp
+"Bowl de Cottage, Frutos Rojos, Avena y Crema de Cacahuate",Snack,suelto,denso,dulce,,Queso Cottage,Queso cottage,200,300,principal,plato,snack_denso,bowl-denso-de-cottage-frutos-rojos-y-cacahuate.webp
+"Bowl de Cottage, Frutos Rojos, Avena y Crema de Cacahuate",Snack,suelto,denso,dulce,,Fresa,Fresas,80,,principal,plato,snack_denso,bowl-denso-de-cottage-frutos-rojos-y-cacahuate.webp
+"Bowl de Cottage, Frutos Rojos, Avena y Crema de Cacahuate",Snack,suelto,denso,dulce,,Zarzamora,Zarzamoras,60,,principal,plato,snack_denso,bowl-denso-de-cottage-frutos-rojos-y-cacahuate.webp
+"Bowl de Cottage, Frutos Rojos, Avena y Crema de Cacahuate",Snack,suelto,denso,dulce,,Avena,Avena,40,80,principal,plato,snack_denso,bowl-denso-de-cottage-frutos-rojos-y-cacahuate.webp
+"Bowl de Cottage, Frutos Rojos, Avena y Crema de Cacahuate",Snack,suelto,denso,dulce,,Mantequilla de cacahuate,Crema de cacahuate,32,48,fijo,plato,snack_denso,bowl-denso-de-cottage-frutos-rojos-y-cacahuate.webp
+"Bowl de Cottage, Frutos Rojos, Avena y Crema de Cacahuate",Snack,suelto,denso,dulce,,Almendra,Almendras,15,45,fijo,plato,snack_denso,bowl-denso-de-cottage-frutos-rojos-y-cacahuate.webp
+"Bowl de Cottage, Frutos Rojos, Avena y Crema de Cacahuate",Snack,suelto,denso,dulce,,Miel,Miel,10,,fijo,plato,snack_denso,bowl-denso-de-cottage-frutos-rojos-y-cacahuate.webp
+"Toast de Requesón, Plátano, Crema de Almendra y Granola",Snack,suelto,denso,dulce,,Pan integral,Pan tostado,60,81,principal,plato,snack_denso,toast-denso-de-requeson-platano-y-almendra.webp
+"Toast de Requesón, Plátano, Crema de Almendra y Granola",Snack,suelto,denso,dulce,,Requesón promedio,Requesón,120,200,principal,plato,snack_denso,toast-denso-de-requeson-platano-y-almendra.webp
+"Toast de Requesón, Plátano, Crema de Almendra y Granola",Snack,suelto,denso,dulce,,Plátano,Plátano en rodajas,100,,principal,plato,snack_denso,toast-denso-de-requeson-platano-y-almendra.webp
+"Toast de Requesón, Plátano, Crema de Almendra y Granola",Snack,suelto,denso,dulce,,Crema de almendras,Crema de almendra,24,45,fijo,plato,snack_denso,toast-denso-de-requeson-platano-y-almendra.webp
+"Toast de Requesón, Plátano, Crema de Almendra y Granola",Snack,suelto,denso,dulce,,Granola con almendras,Granola,30,100,principal,plato,snack_denso,toast-denso-de-requeson-platano-y-almendra.webp
+"Toast de Requesón, Plátano, Crema de Almendra y Granola",Snack,suelto,denso,dulce,,Miel,Miel,10,,fijo,plato,snack_denso,toast-denso-de-requeson-platano-y-almendra.webp
+"Toast de Requesón, Plátano, Crema de Almendra y Granola",Snack,suelto,denso,dulce,,Canela,Canela,1,,condimento,plato,snack_denso,toast-denso-de-requeson-platano-y-almendra.webp
+"Toast de Huevo, Aguacate, Semillas y Aceite",Snack,suelto,denso,salado,,Pan integral,Pan tostado,60,81,principal,plato,snack_denso,toast-denso-de-huevo-aguacate-y-semillas.webp
+"Toast de Huevo, Aguacate, Semillas y Aceite",Snack,suelto,denso,salado,,Huevo entero fresco,Huevos,132,300,principal,plato,snack_denso,toast-denso-de-huevo-aguacate-y-semillas.webp
+"Toast de Huevo, Aguacate, Semillas y Aceite",Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,80,94,principal,plato,snack_denso,toast-denso-de-huevo-aguacate-y-semillas.webp
+"Toast de Huevo, Aguacate, Semillas y Aceite",Snack,suelto,denso,salado,,Semilla de girasol,Semillas de girasol,15,,fijo,plato,snack_denso,toast-denso-de-huevo-aguacate-y-semillas.webp
+"Toast de Huevo, Aguacate, Semillas y Aceite",Snack,suelto,denso,salado,,Aceite de oliva,Aceite de oliva,8,,fijo,plato,snack_denso,toast-denso-de-huevo-aguacate-y-semillas.webp
+"Toast de Huevo, Aguacate, Semillas y Aceite",Snack,suelto,denso,salado,,Limón,Limón,5,,condimento,plato,snack_denso,toast-denso-de-huevo-aguacate-y-semillas.webp
+"Toast de Huevo, Aguacate, Semillas y Aceite",Snack,suelto,denso,salado,,Sal,Pizca de sal,1,,condimento,plato,snack_denso,toast-denso-de-huevo-aguacate-y-semillas.webp
+"Toast de Huevo, Aguacate, Semillas y Aceite",Snack,suelto,denso,salado,,Pimienta,Pimienta,1,,condimento,plato,snack_denso,toast-denso-de-huevo-aguacate-y-semillas.webp
+"Toast de Ricotta, Fresa, Nuez y Miel",Snack,suelto,denso,dulce,,Pan integral,Pan tostado,60,81,principal,plato,snack_denso,toast-denso-de-ricotta-fresa-nuez-y-miel.webp
+"Toast de Ricotta, Fresa, Nuez y Miel",Snack,suelto,denso,dulce,,Queso Ricotta semidescremada,Ricotta,120,200,principal,plato,snack_denso,toast-denso-de-ricotta-fresa-nuez-y-miel.webp
+"Toast de Ricotta, Fresa, Nuez y Miel",Snack,suelto,denso,dulce,,Fresa,Fresas,100,,principal,plato,snack_denso,toast-denso-de-ricotta-fresa-nuez-y-miel.webp
+"Toast de Ricotta, Fresa, Nuez y Miel",Snack,suelto,denso,dulce,,Nuez entera,Nueces,25,45,fijo,plato,snack_denso,toast-denso-de-ricotta-fresa-nuez-y-miel.webp
+"Toast de Ricotta, Fresa, Nuez y Miel",Snack,suelto,denso,dulce,,Crema de almendras,Crema de almendra,20,45,fijo,plato,snack_denso,toast-denso-de-ricotta-fresa-nuez-y-miel.webp
+"Toast de Ricotta, Fresa, Nuez y Miel",Snack,suelto,denso,dulce,,Miel,Miel,12,,fijo,plato,snack_denso,toast-denso-de-ricotta-fresa-nuez-y-miel.webp
+"Toast de Salmón Ahumado, Queso Crema y Aguacate",Snack,suelto,denso,salado,,Pan integral,Pan tostado,60,81,principal,plato,snack_denso,toast-denso-de-salmon-ahumado-y-queso-crema.webp
+"Toast de Salmón Ahumado, Queso Crema y Aguacate",Snack,suelto,denso,salado,,Salmón ahumado,Salmón ahumado,70,120,principal,plato,snack_denso,toast-denso-de-salmon-ahumado-y-queso-crema.webp
+"Toast de Salmón Ahumado, Queso Crema y Aguacate",Snack,suelto,denso,salado,,Queso crema light,Queso crema light,40,,fijo,plato,snack_denso,toast-denso-de-salmon-ahumado-y-queso-crema.webp
+"Toast de Salmón Ahumado, Queso Crema y Aguacate",Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,snack_denso,toast-denso-de-salmon-ahumado-y-queso-crema.webp
+"Toast de Salmón Ahumado, Queso Crema y Aguacate",Snack,suelto,denso,salado,,Alcaparras,Alcaparras,5,,condimento,plato,snack_denso,toast-denso-de-salmon-ahumado-y-queso-crema.webp
+"Toast de Salmón Ahumado, Queso Crema y Aguacate",Snack,suelto,denso,salado,,Eneldo,Eneldo,1,,condimento,plato,snack_denso,toast-denso-de-salmon-ahumado-y-queso-crema.webp
+"Toast de Salmón Ahumado, Queso Crema y Aguacate",Snack,suelto,denso,salado,,Limón,Limón,5,,condimento,plato,snack_denso,toast-denso-de-salmon-ahumado-y-queso-crema.webp
+"Toast de Salmón Ahumado, Queso Crema y Aguacate",Snack,suelto,denso,salado,,Pimienta,Pimienta,1,,condimento,plato,snack_denso,toast-denso-de-salmon-ahumado-y-queso-crema.webp
+"Toast de Requesón, Cacao, Plátano y Cacahuate",Snack,suelto,denso,dulce,,Pan integral,Pan tostado,60,81,principal,plato,snack_denso,toast-denso-de-requeson-cacao-platano-y-cacahuate.webp
+"Toast de Requesón, Cacao, Plátano y Cacahuate",Snack,suelto,denso,dulce,,Requesón promedio,Requesón,120,200,principal,plato,snack_denso,toast-denso-de-requeson-cacao-platano-y-cacahuate.webp
+"Toast de Requesón, Cacao, Plátano y Cacahuate",Snack,suelto,denso,dulce,,Plátano,Plátano en rodajas,100,,principal,plato,snack_denso,toast-denso-de-requeson-cacao-platano-y-cacahuate.webp
+"Toast de Requesón, Cacao, Plátano y Cacahuate",Snack,suelto,denso,dulce,,Mantequilla de cacahuate,Crema de cacahuate,32,48,fijo,plato,snack_denso,toast-denso-de-requeson-cacao-platano-y-cacahuate.webp
+"Toast de Requesón, Cacao, Plátano y Cacahuate",Snack,suelto,denso,dulce,,Cacao en polvo sin azúcar,Cacao en polvo,6,,fijo,plato,snack_denso,toast-denso-de-requeson-cacao-platano-y-cacahuate.webp
+"Toast de Requesón, Cacao, Plátano y Cacahuate",Snack,suelto,denso,dulce,,Cacao nibs,Cacao nibs,10,,fijo,plato,snack_denso,toast-denso-de-requeson-cacao-platano-y-cacahuate.webp
+"Toast de Requesón, Cacao, Plátano y Cacahuate",Snack,suelto,denso,dulce,,Miel,Miel,10,,fijo,plato,snack_denso,toast-denso-de-requeson-cacao-platano-y-cacahuate.webp
+"Toast de Huevo, Queso y Aguacate",Snack,suelto,denso,salado,,Pan integral,Pan tostado (2 rebanadas),80,120,principal,plato,snack_denso,toast-denso-de-huevo-queso-y-aguacate.webp
+"Toast de Huevo, Queso y Aguacate",Snack,suelto,denso,salado,,Huevo entero fresco,Huevos,132,300,principal,plato,snack_denso,toast-denso-de-huevo-queso-y-aguacate.webp
+"Toast de Huevo, Queso y Aguacate",Snack,suelto,denso,salado,,Queso Mozzarella semidescremado,Queso mozzarella,45,120,principal,plato,snack_denso,toast-denso-de-huevo-queso-y-aguacate.webp
+"Toast de Huevo, Queso y Aguacate",Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,snack_denso,toast-denso-de-huevo-queso-y-aguacate.webp
+"Toast de Huevo, Queso y Aguacate",Snack,suelto,denso,salado,,Aceite de oliva,Aceite de oliva,6,,fijo,plato,snack_denso,toast-denso-de-huevo-queso-y-aguacate.webp
+"Toast de Huevo, Queso y Aguacate",Snack,suelto,denso,salado,,Sal,Pizca de sal,1,,condimento,plato,snack_denso,toast-denso-de-huevo-queso-y-aguacate.webp
+"Toast de Huevo, Queso y Aguacate",Snack,suelto,denso,salado,,Pimienta,Pimienta,1,,condimento,plato,snack_denso,toast-denso-de-huevo-queso-y-aguacate.webp
+"Toast de Camote, Requesón, Crema de Cacahuate y Nuez",Snack,suelto,denso,dulce,,Camote al horno,Camote en rodajas,150,300,principal,plato,snack_denso,toast-denso-de-camote-requeson-y-cacahuate.webp
+"Toast de Camote, Requesón, Crema de Cacahuate y Nuez",Snack,suelto,denso,dulce,,Requesón promedio,Requesón,120,200,principal,plato,snack_denso,toast-denso-de-camote-requeson-y-cacahuate.webp
+"Toast de Camote, Requesón, Crema de Cacahuate y Nuez",Snack,suelto,denso,dulce,,Mantequilla de cacahuate,Crema de cacahuate,32,48,fijo,plato,snack_denso,toast-denso-de-camote-requeson-y-cacahuate.webp
+"Toast de Camote, Requesón, Crema de Cacahuate y Nuez",Snack,suelto,denso,dulce,,Plátano,Plátano en rodajas,80,,principal,plato,snack_denso,toast-denso-de-camote-requeson-y-cacahuate.webp
+"Toast de Camote, Requesón, Crema de Cacahuate y Nuez",Snack,suelto,denso,dulce,,Nuez entera,Nueces,20,45,fijo,plato,snack_denso,toast-denso-de-camote-requeson-y-cacahuate.webp
+"Toast de Camote, Requesón, Crema de Cacahuate y Nuez",Snack,suelto,denso,dulce,,Miel,Miel,10,,fijo,plato,snack_denso,toast-denso-de-camote-requeson-y-cacahuate.webp
+"Toast de Camote, Requesón, Crema de Cacahuate y Nuez",Snack,suelto,denso,dulce,,Canela,Canela,1,,condimento,plato,snack_denso,toast-denso-de-camote-requeson-y-cacahuate.webp
+"Toast de Atún, Aguacate, Huevo y Aceite",Snack,suelto,denso,salado,,Pan integral,Pan tostado,60,81,principal,plato,snack_denso,toast-denso-de-atun-aguacate-y-huevo.webp
+"Toast de Atún, Aguacate, Huevo y Aceite",Snack,suelto,denso,salado,,Atún en agua drenado,Atún,100,200,principal,plato,snack_denso,toast-denso-de-atun-aguacate-y-huevo.webp
+"Toast de Atún, Aguacate, Huevo y Aceite",Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,snack_denso,toast-denso-de-atun-aguacate-y-huevo.webp
+"Toast de Atún, Aguacate, Huevo y Aceite",Snack,suelto,denso,salado,,Huevo entero fresco,Huevo cocido,88,300,principal,plato,snack_denso,toast-denso-de-atun-aguacate-y-huevo.webp
+"Toast de Atún, Aguacate, Huevo y Aceite",Snack,suelto,denso,salado,,Mayonesa light,Mayonesa light,12,,fijo,plato,snack_denso,toast-denso-de-atun-aguacate-y-huevo.webp
+"Toast de Atún, Aguacate, Huevo y Aceite",Snack,suelto,denso,salado,,Aceite de oliva,Aceite de oliva,6,,fijo,plato,snack_denso,toast-denso-de-atun-aguacate-y-huevo.webp
+"Toast de Atún, Aguacate, Huevo y Aceite",Snack,suelto,denso,salado,,Limón,Limón,5,,condimento,plato,snack_denso,toast-denso-de-atun-aguacate-y-huevo.webp
+"Toast de Atún, Aguacate, Huevo y Aceite",Snack,suelto,denso,salado,,Pimienta,Pimienta,1,,condimento,plato,snack_denso,toast-denso-de-atun-aguacate-y-huevo.webp
+"Toast de Ricotta, Higo, Nuez y Miel",Snack,suelto,denso,dulce,,Pan integral,Pan tostado,60,81,principal,plato,snack_denso,toast-denso-de-ricotta-higo-nuez-y-miel.webp
+"Toast de Ricotta, Higo, Nuez y Miel",Snack,suelto,denso,dulce,,Queso Ricotta semidescremada,Ricotta,120,200,principal,plato,snack_denso,toast-denso-de-ricotta-higo-nuez-y-miel.webp
+"Toast de Ricotta, Higo, Nuez y Miel",Snack,suelto,denso,dulce,,Higo,Higos frescos,100,,principal,plato,snack_denso,toast-denso-de-ricotta-higo-nuez-y-miel.webp
+"Toast de Ricotta, Higo, Nuez y Miel",Snack,suelto,denso,dulce,,Nuez entera,Nueces,25,45,fijo,plato,snack_denso,toast-denso-de-ricotta-higo-nuez-y-miel.webp
+"Toast de Ricotta, Higo, Nuez y Miel",Snack,suelto,denso,dulce,,Crema de almendras,Crema de almendra,18,45,fijo,plato,snack_denso,toast-denso-de-ricotta-higo-nuez-y-miel.webp
+"Toast de Ricotta, Higo, Nuez y Miel",Snack,suelto,denso,dulce,,Miel,Miel,12,,fijo,plato,snack_denso,toast-denso-de-ricotta-higo-nuez-y-miel.webp
+"Toast de Cottage, Durazno, Almendra y Miel",Snack,suelto,denso,dulce,,Pan integral,Pan tostado,60,81,principal,plato,snack_denso,toast-denso-de-cottage-durazno-y-almendra.webp
+"Toast de Cottage, Durazno, Almendra y Miel",Snack,suelto,denso,dulce,,Queso Cottage,Queso cottage,150,300,principal,plato,snack_denso,toast-denso-de-cottage-durazno-y-almendra.webp
+"Toast de Cottage, Durazno, Almendra y Miel",Snack,suelto,denso,dulce,,Durazno amarillo,Durazno en gajos,120,,principal,plato,snack_denso,toast-denso-de-cottage-durazno-y-almendra.webp
+"Toast de Cottage, Durazno, Almendra y Miel",Snack,suelto,denso,dulce,,Almendra,Almendras,25,45,fijo,plato,snack_denso,toast-denso-de-cottage-durazno-y-almendra.webp
+"Toast de Cottage, Durazno, Almendra y Miel",Snack,suelto,denso,dulce,,Crema de almendras,Crema de almendra,18,45,fijo,plato,snack_denso,toast-denso-de-cottage-durazno-y-almendra.webp
+"Toast de Cottage, Durazno, Almendra y Miel",Snack,suelto,denso,dulce,,Miel,Miel,12,,fijo,plato,snack_denso,toast-denso-de-cottage-durazno-y-almendra.webp
+"Toast de Cottage, Durazno, Almendra y Miel",Snack,suelto,denso,dulce,,Canela,Canela,1,,condimento,plato,snack_denso,toast-denso-de-cottage-durazno-y-almendra.webp
+"Batido de Leche, Avena, Plátano y Cacahuate",Snack,bloque,denso,dulce,1.5,Leche entera,Leche,250,400,principal,plato,snack_denso,batido-denso-de-avena-platano-y-cacahuate.webp
+"Batido de Leche, Avena, Plátano y Cacahuate",Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,120,300,principal,plato,snack_denso,batido-denso-de-avena-platano-y-cacahuate.webp
+"Batido de Leche, Avena, Plátano y Cacahuate",Snack,bloque,denso,dulce,1.5,Avena,Avena,45,100,principal,plato,snack_denso,batido-denso-de-avena-platano-y-cacahuate.webp
+"Batido de Leche, Avena, Plátano y Cacahuate",Snack,bloque,denso,dulce,1.5,Plátano,Plátano,120,,principal,plato,snack_denso,batido-denso-de-avena-platano-y-cacahuate.webp
+"Batido de Leche, Avena, Plátano y Cacahuate",Snack,bloque,denso,dulce,1.5,Mantequilla de cacahuate,Crema de cacahuate,32,48,fijo,plato,snack_denso,batido-denso-de-avena-platano-y-cacahuate.webp
+"Batido de Leche, Avena, Plátano y Cacahuate",Snack,bloque,denso,dulce,1.5,Miel,Miel,10,,fijo,plato,snack_denso,batido-denso-de-avena-platano-y-cacahuate.webp
+"Batido de Leche, Avena, Plátano y Cacahuate",Snack,bloque,denso,dulce,1.5,Canela,Canela,1,,condimento,plato,snack_denso,batido-denso-de-avena-platano-y-cacahuate.webp
+"Batido de Cacao, Plátano y Almendra",Snack,bloque,denso,dulce,1.5,Leche entera,Leche,250,400,principal,plato,snack_denso,batido-denso-de-cacao-platano-y-almendra.webp
+"Batido de Cacao, Plátano y Almendra",Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,120,300,principal,plato,snack_denso,batido-denso-de-cacao-platano-y-almendra.webp
+"Batido de Cacao, Plátano y Almendra",Snack,bloque,denso,dulce,1.5,Plátano,Plátano,120,,principal,plato,snack_denso,batido-denso-de-cacao-platano-y-almendra.webp
+"Batido de Cacao, Plátano y Almendra",Snack,bloque,denso,dulce,1.5,Avena,Avena,40,100,principal,plato,snack_denso,batido-denso-de-cacao-platano-y-almendra.webp
+"Batido de Cacao, Plátano y Almendra",Snack,bloque,denso,dulce,1.5,Crema de almendras,Crema de almendra,24,45,fijo,plato,snack_denso,batido-denso-de-cacao-platano-y-almendra.webp
+"Batido de Cacao, Plátano y Almendra",Snack,bloque,denso,dulce,1.5,Cacao en polvo sin azúcar,Cacao en polvo,10,,fijo,plato,snack_denso,batido-denso-de-cacao-platano-y-almendra.webp
+"Batido de Cacao, Plátano y Almendra",Snack,bloque,denso,dulce,1.5,Miel,Miel,10,,fijo,plato,snack_denso,batido-denso-de-cacao-platano-y-almendra.webp
+"Batido de Fresa, Avena y Almendra",Snack,bloque,denso,dulce,1.5,Leche entera,Leche,220,400,principal,plato,snack_denso,batido-denso-de-fresa-avena-y-almendra.webp
+"Batido de Fresa, Avena y Almendra",Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,150,300,principal,plato,snack_denso,batido-denso-de-fresa-avena-y-almendra.webp
+"Batido de Fresa, Avena y Almendra",Snack,bloque,denso,dulce,1.5,Fresa,Fresas,150,,principal,plato,snack_denso,batido-denso-de-fresa-avena-y-almendra.webp
+"Batido de Fresa, Avena y Almendra",Snack,bloque,denso,dulce,1.5,Avena,Avena,40,100,principal,plato,snack_denso,batido-denso-de-fresa-avena-y-almendra.webp
+"Batido de Fresa, Avena y Almendra",Snack,bloque,denso,dulce,1.5,Almendra,Almendras,20,45,fijo,plato,snack_denso,batido-denso-de-fresa-avena-y-almendra.webp
+"Batido de Fresa, Avena y Almendra",Snack,bloque,denso,dulce,1.5,Crema de almendras,Crema de almendra,18,45,fijo,plato,snack_denso,batido-denso-de-fresa-avena-y-almendra.webp
+"Batido de Fresa, Avena y Almendra",Snack,bloque,denso,dulce,1.5,Miel,Miel,10,,fijo,plato,snack_denso,batido-denso-de-fresa-avena-y-almendra.webp
+"Batido de Mango, Coco y Avena",Snack,bloque,denso,dulce,1.5,Leche entera,Leche,220,400,principal,plato,snack_denso,batido-denso-de-mango-coco-y-avena.webp
+"Batido de Mango, Coco y Avena",Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,150,300,principal,plato,snack_denso,batido-denso-de-mango-coco-y-avena.webp
+"Batido de Mango, Coco y Avena",Snack,bloque,denso,dulce,1.5,Mango,Mango,140,,principal,plato,snack_denso,batido-denso-de-mango-coco-y-avena.webp
+"Batido de Mango, Coco y Avena",Snack,bloque,denso,dulce,1.5,Avena,Avena,40,100,principal,plato,snack_denso,batido-denso-de-mango-coco-y-avena.webp
+"Batido de Mango, Coco y Avena",Snack,bloque,denso,dulce,1.5,Coco seco,Coco en hojuelas,15,,fijo,plato,snack_denso,batido-denso-de-mango-coco-y-avena.webp
+"Batido de Mango, Coco y Avena",Snack,bloque,denso,dulce,1.5,Crema de almendras,Crema de almendra,18,45,fijo,plato,snack_denso,batido-denso-de-mango-coco-y-avena.webp
+"Batido de Mango, Coco y Avena",Snack,bloque,denso,dulce,1.5,Miel,Miel,8,,fijo,plato,snack_denso,batido-denso-de-mango-coco-y-avena.webp
+"Batido de Dátil, Cacao y Cacahuate",Snack,bloque,denso,dulce,1.5,Leche entera,Leche,250,400,principal,plato,snack_denso,batido-denso-de-datil-cacao-y-cacahuate.webp
+"Batido de Dátil, Cacao y Cacahuate",Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,120,300,principal,plato,snack_denso,batido-denso-de-datil-cacao-y-cacahuate.webp
+"Batido de Dátil, Cacao y Cacahuate",Snack,bloque,denso,dulce,1.5,Dátil seco,Dátiles,40,60,principal,plato,snack_denso,batido-denso-de-datil-cacao-y-cacahuate.webp
+"Batido de Dátil, Cacao y Cacahuate",Snack,bloque,denso,dulce,1.5,Avena,Avena,40,100,principal,plato,snack_denso,batido-denso-de-datil-cacao-y-cacahuate.webp
+"Batido de Dátil, Cacao y Cacahuate",Snack,bloque,denso,dulce,1.5,Mantequilla de cacahuate,Crema de cacahuate,32,48,fijo,plato,snack_denso,batido-denso-de-datil-cacao-y-cacahuate.webp
+"Batido de Dátil, Cacao y Cacahuate",Snack,bloque,denso,dulce,1.5,Cacao en polvo sin azúcar,Cacao en polvo,10,,fijo,plato,snack_denso,batido-denso-de-datil-cacao-y-cacahuate.webp
+"Batido de Café, Plátano y Avena",Snack,bloque,denso,dulce,1.5,Leche entera,Leche,320,400,principal,plato,snack_denso,batido-denso-de-cafe-platano-y-avena.webp
+"Batido de Café, Plátano y Avena",Snack,bloque,denso,dulce,1.5,Plátano,Plátano,120,,principal,plato,snack_denso,batido-denso-de-cafe-platano-y-avena.webp
+"Batido de Café, Plátano y Avena",Snack,bloque,denso,dulce,1.5,Avena,Avena,45,100,principal,plato,snack_denso,batido-denso-de-cafe-platano-y-avena.webp
+"Batido de Café, Plátano y Avena",Snack,bloque,denso,dulce,1.5,Café soluble,Café,2,,condimento,plato,snack_denso,batido-denso-de-cafe-platano-y-avena.webp
+"Batido de Café, Plátano y Avena",Snack,bloque,denso,dulce,1.5,Crema de almendras,Crema de almendra,24,45,fijo,plato,snack_denso,batido-denso-de-cafe-platano-y-avena.webp
+"Batido de Café, Plátano y Avena",Snack,bloque,denso,dulce,1.5,Miel,Miel,12,,fijo,plato,snack_denso,batido-denso-de-cafe-platano-y-avena.webp
+"Overnight Oats de Cacahuate, Plátano y Chía",Snack,bloque,denso,dulce,1.5,Avena,Avena,50,100,principal,plato,snack_denso,overnight-oats-denso-de-cacahuate-y-platano.webp
+"Overnight Oats de Cacahuate, Plátano y Chía",Snack,bloque,denso,dulce,1.5,Leche entera,Leche,180,350,principal,plato,snack_denso,overnight-oats-denso-de-cacahuate-y-platano.webp
+"Overnight Oats de Cacahuate, Plátano y Chía",Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,120,300,principal,plato,snack_denso,overnight-oats-denso-de-cacahuate-y-platano.webp
+"Overnight Oats de Cacahuate, Plátano y Chía",Snack,bloque,denso,dulce,1.5,Plátano,Plátano en rodajas,100,,principal,plato,snack_denso,overnight-oats-denso-de-cacahuate-y-platano.webp
+"Overnight Oats de Cacahuate, Plátano y Chía",Snack,bloque,denso,dulce,1.5,Mantequilla de cacahuate,Crema de cacahuate,32,48,fijo,plato,snack_denso,overnight-oats-denso-de-cacahuate-y-platano.webp
+"Overnight Oats de Cacahuate, Plátano y Chía",Snack,bloque,denso,dulce,1.5,Chía,Chía,12,25,fijo,plato,snack_denso,overnight-oats-denso-de-cacahuate-y-platano.webp
+"Overnight Oats de Cacahuate, Plátano y Chía",Snack,bloque,denso,dulce,1.5,Miel,Miel,10,,fijo,plato,snack_denso,overnight-oats-denso-de-cacahuate-y-platano.webp
+Overnight Oats de Cacao y Fresa,Snack,bloque,denso,dulce,1.5,Avena,Avena,50,100,principal,plato,snack_denso,overnight-oats-denso-de-cacao-y-fresa.webp
+Overnight Oats de Cacao y Fresa,Snack,bloque,denso,dulce,1.5,Leche entera,Leche,180,350,principal,plato,snack_denso,overnight-oats-denso-de-cacao-y-fresa.webp
+Overnight Oats de Cacao y Fresa,Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,120,300,principal,plato,snack_denso,overnight-oats-denso-de-cacao-y-fresa.webp
+Overnight Oats de Cacao y Fresa,Snack,bloque,denso,dulce,1.5,Fresa,Fresas,100,,principal,plato,snack_denso,overnight-oats-denso-de-cacao-y-fresa.webp
+Overnight Oats de Cacao y Fresa,Snack,bloque,denso,dulce,1.5,Crema de almendras,Crema de almendra,24,45,fijo,plato,snack_denso,overnight-oats-denso-de-cacao-y-fresa.webp
+Overnight Oats de Cacao y Fresa,Snack,bloque,denso,dulce,1.5,Cacao en polvo sin azúcar,Cacao en polvo,8,,fijo,plato,snack_denso,overnight-oats-denso-de-cacao-y-fresa.webp
+Overnight Oats de Cacao y Fresa,Snack,bloque,denso,dulce,1.5,Chía,Chía,12,25,fijo,plato,snack_denso,overnight-oats-denso-de-cacao-y-fresa.webp
+Overnight Oats de Cacao y Fresa,Snack,bloque,denso,dulce,1.5,Miel,Miel,10,,fijo,plato,snack_denso,overnight-oats-denso-de-cacao-y-fresa.webp
+"Chía Pudding de Cacao, Nuez y Plátano",Snack,bloque,denso,dulce,1.5,Chía,Chía,30,45,principal,plato,snack_denso,chia-pudding-denso-de-cacao-y-nuez.webp
+"Chía Pudding de Cacao, Nuez y Plátano",Snack,bloque,denso,dulce,1.5,Leche entera,Leche,200,350,principal,plato,snack_denso,chia-pudding-denso-de-cacao-y-nuez.webp
+"Chía Pudding de Cacao, Nuez y Plátano",Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,120,300,principal,plato,snack_denso,chia-pudding-denso-de-cacao-y-nuez.webp
+"Chía Pudding de Cacao, Nuez y Plátano",Snack,bloque,denso,dulce,1.5,Plátano,Plátano en rodajas,100,,principal,plato,snack_denso,chia-pudding-denso-de-cacao-y-nuez.webp
+"Chía Pudding de Cacao, Nuez y Plátano",Snack,bloque,denso,dulce,1.5,Nuez entera,Nueces,20,45,fijo,plato,snack_denso,chia-pudding-denso-de-cacao-y-nuez.webp
+"Chía Pudding de Cacao, Nuez y Plátano",Snack,bloque,denso,dulce,1.5,Cacao en polvo sin azúcar,Cacao en polvo,8,,fijo,plato,snack_denso,chia-pudding-denso-de-cacao-y-nuez.webp
+"Chía Pudding de Cacao, Nuez y Plátano",Snack,bloque,denso,dulce,1.5,Miel,Miel,12,,fijo,plato,snack_denso,chia-pudding-denso-de-cacao-y-nuez.webp
+"Batido de Mango, Plátano y Espinacas",Snack,bloque,denso,dulce,1.5,Leche entera,Leche,220,400,principal,plato,snack_denso,batido-de-mango-platano-y-espinacas.webp
+"Batido de Mango, Plátano y Espinacas",Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,150,300,principal,plato,snack_denso,batido-de-mango-platano-y-espinacas.webp
+"Batido de Mango, Plátano y Espinacas",Snack,bloque,denso,dulce,1.5,Plátano,Plátano,100,,principal,plato,snack_denso,batido-de-mango-platano-y-espinacas.webp
+"Batido de Mango, Plátano y Espinacas",Snack,bloque,denso,dulce,1.5,Mango,Mango,100,,principal,plato,snack_denso,batido-de-mango-platano-y-espinacas.webp
+"Batido de Mango, Plátano y Espinacas",Snack,bloque,denso,dulce,1.5,Espinaca cruda,Espinaca,40,,guarnicion,plato,snack_denso,batido-de-mango-platano-y-espinacas.webp
+"Batido de Mango, Plátano y Espinacas",Snack,bloque,denso,dulce,1.5,Avena,Avena,40,100,principal,plato,snack_denso,batido-de-mango-platano-y-espinacas.webp
+"Batido de Mango, Plátano y Espinacas",Snack,bloque,denso,dulce,1.5,Crema de almendras,Crema de almendra,20,45,fijo,plato,snack_denso,batido-de-mango-platano-y-espinacas.webp
+"Batido de Mango, Plátano y Espinacas",Snack,bloque,denso,dulce,1.5,Miel,Miel,8,,fijo,plato,snack_denso,batido-de-mango-platano-y-espinacas.webp
+"Batido de Manzana, Canela y Avena",Snack,bloque,denso,dulce,1.5,Leche entera,Leche,220,400,principal,plato,snack_denso,batido-de-manzana-canela-y-avena.webp
+"Batido de Manzana, Canela y Avena",Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,150,300,principal,plato,snack_denso,batido-de-manzana-canela-y-avena.webp
+"Batido de Manzana, Canela y Avena",Snack,bloque,denso,dulce,1.5,Manzana,Manzana,140,,principal,plato,snack_denso,batido-de-manzana-canela-y-avena.webp
+"Batido de Manzana, Canela y Avena",Snack,bloque,denso,dulce,1.5,Avena,Avena,45,100,principal,plato,snack_denso,batido-de-manzana-canela-y-avena.webp
+"Batido de Manzana, Canela y Avena",Snack,bloque,denso,dulce,1.5,Crema de almendras,Crema de almendra,20,45,fijo,plato,snack_denso,batido-de-manzana-canela-y-avena.webp
+"Batido de Manzana, Canela y Avena",Snack,bloque,denso,dulce,1.5,Miel,Miel,10,,fijo,plato,snack_denso,batido-de-manzana-canela-y-avena.webp
+"Batido de Manzana, Canela y Avena",Snack,bloque,denso,dulce,1.5,Canela,Canela,2,,condimento,plato,snack_denso,batido-de-manzana-canela-y-avena.webp
+"Batido de Piña, Coco y Avena",Snack,bloque,denso,dulce,1.5,Leche entera,Leche,220,400,principal,plato,snack_denso,batido-de-pina-coco-y-avena.webp
+"Batido de Piña, Coco y Avena",Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,150,300,principal,plato,snack_denso,batido-de-pina-coco-y-avena.webp
+"Batido de Piña, Coco y Avena",Snack,bloque,denso,dulce,1.5,Piña,Piña,140,,principal,plato,snack_denso,batido-de-pina-coco-y-avena.webp
+"Batido de Piña, Coco y Avena",Snack,bloque,denso,dulce,1.5,Avena,Avena,40,100,principal,plato,snack_denso,batido-de-pina-coco-y-avena.webp
+"Batido de Piña, Coco y Avena",Snack,bloque,denso,dulce,1.5,Coco seco,Coco en hojuelas,20,,fijo,plato,snack_denso,batido-de-pina-coco-y-avena.webp
+"Batido de Piña, Coco y Avena",Snack,bloque,denso,dulce,1.5,Crema de almendras,Crema de almendra,18,45,fijo,plato,snack_denso,batido-de-pina-coco-y-avena.webp
+"Batido de Piña, Coco y Avena",Snack,bloque,denso,dulce,1.5,Miel,Miel,8,,fijo,plato,snack_denso,batido-de-pina-coco-y-avena.webp
+Manchego con Almendras y Uvas,Snack,suelto,denso,salado,,Queso Manchego,Queso manchego,50,90,principal,plato,snack_denso,manchego-con-almendras-y-uvas.webp
+Manchego con Almendras y Uvas,Snack,suelto,denso,salado,,Almendra,Almendras,30,45,principal,plato,snack_denso,manchego-con-almendras-y-uvas.webp
+Manchego con Almendras y Uvas,Snack,suelto,denso,salado,,Uva,Uvas,120,,principal,plato,snack_denso,manchego-con-almendras-y-uvas.webp
+Manchego con Almendras y Uvas,Snack,suelto,denso,salado,,Nuez entera,Nueces,15,45,fijo,plato,snack_denso,manchego-con-almendras-y-uvas.webp
+Manchego con Almendras y Uvas,Snack,suelto,denso,salado,,Miel,Miel,8,,fijo,plato,snack_denso,manchego-con-almendras-y-uvas.webp
+Gouda con Nueces y Dátiles,Snack,suelto,denso,salado,,Queso Gouda,Queso gouda,50,90,principal,plato,snack_denso,gouda-con-nueces-y-datiles.webp
+Gouda con Nueces y Dátiles,Snack,suelto,denso,salado,,Nuez entera,Nueces,30,45,principal,plato,snack_denso,gouda-con-nueces-y-datiles.webp
+Gouda con Nueces y Dátiles,Snack,suelto,denso,salado,,Dátil seco,Dátiles,34,60,principal,plato,snack_denso,gouda-con-nueces-y-datiles.webp
+Gouda con Nueces y Dátiles,Snack,suelto,denso,salado,,Almendra,Almendras,15,45,fijo,plato,snack_denso,gouda-con-nueces-y-datiles.webp
+"Queso Fresco con Almendra, Miel y Granola",Snack,suelto,denso,dulce,,Queso fresco de cabra,Queso fresco,120,200,principal,plato,snack_denso,queso-fresco-con-almendra-miel-y-granola.webp
+"Queso Fresco con Almendra, Miel y Granola",Snack,suelto,denso,dulce,,Almendra,Almendras,25,45,principal,plato,snack_denso,queso-fresco-con-almendra-miel-y-granola.webp
+"Queso Fresco con Almendra, Miel y Granola",Snack,suelto,denso,dulce,,Granola con almendras,Granola,40,100,principal,plato,snack_denso,queso-fresco-con-almendra-miel-y-granola.webp
+"Queso Fresco con Almendra, Miel y Granola",Snack,suelto,denso,dulce,,Nuez entera,Nueces,15,45,fijo,plato,snack_denso,queso-fresco-con-almendra-miel-y-granola.webp
+"Queso Fresco con Almendra, Miel y Granola",Snack,suelto,denso,dulce,,Miel,Miel,12,,fijo,plato,snack_denso,queso-fresco-con-almendra-miel-y-granola.webp
+"Cottage con Nuez, Pera y Miel",Snack,suelto,denso,dulce,,Queso Cottage,Queso cottage,180,300,principal,plato,snack_denso,cottage-con-nuez-pera-y-miel.webp
+"Cottage con Nuez, Pera y Miel",Snack,suelto,denso,dulce,,Pera,Pera en gajos,120,,principal,plato,snack_denso,cottage-con-nuez-pera-y-miel.webp
+"Cottage con Nuez, Pera y Miel",Snack,suelto,denso,dulce,,Nuez entera,Nueces,30,45,principal,plato,snack_denso,cottage-con-nuez-pera-y-miel.webp
+"Cottage con Nuez, Pera y Miel",Snack,suelto,denso,dulce,,Granola con almendras,Granola,30,100,principal,plato,snack_denso,cottage-con-nuez-pera-y-miel.webp
+"Cottage con Nuez, Pera y Miel",Snack,suelto,denso,dulce,,Miel,Miel,12,,fijo,plato,snack_denso,cottage-con-nuez-pera-y-miel.webp
+"Cottage con Nuez, Pera y Miel",Snack,suelto,denso,dulce,,Canela,Canela,1,,condimento,plato,snack_denso,cottage-con-nuez-pera-y-miel.webp
+Queso Fresco con Cacahuate y Manzana,Snack,suelto,denso,salado,,Queso fresco de cabra,Queso fresco,120,200,principal,plato,snack_denso,queso-fresco-con-cacahuate-y-manzana.webp
+Queso Fresco con Cacahuate y Manzana,Snack,suelto,denso,salado,,Cacahuate,Cacahuates,30,45,principal,plato,snack_denso,queso-fresco-con-cacahuate-y-manzana.webp
+Queso Fresco con Cacahuate y Manzana,Snack,suelto,denso,salado,,Manzana,Manzana en gajos,120,,principal,plato,snack_denso,queso-fresco-con-cacahuate-y-manzana.webp
+Queso Fresco con Cacahuate y Manzana,Snack,suelto,denso,salado,,Mantequilla de cacahuate,Crema de cacahuate,20,48,fijo,plato,snack_denso,queso-fresco-con-cacahuate-y-manzana.webp
+Queso Fresco con Cacahuate y Manzana,Snack,suelto,denso,salado,,Miel,Miel,8,,fijo,plato,snack_denso,queso-fresco-con-cacahuate-y-manzana.webp
+"Requesón con Nuez, Uvas y Pan",Snack,suelto,denso,salado,,Requesón promedio,Requesón,150,300,principal,plato,snack_denso,requeson-con-nuez-uvas-y-pan.webp
+"Requesón con Nuez, Uvas y Pan",Snack,suelto,denso,salado,,Pan integral,Pan tostado,50,81,principal,plato,snack_denso,requeson-con-nuez-uvas-y-pan.webp
+"Requesón con Nuez, Uvas y Pan",Snack,suelto,denso,salado,,Uva,Uvas,120,,principal,plato,snack_denso,requeson-con-nuez-uvas-y-pan.webp
+"Requesón con Nuez, Uvas y Pan",Snack,suelto,denso,salado,,Nuez entera,Nueces,30,45,principal,plato,snack_denso,requeson-con-nuez-uvas-y-pan.webp
+"Requesón con Nuez, Uvas y Pan",Snack,suelto,denso,salado,,Miel,Miel,10,,fijo,plato,snack_denso,requeson-con-nuez-uvas-y-pan.webp
+"Huevo, Aguacate, Pan y Semillas",Snack,suelto,denso,salado,,Huevo entero fresco,Huevos cocidos,132,300,principal,plato,snack_denso,huevo-aguacate-pan-y-semillas.webp
+"Huevo, Aguacate, Pan y Semillas",Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,80,94,principal,plato,snack_denso,huevo-aguacate-pan-y-semillas.webp
+"Huevo, Aguacate, Pan y Semillas",Snack,suelto,denso,salado,,Pan integral,Pan tostado,60,81,principal,plato,snack_denso,huevo-aguacate-pan-y-semillas.webp
+"Huevo, Aguacate, Pan y Semillas",Snack,suelto,denso,salado,,Semilla de girasol,Semillas de girasol,15,,fijo,plato,snack_denso,huevo-aguacate-pan-y-semillas.webp
+"Huevo, Aguacate, Pan y Semillas",Snack,suelto,denso,salado,,Aceite de oliva,Aceite de oliva,6,,fijo,plato,snack_denso,huevo-aguacate-pan-y-semillas.webp
+"Huevo, Aguacate, Pan y Semillas",Snack,suelto,denso,salado,,Limón,Limón,5,,condimento,plato,snack_denso,huevo-aguacate-pan-y-semillas.webp
+"Huevo, Aguacate, Pan y Semillas",Snack,suelto,denso,salado,,Sal,Pizca de sal,1,,condimento,plato,snack_denso,huevo-aguacate-pan-y-semillas.webp
+"Huevo, Aguacate, Pan y Semillas",Snack,suelto,denso,salado,,Pimienta,Pimienta,1,,condimento,plato,snack_denso,huevo-aguacate-pan-y-semillas.webp
+Aguacate Relleno de Atún con Semillas,Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,120,200,principal,plato,snack_denso,aguacate-relleno-de-atun-con-semillas.webp
+Aguacate Relleno de Atún con Semillas,Snack,suelto,denso,salado,,Atún en agua drenado,Atún,100,200,principal,plato,snack_denso,aguacate-relleno-de-atun-con-semillas.webp
+Aguacate Relleno de Atún con Semillas,Snack,suelto,denso,salado,,Pan integral,Pan tostado,40,81,principal,plato,snack_denso,aguacate-relleno-de-atun-con-semillas.webp
+Aguacate Relleno de Atún con Semillas,Snack,suelto,denso,salado,,Mayonesa light,Mayonesa light,12,,fijo,plato,snack_denso,aguacate-relleno-de-atun-con-semillas.webp
+Aguacate Relleno de Atún con Semillas,Snack,suelto,denso,salado,,Semilla de girasol,Semillas de girasol,12,,fijo,plato,snack_denso,aguacate-relleno-de-atun-con-semillas.webp
+Aguacate Relleno de Atún con Semillas,Snack,suelto,denso,salado,,Limón,Limón,5,,condimento,plato,snack_denso,aguacate-relleno-de-atun-con-semillas.webp
+Aguacate Relleno de Atún con Semillas,Snack,suelto,denso,salado,,Pimienta,Pimienta,1,,condimento,plato,snack_denso,aguacate-relleno-de-atun-con-semillas.webp
+"Pan con Hummus, Huevo y Aguacate",Snack,suelto,denso,salado,,Pan integral,Pan tostado,60,81,principal,plato,snack_denso,pan-con-hummus-huevo-y-aguacate.webp
+"Pan con Hummus, Huevo y Aguacate",Snack,suelto,denso,salado,,Hummus,Hummus,60,120,principal,plato,snack_denso,pan-con-hummus-huevo-y-aguacate.webp
+"Pan con Hummus, Huevo y Aguacate",Snack,suelto,denso,salado,,Huevo entero fresco,Huevos,132,300,principal,plato,snack_denso,pan-con-hummus-huevo-y-aguacate.webp
+"Pan con Hummus, Huevo y Aguacate",Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,snack_denso,pan-con-hummus-huevo-y-aguacate.webp
+"Pan con Hummus, Huevo y Aguacate",Snack,suelto,denso,salado,,Semilla de girasol,Semillas,10,,fijo,plato,snack_denso,pan-con-hummus-huevo-y-aguacate.webp
+"Pan con Hummus, Huevo y Aguacate",Snack,suelto,denso,salado,,Aceite de oliva,Aceite de oliva,5,,fijo,plato,snack_denso,pan-con-hummus-huevo-y-aguacate.webp
+"Pan con Hummus, Huevo y Aguacate",Snack,suelto,denso,salado,,Sal,Pizca de sal,1,,condimento,plato,snack_denso,pan-con-hummus-huevo-y-aguacate.webp
+"Pan con Aguacate, Ricotta, Miel y Cayena",Snack,suelto,denso,salado,,Pan integral,Pan tostado,60,81,principal,plato,snack_denso,pan-con-aguacate-ricotta-miel-y-cayena.webp
+"Pan con Aguacate, Ricotta, Miel y Cayena",Snack,suelto,denso,salado,,Queso Ricotta semidescremada,Ricotta,120,200,principal,plato,snack_denso,pan-con-aguacate-ricotta-miel-y-cayena.webp
+"Pan con Aguacate, Ricotta, Miel y Cayena",Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,80,94,principal,plato,snack_denso,pan-con-aguacate-ricotta-miel-y-cayena.webp
+"Pan con Aguacate, Ricotta, Miel y Cayena",Snack,suelto,denso,salado,,Huevo entero fresco,Huevo cocido,88,300,principal,plato,snack_denso,pan-con-aguacate-ricotta-miel-y-cayena.webp
+"Pan con Aguacate, Ricotta, Miel y Cayena",Snack,suelto,denso,salado,,Semilla de girasol,Semillas,10,,fijo,plato,snack_denso,pan-con-aguacate-ricotta-miel-y-cayena.webp
+"Pan con Aguacate, Ricotta, Miel y Cayena",Snack,suelto,denso,salado,,Miel,Miel,10,,fijo,plato,snack_denso,pan-con-aguacate-ricotta-miel-y-cayena.webp
+"Pan con Aguacate, Ricotta, Miel y Cayena",Snack,suelto,denso,salado,,Chile cayena en polvo,Chile cayena,1,,condimento,plato,snack_denso,pan-con-aguacate-ricotta-miel-y-cayena.webp
+"Pan con Aguacate, Ricotta, Miel y Cayena",Snack,suelto,denso,salado,,Sal,Pizca de sal,1,,condimento,plato,snack_denso,pan-con-aguacate-ricotta-miel-y-cayena.webp
+"Sándwich de Atún, Huevo y Aguacate",Snack,suelto,denso,salado,,Pan integral,Pan (2 rebanadas),80,120,principal,plato,snack_denso,sandwich-de-atun-huevo-y-aguacate.webp
+"Sándwich de Atún, Huevo y Aguacate",Snack,suelto,denso,salado,,Atún en agua drenado,Atún,100,200,principal,plato,snack_denso,sandwich-de-atun-huevo-y-aguacate.webp
+"Sándwich de Atún, Huevo y Aguacate",Snack,suelto,denso,salado,,Huevo entero fresco,Huevo cocido,88,300,principal,plato,snack_denso,sandwich-de-atun-huevo-y-aguacate.webp
+"Sándwich de Atún, Huevo y Aguacate",Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,snack_denso,sandwich-de-atun-huevo-y-aguacate.webp
+"Sándwich de Atún, Huevo y Aguacate",Snack,suelto,denso,salado,,Verduras mixtas,"Verduras (lechuga, jitomate)",60,,guarnicion,plato,snack_denso,sandwich-de-atun-huevo-y-aguacate.webp
+"Sándwich de Atún, Huevo y Aguacate",Snack,suelto,denso,salado,,Mayonesa light,Mayonesa light,12,,fijo,plato,snack_denso,sandwich-de-atun-huevo-y-aguacate.webp
+"Sándwich de Atún, Huevo y Aguacate",Snack,suelto,denso,salado,,Limón,Limón,5,,condimento,plato,snack_denso,sandwich-de-atun-huevo-y-aguacate.webp
+"Sándwich de Atún, Huevo y Aguacate",Snack,suelto,denso,salado,,Pimienta,Pimienta,1,,condimento,plato,snack_denso,sandwich-de-atun-huevo-y-aguacate.webp
+"Wrap de Huevo, Queso, Aguacate y Frijol",Snack,suelto,denso,salado,,Tortilla de harina integral,Tortilla de harina integral,60,120,principal,plato,snack_denso,wrap-de-huevo-queso-aguacate-y-frijol.webp
+"Wrap de Huevo, Queso, Aguacate y Frijol",Snack,suelto,denso,salado,,Huevo entero fresco,Huevos revueltos,132,300,principal,plato,snack_denso,wrap-de-huevo-queso-aguacate-y-frijol.webp
+"Wrap de Huevo, Queso, Aguacate y Frijol",Snack,suelto,denso,salado,,Frijol promedio cocido,Frijoles,80,200,principal,plato,snack_denso,wrap-de-huevo-queso-aguacate-y-frijol.webp
+"Wrap de Huevo, Queso, Aguacate y Frijol",Snack,suelto,denso,salado,,Queso Mozzarella semidescremado,Queso mozzarella,40,120,principal,plato,snack_denso,wrap-de-huevo-queso-aguacate-y-frijol.webp
+"Wrap de Huevo, Queso, Aguacate y Frijol",Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,snack_denso,wrap-de-huevo-queso-aguacate-y-frijol.webp
+"Wrap de Huevo, Queso, Aguacate y Frijol",Snack,suelto,denso,salado,,Verduras mixtas,"Verduras (jitomate, cebolla)",50,,guarnicion,plato,snack_denso,wrap-de-huevo-queso-aguacate-y-frijol.webp
+"Wrap de Huevo, Queso, Aguacate y Frijol",Snack,suelto,denso,salado,,Sal,Pizca de sal,1,,condimento,plato,snack_denso,wrap-de-huevo-queso-aguacate-y-frijol.webp
+"Bolitas de Avena, Dátil, Cacahuate y Chocolate",Snack,bloque,denso,dulce,1.5,Avena,Avena,50,100,principal,plato,snack_denso,bolitas-de-avena-datil-cacahuate-y-chocolate.webp
+"Bolitas de Avena, Dátil, Cacahuate y Chocolate",Snack,bloque,denso,dulce,1.5,Dátil seco,Dátiles,51,80,principal,plato,snack_denso,bolitas-de-avena-datil-cacahuate-y-chocolate.webp
+"Bolitas de Avena, Dátil, Cacahuate y Chocolate",Snack,bloque,denso,dulce,1.5,Mantequilla de cacahuate,Crema de cacahuate,32,48,principal,plato,snack_denso,bolitas-de-avena-datil-cacahuate-y-chocolate.webp
+"Bolitas de Avena, Dátil, Cacahuate y Chocolate",Snack,bloque,denso,dulce,1.5,Chocolate amargo,Chocolate amargo,14,30,fijo,plato,snack_denso,bolitas-de-avena-datil-cacahuate-y-chocolate.webp
+"Bolitas de Avena, Dátil, Cacahuate y Chocolate",Snack,bloque,denso,dulce,1.5,Chía,Chía,10,,fijo,plato,snack_denso,bolitas-de-avena-datil-cacahuate-y-chocolate.webp
+"Barrita de Avena, Nuez, Yogur y Miel",Snack,bloque,denso,dulce,1.5,Avena,Avena,50,100,principal,plato,snack_denso,barrita-de-avena-nuez-yogur-y-miel.webp
+"Barrita de Avena, Nuez, Yogur y Miel",Snack,bloque,denso,dulce,1.5,Nuez entera,Nueces,25,45,principal,plato,snack_denso,barrita-de-avena-nuez-yogur-y-miel.webp
+"Barrita de Avena, Nuez, Yogur y Miel",Snack,bloque,denso,dulce,1.5,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,100,200,principal,plato,snack_denso,barrita-de-avena-nuez-yogur-y-miel.webp
+"Barrita de Avena, Nuez, Yogur y Miel",Snack,bloque,denso,dulce,1.5,Dátil seco,Dátiles,34,60,principal,plato,snack_denso,barrita-de-avena-nuez-yogur-y-miel.webp
+"Barrita de Avena, Nuez, Yogur y Miel",Snack,bloque,denso,dulce,1.5,Mantequilla de cacahuate,Crema de cacahuate,20,48,fijo,plato,snack_denso,barrita-de-avena-nuez-yogur-y-miel.webp
+"Barrita de Avena, Nuez, Yogur y Miel",Snack,bloque,denso,dulce,1.5,Miel,Miel,10,,fijo,plato,snack_denso,barrita-de-avena-nuez-yogur-y-miel.webp
+"Bolitas de Dátil, Avena, Almendra y Coco",Snack,bloque,denso,dulce,1.5,Dátil seco,Dátiles,51,80,principal,plato,snack_denso,bolitas-de-datil-avena-almendra-y-coco.webp
+"Bolitas de Dátil, Avena, Almendra y Coco",Snack,bloque,denso,dulce,1.5,Avena,Avena,45,100,principal,plato,snack_denso,bolitas-de-datil-avena-almendra-y-coco.webp
+"Bolitas de Dátil, Avena, Almendra y Coco",Snack,bloque,denso,dulce,1.5,Almendra,Almendras,25,45,principal,plato,snack_denso,bolitas-de-datil-avena-almendra-y-coco.webp
+"Bolitas de Dátil, Avena, Almendra y Coco",Snack,bloque,denso,dulce,1.5,Crema de almendras,Crema de almendra,24,45,principal,plato,snack_denso,bolitas-de-datil-avena-almendra-y-coco.webp
+"Bolitas de Dátil, Avena, Almendra y Coco",Snack,bloque,denso,dulce,1.5,Coco seco,Coco rallado,15,,fijo,plato,snack_denso,bolitas-de-datil-avena-almendra-y-coco.webp
+Yogur Congelado con Frutos Secos y Chocolate,Snack,suelto,denso,dulce,,"Yoghurt Oikos estilo griego sabor natural, sin azúcar y sin endulzar",Yogurt griego,200,300,principal,plato,snack_denso,yogur-congelado-con-frutos-secos-y-chocolate.webp
+Yogur Congelado con Frutos Secos y Chocolate,Snack,suelto,denso,dulce,,Nuez entera,Nueces,25,45,principal,plato,snack_denso,yogur-congelado-con-frutos-secos-y-chocolate.webp
+Yogur Congelado con Frutos Secos y Chocolate,Snack,suelto,denso,dulce,,Almendra,Almendras,20,45,principal,plato,snack_denso,yogur-congelado-con-frutos-secos-y-chocolate.webp
+Yogur Congelado con Frutos Secos y Chocolate,Snack,suelto,denso,dulce,,Chocolate amargo,Chocolate amargo,28,45,principal,plato,snack_denso,yogur-congelado-con-frutos-secos-y-chocolate.webp
+Yogur Congelado con Frutos Secos y Chocolate,Snack,suelto,denso,dulce,,Coco seco,Coco en hojuelas,12,,fijo,plato,snack_denso,yogur-congelado-con-frutos-secos-y-chocolate.webp
+Yogur Congelado con Frutos Secos y Chocolate,Snack,suelto,denso,dulce,,Miel,Miel,12,,fijo,plato,snack_denso,yogur-congelado-con-frutos-secos-y-chocolate.webp
+Papa Rellena de Atún y Queso,Snack,suelto,denso,salado,,Papa cocida,Papa al horno,200,400,principal,plato,snack_denso,papa-rellena-de-atun-y-queso.webp
+Papa Rellena de Atún y Queso,Snack,suelto,denso,salado,,Atún en agua drenado,Atún,100,200,principal,plato,snack_denso,papa-rellena-de-atun-y-queso.webp
+Papa Rellena de Atún y Queso,Snack,suelto,denso,salado,,Queso Mozzarella semidescremado,Queso mozzarella,45,120,principal,plato,snack_denso,papa-rellena-de-atun-y-queso.webp
+Papa Rellena de Atún y Queso,Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,60,94,principal,plato,snack_denso,papa-rellena-de-atun-y-queso.webp
+Papa Rellena de Atún y Queso,Snack,suelto,denso,salado,,Crema Lala Light,Crema light,20,,fijo,plato,snack_denso,papa-rellena-de-atun-y-queso.webp
+Papa Rellena de Atún y Queso,Snack,suelto,denso,salado,,Verduras mixtas,"Verduras (cebollín, jitomate)",50,,guarnicion,plato,snack_denso,papa-rellena-de-atun-y-queso.webp
+Papa Rellena de Atún y Queso,Snack,suelto,denso,salado,,Sal,Pizca de sal,1,,condimento,plato,snack_denso,papa-rellena-de-atun-y-queso.webp
+Papa Rellena de Atún y Queso,Snack,suelto,denso,salado,,Pimienta,Pimienta,1,,condimento,plato,snack_denso,papa-rellena-de-atun-y-queso.webp
+"Rollitos de Pavo, Queso Crema y Nuez",Snack,suelto,denso,salado,,Pechuga de pavo,Jamón de pavo,120,200,principal,plato,snack_denso,rollitos-de-pavo-queso-crema-y-nuez.webp
+"Rollitos de Pavo, Queso Crema y Nuez",Snack,suelto,denso,salado,,Queso crema light,Queso crema light,60,,principal,plato,snack_denso,rollitos-de-pavo-queso-crema-y-nuez.webp
+"Rollitos de Pavo, Queso Crema y Nuez",Snack,suelto,denso,salado,,Nuez entera,Nueces,30,45,principal,plato,snack_denso,rollitos-de-pavo-queso-crema-y-nuez.webp
+"Rollitos de Pavo, Queso Crema y Nuez",Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,snack_denso,rollitos-de-pavo-queso-crema-y-nuez.webp
+"Rollitos de Pavo, Queso Crema y Nuez",Snack,suelto,denso,salado,,Verduras mixtas,"Verduras (espinaca, pepino)",50,,guarnicion,plato,snack_denso,rollitos-de-pavo-queso-crema-y-nuez.webp
+"Rollitos de Pavo, Queso Crema y Nuez",Snack,suelto,denso,salado,,Pimienta,Pimienta,1,,condimento,plato,snack_denso,rollitos-de-pavo-queso-crema-y-nuez.webp
+"Nachos Fit de Frijol, Queso y Aguacate",Snack,suelto,denso,salado,,Totopos de maíz,Totopos horneados,40,60,principal,plato,snack_denso,nachos-fit-de-frijol-queso-y-aguacate.webp
+"Nachos Fit de Frijol, Queso y Aguacate",Snack,suelto,denso,salado,,Frijol promedio cocido,Frijoles refritos,120,250,principal,plato,snack_denso,nachos-fit-de-frijol-queso-y-aguacate.webp
+"Nachos Fit de Frijol, Queso y Aguacate",Snack,suelto,denso,salado,,Queso Mozzarella semidescremado,Queso mozzarella,50,120,principal,plato,snack_denso,nachos-fit-de-frijol-queso-y-aguacate.webp
+"Nachos Fit de Frijol, Queso y Aguacate",Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,snack_denso,nachos-fit-de-frijol-queso-y-aguacate.webp
+"Nachos Fit de Frijol, Queso y Aguacate",Snack,suelto,denso,salado,,Crema Lala Light,Crema light,20,,fijo,plato,snack_denso,nachos-fit-de-frijol-queso-y-aguacate.webp
+"Nachos Fit de Frijol, Queso y Aguacate",Snack,suelto,denso,salado,,Verduras mixtas,"Verduras (jitomate, cebolla, cilantro)",60,,guarnicion,plato,snack_denso,nachos-fit-de-frijol-queso-y-aguacate.webp
+"Nachos Fit de Frijol, Queso y Aguacate",Snack,suelto,denso,salado,,Sal,Pizca de sal,1,,condimento,plato,snack_denso,nachos-fit-de-frijol-queso-y-aguacate.webp
+Elote con Queso y Aguacate,Snack,suelto,denso,salado,,Elote amarillo desgranado cocido,Elote desgranado,180,300,principal,plato,snack_denso,elote-con-queso-y-aguacate.webp
+Elote con Queso y Aguacate,Snack,suelto,denso,salado,,Queso fresco de cabra,Queso fresco,60,150,principal,plato,snack_denso,elote-con-queso-y-aguacate.webp
+Elote con Queso y Aguacate,Snack,suelto,denso,salado,,Aguacate Hass,Aguacate,70,94,principal,plato,snack_denso,elote-con-queso-y-aguacate.webp
+Elote con Queso y Aguacate,Snack,suelto,denso,salado,,Crema Lala Light,Crema light,25,,fijo,plato,snack_denso,elote-con-queso-y-aguacate.webp
+Elote con Queso y Aguacate,Snack,suelto,denso,salado,,Mayonesa light,Mayonesa light,12,,fijo,plato,snack_denso,elote-con-queso-y-aguacate.webp
+Elote con Queso y Aguacate,Snack,suelto,denso,salado,,Chile piquín,Chile piquín,1,,condimento,plato,snack_denso,elote-con-queso-y-aguacate.webp
+Elote con Queso y Aguacate,Snack,suelto,denso,salado,,Limón,Limón,5,,condimento,plato,snack_denso,elote-con-queso-y-aguacate.webp

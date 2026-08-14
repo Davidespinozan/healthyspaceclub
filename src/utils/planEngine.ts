@@ -521,6 +521,15 @@ function snackClass(d: BancoDish): 'F' | 'P' | 'C' {
 const SNACK_BY_MACRO: Record<'F' | 'P' | 'C', BancoDish[]> = { F: [], P: [], C: [] };
 for (const d of BY_TIME.Snack) SNACK_BY_MACRO[snackClass(d)].push(d);
 
+// ── SNACKS DENSOS (400-800 kcal) ──────────────────────────────────────────────
+// Marcados `dense` (nota=snack_denso en el CSV). Solo se ofrecen cuando el requerimiento
+// diario es alto; con metas normales quedan fuera del pool para no inflar el plan.
+// UMBRAL PROVISIONAL — pendiente de afinar con Magaly. Cambiar aquí (un solo lugar).
+export const DENSE_SNACK_KCAL_THRESHOLD = 2800;
+/** Filtra el pool de snacks según el requerimiento: los densos solo entran a partir del umbral. */
+const gateDense = (pool: BancoDish[], kcal: number): BancoDish[] =>
+  kcal >= DENSE_SNACK_KCAL_THRESHOLD ? pool : pool.filter((d) => !d.dense);
+
 /** Mete un snack extra al slot de snack (AM o PM) con menos items, como "2 en 1" —
  *  mergeItems junta nombres, porciones, macros Y fotos (imgs) para el card. */
 function mergeIntoSnack(meals: MealItem[], extra: MealItem): void {
@@ -584,7 +593,7 @@ function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: string[] =
   if (worst <= 0.05) return;                            // hueco chico → se deja (nada de apilar)
   const avoid = makeAvoidFilter(avoidCats);
   const [cls, idx]: ['F' | 'C', number] = rf === worst ? ['F', 2] : ['C', 3];
-  const pool = SNACK_BY_MACRO[cls].filter((d) => !avoid(d)); // nunca un alérgeno
+  const pool = gateDense(SNACK_BY_MACRO[cls].filter((d) => !avoid(d)), target.kcal); // nunca un alérgeno; densos solo si el requerimiento es alto
   const dayNames = new Set(meals.map((m) => m.name));
   // Prefiere uno NO usado en la semana ni hoy; si no hay, el menos repetido.
   const dish = pool.find((d) => !weekUsed?.has(d.nombre) && ![...dayNames].some((n) => n.includes(d.nombre)))
@@ -807,7 +816,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   const des = sesgaCarbo(clean(biasPool(BY_TIME.Desayuno, cuisines)));
   const com = sesgaCarbo(clean(biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines)));
   const cen = sesgaCarbo(clean(biasPool(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, cuisines)));
-  const snack = clean(BY_TIME.Snack);
+  const snack = gateDense(clean(BY_TIME.Snack), T[0]); // densos solo si el requerimiento es alto
   // Regla dura: NADA se repite dentro del mismo día (ni comida ni snack, ni una comida
   // como cena). avail() saca del pool lo ya usado hoy; fitSlot va llenando usedToday.
   // relax≥1: la selección ignora el historial de la semana → puede repetir un
@@ -1011,7 +1020,7 @@ export function adequateBankByTiempo(
     Desayuno: filt(safe.Desayuno, MT.desayuno),
     Comida: filt(safe.Comida, MT.comida),
     Cena: filt(safe.Cena, MT.cena),
-    Snack: safe.Snack,
+    Snack: gateDense(safe.Snack, target.kcal), // densos solo si el requerimiento es alto
   };
 }
 
@@ -1126,9 +1135,9 @@ export function buildDayWithFixed(
     meals.push(...fitSlot(pool2.length ? pool2 : cabe(clean(pool), t), slot, t, n, rng, tol, used, usedToday, usedIng, craving, ingFreq, esSnack));
   };
   add('Desayuno', BY_TIME.Desayuno, 1, 90);
-  add('Snack AM', BY_TIME.Snack, nSnack, 70);
+  add('Snack AM', gateDense(BY_TIME.Snack, target.kcal), nSnack, 70);
   add('Comida', COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, 1, 90);
-  add('Snack PM', BY_TIME.Snack, nSnack, 70);
+  add('Snack PM', gateDense(BY_TIME.Snack, target.kcal), nSnack, 70);
   add('Cena', CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, 1, 90);
   return { day: dayNum, theme: '', meals };
 }

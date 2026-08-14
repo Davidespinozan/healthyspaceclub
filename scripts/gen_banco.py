@@ -46,6 +46,9 @@ ALIAS = {
     # Parmesano estaban perdiendo 417 kcal/100 g en silencio.
     "Queso parmesano":  "Queso Parmesano",
     "Chocolate negro sin azúcar": "Chocolate amargo",
+    # El catálogo no tiene "Mango" genérico (solo Ataúlfo/Manila/picado…). Los snacks
+    # densos escriben "Mango" → sin esto sus macros de mango caían en silencio.
+    "Mango":            "Mango picado",
 }
 
 CAT = {}
@@ -121,6 +124,9 @@ for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), enco
         "multMax": num(r["mult_max"]) or 1.5, "img": _webp(r["image_filename"]), "fixed": [0, 0, 0, 0, 0], "ings": []})
     reg = region_of(r.get("nota"))
     if reg and not d.get("region"): d["region"] = reg  # segmentación por región (mismo bucket que precios)
+    # Snacks densos (400-800 kcal): marca `snack_denso` en nota → el motor los ofrece
+    # SOLO cuando el requerimiento calórico es alto (ver DENSE_SNACK_KCAL_THRESHOLD).
+    if "snack_denso" in (r.get("nota") or "").lower(): d["dense"] = True
     rol = (r.get("rol") or "").strip(); al = (r.get("alimento") or "").strip(); g = num(r["gramos"])
     ing = {"nv": r["nombre_visible"].strip(), "rol": rol, "g0": g}
     # Medida casera contable (pieza/rebanada) para mostrar "2 huevos", no "88 g".
@@ -157,7 +163,7 @@ ts = "// AUTO-GENERADO por scripts/gen_banco.py desde el banco de Magaly. No edi
 ts += "// Cada platillo: fixed = [kcal,P,F,C,fibra] de todo lo NO-principal (ya sumado);\n"
 ts += "// ings principales traen a=[por-gramo kcal,P,F,C,fibra] y max para ajustar la porción.\n"
 ts += "export interface BancoIng { nv: string; rol: string; g0: number; max?: number; a?: number[]; pend?: boolean; pu?: number; un?: string }\n"
-ts += "export interface BancoDish { nombre: string; tiempo: string; tipo: string; multMax: number; img: string; fixed: number[]; ings: BancoIng[]; region?: string }\n"
+ts += "export interface BancoDish { nombre: string; tiempo: string; tipo: string; multMax: number; img: string; fixed: number[]; ings: BancoIng[]; region?: string; dense?: boolean }\n"
 ts += "export const BANCO: BancoDish[] = " + json.dumps(banco, ensure_ascii=False) + ";\n"
 # Recetas de las sub-recetas (guacamole, salsas, aderezos) → la app las MUESTRA al abrir
 # el platillo. `rinde` = gramos que rinde la receta completa.
