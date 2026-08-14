@@ -9,6 +9,15 @@ import fs from 'fs';
 const S = process.argv[2];
 if (!S) { console.error('falta el dir de scratchpad'); process.exit(1); }
 
+// ── Clasificación mat-only compartida con el motor (src/data/matOnly.ts) ──
+// MISMA fuente de verdad que isMatOnlyVariant(): la página no reinterpreta.
+const MATONLY = {};
+{
+  const mo = fs.readFileSync('src/data/matOnly.ts', 'utf8');
+  const body = mo.split('export const MATONLY_BY_ID')[1]?.split('};')[0] ?? '';
+  for (const m of body.matchAll(/'([a-z0-9-]+)':\s*(true|false)/g)) MATONLY[m[1]] = m[2] === 'true';
+}
+
 // ── 1. Banco: patrones + variantes + equipo ──
 const src = fs.readFileSync('src/data/exercises.ts', 'utf8').split('\n');
 const pats = []; let cur = null;
@@ -31,9 +40,52 @@ for (let i = 0; i < src.length; i++) {
     const eqm = l.match(/equipment:\s*\[([^\]]*)\]/);
     let equipo = '—';
     if (eqm) { const e = eqm[1]; equipo = /cuerpo/.test(e) ? 'Casa' : /ligas/.test(e) ? 'Liga' : /gym/.test(e) ? 'GYM' : '—'; }
-    cur.vars.push({ id: vm[1], name: vm[2], equipo, tiene: false, file: null });
+    // matOnly + iso con la MISMA semántica que el motor (matOnly.ts + convención 'seg').
+    const matOnly = /matOnly:\s*true/.test(l) ? true : (MATONLY[vm[1]] ?? false);
+    const iso = /defaultReps:\s*'[^']*seg[^']*'|prescriptionType:\s*'time'/.test(l);
+    cur.vars.push({ id: vm[1], name: vm[2], equipo, tiene: false, file: null, matOnly, iso });
   }
 }
+
+// ── 1b. BACKLOG (src/data/exercisesBacklog.ts) — patrones/variantes PENDIENTES ──
+// Se parsea la sintaxis de helpers (mat/support/band/gym/mkBase) y se inyecta en `pats`
+// con tiene=false. No tienen migración → nunca entran a VIDEO_VARIANT_IDS (sección 4).
+const clsOfHelper = (h) => (h === 'band' ? 'Liga' : h === 'gym' ? 'GYM' : 'Casa'); // mat|support → Casa
+const clsOfEquip = (e) => (/gym/.test(e) ? 'GYM' : /ligas/.test(e) ? 'Liga' : 'Casa');
+const HELP = /^\s*(mat|support|band|gym)\(\s*'([a-z0-9-]+)'\s*,\s*'([^']*)'/;
+const PLAIN = /^\s*\{\s*id:\s*'([a-z0-9-]+)'\s*,\s*name:\s*'([^']*)'.*?equipment:\s*\[([^\]]*)\]/;
+const mkV = (id, name, cls, matOnly, line) => ({
+  id, name, equipo: cls, tiene: false, file: null, backlog: true, matOnly,
+  iso: /HOLD\(|prescriptionType:\s*'time'/.test(line),
+});
+try {
+  const blLines = fs.readFileSync('src/data/exercisesBacklog.ts', 'utf8').split('\n');
+  const patById = Object.fromEntries(pats.map((p) => [p.id, p]));
+  let section = null, curBase = null, collecting = false, mergeTarget = null;
+  for (const l of blLines) {
+    if (/BACKLOG_EXERCISES\s*:/.test(l)) { section = 'bases'; continue; }
+    if (/BACKLOG_VARIANTS\s*:/.test(l)) { section = 'variants'; continue; }
+    if (section === 'bases') {
+      if (/mkBase\(\{/.test(l)) { curBase = { id: '', patron: '', mg: '', vars: [], backlog: true }; }
+      if (curBase && !curBase.id) { const m = l.match(/id:\s*'([a-z0-9-]+)',\s*name:\s*'([^']*)'/); if (m) { curBase.id = m[1]; curBase.patron = m[2]; } }
+      if (curBase) { const mg = l.match(/muscleGroup:\s*'([a-z-]+)'/); if (mg) curBase.mg = mg[1]; }
+      if (curBase && /variants:\s*\[/.test(l)) { collecting = true; continue; }
+      if (collecting) {
+        if (/^\s*\],\s*$/.test(l)) { collecting = false; pats.push(curBase); patById[curBase.id] = curBase; curBase = null; continue; }
+        const h = l.match(HELP); if (h) { curBase.vars.push(mkV(h[2], h[3], clsOfHelper(h[1]), h[1] === 'mat', l)); continue; }
+        const pl = l.match(PLAIN); if (pl) { curBase.vars.push(mkV(pl[1], pl[2], clsOfEquip(pl[3]), /matOnly:\s*true/.test(l), l)); }
+      }
+    } else if (section === 'variants') {
+      const key = l.match(/^\s*'([a-z0-9-]+)':\s*\[/); if (key) { mergeTarget = key[1]; continue; }
+      if (/^\s*\},?\s*$/.test(l)) { mergeTarget = null; continue; }
+      if (mergeTarget) {
+        const tgt = patById[mergeTarget]; if (!tgt) continue;
+        const h = l.match(HELP); if (h) { tgt.vars.push(mkV(h[2], h[3], clsOfHelper(h[1]), h[1] === 'mat', l)); continue; }
+        const pl = l.match(PLAIN); if (pl) { tgt.vars.push(mkV(pl[1], pl[2], clsOfEquip(pl[3]), /matOnly:\s*true/.test(l), l)); }
+      }
+    }
+  }
+} catch (e) { console.error('backlog parse:', e.message); }
 
 // ── 2. Conexiones de video de todas las migraciones ──
 const migDir = 'supabase/migrations';

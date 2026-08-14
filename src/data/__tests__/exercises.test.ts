@@ -4,7 +4,7 @@ import { exercises } from '../exercises';
 describe('Banco de ejercicios', () => {
   describe('Estructura general', () => {
     it('tiene exactamente 121 entradas', () => {
-      expect(exercises).toHaveLength(123);
+      expect(exercises).toHaveLength(131); // 123 base + 8 nuevos patrones backlog (pendientes)
     });
 
     it('cada entrada tiene los campos required del Exercise interface', () => {
@@ -101,7 +101,7 @@ describe('Banco de ejercicios', () => {
   describe('Patrones de fuerza/cardio', () => {
     it('tiene exactamente 86 patrones (no-yoga)', () => {
       const patterns = exercises.filter(e => !e.isYoga);
-      expect(patterns).toHaveLength(88);
+      expect(patterns).toHaveLength(96); // 88 + 8 nuevos patrones backlog (no-yoga)
     });
 
     it('cada patrón no-yoga tiene al menos 1 variante', () => {

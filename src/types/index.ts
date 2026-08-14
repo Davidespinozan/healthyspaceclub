@@ -152,6 +152,28 @@ export interface ExerciseVariant {
   cardioStyle?: CardioStyle;
   /** CARDIO (Fase 1) — override de los roles de sesión del patrón. */
   roles?: SessionRole[];
+
+  /**
+   * SEGURIDAD por variante (Fase backlog) — cuando una variante es más riesgosa que su
+   * patrón (ej. shrimp squat bajo sentadilla unilateral, depth drop bajo box jumps). Metadata
+   * declarativa para la página y filtros; el motor de bajo-impacto sigue leyendo el nivel base.
+   */
+  impact?: 'none' | 'low' | 'high';
+  fallRisk?: boolean;
+  /**
+   * MAT-ONLY (Fase backlog) — true si esta variante se hace SOLO con tapete/peso corporal
+   * sin infraestructura (barra de dominadas, banco, silla, pared, TRX, paralelas). Metadata
+   * para segmentar contenido "casa sin equipo" y para la página de producción de videos.
+   * Si el patrón lo define, la variante lo hereda salvo override. NO altera el motor.
+   */
+  matOnly?: boolean;
+  /**
+   * PRESCRIPCIÓN (Fase backlog) — 'time' si el ejercicio se prescribe por segundos (holds
+   * isométricos) en vez de reps. Es metadata declarativa: el motor ya soporta tiempo vía la
+   * convención `defaultReps: 'XX-YY seg'` (24 ejercicios ya la usan). Este flag NO cambia el
+   * motor; sirve para la página de producción y para validar que un hold no salga como reps.
+   */
+  prescriptionType?: 'reps' | 'time';
 }
 
 export interface Exercise {
@@ -237,6 +259,20 @@ export interface Exercise {
    * Los ejercicios del rediseño "patrón + variantes" tendrán esta propiedad poblada.
    */
   variants?: ExerciseVariant[];
+
+  /**
+   * MAT-ONLY (Fase backlog) — true si el patrón se ejecuta SOLO con tapete/peso corporal
+   * sin infraestructura (barra de dominadas, banco, silla, pared, TRX, paralelas, step).
+   * Distingue "bodyweight puro de casa" de "bodyweight con soporte". Metadata para filtros
+   * y para la página de producción de videos; el motor de video-gating no depende de esto.
+   */
+  matOnly?: boolean;
+  /**
+   * PRESCRIPCIÓN (Fase backlog) — 'time' si se prescribe por segundos (isométricos), 'reps'
+   * en caso normal (default implícito). El motor ya prescribe tiempo con `defaultReps: 'XX seg'`;
+   * este flag es declarativo (página + tests), NO reescribe prescribeSession ni el player.
+   */
+  prescriptionType?: 'reps' | 'time';
 
   // Yoga
   isYoga?: boolean;

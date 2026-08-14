@@ -305,6 +305,7 @@ export const stepTitleEn: Record<string, string> = {
   'Respira': 'Breathe',
   'Respira profundo': 'Breathe deep',
   'Respiración': 'Breathing',
+  'Ejecución': 'Execution',
   'Respiración natural': 'Natural breathing',
   'Ritmo': 'Tempo',
   'Rodilla al pecho': 'Knee to chest',
@@ -625,6 +626,8 @@ export const variantNameEn: Record<string, string> = {
 // natural en inglés; poses de yoga conservan su nombre (Warrior, chaturanga,
 // Dandasana, upward/downward dog). Mapeado por texto ES → EN.
 export const stepDescEn: Record<string, string> = {
+  'Colócate con la técnica descrita en el nombre de la variante.': 'Set up with the technique described in the variant name.',
+  'Exhala en el esfuerzo; mantén el core activo todo el rango.': 'Exhale on the effort; keep the core braced through the full range.',
   'De pie, erguido, mirada al frente. Ten una silla o pared cerca por si necesitas apoyo.': 'Stand tall, gaze forward. Keep a chair or wall nearby in case you need support.',
   'Levanta una rodilla a la altura cómoda y bájala; alterna con ritmo constante.': 'Lift one knee to a comfortable height and lower it; alternate at a steady pace.',
   'Acompaña con los brazos como al caminar para subir un poco el ritmo cardíaco.': 'Swing your arms as if walking to raise your heart rate a little.',

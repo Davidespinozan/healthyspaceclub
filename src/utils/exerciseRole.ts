@@ -63,6 +63,10 @@ export const ROLE_BY_ID: Record<string, ExerciseRole> = {
   'caminata-lateral-monstruo': 'isolation', 'curl-femoral': 'isolation', 'elevacion-talones': 'isolation',
   'anti-extension-isometrica': 'isolation', 'anti-lateral': 'isolation', 'anti-rotacion': 'isolation',
   'flexion-espinal-pesada': 'isolation', 'rotacion-con-peso': 'isolation', 'equilibrio-un-pie': 'isolation',
+  // ── EXPANSIÓN BACKLOG (patrones nuevos, pendientes de video) ──
+  'pseudo-planche': 'secondary', 'colgado-barra': 'secondary', 'thruster-banda': 'secondary',
+  'dead-bug': 'isolation', 'plancha-dinamica': 'isolation', 'activacion-escapular-prona': 'isolation',
+  'copenhagen-plank': 'isolation', 'locomocion-suelo': 'conditioning',
 };
 
 const ROLE_TO_CATEGORY: Record<ExerciseRole, Category> = {

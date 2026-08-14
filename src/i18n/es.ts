@@ -773,6 +773,7 @@ export const es = {
     gearEnvQ: '¿Dónde vas a entrenar?',
     gearEnvGym: 'Gimnasio completo',
     gearEnvOwn: 'Con mi propio equipo',
+    gearEnvMat: 'Solo tapete / sin equipo',
     gearOwnQ: '¿Con qué cuentas?',
     gearOwnHint: 'El peso corporal siempre cuenta. Marca lo que tengas — o nada.',
     gearDumbbells: 'Mancuernas',

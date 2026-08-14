@@ -12,10 +12,21 @@ const REGION={pecho:'superior',espalda:'superior',hombros:'superior',biceps:'sup
 const TABS=[['todos','Todos'],['superior','Tren superior'],['inferior','Tren inferior'],['core','Core'],['cardio','Cardio'],['yoga','Yoga'],['casa','Peso corporal'],['ligas','Ligas']];
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const BASE='https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/';
-// Links de referencia (para saber qué es una variante que aún no grabamos).
+// Traducción ES→EN para el query de búsqueda: encontrar demos técnicas es MUCHO
+// más fácil en inglés. Heurística por términos (no traducción perfecta, basta para buscar).
+const ES2EN={'flexiones':'push ups','flexión':'push up','sentadilla':'squat','zancada':'lunge','peso muerto':'deadlift','buenos días':'good morning','plancha lateral':'side plank','plancha':'plank','puente de glúteo':'glute bridge','puente':'glute bridge','elevación de talón':'calf raise','elevación':'raise','talones':'calf','talón':'calf','con banda':'band','banda':'band','isométrica':'isometric','a una pierna':'single leg','unilateral':'single arm','remo':'row','dominada':'pull up','colgado':'dead hang','gateo del oso':'bear crawl','gateo':'crawl','cangrejo':'crab','gusano':'inchworm','nadador':'swimmer prone','ángel invertido':'reverse snow angel','saltos':'jumps','salto':'jump','patinador':'skater','marcha':'march','paso lateral':'lateral step','paso':'step','rodilla':'knee','hombro':'shoulder','cadera':'hip','glúteo':'glute','pantorrilla':'calf','tijera':'split','pausa':'pause','cosaca':'cossack','sentado':'seated','de pie':'standing','pared':'wall','oso':'bear','contramovimiento':'countermovement','aceleración':'acceleration','pies rápidos':'fast feet','punch de serrato':'serratus punch','jalón':'lat pulldown','apertura':'fly','pull-apart':'pull apart'};
+function enQuery(q){
+  let s=' '+q.toLowerCase().replace(/\(.*?\)/g,' ')+' ';
+  for(const[es,en]of Object.entries(ES2EN)) s=s.split(es).join(en);
+  s=s.replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i').replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/ñ/g,'n');
+  return s.replace(/\s+/g,' ').trim()+' exercise';
+}
+// Links de referencia (para saber qué es una variante que aún no grabamos). El de
+// YouTube usa query en INGLÉS (más demos técnicas); Google/TikTok en el idioma original.
 function refLinks(q){
   const e=encodeURIComponent(q.trim().replace(/\s+/g,' '));
-  return `<div class="refs"><a href="https://www.google.com/search?tbm=isch&q=${e}" target="_blank" rel="noopener">🔍 Google</a><a href="https://www.youtube.com/results?search_query=${e}" target="_blank" rel="noopener">▶️ YouTube</a><a href="https://www.tiktok.com/search?q=${e}" target="_blank" rel="noopener">TikTok</a></div>`;
+  const en=encodeURIComponent(enQuery(q));
+  return `<div class="refs"><a href="https://www.youtube.com/results?search_query=${en}" target="_blank" rel="noopener" title="Búsqueda en inglés (mejores demos)">▶️ YouTube EN</a><a href="https://www.google.com/search?tbm=isch&q=${en}" target="_blank" rel="noopener">🔍 Google EN</a><a href="https://www.youtube.com/results?search_query=${e}" target="_blank" rel="noopener">▶️ ES</a></div>`;
 }
 // Sección colapsable (acordeón) por grupo.
 function mgGroup(rg,title,inner,tot,con,extraTitleStyle){
@@ -25,6 +36,8 @@ function mgGroup(rg,title,inner,tot,con,extraTitleStyle){
 }
 function vcard(v, patron){
   const eqtag=v.equipo&&v.equipo!=='—'?`<span class="eq eq-${v.equipo.toLowerCase()}">${esc(v.equipo)}</span>`:'';
+  const badges=`${v.matOnly?'<span class="bdg mat" title="Solo tapete — sin infraestructura">TAPETE</span>':''}${v.iso?'<span class="bdg iso" title="Isométrico — se prescribe por tiempo">⏱ TIEMPO</span>':''}${v.backlog?'<span class="bdg new" title="Backlog nuevo — pendiente de grabar">NUEVO</span>':''}`;
+  const da=`data-mat="${v.matOnly?1:0}" data-iso="${v.iso?1:0}" data-back="${v.backlog?1:0}"`;
   if(v.tiene){
     // TODOS los videos de esta card (uno por archivo). Si hay 2+, se avisa para revisar mapeo.
     const files=v.files&&v.files.length?v.files:[v.file];
@@ -34,11 +47,11 @@ function vcard(v, patron){
       const url=BASE+file.split('/').map(encodeURIComponent).join('/')+'#t=0.1';
       const warn=dup?`<span class="dupb" title="Hay ${files.length} videos en esta misma card — revisa si alguno está mal asignado">⚠ ${i+1}/${files.length}</span>`:'';
       const cls=dup?'vc ok dup':'vc ok';
-      return `<div class="${cls}" data-falta="0" data-eq="${esc((v.equipo||'').toLowerCase())}" data-q="${esc((v.name+' '+nombre).toLowerCase())}"><video src="${url}" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">${esc(v.name)} ${eqtag} ${warn}</div><div class="vf">${esc(nombre)}</div></div></div>`;
+      return `<div class="${cls}" data-falta="0" data-eq="${esc((v.equipo||'').toLowerCase())}" ${da} data-q="${esc((v.name+' '+nombre).toLowerCase())}"><video src="${url}" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">${esc(v.name)} ${eqtag} ${badges} ${warn}</div><div class="vf">${esc(nombre)}</div></div></div>`;
     }).join('');
   }
   const q=`${patron||''} ${v.name}`;
-  return `<div class="vc falta" data-falta="1" data-eq="${esc((v.equipo||'').toLowerCase())}" data-q="${esc((v.name+' '+(patron||'')).toLowerCase())}"><div class="ghost">🎥<span>Falta grabar</span></div><div class="vm"><div class="vn">${esc(v.name)} ${eqtag}</div>${refLinks(q)}</div></div>`;
+  return `<div class="vc falta" data-falta="1" data-eq="${esc((v.equipo||'').toLowerCase())}" ${da} data-q="${esc((v.name+' '+(patron||'')+' '+v.id).toLowerCase())}"><div class="ghost">🎥<span>Falta grabar</span></div><div class="vm"><div class="vn">${esc(v.name)} ${eqtag} ${badges}</div><div class="vf">${esc(v.id)}</div>${refLinks(q)}</div></div>`;
 }
 let body='';
 for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue;
@@ -103,6 +116,12 @@ for(const mg of orden){const ps=pats.filter(p=>p.mg===mg);if(!ps.length)continue
 const yfalta=yoga.filter(f=>f.falta);
 const totCon=pats.reduce((a,p)=>a+p.con,0),totVar=pats.reduce((a,p)=>a+p.tot,0);
 const totVid=pats.reduce((a,p)=>a+(p.nvid||0),0);
+// Backlog + resumen por categoría (para el centro de producción de videos).
+const allVars=pats.flatMap(p=>p.vars.filter(v=>v.name!=='(único)'));
+const pend=allVars.filter(v=>!v.tiene);
+const nBacklog=allVars.filter(v=>v.backlog).length;
+const CATS=[['Peso corporal',v=>v.equipo==='Casa'],['Mat-only',v=>v.matOnly],['Bandas',v=>v.equipo==='Liga'],['Isométricos',v=>v.iso],['Gym',v=>v.equipo==='GYM']];
+const catChips=CATS.map(([lbl,f])=>`<span class="catchip">${lbl}: <b>${pend.filter(f).length}</b> por grabar <span style="color:var(--ok)">· ${allVars.filter(v=>v.tiene&&f(v)).length} listos</span></span>`).join('');
 const totDup=pats.reduce((a,p)=>a+p.vars.reduce((b,v)=>b+((v.files&&v.files.length>1)?v.files.length:0),0),0);
 const imgs=['YOGA/IMG_2711.mp4','YOGA/IMG_2723.mp4','YOGA/IMG_2725.mp4','YOGA/IMG_2734.mp4'];
 const imgCards=imgs.map(i=>`<div class="vc falta" style="border-color:var(--warn)"><video src="${BASE}${i}#t=0.1" preload="metadata" controls playsinline muted></video><div class="vm"><div class="vn">¿Qué es?</div><div class="vf">${i.split('/').pop()}</div></div></div>`).join('');
@@ -185,6 +204,8 @@ h2.mg{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:upperca
 .vm{padding:9px 11px}.vn{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.vf{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--ink2);margin-top:3px;word-break:break-all}
 .refs{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}.refs a{font-size:10px;font-weight:800;color:#2c62c9;text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:2px 7px;background:#fff;white-space:nowrap}.refs a:hover{background:var(--bg);border-color:#2c62c9}
 .eq{font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:999px}.eq-gym{background:rgba(21,51,48,.1);color:var(--ink2)}.eq-liga{background:rgba(58,90,140,.14);color:#3A5A8C}.eq-casa{background:rgba(46,125,87,.13);color:var(--ok)}
+.bdg{font-size:9px;font-weight:900;letter-spacing:.03em;padding:1px 6px;border-radius:999px;white-space:nowrap}.bdg.mat{background:rgba(46,125,87,.16);color:var(--ok)}.bdg.iso{background:rgba(154,127,69,.18);color:var(--gold)}.bdg.new{background:rgba(180,69,60,.14);color:var(--terra)}
+.catrow{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 2px}.catchip{font-size:11.5px;font-weight:800;color:var(--ink2);background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 11px}.catchip b{color:var(--terra)}
 .vc.dup{border:2px solid var(--warn)}.dupb{font-size:9.5px;font-weight:900;color:#fff;background:var(--warn);padding:1px 6px;border-radius:999px;white-space:nowrap}
 .layout{display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start}
 .col-side{position:sticky;top:64px;max-height:calc(100vh - 80px);display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -224,20 +245,22 @@ h2.mg{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:upperca
 .prop-name{font-size:.92rem;font-weight:700;color:var(--ink)}
 </style></head><body><div class="w">
 <h1>Videos por movimiento</h1><div class="sub">Cada movimiento con TODAS sus variantes: las que ya tienen video (verde, reproducible) y las que faltan (punteado ámbar). Usa "Solo faltan" para ver de un vistazo qué grabar de cada uno.</div>
-<div class="stats"><div class="stat"><b>${totVid}</b><span>videos conectados (todos visibles)</span></div><div class="stat"><b>${totCon}</b><span>variantes con video</span></div><div class="stat"><b style="color:var(--terra)">${totVar-totCon}</b><span>variantes por grabar</span></div>${totDup?`<div class="stat"><b style="color:var(--warn)">${totDup}</b><span>en cards con 2+ videos ⚠</span></div>`:''}<div class="stat"><b>${pats.length}</b><span>movimientos</span></div></div>
+<div class="stats"><div class="stat"><b>${totVar}</b><span>variantes TOTAL</span></div><div class="stat"><b style="color:var(--ok)">${totCon}</b><span>LISTOS (con video)</span></div><div class="stat"><b style="color:var(--terra)">${totVar-totCon}</b><span>PENDIENTES por grabar</span></div><div class="stat"><b style="color:var(--terra)">${nBacklog}</b><span>backlog nuevo</span></div>${totDup?`<div class="stat"><b style="color:var(--warn)">${totDup}</b><span>en cards con 2+ videos ⚠</span></div>`:''}<div class="stat"><b>${pats.length}</b><span>movimientos</span></div></div>
+<div class="catrow">${catChips}</div>
 <div class="stickyhead"><div class="tabs">${TABS.map(([id,label],i)=>`<span class="tab${i===0?' on':''}" data-tab="${id}">${esc(label)}<span class="tc" data-tabcount="${id}"></span></span>`).join('')}</div>
-<div class="tools"><input type="search" id="q" placeholder="Buscar movimiento, variante o archivo…"><span class="pill on" data-f="all">Todo</span><span class="pill warn" data-f="falta">Solo faltan</span><span class="pill" data-f="ok">Solo con video</span></div></div>
+<div class="tools"><input type="search" id="q" placeholder="Buscar movimiento, variante, id o archivo…"><span class="pill on" data-f="all">Todo</span><span class="pill warn" data-f="falta">Solo faltan</span><span class="pill" data-f="ok">Solo con video</span><span class="pill" data-f2="mat">Mat-only</span><span class="pill" data-f2="iso">Isométrico ⏱</span><span class="pill" data-f2="back">Backlog nuevo</span></div></div>
 <div class="layout"><main class="col-main"><div id="app">${covHtml}${propHtml}${body}${gymOrphanSection}${propSection}${mgGroup('yoga','Por identificar — dime qué postura es cada uno',`<section class="pat" data-region="yoga"><div class="vgrid">${imgCards}</div></section>`,0,0,' style="color:var(--terra)"')}</div></main><aside class="col-side"><div class="side-hd">Lista completa<div class="side-legend"><span class="lg azul">● Movimiento (necesario)</span><span class="lg rojo">● Variante extra</span><span class="lg">✓ ya con video</span></div><input type="search" id="qs" placeholder="Filtrar lista…"></div><div class="side-body">${side}</div></aside></div>
 ${yfalta.length?`<footer>Yoga: falta grabar el flow <b>${esc(yfalta.map(f=>f.name).join(', '))}</b>.</footer>`:''}
-<script>const q=document.getElementById('q');let filter='all',tab='todos';
+<script>const q=document.getElementById('q');let filter='all',filter2='all',tab='todos';
 function regOf(c){const s=c.closest('[data-region]');return s?s.dataset.region:'otros';}
 function tabOk(c){if(tab==='todos')return true;if(tab==='casa')return c.dataset.eq==='casa';if(tab==='ligas')return c.dataset.eq==='liga';return regOf(c)===tab;}
-function apply(){const t=q.value.trim().toLowerCase();document.querySelectorAll('.vc').forEach(c=>{const mf=filter==='all'||(filter==='falta'?c.dataset.falta==='1':c.dataset.falta==='0');const mq=!t||(c.dataset.q||'').includes(t);c.classList.toggle('hidden',!(mf&&mq&&tabOk(c)));});document.querySelectorAll('.pat').forEach(p=>p.classList.toggle('hidden',!p.querySelector('.vc:not(.hidden)')));document.querySelectorAll('.mggroup').forEach(g=>{const has=!!g.querySelector('.pat:not(.hidden)');g.classList.toggle('hidden',!has);if(t&&has)g.classList.add('open');});}
+function apply(){const t=q.value.trim().toLowerCase();document.querySelectorAll('.vc').forEach(c=>{const mf=filter==='all'||(filter==='falta'?c.dataset.falta==='1':c.dataset.falta==='0');const m2=filter2==='all'||c.dataset[filter2]==='1';const mq=!t||(c.dataset.q||'').includes(t);c.classList.toggle('hidden',!(mf&&m2&&mq&&tabOk(c)));});document.querySelectorAll('.pat').forEach(p=>p.classList.toggle('hidden',!p.querySelector('.vc:not(.hidden)')));document.querySelectorAll('.mggroup').forEach(g=>{const has=!!g.querySelector('.pat:not(.hidden)');g.classList.toggle('hidden',!has);if(t&&has)g.classList.add('open');});}
 // contador por pestaña: cuántos movimientos (cards) hay en cada región
 (function tabCounts(){const cards=[...document.querySelectorAll('.vc')];document.querySelectorAll('.tab').forEach(tb=>{const id=tb.dataset.tab;const n=id==='todos'?cards.length:id==='casa'?cards.filter(c=>c.dataset.eq==='casa').length:id==='ligas'?cards.filter(c=>c.dataset.eq==='liga').length:cards.filter(c=>regOf(c)===id).length;const s=tb.querySelector('.tc');if(s)s.textContent=n;});})();
 document.querySelectorAll('.mghead').forEach(h=>h.addEventListener('click',()=>h.parentElement.classList.toggle('open')));
 document.querySelectorAll('.tab').forEach(tb=>tb.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));tb.classList.add('on');tab=tb.dataset.tab;document.querySelectorAll('.mggroup').forEach(g=>g.classList.remove('open'));window.scrollTo(0,0);apply();}));
-q.addEventListener('input',apply);const qs=document.getElementById('qs');qs.addEventListener('input',()=>{const t=qs.value.trim().toLowerCase();document.querySelectorAll('.s-pat,.s-var').forEach(r=>r.classList.toggle('hidden',t&&!r.dataset.q.includes(t)));document.querySelectorAll('.side-mg').forEach(h=>{let n=h.nextElementSibling,vis=false;while(n&&!n.classList.contains('side-mg')){if(!n.classList.contains('hidden')){vis=true;break;}n=n.nextElementSibling;}h.classList.toggle('hidden',!vis);});});document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');filter=p.dataset.f;apply();}));</script>
+q.addEventListener('input',apply);const qs=document.getElementById('qs');qs.addEventListener('input',()=>{const t=qs.value.trim().toLowerCase();document.querySelectorAll('.s-pat,.s-var').forEach(r=>r.classList.toggle('hidden',t&&!r.dataset.q.includes(t)));document.querySelectorAll('.side-mg').forEach(h=>{let n=h.nextElementSibling,vis=false;while(n&&!n.classList.contains('side-mg')){if(!n.classList.contains('hidden')){vis=true;break;}n=n.nextElementSibling;}h.classList.toggle('hidden',!vis);});});document.querySelectorAll('.pill[data-f]').forEach(p=>p.addEventListener('click',()=>{document.querySelectorAll('.pill[data-f]').forEach(x=>x.classList.remove('on'));p.classList.add('on');filter=p.dataset.f;apply();}));
+document.querySelectorAll('.pill[data-f2]').forEach(p=>p.addEventListener('click',()=>{const on=p.classList.contains('on');document.querySelectorAll('.pill[data-f2]').forEach(x=>x.classList.remove('on'));if(on){filter2='all';}else{p.classList.add('on');filter2=p.dataset.f2;}apply();}));</script>
 </div></body></html>`;
 fs.writeFileSync('public/videos-review.html',html);
 console.log('página regenerada:',pats.length,'movimientos,',totCon,'con video,',totVar-totCon,'faltan');

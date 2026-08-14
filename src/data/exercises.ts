@@ -1,6 +1,7 @@
 import type { Exercise } from '../types';
 import type { AppLanguage } from '../store';
 import type { ExerciseOverlay } from './exercises.en';
+import { BACKLOG_EXERCISES, BACKLOG_VARIANTS } from './exercisesBacklog';
 
 // Overlay EN cargado bajo demanda (import dinámico) → NO va en el bundle inicial.
 // Para usuarios ES (mayoría) nunca se descarga. getExercises('en') usa optional
@@ -29,7 +30,7 @@ export async function loadExercisesEn(): Promise<void> {
 // 68 patrones de fuerza/cardio + 35 yoga poses = 103 ejercicios totales
 // ════════════════════════════════════════════════════════════════
 
-export const exercises: Exercise[] = [
+const baseExercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   // PECHO (8 patrones)
   // ══════════════════════════════════════════════════════════════
@@ -3522,6 +3523,19 @@ export const exercises: Exercise[] = [
     bg: 'linear-gradient(135deg,#f0e0d0,#e8d0b8)',
   },
 ];
+
+// ── Fusión del BACKLOG (pendiente de grabar) ────────────────────────────────
+// Añade variantes pendientes a patrones existentes y concatena los patrones nuevos.
+// Todo llega SIN video → hasPlayableVariant() lo excluye de producción hasta que su
+// clip se conecte. Recalcula equipment = UNIÓN de variantes para no romper el invariante.
+for (const ex of baseExercises) {
+  const extra = BACKLOG_VARIANTS[ex.id];
+  if (!extra) continue;
+  ex.variants = [...(ex.variants ?? []), ...extra];
+  ex.equipment = [...new Set(ex.variants.flatMap((v) => v.equipment))] as typeof ex.equipment;
+}
+
+export const exercises: Exercise[] = [...baseExercises, ...BACKLOG_EXERCISES];
 
 // i18n de contenido (A2a): devuelve el banco con name/desc/tip traducidos
 // cuando locale==='en' (overlay exercises.en.ts). steps/variants → A2b.

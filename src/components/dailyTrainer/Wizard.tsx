@@ -439,14 +439,20 @@ export default function Wizard({
             <div className="wz-chips wz-chips-col">
               {GEAR_ENV_OPTIONS.map(opt => {
                 const isGymEnv = gear.includes('gym');
-                const on = opt.value === 'gym' ? isGymEnv : !isGymEnv;
+                const isMatEnv = gear.includes('tapete');
+                // tri-estado: gym / solo tapete / propio equipo (el resto).
+                const on = opt.value === 'gym' ? isGymEnv : opt.value === 'tapete' ? isMatEnv : (!isGymEnv && !isMatEnv);
                 return (
                   <button
                     key={opt.value}
                     className={`wz-chip wz-chip-block${on ? ' on' : ''}`}
-                    // gym → set canónico ['gym']; propio equipo → conserva lo ya elegido
-                    // sin gym (o vacío = solo peso corporal).
-                    onClick={() => setGear(opt.value === 'gym' ? ['gym'] : gear.filter(g => g !== 'gym'))}
+                    // gym → ['gym']; solo tapete → ['tapete'] (exclusivo, sin implementos);
+                    // propio equipo → conserva lo elegido quitando gym/tapete (vacío = peso corporal).
+                    onClick={() => setGear(
+                      opt.value === 'gym' ? ['gym']
+                      : opt.value === 'tapete' ? ['tapete']
+                      : gear.filter(g => g !== 'gym' && g !== 'tapete'),
+                    )}
                   >
                     <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
                     {/* CARDIO: "propio equipo" no pregunta implementos → el copy real es "sin equipo /
@@ -462,7 +468,7 @@ export default function Wizard({
                 dominadas/bandas no cambian una sesión de cardio (el banco solo distingue gym-vs-no,
                 auditado) → eran botones decorativos. La distinción útil de cardio (gym → máquinas/
                 kettlebell) ya la da el Paso 1. En fuerza/hipertrofia el selector se mantiene igual. */}
-            {!gear.includes('gym') && selectedModality !== 'cardio' && (
+            {!gear.includes('gym') && !gear.includes('tapete') && selectedModality !== 'cardio' && (
               <div className="wz-subq">
                 <p className="wz-q-sublabel">{t('wizard.gearOwnQ')}</p>
                 <p className="wz-q-hint wz-q-hint-block">{t('wizard.gearOwnHint')}</p>

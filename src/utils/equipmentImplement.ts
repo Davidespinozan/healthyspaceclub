@@ -21,8 +21,10 @@ export type Implement =
   | 'kettlebell' | 'bodyweight' | 'band' | 'gym-other'
   | 'bench'; // no lo DEVUELVE variantImplement — es un flag de capacidad en el set del gear.
 
-/** Lo que el usuario declara tener (multi-select). location-agnostic. */
-export type Gear = 'gym' | 'mancuernas' | 'barra' | 'banco' | 'dominadas' | 'ligas' | 'cuerpo';
+/** Lo que el usuario declara tener (multi-select). location-agnostic.
+ *  'tapete' = SOLO TAPETE (cuerpo + suelo, SIN infraestructura: ni barra de dominadas,
+ *  banco, silla, pared, step, banda…). Es exclusivo: si está, el resto se ignora. */
+export type Gear = 'gym' | 'mancuernas' | 'barra' | 'banco' | 'dominadas' | 'ligas' | 'cuerpo' | 'tapete';
 
 /**
  * Implemento de una variante, derivado de su nombre/id (+ nombre del patrón como
@@ -89,11 +91,14 @@ export interface EquipmentCapabilities {
   equipmentList: Equipment[];        // bucket GRUESO (compat); qué categorías de variante mirar
   hasFullGym: boolean;               // acceso a gimnasio completo
   hasWeights: boolean;               // ¿puede usar carga externa cuantificable? (gym/mancuernas/barra)
+  matOnly: boolean;                  // SOLO TAPETE: pool restringido a variantes mat-only (ver matOnly.ts)
 }
 
 /** Deriva TODAS las capacidades desde el gear canónico. Único punto de derivación. */
 export function deriveCapabilities(gear: Gear[]): EquipmentCapabilities {
   const has = (g: Gear) => gear.includes(g);
+  // SOLO TAPETE es exclusivo: ignora cualquier otro gear (no hay banco/banda/barra…).
+  const matOnly = has('tapete') && !has('gym') && !has('mancuernas') && !has('barra') && !has('banco') && !has('dominadas') && !has('ligas');
   const allowedImplements = gearToImplements(gear);
   const hasFullGym = has('gym');
   const hasWeights = has('gym') || has('mancuernas') || has('barra');
@@ -102,7 +107,7 @@ export function deriveCapabilities(gear: Gear[]): EquipmentCapabilities {
   const equipmentList: Equipment[] = ['cuerpo'];
   if (hasFullGym || has('mancuernas') || has('barra') || has('banco') || has('dominadas')) equipmentList.push('gym');
   if (has('ligas')) equipmentList.push('ligas');
-  return { allowedImplements, equipmentList, hasFullGym, hasWeights };
+  return { allowedImplements, equipmentList, hasFullGym, hasWeights, matOnly };
 }
 
 /** Firma CANÓNICA del gear para el configHash (orden estable → mismo hash sin importar el

@@ -55,6 +55,7 @@ import { computeReadiness, readinessToRecovery, chronicRecoveryTrend, chronicToR
 import { rirError } from '../utils/rirFeedback';
 import { formatCoachTrace } from '../utils/coachTrace';
 import { deriveCapabilities, gearSignature, type Gear } from '../utils/equipmentImplement';
+import { matOnlyBank } from '../data/matOnly';
 import {
   getCachedWorkout,
   saveWorkoutToCache,
@@ -238,11 +239,16 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     return stored ?? ['gym'];
   });
   const caps = useMemo(() => deriveCapabilities(gear), [gear]);
+  // SOLO TAPETE: `bank` es el pool restringido a variantes mat-only y alimenta TODO el
+  // pipeline de generación (main, warm-up, cardio, capacidades, fallbacks, swaps del player).
+  // Así ningún camino puede colar infraestructura. Un usuario normal conserva el banco completo.
+  // Las analíticas de modalidad (arriba) siguen usando `exerciseBank` crudo a propósito.
+  const bank = useMemo(() => (caps.matOnly ? matOnlyBank(exerciseBank) : exerciseBank), [caps.matOnly, exerciseBank]);
   // Capacidades de cardio derivadas del CONTENIDO REAL (video) + gym-vs-no. Fuente única para
   // deshabilitar modalidades sin contenido en la UI (1ª defensa); el guard de generación es la 2ª.
   const cardioCapabilities = useMemo(
-    () => getCardioCapabilities(exerciseBank, cardioEquipmentFor(caps.hasFullGym ? ['gym'] : ['cuerpo'])),
-    [caps.hasFullGym, exerciseBank],
+    () => getCardioCapabilities(bank, cardioEquipmentFor(caps.hasFullGym ? ['gym'] : ['cuerpo'])),
+    [caps.hasFullGym, bank],
   );
   // TRAINING GOAL (Fase 2 · UI): qué adaptación de resistencia. Restaura del plan sellado;
   // si no, cae a la preferencia del perfil (obData.trainingGoal → hipertrofia por default).
@@ -548,7 +554,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       let guardedSplit: WorkoutDayType | null = requestedSplit;
       if (requestedSplit && STRENGTH_SPLITS.includes(requestedSplit)) {
         const supported = supportedSplitsForEquipment({
-          exercises: exerciseBank, equipment: caps.equipmentList, allowedImplements: caps.allowedImplements,
+          exercises: bank, equipment: caps.equipmentList, allowedImplements: caps.allowedImplements,
           goal, difficulty: levelFromObData(obData), lowImpactMode: lowImpactUser, candidates: [requestedSplit],
         });
         if (!supported.includes(requestedSplit)) {
@@ -596,7 +602,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       });
 
       // Intentar cache (para TODAS las modalidades)
-      const validIds = new Set(exerciseBank.map(e => e.id));
+      const validIds = new Set(bank.map(e => e.id));
       // GEAR GRANULAR: `equipmentList` es el filtro GRUESO (qué buckets mirar); la AUTORIDAD
       // FINA es `caps.allowedImplements` (qué implementos concretos puede ejecutar). Ambos se
       // DERIVAN del gear canónico. CARDIO: sus capacidades derivan de hasFullGym (máquinas solo
@@ -609,7 +615,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       const fitsEquipment = (w: { exercises?: Array<{ id?: string }> } | null): boolean => {
         if (!w || !Array.isArray(w.exercises)) return false;
         return w.exercises.every(ex => {
-          const b = exerciseBank.find(e => e.id === ex.id);
+          const b = bank.find(e => e.id === ex.id);
           if (!b) return false;
           const useCardioEq = selectedModality === 'cardio' || b.muscleGroup === 'cardio' || b.type === 'cardio';
           const eq = useCardioEq ? cardioEquipmentFor(cardioEqBase) : equipmentList;
@@ -624,7 +630,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       } else if (cached && validateWorkout(cached, validIds) && fitsEquipment(cached)) {
         // Fuerza/cardio/auto: cache válido. Aplica el reparador estructural
         // (por si fue cacheado antes de estas reglas).
-        cached.exercises = repairWorkoutStructure(cached.exercises, exerciseBank, { hasWeights: caps.hasWeights, trainingGoal }).exercises;
+        cached.exercises = repairWorkoutStructure(cached.exercises, bank, { hasWeights: caps.hasWeights, trainingGoal }).exercises;
         // Pareja: la rutina cacheada TAMBIÉN debe llevar los metadatos de pareja y
         // entregarse al compañero. Sin esto, un cache-hit dejaba al compañero sin
         // rutina y A veía el plan como "solo" (sin cabecera ni formato juntos/alternado).
@@ -695,7 +701,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       }
 
       // Filter by modality first, then by equipment/muscles
-      const modalityFiltered = filterByModality(exerciseBank, selectedModality);
+      const modalityFiltered = filterByModality(bank, selectedModality);
 
       // Sesión de pareja: el entrenador evita también los músculos que el
       // COMPAÑERO entrenó recientemente (si él hizo pierna ayer, hoy no toca).
@@ -739,7 +745,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         equipment: equipmentList,
         lowImpactMode,
         isDeload: mesoDeload,   // P1 · descarga recorta el finisher (no re-meter fatiga)
-        bank: exerciseBank,
+        bank,
       });
 
       let candidates: Exercise[];
@@ -770,7 +776,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           : [...styled, ...pool.filter(ex => !styled.includes(ex))];
       } else {
         const filterResult = filterWithProgressiveRelaxation({
-          exercises: modalityFiltered.length > 0 ? modalityFiltered : exerciseBank,
+          exercises: modalityFiltered.length > 0 ? modalityFiltered : bank,
           equipment: equipmentList,
           muscleGroups,
           goal,
@@ -1624,7 +1630,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           yogaPlan={plan as unknown as YogaPlan}
           regenBlocked={regenBlocked}
           selectedEquipment={selectedEquipment}
-          exerciseBank={exerciseBank}
+          exerciseBank={bank}
           addCompletedSession={addCompletedSession}
           markActiveDay={markActiveDay}
           onRegenerate={handleRegenerate}
@@ -1644,7 +1650,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         selectedModality={selectedModality}
         selectedTime={selectedTime}
         todayDecision={todayDecision}
-        exerciseBank={exerciseBank}
+        exerciseBank={bank}
         addCompletedSession={addCompletedSession}
         markActiveDay={markActiveDay}
         onRegenerate={handleRegenerate}

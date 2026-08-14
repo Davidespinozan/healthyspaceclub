@@ -774,6 +774,7 @@ export const en: Translations<typeof es> = {
     gearEnvQ: 'Where will you train?',
     gearEnvGym: 'Full gym',
     gearEnvOwn: 'With my own equipment',
+    gearEnvMat: 'Mat only / no equipment',
     gearOwnQ: 'What do you have?',
     gearOwnHint: 'Bodyweight always counts. Check what you have — or nothing.',
     gearDumbbells: 'Dumbbells',

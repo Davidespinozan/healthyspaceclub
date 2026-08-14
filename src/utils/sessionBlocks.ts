@@ -213,7 +213,10 @@ function pickActivation(bank: Exercise[], dayMuscles: MuscleGroup[], equipment: 
   const usable = (ex: Exercise) => ex.equipment.some(e => eq.includes(e) || e === 'cuerpo');
   const isDayMuscle = (ex: Exercise) =>
     dayMuscles.includes(ex.muscleGroup) || (ex.secondaryMuscles ?? []).some(m => dayMuscles.includes(m));
-  const activacion = bank.filter(ex => ex.type === 'activacion' && usable(ex));
+  // Invariante de producción (§19): solo se programa lo que YA tiene video reproducible.
+  // Sin este gate, una activación NUEVA sin clip (backlog) entraría al warm-up. Cuando su
+  // video se conecte, vuelve a ser elegible automáticamente (no hay que tocar el coach).
+  const activacion = bank.filter(ex => ex.type === 'activacion' && usable(ex) && isReproducibleStation(ex, eq));
   // 1) activación específica del día
   const specific = dayMuscles.length ? activacion.find(isDayMuscle) : null;
   if (specific) return specific;

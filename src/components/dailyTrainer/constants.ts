@@ -104,9 +104,10 @@ export const EQUIPMENT_OPTIONS: Array<{ value: Equipment; labelKey: TranslationK
 ];
 
 // GEAR granular (2 pasos) · Paso 1: ¿dónde entrenas? (entorno/acceso, NO implemento).
-export const GEAR_ENV_OPTIONS: Array<{ value: 'gym' | 'own'; labelKey: TranslationKey; icon: LucideIcon }> = [
+export const GEAR_ENV_OPTIONS: Array<{ value: 'gym' | 'own' | 'tapete'; labelKey: TranslationKey; icon: LucideIcon }> = [
   { value: 'gym', labelKey: 'wizard.gearEnvGym', icon: Building2 },
   { value: 'own', labelKey: 'wizard.gearEnvOwn', icon: Home },
+  { value: 'tapete', labelKey: 'wizard.gearEnvMat', icon: PersonStanding }, // solo tapete / sin equipo
 ];
 
 // Paso 2 (solo si "con mi propio equipo") · implementos multi-select. El peso corporal
