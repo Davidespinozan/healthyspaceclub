@@ -104,6 +104,7 @@ export default function WorkoutPlayer({
   // Fase 3 — bloques de la sesión (opcionales; rutinas viejas no los traen).
   const warmupBlock = (workout as CachedWorkout).warmupBlock;
   const finisherBlock = (workout as CachedWorkout).finisherBlock;
+  const cardioMain = (workout as CachedWorkout).cardioMainBlock;   // Fase Cardio Main · plan determinista
 
   // Secuencia de ejecución (intercala superseries por vuelta). El player camina
   // por `currentStep`; las series se guardan POR EJERCICIO (2D) y se aplanan al
@@ -793,6 +794,32 @@ export default function WorkoutPlayer({
           {/* P1 · aviso de descarga — mensaje simple, sin tecnicismos de e1RM/mesociclo. */}
           {workout.isDeload && (
             <div className="wp-deload-banner">{t('workout.deloadBanner')}</div>
+          )}
+          {/* FASE CARDIO MAIN · plan determinista guiado (duración/intensidad/work-rest los fija el
+              motor, no la IA). El usuario ejecuta cada bloque leyéndolo (como el finisher). */}
+          {cardioMain && cardioMain.blocks.length > 0 && (
+            <div className="wp-cardio-plan">
+              <div className="wp-cardio-plan-head">
+                {t('workout.cardioMain.title')} · {t('workout.cardioMain.planned', { n: cardioMain.totalMinutes })}
+                {cardioMain.intenseMinutes > 0 ? ` · ${t('workout.cardioMain.intense', { n: cardioMain.intenseMinutes })}` : ''}
+              </div>
+              {cardioMain.blocks.map((b, i) => (
+                <div className={`wp-cardio-block wp-cardio-block--${b.intensity}`} key={i}>
+                  <span className="wp-cardio-block-min">{b.minutes}′</span>
+                  <span className="wp-cardio-block-body">
+                    <span className="wp-cardio-block-name">
+                      {t(`workout.cardioMain.blocks.${b.labelKey.split('.')[1]}` as Parameters<typeof t>[0])}
+                      {b.stationName ? ` · ${b.stationName}` : ''}
+                    </span>
+                    <span className="wp-cardio-block-detail">
+                      {b.rounds ? t('workout.cardioMain.rounds', { n: b.rounds, work: b.workSec ?? 0, rest: b.restSec ?? 0 }) : (b.zone ?? '')}
+                      {b.cue ? ` — ${b.cue}` : ''}
+                    </span>
+                  </span>
+                </div>
+              ))}
+              {cardioMain.earlyEnd && <div className="wp-cardio-early">{t('workout.cardioMain.earlyEnd')}</div>}
+            </div>
           )}
           <div
             className="wp-video-area"

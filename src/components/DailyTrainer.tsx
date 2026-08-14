@@ -44,6 +44,7 @@ import { computeVolumeTargets, targetsToMap } from '../utils/volumeLandmarks';
 import { allocateSessionVolume, prescribeSession, prescribeExercise, categorize } from '../utils/sessionPrescription';
 import { allocateHeadroom } from '../utils/headroom';
 import { assignTechniques } from '../utils/techniques';
+import { buildCardioMain } from '../utils/cardioMain';
 import { composeSession } from '../utils/sessionBlocks';
 import {
   deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
@@ -1394,6 +1395,32 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
               name: nameOf(e.id) ?? '', label: e.label, prescription: e.prescription,
             })),
           };
+        }
+        // ── FASE CARDIO MAIN · el motor determinista gobierna la estructura del cardio dedicado ──
+        // La duración/intensidad/work-rest salen de buildCardioMain (no de la IA). El player ejecuta
+        // estos bloques; la IA (si corrió) solo aportó cues. `candidates` es el pool ya filtrado por
+        // estilo/gear/seguridad. Si el plan termina antes (explosividad/principiante), es intencional.
+        if (isCardioDay) {
+          const cardioPlan = buildCardioMain({
+            mainBudgetMinutes: sessionPlan.budget.main,
+            style: effectiveCardioStyle,
+            level: levelFromObData(obData),
+            readiness: readiness.state === 'low' ? 'low' : readiness.state === 'high' ? 'high' : 'normal',
+            bodyGoal: String(obData?.goal ?? ''),
+            lowImpactMode,
+            isDeload: mesoDeload,
+            pool: candidates,
+          });
+          w.cardioMainBlock = {
+            style: cardioPlan.style, totalMinutes: cardioPlan.totalMinutes, intenseMinutes: cardioPlan.intenseMinutes,
+            earlyEnd: cardioPlan.earlyEnd, earlyEndReason: cardioPlan.earlyEndReason,
+            blocks: cardioPlan.blocks.map(b => ({
+              kind: b.kind, minutes: b.minutes, stationId: b.stationId, stationName: nameOf(b.stationId) ?? '',
+              intensity: b.intensity, labelKey: b.labelKey, zone: b.zone, rpe: b.rpe,
+              workSec: b.workSec, restSec: b.restSec, rounds: b.rounds, cue: b.cue,
+            })),
+          };
+          console.info(`[cardio-main] ${cardioPlan.style} · ${cardioPlan.totalMinutes}/${sessionPlan.budget.main}min · intenso ${cardioPlan.intenseMinutes} · ${cardioPlan.blocks.length} bloques${cardioPlan.earlyEnd ? ' · fin intencional: ' + cardioPlan.earlyEndReason : ''}`);
         }
       }
 

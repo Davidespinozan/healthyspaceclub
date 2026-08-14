@@ -66,6 +66,26 @@ export interface CachedWorkout {
     // 1 estación (steady/intervals) o 2-3 encadenadas (circuit). Nombres localizados.
     stations: Array<{ name: string; label?: string; prescription?: string }>;
   };
+  // ── CARDIO DEDICADO (Fase Cardio Main) — main determinista por bloques, render-ready ──
+  // El motor (buildCardioMain) gobierna duración/intensidad/work-rest; la IA NO decide estructura.
+  cardioMainBlock?: {
+    style: string;
+    totalMinutes: number;         // suma planificada (≤ presupuesto; puede terminar antes a propósito)
+    intenseMinutes: number;
+    earlyEnd: boolean;
+    earlyEndReason?: string;
+    blocks: Array<{
+      kind: string;               // steady | intervals | drills | power | recovery
+      minutes: number;
+      stationId: string;
+      stationName: string;        // nombre localizado (resuelto al construir)
+      intensity: string;          // baja | media | alta
+      labelKey: string;           // clave i18n del nombre del bloque
+      zone?: string; rpe?: number;
+      workSec?: number; restSec?: number; rounds?: number;
+      cue?: string;
+    }>;
+  };
   // ── Metadatos de modo pareja ──
   partnerMode?: boolean;
   partnerName?: string;

@@ -1296,3 +1296,44 @@
 .wp-prep-card .wp-cta {
   width: 100%;
 }
+
+/* ── FASE CARDIO MAIN · plan determinista guiado ── */
+.wp-cardio-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  background: var(--wp-surface2, rgba(255,255,255,0.04));
+  border: 1px solid var(--wp-border, rgba(255,255,255,0.08));
+}
+.wp-cardio-plan-head {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--wp-amber);
+  letter-spacing: 0.02em;
+}
+.wp-cardio-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  background: var(--wp-surface, rgba(255,255,255,0.03));
+  border-left: 3px solid var(--wp-txt3, #888);
+}
+.wp-cardio-block--alta { border-left-color: var(--wp-amber); }
+.wp-cardio-block--media { border-left-color: var(--wp-txt2, #bbb); }
+.wp-cardio-block--baja { border-left-color: var(--wp-good, #4caf7d); }
+.wp-cardio-block-min {
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  min-width: 42px;
+  color: var(--wp-txt1, #fff);
+}
+.wp-cardio-block-body { display: flex; flex-direction: column; gap: 2px; }
+.wp-cardio-block-name { font-size: 13px; font-weight: 600; color: var(--wp-txt1, #fff); }
+.wp-cardio-block-detail { font-size: 11.5px; color: var(--wp-txt2, #bbb); }
+.wp-cardio-early { font-size: 11.5px; font-style: italic; color: var(--wp-txt2, #bbb); margin-top: 2px; }
