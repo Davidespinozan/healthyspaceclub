@@ -458,7 +458,11 @@ export default function WorkoutPlan({
             const checkDay = dayKey(new Date());
             const setWorkoutCheck = useAppStore.getState().setWorkoutCheck;
 
-            const exercisesLog: ExerciseLogItem[] = plan.exercises.map((ex, i) => {
+            // FUENTE DE VERDAD del historial = lo REALMENTE ejecutado (swaps aplicados por el
+            // player). Si el usuario cambió A→B, `data.exercises[i]` es B → history/progresión
+            // bajo B, y A (del plan original) queda intacto. Fallback al plan por compat.
+            const executed = data.exercises ?? plan.exercises;
+            const exercisesLog: ExerciseLogItem[] = executed.map((ex, i) => {
               const setsForExercise = performedByExercise[i] || [];
               const hasAnyData = setsForExercise.length > 0;
               const allSkipped = hasAnyData && setsForExercise.every(s => s === null);
@@ -505,7 +509,7 @@ export default function WorkoutPlan({
             // P6 · extrae observaciones de RIR real (solo series donde el usuario lo
             // reportó) → alimenta la calibración de carga (P2) y la tendencia crónica.
             // En deload NO se capturan (rirRelevant=false) y aquí se omite por seguridad.
-            const rirObs = isDeloadSession ? [] : plan.exercises.flatMap((ex, i) =>
+            const rirObs = isDeloadSession ? [] : executed.flatMap((ex, i) =>
               (performedByExercise[i] || [])
                 .filter((s): s is LoggedSet => s != null && s.rir != null)
                 .map(s => ({
@@ -533,9 +537,13 @@ export default function WorkoutPlan({
               generationMethod: 'ai_generated',
               loggedSets: data.loggedSets,
               isDeload: (plan as { isDeload?: boolean }).isDeload === true, // P1 · marca la sesión de descarga
-              // Fase 3 · crédito compartido: liga la sesión al compañero (del plan,
-              // que lleva partnerId/partnerName — robusto venga de donde venga).
-              partnerUserId: plan.partnerMode ? ((plan as { partnerId?: string | null }).partnerId ?? null) : null,
+              // Fase 3 · crédito compartido: liga la sesión al OTRO. En el device de B el "otro"
+              // es el owner (A), no B mismo → si soy B, el partner es ownerId; si soy A, es partnerId.
+              partnerUserId: plan.partnerMode
+                ? ((userId && (plan as { ownerId?: string | null }).ownerId && userId !== (plan as { ownerId?: string | null }).ownerId)
+                    ? ((plan as { ownerId?: string | null }).ownerId ?? null)          // soy B → el otro es A (owner)
+                    : ((plan as { partnerId?: string | null }).partnerId ?? null))      // soy A → el otro es B (partner)
+                : null,
               partnerName: plan.partnerMode ? (plan.partnerName ?? null) : null,
             }, addCompletedSession, markActiveDay).catch(() => {});
 

@@ -19,6 +19,8 @@ import { selectVariantForEquipment, hasPlayableVariant, exerciseVideoCandidateId
 import type { Implement } from '../utils/equipmentImplement';
 import type { WorkoutExercise } from '../utils/workoutSession';
 import { parseRepsToNumber } from '../utils/workoutLogger';
+import { targetSecondsFromReps } from '../utils/blockTimer';
+import { isPartnerBDevice, partnerExerciseView } from '../utils/partnerView';
 import { nextSetSuggestion } from '../utils/rirFeedback';
 import { computeProgression, incrementForMuscle } from '../utils/progression';
 import {
@@ -56,6 +58,7 @@ interface Props {
     totalSetsCompleted: number;
     durationSeconds: number;
     loggedSets: Array<LoggedSet | null>;
+    exercises: WorkoutExercise[]; // ejecutados (swaps aplicados) — autoridad para history
   }) => void;
   onClose: () => void;
 }
@@ -189,11 +192,23 @@ export default function WorkoutPlayer({
   // #3 — "Cambiar este ejercicio": override por índice. La estructura (secuencia/
   // bloques) sale de baseExercises; el render usa `exercises` con los overrides.
   const [swaps, setSwaps] = useState<Record<number, WorkoutExercise>>(() => savedProgress?.swaps ?? {});
+  // ── Identidad A/B (modo pareja) — estable por ownerId, no por heurística de dispositivo ──
+  const myId = useAppStore(s => s.user?.id) ?? null;
+  const partnerMode = !!workout.partnerMode;
+  const partnerId = (workout.partnerId as string | null) ?? null;
+  const ownerId = (workout.ownerId as string | null) ?? null;
+  const iAmPartnerB = isPartnerBDevice(myId, ownerId, partnerMode);
+  // `exercises` = base + swaps del usuario + VISTA por persona: el compañero (B) ve su propia
+  // prescripción (repsB/tipB) como principal → display, timer, logging y swap la usan de forma
+  // transparente. A (owner) y el flujo individual quedan sin cambios.
   const exercises = useMemo(
-    () => baseExercises.map((e, i) => swaps[i] ?? e),
-    [baseExercises, swaps],
+    () => baseExercises.map((e, i) => partnerExerciseView(swaps[i] ?? e, iAmPartnerB)),
+    [baseExercises, swaps, iAmPartnerB],
   );
   const [restState, setRestState] = useState<{ secondsLeft: number; total: number } | null>(null);
+  // ── Timer time-based (cardio / isométricos) — timestamp-based (robusto a background/pausa) ──
+  const [hold, setHold] = useState<{ startedAt: number; accumPausedMs: number; pausedAt: number | null } | null>(null);
+  const [holdElapsed, setHoldElapsed] = useState(0);
   // P6 · prompt de RIR real tras una serie RELEVANTE (top set de compuesto principal).
   // Mínima fricción: solo aparece ahí, un tap y listo. `suggestion` = pista de autoajuste.
   const [rirPrompt, setRirPrompt] = useState<{ exerciseIndex: number; setIndex: number; prescribedRir: number; topKg: number } | null>(null);
@@ -211,6 +226,15 @@ export default function WorkoutPlayer({
   const currentExerciseIndex = step?.exIndex ?? Math.max(0, exercises.length - 1);
   const currentSetNum = step?.setNum ?? 1;
   const currentEx = exercises[currentExerciseIndex];
+  // Ejercicio por TIEMPO (cardio/isométrico): objetivo en segundos derivado del MISMO string
+  // de reps que usa el motor. null = ejercicio normal de reps (flujo intacto).
+  const holdTargetSec = currentEx ? targetSecondsFromReps(currentEx.reps) : null;
+  const holdLeft = holdTargetSec != null ? Math.max(0, holdTargetSec - holdElapsed) : 0;
+  const startHold = () => { setHoldElapsed(0); setHold({ startedAt: Date.now(), accumPausedMs: 0, pausedAt: null }); };
+  const togglePauseHold = () => setHold(h => !h ? h : h.pausedAt != null
+    ? { ...h, accumPausedMs: h.accumPausedMs + (Date.now() - h.pausedAt), pausedAt: null }   // resume
+    : { ...h, pausedAt: Date.now() });                                                        // pause
+  const finishHoldEarly = () => { markCurrentSet(holdElapsed); setHold(null); setHoldElapsed(0); };
   const currentBank = currentEx ? exerciseMap.get(currentEx.id) : undefined;
   const variant = currentBank ? selectVariantForEquipment(currentBank, userEquipment, allowedImplements) : null;
   // En gym el implemento (barra/mancuerna/máquina) NO importa y el agarre ya va en el
@@ -301,9 +325,7 @@ export default function WorkoutPlayer({
   const currentBlockNumber = currentBlockIndex >= 0 ? currentBlockIndex + 1 : 1;
 
   // ── Co-presencia + turnos (Parte 2): comparto mis sets hechos y veo los del otro.
-  const myId = useAppStore(s => s.user?.id) ?? null;
-  const partnerMode = !!workout.partnerMode;
-  const partnerId = (workout.partnerId as string | null) ?? null;
+  // (myId/partnerMode/partnerId/ownerId/iAmPartnerB ya definidos arriba, junto a `exercises`.)
   const partnerName = workout.partnerName || '';
   // #2 — Un solo móvil: modo compañero SIN dispositivo conectado (invitado). No hay
   // sync en vivo ni turnos; se hace la rutina de LOS DOS en este teléfono, mostrando
@@ -463,6 +485,24 @@ export default function WorkoutPlayer({
     return () => clearInterval(interval);
   }, [restState, phase]);
 
+  // ── Hold/cardio timer: elapsed calculado por TIMESTAMPS (no por conteo de ticks) →
+  //    sobrevive a background/lock/cambio de app. El tick solo refresca la UI.
+  useEffect(() => {
+    if (!hold || hold.pausedAt != null) return;
+    const tick = () => setHoldElapsed(Math.max(0, Math.floor((Date.now() - hold.startedAt - hold.accumPausedMs) / 1000)));
+    tick();
+    const id = setInterval(tick, 250);
+    return () => clearInterval(id);
+  }, [hold]);
+  // Reset del timer al cambiar de step/serie.
+  useEffect(() => { setHold(null); setHoldElapsed(0); }, [currentStep]);
+  // Auto-completa la serie cuando el countdown llega a 0 (aguantó el objetivo completo).
+  useEffect(() => {
+    if (holdTargetSec == null || !hold || hold.pausedAt != null) return;
+    if (holdElapsed >= holdTargetSec) { markCurrentSet(holdTargetSec); setHold(null); setHoldElapsed(0); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [holdElapsed, holdTargetSec, hold]);
+
   // ── Handlers (lógica delegada a src/utils/workoutSession.ts)
 
   // El resume ahora se aplica en los inicializadores de estado (savedProgress),
@@ -486,7 +526,7 @@ export default function WorkoutPlayer({
   // NO auto-avanza: aparece la CTA "siguiente bloque". En cualquier otro paso
   // avanza al siguiente step y arma el descanso (restAfter=0 → encadenado, sin
   // descanso, pasa directo al siguiente ejercicio del bloque).
-  function markCurrentSet() {
+  function markCurrentSet(actualSeconds?: number) {
     // Turnos: no puedes adelantarte a tu compañero (debe alcanzarte primero).
     if (partnerTurn) return;
     if (!step || currentSetMarked || !currentEx) return;
@@ -507,10 +547,11 @@ export default function WorkoutPlayer({
         : (progression?.kg != null && progression.kg > 0 ? progression.kg : sessionKg);
       kg = sessionKg > 0 ? sessionKg : suggestedKg;
     }
-    const entry: LoggedSet = {
-      reps: parseRepsToNumber(currentEx.reps),
-      kg,
-    };
+    // Time-based (cardio/isométrico): se registran los SEGUNDOS REALES ejecutados (no el
+    // objetivo). Si aguantó 22 de 40, history guarda 22. kg=0 (sin carga externa).
+    const entry: LoggedSet = actualSeconds != null
+      ? { reps: Math.max(0, Math.round(actualSeconds)), kg: 0 }
+      : { reps: parseRepsToNumber(currentEx.reps), kg };
     setLoggedByExercise(prev => setLogAt(prev, currentExerciseIndex, currentSetNum - 1, entry));
     // P6 · pide RIR real SOLO en la serie relevante (top set del compuesto principal con
     // carga): es donde calibra el motor de carga. Una sola vez por ejercicio, un tap.
@@ -863,6 +904,10 @@ export default function WorkoutPlayer({
             {currentEx.tip_personalizado && (
               <p className="wp-ex-tip">{currentEx.tip_personalizado}</p>
             )}
+            {/* Coordinación de pareja (prescrita por el motor): juntos / alternado / asistido. */}
+            {partnerMode && currentEx.format && (
+              <p className="wp-partner-format">🤝 {t(`workout.partnerFormat.${currentEx.format}` as Parameters<typeof t>[0])}</p>
+            )}
             {/* #2 — Un solo móvil: prescripción de los DOS. Mismo ejercicio y series;
                 las reps (y el cue) pueden diferir por persona. */}
             {singleDevice && currentEx.repsB && (
@@ -1002,16 +1047,39 @@ export default function WorkoutPlayer({
                 <ChevronRight size={18} />
               </button>
             ) : !restState ? (
-              <button
-                className="wp-complete-cta"
-                onClick={markCurrentSet}
-                disabled={partnerTurn}
-              >
-                <span className="wp-complete-cta-main">{t('workout.completeSet')}</span>
-                <span className="wp-complete-cta-sub">
-                  {t('workout.set')} {currentSetNum} {t('workout.of')} {totalSetsForCurrent} · {currentEx.reps} {t('workout.repsLower')}
-                </span>
-              </button>
+              holdTargetSec != null ? (
+                // TIME-BASED (cardio / isométrico): countdown real por serie. No se puede
+                // "tap-through": el objetivo se cronometra y se registran los segundos reales.
+                <div className="wp-hold">
+                  <div className="wp-hold-count">{formatTime(holdLeft)}</div>
+                  <div className="wp-complete-cta-sub">
+                    {t('workout.set')} {currentSetNum} {t('workout.of')} {totalSetsForCurrent} · {currentEx.reps}
+                  </div>
+                  {!hold ? (
+                    <button className="wp-complete-cta" onClick={startHold} disabled={partnerTurn}>
+                      <span className="wp-complete-cta-main">▶ {t('workout.startHold')}</span>
+                    </button>
+                  ) : (
+                    <div className="wp-hold-controls">
+                      <button className="wp-fin-skip" onClick={togglePauseHold}>
+                        {hold.pausedAt != null ? t('workout.resumeHold') : t('workout.pauseHold')}
+                      </button>
+                      <button className="wp-fin-skip" onClick={finishHoldEarly}>{t('workout.finishEarly')}</button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  className="wp-complete-cta"
+                  onClick={() => markCurrentSet()}
+                  disabled={partnerTurn}
+                >
+                  <span className="wp-complete-cta-main">{t('workout.completeSet')}</span>
+                  <span className="wp-complete-cta-sub">
+                    {t('workout.set')} {currentSetNum} {t('workout.of')} {totalSetsForCurrent} · {currentEx.reps} {t('workout.repsLower')}
+                  </span>
+                </button>
+              )
             ) : null}
           </div>
         </div>

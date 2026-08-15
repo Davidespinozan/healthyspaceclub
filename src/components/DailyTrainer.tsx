@@ -244,6 +244,13 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // Así ningún camino puede colar infraestructura. Un usuario normal conserva el banco completo.
   // Las analíticas de modalidad (arriba) siguen usando `exerciseBank` crudo a propósito.
   const bank = useMemo(() => (caps.matOnly ? matOnlyBank(exerciseBank) : exerciseBank), [caps.matOnly, exerciseBank]);
+  // CAPABILITY UX (honestidad): splits que el equipo actual NO puede sostener (pool < mínimo)
+  // → la UI los deshabilita en vez de dejar que se seleccionen y degraden en silencio a full-body.
+  // Derivado del banco reproducible real (no hardcode). auto/specific nunca se bloquean.
+  const supportedFoci = useMemo(
+    () => new Set<string>(supportedSplitsForEquipment({ exercises: bank, equipment: caps.equipmentList, allowedImplements: caps.allowedImplements, goal: 'hipertrofia', difficulty: levelFromObData(obData) })),
+    [bank, caps.equipmentList, caps.allowedImplements, obData],
+  );
   // Capacidades de cardio derivadas del CONTENIDO REAL (video) + gym-vs-no. Fuente única para
   // deshabilitar modalidades sin contenido en la UI (1ª defensa); el guard de generación es la 2ª.
   const cardioCapabilities = useMemo(
@@ -643,6 +650,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           (cached as CachedWorkout).partnerName = partnerName.trim() || t('wizard.partnerNamePlaceholder');
           (cached as CachedWorkout).partnerAvatar = pendingPartner?.avatarUrl ?? null;
           (cached as CachedWorkout).partnerId = pendingPartner?.id ?? null;
+          (cached as CachedWorkout).ownerId = useAppStore.getState().user?.id ?? null; // generador = A
         }
         setPlan(cached);
         sealPlan(cached);
@@ -685,6 +693,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           (adjustedPlan as any).partnerName = partnerName.trim() || t('wizard.partnerNamePlaceholder');
           (adjustedPlan as any).partnerAvatar = pendingPartner?.avatarUrl ?? null;
           (adjustedPlan as any).partnerId = pendingPartner?.id ?? null;
+          (adjustedPlan as any).ownerId = useAppStore.getState().user?.id ?? null; // generador = A
         }
 
         // Save plan FIRST, then increment counter
@@ -1490,6 +1499,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         (workout as CachedWorkout).partnerName = partnerName.trim() || t('wizard.partnerNamePlaceholder');
         (workout as CachedWorkout).partnerAvatar = pendingPartner?.avatarUrl ?? null;
         (workout as CachedWorkout).partnerId = pendingPartner?.id ?? null;
+        (workout as CachedWorkout).ownerId = useAppStore.getState().user?.id ?? null; // generador = A
       }
 
       setPlan(workout);
@@ -1620,6 +1630,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         setTrainingGoal={setTrainingGoal}
         focus={focus}
         setFocus={setFocus}
+        supportedFoci={supportedFoci}
         selectedMuscles={selectedMuscles}
         setSelectedMuscles={setSelectedMuscles}
         selectedPriority={selectedPriority}

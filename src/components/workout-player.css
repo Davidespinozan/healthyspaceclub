@@ -1337,3 +1337,13 @@
 .wp-cardio-block-name { font-size: 13px; font-weight: 600; color: var(--wp-txt1, #fff); }
 .wp-cardio-block-detail { font-size: 11.5px; color: var(--wp-txt2, #bbb); }
 .wp-cardio-early { font-size: 11.5px; font-style: italic; color: var(--wp-txt2, #bbb); margin-top: 2px; }
+
+/* ── Timer time-based (cardio / isométricos) ── */
+.wp-hold { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+.wp-hold-count {
+  font-size: 64px; font-weight: 800; line-height: 1; letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums; color: var(--wp-ink, #12302b);
+}
+.wp-hold-controls { display: flex; gap: 10px; width: 100%; }
+.wp-hold-controls .wp-fin-skip { flex: 1; }
+.wp-partner-format { font-size: 13px; font-weight: 600; color: var(--wp-gold, #9a7f45); margin-top: 4px; }

@@ -68,6 +68,7 @@ interface WizardProps {
   // Foco de fuerza + historia
   focus: FocusValue;
   setFocus: (f: FocusValue) => void;
+  supportedFoci: Set<string>;
   selectedMuscles: MuscleGroup[];
   setSelectedMuscles: (m: MuscleGroup[]) => void;
   selectedPriority: MuscleGroup[];
@@ -102,7 +103,7 @@ export default function Wizard({
   selectedTime, setSelectedTime,
   gear, setGear,
   trainingGoal, setTrainingGoal,
-  focus, setFocus,
+  focus, setFocus, supportedFoci,
   selectedMuscles, setSelectedMuscles,
   selectedPriority, setSelectedPriority,
   energy, setEnergy, sleep, setSleep, soreness, setSoreness,
@@ -327,16 +328,25 @@ export default function Wizard({
           <div className="wz-q">
             <p className="wz-q-label">{t('wizard.focusQ')}</p>
             <div className="wz-chips wz-chips-col">
-              {FOCUS_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  className={`wz-chip wz-chip-block${focus === opt.value ? ' on' : ''}`}
-                  onClick={() => setFocus(opt.value)}
-                >
-                  <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
-                  <span>{t(opt.labelKey)}</span>
-                </button>
-              ))}
+              {FOCUS_OPTIONS.map(opt => {
+                // Splits (no auto/specific): deshabilitados si el equipo actual no los sostiene
+                // (pool insuficiente) → honestidad, sin degradación silenciosa. auto/specific siempre.
+                const isSplit = opt.value !== 'auto' && opt.value !== 'specific';
+                const available = !isSplit || supportedFoci.has(opt.value);
+                return (
+                  <button
+                    key={opt.value}
+                    className={`wz-chip wz-chip-block${focus === opt.value ? ' on' : ''}${!available ? ' wz-chip-disabled' : ''}`}
+                    disabled={!available}
+                    aria-disabled={!available}
+                    onClick={() => { if (available) setFocus(opt.value); }}
+                  >
+                    <span className="wz-chip-icon"><opt.icon size={16} strokeWidth={1.5} /></span>
+                    <span>{t(opt.labelKey)}</span>
+                    {!available && <span className="wz-option-sub">{t('wizard.focusUnsupported')}</span>}
+                  </button>
+                );
+              })}
             </div>
             {focus === 'specific' && (
               <div className="wz-muscle-grid">

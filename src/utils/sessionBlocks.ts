@@ -221,12 +221,14 @@ function pickActivation(bank: Exercise[], dayMuscles: MuscleGroup[], equipment: 
   const specific = dayMuscles.length ? activacion.find(isDayMuscle) : null;
   if (specific) return specific;
   // 2) flujo de movilidad canónico (saludo al sol) — mobiliser general, no una pose suelta
-  const flow = bank.find(ex => ACTIVATION_TYPES.has(ex.type) && /salutation|saludo|flow|flujo/i.test(ex.id + ' ' + ex.name));
+  // Video-gate (§19) también en los fallbacks: isReproducibleStation deja pasar yoga por equipo
+  // (flujos curados, no gateados por clip) pero excluye una movilidad NO-yoga sin video.
+  const flow = bank.find(ex => ACTIVATION_TYPES.has(ex.type) && /salutation|saludo|flow|flujo/i.test(ex.id + ' ' + ex.name) && isReproducibleStation(ex, eq));
   if (flow) return flow;
-  // 3) activación general → 4) cualquier movilidad
+  // 3) activación general → 4) cualquier movilidad — TODOS los fallbacks respetan video + equipo.
   return activacion[0]
-    ?? bank.find(ex => ex.type === 'movilidad' && !ex.isYoga && usable(ex))
-    ?? bank.find(ex => ex.type === 'movilidad')
+    ?? bank.find(ex => ex.type === 'movilidad' && !ex.isYoga && usable(ex) && isReproducibleStation(ex, eq))
+    ?? bank.find(ex => ex.type === 'movilidad' && usable(ex) && isReproducibleStation(ex, eq))
     ?? null;
 }
 

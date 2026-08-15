@@ -88,6 +88,10 @@ export interface CachedWorkout {
   };
   // ── Metadatos de modo pareja ──
   partnerMode?: boolean;
+  // Id del GENERADOR (persona A). Estampado al generar; viaja en el JSON entregado a B.
+  // Cada dispositivo compara su propio id: myId===ownerId → A; myId!==ownerId → compañero B.
+  // Fuente de verdad estable de identidad A/B (ver partnerView.ts).
+  ownerId?: string | null;
   partnerName?: string;
   partnerAvatar?: string | null; // foto del compañero (para la tarjeta de hoy)
   partnerId?: string | null;     // cuenta del compañero conectado (null si invitado)

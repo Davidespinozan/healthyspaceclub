@@ -284,14 +284,16 @@ describe('computeSessionStats', () => {
 // ════════════════════════════════════════════════════════════════
 
 describe('buildOnCompletePayload', () => {
-  it('emite shape exacto con las 4 keys del contrato', () => {
+  it('emite shape exacto con las keys del contrato (incl. exercises ejecutados para swap→history)', () => {
     const payload = buildOnCompletePayload([], 0, 0, PLAN_3x3);
     expect(Object.keys(payload).sort()).toEqual([
       'durationSeconds',
+      'exercises',
       'exercisesCompleted',
       'loggedSets',
       'totalSetsCompleted',
     ]);
+    expect(payload.exercises).toBe(PLAN_3x3); // los ejercicios ejecutados (autoridad del historial)
   });
 
   it('loggedSets.length === Σ exercises[i].sets (padding aplicado)', () => {

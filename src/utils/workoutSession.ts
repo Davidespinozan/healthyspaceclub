@@ -193,6 +193,10 @@ export interface OnCompletePayload {
   totalSetsCompleted: number;
   durationSeconds: number;
   loggedSets: Array<LoggedSet | null>;
+  // Ejercicios REALMENTE ejecutados (con swaps aplicados), en el mismo orden/índice que
+  // el plan. FUENTE DE VERDAD para logging/history/progresión: si el usuario cambió A→B,
+  // aquí viene B → el historial se guarda bajo B, no bajo el A del plan original.
+  exercises: WorkoutExercise[];
 }
 
 /**
@@ -219,6 +223,7 @@ export function buildOnCompletePayload(
     totalSetsCompleted,
     durationSeconds,
     loggedSets: padded,
+    exercises, // los ejecutados (swaps ya aplicados por el player)
   };
 }
 
