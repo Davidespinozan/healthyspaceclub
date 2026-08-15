@@ -486,13 +486,16 @@ export default function App() {
 
               // Último desempeño por ejercicio (para "la vez pasada" en el player).
               // Las filas vienen ascendentes por completed_at → la última gana.
-              const perf: Record<string, { date: string; sets: { reps: number; kg: number; rir?: number }[] }> = {};
+              const perf: Record<string, { date: string; sets: { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean }[] }> = {};
               for (const w of workouts as Array<WorkoutLogRow & { date_local: string; exercises: unknown }>) {
                 const exs = Array.isArray(w.exercises) ? w.exercises : [];
-                for (const ex of exs as Array<{ exercise_id?: string; performed?: { sets?: Array<{ reps: number; kg: number; rir?: number } | null>; skipped?: boolean } }>) {
+                for (const ex of exs as Array<{ exercise_id?: string; performed?: { sets?: Array<{ reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean } | null>; skipped?: boolean } }>) {
                   if (!ex || typeof ex.exercise_id !== 'string' || !ex.performed || ex.performed.skipped) continue;
                   // BLOQUE 2 · conserva el RIR real del set (para la e1RM RIR-aware que prescribe carga).
-                  const sets = (ex.performed.sets ?? []).filter((s): s is { reps: number; kg: number; rir?: number } => !!s && (s.reps > 0 || s.kg > 0));
+                  // PRESCRIPCIÓN ≠ DESEMPEÑO: conserva TAMBIÉN `repsUnconfirmed` (filter passthrough, sin
+                  // re-map) → la progresión/carga NO trata la sugerencia prescrita como real tras el
+                  // round-trip Supabase. NO re-mapear a {reps,kg,rir} aquí o se perdería el flag.
+                  const sets = (ex.performed.sets ?? []).filter((s): s is { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean } => !!s && (s.reps > 0 || s.kg > 0));
                   if (sets.length === 0) continue;
                   perf[ex.exercise_id] = { date: w.date_local, sets };
                 }

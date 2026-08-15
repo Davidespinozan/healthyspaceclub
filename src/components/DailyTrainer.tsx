@@ -601,6 +601,14 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // resto va undefined y no altera su hash). Cambiar correr↔funcional↔lowImpact↔
         // explosividad invalida la cache y NO reutiliza la rutina del estilo anterior.
         cardioStyle: selectedModality === 'cardio' ? effectiveCardioStyle : undefined,
+        // Señales materiales que faltaban en el hash (caché GLOBAL cross-user, ver buildConfigHash):
+        // sin ellas, dos usuarios/estados distintos colisionaban. lowImpact es SEGURIDAD (no servir
+        // saltos/pliometría a un usuario bajo-impacto desde caché).
+        level: levelFromObData(obData),
+        readiness: readiness.state,
+        lowImpact: lowImpactUser,
+        mesoPhase: meso.phase,
+        deload: mesoDeload,
         energy: undefined,
         objective: String(obData?.goal || ''),
         priorExercise,

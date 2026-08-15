@@ -48,3 +48,33 @@ describe('buildConfigHash · cardioStyle invalida cache al cambiar de estilo', (
     expect(h({ cardioStyle: 'correr' })).not.toBe(buildConfigHash({ ...cardioBase, modality: 'fuerza' }));
   });
 });
+
+describe('buildConfigHash · señales materiales que faltaban (caché GLOBAL cross-user)', () => {
+  const base = { duration: 60, equipment: 'cuerpo', goal: 'hipertrofia', trainingGoal: 'hipertrofia', dayType: 'full-body', modality: 'fuerza', objective: 'Ganar músculo', locale: 'es', schemaVersion: 13 };
+  const H = (o: Partial<Parameters<typeof buildConfigHash>[0]>) => buildConfigHash({ ...base, ...o });
+
+  it('SEGURIDAD (P0): lowImpact separa el caché → un usuario bajo-impacto NO recibe la sesión de alto impacto', () => {
+    expect(H({ lowImpact: true })).not.toBe(H({ lowImpact: false }));
+  });
+  it('level (P1): principiante ≠ avanzado en hash', () => {
+    expect(H({ level: 'principiante' })).not.toBe(H({ level: 'avanzado' }));
+  });
+  it('readiness (P1): low ≠ high en hash', () => {
+    expect(H({ readiness: 'low' })).not.toBe(H({ readiness: 'high' }));
+  });
+  it('mesociclo (P1): fase/deload separan el caché', () => {
+    expect(H({ mesoPhase: 'accumulation' })).not.toBe(H({ mesoPhase: 'intensification' }));
+    expect(H({ deload: true })).not.toBe(H({ deload: false }));
+  });
+  it('determinismo + estabilidad: misma config → mismo hash', () => {
+    expect(H({ level: 'intermedio', readiness: 'normal', lowImpact: false })).toBe(H({ level: 'intermedio', readiness: 'normal', lowImpact: false }));
+  });
+  it('todas las señales materiales combinadas producen hashes únicos (sin colisión)', () => {
+    const hashes = new Set<string>();
+    for (const level of ['principiante', 'intermedio', 'avanzado'])
+      for (const readiness of ['low', 'normal', 'high'])
+        for (const lowImpact of [false, true])
+          for (const deload of [false, true]) hashes.add(H({ level, readiness, lowImpact, deload }));
+    expect(hashes.size).toBe(3 * 3 * 2 * 2); // 36 configs → 36 hashes distintos
+  });
+});

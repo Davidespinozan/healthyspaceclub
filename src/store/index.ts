@@ -252,8 +252,8 @@ interface AppState {
   // y dar sensación de progresión). Se llena al terminar sesión y se hidrata de la DB.
   // BLOQUE 2 · los sets guardan también el RIR real (cuando se capturó) → la e1RM RIR-aware
   // que prescribe la carga no decae. undefined = no se capturó (cae a Epley).
-  lastExercisePerformance: Record<string, { date: string; sets: { reps: number; kg: number; rir?: number }[] }>;
-  recordExercisePerformance: (records: { exerciseId: string; date: string; sets: { reps: number; kg: number; rir?: number }[] }[]) => void;
+  lastExercisePerformance: Record<string, { date: string; sets: { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean }[] }>;
+  recordExercisePerformance: (records: { exerciseId: string; date: string; sets: { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean }[] }[]) => void;
 
   // Completed sessions (per-session: nuevo, escrito por finishWorkoutSession al terminar player)
   completedSessions: CompletedSession[];

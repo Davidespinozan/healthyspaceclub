@@ -268,7 +268,10 @@ export default function WorkoutPlayer({
     const sets = currentEx ? lastExercisePerformance[currentEx.id]?.sets : undefined;
     if (!sets || sets.length === 0) return null;
     const top = sets.reduce((a, b) => (b.kg > a.kg || (b.kg === a.kg && b.reps > a.reps) ? b : a));
-    return top.kg > 0 ? `${top.kg} kg × ${top.reps}` : `× ${top.reps}`;
+    // Si las reps del top no fueron confirmadas (prefill de la prescripción), no las mostramos
+    // como desempeño real: se marcan con "?".
+    const r = top.repsUnconfirmed ? `${top.reps}?` : `${top.reps}`;
+    return top.kg > 0 ? `${top.kg} kg × ${r}` : `× ${r}`;
   })();
   // Sobrecarga progresiva (doble progresión) a partir del historial + reps prescritas.
   const isBandExercise = variant ? variant.equipment.includes('ligas') : userEquipment.includes('ligas');
@@ -548,10 +551,14 @@ export default function WorkoutPlayer({
       kg = sessionKg > 0 ? sessionKg : suggestedKg;
     }
     // Time-based (cardio/isométrico): se registran los SEGUNDOS REALES ejecutados (no el
-    // objetivo). Si aguantó 22 de 40, history guarda 22. kg=0 (sin carga externa).
+    // objetivo). Si aguantó 22 de 40, history guarda 22. kg=0 (sin carga externa). Es
+    // desempeño REAL medido → confirmado (sin flag).
+    // Reps: PRESCRIPCIÓN ≠ DESEMPEÑO. El número prescrito (p.ej. tope del rango) se pre-rellena
+    // solo como SUGERENCIA y para no perder la carga real usada → se marca `repsUnconfirmed`.
+    // La progresión NO subirá peso con este valor hasta que el usuario lo confirme/edite.
     const entry: LoggedSet = actualSeconds != null
       ? { reps: Math.max(0, Math.round(actualSeconds)), kg: 0 }
-      : { reps: parseRepsToNumber(currentEx.reps), kg };
+      : { reps: parseRepsToNumber(currentEx.reps), kg, repsUnconfirmed: true };
     setLoggedByExercise(prev => setLogAt(prev, currentExerciseIndex, currentSetNum - 1, entry));
     // P6 · pide RIR real SOLO en la serie relevante (top set del compuesto principal con
     // carga): es donde calibra el motor de carga. Una sola vez por ejercicio, un tap.
@@ -602,6 +609,9 @@ export default function WorkoutPlayer({
 
   function saveEditSet() {
     if (!editingSet) return;
+    // El usuario introdujo/confirmó reps reales → ES desempeño confirmado: la nueva entrada NO
+    // lleva `repsUnconfirmed` (setLogAt reemplaza la entrada completa), así la progresión ya puede
+    // usar esta serie como evidencia real.
     setLoggedByExercise(prev => setLogAt(prev, editingSet.exerciseIndex, editingSet.setIndex, {
       reps: Math.max(0, editValues.reps),
       kg: Math.max(0, editValues.kg),
@@ -994,7 +1004,9 @@ export default function WorkoutPlayer({
                         </span>
                       )}
                       {isDone && entry && (
-                        <span className="wp-set-row-vals"> · {entry.reps} {t('workout.repsLower')} · {entry.kg}kg</span>
+                        <span className={`wp-set-row-vals${entry.repsUnconfirmed ? ' wp-set-row-vals--unconfirmed' : ''}`} style={entry.repsUnconfirmed ? { opacity: 0.6 } : undefined}>
+                          {' · '}{entry.reps}{entry.repsUnconfirmed ? '?' : ''} {t('workout.repsLower')} · {entry.kg}kg
+                        </span>
                       )}
                       {isSkipped && (
                         <span className="wp-set-row-vals wp-set-row-vals--muted"> · {t('workout.skipped')}</span>

@@ -69,6 +69,43 @@ describe('loadEngine — prescribeLoad', () => {
   });
 });
 
+// PRESCRIPCIÓN ≠ DESEMPEÑO en el canal de carga (compuestos): una serie sin confirmar
+// (reps = tope prescrito, rir 0 asumido) NO debe inflar e1RM/topKg. Mantiene el peso previo.
+describe('loadEngine — prescribeLoad · reps unconfirmed no inflan la carga', () => {
+  const unconf = [{ reps: 12, kg: 40, repsUnconfirmed: true }]; // marcado, no confirmado
+  const conf = [{ reps: 12, kg: 40 }];                          // confirmado (o legacy sin flag)
+
+  it('referencia unconfirmed en INTENSIDAD → mantiene el peso (no dispara el clamp +10%)', () => {
+    const p = prescribeLoad(unconf, '8-12', 'intensidad')!;
+    expect(p.topKg).toBe(40); // antes inflaba a 44 (clamp) y hacía runaway 40→125 en 16 sem
+  });
+
+  it('confirmed sí escala por fase (comportamiento intacto)', () => {
+    const p = prescribeLoad(conf, '8-12', 'intensidad')!;
+    expect(p.topKg).toBeGreaterThan(40); // con evidencia real, la intensificación pesa más
+  });
+
+  it('legacy sin flag = confirmado → idéntico a conf', () => {
+    const legacy = prescribeLoad([{ reps: 12, kg: 40 }], '8-12', 'intensidad')!;
+    const confP = prescribeLoad(conf, '8-12', 'intensidad')!;
+    expect(legacy.topKg).toBe(confP.topKg);
+  });
+
+  it('estabilidad: unconfirmed no decae ni sube en 5 sesiones encadenadas (feedback)', () => {
+    let kg = 40;
+    for (let i = 0; i < 5; i++) {
+      const p = prescribeLoad([{ reps: 12, kg, repsUnconfirmed: true }], '8-12', 'intensidad')!;
+      kg = p.topKg;
+    }
+    expect(kg).toBe(40); // sin evidencia real → carga estable (no runaway, no decay)
+  });
+
+  it('top unconfirmed + backoff confirmed a menor kg → hold al peso top (no infla, no usa backoff)', () => {
+    const p = prescribeLoad([{ reps: 12, kg: 40, repsUnconfirmed: true }, { reps: 12, kg: 30 }], '8-12', 'intensidad')!;
+    expect(p.topKg).toBe(40); // mantiene el top real; no progresa por el backoff
+  });
+});
+
 describe('loadEngine — aggregateE1RM (señal de fuerza)', () => {
   it('suma el mejor e1RM por ejercicio (para la tendencia del mesociclo)', () => {
     const entries = [

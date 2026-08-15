@@ -186,8 +186,10 @@ export function validateWorkout(
 
   const allValid = workout.exercises.every(ex =>
     ex.id && validIds.has(ex.id) &&
-    typeof ex.sets === 'number' &&
-    typeof ex.reps === 'string'
+    // `typeof x === 'number'` es LAX: NaN, Infinity y negativos lo pasan. Endurecemos el único
+    // campo numérico que validateWorkout valida (sets): entero finito y > 0.
+    typeof ex.sets === 'number' && Number.isFinite(ex.sets) && ex.sets > 0 &&
+    typeof ex.reps === 'string' && ex.reps.trim().length > 0
   );
 
   return allValid;

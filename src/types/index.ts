@@ -338,6 +338,15 @@ export interface LoggedSet {
   reps: number;
   kg: number;
   /**
+   * PRESCRIPCIÓN ≠ DESEMPEÑO. Al marcar una serie de reps sin editarla, el player pre-rellena
+   * `reps` con el OBJETIVO prescrito (p.ej. tope del rango) solo como SUGERENCIA visual y para
+   * mantener la continuidad de carga (kg real usado). `repsUnconfirmed: true` marca que ese
+   * número NO es desempeño real confirmado por el usuario. La progresión NUNCA sube peso con una
+   * serie unconfirmed (sin evidencia real → HOLD). Editar/confirmar la serie limpia el flag.
+   * Las series por TIEMPO (isométrico/cardio) guardan segundos REALES → nunca llevan este flag.
+   */
+  repsUnconfirmed?: boolean;
+  /**
    * P6 · RIR real percibido (reps en reserva) que el usuario reporta tras una serie
    * RELEVANTE (top set, último working set, cambio de carga). undefined = no se capturó
    * (la mayoría de series) → el motor cae al método sin RIR. Percepción subjetiva, con error.

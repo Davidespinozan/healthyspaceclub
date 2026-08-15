@@ -22,7 +22,7 @@ export function parseRepRange(reps: string): [number, number] {
  * @param incrementKg  cuánto subir al progresar (típico 2.5 tren superior, 5 tren inferior/compuesto)
  */
 export function computeProgression(
-  lastSets: { reps: number; kg: number }[] | undefined,
+  lastSets: { reps: number; kg: number; repsUnconfirmed?: boolean }[] | undefined,
   repRange: string,
   incrementKg: number,
   isBand = false,
@@ -36,11 +36,24 @@ export function computeProgression(
         : `Primera vez: encuentra un peso donde llegues a ${hi} reps con buena técnica.` };
   }
   const refKg = Math.max(...working.map((s) => s.kg));
-  // serie más dura al peso de referencia = la de menos reps a ese kg
-  const repsAtRef = Math.min(...working.filter((s) => s.kg === refKg).map((s) => s.reps));
+  // PRESCRIPCIÓN ≠ DESEMPEÑO: solo las series con reps CONFIRMADAS por el usuario son evidencia
+  // real. Una serie marcada sin confirmar (reps = prefill de la prescripción) mantiene la carga
+  // (refKg) pero NO puede disparar un aumento de peso/tensión/dificultad. Sin evidencia real al
+  // peso de referencia → HOLD (nunca inventamos que alcanzó el tope, ni el piso, ni el midpoint).
+  const confirmedAtRef = working.filter((s) => s.kg === refKg && !s.repsUnconfirmed);
+  const hasEvidence = confirmedAtRef.length > 0;
+  // serie más dura al peso de referencia = la de menos reps CONFIRMADAS a ese kg
+  const repsAtRef = hasEvidence ? Math.min(...confirmedAtRef.map((s) => s.reps)) : -1;
+
+  const holdNote = isBand
+    ? `Completaste la serie sin registrar reps — mantenemos la misma liga. Confirma tus reps para progresar.`
+    : refKg <= 0
+      ? `Completaste la serie sin registrar reps — mantenemos la dificultad. Confirma tus reps para progresar.`
+      : `Completaste la serie sin registrar reps — mantenemos ${refKg} kg. Confirma tus reps para progresar.`;
 
   // BANDAS: no hay kg → doble progresión sobre la TENSIÓN. Al tope de reps → liga más dura.
   if (isBand) {
+    if (!hasEvidence) return { kg: null, reps: `${lo}-${hi}`, action: 'hold', note: holdNote };
     if (repsAtRef >= hi) return { kg: null, reps: `${lo}-${hi}`, action: 'add-tension',
       note: `Dominaste ${repsAtRef} reps — sube a una liga más dura (o dóblala) y vuelve a ${lo}.` };
     return { kg: null, reps: `${Math.min(repsAtRef + 1, hi)}-${hi}`, action: 'add-reps',
@@ -50,11 +63,14 @@ export function computeProgression(
   if (refKg <= 0) {
     // Peso corporal: doble progresión sobre la DIFICULTAD. Al tope de reps → hazlo más
     // difícil (tempo, pausa, variante más dura), no sumar reps al infinito.
+    if (!hasEvidence) return { kg: 0, reps: `${lo}-${hi}`, action: 'hold', note: holdNote };
     if (repsAtRef >= hi) return { kg: 0, reps: `${lo}-${hi}`, action: 'add-difficulty',
       note: `Dominaste ${repsAtRef} reps — hazlo más difícil: tempo más lento, pausa abajo, o una variante más dura.` };
     return { kg: 0, reps: `${Math.min(repsAtRef + 1, hi)}-${hi}`, action: 'add-reps',
       note: `Busca ${hi} reps limpias (la vez pasada ${repsAtRef}).` };
   }
+  // Con carga: sin evidencia real al peso de referencia → mantener el peso (no subir).
+  if (!hasEvidence) return { kg: refKg, reps: `${lo}-${hi}`, action: 'hold', note: holdNote };
   if (repsAtRef >= hi) {
     const next = Math.round((refKg + incrementKg) * 2) / 2; // a 0.5 kg
     return { kg: next, reps: `${lo}-${hi}`, action: 'add-weight',

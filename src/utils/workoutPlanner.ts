@@ -1141,6 +1141,18 @@ export function buildConfigHash(params: {
   // estructura de la sesión → debe formar parte del hash. Se añade SOLO cuando está presente
   // (sesiones de cardio); en fuerza/hipertrofia/yoga va undefined → su hash NO cambia.
   cardioStyle?: string;
+  // El caché es GLOBAL (una fila por config_hash, cross-user). Estas señales cambian
+  // MATERIALMENTE la sesión y DEBEN separar el caché o dos usuarios distintos colisionan:
+  //  · level      → dificultad/selección/técnicas/volumen (P1).
+  //  · readiness  → agrupación/técnicas/fatiga/dosis (P1).
+  //  · lowImpact  → filtro DURO de seguridad: sin esto, un usuario bajo-impacto puede
+  //                 recibir del caché una sesión de ALTO impacto (saltos/pliometría) (P0 SEGURIDAD).
+  //  · mesoPhase/deload → cargas y flag de descarga; una semana de deload servía loads normales (P1).
+  level?: string;
+  readiness?: string;
+  lowImpact?: boolean;
+  mesoPhase?: string;
+  deload?: boolean;
 }): string {
   const str = [
     `v${params.schemaVersion || 0}`,
@@ -1159,6 +1171,11 @@ export function buildConfigHash(params: {
     params.yesterdayMuscles || 'none',
     params.partner || 'solo',
     params.locale || 'es',
+    // Señales materiales (caché global cross-user): separan sesiones distintas.
+    `lvl:${params.level || 'intermedio'}`,
+    `rdy:${params.readiness || 'normal'}`,
+    params.lowImpact ? 'low-impact' : 'std-impact', // SEGURIDAD: no mezclar bajo/alto impacto
+    `meso:${params.mesoPhase || 'none'}${params.deload ? '+deload' : ''}`,
     // SOLO cardio: segmento condicional → no cambia el hash de fuerza/hipertrofia/yoga.
     ...(params.cardioStyle ? [`cardio:${params.cardioStyle}`] : []),
   ].join('-');

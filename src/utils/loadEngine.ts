@@ -116,7 +116,7 @@ export function rirForBias(bias: IntensityBias): number {
  * null si no hay carga comparable (peso corporal/banda → progresión por dificultad/tensión).
  */
 export function prescribeLoad(
-  lastSets: { reps: number; kg: number; rir?: number }[] | undefined,
+  lastSets: { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean }[] | undefined,
   repRange: string,
   bias: IntensityBias,
   inc = 2.5,
@@ -125,9 +125,20 @@ export function prescribeLoad(
   const work = (lastSets ?? []).filter(s => s.kg > 0 && s.reps > 0);
   if (work.length === 0) return null; // sin carga comparable → progresión por dificultad/tensión
   const refKg = Math.max(...work.map(s => s.kg));
-  const ref = work.filter(s => s.kg === refKg).reduce((a, b) => (b.reps < a.reps ? b : a));
   const reps = targetRepsForPhase(repRange, bias);
   const rir = rirForBias(bias);
+  // PRESCRIPCIÓN ≠ DESEMPEÑO: una serie marcada SIN confirmar guarda reps = tope prescrito con
+  // rir 0 (suposición máximamente inflada). Si la serie de referencia (al peso top) NO tiene reps
+  // confirmadas por el usuario, NO hay evidencia real para estimar e1RM → mantenemos el MISMO peso
+  // de trabajo (no inflar la carga con la prescripción). El usuario progresa al confirmar sus reps.
+  // Legacy sin flag = confirmado (comportamiento intacto).
+  const confirmedAtRef = work.filter(s => s.kg === refKg && !s.repsUnconfirmed);
+  if (confirmedAtRef.length === 0) {
+    const topKg = roundToIncrement(refKg, inc);
+    const e1RM = Math.round(refKg * (1 + (reps + rir) / 30) * 10) / 10; // informativo (target-based, no inventado)
+    return { e1RM, reps, rir, topKg, backoffKg: roundToIncrement(topKg * 0.9, inc) };
+  }
+  const ref = confirmedAtRef.reduce((a, b) => (b.reps < a.reps ? b : a));
   // PESO = último top set ESCALADO por el ratio de esfuerzo (RIR-aware). El "potencial" de una
   // serie = reps + RIR (reps que quedaban): si hoy el objetivo pide el MISMO esfuerzo que la vez
   // pasada, el peso vuelve al mismo kg (NO decae — arregla F4); si el objetivo pide menos reps
