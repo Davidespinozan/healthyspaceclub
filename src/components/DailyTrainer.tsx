@@ -44,7 +44,7 @@ import { computeVolumeTargets, targetsToMap } from '../utils/volumeLandmarks';
 import { allocateSessionVolume, prescribeSession, prescribeExercise, categorize } from '../utils/sessionPrescription';
 import { allocateHeadroom } from '../utils/headroom';
 import { assignTechniques } from '../utils/techniques';
-import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities } from '../utils/cardioMain';
+import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities, resolveCardioStyle } from '../utils/cardioMain';
 import { composeSession } from '../utils/sessionBlocks';
 import {
   deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
@@ -590,6 +590,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         dayType: dayTypeKey,
         schemaVersion: SCHEMA_VERSIONS[schemaType],
         modality: selectedModality,
+        // Cardio · el estilo elegido cambia la sesión → entra al hash SOLO en cardio (en el
+        // resto va undefined y no altera su hash). Cambiar correr↔funcional↔lowImpact↔
+        // explosividad invalida la cache y NO reutiliza la rutina del estilo anterior.
+        cardioStyle: selectedModality === 'cardio' ? effectiveCardioStyle : undefined,
         energy: undefined,
         objective: String(obData?.goal || ''),
         priorExercise,
@@ -1070,7 +1074,19 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         return [...anchorExs, ...rest];
       })();
       const candidateIds = new Set(aiCandidates.map(c => c.id));
-      const workout = await orchestrateWorkout({
+      // ROOT CAUSE FIX (cardio) — CARDIO NO USA LA IA. Su sesión ejecutable sale 100% de
+      // buildCardioMain → cardioBlocksToExercises (determinista), y el output de la IA se
+      // DESCARTA abajo (w.exercises se sobrescribe). Pero orchestrateWorkout (callAI) podía
+      // TIRAR toda la generación de cardio por timeout / JSON inválido / validación, aunque
+      // el builder sí produjera una sesión perfecta. Eliminamos esa dependencia redundante:
+      // para cardio se construye el workout SIN IA. Resistencia/yoga NO cambian.
+      let workout: CachedWorkout;
+      if (isCardioDay) {
+        // El player de cardio usa los bloques deterministas (warmupBlock/cardioMainBlock/
+        // finisherBlock), no estos campos de texto legacy de la IA → van vacíos.
+        workout = { type: dayTypeKey, intensity: 'media', exercises: [], warmup: '', cooldown: '', note: '' } as CachedWorkout;
+      } else {
+      workout = (await orchestrateWorkout({
         candidates: aiCandidates,
         equipment: equipmentList,
         allowedImplements: caps.allowedImplements, // la IA solo ve la variante EJECUTABLE con el gear
@@ -1096,7 +1112,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
               goalLabel: goal,
             }
           : undefined,
-      });
+      })) as CachedWorkout;
 
       if (!validateWorkout(workout, validIds) || !fitsEquipment(workout)) {
         throw new Error(t('wizard.genErrInvalid'));
@@ -1112,6 +1128,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           throw new Error(t('wizard.genErrInvalid'));
         }
       }
+      } // fin rama NO-cardio (IA). Cardio ya tiene su workout stub (sin IA).
 
       // FASE 2 · GARANTÍA DE ANCHOR (determinista, no dependemos del prompt): si la IA omitió una
       // ancla válida, se inyecta (con defaults del banco; prescribeSession fija los números luego)
@@ -1415,7 +1432,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         if (isCardioDay) {
           const cardioPlan = buildCardioMain({
             mainBudgetMinutes: sessionPlan.budget.main,
-            style: effectiveCardioStyle,
+            // Blindaje de STATE: el estilo DEBE tener contenido (caps). Si quedó uno inválido
+            // (cambió el gear tras elegirlo) o el inferido no aplica a este equipo, cae a uno
+            // disponible en vez de disparar el content-gap → nunca "cardio dio error" por estilo.
+            style: resolveCardioStyle(effectiveCardioStyle, cardioCapabilities),
             level: levelFromObData(obData),
             readiness: readiness.state === 'low' ? 'low' : readiness.state === 'high' ? 'high' : 'normal',
             bodyGoal: String(obData?.goal ?? ''),

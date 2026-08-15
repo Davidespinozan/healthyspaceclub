@@ -299,3 +299,17 @@ export function getCardioCapabilities(bank: Exercise[], cardioEquipment: Equipme
   const avail = (style: CardioStyle) => cardio.some(e => styleStationAvailable(e, style, cardioEquipment));
   return { correr: avail('correr'), funcional: avail('funcional'), lowImpact: avail('lowImpact'), explosividad: avail('explosividad') };
 }
+
+/**
+ * Resuelve el estilo de cardio a uno que TENGA contenido reproducible (caps[style]===true).
+ * Blindaje de STATE: si el usuario dejó un estilo inválido (cambió el gear tras elegirlo) o
+ * el estilo inferido no tiene contenido para este equipo, cae a uno disponible en vez de
+ * llegar a buildCardioMain sin estaciones y disparar el guard de "content gap". Prioridad:
+ * el pedido si sirve → funcional → correr → lowImpact → explosividad. Si NADA está disponible
+ * (no debería: correr/funcional siempre lo están con peso corporal), devuelve el pedido.
+ */
+export function resolveCardioStyle(requested: CardioStyle, caps: CardioCapabilities): CardioStyle {
+  if (caps[requested]) return requested;
+  const order: CardioStyle[] = ['funcional', 'correr', 'lowImpact', 'explosividad'];
+  return order.find(s => caps[s]) ?? requested;
+}

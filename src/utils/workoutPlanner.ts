@@ -1137,6 +1137,10 @@ export function buildConfigHash(params: {
   // tips) sale en este idioma. Sin esto, cambiar de idioma reusaba la rutina
   // cacheada en el idioma anterior → texto mezclado.
   locale?: string;
+  // Cardio · el ESTILO (correr/funcional/lowImpact/explosividad) cambia materialmente la
+  // estructura de la sesión → debe formar parte del hash. Se añade SOLO cuando está presente
+  // (sesiones de cardio); en fuerza/hipertrofia/yoga va undefined → su hash NO cambia.
+  cardioStyle?: string;
 }): string {
   const str = [
     `v${params.schemaVersion || 0}`,
@@ -1155,6 +1159,8 @@ export function buildConfigHash(params: {
     params.yesterdayMuscles || 'none',
     params.partner || 'solo',
     params.locale || 'es',
+    // SOLO cardio: segmento condicional → no cambia el hash de fuerza/hipertrofia/yoga.
+    ...(params.cardioStyle ? [`cardio:${params.cardioStyle}`] : []),
   ].join('-');
   // Simple hash function (djb2)
   let hash = 5381;
