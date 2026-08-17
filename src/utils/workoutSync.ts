@@ -23,6 +23,7 @@ import type { CompletedSession, LoggedSet, Modality } from '../types';
 export interface WorkoutLogRow {
   date_local: string;
   completed_at: string;
+  client_session_id?: string | null; // P2-A · identidad estable (dedup cross-device)
   modality: string;
   duration_minutes: number;
   exercises_completed: number;
@@ -87,6 +88,10 @@ export function mapWorkoutLogRowToSession(row: WorkoutLogRow): CompletedSession 
   }
 
   const session: CompletedSession = {
+    // Recupera la identidad estable de sesión → dedup cross-device por sessionId (P2-A).
+    ...(typeof row.client_session_id === 'string' && row.client_session_id
+      ? { sessionId: row.client_session_id }
+      : {}),
     date: row.date_local,
     completedAtIso: row.completed_at,
     modality: row.modality as Modality,
@@ -103,7 +108,8 @@ export function mapWorkoutLogRowToSession(row: WorkoutLogRow): CompletedSession 
       id: e.exercise_id,
       sets: (Array.isArray(e.performed!.sets) ? e.performed!.sets : [])
         .filter((s): s is LoggedSet => !!s && (s.reps > 0 || s.kg > 0))
-        .map(s => ({ reps: s.reps, kg: s.kg, ...((s as LoggedSet).rir != null && { rir: (s as LoggedSet).rir }) })),
+        // Conserva repsUnconfirmed en el round-trip Supabase → historial fiel (no inventa reps reales).
+        .map(s => ({ reps: s.reps, kg: s.kg, ...((s as LoggedSet).rir != null && { rir: (s as LoggedSet).rir }), ...((s as LoggedSet).repsUnconfirmed && { repsUnconfirmed: true as const }) })),
     }))
     .filter(e => e.sets.length > 0);
   if (perEx.length > 0) session.exercises = perEx;
@@ -127,20 +133,28 @@ export function mergeWorkoutSessions(
   local: CompletedSession[],
   remote: CompletedSession[],
 ): { merged: CompletedSession[]; toPush: CompletedSession[] } {
-  const byTime = new Map<string, CompletedSession>();
-  for (const s of remote) {
-    if (s.completedAtIso) byTime.set(s.completedAtIso, s);
-  }
+  // Dedup por identidad ESTABLE (sessionId) con fallback a completedAtIso para legacy. Se rastrean
+  // AMBAS claves para no duplicar una sesión que un lado tiene con sessionId y el otro sin él.
+  const byKey = new Map<string, CompletedSession>();
+  const seenIds = new Set<string>();
+  const seenIso = new Set<string>();
+  const add = (s: CompletedSession) => {
+    const key = s.sessionId || s.completedAtIso;
+    if (!key) return;
+    byKey.set(key, s);
+    if (s.sessionId) seenIds.add(s.sessionId);
+    if (s.completedAtIso) seenIso.add(s.completedAtIso);
+  };
+  for (const s of remote) add(s);
   const toPush: CompletedSession[] = [];
   for (const s of local) {
-    if (!s.completedAtIso) continue;
-    if (!byTime.has(s.completedAtIso)) {
-      byTime.set(s.completedAtIso, s);
-      toPush.push(s);
-    }
+    const covered = (!!s.sessionId && seenIds.has(s.sessionId)) || (!!s.completedAtIso && seenIso.has(s.completedAtIso));
+    if (covered) continue;
+    add(s);
+    toPush.push(s);
   }
-  const merged = [...byTime.values()].sort(
-    (a, b) => a.completedAtIso.localeCompare(b.completedAtIso),
+  const merged = [...byKey.values()].sort(
+    (a, b) => (a.completedAtIso || '').localeCompare(b.completedAtIso || ''),
   );
   return { merged, toPush };
 }

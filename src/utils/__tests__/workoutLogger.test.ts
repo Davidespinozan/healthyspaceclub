@@ -5,10 +5,11 @@ import {
   groupLoggedSetsByExercise,
 } from '../workoutLogger';
 
-const insertMock = vi.fn((_payload: Record<string, unknown>) =>
+// La sincronización va por OUTBOX (upsert idempotente), no insert directo.
+const upsertMock = vi.fn((_payload: Record<string, unknown>, _opts?: Record<string, unknown>) =>
   Promise.resolve({ error: null }),
 );
-const fromMock = vi.fn((_tableName: string) => ({ insert: insertMock }));
+const fromMock = vi.fn((_tableName: string) => ({ upsert: upsertMock }));
 
 vi.mock('../../lib/supabase', () => ({
   supabase: {
@@ -19,7 +20,7 @@ vi.mock('../../lib/supabase', () => ({
 describe('finishWorkoutSession', () => {
   beforeEach(() => {
     fromMock.mockClear();
-    insertMock.mockClear();
+    upsertMock.mockClear();
   });
 
   it('siempre llama addCompletedSession con el entry correcto', async () => {
@@ -71,7 +72,7 @@ describe('finishWorkoutSession', () => {
       vi.fn().mockResolvedValue(undefined),
     );
     expect(fromMock).not.toHaveBeenCalled();
-    expect(insertMock).not.toHaveBeenCalled();
+    expect(upsertMock).not.toHaveBeenCalled();
   });
 
   it('llama Supabase si hay userId con shape correcto', async () => {
@@ -92,8 +93,9 @@ describe('finishWorkoutSession', () => {
       vi.fn().mockResolvedValue(undefined),
     );
     expect(fromMock).toHaveBeenCalledWith('workout_log');
-    expect(insertMock).toHaveBeenCalledOnce();
-    const inserted = insertMock.mock.calls[0][0];
+    expect(upsertMock).toHaveBeenCalledOnce();
+    const inserted = upsertMock.mock.calls[0][0];
+    const opts = upsertMock.mock.calls[0][1];
     expect(inserted.user_id).toBe('550e8400-e29b-41d4-a716-446655440000');
     expect(inserted.modality).toBe('cardio');
     expect(inserted.duration_minutes).toBe(10); // 600s / 60 = 10 min
@@ -101,8 +103,10 @@ describe('finishWorkoutSession', () => {
     expect(inserted.equipment).toBe('cuerpo');
     expect(inserted.day_type).toBe('cardio');
     expect(inserted.exercises_completed).toBe(1);
-    // date_local debe estar en formato YYYY-MM-DD (local timezone)
     expect(inserted.date_local).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // IDEMPOTENCIA: client_session_id + upsert ON CONFLICT DO NOTHING
+    expect(typeof inserted.client_session_id).toBe('string');
+    expect(opts).toMatchObject({ onConflict: 'user_id,client_session_id', ignoreDuplicates: true });
   });
 
   it('llama markActiveDay siempre (independiente de userId) — Lote Racha-1', async () => {

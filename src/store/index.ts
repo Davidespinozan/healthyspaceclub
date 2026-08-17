@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep, CompletedSession } from '../types';
+import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep, CompletedSession, PendingWorkoutRow } from '../types';
 import { assignPlan } from '../utils/tdee';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
 import type { Region, Currency } from '../utils/region';
@@ -259,6 +259,12 @@ interface AppState {
   completedSessions: CompletedSession[];
   addCompletedSession: (session: CompletedSession) => void;
 
+  // OUTBOX (P2-A) · filas de workout_log pendientes de sincronizar (persistido). Una sesión que
+  // no llegó a Supabase (offline) queda aquí y se reintenta idempotente. Nunca se pierde en silencio.
+  pendingWorkoutSync: PendingWorkoutRow[];
+  enqueuePendingWorkout: (row: PendingWorkoutRow) => void;
+  dequeuePendingWorkout: (clientSessionId: string) => void;
+
   // Fase 2 · BLOCK ANCHORS (continuidad de movimientos principales por mesociclo). Referencia
   // mínima persistente; el resto se deriva. setBlockAnchors REEMPLAZA el conjunto (la resolución
   // determinista devuelve el estado completo actualizado — no acumula duplicados).
@@ -362,7 +368,7 @@ interface AppState {
    * Idempotente por día — si ya se marcó hoy, no hace side-effects. Punto
    * único de actualización de racha; todos los disparadores convergen acá.
    */
-  markActiveDay: () => Promise<void>;
+  markActiveDay: (day?: string) => Promise<void>;
 
   /** Días completos = cerraste los 3 anillos core (entreno + nutrición + reflexión). */
   perfectDayStreak: number;       // racha ACTUAL de días completos consecutivos
@@ -810,6 +816,19 @@ export const useAppStore = create<AppState>()(
   addCompletedSession: (session) =>
     set((state) => ({ completedSessions: [...state.completedSessions, session] })),
 
+  // OUTBOX (P2-A). enqueue es idempotente por client_session_id (no acumula la misma fila dos veces).
+  pendingWorkoutSync: [],
+  enqueuePendingWorkout: (row) =>
+    set((state) =>
+      state.pendingWorkoutSync.some((r) => r.client_session_id === row.client_session_id)
+        ? state
+        : { pendingWorkoutSync: [...state.pendingWorkoutSync, row] },
+    ),
+  dequeuePendingWorkout: (clientSessionId) =>
+    set((state) => ({
+      pendingWorkoutSync: state.pendingWorkoutSync.filter((r) => r.client_session_id !== clientSessionId),
+    })),
+
   // Fase 2 · block anchors (continuidad de movimientos principales por mesociclo).
   blockAnchors: [],
   setBlockAnchors: (anchors) => set({ blockAnchors: anchors }),
@@ -1112,7 +1131,9 @@ export const useAppStore = create<AppState>()(
     // Estampamos el idioma actual en el plan: así sabemos en qué idioma se
     // generó la prosa IA (calentamiento/nota/tips) y podemos avisar si el user
     // cambia de idioma después (texto mezclado).
-    const planStamped = { ...plan, lang: get().language };
+    // P2-B · SELLA el día de generación DENTRO del plan (sessionDate) → viaja al player y al
+    // cierre. Si el workout cruza medianoche, la sesión pertenece a ESTE día (inicio), no al de fin.
+    const planStamped = { ...plan, lang: get().language, sessionDate: date };
     set({ dailyWorkout: { date, plan: planStamped, generatedAt } });
 
     const userId = get().user?.id;
@@ -1172,8 +1193,10 @@ export const useAppStore = create<AppState>()(
   // Idempotente: si ya se marcó hoy, early return sin side-effects.
   // Todos los disparadores (workout/yoga finish, HSM all-done,
   // Night Check-in) convergen acá.
-  markActiveDay: async () => {
-    const today = dayKey(new Date());
+  markActiveDay: async (day?: string) => {
+    // P2-B · una sesión que cruza medianoche cuenta para su día SELLADO (inicio), no para el
+    // reloj de fin. `day` = sessionDate sellada; sin él (HSM/night check-in) usa hoy local.
+    const today = day ?? dayKey(new Date());
     const { streakCount, lastActiveDate, user } = get();
     const { newStreak, changed } = computeStreak(streakCount, lastActiveDate, today);
     if (!changed) return;
@@ -1343,6 +1366,10 @@ export const useAppStore = create<AppState>()(
     workoutLog: [],
     lastExercisePerformance: {},
     completedSessions: [],
+    // OUTBOX (P2-A): NO se limpia al cerrar sesión. Una sesión que quedó sin sincronizar (offline)
+    // debe SOBREVIVIR al logout para reintentarse cuando su dueño vuelva. El aislamiento lo da el
+    // filtro por user_id en flushPendingWorkouts (nunca envía la fila de A como B), y la cola NO se
+    // renderiza en ninguna UI (no hay fuga visual cross-cuenta). Se vacía sola al sincronizar.
     blockAnchors: [],
     todayCheckin: null,
     rirLog: [],
@@ -1422,6 +1449,7 @@ export const useAppStore = create<AppState>()(
     workoutLog: state.workoutLog,
     lastExercisePerformance: state.lastExercisePerformance,
     completedSessions: state.completedSessions,
+    pendingWorkoutSync: state.pendingWorkoutSync,  // OUTBOX P2-A · sobrevive reload/offline
     blockAnchors: state.blockAnchors,      // Fase 2 · continuidad de anchors entre recargas
     todayCheckin: state.todayCheckin,      // P6
     rirLog: state.rirLog,                  // P6

@@ -1,6 +1,6 @@
 import { dayKey } from './localDate';
-import { supabase } from '../lib/supabase';
-import type { CompletedSession, Modality, LoggedSet } from '../types';
+import { newSessionId, upsertWorkoutRow } from './workoutOutbox';
+import type { CompletedSession, Modality, LoggedSet, PendingWorkoutRow } from '../types';
 
 /**
  * Shape de la entrada `exercises` (jsonb) en la tabla workout_log.
@@ -90,6 +90,15 @@ export interface FinishSessionPayload {
   /** P1 · ¿fue una sesión de DESCARGA? Se persiste en CompletedSession para derivar el
    *  inicio del bloque de mesociclo (reset tras deload). */
   isDeload?: boolean;
+  /** P2-B · Día LOCAL SELLADO al generar/iniciar el workout (dayKey). Si el workout cruza
+   *  medianoche, la sesión pertenece a ESTE día (inicio), no al reloj de fin. Sin él, cae a hoy. */
+  sessionDate?: string;
+}
+
+/** Operaciones del outbox inyectadas (P2-A) — mantiene finishWorkoutSession honesta y testeable. */
+export interface WorkoutOutboxOps {
+  enqueue: (row: PendingWorkoutRow) => void;
+  dequeue: (clientSessionId: string) => void;
 }
 
 /**
@@ -109,14 +118,20 @@ export interface FinishSessionPayload {
 export async function finishWorkoutSession(
   payload: FinishSessionPayload,
   addCompletedSession: (session: CompletedSession) => void,
-  markActiveDay: () => Promise<void>,
+  markActiveDay: (day?: string) => Promise<void>,
+  outbox?: WorkoutOutboxOps,
 ): Promise<void> {
   const now = new Date();
+  // P2-A · identidad estable de la sesión (idempotencia del outbox + dedup cross-device).
+  const sessionId = newSessionId();
+  // P2-B · el workout pertenece a su día SELLADO al iniciar (no al reloj de fin, que puede
+  // haber cruzado medianoche). Sin sessionDate (legacy/otros flujos) cae al día local de fin.
+  const sessionDay = payload.sessionDate ?? dayKey(now);
 
   // 1. Persistir en Zustand (BLOCANTE)
-  // `date` en UTC YYYY-MM-DD para consistencia con WorkoutEntry existente
   const session: CompletedSession = {
-    date: dayKey(now),
+    sessionId,
+    date: sessionDay,
     completedAtIso: now.toISOString(),
     modality: payload.modality,
     exerciseIds: payload.exercises.map(e => e.exercise_id),
@@ -134,7 +149,9 @@ export async function finishWorkoutSession(
           id: e.exercise_id,
           sets: (e.performed!.sets.filter((s): s is LoggedSet => s != null) as LoggedSet[])
             .filter(s => s.reps > 0 || s.kg > 0)
-            .map(s => ({ reps: s.reps, kg: s.kg, ...(s.rir != null && { rir: s.rir }) })),
+            // PRESCRIPCIÓN ≠ DESEMPEÑO: conserva repsUnconfirmed en el historial por-ejercicio →
+            // e1RM/volumen/display NO pueden confundir la sugerencia con reps reales.
+            .map(s => ({ reps: s.reps, kg: s.kg, ...(s.rir != null && { rir: s.rir }), ...(s.repsUnconfirmed && { repsUnconfirmed: true as const }) })),
         }))
         .filter(e => e.sets.length > 0);
       return perEx.length > 0 ? { exercises: perEx } : {};
@@ -142,40 +159,38 @@ export async function finishWorkoutSession(
   };
   addCompletedSession(session);
 
-  // 2. Marcar el día como activo para la racha (idempotente por día)
-  await markActiveDay();
+  // 2. ENCOLAR la fila de sync (si hay userId) ANTES de cualquier await → no hay ventana entre el
+  // guardado local y el encolado: si la app muere aquí, la sesión sigue pendiente (no se pierde).
+  // `client_session_id` = clave de idempotencia (índice único server). `date_local` = día SELLADO.
+  const row: PendingWorkoutRow | null = payload.userId
+    ? {
+        user_id: payload.userId,
+        client_session_id: sessionId,
+        date_local: sessionDay,
+        // completed_at = instante REAL de fin (≠ sessionDate). Ordering/round-trip legacy.
+        completed_at: now.toISOString(),
+        modality: payload.modality,
+        duration_minutes: Math.max(0, Math.round(payload.durationSeconds / 60)),
+        target_duration_minutes: Math.max(0, Math.round(payload.targetDurationSeconds / 60)),
+        equipment: payload.equipment,
+        day_type: payload.dayType ?? null,
+        exercises: payload.exercises,
+        exercises_completed: payload.exercisesCompleted,
+        exercises_total: payload.exercisesTotal,
+        coach_reason: payload.coachReason ?? null,
+        generation_method: payload.generationMethod ?? null,
+        partner_user_id: payload.partnerUserId ?? null,
+        partner_name: payload.partnerName ?? null,
+      }
+    : null;
+  if (row) outbox?.enqueue(row);
 
-  // 2. Insertar en Supabase (NON-bloqueante)
-  if (!payload.userId) {
-    // Anon: solo guardamos local
-    return;
-  }
+  // 3. Racha del día (idempotente) — usa el día SELLADO.
+  await markActiveDay(sessionDay);
 
-  try {
-    // date_local en zona horaria del usuario (sv-SE devuelve YYYY-MM-DD)
-    const dateLocal = now.toLocaleDateString('sv-SE');
-
-    const { error } = await supabase.from('workout_log').insert({
-      user_id: payload.userId,
-      date_local: dateLocal,
-      modality: payload.modality,
-      duration_minutes: Math.max(0, Math.round(payload.durationSeconds / 60)),
-      target_duration_minutes: Math.max(0, Math.round(payload.targetDurationSeconds / 60)),
-      equipment: payload.equipment,
-      day_type: payload.dayType,
-      exercises: payload.exercises,
-      exercises_completed: payload.exercisesCompleted,
-      exercises_total: payload.exercisesTotal,
-      coach_reason: payload.coachReason,
-      generation_method: payload.generationMethod,
-      partner_user_id: payload.partnerUserId ?? null,
-      partner_name: payload.partnerName ?? null,
-    });
-
-    if (error) {
-      console.warn('[workoutLogger] Supabase insert failed:', error.message);
-    }
-  } catch (e) {
-    console.warn('[workoutLogger] Supabase insert exception:', e);
-  }
+  // 4. Intento de sync idempotente. Éxito → sale de la cola; fallo → queda para el próximo flush
+  // (app-open / online / foco). Reintentar nunca duplica (índice único). Anon (row null): solo local.
+  if (!row) return;
+  const ok = await upsertWorkoutRow(row);
+  if (ok) outbox?.dequeue(sessionId);
 }

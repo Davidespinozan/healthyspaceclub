@@ -16,6 +16,7 @@ import {
   mergeWorkoutSessions,
   type WorkoutLogRow,
 } from './utils/workoutSync';
+import { flushPendingWorkouts } from './utils/workoutOutbox';
 import { detectBrowserLanguage } from './i18n';
 import LandingScreen from './screens/LandingScreen';
 import UpdatePrompt from './components/UpdatePrompt';
@@ -193,6 +194,25 @@ export default function App() {
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+
+  // P2-A · OUTBOX: reintenta sesiones que no llegaron a Supabase (offline) al recuperar conexión
+  // o al volver a foco. Idempotente (índice único server) → nunca duplica. Al montar cubre el caso
+  // "cerré la app offline, la abro online". El flush tras hidratar (abajo) cubre el login/reload.
+  useEffect(() => {
+    const flush = () => {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+      if (!useAppStore.getState().user) return;
+      void flushPendingWorkouts();
+    };
+    const onVis = () => { if (document.visibilityState === 'visible') flush(); };
+    flush();
+    window.addEventListener('online', flush);
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.removeEventListener('online', flush);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, []);
 
   // ── Gate: sin suscripción ('none') NO entra al dashboard → paywall ─
@@ -468,7 +488,7 @@ export default function App() {
             const cutoff = dayKey(new Date(Date.now() - 14 * 86400000));
             const { data: workouts } = await supabase
               .from('workout_log')
-              .select('date_local, completed_at, modality, duration_minutes, exercises_completed, exercises_total, exercises')
+              .select('date_local, completed_at, client_session_id, modality, duration_minutes, exercises_completed, exercises_total, exercises')
               .eq('user_id', session.user.id)
               .gte('date_local', cutoff)
               .order('completed_at', { ascending: true });
@@ -480,8 +500,9 @@ export default function App() {
                 localState.completedSessions,
                 remoteSessions,
               );
-              // Solo lectura remote→local. NO auto-backfill local→DB en
-              // hidratación (evita re-insertar sesiones cacheadas en cada reload).
+              // Solo lectura remote→local. NO auto-backfill ciego local→DB (evita re-insertar
+              // sesiones cacheadas). El backfill dirigido lo hace el OUTBOX (solo pendientes,
+              // idempotente) — se dispara abajo tras hidratar.
               useAppStore.setState({ completedSessions: merged });
 
               // Último desempeño por ejercicio (para "la vez pasada" en el player).
@@ -512,6 +533,9 @@ export default function App() {
                 });
               }
             }
+            // P2-A · backfill dirigido: reintenta las sesiones pendientes de este usuario
+            // (offline previo). Idempotente (índice único) → nunca duplica lo ya sincronizado.
+            if (isStillCurrentUser()) void flushPendingWorkouts();
           } catch (e) {
             console.error('[auth] failed to hydrate workout_log:', e);
           }

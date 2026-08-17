@@ -104,6 +104,9 @@ export default function WorkoutPlayer({
   );
   const baseExercises = workout.exercises;
   const planHash = buildPlanHash(workout);
+  // P2-B · día SELLADO del workout (al generar). El resume se valida contra ESTE día, no contra
+  // el reloj actual → una sesión que cruza medianoche NO pierde el progreso. Fallback: hoy local.
+  const sealedWorkoutDate = (workout as { sessionDate?: string }).sessionDate ?? dayKey(new Date());
   // Fase 3 — bloques de la sesión (opcionales; rutinas viejas no los traen).
   const warmupBlock = (workout as CachedWorkout).warmupBlock;
   const finisherBlock = (workout as CachedWorkout).finisherBlock;
@@ -149,8 +152,7 @@ export default function WorkoutPlayer({
       const raw = localStorage.getItem(PROGRESS_KEY);
       if (!raw) return null;
       const d = JSON.parse(raw);
-      const today = dayKey(new Date());
-      if (d && d.version === 2 && d.workoutDate === today && d.planHash === planHash
+      if (d && d.version === 2 && d.workoutDate === sealedWorkoutDate && d.planHash === planHash
           && typeof d.currentStep === 'number' && d.currentStep >= 0
           && d.currentStep < sequence.length && Array.isArray(d.loggedByExercise)) {
         return d as { currentStep: number; loggedByExercise: LoggedByExercise; startedAt?: number; swaps?: Record<number, WorkoutExercise> };
@@ -366,6 +368,9 @@ export default function WorkoutPlayer({
   // en un arranque fresco (ambos en 0) no salta. Usa el broadcast que ya existe,
   // sin depender de DB — si realtime no conecta, cae al resume local de siempre.
   const caughtUpRef = useRef(false);
+  // IDEMPOTENCIA: una sesión → una sola finalización. Sin esto, un doble-tap / re-entrada rápida de
+  // finishSession dispara onComplete dos veces → completedSessions + insert Supabase duplicados.
+  const finishedRef = useRef(false);
   useEffect(() => {
     if (!partnerMode || caughtUpRef.current || !partnerLive || partnerLive.done) return;
     if (partnerLive.exIndex > currentExerciseIndex) {
@@ -463,7 +468,7 @@ export default function WorkoutPlayer({
   useEffect(() => {
     if (phase === 'exercise' || phase === 'paused') {
       localStorage.setItem(PROGRESS_KEY, JSON.stringify({
-        workoutDate: dayKey(new Date()),
+        workoutDate: sealedWorkoutDate,
         planHash,
         version: 2,
         currentStep,
@@ -517,8 +522,7 @@ export default function WorkoutPlayer({
       const raw = localStorage.getItem(PROGRESS_KEY);
       if (!raw) return;
       const d = JSON.parse(raw);
-      const today = dayKey(new Date());
-      if (!d || d.workoutDate !== today || d.planHash !== planHash) {
+      if (!d || d.workoutDate !== sealedWorkoutDate || d.planHash !== planHash) {
         localStorage.removeItem(PROGRESS_KEY);
       }
     } catch { /* noop */ }
@@ -637,6 +641,8 @@ export default function WorkoutPlayer({
   }
 
   function finishSession(logged: LoggedByExercise) {
+    if (finishedRef.current) return; // ya finalizó → no duplicar la sesión ni el insert
+    finishedRef.current = true;
     const payload = buildOnCompletePayload(flattenByExercise(logged), startedAt, Date.now(), exercises);
     track('workout_completed', {
       exercises: payload.exercisesCompleted,

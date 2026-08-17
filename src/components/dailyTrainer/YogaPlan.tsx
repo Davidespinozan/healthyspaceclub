@@ -186,7 +186,12 @@ export default function YogaPlan({
               dayType: 'power-vinyasa',
               coachReason: yogaPlan.razon,
               generationMethod: 'ai_generated',
-            }, addCompletedSession, markActiveDay).catch(() => {});
+              // P2-B · día sellado (fallback hoy) y P2-A · outbox idempotente, igual que fuerza.
+              sessionDate: (yogaPlan as { sessionDate?: string }).sessionDate,
+            }, addCompletedSession, markActiveDay, {
+              enqueue: useAppStore.getState().enqueuePendingWorkout,
+              dequeue: useAppStore.getState().dequeuePendingWorkout,
+            }).catch(() => {});
 
             setPlayerOpen(false);
           }}
