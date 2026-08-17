@@ -738,6 +738,38 @@
    ══════════════════════════════════════════════════════════ */
 
 /* Aviso de idioma de la rutina (prosa IA en otro idioma) */
+/* Aviso "semana cubierta" (AUTO, pre-generación) — informativo, calmado; no bloquea. */
+.wz-week-covered {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0 0 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: rgba(184, 148, 74, 0.10);
+  border: 1px solid rgba(184, 148, 74, 0.26);
+  font-family: 'Montserrat', sans-serif;
+}
+.wz-week-covered-title { font-size: 0.82rem; font-weight: 600; color: var(--dorado, #B8944A); line-height: 1.35; }
+.wz-week-covered-sub { font-size: 0.76rem; color: var(--texto-suave, #7a7266); line-height: 1.35; }
+
+/* Early-end honesto: la sesión útil de hoy es más corta que el tiempo elegido (informativo, calmado). */
+.dt2-early-end {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(184, 148, 74, 0.10);
+  border: 1px solid rgba(184, 148, 74, 0.26);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--dorado, #B8944A);
+}
+.dt2-early-end svg { flex-shrink: 0; margin-top: 1px; }
+
 .dt2-lang-mismatch {
   display: flex;
   align-items: center;

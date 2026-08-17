@@ -15,6 +15,7 @@
 // SIN heredar sus caps (el finisher es un complemento; esto es el main).
 // ─────────────────────────────────────────────────────────────────────────
 import type { Exercise, CardioStyle, Equipment } from '../types';
+import type { CardioExerciseMeta } from './workoutDisplay';
 import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
 
 export type CardioBlockKind = 'steady' | 'intervals' | 'drills' | 'power' | 'recovery';
@@ -261,12 +262,19 @@ export function buildCardioMain(input: {
  * CLAVE del fix: sin esto, el día de cardio ejecutaba la lista corta de la IA (~37 min) e ignoraba
  * el plan (112 min) — el bloque era solo un panel. Ahora el plan ES la sesión.
  */
-export function cardioBlocksToExercises(plan: CardioMainPlan): Array<{ id: string; sets: number; reps: string; rest: number; tip_personalizado: string }> {
+export function cardioBlocksToExercises(plan: CardioMainPlan): Array<{ id: string; sets: number; reps: string; rest: number; tip_personalizado: string; cardio: CardioExerciseMeta }> {
   return plan.blocks.filter(b => b.stationId).map(b => {
+    // IDENTIDAD DEL BLOQUE (kind/labelKey/zone/style/…) viaja con el ejercicio → la card muestra la
+    // ACTIVIDAD real (correr/circuito/…), no el stationId técnico. El player sigue usando id/reps/sets
+    // para el timer (campo `cardio` es solo display; no lo lee la ejecución).
+    const cardio: CardioExerciseMeta = {
+      kind: b.kind, labelKey: b.labelKey, zone: b.zone, minutes: b.minutes,
+      workSec: b.workSec, restSec: b.restSec, rounds: b.rounds, intensity: b.intensity, style: plan.style,
+    };
     if (b.kind === 'intervals' || b.kind === 'power') {
-      return { id: b.stationId, sets: Math.max(1, b.rounds ?? 1), reps: `${b.workSec ?? 30} seg`, rest: b.restSec ?? 30, tip_personalizado: b.cue ?? '' };
+      return { id: b.stationId, sets: Math.max(1, b.rounds ?? 1), reps: `${b.workSec ?? 30} seg`, rest: b.restSec ?? 30, tip_personalizado: b.cue ?? '', cardio };
     }
-    return { id: b.stationId, sets: 1, reps: `${b.minutes} min${b.zone ? ` · ${b.zone}` : ''}`, rest: 0, tip_personalizado: b.cue ?? '' };
+    return { id: b.stationId, sets: 1, reps: `${b.minutes} min${b.zone ? ` · ${b.zone}` : ''}`, rest: 0, tip_personalizado: b.cue ?? '', cardio };
   });
 }
 

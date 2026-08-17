@@ -215,7 +215,7 @@ TAREA:
 3. Escribe tip_personalizado breve (máx 15 palabras) por ejercicio, dirigido al usuario en 2da persona.
 4. Escribe warmup y cooldown breves (1 oración cada uno), en 2da persona. El warmup debe incluir APROXIMACIÓN: movilidad general + 2-3 series de aproximación subiendo carga en tu PRIMER compuesto pesado antes de las series efectivas (no arranques en frío al peso de trabajo).
 5. Escribe "note": mensaje motivador breve (1-2 oraciones), hablándole directo (ej. "tu próximo paso es..." NO "X, tu próximo paso...").
-6. Escribe "razon": por qué elegiste esta rutina, hablándole al usuario en 2da persona, citando al menos 2 piezas del contexto. Ejemplo: "Elegí esta rutina porque tienes 7 días de descanso y buscas hipertrofia" — NO "Elegí esta rutina porque {nombre} tiene...".${partner ? `
+6. Escribe "razon": por qué elegiste esta rutina, hablándole al usuario en 2da persona, citando al menos 2 piezas del contexto. Ejemplo: "Elegí esta rutina porque tienes 7 días de descanso y buscas hipertrofia" — NO "Elegí esta rutina porque {nombre} tiene...". ⚠️ NO menciones ni prometas una DURACIÓN total de la sesión (p.ej. "con 120 minutos..."): el tiempo elegido es tiempo DISPONIBLE (máximo), NO la duración de la rutina — el motor fija la dosis útil después y puede ser bastante menor. Justifica por objetivo/nivel/músculos/estructura, nunca por "aprovechar los X minutos".${partner ? `
 7. PAREJA: a cada ejercicio agrégale "format" ("juntos" | "alternado" | "asistido"). Si el compañero debe hacer reps distintas, agrega "repsB"; si aporta, agrega "tipB" (cue para el compañero). Pon "partnerMode": true y "partnerName": "${partner.name}".` : ''}
 
 Responde SOLO este JSON, sin markdown (el "analisis" va PRIMERO — razona antes de construir):

@@ -45,6 +45,10 @@ export interface CachedWorkout {
     format?: PartnerFormat;
     repsB?: string; // reps sugeridas para el compañero (persona B) si difieren
     tipB?: string;  // cue breve para el compañero
+    // CARDIO DEDICADO · identidad del bloque (kind/labelKey/zone/style/…) para el DISPLAY de la card
+    // (título de la actividad real + gate de video). El player usa id/reps/sets para el timer; este
+    // campo NO afecta la ejecución. Ver utils/workoutDisplay.ts.
+    cardio?: import('./workoutDisplay').CardioExerciseMeta;
   }>;
   warmup: string;
   cooldown: string;

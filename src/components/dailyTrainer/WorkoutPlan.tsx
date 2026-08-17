@@ -19,6 +19,8 @@ import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRigh
 import { useAppStore } from '../../store';
 import { plural } from '../../i18n/format';
 import { humanizeExerciseId } from '../../utils/exerciseMeta';
+import { logE2ETrace } from '../../utils/e2eTrace';
+import { planPlannedMinutes, planEarlyEnd, isCardioPlan, cardioBlockTitleKey, cardioShowVideo, cardioMetaFor } from '../../utils/workoutDisplay';
 import { useT } from '../../i18n';
 import { getExerciseIcon } from '../../utils/muscleGroupIcon';
 import {
@@ -161,11 +163,13 @@ export default function WorkoutPlan({
   const totalExercises = plan.exercises.length;
   const completedCount = plan.exercises.filter(ex => workoutChecks[`${headerCheckDay}-${ex.id}`]).length;
   const progressPct = totalExercises ? Math.round((completedCount / totalExercises) * 100) : 0;
-  const estMinutes = Math.max(1, Math.round(plan.exercises.reduce((sum, ex) => {
-    const sets = typeof ex.sets === 'number' ? ex.sets : parseInt(String(ex.sets)) || 3;
-    const rest = typeof ex.rest === 'number' ? ex.rest : parseInt(String(ex.rest)) || 60;
-    return sum + sets * (40 + rest);   // ~40s de trabajo por serie + descanso
-  }, 0) / 60));
+  // DURACIÓN REAL (autoridad temporal correcta): cardio → warmup+cardioMain (no el estimador de
+  // fuerza, que daba "25 min" a bloques time-based); resistencia → estimador honesto de la sesión.
+  const estMinutes = planPlannedMinutes(plan);
+  const planIsCardio = isCardioPlan(plan);
+  // Early-end honesto: si la sesión real es materialmente más corta que el tiempo pedido, se comunica
+  // (política: selectedTime = tiempo DISPONIBLE, nunca una promesa de duración).
+  const earlyEnd = planEarlyEnd(plan, selectedTime);
 
   return (
     <div className="wz-root">
@@ -177,10 +181,15 @@ export default function WorkoutPlan({
           <h2 className="dt2-plan-title">{translateDayLabel(plan.type, t)}</h2>
           <div className="dt2-plan-meta">
             <span className="dt2-meta-chip">
-              <Dumbbell size={12} /> {plural(plan.exercises.length, {
-                one: t('workout.exercisesCountOne', { n: plan.exercises.length }),
-                other: t('workout.exercisesCount', { n: plan.exercises.length }),
-              })}
+              <Dumbbell size={12} /> {planIsCardio
+                ? plural(plan.exercises.length, {
+                    one: t('workout.blocksCountOne', { n: plan.exercises.length }),
+                    other: t('workout.blocksCount', { n: plan.exercises.length }),
+                  })
+                : plural(plan.exercises.length, {
+                    one: t('workout.exercisesCountOne', { n: plan.exercises.length }),
+                    other: t('workout.exercisesCount', { n: plan.exercises.length }),
+                  })}
             </span>
             <span className="dt2-meta-chip"><Clock size={12} /> {t('workout.minApprox', { n: estMinutes })}</span>
             <span className="dt2-meta-chip">
@@ -224,6 +233,15 @@ export default function WorkoutPlan({
           <button type="button" onClick={onRegenerate} disabled={regenBlocked}>
             {t('workout.langMismatchCta')}
           </button>
+        </div>
+      )}
+
+      {/* Early-end HONESTO: la sesión útil de hoy es más corta que el tiempo elegido. No se
+          esconde ni se vende como "120 min": se explica el porqué (dosis útil / volumen semanal). */}
+      {earlyEnd && (
+        <div className="dt2-early-end">
+          <Clock size={14} />
+          <span>{t(earlyEnd.reasonKey as Parameters<typeof t>[0], { n: earlyEnd.plannedMin })}</span>
         </div>
       )}
 
@@ -279,6 +297,9 @@ export default function WorkoutPlan({
         type PlanEx = typeof plan.exercises[number];
         const renderCard = (ex: PlanEx, i: number) => {
           const bank = exerciseMap.get(ex.id);
+          // Identidad cardio ROBUSTA: sellada en el ejercicio (rutinas nuevas) o derivada del
+          // cardioMainBlock persistido (rutinas legacy/cache). Nunca cae al stationId técnico.
+          const cm = cardioMetaFor(plan, i);
           return (
             <div
               key={`${ex.id}-${i}`}
@@ -311,7 +332,9 @@ export default function WorkoutPlan({
               }}
             >
               <div className="dt2-ex-emoji">
-                {videoByEx[ex.id] ? (
+                {/* CARDIO: un bloque steady/interval NO muestra el video del stationId técnico
+                    (p.ej. high-knees durante 77 min) → card estilizada. Solo drills / intervals no-running. */}
+                {videoByEx[ex.id] && (!cm || cardioShowVideo(cm)) ? (
                   <video
                     className="dt2-ex-video"
                     src={videoByEx[ex.id]}
@@ -334,9 +357,16 @@ export default function WorkoutPlan({
                     {t(MUSCLE_LABEL_KEY[bank.muscleGroup])}
                   </div>
                 )}
-                <div className="dt2-ex-name">{bank?.name || humanizeExerciseId(ex.id)}</div>
+                {/* CARDIO: título = ACTIVIDAD real del bloque (correr/circuito/…), nunca el stationId. */}
+                <div className="dt2-ex-name">{cm ? t(cardioBlockTitleKey(cm) as Parameters<typeof t>[0]) : (bank?.name || humanizeExerciseId(ex.id))}</div>
                 <div className="dt2-ex-stats">
-                  {ex.reps != null && (
+                  {cm ? (
+                    <span className="dt2-ex-presc">
+                      {(cm.kind === 'intervals' || cm.kind === 'power')
+                        ? t('workout.cardioBlock.roundsSub', { rounds: cm.rounds ?? ex.sets, work: cm.workSec ?? 40, rest: cm.restSec ?? 20 })
+                        : `${t('workout.cardioBlock.minSub', { min: cm.minutes })}${cm.zone ? ` · ${cm.zone}` : ''}`}
+                    </span>
+                  ) : ex.reps != null && (
                     <span className="dt2-ex-presc">
                       {ex.sets != null ? `${ex.sets} × ${ex.reps}` : ex.reps}
                       {ex.rest != null && (
@@ -455,7 +485,9 @@ export default function WorkoutPlan({
             // (no skipeado). Comparte workoutChecks → los ✓ aparecen en la card.
             // OJO: fecha LOCAL (dayKey), no UTC de toISOString — si no, de noche en
             // husos negativos el ✓ quedaba bajo la llave de "mañana" y no se veía.
-            const checkDay = dayKey(new Date());
+            // P2-B · toda la sesión se atribuye al día SELLADO al generar (checks, perfRecords,
+            // rir, historial) → coherente aunque el workout cruce medianoche. Fallback: hoy local.
+            const checkDay = (plan as { sessionDate?: string }).sessionDate ?? dayKey(new Date());
             const setWorkoutCheck = useAppStore.getState().setWorkoutCheck;
 
             // FUENTE DE VERDAD del historial = lo REALMENTE ejecutado (swaps aplicados por el
@@ -523,6 +555,25 @@ export default function WorkoutPlan({
             );
             if (rirObs.length > 0) useAppStore.getState().addRirObservations(rirObs);
 
+            // DEV-only: trace estructurado del contrato PRESCRITO ≠ EJECUTADO ≠ GUARDADO.
+            logE2ETrace({
+              config: { modality: sessionModality, dayType: todayDecision.type, equipment: selectedEquipment, durationMin: selectedTime, isDeload: isDeloadSession, partner: !!plan.partnerMode },
+              player: {
+                exercisesCompleted: data.exercisesCompleted, exercisesTotal: plan.exercises.length,
+                durationSec: data.durationSeconds,
+                loggedSets: (data.loggedSets ?? []).filter(Boolean).length,
+                unconfirmedReps: (data.loggedSets ?? []).filter((s): s is NonNullable<typeof s> => !!s && s.repsUnconfirmed === true).length,
+              },
+              persistence: {
+                exercises: exercisesLog.filter(e => e.performed && !e.performed.skipped).map(e => ({
+                  id: e.exercise_id,
+                  prescribed: `${e.planned?.sets ?? '?'}×${e.planned?.reps ?? '?'}`,
+                  saved: (e.performed!.sets.filter(Boolean) as LoggedSet[]).map(s => `${s.reps}${s.repsUnconfirmed ? '?' : ''}@${s.kg}`),
+                })),
+                recordedForProgression: !isDeloadSession,
+              },
+            });
+
             finishWorkoutSession({
               userId,
               modality: sessionModality,
@@ -537,6 +588,9 @@ export default function WorkoutPlan({
               generationMethod: 'ai_generated',
               loggedSets: data.loggedSets,
               isDeload: (plan as { isDeload?: boolean }).isDeload === true, // P1 · marca la sesión de descarga
+              // P2-B · día SELLADO al generar (no el reloj de fin) → la sesión que cruza medianoche
+              // pertenece a su día de inicio (racha/historial coherentes).
+              sessionDate: (plan as { sessionDate?: string }).sessionDate ?? checkDay,
               // Fase 3 · crédito compartido: liga la sesión al OTRO. En el device de B el "otro"
               // es el owner (A), no B mismo → si soy B, el partner es ownerId; si soy A, es partnerId.
               partnerUserId: plan.partnerMode
@@ -545,7 +599,10 @@ export default function WorkoutPlan({
                     : ((plan as { partnerId?: string | null }).partnerId ?? null))      // soy A → el otro es B (partner)
                 : null,
               partnerName: plan.partnerMode ? (plan.partnerName ?? null) : null,
-            }, addCompletedSession, markActiveDay).catch(() => {});
+            }, addCompletedSession, markActiveDay, {
+              enqueue: useAppStore.getState().enqueuePendingWorkout,
+              dequeue: useAppStore.getState().dequeuePendingWorkout,
+            }).catch(() => {});
 
             setWorkoutPlayerOpen(false);
           }}

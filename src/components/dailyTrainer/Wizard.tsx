@@ -87,6 +87,8 @@ interface WizardProps {
   // Modo pareja: compañero conectado y matcheado (solo confirmación).
   partnerMode: boolean;
   partnerName: string;
+  // AUTO · volumen semanal cubierto (todayDecision.allCovered, ya filtrado por AUTO+resistencia).
+  weekCovered: boolean;
 
   // Acción final
   onGenerate: () => void;
@@ -110,6 +112,7 @@ export default function Wizard({
   lastTrained, setLastTrained,
   hasSystemHistory,
   partnerMode, partnerName,
+  weekCovered,
   onGenerate,
 }: WizardProps) {
   const { t } = useT();
@@ -523,6 +526,15 @@ export default function Wizard({
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* AUTO · volumen semanal prácticamente cubierto → aviso INFORMATIVO antes de generar (no
+            auto-cambia de modalidad; el usuario usa los chips de arriba si prefiere cardio/movilidad). */}
+        {weekCovered && (
+          <div className="wz-week-covered">
+            <span className="wz-week-covered-title">{t('workout.weekCovered.title')}</span>
+            <span className="wz-week-covered-sub">{t('workout.weekCovered.sub')}</span>
           </div>
         )}
 

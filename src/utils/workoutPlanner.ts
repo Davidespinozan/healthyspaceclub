@@ -2,6 +2,7 @@ import { dayKey } from './localDate';
 import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
 import { variantAllowedByGear, gearFromLegacyEquipment, type Implement, type Gear } from './equipmentImplement';
 import { computeVolumeTargets, targetsToMap, type Level } from './volumeLandmarks';
+import { estimatedSessionMinutes } from './sessionPrescription';
 import type {
   Exercise,
   ExerciseVariant,
@@ -489,12 +490,51 @@ export function inDeloadWeek(completedSessions: CompletedSession[]): boolean {
     if (desc[j].isDeload) streakStart = desc[j].date; // desc = más nuevo→viejo: extiende al más antiguo de la racha
     else break;
   }
-  const days = Math.floor((Date.now() - Date.parse(streakStart + 'T00:00:00Z')) / 86400000);
+  // P2-B · `streakStart` es un dayKey LOCAL. Parsearlo como 'T00:00:00Z' (UTC) desfasaba el
+  // conteo hasta ±1 día según la zona horaria → la ventana de 7 días de deload terminaba antes/
+  // después. Parseo por componentes = medianoche LOCAL de ese día (correcto también con DST).
+  const [y, mo, d] = streakStart.split('-').map(Number);
+  const days = Math.floor((Date.now() - new Date(y, mo - 1, d).getTime()) / 86400000);
   return days < 7;
 }
 
-/** Entre varios tipos de día, elige el que más DÉFICIT de volumen tiene esta semana
- *  (músculos que van cortos vs la meta), evitando repetir los de ayer. */
+/** Volumen semanal PENDIENTE de un split, en SERIES (P3): Σ max(0, target − hecho) sobre sus
+ *  músculos. Es la señal de "cuánto trabajo ÚTIL queda hoy" para ese día. Determinista. */
+export function usefulVolumeRemaining(
+  dayMuscles: MuscleGroup[],
+  vol: Record<string, number>,
+  target?: Record<string, number>,
+): number {
+  const t_ = (m: string) => target?.[m] ?? WEEKLY_SET_TARGET;
+  return dayMuscles.reduce((a, m) => a + Math.max(0, t_(m) - (vol[m] ?? 0)), 0);
+}
+
+/** Minutos ÚTILES estimados de un split SIN IA y SIN generar la rutina (P3/P4): series pendientes
+ *  × ~2.2 min/serie (≈40s trabajo + descanso medio). Permite a AUTO conocer, antes de elegir, que
+ *  un split agotado da ~pocos minutos y otro con déficit da bastantes más. */
+const MIN_PER_USEFUL_SET = 2.2;
+export function estimatedUsefulMinutes(
+  dayMuscles: MuscleGroup[],
+  vol: Record<string, number>,
+  target?: Record<string, number>,
+): number {
+  return Math.round(usefulVolumeRemaining(dayMuscles, vol, target) * MIN_PER_USEFUL_SET);
+}
+
+/** Penalización SUAVE por entrenar músculos de AYER (recuperación): ~una exercise de trabajo
+ *  redundante (5 series). NO es un veto — un déficit grande la sobrevive; entre opciones
+ *  parecidas el overlap desempata (favorece recuperar). */
+const OVERLAP_PENALTY_SETS = 5;
+
+/**
+ * Entre varios tipos de día, elige el de mayor UTILIDAD (volumen útil pendiente esta semana),
+ * con una PENALIZACIÓN SUAVE por solapar los músculos de ayer.
+ *
+ * ANTES: el overlap era un tiebreaker BINARIO que ordenaba ANTES que el déficit → un split
+ * AGOTADO no-solapado (p.ej. push con ~13 min útiles) le ganaba a uno ÚTIL solapado (p.ej. lower
+ * con ~88 min) solo porque el otro compartía músculos con ayer. AHORA el overlap resta un poco,
+ * no veta: la utilidad manda, y el overlap solo decide entre opciones comparables.
+ */
 export function pickByVolumeDeficit(
   types: WorkoutDayType[],
   vol: Record<string, number>,
@@ -502,15 +542,59 @@ export function pickByVolumeDeficit(
   target?: Record<string, number>, // P3: target POR MÚSCULO. Sin él → 14 plano (compat).
 ): WorkoutDayType {
   const yesterday = new Set(yesterdayMuscles);
-  const t_ = (m: string) => target?.[m] ?? WEEKLY_SET_TARGET;
   const scored = types.map((t) => {
     const mgs = DAY_TYPE_CONFIG[t].muscleGroups;
-    const deficit = mgs.reduce((a, m) => a + Math.max(0, t_(m) - (vol[m] ?? 0)), 0);
+    const useful = usefulVolumeRemaining(mgs, vol, target); // series útiles pendientes
     const overlap = mgs.some((m) => yesterday.has(m));
-    return { t, deficit, overlap };
+    const score = useful - (overlap ? OVERLAP_PENALTY_SETS : 0);
+    return { t, score, useful };
   });
-  scored.sort((a, b) => (Number(a.overlap) - Number(b.overlap)) || (b.deficit - a.deficit));
+  // score DESC; empate exacto → mayor utilidad bruta (estable, determinista).
+  scored.sort((a, b) => (b.score - a.score) || (b.useful - a.useful));
   return scored[0].t;
+}
+
+// Umbrales SEMÁNTICOS de la selección con tiempo (documentados, no mágicos):
+const MAINTENANCE_FLOOR_SETS = 4;  // < esto = el split ya solo tiene dosis de mantenimiento (agotado)
+const FIT_OVERSHOOT = 1.15;        // "sin pasarse brutalmente": tolera ~15% sobre la ventana (recorte leve)
+const FIT_BAND_MIN = 15;           // recuperación desempata si un split FRESCO ajusta de forma comparable
+
+/**
+ * Selección de día AUTO con TIEMPO DISPONIBLE (jerárquica, legible):
+ *  PASO 1 GATE de VOLUMEN — descarta splits agotados (solo mantenimiento). El tiempo NUNCA sube uno.
+ *  PASO 2 TIME-FIT — entre supervivientes, el que mejor LLENA `availableMinutes` sin pasarse mucho
+ *         (si varios caben → el de más trabajo útil; si ninguno cabe → el más corto, menos recorte).
+ *  PASO 3 RECUPERACIÓN — si el elegido solapa ayer y hay uno FRESCO de ajuste comparable, prefiere el fresco.
+ * `allCovered`=true cuando NADA útil queda pendiente (toda la semana en target) → señal para la UX.
+ */
+export function pickSplitByUtilityTime(
+  types: WorkoutDayType[],
+  vol: Record<string, number>,
+  yesterdayMuscles: MuscleGroup[],
+  target: Record<string, number> | undefined,
+  estMinutes: Record<string, number>,
+  availableMinutes: number,
+): { type: WorkoutDayType; allCovered: boolean } {
+  const yesterday = new Set(yesterdayMuscles);
+  const scored = types.map((t) => {
+    const mgs = DAY_TYPE_CONFIG[t].muscleGroups;
+    return { t, useful: usefulVolumeRemaining(mgs, vol, target), overlap: mgs.some((m) => yesterday.has(m)), est: estMinutes[t] ?? 0 };
+  });
+  const survivors = scored.filter((s) => s.useful >= MAINTENANCE_FLOOR_SETS);
+  if (survivors.length === 0) {
+    const best = [...scored].sort((a, b) => b.useful - a.useful)[0];
+    return { type: best.t, allCovered: true };
+  }
+  const fits = survivors.filter((s) => s.est <= availableMinutes * FIT_OVERSHOOT);
+  const ranked = fits.length
+    ? [...fits].sort((a, b) => b.est - a.est)
+    : [...survivors].sort((a, b) => a.est - b.est);
+  let best = ranked[0];
+  if (best.overlap) {
+    const fresh = ranked.find((s) => !s.overlap && Math.abs(s.est - availableMinutes) <= Math.abs(best.est - availableMinutes) + FIT_BAND_MIN);
+    if (fresh) best = fresh;
+  }
+  return { type: best.t, allCovered: false };
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -529,6 +613,11 @@ export function decideTodayWorkout(params: {
   equipment?: Equipment[];
   allowedImplements?: Set<Implement>;
   lowImpactMode?: boolean;
+  // AUTO × TIEMPO (opcional; sin él → comportamiento previo por deficit). Tiempo MÁXIMO disponible
+  // + el training goal → AUTO estima los minutos útiles de cada split (prescribeSession) y prefiere
+  // el que mejor encaja en la ventana, sin subir un split agotado.
+  selectedTime?: number;
+  trainingGoal?: TrainingGoal;
 }): WorkoutDayDecision {
   const { userObjective, workoutLog, exercises, dailyEnergy, dailySleep, completedSessions = [] } = params;
 
@@ -540,9 +629,12 @@ export function decideTodayWorkout(params: {
 
   // Analyze history (incluye completedSessions si existen)
   const history = analyzeWorkoutHistory(workoutLog, exercises, completedSessions);
+  // Deload se computa aquí (no depende del split) para alimentar la estimación de minutos.
+  const { deload } = deloadCheck(completedSessions, workoutLog);
 
   // Pick next in cycle, avoiding yesterday's muscles
   let todayType = pickNextInCycle(cycle, history);
+  let allCovered = false;
 
   // Fases 2+4 — en días de FUERZA: la FRECUENCIA define la estructura del split
   // (pocos días → full-body; muchos → push/pull/legs), y dentro de esa estructura se
@@ -575,11 +667,27 @@ export function decideTodayWorkout(params: {
       weeksOfHistory,
       longPause: history.restDays >= 14,
     });
-    todayType = pickByVolumeDeficit(preferred, vol, history.yesterday, targetsToMap(targets));
+    const targetMap = targetsToMap(targets);
+    if (params.selectedTime && params.selectedTime > 0) {
+      // AUTO × TIEMPO: estima los minutos útiles de cada candidato (misma prescripción determinista
+      // que la generación) y elige por la regla jerárquica (gate de volumen → time-fit → recuperación).
+      const sessions7 = new Set(completedSessions.filter(s => s.date >= dayKey(new Date(Date.now() - 7 * 86400000))).map(s => s.date)).size;
+      const estMinutes: Record<string, number> = {};
+      for (const s of preferred) {
+        estMinutes[s] = estimatedSessionMinutes({
+          dayMuscles: DAY_TYPE_CONFIG[s].muscleGroups, bank: exercises,
+          weeklyTarget: targetMap, doneThisWeek: vol, freqTarget: freq,
+          sessionsThisWeekDone: Math.min(sessions7, Math.max(0, freq - 1)),
+          trainingGoal: params.trainingGoal ?? DAY_TYPE_CONFIG[s].defaultGoal as TrainingGoal,
+          phase: 'acumulacion', level: params.level, isDeload: deload,
+        });
+      }
+      const picked = pickSplitByUtilityTime(preferred, vol, history.yesterday, targetMap, estMinutes, params.selectedTime);
+      todayType = picked.type; allCovered = picked.allCovered;
+    } else {
+      todayType = pickByVolumeDeficit(preferred, vol, history.yesterday, targetMap);
+    }
   }
-
-  // Fase 5 — deload: si llevas 4+ semanas duras seguidas, toca descarga.
-  const { deload } = deloadCheck(completedSessions, workoutLog);
 
   // Determine intensity from check-in (deload fuerza intensidad baja).
   let intensity = determineIntensity(dailyEnergy, dailySleep, history.restDays);
@@ -589,7 +697,7 @@ export function decideTodayWorkout(params: {
   let reason = buildReason(todayType, history, objectiveKey);
   if (deload) reason = `Semana de descarga: llevas varias semanas entrenando fuerte, así que bajamos el volumen y la intensidad para que recuperes y sigas progresando. ${reason}`;
 
-  return buildDecision(todayType, reason, intensity, deload);
+  return buildDecision(todayType, reason, intensity, deload, allCovered);
 }
 
 function normalizeObjective(obj: string): string {
@@ -705,6 +813,7 @@ function buildDecision(
   reason: string,
   intensity: 'baja' | 'media' | 'alta',
   deload = false,
+  allCovered = false,
 ): WorkoutDayDecision {
   const config = DAY_TYPE_CONFIG[type];
   return {
@@ -715,6 +824,7 @@ function buildDecision(
     intensity,
     reason,
     deload,
+    ...(allCovered && { allCovered: true }),
   };
 }
 

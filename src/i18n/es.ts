@@ -514,8 +514,31 @@ export const es = {
     howToDoIt: 'Cómo hacerlo bien',
     planMicro: 'tu rutina',
     exercisesCount: '{n} ejercicios',
+    blocksCount: '{n} bloques',
+    blocksCountOne: '{n} bloque',
     exercisesSection: 'Ejercicios',
     minApprox: '{n} min aprox.',
+    // Duración real / early-end honesto (política: selectedTime = tiempo disponible, no promesa)
+    earlyEnd: {
+      cardio: 'Hoy tu dosis útil de cardio es de ~{n} min. No necesitas usar todo el tiempo: pasarte sería contraproducente.',
+      resistance: 'Hoy tu sesión útil es de ~{n} min. Tus anclas ya cubren tu volumen de la semana — añadir más sería trabajo de relleno.',
+    },
+    // Aviso PRE-generación cuando AUTO ve el volumen semanal prácticamente cubierto (allCovered).
+    weekCovered: {
+      title: 'Ya cubriste prácticamente tu volumen objetivo de esta semana. Hoy una sesión corta de mantenimiento puede ser suficiente.',
+      sub: 'Puedes mantener la sesión de fuerza o elegir cardio / movilidad si prefieres.',
+    },
+    // Identidad de bloques de CARDIO (nunca el nombre del stationId técnico)
+    cardioBlock: {
+      runDrills: 'Drills de carrera', runIntervals: 'Intervalos de carrera', runTempo: 'Carrera tempo',
+      runSteady: 'Carrera continua', runRecovery: 'Trote de recuperación',
+      circuit: 'Circuito funcional', power: 'Series de potencia', plyoPrep: 'Preparación explosiva',
+      intervals: 'Intervalos', tempo: 'Bloque tempo', drills: 'Movilidad y técnica',
+      steady: 'Ritmo sostenido', lowImpactSteady: 'Cardio sostenible', funcionalSteady: 'Trabajo sostenible',
+      recovery: 'Recuperación activa',
+      roundsSub: '{rounds} rondas · {work}s fuerte / {rest}s recuperación',
+      minSub: '{min} min',
+    },
     exercisesCompleted: 'ejercicios completados',
     todayGoal: 'Objetivo de hoy',
     supersetHow: 'Sin descanso entre ellos',

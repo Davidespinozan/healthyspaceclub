@@ -46,6 +46,7 @@ import { allocateHeadroom } from '../utils/headroom';
 import { assignTechniques } from '../utils/techniques';
 import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities, resolveCardioStyle } from '../utils/cardioMain';
 import { composeSession } from '../utils/sessionBlocks';
+import { shouldShowWeekCoveredNotice } from '../utils/workoutDisplay';
 import {
   deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
 } from '../utils/mesocycle';
@@ -163,13 +164,6 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   }), [workoutLog, streakCount, completedSessions]);
 
   // Auto decision
-  const todayDecision: WorkoutDayDecision = useMemo(() => decideTodayWorkout({
-    userObjective: String(obData?.goal || ''),
-    workoutLog: workoutLog || [],
-    exercises: exerciseBank,
-    completedSessions,
-    level: levelFromObData(obData), // P3: target de volumen personalizado por nivel
-  }), [obData, workoutLog, completedSessions]);
 
   // ── State
   const [phase, setPhase] = useState<Phase>(() => {
@@ -264,6 +258,17 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     const stored = (!partnerMode && storedWorkout?.date === today) ? trainingGoalFromPlan(storedWorkout.plan) : null;
     return stored ?? resolveTrainingGoal(obData);
   });
+  // Decisión del día (AUTO). Depende de selectedTime + trainingGoal → AUTO elige el split cuyo
+  // trabajo útil mejor encaja en el tiempo disponible (ver decideTodayWorkout · AUTO × tiempo).
+  const todayDecision: WorkoutDayDecision = useMemo(() => decideTodayWorkout({
+    userObjective: String(obData?.goal || ''),
+    workoutLog: workoutLog || [],
+    exercises: exerciseBank,
+    completedSessions,
+    level: levelFromObData(obData), // P3: target de volumen personalizado por nivel
+    selectedTime,                   // tiempo MÁXIMO disponible → refina la elección del split
+    trainingGoal,                   // descansos reales (fuerza vs hipertrofia) en la estimación
+  }), [obData, workoutLog, completedSessions, selectedTime, trainingGoal]);
   // Etiqueta gruesa LEGACY (para seal/store/analytics; la generación usa caps, no esto).
   const selectedEquipment: Equipment = caps.hasFullGym ? 'gym' : (gear.includes('ligas') && !caps.hasWeights ? 'ligas' : caps.hasWeights ? 'gym' : 'cuerpo');
   // Foco de fuerza (qué entrenar) + historia (cuándo entrenó por última vez).
@@ -643,32 +648,13 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       };
       const cached = await getCachedWorkout(configHash, schemaType);
 
-      // Yoga: NO usar cache — siempre generar fresh (stretch needs fresh plan)
-      if (selectedModality === 'yoga') {
-        // Skip cache for yoga — fall through to generation
-      } else if (cached && validateWorkout(cached, validIds) && fitsEquipment(cached)) {
-        // Fuerza/cardio/auto: cache válido. Aplica el reparador estructural
-        // (por si fue cacheado antes de estas reglas).
-        cached.exercises = repairWorkoutStructure(cached.exercises, bank, { hasWeights: caps.hasWeights, trainingGoal }).exercises;
-        // Pareja: la rutina cacheada TAMBIÉN debe llevar los metadatos de pareja y
-        // entregarse al compañero. Sin esto, un cache-hit dejaba al compañero sin
-        // rutina y A veía el plan como "solo" (sin cabecera ni formato juntos/alternado).
-        if (partnerMode) {
-          (cached as CachedWorkout).partnerMode = true;
-          (cached as CachedWorkout).partnerName = partnerName.trim() || t('wizard.partnerNamePlaceholder');
-          (cached as CachedWorkout).partnerAvatar = pendingPartner?.avatarUrl ?? null;
-          (cached as CachedWorkout).partnerId = pendingPartner?.id ?? null;
-          (cached as CachedWorkout).ownerId = useAppStore.getState().user?.id ?? null; // generador = A
-        }
-        setPlan(cached);
-        sealPlan(cached);
-        await saveDailyWorkout(cached as any);
-        if (partnerMode && pendingPartner?.id) {
-          deliverToPartner(cached);
-        }
-        setPhase('plan');
-        return;
-      }
+      // CACHE = ESTRUCTURA, NO PERSONALIZACIÓN. Un HIT reutiliza la SELECCIÓN cacheada (ejercicios/
+      // patrones) para EVITAR la IA/selección costosa, pero NO su personalización fisiológica: las
+      // capas deterministas (repairWorkoutStructure con piso por meso, prescribeSession →
+      // sets/reps/rir/rest/topKg/backoff/deload, headroom → volumen, técnicas) se RE-EJECUTAN ABAJO
+      // para el USUARIO ACTUAL con SU historial. Así un usuario JAMÁS recibe las cargas/volumen de
+      // otro (fuga cross-user del caché global). Yoga nunca usa este caché (siempre fresh).
+      const isCacheHit = selectedModality !== 'yoga' && !!cached && validateWorkout(cached, validIds) && fitsEquipment(cached);
 
       // ── Rama YOGA: generar Power Vinyasa fresh
       if (selectedModality === 'yoga') {
@@ -1102,6 +1088,17 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // El player de cardio usa los bloques deterministas (warmupBlock/cardioMainBlock/
         // finisherBlock), no estos campos de texto legacy de la IA → van vacíos.
         workout = { type: dayTypeKey, intensity: 'media', exercises: [], warmup: '', cooldown: '', note: '' } as CachedWorkout;
+      } else if (isCacheHit && cached) {
+        // CACHE HIT (fuerza/hipertrofia): reutiliza SOLO la selección cacheada → se SALTA la IA.
+        // La personalización (cargas/volumen/reps/técnicas) se re-deriva abajo para el usuario actual.
+        workout = cached;
+        // BORRA la carga horneada por el generador anterior. La prescripción abajo la re-fija SÓLO
+        // cuando hay historial; sin esto, un usuario en ARRANQUE EN FRÍO (sin historial → topKg
+        // undefined) heredaría el topKg/backoff/deload del OTRO usuario (la asignación es condicional).
+        for (const ex of workout.exercises) {
+          const e = ex as { topKg?: number; backoffKg?: number; deloadKg?: number };
+          delete e.topKg; delete e.backoffKg; delete e.deloadKg;
+        }
       } else {
       workout = (await orchestrateWorkout({
         candidates: aiCandidates,
@@ -1485,19 +1482,23 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         }
       }
 
-      saveWorkoutToCache({
-        configHash,
-        duration: selectedTime,
-        equipment: selectedEquipment,
-        goal,
-        dayType: dayTypeKey,
-        workout,
-        schemaType: 'workout',
-      }).catch(() => {});
+      // Solo un cache MISS guarda estructura (evita re-escribir) y consume presupuesto de regen:
+      // un HIT reutiliza estructura ya cacheada y re-personaliza sin llamar a la IA → no cuenta.
+      if (!isCacheHit) {
+        saveWorkoutToCache({
+          configHash,
+          duration: selectedTime,
+          equipment: selectedEquipment,
+          goal,
+          dayType: dayTypeKey,
+          workout,
+          schemaType: 'workout',
+        }).catch(() => {});
 
-      // Increment regen AFTER successful generation
-      incrementRegen(selectedModality);
-      console.info(`[regen] ${selectedModality}: ${(regenCounts[selectedModality] || 0) + 1}/3 today | admin: ${isAdmin}`);
+        // Increment regen AFTER successful generation
+        incrementRegen(selectedModality);
+        console.info(`[regen] ${selectedModality}: ${(regenCounts[selectedModality] || 0) + 1}/3 today | admin: ${isAdmin}`);
+      }
 
       // Garantiza los metadatos de pareja aunque el modelo los omita. La rutina
       // de pareja PASA A SER la rutina de hoy (no es un flujo separado) — por eso
@@ -1651,6 +1652,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         hasSystemHistory={hasSystemHistory}
         partnerMode={partnerMode}
         partnerName={partnerName}
+        weekCovered={shouldShowWeekCoveredNotice({ allCovered: !!todayDecision.allCovered, selectedModality, focus })}
         onGenerate={handleGenerate}
       />
     );

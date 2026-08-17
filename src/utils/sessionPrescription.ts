@@ -299,3 +299,40 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
   }
   return items;
 }
+
+/**
+ * MINUTOS ÚTILES estimados de la sesión de HOY para un split, ANTES de generar y SIN IA.
+ * Corre la MISMA prescripción determinista que la generación real (allocateSessionVolume →
+ * prescribeSession → Σ minutesOf), con ejercicios representativos del banco. Es la fuente FIEL
+ * (el estimador lineal `series×const` erraba ~11 min); aquí el error ≈ 0 porque es la misma función.
+ * Permite a AUTO saber, antes de elegir el día, qué split encaja en el tiempo disponible.
+ */
+export function estimatedSessionMinutes(input: {
+  dayMuscles: string[];
+  bank: Array<Pick<Exercise, 'id' | 'name' | 'type' | 'muscleGroup'>>;
+  weeklyTarget: Record<string, number>;
+  doneThisWeek: Record<string, number>;
+  freqTarget: number;
+  sessionsThisWeekDone?: number;
+  trainingGoal: TrainingGoal;
+  phase: Phase;
+  level?: TrainingLevelLike;
+  isDeload?: boolean;
+}): number {
+  const dayMuscles = input.dayMuscles;
+  const alloc = allocateSessionVolume({
+    weeklyTarget: input.weeklyTarget, doneThisWeek: input.doneThisWeek,
+    dayMuscles, primaryMuscles: dayMuscles, freqTarget: input.freqTarget,
+    sessionsThisWeekDone: input.sessionsThisWeekDone ?? 1,
+    muscleWeeklyFreq: Object.fromEntries(dayMuscles.map((m) => [m, 2])),
+    recovery: 'buena', isDeload: input.isDeload,
+  });
+  const exercises = input.bank.filter((e) => dayMuscles.includes(e.muscleGroup)).map((e) => ({ id: e.id, muscleGroup: e.muscleGroup }));
+  if (exercises.length === 0) return 0;
+  const bankById = new Map(input.bank.map((e) => [e.id, { id: e.id, name: e.name, type: e.type }]));
+  const items = prescribeSession({
+    exercises, bankById, allocation: alloc, trainingGoal: input.trainingGoal,
+    phase: input.phase, level: input.level, mainMinutes: 999, lastPerf: {},
+  });
+  return Math.round(items.reduce((a, it) => a + minutesOf(it.prescription), 0));
+}
