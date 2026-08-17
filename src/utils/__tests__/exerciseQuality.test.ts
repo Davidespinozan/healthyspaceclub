@@ -12,10 +12,14 @@ const tier = (id: string, ctx = hip) => exerciseQuality(EX(id), ctx).tier;
 
 // ── §22 · QUAD ──────────────────────────────────────────────────────────
 describe('QUALITY · quad (§22) — leg-ext gana a jump/sissy; leg-press bien como secundario', () => {
-  it('leg extension = preferred; jump squat / sissy = fallback', () => {
-    expect(tier('extension-cuadriceps')).toBe('preferred');
+  it('leg extension = buen aislamiento (good) y gana a jump/sissy; preferred se reserva al compuesto', () => {
+    // FIX MONOPOLIO: el aislamiento cargable es 'good' (score 3), ya NO 'preferred' — ese tier queda
+    // para el mover compuesto. Sigue siendo calidad y muy por encima de pliometría (jump)/balance (sissy).
+    expect(tier('extension-cuadriceps')).toBe('good');
     expect(qualityScore(EX('extension-cuadriceps'), hip)).toBeGreaterThan(qualityScore(EX('sentadilla-pliometrica'), hip));
     expect(qualityScore(EX('extension-cuadriceps'), hip)).toBeGreaterThan(qualityScore(EX('sissy-squat'), hip));
+    // el compuesto cargable AHORA queda por encima del aislamiento (jerarquía correcta).
+    expect(qualityScore(EX('sentadilla-bilateral'), hip)).toBeGreaterThan(qualityScore(EX('extension-cuadriceps'), hip));
     expect(tier('sentadilla-pliometrica')).toBe('fallback');
   });
   it('leg press (máquina, secundario) es buena opción; jump squat no', () => {

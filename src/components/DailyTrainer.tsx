@@ -819,7 +819,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // Fase 5C · CALIDAD PRIMERO: reordena el pool por calidad contextual (estable/progresable/
         // no-pliométrico según objetivo/nivel) preservando el orden previo (recencia) ante empate →
         // anchors/slots/reemplazos eligen la MEJOR opción, no la primera; variedad es desempate.
-        candidates = rankCandidates(candidates, { trainingGoal, level: levelFromObData(obData) });
+        // CONTEXTO DE EQUIPO REAL en el ranking: "cargable" debe depender del gear del usuario, no de
+        // la unión del patrón (un usuario bodyweight no debe heredar el bono gym de un patrón que
+        // casualmente tiene variante de gimnasio). Ver exerciseQuality.QualityContext.equipment.
+        candidates = rankCandidates(candidates, { trainingGoal, level: levelFromObData(obData), equipment: equipmentList });
         // ELEGIBILIDAD (decisión aprobada): el YOGA no entra como sustituto NORMAL de un
         // ejercicio de fuerza solo por compartir metadata de hipertrofia/isométrico (evita
         // p.ej. "pull day → warrior II"). Se admite SOLO como último recurso si sin él quedan

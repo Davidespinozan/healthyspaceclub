@@ -13,7 +13,7 @@
 // variedad/recencia como DESEMPATE); (3) reemplazo por fatiga (Fase 5B) — mejor alternativa, no la
 // primera. Variedad es SEGUNDA: quality gap grande → no rota; gap pequeño → recency puede decidir.
 // ─────────────────────────────────────────────────────────────────────────
-import type { Exercise, TrainingGoal } from '../types';
+import type { Exercise, TrainingGoal, Equipment } from '../types';
 import { roleOf } from './exerciseRole';
 import { setupClass } from './supersetEngine';
 import { HEAVY_COMPOUND } from './exerciseOrder';
@@ -23,6 +23,12 @@ export type QualityTier = 'preferred' | 'good' | 'acceptable' | 'fallback';
 export interface QualityContext {
   trainingGoal: TrainingGoal;
   level?: 'principiante' | 'intermedio' | 'avanzado' | string;
+  /**
+   * Equipo REAL del usuario (equipmentList: ej. ['cuerpo','gym'] o ['cuerpo']). Cuando se pasa,
+   * "cargable" exige que el usuario tenga acceso a carga ('gym'), no solo que el PATRÓN tenga una
+   * variante gym. Sin este campo se cae al comportamiento previo (unión del patrón) por compat.
+   */
+  equipment?: Equipment[];
 }
 
 const BALANCE_RE = /sissy|equilibrio/;                         // inestable por balance/técnica
@@ -45,16 +51,23 @@ export function exerciseQuality(
   const plyometric = role === 'conditioning' || ex.impact === 'high' || ex.fallRisk === true;
   const balance = BALANCE_RE.test(ex.id);
   const compound = role === 'main' || role === 'secondary';
-  // CARGABLE = tiene variante con carga (barra/mancuerna/máquina = bucket 'gym'). El id base de un
-  // compuesto no lleva sufijo de implemento, así que se lee del equipo del patrón (fiable).
-  const loadable = (ex.equipment ?? []).includes('gym');
+  // CARGABLE = existe una variante con carga (bucket 'gym') Y el usuario tiene ese equipo. Antes se
+  // leía SOLO la unión del patrón (ex.equipment), sin contexto → un patrón con variante gym puntuaba
+  // como "cargable" incluso para un usuario de peso corporal (heredaba puntos gym → hiperextensiones
+  // dominaba también los pools bodyweight). Con contexto, se exige que el equipo del usuario incluya
+  // 'gym'; sin contexto se cae a la unión del patrón (compat con llamadores que no pasan equipo).
+  const userHasGym = ctx.equipment ? ctx.equipment.includes('gym') : true;
+  const loadable = (ex.equipment ?? []).includes('gym') && userHasGym;
 
-  // ESTABILIDAD: pliométrico/balance no puntúan. Aislamiento cargable (máquina/polea/mancuerna) =
-  // muy estable (+2); compuesto cargable = estable moderado (+1, más demanda de equilibrio);
-  // peso corporal/banda = neutro. (setupClass es poco fiable en ids base → se usa loadable+rol.)
+  // ESTABILIDAD / JERARQUÍA DE PATRÓN: pliométrico/balance no puntúan. Máquina/polea = muy estable
+  // (+2; aislamiento productivo y controlado, ej. femoral/extensión/polea). Cargable libre: el
+  // COMPUESTO (el mover del día) pesa MÁS que el aislamiento accesorio (+2 vs +1). ANTES era al revés
+  // (+1 compuesto / +2 aislamiento): eso volvía a aislamientos estables (hiperextensiones, pullover,
+  // shrugs) anchors universales por ENCIMA de sentadilla/press/remo. La estabilidad de un accesorio
+  // no debe superar al mover principal. (Magnitud igual, solo se reasigna quién recibe el +2.)
   if (plyometric || balance) { /* sin bono de estabilidad */ }
   else if (setup === 'machine-cable') { score += 2; reasons.push('estable (máquina/polea)'); }
-  else if (loadable) { score += compound ? 1 : 2; reasons.push(compound ? 'estable (compuesto cargable)' : 'estable (aislamiento controlado)'); }
+  else if (loadable) { score += compound ? 2 : 1; reasons.push(compound ? 'estable (compuesto cargable)' : 'estable (aislamiento cargable)'); }
 
   // PLIOMETRÍA / ALTO IMPACTO: no es estímulo controlado para un slot normal de fuerza/hipertrofia.
   if (plyometric) { score -= 5; reasons.push('pliométrico/alto impacto — conditioning, no slot controlado'); }
@@ -68,6 +81,11 @@ export function exerciseQuality(
   // TRAINING GOAL: ambos prefieren carga/estímulo controlado; jamás pliometría en el slot.
   if (loadable) score += 1;
   if (plyometric) score -= 2;
+
+  // NOTA: el compuesto ya lidera al aislamiento por el swap de estabilidad (+2 vs +1). NO se añade
+  // un bono estático extra por role 'main': `role` es propiedad del EJERCICIO, no del slot actual, y
+  // ese +1 sobre-promovía compuestos hacia slots accesorios (expulsaba aislamiento) y a splits donde
+  // el ejercicio solo entra por músculo secundario. La jerarquía correcta la da la estabilidad.
 
   // NIVEL (leve; el advanced engine completo es fase futura).
   if (ctx.level === 'principiante') {
