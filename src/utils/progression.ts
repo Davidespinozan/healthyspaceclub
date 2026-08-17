@@ -28,7 +28,9 @@ export function computeProgression(
   isBand = false,
 ): ProgressionTarget {
   const [lo, hi] = parseRepRange(repRange);
-  const working = (lastSets ?? []).filter((s) => s.reps > 0);
+  // Degrada SEGURO ante historial corrupto (reps/kg NaN/null/negativo): solo series con números
+  // finitos y reps > 0. Sin esto un kg NaN se propagaría a refKg → prog.kg NaN.
+  const working = (lastSets ?? []).filter((s) => Number.isFinite(s.reps) && s.reps > 0 && Number.isFinite(s.kg));
   if (working.length === 0) {
     return { kg: null, reps: `${lo}-${hi}`, action: 'first-time',
       note: isBand

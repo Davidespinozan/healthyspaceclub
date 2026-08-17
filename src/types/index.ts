@@ -322,6 +322,9 @@ export interface WorkoutDayDecision {
   intensity: 'baja' | 'media' | 'alta';
   reason: string;         // "Ayer hiciste Upper..."
   deload?: boolean;       // semana de descarga (fatiga acumulada) → menos volumen/intensidad
+  // AUTO × tiempo · toda la semana en target → no queda trabajo útil; hoy solo mantenimiento.
+  // Señal para la UX (aviso "semana cubierta"). Solo se computa en la ruta AUTO con selectedTime.
+  allCovered?: boolean;
 }
 
 export interface WorkoutEntry {
@@ -363,7 +366,13 @@ export interface LoggedSet {
  * se calcula al insertar a Supabase (column `date_local`).
  */
 export interface CompletedSession {
-  date: string;              // UTC YYYY-MM-DD
+  /**
+   * Identidad ESTABLE de la sesión (uuid de cliente, generado al finalizar). Es la clave de
+   * idempotencia del outbox (workout_log.client_session_id) y la clave de dedup cross-device
+   * (más fiable que completedAtIso). Ausente en sesiones legacy → dedup cae a completedAtIso.
+   */
+  sessionId?: string;
+  date: string;              // día LOCAL YYYY-MM-DD (sellado al iniciar el workout, no al terminar)
   completedAtIso: string;    // ISO completo con timezone para ordering exacto
   modality: Modality;
   exerciseIds: string[];
@@ -390,7 +399,18 @@ export interface CompletedSession {
    * inferido (P5). Sustituye al `workoutLog` legacy (vacío en producción). Ausente en sesiones
    * viejas / sin tracking.
    */
-  exercises?: Array<{ id: string; sets: { reps: number; kg: number; rir?: number }[] }>;
+  exercises?: Array<{ id: string; sets: { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean }[] }>;
+}
+
+/**
+ * Fila de workout_log pendiente de sincronizar (outbox P2-A). Es el payload EXACTO del insert
+ * (todas las columnas), persistido hasta que el upsert idempotente confirme. `user_id` +
+ * `client_session_id` son la clave de dedup del servidor (índice único).
+ */
+export interface PendingWorkoutRow {
+  user_id: string;
+  client_session_id: string;
+  [column: string]: unknown;
 }
 
 export interface RecipeStep {

@@ -21,8 +21,10 @@ export interface LoadPrescription {
 
 /** 1RM estimado (Epley) desde las series registradas: el MEJOR set manda. null si no
  *  hay series con peso (peso corporal / banda / sin dato). */
-export function estimate1RM(sets?: { reps: number; kg: number }[]): number | null {
-  const w = (sets ?? []).filter((s) => s.kg > 0 && s.reps > 0);
+export function estimate1RM(sets?: { reps: number; kg: number; repsUnconfirmed?: boolean }[]): number | null {
+  // PRESCRIPCIÓN ≠ DESEMPEÑO: una serie sin confirmar tiene reps = objetivo prescrito, no reales →
+  // no es evidencia válida de 1RM (inflaría la fuerza/tendencia/punto débil). Se excluye.
+  const w = (sets ?? []).filter((s) => s.kg > 0 && s.reps > 0 && !s.repsUnconfirmed);
   if (w.length === 0) return null;
   return Math.max(...w.map((s) => s.kg * (1 + s.reps / 30))); // Epley
 }
@@ -38,8 +40,8 @@ export function loadForReps(e1RM: number, reps: number): number {
  * repsPotential = repsCompletadas + RIR. Sin `rir` cae al Epley normal (fallo asumido).
  * null si no hay peso (corporal/banda). NO reemplaza el e1RM medido — se COMBINA (blendE1RM).
  */
-export function estimate1RMFromSet(s: { reps: number; kg: number; rir?: number }): number | null {
-  if (s.kg <= 0 || s.reps <= 0) return null;
+export function estimate1RMFromSet(s: { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean }): number | null {
+  if (s.kg <= 0 || s.reps <= 0 || s.repsUnconfirmed) return null; // reps sin confirmar → no es evidencia
   const repsPotential = s.reps + Math.max(0, s.rir ?? 0);
   return s.kg * (1 + repsPotential / 30); // Epley sobre reps potenciales
 }
@@ -50,10 +52,10 @@ export function estimate1RMFromSet(s: { reps: number; kg: number; rir?: number }
  * máx. Con <2 estimaciones con RIR, o ninguna, cae a `estimate1RM` (fallback Epley sin RIR).
  * Devuelve además cuántas exposiciones con RIR respaldan el número (para modular confianza).
  */
-export function robustE1RM(sets?: { reps: number; kg: number; rir?: number }[]): { e1RM: number; ridCount: number } | null {
+export function robustE1RM(sets?: { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean }[]): { e1RM: number; ridCount: number } | null {
   const list = sets ?? [];
   const withRir = list
-    .filter(s => s.kg > 0 && s.reps > 0 && s.rir != null)
+    .filter(s => s.kg > 0 && s.reps > 0 && s.rir != null && !s.repsUnconfirmed)
     .map(s => estimate1RMFromSet(s)!)
     .sort((a, b) => a - b);
   if (withRir.length >= 1) {
@@ -160,7 +162,7 @@ export function prescribeLoad(
 }
 
 /** Mejor e1RM por ejercicio en un conjunto de entradas (ignora ejercicios sin peso). */
-export function bestE1RMByExercise(entries: { exercise: string; sets: { reps: number; kg: number }[] }[]): Map<string, number> {
+export function bestE1RMByExercise(entries: { exercise: string; sets: { reps: number; kg: number; repsUnconfirmed?: boolean }[] }[]): Map<string, number> {
   const best = new Map<string, number>();
   for (const e of entries) {
     const est = estimate1RM(e.sets);
@@ -173,7 +175,7 @@ export function bestE1RMByExercise(entries: { exercise: string; sets: { reps: nu
 /** Mejor e1RM por MÚSCULO (máx e1RM entre sus ejercicios). Para la señal de fuerza por
  *  grupo que usa la inferencia de punto débil (P5). Ignora músculos sin carga. */
 export function bestE1RMByMuscle(
-  entries: { exercise: string; sets: { reps: number; kg: number }[] }[],
+  entries: { exercise: string; sets: { reps: number; kg: number; repsUnconfirmed?: boolean }[] }[],
   muscleOf: (exerciseId: string) => string | undefined,
 ): Record<string, number> {
   const out: Record<string, number> = {};
@@ -187,7 +189,7 @@ export function bestE1RMByMuscle(
 }
 
 /** Suma del mejor e1RM por ejercicio — señal AGREGADA de fuerza. */
-export function aggregateE1RM(entries: { exercise: string; sets: { reps: number; kg: number }[] }[]): number {
+export function aggregateE1RM(entries: { exercise: string; sets: { reps: number; kg: number; repsUnconfirmed?: boolean }[] }[]): number {
   let sum = 0;
   for (const v of bestE1RMByExercise(entries).values()) sum += v;
   return sum;
@@ -200,8 +202,8 @@ export function aggregateE1RM(entries: { exercise: string; sets: { reps: number;
  * → el llamador cae a la señal de volumen.
  */
 export function e1RMTrend(
-  recent: { exercise: string; sets: { reps: number; kg: number }[] }[],
-  older: { exercise: string; sets: { reps: number; kg: number }[] }[],
+  recent: { exercise: string; sets: { reps: number; kg: number; repsUnconfirmed?: boolean }[] }[],
+  older: { exercise: string; sets: { reps: number; kg: number; repsUnconfirmed?: boolean }[] }[],
 ): 'sube' | 'estable' | 'baja' | null {
   const r = bestE1RMByExercise(recent), o = bestE1RMByExercise(older);
   let up = 0, down = 0, n = 0;
