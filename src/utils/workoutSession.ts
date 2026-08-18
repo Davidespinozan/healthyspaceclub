@@ -344,6 +344,35 @@ export function setsDoneForExercise(logged: LoggedByExercise, exIndex: number): 
   return (logged[exIndex] || []).filter(s => s !== null).length;
 }
 
+/**
+ * Estado tras "Cambiar ejercicio" (swap). BUG FIX: el log del ejercicio swappeado DEBE reiniciarse
+ * a su longitud REAL con `new Array(sets).fill(null)`, NUNCA a `[]` — un `[]` hace que `setLogAt`
+ * (que mapea sobre el array) sea un no-op, la serie nunca se registra, `currentSetMarked` queda
+ * false para siempre y el bloque no completa → el player se CONGELA.
+ *
+ * Además, si el bloque es un ejercicio SUELTO, reposiciona `currentStep` a la primera serie del
+ * bloque (no dejarlo a media serie con series previas null). En superserie/triserie NO se reinicia
+ * el bloque (perdería el progreso del co-miembro): solo se limpia el log del miembro swappeado.
+ */
+export function applySwapReset(input: {
+  logged: LoggedByExercise;
+  currentStep: number;
+  exIndex: number;
+  newSets: number;
+  blockMemberCount: number;   // nº de ejercicios del bloque actual (1 = suelto; ≥2 = super/triserie)
+  blockFirstStep: number;     // índice del primer step del bloque actual en la secuencia
+}): { logged: LoggedByExercise; currentStep: number } {
+  const len = Math.max(1, input.newSets || 1);
+  const logged = input.logged.map((arr, i) =>
+    i === input.exIndex ? new Array<LoggedSet | null>(len).fill(null) : arr);
+  // Solo un bloque SUELTO se reinicia desde su primera serie; en super/triserie preservamos el step
+  // (y el progreso del co-miembro) — solo se limpió el log del miembro swappeado arriba.
+  const currentStep = input.blockMemberCount === 1 && input.blockFirstStep >= 0
+    ? input.blockFirstStep
+    : input.currentStep;
+  return { logged, currentStep };
+}
+
 export function parseResumeState(
   rawJson: string | null | undefined,
   expectedPlanHash: string,

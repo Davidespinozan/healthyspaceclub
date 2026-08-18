@@ -34,6 +34,7 @@ import {
   buildOnCompletePayload,
   hasTopBackoffScheme,
   setLoadForIndex,
+  applySwapReset,
   type LoggedByExercise,
 } from '../utils/workoutSession';
 import type { Exercise, Equipment, LoggedSet, CardioStyle } from '../types';
@@ -274,8 +275,18 @@ export default function WorkoutPlayer({
   function swapCurrentExercise() {
     if (!swapAlt || !currentEx) return;
     const newEx: WorkoutExercise = { ...currentEx, id: swapAlt.id, variantId: undefined, tecnica: undefined, tip_personalizado: undefined };
+    // BUG FIX freeze: reinicia el log a la LONGITUD REAL (nunca []) y reposiciona el step de forma
+    // segura (bloque suelto → primera serie; super/triserie → preserva step y co-miembro).
+    const blockRun = blocks.find(run => run.includes(currentExerciseIndex)) ?? [currentExerciseIndex];
+    const blockFirstStep = sequence.findIndex(s => blockId(s.exIndex) === blockId(currentExerciseIndex));
+    const reset = applySwapReset({
+      logged: loggedByExercise, currentStep, exIndex: currentExerciseIndex,
+      newSets: newEx.sets || 1, blockMemberCount: blockRun.length, blockFirstStep,
+    });
     setSwaps(prev => ({ ...prev, [currentExerciseIndex]: newEx }));
-    setLoggedByExercise(prev => { const c = [...prev]; c[currentExerciseIndex] = []; return c; });
+    setLoggedByExercise(reset.logged);
+    setCurrentStep(reset.currentStep);
+    setRestState(null);
     haptics.tap();
   }
 
