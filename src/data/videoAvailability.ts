@@ -112,6 +112,7 @@ export const VIDEO_VARIANT_IDS: ReadonlySet<string> = new Set([
   'high-knees',
   'hip-thrust-barra',
   'hip-thrust-con-banda',
+  'hiperextension-gluteo-maquina',
   'hiperextensiones-banco-romano',
   'hiperextensiones-maquina',
   'jalon-amplio',
