@@ -12,6 +12,9 @@
 // Ambas son top-level y puras respecto a React (cero hooks, cero store).
 
 import { selectVariantForEquipment } from './workoutPlanner';
+import { movementPatternOf } from './movementPattern';
+import { roleOf } from './exerciseRole';
+import { HEAVY_COMPOUND } from './exerciseOrder';
 import type { Implement } from './equipmentImplement';
 import { buildUserProfileBlock } from '../ai/profile';
 import {
@@ -54,6 +57,42 @@ export function formatLastPerf(sets?: { reps: number; kg: number }[]): string {
   return kg > 0 ? `${kg}kg×${reps}` : `×${reps}`;
 }
 
+/**
+ * Serializa los candidatos para el prompt de SELECCIÓN de la IA (token-efficient). La IA solo elige
+ * entre candidatos YA válidos — NO re-decide equipo/video/músculo (el motor ya filtró). Formato:
+ *   id | nombre — variante | músculo(+secundarios) | role | movementPattern | prescripción | perf | carga
+ * Metadata REAL que desambigua candidato↔slot (sin duplicar los filtros duros):
+ * · role (main/secondary/isolation): distingue el MOVER principal de un accesorio — el `type`
+ *   (compuesto/aislamiento) no separaba press-horizontal[main] de press-inclinado[secondary].
+ * · movementPattern: revela la función cuando el nombre engaña — "upright-row" es vertical-push (no
+ *   un remo); "hiperextensiones" es hip-extension (no espalda de tracción) → la IA calza el patrón del slot.
+ * · secondaryMuscles: evita apilar accesorios que solapan el mismo músculo asistente.
+ * NO cambia el pool ni el ranking (se ejecuta aguas abajo, solo re-empaqueta candidatos ya elegidos).
+ */
+export function buildCandidatesCompact(
+  candidates: Exercise[],
+  equipment: Equipment[],
+  allowedImplements: Set<Implement> | undefined,
+  lastPerf: Record<string, { sets: { reps: number; kg: number; rir?: number }[] }> | undefined,
+  loadBias: IntensityBias,
+): string {
+  return candidates.map(c => {
+    const variant = selectVariantForEquipment(c, equipment, allowedImplements);
+    const effectiveName = variant ? `${c.name} — ${variant.name}` : c.name;
+    const effectiveSets = variant?.defaultSets ?? c.defaultSets;
+    const effectiveReps = variant?.defaultReps ?? c.defaultReps;
+    const effectiveRest = variant?.defaultRest ?? c.defaultRest;
+    const perf = formatLastPerf(lastPerf?.[c.id]?.sets);
+    const perfStr = perf ? ` | última vez: ${perf}` : '';
+    const load = prescribeLoad(lastPerf?.[c.id]?.sets, String(effectiveReps), loadBias);
+    const loadStr = load ? ` | 1RM~${load.e1RM}kg → HOY ${load.topKg}kg×${load.reps} (RIR ${load.rir}; backoff ${load.backoffKg}kg)` : '';
+    const role = roleOf(c, HEAVY_COMPOUND);
+    const pattern = c.movementPattern ?? movementPatternOf(c) ?? '—';
+    const secStr = (c.secondaryMuscles ?? []).length ? ` (+${(c.secondaryMuscles ?? []).join(',')})` : '';
+    return `${c.id} | ${effectiveName} | ${c.muscleGroup}${secStr} | ${role} | ${pattern} | sets:${effectiveSets} reps:${effectiveReps} rest:${effectiveRest}s${perfStr}${loadStr}`;
+  }).join('\n');
+}
+
 export async function orchestrateWorkout(params: {
   candidates: Exercise[];
   equipment: Equipment[];
@@ -87,22 +126,7 @@ export async function orchestrateWorkout(params: {
   const { candidates, equipment, targetCount, goal, trainingGoal = 'hipertrofia', requiredAnchorIds = [], slotSummary = '', intensity, userName, dayLabel, context, userProfile, locale, partner, lastPerf, loadBias = 'equilibrio', allowedImplements } = params;
   const profileBlock = buildUserProfileBlock(userProfile);
 
-  // Para cada candidato, seleccionar la variante específica que aplica al equipo Y a los
-  // implementos del usuario. Si tiene overrides (sets/reps/rest), usar esos.
-  const candidatesCompact = candidates.map(c => {
-    const variant = selectVariantForEquipment(c, equipment, allowedImplements);
-    const effectiveName = variant ? `${c.name} — ${variant.name}` : c.name;
-    const effectiveSets = variant?.defaultSets ?? c.defaultSets;
-    const effectiveReps = variant?.defaultReps ?? c.defaultReps;
-    const effectiveRest = variant?.defaultRest ?? c.defaultRest;
-    // Sobrecarga progresiva: adjunta el último rendimiento real si existe.
-    const perf = formatLastPerf(lastPerf?.[c.id]?.sets);
-    const perfStr = perf ? ` | última vez: ${perf}` : '';
-    // P2 · carga sugerida de HOY desde el e1RM y la fase (serie tope + backoff, con RIR).
-    const load = prescribeLoad(lastPerf?.[c.id]?.sets, String(effectiveReps), loadBias);
-    const loadStr = load ? ` | 1RM~${load.e1RM}kg → HOY ${load.topKg}kg×${load.reps} (RIR ${load.rir}; backoff ${load.backoffKg}kg)` : '';
-    return `${c.id} | ${effectiveName} | ${c.muscleGroup} | ${c.type} | sets:${effectiveSets} reps:${effectiveReps} rest:${effectiveRest}s${perfStr}${loadStr}`;
-  }).join('\n');
+  const candidatesCompact = buildCandidatesCompact(candidates, equipment, allowedImplements, lastPerf, loadBias);
 
   const intensityInstruction = intensity === 'baja'
     ? 'Intensidad BAJA: reduce sets 30%, reps más bajas, descansos más largos'

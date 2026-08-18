@@ -127,7 +127,7 @@ ${p.profileBlock}
 CONTEXTO DEL USUARIO:
 ${p.context}
 
-EJERCICIOS DISPONIBLES (elige solo de esta lista):
+EJERCICIOS DISPONIBLES (elige solo de esta lista · formato: id | nombre | músculo(+secundarios) | role(main/secondary/isolation) | patrón | prescripción):
 ${p.candidatesCompact}
 
 PARÁMETROS:
