@@ -233,9 +233,13 @@ export function buildCardioMain(input: {
         blocks.push(mkSteady(rec, pickStation(recStn.length ? recStn : stn, i + 3, true), 'baja', 'cardio.recovery', 'Recuperación activa entre bloques.')); remaining -= rec;
       }
     }
-    // Cooldown / steady con el resto (densidad controlada, no más rounds).
-    if (remaining >= 4) { const recStn = pool.filter(isLowImpactStation); blocks.push(mkSteady(remaining, pickStation(recStn.length ? recStn : stn, 5, true), 'baja', 'cardio.steady', 'Trabajo sostenible para cerrar; baja pulsaciones.')); }
-    if (budget - blocks.reduce((a, b) => a + b.minutes, 0) > budget * 0.15) { earlyEnd = true; earlyEndReason = 'dosis funcional útil alcanzada; densidad controlada'; }
+    // Cooldown ACOTADO — el FUNCIONAL NO RELLENA (política: selectedTime = disponibilidad, no
+    // obligación). Cierre sostenible ≈10% del budget (tope), NO todo el remanente: antes se volcaba
+    // TODO `remaining` aquí → "Funcional 120" = ~24 min de trabajo + 80 min de Zona 2 de relleno.
+    // Ahora, si sobra tiempo tras la dosis funcional útil, se declara EARLY-END honesto (abajo).
+    const cool = Math.min(remaining, Math.max(6, round(budget * 0.1)));
+    if (cool >= 4) { const recStn = pool.filter(isLowImpactStation); blocks.push(mkSteady(cool, pickStation(recStn.length ? recStn : stn, 5, true), 'baja', 'cardio.steady', 'Trabajo sostenible para cerrar; baja pulsaciones.')); }
+    if (budget - blocks.reduce((a, b) => a + b.minutes, 0) > budget * 0.15) { earlyEnd = true; earlyEndReason = 'dosis funcional útil alcanzada; el resto sería relleno de Zona 2'; }
   }
 
   // Ajuste final: nunca exceder el budget (recorta el último bloque steady/recovery si hiciera falta).

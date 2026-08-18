@@ -109,10 +109,15 @@ describe('CARDIO-MAIN · running (§5/§21)', () => {
 
 // ── §7/§22 · FUNCIONAL: bloques con recuperación, densidad controlada ───
 describe('CARDIO-MAIN · funcional (§7/§22)', () => {
-  it('funcional 120 no es 112 min de circuito: intenso acotado, hay recuperación/steady', () => {
+  it('funcional 120 EARLY-END honesto: dosis funcional acotada, NO relleno de Zona 2', () => {
     const p = plan('funcional', 120, 'intermedio');
-    expect(p.intenseMinutes).toBeLessThan(p.totalMinutes * 0.35);
+    // Política nueva (selectedTime = disponibilidad, no obligación): funcional NO rellena la ventana
+    // con steady → dosis útil acotada + early-end honesto. Antes esto era ~24 min circuito + ~80 steady.
+    expect(p.earlyEnd).toBe(true);
+    expect(p.totalMinutes).toBeLessThan(p.budgetMinutes * 0.7);
     expect(p.blocks.some(b => b.kind === 'recovery' || (b.kind === 'steady' && b.intensity !== 'alta'))).toBe(true);
+    const steady = p.blocks.filter(b => b.kind === 'steady' || b.kind === 'recovery').reduce((a, b) => a + b.minutes, 0);
+    expect(steady).toBeLessThan(p.totalMinutes * 0.6); // NO mayoritariamente steady padding
   });
 });
 
@@ -287,8 +292,9 @@ describe('CARDIO-MAIN · tiempo preservado por modalidad con contenido (§11)', 
     const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'lowImpact', level: 'intermedio', pool: pool('lowImpact', ['gym']) });
     expect(p.totalMinutes).toBeGreaterThan(mainBudget(120) * 0.9);
   });
-  it('funcional 120 gym: playable ≈ planned y cerca de la ventana', () => {
+  it('funcional 120 gym: EARLY-END (dosis funcional acotada, NO rellena la ventana)', () => {
     const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'funcional', level: 'intermedio', pool: pool('funcional', ['gym']) });
-    expect(p.totalMinutes).toBeGreaterThan(mainBudget(120) * 0.75);
+    expect(p.earlyEnd).toBe(true);
+    expect(p.totalMinutes).toBeLessThan(mainBudget(120) * 0.7); // no 120 min de relleno
   });
 });
