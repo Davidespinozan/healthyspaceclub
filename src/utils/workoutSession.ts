@@ -354,6 +354,20 @@ export function setsDoneForExercise(logged: LoggedByExercise, exIndex: number): 
  * bloque (no dejarlo a media serie con series previas null). En superserie/triserie NO se reinicia
  * el bloque (perdería el progreso del co-miembro): solo se limpia el log del miembro swappeado.
  */
+/**
+ * SOURCE OF TRUTH de una sesión iniciada: aplica una mutación real (swap de ejercicio o cambio de
+ * variante in-player) al plan PERSISTIDO que lee "Hoy". Reemplaza `exercises[index]` por `newEx`
+ * (que ya conserva TODA la prescripción del bloque: sets/reps/rest/cardio/group/variantId/rir/topKg…)
+ * y deja el resto intacto. Así Hoy/resume/completion/workoutChecks coinciden con lo REALMENTE
+ * ejecutado. Idempotente ante índice fuera de rango. NO toca historial (ya registra el ejecutado).
+ */
+export function applySessionMutation<T extends { exercises: WorkoutExercise[] }>(
+  plan: T, index: number, newEx: WorkoutExercise,
+): T {
+  if (index < 0 || index >= plan.exercises.length) return plan;
+  return { ...plan, exercises: plan.exercises.map((e, i) => (i === index ? newEx : e)) };
+}
+
 export function applySwapReset(input: {
   logged: LoggedByExercise;
   currentStep: number;

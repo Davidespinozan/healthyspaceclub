@@ -397,6 +397,7 @@ export const es = {
     seeTechnique: 'Ver técnica',
     swapExercise: 'Cambiar',
     changeVariant: 'Cambiar máquina',
+    changeVariantStrength: 'Cambiar variante',
     duoYou: 'Tú',
     duoPartner: 'Compa',
     dayTypeUpper: 'Tren superior',

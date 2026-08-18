@@ -398,6 +398,7 @@ export const en: Translations<typeof es> = {
     seeTechnique: 'See technique',
     swapExercise: 'Swap',
     changeVariant: 'Change machine',
+    changeVariantStrength: 'Change variant',
     duoYou: 'You',
     duoPartner: 'Partner',
     dayTypeUpper: 'Upper body',

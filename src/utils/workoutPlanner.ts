@@ -995,11 +995,12 @@ export function selectVariantForEquipment(
 
   if (applicable.length === 0) return null;
 
-  // ELECCIÓN DEL USUARIO (variantId persistido): si eligió una variante y SIGUE siendo aplicable
-  // al equipo/gear, se respeta. Si dejó de ser válida (cambió el gear, etc.) → fallback seguro al
-  // selector normal de abajo. No exige que tenga video: si la eligió, la mostramos igual.
+  // ELECCIÓN DEL USUARIO (variantId persistido): se respeta SOLO si sigue siendo PLAYABLE en el
+  // contexto actual — aplicable al equipo/gear Y con video reproducible. Si perdió video o
+  // compatibilidad (cambió el gear, se despublicó el clip, etc.) → fallback SEGURO al selector normal
+  // de abajo. Así una variantId inválida nunca fuerza una variante sin video/incompatible.
   if (preferredVariantId) {
-    const preferred = applicable.find(v => v.id === preferredVariantId);
+    const preferred = applicable.find(v => v.id === preferredVariantId && VIDEO_VARIANT_IDS.has(v.id));
     if (preferred) return preferred;
   }
 
@@ -1017,6 +1018,24 @@ export function selectVariantForEquipment(
 
   // Si no hay default en el pool, devolver la primera del pool
   return pool[0];
+}
+
+/**
+ * Variantes SELECCIONABLES por el usuario en el CONTEXTO actual (chips del detalle + "Cambiar
+ * variante" del player). Estricto: una variante es opción real solo si (a) aplica al equipo del
+ * usuario, (b) el implemento está permitido por su gear (Fase C), y (c) tiene VIDEO reproducible.
+ * Una variante que existe en metadata pero NO es playable NUNCA aparece como opción ni puede
+ * convertirse en preferredVariantId. Full Gym (equipment sin 'ligas') no verá una variante de bandas.
+ */
+export function playableVariantsForContext(
+  exercise: Exercise,
+  userEquipment: Equipment[],
+  allowed?: Set<Implement>,
+): ExerciseVariant[] {
+  return (exercise.variants ?? []).filter(v =>
+    v.equipment.some(e => userEquipment.includes(e)) &&
+    (!allowed || variantAllowedByGear(v, allowed, exercise.name)) &&
+    VIDEO_VARIANT_IDS.has(v.id));
 }
 
 /**

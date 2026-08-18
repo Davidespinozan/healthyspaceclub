@@ -87,6 +87,9 @@ interface Props {
    *  la persiste en plan.exercises[index].variantId (setPlan + sealPlan + saveDailyWorkout) → llega
    *  a la ejecución. Sin este callback, el selector de variante no aparece (solo lectura). */
   onSelectVariant?: (index: number, variantId: string) => void;
+  /** SOURCE OF TRUTH: el player mutó la sesión iniciada (swap de ejercicio o cambio de variante). El
+   *  dueño persiste plan.exercises[index] = newEx → Hoy/resume/completion reflejan lo ejecutado. */
+  onSessionMutate?: (index: number, newEx: CachedWorkout['exercises'][number]) => void;
 }
 
 export default function WorkoutPlan({
@@ -105,6 +108,7 @@ export default function WorkoutPlan({
   todayDayName,
   todayDateShort,
   onSelectVariant,
+  onSessionMutate,
 }: Props) {
   const { t, locale } = useT();
   const langMismatch = !!(plan as { lang?: string }).lang && (plan as { lang?: string }).lang !== locale;
@@ -468,6 +472,7 @@ export default function WorkoutPlan({
           exercise={selectedExercise.exercise}
           planData={selectedExercise.planData}
           userEquipment={[selectedEquipment]}
+          allowedImplements={allowedImplements}
           activeVariantId={plan.exercises[selectedExercise.index]?.variantId}
           onSelectVariant={onSelectVariant
             ? (variantId) => onSelectVariant(selectedExercise.index, variantId)
@@ -484,6 +489,7 @@ export default function WorkoutPlan({
           exerciseBank={exerciseBank}
           userEquipment={[selectedEquipment]}
           allowedImplements={allowedImplements}
+          onSessionMutate={onSessionMutate}
           onClose={() => setWorkoutPlayerOpen(false)}
           onComplete={(data) => {
             // Mapear modality: si 'auto', derivar del todayDecision.type

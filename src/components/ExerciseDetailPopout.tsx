@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { X, Maximize2, Play, Lightbulb, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Exercise, ExerciseVideo, Equipment } from '../types';
-import { selectVariantForEquipment, exerciseVideoCandidateIds } from '../utils/workoutPlanner';
+import type { Implement } from '../utils/equipmentImplement';
+import { selectVariantForEquipment, exerciseVideoCandidateIds, playableVariantsForContext } from '../utils/workoutPlanner';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
 import { useT } from '../i18n';
 import { translateMuscle, translateDifficulty } from '../utils/exerciseMeta';
@@ -23,8 +24,10 @@ interface Props {
    *  descripción — solo la técnica (pasos + tips), porque el player ya muestra
    *  el video y las series/reps/descanso. */
   compact?: boolean;
+  /** Gear granular del usuario — la elegibilidad de variante respeta el implemento (Fase C). */
+  allowedImplements?: Set<Implement>;
   /** Variante actualmente elegida (persistida en el ejercicio). Si está y sigue siendo
-   *  aplicable, la ficha la muestra como activa. */
+   *  aplicable Y playable, la ficha la muestra como activa. */
   activeVariantId?: string;
   /** Si se provee, el usuario puede ELEGIR variante (chips): al tocar una, se persiste
    *  vía este callback → llega a la ejecución. Sin él, la ficha es solo de lectura. */
@@ -37,17 +40,19 @@ export default function ExerciseDetailPopout({
   planData,
   userEquipment,
   compact = false,
+  allowedImplements,
   activeVariantId,
   onSelectVariant,
   onClose,
 }: Props) {
   const { t } = useT();
-  // Variante específica del equipo del usuario (si aplica) — respeta la elección persistida.
-  const variant = userEquipment ? selectVariantForEquipment(exercise, userEquipment, undefined, activeVariantId) : null;
-  // Variantes ELEGIBLES para este equipo (para el selector de chips). Solo cuando el llamador
-  // permite elegir (onSelectVariant) y hay ≥2 opciones reales.
+  // Variante específica del contexto del usuario (equipo + gear) — respeta la elección persistida
+  // solo si sigue playable; si no, fallback seguro.
+  const variant = userEquipment ? selectVariantForEquipment(exercise, userEquipment, allowedImplements, activeVariantId) : null;
+  // Variantes SELECCIONABLES: solo las PLAYABLE en el contexto actual (equipo + gear + VIDEO). Una
+  // variante sin video o incompatible NUNCA aparece como chip. Solo si el llamador permite elegir.
   const selectableVariants = (onSelectVariant && userEquipment)
-    ? (exercise.variants ?? []).filter(v => v.equipment.some(e => userEquipment.includes(e)))
+    ? playableVariantsForContext(exercise, userEquipment, allowedImplements)
     : [];
   const activeVarId = variant?.id;
   // Gym: el implemento no importa y el agarre ya va en el nombre → no lo muestra en el

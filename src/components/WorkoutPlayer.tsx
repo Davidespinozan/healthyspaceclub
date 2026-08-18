@@ -15,7 +15,7 @@ import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
-import { selectVariantForEquipment, hasPlayableVariant, exerciseVideoCandidateIds, pickExerciseVideo, matchesCardioStyle } from '../utils/workoutPlanner';
+import { selectVariantForEquipment, hasPlayableVariant, exerciseVideoCandidateIds, pickExerciseVideo, matchesCardioStyle, playableVariantsForContext } from '../utils/workoutPlanner';
 import type { Implement } from '../utils/equipmentImplement';
 import type { WorkoutExercise } from '../utils/workoutSession';
 import { parseRepsToNumber } from '../utils/workoutLogger';
@@ -61,6 +61,10 @@ interface Props {
     loggedSets: Array<LoggedSet | null>;
     exercises: WorkoutExercise[]; // ejecutados (swaps aplicados) — autoridad para history
   }) => void;
+  /** SOURCE OF TRUTH: se emite cuando una sesión iniciada MUTA de verdad (swap de ejercicio o cambio
+   *  de variante in-player). El padre persiste newEx en dailyWorkout.plan[index] → Hoy/resume/
+   *  completion coinciden con lo ejecutado. newEx conserva toda la prescripción del bloque. */
+  onSessionMutate?: (index: number, newEx: WorkoutExercise) => void;
   onClose: () => void;
 }
 
@@ -106,6 +110,7 @@ export default function WorkoutPlayer({
   userEquipment,
   allowedImplements,
   onComplete,
+  onSessionMutate,
   onClose,
 }: Props) {
   const { t } = useT();
@@ -255,8 +260,12 @@ export default function WorkoutPlayer({
   // nombre del ejercicio → el título NO muestra la variante de gym. En cuerpo/ligas la
   // variante sí nombra el movimiento real (flexiones, con banda), así que se conserva.
   const varIsGymImpl = !!variant && variant.equipment.length === 1 && variant.equipment[0] === 'gym';
+  // Si el usuario ELIGIÓ variante explícitamente (variantId), se muestra su nombre aunque sea de gym
+  // (ej. "— En Smith") → ve en el player la máquina/variante que va a ejecutar. Sin elección explícita,
+  // se mantiene la regla previa (el agarre de gym ya va en el nombre del ejercicio).
+  const showVariantName = !!variant && (!varIsGymImpl || !!currentEx?.variantId);
   const displayName = currentBank
-    ? (variant && !varIsGymImpl ? `${currentBank.name} — ${variant.name}` : currentBank.name)
+    ? (showVariantName ? `${currentBank.name} — ${variant!.name}` : currentBank.name)
     : currentEx?.id || '';
   const DisplayIcon = getExerciseIcon(currentBank);
   const totalSetsForCurrent = currentEx?.sets || 1;
@@ -287,22 +296,26 @@ export default function WorkoutPlayer({
     setLoggedByExercise(reset.logged);
     setCurrentStep(reset.currentStep);
     setRestState(null);
+    onSessionMutate?.(currentExerciseIndex, newEx); // SOURCE OF TRUTH → persiste a dailyWorkout/Hoy
     haptics.tap();
   }
 
-  // CARDIO · "Cambiar variante": rota ENTRE las variantes/máquinas del MISMO bloque (remo↔bici↔
-  // elíptica dentro de cardio-maquina). Conserva id → conserva cardio-meta/duración/zona/intensidad
-  // Y el progreso (NO resetea las series: es la misma estación, solo cambia la máquina).
-  const cardioVariants = currentEx?.cardio && currentBank
-    ? (currentBank.variants ?? []).filter(v => v.equipment.some(e => userEquipment.includes(e)))
+  // "Cambiar variante" (fuerza) / "Cambiar máquina" (cardio): rota entre las variantes PLAYABLE del
+  // MISMO ejercicio (ej. Elevación de Talones: Máquina de pie ↔ En Smith; cardio: remo ↔ bici ↔
+  // elíptica). Mismo exerciseId → conserva sets/reps/rest, cardio-meta, group y la progresión/historial
+  // (indexada por exerciseId), y NO resetea el progreso (es la misma "estación", solo cambia el equipo).
+  // Estricto: solo variantes compatibles con el equipo/gear actual Y con video (playableVariantsForContext).
+  const playableVariants = currentEx && currentBank
+    ? playableVariantsForContext(currentBank, userEquipment, allowedImplements)
     : [];
-  const canCycleVariant = phase === 'exercise' && cardioVariants.length >= 2;
+  const canCycleVariant = phase === 'exercise' && playableVariants.length >= 2;
   function cycleVariant() {
-    if (!currentEx || cardioVariants.length < 2) return;
-    const curIdx = Math.max(0, cardioVariants.findIndex(v => v.id === variant?.id));
-    const next = cardioVariants[(curIdx + 1) % cardioVariants.length];
+    if (!currentEx || playableVariants.length < 2) return;
+    const curIdx = Math.max(0, playableVariants.findIndex(v => v.id === variant?.id));
+    const next = playableVariants[(curIdx + 1) % playableVariants.length];
     const newEx: WorkoutExercise = { ...currentEx, variantId: next.id };
     setSwaps(prev => ({ ...prev, [currentExerciseIndex]: newEx }));
+    onSessionMutate?.(currentExerciseIndex, newEx); // SOURCE OF TRUTH → persiste a dailyWorkout/Hoy
     haptics.tap();
   }
 
@@ -957,7 +970,7 @@ export default function WorkoutPlayer({
               {canCycleVariant && (
                 <button type="button" className="wp-ex-technique wp-ex-swap" onClick={cycleVariant}>
                   <RefreshCw size={14} strokeWidth={2} />
-                  <span>{t('workout.changeVariant')}</span>
+                  <span>{t(currentEx.cardio ? 'workout.changeVariant' : 'workout.changeVariantStrength')}</span>
                 </button>
               )}
             </div>

@@ -64,6 +64,7 @@ import {
   SCHEMA_VERSIONS,
   type CachedWorkout,
 } from '../utils/workoutCache';
+import { applySessionMutation } from '../utils/workoutSession';
 import {
   validateWorkoutPlanStrict,
 } from '../utils/workoutValidation';
@@ -334,6 +335,17 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     if (!plan) return;
     const exercises = plan.exercises.map((e, i) => (i === index ? { ...e, variantId } : e));
     const next = { ...plan, exercises } as typeof plan;
+    sealPlan(next);
+    setPlan(next);
+    saveDailyWorkout(next as unknown as Record<string, unknown>).catch(() => {});
+  }
+
+  // SOURCE OF TRUTH · el player mutó la sesión iniciada (swap de ejercicio o cambio de variante
+  // in-player). Persiste newEx en dailyWorkout.plan[index] con el MISMO patrón seguro → Hoy, resume,
+  // workoutChecks y completion reflejan lo REALMENTE ejecutado. newEx ya conserva toda la prescripción.
+  function handleSessionMutate(index: number, newEx: CachedWorkout['exercises'][number]) {
+    if (!plan) return;
+    const next = applySessionMutation(plan, index, newEx) as typeof plan;
     sealPlan(next);
     setPlan(next);
     saveDailyWorkout(next as unknown as Record<string, unknown>).catch(() => {});
@@ -1713,6 +1725,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         todayDayName={todayDayName}
         todayDateShort={todayDateShort}
         onSelectVariant={handleSelectCardioVariant}
+        onSessionMutate={handleSessionMutate}
       />
     );
   }
