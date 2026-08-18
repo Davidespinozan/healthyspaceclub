@@ -484,9 +484,10 @@ export default function Wizard({
                 <p className="wz-q-sublabel">{t('wizard.gearOwnQ')}</p>
                 <p className="wz-q-hint wz-q-hint-block">{t('wizard.gearOwnHint')}</p>
                 <div className="wz-chips">
-                  {/* En casa: Dumbbells / Bands / Pull-up bar / Bench-chair. La barra libre no se
-                      ofrece en casa (poco común); vive en Gimnasio completo. Nada marcado = suelo. */}
-                  {GEAR_OPTIONS.filter(o => o.value !== 'barra').map(opt => {
+                  {/* En casa: Mancuernas / Barra + discos / Banco / Barra de dominadas / Bandas.
+                      `barra` (barbell) es DISTINTA de `dominadas` (pull-up bar) — implementos separados.
+                      Nada marcado = solo peso corporal (suelo). */}
+                  {GEAR_OPTIONS.map(opt => {
                     const on = gear.includes(opt.value);
                     return (
                       <button

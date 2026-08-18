@@ -92,6 +92,9 @@ export interface EquipmentCapabilities {
   hasFullGym: boolean;               // acceso a gimnasio completo
   hasWeights: boolean;               // ¿puede usar carga externa cuantificable? (gym/mancuernas/barra)
   noSupport: boolean;                // AT HOME sin muebles/soportes → filtra bodyweight-con-infra (ver matOnly.filterNoSupportsBank)
+  // CONTEXTO (dónde entrena) ≠ "tiene pesas". SOLO acceso a gimnasio real = 'gym'; casa (aunque tenga
+  // mancuernas/barra/banco) = 'home'. Para etiquetas/UI. NO cambia los gates (allowedImplements manda).
+  location: 'gym' | 'home';
 }
 
 /** Deriva TODAS las capacidades desde el gear canónico. Único punto de derivación. */
@@ -110,7 +113,10 @@ export function deriveCapabilities(gear: Gear[]): EquipmentCapabilities {
   const equipmentList: Equipment[] = ['cuerpo'];
   if (hasFullGym || has('mancuernas') || has('barra') || has('banco') || has('dominadas')) equipmentList.push('gym');
   if (has('ligas')) equipmentList.push('ligas');
-  return { allowedImplements, equipmentList, hasFullGym, hasWeights, noSupport };
+  // CONTEXTO derivado: solo el acceso a gimnasio real ('gym') es location 'gym'. Tener pesas en casa
+  // NO convierte el contexto en gimnasio. Derivado (no es input nuevo) → no afecta el configHash.
+  const location: 'gym' | 'home' = hasFullGym ? 'gym' : 'home';
+  return { allowedImplements, equipmentList, hasFullGym, hasWeights, noSupport, location };
 }
 
 /** Firma CANÓNICA del gear para el configHash (orden estable → mismo hash sin importar el

@@ -94,7 +94,7 @@ import type {
 import Wizard from './dailyTrainer/Wizard';
 import YogaPlanView from './dailyTrainer/YogaPlan';
 import WorkoutPlanView from './dailyTrainer/WorkoutPlan';
-import { MODALITY_OPTIONS, EQUIPMENT_OPTIONS, PAIN_AREAS, MUSCLE_OPTIONS, type FocusValue } from './dailyTrainer/constants';
+import { MODALITY_OPTIONS, PAIN_AREAS, MUSCLE_OPTIONS, type FocusValue } from './dailyTrainer/constants';
 import type { WorkoutDayType } from '../types';
 import type { TranslationKey } from '../i18n/es';
 import './daily-trainer-v2.css';
@@ -488,8 +488,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       if (focusText) bullets.push(t('wizard.genFocus', { focus: focusText }));
     }
 
-    const eqKey = EQUIPMENT_OPTIONS.find(e => e.value === selectedEquipment)?.labelKey;
-    bullets.push(t('wizard.genTimeEquip', { min: selectedTime, equip: eqKey ? t(eqKey) : selectedEquipment }));
+    // CONTEXTO real: la etiqueta refleja DÓNDE entrena (location), no "tiene pesas". Un usuario de
+    // casa con mancuernas/barra/banco se muestra como "En casa", nunca "Gimnasio". Los gates de
+    // selección siguen usando selectedEquipment/allowedImplements (sin cambios).
+    const locKey = caps.location === 'gym' ? 'wizard.gearEnvGym' : 'wizard.gearEnvOwn';
+    bullets.push(t('wizard.genTimeEquip', { min: selectedTime, equip: t(locKey) }));
 
     if (priorExercise !== 'none') bullets.push(priorExercise === 'light' ? t('wizard.genPriorLight') : t('wizard.genPriorHeavy'));
     if (discomfort === 'mild') bullets.push(t('wizard.genMildDiscomfort'));
