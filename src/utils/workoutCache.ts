@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const SCHEMA_VERSIONS = {
   yoga: 3, // v3: Power Vinyasa por FLOWS (video corrido + poses sostenidas), determinista
-  workout: 13, // v13: bloque de equipo consciente del goal (cardio sin pesas → progresión por intensidad, no tempo)
+  workout: 14, // v14: "At Home" sin-soportes por defecto (gear=[] ya no asume muebles) → invalida cache con semántica vieja de infraestructura
 } as const;
 
 // Formato de coordinación de un ejercicio cuando se entrena en pareja:

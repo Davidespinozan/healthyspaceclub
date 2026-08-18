@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getExercises } from '../../data/exercises';
-import { matOnlyBank } from '../../data/matOnly';
+import { filterNoSupportsBank } from '../../data/matOnly';
 import { deriveCapabilities, type Gear } from '../equipmentImplement';
 import { cardioEquipmentFor, filterByModality, hasPlayableVariant } from '../workoutPlanner';
 import { getCardioCapabilities, buildCardioMain, cardioBlocksToExercises, cardioPlayableMinutes, resolveCardioStyle } from '../cardioMain';
@@ -31,7 +31,7 @@ const LEVELS = ['principiante', 'intermedio', 'avanzado'];
 // Replica EXACTA de la ruta de cardio de DailyTrainer (pool + buildCardioMain), sin IA.
 function cardioSession(gear: Gear[], style: CardioStyle, time: number, level: string) {
   const caps = deriveCapabilities(gear);
-  const bank = caps.matOnly ? matOnlyBank(exerciseBank) : exerciseBank;
+  const bank = caps.noSupport ? filterNoSupportsBank(exerciseBank) : exerciseBank;
   const cardioEq = cardioEquipmentFor(caps.hasFullGym ? ['gym'] : ['cuerpo']);
   const cardioCaps = getCardioCapabilities(bank, cardioEq);
   const modalityFiltered = filterByModality(bank, 'cardio');

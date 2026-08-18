@@ -452,18 +452,16 @@ export default function Wizard({
             <div className="wz-chips wz-chips-col">
               {GEAR_ENV_OPTIONS.map(opt => {
                 const isGymEnv = gear.includes('gym');
-                const isMatEnv = gear.includes('tapete');
-                // tri-estado: gym / solo tapete / propio equipo (el resto).
-                const on = opt.value === 'gym' ? isGymEnv : opt.value === 'tapete' ? isMatEnv : (!isGymEnv && !isMatEnv);
+                // bi-estado: gimnasio completo / en casa (todo lo demás). "Solo tapete" ya no existe.
+                const on = opt.value === 'gym' ? isGymEnv : !isGymEnv;
                 return (
                   <button
                     key={opt.value}
                     className={`wz-chip wz-chip-block${on ? ' on' : ''}`}
-                    // gym → ['gym']; solo tapete → ['tapete'] (exclusivo, sin implementos);
-                    // propio equipo → conserva lo elegido quitando gym/tapete (vacío = peso corporal).
+                    // gym → ['gym']; en casa → conserva los implementos elegidos, limpia gym y el
+                    // legacy 'tapete' (vacío = solo peso corporal de suelo, sin muebles → noSupport).
                     onClick={() => setGear(
                       opt.value === 'gym' ? ['gym']
-                      : opt.value === 'tapete' ? ['tapete']
                       : gear.filter(g => g !== 'gym' && g !== 'tapete'),
                     )}
                   >
@@ -481,12 +479,14 @@ export default function Wizard({
                 dominadas/bandas no cambian una sesión de cardio (el banco solo distingue gym-vs-no,
                 auditado) → eran botones decorativos. La distinción útil de cardio (gym → máquinas/
                 kettlebell) ya la da el Paso 1. En fuerza/hipertrofia el selector se mantiene igual. */}
-            {!gear.includes('gym') && !gear.includes('tapete') && selectedModality !== 'cardio' && (
+            {!gear.includes('gym') && selectedModality !== 'cardio' && (
               <div className="wz-subq">
                 <p className="wz-q-sublabel">{t('wizard.gearOwnQ')}</p>
                 <p className="wz-q-hint wz-q-hint-block">{t('wizard.gearOwnHint')}</p>
                 <div className="wz-chips">
-                  {GEAR_OPTIONS.map(opt => {
+                  {/* En casa: Dumbbells / Bands / Pull-up bar / Bench-chair. La barra libre no se
+                      ofrece en casa (poco común); vive en Gimnasio completo. Nada marcado = suelo. */}
+                  {GEAR_OPTIONS.filter(o => o.value !== 'barra').map(opt => {
                     const on = gear.includes(opt.value);
                     return (
                       <button

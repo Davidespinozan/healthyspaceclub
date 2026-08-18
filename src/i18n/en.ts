@@ -802,13 +802,13 @@ export const en: Translations<typeof es> = {
     // Granular gear (2 steps)
     gearEnvQ: 'Where will you train?',
     gearEnvGym: 'Full gym',
-    gearEnvOwn: 'With my own equipment',
+    gearEnvOwn: 'At home',
     gearEnvMat: 'Mat only — no supports',
     gearOwnQ: 'What do you have?',
-    gearOwnHint: 'Bodyweight counts. Check what you have; nothing checked = bodyweight (you can use a chair, wall or home surfaces).',
+    gearOwnHint: 'Bodyweight counts. Check what you have; nothing checked = floor bodyweight only. Check "Bench / chair" if you have support surfaces.',
     gearDumbbells: 'Dumbbells',
     gearBarbell: 'Barbell + plates',
-    gearBench: 'Bench',
+    gearBench: 'Bench / chair',
     gearPullup: 'Pull-up bar',
     gearBands: 'Bands',
     // TRAINING GOAL (Phase 2) · what to prioritize with weights

@@ -91,14 +91,17 @@ export interface EquipmentCapabilities {
   equipmentList: Equipment[];        // bucket GRUESO (compat); qué categorías de variante mirar
   hasFullGym: boolean;               // acceso a gimnasio completo
   hasWeights: boolean;               // ¿puede usar carga externa cuantificable? (gym/mancuernas/barra)
-  matOnly: boolean;                  // SOLO TAPETE: pool restringido a variantes mat-only (ver matOnly.ts)
+  noSupport: boolean;                // AT HOME sin muebles/soportes → filtra bodyweight-con-infra (ver matOnly.filterNoSupportsBank)
 }
 
 /** Deriva TODAS las capacidades desde el gear canónico. Único punto de derivación. */
 export function deriveCapabilities(gear: Gear[]): EquipmentCapabilities {
   const has = (g: Gear) => gear.includes(g);
-  // SOLO TAPETE es exclusivo: ignora cualquier otro gear (no hay banco/banda/barra…).
-  const matOnly = has('tapete') && !has('gym') && !has('mancuernas') && !has('barra') && !has('banco') && !has('dominadas') && !has('ligas');
+  // SIN SOPORTES (default de "en casa"): NO asumir muebles/superficies. Se aplica salvo que el
+  // usuario tenga gimnasio o declare explícitamente "banco/silla" (banco). Los implementos de casa
+  // (mancuernas/bandas/dominadas) NO desactivan el filtro: "tengo mancuernas pero no muebles" es
+  // válido. Legacy 'tapete'/[] → sin gym ni banco → noSupport=true (peso corporal de suelo).
+  const noSupport = !has('gym') && !has('banco');
   const allowedImplements = gearToImplements(gear);
   const hasFullGym = has('gym');
   const hasWeights = has('gym') || has('mancuernas') || has('barra');
@@ -107,7 +110,7 @@ export function deriveCapabilities(gear: Gear[]): EquipmentCapabilities {
   const equipmentList: Equipment[] = ['cuerpo'];
   if (hasFullGym || has('mancuernas') || has('barra') || has('banco') || has('dominadas')) equipmentList.push('gym');
   if (has('ligas')) equipmentList.push('ligas');
-  return { allowedImplements, equipmentList, hasFullGym, hasWeights, matOnly };
+  return { allowedImplements, equipmentList, hasFullGym, hasWeights, noSupport };
 }
 
 /** Firma CANÓNICA del gear para el configHash (orden estable → mismo hash sin importar el

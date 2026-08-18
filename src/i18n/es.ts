@@ -804,13 +804,13 @@ export const es = {
     // GEAR granular (2 pasos)
     gearEnvQ: '¿Dónde vas a entrenar?',
     gearEnvGym: 'Gimnasio completo',
-    gearEnvOwn: 'Con mi propio equipo',
+    gearEnvOwn: 'En casa',
     gearEnvMat: 'Solo tapete — sin apoyos',
     gearOwnQ: '¿Con qué cuentas?',
-    gearOwnHint: 'El peso corporal cuenta. Marca lo que tengas; sin marcar nada = peso corporal (puedes usar silla, pared o superficies de casa).',
+    gearOwnHint: 'El peso corporal cuenta. Marca lo que tengas; sin marcar nada = solo peso corporal de suelo. Marca «Banco / silla» si tienes superficies de apoyo.',
     gearDumbbells: 'Mancuernas',
     gearBarbell: 'Barra + discos',
-    gearBench: 'Banco',
+    gearBench: 'Banco / silla',
     gearPullup: 'Barra de dominadas',
     gearBands: 'Bandas',
     // TRAINING GOAL (Fase 2) · qué priorizar con las pesas

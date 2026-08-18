@@ -56,7 +56,7 @@ import { computeReadiness, readinessToRecovery, chronicRecoveryTrend, chronicToR
 import { rirError } from '../utils/rirFeedback';
 import { formatCoachTrace } from '../utils/coachTrace';
 import { deriveCapabilities, gearSignature, type Gear } from '../utils/equipmentImplement';
-import { matOnlyBank } from '../data/matOnly';
+import { filterNoSupportsBank } from '../data/matOnly';
 import {
   getCachedWorkout,
   saveWorkoutToCache,
@@ -237,7 +237,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // pipeline de generación (main, warm-up, cardio, capacidades, fallbacks, swaps del player).
   // Así ningún camino puede colar infraestructura. Un usuario normal conserva el banco completo.
   // Las analíticas de modalidad (arriba) siguen usando `exerciseBank` crudo a propósito.
-  const bank = useMemo(() => (caps.matOnly ? matOnlyBank(exerciseBank) : exerciseBank), [caps.matOnly, exerciseBank]);
+  const bank = useMemo(() => (caps.noSupport ? filterNoSupportsBank(exerciseBank) : exerciseBank), [caps.noSupport, exerciseBank]);
   // CAPABILITY UX (honestidad): splits que el equipo actual NO puede sostener (pool < mínimo)
   // → la UI los deshabilita en vez de dejar que se seleccionen y degraden en silencio a full-body.
   // Derivado del banco reproducible real (no hardcode). auto/specific nunca se bloquean.

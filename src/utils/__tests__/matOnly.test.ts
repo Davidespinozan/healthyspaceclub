@@ -86,25 +86,31 @@ describe('MAT-ONLY · capability real del motor', () => {
     expect(hasPlayableVariant(connected, ['cuerpo'])).toBe(true);
   });
 
-  // ── Compatibilidad / no-regresión ──
-  it('12. bodyweight normal conserva comportamiento (matOnly=false, banco completo)', () => {
-    expect(deriveCapabilities([]).matOnly).toBe(false);
-    expect(deriveCapabilities(['cuerpo']).matOnly).toBe(false);
+  // ── At Home sin-soportes por defecto (política nueva: bodyweight en casa NO asume muebles) ──
+  it('12. at-home bodyweight = noSupport por defecto (sin gym ni banco)', () => {
+    expect(deriveCapabilities([]).noSupport).toBe(true);
+    expect(deriveCapabilities(['cuerpo']).noSupport).toBe(true);
   });
-  it('13. home + bandas conserva bandas y NO es mat-only', () => {
+  it('13. home + bandas conserva bandas y sigue siendo noSupport (bandas no dan muebles)', () => {
     const caps = deriveCapabilities(['ligas']);
-    expect(caps.matOnly).toBe(false);
+    expect(caps.noSupport).toBe(true);
     expect(caps.allowedImplements.has('band')).toBe(true);
   });
-  it('18. plan antiguo (equipment cuerpo) NO se vuelve mat-only', () => {
-    expect(gearFromLegacyEquipment('cuerpo')).toEqual([]); // → deriveCapabilities([]) matOnly=false
-    expect(deriveCapabilities(gearFromLegacyEquipment('cuerpo')).matOnly).toBe(false);
+  it('18. plan antiguo (equipment cuerpo) → At Home bodyweight noSupport', () => {
+    expect(gearFromLegacyEquipment('cuerpo')).toEqual([]); // → deriveCapabilities([]) noSupport=true
+    expect(deriveCapabilities(gearFromLegacyEquipment('cuerpo')).noSupport).toBe(true);
   });
 
-  // ── Solo tapete SÍ activa ──
-  it('deriveCapabilities(["tapete"]) → matOnly=true, equipmentList=[cuerpo], sin pesos', () => {
+  // ── Bench/chair (banco) DESACTIVA el filtro; gym también ──
+  it('deriveCapabilities: banco y gym → noSupport=false (soportes habilitados)', () => {
+    expect(deriveCapabilities(['banco']).noSupport).toBe(false);
+    expect(deriveCapabilities(['gym']).noSupport).toBe(false);
+  });
+
+  // ── Legacy tapete → At Home / No equipment / sin soportes (noSupport) ──
+  it('deriveCapabilities(["tapete"]) → noSupport=true, equipmentList=[cuerpo], sin pesos', () => {
     const caps = deriveCapabilities(['tapete']);
-    expect(caps.matOnly).toBe(true);
+    expect(caps.noSupport).toBe(true);
     expect(caps.equipmentList).toEqual(['cuerpo']);
     expect(caps.hasWeights).toBe(false);
     expect(caps.hasFullGym).toBe(false);

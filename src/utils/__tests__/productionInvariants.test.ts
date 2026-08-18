@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getExercises } from '../../data/exercises';
-import { matOnlyBank, isMatOnlyVariant } from '../../data/matOnly';
+import { filterNoSupportsBank, isMatOnlyVariant } from '../../data/matOnly';
 import { deriveCapabilities, type Gear } from '../equipmentImplement';
 import { filterExercisesForWorkout, supportedSplitsForEquipment, hasPlayableVariant, selectVariantForEquipment, DAY_TYPE_CONFIG, type TrainingLevel } from '../workoutPlanner';
 import { buildGroups } from '../supersetEngine';
@@ -22,7 +22,7 @@ const GOALS: Goal[] = ['hipertrofia', 'fuerza'];
 
 function poolFor(gear: Gear[], goal: Goal, level: TrainingLevel, split: WorkoutDayType) {
   const caps = deriveCapabilities(gear);
-  const bank = caps.matOnly ? matOnlyBank(bankAll) : bankAll;
+  const bank = caps.noSupport ? filterNoSupportsBank(bankAll) : bankAll;
   const mg = DAY_TYPE_CONFIG[split].muscleGroups as MuscleGroup[];
   const pool = filterExercisesForWorkout({ exercises: bank, equipment: caps.equipmentList, muscleGroups: mg, goal, difficulty: level, allowedImplements: caps.allowedImplements });
   return { caps, pool };
@@ -63,7 +63,7 @@ describe('QA · invariantes duros de producción (banco + video reales)', () => 
 
   it('CAPABILITY split honesta: los splits que la UI degrada (tapete pull/lower) NO figuran como soportados', () => {
     const caps = deriveCapabilities(['tapete']);
-    const bank = matOnlyBank(bankAll);
+    const bank = filterNoSupportsBank(bankAll);
     const supported = new Set(supportedSplitsForEquipment({ exercises: bank, equipment: caps.equipmentList, allowedImplements: caps.allowedImplements, goal: 'hipertrofia' }));
     // Solo Tapete no puede sostener un PULL real (sin barra) → no debe declararse soportado.
     expect(supported.has('pull')).toBe(false);

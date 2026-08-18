@@ -69,6 +69,31 @@ export function isMatOnlyVariant(v: { id: string; matOnly?: boolean }): boolean 
 }
 
 import type { Exercise } from '../types';
+import { variantImplement } from '../utils/equipmentImplement';
+
+/**
+ * FILTRO "SIN SOPORTES" (default de AT HOME) — helper puro y pequeño.
+ * Responsabilidad ÚNICA: quitar las variantes de PESO CORPORAL que requieren infraestructura
+ * (silla/banco/mesa/pared/cajón/superficie elevada) = el conjunto `isMatOnlyVariant(v) === false`
+ * cuyo implemento es 'bodyweight'. CONSERVA:
+ *   · el suelo / de-pie (isMatOnlyVariant === true), y
+ *   · TODOS los implementos declarados (mancuernas/bandas/dominadas/gym) — a esos los gatea
+ *     `allowedImplements`/`equipmentList` aparte; aquí NO se tocan.
+ * Fuente ÚNICA de clasificación de infraestructura: `isMatOnlyVariant` (no duplica listas de ids).
+ * NO mezcla lógica de nivel, video, split ni ranking. A diferencia de `matOnlyBank`, NO borra
+ * implementos ni fuerza equipment=['cuerpo'] → sirve "en casa CON mancuernas pero SIN muebles".
+ */
+export function filterNoSupportsBank(bank: Exercise[]): Exercise[] {
+  const out: Exercise[] = [];
+  for (const ex of bank) {
+    if (!ex.variants?.length) { out.push(ex); continue; } // planos/yoga: sin variantes que clasificar
+    const kept = ex.variants.filter(v =>
+      !(variantImplement(v, ex.name) === 'bodyweight' && !isMatOnlyVariant(v)));
+    if (!kept.length) continue; // todas sus variantes requerían soporte → fuera
+    out.push(kept.length === ex.variants.length ? ex : { ...ex, variants: kept });
+  }
+  return out;
+}
 
 /**
  * Banco restringido a SOLO TAPETE. Deja cada ejercicio solo con sus variantes mat-only
