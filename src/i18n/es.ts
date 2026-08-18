@@ -396,6 +396,7 @@ export const es = {
   workout: {
     seeTechnique: 'Ver técnica',
     swapExercise: 'Cambiar',
+    changeVariant: 'Cambiar máquina',
     duoYou: 'Tú',
     duoPartner: 'Compa',
     dayTypeUpper: 'Tren superior',
@@ -690,6 +691,7 @@ export const es = {
     goToVideo: 'Ir al video {n}',
     prev: 'Anterior',
     next: 'Siguiente',
+    chooseVariant: 'Elegir variante',
   },
   weeklyReview: {
     loadError: 'No pudimos generar tu resumen. Intenta de nuevo.',

@@ -15,7 +15,7 @@ import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { useT } from '../i18n';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
-import { selectVariantForEquipment, hasPlayableVariant, exerciseVideoCandidateIds, pickExerciseVideo } from '../utils/workoutPlanner';
+import { selectVariantForEquipment, hasPlayableVariant, exerciseVideoCandidateIds, pickExerciseVideo, matchesCardioStyle } from '../utils/workoutPlanner';
 import type { Implement } from '../utils/equipmentImplement';
 import type { WorkoutExercise } from '../utils/workoutSession';
 import { parseRepsToNumber } from '../utils/workoutLogger';
@@ -36,7 +36,7 @@ import {
   setLoadForIndex,
   type LoggedByExercise,
 } from '../utils/workoutSession';
-import type { Exercise, Equipment, LoggedSet } from '../types';
+import type { Exercise, Equipment, LoggedSet, CardioStyle } from '../types';
 import type { CachedWorkout } from '../utils/workoutCache';
 import './workout-player.css';
 
@@ -77,14 +77,24 @@ function buildPlanHash(workout: CachedWorkout): string {
 }
 
 /** #3 — Alternativa para "Cambiar este ejercicio": mismo grupo muscular, con video
- *  para el equipo del usuario, que no esté ya en la rutina. null si no hay opción. */
-function pickSwapAlternative(bank: Exercise[], currentId: string, equipment: Equipment[], usedIds: Set<string>, allowed?: Set<Implement>): Exercise | null {
+ *  para el equipo del usuario, que no esté ya en la rutina. null si no hay opción.
+ *  CARDIO SAFETY: si el bloque es cardio, la alternativa debe además compartir el ESTILO
+ *  (correr/funcional/lowImpact/explosividad) y respetar el impacto — un bloque lowImpact NUNCA
+ *  puede terminar en saltos/burpees por un swap. */
+export function pickSwapAlternative(
+  bank: Exercise[], currentId: string, equipment: Equipment[], usedIds: Set<string>, allowed?: Set<Implement>,
+  cardio?: { style?: CardioStyle; lowImpactOnly?: boolean },
+): Exercise | null {
   const cur = bank.find(e => e.id === currentId);
   if (!cur) return null;
   const pool = bank.filter(ex =>
     ex.id !== currentId && !usedIds.has(ex.id) &&
     ex.muscleGroup === cur.muscleGroup && !ex.isYoga &&
-    hasPlayableVariant(ex, equipment, allowed),
+    hasPlayableVariant(ex, equipment, allowed) &&
+    (!cardio || (
+      (!cardio.style || matchesCardioStyle(ex, cardio.style)) &&
+      (!cardio.lowImpactOnly || (ex.impact !== 'high' && !ex.fallRisk))
+    )),
   );
   return pool[0] ?? null;
 }
@@ -238,7 +248,8 @@ export default function WorkoutPlayer({
     : { ...h, pausedAt: Date.now() });                                                        // pause
   const finishHoldEarly = () => { markCurrentSet(holdElapsed); setHold(null); setHoldElapsed(0); };
   const currentBank = currentEx ? exerciseMap.get(currentEx.id) : undefined;
-  const variant = currentBank ? selectVariantForEquipment(currentBank, userEquipment, allowedImplements) : null;
+  // Respeta la variante ELEGIDA por el usuario (persistida en el ejercicio) si sigue jugable/compatible.
+  const variant = currentBank ? selectVariantForEquipment(currentBank, userEquipment, allowedImplements, currentEx?.variantId) : null;
   // En gym el implemento (barra/mancuerna/máquina) NO importa y el agarre ya va en el
   // nombre del ejercicio → el título NO muestra la variante de gym. En cuerpo/ligas la
   // variante sí nombra el movimiento real (flexiones, con banda), así que se conserva.
@@ -252,15 +263,35 @@ export default function WorkoutPlayer({
 
   // #3 — "Cambiar este ejercicio": alternativa del mismo grupo (con video, apto al
   // equipo, no repetida). Reemplaza SIN avanzar; resetea las series de ese ejercicio.
+  // En cardio, respeta estilo/impacto del bloque (no romper lowImpact).
+  const cardioSwapConstraint = currentEx?.cardio
+    ? { style: currentEx.cardio.style as CardioStyle | undefined, lowImpactOnly: currentEx.cardio.style === 'lowImpact' }
+    : undefined;
   const swapAlt = currentEx
-    ? pickSwapAlternative(exerciseBank, currentEx.id, userEquipment, new Set(exercises.map(e => e.id)), allowedImplements)
+    ? pickSwapAlternative(exerciseBank, currentEx.id, userEquipment, new Set(exercises.map(e => e.id)), allowedImplements, cardioSwapConstraint)
     : null;
   const canSwap = phase === 'exercise' && !!swapAlt;
   function swapCurrentExercise() {
     if (!swapAlt || !currentEx) return;
-    const newEx: WorkoutExercise = { ...currentEx, id: swapAlt.id, tecnica: undefined, tip_personalizado: undefined };
+    const newEx: WorkoutExercise = { ...currentEx, id: swapAlt.id, variantId: undefined, tecnica: undefined, tip_personalizado: undefined };
     setSwaps(prev => ({ ...prev, [currentExerciseIndex]: newEx }));
     setLoggedByExercise(prev => { const c = [...prev]; c[currentExerciseIndex] = []; return c; });
+    haptics.tap();
+  }
+
+  // CARDIO · "Cambiar variante": rota ENTRE las variantes/máquinas del MISMO bloque (remo↔bici↔
+  // elíptica dentro de cardio-maquina). Conserva id → conserva cardio-meta/duración/zona/intensidad
+  // Y el progreso (NO resetea las series: es la misma estación, solo cambia la máquina).
+  const cardioVariants = currentEx?.cardio && currentBank
+    ? (currentBank.variants ?? []).filter(v => v.equipment.some(e => userEquipment.includes(e)))
+    : [];
+  const canCycleVariant = phase === 'exercise' && cardioVariants.length >= 2;
+  function cycleVariant() {
+    if (!currentEx || cardioVariants.length < 2) return;
+    const curIdx = Math.max(0, cardioVariants.findIndex(v => v.id === variant?.id));
+    const next = cardioVariants[(curIdx + 1) % cardioVariants.length];
+    const newEx: WorkoutExercise = { ...currentEx, variantId: next.id };
+    setSwaps(prev => ({ ...prev, [currentExerciseIndex]: newEx }));
     haptics.tap();
   }
 
@@ -910,6 +941,12 @@ export default function WorkoutPlayer({
                 <button type="button" className="wp-ex-technique wp-ex-swap" onClick={swapCurrentExercise}>
                   <RefreshCw size={14} strokeWidth={2} />
                   <span>{t('workout.swapExercise')}</span>
+                </button>
+              )}
+              {canCycleVariant && (
+                <button type="button" className="wp-ex-technique wp-ex-swap" onClick={cycleVariant}>
+                  <RefreshCw size={14} strokeWidth={2} />
+                  <span>{t('workout.changeVariant')}</span>
                 </button>
               )}
             </div>

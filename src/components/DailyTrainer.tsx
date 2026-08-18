@@ -327,6 +327,18 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     seal.userTrainingGoal = trainingGoal; // Fase 2 · restore de la preferencia al recargar
   }
 
+  // El usuario eligió la variante/máquina de un bloque cardio (ej. remo→bici) en el detalle.
+  // Persiste variantId en el ejercicio del plan (setPlan + sello + saveDailyWorkout) → sobrevive a
+  // Start/player/resume. NO cambia la prescripción (duración/zona/intensidad permanecen).
+  function handleSelectCardioVariant(index: number, variantId: string) {
+    if (!plan) return;
+    const exercises = plan.exercises.map((e, i) => (i === index ? { ...e, variantId } : e));
+    const next = { ...plan, exercises } as typeof plan;
+    sealPlan(next);
+    setPlan(next);
+    saveDailyWorkout(next as unknown as Record<string, unknown>).catch(() => {});
+  }
+
   // Al entregar la rutina al compañero: si él ya tenía SU rutina de hoy, el server
   // NO se la pisa (guard anti-clobber) y avisamos al host en vez de fallar mudo.
   function surfaceDeliver(r: DeliverResult) {
@@ -1700,6 +1712,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         onRegenerate={handleRegenerate}
         todayDayName={todayDayName}
         todayDateShort={todayDateShort}
+        onSelectVariant={handleSelectCardioVariant}
       />
     );
   }

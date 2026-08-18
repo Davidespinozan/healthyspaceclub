@@ -400,6 +400,30 @@
   margin: 0 0 8px;
 }
 
+/* Selector de variante/máquina (chips) — elegir remo↔bici↔elíptica y que llegue a la ejecución. */
+.edp-variant-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+.edp-variant-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--edp-forest) 22%, transparent);
+  background: transparent;
+  color: var(--edp-forest);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.edp-variant-chip--active {
+  background: var(--edp-forest);
+  color: #fff;
+  border-color: var(--edp-forest);
+}
+
 @media (min-width: 640px) {
   .edp-name {
     font-size: 26px;

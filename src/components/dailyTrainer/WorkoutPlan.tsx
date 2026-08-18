@@ -28,7 +28,7 @@ import {
   groupLoggedSetsByExercise,
   type ExerciseLogItem,
 } from '../../utils/workoutLogger';
-import { exerciseVideoCandidateIds, pickExerciseVideo } from '../../utils/workoutPlanner';
+import { exerciseVideoCandidateIds, pickExerciseVideo, selectVariantForEquipment } from '../../utils/workoutPlanner';
 import type { Implement } from '../../utils/equipmentImplement';
 import type {
   Exercise,
@@ -83,6 +83,10 @@ interface Props {
   onRegenerate: () => void;
   todayDayName: string;
   todayDateShort: string;
+  /** El usuario eligió una variante (ej. remo→bici) en el detalle de un bloque. El dueño del plan
+   *  la persiste en plan.exercises[index].variantId (setPlan + sealPlan + saveDailyWorkout) → llega
+   *  a la ejecución. Sin este callback, el selector de variante no aparece (solo lectura). */
+  onSelectVariant?: (index: number, variantId: string) => void;
 }
 
 export default function WorkoutPlan({
@@ -100,6 +104,7 @@ export default function WorkoutPlan({
   onRegenerate,
   todayDayName,
   todayDateShort,
+  onSelectVariant,
 }: Props) {
   const { t, locale } = useT();
   const langMismatch = !!(plan as { lang?: string }).lang && (plan as { lang?: string }).lang !== locale;
@@ -127,7 +132,9 @@ export default function WorkoutPlan({
     const pairs = plan.exercises
       .map(e => {
         const ex = exerciseMap.get(e.id);
-        return { baseId: e.id, candidates: ex ? exerciseVideoCandidateIds(ex, [selectedEquipment], allowedImplements) : [e.id] };
+        const base = ex ? exerciseVideoCandidateIds(ex, [selectedEquipment], allowedImplements) : [e.id];
+        // Si el usuario eligió variante (variantId), su clip manda para el póster de la card.
+        return { baseId: e.id, candidates: e.variantId ? [e.variantId, ...base] : base };
       })
       .filter(p => p.baseId);
     const ids = Array.from(new Set(pairs.flatMap(p => p.candidates)));
@@ -155,7 +162,7 @@ export default function WorkoutPlan({
     })();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan.exercises.map(e => e.id).join(','), selectedEquipment, allowedImplements]);
+  }, [plan.exercises.map(e => `${e.id}:${e.variantId ?? ''}`).join(','), selectedEquipment, allowedImplements]);
 
   // Header: progreso (ejercicios completados hoy) + tiempo estimado del plan.
   const workoutChecks = useAppStore(s => s.workoutChecks);
@@ -300,6 +307,9 @@ export default function WorkoutPlan({
           // Identidad cardio ROBUSTA: sellada en el ejercicio (rutinas nuevas) o derivada del
           // cardioMainBlock persistido (rutinas legacy/cache). Nunca cae al stationId técnico.
           const cm = cardioMetaFor(plan, i);
+          // Identidad SECUNDARIA del bloque cardio: la ESTACIÓN/máquina concreta (ej. "Remo (ergómetro)"),
+          // resolviendo la variante ELEGIDA por el usuario si la hay. Da al usuario la actividad real.
+          const activeVariant = cm && bank ? selectVariantForEquipment(bank, [selectedEquipment], allowedImplements, ex.variantId) : null;
           return (
             <div
               key={`${ex.id}-${i}`}
@@ -334,15 +344,17 @@ export default function WorkoutPlan({
               <div className="dt2-ex-emoji">
                 {/* CARDIO: un bloque steady/interval NO muestra el video del stationId técnico
                     (p.ej. high-knees durante 77 min) → card estilizada. Solo drills / intervals no-running. */}
-                {videoByEx[ex.id] && (!cm || cardioShowVideo(cm)) ? (
+                {videoByEx[ex.id] ? (
+                  // Cardio steady/recovery → PÓSTER estático (primer frame, sin autoplay/loop): identidad
+                  // de la actividad sin el clip engañoso de 77 min. Drills/intervals y fuerza → mini-demo
+                  // (autoplay loop). Sin video usable → icono genérico (fallback actual).
                   <video
                     className="dt2-ex-video"
                     src={videoByEx[ex.id]}
                     muted
-                    autoPlay
-                    loop
                     playsInline
                     preload="metadata"
+                    {...((!cm || cardioShowVideo(cm)) ? { autoPlay: true, loop: true } : {})}
                   />
                 ) : (
                   (() => { const Ic = getExerciseIcon(bank); return <Ic size={22} strokeWidth={1.5} />; })()
@@ -359,6 +371,10 @@ export default function WorkoutPlan({
                 )}
                 {/* CARDIO: título = ACTIVIDAD real del bloque (correr/circuito/…), nunca el stationId. */}
                 <div className="dt2-ex-name">{cm ? t(cardioBlockTitleKey(cm) as Parameters<typeof t>[0]) : (bank?.name || humanizeExerciseId(ex.id))}</div>
+                {/* Identidad secundaria: la máquina/estación concreta que hará el usuario. */}
+                {cm && activeVariant && (
+                  <div className="dt2-ex-variant">{activeVariant.name}</div>
+                )}
                 <div className="dt2-ex-stats">
                   {cm ? (
                     <span className="dt2-ex-presc">
@@ -452,6 +468,10 @@ export default function WorkoutPlan({
           exercise={selectedExercise.exercise}
           planData={selectedExercise.planData}
           userEquipment={[selectedEquipment]}
+          activeVariantId={plan.exercises[selectedExercise.index]?.variantId}
+          onSelectVariant={onSelectVariant
+            ? (variantId) => onSelectVariant(selectedExercise.index, variantId)
+            : undefined}
           onClose={() => setSelectedExercise(null)}
         />
       )}

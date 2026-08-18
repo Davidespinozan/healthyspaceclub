@@ -397,6 +397,7 @@ export const en: Translations<typeof es> = {
   workout: {
     seeTechnique: 'See technique',
     swapExercise: 'Swap',
+    changeVariant: 'Change machine',
     duoYou: 'You',
     duoPartner: 'Partner',
     dayTypeUpper: 'Upper body',
@@ -688,6 +689,7 @@ export const en: Translations<typeof es> = {
     goToVideo: 'Go to video {n}',
     prev: 'Previous',
     next: 'Next',
+    chooseVariant: 'Choose variant',
   },
   weeklyReview: {
     loadError: 'We couldn’t generate your summary. Try again.',

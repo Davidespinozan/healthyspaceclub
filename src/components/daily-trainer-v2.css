@@ -283,6 +283,15 @@
   letter-spacing: var(--tracking-tight);
 }
 
+/* Identidad secundaria del bloque cardio: la máquina/estación concreta (ej. "Remo (ergómetro)"). */
+.dt2-ex-variant {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--txt2);
+  margin: -2px 0 5px;
+  line-height: 1.2;
+}
+
 .dt2-ex-stats {
   font-size: 11px;
   color: var(--txt2);

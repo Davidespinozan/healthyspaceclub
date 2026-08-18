@@ -17,7 +17,8 @@ import { render, screen, waitFor, within, cleanup } from '@testing-library/react
 // ═══════════════════════════════════════════════════════════════════════════
 
 // Mock de supabase: el fetch de videos de WorkoutPlan devuelve un clip por estación → así
-// podemos verificar que el STEADY largo (51 min) NO muestra video aunque exista clip.
+// podemos verificar que el STEADY largo (51 min) usa PÓSTER estático (sin autoplay/loop), no un
+// clip de saltos en loop (fix C1: identidad de la actividad sin el clip engañoso).
 vi.mock('../../../lib/supabase', () => ({
   supabase: {
     from: () => ({
@@ -116,15 +117,20 @@ describe('WorkoutPlan · render REAL de cardio dedicado (ruta de la pantalla)', 
     // (7) el steady de 51 min conserva su duración legible.
     expect(screen.getByText(/51 min/i)).toBeInTheDocument();
 
-    // Video: aparece en los bloques de intervalos (funcional), y NUNCA en un steady.
+    // Fix C1: intervals hacen mini-demo (autoplay+loop); steady muestra PÓSTER estático
+    // (video presente pero SIN autoplay/loop) → identidad de la actividad sin el clip engañoso.
     const cards = document.querySelectorAll('.dt2-ex');
     expect(cards.length).toBe(4);
     await waitFor(() => {
-      // intervals (índices 0 y 2) muestran video; steady (1 y 3) no.
       expect(cards[0].querySelector('video')).toBeTruthy();
     });
-    expect(cards[1].querySelector('video')).toBeFalsy(); // steady 7'
-    expect(cards[3].querySelector('video')).toBeFalsy(); // steady 51' — jamás video de saltos
+    const iv = cards[0].querySelector('video') as HTMLVideoElement; // intervals → demo
+    expect(iv.hasAttribute('autoplay')).toBe(true);
+    expect(iv.hasAttribute('loop')).toBe(true);
+    const steady = cards[3].querySelector('video') as HTMLVideoElement; // steady 51' → póster estático
+    expect(steady).toBeTruthy();
+    expect(steady.hasAttribute('autoplay')).toBe(false); // NUNCA loop de saltos 51 min
+    expect(steady.hasAttribute('loop')).toBe(false);
   });
 
   it('rutina LEGACY/CACHE (ex.cardio ausente, cardioMainBlock presente): se DERIVA la identidad → sigue correcto', async () => {
@@ -138,7 +144,10 @@ describe('WorkoutPlan · render REAL de cardio dedicado (ruta de la pantalla)', 
     // La derivación desde cardioMainBlock.blocks evita el fallback al stationId.
     expect(screen.queryByText('Saltos Básicos')).not.toBeInTheDocument();
     const cards = document.querySelectorAll('.dt2-ex');
-    expect(cards[3].querySelector('video')).toBeFalsy(); // steady 51' sin video, también en legacy
+    await waitFor(() => { expect(cards[3].querySelector('video')).toBeTruthy(); });
+    const steady = cards[3].querySelector('video') as HTMLVideoElement; // steady 51' → póster estático (legacy)
+    expect(steady.hasAttribute('autoplay')).toBe(false);
+    expect(steady.hasAttribute('loop')).toBe(false);
   });
 
   it('REGRESIÓN (guard): objeto SIN metadata NI blocks reproduce la pantalla rota (contrato negativo)', async () => {

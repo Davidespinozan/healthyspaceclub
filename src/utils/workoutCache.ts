@@ -49,6 +49,12 @@ export interface CachedWorkout {
     // (título de la actividad real + gate de video). El player usa id/reps/sets para el timer; este
     // campo NO afecta la ejecución. Ver utils/workoutDisplay.ts.
     cardio?: import('./workoutDisplay').CardioExerciseMeta;
+    // VARIANTE ELEGIDA por el usuario (p.ej. remo↔bici↔elíptica dentro de "Cardio en Máquina").
+    // Si está y sigue siendo jugable/compatible, selectVariantForEquipment la respeta en TODAS las
+    // vistas (card/detalle/player) — así la elección llega a la ejecución. Fallback seguro al
+    // selector normal (isDefault) si el id deja de ser válido. NO cambia la prescripción del bloque
+    // (duración/zona/intensidad/rounds permanecen); solo qué estación/máquina se muestra y ejecuta.
+    variantId?: string;
   }>;
   warmup: string;
   cooldown: string;

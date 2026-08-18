@@ -23,6 +23,12 @@ interface Props {
    *  descripción — solo la técnica (pasos + tips), porque el player ya muestra
    *  el video y las series/reps/descanso. */
   compact?: boolean;
+  /** Variante actualmente elegida (persistida en el ejercicio). Si está y sigue siendo
+   *  aplicable, la ficha la muestra como activa. */
+  activeVariantId?: string;
+  /** Si se provee, el usuario puede ELEGIR variante (chips): al tocar una, se persiste
+   *  vía este callback → llega a la ejecución. Sin él, la ficha es solo de lectura. */
+  onSelectVariant?: (variantId: string) => void;
   onClose: () => void;
 }
 
@@ -31,11 +37,19 @@ export default function ExerciseDetailPopout({
   planData,
   userEquipment,
   compact = false,
+  activeVariantId,
+  onSelectVariant,
   onClose,
 }: Props) {
   const { t } = useT();
-  // Variante específica del equipo del usuario (si aplica)
-  const variant = userEquipment ? selectVariantForEquipment(exercise, userEquipment) : null;
+  // Variante específica del equipo del usuario (si aplica) — respeta la elección persistida.
+  const variant = userEquipment ? selectVariantForEquipment(exercise, userEquipment, undefined, activeVariantId) : null;
+  // Variantes ELEGIBLES para este equipo (para el selector de chips). Solo cuando el llamador
+  // permite elegir (onSelectVariant) y hay ≥2 opciones reales.
+  const selectableVariants = (onSelectVariant && userEquipment)
+    ? (exercise.variants ?? []).filter(v => v.equipment.some(e => userEquipment.includes(e)))
+    : [];
+  const activeVarId = variant?.id;
   // Gym: el implemento no importa y el agarre ya va en el nombre → no lo muestra en el
   // título. Cuerpo/ligas: la variante nombra el movimiento real, se conserva.
   const varIsGymImpl = !!variant && variant.equipment.length === 1 && variant.equipment[0] === 'gym';
@@ -327,6 +341,23 @@ export default function ExerciseDetailPopout({
             {translateMuscle(exercise.muscleGroup, t)} · {translateDifficulty(exercise.difficulty, t)}
           </p>
           <h2 className="edp-name">{displayName}</h2>
+          {/* Selector de VARIANTE (ej. remo ↔ bici ↔ elíptica). Tocar un chip persiste la elección
+              → llega a la ejecución sin cambiar la prescripción del bloque. Solo si hay ≥2 opciones. */}
+          {selectableVariants.length >= 2 && (
+            <div className="edp-variant-chips" role="group" aria-label={t('exerciseDetail.chooseVariant')}>
+              {selectableVariants.map(v => (
+                <button
+                  key={v.id}
+                  type="button"
+                  className={`edp-variant-chip${v.id === activeVarId ? ' edp-variant-chip--active' : ''}`}
+                  aria-pressed={v.id === activeVarId}
+                  onClick={() => onSelectVariant?.(v.id)}
+                >
+                  {v.name}
+                </button>
+              ))}
+            </div>
+          )}
           {!compact && !mismatchGymBase && <p className="edp-desc">{exercise.desc}</p>}
           {variant?.notes && (
             <p className="edp-variant-notes">{variant.notes}</p>

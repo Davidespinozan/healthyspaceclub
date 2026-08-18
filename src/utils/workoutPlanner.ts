@@ -982,6 +982,7 @@ export function selectVariantForEquipment(
   exercise: Exercise,
   userEquipment: Equipment[],
   allowed?: Set<Implement>,
+  preferredVariantId?: string,
 ): ExerciseVariant | null {
   if (!exercise.variants || exercise.variants.length === 0) return null;
 
@@ -993,6 +994,14 @@ export function selectVariantForEquipment(
   );
 
   if (applicable.length === 0) return null;
+
+  // ELECCIÓN DEL USUARIO (variantId persistido): si eligió una variante y SIGUE siendo aplicable
+  // al equipo/gear, se respeta. Si dejó de ser válida (cambió el gear, etc.) → fallback seguro al
+  // selector normal de abajo. No exige que tenga video: si la eligió, la mostramos igual.
+  if (preferredVariantId) {
+    const preferred = applicable.find(v => v.id === preferredVariantId);
+    if (preferred) return preferred;
+  }
 
   // Preferimos variantes que YA tienen video (evita mostrar "video próximamente"
   // cuando hay una hermana aplicable con clip). VIDEO_VARIANT_IDS se regenera desde
