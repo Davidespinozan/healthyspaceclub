@@ -1112,10 +1112,35 @@
   .th3-card-list-name { font-size: 0.74rem; }
 }
 
-/* Sesión completada de hoy (fuerza/cardio) — card compacta, subordinada a la rutina del día. */
-.th3-card-session-done {
-  padding: 14px 16px;
-  margin-top: -4px;
+/* Sesiones completadas de hoy — tiras compactas full-width (fuera de la grilla de cards). */
+.th3-sessions-done {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
 }
-.th3-card-session-done .th3-card-body { padding: 0; }
-.th3-card-session-done .th3-card-title { font-size: 15px; margin-top: 2px; }
+.th3-session-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-lg, 14px);
+  background: rgba(29, 60, 54, 0.28);
+  border: 1px solid rgba(246, 242, 234, 0.08);
+}
+.th3-session-strip-mod {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #C9A968;
+}
+.th3-session-strip-sum {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--txt2, rgba(246, 242, 234, 0.72));
+}

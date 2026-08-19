@@ -786,28 +786,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             </div>
           </article>
 
-          {/* SESIONES COMPLETADAS HOY · cada una independiente (fuerza + cardio del día se ven ambas).
-              Fuente: completedSessions (autoridad de terminadas). Muestra modalidad, duración real y
-              resumen. No pisa la card de "rutina de hoy" (pendiente). */}
-          {sessionsToday.map((s) => {
-            const min = Math.max(1, Math.round(s.durationSeconds / 60));
-            const modKey = s.modality === 'cardio' ? 'wizard.modCardio'
-              : s.modality === 'yoga' ? 'wizard.modYoga' : 'wizard.modStrength';
-            const summary = s.modality === 'cardio'
-              ? t('hoy.sessionDoneCardio', { min })
-              : t('hoy.sessionDoneStrength', { n: s.exercisesCompleted, min });
-            return (
-              <article key={s.sessionId ?? s.completedAtIso} className="th3-card th3-card-session-done">
-                <div className="th3-card-body">
-                  <p className="th3-card-eyebrow th3-card-eyebrow--done">
-                    <Check size={13} strokeWidth={2.4} style={{ verticalAlign: '-2px', flexShrink: 0 }} /> {t(modKey as Parameters<typeof t>[0])}
-                  </p>
-                  <h2 className="th3-card-title">{summary}</h2>
-                </div>
-              </article>
-            );
-          })}
-
           {/* CARD NUTRICIÓN */}
           <article
             className="th3-card th3-card-nutricion"
@@ -963,6 +941,29 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           </article>
 
         </div>
+
+          {/* SESIONES COMPLETADAS HOY · tiras compactas full-width (fuera de la grilla de 2 columnas).
+              Cada una independiente → Fuerza + Cardio del día se ven ambas. Fuente: completedSessions. */}
+          {sessionsToday.length > 0 && (
+            <div className="th3-sessions-done">
+              {sessionsToday.map((s) => {
+                const min = Math.max(1, Math.round(s.durationSeconds / 60));
+                const modKey = s.modality === 'cardio' ? 'wizard.modCardio'
+                  : s.modality === 'yoga' ? 'wizard.modYoga' : 'wizard.modStrength';
+                const summary = s.modality === 'cardio'
+                  ? t('hoy.sessionDoneCardio', { min })
+                  : t('hoy.sessionDoneStrength', { n: s.exercisesCompleted, min });
+                return (
+                  <div key={s.sessionId ?? s.completedAtIso} className="th3-session-strip">
+                    <span className="th3-session-strip-mod">
+                      <Check size={13} strokeWidth={2.6} style={{ verticalAlign: '-2px', flexShrink: 0 }} /> {t(modKey as Parameters<typeof t>[0])}
+                    </span>
+                    <span className="th3-session-strip-sum">{summary}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Widget del food truck. Se pinta SOLO si (a) el admin no lo apagó
             (kill-switch mientras los remolques no abren) y (b) el socio es de una
