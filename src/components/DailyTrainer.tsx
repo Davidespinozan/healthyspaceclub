@@ -1562,8 +1562,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
             // textual por región, nunca yoga genérico) y aproximación que NOMBRA el primer compuesto real.
             // NO altera P4/allocateTime (main sigue igual); solo cambia el bloque de preparación.
             const raise = pickWarmupRaise(bank, equipmentList, caps.hasFullGym);
-            const activation = pickSpecificActivation(bank, muscleGroups, equipmentList);
+            // La región (derivada de la RUTINA FINAL) gatea la activación: en upper/lower/mixed una
+            // activación de core isométrica NO es coherente con MOVILIZA → cae al texto por región.
             const region = warmupRegion(w.exercises, exerciseBank);
+            const activation = pickSpecificActivation(bank, region, equipmentList);
             const firstEx = firstApproachExercise(w.exercises, anchorIds, exerciseBank);
             const firstIsCompound = !!firstEx && firstEx.type === 'compuesto';
             w.warmupBlock = {

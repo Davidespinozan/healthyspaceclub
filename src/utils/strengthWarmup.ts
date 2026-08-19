@@ -56,18 +56,33 @@ export function pickWarmupRaise(bank: Exercise[], equipment: Equipment[], hasFul
   return pool.find(ex => ex.impact === 'low') ?? pool[0] ?? null;
 }
 
+export type WarmupRegion = 'upper' | 'lower' | 'mixed' | 'core';
+
+// GATE SEMÁNTICO de elegibilidad (NO ranking/cobertura): músculo PRIMARIO que una activación debe
+// tener para ser apropiada a la región de HOY. Evita que un core isométrico gane MOVILIZA en un día de
+// upper/lower/mixed solo por tener video. NO decide prioridades de entrenamiento — la rutina/anchors/P4
+// siguen siendo la autoridad; esto solo filtra qué activación es semánticamente coherente con el warm-up.
+const REGION_TARGET: Record<WarmupRegion, MuscleGroup[]> = {
+  upper: ['espalda', 'hombros', 'pecho'],
+  lower: ['gluteo', 'cuadriceps', 'isquios'],
+  mixed: ['gluteo', 'espalda', 'hombros'],   // caderas + hombros (las articulaciones del día mixto)
+  core: ['core'],
+};
+
 /**
- * ACTIVACIÓN ESPECÍFICA con video: type='activacion' (NO yoga) que toque un músculo del día y sea
- * reproducible (clip). Sin candidato → null (el caller usa el fallback textual por región). NUNCA cae a
- * un flujo de yoga genérico (ese era el bug de "Sun Salutation A" en un día de upper).
+ * ACTIVACIÓN ESPECÍFICA con video, COHERENTE con la región del día: type='activacion' (NO yoga), músculo
+ * PRIMARIO en REGION_TARGET[region], usable con el equipo y reproducible (clip). Sin candidato → null (el
+ * caller usa el fallback textual por región). Un core isométrico solo es elegible cuando region==='core'.
+ * NUNCA yoga. El gate por región es de ELEGIBILIDAD, no de ranking (devuelve el primero del banco).
  */
-export function pickSpecificActivation(bank: Exercise[], dayMuscles: MuscleGroup[], equipment: Equipment[]): Exercise | null {
+export function pickSpecificActivation(bank: Exercise[], region: WarmupRegion, equipment: Equipment[]): Exercise | null {
   const eq = cardioEquipmentFor(equipment);
   const usable = (ex: Exercise) => ex.equipment.some(e => eq.includes(e) || e === 'cuerpo');
-  const isDayMuscle = (ex: Exercise) =>
-    dayMuscles.includes(ex.muscleGroup) || (ex.secondaryMuscles ?? []).some(m => dayMuscles.includes(m));
+  const targets = REGION_TARGET[region];
   const pool = bank.filter(ex =>
-    ex.type === 'activacion' && !ex.isYoga && usable(ex) && isDayMuscle(ex) && isReproducibleStation(ex, eq),
+    ex.type === 'activacion' && !ex.isYoga && usable(ex) &&
+    targets.includes(ex.muscleGroup as MuscleGroup) &&   // gate por músculo PRIMARIO (no secundario)
+    isReproducibleStation(ex, eq),
   );
   return pool[0] ?? null;
 }
@@ -76,7 +91,7 @@ const UPPER = new Set<string>(['pecho', 'espalda', 'hombros', 'biceps', 'triceps
 const LOWER = new Set<string>(['cuadriceps', 'isquios', 'gluteo', 'pantorrillas']);
 
 /** Región dominante de la sesión (para el fallback textual de movilidad): upper | lower | mixed | core. */
-export function warmupRegion(exercises: Array<{ id: string }>, bank: Exercise[]): 'upper' | 'lower' | 'mixed' | 'core' {
+export function warmupRegion(exercises: Array<{ id: string }>, bank: Exercise[]): WarmupRegion {
   const byId = new Map(bank.map(e => [e.id, e]));
   let up = 0, lo = 0;
   for (const e of exercises) {

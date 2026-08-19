@@ -4,14 +4,12 @@ import {
 } from '../strengthWarmup';
 import { deriveCapabilities } from '../equipmentImplement';
 import { exercises as BANK } from '../../data/exercises';
-import type { MuscleGroup } from '../../types';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PREPARACIÓN de fuerza: duración desacoplada del reloj + contenido derivado de la rutina real.
 // ═══════════════════════════════════════════════════════════════════════════
 const gym = deriveCapabilities(['gym']);
 const cuerpo = deriveCapabilities([]);
-const upperMuscles: MuscleGroup[] = ['pecho', 'espalda', 'hombros', 'biceps', 'triceps'];
 // Rutina real observada (orden final).
 const upperRoutine = ['traccion-vertical-polea', 'remo-horizontal-pesado', 'remo-invertido', 'press-horizontal', 'press-inclinado', 'press-vertical', 'triceps-push-down', 'curl-polea-alta'].map(id => ({ id }));
 
@@ -60,18 +58,44 @@ describe('raise · equipment-aware', () => {
   });
 });
 
-describe('activación específica · NO yoga genérico', () => {
-  it('upper → activación específica con video O null (jamás un flujo de yoga)', () => {
-    const a = pickSpecificActivation(BANK, upperMuscles, gym.equipmentList);
+describe('activación específica · gate por región (no core en upper/lower/mixed) · NO yoga', () => {
+  it('upper → activación no-yoga con video O null (jamás yoga; jamás core)', () => {
+    const a = pickSpecificActivation(BANK, 'upper', gym.equipmentList);
     if (a) {
       expect(a.isYoga).toBeFalsy();
       expect(a.type).toBe('activacion');
-      // toca un músculo del día
-      const touches = upperMuscles.includes(a.muscleGroup) || (a.secondaryMuscles ?? []).some(m => upperMuscles.includes(m as MuscleGroup));
-      expect(touches).toBe(true);
+      expect(['espalda', 'hombros', 'pecho']).toContain(a.muscleGroup); // región upper, NO core
     }
-    // nunca devuelve sun-salutation
     expect(a?.id).not.toBe('sun-salutation-a');
+  });
+  it('mixed (Full Body observado) → NO selecciona core isométrico → null → fallback textual', () => {
+    // en el banco actual, las únicas activaciones con video son core (anti-*) → gate mixed las excluye.
+    const a = pickSpecificActivation(BANK, 'mixed', gym.equipmentList);
+    if (a) expect(a.muscleGroup).not.toBe('core');
+    // el caso real: sin activación region-relevante con video → null → el caller usa texto por región.
+    expect(a?.id).not.toBe('anti-extension-isometrica');
+  });
+  it('lower → NO core; null o activación de cadera/pierna', () => {
+    const a = pickSpecificActivation(BANK, 'lower', gym.equipmentList);
+    if (a) expect(['gluteo', 'cuadriceps', 'isquios']).toContain(a.muscleGroup);
+    expect(a?.id).not.toBe('anti-extension-isometrica');
+  });
+  it('core region → una activación de core SÍ es elegible', () => {
+    const a = pickSpecificActivation(BANK, 'core', gym.equipmentList);
+    expect(a).not.toBeNull();
+    expect(a!.muscleGroup).toBe('core');
+    expect(a!.isYoga).toBeFalsy();
+  });
+  it('region-relevant + video + equipo compatible → se selecciona (core en core)', () => {
+    // control positivo: cuando existe un candidato coherente con la región, se devuelve (no null).
+    const a = pickSpecificActivation(BANK, 'core', gym.equipmentList);
+    expect(a?.type).toBe('activacion');
+  });
+  it('nunca yoga en ninguna región', () => {
+    for (const r of ['upper', 'lower', 'mixed', 'core'] as const) {
+      const a = pickSpecificActivation(BANK, r, gym.equipmentList);
+      if (a) expect(a.isYoga).toBeFalsy();
+    }
   });
 });
 
