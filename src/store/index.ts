@@ -349,6 +349,11 @@ interface AppState {
   // wizard de cardio en vez de la rutina existente. Se consume y limpia al montar. Solo navegación/UI.
   pendingWorkoutModality: Modality | null;
   setPendingWorkoutModality: (m: Modality | null) => void;
+  // D1 · EFÍMERO (NO persistido): al navegar a "entrenamiento" con esto en true, DailyTrainer calcula
+  // "Generarme más" FRESCO (déficit real actual) en vez de mostrar el plan viejo. Se consume al montar.
+  // Separado de pendingWorkoutModality: un supplemental de fuerza NO es una modalidad nueva.
+  pendingSupplemental: boolean;
+  setPendingSupplemental: (v: boolean) => void;
   // Recarga la rutina de hoy desde el server (para que al compañero le aparezca
   // al instante la rutina que el host le entregó, sin recargar la app).
   pullDailyWorkout: () => Promise<void>;
@@ -1106,6 +1111,8 @@ export const useAppStore = create<AppState>()(
   dailyWorkout: null,
   pendingWorkoutModality: null,
   setPendingWorkoutModality: (m) => set({ pendingWorkoutModality: m }),
+  pendingSupplemental: false,
+  setPendingSupplemental: (v) => set({ pendingSupplemental: v }),
   // Sync-3: persiste a user_profiles.daily_workout. Molde saveWeeklyPlan:
   // set optimista + await upsert + throw. generatedAt (ISO) viaja en el jsonb
   // como timestamp comparable para shouldUseRemoteWorkout en la hidratación.

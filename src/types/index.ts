@@ -393,6 +393,14 @@ export interface CompletedSession {
    */
   isDeload?: boolean;
   /**
+   * D1 · ORIGEN de la sesión. Ausente/undefined = 'prescribed' (rutina normal del día) — TODA sesión
+   * histórica sin este campo sigue funcionando idéntica. 'supplemental' = trabajo adicional de
+   * "Generarme más" (una sesión NUEVA del mismo día, sessionId distinto; NO muta la original).
+   * 'manual' = reservado para D2 (buscador). NO cambia el significado de `modality` (un supplemental de
+   * fuerza sigue siendo modality='fuerza'). Solo distingue el label en Hoy y el conteo.
+   */
+  source?: 'prescribed' | 'supplemental' | 'manual';
+  /**
    * BLOQUE 3 (D5) · Sets PERFORMED por ejercicio (misma estructura que viaja a Supabase). Es la
    * VISTA por-ejercicio de `loggedSets` (misma fuente, escrita en el mismo evento) — permite el
    * historial de fuerza que necesitan la tendencia de rendimiento (P1·e1RMTrend) y el punto débil

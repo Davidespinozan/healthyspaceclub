@@ -52,6 +52,17 @@ export function shouldOfferAddCardio(
   return sessionsToday.some((s) => s.modality !== 'cardio');
 }
 
+/**
+ * D1 · ¿Mostrar la entrada persistente "Generarme más"? Solo cuando YA se COMPLETÓ trabajo de FUERZA
+ * hoy (una sesión no-cardio en completedSessions). El supplemental es trabajo ADICIONAL sobre lo hecho,
+ * así que —a diferencia de "Añadir cardio"— NO basta con tener una rutina pendiente/en progreso: debe
+ * haber una sesión de fuerza terminada. Un supplemental ya completado (modality='fuerza') también cuenta
+ * → el CTA reaparece para pedir aún más (el motor converge a covered).
+ */
+export function shouldOfferGenerateMore(sessionsToday: Array<{ modality: string }>): boolean {
+  return sessionsToday.some((s) => s.modality !== 'cardio');
+}
+
 /** Fase inicial de DailyTrainer al montar. "Añadir cardio" (pendingModality) fuerza el wizard, aunque
  *  haya rutina de hoy → nunca cae al plan viejo. */
 export function initialWorkoutPhase(

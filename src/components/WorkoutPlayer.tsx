@@ -69,6 +69,10 @@ interface Props {
    *  abre el flujo de cardio como una sesión NUEVA (sessionId distinto). Ausente = no se muestra el CTA
    *  (p.ej. tras una sesión de cardio). No modifica la sesión ya completada. */
   onAddCardio?: () => void;
+  /** D1 · "Generarme más": al COMPLETAR una sesión de FUERZA, ofrece trabajo ADICIONAL dosificado por el
+   *  déficit real. El padre recalcula y arma el supplemental (o avisa covered/gap). Ausente en cardio.
+   *  No mete lógica fisiológica aquí — el player solo delega. */
+  onGenerateMore?: () => void;
   onClose: () => void;
 }
 
@@ -116,6 +120,7 @@ export default function WorkoutPlayer({
   onComplete,
   onSessionMutate,
   onAddCardio,
+  onGenerateMore,
   onClose,
 }: Props) {
   const { t } = useT();
@@ -1214,6 +1219,12 @@ export default function WorkoutPlayer({
             </div>
           )}
           <div className="wp-cta-wrap">
+            {onGenerateMore && (
+              <button className="wp-share-cta wp-share-cta--club" onClick={() => { onClose(); onGenerateMore(); }}>
+                <Zap size={18} strokeWidth={2} />
+                {t('workout.generateMore')}
+              </button>
+            )}
             {onAddCardio && (
               <button className="wp-share-cta wp-share-cta--club" onClick={() => { onClose(); onAddCardio(); }}>
                 <Activity size={18} strokeWidth={2} />

@@ -1,6 +1,6 @@
 import { dayKey } from '../utils/localDate';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Sparkles, Dumbbell, Utensils, Brain, Check, Users, ArrowRight, Flame, X, Share2, Activity } from 'lucide-react';
+import { Sparkles, Dumbbell, Utensils, Brain, Check, Users, ArrowRight, Flame, X, Share2, Activity, Zap } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
@@ -28,7 +28,7 @@ import DayCelebration from './DayCelebration';
 import { useCountUp } from '../hooks/useCountUp';
 import FoodLogSheet from './FoodLogSheet';
 import ActivityLogSheet from './ActivityLogSheet';
-import { shouldOfferAddCardio } from '../utils/workoutDisplay';
+import { shouldOfferAddCardio, shouldOfferGenerateMore } from '../utils/workoutDisplay';
 import { listPartnerships, respondInvite, type Partnership } from '../utils/partners';
 import { supabase } from '../lib/supabase';
 import PartnerLiveHeader from './PartnerLiveHeader';
@@ -83,6 +83,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     username,
   } = useAppStore(useShallow((s) => ({ userName: s.userName, planGoal: s.planGoal, mealPlanKey: s.mealPlanKey, shoppingDay: s.shoppingDay, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, workoutChecks: s.workoutChecks, toggleWorkoutCheck: s.toggleWorkoutCheck, mealResolvedByLog: s.mealResolvedByLog, foodLog: s.foodLog, addFoodLog: s.addFoodLog, completedSessions: s.completedSessions, activityLog: s.activityLog, dailyWorkout: s.dailyWorkout, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, lastWeeklyReview: s.lastWeeklyReview, streakCount: s.streakCount, obData: s.obData, dailyBriefing: s.dailyBriefing, setDailyBriefing: s.setDailyBriefing, dailyHSMResponses: s.dailyHSMResponses, lastStreakMilestone: s.lastStreakMilestone, setLastStreakMilestone: s.setLastStreakMilestone, hsmProfile: s.hsmProfile, setHSMProfile: s.setHSMProfile, subscriptionStatus: s.subscriptionStatus, username: s.username })));
   const setPendingWorkoutModality = useAppStore(s => s.setPendingWorkoutModality);
+  const setPendingSupplemental = useAppStore(s => s.setPendingSupplemental);
 
   // Acceso real = estado de Stripe (subscriptionStatus), NO el trial local
   // (userPlan/trialEndsAt), que se expira solo sin mirar Stripe y desincronizaba
@@ -256,6 +257,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // "Añadir cardio" desde Hoy: visible cuando ya hay actividad/rutina de FUERZA del día (pendiente,
   // en progreso o completada). Día vacío → no se muestra (el flujo normal ya permite elegir modalidad).
   const strengthToday = shouldOfferAddCardio(todayWorkoutPlan as never, sessionsToday);
+  // D1 · "Generarme más" persistente: solo si ya COMPLETASTE fuerza hoy (no pendiente/en progreso) — el
+  // supplemental es trabajo ADICIONAL sobre lo hecho. Sobrevive a cerrar/reabrir (lee completedSessions).
+  const completedStrengthToday = shouldOfferGenerateMore(sessionsToday);
   const trainedToday = sessionsToday.length > 0 || allExercisesChecked || activityToday;
   const reflectionDone = todayHSMAnswered > 0;
 
@@ -794,6 +798,19 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                   {t('workout.addCardio')}
                 </button>
               )}
+              {/* "Generarme más" · entrada PERSISTENTE (D1). Visible cuando YA completaste fuerza hoy;
+                  sobrevive a cerrar/reabrir. Setea el flag efímero + navega → DailyTrainer calcula el
+                  supplemental FRESCO (déficit real actual), sin consumir regeneraciones. */}
+              {completedStrengthToday && !(todayWorkoutPlan as { partnerMode?: boolean } | null)?.partnerMode && (
+                <button
+                  type="button"
+                  className="th3-card-alt-activity th3-card-add-cardio"
+                  onClick={(e) => { e.stopPropagation(); setPendingSupplemental(true); onNav('entrenamiento'); }}
+                >
+                  <span className="th3-card-alt-check" aria-hidden="true"><Zap size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span>
+                  {t('workout.generateMore')}
+                </button>
+              )}
               {/* Pie "Ver completa" SOLO cuando hay rutina — en vacío el título ya
                   es la acción ("Generar tu rutina de hoy →"), sin pie. */}
               {todayWorkoutPlan && (
@@ -972,10 +989,14 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 const summary = s.modality === 'cardio'
                   ? t('hoy.sessionDoneCardio', { min })
                   : t('hoy.sessionDoneStrength', { n: s.exercisesCompleted, min });
+                // D1 · las sesiones supplemental ("Generarme más") se marcan como EXTRA — NO reemplazan
+                // la sesión original (ambas se renderizan; son sessionId distintos).
+                const isExtra = s.source === 'supplemental';
                 return (
                   <div key={s.sessionId ?? s.completedAtIso} className="th3-session-strip">
                     <span className="th3-session-strip-mod">
                       <Check size={13} strokeWidth={2.6} style={{ verticalAlign: '-2px', flexShrink: 0 }} /> {t(modKey as Parameters<typeof t>[0])}
+                      {isExtra && <span className="th3-session-strip-extra"> · {t('hoy.sessionExtraTag')}</span>}
                     </span>
                     <span className="th3-session-strip-sum">{summary}</span>
                   </div>

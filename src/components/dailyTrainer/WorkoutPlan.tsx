@@ -92,6 +92,9 @@ interface Props {
   onSessionMutate?: (index: number, newEx: CachedWorkout['exercises'][number]) => void;
   /** Sesión híbrida: abrir el flujo de cardio como sesión nueva tras completar fuerza. */
   onAddCardio?: () => void;
+  /** D1 · "Generarme más": calcular trabajo supplemental FRESCO tras completar fuerza (el padre decide
+   *  0/1/2/3 por déficit real y arma el plan supplemental o el aviso covered/gap). */
+  onGenerateMore?: () => void;
 }
 
 export default function WorkoutPlan({
@@ -112,6 +115,7 @@ export default function WorkoutPlan({
   onSelectVariant,
   onSessionMutate,
   onAddCardio,
+  onGenerateMore,
 }: Props) {
   const { t, locale } = useT();
   const langMismatch = !!(plan as { lang?: string }).lang && (plan as { lang?: string }).lang !== locale;
@@ -494,6 +498,9 @@ export default function WorkoutPlan({
           allowedImplements={allowedImplements}
           onSessionMutate={onSessionMutate}
           onAddCardio={!planIsCardio ? onAddCardio : undefined}
+          // D1 · "Generarme más" solo tras FUERZA (no cardio). El CTA del player cierra (onClose) y
+          // delega al padre, que recalcula el déficit fresco (incluida esta sesión ya persistida).
+          onGenerateMore={!planIsCardio ? onGenerateMore : undefined}
           onClose={() => setWorkoutPlayerOpen(false)}
           onComplete={(data) => {
             // Mapear modality: si 'auto', derivar del todayDecision.type
@@ -621,6 +628,9 @@ export default function WorkoutPlan({
               // P2-B · día SELLADO al generar (no el reloj de fin) → la sesión que cruza medianoche
               // pertenece a su día de inicio (racha/historial coherentes).
               sessionDate: (plan as { sessionDate?: string }).sessionDate ?? checkDay,
+              // D1 · propaga el origen (supplemental) → CompletedSession.source. Plan normal = undefined
+              // (prescribed). NO cambia modality: un supplemental de fuerza sigue siendo 'fuerza'.
+              source: (plan as { source?: 'prescribed' | 'supplemental' | 'manual' }).source,
               // Fase 3 · crédito compartido: liga la sesión al OTRO. En el device de B el "otro"
               // es el owner (A), no B mismo → si soy B, el partner es ownerId; si soy A, es partnerId.
               partnerUserId: plan.partnerMode

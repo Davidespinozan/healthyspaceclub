@@ -1,6 +1,6 @@
 import { dayKey } from '../utils/localDate';
 import { useState, useMemo, useEffect } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Check } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { getExercises } from '../data/exercises';
@@ -29,8 +29,6 @@ import {
   cardioStyleFromPlan,
   reconcilePartnerDayType,
   hasPlayableVariant,
-  deloadCheck,
-  inDeloadWeek,
   computeWeeklyVolume,
   weeklyVolumeSeries,
   trainingFrequency,
@@ -47,13 +45,13 @@ import { assignTechniques } from '../utils/techniques';
 import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities, resolveCardioStyle } from '../utils/cardioMain';
 import { composeSession } from '../utils/sessionBlocks';
 import { shouldShowWeekCoveredNotice, initialWorkoutPhase } from '../utils/workoutDisplay';
-import {
-  deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
-} from '../utils/mesocycle';
-import { e1RMTrend, bestE1RMByMuscle } from '../utils/loadEngine';
+import { composeIntensity } from '../utils/mesocycle';
+import { deriveSessionMesocycle } from '../utils/sessionMesocycle';
+import { buildSupplementalPlan } from '../utils/supplementalWorkout';
+import { buildSupplementalExercises } from '../utils/supplementalPlan';
+import { bestE1RMByMuscle } from '../utils/loadEngine';
 import { resolvePriorities, applyMusclePriority, possibleWeakPoint } from '../utils/musclePriority';
-import { computeReadiness, readinessToRecovery, chronicRecoveryTrend, chronicToRecovery } from '../utils/readiness';
-import { rirError } from '../utils/rirFeedback';
+import { computeReadiness, readinessToRecovery } from '../utils/readiness';
 import { formatCoachTrace } from '../utils/coachTrace';
 import { deriveCapabilities, gearSignature, type Gear } from '../utils/equipmentImplement';
 import { filterNoSupportsBank } from '../data/matOnly';
@@ -172,8 +170,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
   // ── State
   const [phase, setPhase] = useState<Phase>(() =>
+    // "Generarme más" desde Hoy → skeleton mientras se calcula el supplemental FRESCO (no el plan viejo).
     // "Añadir cardio" desde Hoy → wizard (NO el plan de fuerza existente); modo pareja arranca fresco.
-    initialWorkoutPhase(pendingWorkoutModality, storedWorkout?.date === today, partnerMode),
+    useAppStore.getState().pendingSupplemental
+      ? 'generating'
+      : initialWorkoutPhase(pendingWorkoutModality, storedWorkout?.date === today, partnerMode),
   );
   // Notificar phase al padre (DashboardScreen condiciona sec-hero según haya rutina).
   useEffect(() => { onPhaseChange?.(phase); }, [phase, onPhaseChange]);
@@ -187,6 +188,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     !partnerMode && storedWorkout?.date === today ? (storedWorkout.plan as any) : null
   );
   const [error, setError] = useState('');
+  // D1 · "Generarme más": estado covered/gap (no abre player, muestra mensaje claro). null = sin aviso.
+  const [supplementalNotice, setSupplementalNotice] = useState<'covered' | 'gap' | null>(null);
+  const pendingSupplemental = useAppStore(s => s.pendingSupplemental);
+  const setPendingSupplemental = useAppStore(s => s.setPendingSupplemental);
 
   // Flow state. La modalidad, igual que el equipo, se RESTAURA de la rutina guardada
   // al recargar (si no, volvía a una sugerencia y la sesión se registraba con la
@@ -371,6 +376,104 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     setPhase('modality');
   }
 
+  // D1 · "GENERARME MÁS" (supplemental) · trabajo ADICIONAL tras completar fuerza, dosificado por el
+  // DÉFICIT SEMANAL REAL (incluyendo lo ya hecho HOY). Recalcula SIEMPRE desde el estado ACTUAL del store
+  // (nunca déficit stale de antes del entreno) → un 2º "Generarme más" ve el supplemental #1 y converge a
+  // covered. El core (buildSupplementalPlan) decide 0/1/2/3; aquí solo consumimos su output y lo volvemos
+  // un plan ejecutable (series rectas, source='supplemental'). NO toca la sesión original.
+  async function handleGenerateMore() {
+    // GUARDA · UNA sesión a la vez: no pisar una sesión con progreso real sin terminar.
+    try {
+      if (hasUnfinishedSession(localStorage.getItem('workout-player-progress'), today)) {
+        if (!window.confirm(t('workout.activeSessionGuard'))) return;
+        localStorage.removeItem('workout-player-progress');
+      }
+    } catch { /* localStorage denegado → no bloquear */ }
+    setSupplementalNotice(null);
+
+    // Estado ACTUAL (fresco): incluye la sesión recién terminada. NO usar el closure (puede ir un render atrás).
+    const sessionsNow = useAppStore.getState().completedSessions;
+    const logNow = useAppStore.getState().workoutLog || [];
+    const perfNow = useAppStore.getState().lastExercisePerformance;
+    const bankById = new Map(exerciseBank.map(e => [e.id, e]));
+
+    // Trabajo de FUERZA ya ejecutado HOY (dedup + scope físico). Cardio no cuenta para volumen de fuerza.
+    const todayStrength = sessionsNow.filter(s => s.date === today && s.modality !== 'cardio');
+    const doneExerciseIds = [...new Set(todayStrength.flatMap(s => s.exerciseIds))];
+    const dayMuscles = [...new Set(
+      doneExerciseIds
+        .map(id => bankById.get(id)?.muscleGroup)
+        .filter((m): m is MuscleGroup => !!m && m !== 'cardio' && m !== 'cuerpo-completo'),
+    )];
+    if (dayMuscles.length === 0) { setSupplementalNotice('covered'); return; }
+
+    // MESOCICLO — MISMA derivación que la generación normal (una sola fuente).
+    const { meso } = deriveSessionMesocycle({
+      completedSessions: sessionsNow, workoutLog: logNow, exerciseBank, rirLog, readinessLog,
+      fallbackEnergy: String(obData?.energy ?? ''), fallbackSleep: String(obData?.sleep ?? ''),
+    });
+    // TARGET SEMANAL personalizado (P3) — misma función que la generación normal (base, sin priority).
+    const history = analyzeWorkoutHistory(logNow, exerciseBank, sessionsNow);
+    const series = weeklyVolumeSeries(sessionsNow, exerciseBank, logNow, 4);
+    const p3 = computeVolumeTargets({
+      weeklyVolumes: series, level: levelFromObData(obData),
+      weeksOfHistory: series.filter(wk => Object.keys(wk).length > 0).length,
+      longPause: history.restDays >= 14,
+      recovery: meso.signals.recovery, performance: meso.signals.performance,
+      adherence: meso.signals.adherence, volumeMultiplier: meso.volumeMultiplier, isDeload: meso.deload,
+    });
+    const weeklyTarget = targetsToMap(p3);
+
+    // CORE (congelado): decide cuántos ejercicios (techo 3) por déficit real, respetando equipo/playable/patternCap.
+    const result = buildSupplementalPlan({
+      completedSessions: sessionsNow, bank, weeklyTarget, dayMuscles, doneExerciseIds,
+      equipmentList: caps.equipmentList, allowed: caps.allowedImplements, workoutLog: logNow,
+      trainingGoal, maxExtra: 3,
+    });
+    if (result.status !== 'ok') { setSupplementalNotice(result.status === 'covered' ? 'covered' : 'gap'); return; }
+
+    // Déficit restante por músculo → allocation de la prescripción (misma dosis que dirigió al core).
+    const done7 = computeWeeklyVolume(sessionsNow, exerciseBank, 7, logNow);
+    const allocation: Record<string, number> = {};
+    for (const m of dayMuscles) allocation[m] = Math.max(0, (weeklyTarget[m] ?? 0) - (done7[m] ?? 0));
+
+    const supExercises = buildSupplementalExercises({
+      exerciseIds: result.exerciseIds, bank,
+      allocation, trainingGoal, phase: meso.phase,
+      level: levelFromObData(obData), lastPerf: perfNow,
+    });
+    if (supExercises.length === 0) { setSupplementalNotice('gap'); return; }
+
+    // Plan ejecutable — series rectas (sin group), source='supplemental', modality fuerza. La sesión
+    // ORIGINAL ya está persistida como CompletedSession → no se muta. dailyWorkout pasa a este plan
+    // (mismo patrón que "Añadir cardio"); Hoy sigue mostrando ambas sesiones desde completedSessions.
+    const supPlan = {
+      type: 'extra-supplemental',
+      intensity: 'media',
+      exercises: supExercises,
+      warmup: '', cooldown: '', note: '',
+      source: 'supplemental',
+      sessionDate: today,
+      razon: t('workout.supplementalReason'),
+    } as unknown as CachedWorkout & { razon?: string };
+
+    setSelectedModality('fuerza'); // completion loguea modality='fuerza'
+    setPlan(supPlan);
+    sealPlan(supPlan);
+    void saveDailyWorkout(supPlan as unknown as Record<string, unknown>).catch(() => {});
+    setError('');
+    setPhase('plan');
+  }
+
+  // D1 · entrada persistente desde Hoy: al navegar con pendingSupplemental, calcula FRESCO (una vez).
+  // No consume regeneraciones (handleGenerateMore no llama incrementRegen). Se limpia el flag al montar.
+  useEffect(() => {
+    if (!pendingSupplemental) return;
+    setPendingSupplemental(false);
+    void handleGenerateMore();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Al entregar la rutina al compañero: si él ya tenía SU rutina de hoy, el server
   // NO se la pisa (guard anti-clobber) y avisamos al host en vez de fallar mudo.
   function surfaceDeliver(r: DeliverResult) {
@@ -441,51 +544,13 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     const todayRecovery = readinessToRecovery(readiness.state); // dosis de HOY
     let chronicTrend: 'declining' | 'stable' | 'improving' = 'stable'; // se asigna en el meso (para trace)
 
-    const meso = (() => {
-      const { weeksAccumulated } = deloadCheck(completedSessions, workoutLog || []);
-      const inDeload = inDeloadWeek(completedSessions); // P1 · seguimos en la semana de descarga
-      const sum = (v: Record<string, number>) => Object.values(v).reduce((a, b) => a + b, 0);
-      const setsLast7 = sum(computeWeeklyVolume(completedSessions, exerciseBank, 7, workoutLog || []));
-      const setsPrev7 = sum(computeWeeklyVolume(completedSessions, exerciseBank, 14, workoutLog || [])) - setsLast7;
-      const since = (d: number) => dayKey(new Date(Date.now() - d * 86400000));
-      const last7Days = new Set<string>();
-      for (const s of completedSessions) if (s.date >= since(7)) last7Days.add(s.date);
-      for (const w of (workoutLog || [])) if (w.date >= since(7)) last7Days.add(w.date);
-      const freq = trainingFrequency(completedSessions, workoutLog || []);
-      // Rendimiento REAL (P2): tendencia de FUERZA (e1RM del mismo ejercicio, 14d vs 14-28d).
-      // BLOQUE 3 (D5) · lee el historial por-ejercicio de completedSessions (fuente real), no el
-      // workoutLog legacy (vacío en producción). Excluye deload (su carga ligera NO es caída de
-      // fuerza). Si no hay dato de carga comparable, cae a la tendencia de volumen.
-      const strengthEntries = (loDays: number, hiDays: number) => completedSessions
-        .filter(s => !s.isDeload && s.date >= since(hiDays) && (loDays === 0 || s.date < since(loDays)))
-        .flatMap(s => (s.exercises ?? []).map(e => ({ exercise: e.id, sets: e.sets })));
-      const strengthTrend = e1RMTrend(strengthEntries(0, 14), strengthEntries(14, 28));
-      const performance = strengthTrend ?? volumeTrend(setsLast7, setsPrev7);
-
-      // P6 · La recovery del MESOCICLO viene de la tendencia CRÓNICA (no de un día). Errores
-      // de RIR por sesión (media) + estados de readiness recientes + performance. Fallback: el
-      // check-in previo (comportamiento P1 anterior) si aún no hay evidencia longitudinal.
-      const rirBySession = new Map<string, number[]>();
-      for (const o of rirLog) {
-        if (!rirBySession.has(o.date)) rirBySession.set(o.date, []);
-        rirBySession.get(o.date)!.push(rirError(o));
-      }
-      const rirErrors = [...rirBySession.entries()].sort((a, b) => b[0].localeCompare(a[0]))
-        .map(([, errs]) => errs.reduce((a, b) => a + b, 0) / errs.length);
-      const chronic = chronicRecoveryTrend({
-        recentReadiness: [...readinessLog].sort((a, b) => b.date.localeCompare(a.date)).map(r => r.state),
-        rirErrors, performance,
-      });
-      chronicTrend = chronic;
-      const fallbackRecovery = recoveryFromCheckin(String(obData?.energy ?? ''), String(obData?.sleep ?? ''));
-      return deriveMesocycleState({
-        weeksAccumulated,
-        recovery: chronicToRecovery(chronic, fallbackRecovery),
-        adherence: adherenceFrom(last7Days.size, freq),
-        performance,
-        inDeloadWeek: inDeload,
-      });
-    })();
+    // P1/P6 · MESOCICLO — derivación ÚNICA (extraída a sessionMesocycle.deriveSessionMesocycle). La
+    // misma cadena la consume "Generarme más" (D1) → generación normal y supplemental NO divergen.
+    const { meso, chronicTrend: derivedChronicTrend } = deriveSessionMesocycle({
+      completedSessions, workoutLog: workoutLog || [], exerciseBank, rirLog, readinessLog,
+      fallbackEnergy: String(obData?.energy ?? ''), fallbackSleep: String(obData?.sleep ?? ''),
+    });
+    chronicTrend = derivedChronicTrend;
     // El mesociclo es AUTORITATIVO sobre el deload (ventana 4-6 + adelantable).
     const mesoDeload = meso.deload;
     // Registra la readiness de hoy (para la tendencia crónica de las próximas sesiones).
@@ -1618,6 +1683,25 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // RENDER: GENERATING
   // ══════════════════════════════════════════════════════════════
 
+  // D1 · aviso covered/gap de "Generarme más" — NO abre player. Mensaje claro + volver.
+  if (supplementalNotice) {
+    const backToPlan = () => { setSupplementalNotice(null); setPhase(plan ? 'plan' : 'modality'); };
+    return (
+      <div className="wz-root">
+        <div className="wz-error">
+          <p className="wz-error-text">
+            {supplementalNotice === 'covered'
+              ? <Check size={14} strokeWidth={2.4} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
+              : <AlertTriangle size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />}
+            {' '}
+            {t(supplementalNotice === 'covered' ? 'workout.supplementalCovered' : 'workout.supplementalGap')}
+          </p>
+          <button className="wz-error-btn" onClick={backToPlan}>{t('workout.supplementalBack')}</button>
+        </div>
+      </div>
+    );
+  }
+
   if (phase === 'generating') {
     return (
       <div className="dt2-root">
@@ -1759,6 +1843,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         onSelectVariant={handleSelectCardioVariant}
         onSessionMutate={handleSessionMutate}
         onAddCardio={handleAddCardio}
+        onGenerateMore={handleGenerateMore}
       />
     );
   }

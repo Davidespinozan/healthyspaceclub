@@ -15,6 +15,7 @@ const DAY_LABEL_KEY: Record<string, TranslationKey> = {
   'Cardio': 'workout.dayTypeCardio',
   'Movilidad': 'workout.dayTypeMovilidad',
   'Yoga / Recovery': 'workout.dayTypeYoga',
+  'extra-supplemental': 'workout.dayTypeExtra', // D1 · "Generarme más" (trabajo supplemental)
 };
 
 export function translateDayLabel(

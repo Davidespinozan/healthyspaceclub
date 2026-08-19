@@ -93,6 +93,9 @@ export interface FinishSessionPayload {
   /** P2-B · Día LOCAL SELLADO al generar/iniciar el workout (dayKey). Si el workout cruza
    *  medianoche, la sesión pertenece a ESTE día (inicio), no al reloj de fin. Sin él, cae a hoy. */
   sessionDate?: string;
+  /** D1 · Origen de la sesión ('supplemental' = "Generarme más"). Ausente = sesión prescrita normal.
+   *  Se persiste en CompletedSession.source; NO altera modality ni la fila de workout_log. */
+  source?: 'prescribed' | 'supplemental' | 'manual';
 }
 
 /** Operaciones del outbox inyectadas (P2-A) — mantiene finishWorkoutSession honesta y testeable. */
@@ -140,6 +143,9 @@ export async function finishWorkoutSession(
     exercisesTotal: payload.exercisesTotal,
     ...(payload.loggedSets && payload.loggedSets.length > 0 && { loggedSets: payload.loggedSets }),
     ...(payload.isDeload && { isDeload: true }),
+    // D1 · marca supplemental (backward-compat: sin source la sesión es prescrita normal). No viaja a
+    // workout_log (su client_session_id ya la distingue); solo distingue label/conteo en el cliente.
+    ...(payload.source && payload.source !== 'prescribed' && { source: payload.source }),
     // BLOQUE 3 (D5) · sets performed por ejercicio (para el historial de fuerza que consumen
     // P1·e1RMTrend y P5·weak-point). Misma fuente que loggedSets, vista por-ejercicio.
     ...(() => {
