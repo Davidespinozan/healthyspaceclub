@@ -218,6 +218,13 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
   level?: TrainingLevelLike;                        // Fase 6 · matiz de RIR por nivel
   mainMinutes: number;                             // presupuesto del bloque principal
   lastPerf?: Record<string, { sets: { reps: number; kg: number; rir?: number }[] }>;
+  // Fix E · PISO DE COMPUESTOS frente al time-fit (STRUCTURE > TIME). Solo HIPERTROFIA: un
+  // main-compound cuya DOSIS ya justificaba ≥N sets NO se degrada a 2 por ahorrar tiempo. Ausente/0 →
+  // comportamiento histórico (piso 2 para todo). Acotado por la dosis inicial: nunca inventa un set.
+  compoundMinSets?: number;
+  // Fix E · ejercicios de COBERTURA requerida (anchors) que el recorte NUNCA retira. Si solo quedan
+  // protegidos y aún no cabe, el recorte CEDE (acepta el pequeño exceso) en vez de romper cobertura.
+  protectedIds?: Set<string>;
 }): PrescribedItem<T>[] {
   // Distribución de series por rol. FUERZA concentra MÁS en el compuesto principal y menos en
   // accesorios (menos volumen accesorio, más calidad en el lift); es un factor pequeño, acotado
@@ -275,24 +282,37 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
   const recompute = () => items.reduce((a, it) => a + minutesOf(it.prescription), 0);
   let total = recompute();
 
-  // (a) baja series (nunca <2) empezando por lo de menor prioridad y más series.
+  // Fix E · piso por ejercicio para el time-fit. HIPERTROFIA + main-compound + dosis que ya justificaba
+  // ≥compoundMinSets → ese compuesto no baja de min(compoundMinSets, dosisInicial). El resto: piso 2
+  // (histórico). initialSets = sets asignados por la DOSIS (pre-recorte) → acota el piso, nunca inventa.
+  const compoundMinSets = input.compoundMinSets ?? 0;
+  const initialSets = new Map(items.map(it => [it.ex.id, it.prescription.sets]));
+  const floorOf = (it: PrescribedItem<T>): number =>
+    input.trainingGoal === 'hipertrofia' && it.category === 'main-compound' && compoundMinSets > 0
+      ? Math.min(compoundMinSets, initialSets.get(it.ex.id) ?? 2)
+      : 2;
+
+  // (a) baja series (nunca por debajo de floorOf) empezando por lo de menor prioridad y más series.
   let guard = 200;
   while (total > input.mainMinutes && guard-- > 0) {
     const cand = items
-      .filter(it => it.prescription.sets > 2)
+      .filter(it => it.prescription.sets > floorOf(it))
       .sort((a, b) => PRIORITY[a.category] - PRIORITY[b.category] || b.prescription.sets - a.prescription.sets)[0];
     if (!cand) break;
     cand.prescription.sets -= 1;
     total = recompute();
   }
 
-  // (b) si aún no cabe (todos en el piso de series), ELIMINA ejercicios completos: primero
-  // aislamiento, luego secundario; solo como ÚLTIMO recurso un compuesto (el de MENOS series,
-  // que ≈ el menos prioritario — el priorizado recibió más dosis), preservando siempre ≥1.
+  // (b) si aún no cabe, ELIMINA ejercicios completos (amplitud antes que profundidad): primero
+  // aislamiento, luego secundario; solo como ÚLTIMO recurso un compuesto (el de MENOS series).
+  // Fix E · los protectedIds (anchors = cobertura requerida) NUNCA se retiran; si SOLO quedan
+  // protegidos, el recorte CEDE (acepta el exceso) en vez de romper la cobertura del día.
   guard = 200;
   while (total > input.mainMinutes + TIME_TOLERANCE && items.length > 1 && guard-- > 0) {
-    const nonMain = items.filter(it => it.category !== 'main-compound');
-    const pool = nonMain.length > 0 ? nonMain : items; // solo-compuestos → recorta el menor
+    const droppable = items.filter(it => !input.protectedIds?.has(it.ex.id));
+    if (droppable.length === 0) break; // solo quedan anchors/protegidos → time cede a structure
+    const nonMain = droppable.filter(it => it.category !== 'main-compound');
+    const pool = nonMain.length > 0 ? nonMain : droppable; // solo-compuestos droppables → recorta el menor
     const victim = pool.sort((a, b) => PRIORITY[a.category] - PRIORITY[b.category] || a.prescription.sets - b.prescription.sets)[0];
     items.splice(items.indexOf(victim), 1);
     total = recompute();

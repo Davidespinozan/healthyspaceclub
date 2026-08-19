@@ -1354,15 +1354,15 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // coach de élite que la IA a veces incumple (compuestos primero, core al final,
       // pesados fuera de superserie, técnica solo en aislamiento, superseries con
       // sets/rest iguales, anti-enfriamiento). Sin costo ni llamadas extra.
+      // Piso de series en compuestos (B): fuerza/hipertrofia + no principiante → 3 (deload → sin piso).
+      // Escalado por el mesociclo: acumulación/intensificación altas → 4; semanas normales 3.
+      // Fix E · UNA sola autoridad del piso: repair lo aplica (bump) y prescribeSession lo RESPETA como
+      // floor frente al time-fit → el compuesto ya no se degrada a 2 sets. Mismo cálculo, hoisteado.
+      const isStrengthGoal = goal === 'hipertrofia' || goal === 'fuerza';
+      const notBeginner = levelFromObData(obData) !== 'principiante';
+      const compoundSetFloor = isStrengthGoal && notBeginner && !mesoDeload
+        ? Math.max(3, Math.round(3 * meso.volumeMultiplier)) : 0;
       {
-        // Piso de series en compuestos (B): fuerza/hipertrofia + no principiante → 3
-        // (avanzado en descarga baja a 2). Evita rutinas flojas sin importar la IA.
-        const isStrengthGoal = goal === 'hipertrofia' || goal === 'fuerza';
-        const notBeginner = levelFromObData(obData) !== 'principiante';
-        // Piso de series escalado por el mesociclo: acumulación/intensificación altas
-        // → 4 series de piso; semanas normales 3; deload → sin piso.
-        const compoundSetFloor = isStrengthGoal && notBeginner && !mesoDeload
-          ? Math.max(3, Math.round(3 * meso.volumeMultiplier)) : 0;
         const repaired = repairWorkoutStructure(
           (workout as CachedWorkout).exercises, exerciseBank,
           { hasWeights: caps.hasWeights, compoundSetFloor, priorityMuscles: priorityMuscleSet, trainingGoal },
@@ -1390,6 +1390,12 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         const items = prescribeSession({
           exercises: exsWithMuscle, bankById, allocation, trainingGoal,
           phase: meso.phase, level: levelFromObData(obData), mainMinutes: sessionPlan.budget.main, lastPerf: lastExercisePerformance,
+          // Fix E · SOLO hipertrofia con piso activo (no-principiante/no-deload): el time-fit RESPETA el
+          // piso de compuestos (STRUCTURE > TIME) y NUNCA retira anchors. Fuerza/principiante/deload →
+          // params ausentes → recorte histórico byte-idéntico. compoundSetFloor/anchorIds sin cambios.
+          ...(trainingGoal === 'hipertrofia' && compoundSetFloor > 0
+            ? { compoundMinSets: compoundSetFloor, protectedIds: new Set(anchorIds) }
+            : {}),
         });
 
         // ── FASE 5E · ESCALADO VOLUMEN ↔ TIEMPO (headroom, solo HIPERTROFIA) ─────
