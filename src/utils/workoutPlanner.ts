@@ -227,10 +227,25 @@ export function computeWeeklyVolume(
   for (const s of completedSessions) {
     if (s.date < since) continue;
     covered.add(s.date);
-    for (const id of s.exerciseIds) {
-      const ex = exerciseMap.get(id);
-      if (!ex || ex.type === 'cardio') continue;
-      add(ex, ex.defaultSets && ex.defaultSets > 0 ? ex.defaultSets : 3);
+    // LEDGER REAL · sesión MODERNA (trae detalle por-ejercicio) → cuenta los SETS REALMENTE EJECUTADOS
+    // (exercises[].sets.length; skipped/vacíos ya excluidos al escribir la sesión), NO defaultSets. El
+    // volumen se atribuye al exerciseId EJECUTADO (swap ya aplicado en exercises[].id). Antes se contaba
+    // defaultSets por exerciseId → una sesión de 2 sets se contabilizaba como 3-4 (inflaba doneThisWeek).
+    if (s.exercises && s.exercises.length > 0) {
+      for (const e of s.exercises) {
+        const ex = exerciseMap.get(e.id);
+        if (!ex || ex.type === 'cardio') continue;
+        const executed = e.sets?.length ?? 0;
+        if (executed > 0) add(ex, executed);
+      }
+    } else {
+      // LEGACY · sin detalle por-ejercicio → fallback histórico (defaultSets por exerciseId). No borra
+      // volumen de sesiones viejas sin tracking.
+      for (const id of s.exerciseIds) {
+        const ex = exerciseMap.get(id);
+        if (!ex || ex.type === 'cardio') continue;
+        add(ex, ex.defaultSets && ex.defaultSets > 0 ? ex.defaultSets : 3);
+      }
     }
   }
   // workoutLog es legacy: cuéntalo solo en fechas NO cubiertas por completedSessions
