@@ -199,6 +199,18 @@ export function prescribeExercise(input: {
 // ── Orquestación: reparte, prescribe y RESPETA EL TIEMPO ─────────────────────
 export interface PrescribedItem<T> { ex: T; category: Category; prescription: ExercisePrescription; }
 
+/**
+ * F2B-0 · OBSERVABILIDAD ADITIVA del time-fit (NO comportamiento). Si el caller pasa este objeto,
+ * prescribeSession ESCRIBE si el bloque de time-fit recortó la prescripción — SIN cambiar nada del
+ * output. `timeFitTrimmed` es EXACTO: Σsets(después) < Σsets(antes) del time-fit. NO significa
+ * "budget lleno" ni "headroom agotado" (headroom ocurre después y no afecta este flag).
+ */
+export interface TimeFitDiagnostics {
+  timeFitTrimmed: boolean;
+  trimmedSets: number;       // max(0, setsBefore − setsAfter) — combina reducción (a) + retiro (b)
+  removedExercises: number;  // max(0, countBefore − countAfter)
+}
+
 /** Minutos estimados de una prescripción (trabajo por serie + descanso). */
 function minutesOf(p: ExercisePrescription): number {
   return p.sets * (0.7 + p.rest / 60);
@@ -225,7 +237,7 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
   // Fix E · ejercicios de COBERTURA requerida (anchors) que el recorte NUNCA retira. Si solo quedan
   // protegidos y aún no cabe, el recorte CEDE (acepta el pequeño exceso) en vez de romper cobertura.
   protectedIds?: Set<string>;
-}): PrescribedItem<T>[] {
+}, diagnostics?: TimeFitDiagnostics): PrescribedItem<T>[] {
   // Distribución de series por rol. FUERZA concentra MÁS en el compuesto principal y menos en
   // accesorios (menos volumen accesorio, más calidad en el lift); es un factor pequeño, acotado
   // y testeado — NO un segundo motor de volumen (P3/P4 siguen fijando el total por músculo).
@@ -287,6 +299,9 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
   // (histórico). initialSets = sets asignados por la DOSIS (pre-recorte) → acota el piso, nunca inventa.
   const compoundMinSets = input.compoundMinSets ?? 0;
   const initialSets = new Map(items.map(it => [it.ex.id, it.prescription.sets]));
+  // F2B-0 · estado PRE time-fit (para diagnostics; NO se usa en ninguna decisión).
+  const setsBeforeTimeFit = [...initialSets.values()].reduce((a, b) => a + b, 0);
+  const countBeforeTimeFit = items.length;
   const floorOf = (it: PrescribedItem<T>): number =>
     input.trainingGoal === 'hipertrofia' && it.category === 'main-compound' && compoundMinSets > 0
       ? Math.min(compoundMinSets, initialSets.get(it.ex.id) ?? 2)
@@ -316,6 +331,14 @@ export function prescribeSession<T extends { id: string; muscleGroup: string }>(
     const victim = pool.sort((a, b) => PRIORITY[a.category] - PRIORITY[b.category] || a.prescription.sets - b.prescription.sets)[0];
     items.splice(items.indexOf(victim), 1);
     total = recompute();
+  }
+  // F2B-0 · ESCRIBE observabilidad del time-fit (solo si el caller la pidió). NO altera items.
+  if (diagnostics) {
+    const setsAfterTimeFit = items.reduce((a, it) => a + it.prescription.sets, 0);
+    diagnostics.trimmedSets = Math.max(0, setsBeforeTimeFit - setsAfterTimeFit);
+    diagnostics.removedExercises = Math.max(0, countBeforeTimeFit - items.length);
+    // trimmedSets>0 captura AMBOS casos (retirar un ejercicio elimina sus sets → reduce Σsets).
+    diagnostics.timeFitTrimmed = diagnostics.trimmedSets > 0;
   }
   return items;
 }
