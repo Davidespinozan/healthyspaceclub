@@ -473,6 +473,19 @@ export const en: Translations<typeof es> = {
       mobilise: 'Mobilise',
       potentiate: 'Activate',
     },
+    // Fix WARM-UP · strength preparation notes (derived from the real routine).
+    warmupStep: {
+      raise: 'Row or cycle easy ~2 min — raise your pulse, no maxes when cold.',
+      mobiliseEx: "Mobilise and prime what you'll use today — full range, controlled.",
+      region: {
+        upper: 'Dynamic shoulder, scapular and t-spine mobility · ~90 s.',
+        lower: 'Dynamic hip, knee and ankle mobility · ~90 s.',
+        mixed: 'Dynamic hip and shoulder mobility · ~90 s.',
+        core: 'Activate your core and mobilise generally · ~90 s.',
+      },
+      approach: 'Do 2 progressive ramp-up sets before your working sets.',
+      approachGeneric: 'Raise the pace with 1–2 light sets before you start.',
+    },
     partnerFormat: {
       juntos: 'Together — same set at once',
       alternado: 'Alternating — one rests while the other works',

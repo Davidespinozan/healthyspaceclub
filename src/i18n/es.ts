@@ -472,6 +472,19 @@ export const es = {
       mobilise: 'Moviliza',
       potentiate: 'Activa',
     },
+    // Fix WARM-UP · notas de la preparación de FUERZA (derivada de la rutina real).
+    warmupStep: {
+      raise: 'Rema o pedalea suave ~2 min — eleva pulso, sin máximos en frío.',
+      mobiliseEx: 'Moviliza y activa lo que vas a usar hoy — rango completo, control.',
+      region: {
+        upper: 'Movilidad dinámica de hombros, escápulas y torácica · ~90 s.',
+        lower: 'Movilidad dinámica de caderas, rodillas y tobillos · ~90 s.',
+        mixed: 'Movilidad dinámica de caderas y hombros · ~90 s.',
+        core: 'Activa el core y moviliza en general · ~90 s.',
+      },
+      approach: 'Haz 2 series progresivas antes de tus series efectivas.',
+      approachGeneric: 'Sube el ritmo con 1–2 series ligeras antes de empezar.',
+    },
     partnerFormat: {
       juntos: 'Juntos — misma serie a la vez',
       alternado: 'Alternado — mientras uno descansa, el otro trabaja',

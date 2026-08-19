@@ -44,6 +44,7 @@ import { allocateHeadroom } from '../utils/headroom';
 import { assignTechniques } from '../utils/techniques';
 import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities, resolveCardioStyle } from '../utils/cardioMain';
 import { composeSession } from '../utils/sessionBlocks';
+import { strengthWarmupMinutes, pickWarmupRaise, pickSpecificActivation, warmupRegion, firstApproachExercise } from '../utils/strengthWarmup';
 import { shouldShowWeekCoveredNotice, initialWorkoutPhase } from '../utils/workoutDisplay';
 import { composeIntensity } from '../utils/mesocycle';
 import { deriveSessionMesocycle } from '../utils/sessionMesocycle';
@@ -1555,10 +1556,36 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         const w = workout as CachedWorkout;
         const nameOf = (id: string | null) => (id ? (exerciseBank.find(e => e.id === id)?.name ?? null) : null);
         if (sessionPlan.warmup) {
-          w.warmupBlock = {
-            minutes: sessionPlan.warmup.minutes,
-            phases: sessionPlan.warmup.phases.map(p => ({ phase: p.phase, name: nameOf(p.exerciseId), note: p.note })),
-          };
+          if (isResistanceDay) {
+            // Fix WARM-UP · la preparación de FUERZA se compone AQUÍ (rutina ya conocida): duración con
+            // autoridad fisiológica propia (desacoplada del reloj), movilización específica al día (fallback
+            // textual por región, nunca yoga genérico) y aproximación que NOMBRA el primer compuesto real.
+            // NO altera P4/allocateTime (main sigue igual); solo cambia el bloque de preparación.
+            const raise = pickWarmupRaise(bank, equipmentList, caps.hasFullGym);
+            const activation = pickSpecificActivation(bank, muscleGroups, equipmentList);
+            const region = warmupRegion(w.exercises, exerciseBank);
+            const firstEx = firstApproachExercise(w.exercises, anchorIds, exerciseBank);
+            const firstIsCompound = !!firstEx && firstEx.type === 'compuesto';
+            w.warmupBlock = {
+              minutes: strengthWarmupMinutes({
+                trainingGoal, readinessLow: readiness.state === 'low', lowImpactMode,
+                hasPain: discomfort === 'pain', availableMinutes: selectedTime,
+              }),
+              phases: [
+                { phase: 'raise', name: raise?.name ?? null, note: t('workout.warmupStep.raise') },
+                { phase: 'mobilise', name: activation?.name ?? null,
+                  note: activation ? t('workout.warmupStep.mobiliseEx') : t(`workout.warmupStep.region.${region}` as Parameters<typeof t>[0]) },
+                { phase: 'potentiate', name: firstIsCompound ? firstEx!.name : null,
+                  note: firstIsCompound ? t('workout.warmupStep.approach') : t('workout.warmupStep.approachGeneric') },
+              ],
+            };
+          } else {
+            // Cardio/yoga: SIN CAMBIO (warm-up del builder tal cual).
+            w.warmupBlock = {
+              minutes: sessionPlan.warmup.minutes,
+              phases: sessionPlan.warmup.phases.map(p => ({ phase: p.phase, name: nameOf(p.exerciseId), note: p.note })),
+            };
+          }
         }
         if (sessionPlan.finisher) {
           const f = sessionPlan.finisher;
