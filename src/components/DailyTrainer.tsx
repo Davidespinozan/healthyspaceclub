@@ -46,7 +46,7 @@ import { allocateHeadroom } from '../utils/headroom';
 import { assignTechniques } from '../utils/techniques';
 import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities, resolveCardioStyle } from '../utils/cardioMain';
 import { composeSession } from '../utils/sessionBlocks';
-import { shouldShowWeekCoveredNotice } from '../utils/workoutDisplay';
+import { shouldShowWeekCoveredNotice, initialWorkoutPhase } from '../utils/workoutDisplay';
 import {
   deriveMesocycleState, composeIntensity, recoveryFromCheckin, adherenceFrom, volumeTrend,
 } from '../utils/mesocycle';
@@ -126,6 +126,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const workoutLog = useAppStore(s => s.workoutLog);
   const storedWorkout = useAppStore(s => s.dailyWorkout);
   const saveDailyWorkout = useAppStore(s => s.saveDailyWorkout);
+  // Flag efímero de navegación: si Hoy pidió "Añadir cardio", arrancamos en el wizard de cardio (no
+  // en el plan existente). Se consume/limpia al montar. Solo abre el wizard; NO genera solo.
+  const pendingWorkoutModality = useAppStore(s => s.pendingWorkoutModality);
+  const setPendingWorkoutModality = useAppStore(s => s.setPendingWorkoutModality);
   const regenCount = useAppStore(s => s.dailyWorkoutRegenCount);
   const incrementRegen = useAppStore(s => s.incrementDailyWorkoutRegen);
   const streakCount = useAppStore(s => s.streakCount);
@@ -167,13 +171,18 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // Auto decision
 
   // ── State
-  const [phase, setPhase] = useState<Phase>(() => {
-    // Modo pareja siempre arranca fresco (la rutina de hoy guardada es la solo).
-    if (!partnerMode && storedWorkout?.date === today) return 'plan';
-    return 'modality';
-  });
+  const [phase, setPhase] = useState<Phase>(() =>
+    // "Añadir cardio" desde Hoy → wizard (NO el plan de fuerza existente); modo pareja arranca fresco.
+    initialWorkoutPhase(pendingWorkoutModality, storedWorkout?.date === today, partnerMode),
+  );
   // Notificar phase al padre (DashboardScreen condiciona sec-hero según haya rutina).
   useEffect(() => { onPhaseChange?.(phase); }, [phase, onPhaseChange]);
+  // Consume el flag de navegación "Añadir cardio" (ya usado por los inicializadores de phase/modality).
+  // Se limpia UNA vez al montar → no reabre cardio en navegaciones posteriores.
+  useEffect(() => {
+    if (pendingWorkoutModality) setPendingWorkoutModality(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [plan, setPlan] = useState<(CachedWorkout & { razon?: string }) | null>(
     !partnerMode && storedWorkout?.date === today ? (storedWorkout.plan as any) : null
   );
@@ -183,6 +192,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // al recargar (si no, volvía a una sugerencia y la sesión se registraba con la
   // modalidad equivocada al completarla).
   const [selectedModality, setSelectedModality] = useState<Modality>(() => {
+    if (pendingWorkoutModality) return pendingWorkoutModality; // Hoy pidió esta modalidad (cardio)
     const stored = (!partnerMode && storedWorkout?.date === today) ? modalityFromPlan(storedWorkout.plan) : null;
     return stored ?? suggestion.modality;
   });

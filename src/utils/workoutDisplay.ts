@@ -40,6 +40,31 @@ export function isCardioPlan(plan: PlanLike): boolean {
 }
 
 /**
+ * ¿Mostrar la entrada persistente "Añadir cardio" en Hoy? Solo cuando ya hay actividad/rutina de
+ * FUERZA del día (plan pendiente/en progreso NO-cardio, o alguna sesión completada NO-cardio). Día
+ * completamente vacío → false (el flujo normal de generar rutina ya permite elegir modalidad).
+ */
+export function shouldOfferAddCardio(
+  todayPlan: PlanLike | null,
+  sessionsToday: Array<{ modality: string }>,
+): boolean {
+  if (todayPlan && !isCardioPlan(todayPlan)) return true;
+  return sessionsToday.some((s) => s.modality !== 'cardio');
+}
+
+/** Fase inicial de DailyTrainer al montar. "Añadir cardio" (pendingModality) fuerza el wizard, aunque
+ *  haya rutina de hoy → nunca cae al plan viejo. */
+export function initialWorkoutPhase(
+  pendingModality: string | null | undefined,
+  hasWorkoutToday: boolean,
+  partnerMode: boolean,
+): 'plan' | 'modality' {
+  if (pendingModality) return 'modality';
+  if (!partnerMode && hasWorkoutToday) return 'plan';
+  return 'modality';
+}
+
+/**
  * Metadata cardio EFECTIVA de un ejercicio, ROBUSTA a objetos legacy/cache.
  * Preferimos la metadata sellada en el ejercicio (`ex.cardio`, rutinas nuevas). Si NO viaja
  * (una rutina cacheada/persistida por una versión previa que no enriquecía los ejercicios), la
