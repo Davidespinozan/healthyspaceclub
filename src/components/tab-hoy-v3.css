@@ -1111,3 +1111,11 @@
   .th3-card-title { font-size: 15px; }
   .th3-card-list-name { font-size: 0.74rem; }
 }
+
+/* Sesión completada de hoy (fuerza/cardio) — card compacta, subordinada a la rutina del día. */
+.th3-card-session-done {
+  padding: 14px 16px;
+  margin-top: -4px;
+}
+.th3-card-session-done .th3-card-body { padding: 0; }
+.th3-card-session-done .th3-card-title { font-size: 15px; margin-top: 2px; }

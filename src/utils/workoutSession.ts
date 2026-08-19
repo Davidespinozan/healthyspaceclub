@@ -355,6 +355,23 @@ export function setsDoneForExercise(logged: LoggedByExercise, exIndex: number): 
  * el bloque (perdería el progreso del co-miembro): solo se limpia el log del miembro swappeado.
  */
 /**
+ * ¿Hay una sesión de HOY iniciada con PROGRESO REAL y sin terminar? (guarda de "una sesión a la vez"
+ * del flujo híbrido secuencial.) Lee el JSON crudo de PROGRESS_KEY (no lo modifica). "Con progreso" =
+ * currentStep avanzado O alguna serie logueada → abrir el player y cerrarlo sin hacer nada NO cuenta.
+ */
+export function hasUnfinishedSession(progressRaw: string | null, today: string): boolean {
+  if (!progressRaw) return false;
+  try {
+    const d = JSON.parse(progressRaw);
+    if (!d || d.version !== 2 || d.workoutDate !== today) return false;
+    const started = typeof d.currentStep === 'number' && d.currentStep > 0;
+    const anySet = Array.isArray(d.loggedByExercise)
+      && d.loggedByExercise.some((arr: unknown) => Array.isArray(arr) && arr.some(x => x != null));
+    return started || anySet;
+  } catch { return false; }
+}
+
+/**
  * SOURCE OF TRUTH de una sesión iniciada: aplica una mutación real (swap de ejercicio o cambio de
  * variante in-player) al plan PERSISTIDO que lee "Hoy". Reemplaza `exercises[index]` por `newEx`
  * (que ya conserva TODA la prescripción del bloque: sets/reps/rest/cardio/group/variantId/rir/topKg…)

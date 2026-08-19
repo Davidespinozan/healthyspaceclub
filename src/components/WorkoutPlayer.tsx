@@ -1,7 +1,7 @@
 import { dayKey } from '../utils/localDate';
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera, Info, History, TrendingUp, RefreshCw } from 'lucide-react';
+import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, Camera, Info, History, TrendingUp, RefreshCw, Activity } from 'lucide-react';
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 
 const CreatePostModal = lazy(() => import('./CreatePostModal'));
@@ -65,10 +65,14 @@ interface Props {
    *  de variante in-player). El padre persiste newEx en dailyWorkout.plan[index] → Hoy/resume/
    *  completion coinciden con lo ejecutado. newEx conserva toda la prescripción del bloque. */
   onSessionMutate?: (index: number, newEx: WorkoutExercise) => void;
+  /** Sesión híbrida secuencial: al COMPLETAR una sesión NO-cardio, ofrece "Añadir cardio" → el padre
+   *  abre el flujo de cardio como una sesión NUEVA (sessionId distinto). Ausente = no se muestra el CTA
+   *  (p.ej. tras una sesión de cardio). No modifica la sesión ya completada. */
+  onAddCardio?: () => void;
   onClose: () => void;
 }
 
-const PROGRESS_KEY = 'workout-player-progress';
+export const PROGRESS_KEY = 'workout-player-progress';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -111,6 +115,7 @@ export default function WorkoutPlayer({
   allowedImplements,
   onComplete,
   onSessionMutate,
+  onAddCardio,
   onClose,
 }: Props) {
   const { t } = useT();
@@ -1209,6 +1214,12 @@ export default function WorkoutPlayer({
             </div>
           )}
           <div className="wp-cta-wrap">
+            {onAddCardio && (
+              <button className="wp-share-cta wp-share-cta--club" onClick={() => { onClose(); onAddCardio(); }}>
+                <Activity size={18} strokeWidth={2} />
+                {t('workout.addCardio')}
+              </button>
+            )}
             <button className="wp-share-cta" onClick={() => setShareStatOpen(true)}>
               <Camera size={18} strokeWidth={2} />
               {t('post.shareOutCta')}

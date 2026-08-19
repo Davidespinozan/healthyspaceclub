@@ -786,6 +786,28 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             </div>
           </article>
 
+          {/* SESIONES COMPLETADAS HOY · cada una independiente (fuerza + cardio del día se ven ambas).
+              Fuente: completedSessions (autoridad de terminadas). Muestra modalidad, duración real y
+              resumen. No pisa la card de "rutina de hoy" (pendiente). */}
+          {sessionsToday.map((s) => {
+            const min = Math.max(1, Math.round(s.durationSeconds / 60));
+            const modKey = s.modality === 'cardio' ? 'wizard.modCardio'
+              : s.modality === 'yoga' ? 'wizard.modYoga' : 'wizard.modStrength';
+            const summary = s.modality === 'cardio'
+              ? t('hoy.sessionDoneCardio', { min })
+              : t('hoy.sessionDoneStrength', { n: s.exercisesCompleted, min });
+            return (
+              <article key={s.sessionId ?? s.completedAtIso} className="th3-card th3-card-session-done">
+                <div className="th3-card-body">
+                  <p className="th3-card-eyebrow th3-card-eyebrow--done">
+                    <Check size={13} strokeWidth={2.4} style={{ verticalAlign: '-2px', flexShrink: 0 }} /> {t(modKey as Parameters<typeof t>[0])}
+                  </p>
+                  <h2 className="th3-card-title">{summary}</h2>
+                </div>
+              </article>
+            );
+          })}
+
           {/* CARD NUTRICIÓN */}
           <article
             className="th3-card th3-card-nutricion"

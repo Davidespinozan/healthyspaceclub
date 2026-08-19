@@ -90,6 +90,8 @@ interface Props {
   /** SOURCE OF TRUTH: el player mutó la sesión iniciada (swap de ejercicio o cambio de variante). El
    *  dueño persiste plan.exercises[index] = newEx → Hoy/resume/completion reflejan lo ejecutado. */
   onSessionMutate?: (index: number, newEx: CachedWorkout['exercises'][number]) => void;
+  /** Sesión híbrida: abrir el flujo de cardio como sesión nueva tras completar fuerza. */
+  onAddCardio?: () => void;
 }
 
 export default function WorkoutPlan({
@@ -109,6 +111,7 @@ export default function WorkoutPlan({
   todayDateShort,
   onSelectVariant,
   onSessionMutate,
+  onAddCardio,
 }: Props) {
   const { t, locale } = useT();
   const langMismatch = !!(plan as { lang?: string }).lang && (plan as { lang?: string }).lang !== locale;
@@ -490,6 +493,7 @@ export default function WorkoutPlan({
           userEquipment={[selectedEquipment]}
           allowedImplements={allowedImplements}
           onSessionMutate={onSessionMutate}
+          onAddCardio={!planIsCardio ? onAddCardio : undefined}
           onClose={() => setWorkoutPlayerOpen(false)}
           onComplete={(data) => {
             // Mapear modality: si 'auto', derivar del todayDecision.type

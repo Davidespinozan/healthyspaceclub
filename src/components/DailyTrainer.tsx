@@ -64,7 +64,7 @@ import {
   SCHEMA_VERSIONS,
   type CachedWorkout,
 } from '../utils/workoutCache';
-import { applySessionMutation } from '../utils/workoutSession';
+import { applySessionMutation, hasUnfinishedSession } from '../utils/workoutSession';
 import {
   validateWorkoutPlanStrict,
 } from '../utils/workoutValidation';
@@ -351,6 +351,16 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     saveDailyWorkout(next as unknown as Record<string, unknown>).catch(() => {});
   }
 
+  // SESIÓN HÍBRIDA (secuencial) · tras COMPLETAR fuerza, "Añadir cardio" abre el flujo normal de cardio
+  // como una sesión NUEVA (el usuario elige estilo/duración/equipo; al completar se genera un sessionId
+  // distinto). La fuerza YA está persistida como CompletedSession → no se pierde aunque dailyWorkout
+  // pase a cardio. No hardcodea duración: el wizard la pide.
+  function handleAddCardio() {
+    setSelectedModality('cardio');
+    setPlan(null);
+    setPhase('modality');
+  }
+
   // Al entregar la rutina al compañero: si él ya tenía SU rutina de hoy, el server
   // NO se la pisa (guard anti-clobber) y avisamos al host en vez de fallar mudo.
   function surfaceDeliver(r: DeliverResult) {
@@ -373,6 +383,15 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
 
   // ── Generate
   async function handleGenerate() {
+    // GUARDA · UNA sesión a la vez (flujo híbrido secuencial): si hay una sesión de HOY con progreso
+    // real sin terminar, no la pisamos en silencio. El usuario la termina, o confirma abandonarla.
+    // Key igual que WorkoutPlayer.PROGRESS_KEY ('workout-player-progress'); NO se toca su schema.
+    try {
+      if (hasUnfinishedSession(localStorage.getItem('workout-player-progress'), today)) {
+        if (!window.confirm(t('workout.activeSessionGuard'))) return;
+        localStorage.removeItem('workout-player-progress'); // abandono EXPLÍCITO del usuario
+      }
+    } catch { /* localStorage denegado → no bloquear */ }
     // Build context
     const history = analyzeWorkoutHistory(workoutLog || [], exerciseBank, completedSessions);
     const bullets: string[] = [];
@@ -1729,6 +1748,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         todayDateShort={todayDateShort}
         onSelectVariant={handleSelectCardioVariant}
         onSessionMutate={handleSessionMutate}
+        onAddCardio={handleAddCardio}
       />
     );
   }
