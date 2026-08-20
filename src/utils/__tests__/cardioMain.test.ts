@@ -229,13 +229,17 @@ describe('CARDIO-MAIN · running usa solo estaciones de carrera (identidad estri
       }
     }
   });
-  it('misma FILOSOFÍA/estructura de running independiente del gear (solo cambia treadmill si hay gym)', () => {
-    const shape = (gear: Equipment[]) => buildCardioMain({ mainBudgetMinutes: mainBudget(90), style: 'correr', level: 'intermedio', pool: pollutedRunPool(gear) })
-      .blocks.map(b => `${b.kind}:${b.minutes}`).join('|');
-    // bodyweight, bands y (sin treadmill) producen la MISMA estructura de bloques
-    expect(shape(['cuerpo'])).toBe(shape(['ligas']));
-    // gym mantiene la misma estructura (mismos bloques); solo puede diferir la estación
-    expect(shape(['gym'])).toBe(shape(['cuerpo']));
+  it('running · FAIL-CLOSED por contenido (F2C-4): sin estación de carrera CONTINUA no se inventa easy-run', () => {
+    // gym trae treadmill/máquina (continuous) → easy-run real; bodyweight/ligas SIN support solo tienen
+    // running-drills (alto impacto, NO continuo) → el easy-run se OMITE (fail closed), nunca se rellena mal.
+    const run = (gear: Equipment[]) => buildCardioMain({ mainBudgetMinutes: mainBudget(90), style: 'correr', level: 'intermedio', pool: pollutedRunPool(gear) });
+    const gym = run(['gym']); const body = run(['cuerpo']);
+    // todos los bloques son estaciones de carrera reales (identidad estricta) en ambos casos
+    for (const p of [gym, body]) for (const b of p.blocks) expect(isRun(b.stationId)).toBe(true);
+    // gym tiene un steady largo (easy-run en máquina); bodyweight (sin continua) tiene menos steady sostenido
+    const steadyGym = gym.blocks.filter(b => b.kind === 'steady' && b.intensity !== 'alta').reduce((a, b) => a + b.minutes, 0);
+    const steadyBody = body.blocks.filter(b => b.kind === 'steady' && b.intensity !== 'alta').reduce((a, b) => a + b.minutes, 0);
+    expect(steadyGym).toBeGreaterThan(steadyBody);
   });
   it('running largo: el volumen extra es EASY/steady, no intervalos (§ volumen)', () => {
     const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'correr', level: 'avanzado', pool: pollutedRunPool(['gym']) });

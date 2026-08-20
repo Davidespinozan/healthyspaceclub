@@ -6,15 +6,22 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { Exercise } from '../types';
 import type { CardioMainPlan, CardioBlock } from './cardioMain';
-import { cardioStationRole } from './cardioMain';
+import { cardioStationCapabilities } from './cardioMain';
 
 export type CardioAuditFlag =
   | 'excessiveRounds'                 // un bloque intenso con demasiadas rondas
   | 'excessiveHighIntensityMinutes'   // demasiados minutos totales a alta intensidad
   | 'excessiveRecovery'               // recovery demasiado largo o sin siguiente estímulo intenso
-  | 'incompatibleStationRole'         // bloque continuo (steady/recovery/cooldown) sobre estación no sostenible
-  | 'unsupportedContinuousStation'    // alias explícito del caso "saltos usados como steady largo"
+  | 'incompatibleStationRole'         // bloque continuo sobre estación sin la capacidad requerida
+  | 'unsupportedContinuousStation'    // alias del caso "movimiento no-continuo usado como steady largo"
+  | 'unsupportedSteadyStation'        // steady sobre estación sin capacidad steady
+  | 'unsupportedRecoveryStation'      // recovery sobre estación sin capacidad recovery
+  | 'unsupportedCooldownStation'      // cooldown sobre estación sin capacidad cooldown
+  | 'nonCardioStationInCardio'        // bloque cuya estación no es muscleGroup='cardio'
+  | 'continuousDurationExceeded'      // bloque continuo > maxContinuousMinutes de la estación
+  | 'intervalDoseExceededForStation'  // rondas por encima de lo que la demanda de la estación admite
   | 'unsafeFallback'                  // steady/recovery sobre estación impact='high'/fallRisk
+  | 'inappropriatePhaseRole'          // cualquier bloque cuya estación no soporta ese rol de fase
   | 'repeatedStation'                 // misma estación en ≥3 bloques (repetición absurda entre roles)
   | 'redundantBlocks'                 // dos bloques adyacentes idénticos (kind+station) sin razón
   | 'poorIntensityDistribution'       // fracción intensa demasiado alta para una sesión aeróbica
@@ -78,15 +85,32 @@ export function auditCardioSession(
   // 6) exceso de budget
   if (total > plan.budgetMinutes) flags.add('exceedsBudget');
 
-  // 7) estación incompatible con bloque CONTINUO (steady/recovery/cooldown) — el bug central
+  // 7) capacidad de estación por FASE (F2C-4) — el bug central. Cada bloque exige que su estación
+  //    declare/derive la capacidad de ese rol; si no → flag (fail closed). Continuo = steady/recovery/cooldown.
   for (const b of blocks) {
-    if (!CONTINUOUS.includes(b.kind)) continue;
-    if (b.intensity === 'alta') continue; // un tempo 'alta' no es continuo sostenible; se juzga por intensidad
     const ex = stationsById.get(b.stationId);
     if (!ex) continue;
-    const sustainable = cardioStationRole(ex).sustainable;
-    if (!sustainable) { flags.add('incompatibleStationRole'); flags.add('unsupportedContinuousStation'); }
-    if (ex.impact === 'high' || ex.fallRisk) flags.add('unsafeFallback');
+    const caps = cardioStationCapabilities(ex);
+    // ninguna estación de cardio puede ser muscleGroup ≠ cardio (core/fuerza colada por relajación)
+    if (ex.muscleGroup !== 'cardio') flags.add('nonCardioStationInCardio');
+    if (CONTINUOUS.includes(b.kind) && b.intensity !== 'alta') { // 'alta' = tempo, se juzga por intensidad
+      const isRecovery = b.kind === 'recovery';
+      const roleOk = isRecovery ? caps.recovery : caps.steady; // cooldown = steady kind en el motor
+      if (!roleOk) {
+        flags.add('incompatibleStationRole'); flags.add('inappropriatePhaseRole');
+        flags.add('unsupportedContinuousStation');
+        flags.add(isRecovery ? 'unsupportedRecoveryStation' : 'unsupportedSteadyStation');
+        if (isRecovery) flags.add('unsupportedCooldownStation'); // conservador: recovery/cooldown comparten capacidad
+      }
+      if (caps.maxContinuousMinutes > 0 && b.minutes > caps.maxContinuousMinutes) flags.add('continuousDurationExceeded');
+      if (ex.impact === 'high' || ex.fallRisk) flags.add('unsafeFallback');
+    }
+    if (INTENSE_KINDS.includes(b.kind)) {
+      if (b.kind === 'power' && !caps.power) { flags.add('inappropriatePhaseRole'); }
+      else if (b.kind === 'intervals' && !caps.interval) { flags.add('inappropriatePhaseRole'); }
+      // dosis por demanda: una estación de ALTA demanda no debería superar ~8 rondas
+      if (caps.demand === 'high' && (b.rounds ?? 0) > 8) flags.add('intervalDoseExceededForStation');
+    }
   }
 
   // 8) recovery: largo o sin siguiente bloque intenso que justifique la recuperación
@@ -118,7 +142,9 @@ export function auditCardioSession(
 /** Subconjunto de flags CRÍTICOS (una sesión con cualquiera de estos está mal programada). */
 export const CRITICAL_CARDIO_FLAGS: CardioAuditFlag[] = [
   'excessiveRounds', 'excessiveHighIntensityMinutes', 'excessiveRecovery',
-  'incompatibleStationRole', 'unsupportedContinuousStation', 'unsafeFallback',
-  'repeatedStation', 'poorIntensityDistribution', 'suspiciousLongSession',
-  'suspiciousShortSession', 'intensityBudgetExceeded', 'exceedsBudget',
+  'incompatibleStationRole', 'unsupportedContinuousStation', 'unsupportedSteadyStation',
+  'unsupportedRecoveryStation', 'unsupportedCooldownStation', 'nonCardioStationInCardio',
+  'continuousDurationExceeded', 'intervalDoseExceededForStation', 'unsafeFallback',
+  'inappropriatePhaseRole', 'repeatedStation', 'poorIntensityDistribution',
+  'suspiciousLongSession', 'suspiciousShortSession', 'intensityBudgetExceeded', 'exceedsBudget',
 ];

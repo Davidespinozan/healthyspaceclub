@@ -141,3 +141,126 @@ describe('sessionIntensityLabel · derivada de la carga real', () => {
   it('fracción alta → alta', () => expect(sessionIntensityLabel(mk(20, 40))).toBe('alta'));      // 50%
   it('con bloque power → alta aunque poco tiempo', () => expect(sessionIntensityLabel(mk(2, 40, true))).toBe('alta'));
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// F2C-4 · SEMÁNTICA DE ESTACIÓN · regresión del smoke real + station-compatibility matrix.
+// ═══════════════════════════════════════════════════════════════════════════
+import { cardioStationCapabilities } from '../cardioMain';
+import { exercises } from '../../data/exercises';
+import { filterByModality } from '../workoutPlanner';
+
+describe('F2C-4 · regresión del SMOKE REAL (plancha/escaladores steady)', () => {
+  // Pool funcional CONTAMINADO como en prod: burpee(high) + escaladores(cardio, sin impact) + PLANCHA(core).
+  const smokePool = [
+    ex({ id: 'burpee', cardioStyle: 'funcional', impact: 'high', fallRisk: true }),
+    ex({ id: 'escaladores', cardioStyle: 'funcional' }),                 // impact undefined (como prod)
+    ex({ id: 'plancha', muscleGroup: 'core', type: 'activacion' }),      // core, NO cardio
+  ];
+  const supp = [ex({ id: 'marcha', cardioStyle: 'lowImpact', impact: 'low' }), ex({ id: 'paso', cardioStyle: 'lowImpact', impact: 'low' })];
+  const smokeById = new Map<string, Exercise>([...smokePool, ...supp].map(e => [e.id, e]));
+
+  it('OLD/BAD fixture (plancha 14 steady + escaladores 3 steady + burpee 10×40/20) → múltiples critical flags', () => {
+    const bad: CardioMainPlan = {
+      style: 'funcional', budgetMinutes: 30, totalMinutes: 27, intenseMinutes: 7, steadyMinutes: 17, earlyEnd: false,
+      blocks: [
+        badBlock('intervals', 10, 'burpee', 'alta', 10),
+        badBlock('steady', 14, 'plancha', 'baja'),
+        badBlock('steady', 3, 'escaladores', 'baja'),
+      ],
+    };
+    const flags = auditCardioSession(bad, smokeById).flags;
+    expect(flags).toContain('nonCardioStationInCardio');       // plancha no es cardio
+    expect(flags).toContain('unsupportedSteadyStation');       // plancha/escaladores no soportan steady
+    expect(flags).toContain('incompatibleStationRole');
+    expect(flags).toContain('intervalDoseExceededForStation'); // burpee 10 rondas (demanda alta)
+    expect(flags.filter(f => CRITICAL_CARDIO_FLAGS.includes(f)).length).toBeGreaterThanOrEqual(3);
+  });
+  it('NUEVO motor con el MISMO perfil (pool contaminado + support) → 0 critical flags, sin plancha/escaladores en continuous', () => {
+    const p = buildCardioMain({ mainBudgetMinutes: 30, style: 'funcional', level: 'intermedio', bodyGoal: 'Bajar grasa', pool: smokePool, supportPool: supp });
+    expect(critical2(p, smokeById)).toEqual([]);
+    for (const b of p.blocks) {
+      if (b.kind === 'steady' || b.kind === 'recovery') {
+        const c = cardioStationCapabilities(smokeById.get(b.stationId)!);
+        expect(c.steady || c.recovery).toBe(true);              // continuous SOLO en estación compatible
+      }
+    }
+    // plancha/escaladores NUNCA como steady/recovery
+    for (const b of p.blocks.filter(b => b.kind === 'steady' || b.kind === 'recovery')) expect(['plancha', 'escaladores']).not.toContain(b.stationId);
+  });
+  it('SIN support (bodyweight, sin estación continua) → fail closed: circuito + earlyEnd, NUNCA plancha', () => {
+    const p = buildCardioMain({ mainBudgetMinutes: 30, style: 'funcional', level: 'intermedio', bodyGoal: 'Bajar grasa', pool: smokePool, supportPool: [] });
+    expect(p.blocks.every(b => !(b.kind === 'steady' || b.kind === 'recovery') || b.intensity === 'alta')).toBe(true);
+    expect(critical2(p, smokeById)).toEqual([]);
+  });
+});
+const critical2 = (p: CardioMainPlan, m: Map<string, Exercise>) => auditCardioSession(p, m).flags.filter(f => CRITICAL_CARDIO_FLAGS.includes(f));
+
+describe('F2C-4 · station-compatibility matrix (banco REAL)', () => {
+  const cardioModal = filterByModality(exercises, 'cardio');
+  it('ningún ejercicio muscleGroup≠cardio adquiere steady/recovery/cooldown (fail closed)', () => {
+    for (const e of cardioModal.filter(e => e.muscleGroup !== 'cardio')) {
+      const c = cardioStationCapabilities(e);
+      expect(c.steady || c.recovery || c.cooldown).toBe(false);   // core/fuerza colados → NUNCA continuous
+    }
+  });
+  it('plancha/core/escaladores/burpee/kettlebell/battle-ropes NUNCA son continuous', () => {
+    for (const id of ['plancha-dinamica', 'dead-bug', 'mountain-climbers', 'burpee-sprawl', 'kettlebell-swings', 'battle-ropes', 'carries', 'saltos-basicos']) {
+      const e = exercises.find(x => x.id === id); if (!e) continue;
+      const c = cardioStationCapabilities(e);
+      expect(c.steady).toBe(false); expect(c.recovery).toBe(false); expect(c.cooldown).toBe(false);
+    }
+  });
+  it('marcha/paso-lateral SÍ son continuous con cap finito; máquinas continuous ilimitadas', () => {
+    for (const id of ['marcha-en-lugar', 'paso-lateral']) {
+      const e = exercises.find(x => x.id === id); if (!e) continue;
+      const c = cardioStationCapabilities(e);
+      expect(c.steady).toBe(true); expect(c.maxContinuousMinutes).toBeLessThanOrEqual(45);
+    }
+    const maq = exercises.find(x => x.id === 'cardio-maquina');
+    if (maq) expect(cardioStationCapabilities(maq).steady).toBe(true);   // bici/elíptica/cinta → continuous
+  });
+  it('estaciones de intervalo (funcional/explosividad) SÍ interval; demanda alta = impact high/fallRisk', () => {
+    const burpee = exercises.find(x => x.id === 'burpee-sprawl')!;
+    expect(cardioStationCapabilities(burpee).interval).toBe(true);
+    expect(cardioStationCapabilities(burpee).demand).toBe('high');
+  });
+});
+
+describe('F2C-4 · generation matrix por EQUIPMENT/support (0 critical flags; earlyEnd válido)', () => {
+  const styles: CardioStyle[] = ['funcional', 'correr', 'explosividad', 'lowImpact'];
+  const durs = [10, 20, 30, 60, 90, 120];
+  const gymSupport = [ex({ id: 'bici', cardioStyle: 'lowImpact', impact: 'low', equipment: ['gym'] }), ex({ id: 'cinta', cardioStyle: 'correr', impact: 'low', equipment: ['gym'] })];
+  const bodySupport = [ex({ id: 'marcha', cardioStyle: 'lowImpact', impact: 'low' }), ex({ id: 'paso', cardioStyle: 'lowImpact', impact: 'low' })];
+  const scenarios: Array<[string, Exercise[]]> = [
+    ['gym (máquinas, cap ∞)', gymSupport],
+    ['bodyweight (marcha/paso, cap 45)', bodySupport],
+    ['sin support (fail closed)', []],
+    ['single support', [bodySupport[0]]],
+  ];
+  const allById = new Map<string, Exercise>([...funcPool, ...runPool, ...exploPool, ...lowPool, ...gymSupport, ...bodySupport].map(e => [e.id, e]));
+  it('style × duration × support scenario → sin flags críticos', () => {
+    const offenders: string[] = [];
+    for (const [name, support] of scenarios) for (const style of styles) for (const L of ['principiante', 'avanzado']) for (const d of durs) {
+      const p = buildCardioMain({ mainBudgetMinutes: d, style, level: L, readiness: 'normal', bodyGoal: 'Bajar grasa', pool: poolFor(style), supportPool: support });
+      const f = auditCardioSession(p, allById).flags.filter(x => CRITICAL_CARDIO_FLAGS.includes(x));
+      if (f.length) offenders.push(`${name}/${style}/${L}/${d}: ${f.join(',')}`);
+    }
+    expect(offenders).toEqual([]);
+  });
+  it('marcha (cap 45) en sesión 120 → fragmenta o earlyEnd; NUNCA un bloque continuo > 45', () => {
+    const p = buildCardioMain({ mainBudgetMinutes: 120, style: 'lowImpact', level: 'avanzado', bodyGoal: 'Bajar grasa', pool: bodySupport, supportPool: bodySupport });
+    for (const b of p.blocks) if (b.kind === 'steady' || b.kind === 'recovery') expect(b.minutes).toBeLessThanOrEqual(45);
+  });
+});
+
+describe('F2C-4 · revalida F2C-3 (no romper)', () => {
+  it('intense no escala con duración; long crece por steady; 2º circuito solo avanzado; total ≤ budget', () => {
+    const i60 = build({ style: 'funcional', d: 60, L: 'avanzado' }).intenseMinutes;
+    const i120 = build({ style: 'funcional', d: 120, L: 'avanzado' }).intenseMinutes;
+    expect(i120).toBeLessThanOrEqual(i60 + 6);                       // intenso ~estable
+    const p120 = build({ style: 'funcional', d: 120, L: 'avanzado' });
+    expect(p120.steadyMinutes).toBeGreaterThan(p120.intenseMinutes); // crece por steady
+    expect(p120.totalMinutes).toBeLessThanOrEqual(120);
+    expect(build({ style: 'funcional', d: 30, L: 'intermedio' }).blocks.filter(b => b.kind === 'intervals').length).toBe(1); // no 2º circuito intermedio
+  });
+});
