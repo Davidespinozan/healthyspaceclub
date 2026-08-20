@@ -39,6 +39,7 @@ import type {
   LoggedSet,
 } from '../../types';
 import type { CachedWorkout } from '../../utils/workoutCache';
+import type { SessionEndReason } from '../../utils/sessionEndReason';
 import ExerciseDetailPopout from '../ExerciseDetailPopout';
 import ActivityLogSheet from '../ActivityLogSheet';
 import PartnerLiveHeader from '../PartnerLiveHeader';
@@ -56,6 +57,16 @@ const MUSCLE_LABEL_KEY: Record<string, TranslationKey> = {
   biceps: 'wizard.muscleBiceps', triceps: 'wizard.muscleTriceps', cuadriceps: 'wizard.muscleCuadriceps',
   isquios: 'wizard.muscleIsquios', gluteo: 'wizard.muscleGluteo', pantorrillas: 'wizard.musclePantorrillas',
   core: 'wizard.muscleCore', cardio: 'wizard.muscleCardio', 'cuerpo-completo': 'wizard.muscleCuerpoCompleto',
+};
+
+// F2B-1 · CASE F sustituido: el banner del fin de sesión sale del sessionEndReason REAL (señales
+// fisiológicas), no de la heurística `planned < 75%`. Copy honesto y corto (sin afirmaciones médicas).
+const END_REASON_KEY: Record<SessionEndReason, TranslationKey> = {
+  TIME_LIMITED: 'workout.endReason.timeLimited',
+  RECOVERY_LIMITED: 'workout.endReason.recoveryLimited',
+  DOSE_COMPLETE: 'workout.endReason.doseComplete',
+  AVAILABLE_TIME_UNUSED: 'workout.endReason.availableTimeUnused',
+  HYBRID_COMPLETE: 'workout.endReason.hybridComplete',
 };
 
 // Formato de coordinación (modo pareja) → label traducible.
@@ -95,6 +106,13 @@ interface Props {
   /** D1 · "Generarme más": calcular trabajo supplemental FRESCO tras completar fuerza (el padre decide
    *  0/1/2/3 por déficit real y arma el plan supplemental o el aviso covered/gap). */
   onGenerateMore?: () => void;
+  /** F2B-1 · construye la sesión cardio EJECUTABLE desde el spec sellado (minutes/style/ceiling). El
+   *  padre (DailyTrainer) tiene el motor + pool; devuelve un CachedWorkout de cardio o null si no hay
+   *  contenido. NO reemplaza el dailyWorkout de fuerza — se ejecuta como sesión SEPARADA. */
+  buildComposedCardio?: (spec: NonNullable<CachedWorkout['composedCardio']>) => CachedWorkout | null;
+  /** F2B-1 · el cardio compuesto se completó → el padre marca composedCardio.done=true y persiste el
+   *  MISMO plan de fuerza (no lo reemplaza). */
+  onComposedCardioDone?: () => void;
 }
 
 export default function WorkoutPlan({
@@ -116,10 +134,16 @@ export default function WorkoutPlan({
   onSessionMutate,
   onAddCardio,
   onGenerateMore,
+  buildComposedCardio,
+  onComposedCardioDone,
 }: Props) {
   const { t, locale } = useT();
   const langMismatch = !!(plan as { lang?: string }).lang && (plan as { lang?: string }).lang !== locale;
   const [workoutPlayerOpen, setWorkoutPlayerOpen] = useState(false);
+  // F2B-1 · sesión cardio compuesta EN CURSO (sesión SEPARADA; no reemplaza el plan de fuerza).
+  const [composedCardioActive, setComposedCardioActive] = useState<CachedWorkout | null>(null);
+  const composedCardioSpec = plan.composedCardio;
+  const composedCardioPending = !!composedCardioSpec && composedCardioSpec.done !== true;
   const [activityOpen, setActivityOpen] = useState(false);
   // Plan-1: "POR QUÉ HOY" colapsable. Default cerrado — el plan arranca
   // limpio, el usuario lo abre si quiere leer el rationale del coach.
@@ -187,7 +211,13 @@ export default function WorkoutPlan({
   const planIsCardio = isCardioPlan(plan);
   // Early-end honesto: si la sesión real es materialmente más corta que el tiempo pedido, se comunica
   // (política: selectedTime = tiempo DISPONIBLE, nunca una promesa de duración).
-  const earlyEnd = planEarlyEnd(plan, selectedTime);
+  const legacyEarly = planEarlyEnd(plan, selectedTime);
+  // F2B-1 · CASE F sustituido por el motivo REAL. Rutinas nuevas traen sessionEndReason (señales
+  // fisiológicas); las legacy caen al early-end por duración. Se muestra cuando aporta información:
+  // recuperación/híbrido/tiempo-limitado siempre, o cuando la sesión termina materialmente antes.
+  const endReason = (plan as { sessionEndReason?: SessionEndReason }).sessionEndReason;
+  const showReasonBanner = !!endReason &&
+    (endReason === 'RECOVERY_LIMITED' || endReason === 'HYBRID_COMPLETE' || endReason === 'TIME_LIMITED' || legacyEarly != null);
 
   return (
     <div className="wz-root">
@@ -254,14 +284,21 @@ export default function WorkoutPlan({
         </div>
       )}
 
-      {/* Early-end HONESTO: la sesión útil de hoy es más corta que el tiempo elegido. No se
-          esconde ni se vende como "120 min": se explica el porqué (dosis útil / volumen semanal). */}
-      {earlyEnd && (
-        <div className="dt2-early-end">
-          <Clock size={14} />
-          <span>{t(earlyEnd.reasonKey as Parameters<typeof t>[0], { n: earlyEnd.plannedMin })}</span>
-        </div>
-      )}
+      {/* Fin de sesión HONESTO: motivo REAL (sessionEndReason) en rutinas nuevas; early-end por
+          duración en legacy. No se esconde ni se vende como "120 min": se explica el porqué. */}
+      {endReason
+        ? (showReasonBanner && (
+            <div className="dt2-early-end">
+              <Clock size={14} />
+              <span>{t(END_REASON_KEY[endReason])}</span>
+            </div>
+          ))
+        : (legacyEarly && (
+            <div className="dt2-early-end">
+              <Clock size={14} />
+              <span>{t(legacyEarly.reasonKey as Parameters<typeof t>[0], { n: legacyEarly.plannedMin })}</span>
+            </div>
+          ))}
 
       {/* CTA para abrir player — ARRIBA, visible sin scroll. Solo si hay ejercicios. */}
       {plan.exercises.length > 0 && (
@@ -488,6 +525,35 @@ export default function WorkoutPlan({
         />
       )}
 
+      {/* 03 · CARDIO — solo si hay cardio COMPUESTO pendiente (sellado en el plan). Vía PERSISTENTE
+          (no efímera): "Continuar con cardio" ejecuta el spec sellado como sesión SEPARADA
+          (modality='cardio') sin reemplazar el dailyWorkout de fuerza. */}
+      {composedCardioPending && composedCardioSpec && buildComposedCardio && (
+        <div className="dt2-composed-cardio">
+          <div className="dt2-cc-head">
+            <span className="dt2-cc-num">03</span>
+            <span className="dt2-cc-title">{t('workout.composedCardio.title')}</span>
+          </div>
+          <p className="dt2-cc-meta">
+            <Clock size={12} strokeWidth={2} /> {t('workout.minApprox', { n: composedCardioSpec.minutes })}
+            {' · '}
+            {t(composedCardioSpec.intensityCeiling === 'zona2' ? 'workout.composedCardio.zona2' : 'workout.composedCardio.moderate')}
+          </p>
+          <button
+            type="button"
+            className="dt2-cc-cta"
+            onClick={() => {
+              const cardio = buildComposedCardio(composedCardioSpec);
+              if (!cardio || !cardio.exercises.length) return;
+              playerStartedAtRef.current = Date.now();
+              setComposedCardioActive(cardio);
+            }}
+          >
+            <Play size={14} strokeWidth={2} fill="currentColor" /> {t('workout.composedCardio.start')}
+          </button>
+        </div>
+      )}
+
       {/* WorkoutPlayer overlay full-screen — fuerza/cardio · lazy + Suspense */}
       {workoutPlayerOpen && plan.exercises.length > 0 && (
         <Suspense fallback={<PlayerLoadingFallback />}>
@@ -497,7 +563,9 @@ export default function WorkoutPlan({
           userEquipment={[selectedEquipment]}
           allowedImplements={allowedImplements}
           onSessionMutate={onSessionMutate}
-          onAddCardio={!planIsCardio ? onAddCardio : undefined}
+          // F2B-1 · si hay cardio COMPUESTO pendiente, ocultar el "Añadir cardio" manual genérico
+          // (item 11) → no se generan dos sesiones distintas. Con cardio hecho o sin composed, vuelve.
+          onAddCardio={!planIsCardio && !composedCardioPending ? onAddCardio : undefined}
           // D1 · "Generarme más" solo tras FUERZA (no cardio). El CTA del player cierra (onClose) y
           // delega al padre, que recalcula el déficit fresco (incluida esta sesión ya persistida).
           onGenerateMore={!planIsCardio ? onGenerateMore : undefined}
@@ -645,6 +713,55 @@ export default function WorkoutPlan({
             }).catch(() => {});
 
             setWorkoutPlayerOpen(false);
+          }}
+        />
+        </Suspense>
+      )}
+
+      {/* F2B-1 · player de la sesión CARDIO COMPUESTA — sesión SEPARADA (modality='cardio'). Reutiliza
+          WorkoutPlayer SIN modificarlo: solo se le pasa el workout de cardio construido del spec sellado.
+          El plan de fuerza NO se reemplaza; al terminar se marca composedCardio.done y persiste igual. */}
+      {composedCardioActive && composedCardioActive.exercises.length > 0 && (
+        <Suspense fallback={<PlayerLoadingFallback />}>
+        <WorkoutPlayer
+          workout={composedCardioActive}
+          exerciseBank={exerciseBank}
+          userEquipment={[selectedEquipment]}
+          allowedImplements={allowedImplements}
+          onClose={() => setComposedCardioActive(null)}
+          onComplete={(data) => {
+            const userId = useAppStore.getState().user?.id ?? null;
+            const cardioExs = composedCardioActive.exercises;
+            const performedByExercise = groupLoggedSetsByExercise(data.loggedSets, cardioExs);
+            const completedAtIso = new Date().toISOString();
+            const checkDay = (plan as { sessionDate?: string }).sessionDate ?? dayKey(new Date());
+            const executed = data.exercises ?? cardioExs;
+            const exercisesLog: ExerciseLogItem[] = executed.map((ex, i) => {
+              const setsForExercise = performedByExercise[i] || [];
+              const hasAnyData = setsForExercise.length > 0;
+              const allSkipped = hasAnyData && setsForExercise.every(s => s === null);
+              return {
+                exercise_id: ex.id, order: i,
+                planned: { sets: ex.sets, reps: ex.reps, rest: ex.rest },
+                ...(hasAnyData && { performed: { sets: setsForExercise, skipped: allSkipped, completed_at: completedAtIso } }),
+              };
+            });
+            // CompletedSession #2 (cardio) — ledger de fuerza/progresión/e1RM intactos (modality='cardio').
+            finishWorkoutSession({
+              userId, modality: 'cardio', exercises: exercisesLog,
+              exercisesCompleted: data.exercisesCompleted, exercisesTotal: cardioExs.length,
+              durationSeconds: data.durationSeconds,
+              targetDurationSeconds: (composedCardioSpec?.minutes ?? 0) * 60,
+              equipment: selectedEquipment, dayType: 'cardio',
+              generationMethod: 'ai_generated', loggedSets: data.loggedSets, isDeload: false,
+              sessionDate: checkDay,
+            }, addCompletedSession, markActiveDay, {
+              enqueue: useAppStore.getState().enqueuePendingWorkout,
+              dequeue: useAppStore.getState().dequeuePendingWorkout,
+            }).catch(() => {});
+            // Marca done=true en el MISMO plan de fuerza y persiste (no lo reemplaza) → no re-ofrecer.
+            onComposedCardioDone?.();
+            setComposedCardioActive(null);
           }}
         />
         </Suspense>

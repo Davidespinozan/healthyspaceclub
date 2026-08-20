@@ -1,4 +1,6 @@
 import { supabase } from '../lib/supabase';
+import type { CardioStyle } from '../types';
+import type { SessionEndReason } from './sessionEndReason';
 
 export const SCHEMA_VERSIONS = {
   yoga: 3, // v3: Power Vinyasa por FLOWS (video corrido + poses sostenidas), determinista
@@ -96,6 +98,23 @@ export interface CachedWorkout {
       cue?: string;
     }>;
   };
+  // ── SESSION COMPOSER (F2B-1) · decisiones per-usuario/día SELLADAS en el plan del día ──
+  // CRÍTICO: estos campos son per-usuario (dependen de completedSessions/readiness/deload) → NUNCA se
+  // escriben en la caché COMPARTIDA (workout_cache). DailyTrainer los adjunta SOLO al objeto de
+  // dailyWorkout, DESPUÉS de saveWorkoutToCache. La caché conserva el workout genérico (con finisher).
+  //
+  // Recomendación de cardio estructurado para HOY. Autoridad ÚNICA tras generar: no se recomputa en
+  // reload (minutes/style/intensityCeiling sellados). Se ejecuta como CompletedSession SEPARADA
+  // (modality='cardio') — no contamina fuerza. `done=true` tras completarse → no re-ofrecer.
+  composedCardio?: {
+    minutes: number;
+    style: CardioStyle;
+    intensityCeiling: 'zona2' | 'moderate';
+    done?: boolean;
+  };
+  // Motivo REAL por el que la fuerza terminó (sustituye la heurística CASE F `planned < 75%`). Lo
+  // consume WorkoutPlan para el banner honesto. Puede ser HYBRID_COMPLETE si se colocó cardio.
+  sessionEndReason?: SessionEndReason;
   // ── Metadatos de modo pareja ──
   partnerMode?: boolean;
   // Id del GENERADOR (persona A). Estampado al generar; viaja en el JSON entregado a B.

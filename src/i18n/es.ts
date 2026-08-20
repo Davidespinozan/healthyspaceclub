@@ -548,6 +548,21 @@ export const es = {
       cardio: 'Hoy tu dosis útil de cardio es de ~{n} min. No necesitas usar todo el tiempo: pasarte sería contraproducente.',
       resistance: 'Hoy tu sesión útil es de ~{n} min. Tus anclas ya cubren tu volumen de la semana — añadir más sería trabajo de relleno.',
     },
+    // F2B-1 · motivo REAL del fin de sesión (sustituye la heurística de duración). Copy honesto y corto.
+    endReason: {
+      timeLimited: 'La sesión se ajustó al tiempo disponible.',
+      recoveryLimited: 'Hoy priorizamos una sesión más contenida según tu recuperación.',
+      doseComplete: 'La dosis de fuerza prevista para hoy está completa.',
+      availableTimeUnused: 'No necesitas usar todo el tiempo disponible para completar una sesión útil.',
+      hybridComplete: 'La sesión incluye fuerza y cardio estructurado.',
+    },
+    // F2B-1 · bloque 03 · cardio estructurado opcional tras la fuerza (spec sellado).
+    composedCardio: {
+      title: '03 · Cardio estructurado',
+      zona2: 'Zona 2 (sostenible)',
+      moderate: 'Intensidad moderada',
+      start: 'Continuar con cardio',
+    },
     // Aviso PRE-generación cuando AUTO ve el volumen semanal prácticamente cubierto (allCovered).
     weekCovered: {
       title: 'Ya cubriste prácticamente tu volumen objetivo de esta semana. Hoy una sesión corta de mantenimiento puede ser suficiente.',

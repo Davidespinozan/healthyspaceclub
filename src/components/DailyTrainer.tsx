@@ -39,13 +39,14 @@ import {
   trainingGoalFromPlan,
 } from '../utils/workoutPlanner';
 import { computeVolumeTargets, targetsToMap } from '../utils/volumeLandmarks';
-import { allocateSessionVolume, prescribeSession, prescribeExercise, categorize } from '../utils/sessionPrescription';
+import { allocateSessionVolume, prescribeSession, prescribeExercise, categorize, type TimeFitDiagnostics } from '../utils/sessionPrescription';
+import { composeSession as runSessionComposer, sealComposedSession, ceilingSafeCardioLevel, type ComposeSessionResult } from '../utils/sessionComposer';
 import { allocateHeadroom } from '../utils/headroom';
 import { assignTechniques } from '../utils/techniques';
 import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities, resolveCardioStyle } from '../utils/cardioMain';
 import { composeSession } from '../utils/sessionBlocks';
 import { strengthWarmupMinutes, pickWarmupRaise, pickSpecificActivation, warmupRegion, firstApproachExercise } from '../utils/strengthWarmup';
-import { shouldShowWeekCoveredNotice, initialWorkoutPhase } from '../utils/workoutDisplay';
+import { shouldShowWeekCoveredNotice, initialWorkoutPhase, planPlannedMinutes } from '../utils/workoutDisplay';
 import { composeIntensity } from '../utils/mesocycle';
 import { deriveSessionMesocycle } from '../utils/sessionMesocycle';
 import { buildSupplementalPlan } from '../utils/supplementalWorkout';
@@ -375,6 +376,58 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     setSelectedModality('cardio');
     setPlan(null);
     setPhase('modality');
+  }
+
+  // F2B-1 · construye la sesión CARDIO EJECUTABLE desde el spec SELLADO (Opción 1). Reutiliza el motor
+  // (buildCardioMain) + pool; NO recomputa minutes/style/ceiling (sellados en composedCardio). Devuelve un
+  // CachedWorkout de cardio o null si no hay contenido reproducible. NO persiste ni reemplaza el
+  // dailyWorkout de fuerza — WorkoutPlan lo ejecuta como sesión SEPARADA (modality='cardio').
+  function buildComposedCardio(spec: NonNullable<CachedWorkout['composedCardio']>): CachedWorkout | null {
+    const cardioEq = cardioEquipmentFor(caps.hasFullGym ? ['gym'] : ['cuerpo']);
+    const style = resolveCardioStyle(spec.style, cardioCapabilities);
+    const pool = bank.filter(e => (e.type === 'cardio' || e.muscleGroup === 'cardio') && hasPlayableVariant(e, cardioEq, caps.allowedImplements));
+    const cardioPlan = buildCardioMain({
+      mainBudgetMinutes: spec.minutes,
+      style,
+      // FIX (b) · bajo zona2, acota el nivel EFECTIVO de construcción a 'intermedio' para que el motor NO
+      // inyecte el bloque 'media'/Z3 del avanzado. NO cambia el nivel real del miembro ni se persiste.
+      level: ceilingSafeCardioLevel(spec.intensityCeiling, levelFromObData(obData)),
+      readiness: 'normal',
+      bodyGoal: String(obData?.goal ?? ''),
+      // El ceiling SELLADO manda: zona2 → sostenible (bajo impacto); moderate → respeta lowImpact del usuario.
+      lowImpactMode: spec.intensityCeiling === 'zona2' ? true : Number(obData?.edad ?? 0) >= 60,
+      isDeload: false,
+      pool,
+    });
+    if (cardioPlan.totalMinutes === 0 || cardioPlan.blocks.length === 0) return null;
+    const cardioExs = cardioBlocksToExercises(cardioPlan);
+    if (!cardioExs.length) return null;
+    const nameOf = (id: string) => bank.find(e => e.id === id)?.name ?? '';
+    return {
+      type: 'cardio', intensity: 'media', exercises: cardioExs, warmup: '', cooldown: '', note: '',
+      sessionDate: today,
+      cardioMainBlock: {
+        style: cardioPlan.style, totalMinutes: cardioPlan.totalMinutes, intenseMinutes: cardioPlan.intenseMinutes,
+        earlyEnd: cardioPlan.earlyEnd, earlyEndReason: cardioPlan.earlyEndReason,
+        blocks: cardioPlan.blocks.map(b => ({
+          kind: b.kind, minutes: b.minutes, stationId: b.stationId, stationName: nameOf(b.stationId),
+          intensity: b.intensity, labelKey: b.labelKey, zone: b.zone, rpe: b.rpe,
+          workSec: b.workSec, restSec: b.restSec, rounds: b.rounds, cue: b.cue,
+        })),
+      },
+    } as unknown as CachedWorkout;
+  }
+
+  // F2B-1 · el cardio compuesto se completó → marca done=true en el MISMO plan de fuerza y persiste (no
+  // lo reemplaza). Sobrevive reload → el bloque 03 no se vuelve a ofrecer y el manual "Añadir cardio" vuelve.
+  function markComposedCardioDone() {
+    setPlan(prev => {
+      if (!prev?.composedCardio) return prev;
+      const next = { ...prev, composedCardio: { ...prev.composedCardio, done: true } };
+      sealPlan(next);
+      void saveDailyWorkout(next as unknown as Record<string, unknown>).catch(() => {});
+      return next;
+    });
   }
 
   // D1 · "GENERARME MÁS" (supplemental) · trabajo ADICIONAL tras completar fuerza, dosificado por el
@@ -1378,6 +1431,13 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // La IA ya eligió los ejercicios; ahora el motor fija series/reps/descanso desde
       // la cadena mesociclo→target semanal(P3)→déficit→dosis de hoy→esquema (con carga
       // de P2). La IA deja de decidir estos números. No aplica a cardio/yoga.
+      // ── SESSION COMPOSER (F2B-1) · señales que la decisión de composición leerá DESPUÉS ──────
+      // Se sellan en vars de este scope (visibles en el bloque de bloques y en el sello post-caché).
+      // timeFitTrimmed sale EXACTO de prescribeSession (F2B-0), no de heurísticas.
+      let timeFitTrimmed = false;
+      let headroomEndedEarly = false;
+      let strengthWeeklyRemaining = 0;
+      let composerResult: ComposeSessionResult | null = null;
       if (!isCardioDay) {
         const w = workout as CachedWorkout;
         const bankById = new Map(exerciseBank.map(e => [e.id, { id: e.id, name: e.name, type: e.type }]));
@@ -1388,6 +1448,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         const allocation = sessionAllocation;
         // BLOQUE 2 · La carga es UNA sola autoridad (prescribeLoad RIR-aware). Ya NO hay
         // calibración por RIR aparte (canal único: el RIR entra vía la e1RM del historial).
+        // F2B-1 · out-param ADITIVO de time-fit (F2B-0). NO cambia el output de prescripción (byte-idéntico);
+        // solo reporta si el time-fit recortó dosis. Es la ÚNICA fuente de timeFitTrimmed (no planned≈budget).
+        const timefitDiag: TimeFitDiagnostics = { timeFitTrimmed: false, trimmedSets: 0, removedExercises: 0 };
         const items = prescribeSession({
           exercises: exsWithMuscle, bankById, allocation, trainingGoal,
           phase: meso.phase, level: levelFromObData(obData), mainMinutes: sessionPlan.budget.main, lastPerf: lastExercisePerformance,
@@ -1397,7 +1460,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           ...(trainingGoal === 'hipertrofia' && compoundSetFloor > 0
             ? { compoundMinSets: compoundSetFloor, protectedIds: new Set(anchorIds) }
             : {}),
-        });
+        }, timefitDiag);
+        timeFitTrimmed = timefitDiag.timeFitTrimmed;
 
         // ── FASE 5E · ESCALADO VOLUMEN ↔ TIEMPO (headroom, solo HIPERTROFIA) ─────
         // Si tras prescribir sobra tiempo útil, se PROFUNDIZA (más series a mains/secondary — fatiga
@@ -1412,6 +1476,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
             const target = prioritizedTargets?.[m]?.target ?? 0;
             weeklyRemaining[m] = Math.max(0, target - (done7h[m] ?? 0));
           }
+          // F2B-1 · señal de FUERZA (nunca cardio): sets de fuerza restantes esta semana → sessionEndReason.
+          strengthWeeklyRemaining = Object.values(weeklyRemaining).reduce((a, b) => a + b, 0);
           const fullBank = new Map(exerciseBank.map(e => [e.id, e]));
           const readinessKey = readiness.state === 'low' ? 'low' : readiness.state === 'high' ? 'high' : 'normal';
           const fatBudgetVal = computeFatigueBudget({ trainingGoal, level: levelFromObData(obData), timeMinutes: selectedTime, readinessLow: readiness.state === 'low', phase: meso.phase });
@@ -1429,6 +1495,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
             },
           });
           hItems = hr.items;
+          // F2B-1 · señal INDEPENDIENTE (no es timeFitTrimmed): headroom cedió por falta de volumen útil.
+          headroomEndedEarly = hr.endedEarly;
           // Los ejercicios AÑADIDOS por headroom deben entrar al workout real (defaults del banco).
           const presentIds = new Set(w.exercises.map(e => e.id));
           for (const it of hItems) {
@@ -1641,6 +1709,31 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         }
       }
 
+      // ── SESSION COMPOSER (F2B-1) · DECISIÓN de composición (fuerza YA final e INTACTA) ─────────
+      // La fuerza no se toca: solo se LEEN sus minutos finales (warmup real + planPlannedMinutes) y el
+      // SOBRANTE. Se calcula ANTES de guardar en caché pero se SELLA DESPUÉS (Hallazgo A): la caché
+      // compartida nunca ve composedCardio/sessionEndReason. Solo días de resistencia (no cardio/yoga).
+      if (isResistanceDay) {
+        const w = workout as CachedWorkout;
+        composerResult = runSessionComposer({
+          availableMinutes: selectedTime,                       // CAP, no cuota
+          preparationMinutes: w.warmupBlock?.minutes ?? 0,      // warm-up FINAL (no budget.warmup)
+          strengthPlannedMinutes: planPlannedMinutes(w),        // fuerza FINAL (excluye warmup/finisher/cardio)
+          strengthWeeklyRemaining,                              // señal de FUERZA (≠ cardio)
+          timeFitTrimmed,                                       // EXACTO (F2B-0)
+          headroomEndedEarly,                                   // señal independiente
+          readinessLow: readiness.state === 'low',
+          deload: mesoDeload,
+          completedSessions,                                    // datos reales del miembro
+          nowMs: Date.now(),
+          bodyGoal: String(obData?.goal ?? ''),
+          trainingGoal,
+          lowImpactMode,
+          hasPain: discomfort === 'pain',
+          dayType: anchorDayType,                               // split final; el composer normaliza legs→lower
+        });
+      }
+
       // Solo un cache MISS guarda estructura (evita re-escribir) y consume presupuesto de regen:
       // un HIT reutiliza estructura ya cacheada y re-personaliza sin llamar a la IA → no cuenta.
       if (!isCacheHit) {
@@ -1669,6 +1762,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         (workout as CachedWorkout).partnerId = pendingPartner?.id ?? null;
         (workout as CachedWorkout).ownerId = useAppStore.getState().user?.id ?? null; // generador = A
       }
+
+      // F2B-1 · SELLO del Composer — SOLO sobre el objeto del día, DESPUÉS de saveWorkoutToCache (Hallazgo A):
+      // agrega composedCardio + sessionEndReason y suprime el finisher del día si el cardio ocupa su lugar.
+      // La caché compartida ya recibió (por spread síncrono) el workout genérico con finisher intacto.
+      if (composerResult) sealComposedSession(workout as CachedWorkout, composerResult);
 
       setPlan(workout);
       sealPlan(workout);
@@ -1879,6 +1977,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         onSessionMutate={handleSessionMutate}
         onAddCardio={handleAddCardio}
         onGenerateMore={handleGenerateMore}
+        buildComposedCardio={buildComposedCardio}
+        onComposedCardioDone={markComposedCardioDone}
       />
     );
   }

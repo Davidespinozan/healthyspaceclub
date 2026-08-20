@@ -548,6 +548,21 @@ export const en: Translations<typeof es> = {
       cardio: "Today's useful cardio dose is ~{n} min. You don't need to use the full time — overdoing it would be counterproductive.",
       resistance: "Today's useful session is ~{n} min. Your anchors already cover this week's volume — adding more would be filler work.",
     },
+    // F2B-1 · REAL end-of-session reason (replaces the duration heuristic). Honest, short copy.
+    endReason: {
+      timeLimited: 'The session was fitted to the time available.',
+      recoveryLimited: 'Today we kept the session more contained based on your recovery.',
+      doseComplete: "Today's planned strength dose is complete.",
+      availableTimeUnused: "You don't need to use all the available time to complete a useful session.",
+      hybridComplete: 'This session includes strength and structured cardio.',
+    },
+    // F2B-1 · block 03 · optional structured cardio after strength (sealed spec).
+    composedCardio: {
+      title: '03 · Structured cardio',
+      zona2: 'Zone 2 (sustainable)',
+      moderate: 'Moderate intensity',
+      start: 'Continue with cardio',
+    },
     weekCovered: {
       title: "You've essentially hit your target volume for this week. A short maintenance session may be enough today.",
       sub: 'You can keep the strength session or pick cardio / mobility if you prefer.',

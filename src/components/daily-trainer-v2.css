@@ -779,6 +779,55 @@
 }
 .dt2-early-end svg { flex-shrink: 0; margin-top: 1px; }
 
+/* F2B-1 · bloque 03 · cardio estructurado opcional tras la fuerza (spec sellado). */
+.dt2-composed-cardio {
+  margin: 4px 0 18px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(14, 37, 33, 0.04);
+  border: 1px solid rgba(14, 37, 33, 0.12);
+  font-family: 'Montserrat', sans-serif;
+}
+.dt2-cc-head { display: flex; align-items: center; gap: 9px; }
+.dt2-cc-num {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--dorado, #B8944A);
+  border: 1.5px solid rgba(184, 148, 74, 0.4);
+  border-radius: 7px;
+  padding: 2px 7px;
+}
+.dt2-cc-title { font-size: 0.92rem; font-weight: 700; color: var(--txt1, #0E2521); }
+.dt2-cc-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 12px;
+  font-size: 0.78rem;
+  color: var(--txt2);
+}
+.dt2-cc-meta svg { flex-shrink: 0; color: var(--dorado, #B8944A); }
+.dt2-cc-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(160deg, #EAC87C 0%, #C9A868 52%, #B58F51 100%);
+  color: var(--forest, #0E2521);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+.dt2-cc-cta svg { flex-shrink: 0; }
+
 .dt2-lang-mismatch {
   display: flex;
   align-items: center;
