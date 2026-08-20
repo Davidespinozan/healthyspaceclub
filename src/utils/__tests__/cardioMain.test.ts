@@ -53,20 +53,34 @@ describe('CARDIO-MAIN · invariantes globales (§24)', () => {
       expect(i120).toBeLessThanOrEqual(i60 + 6);
     }
   });
-  it('el trabajo STEADY sí crece con la duración (lowImpact/running/funcional)', () => {
+  it('F2C-7 · el trabajo continuo crece con la duración hasta el tope de programación/pool (30→60)', () => {
+    // Ya NO crece sin límite (minute-filler); crece con la duración hasta que el pool/progCap lo acotan.
     for (const s of ['lowImpact', 'funcional'] as CardioStyle[]) {
-      expect(plan(s, 120, 'intermedio').steadyMinutes).toBeGreaterThan(plan(s, 60, 'intermedio').steadyMinutes);
+      expect(plan(s, 60, 'intermedio').steadyMinutes).toBeGreaterThan(plan(s, 30, 'intermedio').steadyMinutes);
+    }
+  });
+  it('F2C-7 · ningún bloque continuo domina absurdamente (≤ safety y ≤ ~progCap+slack)', () => {
+    for (const s of STYLES) for (const t of TIMES) for (const l of LEVELS) {
+      const p = plan(s, t, l);
+      for (const b of p.blocks) {
+        if (b.kind === 'steady' || b.kind === 'recovery' || b.kind === 'cooldown') {
+          expect(b.minutes).toBeLessThanOrEqual(40);   // progCap lowImpact 30 + slack; nunca 66-108 min
+        }
+      }
     }
   });
 });
 
 // ── §4/§20 · LOW IMPACT llena la ventana con steady ─────────────────────
 describe('CARDIO-MAIN · lowImpact (§4/§20)', () => {
-  it('lowImpact 120 usa casi toda la ventana, TODO sostenible (0 intenso)', () => {
+  it('F2C-7 · lowImpact 120 es PROGRAMADO (todo sostenible, fragmentado, con cooldown; no 1 bloque gigante)', () => {
     const p = plan('lowImpact', 120, 'intermedio');
-    expect(p.intenseMinutes).toBe(0);
-    expect(p.totalMinutes).toBeGreaterThanOrEqual(p.budgetMinutes * 0.9);
-    expect(p.earlyEnd).toBe(false);
+    expect(p.intenseMinutes).toBe(0);                                  // sin intenso (lowImpact)
+    expect(p.steadyMinutes).toBeGreaterThan(0);
+    expect(p.blocks.length).toBeGreaterThanOrEqual(2);                 // estructurado, no 1 bloque de 108
+    for (const b of p.blocks) expect(b.minutes).toBeLessThanOrEqual(40);
+    // el volumen lo decide el template/pool, NO el residual → puede terminar antes con razón honesta
+    if (p.earlyEnd) expect(p.endReason).not.toBe('AVAILABLE_TIME_FILLED');
   });
   it('lowImpactMode fuerza estaciones sin alto impacto', () => {
     const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'lowImpact', level: 'intermedio', lowImpactMode: true, pool: pool('lowImpact', ['gym'], true) });
@@ -94,7 +108,8 @@ describe('CARDIO-MAIN · running (§5/§21)', () => {
   it('running 120: el steady (easy) domina sobre el intenso', () => {
     for (const l of ['intermedio', 'avanzado']) {
       const p = plan('correr', 120, l);
-      expect(p.steadyMinutes).toBeGreaterThan(p.intenseMinutes * 2);
+      // el rodaje aeróbico sigue dominando sobre el intenso (acotado por su phase budget)
+      expect(p.steadyMinutes).toBeGreaterThan(p.intenseMinutes);
     }
   });
   it('principiante running acotado (no 120 min de carrera)', () => {
@@ -154,11 +169,14 @@ describe('CARDIO-MAIN · gear (§13)', () => {
     expect(p.earlyEnd).toBe(true);
     expect(p.earlyEndReason).toMatch(/content gap/);
   });
-  it('GYM lowImpact 120: sí sostiene la ventana con máquinas (bici/elíptica), 0 intenso, 0 alto impacto', () => {
+  it('GYM lowImpact 120: máquinas sostienen trabajo continuo PROGRAMADO, 0 intenso, 0 alto impacto', () => {
     const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'lowImpact', level: 'intermedio', pool: pool('lowImpact', ['gym']) });
-    expect(p.totalMinutes).toBeGreaterThan(90);
     expect(p.intenseMinutes).toBe(0);
-    for (const b of p.blocks) { const ex = exercises.find(e => e.id === b.stationId); expect(ex?.impact === 'high').toBeFalsy(); }
+    expect(p.steadyMinutes).toBeGreaterThan(20);               // trabajo continuo material
+    for (const b of p.blocks) {
+      const ex = exercises.find(e => e.id === b.stationId); expect(ex?.impact === 'high').toBeFalsy();
+      expect(b.minutes).toBeLessThanOrEqual(40);               // programado, no un bloque de 108
+    }
   });
 });
 
@@ -180,9 +198,9 @@ describe('CARDIO-MAIN · playableMinutes ≈ plannedMinutes (regresión bug 120�
     const exs = cardioBlocksToExercises(p);
     // cada bloque es un ejercicio ejecutable (gatea la finalización)
     expect(exs.length).toBe(p.blocks.length);
-    // playable ≈ planned (el bug daba ~37 con la lista de la IA)
+    // playable == planned (el bug daba ~37 con la lista de la IA); el volumen es programado, no residual
     expect(cardioPlayableMinutes(p)).toBe(p.totalMinutes);
-    expect(cardioPlayableMinutes(p)).toBeGreaterThan(90);   // ≫ 37
+    expect(cardioPlayableMinutes(p)).toBeGreaterThan(20);   // ejecutable material (≫ 0), acotado por template
   });
 
   it('todas las modalidades: playable == planned (contenido ejecutable = plan)', () => {
@@ -243,7 +261,7 @@ describe('CARDIO-MAIN · running usa solo estaciones de carrera (identidad estri
   });
   it('running largo: el volumen extra es EASY/steady, no intervalos (§ volumen)', () => {
     const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'correr', level: 'avanzado', pool: pollutedRunPool(['gym']) });
-    expect(p.steadyMinutes).toBeGreaterThan(p.intenseMinutes * 2);   // easy domina
+    expect(p.steadyMinutes).toBeGreaterThan(p.intenseMinutes);   // el rodaje easy domina sobre el intenso
   });
 });
 
@@ -276,7 +294,7 @@ describe('CARDIO-MAIN · identidad estricta por modalidad', () => {
   it('estructuralmente diferentes: lowImpact = solo steady; funcional = tiene circuitos (intervals)', () => {
     const li = buildCardioMain({ mainBudgetMinutes: mainBudget(60), style: 'lowImpact', level: 'intermedio', pool: pool('lowImpact', ['gym']) });
     const fn = buildCardioMain({ mainBudgetMinutes: mainBudget(60), style: 'funcional', level: 'intermedio', pool: pool('funcional', ['gym']) });
-    expect(li.blocks.every(b => b.kind === 'steady' || b.kind === 'recovery')).toBe(true);
+    expect(li.blocks.every(b => b.kind === 'steady' || b.kind === 'recovery' || b.kind === 'cooldown')).toBe(true);
     expect(li.blocks.some(b => b.kind === 'intervals')).toBe(false);
     expect(fn.blocks.some(b => b.kind === 'intervals')).toBe(true);   // circuitos distinguen funcional
   });
@@ -291,9 +309,10 @@ describe('CARDIO-MAIN · identidad estricta por modalidad', () => {
 
 // ── TIEMPO: no regresar el bug 120→corto (§11) ──────────────────────────
 describe('CARDIO-MAIN · tiempo preservado por modalidad con contenido (§11)', () => {
-  it('lowImpact 120 gym: playable ≈ planned y cerca de la ventana', () => {
+  it('F2C-7 · lowImpact 120 gym: playable == planned; volumen PROGRAMADO (no residual de la ventana)', () => {
     const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'lowImpact', level: 'intermedio', pool: pool('lowImpact', ['gym']) });
-    expect(p.totalMinutes).toBeGreaterThan(mainBudget(120) * 0.9);
+    expect(cardioPlayableMinutes(p)).toBe(p.totalMinutes);       // ejecutable = plan
+    expect(p.totalMinutes).toBeGreaterThan(20);                  // trabajo material, acotado por template/pool
   });
   it('funcional 120 gym: circuito acotado + aeróbico sostenible (F2C-3), intenso NO domina', () => {
     const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'funcional', level: 'intermedio', pool: pool('funcional', ['gym']) });

@@ -436,10 +436,27 @@ export default function WorkoutPlan({
                 )}
                 {/* CARDIO: título = ACTIVIDAD real del bloque (correr/circuito/…), nunca el stationId. */}
                 <div className="dt2-ex-name">{cm ? t(cardioBlockTitleKey(cm) as Parameters<typeof t>[0]) : (bank?.name || humanizeExerciseId(ex.id))}</div>
-                {/* Identidad secundaria: la máquina/estación concreta que hará el usuario. */}
-                {cm && activeVariant && (
-                  <div className="dt2-ex-variant">{activeVariant.name}</div>
-                )}
+                {/* Identidad secundaria ACCIONABLE (F2C-7):
+                    · continuo (steady/recovery/cooldown) → la ACTIVIDAD (nombre de la estación,
+                      ej. "Marcha en el lugar"). La variante describe posición/equipo ("De pie") → NO es
+                      accionable como identidad principal de un bloque temporizado.
+                    · intervals/power/drills → la variante ES el movimiento concreto que ejecuta → se conserva. */}
+                {cm && (() => {
+                  const isContinuous = cm.kind === 'steady' || cm.kind === 'recovery' || cm.kind === 'cooldown';
+                  // Autoridad metadata-driven (NO parche de string): una estación "container" de varias
+                  // MÁQUINAS/actividades distintas (variantes con cardioStyle propios: bici/elíptica/caminadora/remo)
+                  // → la VARIANTE es la actividad accionable ("Bicicleta"). Una estación de UNA sola actividad
+                  // cuyas variantes son solo POSICIÓN (marcha "De pie"/"Sentado") → el nombre de la ESTACIÓN
+                  // es la actividad ("Marcha en el lugar"); la variante-posición no es accionable como identidad.
+                  // machine-bank = alguna variante con cardioStyle PROPIO distinto al del ejercicio
+                  // (cardio-maquina agrupa bici/elíptica[lowImpact]/caminadora[correr] ≠ su 'funcional').
+                  const isMachineBank = (bank?.variants ?? []).some(v => {
+                    const vs = (v as { cardioStyle?: string }).cardioStyle;
+                    return !!vs && vs !== bank?.cardioStyle;
+                  });
+                  const secondary = (isContinuous && !isMachineBank) ? (bank?.name ?? '') : (activeVariant?.name ?? '');
+                  return secondary ? <div className="dt2-ex-variant">{secondary}</div> : null;
+                })()}
                 <div className="dt2-ex-stats">
                   {cm ? (
                     <span className="dt2-ex-presc">

@@ -127,9 +127,12 @@ describe('buildCardioMain · sin regresión', () => {
     });
     expect(plan.style).toBe('lowImpact');
     expect(plan.intenseMinutes).toBe(0);              // lowImpact = todo sostenible
-    expect(plan.blocks.length).toBe(2);               // 2 bloques (>40min → mitad+mitad)
-    expect(plan.blocks.every(b => b.kind === 'steady' || b.kind === 'recovery')).toBe(true);
-    expect(plan.earlyEnd).toBe(false);                // lowImpact llena la ventana
+    // F2C-7 · PROGRAMADO: ondulación Z2/Z3 fragmentada + cooldown explícito (no "mitad+mitad" residual).
+    expect(plan.blocks.length).toBeGreaterThanOrEqual(3);
+    expect(plan.blocks.every(b => b.kind === 'steady' || b.kind === 'recovery' || b.kind === 'cooldown')).toBe(true);
+    expect(plan.blocks.some(b => b.kind === 'cooldown')).toBe(true);         // fase cooldown real
+    expect(plan.blocks.some(b => b.intensity === 'media')).toBe(true);       // ondulación Z3 (avanzado)
+    for (const b of plan.blocks) expect(b.minutes).toBeLessThanOrEqual(40);  // ningún bloque gigante
   });
 });
 

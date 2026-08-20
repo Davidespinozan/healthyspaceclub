@@ -18,7 +18,6 @@ const burpee = station({ id: 'burpee', cardioStyle: 'funcional', impact: 'high',
 // Estación CONTINUA reproducible tipo máquina (bici/elíptica): steady/recovery/cooldown.
 const bici = station({ id: 'bici', cardioStyle: 'lowImpact', impact: 'low', fallRisk: false, equipment: ['gym'] });
 // Estación lowImpact continua (marcha-like con equipo, para no depender de video en el test unitario).
-const walk = station({ id: 'walk', cardioStyle: 'lowImpact', impact: 'low', fallRisk: false, equipment: ['gym'] });
 // Estación explosiva (power).
 const jump = station({ id: 'jump', cardioStyle: 'explosividad', impact: 'high', fallRisk: true });
 
@@ -87,23 +86,26 @@ describe('E · explosividad tope de estilo', () => {
 
 // ── F · tope aeróbico real → AEROBIC_CAP_REACHED ─────────────────────────────
 describe('F · tope aeróbico del nivel', () => {
-  it('lowImpact intermedio con budget > 120 y estación continua → AEROBIC_CAP_REACHED', () => {
+  it('lowImpact intermedio con budget > 120 y varias estaciones → AEROBIC_CAP_REACHED', () => {
+    // 3 estaciones continuas para poder LLENAR la ventana (120) con rotación por progCap y así toparla.
+    const w = (id: string) => station({ id, cardioStyle: 'lowImpact', impact: 'low', equipment: ['gym'], variants: [{ id, equipment: ['gym'] }] as never });
+    const support = [w('bici'), w('eliptica'), w('caminadora'), w('remo2')];
     const plan = buildCardioMain({
       mainBudgetMinutes: 140, style: 'lowImpact', level: 'intermedio', readiness: 'normal',
-      pool: [walk], supportPool: [walk],
+      pool: support, supportPool: support,
     });
     expect(plan.earlyEnd).toBe(true);
     expect(plan.endReason).toBe('AEROBIC_CAP_REACHED');
-    expect(plan.totalMinutes).toBeLessThanOrEqual(120); // llenó la ventana, no el budget
+    expect(plan.totalMinutes).toBeLessThanOrEqual(120); // llenó la ventana (120), no el budget (140)
   });
 });
 
 // ── G · sesión que llena el tiempo → AVAILABLE_TIME_FILLED ───────────────────
 describe('G · sesión que ocupa el tiempo disponible', () => {
-  it('funcional 30 con estación continua → AVAILABLE_TIME_FILLED (sin early-end)', () => {
+  it('lowImpact 27 con estación continua → AVAILABLE_TIME_FILLED (sin early-end)', () => {
     const plan = buildCardioMain({
-      mainBudgetMinutes: 27, style: 'funcional', level: 'intermedio', readiness: 'normal',
-      pool: [burpee], supportPool: [bici],
+      mainBudgetMinutes: 27, style: 'lowImpact', level: 'intermedio', readiness: 'normal',
+      pool: [bici], supportPool: [bici],
     });
     expect(plan.earlyEnd).toBe(false);
     expect(plan.endReason).toBe('AVAILABLE_TIME_FILLED');

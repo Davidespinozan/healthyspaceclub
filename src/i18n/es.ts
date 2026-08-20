@@ -591,7 +591,7 @@ export const es = {
       circuit: 'Circuito funcional', power: 'Series de potencia', plyoPrep: 'Preparación explosiva',
       intervals: 'Intervalos', tempo: 'Bloque tempo', drills: 'Movilidad y técnica',
       steady: 'Ritmo sostenido', lowImpactSteady: 'Cardio sostenible', funcionalSteady: 'Trabajo sostenible',
-      recovery: 'Recuperación activa',
+      recovery: 'Recuperación activa', cooldown: 'Vuelta a la calma',
       roundsSub: '{rounds} rondas · {work}s fuerte / {rest}s recuperación',
       minSub: '{min} min',
     },

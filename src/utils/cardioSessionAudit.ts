@@ -43,7 +43,7 @@ export interface CardioAuditMetrics {
 }
 export interface CardioSessionAudit { flags: CardioAuditFlag[]; metrics: CardioAuditMetrics; }
 
-const CONTINUOUS: CardioBlock['kind'][] = ['steady', 'recovery'];
+const CONTINUOUS: CardioBlock['kind'][] = ['steady', 'recovery', 'cooldown'];  // F2C-7 · cooldown = fase continua
 const INTENSE_KINDS: CardioBlock['kind'][] = ['intervals', 'power'];
 const intenseMinOf = (b: CardioBlock) => (INTENSE_KINDS.includes(b.kind) ? Math.round(((b.rounds ?? 0) * (b.workSec ?? 0)) / 60) : b.intensity === 'alta' ? b.minutes : 0);
 
@@ -121,8 +121,13 @@ export function auditCardioSession(
     if (!hasNextIntense && b.minutes > 6) flags.add('excessiveRecovery'); // recovery largo sin estímulo posterior
   });
 
-  // 9) repetición absurda: misma estación en ≥3 bloques (un steady largo es UN bloque → no penaliza)
-  for (const [, count] of stationCount) if (count >= 3) flags.add('repeatedStation');
+  // 9) repetición absurda: misma estación en ≥3 bloques NO-cooldown (un steady largo es UN bloque → no
+  //    penaliza). El COOLDOWN es una fase de cierre distinta (F2C-7): reutilizar la estación para bajar
+  //    pulsaciones no es repetición absurda, así que no cuenta aquí (sí sigue atrapando abuso real, p.ej.
+  //    la misma estación intensa en 3 bloques principales).
+  const nonCooldownCount = new Map<string, number>();
+  for (const b of blocks) if (b.stationId && b.kind !== 'cooldown') nonCooldownCount.set(b.stationId, (nonCooldownCount.get(b.stationId) ?? 0) + 1);
+  for (const [, count] of nonCooldownCount) if (count >= 3) flags.add('repeatedStation');
   // 10) bloques adyacentes idénticos (kind+station)
   for (let i = 1; i < blocks.length; i++) {
     if (blocks[i].kind === blocks[i - 1].kind && blocks[i].stationId === blocks[i - 1].stationId) flags.add('redundantBlocks');
@@ -148,3 +153,64 @@ export const CRITICAL_CARDIO_FLAGS: CardioAuditFlag[] = [
   'inappropriatePhaseRole', 'repeatedStation', 'poorIntensityDistribution',
   'suspiciousLongSession', 'suspiciousShortSession', 'intensityBudgetExceeded', 'exceedsBudget',
 ];
+
+// ── F2C-7 · QUALITY WARNINGS (PROGRAMACIÓN, no seguridad) ───────────────────────────────────────
+// Detectan una sesión VÁLIDA pero MAL PROGRAMADA (minute-filler): steady residual dominante, un bloque
+// continuo eterno, bloques redundantes, falta de cooldown, label engañosa, distribución de fases pobre.
+// NO son CRITICAL: una sesión con estos flags sigue siendo segura/ejecutable; señalan calidad premium.
+// Detección por PROPIEDADES (no IDs) y STYLE-AWARE (lowImpact con mucho continuo NO es un defecto).
+export type CardioQualityFlag =
+  | 'residualSteadyDominatesSession'   // sesión de acondicionamiento >75% steady (no lowImpact)
+  | 'excessiveSingleStationDuration'   // un bloque continuo demasiado largo en una estación (tedio)
+  | 'redundantContinuousBlocks'        // ≥2 bloques continuos adyacentes de la MISMA estación
+  | 'poorPhaseDistribution'            // hay intervalos/potencia pero sin fase primaria material o sin cooldown
+  | 'intensityLabelMismatch'           // label 'baja' con intervalos/potencia presentes
+  | 'missingCooldownSemantics';        // sesión con trabajo intenso y sin fase de cooldown explícita
+
+export interface CardioQualityAudit { flags: CardioQualityFlag[]; }
+
+// STYLE-AWARE (§15): lowImpact tolera tramos continuos más largos (el continuo ES el estímulo).
+const SINGLE_STATION_MAX = (style: CardioMainPlan['style']) => (style === 'lowImpact' ? 40 : 30);
+const STEADY_DOMINANCE = 0.75;   // en sesión de acondicionamiento, >75% continuo = mal balanceada
+
+/**
+ * Auditoría de CALIDAD de PROGRAMACIÓN (F2C-7). Separada de auditCardioSession (safety). `label` = la
+ * etiqueta de intensidad ya calculada (sessionIntensityLabel). Devuelve solo warnings; nunca bloquea.
+ */
+export function auditCardioQuality(
+  plan: CardioMainPlan,
+  label: 'baja' | 'media' | 'alta',
+): CardioQualityAudit {
+  const flags = new Set<CardioQualityFlag>();
+  const blocks = plan.blocks;
+  const isLowImpact = plan.style === 'lowImpact';
+  const hasIntense = blocks.some(b => b.kind === 'intervals' || b.kind === 'power');
+  const hasCooldown = blocks.some(b => b.kind === 'cooldown');
+  const continuousMin = blocks.filter(b => b.kind === 'steady' || b.kind === 'recovery' || b.kind === 'cooldown').reduce((a, b) => a + b.minutes, 0);
+
+  // 1) steady residual domina una sesión de ACONDICIONAMIENTO con capacidad intensa material (>3' intenso).
+  //    No aplica a lowImpact (el continuo ES el estímulo) ni a sesiones donde el intenso es mínimo por nivel.
+  if (!isLowImpact && hasIntense && plan.intenseMinutes >= 5 && plan.totalMinutes > 0 && continuousMin / plan.totalMinutes > STEADY_DOMINANCE) {
+    flags.add('residualSteadyDominatesSession');
+  }
+  // 2) bloque continuo excesivamente largo en una estación (style-aware; safety es aparte).
+  for (const b of blocks) {
+    if ((b.kind === 'steady' || b.kind === 'recovery' || b.kind === 'cooldown') && b.minutes > SINGLE_STATION_MAX(plan.style)) {
+      flags.add('excessiveSingleStationDuration');
+    }
+  }
+  // 3) bloques continuos adyacentes de la MISMA estación (fragmentación sin rotación = redundante).
+  for (let i = 1; i < blocks.length; i++) {
+    const a = blocks[i - 1], c = blocks[i];
+    const bothContinuous = (a.kind === 'steady' || a.kind === 'recovery' || a.kind === 'cooldown') &&
+                           (c.kind === 'steady' || c.kind === 'recovery' || c.kind === 'cooldown');
+    if (bothContinuous && a.stationId === c.stationId) flags.add('redundantContinuousBlocks');
+  }
+  // 4) distribución de fases: trabajo intenso presente pero sin cooldown, o sin nada continuo de soporte.
+  if (hasIntense && plan.totalMinutes >= 20 && !hasCooldown) flags.add('missingCooldownSemantics');
+  if (hasIntense && plan.intenseMinutes < 3) flags.add('poorPhaseDistribution');
+  // 5) label engañosa (con la fórmula F2C-7 no debería ocurrir; guard de regresión).
+  if (label === 'baja' && hasIntense) flags.add('intensityLabelMismatch');
+
+  return { flags: [...flags] };
+}

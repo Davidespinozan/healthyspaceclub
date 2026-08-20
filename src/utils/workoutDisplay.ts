@@ -182,6 +182,7 @@ export function cardioBlockTitleKey(m: CardioExerciseMeta): string {
   if (k === 'drills') return s === 'correr' ? 'workout.cardioBlock.runDrills' : s === 'explosividad' ? 'workout.cardioBlock.plyoPrep' : 'workout.cardioBlock.drills';
   if (k === 'intervals') return s === 'correr' ? 'workout.cardioBlock.runIntervals' : s === 'funcional' ? 'workout.cardioBlock.circuit' : 'workout.cardioBlock.intervals';
   if (k === 'power') return 'workout.cardioBlock.power';
+  if (k === 'cooldown') return 'workout.cardioBlock.cooldown';   // F2C-7 · fase de vuelta a la calma explícita
   if (k === 'recovery') return s === 'correr' ? 'workout.cardioBlock.runRecovery' : 'workout.cardioBlock.recovery';
   // steady
   if (m.labelKey === 'cardio.tempo') return s === 'correr' ? 'workout.cardioBlock.runTempo' : 'workout.cardioBlock.tempo';

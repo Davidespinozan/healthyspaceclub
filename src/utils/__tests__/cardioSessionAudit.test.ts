@@ -135,10 +135,14 @@ describe('composed (zona2) sigue siendo lowImpact/sostenible (hard ceiling intac
 
 import { sessionIntensityLabel } from '../cardioMain';
 describe('sessionIntensityLabel · derivada de la carga real', () => {
-  const mk = (intenseMinutes: number, totalMinutes: number, power = false) => ({ intenseMinutes, totalMinutes, blocks: (power ? [{ kind: 'power' } as CardioBlock] : []) });
+  // F2C-7 · el label es ESTRUCTURAL (kinds), no una fracción diluida: un bloque intervals/power NUNCA es 'baja'.
+  const mk = (intenseMinutes: number, totalMinutes: number, power = false) => ({
+    intenseMinutes, totalMinutes,
+    blocks: (power ? [{ kind: 'power' } as CardioBlock] : intenseMinutes > 0 ? [{ kind: 'intervals' } as CardioBlock] : []),
+  });
   it('sesión sostenida (0 intenso) → baja', () => expect(sessionIntensityLabel(mk(0, 40))).toBe('baja'));
-  it('fracción media → media', () => expect(sessionIntensityLabel(mk(8, 40))).toBe('media'));   // 20%
-  it('fracción alta → alta', () => expect(sessionIntensityLabel(mk(20, 40))).toBe('alta'));      // 50%
+  it('un circuito (intervals, <12 min intenso) → media', () => expect(sessionIntensityLabel(mk(8, 40))).toBe('media'));
+  it('carga intensa alta (≥12 min) → alta', () => expect(sessionIntensityLabel(mk(20, 40))).toBe('alta'));
   it('con bloque power → alta aunque poco tiempo', () => expect(sessionIntensityLabel(mk(2, 40, true))).toBe('alta'));
 });
 

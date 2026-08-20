@@ -589,7 +589,7 @@ export const en: Translations<typeof es> = {
       circuit: 'Functional circuit', power: 'Power sets', plyoPrep: 'Explosive prep',
       intervals: 'Intervals', tempo: 'Tempo block', drills: 'Drills & technique',
       steady: 'Steady pace', lowImpactSteady: 'Steady cardio', funcionalSteady: 'Steady work',
-      recovery: 'Active recovery',
+      recovery: 'Active recovery', cooldown: 'Cool-down',
       roundsSub: '{rounds} rounds · {work}s hard / {rest}s recovery',
       minSub: '{min} min',
     },

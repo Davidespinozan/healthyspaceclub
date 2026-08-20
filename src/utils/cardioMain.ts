@@ -18,7 +18,7 @@ import type { Exercise, CardioStyle, Equipment } from '../types';
 import type { CardioExerciseMeta } from './workoutDisplay';
 import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
 
-export type CardioBlockKind = 'steady' | 'intervals' | 'drills' | 'power' | 'recovery';
+export type CardioBlockKind = 'steady' | 'intervals' | 'drills' | 'power' | 'recovery' | 'cooldown';
 export type CardioIntensity = 'baja' | 'media' | 'alta';
 
 // ── F2C-5 · RAZÓN TIPADA de por qué terminó la sesión de cardio (observabilidad/UX, NO cambia la dosis).
@@ -100,8 +100,12 @@ function isRunningStation(e: Exercise): boolean { return matchesStyle(e, 'correr
 function isFunctionalStation(e: Exercise): boolean { return matchesStyle(e, 'funcional'); }
 function isExplosiveStation(e: Exercise): boolean { return matchesStyle(e, 'explosividad'); }
 
+// F2C-7 · el kind (fase) se deriva del labelKey → recovery / cooldown / steady son fases distintas
+// con semántica propia (no un genérico "steady" con cue). Se preserva builder→persistencia→display→audit.
+const continuousKindFor = (labelKey: string): CardioBlockKind =>
+  labelKey === 'cardio.recovery' ? 'recovery' : labelKey === 'cardio.cooldown' ? 'cooldown' : 'steady';
 const mkSteady = (minutes: number, stationId: string, intensity: CardioIntensity, labelKey: string, cue?: string): CardioBlock =>
-  ({ kind: labelKey === 'cardio.recovery' ? 'recovery' : 'steady', minutes: round(minutes), stationId, intensity, labelKey, zone: ZONE[intensity], rpe: RPE[intensity], cue });
+  ({ kind: continuousKindFor(labelKey), minutes: round(minutes), stationId, intensity, labelKey, zone: ZONE[intensity], rpe: RPE[intensity], cue });
 
 const mkIntervals = (kind: 'intervals' | 'power', rounds: number, workSec: number, restSec: number, stationId: string, labelKey: string, cue?: string): CardioBlock => {
   const minutes = round((rounds * (workSec + restSec)) / 60);
@@ -177,13 +181,19 @@ const bump = (used: Map<string, number>, id: string) => used.set(id, (used.get(i
 
 /** Etiqueta GLOBAL de intensidad de la sesión, derivada de la carga real (fracción intensa + presencia
  *  de bloques máximos). Hipótesis inicial (calibrable con la matriz): domina el trabajo, no un atributo. */
+// F2C-7 · label SEMÁNTICO (representa el estímulo PROGRAMADO, no una fracción diluida por el aeróbico).
+// Regla defendible: si hay trabajo intenso PROGRAMADO (power/intervals) o tempo/Z3, la sesión NUNCA es
+// 'baja' — un HIIT no se etiqueta 'baja' porque el denominador incluya la base aeróbica. Solo una sesión
+// puramente continua de Zona 2 (sin intervalos/potencia/tempo) es 'baja'.
 export function sessionIntensityLabel(plan: Pick<CardioMainPlan, 'totalMinutes' | 'intenseMinutes' | 'blocks'>): CardioIntensity {
   if (plan.totalMinutes <= 0) return 'baja';
-  const frac = plan.intenseMinutes / plan.totalMinutes;
   const hasPower = plan.blocks.some(b => b.kind === 'power');
-  if (frac > 0.4 || hasPower) return 'alta';
-  if (frac >= 0.15) return 'media';
-  return 'baja';
+  const hasIntervals = plan.blocks.some(b => b.kind === 'intervals');
+  // tempo/Z3 = bloque continuo de intensidad media/alta (bajo impacto avanzado, tempo de carrera).
+  const hasTempoOrZ3 = plan.blocks.some(b => (b.kind === 'steady' || b.kind === 'recovery') && b.intensity !== 'baja');
+  if (hasPower || plan.intenseMinutes >= 12) return 'alta';   // potencia o ≥2 circuitos = carga alta
+  if (hasIntervals || hasTempoOrZ3) return 'media';           // cualquier estímulo intenso/tempo → no 'baja'
+  return 'baja';                                              // Zona 2 continua pura
 }
 
 /**
@@ -203,6 +213,29 @@ const ROUNDS_CAP: Record<CardioStyle, Record<Level, number>> = {
 // principiante. avanzado sin tope (puede sostener volumen). QUALITY > FILL: si el budget excede el
 // tope, se declara earlyEnd honesto (no se rellena a la fuerza).
 const AEROBIC_CAP: Record<Level, number> = { principiante: 75, intermedio: 120, avanzado: Infinity };
+
+// ── F2C-7 · PROGRAMACIÓN (distinta de la SEGURIDAD) ────────────────────────────────────────────
+// PROGRAMMING CAP: cuántos minutos CONTINUOS seguidos conviene en UNA estación antes de rotar/cerrar
+// la fase. Es una autoridad de PROGRAMACIÓN, NO de seguridad: aunque una bici soporte ∞ minutos
+// (maxContinuousMinutes), 72' seguidos de bici NO es una buena prescripción. El bloque real usa
+// min(maxContinuousMinutes de la estación, este cap). Style-aware: en lowImpact el continuo ES la
+// sesión (tramos más largos, pero ondulados); en funcional el aeróbico es SOPORTE (tramos cortos).
+const PROG_CONTINUOUS_CAP: Record<CardioStyle, number> = {
+  funcional: 12,
+  correr: 15,
+  lowImpact: 30,   // continuo es el punto; tramos más largos válidos (§15), pero con rotación/cooldown
+  explosividad: 8,
+};
+// AEROBIC SHARE: fracción del presupuesto principal (ventana) dedicada al DESARROLLO AERÓBICO
+// (trabajo continuo no-intenso). Es un PHASE BUDGET calculado ANTES de elegir estaciones — el volumen
+// aeróbico lo decide el template, NUNCA el residual (`remaining`). funcional: aeróbico secundario;
+// lowImpact: aeróbico es el estímulo; correr: rodaje dominante; explosividad: mínimo.
+const AEROBIC_SHARE: Record<CardioStyle, number> = {
+  funcional: 0.42,   // conditioning-primary: el aeróbico es SOPORTE secundario
+  correr: 0.62,      // rodaje dominante, con sitio para intervalos/tempo + cooldown
+  lowImpact: 0.90,   // el continuo ES la sesión → llena la ventana, pero PROGRAMADO (fragmentado + cooldown)
+  explosividad: 0.14,// mínimo (calidad, no volumen)
+};
 
 /**
  * Construye el CardioMainPlan determinista (F2C-3 · arquitectura por fases). `pool` = estaciones del
@@ -273,12 +306,13 @@ export function buildCardioMain(input: {
   // CONTINUO (steady/recovery/cooldown): rellena `minutes` a través de estaciones CON la capacidad del rol,
   // respetando maxContinuousMinutes de cada una (fragmenta a otra estación si el bloque excede el tope).
   // Sin estación compatible → NO se crea bloque (fail closed; jamás una estación incompatible). Devuelve lo llenado.
-  const addContinuous = (minutes: number, role: 'steady' | 'recovery' | 'cooldown', intensity: CardioIntensity, labelKey: string, cue: string, poolOverride?: Exercise[]): number => {
+  // `progCap` (F2C-7) = tope de PROGRAMACIÓN por bloque (rotación); el bloque real respeta min(safety, progCap).
+  const addContinuous = (minutes: number, role: 'steady' | 'recovery' | 'cooldown', intensity: CardioIntensity, labelKey: string, cue: string, poolOverride?: Exercise[], progCap = Infinity): number => {
     let filled = 0;
     while (minutes - filled >= 3 && remaining >= 3) {
       const id = pickLeastUsed(poolOverride ?? continuousPool(role), used, 2);
       if (!id) break;                                                   // sin estación compatible → parar (no rellenar mal)
-      const stMax = cap(id)!.maxContinuousMinutes;
+      const stMax = Math.min(cap(id)!.maxContinuousMinutes, progCap);   // SEGURIDAD ∧ PROGRAMACIÓN
       const m = Math.min(minutes - filled, remaining, stMax);
       if (m < 3) break;
       pushBlock(mkSteady(m, id, intensity, labelKey, cue));
@@ -286,8 +320,10 @@ export function buildCardioMain(input: {
     }
     return filled;
   };
-  const addSustainable = (minutes: number, intensity: CardioIntensity, labelKey: string, cue: string): boolean =>
-    addContinuous(minutes, labelKey === 'cardio.recovery' ? 'recovery' : 'steady', intensity, labelKey, cue) >= 3;
+  const roleOf = (labelKey: string): 'steady' | 'recovery' | 'cooldown' =>
+    labelKey === 'cardio.recovery' ? 'recovery' : labelKey === 'cardio.cooldown' ? 'cooldown' : 'steady';
+  const addSustainable = (minutes: number, intensity: CardioIntensity, labelKey: string, cue: string, progCap = Infinity): boolean =>
+    addContinuous(minutes, roleOf(labelKey), intensity, labelKey, cue, undefined, progCap) >= 3;
 
   // INTENSO (intervals/power): estación con la capacidad requerida; rondas = MÁS RESTRICTIVO de {techo
   // estilo×nivel, readiness, DEMANDA de estación, techo intenso global}. Invariante intenseUsed+block ≤ techo.
@@ -320,73 +356,104 @@ export function buildCardioMain(input: {
     return true;
   };
 
-  // ── ARQUITECTURA POR ESTILO ────────────────────────────────────────────────────────────────
-  // El trabajo PRINCIPAL usa SOLO estaciones del estilo (identidad estricta); el soporte cruza a lowImpact.
+  // ── F2C-7 · PROGRAMACIÓN POR FASES ───────────────────────────────────────────────────────────
+  // Phase budgets calculados ANTES de elegir estaciones. El volumen AERÓBICO lo decide el TEMPLATE
+  // (share del budget, acotado por progCap + rotación), NUNCA el residual (`remaining`). La sesión
+  // PUEDE terminar antes del tiempo disponible si su estructura ya está completa (endReason honesto).
+  // El trabajo PRINCIPAL usa SOLO estaciones del estilo (identidad estricta); el soporte cruza a continuo.
+  const progCap = PROG_CONTINUOUS_CAP[style];
+  const cooldownBudget = window >= 12 ? clamp(round(window * 0.08), 3, 5) : 0;   // fase COOLDOWN real (kind propio)
+  const aerobicBudget = Math.max(0, round(window * AEROBIC_SHARE[style]));       // PHASE BUDGET aeróbico
+
+  // Cierra la sesión con una fase de COOLDOWN explícita (kind='cooldown'); si no hay estación continua, se omite.
+  const COOLDOWN_CUE = 'Vuelta a la calma; baja pulsaciones y respira.';
+  const addCooldown = (): void => {
+    if (cooldownBudget < 3 || remaining < 3) return;
+    // 1) Ruta normal: rotación (pickLeastUsed, maxUses 2) — prefiere una estación no/menos usada.
+    const filled = addContinuous(cooldownBudget, 'cooldown', 'baja', 'cardio.cooldown', COOLDOWN_CUE, undefined, progCap);
+    if (filled >= 3) return;
+    // 2) FALLBACK F2C-7 (SOLO kind='cooldown'): si la VARIEDAD se agotó (las estaciones ya se usaron en
+    //    recovery/steady), permitir REUTILIZAR la última estación continuous-cooldown VÁLIDA para no perder
+    //    el cooldown. `continuousPool('cooldown')` es fail-closed: capability.cooldown===true, cardio, segura
+    //    y playable (nunca burpees/intervals/power/non-cardio). Un ÚNICO bloque con su budget propio; respeta
+    //    safety maxContinuousMinutes ∧ progCap; NO devuelve remaining ni toca la rotación de otras fases.
+    const cdPool = continuousPool('cooldown');
+    if (!cdPool.length) return;                          // sin estación de cooldown compatible → se omite (fail closed)
+    const id = pickLeastUsed(cdPool, used, Infinity);    // reutiliza la MENOS usada, ignorando solo aquí el cap de variedad
+    if (!id) return;
+    const m = Math.min(cooldownBudget, remaining, cap(id)!.maxContinuousMinutes, progCap);
+    if (m < 3) return;
+    pushBlock(mkSteady(m, id, 'baja', 'cardio.cooldown', COOLDOWN_CUE));
+  };
+
   if (style === 'lowImpact') {
+    // TEMPLATE: desarrollo aeróbico (ondulado, fragmentado/rotado por progCap) → progresión Z3 (avanzado) → cooldown
     if (!continuousPool('steady').length) return contentGap('sin estaciones de bajo impacto reproducibles con este equipo');
-    if (window <= 40) {
-      addSustainable(window, 'baja', 'cardio.steady', 'Ritmo sostenible, podrías mantener una conversación.');
+    const mainAerobic = Math.min(aerobicBudget, Math.max(0, window - cooldownBudget));
+    if (L === 'avanzado' && mainAerobic >= 16) {
+      const z3 = round(mainAerobic * 0.3);                                       // ondulación Z2/Z3 (bajo impacto ≠ baja intensidad)
+      addSustainable(mainAerobic - z3, 'baja', 'cardio.steady', 'Zona 2 sostenible; podrías conversar.', progCap);
+      addSustainable(z3, 'media', 'cardio.steady', 'Tramo tempo controlado, sigue de bajo impacto.', progCap);
     } else {
-      const half = round(window / 2);
-      addSustainable(half, 'baja', 'cardio.steady', 'Zona 2 sostenible.');
-      // avanzado: un tramo 'media'/Z3 es válido (bajo impacto ≠ baja intensidad).
-      addSustainable(remaining, L === 'avanzado' ? 'media' : 'baja', 'cardio.steady', L === 'avanzado' ? 'Bloque tempo controlado, sigue de bajo impacto.' : 'Segundo bloque sostenible.');
+      addSustainable(mainAerobic, 'baja', 'cardio.steady', 'Zona 2 sostenible; podrías conversar.', progCap);
     }
+    addCooldown();
   } else if (style === 'correr') {
-    const runStations = pool.filter(isRunningStation);   // main work SOLO estaciones de carrera
+    // TEMPLATE: drills → estímulo principal (intervalos/tempo) → rodaje aeróbico (acotado) → cooldown
+    const runStations = pool.filter(isRunningStation);
     addDrill(L === 'principiante' ? 4 : 5, 'Técnica de carrera: skipping, talones, zancada.', runStations);
-    // calidad acotada al techo intenso: avanzado intervalos; resto tempo (bloque 'alta', estación de carrera)
     if (L === 'avanzado') {
       addIntense('intervals', 60, 30, ROUNDS_CAP.correr[L], 'cardio.intervals', 'Series a ritmo fuerte, recupera trotando.', runStations);
     } else {
-      const tempo = Math.min(intenseAllow, Math.max(0, remaining - 3));
+      const tempo = Math.min(intenseAllow, round(window * 0.18));
       const id = pickLeastUsed(runStations.filter(e => capsById.get(e.id)?.interval), used, 2);
       if (id && tempo >= 4 && intenseUsed + tempo <= intenseAllow) { pushBlock(mkSteady(tempo, id, 'alta', 'cardio.tempo', 'Bloque tempo: cómodamente duro.')); intenseUsed += tempo; }
     }
-    // easy run DOMINANTE (la carrera suave ES el trabajo aeróbico): estaciones de CARRERA continuous PRIMERO
-    // (cinta/caminadora), y solo si no hay → caminata/marcha del support (nunca funcional/explosiva).
+    // rodaje suave DOMINANTE (acotado por su phase budget): estaciones de CARRERA continuous PRIMERO.
     const runContinuous = continuousPool('steady').filter(e => matchesStyle(e, 'correr'));
     const easyCue = L === 'principiante' ? 'Alterna trote suave y caminata; la mayor parte es fácil.' : 'Rodaje suave; la mayor parte del volumen es fácil.';
-    if (remaining >= 3) addContinuous(remaining, 'steady', 'baja', 'cardio.steady', easyCue, [...runContinuous, ...continuousPool('steady')]);
+    const easyBudget = Math.min(aerobicBudget, Math.max(0, remaining - cooldownBudget));
+    if (easyBudget >= 3) addContinuous(easyBudget, 'steady', 'baja', 'cardio.steady', easyCue, [...runContinuous, ...continuousPool('steady')], progCap);
+    addCooldown();
   } else if (style === 'explosividad') {
+    // TEMPLATE: prep neural → potencia (calidad, no volumen) → cooldown breve. SIN relleno aeróbico → termina antes.
     const stn = pool.filter(isExplosiveStation);
     if (!stn.length) return contentGap('sin estaciones de explosividad reproducibles (el banco no tiene saltos/potencia con video)');
     addDrill(L === 'principiante' ? 6 : 8, 'Preparación neural: saltos suaves, movilidad, técnica.', stn);
     addIntense('power', 10, L === 'principiante' ? 90 : 75, ROUNDS_CAP.explosividad[L], 'cardio.power', 'Máxima calidad por repetición; descansa completo entre esfuerzos.', stn);
-    // vuelta a la calma SOSTENIBLE (nunca más saltos); si no hay estación sostenible → se omite (earlyEnd honesto)
-    if (remaining >= 4) addSustainable(Math.min(remaining, 8), 'baja', 'cardio.steady', 'Vuelta a la calma y movilidad; no más saltos.');
-    // NO relleno aeróbico: explosividad = calidad, no volumen
+    addCooldown();
   } else { // funcional
+    // TEMPLATE: circuito primario → recovery → circuito secundario (GANADO) → soporte aeróbico (acotado) → cooldown
     const stn = pool.filter(isFunctionalStation);
     if (!stn.length) return contentGap('sin estaciones funcionales reproducibles con este equipo');
-    // 1 circuito principal (rondas derivadas del techo intenso + demanda de estación)
     const built = addIntense('intervals', 40, 20, ROUNDS_CAP.funcional[L], 'cardio.circuit', 'Circuito: 40s trabajo / 20s transición, técnica sólida.', stn);
-    // 2º circuito SOLO avanzado, con techo intenso + tiempo, Y estación continua para recovery/aeróbico
-    // después (sin ella, 2 circuitos back-to-back = sesión intensa suelta; mejor 1 circuito + earlyEnd).
-    if (built && L === 'avanzado' && (intenseAllow - intenseUsed) >= 4 && remaining > 22 && continuousPool('recovery').length > 0) {
-      addSustainable(3, 'baja', 'cardio.recovery', 'Recuperación breve entre circuitos.');
+    // 2º circuito: SOLO avanzado (se gana con techo intenso + estación de recovery). intermedio/principiante
+    // = 1 circuito programado + soporte aeróbico + cooldown (estructura, no densidad).
+    const wantSecondary = built && L === 'avanzado'
+      && (intenseAllow - intenseUsed) >= 4 && continuousPool('recovery').length > 0;
+    if (wantSecondary) {
+      addSustainable(3, 'baja', 'cardio.recovery', 'Recuperación activa entre circuitos.', progCap);  // ≥3 = piso de addContinuous
       addIntense('intervals', 40, 20, ROUNDS_CAP.funcional[L], 'cardio.circuit', 'Segundo circuito — mantén la técnica.', stn);
     }
-    // trabajo AERÓBICO sostenible (el grueso para objetivos aeróbicos) + vuelta a la calma corta (steady)
-    if (remaining >= 6) {
-      const cooldown = clamp(round(window * 0.08), 3, 5);
-      addSustainable(remaining - cooldown, 'baja', 'cardio.steady', 'Trabajo aeróbico sostenible en Zona 2.');
-      addSustainable(remaining, 'baja', 'cardio.steady', 'Vuelta a la calma; baja pulsaciones.');
-    }
+    // Soporte aeróbico: PHASE BUDGET (share del estilo), fragmentado y ROTADO por progCap. NO es `remaining`.
+    const aerobicSupport = Math.min(aerobicBudget, Math.max(0, remaining - cooldownBudget));
+    if (aerobicSupport >= 4) addSustainable(aerobicSupport, 'baja', 'cardio.steady', 'Trabajo aeróbico sostenible en Zona 2.', progCap);
+    addCooldown();
   }
 
   // Ajuste final: nunca exceder el budget (recorta el último bloque sostenible si hiciera falta).
+  const isContinuousKind = (k: CardioBlockKind) => k === 'steady' || k === 'recovery' || k === 'cooldown';
   let total = blocks.reduce((a, b) => a + b.minutes, 0);
   while (total > budget && blocks.length) {
     const last = blocks[blocks.length - 1];
     const over = total - budget;
-    if ((last.kind === 'steady' || last.kind === 'recovery') && last.minutes - over >= 3) { last.minutes -= over; break; }
-    if (last.kind === 'steady' || last.kind === 'recovery') { blocks.pop(); total = blocks.reduce((a, b) => a + b.minutes, 0); }
+    if (isContinuousKind(last.kind) && last.minutes - over >= 3) { last.minutes -= over; break; }
+    if (isContinuousKind(last.kind)) { blocks.pop(); total = blocks.reduce((a, b) => a + b.minutes, 0); }
     else break;
   }
   total = blocks.reduce((a, b) => a + b.minutes, 0);
   const intenseMinutes = blocks.reduce((a, b) => a + intenseOf(b), 0);
-  const steadyMinutes = blocks.filter(b => (b.kind === 'steady' || b.kind === 'recovery') && b.intensity !== 'alta').reduce((a, b) => a + b.minutes, 0);
+  const steadyMinutes = blocks.filter(b => isContinuousKind(b.kind) && b.intensity !== 'alta').reduce((a, b) => a + b.minutes, 0);
   if (!earlyEnd && budget - total > Math.max(6, budget * 0.15)) { earlyEnd = true; earlyEndReason = 'dosis útil de la modalidad alcanzada'; }
 
   // ── F2C-5 · CLASIFICACIÓN de la razón (NO altera bloques/dosis; deriva de estado ya calculado). ──

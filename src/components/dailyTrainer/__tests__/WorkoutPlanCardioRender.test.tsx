@@ -47,9 +47,9 @@ const cardioPlan = {
   earlyEnd: false, earlyEndReason: '',
   blocks: [
     { kind: 'intervals', minutes: 12, stationId: 'burpee', stationName: 'Burpee / Sprawl', intensity: 'alta', labelKey: 'cardio.intervals', zone: undefined, rpe: 8, workSec: 40, restSec: 20, rounds: 12, cue: '' },
-    { kind: 'steady', minutes: 7, stationId: 'saltos', stationName: 'Saltos Básicos', intensity: 'media', labelKey: 'cardio.steady', zone: 'Zona 2', rpe: 5, workSec: undefined, restSec: undefined, rounds: undefined, cue: '' },
+    { kind: 'steady', minutes: 7, stationId: 'marcha', stationName: 'Marcha en el Lugar', intensity: 'media', labelKey: 'cardio.steady', zone: 'Zona 2', rpe: 5, workSec: undefined, restSec: undefined, rounds: undefined, cue: '' },
     { kind: 'intervals', minutes: 12, stationId: 'saltos', stationName: 'Saltos Básicos', intensity: 'alta', labelKey: 'cardio.intervals', zone: undefined, rpe: 8, workSec: 40, restSec: 20, rounds: 12, cue: '' },
-    { kind: 'steady', minutes: 51, stationId: 'saltos', stationName: 'Saltos Básicos', intensity: 'media', labelKey: 'cardio.steady', zone: 'Zona 2', rpe: 5, workSec: undefined, restSec: undefined, rounds: undefined, cue: '' },
+    { kind: 'steady', minutes: 51, stationId: 'marcha', stationName: 'Marcha en el Lugar', intensity: 'media', labelKey: 'cardio.steady', zone: 'Zona 2', rpe: 5, workSec: undefined, restSec: undefined, rounds: undefined, cue: '' },
   ],
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
@@ -70,6 +70,8 @@ const cardioMainBlock = {
 const bank = [
   { id: 'burpee', name: 'Burpee / Sprawl', desc: '', muscleGroup: 'cardio', equipment: ['gym'], goals: ['resistencia'], type: 'compuesto', difficulty: 'intermedio', defaultSets: 3, defaultReps: '10', defaultRest: 30, steps: [] },
   { id: 'saltos', name: 'Saltos Básicos', desc: '', muscleGroup: 'cardio', equipment: ['gym'], goals: ['resistencia'], type: 'compuesto', difficulty: 'intermedio', defaultSets: 3, defaultReps: '10', defaultRest: 30, steps: [] },
+  // Estación continua REALISTA (marcha) — su identidad accionable es la ACTIVIDAD, no una variante-posición.
+  { id: 'marcha', name: 'Marcha en el Lugar', desc: '', muscleGroup: 'cardio', cardioStyle: 'lowImpact', equipment: ['cuerpo'], goals: ['resistencia'], type: 'compuesto', difficulty: 'principiante', defaultSets: 1, defaultReps: '10 min', defaultRest: 0, steps: [] },
 ] as unknown as Exercise[];
 
 const decision: WorkoutDayDecision = { type: 'cardio', reason: '', source: 'auto' } as unknown as WorkoutDayDecision;
