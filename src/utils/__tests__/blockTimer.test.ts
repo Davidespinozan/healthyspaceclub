@@ -94,3 +94,29 @@ describe('targetSecondsFromReps · política única compartida con el motor', ()
     expect(targetSecondsFromReps('30-60 seg')).toBe(60);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// F2C-1 · MUST FIX 3 · el WorkoutPlayer gatea el editor de reps/peso por TIME-BASED
+// (holdTargetSec = targetSecondsFromReps(reps); != null → time-based → NO editor/lápiz). Aquí se
+// verifica la DETECCIÓN que gatea: cardio/isométricos = time-based; fuerza = editable.
+// ═══════════════════════════════════════════════════════════════════════════
+describe('F2C-1 MUST FIX 3 · detección time-based que gatea el editor reps/peso', () => {
+  it('bloques de cardio → time-based (editor de reps/peso GATEADO)', () => {
+    const cardioExs = cardioBlocksToExercises({
+      style: 'lowImpact', budgetMinutes: 20, totalMinutes: 20, intenseMinutes: 0, steadyMinutes: 20, earlyEnd: false,
+      blocks: [
+        { kind: 'steady', minutes: 20, stationId: 'bici', intensity: 'baja', labelKey: 'cardio.steady', zone: 'Zona 2', rpe: 3, cue: '' },
+        { kind: 'intervals', minutes: 12, stationId: 'kb', intensity: 'alta', labelKey: 'cardio.circuit', rpe: 8, workSec: 40, restSec: 20, rounds: 12, cue: '' },
+      ],
+    } as never);
+    for (const ex of cardioExs) expect(targetSecondsFromReps(ex.reps)).not.toBeNull(); // time-based → sin editor
+  });
+  it('isométrico de fuerza ("40 seg") → time-based (sin editor de carga)', () => {
+    expect(targetSecondsFromReps('40 seg')).not.toBeNull();
+  });
+  it('serie de fuerza normal ("8", "6-10") → NO time-based (editor de reps/peso DISPONIBLE)', () => {
+    expect(targetSecondsFromReps('8')).toBeNull();
+    expect(targetSecondsFromReps('6-10')).toBeNull();
+    expect(targetSecondsFromReps('12 reps')).toBeNull();
+  });
+});

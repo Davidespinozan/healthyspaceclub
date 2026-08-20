@@ -119,6 +119,45 @@ describe('transición Fuerza→Cardio (items 2/3/5)', () => {
   });
 });
 
+describe('F2C-1 MUST FIX 1 · supplemental preserva/renderiza composedCardio', () => {
+  const supPlan = (composedCardio?: CachedWorkout['composedCardio']) => ({
+    ...strengthPlan(composedCardio), type: 'extra-supplemental', source: 'supplemental',
+  } as CachedWorkout & { razon?: string });
+  it('plan supplemental con composedCardio pending → bloque 03 se ofrece', () => {
+    render(<WorkoutPlan {...props(supPlan(spec))} />);
+    expect(screen.getByText('03 · Cardio estructurado')).toBeInTheDocument();
+    expect(screen.getByText(/Continuar con cardio/i)).toBeInTheDocument();
+  });
+  it('plan supplemental con composedCardio done → indicador done, sin CTA', () => {
+    render(<WorkoutPlan {...props(supPlan({ ...spec, done: true }))} />);
+    expect(screen.getByText(/Cardio completado/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Continuar con cardio/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('F2C-1 MUST FIX 2 · reconciliación (satisfied → no over-offer)', () => {
+  it('satisfied=true (remaining 0) → NO ofrece el bloque 03 (ni CTA ni done)', () => {
+    render(<WorkoutPlan {...props(strengthPlan(spec), { composedCardioSatisfied: true })} />);
+    expect(screen.queryByText('03 · Cardio estructurado')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Continuar con cardio/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Cardio completado/i)).not.toBeInTheDocument(); // NO marca done (≠ ejecutado)
+  });
+  it('satisfied=false → ofrece normal', () => {
+    render(<WorkoutPlan {...props(strengthPlan(spec), { composedCardioSatisfied: false })} />);
+    expect(screen.getByText('03 · Cardio estructurado')).toBeInTheDocument();
+  });
+  it('satisfied=true → completar fuerza NO dispara handoff (no over-offer)', () => {
+    render(<WorkoutPlan {...props(strengthPlan(spec), { composedCardioSatisfied: true })} />);
+    fireEvent.click(screen.getAllByText(/comenzar entrenamiento/i)[0]);
+    fireEvent.click(screen.getByTestId('finish-player'));
+    expect(screen.queryByText(/Fuerza completada/i)).not.toBeInTheDocument();
+  });
+  it('done=true tiene prioridad sobre satisfied (muestra completado)', () => {
+    render(<WorkoutPlan {...props(strengthPlan({ ...spec, done: true }), { composedCardioSatisfied: true })} />);
+    expect(screen.getByText(/Cardio completado/i)).toBeInTheDocument();
+  });
+});
+
 describe('guard anti-duplicado · onAddCardio (item 11)', () => {
   it('pending → el player NO recibe onAddCardio (manual suprimido)', () => {
     render(<WorkoutPlan {...props(strengthPlan(spec))} />);

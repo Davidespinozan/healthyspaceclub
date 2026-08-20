@@ -40,7 +40,7 @@ import {
 } from '../utils/workoutPlanner';
 import { computeVolumeTargets, targetsToMap } from '../utils/volumeLandmarks';
 import { allocateSessionVolume, prescribeSession, prescribeExercise, categorize, type TimeFitDiagnostics } from '../utils/sessionPrescription';
-import { composeSession as runSessionComposer, sealComposedSession, ceilingSafeCardioLevel, type ComposeSessionResult } from '../utils/sessionComposer';
+import { composeSession as runSessionComposer, sealComposedSession, ceilingSafeCardioLevel, structuredCardioRemainingNow, carrySealedCardio, type ComposeSessionResult } from '../utils/sessionComposer';
 import { allocateHeadroom } from '../utils/headroom';
 import { assignTechniques } from '../utils/techniques';
 import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities, resolveCardioStyle } from '../utils/cardioMain';
@@ -501,7 +501,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     // Plan ejecutable — series rectas (sin group), source='supplemental', modality fuerza. La sesión
     // ORIGINAL ya está persistida como CompletedSession → no se muta. dailyWorkout pasa a este plan
     // (mismo patrón que "Añadir cardio"); Hoy sigue mostrando ambas sesiones desde completedSessions.
-    const supPlan = {
+    // F2C-1 MUST FIX 1 · el supplemental de fuerza NO puede borrar la decisión de cardio del día. D1 sigue
+    // siendo SOLO fuerza; carrySealedCardio PRESERVA composedCardio (pending o done) tal cual desde el
+    // dailyWorkout persistido, sin recomputar. No toca structuredCardioRemaining ni workout_cache.
+    const dayPlan = useAppStore.getState().dailyWorkout?.plan as { composedCardio?: unknown } | undefined;
+    const supPlan = carrySealedCardio({
       type: 'extra-supplemental',
       intensity: 'media',
       exercises: supExercises,
@@ -509,7 +513,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       source: 'supplemental',
       sessionDate: today,
       razon: t('workout.supplementalReason'),
-    } as unknown as CachedWorkout & { razon?: string };
+    }, dayPlan) as unknown as CachedWorkout & { razon?: string };
 
     setSelectedModality('fuerza'); // completion loguea modality='fuerza'
     setPlan(supPlan);
@@ -1959,9 +1963,22 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       );
     }
 
+    // F2C-1 MUST FIX 2 · RECONCILIACIÓN en vivo (read-only): un composedCardio pending solo se OFRECE si la
+    // necesidad estructurada de la semana SIGUE existiendo. Si otro cardio HSC ya la cubrió
+    // (structuredCardioRemainingNow === 0) → satisfecho, no se ofrece (≠ done, no se ejecutó). Si remaining>0
+    // → se mantiene el spec sellado completo (no se recomputa). No persiste estado; se deriva de completedSessions.
+    const composedCardioSatisfied = (() => {
+      const cc = (plan as { composedCardio?: { done?: boolean } } | null)?.composedCardio;
+      if (!cc || cc.done === true) return false;
+      return structuredCardioRemainingNow({
+        completedSessions, nowMs: Date.now(), bodyGoal: String(obData?.goal ?? ''), trainingGoal,
+      }) === 0;
+    })();
+
     return (
       <WorkoutPlanView
         plan={plan}
+        composedCardioSatisfied={composedCardioSatisfied}
         regenBlocked={regenBlocked}
         regensLeft={regensLeft}
         selectedEquipment={selectedEquipment}

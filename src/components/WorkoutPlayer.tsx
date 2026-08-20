@@ -1064,7 +1064,9 @@ export default function WorkoutPlayer({
                     type="button"
                     className={rowClass}
                     onClick={() => {
-                      if (isDone) openEditSet(currentExerciseIndex, setIdx);
+                      // F2C-1 MUST FIX 3 · en bloques TIME-BASED (cardio/isométricos) editar "reps/peso" no
+                      // tiene sentido (reps = segundos, kg = 0) → no abrir el editor. Fuerza sigue editable.
+                      if (isDone) { if (holdTargetSec == null) openEditSet(currentExerciseIndex, setIdx); }
                       else if (isActive) markCurrentSet();
                     }}
                     disabled={(!isActive && !isDone) || (isActive && partnerTurn)}
@@ -1096,7 +1098,8 @@ export default function WorkoutPlayer({
                       )}
                     </span>
                     <span className="wp-set-row-icon">
-                      {isDone ? <Pencil size={14} strokeWidth={1.6} /> : isActive ? <ChevronRight size={16} /> : null}
+                      {/* F2C-1 MUST FIX 3 · sin lápiz de edición de carga en TIME-BASED (cardio/isométricos). */}
+                      {isDone ? (holdTargetSec == null ? <Pencil size={14} strokeWidth={1.6} /> : null) : isActive ? <ChevronRight size={16} /> : null}
                     </span>
                   </button>
                 );

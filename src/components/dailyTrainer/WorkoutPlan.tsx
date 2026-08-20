@@ -113,6 +113,10 @@ interface Props {
   /** F2B-1 · el cardio compuesto se completó → el padre marca composedCardio.done=true y persiste el
    *  MISMO plan de fuerza (no lo reemplaza). */
   onComposedCardioDone?: () => void;
+  /** F2C-1 MUST FIX 2 · reconciliación: true si la necesidad estructurada de cardio de la semana YA quedó
+   *  cubierta por otro cardio HSC (remaining===0). Entonces el composedCardio pending NO se ofrece
+   *  (satisfecho por reconciliación, ≠ done). El spec sellado NO se recomputa. */
+  composedCardioSatisfied?: boolean;
 }
 
 export default function WorkoutPlan({
@@ -136,6 +140,7 @@ export default function WorkoutPlan({
   onGenerateMore,
   buildComposedCardio,
   onComposedCardioDone,
+  composedCardioSatisfied,
 }: Props) {
   const { t, locale } = useT();
   const langMismatch = !!(plan as { lang?: string }).lang && (plan as { lang?: string }).lang !== locale;
@@ -516,7 +521,13 @@ export default function WorkoutPlan({
           ANTES de "otra actividad". Pending → CTA "Continuar con cardio"; done → indicador colapsado.
           Ejecuta el spec SELLADO como sesión SEPARADA (modality='cardio'), sin reemplazar la fuerza. */}
       {composedCardioSpec && buildComposedCardio && (
-        composedCardioPending ? (
+        composedCardioSpec.done === true ? (
+          <div className="dt2-composed-cardio is-done">
+            <span className="dt2-cc-num is-done"><Check size={13} strokeWidth={2.6} /></span>
+            <span className="dt2-cc-title">{t('workout.composedCardio.done')}</span>
+          </div>
+        ) : !composedCardioSatisfied ? (
+          // F2C-1 MUST FIX 2 · solo se ofrece si la necesidad estructurada sigue vigente (no satisfecha por otro cardio).
           <div className="dt2-composed-cardio">
             <div className="dt2-cc-head">
               <span className="dt2-cc-num">03</span>
@@ -532,12 +543,7 @@ export default function WorkoutPlan({
               <Play size={14} strokeWidth={2} fill="currentColor" /> {t('workout.composedCardio.start')}
             </button>
           </div>
-        ) : (
-          <div className="dt2-composed-cardio is-done">
-            <span className="dt2-cc-num is-done"><Check size={13} strokeWidth={2.6} /></span>
-            <span className="dt2-cc-title">{t('workout.composedCardio.done')}</span>
-          </div>
-        )
+        ) : null
       )}
 
       {/* Actividad alterna — "hoy no hice esto, pero hice esto". Oculta en sesión
@@ -568,7 +574,7 @@ export default function WorkoutPlan({
       {/* F2B-1 UX (item 3) · TRANSICIÓN Fuerza→Cardio: al completar la fuerza con cardio pendiente NO
           se vuelve al plan a "buscar" el cardio escondido — se ofrece continuar como sesión continua.
           NO auto-inicia (botón explícito) y "Ahora no" lo deja pending (sin marcar done). */}
-      {cardioHandoff && composedCardioPending && composedCardioSpec && buildComposedCardio && (
+      {cardioHandoff && composedCardioPending && !composedCardioSatisfied && composedCardioSpec && buildComposedCardio && (
         <div className="dt2-cardio-handoff">
           <div className="dt2-handoff-card">
             <span className="dt2-handoff-done"><Check size={18} strokeWidth={2.6} /> {t('workout.composedCardio.strengthDone')}</span>
@@ -748,7 +754,7 @@ export default function WorkoutPlan({
             setWorkoutPlayerOpen(false);
             // F2B-1 UX (item 3) · si esta sesión de fuerza trae cardio compuesto pendiente, no volver al
             // plan a "buscar" el cardio: ofrecer la transición continua Fuerza→Cardio. NO auto-inicia.
-            if (composedCardioPending) setCardioHandoff(true);
+            if (composedCardioPending && !composedCardioSatisfied) setCardioHandoff(true);
           }}
         />
         </Suspense>

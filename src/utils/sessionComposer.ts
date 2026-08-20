@@ -79,6 +79,42 @@ export function ceilingSafeCardioLevel(ceiling: CardioIntensityCeiling, level: s
   return level === 'avanzado' ? 'intermedio' : level;
 }
 
+/**
+ * F2C-1 MUST FIX 2 · RECONCILIACIÓN (read-only). Minutos de cardio estructurado que AÚN faltan esta semana
+ * según el estado REAL de completedSessions (solo cardio HSC, modality='cardio'). Reutiliza los helpers
+ * cerrados SIN modificarlos. NO recomputa el spec sellado; sirve para decidir si un composedCardio pending
+ * SIGUE siendo necesario (remaining>0) o ya quedó cubierto por otro cardio HSC (remaining===0 → satisfecho).
+ * lowImpact/hasPain NO afectan el remaining (solo el ceiling/style), por eso no se piden aquí.
+ */
+/**
+ * F2C-1 MUST FIX 1 · preserva la decisión de cardio del día al construir un plan supplemental de fuerza (D1).
+ * D1 sigue siendo SOLO fuerza: copia composedCardio (pending o done) TAL CUAL, sin recomputar/marcar/duplicar.
+ * Si el día no tenía cardio, no agrega nada. Puro; no toca ledger, structuredCardioRemaining ni workout_cache.
+ */
+export function carrySealedCardio<T extends Record<string, unknown>>(
+  supPlan: T,
+  dayPlan: { composedCardio?: unknown } | null | undefined,
+): T {
+  const cc = dayPlan?.composedCardio;
+  return cc == null ? supPlan : { ...supPlan, composedCardio: cc };
+}
+
+export function structuredCardioRemainingNow(input: {
+  completedSessions: CompletedSession[];
+  nowMs: number;
+  bodyGoal: string;
+  trainingGoal: TrainingGoal;
+}): number {
+  const completedCardio = computeWeeklyCardio(input.completedSessions, input.nowMs);
+  return deriveWeeklyCardioPolicy({
+    bodyGoal: input.bodyGoal,
+    trainingGoal: input.trainingGoal,
+    lowImpactMode: false,
+    hasPain: false,
+    completedCardio,
+  }).structured.remainingMinutes;
+}
+
 export function composeSession(input: ComposeSessionInput): ComposeSessionResult {
   // 1) POR QUÉ terminó la fuerza (señales fisiológicas, NO duración sola). weeklyRemaining = FUERZA.
   const end = deriveSessionEndReason({
