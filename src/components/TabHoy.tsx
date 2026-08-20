@@ -29,6 +29,8 @@ import { useCountUp } from '../hooks/useCountUp';
 import FoodLogSheet from './FoodLogSheet';
 import ActivityLogSheet from './ActivityLogSheet';
 import { shouldOfferAddCardio, shouldOfferGenerateMore } from '../utils/workoutDisplay';
+import { composedCardioLiveState } from '../utils/sessionComposer';
+import { trainingGoalFromPlan } from '../utils/workoutPlanner';
 import { listPartnerships, respondInvite, type Partnership } from '../utils/partners';
 import { supabase } from '../lib/supabase';
 import PartnerLiveHeader from './PartnerLiveHeader';
@@ -260,11 +262,17 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // D1 · "Generarme más" persistente: solo si ya COMPLETASTE fuerza hoy (no pendiente/en progreso) — el
   // supplemental es trabajo ADICIONAL sobre lo hecho. Sobrevive a cerrar/reabrir (lee completedSessions).
   const completedStrengthToday = shouldOfferGenerateMore(sessionsToday);
-  // F2B-1 (item 4/11) · si la rutina de hoy YA trae cardio estructurado PENDIENTE, es prescripción HSC
-  // (parte del workout), no actividad opcional: NO ofrecer "Añadir cardio" manual (evita doble cardio).
-  // done/ausente → el flujo manual sigue intacto. La composición detallada vive en "Ver rutina completa".
-  const composedCardio = (todayWorkoutPlan as { composedCardio?: { done?: boolean } } | null)?.composedCardio;
-  const composedCardioPending = !!composedCardio && composedCardio.done !== true;
+  // F2C-2 (item 1/2) · estado VIVO del cardio compuesto (una sola autoridad, reconciliado): none/pending/
+  // satisfied/done. 'satisfied' = otro cardio HSC ya cubrió la semana → NO mostrar como pendiente (≠ done).
+  // El manual "Añadir cardio" se gatea aparte por EXISTENCIA (shouldOfferAddCardio).
+  const composedCardioState = composedCardioLiveState({
+    composedCardio: (todayWorkoutPlan as { composedCardio?: { done?: boolean } } | null)?.composedCardio,
+    completedSessions, nowMs: Date.now(),
+    bodyGoal: String(obData?.goal ?? ''),
+    trainingGoal: trainingGoalFromPlan(todayWorkoutPlan) ?? 'hipertrofia',
+  });
+  const composedChipPending = composedCardioState === 'pending';
+  const composedChipDone = composedCardioState === 'done';
   const trainedToday = sessionsToday.length > 0 || allExercisesChecked || activityToday;
   const reflectionDone = todayHSMAnswered > 0;
 
@@ -710,10 +718,16 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 return (
                   <>
                     <h2 className="th3-card-title">{t('hoy.routineToday')}</h2>
-                    {(wType || wDuration || composedCardioPending) && (
+                    {(wType || wDuration || composedChipPending || composedChipDone) && (
                       <p className="th3-card-meta">
                         {wType}{wType && wDuration ? ' · ' : ''}{wDuration}
-                        {composedCardioPending && <span className="th3-card-composed">{(wType || wDuration) ? ' · ' : ''}{t('workout.composedCardio.todaySummary')}</span>}
+                        {/* F2C-2 · "Fuerza + cardio" solo si el cardio sigue PENDIENTE (reconciliado);
+                            "Fuerza + cardio ✓" cuando el cardio compuesto se completó. satisfied/none → nada. */}
+                        {(composedChipPending || composedChipDone) && (
+                          <span className={`th3-card-composed${composedChipDone ? ' is-done' : ''}`}>
+                            {(wType || wDuration) ? ' · ' : ''}{t('workout.composedCardio.todaySummary')}{composedChipDone ? ' ✓' : ''}
+                          </span>
+                        )}
                       </p>
                     )}
                     {exList.length > 0 && (

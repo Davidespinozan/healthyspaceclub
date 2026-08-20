@@ -106,12 +106,10 @@ describe('cardioBlocksToExercises — la identidad del bloque viaja con el ejerc
 describe('shouldOfferAddCardio — gate de composedCardio (Today)', () => {
   const strengthPlan = (composedCardio?: { done?: boolean }) =>
     ({ exercises: [{ sets: 4, reps: '8', rest: 120 }], ...(composedCardio ? { composedCardio } : {}) });
-  it('composedCardio PENDING → NO ofrecer "Añadir cardio"', () => {
+  it('composedCardio EXISTE (pending/done) → NO ofrecer "Añadir cardio" manual (F2C-2)', () => {
     expect(shouldOfferAddCardio(strengthPlan({ done: false }) as never, [])).toBe(false);
-    expect(shouldOfferAddCardio(strengthPlan({}) as never, [])).toBe(false); // done ausente = pending
-  });
-  it('composedCardio DONE → sí ofrecer (flujo manual normal)', () => {
-    expect(shouldOfferAddCardio(strengthPlan({ done: true }) as never, [])).toBe(true);
+    expect(shouldOfferAddCardio(strengthPlan({}) as never, [])).toBe(false);
+    expect(shouldOfferAddCardio(strengthPlan({ done: true }) as never, [])).toBe(false); // done → tampoco relleno redundante
   });
   it('SIN composedCardio → comportamiento previo intacto (plan de fuerza → true)', () => {
     expect(shouldOfferAddCardio(strengthPlan() as never, [])).toBe(true);

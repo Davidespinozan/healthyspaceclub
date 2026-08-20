@@ -115,6 +115,32 @@ export function structuredCardioRemainingNow(input: {
   }).structured.remainingMinutes;
 }
 
+// F2C-2 · estado derivado (una sola autoridad, sin persistir) del composedCardio del día.
+export type ComposedCardioState = 'none' | 'pending' | 'satisfied' | 'done';
+
+/**
+ * F2C-2 · Estado VIVO del composedCardio: none (no hay) / done (ejecuté ESTE bloque) / satisfied (otro
+ * cardio HSC ya cubrió la necesidad semanal → no ofrecer, ≠ done) / pending (sigue vigente). Deriva de
+ * completedSessions (read-only, reutiliza structuredCardioRemainingNow). Es la ÚNICA autoridad que
+ * consumen WorkoutPlan (oferta) y Today (label/CTA) → sin duplicar policy ni recomputar el spec sellado.
+ */
+export function composedCardioLiveState(input: {
+  composedCardio: { done?: boolean } | null | undefined;
+  completedSessions: CompletedSession[];
+  nowMs: number;
+  bodyGoal: string;
+  trainingGoal: TrainingGoal;
+}): ComposedCardioState {
+  const cc = input.composedCardio;
+  if (!cc) return 'none';
+  if (cc.done === true) return 'done';
+  const remaining = structuredCardioRemainingNow({
+    completedSessions: input.completedSessions, nowMs: input.nowMs,
+    bodyGoal: input.bodyGoal, trainingGoal: input.trainingGoal,
+  });
+  return remaining === 0 ? 'satisfied' : 'pending';
+}
+
 export function composeSession(input: ComposeSessionInput): ComposeSessionResult {
   // 1) POR QUÉ terminó la fuerza (señales fisiológicas, NO duración sola). weeklyRemaining = FUERZA.
   const end = deriveSessionEndReason({

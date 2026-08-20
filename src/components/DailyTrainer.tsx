@@ -40,7 +40,7 @@ import {
 } from '../utils/workoutPlanner';
 import { computeVolumeTargets, targetsToMap } from '../utils/volumeLandmarks';
 import { allocateSessionVolume, prescribeSession, prescribeExercise, categorize, type TimeFitDiagnostics } from '../utils/sessionPrescription';
-import { composeSession as runSessionComposer, sealComposedSession, ceilingSafeCardioLevel, structuredCardioRemainingNow, carrySealedCardio, type ComposeSessionResult } from '../utils/sessionComposer';
+import { composeSession as runSessionComposer, sealComposedSession, ceilingSafeCardioLevel, carrySealedCardio, composedCardioLiveState, type ComposeSessionResult } from '../utils/sessionComposer';
 import { allocateHeadroom } from '../utils/headroom';
 import { assignTechniques } from '../utils/techniques';
 import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities, resolveCardioStyle } from '../utils/cardioMain';
@@ -1967,13 +1967,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     // necesidad estructurada de la semana SIGUE existiendo. Si otro cardio HSC ya la cubrió
     // (structuredCardioRemainingNow === 0) → satisfecho, no se ofrece (≠ done, no se ejecutó). Si remaining>0
     // → se mantiene el spec sellado completo (no se recomputa). No persiste estado; se deriva de completedSessions.
-    const composedCardioSatisfied = (() => {
-      const cc = (plan as { composedCardio?: { done?: boolean } } | null)?.composedCardio;
-      if (!cc || cc.done === true) return false;
-      return structuredCardioRemainingNow({
-        completedSessions, nowMs: Date.now(), bodyGoal: String(obData?.goal ?? ''), trainingGoal,
-      }) === 0;
-    })();
+    const composedCardioSatisfied = composedCardioLiveState({
+      composedCardio: (plan as { composedCardio?: { done?: boolean } } | null)?.composedCardio,
+      completedSessions, nowMs: Date.now(), bodyGoal: String(obData?.goal ?? ''), trainingGoal,
+    }) === 'satisfied';
 
     return (
       <WorkoutPlanView

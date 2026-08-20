@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { carrySealedCardio, structuredCardioRemainingNow } from '../sessionComposer';
+import { carrySealedCardio, structuredCardioRemainingNow, composedCardioLiveState } from '../sessionComposer';
 import { dayKey } from '../localDate';
 import type { CompletedSession } from '../../types';
 
@@ -66,5 +66,23 @@ describe('MUST FIX 2 · structuredCardioRemainingNow (reconciliación read-only)
   it('cardio viejo fuera de la ventana 7d no reduce (week rollover)', () => {
     const old = [cs(9, 60, 1)]; // 9 días atrás → fuera de 7d
     expect(remaining(old)).toBe(40);
+  });
+});
+
+describe('F2C-2 · composedCardioLiveState (una sola autoridad: none/pending/satisfied/done)', () => {
+  const NOW2 = Date.UTC(2026, 7, 19, 12, 0, 0);
+  const cc = (n: number, m: number, i: number): CompletedSession => ({
+    sessionId: `x${n}${i}`, modality: 'cardio', date: dayKey(new Date(NOW2 - n * 86400000)),
+    durationSeconds: m * 60, completedAtIso: new Date(NOW2 - n * 86400000).toISOString(), exerciseIds: [],
+  } as unknown as CompletedSession);
+  const state = (composedCardio: { done?: boolean } | null | undefined, hist: CompletedSession[]) =>
+    composedCardioLiveState({ composedCardio, completedSessions: hist, nowMs: NOW2, bodyGoal: 'Bajar grasa', trainingGoal: 'hipertrofia' });
+
+  it('sin composedCardio → none', () => expect(state(undefined, [])).toBe('none'));
+  it('done=true → done (prioridad sobre remaining)', () => expect(state({ done: true }, [])).toBe('done'));
+  it('pending + remaining>0 → pending', () => expect(state({}, [])).toBe('pending'));
+  it('pending + remaining=0 (cubierto por otro cardio HSC) → satisfied', () => {
+    const covered = [cc(1, 30, 1), cc(2, 30, 2), cc(3, 30, 3), cc(10, 20, 4)];
+    expect(state({ done: false }, covered)).toBe('satisfied');
   });
 });

@@ -462,6 +462,7 @@ export const en: Translations<typeof es> = {
     exitSession: 'leave the session',
     completedTitle: 'Session complete!',
     setsLower: 'sets',
+    blocksLower: 'blocks',
     exercisesLower: 'exercises',
     repsLower: 'reps',
     kgTotal: 'total kg',

@@ -385,6 +385,8 @@
 }
 /* F2B-1 (item 11) · indicador pequeño "Fuerza + cardio" cuando la rutina trae cardio estructurado. */
 .th3-card-composed { color: var(--dorado, #B8944A); font-weight: 700; }
+/* F2C-2 · variante completada "Fuerza + cardio ✓". */
+.th3-card-composed.is-done { color: var(--sage, #3d6359); }
 .th3-card-meta {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.7rem;

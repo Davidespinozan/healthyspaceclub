@@ -20,6 +20,8 @@ import type { Implement } from '../utils/equipmentImplement';
 import type { WorkoutExercise } from '../utils/workoutSession';
 import { parseRepsToNumber } from '../utils/workoutLogger';
 import { targetSecondsFromReps } from '../utils/blockTimer';
+// F2C-2 · UX cardio-nativa: título humano del bloque + decisión de video (reutiliza la autoridad de Today).
+import { cardioBlockTitleKey, cardioShowVideo } from '../utils/workoutDisplay';
 import { isPartnerBDevice, partnerExerciseView } from '../utils/partnerView';
 import { nextSetSuggestion } from '../utils/rirFeedback';
 import { computeProgression, incrementForMuscle } from '../utils/progression';
@@ -926,7 +928,9 @@ export default function WorkoutPlayer({
             className="wp-video-area"
             style={videoAspect ? { aspectRatio: String(Math.min(1.9, Math.max(0.5, videoAspect))) } : undefined}
           >
-            {currentVideoUrl ? (
+            {/* F2C-2 · cardio: NO mostrar el clip del stationId cuando es un proxy engañoso (steady/recovery/
+                intervalos de carrera) — cardioShowVideo es la MISMA autoridad que usa Today. */}
+            {currentVideoUrl && (!currentEx.cardio || cardioShowVideo(currentEx.cardio)) ? (
               <video
                 key={currentVideoUrl}
                 src={currentVideoUrl}
@@ -984,7 +988,8 @@ export default function WorkoutPlayer({
                 </button>
               )}
             </div>
-            <h2 className="wp-ex-name">{displayName}</h2>
+            {/* F2C-2 · cardio: título HUMANO del bloque (correr/circuito/Zona 2…), no el stationId técnico. */}
+            <h2 className="wp-ex-name">{currentEx.cardio ? t(cardioBlockTitleKey(currentEx.cardio) as Parameters<typeof t>[0]) : displayName}</h2>
             {variant?.notes && (
               <p className="wp-ex-notes">{variant.notes}</p>
             )}
@@ -1019,20 +1024,24 @@ export default function WorkoutPlayer({
               <span className="wp-sets-label">
                 {isSuperset
                   ? t('workout.supersetRound', { n: currentSetNum, total: totalSetsForCurrent })
-                  : <>{t('workout.setsLabel')} · {totalSetsForCurrent}{singleDevice && currentEx.repsB ? '' : ` × ${currentEx.reps}`}</>}
+                  : currentEx.cardio
+                    // F2C-2 · cardio: mostrar la DURACIÓN/zona del bloque, no "Series · N × …" (nomenclatura de fuerza).
+                    ? <>{currentEx.reps}</>
+                    : <>{t('workout.setsLabel')} · {totalSetsForCurrent}{singleDevice && currentEx.repsB ? '' : ` × ${currentEx.reps}`}</>}
                 {currentEx.tecnica && <span className="wp-sets-tecnica">{currentEx.tecnica}</span>}
               </span>
               <span className="wp-sets-counter">
                 {Math.min(setsRegisteredForCurrent, totalSetsForCurrent)} {t('workout.of')} {totalSetsForCurrent}
               </span>
             </div>
-            {lastPerfLabel && (
+            {/* F2C-2 · cardio/isométrico: sin "la vez pasada × N" ni "objetivo X kg" (no aplican a tiempo). */}
+            {lastPerfLabel && holdTargetSec == null && (
               <div className="wp-last-perf">
                 <History size={12} strokeWidth={2} aria-hidden="true" />
                 <span>{t('workout.lastTime')}: <b>{lastPerfLabel}</b></span>
               </div>
             )}
-            {progLabel && (() => {
+            {progLabel && holdTargetSec == null && (() => {
               const a = progression?.action;
               const up = a === 'add-weight' || a === 'add-tension' || a === 'add-difficulty';
               return (
@@ -1082,7 +1091,8 @@ export default function WorkoutPlayer({
                           {' · '}{setIdx === 0 ? t('workout.topSet') : t('workout.backoffSet')} {targetKgForSet(setIdx)}kg
                         </span>
                       )}
-                      {isDone && entry && (
+                      {/* F2C-2 · en TIME-BASED (cardio/isométrico) NO mostrar "reps · kg" (reps=segundos, kg=0). */}
+                      {isDone && entry && holdTargetSec == null && (
                         <span className={`wp-set-row-vals${entry.repsUnconfirmed ? ' wp-set-row-vals--unconfirmed' : ''}`} style={entry.repsUnconfirmed ? { opacity: 0.6 } : undefined}>
                           {' · '}{entry.reps}{entry.repsUnconfirmed ? '?' : ''} {t('workout.repsLower')} · {entry.kg}kg
                         </span>
@@ -1209,12 +1219,16 @@ export default function WorkoutPlayer({
             </div>
             <div className="wp-completed-stat">
               <div className="wp-completed-stat-val">{completedStats.totalSetsCompleted}</div>
-              <div className="wp-completed-stat-lbl">{t('workout.setsLower')}</div>
+              {/* F2C-2 · cardio: "bloques", no "series". */}
+              <div className="wp-completed-stat-lbl">{cardioMain ? t('workout.blocksLower') : t('workout.setsLower')}</div>
             </div>
-            <div className="wp-completed-stat">
-              <div className="wp-completed-stat-val">{completedStats.totalKg}</div>
-              <div className="wp-completed-stat-lbl">{t('workout.kgTotal')}</div>
-            </div>
+            {/* F2C-2 · cardio: sin "kg total" (0 kg no aporta). */}
+            {!cardioMain && (
+              <div className="wp-completed-stat">
+                <div className="wp-completed-stat-val">{completedStats.totalKg}</div>
+                <div className="wp-completed-stat-lbl">{t('workout.kgTotal')}</div>
+              </div>
+            )}
           </div>
           {workout.cooldown && (
             <div className="wp-prep-section">

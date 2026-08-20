@@ -461,6 +461,7 @@ export const es = {
     exitSession: 'salir de la sesión',
     completedTitle: '¡Sesión completada!',
     setsLower: 'series',
+    blocksLower: 'bloques',
     exercisesLower: 'ejercicios',
     repsLower: 'reps',
     kgTotal: 'kg total',

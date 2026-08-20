@@ -50,10 +50,10 @@ export function shouldOfferAddCardio(
   todayPlan: PlanLike | null,
   sessionsToday: Array<{ modality: string }>,
 ): boolean {
-  // F2B-1 (item 4) · si la rutina de hoy YA trae cardio estructurado PENDIENTE, es prescripción HSC
-  // (parte del workout), no actividad manual → NO ofrecer "Añadir cardio" (evita doble cardio). done o
-  // ausente → el flujo manual sigue como antes.
-  if (todayPlan?.composedCardio && todayPlan.composedCardio.done !== true) return false;
+  // F2C-2 (item 3) · si la rutina de hoy trae cardio estructurado (pending, satisfied O done), el
+  // componente cardio del día ya está gobernado por el Composer → NO ofrecer "Añadir cardio" manual como
+  // CTA principal (evita relleno redundante). Solo sin composedCardio el flujo manual sigue como antes.
+  if (todayPlan?.composedCardio) return false;
   if (todayPlan && !isCardioPlan(todayPlan)) return true;
   return sessionsToday.some((s) => s.modality !== 'cardio');
 }
