@@ -415,7 +415,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         style: cardioPlan.style, totalMinutes: cardioPlan.totalMinutes, intenseMinutes: cardioPlan.intenseMinutes,
         earlyEnd: cardioPlan.earlyEnd, earlyEndReason: cardioPlan.earlyEndReason, endReason: cardioPlan.endReason,
         blocks: cardioPlan.blocks.map(b => ({
-          kind: b.kind, minutes: b.minutes, stationId: b.stationId, stationName: nameOf(b.stationId),
+          kind: b.kind, minutes: b.minutes, stationId: b.stationId, ...(b.variantId ? { variantId: b.variantId } : {}), stationName: nameOf(b.stationId),
           intensity: b.intensity, labelKey: b.labelKey, zone: b.zone, rpe: b.rpe,
           workSec: b.workSec, restSec: b.restSec, rounds: b.rounds, cue: b.cue,
         })),
@@ -1705,7 +1705,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
             style: cardioPlan.style, totalMinutes: cardioPlan.totalMinutes, intenseMinutes: cardioPlan.intenseMinutes,
             earlyEnd: cardioPlan.earlyEnd, earlyEndReason: cardioPlan.earlyEndReason, endReason: cardioPlan.endReason,
             blocks: cardioPlan.blocks.map(b => ({
-              kind: b.kind, minutes: b.minutes, stationId: b.stationId, stationName: nameOf(b.stationId) ?? '',
+              kind: b.kind, minutes: b.minutes, stationId: b.stationId, ...(b.variantId ? { variantId: b.variantId } : {}), stationName: nameOf(b.stationId) ?? '',
               intensity: b.intensity, labelKey: b.labelKey, zone: b.zone, rpe: b.rpe,
               workSec: b.workSec, restSec: b.restSec, rounds: b.rounds, cue: b.cue,
             })),

@@ -65,8 +65,12 @@ export function auditCardioSession(
   const steadyMinutes = blocks.filter(b => b.kind === 'steady' && b.intensity !== 'alta').reduce((a, b) => a + b.minutes, 0);
   const intenseBlocks = blocks.filter(b => INTENSE_KINDS.includes(b.kind));
   const maxRounds = blocks.reduce((m, b) => Math.max(m, b.rounds ?? 0), 0);
+  // F2C-8 · identidad LÓGICA de la estación: variantId (máquina concreta) si existe, si no el stationId.
+  // Así una rotación bici→elíptica→remo (mismo stationId 'cardio-maquina', variantId distinto) NO se
+  // penaliza como repetición; y un abuso real de la MISMA máquina sí se cuenta.
+  const logicalId = (b: CardioBlock) => b.variantId ?? b.stationId;
   const stationCount = new Map<string, number>();
-  for (const b of blocks) if (b.stationId) stationCount.set(b.stationId, (stationCount.get(b.stationId) ?? 0) + 1);
+  for (const b of blocks) { const id = logicalId(b); if (id) stationCount.set(id, (stationCount.get(id) ?? 0) + 1); }
   const intenseFraction = total > 0 ? intenseMinutes / total : 0;
 
   // 1) exceso de rondas: por bloque (>14) O acumuladas en la sesión (>18 → densidad de intervalos excesiva,
@@ -126,11 +130,11 @@ export function auditCardioSession(
   //    pulsaciones no es repetición absurda, así que no cuenta aquí (sí sigue atrapando abuso real, p.ej.
   //    la misma estación intensa en 3 bloques principales).
   const nonCooldownCount = new Map<string, number>();
-  for (const b of blocks) if (b.stationId && b.kind !== 'cooldown') nonCooldownCount.set(b.stationId, (nonCooldownCount.get(b.stationId) ?? 0) + 1);
+  for (const b of blocks) if (b.kind !== 'cooldown') { const id = logicalId(b); if (id) nonCooldownCount.set(id, (nonCooldownCount.get(id) ?? 0) + 1); }
   for (const [, count] of nonCooldownCount) if (count >= 3) flags.add('repeatedStation');
-  // 10) bloques adyacentes idénticos (kind+station)
+  // 10) bloques adyacentes idénticos (kind + identidad LÓGICA)
   for (let i = 1; i < blocks.length; i++) {
-    if (blocks[i].kind === blocks[i - 1].kind && blocks[i].stationId === blocks[i - 1].stationId) flags.add('redundantBlocks');
+    if (blocks[i].kind === blocks[i - 1].kind && logicalId(blocks[i]) === logicalId(blocks[i - 1])) flags.add('redundantBlocks');
   }
 
   return {
@@ -199,12 +203,14 @@ export function auditCardioQuality(
       flags.add('excessiveSingleStationDuration');
     }
   }
-  // 3) bloques continuos adyacentes de la MISMA estación (fragmentación sin rotación = redundante).
+  // 3) bloques continuos adyacentes de la MISMA identidad LÓGICA (F2C-8: variantId si es máquina) sin
+  //    rotación = redundante. Dos máquinas distintas del mismo Exercise (bici→elíptica) NO son redundantes.
+  const lid = (b: CardioBlock) => b.variantId ?? b.stationId;
   for (let i = 1; i < blocks.length; i++) {
     const a = blocks[i - 1], c = blocks[i];
     const bothContinuous = (a.kind === 'steady' || a.kind === 'recovery' || a.kind === 'cooldown') &&
                            (c.kind === 'steady' || c.kind === 'recovery' || c.kind === 'cooldown');
-    if (bothContinuous && a.stationId === c.stationId) flags.add('redundantContinuousBlocks');
+    if (bothContinuous && lid(a) === lid(c)) flags.add('redundantContinuousBlocks');
   }
   // 4) distribución de fases: trabajo intenso presente pero sin cooldown, o sin nada continuo de soporte.
   if (hasIntense && plan.totalMinutes >= 20 && !hasCooldown) flags.add('missingCooldownSemantics');

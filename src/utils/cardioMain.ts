@@ -40,7 +40,8 @@ export type CardioEndReason =
 export interface CardioBlock {
   kind: CardioBlockKind;
   minutes: number;              // duración TOTAL del bloque (trabajo + descanso incluidos)
-  stationId: string;            // ejercicio/estación (id del banco)
+  stationId: string;            // ejercicio/estación (id del banco — SIEMPRE un Exercise resoluble por el player)
+  variantId?: string;           // F2C-8 · máquina concreta cuando el Exercise agrupa varias (cardio-maquina → cardio-bici/…)
   intensity: CardioIntensity;
   labelKey: string;             // clave i18n del nombre del bloque (el player la traduce)
   zone?: string;                // 'Zona 2' (steady/recovery)
@@ -104,8 +105,8 @@ function isExplosiveStation(e: Exercise): boolean { return matchesStyle(e, 'expl
 // con semántica propia (no un genérico "steady" con cue). Se preserva builder→persistencia→display→audit.
 const continuousKindFor = (labelKey: string): CardioBlockKind =>
   labelKey === 'cardio.recovery' ? 'recovery' : labelKey === 'cardio.cooldown' ? 'cooldown' : 'steady';
-const mkSteady = (minutes: number, stationId: string, intensity: CardioIntensity, labelKey: string, cue?: string): CardioBlock =>
-  ({ kind: continuousKindFor(labelKey), minutes: round(minutes), stationId, intensity, labelKey, zone: ZONE[intensity], rpe: RPE[intensity], cue });
+const mkSteady = (minutes: number, stationId: string, intensity: CardioIntensity, labelKey: string, cue?: string, variantId?: string): CardioBlock =>
+  ({ kind: continuousKindFor(labelKey), minutes: round(minutes), stationId, ...(variantId ? { variantId } : {}), intensity, labelKey, zone: ZONE[intensity], rpe: RPE[intensity], cue });
 
 const mkIntervals = (kind: 'intervals' | 'power', rounds: number, workSec: number, restSec: number, stationId: string, labelKey: string, cue?: string): CardioBlock => {
   const minutes = round((rounds * (workSec + restSec)) / 60);
@@ -168,8 +169,8 @@ export function cardioStationRole(ex: Exercise): { sustainable: boolean; interva
 
 /** Picker DETERMINISTA que reparte uso (diversidad) y NO usa fallback inseguro: devuelve null si no hay
  *  estación elegible (→ el motor acorta/omite el bloque; QUALITY > FILL RATE). */
-function pickLeastUsed(pool: Exercise[], used: Map<string, number>, maxUses = 2): string | null {
-  let best: Exercise | null = null; let bestUses = Infinity;
+function pickLeastUsed<T extends { id: string }>(pool: T[], used: Map<string, number>, maxUses = 2): string | null {
+  let best: T | null = null; let bestUses = Infinity;
   for (const e of pool) {                                    // orden del pool = determinista (resume estable)
     const u = used.get(e.id) ?? 0;
     if (u < bestUses) { best = e; bestUses = u; }
@@ -178,6 +179,54 @@ function pickLeastUsed(pool: Exercise[], used: Map<string, number>, maxUses = 2)
   return best.id;
 }
 const bump = (used: Map<string, number>, id: string) => used.set(id, (used.get(id) ?? 0) + 1);
+
+// ── F2C-8 · VIRTUAL STATIONS (content modeling de máquinas cardio) ──────────────────────────────
+// `cardio-maquina` es UN Exercise que agrupa varias MÁQUINAS reales (bici/elíptica/caminadora/remo).
+// Para que el programador (F2C-7) rote entre ellas, la fase CONTINUA las trata como identidades lógicas
+// distintas (logicalId = variantId), pero el bloque PERSISTE stationId='cardio-maquina' + variantId
+// (compatibilidad con player/cache/display/history; nunca se crea un exerciseId sintético).
+interface CardioContinuousStation {
+  id: string;                          // logicalId (variantId de la máquina, o exerciseId si no es banco)
+  stationId: string;                   // Exercise id que se persiste (resoluble por el player)
+  variantId?: string;                  // máquina concreta (resuelve video + display)
+  cardioStyle: CardioStyle;            // estilo EFECTIVO (de la variante o del ejercicio)
+  caps: CardioStationCapabilities;
+}
+/** ¿El Exercise agrupa MÁQUINAS cardio tipadas? Signal: alguna variante declara su PROPIO cardioStyle
+ *  (bici/elíptica/caminadora/remo lo hacen; marcha/paso NO). Cada máquina es una identidad distinta
+ *  aunque compartan estilo (bici y elíptica son ambas lowImpact pero son máquinas diferentes). */
+function isCardioMachineBank(ex: Exercise): boolean {
+  return (ex.variants ?? []).some(v => !!(v as { cardioStyle?: string }).cardioStyle);
+}
+/**
+ * Expande las estaciones CONTINUAS: un banco de máquinas se REEMPLAZA por una virtual station por cada
+ * variante REPRODUCIBLE (video) y CONTINUOUS-CAPABLE (capability derivada de la variante). El resto de
+ * estaciones (marcha/paso) quedan como una sola. Fail-closed: el video NO otorga capability — la variante
+ * debe ser continua por su propio cardioStyle (wall-balls con video pero funcional → fuera; air-bike/sled
+ * sin video → fuera). El parent solo se reemplaza si produjo ≥1 virtual station.
+ */
+function expandContinuousStations(stations: Exercise[]): CardioContinuousStation[] {
+  const out: CardioContinuousStation[] = [];
+  const seen = new Set<string>();
+  const add = (s: CardioContinuousStation) => { if (!seen.has(s.id)) { seen.add(s.id); out.push(s); } };
+  for (const ex of stations) {
+    if (isCardioMachineBank(ex)) {
+      let expanded = 0;
+      for (const v of ex.variants ?? []) {
+        if (!VIDEO_VARIANT_IDS.has(v.id)) continue;                    // reproducibilidad (clip real)
+        const vStyle: CardioStyle = (v as { cardioStyle?: CardioStyle }).cardioStyle ?? (ex.cardioStyle as CardioStyle) ?? 'funcional';
+        const vex = { ...ex, id: v.id, variants: [], cardioStyle: vStyle, equipment: v.equipment ?? ex.equipment } as Exercise;
+        const caps = cardioStationCapabilities(vex);                    // capability POR VARIANTE (fail-closed)
+        if (!(caps.steady || caps.recovery || caps.cooldown)) continue; // solo continuous-capable
+        add({ id: v.id, stationId: ex.id, variantId: v.id, cardioStyle: vStyle, caps });
+        expanded++;
+      }
+      if (expanded > 0) continue;                                      // parent REEMPLAZADO por sus máquinas
+    }
+    add({ id: ex.id, stationId: ex.id, cardioStyle: (ex.cardioStyle as CardioStyle) ?? 'funcional', caps: cardioStationCapabilities(ex) });
+  }
+  return out;
+}
 
 /** Etiqueta GLOBAL de intensidad de la sesión, derivada de la carga real (fracción intensa + presencia
  *  de bloques máximos). Hipótesis inicial (calibrable con la matriz): domina el trabajo, no un atributo. */
@@ -275,10 +324,13 @@ export function buildCardioMain(input: {
   const allStations: Exercise[] = [];
   for (const e of [...(input.supportPool ?? []), ...pool]) { if (!seen.has(e.id)) { seen.add(e.id); allStations.push(e); } }
   const capsById = new Map(allStations.map(e => [e.id, cardioStationCapabilities(e)]));
-  const cap = (id: string) => capsById.get(id);
+  const cap = (id: string) => capsById.get(id);   // capsById = INTENSO/drill (nivel Exercise, F2C-4 intacto)
+  // F2C-8 · estaciones CONTINUAS como IDENTIDADES LÓGICAS (máquinas expandidas por variante reproducible).
+  const continuousStations = expandContinuousStations(allStations);
+  const contById = new Map(continuousStations.map(s => [s.id, s]));
   // Pool CONTINUO por rol: SOLO estaciones con la capacidad requerida (fail closed). Nunca por impact solo.
-  const continuousPool = (role: 'steady' | 'recovery' | 'cooldown') =>
-    allStations.filter(e => capsById.get(e.id)![role] && capsById.get(e.id)!.maxContinuousMinutes >= 3);
+  const continuousPool = (role: 'steady' | 'recovery' | 'cooldown'): CardioContinuousStation[] =>
+    continuousStations.filter(s => s.caps[role] && s.caps.maxContinuousMinutes >= 3);
 
   const blocks: CardioBlock[] = [];
   let earlyEnd = false; let earlyEndReason: string | undefined;
@@ -301,21 +353,26 @@ export function buildCardioMain(input: {
   // (una sesión de 20' no debe ser 12' de tempo). Además del techo por estilo×nivel×readiness.
   intenseAllow = Math.min(intenseAllow, Math.round(window * 0.4));
 
-  const pushBlock = (b: CardioBlock) => { blocks.push(b); remaining -= b.minutes; bump(used, b.stationId); };
+  // `bumpKey` = identidad para el `used` map. INTENSO/drill → stationId (Exercise). CONTINUO → logicalId
+  // (variantId de la máquina) para que la rotación distinga bici/elíptica/remo aunque compartan stationId.
+  const pushBlock = (b: CardioBlock, bumpKey: string = b.stationId) => { blocks.push(b); remaining -= b.minutes; bump(used, bumpKey); };
 
   // CONTINUO (steady/recovery/cooldown): rellena `minutes` a través de estaciones CON la capacidad del rol,
   // respetando maxContinuousMinutes de cada una (fragmenta a otra estación si el bloque excede el tope).
   // Sin estación compatible → NO se crea bloque (fail closed; jamás una estación incompatible). Devuelve lo llenado.
   // `progCap` (F2C-7) = tope de PROGRAMACIÓN por bloque (rotación); el bloque real respeta min(safety, progCap).
-  const addContinuous = (minutes: number, role: 'steady' | 'recovery' | 'cooldown', intensity: CardioIntensity, labelKey: string, cue: string, poolOverride?: Exercise[], progCap = Infinity): number => {
+  const addContinuous = (minutes: number, role: 'steady' | 'recovery' | 'cooldown', intensity: CardioIntensity, labelKey: string, cue: string, poolOverride?: CardioContinuousStation[], progCap = Infinity): number => {
     let filled = 0;
     while (minutes - filled >= 3 && remaining >= 3) {
-      const id = pickLeastUsed(poolOverride ?? continuousPool(role), used, 2);
+      const id = pickLeastUsed(poolOverride ?? continuousPool(role), used, 2);   // logicalId (rota máquinas)
       if (!id) break;                                                   // sin estación compatible → parar (no rellenar mal)
-      const stMax = Math.min(cap(id)!.maxContinuousMinutes, progCap);   // SEGURIDAD ∧ PROGRAMACIÓN
+      const st = contById.get(id);
+      if (!st) break;
+      const stMax = Math.min(st.caps.maxContinuousMinutes, progCap);    // SEGURIDAD ∧ PROGRAMACIÓN
       const m = Math.min(minutes - filled, remaining, stMax);
       if (m < 3) break;
-      pushBlock(mkSteady(m, id, intensity, labelKey, cue));
+      // Persiste stationId (Exercise resoluble) + variantId (máquina concreta); bump por logicalId (rotación).
+      pushBlock(mkSteady(m, st.stationId, intensity, labelKey, cue, st.variantId), st.id);
       filled += m;
     }
     return filled;
@@ -381,9 +438,10 @@ export function buildCardioMain(input: {
     if (!cdPool.length) return;                          // sin estación de cooldown compatible → se omite (fail closed)
     const id = pickLeastUsed(cdPool, used, Infinity);    // reutiliza la MENOS usada, ignorando solo aquí el cap de variedad
     if (!id) return;
-    const m = Math.min(cooldownBudget, remaining, cap(id)!.maxContinuousMinutes, progCap);
+    const st = contById.get(id)!;
+    const m = Math.min(cooldownBudget, remaining, st.caps.maxContinuousMinutes, progCap);
     if (m < 3) return;
-    pushBlock(mkSteady(m, id, 'baja', 'cardio.cooldown', COOLDOWN_CUE));
+    pushBlock(mkSteady(m, st.stationId, 'baja', 'cardio.cooldown', COOLDOWN_CUE, st.variantId), st.id);
   };
 
   if (style === 'lowImpact') {
@@ -410,7 +468,7 @@ export function buildCardioMain(input: {
       if (id && tempo >= 4 && intenseUsed + tempo <= intenseAllow) { pushBlock(mkSteady(tempo, id, 'alta', 'cardio.tempo', 'Bloque tempo: cómodamente duro.')); intenseUsed += tempo; }
     }
     // rodaje suave DOMINANTE (acotado por su phase budget): estaciones de CARRERA continuous PRIMERO.
-    const runContinuous = continuousPool('steady').filter(e => matchesStyle(e, 'correr'));
+    const runContinuous = continuousPool('steady').filter(s => s.cardioStyle === 'correr');
     const easyCue = L === 'principiante' ? 'Alterna trote suave y caminata; la mayor parte es fácil.' : 'Rodaje suave; la mayor parte del volumen es fácil.';
     const easyBudget = Math.min(aerobicBudget, Math.max(0, remaining - cooldownBudget));
     if (easyBudget >= 3) addContinuous(easyBudget, 'steady', 'baja', 'cardio.steady', easyCue, [...runContinuous, ...continuousPool('steady')], progCap);
@@ -483,19 +541,22 @@ export function buildCardioMain(input: {
  * CLAVE del fix: sin esto, el día de cardio ejecutaba la lista corta de la IA (~37 min) e ignoraba
  * el plan (112 min) — el bloque era solo un panel. Ahora el plan ES la sesión.
  */
-export function cardioBlocksToExercises(plan: CardioMainPlan): Array<{ id: string; sets: number; reps: string; rest: number; tip_personalizado: string; cardio: CardioExerciseMeta }> {
+export function cardioBlocksToExercises(plan: CardioMainPlan): Array<{ id: string; variantId?: string; sets: number; reps: string; rest: number; tip_personalizado: string; cardio: CardioExerciseMeta }> {
   return plan.blocks.filter(b => b.stationId).map(b => {
     // IDENTIDAD DEL BLOQUE (kind/labelKey/zone/style/…) viaja con el ejercicio → la card muestra la
     // ACTIVIDAD real (correr/circuito/…), no el stationId técnico. El player sigue usando id/reps/sets
     // para el timer (campo `cardio` es solo display; no lo lee la ejecución).
+    // F2C-8 · `variantId` (máquina concreta) viaja con el ejercicio → display/player/video resuelven la
+    //         máquina real (cardio-bici/…) de forma DETERMINISTA (sellada), sin recomputar downstream.
     const cardio: CardioExerciseMeta = {
       kind: b.kind, labelKey: b.labelKey, zone: b.zone, minutes: b.minutes,
       workSec: b.workSec, restSec: b.restSec, rounds: b.rounds, intensity: b.intensity, style: plan.style,
     };
+    const vid = b.variantId ? { variantId: b.variantId } : {};
     if (b.kind === 'intervals' || b.kind === 'power') {
-      return { id: b.stationId, sets: Math.max(1, b.rounds ?? 1), reps: `${b.workSec ?? 30} seg`, rest: b.restSec ?? 30, tip_personalizado: b.cue ?? '', cardio };
+      return { id: b.stationId, ...vid, sets: Math.max(1, b.rounds ?? 1), reps: `${b.workSec ?? 30} seg`, rest: b.restSec ?? 30, tip_personalizado: b.cue ?? '', cardio };
     }
-    return { id: b.stationId, sets: 1, reps: `${b.minutes} min${b.zone ? ` · ${b.zone}` : ''}`, rest: 0, tip_personalizado: b.cue ?? '', cardio };
+    return { id: b.stationId, ...vid, sets: 1, reps: `${b.minutes} min${b.zone ? ` · ${b.zone}` : ''}`, rest: 0, tip_personalizado: b.cue ?? '', cardio };
   });
 }
 

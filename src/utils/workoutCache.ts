@@ -88,9 +88,10 @@ export interface CachedWorkout {
     earlyEndReason?: string;
     endReason?: import('./cardioMain').CardioEndReason; // F2C-5 · razón tipada (opcional: planes legacy sin ella)
     blocks: Array<{
-      kind: string;               // steady | intervals | drills | power | recovery
+      kind: string;               // steady | intervals | drills | power | recovery | cooldown
       minutes: number;
       stationId: string;
+      variantId?: string;         // F2C-8 · máquina concreta (cardio-maquina → cardio-bici/…); opcional (legacy sin él)
       stationName: string;        // nombre localizado (resuelto al construir)
       intensity: string;          // baja | media | alta
       labelKey: string;           // clave i18n del nombre del bloque

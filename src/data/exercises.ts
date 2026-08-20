@@ -2614,7 +2614,7 @@ const baseExercises: Exercise[] = [
     ],
     tip: 'Si haces intervalos, recupera bien entre rondas — el HIIT real requiere descansos completos, no medio respirar.',
     variants: [
-      { id: 'remo-ergometro', name: 'Remo (ergómetro)', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Cardio cuerpo completo — bajo impacto y alta demanda.' },
+      { id: 'remo-ergometro', name: 'Remo (ergómetro)', equipment: ['gym'], difficulty: 'principiante', isDefault: true, cardioStyle: 'lowImpact', notes: 'Cardio cuerpo completo — bajo impacto y alta demanda.' },
       { id: 'air-bike', name: 'Air bike (assault)', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '30-60 seg', defaultRest: 90, notes: 'Bicicleta de ventilador con brazos — intervalos brutales.' },
       { id: 'sled-push', name: 'Empuje de trineo', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '20-40m', defaultRest: 90, notes: 'Empujar trineo con peso — cero impacto articular pero máxima demanda metabólica.' },
       { id: 'wall-balls', name: 'Wall balls', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '15-20', notes: 'Sentadilla profunda lanzando balón medicinal a la pared — clásico CrossFit.' },
