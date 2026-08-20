@@ -43,7 +43,7 @@ import { allocateSessionVolume, prescribeSession, prescribeExercise, categorize,
 import { composeSession as runSessionComposer, sealComposedSession, ceilingSafeCardioLevel, carrySealedCardio, composedCardioLiveState, type ComposeSessionResult } from '../utils/sessionComposer';
 import { allocateHeadroom } from '../utils/headroom';
 import { assignTechniques } from '../utils/techniques';
-import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities, resolveCardioStyle } from '../utils/cardioMain';
+import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities, resolveCardioStyle, cardioStationRole, sessionIntensityLabel } from '../utils/cardioMain';
 import { composeSession } from '../utils/sessionBlocks';
 import { strengthWarmupMinutes, pickWarmupRaise, pickSpecificActivation, warmupRegion, firstApproachExercise } from '../utils/strengthWarmup';
 import { shouldShowWeekCoveredNotice, initialWorkoutPhase, planPlannedMinutes } from '../utils/workoutDisplay';
@@ -386,6 +386,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     const cardioEq = cardioEquipmentFor(caps.hasFullGym ? ['gym'] : ['cuerpo']);
     const style = resolveCardioStyle(spec.style, cardioCapabilities);
     const pool = bank.filter(e => (e.type === 'cardio' || e.muscleGroup === 'cardio') && hasPlayableVariant(e, cardioEq, caps.allowedImplements));
+    // F2C-3 · estaciones SOSTENIBLES (cross-style) para steady/recovery/cooldown (bici/marcha/…).
+    const supportPool = pool.filter(e => cardioStationRole(e).sustainable);
     const cardioPlan = buildCardioMain({
       mainBudgetMinutes: spec.minutes,
       style,
@@ -398,6 +400,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       lowImpactMode: spec.intensityCeiling === 'zona2' ? true : Number(obData?.edad ?? 0) >= 60,
       isDeload: false,
       pool,
+      supportPool,
     });
     if (cardioPlan.totalMinutes === 0 || cardioPlan.blocks.length === 0) return null;
     const cardioExs = cardioBlocksToExercises(cardioPlan);
@@ -1675,6 +1678,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // estos bloques; la IA (si corrió) solo aportó cues. `candidates` es el pool ya filtrado por
         // estilo/gear/seguridad. Si el plan termina antes (explosividad/principiante), es intencional.
         if (isCardioDay) {
+          // F2C-3 · estaciones SOSTENIBLES (cross-style) para steady/recovery/cooldown — `candidates` está
+          // filtrado por estilo (main work), pero recovery/steady necesitan bajo impacto (bici/marcha/…).
+          const cardioSupportPool = bank.filter(e =>
+            (e.type === 'cardio' || e.muscleGroup === 'cardio') && cardioStationRole(e).sustainable
+            && hasPlayableVariant(e, cardioEquipmentFor(cardioEqBase), caps.allowedImplements));
           const cardioPlan = buildCardioMain({
             mainBudgetMinutes: sessionPlan.budget.main,
             // Blindaje de STATE: el estilo DEBE tener contenido (caps). Si quedó uno inválido
@@ -1687,7 +1695,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
             lowImpactMode,
             isDeload: mesoDeload,
             pool: candidates,
+            supportPool: cardioSupportPool,
           });
+          // F2C-3 (item H) · etiqueta GLOBAL de intensidad derivada de la carga REAL de la sesión
+          // (fracción intensa + presencia de potencia), no un valor estático.
+          w.intensity = sessionIntensityLabel(cardioPlan);
           w.cardioMainBlock = {
             style: cardioPlan.style, totalMinutes: cardioPlan.totalMinutes, intenseMinutes: cardioPlan.intenseMinutes,
             earlyEnd: cardioPlan.earlyEnd, earlyEndReason: cardioPlan.earlyEndReason,

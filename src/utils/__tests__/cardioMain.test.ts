@@ -109,15 +109,14 @@ describe('CARDIO-MAIN · running (§5/§21)', () => {
 
 // ── §7/§22 · FUNCIONAL: bloques con recuperación, densidad controlada ───
 describe('CARDIO-MAIN · funcional (§7/§22)', () => {
-  it('funcional 120 EARLY-END honesto: dosis funcional acotada, NO relleno de Zona 2', () => {
+  it('funcional 120: 1 circuito ACOTADO + aeróbico SOSTENIBLE dominante (F2C-3, no relleno de saltos)', () => {
     const p = plan('funcional', 120, 'intermedio');
-    // Política nueva (selectedTime = disponibilidad, no obligación): funcional NO rellena la ventana
-    // con steady → dosis útil acotada + early-end honesto. Antes esto era ~24 min circuito + ~80 steady.
-    expect(p.earlyEnd).toBe(true);
-    expect(p.totalMinutes).toBeLessThan(p.budgetMinutes * 0.7);
-    expect(p.blocks.some(b => b.kind === 'recovery' || (b.kind === 'steady' && b.intensity !== 'alta'))).toBe(true);
-    const steady = p.blocks.filter(b => b.kind === 'steady' || b.kind === 'recovery').reduce((a, b) => a + b.minutes, 0);
-    expect(steady).toBeLessThan(p.totalMinutes * 0.6); // NO mayoritariamente steady padding
+    const circuits = p.blocks.filter(b => b.kind === 'intervals');
+    expect(circuits.length).toBeGreaterThanOrEqual(1);
+    expect(circuits.length).toBeLessThanOrEqual(2);                          // NO 3-4 bloques intensos
+    expect(Math.max(0, ...p.blocks.map(b => b.rounds ?? 0))).toBeLessThanOrEqual(10); // rondas acotadas (no 12+12)
+    expect(p.intenseMinutes).toBeLessThan(p.totalMinutes * 0.4);            // intenso NO domina
+    expect(p.steadyMinutes).toBeGreaterThan(p.intenseMinutes);             // el grueso es sostenible
   });
 });
 
@@ -292,9 +291,10 @@ describe('CARDIO-MAIN · tiempo preservado por modalidad con contenido (§11)', 
     const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'lowImpact', level: 'intermedio', pool: pool('lowImpact', ['gym']) });
     expect(p.totalMinutes).toBeGreaterThan(mainBudget(120) * 0.9);
   });
-  it('funcional 120 gym: EARLY-END (dosis funcional acotada, NO rellena la ventana)', () => {
+  it('funcional 120 gym: circuito acotado + aeróbico sostenible (F2C-3), intenso NO domina', () => {
     const p = buildCardioMain({ mainBudgetMinutes: mainBudget(120), style: 'funcional', level: 'intermedio', pool: pool('funcional', ['gym']) });
-    expect(p.earlyEnd).toBe(true);
-    expect(p.totalMinutes).toBeLessThan(mainBudget(120) * 0.7); // no 120 min de relleno
+    expect(p.blocks.filter(b => b.kind === 'intervals').length).toBeLessThanOrEqual(2);
+    expect(p.intenseMinutes).toBeLessThan(p.totalMinutes * 0.4);
+    expect(p.steadyMinutes).toBeGreaterThan(p.intenseMinutes);   // relleno = sostenible, no saltos
   });
 });
