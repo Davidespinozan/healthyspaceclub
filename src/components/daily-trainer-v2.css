@@ -828,6 +828,138 @@
 }
 .dt2-cc-cta svg { flex-shrink: 0; }
 
+/* Estado DONE del bloque 03 (colapsado): el cardio compuesto ya se ejecutó → indicador, no CTA. */
+.dt2-composed-cardio.is-done {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(61, 99, 89, 0.10);
+  border-color: rgba(61, 99, 89, 0.24);
+}
+.dt2-cc-num.is-done {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sage, #3d6359);
+  border-color: rgba(61, 99, 89, 0.4);
+  padding: 3px;
+}
+
+/* F2B-1 UX (item 3) · overlay de transición Fuerza→Cardio (sesión continua). */
+.dt2-cardio-handoff {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(10, 22, 20, 0.62);
+  backdrop-filter: blur(3px);
+  animation: dt2HandoffIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes dt2HandoffIn { from { opacity: 0; } to { opacity: 1; } }
+.dt2-handoff-card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 28px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+  border-radius: 20px;
+  background: linear-gradient(180deg, #163b34 0%, #0E2521 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: 'Montserrat', sans-serif;
+  color: #fff;
+}
+.dt2-handoff-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--sage, #3d6359);
+}
+.dt2-handoff-done svg { color: var(--sage, #3d6359); }
+.dt2-handoff-next { margin: 2px 0 0; font-size: 1.02rem; font-weight: 700; color: #fff; }
+.dt2-handoff-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+.dt2-handoff-meta svg { color: var(--dorado, #B8944A); flex-shrink: 0; }
+.dt2-handoff-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 22px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(160deg, #EAC87C 0%, #C9A868 52%, #B58F51 100%);
+  color: var(--forest, #0E2521);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.dt2-handoff-later {
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.82rem;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+/* F2B-1 (item 5) · aviso INEQUÍVOCO de "Generarme más" (covered/gap): título + motivo real, visible. */
+.dt2-supp-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 28px 24px;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  font-family: 'Montserrat', sans-serif;
+}
+.dt2-supp-notice.is-covered { background: rgba(61, 99, 89, 0.10); border-color: rgba(61, 99, 89, 0.26); }
+.dt2-supp-notice.is-gap { background: rgba(184, 148, 74, 0.10); border-color: rgba(184, 148, 74, 0.26); }
+.dt2-supp-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+}
+.dt2-supp-notice.is-covered .dt2-supp-icon { color: var(--sage, #3d6359); background: rgba(61, 99, 89, 0.16); }
+.dt2-supp-notice.is-gap .dt2-supp-icon { color: var(--dorado, #B8944A); background: rgba(184, 148, 74, 0.16); }
+.dt2-supp-title { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--txt1, #0E2521); }
+.dt2-supp-text { margin: 0; font-size: 0.85rem; line-height: 1.45; color: var(--txt2); }
+.dt2-supp-btn {
+  margin-top: 6px;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 28px;
+  background: linear-gradient(160deg, #EAC87C 0%, #C9A868 52%, #B58F51 100%);
+  color: var(--forest, #0E2521);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .dt2-lang-mismatch {
   display: flex;
   align-items: center;

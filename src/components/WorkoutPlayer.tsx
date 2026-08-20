@@ -1108,6 +1108,7 @@ export default function WorkoutPlayer({
           {rirPrompt && (
             <div className="wp-rir-prompt">
               <span className="wp-rir-q">{t('workout.rirQ')}</span>
+              <span className="wp-rir-hint">{t('workout.rirHint')}</span>
               <div className="wp-rir-chips">
                 {[0, 1, 2, 3, 4].map(v => (
                   <button key={v} className="wp-rir-chip" onClick={() => pickRir(v)}>

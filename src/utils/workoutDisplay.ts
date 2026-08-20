@@ -32,6 +32,8 @@ interface PlanLike {
   warmupBlock?: { minutes: number } | null;
   cardioMainBlock?: { totalMinutes: number; earlyEnd?: boolean; earlyEndReason?: string; style?: string; blocks?: CardioBlockLike[] } | null;
   finisherBlock?: { minutes: number } | null;
+  // F2B-1 · cardio estructurado sellado en el plan del día (Session Composer).
+  composedCardio?: { done?: boolean } | null;
 }
 
 /** ¿Es un plan de CARDIO dedicado (tiene main determinista por bloques)? */
@@ -48,6 +50,10 @@ export function shouldOfferAddCardio(
   todayPlan: PlanLike | null,
   sessionsToday: Array<{ modality: string }>,
 ): boolean {
+  // F2B-1 (item 4) · si la rutina de hoy YA trae cardio estructurado PENDIENTE, es prescripción HSC
+  // (parte del workout), no actividad manual → NO ofrecer "Añadir cardio" (evita doble cardio). done o
+  // ausente → el flujo manual sigue como antes.
+  if (todayPlan?.composedCardio && todayPlan.composedCardio.done !== true) return false;
   if (todayPlan && !isCardioPlan(todayPlan)) return true;
   return sessionsToday.some((s) => s.modality !== 'cardio');
 }

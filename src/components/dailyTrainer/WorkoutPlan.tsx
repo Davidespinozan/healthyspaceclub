@@ -15,7 +15,7 @@
 
 import { lazy, Suspense, useRef, useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight, Dumbbell, BarChart3, Target } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight, Dumbbell, BarChart3, Target, Check } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { plural } from '../../i18n/format';
 import { humanizeExerciseId } from '../../utils/exerciseMeta';
@@ -142,8 +142,20 @@ export default function WorkoutPlan({
   const [workoutPlayerOpen, setWorkoutPlayerOpen] = useState(false);
   // F2B-1 · sesión cardio compuesta EN CURSO (sesión SEPARADA; no reemplaza el plan de fuerza).
   const [composedCardioActive, setComposedCardioActive] = useState<CachedWorkout | null>(null);
+  // F2B-1 UX (item 3) · transición Fuerza→Cardio: tras completar fuerza con cardio pendiente se ofrece
+  // continuar sin volver a "buscar" el cardio. NO auto-inicia; NO marca done si se pospone.
+  const [cardioHandoff, setCardioHandoff] = useState(false);
   const composedCardioSpec = plan.composedCardio;
   const composedCardioPending = !!composedCardioSpec && composedCardioSpec.done !== true;
+  // Inicia el cardio SELLADO como sesión separada (usado por el bloque 03 y por la transición).
+  const startComposedCardio = () => {
+    if (!composedCardioSpec || !buildComposedCardio) return;
+    const cardio = buildComposedCardio(composedCardioSpec);
+    if (!cardio || !cardio.exercises.length) return;
+    playerStartedAtRef.current = Date.now();
+    setCardioHandoff(false);
+    setComposedCardioActive(cardio);
+  };
   const [activityOpen, setActivityOpen] = useState(false);
   // Plan-1: "POR QUÉ HOY" colapsable. Default cerrado — el plan arranca
   // limpio, el usuario lo abre si quiere leer el rationale del coach.
@@ -500,6 +512,34 @@ export default function WorkoutPlan({
         </div>
       )}
 
+      {/* 03 · CARDIO ESTRUCTURADO — PARTE DE LA RUTINA prescrita (no footer): va junto a la fuerza,
+          ANTES de "otra actividad". Pending → CTA "Continuar con cardio"; done → indicador colapsado.
+          Ejecuta el spec SELLADO como sesión SEPARADA (modality='cardio'), sin reemplazar la fuerza. */}
+      {composedCardioSpec && buildComposedCardio && (
+        composedCardioPending ? (
+          <div className="dt2-composed-cardio">
+            <div className="dt2-cc-head">
+              <span className="dt2-cc-num">03</span>
+              <span className="dt2-cc-title">{t('workout.composedCardio.title')}</span>
+            </div>
+            <p className="dt2-cc-meta">
+              <Clock size={12} strokeWidth={2} /> {t('workout.minApprox', { n: composedCardioSpec.minutes })}
+              {' · '}
+              {t(composedCardioSpec.intensityCeiling === 'zona2' ? 'workout.composedCardio.zona2' : 'workout.composedCardio.moderate')}
+              {' · '}{t('workout.composedCardio.partOfRoutine')}
+            </p>
+            <button type="button" className="dt2-cc-cta" onClick={startComposedCardio}>
+              <Play size={14} strokeWidth={2} fill="currentColor" /> {t('workout.composedCardio.start')}
+            </button>
+          </div>
+        ) : (
+          <div className="dt2-composed-cardio is-done">
+            <span className="dt2-cc-num is-done"><Check size={13} strokeWidth={2.6} /></span>
+            <span className="dt2-cc-title">{t('workout.composedCardio.done')}</span>
+          </div>
+        )
+      )}
+
       {/* Actividad alterna — "hoy no hice esto, pero hice esto". Oculta en sesión
           de pareja (es obvio que están haciendo la rutina juntos). */}
       {!plan.partnerMode && (
@@ -525,32 +565,25 @@ export default function WorkoutPlan({
         />
       )}
 
-      {/* 03 · CARDIO — solo si hay cardio COMPUESTO pendiente (sellado en el plan). Vía PERSISTENTE
-          (no efímera): "Continuar con cardio" ejecuta el spec sellado como sesión SEPARADA
-          (modality='cardio') sin reemplazar el dailyWorkout de fuerza. */}
-      {composedCardioPending && composedCardioSpec && buildComposedCardio && (
-        <div className="dt2-composed-cardio">
-          <div className="dt2-cc-head">
-            <span className="dt2-cc-num">03</span>
-            <span className="dt2-cc-title">{t('workout.composedCardio.title')}</span>
+      {/* F2B-1 UX (item 3) · TRANSICIÓN Fuerza→Cardio: al completar la fuerza con cardio pendiente NO
+          se vuelve al plan a "buscar" el cardio escondido — se ofrece continuar como sesión continua.
+          NO auto-inicia (botón explícito) y "Ahora no" lo deja pending (sin marcar done). */}
+      {cardioHandoff && composedCardioPending && composedCardioSpec && buildComposedCardio && (
+        <div className="dt2-cardio-handoff">
+          <div className="dt2-handoff-card">
+            <span className="dt2-handoff-done"><Check size={18} strokeWidth={2.6} /> {t('workout.composedCardio.strengthDone')}</span>
+            <p className="dt2-handoff-next">{t('workout.composedCardio.next')}</p>
+            <p className="dt2-handoff-meta">
+              <Clock size={13} strokeWidth={2} /> {t('workout.minApprox', { n: composedCardioSpec.minutes })}
+              {' · '}{t(composedCardioSpec.intensityCeiling === 'zona2' ? 'workout.composedCardio.zona2' : 'workout.composedCardio.moderate')}
+            </p>
+            <button type="button" className="dt2-handoff-cta" onClick={startComposedCardio}>
+              <Play size={15} strokeWidth={2} fill="currentColor" /> {t('workout.composedCardio.continue')}
+            </button>
+            <button type="button" className="dt2-handoff-later" onClick={() => setCardioHandoff(false)}>
+              {t('workout.composedCardio.later')}
+            </button>
           </div>
-          <p className="dt2-cc-meta">
-            <Clock size={12} strokeWidth={2} /> {t('workout.minApprox', { n: composedCardioSpec.minutes })}
-            {' · '}
-            {t(composedCardioSpec.intensityCeiling === 'zona2' ? 'workout.composedCardio.zona2' : 'workout.composedCardio.moderate')}
-          </p>
-          <button
-            type="button"
-            className="dt2-cc-cta"
-            onClick={() => {
-              const cardio = buildComposedCardio(composedCardioSpec);
-              if (!cardio || !cardio.exercises.length) return;
-              playerStartedAtRef.current = Date.now();
-              setComposedCardioActive(cardio);
-            }}
-          >
-            <Play size={14} strokeWidth={2} fill="currentColor" /> {t('workout.composedCardio.start')}
-          </button>
         </div>
       )}
 
@@ -713,6 +746,9 @@ export default function WorkoutPlan({
             }).catch(() => {});
 
             setWorkoutPlayerOpen(false);
+            // F2B-1 UX (item 3) · si esta sesión de fuerza trae cardio compuesto pendiente, no volver al
+            // plan a "buscar" el cardio: ofrecer la transición continua Fuerza→Cardio. NO auto-inicia.
+            if (composedCardioPending) setCardioHandoff(true);
           }}
         />
         </Suspense>

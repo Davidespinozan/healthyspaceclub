@@ -1819,17 +1819,19 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   // D1 · aviso covered/gap de "Generarme más" — NO abre player. Mensaje claro + volver.
   if (supplementalNotice) {
     const backToPlan = () => { setSupplementalNotice(null); setPhase(plan ? 'plan' : 'modality'); };
+    // D1 · aviso INEQUÍVOCO (item 5): "Generarme más" corrió y devolvió un resultado real (covered/gap).
+    // Nunca "no pasó nada" — título claro + motivo real. Reutiliza el status de handleGenerateMore (D1),
+    // sin razón fisiológica inventada. covered = dosis de fuerza cubierta; gap = sin ejercicios compatibles.
+    const covered = supplementalNotice === 'covered';
     return (
       <div className="wz-root">
-        <div className="wz-error">
-          <p className="wz-error-text">
-            {supplementalNotice === 'covered'
-              ? <Check size={14} strokeWidth={2.4} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
-              : <AlertTriangle size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />}
-            {' '}
-            {t(supplementalNotice === 'covered' ? 'workout.supplementalCovered' : 'workout.supplementalGap')}
-          </p>
-          <button className="wz-error-btn" onClick={backToPlan}>{t('workout.supplementalBack')}</button>
+        <div className={`dt2-supp-notice${covered ? ' is-covered' : ' is-gap'}`}>
+          <span className="dt2-supp-icon" aria-hidden="true">
+            {covered ? <Check size={22} strokeWidth={2.4} /> : <AlertTriangle size={22} strokeWidth={2} />}
+          </span>
+          <h2 className="dt2-supp-title">{t(covered ? 'workout.supplementalCoveredTitle' : 'workout.supplementalGapTitle')}</h2>
+          <p className="dt2-supp-text">{t(covered ? 'workout.supplementalCovered' : 'workout.supplementalGap')}</p>
+          <button className="dt2-supp-btn" onClick={backToPlan}>{t('workout.supplementalBack')}</button>
         </div>
       </div>
     );

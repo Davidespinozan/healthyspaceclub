@@ -334,6 +334,7 @@
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
 }
 .wp-rir-q { font-size: 14px; font-weight: 600; text-align: center; }
+.wp-rir-hint { font-size: 11.5px; color: var(--wp-txt2); text-align: center; margin-top: -4px; }
 .wp-rir-chips { display: flex; gap: 8px; justify-content: center; }
 .wp-rir-chip {
   flex: 1;
@@ -843,7 +844,15 @@
 .wp-set-row.future .wp-set-row-icon { color: var(--wp-txt3); }
 /* Lápiz de editar en series ya marcadas: tono claro neutro (el dorado apagado
    se leía verdoso sobre el fondo verde). */
-.wp-set-row.done .wp-set-row-icon { color: var(--wp-txt2); }
+/* Trigger de EDICIÓN (lápiz) de una serie ya hecha: chip dorado brillante → se lee de inmediato como
+   editable y con alto contraste sobre el verde (antes era blanco 65% translúcido, casi invisible). */
+.wp-set-row.done .wp-set-row-icon {
+  color: #EAC87C;
+  background: var(--wp-amber-soft);
+  border-radius: 7px;
+  padding: 4px;
+  line-height: 0;
+}
 
 /* ── Rest bar flotante (sticky bottom, no-bloqueante) ── */
 
@@ -967,7 +976,9 @@
 }
 
 .wp-edit-popup {
-  background: var(--wp-bg-2);
+  /* Coherencia con el player (F2B-1 UX): forest en vez del teal claro suelto (--wp-bg-2) que se
+     leía como otro componente. Sutil elevación (top algo más claro → base --wp-bg). */
+  background: linear-gradient(180deg, #163b34 0%, var(--wp-bg) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px 20px 0 0;
   padding: 14px 24px calc(28px + env(safe-area-inset-bottom, 0px));

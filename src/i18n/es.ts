@@ -436,7 +436,8 @@ export const es = {
     resumeHold: 'Reanudar',
     finishEarly: 'Terminar antes',
     deloadBanner: 'Semana de descarga · hoy bajamos carga y volumen para recuperar.',
-    rirQ: '¿Cuántas más podías hacer?',
+    rirQ: '¿Cuántas repeticiones más podrías haber hecho?',
+    rirHint: 'Piensa en esta serie manteniendo buena técnica.',
     rirReduce: 'Quedó más cerca del fallo de lo planeado — afloja un poco la siguiente.',
     rirReduceKg: 'Quedó más cerca del fallo — baja a ~{kg}kg en la siguiente.',
     rirIncrease: 'Te sobró margen — sube un poco la siguiente.',
@@ -562,6 +563,13 @@ export const es = {
       zona2: 'Zona 2 (sostenible)',
       moderate: 'Intensidad moderada',
       start: 'Continuar con cardio',
+      partOfRoutine: 'Parte de tu rutina de hoy',
+      strengthDone: 'Fuerza completada',
+      next: 'Siguiente: cardio estructurado',
+      continue: 'Continuar con cardio',
+      later: 'Ahora no',
+      done: 'Cardio completado',
+      todaySummary: 'Fuerza + cardio',
     },
     // Aviso PRE-generación cuando AUTO ve el volumen semanal prácticamente cubierto (allCovered).
     weekCovered: {

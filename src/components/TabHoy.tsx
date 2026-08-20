@@ -260,6 +260,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // D1 · "Generarme más" persistente: solo si ya COMPLETASTE fuerza hoy (no pendiente/en progreso) — el
   // supplemental es trabajo ADICIONAL sobre lo hecho. Sobrevive a cerrar/reabrir (lee completedSessions).
   const completedStrengthToday = shouldOfferGenerateMore(sessionsToday);
+  // F2B-1 (item 4/11) · si la rutina de hoy YA trae cardio estructurado PENDIENTE, es prescripción HSC
+  // (parte del workout), no actividad opcional: NO ofrecer "Añadir cardio" manual (evita doble cardio).
+  // done/ausente → el flujo manual sigue intacto. La composición detallada vive en "Ver rutina completa".
+  const composedCardio = (todayWorkoutPlan as { composedCardio?: { done?: boolean } } | null)?.composedCardio;
+  const composedCardioPending = !!composedCardio && composedCardio.done !== true;
   const trainedToday = sessionsToday.length > 0 || allExercisesChecked || activityToday;
   const reflectionDone = todayHSMAnswered > 0;
 
@@ -705,9 +710,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 return (
                   <>
                     <h2 className="th3-card-title">{t('hoy.routineToday')}</h2>
-                    {(wType || wDuration) && (
+                    {(wType || wDuration || composedCardioPending) && (
                       <p className="th3-card-meta">
                         {wType}{wType && wDuration ? ' · ' : ''}{wDuration}
+                        {composedCardioPending && <span className="th3-card-composed">{(wType || wDuration) ? ' · ' : ''}{t('workout.composedCardio.todaySummary')}</span>}
                       </p>
                     )}
                     {exList.length > 0 && (

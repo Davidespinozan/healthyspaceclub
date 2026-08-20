@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planPlannedMinutes, planEarlyEnd, isCardioPlan, cardioBlockTitleKey, cardioShowVideo, type CardioExerciseMeta } from '../workoutDisplay';
+import { planPlannedMinutes, planEarlyEnd, isCardioPlan, cardioBlockTitleKey, cardioShowVideo, shouldOfferAddCardio, type CardioExerciseMeta } from '../workoutDisplay';
 import { cardioBlocksToExercises } from '../cardioMain';
 
 const meta = (o: Partial<CardioExerciseMeta>): CardioExerciseMeta =>
@@ -97,5 +97,29 @@ describe('cardioBlocksToExercises — la identidad del bloque viaja con el ejerc
     expect(exs[1].cardio.style).toBe('correr');
     // el steady de 77 min comparte stationId con los drills, pero su IDENTIDAD es distinta
     expect(cardioBlockTitleKey(exs[0].cardio)).not.toBe(cardioBlockTitleKey(exs[1].cardio));
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// F2B-1 (item 4) · shouldOfferAddCardio respeta composedCardio: no doble cardio si hay uno pendiente.
+// ═══════════════════════════════════════════════════════════════════════════
+describe('shouldOfferAddCardio — gate de composedCardio (Today)', () => {
+  const strengthPlan = (composedCardio?: { done?: boolean }) =>
+    ({ exercises: [{ sets: 4, reps: '8', rest: 120 }], ...(composedCardio ? { composedCardio } : {}) });
+  it('composedCardio PENDING → NO ofrecer "Añadir cardio"', () => {
+    expect(shouldOfferAddCardio(strengthPlan({ done: false }) as never, [])).toBe(false);
+    expect(shouldOfferAddCardio(strengthPlan({}) as never, [])).toBe(false); // done ausente = pending
+  });
+  it('composedCardio DONE → sí ofrecer (flujo manual normal)', () => {
+    expect(shouldOfferAddCardio(strengthPlan({ done: true }) as never, [])).toBe(true);
+  });
+  it('SIN composedCardio → comportamiento previo intacto (plan de fuerza → true)', () => {
+    expect(shouldOfferAddCardio(strengthPlan() as never, [])).toBe(true);
+  });
+  it('SIN composedCardio · sin plan pero sesión de fuerza completada → true', () => {
+    expect(shouldOfferAddCardio(null, [{ modality: 'fuerza' }])).toBe(true);
+  });
+  it('día de cardio (isCardioPlan) sin composed → false (ya es cardio)', () => {
+    expect(shouldOfferAddCardio({ exercises: [], cardioMainBlock: { totalMinutes: 30 } } as never, [])).toBe(false);
   });
 });
