@@ -21,6 +21,22 @@ import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
 export type CardioBlockKind = 'steady' | 'intervals' | 'drills' | 'power' | 'recovery';
 export type CardioIntensity = 'baja' | 'media' | 'alta';
 
+// ── F2C-5 · RAZÓN TIPADA de por qué terminó la sesión de cardio (observabilidad/UX, NO cambia la dosis).
+// Distingue un fin FISIOLÓGICO/estructural (dosis/estilo/aeróbico) de un fin por CONTENIDO (no había
+// estación continua reproducible). Autoridad única: la calcula buildCardioMain y viaja al plan/UI.
+//   · AVAILABLE_TIME_FILLED — llenó ~el tiempo disponible (no hay early-end).
+//   · DOSE_REACHED          — dosis útil cubierta con contenido disponible, aunque quedara tiempo.
+//   · STYLE_QUALITY_CAP     — el estilo tiene tope deliberado (explosividad; correr-principiante).
+//   · AEROBIC_CAP_REACHED   — tope aeróbico deliberado por nivel/política.
+//   · CONTENT_LIMITED       — quedaba tiempo y quería una fase continua, pero NO había estación
+//                             compatible/reproducible (caso bodyweight sin video de marcha/paso).
+//   · EQUIPMENT_LIMITED     — DIFERIDO (v1): distinguirlo de CONTENT_LIMITED en runtime exigiría una
+//                             auditoría de "existiría con otro equipo" que hoy no tenemos; v1 usa
+//                             CONTENT_LIMITED para ambos. Se mantiene en la unión para no romper consumidores.
+export type CardioEndReason =
+  | 'AVAILABLE_TIME_FILLED' | 'DOSE_REACHED' | 'STYLE_QUALITY_CAP'
+  | 'AEROBIC_CAP_REACHED' | 'CONTENT_LIMITED' | 'EQUIPMENT_LIMITED';
+
 export interface CardioBlock {
   kind: CardioBlockKind;
   minutes: number;              // duración TOTAL del bloque (trabajo + descanso incluidos)
@@ -42,7 +58,8 @@ export interface CardioMainPlan {
   intenseMinutes: number;       // minutos de trabajo INTENSO (para el techo/invariantes)
   steadyMinutes: number;        // minutos aeróbicos sostenibles
   earlyEnd: boolean;            // terminó antes de la ventana a propósito
-  earlyEndReason?: string;
+  earlyEndReason?: string;      // string interno de debug (console/diagnóstico); NO es user-facing
+  endReason: CardioEndReason;   // F2C-5 · razón TIPADA (autoridad para el copy honesto de la UI)
   blocks: CardioBlock[];
 }
 
@@ -217,7 +234,7 @@ export function buildCardioMain(input: {
 
   const pool = input.pool;
   const contentGap = (reason: string): CardioMainPlan =>
-    ({ style, budgetMinutes: budget, totalMinutes: 0, intenseMinutes: 0, steadyMinutes: 0, earlyEnd: true, earlyEndReason: `content gap: ${reason}`, blocks: [] });
+    ({ style, budgetMinutes: budget, totalMinutes: 0, intenseMinutes: 0, steadyMinutes: 0, earlyEnd: true, earlyEndReason: `content gap: ${reason}`, endReason: 'CONTENT_LIMITED', blocks: [] });
   if (!pool.length) return contentGap('sin estaciones de cardio reproducibles con este equipo');
 
   // CAPACIDADES por estación (autoridad única fail-closed). allStations = support cross-style + estilo.
@@ -372,7 +389,24 @@ export function buildCardioMain(input: {
   const steadyMinutes = blocks.filter(b => (b.kind === 'steady' || b.kind === 'recovery') && b.intensity !== 'alta').reduce((a, b) => a + b.minutes, 0);
   if (!earlyEnd && budget - total > Math.max(6, budget * 0.15)) { earlyEnd = true; earlyEndReason = 'dosis útil de la modalidad alcanzada'; }
 
-  return { style, budgetMinutes: budget, totalMinutes: total, intenseMinutes, steadyMinutes, earlyEnd, earlyEndReason, blocks };
+  // ── F2C-5 · CLASIFICACIÓN de la razón (NO altera bloques/dosis; deriva de estado ya calculado). ──
+  // Precedencia: (1) sin early-end → llenó el tiempo; (2) explosividad = calidad, no volumen;
+  // (3) llenó la VENTANA y la ventana (< budget) fue el límite → estilo/aeróbico; (4) quedó corto de la
+  // ventana → si quería continuo y no había estación reproducible → CONTENT_LIMITED, si no → DOSE_REACHED.
+  const continuousAvailable = continuousPool('steady').length > 0 || continuousPool('recovery').length > 0;
+  const filledWindow = window - total <= Math.max(6, Math.round(window * 0.15));
+  let endReason: CardioEndReason;
+  if (!earlyEnd) {
+    endReason = 'AVAILABLE_TIME_FILLED';
+  } else if (style === 'explosividad') {
+    endReason = 'STYLE_QUALITY_CAP';                                  // explosividad SIEMPRE es tope de estilo
+  } else if (window < budget && filledWindow) {
+    endReason = (window === styleCap && styleCap !== Infinity) ? 'STYLE_QUALITY_CAP' : 'AEROBIC_CAP_REACHED';
+  } else {
+    endReason = continuousAvailable ? 'DOSE_REACHED' : 'CONTENT_LIMITED';  // corto de la ventana: contenido vs dosis
+  }
+
+  return { style, budgetMinutes: budget, totalMinutes: total, intenseMinutes, steadyMinutes, earlyEnd, earlyEndReason, endReason, blocks };
 }
 
 /**

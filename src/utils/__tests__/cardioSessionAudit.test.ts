@@ -25,7 +25,7 @@ const critical = (p: CardioMainPlan) => auditCardioSession(p, byId).flags.filter
 const badBlock = (kind: CardioBlock['kind'], minutes: number, stationId: string, intensity: CardioBlock['intensity'], rounds?: number): CardioBlock =>
   ({ kind, minutes, stationId, intensity, labelKey: 'x', ...(rounds ? { rounds, workSec: 40, restSec: 20 } : {}) });
 const badSession: CardioMainPlan = {
-  style: 'funcional', budgetMinutes: 50, totalMinutes: 43, intenseMinutes: 16, steadyMinutes: 17, earlyEnd: false,
+  style: 'funcional', budgetMinutes: 50, totalMinutes: 43, intenseMinutes: 16, steadyMinutes: 17, earlyEnd: false, endReason: 'AVAILABLE_TIME_FILLED',
   blocks: [
     badBlock('intervals', 12, 'burpee', 'alta', 12),
     badBlock('recovery', 7, 'saltos', 'baja'),
@@ -161,7 +161,7 @@ describe('F2C-4 · regresión del SMOKE REAL (plancha/escaladores steady)', () =
 
   it('OLD/BAD fixture (plancha 14 steady + escaladores 3 steady + burpee 10×40/20) → múltiples critical flags', () => {
     const bad: CardioMainPlan = {
-      style: 'funcional', budgetMinutes: 30, totalMinutes: 27, intenseMinutes: 7, steadyMinutes: 17, earlyEnd: false,
+      style: 'funcional', budgetMinutes: 30, totalMinutes: 27, intenseMinutes: 7, steadyMinutes: 17, earlyEnd: false, endReason: 'AVAILABLE_TIME_FILLED',
       blocks: [
         badBlock('intervals', 10, 'burpee', 'alta', 10),
         badBlock('steady', 14, 'plancha', 'baja'),

@@ -411,7 +411,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       sessionDate: today,
       cardioMainBlock: {
         style: cardioPlan.style, totalMinutes: cardioPlan.totalMinutes, intenseMinutes: cardioPlan.intenseMinutes,
-        earlyEnd: cardioPlan.earlyEnd, earlyEndReason: cardioPlan.earlyEndReason,
+        earlyEnd: cardioPlan.earlyEnd, earlyEndReason: cardioPlan.earlyEndReason, endReason: cardioPlan.endReason,
         blocks: cardioPlan.blocks.map(b => ({
           kind: b.kind, minutes: b.minutes, stationId: b.stationId, stationName: nameOf(b.stationId),
           intensity: b.intensity, labelKey: b.labelKey, zone: b.zone, rpe: b.rpe,
@@ -1702,7 +1702,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           w.intensity = sessionIntensityLabel(cardioPlan);
           w.cardioMainBlock = {
             style: cardioPlan.style, totalMinutes: cardioPlan.totalMinutes, intenseMinutes: cardioPlan.intenseMinutes,
-            earlyEnd: cardioPlan.earlyEnd, earlyEndReason: cardioPlan.earlyEndReason,
+            earlyEnd: cardioPlan.earlyEnd, earlyEndReason: cardioPlan.earlyEndReason, endReason: cardioPlan.endReason,
             blocks: cardioPlan.blocks.map(b => ({
               kind: b.kind, minutes: b.minutes, stationId: b.stationId, stationName: nameOf(b.stationId) ?? '',
               intensity: b.intensity, labelKey: b.labelKey, zone: b.zone, rpe: b.rpe,

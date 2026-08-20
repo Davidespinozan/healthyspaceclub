@@ -547,7 +547,14 @@ export const es = {
     minApprox: '{n} min aprox.',
     // Duración real / early-end honesto (política: selectedTime = tiempo disponible, no promesa)
     earlyEnd: {
-      cardio: 'Hoy tu dosis útil de cardio es de ~{n} min. No necesitas usar todo el tiempo: pasarte sería contraproducente.',
+      // DOSE_REACHED (y fallback legacy de cardio). Sin afirmar "contraproducente": es dosis, no castigo.
+      cardio: 'Hoy tu dosis útil de cardio es de ~{n} min. No necesitas usar todo el tiempo disponible.',
+      // CONTENT_LIMITED · honesto: terminó por contenido/equipo, NO por fisiología.
+      cardioContentLimited: 'Con el equipo y contenido disponible hoy pudimos construir ~{n} min de cardio válido. Preferimos terminar aquí antes que añadir trabajo de relleno.',
+      // STYLE_QUALITY_CAP · el estilo prioriza calidad sobre volumen (p.ej. explosividad).
+      cardioStyleCap: 'Este estilo prioriza calidad sobre duración. Hoy ~{n} min cubren la dosis prevista.',
+      // AEROBIC_CAP_REACHED · tope aeróbico deliberado por nivel.
+      cardioAerobicCap: 'Hoy alcanzaste la dosis aeróbica prevista para esta sesión (~{n} min).',
       resistance: 'Hoy tu sesión útil es de ~{n} min. Tus anclas ya cubren tu volumen de la semana — añadir más sería trabajo de relleno.',
     },
     // F2B-1 · motivo REAL del fin de sesión (sustituye la heurística de duración). Copy honesto y corto.

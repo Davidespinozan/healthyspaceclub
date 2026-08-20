@@ -547,7 +547,14 @@ export const en: Translations<typeof es> = {
     exercisesSection: 'Exercises',
     minApprox: '{n} min approx.',
     earlyEnd: {
-      cardio: "Today's useful cardio dose is ~{n} min. You don't need to use the full time — overdoing it would be counterproductive.",
+      // DOSE_REACHED (and legacy cardio fallback). No "counterproductive" claim: it's a dose, not a penalty.
+      cardio: "Today's useful cardio dose is ~{n} min. You don't need to use all the available time.",
+      // CONTENT_LIMITED · honest: it ended due to content/equipment, NOT physiology.
+      cardioContentLimited: "With the equipment and content available today, we could build ~{n} min of valid cardio. We'd rather stop here than add filler work.",
+      // STYLE_QUALITY_CAP · the style prioritizes quality over volume (e.g. explosiveness).
+      cardioStyleCap: 'This style prioritizes quality over duration. Today ~{n} min cover the planned dose.',
+      // AEROBIC_CAP_REACHED · deliberate aerobic cap for the level.
+      cardioAerobicCap: "You've reached the planned aerobic dose for this session (~{n} min).",
       resistance: "Today's useful session is ~{n} min. Your anchors already cover this week's volume — adding more would be filler work.",
     },
     // F2B-1 · REAL end-of-session reason (replaces the duration heuristic). Honest, short copy.

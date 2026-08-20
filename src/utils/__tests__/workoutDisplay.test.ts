@@ -85,7 +85,7 @@ describe('cardioShowVideo — sin video engañoso en bloques sostenidos', () => 
 describe('cardioBlocksToExercises — la identidad del bloque viaja con el ejercicio', () => {
   it('cada ejercicio de cardio lleva ex.cardio con kind/style/labelKey', () => {
     const plan = {
-      style: 'correr' as const, budgetMinutes: 120, totalMinutes: 90, intenseMinutes: 10, steadyMinutes: 80, earlyEnd: false,
+      style: 'correr' as const, budgetMinutes: 120, totalMinutes: 90, intenseMinutes: 10, steadyMinutes: 80, earlyEnd: false, endReason: 'AVAILABLE_TIME_FILLED' as const,
       blocks: [
         { kind: 'drills' as const, minutes: 5, stationId: 'running-drills', intensity: 'media' as const, labelKey: 'cardio.drills', zone: undefined, rpe: 6, cue: '' },
         { kind: 'steady' as const, minutes: 77, stationId: 'running-drills', intensity: 'baja' as const, labelKey: 'cardio.steady', zone: 'Zona 2', rpe: 3, cue: '' },

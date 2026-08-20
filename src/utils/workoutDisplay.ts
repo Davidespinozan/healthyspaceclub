@@ -8,6 +8,9 @@
 // NO toca P3/P4/volumen/headroom/fisiología. Puro display, derivado de metadata ya sellada.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// F2C-5 · razón tipada de fin de cardio (autoridad en cardioMain; import type-only, sin ciclo real).
+import type { CardioEndReason } from './cardioMain';
+
 /** Metadata de un bloque cardio, sellada por buildCardioMain (viaja en el ejercicio). */
 export interface CardioExerciseMeta {
   kind: string;        // steady | intervals | drills | power | recovery
@@ -30,7 +33,7 @@ interface CardioBlockLike {
 interface PlanLike {
   exercises: Array<{ sets?: number | string; rest?: number | string; reps?: unknown; cardio?: CardioExerciseMeta }>;
   warmupBlock?: { minutes: number } | null;
-  cardioMainBlock?: { totalMinutes: number; earlyEnd?: boolean; earlyEndReason?: string; style?: string; blocks?: CardioBlockLike[] } | null;
+  cardioMainBlock?: { totalMinutes: number; earlyEnd?: boolean; earlyEndReason?: string; endReason?: CardioEndReason; style?: string; blocks?: CardioBlockLike[] } | null;
   finisherBlock?: { minutes: number } | null;
   // F2B-1 · cardio estructurado sellado en el plan del día (Session Composer).
   composedCardio?: { done?: boolean } | null;
@@ -137,14 +140,35 @@ export function planPlannedMinutes(plan: PlanLike): number {
  * Devuelve la duración real + el motivo, o null si la sesión ocupa ~el tiempo pedido.
  * Umbral: se comunica cuando la duración real < 75% de lo solicitado (banda razonable).
  */
+// F2C-5 · copy HONESTO por razón tipada. AVAILABLE_TIME_FILLED → sin banner (null).
+// EQUIPMENT_LIMITED (diferido) comparte el copy de CONTENT_LIMITED.
+const CARDIO_END_REASON_KEY: Record<CardioEndReason, string | null> = {
+  AVAILABLE_TIME_FILLED: null,
+  DOSE_REACHED: 'workout.earlyEnd.cardio',
+  STYLE_QUALITY_CAP: 'workout.earlyEnd.cardioStyleCap',
+  AEROBIC_CAP_REACHED: 'workout.earlyEnd.cardioAerobicCap',
+  CONTENT_LIMITED: 'workout.earlyEnd.cardioContentLimited',
+  EQUIPMENT_LIMITED: 'workout.earlyEnd.cardioContentLimited',
+};
+
 export function planEarlyEnd(plan: PlanLike, requestedMinutes: number): { plannedMin: number; reasonKey: string } | null {
   const planned = planPlannedMinutes(plan);
+  // CARDIO · la razón TIPADA del motor MANDA sobre la heurística de duración (F2C-5). Un fin por
+  // CONTENIDO deja de comunicarse como una dosis fisiológica completada. Sin endReason (planes
+  // legacy) → cae al fallback por duración de siempre.
+  if (isCardioPlan(plan)) {
+    const reason = plan.cardioMainBlock?.endReason;
+    if (reason) {
+      const key = CARDIO_END_REASON_KEY[reason];
+      return key ? { plannedMin: planned, reasonKey: key } : null; // AVAILABLE_TIME_FILLED → sin banner
+    }
+    // Fallback legacy (plan cacheado sin endReason): heurística por duración.
+    if (!requestedMinutes || planned >= requestedMinutes * 0.75) return null;
+    return { plannedMin: planned, reasonKey: 'workout.earlyEnd.cardio' };
+  }
+  // RESISTENCIA · heurística por duración (sin cambios; fuerza usa su propio sessionEndReason aparte).
   if (!requestedMinutes || planned >= requestedMinutes * 0.75) return null;
-  // Motivo: cardio trae su razón estructurada; resistencia = dosis útil de hoy (volumen semanal).
-  const reasonKey = isCardioPlan(plan)
-    ? 'workout.earlyEnd.cardio'
-    : 'workout.earlyEnd.resistance';
-  return { plannedMin: planned, reasonKey };
+  return { plannedMin: planned, reasonKey: 'workout.earlyEnd.resistance' };
 }
 
 // ── IDENTIDAD VISUAL DE BLOQUES CARDIO ───────────────────────────────────────

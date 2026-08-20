@@ -86,6 +86,7 @@ export interface CachedWorkout {
     intenseMinutes: number;
     earlyEnd: boolean;
     earlyEndReason?: string;
+    endReason?: import('./cardioMain').CardioEndReason; // F2C-5 · razón tipada (opcional: planes legacy sin ella)
     blocks: Array<{
       kind: string;               // steady | intervals | drills | power | recovery
       minutes: number;
