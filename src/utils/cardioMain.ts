@@ -16,7 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { Exercise, CardioStyle, Equipment } from '../types';
 import type { CardioExerciseMeta } from './workoutDisplay';
-import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
+import { hasVideo } from './videoAvailability';   // F2C-9A · fuente ÚNICA de disponibilidad de video
 
 export type CardioBlockKind = 'steady' | 'intervals' | 'drills' | 'power' | 'recovery' | 'cooldown';
 export type CardioIntensity = 'baja' | 'media' | 'alta';
@@ -213,7 +213,7 @@ function expandContinuousStations(stations: Exercise[]): CardioContinuousStation
     if (isCardioMachineBank(ex)) {
       let expanded = 0;
       for (const v of ex.variants ?? []) {
-        if (!VIDEO_VARIANT_IDS.has(v.id)) continue;                    // reproducibilidad (clip real)
+        if (!hasVideo(v.id)) continue;                    // reproducibilidad (clip real)
         const vStyle: CardioStyle = (v as { cardioStyle?: CardioStyle }).cardioStyle ?? (ex.cardioStyle as CardioStyle) ?? 'funcional';
         const vex = { ...ex, id: v.id, variants: [], cardioStyle: vStyle, equipment: v.equipment ?? ex.equipment } as Exercise;
         const caps = cardioStationCapabilities(vex);                    // capability POR VARIANTE (fail-closed)
@@ -573,7 +573,7 @@ export interface CardioCapabilities { correr: boolean; funcional: boolean; lowIm
 function styleStationAvailable(e: Exercise, style: CardioStyle, equipment: Equipment[]): boolean {
   if (style === 'lowImpact' && (e.impact === 'high' || e.fallRisk)) return false;
   return (e.variants ?? []).some(v =>
-    VIDEO_VARIANT_IDS.has(v.id) &&
+    hasVideo(v.id) &&
     (v.equipment ?? []).some(x => equipment.includes(x)) &&
     (v.cardioStyle === style || (e.cardioStyle === style && !v.cardioStyle)));
 }

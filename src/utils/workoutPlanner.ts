@@ -1,5 +1,5 @@
 import { dayKey } from './localDate';
-import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
+import { hasVideo } from './videoAvailability';   // F2C-9A · fuente ÚNICA de disponibilidad de video (snapshot ∪ overlay runtime)
 import { variantAllowedByGear, gearFromLegacyEquipment, type Implement, type Gear } from './equipmentImplement';
 import { computeVolumeTargets, targetsToMap, type Level } from './volumeLandmarks';
 import { estimatedSessionMinutes } from './sessionPrescription';
@@ -1015,7 +1015,7 @@ export function selectVariantForEquipment(
   // compatibilidad (cambió el gear, se despublicó el clip, etc.) → fallback SEGURO al selector normal
   // de abajo. Así una variantId inválida nunca fuerza una variante sin video/incompatible.
   if (preferredVariantId) {
-    const preferred = applicable.find(v => v.id === preferredVariantId && VIDEO_VARIANT_IDS.has(v.id));
+    const preferred = applicable.find(v => v.id === preferredVariantId && hasVideo(v.id));
     if (preferred) return preferred;
   }
 
@@ -1024,7 +1024,7 @@ export function selectVariantForEquipment(
   // las migraciones con scripts/build_videos_review_data.mjs. Si el set no cubre una
   // variante (recién grabada, aún sin regenerar), simplemente no la prioriza: cae al
   // comportamiento anterior. Nunca elige una variante que NO aplica al equipo.
-  const withVideo = applicable.filter(v => VIDEO_VARIANT_IDS.has(v.id));
+  const withVideo = applicable.filter(v => hasVideo(v.id));
   const pool = withVideo.length > 0 ? withVideo : applicable;
 
   // Preferir la default si está entre las del pool
@@ -1050,7 +1050,7 @@ export function playableVariantsForContext(
   return (exercise.variants ?? []).filter(v =>
     v.equipment.some(e => userEquipment.includes(e)) &&
     (!allowed || variantAllowedByGear(v, allowed, exercise.name)) &&
-    VIDEO_VARIANT_IDS.has(v.id));
+    hasVideo(v.id));
 }
 
 /**
@@ -1087,7 +1087,7 @@ export function hasPlayableVariant(exercise: Exercise, equipment: Equipment[], a
   if (exercise.isYoga) return exercise.equipment.some(e => equipment.includes(e));
   return exercise.variants?.some(v =>
     v.equipment.some(e => equipment.includes(e)) &&
-    VIDEO_VARIANT_IDS.has(v.id) &&
+    hasVideo(v.id) &&
     (!allowed || variantAllowedByGear(v, allowed, exercise.name)),
   ) ?? false;
 }

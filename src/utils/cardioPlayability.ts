@@ -20,26 +20,34 @@ import type { Exercise, Equipment } from '../types';
 import type { Implement } from './equipmentImplement';
 import { cardioStationCapabilities, type CardioPhaseRole } from './cardioMain';
 import { hasPlayableVariant, isReproducibleStation } from './workoutPlanner';
+import { videoPolicyFor, type VideoPolicy } from './videoAvailability';
 
 const CONTINUOUS_PHASES: readonly CardioPhaseRole[] = ['steady', 'recovery', 'cooldown'];
 const isContinuousPhase = (p: CardioPhaseRole): boolean => CONTINUOUS_PHASES.includes(p);
 
 /**
  * ¿La estación `ex` puede ejecutarse en la fase `phase` con este `equipment`?
- * Fail-closed: capability primero, luego video, y solo entonces la excepción videoless de cardio continuo.
+ * Fail-closed: capability primero, luego video, y solo entonces la excepción videoless (política 'preferred').
+ * F2C-9A · la decisión required/preferred sale de la POLÍTICA CENTRAL (`videoPolicyFor`), no está hardcodeada
+ * aquí: cardio CONTINUO = 'preferred' (admite videoless seguro, F2C-6), intenso = 'required'. `videoPolicy`
+ * es un override opcional para tests/futuro; sin él, el comportamiento es idéntico a F2C-6/7/8.
  */
 export function isPlayableForCardioPhase(
   ex: Exercise,
   equipment: Equipment[],
   phase: CardioPhaseRole,
   allowed?: Set<Implement>,
+  videoPolicy?: VideoPolicy,
 ): boolean {
   // 1) CAPABILITY de fase (autoridad fisiológica). Sin ella → fuera, tenga o no video.
   if (!cardioStationCapabilities(ex)[phase]) return false;
   // 2) VIDEO real para el equipo → reproducible en cualquier fase.
   if (hasPlayableVariant(ex, equipment, allowed)) return true;
-  // 3) VIDELESS: solo fases CONTINUAS y solo cardio continuous-safe auto-explicativo (marcha/paso).
-  if (!isContinuousPhase(phase)) return false;                 // interval/power/drill exigen video
+  // 3) sin video: la POLÍTICA decide. 'required' → fuera; 'preferred' → se admite videoless SEGURO.
+  const continuous = isContinuousPhase(phase);
+  const policy = videoPolicy ?? videoPolicyFor({ role: continuous ? 'cardioContinuous' : 'cardioIntense' });
+  if (policy === 'required') return false;                     // interval/power/drill (o flip futuro) exigen clip
+  if (!continuous) return false;                               // guardia: videoless SOLO en fases continuas
   const equipOk = ex.equipment.some(e => equipment.includes(e));
   return ex.muscleGroup === 'cardio' && equipOk && isReproducibleStation(ex, equipment);
 }
