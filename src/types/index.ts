@@ -79,6 +79,25 @@ export type CardioStyle = 'explosividad' | 'correr' | 'lowImpact' | 'funcional';
  */
 export type SessionRole = 'warmup' | 'main' | 'finisher';
 
+// ── F2C-9B · MOVEMENT CAPABILITY MODEL ───────────────────────────────────────────────────────────
+// Separa "qué movimiento es" (Exercise/Variant) de "qué estímulos PUEDE soportar físicamente"
+// (capabilities). El SESSION ROLE y la PRESCRIPTION (contextuales) los decide el programador; el VIDEO
+// (F2C-9A) y la SEGURIDAD (impact/fallRisk) son ejes ORTOGONALES — NO viven aquí.
+/** Rol/estímulo que un movimiento PUEDE soportar (posibilidad física, no intención de sesión). */
+export type MovementRole = 'strength' | 'conditioning' | 'warmup' | 'cooldown' | 'power' | 'skill' | 'locomotion';
+/** Modo de trabajo ejecutable. `continuous` (bici/marcha) ≠ `interval` (burpee) ≠ `reps` (push-up) ≠ `isometric` (plancha). */
+export type WorkMode = 'reps' | 'isometric' | 'interval' | 'continuous';
+/** Fase RAMP de calentamiento. */
+export type WarmupPhase = 'raise' | 'mobilise' | 'activate' | 'potentiate';
+/** Capabilities RESUELTAS de un movimiento (derivadas + override). roles/workModes siempre presentes. */
+export interface MovementCapabilities {
+  roles: MovementRole[];
+  workModes: WorkMode[];
+  warmupPhases?: WarmupPhase[];
+}
+/** Override DECLARATIVO opcional (additive en el catálogo): si un eje está, REEMPLAZA el derivado. */
+export type MovementCapabilitiesOverride = Partial<MovementCapabilities>;
+
 /**
  * Perfil crónico del usuario derivado del onboarding. Todos los campos son opcionales
  * porque el onboarding puede no estar completo o porque históricamente algunos campos
@@ -152,6 +171,8 @@ export interface ExerciseVariant {
   cardioStyle?: CardioStyle;
   /** CARDIO (Fase 1) — override de los roles de sesión del patrón. */
   roles?: SessionRole[];
+  /** F2C-9B · override DECLARATIVO de capabilities a nivel VARIANTE (refina al patrón). Additive/opcional. */
+  capabilities?: MovementCapabilitiesOverride;
 
   /**
    * SEGURIDAD por variante (Fase backlog) — cuando una variante es más riesgosa que su
@@ -240,6 +261,12 @@ export interface Exercise {
    * bloques (Fase 3) lo usa para calentamiento/principal/finisher. Override por variante.
    */
   roles?: SessionRole[];
+  /**
+   * F2C-9B · override DECLARATIVO de capabilities del movimiento (roles/workModes/warmupPhases).
+   * Additive y OPCIONAL: si no está, `deriveMovementCapabilities` las infiere de la metadata física.
+   * Sirve para corregir una derivación incorrecta por metadata legacy, sin hacks por id en el motor.
+   */
+  capabilities?: MovementCapabilitiesOverride;
 
   /** Defaults del patrón. Usados si la variante seleccionada no tiene override. */
   defaultSets: number;
