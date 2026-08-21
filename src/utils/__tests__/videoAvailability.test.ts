@@ -1,8 +1,9 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { hasVideo, registerAvailableVideos, clearRegisteredVideos, videoPolicyFor } from '../videoAvailability';
+import { hasVideo, registerAvailableVideos, replaceAvailableVideos, clearRegisteredVideos, overlayVideoCount, videoPolicyFor } from '../videoAvailability';
 import { VIDEO_VARIANT_IDS } from '../../data/videoAvailability';
 import { hasPlayableVariant } from '../workoutPlanner';
 import { isPlayableForCardioPhase } from '../cardioPlayability';
+import { exercises } from '../../data/exercises';
 import type { Exercise } from '../../types';
 
 afterEach(() => clearRegisteredVideos());   // el overlay nunca se filtra entre tests
@@ -48,6 +49,52 @@ describe('F2C-9A · agregar video → elegible sin modificar el programador', ()
     // SIMULA "mapear un video" (lo que hará la app al cargar exercise_videos): registrar el id.
     registerAvailableVideos(['marcha-x-basico']);
     // DESPUÉS: el MISMO gate del programador ahora lo ve disponible — sin editar el programador.
+    expect(hasPlayableVariant(marcha, ['cuerpo'])).toBe(true);
+  });
+});
+
+// ── E/C/D/R · replaceAvailableVideos (atómico + invalidación + snapshot floor) ───────────────
+describe('F2C-9A.1 · replaceAvailableVideos (atómico)', () => {
+  it('E · reemplaza el overlay completo (no aditivo) — swap de referencia', () => {
+    registerAvailableVideos(['a', 'b', 'c']);
+    expect(overlayVideoCount()).toBe(3);
+    replaceAvailableVideos(['x', 'y']);
+    expect(overlayVideoCount()).toBe(2);            // reemplazó, no sumó
+    expect(hasVideo('x')).toBe(true);
+    expect(hasVideo('a')).toBe(false);              // el estado anterior desapareció
+  });
+  it('R · [A,B,C] → refresh [A,C] elimina B', () => {
+    replaceAvailableVideos(['A', 'B', 'C']);
+    expect(hasVideo('B')).toBe(true);
+    replaceAvailableVideos(['A', 'C']);
+    expect(hasVideo('A')).toBe(true);
+    expect(hasVideo('C')).toBe(true);
+    expect(hasVideo('B')).toBe(false);              // invalidación
+  });
+  it('D · un id del SNAPSHOT nunca desaparece por un replace que no lo incluya', () => {
+    const snapId = [...VIDEO_VARIANT_IDS][0];
+    replaceAvailableVideos(['algo-que-no-es-snapshot']);
+    expect(hasVideo(snapId)).toBe(true);            // el floor siempre gana
+  });
+  it('S · ids duplicados/no-string → overlay con ids únicos y válidos', () => {
+    replaceAvailableVideos(['dup', 'dup', '', ...(([null, 3] as unknown) as string[])]);
+    expect(overlayVideoCount()).toBe(1);            // solo 'dup'
+    expect(hasVideo('dup')).toBe(true);
+  });
+});
+
+// ── 16 · SMOKE de cambio REAL de elegibilidad (variante real fuera del snapshot) ──────────────
+describe('F2C-9A.1 · cambio real de elegibilidad (sin tocar el planner)', () => {
+  it('una variante REAL del catálogo, ausente del snapshot, se vuelve elegible tras el overlay live', () => {
+    const marcha = exercises.find(e => e.id === 'marcha-en-lugar')!;   // real, videoless (fuera del snapshot)
+    const variantId = (marcha.variants ?? [])[0]?.id ?? 'marcha-en-lugar-basico';
+    expect(VIDEO_VARIANT_IDS.has(variantId)).toBe(false);              // NO está en el snapshot
+    // BEFORE: el gate del planner la excluye
+    expect(hasPlayableVariant(marcha, ['cuerpo'])).toBe(false);
+    // "sync live" trae ese id (fixture realista, sin alterar producción)
+    replaceAvailableVideos([variantId]);
+    // AFTER: el MISMO gate ahora la ve — sin modificar workoutPlanner/cardioMain/cardioPlayability
+    expect(hasVideo(variantId)).toBe(true);
     expect(hasPlayableVariant(marcha, ['cuerpo'])).toBe(true);
   });
 });

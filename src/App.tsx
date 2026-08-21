@@ -17,6 +17,7 @@ import {
   type WorkoutLogRow,
 } from './utils/workoutSync';
 import { flushPendingWorkouts } from './utils/workoutOutbox';
+import { bootstrapVideoAvailability } from './utils/syncVideoAvailability';   // F2C-9A.1 · disponibilidad de video en runtime
 import { detectBrowserLanguage } from './i18n';
 import LandingScreen from './screens/LandingScreen';
 import UpdatePrompt from './components/UpdatePrompt';
@@ -66,6 +67,12 @@ export default function App() {
     ensureLocaleAssets('en').then(open).catch(open).finally(() => clearTimeout(t));
     return () => clearTimeout(t);
   }, [language]);
+
+  // F2C-9A.1 · disponibilidad de video en runtime. UN solo bootstrap global (contenido público, no
+  // per-usuario): overlay ← LKG (localStorage, síncrono) + fresh sync de exercise_videos (fire-and-forget).
+  // Sin soft-gate: la app genera de inmediato con snapshot ∪ LKG; el live corrige/mejora después. Sin red
+  // no rompe (snapshot es el floor). NO toca cardioMain/workoutPlanner/cardioPlayability.
+  useEffect(() => { bootstrapVideoAvailability(); }, []);
 
   // Tope de seguridad por period_end (independiente de la zona horaria del user
   // — comparamos instantes UTC). Si la suscripción está CANCELADA-al-fin-de-ciclo

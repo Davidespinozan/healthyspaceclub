@@ -17,28 +17,43 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { VIDEO_VARIANT_IDS } from '../data/videoAvailability';
 
-// Overlay de runtime. ADITIVO y opcional: la app puede registrar los ids con clip real de
-// `exercise_videos` para unificar la fuente sin modificar el programador. Vacío por defecto.
-const runtimeAvailable = new Set<string>();
+// Overlay de runtime (disponibilidad DINÁMICA: LKG/live). SEPARADO del snapshot: nunca se le
+// inyectan los ids del snapshot — `hasVideo` hace la unión. Referencia swappable para reemplazo ATÓMICO.
+// Vacío por defecto (F2C-9A → inerte). F2C-9A.1 lo alimenta desde `exercise_videos` vía syncVideoAvailability.
+let overlay = new Set<string>();
 
-/** Registra ids (ejercicio/variante) con clip reproducible — típicamente desde `exercise_videos`.
- *  Aditivo: solo agrega disponibilidad. Idempotente. */
+/** Registra ids con clip reproducible (ADITIVO: solo agrega). Backward-compat/tests; el runtime usa `replace`. */
 export function registerAvailableVideos(ids: Iterable<string>): void {
-  for (const id of ids) if (id) runtimeAvailable.add(id);
+  for (const id of ids) if (typeof id === 'string' && id) overlay.add(id);
+}
+
+/**
+ * REEMPLAZA el overlay completo de forma ATÓMICA (F2C-9A.1). Construye un Set nuevo y cambia la
+ * referencia de una sola vez → sin estado intermedio vacío (no es clear+register). Filtra no-strings/vacíos.
+ * Semántica de invalidación: un id del overlay anterior que NO esté en `ids` desaparece — salvo que
+ * pertenezca al snapshot (que es el FLOOR compile-time y siempre gana en `hasVideo`).
+ */
+export function replaceAvailableVideos(ids: Iterable<string>): void {
+  const next = new Set<string>();
+  for (const id of ids) if (typeof id === 'string' && id) next.add(id);
+  overlay = next;
 }
 
 /** Limpia el overlay de runtime (para tests / logout). No afecta el snapshot base. */
 export function clearRegisteredVideos(): void {
-  runtimeAvailable.clear();
+  overlay = new Set<string>();
 }
+
+/** Tamaño actual del overlay (introspección/tests). */
+export function overlayVideoCount(): number { return overlay.size; }
 
 /**
  * FUENTE ÚNICA de "¿este id (ejercicio o variante) tiene video reproducible?".
- * = snapshot compile-time (VIDEO_VARIANT_IDS) ∪ overlay de runtime (exercise_videos registrados).
- * Con overlay vacío es idéntico a `VIDEO_VARIANT_IDS.has(id)`.
+ * = snapshot compile-time (VIDEO_VARIANT_IDS, FLOOR)  ∪  overlay de runtime (LKG/live).
+ * Con overlay vacío es idéntico a `VIDEO_VARIANT_IDS.has(id)`. El snapshot nunca desaparece por el overlay.
  */
 export function hasVideo(id: string): boolean {
-  return VIDEO_VARIANT_IDS.has(id) || runtimeAvailable.has(id);
+  return VIDEO_VARIANT_IDS.has(id) || overlay.has(id);
 }
 
 // ── POLÍTICA CENTRAL de video ───────────────────────────────────────────────────────────────────
