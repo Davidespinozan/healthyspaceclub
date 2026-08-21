@@ -2,6 +2,7 @@ import { dayKey } from './localDate';
 import { hasVideo } from './videoAvailability';   // F2C-9A · fuente ÚNICA de disponibilidad de video (snapshot ∪ overlay runtime)
 import { isStrengthDomainSession } from './trainingDomain';   // F2C-9B.2 · autoridad de strength credit por SESIÓN
 import { hasConditioningIntervalCapability } from './conditioningPool';   // F2C-9B.3 · admisión conditioning por capability
+import { isWorkingSet } from './executionRole';   // F2C-9C.1 · crédito de fuerza solo desde sets de trabajo
 import { variantAllowedByGear, gearFromLegacyEquipment, type Implement, type Gear } from './equipmentImplement';
 import { computeVolumeTargets, targetsToMap, type Level } from './volumeLandmarks';
 import { estimatedSessionMinutes } from './sessionPrescription';
@@ -242,7 +243,9 @@ export function computeWeeklyVolume(
       for (const e of s.exercises) {
         const ex = exerciseMap.get(e.id);
         if (!ex || ex.type === 'cardio') continue;
-        const executed = e.sets?.length ?? 0;
+        // F2C-9C.1 · solo SETS de trabajo cuentan volumen de fuerza (ramp/warmup/cooldown = 0). Legacy sin
+        // role → working → conteo idéntico. La fórmula no cambia; cambia qué sets entran.
+        const executed = e.sets?.filter(isWorkingSet).length ?? 0;
         if (executed > 0) add(ex, executed);
       }
     } else {

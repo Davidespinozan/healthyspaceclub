@@ -1,3 +1,5 @@
+import type { ExecutionRole } from '../utils/executionRole';   // F2C-9C.1 · rol de ejecución por set (additive)
+
 export interface MealItem {
   time: string;
   name: string;
@@ -384,6 +386,9 @@ export interface LoggedSet {
   rir?: number;
   /** P6 · RIR que P4 prescribió para esa serie, para computar rirError = rir − prescribedRir. */
   prescribedRir?: number;
+  /** F2C-9C.1 · función de ESTE set en la sesión. Ausente = 'working' (legacy). warmup/cooldown =
+   *  crédito de fuerza CERO. Per-set → ramp sets (aproximación) y working conviven en la misma entrada. */
+  role?: ExecutionRole;
 }
 
 /**
@@ -434,7 +439,7 @@ export interface CompletedSession {
    * inferido (P5). Sustituye al `workoutLog` legacy (vacío en producción). Ausente en sesiones
    * viejas / sin tracking.
    */
-  exercises?: Array<{ id: string; sets: { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean }[] }>;
+  exercises?: Array<{ id: string; sets: { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean; role?: ExecutionRole }[] }>;
 }
 
 /**

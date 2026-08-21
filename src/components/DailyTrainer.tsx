@@ -75,6 +75,7 @@ import { buildYogaFlowPlan } from '../utils/yogaBuilder';
 import { repairWorkoutStructure } from '../utils/exerciseOrder';
 import { currentBlockId, resolveBlockAnchors, enforceAnchors, type AnchorTraceItem } from '../utils/blockAnchors';
 import { isStrengthDomainSession } from '../utils/trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
+import { isWorkingSet } from '../utils/executionRole';   // F2C-9C.1 · e1RM solo desde sets de trabajo
 import { buildSessionSlots, requiredPatterns, applySessionStructure, type Slot } from '../utils/sessionSlots';
 import { requiredRegions as computeRequiredRegions, regionExposure, selectFullBodyAnchors, type Region } from '../utils/regionalCoverage';
 import { movementPatternOf, type MovementPattern } from '../utils/movementPattern';
@@ -1130,7 +1131,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           const entries = completedSessions
             // F2C-9B.2 · solo dominio fuerza alimenta el e1RM por músculo (weak-point/priority).
             .filter(s => isStrengthDomainSession(s) && !s.isDeload && s.date > lo && s.date <= hi)
-            .flatMap(s => (s.exercises ?? []).map(e => ({ exercise: e.id, sets: e.sets })));
+            // F2C-9C.1 · solo sets de TRABAJO (ramp/warmup/cooldown fuera). Legacy sin role → working.
+            .flatMap(s => (s.exercises ?? []).map(e => ({ exercise: e.id, sets: e.sets.filter(isWorkingSet) })));
           const byM = bestE1RMByMuscle(entries, muscleOfId);
           for (const m of Object.keys(byM)) { (muscleE1RM[m] ??= []).push(byM[m]); }
         }

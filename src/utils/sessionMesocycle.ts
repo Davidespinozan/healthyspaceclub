@@ -13,6 +13,7 @@ import {
 } from './workoutPlanner';
 import { e1RMTrend } from './loadEngine';
 import { isStrengthDomainSession } from './trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
+import { isWorkingSet } from './executionRole';   // F2C-9C.1 · e1RM solo desde sets de trabajo
 import {
   deriveMesocycleState, recoveryFromCheckin, adherenceFrom, volumeTrend,
   type MesocycleState,
@@ -48,7 +49,8 @@ export function deriveSessionMesocycle(input: {
   // aunque una sesión cardio traiga un movimiento de fuerza con kg/reps reales. Antes NO había gate.
   const strengthEntries = (loDays: number, hiDays: number) => completedSessions
     .filter(s => isStrengthDomainSession(s) && !s.isDeload && s.date >= since(hiDays) && (loDays === 0 || s.date < since(loDays)))
-    .flatMap(s => (s.exercises ?? []).map(e => ({ exercise: e.id, sets: e.sets })));
+    // F2C-9C.1 · solo sets de TRABAJO alimentan la tendencia de e1RM (ramp/warmup/cooldown fuera). Legacy → working.
+    .flatMap(s => (s.exercises ?? []).map(e => ({ exercise: e.id, sets: e.sets.filter(isWorkingSet) })));
   const strengthTrend = e1RMTrend(strengthEntries(0, 14), strengthEntries(14, 28));
   const performance = strengthTrend ?? volumeTrend(setsLast7, setsPrev7);
 

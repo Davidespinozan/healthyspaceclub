@@ -109,7 +109,8 @@ export function mapWorkoutLogRowToSession(row: WorkoutLogRow): CompletedSession 
       sets: (Array.isArray(e.performed!.sets) ? e.performed!.sets : [])
         .filter((s): s is LoggedSet => !!s && (s.reps > 0 || s.kg > 0))
         // Conserva repsUnconfirmed en el round-trip Supabase → historial fiel (no inventa reps reales).
-        .map(s => ({ reps: s.reps, kg: s.kg, ...((s as LoggedSet).rir != null && { rir: (s as LoggedSet).rir }), ...((s as LoggedSet).repsUnconfirmed && { repsUnconfirmed: true as const }) })),
+        // F2C-9C.1 · preserva el rol de ejecución por set en el round-trip Supabase (ausente = working).
+        .map(s => ({ reps: s.reps, kg: s.kg, ...((s as LoggedSet).rir != null && { rir: (s as LoggedSet).rir }), ...((s as LoggedSet).repsUnconfirmed && { repsUnconfirmed: true as const }), ...((s as LoggedSet).role && { role: (s as LoggedSet).role }) })),
     }))
     .filter(e => e.sets.length > 0);
   if (perEx.length > 0) session.exercises = perEx;

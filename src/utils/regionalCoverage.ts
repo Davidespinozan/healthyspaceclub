@@ -16,6 +16,7 @@
 import type { Exercise, MuscleGroup, TrainingGoal, Modality } from '../types';
 import { movementPatternOf, type MovementPattern } from './movementPattern';
 import { isStrengthDomainSession } from './trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
+import { isWorkingSet, type ExecutionRole } from './executionRole';   // F2C-9C.1 · exposición solo desde sets de trabajo
 import { categorize } from './sessionPrescription';
 import { isAnchorEligible } from './blockAnchors';
 
@@ -104,7 +105,7 @@ export function requiredRegions(input: {
 
 /** Exposición reciente por región (sets contados por ejercicio ejecutado) desde `sinceDate`. */
 export function regionExposure(
-  sessions: Array<{ date: string; exerciseIds?: string[]; modality?: Modality }>,
+  sessions: Array<{ date: string; exerciseIds?: string[]; modality?: Modality; exercises?: Array<{ id: string; sets: { role?: ExecutionRole }[] }> }>,
   bankById: Map<string, Pick<Exercise, 'id' | 'muscleGroup' | 'isYoga'>>,
   sinceDate: string,
 ): Record<Region, number> {
@@ -114,7 +115,14 @@ export function regionExposure(
     // F2C-9B.2 · la cobertura regional de FUERZA solo cuenta sesiones de dominio fuerza — una sesión
     // cardio con un press-horizontal NO debe marcar "ya cubriste upper-push" y suprimir un ancla.
     if (!isStrengthDomainSession(s)) continue;
+    // F2C-9C.1 · un id con DETALLE por-set y SIN ningún set de trabajo (entrada pure-warmup/cooldown) NO
+    // aporta exposición. Legacy sin `exercises[]` (o sets sin role → working) cuenta idéntico a hoy;
+    // los skipped (en exerciseIds pero no en exercises[]) siguen contando como antes.
+    const detail = s.exercises ?? [];
+    const hasDetail = new Set(detail.map(e => e.id));
+    const worked = new Set(detail.filter(e => e.sets.some(isWorkingSet)).map(e => e.id));
     for (const id of s.exerciseIds ?? []) {
+      if (hasDetail.has(id) && !worked.has(id)) continue;   // entrada solo warmup/cooldown → sin exposición
       const ex = bankById.get(id);
       if (!ex) continue;
       for (const r of regionsOfExercise(ex)) out[r]++;

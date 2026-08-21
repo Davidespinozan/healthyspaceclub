@@ -19,6 +19,7 @@ import {
 import { flushPendingWorkouts } from './utils/workoutOutbox';
 import { bootstrapVideoAvailability } from './utils/syncVideoAvailability';   // F2C-9A.1 · disponibilidad de video en runtime
 import { isStrengthDomainSession } from './utils/trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
+import { isWorkingSet, type ExecutionRole } from './utils/executionRole';   // F2C-9C.1 · lastPerf hydration solo working
 import type { Modality } from './types';
 import { detectBrowserLanguage } from './i18n';
 import LandingScreen from './screens/LandingScreen';
@@ -524,13 +525,14 @@ export default function App() {
                 // sin modality se conserva (comportamiento conservador, no borra historial de fuerza viejo).
                 if (!isStrengthDomainSession({ modality: w.modality as Modality | undefined })) continue;
                 const exs = Array.isArray(w.exercises) ? w.exercises : [];
-                for (const ex of exs as Array<{ exercise_id?: string; performed?: { sets?: Array<{ reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean } | null>; skipped?: boolean } }>) {
+                for (const ex of exs as Array<{ exercise_id?: string; performed?: { sets?: Array<{ reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean; role?: ExecutionRole } | null>; skipped?: boolean } }>) {
                   if (!ex || typeof ex.exercise_id !== 'string' || !ex.performed || ex.performed.skipped) continue;
                   // BLOQUE 2 · conserva el RIR real del set (para la e1RM RIR-aware que prescribe carga).
                   // PRESCRIPCIÓN ≠ DESEMPEÑO: conserva TAMBIÉN `repsUnconfirmed` (filter passthrough, sin
                   // re-map) → la progresión/carga NO trata la sugerencia prescrita como real tras el
                   // round-trip Supabase. NO re-mapear a {reps,kg,rir} aquí o se perdería el flag.
-                  const sets = (ex.performed.sets ?? []).filter((s): s is { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean } => !!s && (s.reps > 0 || s.kg > 0));
+                  // F2C-9C.1 · "la vez pasada" = último TRABAJO real; ramp/warmup/cooldown fuera (legacy → working).
+                  const sets = (ex.performed.sets ?? []).filter((s): s is { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean; role?: ExecutionRole } => !!s && isWorkingSet(s) && (s.reps > 0 || s.kg > 0));
                   if (sets.length === 0) continue;
                   perf[ex.exercise_id] = { date: w.date_local, sets };
                 }

@@ -157,7 +157,8 @@ export async function finishWorkoutSession(
             .filter(s => s.reps > 0 || s.kg > 0)
             // PRESCRIPCIÓN ≠ DESEMPEÑO: conserva repsUnconfirmed en el historial por-ejercicio →
             // e1RM/volumen/display NO pueden confundir la sugerencia con reps reales.
-            .map(s => ({ reps: s.reps, kg: s.kg, ...(s.rir != null && { rir: s.rir }), ...(s.repsUnconfirmed && { repsUnconfirmed: true as const }) })),
+            // F2C-9C.1 · conserva el rol de ejecución por set (warmup/cooldown/working). Ausente = working (legacy).
+            .map(s => ({ reps: s.reps, kg: s.kg, ...(s.rir != null && { rir: s.rir }), ...(s.repsUnconfirmed && { repsUnconfirmed: true as const }), ...(s.role && { role: s.role }) })),
         }))
         .filter(e => e.sets.length > 0);
       return perEx.length > 0 ? { exercises: perEx } : {};

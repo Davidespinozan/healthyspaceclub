@@ -30,6 +30,7 @@ import {
 } from '../../utils/workoutLogger';
 import { exerciseVideoCandidateIds, pickExerciseVideo, selectVariantForEquipment } from '../../utils/workoutPlanner';
 import { isStrengthDomainSession } from '../../utils/trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
+import { isWorkingSet } from '../../utils/executionRole';   // F2C-9C.1 · lastPerf/RIR solo desde sets de trabajo
 import type { Implement } from '../../utils/equipmentImplement';
 import type {
   Exercise,
@@ -699,7 +700,9 @@ export default function WorkoutPlan({
               .map(e => ({
                 exerciseId: e.exercise_id,
                 date: checkDay,
+                // F2C-9C.1 · "la vez pasada" = último TRABAJO real, no ramp/warmup/cooldown. Solo working sets.
                 sets: (e.performed!.sets.filter((s): s is LoggedSet => s != null) as LoggedSet[])
+                  .filter(isWorkingSet)
                   .filter(s => s.reps > 0 || s.kg > 0),
               }))
               .filter(r => r.sets.length > 0);
@@ -710,7 +713,8 @@ export default function WorkoutPlan({
             // En deload NO se capturan (rirRelevant=false) y aquí se omite por seguridad.
             const rirObs = isDeloadSession ? [] : executed.flatMap((ex, i) =>
               (performedByExercise[i] || [])
-                .filter((s): s is LoggedSet => s != null && s.rir != null)
+                // F2C-9C.1 · el RIR de un ramp/warmup/cooldown NO calibra carga → solo working sets.
+                .filter((s): s is LoggedSet => s != null && s.rir != null && isWorkingSet(s))
                 .map(s => ({
                   date: checkDay,
                   exerciseId: ex.id,
