@@ -13,8 +13,9 @@
 //
 // NO incluye: advanced engine, resistanceProfile, station metadata, indirect volume, cardio freq.
 // ─────────────────────────────────────────────────────────────────────────
-import type { Exercise, MuscleGroup, TrainingGoal } from '../types';
+import type { Exercise, MuscleGroup, TrainingGoal, Modality } from '../types';
 import { movementPatternOf, type MovementPattern } from './movementPattern';
+import { isStrengthDomainSession } from './trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
 import { categorize } from './sessionPrescription';
 import { isAnchorEligible } from './blockAnchors';
 
@@ -103,13 +104,16 @@ export function requiredRegions(input: {
 
 /** Exposición reciente por región (sets contados por ejercicio ejecutado) desde `sinceDate`. */
 export function regionExposure(
-  sessions: Array<{ date: string; exerciseIds?: string[] }>,
+  sessions: Array<{ date: string; exerciseIds?: string[]; modality?: Modality }>,
   bankById: Map<string, Pick<Exercise, 'id' | 'muscleGroup' | 'isYoga'>>,
   sinceDate: string,
 ): Record<Region, number> {
   const out: Record<Region, number> = { 'upper-push': 0, 'upper-pull': 0, 'lower-knee': 0, 'lower-hinge': 0, delts: 0, arms: 0, calves: 0, core: 0 };
   for (const s of sessions) {
     if (s.date < sinceDate) continue;
+    // F2C-9B.2 · la cobertura regional de FUERZA solo cuenta sesiones de dominio fuerza — una sesión
+    // cardio con un press-horizontal NO debe marcar "ya cubriste upper-push" y suprimir un ancla.
+    if (!isStrengthDomainSession(s)) continue;
     for (const id of s.exerciseIds ?? []) {
       const ex = bankById.get(id);
       if (!ex) continue;

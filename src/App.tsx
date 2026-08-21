@@ -18,6 +18,8 @@ import {
 } from './utils/workoutSync';
 import { flushPendingWorkouts } from './utils/workoutOutbox';
 import { bootstrapVideoAvailability } from './utils/syncVideoAvailability';   // F2C-9A.1 · disponibilidad de video en runtime
+import { isStrengthDomainSession } from './utils/trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
+import type { Modality } from './types';
 import { detectBrowserLanguage } from './i18n';
 import LandingScreen from './screens/LandingScreen';
 import UpdatePrompt from './components/UpdatePrompt';
@@ -515,7 +517,12 @@ export default function App() {
               // Último desempeño por ejercicio (para "la vez pasada" en el player).
               // Las filas vienen ascendentes por completed_at → la última gana.
               const perf: Record<string, { date: string; sets: { reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean }[] }> = {};
-              for (const w of workouts as Array<WorkoutLogRow & { date_local: string; exercises: unknown }>) {
+              for (const w of workouts as Array<WorkoutLogRow & { date_local: string; exercises: unknown; modality?: string }>) {
+                // F2C-9B.2 · la hidratación de lastExercisePerformance es un PRODUCTOR (el mapa se keya
+                // por exerciseId → pierde el contexto de sesión aguas abajo). Solo filas de DOMINIO fuerza
+                // pueden reconstruir el "peso a batir". Cardio/yoga explícitos se saltan enteros; legacy
+                // sin modality se conserva (comportamiento conservador, no borra historial de fuerza viejo).
+                if (!isStrengthDomainSession({ modality: w.modality as Modality | undefined })) continue;
                 const exs = Array.isArray(w.exercises) ? w.exercises : [];
                 for (const ex of exs as Array<{ exercise_id?: string; performed?: { sets?: Array<{ reps: number; kg: number; rir?: number; repsUnconfirmed?: boolean } | null>; skipped?: boolean } }>) {
                   if (!ex || typeof ex.exercise_id !== 'string' || !ex.performed || ex.performed.skipped) continue;

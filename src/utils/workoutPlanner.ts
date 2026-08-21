@@ -1,5 +1,6 @@
 import { dayKey } from './localDate';
 import { hasVideo } from './videoAvailability';   // F2C-9A · fuente ÚNICA de disponibilidad de video (snapshot ∪ overlay runtime)
+import { isStrengthDomainSession } from './trainingDomain';   // F2C-9B.2 · autoridad de strength credit por SESIÓN
 import { variantAllowedByGear, gearFromLegacyEquipment, type Implement, type Gear } from './equipmentImplement';
 import { computeVolumeTargets, targetsToMap, type Level } from './volumeLandmarks';
 import { estimatedSessionMinutes } from './sessionPrescription';
@@ -226,7 +227,12 @@ export function computeWeeklyVolume(
   const covered = new Set<string>();
   for (const s of completedSessions) {
     if (s.date < since) continue;
+    // F2C-9B.2 · DOMINIO manda: una sesión non-strength (cardio/yoga) NO aporta volumen de fuerza,
+    // aunque su exercises[] traiga un movimiento de fuerza con kg/reps reales (caso 9B.3). Antes esto
+    // dependía SOLO del guard por-ejercicio `ex.type==='cardio'` (accidental); ahora es explícito por
+    // sesión. `covered` se marca IGUAL (la fecha sí tuvo actividad → el legacy workoutLog no la re-cuenta).
     covered.add(s.date);
+    if (!isStrengthDomainSession(s)) continue;
     // LEDGER REAL · sesión MODERNA (trae detalle por-ejercicio) → cuenta los SETS REALMENTE EJECUTADOS
     // (exercises[].sets.length; skipped/vacíos ya excluidos al escribir la sesión), NO defaultSets. El
     // volumen se atribuye al exerciseId EJECUTADO (swap ya aplicado en exercises[].id). Antes se contaba

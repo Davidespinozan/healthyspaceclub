@@ -29,6 +29,7 @@ import {
   type ExerciseLogItem,
 } from '../../utils/workoutLogger';
 import { exerciseVideoCandidateIds, pickExerciseVideo, selectVariantForEquipment } from '../../utils/workoutPlanner';
+import { isStrengthDomainSession } from '../../utils/trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
 import type { Implement } from '../../utils/equipmentImplement';
 import type {
   Exercise,
@@ -685,6 +686,11 @@ export default function WorkoutPlan({
             //    regreso post-deload retoma el peso real previo, no el ligero de la descarga;
             //  · no registra RIR para calibración (un set fácil a propósito no es evidencia).
             const isDeloadSession = (plan as { isDeload?: boolean }).isDeload === true;
+            // F2C-9B.2 · este handler es COMPARTIDO por fuerza y cardio dedicado/manual (sessionModality).
+            // Solo una sesión de DOMINIO fuerza puede escribir estado de aprendizaje de fuerza
+            // (lastExercisePerformance / rirLog). Una sesión cardio jamás lo alimenta, aunque su
+            // exercises[] traiga un movimiento de fuerza con kg/reps/RIR reales (caso 9B.3).
+            const isStrengthSession = isStrengthDomainSession({ modality: sessionModality });
 
             // Guarda el desempeño por ejercicio (para "la vez pasada: NkgxR" en el
             // próximo entreno). Solo series con carga/reps reales (no saltadas).
@@ -697,7 +703,7 @@ export default function WorkoutPlan({
                   .filter(s => s.reps > 0 || s.kg > 0),
               }))
               .filter(r => r.sets.length > 0);
-            if (!isDeloadSession && perfRecords.length > 0) useAppStore.getState().recordExercisePerformance(perfRecords);
+            if (isStrengthSession && !isDeloadSession && perfRecords.length > 0) useAppStore.getState().recordExercisePerformance(perfRecords);
 
             // P6 · extrae observaciones de RIR real (solo series donde el usuario lo
             // reportó) → alimenta la calibración de carga (P2) y la tendencia crónica.
@@ -714,7 +720,7 @@ export default function WorkoutPlan({
                   kg: s.kg,
                 })),
             );
-            if (rirObs.length > 0) useAppStore.getState().addRirObservations(rirObs);
+            if (isStrengthSession && rirObs.length > 0) useAppStore.getState().addRirObservations(rirObs);
 
             // DEV-only: trace estructurado del contrato PRESCRITO ≠ EJECUTADO ≠ GUARDADO.
             logE2ETrace({

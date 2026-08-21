@@ -16,6 +16,7 @@
 import type { Exercise, TrainingGoal } from '../types';
 import { categorize } from './sessionPrescription';
 import type { CompletedSession } from '../types';
+import { isStrengthDomainSession } from './trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
 
 /** Referencia mínima persistente de un anchor. Solo lo que NO se puede derivar con fiabilidad. */
 export interface BlockAnchor {
@@ -42,7 +43,9 @@ export interface AnchorTraceItem {
  * Derivable del historial → no se persiste aparte.
  */
 export function currentBlockId(completedSessions: CompletedSession[]): string {
-  const deloadDates = completedSessions.filter(s => s.isDeload).map(s => s.date).sort();
+  // F2C-9B.2 · la frontera del bloque de FUERZA solo la mueve un deload de dominio fuerza. Un deload
+  // de cardio/yoga (isDeload=true en modality no-fuerza) NO debe reiniciar el mesociclo de fuerza.
+  const deloadDates = completedSessions.filter(s => s.isDeload && isStrengthDomainSession(s)).map(s => s.date).sort();
   return deloadDates.length ? `blk-${deloadDates[deloadDates.length - 1]}` : 'blk-0';
 }
 

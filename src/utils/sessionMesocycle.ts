@@ -12,6 +12,7 @@ import {
   deloadCheck, inDeloadWeek, computeWeeklyVolume, trainingFrequency,
 } from './workoutPlanner';
 import { e1RMTrend } from './loadEngine';
+import { isStrengthDomainSession } from './trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
 import {
   deriveMesocycleState, recoveryFromCheckin, adherenceFrom, volumeTrend,
   type MesocycleState,
@@ -43,8 +44,10 @@ export function deriveSessionMesocycle(input: {
   for (const w of (workoutLog || [])) if (w.date >= since(7)) last7Days.add(w.date);
   const freq = trainingFrequency(completedSessions, workoutLog || []);
   // Rendimiento REAL (P2): tendencia de FUERZA (e1RM del mismo ejercicio, 14d vs 14-28d).
+  // F2C-9B.2 · solo sesiones de DOMINIO fuerza entran a la tendencia de e1RM (no cardio/yoga),
+  // aunque una sesión cardio traiga un movimiento de fuerza con kg/reps reales. Antes NO había gate.
   const strengthEntries = (loDays: number, hiDays: number) => completedSessions
-    .filter(s => !s.isDeload && s.date >= since(hiDays) && (loDays === 0 || s.date < since(loDays)))
+    .filter(s => isStrengthDomainSession(s) && !s.isDeload && s.date >= since(hiDays) && (loDays === 0 || s.date < since(loDays)))
     .flatMap(s => (s.exercises ?? []).map(e => ({ exercise: e.id, sets: e.sets })));
   const strengthTrend = e1RMTrend(strengthEntries(0, 14), strengthEntries(14, 28));
   const performance = strengthTrend ?? volumeTrend(setsLast7, setsPrev7);

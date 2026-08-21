@@ -73,6 +73,7 @@ import { orchestrateWorkout } from '../utils/workoutOrchestration';
 import { buildYogaFlowPlan } from '../utils/yogaBuilder';
 import { repairWorkoutStructure } from '../utils/exerciseOrder';
 import { currentBlockId, resolveBlockAnchors, enforceAnchors, type AnchorTraceItem } from '../utils/blockAnchors';
+import { isStrengthDomainSession } from '../utils/trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
 import { buildSessionSlots, requiredPatterns, applySessionStructure, type Slot } from '../utils/sessionSlots';
 import { requiredRegions as computeRequiredRegions, regionExposure, selectFullBodyAnchors, type Region } from '../utils/regionalCoverage';
 import { movementPatternOf, type MovementPattern } from '../utils/movementPattern';
@@ -1122,7 +1123,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           const hi = dayKey(new Date(Date.now() - (wk * 7 - 7) * 86400000));
           const lo = dayKey(new Date(Date.now() - wk * 7 * 86400000));
           const entries = completedSessions
-            .filter(s => !s.isDeload && s.date > lo && s.date <= hi)
+            // F2C-9B.2 · solo dominio fuerza alimenta el e1RM por músculo (weak-point/priority).
+            .filter(s => isStrengthDomainSession(s) && !s.isDeload && s.date > lo && s.date <= hi)
             .flatMap(s => (s.exercises ?? []).map(e => ({ exercise: e.id, sets: e.sets })));
           const byM = bestE1RMByMuscle(entries, muscleOfId);
           for (const m of Object.keys(byM)) { (muscleE1RM[m] ??= []).push(byM[m]); }
