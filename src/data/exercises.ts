@@ -59,7 +59,7 @@ const baseExercises: Exercise[] = [
       { id: 'press-horizontal-mancuernas', name: 'Con mancuernas', equipment: ['gym'], difficulty: 'intermedio', notes: 'Mayor rango de movimiento y corrige asimetrías entre brazos.' },
       { id: 'press-horizontal-smith', name: 'En Smith', equipment: ['gym'], difficulty: 'principiante', notes: 'Trayectoria fija — ideal si entrenas sin spotter o buscas alto volumen.' },
       { id: 'press-horizontal-banda', name: 'Con banda', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '12-15', notes: 'En casa o de viaje — ancla la banda detrás de ti a la altura del torso.' },
-      { id: 'press-horizontal-flexiones', name: 'Flexiones', equipment: ['cuerpo'], difficulty: 'principiante', defaultSets: 4, defaultReps: '12-15', defaultRest: 60, notes: 'Sin equipo. Mantén core firme — la cadera no debe hundirse.' },
+      { id: 'press-horizontal-flexiones', name: 'Flexiones', equipment: ['cuerpo'], difficulty: 'principiante', defaultSets: 4, defaultReps: '12-15', defaultRest: 60, capabilities: { roles: ['strength', 'conditioning'], workModes: ['reps', 'interval'] }, notes: 'Sin equipo. Mantén core firme — la cadera no debe hundirse.' },   // F2C-9B.3 · multi-role: metcon interval bodyweight
       { id: 'press-horizontal-flexiones-rodillas', name: 'En rodillas', equipment: ['cuerpo'], difficulty: 'principiante', defaultSets: 4, defaultReps: '12-15', defaultRest: 60, notes: 'Regresión de la flexión: apoya las rodillas para bajar la carga. Mantén la línea hombros-cadera-rodillas.' },
       { id: 'press-horizontal-maquina', name: 'En máquina (sentado)', equipment: ['gym'], difficulty: 'principiante', notes: 'Chest press sentado — trayectoria guiada, ideal para principiantes o alto volumen sin spotter.' },
       { id: 'press-horizontal-maquina-acostado', name: 'En máquina (acostado)', equipment: ['gym'], difficulty: 'principiante', notes: 'Máquina con banca horizontal, empujas acostado — trayectoria guiada con el torso plano.' },
@@ -1296,7 +1296,7 @@ const baseExercises: Exercise[] = [
       { id: 'sentadilla-hack', name: 'Sentadilla hack en máquina', equipment: ['gym'], difficulty: 'principiante', defaultReps: '8-12', defaultRest: 90, notes: 'Trayectoria fija — máxima carga sin demanda de estabilización.' },
       { id: 'sentadilla-smith', name: 'En Smith', equipment: ['gym'], difficulty: 'principiante', notes: 'Barra fija en rieles — útil para drop sets o trabajo a alto volumen.' },
       { id: 'sentadilla-isometrica', name: 'Isométrica (hold)', equipment: ['gym', 'cuerpo'], difficulty: 'principiante', defaultReps: '20-45 seg', defaultRest: 60, notes: 'Mantén la posición abajo sin moverte — tensión constante y resistencia del cuádriceps.' },
-      { id: 'sentadilla-al-aire', name: 'Sentadilla al aire', equipment: ['cuerpo'], difficulty: 'principiante', defaultSets: 4, defaultReps: '15-20', defaultRest: 60, notes: 'Sin peso — warm-up o trabajo de movilidad y resistencia.' },
+      { id: 'sentadilla-al-aire', name: 'Sentadilla al aire', equipment: ['cuerpo'], difficulty: 'principiante', defaultSets: 4, defaultReps: '15-20', defaultRest: 60, capabilities: { roles: ['strength', 'conditioning'], workModes: ['reps', 'interval'] }, notes: 'Sin peso — warm-up o trabajo de movilidad y resistencia.' },   // F2C-9B.3 · multi-role: metcon interval bodyweight
       { id: 'sentadilla-con-banda', name: 'Con banda', equipment: ['ligas'], difficulty: 'principiante', defaultReps: '12-15', defaultRest: 75, notes: 'Banda pisada sobre los hombros — versión casera con tensión progresiva.' },
     ],
     category: '4 series',
@@ -1411,7 +1411,7 @@ const baseExercises: Exercise[] = [
     ],
     tip: 'No te impulses con la pierna trasera — la pierna que sube hace TODO el trabajo.',
     variants: [
-      { id: 'step-up-mancuernas', name: 'Mancuernas', equipment: ['gym'], difficulty: 'principiante', isDefault: true, notes: 'Versión clásica — fácil de progresar agregando peso.' },
+      { id: 'step-up-mancuernas', name: 'Mancuernas', equipment: ['gym'], difficulty: 'principiante', isDefault: true, capabilities: { roles: ['strength', 'conditioning'], workModes: ['reps', 'interval'] }, notes: 'Versión clásica — fácil de progresar agregando peso.' },   // F2C-9B.3 · multi-role: metcon interval (carga ligera)
       { id: 'step-up-barra', name: 'Barra atrás', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '8-10 por lado', notes: 'Barra atrás como sentadilla — mayor demanda de estabilidad.' },
       { id: 'step-up-explosivo', name: 'Explosivo', equipment: ['gym'], difficulty: 'intermedio', defaultReps: '8-10 por lado', notes: 'Sube explosivo con cambio de pierna en el aire — patrón pliométrico.' },
       { id: 'step-up-lateral', name: 'Lateral', equipment: ['gym'], difficulty: 'principiante', notes: 'Subes de lado a la plataforma — más activación de glúteo medio.' },
@@ -2097,7 +2097,7 @@ const baseExercises: Exercise[] = [
     ],
     tip: 'No sacrifiques técnica por velocidad — 15 reps lentas y precisas valen más que 40 rápidas sin control.',
     variants: [
-      { id: 'core-mountain-climbers', name: 'Escaladores', equipment: ['cuerpo'], difficulty: 'principiante', isDefault: true, notes: 'Plancha alta alternando rodillas al pecho — cardio + core combinados.' },
+      { id: 'core-mountain-climbers', name: 'Escaladores', equipment: ['cuerpo'], difficulty: 'principiante', isDefault: true, capabilities: { roles: ['strength', 'conditioning'], workModes: ['reps', 'interval'] }, notes: 'Plancha alta alternando rodillas al pecho — cardio + core combinados.' },   // F2C-9B.3 · multi-role: metcon interval bodyweight
       { id: 'hollow-rock', name: 'Hollow rock', equipment: ['cuerpo'], difficulty: 'intermedio', defaultReps: '20-30 seg', notes: 'Acostado en posición de banana balanceándote — fundamental gimnástico de control de core.' },
       { id: 'v-ups', name: 'V-ups', equipment: ['cuerpo'], difficulty: 'intermedio', defaultReps: '10-12', notes: 'Acostado, simultáneo manos y pies suben encontrándose arriba — abdomen completo.' },
       { id: 'bicycle-crunch', name: 'Abdominal bicicleta', equipment: ['cuerpo'], difficulty: 'principiante', defaultReps: '15-20 por lado', notes: 'Pedaleo alternando codo a rodilla contraria — oblicuos dinámicos.' },
@@ -2126,7 +2126,7 @@ const baseExercises: Exercise[] = [
     ],
     tip: 'Si sientes la espalda baja, sube un poco las piernas o mete las manos bajo los glúteos — protege la lumbar.',
     variants: [
-      { id: 'core-crunch-piernas-elevadas', name: 'Crunch con piernas elevadas', equipment: ['cuerpo'], difficulty: 'principiante', isDefault: true, notes: 'Piernas arriba estáticas, despega los hombros hacia ellas — abdomen alto.' },
+      { id: 'core-crunch-piernas-elevadas', name: 'Crunch con piernas elevadas', equipment: ['cuerpo'], difficulty: 'principiante', isDefault: true, capabilities: { roles: ['strength', 'conditioning'], workModes: ['reps', 'interval'] }, notes: 'Piernas arriba estáticas, despega los hombros hacia ellas — abdomen alto.' },   // F2C-9B.3 · multi-role: metcon interval bodyweight
       { id: 'core-in-and-out-manos', name: 'In & out (manos apoyadas)', equipment: ['cuerpo'], difficulty: 'principiante', notes: 'Sentado con manos apoyadas atrás, encoges y estiras las piernas — abdomen inferior.' },
       { id: 'core-in-and-out-mancuerna', name: 'In & out sobre mancuerna', equipment: ['cuerpo'], difficulty: 'intermedio', notes: 'Igual pero pasando las piernas por encima de una mancuerna — más rango y control.' },
       { id: 'core-toques-de-puntas', name: 'Toques de puntas', equipment: ['cuerpo'], difficulty: 'principiante', defaultReps: '12-15', notes: 'Piernas elevadas, subes a tocar las puntas de los pies — abdomen alto.' },
@@ -2414,7 +2414,7 @@ const baseExercises: Exercise[] = [
     ],
     tip: 'El descenso lento es lo que más fortalece — no te dejes caer en la silla.',
     variants: [
-      { id: 'sentarse-pararse-silla', name: 'Con silla', equipment: ['cuerpo'], difficulty: 'principiante', isDefault: true, notes: 'La versión estándar; usa reposabrazos para asistir si lo necesitas.' },
+      { id: 'sentarse-pararse-silla', name: 'Con silla', equipment: ['cuerpo'], difficulty: 'principiante', isDefault: true, capabilities: { roles: ['strength', 'conditioning'], workModes: ['reps', 'interval'] }, notes: 'La versión estándar; usa reposabrazos para asistir si lo necesitas.' },   // F2C-9B.3 · multi-role: metcon interval (low-impact)
       { id: 'sentarse-pararse-mancuerna', name: 'Con peso', equipment: ['gym'], difficulty: 'principiante', notes: 'Sostén una mancuerna al pecho para progresar la carga.' },
     ],
     category: '3 series',

@@ -1,6 +1,7 @@
 import { dayKey } from './localDate';
 import { hasVideo } from './videoAvailability';   // F2C-9A · fuente ÚNICA de disponibilidad de video (snapshot ∪ overlay runtime)
 import { isStrengthDomainSession } from './trainingDomain';   // F2C-9B.2 · autoridad de strength credit por SESIÓN
+import { hasConditioningIntervalCapability } from './conditioningPool';   // F2C-9B.3 · admisión conditioning por capability
 import { variantAllowedByGear, gearFromLegacyEquipment, type Implement, type Gear } from './equipmentImplement';
 import { computeVolumeTargets, targetsToMap, type Level } from './volumeLandmarks';
 import { estimatedSessionMinutes } from './sessionPrescription';
@@ -1371,7 +1372,10 @@ export function getExerciseModalities(ex: Exercise): string[] {
     mods.add('fuerza');
     mods.add('hipertrofia');
   }
-  if (ex.goals.includes('condicion') || ex.type === 'cardio' || ex.type === 'funcional') {
+  // F2C-9B.3 · ADITIVO: además del predicado legacy (goals/type), un movimiento entra al pool de
+  // conditioning si DECLARA capability conditioning+interval (9B.1, variant-aware). INERTE sin overrides
+  // (equivalencia exacta con el pool legacy); en Phase 2 admite exactamente los GREEN autorizados.
+  if (ex.goals.includes('condicion') || ex.type === 'cardio' || ex.type === 'funcional' || hasConditioningIntervalCapability(ex)) {
     mods.add('cardio');
     mods.add('hiit');
   }

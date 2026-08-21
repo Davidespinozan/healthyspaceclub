@@ -45,6 +45,7 @@ import { allocateHeadroom } from '../utils/headroom';
 import { assignTechniques } from '../utils/techniques';
 import { buildCardioMain, cardioBlocksToExercises, getCardioCapabilities, resolveCardioStyle, sessionIntensityLabel } from '../utils/cardioMain';
 import { buildCardioSupportPool } from '../utils/cardioPlayability';
+import { enrichConditioningPool, conditioningVariantIdFor } from '../utils/conditioningPool';   // F2C-9B.3 · adapter capability→cardio
 import { composeSession } from '../utils/sessionBlocks';
 import { strengthWarmupMinutes, pickWarmupRaise, pickSpecificActivation, warmupRegion, firstApproachExercise } from '../utils/strengthWarmup';
 import { shouldShowWeekCoveredNotice, initialWorkoutPhase, planPlannedMinutes } from '../utils/workoutDisplay';
@@ -953,7 +954,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         const cardioEq = cardioEquipmentFor(cardioEqBase);
         // Estilo efectivo: elección del usuario (Fase 4) o el inferido; lowImpact manda.
         const targetStyle = effectiveCardioStyle;
-        const pool = modalityFiltered.filter(ex =>
+        // F2C-9B.3 · movimientos multi-role (capability conditioning+interval) entran como estación de
+        // INTERVALO funcional efímera (cardioStyle=funcional a nivel Exercise; NUNCA variant.cardioStyle).
+        // Inerte sin overrides. El resto del banco pasa intacto; F2C-4→8 gobiernan fase/dosis/seguridad.
+        const cardioBank = enrichConditioningPool(modalityFiltered, cardioEq, caps.allowedImplements);
+        const pool = cardioBank.filter(ex =>
           ex.equipment.some(e => cardioEq.includes(e)) &&
           !(lowImpactMode && (ex.impact === 'high' || ex.fallRisk === true)) &&
           hasPlayableVariant(ex, cardioEq, caps.allowedImplements)
@@ -1723,7 +1728,15 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
             throw new Error(t('wizard.cardioUnavailable'));
           }
           const cardioExs = cardioBlocksToExercises(cardioPlan);
-          if (cardioExs.length) w.exercises = cardioExs;
+          // F2C-9B.3 · variant-aware display: una estación conditioning (interval, sin variantId propio)
+          // fija la variante bodyweight autorizada → el player muestra flexiones/sentadilla-al-aire, no la
+          // hermana pesada (barra/bench). Estaciones cardio nativas (ya con variantId) quedan intactas.
+          const cardioExsResolved = cardioExs.map(e => {
+            if (e.variantId) return e;
+            const vid = conditioningVariantIdFor(e.id, bank, cardioEquipmentFor(cardioEqBase), caps.allowedImplements);
+            return vid ? { ...e, variantId: vid } : e;
+          });
+          if (cardioExsResolved.length) w.exercises = cardioExsResolved;
           console.info(`[cardio-main] ${cardioPlan.style} · plan ${cardioPlan.totalMinutes}/${sessionPlan.budget.main}min · ${cardioPlan.blocks.length} bloques ejecutables (playable=${cardioPlan.blocks.reduce((a, b) => a + b.minutes, 0)}m)${cardioPlan.earlyEnd ? ' · fin intencional: ' + cardioPlan.earlyEndReason : ''}`);
         }
       }
