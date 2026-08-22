@@ -75,6 +75,9 @@ export interface CachedWorkout {
       phase: string; name: string | null; note: string;
       exerciseId?: string; variantId?: string;
       prescription?: import('./warmupSelection').PhaseMovementPrescription;
+      // F2C-9C.2C · SERIES DE APROXIMACIÓN ejecutables (fase potentiate) derivadas del topKg del working
+      // lift (mismo exerciseId/variantId). Additive: sin `ramp` = nota legacy. NUNCA se loguea (cero credit).
+      ramp?: import('./rampPrescription').RampPrescription;
     }>;
   };
   // F2C-9C.2A · vuelta a la calma de FUERZA (PREVIEW · no ejecutable, no LoggedSet, no ExecutionRole,

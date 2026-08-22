@@ -21,6 +21,7 @@ import type { WorkoutExercise } from '../utils/workoutSession';
 import { parseRepsToNumber } from '../utils/workoutLogger';
 import { targetSecondsFromReps } from '../utils/blockTimer';
 import GuidedPhaseMovement from './GuidedPhaseMovement';   // F2C-9C.2B.1 · movimiento de warmup guiado
+import GuidedRampMovement from './GuidedRampMovement';     // F2C-9C.2C · series de aproximación guiadas
 // F2C-2 · UX cardio-nativa: título humano del bloque + decisión de video (reutiliza la autoridad de Today).
 import { cardioBlockTitleKey, cardioShowVideo } from '../utils/workoutDisplay';
 import { isPartnerBDevice, partnerExerciseView } from '../utils/partnerView';
@@ -142,7 +143,10 @@ export default function WorkoutPlayer({
   // calentamiento GUIADO (timer/reps por movimiento); si no → preview legacy (name+note). Warmup NUNCA
   // entra a `sequence`/`exercises[]`/CompletedSession → cero credit por construcción.
   const warmupItems = useMemo(
-    () => (warmupBlock?.phases ?? []).filter((p): p is typeof p & { exerciseId: string; prescription: NonNullable<typeof p.prescription> } => !!p.exerciseId && !!p.prescription),
+    // F2C-9C.2B.1 · fase con prescription (raise/mobilise). F2C-9C.2C · fase potentiate con `ramp` (≥1
+    // aproximación). Ambas son EJECUTABLES (guiadas). Ninguna entra a `sequence`/`exercises[]`/CompletedSession.
+    () => (warmupBlock?.phases ?? []).filter((p): p is typeof p & { exerciseId: string } =>
+      !!p.exerciseId && (!!p.prescription || (!!p.ramp && p.ramp.steps.length > 0))),
     [warmupBlock],
   );
   const finisherBlock = (workout as CachedWorkout).finisherBlock;
@@ -850,19 +854,34 @@ export default function WorkoutPlayer({
         const advance = () => setWarmupItemIndex(i => i + 1);   // onDone/onSkip: siguiente item (NO loguea nada)
         return (
           <div className="wp-prep">
-            <GuidedPhaseMovement
-              key={warmupItemIndex}
-              phaseLabel={t(`workout.ramp.${it.phase}` as Parameters<typeof t>[0])}
-              name={it.name ?? it.exerciseId}
-              note={it.note}
-              prescription={it.prescription}
-              videoUrl={warmupVideoUrl}
-              index={warmupItemIndex}
-              total={warmupItems.length}
-              onDone={advance}
-              onSkip={advance}
-              t={t}
-            />
+            {it.ramp && it.ramp.steps.length > 0 ? (
+              // F2C-9C.2C · SERIES DE APROXIMACIÓN guiadas (potentiate). Preparación específica, no strength set:
+              // sin RIR/kg editable/serie efectiva/log. Al terminar → siguiente item / startExercises().
+              <GuidedRampMovement
+                key={warmupItemIndex}
+                phaseLabel={t('workout.phase.rampTitle')}
+                name={it.name ?? it.exerciseId}
+                steps={it.ramp.steps}
+                videoUrl={warmupVideoUrl}
+                onDone={advance}
+                onSkip={advance}
+                t={t}
+              />
+            ) : (
+              <GuidedPhaseMovement
+                key={warmupItemIndex}
+                phaseLabel={t(`workout.ramp.${it.phase}` as Parameters<typeof t>[0])}
+                name={it.name ?? it.exerciseId}
+                note={it.note}
+                prescription={it.prescription!}
+                videoUrl={warmupVideoUrl}
+                index={warmupItemIndex}
+                total={warmupItems.length}
+                onDone={advance}
+                onSkip={advance}
+                t={t}
+              />
+            )}
             <button className="wp-phase-skipall" onClick={startExercises}>{t('workout.warmupCta')}</button>
           </div>
         );

@@ -501,6 +501,10 @@ export const es = {
       repsPerSide: '{n} por lado',
       skip: 'Saltar',
       done: 'Listo',
+      // F2C-9C.2C · series de aproximación guiadas (potentiate).
+      rampTitle: 'Series de aproximación',
+      rampSet: '{kg} kg × {reps}',
+      rampRest: 'Descanso',
     },
     partnerFormat: {
       juntos: 'Juntos — misma serie a la vez',

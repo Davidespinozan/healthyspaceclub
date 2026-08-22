@@ -502,6 +502,10 @@ export const en: Translations<typeof es> = {
       repsPerSide: '{n} per side',
       skip: 'Skip',
       done: 'Done',
+      // F2C-9C.2C · guided ramp-up (approach) sets (potentiate).
+      rampTitle: 'Ramp-up sets',
+      rampSet: '{kg} kg × {reps}',
+      rampRest: 'Rest',
     },
     partnerFormat: {
       juntos: 'Together — same set at once',
