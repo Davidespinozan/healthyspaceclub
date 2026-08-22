@@ -41,6 +41,7 @@ import type {
   LoggedSet,
 } from '../../types';
 import type { CachedWorkout } from '../../utils/workoutCache';
+import CooldownOverlay from '../CooldownOverlay';   // F2C-9C.2B.2 · vuelta a la calma post-sello
 import type { SessionEndReason } from '../../utils/sessionEndReason';
 import ExerciseDetailPopout from '../ExerciseDetailPopout';
 import ActivityLogSheet from '../ActivityLogSheet';
@@ -152,6 +153,7 @@ export default function WorkoutPlan({
   // F2B-1 UX (item 3) · transición Fuerza→Cardio: tras completar fuerza con cardio pendiente se ofrece
   // continuar sin volver a "buscar" el cardio. NO auto-inicia; NO marca done si se pospone.
   const [cardioHandoff, setCardioHandoff] = useState(false);
+  const [cooldownActive, setCooldownActive] = useState(false);   // F2C-9C.2B.2 · overlay de vuelta a la calma post-sello
   const composedCardioSpec = plan.composedCardio;
   const composedCardioPending = !!composedCardioSpec && composedCardioSpec.done !== true;
   // Inicia el cardio SELLADO como sesión separada (usado por el bloque 03 y por la transición).
@@ -612,6 +614,17 @@ export default function WorkoutPlan({
         </div>
       )}
 
+      {/* F2C-9C.2B.2 · VUELTA A LA CALMA post-sello · overlay independiente del player (ya desmontado).
+          Sesión ya guardada; opcional/skippable; cero training credit. */}
+      {cooldownActive && (plan as CachedWorkout).cooldownBlock && (
+        <CooldownOverlay
+          block={(plan as CachedWorkout).cooldownBlock!}
+          exerciseBank={exerciseBank}
+          equipment={[selectedEquipment]}
+          onClose={() => setCooldownActive(false)}
+        />
+      )}
+
       {/* WorkoutPlayer overlay full-screen — fuerza/cardio · lazy + Suspense */}
       {workoutPlayerOpen && plan.exercises.length > 0 && (
         <Suspense fallback={<PlayerLoadingFallback />}>
@@ -779,6 +792,13 @@ export default function WorkoutPlan({
             }).catch(() => {});
 
             setWorkoutPlayerOpen(false);
+            // F2C-9C.2B.2 · VUELTA A LA CALMA post-sello (overlay nivel WorkoutPlan; el player ya se
+            // desmontó). La sesión YA quedó sellada arriba (finishWorkoutSession: addCompletedSession +
+            // outbox síncronos). SUPRIMIDA si hay cardio compuesto pendiente: static-stretch antes de
+            // cardio intenso no tiene sentido → el cardio tendrá su propia vuelta a la calma.
+            const cd = (plan as CachedWorkout).cooldownBlock;
+            const hasExecutableCooldown = !!cd && cd.movements.some(m => !!m.prescription);
+            if (hasExecutableCooldown && !(composedCardioPending && !composedCardioSatisfied)) setCooldownActive(true);
             // F2B-1 UX (item 3) · si esta sesión de fuerza trae cardio compuesto pendiente, no volver al
             // plan a "buscar" el cardio: ofrecer la transición continua Fuerza→Cardio. NO auto-inicia.
             if (composedCardioPending && !composedCardioSatisfied) setCardioHandoff(true);

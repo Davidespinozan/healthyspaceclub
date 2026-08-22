@@ -489,6 +489,9 @@ export const es = {
     },
     // F2C-9C.2A · vuelta a la calma (preview post-sesión de fuerza).
     cooldownPreview: 'Vuelta a la calma',
+    cooldownSaved: 'Tu entrenamiento ya quedó guardado ✓',
+    cooldownStart: 'Empezar vuelta a la calma',
+    cooldownSkip: 'Omitir',
     cooldownStep: {
       hold: 'Mantén 30–45 s con respiración lenta — sin forzar.',
     },

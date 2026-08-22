@@ -1683,9 +1683,17 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
             // training credit (no entra a exercises[], no LoggedSet, no ExecutionRole).
             const cooldownMoves = selectCooldown(bank, equipmentList, 2);
             if (cooldownMoves.length > 0) {
+              // F2C-9C.2B.2 · sella prescription (time/reps por metadata) + variantId → cooldown EJECUTABLE
+              // (overlay post-sello). Sin prescription honesta → queda como preview (name+note).
               w.cooldownBlock = {
                 minutes: 4,
-                movements: cooldownMoves.map(m => ({ exerciseId: m.id, name: m.name, note: t('workout.cooldownStep.hold') })),
+                movements: cooldownMoves.map(m => {
+                  const prescription = phaseMovementPrescription(m, 'cooldown');
+                  return {
+                    exerciseId: m.id, name: m.name, note: t('workout.cooldownStep.hold'),
+                    ...(prescription ? { prescription, variantId: sealPhaseVariantId(m, equipmentList, caps.allowedImplements) } : {}),
+                  };
+                }),
               };
             }
           } else {

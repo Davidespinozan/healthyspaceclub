@@ -35,8 +35,10 @@ const RAISE_SECONDS = 120;
  * no permite una prescripción honesta (→ el item NO se genera; CONTENT_LIMITED, no bloquea el entreno).
  * NO hardcodea por id. Raise = tiempo fijo suave.
  */
-export function phaseMovementPrescription(ex: Exercise, phase: WarmupPhase): PhaseMovementPrescription | null {
+export function phaseMovementPrescription(ex: Exercise, phase: WarmupPhase | 'cooldown'): PhaseMovementPrescription | null {
   if (phase === 'raise') return { kind: 'time', seconds: RAISE_SECONDS };
+  // F2C-9C.2B.2 · 'cooldown' deriva de la MISMA metadata que mobilise (poses estáticas → time por
+  // defaultDuration/defaultReps 'seg'). Sin caso especial: la derivación de abajo lo cubre.
   const secs = targetSecondsFromReps(ex.defaultReps, ex.prescriptionType)
     ?? ((ex.defaultDuration && ex.defaultDuration > 0) ? ex.defaultDuration : null);
   if (secs != null && secs > 0) return { kind: 'time', seconds: secs };

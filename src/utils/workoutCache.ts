@@ -82,7 +82,10 @@ export interface CachedWorkout {
   // Additive: rutinas legacy sin este campo funcionan igual.
   cooldownBlock?: {
     minutes: number;
-    movements: Array<{ exerciseId: string; variantId?: string; name: string; note?: string }>;
+    // F2C-9C.2B.2 · `prescription` (additive) vuelve un movimiento EJECUTABLE (overlay post-sello, nivel
+    // WorkoutPlan). Sin prescription = preview legacy. Cooldown NUNCA entra a exercises[]/CompletedSession
+    // ni produce LoggedSet/ExecutionRole → cero training credit por construcción.
+    movements: Array<{ exerciseId: string; variantId?: string; name: string; note?: string; prescription?: import('./warmupSelection').PhaseMovementPrescription }>;
   };
   finisherBlock?: {
     minutes: number;

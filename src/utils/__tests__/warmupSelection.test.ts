@@ -137,6 +137,19 @@ describe('9C.2B.1 · phaseMovementPrescription', () => {
     sealPhaseVariantId(ex('cardio-maquina'), [...GYM]);
     expect(JSON.stringify(ex('cardio-maquina'))).toBe(before);
   });
+  // ── 9C.2B.2 · cooldown prescription (reusa la derivación de mobilise) ──
+  it('9C.2B.2 · cooldown: poses estáticas afirmadas → prescripción time honesta', () => {
+    for (const id of ['child-pose', 'pigeon-pose', 'seated-forward-fold', 'bridge-pose', 'camel-pose']) {
+      const p = phaseMovementPrescription(ex(id), 'cooldown');
+      expect(p?.kind).toBe('time');
+      expect((p as { seconds: number }).seconds).toBeGreaterThan(0);
+    }
+  });
+  it('9C.2B.2 · las 8 cooldown afirmadas son prescribibles (ejecutables)', () => {
+    const pool = BANK.filter(e => resolveMovementCapabilities(e).roles.includes('cooldown') && (resolveMovementCapabilities(e).warmupPhases ?? []).length === 0);
+    expect(pool.length).toBe(8);
+    expect(pool.every(m => phaseMovementPrescription(m, 'cooldown') != null)).toBe(true);
+  });
 });
 
 // ── pureza / no-mutación ─────────────────────────────────────────────────────────

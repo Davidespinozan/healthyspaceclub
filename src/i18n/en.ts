@@ -490,6 +490,9 @@ export const en: Translations<typeof es> = {
     },
     // F2C-9C.2A · strength cool-down (post-session preview).
     cooldownPreview: 'Cool-down',
+    cooldownSaved: 'Your workout is already saved ✓',
+    cooldownStart: 'Start cool-down',
+    cooldownSkip: 'Skip',
     cooldownStep: {
       hold: 'Hold 30–45 s with slow breathing — no forcing.',
     },
