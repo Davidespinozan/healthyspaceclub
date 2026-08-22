@@ -174,28 +174,23 @@ export function allocateTime(input: {
     ? clamp(Math.round(total * 0.14), 5, 15)
     : clamp(Math.round(total * 0.10), 3, 8);
 
-  // Finisher solo en días de FUERZA (en un día de cardio, el cardio ES el main).
-  let finisher = 0;
-  if (input.isStrengthDay) {
-    // DELOAD: el finisher re-mete fatiga que la descarga intenta ahorrar → se recorta a la
-    // mitad y con tope bajo (queda algo de trabajo aeróbico ligero solo si el objetivo lo pide).
-    const share = finisherShare(input.objective, input.trainingGoal ?? 'hipertrofia', input.readinessLow ?? false)
-      * (input.isDeload ? 0.5 : 1);
-    finisher = Math.round((total - warmup) * share);
-    const cap = input.isDeload ? 10 : 30;
-    finisher = finisher < 5 ? 0 : Math.min(finisher, cap); // <5 → se omite; tope = FATIGA, no meta
-  }
+  // F2C-9C.2B.3 · el LEGACY finisher se DEPRECA: `finisher = 0` siempre. Antes reservaba minutos
+  // (finisherShare) que RECORTABAN el main para un bloque que nunca se ejecutaba (fase 'finisher'
+  // unreachable — el player se desmonta al sellar). Esos minutos REGRESAN al main. El conditioning
+  // post-fuerza vive ahora SOLO en composedCardio (sesión modality='cardio', domain-aislado, ejecutable
+  // con su propio cooldown). `finisherShare`/`buildFinisher` quedan como helpers inertes (sin consumidor
+  // productivo: composeSession guarda `budget.finisher >= 5`, que ahora es siempre false → finisherBlock
+  // no se adjunta). Warmup/main-floor/reglas de dosis INTACTOS.
+  const finisher = 0;
 
   let main = total - warmup - finisher;
   const mainFloor = input.isStrengthDay ? 20 : 10;
+  // F2C-9C.2B.3 · sin finisher que reclamar; si el main queda bajo el floor, se recorta el warmup
+  // (misma lógica de antes, sin la rama muerta del finisher).
   if (main < mainFloor) {
-    const cutF = Math.min(finisher, mainFloor - main);
-    finisher -= cutF; main += cutF;
-    if (main < mainFloor) {
-      const warmFloor = input.isStrengthDay ? 4 : 2;
-      const cutW = Math.min(Math.max(0, warmup - warmFloor), mainFloor - main);
-      warmup -= cutW; main += cutW;
-    }
+    const warmFloor = input.isStrengthDay ? 4 : 2;
+    const cutW = Math.min(Math.max(0, warmup - warmFloor), mainFloor - main);
+    warmup -= cutW; main += cutW;
   }
   return { warmup, main, finisher };
 }

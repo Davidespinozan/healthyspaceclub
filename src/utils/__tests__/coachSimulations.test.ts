@@ -115,8 +115,8 @@ describe('SIMULACIONES end-to-end P1–P6 (¿tiene sentido como coach?)', () => 
     for (const m of Object.keys(r.targets)) expect(r.targets[m].target).toBeLessThanOrEqual(14);
     // sin carga → ningún top-set con kg
     expect(r.items.every(it => it.prescription.topKg == null)).toBe(true);
-    // perder grasa → hay finisher (share alto)
-    expect(r.time.finisher).toBeGreaterThan(0);
+    // F2C-9C.2B.3 · finisher deprecado (0); el tiempo va al main, el conditioning es composedCardio
+    expect(r.time.finisher).toBe(0);
     expect(timeFits(r, 45)).toBe(true);
   });
 

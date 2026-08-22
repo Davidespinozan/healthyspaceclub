@@ -125,10 +125,11 @@ describe('CUT · finisher acotado (no desproporcionado) y readiness/fase lo reco
     const low = allocateTime({ totalMinutes: 60, isStrengthDay: true, objective: 'perder grasa', readinessLow: true });
     expect(low.finisher).toBeLessThanOrEqual(normal.finisher);
   });
-  it('deload recorta el finisher del cut', () => {
+  it('F2C-9C.2B.3 · finisher deprecado: 0 en normal y deload (el conditioning vive en composedCardio)', () => {
     const normal = allocateTime({ totalMinutes: 75, isStrengthDay: true, objective: 'perder grasa' });
     const deload = allocateTime({ totalMinutes: 75, isStrengthDay: true, objective: 'perder grasa', isDeload: true });
-    expect(deload.finisher).toBeLessThan(normal.finisher);
+    expect(normal.finisher).toBe(0);
+    expect(deload.finisher).toBe(0);
   });
   it('30 min: el main respeta su piso y domina sobre el finisher', () => {
     const a = allocateTime({ totalMinutes: 30, isStrengthDay: true, objective: 'perder grasa' });

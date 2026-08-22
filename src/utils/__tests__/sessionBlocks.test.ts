@@ -35,24 +35,24 @@ describe('sessionBlocks — presupuesto de tiempo', () => {
     expect(a.main).toBeGreaterThanOrEqual(20);
   });
 
-  it('perder grasa recibe MÁS finisher que ganar músculo', () => {
+  it('F2C-9C.2B.3 · finisher DEPRECADO: siempre 0 (ningún goal reserva finisher); main RECLAMA los minutos', () => {
     const grasa = allocateTime({ totalMinutes: 75, isStrengthDay: true, objective: 'perder-grasa' });
     const musculo = allocateTime({ totalMinutes: 75, isStrengthDay: true, objective: 'ganar-musculo' });
-    expect(grasa.finisher).toBeGreaterThan(musculo.finisher);
+    expect(grasa.finisher).toBe(0);
+    expect(musculo.finisher).toBe(0);
+    expect(grasa.warmup + grasa.main).toBe(75);   // sin minutos perdidos a un bloque muerto
   });
 
-  it('ganar músculo NO queda topado en 8 min: escala con el tiempo', () => {
-    // Principio, no regla dura: a 90 min el finisher de hipertrofia puede pasar de 8.
+  it('F2C-9C.2B.3 · 90 min: finisher=0 y el main recibe todo el tiempo (menos warmup)', () => {
     const a = allocateTime({ totalMinutes: 90, isStrengthDay: true, objective: 'ganar-musculo' });
-    expect(a.finisher).toBeGreaterThan(0);
+    expect(a.finisher).toBe(0);
+    expect(a.warmup + a.main).toBe(90);
   });
 
-  it('DELOAD (auditoría): recorta el finisher para no re-meter la fatiga ahorrada', () => {
-    const normal = allocateTime({ totalMinutes: 75, isStrengthDay: true, objective: 'perder-grasa' });
+  it('F2C-9C.2B.3 · deload tampoco tiene finisher (0); el tiempo va al main', () => {
     const deload = allocateTime({ totalMinutes: 75, isStrengthDay: true, objective: 'perder-grasa', isDeload: true });
-    expect(deload.finisher).toBeLessThan(normal.finisher);
-    expect(deload.finisher).toBeLessThanOrEqual(10); // tope bajo en descarga
-    expect(deload.main).toBeGreaterThanOrEqual(normal.main); // el tiempo vuelve al principal
+    expect(deload.finisher).toBe(0);
+    expect(deload.warmup + deload.main).toBe(75);
   });
 
   it('día de yoga = una sola pieza (sin warm-up/finisher)', () => {
@@ -138,11 +138,12 @@ describe('sessionBlocks — circuito multiformato (Fase 5)', () => {
 });
 
 describe('sessionBlocks — composeSession', () => {
-  it('día de fuerza: warm-up + main + finisher, suma = total', () => {
+  it('F2C-9C.2B.3 · día de fuerza: warm-up + main = total; finisher DEPRECADO (null, budget 0)', () => {
     const p = composeSession(base({ totalMinutes: 60, objective: 'perder-grasa' }));
     expect(p.warmup).not.toBeNull();
-    expect(p.finisher).not.toBeNull();
-    expect(p.budget.warmup + p.budget.main + p.budget.finisher).toBe(60);
+    expect(p.finisher).toBeNull();                    // ya no se genera
+    expect(p.budget.finisher).toBe(0);
+    expect(p.budget.warmup + p.budget.main).toBe(60); // el tiempo del finisher regresó al main
   });
 
   it('día de cardio: sin finisher separado (el cardio es el main)', () => {
