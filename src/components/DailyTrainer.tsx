@@ -48,7 +48,7 @@ import { buildCardioSupportPool } from '../utils/cardioPlayability';
 import { enrichConditioningPool, conditioningVariantIdFor } from '../utils/conditioningPool';   // F2C-9B.3 · adapter capability→cardio
 import { composeSession } from '../utils/sessionBlocks';
 import { strengthWarmupMinutes, pickWarmupRaise, pickSpecificActivation, warmupRegion, firstApproachExercise } from '../utils/strengthWarmup';
-import { selectCooldown } from '../utils/warmupSelection';   // F2C-9C.2A · cooldown de fuerza (preview)
+import { selectCooldown, phaseMovementPrescription, sealPhaseVariantId } from '../utils/warmupSelection';   // F2C-9C.2A/2B.1 · cooldown preview + warmup ejecutable
 import { shouldShowWeekCoveredNotice, initialWorkoutPhase, planPlannedMinutes } from '../utils/workoutDisplay';
 import { composeIntensity } from '../utils/mesocycle';
 import { deriveSessionMesocycle } from '../utils/sessionMesocycle';
@@ -1655,15 +1655,24 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
             const activation = pickSpecificActivation(bank, region, equipmentList);
             const firstEx = firstApproachExercise(w.exercises, anchorIds, exerciseBank);
             const firstIsCompound = !!firstEx && firstEx.type === 'compuesto';
+            // F2C-9C.2B.1 · una fase se vuelve EJECUTABLE (guiada) si trae exerciseId + prescription honesta
+            // (raise=timer, mobilise=activación por metadata). Sin prescripción → preview (name+note). Potentiate
+            // sigue siendo NOTA (ramp-sets = 9C.2C). variantId sellado (máquina concreta, no remo por defecto).
+            const execPhase = (phase: 'raise' | 'mobilise', mv: typeof raise, note: string) => {
+              if (!mv) return { phase, name: null, note };
+              const prescription = phaseMovementPrescription(mv, phase);
+              if (!prescription) return { phase, name: mv.name, note };
+              return { phase, name: mv.name, note, exerciseId: mv.id, variantId: sealPhaseVariantId(mv, equipmentList, caps.allowedImplements), prescription };
+            };
             w.warmupBlock = {
               minutes: strengthWarmupMinutes({
                 trainingGoal, readinessLow: readiness.state === 'low', lowImpactMode,
                 hasPain: discomfort === 'pain', availableMinutes: selectedTime,
               }),
               phases: [
-                { phase: 'raise', name: raise?.name ?? null, note: t('workout.warmupStep.raise') },
-                { phase: 'mobilise', name: activation?.name ?? null,
-                  note: activation ? t('workout.warmupStep.mobiliseEx') : t(`workout.warmupStep.region.${region}` as Parameters<typeof t>[0]) },
+                execPhase('raise', raise, t('workout.warmupStep.raise')),
+                execPhase('mobilise', activation,
+                  activation ? t('workout.warmupStep.mobiliseEx') : t(`workout.warmupStep.region.${region}` as Parameters<typeof t>[0])),
                 { phase: 'potentiate', name: firstIsCompound ? firstEx!.name : null,
                   note: firstIsCompound ? t('workout.warmupStep.approach') : t('workout.warmupStep.approachGeneric') },
               ],

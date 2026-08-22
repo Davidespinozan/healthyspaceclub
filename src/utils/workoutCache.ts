@@ -68,7 +68,14 @@ export interface CachedWorkout {
   // Deterministas (código, no IA). Opcionales: rutinas viejas no los traen.
   warmupBlock?: {
     minutes: number;
-    phases: Array<{ phase: string; name: string | null; note: string }>;
+    // F2C-9C.2B.1 · una fase es EJECUTABLE si trae `exerciseId` + `prescription` (raise/mobilise). Sin
+    // esos campos = preview legacy (name+note). Additive: cache viejo funciona igual. warmup NUNCA entra
+    // a exercises[] ni se loguea (cero training credit por construcción; ExecutionRole 9C.1 dormido aquí).
+    phases: Array<{
+      phase: string; name: string | null; note: string;
+      exerciseId?: string; variantId?: string;
+      prescription?: import('./warmupSelection').PhaseMovementPrescription;
+    }>;
   };
   // F2C-9C.2A · vuelta a la calma de FUERZA (PREVIEW · no ejecutable, no LoggedSet, no ExecutionRole,
   // cero training credit). Movimientos de cooldown seleccionados por capability (roles⊇cooldown).

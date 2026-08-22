@@ -492,6 +492,13 @@ export const es = {
     cooldownStep: {
       hold: 'Mantén 30–45 s con respiración lenta — sin forzar.',
     },
+    // F2C-9C.2B.1 · calentamiento guiado ejecutable.
+    phase: {
+      reps: '{n} repeticiones',
+      repsPerSide: '{n} por lado',
+      skip: 'Saltar',
+      done: 'Listo',
+    },
     partnerFormat: {
       juntos: 'Juntos — misma serie a la vez',
       alternado: 'Alternado — mientras uno descansa, el otro trabaja',

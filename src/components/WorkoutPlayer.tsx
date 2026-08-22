@@ -20,6 +20,7 @@ import type { Implement } from '../utils/equipmentImplement';
 import type { WorkoutExercise } from '../utils/workoutSession';
 import { parseRepsToNumber } from '../utils/workoutLogger';
 import { targetSecondsFromReps } from '../utils/blockTimer';
+import GuidedPhaseMovement from './GuidedPhaseMovement';   // F2C-9C.2B.1 · movimiento de warmup guiado
 // F2C-2 · UX cardio-nativa: título humano del bloque + decisión de video (reutiliza la autoridad de Today).
 import { cardioBlockTitleKey, cardioShowVideo } from '../utils/workoutDisplay';
 import { isPartnerBDevice, partnerExerciseView } from '../utils/partnerView';
@@ -137,6 +138,13 @@ export default function WorkoutPlayer({
   const sealedWorkoutDate = (workout as { sessionDate?: string }).sessionDate ?? dayKey(new Date());
   // Fase 3 — bloques de la sesión (opcionales; rutinas viejas no los traen).
   const warmupBlock = (workout as CachedWorkout).warmupBlock;
+  // F2C-9C.2B.1 · items EJECUTABLES del warmup (fases con exerciseId + prescription). Si hay ≥1 →
+  // calentamiento GUIADO (timer/reps por movimiento); si no → preview legacy (name+note). Warmup NUNCA
+  // entra a `sequence`/`exercises[]`/CompletedSession → cero credit por construcción.
+  const warmupItems = useMemo(
+    () => (warmupBlock?.phases ?? []).filter((p): p is typeof p & { exerciseId: string; prescription: NonNullable<typeof p.prescription> } => !!p.exerciseId && !!p.prescription),
+    [warmupBlock],
+  );
   const finisherBlock = (workout as CachedWorkout).finisherBlock;
   const cardioMain = (workout as CachedWorkout).cardioMainBlock;   // Fase Cardio Main · plan determinista
 
@@ -216,6 +224,9 @@ export default function WorkoutPlayer({
   const [shareStatOpen, setShareStatOpen] = useState(false);
   const [showSpecs, setShowSpecs] = useState(false); // popout de técnica/specs encima del player
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
+  // F2C-9C.2B.1 · índice del movimiento de warmup guiado en curso + su video resuelto (mismo resolver).
+  const [warmupItemIndex, setWarmupItemIndex] = useState(0);
+  const [warmupVideoUrl, setWarmupVideoUrl] = useState<string | null>(null);
   const [videoAspect, setVideoAspect] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState(() => savedProgress?.currentStep ?? 0);
   const [loggedByExercise, setLoggedByExercise] = useState<LoggedByExercise>(() => savedProgress?.loggedByExercise ?? initLoggedByExercise(baseExercises));
@@ -501,6 +512,31 @@ export default function WorkoutPlayer({
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentBank?.id, variant?.id]);
+
+  // F2C-9C.2B.1 · video del movimiento de warmup en curso (MISMO resolver: bank inline → exercise_videos).
+  // Solo activo en fase 'warmup' con item ejecutable. Graceful en miss (placeholder, sin spinner infinito).
+  const warmupCur = phase === 'warmup' ? warmupItems[warmupItemIndex] : undefined;
+  useEffect(() => {
+    let active = true;
+    setWarmupVideoUrl(null);
+    if (!warmupCur) return;
+    const bank = exerciseMap.get(warmupCur.exerciseId);
+    const inline = (bank?.videos as { url: string }[] | undefined)?.[0]?.url;
+    if (inline) { setWarmupVideoUrl(inline); return; }
+    (async () => {
+      try {
+        const ids = bank ? exerciseVideoCandidateIds(bank, userEquipment) : [warmupCur.exerciseId];
+        const { data } = await supabase.from('exercise_videos').select('exercise_id, video_url, display_order').in('exercise_id', ids).order('display_order', { ascending: true });
+        if (!active || !data || data.length === 0) return;
+        const byId: Record<string, string> = {};
+        for (const r of data as { exercise_id: string; video_url: string }[]) if (!byId[r.exercise_id]) byId[r.exercise_id] = r.video_url;
+        const url = (warmupCur.variantId && byId[warmupCur.variantId]) || pickExerciseVideo(ids, byId);
+        if (url) setWarmupVideoUrl(url);
+      } catch { /* noop */ }
+    })();
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [warmupCur?.exerciseId, warmupCur?.variantId, phase]);
 
   // Cronómetro de sesión: tick cada segundo mientras se entrena (o en pausa, para
   // que coincida con la duración de reloj que se guarda al terminar).
@@ -808,8 +844,30 @@ export default function WorkoutPlayer({
         </div>
       )}
 
-      {/* ── PHASE: WARMUP (calentamiento guiado, antes de los ejercicios) ── */}
-      {phase === 'warmup' && (
+      {/* ── PHASE: WARMUP ── guiado ejecutable (9C.2B.1) si hay items; si no, preview legacy (name+note) ── */}
+      {phase === 'warmup' && warmupItems.length > 0 && warmupItemIndex < warmupItems.length && (() => {
+        const it = warmupItems[warmupItemIndex];
+        const advance = () => setWarmupItemIndex(i => i + 1);   // onDone/onSkip: siguiente item (NO loguea nada)
+        return (
+          <div className="wp-prep">
+            <GuidedPhaseMovement
+              key={warmupItemIndex}
+              phaseLabel={t(`workout.ramp.${it.phase}` as Parameters<typeof t>[0])}
+              name={it.name ?? it.exerciseId}
+              note={it.note}
+              prescription={it.prescription}
+              videoUrl={warmupVideoUrl}
+              index={warmupItemIndex}
+              total={warmupItems.length}
+              onDone={advance}
+              onSkip={advance}
+              t={t}
+            />
+            <button className="wp-phase-skipall" onClick={startExercises}>{t('workout.warmupCta')}</button>
+          </div>
+        );
+      })()}
+      {phase === 'warmup' && !(warmupItems.length > 0 && warmupItemIndex < warmupItems.length) && (
         <div className="wp-prep">
           <div className="wp-prep-card">
             <div className="wp-prep-section-label">

@@ -15,7 +15,45 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Exercise, Equipment, WarmupPhase } from '../types';
 import { resolveMovementCapabilities } from './movementCapabilities';
-import { isReproducibleStation, cardioEquipmentFor } from './workoutPlanner';
+import { isReproducibleStation, cardioEquipmentFor, selectVariantForEquipment } from './workoutPlanner';
+import { parseRepsToNumber } from './workoutLogger';
+import { targetSecondsFromReps } from './blockTimer';
+import type { Implement } from './equipmentImplement';
+
+// F2C-9C.2B.1 · prescripción EJECUTABLE de un movimiento de fase (NO es un strength set: sin kg/rir/
+// topKg/rest/cardio-meta/ExecutionRole). time = hold/timer; reps = conteo guiado.
+export type PhaseMovementPrescription =
+  | { kind: 'time'; seconds: number }
+  | { kind: 'reps'; reps: number; perSide?: boolean };
+
+/** Duración fija honesta del RAISE (pulse-raiser suave). No es dosis de cardio — solo eleva pulso. */
+const RAISE_SECONDS = 120;
+
+/**
+ * Deriva la prescripción ejecutable de un movimiento para una fase, SOLO de metadata real
+ * (prescriptionType → defaultReps 'seg/min' → defaultDuration → reps). Devuelve null si el catálogo
+ * no permite una prescripción honesta (→ el item NO se genera; CONTENT_LIMITED, no bloquea el entreno).
+ * NO hardcodea por id. Raise = tiempo fijo suave.
+ */
+export function phaseMovementPrescription(ex: Exercise, phase: WarmupPhase): PhaseMovementPrescription | null {
+  if (phase === 'raise') return { kind: 'time', seconds: RAISE_SECONDS };
+  const secs = targetSecondsFromReps(ex.defaultReps, ex.prescriptionType)
+    ?? ((ex.defaultDuration && ex.defaultDuration > 0) ? ex.defaultDuration : null);
+  if (secs != null && secs > 0) return { kind: 'time', seconds: secs };
+  const reps = parseRepsToNumber(ex.defaultReps);
+  if (reps > 0) return { kind: 'reps', reps, perSide: /por\s*lado|per\s*side/i.test(ex.defaultReps ?? '') };
+  return null;
+}
+
+/**
+ * Sella la VARIANTE ejecutable de un movimiento de fase (video-backed, equipo/gear compatible). Para
+ * máquinas de raise (cardio-maquina) fija la máquina concreta → el player no cae a remo por defecto.
+ * Devuelve el variantId o undefined (movimiento sin variantes / bodyweight simple). NO muta.
+ */
+export function sealPhaseVariantId(ex: Exercise, equipment: Equipment[], allowed?: Set<Implement>): string | undefined {
+  const eq = cardioEquipmentFor(equipment);
+  return selectVariantForEquipment(ex, eq, allowed)?.id;
+}
 
 /** ¿La CAPABILITY del movimiento declara esta fase de warmup? (raise/mobilise/activate/potentiate). */
 export function hasWarmupPhase(ex: Exercise, phase: WarmupPhase): boolean {

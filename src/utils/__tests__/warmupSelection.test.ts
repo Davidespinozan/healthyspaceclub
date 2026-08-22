@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   isRaiseEligible, isActivateEligible, hasWarmupPhase, warmupSafe,
-  isCooldownMovement, selectCooldown,
+  isCooldownMovement, selectCooldown, phaseMovementPrescription, sealPhaseVariantId,
 } from '../warmupSelection';
 import { pickWarmupRaise, pickSpecificActivation, warmupRegion } from '../strengthWarmup';
 import { resolveMovementCapabilities } from '../movementCapabilities';
@@ -105,6 +105,37 @@ describe('9C.2A · Activate workMode', () => {
   it('activate: activacion elegible (capability OR legacy), no-activacion no', () => {
     expect(isActivateEligible(ex('anti-extension-isometrica'), [...GYM])).toBe(true);
     expect(isActivateEligible(ex('press-horizontal'), [...GYM])).toBe(false);
+  });
+});
+
+// ── 9C.2B.1 · prescripción ejecutable + variantId ────────────────────────────────
+describe('9C.2B.1 · phaseMovementPrescription', () => {
+  it('C · raise → time fijo (pulse-raiser suave)', () => {
+    expect(phaseMovementPrescription(ex('cardio-maquina'), 'raise')).toEqual({ kind: 'time', seconds: 120 });
+  });
+  it('F · plancha isométrica (prescriptionType time) → time', () => {
+    const p = phaseMovementPrescription(ex('anti-extension-isometrica'), 'mobilise');
+    expect(p?.kind).toBe('time');
+    expect((p as { seconds: number }).seconds).toBeGreaterThan(0);
+  });
+  it('G · movimiento por reps → reps (perSide si "por lado")', () => {
+    const p = phaseMovementPrescription(ex('caminata-lateral-monstruo'), 'activate');
+    expect(p?.kind).toBe('reps');
+  });
+  it('O · sin metadata prescribible honesta → null (CONTENT_LIMITED, no bloquea)', () => {
+    const bare = { ...ex('press-horizontal'), defaultReps: '', defaultDuration: undefined, prescriptionType: undefined } as typeof BANK[number];
+    expect(phaseMovementPrescription(bare, 'mobilise')).toBeNull();
+  });
+  it('P/Q · sealPhaseVariantId sella una máquina concreta (no undefined) para cardio-maquina', () => {
+    const vid = sealPhaseVariantId(ex('cardio-maquina'), [...GYM]);
+    expect(typeof vid).toBe('string');
+    expect((ex('cardio-maquina').variants ?? []).some(v => v.id === vid)).toBe(true);   // variante real del banco
+  });
+  it('determinista + no muta', () => {
+    const before = JSON.stringify(ex('cardio-maquina'));
+    expect(phaseMovementPrescription(ex('cardio-maquina'), 'raise')).toEqual(phaseMovementPrescription(ex('cardio-maquina'), 'raise'));
+    sealPhaseVariantId(ex('cardio-maquina'), [...GYM]);
+    expect(JSON.stringify(ex('cardio-maquina'))).toBe(before);
   });
 });
 

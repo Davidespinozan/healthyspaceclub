@@ -493,6 +493,13 @@ export const en: Translations<typeof es> = {
     cooldownStep: {
       hold: 'Hold 30–45 s with slow breathing — no forcing.',
     },
+    // F2C-9C.2B.1 · executable guided warmup.
+    phase: {
+      reps: '{n} reps',
+      repsPerSide: '{n} per side',
+      skip: 'Skip',
+      done: 'Done',
+    },
     partnerFormat: {
       juntos: 'Together — same set at once',
       alternado: 'Alternating — one rests while the other works',
