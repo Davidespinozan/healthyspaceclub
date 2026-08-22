@@ -8,8 +8,8 @@
 // de preparación a partir de outputs ya existentes. Aplica SOLO a strength-day (cardio/yoga sin cambio).
 // ─────────────────────────────────────────────────────────────────────────
 import type { Exercise, Equipment, MuscleGroup, TrainingGoal } from '../types';
-import { isReproducibleStation, cardioEquipmentFor } from './workoutPlanner';
 import { categorize } from './sessionPrescription';
+import { isRaiseEligible, isActivateEligible } from './warmupSelection';   // F2C-9C.2A · elegibilidad capability-driven
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
@@ -43,12 +43,9 @@ export function strengthWarmupMinutes(input: {
  * frío). Devuelve el Exercise o null.
  */
 export function pickWarmupRaise(bank: Exercise[], equipment: Equipment[], hasFullGym: boolean): Exercise | null {
-  const eq = cardioEquipmentFor(equipment);
-  const pool = bank.filter(ex =>
-    ex.muscleGroup === 'cardio' && (ex.roles ?? []).includes('warmup') &&
-    ex.equipment.some(e => eq.includes(e)) && ex.impact !== 'high' && ex.fallRisk !== true &&
-    isReproducibleStation(ex, eq),
-  );
+  // F2C-9C.2A · elegibilidad capability-driven (warmupPhases⊇raise) OR legacy (roles⊇warmup). Con 0
+  // overrides nuevos = idéntico (equivalencia Phase-1); la metadata raise lo vuelve capability-authoritative.
+  const pool = bank.filter(ex => isRaiseEligible(ex, equipment));
   if (hasFullGym) {
     const machine = pool.find(ex => ex.equipment.includes('gym'));
     if (machine) return machine;
@@ -76,13 +73,12 @@ const REGION_TARGET: Record<WarmupRegion, MuscleGroup[]> = {
  * NUNCA yoga. El gate por región es de ELEGIBILIDAD, no de ranking (devuelve el primero del banco).
  */
 export function pickSpecificActivation(bank: Exercise[], region: WarmupRegion, equipment: Equipment[]): Exercise | null {
-  const eq = cardioEquipmentFor(equipment);
-  const usable = (ex: Exercise) => ex.equipment.some(e => eq.includes(e) || e === 'cuerpo');
   const targets = REGION_TARGET[region];
+  // F2C-9C.2A · elegibilidad capability-driven (warmupPhases⊇activate) OR legacy (type='activacion'),
+  // + gate por REGIÓN (músculo primario). Con 0 overrides = idéntico (equivalencia Phase-1).
   const pool = bank.filter(ex =>
-    ex.type === 'activacion' && !ex.isYoga && usable(ex) &&
-    targets.includes(ex.muscleGroup as MuscleGroup) &&   // gate por músculo PRIMARIO (no secundario)
-    isReproducibleStation(ex, eq),
+    isActivateEligible(ex, equipment) &&
+    targets.includes(ex.muscleGroup as MuscleGroup),   // gate por músculo PRIMARIO (contexto del día)
   );
   return pool[0] ?? null;
 }

@@ -487,6 +487,11 @@ export const es = {
       approach: 'Haz 2 series progresivas antes de tus series efectivas.',
       approachGeneric: 'Sube el ritmo con 1–2 series ligeras antes de empezar.',
     },
+    // F2C-9C.2A · vuelta a la calma (preview post-sesión de fuerza).
+    cooldownPreview: 'Vuelta a la calma',
+    cooldownStep: {
+      hold: 'Mantén 30–45 s con respiración lenta — sin forzar.',
+    },
     partnerFormat: {
       juntos: 'Juntos — misma serie a la vez',
       alternado: 'Alternado — mientras uno descansa, el otro trabaja',

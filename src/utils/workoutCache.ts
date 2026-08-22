@@ -70,6 +70,13 @@ export interface CachedWorkout {
     minutes: number;
     phases: Array<{ phase: string; name: string | null; note: string }>;
   };
+  // F2C-9C.2A · vuelta a la calma de FUERZA (PREVIEW · no ejecutable, no LoggedSet, no ExecutionRole,
+  // cero training credit). Movimientos de cooldown seleccionados por capability (roles⊇cooldown).
+  // Additive: rutinas legacy sin este campo funcionan igual.
+  cooldownBlock?: {
+    minutes: number;
+    movements: Array<{ exerciseId: string; variantId?: string; name: string; note?: string }>;
+  };
   finisherBlock?: {
     minutes: number;
     cardioStyle: string;

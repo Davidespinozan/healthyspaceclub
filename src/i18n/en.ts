@@ -488,6 +488,11 @@ export const en: Translations<typeof es> = {
       approach: 'Do 2 progressive ramp-up sets before your working sets.',
       approachGeneric: 'Raise the pace with 1–2 light sets before you start.',
     },
+    // F2C-9C.2A · strength cool-down (post-session preview).
+    cooldownPreview: 'Cool-down',
+    cooldownStep: {
+      hold: 'Hold 30–45 s with slow breathing — no forcing.',
+    },
     partnerFormat: {
       juntos: 'Together — same set at once',
       alternado: 'Alternating — one rests while the other works',

@@ -1236,6 +1236,20 @@ export default function WorkoutPlayer({
               <p className="wp-prep-section-text">{workout.cooldown}</p>
             </div>
           )}
+          {/* F2C-9C.2A · vuelta a la calma (PREVIEW) · render declarativo, no ejecutable (sin timers,
+              sin logging, sin ExecutionRole, cero training credit). */}
+          {(workout as CachedWorkout).cooldownBlock && (workout as CachedWorkout).cooldownBlock!.movements.length > 0 && (
+            <div className="wp-prep-section">
+              <div className="wp-prep-section-label">
+                {t('workout.cooldownPreview')} · {(workout as CachedWorkout).cooldownBlock!.minutes} min
+              </div>
+              {(workout as CachedWorkout).cooldownBlock!.movements.map((m, i) => (
+                <p className="wp-prep-section-text" key={i}>
+                  <strong>{m.name}</strong>{m.note ? ` — ${m.note}` : ''}
+                </p>
+              ))}
+            </div>
+          )}
           <div className="wp-cta-wrap">
             {onGenerateMore && (
               <button className="wp-share-cta wp-share-cta--club" onClick={() => { onClose(); onGenerateMore(); }}>

@@ -1880,6 +1880,7 @@ const baseExercises: Exercise[] = [
   // ══════════════════════════════════════════════════════════════
   {
     id: 'anti-extension-isometrica',
+    prescriptionType: 'time',   // F2C-9C.2A · hold isométrico → deriva workMode 'isometric' (arregla workModes:[])
     name: 'Anti-extensión Isométrica',
     desc: 'Mantener cuerpo en línea recta resistiendo la extensión lumbar — base de la estabilidad de core.',
     muscleGroup: 'core',
@@ -1909,6 +1910,7 @@ const baseExercises: Exercise[] = [
   },
   {
     id: 'anti-lateral',
+    prescriptionType: 'time',   // F2C-9C.2A · hold isométrico → deriva workMode 'isometric'
     name: 'Anti-lateral',
     desc: 'Mantener postura resistiendo flexión lateral del torso — estabilidad oblicua.',
     muscleGroup: 'core',
@@ -1937,6 +1939,7 @@ const baseExercises: Exercise[] = [
   },
   {
     id: 'anti-rotacion',
+    prescriptionType: 'time',   // F2C-9C.2A · anti-rotación (pallof/bird-dog hold) → workMode 'isometric'
     name: 'Anti-rotación',
     desc: 'Resistir la rotación del torso ante carga lateral — fuerza funcional profunda.',
     muscleGroup: 'core',
@@ -2594,6 +2597,7 @@ const baseExercises: Exercise[] = [
   },
   {
     id: 'cardio-maquina',
+    capabilities: { warmupPhases: ['raise'] },   // F2C-9C.2A · raise capability-driven (roles/workModes derivados intactos → conditioning preservado)
     name: 'Cardio en Máquina',
     desc: 'Cardio sostenido en equipo del gym — intervalos o estado estable.',
     muscleGroup: 'cardio',
@@ -2859,6 +2863,7 @@ const baseExercises: Exercise[] = [
   },
   {
     id: 'pigeon-pose',
+    capabilities: { roles: ['cooldown'], warmupPhases: [] },   // F2C-9C.2A · cooldown estático (no mobilise)
     name: 'Pigeon Pose',
     desc: 'Apertura profunda de cadera y glúteo.',
     muscleGroup: 'cuerpo-completo',
@@ -2986,6 +2991,7 @@ const baseExercises: Exercise[] = [
   },
   {
     id: 'bridge-pose',
+    capabilities: { roles: ['cooldown'], warmupPhases: [] },   // F2C-9C.2A · cooldown estático (no mobilise)
     name: 'Bridge Pose',
     desc: 'Apertura de pecho y cadera — fortalece espalda baja.',
     muscleGroup: 'cuerpo-completo',
@@ -3012,6 +3018,7 @@ const baseExercises: Exercise[] = [
   },
   {
     id: 'puppy-pose',
+    capabilities: { roles: ['cooldown'], warmupPhases: [] },   // F2C-9C.2A · cooldown estático (no mobilise)
     name: 'Puppy Pose',
     desc: 'Apertura de hombros y espalda alta.',
     muscleGroup: 'cuerpo-completo',
@@ -3038,6 +3045,7 @@ const baseExercises: Exercise[] = [
   },
   {
     id: 'seated-forward-fold',
+    capabilities: { roles: ['cooldown'], warmupPhases: [] },   // F2C-9C.2A · cooldown estático (no mobilise)
     name: 'Seated Forward Fold',
     desc: 'Estiramiento profundo de isquios y espalda.',
     muscleGroup: 'cuerpo-completo',
@@ -3141,6 +3149,7 @@ const baseExercises: Exercise[] = [
   },
   {
     id: 'supine-twist',
+    capabilities: { roles: ['cooldown'], warmupPhases: [] },   // F2C-9C.2A · cooldown estático (no mobilise)
     name: 'Supine Twist',
     desc: 'Rotación espinal — liberación lumbar.',
     muscleGroup: 'cuerpo-completo',
@@ -3166,6 +3175,7 @@ const baseExercises: Exercise[] = [
   },
   {
     id: 'child-pose',
+    capabilities: { roles: ['cooldown'], warmupPhases: [] },   // F2C-9C.2A · cooldown estático (no mobilise)
     name: "Child's Pose",
     desc: 'Postura de descanso — reset del sistema nervioso.',
     muscleGroup: 'cuerpo-completo',
@@ -3394,6 +3404,7 @@ const baseExercises: Exercise[] = [
   },
   {
     id: 'camel-pose',
+    capabilities: { roles: ['cooldown'], warmupPhases: [] },   // F2C-9C.2A · cooldown estático (no mobilise)
     name: 'Camel Pose (Ustrasana)',
     desc: 'Backbend profundo — apertura total de pecho y cadera flexora.',
     muscleGroup: 'cuerpo-completo',
@@ -3446,6 +3457,7 @@ const baseExercises: Exercise[] = [
   },
   {
     id: 'seated-twist',
+    capabilities: { roles: ['cooldown'], warmupPhases: [] },   // F2C-9C.2A · cooldown estático (no mobilise)
     name: 'Seated Twist (Ardha Matsyendrasana)',
     desc: 'Twist sentado — masaje profundo a órganos y movilidad espinal.',
     muscleGroup: 'core',

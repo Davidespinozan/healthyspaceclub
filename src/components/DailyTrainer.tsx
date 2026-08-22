@@ -48,6 +48,7 @@ import { buildCardioSupportPool } from '../utils/cardioPlayability';
 import { enrichConditioningPool, conditioningVariantIdFor } from '../utils/conditioningPool';   // F2C-9B.3 · adapter capability→cardio
 import { composeSession } from '../utils/sessionBlocks';
 import { strengthWarmupMinutes, pickWarmupRaise, pickSpecificActivation, warmupRegion, firstApproachExercise } from '../utils/strengthWarmup';
+import { selectCooldown } from '../utils/warmupSelection';   // F2C-9C.2A · cooldown de fuerza (preview)
 import { shouldShowWeekCoveredNotice, initialWorkoutPhase, planPlannedMinutes } from '../utils/workoutDisplay';
 import { composeIntensity } from '../utils/mesocycle';
 import { deriveSessionMesocycle } from '../utils/sessionMesocycle';
@@ -1667,6 +1668,17 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
                   note: firstIsCompound ? t('workout.warmupStep.approach') : t('workout.warmupStep.approachGeneric') },
               ],
             };
+            // F2C-9C.2A · VUELTA A LA CALMA (PREVIEW) · movimientos de cooldown seleccionados por
+            // capability (roles⊇cooldown, warmupPhases vacío = estáticos/gentiles; skill/dinámicas
+            // excluidas por construcción). NO ejecutable: solo se muestra en la pantalla de fin. Cero
+            // training credit (no entra a exercises[], no LoggedSet, no ExecutionRole).
+            const cooldownMoves = selectCooldown(bank, equipmentList, 2);
+            if (cooldownMoves.length > 0) {
+              w.cooldownBlock = {
+                minutes: 4,
+                movements: cooldownMoves.map(m => ({ exerciseId: m.id, name: m.name, note: t('workout.cooldownStep.hold') })),
+              };
+            }
           } else {
             // Cardio/yoga: SIN CAMBIO (warm-up del builder tal cual).
             w.warmupBlock = {
