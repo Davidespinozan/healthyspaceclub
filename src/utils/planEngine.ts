@@ -8,6 +8,7 @@ import type { DayPlan, MealItem } from '../types';
 import type { Region } from './region';
 import { dishAllowedInRegion } from '../data/regionFood';
 import { portionBoundsFor, preferredGramLimit } from './portionPlausibility';   // NUTRITION-N1 techo humano · N2 capacidad preferida
+import { effectiveDishAvoidText, canonicalizeAvoidTerm, catMarker } from './allergenSafety';   // NUTRITION-N3 · sub-recetas + composites ocultos
 
 const IMG_BASE =
   'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PLATILLOS%20BANCO/';
@@ -47,9 +48,13 @@ const dishPrincKeys = (d: BancoDish) => d.ings.filter((i) => i.rol === 'principa
 // Se reinicia al inicio de cada buildWeeklyPlan (no es reentrante).
 const CRAVED_MAX = 2;
 const cravedCount = new Map<string, number>();
+// NUTRITION-N3 · el texto de detección de restricciones ahora es el EFECTIVO: nombre + ingredientes +
+// ingredientes REALES de sus sub-recetas (SUBRECETAS) + marcadores de alérgeno oculto (mayonesa=huevo,
+// hummus=ajonjolí…). Así el MISMO makeAvoidFilter ve lo que antes quedaba escondido. Solo alimenta la
+// detección de "evitar"/"antojo"; NO cambia macros/porciones/selección nutricional.
 const DTEXT = new Map<BancoDish, { text: string; words: Set<string> }>();
 for (const d of BANCO) {
-  const text = norm(d.nombre + ' ' + d.ings.map((i) => i.nv).join(' '));
+  const text = effectiveDishAvoidText(d);
   DTEXT.set(d, { text, words: new Set(text.split(/[^a-z0-9]+/).filter(Boolean)) });
 }
 // term con espacio → substring; palabra suelta → límite de palabra (evita "pan" en "panela").
@@ -95,7 +100,14 @@ const AVOID_MAP: Record<string, string[]> = {
 function expandAvoid(raw: string[]): string[] {
   const skip = new Set(['nada', 'ninguno', 'ninguna', 'todas', 'todo', 'todos']);
   const out: string[] = [];
-  for (const a of raw) { if (skip.has(a)) continue; out.push(...(AVOID_MAP[a] ?? [a])); }
+  for (const a of raw) {
+    // NUTRITION-N3 · canoniza la entrada localizada del usuario (maní→cacahuate, sésamo→ajonjolí) y añade
+    // el MARCADOR de categoría → matchea los alérgenos ocultos que el texto efectivo del plato ya emite
+    // (mayonesa=huevo, sub-receta César=huevo+lácteos, salsa de soya=gluten…). Un solo enforcement.
+    const c = canonicalizeAvoidTerm(a);
+    if (skip.has(c)) continue;
+    out.push(catMarker(c), ...(AVOID_MAP[c] ?? [c]));
+  }
   return out.map(norm);
 }
 
@@ -580,6 +592,14 @@ function mergeIntoSnack(meals: MealItem[], extra: MealItem): void {
 // después la mezcla que haga falta (plátano si faltan carbos, crema de cacahuate si
 // falta grasa, o sola si va justo) — por eso reduce la meta de los principales antes.
 export interface ProteinShake { slots: ('am' | 'pm')[]; type: 'regular' | 'vegana' | 'massgainer'; protG: number }
+
+/** NUTRITION-N3 · ¿es seguro prescribir este batido? El whey (regular/mass gainer) es LÁCTEO → prohibido
+ *  para quien evita lácteos o es vegano. El 'vegana' siempre pasa. Sin batido → n/a (true). Puro. */
+function shakeAllowed(shake: ProteinShake | undefined, avoidCats: string[] = []): boolean {
+  if (!shake) return true;
+  if (shake.type === 'vegana') return true;                 // proteína de planta: segura
+  return !avoidCats.some((a) => /l[aá]cteo|vegan/.test(a.toLowerCase()));  // whey → fuera si evita lácteos/vegano
+}
 
 /** Macros de UN batido según tipo y gramos de proteína. Cada tipo rinde distinto:
  *  regular (whey) casi pura proteína; vegana un poco más de carbo/grasa; mass gainer
@@ -1202,7 +1222,11 @@ export function buildDayWithFixed(
 export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPlan[] {
   cravedCount.clear(); // tope de antojo por semana
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
-  const buildT = reduceForShake(T, opts.shake); // los principales van contra la meta MENOS el batido
+  // NUTRITION-N3 · SEGURIDAD DEL BATIDO: el whey (regular/mass gainer) es lácteo → si el usuario evita
+  // lácteos o es vegano, NO se prescribe (fail-closed). Se omite y los principales cierran la meta con
+  // comida real (no inventamos una "proteína vegana" que no exista como dato). El batido 'vegana' sí pasa.
+  const shake = shakeAllowed(opts.shake, opts.avoid) ? opts.shake : undefined;
+  const buildT = reduceForShake(T, shake); // los principales van contra la meta MENOS el batido
   const rng = mulberry32(opts.seed ?? 12345);
   // "Evitar": categoría (gluten/lácteos/…) → alimentos reales del banco; excluye esos platillos.
   const avoidTerms = expandAvoid((opts.avoid ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean));
@@ -1253,7 +1277,7 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
         ingFreq.clear(); preI.forEach((v, k) => ingFreq.set(k, v));
         cravedCount.clear(); preC.forEach((v, k) => cravedCount.set(k, v));
         const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax);
-        if (opts.shake) applyShake(day.meals, opts.shake);   // batido reemplaza el snack de su slot
+        if (shake) applyShake(day.meals, shake);   // batido (ya validado vs lácteos/vegano) reemplaza el snack de su slot
         // Cuadre del día contra la meta COMPLETA (T), ya con el batido puesto: las
         // comidas absorben lo que el batido aporta o deja faltando.
         topUpDay(day.meals, T);

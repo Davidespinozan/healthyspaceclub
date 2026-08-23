@@ -172,7 +172,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     if (!terms.length) return regionPlan;
     const safe = regionPlan.filter(d => !(d.meals ?? []).some(m =>
       textMatchesAvoid(m.name || '', terms) || (m.portions ?? []).some(p => textMatchesAvoid(p, terms))));
-    return safe.length ? safe : regionPlan;
+    // NUTRITION-N3 · FAIL-CLOSED: si las restricciones vacían el plan estático, NO volver al plan sin
+    // filtrar (eso servía un alérgeno). Se muestra el estado sin comidas → el usuario arma su plan real
+    // (el motor dinámico es fail-closed). Nunca servir el alimento evitado por "completar" el estático.
+    return safe;
   })();
   // scalePlan recorre el plan semanal — memoizar evita recalcularlo en CADA render
   // (TabHoy se re-renderiza con cualquier cambio del store).
