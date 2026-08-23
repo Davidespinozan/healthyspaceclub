@@ -335,10 +335,21 @@ function errMax(fixed: number[], vars: Var[], T: number[]): number {
 function pick<T>(arr: T[], rng: () => number): T { return arr[Math.floor(rng() * arr.length)]; }
 
 // Alimentos que se PARTEN en fracción real (se corta ⅓ de aguacate, ¾ de plátano).
-// El resto son contables (tortilla, pan, tostada) → entero o medio.
+// CORTABLES: fruta que se parte a ojo → fracciones finas (½ aguacate, ⅓ plátano).
 const DIVISIBLE = new Set(['aguacate', 'plátano', 'mango', 'papaya', 'melón', 'toronja']);
-// Nunca se parten: se cuentan enteros SIEMPRE (no existe medio huevo).
-const WHOLE_ONLY = new Set(['huevo']);
+// WHOLE_ONLY: piezas que la gente cuenta ENTERAS, nunca en medios. Huevo (no hay medio
+// huevo), piezas pequeñas indivisibles (dátil, aceituna, cereza, sardina — "½ aceituna"
+// no existe) y tortilla/tostada (un plan legible cuenta tortillas enteras). El resto
+// (pan, pita, bagel, fruta grande cortable) sigue permitiendo medios. Solo cambia el
+// DESPLIEGUE: los gramos del solver no se tocan y el candado ±20% sigue mandando — si el
+// entero mentiría sobre los gramos reales, se cae a gramos (nunca un entero deshonesto).
+const WHOLE_ONLY = new Set(['huevo', 'dátil', 'aceituna', 'cereza', 'sardinas', 'tortilla', 'tostada']);
+// SNAP_WHOLE_GRAMS ⊂ WHOLE_ONLY: SOLO estas piezas cuadran sus GRAMOS a un entero de
+// piezas antes de sumar macros (para que "2 huevos" aporte exactamente 2 huevos). El
+// huevo lo hace desde siempre. Las demás WHOLE_ONLY se cuentan enteras SOLO en pantalla:
+// sus gramos del solver NO se tocan (macros idénticas) y el candado ±20% cae a gramos si
+// un entero mentiría. Mantener este set en {huevo} conserva el comportamiento embarcado.
+const SNAP_WHOLE_GRAMS = new Set(['huevo']);
 // Granos, leguminosas y pasta se miden en TAZAS (cocidos), no en gramos. gramos por
 // taza (cocido, referencia USDA). Se muestran "1½ tazas de arroz" con fracciones ¼⅓½⅔¾.
 const CUP_G: Array<[RegExp, number]> = [
@@ -425,7 +436,7 @@ function pluralPhrase(txt: string, n: number): string {
 // (pu = g por pieza) y la cantidad cae en un conteo limpio y creíble (0.5–8 piezas,
 // error ≤20% para que el conteo no engañe sobre la porción), se muestra "2 huevos"
 // en vez de "88 g". Si no, se queda en gramos.
-function portionStr(ing: BancoIng, g: number | null): string {
+export function portionStr(ing: BancoIng, g: number | null): string {
   // Despliegue por rol. IMPORTANTE: esto es SOLO lo que se pinta — el motor sigue
   // usando los gramos reales para macros/fibra/kcal (van en meal.macros, no aquí).
   // guarnicion = verdura que nadie pesa → nombre + "al gusto" (sin gramos).
@@ -459,7 +470,8 @@ function portionStr(ing: BancoIng, g: number | null): string {
   if (ing.pu && ing.un && grams > 0) {
     const raw = grams / ing.pu;
     // Cortables (se parten en fracción real: ⅓ aguacate, ¾ plátano) → fracciones finas.
-    // Huevo → SIEMPRE entero (nunca medio huevo). Resto contable (tortilla, pan, tostada) → entero/medio.
+    // WHOLE_ONLY (huevo, dátil, aceituna, cereza, sardina, tortilla, tostada) → SIEMPRE entero.
+    // Resto contable (pan, pita, bagel, fruta grande cortable) → entero o medio.
     const n = DIVISIBLE.has(ing.un)
       ? Math.max(0.25, snapCount(raw))
       : WHOLE_ONLY.has(ing.un)
@@ -498,7 +510,7 @@ function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>
       g = gOf.get(ing)!;
       // Huevo: cuadra los gramos a piezas ENTERAS (nunca medio huevo) ANTES de sumar
       // macros, para que lo que se ve ("2 huevos") sea exactamente lo que aporta.
-      if (ing.pu && ing.un && WHOLE_ONLY.has(ing.un)) g = Math.max(ing.pu, Math.round(g / ing.pu) * ing.pu);
+      if (ing.pu && ing.un && SNAP_WHOLE_GRAMS.has(ing.un)) g = Math.max(ing.pu, Math.round(g / ing.pu) * ing.pu);
       if (ing.a) for (let k = 0; k < 5; k++) m[k] += ing.a[k] * g;
       g = Math.round(g);
     } else if (ing.rol === 'condimento') g = null;
