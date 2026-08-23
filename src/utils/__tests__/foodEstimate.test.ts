@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseFoodEstimate, sanitizeFoodEntry } from '../foodEstimate';
+import { parseFoodEstimate, sanitizeFoodEntry, validateFoodEstimateIntegrity, type FoodEstimate } from '../foodEstimate';
 
 describe('parseFoodEstimate', () => {
   it('JSON limpio válido → devuelve FoodEstimate', () => {
@@ -113,5 +113,69 @@ describe('sanitizeFoodEntry', () => {
   it('desc se preserva tal cual (no trim/case)', () => {
     const estimate = { kcal: 100, prot: 5, carbs: 10, fat: 2 };
     expect(sanitizeFoodEntry(estimate, '  Pizza Margarita  ', 'ai').desc).toBe('  Pizza Margarita  ');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NUTRITION-N4 · INTEGRIDAD ATWATER (autoridad única de coherencia).
+// REJECT sólo imposibilidad física; alcohol/fibra/polioles nunca se rechazan por Atwater; kcal muy altas
+// respecto a macros = WARN (se guarda). No modifica valores. manual y 0/0/0/0 = PASS.
+// ─────────────────────────────────────────────────────────────────────────────
+const V = (e: FoodEstimate, s: 'ai' | 'manual' = 'ai') => validateFoodEstimateIntegrity(e, s).status;
+
+describe('validateFoodEstimateIntegrity · matriz adversaria (Gate A §12)', () => {
+  it('A · 500 / 100·100·100 → REJECT (imposible)', () => expect(V({ kcal: 500, prot: 100, carbs: 100, fat: 100 })).toBe('REJECT'));
+  it('B · 900 / 5·10·5 → WARN', () => expect(V({ kcal: 900, prot: 5, carbs: 10, fat: 5 })).toBe('WARN'));
+  it('C · 250 / 50·0·0 → PASS (batido de proteína)', () => expect(V({ kcal: 250, prot: 50, carbs: 0, fat: 0 })).toBe('PASS'));
+  it('D · 600 / 0·0·0 → WARN (posible destilado)', () => expect(V({ kcal: 600, prot: 0, carbs: 0, fat: 0 })).toBe('WARN'));
+  it('E · 100 / 0·100·0 → REJECT (imposible)', () => expect(V({ kcal: 100, prot: 0, carbs: 100, fat: 0 })).toBe('REJECT'));
+  it('F · 300 / 20·30·10 → PASS', () => expect(V({ kcal: 300, prot: 20, carbs: 30, fat: 10 })).toBe('PASS'));
+  it('G · 0/0/0/0 → PASS (ayuno)', () => expect(V({ kcal: 0, prot: 0, carbs: 0, fat: 0 })).toBe('PASS'));
+  it('H · 400 / 0·0·200 → REJECT (imposible)', () => expect(V({ kcal: 400, prot: 0, carbs: 0, fat: 200 })).toBe('REJECT'));
+  it('I · 9999 / macros normales → WARN', () => expect(V({ kcal: 9999, prot: 50, carbs: 200, fat: 60 })).toBe('WARN'));
+});
+
+describe('validateFoodEstimateIntegrity · comida REAL nunca se rechaza por Atwater', () => {
+  it('cerveza (kcal > macroKcal por alcohol) → PASS/ WARN, nunca REJECT', () => {
+    expect(V({ kcal: 150, prot: 1, carbs: 13, fat: 0 })).not.toBe('REJECT');
+    expect(V({ kcal: 250, prot: 2, carbs: 20, fat: 0 })).not.toBe('REJECT');   // cerveza fuerte/cóctel
+  });
+  it('destilado (97 kcal, 0 macros) → no REJECT', () => expect(V({ kcal: 97, prot: 0, carbs: 0, fat: 0 })).not.toBe('REJECT'));
+  it('barra alta en fibra (kcal por debajo de 4·C pero sobre el mínimo) → PASS', () => {
+    expect(V({ kcal: 200, prot: 10, carbs: 30, fat: 5 })).toBe('PASS');
+    expect(V({ kcal: 120, prot: 5, carbs: 25, fat: 2 })).toBe('PASS');   // polioles/keto
+  });
+  it('mass gainer / comida de restaurante grande pero coherente → PASS', () => {
+    expect(V({ kcal: 1200, prot: 50, carbs: 200, fat: 10 })).toBe('PASS');
+    expect(V({ kcal: 1500, prot: 60, carbs: 150, fat: 60 })).toBe('PASS');
+  });
+  it('platillo alto en grasa (aceite) coherente → PASS', () => expect(V({ kcal: 400, prot: 5, carbs: 5, fat: 40 })).toBe('PASS'));
+  it('comida mixta normal → PASS', () => expect(V({ kcal: 550, prot: 35, carbs: 45, fat: 22 })).toBe('PASS'));
+});
+
+describe('validateFoodEstimateIntegrity · propiedades', () => {
+  it('manual jamás se endurece (siempre PASS aunque sea incoherente)', () => {
+    expect(V({ kcal: 100, prot: 0, carbs: 100, fat: 0 }, 'manual')).toBe('PASS');   // A/E imposibles → PASS en manual
+    expect(V({ kcal: 500, prot: 100, carbs: 100, fat: 100 }, 'manual')).toBe('PASS');
+  });
+  it('puro / determinista / NO muta el input', () => {
+    const e = { kcal: 500, prot: 100, carbs: 100, fat: 100 };
+    const snap = JSON.stringify(e);
+    expect(validateFoodEstimateIntegrity(e, 'ai')).toEqual(validateFoodEstimateIntegrity(e, 'ai'));
+    expect(JSON.stringify(e)).toBe(snap);   // sin reparación silenciosa
+  });
+  it('nunca REJECT por kcal ALTAS respecto a macros (eso es WARN, no REJECT)', () => {
+    for (const K of [500, 900, 2000, 9999]) expect(V({ kcal: K, prot: 5, carbs: 10, fat: 5 })).not.toBe('REJECT');
+  });
+  it('REJECT sólo cuando K < energía mínima (carbos a 2 kcal/g)', () => {
+    // frontera: minKcal = 4·10 + 2·50 + 9·5 = 185; tol = max(20, 27.75)=27.75 → REJECT si K < 157.25
+    expect(V({ kcal: 150, prot: 10, carbs: 50, fat: 5 })).toBe('REJECT');
+    expect(V({ kcal: 165, prot: 10, carbs: 50, fat: 5 })).not.toBe('REJECT');
+  });
+  it('NO repara: un estimate aceptado conserva sus valores tras sanitize', () => {
+    const e = { kcal: 900, prot: 5, carbs: 10, fat: 5 };   // WARN
+    expect(V(e)).toBe('WARN');
+    const s = sanitizeFoodEntry(e, 'x', 'ai');
+    expect([s.kcal, s.prot, s.carbs, s.fat]).toEqual([900, 5, 10, 5]);   // sin recálculo Atwater
   });
 });

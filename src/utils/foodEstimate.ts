@@ -102,3 +102,41 @@ export function sanitizeFoodEntry(
 function roundTo1(n: number): number {
   return Math.round(n * 10) / 10;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NUTRITION-N4 · INTEGRIDAD ATWATER de un estimate de IA (autoridad ÚNICA de coherencia).
+//
+// El estimate ya pasó parseFoodEstimate (shape/finite/rango). Esta capa decide si además es COHERENTE.
+// NO modifica ningún valor: sólo emite un veredicto. Filosofía: aceptar comida REAL aunque 4/4/9 no sea
+// exacto (fibra, polioles, almidón resistente, alcohol, etiquetado), y rechazar SOLO lo físicamente
+// imposible. `source:'ai'` se endurece; `source:'manual'` (determinista desde nutritionDB) NO.
+// ─────────────────────────────────────────────────────────────────────────────
+export type FoodEstimateVerdict =
+  | { status: 'PASS' }
+  | { status: 'WARN'; reason: string }
+  | { status: 'REJECT'; reason: string };
+
+/**
+ * Veredicto de integridad de un FoodEstimate. Puro, determinista, NO muta el input.
+ *  · manual → PASS (ya es determinista; no se endurece).
+ *  · 0/0/0/0 → PASS (ayuno / agua / café negro / bebidas sin calorías).
+ *  · REJECT sólo por IMPOSIBILIDAD: kcal por debajo de la energía MÍNIMA de los macros, calculada con un
+ *    piso conservador de 2 kcal/g en carbohidratos (tolera fibra/polioles/almidón resistente); grasa (9) y
+ *    proteína (4) no se pueden abaratar. Nunca se rechaza por kcal ALTAS (el alcohol las eleva legítimamente).
+ *  · WARN (se guarda igual) por incoherencia alta hacia arriba o porción única enorme.
+ */
+export function validateFoodEstimateIntegrity(est: FoodEstimate, source: 'manual' | 'ai'): FoodEstimateVerdict {
+  const { kcal: K, prot: P, carbs: C, fat: F } = est;
+  if (source === 'manual') return { status: 'PASS' };
+  const macroKcal = 4 * P + 4 * C + 9 * F;
+  if (macroKcal === 0 && K === 0) return { status: 'PASS' };
+  const minKcal = 4 * P + 2 * C + 9 * F;                     // energía mínima plausible (carbos = fibra 2 kcal/g)
+  const tol = Math.max(20, 0.15 * minKcal);
+  if (K < minKcal - tol) {
+    return { status: 'REJECT', reason: 'kcal por debajo de la energía mínima de los macros (imposible)' };
+  }
+  if (K > macroKcal + Math.max(250, 0.5 * macroKcal) || K > 4000) {
+    return { status: 'WARN', reason: 'kcal muy por encima de los macros o porción única muy grande' };
+  }
+  return { status: 'PASS' };
+}

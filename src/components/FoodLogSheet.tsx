@@ -14,7 +14,7 @@ import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import { callAI } from '../utils/aiProxy';
 import { buildFoodEstimatePrompt } from '../ai/prompts/foodEstimate';
-import { parseFoodEstimate, sanitizeFoodEntry, type FoodEstimate } from '../utils/foodEstimate';
+import { parseFoodEstimate, sanitizeFoodEntry, validateFoodEstimateIntegrity, type FoodEstimate } from '../utils/foodEstimate';
 import type { TranslationKey } from './../i18n/es';
 
 // Mismo map que MealDetailPopout — el time del meal del plan se traduce
@@ -76,6 +76,16 @@ export default function FoodLogSheet({ mealTime, mealIndex, onClose, onLogged }:
       const raw = data.content?.[0]?.text ?? '';
       const parsed = parseFoodEstimate(raw);
       if (!parsed) {
+        setErrorKey('foodLog.errorEstimate');
+        setPhase('error');
+        return;
+      }
+
+      // NUTRITION-N4 · integridad Atwater (autoridad única). REJECT = imposibilidad física → NO se persiste
+      // ni se resuelve la comida del plan. WARN se guarda igual (integridad > UX nueva; status listo para
+      // futura señal discreta). No se altera ningún valor del estimate.
+      const verdict = validateFoodEstimateIntegrity(parsed, 'ai');
+      if (verdict.status === 'REJECT') {
         setErrorKey('foodLog.errorEstimate');
         setPhase('error');
         return;
