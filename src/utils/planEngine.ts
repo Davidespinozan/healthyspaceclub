@@ -7,6 +7,7 @@ import { BANCO, type BancoDish, type BancoIng } from '../data/banco';
 import type { DayPlan, MealItem } from '../types';
 import type { Region } from './region';
 import { dishAllowedInRegion } from '../data/regionFood';
+import { portionBoundsFor, preferredGramLimit } from './portionPlausibility';   // NUTRITION-N1 techo humano · N2 capacidad preferida
 
 const IMG_BASE =
   'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PLATILLOS%20BANCO/';
@@ -184,6 +185,11 @@ function ingBounds(ing: BancoIng): { lo: number; hi: number } {
   // Techo absoluto por alimento: aquí se detiene el crecimiento, para que no salgan
   // 525 g de papa (Magaly: que suba el arroz/papa, pero sin porciones desproporcionadas).
   for (const [rx, gmax] of GRAM_MAX) if (rx.test(ing.nv)) { hi = Math.min(hi, gmax); break; }
+  // NUTRITION-N1 · TECHO HUMANO por familia (fruta/aceite/nueces/lácteos/granola): el solver NO puede
+  // cerrar calorías con "2–3 tazas de fresas". Otro `min` (nunca afloja PIECE_MAX/GRAM_MAX/ing.max);
+  // se aplica ANTES del guard `max(hi, g0)`, así que jamás encoge por debajo de la receta base de Magaly.
+  const human = portionBoundsFor(ing.nv);
+  if (human) hi = Math.min(hi, human.hardMaxG);
   // Guardia: había ingredientes con `max` MENOR que su porción base (p.ej. tostadas
   // horneadas 60 g base / 52 g max) — el motor no podía ni servir la receta original.
   hi = Math.max(hi, ing.g0);
@@ -220,6 +226,33 @@ export function dishMaxMacros(d: BancoDish): number[] {
       for (let k = 0; k < 4; k++) t[k] += ing.a[k] * hi;
     }
   }
+  return t;
+}
+
+// ── NUTRITION-N2 · CAPACIDAD PREFERIDA (señal de SELECCIÓN, no del solver) ────────────────────────
+// Techo PREFERIDO de un ingrediente = su techo N1 (ingBounds.hi, que ya incluye hardMax/PIECE/GRAM)
+// ACOTADO al rango humano normal (preferredMaxG) cuando existe, sin bajar nunca de la receta base (g0).
+// NO alimenta a solve(): solo estima "hasta dónde da este platillo SIN pasarse de una porción normal".
+function ingPreferredHi(ing: BancoIng): number {
+  const hardHi = ingBounds(ing).hi;               // techo de seguridad N1 (jamás se afloja)
+  const pref = preferredGramLimit(ing.nv);
+  const hi = pref != null ? Math.min(hardHi, pref) : hardHi;
+  return Math.max(hi, ing.g0);                     // preserva la receta base (igual que ingBounds)
+}
+const _prefCapMemo = new Map<BancoDish, number[]>();
+/** Macros que un platillo alcanza con sus principales a su PORCIÓN PREFERIDA (no al hardMax). Memoizado
+ *  por platillo (BANCO es inmutable). Puro/determinista/no-mutante. Base de la señal de capacidad de N2. */
+export function dishPreferredMaxMacros(d: BancoDish): number[] {
+  const cached = _prefCapMemo.get(d);
+  if (cached) return cached;
+  const t = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
+  for (const ing of d.ings) {
+    if (ing.rol === 'principal' && ing.a) {
+      const hi = ingPreferredHi(ing);
+      for (let k = 0; k < 4; k++) t[k] += ing.a[k] * hi;
+    }
+  }
+  _prefCapMemo.set(d, t);
   return t;
 }
 
@@ -622,7 +655,10 @@ function fitSlot(
   // (ej. "zanahoria y pepino con hummus" + "bastones de zanahoria" → el snack se repetía).
   const shares = (a: BancoDish, b: BancoDish) => { const ka = new Set(princKeys(a)); return princKeys(b).some((k) => ka.has(k)); };
   const pickN = () => { const out: BancoDish[] = []; let g = 0; while (out.length < n && g++ < 60) { const d = pick(pool, rng); if (out.includes(d) || out.some((o) => shares(o, d))) continue; out.push(d); } return out; };
-  const cands: { dishes: BancoDish[]; e: number; used: number; craves: number; ingScore: number; dayIng: number; fib: number }[] = [];
+  const isSnack = label.startsWith('Snack');
+  // NUTRITION-N2 · meta calórica del slot (el target llega como [_,P,F,C]; kcal se deriva por Atwater).
+  const tgtKcal = 4 * target[1] + 9 * target[2] + 4 * target[3];
+  const cands: { dishes: BancoDish[]; e: number; used: number; craves: number; ingScore: number; dayIng: number; fib: number; bucket: number }[] = [];
   for (let t = 0; t < trials; t++) {
     const dishes = pickN();
     const { fixed, vars } = prep(dishes);
@@ -635,7 +671,24 @@ function fitSlot(
     let ingScore = 0, dayIng = 0;
     for (const d of dishes) for (const k of princKeys(d)) { ingScore += ingFreq.get(k) ?? 0; if (usedTodayIng.has(k)) dayIng++; }
     let fib = fixed[4]; for (const v of vars) fib += v.a[4] * v.g;
-    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length, craves, ingScore, dayIng, fib });
+    // NUTRITION-N2 · PRESIÓN DE PORCIÓN (solo snacks): ¿este snack alcanza la meta calórica del slot SIN
+    // pasar de una porción PREFERIDA? Si su capacidad preferida queda corta, la única forma de cerrar sería
+    // inflar un ingrediente (fruta) hacia el hardMax → snack humanamente incómodo. La señal manda la selección
+    // (un compuesto que cabe le gana a un fruit-only que se estiraría). Cubetas para NO borrar la variedad.
+    let bucket = 0;
+    if (isSnack && tgtKcal > 0) {
+      let prefKcal = 0, prefC = 0;
+      for (const d of dishes) { const m = dishPreferredMaxMacros(d); prefKcal += m[0]; prefC += m[3]; }
+      // Presión = déficit de capacidad preferida en el macro que MANDA: kcal Y carbohidrato (el snack es
+      // carb-dominante por el reparto; un fruit-only "alcanza kcal" pero no el carbo sin inflarse). Tomamos
+      // el peor de los dos → un compuesto con más capacidad de carbo (yogur+granola, plátano+crema) le gana
+      // a fruta+nueces que dejaría la fruta en el hardMax para cerrar el carbo.
+      const dKcal = (tgtKcal - prefKcal) / tgtKcal;
+      const dCarb = target[3] > 4 ? (target[3] - prefC) / target[3] : 0;
+      const pressure = Math.max(0, dKcal, dCarb);
+      bucket = pressure <= 0.12 ? 0 : pressure <= 0.30 ? 1 : 2;   // cabe / estirado / severo
+    }
+    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length, craves, ingScore, dayIng, fib, bucket });
   }
   // Aceptables = los que pegan razonable (error ≤ 12%; holgura porque cada tiempo es ~¼
   // del día). Entre ellos: 1) ANTOJO, 2) NO repetir ingrediente el mismo día, 3) variedad
@@ -647,7 +700,6 @@ function fitSlot(
   // Snacks: banda MUY ancha (son ~5-10% del día → el error ahí casi no mueve el total,
   // y lo que importa es la VARIEDAD). Así caben fruta, nueces y yogurt por igual y el
   // score de variedad (used/ingFreq) los rota en vez de repetir el mismo a diario.
-  const isSnack = label.startsWith('Snack');
   const cap = isSnack
     ? Math.max(50, minE + 35)
     : merge
@@ -658,7 +710,12 @@ function fitSlot(
   // hoy (30). El ANTOJO es un BONO (-55) que NO manda absoluto: el platillo antojado sale
   // 1-2 veces y luego la penalización semanal (used) deja que rote — no las 7 cenas iguales.
   const vscore = (c: typeof acceptable[number]) => c.used * 50 + c.dayIng * 30 + c.ingScore - c.craves * 55;
+  // NUTRITION-N2 · en SNACKS la PLAUSIBILIDAD DE PORCIÓN manda sobre variedad/antojo: primero por cubeta de
+  // presión (cabe humanamente < estirado < severo), y DENTRO de cada cubeta el orden histórico intacto
+  // (variedad → fibra → ajuste). Fail-closed: si todo el pool es severo (restricciones), igual sale el mejor
+  // acotado (nunca vacío, nunca > hardMax). Las comidas fuertes conservan su orden EXACTO (sin cubeta).
   acceptable.sort((a, b) =>
+    (isSnack ? (a.bucket - b.bucket) : 0) ||
     (vscore(a) - vscore(b)) ||
     (b.fib - a.fib) ||
     (a.e - b.e),
