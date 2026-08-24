@@ -84,13 +84,16 @@ const AVOID_MAP: Record<string, string[]> = {
   pavo: ['pavo'],
   cerdo: ['cerdo', 'chorizo', 'tocino', 'lomo', 'jamon'],
   // Dietas: expanden a TODA la proteína animal. Vegano suma huevo y lácteos.
+  // 'carne' (palabra suelta) cierra el hueco genérico: "Carne asada" no traía ningún corte
+  // específico de la lista (res/bistec/arrachera…) y se colaba en planes veg. Sin falso
+  // positivo: no existe "carne" vegetal en el banco; el matcher es por límite de palabra.
   vegetariano: [
-    'pollo', 'pechuga', 'pavo', 'cerdo', 'chorizo', 'tocino', 'lomo', 'jamon',
+    'carne', 'pollo', 'pechuga', 'pavo', 'cerdo', 'chorizo', 'tocino', 'lomo', 'jamon',
     'res', 'sirloin', 'bistec', 'falda', 'molida', 'machaca', 'arrachera', 'chambarete',
     'camaron', 'camarones', 'marisco', 'mariscos', 'pescado', 'salmon', 'atun', 'tilapia', 'bacalao',
   ],
   vegano: [
-    'pollo', 'pechuga', 'pavo', 'cerdo', 'chorizo', 'tocino', 'lomo', 'jamon',
+    'carne', 'pollo', 'pechuga', 'pavo', 'cerdo', 'chorizo', 'tocino', 'lomo', 'jamon',
     'res', 'sirloin', 'bistec', 'falda', 'molida', 'machaca', 'arrachera', 'chambarete',
     'camaron', 'camarones', 'marisco', 'mariscos', 'pescado', 'salmon', 'atun', 'tilapia', 'bacalao',
     'huevo', 'huevos', 'leche', 'queso', 'yogur', 'yoghurt', 'yogurt', 'requeson', 'ricotta',
