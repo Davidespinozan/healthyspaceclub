@@ -106,6 +106,17 @@ window.addEventListener('unhandledrejection', (e) => {
 // Referido: si la app se abrió con ?ref=<@usuario>, lo guarda para atribuir al registrarse.
 captureRefFromUrl()
 
+// Herramienta DEV-ONLY: reset del historial de entrenamiento del usuario autenticado, para
+// smokes reproducibles del Composer/cardio/fuerza. `import.meta.env.DEV` es estáticamente false
+// en el build de producción → todo este bloque (y el import) se elimina por dead-code-elimination.
+// NO expone ninguna acción destructiva en producción. Invocación en dev: window.__resetTrainingHistory().
+if (import.meta.env.DEV) {
+  void import('./utils/resetTrainingHistory').then((m) => {
+    ;(window as unknown as { __resetTrainingHistory?: typeof m.resetTrainingHistoryForCurrentUser })
+      .__resetTrainingHistory = m.resetTrainingHistoryForCurrentUser
+  })
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>

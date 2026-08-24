@@ -11,6 +11,18 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 import type { PendingWorkoutRow } from '../types';
 
+// Guard anti-carrera para el RESET de historial de entrenamiento (DEV, ver resetTrainingHistory.ts).
+// Mientras está activo, flushPendingWorkouts NO reintenta: una sesión pendiente no puede
+// re-insertarse en workout_log durante/después de un reset. El reset lo activa ANTES del borrado
+// remoto y lo libera al final (éxito o fallo), de modo que ningún outbox viejo sobrevive/reinserta.
+let flushSuspended = false;
+/** Suspende el reintento del outbox (usado por el reset de entrenamiento). */
+export function suspendWorkoutFlush(): void { flushSuspended = true; }
+/** Reactiva el reintento del outbox. */
+export function resumeWorkoutFlush(): void { flushSuspended = false; }
+/** ¿Está suspendido el flush? (test/introspección) */
+export function isWorkoutFlushSuspended(): boolean { return flushSuspended; }
+
 /** UUID de sesión estable (cliente). crypto.randomUUID con fallback para entornos sin él. */
 export function newSessionId(): string {
   try {
@@ -44,9 +56,13 @@ export async function flushPendingWorkouts(): Promise<{ flushed: number; remaini
   const store = useAppStore.getState();
   const userId = store.user?.id;
   const pending = store.pendingWorkoutSync;
-  if (!userId || pending.length === 0) return { flushed: 0, remaining: pending.length };
+  // Guard de reset: si un reset de entrenamiento está en curso, NO reintentar (evita re-insertar
+  // una sesión antigua en workout_log justo después del DELETE remoto).
+  if (flushSuspended || !userId || pending.length === 0) return { flushed: 0, remaining: pending.length };
   let flushed = 0;
   for (const row of pending.filter((r) => r.user_id === userId)) {
+    // Un reset iniciado a mitad del loop lo detiene ANTES del próximo upsert.
+    if (flushSuspended) break;
     const ok = await upsertWorkoutRow(row);
     if (ok) {
       useAppStore.getState().dequeuePendingWorkout(row.client_session_id);
