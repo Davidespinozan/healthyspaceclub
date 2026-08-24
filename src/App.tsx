@@ -478,7 +478,7 @@ export default function App() {
                   prot: Number(f.prot),
                   carbs: Number(f.carbs),
                   fat: Number(f.fat),
-                  source: f.source as 'manual' | 'ai',
+                  source: f.source as 'manual' | 'ai' | 'bowl',   // NUTRITION-N10.2A · bowl ahora persiste (migration food_log_source)
                   ...(f.meal_time != null ? { mealTime: f.meal_time as string } : {}),
                   ...(f.meal_index != null ? { mealIndex: Number(f.meal_index) } : {}),
                   ...(f.items != null ? { items: f.items as import('./store').FoodLogItem[] } : {}),

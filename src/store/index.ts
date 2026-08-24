@@ -1,5 +1,6 @@
 import { dayKey } from '../utils/localDate';
 import { nextNutritionWeight } from '../utils/weightTrend';   // NUTRITION-N10.1 · peso de tendencia estable
+import { buildDayEvidence, upsertSummary, toSummary, type NutritionDaySummary } from '../utils/nutritionEvidence';   // NUTRITION-N10.2A · evidencia de adherencia
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Session, User } from '@supabase/supabase-js';
@@ -211,6 +212,11 @@ interface AppState {
   weightLog: { date: string; kg: number }[];
   addWeight: (kg: number) => Promise<void>;
   removeWeight: (date: string) => Promise<void>;
+
+  // NUTRITION-N10.2A · resúmenes diarios de EVIDENCIA de adherencia (snapshot derivado, NO cambia kcal).
+  // Persistido en el store (localStorage) para que la historia sobreviva weekly reset / reemplazo de plan.
+  nutritionDaySummaries: NutritionDaySummary[];
+  refreshNutritionDaySummary: (date: string) => void;
 
   // Meal check-off (tracks which meals the user actually ate)
   mealChecks: Record<string, boolean>; // { '2026-03-09-planA-1-0': true }
@@ -640,6 +646,20 @@ export const useAppStore = create<AppState>()(
 
   // Weight log
   weightLog: [],
+
+  // NUTRITION-N10.2A · deriva y guarda el resumen de evidencia del día desde el estado actual.
+  // NO toca kcal/planGoal/computeNutritionTargets/weightTrend. Congela targetKcal en el 1er snapshot.
+  nutritionDaySummaries: [],
+  refreshNutritionDaySummary: (date) => {
+    const st = get();
+    const totalSlots = st.weeklyPlan?.days?.[0]?.meals?.length ?? 0;
+    if (!totalSlots || !date) return;              // sin plan → no se puede medir cobertura
+    const ev = buildDayEvidence({
+      date, targetKcal: st.planGoal, totalSlots,
+      mealChecks: st.mealChecks, mealResolvedByLog: st.mealResolvedByLog, foodLog: st.foodLog,
+    });
+    set({ nutritionDaySummaries: upsertSummary(st.nutritionDaySummaries, toSummary(ev), dayKey(new Date())) });
+  },
   addWeight: async (kg) => {
     const today = dayKey(new Date());
     const userId = get().user?.id;
@@ -717,6 +737,7 @@ export const useAppStore = create<AppState>()(
     set({ mealChecks: { ...state.mealChecks, [key]: newChecked } });
 
     const parsed = extractDateAndIndex(key);
+    if (parsed) get().refreshNutritionDaySummary(parsed.date);   // NUTRITION-N10.2A · evidencia (los ✓ NO cuentan como intake medido)
     // Nutrición cuenta para la racha: completar una comida de HOY marca el día activo.
     if (newChecked && parsed && parsed.date === dayKey(new Date())) {
       get().markActiveDay().catch(() => {});
@@ -753,6 +774,9 @@ export const useAppStore = create<AppState>()(
     const state = get();
     const currentChecked = !!state.mealChecks[key];
     set({ mealResolvedByLog: { ...state.mealResolvedByLog, [key]: true } });
+
+    const parsedForEv = extractDateAndIndex(key);
+    if (parsedForEv) get().refreshNutritionDaySummary(parsedForEv.date);   // NUTRITION-N10.2A · resuelto-por-log = evidencia medida
 
     const userId = state.user?.id;
     if (!userId) return;
@@ -902,6 +926,7 @@ export const useAppStore = create<AppState>()(
 
     // Optimistic local primero (UX responsiva, modo offline OK)
     set((state) => ({ foodLog: [...state.foodLog, { id, date: today, ...entry }] }));
+    get().refreshNutritionDaySummary(today);   // NUTRITION-N10.2A · evidencia del día (no cambia kcal)
 
     // Nutrición cuenta para la racha: registrar comida marca el día activo.
     get().markActiveDay().catch(() => {});
@@ -928,6 +953,7 @@ export const useAppStore = create<AppState>()(
         // para que no quede una kcal fantasma que la META cuenta y luego, al
         // rehidratar de Supabase, desaparece.
         set((state) => ({ foodLog: state.foodLog.filter(e => e.id !== id) }));
+        get().refreshNutritionDaySummary(today);   // NUTRITION-N10.2A · re-derivar tras el rollback
         console.error('[addFoodLog] supabase insert failed:', error);
         throw error;
       }
@@ -937,6 +963,7 @@ export const useAppStore = create<AppState>()(
     const userId = get().user?.id;
     const removed = get().foodLog.find(e => e.id === id);
     set((state) => ({ foodLog: state.foodLog.filter(e => e.id !== id) }));
+    if (removed) get().refreshNutritionDaySummary(removed.date);   // NUTRITION-N10.2A · re-derivar el día afectado
     if (userId) {
       const { error } = await supabase
         .from('food_log')
@@ -946,7 +973,7 @@ export const useAppStore = create<AppState>()(
       if (error) {
         // Rollback: si el delete falla, restauramos la entrada. Sin esto,
         // desaparecía de la UI pero seguía en la DB → resucitaba al recargar.
-        if (removed) set((state) => ({ foodLog: [...state.foodLog, removed] }));
+        if (removed) { set((state) => ({ foodLog: [...state.foodLog, removed] })); get().refreshNutritionDaySummary(removed.date); }
         console.error('[removeFoodLog] supabase delete failed:', error);
         throw error;
       }
@@ -1383,6 +1410,7 @@ export const useAppStore = create<AppState>()(
     habitHistory: {},
     habitsDate: '',
     weightLog: [],
+    nutritionDaySummaries: [],
     mealChecks: {},
     workoutChecks: {}, // ← faltaba: sin esto, los ✓ de ejercicios de una cuenta se veían en la siguiente (mismo dispositivo)
     mealResolvedByLog: {},
@@ -1466,6 +1494,7 @@ export const useAppStore = create<AppState>()(
     habitsDate: state.habitsDate,
     habitHistory: state.habitHistory,
     weightLog: state.weightLog,
+    nutritionDaySummaries: state.nutritionDaySummaries,   // NUTRITION-N10.2A · historia de evidencia (sobrevive sesión/reset)
     mealChecks: state.mealChecks,
     workoutChecks: state.workoutChecks,
     mealResolvedByLog: state.mealResolvedByLog,
