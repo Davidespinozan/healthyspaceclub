@@ -1,4 +1,5 @@
 import { dayKey } from '../utils/localDate';
+import { nextNutritionWeight } from '../utils/weightTrend';   // NUTRITION-N10.1 · peso de tendencia estable
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Session, User } from '@supabase/supabase-js';
@@ -663,16 +664,18 @@ export const useAppStore = create<AppState>()(
       }
     }
 
-    // Mantener obData.peso sincronizado con el último peso registrado
-    // (los 8 consumidores leen este campo: TDEE, Coach IA, DailyTrainer, etc.)
+    // NUTRITION-N10.1 · el peso NUTRICIONAL (obData.peso → computeNutritionTargets) NO usa el pesaje crudo:
+    // usa la MEDIANA rodante de 14 días (ignora agua/sodio de un día) y solo se mueve si cambió ≥0.5 kg.
+    // El peso crudo de la báscula ya quedó guardado arriba en weightLog (display/tracking intactos).
     const state = get();
-    const currentPeso = Number(state.obData?.peso);
-    if (currentPeso !== kg) {
-      state.setObData('peso', kg);
+    const decision = nextNutritionWeight(state.weightLog, Number(state.obData?.peso), today);
+    if (decision.update) {
+      state.setObData('peso', decision.stableKg);
       try { await state.recalcFromObData(); } catch (e) {
         console.warn('[addWeight] recalcFromObData failed:', e);
       }
     }
+    // INSUFFICIENT_DATA (<3 días) o sub-umbral → baseline nutricional sin cambios (no persiste target).
   },
   removeWeight: async (date) => {
     const userId = get().user?.id;
@@ -686,6 +689,17 @@ export const useAppStore = create<AppState>()(
       if (error) {
         console.error('[removeWeight] supabase delete failed:', error);
         throw error;
+      }
+    }
+    // NUTRITION-N10.1 · re-derivar el peso nutricional del historial RESTANTE (antes quedaba stale al borrar
+    // el último pesaje). Solo mueve el target si la tendencia sigue READY y cambió ≥0.5 kg; si al quitar el
+    // punto quedan <3 días, mantiene el baseline vigente (no inventa un target arbitrario — fail-safe).
+    const state = get();
+    const decision = nextNutritionWeight(state.weightLog, Number(state.obData?.peso), dayKey(new Date()));
+    if (decision.update) {
+      state.setObData('peso', decision.stableKg);
+      try { await state.recalcFromObData(); } catch (e) {
+        console.warn('[removeWeight] recalcFromObData failed:', e);
       }
     }
   },
