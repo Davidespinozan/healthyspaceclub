@@ -4,7 +4,16 @@ import { useT } from '../../i18n';
 import ImageViewer from './ImageViewer';
 import { plural } from '../../i18n/format';
 import type { TranslationKey } from '../../i18n/es';
+import { REPORT_REASONS, reportContent, blockUser, type ReportReason } from '../../utils/socialModeration';
 import './post-card.css';
+
+const REASON_KEY: Record<ReportReason, TranslationKey> = {
+  spam: 'post.reasonSpam',
+  harassment: 'post.reasonHarassment',
+  inappropriate: 'post.reasonInappropriate',
+  misinformation: 'post.reasonMisinformation',
+  other: 'post.reasonOther',
+};
 
 // Tipo loose para t() — evita acoplar a la signature exacta de useT.
 type TFn = (key: TranslationKey, params?: Record<string, string | number>) => string;
@@ -40,6 +49,8 @@ interface Props {
   onAuthorTap: (userId: string) => void;
   onCommentTap?: (postId: string) => void;
   onDelete?: (postId: string) => void;
+  isAdmin?: boolean;
+  onModerated?: () => void;
   showAuthor?: boolean;
 }
 
@@ -63,10 +74,13 @@ export default function PostCard({
   onAuthorTap,
   onCommentTap,
   onDelete,
+  isAdmin = false,
+  onModerated,
   showAuthor = true,
 }: Props) {
   const { t } = useT();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [reportMode, setReportMode] = useState(false);
   // Visor de imágenes a pantalla completa (null = cerrado).
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const allPhotos = post.photo_urls && post.photo_urls.length > 1
@@ -87,6 +101,7 @@ export default function PostCard({
     function handleOutside(e: MouseEvent | TouchEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
+        setReportMode(false);
       }
     }
     document.addEventListener('mousedown', handleOutside);
@@ -97,9 +112,26 @@ export default function PostCard({
     };
   }, [menuOpen]);
 
+  const canDelete = (isOwn || isAdmin) && !!onDelete;
+  const canModerate = !isOwn; // reportar / bloquear a otros
+  const showMenu = canDelete || canModerate;
+
+  function closeMenu() { setMenuOpen(false); setReportMode(false); }
+  async function doReport(reason: ReportReason) {
+    closeMenu();
+    const ok = await reportContent({ postId: post.id, reason });
+    if (ok) alert(t('post.reported'));
+  }
+  async function doBlock() {
+    closeMenu();
+    if (!window.confirm(t('post.blockConfirm'))) return;
+    const ok = await blockUser(post.user_id);
+    if (ok) { alert(t('post.blocked')); onModerated?.(); }
+  }
+
   return (
     <article className="post-card">
-      {isOwn && onDelete && (
+      {showMenu && (
         <div className="post-card-menu" ref={menuRef}>
           <button
             type="button"
@@ -111,13 +143,51 @@ export default function PostCard({
           </button>
           {menuOpen && (
             <div className="post-card-menu-dropdown">
-              <button
-                type="button"
-                className="post-card-menu-item"
-                onClick={() => { setMenuOpen(false); onDelete(post.id); }}
-              >
-                {t('post.delete')}
-              </button>
+              {reportMode ? (
+                <>
+                  <div className="post-card-menu-heading">{t('post.reportTitle')}</div>
+                  {REPORT_REASONS.map(r => (
+                    <button
+                      key={r}
+                      type="button"
+                      className="post-card-menu-item"
+                      onClick={() => doReport(r)}
+                    >
+                      {t(REASON_KEY[r])}
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {canDelete && (
+                    <button
+                      type="button"
+                      className="post-card-menu-item"
+                      onClick={() => { closeMenu(); onDelete!(post.id); }}
+                    >
+                      {t('post.delete')}
+                    </button>
+                  )}
+                  {canModerate && (
+                    <>
+                      <button
+                        type="button"
+                        className="post-card-menu-item"
+                        onClick={() => setReportMode(true)}
+                      >
+                        {t('post.report')}
+                      </button>
+                      <button
+                        type="button"
+                        className="post-card-menu-item"
+                        onClick={doBlock}
+                      >
+                        {t('post.block')}
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

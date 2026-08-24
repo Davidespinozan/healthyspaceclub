@@ -243,6 +243,14 @@
 .post-card-menu-item:hover {
   background: rgba(21, 51, 48, 0.04);
 }
+.post-card-menu-heading {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--forest);
+  opacity: 0.6;
+}
 
 /* ─── Media — aspect ratio honesto ───────────────────────── */
 .post-card-media {

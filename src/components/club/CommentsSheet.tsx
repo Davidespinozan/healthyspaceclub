@@ -6,6 +6,7 @@ import { useAppStore } from '../../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
+import { reportContent, blockUser, getBlockedIds, filterBlocked } from '../../utils/socialModeration';
 import './comments-sheet.css';
 
 type TFn = (key: TranslationKey, params?: Record<string, string | number>) => string;
@@ -55,12 +56,15 @@ export default function CommentsSheet({ postId, currentUserId, onClose, onCountC
     if (!postId) return;
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from('club_comments')
-        .select('*')
-        .eq('post_id', postId)
-        .order('created_at', { ascending: true });
-      if (data) setComments(data as Comment[]);
+      const [{ data }, blocked] = await Promise.all([
+        supabase
+          .from('club_comments')
+          .select('*')
+          .eq('post_id', postId)
+          .order('created_at', { ascending: true }),
+        getBlockedIds(),
+      ]);
+      if (data) setComments(filterBlocked(data as Comment[], blocked, c => c.user_id));
     } catch (e) {
       console.warn('[CommentsSheet] load failed:', e);
     } finally {
@@ -154,6 +158,20 @@ export default function CommentsSheet({ postId, currentUserId, onClose, onCountC
     }
   }
 
+  async function handleReport(commentId: string) {
+    const ok = await reportContent({ commentId, reason: 'inappropriate' });
+    if (ok) alert(t('post.reported'));
+  }
+
+  async function handleBlock(uid: string) {
+    if (!window.confirm(t('post.blockConfirm'))) return;
+    const ok = await blockUser(uid);
+    if (ok) {
+      setComments(c => c.filter(x => x.user_id !== uid));
+      alert(t('post.blocked'));
+    }
+  }
+
   if (!open) return null;
 
   return createPortal(
@@ -191,7 +209,7 @@ export default function CommentsSheet({ postId, currentUserId, onClose, onCountC
                   </div>
                   <p className="cms-text">{c.text}</p>
                 </div>
-                {c.user_id === currentUserId && !c.id.startsWith('tmp-') && (
+                {c.user_id === currentUserId && !c.id.startsWith('tmp-') ? (
                   <button
                     type="button"
                     className="cms-del"
@@ -200,7 +218,24 @@ export default function CommentsSheet({ postId, currentUserId, onClose, onCountC
                   >
                     <X size={14} />
                   </button>
-                )}
+                ) : c.user_id !== currentUserId && !c.id.startsWith('tmp-') ? (
+                  <div className="cms-mod">
+                    <button
+                      type="button"
+                      className="cms-mod-btn"
+                      onClick={() => handleReport(c.id)}
+                    >
+                      {t('comments.report')}
+                    </button>
+                    <button
+                      type="button"
+                      className="cms-mod-btn"
+                      onClick={() => handleBlock(c.user_id)}
+                    >
+                      {t('comments.block')}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             ))
           )}

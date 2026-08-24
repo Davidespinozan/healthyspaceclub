@@ -5,6 +5,8 @@ import CommentsSheet from './club/CommentsSheet';
 import NotificationsSheet from './club/NotificationsSheet';
 import { useNotifications } from '../hooks/useNotifications';
 import { getFollowingIds } from '../utils/follows';
+import { getBlockedIds, filterBlocked } from '../utils/socialModeration';
+import { useAppStore } from '../store';
 import { haptics } from '../utils/haptics';
 import { Bell } from 'lucide-react';
 import { useEffect, useState, useRef, lazy, Suspense } from 'react';
@@ -26,6 +28,8 @@ export default function TabClub() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [feedMode, setFeedMode] = useState<'all' | 'following'>('all');
   const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
+  const isAdmin = useAppStore(s => s.isAdmin);
   const [activeToday, setActiveToday] = useState(0);
   const [firedIds, setFiredIds] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
@@ -54,6 +58,7 @@ export default function TabClub() {
     if (userId && userId !== 'anon') {
       fetchUserFires();
       getFollowingIds().then(setFollowingIds).catch(() => {});
+      getBlockedIds().then(ids => setBlockedIds(new Set(ids))).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -62,7 +67,14 @@ export default function TabClub() {
   useEffect(() => {
     fetchFeed();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feedMode, followingIds]);
+  }, [feedMode, followingIds, blockedIds]);
+
+  // Tras bloquear a alguien: recargar la lista de bloqueados → el feed se
+  // refiltra por el efecto de arriba.
+  async function refreshAfterModeration() {
+    try { setBlockedIds(new Set(await getBlockedIds())); }
+    catch { /* noop */ }
+  }
 
   // Infinite scroll: el sentinel al final dispara loadMore. loadMoreRef evita
   // stale closures sin re-crear el observer en cada render.
@@ -96,6 +108,10 @@ export default function TabClub() {
       const ids = [...followingIds, userId].filter(Boolean);
       query = query.in('user_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
     }
+    // Ocultar bloqueados (bilateral, vía hsc_blocked_ids). Filtro server-side;
+    // filterBlocked en cliente es defensa en profundidad.
+    const blocked = [...blockedIds];
+    if (blocked.length) query = query.not('user_id', 'in', `(${blocked.join(',')})`);
     return query;
   }
 
@@ -103,7 +119,7 @@ export default function TabClub() {
     try {
       const { data } = await feedQuery();
       if (data) {
-        setPosts(data as ClubPost[]);
+        setPosts(filterBlocked(data as ClubPost[], blockedIds, p => p.user_id));
         setHasMore(data.length === PAGE);
       }
     } catch (e) {
@@ -121,7 +137,8 @@ export default function TabClub() {
         // Dedup defensivo por id (por si llega un post repetido en el borde).
         setPosts(prev => {
           const seen = new Set(prev.map(p => p.id));
-          return [...prev, ...(data as ClubPost[]).filter(p => !seen.has(p.id))];
+          const fresh = filterBlocked(data as ClubPost[], blockedIds, p => p.user_id);
+          return [...prev, ...fresh.filter(p => !seen.has(p.id))];
         });
         setHasMore(data.length === PAGE);
       }
@@ -179,7 +196,7 @@ export default function TabClub() {
     if (!window.confirm(t('club.deletePostConfirm'))) return;
     const post = posts.find(p => p.id === postId);
     try {
-      await deleteClubPost(postId, post?.photo_url ?? null);
+      await deleteClubPost(postId, post?.photo_url ?? null, post?.photo_urls ?? null);
       setPosts(prev => prev.filter(p => p.id !== postId));
     } catch (e) {
       console.warn('[TabClub] deletePost failed:', e);
@@ -246,6 +263,8 @@ export default function TabClub() {
             onAuthorTap={setProfileUserId}
             onCommentTap={setCommentsPostId}
             onDelete={deletePost}
+            isAdmin={isAdmin}
+            onModerated={refreshAfterModeration}
           />
         ))}
         {hasMore && posts.length > 0 && <div ref={sentinelRef} className="clb-sentinel" aria-hidden="true" />}
