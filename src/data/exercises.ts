@@ -2430,6 +2430,11 @@ const baseExercises: Exercise[] = [
     muscleGroup: 'cardio',
     cardioStyle: 'lowImpact',
     roles: ['warmup', 'main'],
+    // F2C-9D.1 · el paso lateral es cardio de bajo impacto CONTINUO válido, pero NO es locomoción por gait
+    // (vaivén lateral cadera/equilibrio, no marcha/carrera hacia adelante). La derivación por defecto
+    // (lowImpact+cuerpo) lo marcaría 'locomotion'; el override lo corrige en la AUTORIDAD física para que no
+    // sustituya un rodaje de correr. Conserva 'conditioning'; workModes siguen derivados ('continuous').
+    capabilities: { roles: ['conditioning'] },
     secondaryMuscles: ['gluteo', 'cuadriceps'],
     equipment: ['cuerpo', 'ligas'],
     goals: ['condicion', 'movilidad'],

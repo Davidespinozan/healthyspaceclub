@@ -49,9 +49,12 @@ describe('9B.1 · reality matrix (catálogo real)', () => {
     expect(c.roles).toEqual(expect.arrayContaining(['conditioning', 'locomotion']));
     expect(c.workModes).toContain('continuous');
   });
-  it('G · side-step = conditioning + locomotion + continuous', () => {
+  it('G · side-step = conditioning + continuous, NO locomotion (F2C-9D.1: vaivén lateral ≠ gait)', () => {
+    // El paso lateral es cardio de bajo impacto CONTINUO válido, pero NO locomoción por gait (override de
+    // metadata en exercises.ts): no debe sustituir un rodaje de correr. Sigue siendo continuo para lowImpact.
     const c = caps('paso-lateral');
-    expect(c.roles).toContain('locomotion');
+    expect(c.roles).not.toContain('locomotion');
+    expect(c.roles).toContain('conditioning');
     expect(c.workModes).toContain('continuous');
   });
   it('H · running-drills / high-knees NO locomotion continuous (alto impacto)', () => {

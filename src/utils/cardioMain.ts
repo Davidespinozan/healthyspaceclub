@@ -17,6 +17,7 @@
 import type { Exercise, CardioStyle, Equipment } from '../types';
 import type { CardioExerciseMeta } from './workoutDisplay';
 import { hasVideo } from './videoAvailability';   // F2C-9A · fuente ÚNICA de disponibilidad de video
+import { resolveMovementCapabilities } from './movementCapabilities';   // F2C-9D.1 · autoridad de locomotion (gait)
 
 export type CardioBlockKind = 'steady' | 'intervals' | 'drills' | 'power' | 'recovery' | 'cooldown';
 export type CardioIntensity = 'baja' | 'media' | 'alta';
@@ -191,6 +192,15 @@ interface CardioContinuousStation {
   variantId?: string;                  // máquina concreta (resuelve video + display)
   cardioStyle: CardioStyle;            // estilo EFECTIVO (de la variante o del ejercicio)
   caps: CardioStationCapabilities;
+  // F2C-9D.1 · ¿la estación es LOCOMOCIÓN por GAIT (correr/caminadora/marcha) y no una máquina estacionaria
+  // (bici/elíptica/remo)? Autoridad ÚNICA = resolveMovementCapabilities (rol 'locomotion' 9B + workMode
+  // 'continuous'). cardioMain NO infiere locomotion de cardioStyle: solo CONSUME esta verdad física.
+  locomotion: boolean;
+}
+/** ¿La vista efectiva de la estación soporta LOCOMOCIÓN continua? (rol locomotion ∧ workMode continuous). */
+function isLocomotionStation(effective: Exercise): boolean {
+  const mc = resolveMovementCapabilities(effective);
+  return mc.roles.includes('locomotion') && mc.workModes.includes('continuous');
 }
 /** ¿El Exercise agrupa MÁQUINAS cardio tipadas? Signal: alguna variante declara su PROPIO cardioStyle
  *  (bici/elíptica/caminadora/remo lo hacen; marcha/paso NO). Cada máquina es una identidad distinta
@@ -218,12 +228,12 @@ function expandContinuousStations(stations: Exercise[]): CardioContinuousStation
         const vex = { ...ex, id: v.id, variants: [], cardioStyle: vStyle, equipment: v.equipment ?? ex.equipment } as Exercise;
         const caps = cardioStationCapabilities(vex);                    // capability POR VARIANTE (fail-closed)
         if (!(caps.steady || caps.recovery || caps.cooldown)) continue; // solo continuous-capable
-        add({ id: v.id, stationId: ex.id, variantId: v.id, cardioStyle: vStyle, caps });
+        add({ id: v.id, stationId: ex.id, variantId: v.id, cardioStyle: vStyle, caps, locomotion: isLocomotionStation(vex) });
         expanded++;
       }
       if (expanded > 0) continue;                                      // parent REEMPLAZADO por sus máquinas
     }
-    add({ id: ex.id, stationId: ex.id, cardioStyle: (ex.cardioStyle as CardioStyle) ?? 'funcional', caps: cardioStationCapabilities(ex) });
+    add({ id: ex.id, stationId: ex.id, cardioStyle: (ex.cardioStyle as CardioStyle) ?? 'funcional', caps: cardioStationCapabilities(ex), locomotion: isLocomotionStation(ex) });
   }
   return out;
 }
@@ -328,9 +338,14 @@ export function buildCardioMain(input: {
   // F2C-8 · estaciones CONTINUAS como IDENTIDADES LÓGICAS (máquinas expandidas por variante reproducible).
   const continuousStations = expandContinuousStations(allStations);
   const contById = new Map(continuousStations.map(s => [s.id, s]));
+  // F2C-9D.1 · GAIT-ONLY para `correr`: el TEMPLATE (no la inferencia) exige LOCOMOCIÓN real en el trabajo
+  // continuo. Una bici/elíptica/remo son continuous-capable (válidas para lowImpact) pero NO son locomoción
+  // → jamás rellenan el rodaje/cooldown de una sesión pedida como correr. El resto de estilos (lowImpact/
+  // funcional/explosividad) NO se restringen: gaitOnly=false → pool idéntico al histórico (equivalencia).
+  const gaitOnly = style === 'correr';
   // Pool CONTINUO por rol: SOLO estaciones con la capacidad requerida (fail closed). Nunca por impact solo.
   const continuousPool = (role: 'steady' | 'recovery' | 'cooldown'): CardioContinuousStation[] =>
-    continuousStations.filter(s => s.caps[role] && s.caps.maxContinuousMinutes >= 3);
+    continuousStations.filter(s => s.caps[role] && s.caps.maxContinuousMinutes >= 3 && (!gaitOnly || s.locomotion));
 
   const blocks: CardioBlock[] = [];
   let earlyEnd = false; let earlyEndReason: string | undefined;
