@@ -42,3 +42,8 @@ verify_jwt = false
 # validate-email: se llama antes del signup (sin sesión) → sin JWT.
 [functions.validate-email]
 verify_jwt = false
+
+# club-moderate: moderación AI pre-publicación del Club. Requiere sesión; la
+# función además valida el JWT y hace rate-limit propio (SOCIAL-2A).
+[functions.club-moderate]
+verify_jwt = true

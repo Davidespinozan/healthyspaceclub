@@ -7,10 +7,9 @@ import { Camera, Image as ImageIcon, FileText, X, ArrowLeft } from 'lucide-react
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
-import { useCurrentUserId } from '../hooks/useCurrentUserId';
-import { supabase } from '../lib/supabase';
 import { validateMediaFile } from '../utils/mediaValidation';
 import { compressImage } from '../utils/imageCompress';
+import { moderateAndPublish, blobToBase64 } from '../utils/clubContentModeration';
 import type { AspectRatio } from '../utils/imageCompress';
 import './create-post-modal.css';
 
@@ -82,10 +81,8 @@ function loadImageDimensions(url: string): Promise<{ width: number; height: numb
 
 export default function CreatePostModal({ open, onClose, onPostCreated, context }: Props) {
   const { t } = useT();
-  const { userName, streakCount, dailyWorkout } = useAppStore(useShallow((s) => ({ userName: s.userName, streakCount: s.streakCount, dailyWorkout: s.dailyWorkout })));
-  const userId = useCurrentUserId();
+  const { dailyWorkout } = useAppStore(useShallow((s) => ({ dailyWorkout: s.dailyWorkout })));
 
-  const [userAvatarUrl, setUserAvatarUrl] = useState('');
   const [collab, setCollab] = useState(true);
   const [view, setView] = useState<ModalView>('choose');
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -134,21 +131,6 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
   const canCollab = postContext === 'workout' && !!partner?.id;
   // Tag que se muestra en composición según contexto.
   const contextSummary = postContext === 'meal' ? mealSummary : workoutSummary;
-
-  // ── Fetch avatar para insert ──────────────────────────────
-  useEffect(() => {
-    if (!open || !userId) return;
-    (async () => {
-      try {
-        const { data } = await supabase
-          .from('user_profiles')
-          .select('avatar_url')
-          .eq('user_id', userId)
-          .single();
-        if (data?.avatar_url) setUserAvatarUrl(data.avatar_url);
-      } catch (e) { console.warn('[CreatePostModal] avatar fetch failed:', e); }
-    })();
-  }, [open, userId]);
 
   // ── Reset state cuando se cierra ──────────────────────────
   useEffect(() => {
@@ -273,93 +255,56 @@ export default function CreatePostModal({ open, onClose, onPostCreated, context 
   }
 
   // ── Submit ────────────────────────────────────────────────
+  // SOCIAL-2A: la publicación pasa SIEMPRE por moderación server-side. El cliente
+  // comprime, convierte a base64 e invoca club-moderate; el servidor decide y —
+  // solo en ALLOW — sube la imagen y crea el post. Fail-closed en cualquier fallo.
   async function handleSubmit() {
     if (view === 'uploading') return;
     setUploadError(null);
     setView('uploading');
 
-    let photoUrl = '';
-    let photoUrls: string[] = [];
-    let imageError: string | null = null;
-
-    if (multiImages.length > 0) {
-      // Multi-foto: cada una a cuadrado (sin crop manual) → array de URLs.
-      try {
+    try {
+      // 1. Comprimir → base64 (compressImage devuelve JPEG).
+      const images: { mimeType: 'image/jpeg'; base64: string }[] = [];
+      if (multiImages.length > 0) {
         for (let i = 0; i < multiImages.length; i++) {
-          const compressed = await compressImage(multiImages[i].file, { aspectRatio: '1:1' });
-          const path = `${userId}_${Date.now()}_${i}.jpg`;
-          const { error: upErr } = await supabase.storage.from('club').upload(path, compressed, {
-            contentType: 'image/jpeg',
-          });
-          if (upErr) throw upErr;
-          photoUrls.push(supabase.storage.from('club').getPublicUrl(path).data.publicUrl);
+          const blob = await compressImage(multiImages[i].file, { aspectRatio: '1:1' });
+          images.push({ mimeType: 'image/jpeg', base64: await blobToBase64(blob) });
         }
-        photoUrl = photoUrls[0] ?? '';
-      } catch (e) {
-        photoUrls = [];
-        imageError = extractErrorMessage(e, t('post.unknownError'));
-        console.error('[CreatePostModal] multi upload failed:', e);
-      }
-    } else if (imageSrc && croppedAreaPixels) {
-      try {
+      } else if (imageSrc && croppedAreaPixels) {
         const res = await fetch(imageSrc);
         const blobIn = await res.blob();
         const file = new File([blobIn], `capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        const compressed = await compressImage(file, {
-          aspectRatio,
-          cropPixels: croppedAreaPixels,
-        });
-        const path = `${userId}_${Date.now()}.jpg`;
-        const { error: upErr } = await supabase.storage.from('club').upload(path, compressed, {
-          contentType: 'image/jpeg',
-        });
-        if (upErr) throw upErr;
-        const { data } = supabase.storage.from('club').getPublicUrl(path);
-        photoUrl = data.publicUrl;
-      } catch (e) {
-        imageError = extractErrorMessage(e, t('post.unknownError'));
-        console.error('[CreatePostModal] upload failed:', e);
+        const blob = await compressImage(file, { aspectRatio, cropPixels: croppedAreaPixels });
+        images.push({ mimeType: 'image/jpeg', base64: await blobToBase64(blob) });
       }
-    }
 
-    // Si es colab, resolvemos el @username actual del coautor (display name no sirve).
-    const isCollabPost = canCollab && collab;
-    let coUsername = '';
-    if (isCollabPost && partner?.id) {
-      try {
-        const { data } = await supabase
-          .from('public_profiles')
-          .select('username')
-          .eq('user_id', partner.id)
-          .single();
-        coUsername = data?.username || partner.name || '';
-      } catch { coUsername = partner.name || ''; }
-    }
-
-    try {
-      const { error: insertErr } = await supabase.from('club_posts').insert({
-        user_id: userId,
-        username: userName || t('common.anonymous'),
-        avatar_url: userAvatarUrl,
-        streak: streakCount,
+      // 2. Moderar + publicar (autoridad server-side; identidad la derivan los triggers).
+      const isCollabPost = canCollab && collab;
+      const result = await moderateAndPublish({
+        text: caption.trim().slice(0, MAX_CAPTION),
+        images,
+        post_context: postContext,
         workout_summary: postContext === 'workout' ? workoutSummary : '',
         meal_summary: postContext === 'meal' ? mealSummary : '',
-        post_context: postContext,
         coauthor_id: isCollabPost ? partner!.id : null,
-        coauthor_username: isCollabPost ? coUsername : '',
-        coauthor_avatar_url: isCollabPost ? (partner!.avatar || '') : '',
-        photo_url: photoUrl,
-        photo_urls: photoUrls.length > 0 ? photoUrls : null,
-        text: caption.trim().slice(0, MAX_CAPTION),
-        fire_count: 0,
         aspect_ratio: multiImages.length > 0 ? '1:1' : aspectRatio,
       });
-      if (insertErr) throw insertErr;
-      if (imageError) alert(t('post.imageUploadFailed', { error: imageError }));
-      onPostCreated?.();
-      onClose();
+
+      // 3. Outcome → UX (nunca exponemos modelo/confidence; no acusamos en fallo técnico).
+      if (result.outcome === 'PUBLISHED') {
+        onPostCreated?.();
+        onClose();
+        return;
+      }
+      const msg = result.outcome === 'BLOCKED_BY_POLICY' ? t('post.modBlocked')
+        : result.outcome === 'REVIEW_REQUIRED' ? t('post.modReview')
+        : t('post.modUnavailable');
+      setUploadError(msg);
+      setView('composing');
     } catch (e) {
-      setUploadError(extractErrorMessage(e, t('post.unknownError')));
+      console.error('[CreatePostModal] moderation submit failed:', e);
+      setUploadError(t('post.modUnavailable'));
       setView('composing');
     }
   }
@@ -632,7 +577,7 @@ function ComposingView({
           </button>
         )}
 
-        {uploadError && <p className="cpm-composing-error">{t('post.publishError', { error: uploadError })}</p>}
+        {uploadError && <p className="cpm-composing-error">{uploadError}</p>}
       </div>
 
       <footer className="cpm-composing-foot">
@@ -657,24 +602,7 @@ function UploadingView() {
   return (
     <div className="cpm-uploading">
       <div className="cpm-spinner" />
-      <p className="cpm-uploading-text">{t('post.publishing')}</p>
+      <p className="cpm-uploading-text">{t('post.reviewing')}</p>
     </div>
   );
-}
-
-// ══════════════════════════════════════════════════════════════
-// Helper
-// ══════════════════════════════════════════════════════════════
-function extractErrorMessage(e: unknown, fallback: string): string {
-  if (e instanceof Error) return e.message;
-  if (e && typeof e === 'object') {
-    const obj = e as Record<string, unknown>;
-    if (typeof obj.message === 'string' && obj.message.length > 0) {
-      const parts: string[] = [obj.message];
-      if (typeof obj.code === 'string' && obj.code.length > 0) parts.push(`(code: ${obj.code})`);
-      if (typeof obj.hint === 'string' && obj.hint.length > 0) parts.push(`hint: ${obj.hint}`);
-      return parts.join(' ');
-    }
-  }
-  return fallback;
 }
