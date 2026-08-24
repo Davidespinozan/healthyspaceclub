@@ -5,6 +5,7 @@ import { getCachedRegion, regionFromCountry } from '../utils/region';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
 import { hasGeneratedWeeklyPlan, weeklyPlanPhase } from '../utils/weeklyPlanState';
+import { normalizeGroceryList } from '../utils/groceryList';
 import { mealKcal, dayNutrition } from '../utils/mealNutrition';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
@@ -269,15 +270,17 @@ export default function WeeklyNutritionPlanner() {
       const shake = buildShake();
       const region = obData.country ? regionFromCountry(String(obData.country)) : (getCachedRegion() ?? undefined);
       const { days } = await generateWeeklyPlan(target, avoid, newAnswers.cravings ?? '', Date.now() & 0x7fffffff, shake, region);
-      // Lista de compras: ingredientes únicos (sin condimentos), del banco ya ajustado.
-      const shopSet = new Set<string>();
-      for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])
-        if (ing.rol !== 'condimento' && ing.rol !== 'sub-receta') shopSet.add(ing.nv);
+      // NUTRITION-N8 · lista de compras = SKUs reales: expande "Verduras (…)" y colapsa sinónimos/
+      // plurales/acentos (jitomate=tomate, yogur=yogurt), deduplicando. Se calcula UNA vez al generar y
+      // se persiste; el plan (days/m.ings/macros) NO cambia. Los checks `shop-i` indexan esta lista
+      // congelada del plan (nunca se re-normaliza in situ → sin deriva de índice).
+      const allIngs = days.flatMap((d) => d.meals.flatMap((m) => m.ings ?? []));
+      const shoppingList = normalizeGroceryList(allIngs);
       await saveWeeklyPlan({
         generatedAt: new Date().toISOString(),
         mealPlanKey,
         selectedDays: [1, 2, 3, 4, 5, 6, 7],
-        shoppingList: [...shopSet],
+        shoppingList,
         nota: '',
         preferences: [newAnswers.cravings, newAnswers.avoid].filter(Boolean).join(' · '),
         lang: locale,
