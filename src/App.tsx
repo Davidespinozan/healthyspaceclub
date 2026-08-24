@@ -593,6 +593,28 @@ export default function App() {
             console.error('[auth] failed to hydrate meal_progress:', e);
           }
 
+          // NUTRITION-N10.2A.2 · hidratar la historia cross-device de evidencia (nutrition_day_summary).
+          // Corre DESPUÉS de food_log + meal_progress (arriba) para poder recomputar HOY desde raw fresco.
+          // Historia: la DB manda (target congelado, evidencia cacheada); no se sube el legacy local.
+          try {
+            const cutoff = dayKey(new Date(Date.now() - 90 * 86400000)); // ventana de lectura 90 días
+            const { data: sums } = await supabase
+              .from('nutrition_day_summary')
+              .select('date, target_kcal, logged_kcal, measured_slots, total_slots, evidence_class')
+              .eq('user_id', session.user.id)
+              .gte('date', cutoff)
+              .order('date', { ascending: true });
+            if (!isStillCurrentUser()) return;
+            if (sums) {
+              const { summaryFromDbRow } = await import('./utils/nutritionSummaryDb');
+              useAppStore.setState({ nutritionDaySummaries: sums.map(summaryFromDbRow) });
+              // recomputa HOY desde el raw ya hidratado (food_log + meal_progress) + persiste best-effort.
+              useAppStore.getState().refreshNutritionDaySummary(dayKey(new Date()));
+            }
+          } catch (e) {
+            console.error('[auth] failed to hydrate nutrition_day_summary:', e);
+          }
+
           // Hidratar user_milestones en paralelo (logros desbloqueados)
           try {
             const { data: milestones } = await supabase

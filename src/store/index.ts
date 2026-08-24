@@ -1,6 +1,7 @@
 import { dayKey } from '../utils/localDate';
 import { nextNutritionWeight } from '../utils/weightTrend';   // NUTRITION-N10.1 · peso de tendencia estable
 import { buildDayEvidence, upsertSummary, toSummary, type NutritionDaySummary } from '../utils/nutritionEvidence';   // NUTRITION-N10.2A · evidencia de adherencia
+import { summaryInsertRow, summaryEvidencePatch } from '../utils/nutritionSummaryDb';   // NUTRITION-N10.2A.2 · persistencia cross-device
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Session, User } from '@supabase/supabase-js';
@@ -658,7 +659,29 @@ export const useAppStore = create<AppState>()(
       date, targetKcal: st.planGoal, totalSlots,
       mealChecks: st.mealChecks, mealResolvedByLog: st.mealResolvedByLog, foodLog: st.foodLog,
     });
-    set({ nutritionDaySummaries: upsertSummary(st.nutritionDaySummaries, toSummary(ev), dayKey(new Date())) });
+    const nextList = upsertSummary(st.nutritionDaySummaries, toSummary(ev), dayKey(new Date()));
+    set({ nutritionDaySummaries: nextList });
+
+    // NUTRITION-N10.2A.2 · persistencia cross-device BEST-EFFORT (nunca bloquea/lanza la acción del usuario).
+    // target_kcal FIRST-WRITE-WINS: INSERT ON CONFLICT DO NOTHING fija el target; luego UPDATE solo evidencia
+    // (summaryEvidencePatch NUNCA incluye target). Un device stale no puede pisar el target histórico.
+    const userId = st.user?.id;
+    const summary = nextList.find((s) => s.date === date);
+    if (userId && summary) {
+      void (async () => {
+        try {
+          // 1) fija target inmutable (no-op si la fila ya existe) …
+          await supabase.from('nutrition_day_summary')
+            .upsert(summaryInsertRow(userId, summary), { onConflict: 'user_id,date', ignoreDuplicates: true });
+          // 2) … y actualiza SOLO evidencia (el patch nunca lleva target_kcal).
+          const { error } = await supabase.from('nutrition_day_summary')
+            .update(summaryEvidencePatch(summary)).eq('user_id', userId).eq('date', date);
+          if (error) console.warn('[nutritionSummary] persist failed:', error);
+        } catch (e) {
+          console.warn('[nutritionSummary] persist error:', e);
+        }
+      })();
+    }
   },
   addWeight: async (kg) => {
     const today = dayKey(new Date());
