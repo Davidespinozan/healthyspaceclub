@@ -4,7 +4,7 @@ import { useAppStore } from '../store';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
-import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
+import { hasGeneratedWeeklyPlan, weeklyPlanPhase } from '../utils/weeklyPlanState';
 import { mealKcal, dayNutrition } from '../utils/mealNutrition';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
@@ -174,12 +174,10 @@ export default function WeeklyNutritionPlanner() {
   // (La auto-regeneración se movió a useAutoRegenPlan(), montado en App, para
   // que corra desde cualquier pantalla y no solo aquí.)
 
+  // NUTRITION-N5.1 · el init de fase usa la MISMA autoridad que el render gate (WNP:657): un weeklyPlan
+  // orphan/vacío/malformado NO es 'plan' (sería render null = pantalla en blanco) → cae a 'questions'.
   const [phase, setPhase] = useState<'setup-day' | 'questions' | 'generating' | 'plan' | 'error'>(
-    () => {
-      if (shoppingDay === null) return 'setup-day';
-      if (weeklyPlan) return 'plan';
-      return 'questions';
-    }
+    () => weeklyPlanPhase(shoppingDay, weeklyPlan),
   );
   const [step, setStep] = useState(0);
   // ¿La selección de día del súper es parte de ESTE flujo? Solo si arrancó sin
@@ -211,11 +209,11 @@ export default function WeeklyNutritionPlanner() {
 
   const localizedMealPlans = getMealPlans(locale);
   const activeMealPlan = localizedMealPlans[mealPlanKey] ?? localizedMealPlans['planA'];
-  // Si el plan viene del motor (banco), ya está ajustado: se usa tal cual (day = 1..7).
-  // Si no, plan viejo escalado por regex.
+  // NUTRITION-N5 · solo el plan GENERADO (motor, con `.days`) se renderiza; sin `.days` la vista de plan
+  // no se monta (return abajo) → cuestionario "Arma tu plan". Se retiró el preview legacy escalado.
   const scaledPlan = useMemo(
-    () => weeklyPlan?.days ?? (planGoal > 0 ? scalePlan(activeMealPlan, planGoal) : activeMealPlan),
-    [weeklyPlan?.days, activeMealPlan, planGoal],
+    () => weeklyPlan?.days ?? activeMealPlan,
+    [weeklyPlan?.days, activeMealPlan],
   );
   const todayOffset = shoppingDay !== null ? (new Date().getDay() - shoppingDay + 7) % 7 : -1;
   const firstName = userName?.split(' ')[0] || '';
@@ -653,14 +651,14 @@ export default function WeeklyNutritionPlanner() {
   }
 
   /* ═══ PLAN DISPLAY ═══ */
-  if (!weeklyPlan) return null;
+  // NUTRITION-N5 · solo si hay plan GENERADO (`.days`). Un weeklyPlan legacy sin `.days` cae al cuestionario.
+  if (!hasGeneratedWeeklyPlan(weeklyPlan)) return null;
 
   const dayPlanIdx = scaledPlan.findIndex(d => d.day === weeklyPlan.selectedDays[activeDay]);
   const dayPlan = dayPlanIdx >= 0 ? scaledPlan[dayPlanIdx] : null;
   const dayKcal = dayPlan ? Math.round(dayNutrition(dayPlan.meals).kcal) : 0;
-  // Factor de escala del día activo. Con motor (banco) ya viene ajustado → 1.
-  const baseDay = activeMealPlan.find(d => d.day === weeklyPlan.selectedDays[activeDay]);
-  const activeDayScale = weeklyPlan.days ? 1 : (baseDay ? dayScaleFactor(baseDay.meals, planGoal) : 1);
+  // NUTRITION-N5 · llegados aquí el plan es del motor (ya ajustado) → factor 1 (se retiró el escalado legacy).
+  const activeDayScale = 1;
   // Comidas del plan de HOY con su índice — para que la Calculadora sepa QUÉ platillo
   // del plan sustituye (mismo índice que usa mealResolvedByLog en Plan del día).
   const todayNum = weeklyPlan.selectedDays[todayOffset >= 0 ? todayOffset : 0] ?? weeklyPlan.selectedDays[0];

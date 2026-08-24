@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { calcPortionKcal, calcMealKcal, calcDayKcal } from '../kcalCalc';
-import { dayNutrition } from '../mealNutrition';
 import { calcTDEE, assignPlan } from '../tdee';
 import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField, mealCalorieSplit, parseObData } from '../nutritionTargets';
-import { scalePlan } from '../scalePlan';
 import { mealPlans } from '../../data/mealPlan';
 
 /* ───────────────────────────────────────────── */
@@ -266,52 +264,6 @@ describe('calcDayKcal', () => {
     const total = calcDayKcal(day.meals);
     expect(total).toBeGreaterThan(2200);
     expect(total).toBeLessThan(3800);
-  });
-});
-
-/* ───────────────────────────────────────────── */
-/*  scalePlan                                    */
-/* ───────────────────────────────────────────── */
-describe('scalePlan', () => {
-  const planA = mealPlans['planA'];
-
-  it('scaling to 3000 kcal keeps accuracy within 8%', () => {
-    const scaled = scalePlan(planA, 3000);
-    for (const day of scaled.slice(0, 5)) {
-      const kcal = dayNutrition(day.meals).kcal;
-      const err = Math.abs(kcal - 3000) / 3000;
-      expect(err).toBeLessThan(0.08);
-    }
-  });
-
-  it('scaling to 1800 kcal keeps accuracy within 10%', () => {
-    const scaled = scalePlan(planA, 1800);
-    for (const day of scaled.slice(0, 5)) {
-      const kcal = dayNutrition(day.meals).kcal;
-      const err = Math.abs(kcal - 1800) / 1800;
-      expect(err).toBeLessThan(0.10);
-    }
-  });
-
-  it('scaling to 2400 kcal keeps accuracy within 8%', () => {
-    const scaled = scalePlan(planA, 2400);
-    for (const day of scaled.slice(0, 5)) {
-      const kcal = dayNutrition(day.meals).kcal;
-      const err = Math.abs(kcal - 2400) / 2400;
-      expect(err).toBeLessThan(0.08);
-    }
-  });
-
-  it('portion text stays human-readable (no decimals > 1 digit)', () => {
-    const scaled = scalePlan(planA, 2400);
-    for (const day of scaled.slice(0, 3)) {
-      for (const meal of day.meals) {
-        for (const p of meal.portions) {
-          // No wild decimal places like 1.333333
-          expect(p).not.toMatch(/\d+\.\d{3,}/);
-        }
-      }
-    }
   });
 });
 

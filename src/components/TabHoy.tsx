@@ -9,7 +9,7 @@ import { buildDayWithFixed, type Slot } from '../utils/planEngine';
 import type { BowlClub } from '../data/bowlsClub';
 import { fetchMisPedidos, fetchBowlsRef, macrosDePedido } from '../data/pedidosTruck';
 import { fetchFoodTrucksEnabled } from '../data/appConfig';
-import { scalePlan, dayScaleFactor } from '../utils/scalePlan';
+import { hasGeneratedWeeklyPlan } from '../utils/weeklyPlanState';
 import { regionalizeStaticPlan } from '../data/regionFood';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
 import { expandAvoidCats, textMatchesAvoid } from '../utils/planEngine';
@@ -177,26 +177,27 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     // (el motor dinámico es fail-closed). Nunca servir el alimento evitado por "completar" el estático.
     return safe;
   })();
-  // scalePlan recorre el plan semanal — memoizar evita recalcularlo en CADA render
-  // (TabHoy se re-renderiza con cualquier cambio del store).
-  // Motor (banco): días ya ajustados a la meta → tal cual. Si no, plan viejo escalado.
+  // Memoizar evita recalcular en CADA render (TabHoy se re-renderiza con cualquier cambio del store).
+  // NUTRITION-N5 · solo el plan GENERADO (motor, con `.days`) es renderable. Sin `.days` → CTA "Arma tu
+  // plan" (nunca el preview legacy escalado). El fallback `activePlan` queda como valor inerte del memo:
+  // no se renderiza porque la lista de comidas se gatea con hasGeneratedWeeklyPlan.
   const scaledPlan = useMemo(
-    () => weeklyPlan?.days ?? (planGoal > 0 ? scalePlan(activePlan, planGoal) : activePlan),
-    [weeklyPlan?.days, activePlan, planGoal],
+    () => weeklyPlan?.days ?? activePlan,
+    [weeklyPlan?.days, activePlan],
   );
   const anchor = shoppingDay ?? 0;
 
   const todayDow = new Date().getDay();
   const todayOffset = (todayDow - anchor + 7) % 7;
-  const todayDayNum = weeklyPlan ? weeklyPlan.selectedDays[todayOffset] ?? weeklyPlan.selectedDays[0] : null;
+  // NUTRITION-N5.1 · misma autoridad que el gate de render (L856): un weeklyPlan orphan/vacío/malformado
+  // (truthy pero sin `.days` — y a veces sin `.selectedDays`) NO es un plan → todayDayNum=null (evita
+  // leer selectedDays de un objeto malformado = crash). La lista de comidas no se pinta en ese estado.
+  const todayDayNum = hasGeneratedWeeklyPlan(weeklyPlan) ? weeklyPlan.selectedDays[todayOffset] ?? weeklyPlan.selectedDays[0] : null;
   const todayPlanIdx = todayDayNum != null ? scaledPlan.findIndex(d => d.day === todayDayNum) : todayOffset % scaledPlan.length;
   const todayMeals = scaledPlan[todayPlanIdx >= 0 ? todayPlanIdx : 0]?.meals ?? [];
-  // Factor de escala del día de hoy (base sin escalar → meta) para el desglose exacto del popout.
-  const todayScale = (() => {
-    if (weeklyPlan?.days) return 1; // motor: ya ajustado
-    const baseDay = activePlan[todayPlanIdx >= 0 ? todayPlanIdx : 0];
-    return baseDay ? dayScaleFactor(baseDay.meals, planGoal) : 1;
-  })();
+  // NUTRITION-N5 · el plan renderable siempre viene del motor (ya ajustado) → factor 1. El desglose del
+  // popout no reescala (se retiró el escalado legacy).
+  const todayScale = 1;
   // Food-5: cálculo unificado de consumo del día.
   // Reemplaza el patrón inconsistente previo (Food-3) que solo contaba el
   // foodLog y dejaba al plan ✓ sin sumar kcal. Ahora plan ✓ y foodLog
@@ -853,7 +854,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             <div className="th3-cover th3-cover-nutricion" />
             <div className="th3-card-body">
               <p className="th3-card-eyebrow">{t('hoy.cardEyebrowNutrition')}</p>
-              {!weeklyPlan ? (
+              {!hasGeneratedWeeklyPlan(weeklyPlan) ? (
                 <h2 className="th3-card-title th3-card-title--cta">
                   {t('hoy.nutritionGenerateTitle')}
                   <ArrowRight size={18} strokeWidth={2.2} className="th3-card-title-arrow" />
@@ -988,9 +989,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               {/* Sin botones sueltos de "calcular/registrar": UNA sola puerta,
                   por comida. Tocas la comida → "registrar la mía" → calculadora
                   del catálogo, atribuida a ESE tiempo (lo sustituye). */}
-              {/* Pie "Ver completo" SOLO con plan — en vacío el título ya es la
-                  acción ("Generar tu plan de hoy →"). */}
-              {weeklyPlan && (
+              {/* Pie "Ver completo" SOLO con plan GENERADO — en vacío/orphan el título ya
+                  es la acción ("Generar tu plan de hoy →"). N5.1: misma autoridad que L856. */}
+              {hasGeneratedWeeklyPlan(weeklyPlan) && (
                 <div className="th3-card-foot">
                   <span className="th3-card-foot-text">{t('hoy.viewFullPlan')}</span>
                   <span className="th3-card-arrow"><ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span>
