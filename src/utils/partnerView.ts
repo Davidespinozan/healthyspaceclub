@@ -16,6 +16,37 @@ export function isPartnerBDevice(myId: string | null, ownerId: string | null | u
   return !!(partnerMode && myId && ownerId && myId !== ownerId);
 }
 
+// ════════════════════════════════════════════════════════════════
+// SHARED-1 B-2 · Envío EXPLÍCITO (generar ≠ enviar). Máquina de estados pura del
+// CTA "Enviar rutina a X" — testeable sin renderizar el componente.
+// ════════════════════════════════════════════════════════════════
+
+export type PartnerSendState = 'idle' | 'sending' | 'sent' | 'conflict' | 'blocked' | 'error';
+
+/** Mapea el resultado del RPC de entrega → estado del CTA. `delivered`→sent (éxito),
+ *  `has-own`→conflict, `blocked`→blocked, cualquier otro→error (reintentable). */
+export function nextPartnerSendState(
+  result: 'delivered' | 'has-own' | 'not-connected' | 'blocked' | 'error',
+): PartnerSendState {
+  return result === 'delivered' ? 'sent'
+    : result === 'has-own' ? 'conflict'
+    : result === 'blocked' ? 'blocked'
+    : 'error';
+}
+
+/** Guard idempotente del envío: NO se puede volver a enviar mientras 'sending' ni
+ *  cuando ya está 'sent' (previene el doble-tap). Desde 'error'/'conflict'/'idle' sí. */
+export function canSendToPartner(state: PartnerSendState): boolean {
+  return state !== 'sending' && state !== 'sent';
+}
+
+/** ¿El usuario actual es el RECEPTOR de esta rutina de pareja? (mismo criterio que
+ *  isPartnerBDevice: partnerMode && mi id ≠ ownerId=iniciador). Independiente de
+ *  quién creó originalmente la partnership (requester/addressee). */
+export function isWorkoutRecipient(myId: string | null, ownerId: string | null | undefined, partnerMode: boolean): boolean {
+  return isPartnerBDevice(myId, ownerId, partnerMode);
+}
+
 export interface PartnerExercise {
   reps: string;
   repsB?: string;

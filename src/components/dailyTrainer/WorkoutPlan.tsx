@@ -15,7 +15,7 @@
 
 import { lazy, Suspense, useRef, useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight, Dumbbell, BarChart3, Target, Check } from 'lucide-react';
+import { RefreshCw, Clock, Zap, ChevronRight, ChevronDown, Lock, Play, ArrowRight, Dumbbell, BarChart3, Target, Check, Send } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { plural } from '../../i18n/format';
 import { humanizeExerciseId } from '../../utils/exerciseMeta';
@@ -120,6 +120,13 @@ interface Props {
    *  cubierta por otro cardio HSC (remaining===0). Entonces el composedCardio pending NO se ofrece
    *  (satisfecho por reconciliación, ≠ done). El spec sellado NO se recomputa. */
   composedCardioSatisfied?: boolean;
+  /** SHARED-1 B-2 · envío explícito: estado del CTA "Enviar rutina a X". `undefined`
+   *  cuando NO es una generación de pareja del iniciador (no se muestra el CTA). */
+  partnerSendState?: 'idle' | 'sending' | 'sent' | 'conflict' | 'blocked' | 'error';
+  /** Nombre del compañero para el copy del CTA de envío. */
+  partnerSendName?: string;
+  /** Dispara el envío explícito (una vez por tap; el padre aplica el guard idempotente). */
+  onSendToPartner?: () => void;
 }
 
 export default function WorkoutPlan({
@@ -144,9 +151,16 @@ export default function WorkoutPlan({
   buildComposedCardio,
   onComposedCardioDone,
   composedCardioSatisfied,
+  partnerSendState,
+  partnerSendName,
+  onSendToPartner,
 }: Props) {
   const { t, locale } = useT();
   const langMismatch = !!(plan as { lang?: string }).lang && (plan as { lang?: string }).lang !== locale;
+  // SHARED-1 B-2 · ¿soy el RECEPTOR de esta rutina de pareja? (mi id ≠ ownerId=iniciador).
+  const myId = useAppStore(s => s.user?.id ?? null);
+  const planOwnerId = (plan as { ownerId?: string | null }).ownerId ?? null;
+  const iAmRecipient = !!(plan.partnerMode && planOwnerId && myId && myId !== planOwnerId);
   const [workoutPlayerOpen, setWorkoutPlayerOpen] = useState(false);
   // F2B-1 · sesión cardio compuesta EN CURSO (sesión SEPARADA; no reemplaza el plan de fuerza).
   const [composedCardioActive, setComposedCardioActive] = useState<CachedWorkout | null>(null);
@@ -338,13 +352,58 @@ export default function WorkoutPlan({
         </div>
       )}
 
-      {/* Cabecera de pareja — los dos avatares + "Entrenando con X" (igual que Hoy). */}
+      {/* Cabecera de pareja — los dos avatares + "Entrenando con X" (igual que Hoy).
+          SHARED-1 B-2: si soy el RECEPTOR (mi id ≠ ownerId), añade la línea de autoría. */}
       {plan.partnerMode && (
         <PartnerLiveHeader
           variant="plain"
           partnerName={plan.partnerName || ''}
           partnerAvatar={(plan as { partnerAvatar?: string | null }).partnerAvatar ?? null}
+          authoredByPartner={iAmRecipient}
         />
+      )}
+
+      {/* SHARED-1 B-2 · ENVÍO EXPLÍCITO — generar ≠ enviar. El iniciador decide cuándo
+          mandar la copia al compañero. Un solo tap; estados: listo / enviando / enviado /
+          conflicto / bloqueado / error (con reintento). El fallo NUNCA borra su copia. */}
+      {partnerSendState && (
+        <div className="dt2-partner-send">
+          {(partnerSendState === 'idle' || partnerSendState === 'sending') && (
+            <>
+              <button
+                type="button"
+                className="dt2-partner-send-cta"
+                onClick={onSendToPartner}
+                disabled={partnerSendState === 'sending'}
+              >
+                <Send size={15} strokeWidth={2} />
+                {partnerSendState === 'sending'
+                  ? t('workout.sendingToPartner')
+                  : t('workout.sendToPartner', { name: partnerSendName || t('partners.aPartner') })}
+              </button>
+              <p className="dt2-partner-send-hint">{t('workout.sendHint')}</p>
+            </>
+          )}
+          {partnerSendState === 'sent' && (
+            <p className="dt2-partner-send-ok">
+              <Check size={15} strokeWidth={2.4} /> {t('workout.sentToPartner', { name: partnerSendName || t('partners.aPartner') })}
+            </p>
+          )}
+          {partnerSendState === 'conflict' && (
+            <p className="dt2-partner-send-note">{t('workout.sendConflictPartner', { name: partnerSendName || t('partners.aPartner') })}</p>
+          )}
+          {partnerSendState === 'blocked' && (
+            <p className="dt2-partner-send-note">{t('workout.sendBlockedPartner')}</p>
+          )}
+          {partnerSendState === 'error' && (
+            <>
+              <p className="dt2-partner-send-note">{t('workout.sendFailedPartner')}</p>
+              <button type="button" className="dt2-partner-send-cta dt2-partner-send-retry" onClick={onSendToPartner}>
+                <Send size={15} strokeWidth={2} /> {t('workout.sendRetry')}
+              </button>
+            </>
+          )}
+        </div>
       )}
 
       {/* Razón del coach — Plan-1: colapsable, default cerrado.

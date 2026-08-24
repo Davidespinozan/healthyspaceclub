@@ -85,6 +85,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   } = useAppStore(useShallow((s) => ({ userName: s.userName, planGoal: s.planGoal, mealPlanKey: s.mealPlanKey, shoppingDay: s.shoppingDay, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, workoutChecks: s.workoutChecks, toggleWorkoutCheck: s.toggleWorkoutCheck, mealResolvedByLog: s.mealResolvedByLog, foodLog: s.foodLog, addFoodLog: s.addFoodLog, completedSessions: s.completedSessions, activityLog: s.activityLog, dailyWorkout: s.dailyWorkout, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, lastWeeklyReview: s.lastWeeklyReview, streakCount: s.streakCount, obData: s.obData, dailyBriefing: s.dailyBriefing, setDailyBriefing: s.setDailyBriefing, dailyHSMResponses: s.dailyHSMResponses, lastStreakMilestone: s.lastStreakMilestone, setLastStreakMilestone: s.setLastStreakMilestone, hsmProfile: s.hsmProfile, setHSMProfile: s.setHSMProfile, hsmDailyReview: s.hsmDailyReview, subscriptionStatus: s.subscriptionStatus, username: s.username })));
   const setPendingWorkoutModality = useAppStore(s => s.setPendingWorkoutModality);
   const setPendingSupplemental = useAppStore(s => s.setPendingSupplemental);
+  // SHARED-1 B-2 · id propio para distinguir iniciador vs receptor de la rutina de pareja.
+  const myId = useAppStore(s => s.user?.id ?? null);
 
   // Acceso real = estado de Stripe (subscriptionStatus), NO el trial local
   // (userPlan/trialEndsAt), que se expira solo sin mirar Stripe y desincronizaba
@@ -675,10 +677,14 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                 // Cabecera "en vivo" cuando la rutina de hoy es de pareja.
                 const w = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
                 if (!w || !w.partnerMode) return null;
+                // Receptor = mi id ≠ ownerId (el iniciador que generó y envió la rutina).
+                const wOwnerId = (w.ownerId as string | null) ?? null;
+                const iAmRecipient = !!(wOwnerId && myId && myId !== wOwnerId);
                 return (
                   <PartnerLiveHeader
                     partnerName={String(w.partnerName || '')}
                     partnerAvatar={(w.partnerAvatar as string | null) || null}
+                    authoredByPartner={iAmRecipient}
                   />
                 );
               })()}
@@ -1049,24 +1055,35 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
         />
         )}
 
-        {/* ── Entrenar en pareja — se oculta si ya hay rutina de pareja hoy
-              (ya estás enlazado y generaron la rutina; el botón sobra). ── */}
-        {!(todayWorkoutPlan as { partnerMode?: boolean } | null)?.partnerMode && (
-          <button
-            type="button"
-            className="th3-partner"
-            onClick={() => onNav('companeros')}
-          >
-            <span className="th3-partner-icon">
-              <Users size={18} strokeWidth={1.8} />
-            </span>
-            <div className="th3-partner-body">
-              <p className="th3-partner-title">{t('hoy.partnerTitle')}</p>
-              <p className="th3-partner-sub">{t('hoy.partnerSub')}</p>
-            </div>
-            <span className="th3-partner-arrow"><ArrowRight size={18} strokeWidth={1.8} style={{ verticalAlign: '-3px', flexShrink: 0 }} /></span>
-          </button>
-        )}
+        {/* ── Entrenar con alguien — SHARED-1 B-2: entrada PERSISTENTE. Antes desaparecía
+              al haber rutina de pareja hoy (el usuario se preguntaba dónde quedó la
+              función). Ahora se queda visible; si ya hay rutina de pareja, adopta un
+              estado contextual "Entrenamiento con {compañero}" y abre Compañeros. ── */}
+        {(() => {
+          const pW = (todayWorkoutPlan as { partnerMode?: boolean; partnerName?: string } | null);
+          const hasPartnerToday = !!pW?.partnerMode;
+          const partnerNm = (pW?.partnerName || '').split(' ')[0] || t('partners.aPartner');
+          return (
+            <button
+              type="button"
+              className="th3-partner"
+              onClick={() => onNav('companeros')}
+            >
+              <span className="th3-partner-icon">
+                <Users size={18} strokeWidth={1.8} />
+              </span>
+              <div className="th3-partner-body">
+                <p className="th3-partner-title">
+                  {hasPartnerToday ? t('hoy.partnerActiveTitle', { name: partnerNm }) : t('hoy.partnerTitle')}
+                </p>
+                <p className="th3-partner-sub">
+                  {hasPartnerToday ? t('hoy.partnerActiveSub') : t('hoy.partnerSub')}
+                </p>
+              </div>
+              <span className="th3-partner-arrow"><ArrowRight size={18} strokeWidth={1.8} style={{ verticalAlign: '-3px', flexShrink: 0 }} /></span>
+            </button>
+          );
+        })()}
 
         {/* ── Tu Espacio (discreto / o review si ya respondió las 5) ── */}
         {allAnswered ? (

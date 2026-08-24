@@ -323,10 +323,11 @@ export default function CompanerosScreen() {
               </div>
             ) : (
               <div className="comp-list">
-                {/* Conectados → SOLO el que invitó (requester) genera la rutina;
-                    el otro la recibe (evita que ambos generen rutinas distintas). */}
+                {/* SHARED-1 B-2: cualquiera de los dos miembros de una conexión
+                    aceptada puede iniciar la rutina compartida (either-party).
+                    El iniciador = usuario actual; la orientación requester/addressee
+                    de la relación NO cambia (solo se desacopla de "quién entrena hoy"). */}
                 {accepted.map(p => {
-                  const iHost = p.direction === 'outgoing';
                   const st = statuses[p.other_id];
                   const theirName = (p.other_name || p.other_username || '').split(' ')[0] || t('partners.aPartner');
                   const bothDone = iTrainedToday && !!st?.trainedToday;
@@ -342,13 +343,9 @@ export default function CompanerosScreen() {
                               : (p.other_username ? `@${p.other_username}` : '')}
                           </span>
                         </div>
-                        {iHost ? (
-                          <button className="comp-train-btn" onClick={() => trainWith(p)}>
-                            <Dumbbell size={14} strokeWidth={2} /> {t('partners.train')}
-                          </button>
-                        ) : (
-                          <span className="comp-row-tag">{t('partners.hostsRoutine')}</span>
-                        )}
+                        <button className="comp-train-btn" onClick={() => trainWith(p)}>
+                          <Dumbbell size={14} strokeWidth={2} /> {t('partners.createTogether')}
+                        </button>
                         <button className="comp-unlink" onClick={() => unlinkPartner(p)} aria-label={t('partners.unlink')} title={t('partners.unlink')}>
                           <X size={14} strokeWidth={2} />
                         </button>

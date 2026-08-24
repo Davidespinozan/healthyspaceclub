@@ -85,6 +85,7 @@ import { buildGroups } from '../utils/supersetEngine';
 import { applyFatigueBudget, fatigueBudget as computeFatigueBudget } from '../utils/fatigueBudget';
 import { rankCandidates } from '../utils/exerciseQuality';
 import { deliverPartnerWorkout, getPartnerRecentDaytypes, type DeliverResult } from '../utils/partners';
+import { canSendToPartner, nextPartnerSendState, type PartnerSendState } from '../utils/partnerView';
 import { track } from '../utils/analytics';
 import type {
   Exercise,
@@ -543,11 +544,11 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Al entregar la rutina al compañero: si él ya tenía SU rutina de hoy, el server
-  // NO se la pisa (guard anti-clobber) y avisamos al host en vez de fallar mudo.
-  function surfaceDeliver(r: DeliverResult) {
-    if (r === 'has-own') { try { window.alert(t('partners.partnerHasOwn')); } catch { /* noop */ } }
-  }
+  // SHARED-1 B-2 · ENVÍO EXPLÍCITO: generar ≠ enviar. Tras generar, el iniciador ve
+  // un preview y un CTA "Enviar rutina a {compañero}". El envío es distribución, no
+  // autoridad: si falla, la copia local del iniciador se conserva intacta (puede
+  // reintentar o entrenar su propia copia). NO consume crédito ni marca completado.
+  const [partnerSendState, setPartnerSendState] = useState<PartnerSendState>('idle');
 
   // "Juntos de verdad" — variante por persona (paso 1, sin tocar el motor): la copia
   // que recibe el compañero se sella con SU equipo (no el del host), para que vea la
@@ -557,10 +558,19 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     const e = (pendingPartner?.equipment as Equipment[] | undefined)?.[0];
     return e === 'ligas' || e === 'cuerpo' || e === 'gym' ? e : selectedEquipment;
   }
-  function deliverToPartner(plan: object) {
-    if (!pendingPartner?.id) return;
-    const forPartner = { ...plan, userEquipment: partnerEquipment() };
-    deliverPartnerWorkout(pendingPartner.id, forPartner).then(surfaceDeliver).catch(() => {});
+  // Envía la copia al compañero EXACTAMENTE una vez por tap. Guard idempotente:
+  // ignora taps mientras 'sending' o ya 'sent' (previene doble-envío accidental).
+  async function sendToPartner() {
+    if (!pendingPartner?.id || !plan) return;
+    if (!canSendToPartner(partnerSendState)) return; // guard idempotente (doble-tap)
+    setPartnerSendState('sending');
+    const forPartner = { ...(plan as object), userEquipment: partnerEquipment() };
+    try {
+      const r: DeliverResult = await deliverPartnerWorkout(pendingPartner.id, forPartner);
+      setPartnerSendState(nextPartnerSendState(r));
+    } catch {
+      setPartnerSendState('error'); // la copia local NUNCA se toca ante un fallo de envío
+    }
   }
 
   // ── Generate
@@ -693,6 +703,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       let partnerRecentDts: string[] = [];
       if (partnerMode && pendingPartner?.id) {
         track('shared_workout_generation_started'); // metadata-only (sin ids/nombres)
+        setPartnerSendState('idle'); // nueva generación → el envío vuelve a "listo para enviar"
         try { partnerRecentDts = await getPartnerRecentDaytypes(pendingPartner.id); } catch { /* noop */ }
       }
       // Solo reconciliamos cuando el motor decide el día (auto / fuerza-auto); si el
@@ -887,10 +898,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         await saveDailyWorkout(adjustedPlan as any);
         setPhase('plan');
 
-        // Sesión compartida: entrega el MISMO flow al compañero (no genera él).
-        if (partnerMode && pendingPartner?.id) {
-          deliverToPartner(adjustedPlan);
-        }
+        // SHARED-1 B-2: generar ≠ enviar. La copia del iniciador ya quedó guardada;
+        // la entrega al compañero es un paso EXPLÍCITO (CTA "Enviar rutina a X") en
+        // el preview, no un side-effect automático de la generación.
 
         // Increment ONLY after successful save
         incrementRegen(selectedModality);
@@ -1851,10 +1861,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       setPlan(workout);
       sealPlan(workout);
       await saveDailyWorkout(workout as any);
-      // Sesión compartida: entrega la MISMA rutina al compañero (no genera él).
-      if (partnerMode && pendingPartner?.id) {
-        deliverToPartner(workout);
-      }
+      // SHARED-1 B-2: la copia del iniciador queda guardada; el envío al compañero
+      // es un paso EXPLÍCITO en el preview (CTA "Enviar rutina a X"), no automático.
       setPhase('plan');
     } catch (e) {
       // El motivo técnico (rate limit, timeout, IA caída) va SOLO a consola para
@@ -2071,6 +2079,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         onGenerateMore={handleGenerateMore}
         buildComposedCardio={buildComposedCardio}
         onComposedCardioDone={markComposedCardioDone}
+        partnerSendState={partnerMode && pendingPartner?.id ? partnerSendState : undefined}
+        partnerSendName={pendingPartner?.name ?? ''}
+        onSendToPartner={sendToPartner}
       />
     );
   }

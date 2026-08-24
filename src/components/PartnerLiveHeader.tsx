@@ -20,12 +20,16 @@ export default function PartnerLiveHeader({
   partnerName,
   partnerAvatar,
   variant = 'card',
+  authoredByPartner = false,
 }: {
   partnerName: string;
   partnerAvatar: string | null;
   /** 'card' = chip dorado compacto "con X" (Hoy); 'plain' = centrado, sin fondo,
    *  texto completo "Entrenando con X" (WorkoutPlan, página ya con color). */
   variant?: 'card' | 'plain';
+  /** SHARED-1 B-2 · el usuario actual es el RECEPTOR (no el iniciador): añade una
+   *  línea de autoría clara — "{name} preparó este entrenamiento para los dos." */
+  authoredByPartner?: boolean;
 }) {
   const { t } = useT();
   const avatarUrl = useAppStore(s => s.avatarUrl);
@@ -44,6 +48,9 @@ export default function PartnerLiveHeader({
           {t(plain ? 'hoy.trainingWithFull' : 'hoy.trainingWith', { name: partnerName })}
         </span>
       </span>
+      {authoredByPartner && (
+        <span className="pl-live-authored">{t('hoy.authoredByPartner', { name: partnerName })}</span>
+      )}
     </div>
   );
 }
