@@ -715,8 +715,6 @@ export const en: Translations<typeof es> = {
     train: 'Train',
     hostsRoutine: 'builds the routine',
     together: '{n}× together',
-    guestTitle: 'Train with a guest',
-    guestSub: 'No account — just tell us their level.',
     aPartner: 'your partner',
   },
   yoga: {

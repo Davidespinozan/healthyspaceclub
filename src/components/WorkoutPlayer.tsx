@@ -24,7 +24,7 @@ import GuidedPhaseMovement from './GuidedPhaseMovement';   // F2C-9C.2B.1 · mov
 import GuidedRampMovement from './GuidedRampMovement';     // F2C-9C.2C · series de aproximación guiadas
 // F2C-2 · UX cardio-nativa: título humano del bloque + decisión de video (reutiliza la autoridad de Today).
 import { cardioBlockTitleKey, cardioShowVideo } from '../utils/workoutDisplay';
-import { isPartnerBDevice, partnerExerciseView } from '../utils/partnerView';
+import { isPartnerBDevice, partnerExerciseView, deriveBLoads } from '../utils/partnerView';
 import { nextSetSuggestion } from '../utils/rirFeedback';
 import { computeProgression, incrementForMuscle } from '../utils/progression';
 import {
@@ -246,10 +246,21 @@ export default function WorkoutPlayer({
   // `exercises` = base + swaps del usuario + VISTA por persona: el compañero (B) ve su propia
   // prescripción (repsB/tipB) como principal → display, timer, logging y swap la usan de forma
   // transparente. A (owner) y el flujo individual quedan sin cambios.
-  const exercises = useMemo(
-    () => baseExercises.map((e, i) => partnerExerciseView(swaps[i] ?? e, iAmPartnerB)),
-    [baseExercises, swaps, iAmPartnerB],
-  );
+  // SHARED-1: en el dispositivo de B, deriva la carga prescrita de B desde SU
+  // propio historial (lookup, no fórmula) → topKgB; el view la mapea a la carga.
+  const lastPerf = useAppStore(s => s.lastExercisePerformance);
+  const exercises = useMemo(() => {
+    const swapped = baseExercises.map((e, i) => swaps[i] ?? e);
+    const withB = iAmPartnerB
+      ? deriveBLoads(swapped, (ex) => {
+          const perf = lastPerf[(ex as { id?: string }).id ?? ''];
+          if (!perf?.sets?.length) return null;
+          const maxKg = Math.max(0, ...perf.sets.map(s => s.kg).filter(k => typeof k === 'number' && k > 0));
+          return maxKg > 0 ? maxKg : null;
+        })
+      : swapped;
+    return withB.map((e) => partnerExerciseView(e, iAmPartnerB));
+  }, [baseExercises, swaps, iAmPartnerB, lastPerf]);
   const [restState, setRestState] = useState<{ secondsLeft: number; total: number } | null>(null);
   // ── Timer time-based (cardio / isométricos) — timestamp-based (robusto a background/pausa) ──
   const [hold, setHold] = useState<{ startedAt: number; accumPausedMs: number; pausedAt: number | null } | null>(null);

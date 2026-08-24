@@ -5,7 +5,6 @@
 //   - Buscador en vivo (mín. 2 chars) → invitar.
 //   - Invitaciones recibidas → aceptar / rechazar.
 //   - Tus compañeros conectados → "Entrenar" (jala su perfil real).
-//   - Siempre: "Entrenar con un invitado" (modo invitado, no requiere cuenta).
 
 import { useEffect, useState, useCallback } from 'react';
 import { Search, UserPlus, Check, X, Dumbbell, AtSign, Clock, Loader2, Flame, ArrowRight } from 'lucide-react';
@@ -20,6 +19,7 @@ import UsernameSetupSheet from './UsernameSetupSheet';
 import ShareStatSheet from './ShareStatSheet';
 import { inviteLink, getMyReferrer, type ReferrerInfo } from '../utils/referral';
 import { dayKey } from '../utils/localDate';
+import { track } from '../utils/analytics';
 import './companeros.css';
 
 type DuoStatus = { trainedToday: boolean; streak: number; duoStreak: number };
@@ -160,6 +160,7 @@ export default function CompanerosScreen() {
   }
 
   async function trainWith(p: Partnership) {
+    track('shared_workout_cta_opened'); // metadata-only (sin ids/nombres)
     const prof = await getPartnerTrainingProfile(p.other_id);
     setPendingPartner({
       id: p.other_id,

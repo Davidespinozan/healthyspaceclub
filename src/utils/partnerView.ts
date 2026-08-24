@@ -1,18 +1,17 @@
 // ════════════════════════════════════════════════════════════════
-// partnerView — identidad A/B y selección de prescripción por persona en modo pareja.
+// partnerView — identidad A/B y prescripción POR PERSONA en modo pareja.
 //
-// El workout se GENERA en el dispositivo de A (owner) y se ENTREGA tal cual a B. En el JSON:
-//   · A (owner)   → reps / tip_personalizado
-//   · B (partner) → repsB / tipB
-//   · format      → coordinación por ejercicio (juntos/alternado/asistido)
+// El workout se GENERA en el dispositivo de A (owner) y se ENTREGA a B. En el JSON:
+//   · A (owner)   → reps / tip_personalizado / topKg / deloadKg / backoffKg
+//   · B (partner) → repsB / tipB  (+ SHARED-1: topKgB / deloadKgB / backoffKgB)
 //
-// Antes: repsB solo se mostraba en modo un-dispositivo → en dos dispositivos B veía las reps
-// de A. Fix: se estampa `ownerId` (id del generador) en el workout; cada dispositivo sabe si es
-// el owner (A) o el compañero (B) comparando su propio id, y B ve su propia prescripción.
+// SHARED-1 · Gate B-1: antes B heredaba la CARGA prescrita de A (topKg). Ahora la
+// carga de B se deriva de SU PROPIO historial (lookup, NO fórmula P2) en el
+// dispositivo de B, se estampa como topKgB, y este view la mapea → cada quien ve
+// su peso sugerido. El peso REGISTRADO sigue siendo individual por dispositivo.
 // ════════════════════════════════════════════════════════════════
 
-/** ¿El dispositivo actual es el COMPAÑERO (B), no el generador (A)? Fuente de verdad estable
- *  (sobrevive recargas): comparación de ids, no orden de conexión ni heurística de render. */
+/** ¿El dispositivo actual es el COMPAÑERO (B), no el generador (A)? Estable por id. */
 export function isPartnerBDevice(myId: string | null, ownerId: string | null | undefined, partnerMode: boolean): boolean {
   return !!(partnerMode && myId && ownerId && myId !== ownerId);
 }
@@ -22,15 +21,55 @@ export interface PartnerExercise {
   repsB?: string;
   tip_personalizado?: string;
   tipB?: string;
+  // Carga prescrita (número) — A-authored; *B son la variante por-persona (SHARED-1).
+  topKg?: number;
+  deloadKg?: number;
+  backoffKg?: number;
+  topKgB?: number;
+  deloadKgB?: number;
+  backoffKgB?: number;
 }
 
 /**
- * Devuelve el ejercicio con la prescripción que corresponde a ESTE dispositivo. Para el
- * compañero (B) con repsB definido, mueve repsB→reps y tipB→tip para que TODO el player
- * (display, timer, logging, swap) use la prescripción de B de forma transparente. Para A
- * (o sin repsB, o single-device) devuelve el ejercicio sin cambios.
+ * Devuelve el ejercicio con la prescripción que corresponde a ESTE dispositivo.
+ * Para B (con repsB) mueve repsB→reps, tipB→tip y, si existen, las cargas *B→carga.
+ * Fallback seguro: si falta una carga B, se conserva la de A (comportamiento previo).
+ * Para A / sin repsB / single-device: sin cambios.
  */
 export function partnerExerciseView<T extends PartnerExercise>(ex: T, iAmPartnerB: boolean): T {
   if (!iAmPartnerB || !ex.repsB) return ex;
-  return { ...ex, reps: ex.repsB, tip_personalizado: ex.tipB ?? ex.tip_personalizado };
+  return {
+    ...ex,
+    reps: ex.repsB,
+    tip_personalizado: ex.tipB ?? ex.tip_personalizado,
+    topKg: ex.topKgB ?? ex.topKg,
+    deloadKg: ex.deloadKgB ?? ex.deloadKg,
+    backoffKg: ex.backoffKgB ?? ex.backoffKg,
+  };
+}
+
+/**
+ * Deriva la carga prescrita de B desde SU PROPIO historial (lookup, no fórmula).
+ * `lastTopKgFor(ex)` devuelve el mayor kg que B registró la última vez en ese
+ * ejercicio (o null si no hay historial). Estampa `topKgB` (y escala deloadKgB/
+ * backoffKgB proporcionalmente si A los traía, para mantener la relación deload/
+ * backoff sin recomputar la fórmula). Puro y testeable. NO toca la carga real.
+ */
+export function deriveBLoads<T extends PartnerExercise>(
+  exercises: T[],
+  lastTopKgFor: (ex: T) => number | null,
+): T[] {
+  return exercises.map((ex) => {
+    const bTop = lastTopKgFor(ex);
+    if (bTop == null || !(bTop > 0)) return ex; // sin historial → hereda la de A (fallback)
+    const extra: Pick<PartnerExercise, 'topKgB' | 'deloadKgB' | 'backoffKgB'> = { topKgB: bTop };
+    // Mantener la proporción deload/backoff que la fórmula de A ya calculó,
+    // aplicada al top de B (regla de tres simple, no recomputo de P2).
+    if (ex.topKg && ex.topKg > 0) {
+      const ratio = bTop / ex.topKg;
+      if (ex.deloadKg && ex.deloadKg > 0) extra.deloadKgB = Math.round((ex.deloadKg * ratio) / 2.5) * 2.5;
+      if (ex.backoffKg && ex.backoffKg > 0) extra.backoffKgB = Math.round((ex.backoffKg * ratio) / 2.5) * 2.5;
+    }
+    return { ...ex, ...extra };
+  });
 }

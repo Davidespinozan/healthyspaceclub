@@ -717,8 +717,6 @@ export const es = {
     train: 'Entrenar',
     hostsRoutine: 'arma la rutina',
     together: '{n}× juntos',
-    guestTitle: 'Entrenar con un invitado',
-    guestSub: 'Sin cuenta — solo dinos su nivel y listo.',
     aPartner: 'tu compañero',
   },
   yoga: {

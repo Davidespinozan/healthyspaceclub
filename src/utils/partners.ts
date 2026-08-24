@@ -4,6 +4,7 @@
 
 import { supabase } from '../lib/supabase';
 import { dayKey } from './localDate';
+import { track } from './analytics';
 
 export interface UserSearchResult {
   user_id: string;
@@ -25,7 +26,7 @@ export interface Partnership {
   created_at: string;
 }
 
-export type InviteResult = 'sent' | 'self' | 'exists' | 'error';
+export type InviteResult = 'sent' | 'self' | 'exists' | 'blocked' | 'error';
 export type RespondResult = 'accepted' | 'declined' | 'notfound' | 'error';
 
 /** Notifica en vivo a un usuario (broadcast a su canal personal) para que su
@@ -73,6 +74,7 @@ async function pushNotification(
 export async function searchUsers(q: string): Promise<UserSearchResult[]> {
   const query = q.trim().replace(/^@+/, '');
   if (query.length < 2) return [];
+  track('partner_search_used'); // metadata-only (sin el query ni resultados)
   const { data, error } = await supabase.rpc('search_users', { q: query });
   if (error) {
     console.warn('[partners] search failed:', error.message);
@@ -92,8 +94,9 @@ export async function sendInvite(targetId: string): Promise<InviteResult> {
     notifyUser(targetId, 'invite');          // aparece al instante en su pantalla
     pushNotification(targetId, 'partner_invite'); // queda en su centro de notificaciones
   }
-  if (data === 'sent' || data === 'self' || data === 'exists') return data;
-  return 'error';
+  const result: InviteResult = (data === 'sent' || data === 'self' || data === 'exists' || data === 'blocked') ? data : 'error';
+  track('partner_invite_sent', { result }); // sin ids/nombres
+  return result;
 }
 
 /** Acepta o rechaza una invitación recibida. `inviterId` (opcional) permite
@@ -115,6 +118,7 @@ export async function respondInvite(
     notifyUser(inviterId, 'partner_accept');
     pushNotification(inviterId, 'partner_accept');
   }
+  if (data === 'accepted') track('partner_invite_accepted');
   if (data === 'accepted' || data === 'declined' || data === 'notfound') return data;
   return 'error';
 }
@@ -167,7 +171,7 @@ export interface PartnerTrainingProfile {
   equipment?: string[];
 }
 
-export type DeliverResult = 'delivered' | 'has-own' | 'not-connected' | 'error';
+export type DeliverResult = 'delivered' | 'has-own' | 'not-connected' | 'blocked' | 'error';
 
 /** Entrega la rutina de pareja al daily_workout del compañero (sesión compartida).
  *  Solo surte efecto si están conectados (la función lo valida). Devuelve el
@@ -184,9 +188,12 @@ export async function deliverPartnerWorkout(partnerId: string, plan: unknown): P
   if (data === 'delivered') {
     // Avisa al compañero para que su rutina de hoy aparezca al instante.
     notifyUser(partnerId, 'partner_workout');
+    track('shared_workout_delivered', { delivery_result: 'delivered' });
     return 'delivered';
   }
-  return (data === 'has-own' || data === 'not-connected') ? data : 'error';
+  const result: DeliverResult = (data === 'has-own' || data === 'not-connected' || data === 'blocked') ? data : 'error';
+  track(result === 'has-own' ? 'shared_workout_delivery_conflict' : 'shared_workout_delivered', { delivery_result: result });
+  return result;
 }
 
 /** day_type recientes del compañero (últimas ~36h) — para evitar sus músculos

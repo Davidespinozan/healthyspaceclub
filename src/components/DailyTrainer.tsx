@@ -85,6 +85,7 @@ import { buildGroups } from '../utils/supersetEngine';
 import { applyFatigueBudget, fatigueBudget as computeFatigueBudget } from '../utils/fatigueBudget';
 import { rankCandidates } from '../utils/exerciseQuality';
 import { deliverPartnerWorkout, getPartnerRecentDaytypes, type DeliverResult } from '../utils/partners';
+import { track } from '../utils/analytics';
 import type {
   Exercise,
   Equipment,
@@ -691,6 +692,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // foco para que quede fresco para AMBOS, (b) excluir sus músculos. Una sola vez.
       let partnerRecentDts: string[] = [];
       if (partnerMode && pendingPartner?.id) {
+        track('shared_workout_generation_started'); // metadata-only (sin ids/nombres)
         try { partnerRecentDts = await getPartnerRecentDaytypes(pendingPartner.id); } catch { /* noop */ }
       }
       // Solo reconciliamos cuando el motor decide el día (auto / fuerza-auto); si el
