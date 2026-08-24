@@ -39,7 +39,6 @@ import { callAI } from '../utils/aiProxy';
 import { buildDay1BriefingPrompt, buildDailyBriefingPrompt } from '../ai/prompts/dailyBriefing';
 import { buildHSMQuestionPrompt } from '../ai/prompts/hsmQuestion';
 import {
-  buildHSMDailyReviewPrompt,
   buildHSM5DayMiniReviewPrompt,
   buildHSMWeeklyReviewPrompt,
 } from '../ai/prompts/hsmReview';
@@ -80,10 +79,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     dailyBriefing, setDailyBriefing,
     dailyHSMResponses,
     lastStreakMilestone, setLastStreakMilestone,
-    hsmProfile, setHSMProfile,
+    hsmProfile, setHSMProfile, hsmDailyReview,
     subscriptionStatus,
     username,
-  } = useAppStore(useShallow((s) => ({ userName: s.userName, planGoal: s.planGoal, mealPlanKey: s.mealPlanKey, shoppingDay: s.shoppingDay, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, workoutChecks: s.workoutChecks, toggleWorkoutCheck: s.toggleWorkoutCheck, mealResolvedByLog: s.mealResolvedByLog, foodLog: s.foodLog, addFoodLog: s.addFoodLog, completedSessions: s.completedSessions, activityLog: s.activityLog, dailyWorkout: s.dailyWorkout, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, lastWeeklyReview: s.lastWeeklyReview, streakCount: s.streakCount, obData: s.obData, dailyBriefing: s.dailyBriefing, setDailyBriefing: s.setDailyBriefing, dailyHSMResponses: s.dailyHSMResponses, lastStreakMilestone: s.lastStreakMilestone, setLastStreakMilestone: s.setLastStreakMilestone, hsmProfile: s.hsmProfile, setHSMProfile: s.setHSMProfile, subscriptionStatus: s.subscriptionStatus, username: s.username })));
+  } = useAppStore(useShallow((s) => ({ userName: s.userName, planGoal: s.planGoal, mealPlanKey: s.mealPlanKey, shoppingDay: s.shoppingDay, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, workoutChecks: s.workoutChecks, toggleWorkoutCheck: s.toggleWorkoutCheck, mealResolvedByLog: s.mealResolvedByLog, foodLog: s.foodLog, addFoodLog: s.addFoodLog, completedSessions: s.completedSessions, activityLog: s.activityLog, dailyWorkout: s.dailyWorkout, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, lastWeeklyReview: s.lastWeeklyReview, streakCount: s.streakCount, obData: s.obData, dailyBriefing: s.dailyBriefing, setDailyBriefing: s.setDailyBriefing, dailyHSMResponses: s.dailyHSMResponses, lastStreakMilestone: s.lastStreakMilestone, setLastStreakMilestone: s.setLastStreakMilestone, hsmProfile: s.hsmProfile, setHSMProfile: s.setHSMProfile, hsmDailyReview: s.hsmDailyReview, subscriptionStatus: s.subscriptionStatus, username: s.username })));
   const setPendingWorkoutModality = useAppStore(s => s.setPendingWorkoutModality);
   const setPendingSupplemental = useAppStore(s => s.setPendingSupplemental);
 
@@ -441,7 +440,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   ];
 
   const [aiQuestion, setAiQuestion] = useState<{ emoji: string; title: string; q: string } | null>(null);
-  const [dailyReview, setDailyReview] = useState<string | null>(null);
+  // MINDSET-1: la reseña diaria tiene UNA sola autoridad (TuEspacioFlow → hsmDailyReview
+  // persistido). TabHoy solo LEE la persistida; ya no genera (se retiró el Generador A
+  // que duplicaba la llamada de IA y se regeneraba en cada remount/reload).
 
   // Ventana "últimos 7 días" por dayKeys LOCALes (string compare). new Date(r.date)
   // parseaba la fecha local como UTC → borde mal contado de noche en husos negativos.
@@ -483,19 +484,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const todayDimensions = aiQuestion ? [...fixedDimensions, aiQuestion] : fixedDimensions;
 
   const allAnswered = todayDimensions.length > 0 && todayDimensions.every(d => todayResponses.some(r => r.dimension === d.title));
-  useEffect(() => {
-    if (!allAnswered || dailyReview || !isPlanActive) return;
-    const todaySummary = todayResponses.map(r => `${r.dimension}: "${r.response}"`).join('\n');
-    const reviewPrompt = buildHSMDailyReviewPrompt(todaySummary, locale);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60_000);
-    callAI({ max_tokens: 200, messages: [{ role: 'user', content: reviewPrompt }] }, controller.signal)
-      .then(data => { const t = data.content?.[0]?.text?.trim(); if (t) setDailyReview(t); })
-      .catch(() => {})
-      .finally(() => clearTimeout(timeoutId));
-    return () => { clearTimeout(timeoutId); controller.abort(); };
-  }, [allAnswered]);
+  // Solo lectura de la reseña persistida del día (autoridad única = TuEspacioFlow).
+  const dailyReview = hsmDailyReview?.date === today ? hsmDailyReview.text : null;
 
   const [miniReview, setMiniReview] = useState<string | null>(null);
   useEffect(() => {
@@ -538,7 +528,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     if (hsmProfile?.updatedAt === today) return;
     if (dailyHSMResponses.length < 10) return;
 
-    const allResponses = dailyHSMResponses.slice(-50).map(r => `[${r.date}] ${r.dimension}: "${r.response}"`).join('\n');
+    // MINDSET-1: excluir reflexiones URGENT del perfil acumulado (no personalizar
+    // sobre una crisis). CONCERNING/NORMAL sí entran.
+    const allResponses = dailyHSMResponses.filter(r => r.safetyLevel !== 'URGENT').slice(-50).map(r => `[${r.date}] ${r.dimension}: "${r.response}"`).join('\n');
     const existingProfile = hsmProfile?.text || 'Sin perfil previo.';
 
     const profilePrompt = buildHSMProfilePrompt(existingProfile, allResponses);

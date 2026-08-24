@@ -5,15 +5,21 @@
 // respuestas — por eso cada usuario ve un idioma consistente (cambiar de
 // idioma deja el historial viejo con labels del idioma anterior; aceptable).
 import type { AppLanguage } from '../store';
+import { HSM_DIMENSION_IDS, type HSMDimensionId } from './hsmDimensions';
 
-export interface HSMDimension {
+// Los literales del banco no llevan `id`; se inyecta por índice (mismo orden que
+// HSM_DIMENSION_IDS) en getHSMBank, para no duplicar el id en 20 objetos.
+interface RawDimension {
   emoji: string;
   title: string;
   color: string;
   questions: string[];
 }
+export interface HSMDimension extends RawDimension {
+  id: HSMDimensionId; // clave ESTABLE, neutral al idioma (MINDSET-1)
+}
 
-const ES_BANK: HSMDimension[] = [
+const ES_BANK: RawDimension[] = [
   { emoji: '🧠', title: 'Identidad', color: '#6B5B95', questions: [
     '¿Quién eres cuando nadie te ve?',
     '¿Tus acciones de hoy reflejaron tus valores más profundos?',
@@ -136,7 +142,7 @@ const ES_BANK: HSMDimension[] = [
   ]},
 ];
 
-const EN_BANK: HSMDimension[] = [
+const EN_BANK: RawDimension[] = [
   { emoji: '🧠', title: 'Identity', color: '#6B5B95', questions: [
     'Who are you when no one is watching?',
     "Did today's actions reflect your deepest values?",
@@ -259,6 +265,11 @@ const EN_BANK: HSMDimension[] = [
   ]},
 ];
 
+// Bancos con id inyectado, memoizados a nivel módulo (referencia estable para
+// los useMemo de RetratoHSM/flow).
+const ES_BANK_ID: HSMDimension[] = ES_BANK.map((d, i) => ({ ...d, id: HSM_DIMENSION_IDS[i] }));
+const EN_BANK_ID: HSMDimension[] = EN_BANK.map((d, i) => ({ ...d, id: HSM_DIMENSION_IDS[i] }));
+
 export function getHSMBank(lang: AppLanguage): HSMDimension[] {
-  return lang === 'en' ? EN_BANK : ES_BANK;
+  return lang === 'en' ? EN_BANK_ID : ES_BANK_ID;
 }

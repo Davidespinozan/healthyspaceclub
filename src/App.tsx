@@ -177,6 +177,38 @@ export default function App() {
     return () => { cancelled = true; };
   }, [authReady, user, subscriptionStatusLoadedFor]);
 
+  // ── MINDSET-1 · Hidratación + migración de reflexiones HSM ─────────
+  // Corre en SIGNED_IN y en reload (atado a authReady+user). Orden: migración
+  // legacy idempotente → flush del outbox → hidratar remoto (autoritativo por
+  // questionKey). Imports dinámicos para no inflar el bundle inicial.
+  useEffect(() => {
+    if (!authReady || !user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [{ fetchReflections, fetchProfile, fetchDailyReview }, { flushHSMOutbox }, { runHSMMigration }] = await Promise.all([
+          import('./utils/hsmRepository'), import('./utils/hsmOutbox'), import('./utils/hsmMigration'),
+        ]);
+        const st = useAppStore.getState();
+        if (!st.hsmMigratedAt) {
+          const res = await runHSMMigration(st.dailyHSMResponses);
+          if (res.ok && !cancelled) st.setHSMMigratedAt(new Date().toISOString());
+        }
+        await flushHSMOutbox();
+        const today = dayKey(new Date());
+        const [rows, profile, review] = await Promise.all([fetchReflections(), fetchProfile(), fetchDailyReview(today)]);
+        if (cancelled) return;
+        if (rows.length) useAppStore.getState().hydrateHSMReflections(rows);
+        if (profile && profile.text) useAppStore.setState({ hsmProfile: { text: profile.text, updatedAt: (profile.generatedAt || '').slice(0, 10) } });
+        // Reseña del día desde remoto → evita que un 2º dispositivo la regenere.
+        if (review && review.text && !useAppStore.getState().hsmDailyReview) {
+          useAppStore.setState({ hsmDailyReview: { date: review.date, text: review.text, source: review.source } });
+        }
+      } catch { /* fail-safe: journal local intacto */ }
+    })();
+    return () => { cancelled = true; };
+  }, [authReady, user]);
+
   // ── Re-validar suscripción al volver al foco ──────────────────────
   // Si una suscripción se cancela/expira con la app abierta (sesión PWA larga),
   // el cliente quedaría con acceso obsoleto. Al volver la pestaña a primer plano

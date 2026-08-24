@@ -14,6 +14,14 @@ import type { BillingCycle } from '../utils/stripe';
 import { MILESTONE_STEPS } from '../constants/milestones';
 import { computeStreak } from '../utils/streak';
 import type { BlockAnchor } from '../utils/blockAnchors';
+import type { HSMDimensionKey } from '../data/hsmDimensions';
+import { dimensionIndexFromId } from '../data/hsmDimensions';
+import { getHSMBank } from '../data/hsmBank';
+import type { HSMSafetyLevel } from '../utils/hsmSafety';
+import type { HSMReflection } from '../utils/hsmRepository';
+import { deleteReflection as repoDeleteReflection, clearAllHSM, upsertProfile, upsertDailyReview } from '../utils/hsmRepository';
+import { enqueueReflection, dequeueReflection, flushHSMOutbox } from '../utils/hsmOutbox';
+import { legacyToReflection } from '../utils/hsmMigration';
 
 // Alimento de un registro armado (para reabrir y editar lo que comiste).
 export interface FoodLogItem {
@@ -410,9 +418,17 @@ interface AppState {
   userMilestones: MilestoneEntry[];
   setUserMilestones: (m: MilestoneEntry[]) => void;
 
-  // Daily HSM micro-responses
-  dailyHSMResponses: { date: string; dimension: string; question: string; response: string }[];
-  addHSMResponse: (entry: { dimension: string; question: string; response: string }) => void;
+  // Daily HSM micro-responses. Se conservan los campos legacy (date/dimension/
+  // question/response) para display + back-compat, y se AÑADE identidad estable
+  // + safety (MINDSET-1). Los campos nuevos son opcionales: entradas viejas
+  // persistidas se rellenan al migrar/hidratar.
+  dailyHSMResponses: { date: string; dimension: string; question: string; response: string; dimensionId?: HSMDimensionKey; questionIndex?: number; questionKey?: string; safetyLevel?: HSMSafetyLevel }[];
+  addHSMResponse: (entry: { dimension: string; question: string; response: string }) => HSMSafetyLevel;
+  deleteHSMResponse: (date: string, questionKey: string) => void;
+  clearAllHSMLocal: () => Promise<void>;
+  hydrateHSMReflections: (rows: HSMReflection[]) => void;
+  hsmMigratedAt: string | null;
+  setHSMMigratedAt: (v: string | null) => void;
 
   // Coach chat history (resets daily)
   coachChatHistory: { role: 'user' | 'assistant'; content: string; timestamp: string }[];
@@ -435,8 +451,8 @@ interface AppState {
   // Reseña del día de la reflexión (HSM). Persistida por día: NO se regenera al
   // reabrir (evita re-llamar la IA) y sobrevive cerrar la app. `source` distingue
   // la de IA (Pro) de la base (free / fallback si la IA falla).
-  hsmDailyReview: { date: string; text: string; source: 'ai' | 'base' } | null;
-  setHSMDailyReview: (r: { date: string; text: string; source: 'ai' | 'base' }) => void;
+  hsmDailyReview: { date: string; text: string; source: 'ai' | 'base' | 'safe' } | null;
+  setHSMDailyReview: (r: { date: string; text: string; source: 'ai' | 'base' | 'safe'; safetyLevel?: HSMSafetyLevel }) => void;
 
   // Logout / namespacing de datos por usuario
   logout: () => void;
@@ -1351,11 +1367,49 @@ export const useAppStore = create<AppState>()(
 
   // Daily HSM micro-responses
   dailyHSMResponses: [],
+  hsmMigratedAt: null,
+  setHSMMigratedAt: (v) => set({ hsmMigratedAt: v }),
   addHSMResponse: (entry) => {
     const today = dayKey(new Date());
+    // Identidad estable + safety derivadas por un solo camino (mismo que la migración).
+    const full: HSMReflection = legacyToReflection({ date: today, dimension: entry.dimension, question: entry.question, response: entry.response });
     set((state) => ({
-      dailyHSMResponses: [...state.dailyHSMResponses, { date: today, ...entry }],
+      dailyHSMResponses: [...state.dailyHSMResponses, {
+        date: today, dimension: entry.dimension, question: entry.question, response: entry.response,
+        dimensionId: full.dimensionId, questionIndex: full.questionIndex, questionKey: full.questionKey, safetyLevel: full.safetyLevel,
+      }],
     }));
+    // Local-first: encolar + intentar sync (no bloquea la UI; idempotente por clave).
+    enqueueReflection(full);
+    void flushHSMOutbox().catch(() => {});
+    return full.safetyLevel; // el flujo decide la UX de urgencia
+  },
+  deleteHSMResponse: (date, questionKey) => {
+    set((state) => ({ dailyHSMResponses: state.dailyHSMResponses.filter(r => !(r.date === date && (r.questionKey ?? '') === questionKey)) }));
+    dequeueReflection(date, questionKey);
+    void repoDeleteReflection(date, questionKey).catch(() => {});
+    // La reseña del día queda inválida; se regenera al reabrir.
+    if (get().hsmDailyReview?.date === date) set({ hsmDailyReview: null });
+  },
+  clearAllHSMLocal: async () => {
+    set({ dailyHSMResponses: [], hsmProfile: null, hsmDailyReview: null });
+    try { if (typeof localStorage !== 'undefined') localStorage.removeItem('hsc-hsm-outbox'); } catch { /* noop */ }
+    await clearAllHSM().catch(() => {});
+  },
+  hydrateHSMReflections: (rows) => {
+    // Merge: remoto es autoritativo por questionKey del día; se preservan las
+    // entradas locales sin questionKey remoto (no sincronizadas todavía).
+    const bank = getHSMBank(get().language);
+    const titleFor = (id: HSMDimensionKey): string => { const i = dimensionIndexFromId(id); return i >= 0 ? bank[i].title : ''; };
+    set((state) => {
+      const remoteKeys = new Set(rows.map(r => `${r.date}|${r.questionKey}`));
+      const localOnly = state.dailyHSMResponses.filter(r => !remoteKeys.has(`${r.date}|${r.questionKey ?? ''}`));
+      const remoteAsLocal = rows.map(r => ({
+        date: r.date, dimension: titleFor(r.dimensionId), question: r.question, response: r.response,
+        dimensionId: r.dimensionId, questionIndex: r.questionIndex, questionKey: r.questionKey, safetyLevel: r.safetyLevel,
+      }));
+      return { dailyHSMResponses: [...remoteAsLocal, ...localOnly] };
+    });
   },
 
   // Coach chat history
@@ -1409,9 +1463,16 @@ export const useAppStore = create<AppState>()(
 
   // Cumulative HSM profile
   hsmProfile: null,
-  setHSMProfile: (text) => set({ hsmProfile: { text, updatedAt: dayKey(new Date()) } }),
+  setHSMProfile: (text) => {
+    set({ hsmProfile: { text, updatedAt: dayKey(new Date()) } });
+    void upsertProfile(text, get().dailyHSMResponses.length).catch(() => {}); // remote best-effort
+  },
   hsmDailyReview: null,
-  setHSMDailyReview: (r) => set({ hsmDailyReview: r }),
+  setHSMDailyReview: (r) => {
+    set({ hsmDailyReview: { date: r.date, text: r.text, source: r.source } });
+    const safety = (r as { safetyLevel?: HSMSafetyLevel }).safetyLevel ?? 'NORMAL';
+    void upsertDailyReview({ date: r.date, text: r.text, source: r.source, safetyLevel: safety }).catch(() => {}); // remote best-effort
+  },
 
   // Night check-in eliminado en Lote Racha-2. La racha vive en markActiveDay
   // (Racha-1) y se dispara desde workout/yoga/HSM completo.
@@ -1481,6 +1542,7 @@ export const useAppStore = create<AppState>()(
     lastStreakMilestone: 0,
     userMilestones: [],
     dailyHSMResponses: [],
+    hsmMigratedAt: null,
     coachChatHistory: [],
     coachChatDate: '',
     hsmProfile: null,
@@ -1489,7 +1551,10 @@ export const useAppStore = create<AppState>()(
 
   logout: () => {
     import('../lib/supabase').then(({ supabase }) => supabase.auth.signOut());
-    localStorage.removeItem('hsc-life-system-v2');
+    localStorage.removeItem('hsc-life-system-v2'); // legacy key (histórico)
+    // MINDSET-1: el outbox HSM contiene texto de journal → limpiarlo al salir.
+    // El blob 'hsc-store' lo reescribe resetUserScopedData (HSM a vacío) en el persist.
+    try { localStorage.removeItem('hsc-hsm-outbox'); } catch { /* noop */ }
     get().resetUserScopedData();
     // Nav/UI + marca de dueño (comportamiento neto idéntico al logout previo).
     set({
@@ -1561,6 +1626,7 @@ export const useAppStore = create<AppState>()(
     lastStreakMilestone: state.lastStreakMilestone,
     userMilestones: state.userMilestones,
     dailyHSMResponses: state.dailyHSMResponses,
+    hsmMigratedAt: state.hsmMigratedAt,
     coachChatHistory: state.coachChatHistory,
     coachChatDate: state.coachChatDate,
     hsmProfile: state.hsmProfile,

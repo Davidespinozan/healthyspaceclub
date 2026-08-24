@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../i18n';
 import { getHSMBank } from '../data/hsmBank';
+import { dimensionIdFromLegacyTitle } from '../data/hsmDimensions';
 import './retrato-hsm.css';
 
 /**
@@ -23,10 +24,16 @@ export default function RetratoHSM() {
   const [sel, setSel] = useState<number | null>(null);
 
   const dims = useMemo(() => {
+    // MINDSET-1: contar por dimensionId ESTABLE (no por el título localizado) →
+    // el historial sobrevive el cambio ES↔EN. Entradas legacy sin dimensionId
+    // derivan su id del título.
     const counts: Record<string, number> = {};
-    for (const r of dailyHSMResponses) counts[r.dimension] = (counts[r.dimension] ?? 0) + 1;
+    for (const r of dailyHSMResponses) {
+      const id = r.dimensionId ?? dimensionIdFromLegacyTitle(r.dimension);
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
     return bank.map((d, i) => {
-      const count = counts[d.title] ?? 0;
+      const count = counts[d.id] ?? 0;
       const a = (-90 + i * 36) * (Math.PI / 180);
       return {
         emoji: d.emoji, title: d.title, count,

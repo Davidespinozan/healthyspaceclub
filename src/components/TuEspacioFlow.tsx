@@ -15,7 +15,7 @@ interface Props {
 
 export default function TuEspacioFlow({ onClose }: Props) {
   const { t, locale } = useT();
-  const { dailyHSMResponses, addHSMResponse, subscriptionStatus, markActiveDay, hsmDailyReview, setHSMDailyReview } = useAppStore(useShallow((s) => ({ dailyHSMResponses: s.dailyHSMResponses, addHSMResponse: s.addHSMResponse, subscriptionStatus: s.subscriptionStatus, markActiveDay: s.markActiveDay, hsmDailyReview: s.hsmDailyReview, setHSMDailyReview: s.setHSMDailyReview })));
+  const { dailyHSMResponses, addHSMResponse, subscriptionStatus, markActiveDay, hsmDailyReview, setHSMDailyReview, deleteHSMResponse, clearAllHSMLocal } = useAppStore(useShallow((s) => ({ dailyHSMResponses: s.dailyHSMResponses, addHSMResponse: s.addHSMResponse, subscriptionStatus: s.subscriptionStatus, markActiveDay: s.markActiveDay, hsmDailyReview: s.hsmDailyReview, setHSMDailyReview: s.setHSMDailyReview, deleteHSMResponse: s.deleteHSMResponse, clearAllHSMLocal: s.clearAllHSMLocal })));
   // Acceso real = Stripe (subscriptionStatus), no el trial local desincronizado.
   const isPlanActive = subscriptionStatus !== 'none';
 
@@ -104,6 +104,10 @@ export default function TuEspacioFlow({ onClose }: Props) {
   const [currentDim, setCurrentDim] = useState(pendingDims[0] || null);
   const [inputVal, setInputVal] = useState('');
   const [animState, setAnimState] = useState<'in' | 'out'>('in');
+  // MINDSET-1: si alguna respuesta de hoy es URGENT, se muestra el panel de apoyo
+  // y se suprime la reseña motivacional normal.
+  const [showSafety, setShowSafety] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   // El hilo: la respuesta MÁS RECIENTE de esta dimensión en días anteriores. Da
   // continuidad ("la app me recuerda") y el usuario no siente que repite preguntas.
@@ -134,6 +138,15 @@ export default function TuEspacioFlow({ onClose }: Props) {
     markActiveDay().catch(() => {});
 
     const base = baseReview();
+    // MINDSET-1 · URGENT: NUNCA correr la reseña motivacional/analítica sobre una
+    // crisis. Reseña determinista de apoyo + panel de seguridad. No llama a la IA.
+    const urgent = todayResponses.some(r => r.safetyLevel === 'URGENT');
+    if (urgent) {
+      setShowSafety(true);
+      setHSMDailyReview({ date: today, text: t('espacio.safeReview'), source: 'safe', safetyLevel: 'URGENT' });
+      return;
+    }
+
     // Free: reseña cálida al instante, sin costo de IA.
     if (!isPlanActive) { setHSMDailyReview({ date: today, text: base, source: 'base' }); return; }
 
@@ -173,7 +186,10 @@ export default function TuEspacioFlow({ onClose }: Props) {
     if (!currentDim || !inputVal.trim()) return;
     if (submittingRef.current) return; // ya hay un envío en curso (evita respuesta duplicada)
     submittingRef.current = true;
-    addHSMResponse({ dimension: currentDim.title, question: currentDim.q, response: inputVal.trim() });
+    // La respuesta se guarda SIEMPRE (local + outbox). La clasificación de
+    // seguridad viene del store; URGENT activa el panel de apoyo.
+    const level = addHSMResponse({ dimension: currentDim.title, question: currentDim.q, response: inputVal.trim() });
+    if (level === 'URGENT') setShowSafety(true);
 
     // Animate out, then move to next
     setAnimState('out');
@@ -248,9 +264,32 @@ export default function TuEspacioFlow({ onClose }: Props) {
               )}
             </div>
           ) : null}
+          {showSafety && (
+            <div className="te-safety" role="alert">
+              <div className="te-safety-title">{t('espacio.safetyTitle')}</div>
+              <p className="te-safety-body">{t('espacio.safetyBody')}</p>
+              <p className="te-safety-emergency">{t('espacio.safetyEmergency')}</p>
+              <button className="te-safety-close" onClick={() => setShowSafety(false)}>{t('espacio.safetyClose')}</button>
+            </div>
+          )}
           <div className="te-complete-progress">🪞 {t('retrato.explored', { n: exploredCount })}</div>
           <p className="te-complete-hint">{t('espacio.portraitHint')}</p>
           <button className="te-complete-btn" onClick={onClose}>{t('hoy.reviewBackToHoy')}</button>
+          {/* MINDSET-1 · control del usuario sobre su journal (mínimo: borrar hoy / borrar todo) */}
+          <div className="te-danger">
+            {todayResponses.length > 0 && (
+              <button type="button" className="te-danger-link" onClick={() => { todayResponses.forEach(r => { if (r.questionKey) deleteHSMResponse(r.date, r.questionKey); }); }}>{t('espacio.deleteToday')}</button>
+            )}
+            {!confirmClear ? (
+              <button type="button" className="te-danger-link" onClick={() => setConfirmClear(true)}>{t('espacio.clearAll')}</button>
+            ) : (
+              <span className="te-danger-confirm">
+                {t('espacio.clearAllConfirm')}{' '}
+                <button type="button" onClick={() => { void clearAllHSMLocal(); setConfirmClear(false); onClose(); }}>{t('espacio.clearAllYes')}</button>{' · '}
+                <button type="button" onClick={() => setConfirmClear(false)}>{t('espacio.clearAllNo')}</button>
+              </span>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -303,6 +342,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
           onChange={e => setInputVal(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
           rows={4}
+          maxLength={2000}
         />
 
         {/* Submit */}
