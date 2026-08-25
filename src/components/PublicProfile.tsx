@@ -8,6 +8,7 @@ import { deleteClubPost } from '../utils/clubPosts';
 import { followUser, unfollowUser, isFollowing, getFollowCounts } from '../utils/follows';
 import { sendInvite } from '../utils/partners';
 import { profileLink } from '../utils/referral';
+import { isProfileViewable, resolvePostCount } from '../utils/profilePrivacy';
 import { MILESTONE_STEPS } from '../constants/milestones';
 import { useT } from '../i18n';
 import './public-profile.css';
@@ -37,9 +38,13 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
   const { t } = useT();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [posts, setPosts] = useState<ClubPost[]>([]);
+  const [postCount, setPostCount] = useState(0);
   const [milestones, setMilestones] = useState<MilestoneRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // PROFILE-1 B: perfil privado / inexistente visto por un tercero → estado neutral
+  // "no disponible", SIN enumerar posts/logros/identidad.
+  const [unavailable, setUnavailable] = useState(false);
   const [userFires, setUserFires] = useState<Set<string>>(new Set());
   const [firingPost, setFiringPost] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -90,18 +95,38 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
 
   useEffect(() => {
     async function load() {
+      const isSelf = !!currentUserId && currentUserId === userId;
+      const postsFilter = `user_id.eq.${userId},and(coauthor_id.eq.${userId},coauthor_accepted.eq.true)`;
       try {
-        const [profileRes, postsRes, milestonesRes] = await Promise.all([
-          supabase
-            .from('public_profiles')
-            .select('display_name, username, bio, avatar_url, created_at, start_date, streak_count')
-            .eq('user_id', userId)
-            .maybeSingle(),
+        // PASO 1 · Resolver el perfil ANTES de enumerar nada. Uno mismo lee su propia
+        // fila (siempre permitido por RLS); un tercero lee la vista is_public-gated.
+        // Si un tercero no obtiene fila (privado/inexistente) → NO se cargan posts,
+        // logros, fires ni identidad denormalizada.
+        const profileRes = isSelf
+          ? await supabase
+              .from('user_profiles')
+              .select('display_name, username, bio, avatar_url, created_at, start_date, streak_count')
+              .eq('user_id', userId)
+              .maybeSingle()
+          : await supabase
+              .from('public_profiles')
+              .select('display_name, username, bio, avatar_url, created_at, start_date, streak_count')
+              .eq('user_id', userId)
+              .maybeSingle();
+        if (profileRes.error) throw new Error(profileRes.error.message);
+        if (!isProfileViewable(profileRes.data, isSelf)) {
+          setUnavailable(true);
+          setLoading(false);
+          return;
+        }
+        setProfile(profileRes.data);
+
+        // PASO 2 · Solo con perfil visible: posts (grid), logros y conteo EXACTO.
+        const [postsRes, milestonesRes, countRes] = await Promise.all([
           supabase
             .from('club_posts')
             .select('*')
-            // Posts propios + colaboraciones ACEPTADAS donde es coautor.
-            .or(`user_id.eq.${userId},and(coauthor_id.eq.${userId},coauthor_accepted.eq.true)`)
+            .or(postsFilter)
             .order('created_at', { ascending: false })
             .limit(50),
           supabase
@@ -109,15 +134,18 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
             .select('milestone_days, unlocked_at')
             .eq('user_id', userId)
             .order('milestone_days', { ascending: true }),
+          supabase
+            .from('club_posts')
+            .select('id', { count: 'exact', head: true })
+            .or(postsFilter),
         ]);
 
-        if (profileRes.error) throw new Error(profileRes.error.message);
         if (postsRes.error) throw new Error(postsRes.error.message);
         if (milestonesRes.error) throw new Error(milestonesRes.error.message);
 
-        if (profileRes.data) setProfile(profileRes.data);
         if (postsRes.data) setPosts(postsRes.data as ClubPost[]);
         if (milestonesRes.data) setMilestones(milestonesRes.data);
+        setPostCount(resolvePostCount(countRes.count, postsRes.data?.length ?? 0));
 
         if (currentUserId && postsRes.data && postsRes.data.length > 0) {
           const postIds = postsRes.data.map(p => p.id);
@@ -141,8 +169,10 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
     load();
   }, [userId, currentUserId]);
 
-  // Estado de seguimiento + contadores.
+  // Estado de seguimiento + contadores. PROFILE-1 B: solo tras confirmar que el perfil
+  // es visible (profile !== null) — no enumeramos followers de un perfil no disponible.
   useEffect(() => {
+    if (!profile) return;
     let active = true;
     (async () => {
       const counts = await getFollowCounts(userId);
@@ -153,7 +183,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
       }
     })();
     return () => { active = false; };
-  }, [userId, currentUserId]);
+  }, [profile, userId, currentUserId]);
 
   async function handleFollow() {
     if (followBusy) return;
@@ -266,6 +296,14 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
             <div className="pp5-spinner" />
             <p className="pp5-loading-text">{t('profile.loadingProfile')}</p>
           </div>
+        ) : unavailable ? (
+          <div className="pp5-error">
+            <button className="pp5-close pp5-close--floating" onClick={onClose} aria-label={t('common.close')} type="button">
+              <X size={18} />
+            </button>
+            <p className="pp5-error-text">{t('profile.unavailable')}</p>
+            <button className="pp5-error-btn" onClick={onClose} type="button">{t('common.close')}</button>
+          </div>
         ) : error ? (
           <div className="pp5-error">
             <button className="pp5-close pp5-close--floating" onClick={onClose} aria-label={t('common.close')} type="button">
@@ -340,7 +378,7 @@ export default function PublicProfile({ userId, currentUserId, onClose }: Props)
             <div className="pp5-stats">
               <div className="pp5-stat pp5-stat--posts">
                 <div className="pp5-stat-label">{t('profile.statPosts')}</div>
-                <div className="pp5-stat-num">{posts.length}</div>
+                <div className="pp5-stat-num">{postCount}</div>
               </div>
               <div className="pp5-stat pp5-stat--racha">
                 <div className="pp5-stat-label">{t('profile.statStreak')}</div>

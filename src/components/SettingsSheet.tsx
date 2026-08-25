@@ -4,6 +4,7 @@ import { X, ChevronRight, Loader2, ArrowRight, Check } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { pushSupported, getPushEnabled, enablePush, disablePush, pushNeedsInstall } from '../utils/push';
+import { fetchProfileIsPublic, persistProfileIsPublic, privateToggleNeedsConfirm } from '../utils/profilePrivacy';
 import { supabase } from '../lib/supabase';
 import { openCoachWith } from '../utils/openCoach';
 import { useT } from '../i18n';
@@ -56,6 +57,35 @@ export default function SettingsSheet({ open, onClose }: Props) {
   const [showUsernameEdit, setShowUsernameEdit] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+
+  // PROFILE-1 B · Privacidad del perfil (is_public). Autoridad REMOTA: se lee del
+  // propio user_profiles al abrir; null = cargando. No se asume el default local.
+  const [isPublic, setIsPublic] = useState<boolean | null>(null);
+  const [privacyBusy, setPrivacyBusy] = useState(false);
+  const [privacyError, setPrivacyError] = useState('');
+  useEffect(() => {
+    if (!open || !user?.id) return;
+    let active = true;
+    setPrivacyError('');
+    fetchProfileIsPublic(user.id).then(v => { if (active && v !== null) setIsPublic(v); });
+    return () => { active = false; };
+  }, [open, user?.id]);
+  async function togglePrivacy() {
+    if (privacyBusy || isPublic === null || !user?.id) return;
+    const next = !isPublic;
+    // Público→privado: una confirmación concisa (privado→público es inmediato).
+    if (privateToggleNeedsConfirm(isPublic, next)) {
+      const ok = window.confirm(`${t('settings.privacyConfirmTitle')}\n\n${t('settings.privacyConfirmBody')}`);
+      if (!ok) return;
+    }
+    setPrivacyBusy(true);
+    setPrivacyError('');
+    // Await remoto PRIMERO; solo fijamos el estado local si la escritura confirma.
+    const success = await persistProfileIsPublic(user.id, next);
+    if (success) setIsPublic(next);
+    else setPrivacyError(t('settings.privacyUpdateError'));
+    setPrivacyBusy(false);
+  }
 
   // Web Push (notificaciones con la app cerrada).
   const [pushState, setPushState] = useState<'unknown' | 'off' | 'on' | 'denied' | 'unsupported'>('unknown');
@@ -328,6 +358,33 @@ export default function SettingsSheet({ open, onClose }: Props) {
               )}
             </div>
           )}
+        </section>
+
+        {/* Sección Privacidad — Perfil público/privado (PROFILE-1 B). Afecta SOLO
+            descoverabilidad/perfil: búsqueda, /u/ y el perfil público. Tus posts del
+            Club siguen visibles en el Club y tus compañeros actuales no se afectan. */}
+        <section className="ss-section">
+          <p className="ss-section-eyebrow">{t('settings.privacyEyebrow')}</p>
+          <div className="ss-notif-row">
+            <p className="ss-notif-hint">
+              <strong className="ss-privacy-title">{t('settings.profilePublic')}</strong>
+              {t('settings.profilePublicHint')}
+            </p>
+            <button
+              type="button"
+              className={`ss-notif-btn${isPublic ? ' is-on' : ''}`}
+              onClick={togglePrivacy}
+              disabled={privacyBusy || isPublic === null}
+              aria-pressed={isPublic === true}
+            >
+              {isPublic === null
+                ? <Loader2 className="ss-spin" size={15} strokeWidth={2.4} />
+                : privacyBusy
+                  ? <Loader2 className="ss-spin" size={15} strokeWidth={2.4} />
+                  : isPublic ? t('settings.visibilityPublic') : t('settings.visibilityPrivate')}
+            </button>
+          </div>
+          {privacyError && <p className="ss-notif-warn">{privacyError}</p>}
         </section>
 
         {/* Sección Notificaciones — Web Push */}

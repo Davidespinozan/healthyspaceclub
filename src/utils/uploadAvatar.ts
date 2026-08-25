@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { compressImageSquare } from './imageCompress';
+import { compressImage } from './imageCompress';
 import { validateMediaFile } from './mediaValidation';
 import type { TranslationKey } from '../i18n/es';
 
@@ -19,9 +19,9 @@ export type UploadAvatarOutcome = UploadAvatarResult | UploadAvatarError;
 /**
  * Upload an avatar image to Supabase Storage with automatic compression.
  * - Validates with validateMediaFile
- * - Compresses to max 720x720 square JPEG quality 0.85 (~80-150 KB typical)
+ * - Compresses to a 1080x1080 square JPEG quality 0.85 (center-crop)
  * - Forces .jpg extension (prevents orphan files in bucket)
- * - Uploads to 'avatar' bucket with upsert
+ * - Uploads to 'avatar' bucket with upsert (stable <uid>.jpg path)
  * - Returns the public URL with cache-busting timestamp
  */
 export async function uploadAvatar(file: File, userId: string): Promise<UploadAvatarOutcome> {
@@ -32,7 +32,7 @@ export async function uploadAvatar(file: File, userId: string): Promise<UploadAv
 
   let compressed: Blob;
   try {
-    compressed = await compressImageSquare(file, 720, 0.85);
+    compressed = await compressImage(file, { aspectRatio: '1:1', quality: 0.85 });
   } catch (e) {
     console.error('[uploadAvatar] compress failed:', e);
     return { errorKey: 'media.processFailed' };

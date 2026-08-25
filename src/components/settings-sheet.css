@@ -324,6 +324,11 @@
   font-family: 'Montserrat', sans-serif; font-size: 12px; line-height: 1.45;
   color: rgba(21, 51, 48, 0.6);
 }
+/* PROFILE-1 B · título del control de privacidad, sobre su descripción */
+.ss-privacy-title {
+  display: block; margin-bottom: 2px;
+  font-size: 13px; font-weight: 700; color: rgba(21, 51, 48, 0.92);
+}
 .ss-notif-btn {
   flex-shrink: 0;
   border: none; cursor: pointer;

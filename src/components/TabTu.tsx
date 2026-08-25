@@ -6,6 +6,7 @@ import { useCurrentUserId } from '../hooks/useCurrentUserId';
 import { supabase } from '../lib/supabase';
 import type { DashPage } from '../types';
 import { uploadAvatar } from '../utils/uploadAvatar';
+import { capBio, BIO_MAX } from '../utils/profilePrivacy';
 import { deleteClubPost } from '../utils/clubPosts';
 import { dayKey } from '../utils/localDate';
 import SettingsSheet from './SettingsSheet';
@@ -48,6 +49,7 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'reflexiones'>('posts');
@@ -96,10 +98,13 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
 
   async function handleSave() {
     setSaving(true);
+    setSaveError('');
     const savedName = editName.trim() || userName || t('common.anonymous');
-    const savedBio = editBio.trim().slice(0, 100);
+    const savedBio = capBio(editBio.trim());
+    // Sin falso éxito: solo actualizamos el estado local/Zustand DESPUÉS de que la
+    // escritura remota confirme. Si falla, seguimos en modo edición con el aviso.
     try {
-      await supabase
+      const { error } = await supabase
         .from('user_profiles')
         .upsert({
           user_id: userId,
@@ -107,11 +112,16 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
           bio: savedBio,
           avatar_url: profile.avatar_url,
         }, { onConflict: 'user_id' });
-    } catch (e) { console.warn('[TabTu] mutation failed:', e); }
-    setProfile(prev => ({ ...prev, display_name: savedName, bio: savedBio }));
-    setUserName(savedName);
-    setEditing(false);
-    setSaving(false);
+      if (error) throw error;
+      setProfile(prev => ({ ...prev, display_name: savedName, bio: savedBio }));
+      setUserName(savedName);
+      setEditing(false);
+    } catch (e) {
+      console.warn('[TabTu] mutation failed:', e);
+      setSaveError(t('profile.saveError'));
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleAvatar(e: React.ChangeEvent<HTMLInputElement>) {
@@ -122,14 +132,21 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
       alert(t(result.errorKey, result.errorParams));
       return;
     }
+    // Solo fijamos el avatar en la UI DESPUÉS de que la fila de perfil confirme.
+    // Residual conocido: el objeto ya se subió a <uid>.jpg (upsert, misma ruta), así
+    // que no lo borramos (borraría el avatar recién puesto, y no hay previo que
+    // restaurar). Si el update de perfil falla, avisamos y la UI queda en la URL
+    // previa; el próximo fetch de perfil reconcilia (misma ruta, nuevos bytes).
     try {
-      await supabase
+      const { error } = await supabase
         .from('user_profiles')
         .update({ avatar_url: result.url })
         .eq('user_id', userId);
+      if (error) throw error;
       setProfile(prev => ({ ...prev, avatar_url: result.url }));
     } catch (e) {
       console.warn('[TabTu] mutation failed:', e);
+      alert(t('profile.saveError'));
     }
   }
 
@@ -188,14 +205,16 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
             <input
               className="tt5-edit-input"
               value={editBio}
-              onChange={e => setEditBio(e.target.value.slice(0, 100))}
+              onChange={e => setEditBio(capBio(e.target.value))}
               placeholder={t('profile.editBioPlaceholder')}
             />
+            <div className="tt5-edit-counter" aria-live="polite">{editBio.length}/{BIO_MAX}</div>
+            {saveError && <p className="tt5-edit-error">{saveError}</p>}
             <div className="tt5-edit-actions">
               <button className="tt5-edit-save" onClick={handleSave} disabled={saving} type="button">
                 {saving ? t('common.saving') : t('common.save')}
               </button>
-              <button className="tt5-edit-cancel" onClick={() => setEditing(false)} type="button">
+              <button className="tt5-edit-cancel" onClick={() => { setSaveError(''); setEditing(false); }} type="button">
                 {t('common.cancel')}
               </button>
             </div>

@@ -191,6 +191,18 @@
 }
 .tt5-edit-input::placeholder { color: rgba(234, 223, 198, 0.45); }
 .tt5-edit-input:focus { border-color: var(--amber); }
+/* PROFILE-1 B · contador del bio + aviso de guardado */
+.tt5-edit-counter {
+  align-self: flex-end;
+  font-size: 11px;
+  color: rgba(234, 223, 198, 0.5);
+  margin-top: -2px;
+}
+.tt5-edit-error {
+  font-size: 12.5px;
+  color: #F0A38C;
+  margin: 0;
+}
 .tt5-edit-actions {
   display: flex;
   gap: 8px;
