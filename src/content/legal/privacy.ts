@@ -65,7 +65,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
   {
     heading: '6. Cómo ejercer tus derechos',
     paragraphs: [
-      'Podés ejercer cualquiera de estos derechos hablando con el coach IA en la app (te guiará al proceso) o escribiendo a soporte@stryvstudio.com. Respondemos en un plazo máximo de 30 días.',
+      'Podés eliminar tu cuenta y todos tus datos directamente desde Ajustes → Cuenta → Eliminar mi cuenta (efecto inmediato). Para los demás derechos, escribí a soporte@stryvstudio.com o pedíselo al coach IA en la app. Respondemos en un plazo máximo de 30 días.',
     ],
   },
   {

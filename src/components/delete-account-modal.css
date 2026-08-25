@@ -1,0 +1,72 @@
+/* ACCOUNT-DELETE-1 · Gate B — modal destructivo de eliminación de cuenta. */
+.dam-backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(10, 20, 18, 0.62);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+}
+.dam-modal {
+  position: relative;
+  width: 100%; max-width: 400px;
+  background: var(--cream, #F6F2EA);
+  border-radius: 18px;
+  padding: 26px 22px 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  font-family: 'Montserrat', sans-serif;
+}
+.dam-close {
+  position: absolute; top: 12px; right: 12px;
+  background: none; border: none; cursor: pointer;
+  color: rgba(21, 51, 48, 0.5); padding: 4px;
+}
+.dam-close:disabled { opacity: 0.4; cursor: default; }
+.dam-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; margin: 4px auto 12px;
+  border-radius: 50%;
+  background: rgba(199, 91, 58, 0.12); color: var(--terracota, #C75B3A);
+}
+.dam-title {
+  margin: 0 0 10px; text-align: center;
+  font-size: 19px; font-weight: 800; color: var(--forest, #0E2521);
+  text-wrap: balance;
+}
+.dam-body {
+  margin: 0 0 16px; text-align: center;
+  font-size: 13.5px; line-height: 1.5; color: rgba(21, 51, 48, 0.72);
+}
+.dam-label {
+  display: block; margin-bottom: 6px;
+  font-size: 12px; font-weight: 700; color: rgba(21, 51, 48, 0.7);
+}
+.dam-input {
+  width: 100%; box-sizing: border-box;
+  padding: 11px 13px; border-radius: 10px;
+  border: 1.5px solid rgba(21, 51, 48, 0.2);
+  background: #fff; font-family: inherit; font-size: 15px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--forest, #0E2521); outline: none;
+}
+.dam-input:focus { border-color: var(--terracota, #C75B3A); }
+.dam-input:disabled { opacity: 0.6; }
+.dam-error {
+  margin: 10px 0 0; font-size: 12.5px; line-height: 1.45;
+  color: var(--terracota, #C75B3A); text-align: center;
+}
+.dam-actions { display: flex; gap: 10px; margin-top: 18px; }
+.dam-cancel, .dam-delete {
+  flex: 1; padding: 12px 16px; border-radius: 999px;
+  font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; border: none;
+}
+.dam-cancel {
+  background: transparent; color: var(--forest, #0E2521);
+  border: 1.5px solid rgba(21, 51, 48, 0.25);
+}
+.dam-delete {
+  background: var(--terracota, #C75B3A); color: #fff;
+}
+.dam-delete:disabled { opacity: 0.45; cursor: default; }
+.dam-cancel:disabled { opacity: 0.5; cursor: default; }
+.dam-delete:not(:disabled):active, .dam-cancel:not(:disabled):active { transform: scale(0.985); }

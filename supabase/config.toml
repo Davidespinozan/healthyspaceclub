@@ -47,3 +47,8 @@ verify_jwt = false
 # función además valida el JWT y hace rate-limit propio (SOCIAL-2A).
 [functions.club-moderate]
 verify_jwt = true
+
+# delete-account: eliminación de cuenta autoservicio. Requiere sesión; deriva la
+# identidad del JWT (self-only) y usa service_role para Stripe/Storage/auth admin.
+[functions.delete-account]
+verify_jwt = true

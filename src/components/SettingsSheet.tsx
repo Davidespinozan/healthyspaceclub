@@ -14,6 +14,7 @@ import EditDataSheet from './sheets/EditDataSheet';
 import UsernameSetupSheet from './UsernameSetupSheet';
 import TermsSheet from './sheets/TermsSheet';
 import PrivacySheet from './sheets/PrivacySheet';
+import DeleteAccountModal from './DeleteAccountModal';
 import './settings-sheet.css';
 
 // Reusable mappings (stored ES value → translation key) — mirror EditDataSheet
@@ -57,6 +58,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
   const [showUsernameEdit, setShowUsernameEdit] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
 
   // PROFILE-1 B · Privacidad del perfil (is_public). Autoridad REMOTA: se lee del
   // propio user_profiles al abrir; null = cargando. No se asume el default local.
@@ -470,8 +472,15 @@ export default function SettingsSheet({ open, onClose }: Props) {
           {t('settings.logout')}
         </button>
 
+        {/* Zona destructiva · eliminación de cuenta (irreversible, con confirmación). */}
+        <button className="ss-delete-account" onClick={() => setShowDeleteAccount(true)} type="button">
+          {t('settings.deleteAccount')}
+        </button>
+
         <p className="ss-version">HSC v1.2.0 · {t('settings.madeIn')}</p>
       </div>
+
+      {showDeleteAccount && <DeleteAccountModal onClose={() => setShowDeleteAccount(false)} />}
 
       {showManagePlan && <ManagePlanSheet onClose={() => setShowManagePlan(false)} />}
       {showEditData && <EditDataSheet onClose={() => setShowEditData(false)} />}
