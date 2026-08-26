@@ -8,6 +8,8 @@ import { callAI } from '../utils/aiProxy';
 import { buildHSMQuestionPrompt } from '../ai/prompts/hsmQuestion';
 import { buildHSMDailyReviewPrompt } from '../ai/prompts/hsmReview';
 import { getHSMBank } from '../data/hsmBank';
+import { excludedFromAIContext } from '../utils/hsmSafety';
+import { renderReflectionBehaviorFacts } from '../utils/reflectionContext';
 
 interface Props {
   onClose: () => void;
@@ -59,7 +61,10 @@ export default function TuEspacioFlow({ onClose }: Props) {
       setAiQuestion({ emoji: pick.emoji, title: pick.title, color: pick.color, q: pick.questions[qIdx] });
       return;
     }
-    const recentSummary = last7Responses.slice(-10).map(r => `${r.dimension}: "${r.response}"`).join('\n');
+    // REFLECTION-1 · P0 · excluir URGENT del material que se manda al modelo.
+    const recentSummary = last7Responses
+      .filter(r => !excludedFromAIContext(r.safetyLevel ?? 'NORMAL'))
+      .slice(-10).map(r => `${r.dimension}: "${r.response}"`).join('\n');
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
     callAI({
@@ -154,16 +159,21 @@ export default function TuEspacioFlow({ onClose }: Props) {
     // se cuelga, cae a la base — NUNCA pantalla vacía (antes era .catch(()=>{}) mudo).
     setReviewLoading(true);
     const todaySummary = todayResponses.map(r => `${r.dimension}: "${r.response}"`).join('\n');
+    // REFLECTION-1 · P0 · el histórico que se serializa al modelo excluye URGENT
+    // (la de HOY ya se cortó arriba; esto cierra la fuga de URGENT de días previos).
     const pastSummary = dailyHSMResponses
-      .filter(r => r.date !== today)
+      .filter(r => r.date !== today && !excludedFromAIContext(r.safetyLevel ?? 'NORMAL'))
       .slice(-30)
       .map(r => `[${r.date}] ${r.dimension}: "${r.response}"`)
       .join('\n');
+    // REFLECTION-1 · P0 · hechos conductuales autoritativos de HSC (mismas autoridades
+    // que el Coach, subconjunto mínimo) para afilar el espejo. Snapshot del store actual.
+    const hscFacts = renderReflectionBehaviorFacts(useAppStore.getState());
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
     callAI({
       max_tokens: 800,
-      messages: [{ role: 'user', content: buildHSMDailyReviewPrompt(todaySummary, locale, pastSummary || undefined) }],
+      messages: [{ role: 'user', content: buildHSMDailyReviewPrompt(todaySummary, locale, pastSummary || undefined, hscFacts || undefined) }],
     }, controller.signal)
       .then(data => {
         const txt = data.content?.[0]?.text?.trim();

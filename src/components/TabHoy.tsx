@@ -43,6 +43,7 @@ import {
   buildHSMWeeklyReviewPrompt,
 } from '../ai/prompts/hsmReview';
 import { buildHSMProfilePrompt } from '../ai/prompts/hsmProfile';
+import { excludedFromAIContext } from '../utils/hsmSafety';
 import { MILESTONE_STEPS, MILESTONE_ICON, getMilestoneCopy } from '../constants/milestones';
 import { getHSMBank } from '../data/hsmBank';
 import { useT } from '../i18n';
@@ -462,7 +463,12 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       setAiQuestion({ emoji: pick.emoji, title: pick.title, q: pick.questions[qIdx] });
       return;
     }
-    const recentSummary = last7Responses.slice(-10).map(r => `${r.dimension}: "${r.response}"`).join('\n');
+    // REFLECTION-1 · P0 · excluir URGENT del material enviado al modelo (invariante
+    // URGENT_RAW_TEXT ⇒ NEVER_AI_CONTEXT). Cambio SOLO de seguridad; la pregunta
+    // sigue sin ser behavior-aware (eso es P2).
+    const recentSummary = last7Responses
+      .filter(r => !excludedFromAIContext(r.safetyLevel ?? 'NORMAL'))
+      .slice(-10).map(r => `${r.dimension}: "${r.response}"`).join('\n');
     const prompt = buildHSMQuestionPrompt(recentSummary, locale);
 
     const controller = new AbortController();
@@ -493,7 +499,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   useEffect(() => {
     if (daysSinceStart !== 5 || !isPlanActive || miniReview) return;
     if (dailyHSMResponses.length < 5) return;
-    const allSoFar = dailyHSMResponses.slice(-15).map(r => `${r.dimension}: "${r.response}"`).join('\n');
+    // REFLECTION-1 · P0 · invariante de exclusión URGENT también en el mini-review.
+    const allSoFar = dailyHSMResponses
+      .filter(r => !excludedFromAIContext(r.safetyLevel ?? 'NORMAL'))
+      .slice(-15).map(r => `${r.dimension}: "${r.response}"`).join('\n');
     const miniPrompt = buildHSM5DayMiniReviewPrompt(allSoFar, locale);
 
     const controller = new AbortController();
@@ -509,9 +518,11 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   useEffect(() => {
     if (!isSunday || !isPlanActive || weeklyHSMReview) return;
     if (last7Responses.length < 5) return;
-    const weekSummary = last7Responses.map(r => `[${r.date}] ${r.dimension}: "${r.response}"`).join('\n');
+    // REFLECTION-1 · P0 · invariante de exclusión URGENT también en el weekly review.
+    const weekSafe = last7Responses.filter(r => !excludedFromAIContext(r.safetyLevel ?? 'NORMAL'));
+    const weekSummary = weekSafe.map(r => `[${r.date}] ${r.dimension}: "${r.response}"`).join('\n');
     const dimCounts: Record<string, number> = {};
-    last7Responses.forEach(r => { dimCounts[r.dimension] = (dimCounts[r.dimension] ?? 0) + 1; });
+    weekSafe.forEach(r => { dimCounts[r.dimension] = (dimCounts[r.dimension] ?? 0) + 1; });
     const dimList = Object.entries(dimCounts).sort((a, b) => b[1] - a[1]).map(([d, c]) => `${d}: ${c} respuestas`).join(', ');
 
     const weekPrompt = buildHSMWeeklyReviewPrompt(weekSummary, dimList, locale);

@@ -19,6 +19,10 @@ export function buildHSMDailyReviewPrompt(
   todaySummary: string,
   locale: AppLanguage = 'es',
   pastSummary?: string,
+  // REFLECTION-1 · P0 · bloque compacto de HECHOS conductuales autoritativos de HSC
+  // (renderReflectionBehaviorFacts). Solo la reseña diaria Pro lo pasa; si viene
+  // vacío/undefined, el prompt se comporta idéntico a antes (path text-only).
+  hscFacts?: string,
 ): string {
   const pastBlock = pastSummary
     ? `
@@ -27,13 +31,21 @@ REFLEXIONES ANTERIORES del usuario (cada línea con su fecha). Es tu material m�
 
 ${pastSummary}`
     : '';
+  const factsBlock = hscFacts && hscFacts.trim()
+    ? `
+
+HECHOS ACTUALES DE HSC (estado real y AUTORITATIVO; no los recalcules ni los contradigas):
+${hscFacts}
+
+SOBRE ESTOS HECHOS: úsalos SOLO cuando de verdad iluminen la reflexión — si son irrelevantes (p. ej. la persona escribe sobre su familia), ignóralos, no los menciones por mencionarlos. Si lo que la persona SIENTE y lo que HSC REGISTRA difieren, muestra el contraste sin juzgar ni avergonzar ("dices que sientes X; al mismo tiempo HSC registra Y"). Distingue: la REFLEXIÓN es lo que la persona siente/piensa; los HECHOS DE HSC son estado real; tu lectura es HIPÓTESIS, no hecho — cualquier "por qué" va hedged salvo que se sepa. Ausencia de dato no es evidencia (sin entreno hoy ≠ descanso; sin comida registrada ≠ no comió; sin tendencia ≠ estable). Sigues siendo un espejo, no un coach: nada de prescripciones de entreno/nutrición, planes ni "deberías".`
+    : '';
   return `${getVoiceRules(locale, 'default')}
 
 Eres un lector profundamente atento y perceptivo — cercano a un buen mentor o a un analista sabio, no a un coach. Lees TODO lo que la persona escribió, te detienes a pensarlo de verdad, y le devuelves una lectura honesta que expande su autoconocimiento. Le hablas directo en 2da persona (nunca "el usuario", nunca en 3ra).
 
 REFLEXIONES DE HOY:
 
-${todaySummary}${pastBlock}
+${todaySummary}${pastBlock}${factsBlock}
 
 TAREA: Escribe un ANÁLISIS SUSTANCIOSO y bien fundado — algo que la persona misma no había articulado, sostenido en sus propias palabras. No una frase bonita ni un resumen: una lectura de verdad. Debe:
 
