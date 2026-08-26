@@ -1550,11 +1550,20 @@ export const useAppStore = create<AppState>()(
   }),
 
   logout: () => {
-    import('../lib/supabase').then(({ supabase }) => supabase.auth.signOut());
+    // signOut no bloquea el logout local (si la red tarda, la UI ya salió). .catch
+    // evita un unhandled rejection; el evento SIGNED_OUT reconcilia igual.
+    import('../lib/supabase').then(({ supabase }) => supabase.auth.signOut().catch(() => {}));
     localStorage.removeItem('hsc-life-system-v2'); // legacy key (histórico)
     // MINDSET-1: el outbox HSM contiene texto de journal → limpiarlo al salir.
     // El blob 'hsc-store' lo reescribe resetUserScopedData (HSM a vacío) en el persist.
     try { localStorage.removeItem('hsc-hsm-outbox'); } catch { /* noop */ }
+    // AUTH-PROVIDERS B · hardening de cambio de cuenta: llaves standalone POR USUARIO
+    // que no vivían en 'hsc-store' y sobrevivían al logout → las hereda la cuenta B en
+    // el mismo dispositivo. Son estado efímero de sesión de entreno (se re-derivan solo).
+    // NO se toca pendingWorkoutSync (particionado por user_id) ni prefs app-wide (idioma).
+    for (const k of ['workout-player-progress', 'yoga-flow-progress', 'day-complete-celebrated', 'hsc_session_min', 'hsc_priority_muscles']) {
+      try { localStorage.removeItem(k); } catch { /* noop */ }
+    }
     get().resetUserScopedData();
     // Nav/UI + marca de dueño (comportamiento neto idéntico al logout previo).
     set({

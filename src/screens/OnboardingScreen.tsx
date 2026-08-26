@@ -11,6 +11,7 @@ import type { TranslationKey } from '../i18n/es';
 import { suggestUsername, isValidUsernameFormat, checkUsernameAvailable, claimUsername } from '../utils/username';
 import { validateEmailDeliverable } from '../utils/emailValidation';
 import LanguageToggle from '../components/LanguageToggle';
+import AuthProviderButtons from '../components/AuthProviderButtons';
 import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
 import { track } from '../utils/analytics';
 import { recordReferralIfAny } from '../utils/referral';
@@ -358,6 +359,8 @@ export default function OnboardingScreen() {
           <div className="onb-center">
             <h2 className="onb-question">{t('onboarding.createAccount')}</h2>
             <p className="onb-hint">{t('onboarding.createAccountHint')}</p>
+
+            <AuthProviderButtons context="signup" />
 
             <input
               className="onb-input-big"

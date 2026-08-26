@@ -208,6 +208,14 @@ export const es = {
     title: 'Nueva versión disponible',
     cta: 'Recargar',
   },
+  auth: {
+    continueApple: 'Continuar con Apple',
+    continueGoogle: 'Continuar con Google',
+    orDivider: 'o',
+    provider_google: 'Google',
+    provider_apple: 'Apple',
+    providerError: 'No se pudo continuar con {provider}. Inténtalo de nuevo o usa tu correo.',
+  },
   login: {
     title: 'Acceso para Miembros',
     subtitle: 'Inicia sesión para continuar tu programa',

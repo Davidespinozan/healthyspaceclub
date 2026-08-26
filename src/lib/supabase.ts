@@ -8,6 +8,11 @@ export const supabase = createClient(url, key, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    // PKCE: flujo recomendado y seguro para OAuth (Google/Apple) — el callback vuelve
+    // con `?code=` y `detectSessionInUrl` lo intercambia por sesión. Compatible con
+    // el reset de contraseña (updateUser sobre la sesión de recovery, sin parseo manual
+    // de tokens) y con signInWithPassword/signUp. No cambia env ni proyecto.
+    flowType: 'pkce',
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   },
 });

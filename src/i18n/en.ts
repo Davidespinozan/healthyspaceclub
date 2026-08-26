@@ -209,6 +209,14 @@ export const en: Translations<typeof es> = {
     title: 'New version available',
     cta: 'Reload',
   },
+  auth: {
+    continueApple: 'Continue with Apple',
+    continueGoogle: 'Continue with Google',
+    orDivider: 'or',
+    provider_google: 'Google',
+    provider_apple: 'Apple',
+    providerError: "We couldn't continue with {provider}. Try again or use your email.",
+  },
   login: {
     title: 'Member Access',
     subtitle: 'Sign in to continue your program',

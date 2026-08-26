@@ -3,6 +3,7 @@ import { Mail } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import LanguageToggle from '../components/LanguageToggle';
+import AuthProviderButtons from '../components/AuthProviderButtons';
 
 const SUPABASE_CONFIGURED = import.meta.env.VITE_SUPABASE_URL &&
   !import.meta.env.VITE_SUPABASE_URL.includes('placeholder');
@@ -85,6 +86,7 @@ export default function LoginScreen() {
           </div>
         ) : (
           <form className="ls-form" onSubmit={handleLogin}>
+            {SUPABASE_CONFIGURED && <AuthProviderButtons context="login" />}
             <div className="ls-field">
               <label className="ls-label">{t('login.emailLabel')}</label>
               <input

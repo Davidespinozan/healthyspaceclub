@@ -1,0 +1,91 @@
+/* AUTH-PROVIDERS · Gate B — botones de proveedor. Apple: negro (marca primaria,
+   compliant en fondo claro y oscuro, con borde sutil para verse en la tarjeta
+   oscura). Google: neutro blanco con borde (estilo oficial). Marca sin distorsión. */
+
+.apb-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.apb-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 18px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 140ms ease, transform 140ms ease, opacity 140ms ease;
+}
+.apb-btn:active { transform: scale(0.985); }
+.apb-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* Apple — botón negro oficial, texto/logo blanco. */
+.apb-btn--apple {
+  background: #000;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+.apb-btn--apple:not(:disabled):hover { filter: brightness(1.15); }
+
+/* Google — botón neutro blanco, texto gris oscuro, borde estándar. */
+.apb-btn--google {
+  background: #fff;
+  color: #1f1f1f;
+  border: 1px solid #dadce0;
+}
+.apb-btn--google:not(:disabled):hover { filter: brightness(0.97); }
+
+.apb-error {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #F0A38C;
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* Separador "o" entre OAuth y email/contraseña. */
+.apb-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: rgba(234, 223, 198, 0.5);
+  font-size: 12px;
+  margin: 6px 0 2px;
+}
+.apb-divider::before,
+.apb-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(234, 223, 198, 0.2);
+}
+.apb-divider span { padding: 0 12px; }
+
+/* En superficie clara (onboarding onb-light) el separador usa tinta oscura. */
+.onb-light .apb-divider { color: rgba(21, 51, 48, 0.5); }
+.onb-light .apb-divider::before,
+.onb-light .apb-divider::after { background: rgba(21, 51, 48, 0.18); }
+
+.apb-spinner {
+  width: 15px; height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: apb-spin 0.7s linear infinite;
+}
+.apb-spinner--dark {
+  border-color: rgba(31, 31, 31, 0.3);
+  border-top-color: #1f1f1f;
+}
+@keyframes apb-spin { to { transform: rotate(360deg); } }

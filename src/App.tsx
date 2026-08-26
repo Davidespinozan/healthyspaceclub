@@ -1,5 +1,6 @@
 import { dayKey } from './utils/localDate';
 import { identify } from './utils/analytics';
+import { signedInScreen } from './utils/authProviders';
 import { sincronizarPush } from './utils/push';
 import { useAutoRegenPlan, useWeeklyPlanReset } from './utils/useAutoRegenPlan';
 import { runProfileHydration, fetchWithTimeout, shouldShowAccountLoader, type ProfileResolution } from './utils/profileHydration';
@@ -400,12 +401,14 @@ export default function App() {
         // dataOwnerId (guard anti-leak). Ya no se backfillea local→DB, así que
         // el valor de retorno no se usa.
         ensureDataOwner(session.user.id);
-        // Redirect INMEDIATO (sync, fuera del auth lock de Supabase v2)
+        // Redirect INMEDIATO (sync, fuera del auth lock de Supabase v2).
+        // AUTH-PROVIDERS B: el callback de OAuth puede volver a la landing (no solo a
+        // 'login'), así que ruteamos desde cualquier pantalla PRE-AUTH. La autoridad
+        // sigue siendo startDate (→ onboarding vs dashboard); 'dashboard' queda además
+        // gated por la suscripción (paywall + guard de montaje), así que es seguro.
         const { currentScreen, startDate } = useAppStore.getState();
-        if (currentScreen === 'login') {
-          useAppStore.setState({
-            currentScreen: startDate ? 'dashboard' : 'onboarding',
-          });
+        if (currentScreen === 'login' || currentScreen === 'landing') {
+          useAppStore.setState({ currentScreen: signedInScreen(startDate) });
         }
 
         // Hidratar profile en background. setTimeout(0) saca la query del lock
