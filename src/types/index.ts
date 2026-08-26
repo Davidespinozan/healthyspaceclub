@@ -453,6 +453,16 @@ export interface PendingWorkoutRow {
   [column: string]: unknown;
 }
 
+// WORKOUT-OUTBOX-RESILIENCE-1 (M-3) · sidecar de reintento del outbox, SEPARADO de la
+// fila (la fila se sube tal cual a workout_log; estos campos JAMÁS viajan a la DB).
+// Se guarda en el store persistido, keyed por client_session_id (UUID único → sin
+// colisión cross-cuenta). Ausente = fila legacy = attempts 0, no cuarentena.
+export interface WorkoutSyncMeta {
+  attempts: number;      // nº de intentos automáticos FALLIDOS ya observados
+  lastCode?: string;     // último código de error seguro (p.ej. PostgREST '23503'), sin PII
+  quarantined: boolean;  // true → el flush automático la SALTA (fila retenida, recuperable)
+}
+
 export interface RecipeStep {
   title: string;
   desc: string;

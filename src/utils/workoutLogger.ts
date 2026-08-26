@@ -197,7 +197,10 @@ export async function finishWorkoutSession(
 
   // 4. Intento de sync idempotente. Éxito → sale de la cola; fallo → queda para el próximo flush
   // (app-open / online / foco). Reintentar nunca duplica (índice único). Anon (row null): solo local.
+  // M-3 · el conteo de intentos/cuarentena vive en flushPendingWorkouts (el camino de reintento);
+  // este primer intento en línea solo desencola en éxito y no toca el sidecar (no está en la ruta
+  // de finalización síncrona de M-2 — addCompletedSession + enqueue ya ocurrieron arriba).
   if (!row) return;
-  const ok = await upsertWorkoutRow(row);
-  if (ok) outbox?.dequeue(sessionId);
+  const res = await upsertWorkoutRow(row);
+  if (res.ok) outbox?.dequeue(sessionId);
 }

@@ -75,6 +75,7 @@ function localTrainingReset() {
   return {
     completedSessions: [],
     pendingWorkoutSync: [],
+    pendingWorkoutMeta: {}, // M-3 · el sidecar de reintento se limpia con la cola en el reset DEV
     lastExercisePerformance: {},
     workoutLog: [],
     blockAnchors: [],

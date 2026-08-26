@@ -122,11 +122,11 @@ describe('P2-A · outbox idempotente', () => {
 });
 
 describe('P2-A · upsertWorkoutRow + dedup estable', () => {
-  it('upsertWorkoutRow: error → false, sin error → true', async () => {
+  it('upsertWorkoutRow: error → {ok:false}, sin error → {ok:true}', async () => {
     upsertError = { message: 'x' };
-    expect(await upsertWorkoutRow({ user_id: USER, client_session_id: 'a' })).toBe(false);
+    expect(await upsertWorkoutRow({ user_id: USER, client_session_id: 'a' })).toMatchObject({ ok: false });
     upsertError = null;
-    expect(await upsertWorkoutRow({ user_id: USER, client_session_id: 'a' })).toBe(true);
+    expect(await upsertWorkoutRow({ user_id: USER, client_session_id: 'a' })).toEqual({ ok: true });
   });
 
   it('mergeWorkoutSessions dedup por sessionId aunque completedAtIso difiera', () => {

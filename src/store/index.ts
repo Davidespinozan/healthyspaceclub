@@ -6,7 +6,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep, CompletedSession, PendingWorkoutRow, Modality } from '../types';
+import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep, CompletedSession, PendingWorkoutRow, WorkoutSyncMeta, Modality } from '../types';
+import { track } from '../utils/analytics';
 import { assignPlan } from '../utils/tdee';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
 import type { Region, Currency } from '../utils/region';
@@ -281,6 +282,14 @@ interface AppState {
   pendingWorkoutSync: PendingWorkoutRow[];
   enqueuePendingWorkout: (row: PendingWorkoutRow) => void;
   dequeuePendingWorkout: (clientSessionId: string) => void;
+  // WORKOUT-OUTBOX-RESILIENCE-1 (M-3) · sidecar de reintento keyed por client_session_id
+  // (persistido, sobrevive reload como la cola). NO viaja a workout_log. Ausente = legacy.
+  pendingWorkoutMeta: Record<string, WorkoutSyncMeta>;
+  /** Registra un intento de sync FALLIDO. Cuarentena si `permanent` o si attempts alcanza
+   *  `maxAttempts`. La fila NUNCA se borra. Devuelve true si ESTA falla la puso en cuarentena. */
+  recordWorkoutSyncFailure: (clientSessionId: string, opts: { permanent: boolean; code?: string; maxAttempts: number }) => boolean;
+  /** Limpia el sidecar de una sesión (éxito de sync o retry manual futuro). No toca la fila. */
+  clearWorkoutSyncMeta: (clientSessionId: string) => void;
 
   // Fase 2 · BLOCK ANCHORS (continuidad de movimientos principales por mesociclo). Referencia
   // mínima persistente; el resto se deriva. setBlockAnchors REEMPLAZA el conjunto (la resolución
@@ -912,9 +921,39 @@ export const useAppStore = create<AppState>()(
         : { pendingWorkoutSync: [...state.pendingWorkoutSync, row] },
     ),
   dequeuePendingWorkout: (clientSessionId) =>
+    set((state) => {
+      // M-3 · éxito de sync → quita la fila Y su sidecar de reintento.
+      const { [clientSessionId]: _drop, ...restMeta } = state.pendingWorkoutMeta;
+      return {
+        pendingWorkoutSync: state.pendingWorkoutSync.filter((r) => r.client_session_id !== clientSessionId),
+        pendingWorkoutMeta: restMeta,
+      };
+    }),
+
+  // WORKOUT-OUTBOX-RESILIENCE-1 (M-3) · sidecar de reintento del outbox.
+  pendingWorkoutMeta: {},
+  recordWorkoutSyncFailure: (clientSessionId, { permanent, code, maxAttempts }) => {
+    const prev = get().pendingWorkoutMeta[clientSessionId];
+    const wasQuarantined = prev?.quarantined === true;
+    const attempts = (prev?.attempts ?? 0) + 1;              // cada falla incrementa exactamente 1
+    const quarantined = wasQuarantined || permanent || attempts >= maxAttempts;
     set((state) => ({
-      pendingWorkoutSync: state.pendingWorkoutSync.filter((r) => r.client_session_id !== clientSessionId),
-    })),
+      pendingWorkoutMeta: {
+        ...state.pendingWorkoutMeta,
+        [clientSessionId]: { attempts, quarantined, ...(code != null && { lastCode: code }) },
+      },
+    }));
+    const justQuarantined = quarantined && !wasQuarantined;
+    // Observabilidad SEGURA: un único evento al entrar en cuarentena. Solo metadata (attempts,
+    // code) — jamás user_id/client_session_id/payload/notas/PII/mensaje crudo.
+    if (justQuarantined) track('workout_sync_stuck', { attempts, ...(code != null && { code }) });
+    return justQuarantined;
+  },
+  clearWorkoutSyncMeta: (clientSessionId) =>
+    set((state) => {
+      const { [clientSessionId]: _drop, ...rest } = state.pendingWorkoutMeta;
+      return { pendingWorkoutMeta: rest };
+    }),
 
   // Fase 2 · block anchors (continuidad de movimientos principales por mesociclo).
   blockAnchors: [],
@@ -1607,6 +1646,7 @@ export const useAppStore = create<AppState>()(
     lastExercisePerformance: state.lastExercisePerformance,
     completedSessions: state.completedSessions,
     pendingWorkoutSync: state.pendingWorkoutSync,  // OUTBOX P2-A · sobrevive reload/offline
+    pendingWorkoutMeta: state.pendingWorkoutMeta,  // M-3 · sidecar de reintento (cuarentena sobrevive reload)
     blockAnchors: state.blockAnchors,      // Fase 2 · continuidad de anchors entre recargas
     todayCheckin: state.todayCheckin,      // P6
     rirLog: state.rirLog,                  // P6
