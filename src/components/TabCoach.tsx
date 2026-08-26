@@ -6,6 +6,7 @@ import { useT } from '../i18n';
 import { ArrowRight } from 'lucide-react';
 import { callAIStream } from '../utils/aiProxy';
 import { buildCoachSystemPrompt } from '../ai/prompts/coach';
+import { classifySafety } from '../utils/hsmSafety';
 import ManagePlanSheet from './sheets/ManagePlanSheet';
 import TermsSheet from './sheets/TermsSheet';
 import PrivacySheet from './sheets/PrivacySheet';
@@ -44,6 +45,7 @@ export default function TabCoach() {
   const [showPlan, setShowPlan] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showSafety, setShowSafety] = useState(false); // COACH-SAFETY-1 · panel de crisis
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Read prefilled message on mount and clear from store
@@ -83,6 +85,18 @@ export default function TabCoach() {
   }, [messages, loading, streamingText]);
 
   async function send(text: string) {
+    // COACH-SAFETY-1 · clasificación de crisis ANTES de persistir o enviar nada.
+    // URGENT (autolesión/suicidio explícito): corte local total — NO se agrega al
+    // historial (así jamás re-entra al contexto de IA en turnos futuros), NO se llama
+    // al modelo/ai-proxy, NO se loguea el texto. Solo se muestra el panel de apoyo.
+    const level = classifySafety(text);
+    if (level === 'URGENT') {
+      setInput('');
+      setShowSafety(true);
+      return;
+    }
+    // NORMAL | CONCERNING continúan al coach; CONCERNING modula un reflejo de apoyo
+    // extra en el prompt (sin diagnóstico), pero SÍ puede responder el modelo.
     addCoachMessage('user', text);
     setInput('');
     setLoading(true);
@@ -99,7 +113,7 @@ export default function TabCoach() {
       const full = await callAIStream(
         {
           max_tokens: 512,
-          system: buildCoachSystemPrompt(state, locale),
+          system: buildCoachSystemPrompt(state, locale, level),
           messages: allMsgs.map(m => ({ role: m.role, content: m.content })),
         },
         (piece) => setStreamingText(prev => (prev ?? '') + piece),
@@ -131,6 +145,17 @@ export default function TabCoach() {
         <div className="tc-header-title">{t('coach.headerTitle')}</div>
         <div className="tc-header-sub">{t('coach.headerSub')}</div>
       </div>
+
+      {/* COACH-SAFETY-1 · panel de crisis (mismo copy/rol que el journal). Se muestra
+          cuando el mensaje es URGENT; el texto del usuario NO se envía ni se guarda. */}
+      {showSafety && (
+        <div className="te-safety" role="alert">
+          <div className="te-safety-title">{t('espacio.safetyTitle')}</div>
+          <p className="te-safety-body">{t('espacio.safetyBody')}</p>
+          <p className="te-safety-emergency">{t('espacio.safetyEmergency')}</p>
+          <button className="te-safety-close" onClick={() => setShowSafety(false)}>{t('espacio.safetyClose')}</button>
+        </div>
+      )}
 
       {/* Quick chips */}
       {messages.length === 0 && (
