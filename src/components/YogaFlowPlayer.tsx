@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, SkipBack, SkipForward, Pause, Play, Volume2, VolumeX, Flower2, Sparkles, Check } from 'lucide-react';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { getExerciseIcon } from '../utils/muscleGroupIcon';
+import { clearResumeAfterCommit } from '../utils/workoutSession';
 import { useT } from '../i18n';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
@@ -307,8 +308,13 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   }
 
   function handleComplete() {
-    localStorage.removeItem('yoga-flow-progress');
-    onComplete();
+    // WORKOUT-FINISH-RESILIENCE-1 (M-2) · idéntico contrato que WorkoutPlayer: onComplete
+    // persiste la sesión localmente de forma síncrona; el breadcrumb se borra recién tras
+    // retornar sin lanzar. Un fallo síncrono pre-durabilidad conserva el resume.
+    clearResumeAfterCommit(
+      () => onComplete(),
+      () => localStorage.removeItem('yoga-flow-progress'),
+    );
   }
 
   // ══════════════════════════════════════════════════════════════

@@ -40,6 +40,7 @@ import {
   setLoadForIndex,
   applySwapReset,
   resumeBlobBelongsTo,
+  clearResumeAfterCommit,
   type LoggedByExercise,
 } from '../utils/workoutSession';
 import type { Exercise, Equipment, LoggedSet, CardioStyle } from '../types';
@@ -780,12 +781,19 @@ export default function WorkoutPlayer({
       exercises: payload.exercisesCompleted,
       minutes: Math.round(payload.durationSeconds / 60),
     });
-    localStorage.removeItem(PROGRESS_KEY);
     haptics.success();
     // El trabajo principal queda registrado ya (onComplete). Si hay finisher, lo
     // hacemos como fase guiada ANTES de la pantalla de cierre; si no, directo a completed.
     setPhase(finisherBlock ? 'finisher' : 'completed');
-    onComplete(payload);
+    // WORKOUT-FINISH-RESILIENCE-1 (M-2) · onComplete persiste la sesión LOCALMENTE de
+    // forma síncrona (addCompletedSession + enqueuePendingWorkout, antes de su primer
+    // await). El breadcrumb de resume se borra SOLO tras un onComplete exitoso: si algo
+    // lanza síncronamente antes de la durabilidad, SOBREVIVE → sesión recuperable al
+    // recargar. No se espera Supabase/markActiveDay (local-first): lo remoto sigue async.
+    clearResumeAfterCommit(
+      () => onComplete(payload),
+      () => localStorage.removeItem(PROGRESS_KEY),
+    );
   }
 
   // Calentamiento → ejercicios. Reiniciamos el cronómetro aquí para no contar el

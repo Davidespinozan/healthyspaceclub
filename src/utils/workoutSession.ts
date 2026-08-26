@@ -10,6 +10,19 @@ export type WorkoutExercise = CachedWorkout['exercises'][number];
 export type SetScheme = 'top' | 'backoff' | 'deload' | 'straight';
 export interface SetLoad { kg: number | null; scheme: SetScheme; }
 
+// ── WORKOUT-FINISH-RESILIENCE-1 (M-2) · contrato de finalización local-first ──
+/** Corre `commit` (persistencia LOCAL síncrona de la sesión: addCompletedSession +
+ *  enqueuePendingWorkout, ANTES de cualquier await) y SOLO si retorna sin lanzar limpia
+ *  el breadcrumb de resume vía `clearResume`. Si `commit` lanza síncronamente —antes de
+ *  alcanzar la durabilidad local— el breadcrumb NO se toca → la sesión sigue siendo
+ *  recuperable al recargar (no se pierde entreno + resume a la vez). NO se traga el
+ *  error: se propaga igual que antes, para no alterar el manejo de errores existente ni
+ *  esperar a la parte remota (Supabase/markActiveDay siguen async). */
+export function clearResumeAfterCommit(commit: () => void, clearResume: () => void): void {
+  commit();        // si lanza aquí, `clearResume` NUNCA se ejecuta (breadcrumb sobrevive)
+  clearResume();   // solo se alcanza tras un commit local exitoso
+}
+
 // ── ACCOUNT-ISOLATION-1 · propiedad del resume del player ────────────────────
 /** ¿El blob de resume (workout-player-progress) pertenece al usuario autenticado?
  *  Fail-closed a través de una frontera de cuenta: solo resume si el blob trae un
