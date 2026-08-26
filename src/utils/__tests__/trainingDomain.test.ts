@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { freezeTrainingTestDate, restoreTrainingTestDate } from './helpers/frozenClock';
 import { isStrengthDomainSession } from '../trainingDomain';
 import { computeWeeklyVolume } from '../workoutPlanner';
 import { regionExposure } from '../regionalCoverage';
@@ -16,6 +17,9 @@ import type { CompletedSession, Modality } from '../../types';
 const PRESS = 'press-horizontal';                 // fuerza: type compuesto, muscleGroup pecho
 const bankPress = BANK.find(e => e.id === PRESS)!;
 const D = '2026-08-19';
+// TEST-STABILITY-1 · reloj congelado a la referencia de los fixtures (2026-08-19).
+beforeEach(freezeTrainingTestDate);
+afterEach(restoreTrainingTestDate);
 const set = (reps = 8, kg = 40, rir?: number) => ({ reps, kg, ...(rir != null && { rir }) });
 
 // Sesión con exercises[] poblado (misma forma que finishWorkoutSession persiste).

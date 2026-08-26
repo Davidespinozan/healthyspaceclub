@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { freezeTrainingTestDate, restoreTrainingTestDate } from './helpers/frozenClock';
 import { roleOf, isWorkingSet, type ExecutionRole } from '../executionRole';
 import { computeWeeklyVolume } from '../workoutPlanner';
 import { regionExposure } from '../regionalCoverage';
@@ -20,6 +21,9 @@ const sess = (modality: CompletedSession['modality'], sets: S[], extra: Partial<
   exercises: [{ id: PRESS, sets }], ...extra,
 });
 const vol = (s: CompletedSession[]) => computeWeeklyVolume(s, BANK, 7, []);
+// TEST-STABILITY-1 · reloj congelado a la referencia de los fixtures (2026-08-19).
+beforeEach(freezeTrainingTestDate);
+afterEach(restoreTrainingTestDate);
 const bankRegion = new Map(BANK.map(e => [e.id, e]));
 // espejo de la entrada a e1RM (sessionMesocycle/DailyTrainer): solo working sets alimentan e1RM.
 const e1rmWorking = (s: CompletedSession) =>

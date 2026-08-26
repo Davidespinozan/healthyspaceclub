@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { freezeTrainingTestDate, restoreTrainingTestDate } from './helpers/frozenClock';
 import { computeWeeklyVolume } from '../workoutPlanner';
 import { buildSupplementalPlan } from '../supplementalWorkout';
 import { deriveCapabilities } from '../equipmentImplement';
@@ -23,6 +24,11 @@ const modern = (exs: Array<{ id: string; nsets: number }>, extra: Partial<Comple
   ...extra,
 });
 const vol = (sessions: CompletedSession[]) => computeWeeklyVolume(sessions, BANK, 7, []);
+
+// TEST-STABILITY-1 · reloj congelado a la referencia de los fixtures (2026-08-19) para
+// que la ventana de 7 días de computeWeeklyVolume los incluya en cualquier fecha/TZ.
+beforeEach(freezeTrainingTestDate);
+afterEach(restoreTrainingTestDate);
 
 describe('ledger · sesión moderna cuenta ejecutados (no defaultSets)', () => {
   it('executed 5 > defaultSets 4 → cuenta 5', () => {

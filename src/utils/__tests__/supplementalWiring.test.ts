@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { freezeTrainingTestDate, restoreTrainingTestDate } from './helpers/frozenClock';
 import { finishWorkoutSession } from '../workoutLogger';
 import { buildSupplementalPlan } from '../supplementalWorkout';
 import { buildSupplementalExercises } from '../supplementalPlan';
@@ -20,6 +21,10 @@ const fromMock = vi.fn((_t: string) => ({ upsert: upsertMock }));
 vi.mock('../../lib/supabase', () => ({ supabase: { from: (t: string) => fromMock(t) } }));
 
 const today = '2026-08-19';
+// TEST-STABILITY-1 · reloj congelado (nivel de archivo) a la referencia de los fixtures
+// (2026-08-19), independiente del beforeEach de limpieza de mocks de cada describe.
+beforeEach(freezeTrainingTestDate);
+afterEach(restoreTrainingTestDate);
 const gym = deriveCapabilities(['gym']);
 const pushMuscles: MuscleGroup[] = ['pecho', 'hombros', 'triceps'];
 const doneSession: CompletedSession = {

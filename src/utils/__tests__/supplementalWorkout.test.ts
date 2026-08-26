@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { freezeTrainingTestDate, restoreTrainingTestDate } from './helpers/frozenClock';
 import { buildSupplementalPlan } from '../supplementalWorkout';
 import { computeWeeklyVolume } from '../workoutPlanner';
 import { deriveCapabilities } from '../equipmentImplement';
@@ -10,6 +11,9 @@ import type { CompletedSession, MuscleGroup } from '../../types';
 // ═══════════════════════════════════════════════════════════════════════════
 
 const today = '2026-08-19';
+// TEST-STABILITY-1 · reloj congelado a la referencia de los fixtures (2026-08-19).
+beforeEach(freezeTrainingTestDate);
+afterEach(restoreTrainingTestDate);
 const gym = deriveCapabilities(['gym']); // equipmentList=['cuerpo','gym'], allowed = gym implements
 const pushMuscles: MuscleGroup[] = ['pecho', 'hombros', 'triceps'];
 
