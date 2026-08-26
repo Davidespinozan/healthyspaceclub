@@ -10,6 +10,18 @@ export type WorkoutExercise = CachedWorkout['exercises'][number];
 export type SetScheme = 'top' | 'backoff' | 'deload' | 'straight';
 export interface SetLoad { kg: number | null; scheme: SetScheme; }
 
+// ── ACCOUNT-ISOLATION-1 · propiedad del resume del player ────────────────────
+/** ¿El blob de resume (workout-player-progress) pertenece al usuario autenticado?
+ *  Fail-closed a través de una frontera de cuenta: solo resume si el blob trae un
+ *  ownerId string no vacío IGUAL al usuario actual. Un blob sin ownerId (legacy),
+ *  con dueño distinto, o malformado → NO se resume (el llamador debe purgarlo).
+ *  `currentOwnerId` null (sin sesión) nunca hace match → tampoco resume. */
+export function resumeBlobBelongsTo(blob: unknown, currentOwnerId: string | null): boolean {
+  if (!blob || typeof blob !== 'object') return false;
+  const owner = (blob as { ownerId?: unknown }).ownerId;
+  return typeof owner === 'string' && owner.length > 0 && owner === currentOwnerId;
+}
+
 /** ¿El ejercicio tiene esquema top/backoff REAL (top+backoff con carga y DISTINTOS)? Deload/
  *  corporal/banda/topKg===backoffKg → false (serie recta, sin distinción por serie). */
 export function hasTopBackoffScheme(ex: { topKg?: number; backoffKg?: number; deloadKg?: number }): boolean {

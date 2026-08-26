@@ -39,6 +39,7 @@ import {
   hasTopBackoffScheme,
   setLoadForIndex,
   applySwapReset,
+  resumeBlobBelongsTo,
   type LoggedByExercise,
 } from '../utils/workoutSession';
 import type { Exercise, Equipment, LoggedSet, CardioStyle } from '../types';
@@ -192,7 +193,13 @@ export default function WorkoutPlayer({
       const raw = localStorage.getItem(PROGRESS_KEY);
       if (!raw) return null;
       const d = JSON.parse(raw);
-      if (d && d.version === 2 && d.workoutDate === sealedWorkoutDate && d.planHash === planHash
+      // ACCOUNT-ISOLATION-1 · fail-closed por DUEÑO: solo se resume un blob sellado con
+      // el usuario autenticado actual. Blob de otra cuenta / legacy sin ownerId / malformado
+      // → NO se resume (y se purga en el effect de limpieza). Evita que la cuenta B retome
+      // los sets en curso de A en el mismo dispositivo.
+      const authId = useAppStore.getState().user?.id ?? null;
+      if (d && d.version === 2 && resumeBlobBelongsTo(d, authId)
+          && d.workoutDate === sealedWorkoutDate && d.planHash === planHash
           && typeof d.currentStep === 'number' && d.currentStep >= 0
           && d.currentStep < sequence.length && Array.isArray(d.loggedByExercise)) {
         return d as { currentStep: number; loggedByExercise: LoggedByExercise; startedAt?: number; swaps?: Record<number, WorkoutExercise> };
@@ -589,6 +596,7 @@ export default function WorkoutPlayer({
         workoutDate: sealedWorkoutDate,
         planHash,
         version: 2,
+        ownerId: myId, // ACCOUNT-ISOLATION-1 · sello de dueño para el resume fail-closed
         currentStep,
         loggedByExercise,
         startedAt,
@@ -640,7 +648,13 @@ export default function WorkoutPlayer({
       const raw = localStorage.getItem(PROGRESS_KEY);
       if (!raw) return;
       const d = JSON.parse(raw);
-      if (!d || d.workoutDate !== sealedWorkoutDate || d.planHash !== planHash) {
+      // ACCOUNT-ISOLATION-1 · purga también un blob de OTRO dueño o legacy (sin ownerId):
+      // no debe quedar en el dispositivo para que otra cuenta lo herede. `myId` aquí es
+      // el usuario autenticado (mismo que el sello de autosave). Solo aplicamos el criterio
+      // de dueño cuando hay usuario resuelto (myId != null) para no borrar un blob válido
+      // durante un instante transitorio sin sesión.
+      if (!d || d.workoutDate !== sealedWorkoutDate || d.planHash !== planHash
+          || (myId != null && !resumeBlobBelongsTo(d, myId))) {
         localStorage.removeItem(PROGRESS_KEY);
       }
     } catch { /* noop */ }

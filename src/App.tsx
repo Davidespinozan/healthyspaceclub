@@ -264,7 +264,13 @@ export default function App() {
           const res = await runHSMMigration(st.dailyHSMResponses);
           if (res.ok && !cancelled) st.setHSMMigratedAt(new Date().toISOString());
         }
-        await flushHSMOutbox();
+        // ACCOUNT-ISOLATION-1 · solo flushear cuando el dueño de los datos está resuelto
+        // y COINCIDE con el usuario autenticado. Si no coincide, ensureDataOwner ya purgó
+        // el outbox; y aun sin purgar, flushHSMOutbox filtra por sello y nunca escribe la
+        // reflexión de A como B. Se pasa user.id como dueño para el filtro.
+        if (useAppStore.getState().dataOwnerId === user.id) {
+          await flushHSMOutbox(undefined, user.id);
+        }
         const today = dayKey(new Date());
         const [rows, profile, review] = await Promise.all([fetchReflections(), fetchProfile(), fetchDailyReview(today)]);
         if (cancelled) return;

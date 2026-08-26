@@ -21,6 +21,7 @@ import type { HSMSafetyLevel } from '../utils/hsmSafety';
 import type { HSMReflection } from '../utils/hsmRepository';
 import { deleteReflection as repoDeleteReflection, clearAllHSM, upsertProfile, upsertDailyReview } from '../utils/hsmRepository';
 import { enqueueReflection, dequeueReflection, flushHSMOutbox } from '../utils/hsmOutbox';
+import { purgeUserScopedStandaloneKeys } from '../utils/accountIsolation';
 import { legacyToReflection } from '../utils/hsmMigration';
 
 // Alimento de un registro armado (para reabrir y editar lo que comiste).
@@ -1380,8 +1381,10 @@ export const useAppStore = create<AppState>()(
       }],
     }));
     // Local-first: encolar + intentar sync (no bloquea la UI; idempotente por clave).
-    enqueueReflection(full);
-    void flushHSMOutbox().catch(() => {});
+    // ACCOUNT-ISOLATION-1 · sella el ítem con el dueño autenticado y flushea solo lo suyo.
+    const owner = get().user?.id ?? undefined;
+    enqueueReflection(full, owner);
+    void flushHSMOutbox(undefined, owner).catch(() => {});
     return full.safetyLevel; // el flujo decide la UX de urgencia
   },
   deleteHSMResponse: (date, questionKey) => {
@@ -1482,7 +1485,13 @@ export const useAppStore = create<AppState>()(
 
   // Resetea SOLO datos per-usuario. NO toca nav/UI (currentScreen, dashPage, modales)
   // ni settings app-level (idioma/tema). Usado por logout y por el guard anti-fuga.
-  resetUserScopedData: () => set({
+  resetUserScopedData: () => {
+    // ACCOUNT-ISOLATION-1 · purga autoritativa de estado standalone per-usuario
+    // (llaves fuera de 'hsc-store' + outbox HSM) en CUALQUIER frontera de cuenta —
+    // SIGNED_OUT y SIGNED_IN con dueño distinto (ensureDataOwner), no solo logout().
+    // NUNCA localStorage.clear(); NO toca pendingWorkoutSync ni prefs app-wide.
+    purgeUserScopedStandaloneKeys();
+    set({
     userName: '',
     username: null,
     avatarUrl: null,
@@ -1547,23 +1556,18 @@ export const useAppStore = create<AppState>()(
     coachChatDate: '',
     hsmProfile: null,
     hsmDailyReview: null,
-  }),
+    });
+  },
 
   logout: () => {
     // signOut no bloquea el logout local (si la red tarda, la UI ya salió). .catch
     // evita un unhandled rejection; el evento SIGNED_OUT reconcilia igual.
     import('../lib/supabase').then(({ supabase }) => supabase.auth.signOut().catch(() => {}));
-    localStorage.removeItem('hsc-life-system-v2'); // legacy key (histórico)
-    // MINDSET-1: el outbox HSM contiene texto de journal → limpiarlo al salir.
-    // El blob 'hsc-store' lo reescribe resetUserScopedData (HSM a vacío) en el persist.
-    try { localStorage.removeItem('hsc-hsm-outbox'); } catch { /* noop */ }
-    // AUTH-PROVIDERS B · hardening de cambio de cuenta: llaves standalone POR USUARIO
-    // que no vivían en 'hsc-store' y sobrevivían al logout → las hereda la cuenta B en
-    // el mismo dispositivo. Son estado efímero de sesión de entreno (se re-derivan solo).
-    // NO se toca pendingWorkoutSync (particionado por user_id) ni prefs app-wide (idioma).
-    for (const k of ['workout-player-progress', 'yoga-flow-progress', 'day-complete-celebrated', 'hsc_session_min', 'hsc_priority_muscles']) {
-      try { localStorage.removeItem(k); } catch { /* noop */ }
-    }
+    localStorage.removeItem('hsc-life-system-v2'); // legacy key (histórico, device-wide)
+    // ACCOUNT-ISOLATION-1 · la purga de llaves standalone per-usuario (incl. el outbox
+    // HSM con texto de journal) vive ahora en resetUserScopedData → autoritativa en
+    // TODA frontera de cuenta (logout + SIGNED_OUT + SIGNED_IN con dueño distinto),
+    // no solo aquí. pendingWorkoutSync se preserva a propósito (particionado por user_id).
     get().resetUserScopedData();
     // Nav/UI + marca de dueño (comportamiento neto idéntico al logout previo).
     set({
