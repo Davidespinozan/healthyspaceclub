@@ -1480,8 +1480,13 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 
 /* Slides */
 .onb-slide {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  position: absolute; inset: 0; display: flex;
   padding: 60px 24px 40px;
+  /* Scroll cuando el paso es más alto que el viewport (cuestionario largo, móvil).
+     El centrado lo hace `margin:auto` en .onb-center → corto = centrado, largo =
+     scroll desde arriba sin recortar (evita el bug de flex align-items:center). */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 /* Todo el onboarding en negro premium (mismo lenguaje que hero/modal de pago).
    .onb-dark y .onb-light comparten base; .onb-light antes era crema. */
@@ -1501,7 +1506,7 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
   to   { opacity: 1; transform: translateX(0); }
 }
 
-.onb-center { width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.onb-center { width: 100%; max-width: 420px; margin: auto; display: flex; flex-direction: column; align-items: center; text-align: center; }
 
 /* Typography */
 .onb-brand { font-size: 2rem; font-weight: 800; color: #F6F2EA; letter-spacing: -.02em; margin-bottom: 8px; }
