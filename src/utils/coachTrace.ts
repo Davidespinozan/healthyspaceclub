@@ -54,6 +54,45 @@ export interface CoachTraceInput {
   groups?: Array<{ ids: string[]; type: string; quality: string; reasons: string[] }>;
 }
 
+// COACH-CONTEXT-1 · versión COMPACTA del trace, persistida en dailyWorkout.plan.coachTrace
+// para que el Coach EXPLIQUE "¿por qué HSC me puso esto hoy?" (deload/readiness/prioridad/carga).
+// Solo re-empaqueta hechos ya producidos por P1–P6; NO recalcula nada.
+export interface CoachTraceForPlan {
+  week: number;
+  phase: string;
+  progression: string;
+  deload: boolean;
+  recovery: string;
+  readinessState: string;
+  readinessFactors: string[];
+  priorityMuscles: string[];
+  loads: Array<{ id: string; muscle: string; sets: number; reps: string; rir: number; topKg?: number; backoffKg?: number }>;
+  replaced: Array<{ exerciseId: string; from?: string; reason?: string }>;
+  notes: string[];
+}
+
+/** Mapea el trace completo (CoachTraceInput) a la versión compacta persistible. Puro. */
+export function toCoachTraceForPlan(t: CoachTraceInput): CoachTraceForPlan {
+  return {
+    week: t.meso.week,
+    phase: t.meso.phase,
+    progression: t.meso.progression,
+    deload: t.meso.deload,
+    recovery: t.meso.recovery,
+    readinessState: t.readiness.state,
+    readinessFactors: t.readiness.factors ?? [],
+    priorityMuscles: Object.keys(t.priorities ?? {}),
+    loads: (t.items ?? []).map(it => ({
+      id: it.id, muscle: it.muscle, sets: it.sets, reps: it.reps, rir: it.rir,
+      ...(it.topKg != null && { topKg: it.topKg }),
+      ...(it.backoffKg != null && { backoffKg: it.backoffKg }),
+    })),
+    replaced: (t.anchors ?? []).filter(a => a.status === 'replaced')
+      .map(a => ({ exerciseId: a.exerciseId, from: a.from, reason: a.reason })),
+    notes: t.notes ?? [],
+  };
+}
+
 const round = (n: number) => Math.round(n * 10) / 10;
 
 /** Devuelve el trace como líneas legibles (una sección por capa de la cadena). */

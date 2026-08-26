@@ -58,7 +58,7 @@ import { buildSupplementalExercises } from '../utils/supplementalPlan';
 import { bestE1RMByMuscle } from '../utils/loadEngine';
 import { resolvePriorities, applyMusclePriority, possibleWeakPoint } from '../utils/musclePriority';
 import { computeReadiness, readinessToRecovery } from '../utils/readiness';
-import { formatCoachTrace } from '../utils/coachTrace';
+import { formatCoachTrace, toCoachTraceForPlan, type CoachTraceInput } from '../utils/coachTrace';
 import { deriveCapabilities, gearSignature, type Gear } from '../utils/equipmentImplement';
 import { filterNoSupportsBank } from '../data/matOnly';
 import {
@@ -1604,45 +1604,47 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           }
         }
 
-        // ── TRAZABILIDAD (dev) · registro auditable de la sesión compuesta ──────
-        if (import.meta.env?.DEV) {
-          try {
-            // Métricas dev (recomputadas aquí; la allocation real es sessionAllocation).
-            const done7 = computeWeeklyVolume(completedSessions, exerciseBank, 7, workoutLog || []);
-            const freq = trainingFrequency(completedSessions, workoutLog || []);
-            const wkAgo = dayKey(new Date(Date.now() - 6 * 86400000));
-            const sessionsThisWeekDone = new Set([...completedSessions.map(s => s.date), ...(workoutLog || []).map(x => x.date)].filter(d => d >= wkAgo)).size;
-            const rankD: Record<string, number> = { mala: 0, media: 1, buena: 2 };
-            const dosingRecovery = rankD[todayRecovery] <= rankD[meso.signals.recovery] ? todayRecovery : meso.signals.recovery;
-            const trace = formatCoachTrace({
-              objective: String(goal), trainingGoal, level: levelFromObData(obData), equipment: equipmentList,
-              anchors: anchorTrace.map(a => ({ exerciseId: a.exerciseId, status: a.status, from: a.from, reason: a.reason })),
-              block: { id: currentBlockId(completedSessions), week: meso.week },
-              groups: groupTrace,
-              hasLoadHistory: caps.hasWeights,
-              time: { total: selectedTime, warmup: sessionPlan.budget.warmup, main: sessionPlan.budget.main, finisher: sessionPlan.budget.finisher },
-              meso: {
-                week: meso.week, phase: meso.phase, progression: meso.progression, deload: mesoDeload,
-                volumeMultiplier: meso.volumeMultiplier, recovery: meso.signals.recovery,
-                adherence: meso.signals.adherence, performance: meso.signals.performance,
-              },
-              chronic: chronicTrend,
-              readiness: { state: readiness.state, factors: readiness.factors, captured: !!checkinToday, dosingRecovery },
-              targets: prioritizedTargets ?? {},
-              priorities: sessionPriorities,
-              doneThisWeek: done7,
-              sessionsLeftInWeek: Math.max(1, freq - sessionsThisWeekDone),
-              allocation,
-              items: items.map(it => ({
-                id: it.ex.id, muscle: it.ex.muscleGroup, category: it.category,
-                sets: it.prescription.sets, reps: it.prescription.reps, rest: it.prescription.rest,
-                rir: it.prescription.rir, topKg: it.prescription.topKg, backoffKg: it.prescription.backoffKg,
-              })),
-              cutsByTime: [], notes: priorityMuscleSet.size ? [`prioridad activa: ${[...priorityMuscleSet].join(', ')}`] : [],
-            });
-            console.info(trace.join('\n'));
-          } catch { /* trace no debe romper la generación */ }
-        }
+        // ── TRAZABILIDAD · el "PORQUÉ" de la sesión (P1–P6). NO es un motor: solo re-empaqueta
+        //    hechos YA producidos por los motores. COACH-CONTEXT-1: se construye SIEMPRE (no solo
+        //    DEV) y se persiste COMPACTO en el plan (workout.coachTrace) para que el Coach explique
+        //    la decisión; el console.info detallado sigue gated a DEV. Cero cambio a los motores. ──
+        try {
+          const done7 = computeWeeklyVolume(completedSessions, exerciseBank, 7, workoutLog || []);
+          const freq = trainingFrequency(completedSessions, workoutLog || []);
+          const wkAgo = dayKey(new Date(Date.now() - 6 * 86400000));
+          const sessionsThisWeekDone = new Set([...completedSessions.map(s => s.date), ...(workoutLog || []).map(x => x.date)].filter(d => d >= wkAgo)).size;
+          const rankD: Record<string, number> = { mala: 0, media: 1, buena: 2 };
+          const dosingRecovery = rankD[todayRecovery] <= rankD[meso.signals.recovery] ? todayRecovery : meso.signals.recovery;
+          const traceInput: CoachTraceInput = {
+            objective: String(goal), trainingGoal, level: levelFromObData(obData), equipment: equipmentList,
+            anchors: anchorTrace.map(a => ({ exerciseId: a.exerciseId, status: a.status, from: a.from, reason: a.reason })),
+            block: { id: currentBlockId(completedSessions), week: meso.week },
+            groups: groupTrace,
+            hasLoadHistory: caps.hasWeights,
+            time: { total: selectedTime, warmup: sessionPlan.budget.warmup, main: sessionPlan.budget.main, finisher: sessionPlan.budget.finisher },
+            meso: {
+              week: meso.week, phase: meso.phase, progression: meso.progression, deload: mesoDeload,
+              volumeMultiplier: meso.volumeMultiplier, recovery: meso.signals.recovery,
+              adherence: meso.signals.adherence, performance: meso.signals.performance,
+            },
+            chronic: chronicTrend,
+            readiness: { state: readiness.state, factors: readiness.factors, captured: !!checkinToday, dosingRecovery },
+            targets: prioritizedTargets ?? {},
+            priorities: sessionPriorities,
+            doneThisWeek: done7,
+            sessionsLeftInWeek: Math.max(1, freq - sessionsThisWeekDone),
+            allocation,
+            items: items.map(it => ({
+              id: it.ex.id, muscle: it.ex.muscleGroup, category: it.category,
+              sets: it.prescription.sets, reps: it.prescription.reps, rest: it.prescription.rest,
+              rir: it.prescription.rir, topKg: it.prescription.topKg, backoffKg: it.prescription.backoffKg,
+            })),
+            cutsByTime: [], notes: priorityMuscleSet.size ? [`prioridad activa: ${[...priorityMuscleSet].join(', ')}`] : [],
+          };
+          if (import.meta.env?.DEV) console.info(formatCoachTrace(traceInput).join('\n'));
+          // Persiste el porqué COMPACTO en el plan (jsonb ya lleva campos extra stampeados).
+          (workout as unknown as Record<string, unknown>).coachTrace = toCoachTraceForPlan(traceInput);
+        } catch { /* la traza nunca debe romper la generación */ }
       }
 
       const strictValidation = validateWorkoutPlanStrict(workout, validIds);

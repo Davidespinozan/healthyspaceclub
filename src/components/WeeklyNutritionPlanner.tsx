@@ -4,7 +4,7 @@ import { useAppStore } from '../store';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
-import { hasGeneratedWeeklyPlan, weeklyPlanPhase } from '../utils/weeklyPlanState';
+import { hasGeneratedWeeklyPlan, weeklyPlanPhase, resolveTodayPlanMeals } from '../utils/weeklyPlanState';
 import { normalizeGroceryList } from '../utils/groceryList';
 import { mealKcal, dayNutrition } from '../utils/mealNutrition';
 import { computeDayConsumption } from '../utils/foodConsumption';
@@ -664,13 +664,14 @@ export default function WeeklyNutritionPlanner() {
   const activeDayScale = 1;
   // Comidas del plan de HOY con su índice — para que la Calculadora sepa QUÉ platillo
   // del plan sustituye (mismo índice que usa mealResolvedByLog en Plan del día).
-  const todayNum = weeklyPlan.selectedDays[todayOffset >= 0 ? todayOffset : 0] ?? weeklyPlan.selectedDays[0];
-  const todayDayPlan = scaledPlan.find(d => d.day === todayNum);
+  // COACH-CONTEXT-1 · selección de "día de HOY del plan" vía helper compartido (única fuente,
+  // el Coach usa exactamente la misma) — comportamiento idéntico al inline previo.
+  const todayPlanMeals = resolveTodayPlanMeals(weeklyPlan, shoppingDay, new Date().getDay());
 
   // Consumo REAL de hoy para la META: suma comidas del plan marcadas ✓ Y lo que
   // registraste tú (food_log). Una sola libreta — todo cuenta (regla 3).
   const dayConsumption = computeDayConsumption({
-    todayMeals: todayDayPlan?.meals ?? [],
+    todayMeals: todayPlanMeals,
     mealChecks, mealResolvedByLog, foodLog, today: todayKey,
   });
   const macroTargets = computeNutritionTargets(parseObData(obData));

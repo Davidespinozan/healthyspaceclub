@@ -28,3 +28,20 @@ export function weeklyPlanPhase<T extends { days?: unknown[] }>(
   if (shoppingDay === null) return 'setup-day';
   return hasGeneratedWeeklyPlan(wp) ? 'plan' : 'questions';
 }
+
+// COACH-CONTEXT-1 · MISMA selección de "día de HOY del plan" que usa WeeklyNutritionPlanner
+// (mapeo weekday→día del plan vía shoppingDay + selectedDays). Se extrae aquí como pura y
+// única fuente para que el Coach y la UI de nutrición no puedan divergir. Sin lógica de
+// consumo/macros (esa la calculan computeDayConsumption/computeNutritionTargets). O(n) trivial.
+export function resolveTodayPlanMeals<M>(
+  wp: { days?: Array<{ day: number; meals: M[] }>; selectedDays?: number[] } | null | undefined,
+  shoppingDay: number | null,
+  weekday: number,
+): M[] {
+  const days = wp?.days;
+  if (!Array.isArray(days) || days.length === 0) return [];
+  const selectedDays = wp?.selectedDays ?? [];
+  const todayOffset = shoppingDay !== null ? ((weekday - shoppingDay + 7) % 7) : -1;
+  const todayNum = selectedDays[todayOffset >= 0 ? todayOffset : 0] ?? selectedDays[0];
+  return days.find(d => d.day === todayNum)?.meals ?? [];
+}

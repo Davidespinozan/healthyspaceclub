@@ -1,7 +1,7 @@
-import { dayKey } from '../../utils/localDate';
 import type { useAppStore, AppLanguage } from '../../store';
 import { buildHSMCoreBlock } from '../hsmCore';
 import { getVoiceRules, getOutputLanguageDirective } from '../voice';
+import { buildCoachContext, renderHscFacts } from '../../utils/coachContext';
 
 /**
  * System prompt del coach IA (chat conversacional en TabCoach).
@@ -22,65 +22,17 @@ export function buildCoachSystemPrompt(
   // modelo); solo 'NORMAL' | 'CONCERNING' modulan un reflejo extra de apoyo.
   safetyLevel: 'NORMAL' | 'CONCERNING' | 'URGENT' = 'NORMAL',
 ): string {
-  const { userName, obData, tdee, planGoal, habits, weightLog, foodLog, workoutLog,
-    streakCount, weeklyPlan, mealPlanKey,
-    dailyHSMResponses, dailyWorkout, hsmProfile } = store;
-
-  const today = dayKey(new Date());
-  const todayFood = foodLog.filter(e => e.date === today);
-  const todayKcal = todayFood.reduce((s, e) => s + e.kcal, 0);
-  const todayProt = Math.round(todayFood.reduce((s, e) => s + e.prot, 0));
-  const todayCarbs = Math.round(todayFood.reduce((s, e) => s + e.carbs, 0));
-  const todayFat = Math.round(todayFood.reduce((s, e) => s + e.fat, 0));
-  const habitsDone = Object.values(habits).filter(Boolean).length;
-  const recentWeight = [...weightLog].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
-  const weightTrend = recentWeight.map(w => `${w.date}: ${w.kg}kg`).join(', ') || 'Sin registros';
-  const recentWorkout = [...workoutLog].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
-  const workoutSummary = recentWorkout.map(e =>
-    `${e.date} — ${e.exercise}: ${e.sets.map(s => `${s.reps}×${s.kg}kg`).join(', ')}`
-  ).join('\n') || 'Sin registros';
-
-  // MINDSET-1 · data-minimization: se ELIMINA el bloque de 30 reflexiones crudas
-  // por turno (mal etiquetado y costoso). El Coach personaliza con el PERFIL
-  // acumulado (resumen) + las reflexiones de HOY, excluyendo las URGENT (no
-  // personalizar sobre una crisis).
-  const todayHSMs = dailyHSMResponses.filter(r => r.date === today && r.safetyLevel !== 'URGENT');
-  const workoutDone = dailyWorkout?.date === today;
+  const { userName } = store;
+  // COACH-CONTEXT-1 · hechos AUTORITATIVOS de HSC, derivados en el envío (frescos y aislados
+  // por cuenta vía el snapshot del store). El Coach los EXPLICA; NO reimplementa los motores
+  // ni recalcula metas/consumo (computeNutritionTargets/computeCoach) ni el porqué (coachTrace).
+  const ctx = buildCoachContext(store);
 
   return `Eres el coach personal de ${userName || 'el usuario'}, entrenado en el Healthy Space Method (HSM) — una filosofía de transformación integral creada por David Espinoza que trabaja 10 dimensiones de vida de forma simultánea y continua.
 
-═══════════════════════════════
-PERFIL DEL USUARIO
-═══════════════════════════════
-Nombre: ${userName || 'el usuario'}
-Sexo: ${obData.sex || '?'} | Edad: ${obData.edad || '?'} | Peso: ${obData.peso || '?'}kg | Altura: ${obData.estatura || '?'}cm
-TDEE: ${tdee} cal/día | Meta calórica: ${planGoal} cal/día
-Objetivo: ${obData.goal || '?'} | Nivel de actividad: ${obData.activity || '?'}
-${obData.goal === 'Ganar músculo' ? 'ENFOQUE NUTRICIONAL: Superávit +300 kcal. Prioriza proteína alta (1.8-2.2g/kg). Entrenamiento de fuerza e hipertrofia.' : ''}
-${obData.goal === 'Bajar grasa' ? 'ENFOQUE NUTRICIONAL: Déficit -500 kcal. Mantener proteína alta para preservar músculo. Priorizar saciedad.' : ''}
-${obData.goal === 'Recomposición' ? 'ENFOQUE NUTRICIONAL: Déficit leve -200 kcal. Proteína muy alta (2g/kg). Combinar fuerza + cardio. Proceso lento pero sostenible.' : ''}
-${obData.goal === 'Bienestar integral' ? 'ENFOQUE NUTRICIONAL: Mantenimiento. Alimentación equilibrada sin restricciones extremas. Priorizar energía, sueño y estrés.' : ''}
-Racha actual: ${streakCount} días
-${hsmProfile?.text ? `
-═══════════════════════════════
-PERFIL PSICOLÓGICO ACUMULATIVO
-═══════════════════════════════
-${hsmProfile.text}
-(Actualizado: ${hsmProfile.updatedAt})
-` : ''}
-HOY:
-- Calorías consumidas: ${todayKcal} de ${planGoal} (P:${todayProt}g C:${todayCarbs}g G:${todayFat}g)
-- Alimentos: ${todayFood.map(e => e.desc).join(', ') || 'Ninguno registrado'}
-- Hábitos: ${habitsDone}/4
-- Entrenamiento completado: ${workoutDone ? 'sí' : 'no'}
-- Respuestas HSM de hoy: ${todayHSMs.map(r => `${r.dimension}: "${r.response}"`).join(' | ') || 'Sin respuestas aún'}
+${renderHscFacts(ctx)}
 
-PESO RECIENTE: ${weightTrend}
-ENTRENOS RECIENTES:
-${workoutSummary}
-Plan de comidas: ${weeklyPlan?.mealPlanKey ?? mealPlanKey}
-
-${buildHSMCoreBlock(streakCount)}
+${buildHSMCoreBlock(ctx.user.streak)}
 
 ═══════════════════════════════
 REGLAS DE COMUNICACIÓN
@@ -89,10 +41,13 @@ ${getVoiceRules(locale, 'default')}
 
 - Tono cercano y directo — como un amigo que sabe mucho.
 - Máximo 3 oraciones por respuesta — eres conciso, no das conferencias.
-- Nunca información genérica — todo personalizado a sus datos reales.
-- Si te pregunta sobre comida: usa sus calorías reales y su plan actual.
-- Si te pregunta sobre entreno: considera su energía de hoy y su historial.
-- Si está mal emocionalmente: conecta con su dimensión HSM activa.
+- Nunca información genérica — usa los DATOS ACTUALES DE HSC de arriba (son la fuente de verdad).
+- HECHOS vs SUGERENCIA: distingue SIEMPRE lo que HSC prescribió/registró (los DATOS de arriba) de tus sugerencias. Ej.: "Tu plan de hoy marca press banca 4×6" (hecho de HSC) frente a "si quieres, podrías considerar…" (sugerencia tuya). No las mezcles.
+- Si te piden un dato de HSC que NO aparece arriba, dilo con naturalidad: no tienes ese dato. NUNCA inventes cifras, entrenos, comidas, macros restantes ni la razón del motor.
+- Macros/calorías: usa los valores EXACTOS de "RESTA HOY" — no estimes ("te faltan ~70g"); HSC ya lo calculó.
+- Ausencia de dato ≠ inferencia: sin entreno hoy no asumas descanso; sin plan no inventes comidas; sin "POR QUÉ" no inventes la razón del deload; sin historial no afirmes una tendencia.
+- Si te pregunta sobre entreno: usa el ENTRENO DE HOY y el "POR QUÉ HSC prescribió esto".
+- Si está mal emocionalmente: conecta con su dimensión HSM activa y su perfil/reflexiones de arriba.
 - Si lleva más de 7 días de racha: reconócelo explícitamente.
 - Si no cumplió algo: confronta con amabilidad, sin juicio, con una pregunta.
 - Nunca des listas de 5 puntos — conversa, no des clase.
