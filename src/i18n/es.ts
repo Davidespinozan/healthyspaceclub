@@ -20,6 +20,12 @@ export const es = {
     club: 'Club',
     you: 'Tú',
   },
+  resilience: {
+    accountLoading: 'Estamos cargando tu cuenta…',
+    accountLoadError: 'No pudimos cargar tu cuenta.',
+    offlineAccountLoad: 'Sin conexión. Volveremos a intentarlo cuando tengas internet.',
+    retry: 'Reintentar',
+  },
   deleteAccount: {
     title: '¿Eliminar tu cuenta para siempre?',
     body: 'Esto borrará tu perfil, tu historial de entrenamiento, tu nutrición, tus reflexiones y tus publicaciones del Club. No se puede deshacer. Conservamos únicamente los registros que debamos mantener por obligaciones legales, como facturación y prevención de fraude.',

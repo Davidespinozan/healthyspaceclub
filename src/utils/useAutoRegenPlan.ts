@@ -15,13 +15,25 @@ export function weekStartKey(d: Date): string {
   return dayKey(s);
 }
 
-/** ¿El plan generado en `generatedAt` es de una semana anterior a `now`? Pura y
- *  testeable. Fecha inválida/ausente → false (nunca borra por las dudas). */
+/** MVP-RESILIENCE-1 · gracia mínima antes de borrar un plan de semana cruzada. Un
+ *  plan generado viernes/sábado no debe morir el domingo pocas horas después: el
+ *  socio pidió un plan de 7 días. Con 48h de gracia, sobrevive al domingo y se
+ *  resetea recién cuando ya tiene ≥48h (dom/lun), sin llegar nunca a durar 8 días. */
+export const WEEKLY_PLAN_GRACE_HOURS = 48;
+
+/** ¿Debe borrarse el plan? Pura y testeable. Resetea SOLO si: fecha válida, semana
+ *  cruzada (Sunday-anchored) Y el plan ya tiene ≥48h. Inválida/ausente/futura → false
+ *  (nunca borra por las dudas). No accede al store. */
 export function shouldResetWeekly(generatedAt: string | null | undefined, now: Date): boolean {
   if (!generatedAt) return false;
   const gen = new Date(generatedAt);
   if (Number.isNaN(gen.getTime())) return false;
-  return weekStartKey(gen) < weekStartKey(now);
+  const nowMs = now.getTime();
+  const genMs = gen.getTime();
+  if (genMs > nowMs) return false;                        // futuro → nunca resetea
+  if (!(weekStartKey(gen) < weekStartKey(now))) return false; // misma semana → no
+  const ageHours = (nowMs - genMs) / 3_600_000;
+  return ageHours >= WEEKLY_PLAN_GRACE_HOURS;             // gracia de 48h
 }
 
 /**
@@ -43,9 +55,26 @@ export function useWeeklyPlanReset(): void {
   })));
 
   useEffect(() => {
-    if (shouldResetWeekly(generatedAt, new Date())) {
-      void clearWeeklyPlan();
-    }
+    // MVP-RESILIENCE-1 · re-evaluar también al reanudar (visibility/focus), no solo
+    // en mount/cambio de generatedAt: una app dejada abierta cruzando el domingo o el
+    // vencimiento de la gracia converge al volver a foco. Guard `clearing` evita que
+    // visibility+focus disparen dos clears simultáneos.
+    let clearing = false;
+    const evaluate = () => {
+      if (clearing) return;
+      if (shouldResetWeekly(useAppStore.getState().weeklyPlan?.generatedAt ?? null, new Date())) {
+        clearing = true;
+        void Promise.resolve(clearWeeklyPlan()).finally(() => { clearing = false; });
+      }
+    };
+    evaluate(); // mount / cambio de generatedAt
+    const onVisible = () => { if (document.visibilityState === 'visible') evaluate(); };
+    window.addEventListener('focus', evaluate);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('focus', evaluate);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generatedAt]);
 }

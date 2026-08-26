@@ -1,0 +1,37 @@
+/* MVP-RESILIENCE-1 · pantalla neutral de carga de cuenta (usa .login-screen/.ls-card
+   globales de index.css; solo estilos propios de .als-*). */
+.als-card { text-align: center; }
+.als-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 0 4px;
+}
+.als-spin { color: var(--amber, #C9A968); animation: als-spin 0.8s linear infinite; }
+@keyframes als-spin { to { transform: rotate(360deg); } }
+.als-text {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(234, 223, 198, 0.8);
+}
+.als-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(234, 223, 198, 0.35);
+  background: transparent;
+  color: #F6F2EA;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.16s ease;
+}
+.als-retry:hover { background: rgba(234, 223, 198, 0.08); }
+.als-retry:active { transform: scale(0.98); }

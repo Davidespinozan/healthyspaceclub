@@ -21,6 +21,12 @@ export const en: Translations<typeof es> = {
     club: 'Club',
     you: 'You',
   },
+  resilience: {
+    accountLoading: 'Loading your account…',
+    accountLoadError: "We couldn't load your account.",
+    offlineAccountLoad: "You're offline. We'll try again when you're back online.",
+    retry: 'Retry',
+  },
   deleteAccount: {
     title: 'Delete your account permanently?',
     body: 'This will delete your profile, training history, nutrition data, reflections and Club posts. This cannot be undone. We retain only records we are required to keep for legal obligations, such as billing and fraud prevention.',

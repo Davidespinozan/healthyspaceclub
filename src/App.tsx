@@ -2,6 +2,8 @@ import { dayKey } from './utils/localDate';
 import { identify } from './utils/analytics';
 import { sincronizarPush } from './utils/push';
 import { useAutoRegenPlan, useWeeklyPlanReset } from './utils/useAutoRegenPlan';
+import { runProfileHydration, fetchWithTimeout, shouldShowAccountLoader, type ProfileResolution } from './utils/profileHydration';
+import AccountLoadingState from './components/AccountLoadingState';
 import { ensureLocaleAssets } from './utils/localeAssets';
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { lazyWithRetry } from './utils/lazyWithRetry';
@@ -76,6 +78,73 @@ export default function App() {
   // Sin soft-gate: la app genera de inmediato con snapshot ∪ LKG; el live corrige/mejora después. Sin red
   // no rompe (snapshot es el floor). NO toca cardioMain/workoutPlanner/cardioPlayability.
   useEffect(() => { bootstrapVideoAvailability(); }, []);
+
+  // ── MVP-RESILIENCE-1 · Hidratación RESILIENTE del perfil (routing) ─────────────
+  // Atado a [authReady, user?.id] → corre también en reload/INITIAL_SESSION (no solo
+  // en SIGNED_IN), en cambio de cuenta y en un futuro callback de proveedor externo. Con timeout
+  // por-request + reintentos acotados. Su ESTADO (profileResolution) gatea el render de
+  // onboarding: un usuario que vuelve en un dispositivo limpio NUNCA ve onboarding por
+  // un fallo transitorio de red; ve una pantalla neutral de carga/reintento. NO toca la
+  // ruta de SIGNED_IN (AUTH-PROVIDERS) ni el resto de la hidratación existente.
+  const [profileResolution, setProfileResolution] = useState<ProfileResolution>('idle');
+  const [profileRetryTick, setProfileRetryTick] = useState(0);
+  useEffect(() => {
+    if (!authReady) return;
+    if (!user) { setProfileResolution('idle'); return; }
+    const uid = user.id;
+    let cancelled = false;
+    setProfileResolution('loading');
+    (async () => {
+      const status = await runProfileHydration({
+        fetchProfile: () => fetchWithTimeout(async () => {
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .select('display_name, username, avatar_url, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at')
+            .eq('user_id', uid)
+            .maybeSingle();
+          return { data, error };
+        }, 10_000),
+        sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+        // Guard anti-cambio-de-cuenta: dataOwnerId es la señal fiable (se reclama al firmar).
+        isCurrent: () => !cancelled && useAppStore.getState().dataOwnerId === uid,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onResolvedRow: (p: any) => {
+          if (cancelled || useAppStore.getState().dataOwnerId !== uid) return;
+          useAppStore.setState({
+            userName: p.display_name || p.username || useAppStore.getState().userName || '',
+            username: p.username ?? useAppStore.getState().username,
+            avatarUrl: p.avatar_url ?? null,
+            obData: (p.ob_data as Record<string, string | number>) ?? {},
+            startDate: p.start_date ?? '',
+            tdee: p.tdee ?? 0,
+            planGoal: p.plan_goal ?? 0,
+            mealPlanKey: p.meal_plan_key ?? 'planA',
+            userPlan: (p.user_plan ?? 'none') as 'none' | 'trial' | 'pro',
+            trialEndsAt: p.trial_ends_at ?? null,
+          });
+        },
+        onResolvedEmpty: () => { /* usuario nuevo real: startDate queda '' → onboarding legítimo */ },
+      });
+      if (cancelled) return;
+      if (status !== 'idle') setProfileResolution(status); // 'idle' = abortado por cambio de cuenta
+    })();
+    return () => { cancelled = true; };
+    // profileRetryTick fuerza un reintento manual/passive sin cambiar de usuario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady, user?.id, profileRetryTick]);
+
+  // Recuperación pasiva: si quedó en 'error', reintenta al volver online o a foco.
+  useEffect(() => {
+    if (profileResolution !== 'error') return;
+    const retry = () => setProfileRetryTick((n) => n + 1);
+    const onVis = () => { if (document.visibilityState === 'visible') retry(); };
+    window.addEventListener('online', retry);
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.removeEventListener('online', retry);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [profileResolution]);
 
   // Tope de seguridad por period_end (independiente de la zona horaria del user
   // — comparamos instantes UTC). Si la suscripción está CANCELADA-al-fin-de-ciclo
@@ -800,7 +869,14 @@ export default function App() {
         )}
         {currentScreen === 'onboarding' && (
           <div id="scr-onboarding" className={`screen active ${fadeClass}`}>
-            <OnboardingScreen />
+            {/* MVP-RESILIENCE-1 · render-gate: un usuario autenticado en 'onboarding'
+                cuya resolución de perfil AÚN no terminó (idle/loading/error) ve una
+                pantalla neutral de carga/reintento — NUNCA el formulario de onboarding
+                (que podría pisar ob_data/tdee/plan_goal). Nuevo usuario real (resuelto,
+                sin start_date) sí ve onboarding. */}
+            {shouldShowAccountLoader({ authenticated: !!user, currentScreen, profileResolution })
+              ? <AccountLoadingState resolution={profileResolution} onRetry={() => setProfileRetryTick((n) => n + 1)} />
+              : <OnboardingScreen />}
           </div>
         )}
         {currentScreen === 'dashboard' && (
