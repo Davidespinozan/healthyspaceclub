@@ -44,6 +44,8 @@ import {
 } from '../ai/prompts/hsmReview';
 import { buildHSMProfilePrompt } from '../ai/prompts/hsmProfile';
 import { excludedFromAIContext } from '../utils/hsmSafety';
+import { buildReflectionSignals, renderReflectionSignals } from '../utils/reflectionSignals';
+import { buildCoachContext } from '../utils/coachContext';
 import { MILESTONE_STEPS, MILESTONE_ICON, getMilestoneCopy } from '../constants/milestones';
 import { getHSMBank } from '../data/hsmBank';
 import { useT } from '../i18n';
@@ -546,7 +548,16 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     const allResponses = dailyHSMResponses.filter(r => r.safetyLevel !== 'URGENT').slice(-50).map(r => `[${r.date}] ${r.dimension}: "${r.response}"`).join('\n');
     const existingProfile = hsmProfile?.text || 'Sin perfil previo.';
 
-    const profilePrompt = buildHSMProfilePrompt(existingProfile, allResponses);
+    // REFLECTION-P1-A · señales longitudinales deterministas (compute-on-read; excluyen
+    // URGENT internamente) para que el perfil se re-derive desde EVIDENCIA ACTUAL y el
+    // perfil anterior entre solo como hipótesis previa revisable (rompe el self-seeding).
+    const signals = renderReflectionSignals(buildReflectionSignals({
+      reflections: dailyHSMResponses,
+      coachContext: buildCoachContext(useAppStore.getState()),
+      today,
+    }));
+
+    const profilePrompt = buildHSMProfilePrompt(existingProfile, allResponses, signals || undefined);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
