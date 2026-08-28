@@ -31,7 +31,13 @@ export default function TuEspacioFlow({ onClose }: Props) {
   const today = dayKey(new Date());
   const todayResponses = dailyHSMResponses.filter(r => r.date === today);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const flowRef = useRef<HTMLDivElement>(null);
   const submittingRef = useRef(false); // guard anti doble-submit (ventana de 300ms de la animación)
+
+  // Enter envía SOLO con puntero "fine" POSITIVAMENTE detectado (mouse/trackpad → hay
+  // teclado físico). En táctil, o si matchMedia no existe (SSR/entornos raros), Enter =
+  // salto de línea: fail-safe, nunca enviar por accidente a media reflexión.
+  const enterSubmits = useMemo(() => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: fine)').matches, []);
 
   // Build today's 5 dimensions (same logic as TabHoy)
   const todayDayIndex = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
@@ -93,7 +99,13 @@ export default function TuEspacioFlow({ onClose }: Props) {
   // premio existe—: bajar el muro sin quitar profundidad ni contenido.
   const [skipped, setSkipped] = useState<Set<string>>(new Set());
   const [finished, setFinished] = useState(false);
-  const [introSeen, setIntroSeen] = useState(false);
+  // REFLECTION-UX-1 · P0 · orquestación de presentación (sin nueva persistencia):
+  //  entered  = pasó la pantalla de llegada (arrival) hacia el flujo de preguntas.
+  //  forkShown = tras la esencial, se muestra el bifurcador "ya cumpliste" (no auto-avanza).
+  //  reopen   = desde el completado, el usuario eligió "seguir profundizando" (opcionales).
+  const [entered, setEntered] = useState(false);
+  const [forkShown, setForkShown] = useState(false);
+  const [reopen, setReopen] = useState(false);
 
   const isAnswered = (d: { title: string }) => todayResponses.some(r => r.dimension === d.title);
   const answeredCount = allDimensions.filter(isAnswered).length;
@@ -105,6 +117,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
   // Progreso por AUTOCONOCIMIENTO (no racha-culpa): cuántas de las 10 dimensiones has
   // tocado alguna vez. Refuerza competencia (SDT) y cierra el lazo con el retrato.
   const exploredCount = HSM_BANK.filter(d => dailyHSMResponses.some(r => r.dimension === d.title)).length;
+  const hasEverReflected = dailyHSMResponses.length > 0;
 
   const [currentDim, setCurrentDim] = useState(pendingDims[0] || null);
   const [inputVal, setInputVal] = useState('');
@@ -185,10 +198,33 @@ export default function TuEspacioFlow({ onClose }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [complete]);
 
-  // Focus textarea when question changes
+  // A11y: contener el foco dentro del overlay (santuario) + Escape cierra.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key !== 'Tab') return;
+      const root = flowRef.current;
+      if (!root) return;
+      const nodes = root.querySelectorAll<HTMLElement>('button, textarea, a[href], input, [tabindex]:not([tabindex="-1"])');
+      const focusables = Array.from(nodes).filter(el => !el.hasAttribute('disabled') && el.offsetParent !== null);
+      if (focusables.length === 0) return;
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prevOverflow; };
+  }, [onClose]);
+
+  // Focus textarea when question changes (y mantenerla visible sobre el teclado móvil).
   useEffect(() => {
     if (currentDim && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 350);
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.scrollIntoView({ block: 'nearest' });
+      }, 350);
     }
   }, [currentDim?.title]);
 
@@ -196,6 +232,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
     if (!currentDim || !inputVal.trim()) return;
     if (submittingRef.current) return; // ya hay un envío en curso (evita respuesta duplicada)
     submittingRef.current = true;
+    const wasMandatory = answeredCount === 0; // esta es la esencial del día
     // La respuesta se guarda SIEMPRE (local + outbox). La clasificación de
     // seguridad viene del store; URGENT activa el panel de apoyo.
     const level = addHSMResponse({ dimension: currentDim.title, question: currentDim.q, response: inputVal.trim() });
@@ -210,6 +247,12 @@ export default function TuEspacioFlow({ onClose }: Props) {
       setCurrentDim(nextPending[0] || null);
       setAnimState('in');
       submittingRef.current = false;
+      // Tras la ESENCIAL, si quedan opcionales, NO auto-avanzar: mostrar el bifurcador
+      // "ya cumpliste por hoy" (ver reflexión / seguir profundizando). Si no quedan
+      // opcionales, `complete` se vuelve true por sí solo → reseña.
+      if (wasMandatory && nextPending.length > 0) setForkShown(true);
+      // Si venía de "seguir profundizando" y ya no quedan opcionales, volver al completado.
+      if (reopen && nextPending.length === 0) setReopen(false);
     }, 300);
   }
 
@@ -225,31 +268,55 @@ export default function TuEspacioFlow({ onClose }: Props) {
       const next = allDimensions.filter(d => !isAnswered(d) && !nextSkipped.has(d.title));
       setCurrentDim(next[0] || null);
       setAnimState('in');
+      if (reopen && next.length === 0) setReopen(false);
     }, 300);
   }
 
-  const currentIndex = currentDim ? allDimensions.findIndex(d => d.title === currentDim.title) : -1;
-  const progressPct = allDimensions.length > 0 ? (answeredCount / allDimensions.length) * 100 : 0;
+  // "Seguir profundizando" desde el completado: reabrir opcionales sin reiniciar
+  // ni duplicar la esencial (reusa pendingDims; no toca persistencia).
+  function continueOptional() {
+    if (pendingDims.length === 0) return;
+    setForkShown(false);
+    setFinished(false);
+    setEntered(true);
+    setReopen(true);
+    setCurrentDim(pendingDims[0]);
+    setInputVal('');
+    setAnimState('in');
+  }
 
-  // ── Intro / significado (solo primera vez: 0 reflexiones) ──
-  if (!complete && dailyHSMResponses.length === 0 && !introSeen) {
+  const answeredIndex = answeredCount; // cuántos dots encendidos
+  const progressLabel = answeredCount === 0 ? t('espacio.progressToday') : t('espacio.progressMore');
+
+  const dateLocale = locale === 'en' ? 'en-US' : 'es-ES';
+  const dateStr = new Date().toLocaleDateString(dateLocale, { day: 'numeric', month: 'long' });
+
+  // ── ARRIVAL — llegada (primera vez o retorno diario). Solo si aún no entró y no
+  //    ha respondido nada hoy; si ya completó (`complete`), se salta directo al espejo. ──
+  if (!complete && !entered && todayResponses.length === 0) {
     return (
-      <div className="te-flow">
+      <div className="te-flow" ref={flowRef} role="dialog" aria-modal="true" aria-label={hasEverReflected ? t('espacio.arrivalTitle') : t('espacio.introTitle')}>
         <button className="te-flow-close" onClick={onClose} aria-label={t('common.close')} type="button"><X size={18} strokeWidth={2} /></button>
-        <div className="te-intro">
-          <div className="te-intro-title">{t('espacio.introTitle')}</div>
-          <p className="te-intro-body">{t('espacio.introBody')}</p>
-          <button className="te-submit" onClick={() => setIntroSeen(true)}>{t('espacio.introCta')}</button>
+        <div className="te-ritual te-arrival">
+          <div className="te-eyebrow">{hasEverReflected ? `${t('espacio.todayCue')} · ${dateStr}` : t('espacio.eyebrow')}</div>
+          <h1 className="te-arrival-title">{hasEverReflected ? t('espacio.arrivalTitle') : t('espacio.introTitle')}</h1>
+          <p className="te-arrival-body">{hasEverReflected ? t('espacio.arrivalLine') : t('espacio.introBody')}</p>
+          <div className="te-arrival-meta">{t('espacio.meta')}</div>
+          <button className="te-submit" onClick={() => setEntered(true)}>{t('espacio.introCta')}</button>
         </div>
       </div>
     );
   }
 
-  // ── Completion screen ──
-  if (complete) {
+  // ── COMPLETION / MIRROR ── (no en modo "seguir profundizando")
+  if (complete && !reopen) {
     return (
       <div
         className="te-flow"
+        ref={flowRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('hoy.reviewCompleteTitle')}
         style={{
           background:
             'radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%), radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%), #081312',
@@ -258,10 +325,10 @@ export default function TuEspacioFlow({ onClose }: Props) {
         <button className="te-flow-close" onClick={onClose} aria-label={t('common.close')} type="button"><X size={18} strokeWidth={2} /></button>
         <div className="te-complete">
           <div className="te-complete-check"><Sparkles size={26} strokeWidth={1.8} /></div>
-          <div className="te-complete-title">{t('hoy.reviewCompleteTitle')}</div>
+          <h1 className="te-complete-title">{t('hoy.reviewCompleteTitle')}</h1>
           <div className="te-complete-sub">{t('hoy.reviewCompleteSub')}</div>
           {reviewLoading ? (
-            <div className="te-review-loading">
+            <div className="te-review-loading" aria-live="polite">
               <div className="te-review-dots"><span /><span /><span /></div>
               <span>{t('hoy.reviewAnalyzing')}</span>
             </div>
@@ -284,6 +351,10 @@ export default function TuEspacioFlow({ onClose }: Props) {
           )}
           <div className="te-complete-progress">🪞 {t('retrato.explored', { n: exploredCount })}</div>
           <p className="te-complete-hint">{t('espacio.portraitHint')}</p>
+          {/* Re-entrada segura a opcionales pendientes (no reinicia ni duplica). */}
+          {!showSafety && pendingDims.length > 0 && (
+            <button type="button" className="te-finish te-complete-continue" onClick={continueOptional}>{t('espacio.forkContinue')}</button>
+          )}
           <button className="te-complete-btn" onClick={onClose}>{t('hoy.reviewBackToHoy')}</button>
           {/* MINDSET-1 · control del usuario sobre su journal (mínimo: borrar hoy / borrar todo) */}
           <div className="te-danger">
@@ -305,20 +376,41 @@ export default function TuEspacioFlow({ onClose }: Props) {
     );
   }
 
+  // ── OPTIONAL FORK — tras la esencial: "ya cumpliste por hoy" ──
+  if (forkShown) {
+    return (
+      <div className="te-flow" ref={flowRef} role="dialog" aria-modal="true" aria-label={t('espacio.forkTitle')}>
+        <button className="te-flow-close" onClick={onClose} aria-label={t('common.close')} type="button"><X size={18} strokeWidth={2} /></button>
+        <div className="te-ritual te-fork">
+          <div className="te-fork-check"><Sparkles size={24} strokeWidth={1.8} /></div>
+          <h1 className="te-fork-title">{t('espacio.forkTitle')}</h1>
+          <p className="te-fork-sub">{t('espacio.forkSub')}</p>
+          <button className="te-submit" onClick={() => { setForkShown(false); setFinished(true); }}>{t('espacio.forkSeeReview')}</button>
+          <button type="button" className="te-finish te-fork-secondary" onClick={() => setForkShown(false)}>{t('espacio.forkContinue')}</button>
+        </div>
+      </div>
+    );
+  }
+
   // ── Question flow ──
   if (!currentDim) return null;
 
   return (
-    <div className="te-flow">
+    <div className="te-flow" ref={flowRef} role="dialog" aria-modal="true" aria-label={progressLabel}>
       {/* Close */}
-      <div className="te-flow-close" onClick={onClose}><X size={18} strokeWidth={2} aria-hidden="true" /></div>
+      <button className="te-flow-close" onClick={onClose} aria-label={t('common.close')} type="button"><X size={18} strokeWidth={2} aria-hidden="true" /></button>
 
-      {/* Progress */}
-      <div className="te-progress">
-        <div className="te-progress-bar">
-          <div className="te-progress-fill" style={{ width: `${progressPct}%` }} />
+      {/* Progress — marcadores honestos: 1 esencial + opcionales suaves (no "N/5") */}
+      <div className="te-progress" role="group" aria-label={progressLabel}>
+        <div className="te-dots" aria-hidden="true">
+          {allDimensions.map((d, i) => (
+            <span
+              key={d.title}
+              className={`te-dot${i === 0 ? ' te-dot-essential' : ''}${i < answeredIndex ? ' is-on' : ''}${currentDim && d.title === currentDim.title ? ' is-current' : ''}`}
+            />
+          ))}
         </div>
-        <div className="te-progress-label">{answeredCount + 1}/{allDimensions.length}</div>
+        <div className="te-progress-label">{progressLabel}</div>
       </div>
 
       {/* Question card */}
@@ -327,7 +419,7 @@ export default function TuEspacioFlow({ onClose }: Props) {
         <div className="te-dim-badge">
           <span className="te-dim-title">{currentDim.title}</span>
           <span className="te-dim-tag">{isMandatory ? t('espacio.essential') : t('espacio.optional')}</span>
-          {currentIndex === allDimensions.length - 1 && aiQuestion && (
+          {currentIndexIsAI(currentDim, allDimensions, aiQuestion) && (
             <span className="te-dim-ai">{t('espacio.aiTag')}</span>
           )}
         </div>
@@ -341,16 +433,18 @@ export default function TuEspacioFlow({ onClose }: Props) {
         )}
 
         {/* The question */}
-        <div className="te-question">{currentDim.q}</div>
+        <h2 className="te-question">{currentDim.q}</h2>
 
         {/* Textarea */}
+        <label className="te-sr-only" htmlFor="te-reflection-input">{t('espacio.textareaLabel')}</label>
         <textarea
+          id="te-reflection-input"
           ref={inputRef}
           className="te-textarea"
           placeholder={t('espacio.placeholder')}
           value={inputVal}
           onChange={e => setInputVal(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
+          onKeyDown={e => { if (enterSubmits && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
           rows={4}
           maxLength={2000}
         />
@@ -371,10 +465,20 @@ export default function TuEspacioFlow({ onClose }: Props) {
             {pendingDims.length > 1 && (
               <button type="button" className="te-skip" onClick={skipCurrent}>{t('espacio.skip')}</button>
             )}
-            <button type="button" className="te-finish" onClick={() => setFinished(true)}>{t('espacio.finish')}</button>
+            <button type="button" className="te-finish" onClick={() => { setReopen(false); setFinished(true); }}>{t('espacio.finish')}</button>
           </div>
         )}
       </div>
     </div>
   );
+}
+
+// La 5ª (última) dimensión es la generada por IA cuando existe aiQuestion.
+function currentIndexIsAI(
+  currentDim: { title: string },
+  allDimensions: { title: string }[],
+  aiQuestion: { title: string } | null,
+): boolean {
+  if (!aiQuestion) return false;
+  return allDimensions.findIndex(d => d.title === currentDim.title) === allDimensions.length - 1;
 }

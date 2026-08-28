@@ -63,15 +63,18 @@ describe('REFLECTION-1 · URGENT histórico excluido de la reseña de IA', () =>
   it('CASE 4 · el sentinel URGENT de un día previo NO aparece en el prompt de la reseña', async () => {
     render(<TuEspacioFlow onClose={() => {}} />);
 
+    // REFLECTION-UX-1: usuario que vuelve → pantalla de llegada; entrar al flujo.
+    fireEvent.click(await screen.findByRole('button', { name: /empezar|begin/i }));
+
     // Responder la pregunta obligatoria (texto normal, no URGENT).
     const ta = await screen.findByRole('textbox');
     fireEvent.change(ta, { target: { value: 'hoy sí avancé un poco' } });
     fireEvent.click(screen.getByRole('button', { name: /siguiente|terminar|listo|completar/i }));
 
-    // Cerrar el día para gatillar la reseña (botón Terminar aparece tras la 1ª).
+    // Tras la esencial aparece el bifurcador: "Ver mi reflexión" gatilla la reseña.
     await waitFor(() => {
-      const fin = screen.queryByRole('button', { name: /terminar/i });
-      if (fin) fireEvent.click(fin);
+      const ver = screen.queryByRole('button', { name: /ver mi reflexi|terminar/i });
+      if (ver) fireEvent.click(ver);
       expect(callAI).toHaveBeenCalled();
     }, { timeout: 3000 });
 

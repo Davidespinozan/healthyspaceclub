@@ -7323,6 +7323,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 ══════════════════════════════════════════════════════════════ */
 .te-flow {
   position: fixed; inset: 0; z-index: 500;
+  min-height: 100dvh;   /* viewport dinámico: la columna no se corta al abrir el teclado */
   display: flex; flex-direction: column;
   /* Oscuro inmersivo (santuario contemplativo) — mismo verde que el completado */
   background:
@@ -7353,35 +7354,53 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .te-flow-close:hover { background: rgba(255, 255, 255, 0.18); }
 .te-flow-close:active { transform: scale(0.95); }
 
-/* Progress — barra fina terracota + label minimal junto, sin dots redundantes */
+/* Columna-ritual compartida — TODO el flujo (llegada/pregunta/bifurcador/completado)
+   vive dentro de ~544px centrados. El fondo atmosférico se queda con los márgenes;
+   el CTA nunca cruza el ancho de la columna (arreglo del bug de intro full-width). */
+:root { --te-col: 34rem; }  /* ~544px, dentro del objetivo 520–560 */
+
+/* Progress — marcadores honestos: 1 esencial + opcionales suaves (sin "N/5") */
 .te-progress {
   padding: calc(56px + env(safe-area-inset-top, 0px)) 24px 0;
-  max-width: 540px; margin: 0 auto; width: 100%;
-  display: flex; align-items: center; gap: 10px;
+  max-width: var(--te-col); margin: 0 auto; width: 100%;
+  display: flex; align-items: center; gap: 12px;
 }
-.te-progress-bar {
-  flex: 1;
-  height: 3px; background: rgba(255,255,255,.12); border-radius: 3px;
-  overflow: hidden;
+.te-dots { display: flex; align-items: center; gap: 7px; }
+.te-dot {
+  width: 6px; height: 6px; border-radius: 999px;
+  background: rgba(255,255,255,.16);
+  transition: background var(--duration-base) ease, transform var(--duration-base) ease, box-shadow var(--duration-base) ease;
 }
-.te-progress-fill {
-  height: 100%; border-radius: 3px;
-  background: linear-gradient(90deg, #C9A968, #A8864E);
-  transition: width .5s cubic-bezier(.23,1,.32,1);
-}
+.te-dot-essential { width: 8px; height: 8px; background: rgba(191,160,101,.4); }
+.te-dot.is-on { background: linear-gradient(90deg, #C9A968, #A8864E); }
+.te-dot-essential.is-on { background: linear-gradient(90deg, #C9A968, #A8864E); }
+.te-dot.is-current { transform: scale(1.25); box-shadow: 0 0 0 3px rgba(191,160,101,.14); }
 .te-progress-label {
   font-family: 'Montserrat', sans-serif;
   font-size: .68rem; font-weight: 600;
-  color: rgba(234,223,198,.6);
+  color: rgba(234,223,198,.62);
   letter-spacing: var(--tracking-kicker);
-  flex-shrink: 0;
+  flex-shrink: 0; margin-left: auto;
 }
 
 /* Question area — sin justify-content:center que generaba el vacío grande arriba */
 .te-question-area {
   display: flex; flex-direction: column;
   padding: 32px 28px 40px;
-  max-width: 540px; margin: 0 auto; width: 100%;
+  max-width: var(--te-col); margin: 0 auto; width: 100%;
+}
+
+/* Columna-ritual (llegada / bifurcador) — top-weighted, no centrada al vacío */
+.te-ritual {
+  max-width: var(--te-col); width: 100%;
+  margin: 0 auto;
+  padding: min(16vh, 132px) 28px calc(40px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column;
+  animation: riseIn .5s var(--ease-out-soft) backwards;
+}
+.te-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 .te-anim-in { animation: teSlideIn .35s ease both; }
 .te-anim-out { animation: teSlideOut .25s ease both; }
@@ -7411,13 +7430,14 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   letter-spacing: var(--tracking-kicker);
 }
 
-/* Question text — Georgia editorial (protagonista) */
+/* Question text — serif editorial de sistema (sin import): la pregunta es la heroína.
+   Georgia/Times ya viven en el SO; el peso normal del serif lee más íntimo que sans. */
 .te-question {
-  font-family: 'Montserrat', sans-serif;
-  font-size: clamp(1.5rem, 4.5vw, 1.9rem);
-  font-weight: 500; color: #F6F2EA;
-  line-height: 1.25; margin-bottom: 28px;
-  letter-spacing: var(--tracking-tighter);
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-size: clamp(1.55rem, 4.6vw, 2rem);
+  font-weight: 400; color: #F6F2EA;
+  line-height: 1.28; margin: 4px 0 26px;
+  letter-spacing: -0.01em;
 }
 
 /* El hilo — "lo último que escribiste aquí": continuidad con tu reflexión pasada. */
@@ -7456,14 +7476,50 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 .te-finish:hover { border-color: rgba(200,168,106,.6); color: #f1ede1; }
 
-/* Pantalla de significado (primera vez) */
-.te-intro { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; padding: 0 4px; }
-.te-intro-title {
-  font-family: 'Montserrat', sans-serif; font-size: clamp(1.4rem, 5vw, 1.7rem);
-  font-weight: 600; color: #F6F2EA; line-height: 1.25; margin-bottom: 16px;
-  letter-spacing: var(--tracking-tighter);
+/* ── Llegada (arrival): primera vez o retorno diario. Ritual breve, no onboarding. ── */
+.te-eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .66rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .18em; color: rgba(200,168,106,.85);
+  margin-bottom: 18px;
 }
-.te-intro-body { font-size: .98rem; color: rgba(246,242,234,.75); line-height: 1.6; margin: 0 auto 28px; max-width: 30ch; }
+.te-arrival-title {
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-size: clamp(1.7rem, 6vw, 2.3rem);
+  font-weight: 400; color: #F6F2EA; line-height: 1.2;
+  letter-spacing: -0.01em; margin: 0 0 16px;
+  text-wrap: balance;
+}
+.te-arrival-body {
+  font-size: 1rem; color: rgba(246,242,234,.72); line-height: 1.6;
+  margin: 0 0 24px; max-width: 34ch;
+}
+.te-arrival-meta {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .76rem; font-weight: 600; color: rgba(234,223,198,.5);
+  letter-spacing: .02em; margin-bottom: 28px;
+}
+
+/* ── Bifurcador tras la esencial: "ya cumpliste por hoy" ── */
+.te-fork-check {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: rgba(191,160,101,.2); color: var(--amber);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+  animation: teCheckPop .5s cubic-bezier(.34,1.56,.64,1);
+}
+.te-fork-title {
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-size: clamp(1.6rem, 5.5vw, 2.1rem);
+  font-weight: 400; color: #F6F2EA; line-height: 1.2;
+  letter-spacing: -0.01em; margin: 0 0 12px;
+}
+.te-fork-sub {
+  font-size: .96rem; color: rgba(246,242,234,.7); line-height: 1.55;
+  margin: 0 0 26px; max-width: 34ch;
+}
+.te-fork-secondary { margin-top: 14px; align-self: flex-start; }
+.te-complete-continue { margin: 0 0 14px; }
 
 /* Textarea — focus terracota para coherencia con el acento */
 .te-textarea {
@@ -7505,14 +7561,16 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 @media (max-width: 480px) {
   .te-progress { padding: calc(52px + env(safe-area-inset-top, 0px)) 20px 0; }
   .te-question-area { padding: 28px 20px 40px; }
-  .te-complete { padding: calc(40px + env(safe-area-inset-top, 0px)) 22px 40px; }
+  .te-complete { padding: calc(40px + env(safe-area-inset-top, 0px)) 22px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  .te-ritual { padding: calc(72px + env(safe-area-inset-top, 0px)) 22px calc(32px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ── Completion screen ── */
 .te-complete {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  padding: 40px 28px; text-align: center;
+  max-width: var(--te-col); margin: 0 auto; width: 100%;
+  padding: 40px 28px calc(40px + env(safe-area-inset-bottom, 0px)); text-align: center;
   overflow-y: auto;   /* análisis largo (2-3 párrafos) → scroll, no recorte */
 }
 .te-complete-check {
