@@ -5,7 +5,7 @@ import { X, Pause, Play, Check, Pencil, Minus, Plus, ChevronRight, Zap, Clock, C
 import ExerciseDetailPopout from './ExerciseDetailPopout';
 
 const CreatePostModal = lazy(() => import('./CreatePostModal'));
-const ShareStatSheet = lazy(() => import('./ShareStatSheet'));
+const ShareStudio = lazy(() => import('./ShareStudio'));
 import { translateMuscle, translateDifficulty } from '../utils/exerciseMeta';
 import { track } from '../utils/analytics';
 import { haptics } from '../utils/haptics';
@@ -1389,15 +1389,18 @@ export default function WorkoutPlayer({
 
       {shareStatOpen && (
         <Suspense fallback={null}>
-          <ShareStatSheet
-            headline={t('post.shareHeadlineWorkout')}
-            stats={[
-              { big: String(completedStats.minutes), label: 'min' },
-              { big: String(completedStats.totalSetsCompleted), label: t('workout.setsLower') },
-              completedStats.totalKg > 0
-                ? { big: String(completedStats.totalKg), label: t('workout.kgTotal') }
-                : { big: String(completedStats.exercisesCompleted), label: t('workout.exercisesLower') },
-            ]}
+          {/* SHARE-2 · Share Studio con proyección content-free del entreno de hoy. */}
+          <ShareStudio
+            input={{
+              streakCount: useAppStore.getState().streakCount,
+              todayWorkout: {
+                modality: (workout as { modality?: string; type?: string }).modality ?? (workout as { type?: string }).type ?? 'auto',
+                durationMinutes: completedStats.minutes,
+                exercisesCompleted: completedStats.exercisesCompleted,
+                totalVolumeKg: completedStats.totalKg,
+              },
+            }}
+            preferredKind="workout"
             onClose={() => setShareStatOpen(false)}
           />
         </Suspense>

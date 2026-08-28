@@ -1,0 +1,85 @@
+/* SHARE-2 · P0 · Share Studio — mobile-first, preview 9:16 escalado. */
+.ssx-overlay {
+  position: fixed; inset: 0; z-index: 9500;
+  background: rgba(6, 20, 16, 0.72);
+  display: flex; align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(6px);
+}
+@media (min-width: 640px) { .ssx-overlay { align-items: center; } }
+
+.ssx {
+  position: relative;
+  width: min(440px, 100vw);
+  max-height: 94vh;
+  overflow-y: auto;
+  background: #0E2521;
+  color: #F4EFE3;
+  border-radius: 22px 22px 0 0;
+  padding: 18px 18px calc(20px + env(safe-area-inset-bottom));
+  box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.4);
+  display: flex; flex-direction: column; gap: 14px;
+  font-family: 'Montserrat', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  outline: none;
+}
+@media (min-width: 640px) { .ssx { border-radius: 22px; } }
+
+.ssx-close {
+  position: absolute; top: 12px; right: 12px; z-index: 2;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: none; background: rgba(244, 239, 227, 0.12); color: #F4EFE3;
+  display: grid; place-items: center; cursor: pointer;
+}
+.ssx-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+.ssx-preview-wrap {
+  position: relative;
+  align-self: center;
+  aspect-ratio: 9 / 16;
+  height: min(56vh, 520px);
+  max-width: 100%;
+  border-radius: 16px; overflow: hidden;
+  background: #081312;
+}
+.ssx-preview { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ssx-preview-empty { display: grid; place-items: center; color: rgba(244, 239, 227, 0.5); }
+.ssx-preview-busy {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: rgba(6, 20, 16, 0.35);
+}
+.ssx-spin { animation: ssx-spin 0.9s linear infinite; }
+@keyframes ssx-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ssx-spin { animation: none; } }
+
+.ssx-error {
+  font-size: 13px; color: #E9A17C; text-align: center;
+  background: rgba(233, 161, 124, 0.1); border-radius: 10px; padding: 8px;
+}
+
+.ssx-strip {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.ssx-strip::-webkit-scrollbar { display: none; }
+.ssx-chip {
+  flex: 0 0 auto; min-height: 44px;
+  padding: 10px 16px; border-radius: 12px;
+  border: 1px solid rgba(244, 239, 227, 0.18);
+  background: transparent; color: #F4EFE3;
+  font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  font-family: inherit;
+}
+.ssx-chip.is-active { background: #D8B064; color: #0E2521; border-color: transparent; }
+
+.ssx-actions { display: flex; gap: 10px; }
+.ssx-btn-ghost, .ssx-btn-primary {
+  flex: 1; min-height: 48px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 13px; font-size: 15px; font-weight: 700; cursor: pointer;
+  font-family: inherit; border: 1px solid transparent;
+}
+.ssx-btn-ghost { background: transparent; color: #F4EFE3; border-color: rgba(244, 239, 227, 0.28); }
+.ssx-btn-primary { background: #D8B064; color: #0E2521; }
+.ssx-btn-primary:disabled { opacity: 0.55; cursor: default; }
+.ssx-note { font-size: 12px; text-align: center; color: rgba(244, 239, 227, 0.72); }
+
+.ssx-empty { padding: 48px 16px; text-align: center; color: rgba(244, 239, 227, 0.7); font-size: 14px; line-height: 1.5; }

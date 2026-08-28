@@ -23,7 +23,7 @@ import { chronoMeals } from '../utils/mealOrder';
 import { translateDayLabel } from '../utils/dayTypeLabel';
 import { equipmentFromPlan, exerciseVideoCandidateIds, pickExerciseVideo } from '../utils/workoutPlanner';
 import DailyRings, { type RingItem } from './DailyRings';
-import ShareStatSheet from './ShareStatSheet';
+import ShareStudio from './ShareStudio';
 import DayCelebration from './DayCelebration';
 import { useCountUp } from '../hooks/useCountUp';
 import FoodLogSheet from './FoodLogSheet';
@@ -1195,23 +1195,22 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
       {/* ── Activity log sheet: movimiento alterno cuenta como día activo ── */}
       {activityOpen && <ActivityLogSheet onClose={() => setActivityOpen(false)} />}
 
-      {/* ── Compartir mi día (estilo Strava: tu foto + tus stats de hoy) ── */}
+      {/* ── SHARE-2 · Share Studio — preview inmediato, foto opcional. Sin kcal (privacidad). ── */}
       {shareDayOpen && (
-        <ShareStatSheet
-          headline={t('hoy.shareDayHeadline')}
-          stats={[
-            { big: String(streakCount), label: plural(streakCount, { one: t('hoy.shareStreakLabelOne'), other: t('hoy.shareStreakLabelOther') }) },
-            ...(kcalConsumed > 0 ? [{ big: kcalConsumed.toLocaleString(), label: t('hoy.shareKcalLabel') }] : []),
-          ]}
+        <ShareStudio
+          input={{
+            streakCount,
+            // Evidencia autoritativa: ¿completó una sesión HOY? (no rolling, no "planeado").
+            showedUpToday: sessionsToday.length > 0,
+          }}
+          preferredKind="showed_up"
           onClose={() => setShareDayOpen(false)}
         />
       )}
       {shareStreak != null && (
-        <ShareStatSheet
-          headline={t('post.shareHeadlineStreak')}
-          stats={[
-            { big: String(shareStreak), label: plural(shareStreak, { one: t('hoy.shareStreakLabelOne'), other: t('hoy.shareStreakLabelOther') }) },
-          ]}
+        <ShareStudio
+          input={{ streakCount: shareStreak }}
+          preferredKind="streak_milestone"
           onClose={() => setShareStreak(null)}
         />
       )}

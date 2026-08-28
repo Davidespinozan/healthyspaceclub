@@ -16,7 +16,7 @@ import {
   countSessionsWith, removePartnership, getPartnerTodayStatus, type UserSearchResult, type Partnership,
 } from '../utils/partners';
 import UsernameSetupSheet from './UsernameSetupSheet';
-import ShareStatSheet from './ShareStatSheet';
+import ShareStudio from './ShareStudio';
 import { inviteLink, getMyReferrer, type ReferrerInfo } from '../utils/referral';
 import { dayKey } from '../utils/localDate';
 import { track } from '../utils/analytics';
@@ -406,9 +406,10 @@ export default function CompanerosScreen() {
       )}
 
       {shareDuo != null && (
-        <ShareStatSheet
-          headline={t('partners.duoHeadline')}
-          stats={[{ big: shareDuo, label: t('partners.duoStatLabel') }]}
+        // SHARE-2 · Share Studio · dúo — SOLO el número de racha, jamás identidad de pareja.
+        <ShareStudio
+          input={{ streakCount, duo: { days: Number(shareDuo) || 0 } }}
+          preferredKind="duo"
           onClose={() => setShareDuo(null)}
         />
       )}
