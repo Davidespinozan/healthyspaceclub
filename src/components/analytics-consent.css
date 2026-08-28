@@ -1,0 +1,40 @@
+/* ANALYTICS-1 · P1-A · banner de consentimiento (discreto, no bloquea la app). */
+.acb {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 24px));
+  background: #0E2521;
+  color: #F4EFE3;
+  border: 1px solid rgba(216, 176, 100, 0.35);
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: 'Montserrat', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+}
+.acb-title { font-weight: 700; font-size: 15px; }
+.acb-text { margin: 0; font-size: 13px; line-height: 1.5; color: rgba(244, 239, 227, 0.82); }
+.acb-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.acb-btn {
+  flex: 1 1 0;
+  padding: 11px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: inherit;
+}
+.acb-decline { background: transparent; color: #F4EFE3; border-color: rgba(244, 239, 227, 0.35); }
+.acb-accept { background: #D8B064; color: #0E2521; }
+@media (min-width: 480px) {
+  .acb { flex-direction: row; align-items: center; }
+  .acb-body { flex: 1; }
+  .acb-actions { flex: 0 0 auto; }
+  .acb-btn { flex: 0 0 auto; }
+}

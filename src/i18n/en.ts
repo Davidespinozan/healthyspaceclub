@@ -4,6 +4,18 @@ import type { es, Translations } from './es';
 // olvidás una key, el compilador grita) pero acepta cualquier string en los
 // values (no exige el literal de es como 'Guardar').
 export const en: Translations<typeof es> = {
+  consent: {
+    title: 'Help us improve Healthy Space?',
+    body: "We use optional product analytics to understand which parts of the app are useful. We don't record your Coach conversations, your reflections, or your nutrition details or health data.",
+    accept: 'Accept',
+    decline: 'No, thanks',
+    settingsTitle: 'Product analytics',
+    settingsOn: 'On',
+    settingsOff: 'Off',
+    settingsEnable: 'Enable',
+    settingsDisable: 'Disable',
+    settingsNote: "Optional usage metrics to improve the app. Never includes Coach, reflections, nutrition or health data.",
+  },
   common: {
     save: 'Save',
     cancel: 'Cancel',

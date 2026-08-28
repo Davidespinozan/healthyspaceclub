@@ -28,6 +28,7 @@ import { detectBrowserLanguage } from './i18n';
 import LandingScreen from './screens/LandingScreen';
 import UpdatePrompt from './components/UpdatePrompt';
 import OfflineBanner from './components/OfflineBanner';
+import AnalyticsConsentBanner from './components/AnalyticsConsentBanner';
 
 const LoginScreen = lazyWithRetry(() => import('./screens/LoginScreen'), 'LoginScreen');
 const OnboardingScreen = lazyWithRetry(() => import('./screens/OnboardingScreen'), 'OnboardingScreen');
@@ -856,6 +857,7 @@ export default function App() {
       {/* Banner global de update de PWA — fijo arriba, persistente hasta recargar */}
       <UpdatePrompt />
       <OfflineBanner />
+      <AnalyticsConsentBanner />
       {/* Reading progress bar */}
       {currentScreen === 'landing' && (
         <div

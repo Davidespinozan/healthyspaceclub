@@ -3,6 +3,18 @@
 // faltantes pero permita literales libres en values.
 
 export const es = {
+  consent: {
+    title: '¿Nos ayudas a mejorar Healthy Space?',
+    body: 'Usamos analítica de producto opcional para entender qué partes de la app son útiles. No registramos tus conversaciones con el Coach, tus reflexiones, ni el detalle de tu nutrición o tus datos de salud.',
+    accept: 'Aceptar',
+    decline: 'No, gracias',
+    settingsTitle: 'Analítica de producto',
+    settingsOn: 'Activada',
+    settingsOff: 'Desactivada',
+    settingsEnable: 'Activar',
+    settingsDisable: 'Desactivar',
+    settingsNote: 'Métricas de uso opcionales para mejorar la app. Nunca incluyen Coach, reflexiones, nutrición ni datos de salud.',
+  },
   common: {
     save: 'Guardar',
     cancel: 'Cancelar',

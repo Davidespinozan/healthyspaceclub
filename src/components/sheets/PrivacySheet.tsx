@@ -1,8 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { PRIVACY_SECTIONS, PRIVACY_LAST_UPDATED, PRIVACY_INTRO, PRIVACY_DISCLAIMER } from '../../content/legal/privacy';
 import { useT } from '../../i18n';
+import { setAnalyticsConsent, identify } from '../../utils/analytics';
+import { readAnalyticsConsent } from '../../utils/analyticsConsent';
+import { useAppStore } from '../../store';
 import './sheet-base.css';
 
 interface Props {
@@ -11,6 +14,19 @@ interface Props {
 
 export default function PrivacySheet({ onClose }: Props) {
   const { t, locale } = useT();
+  // ANALYTICS-1 · P1-A · control reversible del consentimiento de analytics.
+  const [consent, setConsent] = useState(() => readAnalyticsConsent());
+  const analyticsOn = consent === 'accepted';
+  const toggleAnalytics = () => {
+    const next = analyticsOn ? 'declined' : 'accepted';
+    setAnalyticsConsent(next);
+    // Al activar con sesión abierta: identifica al usuario ACTUAL (identify se auto-gatea
+    // por consentimiento; recién ahora está permitido). Sin backfill de eventos previos.
+    if (next === 'accepted') {
+      try { const uid = useAppStore.getState().dataOwnerId; if (uid) identify(uid); } catch { /* noop */ }
+    }
+    setConsent(next);
+  };
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -42,6 +58,17 @@ export default function PrivacySheet({ onClose }: Props) {
           <p className="sh-disclaimer" lang="en">{t('legal.onlySpanishNotice')}</p>
         )}
         <p className="sh-intro" lang="es">{PRIVACY_INTRO}</p>
+
+        {/* ANALYTICS-1 · P1-A · control de analítica de producto (reversible) */}
+        <div className="sh-analytics">
+          <div className="sh-analytics-info">
+            <div className="sh-analytics-title">{t('consent.settingsTitle')} · {analyticsOn ? t('consent.settingsOn') : t('consent.settingsOff')}</div>
+            <p className="sh-analytics-note">{t('consent.settingsNote')}</p>
+          </div>
+          <button type="button" className="sh-analytics-btn" onClick={toggleAnalytics}>
+            {analyticsOn ? t('consent.settingsDisable') : t('consent.settingsEnable')}
+          </button>
+        </div>
 
         <div className="sh-body" lang="es">
           {PRIVACY_SECTIONS.map(section => (

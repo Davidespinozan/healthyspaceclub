@@ -35,38 +35,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&display=swap" rel="stylesheet">
   <script src="https://js.stripe.com/v3/"></script>
 
-  <!-- ═══════════════════════════════════════════════════════════════════
-       OBSERVABILIDAD (PostHog) — DESACTIVADO (ANALYTICS-1 P0). Bloque comentado a
-       propósito: NO carga SDK, NO setea cookies/localStorage, NO hace red. Prepara la
-       configuración SEGURA para una activación futura (P1). NO lo actives aquí.
-
-       Activación (P1, decisión aparte): (1) resolver el modelo de consentimiento EU si
-       aplica; (2) pegar el Project API Key real en lugar de TU_POSTHOG_KEY; (3) en
-       PostHog project settings activar "Discard client IP data" (la supresión de IP NO
-       es configurable de forma fiable desde este bootstrap → es requisito provider-side);
-       (4) descomentar. analytics.ts detecta window.posthog y vacía la cola.
-
-       Config endurecida (privacy-by-default): host EU · autocapture OFF · pageview
-       automático OFF (se usarán screens semánticas) · session replay OFF · heatmaps OFF
-       · person_profiles 'identified_only'. Gate de host de PRODUCCIÓN: no inicializa en
-       localhost / deploy-previews / branch deploys / hosts desconocidos.
-  <script>
-    (function () {
-      var H = location.hostname;
-      // Solo el host canónico de producción (apex + www). Nada de previews/localhost.
-      if (H !== 'healthyspaceclub.com' && H !== 'www.healthyspaceclub.com') return;
-      !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-      posthog.init('TU_POSTHOG_KEY', {
-        api_host: 'https://eu.i.posthog.com',
-        autocapture: false,
-        capture_pageview: false,
-        capture_heatmaps: false,
-        disable_session_recording: true,
-        person_profiles: 'identified_only'
-      });
-    })();
-  </script>
-  ═══════════════════════════════════════════════════════════════════ -->
+  <!-- OBSERVABILIDAD (PostHog) — DESACTIVADO. La inicialización se movió a JS
+       (src/utils/analytics.ts · initializeProviderIfAllowed): SOLO arranca con consent
+       ACCEPTED + host de producción + VITE_POSTHOG_KEY presente, con config endurecida
+       (EU host, autocapture/pageview/heatmaps OFF, replay OFF, identified_only,
+       respect_dnt). Sin key → proveedor OFF. No hay init en este HTML a propósito
+       (evita un segundo camino de arranque sin gate de consentimiento). -->
 </head>
 <body>
   <div id="root"></div>

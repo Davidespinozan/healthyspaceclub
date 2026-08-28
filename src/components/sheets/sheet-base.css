@@ -721,3 +721,29 @@
   line-height: 1.4;
   color: var(--forest, #0E2521);
 }
+
+/* ANALYTICS-1 · P1-A · control de analítica de producto en PrivacySheet */
+.sh-analytics {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 4px;
+  padding: 14px;
+  border: 1px solid rgba(14, 37, 33, 0.14);
+  border-radius: 14px;
+  background: rgba(14, 37, 33, 0.03);
+}
+.sh-analytics-info { flex: 1; min-width: 0; }
+.sh-analytics-title { font-weight: 700; font-size: 14px; }
+.sh-analytics-note { margin: 4px 0 0; font-size: 12px; line-height: 1.45; opacity: 0.7; }
+.sh-analytics-btn {
+  flex: 0 0 auto;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(14, 37, 33, 0.25);
+  background: transparent;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}

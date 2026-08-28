@@ -17,7 +17,7 @@ const AdminApp = lazyWithRetry(() => import('./admin/AdminApp'), 'AdminApp')
 const isPublicProfileRoute = /^\/u\/[a-z0-9_.]{2,30}$/i.test(window.location.pathname)
 const PublicProfilePage = lazyWithRetry(() => import('./public/PublicProfilePage'), 'PublicProfilePage')
 import { useAppStore } from './store'
-import { initAnalytics, track } from './utils/analytics'
+import { initAnalytics, track, errorKind } from './utils/analytics'
 import { captureRefFromUrl } from './utils/referral'
 import './index.css'
 import './styles/wizard.css'
@@ -89,19 +89,19 @@ initAnalytics()
 // reportan vía track() → quedan encolados hasta que exista un sink (PostHog) y
 // entonces se vacían. Sin esto, un crash o un fallo en el flujo de pago solo iba
 // a console.error y el equipo nunca se enteraba (Stripe en LIVE).
+// ANALYTICS-1 · P1-A · telemetría de error SIN contenido: NUNCA se envía message/stack/
+// source/URL (pueden contener texto de usuario, payloads de Supabase, /u/<usuario>, ?ref).
+// Solo el NOMBRE de tipo del error (TypeError…, allowlist-seguro) + la pantalla (enum
+// interno). El error crudo queda en console.error para debug local, no en analytics.
+const errScreen = () => { try { return useAppStore.getState().currentScreen } catch { return '' } }
 window.addEventListener('error', (e) => {
-  track('client_error', {
-    message: String(e.message || 'error'),
-    source: `${e.filename || ''}:${e.lineno || 0}`,
-    screen: (() => { try { return useAppStore.getState().currentScreen } catch { return '' } })(),
-  })
+  try { console.error('[client_error]', e.error ?? e.message) } catch { /* noop */ }
+  track('client_error', { kind: errorKind(e.error?.name), screen: errScreen() })
 })
 window.addEventListener('unhandledrejection', (e) => {
   const r = (e as PromiseRejectionEvent).reason
-  track('client_unhandled_rejection', {
-    message: String(r?.message || r || 'rejection'),
-    screen: (() => { try { return useAppStore.getState().currentScreen } catch { return '' } })(),
-  })
+  try { console.error('[client_unhandled_rejection]', r) } catch { /* noop */ }
+  track('client_unhandled_rejection', { kind: errorKind(r?.name), screen: errScreen() })
 })
 // Referido: si la app se abrió con ?ref=<@usuario>, lo guarda para atribuir al registrarse.
 captureRefFromUrl()

@@ -1,6 +1,6 @@
 import { Component, type ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { track } from '../utils/analytics';
+import { track, errorKind } from '../utils/analytics';
 
 interface Props {
   children: ReactNode;
@@ -20,12 +20,11 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
+    // Debug local: el error completo (message + stack + componentStack) va SOLO a consola.
     console.error('[ErrorBoundary] caught:', error, info.componentStack);
-    // Observabilidad: reporta el crash al sink (PostHog) para verlo en producción.
-    track('react_crash', {
-      message: String(error?.message || error),
-      stack: String(error?.stack || '').slice(0, 500),
-    });
+    // ANALYTICS-1 · P1-A · telemetría SIN contenido: nunca message/stack (pueden llevar
+    // texto de usuario/URLs). Solo el nombre de tipo del error (allowlist-seguro).
+    track('react_crash', { kind: errorKind(error?.name) });
   }
 
   render() {

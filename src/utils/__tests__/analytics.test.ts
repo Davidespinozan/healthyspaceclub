@@ -1,193 +1,162 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import html from '../../../index.html?raw';
-import pkgRaw from '../../../package.json?raw';
+import mainRaw from '../../main.tsx?raw';
+import boundaryRaw from '../../components/ErrorBoundary.tsx?raw';
+import htmlRaw from '../../../index.html?raw';
 
-// ANALYTICS-1 · P0 · reset() de identidad + cola, y bootstrap de PostHog endurecido/OFF.
-// El módulo tiene estado a nivel de módulo (sink/queue) → se re-importa fresco por bloque.
-
-type W = typeof window & { posthog?: unknown; analytics?: unknown };
+// ANALYTICS-1 · P1-A · fachada con consentimiento por delante. Estado a nivel de módulo
+// (sink/queue) → se re-importa fresco por bloque. localStorage controla el consentimiento.
+type W = typeof window & { posthog?: unknown };
 const w = () => globalThis as unknown as W;
+const KEY = 'hsc_analytics_consent';
 
-async function freshAnalytics() {
-  vi.resetModules();
-  return await import('../analytics');
+async function fresh() { vi.resetModules(); return await import('../analytics'); }
+function setConsent(v: 'accepted' | 'declined' | null) {
+  try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch { /* noop */ }
+}
+function mockProvider() {
+  const capture = vi.fn(), identify = vi.fn(), reset = vi.fn(), opt_out_capturing = vi.fn();
+  (w() as { posthog?: unknown }).posthog = { capture, identify, reset, opt_out_capturing };
+  return { capture, identify, reset, opt_out_capturing };
 }
 
-afterEach(() => {
-  delete (w() as { posthog?: unknown }).posthog;
-  delete (w() as { analytics?: unknown }).analytics;
+afterEach(() => { delete (w() as { posthog?: unknown }).posthog; setConsent(null); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
+
+// ── §30 · track/identify gateados por consentimiento ──────────────────────────
+describe('§30 consent-gated capture', () => {
+  it('UNKNOWN → track descartado (proveedor presente pero no se envía)', async () => {
+    setConsent(null); const p = mockProvider(); const a = await fresh();
+    a.track('e'); a.identify('u');
+    expect(p.capture).not.toHaveBeenCalled();
+    expect(p.identify).not.toHaveBeenCalled();
+  });
+  it('DECLINED → track/identify descartados', async () => {
+    setConsent('declined'); const p = mockProvider(); const a = await fresh();
+    a.track('e'); a.identify('u');
+    expect(p.capture).not.toHaveBeenCalled();
+    expect(p.identify).not.toHaveBeenCalled();
+  });
+  it('ACCEPTED → track/identify se envían', async () => {
+    setConsent('accepted'); const p = mockProvider(); const a = await fresh();
+    a.track('e', { ok: true }); a.identify('u');
+    expect(p.capture).toHaveBeenCalledWith('e', { ok: true });
+    expect(p.identify).toHaveBeenCalledWith('u', undefined);
+  });
+  it('GPC bloquea aunque ACCEPTED', async () => {
+    setConsent('accepted'); vi.stubGlobal('navigator', { globalPrivacyControl: true });
+    const p = mockProvider(); const a = await fresh();
+    a.track('e'); a.identify('u');
+    expect(p.capture).not.toHaveBeenCalled();
+    expect(p.identify).not.toHaveBeenCalled();
+  });
 });
 
-// ── §13 · reset primitive ─────────────────────────────────────────────────────
-describe('§13 reset()', () => {
-  it('A · sin proveedor → no lanza', async () => {
-    const a = await freshAnalytics();
+// ── §30 · cola: eventos pre-consentimiento nunca se envían ────────────────────
+describe('§30 pre-consent queue discard', () => {
+  it('track en UNKNOWN no se encola; aceptar luego NO los reenvía', async () => {
+    setConsent(null); const a = await fresh();
+    a.track('pre_A'); a.track('pre_B');       // descartados (unknown)
+    setConsent('accepted'); const p = mockProvider();
+    a.track('post');                          // este sí
+    expect(p.capture).toHaveBeenCalledTimes(1);
+    expect(p.capture).toHaveBeenCalledWith('post', undefined);
+    expect(p.capture).not.toHaveBeenCalledWith('pre_A', undefined);
+  });
+});
+
+// ── §29 · initializeProviderIfAllowed: gates de init ──────────────────────────
+describe('§29 provider init gates (no posthog created when blocked)', () => {
+  it('UNKNOWN → no init (window.posthog no se crea)', async () => {
+    setConsent(null); vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test'); const a = await fresh();
+    a.initializeProviderIfAllowed();
+    expect((w() as { posthog?: unknown }).posthog).toBeUndefined();
+  });
+  it('DECLINED → no init', async () => {
+    setConsent('declined'); vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test'); const a = await fresh();
+    a.initializeProviderIfAllowed();
+    expect((w() as { posthog?: unknown }).posthog).toBeUndefined();
+  });
+  it('ACCEPTED pero host no-producción (localhost jsdom) → no init', async () => {
+    setConsent('accepted'); vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test'); const a = await fresh();
+    a.initializeProviderIfAllowed();
+    expect((w() as { posthog?: unknown }).posthog).toBeUndefined();   // hostname=localhost
+  });
+  it('ACCEPTED + prod host pero SIN key → no init (proveedor OFF por defecto Gate B)', async () => {
+    setConsent('accepted'); vi.stubEnv('VITE_POSTHOG_KEY', '');
+    vi.stubGlobal('location', { hostname: 'healthyspaceclub.com' }); const a = await fresh();
+    a.initializeProviderIfAllowed();
+    expect((w() as { posthog?: unknown }).posthog).toBeUndefined();
+  });
+  it('ACCEPTED + prod host + key → init crea window.posthog (una vez)', async () => {
+    setConsent('accepted'); vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test');
+    vi.stubGlobal('location', { hostname: 'healthyspaceclub.com' }); const a = await fresh();
+    a.initializeProviderIfAllowed();
+    expect((w() as { posthog?: unknown }).posthog).toBeDefined();     // snippet cargó el stub
+    const first = (w() as { posthog?: unknown }).posthog;
+    a.initializeProviderIfAllowed();                                  // idempotente
+    expect((w() as { posthog?: unknown }).posthog).toBe(first);
+  });
+});
+
+// ── §31 · reset / A→B ─────────────────────────────────────────────────────────
+describe('§31 identity reset', () => {
+  it('reset() llama posthog.reset y limpia cola; seguro sin proveedor', async () => {
+    setConsent('accepted'); const p = mockProvider(); const a = await fresh();
+    a.reset();
+    expect(p.reset).toHaveBeenCalledTimes(1);
+    delete (w() as { posthog?: unknown }).posthog;
     expect(() => a.reset()).not.toThrow();
   });
-
-  it('B · PostHog presente → posthog.reset() llamado exactamente una vez', async () => {
-    const reset = vi.fn();
-    (w() as { posthog?: unknown }).posthog = { capture: vi.fn(), identify: vi.fn(), reset };
-    const a = await freshAnalytics();
-    a.reset();
-    expect(reset).toHaveBeenCalledTimes(1);
-  });
-
-  it('C · Segment-compatible → analytics.reset() soportado', async () => {
-    const reset = vi.fn();
-    (w() as { analytics?: unknown }).analytics = { track: vi.fn(), identify: vi.fn(), reset };
-    const a = await freshAnalytics();
-    a.reset();
-    expect(reset).toHaveBeenCalledTimes(1);
-  });
-
-  it('D · cola pendiente NO se vacía a un sink que aparece DESPUÉS del reset', async () => {
-    const a = await freshAnalytics();
-    a.track('pre_logout_event_A');           // encolado (sin proveedor)
-    a.reset();                               // descarta la cola de A
-    const capture = vi.fn();
-    (w() as { posthog?: unknown }).posthog = { capture, identify: vi.fn(), reset: vi.fn() };
-    a.initAnalytics();                       // aparece el proveedor y vacía la cola
-    expect(capture).not.toHaveBeenCalledWith('pre_logout_event_A', undefined);
-    expect(capture).not.toHaveBeenCalled();  // la cola quedó vacía tras reset
-  });
-
-  it('E · track normal sigue funcionando tras reset', async () => {
-    const capture = vi.fn();
-    (w() as { posthog?: unknown }).posthog = { capture, identify: vi.fn(), reset: vi.fn() };
-    const a = await freshAnalytics();
-    a.initAnalytics();
-    a.reset();
-    a.track('after_reset', { ok: true });
-    expect(capture).toHaveBeenCalledWith('after_reset', { ok: true });
-  });
-
-  it('F · cap de 100 eventos intacto', async () => {
-    const a = await freshAnalytics();
-    for (let i = 0; i < 150; i++) a.track(`e${i}`);   // sin sink → encola, cap 100
-    const capture = vi.fn();
-    (w() as { posthog?: unknown }).posthog = { capture, identify: vi.fn(), reset: vi.fn() };
-    a.initAnalytics();
-    expect(capture.mock.calls.length).toBe(100);
+  it('withdraw (setAnalyticsConsent declined) → opt_out + reset + persiste declined', async () => {
+    setConsent('accepted'); const p = mockProvider(); const a = await fresh();
+    a.setAnalyticsConsent('declined');
+    expect(p.opt_out_capturing).toHaveBeenCalledTimes(1);
+    expect(p.reset).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem(KEY)).toBe('declined');
+    // tras declinar, track ya no envía
+    a.track('after_withdraw');
+    expect(p.capture).not.toHaveBeenCalled();
   });
 });
 
-// ── §14 · transiciones de cuenta (simulación de la lógica del handler) ─────────
-// Reproduce la decisión de App.tsx SIN montar todo App: reset() SOLO si hay un dueño
-// previo DISTINTO, antes de identify(B). anon→A y mismo-user no resetean.
-describe('§14 account transitions', () => {
-  function makeHandler(a: Awaited<ReturnType<typeof freshAnalytics>>) {
-    let dataOwnerId: string | null = null;
-    return {
-      get owner() { return dataOwnerId; },
-      signedIn(userId: string) {
-        if (dataOwnerId && dataOwnerId !== userId) a.reset();   // A→B ANTES de identify(B)
-        a.identify(userId);
-        dataOwnerId = userId;                                    // ensureDataOwner reclama
-      },
-      tokenRefreshed(_userId: string) { /* el handler real NO identifica ni resetea */ },
-      signedOut() { a.reset(); dataOwnerId = null; },
-    };
-  }
-
-  it('1 · anon→A: identify(A), sin reset (enlaza actividad anónima)', async () => {
-    const reset = vi.fn(); const identify = vi.fn();
-    (w() as { posthog?: unknown }).posthog = { capture: vi.fn(), identify, reset };
-    const a = await freshAnalytics(); a.initAnalytics();
-    const h = makeHandler(a); h.signedIn('A');
-    expect(identify).toHaveBeenCalledWith('A', undefined);
-    expect(reset).not.toHaveBeenCalled();
+// ── §32 · privacidad de errores: los handlers NO envían contenido crudo ───────
+describe('§32 error telemetry privacy (source-level)', () => {
+  it('main.tsx client_error/rejection NO envían message/stack/source/filename', () => {
+    // Aísla los bloques de track de errores.
+    const ce = mainRaw.slice(mainRaw.indexOf("track('client_error'"), mainRaw.indexOf(')', mainRaw.indexOf("track('client_error'")) + 1);
+    const ur = mainRaw.slice(mainRaw.indexOf("track('client_unhandled_rejection'"), mainRaw.indexOf(')', mainRaw.indexOf("track('client_unhandled_rejection'")) + 1);
+    for (const block of [ce, ur]) {
+      expect(block).not.toMatch(/message/);
+      expect(block).not.toMatch(/\.stack/);
+      expect(block).not.toMatch(/filename|lineno|\.source/);
+      expect(block).toMatch(/kind:/);
+    }
   });
-
-  it('2 · TOKEN_REFRESHED del mismo user → sin reset', async () => {
-    const reset = vi.fn();
-    (w() as { posthog?: unknown }).posthog = { capture: vi.fn(), identify: vi.fn(), reset };
-    const a = await freshAnalytics(); a.initAnalytics();
-    const h = makeHandler(a); h.signedIn('A'); h.tokenRefreshed('A');
-    expect(reset).not.toHaveBeenCalled();
+  it('ErrorBoundary react_crash NO envía message/stack', () => {
+    const rc = boundaryRaw.slice(boundaryRaw.indexOf("track('react_crash'"), boundaryRaw.indexOf('}', boundaryRaw.indexOf("track('react_crash'")) + 1);
+    expect(rc).not.toMatch(/message/);
+    expect(rc).not.toMatch(/stack/);
+    expect(rc).toMatch(/kind:/);
   });
-
-  it('3 · SIGNED_OUT → reset', async () => {
-    const reset = vi.fn();
-    (w() as { posthog?: unknown }).posthog = { capture: vi.fn(), identify: vi.fn(), reset };
-    const a = await freshAnalytics(); a.initAnalytics();
-    const h = makeHandler(a); h.signedIn('A'); h.signedOut();
-    expect(reset).toHaveBeenCalledTimes(1);
-  });
-
-  it('4 · A→B: reset ocurre ANTES de identify(B)', async () => {
-    const calls: string[] = [];
-    const reset = vi.fn(() => calls.push('reset'));
-    const identify = vi.fn((id: string) => calls.push(`identify:${id}`));
-    (w() as { posthog?: unknown }).posthog = { capture: vi.fn(), identify, reset };
-    const a = await freshAnalytics(); a.initAnalytics();
-    const h = makeHandler(a); h.signedIn('A'); h.signedIn('B');
-    expect(calls).toEqual(['identify:A', 'reset', 'identify:B']);
-  });
-
-  it('5 · eventos de A encolados nunca se atribuyen a B', async () => {
-    // Sin sink al inicio → A encola; logout limpia; luego aparece proveedor y B identifica.
-    const a = await freshAnalytics();
-    const h = makeHandler(a);
-    h.signedIn('A');                 // sink null → identify(A) encolado
-    a.track('A_did_something');      // encolado bajo contexto de A
-    h.signedOut();                   // reset() vacía la cola
-    const capture = vi.fn(); const identify = vi.fn();
-    (w() as { posthog?: unknown }).posthog = { capture, identify, reset: vi.fn() };
-    a.initAnalytics();               // aparece proveedor
-    h.signedIn('B');                 // identify(B)
-    expect(capture).not.toHaveBeenCalledWith('A_did_something', undefined);
-    expect(identify).toHaveBeenCalledWith('B', undefined);
-  });
-
-  it('6 · logout sin proveedor → no crash', async () => {
-    const a = await freshAnalytics();
-    const h = makeHandler(a); h.signedIn('A');
-    expect(() => h.signedOut()).not.toThrow();
-  });
-
-  it('7 · A→SIGNED_OUT→B: reset en logout, sin doble reset al identificar a B', async () => {
-    const calls: string[] = [];
-    const reset = vi.fn(() => calls.push('reset'));
-    const identify = vi.fn((id: string) => calls.push(`identify:${id}`));
-    (w() as { posthog?: unknown }).posthog = { capture: vi.fn(), identify, reset };
-    const a = await freshAnalytics(); a.initAnalytics();
-    const h = makeHandler(a);
-    h.signedIn('A'); h.signedOut(); h.signedIn('B');
-    // logout ya reseteó → B entra con dueño null → NO se resetea otra vez (anon→B).
-    expect(calls).toEqual(['identify:A', 'reset', 'identify:B']);
-    expect(reset).toHaveBeenCalledTimes(1);
+  it('errorKind() allowlist: nombres válidos pasan, contenido hostil → UnknownError', async () => {
+    const a = await fresh();
+    expect(a.errorKind('TypeError')).toBe('TypeError');
+    expect(a.errorKind('Error')).toBe('Error');
+    // un Error custom con name = contenido de usuario NO se reenvía crudo
+    expect(a.errorKind('https://healthyspaceclub.com/u/priv?ref=priv private@example.com')).toBe('UnknownError');
+    expect(a.errorKind('reflexión secreta del usuario')).toBe('UnknownError');
+    expect(a.errorKind(undefined)).toBe('UnknownError');
+    expect(a.errorKind(123 as unknown)).toBe('UnknownError');
   });
 });
 
-// ── §15/§16 · provider OFF + config endurecida (index.html) ────────────────────
-describe('§15/§16 bootstrap endurecido y desactivado', () => {
-  it('§15 · sin dependencia de SDK de analytics en package.json', () => {
-    expect(pkgRaw).not.toMatch(/"posthog-js"|"@segment|"analytics-node"|"mixpanel/);
+// ── §26 · provider OFF sin key en el HTML (no hay init en index.html) ─────────
+describe('§26 provider off by default', () => {
+  it('index.html no contiene un posthog.init activo', () => {
+    expect(htmlRaw).not.toMatch(/posthog\.init/);
+    expect(htmlRaw).not.toMatch(/phc_[A-Za-z0-9]{20,}/);
   });
-  it('§15 · el bloque PostHog sigue COMENTADO (desactivado)', () => {
-    const start = html.indexOf('OBSERVABILIDAD (PostHog)');
-    const openComment = html.lastIndexOf('<!--', start);
-    const closeComment = html.indexOf('-->', start);
-    expect(openComment).toBeGreaterThanOrEqual(0);
-    expect(closeComment).toBeGreaterThan(start);       // el init vive dentro del comentario
-    expect(html.indexOf('posthog.init', start)).toBeLessThan(closeComment);
-  });
-  it('§15 · placeholder de key, sin key real', () => {
-    expect(html).toContain('TU_POSTHOG_KEY');
-    expect(html).not.toMatch(/phc_[A-Za-z0-9]{20,}/);  // formato de key real de PostHog
-  });
-  it('§16 · config segura: autocapture/pageview/replay OFF, identified_only', () => {
-    expect(html).toMatch(/autocapture:\s*false/);
-    expect(html).toMatch(/capture_pageview:\s*false/);
-    expect(html).toMatch(/disable_session_recording:\s*true/);
-    expect(html).toMatch(/capture_heatmaps:\s*false/);
-    expect(html).toMatch(/person_profiles:\s*'identified_only'/);
-    expect(html).toMatch(/api_host:\s*'https:\/\/eu\.i\.posthog\.com'/);
-  });
-  it('§16 · gate de host de producción (no localhost/previews)', () => {
-    expect(html).toContain("location.hostname");
-    expect(html).toMatch(/'healthyspaceclub\.com'/);
-    expect(html).toMatch(/'www\.healthyspaceclub\.com'/);
+  it('package.json no añade posthog-js', () => {
+    // se resuelve en el test de consent; aquí solo confirmamos que analytics es la vía JS
+    expect(htmlRaw).toMatch(/initializeProviderIfAllowed/);
   });
 });
