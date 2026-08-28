@@ -69,32 +69,57 @@ beforeEach(() => {
 });
 afterEach(() => cleanup());
 
-// ── A · ZERO ────────────────────────────────────────────────────────────────
-describe('A · estado cero (deseo, no utilidades)', () => {
-  it('hero de valor + invitar primario + buscar secundario + preview de modos; sin caja dashed vieja', async () => {
+// ── A · ZERO (IA corregida: BUSCAR primario visible, invitar secundario) ──────
+describe('A · estado cero — buscar primario, invitar secundario', () => {
+  it('el buscador es visible de inmediato (sin toggle); invitar externo es secundario', async () => {
     render(<CompanerosScreen />);
-    expect(await screen.findByText('Tu entrenamiento. Alguien contigo.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /invitar a un amigo/i })).toBeTruthy();
-    // Buscar es secundario: hay un toggle, no un textbox visible aún.
-    expect(screen.getByRole('button', { name: /ya está en healthy space/i })).toBeTruthy();
-    expect(screen.queryByRole('textbox')).toBeNull();
-    // Preview de los dos modos.
-    expect(screen.getByText('Juntos, en vivo')).toBeTruthy();
-    expect(screen.getByText('A distancia')).toBeTruthy();
-    // La caja "empty-rich" dashed vieja NO se renderiza.
-    expect(screen.queryByText('Todo es mejor con alguien al lado')).toBeNull();
-  });
-
-  it('el toggle revela el buscador con label accesible', async () => {
-    render(<CompanerosScreen />);
-    fireEvent.click(await screen.findByRole('button', { name: /ya está en healthy space/i }));
+    // Título primario "¿Con quién quieres entrenar?"
+    expect(await screen.findByText('¿Con quién quieres entrenar?')).toBeTruthy();
+    // El textbox de búsqueda está visible YA (primario, sin revelar).
     expect(screen.getByRole('textbox', { name: /buscar personas en healthy space/i })).toBeTruthy();
+    // Invitar externo (Referral) presente pero SECUNDARIO (link "Invítalo a unirse").
+    expect(screen.getByText('¿Todavía no está en Healthy Space?')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /invítalo a unirse/i })).toBeTruthy();
+    // Preview de modos y sin caja dashed vieja.
+    expect(screen.getByText('Juntos, en vivo')).toBeTruthy();
+    expect(screen.queryByText('Todo es mejor con alguien al lado')).toBeNull();
   });
 
   it('el título del estado cero NO es "Tus compañeros"', async () => {
     render(<CompanerosScreen />);
-    await screen.findByText('Tu entrenamiento. Alguien contigo.');
+    await screen.findByText('¿Con quién quieres entrenar?');
     expect(screen.getByRole('heading', { level: 1 }).textContent).not.toMatch(/tus compañeros/i);
+  });
+
+  // TEST 3 · orden IA: el buscador aparece ANTES que la invitación externa en el DOM.
+  it('el buscador precede a la invitación externa en el DOM', async () => {
+    const { container } = render(<CompanerosScreen />);
+    await screen.findByText('¿Con quién quieres entrenar?');
+    const input = screen.getByRole('textbox', { name: /buscar personas/i });
+    const inviteLink = screen.getByRole('button', { name: /invítalo a unirse/i });
+    // compareDocumentPosition: input viene antes que inviteLink.
+    expect(input.compareDocumentPosition(inviteLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container).toBeTruthy();
+  });
+});
+
+// ── TEST 1 · IDENTIDAD DEL INPUT (regresión de foco/remount) ──────────────────
+describe('regresión · el input de búsqueda NO se remonta por tecleo', () => {
+  it('tras enfocar, teclear "magaly" conserva el MISMO nodo y el foco', async () => {
+    render(<CompanerosScreen />);
+    const original = await screen.findByRole('textbox', { name: /buscar personas/i }) as HTMLInputElement;
+    original.focus();
+    expect(document.activeElement).toBe(original);
+    // Teclea carácter por carácter (cada change = un re-render de CompanerosScreen).
+    for (const value of ['m', 'ma', 'mag', 'maga', 'magal', 'magaly']) {
+      fireEvent.change(original, { target: { value } });
+    }
+    // El textbox actual debe ser EXACTAMENTE el mismo nodo (no remontado)…
+    const now = screen.getByRole('textbox', { name: /buscar personas/i });
+    expect(now).toBe(original);
+    // …con el foco intacto y el valor acumulado.
+    expect(document.activeElement).toBe(original);
+    expect((now as HTMLInputElement).value).toBe('magaly');
   });
 });
 
@@ -164,8 +189,8 @@ describe('E · búsqueda', () => {
   it('resultado invitable → Conectar (partner authority); no-results; error de invitación visible', async () => {
     P.searchUsers.mockResolvedValue([{ user_id: 'x1', username: 'ana', display_name: 'Ana', avatar_url: null, streak_count: 3 }]);
     render(<CompanerosScreen />);
-    fireEvent.click(await screen.findByRole('button', { name: /ya está en healthy space/i }));
-    const input = screen.getByRole('textbox', { name: /buscar personas/i });
+    // El buscador es primario y visible directamente (sin toggle).
+    const input = await screen.findByRole('textbox', { name: /buscar personas/i });
     fireEvent.change(input, { target: { value: 'ana' } });
     const connect = await screen.findByRole('button', { name: /conectar/i });
     // Conectar usa autoridad de PAREJA (sendInvite), no el referral link.
@@ -179,18 +204,17 @@ describe('E · búsqueda', () => {
   it('sin resultados → mensaje noResults', async () => {
     P.searchUsers.mockResolvedValue([]);
     render(<CompanerosScreen />);
-    fireEvent.click(await screen.findByRole('button', { name: /ya está en healthy space/i }));
-    fireEvent.change(screen.getByRole('textbox', { name: /buscar personas/i }), { target: { value: 'zzz' } });
+    fireEvent.change(await screen.findByRole('textbox', { name: /buscar personas/i }), { target: { value: 'zzz' } });
     expect(await screen.findByText(/nadie encontrado/i)).toBeTruthy();
   });
 });
 
 // ── F · INVITAR (referral) ≠ CONECTAR (partner) ────────────────────────────────
 describe('F · invitar(referral) ≠ conectar(partner)', () => {
-  it('invitar primario NO crea partnership (referral ≠ partner authority)', async () => {
+  it('invitar externo NO crea partnership (referral ≠ partner authority)', async () => {
     render(<CompanerosScreen />);
-    fireEvent.click(await screen.findByRole('button', { name: /invitar a un amigo/i }));
-    // El botón primario es ADQUISICIÓN (referral): jamás llama a la autoridad de
+    fireEvent.click(await screen.findByRole('button', { name: /invítalo a unirse/i }));
+    // "Invítalo a unirse" es ADQUISICIÓN (referral): jamás llama a la autoridad de
     // pareja (sendInvite). Esa autoridad sólo la usa "Conectar" en la búsqueda (test E).
     await new Promise(r => setTimeout(r, 30));
     expect(P.sendInvite).not.toHaveBeenCalled();
