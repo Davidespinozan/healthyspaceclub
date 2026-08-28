@@ -47,6 +47,7 @@ export interface CoachContext {
   };
   mindset: {
     profileSummary?: string; profileAsOf?: string;
+    reflectionCompletedToday: boolean;   // METADATA-ONLY (fecha), nunca texto
     todayReflections: Array<{ dimension: string; response: string }>;
   };
 }
@@ -73,7 +74,7 @@ export function buildCoachContext(store: StoreState): CoachContext {
   const {
     userName, obData, streakCount, startDate, weeklyPlan, shoppingDay,
     mealChecks, mealResolvedByLog, foodLog, completedSessions, workoutLog,
-    dailyWorkout, dailyHSMResponses, hsmProfile,
+    dailyWorkout, dailyHSMResponses, hsmProfile, hsmDailyReview,
   } = store;
   const today = dayKey(new Date());
   const weekday = new Date().getDay();
@@ -156,6 +157,12 @@ export function buildCoachContext(store: StoreState): CoachContext {
   const mindset: CoachContext['mindset'] = {
     profileSummary: hsmProfile?.text || undefined,
     profileAsOf: hsmProfile?.updatedAt || undefined,
+    // METADATA-ONLY: ¿completó el ritual de reflexión HOY? Verdadero en TODOS los
+    // caminos de completado (free/base, pro/ai, URGENT/safe) y también si hay una
+    // respuesta de hoy antes de que se genere la reseña. SOLO fechas — jamás texto:
+    // el filtro de abajo sigue excluyendo el contenido URGENT del contexto de IA.
+    reflectionCompletedToday: hsmDailyReview?.date === today
+      || dailyHSMResponses.some(r => r.date === today),
     todayReflections: dailyHSMResponses
       .filter(r => r.date === today && r.safetyLevel !== 'URGENT')
       .map(r => ({ dimension: r.dimension, response: r.response })),
@@ -211,6 +218,9 @@ export function renderHscFacts(ctx: CoachContext): string {
 
   // MINDSET
   const m = ctx.mindset;
+  // HECHO metadata (siempre): ¿ya hizo su reflexión de hoy? — responde el "sí/no"
+  // sin exponer contenido (URGENT incluido: completada=sí, pero su texto nunca entra).
+  L.push(`REFLEXIÓN DE HOY: ${m.reflectionCompletedToday ? 'completada' : 'no completada'}`);
   if (m.profileSummary) L.push(`PERFIL PSICOLÓGICO (acumulado, al ${m.profileAsOf ?? '?'}): ${m.profileSummary}`);
   if (m.todayReflections.length) L.push(`REFLEXIONES DE HOY: ${m.todayReflections.map(r => `${r.dimension}: "${r.response}"`).join(' | ')}`);
 

@@ -21,7 +21,7 @@ const ctx = (over: Partial<{ daysInProgram: number | null; streak: number; sessi
   user: { name: 'x', daysInProgram: over.daysInProgram ?? 40, streak: over.streak ?? 3, today: TODAY } as never,
   training: { todayWorkout: null, why: null, thisWeek: { sessions: over.sessions ?? 1, volumeTop: [] }, trend4wk: over.trend ?? 'n/a', partnerToday: false },
   nutrition: { hasPlan: false, target: { kcal: 0, prot: 0, carb: 0, fat: 0 }, consumed: { kcal: 0, prot: 0, carb: 0, fat: 0 }, remaining: { kcal: 0, prot: 0, carb: 0, fat: 0 }, mealsDone: 0, mealsLeft: 0, todayMeals: [] },
-  mindset: { todayReflections: [] },
+  mindset: { reflectionCompletedToday: false, todayReflections: [] },
 });
 const R = (date: string, dimensionId: string, extra: Partial<ReflectionRecord> = {}): ReflectionRecord => ({ date, dimensionId: dimensionId as never, dimension: dimensionId, response: 'x', safetyLevel: 'NORMAL', ...extra });
 const sig = (reflections: ReflectionRecord[], c = ctx()) => buildReflectionSignals({ reflections, coachContext: c, today: TODAY });
