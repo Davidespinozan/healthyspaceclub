@@ -43,6 +43,8 @@ export const es = {
     cancel: 'Cancelar',
     close: 'Cerrar',
     back: 'Volver',
+    coachOpen: 'Abrir Coach',
+    coachClose: 'Cerrar Coach',
     saving: 'Guardando…',
     processing: 'Procesando…',
     retry: 'Intentá de nuevo.',

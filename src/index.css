@@ -6049,34 +6049,49 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   .bnav-item:active { transform: none; }
   .bnav-item.active::before { animation: none; }
 }
-/* Coach FAB */
+/* Coach FAB — COACH-SHELL-POLISH-P0: sobrio y premium (sin glow de espectáculo).
+   Un solo toggle abre/cierra; elevación sutil, safe-area, focus-visible claro. */
 .coach-fab {
   position: fixed; z-index: 200;
-  bottom: 90px; right: 16px;
+  /* Se sienta un gap CONSTANTE (~26px) sobre el bottom-nav SIN doble-contar la
+     safe-area: el .bnav ya crece con max(12px, env(safe-area-inset-bottom)); usar
+     el MISMO término aquí hace que la safe-area se cancele (gap = 78 − alto-nav,
+     independiente del dispositivo). En pantalla sin notch = 90px (baseline probado). */
+  bottom: calc(78px + max(12px, env(safe-area-inset-bottom, 0px))); right: 16px;
   width: 56px; height: 56px; border-radius: 50%;
-  /* Gradiente dorado vibrante + glow (sistema actual) */
-  background: linear-gradient(135deg, #C9A968, #A8864E);
-  color: #fff;
-  border: none;
+  background: linear-gradient(150deg, #C9A968, #A8864E);   /* dorado de marca, sin glow dorado */
+  color: #F4EFE3;
+  border: 1px solid rgba(244, 239, 227, 0.16);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(168, 134, 78, 0.42), 0 2px 8px rgba(21, 51, 48, 0.2);
+  box-shadow: 0 6px 18px rgba(21, 51, 48, 0.22);           /* elevación sutil (neutra), no glow */
   -webkit-tap-highlight-color: transparent;
-  transition: transform .2s var(--ease-out-soft, ease), box-shadow .2s ease, filter .2s ease, background .2s ease;
+  transition: transform var(--duration-fast, .15s) var(--ease-out-soft, ease), box-shadow var(--duration-fast, .15s) ease, background .2s ease;
 }
 .coach-fab:hover {
-  transform: translateY(-2px) scale(1.04);
-  filter: brightness(1.05);
-  box-shadow: 0 12px 30px rgba(168, 134, 78, 0.52), 0 2px 8px rgba(21, 51, 48, 0.2);
+  transform: translateY(-1px);                              /* táctil, sin scale de espectáculo */
+  box-shadow: 0 10px 24px rgba(21, 51, 48, 0.28);
 }
-.coach-fab:active { transform: scale(0.96); }
-.coach-fab svg { color: #fff; }
-/* Abierto = forest oscuro con la X (modo "cerrar") */
+.coach-fab:active { transform: scale(0.97); }
+.coach-fab:focus-visible {
+  outline: none;
+  box-shadow: 0 6px 18px rgba(21, 51, 48, 0.22), 0 0 0 3px rgba(191, 160, 101, 0.6);
+}
+.coach-fab svg { color: #F4EFE3; }
+/* Abierto = forest oscuro con la X (modo "cerrar"), igualmente sobrio */
 .coach-fab.open {
-  background: linear-gradient(135deg, #1C3B35, #0E2521);
-  box-shadow: 0 8px 24px rgba(21, 51, 48, 0.4);
+  background: linear-gradient(150deg, #1C3B35, #0E2521);
+  border-color: rgba(191, 160, 101, 0.28);
+  box-shadow: 0 6px 18px rgba(8, 20, 27, 0.34);
 }
-.coach-fab.open svg { color: #fff; }
+.coach-fab.open:focus-visible {
+  box-shadow: 0 6px 18px rgba(8, 20, 27, 0.34), 0 0 0 3px rgba(191, 160, 101, 0.6);
+}
+.coach-fab.open svg { color: #F4EFE3; }
+@media (prefers-reduced-motion: reduce) {
+  .coach-fab { transition: none; }
+  .coach-fab:hover, .coach-fab:active { transform: none; }
+}
 
 .coach-overlay {
   position: fixed;
@@ -6094,7 +6109,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 
 @media (min-width: 1024px) {
-  .coach-fab { bottom: 24px; right: 24px; width: 56px; height: 56px; }
+  .coach-fab { bottom: 24px; right: 24px; width: 56px; height: 56px; }   /* desktop: sin nav inferior ni home-indicator → offset simple */
   .coach-overlay { left: 220px; padding-bottom: 0; }
 }
 

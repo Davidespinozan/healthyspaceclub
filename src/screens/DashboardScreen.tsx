@@ -186,14 +186,17 @@ export default function DashboardScreen() {
         )}
       </main>
 
-      {/* Coach FAB */}
+      {/* Coach FAB — mismo toggle (una sola autoridad open/close), tratamiento sobrio */}
       <button
+        type="button"
         className={`coach-fab${coachOpen ? ' open' : ''}`}
+        aria-label={coachOpen ? t('common.coachClose') : t('common.coachOpen')}
+        aria-expanded={coachOpen}
         onClick={() => setCoachOpen(!coachOpen)}
       >
         {coachOpen
-          ? <X size={23} strokeWidth={2.5} />
-          : <MessageCircle size={23} strokeWidth={2} />
+          ? <X size={22} strokeWidth={2} aria-hidden="true" />
+          : <MessageCircle size={22} strokeWidth={2} aria-hidden="true" />
         }
       </button>
 

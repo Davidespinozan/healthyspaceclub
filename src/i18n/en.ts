@@ -44,6 +44,8 @@ export const en: Translations<typeof es> = {
     cancel: 'Cancel',
     close: 'Close',
     back: 'Back',
+    coachOpen: 'Open Coach',
+    coachClose: 'Close Coach',
     saving: 'Saving…',
     processing: 'Processing…',
     retry: 'Try again.',
