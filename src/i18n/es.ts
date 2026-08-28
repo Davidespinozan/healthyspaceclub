@@ -31,6 +31,7 @@ export const es = {
     duo: 'Juntos, hoy',
     togetherLabel: 'días juntos',
     streakLabel: 'días cumpliendo',
+    streak: 'Racha',
     min: 'min',
     styleDark: 'Oscuro',
     styleEditorial: 'Editorial',

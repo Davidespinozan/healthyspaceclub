@@ -5,7 +5,7 @@
 // Cada ShareMoment contiene SOLO strings display-safe. Puro: sin red, sin IA, sin
 // persistencia, sin analytics, sin efectos. No inventa logros (cada momento tiene un
 // predicado estricto). No emite PR ni comida (diferidos). No expone identidad de pareja.
-import { MILESTONE_STEPS, getMilestoneCopy } from '../constants/milestones';
+import { MILESTONE_STEPS } from '../constants/milestones';
 
 export type ShareMomentKind =
   | 'showed_up' | 'workout' | 'cardio' | 'streak_milestone' | 'streak'
@@ -69,14 +69,16 @@ export function buildShareMoments(input: ShareInput, t: TFn): ShareMoment[] {
   const s = input.streakCount ?? 0;
 
   // ── STREAK MILESTONE (autoridad: MILESTONE_STEPS) ──────────────────────────
+  // VISUAL-P0: el LOGRO es el héroe (el número), no un nombre inventado. Copy FACTUAL:
+  //   kicker "Racha" + número + "días cumpliendo". Se quitó el título metafórico y la
+  //   frase larga (que desbordaba en Oscuro) que antes venían de getMilestoneCopy.
+  //   Los keys milestones.* siguen intactos para la UI de progresión (no-Share).
   const ms = highestMilestone(s);
   if (ms != null) {
-    const copy = getMilestoneCopy(ms, t as never);
     const rare = ms >= 30;
     out.push({
       id: `streak_${ms}`, kind: 'streak_milestone',
-      title: copy.title || String(ms),
-      subtitle: copy.sub || undefined,
+      title: t('sstudio.streak'),
       stat: { big: String(ms), label: t('sstudio.streakLabel') },
       priority: (rare ? 100 : 70) + Math.min(ms, 30),
       autoSuggest: true, photoCompatible: true, privacy: 'public-safe',

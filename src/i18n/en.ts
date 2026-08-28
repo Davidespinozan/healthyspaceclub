@@ -32,6 +32,7 @@ export const en: Translations<typeof es> = {
     duo: 'Together, today',
     togetherLabel: 'days together',
     streakLabel: 'days showing up',
+    streak: 'Streak',
     min: 'min',
     styleDark: 'Dark',
     styleEditorial: 'Editorial',

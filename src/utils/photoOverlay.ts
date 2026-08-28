@@ -143,6 +143,8 @@ export async function composeShareImage(args: { art: ShareArt; style: ShareStyle
       const dw = img.width * scale, dh = img.height * scale;
       ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
     } finally { URL.revokeObjectURL(url); }
+    // Dim uniforme suave: el texto (centrado/arriba/abajo, según estilo) siempre legible.
+    ctx.fillStyle = 'rgba(6,20,16,0.30)'; ctx.fillRect(0, 0, W, H);
     // Scrim para legibilidad (más fuerte abajo).
     const scrim = ctx.createLinearGradient(0, H * 0.35, 0, H);
     scrim.addColorStop(0, 'rgba(6,20,16,0)'); scrim.addColorStop(1, 'rgba(6,20,16,0.9)');
@@ -164,71 +166,142 @@ export async function composeShareImage(args: { art: ShareArt; style: ShareStyle
   trackedLeft(ctx, art.brand.toUpperCase(), PAD, 116, 8);
   ctx.fillStyle = gold; ctx.fillRect(PAD, 138, 72, 5);
 
-  // 3) CONTENIDO por estilo.
+  // 3) CONTENIDO por estilo. Todo el texto pasa por helpers ACOTADOS (fit/wrap) →
+  //    imposible desbordar el borde de 1080. maxW = ancho seguro (W - 2·PAD).
+  //    Regla anti-clutter (≤3 niveles): con `stat`, el NÚMERO es el héroe y NO se
+  //    dibuja `subtitle` (el subtítulo solo aparece en momentos sin número).
+  const maxW = W - PAD * 2;
+  const kicker = art.title && art.title.trim() ? art.title.toUpperCase() : '';
+
   if (style === 'stat' && art.stat) {
-    // Un número héroe gigante centrado + label + título arriba.
-    ctx.textAlign = 'center';
-    ctx.fillStyle = soft; ctx.font = `600 40px ${FONT}`;
-    trackedLeftCenter(ctx, art.title.toUpperCase(), W / 2, H * 0.34, 4);
-    ctx.fillStyle = cream; ctx.font = `800 420px ${FONT}`;
-    ctx.fillText(art.stat.big, W / 2, H * 0.60);
-    ctx.fillStyle = gold; ctx.font = `700 46px ${FONT}`;
-    trackedLeftCenter(ctx, art.stat.label.toUpperCase(), W / 2, H * 0.66, 6);
+    // ── NÚMERO — data-first: número héroe centrado, simétrico, peso 800. ──
+    const cx = W / 2;
+    const numPx = fitFontPx(ctx, art.stat.big, '800', maxW, 460, 200);
+    const baseY = H * 0.56;
+    if (kicker) {
+      ctx.fillStyle = soft; ctx.font = `600 34px ${FONT}`;
+      drawTracked(ctx, kicker, cx, baseY - numPx * 0.72 - 34, 5, 'center');
+    }
+    ctx.fillStyle = cream; ctx.font = `800 ${numPx}px ${FONT}`;
+    ctx.textAlign = 'center'; ctx.fillText(art.stat.big, cx, baseY); ctx.textAlign = 'left';
+    ctx.fillStyle = gold; ctx.font = `700 48px ${FONT}`;
+    drawTracked(ctx, art.stat.label.toUpperCase(), cx, baseY + 96, 6, 'center');
   } else if (style === 'editorial') {
-    // Tipografía grande dominante, mínimo, mucho aire.
-    ctx.textAlign = 'left';
-    ctx.fillStyle = cream; ctx.font = `800 128px ${FONT}`;
-    wrapText(ctx, art.title.toUpperCase(), PAD, H * 0.5, W - PAD * 2, 130);
+    // ── EDITORIAL — minimal/fashion: tercio superior, peso LIGERO (300), regla de
+    //    hilo dorada, mucho aire intencional debajo. ──
+    const topY = H * 0.34;
     if (art.stat) {
-      ctx.fillStyle = gold; ctx.font = `700 52px ${FONT}`;
-      trackedLeft(ctx, `${art.stat.big} ${art.stat.label.toUpperCase()}`, PAD, H * 0.5 + 190, 3);
-    } else if (art.subtitle) {
-      ctx.fillStyle = soft; ctx.font = `600 48px ${FONT}`;
-      trackedLeft(ctx, art.subtitle.toUpperCase(), PAD, H * 0.5 + 180, 4);
+      const numPx = fitFontPx(ctx, art.stat.big, '300', maxW, 360, 170);
+      ctx.fillStyle = cream; ctx.font = `300 ${numPx}px ${FONT}`;
+      ctx.fillText(art.stat.big, PAD, topY);
+      ctx.fillStyle = gold; ctx.fillRect(PAD, topY + 44, 120, 3);
+      ctx.fillStyle = soft; ctx.font = `500 40px ${FONT}`;
+      drawTracked(ctx, art.stat.label.toUpperCase(), PAD, topY + 116, 8);
+      if (kicker) { ctx.fillStyle = 'rgba(216,176,100,0.9)'; ctx.font = `700 26px ${FONT}`; drawTracked(ctx, kicker, PAD, topY - numPx * 0.82, 6); }
+    } else {
+      // sin número: el título (ligero) es el héroe, acotado a ≤3 líneas.
+      ctx.fillStyle = cream;
+      const bottom = drawHeadline(ctx, kicker, PAD, topY, maxW, 100, '300', 3);
+      if (art.subtitle) { ctx.fillStyle = soft; ctx.font = `500 40px ${FONT}`; drawTracked(ctx, art.subtitle.toUpperCase(), PAD, bottom + 70, 6); }
     }
   } else {
-    // 'dark' — equilibrado: título + subtítulo/stat abajo-izquierda (funciona con foto).
+    // ── OSCURO — bold/athletic: anclado abajo-izquierda, peso 800, tipo de "tarjeta
+    //    de actividad". Funciona con foto (sobre el scrim inferior). ──
     ctx.textAlign = 'left';
-    ctx.fillStyle = gold; ctx.font = `700 46px ${FONT}`;
-    if (art.subtitle) trackedLeft(ctx, art.subtitle.toUpperCase(), PAD, H - 360, 5);
-    ctx.fillStyle = cream; ctx.font = `800 108px ${FONT}`;
-    wrapText(ctx, art.title.toUpperCase(), PAD, H - 250, W - PAD * 2, 112);
     if (art.stat) {
-      ctx.fillStyle = cream; ctx.font = `800 96px ${FONT}`;
-      ctx.fillText(art.stat.big, PAD, H - 120);
-      const bigW = ctx.measureText(art.stat.big).width;   // medir con la MISMA fuente (96px)
-      ctx.fillStyle = soft; ctx.font = `600 40px ${FONT}`;
-      trackedLeft(ctx, art.stat.label.toUpperCase(), PAD + bigW + 24, H - 132, 3);
+      // Anclado abajo pero fuera de la zona de UI de Story (~250px inferiores).
+      if (kicker) { ctx.fillStyle = gold; ctx.font = `700 42px ${FONT}`; drawTracked(ctx, kicker, PAD, H - 360, 5); }
+      const numPx = fitFontPx(ctx, art.stat.big, '800', maxW, 240, 150);
+      ctx.fillStyle = cream; ctx.font = `800 ${numPx}px ${FONT}`;
+      ctx.fillText(art.stat.big, PAD, H - 220);
+      ctx.fillStyle = soft; ctx.font = `600 44px ${FONT}`;
+      drawTracked(ctx, art.stat.label.toUpperCase(), PAD, H - 156, 4);
+    } else {
+      // sin número: título héroe abajo, ≤3 líneas, acotado, fuera de la zona de UI.
+      ctx.fillStyle = cream;
+      drawHeadlineBottom(ctx, kicker, PAD, H - 230, maxW, 104, '800', 3);
+      if (art.subtitle) { ctx.fillStyle = gold; ctx.font = `700 40px ${FONT}`; drawTracked(ctx, art.subtitle.toUpperCase(), PAD, H - 168, 5); }
     }
   }
 
-  // 4) FOOTER de marca — sutil (tagline).
-  ctx.textAlign = 'left';
-  ctx.fillStyle = soft; ctx.font = `600 30px ${FONT}`;
-  trackedLeft(ctx, art.tagline, PAD, H - 56, 1);
+  // 4) Sin footer-tagline obligatorio (VISUAL-P0 §5): la MARCA arriba firma el objeto;
+  //    el eslogan como filler de plantilla se elimina para no parecer anuncio.
 
   const blob = await new Promise<Blob | null>(res => canvas.toBlob(res, 'image/jpeg', 0.92));
   if (!blob) throw new Error('compose failed');
   return blob;
 }
 
-function trackedLeftCenter(ctx: CanvasRenderingContext2D, text: string, cx: number, y: number, spacing: number) {
-  ctx.save(); ctx.textAlign = 'left';
-  let total = 0; for (const ch of text) total += ctx.measureText(ch).width + spacing;
-  let x = cx - (total - spacing) / 2;
-  for (const ch of text) { ctx.fillText(ch, x, y); x += ctx.measureText(ch).width + spacing; }
-  ctx.restore();
+// ── Helpers de texto ACOTADO (imposible desbordar 1080) ──────────────────────
+const FIT_MIN = 120;
+
+/** Mayor tamaño (px) del rango que hace que `text` quepa en una línea ≤ maxW. */
+function fitFontPx(ctx: CanvasRenderingContext2D, text: string, weight: string, maxW: number, startPx: number, minPx: number): number {
+  let px = startPx;
+  while (px > minPx) {
+    ctx.font = `${weight} ${px}px ${FONT}`;
+    if (ctx.measureText(text).width <= maxW) break;
+    px -= 8;
+  }
+  return px;
 }
 
-function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, lineH: number) {
+/** Ancho de un texto con letter-spacing manual (para acotar/centrar). */
+function trackedWidth(ctx: CanvasRenderingContext2D, text: string, spacing: number): number {
+  let w = 0; for (const ch of text) w += ctx.measureText(ch).width + spacing;
+  return Math.max(0, w - spacing);
+}
+
+/** Dibuja con letter-spacing; align 'left' desde x, o 'center' centrado en x. La
+ *  fuente ya debe estar seteada. Se asume que el llamador acotó el tamaño. */
+function drawTracked(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, spacing: number, align: 'left' | 'center' = 'left') {
+  const prev = ctx.textAlign; ctx.textAlign = 'left';
+  let cx = align === 'center' ? x - trackedWidth(ctx, text, spacing) / 2 : x;
+  for (const ch of text) { ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + spacing; }
+  ctx.textAlign = prev;
+}
+
+/** Envuelve en líneas ≤ maxW (sin tracking). */
+function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
   const words = text.split(' ');
-  let line = '', cy = y;
+  const lines: string[] = []; let line = '';
   for (const w of words) {
     const test = line ? `${line} ${w}` : w;
-    if (ctx.measureText(test).width > maxW && line) { ctx.fillText(line, x, cy); line = w; cy += lineH; }
+    if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; }
     else line = test;
   }
-  if (line) ctx.fillText(line, x, cy);
+  if (line) lines.push(line);
+  return lines;
+}
+
+/** Titular multilínea que ENCOGE la fuente hasta caber en ≤ maxLines. Ancla la
+ *  PRIMERA línea en baseline `y`, crece hacia abajo. Devuelve el baseline inferior. */
+function drawHeadline(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, startPx: number, weight: string, maxLines: number): number {
+  let px = startPx, lines: string[] = [];
+  while (px > FIT_MIN) {
+    ctx.font = `${weight} ${px}px ${FONT}`;
+    lines = wrapLines(ctx, text, maxW);
+    if (lines.length <= maxLines) break;
+    px -= 8;
+  }
+  const lineH = px * 1.04;
+  lines.forEach((ln, i) => ctx.fillText(ln, x, y + i * lineH));
+  return y + (lines.length - 1) * lineH;
+}
+
+/** Igual que drawHeadline pero anclado por ABAJO: la ÚLTIMA línea queda en baseline
+ *  `yBottom`, el bloque crece hacia arriba (para composición abajo-izquierda). */
+function drawHeadlineBottom(ctx: CanvasRenderingContext2D, text: string, x: number, yBottom: number, maxW: number, startPx: number, weight: string, maxLines: number): void {
+  let px = startPx, lines: string[] = [];
+  while (px > FIT_MIN) {
+    ctx.font = `${weight} ${px}px ${FONT}`;
+    lines = wrapLines(ctx, text, maxW);
+    if (lines.length <= maxLines) break;
+    px -= 8;
+  }
+  const lineH = px * 1.04;
+  const topBaseline = yBottom - (lines.length - 1) * lineH;
+  lines.forEach((ln, i) => ctx.fillText(ln, x, topBaseline + i * lineH));
 }
 
 export type ShareResult = 'shared' | 'downloaded';
