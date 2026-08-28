@@ -108,43 +108,45 @@ export default function ShareStudio({ input, preferredKind, onClose }: Props) {
           <div className="ssx-empty">{t('sstudio.nothing')}</div>
         ) : (
         <>
+        {/* CUERPO SCROLLABLE — preview + selectores. Las ACCIONES quedan FUERA (fijas)
+            para que "Añadir foto"/"Compartir" siempre sean alcanzables en móvil corto. */}
+        <div className="ssx-body">
+          {/* PREVIEW 9:16 — inmediato, sin foto requerida */}
+          <div className="ssx-preview-wrap" aria-live="polite">
+            {previewUrl ? (
+              <img className="ssx-preview" src={previewUrl} alt={moment?.title ?? ''} />
+            ) : (
+              <div className="ssx-preview ssx-preview-empty">{busy ? <Loader2 className="ssx-spin" size={26} /> : null}</div>
+            )}
+            {busy && previewUrl && <div className="ssx-preview-busy"><Loader2 className="ssx-spin" size={22} /></div>}
+          </div>
 
+          {error && <div className="ssx-error">{error}</div>}
 
-        {/* PREVIEW 9:16 — inmediato, sin foto requerida */}
-        <div className="ssx-preview-wrap" aria-live="polite">
-          {previewUrl ? (
-            <img className="ssx-preview" src={previewUrl} alt={moment?.title ?? ''} />
-          ) : (
-            <div className="ssx-preview ssx-preview-empty">{busy ? <Loader2 className="ssx-spin" size={26} /> : null}</div>
+          {/* MOMENTO (si hay >1) */}
+          {moments.length > 1 && (
+            <div className="ssx-strip" role="tablist" aria-label={t('sstudio.moment')}>
+              {moments.map(m => (
+                <button key={m.id} type="button" role="tab" aria-selected={moment?.id === m.id}
+                  className={`ssx-chip${moment?.id === m.id ? ' is-active' : ''}`} onClick={() => selectMoment(m)}>
+                  {m.title}
+                </button>
+              ))}
+            </div>
           )}
-          {busy && previewUrl && <div className="ssx-preview-busy"><Loader2 className="ssx-spin" size={22} /></div>}
-        </div>
 
-        {error && <div className="ssx-error">{error}</div>}
-
-        {/* MOMENTO (si hay >1) */}
-        {moments.length > 1 && (
-          <div className="ssx-strip" role="tablist" aria-label={t('sstudio.moment')}>
-            {moments.map(m => (
-              <button key={m.id} type="button" role="tab" aria-selected={moment?.id === m.id}
-                className={`ssx-chip${moment?.id === m.id ? ' is-active' : ''}`} onClick={() => selectMoment(m)}>
-                {m.title}
+          {/* ESTILO */}
+          <div className="ssx-strip" role="tablist" aria-label={t('sstudio.style')}>
+            {STYLES.map(s => (
+              <button key={s.id} type="button" role="tab" aria-selected={style === s.id}
+                className={`ssx-chip${style === s.id ? ' is-active' : ''}`} onClick={() => setStyle(s.id)}>
+                {tf(s.key)}
               </button>
             ))}
           </div>
-        )}
-
-        {/* ESTILO */}
-        <div className="ssx-strip" role="tablist" aria-label={t('sstudio.style')}>
-          {STYLES.map(s => (
-            <button key={s.id} type="button" role="tab" aria-selected={style === s.id}
-              className={`ssx-chip${style === s.id ? ' is-active' : ''}`} onClick={() => setStyle(s.id)}>
-              {tf(s.key)}
-            </button>
-          ))}
         </div>
 
-        {/* ACCIONES */}
+        {/* ACCIONES — footer FIJO (flex-shrink:0), nunca fuera del viewport del sheet */}
         <div className="ssx-actions">
           <button className="ssx-btn-ghost" type="button" onClick={() => inputRef.current?.click()}>
             <Camera size={16} strokeWidth={2} /> {photo ? t('sstudio.changePhoto') : t('sstudio.addPhoto')}

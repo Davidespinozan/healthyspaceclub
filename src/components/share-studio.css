@@ -10,18 +10,31 @@
 .ssx {
   position: relative;
   width: min(440px, 100vw);
-  max-height: 94vh;
-  overflow-y: auto;
+  /* SHARE-STUDIO-CHROME-P0: acotar al viewport PEQUEÑO (svh) — con la barra de iOS
+     visible el sheet nunca excede el área realmente visible, así el footer de
+     acciones no cae detrás del toolbar. 92vh = fallback sin svh. El sheet NO
+     scrollea; el cuerpo (.ssx-body) sí, y las acciones quedan fijas. */
+  max-height: 92vh;
+  max-height: 92svh;
+  overflow: hidden;
   background: #0E2521;
   color: #F4EFE3;
   border-radius: 22px 22px 0 0;
-  padding: 18px 18px calc(20px + env(safe-area-inset-bottom));
+  padding: 18px 18px calc(16px + env(safe-area-inset-bottom));
   box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.4);
-  display: flex; flex-direction: column; gap: 14px;
+  display: flex; flex-direction: column; gap: 12px;
   font-family: 'Montserrat', -apple-system, 'Helvetica Neue', Arial, sans-serif;
   outline: none;
 }
 @media (min-width: 640px) { .ssx { border-radius: 22px; } }
+
+/* Cuerpo scrollable: preview + selectores. flex:1 + min-height:0 = puede encoger
+   y su overflow activa; las acciones (hermanas, fuera) quedan siempre visibles. */
+.ssx-body {
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  display: flex; flex-direction: column; gap: 12px;
+}
 
 .ssx-close {
   position: absolute; top: 12px; right: 12px; z-index: 2;
@@ -34,12 +47,18 @@
 .ssx-preview-wrap {
   position: relative;
   align-self: center;
+  flex-shrink: 0;                 /* mantiene proporción; el .ssx-body scrollea si falta alto */
   aspect-ratio: 9 / 16;
-  height: min(56vh, 520px);
+  /* Preview representativa del Story 9:16, pero ACOTADA al viewport pequeño para que
+     no empuje nada: en pantallas cortas ocupa menos. La imagen generada sigue 1080×1920. */
+  height: min(48vh, 440px);      /* fallback primero… */
+  height: min(48svh, 440px);     /* …svh gana donde se soporta */
+  max-height: 100%;
   max-width: 100%;
   border-radius: 16px; overflow: hidden;
   background: #081312;
 }
+@media (min-width: 640px) { .ssx-preview-wrap { height: min(56vh, 520px); height: min(56svh, 520px); } }
 .ssx-preview { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ssx-preview-empty { display: grid; place-items: center; color: rgba(244, 239, 227, 0.5); }
 .ssx-preview-busy {
@@ -70,7 +89,7 @@
 }
 .ssx-chip.is-active { background: #D8B064; color: #0E2521; border-color: transparent; }
 
-.ssx-actions { display: flex; gap: 10px; }
+.ssx-actions { display: flex; gap: 10px; flex-shrink: 0; }   /* footer FIJO: nunca se encoge fuera del sheet */
 .ssx-btn-ghost, .ssx-btn-primary {
   flex: 1; min-height: 48px;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
