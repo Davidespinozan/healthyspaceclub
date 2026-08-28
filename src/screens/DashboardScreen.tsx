@@ -98,7 +98,10 @@ export default function DashboardScreen() {
 
   function navTo(page: DashPage) {
     setDashPage(page);
+    // MOBILE-SHELL-P0: el scroller real ahora es .app-main (no el documento) → resetea
+    // ambos. window.scrollTo cubre el modelo viejo/edge; .app-main cubre el nuevo.
     window.scrollTo(0, 0);
+    document.querySelector('.app-main')?.scrollTo(0, 0);
   }
 
   const isSubPage = !['hoy', 'club', 'tu'].includes(dashPage);

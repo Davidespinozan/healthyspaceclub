@@ -7,9 +7,12 @@
 .clb-wrap {
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+  /* MOBILE-SHELL-P0: el Club ya no fuerza altura de viewport propia (causaba gran
+     vacío con feeds cortos) ni duplica la limpieza inferior del nav (esa la posee
+     ahora .app-main). El fondo cream es el mismo (--sala-bg === --cream) → sin
+     costura debajo del feed corto. Queda un respiro modesto al final. */
   background: var(--sala-bg);
-  min-height: 100dvh;
+  padding-bottom: 24px;
 }
 
 .clb-header {

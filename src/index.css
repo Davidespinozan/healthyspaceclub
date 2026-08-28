@@ -5939,13 +5939,18 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 .app-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
+  /* MOBILE-SHELL-P0: shell ACOTADO al viewport dinámico → .app-main es el ÚNICO
+     scroller real y el bnav fijo deja de ser frágil (antes min-height dejaba que
+     el documento fuera el scroller y cualquier transform de un ancestro despegaba
+     el nav). 100vh = fallback; 100dvh (iOS 15.4+) evita el overshoot de la barra. */
+  height: 100vh;
+  height: 100dvh;
   background: var(--cream);
   padding-top: env(safe-area-inset-top, 0px);
 }
 .app-main {
   flex: 1;
+  min-height: 0;   /* imprescindible: permite que el flex item ENCOJA y su overflow-y active */
   padding: 0 0 calc(64px + env(safe-area-inset-bottom, 12px));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
