@@ -668,8 +668,8 @@ export const es = {
     },
     // Aviso PRE-generación cuando AUTO ve el volumen semanal prácticamente cubierto (allCovered).
     weekCovered: {
-      title: 'Ya cubriste prácticamente tu volumen objetivo de esta semana. Hoy una sesión corta de mantenimiento puede ser suficiente.',
-      sub: 'Puedes mantener la sesión de fuerza o elegir cardio / movilidad si prefieres.',
+      title: 'Tu volumen muscular de la semana ya está cubierto.',
+      sub: 'Por eso HSC puede acortar la sesión de hoy: el tiempo que elegiste es tu máximo disponible, no una meta que llenar con volumen innecesario. Mantén la fuerza o elige cardio o movilidad.',
     },
     // Identidad de bloques de CARDIO (nunca el nombre del stationId técnico)
     cardioBlock: {
@@ -1330,6 +1330,7 @@ export const es = {
     statWorkouts: 'Entrenamientos',
     statDaysUnit: 'días',
     ofThreeWeek: 'de {n} esta semana',
+    workoutsWeekUnit: 'esta semana',
     perfectTitle: 'Días completos',
     perfectSub: 'Cerraste entreno, nutrición y reflexión',
     perfectEmpty: 'Cierra entreno, nutrición y reflexión el mismo día para empezar',

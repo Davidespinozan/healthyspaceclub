@@ -667,8 +667,8 @@ export const en: Translations<typeof es> = {
       todaySummary: 'Strength + cardio',
     },
     weekCovered: {
-      title: "You've essentially hit your target volume for this week. A short maintenance session may be enough today.",
-      sub: 'You can keep the strength session or pick cardio / mobility if you prefer.',
+      title: 'Your muscular volume for this week is already covered.',
+      sub: "That's why HSC may shorten today's session: the time you picked is your available maximum, not a target to fill with unnecessary volume. Keep the strength work or pick cardio or mobility.",
     },
     cardioBlock: {
       runDrills: 'Running drills', runIntervals: 'Running intervals', runTempo: 'Tempo run',
@@ -1328,6 +1328,7 @@ export const en: Translations<typeof es> = {
     statWorkouts: 'Workouts',
     statDaysUnit: 'days',
     ofThreeWeek: 'of {n} this week',
+    workoutsWeekUnit: 'this week',
     perfectTitle: 'Complete days',
     perfectSub: 'You closed training, nutrition and reflection',
     perfectEmpty: 'Close training, nutrition and reflection on the same day to start',

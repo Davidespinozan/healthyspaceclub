@@ -270,7 +270,10 @@ export default function TabTu({ onNav: _onNav }: { onNav: (page: DashPage) => vo
               <span className="tt5-stat-icon"><Dumbbell size={15} strokeWidth={2} /></span>
               <span className="tt5-stat-num">{workoutsThisWeek}</span>
             </div>
-            <div className="tt5-stat-sub">{t('profile.ofThreeWeek', { n: 3 })}</div>
+            {/* PROD-REGRESSION-1: se quita el denominador "de 3" hardcodeado (no es una
+                meta real del usuario; trainingFrequency es un heurístico inferido y
+                fluctuante). Se muestra solo el conteo veraz de esta semana. */}
+            <div className="tt5-stat-sub">{t('profile.workoutsWeekUnit')}</div>
           </div>
         </div>
       )}
