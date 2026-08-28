@@ -1,13 +1,17 @@
 /* Fase 1B · Pantalla Compañeros — sistema vibrante (forest + gold) */
 
 .comp-root {
+  /* PARTNER-UX-1 · workspace contenido (no un stack móvil estirado a 960px) */
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
   padding: 4px 2px 40px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.comp-hero { margin-bottom: 2px; }
+.comp-hero-head { margin-bottom: 2px; }
 .comp-eyebrow {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.62rem;
@@ -209,27 +213,128 @@
 }
 .comp-unlink:hover { background: rgba(204,51,51,0.12); color: #c33; }
 
-/* Marco "qué es entrenar en pareja" — las dos formas + estado vacío con valor. */
 .comp-promise {
   font-size: 0.92rem; color: rgba(21,51,48,0.72); line-height: 1.45;
   margin: 2px 0 12px; max-width: 60ch;
 }
-.comp-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-@media (max-width: 420px) { .comp-modes { grid-template-columns: 1fr; } }
+
+/* ── ZERO: workspace de deseo (2 columnas desktop / 1 móvil) ── */
+.comp-zero {
+  display: grid; grid-template-columns: 1fr; gap: 18px;
+  align-items: start;
+}
+@media (min-width: 720px) {
+  .comp-zero { grid-template-columns: 1.05fr 0.95fr; gap: 28px; }
+}
+.comp-zero-value { display: flex; flex-direction: column; gap: 14px; }
+.comp-zero-line {
+  font-size: 1.02rem; color: rgba(21,51,48,0.74); line-height: 1.5;
+  margin: 0 0 4px; max-width: 34ch;
+}
+.comp-zero-search { display: flex; flex-direction: column; gap: 8px; }
+.comp-zero-modes {
+  border-left: none; padding: 0;
+}
+@media (min-width: 720px) {
+  .comp-zero-modes { border-left: 1px solid rgba(21,51,48,0.08); padding-left: 26px; }
+}
+
+/* CTA jerárquico: primario = forest sólido; ghost = borde suave. Ancho de columna. */
+.comp-cta-primary, .comp-cta-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  width: 100%; padding: 14px 18px; border-radius: 14px; cursor: pointer;
+  font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 700;
+  -webkit-tap-highlight-color: transparent; transition: transform 0.12s ease, filter 0.15s ease;
+}
+.comp-cta-primary { background: var(--forest, #0E2521); color: #F4EFE3; border: none; box-shadow: 0 8px 22px rgba(14,37,33,0.22); }
+.comp-cta-primary:hover { filter: brightness(1.08); }
+.comp-cta-primary:active, .comp-cta-ghost:active { transform: scale(0.98); }
+.comp-cta-ghost { background: transparent; color: var(--forest, #0E2521); border: 1.5px solid var(--sand, #e4ddcf); }
+.comp-cta-ghost:hover { border-color: var(--amber, #BFA065); }
+
+.comp-search-toggle, .comp-add-toggle {
+  align-self: flex-start; background: none; border: none; cursor: pointer;
+  font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--amber-deep, #7C6232); padding: 4px 2px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.comp-search-toggle:hover, .comp-add-toggle:hover { color: var(--forest, #0E2521); text-decoration: underline; text-underline-offset: 3px; }
+.comp-add { margin-top: 2px; }
+.comp-add-panel { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── Mode preview — NO interactivo, icono restringido (sin emoji) ── */
+.comp-modes { display: flex; flex-direction: column; gap: 10px; }
+.comp-modes-intro {
+  font-family: 'Montserrat', sans-serif; font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: rgba(21,51,48,0.5); margin: 0 0 2px;
+}
 .comp-mode {
-  border: 1px solid rgba(21,51,48,0.1); border-radius: 14px; padding: 14px;
+  border: 1px solid rgba(21,51,48,0.1); border-radius: 14px; padding: 14px 15px;
   background: rgba(255,255,255,0.5);
 }
-.comp-mode-emoji { font-size: 1.3rem; display: block; margin-bottom: 6px; }
+.comp-mode-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 9px; margin-bottom: 8px;
+  background: rgba(191,160,101,0.16); color: var(--amber-deep, #7C6232);
+}
 .comp-mode-t { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.92rem; color: var(--forest, #153330); margin-bottom: 3px; }
 .comp-mode-b { font-size: 0.8rem; color: rgba(21,51,48,0.6); line-height: 1.4; }
 
-.comp-empty-rich {
-  border: 1px dashed rgba(21,51,48,0.16); border-radius: 14px; padding: 18px 16px;
-  background: rgba(255,255,255,0.4); text-align: center;
+/* ── Error inline recuperable + carga ── */
+.comp-error {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: rgba(199,91,58,0.1); border: 1px solid rgba(199,91,58,0.28);
+  color: #a83f28; border-radius: 12px; padding: 10px 12px; font-size: 13px; font-weight: 600;
 }
-.comp-empty-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.98rem; color: var(--forest, #153330); margin: 0 0 6px; }
-.comp-empty-body { font-size: 0.86rem; color: rgba(21,51,48,0.6); line-height: 1.45; margin: 0; max-width: 42ch; margin-left: auto; margin-right: auto; }
+.comp-error button { background: none; border: none; color: inherit; cursor: pointer; display: grid; place-items: center; padding: 2px; }
+.comp-loading {
+  display: flex; align-items: center; gap: 10px; padding: 18px 4px;
+  color: rgba(21,51,48,0.5); font-size: 13px; font-weight: 600;
+}
+
+/* ── Tarjeta premium de compañero (héroe del estado conectado) ── */
+.comp-cards {
+  display: grid; grid-template-columns: 1fr; gap: 12px;
+}
+@media (min-width: 720px) {
+  .comp-cards { grid-template-columns: repeat(2, 1fr); }
+}
+.comp-card {
+  border: 1px solid var(--sand, #e8e1d3); border-radius: 16px;
+  background: #fff; padding: 15px 16px 14px;
+  display: flex; flex-direction: column; gap: 11px;
+  box-shadow: 0 4px 16px rgba(21,51,48,0.05);
+}
+.comp-card-head { display: flex; align-items: center; gap: 12px; }
+.comp-card-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.comp-card-name {
+  font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 15px; color: var(--forest, #0E2521);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.comp-card-handle { font-size: 12px; color: rgba(21,51,48,0.5); }
+.comp-card-duo {
+  display: inline-flex; align-items: baseline; gap: 4px; flex-shrink: 0;
+  background: rgba(224,112,60,0.1); color: #c9531f; border-radius: 999px; padding: 4px 10px;
+}
+.comp-card-duo svg { align-self: center; }
+.comp-card-duo-n { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 14px; }
+.comp-card-duo-l { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.85; }
+
+.comp-card-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.comp-card-today {
+  font-family: 'Montserrat', sans-serif; font-size: 0.62rem; font-weight: 800;
+  letter-spacing: 0.1em; color: rgba(21,51,48,0.4);
+}
+.comp-card-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.76rem; font-weight: 700; padding: 4px 11px; border-radius: 999px;
+  background: rgba(21,51,48,0.06); color: rgba(21,51,48,0.55);
+}
+.comp-card-pill.on { background: rgba(45,122,79,0.14); color: #2d7a4f; }
+.comp-card-sessions { font-size: 0.74rem; color: rgba(21,51,48,0.45); font-weight: 600; margin-left: auto; }
+.comp-card-line { font-size: 0.84rem; color: rgba(21,51,48,0.72); line-height: 1.4; margin: 0; }
+.comp-card-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.comp-card .comp-train-btn { flex: 1; justify-content: center; padding: 11px 14px; font-size: 13px; }
 
 /* Reto del día (a distancia) — estado de hoy de los dos + payoff. */
 .comp-duo-wrap { border: 1px solid rgba(21,51,48,0.08); border-radius: 14px; overflow: hidden; background: rgba(255,255,255,0.4); }
