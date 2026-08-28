@@ -4,6 +4,7 @@ import { useAdminGuard } from './useAdminGuard';
 import AdminLogin from './AdminLogin';
 import AdminLayout from './AdminLayout';
 import Dashboard from './pages/Dashboard';
+import Analitica from './pages/Analitica';
 import Ingresos from './pages/Ingresos';
 import Reportes from './pages/Reportes';
 import Socios from './pages/Socios';
@@ -42,6 +43,7 @@ export default function AdminApp() {
       <Routes>
         <Route element={<AdminLayout email={email} />}>
           <Route index element={<Dashboard />} />
+          <Route path="analitica" element={<Analitica />} />
           <Route path="ingresos" element={<Ingresos />} />
           <Route path="reportes" element={<Reportes />} />
           <Route path="socios" element={<Socios />} />

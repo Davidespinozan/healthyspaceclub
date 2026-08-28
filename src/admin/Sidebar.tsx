@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Wallet, BarChart3, ScrollText, UserCog, Settings, LogOut, Eye,
+  LineChart,
   type LucideIcon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -13,6 +14,7 @@ const GROUPS: { title: string; items: { to: string; label: string; icon: LucideI
     title: 'Negocio',
     items: [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+      { to: '/analitica', label: 'Analítica', icon: LineChart },
       { to: '/ingresos', label: 'Ingresos', icon: Wallet },
       { to: '/reportes', label: 'Reportes', icon: BarChart3 },
     ],

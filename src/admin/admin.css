@@ -271,3 +271,14 @@
   .adm-side.open { transform: none; }
   .adm-main { padding: 20px 16px 60px; }
 }
+
+/* ADMIN-ANALYTICS-1 · P0 · página Analítica */
+.adm-range { display: flex; gap: 8px; margin: 0 0 20px; }
+.adm-range-btn {
+  padding: 7px 14px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--adm-border, rgba(255,255,255,0.14));
+  background: transparent; color: inherit; font-family: inherit;
+}
+.adm-range-btn.is-active { background: var(--adm-accent, #D8B064); color: #0E2521; border-color: transparent; }
+.adm-section-label { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .6; margin: 24px 0 10px; }
+.adm-caveat { margin-top: 20px; font-size: 12px; line-height: 1.5; }
