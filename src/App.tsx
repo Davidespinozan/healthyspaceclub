@@ -1,5 +1,5 @@
 import { dayKey } from './utils/localDate';
-import { identify } from './utils/analytics';
+import { identify, reset as analyticsReset } from './utils/analytics';
 import { signedInScreen } from './utils/authProviders';
 import { sincronizarPush } from './utils/push';
 import { useAutoRegenPlan, useWeeklyPlanReset } from './utils/useAutoRegenPlan';
@@ -400,6 +400,12 @@ export default function App() {
       }
 
       if (event === 'SIGNED_IN' && session) {
+        // ANALYTICS-1 · P0 · cambio de cuenta A→B sin reload: si ya había un dueño
+        // DISTINTO, suelta la identidad de analytics ANTES de identificar a B (evita
+        // que eventos de A se atribuyan a B). anon→A (dueño null) NO resetea: se quiere
+        // enlazar la actividad anónima pre-signup con A. Mismo user (refresh) tampoco.
+        const prevOwner = useAppStore.getState().dataOwnerId;
+        if (prevOwner && prevOwner !== session.user.id) analyticsReset();
         identify(session.user.id);
         useAppStore.getState().setUserEmail(session.user.email ?? '');
         // Anti-fuga: reseteá datos de otro user ANTES de rutear/hidratar.
@@ -746,6 +752,9 @@ export default function App() {
       }
 
       if (event === 'SIGNED_OUT') {
+        // ANALYTICS-1 · P0 · soltar la identidad de analytics al cerrar sesión (antes
+        // del reset de estado). Aditivo — no cambia la semántica de aislamiento.
+        analyticsReset();
         // Mismo reset per-usuario que logout + soltar el dueño de los datos.
         useAppStore.getState().resetUserScopedData();
         useAppStore.setState({ currentScreen: 'landing', dataOwnerId: null });

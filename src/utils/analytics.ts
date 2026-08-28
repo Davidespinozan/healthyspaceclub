@@ -65,3 +65,26 @@ export function identify(id: string, traits?: Props): void {
   if (queue.length < MAX_QUEUE) queue.push({ kind: 'identify', a: id, b: traits });
   if (import.meta.env.DEV) console.debug('[analytics] identify', id, traits ?? '');
 }
+
+/**
+ * ANALYTICS-1 · P0 · Suelta la identidad de analytics en la frontera de cuenta
+ * (logout / cambio de cuenta A→B). Debe llamarse ANTES de identify() del nuevo user.
+ *
+ * Invariante: tras reset(), NINGÚN evento pendiente de la cuenta anterior puede
+ * atribuirse a la siguiente → se descarta la cola local además de resetear el
+ * distinct_id del proveedor. Seguro sin proveedor (no lanza). NO toca el estado de
+ * la app (Zustand), NO toca Supabase auth, NO recarga, NO crea un identificador nuevo.
+ */
+export function reset(): void {
+  try {
+    if (typeof window !== 'undefined') {
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      const w = window as any;
+      w.posthog?.reset?.();       // PostHog: nuevo distinct_id anónimo
+      w.analytics?.reset?.();     // Segment-compatible, si existe
+    }
+  } catch { /* noop — un fallo del proveedor nunca debe romper el logout */ }
+  // Descarta eventos encolados de la cuenta previa (cola en memoria, best-effort).
+  queue.length = 0;
+  if (import.meta.env.DEV) console.debug('[analytics] reset');
+}
