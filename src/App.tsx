@@ -795,7 +795,10 @@ export default function App() {
   useEffect(() => {
     if (!authReady) return;
     const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add('visible')),
+      // Marca con atributo (no clase): React reescribe `className` al cambiar
+      // estado (ej. abrir una card `.sys-feat` o un FaqItem) y borraría `visible`,
+      // dejando el elemento en opacity:0. `data-revealed` sobrevive al re-render.
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.setAttribute('data-revealed', ''); }),
       { threshold: 0.1 }
     );
     document.querySelectorAll('.reveal').forEach((el) => obs.observe(el));
