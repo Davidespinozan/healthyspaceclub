@@ -12,8 +12,9 @@
 import { Lock, Users, Check, ArrowRight } from 'lucide-react';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
-import type { Modality, MuscleGroup, CardioStyle, TrainingGoal } from '../../types';
+import type { Modality, MuscleGroup, CardioStyle, TrainingGoal, YogaFocus } from '../../types';
 import type { Gear } from '../../utils/equipmentImplement';
+import { durationsFor, clampYogaDuration } from '../../utils/yogaGenerator';
 import {
   MODALITY_OPTIONS,
   TIME_OPTIONS,
@@ -28,6 +29,7 @@ import {
   LAST_TRAINED_OPTIONS,
   type WizardPhase,
   type FocusValue,
+  YOGA_FOCUS_OPTIONS,
 } from './constants';
 
 interface WizardProps {
@@ -68,6 +70,8 @@ interface WizardProps {
   // Foco de fuerza + historia
   focus: FocusValue;
   setFocus: (f: FocusValue) => void;
+  yogaFocus: YogaFocus;
+  setYogaFocus: (f: YogaFocus) => void;
   supportedFoci: Set<string>;
   selectedMuscles: MuscleGroup[];
   setSelectedMuscles: (m: MuscleGroup[]) => void;
@@ -105,7 +109,7 @@ export default function Wizard({
   selectedTime, setSelectedTime,
   gear, setGear,
   trainingGoal, setTrainingGoal,
-  focus, setFocus, supportedFoci,
+  focus, setFocus, yogaFocus, setYogaFocus, supportedFoci,
   selectedMuscles, setSelectedMuscles,
   selectedPriority, setSelectedPriority,
   energy, setEnergy, sleep, setSleep, soreness, setSoreness,
@@ -429,13 +433,42 @@ export default function Wizard({
           </div>
         )}
 
+        {/* Enfoque de la práctica — solo yoga. Pondera la selección; no es un filtro duro. */}
+        {selectedModality === 'yoga' && (
+          <div className="wz-q">
+            <p className="wz-q-label">{t('wizard.yogaFocusQ')}</p>
+            <div className="wz-chips wz-chips-col">
+              {YOGA_FOCUS_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  className={`wz-chip wz-chip-block${yogaFocus === opt.value ? ' on' : ''}`}
+                  onClick={() => {
+                    setYogaFocus(opt.value);
+                    // Si la duración elegida no está disponible para el nuevo enfoque,
+                    // baja a la mayor que sí lo esté (hoy: Relajación no ofrece 45).
+                    setSelectedTime(clampYogaDuration(selectedTime, opt.value));
+                  }}
+                >
+                  <span className="wz-chip-label">{t(opt.labelKey)}</span>
+                  <span className="wz-chip-sub">{t(opt.subKey)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="wz-q">
           <p className="wz-q-label">{t('wizard.timeQ')}</p>
           <div className="wz-chips wz-chips-3">
-            {TIME_OPTIONS.map(opt => (
+            {(selectedModality === 'yoga'
+              ? durationsFor(yogaFocus).map(v => ({ value: v as number, label: `${v} min` }))
+              : TIME_OPTIONS
+            ).map(opt => (
               <button
                 key={opt.value}
-                className={`wz-chip${selectedTime === opt.value ? ' on' : ''}`}
+                className={`wz-chip${(selectedModality === 'yoga'
+                  ? clampYogaDuration(selectedTime, yogaFocus)
+                  : selectedTime) === opt.value ? ' on' : ''}`}
                 onClick={() => setSelectedTime(opt.value)}
               >
                 {opt.label}

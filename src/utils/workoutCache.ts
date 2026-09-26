@@ -3,7 +3,8 @@ import type { CardioStyle } from '../types';
 import type { SessionEndReason } from './sessionEndReason';
 
 export const SCHEMA_VERSIONS = {
-  yoga: 3, // v3: Power Vinyasa por FLOWS (video corrido + poses sostenidas), determinista
+  yoga: 4, // v4: generador por CATÁLOGO — 33 contenidos con fases/focus/prescripción;
+          // la duración sale del tiempo PRESCRITO, no del metraje. Invalida v3 (Power Vinyasa por flows).
   workout: 14, // v14: "At Home" sin-soportes por defecto (gear=[] ya no asume muebles) → invalida cache con semántica vieja de infraestructura
 } as const;
 

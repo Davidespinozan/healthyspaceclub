@@ -326,6 +326,73 @@ export interface YogaPose {
   segments?: Array<{ label: string; atSec: number }>; // subtítulos que van saliendo en el flow
 }
 
+// ════════════════════════════════════════════════════════════════
+// CATÁLOGO DE YOGA — vocabulario de movimiento (33 contenidos)
+// Los 33 vídeos no son 33 rutinas: son piezas que el generador compone.
+// Poses y flows dejan de ser dos mundos; la diferencia es `mode`.
+// La URL del vídeo NO vive aquí — `exercise_videos` sigue siendo la fuente
+// de verdad y se resuelve por `id` (una sola fuente, como en fuerza).
+// ════════════════════════════════════════════════════════════════
+
+/** Etapa estructural de una práctica. Progresión: preparar → movilizar → trabajar → bajar → cerrar. */
+export type YogaPhase = 'centering' | 'warmup' | 'standing' | 'peak' | 'cooldown';
+
+/** Enfoque de la práctica. AFINIDAD DE SELECCIÓN, no clasificación ontológica: una pose
+ *  puede tener afinidad con `flow` sin ser técnicamente un flow. */
+export type YogaFocus = 'movilidad' | 'flow' | 'relajacion';
+
+/**
+ * Cómo EJECUTA el reproductor este contenido. Eje distinto de `WorkMode`: aquél declara qué
+ * estímulo soporta físicamente un movimiento; éste es prescripción (contextual, la decide el
+ * programador — ver la nota de MovementCapabilities). Mapear `timer` a `isometric` sería falso:
+ * Cat-Cow con temporizador es movimiento continuo, no una retención.
+ *
+ *  · timer  → el vídeo hace loop mientras corre el tiempo prescrito
+ *  · reps   → el vídeo es demostración; manda la cuenta de repeticiones
+ *  · rounds → el vídeo es una secuencia completa; se reproduce entero N veces
+ */
+export type YogaExecMode = 'timer' | 'reps' | 'rounds';
+
+/** Lateralidad del CONTENIDO (no de la sesión).
+ *  · none       → no aplica (simétrico)
+ *  · unilateral → el vídeo muestra UN lado; el motor debe garantizar la contraparte
+ *  · contained  → el vídeo YA contiene ambos lados; NUNCA duplicar por lateralidad */
+export type YogaLaterality = 'none' | 'unilateral' | 'contained';
+
+/** Posición corporal de entrada/salida. Se registra para transiciones; V1 la usa
+ *  solo como desempate suave, no como coste de transición. */
+export type YogaPosition = 'standing' | 'seated' | 'supine' | 'prone' | 'quadruped' | 'kneeling';
+
+/** Una pieza del vocabulario de movimiento. */
+export interface YogaContent {
+  id: string;
+  name: string;
+  nameEn: string;
+  /** Duración física del archivo, medida con ffprobe. NO es el tiempo que trabaja la persona. */
+  realSec: number;
+  phases: YogaPhase[];
+  focus: YogaFocus[];
+  mode: YogaExecMode;
+  laterality: YogaLaterality;
+  /** timer → segundos por lado · reps → segundos equivalentes de la serie · rounds → segundos de UNA ronda. */
+  defaultPrescription: number;
+  /** Solo `timer`: hasta dónde puede encogerse o estirarse la prescripción. */
+  minSec?: number;
+  maxSec?: number;
+  /** Solo `rounds`: rondas mínimas y máximas admisibles. */
+  rounds?: [number, number];
+  /** ¿Puede aparecer más de una vez en la misma práctica? */
+  repeatable: boolean;
+  posStart: YogaPosition;
+  posEnd: YogaPosition;
+  /** Veto interno de seguridad. NUNCA es input del usuario ni aparece en la UI. */
+  difficulty?: 'principiante' | 'intermedio' | 'avanzado';
+  /** V1: excluido de la selección automática. Permanece en catálogo y Storage. */
+  excludeFromAutoGeneration?: boolean;
+  /** Subtítulos que corren con el vídeo. Solo `rounds`. */
+  segments?: Array<{ label: string; labelEn: string; atSec: number }>;
+}
+
 export interface YogaPlan {
   type: string;
   totalDuration: number;

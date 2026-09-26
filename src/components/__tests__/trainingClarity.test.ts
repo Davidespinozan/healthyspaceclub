@@ -52,7 +52,11 @@ describe('3 · frecuencia ≠ volumen (sin falso "semana completa")', () => {
 // ── TEST 4 · selectedTime=120 sigue llegando al presupuesto (wiring intacto) ─
 describe('4 · selectedTime → budget.main sin cambios', () => {
   it('DailyTrainer conserva el cableado de selectedTime al presupuesto de sesión', () => {
-    expect(dailyTrainerSrc).toMatch(/targetDurationSeconds = selectedTime \* 60/);
+    // La duración objetivo sale de selectedTime en segundos. En yoga pasa antes por
+    // `yogaMinutes`, que solo recorta a las duraciones que el enfoque ofrece
+    // (Relajación no llega a 45): sigue siendo selectedTime, no una transformación.
+    expect(dailyTrainerSrc).toMatch(/targetDurationSeconds = (selectedTime|yogaDur) \* 60/);
+    expect(dailyTrainerSrc).toMatch(/yogaMinutes = selectedModality === 'yoga'[\s\S]{0,120}clampYogaDuration\(selectedTime, yogaFocus\)/);
     // selectedTime alimenta la decisión/presupuesto (sin transformarlo antes).
     expect(dailyTrainerSrc).toMatch(/timeMinutes: selectedTime|selectedTime,\s*\/\//);
   });

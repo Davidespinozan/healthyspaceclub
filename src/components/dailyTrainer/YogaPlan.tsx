@@ -121,7 +121,10 @@ export default function YogaPlan({
               <div className="dt2-yoga-num">{i + 1}</div>
               <div className="dt2-yoga-emoji"><PoseIcon size={22} strokeWidth={1.5} /></div>
               <div className="dt2-yoga-body">
-                <div className="dt2-yoga-name">{bank?.name || humanizeExerciseId(pose.id)}</div>
+                {/* El plan trae el nombre resuelto (los flows no están en el banco de poses).
+                    Mismo orden que el player: sin esto la previsualización mostraba
+                    «Flow Saludo A» y el reproductor «Saludo al Sol A». */}
+                <div className="dt2-yoga-name">{pose.name || bank?.name || humanizeExerciseId(pose.id)}</div>
                 <div className="dt2-yoga-meta">
                   <span>{durationLabel}</span>
                   {pose.repetitions && (<><span className="dt2-ex-dot">·</span><span>{pose.repetitions}x</span></>)}

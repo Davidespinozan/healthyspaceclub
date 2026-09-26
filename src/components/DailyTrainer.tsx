@@ -73,7 +73,9 @@ import {
   validateWorkoutPlanStrict,
 } from '../utils/workoutValidation';
 import { orchestrateWorkout } from '../utils/workoutOrchestration';
-import { buildYogaFlowPlan } from '../utils/yogaBuilder';
+import { generateYogaSession, yogaSeed, clampYogaDuration, type YogaDuration } from '../utils/yogaGenerator';
+import { validateYogaSession } from '../utils/workoutValidation';
+import { YOGA_SELECTABLE } from '../data/yogaCatalog';
 import { repairWorkoutStructure } from '../utils/exerciseOrder';
 import { currentBlockId, resolveBlockAnchors, enforceAnchors, type AnchorTraceItem } from '../utils/blockAnchors';
 import { isStrengthDomainSession } from '../utils/trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
@@ -98,6 +100,7 @@ import type {
   UserProfile,
   WorkoutDayDecision,
   YogaPlan,
+  YogaFocus,
 } from '../types';
 import Wizard from './dailyTrainer/Wizard';
 import YogaPlanView from './dailyTrainer/YogaPlan';
@@ -299,6 +302,9 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const selectedEquipment: Equipment = caps.hasFullGym ? 'gym' : (gear.includes('ligas') && !caps.hasWeights ? 'ligas' : caps.hasWeights ? 'gym' : 'cuerpo');
   // Foco de fuerza (qué entrenar) + historia (cuándo entrenó por última vez).
   const [focus, setFocus] = useState<FocusValue>('auto');
+  // Enfoque de la práctica de yoga. Eje propio: `focus` es el de fuerza (push/pull/legs)
+  // y no describe una práctica de yoga.
+  const [yogaFocus, setYogaFocus] = useState<YogaFocus>('movilidad');
   const [selectedMuscles, setSelectedMuscles] = useState<MuscleGroup[]>([]);
   // P5 · músculos PRIORITARIOS (explícitos). Preferencia estable → se persiste local
   // (no había campo en perfil/onboarding). La prioridad inferida se deriva del historial.
@@ -791,8 +797,14 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
           ? (focus === 'specific' ? `specific:${[...selectedMuscles].sort().join(',')}` : `fuerza:${guardedSplit ?? (focus === 'auto' && reconciled ? reconciledType : focus)}`)
           : selectedModality;
       const schemaType = selectedModality === 'yoga' ? 'yoga' : 'workout' as const;
+      // Yoga · la duración efectiva se recorta a las que ofrece el enfoque (Relajación no
+      // llega a 45). Se calcula ANTES del hash para que la identidad de configuración y la
+      // práctica generada usen exactamente el mismo número.
+      const yogaMinutes = selectedModality === 'yoga'
+        ? clampYogaDuration(selectedTime, yogaFocus)
+        : (selectedTime as number);
       const configHash = buildConfigHash({
-        duration: selectedTime,
+        duration: yogaMinutes,
         // Firma CANÓNICA del gear (orden estable) → cambiar de equipo invalida un plan
         // incompatible; [mancuernas,banco] y [banco,mancuernas] dan el mismo hash.
         equipment: gearSignature(gear),
@@ -808,6 +820,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         // resto va undefined y no altera su hash). Cambiar correr↔funcional↔lowImpact↔
         // explosividad invalida la cache y NO reutiliza la rutina del estilo anterior.
         cardioStyle: selectedModality === 'cardio' ? effectiveCardioStyle : undefined,
+        // Yoga · el enfoque cambia plantilla de fases y selección → separa el caché.
+        yogaFocus: selectedModality === 'yoga' ? yogaFocus : undefined,
         // Señales materiales que faltaban en el hash (caché GLOBAL cross-user, ver buildConfigHash):
         // sin ellas, dos usuarios/estados distintos colisionaban. lowImpact es SEGURIDAD (no servir
         // saltos/pliometría a un usuario bajo-impacto desde caché).
@@ -858,22 +872,54 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       // otro (fuga cross-user del caché global). Yoga nunca usa este caché (siempre fresh).
       const isCacheHit = selectedModality !== 'yoga' && !!cached && validateWorkout(cached, validIds) && fitsEquipment(cached);
 
-      // ── Rama YOGA: generar Power Vinyasa fresh
+      // ── Rama YOGA: componer la práctica desde el catálogo de 33 contenidos
       if (selectedModality === 'yoga') {
-        const targetDurationSeconds = selectedTime * 60;
-        // Power Vinyasa por FLOWS (video corrido) + poses sostenidas, DETERMINISTA:
-        // un ritual no necesita IA, y así el yoga se siente fluido (no pose por pose).
-        const level = levelFromObData(obData);
-        const adjustedPlan = buildYogaFlowPlan(
-          targetDurationSeconds, level,
-          discomfort === 'pain' ? painArea : undefined,
-          locale,
+        // Dentro de esta rama `yogaMinutes` SIEMPRE viene de clampYogaDuration.
+        const yogaDur = yogaMinutes as YogaDuration;
+        const targetDurationSeconds = yogaDur * 60;
+
+        // Solo contenido con vídeo REALMENTE conectado. El gate global comprueba la
+        // fila en exercise_videos; aquí lo cruzamos con el catálogo.
+        const yogaAvailable = new Set(
+          YOGA_SELECTABLE.map(c => c.id).filter(id => validIds.has(id)),
         );
+
+        // Determinista y reproducible: misma fecha + enfoque + duración + variante
+        // → misma práctica. «Crear otra» incrementa la variante.
+        const seedCtx = {
+          userId: useAppStore.getState().user?.id ?? null,
+          date: today,
+          variant: regenCounts[selectedModality] || 0,
+        };
+
+        // El validador es OBLIGATORIO. Si una composición no pasa, se prueba otra
+        // variante — nunca se maquilla ni se rellena para cuadrar el reloj.
+        let adjustedPlan: YogaPlan | null = null;
+        let lastErrors: string[] = [];
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const candidate = generateYogaSession({
+            durationMin: yogaDur,
+            focus: yogaFocus,
+            seed: yogaSeed({ ...seedCtx, variant: (seedCtx.variant ?? 0) + attempt }, yogaFocus, yogaDur),
+            locale,
+            availableIds: yogaAvailable,
+          });
+          const check = validateYogaSession(candidate, targetDurationSeconds, yogaAvailable);
+          if (check.valid) { adjustedPlan = candidate; break; }
+          lastErrors = check.errors;
+        }
+
+        if (!adjustedPlan) {
+          // Comportamiento honesto: con el contenido disponible hoy no sale una
+          // práctica válida. Preferimos decirlo antes que entregar relleno.
+          console.warn('[yoga] sin composición válida:', lastErrors.join(' · '));
+          throw new Error(t('wizard.genErrNoneMod', { mod: t('wizard.modYoga').toLowerCase() }));
+        }
 
         // Save to cache
         saveWorkoutToCache({
           configHash,
-          duration: selectedTime,
+          duration: yogaDur,   // la generada, no la que marcaba el selector
           equipment: selectedEquipment,
           goal,
           dayType: dayTypeKey,
@@ -2007,6 +2053,8 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         setTrainingGoal={setTrainingGoal}
         focus={focus}
         setFocus={setFocus}
+        yogaFocus={yogaFocus}
+        setYogaFocus={setYogaFocus}
         supportedFoci={supportedFoci}
         selectedMuscles={selectedMuscles}
         setSelectedMuscles={setSelectedMuscles}

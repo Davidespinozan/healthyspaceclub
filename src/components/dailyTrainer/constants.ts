@@ -10,7 +10,7 @@ import {
   Building2, Home, Weight, Armchair, Grip,
   type LucideIcon,
 } from 'lucide-react';
-import type { CardioStyle, Equipment, Modality, MuscleGroup, TrainingGoal } from '../../types';
+import type { CardioStyle, Equipment, Modality, MuscleGroup, TrainingGoal, YogaFocus } from '../../types';
 import type { Gear } from '../../utils/equipmentImplement';
 import type { TranslationKey } from '../../i18n/es';
 
@@ -79,6 +79,18 @@ export const MODALITY_OPTIONS: Array<{
   { value: 'fuerza', icon: Dumbbell, label: 'Fuerza', sub: 'Push, Pull, Legs, Full body', labelKey: 'wizard.modStrength', subKey: 'wizard.modStrengthSub', minExercises: 5 },
   { value: 'yoga', icon: Flower2, label: 'Yoga / recovery', sub: 'Recovery activo + movilidad', labelKey: 'wizard.modYoga', subKey: 'wizard.modYogaSub', minExercises: 5 },
   { value: 'cardio', icon: Activity, label: 'Cardio', sub: 'HIIT, intervalos, walking', labelKey: 'wizard.modCardio', subKey: 'wizard.modCardioSub', minExercises: 5 },
+];
+
+// Enfoques de la práctica de yoga. Es AFINIDAD DE SELECCIÓN, no una clasificación
+// del ejercicio: un contenido puede servir a más de uno y el generador lo pondera.
+export const YOGA_FOCUS_OPTIONS: Array<{
+  value: YogaFocus;
+  labelKey: TranslationKey;
+  subKey: TranslationKey;
+}> = [
+  { value: 'movilidad',  labelKey: 'wizard.yogaFocusMobility',   subKey: 'wizard.yogaFocusMobilitySub' },
+  { value: 'flow',       labelKey: 'wizard.yogaFocusFlow',       subKey: 'wizard.yogaFocusFlowSub' },
+  { value: 'relajacion', labelKey: 'wizard.yogaFocusRelax',      subKey: 'wizard.yogaFocusRelaxSub' },
 ];
 
 export const TIME_OPTIONS = [

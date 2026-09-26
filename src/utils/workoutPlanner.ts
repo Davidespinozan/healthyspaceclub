@@ -1304,6 +1304,10 @@ export function buildConfigHash(params: {
   // estructura de la sesión → debe formar parte del hash. Se añade SOLO cuando está presente
   // (sesiones de cardio); en fuerza/hipertrofia/yoga va undefined → su hash NO cambia.
   cardioStyle?: string;
+  // Yoga · el ENFOQUE (movilidad/flow/relajación) cambia por completo la plantilla de
+  // fases y la selección → debe separar el caché. Condicional: en el resto va undefined
+  // y su hash no cambia.
+  yogaFocus?: string;
   // El caché es GLOBAL (una fila por config_hash, cross-user). Estas señales cambian
   // MATERIALMENTE la sesión y DEBEN separar el caché o dos usuarios distintos colisionan:
   //  · level      → dificultad/selección/técnicas/volumen (P1).
@@ -1341,6 +1345,7 @@ export function buildConfigHash(params: {
     `meso:${params.mesoPhase || 'none'}${params.deload ? '+deload' : ''}`,
     // SOLO cardio: segmento condicional → no cambia el hash de fuerza/hipertrofia/yoga.
     ...(params.cardioStyle ? [`cardio:${params.cardioStyle}`] : []),
+    ...(params.yogaFocus ? [`yoga:${params.yogaFocus}`] : []),
   ].join('-');
   // Simple hash function (djb2)
   let hash = 5381;
