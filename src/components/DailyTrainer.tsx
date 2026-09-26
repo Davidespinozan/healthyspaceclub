@@ -73,9 +73,9 @@ import {
   validateWorkoutPlanStrict,
 } from '../utils/workoutValidation';
 import { orchestrateWorkout } from '../utils/workoutOrchestration';
-import { generateYogaSession, yogaSeed, clampYogaDuration, type YogaDuration } from '../utils/yogaGenerator';
+import { generateYogaSession, yogaSeed, clampYogaDuration, yogaAvailableIds, type YogaDuration } from '../utils/yogaGenerator';
 import { validateYogaSession } from '../utils/workoutValidation';
-import { YOGA_SELECTABLE } from '../data/yogaCatalog';
+import { hasVideo } from '../utils/videoAvailability';
 import { repairWorkoutStructure } from '../utils/exerciseOrder';
 import { currentBlockId, resolveBlockAnchors, enforceAnchors, type AnchorTraceItem } from '../utils/blockAnchors';
 import { isStrengthDomainSession } from '../utils/trainingDomain';   // F2C-9B.2 · strength credit por SESIÓN
@@ -878,11 +878,12 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
         const yogaDur = yogaMinutes as YogaDuration;
         const targetDurationSeconds = yogaDur * 60;
 
-        // Solo contenido con vídeo REALMENTE conectado. El gate global comprueba la
-        // fila en exercise_videos; aquí lo cruzamos con el catálogo.
-        const yogaAvailable = new Set(
-          YOGA_SELECTABLE.map(c => c.id).filter(id => validIds.has(id)),
-        );
+        // Disponibilidad por VÍDEO, no por el banco de poses. `validIds` sale de
+        // exercises.ts, donde no existen los ids del catálogo nuevo: filtrando por
+        // ahí solo llegaban 13 de 31 contenidos y 10 de las 13 combinaciones se
+        // quedaban fuera de tolerancia. `hasVideo` es la fuente única de "¿tiene
+        // clip?" (snapshot compilado ∪ overlay vivo de exercise_videos).
+        const yogaAvailable = yogaAvailableIds(hasVideo);
 
         // Determinista y reproducible: misma fecha + enfoque + duración + variante
         // → misma práctica. «Crear otra» incrementa la variante.

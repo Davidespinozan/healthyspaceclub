@@ -101,6 +101,22 @@ export function clampYogaDuration(minutes: number, focus: YogaFocus): YogaDurati
   return below.length ? below[below.length - 1] : allowed[0];
 }
 
+/**
+ * Contenidos que el generador puede usar AHORA: los seleccionables de V1 cuyo
+ * vídeo está realmente disponible.
+ *
+ * Recibe el predicado en lugar de importarlo para que el generador siga siendo
+ * puro y para que el test pueda ejercitar EXACTAMENTE el mismo cableado que
+ * producción en vez de inyectar una lista a mano.
+ *
+ * El predicado FILTRA, no aporta ids: el conjunto de partida es el catálogo, así
+ * que un id con `hasVideo` true que no esté en el catálogo —los obsoletos que el
+ * snapshot compilado aún declara— no puede colarse. `A.filter(p) ⊆ A`.
+ */
+export function yogaAvailableIds(hasVideo: (id: string) => boolean): ReadonlySet<string> {
+  return new Set(YOGA_SELECTABLE.filter(c => hasVideo(c.id)).map(c => c.id));
+}
+
 // ── Semilla determinista (sin Math.random) ──────────────────────
 function fnv1a(s: string): number {
   let h = 2166136261;
