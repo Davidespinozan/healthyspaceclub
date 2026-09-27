@@ -128,7 +128,7 @@
   font-style: italic;
 }
 
-.yfp-side-badge, .yfp-round-badge {
+.yfp-side-badge {
   position: absolute;
   top: 12px;
   left: 50%;
@@ -145,8 +145,6 @@
   text-transform: none;
   z-index: 5;
 }
-
-.yfp-round-badge { top: auto; bottom: 12px; }
 
 /* Progress dots */
 .yfp-progress {
@@ -181,43 +179,97 @@
 .yfp-prog-dot.active { background: var(--yfp-amber); }
 
 /* Pose info */
+/* Panel único de información de la práctica. Antes eran cinco elementos
+   centrados con separaciones parecidas y el conjunto se leía disperso; ahora
+   se alinean a la izquierda y el espaciado marca la jerarquía. */
 .yfp-pose-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 18px 20px 12px;
-  text-align: center;
-  gap: 10px;
+  gap: 0;
+  padding: 14px 20px 10px;
+  text-align: left;
 }
 
 .yfp-pose-name {
-  font-size: 20px;
-  font-weight: 400;
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   color: var(--yfp-txt);
   margin: 0;
+  text-wrap: balance;
+}
+
+/* Ronda · dorado HSC, discreto: acompaña al nombre sin competir con él.
+   Solo se pinta cuando hay más de una vuelta (lo decide getRoundLabel). */
+.yfp-round-chip {
+  align-self: flex-start;
+  margin: 7px 0 0;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--yfp-amber);
+  background: rgba(201, 169, 104, 0.13);
+  border: 1px solid rgba(201, 169, 104, 0.26);
+  white-space: nowrap;
 }
 
 /* Descripción del movimiento — secundaria, una línea en móvil, dos como máximo. */
 .yfp-pose-desc {
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.42;
   color: var(--yfp-txt2);
-  margin: 6px 0 0;
-  max-width: 300px;
+  margin: 7px 0 0;
+  max-width: 42ch;
   text-wrap: pretty;
 }
 
 /* Indicación de ejecución — diferenciada pero discreta: el timer manda. */
+/* Indicación y tiempo comparten fila: guía a la izquierda, tiempo a la derecha
+   con todo el peso. La instrucción envuelve dentro de su columna (min-width: 0),
+   así que en iPhone nunca desborda ni empuja al tiempo fuera. */
+.yfp-exec-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  margin: 16px 0 0;
+  padding-top: 13px;
+  border-top: 1px solid rgba(246, 242, 234, 0.09);
+}
+
 .yfp-pose-exec {
-  font-size: 11px;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--yfp-txt2);
-  opacity: .72;
-  margin: 8px 0 0;
-  max-width: 300px;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.35;
+  font-weight: 400;
+  color: var(--yfp-amber);
+  opacity: 0.88;
+  text-wrap: pretty;
+}
+
+/* El tiempo, tipográfico: sin aro, pero con el mayor peso de la pantalla. */
+.yfp-time {
+  flex: 0 0 auto;
+  font-size: 40px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--yfp-txt);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 360px) {
+  .yfp-time { font-size: 34px; }
+  .yfp-pose-exec { font-size: 12px; }
 }
 
 .yfp-pose-tip {
@@ -229,47 +281,10 @@
   margin: 0;
 }
 
-/* Timer ring */
-.yfp-timer {
-  position: relative;
-  width: 96px; height: 96px;
-  margin: 0 auto;
-}
-
-.yfp-timer svg {
-  width: 96px; height: 96px;
-  transform: rotate(-90deg);
-}
-
-.yfp-timer-bg {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.14);
-  stroke-width: 4;
-}
-
-.yfp-timer-fill {
-  fill: none;
-  stroke: #C9A968;
-  stroke-width: 5;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 1s linear;
-}
-
-.yfp-timer-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  font-weight: 500;
-  color: var(--yfp-txt);
-}
-
 /* Next preview */
 .yfp-next {
-  text-align: center;
-  padding: 0 20px 8px;
+  text-align: left;
+  padding: 0 20px 6px;
 }
 
 .yfp-next-label {

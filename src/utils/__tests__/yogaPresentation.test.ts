@@ -100,8 +100,29 @@ describe('reproductor · el catálogo manda', () => {
   });
 
   it('resuelve el nombre desde el catálogo antes que de cualquier otra fuente', () => {
-    expect(playerSrc).toMatch(/currentContent = currentPose \? YOGA_BY_ID\.get\(currentPose\.id\)/);
-    expect(playerSrc).toMatch(/currentContent && \(isEn \? currentContent\.nameEn : currentContent\.name\)/);
+    // Un solo resolutor para todas las posiciones: catálogo → plan → banco → id.
+    expect(playerSrc).toMatch(/const nameOf = \(pose: YogaPose \| null \| undefined\): string =>/);
+    expect(playerSrc).toMatch(/const c = YOGA_BY_ID\.get\(pose\.id\);\s*\n\s*if \(c\) return isEn \? c\.nameEn : c\.name;/);
+  });
+
+  it('las CUATRO posiciones que muestran un nombre usan el mismo resolutor', () => {
+    // El título ya estaba corregido; la transición y los dos «siguiente» seguían
+    // cayendo al id. Ninguna debe volver a hacerlo.
+    expect(playerSrc).toMatch(/yfp-pose-name">\{currentName\}/);
+    expect(playerSrc).toMatch(/yfp-trans-name">\{nameOf\(transitionNext\.next\)\}/);
+    expect(playerSrc).toMatch(/yfp-next-name">\{nameOf\(nextPose\)\}/);
+    expect(playerSrc).toMatch(/yfp-info-next">\{t\('yoga\.next'\)\}: \{nameOf\(nextPose\)\}/);
+    // y ninguna conserva el fallback directo al id
+    expect(playerSrc).not.toMatch(/nextBank\?\.name \|\| transitionNext\.next\.id/);
+  });
+
+  it('la ronda ya no se superpone al vídeo y el aro del temporizador desapareció', () => {
+    expect(playerSrc).not.toContain('yfp-round-badge');
+    expect(playerSrc).toMatch(/yfp-round-chip">\{roundLabel\}/);
+    expect(playerSrc).not.toContain('yfp-timer');
+    expect(playerSrc).toMatch(/yfp-time">\{formatTime\(secondsRemaining\)\}/);
+    // la indicación y el tiempo comparten fila
+    expect(playerSrc).toMatch(/yfp-exec-row/);
   });
 
   it('muestra descripción e indicación bajo el nombre', () => {

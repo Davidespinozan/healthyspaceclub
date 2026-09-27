@@ -154,8 +154,16 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   // Current pose info
   const currentPose = poses[currentIndex];
   const currentBank = currentPose ? exerciseMap.get(currentPose.id) : null;
-  const progress = currentPose ? 1 - (secondsRemaining / currentPose.duration) : 0;
-  const circumference = 2 * Math.PI * 44; // r=44
+  const isEn = language === 'en';
+  /** Nombre visible de cualquier pieza. Catálogo → plan → banco → id. Nunca se
+   *  muestra un id si la pieza existe en el catálogo; el id es el último recurso
+   *  para prácticas guardadas antes de que el catálogo existiera. */
+  const nameOf = (pose: YogaPose | null | undefined): string => {
+    if (!pose) return '';
+    const c = YOGA_BY_ID.get(pose.id);
+    if (c) return isEn ? c.nameEn : c.name;
+    return pose.name ?? exerciseMap.get(pose.id)?.name ?? pose.id;
+  };
 
   // Side label
   const getSideLabel = () => {
@@ -316,7 +324,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           <div className="yfp-trans-check"><Check size={26} strokeWidth={2.6} /></div>
           <p className="yfp-trans-done">{t('yoga.poseDone', { pose: transitionNext.prev })}</p>
           <p className="yfp-trans-label">{t('yoga.nextPose')}</p>
-          <h2 className="yfp-trans-name">{nextBank?.name || transitionNext.next.id}</h2>
+          <h2 className="yfp-trans-name">{nameOf(transitionNext.next)}</h2>
           <p className="yfp-trans-cue">
             {transitionNext.next.tip_personalizado || nextBank?.tip || ''}
           </p>
@@ -368,9 +376,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   // segundo recurso —lo trae ya resuelto el generador— y el banco de poses el tercero,
   // para prácticas antiguas cuyos ids no están en el catálogo.
   const currentContent = currentPose ? YOGA_BY_ID.get(currentPose.id) : undefined;
-  const isEn = language === 'en';
-  const currentName = (currentContent && (isEn ? currentContent.nameEn : currentContent.name))
-    ?? currentPose?.name ?? currentBank?.name ?? currentPose?.id;
+  const currentName = nameOf(currentPose);
   const currentDescription = currentContent
     ? (isEn ? currentContent.descriptionEn : currentContent.description)
     : null;
@@ -390,7 +396,6 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   const sideLabel = getSideLabel();
   const roundLabel = getRoundLabel();
   const nextPose = currentIndex < poses.length - 1 ? poses[currentIndex + 1] : null;
-  const nextBank = nextPose ? exerciseMap.get(nextPose.id) : null;
 
   return createPortal(
     <div className="yfp">
@@ -431,15 +436,14 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           {flowSegment && <div className="yfp-flow-segment">{flowSegment}</div>}
 
           {sideLabel && <div className="yfp-side-badge">{sideLabel}</div>}
-          {roundLabel && <div className="yfp-round-badge">{roundLabel}</div>}
 
           {/* Info overlay on tap */}
           {infoOverlay && (
             <div className="yfp-info-overlay">
               <div className="yfp-info-name">{currentName}</div>
               <div className="yfp-info-time">{formatTime(secondsRemaining)}</div>
-              {nextBank && (
-                <div className="yfp-info-next">{t('yoga.next')}: {nextBank.name}</div>
+              {nextPose && (
+                <div className="yfp-info-next">{t('yoga.next')}: {nameOf(nextPose)}</div>
               )}
             </div>
           )}
@@ -465,35 +469,33 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
         {/* Pose info + timer */}
         <div className="yfp-pose-info">
           <h2 className="yfp-pose-name">{currentName}</h2>
+          {/* La ronda vivía superpuesta al vídeo, donde en móvil no se leía. Aquí
+              queda asociada al nombre. Su lógica no cambia: getRoundLabel ya
+              devuelve null con una sola ronda, así que no reserva espacio. */}
+          {roundLabel && <span className="yfp-round-chip">{roundLabel}</span>}
           {currentDescription && (
             <p className="yfp-pose-desc">{currentDescription}</p>
-          )}
-          {currentInstruction && (
-            <p className="yfp-pose-exec">{currentInstruction}</p>
           )}
           {currentPose?.tip_personalizado && (
             <p className="yfp-pose-tip">{currentPose.tip_personalizado}</p>
           )}
 
-          <div className="yfp-timer">
-            <svg viewBox="0 0 100 100">
-              <circle className="yfp-timer-bg" cx="50" cy="50" r="44" />
-              <circle
-                className="yfp-timer-fill"
-                cx="50" cy="50" r="44"
-                strokeDasharray={circumference}
-                strokeDashoffset={circumference * (1 - progress)}
-              />
-            </svg>
-            <div className="yfp-timer-text">{formatTime(secondsRemaining)}</div>
+          {/* Indicación y tiempo son una sola zona: la guía a la izquierda, el
+              tiempo con todo el peso a la derecha. En pantallas estrechas se
+              apilan sin desbordar. */}
+          <div className="yfp-exec-row">
+            {currentInstruction && (
+              <p className="yfp-pose-exec">{currentInstruction}</p>
+            )}
+            <div className="yfp-time">{formatTime(secondsRemaining)}</div>
           </div>
         </div>
 
         {/* Next preview */}
-        {nextBank && (
+        {nextPose && (
           <div className="yfp-next">
             <p className="yfp-next-label">{t('yoga.next')}</p>
-            <p className="yfp-next-name">{nextBank.name}</p>
+            <p className="yfp-next-name">{nameOf(nextPose)}</p>
           </div>
         )}
 
