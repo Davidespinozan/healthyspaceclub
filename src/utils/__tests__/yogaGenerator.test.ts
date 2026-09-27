@@ -315,16 +315,20 @@ describe('D5 · el ajuste respeta los límites del catálogo', () => {
     const probe: YogaContent[] = [
       { id: 'p-cent', name: 'c', nameEn: 'c', realSec: 10, phases: ['centering'], focus: ['relajacion'],
         mode: 'timer', laterality: 'none', defaultPrescription: 40, minSec: 39, maxSec: 41,
-        repeatable: false, posStart: 'kneeling', posEnd: 'kneeling' },
+        repeatable: false, posStart: 'kneeling', posEnd: 'kneeling',
+        executionType: 'hold', description: 'prueba', descriptionEn: 'probe' },
       { id: 'p-uni', name: 'u', nameEn: 'u', realSec: 11, phases: ['warmup'], focus: ['relajacion'],
         mode: 'timer', laterality: 'unilateral', defaultPrescription: 45, minSec: 44.5, maxSec: 45.5,
-        repeatable: false, posStart: 'standing', posEnd: 'standing' },
+        repeatable: false, posStart: 'kneeling', posEnd: 'kneeling',
+        executionType: 'hold', description: 'prueba', descriptionEn: 'probe' },
       { id: 'p-cool', name: 'k', nameEn: 'k', realSec: 12, phases: ['cooldown'], focus: ['relajacion'],
         mode: 'timer', laterality: 'contained', defaultPrescription: 60, minSec: 59.2, maxSec: 60.8,
-        repeatable: false, posStart: 'seated', posEnd: 'seated' },
+        repeatable: false, posStart: 'kneeling', posEnd: 'kneeling',
+        executionType: 'hold', description: 'prueba', descriptionEn: 'probe' },
       { id: 'p-cool2', name: 'k2', nameEn: 'k2', realSec: 12, phases: ['cooldown'], focus: ['relajacion'],
         mode: 'timer', laterality: 'none', defaultPrescription: 50, minSec: 49.3, maxSec: 50.7,
-        repeatable: false, posStart: 'supine', posEnd: 'supine' },
+        repeatable: false, posStart: 'kneeling', posEnd: 'kneeling',
+        executionType: 'hold', description: 'prueba', descriptionEn: 'probe' },
     ];
     for (const min of [10, 15, 20, 30] as YogaDuration[]) {
       for (let v = 0; v < 5; v++) {

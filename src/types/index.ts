@@ -353,6 +353,21 @@ export type YogaFocus = 'movilidad' | 'flow' | 'relajacion';
  */
 export type YogaExecMode = 'timer' | 'reps' | 'rounds';
 
+/**
+ * Qué debe HACER la usuaria durante el tiempo prescrito. Eje distinto de `mode`:
+ * aquél dice cómo lo reproduce el player, éste qué se espera de la persona.
+ * No se deriva uno del otro — `cat-cow` es `mode: 'timer'` pero movimiento continuo,
+ * y decirle «mantén la postura» sobre un gato-vaca sería falso.
+ *
+ *  · hold   → sostener la postura mientras corre el temporizador
+ *  · repeat → seguir el movimiento de forma continua
+ *  · follow → seguir la secuencia que muestra el vídeo
+ *
+ * El texto de la indicación NO vive en el catálogo: se deriva de este tipo vía i18n
+ * (`yoga.execHold` / `execRepeat` / `execFollow`) para no repetir 33 cadenas.
+ */
+export type YogaExecutionType = 'hold' | 'repeat' | 'follow';
+
 /** Lateralidad del CONTENIDO (no de la sesión).
  *  · none       → no aplica (simétrico)
  *  · unilateral → el vídeo muestra UN lado; el motor debe garantizar la contraparte
@@ -391,6 +406,11 @@ export interface YogaContent {
   excludeFromAutoGeneration?: boolean;
   /** Subtítulos que corren con el vídeo. Solo `rounds`. */
   segments?: Array<{ label: string; labelEn: string; atSec: number }>;
+  /** Qué hace la usuaria. El reproductor deriva de aquí la indicación mostrada. */
+  executionType: YogaExecutionType;
+  /** Una línea que explica el movimiento. Se muestra bajo el nombre en el reproductor. */
+  description: string;
+  descriptionEn: string;
 }
 
 export interface YogaPlan {

@@ -1000,6 +1000,7 @@
   color: var(--txt2);
 }
 .dt2-cta-sub svg { color: var(--amber-deep); flex-shrink: 0; }
+.dt2-yoga-start-cta,
 .dt2-start-workout-cta {
   width: 100%;
   padding: 15px 28px;
@@ -1024,6 +1025,7 @@
   gap: 9px;
 }
 .dt2-cta-play { font-size: 0.82em; line-height: 1; font-style: normal; }
+.dt2-yoga-start-cta:hover,
 .dt2-start-workout-cta:hover {
   transform: translateY(-2px);
   box-shadow: 0 16px 34px rgba(191, 160, 101, 0.46);
