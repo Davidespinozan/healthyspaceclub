@@ -88,14 +88,36 @@ describe('cableado · las 13 combinaciones con la disponibilidad real', () => {
     expect(vacias, vacias.join(' · ')).toEqual([]);
   });
 
-  it('13/13 pasan validateYogaSession', () => {
+  it('13/13 pasan validateYogaSession dentro de los 4 intentos que hace DailyTrainer', () => {
+    // DailyTrainer genera con variant, +1, +2 y +3 y se queda con la primera
+    // composición válida; si ninguna lo es, avisa en vez de entregar relleno.
+    // El test replica ese bucle: lo que importa es que el usuario reciba una
+    // práctica, no que acierte precisamente a la primera.
     const fallos: string[] = [];
     for (const { focus, min } of combos) {
-      const plan = generar(focus, min);
-      const res = validateYogaSession(plan, min * 60, yogaAvailableIds(hasVideo));
-      if (!res.valid) fallos.push(`${focus}/${min}: ${res.errors.join(' · ')}`);
+      const disponibles = yogaAvailableIds(hasVideo);
+      let ok = false;
+      let ultimo: string[] = [];
+      for (let intento = 0; intento < 4 && !ok; intento++) {
+        const res = validateYogaSession(generar(focus, min, intento), min * 60, disponibles);
+        ok = res.valid;
+        ultimo = res.errors;
+      }
+      if (!ok) fallos.push(`${focus}/${min}: ${ultimo.join(' · ')}`);
     }
     expect(fallos, `\n${fallos.join('\n')}`).toEqual([]);
+  });
+
+  it('flow/10 es la única combinación que necesita reintento', () => {
+    // Coste conocido del filtro de familia: el warmup de `flow` corto solo tiene
+    // tres contenidos y dos son saludos al sol. Si esta lista crece, la regla se
+    // ha vuelto demasiado cara y hay que ampliar el catálogo o revisar el reparto.
+    const disponibles = yogaAvailableIds(hasVideo);
+    const conReintento = combos
+      .filter(({ focus, min }) =>
+        !validateYogaSession(generar(focus, min), min * 60, disponibles).valid)
+      .map(({ focus, min }) => `${focus}/${min}`);
+    expect(conReintento).toEqual(['flow/10']);
   });
 
   it('relajación sigue sin ofrecer 30 ni 45', () => {

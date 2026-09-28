@@ -110,6 +110,23 @@ export function validateYogaSession(
     if (n > maxUses) errors.push(`${id} usado ${n} veces (máximo ${maxUses})`);
   }
 
+  // ── Familia · máximo un MIEMBRO por práctica ──
+  // Estructural, no scoring: dos variantes del mismo concepto no conviven aunque
+  // el orden de puntuación quisiera elegirlas. Repetir el MISMO contenido sigue
+  // permitido si es `repeatable` (lo gobiernan R2 y maxUses, no esta regla).
+  const porFamilia = new Map<string, Set<string>>();
+  for (const p of poses) {
+    const f = YOGA_BY_ID.get(p.id)!.family;
+    if (!f) continue;
+    if (!porFamilia.has(f)) porFamilia.set(f, new Set());
+    porFamilia.get(f)!.add(p.id);
+  }
+  for (const [f, miembros] of porFamilia) {
+    if (miembros.size > 1) {
+      errors.push(`Familia «${f}» con ${miembros.size} miembros: ${[...miembros].join(', ')}`);
+    }
+  }
+
   // ── Estructura: la práctica progresa y cierra abajo ──
   const phasesPresent = new Set<YogaPhase>();
   for (const p of poses) for (const ph of YOGA_BY_ID.get(p.id)!.phases) phasesPresent.add(ph);

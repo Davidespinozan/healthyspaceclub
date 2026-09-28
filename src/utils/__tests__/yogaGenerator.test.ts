@@ -88,21 +88,42 @@ describe('presupuestos de fase', () => {
 });
 
 describe('matriz de generación', () => {
-  it('todas las combinaciones ofrecidas producen prácticas válidas', () => {
+  // El filtro duro de familia (una sola variante de cada concepto por práctica)
+  // adelgaza el pool de `flow` corto, cuyo warmup solo tiene tres contenidos y dos
+  // son saludos al sol. Cuando la fase no puede gastar su presupuesto lo abandona
+  // y la práctica sale corta. Esas semillas se DESCARTAN — el generador nunca
+  // rellena para cuadrar el reloj — y DailyTrainer prueba la siguiente variante.
+  const INVALIDAS_CONOCIDAS = ['flow/10/v1'];
+
+  it('las combinaciones ofrecidas producen prácticas válidas, salvo las semillas descartadas', () => {
     const fails: string[] = [];
     for (const { focus, min } of combos) {
       for (const v of SEEDS) {
         const plan = gen(focus, min, v);
         const res = validateYogaSession(plan, min * 60, ALL_IDS);
-        if (!res.valid) fails.push(`${focus}/${min}/v${v}: ${res.errors.join(' · ')}`);
+        if (!res.valid) fails.push(`${focus}/${min}/v${v}`);
       }
     }
-    expect(fails, `\n${fails.join('\n')}`).toEqual([]);
+    // La lista es exacta: si crece, el filtro de familia se ha vuelto demasiado caro.
+    expect(fails).toEqual(INVALIDAS_CONOCIDAS);
   });
 
-  it('la duración cae dentro de la tolerancia ±8 %', () => {
+  it('las 13 combinaciones siguen siendo generables: ninguna se queda sin variante válida', () => {
+    for (const { focus, min } of combos) {
+      const validas = SEEDS.filter(v =>
+        validateYogaSession(gen(focus, min, v), min * 60, ALL_IDS).valid);
+      expect(validas.length, `${focus}/${min} sin ninguna variante válida`).toBeGreaterThan(0);
+      // DailyTrainer prueba 4 variantes seguidas: una racha de 4 dejaría al usuario sin práctica
+      let peor = 0, run = 0;
+      for (const v of SEEDS) { run = validas.includes(v) ? 0 : run + 1; peor = Math.max(peor, run); }
+      expect(peor, `${focus}/${min} encadena ${peor} variantes inválidas`).toBeLessThan(4);
+    }
+  });
+
+  it('la duración cae dentro de la tolerancia ±8 % en toda práctica que se entrega', () => {
     for (const { focus, min } of combos) {
       for (const v of SEEDS) {
+        if (INVALIDAS_CONOCIDAS.includes(`${focus}/${min}/v${v}`)) continue;
         const plan = gen(focus, min, v);
         const target = min * 60;
         expect(Math.abs(plan.totalDuration - target), `${focus}/${min}/v${v} → ${plan.totalDuration}s`)

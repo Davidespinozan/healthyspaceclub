@@ -40,21 +40,23 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 45, minSec: 30, maxSec: 90, repeatable: true,
     posStart: 'kneeling', posEnd: 'kneeling',
     executionType: 'hold',
+    family: 'child-pose',
     description: 'Descansa sentada sobre los talones con los brazos extendidos al frente.',
     descriptionEn: "Rest back on your heels with your arms stretched forward.",
   },
   {
-    id: 'child-pose-brazos', name: 'Niño con Brazos Extendidos', nameEn: "Child's Pose, Arms Extended", realSec: 25.7,
+    id: 'child-pose-brazos', name: 'Postura del Niño con Variación de Brazos', nameEn: "Child's Pose, Arm Variation", realSec: 25.7,
     phases: ['centering', 'cooldown'], focus: ['relajacion'],
     mode: 'timer', laterality: 'none',
     defaultPrescription: 50, minSec: 40, maxSec: 90, repeatable: false,
     posStart: 'kneeling', posEnd: 'kneeling',
     executionType: 'hold',
+    family: 'child-pose',
     description: 'Descansa sobre los talones con los brazos al frente y después llévalos hacia atrás.',
     descriptionEn: "Rest back on your heels with your arms forward, then bring them behind you.",
   },
   {
-    id: 'puppy-pose', name: 'Niño a Cachorro', nameEn: 'Child to Puppy Pose', realSec: 23.2,
+    id: 'puppy-pose', name: 'Postura del Cachorro', nameEn: 'Puppy Pose', realSec: 23.2,
     phases: ['centering', 'warmup', 'cooldown'], focus: ['movilidad', 'relajacion'],
     mode: 'timer', laterality: 'none',
     defaultPrescription: 45, minSec: 35, maxSec: 70, repeatable: false,
@@ -76,7 +78,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     descriptionEn: "Standing with arms overhead, bend your torso to each side.",
   },
   {
-    id: 'revolved-chair', name: 'Silla con Torsión', nameEn: 'Revolved Chair', realSec: 13.1,
+    id: 'revolved-chair', name: 'Postura de la Silla con Torsión', nameEn: 'Revolved Chair', realSec: 13.1,
     phases: ['warmup', 'standing'], focus: ['movilidad'],
     mode: 'reps', laterality: 'contained',
     defaultPrescription: 52, minSec: 26, maxSec: 78, repeatable: true,
@@ -92,6 +94,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 24, rounds: [1, 4], repeatable: true,
     posStart: 'standing', posEnd: 'standing',
     executionType: 'follow',
+    family: 'sun-salutation',
     description: 'Secuencia que encadena posturas de pie y de suelo.',
     descriptionEn: "A sequence linking standing and floor postures.",
   },
@@ -112,8 +115,9 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 48, rounds: [1, 2], repeatable: true,
     posStart: 'standing', posEnd: 'standing',
     executionType: 'follow',
-    description: 'Secuencia de saludo al sol, más breve que la serie completa de guerreros.',
-    descriptionEn: "A sun salutation sequence, shorter than the full warrior series.",
+    family: 'sun-salutation',
+    description: 'Secuencia fluida basada en el saludo al sol.',
+    descriptionEn: "Flowing sequence based on the sun salutation.",
   },
 
   // ── STANDING · el cuerpo de la práctica ───────────────────────
@@ -144,6 +148,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 85, rounds: [1, 2], repeatable: true,
     posStart: 'standing', posEnd: 'standing',
     executionType: 'follow',
+    family: 'sun-salutation',
     description: 'Saludo al sol enlazado con la serie de guerreros, en ambos lados.',
     descriptionEn: "Sun salutation linked into the warrior series, on both sides.",
   },
@@ -180,7 +185,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     descriptionEn: "Chair pose with a twist to each side.",
   },
   {
-    id: 'flow-skandasana', name: 'Apertura y Skandasana', nameEn: 'Wide-Leg Opening and Skandasana', realSec: 53.3,
+    id: 'flow-skandasana', name: 'Apertura de Piernas y Skandasana', nameEn: 'Wide-Leg Opening and Skandasana', realSec: 53.3,
     phases: ['standing', 'peak'], focus: ['movilidad'],
     mode: 'rounds', laterality: 'contained',
     defaultPrescription: 53, rounds: [1, 2], repeatable: true,
@@ -210,12 +215,19 @@ export const YOGA_CATALOG: YogaContent[] = [
     descriptionEn: "Three-legged dog opening into wild thing, on both sides.",
   },
   {
-    id: 'triangle-pose', name: 'Triángulo', nameEn: 'Triangle Pose', realSec: 31.7,
+    id: 'triangle-pose', name: 'Postura del Triángulo', nameEn: 'Triangle Pose', realSec: 31.7,
     phases: ['standing'], focus: ['movilidad'],
     mode: 'timer', laterality: 'contained',
     defaultPrescription: 64, minSec: 40, maxSec: 90, repeatable: false,
     posStart: 'standing', posEnd: 'standing',
     executionType: 'hold',
+    splitBySide: true,
+    // Tramos medidos sobre el archivo; `side` sin rellenar: el lado anatómico
+    // no se pudo verificar (no se descarta que el vídeo esté espejado).
+    sideSegments: {
+      first:  { startSec: 4.0, endSec: 14.0 },
+      second: { startSec: 19.0, endSec: 29.0 },
+    },
     description: 'Triángulo hacia cada lado, con las piernas abiertas.',
     descriptionEn: "Triangle to each side, with the legs wide.",
   },
@@ -322,12 +334,19 @@ export const YOGA_CATALOG: YogaContent[] = [
 
   // ── COOLDOWN · bajar y cerrar ─────────────────────────────────
   {
-    id: 'pigeon-pose', name: 'Paloma con Flexión', nameEn: 'Pigeon with Forward Fold', realSec: 39.2,
+    id: 'pigeon-pose', name: 'Postura de la Paloma', nameEn: 'Pigeon Pose', realSec: 39.2,
     phases: ['cooldown'], focus: ['movilidad', 'relajacion'],
     mode: 'timer', laterality: 'contained',
     defaultPrescription: 80, minSec: 50, maxSec: 140, repeatable: false,
     posStart: 'quadruped', posEnd: 'seated',
     executionType: 'hold',
+    splitBySide: true,
+    // Tramos medidos sobre el archivo; `side` sin rellenar: el lado anatómico
+    // no se pudo verificar (no se descarta que el vídeo esté espejado).
+    sideSegments: {
+      first:  { startSec: 3.0, endSec: 16.2 },
+      second: { startSec: 22.8, endSec: 32.0 },
+    },
     description: 'Paloma con el tronco inclinado sobre la pierna, hacia cada lado.',
     descriptionEn: "Pigeon folding over the front leg, on each side.",
   },
@@ -348,18 +367,25 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 60, minSec: 40, maxSec: 100, repeatable: false,
     posStart: 'seated', posEnd: 'seated',
     executionType: 'hold',
+    splitBySide: true,
+    // Tramos medidos sobre el archivo; `side` sin rellenar: el lado anatómico
+    // no se pudo verificar (no se descarta que el vídeo esté espejado).
+    sideSegments: {
+      first:  { startSec: 3.4, endSec: 9.2 },
+      second: { startSec: 13.4, endSec: 18.2 },
+    },
     description: 'Torsión de columna sentada, hacia cada lado.',
     descriptionEn: "Seated spinal twist to each side.",
   },
   {
-    id: 'flow-enfriamiento', name: 'Happy Baby y Torsión Supina', nameEn: 'Happy Baby and Supine Twist', realSec: 42.2,
+    id: 'flow-enfriamiento', name: 'Happy Baby y Torsión Tumbada', nameEn: 'Happy Baby and Reclined Twist', realSec: 42.2,
     phases: ['cooldown'], focus: ['relajacion', 'movilidad'],
     mode: 'rounds', laterality: 'contained',
     defaultPrescription: 42, rounds: [1, 2], repeatable: true,
     posStart: 'supine', posEnd: 'supine',
     executionType: 'follow',
-    description: 'Happy baby y torsión supina, alternando lados.',
-    descriptionEn: "Happy baby and supine twist, alternating sides.",
+    description: 'Happy baby y torsión tumbada, alternando lados.',
+    descriptionEn: "Happy baby and reclined twist, alternating sides.",
   },
   {
     // Cierre natural: es el único contenido que termina SENTADA viniendo del suelo.

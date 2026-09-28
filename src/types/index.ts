@@ -404,6 +404,46 @@ export interface YogaContent {
   difficulty?: 'principiante' | 'intermedio' | 'avanzado';
   /** V1: excluido de la selección automática. Permanece en catálogo y Storage. */
   excludeFromAutoGeneration?: boolean;
+  /**
+   * La prescripción se hace la MITAD por lado, con un cambio a medio camino.
+   *
+   * Es un eje propio, NO se deriva de `laterality`: ésta dice qué trae el vídeo
+   * («contained» = ambos lados grabados) y sirve para que el generador sepa si
+   * duplicar el tiempo. Este campo dice qué hace la persona, y hay contenidos
+   * —torsión sentada, paloma, triángulo— cuyo vídeo trae ambos lados pero cuya
+   * retención prescrita sí exige cambiar a la mitad.
+   *
+   * No altera la duración total de la pieza ni la receta: solo cómo la presenta
+   * el reproductor. Se declara contenido a contenido, nunca se infiere.
+   */
+  splitBySide?: boolean;
+  /**
+   * Tramos del ARCHIVO que muestran cada lado, ya recortados: sin la entrada a la
+   * postura, sin el cambio de lado y sin la salida. Medidos sobre el mp4 real.
+   *
+   * `first` y `second` son POSICIONALES — primer tramo y segundo tramo del vídeo—,
+   * NO significan derecha e izquierda. Cada vídeo empieza por el lado que le toca
+   * y no tienen por qué coincidir entre sí.
+   *
+   * `side` es el lado anatómico y solo se rellena cuando se ha VERIFICADO
+   * visualmente. Mientras falte, el reproductor dice «primer lado» / «segundo
+   * lado» en vez de inventarse una lateralidad.
+   *
+   * Solo tiene sentido junto a `splitBySide`: sin él, nadie lo lee. Es metadata de
+   * presentación — no toca la prescripción, que sigue mandando sobre el vídeo.
+   */
+  sideSegments?: {
+    first: { startSec: number; endSec: number; side?: 'right' | 'left' };
+    second: { startSec: number; endSec: number; side?: 'right' | 'left' };
+  };
+  /**
+   * Familia conceptual. Dos contenidos de la misma familia son variantes de lo
+   * mismo y el generador admite COMO MÁXIMO UNO por práctica — es un filtro duro,
+   * no una penalización de scoring. Sin familia, un contenido no compite con nadie.
+   *
+   * Mismo espíritu que `movementFamily` en el motor de fuerza.
+   */
+  family?: string;
   /** Subtítulos que corren con el vídeo. Solo `rounds`. */
   segments?: Array<{ label: string; labelEn: string; atSec: number }>;
   /** Qué hace la usuaria. El reproductor deriva de aquí la indicación mostrada. */

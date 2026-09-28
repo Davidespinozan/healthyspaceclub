@@ -9,6 +9,7 @@ import { useT } from '../i18n';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { YOGA_BY_ID } from '../data/yogaCatalog';
+import { splitsSides, sideSwitchAt, sideIndexAt, segmentForHalf, sideLabelKey } from '../utils/yogaSides';
 import type { Exercise, YogaPlan, YogaPose } from '../types';
 import './yoga-flow-player.css';
 
@@ -86,6 +87,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   const [transitionNext, setTransitionNext] = useState<{ prev: string; next: YogaPose } | null>(null);
 
   const infoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Wake lock active during playing
   useWakeLock(phase === 'playing' || phase === 'side-switch' || phase === 'transition');
@@ -138,12 +140,11 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   useEffect(() => {
     if (phase !== 'playing') return;
     const currentPose = poses[currentIndex];
-    if (currentPose?.sides !== 'both' || sideSwitchShown) return;
+    if (!splitsSides(currentPose) || sideSwitchShown) return;
 
-    const halfwayMark = Math.floor(currentPose.duration / 2);
     const elapsed = currentPose.duration - secondsRemaining;
 
-    if (elapsed === halfwayMark) {
+    if (elapsed === sideSwitchAt(currentPose.duration)) {
       setSideSwitchShown(true);
       setPhase('side-switch');
       // TODO: V2 audio cue — campana tibetana
@@ -165,13 +166,59 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     return pose.name ?? exerciseMap.get(pose.id)?.name ?? pose.id;
   };
 
-  // Side label
+  // ── Lateralidad
+  /**
+   * ¿La prescripción se reparte entre dos lados? Dos orígenes, un solo mecanismo:
+   *  · `sides === 'both'` — lo pone el generador en los contenidos `unilateral`
+   *    (el vídeo enseña un lado y hay que hacer también el otro).
+   *  · `splitBySide` — declarado en el catálogo para retenciones cuyo vídeo trae
+   *    ambos lados pero cuya prescripción sí exige cambiar a la mitad.
+   * La duración total no cambia: se parte en dos mitades (ver utils/yogaSides).
+   */
+  const sideHalf: 0 | 1 = splitsSides(currentPose)
+    ? sideIndexAt(currentPose.duration, secondsRemaining)
+    : 0;
+
+  /** Tramo del vídeo que enseña el lado en curso. `null` = bucle completo de siempre. */
+  const activeSegment = segmentForHalf(currentPose, sideHalf);
+  const segStart = activeSegment?.startSec;
+  const segEnd = activeSegment?.endSec;
+
   const getSideLabel = () => {
-    if (currentPose?.sides !== 'both') return null;
-    const half = Math.floor(currentPose.duration / 2);
-    const elapsed = currentPose.duration - secondsRemaining;
-    return elapsed < half ? t('yoga.sideRight') : t('yoga.sideLeft');
+    const key = sideLabelKey(currentPose, sideHalf);
+    return key ? t(key) : null;
   };
+
+  // ── Vídeo por tramos · solo el lado que se está sosteniendo ─────────────────
+  // Coloca el vídeo al principio del tramo, lo deja correr y lo CONGELA al final.
+  // No se repite en bucle: es una retención, y reiniciarlo cada pocos segundos
+  // obligaría a saltar entre keyframes (están cada 8,3 s) y daría tirones.
+  // La prescripción manda: el vídeo nunca adelanta la pieza ni toca el contador.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || segStart === undefined || segEnd === undefined) return;
+
+    let cancelado = false;
+
+    const colocar = () => {
+      if (cancelado) return;
+      try { v.currentTime = segStart; } catch { return; }
+      void v.play().catch(() => { /* autoplay bloqueado: se queda en el frame */ });
+    };
+
+    // iOS Safari ignora `currentTime` mientras no haya metadata: se encola.
+    if (v.readyState >= 1 /* HAVE_METADATA */) colocar();
+    else v.addEventListener('loadedmetadata', colocar, { once: true });
+
+    const congelar = () => { if (v.currentTime >= segEnd) v.pause(); };
+    v.addEventListener('timeupdate', congelar);
+
+    return () => {
+      cancelado = true;
+      v.removeEventListener('loadedmetadata', colocar);
+      v.removeEventListener('timeupdate', congelar);
+    };
+  }, [currentIndex, sideHalf, segStart, segEnd]);
 
   // Round label
   const getRoundLabel = () => {
@@ -416,10 +463,11 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           {firstVideoUrl ? (
             <video
               key={firstVideoUrl}
+              ref={videoRef}
               src={firstVideoUrl}
               autoPlay
               muted
-              loop
+              loop={!activeSegment}
               playsInline
               preload="metadata"
             />
@@ -435,7 +483,6 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           {/* Subtítulo del flow: la pose que va sonando ahora, corriendo con el video */}
           {flowSegment && <div className="yfp-flow-segment">{flowSegment}</div>}
 
-          {sideLabel && <div className="yfp-side-badge">{sideLabel}</div>}
 
           {/* Info overlay on tap */}
           {infoOverlay && (
@@ -472,7 +519,12 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           {/* La ronda vivía superpuesta al vídeo, donde en móvil no se leía. Aquí
               queda asociada al nombre. Su lógica no cambia: getRoundLabel ya
               devuelve null con una sola ronda, así que no reserva espacio. */}
-          {roundLabel && <span className="yfp-round-chip">{roundLabel}</span>}
+          {(roundLabel || sideLabel) && (
+            <div className="yfp-chips">
+              {roundLabel && <span className="yfp-round-chip">{roundLabel}</span>}
+              {sideLabel && <span className="yfp-side-chip">{sideLabel}</span>}
+            </div>
+          )}
           {currentDescription && (
             <p className="yfp-pose-desc">{currentDescription}</p>
           )}

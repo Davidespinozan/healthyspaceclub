@@ -128,24 +128,6 @@
   font-style: italic;
 }
 
-.yfp-side-badge {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 5px 14px;
-  background: rgba(246, 242, 234, 0.15);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 20px;
-  color: var(--sala-surface);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: none;
-  z-index: 5;
-}
-
 /* Progress dots */
 .yfp-progress {
   display: flex;
@@ -205,18 +187,34 @@
 
 /* Ronda · dorado HSC, discreto: acompaña al nombre sin competir con él.
    Solo se pinta cuando hay más de una vuelta (lo decide getRoundLabel). */
-.yfp-round-chip {
-  align-self: flex-start;
+.yfp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   margin: 7px 0 0;
+}
+
+.yfp-round-chip,
+.yfp-side-chip {
   padding: 3px 9px;
   border-radius: 20px;
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.yfp-round-chip {
   color: var(--yfp-amber);
   background: rgba(201, 169, 104, 0.13);
   border: 1px solid rgba(201, 169, 104, 0.26);
-  white-space: nowrap;
+}
+
+/* El lado se distingue de la ronda: son dos ejes distintos. */
+.yfp-side-chip {
+  color: var(--yfp-sand);
+  background: rgba(232, 225, 211, 0.10);
+  border: 1px solid rgba(232, 225, 211, 0.22);
 }
 
 /* Descripción del movimiento — secundaria, una línea en móvil, dos como máximo. */

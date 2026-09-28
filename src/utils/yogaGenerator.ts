@@ -232,6 +232,8 @@ export function generateYogaSession(input: GenerateYogaInput): YogaPlan {
     : PHASE_ORDER;
 
   const used = new Map<string, number>();
+  /** Familias ya representadas. Máximo UNA pieza por familia y práctica. */
+  const usedFamilies = new Set<string>();
   const chosen: Array<{ c: YogaContent; pose: YogaPose; phase: YogaPhase }> = [];
 
   for (const phase of phases) {
@@ -251,6 +253,11 @@ export function generateYogaSession(input: GenerateYogaInput): YogaPlan {
 
       const candidates = phasePool.filter(c => {
         const n = used.get(c.id) ?? 0;
+        // Familia · filtro DURO, no penalización: dos variantes de lo mismo (las
+        // dos posturas del niño, los tres saludos al sol) no conviven en una misma
+        // práctica. Va ANTES del atajo de abajo para que también alcance a un
+        // contenido que todavía no se ha usado.
+        if (c.family && n === 0 && usedFamilies.has(c.family)) return false;
         if (n === 0) return true;
         if (!c.repeatable) return false;
         if (c.id === lastId) return false;                              // R1
@@ -274,6 +281,7 @@ export function generateYogaSession(input: GenerateYogaInput): YogaPlan {
 
       chosen.push({ c: pick, pose: toPose(pick, placed, locale), phase });
       used.set(pick.id, (used.get(pick.id) ?? 0) + 1);
+      if (pick.family) usedFamilies.add(pick.family);
       left -= placed.sec;
     }
   }

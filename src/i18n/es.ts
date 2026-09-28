@@ -831,6 +831,9 @@ export const es = {
     opening: 'Apertura',
     closing: 'Cierre',
     bothSides: 'ambos lados',
+    // Posicionales: se usan cuando el lado anatómico del vídeo no está verificado.
+    sideFirst: 'primer lado',
+    sideSecond: 'segundo lado',
     sideRight: 'lado derecho',
     sideLeft: 'lado izquierdo',
     round: 'ronda {r} de {total}',

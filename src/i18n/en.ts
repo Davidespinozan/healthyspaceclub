@@ -829,6 +829,9 @@ export const en: Translations<typeof es> = {
     opening: 'Opening',
     closing: 'Closing',
     bothSides: 'both sides',
+    // Posicionales: se usan cuando el lado anatómico del vídeo no está verificado.
+    sideFirst: 'first side',
+    sideSecond: 'second side',
     sideRight: 'right side',
     sideLeft: 'left side',
     round: 'round {r} of {total}',
