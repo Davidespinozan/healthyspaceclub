@@ -12,6 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { describe, it, expect } from 'vitest';
 import playerSrc from '../../components/YogaFlowPlayer.tsx?raw';
+import cssSrc from '../../components/yoga-flow-player.css?raw';
 import { YOGA_CATALOG, YOGA_BY_ID, YOGA_FAMILY_POLICY, FAMILY_MIN_GAP, FAMILY_MAX_MEMBERS } from '../../data/yogaCatalog';
 import {
   splitsSides, sideHalves, sideSwitchAt, sideIndexAt, sideLabelKey,
@@ -397,7 +398,7 @@ describe('las 13 combinaciones siguen generando prácticas válidas', () => {
 // ══════════════════════════════════════════════════════════════════════════
 describe('el vídeo se reproduce en bucle natural', () => {
   it('el elemento conserva `loop` sin condición', () => {
-    expect(playerSrc).toMatch(/autoPlay\n\s+muted\n\s+loop\n\s+playsInline/);
+    expect(playerSrc).toMatch(/autoPlay=\{i === buf\.active\}\n\s+muted\n\s+loop\n\s+playsInline/);
     expect(playerSrc).not.toMatch(/loop=\{/);
   });
 
@@ -409,8 +410,8 @@ describe('el vídeo se reproduce en bucle natural', () => {
     const efecto = playerSrc.slice(
       playerSrc.indexOf('// ── El vídeo sigue al botón de pausa'),
       playerSrc.indexOf('// ── Timer'));
-    expect(efecto).toMatch(/if \(phase === 'paused'\) \{\n\s+v\.pause\(\);/);
-    expect(efecto).toMatch(/\}, \[phase, currentIndex\]\);/);
+    expect(efecto).toMatch(/if \(phase === 'paused'\) \{\n\s+activo\.pause\(\);/);
+    expect(efecto).toMatch(/\}, \[phase, currentIndex, buf\.active\]\);/);
     expect(efecto).not.toContain('sideHalf');
     expect(efecto).not.toContain('splitsSides');
     expect(efecto).not.toContain('sideSwitchAt');
@@ -605,20 +606,20 @@ describe('el botón de pausa para el vídeo', () => {
     // El <video> es no controlado: `autoPlay` + `loop` lo dejan corriendo pase lo
     // que pase con el estado de React. Pausar paraba el contador y cambiaba el
     // icono, pero el vídeo seguía moviéndose.
-    expect(playerSrc).toMatch(/ref=\{videoRef\}/);
-    expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+v\.pause\(\);/);
+    expect(playerSrc).toMatch(/ref=\{el => \{ videoRefs\.current\[i\] = el; \}\}/);
+    expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+activo\.pause\(\);/);
     // `play()` SOLO en `playing`: nada de un `else` genérico que arranque el
     // vídeo en fases donde no toca.
-    expect(playerSrc).toMatch(/\} else if \(phase === 'playing'\) \{\n\s+void v\.play\(\)/);
-    expect(playerSrc).not.toMatch(/else void v\.play\(\)/);
+    expect(playerSrc).toMatch(/\} else if \(phase === 'playing'\) \{\n\s+void activo\.play\(\)/);
+    expect(playerSrc).not.toMatch(/else void activo\.play\(\)/);
   });
 
   it('el efecto se relanza al cambiar de fase y de pieza, y con nada más', () => {
-    expect(playerSrc).toMatch(/\}, \[phase, currentIndex\]\);/);
+    expect(playerSrc).toMatch(/\}, \[phase, currentIndex, buf\.active\]\);/);
   });
 
   it('el bucle nativo sigue siendo incondicional', () => {
-    expect(playerSrc).toMatch(/autoPlay\n\s+muted\n\s+loop\n\s+playsInline/);
+    expect(playerSrc).toMatch(/autoPlay=\{i === buf\.active\}\n\s+muted\n\s+loop\n\s+playsInline/);
     expect(playerSrc).not.toMatch(/loop=\{/);
   });
 
@@ -764,16 +765,16 @@ describe('reproductor · ronda y lado salen del MISMO bloque', () => {
   });
 
   it('la pausa manual sigue intacta', () => {
-    expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+v\.pause\(\);/);
-    expect(playerSrc).toMatch(/\} else if \(phase === 'playing'\) \{\n\s+void v\.play\(\)/);
-    expect(playerSrc).toMatch(/\}, \[phase, currentIndex\]\);/);
+    expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+activo\.pause\(\);/);
+    expect(playerSrc).toMatch(/\} else if \(phase === 'playing'\) \{\n\s+void activo\.play\(\)/);
+    expect(playerSrc).toMatch(/\}, \[phase, currentIndex, buf\.active\]\);/);
   });
 
   it('el vídeo sigue sin ser tocado por la lateralidad', () => {
     expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
     expect(playerSrc).not.toContain('sideSegments');
     expect(playerSrc).not.toContain('timeupdate');
-    expect(playerSrc).toMatch(/autoPlay\n\s+muted\n\s+loop\n\s+playsInline/);
+    expect(playerSrc).toMatch(/autoPlay=\{i === buf\.active\}\n\s+muted\n\s+loop\n\s+playsInline/);
   });
 });
 
@@ -881,11 +882,126 @@ describe('instrucción · tiempo prescrito, nunca el metraje', () => {
     // el temporizador sigue mandando sobre la pieza
     expect(playerSrc).toMatch(/if \(prev <= 1\) \{\n\s+handlePoseComplete\(\);/);
     // el vídeo sigue en bucle natural y sin reposicionar
-    expect(playerSrc).toMatch(/autoPlay\n\s+muted\n\s+loop\n\s+playsInline/);
+    expect(playerSrc).toMatch(/autoPlay=\{i === buf\.active\}\n\s+muted\n\s+loop\n\s+playsInline/);
     expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
     // la pausa manual sigue
-    expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+v\.pause\(\);/);
+    expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+activo\.pause\(\);/);
     // las fronteras de bloque siguen igual
     expect(playerSrc).toMatch(/const b = blockBoundaryAt\(pose, secondsRemaining\);/);
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// DOBLE BUFFER · el siguiente vídeo se prepara mientras corre el actual
+//
+// Antes había UN <video>, y las pantallas de cambio de lado y de transición lo
+// desmontaban: el `src` de N+1 no se pedía hasta que la persona ya había llegado
+// a él, y un cambio de lado recargaba el mismo mp4 desde cero.
+// ══════════════════════════════════════════════════════════════════════════
+describe('doble buffer · dos <video> persistentes', () => {
+  it('hay dos elementos, generados sobre los dos slots', () => {
+    expect(playerSrc).toMatch(/\(\[0, 1\] as const\)\.map\(i => \(/);
+    expect(playerSrc).toMatch(/src=\{buf\.urls\[i\] \?\? undefined\}/);
+    expect(playerSrc).toMatch(/videoRefs = useRef<Array<HTMLVideoElement \| null>>\(\[null, null\]\)/);
+  });
+
+  it('el slot inactivo sigue renderizado, no oculto con display:none', () => {
+    // Con `display:none` el navegador puede decidir no descargarlo, que es justo
+    // lo contrario de lo que buscamos.
+    expect(playerSrc).toMatch(/className=\{i === buf\.active \? 'yfp-video-on' : 'yfp-video-off'\}/);
+    expect(cssSrc).toMatch(/\.yfp-video-off\s*\{[^}]*opacity:\s*0/);
+    expect(cssSrc).not.toMatch(/\.yfp-video-off\s*\{[^}]*display:\s*none/);
+  });
+
+  it('N+1 recibe su src ANTES de avanzar, al entrar en N', () => {
+    expect(playerSrc).toMatch(/const nxt = currentIndex \+ 1 < poses\.length \? urlDe\(poses\[currentIndex \+ 1\]\) : null;/);
+    expect(playerSrc).toMatch(/urls\[otro\] = nxt;/);
+    // y el reparto se relanza al cambiar de pieza
+    expect(playerSrc).toMatch(/\}, \[currentIndex, videoMap, poses\]\);/);
+  });
+
+  it('al avanzar hace SWAP sin tocar el src del que ya estaba cargado', () => {
+    // Si el inactivo ya traía N, solo cambia cuál se ve: ningún `src` se reasigna
+    // en ese elemento, así que no se recarga y el primer fotograma es inmediato.
+    expect(playerSrc).toMatch(/if \(cur && prev\.urls\[otro\] === cur\) \{/);
+    expect(playerSrc).toMatch(/urls\[prev\.active\] = nxt;\n\s+return \{ urls, active: otro \};/);
+  });
+
+  it('un salto o un retroceso reparten desde cero, sin asumir acierto', () => {
+    expect(playerSrc).toMatch(/urls\[prev\.active\] = cur;\n\s+urls\[otro\] = nxt;\n\s+return \{ urls, active: prev\.active \};/);
+  });
+
+  it('pausa y play tocan SOLO el buffer activo', () => {
+    expect(playerSrc).toMatch(/const activo = videoRefs\.current\[buf\.active\];/);
+    expect(playerSrc).toMatch(/const precarga = videoRefs\.current\[buf\.active === 0 \? 1 : 0\];/);
+    // el de precarga se queda pausado siempre: está para descargar, no para sonar
+    expect(playerSrc).toMatch(/precarga\?\.pause\(\);/);
+    expect(playerSrc).not.toMatch(/precarga\?\.play\(\)/);
+  });
+});
+
+describe('doble buffer · las pantallas ya no desmontan nada', () => {
+  it('side-switch y transition son overlays, no retornos tempranos', () => {
+    expect(playerSrc).not.toMatch(/if \(phase === 'side-switch'\) \{\n\s+return createPortal/);
+    expect(playerSrc).not.toMatch(/if \(phase === 'transition' && transitionNext\) \{\n\s+return createPortal/);
+    expect(playerSrc).toMatch(/\{phase === 'side-switch' && \(/);
+    expect(playerSrc).toMatch(/\{phase === 'transition' && transitionNext && \(/);
+  });
+
+  it('solo queda un retorno temprano: la pantalla final', () => {
+    const tempranos = playerSrc.match(/^  if \(phase === '[a-z-]+'\)/gm) ?? [];
+    expect(tempranos).toEqual(["  if (phase === 'completed')"]);
+  });
+
+  it('un cambio de lado conserva el MISMO asset: nada reasigna el src', () => {
+    // El efecto de buffers depende de `currentIndex`, no de la fase ni del lado.
+    const reparto = playerSrc.slice(
+      playerSrc.indexOf('// ── Reparto de buffers'),
+      playerSrc.indexOf('// ── El vídeo sigue al botón de pausa'));
+    expect(reparto).not.toContain('phase');
+    expect(reparto).not.toContain('sideHalf');
+    expect(reparto).not.toContain('blockAt');
+    expect(reparto).not.toContain('lastSwitchBlock');
+  });
+
+  it('los overlays siguen cubriendo la pantalla entera', () => {
+    for (const c of ['.yfp-side-switch', '.yfp-transition']) {
+      const bloque = cssSrc.slice(cssSrc.indexOf(c + ' {'));
+      expect(bloque.slice(0, 200), c).toMatch(/position:\s*fixed/);
+      expect(bloque.slice(0, 200), c).toMatch(/inset:\s*0/);
+    }
+  });
+});
+
+describe('doble buffer · lo que NO cambió', () => {
+  it('sin currentTime, sin seek, sin sideSegments', () => {
+    expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
+    expect(playerSrc).not.toContain('fastSeek');
+    expect(playerSrc).not.toContain('sideSegments');
+  });
+
+  it('loop sigue siendo incondicional en los dos buffers', () => {
+    expect(playerSrc).not.toMatch(/loop=\{/);
+    expect((playerSrc.match(/\n\s+loop\n/g) ?? []).length).toBe(1);   // un solo <video> en el JSX, mapeado
+  });
+
+  it('las instrucciones temporizadas siguen intactas', () => {
+    expect(playerSrc).toMatch(/time: formatTime\(blockNow\.durationSec\)/);
+    const yogaEs = (es as unknown as { yoga: Record<string, string> }).yoga;
+    expect(yogaEs.execHold).toContain('{time}');
+  });
+
+  it('la lógica de lados y rondas sigue intacta', () => {
+    expect(playerSrc).toMatch(/const blockNow = blockAt\(currentPose, secondsRemaining\);/);
+    expect(playerSrc).toMatch(/const b = blockBoundaryAt\(pose, secondsRemaining\);/);
+    expect(playerSrc).toMatch(/b\.side === 0 && b\.rounds > 1/);
+  });
+
+  it('no hay calentamiento por rangos ni Cache API', () => {
+    // Se descartó a propósito: ver el informe. Sin poder medir en Safari, un
+    // `fetch` por rango puede acabar descargando los mismos bytes dos veces.
+    for (const x of ['Range', 'caches.', 'createObjectURL', 'rel="preload"']) {
+      expect(playerSrc, `${x} no debería estar`).not.toContain(x);
+    }
   });
 });

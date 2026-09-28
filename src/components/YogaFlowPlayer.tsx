@@ -90,7 +90,21 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   const [transitionNext, setTransitionNext] = useState<{ prev: string; next: YogaPose } | null>(null);
 
   const infoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  /**
+   * DOBLE BUFFER · dos <video> persistentes que se alternan.
+   *
+   * `active` reproduce el ejercicio en curso; el otro ya tiene el `src` del
+   * SIGUIENTE y lo va cargando mientras la persona practica el actual. Al
+   * avanzar solo se cambia cuál está visible: el nuevo activo ya está en buffer,
+   * y el que se libera pasa a preparar N+2.
+   *
+   * Antes había un único elemento y, además, las pantallas de cambio de lado y
+   * de transición lo DESMONTABAN, así que el `src` de N+1 no se pedía hasta que
+   * la persona ya había llegado a él.
+   */
+  const videoRefs = useRef<Array<HTMLVideoElement | null>>([null, null]);
+  const [buf, setBuf] = useState<{ urls: [string | null, string | null]; active: 0 | 1 }>(
+    { urls: [null, null], active: 0 });
 
   // Wake lock active during playing
   useWakeLock(phase === 'playing' || phase === 'side-switch' || phase === 'transition');
@@ -122,23 +136,48 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     }
   }, [currentIndex, secondsRemaining, phase]);
 
+  // ── Reparto de buffers ─────────────────────────────────────────────────
+  // Al entrar en la pieza N: el activo muestra N y el otro recibe N+1. Si la
+  // precarga acertó —el inactivo YA tenía N— basta con intercambiar cuál se ve,
+  // sin tocar su `src`: no se recarga nada y el primer fotograma es inmediato.
+  useEffect(() => {
+    const cur = urlDe(poses[currentIndex]);
+    const nxt = currentIndex + 1 < poses.length ? urlDe(poses[currentIndex + 1]) : null;
+    setBuf(prev => {
+      const otro = (prev.active === 0 ? 1 : 0) as 0 | 1;
+      const urls: [string | null, string | null] = [prev.urls[0], prev.urls[1]];
+      if (cur && prev.urls[otro] === cur) {
+        // acierto de precarga → swap. El activo saliente prepara N+1.
+        urls[prev.active] = nxt;
+        return { urls, active: otro };
+      }
+      // primer montaje, salto o retroceso: se reparte desde cero.
+      urls[prev.active] = cur;
+      urls[otro] = nxt;
+      return { urls, active: prev.active };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, videoMap, poses]);
+
   // ── El vídeo sigue al botón de pausa ────────────────────────────────────
   // El <video> es un elemento NO CONTROLADO: con `autoPlay` y `loop` el navegador
   // lo reproduce pase lo que pase con el estado de React. Pausar la práctica
   // paraba el contador y cambiaba el icono, pero el mp4 seguía moviéndose.
   //
-  // Esto sincroniza SOLO la pausa manual. No reposiciona el vídeo, así que al
-  // reanudar sigue desde el mismo punto, y `loop` se mantiene. La lateralidad no
-  // interviene: el vídeo es una demostración, no un reloj.
+  // Solo toca el buffer ACTIVO. El de precarga se queda pausado siempre: está ahí
+  // para descargar, no para reproducir. No reposiciona el vídeo, así que al
+  // reanudar sigue desde el mismo punto, y `loop` se mantiene.
   useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
+    const activo = videoRefs.current[buf.active];
+    const precarga = videoRefs.current[buf.active === 0 ? 1 : 0];
+    precarga?.pause();
+    if (!activo) return;
     if (phase === 'paused') {
-      v.pause();
+      activo.pause();
     } else if (phase === 'playing') {
-      void v.play().catch(() => { /* autoplay bloqueado: se queda en el frame */ });
+      void activo.play().catch(() => { /* autoplay bloqueado: se queda en el frame */ });
     }
-  }, [phase, currentIndex]);
+  }, [phase, currentIndex, buf.active]);
 
   // ── Timer
   useEffect(() => {
@@ -338,52 +377,10 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   // RENDER: SIDE SWITCH
   // ══════════════════════════════════════════════════════════════
 
-  if (phase === 'side-switch') {
-    return createPortal(
-      <div className="yfp">
-        <div className="yfp-side-switch">
-          <div className="yfp-side-switch-text">{t('yoga.switchSide')}</div>
-          {switchRound && (
-            <div className="yfp-side-switch-round">
-              {t('yoga.round', { r: switchRound.r, total: switchRound.total })}
-            </div>
-          )}
-        </div>
-      </div>,
-      document.body
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════
-  // RENDER: TRANSITION
-  // ══════════════════════════════════════════════════════════════
-
-  if (phase === 'transition' && transitionNext) {
-    const nextBank = exerciseMap.get(transitionNext.next.id);
-    return createPortal(
-      <div className="yfp">
-        <div className="yfp-transition">
-          <div className="yfp-trans-check"><Check size={26} strokeWidth={2.6} /></div>
-          <p className="yfp-trans-done">{t('yoga.poseDone', { pose: transitionNext.prev })}</p>
-          <p className="yfp-trans-label">{t('yoga.nextPose')}</p>
-          <h2 className="yfp-trans-name">{nameOf(transitionNext.next)}</h2>
-          <p className="yfp-trans-cue">
-            {transitionNext.next.tip_personalizado || nextBank?.tip || ''}
-          </p>
-          <div className="yfp-trans-dots">
-            <div className="yfp-trans-dot" />
-            <div className="yfp-trans-dot" />
-            <div className="yfp-trans-dot" />
-          </div>
-        </div>
-      </div>,
-      document.body
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════
-  // RENDER: COMPLETED
-  // ══════════════════════════════════════════════════════════════
+  // Las pantallas de cambio de lado y de transición son OVERLAYS sobre el
+  // reproductor, no retornos tempranos. Antes devolvían un árbol distinto y eso
+  // desmontaba los <video>: el cambio de lado recargaba el mismo mp4 desde cero
+  // y los 3 s de transición pasaban sin una sola petición en vuelo.
 
   if (phase === 'completed') {
     return createPortal(
@@ -411,7 +408,11 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   // RENDER: PLAYING / PAUSED
   // ══════════════════════════════════════════════════════════════
 
-  const firstVideoUrl = videoMap[currentPose?.id ?? ''] ?? currentBank?.videos?.[0]?.url;
+  const urlDe = (pose: YogaPose | null | undefined): string | null => {
+    if (!pose) return null;
+    return videoMap[pose.id] ?? exerciseMap.get(pose.id)?.videos?.[0]?.url ?? null;
+  };
+  const activeUrl = buf.urls[buf.active];
   // Nombre a mostrar: los FLOWS no están en el banco → traen su propio `name`.
   // Presentación del contenido. El CATÁLOGO es la autoridad del nombre visible: nunca
   // se muestra un exercise_id si la pieza existe en él. El plan (`pose.name`) es el
@@ -461,17 +462,20 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
 
         {/* Video area */}
         <div className="yfp-video-area" onClick={handleVideoTap}>
-          {firstVideoUrl ? (
-            <video
-              key={firstVideoUrl}
-              ref={videoRef}
-              src={firstVideoUrl}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-            />
+          {activeUrl ? (
+            ([0, 1] as const).map(i => (
+              <video
+                key={i}
+                ref={el => { videoRefs.current[i] = el; }}
+                src={buf.urls[i] ?? undefined}
+                className={i === buf.active ? 'yfp-video-on' : 'yfp-video-off'}
+                autoPlay={i === buf.active}
+                muted
+                loop
+                playsInline
+                preload="auto"
+              />
+            ))
           ) : (
             <div className="yfp-video-fallback">
               <div className="yfp-video-emoji">
@@ -565,6 +569,37 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           </button>
         </div>
       </div>
+
+        {/* Cambio de lado · overlay, no reemplazo: los buffers siguen montados */}
+        {phase === 'side-switch' && (
+          <div className="yfp-side-switch">
+            <div className="yfp-side-switch-text">{t('yoga.switchSide')}</div>
+            {switchRound && (
+              <div className="yfp-side-switch-round">
+                {t('yoga.round', { r: switchRound.r, total: switchRound.total })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Transición · mientras se ve, el buffer de precarga sigue descargando N+1 */}
+        {phase === 'transition' && transitionNext && (
+          <div className="yfp-transition">
+            <div className="yfp-trans-check"><Check size={26} strokeWidth={2.6} /></div>
+            <p className="yfp-trans-done">{t('yoga.poseDone', { pose: transitionNext.prev })}</p>
+            <p className="yfp-trans-label">{t('yoga.nextPose')}</p>
+            <h2 className="yfp-trans-name">{nameOf(transitionNext.next)}</h2>
+            <p className="yfp-trans-cue">
+              {transitionNext.next.tip_personalizado
+                || exerciseMap.get(transitionNext.next.id)?.tip || ''}
+            </p>
+            <div className="yfp-trans-dots">
+              <div className="yfp-trans-dot" />
+              <div className="yfp-trans-dot" />
+              <div className="yfp-trans-dot" />
+            </div>
+          </div>
+        )}
     </div>,
     document.body
   );

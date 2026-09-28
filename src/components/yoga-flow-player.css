@@ -101,11 +101,19 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Los DOS buffers ocupan el mismo hueco. El de precarga se queda invisible pero
+   presente en el layout: con `display:none` el navegador puede decidir no
+   descargarlo, que es justo lo contrario de lo que queremos. */
 .yfp-video-area video {
+  position: absolute;
+  inset: 0;
   width: 100%; height: 100%;
   object-fit: cover;
   display: block;
 }
+
+.yfp-video-on  { opacity: 1; z-index: 1; }
+.yfp-video-off { opacity: 0; z-index: 0; pointer-events: none; }
 
 .yfp-video-fallback {
   width: 100%; height: 100%;
