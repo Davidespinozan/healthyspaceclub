@@ -13,7 +13,10 @@
 import { describe, it, expect } from 'vitest';
 import playerSrc from '../../components/YogaFlowPlayer.tsx?raw';
 import { YOGA_CATALOG, YOGA_BY_ID, YOGA_FAMILY_POLICY, FAMILY_MIN_GAP, FAMILY_MAX_MEMBERS } from '../../data/yogaCatalog';
-import { splitsSides, sideHalves, sideSwitchAt, sideIndexAt, sideLabelKey } from '../yogaSides';
+import {
+  splitsSides, sideHalves, sideSwitchAt, sideIndexAt, sideLabelKey,
+  blocksOf, blockAt, blockBoundaryAt, blockStartSec,
+} from '../yogaSides';
 import sidesSrc from '../yogaSides.ts?raw';
 import catalogSrc from '../../data/yogaCatalog.ts?raw';
 import typesSrc from '../../types/index.ts?raw';
@@ -162,14 +165,11 @@ describe('splitBySide · lo que NO debe haber cambiado', () => {
 });
 
 describe('reproductor · una sola vía para los dos orígenes de lateralidad', () => {
-  it('usa el predicado compartido, sin copia local de la lógica de lados', () => {
-    expect(playerSrc).toMatch(/from '\.\.\/utils\/yogaSides'/);
-    expect(playerSrc).toMatch(/if \(!splitsSides\(currentPose\) \|\| sideSwitchShown\) return;/);
-    // la mitad en curso se calcula una sola vez y la comparten etiqueta y vídeo
-    expect(playerSrc).toMatch(/const sideHalf: 0 \| 1 = splitsSides\(currentPose\)/);
-    expect(playerSrc).toMatch(/const key = sideLabelKey\(currentPose, sideHalf\);/);
-    // ni una segunda regla de mitad suelta en el componente
+  it('toda la lógica de lados vive en yogaSides, sin copia local', () => {
+    expect(playerSrc).toMatch(/import \{ blockAt, blockBoundaryAt, sideLabelKey \} from '\.\.\/utils\/yogaSides'/);
+    // ni una regla de mitad ni una etiqueta de lado cableadas a mano
     expect(playerSrc).not.toMatch(/Math\.floor\(currentPose\.duration \/ 2\)/);
+    expect(playerSrc).not.toMatch(/Math\.floor\(elapsed \/ perRound\)/);
   });
 
   it('el lado se lee en el panel, no superpuesto al vídeo', () => {
@@ -488,14 +488,24 @@ describe('la guía de lateralidad se conserva entera', () => {
     }
   });
 
-  it('el cambio de lado ocurre UNA sola vez y usa la pantalla existente', () => {
-    for (let d = 30; d <= 200; d++) {
-      let cambios = 0;
-      for (let rem = d; rem >= 1; rem--) if (d - rem === sideSwitchAt(d)) cambios++;
-      expect(cambios, `duración ${d}`).toBe(1);
+  it('hay una frontera por cada paso entre bloques, ni una más', () => {
+    // Antes era UNA sola por pieza; con rondas anidadas son `total - 1`.
+    const casos: Array<[YogaPose, number]> = [
+      [{ id: 'seated-twist', duration: 60 }, 1],                                    // 2 bloques
+      [{ id: 'warrior-unilateral', duration: 152, repetitions: 2, sides: 'both' }, 3], // 4 bloques
+      [{ id: 'cat-cow', duration: 45 }, 0],                                         // 1 bloque
+    ];
+    for (const [pose, esperadas] of casos) {
+      let n = 0, ultimo = -1;
+      for (let rem = pose.duration; rem >= 1; rem--) {
+        const b = blockBoundaryAt(pose, rem);
+        if (b && b.index > ultimo) { ultimo = b.index; n++; }
+      }
+      expect(n, `${pose.id}`).toBe(esperadas);
+      expect(n, `${pose.id}`).toBe(blocksOf(pose).total - 1);
     }
     expect(playerSrc).toContain("setPhase('side-switch')");
-    expect(playerSrc).toMatch(/if \(elapsed === sideSwitchAt\(currentPose\.duration\)\)/);
+    expect(playerSrc).toMatch(/const b = blockBoundaryAt\(pose, secondsRemaining\);/);
   });
 
   it('la etiqueta se lee en el panel, no sobre el vídeo', () => {
@@ -614,5 +624,155 @@ describe('el botón de pausa para el vídeo', () => {
 
   it('handlePause sigue siendo el único que cambia a `paused`', () => {
     expect(playerSrc).toMatch(/function handlePause\(\) \{[\s\S]{0,180}setPhase\('paused'\);/);
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// BLOQUES · lados ANIDADOS dentro de rondas
+//
+// `round` y `side` se calculaban por separado desde el mismo `elapsed` y los dos
+// partían la duración en dos, así que coincidían: una Secuencia de Guerrero de
+// 2 rondas ejecutaba «ronda 1 · lado 1» y «ronda 2 · lado 2», nunca los otros
+// dos bloques, y mostraba UNA sola pantalla de cambio de lado.
+// ══════════════════════════════════════════════════════════════════════════
+describe('bloques · rondas × lados', () => {
+  /** Recorre la pieza segundo a segundo, como el reproductor. */
+  const recorrer = (pose: YogaPose) => {
+    const visto: string[] = [];
+    const fronteras: Array<{ at: number; round: number; side: 0 | 1 }> = [];
+    let ultimo = -1;
+    for (let rem = pose.duration; rem >= 1; rem--) {
+      const b = blockAt(pose, rem)!;
+      const k = `R${b.round}L${b.side + 1}`;
+      if (visto[visto.length - 1] !== k) visto.push(k);
+      const fr = blockBoundaryAt(pose, rem);
+      if (fr && fr.index > ultimo) { ultimo = fr.index; fronteras.push({ at: pose.duration - rem, round: fr.round, side: fr.side }); }
+    }
+    return { visto, fronteras };
+  };
+
+  it('2 rondas × 2 lados recorre los CUATRO bloques en orden', () => {
+    const pose: YogaPose = { id: 'warrior-unilateral', duration: 152, repetitions: 2, sides: 'both' };
+    expect(blocksOf(pose)).toEqual({ rounds: 2, sides: 2, total: 4 });
+    expect(recorrer(pose).visto).toEqual(['R1L1', 'R1L2', 'R2L1', 'R2L2']);
+  });
+
+  it('hay exactamente 3 fronteras, en los tercios correctos', () => {
+    const pose: YogaPose = { id: 'warrior-unilateral', duration: 152, repetitions: 2, sides: 'both' };
+    const { fronteras } = recorrer(pose);
+    expect(fronteras).toHaveLength(3);
+    expect(fronteras.map(f => f.at)).toEqual([38, 76, 114]);
+    // solo la del medio abre ronda nueva → es la única que lleva «Ronda 2 de 2»
+    expect(fronteras.map(f => `R${f.round}L${f.side + 1}`)).toEqual(['R1L2', 'R2L1', 'R2L2']);
+    expect(fronteras.filter(f => f.side === 0)).toHaveLength(1);
+  });
+
+  it('la ronda avanza SOLO después del segundo lado', () => {
+    const pose: YogaPose = { id: 'warrior-unilateral', duration: 152, repetitions: 2, sides: 'both' };
+    for (let rem = pose.duration; rem >= 1; rem--) {
+      const b = blockAt(pose, rem)!;
+      const elapsed = pose.duration - rem;
+      // la ronda 2 no puede empezar antes de haber consumido la mitad del tiempo
+      if (b.round === 2) expect(elapsed, `ronda 2 demasiado pronto en ${elapsed}s`).toBeGreaterThanOrEqual(76);
+      if (elapsed < 38) expect(`R${b.round}L${b.side + 1}`).toBe('R1L1');
+      if (elapsed >= 38 && elapsed < 76) expect(`R${b.round}L${b.side + 1}`).toBe('R1L2');
+      if (elapsed >= 76 && elapsed < 114) expect(`R${b.round}L${b.side + 1}`).toBe('R2L1');
+      if (elapsed >= 114) expect(`R${b.round}L${b.side + 1}`).toBe('R2L2');
+    }
+  });
+
+  it('la duración total NO cambia: los bloques la cubren exactamente', () => {
+    for (const d of [152, 76, 61, 100, 45, 233]) {
+      for (const total of [1, 2, 3, 4, 6]) {
+        const trozos = Array.from({ length: total }, (_, i) =>
+          blockStartSec(d, total, i + 1) - blockStartSec(d, total, i));
+        expect(trozos.reduce((a, b) => a + b, 0), `d=${d} total=${total}`).toBe(d);
+        expect(trozos.every(x => x > 0), `d=${d} total=${total} tiene un bloque vacío`).toBe(true);
+      }
+    }
+  });
+
+  it('duración impar: el segundo sobrante se queda en el último bloque, no se pierde', () => {
+    const pose: YogaPose = { id: 'warrior-unilateral', duration: 61, repetitions: 2, sides: 'both' };
+    const { visto, fronteras } = recorrer(pose);
+    expect(visto).toEqual(['R1L1', 'R1L2', 'R2L1', 'R2L2']);
+    expect(fronteras.map(f => f.at)).toEqual([15, 30, 45]);
+    const trozos = [15, 15, 15, 61 - 45];
+    expect(trozos.reduce((a, b) => a + b, 0)).toBe(61);
+  });
+
+  it('lateralidad SIN rondas se comporta como antes: 2 bloques, 1 frontera', () => {
+    const pose: YogaPose = { id: 'seated-twist', duration: 60 };   // splitBySide
+    expect(blocksOf(pose)).toEqual({ rounds: 1, sides: 2, total: 2 });
+    const { visto, fronteras } = recorrer(pose);
+    expect(visto).toEqual(['R1L1', 'R1L2']);
+    expect(fronteras.map(f => f.at)).toEqual([sideSwitchAt(60)]);
+    expect(fronteras[0].side).toBe(1);   // no abre ronda → sin línea de ronda
+  });
+
+  it('rondas SIN lateralidad se comportan como antes: sin fronteras de lado', () => {
+    const pose: YogaPose = { id: 'sun-salutation', duration: 96, repetitions: 4 };
+    expect(splitsSides(pose)).toBe(false);
+    const m = blocksOf(pose);
+    expect(m).toEqual({ rounds: 4, sides: 1, total: 4 });
+    // el contador de rondas sigue avanzando…
+    expect(recorrer(pose).visto).toEqual(['R1L1', 'R2L1', 'R3L1', 'R4L1']);
+    // …pero el reproductor no anuncia nada: el efecto exige `sides === 2`
+    expect(playerSrc).toMatch(/if \(!b \|\| b\.sides !== 2 \|\| b\.index <= lastSwitchBlock\) return;/);
+  });
+
+  it('una pieza sin rondas ni lados es un solo bloque, sin fronteras', () => {
+    const pose: YogaPose = { id: 'cat-cow', duration: 45 };
+    expect(blocksOf(pose)).toEqual({ rounds: 1, sides: 1, total: 1 });
+    expect(blockBoundaryAt(pose, 20)).toBeNull();
+    expect(blockAt(pose, 20)!.round).toBe(1);
+  });
+
+  it('las 3 piezas splitBySide y las 3 unilateral dan bloques coherentes', () => {
+    for (const id of SPLIT) {
+      const c = YOGA_BY_ID.get(id)!;
+      expect(blocksOf({ id, duration: c.defaultPrescription })).toEqual({ rounds: 1, sides: 2, total: 2 });
+    }
+    for (const c of YOGA_CATALOG.filter(x => x.laterality === 'unilateral')) {
+      const pose: YogaPose = { id: c.id, duration: c.defaultPrescription * 2, sides: 'both' };
+      expect(blocksOf(pose).sides, c.id).toBe(2);
+    }
+  });
+});
+
+describe('reproductor · ronda y lado salen del MISMO bloque', () => {
+  it('no quedan dos cálculos paralelos de elapsed', () => {
+    expect(playerSrc).toMatch(/const blockNow = blockAt\(currentPose, secondsRemaining\);/);
+    expect(playerSrc).toMatch(/sideLabelKey\(currentPose, blockNow\?\.side \?\? 0\)/);
+    expect(playerSrc).toMatch(/r: blockNow\?\.round \?\? 1/);
+    // la vieja fórmula de ronda desapareció
+    expect(playerSrc).not.toMatch(/Math\.floor\(elapsed \/ perRound\)/);
+    expect(playerSrc).not.toContain('sideHalf');
+  });
+
+  it('la ronda se nombra en la pantalla solo si además abre ronda nueva', () => {
+    expect(playerSrc).toMatch(/b\.side === 0 && b\.rounds > 1 \? \{ r: b\.round, total: b\.rounds \} : null/);
+    expect(playerSrc).toMatch(/yfp-side-switch-round/);
+    expect(playerSrc).toMatch(/\{t\('yoga\.switchSide'\)\}/);   // la acción sigue mandando
+  });
+
+  it('el estado pasó de un booleano a un índice de bloque', () => {
+    expect(playerSrc).not.toContain('sideSwitchShown');
+    expect(playerSrc).toMatch(/const \[lastSwitchBlock, setLastSwitchBlock\] = useState\(-1\);/);
+    // y se reinicia al cambiar de pieza
+    expect(playerSrc.match(/setLastSwitchBlock\(-1\)/g)!.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('la pausa manual sigue intacta', () => {
+    expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+v\.pause\(\);/);
+    expect(playerSrc).toMatch(/\} else if \(phase === 'playing'\) \{\n\s+void v\.play\(\)/);
+    expect(playerSrc).toMatch(/\}, \[phase, currentIndex\]\);/);
+  });
+
+  it('el vídeo sigue sin ser tocado por la lateralidad', () => {
+    expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
+    expect(playerSrc).not.toContain('sideSegments');
+    expect(playerSrc).not.toContain('timeupdate');
+    expect(playerSrc).toMatch(/autoPlay\n\s+muted\n\s+loop\n\s+playsInline/);
   });
 });

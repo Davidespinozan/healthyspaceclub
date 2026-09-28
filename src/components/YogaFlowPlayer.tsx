@@ -9,7 +9,7 @@ import { useT } from '../i18n';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { YOGA_BY_ID } from '../data/yogaCatalog';
-import { splitsSides, sideSwitchAt, sideIndexAt, sideLabelKey } from '../utils/yogaSides';
+import { blockAt, blockBoundaryAt, sideLabelKey } from '../utils/yogaSides';
 import type { Exercise, YogaPlan, YogaPose } from '../types';
 import './yoga-flow-player.css';
 
@@ -80,7 +80,10 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
       ? (savedYoga.secondsRemaining || poses[savedYoga.currentIndex]?.duration || 45)
       : (poses[0]?.duration || 45)
   );
-  const [sideSwitchShown, setSideSwitchShown] = useState(false);
+  /** Índice del último bloque cuya frontera ya se anunció. −1 = ninguna. */
+  const [lastSwitchBlock, setLastSwitchBlock] = useState(-1);
+  /** Ronda a mostrar bajo «Cambia de lado», solo si además empieza ronda. */
+  const [switchRound, setSwitchRound] = useState<{ r: number; total: number } | null>(null);
   const [infoOverlay, setInfoOverlay] = useState(false);
   const [muted, setMuted] = useState(true); // TODO: V2 audio
   const [pausedBeforeExit, setPausedBeforeExit] = useState(false);
@@ -154,20 +157,26 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     return () => clearInterval(interval);
   }, [phase, currentIndex]);
 
-  // ── Side switch detection
+  // ── Fronteras entre bloques ────────────────────────────────────────────
+  // Una pieza con rondas Y lados los tiene ANIDADOS: ronda 1 (lado 1, lado 2),
+  // ronda 2 (lado 1, lado 2). Hay una frontera por cada paso, no una sola. La
+  // ronda solo avanza tras completar el segundo lado.
   useEffect(() => {
     if (phase !== 'playing') return;
-    const currentPose = poses[currentIndex];
-    if (!splitsSides(currentPose) || sideSwitchShown) return;
+    const pose = poses[currentIndex];
+    const b = blockBoundaryAt(pose, secondsRemaining);
+    // Solo se anuncia si la pieza se parte por lados: un contenido con rondas y
+    // sin lateralidad sigue corriendo seguido, como siempre.
+    if (!b || b.sides !== 2 || b.index <= lastSwitchBlock) return;
 
-    const elapsed = currentPose.duration - secondsRemaining;
-
-    if (elapsed === sideSwitchAt(currentPose.duration)) {
-      setSideSwitchShown(true);
-      setPhase('side-switch');
-      // TODO: V2 audio cue — campana tibetana
-      setTimeout(() => setPhase('playing'), 1000);
-    }
+    setLastSwitchBlock(b.index);
+    // La ronda se nombra solo cuando la frontera además abre una ronda nueva —
+    // es decir, al volver al PRIMER lado. Así nunca se confunde cambiar de lado
+    // con cambiar de ronda.
+    setSwitchRound(b.side === 0 && b.rounds > 1 ? { r: b.round, total: b.rounds } : null);
+    setPhase('side-switch');
+    // TODO: V2 audio cue — campana tibetana
+    setTimeout(() => setPhase('playing'), 1000);
   }, [secondsRemaining]);
 
   // Current pose info
@@ -195,22 +204,19 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
    * El vídeo NO se toca: es una demostración en bucle. La guía la dan el
    * temporizador, la etiqueta de lado y la pantalla de cambio.
    */
-  const sideHalf: 0 | 1 = splitsSides(currentPose)
-    ? sideIndexAt(currentPose.duration, secondsRemaining)
-    : 0;
+  /** Bloque lógico en curso. De aquí salen TANTO la ronda como el lado: antes se
+   *  calculaban por separado desde el mismo `elapsed` y coincidían, de modo que
+   *  una pieza de 2 rondas × 2 lados solo ejecutaba 2 de sus 4 bloques. */
+  const blockNow = blockAt(currentPose, secondsRemaining);
 
   const getSideLabel = () => {
-    const key = sideLabelKey(currentPose, sideHalf);
+    const key = sideLabelKey(currentPose, blockNow?.side ?? 0);
     return key ? t(key) : null;
   };
 
-  // Round label
   const getRoundLabel = () => {
     if (!currentPose?.repetitions || currentPose.repetitions <= 1) return null;
-    const elapsed = currentPose.duration - secondsRemaining;
-    const perRound = currentPose.duration / currentPose.repetitions;
-    const round = Math.min(Math.floor(elapsed / perRound) + 1, currentPose.repetitions);
-    return t('yoga.round', { r: round, total: currentPose.repetitions });
+    return t('yoga.round', { r: blockNow?.round ?? 1, total: currentPose.repetitions });
   };
 
   // Stats for completed screen
@@ -234,7 +240,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
       const nextIdx = currentIndex + 1;
       setCurrentIndex(nextIdx);
       setSecondsRemaining(poses[nextIdx].duration);
-      setSideSwitchShown(false);
+      setLastSwitchBlock(-1);
       setTransitionNext(null);
       setPhase('playing');
     }, 3000);
@@ -265,7 +271,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     setTimeout(() => {
       setCurrentIndex(nextIdx);
       setSecondsRemaining(poses[nextIdx].duration);
-      setSideSwitchShown(false);
+      setLastSwitchBlock(-1);
       setTransitionNext(null);
       setPhase('playing');
     }, 500);
@@ -276,7 +282,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     const prevIdx = currentIndex - 1;
     setCurrentIndex(prevIdx);
     setSecondsRemaining(poses[prevIdx].duration);
-    setSideSwitchShown(false);
+    setLastSwitchBlock(-1);
   }
 
   function handleExit() {
@@ -337,6 +343,11 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
       <div className="yfp">
         <div className="yfp-side-switch">
           <div className="yfp-side-switch-text">{t('yoga.switchSide')}</div>
+          {switchRound && (
+            <div className="yfp-side-switch-round">
+              {t('yoga.round', { r: switchRound.r, total: switchRound.total })}
+            </div>
+          )}
         </div>
       </div>,
       document.body
@@ -490,7 +501,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
                 if (i !== currentIndex) {
                   setCurrentIndex(i);
                   setSecondsRemaining(poses[i].duration);
-                  setSideSwitchShown(false);
+                  setLastSwitchBlock(-1);
                 }
               }}
             />

@@ -353,12 +353,26 @@
   animation: yfp-fade-in 0.2s ease;
 }
 
+.yfp-side-switch {
+  flex-direction: column;
+  gap: 10px;
+}
+
 .yfp-side-switch-text {
   font-size: 24px;
   font-style: italic;
   font-weight: 400;
   color: var(--sala-surface);
   animation: yfp-pulse 0.5s ease infinite;
+}
+
+/* La acción manda; la ronda es contexto, no otra instrucción. */
+.yfp-side-switch-round {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--yfp-amber);
 }
 
 /* ══════════════════════════════════════════════════════════
