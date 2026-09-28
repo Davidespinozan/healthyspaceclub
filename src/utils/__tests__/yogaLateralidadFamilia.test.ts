@@ -15,7 +15,7 @@ import playerSrc from '../../components/YogaFlowPlayer.tsx?raw';
 import { YOGA_CATALOG, YOGA_BY_ID, YOGA_FAMILY_POLICY, FAMILY_MIN_GAP, FAMILY_MAX_MEMBERS } from '../../data/yogaCatalog';
 import {
   splitsSides, sideHalves, sideSwitchAt, sideIndexAt, sideLabelKey,
-  blocksOf, blockAt, blockBoundaryAt, blockStartSec,
+  blocksOf, blockAt, blockBoundaryAt, blockStartSec, blockDurationSec,
 } from '../yogaSides';
 import sidesSrc from '../yogaSides.ts?raw';
 import catalogSrc from '../../data/yogaCatalog.ts?raw';
@@ -774,5 +774,118 @@ describe('reproductor · ronda y lado salen del MISMO bloque', () => {
     expect(playerSrc).not.toContain('sideSegments');
     expect(playerSrc).not.toContain('timeupdate');
     expect(playerSrc).toMatch(/autoPlay\n\s+muted\n\s+loop\n\s+playsInline/);
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// INSTRUCCIÓN · el texto dice cuánto dura el BLOQUE, no cuánto dura el clip
+//
+// El vídeo va en bucle y muchas veces muestra entrar → mantener → salir. Quien
+// nunca ha hecho yoga puede leer eso como «ponte y quítate una y otra vez». El
+// texto tiene que desambiguarlo: VÍDEO = cómo se ve, TEXTO = qué haces y cuánto.
+// ══════════════════════════════════════════════════════════════════════════
+describe('instrucción · tiempo prescrito, nunca el metraje', () => {
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  const yogaEs = (es as unknown as { yoga: Record<string, string> }).yoga;
+  const yogaEn = (en as unknown as { yoga: Record<string, string> }).yoga;
+  const CLAVE = { hold: 'execHold', repeat: 'execRepeat', follow: 'execFollow' } as const;
+  const texto = (pose: YogaPose, rem: number, idioma = yogaEs) => {
+    const c = YOGA_BY_ID.get(pose.id)!;
+    const b = blockAt(pose, rem)!;
+    return idioma[CLAVE[c.executionType]].replace('{time}', fmt(b.durationSec));
+  };
+
+  it('las 3 claves llevan {time} en ambos idiomas', () => {
+    for (const k of ['execHold', 'execRepeat', 'execFollow']) {
+      expect(yogaEs[k], `es.yoga.${k}`).toContain('{time}');
+      expect(yogaEn[k], `en.yoga.${k}`).toContain('{time}');
+    }
+  });
+
+  it('hold muestra la duración prescrita', () => {
+    const pose: YogaPose = { id: 'seated-forward-fold', duration: 60 };
+    expect(texto(pose, 60)).toBe('Adopta la postura y mantenla durante 1:00');
+  });
+
+  it('repeat muestra la duración prescrita', () => {
+    const pose: YogaPose = { id: 'cat-cow', duration: 45 };
+    expect(texto(pose, 45)).toBe('Repite el movimiento durante 0:45, siguiendo tu respiración');
+  });
+
+  it('follow muestra la duración prescrita', () => {
+    const pose: YogaPose = { id: 'sun-salutation', duration: 96, repetitions: 4 };
+    expect(texto(pose, 96)).toBe('Sigue la secuencia durante 0:24, moviéndote con control');
+  });
+
+  it('NUNCA usa la duración física del mp4', () => {
+    // Flexión Sentada dura 12,6 s de clip y se prescribe a 60 s: manda la receta.
+    for (const id of ['seated-forward-fold', 'cat-cow', 'seated-twist', 'sun-salutation']) {
+      const c = YOGA_BY_ID.get(id)!;
+      const pose: YogaPose = { id, duration: 60 };
+      const b = blockAt(pose, 60)!;
+      expect(b.durationSec, `${id} tomó el metraje`).not.toBe(Math.round(c.realSec));
+      expect(texto(pose, 60)).not.toContain(fmt(Math.round(c.realSec)));
+    }
+    // y el player calcula el tiempo desde el bloque, no desde el catálogo
+    expect(playerSrc).toMatch(/time: formatTime\(blockNow\.durationSec\)/);
+    expect(playerSrc).not.toMatch(/formatTime\(currentContent\.realSec\)/);
+  });
+
+  it('splitBySide anuncia el tiempo del LADO, no el total', () => {
+    const pose: YogaPose = { id: 'seated-twist', duration: 60 };
+    expect(texto(pose, 60)).toBe('Adopta la postura y mantenla durante 0:30');          // lado 1
+    expect(texto(pose, 20)).toBe('Adopta la postura y mantenla durante 0:30');          // lado 2
+    expect(texto(pose, 60)).not.toContain('1:00');
+  });
+
+  it('con duración impar cada lado anuncia lo suyo y la suma cuadra', () => {
+    const pose: YogaPose = { id: 'pigeon-pose', duration: 81 };
+    const l1 = blockAt(pose, 81)!.durationSec;
+    const l2 = blockAt(pose, 1)!.durationSec;
+    expect(l1).toBe(40);
+    expect(l2).toBe(41);
+    expect(l1 + l2).toBe(81);
+  });
+
+  it('varias rondas NO multiplican el tiempo mostrado', () => {
+    const pose: YogaPose = { id: 'warrior-unilateral', duration: 152, repetitions: 2, sides: 'both' };
+    // 2 rondas × 2 lados = 4 bloques de 38 s. Nunca 1:16 ni 2:32.
+    const vistos = new Set<string>();
+    for (let rem = pose.duration; rem >= 1; rem--) vistos.add(texto(pose, rem));
+    expect([...vistos]).toEqual(['Sigue la secuencia durante 0:38, moviéndote con control']);
+    for (const v of vistos) { expect(v).not.toContain('1:16'); expect(v).not.toContain('2:32'); }
+  });
+
+  it('la suma de los bloques anunciados es la duración prescrita', () => {
+    for (const pose of [
+      { id: 'warrior-unilateral', duration: 152, repetitions: 2, sides: 'both' } as YogaPose,
+      { id: 'sun-salutation', duration: 96, repetitions: 4 } as YogaPose,
+      { id: 'seated-twist', duration: 61 } as YogaPose,
+      { id: 'cat-cow', duration: 45 } as YogaPose,
+    ]) {
+      const { total } = blocksOf(pose);
+      const suma = Array.from({ length: total }, (_, i) =>
+        blockDurationSec(pose.duration, total, i)).reduce((a, b) => a + b, 0);
+      expect(suma, pose.id).toBe(pose.duration);
+    }
+  });
+
+  it('EN dice lo mismo con el tiempo del bloque', () => {
+    const pose: YogaPose = { id: 'warrior-unilateral', duration: 152, repetitions: 2, sides: 'both' };
+    expect(texto(pose, 152, yogaEn)).toBe('Follow the sequence for 0:38, moving with control');
+    const hold: YogaPose = { id: 'seated-twist', duration: 60 };
+    expect(texto(hold, 60, yogaEn)).toBe('Take the pose and hold it for 0:30');
+  });
+
+  it('no se tocó timer, generador, lateralidad ni reproducción', () => {
+    // el temporizador sigue mandando sobre la pieza
+    expect(playerSrc).toMatch(/if \(prev <= 1\) \{\n\s+handlePoseComplete\(\);/);
+    // el vídeo sigue en bucle natural y sin reposicionar
+    expect(playerSrc).toMatch(/autoPlay\n\s+muted\n\s+loop\n\s+playsInline/);
+    expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
+    // la pausa manual sigue
+    expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+v\.pause\(\);/);
+    // las fronteras de bloque siguen igual
+    expect(playerSrc).toMatch(/const b = blockBoundaryAt\(pose, secondsRemaining\);/);
   });
 });

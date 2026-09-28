@@ -424,7 +424,13 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     : null;
   // La indicación no vive en el catálogo: se deriva del tipo de ejecución.
   const EXEC_KEY = { hold: 'yoga.execHold', repeat: 'yoga.execRepeat', follow: 'yoga.execFollow' } as const;
-  const currentInstruction = currentContent ? t(EXEC_KEY[currentContent.executionType]) : null;
+  // El tiempo visible sale de la PRESCRIPCIÓN del bloque en curso, nunca del
+  // metraje del mp4: el vídeo va en bucle y puede durar 15 s mientras la práctica
+  // pide sostener 60. Y si la pieza se parte por lados o rondas, cada bloque
+  // anuncia SU tiempo — 0:38 por lado, no 1:16 de golpe.
+  const currentInstruction = currentContent && blockNow
+    ? t(EXEC_KEY[currentContent.executionType], { time: formatTime(blockNow.durationSec) })
+    : null;
   // Subtítulo del flow: qué pose va sonando ahora (según la posición dentro de la vuelta).
   const flowSegment = (() => {
     if (!currentPose?.isFlow || !currentPose.segments?.length) return null;

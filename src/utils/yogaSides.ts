@@ -58,6 +58,15 @@ export function blocksOf(pose: YogaPose | null | undefined): BlockModel {
   return { rounds, sides, total: rounds * sides };
 }
 
+/**
+ * Cuánto dura el bloque `index`. Sale SIEMPRE de la prescripción de la pieza,
+ * nunca del metraje del mp4: un clip de 15 s puede prescribir 60 s de retención,
+ * y lo que la persona tiene que hacer son los 60 s, no los 15 del archivo.
+ */
+export function blockDurationSec(duration: number, total: number, index: number): number {
+  return blockStartSec(duration, total, index + 1) - blockStartSec(duration, total, index);
+}
+
 export interface BlockNow extends BlockModel {
   /** Índice del bloque, 0-based. */
   index: number;
@@ -65,6 +74,8 @@ export interface BlockNow extends BlockModel {
   round: number;
   /** 0 = primer lado, 1 = segundo. Siempre 0 si la pieza no se parte. */
   side: 0 | 1;
+  /** Segundos que dura ESTE bloque — lo que la persona sostiene o repite ahora. */
+  durationSec: number;
 }
 
 /** Bloque en curso de una pieza. */
@@ -82,6 +93,7 @@ export function blockAt(
     index,
     round: Math.floor(index / m.sides) + 1,
     side: (index % m.sides) as 0 | 1,
+    durationSec: blockDurationSec(pose.duration, m.total, index),
   };
 }
 
