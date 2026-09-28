@@ -12,7 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
-  generateYogaSession, yogaSeed, durationsFor, yogaAvailableIds, type YogaDuration,
+  generateYogaSession, yogaSeed, yogaSeedBase, durationsFor, yogaAvailableIds, type YogaDuration,
 } from '../yogaGenerator';
 import { validateYogaSession } from '../workoutValidation';
 import { hasVideo, replaceAvailableVideos, clearRegisteredVideos } from '../videoAvailability';
@@ -66,12 +66,16 @@ describe('cableado · derivación de disponibilidad', () => {
 });
 
 describe('cableado · las 13 combinaciones con la disponibilidad real', () => {
-  const generar = (focus: YogaFocus, min: YogaDuration, variant = 0) =>
-    generateYogaSession({
+  const generar = (focus: YogaFocus, min: YogaDuration, variant = 0) => {
+    const ctx = { userId: 'u-wiring', date: '2026-09-26', variant };
+    return generateYogaSession({
       durationMin: min, focus,
       availableIds: yogaAvailableIds(hasVideo),   // derivada, no inyectada
-      seed: yogaSeed({ userId: 'u-wiring', date: '2026-09-26', variant }, focus, min),
+      seed: yogaSeed(ctx, focus, min),
+      rotationKey: yogaSeedBase(ctx, focus, min), // igual que DailyTrainer
+      variant,
     });
+  };
 
   it('son exactamente 13 combinaciones ofrecidas', () => {
     expect(combos).toHaveLength(13);
@@ -108,16 +112,14 @@ describe('cableado · las 13 combinaciones con la disponibilidad real', () => {
     expect(fallos, `\n${fallos.join('\n')}`).toEqual([]);
   });
 
-  it('flow/10 es la única combinación que necesita reintento', () => {
-    // Coste conocido del filtro de familia: el warmup de `flow` corto solo tiene
-    // tres contenidos y dos son saludos al sol. Si esta lista crece, la regla se
-    // ha vuelto demasiado cara y hay que ampliar el catálogo o revisar el reparto.
+  it('13/13 valen a la PRIMERA: ninguna combinación necesita reintento', () => {
+    // El reintento sigue existiendo como red, pero ya no hace falta gastarlo.
     const disponibles = yogaAvailableIds(hasVideo);
     const conReintento = combos
       .filter(({ focus, min }) =>
         !validateYogaSession(generar(focus, min), min * 60, disponibles).valid)
       .map(({ focus, min }) => `${focus}/${min}`);
-    expect(conReintento).toEqual(['flow/10']);
+    expect(conReintento, conReintento.join(', ')).toEqual([]);
   });
 
   it('relajación sigue sin ofrecer 30 ni 45', () => {

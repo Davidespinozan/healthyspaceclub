@@ -11,6 +11,11 @@
 //     la MITAD por lado. NO se deriva de `laterality`; son ejes distintos.
 //
 // En ambos casos la duración total de la pieza NO cambia: se parte en dos.
+//
+// La lateralidad guía la PRÁCTICA, no la reproducción del mp4. El vídeo es una
+// demostración que corre en bucle natural: no se busca, no se pausa y no se
+// recorta por lados. Quien manda sobre lo que hace la persona es el temporizador
+// y la indicación escrita.
 // ─────────────────────────────────────────────────────────────────────────────
 import { YOGA_BY_ID } from '../data/yogaCatalog';
 import type { YogaPose } from '../types';
@@ -42,61 +47,16 @@ export function sideIndexAt(duration: number, secondsRemaining: number): 0 | 1 {
   return elapsed < sideSwitchAt(duration) ? 0 : 1;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TRAMOS DE VÍDEO POR LADO
-//
-// El vídeo de estas retenciones trae los dos lados seguidos, con su entrada, su
-// cambio y su salida. Reproducirlo en bucle mientras la persona sostiene UN lado
-// le enseña el lado contrario a media retención. `sideSegments` recorta cada lado
-// y el reproductor enseña solo el que toca.
-//
-// La PRESCRIPCIÓN manda: el vídeo es referencia visual, nunca marca el tiempo.
-// ─────────────────────────────────────────────────────────────────────────────
-
-export interface SideSegment { startSec: number; endSec: number; side?: 'right' | 'left' }
-export interface SideSegments { first: SideSegment; second: SideSegment }
-
-/** Un tramo sirve si es un intervalo real y finito. */
-function segmentoSano(s: SideSegment | undefined): s is SideSegment {
-  return !!s
-    && Number.isFinite(s.startSec) && Number.isFinite(s.endSec)
-    && s.startSec >= 0 && s.startSec < s.endSec;
-}
-
 /**
- * Tramos utilizables de una pieza, o `null` si no los hay o no son coherentes.
- * Metadata rota degrada al comportamiento de siempre —bucle completo— en vez de
- * dejar el vídeo en negro: la práctica nunca se rompe por un número mal puesto.
+ * Clave i18n de la etiqueta de lado. Es POSICIONAL a propósito: no sabemos con
+ * evidencia suficiente qué lado anatómico enseña cada vídeo primero, y afirmar
+ * «derecho» o «izquierdo» sin verificarlo es peor que no decirlo.
  */
-export function sideSegmentsFor(pose: YogaPose | null | undefined): SideSegments | null {
-  if (!pose || !splitsSides(pose)) return null;
-  const segs = YOGA_BY_ID.get(pose.id)?.sideSegments;
-  if (!segs || !segmentoSano(segs.first) || !segmentoSano(segs.second)) return null;
-  if (segs.first.endSec > segs.second.startSec) return null;   // no pueden solaparse
-  return segs as SideSegments;
-}
-
-/** Tramo que corresponde a la mitad en curso (0 = primera, 1 = segunda). */
-export function segmentForHalf(pose: YogaPose | null | undefined, half: 0 | 1): SideSegment | null {
-  const segs = sideSegmentsFor(pose);
-  if (!segs) return null;
-  return half === 0 ? segs.first : segs.second;
-}
-
-/**
- * Clave i18n de la etiqueta de lado. Solo dice «derecho»/«izquierdo» cuando el
- * lado anatómico está verificado en el catálogo; si no, es posicional. Afirmar
- * una lateralidad sin evidencia es peor que no decirla.
- */
-export type SideLabelKey =
-  | 'yoga.sideRight' | 'yoga.sideLeft' | 'yoga.sideFirst' | 'yoga.sideSecond';
+export type SideLabelKey = 'yoga.sideFirst' | 'yoga.sideSecond';
 
 export function sideLabelKey(
   pose: YogaPose | null | undefined, half: 0 | 1,
 ): SideLabelKey | null {
   if (!splitsSides(pose)) return null;
-  const seg = segmentForHalf(pose, half);
-  if (seg?.side === 'right') return 'yoga.sideRight';
-  if (seg?.side === 'left') return 'yoga.sideLeft';
   return half === 0 ? 'yoga.sideFirst' : 'yoga.sideSecond';
 }

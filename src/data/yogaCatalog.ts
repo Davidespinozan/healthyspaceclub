@@ -30,6 +30,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 45, minSec: 30, maxSec: 75, repeatable: true,
     posStart: 'quadruped', posEnd: 'quadruped',
     executionType: 'repeat',
+    openerFor: ['movilidad', 'flow', 'relajacion'],
     description: 'Alterna entre flexión y extensión de la columna en cuadrupedia.',
     descriptionEn: "Alternate spinal flexion and extension on all fours.",
   },
@@ -41,6 +42,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'kneeling', posEnd: 'kneeling',
     executionType: 'hold',
     family: 'child-pose',
+    openerFor: ['relajacion', 'movilidad', 'flow'],
     description: 'Descansa sentada sobre los talones con los brazos extendidos al frente.',
     descriptionEn: "Rest back on your heels with your arms stretched forward.",
   },
@@ -52,6 +54,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'kneeling', posEnd: 'kneeling',
     executionType: 'hold',
     family: 'child-pose',
+    openerFor: ['relajacion'],
     description: 'Descansa sobre los talones con los brazos al frente y después llévalos hacia atrás.',
     descriptionEn: "Rest back on your heels with your arms forward, then bring them behind you.",
   },
@@ -62,6 +65,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 45, minSec: 35, maxSec: 70, repeatable: false,
     posStart: 'kneeling', posEnd: 'kneeling',
     executionType: 'hold',
+    openerFor: ['movilidad', 'relajacion'],
     description: 'Desde la postura del niño, lleva el pecho al suelo manteniendo las caderas altas.',
     descriptionEn: "From child's pose, melt your chest down while keeping the hips high.",
   },
@@ -74,6 +78,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 58, minSec: 29, maxSec: 86, repeatable: true,
     posStart: 'standing', posEnd: 'standing',
     executionType: 'repeat',
+    openerFor: ['movilidad'],
     description: 'De pie y con los brazos arriba, inclina el tronco a un lado y al otro.',
     descriptionEn: "Standing with arms overhead, bend your torso to each side.",
   },
@@ -84,6 +89,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 52, minSec: 26, maxSec: 78, repeatable: true,
     posStart: 'standing', posEnd: 'standing',
     executionType: 'repeat',
+    openerFor: ['movilidad'],
     description: 'Desde la postura de la silla, gira el tronco hacia cada lado.',
     descriptionEn: "From chair pose, twist your torso to each side.",
   },
@@ -95,6 +101,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'standing', posEnd: 'standing',
     executionType: 'follow',
     family: 'sun-salutation',
+    openerFor: ['flow', 'movilidad'],
     description: 'Secuencia que encadena posturas de pie y de suelo.',
     descriptionEn: "A sequence linking standing and floor postures.",
   },
@@ -116,6 +123,7 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'standing', posEnd: 'standing',
     executionType: 'follow',
     family: 'sun-salutation',
+    openerFor: ['flow'],
     description: 'Secuencia fluida basada en el saludo al sol.',
     descriptionEn: "Flowing sequence based on the sun salutation.",
   },
@@ -222,12 +230,6 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'standing', posEnd: 'standing',
     executionType: 'hold',
     splitBySide: true,
-    // Tramos medidos sobre el archivo; `side` sin rellenar: el lado anatómico
-    // no se pudo verificar (no se descarta que el vídeo esté espejado).
-    sideSegments: {
-      first:  { startSec: 4.0, endSec: 14.0 },
-      second: { startSec: 19.0, endSec: 29.0 },
-    },
     description: 'Triángulo hacia cada lado, con las piernas abiertas.',
     descriptionEn: "Triangle to each side, with the legs wide.",
   },
@@ -341,12 +343,6 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'quadruped', posEnd: 'seated',
     executionType: 'hold',
     splitBySide: true,
-    // Tramos medidos sobre el archivo; `side` sin rellenar: el lado anatómico
-    // no se pudo verificar (no se descarta que el vídeo esté espejado).
-    sideSegments: {
-      first:  { startSec: 3.0, endSec: 16.2 },
-      second: { startSec: 22.8, endSec: 32.0 },
-    },
     description: 'Paloma con el tronco inclinado sobre la pierna, hacia cada lado.',
     descriptionEn: "Pigeon folding over the front leg, on each side.",
   },
@@ -368,12 +364,6 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'seated', posEnd: 'seated',
     executionType: 'hold',
     splitBySide: true,
-    // Tramos medidos sobre el archivo; `side` sin rellenar: el lado anatómico
-    // no se pudo verificar (no se descarta que el vídeo esté espejado).
-    sideSegments: {
-      first:  { startSec: 3.4, endSec: 9.2 },
-      second: { startSec: 13.4, endSec: 18.2 },
-    },
     description: 'Torsión de columna sentada, hacia cada lado.',
     descriptionEn: "Seated spinal twist to each side.",
   },
@@ -401,6 +391,33 @@ export const YOGA_CATALOG: YogaContent[] = [
 ];
 
 /** Índice por id. */
+/**
+ * Cómo se excluyen los miembros de cada familia. NO es una sola regla porque las
+ * dos familias que existen no son el mismo problema:
+ *
+ *  · `strict`   — un solo miembro por práctica. Es el caso de `child-pose`: la
+ *    Postura del Niño y su variación de brazos son LA MISMA postura, cumplen la
+ *    misma función donde sea que caigan y verlas dos veces se lee como repetición.
+ *    Medido: con la política por fase coincidían en 30 de 130 prácticas, una de
+ *    ellas con el Niño en la posición 1 y la variación en la 8, de 8 piezas.
+ *
+ *  · `perPhase` — un miembro por FASE, dos como máximo por práctica y al menos 3
+ *    piezas de separación. Es el caso de `sun-salutation`: un saludo de 24 s
+ *    calentando y una secuencia de saludo+guerreros de 85 s como parte principal
+ *    no son redundantes, son funciones distintas. La regla anterior —uno por
+ *    práctica— mataba a `flow-saludo-guerreros`, que solo vive en `standing`:
+ *    en 50 de 50 prácticas de flow la familia ya se había gastado en `warmup`.
+ */
+export const YOGA_FAMILY_POLICY: Record<string, 'strict' | 'perPhase'> = {
+  'child-pose': 'strict',
+  'sun-salutation': 'perPhase',
+};
+
+/** Piezas de separación mínima entre dos miembros de una familia `perPhase`. */
+export const FAMILY_MIN_GAP = 3;
+/** Miembros distintos de una misma familia admitidos por práctica (`perPhase`). */
+export const FAMILY_MAX_MEMBERS = 2;
+
 export const YOGA_BY_ID: ReadonlyMap<string, YogaContent> =
   new Map(YOGA_CATALOG.map(c => [c.id, c]));
 

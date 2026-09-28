@@ -73,7 +73,7 @@ import {
   validateWorkoutPlanStrict,
 } from '../utils/workoutValidation';
 import { orchestrateWorkout } from '../utils/workoutOrchestration';
-import { generateYogaSession, yogaSeed, clampYogaDuration, yogaAvailableIds, type YogaDuration } from '../utils/yogaGenerator';
+import { generateYogaSession, yogaSeed, yogaSeedBase, clampYogaDuration, yogaAvailableIds, type YogaDuration } from '../utils/yogaGenerator';
 import { validateYogaSession } from '../utils/workoutValidation';
 import { hasVideo } from '../utils/videoAvailability';
 import { repairWorkoutStructure } from '../utils/exerciseOrder';
@@ -902,6 +902,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
             durationMin: yogaDur,
             focus: yogaFocus,
             seed: yogaSeed({ ...seedCtx, variant: (seedCtx.variant ?? 0) + attempt }, yogaFocus, yogaDur),
+            // Rotación de apertura: la clave estable va aparte de la variante para
+            // que intentos y regeneraciones consecutivas no abran con lo mismo.
+            rotationKey: yogaSeedBase(seedCtx, yogaFocus, yogaDur),
+            variant: (seedCtx.variant ?? 0) + attempt,
             locale,
             availableIds: yogaAvailable,
           });

@@ -834,8 +834,6 @@ export const es = {
     // Posicionales: se usan cuando el lado anatómico del vídeo no está verificado.
     sideFirst: 'primer lado',
     sideSecond: 'segundo lado',
-    sideRight: 'lado derecho',
-    sideLeft: 'lado izquierdo',
     round: 'ronda {r} de {total}',
     markDone: 'marcar como hecho',
     closeNoSave: 'cerrar sin guardar',

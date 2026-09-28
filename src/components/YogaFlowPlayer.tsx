@@ -9,7 +9,7 @@ import { useT } from '../i18n';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { YOGA_BY_ID } from '../data/yogaCatalog';
-import { splitsSides, sideSwitchAt, sideIndexAt, segmentForHalf, sideLabelKey } from '../utils/yogaSides';
+import { splitsSides, sideSwitchAt, sideIndexAt, sideLabelKey } from '../utils/yogaSides';
 import type { Exercise, YogaPlan, YogaPose } from '../types';
 import './yoga-flow-player.css';
 
@@ -87,7 +87,6 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   const [transitionNext, setTransitionNext] = useState<{ prev: string; next: YogaPose } | null>(null);
 
   const infoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Wake lock active during playing
   useWakeLock(phase === 'playing' || phase === 'side-switch' || phase === 'transition');
@@ -174,51 +173,17 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
    *  · `splitBySide` — declarado en el catálogo para retenciones cuyo vídeo trae
    *    ambos lados pero cuya prescripción sí exige cambiar a la mitad.
    * La duración total no cambia: se parte en dos mitades (ver utils/yogaSides).
+   * El vídeo NO se toca: es una demostración en bucle. La guía la dan el
+   * temporizador, la etiqueta de lado y la pantalla de cambio.
    */
   const sideHalf: 0 | 1 = splitsSides(currentPose)
     ? sideIndexAt(currentPose.duration, secondsRemaining)
     : 0;
 
-  /** Tramo del vídeo que enseña el lado en curso. `null` = bucle completo de siempre. */
-  const activeSegment = segmentForHalf(currentPose, sideHalf);
-  const segStart = activeSegment?.startSec;
-  const segEnd = activeSegment?.endSec;
-
   const getSideLabel = () => {
     const key = sideLabelKey(currentPose, sideHalf);
     return key ? t(key) : null;
   };
-
-  // ── Vídeo por tramos · solo el lado que se está sosteniendo ─────────────────
-  // Coloca el vídeo al principio del tramo, lo deja correr y lo CONGELA al final.
-  // No se repite en bucle: es una retención, y reiniciarlo cada pocos segundos
-  // obligaría a saltar entre keyframes (están cada 8,3 s) y daría tirones.
-  // La prescripción manda: el vídeo nunca adelanta la pieza ni toca el contador.
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v || segStart === undefined || segEnd === undefined) return;
-
-    let cancelado = false;
-
-    const colocar = () => {
-      if (cancelado) return;
-      try { v.currentTime = segStart; } catch { return; }
-      void v.play().catch(() => { /* autoplay bloqueado: se queda en el frame */ });
-    };
-
-    // iOS Safari ignora `currentTime` mientras no haya metadata: se encola.
-    if (v.readyState >= 1 /* HAVE_METADATA */) colocar();
-    else v.addEventListener('loadedmetadata', colocar, { once: true });
-
-    const congelar = () => { if (v.currentTime >= segEnd) v.pause(); };
-    v.addEventListener('timeupdate', congelar);
-
-    return () => {
-      cancelado = true;
-      v.removeEventListener('loadedmetadata', colocar);
-      v.removeEventListener('timeupdate', congelar);
-    };
-  }, [currentIndex, sideHalf, segStart, segEnd]);
 
   // Round label
   const getRoundLabel = () => {
@@ -463,11 +428,10 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           {firstVideoUrl ? (
             <video
               key={firstVideoUrl}
-              ref={videoRef}
               src={firstVideoUrl}
               autoPlay
               muted
-              loop={!activeSegment}
+              loop
               playsInline
               preload="metadata"
             />

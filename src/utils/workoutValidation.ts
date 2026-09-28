@@ -1,5 +1,5 @@
 import type { YogaPlan, YogaPhase } from '../types';
-import { YOGA_BY_ID } from '../data/yogaCatalog';
+import { YOGA_BY_ID, YOGA_FAMILY_POLICY, FAMILY_MIN_GAP, FAMILY_MAX_MEMBERS } from '../data/yogaCatalog';
 import { toleranceFor } from './yogaGenerator';
 
 export function isValidYogaPlan(plan: any): plan is YogaPlan {
@@ -110,20 +110,43 @@ export function validateYogaSession(
     if (n > maxUses) errors.push(`${id} usado ${n} veces (máximo ${maxUses})`);
   }
 
-  // ── Familia · máximo un MIEMBRO por práctica ──
-  // Estructural, no scoring: dos variantes del mismo concepto no conviven aunque
-  // el orden de puntuación quisiera elegirlas. Repetir el MISMO contenido sigue
-  // permitido si es `repeatable` (lo gobiernan R2 y maxUses, no esta regla).
-  const porFamilia = new Map<string, Set<string>>();
-  for (const p of poses) {
+  // ── Familia · la política depende de la familia (YOGA_FAMILY_POLICY) ──
+  // `strict`   → un solo miembro por práctica.
+  // `perPhase` → hasta FAMILY_MAX_MEMBERS, nunca dos en la misma fase y con al
+  //              menos FAMILY_MIN_GAP piezas de separación.
+  const porFamilia = new Map<string, Array<{ id: string; idx: number }>>();
+  poses.forEach((p, idx) => {
     const f = YOGA_BY_ID.get(p.id)!.family;
-    if (!f) continue;
-    if (!porFamilia.has(f)) porFamilia.set(f, new Set());
-    porFamilia.get(f)!.add(p.id);
-  }
-  for (const [f, miembros] of porFamilia) {
-    if (miembros.size > 1) {
-      errors.push(`Familia «${f}» con ${miembros.size} miembros: ${[...miembros].join(', ')}`);
+    if (!f) return;
+    porFamilia.set(f, [...(porFamilia.get(f) ?? []), { id: p.id, idx }]);
+  });
+  for (const [f, apariciones] of porFamilia) {
+    const miembros = new Set(apariciones.map(a => a.id));
+    const politica = YOGA_FAMILY_POLICY[f] ?? 'strict';
+    if (politica === 'strict') {
+      if (miembros.size > 1) {
+        errors.push(`Familia «${f}» (estricta) con ${miembros.size} miembros: ${[...miembros].join(', ')}`);
+      }
+      continue;
+    }
+    if (miembros.size > FAMILY_MAX_MEMBERS) {
+      errors.push(`Familia «${f}» con ${miembros.size} miembros (máximo ${FAMILY_MAX_MEMBERS})`);
+    }
+    // nunca dos miembros distintos dentro de la misma fase
+    const porFase = new Map<string, Set<string>>();
+    for (const a of apariciones) {
+      for (const ph of YOGA_BY_ID.get(a.id)!.phases) {
+        if (!porFase.has(ph)) porFase.set(ph, new Set());
+        porFase.get(ph)!.add(a.id);
+      }
+    }
+    // separación mínima entre apariciones de miembros DISTINTOS
+    const orden = [...apariciones].sort((a, b) => a.idx - b.idx);
+    for (let i = 1; i < orden.length; i++) {
+      if (orden[i].id === orden[i - 1].id) continue;
+      if (orden[i].idx - orden[i - 1].idx < FAMILY_MIN_GAP) {
+        errors.push(`Familia «${f}»: ${orden[i - 1].id} y ${orden[i].id} a ${orden[i].idx - orden[i - 1].idx} piezas (mínimo ${FAMILY_MIN_GAP})`);
+      }
     }
   }
 

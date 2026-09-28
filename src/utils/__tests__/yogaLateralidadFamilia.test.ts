@@ -12,13 +12,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { describe, it, expect } from 'vitest';
 import playerSrc from '../../components/YogaFlowPlayer.tsx?raw';
-import { YOGA_CATALOG, YOGA_BY_ID } from '../../data/yogaCatalog';
+import { YOGA_CATALOG, YOGA_BY_ID, YOGA_FAMILY_POLICY, FAMILY_MIN_GAP, FAMILY_MAX_MEMBERS } from '../../data/yogaCatalog';
+import { splitsSides, sideHalves, sideSwitchAt, sideIndexAt, sideLabelKey } from '../yogaSides';
+import sidesSrc from '../yogaSides.ts?raw';
+import catalogSrc from '../../data/yogaCatalog.ts?raw';
+import typesSrc from '../../types/index.ts?raw';
 import {
-  splitsSides, sideHalves, sideSwitchAt, sideIndexAt,
-  sideSegmentsFor, segmentForHalf, sideLabelKey,
-} from '../yogaSides';
-import {
-  generateYogaSession, yogaSeed, durationsFor, type YogaDuration,
+  generateYogaSession, yogaSeed, yogaSeedBase, durationsFor, type YogaDuration,
 } from '../yogaGenerator';
 import { validateYogaSession } from '../workoutValidation';
 import type { YogaFocus, YogaPose, YogaPlan } from '../../types';
@@ -33,9 +33,12 @@ const combos: Array<{ focus: YogaFocus; min: YogaDuration }> =
   FOCI.flatMap(focus => durationsFor(focus).map(min => ({ focus, min })));
 
 function gen(focus: YogaFocus, min: YogaDuration, variant: number): YogaPlan {
+  const ctx = { userId: 'u-test', date: '2026-09-25', variant };
   return generateYogaSession({
     durationMin: min, focus,
-    seed: yogaSeed({ userId: 'u-test', date: '2026-09-25', variant }, focus, min),
+    seed: yogaSeed(ctx, focus, min),
+    rotationKey: yogaSeedBase(ctx, focus, min),   // igual que DailyTrainer
+    variant,
     availableIds: ALL_IDS,
   });
 }
@@ -167,8 +170,6 @@ describe('reproductor · una sola vía para los dos orígenes de lateralidad', (
     expect(playerSrc).toMatch(/const key = sideLabelKey\(currentPose, sideHalf\);/);
     // ni una segunda regla de mitad suelta en el componente
     expect(playerSrc).not.toMatch(/Math\.floor\(currentPose\.duration \/ 2\)/);
-    // ni una etiqueta de lado cableada a mano
-    expect(playerSrc).not.toMatch(/t\('yoga\.sideRight'\)/);
   });
 
   it('el lado se lee en el panel, no superpuesto al vídeo', () => {
@@ -205,25 +206,30 @@ describe('familias · como máximo un miembro por práctica', () => {
     expect(YOGA_BY_ID.get('puppy-pose')!.family).toBeUndefined();
   });
 
-  it('ninguna de las 130 prácticas simuladas repite familia', () => {
+  it('ninguna de las 130 prácticas viola la política de su familia', () => {
     const fallos: string[] = [];
     for (const { focus, min, v, plan } of SIM) {
-      const vistos = new Map<string, Set<string>>();
-      for (const p of plan.poses) {
+      const ap = new Map<string, Array<{ id: string; i: number }>>();
+      plan.poses.forEach((p, i) => {
         const f = YOGA_BY_ID.get(p.id)!.family;
-        if (!f) continue;
-        if (!vistos.has(f)) vistos.set(f, new Set());
-        vistos.get(f)!.add(p.id);
-      }
-      for (const [f, ids] of vistos) {
-        if (ids.size > 1) fallos.push(`${focus}/${min}/v${v} · ${f}: ${[...ids].join(' + ')}`);
+        if (!f) return;
+        ap.set(f, [...(ap.get(f) ?? []), { id: p.id, i }]);
+      });
+      for (const [f, xs] of ap) {
+        const miembros = new Set(xs.map(x => x.id));
+        const pol = YOGA_FAMILY_POLICY[f] ?? 'strict';
+        if (pol === 'strict' && miembros.size > 1) fallos.push(`${focus}/${min}/v${v} · ${f} estricta`);
+        if (pol === 'perPhase' && miembros.size > FAMILY_MAX_MEMBERS) fallos.push(`${focus}/${min}/v${v} · ${f} con ${miembros.size}`);
       }
     }
     expect(SIM).toHaveLength(130);
     expect(fallos, fallos.join('\n')).toEqual([]);
   });
 
-  it('en concreto: child-pose + child-pose-brazos nunca coinciden', () => {
+  it('child-pose es ESTRICTA: nunca conviven las dos posturas del niño', () => {
+    // Son la misma postura con otra variación de brazos: verlas dos veces en una
+    // práctica se lee como repetición, caigan en la fase que caigan.
+    expect(YOGA_FAMILY_POLICY['child-pose']).toBe('strict');
     const choques = SIM.filter(({ plan }) => {
       const ids = new Set(plan.poses.map(p => p.id));
       return ids.has('child-pose') && ids.has('child-pose-brazos');
@@ -231,13 +237,42 @@ describe('familias · como máximo un miembro por práctica', () => {
     expect(choques.length, `${choques.length}/130`).toBe(0);
   });
 
-  it('en concreto: dos miembros de sun-salutation nunca coinciden', () => {
+  it('sun-salutation es POR FASE: como mucho 2 miembros, nunca los 3', () => {
+    expect(YOGA_FAMILY_POLICY['sun-salutation']).toBe('perPhase');
     const miembros = ['sun-salutation', 'warrior1-sun-salutation', 'flow-saludo-guerreros'];
-    const choques = SIM.filter(({ plan }) => {
-      const ids = new Set(plan.poses.map(p => p.id));
-      return miembros.filter(m => ids.has(m)).length > 1;
-    });
-    expect(choques.length, `${choques.length}/130`).toBe(0);
+    let conDos = 0;
+    for (const { plan } of SIM) {
+      const n = miembros.filter(m => plan.poses.some(p => p.id === m)).length;
+      expect(n, 'nunca los 3 saludos').toBeLessThanOrEqual(FAMILY_MAX_MEMBERS);
+      if (n === 2) conDos++;
+    }
+    // y la política sirve de algo: en la práctica sí se dan parejas
+    expect(conDos, 'la política por fase no llegó a usarse nunca').toBeGreaterThan(0);
+  });
+
+  it('dos miembros distintos guardan al menos 3 piezas de separación', () => {
+    for (const { focus, min, v, plan } of SIM) {
+      const ap = new Map<string, Array<{ id: string; i: number }>>();
+      plan.poses.forEach((p, i) => {
+        const f = YOGA_BY_ID.get(p.id)!.family;
+        if (!f) return;
+        ap.set(f, [...(ap.get(f) ?? []), { id: p.id, i }]);
+      });
+      for (const [, xs] of ap) {
+        const o = [...xs].sort((a, b) => a.i - b.i);
+        for (let k = 1; k < o.length; k++) {
+          if (o[k].id === o[k - 1].id) continue;
+          expect(o[k].i - o[k - 1].i, `${focus}/${min}/v${v}`).toBeGreaterThanOrEqual(FAMILY_MIN_GAP);
+        }
+      }
+    }
+  });
+
+  it('flow-saludo-guerreros vuelve a ser alcanzable', () => {
+    // Con la política anterior era 0/130: solo vive en `standing` y la familia
+    // se consumía siempre antes, en `warmup`.
+    const n = SIM.filter(({ plan }) => plan.poses.some(p => p.id === 'flow-saludo-guerreros')).length;
+    expect(n, 'sigue muerto').toBeGreaterThan(0);
   });
 
   it('un contenido repetible puede repetirse a sí mismo pese a tener familia', () => {
@@ -313,16 +348,26 @@ describe('las 13 combinaciones siguen generando prácticas válidas', () => {
     }
   });
 
-  it('el coste conocido del filtro: flow/10 pierde exactamente 2 de 10 variantes', () => {
-    // El pool de `flow` corto está dominado por la familia sun-salutation; al
-    // admitir solo un miembro, dos semillas se quedan cortas de duración y se
-    // descartan en vez de rellenarse. Es el precio aceptado de la regla dura:
-    // si este número crece, la regla se ha vuelto demasiado cara.
+  it('ninguna semilla se descarta: el generador es válido por construcción', () => {
+    // Las 54 inválidas de la matriz de 8 736 desaparecieron al dejar de abandonar
+    // fases con presupuesto sin gastar y al incluir `reps` en el ajuste fino.
     const fallos: string[] = [];
     for (const { focus, min, v, plan } of SIM) {
-      if (!validateYogaSession(plan, min * 60, ALL_IDS).valid) fallos.push(`${focus}/${min}/v${v}`);
+      const r = validateYogaSession(plan, min * 60, ALL_IDS);
+      if (!r.valid) fallos.push(`${focus}/${min}/v${v}: ${r.errors.join(' · ')}`);
     }
-    expect(fallos).toEqual(['flow/10/v1', 'flow/10/v5']);
+    expect(fallos, fallos.join('\n')).toEqual([]);
+  });
+
+  it('las 4 variantes que prueba DailyTrainer bastan en las 13 combinaciones', () => {
+    // Lo que de verdad importa: que el usuario reciba práctica al primer intento
+    // o dentro de la ventana de reintentos.
+    for (const { focus, min } of combos) {
+      const primeras = [0, 1, 2, 3].map(v =>
+        validateYogaSession(gen(focus, min, v), min * 60, ALL_IDS).valid);
+      expect(primeras[0], `${focus}/${min} falla a la primera`).toBe(true);
+      expect(primeras.filter(Boolean).length, `${focus}/${min}`).toBe(4);
+    }
   });
 
   it('R1 y R2 siguen cumpliéndose tras el filtro de familia', () => {
@@ -343,237 +388,192 @@ describe('las 13 combinaciones siguen generando prácticas válidas', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════
-// TRAMOS DE VÍDEO POR LADO
+// EL VÍDEO NO SE TOCA
 //
-// El vídeo trae los dos lados seguidos. Sin recortar, la persona que sostiene un
-// lado ve el contrario a media retención. Estos tests fijan los tramos medidos y
-// que la prescripción sigue mandando sobre el vídeo.
+// Probamos la reproducción por tramos en un iPhone y congelar el frame parecía
+// que el reproductor se había trabado. Decisión de producto: el mp4 es una
+// DEMOSTRACIÓN en bucle natural. La lateralidad guía la PRÁCTICA —etiqueta,
+// pantalla de cambio y reparto del tiempo— pero nunca la reproducción física.
 // ══════════════════════════════════════════════════════════════════════════
-describe('sideSegments · metadata', () => {
-  const MEDIDOS: Record<string, [number, number, number, number]> = {
-    'seated-twist':  [3.4, 9.2, 13.4, 18.2],
-    'pigeon-pose':   [3.0, 16.2, 22.8, 32.0],
-    'triangle-pose': [4.0, 14.0, 19.0, 29.0],
-  };
+describe('el vídeo se reproduce en bucle natural', () => {
+  it('el elemento conserva `loop` sin condición', () => {
+    expect(playerSrc).toMatch(/autoPlay\n\s+muted\n\s+loop\n\s+playsInline/);
+    expect(playerSrc).not.toMatch(/loop=\{/);
+  });
 
-  it('solo los tres contenidos splitBySide los declaran', () => {
-    const con = YOGA_CATALOG.filter(c => c.sideSegments).map(c => c.id).sort();
-    expect(con).toEqual([...SPLIT].sort());
-    // nunca sin splitBySide: sin él nadie los lee
-    for (const c of YOGA_CATALOG) {
-      if (c.sideSegments) expect(c.splitBySide, c.id).toBe(true);
+  it('la lateralidad no pausa el vídeo', () => {
+    expect(playerSrc).not.toContain('.pause()');
+  });
+
+  it('la lateralidad no hace seek en el vídeo', () => {
+    expect(playerSrc).not.toContain('currentTime');
+    expect(playerSrc).not.toContain('videoRef');
+  });
+
+  it('no quedan listeners de segmento ni espera de metadata', () => {
+    for (const muerto of ['loadedmetadata', 'timeupdate', 'readyState', 'HAVE_METADATA']) {
+      expect(playerSrc, `${muerto} debería haber desaparecido`).not.toContain(muerto);
     }
   });
 
-  it.each(Object.entries(MEDIDOS))('%s tiene los tramos medidos sobre el archivo', (id, m) => {
-    const s = YOGA_BY_ID.get(id)!.sideSegments!;
-    expect([s.first.startSec, s.first.endSec, s.second.startSec, s.second.endSec]).toEqual(m);
+  it('no queda lógica de sideSegments en ninguna parte', () => {
+    for (const src of [playerSrc, sidesSrc, catalogSrc, typesSrc]) {
+      expect(src).not.toContain('sideSegments');
+      expect(src).not.toContain('segmentForHalf');
+      expect(src).not.toContain('sideSegmentsFor');
+    }
+    // y el catálogo no conserva timestamps sueltos
+    expect(catalogSrc).not.toContain('startSec');
+    expect(catalogSrc).not.toContain('endSec');
   });
 
-  it('cada tramo es un intervalo real y no se solapan', () => {
-    for (const id of SPLIT) {
-      const s = YOGA_BY_ID.get(id)!.sideSegments!;
-      expect(s.first.startSec, `${id} first`).toBeLessThan(s.first.endSec);
-      expect(s.second.startSec, `${id} second`).toBeLessThan(s.second.endSec);
-      expect(s.first.endSec, `${id} solapan`).toBeLessThanOrEqual(s.second.startSec);
-      expect(s.first.startSec).toBeGreaterThanOrEqual(0);
+  it('yogaSides solo conserva lo que sigue teniendo función', () => {
+    for (const vivo of ['splitsSides', 'sideHalves', 'sideSwitchAt', 'sideIndexAt', 'sideLabelKey']) {
+      expect(sidesSrc, `${vivo} debería seguir`).toContain(`export function ${vivo}`);
     }
-  });
-
-  it('ningún tramo se sale de la duración real del vídeo', () => {
-    // Si algún día se recorta o resube un mp4, estos números dejan de valer.
-    for (const id of SPLIT) {
-      const c = YOGA_BY_ID.get(id)!;
-      expect(c.sideSegments!.second.endSec, `${id} excede realSec`).toBeLessThanOrEqual(c.realSec);
-    }
-  });
-
-  it('el lado anatómico queda SIN rellenar: no se verificó', () => {
-    for (const id of SPLIT) {
-      const s = YOGA_BY_ID.get(id)!.sideSegments!;
-      expect(s.first.side, `${id} first.side`).toBeUndefined();
-      expect(s.second.side, `${id} second.side`).toBeUndefined();
-    }
+    expect(sidesSrc).not.toContain('currentTime');
+    expect(sidesSrc).not.toContain('pause');
   });
 });
 
-describe('sideSegments · selección de tramo', () => {
+describe('la guía de lateralidad se conserva entera', () => {
   const pose = (id: string, duration = 60): YogaPose => ({ id, duration });
 
-  it('la primera mitad toma first y la segunda toma second', () => {
-    for (const id of SPLIT) {
-      const s = YOGA_BY_ID.get(id)!.sideSegments!;
-      expect(segmentForHalf(pose(id), 0)).toEqual(s.first);
-      expect(segmentForHalf(pose(id), 1)).toEqual(s.second);
-    }
+  it.each(SPLIT)('%s sigue marcado splitBySide', id => {
+    expect(YOGA_BY_ID.get(id)!.splitBySide).toBe(true);
+    expect(splitsSides(pose(id))).toBe(true);
   });
 
-  it('el cambio de lado a mitad de la prescripción selecciona el segundo tramo', () => {
-    const p = pose('seated-twist', 61);
-    const antes = sideIndexAt(p.duration, p.duration - (sideSwitchAt(p.duration) - 1));
-    const despues = sideIndexAt(p.duration, p.duration - sideSwitchAt(p.duration));
-    expect(antes).toBe(0);
-    expect(despues).toBe(1);
-    expect(segmentForHalf(p, antes)!.startSec).toBe(3.4);
-    expect(segmentForHalf(p, despues)!.startSec).toBe(13.4);
-  });
-
-  it('la prescripción manda: incluso en la más corta, el tramo cabe en la mitad', () => {
-    // El vídeo se congela al acabar el tramo y el contador sigue. Si un tramo
-    // fuese más largo que su mitad, la persona no llegaría a ver el lado entero.
+  it('la duración se divide exactamente en dos y el total no cambia', () => {
     for (const id of SPLIT) {
       const c = YOGA_BY_ID.get(id)!;
-      const s = c.sideSegments!;
-      const { first, second } = sideHalves(c.minSec!);   // el peor caso posible
-      expect(first + second).toBe(c.minSec);
-      expect(s.first.endSec - s.first.startSec, `${id} first`).toBeLessThanOrEqual(first);
-      expect(s.second.endSec - s.second.startSec, `${id} second`).toBeLessThanOrEqual(second);
+      for (const d of [c.minSec!, c.defaultPrescription, c.maxSec!, 61]) {
+        const { first, second } = sideHalves(d);
+        expect(first + second, `${id} @${d}s`).toBe(d);
+        expect(second - first, `${id} @${d}s`).toBe(d % 2);
+      }
     }
   });
 
-  it('contenido sin sideSegments no selecciona tramo alguno', () => {
-    expect(segmentForHalf(pose('cat-cow'), 0)).toBeNull();
-    expect(segmentForHalf(pose('lizard-lunge'), 0)).toBeNull();   // unilateral
-    expect(segmentForHalf(null, 0)).toBeNull();
-  });
-
-  it('un id que no existe en el catálogo degrada sin romper', () => {
-    expect(() => segmentForHalf(pose('id-inexistente'), 0)).not.toThrow();
-    expect(segmentForHalf(pose('id-inexistente'), 0)).toBeNull();
-    expect(sideSegmentsFor(pose('id-inexistente'))).toBeNull();
-  });
-
-  it('metadata incoherente se ignora en vez de romper la práctica', () => {
-    const roto = (segs: unknown) => {
-      const c = YOGA_BY_ID.get('seated-twist')!;
-      const orig = c.sideSegments;
-      (c as { sideSegments?: unknown }).sideSegments = segs;
-      try { return sideSegmentsFor(pose('seated-twist')); }
-      finally { (c as { sideSegments?: unknown }).sideSegments = orig; }
-    };
-    expect(roto({ first: { startSec: 9, endSec: 3 }, second: { startSec: 13, endSec: 18 } })).toBeNull();
-    expect(roto({ first: { startSec: 3, endSec: 15 }, second: { startSec: 13, endSec: 18 } })).toBeNull();
-    expect(roto({ first: { startSec: NaN, endSec: 9 }, second: { startSec: 13, endSec: 18 } })).toBeNull();
-    expect(roto({ first: { startSec: -1, endSec: 9 }, second: { startSec: 13, endSec: 18 } })).toBeNull();
-    expect(roto(undefined)).toBeNull();
-    // y el bueno sigue funcionando después
-    expect(sideSegmentsFor(pose('seated-twist'))!.first.startSec).toBe(3.4);
-  });
-});
-
-describe('sideSegments · etiqueta de lado', () => {
-  const pose = (id: string): YogaPose => ({ id, duration: 60 });
-
-  it('sin lado verificado dice «primer lado» / «segundo lado»', () => {
+  it('primero «primer lado», después «segundo lado»', () => {
     for (const id of SPLIT) {
       expect(sideLabelKey(pose(id), 0)).toBe('yoga.sideFirst');
       expect(sideLabelKey(pose(id), 1)).toBe('yoga.sideSecond');
     }
   });
 
-  it('nunca afirma derecha ni izquierda en los tres contenidos actuales', () => {
-    for (const id of SPLIT) {
-      for (const h of [0, 1] as const) {
-        expect(sideLabelKey(pose(id), h)).not.toBe('yoga.sideRight');
-        expect(sideLabelKey(pose(id), h)).not.toBe('yoga.sideLeft');
-      }
-    }
-  });
-
-  it('cuando el lado SÍ esté verificado, la etiqueta pasa a ser anatómica', () => {
-    const c = YOGA_BY_ID.get('triangle-pose')!;
-    const orig = c.sideSegments;
-    (c as { sideSegments?: unknown }).sideSegments = {
-      first:  { startSec: 4, endSec: 14, side: 'right' },
-      second: { startSec: 19, endSec: 29, side: 'left' },
-    };
-    try {
-      expect(sideLabelKey(pose('triangle-pose'), 0)).toBe('yoga.sideRight');
-      expect(sideLabelKey(pose('triangle-pose'), 1)).toBe('yoga.sideLeft');
-    } finally { (c as { sideSegments?: unknown }).sideSegments = orig; }
-  });
-
-  it('los contenidos unilateral siguen etiquetando sin tramos', () => {
-    // El generador les pone sides:'both'; no tienen sideSegments y la etiqueta
-    // sigue siendo posicional, como antes de este cambio.
-    const uni: YogaPose = { id: 'lizard-lunge', duration: 90, sides: 'both' };
-    expect(sideLabelKey(uni, 0)).toBe('yoga.sideFirst');
-    expect(segmentForHalf(uni, 0)).toBeNull();
-  });
-
-  it('un contenido que no se parte no tiene etiqueta', () => {
-    expect(sideLabelKey(pose('cat-cow'), 0)).toBeNull();
-    expect(sideLabelKey(null, 0)).toBeNull();
-  });
-
-  it('las 4 claves existen en ambos idiomas', () => {
+  it('la etiqueta nunca afirma un lado anatómico', () => {
+    // No hay evidencia de qué lado enseña primero cada vídeo: no se inventa.
+    expect(sidesSrc).not.toContain('sideRight');
+    expect(sidesSrc).not.toContain('sideLeft');
     const esY = (es as unknown as { yoga: Record<string, string> }).yoga;
     const enY = (en as unknown as { yoga: Record<string, string> }).yoga;
-    for (const k of ['sideFirst', 'sideSecond', 'sideRight', 'sideLeft']) {
+    expect(esY.sideRight).toBeUndefined();
+    expect(enY.sideLeft).toBeUndefined();
+    for (const k of ['sideFirst', 'sideSecond']) {
       expect(esY[k]?.trim(), `es.yoga.${k}`).toBeTruthy();
       expect(enY[k]?.trim(), `en.yoga.${k}`).toBeTruthy();
     }
   });
-});
 
-describe('reproductor · reproducción por tramos', () => {
-  it('congela al llegar a endSec en vez de reiniciar el tramo', () => {
-    expect(playerSrc).toMatch(/const congelar = \(\) => \{ if \(v\.currentTime >= segEnd\) v\.pause\(\); \};/);
-    // nada de volver al principio: sería un bucle
-    expect(playerSrc).not.toMatch(/currentTime = segStart;[\s\S]{0,80}timeupdate/);
+  it('el cambio de lado ocurre UNA sola vez y usa la pantalla existente', () => {
+    for (let d = 30; d <= 200; d++) {
+      let cambios = 0;
+      for (let rem = d; rem >= 1; rem--) if (d - rem === sideSwitchAt(d)) cambios++;
+      expect(cambios, `duración ${d}`).toBe(1);
+    }
+    expect(playerSrc).toContain("setPhase('side-switch')");
+    expect(playerSrc).toMatch(/if \(elapsed === sideSwitchAt\(currentPose\.duration\)\)/);
   });
 
-  it('encola el seek si iOS todavía no tiene metadata, y limpia los listeners', () => {
-    expect(playerSrc).toMatch(/if \(v\.readyState >= 1 \/\* HAVE_METADATA \*\/\) colocar\(\);/);
-    expect(playerSrc).toMatch(/else v\.addEventListener\('loadedmetadata', colocar, \{ once: true \}\);/);
-    expect(playerSrc).toMatch(/v\.removeEventListener\('loadedmetadata', colocar\);/);
-    expect(playerSrc).toMatch(/v\.removeEventListener\('timeupdate', congelar\);/);
-  });
-
-  it('se reposiciona al cambiar de pieza y al cambiar de lado', () => {
-    expect(playerSrc).toMatch(/\}, \[currentIndex, sideHalf, segStart, segEnd\]\);/);
-  });
-
-  it('el bucle nativo solo queda para el contenido SIN tramos', () => {
-    expect(playerSrc).toMatch(/loop=\{!activeSegment\}/);
-  });
-
-  it('el vídeo no toca el contador ni avanza de pieza', () => {
-    // handlePoseComplete solo lo dispara el temporizador de la práctica.
-    const efecto = playerSrc.slice(playerSrc.indexOf('const colocar'), playerSrc.indexOf('const congelar'));
-    expect(efecto).not.toContain('handlePoseComplete');
-    expect(efecto).not.toContain('setSecondsRemaining');
-    expect(efecto).not.toContain('setCurrentIndex');
+  it('la etiqueta se lee en el panel, no sobre el vídeo', () => {
+    expect(playerSrc).not.toContain('yfp-side-badge');
+    expect(playerSrc).toMatch(/yfp-side-chip">\{sideLabel\}/);
   });
 });
 
-describe('sideSegments · los otros 30 contenidos no se enteran', () => {
-  it('ningún contenido repeat, rounds ni follow declara tramos', () => {
-    for (const c of YOGA_CATALOG) {
-      if (c.mode === 'rounds' || c.mode === 'reps' || c.executionType !== 'hold') {
-        expect(c.sideSegments, `${c.id} no debería tener tramos`).toBeUndefined();
+describe('nada más cambió', () => {
+  it('los 3 unilateral siguen duplicando y partiéndose', () => {
+    expect(YOGA_CATALOG.filter(c => c.laterality === 'unilateral')).toHaveLength(3);
+    for (const { plan } of SIM) {
+      for (const p of plan.poses) {
+        if (YOGA_BY_ID.get(p.id)!.laterality !== 'unilateral') continue;
+        expect(p.sides, p.id).toBe('both');
+        expect(splitsSides(p), p.id).toBe(true);
+        expect(sideLabelKey(p, 0)).toBe('yoga.sideFirst');
       }
     }
   });
 
-  it('30 de los 33 contenidos siguen con bucle completo', () => {
-    const sinTramos = YOGA_CATALOG.filter(c => !c.sideSegments);
-    expect(sinTramos).toHaveLength(30);
-    for (const c of sinTramos) {
-      expect(segmentForHalf({ id: c.id, duration: 60 }, 0), c.id).toBeNull();
+  it('follow, repeat y rounds no se parten salvo por unilateral', () => {
+    for (const { plan } of SIM) {
+      for (const p of plan.poses) {
+        const c = YOGA_BY_ID.get(p.id)!;
+        if (c.executionType === 'hold') continue;
+        expect(c.splitBySide, c.id).toBeUndefined();
+        expect(splitsSides(p), p.id).toBe(p.sides === 'both');
+      }
     }
   });
 
-  it('las prescripciones de las 130 prácticas no cambiaron al añadir los tramos', () => {
-    // La metadata es de presentación: si tocara la receta, aquí se vería.
+  it('las rondas siguen resolviéndose igual', () => {
+    for (const { plan } of SIM) {
+      for (const p of plan.poses) {
+        const c = YOGA_BY_ID.get(p.id)!;
+        if (c.mode !== 'rounds') continue;
+        const [lo, hi] = c.rounds!;
+        expect(p.repetitions ?? 1, p.id).toBeGreaterThanOrEqual(lo);
+        expect(p.repetitions ?? 1, p.id).toBeLessThanOrEqual(hi);
+        expect(p.isFlow, p.id).toBe(true);
+      }
+    }
+  });
+
+  it('las prescripciones de las 130 prácticas siguen dentro del catálogo', () => {
     for (const { min, plan } of SIM) {
-      expect(plan.poses.every(p => p.duration > 0)).toBe(true);
       for (const p of plan.poses) {
         const c = YOGA_BY_ID.get(p.id)!;
         if (c.mode !== 'timer') continue;
         const f = c.laterality === 'unilateral' ? 2 : 1;
         expect(p.duration / f, `${p.id} en ${min}min`).toBeLessThanOrEqual(c.maxSec ?? c.defaultPrescription);
       }
+    }
+  });
+});
+
+describe('compatibilidad · prácticas guardadas con recetas anteriores', () => {
+  it('un plan guardado por el generador v4 sigue resolviéndose entero', () => {
+    // Un plan en caché/almacenado es una lista de ids y duraciones. V2 cambia
+    // CÓMO se compone una práctica, no el formato de salida: nada de lo que
+    // guardó v4 deja de existir ni cambia de forma.
+    const guardado: YogaPose[] = [
+      { id: 'child-pose', duration: 45 },
+      { id: 'sun-salutation', duration: 96, repetitions: 4, isFlow: true, roundSec: 24 },
+      { id: 'child-pose-brazos', duration: 50 },   // v4 nunca los juntaba; da igual
+      { id: 'warrior1-sun-salutation', duration: 96, repetitions: 2, isFlow: true },
+      { id: 'lizard-lunge', duration: 90, sides: 'both' },
+      { id: 'seated-twist', duration: 60 },
+    ];
+    for (const p of guardado) {
+      const c = YOGA_BY_ID.get(p.id);
+      expect(c, `${p.id} desapareció del catálogo`).toBeDefined();
+      expect(c!.name.trim()).toBeTruthy();
+      expect(p.duration).toBeGreaterThan(0);
+    }
+    // la lateralidad guardada se sigue interpretando igual
+    expect(splitsSides(guardado[4])).toBe(true);   // unilateral · sides:'both'
+    expect(splitsSides(guardado[5])).toBe(true);   // splitBySide
+    expect(splitsSides(guardado[0])).toBe(false);
+    // y las rondas guardadas siguen siendo legibles
+    expect(guardado[1].repetitions).toBe(4);
+  });
+
+  it('ningún id del catálogo v4 desapareció ni cambió de significado', () => {
+    // V2 solo AÑADE metadata (`openerFor`). No borra contenidos ni los renombra.
+    expect(YOGA_CATALOG).toHaveLength(33);
+    for (const c of YOGA_CATALOG) {
+      expect(c.phases.length, `${c.id} sin fases`).toBeGreaterThan(0);
+      expect(c.focus.length, `${c.id} sin enfoque`).toBeGreaterThan(0);
     }
   });
 });

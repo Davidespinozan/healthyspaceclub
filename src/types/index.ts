@@ -418,24 +418,18 @@ export interface YogaContent {
    */
   splitBySide?: boolean;
   /**
-   * Tramos del ARCHIVO que muestran cada lado, ya recortados: sin la entrada a la
-   * postura, sin el cambio de lado y sin la salida. Medidos sobre el mp4 real.
+   * Modalidades para las que este contenido puede ABRIR una práctica.
    *
-   * `first` y `second` son POSICIONALES — primer tramo y segundo tramo del vídeo—,
-   * NO significan derecha e izquierda. Cada vídeo empieza por el lado que le toca
-   * y no tienen por qué coincidir entre sí.
+   * `opening` y `centering` dejan de ser lo mismo. `centering` sigue siendo una
+   * fase —«asentarse»— pero ya no decide universalmente el primer vídeo: eso
+   * dejaba solo 4 contenidos capaces de abrir y hacía imposible que una clase de
+   * flow empezara por un saludo al sol, que es su apertura canónica.
    *
-   * `side` es el lado anatómico y solo se rellena cuando se ha VERIFICADO
-   * visualmente. Mientras falte, el reproductor dice «primer lado» / «segundo
-   * lado» en vez de inventarse una lateralidad.
-   *
-   * Solo tiene sentido junto a `splitBySide`: sin él, nadie lo lee. Es metadata de
-   * presentación — no toca la prescripción, que sigue mandando sobre el vídeo.
+   * Es una lista POR MODALIDAD porque la misma pieza no vale igual en todas: la
+   * Flexión Sentada abre bien una relajación y sería un mal arranque de flow.
+   * Se declara a mano, contenido a contenido, y nunca se infiere de `phases`.
    */
-  sideSegments?: {
-    first: { startSec: number; endSec: number; side?: 'right' | 'left' };
-    second: { startSec: number; endSec: number; side?: 'right' | 'left' };
-  };
+  openerFor?: YogaFocus[];
   /**
    * Familia conceptual. Dos contenidos de la misma familia son variantes de lo
    * mismo y el generador admite COMO MÁXIMO UNO por práctica — es un filtro duro,

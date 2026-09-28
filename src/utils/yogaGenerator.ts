@@ -18,7 +18,7 @@
 // ════════════════════════════════════════════════════════════════
 import type { YogaContent, YogaFocus, YogaPhase, YogaPlan, YogaPose } from '../types';
 import type { AppLanguage } from '../store';
-import { YOGA_SELECTABLE } from '../data/yogaCatalog';
+import { YOGA_SELECTABLE, YOGA_FAMILY_POLICY, FAMILY_MIN_GAP, FAMILY_MAX_MEMBERS } from '../data/yogaCatalog';
 
 const PHASE_ORDER: YogaPhase[] = ['centering', 'warmup', 'standing', 'peak', 'cooldown'];
 
@@ -46,6 +46,14 @@ const FOCUS_BIAS: Record<YogaFocus, Record<YogaPhase, number>> = {
 };
 
 /** Tolerancia de duración: ±8 % con suelo de 45 s. Mejor 19:20 honesto que forzar 20:00. */
+/** Shortlist ponderada · ver el bucle de selección.
+ *  BAND  — cuánto peor que el mejor puede ser un candidato y seguir entrando.
+ *  MAX   — tope de candidatos, para que un pool grande no se vuelva plano.
+ *  T     — temperatura: más baja favorece al mejor, más alta iguala. */
+export const SHORTLIST_BAND = 1.8;
+export const SHORTLIST_MAX = 5;
+export const SHORTLIST_T = 1.0;
+
 export const DURATION_TOLERANCE = 0.08;
 export const DURATION_TOLERANCE_FLOOR = 45;
 
@@ -139,7 +147,17 @@ export interface YogaSeedContext {
 }
 
 export function yogaSeed(ctx: YogaSeedContext, focus: YogaFocus, min: YogaDuration): string {
-  return `${ctx.userId ?? 'anon'}|${ctx.date}|${focus}|${min}|${ctx.variant ?? 0}`;
+  return `${yogaSeedBase(ctx, focus, min)}|${ctx.variant ?? 0}`;
+}
+
+/**
+ * La parte de la semilla que NO depende de la variante. Sirve para rotar la
+ * apertura: con ella, v0, v1 y v2 reciben openers DISTINTOS por construcción en
+ * vez de tres sorteos independientes que pueden caer en el mismo. No introduce
+ * estado — sigue siendo una función pura de usuario, fecha, enfoque y duración.
+ */
+export function yogaSeedBase(ctx: YogaSeedContext, focus: YogaFocus, min: YogaDuration): string {
+  return `${ctx.userId ?? 'anon'}|${ctx.date}|${focus}|${min}`;
 }
 
 // ── Resolución de prescripción ──────────────────────────────────
@@ -197,6 +215,13 @@ function toPose(c: YogaContent, p: Placed, locale: AppLanguage): YogaPose {
 
 // ── Generación ──────────────────────────────────────────────────
 export interface GenerateYogaInput {
+  /** Clave estable sin variante (`yogaSeedBase`). Solo se usa para rotar la
+   *  apertura; si falta, la rotación cae a la semilla completa y sigue siendo
+   *  determinista, pero deja de garantizar openers distintos entre variantes. */
+  rotationKey?: string;
+  /** Variante pedida. `yogaSeed` ya la lleva dentro; aquí se necesita aparte
+   *  porque la rotación tiene que ser una progresión, no un sorteo. */
+  variant?: number;
   durationMin: YogaDuration;
   focus: YogaFocus;
   seed: string;
@@ -214,7 +239,7 @@ const FOCUS_LABEL: Record<YogaFocus, { es: string; en: string }> = {
 };
 
 export function generateYogaSession(input: GenerateYogaInput): YogaPlan {
-  const { durationMin, focus, seed, locale = 'es' } = input;
+  const { durationMin, focus, seed, locale = 'es', rotationKey, variant = 0 } = input;
   const rnd = mulberry32(fnv1a(seed));
   const budget = budgetFor(durationMin, focus);
   const short = durationMin <= 10;
@@ -232,8 +257,64 @@ export function generateYogaSession(input: GenerateYogaInput): YogaPlan {
     : PHASE_ORDER;
 
   const used = new Map<string, number>();
-  /** Familias ya representadas. Máximo UNA pieza por familia y práctica. */
-  const usedFamilies = new Set<string>();
+  /** Miembros DISTINTOS de cada familia ya colocados. */
+  const famMembers = new Map<string, Set<string>>();
+  /** Miembros distintos por familia Y fase (`familia|fase`). */
+  const famPerPhase = new Map<string, Set<string>>();
+  /** Índice e id de la ÚLTIMA pieza colocada de cada familia. */
+  const famLastIdx = new Map<string, number>();
+  const famLastId = new Map<string, string>();
+
+  /**
+   * APERTURA · la primera pieza sale de un pool curado por modalidad, no de la
+   * fase `centering`. Rota con la variante para que v0, v1 y v2 no abran igual.
+   * Sale del MISMO pool que el resto: respeta `input.catalog` y la disponibilidad
+   * real de vídeo. Si nadie declara apertura para esta modalidad, se cae al
+   * comportamiento de siempre y la primera pieza la elige el scoring.
+   */
+  const openerPool = pool.filter(c => c.openerFor?.includes(focus));
+  let opener: YogaContent | null = openerPool.length
+    ? openerPool[(fnv1a(rotationKey ?? seed) + variant) % openerPool.length]
+    : null;
+
+  /**
+   * ¿Puede entrar este contenido sin romper la política de su familia?
+   * Se evalúa SIEMPRE, también cuando el contenido ya se usó: la separación
+   * mínima habla de dos miembros DISTINTOS, y repetir uno de ellos también mueve
+   * la última posición de la familia.
+   */
+  const familiaAdmite = (c: YogaContent, phase: YogaPhase, idx: number): boolean => {
+    if (!c.family) return true;
+    const miembros = famMembers.get(c.family);
+    if (!miembros || miembros.size === 0) return true;
+
+    const esOtroMiembro = !miembros.has(c.id);
+    // `strict` · solo se admite repetir el MISMO miembro, nunca traer otro.
+    if ((YOGA_FAMILY_POLICY[c.family] ?? 'strict') === 'strict') return !esOtroMiembro;
+
+    // `perPhase` · un miembro distinto por fase y tope por práctica.
+    if (esOtroMiembro) {
+      if (miembros.size >= FAMILY_MAX_MEMBERS) return false;
+      if ((famPerPhase.get(`${c.family}|${phase}`)?.size ?? 0) >= 1) return false;
+    }
+    // Separación: si la última pieza de la familia fue OTRO miembro, hay que dejar hueco.
+    if (famLastId.get(c.family) !== c.id
+        && idx - (famLastIdx.get(c.family) ?? -99) < FAMILY_MIN_GAP) return false;
+    return true;
+  };
+
+  const registrar = (c: YogaContent, phase: YogaPhase, idx: number) => {
+    used.set(c.id, (used.get(c.id) ?? 0) + 1);
+    if (!c.family) return;
+    if (!famMembers.has(c.family)) famMembers.set(c.family, new Set());
+    famMembers.get(c.family)!.add(c.id);
+    const k = `${c.family}|${phase}`;
+    if (!famPerPhase.has(k)) famPerPhase.set(k, new Set());
+    famPerPhase.get(k)!.add(c.id);
+    famLastIdx.set(c.family, idx);
+    famLastId.set(c.family, c.id);
+  };
+
   const chosen: Array<{ c: YogaContent; pose: YogaPose; phase: YogaPhase }> = [];
 
   for (const phase of phases) {
@@ -247,23 +328,38 @@ export function generateYogaSession(input: GenerateYogaInput): YogaPlan {
 
     let guard = 0;
     while (left > residualFloor && guard++ < 16) {
+      // ── APERTURA · la primera pieza la pone el pool curado, no el scoring.
+      if (opener && !chosen.length) {
+        const placed = place(opener, left, true);
+        chosen.push({ c: opener, pose: toPose(opener, placed, locale), phase });
+        registrar(opener, phase, 0);
+        left -= placed.sec;
+        opener = null;
+        continue;
+      }
+
       const lastId = chosen.length ? chosen[chosen.length - 1].c.id : null;
       const lastIdx = new Map<string, number>();
       chosen.forEach((x, i) => lastIdx.set(x.c.id, i));
 
       const candidates = phasePool.filter(c => {
         const n = used.get(c.id) ?? 0;
-        // Familia · filtro DURO, no penalización: dos variantes de lo mismo (las
-        // dos posturas del niño, los tres saludos al sol) no conviven en una misma
-        // práctica. Va ANTES del atajo de abajo para que también alcance a un
-        // contenido que todavía no se ha usado.
-        if (c.family && n === 0 && usedFamilies.has(c.family)) return false;
+        // Familia · filtro estructural, no penalización. La política depende de la
+        // familia: ver YOGA_FAMILY_POLICY. Va ANTES del atajo de abajo para que
+        // también alcance a un contenido que todavía no se ha usado.
+        if (!familiaAdmite(c, phase, chosen.length)) return false;
         if (n === 0) return true;
         if (!c.repeatable) return false;
         if (c.id === lastId) return false;                              // R1
         if (chosen.length - (lastIdx.get(c.id) ?? -99) < gap) return false; // R2
         return n < maxUses;
-      });
+      })
+      // Que quepa es una condición para SER candidato, no un motivo para abandonar
+      // la fase. Antes se elegía primero y, si la pieza desbordaba, se rompía el
+      // bucle dejando el presupuesto sin gastar aunque hubiera otras que sí cabían:
+      // 54 de 8736 prácticas salían cortas por eso. Ahora las que no caben
+      // simplemente no compiten.
+      .filter(c => place(c, left, true).sec <= left * 1.6);
       if (!candidates.length) break;
 
       const scored = candidates.map(c => {
@@ -272,16 +368,29 @@ export function generateYogaSession(input: GenerateYogaInput): YogaPlan {
         s -= (used.get(c.id) ?? 0) * 2.2;                               // anti-redundancia
         const prev = chosen[chosen.length - 1];
         if (prev && prev.c.posEnd === c.posStart) s += 0.8;             // transición barata
-        return { c, s: s + rnd() * 0.9 };
+        return { c, s };
       }).sort((a, b) => b.s - a.s);
 
-      const pick = scored[0].c;
+      // ── SHORTLIST PONDERADA ─────────────────────────────────────
+      // Antes se tomaba el máximo con un jitter de 0,9, más pequeño que el salto
+      // de 1,5 entre niveles de enfoque: el azar nunca podía cambiar la elección
+      // y la semilla era decorativa. Ahora se recorta una lista de candidatos ya
+      // razonables y se sortea DENTRO de ella con peso exp(Δscore/T). El enfoque
+      // sigue mandando —una pieza fuera de banda no entra nunca— pero dos piezas
+      // igual de válidas se reparten el hueco según la semilla.
+      const best = scored[0].s;
+      const shortlist = scored.filter(x => x.s >= best - SHORTLIST_BAND).slice(0, SHORTLIST_MAX);
+      const weights = shortlist.map(x => Math.exp((x.s - best) / SHORTLIST_T));
+      const total = weights.reduce((a, b) => a + b, 0);
+      let r = rnd() * total;
+      let k = 0;
+      while (k < weights.length - 1 && r > weights[k]) { r -= weights[k]; k++; }
+      const pick = shortlist[k].c;
+
       const placed = place(pick, left, true);
-      if (placed.sec > left * 1.6) break;   // no desbordar la fase
 
       chosen.push({ c: pick, pose: toPose(pick, placed, locale), phase });
-      used.set(pick.id, (used.get(pick.id) ?? 0) + 1);
-      if (pick.family) usedFamilies.add(pick.family);
+      registrar(pick, phase, chosen.length - 1);
       left -= placed.sec;
     }
   }
@@ -292,14 +401,18 @@ export function generateYogaSession(input: GenerateYogaInput): YogaPlan {
   // Los flows no se tocan — una ronda no se parte por cuadrar el reloj.
   {
     const targetSec = durationMin * 60;
-    const timers = chosen.filter(x => x.c.mode === 'timer');
+    // `timer` y `reps` comparten el mismo contrato de rango: el catálogo declara
+    // [minSec, maxSec] para ambos. Dejar fuera a `reps` desperdiciaba margen ya
+    // aprobado — en relajación 20 eran 53 s repartidos entre dos piezas mientras
+    // la práctica salía corta. Los `rounds` siguen fuera: una ronda no se parte.
+    const ajustables = chosen.filter(x => x.c.mode === 'timer' || x.c.mode === 'reps');
     let delta = targetSec - chosen.reduce((s, x) => s + x.pose.duration, 0);
 
     // reparte de uno en uno, en pasadas, para no cargar todo en la primera pose
-    for (let pass = 0; pass < 6 && Math.abs(delta) > 1 && timers.length; pass++) {
+    for (let pass = 0; pass < 6 && Math.abs(delta) > 1 && ajustables.length; pass++) {
       const step = Math.sign(delta);
       let moved = 0;
-      for (const x of timers) {
+      for (const x of ajustables) {
         if (Math.abs(delta) <= 1) break;
         const f = x.c.laterality === 'unilateral' ? 2 : 1;
         const cur = x.pose.duration / f;

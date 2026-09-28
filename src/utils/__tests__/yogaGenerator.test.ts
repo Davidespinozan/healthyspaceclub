@@ -7,7 +7,8 @@ import dailyTrainerSrc from '../../components/DailyTrainer.tsx?raw';
 import yogaGeneratorSrc from '../yogaGenerator.ts?raw';
 import {
   generateYogaSession, budgetFor, yogaSeed, durationsFor, toleranceFor,
-  clampYogaDuration, YOGA_DURATIONS_BY_FOCUS, YOGA_TIME_OPTIONS, type YogaDuration,
+  clampYogaDuration, YOGA_DURATIONS_BY_FOCUS, YOGA_TIME_OPTIONS, yogaSeedBase,
+  SHORTLIST_BAND, SHORTLIST_MAX, SHORTLIST_T, type YogaDuration,
 } from '../yogaGenerator';
 import { buildConfigHash } from '../workoutPlanner';
 import { SCHEMA_VERSIONS } from '../workoutCache';
@@ -24,9 +25,13 @@ const combos: Array<{ focus: YogaFocus; min: YogaDuration }> =
   FOCI.flatMap(focus => durationsFor(focus).map(min => ({ focus, min })));
 
 function gen(focus: YogaFocus, min: YogaDuration, variant: number) {
+  const ctx = { userId: 'u-test', date: '2026-09-25', variant };
   return generateYogaSession({
     durationMin: min, focus,
-    seed: yogaSeed({ userId: 'u-test', date: '2026-09-25', variant }, focus, min),
+    seed: yogaSeed(ctx, focus, min),
+    // Igual que DailyTrainer: la clave de rotación va aparte de la variante.
+    rotationKey: yogaSeedBase(ctx, focus, min),
+    variant,
     availableIds: ALL_IDS,
   });
 }
@@ -88,12 +93,12 @@ describe('presupuestos de fase', () => {
 });
 
 describe('matriz de generación', () => {
-  // El filtro duro de familia (una sola variante de cada concepto por práctica)
-  // adelgaza el pool de `flow` corto, cuyo warmup solo tiene tres contenidos y dos
-  // son saludos al sol. Cuando la fase no puede gastar su presupuesto lo abandona
-  // y la práctica sale corta. Esas semillas se DESCARTAN — el generador nunca
-  // rellena para cuadrar el reloj — y DailyTrainer prueba la siguiente variante.
-  const INVALIDAS_CONOCIDAS = ['flow/10/v1'];
+  // Generador V2 · apertura curada + shortlist ponderada + familia por fase.
+  // La lista de semillas descartadas se mide, no se supone: si crece, algo del
+  // motor se ha vuelto demasiado restrictivo.
+  // Con la rotación de apertura conectada no queda ninguna semilla descartada.
+  // Si esta lista deja de estar vacía, el motor se ha vuelto más restrictivo.
+  const INVALIDAS_CONOCIDAS: string[] = [];
 
   it('las combinaciones ofrecidas producen prácticas válidas, salvo las semillas descartadas', () => {
     const fails: string[] = [];
@@ -403,5 +408,186 @@ describe('D4 · presupuesto de Relajación', () => {
         }
       }
     }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GENERADOR V2 · apertura curada, shortlist ponderada y rotación determinista
+// ─────────────────────────────────────────────────────────────────────────────
+describe('V2 · apertura por modalidad', () => {
+  it('la apertura la declara el catálogo, no la fase `centering`', () => {
+    const declaran = YOGA_CATALOG.filter(c => c.openerFor?.length);
+    expect(declaran.length).toBeGreaterThan(0);
+    // el pool de apertura de cada modalidad es MAYOR que los 4 de `centering`
+    for (const f of FOCI) {
+      const pool = YOGA_SELECTABLE.filter(c => c.openerFor?.includes(f));
+      expect(pool.length, `${f} sin openers`).toBeGreaterThanOrEqual(4);
+    }
+    expect(YOGA_SELECTABLE.filter(c => c.openerFor?.includes('movilidad')).length).toBeGreaterThan(4);
+  });
+
+  it('cada práctica abre por un contenido declarado para SU modalidad', () => {
+    for (const { focus, min } of combos) {
+      for (const v of SEEDS) {
+        const primero = gen(focus, min, v).poses[0];
+        expect(YOGA_BY_ID.get(primero.id)!.openerFor, `${focus}/${min}/v${v} abre con ${primero.id}`)
+          .toContain(focus);
+      }
+    }
+  });
+
+  it('ningún contenido de `peak` ni ningún cierre abre una práctica', () => {
+    // Coherencia de clase: nada de posturas profundas en frío ni cierres al principio.
+    for (const c of YOGA_CATALOG) {
+      if (!c.openerFor?.length) continue;
+      expect(c.phases, `${c.id} no debería poder abrir`).not.toContain('peak');
+      expect(c.id, 'un cierre no abre').not.toBe('flow-cierre');
+    }
+  });
+
+  it('wheel-pose y flow-inversiones siguen fuera de todo', () => {
+    for (const id of ['wheel-pose', 'flow-inversiones']) {
+      expect(YOGA_BY_ID.get(id)!.openerFor).toBeUndefined();
+      expect(YOGA_BY_ID.get(id)!.excludeFromAutoGeneration).toBe(true);
+    }
+    for (const { focus, min } of combos) {
+      for (const v of SEEDS) {
+        const ids = gen(focus, min, v).poses.map(p => p.id);
+        expect(ids).not.toContain('wheel-pose');
+        expect(ids).not.toContain('flow-inversiones');
+      }
+    }
+  });
+
+  it('v0, v1 y v2 abren con contenidos DISTINTOS', () => {
+    // Rotación determinista: no es un sorteo independiente por variante, es una
+    // progresión sobre el pool. Sin ella, tres variantes pueden caer en lo mismo.
+    for (const { focus, min } of combos) {
+      const openers = [0, 1, 2].map(v => gen(focus, min, v).poses[0].id);
+      expect(new Set(openers).size, `${focus}/${min}: ${openers.join(', ')}`).toBe(3);
+    }
+  });
+});
+
+describe('V2 · determinismo', () => {
+  it('mismos inputs producen exactamente la misma práctica', () => {
+    for (const { focus, min } of combos) {
+      for (const v of SEEDS) {
+        expect(JSON.stringify(gen(focus, min, v))).toBe(JSON.stringify(gen(focus, min, v)));
+      }
+    }
+  });
+
+  it('el motor no usa Math.random en ninguna parte', () => {
+    // sin LLAMADAS (las menciones en los comentarios son justo la promesa)
+    expect(yogaGeneratorSrc).not.toMatch(/Math\.random\(/);
+    expect(yogaGeneratorSrc).toMatch(/mulberry32\(fnv1a\(seed\)\)/);
+  });
+
+  it('la rotación de apertura es una progresión sobre la clave estable', () => {
+    expect(yogaGeneratorSrc).toMatch(/\(fnv1a\(rotationKey \?\? seed\) \+ variant\) % openerPool\.length/);
+    // y la clave estable NO lleva la variante dentro
+    expect(yogaSeedBase({ userId: 'u', date: '2026-01-01', variant: 7 }, 'flow', 20))
+      .toBe(yogaSeedBase({ userId: 'u', date: '2026-01-01', variant: 0 }, 'flow', 20));
+  });
+});
+
+describe('V2 · shortlist ponderada', () => {
+  it('el azar solo elige entre candidatos razonables', () => {
+    expect(SHORTLIST_BAND).toBe(1.8);
+    expect(SHORTLIST_MAX).toBe(5);
+    expect(SHORTLIST_T).toBe(1.0);
+    expect(yogaGeneratorSrc).toMatch(/scored\.filter\(x => x\.s >= best - SHORTLIST_BAND\)\.slice\(0, SHORTLIST_MAX\)/);
+    // ya no se toma el máximo con jitter decorativo
+    expect(yogaGeneratorSrc).not.toMatch(/rnd\(\) \* 0\.9/);
+    expect(yogaGeneratorSrc).not.toMatch(/const pick = scored\[0\]\.c/);
+  });
+
+  it('el enfoque sigue mandando: la mayoría de piezas son del enfoque pedido', () => {
+    // R3 · una pieza de enfoque opuesto (−1.5 frente a 4.5) está a 6 puntos del
+    // mejor, muy fuera de la banda de 1.8: no puede colarse por azar. Donde baja
+    // al 50% es en `flow` corto, y no por el scoring: el catálogo NO tiene ni un
+    // contenido de cooldown con enfoque flow, así que esas piezas se piden
+    // prestadas a relajación por necesidad. Es un hueco de catálogo, no del motor.
+    for (const { focus, min } of combos) {
+      for (const v of SEEDS) {
+        const poses = gen(focus, min, v).poses;
+        const propias = poses.filter(p => YOGA_BY_ID.get(p.id)!.focus.includes(focus)).length;
+        expect(propias / poses.length, `${focus}/${min}/v${v}`).toBeGreaterThanOrEqual(0.5);
+      }
+    }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROBUSTEZ · válido por construcción, sin depender del reintento
+//
+// Una matriz de 8 736 prácticas dejaba 54 inválidas por duración. Dos causas:
+//  1. Si la pieza elegida desbordaba `left * 1.6`, la fase se ABANDONABA con su
+//     presupuesto sin gastar, aunque hubiera otros candidatos que sí cabían.
+//  2. El ajuste fino solo repartía el desvío entre contenidos `timer`, dejando
+//     sin usar el margen [minSec, maxSec] que el catálogo declara para `reps`.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('robustez · las semillas que antes fallaban ahora son válidas', () => {
+  // Reproducen exactamente las entradas que producían práctica corta.
+  const REGRESIONES: Array<{ u: string; d: string; f: YogaFocus; m: YogaDuration; v: number; antes: number }> = [
+    { u: 'u-test', d: '2026-09-25', f: 'flow', m: 10, v: 6, antes: 535 },
+    { u: 'u-0', d: '2026-10-03', f: 'relajacion', m: 20, v: 1, antes: 1046 },
+    { u: 'u-1', d: '2026-10-01', f: 'relajacion', m: 20, v: 0, antes: 1070 },
+    { u: 'u-1', d: '2026-10-04', f: 'flow', m: 10, v: 3, antes: 523 },
+  ];
+
+  it.each(REGRESIONES)('$f/$m v$v de $u ya cuadra (antes $antes s)', ({ u, d, f, m, v }) => {
+    const ctx = { userId: u, date: d, variant: v };
+    const plan = generateYogaSession({
+      durationMin: m, focus: f, availableIds: ALL_IDS,
+      seed: yogaSeed(ctx, f, m), rotationKey: yogaSeedBase(ctx, f, m), variant: v,
+    });
+    const res = validateYogaSession(plan, m * 60, ALL_IDS);
+    expect(res.errors).toEqual([]);
+    expect(res.valid).toBe(true);
+  });
+
+  it('una fase no se abandona mientras quede algún candidato que quepa', () => {
+    // El desborde es condición para SER candidato, no motivo para romper el bucle.
+    expect(yogaGeneratorSrc).toMatch(/\.filter\(c => place\(c, left, true\)\.sec <= left \* 1\.6\)/);
+    expect(yogaGeneratorSrc).not.toMatch(/if \(placed\.sec > left \* 1\.6\) break/);
+  });
+
+  it('el ajuste fino reparte también entre contenidos `reps`, dentro de su rango', () => {
+    expect(yogaGeneratorSrc).toMatch(/x\.c\.mode === 'timer' \|\| x\.c\.mode === 'reps'/);
+    // los `rounds` siguen fuera: una ronda no se parte por cuadrar el reloj
+    expect(yogaGeneratorSrc).toMatch(/if \(x\.c\.mode !== 'rounds'\) continue;/);
+  });
+
+  it('ninguna prescripción se sale de [minSec, maxSec] tras el ajuste', () => {
+    for (const { focus, min } of combos) {
+      for (const v of SEEDS) {
+        for (const pose of gen(focus, min, v).poses) {
+          const c = YOGA_BY_ID.get(pose.id)!;
+          if (c.mode === 'rounds') continue;
+          const f = c.laterality === 'unilateral' ? 2 : 1;
+          const per = pose.duration / f;
+          expect(per, `${c.id} bajo minSec`).toBeGreaterThanOrEqual(c.minSec ?? c.defaultPrescription);
+          expect(per, `${c.id} sobre maxSec`).toBeLessThanOrEqual(c.maxSec ?? c.defaultPrescription);
+        }
+      }
+    }
+  });
+
+  it('las 13 combinaciones valen a la PRIMERA en 40 usuarios distintos', () => {
+    // Sin depender del reintento de DailyTrainer.
+    const fallos: string[] = [];
+    for (let u = 0; u < 40; u++) {
+      for (const { focus, min } of combos) {
+        const ctx = { userId: `robust-${u}`, date: '2026-11-15', variant: 0 };
+        const plan = generateYogaSession({
+          durationMin: min, focus, availableIds: ALL_IDS,
+          seed: yogaSeed(ctx, focus, min), rotationKey: yogaSeedBase(ctx, focus, min), variant: 0,
+        });
+        if (!validateYogaSession(plan, min * 60, ALL_IDS).valid) fallos.push(`robust-${u} ${focus}/${min}`);
+      }
+    }
+    expect(fallos, fallos.join(', ')).toEqual([]);
   });
 });

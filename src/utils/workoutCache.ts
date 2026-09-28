@@ -3,8 +3,12 @@ import type { CardioStyle } from '../types';
 import type { SessionEndReason } from './sessionEndReason';
 
 export const SCHEMA_VERSIONS = {
-  yoga: 4, // v4: generador por CATÁLOGO — 33 contenidos con fases/focus/prescripción;
-          // la duración sale del tiempo PRESCRITO, no del metraje. Invalida v3 (Power Vinyasa por flows).
+  yoga: 5, // v5: generador V2 — apertura curada por modalidad (`openerFor`) en vez de
+          // la fase `centering`, elección por shortlist ponderada en vez de argmax, y
+          // política de familia por fase. Misma receta de salida, composición distinta.
+          // Yoga NO lee esta caché (isCacheHit la excluye), así que el bump no cambia
+          // nada hoy: invalida las filas v4 por si algún día se activa la lectura.
+          // v4: generador por CATÁLOGO — 33 contenidos con fases/focus/prescripción.
   workout: 14, // v14: "At Home" sin-soportes por defecto (gear=[] ya no asume muebles) → invalida cache con semántica vieja de infraestructura
 } as const;
 
