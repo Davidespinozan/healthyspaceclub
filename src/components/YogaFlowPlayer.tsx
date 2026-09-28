@@ -103,8 +103,13 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
    * la persona ya había llegado a él.
    */
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([null, null]);
-  const [buf, setBuf] = useState<{ urls: [string | null, string | null]; active: 0 | 1 }>(
-    { urls: [null, null], active: 0 });
+  const [buf, setBuf] = useState<{
+    urls: [string | null, string | null];
+    /** El slot que SE VE. */
+    active: 0 | 1;
+    /** Slot que ya tiene la pieza en curso y espera un fotograma para pasar a verse. */
+    pending: 0 | 1 | null;
+  }>({ urls: [null, null], active: 0, pending: null });
 
   // Wake lock active during playing
   useWakeLock(phase === 'playing' || phase === 'side-switch' || phase === 'transition');
@@ -137,27 +142,77 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   }, [currentIndex, secondsRemaining, phase]);
 
   // ── Reparto de buffers ─────────────────────────────────────────────────
-  // Al entrar en la pieza N: el activo muestra N y el otro recibe N+1. Si la
-  // precarga acertó —el inactivo YA tenía N— basta con intercambiar cuál se ve,
-  // sin tocar su `src`: no se recarga nada y el primer fotograma es inmediato.
+  // El slot saliente NO se reutiliza en el mismo commit que el swap. Antes sí, y
+  // eso provocaba el parpadeo: el que se veía perdía su vídeo al recibir el src
+  // de N+2 en el mismo instante en que el entrante pasaba a visible, y si Safari
+  // aún no había presentado un fotograma del entrante se veía el fondo del área.
+  // Ahora el saliente se queda intacto y visible hasta que el entrante esté listo.
   useEffect(() => {
     const cur = urlDe(poses[currentIndex]);
     const nxt = currentIndex + 1 < poses.length ? urlDe(poses[currentIndex + 1]) : null;
     setBuf(prev => {
       const otro = (prev.active === 0 ? 1 : 0) as 0 | 1;
       const urls: [string | null, string | null] = [prev.urls[0], prev.urls[1]];
-      if (cur && prev.urls[otro] === cur) {
-        // acierto de precarga → swap. El activo saliente prepara N+1.
-        urls[prev.active] = nxt;
-        return { urls, active: otro };
+
+      // El activo ya muestra lo correcto: solo hay que preparar el siguiente.
+      if (cur && prev.urls[prev.active] === cur) {
+        urls[otro] = nxt;
+        return { urls, active: prev.active, pending: null };
       }
-      // primer montaje, salto o retroceso: se reparte desde cero.
-      urls[prev.active] = cur;
-      urls[otro] = nxt;
-      return { urls, active: prev.active };
+      // Arranque en frío: no hay nada que proteger, se pinta directamente.
+      if (prev.urls[prev.active] === null) {
+        urls[prev.active] = cur;
+        urls[otro] = nxt;
+        return { urls, active: prev.active, pending: null };
+      }
+      // Caso normal. El otro slot trae `cur` (acierto de precarga) o hay que
+      // cargarlo ahí. En los dos casos el ACTIVO sigue visible con la pieza
+      // anterior; el cambio lo confirma el efecto de readiness.
+      if (urls[otro] !== cur) urls[otro] = cur;
+      return { urls, active: prev.active, pending: otro };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, videoMap, poses]);
+
+  // ── Swap condicionado a que HAYA fotograma ──────────────────────────────
+  // `readyState >= HAVE_CURRENT_DATA` es exactamente «hay un fotograma que
+  // presentar». No es una espera fija: en la práctica ya se cumple cuando llega
+  // el momento —el slot tuvo todo el ejercicio anterior más los 3 s de
+  // transición para cargar— y el swap ocurre en el mismo tick.
+  useEffect(() => {
+    const slot = buf.pending;
+    if (slot === null) return;
+    const el = videoRefs.current[slot];
+    const nxt = currentIndex + 1 < poses.length ? urlDe(poses[currentIndex + 1]) : null;
+
+    let hecho = false;
+    const confirmar = () => {
+      if (hecho) return;
+      hecho = true;
+      setBuf(prev => {
+        // El usuario pudo avanzar otra vez mientras esperábamos.
+        if (prev.pending !== slot) return prev;
+        const liberado = (slot === 0 ? 1 : 0) as 0 | 1;
+        const urls: [string | null, string | null] = [prev.urls[0], prev.urls[1]];
+        urls[liberado] = nxt;   // solo AHORA se reutiliza el saliente
+        return { urls, active: slot, pending: null };
+      });
+    };
+
+    if (!el) { confirmar(); return; }
+    if (el.readyState >= 2 /* HAVE_CURRENT_DATA */) { confirmar(); return; }
+    el.addEventListener('loadeddata', confirmar);
+    el.addEventListener('canplay', confirmar);
+    // Red muy lenta, o un evento que Safari no dispara como esperamos: no nos
+    // quedamos colgados enseñando la pieza anterior para siempre.
+    const red = setTimeout(confirmar, 1500);
+    return () => {
+      el.removeEventListener('loadeddata', confirmar);
+      el.removeEventListener('canplay', confirmar);
+      clearTimeout(red);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buf.pending, currentIndex]);
 
   // ── El vídeo sigue al botón de pausa ────────────────────────────────────
   // El <video> es un elemento NO CONTROLADO: con `autoPlay` y `loop` el navegador

@@ -423,10 +423,13 @@ describe('el vídeo se reproduce en bucle natural', () => {
     expect(playerSrc).not.toContain('fastSeek');
   });
 
-  it('no quedan listeners de segmento ni espera de metadata', () => {
-    for (const muerto of ['loadedmetadata', 'timeupdate', 'readyState', 'HAVE_METADATA']) {
+  it('no quedan listeners de segmentación de vídeo', () => {
+    // `readyState` sigue usándose, pero para saber si el buffer entrante tiene
+    // fotograma — no para trocear el mp4 por lados, que es lo que se retiró.
+    for (const muerto of ['loadedmetadata', 'timeupdate', 'HAVE_METADATA', 'sideSegments']) {
       expect(playerSrc, `${muerto} debería haber desaparecido`).not.toContain(muerto);
     }
+    expect(playerSrc).toMatch(/el\.readyState >= 2 \/\* HAVE_CURRENT_DATA \*\//);
   });
 
   it('no queda lógica de sideSegments en ninguna parte', () => {
@@ -921,14 +924,16 @@ describe('doble buffer · dos <video> persistentes', () => {
   });
 
   it('al avanzar hace SWAP sin tocar el src del que ya estaba cargado', () => {
-    // Si el inactivo ya traía N, solo cambia cuál se ve: ningún `src` se reasigna
-    // en ese elemento, así que no se recarga y el primer fotograma es inmediato.
-    expect(playerSrc).toMatch(/if \(cur && prev\.urls\[otro\] === cur\) \{/);
-    expect(playerSrc).toMatch(/urls\[prev\.active\] = nxt;\n\s+return \{ urls, active: otro \};/);
+    // Si el inactivo ya traía N, el reparto no reasigna su `src`: solo lo marca
+    // `pending`. Cuando tiene fotograma pasa a `active` sin recargar nada.
+    expect(playerSrc).toMatch(/if \(urls\[otro\] !== cur\) urls\[otro\] = cur;/);
+    expect(playerSrc).toMatch(/return \{ urls, active: slot, pending: null \};/);
   });
 
-  it('un salto o un retroceso reparten desde cero, sin asumir acierto', () => {
-    expect(playerSrc).toMatch(/urls\[prev\.active\] = cur;\n\s+urls\[otro\] = nxt;\n\s+return \{ urls, active: prev\.active \};/);
+  it('un salto o un retroceso cargan `cur` en el otro slot y esperan fotograma', () => {
+    // Nunca se asume que la precarga acertó: si no traía `cur`, se le asigna y
+    // el activo sigue visible entretanto.
+    expect(playerSrc).toMatch(/if \(urls\[otro\] !== cur\) urls\[otro\] = cur;\n\s+return \{ urls, active: prev\.active, pending: otro \};/);
   });
 
   it('pausa y play tocan SOLO el buffer activo', () => {
@@ -1001,6 +1006,116 @@ describe('doble buffer · lo que NO cambió', () => {
     // Se descartó a propósito: ver el informe. Sin poder medir en Safari, un
     // `fetch` por rango puede acabar descargando los mismos bytes dos veces.
     for (const x of ['Range', 'caches.', 'createObjectURL', 'rel="preload"']) {
+      expect(playerSrc, `${x} no debería estar`).not.toContain(x);
+    }
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// SWAP SIN PARPADEO · el entrante no se ve hasta tener fotograma
+//
+// QA en iPhone: al cambiar de ejercicio se veía un instante el fondo del área de
+// vídeo. Dos causas en el MISMO commit de React: el slot saliente recibía el src
+// de N+2 —perdiendo su imagen al momento— mientras el entrante pasaba a visible
+// sin que Safari hubiera presentado todavía un fotograma suyo.
+// ══════════════════════════════════════════════════════════════════════════
+describe('swap · condicionado a readiness real', () => {
+  it('el estado distingue el slot VISIBLE del que espera fotograma', () => {
+    expect(playerSrc).toMatch(/active: 0 \| 1;/);
+    expect(playerSrc).toMatch(/pending: 0 \| 1 \| null;/);
+    expect(playerSrc).toMatch(/\{ urls: \[null, null\], active: 0, pending: null \}/);
+  });
+
+  it('el slot saliente NO se reutiliza en el commit del swap', () => {
+    // Si `urls[liberado] = nxt` ocurriera en el reparto, el que se ve perdería
+    // su vídeo justo cuando el entrante aún no puede pintar. Solo se hace al
+    // confirmar.
+    const reparto = playerSrc.slice(
+      playerSrc.indexOf('// ── Reparto de buffers'),
+      playerSrc.indexOf('// ── Swap condicionado'));
+    expect(reparto).toMatch(/return \{ urls, active: prev\.active, pending: otro \};/);
+    expect(reparto).not.toMatch(/active: otro/);           // el reparto nunca cambia quién se ve
+    const confirmacion = playerSrc.slice(playerSrc.indexOf('// ── Swap condicionado'));
+    expect(confirmacion).toMatch(/urls\[liberado\] = nxt;/);
+    expect(confirmacion).toMatch(/return \{ urls, active: slot, pending: null \};/);
+  });
+
+  it('la señal es readyState >= HAVE_CURRENT_DATA, más loadeddata y canplay', () => {
+    expect(playerSrc).toMatch(/el\.readyState >= 2 \/\* HAVE_CURRENT_DATA \*\//);
+    expect(playerSrc).toMatch(/el\.addEventListener\('loadeddata', confirmar\)/);
+    expect(playerSrc).toMatch(/el\.addEventListener\('canplay', confirmar\)/);
+    // y si ya estaba listo, se confirma en el acto: no hay espera artificial
+    expect(playerSrc).toMatch(/if \(el\.readyState >= 2[^)]*\) \{ confirmar\(\); return; \}/);
+  });
+
+  it('hay fallback acotado por si Safari no dispara el evento', () => {
+    expect(playerSrc).toMatch(/setTimeout\(confirmar, 1500\)/);
+    // no es el mecanismo principal: primero readyState, luego eventos
+    const i = playerSrc.indexOf('setTimeout(confirmar, 1500)');
+    expect(playerSrc.lastIndexOf('readyState >= 2', i)).toBeGreaterThan(-1);
+  });
+
+  it('no se confirma dos veces ni se pisa un avance manual', () => {
+    expect(playerSrc).toMatch(/if \(hecho\) return;\n\s+hecho = true;/);
+    expect(playerSrc).toMatch(/if \(prev\.pending !== slot\) return prev;/);
+  });
+
+  it('los listeners y el temporizador se limpian', () => {
+    expect(playerSrc).toMatch(/el\.removeEventListener\('loadeddata', confirmar\)/);
+    expect(playerSrc).toMatch(/el\.removeEventListener\('canplay', confirmar\)/);
+    expect(playerSrc).toMatch(/clearTimeout\(red\)/);
+  });
+
+  it('el arranque en frío pinta directo, sin esperar nada', () => {
+    expect(playerSrc).toMatch(/if \(prev\.urls\[prev\.active\] === null\) \{/);
+    expect(playerSrc).toMatch(/urls\[prev\.active\] = cur;\n\s+urls\[otro\] = nxt;\n\s+return \{ urls, active: prev\.active, pending: null \};/);
+  });
+
+  it('el slot oculto sigue pudiendo cargar: opacity, nunca display:none', () => {
+    // Si no pudiera llegar a readyState 2 estando oculto, el fallback de 1500 ms
+    // lo destaparía: el arreglo degrada de forma segura.
+    expect(cssSrc).toMatch(/\.yfp-video-off\s*\{[^}]*opacity:\s*0/);
+    expect(cssSrc).not.toMatch(/\.yfp-video-off\s*\{[^}]*display:\s*none/);
+  });
+
+  it('no se usa requestVideoFrameCallback', () => {
+    // Se evaluó: dispara por fotograma PRESENTADO durante la reproducción, y el
+    // slot de precarga está pausado a propósito. Obligarlo a reproducir para que
+    // dispare es justo lo que evitamos. `readyState` ya significa «hay fotograma».
+    expect(playerSrc).not.toContain('requestVideoFrameCallback');
+  });
+});
+
+describe('swap · lo que sigue intacto', () => {
+  it('el timer no depende del swap visual', () => {
+    // El contador corre con `phase` y `secondsRemaining`; el swap solo decide
+    // qué elemento se ve. Retrasarlo no desincroniza nada.
+    const confirmacion = playerSrc.slice(playerSrc.indexOf('// ── Swap condicionado'),
+                                         playerSrc.indexOf('// ── El vídeo sigue al botón de pausa'));
+    expect(confirmacion).not.toContain('setSecondsRemaining');
+    expect(confirmacion).not.toContain('setPhase');
+    expect(confirmacion).not.toContain('handlePoseComplete');
+  });
+
+  it('pausa/play sigue tocando solo el activo', () => {
+    expect(playerSrc).toMatch(/const activo = videoRefs\.current\[buf\.active\];/);
+    expect(playerSrc).toMatch(/precarga\?\.pause\(\);/);
+  });
+
+  it('sin currentTime, sin seek, loop incondicional', () => {
+    expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
+    expect(playerSrc).not.toContain('fastSeek');
+    expect(playerSrc).not.toMatch(/loop=\{/);
+  });
+
+  it('instrucciones temporizadas, lados y rondas sin tocar', () => {
+    expect(playerSrc).toMatch(/time: formatTime\(blockNow\.durationSec\)/);
+    expect(playerSrc).toMatch(/const blockNow = blockAt\(currentPose, secondsRemaining\);/);
+    expect(playerSrc).toMatch(/const b = blockBoundaryAt\(pose, secondsRemaining\);/);
+  });
+
+  it('sigue sin haber spinner, Range, Cache API ni service worker nuevo', () => {
+    for (const x of ['spinner', 'Range', 'caches.', 'createObjectURL', 'serviceWorker']) {
       expect(playerSrc, `${x} no debería estar`).not.toContain(x);
     }
   });
