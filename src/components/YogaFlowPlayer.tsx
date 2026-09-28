@@ -87,6 +87,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   const [transitionNext, setTransitionNext] = useState<{ prev: string; next: YogaPose } | null>(null);
 
   const infoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Wake lock active during playing
   useWakeLock(phase === 'playing' || phase === 'side-switch' || phase === 'transition');
@@ -117,6 +118,24 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
       }));
     }
   }, [currentIndex, secondsRemaining, phase]);
+
+  // ── El vídeo sigue al botón de pausa ────────────────────────────────────
+  // El <video> es un elemento NO CONTROLADO: con `autoPlay` y `loop` el navegador
+  // lo reproduce pase lo que pase con el estado de React. Pausar la práctica
+  // paraba el contador y cambiaba el icono, pero el mp4 seguía moviéndose.
+  //
+  // Esto sincroniza SOLO la pausa manual. No reposiciona el vídeo, así que al
+  // reanudar sigue desde el mismo punto, y `loop` se mantiene. La lateralidad no
+  // interviene: el vídeo es una demostración, no un reloj.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (phase === 'paused') {
+      v.pause();
+    } else if (phase === 'playing') {
+      void v.play().catch(() => { /* autoplay bloqueado: se queda en el frame */ });
+    }
+  }, [phase, currentIndex]);
 
   // ── Timer
   useEffect(() => {
@@ -428,6 +447,7 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
           {firstVideoUrl ? (
             <video
               key={firstVideoUrl}
+              ref={videoRef}
               src={firstVideoUrl}
               autoPlay
               muted

@@ -401,13 +401,25 @@ describe('el vídeo se reproduce en bucle natural', () => {
     expect(playerSrc).not.toMatch(/loop=\{/);
   });
 
-  it('la lateralidad no pausa el vídeo', () => {
-    expect(playerSrc).not.toContain('.pause()');
+  it('el vídeo solo obedece al botón de pausa, nunca a la lateralidad', () => {
+    // `videoRef` y `pause()`/`play()` existen —el <video> es un elemento no
+    // controlado y había que sincronizarlo con el botón—, pero el efecto que los
+    // usa depende SOLO de la fase y la pieza en curso. Si aquí apareciera
+    // `sideHalf`, el mp4 volvería a estar atado al cambio de lado.
+    const efecto = playerSrc.slice(
+      playerSrc.indexOf('// ── El vídeo sigue al botón de pausa'),
+      playerSrc.indexOf('// ── Timer'));
+    expect(efecto).toMatch(/if \(phase === 'paused'\) \{\n\s+v\.pause\(\);/);
+    expect(efecto).toMatch(/\}, \[phase, currentIndex\]\);/);
+    expect(efecto).not.toContain('sideHalf');
+    expect(efecto).not.toContain('splitsSides');
+    expect(efecto).not.toContain('sideSwitchAt');
   });
 
   it('la lateralidad no hace seek en el vídeo', () => {
-    expect(playerSrc).not.toContain('currentTime');
-    expect(playerSrc).not.toContain('videoRef');
+    // Reanudar sigue desde el mismo punto: nadie reposiciona el mp4.
+    expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
+    expect(playerSrc).not.toContain('fastSeek');
   });
 
   it('no quedan listeners de segmento ni espera de metadata', () => {
@@ -575,5 +587,32 @@ describe('compatibilidad · prácticas guardadas con recetas anteriores', () => 
       expect(c.phases.length, `${c.id} sin fases`).toBeGreaterThan(0);
       expect(c.focus.length, `${c.id} sin enfoque`).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('el botón de pausa para el vídeo', () => {
+  it('pausar la práctica pausa el mp4 y reanudar lo vuelve a arrancar', () => {
+    // El <video> es no controlado: `autoPlay` + `loop` lo dejan corriendo pase lo
+    // que pase con el estado de React. Pausar paraba el contador y cambiaba el
+    // icono, pero el vídeo seguía moviéndose.
+    expect(playerSrc).toMatch(/ref=\{videoRef\}/);
+    expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+v\.pause\(\);/);
+    // `play()` SOLO en `playing`: nada de un `else` genérico que arranque el
+    // vídeo en fases donde no toca.
+    expect(playerSrc).toMatch(/\} else if \(phase === 'playing'\) \{\n\s+void v\.play\(\)/);
+    expect(playerSrc).not.toMatch(/else void v\.play\(\)/);
+  });
+
+  it('el efecto se relanza al cambiar de fase y de pieza, y con nada más', () => {
+    expect(playerSrc).toMatch(/\}, \[phase, currentIndex\]\);/);
+  });
+
+  it('el bucle nativo sigue siendo incondicional', () => {
+    expect(playerSrc).toMatch(/autoPlay\n\s+muted\n\s+loop\n\s+playsInline/);
+    expect(playerSrc).not.toMatch(/loop=\{/);
+  });
+
+  it('handlePause sigue siendo el único que cambia a `paused`', () => {
+    expect(playerSrc).toMatch(/function handlePause\(\) \{[\s\S]{0,180}setPhase\('paused'\);/);
   });
 });
