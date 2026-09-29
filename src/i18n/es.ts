@@ -819,7 +819,7 @@ export const es = {
   yoga: {
     exitConfirm: '¿Seguro que quieres salir? Perderás tu progreso.',
     execHold: "Adopta la postura y mantenla durante {time}",
-    execRepeat: "Continúa el movimiento · Sigue tu respiración",
+    execRepeat: "Repite el movimiento · Sigue tu respiración",
     execFollow: "Sigue la secuencia · Muévete con control",
     startFlow: 'Comenzar práctica',
     switchSide: 'CAMBIA DE LADO',

@@ -829,7 +829,7 @@ describe('instrucción · tiempo explícito solo en hold', () => {
 
   it('repeat NO lleva tiempo', () => {
     const pose: YogaPose = { id: 'cat-cow', duration: 45 };
-    expect(texto(pose, 45)).toBe('Continúa el movimiento · Sigue tu respiración');
+    expect(texto(pose, 45)).toBe('Repite el movimiento · Sigue tu respiración');
     expect(texto(pose, 45)).not.toMatch(/\d+:\d\d/);
   });
 
@@ -906,7 +906,7 @@ describe('instrucción · tiempo explícito solo en hold', () => {
     const follow: YogaPose = { id: 'warrior-unilateral', duration: 152, repetitions: 2, sides: 'both' };
     expect(texto(follow, 152, yogaEn)).toBe('Follow the sequence · Move with control');
     const repeat: YogaPose = { id: 'cat-cow', duration: 45 };
-    expect(texto(repeat, 45, yogaEn)).toBe('Continue the movement · Follow your breath');
+    expect(texto(repeat, 45, yogaEn)).toBe('Repeat the movement · Follow your breath');
   });
 
   it('no se tocó timer, generador, lateralidad ni reproducción', () => {
@@ -1245,5 +1245,34 @@ describe('contador por bloque', () => {
     // y la frontera de bloque sigue midiéndose sobre el mismo valor
     expect(playerSrc).toMatch(/const b = blockBoundaryAt\(pose, secondsRemaining\);/);
     expect(playerSrc).toContain("setPhase('side-switch')");
+  });
+});
+
+describe('copy de repeat · funciona también como primer ejercicio', () => {
+  const yogaEs = (es as unknown as { yoga: Record<string, string> }).yoga;
+  const yogaEn = (en as unknown as { yoga: Record<string, string> }).yoga;
+
+  it('ES dice «Repite», no «Continúa»', () => {
+    expect(yogaEs.execRepeat).toBe('Repite el movimiento · Sigue tu respiración');
+    expect(yogaEs.execRepeat).not.toContain('Continúa');
+  });
+
+  it('EN dice «Repeat», no «Continue»', () => {
+    expect(yogaEn.execRepeat).toBe('Repeat the movement · Follow your breath');
+    expect(yogaEn.execRepeat).not.toContain('Continue');
+  });
+
+  it('sigue sin llevar tiempo', () => {
+    for (const idioma of [yogaEs, yogaEn]) {
+      expect(idioma.execRepeat).not.toContain('{time}');
+      expect(idioma.execRepeat).not.toMatch(/\d+:\d\d/);
+    }
+  });
+
+  it('hold y follow quedan intactos', () => {
+    expect(yogaEs.execHold).toBe('Adopta la postura y mantenla durante {time}');
+    expect(yogaEs.execFollow).toBe('Sigue la secuencia · Muévete con control');
+    expect(yogaEn.execHold).toBe('Take the pose and hold it for {time}');
+    expect(yogaEn.execFollow).toBe('Follow the sequence · Move with control');
   });
 });

@@ -817,7 +817,7 @@ export const en: Translations<typeof es> = {
   yoga: {
     exitConfirm: 'Sure you want to leave? You will lose your progress.',
     execHold: "Take the pose and hold it for {time}",
-    execRepeat: "Continue the movement · Follow your breath",
+    execRepeat: "Repeat the movement · Follow your breath",
     execFollow: "Follow the sequence · Move with control",
     startFlow: 'Start practice',
     switchSide: 'SWITCH SIDES',
