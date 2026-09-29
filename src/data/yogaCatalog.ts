@@ -77,7 +77,11 @@ export const YOGA_CATALOG: YogaContent[] = [
     mode: 'reps', laterality: 'contained',
     defaultPrescription: 58, minSec: 29, maxSec: 86, repeatable: true,
     posStart: 'standing', posEnd: 'standing',
-    executionType: 'repeat',
+    // El clip hace UNA inclinación por lado: demuestra la forma, no una
+    // alternancia continua. El enfoque registrado es movilidad lateral de
+    // columna, y eso se consigue sosteniendo la elongación, no balanceándose.
+    executionType: 'hold',
+    splitBySide: true,
     openerFor: ['movilidad'],
     description: 'De pie y con los brazos arriba, inclina el tronco a un lado y al otro.',
     descriptionEn: "Standing with arms overhead, bend your torso to each side.",
@@ -88,8 +92,11 @@ export const YOGA_CATALOG: YogaContent[] = [
     mode: 'reps', laterality: 'contained',
     defaultPrescription: 52, minSec: 26, maxSec: 78, repeatable: true,
     posStart: 'standing', posEnd: 'standing',
-    executionType: 'repeat',
-    openerFor: ['movilidad'],
+    // Igual que la inclinación lateral: una torsión por lado, no una alternancia.
+    // NO abre práctica — sostener una silla con torsión es carga isométrica de
+    // pierna, y en frío como primera pieza es demasiado.
+    executionType: 'hold',
+    splitBySide: true,
     description: 'Desde la postura de la silla, gira el tronco hacia cada lado.',
     descriptionEn: "From chair pose, twist your torso to each side.",
   },

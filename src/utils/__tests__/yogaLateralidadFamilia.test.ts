@@ -13,7 +13,10 @@
 import { describe, it, expect } from 'vitest';
 import playerSrc from '../../components/YogaFlowPlayer.tsx?raw';
 import cssSrc from '../../components/yoga-flow-player.css?raw';
-import { YOGA_CATALOG, YOGA_BY_ID, YOGA_FAMILY_POLICY, FAMILY_MIN_GAP, FAMILY_MAX_MEMBERS } from '../../data/yogaCatalog';
+import {
+  YOGA_CATALOG, YOGA_BY_ID, YOGA_SELECTABLE,
+  YOGA_FAMILY_POLICY, FAMILY_MIN_GAP, FAMILY_MAX_MEMBERS,
+} from '../../data/yogaCatalog';
 import {
   splitsSides, sideHalves, sideSwitchAt, sideIndexAt, sideLabelKey,
   blocksOf, blockAt, blockBoundaryAt, blockStartSec, blockDurationSec, blockRemainingSec,
@@ -31,7 +34,9 @@ import { en } from '../../i18n/en';
 
 const FOCI: YogaFocus[] = ['movilidad', 'flow', 'relajacion'];
 const ALL_IDS = new Set(YOGA_CATALOG.map(c => c.id));
-const SPLIT = ['seated-twist', 'pigeon-pose', 'triangle-pose'];
+/** Contenidos cuya prescripción se hace la mitad por lado. */
+const SPLIT = ['seated-twist', 'pigeon-pose', 'triangle-pose',
+               'standing-side-bend', 'revolved-chair'];
 
 const combos: Array<{ focus: YogaFocus; min: YogaDuration }> =
   FOCI.flatMap(focus => durationsFor(focus).map(min => ({ focus, min })));
@@ -66,7 +71,7 @@ function recorrer(duration: number) {
 
 // ══════════════════════════════════════════════════════════════════════════
 describe('splitBySide · reparto de la prescripción', () => {
-  it('lo declara el catálogo y solo para los tres contenidos aprobados', () => {
+  it('lo declara el catálogo y solo para los contenidos aprobados', () => {
     const marcados = YOGA_CATALOG.filter(c => c.splitBySide).map(c => c.id).sort();
     expect(marcados).toEqual([...SPLIT].sort());
   });
@@ -1274,5 +1279,122 @@ describe('copy de repeat · funciona también como primer ejercicio', () => {
     expect(yogaEs.execFollow).toBe('Sigue la secuencia · Muévete con control');
     expect(yogaEn.execHold).toBe('Take the pose and hold it for {time}');
     expect(yogaEn.execFollow).toBe('Follow the sequence · Move with control');
+  });
+
+  it('Silla con Torsión pasó a retención sin tocar su mecánica', () => {
+    const c = YOGA_BY_ID.get('revolved-chair')!;
+    expect(c.executionType).toBe('hold');
+    expect(c.splitBySide).toBe(true);
+    // lo que el generador lee sigue igual
+    expect(c.mode).toBe('reps');
+    expect(c.laterality).toBe('contained');
+    expect(c.defaultPrescription).toBe(52);
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// RECLASIFICACIÓN · dos movimientos que en realidad son retenciones
+//
+// Los dos clips hacen UNA inclinación/torsión por lado —tu ficha manual dice
+// «reps: 1/lado»—, o sea demuestran la forma, no una alternancia continua. Lo
+// que debe hacer la persona durante la prescripción es sostener por lado.
+// ══════════════════════════════════════════════════════════════════════════
+describe('reclasificación · inclinación lateral y silla con torsión', () => {
+  const RECLASIFICADOS = ['standing-side-bend', 'revolved-chair'];
+
+  it.each(RECLASIFICADOS)('%s es hold y se parte por lados', id => {
+    const c = YOGA_BY_ID.get(id)!;
+    expect(c.executionType).toBe('hold');
+    expect(c.splitBySide).toBe(true);
+    expect(splitsSides({ id, duration: c.defaultPrescription })).toBe(true);
+  });
+
+  it('conservan su `mode` y su prescripción: el generador no se entera', () => {
+    expect(YOGA_BY_ID.get('standing-side-bend')!.mode).toBe('reps');
+    expect(YOGA_BY_ID.get('standing-side-bend')!.defaultPrescription).toBe(58);
+    expect(YOGA_BY_ID.get('revolved-chair')!.mode).toBe('reps');
+    expect(YOGA_BY_ID.get('revolved-chair')!.defaultPrescription).toBe(52);
+    // y siguen con la misma lateralidad declarada: el clip trae ambos lados
+    for (const id of RECLASIFICADOS) expect(YOGA_BY_ID.get(id)!.laterality).toBe('contained');
+  });
+
+  it('Inclinación Lateral: dos bloques de 0:29 con su cambio de lado', () => {
+    const pose: YogaPose = { id: 'standing-side-bend', duration: 58 };
+    expect(blocksOf(pose).total).toBe(2);
+    expect(blockAt(pose, 58)!.durationSec).toBe(29);
+    expect(blockRemainingSec(pose, 58)).toBe(29);   // arranca el primer lado
+    expect(blockRemainingSec(pose, 29)).toBe(29);   // arranca el segundo
+    expect(blockRemainingSec(pose, 0)).toBe(0);
+    expect(sideLabelKey(pose, 0)).toBe('yoga.sideFirst');
+    expect(sideLabelKey(pose, 1)).toBe('yoga.sideSecond');
+    expect(blockBoundaryAt(pose, 29)?.index).toBe(1);
+  });
+
+  it('Silla con Torsión: dos bloques de 0:26 con su cambio de lado', () => {
+    const pose: YogaPose = { id: 'revolved-chair', duration: 52 };
+    expect(blocksOf(pose).total).toBe(2);
+    expect(blockAt(pose, 52)!.durationSec).toBe(26);
+    expect(blockRemainingSec(pose, 52)).toBe(26);
+    expect(blockRemainingSec(pose, 26)).toBe(26);
+    expect(blockRemainingSec(pose, 0)).toBe(0);
+    expect(blockBoundaryAt(pose, 26)?.index).toBe(1);
+  });
+
+  it('la Silla con Torsión ya NO puede abrir una práctica', () => {
+    // Sostener una silla con torsión es carga isométrica de pierna; en frío y
+    // como primera pieza es demasiado.
+    expect(YOGA_BY_ID.get('revolved-chair')!.openerFor).toBeUndefined();
+    const fallos: string[] = [];
+    for (const { focus, min } of combos) {
+      for (let v = 0; v < 10; v++) {
+        if (gen(focus, min, v).poses[0].id === 'revolved-chair') fallos.push(`${focus}/${min}/v${v}`);
+      }
+    }
+    expect(fallos, fallos.join(', ')).toEqual([]);
+  });
+
+  it('la Inclinación Lateral SÍ sigue abriendo, ahora como retención', () => {
+    expect(YOGA_BY_ID.get('standing-side-bend')!.openerFor).toEqual(['movilidad']);
+  });
+
+  it('quitar ese opener no deja Movilidad corta ni contenido muerto', () => {
+    const pool = YOGA_SELECTABLE.filter(c => c.openerFor?.includes('movilidad'));
+    expect(pool.length, 'Movilidad necesita al menos 3 para rotar v0/v1/v2').toBeGreaterThanOrEqual(3);
+    expect(pool.map(c => c.id)).not.toContain('revolved-chair');
+    // y la silla sigue entrando en las prácticas, solo que no primera
+    const apariciones = SIM.filter(({ plan }) => plan.poses.some(p => p.id === 'revolved-chair')).length;
+    expect(apariciones, 'la silla desapareció del catálogo vivo').toBeGreaterThan(0);
+  });
+
+  it('las 13 combinaciones siguen siendo válidas y la rotación se mantiene', () => {
+    for (const { focus, min } of combos) {
+      const openers = [0, 1, 2].map(v => gen(focus, min, v).poses[0].id);
+      expect(new Set(openers).size, `${focus}/${min}: ${openers.join(', ')}`).toBe(3);
+      for (let v = 0; v < 10; v++) {
+        expect(validateYogaSession(gen(focus, min, v), min * 60, ALL_IDS).valid,
+          `${focus}/${min}/v${v}`).toBe(true);
+      }
+    }
+  });
+});
+
+describe('mode y executionType son ejes independientes', () => {
+  it('existen contenidos `reps` que son retenciones', () => {
+    const reps = YOGA_CATALOG.filter(c => c.mode === 'reps');
+    expect(reps.some(c => c.executionType === 'hold'), 'la convención sigue acoplándolos').toBe(true);
+    expect(reps.some(c => c.executionType === 'repeat'), 'ya no queda ningún reps/repeat').toBe(true);
+  });
+
+  it('`follow` sigue reservado a las secuencias completas', () => {
+    for (const c of YOGA_CATALOG) {
+      if (c.executionType === 'follow') expect(c.mode, c.id).toBe('rounds');
+      if (c.mode === 'rounds') expect(c.executionType, c.id).toBe('follow');
+    }
+  });
+
+  it('los 5 splitBySide son los aprobados', () => {
+    const s = YOGA_CATALOG.filter(c => c.splitBySide).map(c => c.id).sort();
+    expect(s).toEqual(['pigeon-pose', 'revolved-chair', 'seated-twist',
+                       'standing-side-bend', 'triangle-pose']);
   });
 });

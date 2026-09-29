@@ -43,13 +43,19 @@ describe('catálogo · campos de presentación', () => {
     }
   });
 
-  it('executionType es coherente con mode donde la correspondencia es directa', () => {
+  it('`mode` y `executionType` son ejes independientes', () => {
+    // `mode`          → mecánica interna con la que el generador resuelve la duración.
+    // `executionType` → qué tiene que hacer la persona.
+    // `splitBySide`   → cómo se reparte esa ejecución.
+    //
+    // Antes este test exigía `reps → repeat`, y eso los acoplaba de forma
+    // artificial: la Inclinación Lateral y la Silla con Torsión conservan
+    // `mode: 'reps'` por compatibilidad con el generador y son retenciones.
     for (const c of YOGA_CATALOG) {
-      // Una secuencia completa siempre se sigue; unas repeticiones siempre se repiten.
+      // Lo único que sí se deriva: una secuencia completa se sigue.
       if (c.mode === 'rounds') expect(c.executionType, c.id).toBe('follow');
-      if (c.mode === 'reps') expect(c.executionType, c.id).toBe('repeat');
-      // `timer` es el caso que NO se deriva: admite hold y repeat.
-      if (c.mode === 'timer') expect(['hold', 'repeat'], c.id).toContain(c.executionType);
+      // El resto admite cualquiera de los tres, y `follow` solo con `rounds`.
+      if (c.mode !== 'rounds') expect(['hold', 'repeat'], c.id).toContain(c.executionType);
     }
   });
 
