@@ -431,10 +431,14 @@ export interface YogaContent {
    * bloque, ni el cambio de lado, ni el temporizador—. La receta manda.
    *
    * Un tramo por lado, en el orden en que la práctica los ejecuta.
-   *  · `from` — dónde empieza a verse cómo se entra a la postura.
-   *  · `hold` — fotograma final donde se congela como referencia.
+   *  · `hold` — fotograma que se congela como referencia. Obligatorio.
+   *  · `from` — OPCIONAL. Si está, el vídeo reproduce desde ahí para enseñar
+   *    cómo se entra a la postura y se congela al llegar a `hold`. Si NO está,
+   *    salta directo a `hold` sin demostración: es lo que quieres a partir del
+   *    segundo lado, donde la persona ya vio cómo se hace y lo único que
+   *    necesita es la referencia de la forma.
    */
-  poseDemo?: { sides: Array<{ from: number; hold: number }> };
+  poseDemo?: { sides: Array<{ from?: number; hold: number }> };
 
   /**
    * Modalidades para las que este contenido puede ABRIR una práctica.

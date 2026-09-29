@@ -107,6 +107,8 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
    *  referencia. Mientras sea true, reanudar la práctica NO vuelve a poner
    *  el mp4 en marcha: el reloj sigue, la imagen se queda. */
   const demoCongeladaRef = useRef(false);
+  /** Identifica el bloque para el que vale el estado visual de arriba. */
+  const demoClaveRef = useRef<string | null>(null);
   const [buf, setBuf] = useState<{
     urls: [string | null, string | null];
     /** El slot que SE VE. */
@@ -331,24 +333,46 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   // aquí no pasa absolutamente nada y el vídeo va en bucle natural.
   const demoLado = (currentPose ? YOGA_BY_ID.get(currentPose.id) : undefined)
     ?.poseDemo?.sides[blockNow?.side ?? 0] ?? null;
-  useEffect(() => {
-    // Nuevo lado o nueva pieza: la referencia anterior deja de valer.
+
+  // El estado visual se reinicia en RENDER, no dentro del efecto: los efectos
+  // corren en orden de declaración y el de pausa va primero, así que si el
+  // reinicio viviera allí, al avanzar de ejercicio el de pausa vería todavía
+  // «congelado» y dejaría el vídeo de la pieza siguiente sin arrancar.
+  const demoClave = `${currentIndex}|${blockNow?.side ?? 0}|${demoLado ? 'demo' : 'libre'}`;
+  if (demoClaveRef.current !== demoClave) {
+    demoClaveRef.current = demoClave;
     demoCongeladaRef.current = false;
+  }
+  useEffect(() => {
     const v = videoRefs.current[buf.active];
     if (!v || !demoLado) return;
+    const { from, hold } = demoLado;
 
     let cancelado = false;
     const colocar = () => {
       if (cancelado) return;
-      try { v.currentTime = demoLado.from; } catch { return; }
+      if (from === undefined) {
+        // SIN demostración: se planta en el fotograma y ahí se queda. Se pausa
+        // ANTES de buscar para que no se cuele ni un cuadro de la transición
+        // grabada; mientras decodifica, el elemento conserva la imagen anterior,
+        // que en ese instante está tapada por la pantalla de cambio de lado.
+        v.pause();
+        try { v.currentTime = hold; } catch { return; }
+        demoCongeladaRef.current = true;
+        return;
+      }
+      try { v.currentTime = from; } catch { return; }
       void v.play().catch(() => { /* autoplay bloqueado: se queda en el frame */ });
     };
     // iOS Safari ignora `currentTime` mientras no haya metadata: se encola.
     if (v.readyState >= 1 /* HAVE_METADATA */) colocar();
     else v.addEventListener('loadedmetadata', colocar, { once: true });
 
+    // Congela al llegar al fotograma de referencia. En el modo sin demostración
+    // hace además de red: si algo pusiera el vídeo en marcha, lo vuelve a parar
+    // en el acto, porque ya está en `hold`.
     const congelar = () => {
-      if (v.currentTime < demoLado.hold) return;
+      if (v.currentTime < hold) return;
       v.pause();
       demoCongeladaRef.current = true;
     };
