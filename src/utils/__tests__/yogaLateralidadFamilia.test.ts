@@ -16,7 +16,7 @@ import cssSrc from '../../components/yoga-flow-player.css?raw';
 import { YOGA_CATALOG, YOGA_BY_ID, YOGA_FAMILY_POLICY, FAMILY_MIN_GAP, FAMILY_MAX_MEMBERS } from '../../data/yogaCatalog';
 import {
   splitsSides, sideHalves, sideSwitchAt, sideIndexAt, sideLabelKey,
-  blocksOf, blockAt, blockBoundaryAt, blockStartSec, blockDurationSec,
+  blocksOf, blockAt, blockBoundaryAt, blockStartSec, blockDurationSec, blockRemainingSec,
 } from '../yogaSides';
 import sidesSrc from '../yogaSides.ts?raw';
 import catalogSrc from '../../data/yogaCatalog.ts?raw';
@@ -1146,5 +1146,104 @@ describe('swap · lo que sigue intacto', () => {
     for (const x of ['spinner', 'Range', 'caches.', 'createObjectURL', 'serviceWorker']) {
       expect(playerSrc, `${x} no debería estar`).not.toContain(x);
     }
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// CONTADOR POR BLOQUE
+//
+// El contador grande mostraba el tiempo de la PIEZA entera mientras el resto de
+// la interfaz hablaba del bloque: una Zancada del Lagarto de 2:20 anunciaba
+// «mantenla durante 1:10» con el contador en 2:20. Ahora se deriva del mismo
+// `secondsRemaining` — un solo reloj — y cuenta lo que le queda al bloque.
+// ══════════════════════════════════════════════════════════════════════════
+describe('contador por bloque', () => {
+  it('con un solo bloque devuelve exactamente secondsRemaining', () => {
+    // Es la identidad matemática: no hace falta ramificar en el reproductor.
+    for (const id of ['seated-forward-fold', 'cat-cow', 'camel-pose', 'boat-pose']) {
+      const pose: YogaPose = { id, duration: 60 };
+      expect(blocksOf(pose).total, id).toBe(1);
+      for (let rem = 60; rem >= 0; rem--) {
+        expect(blockRemainingSec(pose, rem), `${id} @${rem}`).toBe(rem);
+      }
+    }
+  });
+
+  it('Zancada del Lagarto de 140 s: 1:10 por lado, no 2:20', () => {
+    const pose: YogaPose = { id: 'lizard-lunge', duration: 140, sides: 'both' };
+    expect(blockRemainingSec(pose, 140)).toBe(70);   // empieza el primer lado
+    expect(blockRemainingSec(pose, 71)).toBe(1);     // último segundo del primero
+    expect(blockRemainingSec(pose, 70)).toBe(70);    // empieza el segundo lado
+    expect(blockRemainingSec(pose, 1)).toBe(1);
+    expect(blockRemainingSec(pose, 0)).toBe(0);      // fin de pieza
+  });
+
+  it('cada bloque arranca en su duración completa y baja de uno en uno', () => {
+    const pose: YogaPose = { id: 'lizard-lunge', duration: 140, sides: 'both' };
+    for (let rem = 140; rem >= 1; rem--) {
+      const b = blockAt(pose, rem)!;
+      const r = blockRemainingSec(pose, rem);
+      expect(r, `@${rem}`).toBeGreaterThanOrEqual(0);
+      expect(r, `@${rem} excede su bloque`).toBeLessThanOrEqual(b.durationSec);
+      expect(r, 'debe coincidir con el bloque en curso').toBe(b.remainingSec);
+    }
+  });
+
+  it('duración impar: los bloques se reparten sin perder segundos', () => {
+    const pose: YogaPose = { id: 'pigeon-pose', duration: 81 };
+    expect(blockRemainingSec(pose, 81)).toBe(40);    // lado 1 dura 40
+    expect(blockRemainingSec(pose, 41)).toBe(41);    // lado 2 dura 41, arranca entero
+    expect(blockRemainingSec(pose, 0)).toBe(0);
+    const b1 = blockAt(pose, 81)!, b2 = blockAt(pose, 1)!;
+    expect(b1.durationSec + b2.durationSec).toBe(81);
+  });
+
+  it('las rondas reinician el contador en cada una', () => {
+    const pose: YogaPose = { id: 'sun-salutation', duration: 96, repetitions: 4 };
+    for (const elapsed of [0, 24, 48, 72]) {
+      expect(blockRemainingSec(pose, 96 - elapsed), `ronda en ${elapsed}s`).toBe(24);
+    }
+    expect(blockRemainingSec(pose, 96 - 23)).toBe(1);   // último segundo de la ronda 1
+  });
+
+  it('lados × rondas reinician en los cuatro bloques', () => {
+    const pose: YogaPose = { id: 'warrior-unilateral', duration: 152, repetitions: 2, sides: 'both' };
+    for (const elapsed of [0, 38, 76, 114]) {
+      const b = blockAt(pose, 152 - elapsed)!;
+      expect(blockRemainingSec(pose, 152 - elapsed), `bloque en ${elapsed}s`).toBe(38);
+      expect(b.durationSec).toBe(38);
+    }
+    expect(blockRemainingSec(pose, 0)).toBe(0);
+  });
+
+  it('nunca supera la duración del bloque ni baja de cero', () => {
+    for (const pose of [
+      { id: 'lizard-lunge', duration: 140, sides: 'both' } as YogaPose,
+      { id: 'warrior-unilateral', duration: 152, repetitions: 2, sides: 'both' } as YogaPose,
+      { id: 'pigeon-pose', duration: 81 } as YogaPose,
+      { id: 'sun-salutation', duration: 97, repetitions: 3 } as YogaPose,
+      { id: 'cat-cow', duration: 45 } as YogaPose,
+    ]) {
+      for (let rem = pose.duration; rem >= 0; rem--) {
+        const r = blockRemainingSec(pose, rem);
+        expect(r, `${pose.id} @${rem}`).toBeGreaterThanOrEqual(0);
+        expect(r, `${pose.id} @${rem}`).toBeLessThanOrEqual(blockAt(pose, rem)!.durationSec);
+      }
+    }
+  });
+
+  it('el reproductor lo deriva, sin segundo reloj', () => {
+    expect(playerSrc).toMatch(/yfp-time">\{formatTime\(blockNow\?\.remainingSec \?\? secondsRemaining\)\}/);
+    // un solo setInterval en todo el componente, el del temporizador
+    expect((playerSrc.match(/setInterval\(/g) ?? []).length).toBe(1);
+    expect(playerSrc).not.toContain('blockSecondsRemaining');
+    expect(playerSrc).not.toContain('setBlockRemaining');
+  });
+
+  it('el avance de pieza sigue colgando de secondsRemaining', () => {
+    expect(playerSrc).toMatch(/setSecondsRemaining\(prev => \{\n\s+if \(prev <= 1\) \{\n\s+handlePoseComplete\(\);/);
+    // y la frontera de bloque sigue midiéndose sobre el mismo valor
+    expect(playerSrc).toMatch(/const b = blockBoundaryAt\(pose, secondsRemaining\);/);
+    expect(playerSrc).toContain("setPhase('side-switch')");
   });
 });

@@ -599,7 +599,11 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
             {currentInstruction && (
               <p className="yfp-pose-exec">{currentInstruction}</p>
             )}
-            <div className="yfp-time">{formatTime(secondsRemaining)}</div>
+            {/* Lo que queda del BLOQUE en curso. Con una sola pieza-bloque es
+                idéntico a `secondsRemaining`, así que no hace falta ramificar:
+                lo que cambia es que un lado ya no anuncia 1:10 mientras el
+                contador enseña 2:20 de la pieza entera. */}
+            <div className="yfp-time">{formatTime(blockNow?.remainingSec ?? secondsRemaining)}</div>
           </div>
         </div>
 

@@ -120,7 +120,9 @@ describe('reproductor · el catálogo manda', () => {
     expect(playerSrc).not.toContain('yfp-round-badge');
     expect(playerSrc).toMatch(/yfp-round-chip">\{roundLabel\}/);
     expect(playerSrc).not.toContain('yfp-timer');
-    expect(playerSrc).toMatch(/yfp-time">\{formatTime\(secondsRemaining\)\}/);
+    // El contador muestra lo que queda del BLOQUE en curso; con una sola
+    // pieza-bloque eso es idéntico a `secondsRemaining`.
+    expect(playerSrc).toMatch(/yfp-time">\{formatTime\(blockNow\?\.remainingSec \?\? secondsRemaining\)\}/);
     // la indicación y el tiempo comparten fila
     expect(playerSrc).toMatch(/yfp-exec-row/);
   });

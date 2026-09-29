@@ -76,6 +76,31 @@ export interface BlockNow extends BlockModel {
   side: 0 | 1;
   /** Segundos que dura ESTE bloque — lo que la persona sostiene o repite ahora. */
   durationSec: number;
+  /** Segundos que le quedan a ESTE bloque. Ver `blockRemainingSec`. */
+  remainingSec: number;
+}
+
+/**
+ * Lo que le queda al bloque en curso.
+ *
+ * Se DERIVA de `secondsRemaining`, que sigue siendo el único reloj: no hay un
+ * segundo intervalo ni un contador paralelo que pueda desincronizarse.
+ *
+ * Con una sola pieza-bloque devuelve exactamente `secondsRemaining`, porque
+ * `fin = duration` y `duration − (duration − secondsRemaining)` es la identidad.
+ * Por eso el reproductor no necesita ramificar: las piezas de un bloque siguen
+ * comportándose igual que antes.
+ */
+export function blockRemainingSec(
+  pose: YogaPose | null | undefined, secondsRemaining: number,
+): number {
+  if (!pose) return secondsRemaining;
+  const { total } = blocksOf(pose);
+  const elapsed = pose.duration - secondsRemaining;
+  let index = 0;
+  while (index + 1 < total
+         && elapsed >= blockStartSec(pose.duration, total, index + 1)) index++;
+  return blockStartSec(pose.duration, total, index + 1) - elapsed;
 }
 
 /** Bloque en curso de una pieza. */
@@ -94,6 +119,7 @@ export function blockAt(
     round: Math.floor(index / m.sides) + 1,
     side: (index % m.sides) as 0 | 1,
     durationSec: blockDurationSec(pose.duration, m.total, index),
+    remainingSec: blockStartSec(pose.duration, m.total, index + 1) - elapsed,
   };
 }
 
