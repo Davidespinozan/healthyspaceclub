@@ -103,6 +103,10 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
    * la persona ya había llegado a él.
    */
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([null, null]);
+  /** El lado en curso ya alcanzó su `hold` y el fotograma se quedó de
+   *  referencia. Mientras sea true, reanudar la práctica NO vuelve a poner
+   *  el mp4 en marcha: el reloj sigue, la imagen se queda. */
+  const demoCongeladaRef = useRef(false);
   const [buf, setBuf] = useState<{
     urls: [string | null, string | null];
     /** El slot que SE VE. */
@@ -230,6 +234,10 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     if (phase === 'paused') {
       activo.pause();
     } else if (phase === 'playing') {
+      // Si el lado ya llegó a su fotograma de referencia, reanudar la práctica
+      // no debe volver a mover el vídeo. Antes de `hold`, pausa y reanudación se
+      // comportan con normalidad y la demostración continúa donde iba.
+      if (demoCongeladaRef.current) return;
       void activo.play().catch(() => { /* autoplay bloqueado: se queda en el frame */ });
     }
   }, [phase, currentIndex, buf.active]);
@@ -312,6 +320,46 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
     if (!currentPose?.repetitions || currentPose.repetitions <= 1) return null;
     return t('yoga.round', { r: blockNow?.round ?? 1, total: currentPose.repetitions });
   };
+
+  // ── PROTOTIPO · demostración + fotograma de referencia ─────────────────
+  // Solo para el contenido que declara `poseDemo` (hoy, la Silla con Torsión).
+  // Enseña cómo se entra a la postura del lado en curso y congela un fotograma
+  // claro de la postura final, que se queda de referencia el resto del bloque.
+  //
+  // NO decide nada de la duración: el temporizador, el bloque y el cambio de
+  // lado siguen saliendo de la receta. Si el contenido no declara `poseDemo`,
+  // aquí no pasa absolutamente nada y el vídeo va en bucle natural.
+  const demoLado = (currentPose ? YOGA_BY_ID.get(currentPose.id) : undefined)
+    ?.poseDemo?.sides[blockNow?.side ?? 0] ?? null;
+  useEffect(() => {
+    // Nuevo lado o nueva pieza: la referencia anterior deja de valer.
+    demoCongeladaRef.current = false;
+    const v = videoRefs.current[buf.active];
+    if (!v || !demoLado) return;
+
+    let cancelado = false;
+    const colocar = () => {
+      if (cancelado) return;
+      try { v.currentTime = demoLado.from; } catch { return; }
+      void v.play().catch(() => { /* autoplay bloqueado: se queda en el frame */ });
+    };
+    // iOS Safari ignora `currentTime` mientras no haya metadata: se encola.
+    if (v.readyState >= 1 /* HAVE_METADATA */) colocar();
+    else v.addEventListener('loadedmetadata', colocar, { once: true });
+
+    const congelar = () => {
+      if (v.currentTime < demoLado.hold) return;
+      v.pause();
+      demoCongeladaRef.current = true;
+    };
+    v.addEventListener('timeupdate', congelar);
+
+    return () => {
+      cancelado = true;
+      v.removeEventListener('loadedmetadata', colocar);
+      v.removeEventListener('timeupdate', congelar);
+    };
+  }, [currentIndex, buf.active, demoLado?.from, demoLado?.hold]);
 
   // Stats for completed screen
   const totalMinutes = Math.round(plan.totalDuration / 60);

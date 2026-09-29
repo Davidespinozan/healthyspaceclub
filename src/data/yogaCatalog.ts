@@ -97,6 +97,12 @@ export const YOGA_CATALOG: YogaContent[] = [
     // pierna, y en frío como primera pieza es demasiado.
     executionType: 'hold',
     splitBySide: true,
+    // PROTOTIPO · medido sobre el archivo real (13,118 s, 30 fps):
+    //   0,0–1,2  de pie          1,2–3,0  entra a la silla y gira
+    //   3,0–5,9  PRIMER LADO     6,0–7,6  cambia de lado
+    //   7,6–10,1 SEGUNDO LADO    10,1–13,1 sale y se incorpora
+    // Los fotogramas de referencia son los más asentados de cada retención.
+    poseDemo: { sides: [{ from: 1.2, hold: 4.6 }, { from: 6.0, hold: 8.8 }] },
     description: 'Desde la postura de la silla, gira el tronco hacia cada lado.',
     descriptionEn: "From chair pose, twist your torso to each side.",
   },

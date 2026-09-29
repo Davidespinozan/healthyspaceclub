@@ -34,6 +34,17 @@ import { en } from '../../i18n/en';
 
 const FOCI: YogaFocus[] = ['movilidad', 'flow', 'relajacion'];
 const ALL_IDS = new Set(YOGA_CATALOG.map(c => c.id));
+
+/**
+ * El fuente del reproductor SIN el bloque del prototipo visual. El prototipo
+ * de la Silla con Torsión sí manipula el vídeo a propósito; lo que no debe
+ * hacerlo es ningún camino general — lateralidad, buffers, swap o pausa.
+ */
+const playerGeneral = (() => {
+  const i = playerSrc.indexOf('// ── PROTOTIPO · demostración');
+  const j = playerSrc.indexOf('// Stats for completed screen');
+  return i < 0 ? playerSrc : playerSrc.slice(0, i) + playerSrc.slice(j);
+})();
 /** Contenidos cuya prescripción se hace la mitad por lado. */
 const SPLIT = ['seated-twist', 'pigeon-pose', 'triangle-pose',
                'standing-side-bend', 'revolved-chair'];
@@ -423,8 +434,9 @@ describe('el vídeo se reproduce en bucle natural', () => {
   });
 
   it('la lateralidad no hace seek en el vídeo', () => {
-    // Reanudar sigue desde el mismo punto: nadie reposiciona el mp4.
-    expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
+    // Reanudar sigue desde el mismo punto: ningún camino general reposiciona el
+    // mp4. El prototipo de la Silla con Torsión es la única excepción, acotada.
+    expect(playerGeneral).not.toMatch(/\.currentTime\s*=/);
     expect(playerSrc).not.toContain('fastSeek');
   });
 
@@ -432,14 +444,17 @@ describe('el vídeo se reproduce en bucle natural', () => {
     // `readyState` sigue usándose, pero para saber si el buffer entrante tiene
     // fotograma — no para trocear el mp4 por lados, que es lo que se retiró.
     for (const muerto of ['loadedmetadata', 'timeupdate', 'HAVE_METADATA', 'sideSegments']) {
-      expect(playerSrc, `${muerto} debería haber desaparecido`).not.toContain(muerto);
+      expect(playerGeneral, `${muerto} debería haber desaparecido`).not.toContain(muerto);
     }
     expect(playerSrc).toMatch(/el\.readyState >= 2 \/\* HAVE_CURRENT_DATA \*\//);
   });
 
   it('no queda lógica de sideSegments en ninguna parte', () => {
     for (const src of [playerSrc, sidesSrc, catalogSrc, typesSrc]) {
-      expect(src).not.toContain('sideSegments');
+      // Sin declaración ni uso. La única mención que queda es el comentario de
+      // `poseDemo` que advierte de que NO es aquel sistema — y esa advertencia
+      // es justo lo que evita que alguien los confunda.
+      expect(src).not.toMatch(/sideSegments\s*[?:.(]/);
       expect(src).not.toContain('segmentForHalf');
       expect(src).not.toContain('sideSegmentsFor');
     }
@@ -618,7 +633,7 @@ describe('el botón de pausa para el vídeo', () => {
     expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+activo\.pause\(\);/);
     // `play()` SOLO en `playing`: nada de un `else` genérico que arranque el
     // vídeo en fases donde no toca.
-    expect(playerSrc).toMatch(/\} else if \(phase === 'playing'\) \{\n\s+void activo\.play\(\)/);
+    expect(playerSrc).toMatch(/\} else if \(phase === 'playing'\) \{[\s\S]{0,320}void activo\.play\(\)/);
     expect(playerSrc).not.toMatch(/else void activo\.play\(\)/);
   });
 
@@ -774,14 +789,14 @@ describe('reproductor · ronda y lado salen del MISMO bloque', () => {
 
   it('la pausa manual sigue intacta', () => {
     expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+activo\.pause\(\);/);
-    expect(playerSrc).toMatch(/\} else if \(phase === 'playing'\) \{\n\s+void activo\.play\(\)/);
+    expect(playerSrc).toMatch(/\} else if \(phase === 'playing'\) \{[\s\S]{0,320}void activo\.play\(\)/);
     expect(playerSrc).toMatch(/\}, \[phase, currentIndex, buf\.active\]\);/);
   });
 
   it('el vídeo sigue sin ser tocado por la lateralidad', () => {
-    expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
+    expect(playerGeneral).not.toMatch(/\.currentTime\s*=/);
     expect(playerSrc).not.toContain('sideSegments');
-    expect(playerSrc).not.toContain('timeupdate');
+    expect(playerGeneral).not.toContain('timeupdate');
     expect(playerSrc).toMatch(/autoPlay=\{i === buf\.active\}\n\s+muted\n\s+loop\n\s+playsInline/);
   });
 });
@@ -919,7 +934,7 @@ describe('instrucción · tiempo explícito solo en hold', () => {
     expect(playerSrc).toMatch(/if \(prev <= 1\) \{\n\s+handlePoseComplete\(\);/);
     // el vídeo sigue en bucle natural y sin reposicionar
     expect(playerSrc).toMatch(/autoPlay=\{i === buf\.active\}\n\s+muted\n\s+loop\n\s+playsInline/);
-    expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
+    expect(playerGeneral).not.toMatch(/\.currentTime\s*=/);
     // la pausa manual sigue
     expect(playerSrc).toMatch(/if \(phase === 'paused'\) \{\n\s+activo\.pause\(\);/);
     // las fronteras de bloque siguen igual
@@ -1013,7 +1028,7 @@ describe('doble buffer · las pantallas ya no desmontan nada', () => {
 
 describe('doble buffer · lo que NO cambió', () => {
   it('sin currentTime, sin seek, sin sideSegments', () => {
-    expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
+    expect(playerGeneral).not.toMatch(/\.currentTime\s*=/);
     expect(playerSrc).not.toContain('fastSeek');
     expect(playerSrc).not.toContain('sideSegments');
   });
@@ -1136,7 +1151,7 @@ describe('swap · lo que sigue intacto', () => {
   });
 
   it('sin currentTime, sin seek, loop incondicional', () => {
-    expect(playerSrc).not.toMatch(/\.currentTime\s*=/);
+    expect(playerGeneral).not.toMatch(/\.currentTime\s*=/);
     expect(playerSrc).not.toContain('fastSeek');
     expect(playerSrc).not.toMatch(/loop=\{/);
   });
@@ -1396,5 +1411,189 @@ describe('mode y executionType son ejes independientes', () => {
     const s = YOGA_CATALOG.filter(c => c.splitBySide).map(c => c.id).sort();
     expect(s).toEqual(['pigeon-pose', 'revolved-chair', 'seated-twist',
                        'standing-side-bend', 'triangle-pose']);
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// PROTOTIPO VISUAL · demostración + fotograma de referencia
+//
+// Solo la Silla con Torsión. Un clip corto en bucle entra y sale de la postura
+// una y otra vez mientras la interfaz pide sostener un lado. Esto enseña cómo se
+// llega y después congela un fotograma claro de la postura final.
+// ══════════════════════════════════════════════════════════════════════════
+describe('prototipo visual · solo revolved-chair', () => {
+  it('únicamente la Silla con Torsión lo declara', () => {
+    const con = YOGA_CATALOG.filter(c => c.poseDemo).map(c => c.id);
+    expect(con).toEqual(['revolved-chair']);
+  });
+
+  it('los timestamps son los medidos sobre el archivo real', () => {
+    const d = YOGA_BY_ID.get('revolved-chair')!.poseDemo!;
+    expect(d.sides).toEqual([{ from: 1.2, hold: 4.6 }, { from: 6.0, hold: 8.8 }]);
+  });
+
+  it('hay un tramo por lado y cada uno cabe dentro del clip', () => {
+    const c = YOGA_BY_ID.get('revolved-chair')!;
+    const d = c.poseDemo!;
+    expect(d.sides).toHaveLength(blocksOf({ id: c.id, duration: c.defaultPrescription }).total);
+    for (const s of d.sides) {
+      expect(s.from).toBeGreaterThanOrEqual(0);
+      expect(s.from).toBeLessThan(s.hold);
+      expect(s.hold, 'el fotograma se sale del clip').toBeLessThanOrEqual(c.realSec);
+    }
+    // el segundo tramo empieza después de que acabe la referencia del primero
+    expect(d.sides[1].from).toBeGreaterThan(d.sides[0].hold);
+  });
+
+  it('los timestamps NO deciden nada de la duración', () => {
+    // La receta manda: el bloque sigue saliendo de la prescripción, no del clip.
+    const c = YOGA_BY_ID.get('revolved-chair')!;
+    const pose: YogaPose = { id: c.id, duration: 52 };
+    expect(blockAt(pose, 52)!.durationSec).toBe(26);
+    expect(blockRemainingSec(pose, 52)).toBe(26);
+    expect(blockBoundaryAt(pose, 26)?.index).toBe(1);
+    // nada de eso coincide con los timestamps visuales
+    const d = c.poseDemo!;
+    expect(blockAt(pose, 52)!.durationSec).not.toBe(d.sides[0].hold);
+    expect(c.defaultPrescription).toBe(52);
+  });
+
+  it('el efecto se relanza con la pieza, el buffer y el LADO, y con nada más', () => {
+    expect(playerSrc).toMatch(/\}, \[currentIndex, buf\.active, demoLado\?\.from, demoLado\?\.hold\]\);/);
+    // el lado entra por `demoLado`, que se resuelve desde blockNow.side
+    expect(playerSrc).toMatch(/\?\.poseDemo\?\.sides\[blockNow\?\.side \?\? 0\] \?\? null;/);
+  });
+
+  it('reproduce desde `from` y congela en `hold`', () => {
+    expect(playerSrc).toMatch(/v\.currentTime = demoLado\.from;/);
+    expect(playerSrc).toMatch(/if \(v\.currentTime < demoLado\.hold\) return;\n\s+v\.pause\(\);/);
+  });
+
+  it('encola el seek si iOS no tiene metadata y limpia sus listeners', () => {
+    const proto = playerSrc.slice(playerSrc.indexOf('// ── PROTOTIPO · demostración'),
+                                  playerSrc.indexOf('// Stats for completed screen'));
+    expect(proto).toMatch(/if \(v\.readyState >= 1 \/\* HAVE_METADATA \*\/\) colocar\(\);/);
+    expect(proto).toMatch(/else v\.addEventListener\('loadedmetadata', colocar, \{ once: true \}\);/);
+    expect(proto).toMatch(/v\.removeEventListener\('loadedmetadata', colocar\);/);
+    expect(proto).toMatch(/v\.removeEventListener\('timeupdate', congelar\);/);
+    expect(proto).toMatch(/cancelado = true;/);
+  });
+
+  it('no hace nada si el contenido no declara poseDemo', () => {
+    expect(playerSrc).toMatch(/if \(!v \|\| !demoLado\) return;/);
+    for (const c of YOGA_CATALOG) {
+      if (c.id !== 'revolved-chair') expect(c.poseDemo, c.id).toBeUndefined();
+    }
+  });
+
+  it('no revive sideSegments: es otra cosa y el tipo lo dice', () => {
+    expect(typesSrc).toContain('poseDemo?:');
+    expect(typesSrc).not.toMatch(/sideSegments\s*[?:.(]/);
+    expect(sidesSrc).not.toContain('poseDemo');   // no vive en la lógica de bloques
+  });
+
+  it('el prototipo no toca el temporizador ni el generador', () => {
+    const proto = playerSrc.slice(playerSrc.indexOf('// ── PROTOTIPO · demostración'),
+                                  playerSrc.indexOf('// Stats for completed screen'));
+    for (const x of ['setSecondsRemaining', 'setPhase', 'handlePoseComplete', 'setCurrentIndex', 'setBuf']) {
+      expect(proto, `${x} no debería estar`).not.toContain(x);
+    }
+  });
+
+  it('el resto del reproductor sigue sin tocar el vídeo', () => {
+    // El camino general —lateralidad, buffers, swap, pausa— no reposiciona nada.
+    expect(playerGeneral).not.toMatch(/\.currentTime\s*=/);
+    expect(playerGeneral).not.toContain('timeupdate');
+    expect(playerSrc).not.toMatch(/loop=\{/);
+  });
+
+  it('los demás holds no cambian de comportamiento', () => {
+    for (const id of ['seated-twist', 'pigeon-pose', 'triangle-pose', 'standing-side-bend']) {
+      expect(YOGA_BY_ID.get(id)!.poseDemo, id).toBeUndefined();
+      expect(YOGA_BY_ID.get(id)!.splitBySide, id).toBe(true);   // la guía sigue igual
+    }
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// PROTOTIPO · pausa y reanudación respetan el fotograma de referencia
+//
+// El reproductor no es ejecutable en este entorno de test (no hay elemento de
+// vídeo real), así que estas aserciones fijan la FORMA exacta de las reglas.
+// El comportamiento en dispositivo lo confirma el QA.
+// ══════════════════════════════════════════════════════════════════════════
+describe('prototipo · pausa y reanudación', () => {
+  const proto = () => playerSrc.slice(playerSrc.indexOf('// ── PROTOTIPO · demostración'),
+                                      playerSrc.indexOf('// Stats for completed screen'));
+  const pausaEfecto = () => playerSrc.slice(playerSrc.indexOf('// ── El vídeo sigue al botón de pausa'),
+                                            playerSrc.indexOf('// ── Timer'));
+
+  it('la demo reproduce desde `from`', () => {
+    expect(proto()).toMatch(/v\.currentTime = demoLado\.from;/);
+    expect(proto()).toMatch(/void v\.play\(\)/);
+  });
+
+  it('al alcanzar `hold` pausa y marca el estado visual', () => {
+    expect(proto()).toMatch(/if \(v\.currentTime < demoLado\.hold\) return;\n\s+v\.pause\(\);\n\s+demoCongeladaRef\.current = true;/);
+  });
+
+  it('reanudar DESPUÉS de `hold` no vuelve a mover el vídeo', () => {
+    // El reloj de la práctica sigue; la imagen se queda.
+    expect(pausaEfecto()).toMatch(/if \(demoCongeladaRef\.current\) return;\n\s+void activo\.play\(\)/);
+  });
+
+  it('pausar sigue deteniendo el vídeo en cualquier momento', () => {
+    expect(pausaEfecto()).toMatch(/if \(phase === 'paused'\) \{\n\s+activo\.pause\(\);/);
+    // la guarda del fotograma solo afecta a la reanudación, no a la pausa
+    const pausar = pausaEfecto().slice(0, pausaEfecto().indexOf("} else if (phase === 'playing')"));
+    expect(pausar).not.toContain('demoCongeladaRef');
+  });
+
+  it('reanudar ANTES de `hold` continúa la demostración', () => {
+    // El flag solo se levanta al congelar, así que mientras corre el tramo
+    // `from → hold` vale false y `play()` se ejecuta con normalidad.
+    expect(proto()).toMatch(/demoCongeladaRef\.current = false;/);
+    const antesDeMarcar = proto().slice(0, proto().indexOf('demoCongeladaRef.current = true'));
+    expect(antesDeMarcar).not.toMatch(/demoCongeladaRef\.current = true/);
+  });
+
+  it('cambiar de lado reinicia el estado y carga SU tramo', () => {
+    // El efecto se relanza cuando cambia `demoLado`, que sale de blockNow.side.
+    expect(proto()).toMatch(/demoCongeladaRef\.current = false;\n\s+const v = videoRefs\.current\[buf\.active\];/);
+    expect(playerSrc).toMatch(/\}, \[currentIndex, buf\.active, demoLado\?\.from, demoLado\?\.hold\]\);/);
+    const d = YOGA_BY_ID.get('revolved-chair')!.poseDemo!;
+    expect(d.sides[0]).not.toEqual(d.sides[1]);
+  });
+
+  it('un contenido sin poseDemo conserva su bucle natural', () => {
+    // El efecto sale antes de tocar nada y el flag queda en false, así que la
+    // pausa y la reanudación funcionan como siempre.
+    expect(proto()).toMatch(/if \(!v \|\| !demoLado\) return;/);
+    expect(playerSrc).not.toMatch(/loop=\{/);
+    for (const id of ['cat-cow', 'seated-twist', 'child-pose', 'sun-salutation']) {
+      expect(YOGA_BY_ID.get(id)!.poseDemo, id).toBeUndefined();
+    }
+  });
+
+  it('poseDemo no interviene en la duración ni en la prescripción', () => {
+    const c = YOGA_BY_ID.get('revolved-chair')!;
+    const pose: YogaPose = { id: c.id, duration: 52 };
+    // el bloque sale de la receta, no del clip
+    expect(blockAt(pose, 52)!.durationSec).toBe(26);
+    expect(blockRemainingSec(pose, 26)).toBe(26);
+    expect(c.defaultPrescription).toBe(52);
+    // y el efecto no toca nada del reloj
+    for (const x of ['setSecondsRemaining', 'setPhase', 'handlePoseComplete', 'setCurrentIndex']) {
+      expect(proto(), `${x} no debería estar`).not.toContain(x);
+    }
+    // ni el modelo de bloques conoce el prototipo
+    expect(sidesSrc).not.toContain('poseDemo');
+    expect(sidesSrc).not.toContain('demoCongelada');
+  });
+
+  it('el estado visual vive en un ref, no en un reloj nuevo', () => {
+    expect(playerSrc).toMatch(/const demoCongeladaRef = useRef\(false\);/);
+    expect((playerSrc.match(/setInterval\(/g) ?? []).length).toBe(1);
+    expect(playerSrc).not.toContain('setDemoCongelada');
   });
 });

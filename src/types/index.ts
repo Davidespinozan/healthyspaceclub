@@ -418,6 +418,25 @@ export interface YogaContent {
    */
   splitBySide?: boolean;
   /**
+   * PROTOTIPO VISUAL · hoy solo lo declara `revolved-chair`.
+   *
+   * Una retención con un clip corto y en bucle se lee mal: el vídeo entra y sale
+   * de la postura una y otra vez mientras la interfaz pide sostener un lado.
+   * Esto enseña CÓMO se llega a la postura y después congela un fotograma claro
+   * de la postura final, que se queda de referencia mientras la persona sostiene.
+   *
+   * NO es el antiguo `sideSegments`. Aquello recortaba el vídeo por lados y
+   * pretendía sincronizarlo con la prescripción. Esto es solo presentación: los
+   * timestamps no deciden NADA de la duración —ni la prescrita, ni la del
+   * bloque, ni el cambio de lado, ni el temporizador—. La receta manda.
+   *
+   * Un tramo por lado, en el orden en que la práctica los ejecuta.
+   *  · `from` — dónde empieza a verse cómo se entra a la postura.
+   *  · `hold` — fotograma final donde se congela como referencia.
+   */
+  poseDemo?: { sides: Array<{ from: number; hold: number }> };
+
+  /**
    * Modalidades para las que este contenido puede ABRIR una práctica.
    *
    * `opening` y `centering` dejan de ser lo mismo. `centering` sigue siendo una
