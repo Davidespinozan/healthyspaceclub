@@ -24,6 +24,8 @@ import {
 import sidesSrc from '../yogaSides.ts?raw';
 import catalogSrc from '../../data/yogaCatalog.ts?raw';
 import typesSrc from '../../types/index.ts?raw';
+import generatorSrc from '../yogaGenerator.ts?raw';
+import validationSrc from '../workoutValidation.ts?raw';
 import {
   generateYogaSession, yogaSeed, yogaSeedBase, durationsFor, type YogaDuration,
 } from '../yogaGenerator';
@@ -1422,9 +1424,10 @@ describe('mode y executionType son ejes independientes', () => {
 // llega y después congela un fotograma claro de la postura final.
 // ══════════════════════════════════════════════════════════════════════════
 describe('prototipo visual · solo revolved-chair', () => {
-  it('únicamente la Silla con Torsión lo declara', () => {
-    const con = YOGA_CATALOG.filter(c => c.poseDemo).map(c => c.id);
-    expect(con).toEqual(['revolved-chair']);
+  it('solo lo declaran contenidos hold', () => {
+    const con = YOGA_CATALOG.filter(c => c.poseDemo);
+    expect(con.length).toBeGreaterThan(0);
+    for (const c of con) expect(c.executionType, c.id).toBe('hold');
   });
 
   it('los timestamps son los medidos sobre el archivo real', () => {
@@ -1485,8 +1488,9 @@ describe('prototipo visual · solo revolved-chair', () => {
 
   it('no hace nada si el contenido no declara poseDemo', () => {
     expect(playerSrc).toMatch(/if \(!v \|\| !demoLado\) return;/);
+    // repeat y follow nunca lo llevan: su vídeo sigue en movimiento
     for (const c of YOGA_CATALOG) {
-      if (c.id !== 'revolved-chair') expect(c.poseDemo, c.id).toBeUndefined();
+      if (c.executionType !== 'hold') expect(c.poseDemo, c.id).toBeUndefined();
     }
   });
 
@@ -1511,10 +1515,11 @@ describe('prototipo visual · solo revolved-chair', () => {
     expect(playerSrc).not.toMatch(/loop=\{/);
   });
 
-  it('los demás holds no cambian de comportamiento', () => {
+  it('la guía de lateralidad de los demás holds no cambió', () => {
     for (const id of ['seated-twist', 'pigeon-pose', 'triangle-pose', 'standing-side-bend']) {
-      expect(YOGA_BY_ID.get(id)!.poseDemo, id).toBeUndefined();
-      expect(YOGA_BY_ID.get(id)!.splitBySide, id).toBe(true);   // la guía sigue igual
+      expect(YOGA_BY_ID.get(id)!.splitBySide, id).toBe(true);
+      // ahora sí tienen poseDemo, pero con un tramo por bloque
+      expect(YOGA_BY_ID.get(id)!.poseDemo!.sides, id).toHaveLength(2);
     }
   });
 });
@@ -1576,8 +1581,10 @@ describe('prototipo · pausa y reanudación', () => {
     // pausa y la reanudación funcionan como siempre.
     expect(proto()).toMatch(/if \(!v \|\| !demoLado\) return;/);
     expect(playerSrc).not.toMatch(/loop=\{/);
-    for (const id of ['cat-cow', 'seated-twist', 'child-pose', 'sun-salutation']) {
+    // repeat y follow: el movimiento es parte de la ejecución
+    for (const id of ['cat-cow', 'sun-salutation', 'flow-vinyasa', 'bridge-pose', 'flow-cierre']) {
       expect(YOGA_BY_ID.get(id)!.poseDemo, id).toBeUndefined();
+      expect(YOGA_BY_ID.get(id)!.executionType, id).not.toBe('hold');
     }
   });
 
@@ -1696,7 +1703,187 @@ describe('prototipo · dos modos por lado', () => {
     expect(playerSrc).not.toMatch(/loop=\{/);
   });
 
-  it('ningún otro contenido declara poseDemo', () => {
-    expect(YOGA_CATALOG.filter(c => c.poseDemo).map(c => c.id)).toEqual(['revolved-chair']);
+  it('los 13 que lo declaran son todos hold', () => {
+    const con = YOGA_CATALOG.filter(c => c.poseDemo);
+    expect(con).toHaveLength(13);
+    for (const c of con) expect(c.executionType, c.id).toBe('hold');
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// poseDemo EXTENDIDO A LOS HOLDS
+//
+// Timestamps medidos clip a clip: perfil de movimiento, hoja de contacto y
+// verificación de cada fotograma a resolución completa. Si alguno cambia sin
+// volver a medir el archivo, estos tests lo cantan.
+// ══════════════════════════════════════════════════════════════════════════
+describe('poseDemo · cobertura de los holds', () => {
+  const ESPERADO: Record<string, Array<{ from?: number; hold: number }>> = {
+    'child-pose':          [{ from: 0, hold: 5.0 }],
+    'puppy-pose':          [{ from: 0, hold: 8.5 }],
+    'camel-pose':          [{ from: 0, hold: 6.5 }],
+    'locust-pose':         [{ from: 0, hold: 4.5 }],
+    'boat-pose':           [{ from: 0, hold: 9.0 }],
+    'seated-forward-fold': [{ from: 0, hold: 8.0 }],
+    'standing-side-bend':  [{ from: 0, hold: 8.0 }, { hold: 21.5 }],
+    'triangle-pose':       [{ from: 0, hold: 7.0 }, { hold: 22.0 }],
+    'pigeon-pose':         [{ from: 0, hold: 6.0 }, { hold: 27.0 }],
+    'seated-twist':        [{ from: 0, hold: 6.0 }, { hold: 16.0 }],
+    'lizard-lunge':        [{ from: 0, hold: 8.0 }, { hold: 8.0 }],
+    'side-plank-yoga':     [{ from: 0, hold: 5.0 }, { hold: 5.0 }],
+    'revolved-chair':      [{ from: 1.2, hold: 4.6 }, { hold: 8.8 }],
+  };
+
+  it('exactamente 13 contenidos lo declaran, y son estos', () => {
+    const con = YOGA_CATALOG.filter(c => c.poseDemo).map(c => c.id).sort();
+    expect(con).toHaveLength(13);
+    expect(con).toEqual(Object.keys(ESPERADO).sort());
+  });
+
+  it.each(Object.entries(ESPERADO))('%s tiene los timestamps auditados', (id, sides) => {
+    expect(YOGA_BY_ID.get(id)!.poseDemo!.sides).toEqual(sides);
+  });
+
+  it('revolved-chair conserva exactamente lo ya desplegado', () => {
+    expect(YOGA_BY_ID.get('revolved-chair')!.poseDemo!.sides)
+      .toEqual([{ from: 1.2, hold: 4.6 }, { hold: 8.8 }]);
+  });
+
+  it('child-pose-brazos NO lo declara', () => {
+    // Su clip tiene dos posiciones de brazos y la descripción pide las dos:
+    // congelar en una contradiría la instrucción que la persona está leyendo.
+    const c = YOGA_BY_ID.get('child-pose-brazos')!;
+    expect(c.poseDemo).toBeUndefined();
+    expect(c.executionType).toBe('hold');
+    expect(c.description).toContain('después llévalos hacia atrás');
+  });
+
+  it('wheel-pose no cambió y sigue fuera de la generación', () => {
+    const c = YOGA_BY_ID.get('wheel-pose')!;
+    expect(c.poseDemo).toBeUndefined();
+    expect(c.excludeFromAutoGeneration).toBe(true);
+  });
+
+  it('ningún repeat ni follow lo recibió por error', () => {
+    for (const c of YOGA_CATALOG) {
+      if (c.poseDemo) expect(c.executionType, `${c.id} no es hold`).toBe('hold');
+    }
+    // Cat-Cow y los flows siguen con su vídeo en movimiento
+    for (const id of ['cat-cow', 'revolved-chair-nope', 'sun-salutation', 'flow-vinyasa', 'bridge-pose']) {
+      const c = YOGA_BY_ID.get(id);
+      if (c && c.executionType !== 'hold') expect(c.poseDemo, id).toBeUndefined();
+    }
+  });
+});
+
+describe('poseDemo · coherencia con el clip y con los bloques', () => {
+  it('ningún fotograma se sale de la duración real del archivo', () => {
+    for (const c of YOGA_CATALOG) {
+      if (!c.poseDemo) continue;
+      for (const s of c.poseDemo.sides) {
+        expect(s.hold, `${c.id} hold fuera del clip`).toBeLessThanOrEqual(c.realSec);
+        expect(s.hold, `${c.id} hold negativo`).toBeGreaterThan(0);
+        if (s.from !== undefined) {
+          expect(s.from, `${c.id} from negativo`).toBeGreaterThanOrEqual(0);
+          expect(s.from, `${c.id} from >= hold`).toBeLessThan(s.hold);
+        }
+      }
+    }
+  });
+
+  it('hay un tramo por bloque: uno si no se parte, dos si sí', () => {
+    for (const c of YOGA_CATALOG) {
+      if (!c.poseDemo) continue;
+      const pose: YogaPose = c.laterality === 'unilateral'
+        ? { id: c.id, duration: c.defaultPrescription * 2, sides: 'both' }
+        : { id: c.id, duration: c.defaultPrescription };
+      expect(c.poseDemo.sides).toHaveLength(blocksOf(pose).total);
+    }
+  });
+
+  it('`from: 0` es entrada animada, no ausencia de entrada', () => {
+    // El reproductor distingue con `from === undefined`, nunca con `if (from)`.
+    const conCero = YOGA_CATALOG.filter(c => c.poseDemo?.sides[0].from === 0);
+    expect(conCero.length).toBe(12);
+    expect(playerSrc).toMatch(/if \(from === undefined\) \{/);
+    expect(playerSrc).not.toMatch(/if \(!from\)/);
+    expect(playerSrc).not.toMatch(/from \?\?/);
+  });
+
+  it('los segundos lados saltan directo: sin `from`', () => {
+    for (const c of YOGA_CATALOG) {
+      if (!c.poseDemo || c.poseDemo.sides.length < 2) continue;
+      expect(c.poseDemo.sides[1].from, `${c.id} segundo lado no debe animarse`).toBeUndefined();
+    }
+  });
+
+  it('Lagarto y Plancha Lateral repiten el mismo fotograma en ambos lados', () => {
+    // Su clip solo trae un lado: preferimos una referencia fija a un bucle.
+    for (const id of ['lizard-lunge', 'side-plank-yoga']) {
+      const s = YOGA_BY_ID.get(id)!.poseDemo!.sides;
+      expect(YOGA_BY_ID.get(id)!.laterality, id).toBe('unilateral');
+      expect(s[0].hold, id).toBe(s[1].hold);
+    }
+    // en los `contained` los dos fotogramas SÍ son distintos
+    for (const id of ['standing-side-bend', 'triangle-pose', 'pigeon-pose', 'seated-twist', 'revolved-chair']) {
+      const s = YOGA_BY_ID.get(id)!.poseDemo!.sides;
+      expect(s[0].hold, id).not.toBe(s[1].hold);
+    }
+  });
+});
+
+describe('poseDemo · no toca nada del reloj ni del vídeo general', () => {
+  it('la duración y el contador siguen saliendo de la receta', () => {
+    for (const c of YOGA_CATALOG) {
+      if (!c.poseDemo) continue;
+      const f = c.laterality === 'unilateral' ? 2 : 1;
+      const pose: YogaPose = { id: c.id, duration: c.defaultPrescription * f,
+        ...(f === 2 ? { sides: 'both' as const } : {}) };
+      const b = blockAt(pose, pose.duration)!;
+      // el bloque dura lo que dice la prescripción, no el clip
+      // el bloque se deriva de la PRESCRIPCIÓN, no del clip
+      expect(b.durationSec).toBe(Math.floor((c.defaultPrescription * f) / b.total));
+      expect(blockRemainingSec(pose, pose.duration)).toBe(b.durationSec);
+      // y ningún timestamp visual participa en ese cálculo
+      for (const sd of c.poseDemo.sides) {
+        expect(b.durationSec, `${c.id} usó un timestamp visual`).not.toBe(sd.hold);
+      }
+    }
+  });
+
+  it('las 130 prácticas no cambiaron de duración', () => {
+    for (const { min, plan } of SIM) {
+      const total = plan.poses.reduce((s, p) => s + p.duration, 0);
+      expect(total).toBe(plan.totalDuration);
+      expect(Math.abs(total - min * 60)).toBeLessThanOrEqual(min * 60 * 0.08 + 1);
+    }
+  });
+
+  it('sigue habiendo un solo reloj y ningún sideSegments', () => {
+    expect((playerSrc.match(/setInterval\(/g) ?? []).length).toBe(1);
+    expect(playerSrc).not.toMatch(/sideSegments\s*[?:.(]/);
+    expect(sidesSrc).not.toContain('poseDemo');
+  });
+
+  it('el doble buffer y la readiness siguen intactos', () => {
+    expect(playerSrc).toMatch(/src=\{buf\.urls\[i\] \?\? undefined\}/);
+    expect(playerSrc).toMatch(/el\.readyState >= 2 \/\* HAVE_CURRENT_DATA \*\//);
+    expect(playerSrc).toMatch(/urls\[liberado\] = nxt;/);
+    expect(playerSrc).not.toMatch(/loop=\{/);
+  });
+
+  it('el siguiente ejercicio arranca aunque el anterior quedara congelado', () => {
+    // El reinicio del estado visual corre en RENDER, antes que el efecto de
+    // pausa. Si viviera dentro del efecto, ese efecto vería «congelado» y
+    // dejaría sin arrancar el vídeo de la pieza siguiente.
+    const iReset = playerSrc.indexOf('demoClaveRef.current = demoClave');
+    const iEfecto = playerSrc.indexOf('useEffect', playerSrc.indexOf('const demoLado'));
+    expect(iReset).toBeLessThan(iEfecto);
+    expect(playerSrc).toMatch(/\$\{currentIndex\}\|\$\{blockNow\?\.side \?\? 0\}\|/);
+  });
+
+  it('el generador no lee poseDemo', () => {
+    expect(generatorSrc).not.toContain('poseDemo');
+    expect(validationSrc).not.toContain('poseDemo');
   });
 });

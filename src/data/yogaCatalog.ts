@@ -43,6 +43,8 @@ export const YOGA_CATALOG: YogaContent[] = [
     executionType: 'hold',
     family: 'child-pose',
     openerFor: ['relajacion', 'movilidad', 'flow'],
+    // 0–3,5 se pliega hasta la postura · 3,5–12,2 la sostiene · después sale.
+    poseDemo: { sides: [{ from: 0, hold: 5.0 }] },
     description: 'Descansa sentada sobre los talones con los brazos extendidos al frente.',
     descriptionEn: "Rest back on your heels with your arms stretched forward.",
   },
@@ -66,6 +68,8 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'kneeling', posEnd: 'kneeling',
     executionType: 'hold',
     openerFor: ['movilidad', 'relajacion'],
+    // 0–7 se arrodilla, estira brazos y baja el pecho · 7–18,5 sostiene.
+    poseDemo: { sides: [{ from: 0, hold: 8.5 }] },
     description: 'Desde la postura del niño, lleva el pecho al suelo manteniendo las caderas altas.',
     descriptionEn: "From child's pose, melt your chest down while keeping the hips high.",
   },
@@ -83,6 +87,8 @@ export const YOGA_CATALOG: YogaContent[] = [
     executionType: 'hold',
     splitBySide: true,
     openerFor: ['movilidad'],
+    // 0–5 sube brazos y se inclina · 5–12,2 LADO 1 · 12,2–18,3 vuelve al centro · 18,5–25,8 LADO 2.
+    poseDemo: { sides: [{ from: 0, hold: 8.0 }, { hold: 21.5 }] },
     description: 'De pie y con los brazos arriba, inclina el tronco a un lado y al otro.',
     descriptionEn: "Standing with arms overhead, bend your torso to each side.",
   },
@@ -247,6 +253,8 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'standing', posEnd: 'standing',
     executionType: 'hold',
     splitBySide: true,
+    // 0–4 abre piernas · 4–14 LADO 1 de frente · 14–19 gira 180° · 19–29 LADO 2 de espaldas.
+    poseDemo: { sides: [{ from: 0, hold: 7.0 }, { hold: 22.0 }] },
     description: 'Triángulo hacia cada lado, con las piernas abiertas.',
     descriptionEn: "Triangle to each side, with the legs wide.",
   },
@@ -257,6 +265,11 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 45, minSec: 30, maxSec: 70, repeatable: false,
     posStart: 'prone', posEnd: 'standing',
     executionType: 'hold',
+    // 0–6 entra desde plancha · 6–10,8 sostiene sobre antebrazos.
+    // UNILATERAL: el clip solo trae un lado, así que los dos bloques usan el
+    // MISMO fotograma. Mejor una referencia fija del lado equivocado que un
+    // bucle entrando y saliendo mientras la instrucción pide sostener.
+    poseDemo: { sides: [{ from: 0, hold: 8.0 }, { hold: 8.0 }] },
     description: 'Zancada profunda con las manos dentro del pie, bajando a los antebrazos.',
     descriptionEn: "Deep lunge with hands inside the foot, lowering to the forearms.",
   },
@@ -279,6 +292,9 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 30, minSec: 20, maxSec: 45, repeatable: false,
     posStart: 'prone', posEnd: 'prone',
     executionType: 'hold',
+    // 0–4 entra a la plancha lateral · 4,5–8 sostiene.
+    // UNILATERAL: mismo fotograma en los dos bloques, igual que el Lagarto.
+    poseDemo: { sides: [{ from: 0, hold: 5.0 }, { hold: 5.0 }] },
     description: 'Plancha lateral sostenida sobre un brazo.',
     descriptionEn: "Side plank held on one arm.",
   },
@@ -289,6 +305,8 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 35, minSec: 25, maxSec: 50, repeatable: false,
     posStart: 'seated', posEnd: 'seated',
     executionType: 'hold',
+    // 0–8 entra y eleva las piernas · 8,2–10 sostiene.
+    poseDemo: { sides: [{ from: 0, hold: 9.0 }] },
     description: 'Equilibrio sentada con las piernas elevadas del suelo.',
     descriptionEn: "Seated balance with the legs lifted off the floor.",
   },
@@ -299,6 +317,8 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 35, minSec: 25, maxSec: 50, repeatable: false,
     posStart: 'kneeling', posEnd: 'kneeling',
     executionType: 'hold',
+    // 0–4,5 se arrodilla y abre el pecho · 4,5–9 sostiene · 9–12,9 vuelve.
+    poseDemo: { sides: [{ from: 0, hold: 6.5 }] },
     description: 'Extensión de columna desde las rodillas, abriendo el pecho.',
     descriptionEn: "Kneeling backbend, opening the chest.",
     difficulty: 'intermedio',
@@ -310,6 +330,8 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 30, minSec: 20, maxSec: 45, repeatable: true,
     posStart: 'prone', posEnd: 'prone',
     executionType: 'hold',
+    // 0–2,5 eleva pecho y piernas · 2,5–6,5 sostiene · 7–10,2 baja.
+    poseDemo: { sides: [{ from: 0, hold: 4.5 }] },
     description: 'Boca abajo, eleva el pecho y las piernas del suelo.',
     descriptionEn: "Lying face down, lift your chest and legs off the floor.",
   },
@@ -360,6 +382,8 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'quadruped', posEnd: 'seated',
     executionType: 'hold',
     splitBySide: true,
+    // 0–3 desde cuadrupedia · 3–16,2 LADO 1 · 16,2–22,8 cambia · 22,8–32 LADO 2.
+    poseDemo: { sides: [{ from: 0, hold: 6.0 }, { hold: 27.0 }] },
     description: 'Paloma con el tronco inclinado sobre la pierna, hacia cada lado.',
     descriptionEn: "Pigeon folding over the front leg, on each side.",
   },
@@ -370,6 +394,8 @@ export const YOGA_CATALOG: YogaContent[] = [
     defaultPrescription: 50, minSec: 35, maxSec: 100, repeatable: false,
     posStart: 'seated', posEnd: 'seated',
     executionType: 'hold',
+    // 0–5,9 se inclina al frente · 5,9–10 sostiene.
+    poseDemo: { sides: [{ from: 0, hold: 8.0 }] },
     description: 'Sentada con las piernas extendidas, inclina el tronco al frente.',
     descriptionEn: "Seated with legs extended, fold the torso forward.",
   },
@@ -381,6 +407,8 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'seated', posEnd: 'seated',
     executionType: 'hold',
     splitBySide: true,
+    // 0–3,4 cruza pierna y gira · 3,4–9,2 LADO 1 · 9,2–13,4 cambia · 13,4–18,2 LADO 2.
+    poseDemo: { sides: [{ from: 0, hold: 6.0 }, { hold: 16.0 }] },
     description: 'Torsión de columna sentada, hacia cada lado.',
     descriptionEn: "Seated spinal twist to each side.",
   },
