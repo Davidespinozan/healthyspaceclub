@@ -324,13 +324,16 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
   };
 
   // ── PROTOTIPO · demostración + fotograma de referencia ─────────────────
-  // Solo para el contenido que declara `poseDemo` (hoy, la Silla con Torsión).
-  // Enseña cómo se entra a la postura del lado en curso y congela un fotograma
-  // claro de la postura final, que se queda de referencia el resto del bloque.
+  // Solo para los contenidos que declaran `poseDemo`. Enseña cómo se entra a la
+  // postura del lado en curso y congela un fotograma claro de la postura final,
+  // que se queda de referencia el resto del bloque.
   //
   // NO decide nada de la duración: el temporizador, el bloque y el cambio de
   // lado siguen saliendo de la receta. Si el contenido no declara `poseDemo`,
   // aquí no pasa absolutamente nada y el vídeo va en bucle natural.
+  //
+  // `mirror` refleja la imagen del bloque en curso. El reproductor no sabe qué
+  // ejercicios lo necesitan: se limita a leer la bandera del tramo.
   const demoLado = (currentPose ? YOGA_BY_ID.get(currentPose.id) : undefined)
     ?.poseDemo?.sides[blockNow?.side ?? 0] ?? null;
 
@@ -595,7 +598,17 @@ export default function YogaFlowPlayer({ plan, exerciseBank, onClose, onComplete
                 key={i}
                 ref={el => { videoRefs.current[i] = el; }}
                 src={buf.urls[i] ?? undefined}
-                className={i === buf.active ? 'yfp-video-on' : 'yfp-video-off'}
+                // El espejo es un dato DERIVADO del render, no un estilo que se
+                // escriba a mano sobre el elemento: se recalcula en cada commit
+                // a partir del tramo en curso, así que al cambiar de bloque o de
+                // ejercicio desaparece solo. Ningún ejercicio puede heredarlo.
+                // Va en el <video>, nunca en `.yfp-video-area`, que es quien
+                // sostiene overlays, textos y controles.
+                className={
+                  i === buf.active
+                    ? (demoLado?.mirror ? 'yfp-video-on yfp-video-mirror' : 'yfp-video-on')
+                    : 'yfp-video-off'
+                }
                 autoPlay={i === buf.active}
                 muted
                 loop

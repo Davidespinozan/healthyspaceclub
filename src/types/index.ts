@@ -437,8 +437,14 @@ export interface YogaContent {
    *    salta directo a `hold` sin demostración: es lo que quieres a partir del
    *    segundo lado, donde la persona ya vio cómo se hace y lo único que
    *    necesita es la referencia de la forma.
+   *  · `mirror` — OPCIONAL. Refleja horizontalmente SOLO la imagen del vídeo
+   *    durante ese bloque. Es para los clips `unilateral`, que únicamente traen
+   *    grabado un lado: sin esto el segundo bloque enseña el lado contrario al
+   *    que la interfaz está pidiendo. Se declara aquí, contenido a contenido,
+   *    para que el reproductor no tenga que conocer ningún id. No afecta a la
+   *    duración, ni a la lateralidad funcional, ni a nada fuera del <video>.
    */
-  poseDemo?: { sides: Array<{ from?: number; hold: number }> };
+  poseDemo?: { sides: Array<{ from?: number; hold: number; mirror?: boolean }> };
 
   /**
    * Modalidades para las que este contenido puede ABRIR una práctica.

@@ -961,7 +961,9 @@ describe('doble buffer · dos <video> persistentes', () => {
   it('el slot inactivo sigue renderizado, no oculto con display:none', () => {
     // Con `display:none` el navegador puede decidir no descargarlo, que es justo
     // lo contrario de lo que buscamos.
-    expect(playerSrc).toMatch(/className=\{i === buf\.active \? 'yfp-video-on' : 'yfp-video-off'\}/);
+    // El inactivo se decide con el MISMO ternario de siempre; lo único que se
+    // añadió en la rama activa es el espejo de presentación.
+    expect(playerSrc).toMatch(/i === buf\.active\n\s+\? \(demoLado\?\.mirror \? 'yfp-video-on yfp-video-mirror' : 'yfp-video-on'\)\n\s+: 'yfp-video-off'/);
     expect(cssSrc).toMatch(/\.yfp-video-off\s*\{[^}]*opacity:\s*0/);
     expect(cssSrc).not.toMatch(/\.yfp-video-off\s*\{[^}]*display:\s*none/);
   });
@@ -1718,19 +1720,19 @@ describe('prototipo · dos modos por lado', () => {
 // volver a medir el archivo, estos tests lo cantan.
 // ══════════════════════════════════════════════════════════════════════════
 describe('poseDemo · cobertura de los holds', () => {
-  const ESPERADO: Record<string, Array<{ from?: number; hold: number }>> = {
+  const ESPERADO: Record<string, Array<{ from?: number; hold: number; mirror?: boolean }>> = {
     'child-pose':          [{ from: 0, hold: 5.0 }],
-    'puppy-pose':          [{ from: 0, hold: 8.5 }],
+    'puppy-pose':          [{ from: 9.5, hold: 14.0 }],
     'camel-pose':          [{ from: 0, hold: 6.5 }],
     'locust-pose':         [{ from: 0, hold: 4.5 }],
     'boat-pose':           [{ from: 0, hold: 9.0 }],
     'seated-forward-fold': [{ from: 0, hold: 8.0 }],
     'standing-side-bend':  [{ from: 0, hold: 8.0 }, { hold: 21.5 }],
     'triangle-pose':       [{ from: 0, hold: 7.0 }, { hold: 22.0 }],
-    'pigeon-pose':         [{ from: 0, hold: 6.0 }, { hold: 27.0 }],
+    'pigeon-pose':         [{ from: 9.0, hold: 13.0 }, { hold: 30.0 }],
     'seated-twist':        [{ from: 0, hold: 6.0 }, { hold: 16.0 }],
-    'lizard-lunge':        [{ from: 0, hold: 8.0 }, { hold: 8.0 }],
-    'side-plank-yoga':     [{ from: 0, hold: 5.0 }, { hold: 5.0 }],
+    'lizard-lunge':        [{ from: 0, hold: 8.0 }, { hold: 8.0, mirror: true }],
+    'side-plank-yoga':     [{ from: 0, hold: 5.0 }, { hold: 5.0, mirror: true }],
     'revolved-chair':      [{ from: 1.2, hold: 4.6 }, { hold: 8.8 }],
   };
 
@@ -1747,6 +1749,24 @@ describe('poseDemo · cobertura de los holds', () => {
   it('revolved-chair conserva exactamente lo ya desplegado', () => {
     expect(YOGA_BY_ID.get('revolved-chair')!.poseDemo!.sides)
       .toEqual([{ from: 1.2, hold: 4.6 }, { hold: 8.8 }]);
+  });
+
+  // ── QA en iPhone · los tres fotogramas corregidos ──────────────────────
+  it('Cachorro arranca en 9,5 y congela en 14: no pasa por la postura del Niño', () => {
+    // El clip abre con Niño de brazos estirados —caderas sobre los talones—
+    // hasta ~10,5. Congelábamos en 8,5, que era exactamente esa forma.
+    const s = YOGA_BY_ID.get('puppy-pose')!.poseDemo!.sides;
+    expect(s).toHaveLength(1);
+    expect(s[0]).toEqual({ from: 9.5, hold: 14.0 });
+    expect(s[0].from).toBeGreaterThan(8.5);   // el fotograma viejo queda fuera
+  });
+
+  it('Paloma congela la variante PLEGADA, que es la que promete la descripción', () => {
+    const c = YOGA_BY_ID.get('pigeon-pose')!;
+    expect(c.poseDemo!.sides).toEqual([{ from: 9.0, hold: 13.0 }, { hold: 30.0 }]);
+    expect(c.description).toContain('tronco inclinado sobre la pierna');
+    // el segundo lado salta directo: no se reproduce la transición entre lados
+    expect(c.poseDemo!.sides[1].from).toBeUndefined();
   });
 
   it('child-pose-brazos NO lo declara', () => {
@@ -1804,7 +1824,7 @@ describe('poseDemo · coherencia con el clip y con los bloques', () => {
   it('`from: 0` es entrada animada, no ausencia de entrada', () => {
     // El reproductor distingue con `from === undefined`, nunca con `if (from)`.
     const conCero = YOGA_CATALOG.filter(c => c.poseDemo?.sides[0].from === 0);
-    expect(conCero.length).toBe(12);
+    expect(conCero.length).toBe(10);   // Cachorro (9,5), Paloma (9) y Silla (1,2) entran más tarde
     expect(playerSrc).toMatch(/if \(from === undefined\) \{/);
     expect(playerSrc).not.toMatch(/if \(!from\)/);
     expect(playerSrc).not.toMatch(/from \?\?/);
@@ -1829,6 +1849,145 @@ describe('poseDemo · coherencia con el clip y con los bloques', () => {
       const s = YOGA_BY_ID.get(id)!.poseDemo!.sides;
       expect(s[0].hold, id).not.toBe(s[1].hold);
     }
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// MIRROR · espejo de PRESENTACIÓN para los clips unilaterales
+//
+// `lizard-lunge` y `side-plank-yoga` solo traen grabado un lado. Sin espejo, el
+// segundo bloque enseña el lado contrario al que la interfaz está pidiendo.
+// `mirror` es metadata del TRAMO, no un id que el reproductor tenga que
+// conocer, y afecta exclusivamente al <video>.
+// ══════════════════════════════════════════════════════════════════════════
+describe('poseDemo · mirror', () => {
+  /**
+   * La misma derivación que hace el reproductor en render, reproducida aquí
+   * para poder recorrer una práctica entera sin montar el componente.
+   */
+  const claseDe = (id: string | null, side: number, slot: 0 | 1, activo: 0 | 1) => {
+    const demoLado = (id ? YOGA_BY_ID.get(id) : undefined)?.poseDemo?.sides[side] ?? null;
+    return slot === activo
+      ? (demoLado?.mirror ? 'yfp-video-on yfp-video-mirror' : 'yfp-video-on')
+      : 'yfp-video-off';
+  };
+
+  it('solo los segundos lados de Lagarto y Plancha Lateral lo declaran', () => {
+    const conMirror: string[] = [];
+    for (const c of YOGA_CATALOG) {
+      for (const [i, s] of (c.poseDemo?.sides ?? []).entries()) {
+        if (s.mirror) conMirror.push(`${c.id}#${i}`);
+      }
+    }
+    expect(conMirror.sort()).toEqual(['lizard-lunge#1', 'side-plank-yoga#1']);
+  });
+
+  it('los primeros lados NUNCA van reflejados', () => {
+    for (const c of YOGA_CATALOG) {
+      expect(c.poseDemo?.sides[0].mirror, `${c.id} primer lado reflejado`).toBeUndefined();
+    }
+  });
+
+  it('solo lo declaran contenidos `unilateral`', () => {
+    // En un clip `contained` los dos lados están grabados: reflejar sobraría.
+    for (const c of YOGA_CATALOG) {
+      if ((c.poseDemo?.sides ?? []).some(s => s.mirror)) {
+        expect(c.laterality, c.id).toBe('unilateral');
+      }
+    }
+  });
+
+  it('el espejo se deriva del tramo, no de una lista de ids', () => {
+    const i = playerSrc.indexOf('ref={el => { videoRefs.current[i] = el; }}');
+    const bloque = playerSrc.slice(i, playerSrc.indexOf('/>', i) + 2);
+    expect(bloque).toContain("demoLado?.mirror ? 'yfp-video-on yfp-video-mirror' : 'yfp-video-on'");
+    // ningún id de ejercicio cableado en el reproductor
+    for (const id of ['lizard-lunge', 'side-plank-yoga', 'puppy-pose', 'pigeon-pose']) {
+      expect(playerSrc, `${id} no debe aparecer en el reproductor`).not.toContain(id);
+    }
+  });
+
+  it('el reflejo se aplica en render: no hay transform imperativo que resetear', () => {
+    // Nada escribe el estilo a mano, así que no hay estado que limpiar al salir
+    // del bloque. React reemplaza el className en el mismo commit.
+    expect(playerSrc).not.toMatch(/\.style\.transform/);
+    expect(playerSrc).not.toMatch(/classList\.(add|remove|toggle)/);
+    expect((playerSrc.match(/yfp-video-mirror/g) ?? []).length).toBe(1);
+  });
+
+  it('el buffer de precarga nunca lo lleva', () => {
+    // El que precarga está oculto; si arrastrara la clase, al hacer swap podría
+    // aparecer reflejado un instante antes de recalcularse.
+    expect(claseDe('lizard-lunge', 1, 1, 0)).toBe('yfp-video-off');
+    expect(claseDe('lizard-lunge', 1, 0, 0)).toBe('yfp-video-on yfp-video-mirror');
+  });
+
+  it('el mirror NO se hereda al bloque siguiente ni al ejercicio siguiente', () => {
+    // Lagarto: lado 1 limpio, lado 2 reflejado.
+    expect(claseDe('lizard-lunge', 0, 0, 0)).toBe('yfp-video-on');
+    expect(claseDe('lizard-lunge', 1, 0, 0)).toBe('yfp-video-on yfp-video-mirror');
+    // y lo que venga después vuelve a limpio, declare poseDemo o no
+    for (const sig of ['triangle-pose', 'child-pose', 'cat-cow', 'sun-salutation', null]) {
+      expect(claseDe(sig, 0, 0, 0), `${sig} heredó el espejo`).toBe('yfp-video-on');
+      expect(claseDe(sig, 1, 0, 0), `${sig} heredó el espejo`).toBe('yfp-video-on');
+    }
+  });
+
+  it('una práctica entera solo refleja los bloques declarados', () => {
+    const recorrido = [
+      { id: 'child-pose', side: 0 },
+      { id: 'lizard-lunge', side: 0 },
+      { id: 'lizard-lunge', side: 1 },
+      { id: 'side-plank-yoga', side: 0 },
+      { id: 'side-plank-yoga', side: 1 },
+      { id: 'pigeon-pose', side: 0 },
+      { id: 'pigeon-pose', side: 1 },
+    ];
+    expect(recorrido.map(p => claseDe(p.id, p.side, 0, 0).includes('yfp-video-mirror')))
+      .toEqual([false, false, true, false, true, false, false]);
+  });
+
+  it('el espejo vive en el <video>, no en el contenedor de overlays', () => {
+    expect(cssSrc).toMatch(/\.yfp-video-mirror\s*\{\s*transform:\s*scaleX\(-1\);\s*\}/);
+    // `.yfp-video-area` sostiene overlays, textos, controles y progreso: si el
+    // transform viviera ahí, se voltearía la interfaz entera.
+    const area = cssSrc.slice(cssSrc.indexOf('.yfp-video-area {'));
+    expect(area.slice(0, area.indexOf('}'))).not.toContain('transform');
+    // y ninguna otra regla del reproductor voltea nada
+    expect((cssSrc.match(/scaleX\(-1\)/g) ?? []).length).toBe(1);
+  });
+
+  it('ningún overlay ni texto recibe la clase', () => {
+    for (const sel of ['yfp-video-area', 'yfp-flow-segment', 'yfp-time',
+                       'yfp-instruction', 'yfp-progress', 'yfp-header']) {
+      const i = playerSrc.indexOf(`"${sel}"`);
+      if (i < 0) continue;
+      expect(playerSrc.slice(i, i + 60), sel).not.toContain('yfp-video-mirror');
+    }
+  });
+
+  it('sin `mirror` el comportamiento es exactamente el de antes', () => {
+    for (const id of ['revolved-chair', 'triangle-pose', 'seated-twist',
+                      'standing-side-bend', 'pigeon-pose', 'child-pose']) {
+      const s = YOGA_BY_ID.get(id)!.poseDemo!.sides;
+      for (const [i] of s.entries()) {
+        expect(claseDe(id, i, 0, 0), `${id}#${i}`).toBe('yfp-video-on');
+      }
+    }
+  });
+
+  it('`mirror` no participa en la duración ni en los bloques', () => {
+    expect(sidesSrc).not.toContain('mirror');
+    expect(generatorSrc).not.toContain('mirror');
+    expect(validationSrc).not.toContain('mirror');
+    // en el reproductor solo toca el className del vídeo, nunca el reloj
+    const efecto = playerSrc.slice(playerSrc.indexOf('const demoLado'),
+                                   playerSrc.indexOf('// Stats for completed screen'));
+    expect(efecto).not.toContain('mirror');
+  });
+
+  it('el tipo lo declara opcional y solo dentro de poseDemo', () => {
+    expect(typesSrc).toContain('poseDemo?: { sides: Array<{ from?: number; hold: number; mirror?: boolean }> };');
   });
 });
 

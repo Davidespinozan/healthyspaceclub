@@ -68,8 +68,12 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'kneeling', posEnd: 'kneeling',
     executionType: 'hold',
     openerFor: ['movilidad', 'relajacion'],
-    // 0–7 se arrodilla, estira brazos y baja el pecho · 7–18,5 sostiene.
-    poseDemo: { sides: [{ from: 0, hold: 8.5 }] },
+    // 0–10,5 es postura del NIÑO con los brazos estirados: las caderas están
+    // sentadas sobre los talones. El Cachorro de verdad —caderas altas sobre
+    // las rodillas, pecho al suelo— empieza hacia 11 y se asienta en 13–18.
+    // Por eso la demostración arranca en 9,5: enseña la subida de caderas, que
+    // es la parte útil, sin pasar por el Niño, que confunde.
+    poseDemo: { sides: [{ from: 9.5, hold: 14.0 }] },
     description: 'Desde la postura del niño, lleva el pecho al suelo manteniendo las caderas altas.',
     descriptionEn: "From child's pose, melt your chest down while keeping the hips high.",
   },
@@ -266,10 +270,11 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'prone', posEnd: 'standing',
     executionType: 'hold',
     // 0–6 entra desde plancha · 6–10,8 sostiene sobre antebrazos.
-    // UNILATERAL: el clip solo trae un lado, así que los dos bloques usan el
-    // MISMO fotograma. Mejor una referencia fija del lado equivocado que un
-    // bucle entrando y saliendo mientras la instrucción pide sostener.
-    poseDemo: { sides: [{ from: 0, hold: 8.0 }, { hold: 8.0 }] },
+    // UNILATERAL: el clip solo trae grabado un lado, así que los dos bloques
+    // usan el MISMO fotograma y el segundo se refleja. El espejo es solo de
+    // presentación —la lateralidad anatómica no es determinable en estos
+    // clips— y evita que el segundo lado enseñe el contrario al que se pide.
+    poseDemo: { sides: [{ from: 0, hold: 8.0 }, { hold: 8.0, mirror: true }] },
     description: 'Zancada profunda con las manos dentro del pie, bajando a los antebrazos.',
     descriptionEn: "Deep lunge with hands inside the foot, lowering to the forearms.",
   },
@@ -293,8 +298,9 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'prone', posEnd: 'prone',
     executionType: 'hold',
     // 0–4 entra a la plancha lateral · 4,5–8 sostiene.
-    // UNILATERAL: mismo fotograma en los dos bloques, igual que el Lagarto.
-    poseDemo: { sides: [{ from: 0, hold: 5.0 }, { hold: 5.0 }] },
+    // UNILATERAL: mismo fotograma en los dos bloques y espejo en el segundo,
+    // igual que el Lagarto.
+    poseDemo: { sides: [{ from: 0, hold: 5.0 }, { hold: 5.0, mirror: true }] },
     description: 'Plancha lateral sostenida sobre un brazo.',
     descriptionEn: "Side plank held on one arm.",
   },
@@ -382,8 +388,12 @@ export const YOGA_CATALOG: YogaContent[] = [
     posStart: 'quadruped', posEnd: 'seated',
     executionType: 'hold',
     splitBySide: true,
-    // 0–3 desde cuadrupedia · 3–16,2 LADO 1 · 16,2–22,8 cambia · 22,8–32 LADO 2.
-    poseDemo: { sides: [{ from: 0, hold: 6.0 }, { hold: 27.0 }] },
+    // Cada lado tiene DOS fases: erguida y plegada sobre la pierna.
+    //   LADO 1: erguida 5–9 · plegada 10–15 · sale en 16.
+    //   LADO 2: erguida 26–27 · plegada 28–33 · sale en 34.
+    // La descripción promete la plegada, así que la referencia es esa. El
+    // segundo lado salta directo, sin reproducir la transición entre lados.
+    poseDemo: { sides: [{ from: 9.0, hold: 13.0 }, { hold: 30.0 }] },
     description: 'Paloma con el tronco inclinado sobre la pierna, hacia cada lado.',
     descriptionEn: "Pigeon folding over the front leg, on each side.",
   },

@@ -115,6 +115,11 @@
 .yfp-video-on  { opacity: 1; z-index: 1; }
 .yfp-video-off { opacity: 0; z-index: 0; pointer-events: none; }
 
+/* Espejo de PRESENTACIÓN para los clips unilaterales, que solo traen grabado un
+   lado. Se aplica al <video>, no a `.yfp-video-area`: reflejar el contenedor
+   voltearía también overlays, textos y controles. */
+.yfp-video-mirror { transform: scaleX(-1); }
+
 .yfp-video-fallback {
   width: 100%; height: 100%;
   display: flex;
