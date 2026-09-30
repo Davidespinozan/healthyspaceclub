@@ -8,7 +8,7 @@ import type { DayPlan, MealItem } from '../types';
 import type { Region } from './region';
 import { dishAllowedInRegion } from '../data/regionFood';
 import { portionBoundsFor, preferredGramLimit } from './portionPlausibility';   // NUTRITION-N1 techo humano · N2 capacidad preferida
-import { effectiveDishAvoidText, canonicalizeAvoidTerm, catMarker } from './allergenSafety';   // NUTRITION-N3 · sub-recetas + composites ocultos
+import { effectiveDishAvoidText, dishAvoidUnits, canonicalizeAvoidTerm, catMarker } from './allergenSafety';   // NUTRITION-N3 · sub-recetas + composites ocultos
 
 const IMG_BASE =
   'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PLATILLOS%20BANCO/';
@@ -52,32 +52,91 @@ const cravedCount = new Map<string, number>();
 // ingredientes REALES de sus sub-recetas (SUBRECETAS) + marcadores de alérgeno oculto (mayonesa=huevo,
 // hummus=ajonjolí…). Así el MISMO makeAvoidFilter ve lo que antes quedaba escondido. Solo alimenta la
 // detección de "evitar"/"antojo"; NO cambia macros/porciones/selección nutricional.
-const DTEXT = new Map<BancoDish, { text: string; words: Set<string> }>();
-for (const d of BANCO) {
-  const text = effectiveDishAvoidText(d);
-  DTEXT.set(d, { text, words: new Set(text.split(/[^a-z0-9]+/).filter(Boolean)) });
+interface DishText {
+  text: string; words: Set<string>;                        // ANTOJO: nombre + ingredientes
+  avoidWords: Set<string>; avoidText: string;              // EVITAR: solo ingredientes
+  units: { text: string; words: Set<string> }[];           // EVITAR: por ingrediente (excepciones)
 }
+const tokenize = (text: string) => ({ text, words: new Set(text.split(/[^a-z0-9]+/).filter(Boolean)) });
+// Separador entre unidades: un término nunca lo contiene, así que una frase ("carne asada")
+// NO puede formarse cruzando el final de un ingrediente con el principio del siguiente.
+const UNIT_SEP = ' \u0000 ';
+function buildDishText(d: BancoDish): DishText {
+  // `text`/`words` = nombre + ingredientes (ANTOJO: ahí el nombre del platillo SÍ es la señal).
+  // `units`        = un token-set por INGREDIENTE, sin el nombre (EVITAR: manda la composición).
+  const units = dishAvoidUnits(d).map(tokenize);
+  const avoidWords = new Set<string>();
+  for (const u of units) for (const w of u.words) avoidWords.add(w);
+  return {
+    ...tokenize(effectiveDishAvoidText(d)),
+    avoidWords, avoidText: units.map((u) => u.text).join(UNIT_SEP), units,
+  };
+}
+const DTEXT = new Map<BancoDish, DishText>();
+for (const d of BANCO) DTEXT.set(d, buildDishText(d));
+/** Cacheado para el BANCO; calculado al vuelo para cualquier otro platillo (nunca lanza). */
+const dishText = (d: BancoDish): DishText => DTEXT.get(d) ?? buildDishText(d);
 // term con espacio → substring; palabra suelta → límite de palabra (evita "pan" en "panela").
+const unitMatches = (u: { text: string; words: Set<string> }, term: string) =>
+  term.includes(' ') ? u.text.includes(term) : u.words.has(term);
+// ANTOJO: el nombre del platillo cuenta ("se me antojan unos tacos").
 function dishMatches(d: BancoDish, term: string): boolean {
-  const e = DTEXT.get(d)!;
-  return term.includes(' ') ? e.text.includes(term) : e.words.has(term);
+  return unitMatches(dishText(d), term);
 }
 const dishMatchesAny = (d: BancoDish, terms: string[]) => terms.some((t) => dishMatches(d, t));
 
+// ── P0-01 · DETECCIÓN DE RESTRICCIONES ───────────────────────────────────────
+// Excepciones por TÉRMINO: nombres de ingrediente donde el término aparece pero NO
+// representa el alimento prohibido. Mismo espíritu que el lookahead de "crema de
+// cacahuate" en allergenSafety. Mínimo y auditado contra los ingredientes reales.
+const TERM_EXCEPT: Record<string, RegExp> = {
+  galleta: /galletas? de arroz/,     // galleta de ARROZ = sin gluten
+  galletas: /galletas? de arroz/,
+  // DECISIÓN 05 · PD-02: la granola SIEMPRE activa gluten salvo que el ingrediente declare
+  // EXPLÍCITAMENTE que es la variante sin gluten. NO se infiere de "de avena" ni de nada más.
+  granola: /\bsin gluten\b|\bgluten free\b/,
+};
+/** ¿Algún INGREDIENTE del platillo (o de sus sub-recetas) contiene alguno de los términos? */
+function dishMatchesAvoidTerms(d: BancoDish, terms: string[]): boolean {
+  if (!terms.length) return false;
+  const e = dishText(d);
+  for (const t of terms) {
+    const ex = TERM_EXCEPT[t];
+    if (!ex) {
+      // Camino rápido: palabra suelta contra el set unión, frase contra el texto con separador
+      // (que impide que la frase cruce dos ingredientes). Equivalente al recorrido por unidad.
+      if (t.includes(' ') ? e.avoidText.includes(t) : e.avoidWords.has(t)) return true;
+      continue;
+    }
+    // Con excepción: hay que saber EN QUÉ ingrediente cayó el término.
+    for (const u of e.units) {
+      if (unitMatches(u, t) && !ex.test(u.text)) return true;
+    }
+  }
+  return false;
+}
+
 // Categorías de "evitar" / alergias → alimentos/palabras reales del banco.
 const AVOID_MAP: Record<string, string[]> = {
-  gluten: ['pan', 'pasta', 'espagueti', 'bagel', 'waffle', 'waffles', 'pita', 'tallarines', 'noodles', 'galleta', 'galletas', 'crutones', 'cereal', 'tortilla de harina', 'hot cake', 'hot cakes', 'corn flakes'],
+  // P0-01 · los términos se buscan en el nombre de cada INGREDIENTE, no en el del platillo.
+  // 'waffle'/'hot cake'/'cereal' son conceptos de PLATILLO, no ingredientes: se conservan por
+  // defensa (si algún día un ingrediente se llama así) pero ya no pueden excluir por el nombre.
+  // 'granola' → gluten por DECISIÓN 05 · PD-02: la granola genérica lleva malta de cebada o trigo.
+  // Solo queda exenta si el ingrediente se modela EXPLÍCITAMENTE como variante sin gluten (ver TERM_EXCEPT).
+  gluten: ['pan', 'pasta', 'espagueti', 'bagel', 'baguette', 'waffle', 'waffles', 'pita', 'tallarines', 'noodles', 'fideo', 'fideos', 'galleta', 'galletas', 'granola', 'crutones', 'cereal', 'tortilla de harina', 'harina de trigo', 'hot cake', 'hot cakes', 'corn flakes'],
   lacteos: ['leche', 'queso', 'yogur', 'yoghurt', 'yogurt', 'requeson', 'ricotta', 'cottage', 'panela', 'oaxaca', 'feta', 'mozzarella', 'parmesano', 'crema acida'],
-  'carne-roja': ['res', 'sirloin', 'bistec', 'falda', 'molida', 'machaca', 'chambarete', 'arrachera'],
+  // 'molida' suelta excluía "Papa molida" y "Carne molida de pavo" (ni una ni otra es carne roja):
+  // se sustituye por las frases que sí identifican el corte. 'carne asada' cierra el hueco genérico.
+  'carne-roja': ['res', 'sirloin', 'bistec', 'falda', 'molida magra', 'molida de res', 'carne asada', 'machaca', 'chambarete', 'arrachera'],
   // Magaly: "mariscos" abarca TODO lo del mar (incluye pescado). El toggle "pescado"
   // es el subconjunto para quien solo quiere fuera el pescado pero sí come camarón.
-  mariscos: ['camaron', 'camarones', 'marisco', 'mariscos', 'pescado', 'salmon', 'atun', 'tilapia', 'bacalao'],
+  mariscos: ['camaron', 'camarones', 'gamba', 'gambas', 'marisco', 'mariscos', 'pescado', 'salmon', 'atun', 'tilapia', 'bacalao', 'merluza', 'sardina', 'sardinas', 'boqueron', 'boquerones'],
   // Alergias:
   huevo: ['huevo', 'huevos'],
   'frutos-secos': ['nuez', 'nueces', 'almendra', 'almendras', 'pistache', 'pistaches', 'avellana', 'avellanas'],
   cacahuate: ['cacahuate', 'cacahuates'],
   soya: ['soya', 'edamame', 'edamames'],
-  pescado: ['pescado', 'salmon', 'atun', 'tilapia', 'bacalao'],
+  pescado: ['pescado', 'salmon', 'atun', 'tilapia', 'bacalao', 'merluza', 'sardina', 'sardinas', 'boqueron', 'boquerones'],
   ajonjoli: ['ajonjoli', 'sesamo'],
   // Aves y cerdo (faltaban): sin esto un vegetariano no podía sacar el pollo/pavo/cerdo.
   pollo: ['pollo', 'pechuga'],
@@ -1022,7 +1081,7 @@ function reduceForShake(T: number[], shake?: ProteinShake): number[] {
 /** Filtro de alergia/evitar (categoría → alimentos reales del banco). */
 export function makeAvoidFilter(avoidCats: string[]): (d: BancoDish) => boolean {
   const terms = expandAvoid(avoidCats.map((s) => s.toLowerCase().trim()).filter(Boolean));
-  return (d: BancoDish) => (terms.length ? dishMatchesAny(d, terms) : false);
+  return (d: BancoDish) => dishMatchesAvoidTerms(d, terms);
 }
 
 /** Banco agrupado por tiempo, ya SIN alérgenos (nunca vacío: cae al pool completo). */
@@ -1249,7 +1308,7 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   // (filtro DURO fuera de LATAM + segmentación por marca region:ES) para que el fallback
   // determinista tampoco arme mole en España ni platillos de España fuera de EUROPE.
   const avoid = (d: BancoDish) =>
-    (avoidTerms.length > 0 && dishMatchesAny(d, avoidTerms)) ||
+    dishMatchesAvoidTerms(d, avoidTerms) ||
     !dishAllowedInRegion(d, opts.region);
   const cuisines = (opts.cuisines ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean);
   const craving = cravingTerms(opts.craving ?? ''); // "antojo": prefiere platillos que lo tengan

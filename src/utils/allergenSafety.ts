@@ -77,6 +77,37 @@ export function effectiveDishAvoidText(dish: BancoDish): string {
   return normAllergen([...names, ...cats.map(catMarker)].join(' '));
 }
 
+/**
+ * P0-01 · UNIDADES DE DETECCIÓN DE RESTRICCIÓN de un plato: UN elemento por
+ * INGREDIENTE (y por cada ingrediente de sus sub-recetas), cada uno con los
+ * marcadores de categoría que ese ingrediente implica por sus composites.
+ *
+ * Dos diferencias deliberadas frente a `effectiveDishAvoidText`:
+ *
+ *  1. NO incluye `dish.nombre`. La compatibilidad se decide por la COMPOSICIÓN
+ *     REAL, no por el nombre culinario: "Hot Cakes de Zanahoria" está hecho con
+ *     harina de AVENA y no debe salir de un plan sin gluten solo porque se llame
+ *     "hot cakes". El nombre sigue usándose para el ANTOJO (ahí sí es la señal
+ *     correcta), vía `effectiveDishAvoidText`.
+ *  2. NO concatena todo en un solo blob. Un término-frase ("carne asada",
+ *     "salsa de soya") debe encontrarse DENTRO de un ingrediente, no formarse
+ *     por accidente entre el final de uno y el principio del siguiente.
+ *
+ * Puro / determinista / no-mutante.
+ */
+export function dishAvoidUnits(dish: BancoDish): string[] {
+  const units: string[] = [];
+  const add = (nv: string) => {
+    const cats = hiddenAllergenCatsFor(nv);
+    units.push(normAllergen(cats.length ? [nv, ...cats.map(catMarker)].join(' ') : nv));
+  };
+  for (const ing of dish.ings) {
+    add(ing.nv);
+    for (const subNv of subRecipeIngredientNames(ing.nv)) add(subNv);
+  }
+  return units;
+}
+
 // Alias de ENTRADA del usuario (localización) → llave canónica de AVOID_MAP. Mínimo demostrado; no es
 // un diccionario multi-idioma. El usuario que escribe "maní"/"cacahuete"/"sésamo" debe filtrar igual.
 const USER_AVOID_ALIAS: Record<string, string> = {
