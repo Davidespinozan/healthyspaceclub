@@ -8,12 +8,19 @@ dice de qué bloque salió, por qué quedó fuera de él y qué haría falta par
 
 | # | Hallazgo | Severidad | Origen | Estado |
 |---|---|---|---|---|
-| 01 | Los planes persistidos anteriores a P0-03 pueden violar restricciones o cruzar tiempos | Alta | P0-03 | Abierto → P0-04 |
+| 01 | Los planes persistidos anteriores a P0-03 pueden violar restricciones o cruzar tiempos | Alta | P0-03 | **Cerrado en P0-04** |
 | 02 | `AVOID_MAP.vegetariano/vegano` no lista merluza, gambas, boquerones ni sardinas | Sin impacto activo | P0-03 (auditoría de cobertura) | Deuda congelada — solo si se reactivan |
+| 03 | Los ingredientes del Bowl/Food Truck no son verificables contra las restricciones | Sin impacto activo | P0-04 | Deuda previa a su reactivación |
 
 ---
 
-## HALLAZGO-01 — Los planes ya guardados no se validan nunca
+## HALLAZGO-01 — Los planes ya guardados no se validan nunca · CERRADO EN P0-04
+
+> **Cerrado.** P0-04 valida el plan terminado en las cuatro puertas (`saveWeeklyPlan`, el pull
+> de Supabase y la rehidratación de localStorage; el render conserva su gate estructural), y
+> `PLAN_ENGINE_VERSION` subió 30 → 31 para que los planes anteriores se regeneren en la
+> siguiente carga en lugar de quedarse vigentes para siempre. Se deja el análisis como
+> registro de por qué hizo falta.
 
 **Qué pasa.** P0-03 hace que la *generación* falle de forma segura, pero no revisa nada de lo
 que ya está escrito en `user_profiles.weekly_plan`. Un plan generado **antes** de P0-03 pudo
@@ -99,3 +106,30 @@ cierra la deuda el test avisa.
 categorías que P0-01 corrigió. Pero antes de eso, lo que la Decisión 01 pide resolver es la
 **profundidad del banco**: sin desayunos veganos no hay plan posible, y los términos son el
 último de los problemas.
+
+---
+
+## HALLAZGO-03 — El Bowl/Food Truck no es verificable contra las restricciones
+
+**Estado del producto.** La funcionalidad Bowl/Food Truck está **pausada**: el food truck no
+está operando y esta capacidad no forma parte del HSC que se está preparando. Se registra como
+**deuda previa a su reactivación**, no como defecto activo.
+
+**Qué pasa.** Un bowl entra al plan como alimento EXTERNO con macros conocidas pero **sin
+ingredientes** (`ings: []`, ver `buildDayWithFixed`). P0-04 lo reconoce por su estructura, no
+por su nombre, y puede comprobar su nombre y su porción contra las restricciones — una señal
+débil, que detecta «Bowl de Salmón» con pescado excluido pero no la composición real. Es
+además la única exención del chequeo de tiempo, acotada y justificada: el bowl ocupa el tiempo
+que el usuario eligió al pedirlo.
+
+**Defensas que SÍ quedan activas** (de P0-03 y P0-04, no se retiran):
+
+- el día se rearma con las restricciones **efectivas actuales**, no con el `gen.avoid` guardado;
+- `buildDayWithFixed` falla cerrado si algún tiempo queda sin candidatos;
+- `saveWeeklyPlan` valida el plan resultante y lo rechaza si no cumple;
+- el call-site de `TabHoy` está protegido y el día se queda como estaba si algo falla.
+
+**Qué haría falta antes de reactivar.** Que los bowls lleguen con sus ingredientes modelados
+—como cualquier platillo del banco— para que el detector de P0-01 pueda evaluarlos de verdad.
+Mientras no exista eso, un bowl es un alimento que el usuario elige a ojo y HSC no puede
+afirmar que respete sus restricciones.

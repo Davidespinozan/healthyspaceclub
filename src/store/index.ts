@@ -10,7 +10,8 @@ import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseSt
 import { track } from '../utils/analytics';
 import { assignPlan } from '../utils/tdee';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
-import { planInvalidatedByAvoidChange } from '../utils/avoidAuthority';
+import { planInvalidatedByAvoidChange, avoidForRegen } from '../utils/avoidAuthority';
+import { validatePlan, planIfValid, InvalidPlanError } from '../utils/planIntegrity';
 import type { Region, Currency } from '../utils/region';
 import type { BillingCycle } from '../utils/stripe';
 import { MILESTONE_STEPS } from '../constants/milestones';
@@ -1127,6 +1128,28 @@ export const useAppStore = create<AppState>()(
   weeklyPlan: null,
   saveWeeklyPlan: async (plan) => {
     const prevState = get();
+
+    // P0-04 · VALIDACIÓN FINAL. Única puerta de escritura de las tres rutas que generan
+    // (cuestionario, auto-regeneración y sustitución por bowl), así que validar aquí las
+    // cubre las tres con un solo punto.
+    //
+    // Se valida contra las restricciones efectivas ACTUALES —`avoidForRegen` une las
+    // permanentes del perfil de AHORA con la parte semanal del plan— y NO contra
+    // `plan.gen.avoid`. La diferencia importa: el rearmado del día con un bowl pasaba al
+    // motor el `gen.avoid` con el que se generó el plan, así que si el usuario endureció su
+    // perfil después (y el plan no servía esa categoría, luego P0-02 lo conservó con
+    // razón), el bowl podía reintroducir el alimento recién excluido.
+    //
+    // Un plan inválido no se guarda ni se persiste: se lanza. Los tres llamadores ya
+    // manejan el fallo de guardado.
+    const avoidAhora = avoidForRegen(plan.gen, plan.preferences, prevState.obData);
+    const verdict = validatePlan(plan, avoidAhora);
+    if (!verdict.valid) {
+      const err = new InvalidPlanError(verdict);
+      console.error('[saveWeeklyPlan] plan rechazado:', err.message, verdict.violations);
+      throw err;
+    }
+
     const isRegeneration =
       prevState.weeklyPlan != null &&
       prevState.weeklyPlan.generatedAt !== plan.generatedAt;
@@ -1653,6 +1676,27 @@ export const useAppStore = create<AppState>()(
 }),
 {
   name: 'hsc-store',
+  // P0-04 · SANEADO EN LA REHIDRATACIÓN. `weeklyPlan` se persiste en localStorage y antes
+  // volvía al estado VERBATIM: no había `merge`, ni `migrate`, ni `onRehydrateStorage`, así
+  // que un plan guardado antes de P0-03 (con cruces de tiempo o platillos incompatibles)
+  // reaparecía intacto y pasaba el gate de render, que solo comprueba que `days` sea un
+  // array no vacío.
+  //
+  // Se usa `merge` y no `onRehydrateStorage` a propósito: `merge` corre ANTES de que el
+  // estado exista, así que un plan inválido nunca llega a ser `state.weeklyPlan` ni por un
+  // instante. Con `onRehydrateStorage` entraría primero y se limpiaría después.
+  //
+  // Las restricciones se reconstruyen del propio snapshot persistido (`obData` también se
+  // persiste), no del estado en memoria, que en este punto todavía está vacío.
+  merge: (persisted, current) => {
+    const p = (persisted ?? {}) as Partial<AppState>;
+    const merged = { ...current, ...p } as AppState;
+    if (p.weeklyPlan != null) {
+      const avoid = avoidForRegen(p.weeklyPlan.gen, p.weeklyPlan.preferences, p.obData);
+      merged.weeklyPlan = planIfValid(p.weeklyPlan, avoid);
+    }
+    return merged;
+  },
   partialize: (state) => ({
     language: state.language,
     languageSetByUser: state.languageSetByUser,

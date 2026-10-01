@@ -6,6 +6,7 @@ import { PLAN_ENGINE_VERSION } from './planEngine';
 import { avoidForRegen, permanentAvoidFrom } from './avoidAuthority';
 import { generateWeeklyPlan } from './planOrchestration';
 import { dayKey } from './localDate';
+import { getCachedRegion, regionFromCountry } from './region';   // P0-04 · la regeneración perdía la región
 import type { ProteinShake } from './planEngine';
 
 /** Domingo (inicio de semana) de una fecha, como 'YYYY-MM-DD'. Mismo cálculo que
@@ -115,11 +116,19 @@ export function useAutoRegenPlan(): void {
     const avoid = avoidForRegen(weeklyPlan.gen, weeklyPlan.preferences, obData);
     const craving = weeklyPlan.gen?.craving ?? '';
     const shake = weeklyPlan.gen?.shake as ProteinShake | undefined;
+    // P0-04 · REGIÓN. La generación normal (WeeklyNutritionPlanner) la deriva del país del
+    // perfil y cae a la región cacheada; esta ruta NO la pasaba, así que una regeneración
+    // automática podía armar mole en España o servir platillos de España fuera de EUROPE.
+    // Se corrige AHORA porque subir PLAN_ENGINE_VERSION va a disparar regeneraciones: no
+    // se activa a conciencia una ruta que sabemos incompleta. Misma derivación, literal.
+    const region = obData.country
+      ? regionFromCountry(String(obData.country))
+      : (getCachedRegion() ?? undefined);
 
     let cancelled = false;
     (async () => {
       try {
-        const { days } = await generateWeeklyPlan(target, avoid, craving, Date.now() & 0x7fffffff, shake);
+        const { days } = await generateWeeklyPlan(target, avoid, craving, Date.now() & 0x7fffffff, shake, region);
         if (cancelled) return;
         const shopSet = new Set<string>();
         for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])

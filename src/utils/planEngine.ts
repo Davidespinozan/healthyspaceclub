@@ -1080,7 +1080,16 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // proteína del batido caía ENCIMA de un día que ya llegaba a la meta (+25 g). Se
 // movió DESPUÉS del batido, contra la meta completa menos lo que aportan los
 // snacks (batido incluido). Con 1 batido: kcal y macros a ±0.5-0.7%.
-export const PLAN_ENGINE_VERSION = 30;
+// v31: P0-01, P0-02 y P0-03 cambiaron las GARANTÍAS del motor sin subir la versión, que es
+// exactamente lo que el comentario de la v24 advierte que no hay que hacer. Un plan
+// generado el día antes de P0-03 lleva engineVersion 30, así que `30 >= 30` y la
+// auto-regeneración no disparaba nunca: un plan con cruces de tiempo o con un platillo
+// incompatible se quedaba vigente para siempre. Subir a 31 los regenera en la siguiente
+// carga, ya a través del detector corregido (P0-01), con las restricciones efectivas
+// (P0-02) y con el motor que falla cerrado (P0-03). No hay cambio de reglas en este salto.
+// Requisito previo: la ruta de auto-regeneración no pasaba `region` — se corrigió en el
+// mismo bloque, porque no se activa a conciencia una regeneración que sabemos incompleta.
+export const PLAN_ENGINE_VERSION = 31;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 

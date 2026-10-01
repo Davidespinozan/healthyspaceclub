@@ -12,6 +12,8 @@ import { useAppStore } from './store';
 import { useShallow } from 'zustand/react/shallow';
 import { supabase } from './lib/supabase';
 import { shouldUseRemotePlan } from './utils/planSync';
+import { planIfValid } from './utils/planIntegrity';          // P0-04 · el pull remoto no pasa por saveWeeklyPlan
+import { avoidForRegen } from './utils/avoidAuthority';
 import { shouldUseRemoteWorkout } from './utils/dailyWorkoutSync';
 import { mergeMealProgress } from './utils/mealProgressSync';
 import {
@@ -500,7 +502,16 @@ export default function App() {
                 localPlan, localPlanUpdatedAt, remotePlan, remotePlanUpdatedAt,
               );
               if (decision === 'use_remote') {
-                useAppStore.setState({ weeklyPlan: remotePlan });
+                // P0-04 · el pull remoto no pasa por saveWeeklyPlan, así que valida aquí.
+                // Se usa el obData que acabamos de hidratar arriba (el del perfil remoto),
+                // no el que había en memoria: las permanentes que manda son las actuales.
+                // Un plan remoto inválido se descarta → CTA «Arma tu plan», nunca se
+                // presenta como válido ni se intenta reparar.
+                const avoid = avoidForRegen(
+                  remotePlan?.gen, remotePlan?.preferences,
+                  (profile.ob_data as Record<string, unknown>) ?? {},
+                );
+                useAppStore.setState({ weeklyPlan: planIfValid(remotePlan, avoid) });
               }
               // 'use_local'/'noop': NO auto-backfill local→DB en hidratación.
               // El generate persiste por su cuenta (saveWeeklyPlan). Esto evita

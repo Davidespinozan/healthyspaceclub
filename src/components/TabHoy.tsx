@@ -13,6 +13,7 @@ import { hasGeneratedWeeklyPlan } from '../utils/weeklyPlanState';
 import { regionalizeStaticPlan } from '../data/regionFood';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
 import { expandAvoidCats, textMatchesAvoid } from '../utils/planEngine';
+import { avoidForRegen } from '../utils/avoidAuthority';   // P0-04 · restricciones actuales para el bowl
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
@@ -1069,12 +1070,18 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             // hay platillos elegibles para algún tiempo, lanza en vez de rellenar con un
             // platillo de otro tiempo o con uno excluido. Aquí eso significa dejar el día
             // como estaba (sin el bowl) — nunca guardar un día armado a la fuerza.
+            // P0-04 · restricciones EFECTIVAS ACTUALES, no `g.avoid`. `g.avoid` es el
+            // conjunto con el que se generó el plan: si el socio endureció su perfil
+            // después y el plan no servía esa categoría (así que P0-02 lo conservó, con
+            // razón), rearmar con `g.avoid` reintroducía el alimento recién excluido.
+            // `avoidForRegen` une las permanentes de AHORA con la parte semanal del plan.
+            const avoidAhora = avoidForRegen(g, weeklyPlan.preferences, obData);
             let nuevo;
             try {
               nuevo = buildDayWithFixed(
                 { kcal: g.kcal, protG: g.protG, fatG: g.fatG, carbG: g.carbG },
                 { slot, name: bowl.name, kcal: bowl.kcal, prot: bowl.prot, fat: bowl.fat, carb: bowl.carb, img: bowl.img ?? undefined, desc: bowl.tagline ?? t('bowl.genericDesc') },
-                { avoid: g.avoid, craving: g.craving },
+                { avoid: avoidAhora, craving: g.craving },
                 weeklyPlan.days[i].day,
               );
             } catch (e) {
@@ -1082,7 +1089,10 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
               return;
             }
             const days = weeklyPlan.days.map((d, k) => (k === i ? nuevo : d));
-            void saveWeeklyPlan({ ...weeklyPlan, days });
+            // saveWeeklyPlan valida el plan resultante y lanza si es inválido (P0-04): el
+            // día se queda como estaba en vez de guardarse un plan que no cumple.
+            void saveWeeklyPlan({ ...weeklyPlan, days })
+              .catch((e) => console.error('[TabHoy] el plan con el bowl no se guardó:', e));
           }}
         />
         )}
