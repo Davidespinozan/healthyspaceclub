@@ -6,6 +6,7 @@ import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Foot
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { supabase } from '../lib/supabase';
+import { PERMANENT_AVOID_CATALOG } from '../utils/avoidAuthority';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n/es';
 import { suggestUsername, isValidUsernameFormat, checkUsernameAvailable, claimUsername } from '../utils/username';
@@ -534,11 +535,15 @@ export default function OnboardingScreen() {
               </div>
             </div>
 
-            {/* Restricciones/alergias (opcional, multi) — se respetan desde el 1er plan */}
+            {/* P0-02 · RESTRICCIONES PERMANENTES del perfil. Lo que se marque aquí se
+                excluye SIEMPRE de todos los planes: el generador lo une con la
+                preferencia de la semana (nunca resta). Catálogo único compartido con
+                Ajustes y con el cuestionario semanal. */}
             <div className="onb-optional">
               <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.restrictionsTitle')} · <em>{t('onboarding.optionalTag')}</em></div>
+              <div className="onb-hint onb-hint-sub">{t('onboarding.restrictionsHint')}</div>
               <div className="onb-cards-row" style={{ flexWrap: 'wrap' }}>
-                {(['gluten', 'lacteos', 'huevo', 'frutos-secos', 'cacahuate', 'mariscos', 'vegetariano', 'vegano'] as const).map(v => (
+                {PERMANENT_AVOID_CATALOG.map(v => (
                   <div key={v} className={`onb-card-select${restricciones.includes(v) ? ' selected' : ''}`} onClick={() => toggleRestriccion(v)}>
                     <span className="onb-card-label">{t(`onboarding.restr_${v}`)}</span>
                   </div>

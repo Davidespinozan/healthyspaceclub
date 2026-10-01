@@ -2,6 +2,9 @@ import { dayKey } from '../utils/localDate';
 import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
+import {
+  PERMANENT_AVOID_CATALOG, permanentAvoidFrom, weeklyAvoidFrom, effectiveAvoid,
+} from '../utils/avoidAuthority';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
 import { hasGeneratedWeeklyPlan, weeklyPlanPhase, resolveTodayPlanMeals } from '../utils/weeklyPlanState';
@@ -12,7 +15,7 @@ import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets'
 import { PLAN_ENGINE_VERSION } from '../utils/planEngine';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
-import { RefreshCw, Salad, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, Dumbbell, type LucideIcon } from 'lucide-react';
+import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, Dumbbell, type LucideIcon } from 'lucide-react';
 import type { ProteinShake } from '../utils/planEngine';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import { tDishName, tIngName, tPortion } from '../utils/nutritionI18n';
@@ -57,8 +60,6 @@ const AVOID_LABEL_KEYS: Record<string, TranslationKey> = {
   'soya': 'nutritionPlanner.avoidSoy',
   'ajonjoli': 'nutritionPlanner.avoidSesame',
   'pescado': 'nutritionPlanner.avoidFish',
-  'vegetariano': 'nutritionPlanner.avoidVegetarian',
-  'vegano': 'nutritionPlanner.avoidVegan',
   'nada': 'nutritionPlanner.avoidNone',
 };
 const AVOID_SUB_KEYS: Record<string, TranslationKey> = {
@@ -121,8 +122,6 @@ const QUESTIONS: Array<{
       { value: 'pescado',      icon: Fish },
       { value: 'mariscos',     icon: Shell },
       { value: 'carne-roja',   icon: Beef },
-      { value: 'vegetariano',  icon: Salad },
-      { value: 'vegano',       icon: Sprout },
       { value: 'nada',         icon: CircleCheck },
     ],
   },
@@ -262,8 +261,12 @@ export default function WeeklyNutritionPlanner() {
       // Deja pintar el spinner antes del cómputo síncrono del motor.
       await new Promise((r) => setTimeout(r, 30));
       const targets = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
-      // Categorías/alergias tal cual (el motor mapea a alimentos y descarta 'nada'/'todas').
-      const avoid = (newAnswers.avoid ?? '').toLowerCase().split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
+      // P0-02 · AUTORIDAD DE RESTRICCIONES. Lo que llega al generador es la UNIÓN de
+      // las permanentes del perfil (obData.avoid — «no consumo esto nunca») con la
+      // preferencia de ESTA semana. El cuestionario solo puede AÑADIR; nunca resta.
+      const avoidPermanent = permanentAvoidFrom(obData);
+      const avoidWeekly = weeklyAvoidFrom(newAnswers.avoid);
+      const avoid = effectiveAvoid(avoidPermanent, avoidWeekly);
       // Híbrido: la IA selecciona los platillos (variedad/antojo/tiempos) y el código
       // ajusta porciones + garantiza alergias. Si la IA falla, cae al motor determinista.
       const target = { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG };
@@ -286,7 +289,7 @@ export default function WeeklyNutritionPlanner() {
         lang: locale,
         days,
         engineVersion: PLAN_ENGINE_VERSION,
-        gen: { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, craving: newAnswers.cravings ?? '', shake },
+        gen: { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, avoidPermanent, avoidWeekly, craving: newAnswers.cravings ?? '', shake },
       });
       setActiveDay(todayOffset >= 0 ? todayOffset : 0);
       setPhase('plan');
@@ -456,9 +459,13 @@ export default function WeeklyNutritionPlanner() {
       return undefined;
     };
 
+    // P0-02 · las permanentes del perfil NO se vuelven a preguntar: se muestran como ya
+    // excluidas y no son desactivables desde aquí. El cuestionario solo añade extras.
+    const permanentes = permanentAvoidFrom(obData);
     const titleKey: TranslationKey =
       q.id === 'cravings' ? 'nutritionPlanner.qCravings'
       : q.id === 'protein' ? 'nutritionPlanner.qProtein'
+      : permanentes.length ? 'nutritionPlanner.qAvoidMore'
       : 'nutritionPlanner.qAvoid';
 
     const pill = (on: boolean): React.CSSProperties => ({
@@ -522,9 +529,28 @@ export default function WeeklyNutritionPlanner() {
         );
       }
       if (q.multi) {
+        // Las permanentes salen del listado seleccionable: no se pueden desmarcar aquí.
+        const seleccionables = q.id === 'avoid'
+          ? q.options.filter(o => !permanentes.includes(o.value))
+          : q.options;
         return (
           <div className="wz-options">
-            {q.options.map(opt => {
+            {q.id === 'avoid' && permanentes.length > 0 && (
+              <div className="wz-always">
+                <div className="wz-always-label">{t('nutritionPlanner.avoidAlways')}</div>
+                <div className="wz-always-chips">
+                  {permanentes.map(v => (
+                    <span key={v} className="wz-always-chip">
+                      <Check size={12} strokeWidth={2.5} aria-hidden="true" />
+                      {PERMANENT_AVOID_CATALOG.includes(v as typeof PERMANENT_AVOID_CATALOG[number])
+                        ? t(`onboarding.restr_${v}` as TranslationKey)
+                        : v}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {seleccionables.map(opt => {
               const isSelected = multiSel.includes(opt.value);
               const sub = optionSub(opt.value);
               return (

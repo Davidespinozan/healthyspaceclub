@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { computeNutritionTargets, parseObData } from './nutritionTargets';
 import { PLAN_ENGINE_VERSION } from './planEngine';
+import { avoidForRegen, permanentAvoidFrom } from './avoidAuthority';
 import { generateWeeklyPlan } from './planOrchestration';
 import { dayKey } from './localDate';
 import type { ProteinShake } from './planEngine';
@@ -92,7 +93,6 @@ export function useWeeklyPlanReset(): void {
  * Es idempotente: se corta apenas la versión guardada alcanza a la del código, así
  * que corre a lo mucho una vez por salto de versión y después es un no-op.
  */
-const AVOID_KEYS = ['gluten', 'lacteos', 'carne-roja', 'mariscos', 'huevo', 'frutos-secos', 'cacahuate', 'soya', 'pescado', 'ajonjoli'];
 
 export function useAutoRegenPlan(): void {
   const { weeklyPlan, obData, saveWeeklyPlan } = useAppStore(useShallow((s) => ({
@@ -109,10 +109,10 @@ export function useAutoRegenPlan(): void {
 
     const t = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
     const target = { kcal: t.planGoal, protG: t.protG, fatG: t.fatG, carbG: t.carbG };
-    // Alergias del `gen` si existe; si el plan es viejo (sin gen), del texto de
-    // preferencias. Errar hacia MÁS restricción es seguro: nunca se sirve un
-    // alérgeno de menos.
-    const avoid = weeklyPlan.gen?.avoid ?? AVOID_KEYS.filter((k) => (weeklyPlan.preferences || '').includes(k));
+    // P0-02 · la autoridad une la parte SEMANAL del plan guardado con las permanentes
+    // del perfil ACTUAL. Si el usuario añadió una restricción permanente desde que se
+    // generó, la regeneración ya la respeta. Nunca resta.
+    const avoid = avoidForRegen(weeklyPlan.gen, weeklyPlan.preferences, obData);
     const craving = weeklyPlan.gen?.craving ?? '';
     const shake = weeklyPlan.gen?.shake as ProteinShake | undefined;
 
@@ -127,7 +127,8 @@ export function useAutoRegenPlan(): void {
         await saveWeeklyPlan({
           ...weeklyPlan, generatedAt: new Date().toISOString(),
           engineVersion: PLAN_ENGINE_VERSION, shoppingList: [...shopSet], days,
-          gen: { ...target, avoid, craving, shake },
+          gen: { ...target, avoid, avoidPermanent: permanentAvoidFrom(obData),
+                 avoidWeekly: weeklyPlan.gen?.avoidWeekly ?? weeklyPlan.gen?.avoid ?? [], craving, shake },
         });
       } catch (e) {
         console.error('[auto-regen] falló:', e);

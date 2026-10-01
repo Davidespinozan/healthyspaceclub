@@ -1516,6 +1516,8 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 .onb-brand-wordmark { height: 132px; width: auto; display: block; margin-top: -34px; }
 .onb-question { font-size: 1.5rem; font-weight: 700; color: #F6F2EA; margin-bottom: 8px; line-height: 1.2; }
 .onb-hint { font-size: .84rem; color: rgba(234,223,198,.55); margin-bottom: 28px; line-height: 1.5; }
+/* P0-02 · aclara que la restricción del perfil es PERMANENTE (va pegada a su título). */
+.onb-hint-sub { margin-top: -22px; margin-bottom: 10px; font-size: .78rem; opacity: .85; }
 
 /* Buttons */
 .onb-btn-gold {

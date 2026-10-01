@@ -10,6 +10,7 @@ import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseSt
 import { track } from '../utils/analytics';
 import { assignPlan } from '../utils/tdee';
 import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
+import { planInvalidatedByAvoidChange } from '../utils/avoidAuthority';
 import type { Region, Currency } from '../utils/region';
 import type { BillingCycle } from '../utils/stripe';
 import { MILESTONE_STEPS } from '../constants/milestones';
@@ -167,6 +168,11 @@ interface AppState {
   obData: Record<string, string | number>;
   setObStep: (step: number) => void;
   setObData: (key: string, value: string | number) => void;
+  // P0-02 · cierre UX. true cuando la última edición del perfil AÑADIÓ una restricción
+  // permanente que el plan vigente servía, así que el plan se descartó. Lo lee la hoja de
+  // Ajustes para explicar por qué desapareció; se limpia al abrirla.
+  planClearedByAvoid: boolean;
+  acknowledgePlanClearedByAvoid: () => void;
   finishOnboardingCalc: () => Promise<void>; // calculates TDEE + assigns plan, upserts profile to Supabase
   finishOnboarding: () => void;     // navigates to dashboard
 
@@ -363,7 +369,15 @@ interface AppState {
     // Versión del motor con que se generó + inputs, para auto-regenerar cuando
     // el motor cambia (preservando meta y alergias del usuario).
     engineVersion?: number;
-    gen?: { kcal: number; protG: number; fatG: number; carbG: number; avoid: string[]; craving: string; shake?: { slots: ('am' | 'pm')[]; type: 'regular' | 'vegana' | 'massgainer'; protG: number } };
+    // P0-02 · TRAZABILIDAD DE RESTRICCIONES. `avoid` es el conjunto EFECTIVO con el que
+    // se generó el plan (lo que vio el motor). `avoidPermanent` y `avoidWeekly` guardan de
+    // dónde vino cada categoría, para poder auditar el plan y para regenerar respetando
+    // las permanentes ACTUALES del perfil sin perder la preferencia de esa semana.
+    gen?: {
+      kcal: number; protG: number; fatG: number; carbG: number;
+      avoid: string[]; avoidPermanent?: string[]; avoidWeekly?: string[];
+      craving: string; shake?: { slots: ('am' | 'pm')[]; type: 'regular' | 'vegana' | 'massgainer'; protG: number };
+    };
   } | null;
   saveWeeklyPlan: (plan: NonNullable<AppState['weeklyPlan']>) => Promise<void>;
   clearWeeklyPlan: () => Promise<void>;
@@ -514,8 +528,24 @@ export const useAppStore = create<AppState>()(
   obStep: 1,
   obData: {},
   setObStep: (step) => set({ obStep: step }),
-  setObData: (key, value) =>
-    set((state) => ({ obData: { ...state.obData, [key]: value } })),
+  setObData: (key, value) => {
+    // P0-02 · INVALIDACIÓN MÍNIMA SEGURA, y solo por ENDURECIMIENTO. Aquí es el único
+    // punto donde coexisten la configuración anterior y la nueva, así que es donde se
+    // puede distinguir "añadió una restricción" de "quitó una" o "cambió el peso".
+    // Si las categorías AÑADIDAS están servidas en el plan vigente, ese plan no puede
+    // seguir presentándose como válido → se descarta y se marca para avisar al usuario.
+    // Quitar restricciones (plan más permisivo) o tocar cualquier otro dato: no invalida.
+    if (key === 'avoid') {
+      const { invalidated } = planInvalidatedByAvoidChange(get().obData.avoid, value, get().weeklyPlan);
+      if (invalidated) {
+        set({ planClearedByAvoid: true });
+        void get().clearWeeklyPlan().catch((e) => console.error('[setObData] clearWeeklyPlan falló:', e));
+      }
+    }
+    set((state) => ({ obData: { ...state.obData, [key]: value } }));
+  },
+  planClearedByAvoid: false,
+  acknowledgePlanClearedByAvoid: () => set({ planClearedByAvoid: false }),
   // Calculate TDEE + assign plan WITHOUT navigating (called during processing step)
   finishOnboardingCalc: async () => {
     const { obData, setUserName } = get();

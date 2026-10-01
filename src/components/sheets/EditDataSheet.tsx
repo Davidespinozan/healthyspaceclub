@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { PERMANENT_AVOID_CATALOG } from '../../utils/avoidAuthority';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
@@ -39,12 +40,13 @@ const GOAL_KEYS: Record<string, TranslationKey> = {
 // para que editar aquí y capturar allá escriban exactamente el mismo dato.
 const MOBILITY_OPTS = ['ninguna', 'articular', 'equilibrio', 'apoyo'] as const;
 const CONDITION_OPTS = ['diabetes', 'hipertension', 'renal', 'colesterol'] as const;
-const RESTRICTION_OPTS = ['gluten', 'lacteos', 'huevo', 'frutos-secos', 'cacahuate', 'mariscos', 'vegetariano', 'vegano'] as const;
+// P0-02 · catálogo ÚNICO de restricciones permanentes (mismo que onboarding).
+const RESTRICTION_OPTS = PERMANENT_AVOID_CATALOG;
 
 const splitCsv = (v: unknown): string[] => String(v || '').split(',').map(s => s.trim()).filter(Boolean);
 
 export default function EditDataSheet({ onClose }: Props) {
-  const { obData, setObData, recalcFromObData, addWeight, tdee, planGoal } = useAppStore(useShallow((s) => ({ obData: s.obData, setObData: s.setObData, recalcFromObData: s.recalcFromObData, addWeight: s.addWeight, tdee: s.tdee, planGoal: s.planGoal })));
+  const { obData, setObData, recalcFromObData, addWeight, tdee, planGoal, planClearedByAvoid, acknowledgePlanClearedByAvoid } = useAppStore(useShallow((s) => ({ obData: s.obData, setObData: s.setObData, recalcFromObData: s.recalcFromObData, addWeight: s.addWeight, tdee: s.tdee, planGoal: s.planGoal, planClearedByAvoid: s.planClearedByAvoid, acknowledgePlanClearedByAvoid: s.acknowledgePlanClearedByAvoid })));
   const { t } = useT();
 
   const [form, setForm] = useState({
@@ -63,6 +65,9 @@ export default function EditDataSheet({ onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+
+  // P0-02 · el aviso es de ESTE guardado: se limpia cualquier marca anterior al abrir.
+  useEffect(() => { acknowledgePlanClearedByAvoid(); }, [acknowledgePlanClearedByAvoid]);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -313,6 +318,11 @@ export default function EditDataSheet({ onClose }: Props) {
             <p className="sh-saved-stats">
               TDEE: <strong>{tdee.toLocaleString()} kcal</strong> · {t('editData.goalShort')}: <strong>{planGoal.toLocaleString()} {t('settings.kcalPerDay')}</strong>
             </p>
+            {/* P0-02 · el plan se descartó porque servía algo que el usuario acaba de
+                excluir. Sin esto la desaparición era silenciosa. */}
+            {planClearedByAvoid && (
+              <p className="sh-saved-warn">{t('editData.planClearedByAvoid')}</p>
+            )}
           </div>
         )}
 

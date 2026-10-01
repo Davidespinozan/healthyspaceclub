@@ -257,6 +257,16 @@
 }
 
 /* ──── EditDataSheet ──── */
+/* P0-02 · aviso de plan descartado por una restricción permanente nueva. */
+.sh-saved-warn {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(210, 153, 34, .35);
+  color: #d29922;
+  font-size: .82rem;
+  line-height: 1.45;
+}
+
 .sh-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
