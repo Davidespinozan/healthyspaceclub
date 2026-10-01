@@ -66,10 +66,10 @@ function restrictionLeaks(days: ReturnType<typeof buildWeeklyPlan>, cats: string
 // ── FIXTURES SINTÉTICOS ──────────────────────────────────────────────────────
 // Listas de TÉRMINOS, no de categorías de producto. Los tamaños de pool van medidos para
 // que se vea qué aísla cada una; si el banco cambia, los asserts de A las revalidan.
-/** Vacía solo COMIDA. (Desayuno 41 · Comida 0 · Cena 1 · Snack 110) */
-const SIN_COMIDA = ['verduras'];
-/** Vacía COMIDA y CENA, deja Desayuno. (Desayuno 35 · Comida 0 · Cena 0 · Snack 77) */
-const SIN_CENA = ['verduras', 'crema'];
+/** Vacía solo COMIDA. (Desayuno 26 · Comida 0 · Cena 6 · Snack 100) */
+const SIN_COMIDA = ['verduras', 'pizca'];
+/** Vacía solo CENA, deja Desayuno y Comida. (Desayuno 8 · Comida 2 · Cena 0 · Snack 66) */
+const SIN_CENA = ['verduras', 'miel', 'frijoles', 'queso'];
 /** Vacía solo DESAYUNO. (Desayuno 0 · Comida 4 · Cena 5 · Snack 50) */
 const SIN_DESAYUNO = ['huevo', 'pizca', 'miel', 'queso', 'avena'];
 /** Vacía los TRES tiempos fuertes dejando 19 snacks: aísla la invariante de tiempo, porque
@@ -83,17 +83,15 @@ const SIN_NADA_FUERTE = [
 
 /** Pool real de un tiempo tras restricciones y región (réplica del que arma buildDay). */
 function poolSize(slot: string, cats: string[], region?: Region): number {
+  // DECISIÓN 06 · el pool de cada tiempo es el NOMINAL: ya no se filtra por
+  // `rol:'guarnicion'`. Esta réplica sigue al motor, no al revés.
   const f = makeAvoidFilter(cats);
-  const hasVeg = (d: BancoDish) => d.ings.some((i) => i.rol === 'guarnicion');
-  const base = BANCO.filter((d) => d.tiempo === slot && (slot === 'Comida' || slot === 'Cena' ? hasVeg(d) : true));
-  return base.filter((d) => !f(d) && dishAllowedInRegion(d, region)).length;
+  return BANCO.filter((d) => d.tiempo === slot && !f(d) && dishAllowedInRegion(d, region)).length;
 }
 /** Pool SIN filtro de región: es el que ve `buildDayWithFixed`, que no recibe región. */
 function poolSizeSinRegion(slot: string, cats: string[]): number {
   const f = makeAvoidFilter(cats);
-  const hasVeg = (d: BancoDish) => d.ings.some((i) => i.rol === 'guarnicion');
-  return BANCO.filter((d) => d.tiempo === slot
-    && (slot === 'Comida' || slot === 'Cena' ? hasVeg(d) : true) && !f(d)).length;
+  return BANCO.filter((d) => d.tiempo === slot && !f(d)).length;
 }
 
 // ═════════════════════════════════════════════════════════════════════════════

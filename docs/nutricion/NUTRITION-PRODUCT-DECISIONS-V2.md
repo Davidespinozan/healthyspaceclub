@@ -31,6 +31,7 @@
 | 03 | Elegibilidad de variantes | 2026-09-28 | **Cerrada** |
 | 04 | Familia culinaria | 2026-09-28 | **Cerrada** |
 | 05 | Semántica de restricciones: avena, granola y coco | 2026-09-30 | **Cerrada** |
+| 06 | `rol:'guarnicion'` no es autoridad de elegibilidad | 2026-09-30 | **Cerrada** |
 
 ---
 
@@ -178,6 +179,90 @@ Se mantiene el comportamiento implementado en P0-01.
 > tomada aquí.
 >
 > Tampoco decide nada sobre el resto de la semántica de restricciones.
+
+---
+
+## DECISIÓN 06 — `rol:'guarnicion'` no es autoridad de elegibilidad
+
+**Estado:** Cerrada · **Fecha:** 2026-09-30
+
+La regla histórica «verduras presentes en Comida y Cena» **se conserva como objetivo de calidad
+nutricional, a revisar posteriormente**, pero **deja de implementarse como un filtro duro basado
+en `rol:'guarnicion'`**.
+
+### Intención histórica
+
+La regla está escrita en `LOGICA-NUTRICIONAL-HSC.md` §3.5:
+
+> **Verduras:** presentes en comida y cena SIEMPRE (base del plato).
+
+Se implementó cuatro días después en el commit `c96398c` («verduras forzadas en comida y cena
+(pool con guarnición)»), reduciendo los pools de Comida y Cena a los platillos que llevaran el
+tag. Antes de ese commit `guarnicion` no tenía ningún significado en el motor.
+
+La base nutricional citada en el repo es un **objetivo diario** —«~400 g/día de verduras +
+frutas», WHO 2023—, no un requisito por comida; la forma «por comida» aparece como «regla simple
+**para el banco** de platillos», es decir una heurística de construcción.
+
+### Por qué `guarnicion` no es una autoridad válida
+
+1. **Es un campo de registro opcional.** `INSTRUCCIONES-MAGALY.md`: «Verduras de guarnición que
+   sí cuentan […] ponlas como un ingrediente más, con sus gramos. Puedes escribir "guarnición" en
+   la columna `nota` **si quieres**». Un campo voluntario decidía qué recetas existían.
+2. **Las mismas instrucciones permiten no usarlo.** «Salsas/mezclas caseras (pico de gallo, salsa
+   verde): si quieres que cuenten, desármalas en sus ingredientes; si son mínimas, déjalas fuera».
+   Los platillos con pico de gallo y guacamole siguieron la instrucción al pie de la letra y
+   quedaron fuera del plan.
+3. **Tiene un segundo significado, de display.** El tag imprime «al gusto» sin gramos
+   (`portionStr`) y afecta la lista de compra. Ganó la elegibilidad el 9-jul y el display el
+   12-jul: dos responsabilidades sobre una misma etiqueta.
+4. **No describe verdura con fiabilidad.** De los 136 ingredientes `guarnicion` de Comida/Cena, 9
+   son **elote** (SMAE: Cereales S/G) y 1 **arúgula** (Libres en energía).
+5. **Se le escapaba verdura real.** 4 de los 10 platillos excluidos SÍ llevan verdura: Overnight
+   Oats de Zanahoria tiene 40 g de zanahoria como ingrediente `principal`.
+6. **No cubría la ruta IA.** `safeBankByTiempo` siempre usó los pools nominales, así que la regla
+   solo se aplicaba en la ruta determinista. Era una garantía asimétrica.
+
+### Evidencia de la simulación
+
+Medido sobre **200 planes / 1.400 días** (5 perfiles × 5 combinaciones de restricciones × 8
+semillas), comparando el motor con y sin el filtro:
+
+| | Resultado |
+|---|---|
+Platillos que entran | **3 de 10**, en el **3,5 %** de los slots Comida+Cena |
+Los otros 7 | **nunca** se sirven: el solver ya los rechaza por encaje de macros (28–60 % de error frente a una banda de aceptación del 12 %) |
+De los 3 que entran | **2 llevan verdura real** (~28 g vía guacamole); ninguno es de los 5 sin verdura |
+Error de macros | 0,45 % → 0,46 % (**+0,01 pp**) |
+Variedad por tiempo | 5,46 → 5,42 platillos distintos en 7 días |
+Cruces de tiempo / fugas de restricción | **0 / 0** |
+
+Conclusión: **el filtro protegía mucho menos de lo que su redacción sugería**, y el solver ya
+hacía la mayor parte del trabajo que se le atribuía. Retirarlo no produce cenas dulces.
+
+### Separación que esta decisión establece
+
+> **Elegibilidad del platillo** — la decide su `tiempo` (y las restricciones del socio). Es una
+> cuestión binaria y estructural: ¿puede este platillo ocupar este slot?
+>
+> **Calidad vegetal del plan** — es una propiedad del plan completo y del día, no de un tag en una
+> receta. Medible en gramos, acumulable, y materia de objetivo nutricional.
+
+Mezclarlas era el error: un tag de registro voluntario no puede decidir qué recetas existen.
+
+### Lo que NO queda decidido
+
+> La **estrategia de frutas y verduras queda pendiente**. En concreto, esta decisión **no** define:
+>
+> - cuánta verdura es «suficiente» (20 g, 40 g, 100 g…) ni si se mide por comida o por día;
+> - si se implementa `hasVegetable()` con la clasificación SMAE de `foods.csv` —la fuente más
+>   sólida disponible, hoy inalcanzable porque `gen_banco.py` no arrastra el grupo del alimento—;
+> - si un platillo sin verdura debería recibir una guarnición automáticamente;
+> - si hay que reclasificar recetas entre tiempos (ver HALLAZGO-04);
+> - ninguna receta nueva.
+>
+> Tampoco cambia la semántica de **display** de `guarnicion`, que sigue intacta.
+
 
 ---
 

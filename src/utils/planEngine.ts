@@ -45,10 +45,21 @@ export class NoEligibleDishesError extends Error {
 
 const BY_TIME: Record<string, BancoDish[]> = { Desayuno: [], Comida: [], Cena: [], Snack: [] };
 for (const d of BANCO) (BY_TIME[d.tiempo] ??= []).push(d);
-const hasVeg = (d: BancoDish) => d.ings.some((i) => i.rol === 'guarnicion');
-// Verduras SIEMPRE en comida y cena (Magaly). Prefiere platillos con guarnición.
-const COMIDA_VEG = BY_TIME.Comida.filter(hasVeg);
-const CENA_VEG = BY_TIME.Cena.filter(hasVeg);
+// DECISIÓN 06 · aquí vivía `hasVeg` = `d.ings.some(i => i.rol === 'guarnicion')`, y con él
+// COMIDA_VEG/CENA_VEG: los pools de Comida y Cena quedaban reducidos a los platillos con
+// ese tag. Se retiró como filtro de elegibilidad.
+//
+// `rol:'guarnicion'` no es autoridad nutricional. Las instrucciones a Magaly lo definen como
+// una anotación OPCIONAL para registrar una verdura de guarnición («Puedes escribir
+// "guarnición" en la columna `nota` si quieres»), y permiten explícitamente dejar las salsas
+// caseras como compuesto. Un campo de registro voluntario decidía qué recetas existían: 10
+// platillos de Comida/Cena quedaban fuera por no llevarlo, 4 de ellos CON verdura real
+// (zanahoria de 40 g como ingrediente principal, pico de gallo, guacamole).
+//
+// La elegibilidad la decide el `tiempo` del platillo (+ las restricciones del socio). La
+// calidad vegetal del plan sigue siendo un objetivo de producto, pendiente de definir, no un
+// filtro sobre un tag. `guarnicion` conserva intacto su uso de DISPLAY (portionStr → «al
+// gusto») y en la lista de compra.
 
 // Cocina por nombre del platillo (heurística). El resto = mexicana (base del banco).
 function cuisineOf(d: BancoDish): string {
@@ -763,7 +774,10 @@ function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: string[] =
 }
 
 // Busca el mejor conjunto de `n` platillos de `pool` para pegar el target de ESTE
-// tiempo, y devuelve sus MealItem (ya ajustados). needVeg exige guarnición (comida/cena).
+// tiempo, y devuelve sus MealItem (ya ajustados).
+// (Este comentario describía un parámetro `needVeg` que exigía guarnición y que NUNCA
+//  existió como código: la regla se implementó como filtro de pool. Retirada por la
+//  Decisión 06, se limpia la referencia para que no engañe.)
 // merge=true → devuelve UNA comida combinada (snacks: los dos dentro del mismo).
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
@@ -1002,8 +1016,8 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
     return [...densos, ...pool];
   };
   const des = sesgaCarbo(clean(biasPool(BY_TIME.Desayuno, cuisines), 'Desayuno'));
-  const com = sesgaCarbo(clean(biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines), 'Comida'));
-  const cen = sesgaCarbo(clean(biasPool(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, cuisines), 'Cena'));
+  const com = sesgaCarbo(clean(biasPool(BY_TIME.Comida, cuisines), 'Comida'));
+  const cen = sesgaCarbo(clean(biasPool(BY_TIME.Cena, cuisines), 'Cena'));
   // gateDense puede vaciar el pool por sí solo (si todo lo compatible es snack denso y la
   // meta no llega al umbral): también es una imposibilidad, no una excusa para abrirlo.
   const snackClean = clean(BY_TIME.Snack, 'Snack');
@@ -1376,9 +1390,9 @@ export function buildDayWithFixed(
   };
   add('Desayuno', () => BY_TIME.Desayuno, 1, 90);
   add('Snack AM', snackPool, nSnack, 70);
-  add('Comida', () => (COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida), 1, 90);
+  add('Comida', () => BY_TIME.Comida, 1, 90);
   add('Snack PM', snackPool, nSnack, 70);
-  add('Cena', () => (CENA_VEG.length ? CENA_VEG : BY_TIME.Cena), 1, 90);
+  add('Cena', () => BY_TIME.Cena, 1, 90);
   return { day: dayNum, theme: '', meals };
 }
 

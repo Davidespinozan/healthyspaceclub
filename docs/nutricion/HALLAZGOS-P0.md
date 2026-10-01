@@ -11,6 +11,7 @@ dice de qué bloque salió, por qué quedó fuera de él y qué haría falta par
 | 01 | Los planes persistidos anteriores a P0-03 pueden violar restricciones o cruzar tiempos | Alta | P0-03 | **Cerrado en P0-04** |
 | 02 | `AVOID_MAP.vegetariano/vegano` no lista merluza, gambas, boquerones ni sardinas | Sin impacto activo | P0-03 (auditoría de cobertura) | Deuda congelada — solo si se reactivan |
 | 03 | Los ingredientes del Bowl/Food Truck no son verificables contra las restricciones | Sin impacto activo | P0-04 | Deuda previa a su reactivación |
+| 04 | Cinco platos dulces de desayuno están clasificados como Cena | Media | Bloque 05 (Decisión 06) | Abierto — revisión de clasificación temporal |
 
 ---
 
@@ -133,3 +134,39 @@ que el usuario eligió al pedirlo.
 —como cualquier platillo del banco— para que el detector de P0-01 pueda evaluarlos de verdad.
 Mientras no exista eso, un bowl es un alimento que el usuario elige a ojo y HSC no puede
 afirmar que respete sus restricciones.
+
+---
+
+## HALLAZGO-04 — Cinco platos dulces de desayuno están clasificados como Cena
+
+**De dónde sale.** De la auditoría del Bloque 05. Al retirar el filtro de `guarnicion`
+(Decisión 06) quedó a la vista que los platillos de Cena sin verdura no son un problema de
+etiquetado: son **recetas de desayuno colocadas en el tiempo equivocado**.
+
+**Los cinco:**
+
+| Platillo | `tiempo` actual | Composición |
+|---|---|---|
+Hot Cakes de Camote | Cena | avena, camote, huevo, leche, canela, nueces, miel |
+Crepas Dulces de Plátano y Cacahuate | Cena | avena, leche, huevo, plátano, crema de cacahuate, miel |
+Overnight Oats de Mango y Coco | Cena | avena, leche, yogurt, mango, coco, chía, miel |
+Overnight Oats de Zanahoria | Cena | avena, leche, yogurt, zanahoria, chía, nueces, pasas, miel |
+Yogurt con Frutos Rojos y Almendras | Cena | yogurt griego, frambuesa, zarzamora, arándanos, granola, almendras, miel |
+
+**Por qué no es urgente.** Ninguno llega hoy al plato. Medido sobre 1.400 días generados: el
+solver los descarta por encaje de macros con errores del **28 % al 60 %** frente a una banda de
+aceptación del 12 %. Es decir, el motor ya los está filtrando por una razón legítima —no cuadran
+el tamaño de una cena— y no por su clasificación.
+
+**Por qué conviene resolverlo igualmente.** Mientras sigan marcados como Cena:
+
+- inflan el pool nominal de Cena (54) con 5 recetas que en la práctica nunca se sirven, lo que
+  distorsiona cualquier medición de profundidad del banco;
+- si en el futuro se ajustan las bandas de aceptación o los targets, podrían volverse elegibles
+  sin que nadie lo haya decidido;
+- Overnight Oats de Zanahoria es además el caso que más confunde el diagnóstico: tiene 40 g de
+  zanahoria como ingrediente principal, así que «no tiene verdura» nunca fue su problema.
+
+**Qué haría falta.** Una decisión de producto de Magaly sobre su `tiempo` en
+`PLATILLOS-HSC-final.csv`, y regenerar el banco. **No se toca en este bloque**: la Decisión 06
+prohíbe expresamente cambiar recetas y tiempos de comida, y reclasificar es justamente eso.
