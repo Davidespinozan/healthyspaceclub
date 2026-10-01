@@ -15,6 +15,34 @@ const IMG_BASE =
 
 export interface PlanTarget { kcal: number; protG: number; fatG: number; carbG: number }
 
+/**
+ * P0-03 · FAIL CLOSED. No existe ningún platillo elegible para un tiempo con las
+ * restricciones efectivas del usuario.
+ *
+ * Las restricciones y el tiempo de comida son INVARIANTES NO RELAJABLES: un pool
+ * vacío no autoriza servir un alérgeno ni un platillo de otro tiempo. Cuando de
+ * verdad no hay opción, el motor lo DICE en vez de fabricar disponibilidad.
+ *
+ * Hasta dónde llega: lo lanzan `buildDay` (vía `buildWeeklyPlan`) y
+ * `buildDayWithFixed`. Lo recogen `WeeklyNutritionPlanner.advance` (muestra el
+ * error de generación ya existente), `useAutoRegenPlan` (deja el plan anterior en
+ * pantalla y lo registra) y `TabHoy` (conserva el día sin el bowl).
+ */
+export class NoEligibleDishesError extends Error {
+  readonly slot: string;
+  readonly avoid: string[];
+  constructor(slot: string, avoid: string[]) {
+    const r = avoid.length ? avoid.join(', ') : 'ninguna';
+    super(`Sin platillos elegibles para ${slot} con las restricciones activas (${r}). `
+      + 'No se sirve un platillo de otro tiempo ni se relaja una restricción para rellenar.');
+    // `name` explícito: el instanceof sobrevive al bundling, pero el nombre es lo que
+    // queda en los logs y lo que la UI puede distinguir de un fallo genérico.
+    this.name = 'NoEligibleDishesError';
+    this.slot = slot;
+    this.avoid = [...avoid];
+  }
+}
+
 const BY_TIME: Record<string, BancoDish[]> = { Desayuno: [], Comida: [], Cena: [], Snack: [] };
 for (const d of BANCO) (BY_TIME[d.tiempo] ??= []).push(d);
 const hasVeg = (d: BancoDish) => d.ings.some((i) => i.rol === 'guarnicion');
@@ -743,7 +771,12 @@ function fitSlot(
   used: Set<string>, usedToday: Set<string>, usedTodayIng: Set<string>, craving: string[],
   ingFreq: Map<string, number>, merge = false,
 ): MealItem[] {
-  // El pool ya viene filtrado por alergia (buildDay) → aquí no se cuela ningún alérgeno.
+  // El pool ya viene filtrado por alergia Y por tiempo (buildDay / buildDayWithFixed) →
+  // aquí no se cuela ningún alérgeno ni un platillo de otro tiempo.
+  // P0-03 · un pool vacío significa que no hay nada elegible para este tiempo. Antes
+  // `pick` sobre un array vacío devolvía undefined y reventaba con un TypeError opaco;
+  // ahora se dice qué pasó. Quien llama ya debería haberlo detectado: esto es la red.
+  if (!pool.length) throw new NoEligibleDishesError(label, []);
   const princKeys = (d: BancoDish) => d.ings.filter((i) => i.rol === 'principal').map((i) => ingKey(i.nv));
   // pickN nunca junta en el MISMO slot dos platillos que compartan ingrediente principal
   // (ej. "zanahoria y pepino con hummus" + "bastones de zanahoria" → el snack se repetía).
@@ -938,17 +971,21 @@ function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
   return meals;
 }
 
-function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>, relax = 0): DayPlan {
+function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>, relax = 0, avoidCats: string[] = []): DayPlan {
   const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
   const MT = mealTargets(T);
-  // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno). Si un tiempo se
-  // queda sin opciones (varias alergias juntas), JAMÁS cae al alérgeno: usa cualquier
-  // platillo compatible del banco (una comida sirve de desayuno). Solo si NADA en las 175
-  // recetas cumple (imposible en la práctica) usa el pool para no romper.
-  const anyCompliant = BANCO.filter((d) => !avoid(d));
-  const clean = (pool: BancoDish[]) => {
+  // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno).
+  //
+  // P0-03 · ANTES, si un tiempo se quedaba sin opciones, esto caía a «cualquier platillo
+  // compatible del banco», es decir CRUZABA DE TIEMPO: medido, servía Edamames de
+  // desayuno, Garbanzos Horneados de comida y Puñado de Cacahuates de cena, los 7 días.
+  // Contradecía la regla de Magaly que la v29 ya había restaurado en la degradación: el
+  // cross-time seguía vivo por esta puerta de atrás. Ahora el tiempo es invariante — si
+  // un tiempo no tiene candidatos, el día es IMPOSIBLE y se dice (no se rellena).
+  const clean = (pool: BancoDish[], slot: string) => {
     const f = pool.filter((d) => !avoid(d));
-    return f.length ? f : (anyCompliant.length ? anyCompliant : pool);
+    if (!f.length) throw new NoEligibleDishesError(slot, avoidCats);
+    return f;
   };
   // REGLA DURA de Magaly: cada tiempo usa SOLO sus platillos. El desayuno es
   // desayuno; una cena JAMÁS aparece en el desayuno, por ningún motivo. La
@@ -964,10 +1001,14 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
     const densos = [...pool].sort((a, b) => carbCap(b) - carbCap(a)).slice(0, 8);
     return [...densos, ...pool];
   };
-  const des = sesgaCarbo(clean(biasPool(BY_TIME.Desayuno, cuisines)));
-  const com = sesgaCarbo(clean(biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines)));
-  const cen = sesgaCarbo(clean(biasPool(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, cuisines)));
-  const snack = gateDense(clean(BY_TIME.Snack), T[0]); // densos solo si el requerimiento es alto
+  const des = sesgaCarbo(clean(biasPool(BY_TIME.Desayuno, cuisines), 'Desayuno'));
+  const com = sesgaCarbo(clean(biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines), 'Comida'));
+  const cen = sesgaCarbo(clean(biasPool(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, cuisines), 'Cena'));
+  // gateDense puede vaciar el pool por sí solo (si todo lo compatible es snack denso y la
+  // meta no llega al umbral): también es una imposibilidad, no una excusa para abrirlo.
+  const snackClean = clean(BY_TIME.Snack, 'Snack');
+  const snackGated = gateDense(snackClean, T[0]); // densos solo si el requerimiento es alto
+  const snack = snackGated.length ? snackGated : snackClean;
   // Regla dura: NADA se repite dentro del mismo día (ni comida ni snack, ni una comida
   // como cena). avail() saca del pool lo ya usado hoy; fitSlot va llenando usedToday.
   // relax≥1: la selección ignora el historial de la semana → puede repetir un
@@ -1084,10 +1125,17 @@ export function makeAvoidFilter(avoidCats: string[]): (d: BancoDish) => boolean 
   return (d: BancoDish) => dishMatchesAvoidTerms(d, terms);
 }
 
-/** Banco agrupado por tiempo, ya SIN alérgenos (nunca vacío: cae al pool completo). */
+/** Banco agrupado por tiempo, ya SIN alérgenos.
+ *
+ *  P0-03: un pool puede quedar VACÍO y eso es el resultado correcto. Antes caía al
+ *  pool COMPLETO sin filtrar «para no quedarse sin opciones», con lo que un usuario
+ *  sin opciones compatibles recibía exactamente los platillos que había excluido (70
+ *  desayunos, todos incompatibles, medido). El vacío lo resuelve quien consume el
+ *  banco: el motor determinista lanza NoEligibleDishesError y la ruta IA no puede
+ *  completar los 7 días, así que cae al determinista. Nunca se rellena con alérgenos. */
 export function safeBankByTiempo(avoidCats: string[]): Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]> {
   const avoid = makeAvoidFilter(avoidCats);
-  const pick = (t: string) => { const f = (BY_TIME[t] ?? []).filter((d) => !avoid(d)); return f.length ? f : (BY_TIME[t] ?? []); };
+  const pick = (t: string) => (BY_TIME[t] ?? []).filter((d) => !avoid(d));
   return { Desayuno: pick('Desayuno'), Comida: pick('Comida'), Cena: pick('Cena'), Snack: pick('Snack') };
 }
 
@@ -1193,9 +1241,22 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
   const corrUsed = new Set<string>(); // corrector no repite el mismo snack en la semana
   const out: DayPlan[] = [];
   days.forEach((sel, i) => {
-    const des = byName.get(sel.desayuno), com = byName.get(sel.comida), cen = byName.get(sel.cena);
-    if (!des || !com || !cen) return; // el orquestador ya validó; salta por seguridad
-    const snacks = (sel.snacks ?? []).map((n) => byName.get(n)).filter((d): d is BancoDish => !!d);
+    // P0-03 · DOBLE LLAVE sobre la selección de la IA. El orquestador ya solo acepta
+    // nombres de `adequateBankByTiempo` (filtrado por tiempo y por restricciones), pero
+    // este helper resuelve los nombres contra el BANCO COMPLETO: si alguna vez llegara
+    // aquí una selección de otra procedencia, el nombre bastaría para servir un platillo
+    // de otro tiempo o un alérgeno. Se verifican las dos invariantes aquí también; un día
+    // que no las cumpla se DESCARTA (el plan sale con <7 días → el orquestador devuelve
+    // null → motor determinista), nunca se sirve corregido a medias.
+    const noEvitado = makeAvoidFilter(avoidCats);
+    const main = (nombre: string, t: string): BancoDish | undefined => {
+      const d = byName.get(nombre);
+      return d && d.tiempo === t && !noEvitado(d) ? d : undefined;
+    };
+    const des = main(sel.desayuno, 'Desayuno'), com = main(sel.comida, 'Comida'), cen = main(sel.cena, 'Cena');
+    if (!des || !com || !cen) return;
+    const snacks = (sel.snacks ?? []).map((n) => byName.get(n))
+      .filter((d): d is BancoDish => !!d && d.tiempo === 'Snack' && !noEvitado(d));
     // Reparto de Magaly: cada tiempo a su share (proteína pareja en los 3 principales,
     // menos en snacks). Snacks: nSnack combinados por slot para tener capacidad a metas altas.
     const amSnacks = snacks.slice(0, nSnack), pmSnacks = snacks.slice(nSnack, 2 * nSnack);
@@ -1246,8 +1307,15 @@ export function buildDayWithFixed(
   const craving = cravingTerms(opts.craving ?? '');
   const ingFreq = new Map<string, number>();
 
-  const anyOk = BANCO.filter((d) => !avoid(d));
-  const clean = (pool: BancoDish[]) => { const f = pool.filter((d) => !avoid(d)); return f.length ? f : anyOk; };
+  // P0-03 · igual que en buildDay: antes, un tiempo sin opciones caía a «cualquier platillo
+  // compatible» y cruzaba de tiempo (medido: servía Merluza al Horno con Patatas, una
+  // Comida, como desayuno). El tiempo no se negocia; si no hay candidatos, el día no se
+  // puede armar y se dice.
+  const clean = (pool: BancoDish[], slot: string) => {
+    const f = pool.filter((d) => !avoid(d));
+    if (!f.length) throw new NoEligibleDishesError(slot, opts.avoid ?? []);
+    return f;
+  };
   // Solo los que CABEN por debajo del presupuesto del tiempo (con 15% de holgura, que
   // el solver puede cuadrar). Si ninguno cabe, se toman los más ligeros.
   const cabe = (pool: BancoDish[], slotT: number[]) => {
@@ -1262,7 +1330,9 @@ export function buildDayWithFixed(
 
   const nSnack = rest[0] > 2200 ? 2 : 1;
   const meals: MealItem[] = [];
-  const add = (slot: Slot, pool: BancoDish[], n: number, tol: number) => {
+  // El pool llega PEREZOSO: el tiempo que ocupa el alimento fijo no necesita candidatos,
+  // así que no puede declararse imposible por un pool que nunca se iba a usar.
+  const add = (slot: Slot, poolOf: () => BancoDish[], n: number, tol: number) => {
     if (slot === fixed.slot) {
       meals.push({
         time: slot, name: fixed.name, desc: fixed.desc ?? '', img: fixed.img,
@@ -1282,14 +1352,24 @@ export function buildDayWithFixed(
         : p.filter((d) => !usedToday.has(d.nombre));
       return f.length ? f : p.filter((d) => !usedToday.has(d.nombre));
     };
-    const pool2 = libre(cabe(clean(pool), t));
-    meals.push(...fitSlot(pool2.length ? pool2 : cabe(clean(pool), t), slot, t, n, rng, tol, used, usedToday, usedIng, craving, ingFreq, esSnack));
+    // `cabe` y `libre` relajan encaje y repetición, pero SIEMPRE dentro del pool ya limpio
+    // de este tiempo: ninguno de los dos puede reintroducir un alérgeno ni otro tiempo.
+    const limpio = clean(poolOf(), slot);
+    const pool2 = libre(cabe(limpio, t));
+    meals.push(...fitSlot(pool2.length ? pool2 : cabe(limpio, t), slot, t, n, rng, tol, used, usedToday, usedIng, craving, ingFreq, esSnack));
   };
-  add('Desayuno', BY_TIME.Desayuno, 1, 90);
-  add('Snack AM', gateDense(BY_TIME.Snack, target.kcal), nSnack, 70);
-  add('Comida', COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, 1, 90);
-  add('Snack PM', gateDense(BY_TIME.Snack, target.kcal), nSnack, 70);
-  add('Cena', CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, 1, 90);
+  // El pool de snacks se limpia ANTES de gateDense para que, si todo lo compatible es
+  // denso, el vacío lo detecte `clean` (imposibilidad) y no gateDense (que daría []).
+  const snackPool = (): BancoDish[] => {
+    const limpio = clean(BY_TIME.Snack, 'Snack');
+    const gated = gateDense(limpio, target.kcal);
+    return gated.length ? gated : limpio;
+  };
+  add('Desayuno', () => BY_TIME.Desayuno, 1, 90);
+  add('Snack AM', snackPool, nSnack, 70);
+  add('Comida', () => (COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida), 1, 90);
+  add('Snack PM', snackPool, nSnack, 70);
+  add('Cena', () => (CENA_VEG.length ? CENA_VEG : BY_TIME.Cena), 1, 90);
   return { day: dayNum, theme: '', meals };
 }
 
@@ -1350,7 +1430,10 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
         used.clear(); preU.forEach((x) => used.add(x));
         ingFreq.clear(); preI.forEach((v, k) => ingFreq.set(k, v));
         cravedCount.clear(); preC.forEach((v, k) => cravedCount.set(k, v));
-        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax);
+        // Si un tiempo no tiene candidatos, buildDay lanza NoEligibleDishesError y el error
+        // SALE de buildWeeklyPlan: no se reintenta con otro relax (relajar variedad o sesgar
+        // a carbo no crea platillos) ni se devuelve un plan incompleto. Lo recoge la UI.
+        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax, opts.avoid ?? []);
         if (shake) applyShake(day.meals, shake);   // batido (ya validado vs lácteos/vegano) reemplaza el snack de su slot
         // Cuadre del día contra la meta COMPLETA (T), ya con el batido puesto: las
         // comidas absorben lo que el batido aporta o deja faltando.

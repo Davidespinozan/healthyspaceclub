@@ -32,9 +32,9 @@ import { expandAvoidCats, textMatchesAvoid } from './planEngine';
  * semanal la importan para que no vuelvan a divergir (antes el perfil ofrecía 8 y
  * el cuestionario 13).
  *
- * `vegetariano` y `vegano` NO están: la Decisión 01 establece que HSC no los
- * ofrece en la versión actual. Los perfiles que ya los tengan guardados se siguen
- * respetando (ver `permanentAvoidFrom`): retirarlos haría el plan más permisivo.
+ * `vegetariano` y `vegano` NO están: la Decisión 01 establece que HSC no los ofrece,
+ * porque el banco no tiene profundidad para sostenerlos. No son solo «lo que la UI
+ * muestra»: son el ÚNICO conjunto que la autoridad admite (ver `normalizeCats`).
  */
 export const PERMANENT_AVOID_CATALOG = [
   'gluten', 'lacteos', 'huevo', 'frutos-secos', 'cacahuate',
@@ -48,6 +48,23 @@ export const WEEKLY_AVOID_CATALOG = [...PERMANENT_AVOID_CATALOG, 'nada'] as cons
 /** Valores centinela que significan «ninguna restricción» y no son categorías. */
 const SENTINELS = new Set(['nada', 'ninguno', 'ninguna', 'todas', 'todo', 'todos']);
 
+/**
+ * Conjunto admitido por la autoridad. Cualquier otro valor se DESCARTA.
+ *
+ * HSC todavía no tiene usuarios reales, así que no hay población histórica que preservar:
+ * `vegetariano`/`vegano` solo pueden venir de datos de desarrollo. Antes se respetaban con
+ * el argumento de que quitarlos haría el plan más permisivo; el argumento no se sostiene,
+ * porque admitirlos convierte una capacidad que la Decisión 01 declara NO soportada en una
+ * restricción efectiva, y el motor entonces no puede construir ningún plan (el banco no
+ * tiene un solo desayuno vegano). Fallar por una capacidad que el producto no ofrece es
+ * peor que ignorar un dato de desarrollo obsoleto.
+ *
+ * Que `AVOID_MAP` siga teniendo términos `vegetariano`/`vegano` no es una promesa de
+ * producto: es capacidad INACTIVA, inalcanzable desde los datos activos precisamente por
+ * este filtro.
+ */
+const SUPPORTED = new Set<string>(PERMANENT_AVOID_CATALOG);
+
 /** CSV/lista laxa → categorías en minúscula, sin vacíos ni duplicados. Puro. */
 export function parseAvoidCsv(v: unknown): string[] {
   if (v == null) return [];
@@ -60,12 +77,17 @@ export function parseAvoidCsv(v: unknown): string[] {
   return out;
 }
 
-/** Canoniza (maní→cacahuate, sésamo→ajonjolí) y descarta centinelas. Puro. */
+/**
+ * Canoniza (maní→cacahuate, sésamo→ajonjolí), descarta centinelas y descarta todo lo que
+ * no sea una de las 10 categorías soportadas. Es el único punto donde se decide qué cuenta
+ * como restricción: todas las funciones públicas de este módulo pasan por aquí, así que una
+ * categoría no soportada no puede entrar por ninguna vía. Puro.
+ */
 function normalizeCats(cats: string[]): string[] {
   const out: string[] = [];
   for (const c of cats) {
     const k = canonicalizeAvoidTerm(c);
-    if (!k || SENTINELS.has(k) || out.includes(k)) continue;
+    if (!k || SENTINELS.has(k) || !SUPPORTED.has(k) || out.includes(k)) continue;
     out.push(k);
   }
   return out;
@@ -74,9 +96,13 @@ function normalizeCats(cats: string[]): string[] {
 /**
  * RESTRICCIONES PERMANENTES del perfil. Lee `obData.avoid`.
  *
- * Se respeta TODO lo que haya guardado, incluidas categorías que la UI ya no
- * ofrece (`vegetariano`/`vegano` de perfiles anteriores a la Decisión 01):
- * ignorarlas volvería el plan MÁS permisivo, y el contrato es que nunca se resta.
+ * Solo sobreviven las 10 categorías soportadas. Un `obData.avoid` de desarrollo que
+ * contenga `vegetariano`/`vegano` se normaliza a vacío para esa entrada: no se convierte en
+ * restricción efectiva ni llega al motor. No hace falta migrar nada en Supabase —el filtro
+ * actúa en cada lectura— y HSC no tiene todavía usuarios reales que migrar.
+ *
+ * «Nunca se resta» sigue siendo el contrato ENTRE perfil y semana (ver `effectiveAvoid`):
+ * lo que no aplica es a un valor que el producto no soporta.
  */
 export function permanentAvoidFrom(obData: Record<string, unknown> | null | undefined): string[] {
   return normalizeCats(parseAvoidCsv(obData?.avoid));

@@ -173,10 +173,17 @@ describe('P0-02 · B · permanentAvoid · weeklyAvoid · effectiveAvoid', () => 
     expect(permanentAvoidFrom({ avoid: 'maní,sésamo' })).toEqual(['cacahuate', 'ajonjoli']);
   });
 
-  it('las permanentes heredadas de un perfil viejo (vegetariano/vegano) se siguen respetando', () => {
-    // Decisión 01 las retira de la UI, pero quitarlas de un perfil ya guardado
-    // haría el plan MÁS permisivo → nunca se resta.
-    expect(permanentAvoidFrom({ avoid: 'vegetariano' })).toContain('vegetariano');
+  it('la autoridad SOLO admite las 10 soportadas: vegetariano/vegano se descartan', () => {
+    // CAMBIO DE CRITERIO (post-P0-03). Antes se respetaba lo que hubiera guardado, con el
+    // argumento de que quitarlo haría el plan más permisivo. El argumento no se sostiene:
+    // HSC no tiene todavía usuarios reales, así que no hay población histórica que preservar,
+    // y admitir una capacidad que la Decisión 01 declara NO soportada no vuelve el plan más
+    // seguro — vuelve el plan IMPOSIBLE (el banco no tiene un solo desayuno vegano).
+    expect(permanentAvoidFrom({ avoid: 'vegetariano' })).toEqual([]);
+    expect(permanentAvoidFrom({ avoid: 'vegano' })).toEqual([]);
+    expect(weeklyAvoidFrom('vegano')).toEqual([]);
+    // y tampoco cualquier otra etiqueta que no sea una de las 10
+    expect(permanentAvoidFrom({ avoid: 'keto,paleo,gluten' })).toEqual(['gluten']);
   });
 
   it('effectiveAvoid es determinista y sin duplicados', () => {

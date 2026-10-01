@@ -1065,12 +1065,22 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             if (!g || !weeklyPlan?.days?.length) return;
             const idx = new Date().getDay();                 // 0=domingo
             const i = Math.min(idx, weeklyPlan.days.length - 1);
-            const nuevo = buildDayWithFixed(
-              { kcal: g.kcal, protG: g.protG, fatG: g.fatG, carbG: g.carbG },
-              { slot, name: bowl.name, kcal: bowl.kcal, prot: bowl.prot, fat: bowl.fat, carb: bowl.carb, img: bowl.img ?? undefined, desc: bowl.tagline ?? t('bowl.genericDesc') },
-              { avoid: g.avoid, craving: g.craving },
-              weeklyPlan.days[i].day,
-            );
+            // P0-03 · el motor ahora FALLA CERRADO: si con las restricciones del socio no
+            // hay platillos elegibles para algún tiempo, lanza en vez de rellenar con un
+            // platillo de otro tiempo o con uno excluido. Aquí eso significa dejar el día
+            // como estaba (sin el bowl) — nunca guardar un día armado a la fuerza.
+            let nuevo;
+            try {
+              nuevo = buildDayWithFixed(
+                { kcal: g.kcal, protG: g.protG, fatG: g.fatG, carbG: g.carbG },
+                { slot, name: bowl.name, kcal: bowl.kcal, prot: bowl.prot, fat: bowl.fat, carb: bowl.carb, img: bowl.img ?? undefined, desc: bowl.tagline ?? t('bowl.genericDesc') },
+                { avoid: g.avoid, craving: g.craving },
+                weeklyPlan.days[i].day,
+              );
+            } catch (e) {
+              console.error('[TabHoy] no se pudo rearmar el día con el bowl:', e);
+              return;
+            }
             const days = weeklyPlan.days.map((d, k) => (k === i ? nuevo : d));
             void saveWeeklyPlan({ ...weeklyPlan, days });
           }}

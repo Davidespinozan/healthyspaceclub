@@ -1,29 +1,47 @@
 import { describe, it, expect } from 'vitest';
-import { buildWeeklyPlan } from '../planEngine';
+import { makeAvoidFilter } from '../planEngine';
+import { effectiveAvoid, permanentAvoidFrom, weeklyAvoidFrom } from '../avoidAuthority';
+import { BANCO } from '../../data/banco';
 
-// Food-safety: un usuario vegetariano/vegano NUNCA debe recibir proteína animal.
-const MEAT = ['pollo', 'pechuga', 'pavo', 'cerdo', 'chorizo', 'tocino', 'jamon', 'res', 'sirloin', 'bistec', 'arrachera', 'camaron', 'marisco', 'pescado', 'salmon', 'atun', 'tilapia'];
-const ANIMAL = [...MEAT, 'huevo', 'queso', 'leche', 'yogur', 'panela', 'mozzarella'];
-const target = { kcal: 2200, protG: 140, fatG: 70, carbG: 230 };
+// ─────────────────────────────────────────────────────────────────────────────
+// CAPACIDAD INACTIVA · dieta vegetariana / vegana.
+//
+// Este fichero nació como food-safety de producto: «un usuario vegetariano/vegano NUNCA
+// debe recibir proteína animal», comprobado generando planes. Esa premisa ya no se sostiene:
+// la Decisión 01 declara que HSC NO ofrece estas dietas, porque el banco no tiene
+// profundidad para sostenerlas, y desde P0-03 la autoridad de restricciones no las admite.
+//
+// Generar planes con ellas probaba una vía inalcanzable —y, en el caso vegano, pasaba solo
+// porque el motor rellenaba los tres tiempos fuertes con snacks (Edamames de desayuno,
+// Puñado de Cacahuates de cena): cero fugas animales, sí, pero sobre un plan que Magaly no
+// firma—. Lo que este fichero garantiza ahora es lo que de verdad protege al usuario:
+// que estas categorías NO PUEDEN convertirse en restricción efectiva.
+//
+// Los términos que siguen en AVOID_MAP se caracterizan en dietTermCompleteness.test.ts.
+// ─────────────────────────────────────────────────────────────────────────────
 
-function ingNames(days: ReturnType<typeof buildWeeklyPlan>): string[] {
-  const out: string[] = [];
-  for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? []) out.push((ing.nv || '').toLowerCase());
-  return out;
-}
+const NO_SOPORTADAS = ['vegetariano', 'vegano'];
 
-describe('dieta vegetariana / vegana (food-safety)', () => {
-  it('vegetariano: sin carne, pollo, pavo, cerdo ni pescado', () => {
-    const days = buildWeeklyPlan(target, { seed: 7, avoid: ['vegetariano'] });
-    const ings = ingNames(days);
-    const found = ings.filter((nv) => MEAT.some((t) => new RegExp(`\\b${t}\\b`).test(nv)));
-    expect(found, `proteína animal encontrada: ${[...new Set(found)].join(', ')}`).toHaveLength(0);
+describe('dieta vegetariana / vegana · capacidad NO soportada (Decisión 01)', () => {
+  it('no pueden entrar en effectiveAvoid por ninguna vía', () => {
+    for (const v of NO_SOPORTADAS) {
+      expect(permanentAvoidFrom({ avoid: v }), `perfil ${v}`).toEqual([]);
+      expect(weeklyAvoidFrom(v), `cuestionario ${v}`).toEqual([]);
+      expect(effectiveAvoid([v], [v]), `efectiva ${v}`).toEqual([]);
+    }
   });
 
-  it('vegano: además sin huevo ni lácteos', () => {
-    const days = buildWeeklyPlan(target, { seed: 7, avoid: ['vegano'] });
-    const ings = ingNames(days);
-    const found = ings.filter((nv) => ANIMAL.some((t) => new RegExp(`\\b${t}\\b`).test(nv)));
-    expect(found, `producto animal encontrado: ${[...new Set(found)].join(', ')}`).toHaveLength(0);
+  it('un dato de desarrollo no bloquea las restricciones reales que lo acompañan', () => {
+    // el caso realista: obData.avoid de una prueba antigua con una categoría válida al lado
+    expect(permanentAvoidFrom({ avoid: 'vegetariano,lacteos' })).toEqual(['lacteos']);
+    expect(effectiveAvoid(permanentAvoidFrom({ avoid: 'vegano' }), weeklyAvoidFrom('gluten')))
+      .toEqual(['gluten']);
+  });
+
+  // Caracterización mínima de la capacidad inactiva: los términos siguen en AVOID_MAP y
+  // siguen detectando. No es una promesa de producto, es el estado en que quedaron.
+  it('[inactiva] el predicado todavía reconoce los términos si se le invocan a mano', () => {
+    const tacos = BANCO.find((d) => d.nombre === 'Tacos de Carne Asada')!;
+    for (const v of NO_SOPORTADAS) expect(makeAvoidFilter([v])(tacos), v).toBe(true);
   });
 });
