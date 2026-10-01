@@ -11,7 +11,7 @@ dice de qué bloque salió, por qué quedó fuera de él y qué haría falta par
 | 01 | Los planes persistidos anteriores a P0-03 pueden violar restricciones o cruzar tiempos | Alta | P0-03 | **Cerrado en P0-04** |
 | 02 | `AVOID_MAP.vegetariano/vegano` no lista merluza, gambas, boquerones ni sardinas | Sin impacto activo | P0-03 (auditoría de cobertura) | Deuda congelada — solo si se reactivan |
 | 03 | Los ingredientes del Bowl/Food Truck no son verificables contra las restricciones | Sin impacto activo | P0-04 | Deuda previa a su reactivación |
-| 04 | Cinco platos dulces de desayuno están clasificados como Cena | Media | Bloque 05 (Decisión 06) | Abierto — revisión de clasificación temporal |
+| 04 | Seis platos dulces de desayuno están clasificados como Cena | Media | Bloque 05 (Decisión 06) | Abierto — revisión de clasificación temporal |
 
 ---
 
@@ -137,21 +137,30 @@ afirmar que respete sus restricciones.
 
 ---
 
-## HALLAZGO-04 — Cinco platos dulces de desayuno están clasificados como Cena
+## HALLAZGO-04 — Seis platos dulces de desayuno están clasificados como Cena
 
 **De dónde sale.** De la auditoría del Bloque 05. Al retirar el filtro de `guarnicion`
 (Decisión 06) quedó a la vista que los platillos de Cena sin verdura no son un problema de
 etiquetado: son **recetas de desayuno colocadas en el tiempo equivocado**.
 
-**Los cinco:**
+**Los seis:**
 
 | Platillo | `tiempo` actual | Composición |
 |---|---|---|
 Hot Cakes de Camote | Cena | avena, camote, huevo, leche, canela, nueces, miel |
+Hot Cakes de Zanahoria | Cena | harina de avena, zanahoria, huevo, yogurt griego, leche, canela, crema de cacahuate, nueces, miel |
 Crepas Dulces de Plátano y Cacahuate | Cena | avena, leche, huevo, plátano, crema de cacahuate, miel |
 Overnight Oats de Mango y Coco | Cena | avena, leche, yogurt, mango, coco, chía, miel |
 Overnight Oats de Zanahoria | Cena | avena, leche, yogurt, zanahoria, chía, nueces, pasas, miel |
 Yogurt con Frutos Rojos y Almendras | Cena | yogurt griego, frambuesa, zarzamora, arándanos, granola, almendras, miel |
+
+**Corrección posterior: son seis, no cinco.** La auditoría original del Bloque 05 solo encontró
+cinco porque partía de los platillos SIN `rol:'guarnicion'`. **Hot Cakes de Zanahoria** sí lleva
+el tag, en un ingrediente llamado `Zanahoria rallada (topping)` de 20 g, así que pasaba el
+antiguo filtro y no aparecía en esa lista. La radiografía posterior del modelo de datos lo
+localizó por otra vía —el cruce `sabor` × `tiempo`, donde los dulces de Cena son exactamente
+seis— y es un buen resumen de por qué el tag no servía como autoridad: 20 g de zanahoria rallada
+por encima bastaban para que un hot cake con miel contara como «comida con verdura».
 
 **Por qué no es urgente.** Ninguno llega hoy al plato. Medido sobre 1.400 días generados: el
 solver los descarta por encaje de macros con errores del **28 % al 60 %** frente a una banda de
@@ -160,7 +169,7 @@ el tamaño de una cena— y no por su clasificación.
 
 **Por qué conviene resolverlo igualmente.** Mientras sigan marcados como Cena:
 
-- inflan el pool nominal de Cena (54) con 5 recetas que en la práctica nunca se sirven, lo que
+- inflan el pool nominal de Cena (54) con 6 recetas que en la práctica nunca se sirven, lo que
   distorsiona cualquier medición de profundidad del banco;
 - si en el futuro se ajustan las bandas de aceptación o los targets, podrían volverse elegibles
   sin que nadie lo haya decidido;
