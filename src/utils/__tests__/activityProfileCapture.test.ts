@@ -313,12 +313,28 @@ describe('FASE B · la Fase B no conecta el motor energético', () => {
     expect(PRODUCTIVOS.some(([p]) => p.endsWith('/nutritionEnergyOrchestrator.ts'))).toBe(true);
   });
 
-  it('resolveNutritionEnergy tiene CERO consumidores productivos', () => {
-    const consumidores = PRODUCTIVOS
-      .filter(([p]) => !p.endsWith('/nutritionEnergyOrchestrator.ts'))
+  it('resolveNutritionEnergy no tiene ningún consumidor de FLUJO productivo', () => {
+    // Desde la Fase C2 existe `nutritionEnergyState`, el productor ÚNICO que
+    // compone el mapper con el orquestador. Importarlo es su trabajo, así que ya
+    // no se puede exigir cero referencias en todo el árbol. La garantía que
+    // importa —que ningún FLUJO productivo llega al motor— se mantiene en dos
+    // tramos, y el segundo es el que la cierra.
+    const INTERMEDIARIOS = ['/nutritionEnergyOrchestrator.ts', '/nutritionEnergyState.ts'];
+    const esIntermediario = (p: string) => INTERMEDIARIOS.some((s) => p.endsWith(s));
+
+    const directos = PRODUCTIVOS
+      .filter(([p]) => !esIntermediario(p))
       .filter(([, src]) => /resolveNutritionEnergy|nutritionEnergyOrchestrator/.test(src))
       .map(([p]) => p);
-    expect(consumidores).toEqual([]);
+    expect(directos).toEqual([]);
+
+    // …y el intermediario tampoco tiene consumidores, así que la cadena sigue
+    // sin alcanzar producción por ningún camino.
+    const indirectos = PRODUCTIVOS
+      .filter(([p]) => !p.endsWith('/nutritionEnergyState.ts'))
+      .filter(([, src]) => /\bnutritionEnergyState\b|\bresolveNutritionEnergyState\b/.test(src))
+      .map(([p]) => p);
+    expect(indirectos).toEqual([]);
   });
 
   it('el mapper NO importa el orquestador: existir no es estar conectado', () => {
