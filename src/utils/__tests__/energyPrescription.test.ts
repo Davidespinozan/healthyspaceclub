@@ -193,6 +193,9 @@ describe('EnergyPrescription V1 · 2 · mapeo de objetivos', () => {
   const PARES: Array<[string, CanonicalGoal]> = [
     ['Bajar grasa', 'FAT_LOSS'],
     ['Ganar músculo', 'MUSCLE_GAIN'],
+    // El producto escribe DOS representaciones del mismo objetivo: el onboarding
+    // guarda 'Ganar músculo' y la hoja de Ajustes guarda 'Subir masa muscular'.
+    ['Subir masa muscular', 'MUSCLE_GAIN'],
     ['Recomposición', 'RECOMPOSITION'],
     ['Bienestar integral', 'MAINTENANCE'],
   ];
@@ -240,11 +243,99 @@ describe('EnergyPrescription V1 · 2 · mapeo de objetivos', () => {
   });
 
   it('prescribeEnergy exige el objetivo YA canónico', () => {
-    for (const v of ['Bajar grasa', 'Bienestar integral', 'fat_loss', '', null, undefined]) {
+    for (const v of ['Bajar grasa', 'Bienestar integral', 'Ganar músculo',
+      'Subir masa muscular', 'fat_loss', '', null, undefined]) {
       expect(() => prescribeEnergy(
         { goal: v, maintenance: synthM(2500) } as unknown as PrescriptionRequest,
       ), `goal=${String(v)}`).toThrow(InvalidPrescriptionInputError);
     }
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 2b · ALIAS LEGACY 'Subir masa muscular' (PATCH 03A)
+//
+// El onboarding escribe 'Ganar músculo' y la hoja de Ajustes escribe
+// 'Subir masa muscular'. Las dos son datos que el propio producto generó, y el
+// `goalFactor` legacy reconocía ambas (su regex incluía `subir` y `masa`). El
+// alias existe para no rechazar a quien cambió su objetivo desde Ajustes.
+//
+// NO es un quinto objetivo, y la autoridad del mapeo sigue siendo únicamente
+// `canonicalGoalFrom`.
+// ═════════════════════════════════════════════════════════════════════════════
+describe('EnergyPrescription V1 · 2b · alias legacy de MUSCLE_GAIN', () => {
+  it("'Subir masa muscular' → MUSCLE_GAIN", () => {
+    expect(canonicalGoalFrom('Subir masa muscular')).toBe('MUSCLE_GAIN');
+  });
+
+  it('las variantes normalizadas también → MUSCLE_GAIN', () => {
+    // Misma normalización del contrato: trim + minúsculas + sin acentos.
+    for (const v of ['subir masa muscular', 'SUBIR MASA MUSCULAR',
+      '  Subir Masa Muscular  ', 'Subir masa múscular']) {
+      expect(canonicalGoalFrom(v), `valor: ${JSON.stringify(v)}`).toBe('MUSCLE_GAIN');
+    }
+  });
+
+  it("'Ganar músculo' sigue → MUSCLE_GAIN (el otro escritor no se rompe)", () => {
+    expect(canonicalGoalFrom('Ganar músculo')).toBe('MUSCLE_GAIN');
+    expect(canonicalGoalFrom('ganar musculo')).toBe('MUSCLE_GAIN');
+  });
+
+  it('las dos representaciones son INDISTINGUIBLES aguas abajo', () => {
+    const a = canonicalGoalFrom('Ganar músculo');
+    const b = canonicalGoalFrom('Subir masa muscular');
+    expect(a).toBe(b);
+    // Y por tanto producen exactamente la misma prescripción: el alias es de
+    // boundary y no toca la aritmética.
+    expect(prescribir(b, M_REF)).toEqual(prescribir(a, M_REF));
+    expect(prescribir(b, M_REF).prescribedEnergy).toBe(3245);
+  });
+
+  it('prescribeEnergy NO acepta el string legacy directamente', () => {
+    for (const v of ['Subir masa muscular', 'subir masa muscular']) {
+      expect(() => prescribeEnergy(
+        { goal: v, maintenance: synthM(2500) } as unknown as PrescriptionRequest,
+      ), `goal=${v}`).toThrow(InvalidPrescriptionInputError);
+    }
+  });
+
+  it('el alias NO abre un fallback: variantes parciales siguen lanzando', () => {
+    // El legacy aceptaba cualquier texto con `subir`, `masa` o `músculo` por
+    // regex. Aquí solo la cadena completa mapea.
+    for (const v of ['subir', 'masa', 'muscular', 'subir masa', 'masa muscular',
+      'subir musculo', 'ganar masa', 'subir de masa muscular', 'masa muscular subir']) {
+      expect(() => canonicalGoalFrom(v), `valor: ${v}`).toThrow(InvalidPrescriptionInputError);
+    }
+  });
+
+  it('la taxonomía canónica sigue siendo de CUATRO', () => {
+    expect(CANONICAL_GOALS).toHaveLength(4);
+    expect([...CANONICAL_GOALS].sort())
+      .toEqual(['FAT_LOSS', 'MAINTENANCE', 'MUSCLE_GAIN', 'RECOMPOSITION']);
+    // Los cuatro siguen siendo alcanzables y distintos entre sí.
+    const destinos = new Set(['Bajar grasa', 'Recomposición', 'Ganar músculo',
+      'Subir masa muscular', 'Bienestar integral'].map(canonicalGoalFrom));
+    expect(destinos.size).toBe(4);
+  });
+
+  it('el mapeo sigue teniendo UNA sola autoridad: un único switch', () => {
+    const switches = (CODIGO.match(/switch\s*\(\s*normalizeText/g) ?? []).length;
+    expect(switches, 'no debe haber una segunda tabla de equivalencias').toBe(1);
+    expect(usaIdentificador('goalFactor')).toBe(false);
+    expect(CODIGO, 'sin regex sobre texto libre').not.toMatch(/subir\|masa|masa\|subir/);
+  });
+
+  it('ninguna fórmula energética cambió con el alias', () => {
+    // Los cuatro valores de referencia de §1, recalculados por la vía del alias.
+    expect(prescribir('MAINTENANCE', M_REF).prescribedEnergy).toBe(3091);
+    expect(prescribir('RECOMPOSITION', M_REF).prescribedEnergy).toBe(3091);
+    expect(prescribir('FAT_LOSS', M_REF).prescribedEnergy).toBe(2627);
+    expect(prescribir(canonicalGoalFrom('Subir masa muscular'), M_REF).prescribedEnergy)
+      .toBe(3245);
+    expect(FAT_LOSS_RELATIVE_DEFICIT).toBe(0.15);
+    expect(FAT_LOSS_ABSOLUTE_DEFICIT_CAP).toBe(500);
+    expect(MUSCLE_GAIN_RELATIVE_SURPLUS).toBe(0.05);
+    expect(ENERGY_PRESCRIPTION_VERSION).toBe(1);
   });
 });
 

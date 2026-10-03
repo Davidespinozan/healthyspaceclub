@@ -218,14 +218,26 @@ function normalizeText(v: string): string {
  * input de `prescribeEnergy` es un `CanonicalGoal` ya mapeado: esta función es
  * la que el boundary de perfil usará para obtenerlo.
  *
- *   'Bajar grasa'        → FAT_LOSS
- *   'Recomposición'      → RECOMPOSITION
- *   'Ganar músculo'      → MUSCLE_GAIN
- *   'Bienestar integral' → MAINTENANCE
+ *   'Bajar grasa'          → FAT_LOSS
+ *   'Recomposición'        → RECOMPOSITION
+ *   'Ganar músculo'        → MUSCLE_GAIN
+ *   'Subir masa muscular'  → MUSCLE_GAIN   ← alias legacy, ver abajo
+ *   'Bienestar integral'   → MAINTENANCE
  *
  * «Bienestar integral» → MAINTENANCE: el legacy le aplicaba `goalFactor = 1.0`,
  * así que la energía resultante es la misma, pero deja de existir como concepto
  * energético propio.
+ *
+ * ALIAS LEGACY 'Subir masa muscular'. El producto escribe DOS representaciones
+ * distintas del mismo objetivo: el onboarding guarda 'Ganar músculo' y la hoja
+ * de Ajustes guarda 'Subir masa muscular'. Las dos son datos legítimos que el
+ * propio producto generó, y el `goalFactor` legacy reconocía ambas porque su
+ * regex incluía `subir` y `masa`. El alias existe para no rechazar a quien
+ * cambió su objetivo desde Ajustes.
+ *
+ * NO es un quinto objetivo: la taxonomía canónica sigue siendo de cuatro. Y la
+ * autoridad de este mapeo es ÚNICAMENTE esta función — no debe aparecer una
+ * segunda tabla de equivalencias en Profile Validation ni en ningún boundary.
  *
  * Sin regex y sin fallback. El legacy usaba `/bajar|perder|d[eé]ficit/` sobre
  * texto libre y devolvía 1.0 para cualquier cosa no reconocida, es decir, un
@@ -244,6 +256,7 @@ export function canonicalGoalFrom(value: unknown): CanonicalGoal {
       return 'RECOMPOSITION';
     case 'muscle_gain':
     case 'ganar musculo':
+    case 'subir masa muscular':   // alias legacy que escribe la hoja de Ajustes
       return 'MUSCLE_GAIN';
     case 'maintenance':
     case 'bienestar integral':
