@@ -9,6 +9,28 @@
 //   · %grasa opcional → BMR Katch-McArdle (más preciso que Mifflin)
 //   · Punto 8/12 — avisos de peso meta y tiempo estimado (helpers abajo)
 // Los MENSAJES no viven aquí: se devuelven CÓDIGOS y la UI los traduce (ES/EN).
+//
+// ── CAPA 1E · FASE C1 · EL SEAM ENERGÍA → MACROS ────────────────────────────
+// Este archivo contenía dos cosas en una: el cálculo de la ENERGÍA (que CAPA 1 ya
+// reemplazó y muere en C4) y el de las MACROS (que sobrevive hasta la Fase D). El
+// problema es que las macros usaban el `planGoal` calculado unas líneas más
+// arriba, así que retirar la fórmula energética las habría dejado sin energía.
+//
+//   legacyEnergy(o)  ──▶ bmr · tdee · planGoal · floor · capped · wellnessMode
+//        │                                            MUERE EN C4
+//        ▼ energía explícita
+//   legacyMacros(o, energyKcal, wellnessMode) ──▶ protG · fatG · carbG · fiberG
+//                                                 SOBREVIVE HASTA D
+//
+// `legacyMacros` NO conoce ni invoca `legacyEnergy`: su energía es siempre el
+// argumento. En C4 bastará con pasarle `prescribedEnergy` y borrar la otra mitad,
+// sin volver a tocar ninguna regla macro.
+//
+// `computeNutritionTargets` es SOLO la composición legacy y no acepta una energía
+// externa: quien la suministre llama a `legacyMacros` directamente. Así no existe
+// una API con dos modos ni un fallback implícito a la energía legacy.
+//
+// C1 es NUMÉRICAMENTE NEUTRO: ni una kcal ni un gramo cambian respecto a antes.
 
 export const ACTIVITY_FACTORS: Record<string, number> = {
   Sedentaria: 1.2,
@@ -100,7 +122,29 @@ function normalizeGoal(goal: string): 'bajar' | 'recomp' | 'ganar' | 'mantener' 
   return 'mantener';
 }
 
-export function computeNutritionTargets(o: ObInput): NutritionTargets {
+/** Salida de la mitad energética legacy. Ver `legacyEnergy`. */
+export interface LegacyEnergy {
+  bmr: number;
+  tdee: number;
+  planGoal: number;
+  floor: number;
+  capped: boolean;
+  wellnessMode: boolean;
+  wellnessReason: WellnessReason;
+}
+
+/**
+ * Mitad ENERGÉTICA legacy. **MUERE EN C4.**
+ *
+ * Todo lo que CAPA 1 ya reemplazó vive aquí y en ningún otro sitio de este
+ * archivo: Mifflin, Katch-McArdle, `ACTIVITY_FACTORS`, `goalFactor`, `sexFloor`
+ * y `wellnessMode`. Cuando C4 conecte el orquestador esta función se borra
+ * entera, y `legacyMacros` sigue intacta porque no la invoca ni la conoce.
+ *
+ * El seam existe exactamente para eso: aislar lo que se va de lo que se queda.
+ * En C1 sigue siendo la autoridad energética productiva, sin cambios.
+ */
+export function legacyEnergy(o: ObInput): LegacyEnergy {
   // BMR: Katch-McArdle si hay %grasa (usa masa magra); si no, Mifflin-St Jeor.
   let bmr: number;
   if (o.grasa && o.grasa > 0) {
@@ -142,6 +186,53 @@ export function computeNutritionTargets(o: ObInput): NutritionTargets {
   const planGoal = Math.round(Math.max(target, floor));
   const capped = planGoal > Math.round(target) + 1;
 
+  return { bmr, tdee, planGoal, floor: Math.round(floor), capped, wellnessMode, wellnessReason };
+}
+
+/**
+ * Mitad de MACROS legacy. **SOBREVIVE HASTA LA FASE D.**
+ *
+ * ── EL SEAM ─────────────────────────────────────────────────────────────────
+ * RECIBE la energía; no la calcula. Es la única diferencia respecto a antes de
+ * C1, y es toda la razón de ser de este bloque: hasta ahora las macros usaban un
+ * `planGoal` calculado unas líneas más arriba por la fórmula legacy, así que
+ * retirar esa fórmula en C4 las habría dejado sin energía. Ahora C4 puede pasar
+ * `prescribedEnergy` aquí y borrar `legacyEnergy` sin tocar una sola regla macro.
+ *
+ * `energyKcal` es la ÚNICA fuente de energía de `fatG`, `carbG` y `fiberG`. Esta
+ * función no tiene acceso a `legacyEnergy` ni la invoca: la dependencia es
+ * inequívocamente el argumento.
+ *
+ * ── POR QUÉ `wellnessMode` ES UN PARÁMETRO ──────────────────────────────────
+ * `objKey` lo necesita: en modo bienestar la tabla de proteína usa 'mantener' en
+ * vez del objetivo declarado. Es la ÚNICA dependencia que las macros tienen de la
+ * mitad energética, y pasarla explícitamente la hace visible y auditable. Las
+ * alternativas eran peores: recalcularla aquí duplicaría la lógica energética que
+ * C4 va a retirar (una segunda fórmula), y suprimirla cambiaría la proteína de
+ * menores, embarazo, bajo peso y ≥70 — que C1 no puede tocar.
+ *
+ * Cómo se resuelve esta dependencia en C4 NO está decidido, y C1 no lo prejuzga.
+ * El problema real es que `wellnessMode` legacy MEZCLA dos decisiones sobre los
+ * mismos datos: una energética —que CAPA 1 ya reemplazó por el alcance y el guard
+ * de IMC— y una de MACROS, que debe sobrevivir hasta la Fase D. El caso de ≥70 lo
+ * muestra: en la cadena nueva la edad NO altera la energía (no hay tope superior
+ * de edad), pero la política macro de adulto mayor sigue vigente. C4 tendrá que
+ * separar la parte macro de esta señal SIN devolverle autoridad energética, y esa
+ * separación se diseña allí, no aquí.
+ *
+ * ── QUÉ NO CAMBIA AQUÍ ──────────────────────────────────────────────────────
+ * `actIdx`, `GKG`, el tope de 2.4, el tope de 2.0 por ≥70, el tope renal de 1.0,
+ * `FAT_PCT`, el piso de grasa de 0.6 g/kg y la fibra por 1000 kcal: idénticos.
+ * `obData.activity` sigue alimentando `actIdx` exactamente igual.
+ */
+export interface LegacyMacros {
+  protG: number;
+  fatG: number;
+  carbG: number;
+  fiberG: number;
+}
+
+export function legacyMacros(o: ObInput, energyKcal: number, wellnessMode: boolean): LegacyMacros {
   // ── Capa de macros (Punto 3) ──────────────────────────────────────────
   // Proteína g/kg por objetivo × actividad; en modo bienestar → 'mantener'.
   const objKey = wellnessMode ? 'mantener' : normalizeGoal(o.goal);
@@ -155,6 +246,10 @@ export function computeNutritionTargets(o: ObInput): NutritionTargets {
   };
   let gkg = (GKG[objKey] || [1.4, 1.6, 1.8])[actIdx];
   if (gkg > 2.4) gkg = 2.4;                                          // techo de seguridad
+  // El umbral de 70 años se evalúa AQUÍ, no se recibe: es el umbral de un tope de
+  // PROTEÍNA, no la regla energética de `wellnessMode` que casualmente usa el mismo
+  // número. Son dos decisiones distintas sobre la misma edad, y C4 retira solo una.
+  const mayor70 = o.edad >= 70;
   // Adulto mayor (>=70): tope de proteína a 2.0 g/kg. Sigue por encima del piso
   // anti-sarcopenia (1.6) pero evita 2.2-2.4 g/kg, que sin diagnóstico renal puede
   // forzar el riñón en una demografía con enfermedad renal crónica frecuente.
@@ -169,17 +264,35 @@ export function computeNutritionTargets(o: ObInput): NutritionTargets {
   // Piso de seguridad 0.6 g/kg (protege función hormonal aunque el % quede bajo).
   const FAT_PCT: Record<string, number> = { bajar: 0.22, recomp: 0.25, mantener: 0.28, ganar: 0.30 };
   const fatPct = FAT_PCT[objKey] ?? 0.27;
-  const fatG = Math.round(Math.max(planGoal * fatPct / 9, o.pesoKg * 0.6));
+  const fatG = Math.round(Math.max(energyKcal * fatPct / 9, o.pesoKg * 0.6));
   // Carbos = el RESTO (así las macros suman EXACTO la meta calórica, no la exceden).
   // Piso bajo (50 g) solo para casos extremos; a metas bajas rellena el resto en vez de
   // forzar 130 g, que hacía que el plan se pasara ~14% de la meta (déficit de mujer chica).
-  const carbG = Math.round(Math.max(50, (planGoal - protG * 4 - fatG * 9) / 4));
-  const fiberG = Math.round(planGoal / 1000 * 14);                  // 14 g / 1000 kcal
+  const carbG = Math.round(Math.max(50, (energyKcal - protG * 4 - fatG * 9) / 4));
+  const fiberG = Math.round(energyKcal / 1000 * 14);                // 14 g / 1000 kcal
 
-  return {
-    bmr, tdee, planGoal, floor: Math.round(floor), capped, wellnessMode, wellnessReason,
-    protG, fatG, carbG, fiberG,
-  };
+  return { protG, fatG, carbG, fiberG };
+}
+
+/**
+ * Composición legacy · la firma pública que los 7 call-sites productivos ya usan.
+ *
+ * Es EXCLUSIVAMENTE la composición de las dos mitades con la energía legacy, y no
+ * admite ninguna otra: **no existe ningún parámetro para inyectar una energía
+ * externa**. Una API con dos modos —energía implícita o energía inyectada— dejaría
+ * abierta la puerta a que alguien pasara una energía ajena por accidente y a un
+ * fallback implícito, que es justo lo que el seam viene a cerrar.
+ *
+ * Quien necesite suministrar la energía llama directamente a `legacyMacros`. Eso
+ * es el seam, y es el camino que C4 usará con `prescribedEnergy` cuando
+ * `legacyEnergy` se elimine. Esta función desaparece con ella.
+ *
+ * `legacyEnergy` corre UNA vez: sin doble evaluación.
+ */
+export function computeNutritionTargets(o: ObInput): NutritionTargets {
+  const energy = legacyEnergy(o);
+  const macros = legacyMacros(o, energy.planGoal, energy.wellnessMode);
+  return { ...energy, ...macros };
 }
 
 // ── Punto 3.5 — reparto de calorías por comida (25/35/25/15) ──────────────
