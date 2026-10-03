@@ -178,10 +178,12 @@ describe('FASE A · onboarding captura el nivel', () => {
     expect(paso).not.toContain('onb-cta');
   });
 
-  it('el flujo creció a 10 pasos y el perfil queda contiguo', () => {
-    expect(CODE_ONB).toContain('const TOTAL_STEPS = 10');
-    expect(CODE_ONB).toContain('{step === 10 &&'); // perfil listo
-    expect(CODE_ONB).toContain('setStep(10)');     // fin del procesamiento
+  it('el nivel es el paso 7 y el bloque de perfil queda contiguo', () => {
+    // La Fase A lo puso justo después de la actividad legacy para no mover esa
+    // pregunta. El nº total de pasos lo fija la fase que lo cambió (B): afirmarlo
+    // aquí convertiría este test en un contador de pasos, no en un test del nivel.
+    expect(CODE_ONB).toContain('{step === 6 &&'); // actividad legacy, sin moverse
+    expect(CODE_ONB).toContain('{step === 7 &&'); // nivel, inmediatamente después
   });
 
   it('NO escribe ningún nivel por defecto', () => {
@@ -229,11 +231,15 @@ describe('FASE A · sin derivación en ninguna dirección', () => {
     expect(usa(bloquePaso(CODE_ONB, 6, 7), 'nivel')).toBe(false);
   });
 
-  it('no se adelanta nada de la Fase B (ActivityProfile)', () => {
-    for (const id of ['dailyLife', 'DL1', 'trainsHabitually', 'habitualSessionMinutes']) {
-      expect(usa(CODE_ONB, id)).toBe(false);
-      expect(usa(CODE_EDIT, id)).toBe(false);
+  it('el nivel no se deriva del ActivityProfile de la Fase B ni al contrario', () => {
+    // Antes de la Fase B esto afirmaba que esos campos NO existían. Ahora existen,
+    // y el invariante que importa es el que sobrevive: son dominios separados y el
+    // paso del nivel no mira ninguno de ellos.
+    for (const id of ['dailyLife', 'trainsHabitually', 'trainingDays', 'trainingMinutes']) {
+      expect(usa(bloquePaso(CODE_ONB, 7, 8), id), id).toBe(false);
     }
+    expect(usa(CODE_ONB, 'habitualSessionMinutes')).toBe(false);
+    expect(usa(CODE_EDIT, 'habitualSessionMinutes')).toBe(false);
   });
 });
 
