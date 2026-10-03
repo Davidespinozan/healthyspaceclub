@@ -139,6 +139,14 @@ export const es = {
     weight: 'Peso (kg)',
     height: 'Estatura (cm)',
     activity: 'Actividad',
+    // CAPA 1E · Fase A — campo nuevo, dominio Training. Convive a propósito con
+    // 'activity' (dominio Nutrition legacy) hasta la Fase E.
+    level: 'Nivel de entrenamiento',
+    levelHint: 'Define la dificultad de tus ejercicios y cuánto te vamos a pedir en tus entrenamientos.',
+    levelPending: 'Sin declarar',
+    levelPrincipiante: 'Estoy empezando',
+    levelIntermedio: 'Ya tengo base',
+    levelAvanzado: 'Tengo experiencia',
     goal: 'Objetivo',
     placeholderYears: 'años',
     save: 'Guardar cambios',
@@ -150,6 +158,7 @@ export const es = {
     errWeight: 'Peso inválido (30-300 kg).',
     errHeight: 'Estatura inválida (100-230 cm).',
     errActivity: 'Seleccioná tu nivel de actividad.',
+    errLevel: 'Seleccioná tu nivel de entrenamiento.',
     errGoal: 'Seleccioná tu objetivo.',
     errSaveFallback: 'Guardamos tus datos pero el peso no se sincronizó. Intentá de nuevo desde TabTu.',
     sexHombre: 'Hombre',
@@ -398,6 +407,18 @@ export const es = {
     actHighDesc: 'Entreno intenso casi todos los días',
     actAthlete: 'Atleta',
     actAthleteDesc: 'Entreno muy fuerte, 2 veces al día, o trabajo físico pesado',
+    // CAPA 1E · Fase A — NIVEL DE ENTRENAMIENTO declarado. Es un dato de Training,
+    // NO de actividad cotidiana: describe competencia técnica, capacidad de
+    // autorregular el esfuerzo y familiaridad con entrenamiento estructurado. Las
+    // etiquetas evitan los años ('Llevo años') porque nivel != experiencia_anos.
+    levelQuestion: '¿Cómo describirías tu experiencia entrenando?',
+    levelHint: 'Esto define la dificultad de tus ejercicios y cuánto te vamos a pedir. Puedes cambiarlo cuando quieras.',
+    levelBeginner: 'Estoy empezando',
+    levelBeginnerDesc: 'Llevo poco tiempo entrenando, o vuelvo después de una pausa larga. Todavía estoy aprendiendo la técnica de los ejercicios básicos.',
+    levelIntermediate: 'Ya tengo base',
+    levelIntermediateDesc: 'Entreno con regularidad, conozco la técnica de los ejercicios básicos y ya puedo reconocer cuándo una serie realmente me está exigiendo.',
+    levelAdvanced: 'Tengo experiencia',
+    levelAdvancedDesc: 'Domino la técnica de los ejercicios, sé medir qué tan cerca del fallo estoy y tengo experiencia siguiendo programas de entrenamiento.',
     proc1: 'Calculando tu metabolismo...',
     proc2: 'Diseñando tu plan de nutrición...',
     proc3: 'Preparando tu coach personal...',

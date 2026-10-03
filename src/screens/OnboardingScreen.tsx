@@ -2,7 +2,7 @@ import { UbicacionPicker, type Ubicacion } from '../components/UbicacionPicker';
 import { PAISES } from '../data/ubicaciones';
 import { detectCountry } from '../utils/region';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity, AtSign, Check, Loader2, X, ArrowRight } from 'lucide-react';
+import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity, Sprout, TrendingUp, Gauge, AtSign, Check, Loader2, X, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { supabase } from '../lib/supabase';
@@ -19,7 +19,23 @@ import { recordReferralIfAny } from '../utils/referral';
 
 const BRAND_ICON = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp';
 
-const TOTAL_STEPS = 9;
+// CAPA 1E · Fase A — el paso 7 (nivel de entrenamiento) es nuevo; el paso 6
+// (actividad legacy) queda EXACTAMENTE donde estaba para no mover un dato que
+// aún alimenta la nutrición legacy y los macros de CAPA 2.
+const TOTAL_STEPS = 10;
+
+/**
+ * NIVEL DE ENTRENAMIENTO · los tres valores que consume `levelFromObData`.
+ *
+ * Los ids son los que persisten en `obData.nivel` y NO se traducen: son el dato.
+ * Dominio TRAINING — nada que ver con `obData.activity`, que mide el gasto del
+ * día y sigue capturándose aparte en el paso 6.
+ */
+const TRAINING_LEVELS = [
+  { id: 'principiante', icon: Sprout, titleKey: 'onboarding.levelBeginner', descKey: 'onboarding.levelBeginnerDesc' },
+  { id: 'intermedio', icon: TrendingUp, titleKey: 'onboarding.levelIntermediate', descKey: 'onboarding.levelIntermediateDesc' },
+  { id: 'avanzado', icon: Gauge, titleKey: 'onboarding.levelAdvanced', descKey: 'onboarding.levelAdvancedDesc' },
+] as const;
 
 export default function OnboardingScreen() {
   const { t } = useT();
@@ -47,6 +63,10 @@ export default function OnboardingScreen() {
   // food truck solo aparecen donde hay cobertura).
   const [ubic, setUbic] = useState<Ubicacion>({ country: '', state: '', city: '' });
   const [activity, setActivity] = useState('');
+  // CAPA 1E · Fase A — nivel de entrenamiento DECLARADO (paso 7). Obligatorio por
+  // construcción: el paso solo avanza al elegir una de las tres tarjetas, así que
+  // nadie termina el onboarding sin declararlo y no hace falta un default.
+  const [nivel, setNivel] = useState('');
   // Fase 2 — seguridad: embarazo (si mujer) + opcionales
   const [embarazo, setEmbarazo] = useState<'si' | 'no' | ''>('');
   // Fase 3 — salud/movilidad (opcionales): habilitan modo bajo impacto y ajustes de
@@ -83,13 +103,13 @@ export default function OnboardingScreen() {
 
   // Pre-sugerir el @usuario al llegar al paso (desde el nombre).
   useEffect(() => {
-    if (step === 7 && !handle) setHandle(suggestUsername(userName));
+    if (step === 8 && !handle) setHandle(suggestUsername(userName));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   // Chequeo de disponibilidad debounced.
   useEffect(() => {
-    if (step !== 7) return;
+    if (step !== 8) return;
     const h = handle.trim().toLowerCase();
     if (!isValidUsernameFormat(h)) { setHandleStatus('invalid'); return; }
     setHandleStatus('checking');
@@ -215,9 +235,9 @@ export default function OnboardingScreen() {
     }
   }
 
-  // Step 8: processing animation + save to store
+  // Step 9: processing animation + save to store
   useEffect(() => {
-    if (step !== 8) return;
+    if (step !== 9) return;
 
     // Save all data to store (name ya fue guardado en SignupModal o handleOnboardingSignup)
     setObData('sex', sex);
@@ -226,6 +246,11 @@ export default function OnboardingScreen() {
     setObData('peso', Number(peso) || 70);
     setObData('estatura', Number(estatura) || 170);
     setObData('activity', activity);
+    // CAPA 1E · Fase A — nivel declarado, dominio TRAINING. Se escribe tal cual, sin
+    // `|| 'intermedio'`: el paso 7 es inevitable, así que siempre trae uno de los tres
+    // valores. Y NO se deriva de `activity` ni al contrario — son datos distintos que
+    // conviven a propósito hasta la Fase E.
+    setObData('nivel', nivel);
     setObData('embarazo', embarazo === 'si' ? 1 : 0);
     setObData('movilidad', movilidad);
     setObData('conditions', conditions.filter(c => c !== 'ninguna').join(','));
@@ -268,7 +293,7 @@ export default function OnboardingScreen() {
       }
       setDir('next');
       setAnimKey(k => k + 1);
-      setStep(9);
+      setStep(10);
     }, processingTexts.length * 800 + 700);
 
     return () => { timers.forEach(clearTimeout); clearTimeout(finalTimer); };
@@ -300,12 +325,12 @@ export default function OnboardingScreen() {
     goNext();
   }
 
-  // Progress bar (steps 2-8 = cuenta..procesando, no en 1 ni en 9 listo)
-  const showProgress = step >= 2 && step <= 8;
+  // Progress bar (steps 2-9 = cuenta..procesando, no en 1 ni en 10 listo)
+  const showProgress = step >= 2 && step <= 9;
   const progressPct = showProgress ? ((step - 1) / (TOTAL_STEPS - 2)) * 100 : 0;
 
   // Can go back? (cuenta..@usuario; no en procesando ni listo)
-  const showBack = step >= 2 && step <= 7;
+  const showBack = step >= 2 && step <= 8;
 
   // Goal label for result screen. La KEY (valor en español) la usa el motor;
   // solo se traduce el texto mostrado.
@@ -595,8 +620,37 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {/* ── Step 7: @usuario (obligatorio para cuentas nuevas) ── */}
+      {/* ── Step 7: Nivel de entrenamiento (CAPA 1E · Fase A) ──
+           Último dato del bloque de perfil y el único que el socio va a querer
+           cambiar con el tiempo, de ahí el «puedes cambiarlo cuando quieras» del
+           subtítulo. Obligatorio por construcción: no hay botón de continuar, solo
+           las tres tarjetas. */}
       {step === 7 && (
+        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
+          <div className="onb-center">
+            <h2 className="onb-question">{t('onboarding.levelQuestion')}</h2>
+            <p className="onb-hint">{t('onboarding.levelHint')}</p>
+            <div className="onb-cards-col">
+              {TRAINING_LEVELS.map(o => (
+                <div
+                  key={o.id}
+                  className={`onb-card-option${nivel === o.id ? ' selected' : ''}`}
+                  onClick={() => { setNivel(o.id); setTimeout(goNext, 200); }}
+                >
+                  <span className="onb-card-icon"><o.icon size={22} strokeWidth={1.7} /></span>
+                  <div>
+                    <div className="onb-card-title">{t(o.titleKey)}</div>
+                    <div className="onb-card-desc">{t(o.descKey)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 8: @usuario (obligatorio para cuentas nuevas) ── */}
+      {step === 8 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
           <div className="onb-center">
             <h2 className="onb-question">{t('username.title')}</h2>
@@ -639,8 +693,8 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {/* ── Step 8: Processing ── */}
-      {step === 8 && (
+      {/* ── Step 9: Processing ── */}
+      {step === 9 && (
         <div key={animKey} className="onb-slide onb-dark">
           <div className="onb-center">
             <div className="onb-proc-logo">
@@ -669,8 +723,8 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {/* ── Step 9: Profile ready ── */}
-      {step === 9 && (() => {
+      {/* ── Step 10: Profile ready ── */}
+      {step === 10 && (() => {
         const tdeeVal = useAppStore.getState().tdee;
         const goalVal = useAppStore.getState().planGoal;
         // Avisos de seguridad (Fase 2): mismo cálculo que el store, para mostrar mensajes.

@@ -140,6 +140,14 @@ export const en: Translations<typeof es> = {
     weight: 'Weight (kg)',
     height: 'Height (cm)',
     activity: 'Activity',
+    // CAPA 1E · Phase A — new field, Training domain. Coexists on purpose with
+    // 'activity' (legacy Nutrition domain) until Phase E.
+    level: 'Training level',
+    levelHint: 'Sets your exercise difficulty and how much we\'ll ask of you in your training.',
+    levelPending: 'Not declared',
+    levelPrincipiante: 'I\'m just starting',
+    levelIntermedio: 'I have a base',
+    levelAvanzado: 'I\'m experienced',
     goal: 'Goal',
     placeholderYears: 'years',
     save: 'Save changes',
@@ -151,6 +159,7 @@ export const en: Translations<typeof es> = {
     errWeight: 'Invalid weight (30-300 kg).',
     errHeight: 'Invalid height (100-230 cm).',
     errActivity: 'Select your activity level.',
+    errLevel: 'Select your training level.',
     errGoal: 'Select your goal.',
     errSaveFallback: 'We saved your data but the weight didn\'t sync. Try again from your profile.',
     sexHombre: 'Male',
@@ -399,6 +408,17 @@ export const en: Translations<typeof es> = {
     actHighDesc: 'Intense training almost every day',
     actAthlete: 'Athlete',
     actAthleteDesc: 'Very intense training, twice a day, or heavy physical work',
+    // CAPA 1E · Phase A — declared TRAINING level. Not daily activity, and not
+    // years trained: it describes technique, effort self-regulation and
+    // familiarity with structured training.
+    levelQuestion: 'How would you describe your training experience?',
+    levelHint: 'This sets how hard your exercises are and how much we ask of you. You can change it whenever you want.',
+    levelBeginner: 'I\'m just starting',
+    levelBeginnerDesc: 'I haven\'t been training long, or I\'m coming back after a long break. I\'m still learning the technique of the basic lifts.',
+    levelIntermediate: 'I have a base',
+    levelIntermediateDesc: 'I train regularly, I know the technique of the basic lifts and I can already tell when a set is really demanding.',
+    levelAdvanced: 'I\'m experienced',
+    levelAdvancedDesc: 'I have the technique down, I can judge how close to failure I am and I\'ve followed training programs before.',
     proc1: 'Calculating your metabolism...',
     proc2: 'Designing your nutrition plan...',
     proc3: 'Preparing your personal coach...',

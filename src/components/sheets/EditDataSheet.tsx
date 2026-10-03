@@ -16,6 +16,10 @@ interface Props {
 // Stored values stay in Spanish (data layer). Display labels use t() for i18n.
 const SEX_OPTIONS = ['Hombre', 'Mujer'];
 const ACTIVITY_OPTIONS = ['Sedentaria', 'Ligera', 'Moderada', 'Alta', 'Atleta'];
+// CAPA 1E · Fase A — NIVEL DE ENTRENAMIENTO. Los tres valores que consume
+// `levelFromObData`. Dominio TRAINING: convive a propósito con ACTIVITY_OPTIONS
+// (dominio Nutrition legacy), que no se toca hasta la Fase E.
+const LEVEL_OPTIONS = ['principiante', 'intermedio', 'avanzado'];
 const GOAL_OPTIONS = ['Bajar grasa', 'Subir masa muscular', 'Recomposición', 'Bienestar integral'];
 
 const SEX_KEYS: Record<string, TranslationKey> = {
@@ -28,6 +32,11 @@ const ACTIVITY_KEYS: Record<string, TranslationKey> = {
   'Moderada': 'editData.actModerada',
   'Alta': 'editData.actAlta',
   'Atleta': 'editData.actAtleta',
+};
+const LEVEL_KEYS: Record<string, TranslationKey> = {
+  'principiante': 'editData.levelPrincipiante',
+  'intermedio': 'editData.levelIntermedio',
+  'avanzado': 'editData.levelAvanzado',
 };
 const GOAL_KEYS: Record<string, TranslationKey> = {
   'Bajar grasa': 'editData.goalBajarGrasa',
@@ -55,6 +64,11 @@ export default function EditDataSheet({ onClose }: Props) {
     peso: String(obData.peso || ''),
     estatura: String(obData.estatura || obData.altura || ''),
     activity: String(obData.activity || obData.actividad || ''),
+    // Perfil legacy sin nivel → '' = SIN DECLARAR, y así se muestra. NO se
+    // prerrellena con 'intermedio' ni se infiere desde `activity`: el motor tiene
+    // su propio fallback, pero la UI no debe fingir que ese fallback fue una
+    // declaración del socio.
+    nivel: String(obData.nivel || ''),
     goal: String(obData.goal || ''),
     country: String(obData.country || ''),
     movilidad: String(obData.movilidad || ''),
@@ -106,6 +120,12 @@ export default function EditDataSheet({ onClose }: Props) {
     if (!pesoN || pesoN < 30 || pesoN > 300) { setError(t('editData.errWeight')); return; }
     if (!estaturaN || estaturaN < 100 || estaturaN > 230) { setError(t('editData.errHeight')); return; }
     if (!form.activity || !ACTIVITY_OPTIONS.includes(form.activity)) { setError(t('editData.errActivity')); return; }
+    // `nivel` es nuevo: un perfil legacy que nunca lo declaró debe poder guardar el
+    // resto de sus datos sin que le inventemos uno. Pero en cuanto forma parte del
+    // perfil —ya estaba declarado, o se declara ahora— tiene que ser válido: así no
+    // se puede vaciar un nivel real ni colar un valor que el motor ignoraría.
+    const hadLevel = LEVEL_OPTIONS.includes(String(obData.nivel || ''));
+    if ((hadLevel || form.nivel) && !LEVEL_OPTIONS.includes(form.nivel)) { setError(t('editData.errLevel')); return; }
     if (!form.goal) { setError(t('editData.errGoal')); return; }
 
     setSaving(true);
@@ -115,6 +135,10 @@ export default function EditDataSheet({ onClose }: Props) {
     setObData('edad', edadN);
     setObData('estatura', estaturaN);
     setObData('activity', form.activity);
+    // Solo se escribe una DECLARACIÓN real. Un perfil legacy que sigue sin nivel se
+    // queda sin nivel: ni '' ni 'intermedio'. Escribirlo aquí convertiría el fallback
+    // del motor en un dato del socio, que es justo lo que no queremos.
+    if (LEVEL_OPTIONS.includes(form.nivel)) setObData('nivel', form.nivel);
     setObData('goal', form.goal);
     // Ubicación + salud/preferencias (opcionales). Se persisten ANTES del recalc
     // porque 'renal' baja el tope de proteína en computeNutritionTargets.
@@ -226,6 +250,22 @@ export default function EditDataSheet({ onClose }: Props) {
               <option value="">—</option>
               {ACTIVITY_OPTIONS.map(o => <option key={o} value={o}>{t(ACTIVITY_KEYS[o])}</option>)}
             </select>
+          </label>
+
+          {/* CAPA 1E · Fase A — junto a «Actividad» a propósito: son los dos campos
+              que más fácil se confunden, y verlos con etiquetas distintas es lo que
+              aclara que miden cosas distintas. */}
+          <label className="sh-field">
+            <span className="sh-field-label">{t('editData.level')}</span>
+            <select
+              className="sh-input"
+              value={form.nivel}
+              onChange={e => update('nivel', e.target.value)}
+            >
+              <option value="">{t('editData.levelPending')}</option>
+              {LEVEL_OPTIONS.map(o => <option key={o} value={o}>{t(LEVEL_KEYS[o])}</option>)}
+            </select>
+            <p className="sh-field-hint">{t('editData.levelHint')}</p>
           </label>
 
           <label className="sh-field">
