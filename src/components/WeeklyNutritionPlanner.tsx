@@ -255,6 +255,26 @@ export default function WeeklyNutritionPlanner() {
       setStep(s => s + 1);
       return;
     }
+    // CAPA 1E · FASE C3 — generar un plan exige un objetivo energético real. Sin
+    // él no se llama al motor, ni a la IA, ni se crea un `weeklyPlan`: un plan
+    // dimensionado contra una meta inexistente serviría comida que nadie
+    // prescribió.
+    //
+    // El aborto es NEUTRO, no un error de generación. La ausencia de prescripción
+    // no es un fallo del generador: en C4 será un estado esperado —perfil
+    // incompleto o ilegible, fuera de alcance, pérdida de grasa bloqueada— y C3
+    // no sabe cuál de ellos. Marcarlo como `genError` (triángulo de alerta +
+    // «intenta de nuevo») mentiría sobre la causa y pediría reintentar algo que
+    // reintentar no arregla.
+    //
+    // Así que se vuelve a la fase que la autoridad de siempre derive del estado:
+    // con un plan guardado, a verlo —intacto—; sin plan, al cuestionario. Ningún
+    // copy nuevo y ninguna fase nueva. Darle voz a este caso es trabajo de C4,
+    // que es quien conocerá el motivo.
+    if (planGoal == null) {
+      setPhase(weeklyPlanPhase(shoppingDay, weeklyPlan));
+      return;
+    }
     setPhase('generating');
     setError('');
     try {
@@ -863,10 +883,16 @@ export default function WeeklyNutritionPlanner() {
               <div className="wnp2-day-kcal-block">
                 <span className="wnp2-day-kcal">{dayKcal} kcal</span>
                 <div className="wnp2-day-kcal-bar-wrap">
+                  {/* C3 · sin objetivo vigente NO se pinta progreso. Antes el
+                      `|| dayKcal` usaba el propio consumo como denominador, así
+                      que la barra salía siempre al 100 % — un progreso inventado
+                      contra una meta que no existe. */}
                   <div
                     className="wnp2-day-kcal-bar"
                     style={{
-                      width: `${Math.min((dayKcal / (planGoal || dayKcal)) * 100, 100)}%`,
+                      width: planGoal != null && planGoal > 0
+                        ? `${Math.min((dayKcal / planGoal) * 100, 100)}%`
+                        : '0%',
                     }}
                   />
                 </div>

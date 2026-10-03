@@ -265,8 +265,17 @@ interface AppState {
   setMealPlanKey: (key: string) => void;
 
   // Calculated nutrition targets
-  tdee: number;        // kcal/day maintenance
-  planGoal: number;    // kcal/day target (tdee ± adjustment)
+  //
+  // CAPA 1E · FASE C3 — `null` es un estado VÁLIDO y significa «no existe una
+  // cifra energética vigente utilizable». NO significa 0 kcal: un 0 se pinta, se
+  // divide y se usa para generar planes, y eso fabricaría un objetivo que nadie
+  // prescribió. La ausencia se propaga como ausencia.
+  //
+  // En C3 la autoridad sigue siendo la legacy, que siempre produce números, así
+  // que las ramas `null` solo se alcanzan antes del onboarding y en los tests.
+  // C4 las usará de verdad: cinco de sus seis estados energéticos no llevan cifra.
+  tdee: number | null;        // kcal/day maintenance
+  planGoal: number | null;    // kcal/day target (tdee ± adjustment)
 
   // Workout log (granular per-exercise: legacy, usado para tracking de reps/kg)
   workoutLog: { date: string; exercise: string; sets: { reps: number; kg: number }[] }[];
@@ -712,6 +721,16 @@ export const useAppStore = create<AppState>()(
     const st = get();
     const totalSlots = st.weeklyPlan?.days?.[0]?.meals?.length ?? 0;
     if (!totalSlots || !date) return;              // sin plan → no se puede medir cobertura
+    // CAPA 1E · FASE C3 · D9 — sin cifra energética vigente NO se crea un summary
+    // nuevo: no hay objetivo contra el que medir adherencia. Las alternativas
+    // estaban descartadas: un 0 mediría contra una meta inexistente, copiar
+    // `weeklyPlan.gen.kcal` resucitaría un objetivo viejo, y rescatar el de un
+    // histórico es exactamente la cifra caduca que C3 viene a eliminar.
+    //
+    // La serie histórica puede quedar con huecos, y es correcto: esos días no
+    // tenían objetivo. Los summaries YA EXISTENTES no se tocan — este `return`
+    // ocurre antes de cualquier escritura, así que nada se borra ni se modifica.
+    if (st.planGoal == null) return;
     const ev = buildDayEvidence({
       date, targetKcal: st.planGoal, totalSlots,
       mealChecks: st.mealChecks, mealResolvedByLog: st.mealResolvedByLog, foodLog: st.foodLog,
@@ -910,8 +929,10 @@ export const useAppStore = create<AppState>()(
   setMealPlanKey: (key) => set({ mealPlanKey: key }),
 
   // Nutrition targets (calculated after onboarding)
-  tdee: 0,
-  planGoal: 0,
+  // C3 · `null` hasta que exista una cifra real. Antes era 0, que la UI pintaba
+  // como «0 kcal» a quien todavía no había terminado el onboarding.
+  tdee: null,
+  planGoal: null,
 
   // Workout log (granular per-exercise: legacy)
   workoutLog: [],
@@ -1601,8 +1622,9 @@ export const useAppStore = create<AppState>()(
     mealResolvedByLog: {},
     welcomeVidClosed: false,
     mealPlanKey: 'planA',
-    tdee: 0,
-    planGoal: 0,
+    // C3 · al cambiar de cuenta no hay cifra energética: `null`, no 0.
+    tdee: null,
+    planGoal: null,
     workoutLog: [],
     lastExercisePerformance: {},
     completedSessions: [],

@@ -355,19 +355,23 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const kcalGoal = planGoal > 0 ? planGoal : 0;
+  // C3 · `null` = no hay objetivo vigente. Antes esto producía 0, que luego se
+  // pintaba y se usaba como denominador.
+  const kcalGoal: number | null = planGoal != null && planGoal > 0 ? planGoal : null;
   const kcalConsumed = Math.round(dayConsumption.consumedKcal);
   // El anillo de menú refleja la ACCIÓN del usuario: comidas marcadas / total
   // (antes era kcal≥80% de la meta, y marcar todo no lo cerraba si el plan
   // sumaba menos). Fallback a kcal si no hay slots de comida.
   const mealSlotsTotal = dayConsumption.totalSlots;
   const mealSlotsDone = dayConsumption.completedSlots;
+  // Sin slots de comida el anillo cae a kcal, y sin objetivo vigente no hay
+  // denominador: 0 % es la representación neutra, no un 100 % artificial.
   const nutritionPct = mealSlotsTotal > 0
     ? mealSlotsDone / mealSlotsTotal
-    : (kcalGoal > 0 ? Math.min(1, kcalConsumed / kcalGoal) : 0);
+    : (kcalGoal != null ? Math.min(1, kcalConsumed / kcalGoal) : 0);
   const nutritionDone = mealSlotsTotal > 0
     ? mealSlotsDone >= mealSlotsTotal
-    : (kcalGoal > 0 ? kcalConsumed / kcalGoal >= 0.8 : kcalConsumed > 0);
+    : (kcalGoal != null ? kcalConsumed / kcalGoal >= 0.8 : kcalConsumed > 0);
   const coreDoneCount = [trainedToday, nutritionDone, reflectionDone].filter(Boolean).length;
   const allCoreDone = coreDoneCount === 3;
   const animatedStreak = useCountUp(streakCount);
@@ -888,7 +892,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                       completed: dayConsumption.completedSlots,
                       total: dayConsumption.totalSlots,
                       consumed: dayConsumption.consumedKcal,
-                      goal: planGoal,
+                      // C3 · sin objetivo vigente, «—». Nunca un 0 ni «null».
+                      goal: planGoal ?? '—',
                     })}
                   </p>
                   {(todayMeals.length > 0 || todayFoodLog.length > 0) && (

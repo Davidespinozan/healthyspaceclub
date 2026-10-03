@@ -262,13 +262,16 @@ export default function SettingsSheet({ open, onClose }: Props) {
               <span className="ss-data-key">{t('editData.goal')}</span>
               <span className="ss-data-val">{obDataLabel(GOAL_KEYS, obData.goal)}</span>
             </div>
-            {tdee > 0 && (
+            {/* C3 · sin cifra no se pinta la fila. `null > 0` ya era falso en
+                runtime, pero la comprobación explícita deja de depender de una
+                coerción y el compilador estrecha el tipo. */}
+            {tdee != null && tdee > 0 && (
               <div className="ss-data-row">
                 <span className="ss-data-key">TDEE</span>
                 <span className="ss-data-val">{tdee.toLocaleString()} kcal</span>
               </div>
             )}
-            {planGoal > 0 && (
+            {planGoal != null && planGoal > 0 && (
               <div className="ss-data-row">
                 <span className="ss-data-key">{t('settings.calorieTarget')}</span>
                 <span className="ss-data-val ss-data-val--accent">{planGoal.toLocaleString()} {t('settings.kcalPerDay')}</span>

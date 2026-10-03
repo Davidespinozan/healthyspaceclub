@@ -96,10 +96,14 @@ export function useWeeklyPlanReset(): void {
  */
 
 export function useAutoRegenPlan(): void {
-  const { weeklyPlan, obData, saveWeeklyPlan } = useAppStore(useShallow((s) => ({
+  const { weeklyPlan, obData, saveWeeklyPlan, planGoal } = useAppStore(useShallow((s) => ({
     weeklyPlan: s.weeklyPlan,
     obData: s.obData,
     saveWeeklyPlan: s.saveWeeklyPlan,
+    // CAPA 1E · FASE C3 — se lee SOLO para poder abortar sin objetivo vigente.
+    // No se usa como input del generador: la energía de la regeneración sigue
+    // saliendo de la autoridad legacy, igual que antes.
+    planGoal: s.planGoal,
   })));
 
   const savedVersion = weeklyPlan?.engineVersion ?? 0;
@@ -107,6 +111,10 @@ export function useAutoRegenPlan(): void {
   useEffect(() => {
     if (!weeklyPlan?.days) return;
     if (savedVersion >= PLAN_ENGINE_VERSION) return;
+    // C3 · sin objetivo energético vigente NO se regenera: ni motor, ni IA, ni
+    // escritura. El plan guardado se queda como está —no se borra ni se degrada—
+    // y un `mealPlanKey` heredado tampoco habilita la regeneración.
+    if (planGoal == null) return;
 
     const t = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
     const target = { kcal: t.planGoal, protG: t.protG, fatG: t.fatG, carbG: t.carbG };
@@ -145,6 +153,10 @@ export function useAutoRegenPlan(): void {
     })();
     return () => { cancelled = true; };
     // Solo la versión guardada dispara: cuando sube a la actual, deja de correr.
+    // C3 · `planGoal` también, porque es un guard de salida: si se hidrata un plan
+    // viejo sin objetivo vigente y la cifra aparece después, la regeneración que
+    // se abortó tiene que poder ocurrir. Cuando ya es un número, añadirlo no
+    // cambia nada — su valor no se mueve.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savedVersion]);
+  }, [savedVersion, planGoal]);
 }

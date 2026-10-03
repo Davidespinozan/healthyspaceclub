@@ -942,13 +942,13 @@ export default function OnboardingScreen() {
             <div className="onb-result-card">
               <div className="onb-result-row">
                 <span className="onb-result-row-label">{t('onboarding.resultMetabolism')}</span>
-                <span className="onb-result-row-val">{tdeeVal > 0 ? tdeeVal.toLocaleString() : '—'}<i>{t('onboarding.kcalDay')}</i></span>
+                <span className="onb-result-row-val">{tdeeVal != null && tdeeVal > 0 ? tdeeVal.toLocaleString() : '—'}<i>{t('onboarding.kcalDay')}</i></span>
               </div>
               <div className="onb-result-divider" />
               <div className="onb-result-target">
                 <span className="onb-result-row-label">{t('onboarding.resultTarget')}</span>
                 <div className="onb-result-kcal">
-                  {goalVal > 0 ? goalVal.toLocaleString() : '—'} <span>{t('onboarding.kcalDay')}</span>
+                  {goalVal != null && goalVal > 0 ? goalVal.toLocaleString() : '—'} <span>{t('onboarding.kcalDay')}</span>
                 </div>
               </div>
               <div className="onb-result-plan">{goalLabelKeys[goal] ? t(goalLabelKeys[goal]) : goal}</div>

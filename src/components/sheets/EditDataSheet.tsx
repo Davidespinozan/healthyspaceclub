@@ -540,7 +540,8 @@ export default function EditDataSheet({ onClose }: Props) {
           <div className="sh-saved">
             <p>{t('editData.saved')}</p>
             <p className="sh-saved-stats">
-              TDEE: <strong>{tdee.toLocaleString()} kcal</strong> · {t('editData.goalShort')}: <strong>{planGoal.toLocaleString()} {t('settings.kcalPerDay')}</strong>
+              {/* C3 · sin cifra, «—». Nunca «0 kcal». */}
+              TDEE: <strong>{tdee != null ? `${tdee.toLocaleString()} kcal` : '—'}</strong> · {t('editData.goalShort')}: <strong>{planGoal != null ? `${planGoal.toLocaleString()} ${t('settings.kcalPerDay')}` : '—'}</strong>
             </p>
             {/* P0-02 · el plan se descartó porque servía algo que el usuario acaba de
                 excluir. Sin esto la desaparición era silenciosa. */}

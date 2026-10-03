@@ -120,8 +120,11 @@ export default function App() {
             avatarUrl: p.avatar_url ?? null,
             obData: (p.ob_data as Record<string, string | number>) ?? {},
             startDate: p.start_date ?? '',
-            tdee: p.tdee ?? 0,
-            planGoal: p.plan_goal ?? 0,
+            // C3 · `null` se conserva como `null`. Antes era `?? 0`, que convertía
+            // «este perfil no tiene cifra» en «su objetivo es 0 kcal» justo en el
+            // punto donde un valor guardado recupera autoridad.
+            tdee: p.tdee ?? null,
+            planGoal: p.plan_goal ?? null,
             mealPlanKey: p.meal_plan_key ?? 'planA',
             userPlan: (p.user_plan ?? 'none') as 'none' | 'trial' | 'pro',
             trialEndsAt: p.trial_ends_at ?? null,
@@ -480,8 +483,9 @@ export default function App() {
                 avatarUrl: (profile as { avatar_url?: string | null }).avatar_url ?? null,
                 obData: (profile.ob_data as Record<string, string | number>) ?? {},
                 startDate: profile.start_date ?? '',
-                tdee: profile.tdee ?? 0,
-                planGoal: profile.plan_goal ?? 0,
+                // C3 · ídem: la ausencia se conserva, no se convierte en 0.
+                tdee: profile.tdee ?? null,
+                planGoal: profile.plan_goal ?? null,
                 mealPlanKey: profile.meal_plan_key ?? 'planA',
                 userPlan: (profile.user_plan ?? 'none') as 'none' | 'trial' | 'pro',
                 trialEndsAt: profile.trial_ends_at ?? null,
