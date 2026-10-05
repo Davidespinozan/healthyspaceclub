@@ -4,14 +4,16 @@
 //   AUTORIDADES HSC (motores/estado)  →  derivación pura  →  CoachContext compacto
 //
 // El Coach EXPLICA y RAZONA sobre el estado de HSC; NO recrea sus motores. Este módulo
-// SOLO LEE autoridades existentes (computeNutritionTargets, computeCoach,
+// SOLO LEE autoridades existentes (store.energyState/planGoal, computeCoach,
 // computeDayConsumption, computeWeeklyVolume/weeklyVolumeSeries, dailyWorkout.plan +
 // su coachTrace, hsmProfile). No escribe estado, no llama a IA, no muta planes, no
 // hace red, no reimplementa fórmulas. Se construye desde el snapshot del store en cada
 // envío (fresco) → hereda el aislamiento por cuenta de ACCOUNT-ISOLATION-1.
 // ─────────────────────────────────────────────────────────────────────────────
 import { dayKey } from './localDate';
-import { computeNutritionTargets, parseObData } from './nutritionTargets';
+// C4 · el Coach no estima energía: la cifra la prescribe el motor nuevo y llega por
+// `store.planGoal`. De aquí solo queda el PUENTE de macros, legacy hasta la CAPA 2.
+import { legacyMacros, legacyMacroWellness, parseObData } from './nutritionTargets';
 import { computeCoach } from './nutritionCoach';
 import { computeDayConsumption } from './foodConsumption';
 import { computeWeeklyVolume, weeklyVolumeSeries } from './workoutPlanner';
@@ -39,12 +41,21 @@ export interface CoachContext {
     trend4wk: 'up' | 'flat' | 'down' | 'n/a';
     partnerToday: boolean;
   };
+  /**
+   * CAPA 1E · FASE C4 — `null` cuando HSC no prescribe energía a este socio
+   * (perfil incompleto, ilegible, fuera de alcance, o pérdida de grasa bloqueada).
+   *
+   * Se omite el bloque COMPLETO, no se rellena con ceros: un `target.kcal: 0` o un
+   * `remaining` calculado contra la nada es un hecho FALSO presentado al modelo
+   * como autoritativo, y el Coach razonaría sobre él con total confianza. Tampoco
+   * se envían solo las macros: se derivan de la cifra que no existe.
+   */
   nutrition: {
     hasPlan: boolean;
     target: Macro4; consumed: Macro4; remaining: Macro4;
     mealsDone: number; mealsLeft: number;
     todayMeals: Array<{ time?: string; name: string; kcal?: number }>;
-  };
+  } | null;
   mindset: {
     profileSummary?: string; profileAsOf?: string;
     reflectionCompletedToday: boolean;   // METADATA-ONLY (fecha), nunca texto
@@ -75,6 +86,9 @@ export function buildCoachContext(store: StoreState): CoachContext {
     userName, obData, streakCount, startDate, weeklyPlan, shoppingDay,
     mealChecks, mealResolvedByLog, foodLog, completedSessions, workoutLog,
     dailyWorkout, dailyHSMResponses, hsmProfile, hsmDailyReview,
+    // C4 · proyección del estado energético. No se lee `energyState` porque el
+    // contexto no explica el MOTIVO de la ausencia: solo omite lo que no existe.
+    planGoal,
   } = store;
   const today = dayKey(new Date());
   const weekday = new Date().getDay();
@@ -127,31 +141,36 @@ export function buildCoachContext(store: StoreState): CoachContext {
     partnerToday: !!todayWorkout?.partner,
   };
 
-  // ── NUTRITION (autoridades: computeNutritionTargets / computeDayConsumption / computeCoach) ──
-  const hasPlan = hasGeneratedWeeklyPlan(weeklyPlan as { days?: unknown[] } | null);
-  const targets = computeNutritionTargets(parseObData(ob));
-  const todayMeals = resolveTodayPlanMeals(
-    weeklyPlan as { days?: Array<{ day: number; meals: Array<Record<string, unknown>> }>; selectedDays?: number[] } | null,
-    shoppingDay, weekday,
-  );
-  const cons = computeDayConsumption({ todayMeals: todayMeals as never, mealChecks, mealResolvedByLog, foodLog, today });
-  const coach = computeCoach({
-    consumed: { kcal: cons.consumedKcal, prot: cons.consumedProt, carbs: cons.consumedCarbs, fat: cons.consumedFat },
-    target: { kcal: targets.planGoal, prot: targets.protG, carbs: targets.carbG, fat: targets.fatG },
-    mealsDone: cons.completedSlots, mealsTotal: cons.totalSlots,
-  });
-  const leftOf = (k: 'carbs' | 'fat') => coach.macros.find(m => m.key === k)?.left ?? 0;
-  const nutrition: CoachContext['nutrition'] = {
-    hasPlan,
-    target: { kcal: targets.planGoal, prot: targets.protG, carb: targets.carbG, fat: targets.fatG },
-    consumed: { kcal: Math.round(cons.consumedKcal), prot: Math.round(cons.consumedProt), carb: Math.round(cons.consumedCarbs), fat: Math.round(cons.consumedFat) },
-    remaining: { kcal: coach.kcalLeft, prot: coach.protLeft, carb: leftOf('carbs'), fat: leftOf('fat') },
-    mealsDone: coach.mealsDone, mealsLeft: coach.mealsLeft,
-    todayMeals: (todayMeals as Array<Record<string, unknown>>).map(m => ({
-      time: str(m.time), name: String(m.name ?? ''),
-      kcal: num((m.macros as Record<string, unknown>)?.kcal),
-    })),
-  };
+  // ── NUTRITION (autoridades: store.planGoal / computeDayConsumption / computeCoach) ──
+  // C4 · `planGoal` es la ÚNICA puerta. Si el motor nuevo no prescribió, el bloque
+  // entero es `null`: aquí no se estima una cifra de repuesto.
+  const nutrition: CoachContext['nutrition'] = planGoal == null ? null : (() => {
+    const hasPlan = hasGeneratedWeeklyPlan(weeklyPlan as { days?: unknown[] } | null);
+    const obIn = parseObData(ob);
+    const targets = legacyMacros(obIn, planGoal, legacyMacroWellness(obIn));
+    const todayMeals = resolveTodayPlanMeals(
+      weeklyPlan as { days?: Array<{ day: number; meals: Array<Record<string, unknown>> }>; selectedDays?: number[] } | null,
+      shoppingDay, weekday,
+    );
+    const cons = computeDayConsumption({ todayMeals: todayMeals as never, mealChecks, mealResolvedByLog, foodLog, today });
+    const coach = computeCoach({
+      consumed: { kcal: cons.consumedKcal, prot: cons.consumedProt, carbs: cons.consumedCarbs, fat: cons.consumedFat },
+      target: { kcal: planGoal, prot: targets.protG, carbs: targets.carbG, fat: targets.fatG },
+      mealsDone: cons.completedSlots, mealsTotal: cons.totalSlots,
+    });
+    const leftOf = (k: 'carbs' | 'fat') => coach.macros.find(m => m.key === k)?.left ?? 0;
+    return {
+      hasPlan,
+      target: { kcal: planGoal, prot: targets.protG, carb: targets.carbG, fat: targets.fatG },
+      consumed: { kcal: Math.round(cons.consumedKcal), prot: Math.round(cons.consumedProt), carb: Math.round(cons.consumedCarbs), fat: Math.round(cons.consumedFat) },
+      remaining: { kcal: coach.kcalLeft, prot: coach.protLeft, carb: leftOf('carbs'), fat: leftOf('fat') },
+      mealsDone: coach.mealsDone, mealsLeft: coach.mealsLeft,
+      todayMeals: (todayMeals as Array<Record<string, unknown>>).map(m => ({
+        time: str(m.time), name: String(m.name ?? ''),
+        kcal: num((m.macros as Record<string, unknown>)?.kcal),
+      })),
+    };
+  })();
 
   // ── MINDSET (perfil longitudinal + reflexiones de HOY, NUNCA URGENT) ──────────
   const mindset: CoachContext['mindset'] = {
@@ -206,14 +225,21 @@ export function renderHscFacts(ctx: CoachContext): string {
 
   // NUTRITION
   const n = ctx.nutrition;
-  L.push(`NUTRICIÓN HOY — META: ${n.target.kcal} kcal (P${n.target.prot} C${n.target.carb} G${n.target.fat}g)`);
-  L.push(`  Consumido: ${n.consumed.kcal} kcal (P${n.consumed.prot} C${n.consumed.carb} G${n.consumed.fat}g) · Comidas: ${n.mealsDone} hechas, ${n.mealsLeft} restantes`);
-  L.push(`  RESTA HOY (exacto, no estimes): ${n.remaining.kcal} kcal · P${n.remaining.prot}g · C${n.remaining.carb}g · G${n.remaining.fat}g`);
-  if (n.hasPlan && n.todayMeals.length) {
-    L.push(`  PLAN DE HOY: ${n.todayMeals.map(m => `${m.time ? m.time + ' ' : ''}${m.name}${m.kcal != null ? ` (${Math.round(m.kcal)}kcal)` : ''}`).join(' · ')}`);
-    L.push('  (El plan NO tiene alternativas/sustituciones guardadas: si sugieres cambios, dilo como sugerencia tuya, no como "tu plan dice".)');
-  } else if (!n.hasPlan) {
-    L.push('  PLAN DE COMIDAS: no hay plan generado (no inventes comidas como si HSC las hubiera planeado).');
+  if (n === null) {
+    // C4 · HSC no prescribe energía a este socio. Se dice UNA vez y explícitamente:
+    // omitir el bloque en silencio dejaría al modelo rellenando el hueco con una
+    // cifra plausible, que es el fallo que esto viene a cerrar.
+    L.push('NUTRICIÓN HOY: HSC no tiene una meta energética vigente para este socio (no inventes kcal, macros ni un "restante": no existen).');
+  } else {
+    L.push(`NUTRICIÓN HOY — META: ${n.target.kcal} kcal (P${n.target.prot} C${n.target.carb} G${n.target.fat}g)`);
+    L.push(`  Consumido: ${n.consumed.kcal} kcal (P${n.consumed.prot} C${n.consumed.carb} G${n.consumed.fat}g) · Comidas: ${n.mealsDone} hechas, ${n.mealsLeft} restantes`);
+    L.push(`  RESTA HOY (exacto, no estimes): ${n.remaining.kcal} kcal · P${n.remaining.prot}g · C${n.remaining.carb}g · G${n.remaining.fat}g`);
+    if (n.hasPlan && n.todayMeals.length) {
+      L.push(`  PLAN DE HOY: ${n.todayMeals.map(m => `${m.time ? m.time + ' ' : ''}${m.name}${m.kcal != null ? ` (${Math.round(m.kcal)}kcal)` : ''}`).join(' · ')}`);
+      L.push('  (El plan NO tiene alternativas/sustituciones guardadas: si sugieres cambios, dilo como sugerencia tuya, no como "tu plan dice".)');
+    } else if (!n.hasPlan) {
+      L.push('  PLAN DE COMIDAS: no hay plan generado (no inventes comidas como si HSC las hubiera planeado).');
+    }
   }
 
   // MINDSET

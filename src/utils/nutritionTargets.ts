@@ -190,6 +190,51 @@ export function legacyEnergy(o: ObInput): LegacyEnergy {
 }
 
 /**
+ * ⚠️ DEUDA TEMPORAL DE C4 · LA RETIRA **CAPA 2** ⚠️
+ *
+ * Predicado de «modo bienestar» para la capa de MACROS, extraído de `legacyEnergy`
+ * sin calcular una sola kcal.
+ *
+ * ── POR QUÉ EXISTE ──────────────────────────────────────────────────────────
+ * `legacyMacros` usa `wellnessMode` en un único sitio —`objKey`— y de ahí salen
+ * la tabla de proteína (`GKG`) y el porcentaje de grasa (`FAT_PCT`). Hasta C4 ese
+ * booleano lo producía `legacyEnergy`. Al retirarle la autoridad energética había
+ * dos salidas: pasar `false` siempre, que CAMBIARÍA las macros de una población
+ * real, o extraer el predicado. C4 cambia la ENERGÍA y no rediseña las macros, así
+ * que extrae.
+ *
+ * ── QUIÉN ES ESA POBLACIÓN, Y POR QUÉ ES UNA SOLA ───────────────────────────
+ * El predicado legacy tiene cuatro ramas. Tres son INALCANZABLES en PRESCRIBED:
+ *   · `edad < 18`        → el Scope Guard corta en < 19
+ *   · `embarazo`         → el Scope Guard lo saca de alcance
+ *   · `edad >= 70`       → el Scope Guard corta en > 64 (Nutrition V1 = 19–64)
+ *   · `IMC < 18.5` ∧ FAT_LOSS → `FAT_LOSS_BLOCKED` lo intercepta
+ * Queda exactamente una: **`IMC < 18.5` ∧ RECOMPOSICIÓN**, porque el guard de IMC
+ * vive dentro de la rama FAT_LOSS y `wantsToLose` también casa `/recompos/`. Ese
+ * caso conserva `objKey = 'mantener'` exactamente como hasta ahora.
+ *
+ * Se conserva el predicado ÍNTEGRO en vez de recortarlo a esa rama: recortarlo
+ * sería DECIDIR la política macro, y esa decisión es de CAPA 2. Esto preserva.
+ *
+ * ── LO QUE NO HACE ──────────────────────────────────────────────────────────
+ * No calcula energía. No llama a `legacyEnergy` ni a `computeNutritionTargets`.
+ * No lee `ACTIVITY_FACTORS`, `goalFactor` ni `sexFloor`. Devuelve un booleano y
+ * nada más: no es, ni puede convertirse en, autoridad energética.
+ *
+ * ── QUÉ HARÁ CAPA 2 ────────────────────────────────────────────────────────
+ * Decidir DESDE CERO si la ruta `IMC<18.5` + Recomposición debe existir y cuáles
+ * son sus macros. Cuando lo haga, esta función desaparece.
+ */
+export function legacyMacroWellness(o: ObInput): boolean {
+  const menor = o.edad < 18;
+  const hM = o.estaturaCm / 100;
+  const imc = hM > 0 ? o.pesoKg / (hM * hM) : 0;
+  const riesgoBajoPeso = imc > 0 && imc < 18.5 && wantsToLose(o.goal);
+  const mayor70 = o.edad >= 70;
+  return menor || !!o.embarazo || riesgoBajoPeso || mayor70;
+}
+
+/**
  * Mitad de MACROS legacy. **SOBREVIVE HASTA LA FASE D.**
  *
  * ── EL SEAM ─────────────────────────────────────────────────────────────────

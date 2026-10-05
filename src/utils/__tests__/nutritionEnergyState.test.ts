@@ -845,25 +845,41 @@ describe('C2 · nada de esto está conectado', () => {
     expect(PRODUCTIVOS.some(([p]) => p.endsWith('/nutritionEnergyState.ts'))).toBe(true);
   });
 
-  it('CERO consumidores productivos de todo lo nuevo', () => {
+  // ACTUALIZADO POR C4 · C2 se cerró con CERO consumidores a propósito: construir
+  // el contrato no era conectarlo. C4 lo conecta, así que el contrato pasa de
+  // «nadie» a «exactamente éstos». Es más fuerte: «cero» deja de proteger en el
+  // momento en que se conecta algo, y esta lista falla si aparece un consumidor
+  // nuevo — que es justo lo que hay que vigilar ahora.
+  const STORE_Y_PUENTE = ['/src/store/index.ts', '/src/utils/energyHydration.ts'];
+  it('C4 · consumidores productivos de C2 == exactamente el store y la hidratación', () => {
     const propio = (p: string) => p.endsWith('/nutritionEnergyState.ts');
-    for (const id of ['nutritionEnergyState', 'resolveNutritionEnergyState',
-      'NutritionEnergyState', 'EnergySnapshotV1', 'buildEnergySnapshot',
-      'parseEnergySnapshot', 'energyInputIdentity', 'currentEngineVersions']) {
+    const ESPERADO: Record<string, string[]> = {
+      nutritionEnergyState:        STORE_Y_PUENTE,
+      resolveNutritionEnergyState: [],                      // nadie lo llama directo
+      NutritionEnergyState:        STORE_Y_PUENTE,
+      EnergySnapshotV1:            ['/src/utils/energyHydration.ts'],
+      buildEnergySnapshot:         STORE_Y_PUENTE,
+      parseEnergySnapshot:         ['/src/utils/energyHydration.ts'],
+      energyInputIdentity:         [],                      // vive dentro del snapshot
+      currentEngineVersions:       [],                      // ídem
+    };
+    for (const [id, esperado] of Object.entries(ESPERADO)) {
       const consumidores = PRODUCTIVOS
         .filter(([p]) => !propio(p))
         .filter(([, src]) => new RegExp(`\\b${id}\\b`).test(src))
-        .map(([p]) => p);
-      expect(consumidores, id).toEqual([]);
+        .map(([p]) => p).sort();
+      expect(consumidores, id).toEqual([...esperado].sort());
     }
   });
 
-  it('CERO lectores y escritores productivos de energy_snapshot', () => {
+  it('C4 · la columna `energy_snapshot` se toca en exactamente tres sitios', () => {
     const consumidores = PRODUCTIVOS
       .filter(([p]) => !p.endsWith('/database.ts') && !p.endsWith('/nutritionEnergyState.ts'))
       .filter(([, src]) => /energy_snapshot/.test(src))
-      .map(([p]) => p);
-    expect(consumidores).toEqual([]);
+      .map(([p]) => p).sort();
+    // App la LEE (dos `select` + dos delegaciones), el store la ESCRIBE (un
+    // upsert) y la hidratación la nombra en su contrato. Ningún componente.
+    expect(consumidores).toEqual(['/src/App.tsx', '/src/store/index.ts']);
   });
 
   it('resolveNutritionEnergy sigue sin consumidores productivos fuera de C2', () => {
@@ -874,10 +890,22 @@ describe('C2 · nada de esto está conectado', () => {
     expect(consumidores).toEqual([]);
   });
 
-  it('la autoridad energética VISIBLE sigue siendo la legacy', () => {
+  // ACTUALIZADO POR C4 · C2 construyó el snapshot sin escribir ninguno, y este
+  // contrato fijaba justamente eso. C4 lo escribe a propósito, así que el
+  // invariante se re-apunta: el store usa el productor ÚNICO de C2 y no
+  // reimplementa nada suyo, que es lo que C2 tenía que proteger.
+  it('C4 · el store escribe el snapshot a través del productor único de C2', () => {
     const store = sinComentarios(TODO['/src/store/index.ts']);
-    expect(store).toMatch(/computeNutritionTargets/);
-    expect(store).not.toMatch(/resolveNutritionEnergy|energy_snapshot|EnergySnapshot/);
+    expect(store).toMatch(/buildEnergySnapshot\(obData, new Date\(\)\.toISOString\(\)\)/);
+    // Una sola columna, un solo upsert: no hay una segunda ruta de escritura.
+    expect(store.match(/energy_snapshot/g)).toHaveLength(1);
+    // Y el store NO reimplementa el contrato de C2: ni versiona, ni hashea, ni parsea.
+    for (const id of ['ENERGY_SNAPSHOT_SCHEMA_VERSION', 'energyInputIdentity',
+      'currentEngineVersions', 'parseEnergySnapshot', 'schemaVersion']) {
+      expect(store, `el store no debe usar ${id}`).not.toMatch(new RegExp(`\\b${id}\\b`));
+    }
+    // La energía legacy ya no tiene autoridad en el store.
+    expect(store).not.toMatch(/computeNutritionTargets|legacyEnergy/);
     // Y C1 sigue intacto: la composición legacy con un solo argumento.
     const targets = TODO['/src/utils/nutritionTargets.ts'];
     expect(targets).toContain('export function computeNutritionTargets(o: ObInput): NutritionTargets');

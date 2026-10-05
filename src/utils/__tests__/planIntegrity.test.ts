@@ -353,12 +353,16 @@ describe('P0-04 · H · las cuatro puertas', () => {
 // I · VERSIÓN DEL MOTOR + REGIÓN EN LA AUTO-REGENERACIÓN
 // ═════════════════════════════════════════════════════════════════════════════
 describe('P0-04 · I · versión y región', () => {
-  it('6 · PLAN_ENGINE_VERSION = 31 → un plan v30 queda por debajo y se regenera', () => {
-    expect(PLAN_ENGINE_VERSION).toBe(31);
-    const guardado = 30;
-    expect(guardado >= PLAN_ENGINE_VERSION, 'un plan v30 YA NO debe considerarse al día').toBe(false);
-    // el gate de la auto-regeneración es exactamente esa comparación
-    expect(srcAutoRegen).toMatch(/savedVersion >= PLAN_ENGINE_VERSION/);
+  it('6 · PLAN_ENGINE_VERSION = 32 → un plan v31 queda por debajo y se regenera', () => {
+    expect(PLAN_ENGINE_VERSION).toBe(32);
+    const guardado = 31;
+    expect(guardado >= PLAN_ENGINE_VERSION, 'un plan v31 YA NO debe considerarse al día').toBe(false);
+    // C4 · el gate dejó de ser una comparación suelta en el efecto: ahora lo hace
+    // `weeklyPlanCurrentness`, que compara la versión Y la cifra prescrita. La
+    // comparación de versión sigue existiendo, pero dentro del selector.
+    expect(srcAutoRegen).toMatch(/weeklyPlanCurrentness\(/);
+    expect(srcAutoRegen).toMatch(/currentVersion: PLAN_ENGINE_VERSION/);
+    expect(srcAutoRegen).toMatch(/currentness !== 'STALE'/);
   });
 
   it('7 · la auto-regeneración pasa región, con la MISMA derivación que la generación normal', () => {

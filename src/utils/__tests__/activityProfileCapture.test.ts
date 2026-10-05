@@ -328,13 +328,15 @@ describe('FASE B · la Fase B no conecta el motor energético', () => {
       .map(([p]) => p);
     expect(directos).toEqual([]);
 
-    // …y el intermediario tampoco tiene consumidores, así que la cadena sigue
-    // sin alcanzar producción por ningún camino.
+    // ACTUALIZADO POR C4 · el intermediario SÍ tiene consumidores ahora: es el
+    // cutover. Pero el radio está acotado a dos ficheros, y eso es una garantía
+    // más fuerte que «cero», porque «cero» se pierde en cuanto se conecta y esta
+    // falla si aparece un tercero. El flujo entra por UN sitio.
     const indirectos = PRODUCTIVOS
       .filter(([p]) => !p.endsWith('/nutritionEnergyState.ts'))
       .filter(([, src]) => /\bnutritionEnergyState\b|\bresolveNutritionEnergyState\b/.test(src))
-      .map(([p]) => p);
-    expect(indirectos).toEqual([]);
+      .map(([p]) => p).sort();
+    expect(indirectos).toEqual(['/src/store/index.ts', '/src/utils/energyHydration.ts']);
   });
 
   it('el mapper NO importa el orquestador: existir no es estar conectado', () => {
@@ -352,11 +354,25 @@ describe('FASE B · la Fase B no conecta el motor energético', () => {
     }
   });
 
-  it('la autoridad energética VISIBLE sigue siendo la legacy', () => {
-    const store = TODO['/src/store/index.ts'];
+  // ACTUALIZADO POR C4 · la autoridad energética visible ES la nueva. Lo que la
+  // Fase B garantizaba —que CAPTURAR el perfil de actividad no cableaba nada— ya
+  // no se puede expresar sobre el store, porque C4 lo cableó a propósito. El
+  // invariante que sobrevive, y que sigue siendo de la Fase B, es que el MAPPER
+  // no invoca el motor: capturar y resolver siguen siendo dos actos distintos.
+  it('C4 · capturar sigue sin resolver: el mapper no invoca ningún motor', () => {
+    const mapper = sinComentarios(TODO['/src/utils/nutritionProfileInput.ts']);
+    expect(mapper).toBeTruthy();
+    for (const id of ['resolveNutritionEnergy', 'resolveNutritionEnergyState',
+      'buildEnergySnapshot', 'computeNutritionTargets', 'legacyEnergy']) {
+      expect(mapper, `el mapper no debe invocar ${id}`).not.toMatch(new RegExp(`${id}\\(`));
+    }
+  });
+
+  it('C4 · la autoridad energética del store ES la nueva, y la legacy ya no está', () => {
+    const store = sinComentarios(TODO['/src/store/index.ts']);
     expect(store).toBeTruthy();
-    expect(store).toMatch(/computeNutritionTargets/);
-    expect(store).not.toMatch(/resolveNutritionEnergy/);
+    expect(store).toMatch(/buildEnergySnapshot/);
+    expect(store).not.toMatch(/computeNutritionTargets/);
   });
 });
 

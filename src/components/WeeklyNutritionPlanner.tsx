@@ -11,7 +11,10 @@ import { hasGeneratedWeeklyPlan, weeklyPlanPhase, resolveTodayPlanMeals } from '
 import { normalizeGroceryList } from '../utils/groceryList';
 import { mealKcal, dayNutrition } from '../utils/mealNutrition';
 import { computeDayConsumption } from '../utils/foodConsumption';
-import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
+// C4 · el planner ya NO llama a `computeNutritionTargets`: la cifra energética la
+// prescribe el motor nuevo y llega por `store.planGoal`. De `nutritionTargets` solo
+// queda el PUENTE de macros, que sigue siendo legacy hasta la CAPA 2.
+import { legacyMacros, legacyMacroWellness, parseObData } from '../utils/nutritionTargets';
 import { PLAN_ENGINE_VERSION } from '../utils/planEngine';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
@@ -280,7 +283,11 @@ export default function WeeklyNutritionPlanner() {
     try {
       // Deja pintar el spinner antes del cómputo síncrono del motor.
       await new Promise((r) => setTimeout(r, 30));
-      const targets = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
+      // C4 · PUENTE. La kcal es `planGoal` (motor nuevo, ya estrechado a number por
+      // el guard de arriba) y las macros se derivan DE ESA kcal. `legacyMacros` no
+      // vuelve a estimar energía: la recibe.
+      const ob = parseObData(obData as Record<string, string | number>);
+      const targets = legacyMacros(ob, planGoal, legacyMacroWellness(ob));
       // P0-02 · AUTORIDAD DE RESTRICCIONES. Lo que llega al generador es la UNIÓN de
       // las permanentes del perfil (obData.avoid — «no consumo esto nunca») con la
       // preferencia de ESTA semana. El cuestionario solo puede AÑADIR; nunca resta.
@@ -289,7 +296,7 @@ export default function WeeklyNutritionPlanner() {
       const avoid = effectiveAvoid(avoidPermanent, avoidWeekly);
       // Híbrido: la IA selecciona los platillos (variedad/antojo/tiempos) y el código
       // ajusta porciones + garantiza alergias. Si la IA falla, cae al motor determinista.
-      const target = { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG };
+      const target = { kcal: planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG };
       const shake = buildShake();
       const region = obData.country ? regionFromCountry(String(obData.country)) : (getCachedRegion() ?? undefined);
       const { days } = await generateWeeklyPlan(target, avoid, newAnswers.cravings ?? '', Date.now() & 0x7fffffff, shake, region);
@@ -309,7 +316,7 @@ export default function WeeklyNutritionPlanner() {
         lang: locale,
         days,
         engineVersion: PLAN_ENGINE_VERSION,
-        gen: { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, avoidPermanent, avoidWeekly, craving: newAnswers.cravings ?? '', shake },
+        gen: { kcal: planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, avoidPermanent, avoidWeekly, craving: newAnswers.cravings ?? '', shake },
       });
       setActiveDay(todayOffset >= 0 ? todayOffset : 0);
       setPhase('plan');
@@ -720,7 +727,13 @@ export default function WeeklyNutritionPlanner() {
     todayMeals: todayPlanMeals,
     mealChecks, mealResolvedByLog, foodLog, today: todayKey,
   });
-  const macroTargets = computeNutritionTargets(parseObData(obData));
+  // C4 · sin cifra prescrita no hay macros que mostrar: se derivan de la kcal, así
+  // que inventarlas sería inventar un objetivo. `null` viaja hasta la tarjeta.
+  const macroTargets = (() => {
+    if (planGoal == null) return null;
+    const ob = parseObData(obData);
+    return legacyMacros(ob, planGoal, legacyMacroWellness(ob));
+  })();
 
   const shoppingTotal = weeklyPlan.shoppingList.length;
   const shoppingDone = weeklyPlan.shoppingList.filter((_, i) => !!mealChecks[`shop-${i}`]).length;
@@ -751,7 +764,7 @@ export default function WeeklyNutritionPlanner() {
           carbs: dayConsumption.consumedCarbs, fat: dayConsumption.consumedFat,
         }}
         goalKcal={planGoal}
-        targets={{ protG: macroTargets.protG, carbG: macroTargets.carbG, fatG: macroTargets.fatG, fiberG: macroTargets.fiberG }}
+        targets={macroTargets && { protG: macroTargets.protG, carbG: macroTargets.carbG, fatG: macroTargets.fatG, fiberG: macroTargets.fiberG }}
         mealsDone={dayConsumption.completedSlots}
         mealsTotal={dayConsumption.totalSlots}
       />

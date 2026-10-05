@@ -16,7 +16,16 @@ interface Props {
    * comido en negativo, ni una voz del coach calculada contra la nada.
    */
   goalKcal: number | null;
-  targets: { protG: number; carbG: number; fatG: number; fiberG: number };
+  /**
+   * CAPA 1E · FASE C4 — `null` significa que tampoco hay objetivos de macros.
+   *
+   * Las macros legacy se derivan de la cifra energética: sin cifra no hay
+   * `protG` que mostrar. Antes esta tarjeta recibía unas macros calculadas por
+   * la ruta legacy aunque el producto no prescribiera nada, así que un usuario
+   * sin meta veía «0 / 148 g de proteína» — un objetivo que nadie le había
+   * puesto. Con `null` se muestra lo COMIDO y nada más.
+   */
+  targets: { protG: number; carbG: number; fatG: number; fiberG: number } | null;
   mealsDone: number;
   mealsTotal: number;
 }
@@ -25,13 +34,13 @@ export default function NutritionMeta({ consumed, goalKcal, targets, mealsDone, 
   const { t } = useT();
 
   // Sin objetivo no se invoca al coach: toda su aritmética parte de `target.kcal`.
-  const coach = goalKcal == null ? null : computeCoach({
+  const coach = goalKcal == null || targets == null ? null : computeCoach({
     consumed,
     target: { kcal: goalKcal, prot: targets.protG, carbs: targets.carbG, fat: targets.fatG },
     mealsDone,
     mealsTotal,
   });
-  const coachText = coach === null ? null : (() => {
+  const coachText = coach === null || targets === null ? null : (() => {
     // Dentro de esta rama `coach` ya está estrechado, así que la etiqueta se
     // calcula aquí en vez de arriba: evita un `string | null` que luego habría
     // que volver a estrechar en cada interpolación.
@@ -70,13 +79,20 @@ export default function NutritionMeta({ consumed, goalKcal, targets, mealsDone, 
       </div>
 
       {([
-        { lbl: t('onboarding.macroProtein'), v: consumed.prot, g: targets.protG },
-        { lbl: t('onboarding.macroCarbs'), v: consumed.carbs, g: targets.carbG },
-        { lbl: t('onboarding.macroFat'), v: consumed.fat, g: targets.fatG },
+        { lbl: t('onboarding.macroProtein'), v: consumed.prot, g: targets?.protG ?? null },
+        { lbl: t('onboarding.macroCarbs'), v: consumed.carbs, g: targets?.carbG ?? null },
+        { lbl: t('onboarding.macroFat'), v: consumed.fat, g: targets?.fatG ?? null },
       ]).map((m, i) => (
         <div className="cday-bar" key={i}>
-          <div className="cday-bar-row"><span>{m.lbl}</span><span className="cday-bar-v">{Math.round(m.v)} / {m.g} g</span></div>
-          <div className="cday-track"><i style={{ width: `${pct(m.v, m.g)}%` }} /></div>
+          {/* Sin objetivo se imprime solo lo comido: ni el «/ X g» ni la barra,
+              porque una barra sin meta no puede estar llena ni vacía. */}
+          <div className="cday-bar-row">
+            <span>{m.lbl}</span>
+            <span className="cday-bar-v">{Math.round(m.v)}{m.g != null ? ` / ${m.g}` : ''} g</span>
+          </div>
+          {m.g != null && (
+            <div className="cday-track"><i style={{ width: `${pct(m.v, m.g)}%` }} /></div>
+          )}
         </div>
       ))}
 

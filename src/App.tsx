@@ -103,7 +103,7 @@ export default function App() {
         fetchProfile: () => fetchWithTimeout(async () => {
           const { data, error } = await supabase
             .from('user_profiles')
-            .select('display_name, username, avatar_url, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at')
+            .select('display_name, username, avatar_url, ob_data, start_date, energy_snapshot, meal_plan_key, user_plan, trial_ends_at')
             .eq('user_id', uid)
             .maybeSingle();
           return { data, error };
@@ -120,15 +120,16 @@ export default function App() {
             avatarUrl: p.avatar_url ?? null,
             obData: (p.ob_data as Record<string, string | number>) ?? {},
             startDate: p.start_date ?? '',
-            // C3 · `null` se conserva como `null`. Antes era `?? 0`, que convertía
-            // «este perfil no tiene cifra» en «su objetivo es 0 kcal» justo en el
-            // punto donde un valor guardado recupera autoridad.
-            tdee: p.tdee ?? null,
-            planGoal: p.plan_goal ?? null,
             mealPlanKey: p.meal_plan_key ?? 'planA',
             userPlan: (p.user_plan ?? 'none') as 'none' | 'trial' | 'pro',
             trialEndsAt: p.trial_ends_at ?? null,
           });
+          // C4 · `tdee` y `planGoal` NO se hidratan desde sus columnas: ya no se
+          // leen ni se piden en el `select`. La autoridad es `energy_snapshot`, y
+          // es la acción del store la que decide si sigue vigente (adoptar) o no
+          // (volver a resolver y persistir). Un perfil legacy sin snapshot NO
+          // hereda su `plan_goal`: se recalcula con el motor nuevo.
+          void useAppStore.getState().hydrateEnergyFromSnapshot(p.energy_snapshot);
         },
         onResolvedEmpty: () => { /* usuario nuevo real: startDate queda '' → onboarding legítimo */ },
       });
@@ -449,7 +450,7 @@ export default function App() {
             for (let attempt = 0; attempt < 3; attempt++) {
               const { data, error } = await supabase
                 .from('user_profiles')
-                .select('display_name, avatar_url, ob_data, start_date, tdee, plan_goal, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date, weekly_plan, weekly_plan_updated_at, shopping_day, daily_workout, daily_workout_updated_at, daily_workout_regen, daily_workout_regen_updated_at')
+                .select('display_name, avatar_url, ob_data, start_date, energy_snapshot, meal_plan_key, user_plan, trial_ends_at, streak_count, last_active_date, weekly_plan, weekly_plan_updated_at, shopping_day, daily_workout, daily_workout_updated_at, daily_workout_regen, daily_workout_regen_updated_at')
                 .eq('user_id', session.user.id)
                 .maybeSingle();
               if (!isStillCurrentUser()) return;
@@ -483,13 +484,16 @@ export default function App() {
                 avatarUrl: (profile as { avatar_url?: string | null }).avatar_url ?? null,
                 obData: (profile.ob_data as Record<string, string | number>) ?? {},
                 startDate: profile.start_date ?? '',
-                // C3 · ídem: la ausencia se conserva, no se convierte en 0.
-                tdee: profile.tdee ?? null,
-                planGoal: profile.plan_goal ?? null,
                 mealPlanKey: profile.meal_plan_key ?? 'planA',
                 userPlan: (profile.user_plan ?? 'none') as 'none' | 'trial' | 'pro',
                 trialEndsAt: profile.trial_ends_at ?? null,
               });
+
+              // C4 · ídem que el otro sitio de hidratación: la energía entra por
+              // `energy_snapshot`, nunca por `plan_goal`. Va DESPUÉS del `setState`
+              // porque la decisión compara el snapshot guardado contra lo que los
+              // motores producen con el `obData` que acabamos de hidratar.
+              void useAppStore.getState().hydrateEnergyFromSnapshot(profile.energy_snapshot);
 
               // NO auto-backfill de streak local→DB en hidratación (re-seed).
               const localState = useAppStore.getState();

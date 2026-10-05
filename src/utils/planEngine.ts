@@ -1103,7 +1103,17 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // (P0-02) y con el motor que falla cerrado (P0-03). No hay cambio de reglas en este salto.
 // Requisito previo: la ruta de auto-regeneración no pasaba `region` — se corrigió en el
 // mismo bloque, porque no se activa a conciencia una regeneración que sabemos incompleta.
-export const PLAN_ENGINE_VERSION = 31;
+//
+// CAPA 1E · FASE C4 · 31 → 32 · ENERGY AUTHORITY CUTOVER.
+// La energía de un plan ya no la estima `legacyEnergy` desde `obData.activity`: la
+// prescribe el HSC Energy Engine (DRI 2023 EER + clasificación de actividad +
+// prescripción) y llega al generador por `store.planGoal`. Para una parte de los
+// socios la cifra CAMBIA, así que todo plan guardado con v31 se armó contra una
+// meta que el producto ya no prescribe. El salto de versión es lo que los regenera
+// en la siguiente carga, a través de `weeklyPlanCurrentness`.
+// Se sube AL FINAL, cuando ya no queda ningún consumidor leyendo la cifra legacy:
+// subirla antes habría regenerado planes con la autoridad que estábamos retirando.
+export const PLAN_ENGINE_VERSION = 32;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 

@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
-import { computeNutritionTargets, parseObData } from './nutritionTargets';
+// C4 · la regeneración ya NO estima energía: la cifra la prescribe el motor nuevo
+// y llega por `store.planGoal`. De aquí solo queda el PUENTE de macros.
+import { legacyMacros, legacyMacroWellness, parseObData } from './nutritionTargets';
+import { weeklyPlanCurrentness } from './weeklyPlanState';
 import { PLAN_ENGINE_VERSION } from './planEngine';
 import { avoidForRegen, permanentAvoidFrom } from './avoidAuthority';
 import { generateWeeklyPlan } from './planOrchestration';
@@ -96,28 +99,47 @@ export function useWeeklyPlanReset(): void {
  */
 
 export function useAutoRegenPlan(): void {
-  const { weeklyPlan, obData, saveWeeklyPlan, planGoal } = useAppStore(useShallow((s) => ({
+  const { weeklyPlan, obData, saveWeeklyPlan, planGoal, energyStatus } = useAppStore(useShallow((s) => ({
     weeklyPlan: s.weeklyPlan,
     obData: s.obData,
     saveWeeklyPlan: s.saveWeeklyPlan,
-    // CAPA 1E · FASE C3 — se lee SOLO para poder abortar sin objetivo vigente.
-    // No se usa como input del generador: la energía de la regeneración sigue
-    // saliendo de la autoridad legacy, igual que antes.
+    // CAPA 1E · FASE C3/C4 — se lee como GUARD y como input de la vigencia. La
+    // cifra del generador ES ésta: la prescribe el motor nuevo, no la estima
+    // nadie aquí.
     planGoal: s.planGoal,
+    // C4 · sin `PRESCRIBED` no hay plan vigente que mantener al día.
+    energyStatus: s.energyState?.status ?? null,
   })));
 
-  const savedVersion = weeklyPlan?.engineVersion ?? 0;
+  /**
+   * C4 · la obsolescencia ya no es solo «el motor de planes subió de versión»:
+   * también lo es «la energía prescrita cambió y el plan guardado sigue armado
+   * contra la cifra anterior». Antes un usuario represcrito de 2.400 a 1.900 kcal
+   * seguía viendo el plan de 2.400 hasta el siguiente salto de `engineVersion`.
+   */
+  const currentness = weeklyPlanCurrentness({
+    status: energyStatus,
+    planGoal,
+    weeklyPlan,
+    currentVersion: PLAN_ENGINE_VERSION,
+  });
 
   useEffect(() => {
+    // `STALE` = hay plan generado Y prescripción vigente, pero el plan no
+    // corresponde. `ACTIVE` no necesita nada y `NOT_CURRENT` no se regenera: sin
+    // cifra el plan guardado se queda como está —no se borra ni se degrada— y un
+    // `mealPlanKey` heredado tampoco habilita la regeneración.
+    if (currentness !== 'STALE') return;
+    // Las dos líneas siguientes son redundantes con `STALE` —que ya exige plan
+    // generado y cifra vigente— pero son lo que ESTRECHA los tipos a `DayPlan[]` y
+    // `number` para el generador: la garantía la da el compilador, no un comentario.
     if (!weeklyPlan?.days) return;
-    if (savedVersion >= PLAN_ENGINE_VERSION) return;
-    // C3 · sin objetivo energético vigente NO se regenera: ni motor, ni IA, ni
-    // escritura. El plan guardado se queda como está —no se borra ni se degrada—
-    // y un `mealPlanKey` heredado tampoco habilita la regeneración.
     if (planGoal == null) return;
 
-    const t = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
-    const target = { kcal: t.planGoal, protG: t.protG, fatG: t.fatG, carbG: t.carbG };
+    // C4 · PUENTE. Macros derivadas de la cifra prescrita, no de una estimación.
+    const ob = parseObData(obData as Record<string, string | number>);
+    const t = legacyMacros(ob, planGoal, legacyMacroWellness(ob));
+    const target = { kcal: planGoal, protG: t.protG, fatG: t.fatG, carbG: t.carbG };
     // P0-02 · la autoridad une la parte SEMANAL del plan guardado con las permanentes
     // del perfil ACTUAL. Si el usuario añadió una restricción permanente desde que se
     // generó, la regeneración ya la respeta. Nunca resta.
@@ -152,11 +174,11 @@ export function useAutoRegenPlan(): void {
       }
     })();
     return () => { cancelled = true; };
-    // Solo la versión guardada dispara: cuando sube a la actual, deja de correr.
-    // C3 · `planGoal` también, porque es un guard de salida: si se hidrata un plan
-    // viejo sin objetivo vigente y la cifra aparece después, la regeneración que
-    // se abortó tiene que poder ocurrir. Cuando ya es un número, añadirlo no
-    // cambia nada — su valor no se mueve.
+    // C4 · la vigencia dispara. Absorbe los dos antiguos disparadores (la versión
+    // guardada y la aparición de la cifra) y añade el tercero —la cifra CAMBIÓ—,
+    // porque los tres están dentro de ella. Al terminar la regeneración el plan
+    // guardado pasa a `ACTIVE`, el efecto se vuelve a evaluar y corta: idempotente,
+    // a lo mucho una vez por cambio real.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savedVersion, planGoal]);
+  }, [currentness, planGoal]);
 }

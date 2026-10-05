@@ -13,7 +13,10 @@ import { suggestUsername, isValidUsernameFormat, checkUsernameAvailable, claimUs
 import { validateEmailDeliverable } from '../utils/emailValidation';
 import LanguageToggle from '../components/LanguageToggle';
 import AuthProviderButtons from '../components/AuthProviderButtons';
-import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
+// C4 · el onboarding ya NO calcula energía: la cifra la prescribe el motor nuevo y
+// se lee del store. De `nutritionTargets` quedan el PUENTE de macros (legacy hasta
+// la CAPA 2) y los dos avisos de peso meta, que no son energéticos.
+import { legacyMacros, legacyMacroWellness, targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
 import { track } from '../utils/analytics';
 import { recordReferralIfAny } from '../utils/referral';
 
@@ -919,26 +922,61 @@ export default function OnboardingScreen() {
 
       {/* ── Step 12: Profile ready ── */}
       {step === 12 && (() => {
-        const tdeeVal = useAppStore.getState().tdee;
-        const goalVal = useAppStore.getState().planGoal;
-        // Avisos de seguridad (Fase 2): mismo cálculo que el store, para mostrar mensajes.
-        // CAPA 1E · Fase B — sin `|| 70`/`|| 170`/`|| 28`: estos avisos se calculan con
-        // los datos REALES del socio o no se calculan. Es la misma antropometría que
-        // acaba de persistirse unas líneas arriba.
+        // C4 · esta pantalla LEE el resultado; no lo calcula. `recalcFromObData`
+        // —que `finishOnboardingCalc` acaba de ejecutar unas líneas arriba— ya
+        // resolvió el estado y proyectó las cifras. Volver a resolver aquí crearía
+        // una segunda autoridad que podría discrepar de la que se persistió.
+        const { tdee: tdeeVal, planGoal: goalVal, energyState } = useAppStore.getState();
+        // Avisos de PESO META (no energéticos): se calculan con los datos REALES del
+        // socio, sin `|| 70`/`|| 170`/`|| 28`. Es la misma antropometría que acaba de
+        // persistirse unas líneas arriba.
         const oi = {
           sexo: sex, pesoKg: Number(peso), estaturaCm: Number(estatura),
           edad: Number(edad), activity, goal,
           grasa: grasa ? Number(grasa) : null, embarazo: embarazo === 'si',
           pesoMeta: pesoMeta ? Number(pesoMeta) : null,
         };
-        const targets = computeNutritionTargets(oi);
         const metaNotice = targetWeightNotice(oi);
-        const tiempo = targets.wellnessMode ? null : estimateTimeMonths(oi);
+        // C4 · PUENTE. Sin cifra prescrita no hay macros: se derivan de ella. Y sin
+        // cifra tampoco hay ritmo que estimar, porque no hay déficit que aplicar.
+        const macros = goalVal == null ? null : legacyMacros(oi, goalVal, legacyMacroWellness(oi));
+        const tiempo = goalVal == null ? null : estimateTimeMonths(oi);
+        /**
+         * C4 · POR QUÉ no hay cifra. El onboarding TERMINA igual —el socio entra a su
+         * espacio, su entrenamiento funciona— pero se le dice el motivo en vez de
+         * mostrarle una meta de bienestar que el producto ya no prescribe.
+         *
+         * `switch` sobre el `status` del estado nuevo, que es la única autoridad que
+         * conoce el motivo. `planGoal == null` sin estado resuelto cae al mensaje de
+         * dato faltante: es lo único honesto que se puede decir sin saber más.
+         */
+        const sinMeta = goalVal != null ? null : (() => {
+          switch (energyState?.status) {
+            case 'OUTSIDE_HSC_NUTRITION_SCOPE':
+              switch (energyState.scopeReason) {
+                case 'age_under_19':           return t('onboarding.sinMetaMenor');
+                case 'age_65_or_over':         return t('onboarding.sinMetaAdultoMayor');
+                case 'pregnancy_or_lactation': return t('onboarding.sinMetaEmbarazo');
+              }
+              break;
+            case 'FAT_LOSS_BLOCKED':
+              return t('onboarding.sinMetaBajoPeso');
+            case 'OUTSIDE_HSC_FAT_LOSS_SCOPE':
+              return t('onboarding.sinMetaSuelo');
+          }
+          return t('onboarding.sinMetaIncompleto');
+        })();
         return (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
           <div className="onb-center">
             <div className="onb-result-badge"><Check size={14} strokeWidth={3} /> {t('onboarding.resultAnalysisDone')}</div>
-            <h2 className="onb-result-title">{t('onboarding.resultTitle', { name: userName })}</h2>
+            <h2 className="onb-result-title">
+              {sinMeta ? t('onboarding.sinMetaTitulo') : t('onboarding.resultTitle', { name: userName })}
+            </h2>
+            {/* C4 · la tarjeta de cifras solo existe si hay cifra. Sin prescripción no
+                se pinta un '—' donde debería ir una meta, ni unas macros derivadas de
+                una energía que nadie prescribió: se pinta el motivo. */}
+            {macros !== null && goalVal != null ? (
             <div className="onb-result-card">
               <div className="onb-result-row">
                 <span className="onb-result-row-label">{t('onboarding.resultMetabolism')}</span>
@@ -948,24 +986,26 @@ export default function OnboardingScreen() {
               <div className="onb-result-target">
                 <span className="onb-result-row-label">{t('onboarding.resultTarget')}</span>
                 <div className="onb-result-kcal">
-                  {goalVal != null && goalVal > 0 ? goalVal.toLocaleString() : '—'} <span>{t('onboarding.kcalDay')}</span>
+                  {goalVal.toLocaleString()} <span>{t('onboarding.kcalDay')}</span>
                 </div>
               </div>
               <div className="onb-result-plan">{goalLabelKeys[goal] ? t(goalLabelKeys[goal]) : goal}</div>
               <div className="onb-result-macros">
-                <div className="onb-macro"><span className="onb-macro-v">{targets.protG}g</span><span className="onb-macro-l">{t('onboarding.macroProtein')}</span></div>
-                <div className="onb-macro"><span className="onb-macro-v">{targets.carbG}g</span><span className="onb-macro-l">{t('onboarding.macroCarbs')}</span></div>
-                <div className="onb-macro"><span className="onb-macro-v">{targets.fatG}g</span><span className="onb-macro-l">{t('onboarding.macroFat')}</span></div>
-                <div className="onb-macro"><span className="onb-macro-v">{targets.fiberG}g</span><span className="onb-macro-l">{t('onboarding.macroFiber')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{macros.protG}g</span><span className="onb-macro-l">{t('onboarding.macroProtein')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{macros.carbG}g</span><span className="onb-macro-l">{t('onboarding.macroCarbs')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{macros.fatG}g</span><span className="onb-macro-l">{t('onboarding.macroFat')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{macros.fiberG}g</span><span className="onb-macro-l">{t('onboarding.macroFiber')}</span></div>
               </div>
               <div className="onb-result-coach">{t('onboarding.coachKnows')}</div>
             </div>
-            {/* Avisos de seguridad + peso meta (Fase 2) */}
-            {targets.wellnessReason === 'menor' && <div className="onb-notice">{t('onboarding.avisoMenor')}</div>}
-            {targets.wellnessReason === 'embarazo' && <div className="onb-notice">{t('onboarding.avisoEmbarazo')}</div>}
-            {targets.wellnessReason === 'bajopeso' && <div className="onb-notice">{t('onboarding.avisoBajoPeso')}</div>}
-            {targets.wellnessReason === 'adultoMayor' && <div className="onb-notice">{t('onboarding.avisoAdultoMayor')}</div>}
-            {!targets.wellnessMode && targets.capped && <div className="onb-notice">{t('onboarding.avisoTopado', { kcal: targets.planGoal.toLocaleString() })}</div>}
+            ) : (
+              <div className="onb-result-card">
+                <div className="onb-result-coach">{sinMeta}</div>
+              </div>
+            )}
+            {/* Avisos de peso meta (Fase 2). Los `aviso*` energéticos —menor, embarazo,
+                bajo peso, adulto mayor, topado— los sustituyó `sinMeta`: ya no se
+                derivan de `wellnessMode`, que era la autoridad legacy. */}
             {metaNotice?.kind === 'bajopeso-meta' && <div className="onb-notice">{t('onboarding.metaBajoPeso')}</div>}
             {metaNotice?.kind === 'sube-musculo' && <div className="onb-notice">{t('onboarding.metaMusculo')}</div>}
             {metaNotice?.kind === 'sube-neutro-imc' && <div className="onb-notice">{t('onboarding.metaNeutroImc')}</div>}
