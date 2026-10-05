@@ -906,9 +906,10 @@ describe('C2 · nada de esto está conectado', () => {
     }
     // La energía legacy ya no tiene autoridad en el store.
     expect(store).not.toMatch(/computeNutritionTargets|legacyEnergy/);
-    // Y C1 sigue intacto: la composición legacy con un solo argumento.
-    const targets = TODO['/src/utils/nutritionTargets.ts'];
-    expect(targets).toContain('export function computeNutritionTargets(o: ObInput): NutritionTargets');
+    // ACTUALIZADO POR C5 · la composición legacy ya no existe en ningún sitio.
+    const targets = sinComentarios(TODO['/src/utils/nutritionTargets.ts']);
+    expect(targets).not.toMatch(/\bcomputeNutritionTargets\b/);
+    expect(targets).not.toMatch(/\blegacyEnergy\b/);
   });
 
   it('C2 no calcula energía ni macros por su cuenta', () => {

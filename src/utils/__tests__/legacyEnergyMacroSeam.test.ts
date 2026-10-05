@@ -1,38 +1,66 @@
 import { describe, it, expect } from 'vitest';
 import srcTargets from '../nutritionTargets.ts?raw';
 import {
-  computeNutritionTargets,
-  legacyEnergy,
   legacyMacros,
+  legacyMacroWellness,
   type ObInput,
 } from '../nutritionTargets';
-import {
-  C1_GOLDEN_CASES,
-  C1_GOLDEN_SWEEP_COUNT,
-  C1_GOLDEN_SWEEP_DIGEST,
-} from './c1Golden.fixture';
+import { C1_GOLDEN_CASES } from './c1Golden.fixture';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CAPA 1E · FASE C1 · SEAM ENERGÍA → MACROS
+// CAPA 1E · FASE C1 (seam) → FASE C5 (macro-only)
 //
-// C1 separa el cálculo de la ENERGÍA legacy (que muere en C4) del de las MACROS
-// legacy (que sobrevive hasta la Fase D), sin cambiar quién calcula la energía
-// productiva y sin cambiar un solo número.
+// C1 separó el cálculo de la ENERGÍA legacy del de las MACROS legacy. **C5 borra
+// la mitad energética**, así que este fichero deja de custodiar las dos y queda
+// como la red de seguridad de la ÚNICA que sobrevive: `legacyMacros`, que recibe
+// la energía desde fuera y no la calcula.
 //
-// ── CÓMO SE DEMUESTRA LA NEUTRALIDAD ────────────────────────────────────────
+// ── CÓMO SE DEMUESTRA LA NEUTRALIDAD, ANTES Y AHORA ─────────────────────────
 // NO reimplementando la fórmula —un test que repite el cálculo se equivoca igual
-// que el código—, sino contra un GOLDEN capturado MECÁNICAMENTE ejecutando el
-// código PRE-refactor en HEAD c219c57: 158 casos de frontera con sus 11 salidas
-// completas, más un barrido de 635.040 combinaciones reducido a un dígito FNV-1a.
-// Si cualquier número cambia en cualquier rama, el dígito cambia.
+// que el código—, sino contra un GOLDEN capturado MECÁNICAMENTE. El de C1 salió
+// de ejecutar el código PRE-refactor en HEAD c219c57: 167 casos de frontera con
+// sus 11 salidas, más un barrido de 635.040 combinaciones en un dígito FNV-1a.
+//
+// C5 reutiliza ESE MISMO golden sin regenerarlo, cambiando qué papel juega cada
+// columna:
+//
+//   ANTES          bmr|tdee|planGoal|floor|capped|wellnessMode | protG|fatG|carbG|fiberG
+//                  └──────────── expectativa ────────────────┘ └──── expectativa ────┘
+//
+//   AHORA          bmr|tdee|planGoal|floor|capped|wellnessMode | protG|fatG|carbG|fiberG
+//                             └── INPUT ──┘ └ INPUT ┘           └──── expectativa ────┘
+//
+// Es decir: se le suministra a `legacyMacros` exactamente la energía y el
+// `wellnessMode` que la fórmula legacy producía, y se exige que los cuatro
+// gramos salgan idénticos. Si C5 hubiera tocado una sola regla macro, falla.
+// Las columnas energéticas dejan de comprobarse porque la fórmula que las
+// producía ya no existe; conservarlas como entrada es lo que permite no
+// regenerar el golden y, por tanto, no poder «ajustarlo» para que pase.
+//
+// El barrido se rehace macro-only con energía ROTATORIA (ver §A): no puede
+// derivarse de `legacyEnergy`, que ya no está, así que se inyectan cinco niveles
+// de kcal ciclando sobre las 635.040 combinaciones de perfil. Su dígito se
+// capturó ANTES de borrar nada, en el baseline 13f744b.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Misma serialización que usó el generador del golden. */
-const row = (o: ObInput): string => {
-  const t = computeNutritionTargets(o);
-  return [t.bmr, t.tdee, t.planGoal, t.floor, t.capped ? 1 : 0, t.wellnessMode ? 1 : 0,
-    t.wellnessReason ?? '-', t.protG, t.fatG, t.carbG, t.fiberG].join('|');
+/** Serialización macro-only: las cuatro columnas que C5 debe preservar. */
+const macroRow = (o: ObInput, energyKcal: number, wellnessMode: boolean): string => {
+  const m = legacyMacros(o, energyKcal, wellnessMode);
+  return [m.protG, m.fatG, m.carbG, m.fiberG].join('|');
 };
+
+/**
+ * Energías inyectadas en el barrido macro. Cinco niveles que cruzan los umbrales
+ * que importan: el piso de grasa de 0.6 g/kg, el piso de carbos de 50 g y el
+ * escalón de fibra por 1000 kcal.
+ */
+const SWEEP_KCAL = [1200, 1650, 1999, 2400, 3600];
+
+/**
+ * Dígito del barrido macro, capturado en el baseline 13f744b ANTES de retirar la
+ * energía legacy. No se regenera: si cambia, C5 cambió las macros.
+ */
+const C5_MACRO_SWEEP_DIGEST = '1c90045c';
 
 function fnv1a(s: string): string {
   let h = 0x811c9dc5;
@@ -68,15 +96,22 @@ const ob = (over: Partial<ObInput> = {}): ObInput => ({ ...BASE, ...over });
 // ═════════════════════════════════════════════════════════════════════════════
 // A · EQUIVALENCIA NUMÉRICA EXACTA contra el golden pre-refactor
 // ═════════════════════════════════════════════════════════════════════════════
-describe('C1 · neutralidad numérica', () => {
-  it('los 158 casos de frontera dan EXACTAMENTE los mismos 11 valores', () => {
-    expect(C1_GOLDEN_CASES.length).toBeGreaterThan(150);
+describe('C5 · neutralidad macro', () => {
+  it('los 167 casos de frontera dan EXACTAMENTE las mismas 4 macros', () => {
+    expect(C1_GOLDEN_CASES.length).toBe(167);
     for (const { o, r } of C1_GOLDEN_CASES) {
-      expect(row(o), JSON.stringify(o)).toBe(r);
+      const c = r.split('|');
+      // Columnas 2 y 5 del golden: la energía y el `wellnessMode` que la fórmula
+      // legacy producía para este perfil. Entran como ARGUMENTOS.
+      const planGoal = Number(c[2]);
+      const wellnessMode = c[5] === '1';
+      // Columnas 7-10: las cuatro macros. Son la expectativa.
+      const esperado = [c[7], c[8], c[9], c[10]].join('|');
+      expect(macroRow(o, planGoal, wellnessMode), JSON.stringify(o)).toBe(esperado);
     }
   });
 
-  it('el barrido de 635.040 combinaciones conserva el dígito', () => {
+  it('el barrido macro de 635.040 combinaciones conserva el dígito', () => {
     const SEXOS = ['Hombre', 'Mujer'];
     const EDADES = [16, 17, 18, 25, 40, 55, 64, 65, 67, 69, 70, 75, 82, 100];
     const PESOS = [40, 45, 50, 70, 82, 100, 120];
@@ -88,6 +123,7 @@ describe('C1 · neutralidad numérica', () => {
     const EMBS = [false, true];
 
     const partes: string[] = [];
+    let n = 0;
     for (const sexo of SEXOS)
       for (const edad of EDADES)
         for (const pesoKg of PESOS)
@@ -96,29 +132,30 @@ describe('C1 · neutralidad numérica', () => {
               for (const goal of GOALS)
                 for (const activity of ACTS)
                   for (const conditions of CONDS)
-                    for (const embarazo of EMBS)
-                      partes.push(row({ sexo, pesoKg, estaturaCm, edad, activity, goal, grasa, embarazo, conditions }));
+                    for (const embarazo of EMBS) {
+                      const o: ObInput = { sexo, pesoKg, estaturaCm, edad, activity, goal, grasa, embarazo, conditions };
+                      // Energía rotatoria + el predicado macro que SOBREVIVE: ni una
+                      // sola llamada a la energía legacy, que ya no existe.
+                      partes.push(macroRow(o, SWEEP_KCAL[n % SWEEP_KCAL.length], legacyMacroWellness(o)));
+                      n++;
+                    }
 
-    expect(partes.length).toBe(C1_GOLDEN_SWEEP_COUNT);
-    expect(fnv1a(partes.join(';'))).toBe(C1_GOLDEN_SWEEP_DIGEST);
-  });
-
-  it('la composición es idéntica a ensamblar las dos mitades a mano', () => {
-    for (const { o } of C1_GOLDEN_CASES) {
-      const e = legacyEnergy(o);
-      const m = legacyMacros(o, e.planGoal, e.wellnessMode);
-      expect(computeNutritionTargets(o)).toEqual({ ...e, ...m });
-    }
+    expect(partes.length).toBe(635040);
+    expect(fnv1a(partes.join(';'))).toBe(C5_MACRO_SWEEP_DIGEST);
   });
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
 // B · EL SEAM EXISTE DE VERDAD
 // ═════════════════════════════════════════════════════════════════════════════
-describe('C1 · el seam energía → macros', () => {
-  it('fatG, carbG y fiberG siguen la energía SUMINISTRADA, no el planGoal interno', () => {
+describe('C5 · el seam energía → macros', () => {
+  it('fatG, carbG y fiberG siguen la energía SUMINISTRADA', () => {
+    // C1 comparaba contra `legacyEnergy(o).planGoal` para probar que la energía
+    // interna no mandaba. C5 ya no tiene energía interna que comparar: la prueba
+    // es más simple y más fuerte — dos energías cualesquiera dan macros distintas,
+    // porque el ARGUMENTO es la única fuente que existe.
     const o = ob();
-    const interno = legacyEnergy(o).planGoal;
+    const interno = 2_300;
     const ajena = interno + 777;                     // una energía deliberadamente distinta
     expect(ajena).not.toBe(interno);
 
@@ -153,13 +190,15 @@ describe('C1 · el seam energía → macros', () => {
       .toEqual(['carbG', 'fatG', 'fiberG', 'protG']);
   });
 
-  it('la composición NO acepta una energía externa', () => {
-    // Una API con dos modos dejaría pasar una energía ajena por accidente. El
-    // único canal es `legacyMacros`.
-    expect(computeNutritionTargets.length).toBe(1);
-    expect(CODIGO).toContain('export function computeNutritionTargets(o: ObInput): NutritionTargets');
+  it('C5 · ya no existe ninguna composición que inyecte energía implícita', () => {
+    // C1 tenía que demostrar que la composición no admitía DOS modos (energía
+    // implícita o inyectada). C5 la borra entera: el único canal de energía hacia
+    // las macros es el argumento `energyKcal`, y no hay segunda puerta.
+    expect(legacyMacros.length).toBe(3);
+    expect(CODIGO).not.toMatch(/\bcomputeNutritionTargets\b/);
+    expect(CODIGO).not.toMatch(/\bNutritionTargets\b/);
     expect(CODIGO).not.toMatch(/\benergyOverride\b/);
-    expect(CODIGO).toContain('const macros = legacyMacros(o, energy.planGoal, energy.wellnessMode);');
+    expect(CODIGO).not.toMatch(/energy\.planGoal/);
   });
 
   it('la proteína NO depende de la energía: sigue el contrato legacy', () => {
@@ -174,7 +213,7 @@ describe('C1 · el seam energía → macros', () => {
     expect(legacyMacros(ob({ conditions: ['renal'] }), 2_000, false).protG).not.toBe(a.protG);
   });
 
-  it('`legacyMacros` NO conoce ni invoca `legacyEnergy`', () => {
+  it('`legacyMacros` NO conoce ninguna cifra energética', () => {
     const c = cuerpo('legacyMacros');
     for (const id of ['legacyEnergy', 'planGoal', 'tdee', 'bmr', 'ACTIVITY_FACTORS',
       'goalFactor', 'sexFloor', 'floor', 'capped']) {
@@ -184,20 +223,17 @@ describe('C1 · el seam energía → macros', () => {
     expect(c).toContain('energyKcal');
   });
 
-  it('`legacyEnergy` NO calcula macros', () => {
-    const c = cuerpo('legacyEnergy');
-    for (const id of ['protG', 'fatG', 'carbG', 'fiberG', 'actIdx', 'GKG', 'FAT_PCT', 'gkg']) {
-      expect(c, `legacyEnergy no debe usar ${id}`).not.toMatch(new RegExp(`\\b${id}\\b`));
-    }
-  });
-
-  it('no hay una segunda fórmula energética ni doble evaluación', () => {
-    // `legacyEnergy` se invoca UNA vez en todo el archivo: dentro de la composición.
-    expect(CODIGO.match(/legacyEnergy\(/g)).toHaveLength(2); // declaración + 1 llamada
-    expect(CODIGO).toContain('const energy = legacyEnergy(o);');
-    // Mifflin, Katch y el factor de actividad siguen existiendo UNA sola vez cada uno.
-    expect(CODIGO.match(/370 \+ 21\.6 \* lbm/g)).toHaveLength(1);
-    expect(CODIGO.match(/ACTIVITY_FACTORS\[o\.activity\]/g)).toHaveLength(1);
+  it('C5 · NO queda ninguna fórmula energética en el fichero', () => {
+    // C1 fijaba que Mifflin, Katch y el factor de actividad existían UNA vez cada
+    // uno. C5 los retira: la cuenta pasa de uno a cero.
+    expect(CODIGO).not.toMatch(/370 \+ 21\.6 \* lbm/);     // Katch-McArdle
+    expect(CODIGO).not.toMatch(/6\.25 \* o\.estaturaCm/);  // Mifflin-St Jeor
+    expect(CODIGO).not.toMatch(/ACTIVITY_FACTORS/);
+    expect(CODIGO).not.toMatch(/\bgoalFactor\b/);
+    expect(CODIGO).not.toMatch(/\bsexFloor\b/);
+    expect(CODIGO).not.toMatch(/\blegacyEnergy\b/);
+    expect(CODIGO).not.toMatch(/\bLegacyEnergy\b/);
+    expect(CODIGO).not.toMatch(/\bWellnessReason\b/);
   });
 });
 
@@ -228,12 +264,17 @@ describe('C1 · dependencia documentada de wellnessMode', () => {
     expect(normal.fatG).not.toBe(bienestar.fatG);
   });
 
-  it('los cuatro caminos de wellness siguen produciendo sus razones', () => {
-    expect(legacyEnergy(ob({ edad: 16 })).wellnessReason).toBe('menor');
-    expect(legacyEnergy(ob({ sexo: 'Mujer', embarazo: true })).wellnessReason).toBe('embarazo');
-    expect(legacyEnergy(ob({ pesoKg: 50, estaturaCm: 190 })).wellnessReason).toBe('bajopeso');
-    expect(legacyEnergy(ob({ edad: 75 })).wellnessReason).toBe('adultoMayor');
-    expect(legacyEnergy(ob()).wellnessReason).toBe(null);
+  it('los cuatro caminos de wellness siguen activando el predicado macro', () => {
+    // C1 comprobaba las CUATRO razones (`'menor'`, `'embarazo'`, `'bajopeso'`,
+    // `'adultoMayor'`) sobre `legacyEnergy`. Esas etiquetas murieron con ella: su
+    // único consumidor productivo era la UI del onboarding, que C4 sustituyó por
+    // los motivos del estado energético nuevo (`sinMeta*`). Lo que importa para
+    // las MACROS es el booleano, y las cuatro ramas lo siguen activando igual.
+    expect(legacyMacroWellness(ob({ edad: 16 }))).toBe(true);                        // menor
+    expect(legacyMacroWellness(ob({ sexo: 'Mujer', embarazo: true }))).toBe(true);    // embarazo
+    expect(legacyMacroWellness(ob({ pesoKg: 50, estaturaCm: 190 }))).toBe(true);      // IMC<18.5 + bajar
+    expect(legacyMacroWellness(ob({ edad: 75 }))).toBe(true);                         // >=70
+    expect(legacyMacroWellness(ob())).toBe(false);
   });
 
   it('el umbral de 70 para el tope de PROTEÍNA vive en la mitad macro', () => {
@@ -272,14 +313,13 @@ describe('C1 · legacy activity y actIdx', () => {
     }
   });
 
-  it('activity sigue cambiando la energía legacy EXACTAMENTE como en el baseline', () => {
-    // C1 no retira activity de la energía: eso es C4. El golden ya lo cubre; esto
-    // lo deja explícito.
-    const kcal = (activity: string) => legacyEnergy(ob({ activity })).tdee;
-    expect(kcal('Sedentaria')).toBeLessThan(kcal('Ligera'));
-    expect(kcal('Ligera')).toBeLessThan(kcal('Moderada'));
-    expect(kcal('Moderada')).toBeLessThan(kcal('Alta'));
-    expect(kcal('Alta')).toBeLessThan(kcal('Atleta'));
+  it('C5 · activity ya NO alimenta ninguna energía, solo `actIdx`', () => {
+    // C1 fijaba que las 5 actividades movían el TDEE legacy. C5 retira esa ruta
+    // por completo: `obData.activity` sobrevive —lo leen Training, el Coach y
+    // Ajustes— pero su único efecto nutricional es el bucket de proteína.
+    expect(CODIGO.match(/o\.activity/g)).toHaveLength(3); // los 3 usos de actIdx
+    expect(cuerpo('legacyMacros')).toContain('const actIdx = o.activity');
+    expect(CODIGO).not.toMatch(/ACTIVITY_FACTORS\[o\.activity\]/);
   });
 });
 
@@ -295,11 +335,14 @@ describe('C1 · frontera del bloque', () => {
     }
   });
 
-  it('la energía legacy sigue entera: nada se retiró antes de C4', () => {
-    for (const id of ['ACTIVITY_FACTORS', 'goalFactor', 'sexFloor', 'wellnessMode', 'capped']) {
-      expect(CODIGO, `${id} debe seguir existiendo`).toMatch(new RegExp(`\\b${id}\\b`));
+  it('C5 · la energía legacy se retiró ENTERA; `wellnessMode` solo sobrevive como macro', () => {
+    for (const id of ['ACTIVITY_FACTORS', 'goalFactor', 'sexFloor', 'capped', 'bmr', 'tdee']) {
+      expect(CODIGO, `${id} ya no debe existir`).not.toMatch(new RegExp(`\\b${id}\\b`));
     }
-    expect(CODIGO).toContain('Math.max(sexFloor(o.sexo), bmr)');
+    expect(CODIGO).not.toContain('Math.max(sexFloor(o.sexo), bmr)');
+    // `wellnessMode` sigue, pero SOLO como parámetro de la mitad macro.
+    expect(CODIGO.match(/\bwellnessMode\b/g)).toHaveLength(2);
+    expect(CODIGO).toContain('energyKcal: number, wellnessMode: boolean');
   });
 
   it('las constantes macro no cambiaron', () => {

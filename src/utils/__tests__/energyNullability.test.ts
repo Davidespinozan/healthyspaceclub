@@ -597,8 +597,9 @@ describe('C3 · la autoridad y las cifras no cambian', () => {
       ['OnboardingScreen', ONB], ['App', APP], ['energyHydration', HYDRATION]] as [string, string][]) {
       expect(src, `${nombre} no debe llamar a legacyEnergy`).not.toMatch(/legacyEnergy\(/);
     }
-    // Sigue EXISTIENDO —la composición interna la usa— pero nadie productivo la invoca.
-    expect(TARGETS).toContain('export function legacyEnergy(o: ObInput): LegacyEnergy');
+    // ACTUALIZADO POR C5 · ya no «existe sin autoridad»: se borró entera.
+    expect(TARGETS).not.toMatch(/\blegacyEnergy\b/);
+    expect(TARGETS).not.toMatch(/\bLegacyEnergy\b/);
   });
 
   it('C4 · el puente de macros es el ÚNICO resto legacy, y recibe la cifra nueva', () => {
@@ -610,16 +611,19 @@ describe('C3 · la autoridad y las cifras no cambian', () => {
     expect(TARGETS).toContain('export function legacyMacroWellness(o: ObInput): boolean');
   });
 
-  it('`nutritionTargets` sigue intacto desde C1', () => {
-    expect(TARGETS).toContain('export function computeNutritionTargets(o: ObInput): NutritionTargets');
-    expect(TARGETS).toContain('export function legacyEnergy(o: ObInput): LegacyEnergy');
+  it('C5 · `nutritionTargets` conserva la mitad MACRO y ha perdido la energética', () => {
+    // C3 fijaba que el contrato legacy seguía dando `tdee`/`planGoal` como
+    // `number` no nullable. C5 retira esos campos con la mitad que los producía,
+    // así que lo que se defiende ahora es lo que QUEDA y que no quede nada más.
     expect(TARGETS).toContain('export function legacyMacros(o: ObInput, energyKcal: number, wellnessMode: boolean): LegacyMacros');
-    // Su contrato NO se hizo nullable: la autoridad legacy siempre da números.
-    // (`ObInput.grasa` y `.pesoMeta` ya eran `number | null` desde antes de C1.)
-    expect(TARGETS).toContain('tdee: number;');
-    expect(TARGETS).toContain('planGoal: number;');
-    expect(TARGETS).not.toMatch(/tdee:\s*number \| null/);
-    expect(TARGETS).not.toMatch(/planGoal:\s*number \| null/);
+    expect(TARGETS).toContain('export function legacyMacroWellness(o: ObInput): boolean');
+    for (const id of ['computeNutritionTargets', 'NutritionTargets', 'legacyEnergy',
+      'LegacyEnergy', 'WellnessReason', 'goalFactor', 'sexFloor', 'ACTIVITY_FACTORS']) {
+      expect(TARGETS, `${id} debe haber desaparecido`).not.toMatch(new RegExp(`\\b${id}\\b`));
+    }
+    // Y no reaparece una cifra energética como campo de salida de las macros.
+    expect(TARGETS).not.toMatch(/^\s*tdee: number;/m);
+    expect(TARGETS).not.toMatch(/^\s*planGoal: number;/m);
   });
 
   // C4 invierte este contrato: el motor nuevo SÍ está conectado, pero por UN solo

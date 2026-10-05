@@ -1,44 +1,48 @@
-// ── Motor único de metas nutricionales ────────────────────────────────────
-// Fuente ÚNICA de verdad para la meta calórica. Reemplaza la lógica que estaba
-// TRIPLICADA (tdee.ts assignPlan, store finishOnboardingCalc, store recalcFromObData).
-// Basado en LOGICA-NUTRICIONAL-HSC.md (Magaly) + calcPlan() del prototipo:
-//   · Punto 1 — piso calórico de seguridad
-//   · Punto 2/10/11 — modo bienestar (menores, embarazo, bajo peso) → sin déficit
-//   · Punto 4 — déficit/superávit PORCENTUAL (no offset fijo)
-//   · Punto 6 — factor de actividad (incluye "Atleta" 1.9)
-//   · %grasa opcional → BMR Katch-McArdle (más preciso que Mifflin)
-//   · Punto 8/12 — avisos de peso meta y tiempo estimado (helpers abajo)
+// ── Macros legacy + avisos de peso meta ───────────────────────────────────
+//
+// Este archivo YA NO calcula energía. Lo que queda son dos cosas que no son
+// energía y una coerción compartida:
+//
+//   1 · MACROS legacy  → `legacyMacros` + `legacyMacroWellness` (+ sus helpers)
+//   2 · AVISOS de peso meta y validación de rangos → `targetWeightNotice`,
+//       `estimateTimeMonths`, `invalidField`
+//   3 · `parseObData` / `ObInput` → único punto de coerción obData → tipado
+//
 // Los MENSAJES no viven aquí: se devuelven CÓDIGOS y la UI los traduce (ES/EN).
 //
-// ── CAPA 1E · FASE C1 · EL SEAM ENERGÍA → MACROS ────────────────────────────
-// Este archivo contenía dos cosas en una: el cálculo de la ENERGÍA (que CAPA 1 ya
-// reemplazó y muere en C4) y el de las MACROS (que sobrevive hasta la Fase D). El
-// problema es que las macros usaban el `planGoal` calculado unas líneas más
-// arriba, así que retirar la fórmula energética las habría dejado sin energía.
+// ── CÓMO LLEGÓ A SER ESTO ───────────────────────────────────────────────────
+// Hasta C4 este archivo era el «motor único de metas nutricionales»: calculaba
+// BMR (Mifflin-St Jeor / Katch-McArdle), TDEE por factor de actividad, el
+// déficit/superávit porcentual, el piso de seguridad por sexo y el `wellnessMode`
+// — y de paso las macros, que usaban el `planGoal` calculado unas líneas arriba.
 //
-//   legacyEnergy(o)  ──▶ bmr · tdee · planGoal · floor · capped · wellnessMode
-//        │                                            MUERE EN C4
+//   C1  separó las dos mitades en un seam, para que retirar la energía no
+//       dejara a las macros sin su entrada.
+//   C4  cedió la autoridad energética al HSC Energy Engine (DRI 2023 EER +
+//       clasificación de actividad + prescripción) y dejó la mitad legacy sin un
+//       solo consumidor productivo.
+//   C5  la borró: `legacyEnergy`, `LegacyEnergy`, `computeNutritionTargets`,
+//       `NutritionTargets`, `WellnessReason`, `goalFactor`, `sexFloor` y
+//       `ACTIVITY_FACTORS`. También `calcTDEE`, en `tdee.ts`, que era su último
+//       importador.
+//
+// ── EL SEAM, QUE AHORA ES LA FIRMA ──────────────────────────────────────────
+//
+//   store.planGoal  ◀── HSC Energy Engine (única autoridad energética)
+//        │
 //        ▼ energía explícita
 //   legacyMacros(o, energyKcal, wellnessMode) ──▶ protG · fatG · carbG · fiberG
-//                                                 SOBREVIVE HASTA D
 //
-// `legacyMacros` NO conoce ni invoca `legacyEnergy`: su energía es siempre el
-// argumento. En C4 bastará con pasarle `prescribedEnergy` y borrar la otra mitad,
-// sin volver a tocar ninguna regla macro.
+// `energyKcal` es la ÚNICA fuente de energía de `fatG`, `carbG` y `fiberG`. Ya no
+// existe ninguna composición que la inyecte implícitamente, así que tampoco
+// existe un fallback a la energía legacy: no hay energía legacy.
 //
-// `computeNutritionTargets` es SOLO la composición legacy y no acepta una energía
-// externa: quien la suministre llama a `legacyMacros` directamente. Así no existe
-// una API con dos modos ni un fallback implícito a la energía legacy.
+// ── DEUDA PENDIENTE · LA RETIRA CAPA 2 ──────────────────────────────────────
+// `legacyMacroWellness` es un bridge temporal. No calcula energía (C5 verificó
+// que no queda ni una fórmula en el archivo), pero su existencia preserva la
+// política macro de una población concreta: ver su propio docblock.
 //
-// C1 es NUMÉRICAMENTE NEUTRO: ni una kcal ni un gramo cambian respecto a antes.
-
-export const ACTIVITY_FACTORS: Record<string, number> = {
-  Sedentaria: 1.2,
-  Ligera: 1.375,
-  Moderada: 1.55,
-  Alta: 1.725,
-  Atleta: 1.9,
-};
+// C5 es NUMÉRICAMENTE NEUTRO EN MACROS: ni un gramo cambia respecto a C4.
 
 export interface ObInput {
   sexo: string;                 // 'Hombre' | (otro → fórmula mujer, conservador)
@@ -76,38 +80,6 @@ export function parseObData(ob: Record<string, string | number>): ObInput {
   };
 }
 
-export type WellnessReason = 'menor' | 'embarazo' | 'bajopeso' | 'adultoMayor' | null;
-
-export interface NutritionTargets {
-  bmr: number;                  // metabolismo basal (Mifflin o Katch-McArdle)
-  tdee: number;                 // gasto total = bmr × factor actividad
-  planGoal: number;             // meta calórica final (protegida por el piso)
-  floor: number;                // piso aplicado = max(piso_sexo, bmr)
-  capped: boolean;              // true si el piso subió la meta (avisar)
-  wellnessMode: boolean;        // true = sin déficit (protección)
-  wellnessReason: WellnessReason;
-  // ── Capa de macros (Punto 3) — metas diarias ──
-  protG: number;                // proteína g/día
-  fatG: number;                 // grasa g/día
-  carbG: number;                // carbohidratos g/día
-  fiberG: number;               // fibra g/día
-}
-
-// Punto 4 — ajuste PORCENTUAL del TDEE según objetivo. Regex para no depender de
-// strings exactos (arregla la fragilidad #7).
-export function goalFactor(goal: string): number {
-  const g = (goal || '').toLowerCase();
-  if (/recompos/.test(g)) return 0.90;                    // Recomposición: −10%
-  if (/bajar|perder|d[eé]ficit/.test(g)) return 0.80;     // Bajar grasa/peso: −20%
-  if (/ganar|subir|m[uú]sculo|masa|super[aá]vit/.test(g)) return 1.12; // Ganar músculo: +12%
-  return 1.0;                                             // Bienestar integral / mantener
-}
-
-// Punto 1 — piso por sexo (mujer 1200 / hombre 1500 kcal).
-export function sexFloor(sexo: string): number {
-  return sexo === 'Hombre' ? 1500 : 1200;
-}
-
 // ¿El objetivo implica bajar? (para riesgo de bajo peso). Recomp cuenta como bajar.
 function wantsToLose(goal: string): boolean {
   return /bajar|perder|recompos/.test((goal || '').toLowerCase());
@@ -120,73 +92,6 @@ function normalizeGoal(goal: string): 'bajar' | 'recomp' | 'ganar' | 'mantener' 
   if (/bajar|perder/.test(g)) return 'bajar';
   if (/ganar|subir|m[uú]sculo|masa/.test(g)) return 'ganar';
   return 'mantener';
-}
-
-/** Salida de la mitad energética legacy. Ver `legacyEnergy`. */
-export interface LegacyEnergy {
-  bmr: number;
-  tdee: number;
-  planGoal: number;
-  floor: number;
-  capped: boolean;
-  wellnessMode: boolean;
-  wellnessReason: WellnessReason;
-}
-
-/**
- * Mitad ENERGÉTICA legacy. **MUERE EN C4.**
- *
- * Todo lo que CAPA 1 ya reemplazó vive aquí y en ningún otro sitio de este
- * archivo: Mifflin, Katch-McArdle, `ACTIVITY_FACTORS`, `goalFactor`, `sexFloor`
- * y `wellnessMode`. Cuando C4 conecte el orquestador esta función se borra
- * entera, y `legacyMacros` sigue intacta porque no la invoca ni la conoce.
- *
- * El seam existe exactamente para eso: aislar lo que se va de lo que se queda.
- * En C1 sigue siendo la autoridad energética productiva, sin cambios.
- */
-export function legacyEnergy(o: ObInput): LegacyEnergy {
-  // BMR: Katch-McArdle si hay %grasa (usa masa magra); si no, Mifflin-St Jeor.
-  let bmr: number;
-  if (o.grasa && o.grasa > 0) {
-    const lbm = o.pesoKg * (1 - o.grasa / 100);
-    bmr = Math.round(370 + 21.6 * lbm);
-  } else {
-    bmr = Math.round(
-      o.sexo === 'Hombre'
-        ? 10 * o.pesoKg + 6.25 * o.estaturaCm - 5 * o.edad + 5
-        : 10 * o.pesoKg + 6.25 * o.estaturaCm - 5 * o.edad - 161,
-    );
-  }
-
-  const factor = ACTIVITY_FACTORS[o.activity] ?? 1.375;
-  const tdee = Math.round(bmr * factor);
-
-  // Modo bienestar (SIN déficit): menor de 18, embarazo/lactancia, bajo peso queriendo
-  // bajar, o ADULTO MAYOR (>=70). En frágiles, un déficit acelera la pérdida de masa
-  // muscular/ósea; se prioriza mantener y nutrir (proteína anti-sarcopenia), no bajar.
-  const menor = o.edad < 18;
-  const mayor70 = o.edad >= 70;
-  const mayor65 = o.edad >= 65;
-  const hM = o.estaturaCm / 100;
-  const imc = hM > 0 ? o.pesoKg / (hM * hM) : 0;
-  const bajoPeso = imc > 0 && imc < 18.5;
-  const riesgoBajoPeso = bajoPeso && wantsToLose(o.goal);
-  const wellnessMode = menor || !!o.embarazo || riesgoBajoPeso || mayor70;
-  const wellnessReason: WellnessReason =
-    menor ? 'menor' : o.embarazo ? 'embarazo' : riesgoBajoPeso ? 'bajopeso'
-    : mayor70 ? 'adultoMayor' : null;
-
-  // Déficit suave para 65-69 (no-bienestar): máx -10% en vez de -20%, para no perder
-  // masa magra de forma agresiva. En bienestar → mantenimiento (factor 1.0).
-  const gf = mayor65 ? Math.max(goalFactor(o.goal), 0.90) : goalFactor(o.goal);
-  const target = tdee * (wellnessMode ? 1.0 : gf);
-
-  // Piso de seguridad (Punto 1): nunca por debajo de max(piso_sexo, BMR).
-  const floor = Math.max(sexFloor(o.sexo), bmr);
-  const planGoal = Math.round(Math.max(target, floor));
-  const capped = planGoal > Math.round(target) + 1;
-
-  return { bmr, tdee, planGoal, floor: Math.round(floor), capped, wellnessMode, wellnessReason };
 }
 
 /**
@@ -317,27 +222,6 @@ export function legacyMacros(o: ObInput, energyKcal: number, wellnessMode: boole
   const fiberG = Math.round(energyKcal / 1000 * 14);                // 14 g / 1000 kcal
 
   return { protG, fatG, carbG, fiberG };
-}
-
-/**
- * Composición legacy · la firma pública que los 7 call-sites productivos ya usan.
- *
- * Es EXCLUSIVAMENTE la composición de las dos mitades con la energía legacy, y no
- * admite ninguna otra: **no existe ningún parámetro para inyectar una energía
- * externa**. Una API con dos modos —energía implícita o energía inyectada— dejaría
- * abierta la puerta a que alguien pasara una energía ajena por accidente y a un
- * fallback implícito, que es justo lo que el seam viene a cerrar.
- *
- * Quien necesite suministrar la energía llama directamente a `legacyMacros`. Eso
- * es el seam, y es el camino que C4 usará con `prescribedEnergy` cuando
- * `legacyEnergy` se elimine. Esta función desaparece con ella.
- *
- * `legacyEnergy` corre UNA vez: sin doble evaluación.
- */
-export function computeNutritionTargets(o: ObInput): NutritionTargets {
-  const energy = legacyEnergy(o);
-  const macros = legacyMacros(o, energy.planGoal, energy.wellnessMode);
-  return { ...energy, ...macros };
 }
 
 // ── Punto 3.5 — reparto de calorías por comida (25/35/25/15) ──────────────

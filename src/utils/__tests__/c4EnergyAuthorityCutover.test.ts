@@ -503,13 +503,16 @@ describe('C4 · E · autoridad única', () => {
     expect(paso12).toContain('const sinMeta = goalVal != null ? null : (() => {');
   });
 
-  it('TARGETS conserva el seam de C1 intacto', () => {
-    expect(TARGETS).toContain('export function legacyEnergy(o: ObInput): LegacyEnergy');
+  it('C5 · TARGETS conserva el lado MACRO del seam; el energético se borró', () => {
+    // C4 fijaba que `legacyEnergy` seguía existiendo sin autoridad, y que la
+    // composición la invocaba una vez. C5 borra ambas, así que la garantía se
+    // invierte: el seam ya no es «dos mitades aisladas», es UNA mitad.
     expect(TARGETS).toContain('export function legacyMacros(o: ObInput, energyKcal: number, wellnessMode: boolean): LegacyMacros');
     expect(TARGETS).toContain('export function legacyMacroWellness(o: ObInput): boolean');
-    expect(TARGETS).toContain('const energy = legacyEnergy(o);');
-    // El puente NO llama a `legacyEnergy`: lo reproduce, que es la razón de existir.
+    expect(TARGETS).not.toMatch(/\blegacyEnergy\b/);
+    expect(TARGETS).not.toMatch(/const energy = legacyEnergy/);
+    // El puente sigue sin calcular energía: ahora porque no hay ninguna que calcular.
     const puente = TARGETS.slice(TARGETS.indexOf('export function legacyMacroWellness'));
-    expect(puente.slice(0, puente.indexOf('\n}'))).not.toMatch(/legacyEnergy/);
+    expect(puente.slice(0, puente.indexOf('\n}'))).not.toMatch(/legacyEnergy|ACTIVITY_FACTORS|goalFactor|sexFloor/);
   });
 });
