@@ -148,6 +148,33 @@ describe('Orchestrator · 2 · cortocircuito del Scope Guard', () => {
       expect(r.status, `edad ${age}`).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');
     }
   });
+
+  // ── C4-PRE · 19–64 inclusive ────────────────────────────────────────────
+  it('edad >= 65 CORTOCIRCUITA en el Scope Guard, sin ejecutar ningún motor', () => {
+    for (const age of [65, 70, 90]) {
+      const r = resolveNutritionEnergy(perfil({ ageYears: age }));
+      expect(r.status, `edad ${age}`).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');
+      expect(r.scopeReason, `edad ${age}`).toBe('age_65_or_over');
+      // Ningún motor corrió: ni clasificación, ni mantenimiento, ni prescripción.
+      expect(r.classification, `edad ${age}`).toBeUndefined();
+      expect(r.maintenance, `edad ${age}`).toBeUndefined();
+      expect(r.prescribedEnergy, `edad ${age}`).toBeUndefined();
+      expect(r.rawPrescribedEnergy, `edad ${age}`).toBeUndefined();
+      expect(r.engineVersion, `edad ${age}`).toBeUndefined();
+      expect(r.bmi, `edad ${age}`).toBeUndefined();
+    }
+  });
+
+  it('64 sigue entrando al pipeline completo y 65 no', () => {
+    const dentro = resolveNutritionEnergy(perfil({ ageYears: 64 }));
+    expect(dentro.status).toBe('PRESCRIBED');
+    expect(dentro.maintenance).toBeDefined();
+    expect(dentro.classification).toBeDefined();
+
+    const fuera = resolveNutritionEnergy(perfil({ ageYears: 65 }));
+    expect(fuera.status).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');
+    expect(fuera.maintenance).toBeUndefined();
+  });
 });
 
 // ═════════════════════════════════════════════════════════════════════════════

@@ -17,8 +17,8 @@
 > escritura autorizada.
 
 - **Creado:** 2026-09-27
-- **Última actualización:** 2026-09-30
-- **Decisiones cerradas:** 5 (01, 02, 03, 04, 05)
+- **Última actualización:** 2026-10-05
+- **Decisiones cerradas:** 7 (01, 02, 03, 04, 05, 06, 07)
 
 ---
 
@@ -32,6 +32,7 @@
 | 04 | Familia culinaria | 2026-09-28 | **Cerrada** |
 | 05 | Semántica de restricciones: avena, granola y coco | 2026-09-30 | **Cerrada** |
 | 06 | `rol:'guarnicion'` no es autoridad de elegibilidad | 2026-09-30 | **Cerrada** |
+| 07 | Población de Nutrition V1: 19–64 años inclusive | 2026-10-05 | **Cerrada** |
 
 ---
 
@@ -266,6 +267,56 @@ Mezclarlas era el error: un tag de registro voluntario no puede decidir qué rec
 
 ---
 
+## DECISIÓN 07 — Población de Nutrition V1: 19–64 años inclusive
+
+**Estado:** Cerrada · **Fecha:** 2026-10-05
+
+HSC Nutrition V1 prescribe nutrición personalizada **solo a personas de 19 a 64 años, inclusive**.
+
+- `edad < 19` → **fuera del alcance** de Nutrición (`age_under_19`)
+- `edad 19..64` → continúa el pipeline normal, sujeta a los demás guards
+- `edad >= 65` → **fuera del alcance** de Nutrición (`age_65_or_over`)
+
+### Qué SUPERSEDE
+
+La decisión anterior era «`edad >= 19` → ruta adulta **sin tope superior**». Queda **superseded**.
+
+### Por qué
+
+No queremos diseñar dentro de esta versión la nutrición propia de adultos mayores: pérdida de
+grasa en esa población, fragilidad, sarcopenia, necesidades clínicas asociadas, políticas
+energéticas por edad avanzada ni políticas de macros específicas. El objetivo actual es hacer
+Nutrición **muy bien** para el mercado inicial 19–64.
+
+Entregar una cifra a alguien de 70 años sin ese diseño detrás sería peor que no entregarla.
+
+### Qué NO significa
+
+1. **No** afirma que una persona de 65 o más no pueda, fisiológicamente, recibir nutrición
+   personalizada. Es **alcance de producto**, no una afirmación clínica.
+2. **No** bloquea Healthy Space Club completo: solo el módulo de Nutrición personalizada.
+3. **No** diseña nutrición geriátrica.
+4. **No** manda a los 65+ a mantenimiento ni les da una prescripción conservadora. No reciben
+   cifra: reciben el estado «fuera del alcance de HSC Nutrition».
+
+### Principio derivado
+
+El tope superior es una frontera de **producto**, no una limitación del motor. El DRI 2023
+publica una única ruta adulta «19 years and above» sin límite, y el estimador de mantenimiento
+calcula sin problema el EER de una persona de 75 años. Por eso el umbral inferior (19) **se
+deriva** del motor que lo rechaza, y el superior (64) **vive en el Scope Guard**, que es el dueño
+del alcance. Importarlo de un motor mentiría sobre de dónde viene.
+
+### Delimitación explícita
+
+- La **expansión a adultos mayores** queda **DIFERIDA** a una versión futura del producto. No se
+  diseña, no se estima y no se promete fecha aquí.
+- Esta decisión **no** resuelve el caso `IMC < 18.5` + **Recomposición**, que sigue abierto y se
+  tratará con el puente temporal de macros.
+- Esta decisión **no** toca macros, ni la energía legacy, ni el motor de platillos.
+
+---
+
 ## ESTADO ACTUAL
 
 Se están analizando los **70 desayunos reales del banco** para decidir qué variantes crear.
@@ -339,6 +390,7 @@ Mediciones obtenidas ejecutando el motor real en memoria (sin modificar el repos
 | 2026-09-27 | Creación del documento. Se registran las Decisiones 01 y 02, el Estado Actual y los pendientes P-1 a P-6. |
 | 2026-09-28 | Se registran las Decisiones 03 (Elegibilidad de variantes) y 04 (Familia culinaria). P-3, P-4 y P-5 quedan resueltos a nivel de regla/principio; su representación técnica se mantiene abierta dentro de P-6. |
 | 2026-09-30 | Se registra la Decisión 05 (semántica de avena, granola y coco), cerrada en la revisión de producto del bloque P0-01. Solo PD-02 implicó cambio de comportamiento; PD-01 y PD-03 confirman lo implementado. |
+| 2026-10-05 | Se registra la Decisión 07 (población de Nutrition V1 = 19–64 inclusive), que **supersede** la decisión previa de «>=19 sin tope superior». Implementada en el Scope Guard como `age_65_or_over`. La expansión a adultos mayores queda diferida. |
 
 ---
 

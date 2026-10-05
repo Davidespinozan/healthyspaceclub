@@ -3,6 +3,7 @@ import srcScopeGuard from '../nutritionScopeGuard.ts?raw';
 import {
   checkNutritionScope,
   NUTRITION_SCOPE_REASONS,
+  NUTRITION_V1_MAX_AGE_YEARS,
   type NutritionScopeReason,
 } from '../nutritionScopeGuard';
 import { validateNutritionProfile, type ProfileInput } from '../profileValidation';
@@ -53,29 +54,57 @@ describe('NutritionScopeGuard · 1 · edad', () => {
     });
   }
 
-  for (const age of [19, 19.001, 20, 35, 65, 70, 75, 80, 100, 120]) {
+  for (const age of [19, 19.001, 20, 35, 50, 63.5, 64]) {
     it(`edad ${age} → DENTRO (null)`, () => {
       expect(checkNutritionScope(perfil({ ageYears: age }))).toBeNull();
     });
   }
 
-  it('la frontera es `< 19`, no `<= 19`', () => {
+  // ── C4-PRE · Nutrition V1 solo prescribe de 19 a 64 inclusive ────────────
+  // El tope superior SUPERSEDE la decisión anterior («>=19 sin tope»). No es un
+  // límite del motor —el EER de 75 años se calcula bien— sino alcance de
+  // producto: V1 todavía no diseña pérdida de grasa en adulto mayor, fragilidad
+  // ni sarcopenia, y dar una cifra sin ese diseño sería peor que no darla.
+  for (const age of [65, 66, 69, 70, 75, 80, 90, 100, 110, 120]) {
+    it(`edad ${age} → OUTSIDE_HSC_NUTRITION_SCOPE / age_65_or_over`, () => {
+      const r = checkNutritionScope(perfil({ ageYears: age }));
+      expect(r).not.toBeNull();
+      expect(r!.status).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');
+      expect(r!.scopeReason).toBe('age_65_or_over');
+    });
+  }
+
+  it('la frontera inferior es `< 19`, no `<= 19`', () => {
     expect(checkNutritionScope(perfil({ ageYears: 18.999 }))).not.toBeNull();
     expect(checkNutritionScope(perfil({ ageYears: 19 }))).toBeNull();
   });
 
-  it('NO hay tope superior de edad en ningún punto', () => {
-    for (const age of [65, 66, 69, 70, 71, 75, 80, 90, 100, 110, 120]) {
-      expect(checkNutritionScope(perfil({ ageYears: age })), `edad ${age}`).toBeNull();
-    }
+  it('la frontera superior es `> 64`, no `>= 64`', () => {
+    expect(checkNutritionScope(perfil({ ageYears: 64 }))).toBeNull();
+    expect(checkNutritionScope(perfil({ ageYears: 64.001 }))).not.toBeNull();
+    expect(checkNutritionScope(perfil({ ageYears: 65 }))!.scopeReason).toBe('age_65_or_over');
   });
 
-  it('el umbral se DERIVA del motor, no se copia', () => {
-    // El guard existe para que MaintenanceEstimate no vea una edad que rechaza;
-    // si el 19 estuviera duplicado, podrían divergir.
+  it('las dos fronteras delimitan EXACTAMENTE 19–64 inclusive', () => {
     expect(ADULT_ROUTE_MIN_AGE_YEARS).toBe(19);
+    expect(NUTRITION_V1_MAX_AGE_YEARS).toBe(64);
+    // Todos los enteros del rango están dentro; los dos vecinos, fuera.
+    for (let age = 19; age <= 64; age++) {
+      expect(checkNutritionScope(perfil({ ageYears: age })), `edad ${age}`).toBeNull();
+    }
+    expect(checkNutritionScope(perfil({ ageYears: 18 }))!.scopeReason).toBe('age_under_19');
+    expect(checkNutritionScope(perfil({ ageYears: 65 }))!.scopeReason).toBe('age_65_or_over');
+  });
+
+  it('el umbral INFERIOR se deriva del motor; el SUPERIOR es propio', () => {
+    // Asimetría deliberada. El 19 lo impone `MaintenanceEstimate`, que LANZA por
+    // debajo: derivarlo evita que guard y motor divergan. El 64 no lo impone
+    // ningún motor —ninguno rechaza a un adulto mayor—, así que vive aquí, en el
+    // módulo que posee el alcance de producto.
     expect(usaIdentificador('ADULT_ROUTE_MIN_AGE_YEARS')).toBe(true);
     expect(CODIGO, 'el 19 no debe estar escrito a mano').not.toMatch(/\b19\b/);
+    expect(usaIdentificador('NUTRITION_V1_MAX_AGE_YEARS')).toBe(true);
+    expect(CODIGO).toContain('export const NUTRITION_V1_MAX_AGE_YEARS = 64;');
   });
 });
 
@@ -101,8 +130,10 @@ describe('NutritionScopeGuard · 2 · embarazo/lactancia', () => {
     }
   });
 
-  it('aplica a cualquier edad adulta', () => {
-    for (const age of [19, 30, 45, 70]) {
+  it('aplica a cualquier edad DENTRO del alcance (19–64)', () => {
+    // 70 ya no sirve de ejemplo: desde C4-PRE sale por edad, y la edad se
+    // evalúa antes para que el motivo sea determinista.
+    for (const age of [19, 30, 45, 64]) {
       const r = checkNutritionScope(perfil({ sex: 'Mujer', ageYears: age, pregnantOrLactating: true }));
       expect(r!.scopeReason, `edad ${age}`).toBe('pregnancy_or_lactation');
     }
@@ -127,23 +158,35 @@ describe('NutritionScopeGuard · 3 · orden', () => {
     }
   });
 
-  it('solo existen DOS motivos', () => {
-    expect(NUTRITION_SCOPE_REASONS).toHaveLength(2);
+  it('solo existen TRES motivos', () => {
+    expect(NUTRITION_SCOPE_REASONS).toHaveLength(3);
     expect([...NUTRITION_SCOPE_REASONS].sort())
-      .toEqual(['age_under_19', 'pregnancy_or_lactation']);
+      .toEqual(['age_65_or_over', 'age_under_19', 'pregnancy_or_lactation']);
   });
 
-  it('los motivos observables son exactamente esos dos', () => {
+  it('los motivos observables son exactamente esos tres', () => {
     const vistos = new Set<NutritionScopeReason>();
     for (const p of [
       perfil({ ageYears: 16 }),
+      perfil({ ageYears: 70 }),
       perfil({ sex: 'Mujer', pregnantOrLactating: true }),
       perfil({ sex: 'Mujer', ageYears: 16, pregnantOrLactating: true }),
+      perfil({ sex: 'Mujer', ageYears: 70, pregnantOrLactating: true }),
     ]) {
       const r = checkNutritionScope(p);
       if (r) vistos.add(r.scopeReason);
     }
-    expect([...vistos].sort()).toEqual(['age_under_19', 'pregnancy_or_lactation']);
+    expect([...vistos].sort())
+      .toEqual(['age_65_or_over', 'age_under_19', 'pregnancy_or_lactation']);
+  });
+
+  it('`age_65_or_over` NO reutiliza ni se confunde con los otros dos', () => {
+    const mayor = checkNutritionScope(perfil({ ageYears: 70 }))!;
+    expect(mayor.scopeReason).not.toBe('age_under_19');
+    expect(mayor.scopeReason).not.toBe('pregnancy_or_lactation');
+    expect(mayor.scopeReason).toBe('age_65_or_over');
+    // Y es un motivo propio, no una cadena ambigua.
+    expect(NUTRITION_SCOPE_REASONS).toContain('age_65_or_over');
   });
 });
 

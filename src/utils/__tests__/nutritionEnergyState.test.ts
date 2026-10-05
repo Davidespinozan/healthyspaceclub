@@ -123,6 +123,41 @@ describe('C2 · estado productivo · los seis estados', () => {
     expect(s.classification).toBeUndefined();
   });
 
+  it('65 años o más → OUTSIDE_HSC_NUTRITION_SCOPE / age_65_or_over', () => {
+    // C4-PRE · Nutrition V1 prescribe 19–64 inclusive.
+    for (const edad of [65, 70, 90]) {
+      const s = resolveNutritionEnergyState(ob({ edad }));
+      expect(s.status, `edad ${edad}`).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');
+      expect(s.scopeReason, `edad ${edad}`).toBe('age_65_or_over');
+      expect(s.maintenance, `edad ${edad}`).toBeUndefined();
+      expect(s.classification, `edad ${edad}`).toBeUndefined();
+      expect(s.prescribedEnergy, `edad ${edad}`).toBeUndefined();
+    }
+    // 18 y 64 son las dos fronteras: fuera por abajo, dentro por arriba.
+    expect(resolveNutritionEnergyState(ob({ edad: 18 })).scopeReason).toBe('age_under_19');
+    expect(resolveNutritionEnergyState(ob({ edad: 64 })).status).toBe('PRESCRIBED');
+  });
+
+  it('el snapshot de >= 65 no inventa mantenimiento ni clasificación', () => {
+    const s = buildEnergySnapshot(ob({ edad: 70 }), AHORA).snapshot;
+    expect(s.status).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');
+    expect(s.maintenance).toBeUndefined();
+    expect(s.classification).toBeUndefined();
+    expect(s.prescribedEnergy).toBeUndefined();
+    // Sí lleva identidad y versiones: el perfil es canónico y el orquestador corrió.
+    expect(s.inputIdentity).toMatch(/^[0-9a-f]{8}$/);
+    expect(s.versions).toEqual(currentEngineVersions());
+    expect(parseEnergySnapshot(JSON.parse(JSON.stringify(s))).ok).toBe(true);
+  });
+
+  it('la edad entra en la identidad también al cruzar la frontera de 64/65', () => {
+    const a = buildEnergySnapshot(ob({ edad: 64 }), AHORA).snapshot.inputIdentity;
+    const b = buildEnergySnapshot(ob({ edad: 65 }), AHORA).snapshot.inputIdentity;
+    expect(a).toBeDefined();
+    expect(b).toBeDefined();
+    expect(a).not.toBe(b);
+  });
+
   it('embarazo o lactancia → OUTSIDE_HSC_NUTRITION_SCOPE', () => {
     const s = resolveNutritionEnergyState(ob({ sex: 'Mujer', embarazo: 1 }));
     expect(s.status).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');

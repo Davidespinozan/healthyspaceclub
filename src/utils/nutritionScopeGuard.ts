@@ -14,17 +14,30 @@
 // hasta tener un `null` de aquí: el orden deja de ser una línea que alguien
 // puede mover y pasa a ser una dependencia de datos.
 //
-// ── LAS DOS REGLAS, Y NADA MÁS ──────────────────────────────────────────────
+// ── LAS TRES REGLAS, Y NADA MÁS ─────────────────────────────────────────────
 //   1. ageYears < 19          → OUTSIDE_HSC_NUTRITION_SCOPE · age_under_19
-//   2. pregnantOrLactating    → OUTSIDE_HSC_NUTRITION_SCOPE · pregnancy_or_lactation
+//   2. ageYears > 64          → OUTSIDE_HSC_NUTRITION_SCOPE · age_65_or_over
+//   3. pregnantOrLactating    → OUTSIDE_HSC_NUTRITION_SCOPE · pregnancy_or_lactation
 //
-// El orden es FIJO (edad primero) para que `scopeReason` sea determinista
-// cuando se cumplen las dos a la vez.
+// El orden es FIJO (las dos de edad primero) para que `scopeReason` sea
+// determinista cuando se cumplen varias a la vez.
 //
-// ── NO HAY TOPE SUPERIOR DE EDAD ────────────────────────────────────────────
-// 19, 65, 70, 75, 80, 100: todas dentro. No existe factor por edad, ni ruta
-// geriátrica, ni ecuación alternativa. El propio DRI publica una sola ruta
-// adulta «19 years and above» sin límite superior.
+// ── LA POBLACIÓN DE NUTRITION V1 ES 19–64 INCLUSIVE ─────────────────────────
+// El tope superior es una decisión de PRODUCTO, no una limitación del motor: el
+// DRI publica una sola ruta adulta «19 years and above» sin límite, y
+// `MaintenanceEstimate` calcula perfectamente el EER de alguien de 75 años.
+//
+// Lo que HSC V1 todavía no hace es PRESCRIBIR nutrición personalizada a partir
+// de los 65: pérdida de grasa en adulto mayor, fragilidad, sarcopenia y las
+// necesidades clínicas de esa población son un diseño propio que esta versión no
+// aborda, y entregar una cifra sin ese diseño sería peor que no entregarla. La
+// expansión queda DIFERIDA a una versión futura.
+//
+// Esto NO afirma que una persona de 65+ no pueda recibir nutrición
+// personalizada, y NO bloquea el resto de Healthy Space Club: solo delimita el
+// alcance de ESTE módulo.
+//
+// SUPERSEDE la decisión anterior («age >= 19, ruta adulta sin tope superior»).
 //
 // ── QUÉ *NO* HACE ESTE ESTADO ───────────────────────────────────────────────
 // Fuera de alcance significa fuera: no se redirige a mantenimiento, no se
@@ -32,12 +45,17 @@
 // ActivityClassification, MaintenanceEstimate ni EnergyPrescription. Es una
 // frontera de producto, no una dieta alternativa.
 //
-// ── POR QUÉ EL UMBRAL SE IMPORTA Y NO SE COPIA ──────────────────────────────
+// ── LOS DOS UMBRALES SON ASIMÉTRICOS, Y A PROPÓSITO ─────────────────────────
 // `ADULT_ROUTE_MIN_AGE_YEARS` viene de `maintenanceEstimate`, que es quien
 // LANZA si recibe una edad por debajo. El trabajo de este guard es
 // precisamente impedir que el motor vea esa edad, así que derivar el umbral del
 // propio motor es el invariante — si se copiara el 19, podrían divergir y el
 // guard dejaría pasar una edad que el motor rechaza.
+//
+// `NUTRITION_V1_MAX_AGE_YEARS` NO se puede derivar de ningún motor, porque
+// ninguno lo impone: el EER de una persona de 75 años se calcula sin problema.
+// Es una frontera de PRODUCTO y por eso vive AQUÍ, en el módulo que posee el
+// alcance. Importarla de un motor sería mentir sobre de dónde viene.
 //
 // ── QUÉ NO ENTRA AQUÍ ───────────────────────────────────────────────────────
 // `nutritionTargets`, `wellnessMode`, `obData`, `targetWeight`, `bodyFat`, el
@@ -47,11 +65,25 @@ import { ADULT_ROUTE_MIN_AGE_YEARS } from './maintenanceEstimate';
 import type { CanonicalGoal } from './energyPrescription';
 import type { ValidatedNutritionProfile } from './profileValidation';
 
-/** Por qué quedó fuera del alcance de HSC Nutrition. Ambos motivos comparten estado. */
-export type NutritionScopeReason = 'age_under_19' | 'pregnancy_or_lactation';
+/** Por qué quedó fuera del alcance de HSC Nutrition. Los tres comparten estado. */
+export type NutritionScopeReason =
+  | 'age_under_19'
+  | 'age_65_or_over'
+  | 'pregnancy_or_lactation';
 
 export const NUTRITION_SCOPE_REASONS: readonly NutritionScopeReason[] =
-  ['age_under_19', 'pregnancy_or_lactation'];
+  ['age_under_19', 'age_65_or_over', 'pregnancy_or_lactation'];
+
+/**
+ * Edad máxima INCLUSIVE de la población que HSC Nutrition V1 prescribe.
+ *
+ * 64 significa que 64 está DENTRO y 65 fuera, igual que
+ * `ADULT_ROUTE_MIN_AGE_YEARS = 19` significa que 19 está dentro y 18.999 fuera.
+ * Las dos fronteras se leen como el rango que delimitan: 19–64 inclusive.
+ *
+ * Decisión de producto, no límite del motor. Ver la cabecera.
+ */
+export const NUTRITION_V1_MAX_AGE_YEARS = 64;
 
 /**
  * Resultado de quedar fuera de alcance.
@@ -80,8 +112,8 @@ export interface OutsideHscNutritionScopeResult {
 export function checkNutritionScope(
   profile: ValidatedNutritionProfile,
 ): OutsideHscNutritionScopeResult | null {
-  // 1 · EDAD. Primero, para que el motivo sea determinista si también está
-  //     embarazada o en lactancia.
+  // 1 · EDAD POR DEBAJO. Primero, para que el motivo sea determinista si también
+  //     está embarazada o en lactancia.
   if (profile.ageYears < ADULT_ROUTE_MIN_AGE_YEARS) {
     return {
       status: 'OUTSIDE_HSC_NUTRITION_SCOPE',
@@ -90,7 +122,17 @@ export function checkNutritionScope(
     };
   }
 
-  // 2 · EMBARAZO / LACTANCIA.
+  // 2 · EDAD POR ENCIMA. Junto a la anterior y antes del embarazo: las dos
+  //     fronteras de edad delimitan el rango 19–64 y deben leerse juntas.
+  if (profile.ageYears > NUTRITION_V1_MAX_AGE_YEARS) {
+    return {
+      status: 'OUTSIDE_HSC_NUTRITION_SCOPE',
+      scopeReason: 'age_65_or_over',
+      goal: profile.goal,
+    };
+  }
+
+  // 3 · EMBARAZO / LACTANCIA.
   if (profile.pregnantOrLactating) {
     return {
       status: 'OUTSIDE_HSC_NUTRITION_SCOPE',
