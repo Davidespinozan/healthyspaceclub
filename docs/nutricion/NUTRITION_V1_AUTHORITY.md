@@ -37,7 +37,7 @@ Commits previos de CAPA 1: `444ee45`, `c54c313`, `090166a`, `13f744b` (cutover e
 |---|---|
 | CAPA 0 · alcance y decisiones de producto | Por decisión, ver tabla. Todas `IMPLEMENTED` salvo variantes de receta (`CLOSED_DESIGN · IMPLEMENTATION_DEFERRED`). |
 | CAPA 1 · energía | `IMPLEMENTED / VERIFIED_CLEAN` |
-| CAPA 2 · macros diarias | `IMPLEMENTED`. **No** `VERIFIED_CLEAN` todavía: quedan 2 dependencias temporales declaradas (mapeo de clase de actividad y tope renal heredado). |
+| CAPA 2 · macros diarias | `IMPLEMENTED`. **No** `VERIFIED_CLEAN` todavía: queda el tope renal heredado. La clase de actividad ya sale de la modalidad declarada (A2). |
 | CAPA 3 | `OPEN`. No hay definición de esta capa en el repo ni implementación dedicada. No se infiere cierre. |
 | CAPA 4 · reparto en tiempos de comida | `OPEN / DESIGN IN PROGRESS`. Punto de reanudación: **MEAL FREQUENCY & EATING OPPORTUNITIES**. Sus reglas legacy siguen activas (ver abajo). |
 | CAPA 5+ | `OPEN` |
@@ -99,11 +99,23 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 1`). 
 
 ### ⚠️ Dependencias temporales y supuestos (impiden `VERIFIED_CLEAN`)
 
-1. **Mapeo de clase de actividad · SUPUESTO OPERATIVO.** HSC no captura modalidad ni deporte especializado. El adaptador usa la banda de CAPA 1: 0 min → `NO_STRUCTURED_TRAINING`; 1–149 min/sem (T0–T1) → `LOW_DEMAND`; ≥ 150 min/sem (T2–T4) → `MIXED`. `SPECIALIZED_SPORT` no se asigna nunca. Requiere confirmación de producto.
+1. ~~Mapeo de clase de actividad desde los minutos~~ · **`RETIRED` en A2** (ver la sección A1/A2).
 2. **Prioridad de carbohidrato** = `STANDARD` para todos, por falta de mapeo cerrado desde datos de HSC. Sin efecto en gramos.
 3. **Tope renal heredado (1,0 g/kg PRW) · REGLA DE SEGURIDAD LEGACY.** La política V1 no trata la enfermedad renal; retirarlo subiría a 1,3–1,8 g/kg a quien la declaró. Se conserva y la prescripción sale en `REVIEW` con motivo `RENAL_CONDITION_DECLARED`. Requiere decisión clínica.
 4. **Copy para `INFEASIBLE` / `SPORTS_SCOPE`.** No hay mensaje dedicado: el planner aborta en neutro (como sin energía), el onboarding muestra la energía sin gramos y el coach dice que no hay meta nutricional vigente.
 5. **`LOGICA-NUTRICIONAL-HSC.md` §3.1–3.3** (GKG, grasa por objetivo, piso de 130 g) describe la política legacy y no se ha actualizado.
+
+### A1/A2 · Fuente de la clase de actividad proteica
+
+| Concepto | Estado |
+|---|---|
+| Fuente de la modalidad | `USER_DECLARED` · `obData.trainingModalities` (CSV canónico: `strength`, `endurance`, `team_intermittent`, `low_demand`, `specialized_sport`). Se captura en el onboarding (paso 9, con «Sí») y se edita en la hoja de datos. |
+| Derivación | `deriveProteinActivityClass(trainsHabitually, modalities)` en `trainingModality.ts`. «No entreno» → `NO_STRUCTURED_TRAINING`. Especializado domina. 1 estructurada → su clase. 2 o más → `MIXED`. Solo baja demanda → `LOW_DEMAND`. |
+| Falta la declaración (entrena y sin modalidad, o valor inválido) | `MacroResolution.INPUT_REQUIRED` · `TRAINING_MODALITY_REQUIRED`. Sin prescripción, sin `MacroStatus` nuevo. El plan guardado queda `NOT_CURRENT` (no se borra) y el planner pide la modalidad. |
+| Carga de entrenamiento | `T0–T4 · SEPARATE DIMENSION` (energía). No decide la clase. |
+| Historial observado (`completedSessions`, `workout_log`, `trainingGoal`, `activityLog`, modalidad del día) | `NON_AUTHORITATIVE FOR NUTRITION MODALITY` |
+| Mapeo anterior (minutos/banda → clase, `STRUCTURED_BANDS`, `proteinActivityClassFrom`) | `RETIRED` · `MACRO_PRESCRIPTION_VERSION` 1 → 2; las prescripciones v1 persistidas se descartan al cargar. |
+| Energía | No depende de la modalidad (fuera de `ENERGY_IDENTITY_FIELDS`). |
 
 ### Cruce de capas aceptado
 

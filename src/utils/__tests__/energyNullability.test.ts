@@ -193,7 +193,7 @@ describe('C3 · hidratación', () => {
   it('C4 · fail-closed: un perfil irresoluble deja SIN CIFRA, no en legacy', () => {
     const fn = STORE.slice(STORE.indexOf('hydrateEnergyFromSnapshot: async (rawSnapshot) => {'));
     const cuerpo = fn.slice(0, fn.indexOf('\n  },'));
-    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null, macroTargets: null });');
+    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null, macroTargets: null, macroResolution: null });');
     for (const id of ['computeNutritionTargets', 'legacyEnergy', 'plan_goal']) {
       expect(cuerpo, `el catch no debe caer a ${id}`).not.toMatch(new RegExp(`\\b${id}\\b`));
     }

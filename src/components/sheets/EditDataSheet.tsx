@@ -3,6 +3,10 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { PERMANENT_AVOID_CATALOG } from '../../utils/avoidAuthority';
+import {
+  TRAINING_MODALITIES, TRAINING_MODALITIES_KEY, declaredTrainingModalitiesForForm,
+  serializeTrainingModalities, type TrainingModality,
+} from '../../utils/trainingModality';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
@@ -119,6 +123,11 @@ export default function EditDataSheet({ onClose }: Props) {
   // Multi-selección: se guardan como CSV en obData ('conditions', 'avoid').
   const [conditions, setConditions] = useState<string[]>(() => splitCsv(obData.conditions));
   const [avoid, setAvoid] = useState<string[]>(() => splitCsv(obData.avoid));
+  // CAPA 2 · A2 · modalidad DECLARADA. Se pre-rellena solo con valores válidos; un
+  // perfil sin declaración abre vacío (no se infiere de minutos, actividad ni historial).
+  const [modalities, setModalities] = useState<TrainingModality[]>(
+    () => declaredTrainingModalitiesForForm(obData[TRAINING_MODALITIES_KEY]),
+  );
   // Si la duración declarada no coincide con ningún atajo (p. ej. 50), la hoja abre
   // directamente en «Otro» con el valor real — nunca lo redondea a un chip.
   const [minutesCustom, setMinutesCustom] = useState(
@@ -204,6 +213,10 @@ export default function EditDataSheet({ onClose }: Props) {
     if (form.trainsHabitually === 'si' && !(trainingDaysValid && trainingMinutesValid)) {
       setError(t('editData.errTraining')); return;
     }
+    // A2 · con «Sí», al menos una modalidad: es lo que decide la proteína.
+    if (form.trainsHabitually === 'si' && modalities.length === 0) {
+      setError(t('editData.errModality')); return;
+    }
     if (!form.goal) { setError(t('editData.errGoal')); return; }
 
     setSaving(true);
@@ -226,10 +239,13 @@ export default function EditDataSheet({ onClose }: Props) {
       setObData('trainsHabitually', 0);
       setObData('trainingDaysPerWeek', 0);
       setObData('trainingSessionMinutes', 0);
+      // A2 · «No entreno» vacía la modalidad: ya no aplica y no debe quedar rancia.
+      setObData(TRAINING_MODALITIES_KEY, '');
     } else if (form.trainsHabitually === 'si') {
       setObData('trainsHabitually', 1);
       setObData('trainingDaysPerWeek', trainingDaysNum);
       setObData('trainingSessionMinutes', trainingMinutesNum);
+      setObData(TRAINING_MODALITIES_KEY, serializeTrainingModalities(modalities));
     }
     setObData('goal', form.goal);
     // Ubicación + salud/preferencias (opcionales). Se persisten ANTES del recalc
@@ -473,6 +489,26 @@ export default function EditDataSheet({ onClose }: Props) {
                   />
                 )}
                 <p className="sh-field-hint">{t('onboarding.trainingMinutesHint')}</p>
+              </div>
+
+              {/* CAPA 2 · A2 · modalidad DECLARADA (multi-selección). */}
+              <div className="sh-field" style={{ marginTop: 14 }}>
+                <span className="sh-field-label">{t('onboarding.modalityQuestion')}</span>
+                <p className="sh-field-hint" style={{ marginTop: 0 }}>{t('onboarding.modalityHint')}</p>
+                <div className="sh-chips">
+                  {TRAINING_MODALITIES.map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      className="sh-chip"
+                      aria-pressed={modalities.includes(m)}
+                      title={t(`onboarding.modality_${m}Desc` as TranslationKey)}
+                      onClick={() => toggleIn(modalities, (v) => setModalities(v as TrainingModality[]), m)}
+                    >
+                      {t(`onboarding.modality_${m}` as TranslationKey)}
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           )}

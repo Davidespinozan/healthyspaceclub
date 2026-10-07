@@ -18,6 +18,7 @@ import AuthProviderButtons from '../components/AuthProviderButtons';
 // la CAPA 2) y los dos avisos de peso meta, que no son energéticos.
 import { targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
 import { isServableMacroPrescription } from '../utils/macroPrescription';
+import { TRAINING_MODALITIES, TRAINING_MODALITIES_KEY, serializeTrainingModalities, type TrainingModality } from '../utils/trainingModality';
 import { track } from '../utils/analytics';
 import { recordReferralIfAny } from '../utils/referral';
 
@@ -25,7 +26,8 @@ const BRAND_ICON = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/p
 
 // CAPA 1E · Fase A — el paso 7 (nivel de entrenamiento) es nuevo; el paso 6
 // (actividad legacy) queda EXACTAMENTE donde estaba para no mover un dato que
-// aún alimenta la nutrición legacy y los macros de CAPA 2.
+// aún usa Training (`levelFromObData`). Ni la energía ni las macros lo leen: la
+// clase proteica sale de la modalidad DECLARADA del paso 9 (CAPA 2 · A2).
 // CAPA 1E · Fase B — pasos 8 y 9 (movimiento diario y entrenamiento habitual),
 // dominio NUTRITION. El paso 7 los separa del 6 a propósito: la pregunta legacy y
 // el movimiento diario no quedan adyacentes.
@@ -112,6 +114,10 @@ export default function OnboardingScreen() {
   const [trainsHabitually, setTrainsHabitually] = useState<'si' | 'no' | ''>('');
   const [trainingDays, setTrainingDays] = useState('');
   const [trainingMinutes, setTrainingMinutes] = useState('');
+  // CAPA 2 · A2 · modalidad DECLARADA. Solo se pide con «Sí»; selección múltiple.
+  const [trainingModalities, setTrainingModalities] = useState<TrainingModality[]>([]);
+  const toggleModality = (m: TrainingModality) =>
+    setTrainingModalities(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]);
   // `Otro`: deja declarar la duración real en vez de redondearla a un atajo.
   const [minutesCustom, setMinutesCustom] = useState(false);
   // Fase 2 — seguridad: embarazo (si mujer) + opcionales
@@ -317,6 +323,9 @@ export default function OnboardingScreen() {
     setObData('trainsHabitually', entrenaHabitualmente ? 1 : 0);
     setObData('trainingDaysPerWeek', entrenaHabitualmente ? Number(trainingDays) : 0);
     setObData('trainingSessionMinutes', entrenaHabitualmente ? Number(trainingMinutes) : 0);
+    // CAPA 2 · A2 · la modalidad declarada se guarda ANTES del cálculo final, que
+    // la necesita para la proteína. Con «No» se guarda vacía: no aplica.
+    setObData(TRAINING_MODALITIES_KEY, entrenaHabitualmente ? serializeTrainingModalities(trainingModalities) : '');
     setObData('embarazo', embarazo === 'si' ? 1 : 0);
     setObData('movilidad', movilidad);
     setObData('conditions', conditions.filter(c => c !== 'ninguna').join(','));
@@ -410,7 +419,8 @@ export default function OnboardingScreen() {
     Number.isInteger(trainingMinutesNum) &&
     trainingMinutesNum >= TRAINING_MINUTES_MIN &&
     trainingMinutesNum <= TRAINING_MINUTES_MAX;
-  const habitualTrainingReady = trainingDays !== '' && trainingMinutesValid;
+  // A2 · con «Sí», además, al menos una modalidad declarada.
+  const habitualTrainingReady = trainingDays !== '' && trainingMinutesValid && trainingModalities.length > 0;
 
   // Goal label for result screen. La KEY (valor en español) la usa el motor;
   // solo se traduce el texto mostrado.
@@ -833,6 +843,29 @@ export default function OnboardingScreen() {
                       />
                     </div>
                   )}
+                </div>
+
+                {/* CAPA 2 · A2 · modalidad DECLARADA. Es lo único que decide la clase
+                    proteica: los días y minutos de arriba son carga, no modalidad. */}
+                <div className="onb-optional">
+                  <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.modalityQuestion')}</div>
+                  <p className="onb-hint-sub">{t('onboarding.modalityHint')}</p>
+                  <div className="onb-cards-col">
+                    {TRAINING_MODALITIES.map(m => (
+                      <div
+                        key={m}
+                        role="checkbox"
+                        aria-checked={trainingModalities.includes(m)}
+                        className={`onb-card-option${trainingModalities.includes(m) ? ' selected' : ''}`}
+                        onClick={() => toggleModality(m)}
+                      >
+                        <div>
+                          <div className="onb-card-title">{t(`onboarding.modality_${m}` as TranslationKey)}</div>
+                          <div className="onb-card-desc">{t(`onboarding.modality_${m}Desc` as TranslationKey)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <button

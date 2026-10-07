@@ -280,7 +280,7 @@ describe('C4 · B · decisión de hidratación', () => {
     // Y el store lo traduce a SIN CIFRA, nunca a la energía legacy.
     const fn = STORE.slice(STORE.indexOf('hydrateEnergyFromSnapshot: async (rawSnapshot) => {'));
     const cuerpo = fn.slice(0, fn.indexOf('\n  },'));
-    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null, macroTargets: null });');
+    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null, macroTargets: null, macroResolution: null });');
     expect(cuerpo).not.toMatch(/legacyEnergy|computeNutritionTargets|plan_goal/);
   });
 
@@ -377,12 +377,12 @@ describe('C4 · D · CAPA 2 · macros desde la autoridad nueva', () => {
   it('IMC<18.5 ∧ RECOMPOSICIÓN · ya no hay «modo bienestar»: macros ordinarias de recomposición', () => {
     // El puente le daba la tabla de 'mantener'. CAPA 2 no tiene wellness: el
     // objetivo canónico y la clase de actividad deciden, sin ramas por población.
-    const recomp = { ...OB, goal: 'Recomposición', peso: 50, estatura: 190 };
+    const recomp = { ...OB, goal: 'Recomposición', peso: 50, estatura: 190, trainingModalities: 'strength' };
     const estado = resolveNutritionEnergyState(recomp);
     expect(estado.status).toBe('PRESCRIBED');
-    const m = resolveMacroPrescription(estado, recomp);
+    const m = resolveMacroPrescription(estado, recomp).prescription;
     expect(m?.status).toBe('VALID');
-    expect(m?.proteinFactor).toBe(1.6);           // 240 min/sem → estructurado
+    expect(m?.proteinFactor).toBe(1.6);           // fuerza declarada
     expect(m?.proteinG).toBe(80);                 // 50 kg × 1.6 (IMC < 30 → PRW = peso)
   });
 

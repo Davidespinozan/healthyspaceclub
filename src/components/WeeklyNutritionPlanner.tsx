@@ -19,6 +19,7 @@ import { isServableMacroPrescription } from '../utils/macroPrescription';
 import { PLAN_ENGINE_VERSION } from '../utils/planEngine';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
+import EditDataSheet from './sheets/EditDataSheet';
 import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, Dumbbell, type LucideIcon } from 'lucide-react';
 import type { ProteinShake } from '../utils/planEngine';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
@@ -156,11 +157,11 @@ export default function WeeklyNutritionPlanner() {
   const {
     shoppingDay, setShoppingDay,
     weeklyPlan, saveWeeklyPlan, clearWeeklyPlan,
-    mealPlanKey, planGoal, macroTargets, obData, userName,
+    mealPlanKey, planGoal, macroTargets, macroResolution, obData, userName,
     mealChecks, toggleMealCheck,
     mealResolvedByLog, clearMealResolvedByLog, foodLog, removeFoodLog,
     planRegenCount, incrementPlanRegen, userEmail,
-  } = useAppStore(useShallow((s) => ({ shoppingDay: s.shoppingDay, setShoppingDay: s.setShoppingDay, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, clearWeeklyPlan: s.clearWeeklyPlan, mealPlanKey: s.mealPlanKey, planGoal: s.planGoal, macroTargets: s.macroTargets, obData: s.obData, userName: s.userName, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, mealResolvedByLog: s.mealResolvedByLog, clearMealResolvedByLog: s.clearMealResolvedByLog, foodLog: s.foodLog, removeFoodLog: s.removeFoodLog, planRegenCount: s.planRegenCount, incrementPlanRegen: s.incrementPlanRegen, userEmail: s.userEmail })));
+  } = useAppStore(useShallow((s) => ({ shoppingDay: s.shoppingDay, setShoppingDay: s.setShoppingDay, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, clearWeeklyPlan: s.clearWeeklyPlan, mealPlanKey: s.mealPlanKey, planGoal: s.planGoal, macroTargets: s.macroTargets, macroResolution: s.macroResolution, obData: s.obData, userName: s.userName, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, mealResolvedByLog: s.mealResolvedByLog, clearMealResolvedByLog: s.clearMealResolvedByLog, foodLog: s.foodLog, removeFoodLog: s.removeFoodLog, planRegenCount: s.planRegenCount, incrementPlanRegen: s.incrementPlanRegen, userEmail: s.userEmail })));
   const todayKey = dayKey(new Date());
 
   const weekStart = (() => {
@@ -184,6 +185,21 @@ export default function WeeklyNutritionPlanner() {
     () => weeklyPlanPhase(shoppingDay, weeklyPlan),
   );
   const [step, setStep] = useState(0);
+  // CAPA 2 · A2 · un socio que entrena y no declaró su modalidad no tiene macros
+  // vigentes (`INPUT_REQUIRED`): se le pide aquí, con acceso directo a sus datos.
+  // El plan guardado NO se borra; simplemente deja de estar vigente.
+  const [editDataOpen, setEditDataOpen] = useState(false);
+  const modalityRequired = macroResolution?.kind === 'INPUT_REQUIRED'
+    && macroResolution.missing === 'TRAINING_MODALITY_REQUIRED';
+  const modalityPrompt = modalityRequired ? (
+    <div className="wnp2-modality-required" role="status" style={{ margin: '12px 0', textAlign: 'center' }}>
+      <p className="wz-subtitle">{t('nutritionPlanner.modalityRequired')}</p>
+      <button type="button" className="wz-cta" onClick={() => setEditDataOpen(true)}>
+        {t('nutritionPlanner.modalityRequiredCta')}
+      </button>
+      {editDataOpen && <EditDataSheet onClose={() => setEditDataOpen(false)} />}
+    </div>
+  ) : null;
   // ¿La selección de día del súper es parte de ESTE flujo? Solo si arrancó sin
   // día elegido (usuario nuevo). Si ya tenía día (regenera), el cuestionario NO
   // debe numerar desde 2: las preguntas son paso 1/2/3, no 2/3/4.
@@ -684,6 +700,7 @@ export default function WeeklyNutritionPlanner() {
           <p className="wz-subtitle">{t(q.hintKey)}</p>
         </div>
 
+        {modalityPrompt}
         {renderBody()}
         {renderCta()}
 
@@ -766,6 +783,7 @@ export default function WeeklyNutritionPlanner() {
         mealsDone={dayConsumption.completedSlots}
         mealsTotal={dayConsumption.totalSlots}
       />
+      {modalityPrompt}
 
       {/* Barra slim única: semana + acciones (nota · lista · cambiar plan). Colapsa
           el subhead + la nota dorada gigante + los tabs Mi Plan/Lista (abrumaban). */}

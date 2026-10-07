@@ -4,7 +4,6 @@ import {
   prescribeMacros,
   proteinReferenceWeightKg,
   proteinFactor,
-  proteinActivityClassFrom,
   resolveMacroPrescription,
   isServableMacroPrescription,
   InvalidMacroInputError,
@@ -286,69 +285,62 @@ describe('CAPA 2 · F · estados', () => {
 // G · ADAPTADOR DE PRODUCCIÓN + ALCANCE (CAPA 0)
 // ═════════════════════════════════════════════════════════════════════════════
 describe('CAPA 2 · G · adaptador y alcance', () => {
+  // A2 · la clase sale de la modalidad DECLARADA. Esta base entrena y declara fuerza.
   const OB = {
     sex: 'Hombre', goal: 'Bienestar integral', edad: 30, estatura: 180, peso: 80,
     embarazo: 0, dailyLife: 'DL2', trainsHabitually: 1,
-    trainingDaysPerWeek: 4, trainingSessionMinutes: 60,
+    trainingDaysPerWeek: 4, trainingSessionMinutes: 60, trainingModalities: 'strength',
   } as Record<string, string | number>;
   const resolve = (over: Record<string, string | number> = {}) => {
     const ob = { ...OB, ...over };
     return resolveMacroPrescription(resolveNutritionEnergyState(ob), ob);
   };
-
-  it('clase de actividad: 0 min → sin entrenamiento · 1–149 → baja demanda · ≥150 → estructurado', () => {
-    const c = (weeklyTrainingMinutes: number, trainingBand: 'T0' | 'T1' | 'T2' | 'T3' | 'T4') =>
-      proteinActivityClassFrom({ weeklyTrainingMinutes, matrixCell: { trainingBand } });
-    expect(c(0, 'T0')).toBe('NO_STRUCTURED_TRAINING');
-    expect(c(45, 'T0')).toBe('LOW_DEMAND');
-    expect(c(120, 'T1')).toBe('LOW_DEMAND');
-    expect(c(150, 'T2')).toBe('MIXED');
-    expect(c(450, 'T4')).toBe('MIXED');
-  });
+  const rx = (over: Record<string, string | number> = {}) => resolve(over).prescription;
 
   it('end-to-end · PRESCRIBED → macros con la energía prescrita', () => {
     const state = resolveNutritionEnergyState(OB);
     if (state.status !== 'PRESCRIBED') throw new Error('debería ser PRESCRIBED');
-    const m = resolveMacroPrescription(state, OB);
+    const r = resolveMacroPrescription(state, OB);
+    expect(r.kind).toBe('RESOLVED');
+    const m = r.prescription;
     if (!isServableMacroPrescription(m)) throw new Error('debería ser servible');
     expect(m.energyKcal).toBe(state.prescribedEnergy);
-    expect(m.activityClass).toBe('MIXED');              // 240 min/sem
+    expect(m.activityClass).toBe('STRENGTH');
     expect(m.proteinG).toBe(128);                       // 80 × 1.6
   });
 
-  it('no entrena → 1.0 g/kg; entrena poco → 1.2 g/kg', () => {
-    expect(resolve({ trainsHabitually: 0, trainingDaysPerWeek: 0, trainingSessionMinutes: 0 })?.proteinFactor).toBe(1.0);
-    expect(resolve({ trainingDaysPerWeek: 2, trainingSessionMinutes: 45 })?.proteinFactor).toBe(1.2);
+  it('no entrena → 1.0 g/kg; solo baja demanda → 1.2 g/kg', () => {
+    expect(rx({ trainsHabitually: 0, trainingDaysPerWeek: 0, trainingSessionMinutes: 0, trainingModalities: '' })?.proteinFactor).toBe(1.0);
+    expect(rx({ trainingModalities: 'low_demand' })?.proteinFactor).toBe(1.2);
   });
 
   it('renal en `conditions` (CSV) → REVIEW con tope', () => {
-    const m = resolve({ conditions: 'diabetes,renal' });
-    expect(m?.status).toBe('REVIEW');
-    expect(m?.proteinFactor).toBe(1.0);
-    expect(resolve({ conditions: 'diabetes' })?.status).toBe('VALID');
+    expect(rx({ conditions: 'diabetes,renal' })?.status).toBe('REVIEW');
+    expect(rx({ conditions: 'diabetes,renal' })?.proteinFactor).toBe(1.0);
+    expect(rx({ conditions: 'diabetes' })?.status).toBe('VALID');
   });
 
   it('edad 18 y 65 → sin macros · 19 y 64 → con macros (D01)', () => {
-    expect(resolve({ edad: 18 })).toBeNull();
-    expect(resolve({ edad: 19 })).not.toBeNull();
-    expect(resolve({ edad: 64 })).not.toBeNull();
-    expect(resolve({ edad: 65 })).toBeNull();
+    expect(resolve({ edad: 18 }).kind).toBe('NO_ENERGY');
+    expect(resolve({ edad: 19 }).kind).toBe('RESOLVED');
+    expect(resolve({ edad: 64 }).kind).toBe('RESOLVED');
+    expect(resolve({ edad: 65 }).kind).toBe('NO_ENERGY');
   });
 
   it('embarazo/lactancia → sin macros (D02)', () => {
-    expect(resolve({ sex: 'Mujer', embarazo: 1, peso: 62, estatura: 165 })).toBeNull();
+    expect(resolve({ sex: 'Mujer', embarazo: 1, peso: 62, estatura: 165 }).kind).toBe('NO_ENERGY');
   });
 
   it('bajo peso + pérdida de grasa → FAT_LOSS_BLOCKED → sin macros (D03)', () => {
     const ob = { ...OB, goal: 'Bajar grasa', peso: 55, estatura: 180 };
     expect(resolveNutritionEnergyState(ob).status).toBe('FAT_LOSS_BLOCKED');
-    expect(resolveMacroPrescription(resolveNutritionEnergyState(ob), ob)).toBeNull();
+    expect(resolveMacroPrescription(resolveNutritionEnergyState(ob), ob).kind).toBe('NO_ENERGY');
   });
 
   it('perfil incompleto → sin macros', () => {
     const ob = { ...OB };
     delete ob.peso;
-    expect(resolveMacroPrescription(resolveNutritionEnergyState(ob), ob)).toBeNull();
+    expect(resolveMacroPrescription(resolveNutritionEnergyState(ob), ob).kind).toBe('NO_ENERGY');
   });
 
   it('vegetariano/vegano no son restricciones permanentes expuestas (D04)', () => {

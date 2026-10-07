@@ -29,12 +29,17 @@
 // ESTADO, no como excepción.
 // ═════════════════════════════════════════════════════════════════════════════
 import type { CanonicalGoal } from './energyPrescription';
-import type { TrainingBand } from './activityClassifier';
 import type { NutritionEnergyState } from './nutritionEnergyState';
 import { nutritionProfileInputFrom, type PersistedObData } from './nutritionProfileInput';
+import { TRAINING_MODALITIES_KEY, deriveProteinActivityClass, readTrainingModalities } from './trainingModality';
 
-/** Versión de la autoridad. Entra en la firma de vigencia del plan semanal. */
-export const MACRO_PRESCRIPTION_VERSION = 1;
+/**
+ * Versión de la autoridad.
+ *   v1 · CAPA 2 (clase de actividad inferida de los minutos · retirada)
+ *   v2 · A2 · clase de actividad desde la modalidad DECLARADA
+ * Una prescripción persistida con otra versión no se adopta (`store.merge`).
+ */
+export const MACRO_PRESCRIPTION_VERSION = 2;
 
 /**
  * Clase de actividad que determina el factor de proteína.
@@ -278,36 +283,22 @@ export function isServableMacroPrescription(
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 2 · ADAPTADOR DE PRODUCCIÓN · estado energético + perfil → MacroInput
+// 2 · ADAPTADOR DE PRODUCCIÓN · estado energético + perfil → MacroResolution
 // ═════════════════════════════════════════════════════════════════════════════
 //
-// ⚠️ SUPUESTO OPERATIVO · PENDIENTE DE CONFIRMACIÓN (ledger: CAPA 2 · M-ADAPT).
+// La clase de actividad sale SOLO de la modalidad DECLARADA (`trainingModality`,
+// A2) y de `trainsHabitually`. Los minutos y la banda T0–T4 son CARGA, no
+// modalidad: no entran aquí.
 //
-// HSC NO captura la MODALIDAD de entrenamiento (fuerza / resistencia / mixto /
-// equipo) ni el deporte especializado. Solo captura si entrena, días y minutos.
-// La política V1 da el MISMO factor a fuerza, resistencia, mixto y equipo, así
-// que la modalidad no cambia un solo gramo; lo que sí cambia la proteína es la
-// frontera «sin entrenamiento / baja demanda / estructurado». Este adaptador la
-// deriva de la banda semanal que ya produce el ActivityClassifier (CAPA 1):
+// Falta de input ≠ resultado fisiológico. Si el socio entrena y no declaró su
+// modalidad, NO hay prescripción: se devuelve `INPUT_REQUIRED`, no un
+// `MacroStatus` nuevo ni una clase supuesta.
 //
-//   0 min/semana          → NO_STRUCTURED_TRAINING
-//   T0–T1 (1–149 min)     → LOW_DEMAND
-//   T2–T4 (≥ 150 min)     → MIXED   (estructurado, modalidad no capturada)
+// La prioridad de carbohidrato es `STANDARD` para todos: es metadato y su mapeo
+// no está cerrado (bloque aparte).
 //
-// `SPECIALIZED_SPORT` no se asigna nunca: no hay dato que lo identifique.
-// La prioridad de carbohidrato es `STANDARD` para todos por la misma razón: es
-// metadato y no hay mapeo cerrado desde los datos de HSC.
-//
-// Si el mapeo cambia, cambia AQUÍ y sube `MACRO_PRESCRIPTION_VERSION`.
+// Si la derivación cambia, sube `MACRO_PRESCRIPTION_VERSION`.
 // ─────────────────────────────────────────────────────────────────────────────
-
-const STRUCTURED_BANDS: readonly TrainingBand[] = ['T2', 'T3', 'T4'];
-
-/** Clase de actividad proteica a partir de la clasificación de CAPA 1. */
-export function proteinActivityClassFrom(c: { weeklyTrainingMinutes: number; matrixCell: { trainingBand: TrainingBand } }): ProteinActivityClass {
-  if (c.weeklyTrainingMinutes <= 0) return 'NO_STRUCTURED_TRAINING';
-  return STRUCTURED_BANDS.includes(c.matrixCell.trainingBand) ? 'MIXED' : 'LOW_DEMAND';
-}
 
 /** ¿El perfil declara enfermedad renal? `conditions` se guarda como CSV en obData. */
 function declaresRenalCondition(obData: PersistedObData | null | undefined): boolean {
@@ -316,28 +307,50 @@ function declaresRenalCondition(obData: PersistedObData | null | undefined): boo
   return raw.split(',').map((c) => c.trim()).includes('renal');
 }
 
+/** Input que falta para poder prescribir macros. Completitud, no fisiología. */
+export type MacroMissingInput = 'TRAINING_MODALITY_REQUIRED';
+
 /**
- * Prescripción de macros vigente para un estado energético.
+ * Resolución de macros para un estado energético.
  *
- * `null` = no hay energía prescrita (cualquier estado distinto de PRESCRIBED):
- * sin energía no existen macros. No se inventan.
+ *   NO_ENERGY       · no hay energía prescrita: sin energía no existen macros
+ *   INPUT_REQUIRED  · hay energía, pero falta una declaración del socio
+ *   RESOLVED        · prescripción (cualquiera de los cuatro `MacroStatus`)
  */
+export type MacroResolution =
+  | { kind: 'NO_ENERGY'; missing?: undefined; prescription?: undefined }
+  | { kind: 'INPUT_REQUIRED'; missing: MacroMissingInput; prescription?: undefined }
+  | { kind: 'RESOLVED'; prescription: MacroPrescription; missing?: undefined };
+
 export function resolveMacroPrescription(
   state: NutritionEnergyState | null | undefined,
   obData: PersistedObData | null | undefined,
-): MacroPrescription | null {
-  if (state == null || state.status !== 'PRESCRIBED') return null;
+): MacroResolution {
+  if (state == null || state.status !== 'PRESCRIBED') return { kind: 'NO_ENERGY' };
   // PRESCRIBED garantiza que el perfil estaba completo cuando se resolvió la
   // energía; si ya no lo está, el estado es de otro `obData` y no se mezcla.
   const read = nutritionProfileInputFrom(obData);
-  if (!read.complete) return null;
-  return prescribeMacros({
-    energyKcal: state.prescribedEnergy,
-    goal: state.goal,
-    weightKg: read.profile.weightKg,
-    heightCm: read.profile.heightCm,
-    activityClass: proteinActivityClassFrom(state.classification),
-    carbohydratePriority: 'STANDARD',
-    declaredRenalCondition: declaresRenalCondition(obData),
-  });
+  if (!read.complete) return { kind: 'NO_ENERGY' };
+
+  // Un valor persistido desconocido NO se reinterpreta: cuenta como no declarado
+  // y se vuelve a pedir. Con `trainsHabitually = false` ni se mira.
+  const declared = readTrainingModalities(obData?.[TRAINING_MODALITIES_KEY]);
+  const cls = deriveProteinActivityClass(
+    read.profile.activityProfile.habitualTraining.trainsHabitually,
+    declared.kind === 'DECLARED' ? declared.modalities : null,
+  );
+  if (cls.kind === 'TRAINING_MODALITY_REQUIRED') return { kind: 'INPUT_REQUIRED', missing: cls.kind };
+
+  return {
+    kind: 'RESOLVED',
+    prescription: prescribeMacros({
+      energyKcal: state.prescribedEnergy,
+      goal: state.goal,
+      weightKg: read.profile.weightKg,
+      heightCm: read.profile.heightCm,
+      activityClass: cls.activityClass,
+      carbohydratePriority: 'STANDARD',
+      declaredRenalCondition: declaresRenalCondition(obData),
+    }),
+  };
 }
