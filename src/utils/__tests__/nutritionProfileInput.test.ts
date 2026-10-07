@@ -45,6 +45,7 @@ const BASE: PersistedObData = {
   estatura: 178,
   peso: 82,
   embarazo: 0,
+  requiresTherapeuticDiet: 0,
   dailyLife: 'DL2',
   trainsHabitually: 1,
   trainingDaysPerWeek: 4,
@@ -305,13 +306,13 @@ describe('mapper · perfil legacy incompleto', () => {
     expect(nutritionProfileInputFrom(ob).complete).toBe(true);
   });
 
-  it('un obData vacío reclama los seis campos base más los dos de actividad', () => {
+  it('un obData vacío reclama los campos base, el alcance de salud (A7) y los dos de actividad', () => {
     const r = nutritionProfileInputFrom({});
     expect(r.complete).toBe(false);
     if (r.complete) return;
     expect([...r.missing]).toEqual([
       'sex', 'goal', 'ageYears', 'heightCm', 'weightKg',
-      'pregnantOrLactating', 'dailyLife', 'trainsHabitually',
+      'pregnantOrLactating', 'requiresTherapeuticDiet', 'dailyLife', 'trainsHabitually',
     ]);
   });
 
@@ -455,10 +456,10 @@ describe('mapper · round trip de persistencia', () => {
 // J · OUTPUT EXACTO
 // ═════════════════════════════════════════════════════════════════════════════
 describe('mapper · forma exacta del ProfileInput', () => {
-  it('exactamente las 7 claves del contrato, sin sobrantes', () => {
+  it('exactamente las 8 claves del contrato, sin sobrantes', () => {
     expect(Object.keys(completo(perfil())).sort()).toEqual([
       'activityProfile', 'ageYears', 'goal', 'heightCm',
-      'pregnantOrLactating', 'sex', 'weightKg',
+      'pregnantOrLactating', 'requiresTherapeuticDiet', 'sex', 'weightKg',
     ]);
   });
 

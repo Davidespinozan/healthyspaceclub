@@ -37,7 +37,7 @@ Commits previos de CAPA 1: `444ee45`, `c54c313`, `090166a`, `13f744b` (cutover e
 |---|---|
 | CAPA 0 · alcance y decisiones de producto | Por decisión, ver tabla. Todas `IMPLEMENTED` salvo variantes de receta (`CLOSED_DESIGN · IMPLEMENTATION_DEFERRED`). |
 | CAPA 1 · energía | `IMPLEMENTED / VERIFIED_CLEAN` |
-| CAPA 2 · macros diarias | `IMPLEMENTED`. **No** `VERIFIED_CLEAN` todavía: queda el tope renal heredado. La clase de actividad ya sale de la modalidad declarada (A2). |
+| CAPA 2 · macros diarias | `IMPLEMENTED`. **No** `VERIFIED_CLEAN` todavía: falta copy dedicado para `INFEASIBLE`/`SPORTS_SCOPE` y `LOGICA-NUTRICIONAL-HSC.md` sigue describiendo política legacy. La clase de actividad sale de la modalidad declarada (A2), la prioridad de carbohidrato de la matriz cerrada (A4) y ningún diagnóstico ajusta macros (A7). |
 | CAPA 3 | `OPEN`. No hay definición de esta capa en el repo ni implementación dedicada. No se infiere cierre. |
 | CAPA 4 · reparto en tiempos de comida | `OPEN / DESIGN IN PROGRESS`. Punto de reanudación: **MEAL FREQUENCY & EATING OPPORTUNITIES**. Sus reglas legacy siguen activas (ver abajo). |
 | CAPA 5+ | `OPEN` |
@@ -58,6 +58,8 @@ Fuente de las decisiones: `docs/nutricion/NUTRITION-PRODUCT-DECISIONS-V2.md`.
 | D04 | Vegetariano/vegano no expuestos | `IMPLEMENTED` | `avoidAuthority.PERMANENT_AVOID_CATALOG` (sin `vegetariano`/`vegano`; `normalizeCats` descarta valores persistidos) | Opciones de restricción permanente | anterior | Decisión 01. |
 | D05 | Variantes de receta (decisiones 02, 03, 04) | `CLOSED_DESIGN · IMPLEMENTATION_DEFERRED` | — | — | — | No existe estructura de variantes en el banco. No se inventa arquitectura en este paquete. |
 | D06 | Semántica avena/granola/coco y guarnición | `IMPLEMENTED` | Detector de restricciones (tests `PD-01..PD-03`); guarnición no es autoridad de elegibilidad | — | anterior | Decisiones 05 y 06. |
+| D07 | Alcance de salud · `USER-DECLARED NEED FOR THERAPEUTIC DIET` | `IMPLEMENTED` (A7) | `obData.requiresTherapeuticDiet` (0/1) → `nutritionProfileInput` → `profileValidation` → Scope Guard: «Sí» → `OUTSIDE_HSC_NUTRITION_SCOPE` · `therapeutic_diet_required` (4.ª regla, tras edad < 19, edad ≥ 65 y embarazo). Ausente → `PROFILE_INCOMPLETE` (nunca se asume «No»). Entra en la identidad energética. | Lista de diagnósticos (`conditions`: diabetes/hipertensión/renal/colesterol) | A7 | Una sola pregunta funcional, obligatoria en onboarding y editable. Sin efecto energético con «No». |
+| — | Lista de diagnósticos como autoridad de Nutrition | `RETIRED` (A7) | — | Captura en onboarding y EditDataSheet retirada. `obData.conditions` en datos antiguos: `LEGACY DATA · NON-AUTHORITATIVE` (nadie lo lee; sin migración). Ajustes de macros por enfermedad: `NONE`. | A7 | Contradice `LOGICA-NUTRICIONAL-HSC.md` §punto 2 («Condiciones … Sin bloqueo»): documento histórico, no se reescribe. |
 | — | Copy contradictorio (`avisoMenor`, `avisoEmbarazo`, `avisoBajoPeso`, `avisoAdultoMayor`, `avisoTopado`) | `RETIRED` | Copys `sinMeta*` por estado energético | Avisos del `wellnessMode` legacy | `18fa53a` | Tenían 0 consumidores y contradecían el alcance V1. |
 
 ---
@@ -90,7 +92,7 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 1`). 
 | Grasa | `IMPLEMENTED` | 25 % de la energía. AMDR 20–35 % solo como referencia. | `FAT_PCT` 22/25/28/30, piso 0,6 g/kg |
 | Carbohidrato | `IMPLEMENTED` | Residuo. Residuo ≤ 0 → `INFEASIBLE` (`CARB_RESIDUAL_NON_POSITIVE`), sin clamp. | Piso de 50 g (y el de 130 g de la especificación legacy) |
 | Estados | `IMPLEMENTED` | `VALID` / `REVIEW` / `INFEASIBLE` / `SPORTS_SCOPE`. Solo `VALID`/`REVIEW` se sirven. | — |
-| `REVIEW` | Arquitectura `IMPLEMENTED`; regla general `OPEN` | Único disparador hoy: tope renal heredado. La prioridad de carbohidrato NO dispara REVIEW: sus umbrales siguen `OPEN / NOT IMPLEMENTED`, no inventados. | — |
+| `REVIEW` | Arquitectura `IMPLEMENTED`; regla general `OPEN` | Hoy NO hay ningún disparador: el tope renal se retiró en A7 y la prioridad de carbohidrato no dispara REVIEW (umbrales `OPEN / NOT IMPLEMENTED`). | — |
 | Prioridad de carbohidrato | `IMPLEMENTED` como metadato (A4) | Fuente: `DECLARED MODALITY + T-BAND` · `deriveCarbohydratePriority(clase, banda)`. Semántica: `CONTEXT METADATA`. Efecto automático en macros: `NONE` (STANDARD/ELEVATED/HIGH no mueven gramos ni disparan REVIEW). Resistencia/mixto/equipo en T4 → status `SPORTS_SCOPE` con motivo `CARB_PRIORITY_SPORTS_SCOPE`; deporte especializado → `SPORTS_SCOPE` (`SPECIALIZED_SPORT`). Umbral de REVIEW: `OPEN / NOT IMPLEMENTED`. | `STANDARD FOR ALL → RETIRED` |
 | Redondeo | `IMPLEMENTED` | Energía intacta. Proteína y grasa a gramos enteros; carbohidrato derivado de los gramos redondeados → `4P + 9G + 4C` = energía ± 2 kcal. El estado se decide sobre valores sin redondear. | — |
 | Fibra | `IMPLEMENTED` (informativa) | 14 g / 1000 kcal (LOGICA §3.4). Solo se muestra en onboarding; no es objetivo del solver. | Igual que antes |
@@ -101,7 +103,7 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 1`). 
 
 1. ~~Mapeo de clase de actividad desde los minutos~~ · **`RETIRED` en A2** (ver la sección A1/A2).
 2. ~~Prioridad de carbohidrato = `STANDARD` para todos~~ · **`RETIRED` en A4** (matriz cerrada clase declarada × banda T0–T4; `MACRO_PRESCRIPTION_VERSION` 2 → 3).
-3. **Tope renal heredado (1,0 g/kg PRW) · REGLA DE SEGURIDAD LEGACY.** La política V1 no trata la enfermedad renal; retirarlo subiría a 1,3–1,8 g/kg a quien la declaró. Se conserva y la prescripción sale en `REVIEW` con motivo `RENAL_CONDITION_DECLARED`. Requiere decisión clínica.
+3. ~~Tope renal heredado (1,0 g/kg PRW)~~ · **`RETIRED` en A7** (`RENAL_PROTEIN_FACTOR_CAP`, `declaresRenalCondition`, `RENAL_CONDITION_DECLARED`). Sin sustituto: no existe prescripción renal automática en HSC V1. `MACRO_PRESCRIPTION_VERSION` 3 → 4.
 4. **Copy para `INFEASIBLE` / `SPORTS_SCOPE`.** No hay mensaje dedicado: el planner aborta en neutro (como sin energía), el onboarding muestra la energía sin gramos y el coach dice que no hay meta nutricional vigente.
 5. **`LOGICA-NUTRICIONAL-HSC.md` §3.1–3.3** (GKG, grasa por objetivo, piso de 130 g) describe la política legacy y no se ha actualizado.
 

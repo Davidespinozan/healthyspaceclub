@@ -122,12 +122,12 @@ export default function OnboardingScreen() {
   const [minutesCustom, setMinutesCustom] = useState(false);
   // Fase 2 — seguridad: embarazo (si mujer) + opcionales
   const [embarazo, setEmbarazo] = useState<'si' | 'no' | ''>('');
-  // Fase 3 — salud/movilidad (opcionales): habilitan modo bajo impacto y ajustes de
-  // nutrición (tope de proteína renal, filtros suaves). Default vacío = sin fricción.
+  // Fase 3 — movilidad (opcional): habilita el modo bajo impacto en entrenamiento.
   const [movilidad, setMovilidad] = useState('');
-  const [conditions, setConditions] = useState<string[]>([]);
-  const toggleCondition = (c: string) =>
-    setConditions(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev.filter(x => x !== 'ninguna'), c]);
+  // A7 · ÚNICA pregunta de alcance de salud de Nutrition: ¿un profesional le indicó
+  // una dieta terapéutica? Obligatoria. Sustituye a la antigua lista de
+  // diagnósticos (diabetes/hipertensión/renal/colesterol), que ya no se pregunta.
+  const [therapeuticDiet, setTherapeuticDiet] = useState<'si' | 'no' | ''>('');
   const [restricciones, setRestricciones] = useState<string[]>([]);
   const toggleRestriccion = (r: string) =>
     setRestricciones(prev => prev.includes(r) ? prev.filter(x => x !== r) : [...prev, r]);
@@ -328,7 +328,8 @@ export default function OnboardingScreen() {
     setObData(TRAINING_MODALITIES_KEY, entrenaHabitualmente ? serializeTrainingModalities(trainingModalities) : '');
     setObData('embarazo', embarazo === 'si' ? 1 : 0);
     setObData('movilidad', movilidad);
-    setObData('conditions', conditions.filter(c => c !== 'ninguna').join(','));
+    // A7 · respuesta de alcance (1/0, como `embarazo`). La guarda ANTES del cálculo.
+    setObData('requiresTherapeuticDiet', therapeuticDiet === 'si' ? 1 : 0);
     setObData('avoid', restricciones.join(','));
     // País → perfil de nutrición: habilita la localización de comida por país
     // (filtro de disponibilidad). Antes solo se guardaba en user_profiles para el
@@ -399,6 +400,8 @@ export default function OnboardingScreen() {
     };
     if (inv) { setDataError(t(invMsg[inv])); return; }
     if (sex === 'Mujer' && !embarazo) { setDataError(t('onboarding.embarazoRequired')); return; }
+    // A7 · obligatoria: sin respuesta no hay prescripción posible.
+    if (!therapeuticDiet) { setDataError(t('onboarding.embarazoRequired')); return; }
     setDataError('');
     goNext();
   }
@@ -638,13 +641,15 @@ export default function OnboardingScreen() {
               </div>
             </div>
 
-            {/* Condiciones de salud (opcional, multi) — ajustes suaves de nutrición */}
+            {/* A7 · alcance de salud: UNA pregunta funcional, obligatoria. Sin lista
+                de enfermedades: HSC no ajusta la alimentación por diagnóstico. */}
             <div className="onb-optional">
-              <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.conditionsTitle')} · <em>{t('onboarding.optionalTag')}</em></div>
-              <div className="onb-cards-row" style={{ flexWrap: 'wrap' }}>
-                {(['diabetes', 'hipertension', 'renal', 'colesterol'] as const).map(v => (
-                  <div key={v} className={`onb-card-select${conditions.includes(v) ? ' selected' : ''}`} onClick={() => toggleCondition(v)}>
-                    <span className="onb-card-label">{t(`onboarding.condition_${v}`)}</span>
+              <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.therapeuticDietQuestion')}</div>
+              <div className="onb-hint onb-hint-sub">{t('onboarding.therapeuticDietHint')}</div>
+              <div className="onb-cards-row">
+                {(['no', 'si'] as const).map(v => (
+                  <div key={v} className={`onb-card-select${therapeuticDiet === v ? ' selected' : ''}`} onClick={() => setTherapeuticDiet(v)}>
+                    <span className="onb-card-label">{t(v === 'no' ? 'onboarding.therapeuticDietNo' : 'onboarding.therapeuticDietYes')}</span>
                   </div>
                 ))}
               </div>
@@ -993,6 +998,7 @@ export default function OnboardingScreen() {
                 case 'age_under_19':           return t('onboarding.sinMetaMenor');
                 case 'age_65_or_over':         return t('onboarding.sinMetaAdultoMayor');
                 case 'pregnancy_or_lactation': return t('onboarding.sinMetaEmbarazo');
+                case 'therapeutic_diet_required': return t('onboarding.sinMetaTerapeutica');
               }
               break;
             case 'FAT_LOSS_BLOCKED':
@@ -1007,7 +1013,10 @@ export default function OnboardingScreen() {
           <div className="onb-center">
             <div className="onb-result-badge"><Check size={14} strokeWidth={3} /> {t('onboarding.resultAnalysisDone')}</div>
             <h2 className="onb-result-title">
-              {sinMeta ? t('onboarding.sinMetaTitulo') : t('onboarding.resultTitle', { name: userName })}
+              {sinMeta
+                ? t(energyState?.status === 'OUTSIDE_HSC_NUTRITION_SCOPE' && energyState.scopeReason === 'therapeutic_diet_required'
+                    ? 'onboarding.sinMetaTerapeuticaTitulo' : 'onboarding.sinMetaTitulo')
+                : t('onboarding.resultTitle', { name: userName })}
             </h2>
             {/* C4 · la tarjeta de cifras solo existe si hay cifra. Sin prescripción no
                 se pinta un '—' donde debería ir una meta, ni unas macros derivadas de

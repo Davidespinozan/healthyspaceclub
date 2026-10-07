@@ -57,7 +57,7 @@ const AHORA = '2026-10-02T12:00:00.000Z';
 /** Adulto normal que entrena 4 × 60 → PRESCRIBED. */
 const OB: PersistedObData = {
   sex: 'Hombre', goal: 'Bajar grasa', edad: 34, estatura: 178, peso: 82,
-  embarazo: 0, dailyLife: 'DL2', trainsHabitually: 1,
+  embarazo: 0, requiresTherapeuticDiet: 0, dailyLife: 'DL2', trainsHabitually: 1,
   trainingDaysPerWeek: 4, trainingSessionMinutes: 60,
 };
 const ob = (over: PersistedObData = {}): PersistedObData => ({ ...OB, ...over });
@@ -69,7 +69,7 @@ const sin = (...keys: string[]): PersistedObData => {
 
 const PERFIL: ProfileInput = {
   sex: 'Hombre', goal: 'Bajar grasa', ageYears: 34, heightCm: 178, weightKg: 82,
-  pregnantOrLactating: false,
+  pregnantOrLactating: false, requiresTherapeuticDiet: false,
   activityProfile: {
     dailyLife: 'DL2',
     habitualTraining: { trainsHabitually: true, daysPerWeek: 4, habitualSessionMinutes: 60 },
@@ -330,6 +330,7 @@ describe('C2 · input identity · misma semántica, misma identidad', () => {
   it('el orden de los campos es EXPLÍCITO, no derivado de Object.keys', () => {
     expect(ENERGY_IDENTITY_FIELDS).toEqual([
       'sex', 'ageYears', 'heightCm', 'weightKg', 'goal', 'pregnantOrLactating',
+      'requiresTherapeuticDiet',
       'dailyLife', 'trainsHabitually', 'daysPerWeek', 'habitualSessionMinutes',
     ]);
     // Acotado a la función de identidad: el parser estricto SÍ usa `Object.keys`

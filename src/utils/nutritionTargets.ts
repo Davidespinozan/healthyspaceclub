@@ -30,7 +30,6 @@ export interface ObInput {
   grasa?: number | null;        // % grasa corporal (opcional) → avisos de peso meta
   embarazo?: boolean;
   pesoMeta?: number | null;     // peso meta (opcional) → avisos/tiempo
-  conditions?: string[];
 }
 
 // ── Punto 3.5 — reparto de calorías por comida (25/35/25/15) ──────────────

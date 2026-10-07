@@ -253,12 +253,9 @@ describe('CAPA 2 · F · estados', () => {
     expect(m.version).toBe(MACRO_PRESCRIPTION_VERSION);
   });
 
-  it('REVIEW · enfermedad renal declarada: tope heredado de 1.0 g/kg PRW, con motivo', () => {
-    const m = served({ goal: 'FAT_LOSS', declaredRenalCondition: true });
-    expect(m.status).toBe('REVIEW');
-    expect(m.reviewReasons).toEqual(['RENAL_CONDITION_DECLARED']);
-    expect(m.proteinFactor).toBe(1.0);
-    expect(m.proteinG).toBe(80);
+  it('A7 · ningún diagnóstico entra en la autoridad: no hay tope renal ni REVIEW por enfermedad', () => {
+    expect(CODE).not.toMatch(/\b(renal|RENAL|diabet|hipertens|colesterol|conditions)\w*/);
+    expect(served({ goal: 'FAT_LOSS' }).proteinFactor).toBe(1.8);
   });
 
   it('la prioridad de carbohidrato es metadato: no mueve un gramo (T0–T3 de MIXED)', () => {
@@ -292,7 +289,7 @@ describe('CAPA 2 · G · adaptador y alcance', () => {
   // A2 · la clase sale de la modalidad DECLARADA. Esta base entrena y declara fuerza.
   const OB = {
     sex: 'Hombre', goal: 'Bienestar integral', edad: 30, estatura: 180, peso: 80,
-    embarazo: 0, dailyLife: 'DL2', trainsHabitually: 1,
+    embarazo: 0, requiresTherapeuticDiet: 0, dailyLife: 'DL2', trainsHabitually: 1,
     trainingDaysPerWeek: 4, trainingSessionMinutes: 60, trainingModalities: 'strength',
   } as Record<string, string | number>;
   const resolve = (over: Record<string, string | number> = {}) => {
@@ -318,10 +315,12 @@ describe('CAPA 2 · G · adaptador y alcance', () => {
     expect(rx({ trainingModalities: 'low_demand' })?.proteinFactor).toBe(1.2);
   });
 
-  it('renal en `conditions` (CSV) → REVIEW con tope', () => {
-    expect(rx({ conditions: 'diabetes,renal' })?.status).toBe('REVIEW');
-    expect(rx({ conditions: 'diabetes,renal' })?.proteinFactor).toBe(1.0);
-    expect(rx({ conditions: 'diabetes' })?.status).toBe('VALID');
+  it('A7 · el CSV legacy `conditions` es nutricionalmente inerte', () => {
+    const ref = rx();
+    for (const c of ['renal', 'diabetes,renal', 'diabetes,hipertension,colesterol']) {
+      expect(rx({ conditions: c }), c).toEqual(ref);
+    }
+    expect(ref?.status).toBe('VALID');
   });
 
   it('edad 18 y 65 → sin macros · 19 y 64 → con macros (D01)', () => {

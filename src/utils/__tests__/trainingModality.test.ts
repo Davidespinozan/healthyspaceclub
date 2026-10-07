@@ -143,7 +143,7 @@ describe('A2 · B · lectura del valor persistido', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 const BASE = {
   sex: 'Hombre', goal: 'Bienestar integral', edad: 30, estatura: 180, peso: 80,
-  embarazo: 0, dailyLife: 'DL2', trainsHabitually: 1,
+  embarazo: 0, requiresTherapeuticDiet: 0, dailyLife: 'DL2', trainsHabitually: 1,
   trainingDaysPerWeek: 4, trainingSessionMinutes: 60,             // 240 min/sem → T2
 } as Record<string, string | number>;
 const ob = (over: Record<string, string | number> = {}) => ({ ...BASE, ...over });
@@ -319,7 +319,7 @@ describe('A2 · F · vigencia del plan', () => {
     const code = sinComentarios(srcPlanner);
     expect(code).toContain('if (planGoal == null || !isServableMacroPrescription(macroTargets)) {');
     expect(code).toContain("macroResolution?.kind === 'INPUT_REQUIRED'");
-    expect(code).toContain("t('nutritionPlanner.modalityRequired')");
+    expect(code).toContain("'nutritionPlanner.modalityRequired'");
     expect(code).not.toMatch(/clearWeeklyPlan\([^)]*\)[^\n]*modalit/i);
   });
 });

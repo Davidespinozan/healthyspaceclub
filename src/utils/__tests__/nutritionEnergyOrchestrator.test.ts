@@ -57,7 +57,7 @@ const ACT_ROTO = { dailyLife: 'DL9', habitualTraining: { trainsHabitually: 'x' }
 
 const perfil = (over: Partial<ProfileInput> = {}): ProfileInput => ({
   sex: 'Hombre', goal: 'Bienestar integral', ageYears: 35, heightCm: 178, weightKg: 82,
-  pregnantOrLactating: false, activityProfile: ACT_CLEAR_ACTIVE, ...over,
+  pregnantOrLactating: false, requiresTherapeuticDiet: false, activityProfile: ACT_CLEAR_ACTIVE, ...over,
 });
 
 const resolver = (over: Partial<ProfileInput> = {}) => resolveNutritionEnergy(perfil(over));

@@ -40,9 +40,11 @@ import { TRAINING_MODALITIES_KEY, deriveProteinActivityClass, readTrainingModali
  *   v2 · A2 · clase de actividad desde la modalidad DECLARADA
  *   v3 · A4 · prioridad de carbohidrato desde la matriz cerrada (antes STANDARD
  *        para todos); resistencia/mixto/equipo en T4 → SPORTS_SCOPE
+ *   v4 · A7 · retirado el tope renal heredado (1,0 g/kg + REVIEW): ningún
+ *        diagnóstico cambia los gramos
  * Una prescripción persistida con otra versión no se adopta (`store.merge`).
  */
-export const MACRO_PRESCRIPTION_VERSION = 3;
+export const MACRO_PRESCRIPTION_VERSION = 4;
 
 /**
  * Clase de actividad que determina el factor de proteína.
@@ -138,20 +140,7 @@ export interface MacroInput {
    * prioridad de carbohidrato; nunca la clase de actividad ni los gramos.
    */
   trainingBand: TrainingBand;
-  /**
-   * El socio declaró enfermedad renal en el perfil.
-   *
-   * ⚠️ REGLA DE SEGURIDAD HEREDADA · PENDIENTE DE DECISIÓN. La política V1 de
-   * proteína no trata la enfermedad renal; el motor legacy topaba la proteína a
-   * 1,0 g/kg. Retirarla sin reemplazo subiría a 1,3–1,8 g/kg a quien declaró
-   * enfermedad renal. Se CONSERVA el tope y la prescripción sale en REVIEW con
-   * motivo explícito, hasta que se cierre una decisión clínica.
-   */
-  declaredRenalCondition?: boolean;
 }
-
-/** Tope heredado de proteína con enfermedad renal declarada (g/kg PRW). */
-export const RENAL_PROTEIN_FACTOR_CAP = 1.0;
 
 interface MacroBase {
   version: number;
@@ -268,9 +257,11 @@ export function proteinFactor(goal: CanonicalGoal, activityClass: ProteinActivit
  * máximo de ±2 kcal (el redondeo de un solo valor).
  *
  * ── REVIEW ──────────────────────────────────────────────────────────────────
- * La arquitectura existe. El único disparador hoy es la regla de seguridad
- * renal heredada (ver `declaredRenalCondition`). La prioridad de carbohidrato
- * (`ELEVATED`/`HIGH`) NO dispara REVIEW: sus umbrales siguen ABIERTOS.
+ * La arquitectura existe, pero hoy NO hay ningún disparador cerrado. Ningún
+ * diagnóstico ajusta las macros (A7: quien necesita una dieta terapéutica queda
+ * fuera de alcance en el Scope Guard, antes de llegar aquí), y la prioridad de
+ * carbohidrato (`ELEVATED`/`HIGH`) tampoco dispara REVIEW: sus umbrales siguen
+ * ABIERTOS.
  */
 export function prescribeMacros(input: MacroInput): MacroPrescription {
   const { energyKcal, goal, weightKg, heightCm, activityClass } = input;
@@ -288,9 +279,9 @@ export function prescribeMacros(input: MacroInput): MacroPrescription {
   // A4 · la matriz de prioridad saca el contexto del alcance automático: no se
   // sirve como VALID. Mismo estado, motivo propio. Ningún gramo.
   if (carbohydratePriority === 'SPORTS_SCOPE') return { ...base, status: 'SPORTS_SCOPE', reason: 'CARB_PRIORITY_SPORTS_SCOPE' };
-  const renal = input.declaredRenalCondition === true;
-  const factor = renal ? Math.min(matrixFactor, RENAL_PROTEIN_FACTOR_CAP) : matrixFactor;
-  const reviewReasons: string[] = renal ? ['RENAL_CONDITION_DECLARED'] : [];
+  const factor = matrixFactor;
+  // Sin disparadores de REVIEW cerrados (ver arriba).
+  const reviewReasons: string[] = [];
 
   // Valores internos sin redondear: deciden el estado.
   const proteinRaw = prwKg * factor;
@@ -340,13 +331,6 @@ export function isServableMacroPrescription(
 // Si la derivación cambia, sube `MACRO_PRESCRIPTION_VERSION`.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** ¿El perfil declara enfermedad renal? `conditions` se guarda como CSV en obData. */
-function declaresRenalCondition(obData: PersistedObData | null | undefined): boolean {
-  const raw = obData?.conditions;
-  if (typeof raw !== 'string') return false;
-  return raw.split(',').map((c) => c.trim()).includes('renal');
-}
-
 /** Input que falta para poder prescribir macros. Completitud, no fisiología. */
 export type MacroMissingInput = 'TRAINING_MODALITY_REQUIRED';
 
@@ -390,7 +374,6 @@ export function resolveMacroPrescription(
       heightCm: read.profile.heightCm,
       activityClass: cls.activityClass,
       trainingBand: state.classification.matrixCell.trainingBand,
-      declaredRenalCondition: declaresRenalCondition(obData),
     }),
   };
 }

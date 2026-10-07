@@ -197,7 +197,8 @@ function readProfile(obData: PersistedObData | null | undefined): ProfileRead {
  *   ageYears             → término `age` del EER + umbral del Scope Guard
  *   heightCm, weightKg   → términos del EER + IMC del guard de FAT_LOSS
  *   goal                 → rama de la prescripción
- *   pregnantOrLactating  → segunda regla del Scope Guard
+ *   pregnantOrLactating  → tercera regla del Scope Guard
+ *   requiresTherapeuticDiet → cuarta regla del Scope Guard (A7)
  *   dailyLife            → fila de la matriz de clasificación
  *   trainsHabitually     → banda de entrenamiento
  *   daysPerWeek, habitualSessionMinutes → `días × minutos` → banda
@@ -209,6 +210,7 @@ function readProfile(obData: PersistedObData | null | undefined): ProfileRead {
  */
 export const ENERGY_IDENTITY_FIELDS: readonly string[] = [
   'sex', 'ageYears', 'heightCm', 'weightKg', 'goal', 'pregnantOrLactating',
+  'requiresTherapeuticDiet',
   'dailyLife', 'trainsHabitually', 'daysPerWeek', 'habitualSessionMinutes',
 ];
 
@@ -269,6 +271,7 @@ export function energyInputIdentity(profile: ProfileInput): string {
     numStr(profile.weightKg),
     canonicalGoalFrom(profile.goal),
     profile.pregnantOrLactating ? '1' : '0',
+    profile.requiresTherapeuticDiet ? '1' : '0',
     profile.activityProfile.dailyLife,
     entrena ? '1' : '0',
     entrena ? numStr(t.daysPerWeek) : '0',

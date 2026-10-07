@@ -68,7 +68,6 @@ const GOAL_KEYS: Record<string, TranslationKey> = {
 // Salud/preferencias (opcionales) — mismos slugs y claves i18n que el onboarding,
 // para que editar aquí y capturar allá escriban exactamente el mismo dato.
 const MOBILITY_OPTS = ['ninguna', 'articular', 'equilibrio', 'apoyo'] as const;
-const CONDITION_OPTS = ['diabetes', 'hipertension', 'renal', 'colesterol'] as const;
 // P0-02 · catálogo ÚNICO de restricciones permanentes (mismo que onboarding).
 const RESTRICTION_OPTS = PERMANENT_AVOID_CATALOG;
 
@@ -119,9 +118,13 @@ export default function EditDataSheet({ onClose }: Props) {
     goal: String(obData.goal || ''),
     country: String(obData.country || ''),
     movilidad: String(obData.movilidad || ''),
+    // A7 · alcance de salud. Por PRESENCIA (0 = «No» es una respuesta). '' = sin
+    // declarar, y así se muestra: no se infiere de la antigua lista `conditions`.
+    requiresTherapeuticDiet: isDeclared(obData, 'requiresTherapeuticDiet')
+      ? (Number(obData.requiresTherapeuticDiet) === 1 ? 'si' : 'no')
+      : '',
   });
-  // Multi-selección: se guardan como CSV en obData ('conditions', 'avoid').
-  const [conditions, setConditions] = useState<string[]>(() => splitCsv(obData.conditions));
+  // Multi-selección: se guarda como CSV en obData ('avoid').
   const [avoid, setAvoid] = useState<string[]>(() => splitCsv(obData.avoid));
   // CAPA 2 · A2 · modalidad DECLARADA. Se pre-rellena solo con valores válidos; un
   // perfil sin declaración abre vacío (no se infiere de minutos, actividad ni historial).
@@ -217,6 +220,11 @@ export default function EditDataSheet({ onClose }: Props) {
     if (form.trainsHabitually === 'si' && modalities.length === 0) {
       setError(t('editData.errModality')); return;
     }
+    // A7 · igual que `trainsHabitually`: lo ya declarado no se puede vaciar.
+    const hadTherapeutic = isDeclared(obData, 'requiresTherapeuticDiet');
+    if ((hadTherapeutic || form.requiresTherapeuticDiet) && form.requiresTherapeuticDiet !== 'si' && form.requiresTherapeuticDiet !== 'no') {
+      setError(t('editData.errTherapeuticDiet')); return;
+    }
     if (!form.goal) { setError(t('editData.errGoal')); return; }
 
     setSaving(true);
@@ -248,11 +256,14 @@ export default function EditDataSheet({ onClose }: Props) {
       setObData(TRAINING_MODALITIES_KEY, serializeTrainingModalities(modalities));
     }
     setObData('goal', form.goal);
-    // Ubicación + salud/preferencias (opcionales). Se persisten ANTES del recalc
-    // porque 'renal' baja el tope de proteína en computeNutritionTargets.
+    // A7 · alcance de salud. Se persiste ANTES del recalc: con «Sí» el Scope Guard
+    // deja Nutrition fuera de alcance. Solo se escribe una declaración real.
+    if (form.requiresTherapeuticDiet === 'si' || form.requiresTherapeuticDiet === 'no') {
+      setObData('requiresTherapeuticDiet', form.requiresTherapeuticDiet === 'si' ? 1 : 0);
+    }
+    // Ubicación + preferencias (opcionales).
     setObData('country', form.country);
     setObData('movilidad', form.movilidad);
-    setObData('conditions', conditions.join(','));
     setObData('avoid', avoid.join(','));
 
     try {
@@ -535,22 +546,20 @@ export default function EditDataSheet({ onClose }: Props) {
             </div>
           </div>
 
-          <div className="sh-field" style={{ marginTop: 14 }}>
-            <span className="sh-field-label">{t('onboarding.conditionsTitle')}</span>
-            <div className="sh-chips">
-              {CONDITION_OPTS.map(v => (
-                <button
-                  key={v}
-                  type="button"
-                  className="sh-chip"
-                  aria-pressed={conditions.includes(v)}
-                  onClick={() => toggleIn(conditions, setConditions, v)}
-                >
-                  {t(`onboarding.condition_${v}` as TranslationKey)}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* A7 · alcance de salud: una sola pregunta funcional, sin lista de enfermedades. */}
+          <label className="sh-field" style={{ marginTop: 14 }}>
+            <span className="sh-field-label">{t('onboarding.therapeuticDietQuestion')}</span>
+            <select
+              className="sh-input"
+              value={form.requiresTherapeuticDiet}
+              onChange={e => update('requiresTherapeuticDiet', e.target.value)}
+            >
+              <option value="">{t('editData.notDeclared')}</option>
+              <option value="no">{t('editData.optNo')}</option>
+              <option value="si">{t('editData.optYes')}</option>
+            </select>
+            <p className="sh-field-hint">{t('onboarding.therapeuticDietHint')}</p>
+          </label>
 
           <div className="sh-field" style={{ marginTop: 14 }}>
             <span className="sh-field-label">{t('onboarding.restrictionsTitle')}</span>

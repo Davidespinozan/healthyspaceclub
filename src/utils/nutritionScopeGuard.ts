@@ -14,13 +14,20 @@
 // hasta tener un `null` de aquí: el orden deja de ser una línea que alguien
 // puede mover y pasa a ser una dependencia de datos.
 //
-// ── LAS TRES REGLAS, Y NADA MÁS ─────────────────────────────────────────────
-//   1. ageYears < 19          → OUTSIDE_HSC_NUTRITION_SCOPE · age_under_19
-//   2. ageYears > 64          → OUTSIDE_HSC_NUTRITION_SCOPE · age_65_or_over
-//   3. pregnantOrLactating    → OUTSIDE_HSC_NUTRITION_SCOPE · pregnancy_or_lactation
+// ── LAS CUATRO REGLAS, Y NADA MÁS ───────────────────────────────────────────
+//   1. ageYears < 19            → OUTSIDE_HSC_NUTRITION_SCOPE · age_under_19
+//   2. ageYears > 64            → OUTSIDE_HSC_NUTRITION_SCOPE · age_65_or_over
+//   3. pregnantOrLactating      → OUTSIDE_HSC_NUTRITION_SCOPE · pregnancy_or_lactation
+//   4. requiresTherapeuticDiet  → OUTSIDE_HSC_NUTRITION_SCOPE · therapeutic_diet_required
 //
 // El orden es FIJO (las dos de edad primero) para que `scopeReason` sea
-// determinista cuando se cumplen varias a la vez.
+// determinista cuando se cumplen varias a la vez. La regla 4 (A7) va al final:
+// las tres anteriores ya sacan a la persona de alcance por su cuenta.
+//
+// HSC Nutrition V1 es para personas que NO necesitan una dieta terapéutica
+// individualizada. No trata enfermedades, no prescribe dietas terapéuticas y no
+// ajusta macros por diagnóstico: por eso no hay una lista de enfermedades, sino
+// una sola pregunta funcional declarada por el socio.
 //
 // ── LA POBLACIÓN DE NUTRITION V1 ES 19–64 INCLUSIVE ─────────────────────────
 // El tope superior es una decisión de PRODUCTO, no una limitación del motor: el
@@ -65,14 +72,15 @@ import { ADULT_ROUTE_MIN_AGE_YEARS } from './maintenanceEstimate';
 import type { CanonicalGoal } from './energyPrescription';
 import type { ValidatedNutritionProfile } from './profileValidation';
 
-/** Por qué quedó fuera del alcance de HSC Nutrition. Los tres comparten estado. */
+/** Por qué quedó fuera del alcance de HSC Nutrition. Todos comparten estado. */
 export type NutritionScopeReason =
   | 'age_under_19'
   | 'age_65_or_over'
-  | 'pregnancy_or_lactation';
+  | 'pregnancy_or_lactation'
+  | 'therapeutic_diet_required';
 
 export const NUTRITION_SCOPE_REASONS: readonly NutritionScopeReason[] =
-  ['age_under_19', 'age_65_or_over', 'pregnancy_or_lactation'];
+  ['age_under_19', 'age_65_or_over', 'pregnancy_or_lactation', 'therapeutic_diet_required'];
 
 /**
  * Edad máxima INCLUSIVE de la población que HSC Nutrition V1 prescribe.
@@ -137,6 +145,16 @@ export function checkNutritionScope(
     return {
       status: 'OUTSIDE_HSC_NUTRITION_SCOPE',
       scopeReason: 'pregnancy_or_lactation',
+      goal: profile.goal,
+    };
+  }
+
+  // 4 · DIETA TERAPÉUTICA INDICADA POR UN PROFESIONAL (A7). Antes de toda
+  //     estimación: no se calcula ninguna prescripción clínica parcial.
+  if (profile.requiresTherapeuticDiet) {
+    return {
+      status: 'OUTSIDE_HSC_NUTRITION_SCOPE',
+      scopeReason: 'therapeutic_diet_required',
       goal: profile.goal,
     };
   }

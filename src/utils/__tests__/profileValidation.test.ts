@@ -39,7 +39,7 @@ const ACT: ActivityProfile = {
 
 const crudo = (over: Partial<ProfileInput> = {}): ProfileInput => ({
   sex: 'Hombre', goal: 'Bajar grasa', ageYears: 35, heightCm: 178, weightKg: 82,
-  pregnantOrLactating: false, activityProfile: ACT, ...over,
+  pregnantOrLactating: false, requiresTherapeuticDiet: false, activityProfile: ACT, ...over,
 });
 
 const mal = (over: Record<string, unknown>) => () =>
@@ -303,7 +303,8 @@ describe('ProfileValidation · 7 · sin defaults silenciosos', () => {
   it('el objeto resultante no lleva campos sobrantes', () => {
     const p = validateNutritionProfile(crudo());
     expect(Object.keys(p).sort()).toEqual([
-      'activityProfile', 'ageYears', 'goal', 'heightCm', 'pregnantOrLactating', 'sex', 'weightKg',
+      'activityProfile', 'ageYears', 'goal', 'heightCm', 'pregnantOrLactating',
+      'requiresTherapeuticDiet', 'sex', 'weightKg',
     ]);
   });
 
@@ -345,7 +346,7 @@ describe('ProfileValidation · 8 · estructura y determinismo', () => {
     expect(Object.getOwnPropertySymbols(p)).toHaveLength(0);
     expect(JSON.parse(JSON.stringify(p))).toEqual({
       sex: 'male', goal: 'FAT_LOSS', ageYears: 35, heightCm: 178, weightKg: 82,
-      pregnantOrLactating: false, activityProfile: ACT,
+      pregnantOrLactating: false, requiresTherapeuticDiet: false, activityProfile: ACT,
     });
   });
 

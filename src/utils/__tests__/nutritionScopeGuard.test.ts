@@ -38,7 +38,7 @@ const ACT: ActivityProfile = {
 /** Perfil validado (único camino para construir uno) con los overrides pedidos. */
 const perfil = (over: Partial<ProfileInput> = {}) => validateNutritionProfile({
   sex: 'Hombre', goal: 'Bajar grasa', ageYears: 35, heightCm: 178, weightKg: 82,
-  pregnantOrLactating: false, activityProfile: ACT, ...over,
+  pregnantOrLactating: false, requiresTherapeuticDiet: false, activityProfile: ACT, ...over,
 } as ProfileInput);
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -158,13 +158,13 @@ describe('NutritionScopeGuard · 3 · orden', () => {
     }
   });
 
-  it('solo existen TRES motivos', () => {
-    expect(NUTRITION_SCOPE_REASONS).toHaveLength(3);
+  it('solo existen CUATRO motivos (A7 añadió la dieta terapéutica)', () => {
+    expect(NUTRITION_SCOPE_REASONS).toHaveLength(4);
     expect([...NUTRITION_SCOPE_REASONS].sort())
-      .toEqual(['age_65_or_over', 'age_under_19', 'pregnancy_or_lactation']);
+      .toEqual(['age_65_or_over', 'age_under_19', 'pregnancy_or_lactation', 'therapeutic_diet_required']);
   });
 
-  it('los motivos observables son exactamente esos tres', () => {
+  it('los motivos observables son exactamente esos cuatro', () => {
     const vistos = new Set<NutritionScopeReason>();
     for (const p of [
       perfil({ ageYears: 16 }),
@@ -172,12 +172,13 @@ describe('NutritionScopeGuard · 3 · orden', () => {
       perfil({ sex: 'Mujer', pregnantOrLactating: true }),
       perfil({ sex: 'Mujer', ageYears: 16, pregnantOrLactating: true }),
       perfil({ sex: 'Mujer', ageYears: 70, pregnantOrLactating: true }),
+      perfil({ requiresTherapeuticDiet: true }),
     ]) {
       const r = checkNutritionScope(p);
       if (r) vistos.add(r.scopeReason);
     }
     expect([...vistos].sort())
-      .toEqual(['age_65_or_over', 'age_under_19', 'pregnancy_or_lactation']);
+      .toEqual(['age_65_or_over', 'age_under_19', 'pregnancy_or_lactation', 'therapeutic_diet_required']);
   });
 
   it('`age_65_or_over` NO reutiliza ni se confunde con los otros dos', () => {

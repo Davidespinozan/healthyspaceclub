@@ -157,11 +157,11 @@ export default function WeeklyNutritionPlanner() {
   const {
     shoppingDay, setShoppingDay,
     weeklyPlan, saveWeeklyPlan, clearWeeklyPlan,
-    mealPlanKey, planGoal, macroTargets, macroResolution, obData, userName,
+    mealPlanKey, planGoal, macroTargets, macroResolution, energyState, obData, userName,
     mealChecks, toggleMealCheck,
     mealResolvedByLog, clearMealResolvedByLog, foodLog, removeFoodLog,
     planRegenCount, incrementPlanRegen, userEmail,
-  } = useAppStore(useShallow((s) => ({ shoppingDay: s.shoppingDay, setShoppingDay: s.setShoppingDay, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, clearWeeklyPlan: s.clearWeeklyPlan, mealPlanKey: s.mealPlanKey, planGoal: s.planGoal, macroTargets: s.macroTargets, macroResolution: s.macroResolution, obData: s.obData, userName: s.userName, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, mealResolvedByLog: s.mealResolvedByLog, clearMealResolvedByLog: s.clearMealResolvedByLog, foodLog: s.foodLog, removeFoodLog: s.removeFoodLog, planRegenCount: s.planRegenCount, incrementPlanRegen: s.incrementPlanRegen, userEmail: s.userEmail })));
+  } = useAppStore(useShallow((s) => ({ shoppingDay: s.shoppingDay, setShoppingDay: s.setShoppingDay, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, clearWeeklyPlan: s.clearWeeklyPlan, mealPlanKey: s.mealPlanKey, planGoal: s.planGoal, macroTargets: s.macroTargets, macroResolution: s.macroResolution, energyState: s.energyState, obData: s.obData, userName: s.userName, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, mealResolvedByLog: s.mealResolvedByLog, clearMealResolvedByLog: s.clearMealResolvedByLog, foodLog: s.foodLog, removeFoodLog: s.removeFoodLog, planRegenCount: s.planRegenCount, incrementPlanRegen: s.incrementPlanRegen, userEmail: s.userEmail })));
   const todayKey = dayKey(new Date());
 
   const weekStart = (() => {
@@ -191,11 +191,28 @@ export default function WeeklyNutritionPlanner() {
   const [editDataOpen, setEditDataOpen] = useState(false);
   const modalityRequired = macroResolution?.kind === 'INPUT_REQUIRED'
     && macroResolution.missing === 'TRAINING_MODALITY_REQUIRED';
-  const modalityPrompt = modalityRequired ? (
+  // A7 · perfil legacy sin la respuesta de alcance de salud → se le pide; nunca se
+  // asume «No» ni se deduce de la antigua lista de diagnósticos.
+  const therapeuticAnswerRequired = energyState?.status === 'PROFILE_INCOMPLETE'
+    && energyState.missing.includes('requiresTherapeuticDiet');
+  // A7 · fuera de alcance por dieta terapéutica indicada: se explica, sin cifras.
+  const therapeuticOutOfScope = energyState?.status === 'OUTSIDE_HSC_NUTRITION_SCOPE'
+    && energyState.scopeReason === 'therapeutic_diet_required';
+  const askKey = therapeuticAnswerRequired
+    ? (['nutritionPlanner.therapeuticDietRequired', 'nutritionPlanner.therapeuticDietRequiredCta'] as const)
+    : modalityRequired
+      ? (['nutritionPlanner.modalityRequired', 'nutritionPlanner.modalityRequiredCta'] as const)
+      : null;
+  const modalityPrompt = therapeuticOutOfScope ? (
+    <div className="wnp2-scope-notice" role="status" style={{ margin: '12px 0', textAlign: 'center' }}>
+      <p className="wz-title" style={{ fontSize: '1.05rem' }}>{t('nutritionPlanner.therapeuticOutTitle')}</p>
+      <p className="wz-subtitle">{t('nutritionPlanner.therapeuticOutBody')}</p>
+    </div>
+  ) : askKey ? (
     <div className="wnp2-modality-required" role="status" style={{ margin: '12px 0', textAlign: 'center' }}>
-      <p className="wz-subtitle">{t('nutritionPlanner.modalityRequired')}</p>
+      <p className="wz-subtitle">{t(askKey[0])}</p>
       <button type="button" className="wz-cta" onClick={() => setEditDataOpen(true)}>
-        {t('nutritionPlanner.modalityRequiredCta')}
+        {t(askKey[1])}
       </button>
       {editDataOpen && <EditDataSheet onClose={() => setEditDataOpen(false)} />}
     </div>

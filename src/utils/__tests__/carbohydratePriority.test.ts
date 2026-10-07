@@ -165,7 +165,7 @@ describe('A4 · D · SPORTS_SCOPE', () => {
 
   it('end-to-end · 7 × 60 min (T4): resistencia → SPORTS_SCOPE · fuerza → VALID', () => {
     const ob = (m: string) => ({
-      sex: 'Mujer', goal: 'Bienestar integral', edad: 32, estatura: 168, peso: 62, embarazo: 0,
+      sex: 'Mujer', goal: 'Bienestar integral', edad: 32, estatura: 168, peso: 62, embarazo: 0, requiresTherapeuticDiet: 0,
       dailyLife: 'DL2', trainsHabitually: 1, trainingDaysPerWeek: 7, trainingSessionMinutes: 60,
       trainingModalities: m,
     }) as Record<string, string | number>;

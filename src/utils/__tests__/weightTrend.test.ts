@@ -144,13 +144,14 @@ describe('N10.1 · S/T · determinismo / no-mutación', () => {
   });
 });
 
-describe('N10.1 · Z/AC · el peso estable alimenta las macros, y respeta el tope renal', () => {
+describe('N10.1 · Z · el peso estable alimenta las macros', () => {
   // CAPA 2 · las macros las prescribe `macroPrescription` (PRW × factor). AB
   // (bienestar ≥ 70) se retiró: fuera de 19–64 no hay prescripción (Scope Guard),
   // y la autoridad nueva no tiene «modo bienestar».
-  const macros = (weightKg: number, declaredRenalCondition = false) => prescribeMacros({
+  // A7 · AC (tope renal) se retiró: ningún diagnóstico ajusta las macros.
+  const macros = (weightKg: number) => prescribeMacros({
     energyKcal: 2200, goal: 'FAT_LOSS', weightKg, heightCm: 178,
-    activityClass: 'LOW_DEMAND', trainingBand: 'T1', declaredRenalCondition,
+    activityClass: 'LOW_DEMAND', trainingBand: 'T1',
   });
 
   it('Z · macros desde stableKg = macros desde ese peso (sin capa paralela)', () => {
@@ -160,9 +161,5 @@ describe('N10.1 · Z/AC · el peso estable alimenta las macros, y respeta el top
       expect(stable.stableKg).toBe(80.0);
       expect(macros(stable.stableKg)).toEqual(macros(80.0));
     }
-  });
-  it('AC · renal → proteína ≤ 1.0 g/kg', () => {
-    const m = macros(80, true);
-    expect(m.proteinG).toBeLessThanOrEqual(80);
   });
 });

@@ -93,7 +93,7 @@ export class InvalidPersistedProfileError extends Error {
 }
 
 /** Claves persistidas como `0`/`1` cuya conversión a booleano posee este módulo. */
-export const PERSISTED_BOOLEAN_KEYS: readonly string[] = ['embarazo', 'trainsHabitually'];
+export const PERSISTED_BOOLEAN_KEYS: readonly string[] = ['embarazo', 'trainsHabitually', 'requiresTherapeuticDiet'];
 
 /** Datos persistidos del perfil, tal como los guarda `obData`. */
 export type PersistedObData = Record<string, string | number | undefined>;
@@ -110,6 +110,7 @@ export type MissingProfileField =
   | 'heightCm'
   | 'weightKg'
   | 'pregnantOrLactating'
+  | 'requiresTherapeuticDiet'
   | 'dailyLife'
   | 'trainsHabitually'
   | 'trainingDaysPerWeek'
@@ -117,6 +118,7 @@ export type MissingProfileField =
 
 export const MISSING_PROFILE_FIELDS: readonly MissingProfileField[] = [
   'sex', 'goal', 'ageYears', 'heightCm', 'weightKg', 'pregnantOrLactating',
+  'requiresTherapeuticDiet',
   'dailyLife', 'trainsHabitually', 'trainingDaysPerWeek', 'trainingSessionMinutes',
 ];
 
@@ -222,6 +224,10 @@ export function nutritionProfileInputFrom(
   const trains = declared(ob, 'trainsHabitually')
     ? boolFrom10('trainsHabitually', ob.trainsHabitually)
     : null;
+  // A7 · ¿un profesional le indicó una dieta terapéutica? Misma convención 0/1.
+  const therapeutic = declared(ob, 'requiresTherapeuticDiet')
+    ? boolFrom10('requiresTherapeuticDiet', ob.requiresTherapeuticDiet)
+    : null;
 
   // ── 1 · IDENTIDAD Y OBJETIVO ─────────────────────────────────────────────
   // Pass-through: el mapeo de `'Hombre'`/`'Mujer'` y de los objetivos del producto
@@ -243,6 +249,12 @@ export function nutritionProfileInputFrom(
   // Asumir `false` metería a una persona embarazada DENTRO del alcance de
   // nutrición, que es precisamente lo que el Scope Guard existe para impedir.
   if (pregnant === null) missing.push('pregnantOrLactating');
+
+  // ── 3b · DIETA TERAPÉUTICA INDICADA (A7) ─────────────────────────────────
+  // Misma regla que el embarazo: AUSENTE es `missing`, nunca `false`. Un perfil
+  // legacy no contesta esta pregunta, y su antigua lista de diagnósticos
+  // (`conditions`) NO la responde: no se lee aquí.
+  if (therapeutic === null) missing.push('requiresTherapeuticDiet');
 
   // ── 4 · ACTIVITY PROFILE ─────────────────────────────────────────────────
   if (!declared(ob, 'dailyLife')) missing.push('dailyLife');
@@ -268,6 +280,7 @@ export function nutritionProfileInputFrom(
   // Si alguna vez llegara aquí, es un fallo interno y tiene que verse.
   if (pregnant === null) throw new InvalidPersistedProfileError('embarazo', ob.embarazo);
   if (trains === null) throw new InvalidPersistedProfileError('trainsHabitually', ob.trainsHabitually);
+  if (therapeutic === null) throw new InvalidPersistedProfileError('requiresTherapeuticDiet', ob.requiresTherapeuticDiet);
 
   // ── 5 · ENSAMBLAJE ───────────────────────────────────────────────────────
   // `dailyLife` va como pass-through: un `'DL9'` llega crudo al clasificador, que
@@ -294,6 +307,7 @@ export function nutritionProfileInputFrom(
     heightCm: num(ob, hKey as string),
     weightKg: num(ob, 'peso'),
     pregnantOrLactating: pregnant,
+    requiresTherapeuticDiet: therapeutic,
     activityProfile: {
       dailyLife: ob.dailyLife as ActivityProfile['dailyLife'],
       habitualTraining,

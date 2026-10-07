@@ -77,6 +77,11 @@ export interface ProfileInput {
   weightKg: number;
   /** Un solo booleano: el onboarding pregunta «¿embarazada o en lactancia?». */
   pregnantOrLactating: boolean;
+  /**
+   * A7 · «¿Un profesional te indicó modificar tu alimentación o seguir una dieta
+   * específica por una condición médica?». Solo decide el ALCANCE.
+   */
+  requiresTherapeuticDiet: boolean;
   activityProfile: ActivityProfile;
 }
 
@@ -99,6 +104,7 @@ export interface ValidatedNutritionProfile {
   heightCm: number;
   weightKg: number;
   pregnantOrLactating: boolean;
+  requiresTherapeuticDiet: boolean;
   /** Sin tocar: `ActivityClassifier` conserva toda la autoridad sobre su forma. */
   activityProfile: ActivityProfile;
 }
@@ -183,6 +189,12 @@ export function validateNutritionProfile(input: ProfileInput): ValidatedNutritio
     );
   }
 
+  if (typeof input.requiresTherapeuticDiet !== 'boolean') {
+    throw new InvalidProfileInputError(
+      'requiresTherapeuticDiet', input.requiresTherapeuticDiet, 'debe ser booleano',
+    );
+  }
+
   // Solo presencia: la forma interna es autoridad de ActivityClassifier.
   const activityProfile = input.activityProfile;
   if (activityProfile === null || typeof activityProfile !== 'object') {
@@ -194,6 +206,7 @@ export function validateNutritionProfile(input: ProfileInput): ValidatedNutritio
   return {
     sex, goal, ageYears, heightCm, weightKg,
     pregnantOrLactating: input.pregnantOrLactating,
+    requiresTherapeuticDiet: input.requiresTherapeuticDiet,
     activityProfile,
   } as ValidatedNutritionProfile;
 }

@@ -120,8 +120,8 @@ export function weeklyPlanCurrentness(input: {
   if (weeklyPlan.gen?.kcal !== planGoal) return 'STALE';
 
   // CAPA 2 · plan dimensionado a otras macros con la MISMA energía. Un cambio de
-  // peso, de objetivo, de entrenamiento o de condición renal puede mover la
-  // proteína sin mover la kcal; antes ese plan seguía «vigente».
+  // peso, de objetivo o de entrenamiento puede mover la proteína sin mover la
+  // kcal; antes ese plan seguía «vigente».
   if (weeklyPlan.gen.protG !== macros.proteinG
     || weeklyPlan.gen.fatG !== macros.fatG
     || weeklyPlan.gen.carbG !== macros.carbG) return 'STALE';

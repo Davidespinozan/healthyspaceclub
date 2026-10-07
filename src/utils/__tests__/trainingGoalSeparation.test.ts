@@ -161,7 +161,7 @@ describe('CUT · nutrición SÍ responde al body goal (dominio A intacto)', () =
   // El perfil lleva los campos que exige la cadena nueva (alcance 19-64,
   // embarazo declarado, ActivityProfile completo).
   const stats = {
-    sex: 'Hombre', peso: 80, estatura: 178, edad: 30, embarazo: 0,
+    sex: 'Hombre', peso: 80, estatura: 178, edad: 30, embarazo: 0, requiresTherapeuticDiet: 0,
     dailyLife: 'DL2', trainsHabitually: 1, trainingDaysPerWeek: 4, trainingSessionMinutes: 60,
   };
   const prescrita = (goal: string) => {

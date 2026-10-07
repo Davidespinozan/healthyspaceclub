@@ -63,7 +63,7 @@ const TARGETS = limpio(srcTargets);
 /** Perfil persistido completo y dentro de alcance → PRESCRIBED. */
 const OB = {
   sex: 'Hombre', goal: 'Bajar grasa', edad: 30, estatura: 180, peso: 80,
-  embarazo: 0, dailyLife: 'DL2', trainsHabitually: 1,
+  embarazo: 0, requiresTherapeuticDiet: 0, dailyLife: 'DL2', trainsHabitually: 1,
   trainingDaysPerWeek: 4, trainingSessionMinutes: 60,
 } as const;
 
@@ -79,7 +79,7 @@ const PERFILES = {
   // La cifra cruda cae por debajo del suelo de 1200 kcal.
   OUTSIDE_FAT_LOSS: {
     sex: 'Mujer', goal: 'Bajar grasa', edad: 64, estatura: 143, peso: 39,
-    embarazo: 0, dailyLife: 'DL1', trainsHabitually: 0,
+    embarazo: 0, requiresTherapeuticDiet: 0, dailyLife: 'DL1', trainsHabitually: 0,
   },
   PROFILE_INCOMPLETE: { sex: 'Hombre' },
   // `dailyLife` presente pero inválido: el clasificador LANZA (dato, no ausencia).
