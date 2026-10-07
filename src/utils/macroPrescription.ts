@@ -29,6 +29,7 @@
 // ESTADO, no como excepción.
 // ═════════════════════════════════════════════════════════════════════════════
 import type { CanonicalGoal } from './energyPrescription';
+import { TRAINING_BANDS, type TrainingBand } from './activityClassifier';
 import type { NutritionEnergyState } from './nutritionEnergyState';
 import { nutritionProfileInputFrom, type PersistedObData } from './nutritionProfileInput';
 import { TRAINING_MODALITIES_KEY, deriveProteinActivityClass, readTrainingModalities } from './trainingModality';
@@ -37,9 +38,11 @@ import { TRAINING_MODALITIES_KEY, deriveProteinActivityClass, readTrainingModali
  * Versión de la autoridad.
  *   v1 · CAPA 2 (clase de actividad inferida de los minutos · retirada)
  *   v2 · A2 · clase de actividad desde la modalidad DECLARADA
+ *   v3 · A4 · prioridad de carbohidrato desde la matriz cerrada (antes STANDARD
+ *        para todos); resistencia/mixto/equipo en T4 → SPORTS_SCOPE
  * Una prescripción persistida con otra versión no se adopta (`store.merge`).
  */
-export const MACRO_PRESCRIPTION_VERSION = 2;
+export const MACRO_PRESCRIPTION_VERSION = 3;
 
 /**
  * Clase de actividad que determina el factor de proteína.
@@ -63,12 +66,28 @@ export const PROTEIN_ACTIVITY_CLASSES: readonly ProteinActivityClass[] = [
 ];
 
 /**
- * Prioridad de carbohidrato · METADATO contextual.
+ * Prioridad de carbohidrato · METADATO contextual (A4).
  *
- * NO cambia la energía ni las macros. Existe para validación y contexto (p. ej.
- * futuras señales de REVIEW en deportes de alta demanda glucolítica).
+ * `STANDARD` / `ELEVATED` / `HIGH` NO cambian la energía, la proteína, la grasa
+ * ni los gramos de carbohidrato, no crean pisos y no disparan REVIEW: los
+ * umbrales de REVIEW por baja disponibilidad de carbohidrato siguen ABIERTOS.
+ *
+ * `SPORTS_SCOPE` es la única que tiene efecto: el contexto queda fuera del
+ * manejo deportivo automático de HSC V1, y la prescripción sale con el
+ * `MacroStatus` que ya existe para eso (`SPORTS_SCOPE`), no con un número.
  */
 export type CarbohydratePriority = 'STANDARD' | 'ELEVATED' | 'HIGH' | 'SPORTS_SCOPE';
+
+/** Matriz CERRADA (A4) · clase de actividad declarada × banda de carga T0–T4. */
+const CARB_PRIORITY_MATRIX: Readonly<Record<ProteinActivityClass, Readonly<Record<TrainingBand, CarbohydratePriority>>>> = {
+  NO_STRUCTURED_TRAINING: { T0: 'STANDARD', T1: 'STANDARD', T2: 'STANDARD', T3: 'STANDARD', T4: 'STANDARD' },
+  LOW_DEMAND:             { T0: 'STANDARD', T1: 'STANDARD', T2: 'STANDARD', T3: 'STANDARD', T4: 'STANDARD' },
+  STRENGTH:               { T0: 'STANDARD', T1: 'ELEVATED', T2: 'ELEVATED', T3: 'ELEVATED', T4: 'ELEVATED' },
+  ENDURANCE_GENERAL:      { T0: 'STANDARD', T1: 'ELEVATED', T2: 'HIGH',     T3: 'HIGH',     T4: 'SPORTS_SCOPE' },
+  MIXED:                  { T0: 'STANDARD', T1: 'ELEVATED', T2: 'HIGH',     T3: 'HIGH',     T4: 'SPORTS_SCOPE' },
+  TEAM_INTERMITTENT:      { T0: 'STANDARD', T1: 'ELEVATED', T2: 'HIGH',     T3: 'HIGH',     T4: 'SPORTS_SCOPE' },
+  SPECIALIZED_SPORT:      { T0: 'SPORTS_SCOPE', T1: 'SPORTS_SCOPE', T2: 'SPORTS_SCOPE', T3: 'SPORTS_SCOPE', T4: 'SPORTS_SCOPE' },
+};
 
 /** Estado autoritativo de la prescripción de macros. Un solo enum, sin solapes. */
 export type MacroStatus = 'VALID' | 'REVIEW' | 'INFEASIBLE' | 'SPORTS_SCOPE';
@@ -114,8 +133,11 @@ export interface MacroInput {
   weightKg: number;
   heightCm: number;
   activityClass: ProteinActivityClass;
-  /** Metadato. Si no se indica, se toma `STANDARD`. */
-  carbohydratePriority?: CarbohydratePriority;
+  /**
+   * Banda de CARGA semanal (ActivityClassifier, CAPA 1). Solo alimenta la
+   * prioridad de carbohidrato; nunca la clase de actividad ni los gramos.
+   */
+  trainingBand: TrainingBand;
   /**
    * El socio declaró enfermedad renal en el perfil.
    *
@@ -168,7 +190,12 @@ export type MacroPrescription =
     })
   | (MacroBase & {
       status: 'SPORTS_SCOPE';
-      reason: 'SPECIALIZED_SPORT';
+      /**
+       * `SPECIALIZED_SPORT` · la clase declarada es deporte especializado.
+       * `CARB_PRIORITY_SPORTS_SCOPE` · la matriz de prioridad (A4) coloca el
+       * contexto fuera de alcance (resistencia/mixto/equipo en T4).
+       */
+      reason: 'SPECIALIZED_SPORT' | 'CARB_PRIORITY_SPORTS_SCOPE';
       proteinFactor?: undefined;
       proteinG?: undefined;
       fatG?: undefined;
@@ -190,7 +217,6 @@ export class InvalidMacroInputError extends Error {
 }
 
 const GOALS: readonly CanonicalGoal[] = ['FAT_LOSS', 'RECOMPOSITION', 'MUSCLE_GAIN', 'MAINTENANCE'];
-const PRIORITIES: readonly CarbohydratePriority[] = ['STANDARD', 'ELEVATED', 'HIGH', 'SPORTS_SCOPE'];
 const positiveFinite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0;
 
 /**
@@ -212,6 +238,18 @@ export function proteinReferenceWeightKg(weightKg: number, heightCm: number): nu
   return weightAtBmi30 + PRW_EXCESS_FRACTION * (weightKg - weightAtBmi30);
 }
 
+/**
+ * Prioridad de carbohidrato · ÚNICA derivación (A4).
+ *
+ * Entradas autoritativas: la clase de actividad DECLARADA (A2) y la banda de
+ * carga T0–T4. Sin defaults: una entrada desconocida lanza (fail-closed).
+ */
+export function deriveCarbohydratePriority(activityClass: ProteinActivityClass, trainingBand: TrainingBand): CarbohydratePriority {
+  if (!PROTEIN_ACTIVITY_CLASSES.includes(activityClass)) throw new InvalidMacroInputError('activityClass', activityClass, 'clase de actividad desconocida');
+  if (!TRAINING_BANDS.includes(trainingBand)) throw new InvalidMacroInputError('trainingBand', trainingBand, 'banda de carga desconocida');
+  return CARB_PRIORITY_MATRIX[activityClass][trainingBand];
+}
+
 /** Factor de proteína (g/kg PRW). `null` = deporte especializado (fuera del alcance automático). */
 export function proteinFactor(goal: CanonicalGoal, activityClass: ProteinActivityClass): number | null {
   if (activityClass === 'SPECIALIZED_SPORT') return null;
@@ -231,23 +269,25 @@ export function proteinFactor(goal: CanonicalGoal, activityClass: ProteinActivit
  *
  * ── REVIEW ──────────────────────────────────────────────────────────────────
  * La arquitectura existe. El único disparador hoy es la regla de seguridad
- * renal heredada (ver `declaredRenalCondition`). Los umbrales de baja
- * disponibilidad de carbohidrato en contextos HIGH NO están cerrados y quedan
- * DIFERIDOS: no se inventan aquí.
+ * renal heredada (ver `declaredRenalCondition`). La prioridad de carbohidrato
+ * (`ELEVATED`/`HIGH`) NO dispara REVIEW: sus umbrales siguen ABIERTOS.
  */
 export function prescribeMacros(input: MacroInput): MacroPrescription {
   const { energyKcal, goal, weightKg, heightCm, activityClass } = input;
   if (!positiveFinite(energyKcal)) throw new InvalidMacroInputError('energyKcal', energyKcal, 'debe ser un número finito > 0');
   if (!GOALS.includes(goal)) throw new InvalidMacroInputError('goal', goal, 'objetivo canónico desconocido');
   if (!PROTEIN_ACTIVITY_CLASSES.includes(activityClass)) throw new InvalidMacroInputError('activityClass', activityClass, 'clase de actividad desconocida');
-  const carbohydratePriority = input.carbohydratePriority ?? 'STANDARD';
-  if (!PRIORITIES.includes(carbohydratePriority)) throw new InvalidMacroInputError('carbohydratePriority', carbohydratePriority, 'prioridad desconocida');
+  // Metadato. Se calcula junto a las macros y NO entra en ninguna fórmula de gramos.
+  const carbohydratePriority = deriveCarbohydratePriority(activityClass, input.trainingBand);
 
   const prwKg = proteinReferenceWeightKg(weightKg, heightCm);
   const base: MacroBase = { version: MACRO_PRESCRIPTION_VERSION, energyKcal, goal, activityClass, carbohydratePriority, prwKg };
 
   const matrixFactor = proteinFactor(goal, activityClass);
   if (matrixFactor === null) return { ...base, status: 'SPORTS_SCOPE', reason: 'SPECIALIZED_SPORT' };
+  // A4 · la matriz de prioridad saca el contexto del alcance automático: no se
+  // sirve como VALID. Mismo estado, motivo propio. Ningún gramo.
+  if (carbohydratePriority === 'SPORTS_SCOPE') return { ...base, status: 'SPORTS_SCOPE', reason: 'CARB_PRIORITY_SPORTS_SCOPE' };
   const renal = input.declaredRenalCondition === true;
   const factor = renal ? Math.min(matrixFactor, RENAL_PROTEIN_FACTOR_CAP) : matrixFactor;
   const reviewReasons: string[] = renal ? ['RENAL_CONDITION_DECLARED'] : [];
@@ -294,8 +334,8 @@ export function isServableMacroPrescription(
 // modalidad, NO hay prescripción: se devuelve `INPUT_REQUIRED`, no un
 // `MacroStatus` nuevo ni una clase supuesta.
 //
-// La prioridad de carbohidrato es `STANDARD` para todos: es metadato y su mapeo
-// no está cerrado (bloque aparte).
+// La prioridad de carbohidrato sale de la matriz cerrada (A4): clase declarada ×
+// banda de carga T0–T4. La banda NO decide la clase.
 //
 // Si la derivación cambia, sube `MACRO_PRESCRIPTION_VERSION`.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -349,7 +389,7 @@ export function resolveMacroPrescription(
       weightKg: read.profile.weightKg,
       heightCm: read.profile.heightCm,
       activityClass: cls.activityClass,
-      carbohydratePriority: 'STANDARD',
+      trainingBand: state.classification.matrixCell.trainingBand,
       declaredRenalCondition: declaresRenalCondition(obData),
     }),
   };

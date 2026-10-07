@@ -32,7 +32,7 @@ const OB = { sex: 'Hombre', peso: 80, estatura: 180, edad: 30, activity: 'Alta',
 const PLAN_GOAL = 2100;
 /** CAPA 2 · las macros llegan por `store.macroTargets`, prescritas sobre `PLAN_GOAL`. */
 const MACRO_TARGETS = prescribeMacros({
-  energyKcal: PLAN_GOAL, goal: 'FAT_LOSS', weightKg: 80, heightCm: 180, activityClass: 'MIXED',
+  energyKcal: PLAN_GOAL, goal: 'FAT_LOSS', weightKg: 80, heightCm: 180, activityClass: 'MIXED', trainingBand: 'T2',
 });
 if (MACRO_TARGETS.status !== 'VALID') throw new Error('el seed debería ser VALID');
 const MACROS = { protG: MACRO_TARGETS.proteinG, carbG: MACRO_TARGETS.carbG, fatG: MACRO_TARGETS.fatG };

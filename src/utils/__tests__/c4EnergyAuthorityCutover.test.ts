@@ -365,7 +365,7 @@ describe('C4 · C · vigencia del plan semanal', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 describe('C4 · D · CAPA 2 · macros desde la autoridad nueva', () => {
   it('las macros se derivan de la cifra RECIBIDA, no de una estimación propia', () => {
-    const base = { goal: 'FAT_LOSS', weightKg: 80, heightCm: 180, activityClass: 'MIXED' } as const;
+    const base = { goal: 'FAT_LOSS', weightKg: 80, heightCm: 180, activityClass: 'MIXED', trainingBand: 'T2' } as const;
     const a = prescribeMacros({ ...base, energyKcal: 2000 });
     const b = prescribeMacros({ ...base, energyKcal: 2600 });
     if (a.status !== 'VALID' || b.status !== 'VALID') throw new Error('deberían ser VALID');
@@ -463,7 +463,7 @@ describe('C4 · E · autoridad única', () => {
     macroTargets: planGoal == null ? null : COACH_MACROS(planGoal),
   }) as unknown as Parameters<typeof buildCoachContext>[0];
   const COACH_MACROS = (kcal: number) => prescribeMacros({
-    energyKcal: kcal, goal: 'FAT_LOSS', weightKg: 80, heightCm: 180, activityClass: 'MIXED',
+    energyKcal: kcal, goal: 'FAT_LOSS', weightKg: 80, heightCm: 180, activityClass: 'MIXED', trainingBand: 'T2',
   });
 
   it('sin prescripción el bloque `nutrition` es null COMPLETO, no ceros', () => {

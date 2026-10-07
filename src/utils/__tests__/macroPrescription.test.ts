@@ -29,7 +29,7 @@ const sinComentarios = (s: string): string =>
 const CODE = sinComentarios(srcMacro);
 
 const BASE: MacroInput = {
-  energyKcal: 2000, goal: 'MAINTENANCE', weightKg: 80, heightCm: 180, activityClass: 'MIXED',
+  energyKcal: 2000, goal: 'MAINTENANCE', weightKg: 80, heightCm: 180, activityClass: 'MIXED', trainingBand: 'T2',
 };
 const served = (input: Partial<MacroInput> = {}) => {
   const m = prescribeMacros({ ...BASE, ...input });
@@ -134,7 +134,10 @@ describe('CAPA 2 · B · factor de proteína', () => {
   it('la autoridad pura no depende del sexo, la edad ni los minutos: no son entradas', () => {
     const pura = CODE.slice(CODE.indexOf('export function prescribeMacros'), CODE.indexOf('export function isServableMacroPrescription'));
     expect(pura.length).toBeGreaterThan(0);
-    expect(pura).not.toMatch(/\b(sex|sexo|ageYears|edad|weeklyTrainingMinutes|trainingBand)\b/);
+    expect(pura).not.toMatch(/\b(sex|sexo|ageYears|edad|weeklyTrainingMinutes)\b/);
+    // A4 · la banda de carga solo entra para la prioridad de carbohidrato.
+    expect(pura.match(/\btrainingBand\b/g)).toEqual(['trainingBand']);
+    expect(pura).toContain('deriveCarbohydratePriority(activityClass, input.trainingBand)');
   });
 
   it('sin techo universal (2.2 / 2.4) ni tabla GKG', () => {
@@ -258,11 +261,12 @@ describe('CAPA 2 · F · estados', () => {
     expect(m.proteinG).toBe(80);
   });
 
-  it('la prioridad de carbohidrato es metadato: no mueve un gramo', () => {
-    const ref = served();
-    for (const p of ['STANDARD', 'ELEVATED', 'HIGH'] as const) {
-      const m = served({ carbohydratePriority: p });
+  it('la prioridad de carbohidrato es metadato: no mueve un gramo (T0–T3 de MIXED)', () => {
+    const ref = served({ trainingBand: 'T0' });
+    for (const [band, p] of [['T0', 'STANDARD'], ['T1', 'ELEVATED'], ['T2', 'HIGH'], ['T3', 'HIGH']] as const) {
+      const m = served({ trainingBand: band });
       expect(m.carbohydratePriority).toBe(p);
+      expect(m.status).toBe('VALID');
       expect([m.proteinG, m.fatG, m.carbG]).toEqual([ref.proteinG, ref.fatG, ref.carbG]);
     }
   });
@@ -270,7 +274,7 @@ describe('CAPA 2 · F · estados', () => {
   it('entradas sin sentido físico lanzan (fail-closed)', () => {
     for (const bad of [
       { energyKcal: 0 }, { energyKcal: Number.NaN }, { weightKg: -1 }, { heightCm: 0 },
-      { goal: 'BULK' as never }, { activityClass: 'YOGA' as never }, { carbohydratePriority: 'MAX' as never },
+      { goal: 'BULK' as never }, { activityClass: 'YOGA' as never }, { trainingBand: 'T9' as never },
     ]) {
       expect(() => prescribeMacros({ ...BASE, ...bad }), JSON.stringify(bad)).toThrow(InvalidMacroInputError);
     }

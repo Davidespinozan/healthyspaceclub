@@ -150,7 +150,7 @@ describe('N10.1 · Z/AC · el peso estable alimenta las macros, y respeta el top
   // y la autoridad nueva no tiene «modo bienestar».
   const macros = (weightKg: number, declaredRenalCondition = false) => prescribeMacros({
     energyKcal: 2200, goal: 'FAT_LOSS', weightKg, heightCm: 178,
-    activityClass: 'LOW_DEMAND', declaredRenalCondition,
+    activityClass: 'LOW_DEMAND', trainingBand: 'T1', declaredRenalCondition,
   });
 
   it('Z · macros desde stableKg = macros desde ese peso (sin capa paralela)', () => {

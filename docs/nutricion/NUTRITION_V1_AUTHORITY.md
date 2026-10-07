@@ -90,8 +90,8 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 1`). 
 | Grasa | `IMPLEMENTED` | 25 % de la energía. AMDR 20–35 % solo como referencia. | `FAT_PCT` 22/25/28/30, piso 0,6 g/kg |
 | Carbohidrato | `IMPLEMENTED` | Residuo. Residuo ≤ 0 → `INFEASIBLE` (`CARB_RESIDUAL_NON_POSITIVE`), sin clamp. | Piso de 50 g (y el de 130 g de la especificación legacy) |
 | Estados | `IMPLEMENTED` | `VALID` / `REVIEW` / `INFEASIBLE` / `SPORTS_SCOPE`. Solo `VALID`/`REVIEW` se sirven. | — |
-| `REVIEW` | Arquitectura `IMPLEMENTED`; regla general `OPEN` | Único disparador hoy: tope renal heredado. Umbrales de baja disponibilidad de carbohidrato: **no cerrados**, no inventados. | — |
-| Prioridad de carbohidrato | `IMPLEMENTED` como metadato | `STANDARD`/`ELEVATED`/`HIGH`/`SPORTS_SCOPE`; no mueve gramos. Producción asigna `STANDARD` a todos (ver dependencias). | — |
+| `REVIEW` | Arquitectura `IMPLEMENTED`; regla general `OPEN` | Único disparador hoy: tope renal heredado. La prioridad de carbohidrato NO dispara REVIEW: sus umbrales siguen `OPEN / NOT IMPLEMENTED`, no inventados. | — |
+| Prioridad de carbohidrato | `IMPLEMENTED` como metadato (A4) | Fuente: `DECLARED MODALITY + T-BAND` · `deriveCarbohydratePriority(clase, banda)`. Semántica: `CONTEXT METADATA`. Efecto automático en macros: `NONE` (STANDARD/ELEVATED/HIGH no mueven gramos ni disparan REVIEW). Resistencia/mixto/equipo en T4 → status `SPORTS_SCOPE` con motivo `CARB_PRIORITY_SPORTS_SCOPE`; deporte especializado → `SPORTS_SCOPE` (`SPECIALIZED_SPORT`). Umbral de REVIEW: `OPEN / NOT IMPLEMENTED`. | `STANDARD FOR ALL → RETIRED` |
 | Redondeo | `IMPLEMENTED` | Energía intacta. Proteína y grasa a gramos enteros; carbohidrato derivado de los gramos redondeados → `4P + 9G + 4C` = energía ± 2 kcal. El estado se decide sobre valores sin redondear. | — |
 | Fibra | `IMPLEMENTED` (informativa) | 14 g / 1000 kcal (LOGICA §3.4). Solo se muestra en onboarding; no es objetivo del solver. | Igual que antes |
 | Vigencia del plan | `IMPLEMENTED` | `weeklyPlanCurrentness` compara `gen.kcal` **y** `gen.protG/fatG/carbG`; sin macros servibles → `NOT_CURRENT`. `PLAN_ENGINE_VERSION` 32 → 33. | Planes con macros legacy quedan `STALE` |
@@ -100,7 +100,7 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 1`). 
 ### ⚠️ Dependencias temporales y supuestos (impiden `VERIFIED_CLEAN`)
 
 1. ~~Mapeo de clase de actividad desde los minutos~~ · **`RETIRED` en A2** (ver la sección A1/A2).
-2. **Prioridad de carbohidrato** = `STANDARD` para todos, por falta de mapeo cerrado desde datos de HSC. Sin efecto en gramos.
+2. ~~Prioridad de carbohidrato = `STANDARD` para todos~~ · **`RETIRED` en A4** (matriz cerrada clase declarada × banda T0–T4; `MACRO_PRESCRIPTION_VERSION` 2 → 3).
 3. **Tope renal heredado (1,0 g/kg PRW) · REGLA DE SEGURIDAD LEGACY.** La política V1 no trata la enfermedad renal; retirarlo subiría a 1,3–1,8 g/kg a quien la declaró. Se conserva y la prescripción sale en `REVIEW` con motivo `RENAL_CONDITION_DECLARED`. Requiere decisión clínica.
 4. **Copy para `INFEASIBLE` / `SPORTS_SCOPE`.** No hay mensaje dedicado: el planner aborta en neutro (como sin energía), el onboarding muestra la energía sin gramos y el coach dice que no hay meta nutricional vigente.
 5. **`LOGICA-NUTRICIONAL-HSC.md` §3.1–3.3** (GKG, grasa por objetivo, piso de 130 g) describe la política legacy y no se ha actualizado.

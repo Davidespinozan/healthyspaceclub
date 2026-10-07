@@ -276,7 +276,7 @@ describe('A2 · E · usuarios existentes y persistencia', () => {
   });
 
   it('una prescripción persistida de otra versión (minutos → clase) no se adopta', () => {
-    expect(MACRO_PRESCRIPTION_VERSION).toBe(2);
+    expect(MACRO_PRESCRIPTION_VERSION).toBeGreaterThanOrEqual(2);
     expect(sinComentarios(srcStore)).toContain('p.macroTargets.version !== MACRO_PRESCRIPTION_VERSION');
   });
 });
@@ -339,15 +339,29 @@ describe('A2 · G · la inferencia por minutos está retirada', () => {
     }
   });
 
-  it('ningún módulo que decide la clase lee minutos, banda T ni historial', () => {
-    for (const src of [sinComentarios(srcModality), sinComentarios(srcMacro)]) {
-      expect(src).not.toMatch(/\b(trainingBand|TrainingBand|weeklyTrainingMinutes|matrixCell|classification)\b/);
+  it('la derivación de la clase no lee minutos, banda T ni historial', () => {
+    const modality = sinComentarios(srcModality);
+    expect(modality).not.toMatch(/\b(trainingBand|TrainingBand|weeklyTrainingMinutes|matrixCell|classification)\b/);
+    for (const src of [modality, sinComentarios(srcMacro)]) {
       expect(src).not.toMatch(/\b(completedSessions|workout_log|workoutLog|activityLog|trainingGoal|cardioStyle|dailyWorkout|Modality)\b/);
     }
   });
 
-  it('ningún fichero productivo une banda/minutos con la clase proteica', () => {
+  it('en el adaptador, la banda solo va a la prioridad de carbohidrato (A4), nunca a la clase', () => {
+    const macro = sinComentarios(srcMacro);
+    expect(macro).not.toMatch(/\bweeklyTrainingMinutes\b/);
+    // La clase sale de `trainsHabitually` + modalidad declarada, y nada más.
+    const llamada = macro.slice(macro.indexOf('deriveProteinActivityClass('), macro.indexOf('if (cls.kind'));
+    expect(llamada).not.toMatch(/trainingBand|matrixCell|classification/);
+    expect(macro).toContain('activityClass: cls.activityClass,');
+    // La única lectura de la banda en el adaptador alimenta `trainingBand` (→ prioridad).
+    expect(macro.match(/state\.classification/g)).toEqual(['state.classification']);
+    expect(macro).toContain('trainingBand: state.classification.matrixCell.trainingBand,');
+  });
+
+  it('ningún OTRO fichero productivo une banda/minutos con la clase proteica', () => {
     const culpables = PRODUCTIVOS
+      .filter(([p]) => !p.endsWith('/macroPrescription.ts'))
       .filter(([, src]) => /\bProteinActivityClass\b|\bactivityClass\b/.test(src))
       .filter(([, src]) => /\btrainingBand\b|\bweeklyTrainingMinutes\b|\bT[234]\b/.test(src))
       .map(([p]) => p);
