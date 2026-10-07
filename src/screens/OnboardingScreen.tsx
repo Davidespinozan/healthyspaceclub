@@ -17,6 +17,7 @@ import AuthProviderButtons from '../components/AuthProviderButtons';
 // se lee del store. De `nutritionTargets` quedan el PUENTE de macros (legacy hasta
 // la CAPA 2) y los dos avisos de peso meta, que no son energéticos.
 import { targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
+import { classifyTargetWeight } from '../utils/targetWeightSafety';
 import { isServableMacroPrescription } from '../utils/macroPrescription';
 import { TRAINING_MODALITIES, TRAINING_MODALITIES_KEY, serializeTrainingModalities, type TrainingModality } from '../utils/trainingModality';
 import { track } from '../utils/analytics';
@@ -383,6 +384,19 @@ export default function OnboardingScreen() {
   }
 
   // Valida datos (Punto 9) + exige embarazo si es mujer, antes de continuar.
+  // A8 · aviso INFORMATIVO de IMC meta bajo (17–18,5). Lo decide la autoridad
+  // única; aquí no hay fórmula. No bloquea: el bloqueo lo traduce `invalidField`.
+  const targetLowBmiNotice = (() => {
+    if (!pesoMeta || !peso || !estatura) return false;
+    try {
+      return classifyTargetWeight({
+        currentWeightKg: Number(peso), heightCm: Number(estatura), targetWeightKg: Number(pesoMeta),
+      }).status === 'VALID_WITH_LOW_BMI_NOTICE';
+    } catch {
+      return false; // peso o estatura aún no evaluables: lo señala `invalidField` al continuar
+    }
+  })();
+
   function handleDataContinue() {
     const inv = invalidField({
       sexo: sex,
@@ -397,6 +411,7 @@ export default function OnboardingScreen() {
       estatura: 'onboarding.invalidEstatura', grasa: 'onboarding.invalidGrasa',
       pesoMeta: 'onboarding.invalidPesoMeta',
       pesoMetaBajoPeso: 'onboarding.invalidPesoMetaBajoPeso',
+      pesoMetaBajoPesoActual: 'onboarding.invalidPesoMetaBajoPesoActual',
     };
     if (inv) { setDataError(t(invMsg[inv])); return; }
     if (sex === 'Mujer' && !embarazo) { setDataError(t('onboarding.embarazoRequired')); return; }
@@ -612,7 +627,7 @@ export default function OnboardingScreen() {
               </div>
             )}
 
-            {/* Opcionales: % grasa (→ Katch-McArdle) + peso meta */}
+            {/* Opcionales: % grasa (avisos de peso meta) + peso meta (A8 · seguridad) */}
             <div className="onb-optional">
               <div className="onb-hint" style={{ marginTop: 6 }}>
                 {t('onboarding.optionalTitle')} · <em>{t('onboarding.optionalTag')}</em>
@@ -627,6 +642,7 @@ export default function OnboardingScreen() {
                   <input type="number" inputMode="decimal" placeholder="—" value={pesoMeta} onChange={e => setPesoMeta(e.target.value)} />
                 </div>
               </div>
+              {targetLowBmiNotice && <div className="onb-notice">{t('onboarding.targetWeightLowBmiNotice')}</div>}
             </div>
 
             {/* Movilidad (opcional) — deriva el modo bajo impacto en entrenamiento */}

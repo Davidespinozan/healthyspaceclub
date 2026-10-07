@@ -520,7 +520,10 @@ export const en: Translations<typeof es> = {
     invalidEstatura: 'Check your height (120-220 cm).',
     invalidGrasa: 'Check your body fat %.',
     invalidPesoMeta: 'Check your target weight (30-300 kg).',
-    invalidPesoMetaBajoPeso: 'Your target weight is below a healthy weight for your height (BMI under 18.5). Choose a higher target to continue.',
+    invalidPesoMetaBajoPeso: 'That target is below the range Healthy Space Club can recommend. Choose a slightly higher target to continue.',
+    invalidPesoMetaBajoPesoActual: 'At your current weight, Healthy Space Club cannot set a lower target weight. You can continue with a maintenance or gain goal.',
+    // A8 · INFORMATIONAL notice (does not block): target BMI between 17 and 18.5.
+    targetWeightLowBmiNotice: 'Your target is close to or below the usual healthy BMI range. You can continue, but BMI is only a reference and does not on its own reflect your body composition or health.',
     // CAPA 1E · FASE C4 — see the Spanish copy: where HSC Nutrition v1 does not
     // prescribe, it says so instead of inventing a wellness figure.
     sinMetaTitulo: 'Your space is ready, but without a nutrition target yet',

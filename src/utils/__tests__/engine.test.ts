@@ -56,18 +56,29 @@ describe('invalidField (datos imposibles)', () => {
   it('edad fuera de rango', () => expect(invalidField({ ...ok, edad: 12 })).toBe('edad'));
   it('peso fuera de rango', () => expect(invalidField({ ...ok, pesoKg: 500 })).toBe('peso'));
   it('% grasa fuera de rango (hombre)', () => expect(invalidField({ ...ok, grasa: 60 })).toBe('grasa'));
-  // CAPA 0 · D03 · peso meta con IMC < 18,5 → RECHAZADO (antes, solo un aviso).
-  it('peso meta con IMC < 18.5 → rechazado', () => {
-    // 165 cm: IMC 18.5 ≈ 50.4 kg
-    expect(invalidField({ ...ok, estaturaCm: 165, pesoMeta: 48 })).toBe('pesoMetaBajoPeso');
-    expect(invalidField({ ...ok, estaturaCm: 165, pesoMeta: 50 })).toBe('pesoMetaBajoPeso');
+  // A8 · el peso meta lo decide `classifyTargetWeight`; `invalidField` solo traduce
+  // su INVALID a un código. La matriz completa vive en `targetWeightSafety.test.ts`.
+  it('IMC meta 17–18,5 → aviso informativo, NO error', () => {
+    // 165 cm: IMC 18,5 ≈ 50,37 kg · IMC 17 ≈ 46,28 kg
+    expect(invalidField({ ...ok, pesoKg: 60, estaturaCm: 165, pesoMeta: 48 })).toBeNull();
+    expect(invalidField({ ...ok, pesoKg: 60, estaturaCm: 165, pesoMeta: 50 })).toBeNull();
+  });
+  it('IMC meta < 17 bajando desde un peso normal → pesoMetaBajoPeso', () => {
+    expect(invalidField({ ...ok, pesoKg: 60, estaturaCm: 165, pesoMeta: 45 })).toBe('pesoMetaBajoPeso');
+  });
+  it('ya en bajo peso y meta más baja → pesoMetaBajoPesoActual; subir → válido', () => {
+    expect(invalidField({ ...ok, pesoKg: 45, estaturaCm: 165, pesoMeta: 43 })).toBe('pesoMetaBajoPesoActual');
+    expect(invalidField({ ...ok, pesoKg: 43, estaturaCm: 165, pesoMeta: 45 })).toBeNull();
   });
   it('peso meta con IMC ≥ 18.5 → aceptado', () => {
     expect(invalidField({ ...ok, estaturaCm: 165, pesoMeta: 51 })).toBeNull();
     expect(invalidField({ ...ok, pesoMeta: 75 })).toBeNull();
   });
-  it('el rango absoluto (30–300 kg) sigue mandando primero', () => {
+  it('rango absoluto (30–300 kg) y no finitos → pesoMeta', () => {
     expect(invalidField({ ...ok, pesoMeta: 20 })).toBe('pesoMeta');
+    expect(invalidField({ ...ok, pesoMeta: 301 })).toBe('pesoMeta');
+    expect(invalidField({ ...ok, pesoMeta: Number.NaN })).toBe('pesoMeta');
+    expect(invalidField({ ...ok, pesoMeta: Number('53,5') })).toBe('pesoMeta');
   });
 });
 

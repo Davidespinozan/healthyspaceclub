@@ -521,7 +521,10 @@ export const es = {
     invalidEstatura: 'Revisa tu estatura (120-220 cm).',
     invalidGrasa: 'Revisa tu % de grasa corporal.',
     invalidPesoMeta: 'Revisa tu peso meta (30-300 kg).',
-    invalidPesoMetaBajoPeso: 'Tu peso meta queda por debajo de un peso saludable para tu estatura (IMC menor a 18.5). Elige una meta más alta para continuar.',
+    invalidPesoMetaBajoPeso: 'Esa meta está por debajo del rango que Healthy Space Club puede recomendar. Elige una meta un poco más alta para continuar.',
+    invalidPesoMetaBajoPesoActual: 'Con tu peso actual, Healthy Space Club no puede establecer una meta de peso más baja. Puedes continuar con un objetivo de mantenimiento o aumento.',
+    // A8 · aviso INFORMATIVO (no bloquea): IMC meta entre 17 y 18,5.
+    targetWeightLowBmiNotice: 'Tu meta está cerca o por debajo del rango habitual de IMC saludable. Puedes continuar, pero el IMC es solo una referencia y no refleja por sí solo tu composición corporal o salud.',
     // CAPA 1E · FASE C4 — HSC Nutrition v1 no prescribe a todo el mundo, y donde no
     // prescribe NO inventa una cifra de bienestar: lo dice. Las claves `aviso*` de
     // arriba acompañaban a un plan que sí existía; éstas explican que no hay plan.

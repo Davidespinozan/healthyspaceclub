@@ -3,8 +3,8 @@
 // Este archivo ya NO calcula energía (retirada en C5) ni macros (retiradas en
 // CAPA 2). Lo que queda no es una autoridad nutricional:
 //
-//   1 · VALIDACIÓN de rangos del onboarding → `invalidField` (incluye el rechazo
-//       del peso meta con IMC < 18,5, CAPA 0 · D03)
+//   1 · VALIDACIÓN de rangos del onboarding → `invalidField` (el peso meta lo
+//       decide `classifyTargetWeight`, A8; aquí solo se traduce a un código)
 //   2 · AVISOS de peso meta → `targetWeightNotice`, `estimateTimeMonths`
 //   3 · `mealCalorieSplit` (25/35/25/15) · sin consumidores productivos.
 //       LEGACY · PENDIENTE CAPA 4: no se borra antes de diseñar su reemplazo.
@@ -19,6 +19,10 @@
 //       tabla `GKG`, `FAT_PCT`, el piso de grasa de 0,6 g/kg, el piso de 50 g de
 //       carbohidrato) y `parseObData`, con sus defaults 70 kg / 170 cm / 28 años.
 //       La autoridad de macros es ahora `macroPrescription.ts`.
+
+import {
+  classifyTargetWeight, InvalidTargetWeightContextError, type TargetWeightSafety,
+} from './targetWeightSafety';
 
 export interface ObInput {
   sexo: string;                 // 'Hombre' | 'Mujer' → umbrales de % grasa
@@ -45,9 +49,13 @@ export function mealCalorieSplit(planGoal: number): { desayuno: number; comida: 
 
 // ── Punto 9 — validación de datos imposibles ──────────────────────────────
 // Devuelve el campo inválido (o null). La UI muestra "Revisa este dato".
+//
+// El PESO META ya no se valida aquí: lo decide la autoridad única
+// `classifyTargetWeight` (A8). Esta función solo traduce su INVALID a un código
+// de UI. El aviso informativo (`VALID_WITH_LOW_BMI_NOTICE`) NO es un error.
 export function invalidField(
   o: Pick<ObInput, 'sexo' | 'pesoKg' | 'estaturaCm' | 'edad' | 'grasa' | 'pesoMeta'>,
-): 'edad' | 'peso' | 'estatura' | 'grasa' | 'pesoMeta' | 'pesoMetaBajoPeso' | null {
+): 'edad' | 'peso' | 'estatura' | 'grasa' | 'pesoMeta' | 'pesoMetaBajoPeso' | 'pesoMetaBajoPesoActual' | null {
   if (o.edad < 13 || o.edad > 100) return 'edad';
   if (o.pesoKg < 30 || o.pesoKg > 300) return 'peso';
   if (o.estaturaCm < 120 || o.estaturaCm > 220) return 'estatura';
@@ -56,19 +64,29 @@ export function invalidField(
     const hi = o.sexo === 'Hombre' ? 50 : 55;
     if (o.grasa < lo || o.grasa > hi) return 'grasa';
   }
-  if (o.pesoMeta != null && (o.pesoMeta < 30 || o.pesoMeta > 300)) return 'pesoMeta';
-  // CAPA 0 · D03 · un peso meta con IMC < 18,5 se RECHAZA (antes solo era un
-  // aviso, `bajopeso-meta`). HSC no acompaña hacia el bajo peso.
   if (o.pesoMeta != null) {
-    const hM = o.estaturaCm / 100;
-    if (o.pesoMeta / (hM * hM) < 18.5) return 'pesoMetaBajoPeso';
+    let safety: TargetWeightSafety;
+    try {
+      safety = classifyTargetWeight({ currentWeightKg: o.pesoKg, heightCm: o.estaturaCm, targetWeightKg: o.pesoMeta });
+    } catch (e) {
+      // Sin peso o estatura evaluables la meta no se puede juzgar: se señala el dato de base.
+      if (e instanceof InvalidTargetWeightContextError) return e.field === 'heightCm' ? 'estatura' : 'peso';
+      throw e;
+    }
+    if (safety.status === 'INVALID') {
+      switch (safety.reason) {
+        case 'TARGET_OUT_OF_RANGE':          return 'pesoMeta';
+        case 'TARGET_BMI_TOO_LOW':           return 'pesoMetaBajoPeso';
+        case 'UNDERWEIGHT_NO_FURTHER_LOSS':  return 'pesoMetaBajoPesoActual';
+      }
+    }
   }
   return null;
 }
 
 // ── Punto 8 — aviso de peso meta (IMC + % grasa manda sobre IMC) ───────────
-// `bajopeso-meta` ya no existe: CAPA 0 · D03 convirtió ese aviso en un rechazo
-// (`invalidField` → 'pesoMetaBajoPeso'), así que un peso meta así no llega aquí.
+// `bajopeso-meta` ya no existe: la seguridad del peso meta (bloqueo y aviso de IMC
+// bajo) es de `classifyTargetWeight` (A8). Aquí solo quedan avisos de contexto.
 export type TargetWeightNoticeKind =
   | 'sube-musculo'     // sube + IMC alto pero % grasa bajo = músculo (ok)
   | 'sube-neutro-imc'  // sube + IMC alto, sin dato de grasa (aviso neutro)

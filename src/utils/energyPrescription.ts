@@ -73,8 +73,8 @@
 // `goalFactor` (0.80/0.90/1.12), `ACTIVITY_FACTORS`, `calcTDEE`, `sexFloor`,
 // `wellnessMode`, el piso `max(sexFloor, bmr)`, Mifflin, Katch-McArdle,
 // `obData.activity`, `% de grasa`, `targetWeight`, macros ni `conditions`.
-// `targetWeight` queda FUERA de la cadena energética: un IMC meta < 18.5
-// invalida ese target y no toca ni el mantenimiento ni la prescripción.
+// `targetWeight` queda FUERA de la cadena energética: su seguridad la decide
+// `targetWeightSafety` (A8) y no toca ni el mantenimiento ni la prescripción.
 //
 // NO HAY CLAMP EN NINGUNA PARTE. Cuando la cifra queda fuera del alcance del
 // producto se DICE, no se eleva en silencio a 1200.

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { PERMANENT_AVOID_CATALOG } from '../../utils/avoidAuthority';
+import { classifyTargetWeight, type TargetWeightSafety } from '../../utils/targetWeightSafety';
 import {
   TRAINING_MODALITIES, TRAINING_MODALITIES_KEY, declaredTrainingModalitiesForForm,
   serializeTrainingModalities, type TrainingModality,
@@ -96,6 +97,9 @@ export default function EditDataSheet({ onClose }: Props) {
     edad: String(obData.edad || ''),
     peso: String(obData.peso || ''),
     estatura: String(obData.estatura || obData.altura || ''),
+    // A8 · peso meta (opcional). Se muestra tal cual está guardado —también si es
+    // inválido (legacy o tras un cambio de estatura)— para poder corregirlo.
+    pesoMeta: obData.pesoMeta != null && obData.pesoMeta !== '' ? String(obData.pesoMeta) : '',
     activity: String(obData.activity || obData.actividad || ''),
     // Perfil legacy sin nivel → '' = SIN DECLARAR, y así se muestra. NO se
     // prerrellena con 'intermedio' ni se infiere desde `activity`: el motor tiene
@@ -184,6 +188,25 @@ export default function EditDataSheet({ onClose }: Props) {
     trainingMinutesNum >= TRAINING_MINUTES_MIN &&
     trainingMinutesNum <= TRAINING_MINUTES_MAX;
 
+  // A8 · seguridad del peso meta con los valores DEL FORMULARIO: reevalúa al cambiar
+  // estatura o peso. Misma autoridad que el onboarding; aquí no hay fórmula.
+  const targetSafety: TargetWeightSafety | null = (() => {
+    if (form.pesoMeta.trim() === '') return null;
+    try {
+      return classifyTargetWeight({
+        currentWeightKg: Number(form.peso), heightCm: Number(form.estatura), targetWeightKg: Number(form.pesoMeta),
+      });
+    } catch {
+      return null; // peso o estatura no evaluables: ya los rechaza su propia validación
+    }
+  })();
+  const targetSafetyMessageKey: TranslationKey | null = targetSafety == null ? null
+    : targetSafety.status === 'VALID_WITH_LOW_BMI_NOTICE' ? 'onboarding.targetWeightLowBmiNotice'
+    : targetSafety.status !== 'INVALID' ? null
+    : targetSafety.reason === 'TARGET_OUT_OF_RANGE' ? 'onboarding.invalidPesoMeta'
+    : targetSafety.reason === 'UNDERWEIGHT_NO_FURTHER_LOSS' ? 'onboarding.invalidPesoMetaBajoPesoActual'
+    : 'onboarding.invalidPesoMetaBajoPeso';
+
   async function handleSave() {
     setError('');
     const edadN = Number(form.edad);
@@ -194,6 +217,9 @@ export default function EditDataSheet({ onClose }: Props) {
     if (!edadN || edadN < 13 || edadN > 100) { setError(t('editData.errAge')); return; }
     if (!pesoN || pesoN < 30 || pesoN > 300) { setError(t('editData.errWeight')); return; }
     if (!estaturaN || estaturaN < 100 || estaturaN > 230) { setError(t('editData.errHeight')); return; }
+    // A8 · una meta INVALID no se guarda: hay que corregirla o vaciarla. El aviso
+    // informativo no bloquea.
+    if (targetSafety?.status === 'INVALID' && targetSafetyMessageKey) { setError(t(targetSafetyMessageKey)); return; }
     if (!form.activity || !ACTIVITY_OPTIONS.includes(form.activity)) { setError(t('editData.errActivity')); return; }
     // `nivel` es nuevo: un perfil legacy que nunca lo declaró debe poder guardar el
     // resto de sus datos sin que le inventemos uno. Pero en cuanto forma parte del
@@ -233,6 +259,8 @@ export default function EditDataSheet({ onClose }: Props) {
     setObData('sex', form.sex);
     setObData('edad', edadN);
     setObData('estatura', estaturaN);
+    // A8 · peso meta: metadato opcional. Vacío = sin meta. No entra en el recálculo.
+    setObData('pesoMeta', form.pesoMeta.trim() === '' ? '' : Number(form.pesoMeta));
     setObData('activity', form.activity);
     // Solo se escribe una DECLARACIÓN real. Un perfil legacy que sigue sin nivel se
     // queda sin nivel: ni '' ni 'intermedio'. Escribirlo aquí convertiría el fallback
@@ -357,6 +385,20 @@ export default function EditDataSheet({ onClose }: Props) {
               value={form.estatura}
               onChange={e => update('estatura', e.target.value)}
             />
+          </label>
+
+          {/* A8 · peso meta opcional, evaluado por la autoridad única de seguridad. */}
+          <label className="sh-field">
+            <span className="sh-field-label">{t('onboarding.targetWeight')}</span>
+            <input
+              className="sh-input"
+              type="number"
+              inputMode="decimal"
+              placeholder="—"
+              value={form.pesoMeta}
+              onChange={e => update('pesoMeta', e.target.value)}
+            />
+            {targetSafetyMessageKey && <p className="sh-field-hint">{t(targetSafetyMessageKey)}</p>}
           </label>
 
           <label className="sh-field">
