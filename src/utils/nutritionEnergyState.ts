@@ -57,11 +57,14 @@ import { ENERGY_PRESCRIPTION_VERSION, canonicalGoalFrom } from './energyPrescrip
 import {
   ORCHESTRATOR_VERSION,
   resolveNutritionEnergy,
+  resolveKnownNutritionScope,
   type NutritionEnergyResult,
 } from './nutritionEnergyOrchestrator';
 import {
   nutritionProfileInputFrom,
+  pendingTherapeuticDietProfileFrom,
   InvalidPersistedProfileError,
+  type ProfileInputPendingTherapeuticDiet,
   type MissingProfileField,
   type PersistedObData,
 } from './nutritionProfileInput';
@@ -156,6 +159,11 @@ export function resolveNutritionEnergyState(
   const input = readProfile(obData);
   if (input.kind === 'unreadable') return { status: 'PROFILE_UNREADABLE', key: input.key };
   if (input.kind === 'incomplete') return { status: 'PROFILE_INCOMPLETE', missing: input.missing };
+  // A7.1 · solo falta la respuesta de dieta terapéutica: si edad o embarazo ya
+  // sacan de alcance, ESE es el estado; si no, la respuesta es necesaria.
+  if (input.kind === 'pending_therapeutic') {
+    return resolveKnownNutritionScope(input.profile) ?? { status: 'PROFILE_INCOMPLETE', missing: input.missing };
+  }
   // Los cuatro estados de motor salen TAL CUAL del orquestador. Si lanza, lanza:
   // un `ActivityProfile` con `'DL9'` es un dato inválido, no un perfil ilegible.
   return resolveNutritionEnergy(input.profile);
@@ -165,13 +173,17 @@ export function resolveNutritionEnergyState(
 type ProfileRead =
   | { kind: 'ok'; profile: ProfileInput }
   | { kind: 'incomplete'; missing: readonly MissingProfileField[] }
+  /** A7.1 · completo salvo `requiresTherapeuticDiet` (único dato que falta). */
+  | { kind: 'pending_therapeutic'; profile: ProfileInputPendingTherapeuticDiet; missing: readonly MissingProfileField[] }
   | { kind: 'unreadable'; key: string };
 
 function readProfile(obData: PersistedObData | null | undefined): ProfileRead {
   try {
     const r = nutritionProfileInputFrom(obData);
-    return r.complete
-      ? { kind: 'ok', profile: r.profile }
+    if (r.complete) return { kind: 'ok', profile: r.profile };
+    const pending = pendingTherapeuticDietProfileFrom(obData);
+    return pending
+      ? { kind: 'pending_therapeutic', profile: pending, missing: r.missing }
       : { kind: 'incomplete', missing: r.missing };
   } catch (e) {
     // ÚNICA captura del boundary energético, y solo de este error. Cualquier otro
@@ -260,7 +272,9 @@ const numStr = (n: number): string => (Object.is(n, -0) ? '0' : String(n));
  * Lanza si `sex` o `goal` no son mapeables. Para los cuatro estados de motor eso
  * ya ocurrió sin error dentro de la cadena, así que no puede pasar.
  */
-export function energyInputIdentity(profile: ProfileInput): string {
+export function energyInputIdentity(
+  profile: Omit<ProfileInput, 'requiresTherapeuticDiet'> & { requiresTherapeuticDiet: boolean | null },
+): string {
   const t = profile.activityProfile.habitualTraining;
   const entrena = t.trainsHabitually === true;
   const payload = [
@@ -271,7 +285,8 @@ export function energyInputIdentity(profile: ProfileInput): string {
     numStr(profile.weightKg),
     canonicalGoalFrom(profile.goal),
     profile.pregnantOrLactating ? '1' : '0',
-    profile.requiresTherapeuticDiet ? '1' : '0',
+    // A7.1 · `null` = respuesta pendiente (solo con una exclusión ya conocida).
+    profile.requiresTherapeuticDiet === null ? '-' : profile.requiresTherapeuticDiet ? '1' : '0',
     profile.activityProfile.dailyLife,
     entrena ? '1' : '0',
     entrena ? numStr(t.daysPerWeek) : '0',
@@ -386,6 +401,23 @@ export function buildEnergySnapshot(
     );
   }
   const read = readProfile(obData);
+
+  // ── A7.1 · exclusión ya conocida con la respuesta terapéutica pendiente ───
+  // Mismo snapshot que cualquier OUTSIDE_HSC_NUTRITION_SCOPE (identidad +
+  // versiones); la identidad marca la respuesta como pendiente, distinta de «No».
+  if (read.kind === 'pending_therapeutic') {
+    const known = resolveKnownNutritionScope(read.profile);
+    if (known) {
+      return {
+        state: known,
+        snapshot: {
+          schemaVersion: 1, status: known.status,
+          inputIdentity: energyInputIdentity(read.profile),
+          versions: currentEngineVersions(), computedAt,
+        },
+      };
+    }
+  }
 
   // ── Estados PRE-MOTOR · no hay identidad, ni versiones, ni motores ───────
   if (read.kind !== 'ok') {

@@ -120,6 +120,22 @@ export interface OutsideHscNutritionScopeResult {
 export function checkNutritionScope(
   profile: ValidatedNutritionProfile,
 ): OutsideHscNutritionScopeResult | null {
+  return checkKnownScopeExclusions(profile) ?? checkTherapeuticDiet(profile);
+}
+
+/**
+ * Reglas 1–3 (edad y embarazo/lactancia), que NO dependen de la pregunta de
+ * dieta terapéutica.
+ *
+ * A7.1 · se exponen por separado para que un perfil legacy al que solo le falta
+ * `requiresTherapeuticDiet` reciba su motivo YA CONOCIDO en vez de
+ * `PROFILE_INCOMPLETE`: si la decisión ya está tomada, no se pide un dato que no
+ * la cambia. El tipo de entrada excluye `requiresTherapeuticDiet`, así que estas
+ * reglas no pueden leerlo.
+ */
+export function checkKnownScopeExclusions(
+  profile: Pick<ValidatedNutritionProfile, 'ageYears' | 'pregnantOrLactating' | 'goal'>,
+): OutsideHscNutritionScopeResult | null {
   // 1 · EDAD POR DEBAJO. Primero, para que el motivo sea determinista si también
   //     está embarazada o en lactancia.
   if (profile.ageYears < ADULT_ROUTE_MIN_AGE_YEARS) {
@@ -149,6 +165,13 @@ export function checkNutritionScope(
     };
   }
 
+  return null;
+}
+
+/** Regla 4 · solo se evalúa si ninguna de las tres anteriores sacó de alcance. */
+function checkTherapeuticDiet(
+  profile: Pick<ValidatedNutritionProfile, 'requiresTherapeuticDiet' | 'goal'>,
+): OutsideHscNutritionScopeResult | null {
   // 4 · DIETA TERAPÉUTICA INDICADA POR UN PROFESIONAL (A7). Antes de toda
   //     estimación: no se calcula ninguna prescripción clínica parcial.
   if (profile.requiresTherapeuticDiet) {

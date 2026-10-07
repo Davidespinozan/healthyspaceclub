@@ -238,10 +238,100 @@ describe('A7 · E · ningún diagnóstico cambia la nutrición', () => {
       'src/components/WeeklyNutritionPlanner.tsx',
       'src/components/sheets/EditDataSheet.tsx',
       'src/screens/OnboardingScreen.tsx',
+      // A7.1 · solo en un tipo `Omit<…, 'requiresTherapeuticDiet'>`: lo EXCLUYE.
+      'src/utils/nutritionEnergyOrchestrator.ts',
       'src/utils/nutritionEnergyState.ts',
       'src/utils/nutritionProfileInput.ts',
       'src/utils/nutritionScopeGuard.ts',
       'src/utils/profileValidation.ts',
     ]);
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// F · A7.1 · UNA EXCLUSIÓN YA CONOCIDA GANA A LA RESPUESTA PENDIENTE
+// ═════════════════════════════════════════════════════════════════════════════
+describe('A7.1 · la exclusión conocida no se esconde tras la pregunta pendiente', () => {
+  const legacy = (over: Ob = {}): Ob => { const o = { ...ob(over) }; delete o.requiresTherapeuticDiet; return o; };
+  const AT = '2026-10-07T00:00:00.000Z';
+
+  it('caso 1 · 17 años sin la respuesta → age_under_19 (no PROFILE_INCOMPLETE)', () => {
+    const s = state(legacy({ edad: 17 }));
+    expect(s.status).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');
+    expect(s.scopeReason).toBe('age_under_19');
+  });
+
+  it('caso 2 · 70 años sin la respuesta → age_65_or_over', () => {
+    expect(state(legacy({ edad: 70 })).scopeReason).toBe('age_65_or_over');
+  });
+
+  it('caso 3 · embarazo/lactancia sin la respuesta → pregnancy_or_lactation', () => {
+    expect(state(legacy({ sex: 'Mujer', embarazo: 1 })).scopeReason).toBe('pregnancy_or_lactation');
+  });
+
+  it('caso 4 · adulto elegible sin la respuesta → PROFILE_INCOMPLETE pidiendo la pregunta', () => {
+    const s = state(legacy());
+    expect(s.status).toBe('PROFILE_INCOMPLETE');
+    if (s.status === 'PROFILE_INCOMPLETE') expect(s.missing).toEqual(['requiresTherapeuticDiet']);
+  });
+
+  it('caso 5 · adulto con «No» → Nutrition V1 normal', () => {
+    expect(state(ob()).status).toBe('PRESCRIBED');
+    expect(macros(ob()).kind).toBe('RESOLVED');
+  });
+
+  it('caso 6 · adulto con «Sí» → therapeutic_diet_required', () => {
+    expect(state(ob({ requiresTherapeuticDiet: 1 })).scopeReason).toBe('therapeutic_diet_required');
+  });
+
+  it('el resultado es IDÉNTICO al que daría la cadena con la respuesta presente', () => {
+    for (const over of [{ edad: 17 }, { edad: 70 }, { sex: 'Mujer', embarazo: 1 }] as Ob[]) {
+      for (const respuesta of [0, 1]) {
+        expect(state(legacy(over)), JSON.stringify(over)).toEqual(state(ob({ ...over, requiresTherapeuticDiet: respuesta })));
+      }
+    }
+  });
+
+  it('sin energía ni macros en los casos ya excluidos', () => {
+    for (const over of [{ edad: 17 }, { edad: 70 }, { sex: 'Mujer', embarazo: 1 }] as Ob[]) {
+      const s = state(legacy(over));
+      expect(s.prescribedEnergy).toBeUndefined();
+      expect(s.maintenance).toBeUndefined();
+      expect(macros(legacy(over)).kind).toBe('NO_ENERGY');
+    }
+  });
+
+  it('si falta OTRO dato además, sigue siendo PROFILE_INCOMPLETE (como antes de A7)', () => {
+    const o = legacy({ edad: 70 });
+    delete o.dailyLife;
+    expect(state(o).status).toBe('PROFILE_INCOMPLETE');
+  });
+
+  it('el snapshot es estable: la hidratación siguiente ADOPTA, no recalcula en bucle', () => {
+    for (const over of [{ edad: 17 }, { edad: 70 }, { sex: 'Mujer', embarazo: 1 }] as Ob[]) {
+      const o = legacy(over);
+      const { snapshot } = buildEnergySnapshot(o, AT);
+      expect(snapshot.inputIdentity).toMatch(/^[0-9a-f]{8}$/);
+      expect(snapshot.versions).toBeDefined();
+      expect(decideEnergyHydration({ obData: o, rawSnapshot: snapshot, computedAt: AT, previousMealPlanKey: 'planA' }).action)
+        .toBe('ADOPT');
+    }
+  });
+
+  it('la identidad distingue «pendiente» de «No» y de «Sí»', () => {
+    const o = { edad: 70 } as Ob;
+    const id = (x: Ob) => buildEnergySnapshot(x, AT).snapshot.inputIdentity;
+    const pendiente = id(legacy(o));
+    expect(pendiente).not.toBe(id(ob({ ...o, requiresTherapeuticDiet: 0 })));
+    expect(pendiente).not.toBe(id(ob({ ...o, requiresTherapeuticDiet: 1 })));
+  });
+
+  it('el CTA de la pregunta solo aparece con PROFILE_INCOMPLETE, nunca con un motivo ya conocido', () => {
+    const code = sinComentarios(srcPlanner);
+    expect(code).toContain("const therapeuticAnswerRequired = energyState?.status === 'PROFILE_INCOMPLETE'");
+    // Y esos casos ya no son PROFILE_INCOMPLETE (ver arriba), así que no lo ven.
+    for (const over of [{ edad: 17 }, { edad: 70 }, { sex: 'Mujer', embarazo: 1 }] as Ob[]) {
+      expect(state(legacy(over)).status).not.toBe('PROFILE_INCOMPLETE');
+    }
   });
 });

@@ -63,9 +63,10 @@
 import { classifyActivity, type ActivityClassification } from './activityClassifier';
 import { estimateMaintenance } from './maintenanceEstimate';
 import { prescribeEnergy, type EnergyPrescription } from './energyPrescription';
-import { validateNutritionProfile, type ProfileInput } from './profileValidation';
+import { validateNutritionProfile, validateProfileCore, type ProfileInput } from './profileValidation';
 import {
   checkNutritionScope,
+  checkKnownScopeExclusions,
   type OutsideHscNutritionScopeResult,
 } from './nutritionScopeGuard';
 
@@ -165,4 +166,22 @@ export function resolveNutritionEnergy(rawProfile: ProfileInput): NutritionEnerg
   // Solo lo que pertenece al ensamblaje. `maintenance` sigue anidado tal como lo
   // entregó su módulo y no se copia ninguno de sus campos a este nivel.
   return { ...prescription, classification, orchestratorVersion: ORCHESTRATOR_VERSION };
+}
+
+/**
+ * A7.1 · exclusiones de alcance YA CONOCIDAS para un perfil al que solo le falta
+ * la respuesta de dieta terapéutica.
+ *
+ * Valida el resto del perfil y aplica únicamente las reglas 1–3 del Scope Guard
+ * (edad < 19, edad ≥ 65, embarazo/lactancia). Si alguna saca a la persona de
+ * alcance, devuelve EXACTAMENTE el mismo resultado que `resolveNutritionEnergy`
+ * daría con la respuesta presente, porque esas reglas van antes en la
+ * precedencia. Si ninguna aplica devuelve `null`: la respuesta sí es necesaria y
+ * no se resuelve nada más (ni clasificación, ni mantenimiento, ni prescripción).
+ */
+export function resolveKnownNutritionScope(
+  rawProfile: Omit<ProfileInput, 'requiresTherapeuticDiet'>,
+): NutritionEnergyResult | null {
+  const outside = checkKnownScopeExclusions(validateProfileCore(rawProfile));
+  return outside ? { ...outside, orchestratorVersion: ORCHESTRATOR_VERSION } : null;
 }

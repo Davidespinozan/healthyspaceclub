@@ -148,6 +148,27 @@ function requireNumber(field: string, v: unknown): number {
  * actividad con valores inventados cuando faltaban.
  */
 export function validateNutritionProfile(input: ProfileInput): ValidatedNutritionProfile {
+  const core = validateProfileCore(input);
+  if (typeof input.requiresTherapeuticDiet !== 'boolean') {
+    throw new InvalidProfileInputError(
+      'requiresTherapeuticDiet', input.requiresTherapeuticDiet, 'debe ser booleano',
+    );
+  }
+  // Único cast del módulo, y vive dentro de la autoridad: la marca no existe en
+  // tiempo de ejecución, así que no viaja en la serialización.
+  return { ...core, requiresTherapeuticDiet: input.requiresTherapeuticDiet } as ValidatedNutritionProfile;
+}
+
+/** Perfil validado SIN la respuesta de dieta terapéutica (A7.1). Sin marca de tipo. */
+export type ValidatedProfileCore = Omit<ValidatedNutritionProfile, typeof VALIDATED_PROFILE | 'requiresTherapeuticDiet'>;
+
+/**
+ * A7.1 · valida todo MENOS `requiresTherapeuticDiet`. Solo sirve para evaluar las
+ * exclusiones de alcance ya conocidas (edad, embarazo) cuando esa respuesta aún
+ * no existe. No produce un `ValidatedNutritionProfile`: no puede entrar en la
+ * cadena energética.
+ */
+export function validateProfileCore(input: Omit<ProfileInput, 'requiresTherapeuticDiet'>): ValidatedProfileCore {
   if (input === null || typeof input !== 'object') {
     throw new InvalidProfileInputError('profile', input, 'debe ser un objeto');
   }
@@ -189,24 +210,15 @@ export function validateNutritionProfile(input: ProfileInput): ValidatedNutritio
     );
   }
 
-  if (typeof input.requiresTherapeuticDiet !== 'boolean') {
-    throw new InvalidProfileInputError(
-      'requiresTherapeuticDiet', input.requiresTherapeuticDiet, 'debe ser booleano',
-    );
-  }
-
   // Solo presencia: la forma interna es autoridad de ActivityClassifier.
   const activityProfile = input.activityProfile;
   if (activityProfile === null || typeof activityProfile !== 'object') {
     throw new InvalidProfileInputError('activityProfile', activityProfile, 'debe ser un objeto');
   }
 
-  // Único cast del módulo, y vive dentro de la autoridad: la marca no existe en
-  // tiempo de ejecución, así que no viaja en la serialización.
   return {
     sex, goal, ageYears, heightCm, weightKg,
     pregnantOrLactating: input.pregnantOrLactating,
-    requiresTherapeuticDiet: input.requiresTherapeuticDiet,
     activityProfile,
-  } as ValidatedNutritionProfile;
+  };
 }

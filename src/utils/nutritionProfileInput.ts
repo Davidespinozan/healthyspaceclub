@@ -212,6 +212,49 @@ function heightKey(ob: PersistedObData): 'estatura' | 'altura' | null {
 export function nutritionProfileInputFrom(
   obData: PersistedObData | null | undefined,
 ): NutritionProfileInputResult {
+  const r = mapProfile(obData, false);
+  if (!r.complete) return r;
+  // Con la respuesta obligatoria, un `null` habría entrado en `missing`.
+  const { requiresTherapeuticDiet } = r.profile;
+  if (requiresTherapeuticDiet === null) {
+    throw new InvalidPersistedProfileError('requiresTherapeuticDiet', obData?.requiresTherapeuticDiet);
+  }
+  return { complete: true, profile: { ...r.profile, requiresTherapeuticDiet } };
+}
+
+/** Perfil completo SALVO la respuesta de dieta terapéutica, que está pendiente. */
+export type ProfileInputPendingTherapeuticDiet =
+  Omit<ProfileInput, 'requiresTherapeuticDiet'> & { requiresTherapeuticDiet: null };
+
+/**
+ * A7.1 · el perfil cuando lo ÚNICO que falta es `requiresTherapeuticDiet`.
+ *
+ * Existe para que las exclusiones de alcance ya conocidas (edad, embarazo) se
+ * puedan evaluar sin pedir antes una respuesta que no cambiaría la decisión. La
+ * respuesta pendiente viaja como `null`: no se rellena con ningún valor.
+ *
+ * `null` si falta cualquier otro dato, o si el perfil está completo.
+ */
+export function pendingTherapeuticDietProfileFrom(
+  obData: PersistedObData | null | undefined,
+): ProfileInputPendingTherapeuticDiet | null {
+  const strict = mapProfile(obData, false);
+  if (strict.complete) return null;
+  if (strict.missing.length !== 1 || strict.missing[0] !== 'requiresTherapeuticDiet') return null;
+  const pending = mapProfile(obData, true);
+  if (!pending.complete || pending.profile.requiresTherapeuticDiet !== null) return null;
+  return { ...pending.profile, requiresTherapeuticDiet: null };
+}
+
+type MappedProfile = Omit<ProfileInput, 'requiresTherapeuticDiet'> & { requiresTherapeuticDiet: boolean | null };
+type MapResult =
+  | { complete: true; profile: MappedProfile; missing?: undefined }
+  | { complete: false; missing: readonly MissingProfileField[]; profile?: undefined };
+
+function mapProfile(
+  obData: PersistedObData | null | undefined,
+  therapeuticDietMayBePending: boolean,
+): MapResult {
   const ob: PersistedObData = obData && typeof obData === 'object' ? obData : {};
   const missing: MissingProfileField[] = [];
 
@@ -254,7 +297,7 @@ export function nutritionProfileInputFrom(
   // Misma regla que el embarazo: AUSENTE es `missing`, nunca `false`. Un perfil
   // legacy no contesta esta pregunta, y su antigua lista de diagnósticos
   // (`conditions`) NO la responde: no se lee aquí.
-  if (therapeutic === null) missing.push('requiresTherapeuticDiet');
+  if (therapeutic === null && !therapeuticDietMayBePending) missing.push('requiresTherapeuticDiet');
 
   // ── 4 · ACTIVITY PROFILE ─────────────────────────────────────────────────
   if (!declared(ob, 'dailyLife')) missing.push('dailyLife');
@@ -280,7 +323,6 @@ export function nutritionProfileInputFrom(
   // Si alguna vez llegara aquí, es un fallo interno y tiene que verse.
   if (pregnant === null) throw new InvalidPersistedProfileError('embarazo', ob.embarazo);
   if (trains === null) throw new InvalidPersistedProfileError('trainsHabitually', ob.trainsHabitually);
-  if (therapeutic === null) throw new InvalidPersistedProfileError('requiresTherapeuticDiet', ob.requiresTherapeuticDiet);
 
   // ── 5 · ENSAMBLAJE ───────────────────────────────────────────────────────
   // `dailyLife` va como pass-through: un `'DL9'` llega crudo al clasificador, que
@@ -300,7 +342,7 @@ export function nutritionProfileInputFrom(
         }
       : { trainsHabitually: false, daysPerWeek: 0, habitualSessionMinutes: 0 };
 
-  const profile: ProfileInput = {
+  const profile: MappedProfile = {
     sex: String(ob.sex),
     goal: String(ob.goal),
     ageYears: num(ob, 'edad'),
