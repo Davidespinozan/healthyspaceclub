@@ -385,6 +385,7 @@ export default function OnboardingScreen() {
       edad: 'onboarding.invalidEdad', peso: 'onboarding.invalidPeso',
       estatura: 'onboarding.invalidEstatura', grasa: 'onboarding.invalidGrasa',
       pesoMeta: 'onboarding.invalidPesoMeta',
+      pesoMetaBajoPeso: 'onboarding.invalidPesoMetaBajoPeso',
     };
     if (inv) { setDataError(t(invMsg[inv])); return; }
     if (sex === 'Mujer' && !embarazo) { setDataError(t('onboarding.embarazoRequired')); return; }
@@ -1006,7 +1007,6 @@ export default function OnboardingScreen() {
             {/* Avisos de peso meta (Fase 2). Los `aviso*` energéticos —menor, embarazo,
                 bajo peso, adulto mayor, topado— los sustituyó `sinMeta`: ya no se
                 derivan de `wellnessMode`, que era la autoridad legacy. */}
-            {metaNotice?.kind === 'bajopeso-meta' && <div className="onb-notice">{t('onboarding.metaBajoPeso')}</div>}
             {metaNotice?.kind === 'sube-musculo' && <div className="onb-notice">{t('onboarding.metaMusculo')}</div>}
             {metaNotice?.kind === 'sube-neutro-imc' && <div className="onb-notice">{t('onboarding.metaNeutroImc')}</div>}
             {metaNotice?.kind === 'sube-gradual' && <div className="onb-notice">{t('onboarding.metaGradual')}</div>}

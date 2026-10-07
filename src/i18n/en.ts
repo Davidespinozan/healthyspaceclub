@@ -505,11 +505,7 @@ export const en: Translations<typeof es> = {
     invalidEstatura: 'Check your height (120-220 cm).',
     invalidGrasa: 'Check your body fat %.',
     invalidPesoMeta: 'Check your target weight (30-300 kg).',
-    avisoMenor: 'Since you are under 18, your plan is wellness mode, with no calorie restriction. For body-composition goals, consult a professional.',
-    avisoEmbarazo: 'During pregnancy or breastfeeding we do not recommend a deficit. Your plan is maintenance. Consult your health professional.',
-    avisoBajoPeso: 'We set your plan to wellness mode. For more specific goals, a specialist can help you better.',
-    avisoAdultoMayor: 'At your age we prioritize keeping your muscle and bone mass, with enough protein and no aggressive deficits. Check with your doctor about any condition.',
-    avisoTopado: 'We adjusted your target to {kcal} kcal — going lower is not safe without professional guidance.',
+    invalidPesoMetaBajoPeso: 'Your target weight is below a healthy weight for your height (BMI under 18.5). Choose a higher target to continue.',
     // CAPA 1E · FASE C4 — see the Spanish copy: where HSC Nutrition v1 does not
     // prescribe, it says so instead of inventing a wellness figure.
     sinMetaTitulo: 'Your space is ready, but without a nutrition target yet',
@@ -519,7 +515,6 @@ export const en: Translations<typeof es> = {
     sinMetaBajoPeso: 'Your current weight is already below the healthy range for your height, so we will not propose a deficit. A specialist can support you better at this point.',
     sinMetaSuelo: 'For your goal, the resulting figure falls below the minimum we consider safe without supervision. We would rather give you no figure than one you should not follow.',
     sinMetaIncompleto: 'We are missing a piece of data to calculate your target. You can complete it any time from Settings → Edit my data.',
-    metaBajoPeso: 'Your target weight is below a healthy weight for your height. We suggest a safer target, or consulting a health professional.',
     metaMusculo: 'Your target gives a high BMI, but since your body fat is low, that is muscle, not fat. You are on track.',
     metaNeutroImc: 'Your target gives a high BMI. Note: BMI does not distinguish muscle from fat; if you train hard, ignore it.',
     metaGradual: 'To gain muscle, keep the increase gradual: go up slowly to build muscle and not extra fat.',

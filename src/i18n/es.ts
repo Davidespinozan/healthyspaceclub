@@ -506,11 +506,7 @@ export const es = {
     invalidEstatura: 'Revisa tu estatura (120-220 cm).',
     invalidGrasa: 'Revisa tu % de grasa corporal.',
     invalidPesoMeta: 'Revisa tu peso meta (30-300 kg).',
-    avisoMenor: 'Como eres menor de 18, tu plan es de bienestar, sin restricción calórica. Para objetivos de composición corporal, consulta a un profesional.',
-    avisoEmbarazo: 'En embarazo o lactancia no recomendamos déficit. Tu plan es de mantenimiento. Consulta a tu profesional de salud.',
-    avisoBajoPeso: 'Ajustamos tu plan a modo bienestar. Para objetivos más específicos, un especialista puede ayudarte mejor.',
-    avisoAdultoMayor: 'A tu edad priorizamos mantener tu masa muscular y ósea, con proteína suficiente y sin déficits agresivos. Consulta a tu médico ante cualquier condición.',
-    avisoTopado: 'Ajustamos tu meta a {kcal} kcal — bajar más no es seguro sin acompañamiento profesional.',
+    invalidPesoMetaBajoPeso: 'Tu peso meta queda por debajo de un peso saludable para tu estatura (IMC menor a 18.5). Elige una meta más alta para continuar.',
     // CAPA 1E · FASE C4 — HSC Nutrition v1 no prescribe a todo el mundo, y donde no
     // prescribe NO inventa una cifra de bienestar: lo dice. Las claves `aviso*` de
     // arriba acompañaban a un plan que sí existía; éstas explican que no hay plan.
@@ -521,7 +517,6 @@ export const es = {
     sinMetaBajoPeso: 'Tu peso actual ya está por debajo del rango saludable para tu estatura, así que no vamos a proponerte un déficit. Un especialista puede acompañarte mejor en este punto.',
     sinMetaSuelo: 'Para tu objetivo, la cifra que saldría queda por debajo del mínimo que consideramos seguro sin supervisión. Preferimos no darte una cifra antes que darte una que no deberías seguir.',
     sinMetaIncompleto: 'Nos falta algún dato para calcular tu meta. Puedes completarlo cuando quieras desde Ajustes → Editar mis datos.',
-    metaBajoPeso: 'Tu peso meta queda por debajo de un peso saludable para tu estatura. Te sugerimos una meta más segura, o consultar a un profesional.',
     metaMusculo: 'Tu meta te da un IMC alto, pero como tu porcentaje de grasa es bajo, eso es músculo, no grasa. Vas bien.',
     metaNeutroImc: 'Tu meta te da un IMC alto. Ojo: el IMC no distingue músculo de grasa; si entrenas fuerte, ignóralo.',
     metaGradual: 'Para ganar músculo, cuida que el aumento sea gradual: sube despacio para ganar músculo y no grasa de más.',

@@ -73,9 +73,9 @@ describe('predicado de bienestar macro (C5: era `wellnessMode` energético)', ()
 });
 
 describe('targetWeightNotice (peso meta)', () => {
-  it('meta bajo un peso saludable → bandera roja', () => {
+  it('CAPA 0 · D03 · la meta bajo un peso saludable ya no es un aviso: no hay `bajopeso-meta`', () => {
     const n = targetWeightNotice({ sexo: 'Mujer', pesoKg: 60, estaturaCm: 165, edad: 25, activity: 'Ligera', goal: 'Bajar grasa', pesoMeta: 48 });
-    expect(n?.kind).toBe('bajopeso-meta');
+    expect(n?.kind).not.toBe('bajopeso-meta');
   });
 
   it('sube con IMC alto pero % grasa bajo = músculo (ok)', () => {
@@ -105,6 +105,19 @@ describe('invalidField (datos imposibles)', () => {
   it('edad fuera de rango', () => expect(invalidField({ ...ok, edad: 12 })).toBe('edad'));
   it('peso fuera de rango', () => expect(invalidField({ ...ok, pesoKg: 500 })).toBe('peso'));
   it('% grasa fuera de rango (hombre)', () => expect(invalidField({ ...ok, grasa: 60 })).toBe('grasa'));
+  // CAPA 0 · D03 · peso meta con IMC < 18,5 → RECHAZADO (antes, solo un aviso).
+  it('peso meta con IMC < 18.5 → rechazado', () => {
+    // 165 cm: IMC 18.5 ≈ 50.4 kg
+    expect(invalidField({ ...ok, estaturaCm: 165, pesoMeta: 48 })).toBe('pesoMetaBajoPeso');
+    expect(invalidField({ ...ok, estaturaCm: 165, pesoMeta: 50 })).toBe('pesoMetaBajoPeso');
+  });
+  it('peso meta con IMC ≥ 18.5 → aceptado', () => {
+    expect(invalidField({ ...ok, estaturaCm: 165, pesoMeta: 51 })).toBeNull();
+    expect(invalidField({ ...ok, pesoMeta: 75 })).toBeNull();
+  });
+  it('el rango absoluto (30–300 kg) sigue mandando primero', () => {
+    expect(invalidField({ ...ok, pesoMeta: 20 })).toBe('pesoMeta');
+  });
 });
 
 /* ───────────────────────────────────────────── */

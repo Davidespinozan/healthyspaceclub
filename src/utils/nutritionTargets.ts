@@ -239,7 +239,7 @@ export function mealCalorieSplit(planGoal: number): { desayuno: number; comida: 
 // Devuelve el campo inválido (o null). La UI muestra "Revisa este dato".
 export function invalidField(
   o: Pick<ObInput, 'sexo' | 'pesoKg' | 'estaturaCm' | 'edad' | 'grasa' | 'pesoMeta'>,
-): 'edad' | 'peso' | 'estatura' | 'grasa' | 'pesoMeta' | null {
+): 'edad' | 'peso' | 'estatura' | 'grasa' | 'pesoMeta' | 'pesoMetaBajoPeso' | null {
   if (o.edad < 13 || o.edad > 100) return 'edad';
   if (o.pesoKg < 30 || o.pesoKg > 300) return 'peso';
   if (o.estaturaCm < 120 || o.estaturaCm > 220) return 'estatura';
@@ -249,12 +249,19 @@ export function invalidField(
     if (o.grasa < lo || o.grasa > hi) return 'grasa';
   }
   if (o.pesoMeta != null && (o.pesoMeta < 30 || o.pesoMeta > 300)) return 'pesoMeta';
+  // CAPA 0 · D03 · un peso meta con IMC < 18,5 se RECHAZA (antes solo era un
+  // aviso, `bajopeso-meta`). HSC no acompaña hacia el bajo peso.
+  if (o.pesoMeta != null) {
+    const hM = o.estaturaCm / 100;
+    if (o.pesoMeta / (hM * hM) < 18.5) return 'pesoMetaBajoPeso';
+  }
   return null;
 }
 
 // ── Punto 8 — aviso de peso meta (IMC + % grasa manda sobre IMC) ───────────
+// `bajopeso-meta` ya no existe: CAPA 0 · D03 convirtió ese aviso en un rechazo
+// (`invalidField` → 'pesoMetaBajoPeso'), así que un peso meta así no llega aquí.
 export type TargetWeightNoticeKind =
-  | 'bajopeso-meta'    // meta bajo un peso saludable → bandera roja
   | 'sube-musculo'     // sube + IMC alto pero % grasa bajo = músculo (ok)
   | 'sube-neutro-imc'  // sube + IMC alto, sin dato de grasa (aviso neutro)
   | 'sube-gradual'     // sube + % grasa alto → subir gradual
@@ -275,7 +282,6 @@ export function targetWeightNotice(o: ObInput): TargetWeightNotice | null {
   const grasaBaja = o.grasa != null && (o.sexo === 'Hombre' ? o.grasa < 18 : o.grasa < 25);
   const grasaAlta = o.grasa != null && (o.sexo === 'Hombre' ? o.grasa >= 25 : o.grasa >= 32);
 
-  if (imcMeta < 18.5 && !subiendo) return { kind: 'bajopeso-meta' };
   if (subiendo && imcMeta >= 25) {
     if (grasaBaja) return { kind: 'sube-musculo' };
     if (o.grasa == null) return { kind: 'sube-neutro-imc' };
