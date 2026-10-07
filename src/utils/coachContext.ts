@@ -12,8 +12,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { dayKey } from './localDate';
 // C4 · el Coach no estima energía: la cifra la prescribe el motor nuevo y llega por
-// `store.planGoal`. De aquí solo queda el PUENTE de macros, legacy hasta la CAPA 2.
-import { legacyMacros, legacyMacroWellness, parseObData } from './nutritionTargets';
+// `store.planGoal`. CAPA 2 · tampoco calcula macros: llegan por `store.macroTargets`.
+import { isServableMacroPrescription } from './macroPrescription';
 import { computeCoach } from './nutritionCoach';
 import { computeDayConsumption } from './foodConsumption';
 import { computeWeeklyVolume, weeklyVolumeSeries } from './workoutPlanner';
@@ -89,6 +89,8 @@ export function buildCoachContext(store: StoreState): CoachContext {
     // C4 · proyección del estado energético. No se lee `energyState` porque el
     // contexto no explica el MOTIVO de la ausencia: solo omite lo que no existe.
     planGoal,
+    // CAPA 2 · proyección hermana de `planGoal`: las macros diarias vigentes.
+    macroTargets,
   } = store;
   const today = dayKey(new Date());
   const weekday = new Date().getDay();
@@ -144,10 +146,10 @@ export function buildCoachContext(store: StoreState): CoachContext {
   // ── NUTRITION (autoridades: store.planGoal / computeDayConsumption / computeCoach) ──
   // C4 · `planGoal` es la ÚNICA puerta. Si el motor nuevo no prescribió, el bloque
   // entero es `null`: aquí no se estima una cifra de repuesto.
-  const nutrition: CoachContext['nutrition'] = planGoal == null ? null : (() => {
+  // CAPA 2 · y tampoco hay bloque sin macros servibles (`VALID`/`REVIEW`).
+  const nutrition: CoachContext['nutrition'] = planGoal == null || !isServableMacroPrescription(macroTargets) ? null : (() => {
     const hasPlan = hasGeneratedWeeklyPlan(weeklyPlan as { days?: unknown[] } | null);
-    const obIn = parseObData(ob);
-    const targets = legacyMacros(obIn, planGoal, legacyMacroWellness(obIn));
+    const targets = { protG: macroTargets.proteinG, carbG: macroTargets.carbG, fatG: macroTargets.fatG };
     const todayMeals = resolveTodayPlanMeals(
       weeklyPlan as { days?: Array<{ day: number; meals: Array<Record<string, unknown>> }>; selectedDays?: number[] } | null,
       shoppingDay, weekday,
@@ -229,7 +231,7 @@ export function renderHscFacts(ctx: CoachContext): string {
     // C4 · HSC no prescribe energía a este socio. Se dice UNA vez y explícitamente:
     // omitir el bloque en silencio dejaría al modelo rellenando el hueco con una
     // cifra plausible, que es el fallo que esto viene a cerrar.
-    L.push('NUTRICIÓN HOY: HSC no tiene una meta energética vigente para este socio (no inventes kcal, macros ni un "restante": no existen).');
+    L.push('NUTRICIÓN HOY: HSC no tiene una meta nutricional vigente para este socio (no inventes kcal, macros ni un "restante": no existen).');
   } else {
     L.push(`NUTRICIÓN HOY — META: ${n.target.kcal} kcal (P${n.target.prot} C${n.target.carb} G${n.target.fat}g)`);
     L.push(`  Consumido: ${n.consumed.kcal} kcal (P${n.consumed.prot} C${n.consumed.carb} G${n.consumed.fat}g) · Comidas: ${n.mealsDone} hechas, ${n.mealsLeft} restantes`);

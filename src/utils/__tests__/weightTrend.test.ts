@@ -3,7 +3,7 @@ import {
   deriveStableNutritionWeight, nextNutritionWeight,
   NUTRITION_WEIGHT_UPDATE_KG, NUTRITION_WEIGHT_MIN_DAYS,
 } from '../weightTrend';
-import { legacyMacros, legacyMacroWellness, type ObInput } from '../nutritionTargets';
+import { prescribeMacros } from '../macroPrescription';
 
 // NUTRITION-N10.1 · peso de tendencia estable (mediana rodante 14 días). Todo puro/determinista;
 // asOf se pasa siempre (sin Date.now oculto).
@@ -144,28 +144,25 @@ describe('N10.1 · S/T · determinismo / no-mutación', () => {
   });
 });
 
-describe('N10.1 · Z/AB/AC · el peso estable alimenta las macros, y respeta wellness/renal', () => {
-  // CAPA 1E · FASE C5 · `computeNutritionTargets` ya no existe. El caso AA (piso
-  // de seguridad de 1200 kcal) era puramente ENERGÉTICO y murió con la fórmula
-  // legacy; el suelo de la autoridad nueva lo cubre `energyPrescription.test.ts`
-  // (`OUTSIDE_HSC_FAT_LOSS_SCOPE`). Z, AB y AC se migran a la mitad macro, que es
-  // la que sigue leyendo `obData.peso` y por tanto el peso estable.
-  const ob = (over: Partial<ObInput> = {}): ObInput => ({ sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 30, activity: 'Ligera', goal: 'bajar grasa', grasa: 0, embarazo: false, conditions: [], ...over });
-  const macros = (o: ObInput) => legacyMacros(o, 2200, legacyMacroWellness(o));
+describe('N10.1 · Z/AC · el peso estable alimenta las macros, y respeta el tope renal', () => {
+  // CAPA 2 · las macros las prescribe `macroPrescription` (PRW × factor). AB
+  // (bienestar ≥ 70) se retiró: fuera de 19–64 no hay prescripción (Scope Guard),
+  // y la autoridad nueva no tiene «modo bienestar».
+  const macros = (weightKg: number, declaredRenalCondition = false) => prescribeMacros({
+    energyKcal: 2200, goal: 'FAT_LOSS', weightKg, heightCm: 178,
+    activityClass: 'LOW_DEMAND', declaredRenalCondition,
+  });
 
   it('Z · macros desde stableKg = macros desde ese peso (sin capa paralela)', () => {
     const stable = deriveStableNutritionWeight(series(ASOF, [80.0, 80.1, 79.9]), ASOF);
     expect(stable.status).toBe('READY');
     if (stable.status === 'READY') {
       expect(stable.stableKg).toBe(80.0);
-      expect(macros(ob({ pesoKg: stable.stableKg }))).toEqual(macros(ob({ pesoKg: 80.0 })));
+      expect(macros(stable.stableKg)).toEqual(macros(80.0));
     }
   });
-  it('AB · bienestar (≥70) usa la proteína de mantenimiento', () => {
-    expect(legacyMacroWellness(ob({ edad: 72 }))).toBe(true);
-    expect(macros(ob({ edad: 72 })).protG).toBeLessThan(macros(ob({ edad: 30 })).protG);
-  });
   it('AC · renal → proteína ≤ 1.0 g/kg', () => {
-    expect(macros(ob({ pesoKg: 80, conditions: ['renal'] })).protG).toBeLessThanOrEqual(80);
+    const m = macros(80, true);
+    expect(m.proteinG).toBeLessThanOrEqual(80);
   });
 });

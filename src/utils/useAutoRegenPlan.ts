@@ -2,8 +2,9 @@ import { useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 // C4 · la regeneración ya NO estima energía: la cifra la prescribe el motor nuevo
-// y llega por `store.planGoal`. De aquí solo queda el PUENTE de macros.
-import { legacyMacros, legacyMacroWellness, parseObData } from './nutritionTargets';
+// y llega por `store.planGoal`. CAPA 2 · tampoco calcula macros: llegan por
+// `store.macroTargets`, de la autoridad `macroPrescription`.
+import { isServableMacroPrescription } from './macroPrescription';
 import { weeklyPlanCurrentness } from './weeklyPlanState';
 import { PLAN_ENGINE_VERSION } from './planEngine';
 import { avoidForRegen, permanentAvoidFrom } from './avoidAuthority';
@@ -99,7 +100,7 @@ export function useWeeklyPlanReset(): void {
  */
 
 export function useAutoRegenPlan(): void {
-  const { weeklyPlan, obData, saveWeeklyPlan, planGoal, energyStatus } = useAppStore(useShallow((s) => ({
+  const { weeklyPlan, obData, saveWeeklyPlan, planGoal, macroTargets, energyStatus } = useAppStore(useShallow((s) => ({
     weeklyPlan: s.weeklyPlan,
     obData: s.obData,
     saveWeeklyPlan: s.saveWeeklyPlan,
@@ -107,6 +108,8 @@ export function useAutoRegenPlan(): void {
     // cifra del generador ES ésta: la prescribe el motor nuevo, no la estima
     // nadie aquí.
     planGoal: s.planGoal,
+    // CAPA 2 · macros vigentes: entran en la firma de vigencia y en el objetivo.
+    macroTargets: s.macroTargets,
     // C4 · sin `PRESCRIBED` no hay plan vigente que mantener al día.
     energyStatus: s.energyState?.status ?? null,
   })));
@@ -117,9 +120,11 @@ export function useAutoRegenPlan(): void {
    * contra la cifra anterior». Antes un usuario represcrito de 2.400 a 1.900 kcal
    * seguía viendo el plan de 2.400 hasta el siguiente salto de `engineVersion`.
    */
+  const servableMacros = isServableMacroPrescription(macroTargets) ? macroTargets : null;
   const currentness = weeklyPlanCurrentness({
     status: energyStatus,
     planGoal,
+    macros: servableMacros,
     weeklyPlan,
     currentVersion: PLAN_ENGINE_VERSION,
   });
@@ -135,11 +140,10 @@ export function useAutoRegenPlan(): void {
     // `number` para el generador: la garantía la da el compilador, no un comentario.
     if (!weeklyPlan?.days) return;
     if (planGoal == null) return;
+    if (servableMacros == null) return;
 
-    // C4 · PUENTE. Macros derivadas de la cifra prescrita, no de una estimación.
-    const ob = parseObData(obData as Record<string, string | number>);
-    const t = legacyMacros(ob, planGoal, legacyMacroWellness(ob));
-    const target = { kcal: planGoal, protG: t.protG, fatG: t.fatG, carbG: t.carbG };
+    // CAPA 2 · objetivo diario = energía prescrita + macros de la autoridad nueva.
+    const target = { kcal: planGoal, protG: servableMacros.proteinG, fatG: servableMacros.fatG, carbG: servableMacros.carbG };
     // P0-02 · la autoridad une la parte SEMANAL del plan guardado con las permanentes
     // del perfil ACTUAL. Si el usuario añadió una restricción permanente desde que se
     // generó, la regeneración ya la respeta. Nunca resta.
@@ -180,5 +184,5 @@ export function useAutoRegenPlan(): void {
     // guardado pasa a `ACTIVE`, el efecto se vuelve a evaluar y corta: idempotente,
     // a lo mucho una vez por cambio real.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentness, planGoal]);
+  }, [currentness, planGoal, servableMacros]);
 }

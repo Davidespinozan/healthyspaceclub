@@ -193,7 +193,7 @@ describe('C3 · hidratación', () => {
   it('C4 · fail-closed: un perfil irresoluble deja SIN CIFRA, no en legacy', () => {
     const fn = STORE.slice(STORE.indexOf('hydrateEnergyFromSnapshot: async (rawSnapshot) => {'));
     const cuerpo = fn.slice(0, fn.indexOf('\n  },'));
-    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null });');
+    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null, macroTargets: null });');
     for (const id of ['computeNutritionTargets', 'legacyEnergy', 'plan_goal']) {
       expect(cuerpo, `el catch no debe caer a ${id}`).not.toMatch(new RegExp(`\\b${id}\\b`));
     }
@@ -263,7 +263,9 @@ describe('C3 · UI null-safe', () => {
   // tarjeta de cifras desaparece en vez de quedar vacía.
   it('C4 · sin cifra el onboarding explica el motivo y NO pinta la tarjeta', () => {
     expect(ONB).toContain('const sinMeta = goalVal != null ? null : (() => {');
-    expect(ONB).toContain('{macros !== null && goalVal != null ? (');
+    // CAPA 2 · la tarjeta depende de la energía; las macros, de que sean servibles.
+    expect(ONB).toContain('{goalVal != null ? (');
+    expect(ONB).toContain('{macros !== null && (');
     expect(ONB).toContain("{goalVal.toLocaleString()} <span>{t('onboarding.kcalDay')}</span>");
     // Un motivo por estado, ninguno inventado.
     for (const clave of ['sinMetaMenor', 'sinMetaAdultoMayor', 'sinMetaEmbarazo',
@@ -277,7 +279,7 @@ describe('C3 · UI null-safe', () => {
     expect(ONB).not.toMatch(/\bwellnessMode\b/);
     expect(ONB).not.toMatch(/\bwellnessReason\b/);
     expect(ONB).not.toMatch(/targets\.capped/);
-    expect(ONB).toContain('const { tdee: tdeeVal, planGoal: goalVal, energyState } = useAppStore.getState();');
+    expect(ONB).toContain('const { tdee: tdeeVal, planGoal: goalVal, energyState, macroTargets } = useAppStore.getState();');
   });
 
   it('TabHoy no fabrica un objetivo ni un denominador', () => {
@@ -328,11 +330,12 @@ describe('C3 · UI null-safe', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 describe('C3 · sin objetivo no se genera nada', () => {
   it('WeeklyNutritionPlanner aborta ANTES de llamar al motor', () => {
-    expect(PLANNER).toContain('if (planGoal == null) {');
+    // CAPA 2 · el mismo guard cubre también las macros no servibles.
+    expect(PLANNER).toContain('if (planGoal == null || !isServableMacroPrescription(macroTargets)) {');
     const advance = PLANNER.slice(PLANNER.indexOf('async function advance('));
-    const guard = advance.indexOf('if (planGoal == null)');
+    const guard = advance.indexOf('if (planGoal == null || !isServableMacroPrescription(macroTargets))');
     expect(guard).toBeGreaterThan(-1);
-    for (const llamada of ['legacyMacros(', 'generateWeeklyPlan(', 'saveWeeklyPlan(',
+    for (const llamada of ['macroTargets.proteinG', 'generateWeeklyPlan(', 'saveWeeklyPlan(',
       "setPhase('generating')"]) {
       const i = advance.indexOf(llamada);
       expect(i, `${llamada} debe existir`).toBeGreaterThan(-1);
@@ -342,8 +345,8 @@ describe('C3 · sin objetivo no se genera nada', () => {
 
   it('la ausencia de objetivo NO es un error de generación', () => {
     const advance = PLANNER.slice(PLANNER.indexOf('async function advance('));
-    const hastaGuard = advance.slice(0, advance.indexOf('if (planGoal == null)'));
-    const ramaNull = advance.slice(advance.indexOf('if (planGoal == null)'));
+    const hastaGuard = advance.slice(0, advance.indexOf('if (planGoal == null || !isServableMacroPrescription(macroTargets))'));
+    const ramaNull = advance.slice(advance.indexOf('if (planGoal == null || !isServableMacroPrescription(macroTargets))'));
     const finRama = ramaNull.indexOf('\n    }');
     const cuerpo = ramaNull.slice(0, finRama);
 
@@ -363,7 +366,7 @@ describe('C3 · sin objetivo no se genera nada', () => {
     expect(PLANNER.match(/nutritionPlanner\.genError/g)).toHaveLength(1);
     const i = PLANNER.indexOf('nutritionPlanner.genError');
     const antes = PLANNER.slice(0, i);
-    expect(antes.lastIndexOf('catch (e)')).toBeGreaterThan(antes.lastIndexOf('if (planGoal == null)'));
+    expect(antes.lastIndexOf('catch (e)')).toBeGreaterThan(antes.lastIndexOf('if (planGoal == null || !isServableMacroPrescription(macroTargets))'));
   });
 
   it('sin objetivo y CON plan guardado, se vuelve a ver el plan intacto', () => {
@@ -385,7 +388,7 @@ describe('C3 · sin objetivo no se genera nada', () => {
     expect(guard).toBeGreaterThan(-1);
     // Se comparan las LLAMADAS, no la desestructuración del selector —
     // `saveWeeklyPlan` se extrae del store antes del guard, y extraerlo no escribe.
-    for (const llamada of ['legacyMacros(', 'generateWeeklyPlan(', 'saveWeeklyPlan(']) {
+    for (const llamada of ['servableMacros.proteinG', 'generateWeeklyPlan(', 'saveWeeklyPlan(']) {
       const i = efecto.indexOf(llamada);
       expect(i, `${llamada} debe existir`).toBeGreaterThan(-1);
       expect(guard, `el guard debe ir antes de ${llamada}`).toBeLessThan(i);
@@ -395,7 +398,9 @@ describe('C3 · sin objetivo no se genera nada', () => {
   // C4 · el disparador dejó de ser la versión guardada suelta: lo absorbe
   // `weeklyPlanCurrentness`, que además detecta que la cifra prescrita CAMBIÓ.
   it('C4 · la regeneración se dispara por la VIGENCIA, no por la versión suelta', () => {
-    expect(REGEN).toContain('}, [currentness, planGoal]);');
+    expect(REGEN).toContain('}, [currentness, planGoal, servableMacros]);');
+    // CAPA 2 · la vigencia incluye las macros servibles.
+    expect(REGEN).toContain('macros: servableMacros,');
     expect(REGEN).toContain('const currentness = weeklyPlanCurrentness({');
     expect(REGEN).toContain('currentVersion: PLAN_ENGINE_VERSION,');
     expect(REGEN).toContain('status: energyStatus,');
@@ -411,7 +416,7 @@ describe('C3 · sin objetivo no se genera nada', () => {
   const EFECTO = (() => {
     const hook = REGEN.slice(REGEN.indexOf('export function useAutoRegenPlan'));
     const i = hook.indexOf('useEffect(() => {');
-    return hook.slice(i, hook.indexOf('}, [currentness, planGoal]);'));
+    return hook.slice(i, hook.indexOf('}, [currentness, planGoal, servableMacros]);'));
   })();
 
   it('A · planGoal null, con plan viejo y cualquier mealPlanKey → 0 regen', () => {
@@ -419,7 +424,7 @@ describe('C3 · sin objetivo no se genera nada', () => {
     // motor/IA/escritura; aquí se fija que el gate existe dentro del efecto.
     expect(EFECTO).toContain('if (planGoal == null) return;');
     const gate = EFECTO.indexOf('if (planGoal == null) return;');
-    for (const llamada of ['legacyMacros(', 'generateWeeklyPlan(', 'saveWeeklyPlan(']) {
+    for (const llamada of ['servableMacros.proteinG', 'generateWeeklyPlan(', 'saveWeeklyPlan(']) {
       expect(gate, `gate antes de ${llamada}`).toBeLessThan(EFECTO.indexOf(llamada));
     }
   });
@@ -443,19 +448,18 @@ describe('C3 · sin objetivo no se genera nada', () => {
     // autoridad era `legacyEnergy` y leerlo habría sido una segunda verdad. C4
     // retira esa autoridad: ahora `planGoal` ES la cifra, y lo que hay que
     // defender es lo contrario — que NADA MÁS la produzca.
-    expect(EFECTO).toContain('const target = { kcal: planGoal, protG: t.protG, fatG: t.fatG, carbG: t.carbG };');
+    expect(EFECTO).toContain('const target = { kcal: planGoal, protG: servableMacros.proteinG, fatG: servableMacros.fatG, carbG: servableMacros.carbG };');
     expect(EFECTO).not.toMatch(/\bt\.planGoal\b/);
     expect(EFECTO).not.toMatch(/\bcomputeNutritionTargets\b/);
     // Y la cifra no sale del plan guardado, que sigue siendo el fallo que importa.
     expect(EFECTO).not.toMatch(/kcal:[^\n]*gen[?.]*\.kcal/);
   });
 
-  it('C · pasados los guards, las macros vienen del PUENTE sobre la cifra nueva', () => {
-    expect(EFECTO).toContain('const ob = parseObData(obData as Record<string, string | number>);');
-    expect(EFECTO).toContain('const t = legacyMacros(ob, planGoal, legacyMacroWellness(ob));');
+  it('C · CAPA 2 · pasados los guards, las macros vienen de `store.macroTargets`', () => {
+    expect(EFECTO).toContain('if (servableMacros == null) return;');
+    expect(EFECTO).not.toMatch(/\blegacyMacros\b|\bparseObData\b/);
     expect(EFECTO).toContain('avoidForRegen(weeklyPlan.gen, weeklyPlan.preferences, obData)');
-    // El puente recibe la energía; no la estima.
-    expect(TARGETS).toContain('export function legacyMacros(o: ObInput, energyKcal: number, wellnessMode: boolean): LegacyMacros');
+    expect(TARGETS).not.toMatch(/\blegacyMacros\b/);
   });
 
   it('ninguno de los dos borra el plan existente por un null', () => {
@@ -556,7 +560,7 @@ describe('C3 · coachContext', () => {
   it('C4 · lee `store.planGoal` y ya no recalcula la energía legacy', () => {
     expect(COACH_CTX).not.toMatch(/\bcomputeNutritionTargets\b/);
     expect(COACH_CTX).toContain('planGoal,');
-    expect(COACH_CTX).toContain("const nutrition: CoachContext['nutrition'] = planGoal == null ? null : (() => {");
+    expect(COACH_CTX).toContain("const nutrition: CoachContext['nutrition'] = planGoal == null || !isServableMacroPrescription(macroTargets) ? null : (() => {");
     expect(COACH_CTX).toContain('target: { kcal: planGoal, prot: targets.protG, carb: targets.carbG, fat: targets.fatG },');
   });
 
@@ -564,7 +568,7 @@ describe('C3 · coachContext', () => {
     expect(COACH_CTX).toContain("  } | null;");
     // El serializador lo dice explícitamente en vez de callar.
     expect(COACH_CTX).toContain('if (n === null) {');
-    expect(COACH_CTX).toMatch(/no tiene una meta energética vigente/);
+    expect(COACH_CTX).toMatch(/no tiene una meta nutricional vigente/);
     // Y la rama con cifras queda detrás del `else`: inalcanzable sin prescripción.
     const iNull = COACH_CTX.indexOf('if (n === null) {');
     const iMeta = COACH_CTX.indexOf('NUTRICIÓN HOY — META:');
@@ -602,23 +606,20 @@ describe('C3 · la autoridad y las cifras no cambian', () => {
     expect(TARGETS).not.toMatch(/\bLegacyEnergy\b/);
   });
 
-  it('C4 · el puente de macros es el ÚNICO resto legacy, y recibe la cifra nueva', () => {
+  it('CAPA 2 · el puente de macros desapareció: los cuatro consumidores leen `macroTargets`', () => {
     for (const [nombre, src] of [['WeeklyNutritionPlanner', PLANNER], ['useAutoRegenPlan', REGEN],
       ['coachContext', COACH_CTX], ['OnboardingScreen', ONB]] as [string, string][]) {
-      expect(src, `${nombre} debe usar el puente`).toMatch(/legacyMacros\(/);
-      expect(src, `${nombre} debe derivar wellness del puente`).toMatch(/legacyMacroWellness\(/);
+      expect(src, `${nombre} ya no usa el puente`).not.toMatch(/\blegacyMacros\b|\blegacyMacroWellness\b/);
+      expect(src, `${nombre} lee la autoridad nueva`).toMatch(/\bmacroTargets\b/);
+      expect(src, `${nombre} sirve solo VALID/REVIEW`).toMatch(/isServableMacroPrescription\(/);
     }
-    expect(TARGETS).toContain('export function legacyMacroWellness(o: ObInput): boolean');
+    expect(TARGETS).not.toMatch(/\blegacyMacroWellness\b/);
   });
 
-  it('C5 · `nutritionTargets` conserva la mitad MACRO y ha perdido la energética', () => {
-    // C3 fijaba que el contrato legacy seguía dando `tdee`/`planGoal` como
-    // `number` no nullable. C5 retira esos campos con la mitad que los producía,
-    // así que lo que se defiende ahora es lo que QUEDA y que no quede nada más.
-    expect(TARGETS).toContain('export function legacyMacros(o: ObInput, energyKcal: number, wellnessMode: boolean): LegacyMacros');
-    expect(TARGETS).toContain('export function legacyMacroWellness(o: ObInput): boolean');
+  it('CAPA 2 · `nutritionTargets` ya no tiene ni la mitad energética ni la de macros', () => {
     for (const id of ['computeNutritionTargets', 'NutritionTargets', 'legacyEnergy',
-      'LegacyEnergy', 'WellnessReason', 'goalFactor', 'sexFloor', 'ACTIVITY_FACTORS']) {
+      'LegacyEnergy', 'WellnessReason', 'goalFactor', 'sexFloor', 'ACTIVITY_FACTORS',
+      'legacyMacros', 'LegacyMacros', 'legacyMacroWellness', 'parseObData', 'GKG', 'FAT_PCT']) {
       expect(TARGETS, `${id} debe haber desaparecido`).not.toMatch(new RegExp(`\\b${id}\\b`));
     }
     // Y no reaparece una cifra energética como campo de salida de las macros.
@@ -649,7 +650,7 @@ describe('C3 · la autoridad y las cifras no cambian', () => {
     expect(APP).not.toMatch(/\bparseEnergySnapshot\b/);
   });
 
-  it('`objKey` / `wellnessMode` sin tocar', () => {
-    expect(TARGETS).toContain("const objKey = wellnessMode ? 'mantener' : normalizeGoal(o.goal);");
+  it('CAPA 2 · `objKey` / `wellnessMode` retirados con las macros legacy', () => {
+    expect(TARGETS).not.toMatch(/\bobjKey\b|\bwellnessMode\b|\bnormalizeGoal\b|\bwantsToLose\b/);
   });
 });

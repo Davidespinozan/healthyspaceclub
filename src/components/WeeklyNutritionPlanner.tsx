@@ -12,9 +12,10 @@ import { normalizeGroceryList } from '../utils/groceryList';
 import { mealKcal, dayNutrition } from '../utils/mealNutrition';
 import { computeDayConsumption } from '../utils/foodConsumption';
 // C4 · el planner ya NO llama a `computeNutritionTargets`: la cifra energética la
-// prescribe el motor nuevo y llega por `store.planGoal`. De `nutritionTargets` solo
-// queda el PUENTE de macros, que sigue siendo legacy hasta la CAPA 2.
-import { legacyMacros, legacyMacroWellness, parseObData } from '../utils/nutritionTargets';
+// prescribe el motor nuevo y llega por `store.planGoal`.
+// CAPA 2 · las macros tampoco se calculan aquí: las prescribe `macroPrescription`
+// y llegan por `store.macroTargets`.
+import { isServableMacroPrescription } from '../utils/macroPrescription';
 import { PLAN_ENGINE_VERSION } from '../utils/planEngine';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
@@ -155,11 +156,11 @@ export default function WeeklyNutritionPlanner() {
   const {
     shoppingDay, setShoppingDay,
     weeklyPlan, saveWeeklyPlan, clearWeeklyPlan,
-    mealPlanKey, planGoal, obData, userName,
+    mealPlanKey, planGoal, macroTargets, obData, userName,
     mealChecks, toggleMealCheck,
     mealResolvedByLog, clearMealResolvedByLog, foodLog, removeFoodLog,
     planRegenCount, incrementPlanRegen, userEmail,
-  } = useAppStore(useShallow((s) => ({ shoppingDay: s.shoppingDay, setShoppingDay: s.setShoppingDay, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, clearWeeklyPlan: s.clearWeeklyPlan, mealPlanKey: s.mealPlanKey, planGoal: s.planGoal, obData: s.obData, userName: s.userName, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, mealResolvedByLog: s.mealResolvedByLog, clearMealResolvedByLog: s.clearMealResolvedByLog, foodLog: s.foodLog, removeFoodLog: s.removeFoodLog, planRegenCount: s.planRegenCount, incrementPlanRegen: s.incrementPlanRegen, userEmail: s.userEmail })));
+  } = useAppStore(useShallow((s) => ({ shoppingDay: s.shoppingDay, setShoppingDay: s.setShoppingDay, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, clearWeeklyPlan: s.clearWeeklyPlan, mealPlanKey: s.mealPlanKey, planGoal: s.planGoal, macroTargets: s.macroTargets, obData: s.obData, userName: s.userName, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, mealResolvedByLog: s.mealResolvedByLog, clearMealResolvedByLog: s.clearMealResolvedByLog, foodLog: s.foodLog, removeFoodLog: s.removeFoodLog, planRegenCount: s.planRegenCount, incrementPlanRegen: s.incrementPlanRegen, userEmail: s.userEmail })));
   const todayKey = dayKey(new Date());
 
   const weekStart = (() => {
@@ -274,7 +275,10 @@ export default function WeeklyNutritionPlanner() {
     // con un plan guardado, a verlo —intacto—; sin plan, al cuestionario. Ningún
     // copy nuevo y ninguna fase nueva. Darle voz a este caso es trabajo de C4,
     // que es quien conocerá el motivo.
-    if (planGoal == null) {
+    // CAPA 2 · tampoco se genera sin macros SERVIBLES (`VALID`/`REVIEW`). Un residuo
+    // de carbohidrato no positivo (`INFEASIBLE`) o un deporte especializado
+    // (`SPORTS_SCOPE`) no tienen gramos: mismo aborto neutro.
+    if (planGoal == null || !isServableMacroPrescription(macroTargets)) {
       setPhase(weeklyPlanPhase(shoppingDay, weeklyPlan));
       return;
     }
@@ -283,11 +287,9 @@ export default function WeeklyNutritionPlanner() {
     try {
       // Deja pintar el spinner antes del cómputo síncrono del motor.
       await new Promise((r) => setTimeout(r, 30));
-      // C4 · PUENTE. La kcal es `planGoal` (motor nuevo, ya estrechado a number por
-      // el guard de arriba) y las macros se derivan DE ESA kcal. `legacyMacros` no
-      // vuelve a estimar energía: la recibe.
-      const ob = parseObData(obData as Record<string, string | number>);
-      const targets = legacyMacros(ob, planGoal, legacyMacroWellness(ob));
+      // CAPA 2 · la kcal es `planGoal` y las macros, `macroTargets`: las dos
+      // proyecciones del mismo acto de resolución. Aquí no se deriva nada.
+      const targets = { protG: macroTargets.proteinG, fatG: macroTargets.fatG, carbG: macroTargets.carbG };
       // P0-02 · AUTORIDAD DE RESTRICCIONES. Lo que llega al generador es la UNIÓN de
       // las permanentes del perfil (obData.avoid — «no consumo esto nunca») con la
       // preferencia de ESTA semana. El cuestionario solo puede AÑADIR; nunca resta.
@@ -727,13 +729,9 @@ export default function WeeklyNutritionPlanner() {
     todayMeals: todayPlanMeals,
     mealChecks, mealResolvedByLog, foodLog, today: todayKey,
   });
-  // C4 · sin cifra prescrita no hay macros que mostrar: se derivan de la kcal, así
-  // que inventarlas sería inventar un objetivo. `null` viaja hasta la tarjeta.
-  const macroTargets = (() => {
-    if (planGoal == null) return null;
-    const ob = parseObData(obData);
-    return legacyMacros(ob, planGoal, legacyMacroWellness(ob));
-  })();
+  // CAPA 2 · sin macros servibles no hay objetivo de macros que mostrar. `null`
+  // viaja hasta la tarjeta, que entonces solo pinta lo comido.
+  const servableMacros = planGoal != null && isServableMacroPrescription(macroTargets) ? macroTargets : null;
 
   const shoppingTotal = weeklyPlan.shoppingList.length;
   const shoppingDone = weeklyPlan.shoppingList.filter((_, i) => !!mealChecks[`shop-${i}`]).length;
@@ -764,7 +762,7 @@ export default function WeeklyNutritionPlanner() {
           carbs: dayConsumption.consumedCarbs, fat: dayConsumption.consumedFat,
         }}
         goalKcal={planGoal}
-        targets={macroTargets && { protG: macroTargets.protG, carbG: macroTargets.carbG, fatG: macroTargets.fatG, fiberG: macroTargets.fiberG }}
+        targets={servableMacros && { protG: servableMacros.proteinG, carbG: servableMacros.carbG, fatG: servableMacros.fatG, fiberG: servableMacros.fiberG }}
         mealsDone={dayConsumption.completedSlots}
         mealsTotal={dayConsumption.totalSlots}
       />

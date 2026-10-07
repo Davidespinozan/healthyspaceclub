@@ -1,15 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import srcTargets from '../nutritionTargets.ts?raw';
 import srcTdee from '../tdee.ts?raw';
-import { legacyMacros, legacyMacroWellness, parseObData } from '../nutritionTargets';
 import { assignPlan } from '../tdee';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CAPA 1E · FASE C5 · LEGACY ENERGY REMOVAL · CONTRATO
 //
 // C4 le quitó la autoridad a la energía legacy. C5 la BORRA. Este fichero es la
-// prueba de que el borrado es total y de que no se llevó por delante nada de la
-// mitad macro, que sobrevive hasta CAPA 2.
+// prueba de que el borrado es total. (CAPA 2 borró después la mitad macro; los
+// contratos de esa retirada viven también aquí.)
 //
 // ── POR QUÉ UN BARRIDO DE TODO EL ÁRBOL ─────────────────────────────────────
 // «No encuentro call-sites» no es una garantía: un símbolo puede seguir
@@ -114,70 +113,25 @@ describe('C5 · tdee.ts', () => {
 // C · LOS SUPERVIVIENTES CONSERVAN SU SEMÁNTICA
 // ═════════════════════════════════════════════════════════════════════════════
 describe('C5 · lo que sobrevive, sobrevive entero', () => {
-  it('los once exports de `nutritionTargets` son los esperados, ni uno más', () => {
+  // ACTUALIZADO POR CAPA 2 · la mitad macro (`legacyMacros`, `LegacyMacros`,
+  // `legacyMacroWellness`, sus helpers `wantsToLose`/`normalizeGoal`, las tablas
+  // `GKG`/`FAT_PCT`) y `parseObData` se retiraron. Su autoridad es ahora
+  // `macroPrescription.ts`, que tiene su propio contrato (`macroPrescription.test.ts`).
+  it('los siete exports de `nutritionTargets` son los esperados, ni uno más', () => {
     const exports = [...TARGETS.matchAll(/^export (?:function|interface|type|const) (\w+)/gm)]
       .map((m) => m[1]).sort();
     expect(exports).toEqual([
-      'LegacyMacros', 'ObInput', 'TargetWeightNotice', 'TargetWeightNoticeKind',
-      'estimateTimeMonths', 'invalidField', 'legacyMacroWellness', 'legacyMacros',
-      'mealCalorieSplit', 'parseObData', 'targetWeightNotice',
+      'ObInput', 'TargetWeightNotice', 'TargetWeightNoticeKind',
+      'estimateTimeMonths', 'invalidField', 'mealCalorieSplit', 'targetWeightNotice',
     ]);
   });
 
-  it('los dos helpers privados siguen ahí · `wantsToLose` NO se fue con la energía', () => {
-    // Era el riesgo del borrado: `wantsToLose` vivía entre las dos mitades y lo
-    // usaban `legacyEnergy` (muerta) Y `legacyMacroWellness` (viva).
-    expect(TARGETS).toContain('function wantsToLose(goal: string): boolean {');
-    expect(TARGETS).toContain('function normalizeGoal(goal: string)');
-    expect(TARGETS).toContain('wantsToLose(o.goal)');
-    expect(TARGETS).toContain('normalizeGoal(o.goal)');
-  });
-
-  it('las constantes macro no cambiaron ni un decimal', () => {
-    expect(TARGETS).toContain('bajar:    [2.0, 2.2, 2.4]');
-    expect(TARGETS).toContain('mantener: [1.6, 1.8, 2.0]');
-    expect(TARGETS).toContain('recomp:   [1.8, 2.0, 2.2]');
-    expect(TARGETS).toContain('ganar:    [1.8, 2.0, 2.2]');
-    expect(TARGETS).toContain('{ bajar: 0.22, recomp: 0.25, mantener: 0.28, ganar: 0.30 }');
-    expect(TARGETS).toContain('if (gkg > 2.4) gkg = 2.4;');
-    expect(TARGETS).toContain('if (mayor70 && gkg > 2.0) gkg = 2.0;');
-    expect(TARGETS).toContain('if (renal && gkg > 1.0) gkg = 1.0;');
-    expect(TARGETS).toContain('o.pesoKg * 0.6');
-    expect(TARGETS).toContain('energyKcal / 1000 * 14');
-  });
-
-  it('`parseObData` conserva sus defaults: la coerción es la misma', () => {
-    const o = parseObData({});
-    expect(o).toEqual({
-      sexo: 'Hombre', pesoKg: 70, estaturaCm: 170, edad: 28,
-      activity: 'Moderada', goal: '', grasa: null, embarazo: false,
-      pesoMeta: null, conditions: [],
-    });
-  });
-
-  it('el bridge M2 sigue siendo un predicado, no una autoridad energética', () => {
-    const base: Parameters<typeof legacyMacroWellness>[0] = {
-      sexo: 'Hombre', pesoKg: 80, estaturaCm: 180, edad: 30,
-      activity: 'Moderada', goal: 'Bajar grasa',
-    };
-    expect(legacyMacroWellness(base)).toBe(false);
-    expect(legacyMacroWellness({ ...base, edad: 16 })).toBe(true);
-    expect(legacyMacroWellness({ ...base, embarazo: true })).toBe(true);
-    expect(legacyMacroWellness({ ...base, pesoKg: 50, estaturaCm: 190 })).toBe(true);
-    expect(legacyMacroWellness({ ...base, edad: 75 })).toBe(true);
-    // Devuelve un booleano y nada más: no es, ni puede ser, autoridad energética.
-    expect(typeof legacyMacroWellness(base)).toBe('boolean');
-  });
-
-  it('`legacyMacros` sigue recibiendo la energía, nunca estimándola', () => {
-    const o = parseObData({ sex: 'Hombre', peso: 80, estatura: 180, edad: 30, activity: 'Moderada', goal: 'Bajar grasa' });
-    for (const kcal of [1_200, 2_400, 3_600]) {
-      const m = legacyMacros(o, kcal, false);
-      expect(m.fiberG, `fibra @${kcal}`).toBe(Math.round(kcal / 1000 * 14));
+  it('CAPA 2 · no queda ni una constante ni un helper de las macros legacy', () => {
+    for (const id of ['wantsToLose', 'normalizeGoal', 'GKG', 'FAT_PCT', 'objKey', 'actIdx', 'gkg']) {
+      expect(TARGETS, id).not.toMatch(new RegExp(`\\b${id}\\b`));
     }
-    // Y su salida sigue siendo macro-only: no puede emitir una cifra energética.
-    expect(Object.keys(legacyMacros(o, 2_000, false)).sort())
-      .toEqual(['carbG', 'fatG', 'fiberG', 'protG']);
+    expect(TARGETS).not.toContain('o.pesoKg * 0.6');
+    expect(TARGETS).not.toContain('Math.max(50,');
   });
 });
 
@@ -188,7 +142,7 @@ describe('C5 · la autoridad de C4 intacta', () => {
   it('ningún módulo de la cadena nueva importa `nutritionTargets`', () => {
     const CADENA = ['nutritionEnergyState', 'nutritionEnergyOrchestrator', 'activityClassifier',
       'maintenanceEstimate', 'energyPrescription', 'nutritionScopeGuard', 'profileValidation',
-      'nutritionProfileInput', 'energyHydration', 'weeklyPlanState'];
+      'nutritionProfileInput', 'energyHydration', 'weeklyPlanState', 'macroPrescription'];
     for (const mod of CADENA) {
       const entry = PRODUCTIVOS.find(([p]) => p.endsWith(`/${mod}.ts`));
       expect(entry, `falta ${mod}`).toBeTruthy();
@@ -204,16 +158,10 @@ describe('C5 · la autoridad de C4 intacta', () => {
     }
   });
 
-  it('los cuatro consumidores del bridge siguen siendo exactamente esos cuatro', () => {
+  it('CAPA 2 · el bridge de macros no tiene ni un consumidor: se borró', () => {
     const donde = PRODUCTIVOS
-      .filter(([p]) => !p.endsWith('/nutritionTargets.ts'))   // el módulo que lo define
-      .filter(([, src]) => /\blegacyMacros\b/.test(src))
-      .map(([p]) => p).sort();
-    expect(donde).toEqual([
-      '/src/components/WeeklyNutritionPlanner.tsx',
-      '/src/screens/OnboardingScreen.tsx',
-      '/src/utils/coachContext.ts',
-      '/src/utils/useAutoRegenPlan.ts',
-    ]);
+      .filter(([, src]) => /\blegacyMacros\b|\blegacyMacroWellness\b|\bparseObData\b/.test(src))
+      .map(([p]) => p);
+    expect(donde).toEqual([]);
   });
 });

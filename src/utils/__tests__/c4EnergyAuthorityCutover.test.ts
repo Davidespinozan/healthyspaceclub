@@ -16,7 +16,7 @@ import {
   type EnergySnapshotV1,
 } from '../nutritionEnergyState';
 import { weeklyPlanCurrentness } from '../weeklyPlanState';
-import { legacyMacros, legacyMacroWellness, parseObData } from '../nutritionTargets';
+import { prescribeMacros, resolveMacroPrescription } from '../macroPrescription';
 import { PLAN_ENGINE_VERSION } from '../planEngine';
 import { assignPlan } from '../tdee';
 
@@ -34,7 +34,8 @@ import { assignPlan } from '../tdee';
 //   2 · la HIDRATACIÓN nunca confía en `plan_goal`: adopta un snapshot vigente o
 //       vuelve a resolver, y jamás cae a la energía legacy.
 //   3 · la VIGENCIA del plan semanal detecta también que la cifra CAMBIÓ.
-//   4 · el PUENTE de macros recibe la energía nueva; no la estima.
+//   4 · las MACROS reciben la energía nueva; no la estiman. (CAPA 2 retiró el
+//       puente legacy: ahora vienen de `macroPrescription`.)
 //
 // ── POR QUÉ NO SE MONTA NADA ────────────────────────────────────────────────
 // El entorno de test no tiene `localStorage`, así que importar el store hace
@@ -279,7 +280,7 @@ describe('C4 · B · decisión de hidratación', () => {
     // Y el store lo traduce a SIN CIFRA, nunca a la energía legacy.
     const fn = STORE.slice(STORE.indexOf('hydrateEnergyFromSnapshot: async (rawSnapshot) => {'));
     const cuerpo = fn.slice(0, fn.indexOf('\n  },'));
-    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null });');
+    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null, macroTargets: null });');
     expect(cuerpo).not.toMatch(/legacyEnergy|computeNutritionTargets|plan_goal/);
   });
 
@@ -300,10 +301,12 @@ describe('C4 · B · decisión de hidratación', () => {
 // C · VIGENCIA DEL PLAN SEMANAL
 // ═════════════════════════════════════════════════════════════════════════════
 describe('C4 · C · vigencia del plan semanal', () => {
-  const PLAN = { days: [{}, {}], engineVersion: PLAN_ENGINE_VERSION, gen: { kcal: 2100 } };
+  // CAPA 2 · la firma del plan incluye las macros con que se armó.
+  const MACROS = { proteinG: 144, fatG: 58, carbG: 251 };
+  const PLAN = { days: [{}, {}], engineVersion: PLAN_ENGINE_VERSION, gen: { kcal: 2100, protG: 144, fatG: 58, carbG: 251 } };
   const v = (over: Partial<Parameters<typeof weeklyPlanCurrentness>[0]> = {}) =>
     weeklyPlanCurrentness({
-      status: 'PRESCRIBED', planGoal: 2100, weeklyPlan: PLAN,
+      status: 'PRESCRIBED', planGoal: 2100, macros: MACROS, weeklyPlan: PLAN,
       currentVersion: PLAN_ENGINE_VERSION, ...over,
     });
 
@@ -319,6 +322,19 @@ describe('C4 · C · vigencia del plan semanal', () => {
     // Antes un socio represcrito de 2.100 a 1.900 seguía viendo el plan de 2.100
     // hasta el siguiente salto de `engineVersion`.
     expect(v({ planGoal: 1900 })).toBe('STALE');
+  });
+
+  it('CAPA 2 · cambian SOLO las macros (misma kcal) → STALE', () => {
+    expect(v({ macros: { ...MACROS, proteinG: 160, carbG: 235 } })).toBe('STALE');
+    expect(v({ macros: { ...MACROS, fatG: 59 } })).toBe('STALE');
+  });
+
+  it('CAPA 2 · un plan armado con macros legacy (v32) no sigue vigente aunque coincidan los gramos', () => {
+    expect(v({ weeklyPlan: { ...PLAN, engineVersion: 32 } })).toBe('STALE');
+  });
+
+  it('CAPA 2 · energía prescrita pero macros NO servibles → NOT_CURRENT, no se regenera', () => {
+    expect(v({ macros: null })).toBe('NOT_CURRENT');
   });
 
   it('sin plan generado → NOT_CURRENT (no hay nada que mantener al día)', () => {
@@ -345,51 +361,33 @@ describe('C4 · C · vigencia del plan semanal', () => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
-// D · PUENTE M2 · las macros reciben la energía nueva
+// D · CAPA 2 · el puente de macros se retiró; las macros reciben la energía nueva
 // ═════════════════════════════════════════════════════════════════════════════
-describe('C4 · D · puente de macros', () => {
+describe('C4 · D · CAPA 2 · macros desde la autoridad nueva', () => {
   it('las macros se derivan de la cifra RECIBIDA, no de una estimación propia', () => {
-    const ob = parseObData({ ...OB } as Record<string, string | number>);
-    const a = legacyMacros(ob, 2000, false);
-    const b = legacyMacros(ob, 2600, false);
-    // La proteína es g/kg: no depende de la kcal. Los carbos son el resto, sí.
-    expect(a.protG).toBe(b.protG);
+    const base = { goal: 'FAT_LOSS', weightKg: 80, heightCm: 180, activityClass: 'MIXED' } as const;
+    const a = prescribeMacros({ ...base, energyKcal: 2000 });
+    const b = prescribeMacros({ ...base, energyKcal: 2600 });
+    if (a.status !== 'VALID' || b.status !== 'VALID') throw new Error('deberían ser VALID');
+    // La proteína es g/kg PRW: no depende de la kcal. Los carbos son el resto, sí.
+    expect(a.proteinG).toBe(b.proteinG);
     expect(b.carbG).toBeGreaterThan(a.carbG);
   });
 
-  it('`legacyMacroWellness` reproduce el booleano que antes venía de `legacyEnergy`', () => {
-    const ob = (over: Record<string, unknown> = {}) => parseObData({ ...OB, ...over } as Record<string, string | number>);
-    expect(legacyMacroWellness(ob())).toBe(false);
-    expect(legacyMacroWellness(ob({ edad: 16 }))).toBe(true);        // menor
-    expect(legacyMacroWellness(ob({ sex: 'Mujer', embarazo: 1 }))).toBe(true); // embarazo
-    expect(legacyMacroWellness(ob({ peso: 50, estatura: 190 }))).toBe(true);   // IMC<18.5 + bajar
-    expect(legacyMacroWellness(ob({ edad: 75 }))).toBe(true);        // >=70
-  });
-
-  it('la ÚNICA población que todavía necesita el puente es IMC<18.5 ∧ RECOMPOSICIÓN', () => {
-    // Las otras cuatro ramas son inalcanzables en PRESCRIBED: <18 y >=70 las corta
-    // el Scope Guard (19-64), el embarazo también, y IMC<18.5 ∧ FAT_LOSS cae en
-    // FAT_LOSS_BLOCKED. Recomposición sobrevive porque el gate de IMC vive DENTRO
-    // de la rama de pérdida de grasa mientras `wantsToLose` también casa /recompos/.
+  it('IMC<18.5 ∧ RECOMPOSICIÓN · ya no hay «modo bienestar»: macros ordinarias de recomposición', () => {
+    // El puente le daba la tabla de 'mantener'. CAPA 2 no tiene wellness: el
+    // objetivo canónico y la clase de actividad deciden, sin ramas por población.
     const recomp = { ...OB, goal: 'Recomposición', peso: 50, estatura: 190 };
     const estado = resolveNutritionEnergyState(recomp);
     expect(estado.status).toBe('PRESCRIBED');
-    expect(legacyMacroWellness(parseObData(recomp as Record<string, string | number>))).toBe(true);
-
-    // Y ninguna de las otras cuatro llega a PRESCRIBED.
-    for (const [nombre, ob] of [
-      ['menor', { ...OB, edad: 16 }],
-      ['mayor', { ...OB, edad: 75 }],
-      ['embarazo', { ...OB, sex: 'Mujer', embarazo: 1 }],
-      ['bajopeso+fatloss', { ...OB, peso: 50, estatura: 190 }],
-    ] as [string, Record<string, string | number>][]) {
-      expect(resolveNutritionEnergyState(ob).status, nombre).not.toBe('PRESCRIBED');
-    }
+    const m = resolveMacroPrescription(estado, recomp);
+    expect(m?.status).toBe('VALID');
+    expect(m?.proteinFactor).toBe(1.6);           // 240 min/sem → estructurado
+    expect(m?.proteinG).toBe(80);                 // 50 kg × 1.6 (IMC < 30 → PRW = peso)
   });
 
-  it('el puente está marcado como deuda temporal y con dueño', () => {
-    expect(srcTargets).toMatch(/DEUDA TEMPORAL DE C4/);
-    expect(srcTargets).toMatch(/LA RETIRA \*\*CAPA 2\*\*/);
+  it('el puente desapareció de `nutritionTargets`', () => {
+    expect(TARGETS).not.toMatch(/\blegacyMacros\b|\blegacyMacroWellness\b|\bparseObData\b/);
   });
 });
 
@@ -439,14 +437,14 @@ describe('C4 · E · autoridad única', () => {
     }
   });
 
-  it('`PLAN_ENGINE_VERSION` subió a 32 y la vigencia lo usa', () => {
-    expect(PLAN_ENGINE_VERSION).toBe(32);
+  it('`PLAN_ENGINE_VERSION` subió a 33 (CAPA 2) y la vigencia lo usa', () => {
+    expect(PLAN_ENGINE_VERSION).toBe(33);
     expect(REGEN).toContain('currentVersion: PLAN_ENGINE_VERSION,');
     expect(PLANNER).toContain('engineVersion: PLAN_ENGINE_VERSION,');
   });
 
   it('el Coach omite el bloque entero sin prescripción: ni ceros ni macros sueltas', () => {
-    expect(COACH_CTX).toContain("const nutrition: CoachContext['nutrition'] = planGoal == null ? null : (() => {");
+    expect(COACH_CTX).toContain("const nutrition: CoachContext['nutrition'] = planGoal == null || !isServableMacroPrescription(macroTargets) ? null : (() => {");
     expect(COACH_CTX).toContain('if (n === null) {');
     expect(COACH_CTX).not.toMatch(/kcal:\s*0\b/);
   });
@@ -461,7 +459,12 @@ describe('C4 · E · autoridad única', () => {
     weeklyPlan: null, shoppingDay: 0, mealChecks: {}, mealResolvedByLog: {},
     foodLog: [], completedSessions: [], workoutLog: [], dailyWorkout: null,
     dailyHSMResponses: [], hsmProfile: null, hsmDailyReview: null, planGoal,
+    // CAPA 2 · proyección hermana: sin energía no hay macros.
+    macroTargets: planGoal == null ? null : COACH_MACROS(planGoal),
   }) as unknown as Parameters<typeof buildCoachContext>[0];
+  const COACH_MACROS = (kcal: number) => prescribeMacros({
+    energyKcal: kcal, goal: 'FAT_LOSS', weightKg: 80, heightCm: 180, activityClass: 'MIXED',
+  });
 
   it('sin prescripción el bloque `nutrition` es null COMPLETO, no ceros', () => {
     expect(buildCoachContext(SNAPSHOT(null)).nutrition).toBeNull();
@@ -469,18 +472,18 @@ describe('C4 · E · autoridad única', () => {
 
   it('sin prescripción los HECHOS lo dicen, y no llevan meta ni restante', () => {
     const facts = renderHscFacts(buildCoachContext(SNAPSHOT(null)));
-    expect(facts).toMatch(/no tiene una meta energética vigente/i);
+    expect(facts).toMatch(/no tiene una meta nutricional vigente/i);
     expect(facts).not.toMatch(/RESTA HOY/);
     expect(facts).not.toMatch(/NUTRICIÓN HOY — META/);
     expect(facts).not.toMatch(/0 kcal \(P/);   // ni un 0 presentado como objetivo
   });
 
-  it('CON prescripción la cifra del Coach ES `store.planGoal` y las macros el puente', () => {
+  it('CON prescripción la cifra del Coach ES `store.planGoal` y las macros `store.macroTargets`', () => {
     const n = buildCoachContext(SNAPSHOT(2100)).nutrition;
     if (n === null) throw new Error('con planGoal debería haber bloque');
-    const macros = legacyMacros(parseObData({ ...OB } as Record<string, string | number>), 2100,
-      legacyMacroWellness(parseObData({ ...OB } as Record<string, string | number>)));
-    expect(n.target).toEqual({ kcal: 2100, prot: macros.protG, carb: macros.carbG, fat: macros.fatG });
+    const macros = COACH_MACROS(2100);
+    if (macros.status !== 'VALID') throw new Error('debería ser VALID');
+    expect(n.target).toEqual({ kcal: 2100, prot: macros.proteinG, carb: macros.carbG, fat: macros.fatG });
     expect(renderHscFacts(buildCoachContext(SNAPSHOT(2100)))).toMatch(/NUTRICIÓN HOY — META: 2100 kcal/);
   });
 
@@ -503,16 +506,9 @@ describe('C4 · E · autoridad única', () => {
     expect(paso12).toContain('const sinMeta = goalVal != null ? null : (() => {');
   });
 
-  it('C5 · TARGETS conserva el lado MACRO del seam; el energético se borró', () => {
-    // C4 fijaba que `legacyEnergy` seguía existiendo sin autoridad, y que la
-    // composición la invocaba una vez. C5 borra ambas, así que la garantía se
-    // invierte: el seam ya no es «dos mitades aisladas», es UNA mitad.
-    expect(TARGETS).toContain('export function legacyMacros(o: ObInput, energyKcal: number, wellnessMode: boolean): LegacyMacros');
-    expect(TARGETS).toContain('export function legacyMacroWellness(o: ObInput): boolean');
-    expect(TARGETS).not.toMatch(/\blegacyEnergy\b/);
-    expect(TARGETS).not.toMatch(/const energy = legacyEnergy/);
-    // El puente sigue sin calcular energía: ahora porque no hay ninguna que calcular.
-    const puente = TARGETS.slice(TARGETS.indexOf('export function legacyMacroWellness'));
-    expect(puente.slice(0, puente.indexOf('\n}'))).not.toMatch(/legacyEnergy|ACTIVITY_FACTORS|goalFactor|sexFloor/);
+  it('CAPA 2 · TARGETS ya no tiene ninguna de las dos mitades del seam', () => {
+    for (const id of ['legacyEnergy', 'legacyMacros', 'legacyMacroWellness', 'LegacyMacros']) {
+      expect(TARGETS, id).not.toMatch(new RegExp(`\\b${id}\\b`));
+    }
   });
 });

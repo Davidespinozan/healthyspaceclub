@@ -15,6 +15,7 @@ import { buildEnergySnapshot, type NutritionEnergyState } from '../utils/nutriti
 // C4 · la proyección estado → campos del store y la decisión de hidratación son
 // puras y viven fuera: el store las aplica, no las define.
 import { projectEnergy, decideEnergyHydration } from '../utils/energyHydration';
+import { resolveMacroPrescription, type MacroPrescription } from '../utils/macroPrescription';
 import type { Json } from '../types/database';
 import { planInvalidatedByAvoidChange, avoidForRegen } from '../utils/avoidAuthority';
 import { validatePlan, planIfValid, InvalidPlanError } from '../utils/planIntegrity';
@@ -300,6 +301,16 @@ interface AppState {
    * invitaría a confiar en un estado viejo sin comprobar su identidad.
    */
   energyState: NutritionEnergyState | null;
+
+  /**
+   * CAPA 2 · prescripción de MACROS diarios (única autoridad: `macroPrescription`).
+   *
+   * Proyección del MISMO acto de resolución que `energyState`: se escribe en el
+   * mismo `set()`, derivada del estado energético y del `obData` con que se
+   * resolvió. `null` = no hay energía prescrita, y sin energía no hay macros.
+   * Solo `VALID`/`REVIEW` llevan gramos; `INFEASIBLE` y `SPORTS_SCOPE` no se sirven.
+   */
+  macroTargets: MacroPrescription | null;
 
   // Workout log (granular per-exercise: legacy, usado para tracking de reps/kg)
   workoutLog: { date: string; exercise: string; sets: { reps: number; kg: number }[] }[];
@@ -1599,6 +1610,7 @@ export const useAppStore = create<AppState>()(
   setCoachPrefilledMessage: (msg) => set({ coachPrefilledMessage: msg }),
 
   energyState: null,
+  macroTargets: null,
 
   recalcFromObData: async (reason = 'unspecified') => {
     const { obData } = get();
@@ -1622,6 +1634,8 @@ export const useAppStore = create<AppState>()(
       planGoal: projected.planGoal,
       tdee: projected.tdee,
       mealPlanKey: projected.mealPlanKey,
+      // CAPA 2 · las macros se derivan en el mismo acto: no pueden quedar de otra energía.
+      macroTargets: resolveMacroPrescription(energyState, obData),
     });
 
     // ── 4 · PERSISTIR · un solo upsert ─────────────────────────────────────
@@ -1672,6 +1686,8 @@ export const useAppStore = create<AppState>()(
           planGoal: decision.projection.planGoal,
           tdee: decision.projection.tdee,
           mealPlanKey: decision.projection.mealPlanKey,
+          // CAPA 2 · derivación pura y determinista: no hace falta snapshot propio.
+          macroTargets: resolveMacroPrescription(decision.state, get().obData),
         });
         return;
       }
@@ -1687,7 +1703,7 @@ export const useAppStore = create<AppState>()(
       // `plan_goal`: es quedarse SIN CIFRA, con el estado a `null` para que cada
       // pantalla sepa que no hay nada resuelto en esta sesión.
       console.error('[hydrateEnergyFromSnapshot] perfil energético irresoluble:', e);
-      set({ energyState: null, planGoal: null, tdee: null });
+      set({ energyState: null, planGoal: null, tdee: null, macroTargets: null });
     }
   },
 
@@ -1740,6 +1756,7 @@ export const useAppStore = create<AppState>()(
     // C3 · al cambiar de cuenta no hay cifra energética: `null`, no 0.
     tdee: null,
     planGoal: null,
+    macroTargets: null,
     workoutLog: [],
     lastExercisePerformance: {},
     completedSessions: [],
@@ -1856,6 +1873,8 @@ export const useAppStore = create<AppState>()(
     // identidad del snapshot, y guardarlo invitaría a confiar en uno viejo.
     tdee: state.tdee,
     planGoal: state.planGoal,
+    // CAPA 2 · proyección hermana de `planGoal`; la hidratación la vuelve a derivar.
+    macroTargets: state.macroTargets,
     workoutLog: state.workoutLog,
     lastExercisePerformance: state.lastExercisePerformance,
     completedSessions: state.completedSessions,

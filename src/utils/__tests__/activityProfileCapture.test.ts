@@ -336,7 +336,9 @@ describe('FASE B · la Fase B no conecta el motor energético', () => {
       .filter(([p]) => !p.endsWith('/nutritionEnergyState.ts'))
       .filter(([, src]) => /\bnutritionEnergyState\b|\bresolveNutritionEnergyState\b/.test(src))
       .map(([p]) => p).sort();
-    expect(indirectos).toEqual(['/src/store/index.ts', '/src/utils/energyHydration.ts']);
+    // CAPA 2 · `macroPrescription` CONSUME el estado ya resuelto (tipo + lectura de
+    // `prescribedEnergy`/`classification`); no resuelve ni dispara el flujo.
+    expect(indirectos).toEqual(['/src/store/index.ts', '/src/utils/energyHydration.ts', '/src/utils/macroPrescription.ts']);
   });
 
   it('el mapper NO importa el orquestador: existir no es estar conectado', () => {

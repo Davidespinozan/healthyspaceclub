@@ -1113,7 +1113,10 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // en la siguiente carga, a través de `weeklyPlanCurrentness`.
 // Se sube AL FINAL, cuando ya no queda ningún consumidor leyendo la cifra legacy:
 // subirla antes habría regenerado planes con la autoridad que estábamos retirando.
-export const PLAN_ENGINE_VERSION = 32;
+// v33 · CAPA 2 · las MACROS diarias pasan a la autoridad nueva (`macroPrescription`:
+// proteína por PRW × factor, grasa 25 %, carbohidrato residual). Todo plan v32 se
+// armó con gramos de `legacyMacros`; el salto lo marca STALE aunque coincida la kcal.
+export const PLAN_ENGINE_VERSION = 33;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 

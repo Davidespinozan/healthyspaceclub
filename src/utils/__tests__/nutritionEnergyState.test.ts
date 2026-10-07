@@ -851,12 +851,14 @@ describe('C2 · nada de esto está conectado', () => {
   // momento en que se conecta algo, y esta lista falla si aparece un consumidor
   // nuevo — que es justo lo que hay que vigilar ahora.
   const STORE_Y_PUENTE = ['/src/store/index.ts', '/src/utils/energyHydration.ts'];
+  // CAPA 2 · la autoridad de macros lee el estado ya resuelto (solo el tipo).
+  const CON_MACROS = [...STORE_Y_PUENTE, '/src/utils/macroPrescription.ts'];
   it('C4 · consumidores productivos de C2 == exactamente el store y la hidratación', () => {
     const propio = (p: string) => p.endsWith('/nutritionEnergyState.ts');
     const ESPERADO: Record<string, string[]> = {
-      nutritionEnergyState:        STORE_Y_PUENTE,
+      nutritionEnergyState:        CON_MACROS,
       resolveNutritionEnergyState: [],                      // nadie lo llama directo
-      NutritionEnergyState:        STORE_Y_PUENTE,
+      NutritionEnergyState:        CON_MACROS,
       EnergySnapshotV1:            ['/src/utils/energyHydration.ts'],
       buildEnergySnapshot:         STORE_Y_PUENTE,
       parseEnergySnapshot:         ['/src/utils/energyHydration.ts'],

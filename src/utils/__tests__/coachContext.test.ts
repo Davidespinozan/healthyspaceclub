@@ -4,7 +4,7 @@ vi.mock('../../lib/supabase', () => ({ supabase: { auth: {}, from: () => ({}) } 
 
 import { buildCoachContext, renderHscFacts } from '../coachContext';
 import { buildCoachSystemPrompt } from '../../ai/prompts/coach';
-import { legacyMacros, legacyMacroWellness, parseObData } from '../nutritionTargets';
+import { prescribeMacros } from '../macroPrescription';
 import { dayKey } from '../localDate';
 import { useAppStore } from '../../store';
 
@@ -30,11 +30,12 @@ const OB = { sex: 'Hombre', peso: 80, estatura: 180, edad: 30, activity: 'Alta',
  * tests comprueban es que el contexto la USA, no cómo se calcula.
  */
 const PLAN_GOAL = 2100;
-/** Las macros siguen siendo legacy hasta la CAPA 2, pero DERIVADAS de `PLAN_GOAL`. */
-const MACROS = (() => {
-  const ob = parseObData(OB as never);
-  return legacyMacros(ob, PLAN_GOAL, legacyMacroWellness(ob));
-})();
+/** CAPA 2 · las macros llegan por `store.macroTargets`, prescritas sobre `PLAN_GOAL`. */
+const MACRO_TARGETS = prescribeMacros({
+  energyKcal: PLAN_GOAL, goal: 'FAT_LOSS', weightKg: 80, heightCm: 180, activityClass: 'MIXED',
+});
+if (MACRO_TARGETS.status !== 'VALID') throw new Error('el seed debería ser VALID');
+const MACROS = { protG: MACRO_TARGETS.proteinG, carbG: MACRO_TARGETS.carbG, fatG: MACRO_TARGETS.fatG };
 const TRACE = {
   week: 5, phase: 'acumulacion', progression: 'lineal', deload: true, recovery: 'media',
   readinessState: 'ok', readinessFactors: ['sueño bajo'], priorityMuscles: ['pecho'],
@@ -47,6 +48,7 @@ function seed(over: Record<string, unknown> = {}) {
   useAppStore.setState({
     userName: 'Dae', obData: OB as never, startDate: daysAgo(10), streakCount: 9,
     planGoal: PLAN_GOAL,
+    macroTargets: MACRO_TARGETS,
     shoppingDay: new Date().getDay(), // todayOffset = 0 → selectedDays[0]
     weeklyPlan: { days: [{ day: 1, meals: [DINNER] }, { day: 2, meals: [{ ...DINNER, name: 'Pollo (mañana)' }] }], selectedDays: [1, 2, 3, 4, 5, 6, 7], mealPlanKey: 'planA', shoppingList: [], preferences: '' } as never,
     mealChecks: {}, mealResolvedByLog: {}, foodLog: [],

@@ -16,7 +16,8 @@ import AuthProviderButtons from '../components/AuthProviderButtons';
 // C4 · el onboarding ya NO calcula energía: la cifra la prescribe el motor nuevo y
 // se lee del store. De `nutritionTargets` quedan el PUENTE de macros (legacy hasta
 // la CAPA 2) y los dos avisos de peso meta, que no son energéticos.
-import { legacyMacros, legacyMacroWellness, targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
+import { targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
+import { isServableMacroPrescription } from '../utils/macroPrescription';
 import { track } from '../utils/analytics';
 import { recordReferralIfAny } from '../utils/referral';
 
@@ -927,7 +928,7 @@ export default function OnboardingScreen() {
         // —que `finishOnboardingCalc` acaba de ejecutar unas líneas arriba— ya
         // resolvió el estado y proyectó las cifras. Volver a resolver aquí crearía
         // una segunda autoridad que podría discrepar de la que se persistió.
-        const { tdee: tdeeVal, planGoal: goalVal, energyState } = useAppStore.getState();
+        const { tdee: tdeeVal, planGoal: goalVal, energyState, macroTargets } = useAppStore.getState();
         // Avisos de PESO META (no energéticos): se calculan con los datos REALES del
         // socio, sin `|| 70`/`|| 170`/`|| 28`. Es la misma antropometría que acaba de
         // persistirse unas líneas arriba.
@@ -938,9 +939,10 @@ export default function OnboardingScreen() {
           pesoMeta: pesoMeta ? Number(pesoMeta) : null,
         };
         const metaNotice = targetWeightNotice(oi);
-        // C4 · PUENTE. Sin cifra prescrita no hay macros: se derivan de ella. Y sin
-        // cifra tampoco hay ritmo que estimar, porque no hay déficit que aplicar.
-        const macros = goalVal == null ? null : legacyMacros(oi, goalVal, legacyMacroWellness(oi));
+        // CAPA 2 · las macros las prescribió `recalcFromObData` en el mismo acto que
+        // la energía. Solo `VALID`/`REVIEW` tienen gramos que mostrar. Sin cifra
+        // tampoco hay ritmo que estimar, porque no hay déficit que aplicar.
+        const macros = goalVal != null && isServableMacroPrescription(macroTargets) ? macroTargets : null;
         const tiempo = goalVal == null ? null : estimateTimeMonths(oi);
         /**
          * C4 · POR QUÉ no hay cifra. El onboarding TERMINA igual —el socio entra a su
@@ -977,7 +979,7 @@ export default function OnboardingScreen() {
             {/* C4 · la tarjeta de cifras solo existe si hay cifra. Sin prescripción no
                 se pinta un '—' donde debería ir una meta, ni unas macros derivadas de
                 una energía que nadie prescribió: se pinta el motivo. */}
-            {macros !== null && goalVal != null ? (
+            {goalVal != null ? (
             <div className="onb-result-card">
               <div className="onb-result-row">
                 <span className="onb-result-row-label">{t('onboarding.resultMetabolism')}</span>
@@ -991,12 +993,16 @@ export default function OnboardingScreen() {
                 </div>
               </div>
               <div className="onb-result-plan">{goalLabelKeys[goal] ? t(goalLabelKeys[goal]) : goal}</div>
+              {/* CAPA 2 · sin macros servibles (`INFEASIBLE`/`SPORTS_SCOPE`) se muestra
+                  la energía y no se inventan gramos. */}
+              {macros !== null && (
               <div className="onb-result-macros">
-                <div className="onb-macro"><span className="onb-macro-v">{macros.protG}g</span><span className="onb-macro-l">{t('onboarding.macroProtein')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{macros.proteinG}g</span><span className="onb-macro-l">{t('onboarding.macroProtein')}</span></div>
                 <div className="onb-macro"><span className="onb-macro-v">{macros.carbG}g</span><span className="onb-macro-l">{t('onboarding.macroCarbs')}</span></div>
                 <div className="onb-macro"><span className="onb-macro-v">{macros.fatG}g</span><span className="onb-macro-l">{t('onboarding.macroFat')}</span></div>
                 <div className="onb-macro"><span className="onb-macro-v">{macros.fiberG}g</span><span className="onb-macro-l">{t('onboarding.macroFiber')}</span></div>
               </div>
+              )}
               <div className="onb-result-coach">{t('onboarding.coachKnows')}</div>
             </div>
             ) : (
