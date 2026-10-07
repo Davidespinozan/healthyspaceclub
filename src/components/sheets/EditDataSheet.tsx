@@ -3,7 +3,9 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { PERMANENT_AVOID_CATALOG } from '../../utils/avoidAuthority';
-import { classifyTargetWeight, type TargetWeightSafety } from '../../utils/targetWeightSafety';
+import {
+  classifyTargetWeight, decideTargetWeightEdit, resolveTargetWeightState, type TargetWeightSafety,
+} from '../../utils/targetWeightSafety';
 import {
   TRAINING_MODALITIES, TRAINING_MODALITIES_KEY, declaredTrainingModalitiesForForm,
   serializeTrainingModalities, type TrainingModality,
@@ -188,10 +190,17 @@ export default function EditDataSheet({ onClose }: Props) {
     trainingMinutesNum >= TRAINING_MINUTES_MIN &&
     trainingMinutesNum <= TRAINING_MINUTES_MAX;
 
-  // A8 · seguridad del peso meta con los valores DEL FORMULARIO: reevalúa al cambiar
-  // estatura o peso. Misma autoridad que el onboarding; aquí no hay fórmula.
-  const targetSafety: TargetWeightSafety | null = (() => {
-    if (form.pesoMeta.trim() === '') return null;
+  // A8.1 · ¿el socio TOCÓ el campo de la meta en esta edición? Se compara con el
+  // valor inicial del propio formulario, no con otros campos.
+  const [initialPesoMeta] = useState(() => form.pesoMeta);
+  const targetTouched = form.pesoMeta.trim() !== initialPesoMeta.trim();
+
+  // Sin tocar · estado de la meta GUARDADA (autoridad + `obData` persistido). Una
+  // meta legacy inválida solo se señala aquí: no bloquea cambios ajenos.
+  const storedTarget = resolveTargetWeightState(obData);
+  // Tocada · la meta NUEVA, evaluada con el peso y la estatura del formulario.
+  const editedTarget: TargetWeightSafety | null = (() => {
+    if (!targetTouched || form.pesoMeta.trim() === '') return null;
     try {
       return classifyTargetWeight({
         currentWeightKg: Number(form.peso), heightCm: Number(form.estatura), targetWeightKg: Number(form.pesoMeta),
@@ -200,12 +209,16 @@ export default function EditDataSheet({ onClose }: Props) {
       return null; // peso o estatura no evaluables: ya los rechaza su propia validación
     }
   })();
-  const targetSafetyMessageKey: TranslationKey | null = targetSafety == null ? null
-    : targetSafety.status === 'VALID_WITH_LOW_BMI_NOTICE' ? 'onboarding.targetWeightLowBmiNotice'
-    : targetSafety.status !== 'INVALID' ? null
-    : targetSafety.reason === 'TARGET_OUT_OF_RANGE' ? 'onboarding.invalidPesoMeta'
-    : targetSafety.reason === 'UNDERWEIGHT_NO_FURTHER_LOSS' ? 'onboarding.invalidPesoMetaBajoPesoActual'
+  const invalidTargetKey = (s: Extract<TargetWeightSafety, { status: 'INVALID' }>): TranslationKey =>
+    s.reason === 'TARGET_OUT_OF_RANGE' ? 'onboarding.invalidPesoMeta'
+    : s.reason === 'UNDERWEIGHT_NO_FURTHER_LOSS' ? 'onboarding.invalidPesoMetaBajoPesoActual'
     : 'onboarding.invalidPesoMetaBajoPeso';
+  const targetSafetyMessageKey: TranslationKey | null = targetTouched
+    ? (editedTarget == null ? null
+      : editedTarget.status === 'VALID_WITH_LOW_BMI_NOTICE' ? 'onboarding.targetWeightLowBmiNotice'
+      : editedTarget.status === 'INVALID' ? invalidTargetKey(editedTarget) : null)
+    : (storedTarget.status === 'VALID_WITH_LOW_BMI_NOTICE' ? 'onboarding.targetWeightLowBmiNotice'
+      : storedTarget.status === 'INVALID' ? 'editData.storedTargetInvalid' : null);
 
   async function handleSave() {
     setError('');
@@ -217,9 +230,12 @@ export default function EditDataSheet({ onClose }: Props) {
     if (!edadN || edadN < 13 || edadN > 100) { setError(t('editData.errAge')); return; }
     if (!pesoN || pesoN < 30 || pesoN > 300) { setError(t('editData.errWeight')); return; }
     if (!estaturaN || estaturaN < 100 || estaturaN > 230) { setError(t('editData.errHeight')); return; }
-    // A8 · una meta INVALID no se guarda: hay que corregirla o vaciarla. El aviso
-    // informativo no bloquea.
-    if (targetSafety?.status === 'INVALID' && targetSafetyMessageKey) { setError(t(targetSafetyMessageKey)); return; }
+    // A8.1 · solo una meta NUEVA inválida bloquea (corregir o vaciar). La meta guardada
+    // sin tocar —aunque sea legacy inválida— no bloquea cambios ajenos.
+    const targetDecision = decideTargetWeightEdit({
+      initialValue: initialPesoMeta, editedValue: form.pesoMeta, currentWeightKg: pesoN, heightCm: estaturaN,
+    });
+    if (targetDecision.action === 'REJECT') { setError(t(invalidTargetKey(targetDecision.safety))); return; }
     if (!form.activity || !ACTIVITY_OPTIONS.includes(form.activity)) { setError(t('editData.errActivity')); return; }
     // `nivel` es nuevo: un perfil legacy que nunca lo declaró debe poder guardar el
     // resto de sus datos sin que le inventemos uno. Pero en cuanto forma parte del
@@ -259,8 +275,10 @@ export default function EditDataSheet({ onClose }: Props) {
     setObData('sex', form.sex);
     setObData('edad', edadN);
     setObData('estatura', estaturaN);
-    // A8 · peso meta: metadato opcional. Vacío = sin meta. No entra en el recálculo.
-    setObData('pesoMeta', form.pesoMeta.trim() === '' ? '' : Number(form.pesoMeta));
+    // A8.1 · peso meta: metadato opcional. Sin tocar → no se escribe (la meta
+    // guardada, válida o no, queda como está). No entra en el recálculo.
+    if (targetDecision.action === 'CLEAR') setObData('pesoMeta', '');
+    if (targetDecision.action === 'SAVE') setObData('pesoMeta', targetDecision.targetWeightKg);
     setObData('activity', form.activity);
     // Solo se escribe una DECLARACIÓN real. Un perfil legacy que sigue sin nivel se
     // queda sin nivel: ni '' ni 'intermedio'. Escribirlo aquí convertiría el fallback
@@ -398,8 +416,9 @@ export default function EditDataSheet({ onClose }: Props) {
               value={form.pesoMeta}
               onChange={e => update('pesoMeta', e.target.value)}
             />
-            {targetSafetyMessageKey && <p className="sh-field-hint">{t(targetSafetyMessageKey)}</p>}
           </label>
+          {/* Fuera del <label>: el aviso no forma parte del nombre accesible del campo. */}
+          {targetSafetyMessageKey && <p className="sh-field-hint" role="status">{t(targetSafetyMessageKey)}</p>}
 
           <label className="sh-field">
             <span className="sh-field-label">{t('editData.activity')}</span>

@@ -6,6 +6,8 @@ import srcSafety from '../targetWeightSafety.ts?raw';
 import {
   classifyTargetWeight,
   targetWeightSafetyFrom,
+  resolveTargetWeightState,
+  decideTargetWeightEdit,
   isAcceptedTargetWeight,
   InvalidTargetWeightContextError,
   type TargetWeightSafety,
@@ -248,6 +250,90 @@ describe('A8 · F · sin reglas duplicadas', () => {
       expect(src).not.toMatch(/pesoMeta\)?\s*\/\s*\(|18\.5/);
     }
     expect(sinComentarios(srcOnboarding)).toContain("t('onboarding.targetWeightLowBmiNotice')");
-    expect(sinComentarios(srcEdit)).toContain("targetSafety?.status === 'INVALID'");
+    // A8.1 · solo una meta NUEVA inválida bloquea; la guardada se muestra vía resolver.
+    expect(sinComentarios(srcEdit)).toContain('decideTargetWeightEdit({');
+    expect(sinComentarios(srcEdit)).toContain('resolveTargetWeightState(obData)');
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// G · A8.1 · ESTADO DE LA META GUARDADA + DECISIÓN AL EDITAR
+// ═════════════════════════════════════════════════════════════════════════════
+describe('A8.1 · resolveTargetWeightState (meta persistida)', () => {
+  const OB = {
+    sex: 'Mujer', goal: 'Bajar grasa', edad: 30, estatura: 170, peso: 62, embarazo: 0,
+    requiresTherapeuticDiet: 0, dailyLife: 'DL2', trainsHabitually: 0,
+    trainingDaysPerWeek: 0, trainingSessionMinutes: 0,
+  } as Record<string, string | number>;
+
+  it('8 · legacy inválida → INVALID', () => expect(resolveTargetWeightState({ ...OB, pesoMeta: 45 }).status).toBe('INVALID'));
+  it('9 · con aviso → VALID_WITH_LOW_BMI_NOTICE', () => expect(resolveTargetWeightState({ ...OB, pesoMeta: 50 }).status).toBe('VALID_WITH_LOW_BMI_NOTICE'));
+  it('10 · subida desde bajo peso → VALID_GAIN_DIRECTION (aceptada)', () => {
+    const r = resolveTargetWeightState({ ...OB, peso: 45, pesoMeta: 48 });
+    expect(r.status).toBe('VALID_GAIN_DIRECTION');
+  });
+  it('11 · sin meta → NO_TARGET', () => {
+    expect(resolveTargetWeightState(OB).status).toBe('NO_TARGET');
+    expect(resolveTargetWeightState({ ...OB, pesoMeta: '' }).status).toBe('NO_TARGET');
+    expect(resolveTargetWeightState(null).status).toBe('NO_TARGET');
+  });
+  it('meta sin peso/estatura evaluables → NOT_EVALUABLE (ni válida ni inválida)', () => {
+    const { peso: _p, ...sinPeso } = OB;
+    expect(resolveTargetWeightState({ ...sinPeso, pesoMeta: 55 }).status).toBe('NOT_EVALUABLE');
+  });
+  it('delega en `targetWeightSafetyFrom`: mismo resultado para metas evaluables', () => {
+    for (const pesoMeta of [45, 50, 58, 75]) {
+      expect(resolveTargetWeightState({ ...OB, pesoMeta })).toEqual(targetWeightSafetyFrom({ ...OB, pesoMeta }));
+    }
+  });
+
+  it('12/13 · energía y macros idénticas con meta guardada válida o inválida', () => {
+    const v = { ...OB, pesoMeta: 58 }; const i = { ...OB, pesoMeta: 45 };
+    expect(resolveNutritionEnergyState(i)).toEqual(resolveNutritionEnergyState(v));
+    expect(resolveMacroPrescription(resolveNutritionEnergyState(i), i))
+      .toEqual(resolveMacroPrescription(resolveNutritionEnergyState(v), v));
+  });
+
+  it('14 · una meta guardada INVALID no deja el plan STALE', () => {
+    const i = { ...OB, pesoMeta: 45 };
+    const m = resolveMacroPrescription(resolveNutritionEnergyState(i), i).prescription;
+    if (!m || (m.status !== 'VALID' && m.status !== 'REVIEW')) throw new Error('servible');
+    expect(weeklyPlanCurrentness({
+      status: 'PRESCRIBED', planGoal: m.energyKcal, macros: m, currentVersion: PLAN_ENGINE_VERSION,
+      weeklyPlan: { days: [{}], engineVersion: PLAN_ENGINE_VERSION, gen: { kcal: m.energyKcal, protG: m.proteinG, fatG: m.fatG, carbG: m.carbG } },
+    })).toBe('ACTIVE');
+  });
+});
+
+describe('A8.1 · decideTargetWeightEdit (pura)', () => {
+  const d = (initialValue: string, editedValue: string, currentWeightKg = 62, heightCm = 170) =>
+    decideTargetWeightEdit({ initialValue, editedValue, currentWeightKg, heightCm });
+
+  it('sin tocar → KEEP, aunque la meta guardada sea inválida', () => {
+    expect(d('45', '45')).toEqual({ action: 'KEEP' });
+    expect(d('45', ' 45 ')).toEqual({ action: 'KEEP' });
+    expect(d('', '')).toEqual({ action: 'KEEP' });
+  });
+  it('vaciada → CLEAR', () => expect(d('45', '')).toEqual({ action: 'CLEAR' }));
+  it('nueva inválida → REJECT con el motivo de la autoridad', () => {
+    const r = d('45', '44');
+    expect(r.action).toBe('REJECT');
+    if (r.action === 'REJECT') expect(r.safety.reason).toBe('TARGET_BMI_TOO_LOW');
+    expect(d('58', '45').action).toBe('REJECT');
+    expect(d('', '20').action).toBe('REJECT');
+  });
+  it('nueva aceptada → SAVE (VALID, aviso o subida desde bajo peso)', () => {
+    expect(d('45', '58')).toMatchObject({ action: 'SAVE', targetWeightKg: 58, safety: { status: 'VALID' } });
+    expect(d('58', '50')).toMatchObject({ action: 'SAVE', safety: { status: 'VALID_WITH_LOW_BMI_NOTICE' } });
+    expect(d('', '48', 45)).toMatchObject({ action: 'SAVE', safety: { status: 'VALID_GAIN_DIRECTION' } });
+  });
+  it('no tiene matriz propia: delega en `classifyTargetWeight`', () => {
+    const code = sinComentarios(srcSafety);
+    const fn = code.slice(code.indexOf('export function decideTargetWeightEdit'));
+    expect(fn).toContain('classifyTargetWeight(');
+    expect(fn).not.toMatch(/18\.5|17\.0|_BELOW\b|atLeast\(/);
+    const res = code.slice(code.indexOf('export function resolveTargetWeightState'), code.indexOf('export type TargetWeightEditDecision'));
+    expect(res).toContain('targetWeightSafetyFrom(obData)');
+    expect(res).not.toMatch(/18\.5|17\.0|_BELOW\b|atLeast\(/);
   });
 });

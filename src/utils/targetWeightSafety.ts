@@ -141,3 +141,66 @@ export function targetWeightSafetyFrom(
   if (!positiveFinite(currentWeightKg) || !positiveFinite(heightCm)) return null;
   return classifyTargetWeight({ currentWeightKg, heightCm, targetWeightKg: Number(raw) });
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// A8.1 · ESTADO DE LA META GUARDADA + DECISIÓN AL EDITAR
+// ═════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Estado ACTUAL del peso meta persistido, para la UI de perfil.
+ *
+ *   NO_TARGET       · no hay meta declarada
+ *   NOT_EVALUABLE   · hay meta, pero el peso o la estatura guardados no permiten
+ *                     juzgarla (perfil incompleto); no es ni válida ni inválida
+ *   …o la clasificación de `classifyTargetWeight` tal cual.
+ *
+ * Una meta `INVALID` guardada (legacy, o tras un cambio de estatura/peso) solo
+ * invalida LA META: no es autoritativa, pero el perfil de Nutrition sigue
+ * intacto. Delegación pura en `targetWeightSafetyFrom`: no hay matriz propia.
+ */
+export type TargetWeightState =
+  | { status: 'NO_TARGET' }
+  | { status: 'NOT_EVALUABLE' }
+  | TargetWeightSafety;
+
+export function resolveTargetWeightState(
+  obData: Record<string, string | number | undefined> | null | undefined,
+): TargetWeightState {
+  const raw = obData?.pesoMeta;
+  if (raw === undefined || raw === null || (typeof raw === 'string' && raw.trim() === '')) return { status: 'NO_TARGET' };
+  return targetWeightSafetyFrom(obData) ?? { status: 'NOT_EVALUABLE' };
+}
+
+/**
+ * Qué hacer con el peso meta al guardar un formulario de perfil.
+ *
+ * La pregunta es SOLO «¿el socio cambió el campo de la meta en esta edición?»,
+ * comparando el valor editado con el inicial (no se infiere de otros campos):
+ *
+ *   · sin cambios                → KEEP: no se escribe ni se valida. Una meta
+ *                                  legacy inválida NO bloquea cambios ajenos.
+ *   · vaciada                    → CLEAR: la meta es opcional.
+ *   · nueva meta aceptada        → SAVE (VALID, aviso o subida desde bajo peso).
+ *   · nueva meta INVALID         → REJECT: hay que corregirla o vaciarla.
+ *
+ * La nueva meta se evalúa con el peso y la estatura del MISMO formulario.
+ */
+export type TargetWeightEditDecision =
+  | { action: 'KEEP' }
+  | { action: 'CLEAR' }
+  | { action: 'SAVE'; targetWeightKg: number; safety: TargetWeightSafety }
+  | { action: 'REJECT'; safety: Extract<TargetWeightSafety, { status: 'INVALID' }> };
+
+export function decideTargetWeightEdit(input: {
+  initialValue: string;
+  editedValue: string;
+  currentWeightKg: number;
+  heightCm: number;
+}): TargetWeightEditDecision {
+  const edited = input.editedValue.trim();
+  if (edited === input.initialValue.trim()) return { action: 'KEEP' };
+  if (edited === '') return { action: 'CLEAR' };
+  const targetWeightKg = Number(edited);
+  const safety = classifyTargetWeight({ currentWeightKg: input.currentWeightKg, heightCm: input.heightCm, targetWeightKg });
+  return safety.status === 'INVALID' ? { action: 'REJECT', safety } : { action: 'SAVE', targetWeightKg, safety };
+}

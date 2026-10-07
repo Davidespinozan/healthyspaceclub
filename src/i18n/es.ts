@@ -191,6 +191,7 @@ export const es = {
     errDailyLife: 'Seleccioná cuánto te mueves en un día normal.',
     errTrainsHabitually: 'Indicá si entrenas de forma habitual.',
     errTherapeuticDiet: 'Indica si un profesional te indicó modificar tu alimentación.',
+    storedTargetInvalid: 'Tu peso meta guardado ya no está dentro de los límites que Healthy Space Club puede aceptar. Puedes corregirlo o eliminarlo.',
     errTraining: 'Completá tu entrenamiento habitual: días por semana y duración (1-300 min).',
     errModality: 'Elige al menos un tipo de entrenamiento.',
   },

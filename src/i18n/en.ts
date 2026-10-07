@@ -191,6 +191,7 @@ export const en: Translations<typeof es> = {
     errDailyLife: 'Select how much you move on a normal day.',
     errTrainsHabitually: 'Tell us whether you train regularly.',
     errTherapeuticDiet: 'Tell us whether a professional told you to change your diet.',
+    storedTargetInvalid: 'Your saved target weight is no longer within the limits Healthy Space Club can accept. You can correct it or remove it.',
     errTraining: 'Complete your habitual training: days per week and length (1-300 min).',
     errModality: 'Choose at least one type of training.',
   },
