@@ -306,6 +306,34 @@ export function prescribeMacros(input: MacroInput): MacroPrescription {
   };
 }
 
+/**
+ * A9 · por qué una prescripción RESUELTA no tiene gramos, para elegir el texto.
+ *
+ *   SPORTS_SPECIALIZED   · `SPORTS_SCOPE` por deporte especializado declarado
+ *   SPORTS_HIGH_DEMAND   · `SPORTS_SCOPE` por la matriz de prioridad (alta carga)
+ *   DEFENSIVE_UNAVAILABLE · `INFEASIBLE`: invariante defensivo, inalcanzable en el
+ *                          dominio válido actual (auditoría A8.2). Mensaje genérico,
+ *                          sin exponer la aritmética.
+ *   null                 · servible (VALID/REVIEW) o sin prescripción
+ *
+ * `SPORTS_SCOPE` no es un error ni un dato corrupto: es el límite del alcance
+ * deportivo estándar de HSC.
+ */
+export type NonServableMacroNotice = 'SPORTS_SPECIALIZED' | 'SPORTS_HIGH_DEMAND' | 'DEFENSIVE_UNAVAILABLE';
+
+export function nonServableMacroNotice(m: MacroPrescription | null | undefined): NonServableMacroNotice | null {
+  if (m == null) return null;
+  switch (m.status) {
+    case 'VALID':
+    case 'REVIEW':
+      return null;
+    case 'INFEASIBLE':
+      return 'DEFENSIVE_UNAVAILABLE';
+    case 'SPORTS_SCOPE':
+      return m.reason === 'SPECIALIZED_SPORT' ? 'SPORTS_SPECIALIZED' : 'SPORTS_HIGH_DEMAND';
+  }
+}
+
 /** ¿Se puede generar un plan con esta prescripción? Solo VALID y REVIEW tienen gramos. */
 export function isServableMacroPrescription(
   m: MacroPrescription | null | undefined,

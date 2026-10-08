@@ -26,6 +26,14 @@ Registro único de **qué autoridad decide cada concepto** de HSC Nutrition V1, 
 | `4c021d5` | CAPA 2 · autoridad `macroPrescription` (núcleo + adaptador + tests) |
 | `1c555c6` | CAPA 2 · migración de consumidores, vigencia por macros, `PLAN_ENGINE_VERSION` 33, retirada de macros legacy |
 | (este documento) | Ledger |
+| `66e1c11` | Ledger inicial |
+| `c9f0b10` | A2 · modalidad de entrenamiento declarada |
+| `ffd9d28` | A4 · prioridad de carbohidrato (matriz cerrada) |
+| `aec782a` | A7 · alcance de salud por dieta terapéutica; retirada del tope renal |
+| `f2ba32a` | A7.1 · exclusión conocida antes que la respuesta terapéutica pendiente |
+| `37e8d31` | A8 · seguridad del peso meta como autoridad de dominio |
+| `7894cf8` | A8.1 · meta legacy inválida no bloquea ediciones ajenas |
+| A9 | Cierre administrativo de CAPA 2 (`VERIFIED_CLEAN`) |
 
 Commits previos de CAPA 1: `444ee45`, `c54c313`, `090166a`, `13f744b` (cutover energético), `4721170` (retirada de la energía legacy).
 
@@ -37,7 +45,7 @@ Commits previos de CAPA 1: `444ee45`, `c54c313`, `090166a`, `13f744b` (cutover e
 |---|---|
 | CAPA 0 · alcance y decisiones de producto | Por decisión, ver tabla. Todas `IMPLEMENTED` salvo variantes de receta (`CLOSED_DESIGN · IMPLEMENTATION_DEFERRED`). |
 | CAPA 1 · energía | `IMPLEMENTED / VERIFIED_CLEAN` |
-| CAPA 2 · macros diarias | `IMPLEMENTED`. **No** `VERIFIED_CLEAN` todavía: falta copy dedicado para `INFEASIBLE`/`SPORTS_SCOPE` y `LOGICA-NUTRICIONAL-HSC.md` sigue describiendo política legacy. La clase de actividad sale de la modalidad declarada (A2), la prioridad de carbohidrato de la matriz cerrada (A4) y ningún diagnóstico ajusta macros (A7). |
+| CAPA 2 · macros diarias | **`IMPLEMENTED / VERIFIED_CLEAN`** (A9). `MACRO_PRESCRIPTION_VERSION = 4`. Clase de actividad por modalidad declarada (A2), prioridad de carbohidrato por matriz cerrada (A4), ningún ajuste por diagnóstico (A7), `INFEASIBLE` como invariante defensivo (A8.2), copy de `SPORTS_SCOPE`/`INFEASIBLE` y documentación histórica marcada (A9). |
 | CAPA 3 | `OPEN`. No hay definición de esta capa en el repo ni implementación dedicada. No se infiere cierre. |
 | CAPA 4 · reparto en tiempos de comida | `OPEN / DESIGN IN PROGRESS`. Punto de reanudación: **MEAL FREQUENCY & EATING OPPORTUNITIES**. Sus reglas legacy siguen activas (ver abajo). |
 | CAPA 5+ | `OPEN` |
@@ -80,17 +88,17 @@ Verificación (este checkpoint, sin cambios de código en CAPA 1): 0 apariciones
 
 ---
 
-## CAPA 2 · macros diarias · `IMPLEMENTED`
+## CAPA 2 · macros diarias · `IMPLEMENTED / VERIFIED_CLEAN`
 
-Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 1`). Proyección: `store.macroTargets`, escrita en el mismo `set()` que `planGoal`.
+Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v1 CAPA 2 · v2 modalidad declarada A2 · v3 prioridad de carbohidrato A4 · v4 sin tope renal A7; las prescripciones persistidas de otra versión se descartan al cargar). Proyección: `store.macroTargets`, escrita en el mismo `set()` que `planGoal`.
 
 | Concepto | Estado | Regla | Legado retirado (`1c555c6`) |
 |---|---|---|---|
 | Orden de autoridad | `IMPLEMENTED` | Energía (dura) → proteína → grasa → carbohidrato residual | — |
 | PRW | `IMPLEMENTED` | IMC < 30: peso actual. IMC ≥ 30: peso a IMC 30 + 0,25 × exceso. Política operativa; no es masa magra. | Peso actual como denominador universal |
-| Proteína | `IMPLEMENTED` | PRW × factor (tabla objetivo × clase). Deporte especializado → `SPORTS_SCOPE`. | Tabla `GKG`, arrays por objetivo, `actIdx`, techo 2,4, tope ≥ 70, `wellnessMode` |
+| Proteína | `IMPLEMENTED` | PRW × factor. Mantenimiento / ganancia / recomposición ordinaria: sin entrenamiento estructurado 1,0 · baja demanda 1,2 · fuerza, resistencia, mixto, equipo/intermitente 1,6. Pérdida de grasa: 1,3 · 1,3 · 1,8. Deporte especializado → `SPORTS_SCOPE`. Clase desde la modalidad DECLARADA (A2). Sin techo universal, sin factor de edad ni de sexo, sin tope renal. | Tabla `GKG`, arrays por objetivo, `actIdx`, techo 2,4, tope ≥ 70, `wellnessMode`, tope renal 1,0 (A7) |
 | Grasa | `IMPLEMENTED` | 25 % de la energía. AMDR 20–35 % solo como referencia. | `FAT_PCT` 22/25/28/30, piso 0,6 g/kg |
-| Carbohidrato | `IMPLEMENTED` | Residuo. Residuo ≤ 0 → `INFEASIBLE` (`CARB_RESIDUAL_NON_POSITIVE`), sin clamp. | Piso de 50 g (y el de 130 g de la especificación legacy) |
+| Carbohidrato | `IMPLEMENTED` | Residuo: `E − 4P − 9G`. Sin pisos (50 g, 130 g) ni clamp. Residuo ≤ 0 → `INFEASIBLE` (`CARB_RESIDUAL_NON_POSITIVE`): **`DEFENSIVE_INVARIANT_UNREACHABLE_CURRENT_POLICY`** (A8.2: 36.353.024 perfiles válidos con las autoridades reales, 0 INFEASIBLE, carbohidrato mínimo 34,4 % de la energía, residuo mínimo 556 kcal). Condición algebraica: proteína ≥ 75 % de la energía. Protegido por la rejilla de frontera `macroClosure.test.ts`. | Piso de 50 g (y el de 130 g de la especificación legacy) |
 | Estados | `IMPLEMENTED` | `VALID` / `REVIEW` / `INFEASIBLE` / `SPORTS_SCOPE`. Solo `VALID`/`REVIEW` se sirven. | — |
 | `REVIEW` | Arquitectura `IMPLEMENTED`; regla general `OPEN` | Hoy NO hay ningún disparador: el tope renal se retiró en A7 y la prioridad de carbohidrato no dispara REVIEW (umbrales `OPEN / NOT IMPLEMENTED`). | — |
 | Prioridad de carbohidrato | `IMPLEMENTED` como metadato (A4) | Fuente: `DECLARED MODALITY + T-BAND` · `deriveCarbohydratePriority(clase, banda)`. Semántica: `CONTEXT METADATA`. Efecto automático en macros: `NONE` (STANDARD/ELEVATED/HIGH no mueven gramos ni disparan REVIEW). Resistencia/mixto/equipo en T4 → status `SPORTS_SCOPE` con motivo `CARB_PRIORITY_SPORTS_SCOPE`; deporte especializado → `SPORTS_SCOPE` (`SPECIALIZED_SPORT`). Umbral de REVIEW: `OPEN / NOT IMPLEMENTED`. | `STANDARD FOR ALL → RETIRED` |
@@ -98,14 +106,16 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 1`). 
 | Fibra | `IMPLEMENTED` (informativa) | 14 g / 1000 kcal (LOGICA §3.4). Solo se muestra en onboarding; no es objetivo del solver. | Igual que antes |
 | Vigencia del plan | `IMPLEMENTED` | `weeklyPlanCurrentness` compara `gen.kcal` **y** `gen.protG/fatG/carbG`; sin macros servibles → `NOT_CURRENT`. `PLAN_ENGINE_VERSION` 32 → 33. | Planes con macros legacy quedan `STALE` |
 | Consumidores | `IMPLEMENTED` | Planner, auto-regeneración, coach, onboarding, tarjeta «Meta de hoy» leen `store.macroTargets`. | `legacyMacros`, `legacyMacroWellness`, `parseObData` (`RETIRED`) |
+| `SPORTS_SCOPE` | `IMPLEMENTED` (A9: copy) | `OUTSIDE STANDARD HSC SPORTS-NUTRITION SCOPE` — no es error, enfermedad ni dato corrupto. Rutas: deporte especializado declarado (`SPECIALIZED_SPORT`, cualquier banda) · resistencia/mixto/equipo en T4 (`CARB_PRIORITY_SPORTS_SCOPE`). La energía sigue prescrita; sin gramos; no se genera ni regenera plan (`NOT_CURRENT`); el coach no recibe bloque de nutrición. Planner y onboarding explican el motivo con texto propio (`sportsScopeSpecialized` / `sportsScopeHighDemand`), vía `nonServableMacroNotice`. | — |
+| `INFEASIBLE` (UX) | `IMPLEMENTED` (A9) | Respaldo defensivo genérico: «No pudimos calcular una prescripción nutricional válida con estos datos…» (`macrosUnavailable`). Sin pantalla propia ni explicación de la aritmética. Estado y motivo legibles por máquina conservados. | — |
 
-### ⚠️ Dependencias temporales y supuestos (impiden `VERIFIED_CLEAN`)
+### Dependencias temporales y supuestos · todas cerradas (A9)
 
 1. ~~Mapeo de clase de actividad desde los minutos~~ · **`RETIRED` en A2** (ver la sección A1/A2).
 2. ~~Prioridad de carbohidrato = `STANDARD` para todos~~ · **`RETIRED` en A4** (matriz cerrada clase declarada × banda T0–T4; `MACRO_PRESCRIPTION_VERSION` 2 → 3).
 3. ~~Tope renal heredado (1,0 g/kg PRW)~~ · **`RETIRED` en A7** (`RENAL_PROTEIN_FACTOR_CAP`, `declaresRenalCondition`, `RENAL_CONDITION_DECLARED`). Sin sustituto: no existe prescripción renal automática en HSC V1. `MACRO_PRESCRIPTION_VERSION` 3 → 4.
-4. **Copy para `INFEASIBLE` / `SPORTS_SCOPE`.** No hay mensaje dedicado: el planner aborta en neutro (como sin energía), el onboarding muestra la energía sin gramos y el coach dice que no hay meta nutricional vigente.
-5. **`LOGICA-NUTRICIONAL-HSC.md` §3.1–3.3** (GKG, grasa por objetivo, piso de 130 g) describe la política legacy y no se ha actualizado.
+4. ~~Copy para `INFEASIBLE` / `SPORTS_SCOPE`~~ · **RESUELTO en A9** (texto por motivo en planner y onboarding).
+5. ~~`LOGICA-NUTRICIONAL-HSC.md` describe la política legacy~~ · **RESUELTO en A9**: marcado como DOCUMENTO HISTÓRICO con notas «SUPERADO» por punto; `PLAN-INTEGRACION.md`, `BRIEF-PARA-REVISION.md` y `LEEME-PRIMERO.md` llevan el mismo aviso. No se reescribió su contenido.
 
 ### A1/A2 · Fuente de la clase de actividad proteica
 

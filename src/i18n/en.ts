@@ -1604,6 +1604,12 @@ export const en: Translations<typeof es> = {
     therapeuticDietRequiredCta: 'Answer',
     therapeuticOutTitle: 'Your nutrition needs more specific guidance',
     therapeuticOutBody: 'Healthy Space Club offers general eating plans. If a professional told you to change your diet or follow a specific plan because of a medical condition, that diet should stay under their supervision.',
+    // A9 · non-servable macros. SPORTS_SCOPE = edge of the sports scope, not an error.
+    sportsScopeTitle: 'Specialized sports nutrition',
+    sportsScopeSpecialized: 'Because of your sport or competitive discipline, your nutrition needs a more specialized sports-nutrition plan than Healthy Space Club generates automatically.',
+    sportsScopeHighDemand: 'Because of your training volume, your nutrition needs a more specialized sports-nutrition plan than Healthy Space Club generates automatically.',
+    macrosUnavailableTitle: 'We could not calculate your prescription',
+    macrosUnavailable: 'We could not calculate a valid nutrition prescription with this information. Review your details and try again.',
     setupDayEyebrow: 'STEP 1 · GROCERY DAY',
     setupDayTitleName: '{name}, what day do you grocery shop?',
     setupDayTitleAnon: 'What day do you grocery shop?',

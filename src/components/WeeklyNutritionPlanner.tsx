@@ -15,7 +15,7 @@ import { computeDayConsumption } from '../utils/foodConsumption';
 // prescribe el motor nuevo y llega por `store.planGoal`.
 // CAPA 2 · las macros tampoco se calculan aquí: las prescribe `macroPrescription`
 // y llegan por `store.macroTargets`.
-import { isServableMacroPrescription } from '../utils/macroPrescription';
+import { isServableMacroPrescription, nonServableMacroNotice } from '../utils/macroPrescription';
 import { PLAN_ENGINE_VERSION } from '../utils/planEngine';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
@@ -203,7 +203,20 @@ export default function WeeklyNutritionPlanner() {
     : modalityRequired
       ? (['nutritionPlanner.modalityRequired', 'nutritionPlanner.modalityRequiredCta'] as const)
       : null;
-  const modalityPrompt = therapeuticOutOfScope ? (
+  // A9 · prescripción resuelta pero sin gramos: alcance deportivo (por motivo) o el
+  // respaldo defensivo de INFEASIBLE. Sin cifras, sin macros inventadas.
+  const macroNotice = nonServableMacroNotice(macroResolution?.prescription);
+  const macroNoticeBody = macroNotice === 'SPORTS_SPECIALIZED' ? 'nutritionPlanner.sportsScopeSpecialized'
+    : macroNotice === 'SPORTS_HIGH_DEMAND' ? 'nutritionPlanner.sportsScopeHighDemand'
+    : macroNotice === 'DEFENSIVE_UNAVAILABLE' ? 'nutritionPlanner.macrosUnavailable' : null;
+  const modalityPrompt = macroNoticeBody ? (
+    <div className="wnp2-scope-notice" role="status" style={{ margin: '12px 0', textAlign: 'center' }}>
+      <p className="wz-title" style={{ fontSize: '1.05rem' }}>
+        {t(macroNotice === 'DEFENSIVE_UNAVAILABLE' ? 'nutritionPlanner.macrosUnavailableTitle' : 'nutritionPlanner.sportsScopeTitle')}
+      </p>
+      <p className="wz-subtitle">{t(macroNoticeBody)}</p>
+    </div>
+  ) : therapeuticOutOfScope ? (
     <div className="wnp2-scope-notice" role="status" style={{ margin: '12px 0', textAlign: 'center' }}>
       <p className="wz-title" style={{ fontSize: '1.05rem' }}>{t('nutritionPlanner.therapeuticOutTitle')}</p>
       <p className="wz-subtitle">{t('nutritionPlanner.therapeuticOutBody')}</p>

@@ -18,7 +18,7 @@ import AuthProviderButtons from '../components/AuthProviderButtons';
 // la CAPA 2) y los dos avisos de peso meta, que no son energéticos.
 import { targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
 import { classifyTargetWeight } from '../utils/targetWeightSafety';
-import { isServableMacroPrescription } from '../utils/macroPrescription';
+import { isServableMacroPrescription, nonServableMacroNotice } from '../utils/macroPrescription';
 import { TRAINING_MODALITIES, TRAINING_MODALITIES_KEY, serializeTrainingModalities, type TrainingModality } from '../utils/trainingModality';
 import { track } from '../utils/analytics';
 import { recordReferralIfAny } from '../utils/referral';
@@ -1052,7 +1052,14 @@ export default function OnboardingScreen() {
               </div>
               <div className="onb-result-plan">{goalLabelKeys[goal] ? t(goalLabelKeys[goal]) : goal}</div>
               {/* CAPA 2 · sin macros servibles (`INFEASIBLE`/`SPORTS_SCOPE`) se muestra
-                  la energía y no se inventan gramos. */}
+                  la energía y no se inventan gramos. A9 · se dice por qué. */}
+              {macros === null && (() => {
+                const notice = nonServableMacroNotice(macroTargets);
+                const key = notice === 'SPORTS_SPECIALIZED' ? 'nutritionPlanner.sportsScopeSpecialized'
+                  : notice === 'SPORTS_HIGH_DEMAND' ? 'nutritionPlanner.sportsScopeHighDemand'
+                  : notice === 'DEFENSIVE_UNAVAILABLE' ? 'nutritionPlanner.macrosUnavailable' : null;
+                return key ? <div className="onb-result-coach">{t(key)}</div> : null;
+              })()}
               {macros !== null && (
               <div className="onb-result-macros">
                 <div className="onb-macro"><span className="onb-macro-v">{macros.proteinG}g</span><span className="onb-macro-l">{t('onboarding.macroProtein')}</span></div>

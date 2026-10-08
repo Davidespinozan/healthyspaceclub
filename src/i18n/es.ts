@@ -1609,6 +1609,12 @@ export const es = {
     therapeuticDietRequiredCta: 'Responder',
     therapeuticOutTitle: 'Tu alimentación necesita indicaciones más específicas',
     therapeuticOutBody: 'Healthy Space Club ofrece planes generales de alimentación. Si un profesional te indicó modificar tu dieta o seguir un plan específico por una condición médica, esa alimentación debe mantenerse bajo su supervisión.',
+    // A9 · macros no servibles. SPORTS_SCOPE = límite del alcance deportivo, no un error.
+    sportsScopeTitle: 'Nutrición deportiva especializada',
+    sportsScopeSpecialized: 'Por tu deporte o disciplina competitiva, tu alimentación necesita una pauta de nutrición deportiva más especializada de la que Healthy Space Club genera automáticamente.',
+    sportsScopeHighDemand: 'Por tu volumen de entrenamiento, tu alimentación necesita una pauta de nutrición deportiva más especializada de la que Healthy Space Club genera automáticamente.',
+    macrosUnavailableTitle: 'No pudimos calcular tu prescripción',
+    macrosUnavailable: 'No pudimos calcular una prescripción nutricional válida con estos datos. Revisa tu información e inténtalo de nuevo.',
     setupDayEyebrow: 'PASO 1 · DÍA DEL SÚPER',
     setupDayTitleName: '{name}, ¿qué día vas al súper?',
     setupDayTitleAnon: '¿Qué día vas al súper?',
