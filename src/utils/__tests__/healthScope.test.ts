@@ -304,9 +304,16 @@ describe('A7.1 · la exclusión conocida no se esconde tras la pregunta pendient
     }
   });
 
-  it('si falta OTRO dato además, sigue siendo PROFILE_INCOMPLETE (como antes de A7)', () => {
+  it('A10.1 · faltando también datos de ACTIVIDAD, la exclusión conocida sigue mandando', () => {
     const o = legacy({ edad: 70 });
     delete o.dailyLife;
+    delete o.trainsHabitually;
+    expect(state(o).scopeReason).toBe('age_65_or_over');
+  });
+
+  it('si falta un dato de ALCANCE (p. ej. el peso), sigue siendo PROFILE_INCOMPLETE', () => {
+    const o = legacy({ edad: 70 });
+    delete o.peso;
     expect(state(o).status).toBe('PROFILE_INCOMPLETE');
   });
 

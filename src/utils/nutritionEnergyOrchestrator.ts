@@ -63,10 +63,10 @@
 import { classifyActivity, type ActivityClassification } from './activityClassifier';
 import { estimateMaintenance } from './maintenanceEstimate';
 import { prescribeEnergy, type EnergyPrescription } from './energyPrescription';
-import { validateNutritionProfile, validateProfileCore, type ProfileInput } from './profileValidation';
+import { validateNutritionProfile, validateScopeFacts, type ProfileInput } from './profileValidation';
 import {
   checkNutritionScope,
-  checkKnownScopeExclusions,
+  checkScopeWithPendingInputs,
   type OutsideHscNutritionScopeResult,
 } from './nutritionScopeGuard';
 
@@ -169,19 +169,19 @@ export function resolveNutritionEnergy(rawProfile: ProfileInput): NutritionEnerg
 }
 
 /**
- * A7.1 · exclusiones de alcance YA CONOCIDAS para un perfil al que solo le falta
- * la respuesta de dieta terapéutica.
+ * A7.1 / A10.1 · exclusión de alcance YA DEMOSTRABLE con datos pendientes.
  *
- * Valida el resto del perfil y aplica únicamente las reglas 1–3 del Scope Guard
- * (edad < 19, edad ≥ 65, embarazo/lactancia). Si alguna saca a la persona de
- * alcance, devuelve EXACTAMENTE el mismo resultado que `resolveNutritionEnergy`
- * daría con la respuesta presente, porque esas reglas van antes en la
- * precedencia. Si ninguna aplica devuelve `null`: la respuesta sí es necesaria y
- * no se resuelve nada más (ni clasificación, ni mantenimiento, ni prescripción).
+ * Para un perfil al que solo le faltan la respuesta de dieta terapéutica y/o los
+ * datos de actividad: valida lo que hay y aplica el Scope Guard sin leer lo que
+ * falta (reglas 1–3; la 4 solo con un «Sí» ya dado). Si saca de alcance, devuelve
+ * EXACTAMENTE el mismo resultado que `resolveNutritionEnergy` daría con todos los
+ * datos, porque el guard va antes de cualquier motor y no lee la actividad. Si no,
+ * `null`: lo que falta sí importa. Nunca clasifica, estima ni prescribe.
  */
 export function resolveKnownNutritionScope(
-  rawProfile: Omit<ProfileInput, 'requiresTherapeuticDiet'>,
+  rawProfile: Omit<ProfileInput, 'requiresTherapeuticDiet' | 'activityProfile'> & { requiresTherapeuticDiet: boolean | null },
 ): NutritionEnergyResult | null {
-  const outside = checkKnownScopeExclusions(validateProfileCore(rawProfile));
+  const facts = validateScopeFacts(rawProfile);
+  const outside = checkScopeWithPendingInputs({ ...facts, requiresTherapeuticDiet: rawProfile.requiresTherapeuticDiet });
   return outside ? { ...outside, orchestratorVersion: ORCHESTRATOR_VERSION } : null;
 }

@@ -86,6 +86,16 @@ describe('A10 · ProfileCompletionSheet', () => {
     expect(Object.fromEntries(setObData.mock.calls)).toEqual({ requiresTherapeuticDiet: 1 });
   });
 
+  it('A10.1 · «Sí» a la dieta terapéutica termina el flujo: sin movimiento ni entrenamiento', async () => {
+    mount(LEGACY);
+    pregunta(/¿Tienes alguna condición médica/);
+    click('Sí');
+    expect(screen.queryByText(/¿Cuánto te mueves/)).toBeNull();
+    click('Guardar y calcular');
+    await waitFor(() => expect(recalcFromObData).toHaveBeenCalled());
+    expect(Object.fromEntries(setObData.mock.calls)).toEqual({ requiresTherapeuticDiet: 1 });
+  });
+
   it('«Atrás» deshace la última respuesta', () => {
     mount(LEGACY);
     click('No');

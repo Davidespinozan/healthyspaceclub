@@ -169,6 +169,26 @@ export type ValidatedProfileCore = Omit<ValidatedNutritionProfile, typeof VALIDA
  * cadena energética.
  */
 export function validateProfileCore(input: Omit<ProfileInput, 'requiresTherapeuticDiet'>): ValidatedProfileCore {
+  const facts = validateScopeFacts(input);
+  // Solo presencia: la forma interna es autoridad de ActivityClassifier.
+  const activityProfile = input.activityProfile;
+  if (activityProfile === null || typeof activityProfile !== 'object') {
+    throw new InvalidProfileInputError('activityProfile', activityProfile, 'debe ser un objeto');
+  }
+  return { ...facts, activityProfile };
+}
+
+/** Los datos que el Scope Guard necesita para las reglas 1–3 (A10.1). */
+export type ValidatedScopeFacts = Omit<ValidatedProfileCore, 'activityProfile'>;
+
+/**
+ * A10.1 · valida SOLO sexo, objetivo, edad, estatura, peso y embarazo. Sirve para
+ * evaluar exclusiones de alcance ya demostrables cuando todavía faltan datos de
+ * actividad o la respuesta de dieta terapéutica. No entra en la cadena energética.
+ */
+export function validateScopeFacts(
+  input: Omit<ProfileInput, 'requiresTherapeuticDiet' | 'activityProfile'>,
+): ValidatedScopeFacts {
   if (input === null || typeof input !== 'object') {
     throw new InvalidProfileInputError('profile', input, 'debe ser un objeto');
   }
@@ -210,15 +230,8 @@ export function validateProfileCore(input: Omit<ProfileInput, 'requiresTherapeut
     );
   }
 
-  // Solo presencia: la forma interna es autoridad de ActivityClassifier.
-  const activityProfile = input.activityProfile;
-  if (activityProfile === null || typeof activityProfile !== 'object') {
-    throw new InvalidProfileInputError('activityProfile', activityProfile, 'debe ser un objeto');
-  }
-
   return {
     sex, goal, ageYears, heightCm, weightKg,
     pregnantOrLactating: input.pregnantOrLactating,
-    activityProfile,
   };
 }

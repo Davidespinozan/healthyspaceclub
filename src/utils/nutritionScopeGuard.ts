@@ -168,6 +168,25 @@ export function checkKnownScopeExclusions(
   return null;
 }
 
+/**
+ * A10.1 · exclusión DEMOSTRABLE con datos pendientes.
+ *
+ * Mismas reglas y mismo orden que `checkNutritionScope`, sin leer nada que falte:
+ * las reglas 1–3 siempre (sus datos están), y la 4 solo si la respuesta de dieta
+ * terapéutica ya es «Sí». Si devuelve `null`, los datos que faltan SÍ pueden
+ * cambiar el resultado y hay que pedirlos. El Scope Guard no lee la actividad, así
+ * que los datos de actividad pendientes nunca cambian una exclusión.
+ */
+export function checkScopeWithPendingInputs(
+  profile: Pick<ValidatedNutritionProfile, 'ageYears' | 'pregnantOrLactating' | 'goal'>
+    & { requiresTherapeuticDiet: boolean | null },
+): OutsideHscNutritionScopeResult | null {
+  return checkKnownScopeExclusions(profile)
+    ?? (profile.requiresTherapeuticDiet === true
+      ? checkTherapeuticDiet({ requiresTherapeuticDiet: true, goal: profile.goal })
+      : null);
+}
+
 /** Regla 4 · solo se evalúa si ninguna de las tres anteriores sacó de alcance. */
 function checkTherapeuticDiet(
   profile: Pick<ValidatedNutritionProfile, 'requiresTherapeuticDiet' | 'goal'>,

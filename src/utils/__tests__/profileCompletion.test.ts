@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import srcCompletion from '../profileCompletion.ts?raw';
 import srcSheet from '../../components/sheets/ProfileCompletionSheet.tsx?raw';
+import srcHoy from '../../components/TabHoy.tsx?raw';
+import { buildEnergySnapshot } from '../nutritionEnergyState';
+import { decideEnergyHydration } from '../energyHydration';
 import {
   nutritionCompletionSteps, withAnswers, answerTrainsHabitually, type CompletionAnswers,
 } from '../profileCompletion';
@@ -85,7 +88,9 @@ describe('A10 · fuente canónica de lo que falta', () => {
   });
 
   it('F · responde «Sí» a la dieta terapéutica → alcance canónico, sin forzar «normal»', () => {
-    const { draft } = completar(LEGACY, (s) => s === 'requiresTherapeuticDiet' ? { requiresTherapeuticDiet: 1 } : RESPUESTAS_NORMALES(s));
+    const { draft, pasos } = completar(LEGACY, (s) => s === 'requiresTherapeuticDiet' ? { requiresTherapeuticDiet: 1 } : RESPUESTAS_NORMALES(s));
+    // A10.1 · el «Sí» ya decide el resultado: no se pide movimiento ni entrenamiento.
+    expect(pasos).toEqual(['requiresTherapeuticDiet']);
     const s = resolveNutritionEnergyState(draft);
     expect(s.status).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');
     expect(s.scopeReason).toBe('therapeutic_diet_required');
@@ -151,5 +156,64 @@ describe('A10 · sin segunda autoridad', () => {
     expect(sheet).toContain("recalcFromObData('profile-completion')");
     // Ni kcal ni macros calculadas en la UI.
     expect(sheet).not.toMatch(/prescribeMacros|prescribeEnergy|estimateMaintenance|proteinG|energyKcal/);
+  });
+});
+
+describe('A10.1 · el flujo se detiene en un estado terminal', () => {
+  const AT = '2026-10-08T00:00:00.000Z';
+
+  it('el «Sí» terapéutico con actividad pendiente resuelve YA a fuera de alcance (no es una regla de UI)', () => {
+    const draft = withAnswers(LEGACY, { requiresTherapeuticDiet: 1 });
+    expect(draft.dailyLife).toBeUndefined();
+    const s = resolveNutritionEnergyState(draft);
+    expect(s.status).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');
+    expect(s.scopeReason).toBe('therapeutic_diet_required');
+    expect(nutritionCompletionSteps(draft)).toEqual([]);
+    // El código del flujo no conoce la pregunta terapéutica como regla de parada.
+    expect(sinComentarios(srcCompletion)).not.toMatch(/requiresTherapeuticDiet\s*===?\s*(1|true)/);
+  });
+
+  it('el estado guardado es estable: la hidratación siguiente ADOPTA (sin bucle de recálculo)', () => {
+    const draft = withAnswers(LEGACY, { requiresTherapeuticDiet: 1 });
+    const { snapshot } = buildEnergySnapshot(draft, AT);
+    expect(snapshot.status).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');
+    expect(snapshot.inputIdentity).toMatch(/^[0-9a-f]{8}$/);
+    expect(decideEnergyHydration({ obData: draft, rawSnapshot: snapshot, computedAt: AT, previousMealPlanKey: 'planA' }).action).toBe('ADOPT');
+  });
+
+  it('edad o embarazo ya conocidos → ninguna pregunta, aunque falte todo lo nuevo', () => {
+    for (const over of [{ edad: 17 }, { edad: 70 }, { embarazo: 1 }] as Ob[]) {
+      const ob = { ...LEGACY, ...over };
+      expect(nutritionCompletionSteps(ob), JSON.stringify(over)).toEqual([]);
+      expect(resolveNutritionEnergyState(ob).status).toBe('OUTSIDE_HSC_NUTRITION_SCOPE');
+    }
+  });
+
+  it('«No» a la dieta terapéutica (dentro de alcance) → sigue pidiendo solo lo necesario', () => {
+    expect(nutritionCompletionSteps(withAnswers(LEGACY, { requiresTherapeuticDiet: 0 }))).toEqual(['dailyLife', 'trainsHabitually']);
+  });
+
+  it('la modalidad (INPUT_REQUIRED de macros) se sigue pidiendo cuando hace falta', () => {
+    const ob = { ...LEGACY, requiresTherapeuticDiet: 0, dailyLife: 'DL2', trainsHabitually: 1, trainingDaysPerWeek: 3, trainingSessionMinutes: 45 };
+    expect(nutritionCompletionSteps(ob)).toEqual(['trainingModalities']);
+  });
+});
+
+describe('A10.1 · Inicio · tarjeta de nutrición', () => {
+  const HOY = sinComentarios(srcHoy);
+
+  it('perfil incompleto → estado claro con CTA que abre la MISMA hoja de completar perfil', () => {
+    expect(HOY).toContain('const nutritionCompletionPending = nutritionCompletionSteps(obData).length > 0;');
+    expect(HOY).toContain("{nutritionCompletionPending ? (");
+    expect(HOY).toContain("t('profileCompletion.title')");
+    expect(HOY).toContain("onClick={(e) => { e.stopPropagation(); setCompletionOpen(true); }}");
+    expect(HOY).toContain("import ProfileCompletionSheet from './sheets/ProfileCompletionSheet';");
+    expect(HOY).toContain('{completionOpen && <ProfileCompletionSheet onClose={() => setCompletionOpen(false)} />}');
+  });
+
+  it('perfil completo → la tarjeta de siempre (sin aviso)', () => {
+    const { draft } = completar(LEGACY, RESPUESTAS_NORMALES);
+    expect(nutritionCompletionSteps(draft)).toEqual([]);
+    expect(HOY).toContain("t('hoy.nutritionMeta', {");
   });
 });

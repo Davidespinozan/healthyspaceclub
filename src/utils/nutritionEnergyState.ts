@@ -62,9 +62,9 @@ import {
 } from './nutritionEnergyOrchestrator';
 import {
   nutritionProfileInputFrom,
-  pendingTherapeuticDietProfileFrom,
+  pendingScopeProfileFrom,
   InvalidPersistedProfileError,
-  type ProfileInputPendingTherapeuticDiet,
+  type ProfileInputPendingScope,
   type MissingProfileField,
   type PersistedObData,
 } from './nutritionProfileInput';
@@ -159,9 +159,10 @@ export function resolveNutritionEnergyState(
   const input = readProfile(obData);
   if (input.kind === 'unreadable') return { status: 'PROFILE_UNREADABLE', key: input.key };
   if (input.kind === 'incomplete') return { status: 'PROFILE_INCOMPLETE', missing: input.missing };
-  // A7.1 · solo falta la respuesta de dieta terapéutica: si edad o embarazo ya
-  // sacan de alcance, ESE es el estado; si no, la respuesta es necesaria.
-  if (input.kind === 'pending_therapeutic') {
+  // A7.1 / A10.1 · solo faltan la respuesta terapéutica y/o la actividad: si los
+  // datos presentes ya demuestran una exclusión de alcance, ESE es el estado; si
+  // no, lo que falta importa y el perfil sigue incompleto.
+  if (input.kind === 'pending_scope') {
     return resolveKnownNutritionScope(input.profile) ?? { status: 'PROFILE_INCOMPLETE', missing: input.missing };
   }
   // Los cuatro estados de motor salen TAL CUAL del orquestador. Si lanza, lanza:
@@ -174,16 +175,17 @@ type ProfileRead =
   | { kind: 'ok'; profile: ProfileInput }
   | { kind: 'incomplete'; missing: readonly MissingProfileField[] }
   /** A7.1 · completo salvo `requiresTherapeuticDiet` (único dato que falta). */
-  | { kind: 'pending_therapeutic'; profile: ProfileInputPendingTherapeuticDiet; missing: readonly MissingProfileField[] }
+  /** A7.1/A10.1 · solo faltan la respuesta terapéutica y/o la actividad. */
+  | { kind: 'pending_scope'; profile: ProfileInputPendingScope; missing: readonly MissingProfileField[] }
   | { kind: 'unreadable'; key: string };
 
 function readProfile(obData: PersistedObData | null | undefined): ProfileRead {
   try {
     const r = nutritionProfileInputFrom(obData);
     if (r.complete) return { kind: 'ok', profile: r.profile };
-    const pending = pendingTherapeuticDietProfileFrom(obData);
+    const pending = pendingScopeProfileFrom(obData);
     return pending
-      ? { kind: 'pending_therapeutic', profile: pending, missing: r.missing }
+      ? { kind: 'pending_scope', profile: pending, missing: r.missing }
       : { kind: 'incomplete', missing: r.missing };
   } catch (e) {
     // ÚNICA captura del boundary energético, y solo de este error. Cualquier otro
@@ -273,10 +275,13 @@ const numStr = (n: number): string => (Object.is(n, -0) ? '0' : String(n));
  * ya ocurrió sin error dentro de la cadena, así que no puede pasar.
  */
 export function energyInputIdentity(
-  profile: Omit<ProfileInput, 'requiresTherapeuticDiet'> & { requiresTherapeuticDiet: boolean | null },
+  profile: Omit<ProfileInput, 'requiresTherapeuticDiet' | 'activityProfile'>
+    & { requiresTherapeuticDiet: boolean | null; activityProfile: ProfileInput['activityProfile'] | null },
 ): string {
-  const t = profile.activityProfile.habitualTraining;
-  const entrena = t.trainsHabitually === true;
+  // A10.1 · actividad pendiente (solo con una exclusión ya demostrable) → '-'.
+  const ap = profile.activityProfile;
+  const t = ap?.habitualTraining;
+  const entrena = t?.trainsHabitually === true;
   const payload = [
     `v${ENERGY_SNAPSHOT_SCHEMA_VERSION}`,
     biologicalSexFrom(profile.sex),
@@ -287,10 +292,10 @@ export function energyInputIdentity(
     profile.pregnantOrLactating ? '1' : '0',
     // A7.1 · `null` = respuesta pendiente (solo con una exclusión ya conocida).
     profile.requiresTherapeuticDiet === null ? '-' : profile.requiresTherapeuticDiet ? '1' : '0',
-    profile.activityProfile.dailyLife,
-    entrena ? '1' : '0',
-    entrena ? numStr(t.daysPerWeek) : '0',
-    entrena ? numStr(t.habitualSessionMinutes) : '0',
+    ap ? ap.dailyLife : '-',
+    ap ? (entrena ? '1' : '0') : '-',
+    ap ? (entrena && t ? numStr(t.daysPerWeek) : '0') : '-',
+    ap ? (entrena && t ? numStr(t.habitualSessionMinutes) : '0') : '-',
   ].join('|');
   return fnv1a32(payload);
 }
@@ -405,7 +410,7 @@ export function buildEnergySnapshot(
   // ── A7.1 · exclusión ya conocida con la respuesta terapéutica pendiente ───
   // Mismo snapshot que cualquier OUTSIDE_HSC_NUTRITION_SCOPE (identidad +
   // versiones); la identidad marca la respuesta como pendiente, distinta de «No».
-  if (read.kind === 'pending_therapeutic') {
+  if (read.kind === 'pending_scope') {
     const known = resolveKnownNutritionScope(read.profile);
     if (known) {
       return {

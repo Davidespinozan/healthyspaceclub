@@ -52,6 +52,8 @@ import { getHSMBank } from '../data/hsmBank';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n/es';
 import CalculadoraSheet from './CalculadoraSheet';
+import ProfileCompletionSheet from './sheets/ProfileCompletionSheet';
+import { nutritionCompletionSteps } from '../utils/profileCompletion';
 import { plural } from '../i18n/format';
 
 // Etiquetas de tiempo (tag) por comida — mismas llaves que MealDetailPopout.
@@ -69,6 +71,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const { t, locale } = useT();
   // Calculadora abierta "en vez de" una comida (slot). null = cerrada.
   const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number } | null>(null);
+  // A10.1 · completar el perfil de Nutrition desde Inicio: MISMA hoja que el planner.
+  const [completionOpen, setCompletionOpen] = useState(false);
   const {
     userName, planGoal, mealPlanKey, shoppingDay, saveWeeklyPlan, addFoodLog,
     mealChecks, toggleMealCheck,
@@ -358,6 +362,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // C3 · `null` = no hay objetivo vigente. Antes esto producía 0, que luego se
   // pintaba y se usaba como denominador.
   const kcalGoal: number | null = planGoal != null && planGoal > 0 ? planGoal : null;
+  // A10.1 · si a Nutrition le falta algún dato del socio, la tarjeta lo dice en vez
+  // de pintar «— kcal». Qué falta lo decide el dominio (`nutritionCompletionSteps`).
+  const nutritionCompletionPending = nutritionCompletionSteps(obData).length > 0;
   const kcalConsumed = Math.round(dayConsumption.consumedKcal);
   // El anillo de menú refleja la ACCIÓN del usuario: comidas marcadas / total
   // (antes era kcal≥80% de la meta, y marcar todo no lo cerraba si el plan
@@ -879,7 +886,19 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             <div className="th3-cover th3-cover-nutricion" />
             <div className="th3-card-body">
               <p className="th3-card-eyebrow">{t('hoy.cardEyebrowNutrition')}</p>
-              {!hasGeneratedWeeklyPlan(weeklyPlan) ? (
+              {nutritionCompletionPending ? (
+                <div className="th3-profile-completion">
+                  <h2 className="th3-card-title">{t('profileCompletion.title')}</h2>
+                  <p className="th3-card-meta">{t('profileCompletion.body')}</p>
+                  <button
+                    type="button"
+                    className="th3-completion-btn"
+                    onClick={(e) => { e.stopPropagation(); setCompletionOpen(true); }}
+                  >
+                    {t('profileCompletion.cta')}
+                  </button>
+                </div>
+              ) : !hasGeneratedWeeklyPlan(weeklyPlan) ? (
                 <h2 className="th3-card-title th3-card-title--cta">
                   {t('hoy.nutritionGenerateTitle')}
                   <ArrowRight size={18} strokeWidth={2.2} className="th3-card-title-arrow" />
@@ -1193,6 +1212,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           setCalcTarget({ mealTime: time, mealIndex: index });
         }}
       />
+
+      {/* ── A10.1 · completar el perfil de Nutrition (misma hoja que el planner) ── */}
+      {completionOpen && <ProfileCompletionSheet onClose={() => setCompletionOpen(false)} />}
 
       {/* ── Calculadora "en vez de" una comida (catálogo → gramos → macros exactas) ── */}
       {calcTarget !== null && (

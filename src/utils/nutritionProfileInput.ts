@@ -222,28 +222,53 @@ export function nutritionProfileInputFrom(
   return { complete: true, profile: { ...r.profile, requiresTherapeuticDiet } };
 }
 
-/** Perfil completo SALVO la respuesta de dieta terapéutica, que está pendiente. */
-export type ProfileInputPendingTherapeuticDiet =
-  Omit<ProfileInput, 'requiresTherapeuticDiet'> & { requiresTherapeuticDiet: null };
+/**
+ * Perfil con datos de ALCANCE completos, pero con la respuesta de dieta
+ * terapéutica y/o la actividad todavía pendientes (`null`).
+ */
+export type ProfileInputPendingScope =
+  Omit<ProfileInput, 'requiresTherapeuticDiet' | 'activityProfile'>
+  & { requiresTherapeuticDiet: boolean | null; activityProfile: ActivityProfile | null };
+
+/** Lo único que puede faltar para evaluar el alcance con datos pendientes. */
+const PENDING_FOR_SCOPE: readonly MissingProfileField[] = [
+  'requiresTherapeuticDiet', 'dailyLife', 'trainsHabitually', 'trainingDaysPerWeek', 'trainingSessionMinutes',
+];
 
 /**
- * A7.1 · el perfil cuando lo ÚNICO que falta es `requiresTherapeuticDiet`.
+ * A7.1 / A10.1 · el perfil cuando lo que falta es SOLO la respuesta de dieta
+ * terapéutica y/o los datos de actividad.
  *
- * Existe para que las exclusiones de alcance ya conocidas (edad, embarazo) se
- * puedan evaluar sin pedir antes una respuesta que no cambiaría la decisión. La
- * respuesta pendiente viaja como `null`: no se rellena con ningún valor.
+ * Existe para que una exclusión de alcance ya demostrable (edad, embarazo, o un
+ * «Sí» a la dieta terapéutica) se pueda resolver sin pedir antes datos que no la
+ * cambiarían. Lo pendiente viaja como `null`: nunca se rellena.
  *
- * `null` si falta cualquier otro dato, o si el perfil está completo.
+ * `null` si falta cualquier dato de alcance (sexo, objetivo, edad, estatura,
+ * peso, embarazo) o si el perfil ya está completo.
  */
-export function pendingTherapeuticDietProfileFrom(
+export function pendingScopeProfileFrom(
   obData: PersistedObData | null | undefined,
-): ProfileInputPendingTherapeuticDiet | null {
+): ProfileInputPendingScope | null {
   const strict = mapProfile(obData, false);
   if (strict.complete) return null;
-  if (strict.missing.length !== 1 || strict.missing[0] !== 'requiresTherapeuticDiet') return null;
-  const pending = mapProfile(obData, true);
-  if (!pending.complete || pending.profile.requiresTherapeuticDiet !== null) return null;
-  return { ...pending.profile, requiresTherapeuticDiet: null };
+  if (!strict.missing.every((f) => PENDING_FOR_SCOPE.includes(f))) return null;
+  const ob: PersistedObData = obData && typeof obData === 'object' ? obData : {};
+  const therapeutic = declared(ob, 'requiresTherapeuticDiet')
+    ? boolFrom10('requiresTherapeuticDiet', ob.requiresTherapeuticDiet)
+    : null;
+  const pregnant = boolFrom10('embarazo', ob.embarazo);
+  // La actividad solo viaja si está COMPLETA (falta únicamente la respuesta terapéutica).
+  const withActivity = mapProfile(obData, true);
+  return {
+    sex: String(ob.sex),
+    goal: String(ob.goal),
+    ageYears: num(ob, 'edad'),
+    heightCm: num(ob, heightKey(ob) as string),
+    weightKg: num(ob, 'peso'),
+    pregnantOrLactating: pregnant,
+    requiresTherapeuticDiet: therapeutic,
+    activityProfile: withActivity.complete ? withActivity.profile.activityProfile : null,
+  };
 }
 
 type MappedProfile = Omit<ProfileInput, 'requiresTherapeuticDiet'> & { requiresTherapeuticDiet: boolean | null };
