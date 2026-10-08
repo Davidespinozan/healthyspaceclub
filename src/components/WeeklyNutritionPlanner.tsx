@@ -20,6 +20,8 @@ import { PLAN_ENGINE_VERSION } from '../utils/planEngine';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
 import EditDataSheet from './sheets/EditDataSheet';
+import ProfileCompletionSheet from './sheets/ProfileCompletionSheet';
+import { nutritionCompletionSteps } from '../utils/profileCompletion';
 import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, Dumbbell, type LucideIcon } from 'lucide-react';
 import type { ProteinShake } from '../utils/planEngine';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
@@ -185,24 +187,16 @@ export default function WeeklyNutritionPlanner() {
     () => weeklyPlanPhase(shoppingDay, weeklyPlan),
   );
   const [step, setStep] = useState(0);
-  // CAPA 2 · A2 · un socio que entrena y no declaró su modalidad no tiene macros
-  // vigentes (`INPUT_REQUIRED`): se le pide aquí, con acceso directo a sus datos.
-  // El plan guardado NO se borra; simplemente deja de estar vigente.
+  // A10 · COMPLETAR PERFIL. Un único aviso cuando a Nutrition le falta cualquier
+  // dato del socio (perfil incompleto o modalidad no declarada). Qué falta lo
+  // decide la cadena real (`nutritionCompletionSteps`), no esta pantalla. El plan
+  // guardado NO se borra: solo deja de estar vigente hasta completar.
+  const [completionOpen, setCompletionOpen] = useState(false);
   const [editDataOpen, setEditDataOpen] = useState(false);
-  const modalityRequired = macroResolution?.kind === 'INPUT_REQUIRED'
-    && macroResolution.missing === 'TRAINING_MODALITY_REQUIRED';
-  // A7 · perfil legacy sin la respuesta de alcance de salud → se le pide; nunca se
-  // asume «No» ni se deduce de la antigua lista de diagnósticos.
-  const therapeuticAnswerRequired = energyState?.status === 'PROFILE_INCOMPLETE'
-    && energyState.missing.includes('requiresTherapeuticDiet');
+  const completionPending = nutritionCompletionSteps(obData).length > 0;
   // A7 · fuera de alcance por dieta terapéutica indicada: se explica, sin cifras.
   const therapeuticOutOfScope = energyState?.status === 'OUTSIDE_HSC_NUTRITION_SCOPE'
     && energyState.scopeReason === 'therapeutic_diet_required';
-  const askKey = therapeuticAnswerRequired
-    ? (['nutritionPlanner.therapeuticDietRequired', 'nutritionPlanner.therapeuticDietRequiredCta'] as const)
-    : modalityRequired
-      ? (['nutritionPlanner.modalityRequired', 'nutritionPlanner.modalityRequiredCta'] as const)
-      : null;
   // A9 · prescripción resuelta pero sin gramos: alcance deportivo (por motivo) o el
   // respaldo defensivo de INFEASIBLE. Sin cifras, sin macros inventadas.
   const macroNotice = nonServableMacroNotice(macroResolution?.prescription);
@@ -221,15 +215,28 @@ export default function WeeklyNutritionPlanner() {
       <p className="wz-title" style={{ fontSize: '1.05rem' }}>{t('nutritionPlanner.therapeuticOutTitle')}</p>
       <p className="wz-subtitle">{t('nutritionPlanner.therapeuticOutBody')}</p>
     </div>
-  ) : askKey ? (
-    <div className="wnp2-modality-required" role="status" style={{ margin: '12px 0', textAlign: 'center' }}>
-      <p className="wz-subtitle">{t(askKey[0])}</p>
-      <button type="button" className="wz-cta" onClick={() => setEditDataOpen(true)}>
-        {t(askKey[1])}
+  ) : completionPending ? (
+    <div className="wnp2-profile-completion" role="status" style={{ margin: '12px 0', textAlign: 'center' }}>
+      <p className="wz-title" style={{ fontSize: '1.05rem' }}>{t('profileCompletion.title')}</p>
+      <p className="wz-subtitle">{t('profileCompletion.body')}</p>
+      <button type="button" className="wz-cta" onClick={() => setCompletionOpen(true)}>
+        {t('profileCompletion.cta')}
       </button>
-      {editDataOpen && <EditDataSheet onClose={() => setEditDataOpen(false)} />}
     </div>
   ) : null;
+  // Las hojas viven fuera del aviso: al completar el perfil el aviso desaparece y
+  // la hoja no debe desmontarse a mitad del guardado.
+  const completionSheets = (
+    <>
+      {completionOpen && (
+        <ProfileCompletionSheet
+          onClose={() => setCompletionOpen(false)}
+          onOpenEditData={() => { setCompletionOpen(false); setEditDataOpen(true); }}
+        />
+      )}
+      {editDataOpen && <EditDataSheet onClose={() => setEditDataOpen(false)} />}
+    </>
+  );
   // ¿La selección de día del súper es parte de ESTE flujo? Solo si arrancó sin
   // día elegido (usuario nuevo). Si ya tenía día (regenera), el cuestionario NO
   // debe numerar desde 2: las preguntas son paso 1/2/3, no 2/3/4.
@@ -408,6 +415,8 @@ export default function WeeklyNutritionPlanner() {
           </h1>
           <p className="wz-subtitle">{t('nutritionPlanner.setupDaySubtitle')}</p>
         </div>
+        {modalityPrompt}
+        {completionSheets}
 
         <div className="wz-options">
           {SETUP_DAYS.map(day => (
@@ -731,6 +740,7 @@ export default function WeeklyNutritionPlanner() {
         </div>
 
         {modalityPrompt}
+        {completionSheets}
         {renderBody()}
         {renderCta()}
 
@@ -814,6 +824,7 @@ export default function WeeklyNutritionPlanner() {
         mealsTotal={dayConsumption.totalSlots}
       />
       {modalityPrompt}
+      {completionSheets}
 
       {/* Barra slim única: semana + acciones (nota · lista · cambiar plan). Colapsa
           el subhead + la nota dorada gigante + los tabs Mi Plan/Lista (abrumaban). */}

@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import srcOnboarding from '../../screens/OnboardingScreen.tsx?raw';
 import srcEditData from '../../components/sheets/EditDataSheet.tsx?raw';
 import srcMapper from '../nutritionProfileInput.ts?raw';
+import srcOptions from '../trainingProfileOptions.ts?raw';
+import {
+  TRAINING_DAY_OPTIONS, TRAINING_MINUTE_CHIPS, TRAINING_MINUTES_MIN, TRAINING_MINUTES_MAX,
+} from '../trainingProfileOptions';
 import { es } from '../../i18n/es';
 import { en } from '../../i18n/en';
 
@@ -100,17 +104,20 @@ describe('FASE B · onboarding captura el ActivityProfile', () => {
   });
 
   it('los días son 1–7 y el 0 NO aparece', () => {
-    expect(CODE_ONB).toContain('const TRAINING_DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7]');
-    expect(CODE_ONB).not.toMatch(/TRAINING_DAY_OPTIONS = \[0/);
+    // A10 · los valores viven en `trainingProfileOptions` (compartidos con la hoja
+    // de datos y el flujo de completar perfil); el onboarding los importa.
+    expect([...TRAINING_DAY_OPTIONS]).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(srcOptions).not.toMatch(/TRAINING_DAY_OPTIONS = \[0/);
+    expect(CODE_ONB).toContain("from '../utils/trainingProfileOptions'");
   });
 
   it('los atajos de duración son exactamente los seis acordados', () => {
-    expect(CODE_ONB).toContain('const TRAINING_MINUTE_CHIPS = [30, 45, 60, 75, 90, 120]');
+    expect([...TRAINING_MINUTE_CHIPS]).toEqual([30, 45, 60, 75, 90, 120]);
   });
 
   it('«Otro» acepta cualquier entero declarado en [1, 300]', () => {
-    expect(CODE_ONB).toContain('const TRAINING_MINUTES_MIN = 1');
-    expect(CODE_ONB).toContain('const TRAINING_MINUTES_MAX = 300');
+    expect(TRAINING_MINUTES_MIN).toBe(1);
+    expect(TRAINING_MINUTES_MAX).toBe(300);
     expect(CODE_ONB).toContain("t('onboarding.trainingMinutesOther')");
     expect(CODE_ONB).toContain('setMinutesCustom(true)');
     // El input solo admite dígitos → la duración declarada es siempre un entero.
@@ -324,7 +331,9 @@ describe('FASE B · la Fase B no conecta el motor energético', () => {
 
     const directos = PRODUCTIVOS
       .filter(([p]) => !esIntermediario(p))
-      .filter(([, src]) => /resolveNutritionEnergy|nutritionEnergyOrchestrator/.test(src))
+      // Límite de palabra: `resolveNutritionEnergyState` es el INTERMEDIARIO
+      // permitido (tramo 2), no una llamada directa al orquestador.
+      .filter(([, src]) => /\bresolveNutritionEnergy\b|nutritionEnergyOrchestrator/.test(src))
       .map(([p]) => p);
     expect(directos).toEqual([]);
 
@@ -338,7 +347,9 @@ describe('FASE B · la Fase B no conecta el motor energético', () => {
       .map(([p]) => p).sort();
     // CAPA 2 · `macroPrescription` CONSUME el estado ya resuelto (tipo + lectura de
     // `prescribedEnergy`/`classification`); no resuelve ni dispara el flujo.
-    expect(indirectos).toEqual(['/src/store/index.ts', '/src/utils/energyHydration.ts', '/src/utils/macroPrescription.ts']);
+    // A10 · `profileCompletion` RESUELVE el estado sobre un borrador para saber qué
+    // preguntar; no escribe ni proyecta nada (lo sigue haciendo solo el store).
+    expect(indirectos).toEqual(['/src/store/index.ts', '/src/utils/energyHydration.ts', '/src/utils/macroPrescription.ts', '/src/utils/profileCompletion.ts']);
   });
 
   it('el mapper NO importa el orquestador: existir no es estar conectado', () => {

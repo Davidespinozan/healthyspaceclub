@@ -1603,10 +1603,6 @@ export const es = {
   },
   nutritionPlanner: {
     genError: 'No pudimos generar tu plan. Intenta de nuevo.',
-    modalityRequired: 'Cuéntanos qué tipo de entrenamiento haces para actualizar tu meta de nutrición.',
-    modalityRequiredCta: 'Completar mi entrenamiento',
-    therapeuticDietRequired: 'Responde una pregunta sobre tu alimentación para actualizar tu meta de nutrición.',
-    therapeuticDietRequiredCta: 'Responder',
     therapeuticOutTitle: 'Tu alimentación necesita indicaciones más específicas',
     therapeuticOutBody: 'Healthy Space Club ofrece planes generales de alimentación. Si un profesional te indicó modificar tu dieta o seguir un plan específico por una condición médica, esa alimentación debe mantenerse bajo su supervisión.',
     // A9 · macros no servibles. SPORTS_SCOPE = límite del alcance deportivo, no un error.
@@ -1988,6 +1984,21 @@ export const es = {
     slotDesayuno: 'Desayuno',
     slotComida: 'Comida',
     slotCena: 'Cena',
+  },
+  // A10 · completar el perfil de Nutrition (usuarios existentes). Las preguntas
+  // reutilizan el copy del onboarding; aquí solo el marco del flujo.
+  profileCompletion: {
+    title: 'Completa tu perfil de nutrición',
+    body: 'Necesitamos algunos datos para calcular correctamente tus calorías y macronutrientes.',
+    cta: 'Completar datos',
+    stepOf: 'Paso {n}',
+    next: 'Continuar',
+    save: 'Guardar y calcular',
+    saving: 'Calculando…',
+    coreMissing: 'Faltan algunos datos básicos (sexo, edad, peso, estatura u objetivo). Complétalos en «Editar mis datos».',
+    coreCta: 'Editar mis datos',
+    done: 'Listo. Tu perfil de nutrición está completo.',
+    error: 'No pudimos guardar tus datos. Inténtalo de nuevo.',
   },
 } as const;
 

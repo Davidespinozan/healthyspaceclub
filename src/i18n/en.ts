@@ -1598,10 +1598,6 @@ export const en: Translations<typeof es> = {
   },
   nutritionPlanner: {
     genError: 'We couldn’t generate your plan. Try again.',
-    modalityRequired: 'Tell us what type of training you do to update your nutrition target.',
-    modalityRequiredCta: 'Complete my training',
-    therapeuticDietRequired: 'Answer one question about your diet to update your nutrition target.',
-    therapeuticDietRequiredCta: 'Answer',
     therapeuticOutTitle: 'Your nutrition needs more specific guidance',
     therapeuticOutBody: 'Healthy Space Club offers general eating plans. If a professional told you to change your diet or follow a specific plan because of a medical condition, that diet should stay under their supervision.',
     // A9 · non-servable macros. SPORTS_SCOPE = edge of the sports scope, not an error.
@@ -1977,5 +1973,19 @@ export const en: Translations<typeof es> = {
     slotDesayuno: 'Breakfast',
     slotComida: 'Lunch',
     slotCena: 'Dinner',
+  },
+  // A10 · complete the Nutrition profile (existing users).
+  profileCompletion: {
+    title: 'Complete your nutrition profile',
+    body: 'We need a few details to calculate your calories and macronutrients correctly.',
+    cta: 'Complete details',
+    stepOf: 'Step {n}',
+    next: 'Continue',
+    save: 'Save and calculate',
+    saving: 'Calculating…',
+    coreMissing: 'Some basic details are missing (sex, age, weight, height or goal). Complete them in “Edit my details”.',
+    coreCta: 'Edit my details',
+    done: 'Done. Your nutrition profile is complete.',
+    error: 'We could not save your details. Please try again.',
   },
 } as const;

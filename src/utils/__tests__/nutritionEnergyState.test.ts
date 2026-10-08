@@ -857,8 +857,10 @@ describe('C2 · nada de esto está conectado', () => {
   it('C4 · consumidores productivos de C2 == exactamente el store y la hidratación', () => {
     const propio = (p: string) => p.endsWith('/nutritionEnergyState.ts');
     const ESPERADO: Record<string, string[]> = {
-      nutritionEnergyState:        CON_MACROS,
-      resolveNutritionEnergyState: [],                      // nadie lo llama directo
+      // A10 · `profileCompletion` lo llama sobre un BORRADOR para saber qué
+      // preguntar; no escribe ni proyecta nada.
+      nutritionEnergyState:        [...CON_MACROS, '/src/utils/profileCompletion.ts'],
+      resolveNutritionEnergyState: ['/src/utils/profileCompletion.ts'],
       NutritionEnergyState:        CON_MACROS,
       EnergySnapshotV1:            ['/src/utils/energyHydration.ts'],
       buildEnergySnapshot:         STORE_Y_PUENTE,

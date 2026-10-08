@@ -25,6 +25,7 @@ import { decideEnergyHydration } from '../energyHydration';
 import { nutritionProfileInputFrom } from '../nutritionProfileInput';
 import { weeklyPlanCurrentness } from '../weeklyPlanState';
 import { PLAN_ENGINE_VERSION } from '../planEngine';
+import { nutritionCompletionSteps } from '../profileCompletion';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CAPA 2 · A2 · MODALIDAD DE ENTRENAMIENTO DECLARADA
@@ -318,8 +319,9 @@ describe('A2 · F · vigencia del plan', () => {
   it('el planner no genera sin macros servibles y pide la modalidad', () => {
     const code = sinComentarios(srcPlanner);
     expect(code).toContain('if (planGoal == null || !isServableMacroPrescription(macroTargets)) {');
-    expect(code).toContain("macroResolution?.kind === 'INPUT_REQUIRED'");
-    expect(code).toContain("'nutritionPlanner.modalityRequired'");
+    // A10 · el aviso es el de completar perfil; la modalidad la pide el dominio.
+    expect(code).toContain('nutritionCompletionSteps(obData).length > 0');
+    expect(nutritionCompletionSteps(ob())).toEqual(['trainingModalities']);
     expect(code).not.toMatch(/clearWeeklyPlan\([^)]*\)[^\n]*modalit/i);
   });
 });

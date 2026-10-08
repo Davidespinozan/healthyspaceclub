@@ -4,6 +4,10 @@ import { X } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { PERMANENT_AVOID_CATALOG } from '../../utils/avoidAuthority';
 import {
+  DAILY_LIFE_LEVELS, DAILY_LIFE_COPY, TRAINING_MINUTES_MIN, TRAINING_MINUTES_MAX,
+  TRAINING_DAY_OPTIONS as TRAINING_DAY_OPTIONS_SHARED, TRAINING_MINUTE_CHIPS as TRAINING_MINUTE_CHIPS_SHARED,
+} from '../../utils/trainingProfileOptions';
+import {
   classifyTargetWeight, decideTargetWeightEdit, resolveTargetWeightState, type TargetWeightSafety,
 } from '../../utils/targetWeightSafety';
 import {
@@ -30,11 +34,10 @@ const LEVEL_OPTIONS = ['principiante', 'intermedio', 'avanzado'];
 // CAPA 1E · Fase B — ACTIVITY PROFILE de Nutrition. Tercer dominio, distinto de
 // ACTIVITY_OPTIONS (legacy) y de LEVEL_OPTIONS (Training). Vive en su propia
 // sección para que no se lea como una variante de ninguno de los dos.
-const DAILY_LIFE_OPTIONS = ['DL1', 'DL2', 'DL3', 'DL4'];
-const TRAINING_DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
-const TRAINING_MINUTE_CHIPS = [30, 45, 60, 75, 90, 120];
-const TRAINING_MINUTES_MIN = 1;
-const TRAINING_MINUTES_MAX = 300;
+// Valores compartidos con el onboarding y el flujo de completar perfil (A10).
+const DAILY_LIFE_OPTIONS: readonly string[] = DAILY_LIFE_LEVELS;
+const TRAINING_DAY_OPTIONS: readonly number[] = TRAINING_DAY_OPTIONS_SHARED;
+const TRAINING_MINUTE_CHIPS: readonly number[] = TRAINING_MINUTE_CHIPS_SHARED;
 const GOAL_OPTIONS = ['Bajar grasa', 'Subir masa muscular', 'Recomposición', 'Bienestar integral'];
 
 const SEX_KEYS: Record<string, TranslationKey> = {
@@ -55,12 +58,9 @@ const LEVEL_KEYS: Record<string, TranslationKey> = {
 };
 // Las etiquetas del movimiento diario se REUSAN del onboarding: mismo dato, mismo
 // copy. Igual que la sección de salud reusa `onboarding.mobility_*`.
-const DAILY_LIFE_KEYS: Record<string, TranslationKey> = {
-  'DL1': 'onboarding.dlNone',
-  'DL2': 'onboarding.dlLittle',
-  'DL3': 'onboarding.dlQuite',
-  'DL4': 'onboarding.dlLot',
-};
+const DAILY_LIFE_KEYS: Record<string, TranslationKey> = Object.fromEntries(
+  DAILY_LIFE_LEVELS.map((id) => [id, DAILY_LIFE_COPY[id].titleKey]),
+);
 const GOAL_KEYS: Record<string, TranslationKey> = {
   'Bajar grasa': 'editData.goalBajarGrasa',
   'Subir masa muscular': 'editData.goalSubirMasaMuscular',

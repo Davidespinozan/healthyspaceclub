@@ -19,6 +19,9 @@ import AuthProviderButtons from '../components/AuthProviderButtons';
 import { targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
 import { classifyTargetWeight } from '../utils/targetWeightSafety';
 import { isServableMacroPrescription, nonServableMacroNotice } from '../utils/macroPrescription';
+import {
+  TRAINING_DAY_OPTIONS, TRAINING_MINUTE_CHIPS, TRAINING_MINUTES_MIN, TRAINING_MINUTES_MAX,
+} from '../utils/trainingProfileOptions';
 import { TRAINING_MODALITIES, TRAINING_MODALITIES_KEY, serializeTrainingModalities, type TrainingModality } from '../utils/trainingModality';
 import { track } from '../utils/analytics';
 import { recordReferralIfAny } from '../utils/referral';
@@ -61,22 +64,8 @@ const DAILY_LIFE_OPTIONS = [
   { id: 'DL4', icon: Package, titleKey: 'onboarding.dlLot', descKey: 'onboarding.dlLotDesc' },
 ] as const;
 
-/**
- * Días por semana. 1–7, nunca 0: el ActivityClassifier acepta `[0,7]` pero LANZA
- * con `trainsHabitually=true` y 0 días por incoherente, así que ofrecerlo sería
- * ofrecer un input que el motor rechaza.
- */
-const TRAINING_DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7] as const;
-
-/**
- * Atajos de duración. NO son el dominio: son accesos rápidos a los valores más
- * comunes. «Otro» permite declarar cualquier entero de 1 a 300, porque lo que se
- * captura es la duración DECLARADA — quien entrena 50 minutos persiste 50, no el
- * chip más cercano. El rango estructural del clasificador (0–1440) no se toca.
- */
-const TRAINING_MINUTE_CHIPS = [30, 45, 60, 75, 90, 120] as const;
-const TRAINING_MINUTES_MIN = 1;
-const TRAINING_MINUTES_MAX = 300;
+// Días, duración y sus validadores: valores COMPARTIDOS con «Editar mis datos» y el
+// flujo de completar perfil (A10) → `trainingProfileOptions`.
 
 export default function OnboardingScreen() {
   const { t } = useT();

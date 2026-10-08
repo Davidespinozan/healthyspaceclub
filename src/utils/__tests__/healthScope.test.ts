@@ -9,6 +9,7 @@ import { weeklyPlanCurrentness } from '../weeklyPlanState';
 import { PLAN_ENGINE_VERSION } from '../planEngine';
 import { buildCoachContext, renderHscFacts } from '../coachContext';
 import { NUTRITION_SCOPE_REASONS } from '../nutritionScopeGuard';
+import { nutritionCompletionSteps } from '../profileCompletion';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CAPA 0/2 · A7 · HEALTH SCOPE POLICY
@@ -146,10 +147,10 @@ describe('A7 · C · perfil legacy sin la respuesta', () => {
     }
   });
 
-  it('el planner pide la respuesta con acceso directo a los datos', () => {
+  it('A10 · el planner pide completar el perfil (la pregunta la decide el dominio)', () => {
     const code = sinComentarios(srcPlanner);
-    expect(code).toContain("energyState.missing.includes('requiresTherapeuticDiet')");
-    expect(code).toContain("'nutritionPlanner.therapeuticDietRequired'");
+    expect(code).toContain('nutritionCompletionSteps(obData).length > 0');
+    expect(nutritionCompletionSteps(sin('requiresTherapeuticDiet'))).toEqual(['requiresTherapeuticDiet']);
   });
 });
 
@@ -235,14 +236,16 @@ describe('A7 · E · ningún diagnóstico cambia la nutrición', () => {
       .filter(([, src]) => /\brequiresTherapeuticDiet\b/.test(src))
       .map(([p]) => p.replace(/^.*\/src\//, 'src/')).sort();
     expect(lectores).toEqual([
-      'src/components/WeeklyNutritionPlanner.tsx',
+      // A10 · el flujo de completar perfil la PREGUNTA (misma clave 0/1) y la mapea.
       'src/components/sheets/EditDataSheet.tsx',
+      'src/components/sheets/ProfileCompletionSheet.tsx',
       'src/screens/OnboardingScreen.tsx',
       // A7.1 · solo en un tipo `Omit<…, 'requiresTherapeuticDiet'>`: lo EXCLUYE.
       'src/utils/nutritionEnergyOrchestrator.ts',
       'src/utils/nutritionEnergyState.ts',
       'src/utils/nutritionProfileInput.ts',
       'src/utils/nutritionScopeGuard.ts',
+      'src/utils/profileCompletion.ts',
       'src/utils/profileValidation.ts',
     ]);
   });
@@ -326,12 +329,10 @@ describe('A7.1 · la exclusión conocida no se esconde tras la pregunta pendient
     expect(pendiente).not.toBe(id(ob({ ...o, requiresTherapeuticDiet: 1 })));
   });
 
-  it('el CTA de la pregunta solo aparece con PROFILE_INCOMPLETE, nunca con un motivo ya conocido', () => {
-    const code = sinComentarios(srcPlanner);
-    expect(code).toContain("const therapeuticAnswerRequired = energyState?.status === 'PROFILE_INCOMPLETE'");
-    // Y esos casos ya no son PROFILE_INCOMPLETE (ver arriba), así que no lo ven.
+  it('no se pide completar el perfil cuando ya hay un motivo de alcance conocido', () => {
     for (const over of [{ edad: 17 }, { edad: 70 }, { sex: 'Mujer', embarazo: 1 }] as Ob[]) {
       expect(state(legacy(over)).status).not.toBe('PROFILE_INCOMPLETE');
+      expect(nutritionCompletionSteps(legacy(over))).toEqual([]);
     }
   });
 });
