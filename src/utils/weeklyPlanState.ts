@@ -45,3 +45,86 @@ export function resolveTodayPlanMeals<M>(
   const todayNum = selectedDays[todayOffset >= 0 ? todayOffset : 0] ?? selectedDays[0];
   return days.find(d => d.day === todayNum)?.meals ?? [];
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAPA 1E · FASE C4 · VIGENCIA DEL PLAN SEMANAL
+//
+// ¿El plan guardado corresponde a la prescripción vigente? Se DERIVA; no se
+// persiste nada nuevo y no se muta el plan.
+//
+//   ACTIVE       · los platillos están dimensionados a la energía de hoy
+//   STALE        · hay prescripción, pero el plan no le corresponde → regenerar
+//   NOT_CURRENT  · no hay prescripción vigente, o no hay plan
+//
+// ── POR QUÉ `gen.kcal` Y NO UN HASH DE INPUTS ───────────────────────────────
+// La pregunta es «¿los platillos están dimensionados a la energía vigente?». Si
+// alguien cambia su movimiento diario y la prescripción NO cambia, el plan sigue
+// siendo válido y no se regenera; un hash de inputs forzaría una regeneración
+// inútil. Deliberadamente NO entran `avoid`, antojo, batido ni región: eso es
+// vigencia del GENERADOR, no de la energía, y queda fuera de C4.
+//
+// Su hueco conocido: si la energía nueva coincide por casualidad con la de un
+// plan legacy, `gen.kcal` lo daría por ACTIVE. Lo cubre el salto de
+// PLAN_ENGINE_VERSION, que marca stale TODO plan anterior sin mirar la cifra.
+// Los dos mecanismos son necesarios y no se solapan.
+//
+// CAPA 2 añade las MACROS a la firma (`gen.protG/fatG/carbG`): un cambio solo de
+// macros también deja el plan STALE. Y sube PLAN_ENGINE_VERSION a 33 para que
+// ningún plan armado con macros legacy siga vigente aunque coincidan los gramos.
+//
+// ── NO SE CONFUNDE CON `energyInputIdentity` ────────────────────────────────
+// Ésa responde «¿la cifra guardada se calculó con los inputs actuales?» y
+// gobierna la HIDRATACIÓN. Dos preguntas distintas, dos mecanismos distintos.
+// ─────────────────────────────────────────────────────────────────────────────
+export type WeeklyPlanCurrentness = 'ACTIVE' | 'STALE' | 'NOT_CURRENT';
+
+/**
+ * Puro y sin dependencias del módulo energético: recibe el `status` y la cifra ya
+ * resueltos, no el estado completo. Así este archivo no necesita conocer la
+ * cadena de nutrición.
+ */
+export function weeklyPlanCurrentness(input: {
+  /** `status` del estado energético vigente. */
+  status: string | null | undefined;
+  /** Proyección vigente. `null` = no hay prescripción utilizable. */
+  planGoal: number | null;
+  /**
+   * CAPA 2 · macros vigentes. Solo sus gramos (`VALID`/`REVIEW`); `null` = no hay
+   * macros servibles (sin energía, `INFEASIBLE` o `SPORTS_SCOPE`).
+   */
+  macros: { proteinG: number; fatG: number; carbG: number } | null;
+  weeklyPlan: {
+    days?: unknown[]; engineVersion?: number;
+    gen?: { kcal?: number; protG?: number; fatG?: number; carbG?: number };
+  } | null | undefined;
+  /** `PLAN_ENGINE_VERSION` actual. Se recibe para no acoplar esto al motor de platillos. */
+  currentVersion: number;
+}): WeeklyPlanCurrentness {
+  const { status, planGoal, macros, weeklyPlan, currentVersion } = input;
+
+  // Sin plan generado no hay nada que presentar como vigente.
+  if (!hasGeneratedWeeklyPlan(weeklyPlan)) return 'NOT_CURRENT';
+
+  // Sin prescripción el plan existe físicamente pero NO opera como plan activo.
+  // Cubre los cinco estados sin cifra, incluido el perfil fuera de alcance.
+  if (status !== 'PRESCRIBED' || planGoal == null) return 'NOT_CURRENT';
+
+  // CAPA 2 · con energía pero sin macros servibles tampoco hay plan activo: no
+  // se regenera contra una prescripción que no se puede servir.
+  if (macros == null) return 'NOT_CURRENT';
+
+  // Plan sellado por un motor de platillos anterior.
+  if ((weeklyPlan.engineVersion ?? 0) < currentVersion) return 'STALE';
+
+  // Plan dimensionado a otra energía.
+  if (weeklyPlan.gen?.kcal !== planGoal) return 'STALE';
+
+  // CAPA 2 · plan dimensionado a otras macros con la MISMA energía. Un cambio de
+  // peso, de objetivo o de entrenamiento puede mover la proteína sin mover la
+  // kcal; antes ese plan seguía «vigente».
+  if (weeklyPlan.gen.protG !== macros.proteinG
+    || weeklyPlan.gen.fatG !== macros.fatG
+    || weeklyPlan.gen.carbG !== macros.carbG) return 'STALE';
+
+  return 'ACTIVE';
+}

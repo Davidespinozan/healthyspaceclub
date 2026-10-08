@@ -2,10 +2,23 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { PERMANENT_AVOID_CATALOG } from '../../utils/avoidAuthority';
+import {
+  DAILY_LIFE_LEVELS, DAILY_LIFE_COPY, TRAINING_MINUTES_MIN, TRAINING_MINUTES_MAX,
+  TRAINING_DAY_OPTIONS as TRAINING_DAY_OPTIONS_SHARED, TRAINING_MINUTE_CHIPS as TRAINING_MINUTE_CHIPS_SHARED,
+} from '../../utils/trainingProfileOptions';
+import {
+  classifyTargetWeight, decideTargetWeightEdit, resolveTargetWeightState, type TargetWeightSafety,
+} from '../../utils/targetWeightSafety';
+import {
+  TRAINING_MODALITIES, TRAINING_MODALITIES_KEY, declaredTrainingModalitiesForForm,
+  serializeTrainingModalities, type TrainingModality,
+} from '../../utils/trainingModality';
 import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
 import { PAISES } from '../../data/ubicaciones';
+import SheetOption from './SheetOption';
 import './sheet-base.css';
 
 interface Props {
@@ -14,20 +27,33 @@ interface Props {
 
 // Stored values stay in Spanish (data layer). Display labels use t() for i18n.
 const SEX_OPTIONS = ['Hombre', 'Mujer'];
-const ACTIVITY_OPTIONS = ['Sedentaria', 'Ligera', 'Moderada', 'Alta', 'Atleta'];
+// «Actividad» legacy (`obData.activity`) RETIRADA de la hoja (Preview QA): no tiene
+// autoridad en Nutrition. El valor guardado no se toca.
+// EXPERIENCIA ENTRENANDO (`obData.nivel`) · los tres valores que consume
+// `levelFromObData`. Dominio TRAINING: vive en su propia sección.
+const LEVEL_OPTIONS = ['principiante', 'intermedio', 'avanzado'];
+// ACTIVITY PROFILE de Nutrition (movimiento + entrenamiento habitual): su propia
+// sección, separada de la experiencia entrenando.
+// Valores compartidos con el onboarding y el flujo de completar perfil (A10).
+const DAILY_LIFE_OPTIONS: readonly string[] = DAILY_LIFE_LEVELS;
+const TRAINING_DAY_OPTIONS: readonly number[] = TRAINING_DAY_OPTIONS_SHARED;
+const TRAINING_MINUTE_CHIPS: readonly number[] = TRAINING_MINUTE_CHIPS_SHARED;
 const GOAL_OPTIONS = ['Bajar grasa', 'Subir masa muscular', 'Recomposición', 'Bienestar integral'];
 
 const SEX_KEYS: Record<string, TranslationKey> = {
   'Hombre': 'editData.sexHombre',
   'Mujer': 'editData.sexMujer',
 };
-const ACTIVITY_KEYS: Record<string, TranslationKey> = {
-  'Sedentaria': 'editData.actSedentaria',
-  'Ligera': 'editData.actLigera',
-  'Moderada': 'editData.actModerada',
-  'Alta': 'editData.actAlta',
-  'Atleta': 'editData.actAtleta',
+const LEVEL_KEYS: Record<string, TranslationKey> = {
+  'principiante': 'editData.levelPrincipiante',
+  'intermedio': 'editData.levelIntermedio',
+  'avanzado': 'editData.levelAvanzado',
 };
+// Las etiquetas del movimiento diario se REUSAN del onboarding: mismo dato, mismo
+// copy. Igual que la sección de salud reusa `onboarding.mobility_*`.
+const DAILY_LIFE_KEYS: Record<string, TranslationKey> = Object.fromEntries(
+  DAILY_LIFE_LEVELS.map((id) => [id, DAILY_LIFE_COPY[id].titleKey]),
+);
 const GOAL_KEYS: Record<string, TranslationKey> = {
   'Bajar grasa': 'editData.goalBajarGrasa',
   'Subir masa muscular': 'editData.goalSubirMasaMuscular',
@@ -38,13 +64,27 @@ const GOAL_KEYS: Record<string, TranslationKey> = {
 // Salud/preferencias (opcionales) — mismos slugs y claves i18n que el onboarding,
 // para que editar aquí y capturar allá escriban exactamente el mismo dato.
 const MOBILITY_OPTS = ['ninguna', 'articular', 'equilibrio', 'apoyo'] as const;
-const CONDITION_OPTS = ['diabetes', 'hipertension', 'renal', 'colesterol'] as const;
-const RESTRICTION_OPTS = ['gluten', 'lacteos', 'huevo', 'frutos-secos', 'cacahuate', 'mariscos', 'vegetariano', 'vegano'] as const;
+// P0-02 · catálogo ÚNICO de restricciones permanentes (mismo que onboarding).
+const RESTRICTION_OPTS = PERMANENT_AVOID_CATALOG;
 
 const splitCsv = (v: unknown): string[] => String(v || '').split(',').map(s => s.trim()).filter(Boolean);
 
+/**
+ * ¿La clave está declarada en el perfil persistido?
+ *
+ * CAPA 1E · Fase B — por PRESENCIA, nunca por truthiness. `trainsHabitually: 0`
+ * significa «declaró que no entrena» y es falsy: con un `||` se leería como «sin
+ * declarar» y la hoja le volvería a preguntar algo que ya respondió.
+ */
+const isDeclared = (ob: Record<string, string | number>, key: string): boolean => {
+  if (!(key in ob)) return false;
+  const v = ob[key];
+  if (v === undefined || v === null) return false;
+  return typeof v === 'string' ? v.trim() !== '' : true;
+};
+
 export default function EditDataSheet({ onClose }: Props) {
-  const { obData, setObData, recalcFromObData, addWeight, tdee, planGoal } = useAppStore(useShallow((s) => ({ obData: s.obData, setObData: s.setObData, recalcFromObData: s.recalcFromObData, addWeight: s.addWeight, tdee: s.tdee, planGoal: s.planGoal })));
+  const { obData, setObData, recalcFromObData, addWeight, tdee, planGoal, planClearedByAvoid, acknowledgePlanClearedByAvoid } = useAppStore(useShallow((s) => ({ obData: s.obData, setObData: s.setObData, recalcFromObData: s.recalcFromObData, addWeight: s.addWeight, tdee: s.tdee, planGoal: s.planGoal, planClearedByAvoid: s.planClearedByAvoid, acknowledgePlanClearedByAvoid: s.acknowledgePlanClearedByAvoid })));
   const { t } = useT();
 
   const [form, setForm] = useState({
@@ -52,17 +92,56 @@ export default function EditDataSheet({ onClose }: Props) {
     edad: String(obData.edad || ''),
     peso: String(obData.peso || ''),
     estatura: String(obData.estatura || obData.altura || ''),
-    activity: String(obData.activity || obData.actividad || ''),
+    // A8 · peso meta (opcional). Se muestra tal cual está guardado —también si es
+    // inválido (legacy o tras un cambio de estatura)— para poder corregirlo.
+    pesoMeta: obData.pesoMeta != null && obData.pesoMeta !== '' ? String(obData.pesoMeta) : '',
+    // Perfil legacy sin nivel → '' = SIN DECLARAR, y así se muestra. NO se
+    // prerrellena con 'intermedio' ni se infiere desde `activity`: el motor tiene
+    // su propio fallback, pero la UI no debe fingir que ese fallback fue una
+    // declaración del socio.
+    nivel: String(obData.nivel || ''),
+    // CAPA 1E · Fase B — ActivityProfile. Igual que el nivel: '' = SIN DECLARAR, y
+    // así se muestra. Nada se prerrellena ni se infiere desde `activity` ni desde
+    // `nivel`. `trainsHabitually` se lee por PRESENCIA porque 0 es una respuesta.
+    dailyLife: String(obData.dailyLife || ''),
+    trainsHabitually: isDeclared(obData, 'trainsHabitually')
+      ? (Number(obData.trainsHabitually) === 1 ? 'si' : 'no')
+      : '',
+    trainingDays: isDeclared(obData, 'trainingDaysPerWeek')
+      ? String(obData.trainingDaysPerWeek)
+      : '',
+    trainingMinutes: isDeclared(obData, 'trainingSessionMinutes')
+      ? String(obData.trainingSessionMinutes)
+      : '',
     goal: String(obData.goal || ''),
     country: String(obData.country || ''),
     movilidad: String(obData.movilidad || ''),
+    // A7 · alcance de salud. Por PRESENCIA (0 = «No» es una respuesta). '' = sin
+    // declarar, y así se muestra: no se infiere de la antigua lista `conditions`.
+    requiresTherapeuticDiet: isDeclared(obData, 'requiresTherapeuticDiet')
+      ? (Number(obData.requiresTherapeuticDiet) === 1 ? 'si' : 'no')
+      : '',
   });
-  // Multi-selección: se guardan como CSV en obData ('conditions', 'avoid').
-  const [conditions, setConditions] = useState<string[]>(() => splitCsv(obData.conditions));
+  // Multi-selección: se guarda como CSV en obData ('avoid').
   const [avoid, setAvoid] = useState<string[]>(() => splitCsv(obData.avoid));
+  // CAPA 2 · A2 · modalidad DECLARADA. Se pre-rellena solo con valores válidos; un
+  // perfil sin declaración abre vacío (no se infiere de minutos, actividad ni historial).
+  const [modalities, setModalities] = useState<TrainingModality[]>(
+    () => declaredTrainingModalitiesForForm(obData[TRAINING_MODALITIES_KEY]),
+  );
+  // Si la duración declarada no coincide con ningún atajo (p. ej. 50), la hoja abre
+  // directamente en «Otro» con el valor real — nunca lo redondea a un chip.
+  const [minutesCustom, setMinutesCustom] = useState(
+    () => isDeclared(obData, 'trainingSessionMinutes') &&
+      Number(obData.trainsHabitually) === 1 &&
+      !TRAINING_MINUTE_CHIPS.includes(Number(obData.trainingSessionMinutes)),
+  );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+
+  // P0-02 · el aviso es de ESTE guardado: se limpia cualquier marca anterior al abrir.
+  useEffect(() => { acknowledgePlanClearedByAvoid(); }, [acknowledgePlanClearedByAvoid]);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -90,6 +169,49 @@ export default function EditDataSheet({ onClose }: Props) {
     update('movilidad', form.movilidad === slug ? '' : slug);
   }
 
+  // CAPA 1E · Fase B — validez del entrenamiento habitual. Los días tienen que ser
+  // uno de 1–7 (no basta «no vacío»: un perfil que respondió «No» trae 0 guardado,
+  // y 0 es incoherente con «Sí» para el clasificador). Los minutos, cualquier
+  // entero declarado en [1, 300].
+  const trainingDaysNum = Number(form.trainingDays);
+  const trainingDaysValid = TRAINING_DAY_OPTIONS.includes(trainingDaysNum);
+  const trainingMinutesNum = Number(form.trainingMinutes);
+  const trainingMinutesValid =
+    form.trainingMinutes !== '' &&
+    Number.isInteger(trainingMinutesNum) &&
+    trainingMinutesNum >= TRAINING_MINUTES_MIN &&
+    trainingMinutesNum <= TRAINING_MINUTES_MAX;
+
+  // A8.1 · ¿el socio TOCÓ el campo de la meta en esta edición? Se compara con el
+  // valor inicial del propio formulario, no con otros campos.
+  const [initialPesoMeta] = useState(() => form.pesoMeta);
+  const targetTouched = form.pesoMeta.trim() !== initialPesoMeta.trim();
+
+  // Sin tocar · estado de la meta GUARDADA (autoridad + `obData` persistido). Una
+  // meta legacy inválida solo se señala aquí: no bloquea cambios ajenos.
+  const storedTarget = resolveTargetWeightState(obData);
+  // Tocada · la meta NUEVA, evaluada con el peso y la estatura del formulario.
+  const editedTarget: TargetWeightSafety | null = (() => {
+    if (!targetTouched || form.pesoMeta.trim() === '') return null;
+    try {
+      return classifyTargetWeight({
+        currentWeightKg: Number(form.peso), heightCm: Number(form.estatura), targetWeightKg: Number(form.pesoMeta),
+      });
+    } catch {
+      return null; // peso o estatura no evaluables: ya los rechaza su propia validación
+    }
+  })();
+  const invalidTargetKey = (s: Extract<TargetWeightSafety, { status: 'INVALID' }>): TranslationKey =>
+    s.reason === 'TARGET_OUT_OF_RANGE' ? 'onboarding.invalidPesoMeta'
+    : s.reason === 'UNDERWEIGHT_NO_FURTHER_LOSS' ? 'onboarding.invalidPesoMetaBajoPesoActual'
+    : 'onboarding.invalidPesoMetaBajoPeso';
+  const targetSafetyMessageKey: TranslationKey | null = targetTouched
+    ? (editedTarget == null ? null
+      : editedTarget.status === 'VALID_WITH_LOW_BMI_NOTICE' ? 'onboarding.targetWeightLowBmiNotice'
+      : editedTarget.status === 'INVALID' ? invalidTargetKey(editedTarget) : null)
+    : (storedTarget.status === 'VALID_WITH_LOW_BMI_NOTICE' ? 'onboarding.targetWeightLowBmiNotice'
+      : storedTarget.status === 'INVALID' ? 'editData.storedTargetInvalid' : null);
+
   async function handleSave() {
     setError('');
     const edadN = Number(form.edad);
@@ -100,7 +222,42 @@ export default function EditDataSheet({ onClose }: Props) {
     if (!edadN || edadN < 13 || edadN > 100) { setError(t('editData.errAge')); return; }
     if (!pesoN || pesoN < 30 || pesoN > 300) { setError(t('editData.errWeight')); return; }
     if (!estaturaN || estaturaN < 100 || estaturaN > 230) { setError(t('editData.errHeight')); return; }
-    if (!form.activity || !ACTIVITY_OPTIONS.includes(form.activity)) { setError(t('editData.errActivity')); return; }
+    // A8.1 · solo una meta NUEVA inválida bloquea (corregir o vaciar). La meta guardada
+    // sin tocar —aunque sea legacy inválida— no bloquea cambios ajenos.
+    const targetDecision = decideTargetWeightEdit({
+      initialValue: initialPesoMeta, editedValue: form.pesoMeta, currentWeightKg: pesoN, heightCm: estaturaN,
+    });
+    if (targetDecision.action === 'REJECT') { setError(t(invalidTargetKey(targetDecision.safety))); return; }
+    // `nivel` es nuevo: un perfil legacy que nunca lo declaró debe poder guardar el
+    // resto de sus datos sin que le inventemos uno. Pero en cuanto forma parte del
+    // perfil —ya estaba declarado, o se declara ahora— tiene que ser válido: así no
+    // se puede vaciar un nivel real ni colar un valor que el motor ignoraría.
+    const hadLevel = LEVEL_OPTIONS.includes(String(obData.nivel || ''));
+    if ((hadLevel || form.nivel) && !LEVEL_OPTIONS.includes(form.nivel)) { setError(t('editData.errLevel')); return; }
+    // CAPA 1E · Fase B — mismo criterio que el nivel: un perfil legacy que nunca
+    // declaró su ActivityProfile puede guardar el resto sin completarlo, pero lo ya
+    // declarado no se puede vaciar ni dejar inválido.
+    const hadDailyLife = DAILY_LIFE_OPTIONS.includes(String(obData.dailyLife || ''));
+    if ((hadDailyLife || form.dailyLife) && !DAILY_LIFE_OPTIONS.includes(form.dailyLife)) {
+      setError(t('editData.errDailyLife')); return;
+    }
+    const hadTrains = isDeclared(obData, 'trainsHabitually');
+    if ((hadTrains || form.trainsHabitually) && form.trainsHabitually !== 'si' && form.trainsHabitually !== 'no') {
+      setError(t('editData.errTrainsHabitually')); return;
+    }
+    // Con «Sí», días Y duración son obligatorios. Con «No» no se pide nada más.
+    if (form.trainsHabitually === 'si' && !(trainingDaysValid && trainingMinutesValid)) {
+      setError(t('editData.errTraining')); return;
+    }
+    // A2 · con «Sí», al menos una modalidad: es lo que decide la proteína.
+    if (form.trainsHabitually === 'si' && modalities.length === 0) {
+      setError(t('editData.errModality')); return;
+    }
+    // A7 · igual que `trainsHabitually`: lo ya declarado no se puede vaciar.
+    const hadTherapeutic = isDeclared(obData, 'requiresTherapeuticDiet');
+    if ((hadTherapeutic || form.requiresTherapeuticDiet) && form.requiresTherapeuticDiet !== 'si' && form.requiresTherapeuticDiet !== 'no') {
+      setError(t('editData.errTherapeuticDiet')); return;
+    }
     if (!form.goal) { setError(t('editData.errGoal')); return; }
 
     setSaving(true);
@@ -109,13 +266,40 @@ export default function EditDataSheet({ onClose }: Props) {
     setObData('sex', form.sex);
     setObData('edad', edadN);
     setObData('estatura', estaturaN);
-    setObData('activity', form.activity);
+    // A8.1 · peso meta: metadato opcional. Sin tocar → no se escribe (la meta
+    // guardada, válida o no, queda como está). No entra en el recálculo.
+    if (targetDecision.action === 'CLEAR') setObData('pesoMeta', '');
+    if (targetDecision.action === 'SAVE') setObData('pesoMeta', targetDecision.targetWeightKg);
+    // Solo se escribe una DECLARACIÓN real. Un perfil legacy que sigue sin nivel se
+    // queda sin nivel: ni '' ni 'intermedio'. Escribirlo aquí convertiría el fallback
+    // del motor en un dato del socio, que es justo lo que no queremos.
+    if (LEVEL_OPTIONS.includes(form.nivel)) setObData('nivel', form.nivel);
+    // CAPA 1E · Fase B — solo declaraciones reales. Sin declarar → no se escribe
+    // nada y el perfil sigue incompleto para el mapper, que es lo correcto.
+    if (DAILY_LIFE_OPTIONS.includes(form.dailyLife)) setObData('dailyLife', form.dailyLife);
+    if (form.trainsHabitually === 'no') {
+      // «No» se persiste EXPLÍCITO con 0/0: es el único par verdadero y neutraliza
+      // unos días/minutos que hubieran quedado de un «Sí» anterior.
+      setObData('trainsHabitually', 0);
+      setObData('trainingDaysPerWeek', 0);
+      setObData('trainingSessionMinutes', 0);
+      // A2 · «No entreno» vacía la modalidad: ya no aplica y no debe quedar rancia.
+      setObData(TRAINING_MODALITIES_KEY, '');
+    } else if (form.trainsHabitually === 'si') {
+      setObData('trainsHabitually', 1);
+      setObData('trainingDaysPerWeek', trainingDaysNum);
+      setObData('trainingSessionMinutes', trainingMinutesNum);
+      setObData(TRAINING_MODALITIES_KEY, serializeTrainingModalities(modalities));
+    }
     setObData('goal', form.goal);
-    // Ubicación + salud/preferencias (opcionales). Se persisten ANTES del recalc
-    // porque 'renal' baja el tope de proteína en computeNutritionTargets.
+    // A7 · alcance de salud. Se persiste ANTES del recalc: con «Sí» el Scope Guard
+    // deja Nutrition fuera de alcance. Solo se escribe una declaración real.
+    if (form.requiresTherapeuticDiet === 'si' || form.requiresTherapeuticDiet === 'no') {
+      setObData('requiresTherapeuticDiet', form.requiresTherapeuticDiet === 'si' ? 1 : 0);
+    }
+    // Ubicación + preferencias (opcionales).
     setObData('country', form.country);
     setObData('movilidad', form.movilidad);
-    setObData('conditions', conditions.join(','));
     setObData('avoid', avoid.join(','));
 
     try {
@@ -211,17 +395,20 @@ export default function EditDataSheet({ onClose }: Props) {
             />
           </label>
 
+          {/* A8 · peso meta opcional, evaluado por la autoridad única de seguridad. */}
           <label className="sh-field">
-            <span className="sh-field-label">{t('editData.activity')}</span>
-            <select
+            <span className="sh-field-label">{t('onboarding.targetWeight')}</span>
+            <input
               className="sh-input"
-              value={form.activity}
-              onChange={e => update('activity', e.target.value)}
-            >
-              <option value="">—</option>
-              {ACTIVITY_OPTIONS.map(o => <option key={o} value={o}>{t(ACTIVITY_KEYS[o])}</option>)}
-            </select>
+              type="number"
+              inputMode="decimal"
+              placeholder="—"
+              value={form.pesoMeta}
+              onChange={e => update('pesoMeta', e.target.value)}
+            />
           </label>
+          {/* Fuera del <label>: el aviso no forma parte del nombre accesible del campo. */}
+          {targetSafetyMessageKey && <p className="sh-field-hint" role="status">{t(targetSafetyMessageKey)}</p>}
 
           <label className="sh-field">
             <span className="sh-field-label">{t('editData.goal')}</span>
@@ -249,6 +436,133 @@ export default function EditDataSheet({ onClose }: Props) {
           </label>
         </div>
 
+        {/* Sección propia para el ActivityProfile de Nutrition (lo que calcula tus
+            calorías). La experiencia entrenando vive en su propia sección, abajo. */}
+        <div className="sh-section">
+          <p className="sh-heading">{t('editData.movementSection')}</p>
+          <p className="sh-field-hint" style={{ marginTop: -6, marginBottom: 12 }}>{t('editData.movementHint')}</p>
+
+          <label className="sh-field">
+            <span className="sh-field-label">{t('editData.dailyLife')}</span>
+            <select
+              className="sh-input"
+              value={form.dailyLife}
+              onChange={e => update('dailyLife', e.target.value)}
+            >
+              <option value="">{t('editData.notDeclared')}</option>
+              {DAILY_LIFE_OPTIONS.map(o => <option key={o} value={o}>{t(DAILY_LIFE_KEYS[o])}</option>)}
+            </select>
+          </label>
+
+          <label className="sh-field" style={{ marginTop: 14 }}>
+            <span className="sh-field-label">{t('editData.trainsHabitually')}</span>
+            <select
+              className="sh-input"
+              value={form.trainsHabitually}
+              onChange={e => update('trainsHabitually', e.target.value)}
+            >
+              <option value="">{t('editData.notDeclared')}</option>
+              <option value="no">{t('editData.optNo')}</option>
+              <option value="si">{t('editData.optYes')}</option>
+            </select>
+          </label>
+
+          {form.trainsHabitually === 'si' && (
+            <>
+              <div className="sh-field" style={{ marginTop: 14 }}>
+                <span className="sh-field-label">{t('editData.trainingDays')}</span>
+                <div className="sh-chips">
+                  {TRAINING_DAY_OPTIONS.map(d => (
+                    <button
+                      key={d}
+                      type="button"
+                      className="sh-chip"
+                      aria-pressed={trainingDaysNum === d}
+                      onClick={() => update('trainingDays', String(d))}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="sh-field" style={{ marginTop: 14 }}>
+                <span className="sh-field-label">{t('editData.trainingMinutes')}</span>
+                <div className="sh-chips">
+                  {TRAINING_MINUTE_CHIPS.map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      className="sh-chip"
+                      aria-pressed={!minutesCustom && trainingMinutesNum === m}
+                      onClick={() => { setMinutesCustom(false); update('trainingMinutes', String(m)); }}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="sh-chip"
+                    aria-pressed={minutesCustom}
+                    onClick={() => setMinutesCustom(true)}
+                  >
+                    {t('onboarding.trainingMinutesOther')}
+                  </button>
+                </div>
+                {minutesCustom && (
+                  <input
+                    className="sh-input"
+                    style={{ marginTop: 10 }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={3}
+                    aria-label={t('onboarding.trainingMinutesCustomLabel')}
+                    value={form.trainingMinutes}
+                    onChange={e => update('trainingMinutes', e.target.value.replace(/[^0-9]/g, ''))}
+                  />
+                )}
+                <p className="sh-field-hint">{t('onboarding.trainingMinutesHint')}</p>
+              </div>
+
+              {/* CAPA 2 · A2 · modalidad DECLARADA (multi-selección). */}
+              <div className="sh-field" style={{ marginTop: 14 }}>
+                <span className="sh-field-label">{t('onboarding.modalityQuestion')}</span>
+                <p className="sh-field-hint" style={{ marginTop: 0 }}>{t('onboarding.modalityHint')}</p>
+                {/* Preview QA · descripción VISIBLE (sin hover), opción a ancho completo. */}
+                <div className="sh-options">
+                  {TRAINING_MODALITIES.map(m => (
+                    <SheetOption
+                      key={m}
+                      title={t(`onboarding.modality_${m}` as TranslationKey)}
+                      description={t(`onboarding.modality_${m}Desc` as TranslationKey)}
+                      pressed={modalities.includes(m)}
+                      onClick={() => toggleIn(modalities, (v) => setModalities(v as TrainingModality[]), m)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Preview QA · EXPERIENCIA ENTRENANDO (`obData.nivel`) · dominio TRAINING.
+            Sección propia: no forma parte del movimiento que calcula la nutrición. */}
+        <div className="sh-section">
+          <p className="sh-heading">{t('editData.trainingSection')}</p>
+          <label className="sh-field">
+            <span className="sh-field-label">{t('editData.level')}</span>
+            <select
+              className="sh-input"
+              value={form.nivel}
+              onChange={e => update('nivel', e.target.value)}
+            >
+              <option value="">{t('editData.levelPending')}</option>
+              {LEVEL_OPTIONS.map(o => <option key={o} value={o}>{t(LEVEL_KEYS[o])}</option>)}
+            </select>
+            <p className="sh-field-hint">{t('editData.levelHint')}</p>
+          </label>
+        </div>
+
         <div className="sh-section">
           <p className="sh-heading">{t('editData.healthSection')}</p>
           <p className="sh-field-hint" style={{ marginTop: -6, marginBottom: 12 }}>{t('editData.healthHint')}</p>
@@ -270,22 +584,20 @@ export default function EditDataSheet({ onClose }: Props) {
             </div>
           </div>
 
-          <div className="sh-field" style={{ marginTop: 14 }}>
-            <span className="sh-field-label">{t('onboarding.conditionsTitle')}</span>
-            <div className="sh-chips">
-              {CONDITION_OPTS.map(v => (
-                <button
-                  key={v}
-                  type="button"
-                  className="sh-chip"
-                  aria-pressed={conditions.includes(v)}
-                  onClick={() => toggleIn(conditions, setConditions, v)}
-                >
-                  {t(`onboarding.condition_${v}` as TranslationKey)}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* A7 · alcance de salud: una sola pregunta funcional, sin lista de enfermedades. */}
+          <label className="sh-field" style={{ marginTop: 14 }}>
+            <span className="sh-field-label">{t('onboarding.therapeuticDietQuestion')}</span>
+            <select
+              className="sh-input"
+              value={form.requiresTherapeuticDiet}
+              onChange={e => update('requiresTherapeuticDiet', e.target.value)}
+            >
+              <option value="">{t('editData.notDeclared')}</option>
+              <option value="no">{t('editData.optNo')}</option>
+              <option value="si">{t('editData.optYes')}</option>
+            </select>
+            <p className="sh-field-hint">{t('onboarding.therapeuticDietHint')}</p>
+          </label>
 
           <div className="sh-field" style={{ marginTop: 14 }}>
             <span className="sh-field-label">{t('onboarding.restrictionsTitle')}</span>
@@ -311,8 +623,14 @@ export default function EditDataSheet({ onClose }: Props) {
           <div className="sh-saved">
             <p>{t('editData.saved')}</p>
             <p className="sh-saved-stats">
-              TDEE: <strong>{tdee.toLocaleString()} kcal</strong> · {t('editData.goalShort')}: <strong>{planGoal.toLocaleString()} {t('settings.kcalPerDay')}</strong>
+              {/* C3 · sin cifra, «—». Nunca «0 kcal». */}
+              TDEE: <strong>{tdee != null ? `${tdee.toLocaleString()} kcal` : '—'}</strong> · {t('editData.goalShort')}: <strong>{planGoal != null ? `${planGoal.toLocaleString()} ${t('settings.kcalPerDay')}` : '—'}</strong>
             </p>
+            {/* P0-02 · el plan se descartó porque servía algo que el usuario acaba de
+                excluir. Sin esto la desaparición era silenciosa. */}
+            {planClearedByAvoid && (
+              <p className="sh-saved-warn">{t('editData.planClearedByAvoid')}</p>
+            )}
           </div>
         )}
 

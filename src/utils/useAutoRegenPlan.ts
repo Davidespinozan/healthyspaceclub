@@ -1,10 +1,16 @@
 import { useEffect } from 'react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
-import { computeNutritionTargets, parseObData } from './nutritionTargets';
+// C4 · la regeneración ya NO estima energía: la cifra la prescribe el motor nuevo
+// y llega por `store.planGoal`. CAPA 2 · tampoco calcula macros: llegan por
+// `store.macroTargets`, de la autoridad `macroPrescription`.
+import { isServableMacroPrescription } from './macroPrescription';
+import { weeklyPlanCurrentness } from './weeklyPlanState';
 import { PLAN_ENGINE_VERSION } from './planEngine';
+import { avoidForRegen, permanentAvoidFrom } from './avoidAuthority';
 import { generateWeeklyPlan } from './planOrchestration';
 import { dayKey } from './localDate';
+import { getCachedRegion, regionFromCountry } from './region';   // P0-04 · la regeneración perdía la región
 import type { ProteinShake } from './planEngine';
 
 /** Domingo (inicio de semana) de una fecha, como 'YYYY-MM-DD'. Mismo cálculo que
@@ -92,34 +98,71 @@ export function useWeeklyPlanReset(): void {
  * Es idempotente: se corta apenas la versión guardada alcanza a la del código, así
  * que corre a lo mucho una vez por salto de versión y después es un no-op.
  */
-const AVOID_KEYS = ['gluten', 'lacteos', 'carne-roja', 'mariscos', 'huevo', 'frutos-secos', 'cacahuate', 'soya', 'pescado', 'ajonjoli'];
 
 export function useAutoRegenPlan(): void {
-  const { weeklyPlan, obData, saveWeeklyPlan } = useAppStore(useShallow((s) => ({
+  const { weeklyPlan, obData, saveWeeklyPlan, planGoal, macroTargets, energyStatus } = useAppStore(useShallow((s) => ({
     weeklyPlan: s.weeklyPlan,
     obData: s.obData,
     saveWeeklyPlan: s.saveWeeklyPlan,
+    // CAPA 1E · FASE C3/C4 — se lee como GUARD y como input de la vigencia. La
+    // cifra del generador ES ésta: la prescribe el motor nuevo, no la estima
+    // nadie aquí.
+    planGoal: s.planGoal,
+    // CAPA 2 · macros vigentes: entran en la firma de vigencia y en el objetivo.
+    macroTargets: s.macroTargets,
+    // C4 · sin `PRESCRIBED` no hay plan vigente que mantener al día.
+    energyStatus: s.energyState?.status ?? null,
   })));
 
-  const savedVersion = weeklyPlan?.engineVersion ?? 0;
+  /**
+   * C4 · la obsolescencia ya no es solo «el motor de planes subió de versión»:
+   * también lo es «la energía prescrita cambió y el plan guardado sigue armado
+   * contra la cifra anterior». Antes un usuario represcrito de 2.400 a 1.900 kcal
+   * seguía viendo el plan de 2.400 hasta el siguiente salto de `engineVersion`.
+   */
+  const servableMacros = isServableMacroPrescription(macroTargets) ? macroTargets : null;
+  const currentness = weeklyPlanCurrentness({
+    status: energyStatus,
+    planGoal,
+    macros: servableMacros,
+    weeklyPlan,
+    currentVersion: PLAN_ENGINE_VERSION,
+  });
 
   useEffect(() => {
+    // `STALE` = hay plan generado Y prescripción vigente, pero el plan no
+    // corresponde. `ACTIVE` no necesita nada y `NOT_CURRENT` no se regenera: sin
+    // cifra el plan guardado se queda como está —no se borra ni se degrada— y un
+    // `mealPlanKey` heredado tampoco habilita la regeneración.
+    if (currentness !== 'STALE') return;
+    // Las dos líneas siguientes son redundantes con `STALE` —que ya exige plan
+    // generado y cifra vigente— pero son lo que ESTRECHA los tipos a `DayPlan[]` y
+    // `number` para el generador: la garantía la da el compilador, no un comentario.
     if (!weeklyPlan?.days) return;
-    if (savedVersion >= PLAN_ENGINE_VERSION) return;
+    if (planGoal == null) return;
+    if (servableMacros == null) return;
 
-    const t = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
-    const target = { kcal: t.planGoal, protG: t.protG, fatG: t.fatG, carbG: t.carbG };
-    // Alergias del `gen` si existe; si el plan es viejo (sin gen), del texto de
-    // preferencias. Errar hacia MÁS restricción es seguro: nunca se sirve un
-    // alérgeno de menos.
-    const avoid = weeklyPlan.gen?.avoid ?? AVOID_KEYS.filter((k) => (weeklyPlan.preferences || '').includes(k));
+    // CAPA 2 · objetivo diario = energía prescrita + macros de la autoridad nueva.
+    const target = { kcal: planGoal, protG: servableMacros.proteinG, fatG: servableMacros.fatG, carbG: servableMacros.carbG };
+    // P0-02 · la autoridad une la parte SEMANAL del plan guardado con las permanentes
+    // del perfil ACTUAL. Si el usuario añadió una restricción permanente desde que se
+    // generó, la regeneración ya la respeta. Nunca resta.
+    const avoid = avoidForRegen(weeklyPlan.gen, weeklyPlan.preferences, obData);
     const craving = weeklyPlan.gen?.craving ?? '';
     const shake = weeklyPlan.gen?.shake as ProteinShake | undefined;
+    // P0-04 · REGIÓN. La generación normal (WeeklyNutritionPlanner) la deriva del país del
+    // perfil y cae a la región cacheada; esta ruta NO la pasaba, así que una regeneración
+    // automática podía armar mole en España o servir platillos de España fuera de EUROPE.
+    // Se corrige AHORA porque subir PLAN_ENGINE_VERSION va a disparar regeneraciones: no
+    // se activa a conciencia una ruta que sabemos incompleta. Misma derivación, literal.
+    const region = obData.country
+      ? regionFromCountry(String(obData.country))
+      : (getCachedRegion() ?? undefined);
 
     let cancelled = false;
     (async () => {
       try {
-        const { days } = await generateWeeklyPlan(target, avoid, craving, Date.now() & 0x7fffffff, shake);
+        const { days } = await generateWeeklyPlan(target, avoid, craving, Date.now() & 0x7fffffff, shake, region);
         if (cancelled) return;
         const shopSet = new Set<string>();
         for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])
@@ -127,14 +170,19 @@ export function useAutoRegenPlan(): void {
         await saveWeeklyPlan({
           ...weeklyPlan, generatedAt: new Date().toISOString(),
           engineVersion: PLAN_ENGINE_VERSION, shoppingList: [...shopSet], days,
-          gen: { ...target, avoid, craving, shake },
+          gen: { ...target, avoid, avoidPermanent: permanentAvoidFrom(obData),
+                 avoidWeekly: weeklyPlan.gen?.avoidWeekly ?? weeklyPlan.gen?.avoid ?? [], craving, shake },
         });
       } catch (e) {
         console.error('[auto-regen] falló:', e);
       }
     })();
     return () => { cancelled = true; };
-    // Solo la versión guardada dispara: cuando sube a la actual, deja de correr.
+    // C4 · la vigencia dispara. Absorbe los dos antiguos disparadores (la versión
+    // guardada y la aparición de la cifra) y añade el tercero —la cifra CAMBIÓ—,
+    // porque los tres están dentro de ella. Al terminar la regeneración el plan
+    // guardado pasa a `ACTIVE`, el efecto se vuelve a evaluar y corta: idempotente,
+    // a lo mucho una vez por cambio real.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savedVersion]);
+  }, [currentness, planGoal, servableMacros]);
 }

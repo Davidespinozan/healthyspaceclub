@@ -2,23 +2,71 @@ import { UbicacionPicker, type Ubicacion } from '../components/UbicacionPicker';
 import { PAISES } from '../data/ubicaciones';
 import { detectCountry } from '../utils/region';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity, AtSign, Check, Loader2, X, ArrowRight } from 'lucide-react';
+import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Footprints, Sprout, TrendingUp, Gauge, Armchair, PersonStanding, Package, AtSign, Check, Loader2, X, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { supabase } from '../lib/supabase';
+import { PERMANENT_AVOID_CATALOG } from '../utils/avoidAuthority';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n/es';
 import { suggestUsername, isValidUsernameFormat, checkUsernameAvailable, claimUsername } from '../utils/username';
 import { validateEmailDeliverable } from '../utils/emailValidation';
 import LanguageToggle from '../components/LanguageToggle';
 import AuthProviderButtons from '../components/AuthProviderButtons';
-import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
+// C4 · el onboarding ya NO calcula energía: la cifra la prescribe el motor nuevo y
+// se lee del store. De `nutritionTargets` quedan el PUENTE de macros (legacy hasta
+// la CAPA 2) y los dos avisos de peso meta, que no son energéticos.
+import { targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
+import { classifyTargetWeight } from '../utils/targetWeightSafety';
+import { isServableMacroPrescription, nonServableMacroNotice } from '../utils/macroPrescription';
+import {
+  TRAINING_DAY_OPTIONS, TRAINING_MINUTE_CHIPS, TRAINING_MINUTES_MIN, TRAINING_MINUTES_MAX,
+} from '../utils/trainingProfileOptions';
+import { TRAINING_MODALITIES, TRAINING_MODALITIES_KEY, serializeTrainingModalities, type TrainingModality } from '../utils/trainingModality';
 import { track } from '../utils/analytics';
 import { recordReferralIfAny } from '../utils/referral';
 
 const BRAND_ICON = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp';
 
-const TOTAL_STEPS = 9;
+// Preview QA — el paso 6 (actividad legacy, `obData.activity`) se RETIRA: no tiene
+// autoridad en Nutrition y duplicaba los pasos 8 y 9. Se conserva su número para no
+// renumerar el flujo; la navegación lo salta. Training sigue teniendo el nivel
+// declarado del paso 7 (`obData.nivel`); `activity` guardada solo queda como
+// respaldo legacy de `levelFromObData` para perfiles sin nivel.
+const RETIRED_ACTIVITY_STEP = 6;
+// CAPA 1E · Fase B — pasos 8 y 9 (movimiento diario y entrenamiento habitual),
+// dominio NUTRITION. El paso 7 los separa del 6 a propósito: la pregunta legacy y
+// el movimiento diario no quedan adyacentes.
+const TOTAL_STEPS = 12;
+
+/**
+ * NIVEL DE ENTRENAMIENTO · los tres valores que consume `levelFromObData`.
+ *
+ * Los ids son los que persisten en `obData.nivel` y NO se traducen: son el dato.
+ * Dominio TRAINING — nada que ver con `obData.activity` (legacy, ya no se pregunta).
+ */
+const TRAINING_LEVELS = [
+  { id: 'principiante', icon: Sprout, titleKey: 'onboarding.levelBeginner', descKey: 'onboarding.levelBeginnerDesc' },
+  { id: 'intermedio', icon: TrendingUp, titleKey: 'onboarding.levelIntermediate', descKey: 'onboarding.levelIntermediateDesc' },
+  { id: 'avanzado', icon: Gauge, titleKey: 'onboarding.levelAdvanced', descKey: 'onboarding.levelAdvancedDesc' },
+] as const;
+
+/**
+ * MOVIMIENTO DIARIO · los cuatro niveles que consume el ActivityClassifier.
+ *
+ * Mide el movimiento cotidiano FUERA del entrenamiento estructurado — de ahí el
+ * «sin contar tus entrenamientos» del subtítulo, que es el único separador entre
+ * esta pregunta y la del paso 9. Los ids `DL1`–`DL4` son el dato y NO se muestran.
+ */
+const DAILY_LIFE_OPTIONS = [
+  { id: 'DL1', icon: Armchair, titleKey: 'onboarding.dlNone', descKey: 'onboarding.dlNoneDesc' },
+  { id: 'DL2', icon: Footprints, titleKey: 'onboarding.dlLittle', descKey: 'onboarding.dlLittleDesc' },
+  { id: 'DL3', icon: PersonStanding, titleKey: 'onboarding.dlQuite', descKey: 'onboarding.dlQuiteDesc' },
+  { id: 'DL4', icon: Package, titleKey: 'onboarding.dlLot', descKey: 'onboarding.dlLotDesc' },
+] as const;
+
+// Días, duración y sus validadores: valores COMPARTIDOS con «Editar mis datos» y el
+// flujo de completar perfil (A10) → `trainingProfileOptions`.
 
 export default function OnboardingScreen() {
   const { t } = useT();
@@ -45,15 +93,31 @@ export default function OnboardingScreen() {
   // abandona. Además de demografía, decide qué contenido local ve (los bowls del
   // food truck solo aparecen donde hay cobertura).
   const [ubic, setUbic] = useState<Ubicacion>({ country: '', state: '', city: '' });
-  const [activity, setActivity] = useState('');
+  // CAPA 1E · Fase A — nivel de entrenamiento DECLARADO (paso 7). Obligatorio por
+  // construcción: el paso solo avanza al elegir una de las tres tarjetas, así que
+  // nadie termina el onboarding sin declararlo y no hace falta un default.
+  const [nivel, setNivel] = useState('');
+  // CAPA 1E · Fase B — ActivityProfile de Nutrition (pasos 8 y 9). Dos datos
+  // distintos del nivel y de `activity`: movimiento cotidiano FUERA del
+  // entrenamiento, y el entrenamiento habitual total (dentro y fuera de HSC).
+  const [dailyLife, setDailyLife] = useState('');
+  const [trainsHabitually, setTrainsHabitually] = useState<'si' | 'no' | ''>('');
+  const [trainingDays, setTrainingDays] = useState('');
+  const [trainingMinutes, setTrainingMinutes] = useState('');
+  // CAPA 2 · A2 · modalidad DECLARADA. Solo se pide con «Sí»; selección múltiple.
+  const [trainingModalities, setTrainingModalities] = useState<TrainingModality[]>([]);
+  const toggleModality = (m: TrainingModality) =>
+    setTrainingModalities(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]);
+  // `Otro`: deja declarar la duración real en vez de redondearla a un atajo.
+  const [minutesCustom, setMinutesCustom] = useState(false);
   // Fase 2 — seguridad: embarazo (si mujer) + opcionales
   const [embarazo, setEmbarazo] = useState<'si' | 'no' | ''>('');
-  // Fase 3 — salud/movilidad (opcionales): habilitan modo bajo impacto y ajustes de
-  // nutrición (tope de proteína renal, filtros suaves). Default vacío = sin fricción.
+  // Fase 3 — movilidad (opcional): habilita el modo bajo impacto en entrenamiento.
   const [movilidad, setMovilidad] = useState('');
-  const [conditions, setConditions] = useState<string[]>([]);
-  const toggleCondition = (c: string) =>
-    setConditions(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev.filter(x => x !== 'ninguna'), c]);
+  // A7 · ÚNICA pregunta de alcance de salud de Nutrition: ¿un profesional le indicó
+  // una dieta terapéutica? Obligatoria. Sustituye a la antigua lista de
+  // diagnósticos (diabetes/hipertensión/renal/colesterol), que ya no se pregunta.
+  const [therapeuticDiet, setTherapeuticDiet] = useState<'si' | 'no' | ''>('');
   const [restricciones, setRestricciones] = useState<string[]>([]);
   const toggleRestriccion = (r: string) =>
     setRestricciones(prev => prev.includes(r) ? prev.filter(x => x !== r) : [...prev, r]);
@@ -82,13 +146,13 @@ export default function OnboardingScreen() {
 
   // Pre-sugerir el @usuario al llegar al paso (desde el nombre).
   useEffect(() => {
-    if (step === 7 && !handle) setHandle(suggestUsername(userName));
+    if (step === 10 && !handle) setHandle(suggestUsername(userName));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   // Chequeo de disponibilidad debounced.
   useEffect(() => {
-    if (step !== 7) return;
+    if (step !== 10) return;
     const h = handle.trim().toLowerCase();
     if (!isValidUsernameFormat(h)) { setHandleStatus('invalid'); return; }
     setHandleStatus('checking');
@@ -140,6 +204,8 @@ export default function OnboardingScreen() {
       const next = s + 1;
       // Skip Step 2 (signup) si ya hay session — viene de SignupModal post-pago
       if (next === 2 && hasSession) return 3;
+      // Paso 6 (actividad legacy) retirado: se salta siempre.
+      if (next === RETIRED_ACTIVITY_STEP) return next + 1;
       return next;
     });
   }
@@ -152,6 +218,7 @@ export default function OnboardingScreen() {
       const prev = s - 1;
       // Skip Step 2 hacia atrás también — no hay nada que editar ahí cuando ya hay session
       if (prev === 2 && hasSession) return 1;
+      if (prev === RETIRED_ACTIVITY_STEP) return prev - 1;
       return prev;
     });
   }
@@ -214,20 +281,47 @@ export default function OnboardingScreen() {
     }
   }
 
-  // Step 8: processing animation + save to store
+  // Step 11: processing animation + save to store
   useEffect(() => {
-    if (step !== 8) return;
+    if (step !== 11) return;
 
     // Save all data to store (name ya fue guardado en SignupModal o handleOnboardingSignup)
     setObData('sex', sex);
     setObData('goal', goal);
-    setObData('edad', Number(edad) || 28);
-    setObData('peso', Number(peso) || 70);
-    setObData('estatura', Number(estatura) || 170);
-    setObData('activity', activity);
+    // CAPA 1E · Fase B — SIN defaults antropométricos. Antes había `|| 28`, `|| 70` y
+    // `|| 170`, inalcanzables (el botón del paso 5 exige los tres campos y
+    // `handleDataContinue` los valida con `invalidField`) pero capaces de fabricar una
+    // edad, un peso o una estatura si ese gate se aflojara. HSC no inventa
+    // antropometría: dato ausente es dato ausente, y el mapper lo reporta como tal.
+    setObData('edad', Number(edad));
+    setObData('peso', Number(peso));
+    setObData('estatura', Number(estatura));
+    // CAPA 1E · Fase A — nivel declarado, dominio TRAINING. Se escribe tal cual, sin
+    // `|| 'intermedio'`: el paso 7 es inevitable, así que siempre trae uno de los tres
+    // valores. Y NO se deriva de `activity` ni al contrario — son datos distintos que
+    // conviven a propósito hasta la Fase E.
+    setObData('nivel', nivel);
+    // CAPA 1E · Fase B — ActivityProfile, en cuatro claves planas. Los pasos 8 y 9
+    // son inevitables, así que `dailyLife` siempre trae un DLx y, cuando declara
+    // entrenar, los días y los minutos ya pasaron el gate del botón Continuar.
+    //
+    // `trainsHabitually` como 1/0 (igual que `embarazo`), porque `setObData` solo
+    // acepta string|number. Cuando es 0 se escriben días y minutos a 0 EXPLÍCITOS:
+    // es el único par verdadero (volumen cero), el clasificador no los mira, y así
+    // las tres claves están siempre co-presentes. CLAVE AUSENTE significa otra cosa:
+    // «todavía no respondió». Por eso nada de esto se decide por truthiness.
+    const entrenaHabitualmente = trainsHabitually === 'si';
+    setObData('dailyLife', dailyLife);
+    setObData('trainsHabitually', entrenaHabitualmente ? 1 : 0);
+    setObData('trainingDaysPerWeek', entrenaHabitualmente ? Number(trainingDays) : 0);
+    setObData('trainingSessionMinutes', entrenaHabitualmente ? Number(trainingMinutes) : 0);
+    // CAPA 2 · A2 · la modalidad declarada se guarda ANTES del cálculo final, que
+    // la necesita para la proteína. Con «No» se guarda vacía: no aplica.
+    setObData(TRAINING_MODALITIES_KEY, entrenaHabitualmente ? serializeTrainingModalities(trainingModalities) : '');
     setObData('embarazo', embarazo === 'si' ? 1 : 0);
     setObData('movilidad', movilidad);
-    setObData('conditions', conditions.filter(c => c !== 'ninguna').join(','));
+    // A7 · respuesta de alcance (1/0, como `embarazo`). La guarda ANTES del cálculo.
+    setObData('requiresTherapeuticDiet', therapeuticDiet === 'si' ? 1 : 0);
     setObData('avoid', restricciones.join(','));
     // País → perfil de nutrición: habilita la localización de comida por país
     // (filtro de disponibilidad). Antes solo se guardaba en user_profiles para el
@@ -260,14 +354,16 @@ export default function OnboardingScreen() {
       await finishOnboardingCalc();
       // Crear primera entry en weight_log para que el tracking semanal
       // arranque con un punto de referencia desde el día 1.
-      const pesoInicial = Number(peso) || 70;
+      // Sin `|| 70`: si no hubiera peso, `Number('')` es NaN y el rango de abajo
+      // falla cerrado — no se crea una entrada de peso inventada.
+      const pesoInicial = Number(peso);
       if (pesoInicial >= 30 && pesoInicial <= 300) {
         try { await addWeight(pesoInicial); }
         catch (e) { console.warn('[onboarding] addWeight failed (no-blocking):', e); }
       }
       setDir('next');
       setAnimKey(k => k + 1);
-      setStep(9);
+      setStep(12);
     }, processingTexts.length * 800 + 700);
 
     return () => { timers.forEach(clearTimeout); clearTimeout(finalTimer); };
@@ -279,6 +375,19 @@ export default function OnboardingScreen() {
   }
 
   // Valida datos (Punto 9) + exige embarazo si es mujer, antes de continuar.
+  // A8 · aviso INFORMATIVO de IMC meta bajo (17–18,5). Lo decide la autoridad
+  // única; aquí no hay fórmula. No bloquea: el bloqueo lo traduce `invalidField`.
+  const targetLowBmiNotice = (() => {
+    if (!pesoMeta || !peso || !estatura) return false;
+    try {
+      return classifyTargetWeight({
+        currentWeightKg: Number(peso), heightCm: Number(estatura), targetWeightKg: Number(pesoMeta),
+      }).status === 'VALID_WITH_LOW_BMI_NOTICE';
+    } catch {
+      return false; // peso o estatura aún no evaluables: lo señala `invalidField` al continuar
+    }
+  })();
+
   function handleDataContinue() {
     const inv = invalidField({
       sexo: sex,
@@ -292,19 +401,35 @@ export default function OnboardingScreen() {
       edad: 'onboarding.invalidEdad', peso: 'onboarding.invalidPeso',
       estatura: 'onboarding.invalidEstatura', grasa: 'onboarding.invalidGrasa',
       pesoMeta: 'onboarding.invalidPesoMeta',
+      pesoMetaBajoPeso: 'onboarding.invalidPesoMetaBajoPeso',
+      pesoMetaBajoPesoActual: 'onboarding.invalidPesoMetaBajoPesoActual',
     };
     if (inv) { setDataError(t(invMsg[inv])); return; }
     if (sex === 'Mujer' && !embarazo) { setDataError(t('onboarding.embarazoRequired')); return; }
+    // A7 · obligatoria: sin respuesta no hay prescripción posible.
+    if (!therapeuticDiet) { setDataError(t('onboarding.embarazoRequired')); return; }
     setDataError('');
     goNext();
   }
 
-  // Progress bar (steps 2-8 = cuenta..procesando, no en 1 ni en 9 listo)
-  const showProgress = step >= 2 && step <= 8;
+  // Progress bar (steps 2-11 = cuenta..procesando, no en 1 ni en 12 listo)
+  const showProgress = step >= 2 && step <= 11;
   const progressPct = showProgress ? ((step - 1) / (TOTAL_STEPS - 2)) * 100 : 0;
 
   // Can go back? (cuenta..@usuario; no en procesando ni listo)
-  const showBack = step >= 2 && step <= 7;
+  const showBack = step >= 2 && step <= 10;
+
+  // CAPA 1E · Fase B — con `trainsHabitually = Sí`, días Y minutos son obligatorios.
+  // Los minutos aceptan cualquier entero declarado en [1, 300]; el gate vive aquí y
+  // no en el clasificador, que conserva su rango estructural intacto.
+  const trainingMinutesNum = Number(trainingMinutes);
+  const trainingMinutesValid =
+    trainingMinutes !== '' &&
+    Number.isInteger(trainingMinutesNum) &&
+    trainingMinutesNum >= TRAINING_MINUTES_MIN &&
+    trainingMinutesNum <= TRAINING_MINUTES_MAX;
+  // A2 · con «Sí», además, al menos una modalidad declarada.
+  const habitualTrainingReady = trainingDays !== '' && trainingMinutesValid && trainingModalities.length > 0;
 
   // Goal label for result screen. La KEY (valor en español) la usa el motor;
   // solo se traduce el texto mostrado.
@@ -493,7 +618,7 @@ export default function OnboardingScreen() {
               </div>
             )}
 
-            {/* Opcionales: % grasa (→ Katch-McArdle) + peso meta */}
+            {/* Opcionales: % grasa (avisos de peso meta) + peso meta (A8 · seguridad) */}
             <div className="onb-optional">
               <div className="onb-hint" style={{ marginTop: 6 }}>
                 {t('onboarding.optionalTitle')} · <em>{t('onboarding.optionalTag')}</em>
@@ -508,6 +633,7 @@ export default function OnboardingScreen() {
                   <input type="number" inputMode="decimal" placeholder="—" value={pesoMeta} onChange={e => setPesoMeta(e.target.value)} />
                 </div>
               </div>
+              {targetLowBmiNotice && <div className="onb-notice">{t('onboarding.targetWeightLowBmiNotice')}</div>}
             </div>
 
             {/* Movilidad (opcional) — deriva el modo bajo impacto en entrenamiento */}
@@ -522,23 +648,29 @@ export default function OnboardingScreen() {
               </div>
             </div>
 
-            {/* Condiciones de salud (opcional, multi) — ajustes suaves de nutrición */}
+            {/* A7 · alcance de salud: UNA pregunta funcional, obligatoria. Sin lista
+                de enfermedades: HSC no ajusta la alimentación por diagnóstico. */}
             <div className="onb-optional">
-              <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.conditionsTitle')} · <em>{t('onboarding.optionalTag')}</em></div>
-              <div className="onb-cards-row" style={{ flexWrap: 'wrap' }}>
-                {(['diabetes', 'hipertension', 'renal', 'colesterol'] as const).map(v => (
-                  <div key={v} className={`onb-card-select${conditions.includes(v) ? ' selected' : ''}`} onClick={() => toggleCondition(v)}>
-                    <span className="onb-card-label">{t(`onboarding.condition_${v}`)}</span>
+              <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.therapeuticDietQuestion')}</div>
+              <div className="onb-hint onb-hint-sub">{t('onboarding.therapeuticDietHint')}</div>
+              <div className="onb-cards-row">
+                {(['no', 'si'] as const).map(v => (
+                  <div key={v} className={`onb-card-select${therapeuticDiet === v ? ' selected' : ''}`} onClick={() => setTherapeuticDiet(v)}>
+                    <span className="onb-card-label">{t(v === 'no' ? 'onboarding.therapeuticDietNo' : 'onboarding.therapeuticDietYes')}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Restricciones/alergias (opcional, multi) — se respetan desde el 1er plan */}
+            {/* P0-02 · RESTRICCIONES PERMANENTES del perfil. Lo que se marque aquí se
+                excluye SIEMPRE de todos los planes: el generador lo une con la
+                preferencia de la semana (nunca resta). Catálogo único compartido con
+                Ajustes y con el cuestionario semanal. */}
             <div className="onb-optional">
               <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.restrictionsTitle')} · <em>{t('onboarding.optionalTag')}</em></div>
+              <div className="onb-hint onb-hint-sub">{t('onboarding.restrictionsHint')}</div>
               <div className="onb-cards-row" style={{ flexWrap: 'wrap' }}>
-                {(['gluten', 'lacteos', 'huevo', 'frutos-secos', 'cacahuate', 'mariscos', 'vegetariano', 'vegano'] as const).map(v => (
+                {PERMANENT_AVOID_CATALOG.map(v => (
                   <div key={v} className={`onb-card-select${restricciones.includes(v) ? ' selected' : ''}`} onClick={() => toggleRestriccion(v)}>
                     <span className="onb-card-label">{t(`onboarding.restr_${v}`)}</span>
                   </div>
@@ -560,23 +692,28 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {/* ── Step 6: Actividad ── */}
-      {step === 6 && (
+      {/* ── Step 6: RETIRADO (Preview QA) ──
+           «¿Qué tan activo eres normalmente?» (`obData.activity`) era legacy: no
+           tiene autoridad en Nutrition (la tienen el movimiento diario y el
+           entrenamiento habitual de los pasos 8 y 9) y duplicaba esas preguntas.
+           La navegación salta este paso; los datos ya guardados no se tocan. */}
+
+      {/* ── Step 7: Nivel de entrenamiento (CAPA 1E · Fase A) ──
+           Último dato del bloque de perfil y el único que el socio va a querer
+           cambiar con el tiempo, de ahí el «puedes cambiarlo cuando quieras» del
+           subtítulo. Obligatorio por construcción: no hay botón de continuar, solo
+           las tres tarjetas. */}
+      {step === 7 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
           <div className="onb-center">
-            <h2 className="onb-question">{t('onboarding.activityQuestion')}</h2>
+            <h2 className="onb-question">{t('onboarding.levelQuestion')}</h2>
+            <p className="onb-hint">{t('onboarding.levelHint')}</p>
             <div className="onb-cards-col">
-              {([
-                { id: 'Sedentaria', icon: Sofa, titleKey: 'onboarding.actSed', descKey: 'onboarding.actSedDesc' },
-                { id: 'Ligera', icon: Footprints, titleKey: 'onboarding.actLight', descKey: 'onboarding.actLightDesc' },
-                { id: 'Moderada', icon: Activity, titleKey: 'onboarding.actMod', descKey: 'onboarding.actModDesc' },
-                { id: 'Alta', icon: Dumbbell, titleKey: 'onboarding.actHigh', descKey: 'onboarding.actHighDesc' },
-                { id: 'Atleta', icon: Zap, titleKey: 'onboarding.actAthlete', descKey: 'onboarding.actAthleteDesc' },
-              ] as const).map(o => (
+              {TRAINING_LEVELS.map(o => (
                 <div
                   key={o.id}
-                  className={`onb-card-option${activity === o.id ? ' selected' : ''}`}
-                  onClick={() => { setActivity(o.id); setTimeout(goNext, 200); }}
+                  className={`onb-card-option${nivel === o.id ? ' selected' : ''}`}
+                  onClick={() => { setNivel(o.id); setTimeout(goNext, 200); }}
                 >
                   <span className="onb-card-icon"><o.icon size={22} strokeWidth={1.7} /></span>
                   <div>
@@ -590,8 +727,150 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {/* ── Step 7: @usuario (obligatorio para cuentas nuevas) ── */}
-      {step === 7 && (
+      {/* ── Step 8: Movimiento diario (CAPA 1E · Fase B · NUTRITION) ──
+           Movimiento cotidiano FUERA del entrenamiento. El subtítulo «sin contar tus
+           entrenamientos» es lo que la separa del paso 6 (actividad legacy) y del 9.
+           Obligatoria por construcción: cuatro tarjetas, sin botón de continuar. */}
+      {step === 8 && (
+        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
+          <div className="onb-center">
+            <h2 className="onb-question">{t('onboarding.dailyLifeQuestion')}</h2>
+            <p className="onb-hint">{t('onboarding.dailyLifeHint')}</p>
+            <div className="onb-cards-col">
+              {DAILY_LIFE_OPTIONS.map(o => (
+                <div
+                  key={o.id}
+                  className={`onb-card-option${dailyLife === o.id ? ' selected' : ''}`}
+                  onClick={() => { setDailyLife(o.id); setTimeout(goNext, 200); }}
+                >
+                  <span className="onb-card-icon"><o.icon size={22} strokeWidth={1.7} /></span>
+                  <div>
+                    <div className="onb-card-title">{t(o.titleKey)}</div>
+                    <div className="onb-card-desc">{t(o.descKey)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 9: Entrenamiento habitual (CAPA 1E · Fase B · NUTRITION) ──
+           Sí/No y, solo con «Sí», días + duración revelados EN LA MISMA pantalla —
+           el mismo patrón condicional que el paso 5 usa con embarazo. Quien no
+           entrena no responde nada más: dos toques y fuera. */}
+      {step === 9 && (
+        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
+          <div className="onb-center">
+            <h2 className="onb-question">{t('onboarding.trainsQuestion')}</h2>
+            <p className="onb-hint">{t('onboarding.trainsHint')}</p>
+            <div className="onb-cards-col">
+              <div
+                className={`onb-card-option${trainsHabitually === 'si' ? ' selected' : ''}`}
+                onClick={() => setTrainsHabitually('si')}
+              >
+                <span className="onb-card-icon"><Check size={22} strokeWidth={1.8} /></span>
+                <div><div className="onb-card-title">{t('onboarding.trainsYes')}</div></div>
+              </div>
+              <div
+                className={`onb-card-option${trainsHabitually === 'no' ? ' selected' : ''}`}
+                onClick={() => { setTrainsHabitually('no'); setTimeout(goNext, 200); }}
+              >
+                <span className="onb-card-icon"><X size={22} strokeWidth={1.8} /></span>
+                <div><div className="onb-card-title">{t('onboarding.trainsNo')}</div></div>
+              </div>
+            </div>
+
+            {trainsHabitually === 'si' && (
+              <>
+                <div className="onb-optional">
+                  <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.trainingDaysQuestion')}</div>
+                  <div className="onb-cards-row" style={{ flexWrap: 'wrap' }}>
+                    {TRAINING_DAY_OPTIONS.map(d => (
+                      <div
+                        key={d}
+                        className={`onb-card-select${trainingDays === String(d) ? ' selected' : ''}`}
+                        onClick={() => setTrainingDays(String(d))}
+                      >
+                        <span className="onb-card-label">{d}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="onb-optional">
+                  <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.trainingMinutesQuestion')}</div>
+                  <p className="onb-hint-sub">{t('onboarding.trainingMinutesHint')}</p>
+                  <div className="onb-cards-row" style={{ flexWrap: 'wrap' }}>
+                    {TRAINING_MINUTE_CHIPS.map(m => (
+                      <div
+                        key={m}
+                        className={`onb-card-select${!minutesCustom && trainingMinutes === String(m) ? ' selected' : ''}`}
+                        onClick={() => { setMinutesCustom(false); setTrainingMinutes(String(m)); }}
+                      >
+                        <span className="onb-card-label">{m}</span>
+                      </div>
+                    ))}
+                    <div
+                      className={`onb-card-select${minutesCustom ? ' selected' : ''}`}
+                      onClick={() => setMinutesCustom(true)}
+                    >
+                      <span className="onb-card-label">{t('onboarding.trainingMinutesOther')}</span>
+                    </div>
+                  </div>
+                  {minutesCustom && (
+                    <div className="onb-input-field" style={{ marginTop: 10 }}>
+                      <label>{t('onboarding.trainingMinutesCustomLabel')}</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={3}
+                        autoFocus
+                        value={trainingMinutes}
+                        onChange={e => setTrainingMinutes(e.target.value.replace(/[^0-9]/g, ''))}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* CAPA 2 · A2 · modalidad DECLARADA. Es lo único que decide la clase
+                    proteica: los días y minutos de arriba son carga, no modalidad. */}
+                <div className="onb-optional">
+                  <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.modalityQuestion')}</div>
+                  <p className="onb-hint-sub">{t('onboarding.modalityHint')}</p>
+                  <div className="onb-cards-col">
+                    {TRAINING_MODALITIES.map(m => (
+                      <div
+                        key={m}
+                        role="checkbox"
+                        aria-checked={trainingModalities.includes(m)}
+                        className={`onb-card-option${trainingModalities.includes(m) ? ' selected' : ''}`}
+                        onClick={() => toggleModality(m)}
+                      >
+                        <div>
+                          <div className="onb-card-title">{t(`onboarding.modality_${m}` as TranslationKey)}</div>
+                          <div className="onb-card-desc">{t(`onboarding.modality_${m}Desc` as TranslationKey)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  className="onb-btn-gold"
+                  onClick={goNext}
+                  disabled={!habitualTrainingReady}
+                >
+                  {t('onboarding.continue')} <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 10: @usuario (obligatorio para cuentas nuevas) ── */}
+      {step === 10 && (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
           <div className="onb-center">
             <h2 className="onb-question">{t('username.title')}</h2>
@@ -634,8 +913,8 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {/* ── Step 8: Processing ── */}
-      {step === 8 && (
+      {/* ── Step 11: Processing ── */}
+      {step === 11 && (
         <div key={animKey} className="onb-slide onb-dark">
           <div className="onb-center">
             <div className="onb-proc-logo">
@@ -664,53 +943,108 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {/* ── Step 9: Profile ready ── */}
-      {step === 9 && (() => {
-        const tdeeVal = useAppStore.getState().tdee;
-        const goalVal = useAppStore.getState().planGoal;
-        // Avisos de seguridad (Fase 2): mismo cálculo que el store, para mostrar mensajes.
+      {/* ── Step 12: Profile ready ── */}
+      {step === 12 && (() => {
+        // C4 · esta pantalla LEE el resultado; no lo calcula. `recalcFromObData`
+        // —que `finishOnboardingCalc` acaba de ejecutar unas líneas arriba— ya
+        // resolvió el estado y proyectó las cifras. Volver a resolver aquí crearía
+        // una segunda autoridad que podría discrepar de la que se persistió.
+        const { tdee: tdeeVal, planGoal: goalVal, energyState, macroTargets } = useAppStore.getState();
+        // Avisos de PESO META (no energéticos): se calculan con los datos REALES del
+        // socio, sin `|| 70`/`|| 170`/`|| 28`. Es la misma antropometría que acaba de
+        // persistirse unas líneas arriba.
         const oi = {
-          sexo: sex, pesoKg: Number(peso) || 70, estaturaCm: Number(estatura) || 170,
-          edad: Number(edad) || 28, activity, goal,
+          sexo: sex, pesoKg: Number(peso), estaturaCm: Number(estatura),
+          edad: Number(edad), goal,
           grasa: grasa ? Number(grasa) : null, embarazo: embarazo === 'si',
           pesoMeta: pesoMeta ? Number(pesoMeta) : null,
         };
-        const targets = computeNutritionTargets(oi);
         const metaNotice = targetWeightNotice(oi);
-        const tiempo = targets.wellnessMode ? null : estimateTimeMonths(oi);
+        // CAPA 2 · las macros las prescribió `recalcFromObData` en el mismo acto que
+        // la energía. Solo `VALID`/`REVIEW` tienen gramos que mostrar. Sin cifra
+        // tampoco hay ritmo que estimar, porque no hay déficit que aplicar.
+        const macros = goalVal != null && isServableMacroPrescription(macroTargets) ? macroTargets : null;
+        const tiempo = goalVal == null ? null : estimateTimeMonths(oi);
+        /**
+         * C4 · POR QUÉ no hay cifra. El onboarding TERMINA igual —el socio entra a su
+         * espacio, su entrenamiento funciona— pero se le dice el motivo en vez de
+         * mostrarle una meta de bienestar que el producto ya no prescribe.
+         *
+         * `switch` sobre el `status` del estado nuevo, que es la única autoridad que
+         * conoce el motivo. `planGoal == null` sin estado resuelto cae al mensaje de
+         * dato faltante: es lo único honesto que se puede decir sin saber más.
+         */
+        const sinMeta = goalVal != null ? null : (() => {
+          switch (energyState?.status) {
+            case 'OUTSIDE_HSC_NUTRITION_SCOPE':
+              switch (energyState.scopeReason) {
+                case 'age_under_19':           return t('onboarding.sinMetaMenor');
+                case 'age_65_or_over':         return t('onboarding.sinMetaAdultoMayor');
+                case 'pregnancy_or_lactation': return t('onboarding.sinMetaEmbarazo');
+                case 'therapeutic_diet_required': return t('onboarding.sinMetaTerapeutica');
+              }
+              break;
+            case 'FAT_LOSS_BLOCKED':
+              return t('onboarding.sinMetaBajoPeso');
+            case 'OUTSIDE_HSC_FAT_LOSS_SCOPE':
+              return t('onboarding.sinMetaSuelo');
+          }
+          return t('onboarding.sinMetaIncompleto');
+        })();
         return (
         <div key={animKey} className={`onb-slide onb-slide-${dir} onb-dark`}>
           <div className="onb-center">
             <div className="onb-result-badge"><Check size={14} strokeWidth={3} /> {t('onboarding.resultAnalysisDone')}</div>
-            <h2 className="onb-result-title">{t('onboarding.resultTitle', { name: userName })}</h2>
+            <h2 className="onb-result-title">
+              {sinMeta
+                ? t(energyState?.status === 'OUTSIDE_HSC_NUTRITION_SCOPE' && energyState.scopeReason === 'therapeutic_diet_required'
+                    ? 'onboarding.sinMetaTerapeuticaTitulo' : 'onboarding.sinMetaTitulo')
+                : t('onboarding.resultTitle', { name: userName })}
+            </h2>
+            {/* C4 · la tarjeta de cifras solo existe si hay cifra. Sin prescripción no
+                se pinta un '—' donde debería ir una meta, ni unas macros derivadas de
+                una energía que nadie prescribió: se pinta el motivo. */}
+            {goalVal != null ? (
             <div className="onb-result-card">
               <div className="onb-result-row">
                 <span className="onb-result-row-label">{t('onboarding.resultMetabolism')}</span>
-                <span className="onb-result-row-val">{tdeeVal > 0 ? tdeeVal.toLocaleString() : '—'}<i>{t('onboarding.kcalDay')}</i></span>
+                <span className="onb-result-row-val">{tdeeVal != null && tdeeVal > 0 ? tdeeVal.toLocaleString() : '—'}<i>{t('onboarding.kcalDay')}</i></span>
               </div>
               <div className="onb-result-divider" />
               <div className="onb-result-target">
                 <span className="onb-result-row-label">{t('onboarding.resultTarget')}</span>
                 <div className="onb-result-kcal">
-                  {goalVal > 0 ? goalVal.toLocaleString() : '—'} <span>{t('onboarding.kcalDay')}</span>
+                  {goalVal.toLocaleString()} <span>{t('onboarding.kcalDay')}</span>
                 </div>
               </div>
               <div className="onb-result-plan">{goalLabelKeys[goal] ? t(goalLabelKeys[goal]) : goal}</div>
+              {/* CAPA 2 · sin macros servibles (`INFEASIBLE`/`SPORTS_SCOPE`) se muestra
+                  la energía y no se inventan gramos. A9 · se dice por qué. */}
+              {macros === null && (() => {
+                const notice = nonServableMacroNotice(macroTargets);
+                const key = notice === 'SPORTS_SPECIALIZED' ? 'nutritionPlanner.sportsScopeSpecialized'
+                  : notice === 'SPORTS_HIGH_DEMAND' ? 'nutritionPlanner.sportsScopeHighDemand'
+                  : notice === 'DEFENSIVE_UNAVAILABLE' ? 'nutritionPlanner.macrosUnavailable' : null;
+                return key ? <div className="onb-result-coach">{t(key)}</div> : null;
+              })()}
+              {macros !== null && (
               <div className="onb-result-macros">
-                <div className="onb-macro"><span className="onb-macro-v">{targets.protG}g</span><span className="onb-macro-l">{t('onboarding.macroProtein')}</span></div>
-                <div className="onb-macro"><span className="onb-macro-v">{targets.carbG}g</span><span className="onb-macro-l">{t('onboarding.macroCarbs')}</span></div>
-                <div className="onb-macro"><span className="onb-macro-v">{targets.fatG}g</span><span className="onb-macro-l">{t('onboarding.macroFat')}</span></div>
-                <div className="onb-macro"><span className="onb-macro-v">{targets.fiberG}g</span><span className="onb-macro-l">{t('onboarding.macroFiber')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{macros.proteinG}g</span><span className="onb-macro-l">{t('onboarding.macroProtein')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{macros.carbG}g</span><span className="onb-macro-l">{t('onboarding.macroCarbs')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{macros.fatG}g</span><span className="onb-macro-l">{t('onboarding.macroFat')}</span></div>
+                <div className="onb-macro"><span className="onb-macro-v">{macros.fiberG}g</span><span className="onb-macro-l">{t('onboarding.macroFiber')}</span></div>
               </div>
+              )}
               <div className="onb-result-coach">{t('onboarding.coachKnows')}</div>
             </div>
-            {/* Avisos de seguridad + peso meta (Fase 2) */}
-            {targets.wellnessReason === 'menor' && <div className="onb-notice">{t('onboarding.avisoMenor')}</div>}
-            {targets.wellnessReason === 'embarazo' && <div className="onb-notice">{t('onboarding.avisoEmbarazo')}</div>}
-            {targets.wellnessReason === 'bajopeso' && <div className="onb-notice">{t('onboarding.avisoBajoPeso')}</div>}
-            {targets.wellnessReason === 'adultoMayor' && <div className="onb-notice">{t('onboarding.avisoAdultoMayor')}</div>}
-            {!targets.wellnessMode && targets.capped && <div className="onb-notice">{t('onboarding.avisoTopado', { kcal: targets.planGoal.toLocaleString() })}</div>}
-            {metaNotice?.kind === 'bajopeso-meta' && <div className="onb-notice">{t('onboarding.metaBajoPeso')}</div>}
+            ) : (
+              <div className="onb-result-card">
+                <div className="onb-result-coach">{sinMeta}</div>
+              </div>
+            )}
+            {/* Avisos de peso meta (Fase 2). Los `aviso*` energéticos —menor, embarazo,
+                bajo peso, adulto mayor, topado— los sustituyó `sinMeta`: ya no se
+                derivan de `wellnessMode`, que era la autoridad legacy. */}
             {metaNotice?.kind === 'sube-musculo' && <div className="onb-notice">{t('onboarding.metaMusculo')}</div>}
             {metaNotice?.kind === 'sube-neutro-imc' && <div className="onb-notice">{t('onboarding.metaNeutroImc')}</div>}
             {metaNotice?.kind === 'sube-gradual' && <div className="onb-notice">{t('onboarding.metaGradual')}</div>}

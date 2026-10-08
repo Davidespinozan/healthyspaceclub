@@ -8,19 +8,58 @@ import type { DayPlan, MealItem } from '../types';
 import type { Region } from './region';
 import { dishAllowedInRegion } from '../data/regionFood';
 import { portionBoundsFor, preferredGramLimit } from './portionPlausibility';   // NUTRITION-N1 techo humano · N2 capacidad preferida
-import { effectiveDishAvoidText, canonicalizeAvoidTerm, catMarker } from './allergenSafety';   // NUTRITION-N3 · sub-recetas + composites ocultos
+import { effectiveDishAvoidText, dishAvoidUnits, canonicalizeAvoidTerm, catMarker } from './allergenSafety';   // NUTRITION-N3 · sub-recetas + composites ocultos
 
 const IMG_BASE =
   'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PLATILLOS%20BANCO/';
 
 export interface PlanTarget { kcal: number; protG: number; fatG: number; carbG: number }
 
+/**
+ * P0-03 · FAIL CLOSED. No existe ningún platillo elegible para un tiempo con las
+ * restricciones efectivas del usuario.
+ *
+ * Las restricciones y el tiempo de comida son INVARIANTES NO RELAJABLES: un pool
+ * vacío no autoriza servir un alérgeno ni un platillo de otro tiempo. Cuando de
+ * verdad no hay opción, el motor lo DICE en vez de fabricar disponibilidad.
+ *
+ * Hasta dónde llega: lo lanzan `buildDay` (vía `buildWeeklyPlan`) y
+ * `buildDayWithFixed`. Lo recogen `WeeklyNutritionPlanner.advance` (muestra el
+ * error de generación ya existente), `useAutoRegenPlan` (deja el plan anterior en
+ * pantalla y lo registra) y `TabHoy` (conserva el día sin el bowl).
+ */
+export class NoEligibleDishesError extends Error {
+  readonly slot: string;
+  readonly avoid: string[];
+  constructor(slot: string, avoid: string[]) {
+    const r = avoid.length ? avoid.join(', ') : 'ninguna';
+    super(`Sin platillos elegibles para ${slot} con las restricciones activas (${r}). `
+      + 'No se sirve un platillo de otro tiempo ni se relaja una restricción para rellenar.');
+    // `name` explícito: el instanceof sobrevive al bundling, pero el nombre es lo que
+    // queda en los logs y lo que la UI puede distinguir de un fallo genérico.
+    this.name = 'NoEligibleDishesError';
+    this.slot = slot;
+    this.avoid = [...avoid];
+  }
+}
+
 const BY_TIME: Record<string, BancoDish[]> = { Desayuno: [], Comida: [], Cena: [], Snack: [] };
 for (const d of BANCO) (BY_TIME[d.tiempo] ??= []).push(d);
-const hasVeg = (d: BancoDish) => d.ings.some((i) => i.rol === 'guarnicion');
-// Verduras SIEMPRE en comida y cena (Magaly). Prefiere platillos con guarnición.
-const COMIDA_VEG = BY_TIME.Comida.filter(hasVeg);
-const CENA_VEG = BY_TIME.Cena.filter(hasVeg);
+// DECISIÓN 06 · aquí vivía `hasVeg` = `d.ings.some(i => i.rol === 'guarnicion')`, y con él
+// COMIDA_VEG/CENA_VEG: los pools de Comida y Cena quedaban reducidos a los platillos con
+// ese tag. Se retiró como filtro de elegibilidad.
+//
+// `rol:'guarnicion'` no es autoridad nutricional. Las instrucciones a Magaly lo definen como
+// una anotación OPCIONAL para registrar una verdura de guarnición («Puedes escribir
+// "guarnición" en la columna `nota` si quieres»), y permiten explícitamente dejar las salsas
+// caseras como compuesto. Un campo de registro voluntario decidía qué recetas existían: 10
+// platillos de Comida/Cena quedaban fuera por no llevarlo, 4 de ellos CON verdura real
+// (zanahoria de 40 g como ingrediente principal, pico de gallo, guacamole).
+//
+// La elegibilidad la decide el `tiempo` del platillo (+ las restricciones del socio). La
+// calidad vegetal del plan sigue siendo un objetivo de producto, pendiente de definir, no un
+// filtro sobre un tag. `guarnicion` conserva intacto su uso de DISPLAY (portionStr → «al
+// gusto») y en la lista de compra.
 
 // Cocina por nombre del platillo (heurística). El resto = mexicana (base del banco).
 function cuisineOf(d: BancoDish): string {
@@ -52,32 +91,91 @@ const cravedCount = new Map<string, number>();
 // ingredientes REALES de sus sub-recetas (SUBRECETAS) + marcadores de alérgeno oculto (mayonesa=huevo,
 // hummus=ajonjolí…). Así el MISMO makeAvoidFilter ve lo que antes quedaba escondido. Solo alimenta la
 // detección de "evitar"/"antojo"; NO cambia macros/porciones/selección nutricional.
-const DTEXT = new Map<BancoDish, { text: string; words: Set<string> }>();
-for (const d of BANCO) {
-  const text = effectiveDishAvoidText(d);
-  DTEXT.set(d, { text, words: new Set(text.split(/[^a-z0-9]+/).filter(Boolean)) });
+interface DishText {
+  text: string; words: Set<string>;                        // ANTOJO: nombre + ingredientes
+  avoidWords: Set<string>; avoidText: string;              // EVITAR: solo ingredientes
+  units: { text: string; words: Set<string> }[];           // EVITAR: por ingrediente (excepciones)
 }
+const tokenize = (text: string) => ({ text, words: new Set(text.split(/[^a-z0-9]+/).filter(Boolean)) });
+// Separador entre unidades: un término nunca lo contiene, así que una frase ("carne asada")
+// NO puede formarse cruzando el final de un ingrediente con el principio del siguiente.
+const UNIT_SEP = ' \u0000 ';
+function buildDishText(d: BancoDish): DishText {
+  // `text`/`words` = nombre + ingredientes (ANTOJO: ahí el nombre del platillo SÍ es la señal).
+  // `units`        = un token-set por INGREDIENTE, sin el nombre (EVITAR: manda la composición).
+  const units = dishAvoidUnits(d).map(tokenize);
+  const avoidWords = new Set<string>();
+  for (const u of units) for (const w of u.words) avoidWords.add(w);
+  return {
+    ...tokenize(effectiveDishAvoidText(d)),
+    avoidWords, avoidText: units.map((u) => u.text).join(UNIT_SEP), units,
+  };
+}
+const DTEXT = new Map<BancoDish, DishText>();
+for (const d of BANCO) DTEXT.set(d, buildDishText(d));
+/** Cacheado para el BANCO; calculado al vuelo para cualquier otro platillo (nunca lanza). */
+const dishText = (d: BancoDish): DishText => DTEXT.get(d) ?? buildDishText(d);
 // term con espacio → substring; palabra suelta → límite de palabra (evita "pan" en "panela").
+const unitMatches = (u: { text: string; words: Set<string> }, term: string) =>
+  term.includes(' ') ? u.text.includes(term) : u.words.has(term);
+// ANTOJO: el nombre del platillo cuenta ("se me antojan unos tacos").
 function dishMatches(d: BancoDish, term: string): boolean {
-  const e = DTEXT.get(d)!;
-  return term.includes(' ') ? e.text.includes(term) : e.words.has(term);
+  return unitMatches(dishText(d), term);
 }
 const dishMatchesAny = (d: BancoDish, terms: string[]) => terms.some((t) => dishMatches(d, t));
 
+// ── P0-01 · DETECCIÓN DE RESTRICCIONES ───────────────────────────────────────
+// Excepciones por TÉRMINO: nombres de ingrediente donde el término aparece pero NO
+// representa el alimento prohibido. Mismo espíritu que el lookahead de "crema de
+// cacahuate" en allergenSafety. Mínimo y auditado contra los ingredientes reales.
+const TERM_EXCEPT: Record<string, RegExp> = {
+  galleta: /galletas? de arroz/,     // galleta de ARROZ = sin gluten
+  galletas: /galletas? de arroz/,
+  // DECISIÓN 05 · PD-02: la granola SIEMPRE activa gluten salvo que el ingrediente declare
+  // EXPLÍCITAMENTE que es la variante sin gluten. NO se infiere de "de avena" ni de nada más.
+  granola: /\bsin gluten\b|\bgluten free\b/,
+};
+/** ¿Algún INGREDIENTE del platillo (o de sus sub-recetas) contiene alguno de los términos? */
+function dishMatchesAvoidTerms(d: BancoDish, terms: string[]): boolean {
+  if (!terms.length) return false;
+  const e = dishText(d);
+  for (const t of terms) {
+    const ex = TERM_EXCEPT[t];
+    if (!ex) {
+      // Camino rápido: palabra suelta contra el set unión, frase contra el texto con separador
+      // (que impide que la frase cruce dos ingredientes). Equivalente al recorrido por unidad.
+      if (t.includes(' ') ? e.avoidText.includes(t) : e.avoidWords.has(t)) return true;
+      continue;
+    }
+    // Con excepción: hay que saber EN QUÉ ingrediente cayó el término.
+    for (const u of e.units) {
+      if (unitMatches(u, t) && !ex.test(u.text)) return true;
+    }
+  }
+  return false;
+}
+
 // Categorías de "evitar" / alergias → alimentos/palabras reales del banco.
 const AVOID_MAP: Record<string, string[]> = {
-  gluten: ['pan', 'pasta', 'espagueti', 'bagel', 'waffle', 'waffles', 'pita', 'tallarines', 'noodles', 'galleta', 'galletas', 'crutones', 'cereal', 'tortilla de harina', 'hot cake', 'hot cakes', 'corn flakes'],
+  // P0-01 · los términos se buscan en el nombre de cada INGREDIENTE, no en el del platillo.
+  // 'waffle'/'hot cake'/'cereal' son conceptos de PLATILLO, no ingredientes: se conservan por
+  // defensa (si algún día un ingrediente se llama así) pero ya no pueden excluir por el nombre.
+  // 'granola' → gluten por DECISIÓN 05 · PD-02: la granola genérica lleva malta de cebada o trigo.
+  // Solo queda exenta si el ingrediente se modela EXPLÍCITAMENTE como variante sin gluten (ver TERM_EXCEPT).
+  gluten: ['pan', 'pasta', 'espagueti', 'bagel', 'baguette', 'waffle', 'waffles', 'pita', 'tallarines', 'noodles', 'fideo', 'fideos', 'galleta', 'galletas', 'granola', 'crutones', 'cereal', 'tortilla de harina', 'harina de trigo', 'hot cake', 'hot cakes', 'corn flakes'],
   lacteos: ['leche', 'queso', 'yogur', 'yoghurt', 'yogurt', 'requeson', 'ricotta', 'cottage', 'panela', 'oaxaca', 'feta', 'mozzarella', 'parmesano', 'crema acida'],
-  'carne-roja': ['res', 'sirloin', 'bistec', 'falda', 'molida', 'machaca', 'chambarete', 'arrachera'],
+  // 'molida' suelta excluía "Papa molida" y "Carne molida de pavo" (ni una ni otra es carne roja):
+  // se sustituye por las frases que sí identifican el corte. 'carne asada' cierra el hueco genérico.
+  'carne-roja': ['res', 'sirloin', 'bistec', 'falda', 'molida magra', 'molida de res', 'carne asada', 'machaca', 'chambarete', 'arrachera'],
   // Magaly: "mariscos" abarca TODO lo del mar (incluye pescado). El toggle "pescado"
   // es el subconjunto para quien solo quiere fuera el pescado pero sí come camarón.
-  mariscos: ['camaron', 'camarones', 'marisco', 'mariscos', 'pescado', 'salmon', 'atun', 'tilapia', 'bacalao'],
+  mariscos: ['camaron', 'camarones', 'gamba', 'gambas', 'marisco', 'mariscos', 'pescado', 'salmon', 'atun', 'tilapia', 'bacalao', 'merluza', 'sardina', 'sardinas', 'boqueron', 'boquerones'],
   // Alergias:
   huevo: ['huevo', 'huevos'],
   'frutos-secos': ['nuez', 'nueces', 'almendra', 'almendras', 'pistache', 'pistaches', 'avellana', 'avellanas'],
   cacahuate: ['cacahuate', 'cacahuates'],
   soya: ['soya', 'edamame', 'edamames'],
-  pescado: ['pescado', 'salmon', 'atun', 'tilapia', 'bacalao'],
+  pescado: ['pescado', 'salmon', 'atun', 'tilapia', 'bacalao', 'merluza', 'sardina', 'sardinas', 'boqueron', 'boquerones'],
   ajonjoli: ['ajonjoli', 'sesamo'],
   // Aves y cerdo (faltaban): sin esto un vegetariano no podía sacar el pollo/pavo/cerdo.
   pollo: ['pollo', 'pechuga'],
@@ -676,7 +774,10 @@ function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: string[] =
 }
 
 // Busca el mejor conjunto de `n` platillos de `pool` para pegar el target de ESTE
-// tiempo, y devuelve sus MealItem (ya ajustados). needVeg exige guarnición (comida/cena).
+// tiempo, y devuelve sus MealItem (ya ajustados).
+// (Este comentario describía un parámetro `needVeg` que exigía guarnición y que NUNCA
+//  existió como código: la regla se implementó como filtro de pool. Retirada por la
+//  Decisión 06, se limpia la referencia para que no engañe.)
 // merge=true → devuelve UNA comida combinada (snacks: los dos dentro del mismo).
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
@@ -684,7 +785,12 @@ function fitSlot(
   used: Set<string>, usedToday: Set<string>, usedTodayIng: Set<string>, craving: string[],
   ingFreq: Map<string, number>, merge = false,
 ): MealItem[] {
-  // El pool ya viene filtrado por alergia (buildDay) → aquí no se cuela ningún alérgeno.
+  // El pool ya viene filtrado por alergia Y por tiempo (buildDay / buildDayWithFixed) →
+  // aquí no se cuela ningún alérgeno ni un platillo de otro tiempo.
+  // P0-03 · un pool vacío significa que no hay nada elegible para este tiempo. Antes
+  // `pick` sobre un array vacío devolvía undefined y reventaba con un TypeError opaco;
+  // ahora se dice qué pasó. Quien llama ya debería haberlo detectado: esto es la red.
+  if (!pool.length) throw new NoEligibleDishesError(label, []);
   const princKeys = (d: BancoDish) => d.ings.filter((i) => i.rol === 'principal').map((i) => ingKey(i.nv));
   // pickN nunca junta en el MISMO slot dos platillos que compartan ingrediente principal
   // (ej. "zanahoria y pepino con hummus" + "bastones de zanahoria" → el snack se repetía).
@@ -879,17 +985,21 @@ function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
   return meals;
 }
 
-function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>, relax = 0): DayPlan {
+function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>, relax = 0, avoidCats: string[] = []): DayPlan {
   const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
   const MT = mealTargets(T);
-  // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno). Si un tiempo se
-  // queda sin opciones (varias alergias juntas), JAMÁS cae al alérgeno: usa cualquier
-  // platillo compatible del banco (una comida sirve de desayuno). Solo si NADA en las 175
-  // recetas cumple (imposible en la práctica) usa el pool para no romper.
-  const anyCompliant = BANCO.filter((d) => !avoid(d));
-  const clean = (pool: BancoDish[]) => {
+  // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno).
+  //
+  // P0-03 · ANTES, si un tiempo se quedaba sin opciones, esto caía a «cualquier platillo
+  // compatible del banco», es decir CRUZABA DE TIEMPO: medido, servía Edamames de
+  // desayuno, Garbanzos Horneados de comida y Puñado de Cacahuates de cena, los 7 días.
+  // Contradecía la regla de Magaly que la v29 ya había restaurado en la degradación: el
+  // cross-time seguía vivo por esta puerta de atrás. Ahora el tiempo es invariante — si
+  // un tiempo no tiene candidatos, el día es IMPOSIBLE y se dice (no se rellena).
+  const clean = (pool: BancoDish[], slot: string) => {
     const f = pool.filter((d) => !avoid(d));
-    return f.length ? f : (anyCompliant.length ? anyCompliant : pool);
+    if (!f.length) throw new NoEligibleDishesError(slot, avoidCats);
+    return f;
   };
   // REGLA DURA de Magaly: cada tiempo usa SOLO sus platillos. El desayuno es
   // desayuno; una cena JAMÁS aparece en el desayuno, por ningún motivo. La
@@ -905,10 +1015,14 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
     const densos = [...pool].sort((a, b) => carbCap(b) - carbCap(a)).slice(0, 8);
     return [...densos, ...pool];
   };
-  const des = sesgaCarbo(clean(biasPool(BY_TIME.Desayuno, cuisines)));
-  const com = sesgaCarbo(clean(biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines)));
-  const cen = sesgaCarbo(clean(biasPool(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, cuisines)));
-  const snack = gateDense(clean(BY_TIME.Snack), T[0]); // densos solo si el requerimiento es alto
+  const des = sesgaCarbo(clean(biasPool(BY_TIME.Desayuno, cuisines), 'Desayuno'));
+  const com = sesgaCarbo(clean(biasPool(BY_TIME.Comida, cuisines), 'Comida'));
+  const cen = sesgaCarbo(clean(biasPool(BY_TIME.Cena, cuisines), 'Cena'));
+  // gateDense puede vaciar el pool por sí solo (si todo lo compatible es snack denso y la
+  // meta no llega al umbral): también es una imposibilidad, no una excusa para abrirlo.
+  const snackClean = clean(BY_TIME.Snack, 'Snack');
+  const snackGated = gateDense(snackClean, T[0]); // densos solo si el requerimiento es alto
+  const snack = snackGated.length ? snackGated : snackClean;
   // Regla dura: NADA se repite dentro del mismo día (ni comida ni snack, ni una comida
   // como cena). avail() saca del pool lo ya usado hoy; fitSlot va llenando usedToday.
   // relax≥1: la selección ignora el historial de la semana → puede repetir un
@@ -980,7 +1094,29 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // proteína del batido caía ENCIMA de un día que ya llegaba a la meta (+25 g). Se
 // movió DESPUÉS del batido, contra la meta completa menos lo que aportan los
 // snacks (batido incluido). Con 1 batido: kcal y macros a ±0.5-0.7%.
-export const PLAN_ENGINE_VERSION = 30;
+// v31: P0-01, P0-02 y P0-03 cambiaron las GARANTÍAS del motor sin subir la versión, que es
+// exactamente lo que el comentario de la v24 advierte que no hay que hacer. Un plan
+// generado el día antes de P0-03 lleva engineVersion 30, así que `30 >= 30` y la
+// auto-regeneración no disparaba nunca: un plan con cruces de tiempo o con un platillo
+// incompatible se quedaba vigente para siempre. Subir a 31 los regenera en la siguiente
+// carga, ya a través del detector corregido (P0-01), con las restricciones efectivas
+// (P0-02) y con el motor que falla cerrado (P0-03). No hay cambio de reglas en este salto.
+// Requisito previo: la ruta de auto-regeneración no pasaba `region` — se corrigió en el
+// mismo bloque, porque no se activa a conciencia una regeneración que sabemos incompleta.
+//
+// CAPA 1E · FASE C4 · 31 → 32 · ENERGY AUTHORITY CUTOVER.
+// La energía de un plan ya no la estima `legacyEnergy` desde `obData.activity`: la
+// prescribe el HSC Energy Engine (DRI 2023 EER + clasificación de actividad +
+// prescripción) y llega al generador por `store.planGoal`. Para una parte de los
+// socios la cifra CAMBIA, así que todo plan guardado con v31 se armó contra una
+// meta que el producto ya no prescribe. El salto de versión es lo que los regenera
+// en la siguiente carga, a través de `weeklyPlanCurrentness`.
+// Se sube AL FINAL, cuando ya no queda ningún consumidor leyendo la cifra legacy:
+// subirla antes habría regenerado planes con la autoridad que estábamos retirando.
+// v33 · CAPA 2 · las MACROS diarias pasan a la autoridad nueva (`macroPrescription`:
+// proteína por PRW × factor, grasa 25 %, carbohidrato residual). Todo plan v32 se
+// armó con gramos de `legacyMacros`; el salto lo marca STALE aunque coincida la kcal.
+export const PLAN_ENGINE_VERSION = 33;
 
 export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 
@@ -1022,13 +1158,20 @@ function reduceForShake(T: number[], shake?: ProteinShake): number[] {
 /** Filtro de alergia/evitar (categoría → alimentos reales del banco). */
 export function makeAvoidFilter(avoidCats: string[]): (d: BancoDish) => boolean {
   const terms = expandAvoid(avoidCats.map((s) => s.toLowerCase().trim()).filter(Boolean));
-  return (d: BancoDish) => (terms.length ? dishMatchesAny(d, terms) : false);
+  return (d: BancoDish) => dishMatchesAvoidTerms(d, terms);
 }
 
-/** Banco agrupado por tiempo, ya SIN alérgenos (nunca vacío: cae al pool completo). */
+/** Banco agrupado por tiempo, ya SIN alérgenos.
+ *
+ *  P0-03: un pool puede quedar VACÍO y eso es el resultado correcto. Antes caía al
+ *  pool COMPLETO sin filtrar «para no quedarse sin opciones», con lo que un usuario
+ *  sin opciones compatibles recibía exactamente los platillos que había excluido (70
+ *  desayunos, todos incompatibles, medido). El vacío lo resuelve quien consume el
+ *  banco: el motor determinista lanza NoEligibleDishesError y la ruta IA no puede
+ *  completar los 7 días, así que cae al determinista. Nunca se rellena con alérgenos. */
 export function safeBankByTiempo(avoidCats: string[]): Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]> {
   const avoid = makeAvoidFilter(avoidCats);
-  const pick = (t: string) => { const f = (BY_TIME[t] ?? []).filter((d) => !avoid(d)); return f.length ? f : (BY_TIME[t] ?? []); };
+  const pick = (t: string) => (BY_TIME[t] ?? []).filter((d) => !avoid(d));
   return { Desayuno: pick('Desayuno'), Comida: pick('Comida'), Cena: pick('Cena'), Snack: pick('Snack') };
 }
 
@@ -1134,9 +1277,22 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
   const corrUsed = new Set<string>(); // corrector no repite el mismo snack en la semana
   const out: DayPlan[] = [];
   days.forEach((sel, i) => {
-    const des = byName.get(sel.desayuno), com = byName.get(sel.comida), cen = byName.get(sel.cena);
-    if (!des || !com || !cen) return; // el orquestador ya validó; salta por seguridad
-    const snacks = (sel.snacks ?? []).map((n) => byName.get(n)).filter((d): d is BancoDish => !!d);
+    // P0-03 · DOBLE LLAVE sobre la selección de la IA. El orquestador ya solo acepta
+    // nombres de `adequateBankByTiempo` (filtrado por tiempo y por restricciones), pero
+    // este helper resuelve los nombres contra el BANCO COMPLETO: si alguna vez llegara
+    // aquí una selección de otra procedencia, el nombre bastaría para servir un platillo
+    // de otro tiempo o un alérgeno. Se verifican las dos invariantes aquí también; un día
+    // que no las cumpla se DESCARTA (el plan sale con <7 días → el orquestador devuelve
+    // null → motor determinista), nunca se sirve corregido a medias.
+    const noEvitado = makeAvoidFilter(avoidCats);
+    const main = (nombre: string, t: string): BancoDish | undefined => {
+      const d = byName.get(nombre);
+      return d && d.tiempo === t && !noEvitado(d) ? d : undefined;
+    };
+    const des = main(sel.desayuno, 'Desayuno'), com = main(sel.comida, 'Comida'), cen = main(sel.cena, 'Cena');
+    if (!des || !com || !cen) return;
+    const snacks = (sel.snacks ?? []).map((n) => byName.get(n))
+      .filter((d): d is BancoDish => !!d && d.tiempo === 'Snack' && !noEvitado(d));
     // Reparto de Magaly: cada tiempo a su share (proteína pareja en los 3 principales,
     // menos en snacks). Snacks: nSnack combinados por slot para tener capacidad a metas altas.
     const amSnacks = snacks.slice(0, nSnack), pmSnacks = snacks.slice(nSnack, 2 * nSnack);
@@ -1187,8 +1343,15 @@ export function buildDayWithFixed(
   const craving = cravingTerms(opts.craving ?? '');
   const ingFreq = new Map<string, number>();
 
-  const anyOk = BANCO.filter((d) => !avoid(d));
-  const clean = (pool: BancoDish[]) => { const f = pool.filter((d) => !avoid(d)); return f.length ? f : anyOk; };
+  // P0-03 · igual que en buildDay: antes, un tiempo sin opciones caía a «cualquier platillo
+  // compatible» y cruzaba de tiempo (medido: servía Merluza al Horno con Patatas, una
+  // Comida, como desayuno). El tiempo no se negocia; si no hay candidatos, el día no se
+  // puede armar y se dice.
+  const clean = (pool: BancoDish[], slot: string) => {
+    const f = pool.filter((d) => !avoid(d));
+    if (!f.length) throw new NoEligibleDishesError(slot, opts.avoid ?? []);
+    return f;
+  };
   // Solo los que CABEN por debajo del presupuesto del tiempo (con 15% de holgura, que
   // el solver puede cuadrar). Si ninguno cabe, se toman los más ligeros.
   const cabe = (pool: BancoDish[], slotT: number[]) => {
@@ -1203,7 +1366,9 @@ export function buildDayWithFixed(
 
   const nSnack = rest[0] > 2200 ? 2 : 1;
   const meals: MealItem[] = [];
-  const add = (slot: Slot, pool: BancoDish[], n: number, tol: number) => {
+  // El pool llega PEREZOSO: el tiempo que ocupa el alimento fijo no necesita candidatos,
+  // así que no puede declararse imposible por un pool que nunca se iba a usar.
+  const add = (slot: Slot, poolOf: () => BancoDish[], n: number, tol: number) => {
     if (slot === fixed.slot) {
       meals.push({
         time: slot, name: fixed.name, desc: fixed.desc ?? '', img: fixed.img,
@@ -1223,14 +1388,24 @@ export function buildDayWithFixed(
         : p.filter((d) => !usedToday.has(d.nombre));
       return f.length ? f : p.filter((d) => !usedToday.has(d.nombre));
     };
-    const pool2 = libre(cabe(clean(pool), t));
-    meals.push(...fitSlot(pool2.length ? pool2 : cabe(clean(pool), t), slot, t, n, rng, tol, used, usedToday, usedIng, craving, ingFreq, esSnack));
+    // `cabe` y `libre` relajan encaje y repetición, pero SIEMPRE dentro del pool ya limpio
+    // de este tiempo: ninguno de los dos puede reintroducir un alérgeno ni otro tiempo.
+    const limpio = clean(poolOf(), slot);
+    const pool2 = libre(cabe(limpio, t));
+    meals.push(...fitSlot(pool2.length ? pool2 : cabe(limpio, t), slot, t, n, rng, tol, used, usedToday, usedIng, craving, ingFreq, esSnack));
   };
-  add('Desayuno', BY_TIME.Desayuno, 1, 90);
-  add('Snack AM', gateDense(BY_TIME.Snack, target.kcal), nSnack, 70);
-  add('Comida', COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, 1, 90);
-  add('Snack PM', gateDense(BY_TIME.Snack, target.kcal), nSnack, 70);
-  add('Cena', CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, 1, 90);
+  // El pool de snacks se limpia ANTES de gateDense para que, si todo lo compatible es
+  // denso, el vacío lo detecte `clean` (imposibilidad) y no gateDense (que daría []).
+  const snackPool = (): BancoDish[] => {
+    const limpio = clean(BY_TIME.Snack, 'Snack');
+    const gated = gateDense(limpio, target.kcal);
+    return gated.length ? gated : limpio;
+  };
+  add('Desayuno', () => BY_TIME.Desayuno, 1, 90);
+  add('Snack AM', snackPool, nSnack, 70);
+  add('Comida', () => BY_TIME.Comida, 1, 90);
+  add('Snack PM', snackPool, nSnack, 70);
+  add('Cena', () => BY_TIME.Cena, 1, 90);
   return { day: dayNum, theme: '', meals };
 }
 
@@ -1249,7 +1424,7 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   // (filtro DURO fuera de LATAM + segmentación por marca region:ES) para que el fallback
   // determinista tampoco arme mole en España ni platillos de España fuera de EUROPE.
   const avoid = (d: BancoDish) =>
-    (avoidTerms.length > 0 && dishMatchesAny(d, avoidTerms)) ||
+    dishMatchesAvoidTerms(d, avoidTerms) ||
     !dishAllowedInRegion(d, opts.region);
   const cuisines = (opts.cuisines ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean);
   const craving = cravingTerms(opts.craving ?? ''); // "antojo": prefiere platillos que lo tengan
@@ -1291,7 +1466,10 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
         used.clear(); preU.forEach((x) => used.add(x));
         ingFreq.clear(); preI.forEach((v, k) => ingFreq.set(k, v));
         cravedCount.clear(); preC.forEach((v, k) => cravedCount.set(k, v));
-        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax);
+        // Si un tiempo no tiene candidatos, buildDay lanza NoEligibleDishesError y el error
+        // SALE de buildWeeklyPlan: no se reintenta con otro relax (relajar variedad o sesgar
+        // a carbo no crea platillos) ni se devuelve un plan incompleto. Lo recoge la UI.
+        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax, opts.avoid ?? []);
         if (shake) applyShake(day.meals, shake);   // batido (ya validado vs lácteos/vegano) reemplaza el snack de su slot
         // Cuadre del día contra la meta COMPLETA (T), ya con el batido puesto: las
         // comidas absorben lo que el batido aporta o deja faltando.

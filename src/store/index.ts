@@ -8,8 +8,17 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { ScreenType, ModalType, DashPage, VideoState, VideoType, ExerciseStep, RecipeStep, CompletedSession, PendingWorkoutRow, WorkoutSyncMeta, Modality } from '../types';
 import { track } from '../utils/analytics';
-import { assignPlan } from '../utils/tdee';
-import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
+// CAPA 1E · FASE C4 — el motor energético nuevo es la ÚNICA autoridad de kcal.
+// El store ya no importa `computeNutritionTargets` ni `parseObData`: no calcula
+// energía, la recibe resuelta.
+import { buildEnergySnapshot, type NutritionEnergyState } from '../utils/nutritionEnergyState';
+// C4 · la proyección estado → campos del store y la decisión de hidratación son
+// puras y viven fuera: el store las aplica, no las define.
+import { projectEnergy, decideEnergyHydration } from '../utils/energyHydration';
+import { resolveMacroPrescription, MACRO_PRESCRIPTION_VERSION, type MacroPrescription, type MacroResolution } from '../utils/macroPrescription';
+import type { Json } from '../types/database';
+import { planInvalidatedByAvoidChange, avoidForRegen } from '../utils/avoidAuthority';
+import { validatePlan, planIfValid, InvalidPlanError } from '../utils/planIntegrity';
 import type { Region, Currency } from '../utils/region';
 import type { BillingCycle } from '../utils/stripe';
 import { MILESTONE_STEPS } from '../constants/milestones';
@@ -167,6 +176,11 @@ interface AppState {
   obData: Record<string, string | number>;
   setObStep: (step: number) => void;
   setObData: (key: string, value: string | number) => void;
+  // P0-02 · cierre UX. true cuando la última edición del perfil AÑADIÓ una restricción
+  // permanente que el plan vigente servía, así que el plan se descartó. Lo lee la hoja de
+  // Ajustes para explicar por qué desapareció; se limpia al abrirla.
+  planClearedByAvoid: boolean;
+  acknowledgePlanClearedByAvoid: () => void;
   finishOnboardingCalc: () => Promise<void>; // calculates TDEE + assigns plan, upserts profile to Supabase
   finishOnboarding: () => void;     // navigates to dashboard
 
@@ -258,8 +272,56 @@ interface AppState {
   setMealPlanKey: (key: string) => void;
 
   // Calculated nutrition targets
-  tdee: number;        // kcal/day maintenance
-  planGoal: number;    // kcal/day target (tdee ± adjustment)
+  //
+  // CAPA 1E · FASE C3 — `null` es un estado VÁLIDO y significa «no existe una
+  // cifra energética vigente utilizable». NO significa 0 kcal: un 0 se pinta, se
+  // divide y se usa para generar planes, y eso fabricaría un objetivo que nadie
+  // prescribió. La ausencia se propaga como ausencia.
+  //
+  // En C3 la autoridad sigue siendo la legacy, que siempre produce números, así
+  // que las ramas `null` solo se alcanzan antes del onboarding y en los tests.
+  // C4 las usará de verdad: cinco de sus seis estados energéticos no llevan cifra.
+  tdee: number | null;        // kcal/day maintenance
+  planGoal: number | null;    // kcal/day target (tdee ± adjustment)
+
+  /**
+   * CAPA 1E · FASE C4 — AUTORIDAD energética de la sesión.
+   *
+   * `planGoal` y `tdee` son PROYECCIONES de este estado, no autoridades
+   * independientes: se escriben en el mismo `set()` que él, derivadas del mismo
+   * acto de resolución, así que no pueden divergir.
+   *
+   * Hace falta además de las proyecciones porque con `planGoal: null` nadie
+   * puede distinguir «falta una respuesta» de «fuera de alcance» de «pérdida de
+   * grasa bloqueada». Sin el `status`, cada pantalla que quisiera explicarse
+   * tendría que volver a resolver por su cuenta.
+   *
+   * `null` = todavía no resuelto en esta sesión. NO se persiste (`partialize`):
+   * se recalcula en la hidratación, que es puro y síncrono, y guardarlo
+   * invitaría a confiar en un estado viejo sin comprobar su identidad.
+   */
+  energyState: NutritionEnergyState | null;
+
+  /**
+   * CAPA 2 · prescripción de MACROS diarios (única autoridad: `macroPrescription`).
+   *
+   * Proyección del MISMO acto de resolución que `energyState`: se escribe en el
+   * mismo `set()`, derivada del estado energético y del `obData` con que se
+   * resolvió. `null` = no hay energía prescrita, y sin energía no hay macros.
+   * Solo `VALID`/`REVIEW` llevan gramos; `INFEASIBLE` y `SPORTS_SCOPE` no se sirven.
+   */
+  macroTargets: MacroPrescription | null;
+
+  /**
+   * A2 · RESOLUCIÓN de macros de la sesión, de la que `macroTargets` es la
+   * proyección. Hace falta además de ella porque `macroTargets: null` no distingue
+   * «no hay energía» de «falta que el socio declare su modalidad de
+   * entrenamiento» (`INPUT_REQUIRED`), y la UI tiene que poder pedir lo segundo.
+   *
+   * `null` = sin resolver en esta sesión. NO se persiste, igual que `energyState`:
+   * se vuelve a derivar en la hidratación.
+   */
+  macroResolution: MacroResolution | null;
 
   // Workout log (granular per-exercise: legacy, usado para tracking de reps/kg)
   workoutLog: { date: string; exercise: string; sets: { reps: number; kg: number }[] }[];
@@ -363,7 +425,15 @@ interface AppState {
     // Versión del motor con que se generó + inputs, para auto-regenerar cuando
     // el motor cambia (preservando meta y alergias del usuario).
     engineVersion?: number;
-    gen?: { kcal: number; protG: number; fatG: number; carbG: number; avoid: string[]; craving: string; shake?: { slots: ('am' | 'pm')[]; type: 'regular' | 'vegana' | 'massgainer'; protG: number } };
+    // P0-02 · TRAZABILIDAD DE RESTRICCIONES. `avoid` es el conjunto EFECTIVO con el que
+    // se generó el plan (lo que vio el motor). `avoidPermanent` y `avoidWeekly` guardan de
+    // dónde vino cada categoría, para poder auditar el plan y para regenerar respetando
+    // las permanentes ACTUALES del perfil sin perder la preferencia de esa semana.
+    gen?: {
+      kcal: number; protG: number; fatG: number; carbG: number;
+      avoid: string[]; avoidPermanent?: string[]; avoidWeekly?: string[];
+      craving: string; shake?: { slots: ('am' | 'pm')[]; type: 'regular' | 'vegana' | 'massgainer'; protG: number };
+    };
   } | null;
   saveWeeklyPlan: (plan: NonNullable<AppState['weeklyPlan']>) => Promise<void>;
   clearWeeklyPlan: () => Promise<void>;
@@ -452,8 +522,31 @@ interface AppState {
   coachPrefilledMessage: string | null;
   setCoachPrefilledMessage: (msg: string | null) => void;
 
-  // Recalcular TDEE/planGoal/mealPlanKey desde obData actual
-  recalcFromObData: () => Promise<void>;
+  /**
+   * CAPA 1E · FASE C4 — ACCIÓN CENTRAL y ÚNICA AUTORIDAD energética productiva.
+   *
+   *   obData → mapper canónico → resolveNutritionEnergyState
+   *          → proyectar planGoal/tdee/mealPlanKey
+   *          → construir EnergySnapshotV1
+   *          → memoria (un `set`) → DB (un `upsert`)
+   *
+   * Es el ÚNICO sitio que escribe `energy_snapshot`, y el único que escribe
+   * `plan_goal`/`tdee`. `finishOnboardingCalc` delega aquí en vez de duplicar el
+   * motor. La llaman los siete caminos que mutan un input energético.
+   *
+   * `reason` solo va al log: ayuda a saber qué disparó un recálculo sin añadir
+   * una decisión al contrato.
+   */
+  recalcFromObData: (reason?: string) => Promise<void>;
+  /**
+   * CAPA 1E · FASE C4 — hidratación energética desde `user_profiles`.
+   *
+   * Recibe el valor CRUDO de la columna `energy_snapshot` (nunca `plan_goal`) y
+   * decide: adoptar el snapshot guardado si sigue vigente, o volver a resolver y
+   * persistir si no. Es el único punto por el que la energía entra en la sesión
+   * desde la base de datos.
+   */
+  hydrateEnergyFromSnapshot: (rawSnapshot: unknown) => Promise<void>;
 
   // Cumulative HSM profile (updated weekly by AI)
   hsmProfile: { text: string; updatedAt: string } | null;
@@ -472,6 +565,15 @@ interface AppState {
   dataOwnerId: string | null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CAPA 1E · FASE C4 · PROYECCIÓN DEL ESTADO ENERGÉTICO
+//
+// Única función que traduce el estado a los campos que el resto de la app lee.
+// Pura y exhaustiva sobre los seis estados: si mañana aparece uno nuevo, el
+// compilador obliga a decidir su proyección aquí en vez de dejarla al azar.
+//
+//   NULL ≠ 0. Cinco de los seis estados no llevan cifra, y eso es la respuesta.
+// ─────────────────────────────────────────────────────────────────────────────
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -514,8 +616,24 @@ export const useAppStore = create<AppState>()(
   obStep: 1,
   obData: {},
   setObStep: (step) => set({ obStep: step }),
-  setObData: (key, value) =>
-    set((state) => ({ obData: { ...state.obData, [key]: value } })),
+  setObData: (key, value) => {
+    // P0-02 · INVALIDACIÓN MÍNIMA SEGURA, y solo por ENDURECIMIENTO. Aquí es el único
+    // punto donde coexisten la configuración anterior y la nueva, así que es donde se
+    // puede distinguir "añadió una restricción" de "quitó una" o "cambió el peso".
+    // Si las categorías AÑADIDAS están servidas en el plan vigente, ese plan no puede
+    // seguir presentándose como válido → se descarta y se marca para avisar al usuario.
+    // Quitar restricciones (plan más permisivo) o tocar cualquier otro dato: no invalida.
+    if (key === 'avoid') {
+      const { invalidated } = planInvalidatedByAvoidChange(get().obData.avoid, value, get().weeklyPlan);
+      if (invalidated) {
+        set({ planClearedByAvoid: true });
+        void get().clearWeeklyPlan().catch((e) => console.error('[setObData] clearWeeklyPlan falló:', e));
+      }
+    }
+    set((state) => ({ obData: { ...state.obData, [key]: value } }));
+  },
+  planClearedByAvoid: false,
+  acknowledgePlanClearedByAvoid: () => set({ planClearedByAvoid: false }),
   // Calculate TDEE + assign plan WITHOUT navigating (called during processing step)
   finishOnboardingCalc: async () => {
     const { obData, setUserName } = get();
@@ -524,25 +642,20 @@ export const useAppStore = create<AppState>()(
     const resolvedName = String(obData.name || get().username || '').trim();
     if (resolvedName) setUserName(resolvedName);
 
-    // Motor único: déficit/superávit % + piso + modo bienestar (nutritionTargets.ts).
-    const targets    = computeNutritionTargets(parseObData(obData));
-    const tdee       = targets.tdee;
-    const planGoal   = targets.planGoal;
-    const planKey    = assignPlan(planGoal);
-
+    // CAPA 1E · FASE C4 — la energía la resuelve y persiste la ACCIÓN CENTRAL.
+    // Aquí ya no hay motor: duplicarlo era lo que creaba dos autoridades.
     const trialEndsAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
     const startDateStr = dayKey(new Date());
 
     // NO seteamos startDate en el store aquí: App.tsx redirige onboarding→dashboard
     // en cuanto startDate existe, lo que se saltaba la pantalla de resultado.
     // startDate se setea al tocar "Entrar a mi espacio" (finishOnboarding).
-    set({
-      mealPlanKey: planKey,
-      tdee,
-      planGoal,
-      userPlan: 'trial',
-      trialEndsAt,
-    });
+    set({ userPlan: 'trial', trialEndsAt });
+
+    // Resuelve, proyecta y persiste `tdee`/`plan_goal`/`meal_plan_key`/
+    // `energy_snapshot`/`ob_data`. Puede terminar sin cifra: un perfil fuera de
+    // alcance (<19, >=65, embarazo) completa el onboarding y NO recibe kcal.
+    await get().recalcFromObData('onboarding');
 
     // Persist to Supabase if authenticated
     const user = get().user;
@@ -558,14 +671,13 @@ export const useAppStore = create<AppState>()(
           .eq('user_id', user.id)
           .maybeSingle();
         const preservedStart = (existing as { start_date?: string | null } | null)?.start_date || startDateStr;
+        // Energía NO: ya la escribió la acción central en su propio upsert. Este
+        // solo pone lo que es suyo — nombre, fecha de inicio y trial.
         await supabase.from('user_profiles').upsert({
           user_id: user.id,
           display_name: state.userName,
           ob_data: state.obData,
           start_date: preservedStart,
-          tdee: state.tdee,
-          plan_goal: state.planGoal,
-          meal_plan_key: state.mealPlanKey,
           user_plan: state.userPlan,
           trial_ends_at: state.trialEndsAt,
           updated_at: new Date().toISOString(),
@@ -681,6 +793,16 @@ export const useAppStore = create<AppState>()(
     const st = get();
     const totalSlots = st.weeklyPlan?.days?.[0]?.meals?.length ?? 0;
     if (!totalSlots || !date) return;              // sin plan → no se puede medir cobertura
+    // CAPA 1E · FASE C3 · D9 — sin cifra energética vigente NO se crea un summary
+    // nuevo: no hay objetivo contra el que medir adherencia. Las alternativas
+    // estaban descartadas: un 0 mediría contra una meta inexistente, copiar
+    // `weeklyPlan.gen.kcal` resucitaría un objetivo viejo, y rescatar el de un
+    // histórico es exactamente la cifra caduca que C3 viene a eliminar.
+    //
+    // La serie histórica puede quedar con huecos, y es correcto: esos días no
+    // tenían objetivo. Los summaries YA EXISTENTES no se tocan — este `return`
+    // ocurre antes de cualquier escritura, así que nada se borra ni se modifica.
+    if (st.planGoal == null) return;
     const ev = buildDayEvidence({
       date, targetKcal: st.planGoal, totalSlots,
       mealChecks: st.mealChecks, mealResolvedByLog: st.mealResolvedByLog, foodLog: st.foodLog,
@@ -879,8 +1001,10 @@ export const useAppStore = create<AppState>()(
   setMealPlanKey: (key) => set({ mealPlanKey: key }),
 
   // Nutrition targets (calculated after onboarding)
-  tdee: 0,
-  planGoal: 0,
+  // C3 · `null` hasta que exista una cifra real. Antes era 0, que la UI pintaba
+  // como «0 kcal» a quien todavía no había terminado el onboarding.
+  tdee: null,
+  planGoal: null,
 
   // Workout log (granular per-exercise: legacy)
   workoutLog: [],
@@ -1097,6 +1221,28 @@ export const useAppStore = create<AppState>()(
   weeklyPlan: null,
   saveWeeklyPlan: async (plan) => {
     const prevState = get();
+
+    // P0-04 · VALIDACIÓN FINAL. Única puerta de escritura de las tres rutas que generan
+    // (cuestionario, auto-regeneración y sustitución por bowl), así que validar aquí las
+    // cubre las tres con un solo punto.
+    //
+    // Se valida contra las restricciones efectivas ACTUALES —`avoidForRegen` une las
+    // permanentes del perfil de AHORA con la parte semanal del plan— y NO contra
+    // `plan.gen.avoid`. La diferencia importa: el rearmado del día con un bowl pasaba al
+    // motor el `gen.avoid` con el que se generó el plan, así que si el usuario endureció su
+    // perfil después (y el plan no servía esa categoría, luego P0-02 lo conservó con
+    // razón), el bowl podía reintroducir el alimento recién excluido.
+    //
+    // Un plan inválido no se guarda ni se persiste: se lanza. Los tres llamadores ya
+    // manejan el fallo de guardado.
+    const avoidAhora = avoidForRegen(plan.gen, plan.preferences, prevState.obData);
+    const verdict = validatePlan(plan, avoidAhora);
+    if (!verdict.valid) {
+      const err = new InvalidPlanError(verdict);
+      console.error('[saveWeeklyPlan] plan rechazado:', err.message, verdict.violations);
+      throw err;
+    }
+
     const isRegeneration =
       prevState.weeklyPlan != null &&
       prevState.weeklyPlan.generatedAt !== plan.generatedAt;
@@ -1474,31 +1620,108 @@ export const useAppStore = create<AppState>()(
   coachPrefilledMessage: null,
   setCoachPrefilledMessage: (msg) => set({ coachPrefilledMessage: msg }),
 
-  recalcFromObData: async () => {
+  energyState: null,
+  macroTargets: null,
+  macroResolution: null,
+
+  recalcFromObData: async (reason = 'unspecified') => {
     const { obData } = get();
-    // Motor único (mismo cálculo que finishOnboardingCalc — ya no está duplicado).
-    const targets  = computeNutritionTargets(parseObData(obData));
-    const tdee     = targets.tdee;
-    const planGoal = targets.planGoal;
-    const planKey  = assignPlan(planGoal);
 
-    set({ mealPlanKey: planKey, tdee, planGoal });
+    // ── 1 · RESOLVER · motor nuevo, única autoridad ─────────────────────────
+    // `buildEnergySnapshot` toma `obData` y resuelve el estado por su cuenta, así
+    // que es IMPOSIBLE guardar un snapshot que no corresponda a estos inputs.
+    // Puede LANZAR si un dato presente es inválido (`'DL9'`, 8 días, un sexo no
+    // mapeable): eso es un fallo real y debe verse, no convertirse en una cifra.
+    const { state: energyState, snapshot } =
+      buildEnergySnapshot(obData, new Date().toISOString());
 
+    // ── 2 · PROYECTAR ──────────────────────────────────────────────────────
+    // `planGoal` y `tdee` son proyecciones del estado, no autoridades. Se
+    // escriben en el MISMO `set()` que él: por construcción no pueden divergir.
+    const projected = projectEnergy(energyState, get().mealPlanKey);
+    // A2 · macros: misma resolución, mismo acto. La modalidad declarada vive en
+    // `obData`; si falta, la resolución lo dice (`INPUT_REQUIRED`) y no hay gramos.
+    const macroResolution = resolveMacroPrescription(energyState, obData);
+
+    // ── 3 · MEMORIA · un solo set, atómico ─────────────────────────────────
+    set({
+      energyState,
+      planGoal: projected.planGoal,
+      tdee: projected.tdee,
+      mealPlanKey: projected.mealPlanKey,
+      // CAPA 2 · las macros se derivan en el mismo acto: no pueden quedar de otra energía.
+      macroResolution,
+      macroTargets: macroResolution.prescription ?? null,
+    });
+
+    // ── 4 · PERSISTIR · un solo upsert ─────────────────────────────────────
+    // Los cinco campos viajan juntos, así que Postgres los aplica atómicamente:
+    // es imposible que la DB quede con el snapshot nuevo y el `plan_goal` viejo,
+    // o al revés. Y la memoria se escribió ANTES, así que tampoco puede quedar
+    // la DB nueva con el store viejo.
     const user = get().user;
-    if (user?.id) {
-      try {
-        const state = get();
-        await supabase.from('user_profiles').upsert({
-          user_id: user.id,
-          ob_data: state.obData,
-          tdee: state.tdee,
-          plan_goal: state.planGoal,
-          meal_plan_key: state.mealPlanKey,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
-      } catch (e) {
-        console.error('[recalcFromObData] failed to persist profile:', e);
+    if (!user?.id) return;
+    try {
+      const st = get();
+      await supabase.from('user_profiles').upsert({
+        user_id: user.id,
+        ob_data: st.obData,
+        tdee: st.tdee,
+        plan_goal: st.planGoal,
+        meal_plan_key: st.mealPlanKey,
+        energy_snapshot: snapshot as unknown as Json,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+    } catch (e) {
+      // La AUTORIDAD DE LA SESIÓN es la memoria, que ya tiene el resultado nuevo.
+      // No se revierte: revertir significaría volver a una cifra legacy o a
+      // ninguna. La hidratación siguiente verá una identidad obsoleta y
+      // recalculará, llegando al mismo resultado porque el motor es determinista.
+      console.error(`[recalcFromObData:${reason}] failed to persist profile:`, e);
+    }
+  },
+
+  hydrateEnergyFromSnapshot: async (rawSnapshot) => {
+    // `obData` DEBE estar ya hidratado cuando se llama a esto: la decisión se
+    // toma comparando el snapshot guardado contra lo que los motores producen con
+    // el perfil de la base de datos, no con el que hubiera en memoria.
+    try {
+      const decision = decideEnergyHydration({
+        obData: get().obData,
+        rawSnapshot,
+        computedAt: new Date().toISOString(),
+        previousMealPlanKey: get().mealPlanKey,
+      });
+
+      if (decision.action === 'ADOPT') {
+        const macroResolution = resolveMacroPrescription(decision.state, get().obData);
+        // Vigente: se adopta y NO se escribe. Escribir aquí convertiría cada
+        // login en un UPDATE que no cambia nada y movería `computedAt` sin que
+        // haya ocurrido ningún cálculo nuevo.
+        set({
+          energyState: decision.state,
+          planGoal: decision.projection.planGoal,
+          tdee: decision.projection.tdee,
+          mealPlanKey: decision.projection.mealPlanKey,
+          // CAPA 2 · derivación pura y determinista: no hace falta snapshot propio.
+          macroResolution,
+          macroTargets: macroResolution.prescription ?? null,
+        });
+        return;
       }
+
+      // Cualquier otro motivo —ausente, corrupto, esquema futuro, identidad o
+      // versiones obsoletas, status cambiado, cifras contradictorias— pasa por la
+      // ACCIÓN CENTRAL. No hay una segunda ruta que resuelva y persista: la
+      // hidratación decide, no calcula.
+      await get().recalcFromObData(`hydration:${decision.reason}`);
+    } catch (e) {
+      // FAIL-CLOSED. Un `obData` con un dato PRESENTE pero inválido lanza desde
+      // el motor. La salida NO es la energía legacy ni la cifra que hubiera en
+      // `plan_goal`: es quedarse SIN CIFRA, con el estado a `null` para que cada
+      // pantalla sepa que no hay nada resuelto en esta sesión.
+      console.error('[hydrateEnergyFromSnapshot] perfil energético irresoluble:', e);
+      set({ energyState: null, planGoal: null, tdee: null, macroTargets: null, macroResolution: null });
     }
   },
 
@@ -1548,8 +1771,11 @@ export const useAppStore = create<AppState>()(
     mealResolvedByLog: {},
     welcomeVidClosed: false,
     mealPlanKey: 'planA',
-    tdee: 0,
-    planGoal: 0,
+    // C3 · al cambiar de cuenta no hay cifra energética: `null`, no 0.
+    tdee: null,
+    planGoal: null,
+    macroTargets: null,
+    macroResolution: null,
     workoutLog: [],
     lastExercisePerformance: {},
     completedSessions: [],
@@ -1623,6 +1849,33 @@ export const useAppStore = create<AppState>()(
 }),
 {
   name: 'hsc-store',
+  // P0-04 · SANEADO EN LA REHIDRATACIÓN. `weeklyPlan` se persiste en localStorage y antes
+  // volvía al estado VERBATIM: no había `merge`, ni `migrate`, ni `onRehydrateStorage`, así
+  // que un plan guardado antes de P0-03 (con cruces de tiempo o platillos incompatibles)
+  // reaparecía intacto y pasaba el gate de render, que solo comprueba que `days` sea un
+  // array no vacío.
+  //
+  // Se usa `merge` y no `onRehydrateStorage` a propósito: `merge` corre ANTES de que el
+  // estado exista, así que un plan inválido nunca llega a ser `state.weeklyPlan` ni por un
+  // instante. Con `onRehydrateStorage` entraría primero y se limpiaría después.
+  //
+  // Las restricciones se reconstruyen del propio snapshot persistido (`obData` también se
+  // persiste), no del estado en memoria, que en este punto todavía está vacío.
+  merge: (persisted, current) => {
+    const p = (persisted ?? {}) as Partial<AppState>;
+    const merged = { ...current, ...p } as AppState;
+    // A2 · una prescripción persistida por otra versión de la autoridad (p. ej. v1,
+    // con la clase de actividad inferida de los minutos) no se adopta ni un
+    // instante: queda sin macros hasta que la hidratación las vuelva a derivar.
+    if (p.macroTargets != null && p.macroTargets.version !== MACRO_PRESCRIPTION_VERSION) {
+      merged.macroTargets = null;
+    }
+    if (p.weeklyPlan != null) {
+      const avoid = avoidForRegen(p.weeklyPlan.gen, p.weeklyPlan.preferences, p.obData);
+      merged.weeklyPlan = planIfValid(p.weeklyPlan, avoid);
+    }
+    return merged;
+  },
   partialize: (state) => ({
     language: state.language,
     languageSetByUser: state.languageSetByUser,
@@ -1640,8 +1893,13 @@ export const useAppStore = create<AppState>()(
     mealResolvedByLog: state.mealResolvedByLog,
     welcomeVidClosed: state.welcomeVidClosed,
     mealPlanKey: state.mealPlanKey,
+    // C4 · `tdee` y `planGoal` se persisten como PROYECCIONES; `energyState`
+    // NO se persiste a propósito: se recalcula en la hidratación comprobando la
+    // identidad del snapshot, y guardarlo invitaría a confiar en uno viejo.
     tdee: state.tdee,
     planGoal: state.planGoal,
+    // CAPA 2 · proyección hermana de `planGoal`; la hidratación la vuelve a derivar.
+    macroTargets: state.macroTargets,
     workoutLog: state.workoutLog,
     lastExercisePerformance: state.lastExercisePerformance,
     completedSessions: state.completedSessions,

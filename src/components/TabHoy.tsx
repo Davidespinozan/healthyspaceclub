@@ -13,6 +13,7 @@ import { hasGeneratedWeeklyPlan } from '../utils/weeklyPlanState';
 import { regionalizeStaticPlan } from '../data/regionFood';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
 import { expandAvoidCats, textMatchesAvoid } from '../utils/planEngine';
+import { avoidForRegen } from '../utils/avoidAuthority';   // P0-04 · restricciones actuales para el bowl
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
@@ -51,6 +52,9 @@ import { getHSMBank } from '../data/hsmBank';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n/es';
 import CalculadoraSheet from './CalculadoraSheet';
+import ProfileCompletionSheet from './sheets/ProfileCompletionSheet';
+import { nutritionCompletionSteps } from '../utils/profileCompletion';
+import { habitualActivityForAI } from '../utils/trainingProfileOptions';
 import { plural } from '../i18n/format';
 
 // Etiquetas de tiempo (tag) por comida — mismas llaves que MealDetailPopout.
@@ -68,6 +72,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const { t, locale } = useT();
   // Calculadora abierta "en vez de" una comida (slot). null = cerrada.
   const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number } | null>(null);
+  // A10.1 · completar el perfil de Nutrition desde Inicio: MISMA hoja que el planner.
+  const [completionOpen, setCompletionOpen] = useState(false);
   const {
     userName, planGoal, mealPlanKey, shoppingDay, saveWeeklyPlan, addFoodLog,
     mealChecks, toggleMealCheck,
@@ -354,19 +360,26 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const kcalGoal = planGoal > 0 ? planGoal : 0;
+  // C3 · `null` = no hay objetivo vigente. Antes esto producía 0, que luego se
+  // pintaba y se usaba como denominador.
+  const kcalGoal: number | null = planGoal != null && planGoal > 0 ? planGoal : null;
+  // A10.1 · si a Nutrition le falta algún dato del socio, la tarjeta lo dice en vez
+  // de pintar «— kcal». Qué falta lo decide el dominio (`nutritionCompletionSteps`).
+  const nutritionCompletionPending = nutritionCompletionSteps(obData).length > 0;
   const kcalConsumed = Math.round(dayConsumption.consumedKcal);
   // El anillo de menú refleja la ACCIÓN del usuario: comidas marcadas / total
   // (antes era kcal≥80% de la meta, y marcar todo no lo cerraba si el plan
   // sumaba menos). Fallback a kcal si no hay slots de comida.
   const mealSlotsTotal = dayConsumption.totalSlots;
   const mealSlotsDone = dayConsumption.completedSlots;
+  // Sin slots de comida el anillo cae a kcal, y sin objetivo vigente no hay
+  // denominador: 0 % es la representación neutra, no un 100 % artificial.
   const nutritionPct = mealSlotsTotal > 0
     ? mealSlotsDone / mealSlotsTotal
-    : (kcalGoal > 0 ? Math.min(1, kcalConsumed / kcalGoal) : 0);
+    : (kcalGoal != null ? Math.min(1, kcalConsumed / kcalGoal) : 0);
   const nutritionDone = mealSlotsTotal > 0
     ? mealSlotsDone >= mealSlotsTotal
-    : (kcalGoal > 0 ? kcalConsumed / kcalGoal >= 0.8 : kcalConsumed > 0);
+    : (kcalGoal != null ? kcalConsumed / kcalGoal >= 0.8 : kcalConsumed > 0);
   const coreDoneCount = [trainedToday, nutritionDone, reflectionDone].filter(Boolean).length;
   const allCoreDone = coreDoneCount === 3;
   const animatedStreak = useCountUp(streakCount);
@@ -416,7 +429,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           edad: obData.edad || '',
           peso: obData.peso || '',
           goal: obData.goal || '',
-          activity: obData.activity || '',
+          habitualActivity: habitualActivityForAI(obData),
           locale,
         })
       : buildDailyBriefingPrompt({
@@ -874,7 +887,19 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             <div className="th3-cover th3-cover-nutricion" />
             <div className="th3-card-body">
               <p className="th3-card-eyebrow">{t('hoy.cardEyebrowNutrition')}</p>
-              {!hasGeneratedWeeklyPlan(weeklyPlan) ? (
+              {nutritionCompletionPending ? (
+                <div className="th3-profile-completion">
+                  <h2 className="th3-card-title">{t('profileCompletion.title')}</h2>
+                  <p className="th3-card-meta">{t('profileCompletion.body')}</p>
+                  <button
+                    type="button"
+                    className="th3-completion-btn"
+                    onClick={(e) => { e.stopPropagation(); setCompletionOpen(true); }}
+                  >
+                    {t('profileCompletion.cta')}
+                  </button>
+                </div>
+              ) : !hasGeneratedWeeklyPlan(weeklyPlan) ? (
                 <h2 className="th3-card-title th3-card-title--cta">
                   {t('hoy.nutritionGenerateTitle')}
                   <ArrowRight size={18} strokeWidth={2.2} className="th3-card-title-arrow" />
@@ -887,7 +912,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
                       completed: dayConsumption.completedSlots,
                       total: dayConsumption.totalSlots,
                       consumed: dayConsumption.consumedKcal,
-                      goal: planGoal,
+                      // C3 · sin objetivo vigente, «—». Nunca un 0 ni «null».
+                      goal: planGoal ?? '—',
                     })}
                   </p>
                   {(todayMeals.length > 0 || todayFoodLog.length > 0) && (
@@ -1065,14 +1091,33 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             if (!g || !weeklyPlan?.days?.length) return;
             const idx = new Date().getDay();                 // 0=domingo
             const i = Math.min(idx, weeklyPlan.days.length - 1);
-            const nuevo = buildDayWithFixed(
-              { kcal: g.kcal, protG: g.protG, fatG: g.fatG, carbG: g.carbG },
-              { slot, name: bowl.name, kcal: bowl.kcal, prot: bowl.prot, fat: bowl.fat, carb: bowl.carb, img: bowl.img ?? undefined, desc: bowl.tagline ?? t('bowl.genericDesc') },
-              { avoid: g.avoid, craving: g.craving },
-              weeklyPlan.days[i].day,
-            );
+            // P0-03 · el motor ahora FALLA CERRADO: si con las restricciones del socio no
+            // hay platillos elegibles para algún tiempo, lanza en vez de rellenar con un
+            // platillo de otro tiempo o con uno excluido. Aquí eso significa dejar el día
+            // como estaba (sin el bowl) — nunca guardar un día armado a la fuerza.
+            // P0-04 · restricciones EFECTIVAS ACTUALES, no `g.avoid`. `g.avoid` es el
+            // conjunto con el que se generó el plan: si el socio endureció su perfil
+            // después y el plan no servía esa categoría (así que P0-02 lo conservó, con
+            // razón), rearmar con `g.avoid` reintroducía el alimento recién excluido.
+            // `avoidForRegen` une las permanentes de AHORA con la parte semanal del plan.
+            const avoidAhora = avoidForRegen(g, weeklyPlan.preferences, obData);
+            let nuevo;
+            try {
+              nuevo = buildDayWithFixed(
+                { kcal: g.kcal, protG: g.protG, fatG: g.fatG, carbG: g.carbG },
+                { slot, name: bowl.name, kcal: bowl.kcal, prot: bowl.prot, fat: bowl.fat, carb: bowl.carb, img: bowl.img ?? undefined, desc: bowl.tagline ?? t('bowl.genericDesc') },
+                { avoid: avoidAhora, craving: g.craving },
+                weeklyPlan.days[i].day,
+              );
+            } catch (e) {
+              console.error('[TabHoy] no se pudo rearmar el día con el bowl:', e);
+              return;
+            }
             const days = weeklyPlan.days.map((d, k) => (k === i ? nuevo : d));
-            void saveWeeklyPlan({ ...weeklyPlan, days });
+            // saveWeeklyPlan valida el plan resultante y lanza si es inválido (P0-04): el
+            // día se queda como estaba en vez de guardarse un plan que no cumple.
+            void saveWeeklyPlan({ ...weeklyPlan, days })
+              .catch((e) => console.error('[TabHoy] el plan con el bowl no se guardó:', e));
           }}
         />
         )}
@@ -1168,6 +1213,9 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           setCalcTarget({ mealTime: time, mealIndex: index });
         }}
       />
+
+      {/* ── A10.1 · completar el perfil de Nutrition (misma hoja que el planner) ── */}
+      {completionOpen && <ProfileCompletionSheet onClose={() => setCompletionOpen(false)} />}
 
       {/* ── Calculadora "en vez de" una comida (catálogo → gramos → macros exactas) ── */}
       {calcTarget !== null && (

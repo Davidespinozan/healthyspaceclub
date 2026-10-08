@@ -19,6 +19,8 @@ const DINNER = { time: 'Cena', name: 'Salmón con arroz', desc: 's', portions: [
 function seed(over: Record<string, unknown> = {}) {
   useAppStore.setState({
     userName: 'Dae', obData: OB as never, startDate: daysAgo(10), streakCount: 9,
+    // C4 · la cifra viene prescrita por el motor nuevo; el contexto solo la usa.
+    planGoal: 2100,
     shoppingDay: new Date().getDay(),
     weeklyPlan: { days: [{ day: 1, meals: [DINNER] }], selectedDays: [1,2,3,4,5,6,7], mealPlanKey: 'planA', shoppingList: [], preferences: '' } as never,
     mealChecks: {}, mealResolvedByLog: {}, foodLog: [], workoutLog: [],
@@ -43,12 +45,13 @@ describe('§15 · behavioral facts', () => {
   });
   it('C · nutrición usa el resultado EXACTO de CoachContext (no recalcula)', () => {
     seed({ foodLog: [{ date: today, desc: 'pollo', kcal: 300, prot: 30, carbs: 10, fat: 8 }] as never });
-    const ctx = buildCoachContext(ST());
+    const n = buildCoachContext(ST()).nutrition;
+    if (n === null) throw new Error('nutrition es null: el seed debería tener planGoal');
     const f = facts();
     // los valores del bloque === CoachContext.remaining (autoridad), sin target-consumed local
-    expect(f).toContain(String(ctx.nutrition.remaining.prot));
-    expect(f).toContain(String(ctx.nutrition.remaining.kcal));
-    expect(f).toContain(String(ctx.nutrition.consumed.kcal));
+    expect(f).toContain(String(n.remaining.prot));
+    expect(f).toContain(String(n.remaining.kcal));
+    expect(f).toContain(String(n.consumed.kcal));
   });
   it('D · sin entreno hoy → NO se llama "día de descanso"', () => {
     seed({ dailyWorkout: { date: daysAgo(3), generatedAt: '', plan: { exercises: [] } } as never });

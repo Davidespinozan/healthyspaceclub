@@ -3,7 +3,7 @@ import {
   deriveStableNutritionWeight, nextNutritionWeight,
   NUTRITION_WEIGHT_UPDATE_KG, NUTRITION_WEIGHT_MIN_DAYS,
 } from '../weightTrend';
-import { computeNutritionTargets } from '../nutritionTargets';
+import { prescribeMacros } from '../macroPrescription';
 
 // NUTRITION-N10.1 · peso de tendencia estable (mediana rodante 14 días). Todo puro/determinista;
 // asOf se pasa siempre (sin Date.now oculto).
@@ -144,27 +144,22 @@ describe('N10.1 · S/T · determinismo / no-mutación', () => {
   });
 });
 
-describe('N10.1 · Z/AA/AB/AC · computeNutritionTargets desde peso estable respeta pisos/wellness/renal', () => {
-  const ob = (over: any) => ({ sexo: 'Hombre', pesoKg: 80, estaturaCm: 178, edad: 30, activity: 'Ligera', goal: 'bajar grasa', grasa: 0, embarazo: false, conditions: [] as string[], ...over });
-  it('Z · target desde stableKg = target desde ese peso (sin capa paralela)', () => {
+describe('N10.1 · Z · el peso estable alimenta las macros', () => {
+  // CAPA 2 · las macros las prescribe `macroPrescription` (PRW × factor). AB
+  // (bienestar ≥ 70) se retiró: fuera de 19–64 no hay prescripción (Scope Guard),
+  // y la autoridad nueva no tiene «modo bienestar».
+  // A7 · AC (tope renal) se retiró: ningún diagnóstico ajusta las macros.
+  const macros = (weightKg: number) => prescribeMacros({
+    energyKcal: 2200, goal: 'FAT_LOSS', weightKg, heightCm: 178,
+    activityClass: 'LOW_DEMAND', trainingBand: 'T1',
+  });
+
+  it('Z · macros desde stableKg = macros desde ese peso (sin capa paralela)', () => {
     const stable = deriveStableNutritionWeight(series(ASOF, [80.0, 80.1, 79.9]), ASOF);
     expect(stable.status).toBe('READY');
     if (stable.status === 'READY') {
-      const fromStable = computeNutritionTargets(ob({ pesoKg: stable.stableKg }));
-      const direct = computeNutritionTargets(ob({ pesoKg: 80.0 }));
-      expect(fromStable.planGoal).toBe(direct.planGoal); // stableKg==80.0
+      expect(stable.stableKg).toBe(80.0);
+      expect(macros(stable.stableKg)).toEqual(macros(80.0));
     }
-  });
-  it('AA · piso de seguridad sigue vigente (mujer chica cut ≥1200)', () => {
-    const t = computeNutritionTargets(ob({ sexo: 'Mujer', pesoKg: 48, estaturaCm: 152, edad: 30 }));
-    expect(t.planGoal).toBeGreaterThanOrEqual(1200);
-  });
-  it('AB · wellnessMode (≥70) sin déficit', () => {
-    const t = computeNutritionTargets(ob({ edad: 72 }));
-    expect(t.wellnessMode).toBe(true);
-  });
-  it('AC · renal → proteína ≤ 1.0 g/kg', () => {
-    const t = computeNutritionTargets(ob({ pesoKg: 80, conditions: ['renal'] }));
-    expect(t.protG).toBeLessThanOrEqual(80);
   });
 });

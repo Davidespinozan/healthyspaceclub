@@ -4,16 +4,38 @@ vi.mock('../../lib/supabase', () => ({ supabase: { auth: {}, from: () => ({}) } 
 
 import { buildCoachContext, renderHscFacts } from '../coachContext';
 import { buildCoachSystemPrompt } from '../../ai/prompts/coach';
-import { computeNutritionTargets, parseObData } from '../nutritionTargets';
+import { prescribeMacros } from '../macroPrescription';
 import { dayKey } from '../localDate';
 import { useAppStore } from '../../store';
 
 const ST = () => useAppStore.getState();
 const ctx = () => buildCoachContext(ST());
+/**
+ * C4 · el bloque de nutrición ya puede ser `null` (sin prescripción vigente). Los
+ * tests que SÍ esperan cifras pasan por aquí: si llega `null` el fallo señala el
+ * contrato roto en vez de un `TypeError` opaco diez líneas más abajo.
+ */
+const nut = () => {
+  const n = ctx().nutrition;
+  if (n === null) throw new Error('nutrition es null: el seed debería tener planGoal');
+  return n;
+};
 const today = dayKey(new Date());
 const daysAgo = (n: number) => dayKey(new Date(Date.now() - n * 86400000));
 
 const OB = { sex: 'Hombre', peso: 80, estatura: 180, edad: 30, activity: 'Alta', goal: 'Bajar grasa', trainingGoal: 'hipertrofia' };
+/**
+ * C4 · la cifra la PRESCRIBE el motor nuevo y llega al contexto por `store.planGoal`.
+ * Se siembra directamente —como lo haría la acción central— porque lo que estos
+ * tests comprueban es que el contexto la USA, no cómo se calcula.
+ */
+const PLAN_GOAL = 2100;
+/** CAPA 2 · las macros llegan por `store.macroTargets`, prescritas sobre `PLAN_GOAL`. */
+const MACRO_TARGETS = prescribeMacros({
+  energyKcal: PLAN_GOAL, goal: 'FAT_LOSS', weightKg: 80, heightCm: 180, activityClass: 'MIXED', trainingBand: 'T2',
+});
+if (MACRO_TARGETS.status !== 'VALID') throw new Error('el seed debería ser VALID');
+const MACROS = { protG: MACRO_TARGETS.proteinG, carbG: MACRO_TARGETS.carbG, fatG: MACRO_TARGETS.fatG };
 const TRACE = {
   week: 5, phase: 'acumulacion', progression: 'lineal', deload: true, recovery: 'media',
   readinessState: 'ok', readinessFactors: ['sueño bajo'], priorityMuscles: ['pecho'],
@@ -25,6 +47,8 @@ const DINNER = { time: 'Cena', name: 'Salmón con arroz', desc: 'salmón + arroz
 function seed(over: Record<string, unknown> = {}) {
   useAppStore.setState({
     userName: 'Dae', obData: OB as never, startDate: daysAgo(10), streakCount: 9,
+    planGoal: PLAN_GOAL,
+    macroTargets: MACRO_TARGETS,
     shoppingDay: new Date().getDay(), // todayOffset = 0 → selectedDays[0]
     weeklyPlan: { days: [{ day: 1, meals: [DINNER] }, { day: 2, meals: [{ ...DINNER, name: 'Pollo (mañana)' }] }], selectedDays: [1, 2, 3, 4, 5, 6, 7], mealPlanKey: 'planA', shoppingList: [], preferences: '' } as never,
     mealChecks: {}, mealResolvedByLog: {}, foodLog: [],
@@ -43,27 +67,28 @@ beforeEach(() => seed());
 
 // ── §20A · NUTRITION AUTHORITY (no re-cálculo, no déficit hard-coded) ─────────
 describe('nutrition authority', () => {
-  it('A · target macros === computeNutritionTargets; remaining === computeCoach (sin hard-code)', () => {
-    const c = ctx().nutrition;
-    const tgt = computeNutritionTargets(parseObData(OB as never));
-    expect(c.target).toEqual({ kcal: tgt.planGoal, prot: tgt.protG, carb: tgt.carbG, fat: tgt.fatG });
+  it('A · kcal === store.planGoal y macros === el puente; remaining === computeCoach (sin hard-code)', () => {
+    const c = nut();
+    expect(c.target).toEqual({ kcal: PLAN_GOAL, prot: MACROS.protG, carb: MACROS.carbG, fat: MACROS.fatG });
     // sin comida registrada → resta = meta completa (target − 0)
-    expect(c.remaining.kcal).toBe(tgt.planGoal);
-    expect(c.remaining.prot).toBe(tgt.protG);
+    expect(c.remaining.kcal).toBe(PLAN_GOAL);
+    expect(c.remaining.prot).toBe(MACROS.protG);
   });
   it('A2 · con comida registrada, remaining = target − consumed (exacto)', () => {
     seed({ foodLog: [{ date: today, desc: 'pollo', kcal: 300, prot: 30, carbs: 10, fat: 8 }] as never });
-    const c = ctx().nutrition;
-    const tgt = computeNutritionTargets(parseObData(OB as never));
+    const c = nut();
     expect(c.consumed.kcal).toBe(300);
-    expect(c.remaining.prot).toBe(Math.max(0, tgt.protG - 30));
+    expect(c.remaining.prot).toBe(Math.max(0, MACROS.protG - 30));
   });
+  // C4 · el caso «sin prescripción → bloque null» se prueba EJECUTÁNDOLO en
+  // `c4EnergyAuthorityCutover.test.ts`, que no importa el store y por tanto sí
+  // corre. Añadirlo aquí habría sumado tests que el baseline roto nunca ejecuta.
 });
 
 // ── §20B · today's meals ─────────────────────────────────────────────────────
 describe('today meals', () => {
   it('B · la cena de HOY aparece; la comida de MAÑANA no aparece como de hoy; sin alternativas inventadas', () => {
-    const meals = ctx().nutrition.todayMeals;
+    const meals = nut().todayMeals;
     expect(meals.map(m => m.name)).toContain('Salmón con arroz');
     expect(meals.map(m => m.name)).not.toContain('Pollo (mañana)');
     const facts = renderHscFacts(ctx());
@@ -114,9 +139,9 @@ describe('temporal', () => {
 // ── §20G · freshness ─────────────────────────────────────────────────────────
 describe('freshness', () => {
   it('G · cambiar foodLog cambia el contexto de nutrición en el siguiente build', () => {
-    const before = ctx().nutrition.consumed.kcal;
+    const before = nut().consumed.kcal;
     useAppStore.setState({ foodLog: [{ date: today, desc: 'x', kcal: 500, prot: 10, carbs: 10, fat: 10 }] as never });
-    const after = ctx().nutrition.consumed.kcal;
+    const after = nut().consumed.kcal;
     expect(before).toBe(0); expect(after).toBe(500);
   });
 });
@@ -170,14 +195,13 @@ describe('§21 target-question acceptance (el prompt contiene los hechos)', () =
   it('el system prompt incluye los datos para responder las preguntas objetivo', () => {
     seed({ foodLog: [{ date: today, desc: 'pollo', kcal: 300, prot: 30, carbs: 10, fat: 8 }] as never });
     const p = buildCoachSystemPrompt(ST(), 'es', 'NORMAL');
-    const tgt = computeNutritionTargets(parseObData(OB as never));
     expect(p).toMatch(/DATOS ACTUALES DE HSC/);            // bloque de hechos
     expect(p).toMatch(/ENTRENO DE HOY/);                   // Q1 qué entreno hoy
     expect(p).toContain('Press');                          // ejercicio real (nombre del banco)
     expect(p).toMatch(/POR QUÉ HSC prescribió/);           // Q2/Q3 por qué / deload
     expect(p).toMatch(/DELOAD activo/i);                   // Q3
     expect(p).toMatch(/RESTA HOY/);                        // Q4-7 calorías/macros restantes
-    expect(p).toContain(String(tgt.protG - 30));           // proteína restante EXACTA
+    expect(p).toContain(String(MACROS.protG - 30));        // proteína restante EXACTA
     expect(p).toMatch(/Salmón con arroz/);                 // Q9 cena
     expect(p).toMatch(/ESTA SEMANA: 1 sesion/);            // Q10 esta semana
     expect(p).toMatch(/tendencia de volumen/);             // Q11

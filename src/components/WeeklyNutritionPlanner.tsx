@@ -2,17 +2,27 @@ import { dayKey } from '../utils/localDate';
 import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
+import {
+  PERMANENT_AVOID_CATALOG, permanentAvoidFrom, weeklyAvoidFrom, effectiveAvoid,
+} from '../utils/avoidAuthority';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
 import { hasGeneratedWeeklyPlan, weeklyPlanPhase, resolveTodayPlanMeals } from '../utils/weeklyPlanState';
 import { normalizeGroceryList } from '../utils/groceryList';
 import { mealKcal, dayNutrition } from '../utils/mealNutrition';
 import { computeDayConsumption } from '../utils/foodConsumption';
-import { computeNutritionTargets, parseObData } from '../utils/nutritionTargets';
+// C4 · el planner ya NO llama a `computeNutritionTargets`: la cifra energética la
+// prescribe el motor nuevo y llega por `store.planGoal`.
+// CAPA 2 · las macros tampoco se calculan aquí: las prescribe `macroPrescription`
+// y llegan por `store.macroTargets`.
+import { isServableMacroPrescription, nonServableMacroNotice } from '../utils/macroPrescription';
 import { PLAN_ENGINE_VERSION } from '../utils/planEngine';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
-import { RefreshCw, Salad, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, Dumbbell, type LucideIcon } from 'lucide-react';
+import EditDataSheet from './sheets/EditDataSheet';
+import ProfileCompletionSheet from './sheets/ProfileCompletionSheet';
+import { nutritionCompletionSteps } from '../utils/profileCompletion';
+import { RefreshCw, ShoppingCart, Lock, Sunrise, Apple, Utensils, Nut, Moon, Leaf, Wheat, Milk, Beef, Shell, CircleCheck, AlertTriangle, Check, X, ArrowRight, ArrowLeft, RotateCcw, Egg, Fish, Bean, Sprout, Dumbbell, type LucideIcon } from 'lucide-react';
 import type { ProteinShake } from '../utils/planEngine';
 import MealDetailPopout, { type PopoutMeal } from './MealDetailPopout';
 import { tDishName, tIngName, tPortion } from '../utils/nutritionI18n';
@@ -57,8 +67,6 @@ const AVOID_LABEL_KEYS: Record<string, TranslationKey> = {
   'soya': 'nutritionPlanner.avoidSoy',
   'ajonjoli': 'nutritionPlanner.avoidSesame',
   'pescado': 'nutritionPlanner.avoidFish',
-  'vegetariano': 'nutritionPlanner.avoidVegetarian',
-  'vegano': 'nutritionPlanner.avoidVegan',
   'nada': 'nutritionPlanner.avoidNone',
 };
 const AVOID_SUB_KEYS: Record<string, TranslationKey> = {
@@ -121,8 +129,6 @@ const QUESTIONS: Array<{
       { value: 'pescado',      icon: Fish },
       { value: 'mariscos',     icon: Shell },
       { value: 'carne-roja',   icon: Beef },
-      { value: 'vegetariano',  icon: Salad },
-      { value: 'vegano',       icon: Sprout },
       { value: 'nada',         icon: CircleCheck },
     ],
   },
@@ -153,11 +159,11 @@ export default function WeeklyNutritionPlanner() {
   const {
     shoppingDay, setShoppingDay,
     weeklyPlan, saveWeeklyPlan, clearWeeklyPlan,
-    mealPlanKey, planGoal, obData, userName,
+    mealPlanKey, planGoal, macroTargets, macroResolution, energyState, obData, userName,
     mealChecks, toggleMealCheck,
     mealResolvedByLog, clearMealResolvedByLog, foodLog, removeFoodLog,
     planRegenCount, incrementPlanRegen, userEmail,
-  } = useAppStore(useShallow((s) => ({ shoppingDay: s.shoppingDay, setShoppingDay: s.setShoppingDay, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, clearWeeklyPlan: s.clearWeeklyPlan, mealPlanKey: s.mealPlanKey, planGoal: s.planGoal, obData: s.obData, userName: s.userName, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, mealResolvedByLog: s.mealResolvedByLog, clearMealResolvedByLog: s.clearMealResolvedByLog, foodLog: s.foodLog, removeFoodLog: s.removeFoodLog, planRegenCount: s.planRegenCount, incrementPlanRegen: s.incrementPlanRegen, userEmail: s.userEmail })));
+  } = useAppStore(useShallow((s) => ({ shoppingDay: s.shoppingDay, setShoppingDay: s.setShoppingDay, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, clearWeeklyPlan: s.clearWeeklyPlan, mealPlanKey: s.mealPlanKey, planGoal: s.planGoal, macroTargets: s.macroTargets, macroResolution: s.macroResolution, energyState: s.energyState, obData: s.obData, userName: s.userName, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, mealResolvedByLog: s.mealResolvedByLog, clearMealResolvedByLog: s.clearMealResolvedByLog, foodLog: s.foodLog, removeFoodLog: s.removeFoodLog, planRegenCount: s.planRegenCount, incrementPlanRegen: s.incrementPlanRegen, userEmail: s.userEmail })));
   const todayKey = dayKey(new Date());
 
   const weekStart = (() => {
@@ -181,6 +187,56 @@ export default function WeeklyNutritionPlanner() {
     () => weeklyPlanPhase(shoppingDay, weeklyPlan),
   );
   const [step, setStep] = useState(0);
+  // A10 · COMPLETAR PERFIL. Un único aviso cuando a Nutrition le falta cualquier
+  // dato del socio (perfil incompleto o modalidad no declarada). Qué falta lo
+  // decide la cadena real (`nutritionCompletionSteps`), no esta pantalla. El plan
+  // guardado NO se borra: solo deja de estar vigente hasta completar.
+  const [completionOpen, setCompletionOpen] = useState(false);
+  const [editDataOpen, setEditDataOpen] = useState(false);
+  const completionPending = nutritionCompletionSteps(obData).length > 0;
+  // A7 · fuera de alcance por dieta terapéutica indicada: se explica, sin cifras.
+  const therapeuticOutOfScope = energyState?.status === 'OUTSIDE_HSC_NUTRITION_SCOPE'
+    && energyState.scopeReason === 'therapeutic_diet_required';
+  // A9 · prescripción resuelta pero sin gramos: alcance deportivo (por motivo) o el
+  // respaldo defensivo de INFEASIBLE. Sin cifras, sin macros inventadas.
+  const macroNotice = nonServableMacroNotice(macroResolution?.prescription);
+  const macroNoticeBody = macroNotice === 'SPORTS_SPECIALIZED' ? 'nutritionPlanner.sportsScopeSpecialized'
+    : macroNotice === 'SPORTS_HIGH_DEMAND' ? 'nutritionPlanner.sportsScopeHighDemand'
+    : macroNotice === 'DEFENSIVE_UNAVAILABLE' ? 'nutritionPlanner.macrosUnavailable' : null;
+  const modalityPrompt = macroNoticeBody ? (
+    <div className="wnp2-scope-notice" role="status" style={{ margin: '12px 0', textAlign: 'center' }}>
+      <p className="wz-title" style={{ fontSize: '1.05rem' }}>
+        {t(macroNotice === 'DEFENSIVE_UNAVAILABLE' ? 'nutritionPlanner.macrosUnavailableTitle' : 'nutritionPlanner.sportsScopeTitle')}
+      </p>
+      <p className="wz-subtitle">{t(macroNoticeBody)}</p>
+    </div>
+  ) : therapeuticOutOfScope ? (
+    <div className="wnp2-scope-notice" role="status" style={{ margin: '12px 0', textAlign: 'center' }}>
+      <p className="wz-title" style={{ fontSize: '1.05rem' }}>{t('nutritionPlanner.therapeuticOutTitle')}</p>
+      <p className="wz-subtitle">{t('nutritionPlanner.therapeuticOutBody')}</p>
+    </div>
+  ) : completionPending ? (
+    <div className="wnp2-profile-completion" role="status" style={{ margin: '12px 0', textAlign: 'center' }}>
+      <p className="wz-title" style={{ fontSize: '1.05rem' }}>{t('profileCompletion.title')}</p>
+      <p className="wz-subtitle">{t('profileCompletion.body')}</p>
+      <button type="button" className="wz-cta" onClick={() => setCompletionOpen(true)}>
+        {t('profileCompletion.cta')}
+      </button>
+    </div>
+  ) : null;
+  // Las hojas viven fuera del aviso: al completar el perfil el aviso desaparece y
+  // la hoja no debe desmontarse a mitad del guardado.
+  const completionSheets = (
+    <>
+      {completionOpen && (
+        <ProfileCompletionSheet
+          onClose={() => setCompletionOpen(false)}
+          onOpenEditData={() => { setCompletionOpen(false); setEditDataOpen(true); }}
+        />
+      )}
+      {editDataOpen && <EditDataSheet onClose={() => setEditDataOpen(false)} />}
+    </>
+  );
   // ¿La selección de día del súper es parte de ESTE flujo? Solo si arrancó sin
   // día elegido (usuario nuevo). Si ya tenía día (regenera), el cuestionario NO
   // debe numerar desde 2: las preguntas son paso 1/2/3, no 2/3/4.
@@ -256,17 +312,46 @@ export default function WeeklyNutritionPlanner() {
       setStep(s => s + 1);
       return;
     }
+    // CAPA 1E · FASE C3 — generar un plan exige un objetivo energético real. Sin
+    // él no se llama al motor, ni a la IA, ni se crea un `weeklyPlan`: un plan
+    // dimensionado contra una meta inexistente serviría comida que nadie
+    // prescribió.
+    //
+    // El aborto es NEUTRO, no un error de generación. La ausencia de prescripción
+    // no es un fallo del generador: en C4 será un estado esperado —perfil
+    // incompleto o ilegible, fuera de alcance, pérdida de grasa bloqueada— y C3
+    // no sabe cuál de ellos. Marcarlo como `genError` (triángulo de alerta +
+    // «intenta de nuevo») mentiría sobre la causa y pediría reintentar algo que
+    // reintentar no arregla.
+    //
+    // Así que se vuelve a la fase que la autoridad de siempre derive del estado:
+    // con un plan guardado, a verlo —intacto—; sin plan, al cuestionario. Ningún
+    // copy nuevo y ninguna fase nueva. Darle voz a este caso es trabajo de C4,
+    // que es quien conocerá el motivo.
+    // CAPA 2 · tampoco se genera sin macros SERVIBLES (`VALID`/`REVIEW`). Un residuo
+    // de carbohidrato no positivo (`INFEASIBLE`) o un deporte especializado
+    // (`SPORTS_SCOPE`) no tienen gramos: mismo aborto neutro.
+    if (planGoal == null || !isServableMacroPrescription(macroTargets)) {
+      setPhase(weeklyPlanPhase(shoppingDay, weeklyPlan));
+      return;
+    }
     setPhase('generating');
     setError('');
     try {
       // Deja pintar el spinner antes del cómputo síncrono del motor.
       await new Promise((r) => setTimeout(r, 30));
-      const targets = computeNutritionTargets(parseObData(obData as Record<string, string | number>));
-      // Categorías/alergias tal cual (el motor mapea a alimentos y descarta 'nada'/'todas').
-      const avoid = (newAnswers.avoid ?? '').toLowerCase().split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
+      // CAPA 2 · la kcal es `planGoal` y las macros, `macroTargets`: las dos
+      // proyecciones del mismo acto de resolución. Aquí no se deriva nada.
+      const targets = { protG: macroTargets.proteinG, fatG: macroTargets.fatG, carbG: macroTargets.carbG };
+      // P0-02 · AUTORIDAD DE RESTRICCIONES. Lo que llega al generador es la UNIÓN de
+      // las permanentes del perfil (obData.avoid — «no consumo esto nunca») con la
+      // preferencia de ESTA semana. El cuestionario solo puede AÑADIR; nunca resta.
+      const avoidPermanent = permanentAvoidFrom(obData);
+      const avoidWeekly = weeklyAvoidFrom(newAnswers.avoid);
+      const avoid = effectiveAvoid(avoidPermanent, avoidWeekly);
       // Híbrido: la IA selecciona los platillos (variedad/antojo/tiempos) y el código
       // ajusta porciones + garantiza alergias. Si la IA falla, cae al motor determinista.
-      const target = { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG };
+      const target = { kcal: planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG };
       const shake = buildShake();
       const region = obData.country ? regionFromCountry(String(obData.country)) : (getCachedRegion() ?? undefined);
       const { days } = await generateWeeklyPlan(target, avoid, newAnswers.cravings ?? '', Date.now() & 0x7fffffff, shake, region);
@@ -286,7 +371,7 @@ export default function WeeklyNutritionPlanner() {
         lang: locale,
         days,
         engineVersion: PLAN_ENGINE_VERSION,
-        gen: { kcal: targets.planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, craving: newAnswers.cravings ?? '', shake },
+        gen: { kcal: planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, avoidPermanent, avoidWeekly, craving: newAnswers.cravings ?? '', shake },
       });
       setActiveDay(todayOffset >= 0 ? todayOffset : 0);
       setPhase('plan');
@@ -330,6 +415,8 @@ export default function WeeklyNutritionPlanner() {
           </h1>
           <p className="wz-subtitle">{t('nutritionPlanner.setupDaySubtitle')}</p>
         </div>
+        {modalityPrompt}
+        {completionSheets}
 
         <div className="wz-options">
           {SETUP_DAYS.map(day => (
@@ -456,9 +543,13 @@ export default function WeeklyNutritionPlanner() {
       return undefined;
     };
 
+    // P0-02 · las permanentes del perfil NO se vuelven a preguntar: se muestran como ya
+    // excluidas y no son desactivables desde aquí. El cuestionario solo añade extras.
+    const permanentes = permanentAvoidFrom(obData);
     const titleKey: TranslationKey =
       q.id === 'cravings' ? 'nutritionPlanner.qCravings'
       : q.id === 'protein' ? 'nutritionPlanner.qProtein'
+      : permanentes.length ? 'nutritionPlanner.qAvoidMore'
       : 'nutritionPlanner.qAvoid';
 
     const pill = (on: boolean): React.CSSProperties => ({
@@ -522,9 +613,28 @@ export default function WeeklyNutritionPlanner() {
         );
       }
       if (q.multi) {
+        // Las permanentes salen del listado seleccionable: no se pueden desmarcar aquí.
+        const seleccionables = q.id === 'avoid'
+          ? q.options.filter(o => !permanentes.includes(o.value))
+          : q.options;
         return (
           <div className="wz-options">
-            {q.options.map(opt => {
+            {q.id === 'avoid' && permanentes.length > 0 && (
+              <div className="wz-always">
+                <div className="wz-always-label">{t('nutritionPlanner.avoidAlways')}</div>
+                <div className="wz-always-chips">
+                  {permanentes.map(v => (
+                    <span key={v} className="wz-always-chip">
+                      <Check size={12} strokeWidth={2.5} aria-hidden="true" />
+                      {PERMANENT_AVOID_CATALOG.includes(v as typeof PERMANENT_AVOID_CATALOG[number])
+                        ? t(`onboarding.restr_${v}` as TranslationKey)
+                        : v}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {seleccionables.map(opt => {
               const isSelected = multiSel.includes(opt.value);
               const sub = optionSub(opt.value);
               return (
@@ -629,6 +739,8 @@ export default function WeeklyNutritionPlanner() {
           <p className="wz-subtitle">{t(q.hintKey)}</p>
         </div>
 
+        {modalityPrompt}
+        {completionSheets}
         {renderBody()}
         {renderCta()}
 
@@ -674,7 +786,9 @@ export default function WeeklyNutritionPlanner() {
     todayMeals: todayPlanMeals,
     mealChecks, mealResolvedByLog, foodLog, today: todayKey,
   });
-  const macroTargets = computeNutritionTargets(parseObData(obData));
+  // CAPA 2 · sin macros servibles no hay objetivo de macros que mostrar. `null`
+  // viaja hasta la tarjeta, que entonces solo pinta lo comido.
+  const servableMacros = planGoal != null && isServableMacroPrescription(macroTargets) ? macroTargets : null;
 
   const shoppingTotal = weeklyPlan.shoppingList.length;
   const shoppingDone = weeklyPlan.shoppingList.filter((_, i) => !!mealChecks[`shop-${i}`]).length;
@@ -705,10 +819,12 @@ export default function WeeklyNutritionPlanner() {
           carbs: dayConsumption.consumedCarbs, fat: dayConsumption.consumedFat,
         }}
         goalKcal={planGoal}
-        targets={{ protG: macroTargets.protG, carbG: macroTargets.carbG, fatG: macroTargets.fatG, fiberG: macroTargets.fiberG }}
+        targets={servableMacros && { protG: servableMacros.proteinG, carbG: servableMacros.carbG, fatG: servableMacros.fatG, fiberG: servableMacros.fiberG }}
         mealsDone={dayConsumption.completedSlots}
         mealsTotal={dayConsumption.totalSlots}
       />
+      {modalityPrompt}
+      {completionSheets}
 
       {/* Barra slim única: semana + acciones (nota · lista · cambiar plan). Colapsa
           el subhead + la nota dorada gigante + los tabs Mi Plan/Lista (abrumaban). */}
@@ -837,10 +953,16 @@ export default function WeeklyNutritionPlanner() {
               <div className="wnp2-day-kcal-block">
                 <span className="wnp2-day-kcal">{dayKcal} kcal</span>
                 <div className="wnp2-day-kcal-bar-wrap">
+                  {/* C3 · sin objetivo vigente NO se pinta progreso. Antes el
+                      `|| dayKcal` usaba el propio consumo como denominador, así
+                      que la barra salía siempre al 100 % — un progreso inventado
+                      contra una meta que no existe. */}
                   <div
                     className="wnp2-day-kcal-bar"
                     style={{
-                      width: `${Math.min((dayKcal / (planGoal || dayKcal)) * 100, 100)}%`,
+                      width: planGoal != null && planGoal > 0
+                        ? `${Math.min((dayKcal / planGoal) * 100, 100)}%`
+                        : '0%',
                     }}
                   />
                 </div>

@@ -8,7 +8,7 @@ import {
 } from '../workoutPlanner';
 import { repRangeFor, rirFor, restFor } from '../sessionPrescription';
 import { finisherShare, allocateTime, buildFinisher, type SessionInput } from '../sessionBlocks';
-import { computeNutritionTargets, parseObData } from '../nutritionTargets';
+import { resolveNutritionEnergyState } from '../nutritionEnergyState';
 import type { MuscleGroup } from '../../types';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -154,13 +154,28 @@ describe('CUT · el metcon no lo decide el body goal por sí solo (training goal
 });
 
 describe('CUT · nutrición SÍ responde al body goal (dominio A intacto)', () => {
-  const stats = { sex: 'Hombre', peso: 80, estatura: 178, edad: 30, activity: 'Moderada' };
+  // CAPA 1E · FASE C5 · migrado de `computeNutritionTargets` (retirada) al HSC
+  // Energy Engine, que es la autoridad energética desde C4. El invariante no
+  // cambia —el objetivo CORPORAL sigue moviendo las kcal, el de ENTRENAMIENTO
+  // no— pero ahora se mide sobre la cifra que el producto prescribe de verdad.
+  // El perfil lleva los campos que exige la cadena nueva (alcance 19-64,
+  // embarazo declarado, ActivityProfile completo).
+  const stats = {
+    sex: 'Hombre', peso: 80, estatura: 178, edad: 30, embarazo: 0, requiresTherapeuticDiet: 0,
+    dailyLife: 'DL2', trainsHabitually: 1, trainingDaysPerWeek: 4, trainingSessionMinutes: 60,
+  };
+  const prescrita = (goal: string) => {
+    const s = resolveNutritionEnergyState({ ...stats, goal });
+    if (s.status !== 'PRESCRIBED') throw new Error(`esperaba PRESCRIBED, salió ${s.status}`);
+    return { kcal: s.prescribedEnergy, mantenimiento: s.maintenance.initialMaintenance };
+  };
+
   it('bajar grasa → déficit; ganar músculo → superávit (mismas stats)', () => {
-    const cut = computeNutritionTargets(parseObData({ ...stats, goal: 'Bajar grasa' }));
-    const bulk = computeNutritionTargets(parseObData({ ...stats, goal: 'Ganar músculo' }));
-    expect(cut.planGoal).toBeLessThan(bulk.planGoal);
-    expect(cut.planGoal).toBeLessThan(cut.tdee);      // déficit real
-    expect(bulk.planGoal).toBeGreaterThan(bulk.tdee); // superávit real
+    const cut = prescrita('Bajar grasa');
+    const bulk = prescrita('Ganar músculo');
+    expect(cut.kcal).toBeLessThan(bulk.kcal);
+    expect(cut.kcal).toBeLessThan(cut.mantenimiento);        // déficit real
+    expect(bulk.kcal).toBeGreaterThan(bulk.mantenimiento);   // superávit real
   });
 });
 

@@ -11,7 +11,8 @@ interface Day1Params {
   edad: string | number;
   peso: string | number;
   goal: string | number;
-  activity: string | number;
+  /** Movimiento diario + entrenamiento habitual (campos canónicos, `habitualActivityForAI`). */
+  habitualActivity?: string;
   locale?: AppLanguage;
 }
 
@@ -30,14 +31,14 @@ DATOS DEL USUARIO:
 - Edad: ${p.edad || '?'} años
 - Peso: ${p.peso || '?'} kg
 - Objetivo: ${p.goal || '?'}
-- Actividad: ${p.activity || '?'}
+- Movimiento y entrenamiento habitual: ${p.habitualActivity || 'sin dato'}
 
 ${getVoiceRules(locale, 'day1')}
 
 TAREA: Escribe un mensaje de bienvenida de 3-4 líneas que:
 - Empiece saludándolo con su nombre (una sola vez).
 - Mencione su objetivo específico (${p.goal}).
-- Reconozca su nivel de actividad.
+- Reconozca cómo se mueve y entrena habitualmente.
 - Anticipe lo que van a trabajar juntos.
 - Sea cálido pero directo, como un coach que ya lo conoce.
 

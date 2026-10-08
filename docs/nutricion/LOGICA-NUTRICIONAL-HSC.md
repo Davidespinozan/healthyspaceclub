@@ -1,4 +1,11 @@
 # LÓGICA NUTRICIONAL — Calculadora HSC
+
+> ⚠️ **DOCUMENTO HISTÓRICO · NO ES LA AUTORIDAD VIGENTE.** Es la especificación original
+> (junio 2026) con la que se empezó a reconstruir Nutrición. Se conserva por su valor de
+> contexto y sus fuentes, pero **la autoridad vigente es
+> [`NUTRITION_V1_AUTHORITY.md`](NUTRITION_V1_AUTHORITY.md)**. Donde este documento contradiga
+> al ledger, manda el ledger. Cada punto superado lleva una nota «SUPERADO».
+
 ## Documento de decisiones (basado en evidencia)
 
 Este documento define la lógica del sistema de cálculo nutricional, auditada contra
@@ -42,6 +49,8 @@ Los cambios se dividen en dos responsabilidades:
 ---
 
 ## PUNTO 8 — VALIDACIÓN DEL PESO META ✅ DEFINIDO
+
+> **SUPERADO (A8/A8.1).** El peso meta lo decide `classifyTargetWeight` (IMC meta ≥ 18,5 válido; 17–18,49 válido con aviso; < 17 inválido bajando; subir desde bajo peso siempre válido). Ver ledger, fila D03b.
 
 ### El problema
 Si el usuario pone un peso meta muy alejado o hacia bajo peso, la app no debe
@@ -110,6 +119,8 @@ No dejar continuar con valores fuera de rango:
 Mensaje suave ("Revisa este dato") sin avanzar. (En prototipo v10.)
 
 ### PUNTO 10 — Bajo peso + querer bajar (bandera roja)
+
+> **SUPERADO (D03a, D03c).** IMC < 18,5 + pérdida de grasa → `FAT_LOSS_BLOCKED` (sin prescripción). Recomposición con IMC < 18,5 → mantenimiento y macros ordinarias. No hay modo bienestar.
 Si IMC actual < 18.5 Y objetivo es bajar grasa/recomposición → NO déficit. Se pone
 en modo bienestar (igual que menores/embarazo). Protege contra adelgazamiento de
 alguien que ya está en o bajo peso saludable.
@@ -137,6 +148,8 @@ estimado a ritmo seguro (0.5–1% del peso/semana):
 ---
 
 ## PUNTO 1 — PISO CALÓRICO DE SEGURIDAD ✅ DEFINIDO
+
+> **SUPERADO (CAPA 1).** No hay pisos por sexo ni `max(TDEE − ajuste, piso, BMR)`. La energía sale de DRI 2023 EER + clasificador de actividad; en pérdida de grasa, una energía cruda ≤ 1200 kcal deja a la persona FUERA de alcance (`OUTSIDE_HSC_FAT_LOSS_SCOPE`), sin elevarla en silencio.
 
 ### El problema detectado (auditoría)
 HSC calcula `planGoal = TDEE − 500` (para bajar grasa) **sin ningún piso**. Una
@@ -183,6 +196,8 @@ se adapte a cada cuerpo, en vez de un número genérico.
 ---
 
 ## PUNTO 2 — ACCESO CON RESTRICCIONES DE SEGURIDAD ✅ DEFINIDO
+
+> **SUPERADO (D01, D02, D07).** Menores de 19, 65+, embarazo/lactancia y quien tiene una dieta terapéutica indicada quedan FUERA del alcance de Nutrition V1 (Scope Guard); no hay «modo bienestar». No se preguntan diagnósticos uno por uno: hay una sola pregunta de dieta terapéutica. Ningún diagnóstico ajusta macros.
 
 ### Principio
 Nadie se bloquea de la app. Todos pueden acceder y usarla. Pero según su caso, se
@@ -232,6 +247,8 @@ Esta capa es territorio nuevo — la aportamos nosotras.
 
 ### 3.1 — PROTEÍNA ✅ DEFINIDO
 
+> **SUPERADO (CAPA 2).** Proteína = PRW × factor por objetivo y modalidad DECLARADA (1,0–1,8 g/kg PRW; deporte especializado → `SPORTS_SCOPE`). Sin tabla GKG, sin techo 2,4, sin tope por edad ni renal.
+
 **g/kg de peso según objetivo + actividad:**
 
 | Objetivo | Sedentario/ligero | Moderado | Alto/fuerza |
@@ -262,6 +279,8 @@ Esta capa es territorio nuevo — la aportamos nosotras.
 
 ### 3.2 — GRASA ✅ DEFINIDO
 
+> **SUPERADO (CAPA 2).** Grasa = 25 % de la energía prescrita. Sin piso en g/kg; el AMDR 20–35 % es solo referencia.
+
 - **Rango:** 20–35% de las calorías del día (parte baja ~20-25% en déficit, media
   en mantener/ganar).
 - **Piso de seguridad:** nunca menos de 0.5 g/kg (ideal 0.6–0.8). Protege ácidos
@@ -284,6 +303,8 @@ Esta capa es territorio nuevo — la aportamos nosotras.
 
 ### 3.3 — CARBOHIDRATOS ✅ DEFINIDO
 
+> **SUPERADO (CAPA 2).** Carbohidrato = RESIDUO energético. Sin piso de 130 g ni de 50 g, sin clamp. `INFEASIBLE` es un invariante defensivo, inalcanzable en el dominio válido actual (A8.2).
+
 - **Cómo se calculan:** RELLENAN las calorías que quedan tras fijar proteína y
   grasa. No se fijan primero.
 - **Rango de referencia:** 45–65% de calorías (AMDR). En esta app, como la proteína
@@ -305,6 +326,8 @@ Esta capa es territorio nuevo — la aportamos nosotras.
 
 ### 3.4 — FIBRA ✅ DEFINIDO (HSC no lo tiene — lo aportamos)
 
+> **VIGENTE como referencia informativa** (14 g/1000 kcal; se muestra, no es objetivo del solver).
+
 - **Mínimo:** 14 g por cada 1,000 kcal (Adequate Intake oficial). En absoluto,
   **al menos 25 g/día** (WHO 2023). Referencia: ~25-28 g mujer, ~35-38 g hombre.
 - **Azúcar añadida:** < 10% de las calorías.
@@ -322,6 +345,8 @@ Esta capa es territorio nuevo — la aportamos nosotras.
 ---
 
 ### 3.5 — REPARTO DE MACROS ENTRE COMIDAS ✅ DEFINIDO
+
+> **LEGACY · PENDIENTE CAPA 4.** El reparto entre tiempos de comida se rediseña en CAPA 4 (frecuencia de comidas).
 
 **Reparto de calorías por comida:** 25% desayuno / 35% comida / 25% cena / 15% snacks.
 
@@ -357,6 +382,8 @@ de proteína + verduras; los carbos de calidad se acomodan según el tamaño de 
 ---
 
 ## PUNTO 4 — DÉFICIT / SUPERÁVIT PORCENTUAL ✅ DEFINIDO
+
+> **SUPERADO (CAPA 1).** Pérdida de grasa = M − min(15 % M, 500); ganancia muscular = M + 5 %; recomposición y mantenimiento = M. Sin `TDEE × 0,80` ni `× 1,12`.
 
 ### El problema detectado (auditoría)
 HSC usa offset FIJO: −500 (bajar), +300 (subir). Un −500 fijo es peligroso para
@@ -409,6 +436,8 @@ Todos son estimados iniciales. Recalcular cada 4 semanas según progreso real. S
 
 ## PUNTO 7 — RECALIBRACIÓN (ajuste con el tiempo) ✅ DEFINIDO
 
+> **PARCIAL en V1.** El peso de nutrición se actualiza con la tendencia estable de peso (`weightTrend`, N10.1) y la energía se vuelve a calcular con él; no hay recalibración adaptativa por la respuesta observada (la estimación sigue siendo DRI 2023 EER).
+
 ### Por qué (lo más importante del sistema)
 Todo cálculo inicial es un ESTIMADO, no una certeza. Ninguna fórmula acierta perfecto
 para cada cuerpo. Lo que hace que un plan funcione no es el número inicial perfecto,
@@ -457,6 +486,8 @@ HSC hoy usa el Sistema Mexicano de Equivalentes **4ª edición** hardcodeado en
 - Recordatorio: en la app NO se menciona la fuente (SMAE). Solo HSC.
 
 ### PUNTO 6 — Factor de actividad: 5 niveles + descripciones ✅ DEFINIDO
+
+> **SUPERADO (CAPA 1).** La actividad la clasifica `activityClassifier` (movimiento diario DL1–DL4 × banda de entrenamiento T0–T4); `obData.activity` y sus factores no entran en ningún motor.
 
 Se AGREGA el nivel "Atleta" (5º nivel, factor 1.9) que existía en código pero no
 era alcanzable. Onboarding queda con 5 tarjetas.
@@ -522,16 +553,22 @@ Cada pregunta existe porque un cálculo la necesita. Ni una de más, ni una de m
 ---
 
 ## YA CONFIRMADO COMO CORRECTO EN HSC (no tocar)
+
+> **SUPERADO (CAPA 1).** Mifflin-St Jeor y los factores 1.2–1.725 fueron retirados; la energía es DRI 2023 EER.
 - Fórmula BMR: **Mifflin-St Jeor** (la más recomendada, fuentes actuales) ✅
 - Factores de actividad: 1.2 / 1.375 / 1.55 / 1.725 (estándar) ✅
 - kcal de alimentos desde tabla, no fórmula Atwater ✅
 
 ## REPARTO DE CALORÍAS POR COMIDA (definido en sesión aparte)
+
+> **LEGACY · PENDIENTE CAPA 4.**
 - Desayuno 25% / Comida 35% / Cena 25% / Snacks 15%
 - Base razonable (evidencia de comer más temprano + adherencia realista)
 - Ajustable por la nutrióloga
 
 ## FÓRMULA DE PROTEÍNA POR OBJETIVO (definido, pendiente integrar en Punto 3)
+
+> **SUPERADO (CAPA 2).** Ver la nota de 3.1: PRW × factor por objetivo y modalidad declarada.
 Basado en ISSN Position Stand (fuente certificada):
 | Objetivo | Proteína (g/kg/día) |
 |---|---|

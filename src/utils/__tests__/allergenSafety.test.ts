@@ -82,14 +82,24 @@ describe('N3 · el filtro EXCLUYE el alérgeno oculto (platos reales)', () => {
     expect(avoids('huevo')(d)).toBe(true);
     expect(avoids('lacteos')(d)).toBe(true);
   });
-  it('H · Aderezo chipotle (sub-receta) → REJECT para vegano (yoghurt+mayonesa)', () => {
-    expect(avoids('vegano')(dishWithSub(/aderezo chipotle/))).toBe(true);
+  it('H · Aderezo chipotle (sub-receta) → REJECT para lácteos Y huevo (yoghurt + mayonesa)', () => {
+    // Antes se probaba con `vegano`, que cubría los dos de una pero es capacidad inactiva.
+    // Con las dos categorías activas la prueba es más precisa: verifica que la sub-receta
+    // aporta AMBOS alérgenos por separado, no solo que «algo» la rechaza.
+    const d = dishWithSub(/aderezo chipotle/);
+    expect(avoids('lacteos')(d), 'yoghurt → lácteos').toBe(true);
+    expect(avoids('huevo')(d), 'mayonesa → huevo').toBe(true);
   });
   it('K · corn flakes triturados → REJECT para gluten', () => {
     const d = dishWithIng(/corn\s*flakes/i);
     if (d) expect(avoids('gluten')(d)).toBe(true);
   });
-  it('J · vinagreta balsámica (miel) → REJECT para vegano', () => {
+  // CAPACIDAD INACTIVA. La miel solo la excluye `vegano`, que la Decisión 01 declara no
+  // soportada y la autoridad ya no admite: ningún usuario puede alcanzar esta exclusión. Se
+  // conserva como caracterización del término que sigue en AVOID_MAP, NO como garantía de
+  // producto. Lo que sí es activo —que la sub-receta resuelve a sus ingredientes— ya está
+  // comprobado arriba con `subRecipeIngredientNames('vinagreta balsámica')`.
+  it('J · vinagreta balsámica (miel) → REJECT para vegano [capacidad inactiva]', () => {
     expect(avoids('vegano')(dishWithSub(/vinagreta balsamica/))).toBe(true);
   });
 });
@@ -132,8 +142,11 @@ describe('N3 · el batido whey no se prescribe a lácteos/vegano', () => {
     const days = buildWeeklyPlan(T(2500), { seed: 7, avoid: ['lacteos'], shake: { slots: ['am'], type: 'regular', protG: 30 } });
     expect(hasWheyShake(days)).toBe(false);
   });
-  it('massgainer (whey) + vegano → NO batido', () => {
-    const days = buildWeeklyPlan(T(2500), { seed: 7, avoid: ['vegano'], shake: { slots: ['am'], type: 'massgainer', protG: 40 } });
+  // La regla real y ACTIVA es la de lácteos: `vegano` no puede llegar al motor (la autoridad
+  // solo admite las 10 soportadas), así que probarla con vegano probaba una vía muerta. Se
+  // mantiene la cobertura del tipo `massgainer`, que es lo que este caso añadía al anterior.
+  it('massgainer (whey) + avoid lacteos → NO batido', () => {
+    const days = buildWeeklyPlan(T(2500), { seed: 7, avoid: ['lacteos'], shake: { slots: ['am'], type: 'massgainer', protG: 40 } });
     expect(hasWheyShake(days)).toBe(false);
   });
   it('usuario sin restricción → el batido whey se conserva', () => {
@@ -184,7 +197,12 @@ describe('N3 · el plan estático es fail-closed (nunca sirve el alérgeno)', ()
 
 // ── INVARIANTE DE PROPIEDAD (§11) — oracle independiente del AVOID_MAP ────────
 describe('N3 · property: ningún plato generado contiene el alérgeno evitado', () => {
-  const RESTR = ['huevo', 'ajonjoli', 'lacteos', 'gluten', 'soya', 'cacahuate', 'frutos-secos', 'pescado', 'mariscos', 'vegetariano', 'vegano'];
+  // Las 10 categorías SOPORTADAS (Decisión 01). `vegetariano`/`vegano` salen del barrido:
+  // la autoridad ya no los admite, así que generar planes con ellos ejercitaba una vía que
+  // ningún usuario puede alcanzar. Lo único que aportaba era coste —eran los perfiles de
+  // pool más estrecho y los más lentos de generar—. Su detección sigue cubierta a nivel de
+  // predicado en dietTermCompleteness.test.ts, como capacidad inactiva.
+  const RESTR = ['huevo', 'ajonjoli', 'lacteos', 'gluten', 'soya', 'cacahuate', 'frutos-secos', 'pescado', 'mariscos', 'carne-roja'];
   const KCAL = [1450, 1800, 2200, 3000];
   const SEEDS = [7, 42, 99];
   const byName = new Map(BANCO.map(d => [d.nombre, d]));
@@ -210,4 +228,5 @@ describe('N3 · property: ningún plato generado contiene el alérgeno evitado',
       expect(leaks).toEqual([]);
     });
   }
+
 });
