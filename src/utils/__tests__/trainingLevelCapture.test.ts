@@ -182,8 +182,9 @@ describe('FASE A · onboarding captura el nivel', () => {
     // La Fase A lo puso justo después de la actividad legacy para no mover esa
     // pregunta. El nº total de pasos lo fija la fase que lo cambió (B): afirmarlo
     // aquí convertiría este test en un contador de pasos, no en un test del nivel.
-    expect(CODE_ONB).toContain('{step === 6 &&'); // actividad legacy, sin moverse
-    expect(CODE_ONB).toContain('{step === 7 &&'); // nivel, inmediatamente después
+    // Preview QA · el paso 6 (actividad legacy) se retiró y la navegación lo salta.
+    expect(CODE_ONB).not.toContain('{step === 6 &&');
+    expect(CODE_ONB).toContain('{step === 7 &&'); // nivel
   });
 
   it('NO escribe ningún nivel por defecto', () => {
@@ -198,20 +199,18 @@ describe('FASE A · onboarding captura el nivel', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // E · ONBOARDING · la pregunta legacy de actividad NO cambió
 // ═════════════════════════════════════════════════════════════════════════════
-describe('FASE A · activity sigue capturándose igual', () => {
-  it('conserva sus cinco opciones', () => {
+describe('Preview QA · activity legacy retirada de la captura', () => {
+  it('el onboarding ya no la pregunta ni la escribe', () => {
+    expect(CODE_ONB).not.toContain('onboarding.activityQuestion');
+    expect(CODE_ONB).not.toMatch(/setObData\(\s*['"]activity['"]/);
     for (const a of ['Sedentaria', 'Ligera', 'Moderada', 'Alta', 'Atleta']) {
-      expect(CODE_ONB).toContain(`id: '${a}'`);
+      expect(CODE_ONB).not.toContain(`id: '${a}'`);
     }
   });
 
-  it('conserva su pregunta, su paso y su escritura', () => {
-    expect(CODE_ONB).toContain("t('onboarding.activityQuestion')");
-    expect(CODE_ONB).toContain("setObData('activity', activity)");
-    // Sigue siendo el paso 6: el dato que alimenta la nutrición legacy no se movió.
-    expect(CODE_ONB).toContain('{step === 6 &&');
-    const paso = bloquePaso(CODE_ONB, 6, 7);
-    expect(paso).toContain('setActivity(o.id)');
+  it('el respaldo de Training para perfiles legacy sin nivel sigue leyendo la activity guardada', () => {
+    expect(levelFromObData({ activity: 'Atleta' })).toBe('avanzado');
+    expect(levelFromObData({ nivel: 'principiante', activity: 'Atleta' })).toBe('principiante');
   });
 });
 
@@ -226,9 +225,8 @@ describe('FASE A · sin derivación en ninguna dirección', () => {
     expect(usa(CODE_EDIT, 'levelFromObData')).toBe(false);
   });
 
-  it('el paso del nivel no mira la actividad, y la actividad no mira el nivel', () => {
+  it('el paso del nivel no mira la actividad', () => {
     expect(usa(bloquePaso(CODE_ONB, 7, 8), 'activity')).toBe(false);
-    expect(usa(bloquePaso(CODE_ONB, 6, 7), 'nivel')).toBe(false);
   });
 
   it('el nivel no se deriva del ActivityProfile de la Fase B ni al contrario', () => {
@@ -281,12 +279,16 @@ describe('FASE A · EditDataSheet edita el nivel', () => {
     expect(CODE_EDIT).toMatch(/hadLevel\s*\|\|\s*form\.nivel/);
   });
 
-  it('sigue leyendo, validando y escribiendo activity', () => {
-    expect(CODE_EDIT).toContain(
-      "const ACTIVITY_OPTIONS = ['Sedentaria', 'Ligera', 'Moderada', 'Alta', 'Atleta']",
-    );
-    expect(CODE_EDIT).toContain('ACTIVITY_OPTIONS.includes(form.activity)');
-    expect(CODE_EDIT).toContain("setObData('activity', form.activity)");
+  it('Preview QA · «Experiencia entrenando» vive en su propia sección de entrenamiento', () => {
+    expect(es.editData.level).toBe('Experiencia entrenando');
+    expect(en.editData.level).toBe('Training experience');
+    const seccion = CODE_EDIT.slice(CODE_EDIT.indexOf("t('editData.trainingSection')"));
+    expect(seccion.indexOf("t('editData.level')")).toBeGreaterThan(-1);
+    // No está dentro de la sección de movimiento (Nutrition).
+    const mov = CODE_EDIT.slice(CODE_EDIT.indexOf("t('editData.movementSection')"), CODE_EDIT.indexOf("t('editData.trainingSection')"));
+    expect(mov).not.toContain("t('editData.level')");
+    // Y ya no lee, valida ni escribe la activity legacy.
+    expect(CODE_EDIT).not.toMatch(/\bACTIVITY_OPTIONS\b|form\.activity/);
   });
 });
 

@@ -28,7 +28,7 @@ type Macro4 = { kcal: number; prot: number; carb: number; fat: number };
 export interface CoachContext {
   user: {
     name: string; sex?: string; age?: number; heightCm?: number; weightKg?: number;
-    goal?: string; trainingGoal?: string; activity?: string;
+    goal?: string; trainingGoal?: string;
     daysInProgram: number | null; streak: number; today: string;
   };
   training: {
@@ -100,7 +100,7 @@ export function buildCoachContext(store: StoreState): CoachContext {
   const user: CoachContext['user'] = {
     name: userName || '',
     sex: str(ob.sex), age: num(ob.edad), heightCm: num(ob.estatura), weightKg: num(ob.peso),
-    goal: str(ob.goal), trainingGoal: str(ob.trainingGoal), activity: str(ob.activity),
+    goal: str(ob.goal), trainingGoal: str(ob.trainingGoal),
     daysInProgram: daysBetween(startDate, today),
     streak: streakCount, today,
   };

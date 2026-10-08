@@ -110,7 +110,8 @@ export interface UserProfile {
   edad?: number;
   peso?: number; // kg
   estatura?: number; // cm
-  activity?: 'Sedentaria' | 'Ligera' | 'Moderada' | 'Alta' | string;
+  /** Movimiento diario + entrenamiento habitual (campos canónicos). Sustituye a la `activity` legacy. */
+  habitualActivity?: string;
 }
 
 export interface ExerciseVideo {

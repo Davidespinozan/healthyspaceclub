@@ -1,4 +1,5 @@
 import { dayKey } from '../utils/localDate';
+import { habitualActivityForAI } from '../utils/trainingProfileOptions';
 import { useState, useMemo, useEffect } from 'react';
 import { AlertTriangle, Check } from 'lucide-react';
 import { useAppStore } from '../store';
@@ -700,7 +701,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
       edad: toNum(obData?.edad),
       peso: toNum(obData?.peso),
       estatura: toNum(obData?.estatura),
-      activity: toStr(obData?.activity),
+      habitualActivity: habitualActivityForAI(obData),
     };
 
     try {

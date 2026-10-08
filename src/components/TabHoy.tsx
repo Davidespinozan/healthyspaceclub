@@ -54,6 +54,7 @@ import type { TranslationKey } from '../i18n/es';
 import CalculadoraSheet from './CalculadoraSheet';
 import ProfileCompletionSheet from './sheets/ProfileCompletionSheet';
 import { nutritionCompletionSteps } from '../utils/profileCompletion';
+import { habitualActivityForAI } from '../utils/trainingProfileOptions';
 import { plural } from '../i18n/format';
 
 // Etiquetas de tiempo (tag) por comida — mismas llaves que MealDetailPopout.
@@ -428,7 +429,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           edad: obData.edad || '',
           peso: obData.peso || '',
           goal: obData.goal || '',
-          activity: obData.activity || '',
+          habitualActivity: habitualActivityForAI(obData),
           locale,
         })
       : buildDailyBriefingPrompt({

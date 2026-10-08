@@ -29,6 +29,7 @@ import {
 import {
   TRAINING_MODALITIES, TRAINING_MODALITIES_KEY, serializeTrainingModalities, type TrainingModality,
 } from '../../utils/trainingModality';
+import SheetOption from './SheetOption';
 import './sheet-base.css';
 
 interface Props {
@@ -124,12 +125,13 @@ export default function ProfileCompletionSheet({ onClose, onOpenEditData }: Prop
         return yesNo(() => answer(answerTrainsHabitually(true)), () => answer(answerTrainsHabitually(false)));
       case 'dailyLife':
         return (
-          <div className="sh-chips">
+          // Preview QA · título + descripción VISIBLES (sin hover), a ancho completo.
+          <div className="sh-options">
             {DAILY_LIFE_LEVELS.map((id) => (
-              <button key={id} type="button" className="sh-chip" title={t(DAILY_LIFE_COPY[id].descKey)}
-                onClick={() => answer({ dailyLife: id })}>
-                {t(DAILY_LIFE_COPY[id].titleKey)}
-              </button>
+              <SheetOption key={id}
+                title={t(DAILY_LIFE_COPY[id].titleKey)}
+                description={t(DAILY_LIFE_COPY[id].descKey)}
+                onClick={() => answer({ dailyLife: id })} />
             ))}
           </div>
         );
@@ -165,13 +167,13 @@ export default function ProfileCompletionSheet({ onClose, onOpenEditData }: Prop
       case 'trainingModalities':
         return (
           <>
-            <div className="sh-chips">
+            <div className="sh-options">
               {TRAINING_MODALITIES.map((m) => (
-                <button key={m} type="button" className="sh-chip" aria-pressed={modalities.includes(m)}
-                  title={t(`onboarding.modality_${m}Desc` as TranslationKey)}
-                  onClick={() => setModalities((p) => (p.includes(m) ? p.filter((x) => x !== m) : [...p, m]))}>
-                  {t(`onboarding.modality_${m}` as TranslationKey)}
-                </button>
+                <SheetOption key={m}
+                  title={t(`onboarding.modality_${m}` as TranslationKey)}
+                  description={t(`onboarding.modality_${m}Desc` as TranslationKey)}
+                  pressed={modalities.includes(m)}
+                  onClick={() => setModalities((p) => (p.includes(m) ? p.filter((x) => x !== m) : [...p, m]))} />
               ))}
             </div>
             <button type="button" className="sh-cta" disabled={modalities.length === 0}

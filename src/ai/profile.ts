@@ -16,7 +16,7 @@ export function buildUserProfileBlock(profile: UserProfile | undefined): string 
     profile.edad !== undefined ||
     profile.peso !== undefined ||
     profile.estatura !== undefined ||
-    profile.activity !== undefined;
+    profile.habitualActivity !== undefined;
 
   if (!hasAny) return '';
 
@@ -25,6 +25,6 @@ export function buildUserProfileBlock(profile: UserProfile | undefined): string 
 - Edad: ${profile.edad !== undefined ? `${profile.edad} años` : 'no especificado'}
 - Peso: ${profile.peso !== undefined ? `${profile.peso} kg` : 'no especificado'}
 - Estatura: ${profile.estatura !== undefined ? `${profile.estatura} cm` : 'no especificado'}
-- Nivel de actividad habitual: ${profile.activity ?? 'no especificado'}
+- Movimiento y entrenamiento habitual: ${profile.habitualActivity ?? 'no especificado'}
 `;
 }

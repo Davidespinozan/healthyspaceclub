@@ -22,13 +22,6 @@ const SEX_KEYS: Record<string, TranslationKey> = {
   'Hombre': 'editData.sexHombre',
   'Mujer': 'editData.sexMujer',
 };
-const ACTIVITY_KEYS: Record<string, TranslationKey> = {
-  'Sedentaria': 'editData.actSedentaria',
-  'Ligera': 'editData.actLigera',
-  'Moderada': 'editData.actModerada',
-  'Alta': 'editData.actAlta',
-  'Atleta': 'editData.actAtleta',
-};
 const GOAL_KEYS: Record<string, TranslationKey> = {
   'Bajar grasa': 'editData.goalBajarGrasa',
   'Subir masa muscular': 'editData.goalSubirMasaMuscular',
@@ -253,10 +246,6 @@ export default function SettingsSheet({ open, onClose }: Props) {
               <span className="ss-data-val">
                 {(obData.estatura || obData.altura) ? `${obData.estatura || obData.altura} cm` : '—'}
               </span>
-            </div>
-            <div className="ss-data-row">
-              <span className="ss-data-key">{t('editData.activity')}</span>
-              <span className="ss-data-val">{obDataLabel(ACTIVITY_KEYS, obData.activity || obData.actividad)}</span>
             </div>
             <div className="ss-data-row">
               <span className="ss-data-key">{t('editData.goal')}</span>

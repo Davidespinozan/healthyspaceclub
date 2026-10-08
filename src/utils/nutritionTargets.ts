@@ -29,7 +29,7 @@ export interface ObInput {
   pesoKg: number;
   estaturaCm: number;
   edad: number;
-  activity: string;             // actividad legacy del onboarding (no la lee ningún motor)
+  activity?: string;            // legacy · ya no se captura; ningún cálculo la lee
   goal: string;                 // objetivo del onboarding
   grasa?: number | null;        // % grasa corporal (opcional) → avisos de peso meta
   embarazo?: boolean;

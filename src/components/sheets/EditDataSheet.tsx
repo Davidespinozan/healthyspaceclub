@@ -18,6 +18,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
 import { PAISES } from '../../data/ubicaciones';
+import SheetOption from './SheetOption';
 import './sheet-base.css';
 
 interface Props {
@@ -26,14 +27,13 @@ interface Props {
 
 // Stored values stay in Spanish (data layer). Display labels use t() for i18n.
 const SEX_OPTIONS = ['Hombre', 'Mujer'];
-const ACTIVITY_OPTIONS = ['Sedentaria', 'Ligera', 'Moderada', 'Alta', 'Atleta'];
-// CAPA 1E · Fase A — NIVEL DE ENTRENAMIENTO. Los tres valores que consume
-// `levelFromObData`. Dominio TRAINING: convive a propósito con ACTIVITY_OPTIONS
-// (dominio Nutrition legacy), que no se toca hasta la Fase E.
+// «Actividad» legacy (`obData.activity`) RETIRADA de la hoja (Preview QA): no tiene
+// autoridad en Nutrition. El valor guardado no se toca.
+// EXPERIENCIA ENTRENANDO (`obData.nivel`) · los tres valores que consume
+// `levelFromObData`. Dominio TRAINING: vive en su propia sección.
 const LEVEL_OPTIONS = ['principiante', 'intermedio', 'avanzado'];
-// CAPA 1E · Fase B — ACTIVITY PROFILE de Nutrition. Tercer dominio, distinto de
-// ACTIVITY_OPTIONS (legacy) y de LEVEL_OPTIONS (Training). Vive en su propia
-// sección para que no se lea como una variante de ninguno de los dos.
+// ACTIVITY PROFILE de Nutrition (movimiento + entrenamiento habitual): su propia
+// sección, separada de la experiencia entrenando.
 // Valores compartidos con el onboarding y el flujo de completar perfil (A10).
 const DAILY_LIFE_OPTIONS: readonly string[] = DAILY_LIFE_LEVELS;
 const TRAINING_DAY_OPTIONS: readonly number[] = TRAINING_DAY_OPTIONS_SHARED;
@@ -43,13 +43,6 @@ const GOAL_OPTIONS = ['Bajar grasa', 'Subir masa muscular', 'Recomposición', 'B
 const SEX_KEYS: Record<string, TranslationKey> = {
   'Hombre': 'editData.sexHombre',
   'Mujer': 'editData.sexMujer',
-};
-const ACTIVITY_KEYS: Record<string, TranslationKey> = {
-  'Sedentaria': 'editData.actSedentaria',
-  'Ligera': 'editData.actLigera',
-  'Moderada': 'editData.actModerada',
-  'Alta': 'editData.actAlta',
-  'Atleta': 'editData.actAtleta',
 };
 const LEVEL_KEYS: Record<string, TranslationKey> = {
   'principiante': 'editData.levelPrincipiante',
@@ -102,7 +95,6 @@ export default function EditDataSheet({ onClose }: Props) {
     // A8 · peso meta (opcional). Se muestra tal cual está guardado —también si es
     // inválido (legacy o tras un cambio de estatura)— para poder corregirlo.
     pesoMeta: obData.pesoMeta != null && obData.pesoMeta !== '' ? String(obData.pesoMeta) : '',
-    activity: String(obData.activity || obData.actividad || ''),
     // Perfil legacy sin nivel → '' = SIN DECLARAR, y así se muestra. NO se
     // prerrellena con 'intermedio' ni se infiere desde `activity`: el motor tiene
     // su propio fallback, pero la UI no debe fingir que ese fallback fue una
@@ -236,7 +228,6 @@ export default function EditDataSheet({ onClose }: Props) {
       initialValue: initialPesoMeta, editedValue: form.pesoMeta, currentWeightKg: pesoN, heightCm: estaturaN,
     });
     if (targetDecision.action === 'REJECT') { setError(t(invalidTargetKey(targetDecision.safety))); return; }
-    if (!form.activity || !ACTIVITY_OPTIONS.includes(form.activity)) { setError(t('editData.errActivity')); return; }
     // `nivel` es nuevo: un perfil legacy que nunca lo declaró debe poder guardar el
     // resto de sus datos sin que le inventemos uno. Pero en cuanto forma parte del
     // perfil —ya estaba declarado, o se declara ahora— tiene que ser válido: así no
@@ -279,7 +270,6 @@ export default function EditDataSheet({ onClose }: Props) {
     // guardada, válida o no, queda como está). No entra en el recálculo.
     if (targetDecision.action === 'CLEAR') setObData('pesoMeta', '');
     if (targetDecision.action === 'SAVE') setObData('pesoMeta', targetDecision.targetWeightKg);
-    setObData('activity', form.activity);
     // Solo se escribe una DECLARACIÓN real. Un perfil legacy que sigue sin nivel se
     // queda sin nivel: ni '' ni 'intermedio'. Escribirlo aquí convertiría el fallback
     // del motor en un dato del socio, que es justo lo que no queremos.
@@ -421,34 +411,6 @@ export default function EditDataSheet({ onClose }: Props) {
           {targetSafetyMessageKey && <p className="sh-field-hint" role="status">{t(targetSafetyMessageKey)}</p>}
 
           <label className="sh-field">
-            <span className="sh-field-label">{t('editData.activity')}</span>
-            <select
-              className="sh-input"
-              value={form.activity}
-              onChange={e => update('activity', e.target.value)}
-            >
-              <option value="">—</option>
-              {ACTIVITY_OPTIONS.map(o => <option key={o} value={o}>{t(ACTIVITY_KEYS[o])}</option>)}
-            </select>
-          </label>
-
-          {/* CAPA 1E · Fase A — junto a «Actividad» a propósito: son los dos campos
-              que más fácil se confunden, y verlos con etiquetas distintas es lo que
-              aclara que miden cosas distintas. */}
-          <label className="sh-field">
-            <span className="sh-field-label">{t('editData.level')}</span>
-            <select
-              className="sh-input"
-              value={form.nivel}
-              onChange={e => update('nivel', e.target.value)}
-            >
-              <option value="">{t('editData.levelPending')}</option>
-              {LEVEL_OPTIONS.map(o => <option key={o} value={o}>{t(LEVEL_KEYS[o])}</option>)}
-            </select>
-            <p className="sh-field-hint">{t('editData.levelHint')}</p>
-          </label>
-
-          <label className="sh-field">
             <span className="sh-field-label">{t('editData.goal')}</span>
             <select
               className="sh-input"
@@ -474,9 +436,8 @@ export default function EditDataSheet({ onClose }: Props) {
           </label>
         </div>
 
-        {/* CAPA 1E · Fase B — sección propia para el ActivityProfile de Nutrition.
-            Separarla de DATOS es lo que impide que se lea como una variante de
-            «Actividad» (legacy) o de «Nivel de entrenamiento» (Training). */}
+        {/* Sección propia para el ActivityProfile de Nutrition (lo que calcula tus
+            calorías). La experiencia entrenando vive en su propia sección, abajo. */}
         <div className="sh-section">
           <p className="sh-heading">{t('editData.movementSection')}</p>
           <p className="sh-field-hint" style={{ marginTop: -6, marginBottom: 12 }}>{t('editData.movementHint')}</p>
@@ -567,23 +528,39 @@ export default function EditDataSheet({ onClose }: Props) {
               <div className="sh-field" style={{ marginTop: 14 }}>
                 <span className="sh-field-label">{t('onboarding.modalityQuestion')}</span>
                 <p className="sh-field-hint" style={{ marginTop: 0 }}>{t('onboarding.modalityHint')}</p>
-                <div className="sh-chips">
+                {/* Preview QA · descripción VISIBLE (sin hover), opción a ancho completo. */}
+                <div className="sh-options">
                   {TRAINING_MODALITIES.map(m => (
-                    <button
+                    <SheetOption
                       key={m}
-                      type="button"
-                      className="sh-chip"
-                      aria-pressed={modalities.includes(m)}
-                      title={t(`onboarding.modality_${m}Desc` as TranslationKey)}
+                      title={t(`onboarding.modality_${m}` as TranslationKey)}
+                      description={t(`onboarding.modality_${m}Desc` as TranslationKey)}
+                      pressed={modalities.includes(m)}
                       onClick={() => toggleIn(modalities, (v) => setModalities(v as TrainingModality[]), m)}
-                    >
-                      {t(`onboarding.modality_${m}` as TranslationKey)}
-                    </button>
+                    />
                   ))}
                 </div>
               </div>
             </>
           )}
+        </div>
+
+        {/* Preview QA · EXPERIENCIA ENTRENANDO (`obData.nivel`) · dominio TRAINING.
+            Sección propia: no forma parte del movimiento que calcula la nutrición. */}
+        <div className="sh-section">
+          <p className="sh-heading">{t('editData.trainingSection')}</p>
+          <label className="sh-field">
+            <span className="sh-field-label">{t('editData.level')}</span>
+            <select
+              className="sh-input"
+              value={form.nivel}
+              onChange={e => update('nivel', e.target.value)}
+            >
+              <option value="">{t('editData.levelPending')}</option>
+              {LEVEL_OPTIONS.map(o => <option key={o} value={o}>{t(LEVEL_KEYS[o])}</option>)}
+            </select>
+            <p className="sh-field-hint">{t('editData.levelHint')}</p>
+          </label>
         </div>
 
         <div className="sh-section">

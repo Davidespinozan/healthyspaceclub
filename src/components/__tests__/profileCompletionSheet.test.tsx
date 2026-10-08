@@ -44,7 +44,7 @@ describe('A10 · ProfileCompletionSheet', () => {
     pregunta(/¿Tienes alguna condición médica/);
     click('No');
     pregunta(/¿Cuánto te mueves en un día normal\?/);
-    click('Un poco');
+    click(/^Un poco/);
     pregunta(/¿Entrenas de forma habitual\?/);
     click('Sí');
     pregunta(/¿Cuántos días entrenas por semana\?/);
@@ -52,7 +52,7 @@ describe('A10 · ProfileCompletionSheet', () => {
     pregunta(/¿Cuánto dura normalmente una sesión\?/);
     click('60');
     pregunta(/¿Qué tipo de entrenamiento haces habitualmente\?/);
-    click('Fuerza / gimnasio');
+    click(/^Fuerza \/ gimnasio/);
     click('Continuar');
     click('Guardar y calcular');
     await waitFor(() => expect(recalcFromObData).toHaveBeenCalledWith('profile-completion'));
@@ -67,7 +67,7 @@ describe('A10 · ProfileCompletionSheet', () => {
   it('caso D · «No entreno» salta días, minutos y modalidad', async () => {
     mount(LEGACY);
     click('No');            // dieta terapéutica
-    click('Casi nada');     // movimiento diario
+    click(/^Casi nada/);     // movimiento diario
     click('No');            // ¿entrenas?
     click('Guardar y calcular');
     await waitFor(() => expect(recalcFromObData).toHaveBeenCalled());
@@ -107,7 +107,7 @@ describe('A10 · ProfileCompletionSheet', () => {
   it('nada se guarda hasta el final; el peso meta legacy no aparece ni se toca', () => {
     mount(LEGACY);
     click('No');
-    click('Un poco');
+    click(/^Un poco/);
     expect(setObData).not.toHaveBeenCalled();
     expect(screen.queryByText(/Peso meta/)).toBeNull();
   });

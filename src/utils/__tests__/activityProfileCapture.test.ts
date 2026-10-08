@@ -64,10 +64,14 @@ describe('FASE B · onboarding captura el ActivityProfile', () => {
     expect(CODE_ONB).toContain('{step === 12 &&');  // perfil listo
     expect(CODE_ONB).toContain('if (step !== 11) return');
     expect(CODE_ONB).toContain('setStep(12)');
-    // Doce pasos CONSECUTIVOS, sin huecos ni duplicados.
+    // Pasos sin duplicados. Preview QA · el 6 (actividad legacy) está RETIRADO y la
+    // navegación lo salta; el resto conserva su número.
     for (let s = 1; s <= 12; s++) {
-      expect(CODE_ONB.match(new RegExp(`\\{step === ${s} &&`, 'g')), `paso ${s}`).toHaveLength(1);
+      expect(CODE_ONB.match(new RegExp(`\\{step === ${s} &&`, 'g')) ?? [], `paso ${s}`).toHaveLength(s === 6 ? 0 : 1);
     }
+    expect(CODE_ONB).toContain('const RETIRED_ACTIVITY_STEP = 6;');
+    expect(CODE_ONB).toContain('if (next === RETIRED_ACTIVITY_STEP) return next + 1;');
+    expect(CODE_ONB).toContain('if (prev === RETIRED_ACTIVITY_STEP) return prev - 1;');
     expect(CODE_ONB).not.toContain('{step === 13 &&');
   });
 
@@ -148,14 +152,11 @@ describe('FASE B · onboarding captura el ActivityProfile', () => {
 // B · LO ANTERIOR SIGUE INTACTO
 // ═════════════════════════════════════════════════════════════════════════════
 describe('FASE B · activity legacy y Training Level intactos', () => {
-  it('la pregunta legacy de actividad sigue en el paso 6, igual', () => {
-    expect(CODE_ONB).toContain('{step === 6 &&');
-    expect(CODE_ONB).toContain("t('onboarding.activityQuestion')");
-    expect(CODE_ONB).toContain("setObData('activity', activity)");
-    for (const a of ['Sedentaria', 'Ligera', 'Moderada', 'Alta', 'Atleta']) {
-      expect(CODE_ONB).toContain(`id: '${a}'`);
-    }
-    expect(bloquePaso(CODE_ONB, 6, 7)).toContain('setActivity(o.id)');
+  it('Preview QA · la pregunta legacy de actividad está RETIRADA del onboarding', () => {
+    expect(CODE_ONB).not.toContain('{step === 6 &&');
+    expect(CODE_ONB).not.toContain('onboarding.activityQuestion');
+    expect(CODE_ONB).not.toMatch(/setObData\(\s*['"]activity['"]/);
+    expect(CODE_ONB).not.toMatch(/\bsetActivity\b/);
   });
 
   it('el nivel de entrenamiento sigue en el paso 7, igual', () => {
@@ -177,9 +178,8 @@ describe('FASE B · activity legacy y Training Level intactos', () => {
     const paso9 = bloquePaso(CODE_ONB, 9, 10);
     expect(usa(paso9, 'activity')).toBe(false);
     expect(usa(paso9, 'nivel')).toBe(false);
-    // …y ni el 6 ni el 7 miran el ActivityProfile.
+    // …y el 7 (experiencia entrenando) no mira el ActivityProfile.
     for (const id of ['dailyLife', 'trainsHabitually', 'trainingDays', 'trainingMinutes']) {
-      expect(usa(bloquePaso(CODE_ONB, 6, 7), id)).toBe(false);
       expect(usa(bloquePaso(CODE_ONB, 7, 8), id)).toBe(false);
     }
   });
@@ -287,9 +287,9 @@ describe('FASE B · EditDataSheet edita el ActivityProfile', () => {
     expect(CODE_EDIT).not.toMatch(/trainsHabitually[^\n]*obData\.(activity|nivel)/);
   });
 
-  it('activity y nivel siguen leyéndose, validándose y escribiéndose', () => {
-    expect(CODE_EDIT).toContain('ACTIVITY_OPTIONS.includes(form.activity)');
-    expect(CODE_EDIT).toContain("setObData('activity', form.activity)");
+  it('Preview QA · activity ya no se lee, valida ni escribe; nivel sí', () => {
+    expect(CODE_EDIT).not.toMatch(/\bACTIVITY_OPTIONS\b|form\.activity|editData\.errActivity/);
+    expect(CODE_EDIT).not.toMatch(/setObData\(\s*['"]activity['"]/);
     expect(CODE_EDIT).toContain('LEVEL_OPTIONS.includes(form.nivel)');
   });
 });

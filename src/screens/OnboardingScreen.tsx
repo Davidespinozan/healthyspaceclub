@@ -2,7 +2,7 @@ import { UbicacionPicker, type Ubicacion } from '../components/UbicacionPicker';
 import { PAISES } from '../data/ubicaciones';
 import { detectCountry } from '../utils/region';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Sofa, Footprints, Activity, Sprout, TrendingUp, Gauge, Armchair, PersonStanding, Package, AtSign, Check, Loader2, X, ArrowRight } from 'lucide-react';
+import { ChevronLeft, User, UserRound, Dumbbell, Flame, Zap, Flower2, Footprints, Sprout, TrendingUp, Gauge, Armchair, PersonStanding, Package, AtSign, Check, Loader2, X, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { supabase } from '../lib/supabase';
@@ -28,10 +28,12 @@ import { recordReferralIfAny } from '../utils/referral';
 
 const BRAND_ICON = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp';
 
-// CAPA 1E · Fase A — el paso 7 (nivel de entrenamiento) es nuevo; el paso 6
-// (actividad legacy) queda EXACTAMENTE donde estaba para no mover un dato que
-// aún usa Training (`levelFromObData`). Ni la energía ni las macros lo leen: la
-// clase proteica sale de la modalidad DECLARADA del paso 9 (CAPA 2 · A2).
+// Preview QA — el paso 6 (actividad legacy, `obData.activity`) se RETIRA: no tiene
+// autoridad en Nutrition y duplicaba los pasos 8 y 9. Se conserva su número para no
+// renumerar el flujo; la navegación lo salta. Training sigue teniendo el nivel
+// declarado del paso 7 (`obData.nivel`); `activity` guardada solo queda como
+// respaldo legacy de `levelFromObData` para perfiles sin nivel.
+const RETIRED_ACTIVITY_STEP = 6;
 // CAPA 1E · Fase B — pasos 8 y 9 (movimiento diario y entrenamiento habitual),
 // dominio NUTRITION. El paso 7 los separa del 6 a propósito: la pregunta legacy y
 // el movimiento diario no quedan adyacentes.
@@ -41,8 +43,7 @@ const TOTAL_STEPS = 12;
  * NIVEL DE ENTRENAMIENTO · los tres valores que consume `levelFromObData`.
  *
  * Los ids son los que persisten en `obData.nivel` y NO se traducen: son el dato.
- * Dominio TRAINING — nada que ver con `obData.activity`, que mide el gasto del
- * día y sigue capturándose aparte en el paso 6.
+ * Dominio TRAINING — nada que ver con `obData.activity` (legacy, ya no se pregunta).
  */
 const TRAINING_LEVELS = [
   { id: 'principiante', icon: Sprout, titleKey: 'onboarding.levelBeginner', descKey: 'onboarding.levelBeginnerDesc' },
@@ -92,7 +93,6 @@ export default function OnboardingScreen() {
   // abandona. Además de demografía, decide qué contenido local ve (los bowls del
   // food truck solo aparecen donde hay cobertura).
   const [ubic, setUbic] = useState<Ubicacion>({ country: '', state: '', city: '' });
-  const [activity, setActivity] = useState('');
   // CAPA 1E · Fase A — nivel de entrenamiento DECLARADO (paso 7). Obligatorio por
   // construcción: el paso solo avanza al elegir una de las tres tarjetas, así que
   // nadie termina el onboarding sin declararlo y no hace falta un default.
@@ -204,6 +204,8 @@ export default function OnboardingScreen() {
       const next = s + 1;
       // Skip Step 2 (signup) si ya hay session — viene de SignupModal post-pago
       if (next === 2 && hasSession) return 3;
+      // Paso 6 (actividad legacy) retirado: se salta siempre.
+      if (next === RETIRED_ACTIVITY_STEP) return next + 1;
       return next;
     });
   }
@@ -216,6 +218,7 @@ export default function OnboardingScreen() {
       const prev = s - 1;
       // Skip Step 2 hacia atrás también — no hay nada que editar ahí cuando ya hay session
       if (prev === 2 && hasSession) return 1;
+      if (prev === RETIRED_ACTIVITY_STEP) return prev - 1;
       return prev;
     });
   }
@@ -293,7 +296,6 @@ export default function OnboardingScreen() {
     setObData('edad', Number(edad));
     setObData('peso', Number(peso));
     setObData('estatura', Number(estatura));
-    setObData('activity', activity);
     // CAPA 1E · Fase A — nivel declarado, dominio TRAINING. Se escribe tal cual, sin
     // `|| 'intermedio'`: el paso 7 es inevitable, así que siempre trae uno de los tres
     // valores. Y NO se deriva de `activity` ni al contrario — son datos distintos que
@@ -690,35 +692,11 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {/* ── Step 6: Actividad ── */}
-      {step === 6 && (
-        <div key={animKey} className={`onb-slide onb-slide-${dir} onb-light`}>
-          <div className="onb-center">
-            <h2 className="onb-question">{t('onboarding.activityQuestion')}</h2>
-            <div className="onb-cards-col">
-              {([
-                { id: 'Sedentaria', icon: Sofa, titleKey: 'onboarding.actSed', descKey: 'onboarding.actSedDesc' },
-                { id: 'Ligera', icon: Footprints, titleKey: 'onboarding.actLight', descKey: 'onboarding.actLightDesc' },
-                { id: 'Moderada', icon: Activity, titleKey: 'onboarding.actMod', descKey: 'onboarding.actModDesc' },
-                { id: 'Alta', icon: Dumbbell, titleKey: 'onboarding.actHigh', descKey: 'onboarding.actHighDesc' },
-                { id: 'Atleta', icon: Zap, titleKey: 'onboarding.actAthlete', descKey: 'onboarding.actAthleteDesc' },
-              ] as const).map(o => (
-                <div
-                  key={o.id}
-                  className={`onb-card-option${activity === o.id ? ' selected' : ''}`}
-                  onClick={() => { setActivity(o.id); setTimeout(goNext, 200); }}
-                >
-                  <span className="onb-card-icon"><o.icon size={22} strokeWidth={1.7} /></span>
-                  <div>
-                    <div className="onb-card-title">{t(o.titleKey)}</div>
-                    <div className="onb-card-desc">{t(o.descKey)}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Step 6: RETIRADO (Preview QA) ──
+           «¿Qué tan activo eres normalmente?» (`obData.activity`) era legacy: no
+           tiene autoridad en Nutrition (la tienen el movimiento diario y el
+           entrenamiento habitual de los pasos 8 y 9) y duplicaba esas preguntas.
+           La navegación salta este paso; los datos ya guardados no se tocan. */}
 
       {/* ── Step 7: Nivel de entrenamiento (CAPA 1E · Fase A) ──
            Último dato del bloque de perfil y el único que el socio va a querer
@@ -977,7 +955,7 @@ export default function OnboardingScreen() {
         // persistirse unas líneas arriba.
         const oi = {
           sexo: sex, pesoKg: Number(peso), estaturaCm: Number(estatura),
-          edad: Number(edad), activity, goal,
+          edad: Number(edad), goal,
           grasa: grasa ? Number(grasa) : null, embarazo: embarazo === 'si',
           pesoMeta: pesoMeta ? Number(pesoMeta) : null,
         };

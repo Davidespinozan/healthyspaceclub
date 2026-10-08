@@ -7,7 +7,8 @@
 // No es una autoridad energética: solo define qué valores ofrece la captura. El
 // rango estructural del clasificador (0–7 días, 0–1440 min) no se toca.
 // ─────────────────────────────────────────────────────────────────────────────
-import type { TranslationKey } from '../i18n/es';
+import { es, type TranslationKey } from '../i18n/es';
+import { declaredTrainingModalitiesForForm } from './trainingModality';
 
 /** Movimiento diario · los cuatro niveles que consume el ActivityClassifier. */
 export const DAILY_LIFE_LEVELS = ['DL1', 'DL2', 'DL3', 'DL4'] as const;
@@ -41,3 +42,33 @@ export const isValidTrainingDays = (n: number): boolean =>
 
 export const isValidTrainingMinutes = (n: number): boolean =>
   Number.isInteger(n) && n >= TRAINING_MINUTES_MIN && n <= TRAINING_MINUTES_MAX;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Resumen para contextos de IA · SOLO desde los campos canónicos de Nutrition
+// (`dailyLife`, `trainsHabitually`, días, minutos, `trainingModalities`), con las
+// MISMAS etiquetas que ve el socio. Sustituye a `obData.activity`, que es legacy
+// y ya no tiene ninguna autoridad. `undefined` si no hay nada declarado.
+// ─────────────────────────────────────────────────────────────────────────────
+const label = (key: TranslationKey): string =>
+  key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], es) as string;
+
+export function habitualActivityForAI(ob: Record<string, unknown> | null | undefined): string | undefined {
+  const o = ob ?? {};
+  const parts: string[] = [];
+  const dl = String(o.dailyLife ?? '') as (typeof DAILY_LIFE_LEVELS)[number];
+  if ((DAILY_LIFE_LEVELS as readonly string[]).includes(dl)) {
+    parts.push(`Movimiento diario: ${label(DAILY_LIFE_COPY[dl].titleKey)}`);
+  }
+  const trains = o.trainsHabitually;
+  if (trains === 0 || trains === '0') parts.push('No entrena de forma habitual');
+  if (trains === 1 || trains === '1') {
+    const days = Number(o.trainingDaysPerWeek);
+    const min = Number(o.trainingSessionMinutes);
+    const mods = declaredTrainingModalitiesForForm(o.trainingModalities)
+      .map((m) => label(`onboarding.modality_${m}` as TranslationKey));
+    parts.push(`Entrena ${isValidTrainingDays(days) ? `${days} días/semana` : 'habitualmente'}`
+      + (isValidTrainingMinutes(min) ? ` × ${min} min` : '')
+      + (mods.length ? ` (${mods.join(', ')})` : ''));
+  }
+  return parts.length ? parts.join(' · ') : undefined;
+}
