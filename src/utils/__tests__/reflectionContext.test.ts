@@ -4,6 +4,7 @@ vi.mock('../../lib/supabase', () => ({ supabase: { auth: {}, from: () => ({}) } 
 
 import { renderReflectionBehaviorFacts } from '../reflectionContext';
 import { buildCoachContext } from '../coachContext';
+import { prescribeMacros } from '../macroPrescription';
 import { buildHSMDailyReviewPrompt } from '../../ai/prompts/hsmReview';
 import { dayKey } from '../localDate';
 import { useAppStore } from '../../store';
@@ -14,6 +15,11 @@ const today = dayKey(new Date());
 const daysAgo = (n: number) => dayKey(new Date(Date.now() - n * 86400000));
 
 const OB = { sex: 'Hombre', peso: 80, estatura: 180, edad: 30, activity: 'Alta', goal: 'Bajar grasa', trainingGoal: 'hipertrofia' };
+/** CAPA 2 · las macros llegan por `store.macroTargets`, prescritas sobre `planGoal` (mismo seed que coachContext.test). */
+const MACRO_TARGETS = prescribeMacros({
+  energyKcal: 2100, goal: 'FAT_LOSS', weightKg: 80, heightCm: 180, activityClass: 'MIXED', trainingBand: 'T2',
+});
+if (MACRO_TARGETS.status !== 'VALID') throw new Error('el seed debería ser VALID');
 const DINNER = { time: 'Cena', name: 'Salmón con arroz', desc: 's', portions: ['150g'], macros: { kcal: 600, prot: 40, carb: 50, fat: 20 } };
 
 function seed(over: Record<string, unknown> = {}) {
@@ -21,6 +27,7 @@ function seed(over: Record<string, unknown> = {}) {
     userName: 'Dae', obData: OB as never, startDate: daysAgo(10), streakCount: 9,
     // C4 · la cifra viene prescrita por el motor nuevo; el contexto solo la usa.
     planGoal: 2100,
+    macroTargets: MACRO_TARGETS,
     shoppingDay: new Date().getDay(),
     weeklyPlan: { days: [{ day: 1, meals: [DINNER] }], selectedDays: [1,2,3,4,5,6,7], mealPlanKey: 'planA', shoppingList: [], preferences: '' } as never,
     mealChecks: {}, mealResolvedByLog: {}, foodLog: [], workoutLog: [],
