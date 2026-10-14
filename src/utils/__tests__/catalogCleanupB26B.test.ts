@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import foodsCsv from '../../../docs/nutricion/foods.csv?raw';
 import { BANCO } from '../../data/banco';
+import { planFoods } from '../../data/planFoods';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // B2.6B · Catalog Cleanup — las nueve correcciones de ALTA confianza del catálogo
@@ -107,5 +108,21 @@ describe('B2.6B · banco regenerado desde el catálogo corregido', () => {
     const all = BANCO.flatMap((d) => d.ings).filter((i) => i.a);
     expect(all.some((i) => i.a![1] === 1 && i.nv === 'Nueces')).toBe(false);
     expect(all.some((i) => i.nv === 'Toronja' && i.a![2] === 0.01235)).toBe(false);
+  });
+});
+
+describe('B2.6B · planFoods alineado a mano con el catálogo corregido', () => {
+  const r2 = (x: number) => Math.round(x * 100) / 100;
+  const IN_PLAN = Object.keys(CORRECTED).filter((id) => planFoods.some((f) => f.id === id));
+
+  it('de las nueve filas corregidas, el plan solo usa pera y camote-cocido', () => {
+    expect(IN_PLAN.sort()).toEqual(['camote-cocido', 'pera']);
+  });
+
+  it.each(['pera', 'camote-cocido'])('%s · macros por 100 g = valor × 100 / peso_neto_g (2 decimales)', (id) => {
+    const r = row(id);
+    const f = planFoods.find((x) => x.id === id)!;
+    const per100 = (c: string) => r2((n(r, c) * 100) / n(r, 'peso_neto_g'));
+    expect([f.k, f.p, f.f, f.c, f.fb]).toEqual(['kcal', 'prot_g', 'lip_g', 'hc_g', 'fibra_g'].map(per100));
   });
 });
