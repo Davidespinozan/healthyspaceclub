@@ -1,41 +1,61 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import COMMITTED from '../../../supabase/functions/_shared/nutritionEngine.generated.ts?raw';
+import ts from 'typescript';
 import * as SRC from '../nutritionEngineEntry';
-import * as BUNDLE from '../../../supabase/functions/_shared/nutritionEngine.generated.ts';
+import * as BUNDLE from '../../../supabase/functions/_shared/nutritionEngine.generated.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NUTRITION ENGINE BUNDLE · drift control + equivalencia src ↔ bundle.
-// El bundle es un artefacto de scripts/build-nutrition-engine.mjs; la fuente única
-// es src/utils/nutritionEngineEntry.ts y su grafo.
+// NUTRITION ENGINE BUNDLE · drift control + contrato de tipos + equivalencia src ↔ bundle.
+// Artefactos de scripts/build-nutrition-engine.mjs (runtime .js + declaraciones .d.ts);
+// la fuente única es src/utils/nutritionEngineEntry.ts y su grafo.
+// La verificación con Deno vive en supabase/tests/nutrition-engine-deno/check.sh.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SCRIPT = '../../../scripts/build-nutrition-engine.mjs';
-type Generator = { buildNutritionEngine: () => Promise<string> };
+type Generator = { buildNutritionEngine: () => Promise<Record<string, string>> };
 const generator = () => import(/* @vite-ignore */ SCRIPT) as Promise<Generator>;
 
-describe('DRIFT · el bundle commiteado es exactamente el que generan las fuentes', () => {
-  it('regenerar desde src produce el archivo commiteado, byte a byte', async () => {
-    const g = await generator();
-    const fresh = await g.buildNutritionEngine();
-    // Si falla: se editó una fuente sin `npm run build:nutrition-engine`, o se editó el bundle a mano.
-    expect(fresh === COMMITTED, 'nutritionEngine.generated.ts desincronizado: npm run build:nutrition-engine').toBe(true);
+const SHARED = 'supabase/functions/_shared';
+const RUNTIME = `${SHARED}/nutritionEngine.generated.js`;
+const TYPES_ENTRY = `${SHARED}/nutritionEngine.generated.d.ts`;
+/** Todo lo commiteado con prefijo nutritionEngine en _shared (incluye cualquier huérfano). */
+const COMMITTED: Record<string, string> = Object.fromEntries(
+  Object.entries(import.meta.glob(['../../../supabase/functions/_shared/nutritionEngine*', '../../../supabase/functions/_shared/nutritionEngine.types/*'],
+    { query: '?raw', import: 'default', eager: true }) as Record<string, string>)
+    .map(([k, v]) => [k.replace(/^(\.\.\/)+/, ''), v]),
+);
+const DECLS = Object.entries(COMMITTED).filter(([p]) => p.endsWith('.d.ts'));
+
+describe('DRIFT · los artefactos commiteados son exactamente los que generan las fuentes', () => {
+  it('mismo conjunto de archivos (sin huérfanos ni el .ts del Bloque 1)', async () => {
+    const fresh = await (await generator()).buildNutritionEngine();
+    expect(Object.keys(COMMITTED).sort()).toEqual(Object.keys(fresh).sort());
+    expect(Object.keys(fresh)).toContain(RUNTIME);
+    expect(Object.keys(fresh)).toContain(TYPES_ENTRY);
+    expect(Object.keys(fresh).filter((p) => p.startsWith(`${SHARED}/nutritionEngine.types/`))).toHaveLength(13);
+  });
+  it('regenerar desde src produce runtime y declaraciones idénticos, byte a byte', async () => {
+    const fresh = await (await generator()).buildNutritionEngine();
+    // Si falla: se editó una fuente sin `npm run build:nutrition-engine`, o se editó un artefacto a mano.
+    const drift = Object.keys(fresh).filter((p) => fresh[p] !== COMMITTED[p]);
+    expect(drift, 'artefactos desincronizados: npm run build:nutrition-engine').toEqual([]);
   });
   it('la generación es determinista', async () => {
     const g = await generator();
-    expect(await g.buildNutritionEngine()).toBe(await g.buildNutritionEngine());
+    expect(await g.buildNutritionEngine()).toEqual(await g.buildNutritionEngine());
   });
 });
 
 describe('CONTENIDO · autocontenido, solo el grafo puro, sin efectos', () => {
-  const code = async () => COMMITTED;
+  const code = async () => COMMITTED[RUNTIME];
 
-  it('cabecera de artefacto generado', async () => {
-    expect((await code()).split('\n').slice(0, 4)).toEqual([
-      '// @ts-nocheck', '// deno-lint-ignore-file',
+  it('runtime: directiva de tipos de Deno en la 1.ª línea + cabecera de artefacto', async () => {
+    expect((await code()).split('\n').slice(0, 3)).toEqual([
+      '// @ts-self-types="./nutritionEngine.generated.d.ts"',
       '// ════════════════════════════════════════════════════════════════════',
       '// AUTO-GENERADO por scripts/build-nutrition-engine.mjs — NO EDITAR A MANO.',
     ]);
+    expect(await code()).not.toContain('@ts-nocheck');
   });
   it('sin imports ni requires: no depende de src/ ni de paquetes', async () => {
     const c = await code();
@@ -60,6 +80,32 @@ describe('CONTENIDO · autocontenido, solo el grafo puro, sin efectos', () => {
       'energyHydration', 'assignPlan', 'nutritionCalibrationRepository']) {
       expect(c.includes(banned), banned).toBe(false);
     }
+  });
+});
+
+describe('CONTRATO DE TIPOS · declaraciones derivadas de src, sin any', () => {
+  it('cada declaración lleva la cabecera de artefacto y solo importa .d.ts hermanos', () => {
+    for (const [p, text] of DECLS) {
+      expect(text.split('\n')[1], p).toBe('// AUTO-GENERADO por scripts/build-nutrition-engine.mjs — NO EDITAR A MANO.');
+      const specs = [...text.matchAll(/(?:from|import\()\s*['"]([^'"]+)['"]/g)].map((m) => m[1]);
+      for (const sp of specs) expect(sp, p).toMatch(/^\.\/(nutritionEngine\.types\/)?\w+\.d\.ts$/);
+    }
+  });
+  it('ningún tipo any en el contrato', () => {
+    for (const [p, text] of DECLS) expect(text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''), p).not.toMatch(/\bany\b/);
+  });
+  it('los exports de VALOR declarados == los exports del runtime', () => {
+    const entry = new URL(`../../../${TYPES_ENTRY}`, import.meta.url).pathname;
+    const program = ts.createProgram([entry], { noEmit: true, skipLibCheck: true, lib: ['lib.es2020.d.ts'], types: [], allowImportingTsExtensions: true, moduleResolution: ts.ModuleResolutionKind.Bundler, module: ts.ModuleKind.ESNext });
+    const checker = program.getTypeChecker();
+    const mod = checker.getSymbolAtLocation(program.getSourceFile(entry)!)!;
+    const exported = checker.getExportsOfModule(mod);
+    const target = (x: ts.Symbol) => ((x.flags & ts.SymbolFlags.Alias) !== 0 ? checker.getAliasedSymbol(x) : x);
+    const values = exported.filter((x) => (target(x).flags & ts.SymbolFlags.Value) !== 0).map((x) => x.name).sort();
+    expect(values).toEqual(Object.keys(BUNDLE).sort());
+    // y además exporta los tipos del contrato (no solo valores)
+    const types = exported.filter((x) => (target(x).flags & ts.SymbolFlags.Value) === 0).map((x) => x.name);
+    for (const t of ['TrajectoryResult', 'NutritionCheckinValidation', 'AdaptiveDecisionResult', 'NutritionEnergyState', 'MacroPrescription']) expect(types).toContain(t);
   });
 });
 

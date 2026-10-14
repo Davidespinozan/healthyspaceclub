@@ -1,5 +1,4 @@
-// @ts-nocheck
-// deno-lint-ignore-file
+// @ts-self-types="./nutritionEngine.generated.d.ts"
 // ════════════════════════════════════════════════════════════════════
 // AUTO-GENERADO por scripts/build-nutrition-engine.mjs — NO EDITAR A MANO.
 // Fuente única: src/utils/nutritionEngineEntry.ts (y su grafo de imports en src/utils).
