@@ -328,9 +328,16 @@ describe('FASE B · la Fase B no conecta el motor energético', () => {
     // tramos, y el segundo es el que la cierra.
     const INTERMEDIARIOS = ['/nutritionEnergyOrchestrator.ts', '/nutritionEnergyState.ts'];
     const esIntermediario = (p: string) => INTERMEDIARIOS.some((s) => p.endsWith(s));
+    // BUNDLE SERVER-SIDE · `nutritionEngineEntry` solo reexporta el motor para la
+    // Edge Function; no es FLUJO. Excepción ESTRICTA, verificada aquí mismo.
+    const ENTRY_MOTOR = '/src/utils/nutritionEngineEntry.ts';
+    const entry = PRODUCTIVOS.find(([p]) => p === ENTRY_MOTOR);
+    expect(entry).toBeDefined();
+    for (const l of entry![1].split('\n').map((x) => x.trim()).filter(Boolean)) expect(l).toMatch(/^export \* from '\.\/\w+';$/);
+    expect(PRODUCTIVOS.filter(([p, src]) => p !== ENTRY_MOTOR && /nutritionEngineEntry/.test(src)).map(([p]) => p)).toEqual([]);
 
     const directos = PRODUCTIVOS
-      .filter(([p]) => !esIntermediario(p))
+      .filter(([p]) => !esIntermediario(p) && p !== ENTRY_MOTOR)
       // Límite de palabra: `resolveNutritionEnergyState` es el INTERMEDIARIO
       // permitido (tramo 2), no una llamada directa al orquestador.
       .filter(([, src]) => /\bresolveNutritionEnergy\b|nutritionEnergyOrchestrator/.test(src))
@@ -342,7 +349,7 @@ describe('FASE B · la Fase B no conecta el motor energético', () => {
     // más fuerte que «cero», porque «cero» se pierde en cuanto se conecta y esta
     // falla si aparece un tercero. El flujo entra por UN sitio.
     const indirectos = PRODUCTIVOS
-      .filter(([p]) => !p.endsWith('/nutritionEnergyState.ts'))
+      .filter(([p]) => !p.endsWith('/nutritionEnergyState.ts') && p !== ENTRY_MOTOR)
       .filter(([, src]) => /\bnutritionEnergyState\b|\bresolveNutritionEnergyState\b/.test(src))
       .map(([p]) => p).sort();
     // CAPA 2 · `macroPrescription` CONSUME el estado ya resuelto (tipo + lectura de

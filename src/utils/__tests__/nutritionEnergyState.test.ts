@@ -854,8 +854,21 @@ describe('C2 · nada de esto está conectado', () => {
   const STORE_Y_PUENTE = ['/src/store/index.ts', '/src/utils/energyHydration.ts'];
   // CAPA 2 · la autoridad de macros lee el estado ya resuelto (solo el tipo).
   const CON_MACROS = [...STORE_Y_PUENTE, '/src/utils/macroPrescription.ts'];
+  // BUNDLE SERVER-SIDE · `nutritionEngineEntry` reexporta el motor para la Edge
+  // Function; no es un consumidor de FLUJO. Excepción ESTRICTA: solo líneas
+  // `export * from './x'` y ningún fichero productivo lo importa.
+  const ENTRY_MOTOR = '/src/utils/nutritionEngineEntry.ts';
+  it('BUNDLE · el entrypoint del motor solo reexporta y nadie de la app lo importa', () => {
+    const entry = PRODUCTIVOS.find(([p]) => p === ENTRY_MOTOR);
+    expect(entry).toBeDefined();
+    const lineas = entry![1].split('\n').map((l) => l.trim()).filter(Boolean);
+    expect(lineas.length).toBeGreaterThan(0);
+    for (const l of lineas) expect(l).toMatch(/^export \* from '\.\/\w+';$/);
+    expect(PRODUCTIVOS.filter(([p, src]) => p !== ENTRY_MOTOR && /nutritionEngineEntry/.test(src)).map(([p]) => p)).toEqual([]);
+  });
+
   it('C4 · consumidores productivos de C2 == exactamente el store y la hidratación', () => {
-    const propio = (p: string) => p.endsWith('/nutritionEnergyState.ts');
+    const propio = (p: string) => p.endsWith('/nutritionEnergyState.ts') || p === ENTRY_MOTOR;
     const ESPERADO: Record<string, string[]> = {
       // A10 · `profileCompletion` lo llama sobre un BORRADOR para saber qué
       // preguntar; no escribe ni proyecta nada.

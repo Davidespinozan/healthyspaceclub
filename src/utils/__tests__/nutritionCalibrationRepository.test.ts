@@ -329,7 +329,7 @@ describe('ALCANCE · sin store, UI, energía ni logs', () => {
   });
   it('nadie importa este módulo todavía (no está conectado)', () => {
     const files = import.meta.glob('../../**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-    const users = Object.entries(files).filter(([path, src]) => !path.includes('__tests__') && !path.endsWith('nutritionCalibrationRepository.ts') && src.includes('nutritionCalibrationRepository'));
+    const users = Object.entries(files).filter(([path, src]) => !path.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(path) && !path.endsWith('nutritionCalibrationRepository.ts') && src.includes('nutritionCalibrationRepository'));
     expect(users.map(([p]) => p)).toEqual([]);
   });
 });
