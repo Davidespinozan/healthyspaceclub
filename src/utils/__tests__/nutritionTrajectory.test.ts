@@ -4,6 +4,7 @@ import {
   assessTrajectory,
   requiredWindowDays,
   DAYS_PER_MONTH,
+  DIRECTION_STABLE_BAND_PCT,
   FAT_LOSS_MIN_WINDOW_DAYS,
   BODY_MIN_WINDOW_DAYS,
   MUSCLE_GAIN_TARGET_KG_PER_MONTH,
@@ -218,6 +219,46 @@ describe('GENERALES · entradas inválidas o incompletas, sin fallback silencios
   it('determinista y sin mutar la entrada', () => {
     const input = Object.freeze({ objective: 'FAT_LOSS', previousWeightKg: 70, currentWeightKg: 69.3, elapsed: Object.freeze({ elapsedDays: 14 }) }) as TrajectoryInput;
     expect(assessTrajectory(input)).toEqual(assessTrajectory(input));
+  });
+});
+
+describe('DIRECCIÓN general · STABLE dentro de ±0.25 % del peso anterior (1B)', () => {
+  const dir = (prev: number, curr: number) => {
+    const r = run({ objective: 'MAINTENANCE', previousWeightKg: prev, currentWeightKg: curr, elapsed: { elapsedDays: 28 } });
+    return r.status === 'ASSESSED' ? r.metrics?.direction : r.status;
+  };
+
+  it('la banda es 0.25 %', () => expect(DIRECTION_STABLE_BAND_PCT).toBe(0.25));
+  it('ejemplo de producto: 60 kg → ±0.15 kg', () => {
+    expect(dir(60, 60.1)).toBe('STABLE');
+    expect(dir(60, 59.9)).toBe('STABLE');
+    expect(dir(60, 60.2)).toBe('UP');
+    expect(dir(60, 59.8)).toBe('DOWN');
+  });
+  it.each([
+    // base, +0.25 % exacto, −0.25 % exacto, apenas dentro (+/−), apenas fuera (+/−)
+    [60, 60.15, 59.85, 60.149, 59.851, 60.151, 59.849],
+    [80, 80.2, 79.8, 80.199, 79.801, 80.201, 79.799],
+    [100, 100.25, 99.75, 100.249, 99.751, 100.251, 99.749],
+    [47.2, 47.318, 47.082, 47.317, 47.083, 47.319, 47.081],
+  ])('base %s kg: frontera exacta e inclusiva, apenas dentro y apenas fuera', (base, upEx, downEx, inUp, inDown, outUp, outDown) => {
+    expect(dir(base, upEx), `+0.25 % (${upEx})`).toBe('STABLE');
+    expect(dir(base, downEx), `−0.25 % (${downEx})`).toBe('STABLE');
+    expect(dir(base, inUp)).toBe('STABLE');
+    expect(dir(base, inDown)).toBe('STABLE');
+    expect(dir(base, outUp)).toBe('UP');
+    expect(dir(base, outDown)).toBe('DOWN');
+    expect(dir(base, base)).toBe('STABLE');
+  });
+  it('la dirección no gobierna la clasificación: FAT_LOSS STABLE sigue clasificado por su ritmo', () => {
+    const r = decided(run({ objective: 'FAT_LOSS', previousWeightKg: 70, currentWeightKg: 69.85, elapsed: { elapsedDays: 14 } }));
+    expect(r.metrics.direction).toBe('STABLE');
+    expect(r.classification).toMatchObject({ rate: 'VERY_SLOW', lossPercentPerWeek: 0.107143 });
+  });
+  it('… y en MAINTENANCE un UP general puede quedar WITHIN de su banda ±1 %', () => {
+    const r = decided(run({ objective: 'MAINTENANCE', previousWeightKg: 60, currentWeightKg: 60.3, elapsed: { elapsedDays: 28 } }));
+    expect(r.metrics.direction).toBe('UP');
+    expect(r.classification).toMatchObject({ band: 'WITHIN_MAINTENANCE_BAND' });
   });
 });
 

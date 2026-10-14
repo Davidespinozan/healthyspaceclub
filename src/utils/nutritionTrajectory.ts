@@ -71,6 +71,8 @@ export const MUSCLE_GAIN_TARGET_KG_PER_MONTH: Readonly<Record<MuscleGainExperien
 export const RECOMP_STABLE_KG_PER_MONTH = 0.5;
 /** MAINTENANCE · ±% del peso anterior. */
 export const MAINTENANCE_BAND_PCT = 1.0;
+/** `direction` general · ±% del peso anterior que se lee como STABLE. No es un umbral de objetivo. */
+export const DIRECTION_STABLE_BAND_PCT = 0.25;
 
 // ── Tipos ───────────────────────────────────────────────────────────────────
 /** Tiempo entre check-ins: fechas locales YYYY-MM-DD o días ya calculados. */
@@ -112,7 +114,10 @@ export interface TrajectoryMetrics {
   percentChangePerWeek: number;
   /** Firmado. */
   changeKgPerMonth: number;
-  /** Signo crudo del cambio a resolución de gramo. Las tolerancias son por objetivo, no aquí. */
+  /**
+   * Lectura general: STABLE si |cambio| ≤ 0.25 % del peso anterior (frontera inclusiva).
+   * NO decide la trayectoria: esa autoridad es la clasificación de cada objetivo.
+   */
   direction: WeightDirection;
 }
 
@@ -182,17 +187,17 @@ function metricsOf(prev: number, curr: number, days: number): TrajectoryMetrics 
   const weeks = days / 7;
   const changeKg = curr - prev;
   const pct = (changeKg / prev) * 100;
-  const grams = Math.round(changeKg * 1000);
+  const pctR = r6(pct);
   return {
     previousWeightKg: prev,
     currentWeightKg: curr,
     elapsedDays: days,
     evaluationWindowWeeks: r6(weeks),
     absoluteChangeKg: r6(changeKg),
-    percentChangeFromBaseline: r6(pct),
+    percentChangeFromBaseline: pctR,
     percentChangePerWeek: r6(pct / weeks),
     changeKgPerMonth: r6((changeKg / days) * DAYS_PER_MONTH),
-    direction: grams < 0 ? 'DOWN' : grams > 0 ? 'UP' : 'STABLE',
+    direction: pctR < -DIRECTION_STABLE_BAND_PCT ? 'DOWN' : pctR > DIRECTION_STABLE_BAND_PCT ? 'UP' : 'STABLE',
   };
 }
 
