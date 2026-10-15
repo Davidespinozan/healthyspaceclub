@@ -7,7 +7,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { isServableMacroPrescription } from './macroPrescription';
 import { weeklyPlanCurrentness } from './weeklyPlanState';
 import { PLAN_ENGINE_VERSION } from './planEngine';
-import { avoidForRegen, permanentAvoidFrom, AVOID_SEMANTICS } from './avoidAuthority';
+import { avoidPolicyForPlan, policyUnion, permanentAvoidFrom, AVOID_SEMANTICS } from './avoidAuthority';
 import { generateWeeklyPlan } from './planOrchestration';
 import { dayKey } from './localDate';
 import { getCachedRegion, regionFromCountry } from './region';   // P0-04 · la regeneración perdía la región
@@ -147,7 +147,10 @@ export function useAutoRegenPlan(): void {
     // P0-02 · la autoridad une la parte SEMANAL del plan guardado con las permanentes
     // del perfil ACTUAL. Si el usuario añadió una restricción permanente desde que se
     // generó, la regeneración ya la respeta. Nunca resta.
-    const avoid = avoidForRegen(weeklyPlan.gen, weeklyPlan.preferences, obData);
+    // MB3 · la POLÍTICA del plan: permanentes ACTUALES en estricto, `avoidWeekly` (origen conocido) en
+    // suave. Un plan legacy sin `avoidWeekly` sale todo estricto (MB2): no se degrada nada.
+    const policy = avoidPolicyForPlan(weeklyPlan.gen, weeklyPlan.preferences, obData);
+    const avoid = policyUnion(policy);   // unión: trazabilidad en gen.avoid
     const craving = weeklyPlan.gen?.craving ?? '';
     const shake = weeklyPlan.gen?.shake as ProteinShake | undefined;
     // P0-04 · REGIÓN. La generación normal (WeeklyNutritionPlanner) la deriva del país del
@@ -162,7 +165,7 @@ export function useAutoRegenPlan(): void {
     let cancelled = false;
     (async () => {
       try {
-        const { days } = await generateWeeklyPlan(target, avoid, craving, Date.now() & 0x7fffffff, shake, region);
+        const { days } = await generateWeeklyPlan(target, policy, craving, Date.now() & 0x7fffffff, shake, region);
         if (cancelled) return;
         const shopSet = new Set<string>();
         for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])

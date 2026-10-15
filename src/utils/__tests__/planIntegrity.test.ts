@@ -314,7 +314,7 @@ describe('P0-04 · G · el bowl ya no puede usar restricciones obsoletas', () =>
   });
 
   it('TabHoy construye el día con las restricciones actuales, no con g.avoid', () => {
-    expect(srcTabHoy).toMatch(/avoidForRegen\(\s*g\s*,/);
+    expect(srcTabHoy).toMatch(/avoidPolicyForPlan\(\s*g\s*,/);   // MB3 · política del plan, no la unión
     expect(srcTabHoy, 'ya no debe pasar g.avoid al motor').not.toMatch(/avoid:\s*g\.avoid/);
     expect(srcTabHoy, 'el guardado del bowl debe atrapar el rechazo').toMatch(/saveWeeklyPlan\(\{[^}]*\}\)\s*\n?\s*\.catch/);
   });
@@ -368,7 +368,7 @@ describe('P0-04 · I · versión y región', () => {
   });
 
   it('7 · la auto-regeneración pasa región, con la MISMA derivación que la generación normal', () => {
-    expect(srcAutoRegen).toMatch(/generateWeeklyPlan\(target, avoid, craving, Date\.now\(\) & 0x7fffffff, shake, region\)/);
+    expect(srcAutoRegen).toMatch(/generateWeeklyPlan\(target, policy, craving, Date\.now\(\) & 0x7fffffff, shake, region\)/);   // MB3
     const deriva = /obData\.country\s*\n?\s*\?\s*regionFromCountry\(String\(obData\.country\)\)\s*\n?\s*:\s*\(getCachedRegion\(\) \?\? undefined\)/;
     expect(srcAutoRegen, 'misma derivación país → región').toMatch(deriva);
   });

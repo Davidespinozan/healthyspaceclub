@@ -151,7 +151,7 @@ describe('INVARIANTE · SOFT nunca es más restrictivo que STRICT (banco complet
   });
 });
 
-describe('CONSUMIDORES · el modo suave solo lo usa la VALIDACIÓN (MB2); la generación todavía no (MB3)', () => {
+describe('CONSUMIDORES · el modo suave lo usan la VALIDACIÓN (MB2) y el GENERADOR (MB3), por una sola puerta', () => {
   it('el único módulo productivo que usa el filtro de preferencia es planIntegrity', () => {
     const files = import.meta.glob('../../**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
     const users = Object.entries(files)
@@ -160,13 +160,22 @@ describe('CONSUMIDORES · el modo suave solo lo usa la VALIDACIÓN (MB2); la gen
       .map(([p]) => p);
     expect(users).toEqual(['../planIntegrity.ts']);
   });
-  it('dentro de planEngine, el filtro de preferencia no alimenta ningún pool del generador', () => {
+  it('dentro de planEngine, el modo suave entra al generador SOLO a través de makePolicyFilter', () => {
     const src = (import.meta.glob('../planEngine.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>)['../planEngine.ts'];
-    const usos = src.split('\n').filter((l) => /makePreferenceFilter\(|\.soft\b/.test(l) && !/^\s*(\/\/|\*)/.test(l));
-    // solo su propia definición y el acceso a las unidades suaves dentro de ella
-    expect(usos.map((l) => l.trim())).toEqual([
-      'export function makePreferenceFilter(softCats: string[]): (d: BancoDish) => boolean {',
-      'return (d: BancoDish) => unitsMatchAvoidTerms(dishText(d).soft, terms);',
-    ]);
+    const code = src.split('\n').filter((l) => !/^\s*(\/\/|\*)/.test(l)).join('\n');
+    // makePreferenceFilter: su definición + UNA llamada (dentro de makePolicyFilter)
+    expect(code.match(/makePreferenceFilter\(/g)).toHaveLength(2);
+    const policyFn = code.slice(code.indexOf('export function makePolicyFilter'), code.indexOf('\n}', code.indexOf('export function makePolicyFilter')));
+    expect(policyFn).toMatch(/makePreferenceFilter\(p\.soft\)/);
+    // y ningún pool del generador filtra ya con makeAvoidFilter a secas: todos pasan por la política
+    for (const fn of ['safeBankByTiempo', 'assembleFromSelection', 'buildDayWithFixed', 'topUpMeals']) {
+      const i = code.indexOf(`function ${fn}`);
+      const body = code.slice(i, code.indexOf('\n}\n', i));
+      expect(body, fn).toMatch(/makePolicyFilter\(/);
+      expect(body, fn).not.toMatch(/makeAvoidFilter\(/);
+    }
+    const bw = code.slice(code.indexOf('export function buildWeeklyPlan'), code.indexOf('\n}\n', code.indexOf('export function buildWeeklyPlan')));
+    expect(bw).toMatch(/const policyAvoid = makePolicyFilter\(opts\.avoid\);/);
+    expect(bw).not.toMatch(/dishMatchesAvoidTerms|makeAvoidFilter\(/);
   });
 });

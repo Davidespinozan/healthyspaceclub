@@ -27,7 +27,8 @@
 // Puro / determinista / sin estado. No conoce React, ni el store, ni Supabase.
 // ─────────────────────────────────────────────────────────────────────────────
 import { BANCO, type BancoDish } from '../data/banco';
-import { makeAvoidFilter, makePreferenceFilter, expandAvoidCats, textMatchesAvoid, shakeCompatibleWith, shakeTypeOfService, SHAKE_NAME } from './planEngine';
+import { makeAvoidFilter, makePreferenceFilter, expandAvoidCats, textMatchesAvoid, shakeCompatibleWith, shakeTypeOfService, SHAKE_NAME, toAvoidPolicy, type AvoidInput } from './planEngine';
+export type { AvoidPolicy, AvoidInput } from './planEngine';
 
 /** Tipo de defecto. Granular a propósito: la UI y los tests necesitan el motivo, no un bool. */
 export type PlanViolationKind =
@@ -38,20 +39,6 @@ export type PlanViolationKind =
   | 'unverifiable'   // con restricciones activas, un servicio sin composición modelada (falla cerrado)
   | 'preference';    // sirve VISIBLE una categoría que el usuario prefiere evitar ESTA semana (soft)
 
-/**
- * WEEKLY PREFERENCES SPLIT · política de restricciones con el ORIGEN separado.
- *   · `strict` · restricciones PERMANENTES → detector estricto (sub-recetas, ocultos IS y CONTAINS).
- *   · `soft`   · preferencias de ESTA semana que no son ya permanentes → detector suave (MB1).
- * La construye `avoidPolicyForPlan`/`avoidPolicy` (avoidAuthority); aquí solo se consume.
- */
-export interface AvoidPolicy { strict: string[]; soft: string[] }
-/** Una lista suelta se interpreta como STRICT (contrato anterior a MB2, sin cambio de veredicto). */
-export type AvoidInput = string[] | AvoidPolicy;
-function toPolicy(a: AvoidInput): AvoidPolicy {
-  if (Array.isArray(a)) return { strict: a.filter(Boolean), soft: [] };
-  const strict = a.strict.filter(Boolean);
-  return { strict, soft: a.soft.filter((c) => c && !strict.includes(c)) };   // STRICT gana
-}
 
 export interface PlanViolation {
   kind: PlanViolationKind;
@@ -206,7 +193,8 @@ export function validatePlan(plan: unknown, effectiveAvoid: AvoidInput): PlanVer
     bad({ kind: 'shape', detail: `el plan tiene ${p.days.length} días, se esperan 7` });
   }
 
-  const { strict, soft } = toPolicy(effectiveAvoid);
+  // `AvoidPolicy`/`toAvoidPolicy` viven en el motor (MB3): validador y generador comparten la normalización.
+  const { strict, soft } = toAvoidPolicy(effectiveAvoid);
   const union = [...strict, ...soft];
   // El predicado REAL de P0-01: sub-recetas, alérgenos ocultos y Decisión 05 incluidos.
   const viola = strict.length ? makeAvoidFilter(strict) : null;

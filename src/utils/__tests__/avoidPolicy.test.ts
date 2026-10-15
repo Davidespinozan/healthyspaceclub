@@ -213,8 +213,9 @@ describe('REGEN y PERSISTENCIA · el origen se conserva', () => {
     const code = REGEN_SRC.replace(/\/\/.*$/gm, '');
     expect(code).not.toMatch(/avoidWeekly: weeklyPlan\.gen\?\.avoidWeekly \?\? weeklyPlan\.gen\?\.avoid/);
     expect(code).toMatch(/\.\.\.\(weeklyPlan\.gen\?\.avoidWeekly \? \{ avoidWeekly: weeklyPlan\.gen\.avoidWeekly, avoidSemantics: AVOID_SEMANTICS \} : \{\}\)/);
-    // el generador sigue recibiendo la UNIÓN (MB3)
-    expect(code).toMatch(/const avoid = avoidForRegen\(weeklyPlan\.gen, weeklyPlan\.preferences, obData\);/);
+    // MB3 · el generador recibe la POLÍTICA; la unión solo queda como trazabilidad en gen.avoid
+    expect(code).toMatch(/const policy = avoidPolicyForPlan\(weeklyPlan\.gen, weeklyPlan\.preferences, obData\);/);
+    expect(code).toMatch(/const avoid = policyUnion\(policy\);/);
   });
 });
 

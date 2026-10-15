@@ -3,7 +3,7 @@ import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
 import {
-  PERMANENT_AVOID_CATALOG, permanentAvoidFrom, weeklyAvoidFrom, effectiveAvoid, AVOID_SEMANTICS,
+  PERMANENT_AVOID_CATALOG, permanentAvoidFrom, weeklyAvoidFrom, effectiveAvoid, avoidPolicy, AVOID_SEMANTICS,
 } from '../utils/avoidAuthority';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
@@ -354,13 +354,15 @@ export default function WeeklyNutritionPlanner() {
       // preferencia de ESTA semana. El cuestionario solo puede AÑADIR; nunca resta.
       const avoidPermanent = permanentAvoidFrom(obData);
       const avoidWeekly = weeklyAvoidFrom(newAnswers.avoid);
-      const avoid = effectiveAvoid(avoidPermanent, avoidWeekly);
+      const avoid = effectiveAvoid(avoidPermanent, avoidWeekly);   // unión: trazabilidad en gen.avoid
+      // MB3 · al GENERADOR llega la política separada: permanentes en estricto, semana en suave.
+      const policy = avoidPolicy(avoidPermanent, avoidWeekly);
       // Híbrido: la IA selecciona los platillos (variedad/antojo/tiempos) y el código
       // ajusta porciones + garantiza alergias. Si la IA falla, cae al motor determinista.
       const target = { kcal: planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG };
       const shake = buildShake();
       const region = obData.country ? regionFromCountry(String(obData.country)) : (getCachedRegion() ?? undefined);
-      const { days } = await generateWeeklyPlan(target, avoid, newAnswers.cravings ?? '', Date.now() & 0x7fffffff, shake, region);
+      const { days } = await generateWeeklyPlan(target, policy, newAnswers.cravings ?? '', Date.now() & 0x7fffffff, shake, region);
       // NUTRITION-N8 · lista de compras = SKUs reales: expande "Verduras (…)" y colapsa sinónimos/
       // plurales/acentos (jitomate=tomate, yogur=yogurt), deduplicando. Se calcula UNA vez al generar y
       // se persiste; el plan (days/m.ings/macros) NO cambia. Los checks `shop-i` indexan esta lista

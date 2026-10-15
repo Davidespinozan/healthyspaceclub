@@ -814,7 +814,7 @@ function applyShake(meals: MealItem[], shake: ProteinShake): void {
  *  el día, agrega UN solo snack real de ese macro. La proteína NO se corrige aquí (la
  *  cargan los principales — subir gramos de una comida, no apilar snacks). Rota en la
  *  semana (weekUsed) para no repetir el mismo. RESPETA alergias. */
-function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: string[] = [], weekUsed?: Set<string>): void {
+function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: AvoidInput = [], weekUsed?: Set<string>): void {
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const cur = macroSum(meals);
   if (cur[0] >= target.kcal * 1.02) return;            // sin espacio calórico
@@ -822,7 +822,7 @@ function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: string[] =
   const rf = rel(2), rc = rel(3);                      // solo grasa/carbo (proteína = principales)
   const worst = Math.max(rf, rc);
   if (worst <= 0.05) return;                            // hueco chico → se deja (nada de apilar)
-  const avoid = makeAvoidFilter(avoidCats);
+  const avoid = makePolicyFilter(avoidCats);   // MB3 · strict + soft
   const [cls, idx]: ['F' | 'C', number] = rf === worst ? ['F', 2] : ['C', 3];
   const pool = gateDense(SNACK_BY_MACRO[cls].filter((d) => !avoid(d)), target.kcal); // nunca un alérgeno; densos solo si el requerimiento es alto
   const dayNames = new Set(meals.map((m) => m.name));
@@ -1183,7 +1183,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // armó con gramos de `legacyMacros`; el salto lo marca STALE aunque coincida la kcal.
 export const PLAN_ENGINE_VERSION = 33;
 
-export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
+export interface BuildOpts { seed?: number; avoid?: AvoidInput; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 
 /** Resta las macros del batido a la meta del día, para que los principales se
  *  construyan contra el remanente y el total (con batido) caiga en la meta.
@@ -1241,6 +1241,43 @@ export function makePreferenceFilter(softCats: string[]): (d: BancoDish) => bool
   return (d: BancoDish) => unitsMatchAvoidTerms(dishText(d).soft, terms);
 }
 
+/**
+ * WEEKLY PREFERENCES SPLIT · política de restricciones con el ORIGEN separado.
+ *   · `strict` · restricciones PERMANENTES → detector estricto (sub-recetas, ocultos IS y CONTAINS).
+ *   · `soft`   · preferencias de ESTA semana que no son ya permanentes → detector suave (MB1).
+ * La construye la autoridad (`avoidPolicy`/`avoidPolicyForPlan`); el motor y el validador la consumen.
+ */
+export interface AvoidPolicy { strict: string[]; soft: string[] }
+/** Entrada de restricciones del motor y del validador. Una lista suelta = TODO estricto (contrato
+ *  anterior: misma salida, byte a byte). */
+export type AvoidInput = string[] | AvoidPolicy;
+/** Normaliza la entrada a política. STRICT gana: lo que esté en ambos lados solo queda en `strict`. */
+export function toAvoidPolicy(a: AvoidInput | null | undefined): AvoidPolicy {
+  if (!a) return { strict: [], soft: [] };
+  if (Array.isArray(a)) return { strict: a.filter(Boolean), soft: [] };
+  const strict = a.strict.filter(Boolean);
+  return { strict, soft: a.soft.filter((c) => c && !strict.includes(c)) };
+}
+/** Unión de la entrada (strict y luego soft): para lo que todavía no distingue el origen (batido,
+ *  bowl hasta MB4) y para el mensaje de `NoEligibleDishesError`. */
+export function avoidInputUnion(a: AvoidInput | null | undefined): string[] {
+  const p = toAvoidPolicy(a);
+  return [...p.strict, ...p.soft];
+}
+/**
+ * MB3 · EL filtro del generador: `true` = el platillo NO es elegible. Excluye si viola lo permanente
+ * (`makeAvoidFilter(strict)`) O si sirve visible una preferencia de la semana (`makePreferenceFilter(soft)`).
+ * Es la misma pareja de detectores que usa `validatePlan`, así que lo que el generador acepta el
+ * validador no lo rechaza por restricción ni por preferencia.
+ */
+export function makePolicyFilter(a: AvoidInput | null | undefined): (d: BancoDish) => boolean {
+  const p = toAvoidPolicy(a);
+  const st = makeAvoidFilter(p.strict);
+  if (!p.soft.length) return st;
+  const so = makePreferenceFilter(p.soft);
+  return (d: BancoDish) => st(d) || so(d);
+}
+
 /** Banco agrupado por tiempo, ya SIN alérgenos.
  *
  *  P0-03: un pool puede quedar VACÍO y eso es el resultado correcto. Antes caía al
@@ -1249,8 +1286,8 @@ export function makePreferenceFilter(softCats: string[]): (d: BancoDish) => bool
  *  desayunos, todos incompatibles, medido). El vacío lo resuelve quien consume el
  *  banco: el motor determinista lanza NoEligibleDishesError y la ruta IA no puede
  *  completar los 7 días, así que cae al determinista. Nunca se rellena con alérgenos. */
-export function safeBankByTiempo(avoidCats: string[]): Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]> {
-  const avoid = makeAvoidFilter(avoidCats);
+export function safeBankByTiempo(avoidCats: AvoidInput): Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]> {
+  const avoid = makePolicyFilter(avoidCats);   // MB3 · strict + soft: el pool de la IA ya llega filtrado en código
   const pick = (t: string) => (BY_TIME[t] ?? []).filter((d) => !avoid(d));
   return { Desayuno: pick('Desayuno'), Comida: pick('Comida'), Cena: pick('Cena'), Snack: pick('Snack') };
 }
@@ -1285,7 +1322,7 @@ function slotFit(d: BancoDish, slotTarget: number[]): number {
  *  antojo), las macros pegan. Los principales de un antojo se fuerzan aunque encajen peor
  *  (1-2 días al máximo). Snacks pasan completos (rellenan el share chico). */
 export function adequateBankByTiempo(
-  avoidCats: string[], target: PlanTarget, cravingText = '', region?: Region,
+  avoidCats: AvoidInput, target: PlanTarget, cravingText = '', region?: Region,
 ): Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]> {
   const safeRaw = safeBankByTiempo(avoidCats);
   // Visibilidad por región (SIEMPRE se aplica): combina el filtro DURO de disponibilidad
@@ -1349,10 +1386,11 @@ export function snacksPerSlot(kcal: number): number { return kcal > 2200 ? 2 : 1
  *  Magaly; los SNACKS RELLENAN lo que falte para pegar la meta exacta (así el día no
  *  queda bajo aunque los platillos que eligió la IA no escalen tanto), con nSnack
  *  combinados por slot para tener capacidad. */
-export function assembleFromSelection(target: PlanTarget, days: DaySelection[], avoidCats: string[] = [], shake?: ProteinShake): DayPlan[] {
+export function assembleFromSelection(target: PlanTarget, days: DaySelection[], avoidCats: AvoidInput = [], shake?: ProteinShake): DayPlan[] {
   // RESTRICCIONES · el batido pasa por la MISMA autoridad que en el motor determinista: si no es
   // compatible (whey con lácteos), el plan va SIN batido. Antes esta ruta lo aplicaba sin comprobar.
-  if (!shakeAllowedFor(shake, avoidCats)) shake = undefined;
+  // El batido conserva hasta MB4 su regla sobre la UNIÓN (whey con lácteos de cualquier origen).
+  if (!shakeAllowedFor(shake, avoidInputUnion(avoidCats))) shake = undefined;
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const MT = mealTargets(reduceForShake(T, shake)); // principales contra la meta MENOS el batido
   const nSnack = snacksPerSlot(target.kcal);
@@ -1367,7 +1405,7 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
     // de otro tiempo o un alérgeno. Se verifican las dos invariantes aquí también; un día
     // que no las cumpla se DESCARTA (el plan sale con <7 días → el orquestador devuelve
     // null → motor determinista), nunca se sirve corregido a medias.
-    const noEvitado = makeAvoidFilter(avoidCats);
+    const noEvitado = makePolicyFilter(avoidCats);   // MB3 · re-verifica cada pick de la IA con strict + soft
     const main = (nombre: string, t: string): BancoDish | undefined => {
       const d = byName.get(nombre);
       return d && d.tiempo === t && !noEvitado(d) ? d : undefined;
@@ -1420,7 +1458,7 @@ export function buildDayWithFixed(
     Math.max(0, T[2] - fixed.fat), Math.max(0, T[3] - fixed.carb),
   ];
   const MT = slotTargets(rest, [fixed.slot]);
-  const avoid = makeAvoidFilter(opts.avoid ?? []);
+  const avoid = makePolicyFilter(opts.avoid);   // MB3 · strict + soft
   const rng = mulberry32(opts.seed ?? 12345);
   const used = new Set<string>(), usedToday = new Set<string>(), usedIng = new Set<string>();
   const craving = cravingTerms(opts.craving ?? '');
@@ -1432,7 +1470,7 @@ export function buildDayWithFixed(
   // puede armar y se dice.
   const clean = (pool: BancoDish[], slot: string) => {
     const f = pool.filter((d) => !avoid(d));
-    if (!f.length) throw new NoEligibleDishesError(slot, opts.avoid ?? []);
+    if (!f.length) throw new NoEligibleDishesError(slot, avoidInputUnion(opts.avoid));
     return f;
   };
   // Solo los que CABEN por debajo del presupuesto del tiempo (con 15% de holgura, que
@@ -1498,16 +1536,17 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   // NUTRITION-N3 · SEGURIDAD DEL BATIDO: el whey (regular/mass gainer) es lácteo → si el usuario evita
   // lácteos o es vegano, NO se prescribe (fail-closed). Se omite y los principales cierran la meta con
   // comida real (no inventamos una "proteína vegana" que no exista como dato). El batido 'vegana' sí pasa.
-  const shake = shakeAllowedFor(opts.shake, opts.avoid) ? opts.shake : undefined;
+  const shake = shakeAllowedFor(opts.shake, avoidInputUnion(opts.avoid)) ? opts.shake : undefined;   // unión hasta MB4
   const buildT = reduceForShake(T, shake); // los principales van contra la meta MENOS el batido
   const rng = mulberry32(opts.seed ?? 12345);
   // "Evitar": categoría (gluten/lácteos/…) → alimentos reales del banco; excluye esos platillos.
-  const avoidTerms = expandAvoid((opts.avoid ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean));
+  // MB3 · strict (permanentes) + soft (preferencias de la semana), la misma pareja que el pool de la IA.
+  const policyAvoid = makePolicyFilter(opts.avoid);
   // El predicado 'avoid' ya excluye alérgenos; le sumamos la visibilidad por región
   // (filtro DURO fuera de LATAM + segmentación por marca region:ES) para que el fallback
   // determinista tampoco arme mole en España ni platillos de España fuera de EUROPE.
   const avoid = (d: BancoDish) =>
-    dishMatchesAvoidTerms(d, avoidTerms) ||
+    policyAvoid(d) ||
     !dishAllowedInRegion(d, opts.region);
   const cuisines = (opts.cuisines ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean);
   const craving = cravingTerms(opts.craving ?? ''); // "antojo": prefiere platillos que lo tengan
@@ -1552,7 +1591,7 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
         // Si un tiempo no tiene candidatos, buildDay lanza NoEligibleDishesError y el error
         // SALE de buildWeeklyPlan: no se reintenta con otro relax (relajar variedad o sesgar
         // a carbo no crea platillos) ni se devuelve un plan incompleto. Lo recoge la UI.
-        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax, opts.avoid ?? []);
+        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax, avoidInputUnion(opts.avoid));
         if (shake) applyShake(day.meals, shake);   // batido (ya validado por shakeAllowedFor) reemplaza el snack de su slot
         // Cuadre del día contra la meta COMPLETA (T), ya con el batido puesto: las
         // comidas absorben lo que el batido aporta o deja faltando.

@@ -1213,7 +1213,7 @@ export const useAppStore = create<AppState>()(
     // (cuestionario, auto-regeneración y sustitución por bowl), así que validar aquí las
     // cubre las tres con un solo punto.
     //
-    // Se valida contra las restricciones efectivas ACTUALES —`avoidForRegen` une las
+    // Se valida contra las restricciones efectivas ACTUALES —la política del plan une las
     // permanentes del perfil de AHORA con la parte semanal del plan— y NO contra
     // `plan.gen.avoid`. La diferencia importa: el rearmado del día con un bowl pasaba al
     // motor el `gen.avoid` con el que se generó el plan, así que si el usuario endureció su

@@ -458,7 +458,7 @@ describe('C3 · sin objetivo no se genera nada', () => {
   it('C · CAPA 2 · pasados los guards, las macros vienen de `store.macroTargets`', () => {
     expect(EFECTO).toContain('if (servableMacros == null) return;');
     expect(EFECTO).not.toMatch(/\blegacyMacros\b|\bparseObData\b/);
-    expect(EFECTO).toContain('avoidForRegen(weeklyPlan.gen, weeklyPlan.preferences, obData)');
+    expect(EFECTO).toContain('avoidPolicyForPlan(weeklyPlan.gen, weeklyPlan.preferences, obData)');   // MB3 · política
     expect(TARGETS).not.toMatch(/\blegacyMacros\b/);
   });
 

@@ -13,7 +13,7 @@ import { hasGeneratedWeeklyPlan } from '../utils/weeklyPlanState';
 import { regionalizeStaticPlan } from '../data/regionFood';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
 import { expandAvoidCats, textMatchesAvoid } from '../utils/planEngine';
-import { avoidForRegen } from '../utils/avoidAuthority';   // P0-04 · restricciones actuales para el bowl
+import { avoidPolicyForPlan } from '../utils/avoidAuthority';   // P0-04 · restricciones actuales para el bowl (MB3: política)
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
@@ -1099,8 +1099,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
             // conjunto con el que se generó el plan: si el socio endureció su perfil
             // después y el plan no servía esa categoría (así que P0-02 lo conservó, con
             // razón), rearmar con `g.avoid` reintroducía el alimento recién excluido.
-            // `avoidForRegen` une las permanentes de AHORA con la parte semanal del plan.
-            const avoidAhora = avoidForRegen(g, weeklyPlan.preferences, obData);
+            // MB3 · política del plan: permanentes de AHORA en estricto, la semana del plan en suave.
+            const avoidAhora = avoidPolicyForPlan(g, weeklyPlan.preferences, obData);
             let nuevo;
             try {
               nuevo = buildDayWithFixed(

@@ -309,7 +309,8 @@ describe('P0-02 · D · todas las rutas reciben effectiveAvoid', () => {
 
   it('10c · useAutoRegenPlan usa la autoridad, no gen.avoid a secas', () => {
     const src = read('utils/useAutoRegenPlan.ts');
-    expect(src).toMatch(/avoidForRegen/);
+    // MB3 · la autoridad ahora es la POLÍTICA del plan (strict/soft), no la unión
+    expect(src).toMatch(/avoidPolicyForPlan\(weeklyPlan\.gen, weeklyPlan\.preferences, obData\)/);
   });
 });
 
