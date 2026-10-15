@@ -737,6 +737,8 @@ export default function WeeklyNutritionPlanner() {
           </p>
           <h1 className="wz-title">{t(titleKey)}</h1>
           <p className="wz-subtitle">{t(q.hintKey)}</p>
+          {/* MB5 · lo de esta semana es una preferencia; las restricciones reales viven en Mis datos. */}
+          {q.id === 'avoid' && <p className="wz-note">{t('nutritionPlanner.avoidWeeklyNote')}</p>}
         </div>
 
         {modalityPrompt}

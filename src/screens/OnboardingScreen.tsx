@@ -669,6 +669,8 @@ export default function OnboardingScreen() {
             <div className="onb-optional">
               <div className="onb-hint" style={{ marginTop: 6 }}>{t('onboarding.restrictionsTitle')} · <em>{t('onboarding.optionalTag')}</em></div>
               <div className="onb-hint onb-hint-sub">{t('onboarding.restrictionsHint')}</div>
+              {/* MB5 · nota secundaria: un gusto NO es una restricción (se pregunta cada semana). */}
+              <div className="onb-hint onb-hint-note">{t('onboarding.restrictionsNote')}</div>
               <div className="onb-cards-row" style={{ flexWrap: 'wrap' }}>
                 {PERMANENT_AVOID_CATALOG.map(v => (
                   <div key={v} className={`onb-card-select${restricciones.includes(v) ? ' selected' : ''}`} onClick={() => toggleRestriccion(v)}>

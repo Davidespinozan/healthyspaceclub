@@ -340,6 +340,12 @@
   color: rgba(21, 51, 48, 0.5);
   margin: 2px 0 0;
 }
+/* MB5 · nota secundaria bajo un hint (jerarquía: label → hint → nota). */
+.sh-field-note {
+  font-size: 0.72rem;
+  color: rgba(21, 51, 48, 0.42);
+  margin: 4px 0 8px;
+}
 
 .sh-saved {
   background: rgba(45, 122, 79, 0.08);

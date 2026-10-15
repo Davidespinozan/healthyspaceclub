@@ -11,7 +11,7 @@
 //      Fuente: `obData.avoid` (CSV), escrita en onboarding y en Ajustes.
 //
 //   B) PREFERENCIAS TEMPORALES DE LA SEMANA (`weeklyAvoid`)
-//      Lo que responde el usuario a «¿Algo que prefieras evitar?». Son categorías
+//      Lo que responde el usuario a «¿Hay algo que prefieras evitar esta semana?». Son categorías
 //      ADICIONALES para ESA generación. No eliminan ni reemplazan las permanentes.
 //      Fuente: la respuesta del cuestionario semanal.
 //

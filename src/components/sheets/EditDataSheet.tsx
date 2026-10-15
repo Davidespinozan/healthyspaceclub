@@ -601,6 +601,9 @@ export default function EditDataSheet({ onClose }: Props) {
 
           <div className="sh-field" style={{ marginTop: 14 }}>
             <span className="sh-field-label">{t('onboarding.restrictionsTitle')}</span>
+            {/* MB5 · misma semántica que el onboarding: aquí solo restricciones reales. */}
+            <p className="sh-field-hint">{t('onboarding.restrictionsHint')}</p>
+            <p className="sh-field-hint sh-field-note">{t('onboarding.restrictionsNote')}</p>
             <div className="sh-chips">
               {RESTRICTION_OPTS.map(v => (
                 <button

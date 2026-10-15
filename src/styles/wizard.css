@@ -67,6 +67,14 @@
   font-style: italic;
 }
 
+/* MB5 · nota secundaria (p. ej. «las alergias van en Mis datos»): sin cursiva, más discreta. */
+.wz-note {
+  font-size: 11.5px;
+  color: rgba(246, 242, 234, 0.5);
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+
 /* ── Stepper ───────────────────────────────────────────────────── */
 
 .wz-stepper {

@@ -237,8 +237,9 @@ describe('P0-02 · C · catálogos', () => {
       expect(src, `${lang}: falta el nuevo título`).toMatch(/restrictionsTitle:/);
       expect(src, `${lang}: falta el subtexto de permanencia`).toMatch(/restrictionsHint:/);
     }
-    expect(read('i18n/es.ts')).toContain('¿Hay algo que no consumas?');
-    expect(read('i18n/es.ts')).toContain('debamos excluir siempre');
+    // MB5 · el perfil pregunta por restricciones REALES (alergia/intolerancia/restricción), no por gustos
+    expect(read('i18n/es.ts')).toContain('¿Tienes alguna alergia, intolerancia o restricción alimentaria?');
+    expect(read('i18n/es.ts')).toContain('Marca aquí solo lo que necesites evitar por completo.');
   });
 
   it('7d · cada categoría del catálogo tiene etiqueta en ES y EN', () => {

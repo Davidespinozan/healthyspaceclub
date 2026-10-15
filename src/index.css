@@ -1518,6 +1518,8 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 .onb-hint { font-size: .84rem; color: rgba(234,223,198,.55); margin-bottom: 28px; line-height: 1.5; }
 /* P0-02 · aclara que la restricción del perfil es PERMANENTE (va pegada a su título). */
 .onb-hint-sub { margin-top: -22px; margin-bottom: 10px; font-size: .78rem; opacity: .85; }
+/* MB5 · nota secundaria bajo un hint (jerarquía: título → hint → nota). */
+.onb-hint-note { margin-top: 0; margin-bottom: 12px; font-size: .74rem; opacity: .7; }
 
 /* Buttons */
 .onb-btn-gold {
