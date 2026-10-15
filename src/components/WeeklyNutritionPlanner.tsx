@@ -16,7 +16,7 @@ import { computeDayConsumption } from '../utils/foodConsumption';
 // CAPA 2 · las macros tampoco se calculan aquí: las prescribe `macroPrescription`
 // y llegan por `store.macroTargets`.
 import { isServableMacroPrescription, nonServableMacroNotice } from '../utils/macroPrescription';
-import { PLAN_ENGINE_VERSION, shakeCompatibleWith } from '../utils/planEngine';
+import { PLAN_ENGINE_VERSION, shakeTypeVerdict } from '../utils/planEngine';
 import ShakeTypeSelector from './ShakeTypeSelector';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
@@ -250,11 +250,12 @@ export default function WeeklyNutritionPlanner() {
   const [shakeWhen, setShakeWhen] = useState<'' | 'am' | 'pm' | 'both'>('');
   const [shakeType, setShakeType] = useState<ProteinShake['type'] | null>('regular');
   const [shakeGrams, setShakeGrams] = useState(25);
-  // RESTRICCIONES · el selector ve las MISMAS restricciones efectivas que recibirá el generador
-  // (permanentes ∪ semanales; el paso 'avoid' va antes que 'protein'). Un tipo incompatible no
-  // cuenta como elegido —tampoco el default «Regular»— y no se sustituye por otro.
-  const shakeAvoid = effectiveAvoid(permanentAvoidFrom(obData), weeklyAvoidFrom(answers.avoid));
-  const selectedShakeType = shakeType && shakeCompatibleWith(shakeType, shakeAvoid) ? shakeType : null;
+  // RESTRICCIONES · el selector ve la MISMA política que recibirá el generador (permanentes en strict,
+  // la semana en soft; el paso 'avoid' va antes que 'protein'). D-WP5: lácteos de cualquier origen
+  // bloquea el whey. Un tipo incompatible no cuenta como elegido —tampoco el default «Regular»— y no se
+  // sustituye por otro.
+  const shakeAvoid = avoidPolicy(permanentAvoidFrom(obData), weeklyAvoidFrom(answers.avoid));
+  const selectedShakeType = shakeType && shakeTypeVerdict(shakeType, shakeAvoid).compatible ? shakeType : null;
   const buildShake = (): ProteinShake | undefined =>
     shakeWhen && selectedShakeType ? { slots: shakeWhen === 'both' ? ['am', 'pm'] : [shakeWhen], type: selectedShakeType, protG: shakeGrams } : undefined;
   const [error, setError] = useState('');

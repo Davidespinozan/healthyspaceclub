@@ -182,7 +182,7 @@ describe('J · INVALIDACIÓN · solo responde a permanentes nuevas, en estricto'
   });
 });
 
-describe('K / L · batido y bowl conservan su comportamiento hasta MB4', () => {
+describe('K / L · batido (D-WP5) y bowl (D-WP6)', () => {
   const shakePlan = (type: ProteinShake['type'], avoid: string[]) =>
     ({ days: buildWeeklyPlan({ kcal: 2473, protG: 148, fatG: 69, carbG: 315 }, { seed: 5, avoid, shake: { slots: ['am'], type, protG: 25 } }) });
   it('K · whey con lácteos: permanente → restriction; solo semanal → sigue bloqueado (preference); vegana → válido', () => {
@@ -195,11 +195,11 @@ describe('K / L · batido y bowl conservan su comportamiento hasta MB4', () => {
     expect(validatePlan(vegana, { strict: [], soft: ['lacteos'] }).violations).toEqual([]);
     expect(validatePlan(vegana, { strict: ['lacteos'], soft: [] }).violations).toEqual([]);
   });
-  it('L · bowl: falla cerrado con strict y también con solo soft (D-WP6 llega en MB4); sin categorías, válido', () => {
+  it('L · bowl (D-WP6, MB4): falla cerrado con strict; con solo soft se permite; sin categorías, válido', () => {
     const days = buildWeeklyPlan(TARGET, { seed: 7, avoid: ['ajonjoli'] });
     const plan = { days: [buildDayWithFixed(TARGET, { slot: 'Comida', name: 'Humo', kcal: 737, prot: 59, fat: 31, carb: 64 }, { seed: 7, avoid: ['ajonjoli'] }, 1), ...days.slice(1)] };
     expect(kinds(validatePlan(plan, { strict: ['ajonjoli'], soft: [] }).violations)).toEqual(['unverifiable']);
-    expect(kinds(validatePlan(plan, { strict: [], soft: ['ajonjoli'] }).violations)).toEqual(['unverifiable']);
+    expect(validatePlan(plan, { strict: [], soft: ['ajonjoli'] }).violations).toEqual([]);
     expect(validatePlan(plan, { strict: [], soft: [] }).violations).toEqual([]);
   });
 });

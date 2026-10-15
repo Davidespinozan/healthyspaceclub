@@ -1625,6 +1625,7 @@ export const es = {
     proteinVegan: 'Vegana',
     proteinGainer: 'Mass gainer',
     shakeIncompatibleDairy: 'No compatible con tu restricción de lácteos.',
+    shakeIncompatibleDairyWeekly: 'No compatible con tu preferencia de evitar lácteos esta semana.',
     proteinGrams: 'Gramos de proteína por scoop',
     generatePlan: 'Generar mi plan',
     cuisineMexican: 'Mexicana',

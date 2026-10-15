@@ -5,10 +5,13 @@
 // aplican el generador y la validación final. Un tipo incompatible se muestra
 // deshabilitado y con su motivo; nunca queda seleccionado y no se elige otro por el
 // usuario (sin sustituciones automáticas).
+//
+// WEEKLY PREFERENCES SPLIT · D-WP5 · recibe la POLÍTICA (strict/soft): lácteos permanente o semanal
+// bloquea el whey igual, pero el motivo dice de dónde viene (restricción vs preferencia de la semana).
 import type React from 'react';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n/es';
-import { shakeTypeOptions, type ProteinShake } from '../utils/planEngine';
+import { shakeTypeOptions, type ProteinShake, type AvoidPolicy } from '../utils/planEngine';
 
 const LABEL: Record<ProteinShake['type'], TranslationKey> = {
   regular: 'nutritionPlanner.proteinRegular',
@@ -17,8 +20,9 @@ const LABEL: Record<ProteinShake['type'], TranslationKey> = {
 };
 
 interface Props {
-  /** Restricciones EFECTIVAS (permanentes ∪ semanales), las mismas que recibirá el generador. */
-  avoid: readonly string[];
+  /** Política de la semana (permanentes en `strict`, preferencias en `soft`), la misma que recibirá el
+   *  generador. Una lista suelta se interpreta como todo estricto. */
+  avoid: AvoidPolicy | readonly string[];
   /** Tipo elegido y compatible, o null si no hay ninguno elegido. */
   value: ProteinShake['type'] | null;
   onChange: (type: ProteinShake['type']) => void;
@@ -29,7 +33,7 @@ export default function ShakeTypeSelector({ avoid, value, onChange, pill }: Prop
   const { t } = useT();
   return (
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-      {shakeTypeOptions(avoid).map(({ type, compatible }) => {
+      {shakeTypeOptions(avoid).map(({ type, compatible, origin }) => {
         const on = compatible && value === type;
         return (
           <button
@@ -44,7 +48,7 @@ export default function ShakeTypeSelector({ avoid, value, onChange, pill }: Prop
           >
             {t(LABEL[type])}
             {!compatible && (
-              <span style={{ fontSize: 11, fontWeight: 400, marginTop: 2 }}>{t('nutritionPlanner.shakeIncompatibleDairy')}</span>
+              <span style={{ fontSize: 11, fontWeight: 400, marginTop: 2 }}>{t(origin === 'soft' ? 'nutritionPlanner.shakeIncompatibleDairyWeekly' : 'nutritionPlanner.shakeIncompatibleDairy')}</span>
             )}
           </button>
         );

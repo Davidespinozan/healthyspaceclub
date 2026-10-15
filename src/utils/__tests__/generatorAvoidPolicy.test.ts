@@ -197,7 +197,7 @@ describe('PLANIFICADOR y TabHoy pasan la política (no la unión) al generador',
   });
 });
 
-describe('N / O · batido y bowl sin cambio de comportamiento (MB4)', () => {
+describe('N / O · batido (D-WP5) y bowl (D-WP6)', () => {
   it('el batido se decide sobre la UNIÓN: whey se omite con lácteos permanente o semanal', () => {
     for (const pol of [P(['lacteos'], []), P([], ['lacteos'])]) {
       const days = buildWeeklyPlan(TARGETS[0], { seed: 1, avoid: pol, shake: { slots: ['am'], type: 'regular', protG: 25 } });
@@ -206,11 +206,12 @@ describe('N / O · batido y bowl sin cambio de comportamiento (MB4)', () => {
     const vegana = buildWeeklyPlan(TARGETS[0], { seed: 1, avoid: P([], ['lacteos']), shake: { slots: ['am'], type: 'vegana', protG: 25 } });
     expect(vegana.flatMap((d) => d.meals).some((m) => m.name.startsWith('Batido de Proteína'))).toBe(true);
   });
-  it('el día con bowl se arma con el pool de la política; la validación del bowl no cambia', () => {
+  it('el día con bowl se arma con el pool de la política; con solo soft el bowl se permite (D-WP6, MB4)', () => {
     const day = buildDayWithFixed(TARGETS[0], { slot: 'Comida', name: 'Verde', kcal: 737, prot: 59, fat: 31, carb: 64 }, { seed: 2, avoid: P([], ['huevo']) }, 1);
     const ds = day.meals.flatMap((m) => m.name.split(' + ')).map((n) => BANCO.find((x) => x.nombre === n)).filter(Boolean) as BancoDish[];
     expect(ds.filter((d) => makePreferenceFilter(['huevo'])(d))).toEqual([]);
     const plan = { days: [day, ...buildWeeklyPlan(TARGETS[0], { seed: 2, avoid: P([], ['huevo']) }).slice(1)] };
-    expect([...new Set(validatePlan(plan, P([], ['huevo'])).violations.map((v) => v.kind))]).toEqual(['unverifiable']);
+    expect(validatePlan(plan, P([], ['huevo'])).violations).toEqual([]);
+    expect([...new Set(validatePlan(plan, P(['huevo'], [])).violations.map((v) => v.kind))]).toContain('unverifiable');
   });
 });

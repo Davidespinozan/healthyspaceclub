@@ -27,7 +27,7 @@ const pill = (on: boolean) => ({ fontWeight: on ? 700 : 400 });
 const MSG = es.nutritionPlanner.shakeIncompatibleDairy;
 const btn = (type: string) => document.querySelector(`[data-shake-type="${type}"]`) as HTMLButtonElement;
 
-function mount(avoid: string[], value: ProteinShake['type'] | null) {
+function mount(avoid: string[] | { strict: string[]; soft: string[] }, value: ProteinShake['type'] | null) {
   const onChange = vi.fn();
   render(<ShakeTypeSelector avoid={avoid} value={value} onChange={onChange} pill={pill} />);
   return onChange;
@@ -106,15 +106,41 @@ describe('UI y motor no divergen', () => {
   });
 });
 
+describe('MB4 · D-WP5 · política: lácteos semanal también bloquea, con su motivo propio', () => {
+  const WEEKLY = es.nutritionPlanner.shakeIncompatibleDairyWeekly;
+  it('lácteos SOLO semanal: whey y mass gainer deshabilitados con el motivo de la semana; vegana libre', () => {
+    mount({ strict: [], soft: ['lacteos'] } as never, null);
+    for (const t of ['regular', 'massgainer']) {
+      expect(btn(t).disabled, t).toBe(true);
+      expect(btn(t).textContent, t).toContain(WEEKLY);
+      expect(btn(t).textContent, t).not.toContain(MSG);
+    }
+    expect(btn('vegana').disabled).toBe(false);
+    expect(WEEKLY).toBe('No compatible con tu preferencia de evitar lácteos esta semana.');
+  });
+  it('lácteos PERMANENTE (aunque también esté en la semana): motivo de restricción', () => {
+    mount({ strict: ['lacteos'], soft: ['lacteos'] } as never, null);
+    expect(btn('regular').disabled).toBe(true);
+    expect(btn('regular').textContent).toContain(MSG);
+    expect(btn('regular').textContent).not.toContain(WEEKLY);
+  });
+  it('tocar un tipo bloqueado por la semana no lo elige', () => {
+    const onChange = mount({ strict: [], soft: ['lacteos'] } as never, null);
+    fireEvent.click(btn('regular'));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
 describe('Planificador · cableado', () => {
   const code = PLANNER_SRC.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
   it('el selector recibe las restricciones efectivas y no hay una lista de tipos propia', () => {
-    expect(code).toMatch(/const shakeAvoid = effectiveAvoid\(permanentAvoidFrom\(obData\), weeklyAvoidFrom\(answers\.avoid\)\);/);
+    // MB4 · la POLÍTICA (strict/soft), no la unión opaca
+    expect(code).toMatch(/const shakeAvoid = avoidPolicy\(permanentAvoidFrom\(obData\), weeklyAvoidFrom\(answers\.avoid\)\);/);
     expect(code).toMatch(/<ShakeTypeSelector avoid=\{shakeAvoid\} value=\{selectedShakeType\}/);
     expect(code).not.toMatch(/const TYPES: Array/);
   });
   it('el batido que se manda a generar solo lleva un tipo compatible (nunca el default incompatible)', () => {
-    expect(code).toMatch(/const selectedShakeType = shakeType && shakeCompatibleWith\(shakeType, shakeAvoid\) \? shakeType : null;/);
+    expect(code).toMatch(/const selectedShakeType = shakeType && shakeTypeVerdict\(shakeType, shakeAvoid\)\.compatible \? shakeType : null;/);
     expect(code).toMatch(/shakeWhen && selectedShakeType \? \{[^}]*type: selectedShakeType/);
   });
 });

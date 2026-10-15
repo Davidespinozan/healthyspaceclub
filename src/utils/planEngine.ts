@@ -739,23 +739,37 @@ export const SHAKE_TYPES: readonly ProteinShake['type'][] = ['regular', 'vegana'
 
 /** Categoría que vuelve incompatible un tipo de batido (hoy solo existe la regla del whey). */
 export type ShakeBlockReason = 'lacteos';
+/** De dónde viene el bloqueo: restricción PERMANENTE o preferencia de ESTA semana. */
+export type ShakeBlockOrigin = 'strict' | 'soft';
 
 /**
- * PROYECCIÓN PARA LA UI de la autoridad única: cada tipo con su compatibilidad para estas restricciones.
- * No es una segunda matriz: cada `compatible` sale de `shakeCompatibleWith`, la misma función que aplican
- * el generador y la validación final. Puro.
+ * WEEKLY PREFERENCES SPLIT · D-WP5 · veredicto de un tipo de batido para una política (o una lista, que es
+ * todo estricto). El whey / mass gainer se bloquea con `lacteos` de CUALQUIER origen: elegir el tipo de
+ * proteína es una elección directa y visible, no un ingrediente oculto. Por eso la compatibilidad se
+ * decide sobre strict ∪ soft (`shakeCompatibleWith`), pero se CONSERVA el origen del bloqueo: permanente
+ * ('strict') si la restricción por sí sola ya lo bloquea; si no, preferencia de la semana ('soft'). Puro.
  */
-export function shakeTypeOptions(avoidCats: readonly string[] = []): Array<{ type: ProteinShake['type']; compatible: boolean; blockedBy: ShakeBlockReason | null }> {
-  return SHAKE_TYPES.map((type) => {
-    const compatible = shakeCompatibleWith(type, avoidCats);
-    return { type, compatible, blockedBy: compatible ? null : 'lacteos' };
-  });
+export function shakeTypeVerdict(type: ProteinShake['type'] | null, avoid: AvoidInput | readonly string[] = []):
+  { compatible: boolean; blockedBy: ShakeBlockReason | null; origin: ShakeBlockOrigin | null } {
+  const p = toAvoidPolicy(avoid as AvoidInput);
+  if (shakeCompatibleWith(type, [...p.strict, ...p.soft])) return { compatible: true, blockedBy: null, origin: null };
+  return { compatible: false, blockedBy: 'lacteos', origin: shakeCompatibleWith(type, p.strict) ? 'soft' : 'strict' };
 }
 
-/** Batido elegible para el plan: sin batido → n/a (true); con batido → `shakeCompatibleWith`. NO sustituye
- *  por otro tipo: si no es compatible, el plan va sin batido. Puro. */
-export function shakeAllowedFor(shake: ProteinShake | undefined, avoidCats: readonly string[] = []): boolean {
-  return !shake || shakeCompatibleWith(shake.type, avoidCats);
+/**
+ * PROYECCIÓN PARA LA UI de la autoridad única: cada tipo con su compatibilidad para esta política.
+ * No es una segunda matriz: cada `compatible` sale de `shakeTypeVerdict` → `shakeCompatibleWith`, la misma
+ * autoridad que aplican el generador y la validación final. `origin` permite explicar el motivo. Puro.
+ */
+export function shakeTypeOptions(avoid: AvoidInput | readonly string[] = []): Array<{ type: ProteinShake['type']; compatible: boolean; blockedBy: ShakeBlockReason | null; origin: ShakeBlockOrigin | null }> {
+  return SHAKE_TYPES.map((type) => ({ type, ...shakeTypeVerdict(type, avoid) }));
+}
+
+/** Batido elegible para el plan: sin batido → n/a (true); con batido → `shakeTypeVerdict` (D-WP5: lácteos
+ *  permanente O semanal bloquea el whey). NO sustituye por otro tipo: si no es compatible, el plan va sin
+ *  batido. Puro. */
+export function shakeAllowedFor(shake: ProteinShake | undefined, avoid: AvoidInput | readonly string[] = []): boolean {
+  return !shake || shakeTypeVerdict(shake.type, avoid).compatible;
 }
 
 /** Nombre con que `shakeItem` sirve el batido. Si el corrector le fusiona un snack (`mergeIntoSnack`), el
@@ -1389,8 +1403,8 @@ export function snacksPerSlot(kcal: number): number { return kcal > 2200 ? 2 : 1
 export function assembleFromSelection(target: PlanTarget, days: DaySelection[], avoidCats: AvoidInput = [], shake?: ProteinShake): DayPlan[] {
   // RESTRICCIONES · el batido pasa por la MISMA autoridad que en el motor determinista: si no es
   // compatible (whey con lácteos), el plan va SIN batido. Antes esta ruta lo aplicaba sin comprobar.
-  // El batido conserva hasta MB4 su regla sobre la UNIÓN (whey con lácteos de cualquier origen).
-  if (!shakeAllowedFor(shake, avoidInputUnion(avoidCats))) shake = undefined;
+  // D-WP5 · whey / mass gainer fuera con lácteos permanente O semanal (`shakeAllowedFor` decide sobre la política).
+  if (!shakeAllowedFor(shake, avoidCats)) shake = undefined;
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const MT = mealTargets(reduceForShake(T, shake)); // principales contra la meta MENOS el batido
   const nSnack = snacksPerSlot(target.kcal);
@@ -1536,7 +1550,7 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   // NUTRITION-N3 · SEGURIDAD DEL BATIDO: el whey (regular/mass gainer) es lácteo → si el usuario evita
   // lácteos o es vegano, NO se prescribe (fail-closed). Se omite y los principales cierran la meta con
   // comida real (no inventamos una "proteína vegana" que no exista como dato). El batido 'vegana' sí pasa.
-  const shake = shakeAllowedFor(opts.shake, avoidInputUnion(opts.avoid)) ? opts.shake : undefined;   // unión hasta MB4
+  const shake = shakeAllowedFor(opts.shake, opts.avoid ?? []) ? opts.shake : undefined;   // D-WP5
   const buildT = reduceForShake(T, shake); // los principales van contra la meta MENOS el batido
   const rng = mulberry32(opts.seed ?? 12345);
   // "Evitar": categoría (gluten/lácteos/…) → alimentos reales del banco; excluye esos platillos.

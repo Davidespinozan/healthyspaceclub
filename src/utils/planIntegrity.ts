@@ -121,8 +121,9 @@ const portionList = (s: ServiceLike): string[] =>
  *                `buildDayWithFixed`. Un nombre desconocido con ingredientes reales no
  *                encaja en esta firma. CAPACIDAD INACTIVA: el Bowl/Food Truck está pausado
  *                y no forma parte del producto actual. El bowl llega SIN composición, así
- *                que con restricciones activas no se puede verificar y FALLA CERRADO
- *                (`unverifiable`); sin restricciones no hay nada que comprobar. Modelar su
+ *                que con restricciones PERMANENTES no se puede verificar y FALLA CERRADO
+ *                (`unverifiable`); con solo preferencias de la semana se permite (D-WP6);
+ *                sin nada no hay que comprobar. Modelar su
  *                composición es deuda previa a reactivarlo (HALLAZGO-03 en
  *                docs/nutricion/HALLAZGOS-P0.md).
  * - `unknown`  · cualquier otra cosa. NO recibe exención.
@@ -166,8 +167,9 @@ function isShakeCombined(added: string[], ings: string[]): boolean {
  *
  * MB2 · puede llegar como `AvoidPolicy`: lo `strict` se valida con el detector estricto y da
  * `restriction`; lo `soft` con el suave y da `preference`. Una lista suelta = todo strict.
- * Batido y bowl conservan hasta MB4 su regla sobre la UNIÓN (whey con lácteos de cualquier
- * origen; bowl falla cerrado con cualquier categoría), solo que etiquetan el origen.
+ * Batido (D-WP5): whey / mass gainer con lácteos de cualquier origen → `restriction` si es permanente,
+ * `preference` si es solo de la semana. Bowl (D-WP6): falla cerrado (`unverifiable`) solo con `strict`;
+ * con solo `soft` se permite.
  *
  * Devuelve TODAS las violaciones, no la primera: un diagnóstico parcial haría imposible
  * saber si un plan tiene un defecto o treinta.
@@ -278,10 +280,11 @@ export function validatePlan(plan: unknown, effectiveAvoid: AvoidInput): PlanVer
         // no dice qué lleva ("Humo" es chamberete + hummus + salsa), y adivinarlo por texto
         // contradecía al detector canónico. Sin composición no hay verificación posible: con
         // restricciones activas FALLA CERRADO; sin restricciones no hay nada que comprobar.
-        // MB2 · se conserva sobre la UNIÓN (también con solo preferencias semanales). MB4 decidirá
-        // el bowl con solo `soft` (D-WP6: permitido); con `strict` seguirá fallando cerrado.
-        if (unionTerms.length) {   // categoría REAL (los centinelas «ninguno»/«todas» no cuentan)
-          bad({ kind: 'unverifiable', day: dayNum, slot, dish: m.name, detail: `alimento externo sin composición modelada: no se puede verificar contra ${union.join(', ')}` });
+        // D-WP6 · solo una restricción PERMANENTE lo hace fallar cerrado. Con solo preferencias de la
+        // semana (`soft`) el bowl se permite: el usuario lo eligió explícitamente y una preferencia
+        // flexible no es una alergia. No se aplica `soft` por nombre ni se inventa su composición.
+        if (strictTerms.length) {   // restricción REAL (los centinelas «ninguno»/«todas» no cuentan)
+          bad({ kind: 'unverifiable', day: dayNum, slot, dish: m.name, detail: `alimento externo sin composición modelada: no se puede verificar contra ${strict.join(', ')}` });
         }
         // El BOWL ocupa el tiempo que el usuario eligió al pedirlo, así que cualquier slot
         // es legítimo por construcción: es la única exención de tiempo, y es acotada.

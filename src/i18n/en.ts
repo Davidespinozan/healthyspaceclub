@@ -1620,6 +1620,7 @@ export const en: Translations<typeof es> = {
     proteinVegan: 'Vegan',
     proteinGainer: 'Mass gainer',
     shakeIncompatibleDairy: 'Not compatible with your dairy restriction.',
+    shakeIncompatibleDairyWeekly: 'Not compatible with your preference to avoid dairy this week.',
     proteinGrams: 'Grams of protein per scoop',
     generatePlan: 'Generate my plan',
     cuisineMexican: 'Mexican',

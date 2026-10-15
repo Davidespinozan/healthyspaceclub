@@ -124,9 +124,11 @@ bowl ocupa el tiempo que el usuario eligió al pedirlo.
 **Contrato vigente (Restrictions Safety · bowl).** Antes P0-04 buscaba términos en su nombre y
 su porción, una señal que con los nombres reales del truck (Fuego, Brasa, Humo, Oro, Verde) no
 detectaba nada: chamberete (carne roja) y hummus (ajonjolí) pasaban. Ahora, **con restricciones
-activas, un bowl falla cerrado** con la violación explícita `unverifiable` (no se guarda, no se
-hidrata, e invalida el plan si se endurecen las restricciones). Sin restricciones no hay nada
-que comprobar y sigue siendo válido. No hay heurística de texto para el bowl.
+PERMANENTES, un bowl falla cerrado** con la violación explícita `unverifiable` (no se guarda, no
+se hidrata, e invalida el plan si se endurecen las restricciones). Con **solo preferencias de la
+semana** se permite (D-WP6, Weekly Preferences Split MB4): el usuario lo eligió explícitamente y
+una preferencia flexible no es una alergia. Sin nada que evitar sigue siendo válido. No hay
+heurística de texto para el bowl.
 
 **Datos que existen hoy (lectura de producción, 2026-10-15).** `truck_bowls.ingredients` guarda
 los componentes del truck por slug (`chamberete`, `pollo-lento`, `hummus-chiles`, `s-chipotle`…)

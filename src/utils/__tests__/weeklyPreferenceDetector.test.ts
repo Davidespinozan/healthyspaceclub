@@ -156,7 +156,8 @@ describe('CONSUMIDORES · el modo suave lo usan la VALIDACIÓN (MB2) y el GENERA
     const files = import.meta.glob('../../**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
     const users = Object.entries(files)
       .filter(([p]) => !p.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(p))
-      .filter(([p, src]) => !p.endsWith('/planEngine.ts') && !p.endsWith('/allergenSafety.ts') && /makePreferenceFilter|'soft'/.test(src))
+      .filter(([p, src]) => !p.endsWith('/planEngine.ts') && !p.endsWith('/allergenSafety.ts')
+        && /makePreferenceFilter|(dishAvoidUnits|hiddenAllergenCatsFor)\([^)]*'soft'/.test(src))   // el DETECTOR suave, no la etiqueta de origen
       .map(([p]) => p);
     expect(users).toEqual(['../planIntegrity.ts']);
   });
