@@ -226,10 +226,11 @@ describe('P0-04 · D · formas especiales vs nombre desconocido', () => {
     expect(v.violations.some((x) => x.kind === 'time' && /batido/i.test(x.detail))).toBe(true);
   });
 
-  it('un BOWL cuyo nombre delata un alimento excluido se marca (comprobación débil, documentada)', () => {
+  it('un BOWL (sin composición) con restricciones activas falla cerrado: unverifiable, no un match por nombre', () => {
     const bowlSalmon = { time: 'Comida', name: 'Bowl de Salmón', desc: '', portions: ['Bowl de Salmón'], ings: [] as unknown[] };
     expect(classifyService(bowlSalmon)).toBe('bowl');
-    expect(validatePlan(planCon([bowlSalmon]), ['pescado']).violations.some((x) => x.kind === 'restriction')).toBe(true);
+    const v = validatePlan(planCon([bowlSalmon]), ['pescado']).violations.filter((x) => x.day === 1);
+    expect(v.map((x) => x.kind)).toEqual(['unverifiable']);
   });
 });
 

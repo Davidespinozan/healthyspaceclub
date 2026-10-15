@@ -34,7 +34,8 @@ export type PlanViolationKind =
   | 'shape'          // el plan no tiene la forma mínima para poder validarse
   | 'restriction'    // un servicio viola una restricción efectiva
   | 'time'           // un platillo está servido en un tiempo que no es el suyo
-  | 'unknown-dish';  // un nombre que no resuelve y no es una forma especial legítima
+  | 'unknown-dish'   // un nombre que no resuelve y no es una forma especial legítima
+  | 'unverifiable';  // con restricciones activas, un servicio sin composición modelada (falla cerrado)
 
 export interface PlanViolation {
   kind: PlanViolationKind;
@@ -116,9 +117,11 @@ const portionList = (s: ServiceLike): string[] =>
  *                porción que es su propio nombre, que es exactamente lo que construye
  *                `buildDayWithFixed`. Un nombre desconocido con ingredientes reales no
  *                encaja en esta firma. CAPACIDAD INACTIVA: el Bowl/Food Truck está pausado
- *                y no forma parte del producto actual. La firma se conserva para que las
- *                defensas sigan en pie; su verificabilidad es deuda previa a reactivarlo
- *                (HALLAZGO-03 en docs/nutricion/HALLAZGOS-P0.md).
+ *                y no forma parte del producto actual. El bowl llega SIN composición, así
+ *                que con restricciones activas no se puede verificar y FALLA CERRADO
+ *                (`unverifiable`); sin restricciones no hay nada que comprobar. Modelar su
+ *                composición es deuda previa a reactivarlo (HALLAZGO-03 en
+ *                docs/nutricion/HALLAZGOS-P0.md).
  * - `unknown`  · cualquier otra cosa. NO recibe exención.
  */
 export function classifyService(s: ServiceLike): ServiceKind {
@@ -185,9 +188,8 @@ export function validatePlan(plan: unknown, effectiveAvoid: string[]): PlanVerdi
   const avoid = effectiveAvoid.filter(Boolean);
   // El predicado REAL de P0-01: sub-recetas, alérgenos ocultos y Decisión 05 incluidos.
   const viola = avoid.length ? makeAvoidFilter(avoid) : null;
-  // Para las formas especiales no hay BancoDish que mirar; se usa el texto que el propio
-  // plan guarda (mismos primitivos compartidos, no un detector nuevo). Es una comprobación
-  // más DÉBIL, y se declara como tal: cubre el nombre y las porciones, no la composición.
+  // El batido no tiene BancoDish: su texto propio se mira con los mismos primitivos
+  // compartidos y su base la decide `shakeCompatibleWith`. (El bowl ya no usa texto: ver abajo.)
   const terms = avoid.length ? expandAvoidCats(avoid) : [];
   const textoViola = (txts: string[]) => terms.length > 0 && txts.some((t) => textMatchesAvoid(t, terms));
 
@@ -251,8 +253,18 @@ export function validatePlan(plan: unknown, effectiveAvoid: string[]): PlanVerdi
             bad({ kind: 'time', day: dayNum, slot, dish: part, detail: `es de ${dish.tiempo} y está servido en ${slot}` });
           }
         }
+      } else if (kind === 'bowl') {
+        // BOWL · alimento externo SIN composición (`ings: []`, solo nombre y macros). Su nombre
+        // no dice qué lleva ("Humo" es chamberete + hummus + salsa), y adivinarlo por texto
+        // contradecía al detector canónico. Sin composición no hay verificación posible: con
+        // restricciones activas FALLA CERRADO; sin restricciones no hay nada que comprobar.
+        if (terms.length) {   // restricción REAL (los centinelas «ninguno»/«todas» no cuentan)
+          bad({ kind: 'unverifiable', day: dayNum, slot, dish: m.name, detail: `alimento externo sin composición modelada: no se puede verificar contra ${avoid.join(', ')}` });
+        }
+        // El BOWL ocupa el tiempo que el usuario eligió al pedirlo, así que cualquier slot
+        // es legítimo por construcción: es la única exención de tiempo, y es acotada.
       } else {
-        // shake / bowl · sin BancoDish detrás.
+        // shake · sin BancoDish detrás.
         if (textoViola([m.name, ...portionList(m), ...ingNames(m)])) {
           bad({ kind: 'restriction', day: dayNum, slot, dish: m.name, detail: `viola una restricción activa (${avoid.join(', ')})` });
         } else if (kind === 'shake' && !shakeCompatibleWith(shakeTypeOfService(m), avoid)) {
@@ -265,8 +277,6 @@ export function validatePlan(plan: unknown, effectiveAvoid: string[]): PlanVerdi
         if (kind === 'shake' && slot !== 'Snack') {
           bad({ kind: 'time', day: dayNum, slot, dish: m.name, detail: `el batido solo puede ocupar un snack, está en ${slot}` });
         }
-        // El BOWL ocupa el tiempo que el usuario eligió al pedirlo, así que cualquier slot
-        // es legítimo por construcción: es la única exención de tiempo, y es acotada.
       }
     }
   }

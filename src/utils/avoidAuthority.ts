@@ -176,11 +176,12 @@ interface PlanLike {
  *
  * DELEGA en la validación final (`validatePlan`), la misma autoridad que decide si un plan
  * se guarda o se hidrata: composición real del platillo del banco (sub-recetas, alérgenos
- * ocultos, TERM_EXCEPT), tipo del batido (`shakeCompatibleWith`, solo o combinado) y la
- * comprobación de texto de las formas sin platillo detrás (bowl). Solo cuentan las
- * violaciones `restriction`: un defecto de otra clase (tiempo, forma, nombre desconocido)
- * no es motivo para descartar el plan por un cambio de restricciones. Antes había aquí una
- * búsqueda propia por texto en nombre/ingredientes/porciones que contradecía al detector:
+ * ocultos, TERM_EXCEPT), tipo del batido (`shakeCompatibleWith`, solo o combinado) y el
+ * cierre de lo que no se puede verificar (un bowl sin composición). Cuentan las violaciones
+ * `restriction` y `unverifiable` (sin composición no se puede afirmar que el plan respete lo
+ * recién excluido: falla cerrado). Un defecto de otra clase (tiempo, forma, nombre
+ * desconocido) no es motivo para descartar el plan por un cambio de restricciones.
+ * Antes había aquí una búsqueda propia por texto en nombre/ingredientes/porciones que contradecía al detector:
  * borraba planes seguros ("Hot Cakes de Avena" con gluten) y dejaba pasar alérgenos ocultos
  * (mayonesa = huevo, salsa de soya = gluten, hummus = ajonjolí).
  *
@@ -189,7 +190,7 @@ interface PlanLike {
 export function planViolatesAvoid(plan: PlanLike | null | undefined, cats: string[]): boolean {
   const norm = normalizeCats(cats);
   if (!norm.length || !plan?.days?.length) return false;
-  return validatePlan(plan, norm).violations.some((v) => v.kind === 'restriction');
+  return validatePlan(plan, norm).violations.some((v) => v.kind === 'restriction' || v.kind === 'unverifiable');
 }
 
 /**

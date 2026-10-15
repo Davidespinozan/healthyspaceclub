@@ -55,7 +55,7 @@ describe('AUTORIDAD ÚNICA · la invalidación coincide con el detector canónic
   it('no queda una segunda lógica de texto en la invalidación', () => {
     const code = AUTHORITY_SRC.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     expect(code).not.toMatch(/textMatchesAvoid|expandAvoidCats/);
-    expect(code).toMatch(/validatePlan\(plan, norm\)\.violations\.some\(\(v\) => v\.kind === 'restriction'\)/);
+    expect(code).toMatch(/validatePlan\(plan, norm\)\.violations\.some\(\(v\) => v\.kind === 'restriction' \|\| v\.kind === 'unverifiable'\)/);
   });
 });
 
@@ -114,7 +114,7 @@ describe('E · restricción permanente y semanal: misma semántica', () => {
   it('la invalidación coincide con la validación final de las restricciones efectivas', () => {
     const plan = planWith(dish('Tostadas de Atún'));
     const eff = effectiveAvoid(permanentAvoidFrom({ avoid: 'huevo' }), weeklyAvoidFrom(''));
-    expect(planViolatesAvoid(plan, eff)).toBe(validatePlan(plan, eff).violations.some((v) => v.kind === 'restriction'));
+    expect(planViolatesAvoid(plan, eff)).toBe(validatePlan(plan, eff).violations.some((v) => v.kind === 'restriction' || v.kind === 'unverifiable'));
   });
 });
 

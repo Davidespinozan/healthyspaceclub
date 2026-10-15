@@ -118,10 +118,22 @@ está operando y esta capacidad no forma parte del HSC que se está preparando. 
 
 **Qué pasa.** Un bowl entra al plan como alimento EXTERNO con macros conocidas pero **sin
 ingredientes** (`ings: []`, ver `buildDayWithFixed`). P0-04 lo reconoce por su estructura, no
-por su nombre, y puede comprobar su nombre y su porción contra las restricciones — una señal
-débil, que detecta «Bowl de Salmón» con pescado excluido pero no la composición real. Es
-además la única exención del chequeo de tiempo, acotada y justificada: el bowl ocupa el tiempo
-que el usuario eligió al pedirlo.
+por su nombre. Es además la única exención del chequeo de tiempo, acotada y justificada: el
+bowl ocupa el tiempo que el usuario eligió al pedirlo.
+
+**Contrato vigente (Restrictions Safety · bowl).** Antes P0-04 buscaba términos en su nombre y
+su porción, una señal que con los nombres reales del truck (Fuego, Brasa, Humo, Oro, Verde) no
+detectaba nada: chamberete (carne roja) y hummus (ajonjolí) pasaban. Ahora, **con restricciones
+activas, un bowl falla cerrado** con la violación explícita `unverifiable` (no se guarda, no se
+hidrata, e invalida el plan si se endurecen las restricciones). Sin restricciones no hay nada
+que comprobar y sigue siendo válido. No hay heurística de texto para el bowl.
+
+**Datos que existen hoy (lectura de producción, 2026-10-15).** `truck_bowls.ingredients` guarda
+los componentes del truck por slug (`chamberete`, `pollo-lento`, `hummus-chiles`, `s-chipotle`…)
+y `truck_recetas` los desglosa en insumos de inventario, pero se detiene en sub-recetas genéricas
+(«Hummus (sub-receta)», «Salsas (sub-receta)», «Verduras frescas»). El RPC
+`club_bowls_disponibles` no devuelve ingredientes y las recetas son de lectura solo para staff.
+Mapear eso al detector exigiría suponer qué llevan las salsas y el hummus: no se hace.
 
 **Defensas que SÍ quedan activas** (de P0-03 y P0-04, no se retiran):
 
