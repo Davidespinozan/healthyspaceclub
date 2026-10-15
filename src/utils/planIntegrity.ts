@@ -27,7 +27,7 @@
 // Puro / determinista / sin estado. No conoce React, ni el store, ni Supabase.
 // ─────────────────────────────────────────────────────────────────────────────
 import { BANCO, type BancoDish } from '../data/banco';
-import { makeAvoidFilter, expandAvoidCats, textMatchesAvoid, shakeCompatibleWith, shakeTypeOfService } from './planEngine';
+import { makeAvoidFilter, expandAvoidCats, textMatchesAvoid, shakeCompatibleWith, shakeTypeOfService, SHAKE_NAME } from './planEngine';
 
 /** Tipo de defecto. Granular a propósito: la UI y los tests necesitan el motivo, no un bool. */
 export type PlanViolationKind =
@@ -72,7 +72,7 @@ export class InvalidPlanError extends Error {
 // legítimas que no tienen correspondencia 1:1, y cada una se reconoce por su ESTRUCTURA,
 // no por su nombre: si bastara el nombre, cualquier platillo desconocido podría disfrazarse
 // de forma especial y saltarse la validación. Eso es exactamente lo que no queremos.
-export type ServiceKind = 'dish' | 'combined' | 'shake' | 'bowl' | 'unknown';
+export type ServiceKind = 'dish' | 'combined' | 'shake' | 'shake-combined' | 'bowl' | 'unknown';
 
 /** Forma mínima de un servicio del plan que este módulo necesita leer. */
 export interface ServiceLike {
@@ -82,7 +82,6 @@ export interface ServiceLike {
   ings?: unknown;
 }
 
-const SHAKE_NAME = 'Batido de Proteína';
 const SHAKE_ING = 'Proteína en polvo';
 
 const BY_NAME = new Map<string, BancoDish>(BANCO.map((d) => [d.nombre, d]));
@@ -106,6 +105,13 @@ const portionList = (s: ServiceLike): string[] =>
  * - `shake`    · el batido de proteína: nombre exacto Y su único ingrediente es la
  *                proteína en polvo. No basta el nombre: un platillo desconocido que se
  *                llame "Batido de Proteína" con otros ingredientes NO es un batido.
+ * - `shake-combined` · el batido al que el corrector de macros (`mergeIntoSnack`) le
+ *                fusionó un snack: "Batido de Proteína + <snack>". Contrato CERRADO:
+ *                la primera parte es exactamente el batido, su primer ingrediente es la
+ *                proteína en polvo, cada parte añadida es un platillo del banco y cada
+ *                ingrediente restante pertenece a esas partes (nada ajeno colado). Las
+ *                partes añadidas se validan después como cualquier platillo (restricción
+ *                y tiempo) y el batido conserva su tipo (`shakeCompatibleWith`).
  * - `bowl`     · un alimento EXTERNO con macros conocidas: sin ingredientes y con una única
  *                porción que es su propio nombre, que es exactamente lo que construye
  *                `buildDayWithFixed`. Un nombre desconocido con ingredientes reales no
@@ -130,8 +136,19 @@ export function classifyService(s: ServiceLike): ServiceKind {
   }
 
   const parts = partsOf(name);
+  if (parts[0] === SHAKE_NAME) return isShakeCombined(parts.slice(1), ings) ? 'shake-combined' : 'unknown';
   if (parts.every((p) => BY_NAME.has(p))) return parts.length > 1 ? 'combined' : 'dish';
   return 'unknown';
+}
+
+/** Estructura de `mergeItems([batido, snack…])`: ingredientes = [proteína en polvo, …los del banco de cada
+ *  snack añadido]. Sin coincidencias parciales: cada parte es un nombre exacto del banco. */
+function isShakeCombined(added: string[], ings: string[]): boolean {
+  if (added.length === 0 || ings[0] !== SHAKE_ING) return false;
+  const dishes = added.map((p) => BY_NAME.get(p));
+  if (dishes.some((d) => d === undefined)) return false;
+  const allowed = new Set(dishes.flatMap((d) => d!.ings.map((i) => i.nv)));
+  return ings.slice(1).every((nv) => allowed.has(nv));
 }
 
 /**
@@ -211,8 +228,20 @@ export function validatePlan(plan: unknown, effectiveAvoid: string[]): PlanVerdi
       }
 
       // ── A · RESTRICCIONES ──────────────────────────────────────────────
-      if (kind === 'dish' || kind === 'combined') {
-        for (const part of partsOf(m.name)) {
+      if (kind === 'dish' || kind === 'combined' || kind === 'shake-combined') {
+        const parts = partsOf(m.name);
+        if (kind === 'shake-combined') {
+          // El batido conserva su identidad: mismo texto propio y misma autoridad de tipo que el batido solo.
+          if (textoViola([SHAKE_NAME, portionList(m)[0] ?? '', SHAKE_ING])) {
+            bad({ kind: 'restriction', day: dayNum, slot, dish: SHAKE_NAME, detail: `viola una restricción activa (${avoid.join(', ')})` });
+          } else if (!shakeCompatibleWith(shakeTypeOfService(m), avoid)) {
+            bad({ kind: 'restriction', day: dayNum, slot, dish: SHAKE_NAME, detail: `batido de whey incompatible con ${avoid.join(', ')}` });
+          }
+          if (slot !== 'Snack') {
+            bad({ kind: 'time', day: dayNum, slot, dish: SHAKE_NAME, detail: `el batido solo puede ocupar un snack, está en ${slot}` });
+          }
+        }
+        for (const part of kind === 'shake-combined' ? parts.slice(1) : parts) {
           const dish = BY_NAME.get(part)!;
           if (viola && viola(dish)) {
             bad({ kind: 'restriction', day: dayNum, slot, dish: part, detail: `viola una restricción activa (${avoid.join(', ')})` });

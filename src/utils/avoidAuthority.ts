@@ -24,7 +24,7 @@
 // Puro / determinista / sin estado. No conoce React ni el store.
 // ─────────────────────────────────────────────────────────────────────────────
 import { canonicalizeAvoidTerm } from './allergenSafety';
-import { expandAvoidCats, textMatchesAvoid, shakeCompatibleWith, shakeTypeOfService } from './planEngine';
+import { expandAvoidCats, textMatchesAvoid, shakeCompatibleWith, shakeTypeOfService, isShakeName } from './planEngine';
 
 /**
  * Las 10 restricciones que el producto ofrece hoy, para el PERFIL (permanentes).
@@ -184,7 +184,8 @@ export function planViolatesAvoid(plan: PlanLike | null | undefined, cats: strin
   for (const d of plan.days) {
     for (const m of d.meals ?? []) {
       // El batido no nombra su base: whey = lácteo lo decide la autoridad única del batido.
-      if (m.name === 'Batido de Proteína' && !shakeCompatibleWith(shakeTypeOfService(m), norm)) return true;
+      // Solo o combinado por el corrector ("Batido de Proteína + <snack>"): el tipo es el del batido.
+      if (isShakeName(m.name) && !shakeCompatibleWith(shakeTypeOfService(m), norm)) return true;
       if (textMatchesAvoid(m.name ?? '', terms)) return true;
       for (const ing of m.ings ?? []) if (textMatchesAvoid(ing.nv ?? '', terms)) return true;
       for (const p of m.portions ?? []) if (textMatchesAvoid(p, terms)) return true;

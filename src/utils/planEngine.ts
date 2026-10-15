@@ -750,10 +750,22 @@ export function shakeAllowedFor(shake: ProteinShake | undefined, avoidCats: read
   return !shake || shakeCompatibleWith(shake.type, avoidCats);
 }
 
+/** Nombre con que `shakeItem` sirve el batido. Si el corrector le fusiona un snack (`mergeIntoSnack`), el
+ *  servicio pasa a llamarse `Batido de Proteína + <snack>`: el batido SIEMPRE es la primera parte. */
+export const SHAKE_NAME = 'Batido de Proteína';
+/** ¿El nombre es el de un batido, solo o combinado? Solo por nombre: sirve para DETECTAR (falla hacia
+ *  invalidar). Para ACEPTAR un servicio como batido se exige la estructura (`classifyService`). */
+export const isShakeName = (name: unknown): boolean =>
+  name === SHAKE_NAME || (typeof name === 'string' && name.startsWith(`${SHAKE_NAME} + `));
+
 /** Tipo de un batido ya servido (plan guardado), leído de las MISMAS etiquetas con que `shakeItem` lo
- *  escribe. Sin etiqueta = regular (whey). Puro. */
+ *  escribe. Sin etiqueta = regular (whey). Solo se lee el texto PROPIO del batido —el primer segmento de
+ *  `desc` y la primera porción, que es lo que `mergeItems` conserva del batido al fusionarle un snack—:
+ *  así un snack añadido no puede cambiarle el tipo. Puro. */
 export function shakeTypeOfService(s: { desc?: unknown; portions?: unknown }): ProteinShake['type'] {
-  const text = [s.desc, ...(Array.isArray(s.portions) ? s.portions : [])].map((x) => String(x ?? '')).join(' ');
+  const ownDesc = String(s.desc ?? '').split(' · ')[0];
+  const ownPortion = Array.isArray(s.portions) ? String(s.portions[0] ?? '') : '';
+  const text = `${ownDesc} ${ownPortion}`;
   if (text.includes(SHAKE_TAG.vegana.trim())) return 'vegana';
   if (text.includes(SHAKE_TAG.massgainer.trim())) return 'massgainer';
   return 'regular';
@@ -771,7 +783,7 @@ function shakeItem(s: ProteinShake, label: string): MealItem {
   const m = shakeMacros(s);
   const tag = SHAKE_TAG[s.type];
   return {
-    time: label, name: 'Batido de Proteína', desc: `${s.protG} g proteína${tag}`,
+    time: label, name: SHAKE_NAME, desc: `${s.protG} g proteína${tag}`,
     img: IMG_BASE + 'batido-de-proteina.webp', // si no existe la foto, el card la oculta solo
     portions: [`1 scoop de proteína${tag} — ${s.protG} g proteína`],
     macros: { ...m, fiber: 0 },
