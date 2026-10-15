@@ -218,7 +218,7 @@ describe('Orchestrator · 3 · unión de cuatro estados', () => {
     expect(porEstado.OUTSIDE_HSC_FAT_LOSS_SCOPE.status).toBe('OUTSIDE_HSC_FAT_LOSS_SCOPE');
     // Y sus campos llegan intactos.
     expect(porEstado.FAT_LOSS_BLOCKED.bmi).toBeCloseTo(17.3010, 3);
-    expect(porEstado.OUTSIDE_HSC_FAT_LOSS_SCOPE.rawPrescribedEnergy).toBeCloseTo(1137.53834, 5);
+    expect(porEstado.OUTSIDE_HSC_FAT_LOSS_SCOPE.rawPrescribedEnergy).toBeCloseTo(1070.62432, 5); // CAPA 1 V2 (20 % / 750)
     expect(porEstado.OUTSIDE_HSC_FAT_LOSS_SCOPE.deficitBound).toBe('relative');
   });
 
@@ -245,7 +245,7 @@ describe('Orchestrator · 4 · la cadena', () => {
     const esperado: Array<[string, number]> = [
       ['Bienestar integral', 3091],   // M = 3090.95
       ['Recomposición', 3091],
-      ['Bajar grasa', 2627],          // 3090.95 − 463.6425
+      ['Bajar grasa', 2473],          // 3090.95 − 618.19 (20 %)
       ['Ganar músculo', 3245],        // 3090.95 × 1.05
     ];
     for (const [goal, kcal] of esperado) {
@@ -449,8 +449,8 @@ describe('Orchestrator · 6 · no recalcula nada', () => {
     // Prueba contractual del pass-through: el orquestador no transforma nada.
     const r = resolver({ goal: 'Bajar grasa' });
     expect(r.maintenance!.initialMaintenance).toBe(M_ACTIVE);
-    expect(r.rawPrescribedEnergy).toBeCloseTo(2627.3075, 6);
-    expect(r.appliedDeficit).toBeCloseTo(463.6425, 6);
+    expect(r.rawPrescribedEnergy).toBeCloseTo(2472.76, 6);
+    expect(r.appliedDeficit).toBeCloseTo(618.19, 6);
     expect(r.appliedSurplus).toBe(0);
   });
 });

@@ -30,16 +30,17 @@
 // calcular energía saltándose el guard de IMC, el alcance de 1200, el redondeo
 // y los estados.
 //
-// ── QUÉ ES HSC PRODUCT POLICY V1 (ningún número de aquí es fisiológico) ─────
-//   · 15 %  de déficit relativo candidato para FAT_LOSS
-//   · 500   kcal/d de techo absoluto del déficit inicial
+// ── QUÉ ES HSC PRODUCT POLICY V2 (ningún número de aquí es fisiológico) ─────
+//   · 20 %  de déficit relativo candidato para FAT_LOSS   (V1: 15 %)
+//   · 750   kcal/d de techo absoluto del déficit inicial  (V1: 500)
 //   ·   5 % de superávit para MUSCLE_GAIN
 //   · 1200  kcal/d como FRONTERA DE ALCANCE DEL PRODUCTO, no mínimo fisiológico
 //   · 18.5  de IMC como bloqueo de FAT_LOSS (frontera de alcance, no diagnóstico)
 //   · RECOMPOSITION = mantenimiento: recomposición NO es «fat loss suave»
 //   · MAINTENANCE   = mantenimiento
 // Ninguno es recomendación clínica, límite de seguridad deportiva ni óptimo
-// universal. Son parámetros de producto V1, sujetos a revisión.
+// universal. Son parámetros de producto, sujetos a revisión. V2 solo cambió el
+// déficit de FAT_LOSS; el resto es idéntico a V1.
 //
 // ── EL GATE DE 1200 SE EVALÚA SOBRE EL VALOR CRUDO ──────────────────────────
 // Decisión cerrada y deliberada:
@@ -100,14 +101,18 @@ export type PrescriptionStatus =
 /** Qué acotó el déficit de FAT_LOSS. `null` cuando el objetivo no aplica déficit. */
 export type DeficitBound = 'relative' | 'absolute_cap' | null;
 
-/** Versión propia. Ni `PLAN_ENGINE_VERSION`, ni la del clasificador, ni la del estimador. */
-export const ENERGY_PRESCRIPTION_VERSION = 1;
+/**
+ * Versión propia. Ni `PLAN_ENGINE_VERSION`, ni la del clasificador, ni la del estimador.
+ * v2: déficit de FAT_LOSS 20 % / 750 (v1: 15 % / 500). La misma identidad energética
+ * puede dar otra cifra, así que un snapshot v1 queda obsoleto (hidratación → stale_versions).
+ */
+export const ENERGY_PRESCRIPTION_VERSION = 2;
 
-// ── Parámetros · HSC PRODUCT POLICY V1 ──────────────────────────────────────
+// ── Parámetros · HSC PRODUCT POLICY V2 ──────────────────────────────────────
 /** Déficit relativo candidato de FAT_LOSS. No es un porcentaje óptimo universal. */
-export const FAT_LOSS_RELATIVE_DEFICIT = 0.15;
+export const FAT_LOSS_RELATIVE_DEFICIT = 0.20;
 /** Techo absoluto del déficit inicial. Guardarraíl de producto, no límite médico. */
-export const FAT_LOSS_ABSOLUTE_DEFICIT_CAP = 500;
+export const FAT_LOSS_ABSOLUTE_DEFICIT_CAP = 750;
 /** Superávit de MUSCLE_GAIN. Política conservadora V1, no un óptimo. */
 export const MUSCLE_GAIN_RELATIVE_SURPLUS = 0.05;
 /** IMC actual por debajo del cual no se prescribe pérdida de grasa. Frontera de alcance. */
@@ -296,7 +301,7 @@ interface GoalEnergy {
  *
  *   MAINTENANCE    → M
  *   RECOMPOSITION  → M            (NO −10 %, NO −5 %, NO «fat loss suave»)
- *   FAT_LOSS       → M − min(0.15·M, 500)
+ *   FAT_LOSS       → M − min(0.20·M, 750)
  *   MUSCLE_GAIN    → M + 0.05·M
  */
 function goalEnergy(initialMaintenance: number, goal: CanonicalGoal): GoalEnergy {

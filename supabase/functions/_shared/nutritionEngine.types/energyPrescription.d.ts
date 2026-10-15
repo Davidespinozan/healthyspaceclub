@@ -15,12 +15,16 @@ export declare const CANONICAL_GOALS: readonly CanonicalGoal[];
 export type PrescriptionStatus = 'PRESCRIBED' | 'FAT_LOSS_BLOCKED' | 'OUTSIDE_HSC_FAT_LOSS_SCOPE';
 /** Qué acotó el déficit de FAT_LOSS. `null` cuando el objetivo no aplica déficit. */
 export type DeficitBound = 'relative' | 'absolute_cap' | null;
-/** Versión propia. Ni `PLAN_ENGINE_VERSION`, ni la del clasificador, ni la del estimador. */
-export declare const ENERGY_PRESCRIPTION_VERSION = 1;
+/**
+ * Versión propia. Ni `PLAN_ENGINE_VERSION`, ni la del clasificador, ni la del estimador.
+ * v2: déficit de FAT_LOSS 20 % / 750 (v1: 15 % / 500). La misma identidad energética
+ * puede dar otra cifra, así que un snapshot v1 queda obsoleto (hidratación → stale_versions).
+ */
+export declare const ENERGY_PRESCRIPTION_VERSION = 2;
 /** Déficit relativo candidato de FAT_LOSS. No es un porcentaje óptimo universal. */
-export declare const FAT_LOSS_RELATIVE_DEFICIT = 0.15;
+export declare const FAT_LOSS_RELATIVE_DEFICIT = 0.2;
 /** Techo absoluto del déficit inicial. Guardarraíl de producto, no límite médico. */
-export declare const FAT_LOSS_ABSOLUTE_DEFICIT_CAP = 500;
+export declare const FAT_LOSS_ABSOLUTE_DEFICIT_CAP = 750;
 /** Superávit de MUSCLE_GAIN. Política conservadora V1, no un óptimo. */
 export declare const MUSCLE_GAIN_RELATIVE_SURPLUS = 0.05;
 /** IMC actual por debajo del cual no se prescribe pérdida de grasa. Frontera de alcance. */

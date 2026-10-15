@@ -122,13 +122,13 @@ describe('EXPORTS · el bundle expone lo mismo que el entrypoint', () => {
       expect(typeof (BUNDLE as Record<string, unknown>)[fn], fn).toBe('function');
     }
   });
-  it('constantes y versiones idénticas (el bundle no cambia ninguna versión)', () => {
+  it('constantes y versiones idénticas entre src y bundle', () => {
     const consts = Object.keys(SRC).filter((k) => typeof (SRC as Record<string, unknown>)[k] !== 'function');
     expect(consts.length).toBeGreaterThan(20);
     for (const k of consts) expect((BUNDLE as Record<string, unknown>)[k], k).toEqual((SRC as Record<string, unknown>)[k]);
     expect([SRC.ENERGY_PRESCRIPTION_VERSION, SRC.ENERGY_SNAPSHOT_SCHEMA_VERSION, SRC.ORCHESTRATOR_VERSION, SRC.NUTRITION_PROFILE_INPUT_VERSION,
       SRC.ADAPTIVE_DECISION_VERSION, SRC.MACRO_PRESCRIPTION_VERSION, SRC.TRAJECTORY_ENGINE_VERSION, SRC.NUTRITION_CHECKIN_VERSION])
-      .toEqual([1, 1, 1, 1, 1, 4, 1, 1]);
+      .toEqual([2, 1, 1, 1, 1, 4, 1, 1]); // CAPA 1 V2: solo ENERGY_PRESCRIPTION_VERSION
   });
 });
 

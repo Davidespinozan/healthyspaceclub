@@ -383,7 +383,7 @@ de proteína + verduras; los carbos de calidad se acomodan según el tamaño de 
 
 ## PUNTO 4 — DÉFICIT / SUPERÁVIT PORCENTUAL ✅ DEFINIDO
 
-> **SUPERADO (CAPA 1).** Pérdida de grasa = M − min(15 % M, 500); ganancia muscular = M + 5 %; recomposición y mantenimiento = M. Sin `TDEE × 0,80` ni `× 1,12`.
+> **SUPERADO (CAPA 1, `ENERGY_PRESCRIPTION_VERSION` 2).** Pérdida de grasa = M − min(20 % M, 750) (V1 era 15 % / 500); ganancia muscular = M + 5 %; recomposición y mantenimiento = M. Fuera de alcance si el valor crudo de pérdida de grasa es ≤ 1200. Sin `TDEE × 0,80` ni `× 1,12`.
 
 ### El problema detectado (auditoría)
 HSC usa offset FIJO: −500 (bajar), +300 (subir). Un −500 fijo es peligroso para

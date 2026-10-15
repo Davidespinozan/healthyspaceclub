@@ -81,12 +81,15 @@ describe('A9 · invariante · INFEASIBLE inalcanzable en el dominio válido (rej
     expect(minShare).toBeGreaterThan(0.25);
   });
 
-  it('el peor caso conocido de A8.2 sigue lejos del cero (126 cm · 48 kg · 64 años · DL1 · fuerza T0)', () => {
+  it('A8.2 (126 cm · 48 kg · 64 años · DL1 · fuerza T0) con 20 % / 750 queda FUERA de alcance: sin cifra ni macros', () => {
+    // CAPA 1 V2: M = 1419.06 → raw = 1419.06 − 283.812 = 1135.248 ≤ 1200. Con V1 (15 % / 500)
+    // el raw era 1206.20 y se prescribía; el peor caso servible lo vigila la rejilla de arriba.
     const ob = perfil({ estatura: 126, peso: 48 });
-    const m = resolveMacroPrescription(resolveNutritionEnergyState(ob), ob).prescription;
-    if (!isServableMacroPrescription(m)) throw new Error('debería ser servible');
-    expect(m.proteinFactor).toBe(1.8);
-    expect(m.energyKcal - 4 * m.proteinG - 9 * m.fatG).toBeGreaterThan(500);
+    const state = resolveNutritionEnergyState(ob);
+    expect(state.status).toBe('OUTSIDE_HSC_FAT_LOSS_SCOPE');
+    expect(state.rawPrescribedEnergy).toBeCloseTo(1135.248, 6);
+    expect(state.prescribedEnergy).toBeUndefined();
+    expect(resolveMacroPrescription(state, ob)).toEqual({ kind: 'NO_ENERGY' });
   });
 
   it('la ruta INFEASIBLE sigue existiendo como defensa, sin clamp, con motivo legible', () => {

@@ -85,10 +85,10 @@ const M_REF = 3090.95;
 // ═════════════════════════════════════════════════════════════════════════════
 // 1 · LOS CUATRO OBJETIVOS · a través de la API pública
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 1 · los cuatro objetivos', () => {
+describe('EnergyPrescription V2 · 1 · los cuatro objetivos', () => {
   it('los parámetros de política son los cerrados', () => {
-    expect(FAT_LOSS_RELATIVE_DEFICIT).toBe(0.15);
-    expect(FAT_LOSS_ABSOLUTE_DEFICIT_CAP).toBe(500);
+    expect(FAT_LOSS_RELATIVE_DEFICIT).toBe(0.20);
+    expect(FAT_LOSS_ABSOLUTE_DEFICIT_CAP).toBe(750);
     expect(MUSCLE_GAIN_RELATIVE_SURPLUS).toBe(0.05);
     expect(FAT_LOSS_BLOCKED_BELOW_BMI).toBe(18.5);
     expect(HSC_FAT_LOSS_SCOPE_MIN_ENERGY).toBe(1200);
@@ -124,36 +124,47 @@ describe('EnergyPrescription V1 · 1 · los cuatro objetivos', () => {
     }
   });
 
-  it('FAT_LOSS = M − min(0.15·M, 500) · régimen RELATIVO', () => {
+  it('FAT_LOSS = M − min(0.20·M, 750) · régimen RELATIVO', () => {
     const r = prescribir('FAT_LOSS', M_REF);
-    expect(r.appliedDeficit).toBeCloseTo(463.6425, 6);
-    expect(r.rawPrescribedEnergy).toBeCloseTo(2627.3075, 6);
-    expect(r.prescribedEnergy).toBe(2627);
+    expect(r.appliedDeficit).toBeCloseTo(618.19, 6);
+    expect(r.rawPrescribedEnergy).toBeCloseTo(2472.76, 6);
+    expect(r.prescribedEnergy).toBe(2473);
     expect(r.deficitBound).toBe('relative');
     expect(r.appliedSurplus).toBe(0);
   });
 
   it('FAT_LOSS · régimen del CAP ABSOLUTO', () => {
-    const r = prescribir('FAT_LOSS', 3617.34);   // EER(H 25/186/105, ACTIVE)
-    expect(r.appliedDeficit).toBe(500);
-    expect(r.rawPrescribedEnergy).toBeCloseTo(3117.34, 6);
+    const r = prescribir('FAT_LOSS', 4000);
+    expect(r.appliedDeficit).toBe(750);
+    expect(r.rawPrescribedEnergy).toBe(3250);
     expect(r.deficitBound).toBe('absolute_cap');
+    // 3617.34 (EER H 25/186/105, ACTIVE) cruzaba el cap de V1; con 20 % / 750 ya es relativo.
+    expect(prescribir('FAT_LOSS', 3617.34).deficitBound).toBe('relative');
+    expect(prescribir('FAT_LOSS', 3617.34).appliedDeficit).toBeCloseTo(723.468, 6);
   });
 
-  it('el cruce del cap está en M = 500/0.15 = 3333.33…', () => {
-    expect(prescribir('FAT_LOSS', 3333).deficitBound).toBe('relative');
-    expect(prescribir('FAT_LOSS', 3333.33).deficitBound).toBe('relative');
-    expect(prescribir('FAT_LOSS', 3333.34).deficitBound).toBe('absolute_cap');
-    expect(prescribir('FAT_LOSS', 4000).appliedDeficit).toBe(500);
-    expect(prescribir('FAT_LOSS', 4000).rawPrescribedEnergy).toBe(3500);
+  it('el cruce del cap está en M = 750/0.20 = 3750 (en el cruce exacto el 20 % ya vale 750)', () => {
+    expect(prescribir('FAT_LOSS', 3749.99).deficitBound).toBe('relative');
+    expect(prescribir('FAT_LOSS', 3749.99).appliedDeficit).toBeCloseTo(749.998, 6);
+    expect(prescribir('FAT_LOSS', 3750)).toMatchObject({ deficitBound: 'relative', appliedDeficit: 750, rawPrescribedEnergy: 3000 });
+    expect(prescribir('FAT_LOSS', 3750.01)).toMatchObject({ deficitBound: 'absolute_cap', appliedDeficit: 750 });
+    expect(prescribir('FAT_LOSS', 4000).rawPrescribedEnergy).toBe(3250);
   });
 
   it('el déficit relativo DECRECE por encima del cruce (el cap manda)', () => {
     const pct = (m: number) => prescribir('FAT_LOSS', m).appliedDeficit! / m;
-    expect(pct(3000)).toBeCloseTo(0.15, 9);
-    expect(pct(4000)).toBeCloseTo(0.125, 9);
-    expect(pct(5000)).toBeCloseTo(0.10, 9);
-    expect(pct(6000)).toBeCloseTo(0.0833333, 6);
+    expect(pct(3000)).toBeCloseTo(0.20, 9);
+    expect(pct(4000)).toBeCloseTo(0.1875, 9);
+    expect(pct(5000)).toBeCloseTo(0.15, 9);
+    expect(pct(6000)).toBeCloseTo(0.125, 9);
+  });
+
+  it('ningún FAT_LOSS usa ya 15 % / 500 (V1)', () => {
+    for (let m = 1600; m <= 6000; m += 7.3) {
+      const r = prescribir('FAT_LOSS', m);
+      expect(r.appliedDeficit!, `M=${m}`).toBeCloseTo(Math.min(0.20 * m, 750), 9);
+      expect(Math.abs(r.appliedDeficit! - Math.min(0.15 * m, 500)), `M=${m}`).toBeGreaterThan(1e-6);
+    }
   });
 
   it('MUSCLE_GAIN = M + 0.05·M', () => {
@@ -174,9 +185,9 @@ describe('EnergyPrescription V1 · 1 · los cuatro objetivos', () => {
     expect(r.rawPrescribedEnergy).toBeCloseTo(1470, 9);
   });
 
-  it('el cap de 500 NO se aplica al superávit de MUSCLE_GAIN', () => {
-    // 0.05 × 12000 = 600 > 500 y debe pasar: el cap es del DÉFICIT.
-    expect(prescribir('MUSCLE_GAIN', 12000).appliedSurplus).toBeCloseTo(600, 9);
+  it('el cap de 750 NO se aplica al superávit de MUSCLE_GAIN', () => {
+    // 0.05 × 20000 = 1000 > 750 y debe pasar: el cap es del DÉFICIT.
+    expect(prescribir('MUSCLE_GAIN', 20000).appliedSurplus).toBeCloseTo(1000, 9);
   });
 
   it('no hay tablas beginner/intermediate/advanced ni factores por edad', () => {
@@ -189,7 +200,7 @@ describe('EnergyPrescription V1 · 1 · los cuatro objetivos', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // 2 · MAPEO DE OBJETIVOS · los 4 strings del repo
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 2 · mapeo de objetivos', () => {
+describe('EnergyPrescription V2 · 2 · mapeo de objetivos', () => {
   const PARES: Array<[string, CanonicalGoal]> = [
     ['Bajar grasa', 'FAT_LOSS'],
     ['Ganar músculo', 'MUSCLE_GAIN'],
@@ -263,7 +274,7 @@ describe('EnergyPrescription V1 · 2 · mapeo de objetivos', () => {
 // NO es un quinto objetivo, y la autoridad del mapeo sigue siendo únicamente
 // `canonicalGoalFrom`.
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 2b · alias legacy de MUSCLE_GAIN', () => {
+describe('EnergyPrescription V2 · 2b · alias legacy de MUSCLE_GAIN', () => {
   it("'Subir masa muscular' → MUSCLE_GAIN", () => {
     expect(canonicalGoalFrom('Subir masa muscular')).toBe('MUSCLE_GAIN');
   });
@@ -329,22 +340,27 @@ describe('EnergyPrescription V1 · 2b · alias legacy de MUSCLE_GAIN', () => {
     // Los cuatro valores de referencia de §1, recalculados por la vía del alias.
     expect(prescribir('MAINTENANCE', M_REF).prescribedEnergy).toBe(3091);
     expect(prescribir('RECOMPOSITION', M_REF).prescribedEnergy).toBe(3091);
-    expect(prescribir('FAT_LOSS', M_REF).prescribedEnergy).toBe(2627);
+    expect(prescribir('FAT_LOSS', M_REF).prescribedEnergy).toBe(2473);
     expect(prescribir(canonicalGoalFrom('Subir masa muscular'), M_REF).prescribedEnergy)
       .toBe(3245);
-    expect(FAT_LOSS_RELATIVE_DEFICIT).toBe(0.15);
-    expect(FAT_LOSS_ABSOLUTE_DEFICIT_CAP).toBe(500);
+    expect(FAT_LOSS_RELATIVE_DEFICIT).toBe(0.20);
+    expect(FAT_LOSS_ABSOLUTE_DEFICIT_CAP).toBe(750);
     expect(MUSCLE_GAIN_RELATIVE_SURPLUS).toBe(0.05);
-    expect(ENERGY_PRESCRIPTION_VERSION).toBe(1);
+    expect(ENERGY_PRESCRIPTION_VERSION).toBe(2);
   });
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
 // 3 · GATE DE 1200 SOBRE EL VALOR CRUDO · los cuatro casos del contrato
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 3 · gate de 1200 sobre rawPrescribedEnergy', () => {
-  /** M sintético que produce exactamente el raw buscado (raw = 0.85·M). */
-  const conRaw = (raw: number) => prescribir('FAT_LOSS', raw / 0.85);
+describe('EnergyPrescription V2 · 3 · gate de 1200 sobre rawPrescribedEnergy', () => {
+  /** M sintético que produce exactamente el raw buscado (raw = 0.80·M en el régimen relativo). */
+  const conRaw = (raw: number) => prescribir('FAT_LOSS', raw / 0.80);
+
+  it('raw = 1200 exacto sale de M = 1500 (sin ruido de coma flotante)', () => {
+    expect(prescribir('FAT_LOSS', 1500).rawPrescribedEnergy).toBe(1200);
+    expect(prescribir('FAT_LOSS', 1500).status).toBe('OUTSIDE_HSC_FAT_LOSS_SCOPE');
+  });
 
   it('raw = 1199.9 → OUTSIDE_HSC_FAT_LOSS_SCOPE', () => {
     const r = conRaw(1199.9);
@@ -422,7 +438,7 @@ describe('EnergyPrescription V1 · 3 · gate de 1200 sobre rawPrescribedEnergy',
 // ═════════════════════════════════════════════════════════════════════════════
 // 4 · REDONDEO · un solo punto
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 4 · redondeo único', () => {
+describe('EnergyPrescription V2 · 4 · redondeo único', () => {
   it('prescribedEnergy es SIEMPRE entero', () => {
     for (const goal of CANONICAL_GOALS) {
       for (const m of [1500.37, 2500.5, 3090.95, 4123.456]) {
@@ -434,8 +450,8 @@ describe('EnergyPrescription V1 · 4 · redondeo único', () => {
 
   it('rawPrescribedEnergy conserva los decimales junto a la cifra redondeada', () => {
     const r = prescribir('FAT_LOSS', M_REF);
-    expect(r.rawPrescribedEnergy).toBeCloseTo(2627.3075, 6);
-    expect(r.prescribedEnergy).toBe(2627);
+    expect(r.rawPrescribedEnergy).toBeCloseTo(2472.76, 6);
+    expect(r.prescribedEnergy).toBe(2473);
     expect(Number.isInteger(r.rawPrescribedEnergy!)).toBe(false);
   });
 
@@ -470,7 +486,7 @@ describe('EnergyPrescription V1 · 4 · redondeo único', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // 5 · FAT LOSS GATE · IMC
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 5 · guard de IMC', () => {
+describe('EnergyPrescription V2 · 5 · guard de IMC', () => {
   const conAnthro = (h: number, w: number) => prescribir('FAT_LOSS', 2500, { heightCm: h, weightKg: w });
 
   it('IMC < 18.5 → FAT_LOSS_BLOCKED, conservando el mantenimiento', () => {
@@ -523,7 +539,7 @@ describe('EnergyPrescription V1 · 5 · guard de IMC', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // 6 · PASS-THROUGH DEL MANTENIMIENTO · el edge case DRI, sin corregir
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 6 · pass-through del mantenimiento', () => {
+describe('EnergyPrescription V2 · 6 · pass-through del mantenimiento', () => {
   // Hombre 30a / 150cm / 45kg (IMC 20.0): el edge case documentado en
   // maintenanceEstimate, donde VERY_ACTIVE da un EER INFERIOR a ACTIVE.
   const ANTHRO_EDGE = { sex: 'male' as const, ageYears: 30, heightCm: 150, weightKg: 45 };
@@ -562,8 +578,8 @@ describe('EnergyPrescription V1 · 6 · pass-through del mantenimiento', () => {
     // Y lo mismo con un objetivo que aplica déficit.
     const fa = prescribeEnergy({ goal: 'FAT_LOSS', maintenance: mA, heightCm: 150, weightKg: 45 });
     const fb = prescribeEnergy({ goal: 'FAT_LOSS', maintenance: mB, heightCm: 150, weightKg: 45 });
-    expect(fa.prescribedEnergy).toBe(2018);
-    expect(fb.prescribedEnergy).toBe(2011);
+    expect(fa.prescribedEnergy).toBe(1899);
+    expect(fb.prescribedEnergy).toBe(1893);
     expect(fb.prescribedEnergy!).toBeLessThan(fa.prescribedEnergy!);
   });
 
@@ -642,7 +658,7 @@ describe('EnergyPrescription V1 · 6 · pass-through del mantenimiento', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // 7 · FORMA DE LOS TRES ESTADOS
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 7 · forma de cada estado', () => {
+describe('EnergyPrescription V2 · 7 · forma de cada estado', () => {
   const porEstado: Record<string, EnergyPrescription> = {
     PRESCRIBED: prescribir('MAINTENANCE', 2500),
     FAT_LOSS_BLOCKED: prescribir('FAT_LOSS', 2500, { heightCm: 170, weightKg: 50 }),
@@ -693,7 +709,7 @@ describe('EnergyPrescription V1 · 7 · forma de cada estado', () => {
   it('todos llevan goal y engineVersion', () => {
     for (const [nombre, r] of Object.entries(porEstado)) {
       expect(CANONICAL_GOALS, nombre).toContain(r.goal);
-      expect(r.engineVersion, nombre).toBe(1);
+      expect(r.engineVersion, nombre).toBe(2);
     }
   });
 });
@@ -701,17 +717,17 @@ describe('EnergyPrescription V1 · 7 · forma de cada estado', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // 8 · TRAZABILIDAD
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 8 · trazabilidad', () => {
+describe('EnergyPrescription V2 · 8 · trazabilidad', () => {
   it('PRESCRIBED permite reconstruir el «por qué» de la cifra', () => {
     const r = prescribir('FAT_LOSS', M_REF);
     expect(r.goal).toBe('FAT_LOSS');
     expect(r.engineVersion).toBe(ENERGY_PRESCRIPTION_VERSION);
     expect(r.maintenance.initialMaintenance).toBe(M_REF);
-    expect(r.appliedDeficit).toBeCloseTo(463.6425, 6);
+    expect(r.appliedDeficit).toBeCloseTo(618.19, 6);
     expect(r.appliedSurplus).toBe(0);
     expect(r.deficitBound).toBe('relative');
-    expect(r.rawPrescribedEnergy).toBeCloseTo(2627.3075, 6);
-    expect(r.prescribedEnergy).toBe(2627);
+    expect(r.rawPrescribedEnergy).toBeCloseTo(2472.76, 6);
+    expect(r.prescribedEnergy).toBe(2473);
     // M − déficit = raw, verificable desde los propios campos.
     expect(r.maintenance.initialMaintenance - r.appliedDeficit!)
       .toBeCloseTo(r.rawPrescribedEnergy!, 9);
@@ -725,8 +741,8 @@ describe('EnergyPrescription V1 · 8 · trazabilidad', () => {
 
   it('deficitBound distingue el régimen relativo del cap', () => {
     expect(prescribir('FAT_LOSS', M_REF).deficitBound).toBe('relative');
-    expect(prescribir('FAT_LOSS', 3617.34).deficitBound).toBe('absolute_cap');
-    expect(prescribir('FAT_LOSS', 3617.34).appliedDeficit).toBe(500);
+    expect(prescribir('FAT_LOSS', 4000).deficitBound).toBe('absolute_cap');
+    expect(prescribir('FAT_LOSS', 4000).appliedDeficit).toBe(750);
   });
 
   it('las versiones del eslabón anterior viajan intactas', () => {
@@ -736,13 +752,13 @@ describe('EnergyPrescription V1 · 8 · trazabilidad', () => {
       habitualTraining: { trainsHabitually: true, daysPerWeek: 5, habitualSessionMinutes: 60 },
     }));
     const r = prescribeEnergy({ goal: 'MAINTENANCE', maintenance: m });
-    expect(r.engineVersion).toBe(1);
+    expect(r.engineVersion).toBe(2);
     expect(r.maintenance.engineVersion).toBe(MAINTENANCE_ESTIMATE_VERSION);
     expect(r.maintenance.classifierEngineVersion).toBe(ACTIVITY_CLASSIFIER_VERSION);
   });
 
   it('engineVersion es PROPIO · no se reutiliza ninguno de los otros', () => {
-    expect(ENERGY_PRESCRIPTION_VERSION).toBe(1);
+    expect(ENERGY_PRESCRIPTION_VERSION).toBe(2);
     expect(usaIdentificador('PLAN_ENGINE_VERSION')).toBe(false);
     expect(usaIdentificador('ACTIVITY_CLASSIFIER_VERSION')).toBe(false);
     expect(usaIdentificador('MAINTENANCE_ESTIMATE_VERSION')).toBe(false);
@@ -752,7 +768,7 @@ describe('EnergyPrescription V1 · 8 · trazabilidad', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // 9 · DETERMINISMO
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 9 · determinismo', () => {
+describe('EnergyPrescription V2 · 9 · determinismo', () => {
   it('mismo input → mismo resultado exacto (50 veces)', () => {
     const req = pedir('FAT_LOSS', M_REF);
     const primero = prescribeEnergy(req);
@@ -782,7 +798,7 @@ describe('EnergyPrescription V1 · 9 · determinismo', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // 10 · INPUTS INVÁLIDOS · fail-closed, solo los PROPIOS
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 10 · inputs inválidos', () => {
+describe('EnergyPrescription V2 · 10 · inputs inválidos', () => {
   describe('maintenance', () => {
     for (const v of [null, undefined, 'M', 2500, []]) {
       it(`rechaza maintenance = ${String(v)}`, () => {
@@ -874,7 +890,7 @@ describe('EnergyPrescription V1 · 10 · inputs inválidos', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // 11 · FRONTERA DEL MÓDULO · lo que ya NO le pertenece
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 11 · frontera del módulo', () => {
+describe('EnergyPrescription V2 · 11 · frontera del módulo', () => {
   it('NO importa activityClassifier', () => {
     const from = srcPrescription.split('\n')
       .map((l) => l.match(/from\s+'([^']+)'/)?.[1])
@@ -950,7 +966,7 @@ describe('EnergyPrescription V1 · 11 · frontera del módulo', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // 12 · AISLAMIENTO DE AUTORIDAD LEGACY
 // ═════════════════════════════════════════════════════════════════════════════
-describe('EnergyPrescription V1 · 12 · aislamiento de autoridad legacy', () => {
+describe('EnergyPrescription V2 · 12 · aislamiento de autoridad legacy', () => {
   it('NO usa ninguna autoridad energética legacy', () => {
     const PROHIBIDAS = [
       'nutritionTargets', 'computeNutritionTargets', 'parseObData',
