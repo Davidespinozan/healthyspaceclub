@@ -3,7 +3,7 @@ import { useState, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../store';
 import { getCachedRegion, regionFromCountry } from '../utils/region';
 import {
-  PERMANENT_AVOID_CATALOG, permanentAvoidFrom, weeklyAvoidFrom, effectiveAvoid,
+  PERMANENT_AVOID_CATALOG, permanentAvoidFrom, weeklyAvoidFrom, effectiveAvoid, AVOID_SEMANTICS,
 } from '../utils/avoidAuthority';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
@@ -377,7 +377,7 @@ export default function WeeklyNutritionPlanner() {
         lang: locale,
         days,
         engineVersion: PLAN_ENGINE_VERSION,
-        gen: { kcal: planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, avoidPermanent, avoidWeekly, craving: newAnswers.cravings ?? '', shake },
+        gen: { kcal: planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, avoidPermanent, avoidWeekly, avoidSemantics: AVOID_SEMANTICS, craving: newAnswers.cravings ?? '', shake },
       });
       setActiveDay(todayOffset >= 0 ? todayOffset : 0);
       setPhase('plan');

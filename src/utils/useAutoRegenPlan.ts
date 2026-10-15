@@ -7,7 +7,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { isServableMacroPrescription } from './macroPrescription';
 import { weeklyPlanCurrentness } from './weeklyPlanState';
 import { PLAN_ENGINE_VERSION } from './planEngine';
-import { avoidForRegen, permanentAvoidFrom } from './avoidAuthority';
+import { avoidForRegen, permanentAvoidFrom, AVOID_SEMANTICS } from './avoidAuthority';
 import { generateWeeklyPlan } from './planOrchestration';
 import { dayKey } from './localDate';
 import { getCachedRegion, regionFromCountry } from './region';   // P0-04 · la regeneración perdía la región
@@ -170,8 +170,12 @@ export function useAutoRegenPlan(): void {
         await saveWeeklyPlan({
           ...weeklyPlan, generatedAt: new Date().toISOString(),
           engineVersion: PLAN_ENGINE_VERSION, shoppingList: [...shopSet], days,
+          // MB2 · el ORIGEN se conserva, no se inventa: solo un `avoidWeekly` conocido pasa como
+          // preferencia semanal (soft). Un plan legacy sin él NO convierte su `gen.avoid` en
+          // semanal: se queda sin `avoidWeekly` y la autoridad lo sigue validando en estricto.
           gen: { ...target, avoid, avoidPermanent: permanentAvoidFrom(obData),
-                 avoidWeekly: weeklyPlan.gen?.avoidWeekly ?? weeklyPlan.gen?.avoid ?? [], craving, shake },
+                 ...(weeklyPlan.gen?.avoidWeekly ? { avoidWeekly: weeklyPlan.gen.avoidWeekly, avoidSemantics: AVOID_SEMANTICS } : {}),
+                 craving, shake },
         });
       } catch (e) {
         console.error('[auto-regen] falló:', e);

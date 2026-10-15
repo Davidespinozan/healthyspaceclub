@@ -327,7 +327,8 @@ describe('P0-04 · H · las cuatro puertas', () => {
   it('AL GUARDAR · saveWeeklyPlan valida contra el perfil actual ANTES del set', () => {
     const save = srcStore.slice(srcStore.indexOf('saveWeeklyPlan: async (plan)'), srcStore.indexOf('clearWeeklyPlan: async'));
     expect(save).toMatch(/validatePlan\(plan,\s*avoidAhora\)/);
-    expect(save).toMatch(/avoidForRegen\(plan\.gen, plan\.preferences, prevState\.obData\)/);
+    // MB2 · política strict/soft separada (antes: la unión de avoidForRegen)
+    expect(save).toMatch(/avoidPolicyForPlan\(plan\.gen, plan\.preferences, prevState\.obData\)/);
     expect(save).toMatch(/throw err/);
     // el orden importa: validar DESPUÉS del set no evitaría nada
     expect(save.indexOf('validatePlan'), 'valida antes de set({ weeklyPlan')

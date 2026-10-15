@@ -55,7 +55,8 @@ describe('AUTORIDAD ÚNICA · la invalidación coincide con el detector canónic
   it('no queda una segunda lógica de texto en la invalidación', () => {
     const code = AUTHORITY_SRC.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     expect(code).not.toMatch(/textMatchesAvoid|expandAvoidCats/);
-    expect(code).toMatch(/validatePlan\(plan, norm\)\.violations\.some\(\(v\) => v\.kind === 'restriction' \|\| v\.kind === 'unverifiable'\)/);
+    // MB2 · solo STRICT: un cambio de restricciones permanentes nunca se juzga con el modo suave
+    expect(code).toMatch(/validatePlan\(plan, \{ strict: norm, soft: \[\] \}\)\.violations\.some\(\(v\) => v\.kind === 'restriction' \|\| v\.kind === 'unverifiable'\)/);
   });
 });
 

@@ -151,13 +151,22 @@ describe('INVARIANTE · SOFT nunca es más restrictivo que STRICT (banco complet
   });
 });
 
-describe('MB1 · sin consumidores productivos', () => {
-  it('ningún módulo productivo usa todavía el filtro de preferencia ni el modo soft', () => {
+describe('CONSUMIDORES · el modo suave solo lo usa la VALIDACIÓN (MB2); la generación todavía no (MB3)', () => {
+  it('el único módulo productivo que usa el filtro de preferencia es planIntegrity', () => {
     const files = import.meta.glob('../../**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
     const users = Object.entries(files)
       .filter(([p]) => !p.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(p))
       .filter(([p, src]) => !p.endsWith('/planEngine.ts') && !p.endsWith('/allergenSafety.ts') && /makePreferenceFilter|'soft'/.test(src))
       .map(([p]) => p);
-    expect(users).toEqual([]);
+    expect(users).toEqual(['../planIntegrity.ts']);
+  });
+  it('dentro de planEngine, el filtro de preferencia no alimenta ningún pool del generador', () => {
+    const src = (import.meta.glob('../planEngine.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>)['../planEngine.ts'];
+    const usos = src.split('\n').filter((l) => /makePreferenceFilter\(|\.soft\b/.test(l) && !/^\s*(\/\/|\*)/.test(l));
+    // solo su propia definición y el acceso a las unidades suaves dentro de ella
+    expect(usos.map((l) => l.trim())).toEqual([
+      'export function makePreferenceFilter(softCats: string[]): (d: BancoDish) => boolean {',
+      'return (d: BancoDish) => unitsMatchAvoidTerms(dishText(d).soft, terms);',
+    ]);
   });
 });

@@ -17,6 +17,12 @@
 //
 //   effectiveAvoid = UNION(permanentAvoid, weeklyAvoid)     ·     NUNCA resta.
 //
+// WEEKLY PREFERENCES SPLIT (MB2) · para VALIDAR, las dos fuentes ya no se colapsan en una
+// lista: `AvoidPolicy` las conserva separadas — `strict` (permanentes, detector estricto) y
+// `soft` (semanales que no son ya permanentes, detector suave de MB1). La unión sigue siendo
+// lo que recibe el GENERADOR hasta MB3 (filtra lo semanal en estricto, que es MÁS restrictivo:
+// todo plan generado así cumple también la validación suave).
+//
 // Este módulo decide QUÉ categorías llegan al detector; el detector (P0-01,
 // makeAvoidFilter) decide si un platillo CONTIENE esa categoría. Son capas
 // distintas y no se mezclan.
@@ -24,7 +30,8 @@
 // Puro / determinista / sin estado. No conoce React ni el store.
 // ─────────────────────────────────────────────────────────────────────────────
 import { canonicalizeAvoidTerm } from './allergenSafety';
-import { validatePlan } from './planIntegrity';
+import { validatePlan, type AvoidPolicy } from './planIntegrity';
+export type { AvoidPolicy } from './planIntegrity';
 
 /**
  * Las 10 restricciones que el producto ofrece hoy, para el PERFIL (permanentes).
@@ -131,11 +138,57 @@ export function effectiveAvoid(permanent: string[], weekly: string[]): string[] 
   return out;
 }
 
+/**
+ * WEEKLY PREFERENCES SPLIT · LA POLÍTICA: `strict` = permanentes normalizadas; `soft` = semanales
+ * normalizadas MENOS las que ya son permanentes. Si una categoría está en ambas, MANDA STRICT (se
+ * valida con el detector estricto y no aparece en `soft`). Puro.
+ */
+export function avoidPolicy(permanent: string[], weekly: string[]): AvoidPolicy {
+  const strict = normalizeCats(permanent);
+  const soft = normalizeCats(weekly).filter((c) => !strict.includes(c));
+  return { strict, soft };
+}
+
+/** Unión de una política (orden estable: strict y luego soft). Es la lista que recibe el generador. */
+export function policyUnion(policy: AvoidPolicy): string[] {
+  return [...policy.strict, ...policy.soft];
+}
+
 /** Forma mínima del bloque `gen` de un plan guardado que necesita la autoridad. */
 export interface SavedGenAvoid {
   avoid?: string[];
   avoidWeekly?: string[];
   avoidPermanent?: string[];
+  /** 2 = `avoidWeekly` se guardó como preferencia SUAVE (MB2). Solo trazabilidad: la autoridad
+   *  decide por la presencia de `avoidWeekly`, que ya identifica el origen semanal. */
+  avoidSemantics?: number;
+}
+
+/** Marca de semántica que se escribe en `gen` desde MB2 (JSON; no requiere migración). */
+export const AVOID_SEMANTICS = 2;
+
+/**
+ * POLÍTICA con la que se VALIDA un plan guardado (guardado, hidratación remota y local).
+ *
+ *   · `strict` = permanentes del perfil ACTUAL (`obData.avoid`). `gen.avoidPermanent` es solo la
+ *     foto de cuándo se generó: no manda (si el usuario añadió o quitó una, rige la de ahora).
+ *   · `soft`   = `gen.avoidWeekly` — origen SEMANAL conocido — menos lo que ya es permanente.
+ *
+ * LEGACY (origen desconocido) · planes anteriores a P0-02 sin `avoidWeekly`: su `gen.avoid`, o
+ * las categorías reconocibles en `preferences` si ni siquiera hay `gen`, NO se sabe si fueron
+ * semanales o permanentes. No se inventa el origen: se tratan como STRICT (lo conservador; es
+ * exactamente como se validaban antes de MB2, así que ningún plan legacy cambia de veredicto).
+ */
+export function avoidPolicyForPlan(
+  gen: SavedGenAvoid | null | undefined,
+  preferences: string | null | undefined,
+  obData: Record<string, unknown> | null | undefined,
+): AvoidPolicy {
+  const permanent = permanentAvoidFrom(obData);
+  if (gen?.avoidWeekly) return avoidPolicy(permanent, weeklyAvoidFrom(gen.avoidWeekly));
+  const legacy = gen?.avoid
+    ?? PERMANENT_AVOID_CATALOG.filter((k) => (preferences || '').toLowerCase().includes(k));
+  return avoidPolicy(effectiveAvoid(permanent, weeklyAvoidFrom(legacy)), []);
 }
 
 /**
@@ -156,10 +209,10 @@ export function avoidForRegen(
   preferences: string | null | undefined,
   obData: Record<string, unknown> | null | undefined,
 ): string[] {
-  const weekly = gen?.avoidWeekly
-    ?? gen?.avoid
-    ?? PERMANENT_AVOID_CATALOG.filter((k) => (preferences || '').toLowerCase().includes(k));
-  return effectiveAvoid(permanentAvoidFrom(obData), weeklyAvoidFrom(weekly));
+  // MB2 · es la UNIÓN de la política del plan: misma lista, mismo orden que antes. Alimenta al
+  // GENERADOR (regeneración y bowl), que hasta MB3 filtra todo en estricto. Para VALIDAR se usa
+  // `avoidPolicyForPlan`, que conserva strict y soft separados.
+  return policyUnion(avoidPolicyForPlan(gen, preferences, obData));
 }
 
 /** Forma mínima de un plan guardado para comprobar compatibilidad. */
@@ -185,12 +238,14 @@ interface PlanLike {
  * borraba planes seguros ("Hot Cakes de Avena" con gluten) y dejaba pasar alérgenos ocultos
  * (mayonesa = huevo, salsa de soya = gluten, hummus = ajonjolí).
  *
+ * Recibe SOLO restricciones PERMANENTES (MB2): se valida con `strict`, nunca con el modo suave.
+ *
  * Sin plan, sin días o sin categorías → false (nada que invalidar).
  */
 export function planViolatesAvoid(plan: PlanLike | null | undefined, cats: string[]): boolean {
   const norm = normalizeCats(cats);
   if (!norm.length || !plan?.days?.length) return false;
-  return validatePlan(plan, norm).violations.some((v) => v.kind === 'restriction' || v.kind === 'unverifiable');
+  return validatePlan(plan, { strict: norm, soft: [] }).violations.some((v) => v.kind === 'restriction' || v.kind === 'unverifiable');
 }
 
 /**

@@ -16,7 +16,7 @@ import { buildEnergySnapshot, type NutritionEnergyState } from '../utils/nutriti
 import { projectEnergy, decideEnergyHydration } from '../utils/energyHydration';
 import { resolveMacroPrescription, MACRO_PRESCRIPTION_VERSION, type MacroPrescription, type MacroResolution } from '../utils/macroPrescription';
 import type { Json } from '../types/database';
-import { planInvalidatedByAvoidChange, avoidForRegen } from '../utils/avoidAuthority';
+import { planInvalidatedByAvoidChange, avoidPolicyForPlan } from '../utils/avoidAuthority';
 import { validatePlan, planIfValid, InvalidPlanError } from '../utils/planIntegrity';
 import type { Region, Currency } from '../utils/region';
 import type { BillingCycle } from '../utils/stripe';
@@ -431,6 +431,8 @@ interface AppState {
     gen?: {
       kcal: number; protG: number; fatG: number; carbG: number;
       avoid: string[]; avoidPermanent?: string[]; avoidWeekly?: string[];
+      // MB2 · 2 = `avoidWeekly` es preferencia SUAVE. Solo trazabilidad (ver `avoidPolicyForPlan`).
+      avoidSemantics?: number;
       craving: string; shake?: { slots: ('am' | 'pm')[]; type: 'regular' | 'vegana' | 'massgainer'; protG: number };
     };
   } | null;
@@ -1220,7 +1222,11 @@ export const useAppStore = create<AppState>()(
     //
     // Un plan inválido no se guarda ni se persiste: se lanza. Los tres llamadores ya
     // manejan el fallo de guardado.
-    const avoidAhora = avoidForRegen(plan.gen, plan.preferences, prevState.obData);
+    //
+    // MB2 · con la POLÍTICA separada: un plan nuevo nunca viola lo permanente (`restriction`,
+    // detector estricto) ni la preferencia de esa semana (`preference`, detector suave). El
+    // origen de cada violación se conserva en el veredicto.
+    const avoidAhora = avoidPolicyForPlan(plan.gen, plan.preferences, prevState.obData);
     const verdict = validatePlan(plan, avoidAhora);
     if (!verdict.valid) {
       const err = new InvalidPlanError(verdict);
@@ -1863,7 +1869,7 @@ export const useAppStore = create<AppState>()(
       merged.macroTargets = null;
     }
     if (p.weeklyPlan != null) {
-      const avoid = avoidForRegen(p.weeklyPlan.gen, p.weeklyPlan.preferences, p.obData);
+      const avoid = avoidPolicyForPlan(p.weeklyPlan.gen, p.weeklyPlan.preferences, p.obData);   // MB2 · strict/soft
       merged.weeklyPlan = planIfValid(p.weeklyPlan, avoid);
     }
     return merged;

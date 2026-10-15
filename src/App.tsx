@@ -13,7 +13,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { supabase } from './lib/supabase';
 import { shouldUseRemotePlan } from './utils/planSync';
 import { planIfValid } from './utils/planIntegrity';          // P0-04 · el pull remoto no pasa por saveWeeklyPlan
-import { avoidForRegen } from './utils/avoidAuthority';
+import { avoidPolicyForPlan } from './utils/avoidAuthority';
 import { shouldUseRemoteWorkout } from './utils/dailyWorkoutSync';
 import { mergeMealProgress } from './utils/mealProgressSync';
 import {
@@ -515,7 +515,8 @@ export default function App() {
                 // no el que había en memoria: las permanentes que manda son las actuales.
                 // Un plan remoto inválido se descarta → CTA «Arma tu plan», nunca se
                 // presenta como válido ni se intenta reparar.
-                const avoid = avoidForRegen(
+                // MB2 · política separada: permanentes ACTUALES en estricto, semana en suave.
+                const avoid = avoidPolicyForPlan(
                   remotePlan?.gen, remotePlan?.preferences,
                   (profile.ob_data as Record<string, unknown>) ?? {},
                 );

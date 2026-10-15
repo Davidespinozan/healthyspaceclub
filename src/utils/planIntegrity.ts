@@ -27,7 +27,7 @@
 // Puro / determinista / sin estado. No conoce React, ni el store, ni Supabase.
 // ─────────────────────────────────────────────────────────────────────────────
 import { BANCO, type BancoDish } from '../data/banco';
-import { makeAvoidFilter, expandAvoidCats, textMatchesAvoid, shakeCompatibleWith, shakeTypeOfService, SHAKE_NAME } from './planEngine';
+import { makeAvoidFilter, makePreferenceFilter, expandAvoidCats, textMatchesAvoid, shakeCompatibleWith, shakeTypeOfService, SHAKE_NAME } from './planEngine';
 
 /** Tipo de defecto. Granular a propósito: la UI y los tests necesitan el motivo, no un bool. */
 export type PlanViolationKind =
@@ -35,7 +35,23 @@ export type PlanViolationKind =
   | 'restriction'    // un servicio viola una restricción efectiva
   | 'time'           // un platillo está servido en un tiempo que no es el suyo
   | 'unknown-dish'   // un nombre que no resuelve y no es una forma especial legítima
-  | 'unverifiable';  // con restricciones activas, un servicio sin composición modelada (falla cerrado)
+  | 'unverifiable'   // con restricciones activas, un servicio sin composición modelada (falla cerrado)
+  | 'preference';    // sirve VISIBLE una categoría que el usuario prefiere evitar ESTA semana (soft)
+
+/**
+ * WEEKLY PREFERENCES SPLIT · política de restricciones con el ORIGEN separado.
+ *   · `strict` · restricciones PERMANENTES → detector estricto (sub-recetas, ocultos IS y CONTAINS).
+ *   · `soft`   · preferencias de ESTA semana que no son ya permanentes → detector suave (MB1).
+ * La construye `avoidPolicyForPlan`/`avoidPolicy` (avoidAuthority); aquí solo se consume.
+ */
+export interface AvoidPolicy { strict: string[]; soft: string[] }
+/** Una lista suelta se interpreta como STRICT (contrato anterior a MB2, sin cambio de veredicto). */
+export type AvoidInput = string[] | AvoidPolicy;
+function toPolicy(a: AvoidInput): AvoidPolicy {
+  if (Array.isArray(a)) return { strict: a.filter(Boolean), soft: [] };
+  const strict = a.strict.filter(Boolean);
+  return { strict, soft: a.soft.filter((c) => c && !strict.includes(c)) };   // STRICT gana
+}
 
 export interface PlanViolation {
   kind: PlanViolationKind;
@@ -161,10 +177,15 @@ function isShakeCombined(added: string[], ings: string[]): boolean {
  * aquí ni se lee de `plan.gen`: confiar en `plan.gen.avoid` es justamente el agujero que
  * este módulo cierra, porque el perfil pudo endurecerse después de generar el plan.
  *
+ * MB2 · puede llegar como `AvoidPolicy`: lo `strict` se valida con el detector estricto y da
+ * `restriction`; lo `soft` con el suave y da `preference`. Una lista suelta = todo strict.
+ * Batido y bowl conservan hasta MB4 su regla sobre la UNIÓN (whey con lácteos de cualquier
+ * origen; bowl falla cerrado con cualquier categoría), solo que etiquetan el origen.
+ *
  * Devuelve TODAS las violaciones, no la primera: un diagnóstico parcial haría imposible
  * saber si un plan tiene un defecto o treinta.
  */
-export function validatePlan(plan: unknown, effectiveAvoid: string[]): PlanVerdict {
+export function validatePlan(plan: unknown, effectiveAvoid: AvoidInput): PlanVerdict {
   const violations: PlanViolation[] = [];
   const bad = (v: PlanViolation) => { violations.push(v); };
 
@@ -185,13 +206,25 @@ export function validatePlan(plan: unknown, effectiveAvoid: string[]): PlanVerdi
     bad({ kind: 'shape', detail: `el plan tiene ${p.days.length} días, se esperan 7` });
   }
 
-  const avoid = effectiveAvoid.filter(Boolean);
+  const { strict, soft } = toPolicy(effectiveAvoid);
+  const union = [...strict, ...soft];
   // El predicado REAL de P0-01: sub-recetas, alérgenos ocultos y Decisión 05 incluidos.
-  const viola = avoid.length ? makeAvoidFilter(avoid) : null;
+  const viola = strict.length ? makeAvoidFilter(strict) : null;
+  // MB1 · el detector SUAVE: solo ingrediente propio/visible + reglas IS. Mismo diccionario.
+  const prefiere = soft.length ? makePreferenceFilter(soft) : null;
   // El batido no tiene BancoDish: su texto propio se mira con los mismos primitivos
   // compartidos y su base la decide `shakeCompatibleWith`. (El bowl ya no usa texto: ver abajo.)
-  const terms = avoid.length ? expandAvoidCats(avoid) : [];
-  const textoViola = (txts: string[]) => terms.length > 0 && txts.some((t) => textMatchesAvoid(t, terms));
+  const strictTerms = strict.length ? expandAvoidCats(strict) : [];
+  const unionTerms = union.length ? expandAvoidCats(union) : [];
+  const textHit = (terms: string[], txts: string[]) => terms.length > 0 && txts.some((t) => textMatchesAvoid(t, terms));
+  /** Veredicto del batido (solo o combinado): primero lo permanente, después lo de la semana. */
+  const shakeIssue = (txts: string[], type: ReturnType<typeof shakeTypeOfService>): Omit<PlanViolation, 'day' | 'slot' | 'dish'> | null => {
+    if (textHit(strictTerms, txts)) return { kind: 'restriction', detail: `viola una restricción activa (${strict.join(', ')})` };
+    if (!shakeCompatibleWith(type, strict)) return { kind: 'restriction', detail: `batido de whey incompatible con ${strict.join(', ')}` };
+    if (textHit(unionTerms, txts)) return { kind: 'preference', detail: `contradice una preferencia de esta semana (${soft.join(', ')})` };
+    if (!shakeCompatibleWith(type, union)) return { kind: 'preference', detail: `batido de whey contra la preferencia de esta semana (${soft.join(', ')})` };
+    return null;
+  };
 
   for (const rawDay of p.days) {
     if (rawDay == null || typeof rawDay !== 'object') {
@@ -234,11 +267,8 @@ export function validatePlan(plan: unknown, effectiveAvoid: string[]): PlanVerdi
         const parts = partsOf(m.name);
         if (kind === 'shake-combined') {
           // El batido conserva su identidad: mismo texto propio y misma autoridad de tipo que el batido solo.
-          if (textoViola([SHAKE_NAME, portionList(m)[0] ?? '', SHAKE_ING])) {
-            bad({ kind: 'restriction', day: dayNum, slot, dish: SHAKE_NAME, detail: `viola una restricción activa (${avoid.join(', ')})` });
-          } else if (!shakeCompatibleWith(shakeTypeOfService(m), avoid)) {
-            bad({ kind: 'restriction', day: dayNum, slot, dish: SHAKE_NAME, detail: `batido de whey incompatible con ${avoid.join(', ')}` });
-          }
+          const issue = shakeIssue([SHAKE_NAME, portionList(m)[0] ?? '', SHAKE_ING], shakeTypeOfService(m));
+          if (issue) bad({ ...issue, day: dayNum, slot, dish: SHAKE_NAME });
           if (slot !== 'Snack') {
             bad({ kind: 'time', day: dayNum, slot, dish: SHAKE_NAME, detail: `el batido solo puede ocupar un snack, está en ${slot}` });
           }
@@ -246,7 +276,9 @@ export function validatePlan(plan: unknown, effectiveAvoid: string[]): PlanVerdi
         for (const part of kind === 'shake-combined' ? parts.slice(1) : parts) {
           const dish = BY_NAME.get(part)!;
           if (viola && viola(dish)) {
-            bad({ kind: 'restriction', day: dayNum, slot, dish: part, detail: `viola una restricción activa (${avoid.join(', ')})` });
+            bad({ kind: 'restriction', day: dayNum, slot, dish: part, detail: `viola una restricción activa (${strict.join(', ')})` });
+          } else if (prefiere && prefiere(dish)) {
+            bad({ kind: 'preference', day: dayNum, slot, dish: part, detail: `sirve visible una preferencia a evitar esta semana (${soft.join(', ')})` });
           }
           // ── B · TIEMPO ──
           if (dish.tiempo !== slot) {
@@ -258,20 +290,19 @@ export function validatePlan(plan: unknown, effectiveAvoid: string[]): PlanVerdi
         // no dice qué lleva ("Humo" es chamberete + hummus + salsa), y adivinarlo por texto
         // contradecía al detector canónico. Sin composición no hay verificación posible: con
         // restricciones activas FALLA CERRADO; sin restricciones no hay nada que comprobar.
-        if (terms.length) {   // restricción REAL (los centinelas «ninguno»/«todas» no cuentan)
-          bad({ kind: 'unverifiable', day: dayNum, slot, dish: m.name, detail: `alimento externo sin composición modelada: no se puede verificar contra ${avoid.join(', ')}` });
+        // MB2 · se conserva sobre la UNIÓN (también con solo preferencias semanales). MB4 decidirá
+        // el bowl con solo `soft` (D-WP6: permitido); con `strict` seguirá fallando cerrado.
+        if (unionTerms.length) {   // categoría REAL (los centinelas «ninguno»/«todas» no cuentan)
+          bad({ kind: 'unverifiable', day: dayNum, slot, dish: m.name, detail: `alimento externo sin composición modelada: no se puede verificar contra ${union.join(', ')}` });
         }
         // El BOWL ocupa el tiempo que el usuario eligió al pedirlo, así que cualquier slot
         // es legítimo por construcción: es la única exención de tiempo, y es acotada.
       } else {
         // shake · sin BancoDish detrás.
-        if (textoViola([m.name, ...portionList(m), ...ingNames(m)])) {
-          bad({ kind: 'restriction', day: dayNum, slot, dish: m.name, detail: `viola una restricción activa (${avoid.join(', ')})` });
-        } else if (kind === 'shake' && !shakeCompatibleWith(shakeTypeOfService(m), avoid)) {
-          // El texto del batido no nombra su base («proteína en polvo»): la composición la decide la
-          // autoridad única del batido (whey = lácteo), la misma que usan las dos rutas del generador.
-          bad({ kind: 'restriction', day: dayNum, slot, dish: m.name, detail: `batido de whey incompatible con ${avoid.join(', ')}` });
-        }
+        // El texto del batido no nombra su base («proteína en polvo»): la composición la decide la
+        // autoridad única del batido (whey = lácteo), la misma que usan las dos rutas del generador.
+        const issue = shakeIssue([m.name, ...portionList(m), ...ingNames(m)], shakeTypeOfService(m));
+        if (issue) bad({ ...issue, day: dayNum, slot, dish: m.name });
         // El BATIDO sí tiene un tiempo comprobable: reemplaza un snack, nunca una comida
         // fuerte (`applyShake` solo escribe en Snack AM/PM). No es una exención.
         if (kind === 'shake' && slot !== 'Snack') {
@@ -294,7 +325,7 @@ export function validatePlan(plan: unknown, effectiveAvoid: string[]): PlanVerdi
  *
  * `null`/`undefined` entra y sale como `null`: la ausencia de plan no es un defecto.
  */
-export function planIfValid<T>(plan: T | null | undefined, effectiveAvoid: string[]): T | null {
+export function planIfValid<T>(plan: T | null | undefined, effectiveAvoid: AvoidInput): T | null {
   if (plan == null) return null;
   const verdict = validatePlan(plan, effectiveAvoid);
   if (verdict.valid) return plan;
