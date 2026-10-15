@@ -8,7 +8,7 @@ import type { DayPlan, MealItem } from '../types';
 import type { Region } from './region';
 import { dishAllowedInRegion } from '../data/regionFood';
 import { portionBoundsFor, preferredGramLimit } from './portionPlausibility';   // NUTRITION-N1 techo humano · N2 capacidad preferida
-import { effectiveDishAvoidText, dishAvoidUnits, canonicalizeAvoidTerm, catMarker } from './allergenSafety';   // NUTRITION-N3 · sub-recetas + composites ocultos
+import { effectiveDishAvoidText, dishAvoidUnits, canonicalizeAvoidTerm, catMarker, type AvoidMode } from './allergenSafety';   // NUTRITION-N3 · sub-recetas + composites ocultos
 
 const IMG_BASE =
   'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PLATILLOS%20BANCO/';
@@ -91,25 +91,30 @@ const cravedCount = new Map<string, number>();
 // ingredientes REALES de sus sub-recetas (SUBRECETAS) + marcadores de alérgeno oculto (mayonesa=huevo,
 // hummus=ajonjolí…). Así el MISMO makeAvoidFilter ve lo que antes quedaba escondido. Solo alimenta la
 // detección de "evitar"/"antojo"; NO cambia macros/porciones/selección nutricional.
-interface DishText {
-  text: string; words: Set<string>;                        // ANTOJO: nombre + ingredientes
+/** Unidades de detección de "evitar" de un platillo en UN modo (estricto o suave). */
+interface AvoidUnits {
   avoidWords: Set<string>; avoidText: string;              // EVITAR: solo ingredientes
   units: { text: string; words: Set<string> }[];           // EVITAR: por ingrediente (excepciones)
+}
+interface DishText extends AvoidUnits {
+  text: string; words: Set<string>;                        // ANTOJO: nombre + ingredientes
+  /** WEEKLY PREFERENCES · las mismas unidades en modo SUAVE (ingredientes propios + reglas IS). */
+  soft: AvoidUnits;
 }
 const tokenize = (text: string) => ({ text, words: new Set(text.split(/[^a-z0-9]+/).filter(Boolean)) });
 // Separador entre unidades: un término nunca lo contiene, así que una frase ("carne asada")
 // NO puede formarse cruzando el final de un ingrediente con el principio del siguiente.
 const UNIT_SEP = ' \u0000 ';
+function avoidUnitsOf(d: BancoDish, mode: AvoidMode): AvoidUnits {
+  const units = dishAvoidUnits(d, mode).map(tokenize);
+  const avoidWords = new Set<string>();
+  for (const u of units) for (const w of u.words) avoidWords.add(w);
+  return { avoidWords, avoidText: units.map((u) => u.text).join(UNIT_SEP), units };
+}
 function buildDishText(d: BancoDish): DishText {
   // `text`/`words` = nombre + ingredientes (ANTOJO: ahí el nombre del platillo SÍ es la señal).
   // `units`        = un token-set por INGREDIENTE, sin el nombre (EVITAR: manda la composición).
-  const units = dishAvoidUnits(d).map(tokenize);
-  const avoidWords = new Set<string>();
-  for (const u of units) for (const w of u.words) avoidWords.add(w);
-  return {
-    ...tokenize(effectiveDishAvoidText(d)),
-    avoidWords, avoidText: units.map((u) => u.text).join(UNIT_SEP), units,
-  };
+  return { ...tokenize(effectiveDishAvoidText(d)), ...avoidUnitsOf(d, 'strict'), soft: avoidUnitsOf(d, 'soft') };
 }
 const DTEXT = new Map<BancoDish, DishText>();
 for (const d of BANCO) DTEXT.set(d, buildDishText(d));
@@ -137,8 +142,11 @@ const TERM_EXCEPT: Record<string, RegExp> = {
 };
 /** ¿Algún INGREDIENTE del platillo (o de sus sub-recetas) contiene alguno de los términos? */
 function dishMatchesAvoidTerms(d: BancoDish, terms: string[]): boolean {
+  return unitsMatchAvoidTerms(dishText(d), terms);
+}
+/** El matcher de "evitar" sobre unas unidades ya construidas (estrictas o suaves). Mismas excepciones. */
+function unitsMatchAvoidTerms(e: AvoidUnits, terms: string[]): boolean {
   if (!terms.length) return false;
-  const e = dishText(d);
   for (const t of terms) {
     const ex = TERM_EXCEPT[t];
     if (!ex) {
@@ -1216,6 +1224,21 @@ function reduceForShake(T: number[], shake?: ProteinShake): number[] {
 export function makeAvoidFilter(avoidCats: string[]): (d: BancoDish) => boolean {
   const terms = expandAvoid(avoidCats.map((s) => s.toLowerCase().trim()).filter(Boolean));
   return (d: BancoDish) => dishMatchesAvoidTerms(d, terms);
+}
+
+/**
+ * WEEKLY PREFERENCES · D-WP2 · filtro de PREFERENCIA SEMANAL (suave). `true` = el platillo tiene la
+ * categoría como INGREDIENTE PROPIO / VISIBLE (directo, por alias o por una regla oculta IS como
+ * "Crema"), así que esta semana se prefiere evitar. NO cuenta lo que solo vive dentro de una
+ * sub-receta ni los compuestos que la CONTIENEN (mayonesa → huevo, aderezo con yogurt → lácteos).
+ *
+ * Mismo diccionario (AVOID_MAP), mismos alias, mismas excepciones (TERM_EXCEPT) y mismo matcher que
+ * `makeAvoidFilter`; solo cambian las unidades. Nunca excluye algo que `makeAvoidFilter` permita.
+ * Todavía NO lo consume ningún camino productivo (MB1: solo la autoridad técnica).
+ */
+export function makePreferenceFilter(softCats: string[]): (d: BancoDish) => boolean {
+  const terms = expandAvoid(softCats.map((s) => s.toLowerCase().trim()).filter(Boolean));
+  return (d: BancoDish) => unitsMatchAvoidTerms(dishText(d).soft, terms);
 }
 
 /** Banco agrupado por tiempo, ya SIN alérgenos.
