@@ -27,7 +27,7 @@
 // Puro / determinista / sin estado. No conoce React, ni el store, ni Supabase.
 // ─────────────────────────────────────────────────────────────────────────────
 import { BANCO, type BancoDish } from '../data/banco';
-import { makeAvoidFilter, expandAvoidCats, textMatchesAvoid } from './planEngine';
+import { makeAvoidFilter, expandAvoidCats, textMatchesAvoid, shakeCompatibleWith, shakeTypeOfService } from './planEngine';
 
 /** Tipo de defecto. Granular a propósito: la UI y los tests necesitan el motivo, no un bool. */
 export type PlanViolationKind =
@@ -226,6 +226,10 @@ export function validatePlan(plan: unknown, effectiveAvoid: string[]): PlanVerdi
         // shake / bowl · sin BancoDish detrás.
         if (textoViola([m.name, ...portionList(m), ...ingNames(m)])) {
           bad({ kind: 'restriction', day: dayNum, slot, dish: m.name, detail: `viola una restricción activa (${avoid.join(', ')})` });
+        } else if (kind === 'shake' && !shakeCompatibleWith(shakeTypeOfService(m), avoid)) {
+          // El texto del batido no nombra su base («proteína en polvo»): la composición la decide la
+          // autoridad única del batido (whey = lácteo), la misma que usan las dos rutas del generador.
+          bad({ kind: 'restriction', day: dayNum, slot, dish: m.name, detail: `batido de whey incompatible con ${avoid.join(', ')}` });
         }
         // El BATIDO sí tiene un tiempo comprobable: reemplaza un snack, nunca una comida
         // fuerte (`applyShake` solo escribe en Snack AM/PM). No es una exención.

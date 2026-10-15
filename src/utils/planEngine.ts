@@ -706,12 +706,39 @@ function mergeIntoSnack(meals: MealItem[], extra: MealItem): void {
 // falta grasa, o sola si va justo) — por eso reduce la meta de los principales antes.
 export interface ProteinShake { slots: ('am' | 'pm')[]; type: 'regular' | 'vegana' | 'massgainer'; protG: number }
 
-/** NUTRITION-N3 · ¿es seguro prescribir este batido? El whey (regular/mass gainer) es LÁCTEO → prohibido
- *  para quien evita lácteos o es vegano. El 'vegana' siempre pasa. Sin batido → n/a (true). Puro. */
-function shakeAllowed(shake: ProteinShake | undefined, avoidCats: string[] = []): boolean {
-  if (!shake) return true;
-  if (shake.type === 'vegana') return true;                 // proteína de planta: segura
-  return !avoidCats.some((a) => /l[aá]cteo|vegan/.test(a.toLowerCase()));  // whey → fuera si evita lácteos/vegano
+/** Etiqueta de cada tipo en el texto del batido. ÚNICA fuente: la usan `shakeItem` para construirlo y
+ *  `shakeTypeOfService` para leerlo de un plan guardado (sin dos tablas que puedan divergir). */
+const SHAKE_TAG: Readonly<Record<ProteinShake['type'], string>> = { regular: '', vegana: ' (vegana)', massgainer: ' (mass gainer)' };
+/** Tipos de batido hechos de WHEY (suero de leche): contienen LÁCTEO. */
+const WHEY_SHAKES: ReadonlySet<ProteinShake['type']> = new Set(['regular', 'massgainer']);
+
+/**
+ * RESTRICCIONES · AUTORIDAD ÚNICA DEL BATIDO. ¿Es compatible este tipo de batido con las restricciones?
+ * El whey (regular / mass gainer) es lácteo → incompatible con `lacteos`. La proteína 'vegana' no tiene
+ * composición declarada en el catálogo, así que ninguna categoría la bloquea (no se inventa). Un tipo
+ * desconocido (`null`) se trata como whey: falla cerrado. Las categorías se canonizan igual que en la
+ * autoridad de restricciones; vegano/vegetariano no existen como categoría activa y no bloquean nada.
+ * La usan las dos rutas del generador, la validación final y la invalidación por endurecimiento. Puro.
+ */
+export function shakeCompatibleWith(type: ProteinShake['type'] | null, avoidCats: readonly string[] = []): boolean {
+  const avoidsDairy = avoidCats.some((a) => canonicalizeAvoidTerm(String(a)) === 'lacteos');
+  if (!avoidsDairy) return true;
+  return type !== null && !WHEY_SHAKES.has(type);
+}
+
+/** Batido elegible para el plan: sin batido → n/a (true); con batido → `shakeCompatibleWith`. NO sustituye
+ *  por otro tipo: si no es compatible, el plan va sin batido. Puro. */
+export function shakeAllowedFor(shake: ProteinShake | undefined, avoidCats: readonly string[] = []): boolean {
+  return !shake || shakeCompatibleWith(shake.type, avoidCats);
+}
+
+/** Tipo de un batido ya servido (plan guardado), leído de las MISMAS etiquetas con que `shakeItem` lo
+ *  escribe. Sin etiqueta = regular (whey). Puro. */
+export function shakeTypeOfService(s: { desc?: unknown; portions?: unknown }): ProteinShake['type'] {
+  const text = [s.desc, ...(Array.isArray(s.portions) ? s.portions : [])].map((x) => String(x ?? '')).join(' ');
+  if (text.includes(SHAKE_TAG.vegana.trim())) return 'vegana';
+  if (text.includes(SHAKE_TAG.massgainer.trim())) return 'massgainer';
+  return 'regular';
 }
 
 /** Macros de UN batido según tipo y gramos de proteína. Cada tipo rinde distinto:
@@ -724,7 +751,7 @@ export function shakeMacros(s: ProteinShake): { kcal: number; prot: number; fat:
 }
 function shakeItem(s: ProteinShake, label: string): MealItem {
   const m = shakeMacros(s);
-  const tag = s.type === 'massgainer' ? ' (mass gainer)' : s.type === 'vegana' ? ' (vegana)' : '';
+  const tag = SHAKE_TAG[s.type];
   return {
     time: label, name: 'Batido de Proteína', desc: `${s.protG} g proteína${tag}`,
     img: IMG_BASE + 'batido-de-proteina.webp', // si no existe la foto, el card la oculta solo
@@ -1270,6 +1297,9 @@ export function snacksPerSlot(kcal: number): number { return kcal > 2200 ? 2 : 1
  *  queda bajo aunque los platillos que eligió la IA no escalen tanto), con nSnack
  *  combinados por slot para tener capacidad. */
 export function assembleFromSelection(target: PlanTarget, days: DaySelection[], avoidCats: string[] = [], shake?: ProteinShake): DayPlan[] {
+  // RESTRICCIONES · el batido pasa por la MISMA autoridad que en el motor determinista: si no es
+  // compatible (whey con lácteos), el plan va SIN batido. Antes esta ruta lo aplicaba sin comprobar.
+  if (!shakeAllowedFor(shake, avoidCats)) shake = undefined;
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const MT = mealTargets(reduceForShake(T, shake)); // principales contra la meta MENOS el batido
   const nSnack = snacksPerSlot(target.kcal);
@@ -1415,7 +1445,7 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   // NUTRITION-N3 · SEGURIDAD DEL BATIDO: el whey (regular/mass gainer) es lácteo → si el usuario evita
   // lácteos o es vegano, NO se prescribe (fail-closed). Se omite y los principales cierran la meta con
   // comida real (no inventamos una "proteína vegana" que no exista como dato). El batido 'vegana' sí pasa.
-  const shake = shakeAllowed(opts.shake, opts.avoid) ? opts.shake : undefined;
+  const shake = shakeAllowedFor(opts.shake, opts.avoid) ? opts.shake : undefined;
   const buildT = reduceForShake(T, shake); // los principales van contra la meta MENOS el batido
   const rng = mulberry32(opts.seed ?? 12345);
   // "Evitar": categoría (gluten/lácteos/…) → alimentos reales del banco; excluye esos platillos.
@@ -1470,7 +1500,7 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
         // SALE de buildWeeklyPlan: no se reintenta con otro relax (relajar variedad o sesgar
         // a carbo no crea platillos) ni se devuelve un plan incompleto. Lo recoge la UI.
         const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax, opts.avoid ?? []);
-        if (shake) applyShake(day.meals, shake);   // batido (ya validado vs lácteos/vegano) reemplaza el snack de su slot
+        if (shake) applyShake(day.meals, shake);   // batido (ya validado por shakeAllowedFor) reemplaza el snack de su slot
         // Cuadre del día contra la meta COMPLETA (T), ya con el batido puesto: las
         // comidas absorben lo que el batido aporta o deja faltando.
         topUpDay(day.meals, T);
