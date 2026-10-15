@@ -3,6 +3,7 @@
 #   supabase/tests/nutrition-engine-deno/check.sh        (DENO=/ruta/a/deno para otro binario)
 #   1. importer.ts  → `deno check` debe PASAR y `deno run` sin permisos debe ejecutar
 #   2. invalid.ts   → `deno check` debe FALLAR con TS2322
+#   3. Edge Function nutrition-checkin → `deno check` debe PASAR (requiere red para npm:@supabase/supabase-js)
 set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 DENO="${DENO:-deno}"
@@ -22,3 +23,7 @@ if [ "$CODE" -eq 0 ] || ! grep -q "TS2322" <<<"$OUT"; then
   echo "FAIL invalid.ts: se esperaba TS2322 y deno check terminó con $CODE"; echo "$OUT"; exit 1
 fi
 echo "PASS invalid.ts: deno check rechaza la asignación inválida (TS2322)"
+
+FN="$DIR/../../functions/nutrition-checkin"
+"$DENO" check --no-config --quiet "$FN/index.ts" "$FN/handler.ts"
+echo "PASS nutrition-checkin: deno check de la Edge Function contra el contrato generado"

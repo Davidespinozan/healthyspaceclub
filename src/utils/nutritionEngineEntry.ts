@@ -7,14 +7,15 @@
 //   · cadena energética (CAPA 1): perfil → alcance → actividad → mantenimiento →
 //     prescripción → estado/snapshot
 //   · macros (CAPA 2) y modalidad de entrenamiento declarada
+//   · calibración server-authoritative (Bloque 2): mapeo persistido y planificador
 //
 // `npm run build:nutrition-engine` lo empaqueta, sin imports externos, en
-// supabase/functions/_shared/nutritionEngine.generated.ts. Ese archivo es un
-// ARTEFACTO: las reglas se editan aquí, en src/. Un test regenera el bundle y lo
-// compara byte a byte con el commiteado.
+// supabase/functions/_shared/nutritionEngine.generated.js (+ sus .d.ts). Son
+// ARTEFACTOS: las reglas se editan aquí, en src/. Un test los regenera y los
+// compara byte a byte con los commiteados.
 //
 // Fuera a propósito: energyHydration / tdee (proyección hacia el store y banda
-// del banco de platillos), la persistencia de calibración (cliente Supabase) y
+// del banco de platillos), las lecturas de calibración (cliente Supabase) y
 // cualquier módulo con React, store, DOM o red.
 // ─────────────────────────────────────────────────────────────────────────────
 export * from './nutritionTrajectory';
@@ -30,3 +31,5 @@ export * from './nutritionEnergyState';
 export * from './nutritionProfileInput';
 export * from './macroPrescription';
 export * from './trainingModality';
+export * from './adaptiveCalibrationCore';
+export * from './adaptiveCheckinPlanner';

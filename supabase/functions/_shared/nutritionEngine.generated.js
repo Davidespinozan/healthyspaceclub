@@ -1683,11 +1683,416 @@ function resolveMacroPrescription(state, obData) {
     })
   };
 }
+
+// src/utils/adaptiveCalibrationCore.ts
+var ENERGY_CALIBRATION_VERSION = 2;
+var REASON_SET = {
+  INSUFFICIENT_WINDOW: true,
+  INSUFFICIENT_DATA: true,
+  ADHERENCE_NOT_HIGH: true,
+  VERY_SLOW: true,
+  BORDERLINE_SLOW_FIRST: true,
+  BORDERLINE_SLOW_CONFIRMED: true,
+  ON_TARGET: true,
+  DEFICIT_SYMPTOMS: true,
+  FAST_FIRST: true,
+  FAST_CONFIRMED: true,
+  FAST_WITH_SYMPTOMS: true,
+  BELOW_TARGET: true,
+  ABOVE_TARGET: true,
+  WITHIN_MAINTENANCE_BAND: true,
+  BELOW_MAINTENANCE_BAND: true,
+  ABOVE_MAINTENANCE_BAND: true,
+  NEGATIVE_SIGNALS: true,
+  CONTRADICTORY_SIGNALS: true,
+  PERFORMANCE_IMPROVING: true,
+  PERFORMANCE_WORSE: true,
+  NO_TRAINING_SIGNAL: true,
+  WAIST_IMPROVING: true,
+  WAIST_WORSENING: true,
+  NO_CLEAR_PROGRESS: true,
+  DIRECTION_REVERSAL_BLOCKED: true,
+  CALIBRATION_LIMIT_REACHED: true
+};
+var ADAPTIVE_REASONS = Object.keys(REASON_SET);
+var TRAJECTORY_CLASSIFICATION_VALUES = {
+  FAT_LOSS: ["VERY_SLOW", "BORDERLINE_SLOW", "ON_TARGET", "FAST"],
+  MUSCLE_GAIN: ["BELOW_TARGET", "ON_TARGET", "ABOVE_TARGET"],
+  RECOMPOSITION: ["DOWN", "RELATIVELY_STABLE", "UP"],
+  MAINTENANCE: ["BELOW_MAINTENANCE_BAND", "WITHIN_MAINTENANCE_BAND", "ABOVE_MAINTENANCE_BAND"]
+};
+var TRAJECTORY_SUFFICIENCY_VALUES = ["SUFFICIENT_FOR_DECISION", "INSUFFICIENT_WINDOW", "INSUFFICIENT_DATA"];
+var WEIGHT_DIRECTION_VALUES = ["DOWN", "STABLE", "UP"];
+var WAIST_CHANGE_VALUES = ["LOWER", "SAME", "HIGHER"];
+function classificationValue(c) {
+  switch (c.objective) {
+    case "FAT_LOSS":
+      return c.rate;
+    case "MUSCLE_GAIN":
+      return c.rate;
+    case "RECOMPOSITION":
+      return c.weight;
+    case "MAINTENANCE":
+      return c.band;
+  }
+}
+function buildCheckinRecord(input) {
+  const { cycleIndex, checkin: c, trajectory: t, decision: d, previousWaistCm } = input;
+  if (t.status !== "ASSESSED") return { ok: false, error: "TRAJECTORY_NOT_ASSESSED" };
+  if (t.objective !== c.objective || d.objective !== c.objective) return { ok: false, error: "OBJECTIVE_MISMATCH" };
+  if (d.cycleIndex !== cycleIndex) return { ok: false, error: "CYCLE_MISMATCH" };
+  const m = t.metrics;
+  if (m != null && m.currentWeightKg !== c.weightKg) return { ok: false, error: "WEIGHT_MISMATCH" };
+  const waistDirection = previousWaistCm != null && c.waistCm != null ? classifyWaistChange(previousWaistCm, c.waistCm) : null;
+  return {
+    ok: true,
+    payload: {
+      cycle_index: cycleIndex,
+      checkin_date: c.checkinDate,
+      objective: c.objective,
+      weight_kg: c.weightKg,
+      waist_cm: c.waistCm,
+      adherence_answer: c.adherence.answer,
+      adherence_band: c.adherence.band,
+      hunger: c.hunger,
+      energy: c.energy,
+      performance: c.performance,
+      trains_strength: c.trainsStrength,
+      strength_experience: c.strengthExperience,
+      recent_strength_continuity: c.recentStrengthContinuity,
+      trajectory_sufficiency: t.sufficiency,
+      previous_weight_kg: m?.previousWeightKg ?? null,
+      elapsed_days: m?.elapsedDays ?? null,
+      absolute_change_kg: m?.absoluteChangeKg ?? null,
+      percent_change: m?.percentChangeFromBaseline ?? null,
+      percent_change_per_week: m?.percentChangePerWeek ?? null,
+      kg_per_month: m?.changeKgPerMonth ?? null,
+      trajectory_direction: m?.direction ?? null,
+      trajectory_classification: t.sufficiency === "SUFFICIENT_FOR_DECISION" ? classificationValue(t.classification) : null,
+      previous_waist_cm: waistDirection ? previousWaistCm : null,
+      waist_direction: waistDirection,
+      action: d.action,
+      reason: d.reason,
+      previous_step: d.currentStep,
+      proposed_step: d.proposedStep,
+      blocked_action: d.blocked?.action ?? null,
+      blocked_reason: d.blocked?.reason ?? null,
+      trajectory_version: TRAJECTORY_ENGINE_VERSION,
+      checkin_domain_version: NUTRITION_CHECKIN_VERSION,
+      adaptive_decision_version: ADAPTIVE_DECISION_VERSION
+    }
+  };
+}
+function isOneOf3(v, list) {
+  return typeof v === "string" && list.includes(v);
+}
+var num2 = (v) => v === null || v === void 0 || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null;
+var str = (v) => typeof v === "string" && v !== "" ? v : null;
+var isStep = (v) => v != null && Number.isInteger(v) && v >= CALIBRATION_STEP_MIN && v <= CALIBRATION_STEP_MAX;
+function checkinFromRow(row) {
+  const objective = row.objective;
+  if (!isOneOf3(objective, CANONICAL_GOALS)) return null;
+  const id = str(row.id), calibrationId = str(row.calibration_id), checkinDate = str(row.checkin_date);
+  const cycleIndex = num2(row.cycle_index), weightKg = num2(row.weight_kg);
+  const previousStep = num2(row.previous_step), proposedStep = num2(row.proposed_step);
+  if (!id || !calibrationId || !checkinDate || cycleIndex == null || weightKg == null || !isStep(previousStep) || !isStep(proposedStep)) return null;
+  if (!isOneOf3(row.adherence_answer, ADHERENCE_ANSWERS) || !isOneOf3(row.adherence_band, ["HIGH", "MEDIUM", "LOW"])) return null;
+  if (!isOneOf3(row.hunger, NUTRITION_HUNGER_VALUES) || !isOneOf3(row.energy, NUTRITION_ENERGY_VALUES) || !isOneOf3(row.performance, NUTRITION_PERFORMANCE_VALUES)) return null;
+  if (!isOneOf3(row.action, ADAPTIVE_ACTIONS) || !isOneOf3(row.reason, ADAPTIVE_REASONS)) return null;
+  if (!isOneOf3(row.trajectory_sufficiency, TRAJECTORY_SUFFICIENCY_VALUES)) return null;
+  const optional = (v, list) => v === null || v === void 0 ? null : isOneOf3(v, list) ? v : void 0;
+  const strengthExperience = optional(row.strength_experience, STRENGTH_EXPERIENCE_VALUES);
+  const continuity = optional(row.recent_strength_continuity, RECENT_STRENGTH_CONTINUITY_VALUES);
+  const direction = optional(row.trajectory_direction, WEIGHT_DIRECTION_VALUES);
+  const waistDirection = optional(row.waist_direction, WAIST_CHANGE_VALUES);
+  const classification = optional(row.trajectory_classification, TRAJECTORY_CLASSIFICATION_VALUES[objective]);
+  const blockedAction = optional(row.blocked_action, ["STEP_UP", "STEP_DOWN"]);
+  const blockedReason = optional(row.blocked_reason, ADAPTIVE_REASONS);
+  if ([strengthExperience, continuity, direction, waistDirection, classification, blockedAction, blockedReason].includes(void 0)) return null;
+  if (blockedAction == null !== (blockedReason == null)) return null;
+  return {
+    id,
+    calibrationId,
+    cycleIndex,
+    checkinDate,
+    objective,
+    weightKg,
+    waistCm: num2(row.waist_cm),
+    adherence: { answer: row.adherence_answer, band: row.adherence_band },
+    hunger: row.hunger,
+    energy: row.energy,
+    performance: row.performance,
+    trainsStrength: typeof row.trains_strength === "boolean" ? row.trains_strength : null,
+    strengthExperience,
+    recentStrengthContinuity: continuity,
+    trajectory: {
+      sufficiency: row.trajectory_sufficiency,
+      previousWeightKg: num2(row.previous_weight_kg),
+      elapsedDays: num2(row.elapsed_days),
+      absoluteChangeKg: num2(row.absolute_change_kg),
+      percentChange: num2(row.percent_change),
+      percentChangePerWeek: num2(row.percent_change_per_week),
+      kgPerMonth: num2(row.kg_per_month),
+      direction,
+      classification
+    },
+    previousWaistCm: num2(row.previous_waist_cm),
+    waistDirection,
+    action: row.action,
+    reason: row.reason,
+    previousStep,
+    proposedStep,
+    blocked: blockedAction ? { action: blockedAction, reason: blockedReason } : null,
+    versions: {
+      trajectory: num2(row.trajectory_version) ?? 0,
+      checkinDomain: num2(row.checkin_domain_version) ?? 0,
+      adaptiveDecision: num2(row.adaptive_decision_version) ?? 0
+    },
+    createdAt: String(row.created_at ?? "")
+  };
+}
+function calibrationFromRow(row) {
+  const objective = row.objective;
+  const id = str(row.id), cycleStart = str(row.cycle_start), baselineDate = str(row.baseline_date);
+  const baselineWeightKg = num2(row.baseline_weight_kg), currentStep = num2(row.current_step);
+  if (!isOneOf3(objective, CANONICAL_GOALS) || !id || !cycleStart || !baselineDate || baselineWeightKg == null || !isStep(currentStep)) return null;
+  if (!isOneOf3(row.status, ["ACTIVE", "CLOSED"])) return null;
+  const lastApplied = row.last_applied_action;
+  if (lastApplied != null && !isOneOf3(lastApplied, ["STEP_UP", "STEP_DOWN"])) return null;
+  return {
+    id,
+    objective,
+    status: row.status,
+    baselineDate,
+    cycleStart,
+    baselineWeightKg,
+    baselineWaistCm: num2(row.baseline_waist_cm),
+    currentStep,
+    baseEnergyKcal: num2(row.base_energy_kcal),
+    lastCheckinId: str(row.last_checkin_id),
+    lastAppliedAction: lastApplied ?? null,
+    lastAppliedAt: str(row.last_applied_at),
+    calibrationVersion: num2(row.calibration_version) ?? 0,
+    createdAt: String(row.created_at ?? ""),
+    closedAt: str(row.closed_at)
+  };
+}
+function previousContextFromCheckin(s) {
+  return {
+    action: s.action,
+    classification: storedClassification(s),
+    hunger: s.hunger,
+    energy: s.energy,
+    performance: s.performance,
+    waistCm: s.waistCm
+  };
+}
+function storedClassification(s) {
+  const t = s.trajectory;
+  if (t.sufficiency !== "SUFFICIENT_FOR_DECISION" || t.classification == null) return null;
+  switch (s.objective) {
+    case "FAT_LOSS":
+      return { objective: "FAT_LOSS", lossPercentPerWeek: -(t.percentChangePerWeek ?? 0) || 0, rate: t.classification };
+    case "MUSCLE_GAIN": {
+      if (s.strengthExperience == null) return null;
+      return {
+        objective: "MUSCLE_GAIN",
+        experienceLevel: s.strengthExperience,
+        gainKgPerMonth: t.kgPerMonth ?? 0,
+        targetKgPerMonth: { ...MUSCLE_GAIN_TARGET_KG_PER_MONTH[s.strengthExperience] },
+        rate: t.classification
+      };
+    }
+    case "RECOMPOSITION":
+      return { objective: "RECOMPOSITION", changeKgPerMonth: t.kgPerMonth ?? 0, weight: t.classification };
+    case "MAINTENANCE":
+      return { objective: "MAINTENANCE", percentChangeFromBaseline: t.percentChange ?? 0, band: t.classification };
+  }
+}
+
+// src/utils/adaptiveCheckinPlanner.ts
+var CYCLE_LENGTH_DAYS = 14;
+var CHECKIN_EARLY_DAYS = 1;
+var CHECKIN_LATE_DAYS = 6;
+var DECLARED_DATE_TOLERANCE_DAYS = 1;
+var START_REQUEST_FIELDS = ["requestId", "localDate", "weightKg", "waistCm"];
+var CHECKIN_REQUEST_FIELDS = [
+  "requestId",
+  "localDate",
+  "weightKg",
+  "waistCm",
+  "adherenceAnswer",
+  "hunger",
+  "energy",
+  "performance",
+  "strengthExperience",
+  "recentStrengthContinuity"
+];
+var DAY_MS2 = 864e5;
+function ymdToDay(v) {
+  if (typeof v !== "string") return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  if (!m) return null;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const t = Date.UTC(y, mo - 1, d);
+  const back = new Date(t);
+  if (back.getUTCFullYear() !== y || back.getUTCMonth() !== mo - 1 || back.getUTCDate() !== d) return null;
+  return t / DAY_MS2;
+}
+var dayToYmd = (day) => new Date(day * DAY_MS2).toISOString().slice(0, 10);
+function cycleStartFor(baselineDate) {
+  const d = ymdToDay(baselineDate);
+  if (d == null) return null;
+  const dow = new Date(d * DAY_MS2).getUTCDay();
+  return dayToYmd(d + (7 - dow) % 7);
+}
+function cycleDueDate(cycleStart, n) {
+  const s = ymdToDay(cycleStart);
+  return s == null || !Number.isInteger(n) || n < 1 ? null : dayToYmd(s + CYCLE_LENGTH_DAYS * n);
+}
+function cycleIndexForDate(cycleStart, date) {
+  const s = ymdToDay(cycleStart), d = ymdToDay(date);
+  if (s == null || d == null) return null;
+  const offset = d - s;
+  const n = Math.floor((offset + CHECKIN_EARLY_DAYS) / CYCLE_LENGTH_DAYS);
+  if (n < 1) return null;
+  return offset <= CYCLE_LENGTH_DAYS * n + CHECKIN_LATE_DAYS ? n : null;
+}
+function acceptDeclaredDate(declared2, serverUtcDate) {
+  const d = ymdToDay(declared2), s = ymdToDay(serverUtcDate);
+  if (d == null || s == null) return { ok: false, reason: "INVALID_DATE" };
+  if (d > s + DECLARED_DATE_TOLERANCE_DAYS) return { ok: false, reason: "FUTURE_DATE" };
+  if (d < s - DECLARED_DATE_TOLERANCE_DAYS) return { ok: false, reason: "DATE_OUT_OF_TOLERANCE" };
+  return { ok: true, date: declared2 };
+}
+var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+var isRequestId = (v) => typeof v === "string" && UUID.test(v);
+function readRequest(raw, allowed, serverUtcDate) {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return { ok: false, rejection: { kind: "REJECT", reason: "INVALID_REQUEST" } };
+  const body = raw;
+  const unexpected = Object.keys(body).filter((k) => !allowed.includes(k)).sort();
+  if (unexpected.length > 0) return { ok: false, rejection: { kind: "REJECT", reason: "UNEXPECTED_FIELDS", fields: unexpected } };
+  if (!isRequestId(body.requestId)) return { ok: false, rejection: { kind: "REJECT", reason: "INVALID_REQUEST_ID" } };
+  const date = acceptDeclaredDate(body.localDate, serverUtcDate);
+  if (!date.ok) return { ok: false, rejection: { kind: "REJECT", reason: date.reason } };
+  return { ok: true, body, requestId: body.requestId, date: date.date };
+}
+function objectiveOf(obData) {
+  try {
+    return canonicalGoalFrom(obData?.goal);
+  } catch {
+    return null;
+  }
+}
+var isPositiveFinite3 = (v) => typeof v === "number" && Number.isFinite(v) && v > 0;
+var reject = (reason, fields) => fields ? { kind: "REJECT", reason, fields } : { kind: "REJECT", reason };
+function planStartCalibration(input) {
+  const req = readRequest(input.request, START_REQUEST_FIELDS, input.serverUtcDate);
+  if (!req.ok) return req.rejection;
+  if (input.energyStatus !== "PRESCRIBED") return reject("NOT_ELIGIBLE");
+  const objective = objectiveOf(input.obData);
+  if (objective == null) return reject("OBJECTIVE_UNRESOLVED");
+  const { weightKg, waistCm } = req.body;
+  if (!isPositiveFinite3(weightKg)) return reject("INVALID_WEIGHT");
+  if (waistCm !== void 0 && waistCm !== null && !isPositiveFinite3(waistCm)) return reject("INVALID_WAIST");
+  const baselineWaistCm = isPositiveFinite3(waistCm) ? waistCm : null;
+  if (objective === "RECOMPOSITION" && baselineWaistCm == null) return reject("WAIST_REQUIRED");
+  const active = input.active?.status === "ACTIVE" ? input.active : null;
+  if (active != null && active.objective === objective) return { kind: "ALREADY_ACTIVE", calibrationId: active.id };
+  return {
+    kind: "START",
+    requestId: req.requestId,
+    objective,
+    baselineDate: req.date,
+    cycleStart: cycleStartFor(req.date),
+    baselineWeightKg: weightKg,
+    baselineWaistCm,
+    calibrationVersion: ENERGY_CALIBRATION_VERSION,
+    closesCalibrationId: active?.id ?? null
+  };
+}
+function referenceOnlyContext(waistCm) {
+  return { action: "NO_ADJUSTMENT", classification: null, hunger: "NORMAL", energy: "NORMAL", performance: "SAME", waistCm };
+}
+function referencePointFor(objective, calibration, ordered) {
+  const pick = objective === "FAT_LOSS" ? ordered[ordered.length - 1] : [...ordered].reverse().find((c) => c.trajectory.sufficiency === "SUFFICIENT_FOR_DECISION");
+  return pick ? { kind: "CHECKIN", date: pick.checkinDate, weightKg: pick.weightKg, waistCm: pick.waistCm, checkinId: pick.id } : { kind: "BASELINE", date: calibration.baselineDate, weightKg: calibration.baselineWeightKg, waistCm: calibration.baselineWaistCm, checkinId: null };
+}
+function planCheckin(input) {
+  const req = readRequest(input.request, CHECKIN_REQUEST_FIELDS, input.serverUtcDate);
+  if (!req.ok) return req.rejection;
+  const cal = input.calibration;
+  if (cal == null || cal.status !== "ACTIVE") return reject("NO_ACTIVE_CALIBRATION");
+  if (input.energyStatus !== "PRESCRIBED") return reject("NOT_ELIGIBLE");
+  const objective = objectiveOf(input.obData);
+  if (objective == null) return reject("OBJECTIVE_UNRESOLVED");
+  if (objective !== cal.objective) return reject("OBJECTIVE_CHANGED");
+  const cycleIndex = cycleIndexForDate(cal.cycleStart, req.date);
+  if (cycleIndex == null) return reject("NOT_DUE");
+  const ordered = input.history.filter((c) => c.calibrationId === cal.id).sort((a, b2) => a.cycleIndex - b2.cycleIndex);
+  if (ordered.some((c) => c.cycleIndex === cycleIndex)) return reject("DUPLICATE_CYCLE");
+  const last = ordered.length > 0 ? ordered[ordered.length - 1] : null;
+  if (last != null && (cycleIndex < last.cycleIndex || req.date <= last.checkinDate)) return reject("OUT_OF_ORDER");
+  const modalities = readTrainingModalities(input.obData?.trainingModalities);
+  const trainsStrength = modalities.kind === "DECLARED" ? modalities.modalities.includes("strength") : modalities.kind === "MISSING" ? false : null;
+  const b = req.body;
+  const validated = validateNutritionCheckin({
+    objective,
+    weightKg: b.weightKg,
+    waistCm: b.waistCm,
+    adherenceAnswer: b.adherenceAnswer,
+    hunger: b.hunger,
+    energy: b.energy,
+    performance: b.performance,
+    trainsStrength,
+    strengthExperience: b.strengthExperience,
+    recentStrengthContinuity: b.recentStrengthContinuity,
+    checkinDate: req.date,
+    cycleNumber: cycleIndex
+  });
+  if (validated.status === "INVALID") return reject("CHECKIN_INVALID", validated.invalid);
+  if (validated.status === "INCOMPLETE") return reject("CHECKIN_INCOMPLETE", validated.missing);
+  const checkin = validated.checkin;
+  const reference = referencePointFor(objective, cal, ordered);
+  const trajectory = assessTrajectory({
+    objective,
+    previousWeightKg: reference.weightKg,
+    currentWeightKg: checkin.weightKg,
+    elapsed: { previousDate: reference.date, currentDate: req.date },
+    experienceLevel: checkin.strengthExperience
+  });
+  const consecutive = last != null && last.cycleIndex === cycleIndex - 1 ? last : null;
+  const previous = consecutive ? { ...previousContextFromCheckin(consecutive), waistCm: reference.waistCm } : reference.waistCm != null ? referenceOnlyContext(reference.waistCm) : null;
+  const decided = decideAdaptiveNutrition({
+    objective,
+    trajectory,
+    checkin: validated,
+    currentStep: cal.currentStep,
+    cycleIndex,
+    previous
+  });
+  if (decided.status !== "DECIDED") return reject("ENGINE_INVALID");
+  const record = buildCheckinRecord({ cycleIndex, checkin, trajectory, decision: decided.decision, previousWaistCm: reference.waistCm });
+  if (!record.ok) return reject("ENGINE_INVALID");
+  return {
+    kind: "RECORD",
+    requestId: req.requestId,
+    calibrationId: cal.id,
+    expectedLastCheckinId: cal.lastCheckinId,
+    cycleIndex,
+    reference,
+    checkin,
+    trajectory,
+    decision: decided.decision,
+    payload: record.payload
+  };
+}
 export {
   ACTIVITY_CATEGORIES,
   ACTIVITY_CLASSIFIER_VERSION,
   ADAPTIVE_ACTIONS,
   ADAPTIVE_DECISION_VERSION,
+  ADAPTIVE_REASONS,
   ADHERENCE_ANSWERS,
   ADHERENCE_ANSWER_BAND,
   ADHERENCE_ANSWER_COPY_RANGE_PCT,
@@ -1697,10 +2102,16 @@ export {
   CALIBRATION_STEP_MAX,
   CALIBRATION_STEP_MIN,
   CANONICAL_GOALS,
+  CHECKIN_EARLY_DAYS,
+  CHECKIN_LATE_DAYS,
+  CHECKIN_REQUEST_FIELDS,
+  CYCLE_LENGTH_DAYS,
   DAILY_LIFE_LEVELS,
   DAYS_PER_MONTH,
+  DECLARED_DATE_TOLERANCE_DAYS,
   DIRECTION_STABLE_BAND_PCT,
   EER_COEFFICIENTS,
+  ENERGY_CALIBRATION_VERSION,
   ENERGY_IDENTITY_FIELDS,
   ENERGY_PRESCRIPTION_VERSION,
   ENERGY_SNAPSHOT_SCHEMA_VERSION,
@@ -1741,27 +2152,39 @@ export {
   PRW_EXCESS_FRACTION,
   RECENT_STRENGTH_CONTINUITY_VALUES,
   RECOMP_STABLE_KG_PER_MONTH,
+  START_REQUEST_FIELDS,
   STRENGTH_EXPERIENCE_REQUIRED_OBJECTIVES,
   STRENGTH_EXPERIENCE_VALUES,
   TRAINING_BANDS,
   TRAINING_MODALITIES,
   TRAINING_MODALITIES_KEY,
+  TRAJECTORY_CLASSIFICATION_VALUES,
   TRAJECTORY_ENGINE_VERSION,
+  TRAJECTORY_SUFFICIENCY_VALUES,
+  WAIST_CHANGE_VALUES,
   WAIST_REQUIRED_OBJECTIVES,
   WAIST_SAME_TOLERANCE_CM,
+  WEIGHT_DIRECTION_VALUES,
+  acceptDeclaredDate,
   activityOrdinalRank,
   adherenceBandOf,
   assessTrajectory,
   biologicalSexFrom,
+  buildCheckinRecord,
   buildEnergySnapshot,
+  calibrationFromRow,
   canonicalGoalFrom,
   canonicalTrainingModalities,
   checkKnownScopeExclusions,
   checkNutritionScope,
   checkScopeWithPendingInputs,
+  checkinFromRow,
   classifyActivity,
   classifyWaistChange,
   currentEngineVersions,
+  cycleDueDate,
+  cycleIndexForDate,
+  cycleStartFor,
   decideAdaptiveNutrition,
   declaredTrainingModalitiesForForm,
   deriveCarbohydratePriority,
@@ -1771,16 +2194,22 @@ export {
   energyInputIdentity,
   estimateMaintenance,
   isIsoUtcTimestamp,
+  isRequestId,
   isServableMacroPrescription,
   nonServableMacroNotice,
   nutritionProfileInputFrom,
   parseEnergySnapshot,
   pendingScopeProfileFrom,
+  planCheckin,
+  planStartCalibration,
   prescribeEnergy,
   prescribeMacros,
+  previousContextFromCheckin,
   proteinFactor,
   proteinReferenceWeightKg,
   readTrainingModalities,
+  referenceOnlyContext,
+  referencePointFor,
   requiredWindowDays,
   resolveKnownNutritionScope,
   resolveMacroPrescription,

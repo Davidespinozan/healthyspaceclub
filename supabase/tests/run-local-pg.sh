@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Ejecuta un test SQL de migración contra un Postgres DESECHABLE (nunca producción).
-#   supabase/tests/run-local-pg.sh [migración] [test]
+#   supabase/tests/run-local-pg.sh [migración[:migración…]] [test]
+# Varias migraciones se aplican en el orden dado (separadas por «:»).
 # Requiere binarios de Postgres 17 (initdb/pg_ctl/psql). Crea stubs mínimos de
 # Supabase: roles anon/authenticated/service_role, auth.users y auth.uid().
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-MIGRATION="${1:-$ROOT/supabase/migrations/20261014120000_nutrition_adaptive_calibration.sql}"
+MIGRATIONS="${1:-$ROOT/supabase/migrations/20261014120000_nutrition_adaptive_calibration.sql}"
 TEST="${2:-$ROOT/supabase/tests/nutrition_adaptive_calibration.test.sql}"
 PGBIN="${PGBIN:-$(ls -d /opt/homebrew/opt/postgresql@17/bin 2>/dev/null || dirname "$(command -v initdb)")}"
 
@@ -31,7 +32,9 @@ grant usage on schema auth, public to anon, authenticated, service_role;
 grant execute on function auth.uid() to anon, authenticated;
 -- privilegios por defecto de Supabase sobre tablas nuevas de public
 alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
 SQL
 
-"${PSQL[@]}" -f "$MIGRATION"
+IFS=':' read -r -a MIGRATION_LIST <<<"$MIGRATIONS"
+for m in "${MIGRATION_LIST[@]}"; do "${PSQL[@]}" -f "$m"; done
 "${PSQL[@]}" -f "$TEST"

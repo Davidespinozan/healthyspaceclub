@@ -7,20 +7,17 @@ vi.mock('../../lib/supabase', () => ({ supabase: { rpc: (...a: unknown[]) => rpc
 
 import SQL from '../../../supabase/migrations/20261014120000_nutrition_adaptive_calibration.sql?raw';
 import CODE from '../nutritionCalibrationRepository.ts?raw';
+import * as REPO from '../nutritionCalibrationRepository';
+import { ENERGY_CALIBRATION_VERSION } from '../adaptiveCalibrationCore';
 import {
   buildCheckinRecord,
   checkinFromRow,
   calibrationFromRow,
   previousContextFromCheckin,
-  parseRecordCheckinResult,
-  parseStartCalibrationResult,
-  startCalibration,
-  recordCheckin,
   getActiveCalibration,
   listRecentCheckins,
   getCheckinAtCycle,
   ADAPTIVE_REASONS,
-  ENERGY_CALIBRATION_VERSION,
   TRAJECTORY_CLASSIFICATION_VALUES,
   TRAJECTORY_SUFFICIENCY_VALUES,
   WEIGHT_DIRECTION_VALUES,
@@ -248,7 +245,7 @@ describe('previousContextFromCheckin · MB3 reconstruye el contexto desde el his
 
 describe('calibrationFromRow', () => {
   const row = {
-    id: 'cal-1', user_id: 'u-1', objective: 'FAT_LOSS', status: 'ACTIVE', cycle_start: '2026-10-04',
+    id: 'cal-1', user_id: 'u-1', objective: 'FAT_LOSS', status: 'ACTIVE', baseline_date: '2026-10-01', cycle_start: '2026-10-04',
     baseline_weight_kg: '70', baseline_waist_cm: null, current_step: 0, base_energy_kcal: null,
     last_checkin_id: null, last_applied_action: null, last_applied_at: null, calibration_version: 1,
     created_at: '2026-10-04T00:00:00Z', closed_at: null,
@@ -269,33 +266,14 @@ describe('RPC · resultados y llamadas (Supabase simulado)', () => {
     for (const fn of Object.values(query)) fn.mockReset().mockReturnValue(query);
   });
 
-  it('parseRecordCheckinResult / parseStartCalibrationResult', () => {
-    expect(parseRecordCheckinResult({ status: 'RECORDED', checkin_id: 'c', current_step: -1 })).toEqual({ status: 'RECORDED', checkinId: 'c', currentStep: -1 });
-    expect(parseRecordCheckinResult({ status: 'DUPLICATE_CYCLE', checkin_id: 'c' })).toEqual({ status: 'DUPLICATE_CYCLE', checkinId: 'c' });
-    for (const s of ['STALE_STATE', 'OUT_OF_ORDER', 'STEP_MISMATCH', 'INVALID_PAYLOAD', 'NOT_FOUND', 'CALIBRATION_CLOSED']) expect(parseRecordCheckinResult({ status: s })).toEqual({ status: s });
-    expect(parseRecordCheckinResult({ status: 'RECORDED', checkin_id: 'c', current_step: 5 })).toEqual({ status: 'TRANSPORT_ERROR' });
-    expect(parseRecordCheckinResult(null)).toEqual({ status: 'TRANSPORT_ERROR' });
-    expect(parseStartCalibrationResult({ status: 'STARTED', calibration_id: 'n', closed_calibration_id: 'o' })).toEqual({ status: 'STARTED', calibrationId: 'n', closedCalibrationId: 'o' });
-    expect(parseStartCalibrationResult({ status: 'ALREADY_ACTIVE', calibration_id: 'n' })).toEqual({ status: 'ALREADY_ACTIVE', calibrationId: 'n' });
-    expect(parseStartCalibrationResult({ status: 'WAT' })).toEqual({ status: 'TRANSPORT_ERROR' });
-  });
-  it('startCalibration llama a la RPC con la versión de calibración y sin user_id', async () => {
-    rpc.mockResolvedValue({ data: { status: 'STARTED', calibration_id: 'n', closed_calibration_id: null }, error: null });
-    const r = await startCalibration({ objective: 'MUSCLE_GAIN', cycleStart: '2026-10-04', baselineWeightKg: 75, baselineWaistCm: 84 });
-    expect(r).toEqual({ status: 'STARTED', calibrationId: 'n', closedCalibrationId: null });
-    expect(rpc).toHaveBeenCalledWith('nutrition_start_calibration', {
-      p_objective: 'MUSCLE_GAIN', p_cycle_start: '2026-10-04', p_baseline_weight_kg: 75, p_baseline_waist_cm: 84, p_calibration_version: ENERGY_CALIBRATION_VERSION,
-    });
-  });
-  it('recordCheckin envía calibración, estado esperado y payload; error de red → TRANSPORT_ERROR', async () => {
-    rpc.mockResolvedValue({ data: { status: 'STALE_STATE' }, error: null });
-    expect(await recordCheckin('cal-1', 'c-0', { cycle_index: 2 })).toEqual({ status: 'STALE_STATE' });
-    expect(rpc).toHaveBeenCalledWith('nutrition_record_checkin', { p_calibration_id: 'cal-1', p_expected_last_checkin_id: 'c-0', p_checkin: { cycle_index: 2 } });
-    rpc.mockResolvedValue({ data: null, error: { code: '500' } });
-    expect(await recordCheckin('cal-1', null, {})).toEqual({ status: 'TRANSPORT_ERROR' });
+  it('Bloque 2 · el cliente ya NO escribe: sin RPC ni operaciones de escritura', () => {
+    for (const gone of ['startCalibration', 'recordCheckin', 'parseStartCalibrationResult', 'parseRecordCheckinResult']) expect(REPO, gone).not.toHaveProperty(gone);
+    const body = CODE.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    for (const w of ['.rpc(', '.insert(', '.update(', '.upsert(', '.delete(']) expect(body.includes(w), w).toBe(false);
+    expect(ENERGY_CALIBRATION_VERSION).toBe(2);
   });
   it('lecturas: estado activo, recientes (anterior) y dos ciclos atrás', async () => {
-    query.maybeSingle.mockResolvedValueOnce({ data: { id: 'cal-1', objective: 'MAINTENANCE', status: 'ACTIVE', cycle_start: '2026-10-04', baseline_weight_kg: 70, current_step: 1, calibration_version: 1 }, error: null });
+    query.maybeSingle.mockResolvedValueOnce({ data: { id: 'cal-1', objective: 'MAINTENANCE', status: 'ACTIVE', baseline_date: '2026-10-01', cycle_start: '2026-10-04', baseline_weight_kg: 70, current_step: 1, calibration_version: 1 }, error: null });
     expect(await getActiveCalibration()).toMatchObject({ id: 'cal-1', currentStep: 1 });
     expect(from).toHaveBeenLastCalledWith('nutrition_calibrations');
     expect(query.eq).toHaveBeenCalledWith('status', 'ACTIVE');
@@ -317,9 +295,9 @@ describe('RPC · resultados y llamadas (Supabase simulado)', () => {
 
 describe('ALCANCE · sin store, UI, energía ni logs', () => {
   const BODY = CODE.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-  it('imports: cliente Supabase + módulos puros de Nutrición', () => {
+  it('imports: cliente Supabase + núcleo puro de calibración', () => {
     const imports = [...CODE.matchAll(/^import [\s\S]*? from '([^']+)';$/gm)].map((m) => m[1]);
-    expect(imports).toEqual(['../lib/supabase', './energyPrescription', './nutritionTrajectory', './nutritionCheckin', './adaptiveNutritionDecision']);
+    expect(imports).toEqual(['../lib/supabase', './adaptiveCalibrationCore']);
   });
   it('no toca store, energía, plan ni logs', () => {
     for (const banned of ['../store', 'useAppStore', 'planGoal', 'plan_goal', 'prescribeEnergy', 'energy_snapshot', 'weekly_plan',

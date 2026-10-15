@@ -16,3 +16,5 @@ export * from './nutritionEngine.types/nutritionEnergyState.d.ts';
 export * from './nutritionEngine.types/nutritionProfileInput.d.ts';
 export * from './nutritionEngine.types/macroPrescription.d.ts';
 export * from './nutritionEngine.types/trainingModality.d.ts';
+export * from './nutritionEngine.types/adaptiveCalibrationCore.d.ts';
+export * from './nutritionEngine.types/adaptiveCheckinPlanner.d.ts';
