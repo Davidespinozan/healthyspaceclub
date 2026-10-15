@@ -141,8 +141,8 @@ describe('VALIDACIÓN FINAL · defensa en profundidad', () => {
   });
 });
 
-describe('UI · estado actual del selector (sin cambiar)', () => {
-  it('el selector sigue ofreciendo los tres tipos, incluido «Regular» (whey): pendiente de decisión UX', () => {
-    expect(PLANNER_SRC).toMatch(/useState<'regular' \| 'vegana' \| 'massgainer'>\('regular'\)/);
+describe('UI · el selector consume la misma autoridad (decisión UX cerrada)', () => {
+  it('el Planificador usa ShakeTypeSelector con las restricciones efectivas; el detalle se prueba en shakeTypeSelector.test', () => {
+    expect(PLANNER_SRC).toMatch(/<ShakeTypeSelector avoid=\{shakeAvoid\}/);
   });
 });

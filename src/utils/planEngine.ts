@@ -726,6 +726,24 @@ export function shakeCompatibleWith(type: ProteinShake['type'] | null, avoidCats
   return type !== null && !WHEY_SHAKES.has(type);
 }
 
+/** Tipos de batido que ofrece el producto, en el orden en que se muestran. */
+export const SHAKE_TYPES: readonly ProteinShake['type'][] = ['regular', 'vegana', 'massgainer'];
+
+/** Categoría que vuelve incompatible un tipo de batido (hoy solo existe la regla del whey). */
+export type ShakeBlockReason = 'lacteos';
+
+/**
+ * PROYECCIÓN PARA LA UI de la autoridad única: cada tipo con su compatibilidad para estas restricciones.
+ * No es una segunda matriz: cada `compatible` sale de `shakeCompatibleWith`, la misma función que aplican
+ * el generador y la validación final. Puro.
+ */
+export function shakeTypeOptions(avoidCats: readonly string[] = []): Array<{ type: ProteinShake['type']; compatible: boolean; blockedBy: ShakeBlockReason | null }> {
+  return SHAKE_TYPES.map((type) => {
+    const compatible = shakeCompatibleWith(type, avoidCats);
+    return { type, compatible, blockedBy: compatible ? null : 'lacteos' };
+  });
+}
+
 /** Batido elegible para el plan: sin batido → n/a (true); con batido → `shakeCompatibleWith`. NO sustituye
  *  por otro tipo: si no es compatible, el plan va sin batido. Puro. */
 export function shakeAllowedFor(shake: ProteinShake | undefined, avoidCats: readonly string[] = []): boolean {

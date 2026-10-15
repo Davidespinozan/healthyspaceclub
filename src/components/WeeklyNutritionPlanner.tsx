@@ -16,7 +16,8 @@ import { computeDayConsumption } from '../utils/foodConsumption';
 // CAPA 2 · las macros tampoco se calculan aquí: las prescribe `macroPrescription`
 // y llegan por `store.macroTargets`.
 import { isServableMacroPrescription, nonServableMacroNotice } from '../utils/macroPrescription';
-import { PLAN_ENGINE_VERSION } from '../utils/planEngine';
+import { PLAN_ENGINE_VERSION, shakeCompatibleWith } from '../utils/planEngine';
+import ShakeTypeSelector from './ShakeTypeSelector';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
 import NutritionMeta from './NutritionMeta';
 import EditDataSheet from './sheets/EditDataSheet';
@@ -247,10 +248,15 @@ export default function WeeklyNutritionPlanner() {
   const [singleSel, setSingleSel] = useState<string>('');
   // Batido de proteína (paso 'protein'): cuándo, tipo y gramos.
   const [shakeWhen, setShakeWhen] = useState<'' | 'am' | 'pm' | 'both'>('');
-  const [shakeType, setShakeType] = useState<'regular' | 'vegana' | 'massgainer'>('regular');
+  const [shakeType, setShakeType] = useState<ProteinShake['type'] | null>('regular');
   const [shakeGrams, setShakeGrams] = useState(25);
+  // RESTRICCIONES · el selector ve las MISMAS restricciones efectivas que recibirá el generador
+  // (permanentes ∪ semanales; el paso 'avoid' va antes que 'protein'). Un tipo incompatible no
+  // cuenta como elegido —tampoco el default «Regular»— y no se sustituye por otro.
+  const shakeAvoid = effectiveAvoid(permanentAvoidFrom(obData), weeklyAvoidFrom(answers.avoid));
+  const selectedShakeType = shakeType && shakeCompatibleWith(shakeType, shakeAvoid) ? shakeType : null;
   const buildShake = (): ProteinShake | undefined =>
-    shakeWhen ? { slots: shakeWhen === 'both' ? ['am', 'pm'] : [shakeWhen], type: shakeType, protG: shakeGrams } : undefined;
+    shakeWhen && selectedShakeType ? { slots: shakeWhen === 'both' ? ['am', 'pm'] : [shakeWhen], type: selectedShakeType, protG: shakeGrams } : undefined;
   const [error, setError] = useState('');
   const [activeDay, setActiveDay] = useState(() =>
     shoppingDay !== null ? (new Date().getDay() - shoppingDay + 7) % 7 : 0
@@ -567,11 +573,6 @@ export default function WeeklyNutritionPlanner() {
           { v: 'pm', k: 'nutritionPlanner.proteinPm' },
           { v: 'both', k: 'nutritionPlanner.proteinBoth' },
         ];
-        const TYPES: Array<{ v: 'regular' | 'vegana' | 'massgainer'; k: TranslationKey }> = [
-          { v: 'regular', k: 'nutritionPlanner.proteinRegular' },
-          { v: 'vegana', k: 'nutritionPlanner.proteinVegan' },
-          { v: 'massgainer', k: 'nutritionPlanner.proteinGainer' },
-        ];
         return (
           <div className="wz-options">
             {WHEN.map(o => (
@@ -584,11 +585,7 @@ export default function WeeklyNutritionPlanner() {
             {shakeWhen && (
               <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div className="wz-option-sub" style={{ fontWeight: 600 }}>{t('nutritionPlanner.proteinType')}</div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {TYPES.map(o => (
-                    <button key={o.v} style={pill(shakeType === o.v)} onClick={() => setShakeType(o.v)}>{t(o.k)}</button>
-                  ))}
-                </div>
+                <ShakeTypeSelector avoid={shakeAvoid} value={selectedShakeType} onChange={setShakeType} pill={pill} />
                 <div className="wz-option-sub" style={{ fontWeight: 600 }}>{t('nutritionPlanner.proteinGrams')}</div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {[15, 20, 25, 30, 35].map(g => (

@@ -1619,6 +1619,7 @@ export const en: Translations<typeof es> = {
     proteinRegular: 'Regular (whey)',
     proteinVegan: 'Vegan',
     proteinGainer: 'Mass gainer',
+    shakeIncompatibleDairy: 'Not compatible with your dairy restriction.',
     proteinGrams: 'Grams of protein per scoop',
     generatePlan: 'Generate my plan',
     cuisineMexican: 'Mexican',

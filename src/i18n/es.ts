@@ -1624,6 +1624,7 @@ export const es = {
     proteinRegular: 'Regular (whey)',
     proteinVegan: 'Vegana',
     proteinGainer: 'Mass gainer',
+    shakeIncompatibleDairy: 'No compatible con tu restricción de lácteos.',
     proteinGrams: 'Gramos de proteína por scoop',
     generatePlan: 'Generar mi plan',
     cuisineMexican: 'Mexicana',
