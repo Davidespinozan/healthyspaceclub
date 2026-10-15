@@ -11,6 +11,7 @@
 // envío (fresco) → hereda el aislamiento por cuenta de ACCOUNT-ISOLATION-1.
 // ─────────────────────────────────────────────────────────────────────────────
 import { dayKey } from './localDate';
+import { latestBodyWeightKg } from './bodyWeight';
 // C4 · el Coach no estima energía: la cifra la prescribe el motor nuevo y llega por
 // `store.planGoal`. CAPA 2 · tampoco calcula macros: llegan por `store.macroTargets`.
 import { isServableMacroPrescription } from './macroPrescription';
@@ -84,7 +85,7 @@ const str = (v: unknown): string | undefined => {
 export function buildCoachContext(store: StoreState): CoachContext {
   const {
     userName, obData, streakCount, startDate, weeklyPlan, shoppingDay,
-    mealChecks, mealResolvedByLog, foodLog, completedSessions, workoutLog,
+    mealChecks, mealResolvedByLog, foodLog, completedSessions, workoutLog, weightLog,
     dailyWorkout, dailyHSMResponses, hsmProfile, hsmDailyReview,
     // C4 · proyección del estado energético. No se lee `energyState` porque el
     // contexto no explica el MOTIVO de la ausencia: solo omite lo que no existe.
@@ -99,7 +100,7 @@ export function buildCoachContext(store: StoreState): CoachContext {
   // ── USER / TEMPORAL ─────────────────────────────────────────────────────────
   const user: CoachContext['user'] = {
     name: userName || '',
-    sex: str(ob.sex), age: num(ob.edad), heightCm: num(ob.estatura), weightKg: num(ob.peso),
+    sex: str(ob.sex), age: num(ob.edad), heightCm: num(ob.estatura), weightKg: latestBodyWeightKg(weightLog, ob.peso),
     goal: str(ob.goal), trainingGoal: str(ob.trainingGoal),
     daysInProgram: daysBetween(startDate, today),
     streak: streakCount, today,

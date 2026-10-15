@@ -32,7 +32,7 @@ function fakeDb(today = '2026-10-01') {
       findCheckinByRequest: async (uid: string, r: string): Promise<Row | null> => checkins.find((c) => c.user_id === uid && c.request_id === r) ?? null,
       rpcStart: vi.fn(async (a: Row): Promise<{ data: unknown; error: unknown }> => {
         const prev = calibrations.find((c) => c.user_id === a.p_user_id && c.start_request_id === a.p_request_id);
-        if (prev) return { data: { status: 'STARTED', calibration_id: prev.id }, error: null };
+        if (prev) return { data: { status: 'STARTED', calibration_id: prev.id, nutrition_weight_kg: prev.baseline_weight_kg }, error: null };
         const active = calibrations.find((c) => c.user_id === a.p_user_id && c.status === 'ACTIVE');
         if (active && active.objective === a.p_objective) return { data: { status: 'ALREADY_ACTIVE', calibration_id: active.id }, error: null };
         if (active) Object.assign(active, { status: 'CLOSED', closed_at: 'now' });
@@ -43,10 +43,12 @@ function fakeDb(today = '2026-10-01') {
           created_at: 'now', closed_at: null, start_request_id: a.p_request_id,
         };
         calibrations.push(row);
-        return { data: { status: 'STARTED', calibration_id: row.id }, error: null };
+        // Bloque 4 · misma transacción: el peso base pasa a ser ob_data.peso (escritura estrecha)
+        profiles[a.p_user_id as string] = { ...(profiles[a.p_user_id as string] as Row), peso: a.p_baseline_weight_kg };
+        return { data: { status: 'STARTED', calibration_id: row.id, nutrition_weight_kg: a.p_baseline_weight_kg }, error: null };
       }),
       rpcRecord: vi.fn(async (a: Row): Promise<{ data: unknown; error: unknown }> => {
-        const summary = (r: Row) => ({ status: 'RECORDED', checkin_id: r.id, cycle_index: r.cycle_index, action: r.action, reason: r.reason, current_step: r.proposed_step });
+        const summary = (r: Row) => ({ status: 'RECORDED', checkin_id: r.id, cycle_index: r.cycle_index, action: r.action, reason: r.reason, current_step: r.proposed_step, nutrition_weight_kg: r.weight_kg });
         const prev = checkins.find((c) => c.user_id === a.p_user_id && c.request_id === a.p_request_id);
         if (prev) return { data: summary(prev), error: null };
         const cal = calibrations.find((c) => c.id === a.p_calibration_id && c.user_id === a.p_user_id);
@@ -58,6 +60,7 @@ function fakeDb(today = '2026-10-01') {
         const row = { ...p, id: uuid(), user_id: a.p_user_id, calibration_id: cal.id, request_id: a.p_request_id, created_at: 'now' };
         checkins.push(row);
         Object.assign(cal, { current_step: p.proposed_step, last_checkin_id: row.id });
+        profiles[a.p_user_id as string] = { ...(profiles[a.p_user_id as string] as Row), peso: p.weight_kg };
         return { data: summary(row), error: null };
       }),
       serverUtcDate: () => clock.today,
@@ -186,11 +189,39 @@ describe('IDEMPOTENCIA', () => {
     const db = fakeDb();
     const body = startBody();
     const first = await handleNutritionCheckin(A, body, db.deps);
-    expect(first).toEqual({ status: 200, body: { status: 'STARTED', calibrationId: db.calibrations[0].id } });
+    expect(first).toEqual({ status: 200, body: { status: 'STARTED', calibrationId: db.calibrations[0].id, nutritionWeightKg: 70 } });
     expect(await handleNutritionCheckin(A, body, db.deps)).toEqual(first);
     expect(await handleNutritionCheckin(A, startBody(), db.deps)).toEqual({ status: 200, body: { status: 'ALREADY_ACTIVE', calibrationId: db.calibrations[0].id } });
     expect(db.calibrations).toHaveLength(1);
     expect(db.deps.rpcStart).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('BLOQUE 4 · peso nutricional aceptado por el servidor', () => {
+  it('start devuelve el peso base aceptado y lo fija en el perfil', async () => {
+    const db = fakeDb();
+    const r = await handleNutritionCheckin(A, startBody({ weightKg: 81.4 }), db.deps);
+    expect(r.body).toMatchObject({ status: 'STARTED', nutritionWeightKg: 81.4 });
+    expect((db.profiles[A] as Row).peso).toBe(81.4);
+    expect((db.profiles[A] as Row).goal).toBe('Bajar grasa'); // el resto del perfil intacto
+  });
+  it('check-in devuelve el peso declarado aceptado; el replay devuelve el mismo', async () => {
+    const db = fakeDb(); await started(db);
+    const body = checkinBody({ weightKg: 69.1 });
+    const first = await handleNutritionCheckin(A, body, db.deps);
+    expect(first.body).toMatchObject({ status: 'RECORDED', nutritionWeightKg: 69.1 });
+    expect(await handleNutritionCheckin(A, body, db.deps)).toEqual(first);
+  });
+  it('ALREADY_ACTIVE no trae peso (no hubo escritura)', async () => {
+    const db = fakeDb(); await started(db);
+    const r = await handleNutritionCheckin(A, startBody({ weightKg: 60, localDate: '2026-10-18' }), db.deps);
+    expect(r.body).toEqual({ status: 'ALREADY_ACTIVE', calibrationId: db.calibrations[0].id });
+    expect((db.profiles[A] as Row).peso).toBe(70); // no se reescribió
+  });
+  it('perfil inexistente en la RPC → 409 PROFILE_NOT_FOUND', async () => {
+    const db = fakeDb(); await started(db);
+    db.deps.rpcRecord.mockResolvedValueOnce({ data: { status: 'PROFILE_NOT_FOUND' }, error: null });
+    expect(await handleNutritionCheckin(A, checkinBody(), db.deps)).toEqual({ status: 409, body: { status: 'PROFILE_NOT_FOUND' } });
   });
 });
 

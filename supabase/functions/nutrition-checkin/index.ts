@@ -43,12 +43,12 @@ Deno.serve(async (req: Request) => {
       return data ?? [];
     },
     findCalibrationByStartRequest: async (uid, requestId) => {
-      const { data, error } = await admin.from('nutrition_calibrations').select('id').eq('user_id', uid).eq('start_request_id', requestId).maybeSingle();
+      const { data, error } = await admin.from('nutrition_calibrations').select('id, baseline_weight_kg').eq('user_id', uid).eq('start_request_id', requestId).maybeSingle();
       if (error) throw new Error('replay_read');
       return data ?? null;
     },
     findCheckinByRequest: async (uid, requestId) => {
-      const { data, error } = await admin.from('nutrition_adaptive_checkins').select('id, cycle_index, action, reason, proposed_step').eq('user_id', uid).eq('request_id', requestId).maybeSingle();
+      const { data, error } = await admin.from('nutrition_adaptive_checkins').select('id, cycle_index, action, reason, proposed_step, weight_kg').eq('user_id', uid).eq('request_id', requestId).maybeSingle();
       if (error) throw new Error('replay_read');
       return data ?? null;
     },

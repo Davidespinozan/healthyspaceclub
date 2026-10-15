@@ -303,14 +303,14 @@ export default function EditDataSheet({ onClose }: Props) {
     setObData('avoid', avoid.join(','));
 
     try {
+      // BLOQUE 4 · «Mis datos» es una CORRECCIÓN EXPLÍCITA del peso nutricional: se fija
+      // obData.peso y se recalcula, igual que con estatura, objetivo o actividad.
+      setObData('peso', pesoN);
+      await recalcFromObData('edit-data');
+      // Además queda como pesaje en el historial. addWeight es solo historial: no toca
+      // el peso nutricional ni las kcal, y si falla no deshace la corrección.
       if (pesoChanged) {
-        // addWeight crea entry en weight_log + setObData('peso') + recalcFromObData
-        // (camino unificado para mantener histórico consistente)
-        await addWeight(pesoN);
-      } else {
-        // Peso no cambió: solo recalc por los otros campos
-        setObData('peso', pesoN);
-        await recalcFromObData();
+        try { await addWeight(pesoN); } catch (e) { console.warn('[EditDataSheet] historial de peso no guardado:', e); }
       }
       setSaved(true);
     } catch (e) {

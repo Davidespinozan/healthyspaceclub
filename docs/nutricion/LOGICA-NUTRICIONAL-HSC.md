@@ -436,7 +436,7 @@ Todos son estimados iniciales. Recalcular cada 4 semanas según progreso real. S
 
 ## PUNTO 7 — RECALIBRACIÓN (ajuste con el tiempo) ✅ DEFINIDO
 
-> **PARCIAL en V1.** El peso de nutrición se actualiza con la tendencia estable de peso (`weightTrend`, N10.1) y la energía se vuelve a calcular con él; no hay recalibración adaptativa por la respuesta observada (la estimación sigue siendo DRI 2023 EER).
+> **ACTUALIZADO (Bloque 4).** Los pesajes de `weight_log` son solo historial: ya no mueven el peso de nutrición (`weightTrend`/N10.1 dejó de ser autoridad). El peso nutricional (`ob_data.peso`) cambia por el onboarding, por la corrección explícita de «Mis datos» y, en el servidor, al abrir una calibración y en cada check-in; con él se recalculan energía y macros. La recalibración adaptativa por paso (`current_step`) aún no está conectada a kcal.
 
 ### Por qué (lo más importante del sistema)
 Todo cálculo inicial es un ESTIMADO, no una certeza. Ninguna fórmula acierta perfecto

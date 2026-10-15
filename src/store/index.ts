@@ -1,5 +1,4 @@
 import { dayKey } from '../utils/localDate';
-import { nextNutritionWeight } from '../utils/weightTrend';   // NUTRITION-N10.1 · peso de tendencia estable
 import { buildDayEvidence, upsertSummary, toSummary, type NutritionDaySummary } from '../utils/nutritionEvidence';   // NUTRITION-N10.2A · evidencia de adherencia
 import { summaryInsertRow, summaryEvidencePatch } from '../utils/nutritionSummaryDb';   // NUTRITION-N10.2A.2 · persistencia cross-device
 import { create } from 'zustand';
@@ -539,6 +538,11 @@ interface AppState {
    */
   recalcFromObData: (reason?: string) => Promise<void>;
   /**
+   * BLOQUE 4 · aplica el peso nutricional que ACEPTÓ el servidor (calibración/check-in) antes de
+   * cualquier otro recálculo: así un upsert posterior de ob_data no puede revertirlo con el valor viejo.
+   */
+  applyServerNutritionWeight: (kg: number) => Promise<void>;
+  /**
    * CAPA 1E · FASE C4 — hidratación energética desde `user_profiles`.
    *
    * Recibe el valor CRUDO de la columna `energy_snapshot` (nunca `plan_goal`) y
@@ -855,18 +859,9 @@ export const useAppStore = create<AppState>()(
       }
     }
 
-    // NUTRITION-N10.1 · el peso NUTRICIONAL (obData.peso → computeNutritionTargets) NO usa el pesaje crudo:
-    // usa la MEDIANA rodante de 14 días (ignora agua/sodio de un día) y solo se mueve si cambió ≥0.5 kg.
-    // El peso crudo de la báscula ya quedó guardado arriba en weightLog (display/tracking intactos).
-    const state = get();
-    const decision = nextNutritionWeight(state.weightLog, Number(state.obData?.peso), today);
-    if (decision.update) {
-      state.setObData('peso', decision.stableKg);
-      try { await state.recalcFromObData(); } catch (e) {
-        console.warn('[addWeight] recalcFromObData failed:', e);
-      }
-    }
-    // INSUFFICIENT_DATA (<3 días) o sub-umbral → baseline nutricional sin cambios (no persiste target).
+    // BLOQUE 4 · un pesaje es SOLO historial: no toca obData.peso, ni energía, ni macros,
+    // ni plan_goal, ni el plan. El peso nutricional cambia solo por onboarding, por la
+    // edición explícita de «Mis datos» o por la calibración/check-in server-authoritative.
   },
   removeWeight: async (date) => {
     const userId = get().user?.id;
@@ -882,17 +877,7 @@ export const useAppStore = create<AppState>()(
         throw error;
       }
     }
-    // NUTRITION-N10.1 · re-derivar el peso nutricional del historial RESTANTE (antes quedaba stale al borrar
-    // el último pesaje). Solo mueve el target si la tendencia sigue READY y cambió ≥0.5 kg; si al quitar el
-    // punto quedan <3 días, mantiene el baseline vigente (no inventa un target arbitrario — fail-safe).
-    const state = get();
-    const decision = nextNutritionWeight(state.weightLog, Number(state.obData?.peso), dayKey(new Date()));
-    if (decision.update) {
-      state.setObData('peso', decision.stableKg);
-      try { await state.recalcFromObData(); } catch (e) {
-        console.warn('[removeWeight] recalcFromObData failed:', e);
-      }
-    }
+    // BLOQUE 4 · borrar un pesaje es SOLO historial: el peso nutricional no se re-deriva.
   },
 
   // Meal check-off — Sync-2: fire-and-forget upsert a meal_progress.
@@ -1623,6 +1608,13 @@ export const useAppStore = create<AppState>()(
   energyState: null,
   macroTargets: null,
   macroResolution: null,
+
+  applyServerNutritionWeight: async (kg) => {
+    if (typeof kg !== 'number' || !Number.isFinite(kg) || kg <= 0) return;
+    // Primero la memoria (síncrono): cualquier upsert que salga a partir de aquí lleva el peso del servidor.
+    set((state) => ({ obData: { ...state.obData, peso: kg } }));
+    await get().recalcFromObData('server-weight');
+  },
 
   recalcFromObData: async (reason = 'unspecified') => {
     const { obData } = get();

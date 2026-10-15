@@ -57,11 +57,17 @@ function energyStatusOf(obData: unknown): string {
   try { return resolveNutritionEnergyState(obData as never).status; } catch { return 'PROFILE_INVALID'; }
 }
 
-/** Respuesta de un check-in registrado: idéntica en la primera vez y en cualquier replay. */
-function recordedBody(r: { checkin_id: unknown; cycle_index: unknown; action: unknown; reason: unknown; current_step: unknown }) {
+/** Peso nutricional efectivo devuelto por el servidor (o null si no hay uno válido). */
+const weightOf = (v: unknown): number | null => { const n = Number(v); return v != null && Number.isFinite(n) && n > 0 ? n : null; };
+
+/**
+ * Respuesta de un check-in registrado: idéntica en la primera vez y en cualquier replay.
+ * `nutritionWeightKg` es el peso que el servidor fijó en ob_data.peso (Bloque 4).
+ */
+function recordedBody(r: { checkin_id: unknown; cycle_index: unknown; action: unknown; reason: unknown; current_step: unknown; nutrition_weight_kg: unknown }) {
   return {
     status: 'RECORDED', checkinId: r.checkin_id, cycleIndex: Number(r.cycle_index),
-    action: r.action, reason: r.reason, currentStep: Number(r.current_step),
+    action: r.action, reason: r.reason, currentStep: Number(r.current_step), nutritionWeightKg: weightOf(r.nutrition_weight_kg),
   };
 }
 
@@ -85,7 +91,10 @@ async function start(userId: string, request: Record<string, unknown>, deps: Nut
   // Replay ANTES de recalcular: el mismo requestId devuelve el resultado original.
   if (isRequestId(request.requestId)) {
     const prev = await deps.findCalibrationByStartRequest(userId, request.requestId);
-    if (prev) { log('nutrition_checkin.start.replay'); return { status: 200, body: { status: 'STARTED', calibrationId: prev.id } }; }
+    if (prev) {
+      log('nutrition_checkin.start.replay');
+      return { status: 200, body: { status: 'STARTED', calibrationId: prev.id, nutritionWeightKg: weightOf(prev.baseline_weight_kg) } };
+    }
   }
   const obData = await deps.loadObData(userId);
   const activeRow = await deps.loadActiveCalibration(userId);
@@ -108,8 +117,10 @@ async function start(userId: string, request: Record<string, unknown>, deps: Nut
   const r = (data ?? {}) as Row;
   log('nutrition_checkin.start.result', { status: r.status });
   switch (r.status) {
-    case 'STARTED': case 'ALREADY_ACTIVE': return { status: 200, body: { status: r.status, calibrationId: r.calibration_id } };
+    case 'STARTED': return { status: 200, body: { status: 'STARTED', calibrationId: r.calibration_id, nutritionWeightKg: weightOf(r.nutrition_weight_kg) } };
+    case 'ALREADY_ACTIVE': return { status: 200, body: { status: 'ALREADY_ACTIVE', calibrationId: r.calibration_id } };
     case 'CONFLICT': return { status: 409, body: { status: 'CONFLICT' } };
+    case 'PROFILE_NOT_FOUND': return { status: 409, body: { status: 'PROFILE_NOT_FOUND' } };
     default: return { status: 500, body: { status: 'SERVER_REJECTED' } };
   }
 }
@@ -119,7 +130,7 @@ async function checkin(userId: string, request: Record<string, unknown>, deps: N
     const prev = await deps.findCheckinByRequest(userId, request.requestId);
     if (prev) {
       log('nutrition_checkin.record.replay');
-      return { status: 200, body: recordedBody({ ...prev, checkin_id: prev.id, current_step: prev.proposed_step } as never) };
+      return { status: 200, body: recordedBody({ ...prev, checkin_id: prev.id, current_step: prev.proposed_step, nutrition_weight_kg: prev.weight_kg } as never) };
     }
   }
   const obData = await deps.loadObData(userId);
@@ -150,6 +161,7 @@ async function checkin(userId: string, request: Record<string, unknown>, deps: N
     case 'RECORDED': return { status: 200, body: recordedBody(r as never) };
     case 'DUPLICATE_CYCLE': case 'STALE_STATE': return { status: 409, body: { status: r.status } };
     case 'CALIBRATION_CLOSED': case 'NOT_FOUND': return { status: 409, body: { status: 'NO_ACTIVE_CALIBRATION' } };
+    case 'PROFILE_NOT_FOUND': return { status: 409, body: { status: 'PROFILE_NOT_FOUND' } };
     default: return { status: 500, body: { status: 'SERVER_REJECTED' } };
   }
 }
