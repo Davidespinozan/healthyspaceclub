@@ -24,7 +24,7 @@
 // Puro / determinista / sin estado. No conoce React ni el store.
 // ─────────────────────────────────────────────────────────────────────────────
 import { canonicalizeAvoidTerm } from './allergenSafety';
-import { expandAvoidCats, textMatchesAvoid, shakeCompatibleWith, shakeTypeOfService, isShakeName } from './planEngine';
+import { validatePlan } from './planIntegrity';
 
 /**
  * Las 10 restricciones que el producto ofrece hoy, para el PERFIL (permanentes).
@@ -172,26 +172,24 @@ interface PlanLike {
  *
  * Se usa cuando el usuario ENDURECE sus restricciones permanentes: un plan que ya
  * está en pantalla no puede seguir presentándose como válido si contiene lo que el
- * usuario acaba de declarar que no consume. Inspecciona el nombre de cada comida,
- * sus ingredientes y sus porciones con el MISMO expandAvoidCats del motor.
+ * usuario acaba de declarar que no consume.
+ *
+ * DELEGA en la validación final (`validatePlan`), la misma autoridad que decide si un plan
+ * se guarda o se hidrata: composición real del platillo del banco (sub-recetas, alérgenos
+ * ocultos, TERM_EXCEPT), tipo del batido (`shakeCompatibleWith`, solo o combinado) y la
+ * comprobación de texto de las formas sin platillo detrás (bowl). Solo cuentan las
+ * violaciones `restriction`: un defecto de otra clase (tiempo, forma, nombre desconocido)
+ * no es motivo para descartar el plan por un cambio de restricciones. Antes había aquí una
+ * búsqueda propia por texto en nombre/ingredientes/porciones que contradecía al detector:
+ * borraba planes seguros ("Hot Cakes de Avena" con gluten) y dejaba pasar alérgenos ocultos
+ * (mayonesa = huevo, salsa de soya = gluten, hummus = ajonjolí).
  *
  * Sin plan, sin días o sin categorías → false (nada que invalidar).
  */
 export function planViolatesAvoid(plan: PlanLike | null | undefined, cats: string[]): boolean {
   const norm = normalizeCats(cats);
-  const terms = expandAvoidCats(norm);
-  if (!terms.length || !plan?.days?.length) return false;
-  for (const d of plan.days) {
-    for (const m of d.meals ?? []) {
-      // El batido no nombra su base: whey = lácteo lo decide la autoridad única del batido.
-      // Solo o combinado por el corrector ("Batido de Proteína + <snack>"): el tipo es el del batido.
-      if (isShakeName(m.name) && !shakeCompatibleWith(shakeTypeOfService(m), norm)) return true;
-      if (textMatchesAvoid(m.name ?? '', terms)) return true;
-      for (const ing of m.ings ?? []) if (textMatchesAvoid(ing.nv ?? '', terms)) return true;
-      for (const p of m.portions ?? []) if (textMatchesAvoid(p, terms)) return true;
-    }
-  }
-  return false;
+  if (!norm.length || !plan?.days?.length) return false;
+  return validatePlan(plan, norm).violations.some((v) => v.kind === 'restriction');
 }
 
 /**
