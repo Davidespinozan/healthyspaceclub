@@ -4,7 +4,7 @@
 //   · qué mostrar (activando / check-in / esperar / qué falta) → `adaptiveEntryState` (puro), que usa
 //     CAPA 1, el planificador y el calendario del SERVIDOR y el Snapshot V2 del store;
 //   · el inicio → AUTOMÁTICO con el peso (y la cintura, D2) del perfil (`adaptiveAutoStart`, montado en
-//     App); aquí solo se muestra su estado. Recomposición sin cintura en el perfil → Mis datos;
+//     App); es invisible. Recomposición sin cintura en el perfil → Mis datos;
 //   · el check-in → `callNutritionCheckin` (Edge `nutrition-checkin`), que decide y persiste;
 //   · el resultado → la decisión del servidor, solo traducida (`adaptiveResultFrom`).
 // El cliente nunca calcula ni envía base, paso, kcal ni decisión, y nunca muestra términos técnicos.
@@ -19,10 +19,9 @@ import type { TranslationKey } from '../i18n/es';
 import { dayKey } from '../utils/localDate';
 import { callNutritionCheckin } from '../utils/nutritionCheckinClient';
 import {
-  adaptiveEntryState, adaptiveResultFrom, isPlausibleWeightKg, isPlausibleWaistCm, WEIGHT_KG_RANGE, WAIST_CM_RANGE,
+  adaptiveEntryState, adaptiveResultFrom, checkinNotice, isPlausibleWeightKg, isPlausibleWaistCm, WEIGHT_KG_RANGE, WAIST_CM_RANGE,
   type AdaptiveBlockReason, type AdaptiveResult,
 } from '../utils/adaptiveEntry';
-import { retryAdaptiveAutoStart, useAdaptiveAutoStartStatus } from '../utils/adaptiveAutoStart';
 import {
   ADHERENCE_ANSWERS, ADHERENCE_ANSWER_COPY_RANGE_PCT, NUTRITION_HUNGER_VALUES, NUTRITION_ENERGY_VALUES,
   NUTRITION_PERFORMANCE_VALUES, STRENGTH_EXPERIENCE_VALUES,
@@ -48,7 +47,6 @@ export default function AdaptiveCheckinCard({ onEditData }: Props) {
     energyStatus: s.energyState?.status ?? null, obData: s.obData, adaptive: s.adaptiveCalibration, snapshot: s.nutritionSnapshot, startDate: s.startDate,
     applyServerNutritionWeight: s.applyServerNutritionWeight, loadAdaptiveCalibration: s.loadAdaptiveCalibration,
   })));
-  const autoStart = useAdaptiveAutoStartStatus();
   const today = dayKey(new Date());
   const state = useMemo(() => adaptiveEntryState({ energyStatus, obData, adaptive, snapshot, startDate: startDate ?? '', today }),
     [energyStatus, obData, adaptive, snapshot, startDate, today]);
@@ -80,43 +78,41 @@ export default function AdaptiveCheckinCard({ onEditData }: Props) {
     </div>
   );
 
-  if (state.kind === 'HIDDEN' && !result) return null;
+  // UX final · el seguimiento es mayormente INVISIBLE. Solo se ve:
+  //   · un bloqueo que requiere acción (persistente mientras siga pendiente);
+  //   · el aviso a 2 días («pronto») o a 1 día («mañana») del próximo check-in;
+  //   · el CTA cuando el check-in ya está disponible;
+  //   · el resultado de un check-in, breve y descartable (y desaparece al salir de Nutrición).
+  // El inicio automático (activando / fallo con reintento automático) y la espera no se muestran.
+  const notice = state.kind === 'WAITING' ? checkinNotice(today, state.nextCheckinFrom) : 'NONE';
   const banner = result && resultText(result);
   // Tras un check-in con peso bajo, el resultado ya explica la causa: no se repite la tarjeta de pausa.
   const hideBlocked = state.kind === 'BLOCKED' && state.reason === 'UNDERWEIGHT' && result?.kind === 'UNDERWEIGHT';
+  const showBlocked = state.kind === 'BLOCKED' && !hideBlocked;
+  const showStrengthFromResult = result?.kind === 'STRENGTH_REQUIRED' && state.kind !== 'BLOCKED';
+  if (!banner && !showBlocked && !showStrengthFromResult && state.kind !== 'CHECKIN_DUE' && notice === 'NONE') return null;
 
   return (
     <div className="ad-wrap" data-adaptive-state={state.kind}>
-      {banner && <p className="ad-result" role="status" data-adaptive-result={result!.kind}>{banner}</p>}
-      {result?.kind === 'STRENGTH_REQUIRED' && state.kind !== 'BLOCKED' && blockedCard('STRENGTH_REQUIRED')}
-      {state.kind === 'BLOCKED' && !hideBlocked && blockedCard(state.reason)}
-      {state.kind === 'STARTING' && (
-        autoStart === 'FAILED' ? (
-          <div className="ad-card" role="status" data-adaptive="start-failed">
-            <p className="ad-body">{t('adaptive.startFailed')}</p>
-            <button type="button" className="ad-cta" onClick={() => void retryAdaptiveAutoStart()}>{t('adaptive.retryCta')}</button>
-          </div>
-        ) : (
-          <div className="ad-card ad-card--quiet" role="status" data-adaptive="starting">
-            <p className="ad-title">{t('adaptive.startingTitle')}</p>
-            <p className="ad-body">{t('adaptive.startingBody')}</p>
-          </div>
-        )
+      {banner && (
+        <div className="ad-result" role="status" data-adaptive-result={result!.kind}>
+          <p className="ad-result-text">{banner}</p>
+          <button type="button" className="ad-dismiss" onClick={() => setResult(null)}>{t('adaptive.resultDismiss')}</button>
+        </div>
       )}
+      {showStrengthFromResult && blockedCard('STRENGTH_REQUIRED')}
+      {showBlocked && blockedCard(state.reason)}
       {state.kind === 'CHECKIN_DUE' && (
         <div className="ad-card" data-adaptive="due">
           <p className="ad-title">{t('adaptive.dueTitle')}</p>
           <p className="ad-body">{t('adaptive.dueBody')}</p>
-          {state.pendingFrom && <p className="ad-note">{t('adaptive.pendingAdjust', { date: fmt(state.pendingFrom) })}</p>}
           <button type="button" className="ad-cta" onClick={() => { setResult(null); setSheetOpen(true); }}>{t('adaptive.dueCta')}</button>
         </div>
       )}
-      {state.kind === 'WAITING' && (
-        <div className="ad-card ad-card--quiet" data-adaptive="waiting">
-          <p className="ad-title">{t('adaptive.waitingTitle')}</p>
-          {state.pendingFrom && result?.kind !== 'ADJUST' && <p className="ad-note">{t('adaptive.pendingAdjust', { date: fmt(state.pendingFrom) })}</p>}
-          <p className="ad-body">{state.nextCheckinFrom ? t('adaptive.waitingNext', { date: fmt(state.nextCheckinFrom) }) : t('adaptive.waitingNextUnknown')}</p>
-        </div>
+      {notice !== 'NONE' && !banner && (
+        <p className="ad-notice" role="status" data-adaptive={notice === 'TOMORROW' ? 'notice-tomorrow' : 'notice-soon'}>
+          {t(notice === 'TOMORROW' ? 'adaptive.noticeTomorrow' : 'adaptive.noticeSoon')}
+        </p>
       )}
       {sheetOpen && state.kind === 'CHECKIN_DUE' && (
         <CheckinSheet

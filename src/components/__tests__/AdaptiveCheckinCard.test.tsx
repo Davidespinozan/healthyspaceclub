@@ -65,25 +65,18 @@ beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); h.call.mockReset(); a
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 describe('INICIO AUTOMÁTICO · no hay «Empezar seguimiento» ni se pide peso fuera del check-in', () => {
-  it('perfil elegible sin calibración: «Activando tu seguimiento…», sin botones ni campos de peso', () => {
+  it('perfil elegible sin calibración: el inicio automático es INVISIBLE (nada que ver, nada que pedir)', () => {
     at('2026-10-10');
     state({ calibration: null });
-    mount();
-    expect(screen.getByText(A.startingTitle)).toBeTruthy();
-    expect(screen.queryByRole('button')).toBeNull();
+    expect(mount().container.innerHTML).toBe('');
     expect(input('weightKg')).toBeNull();
-    expect(screen.queryByText(/Empezar seguimiento/)).toBeNull();
     expect(h.call).not.toHaveBeenCalled();                                  // la tarjeta no inicia nada: lo hace el hook de App
-    expectNoTechnicalTerms();
   });
-  it('si el inicio automático falla: mensaje claro y reintento', () => {
+  it('un fallo del inicio automático tampoco se muestra (el hook reintenta solo al volver a abrir / otro día)', () => {
     at('2026-10-10');
     state({ calibration: null });
     auto.status = 'FAILED';
-    mount();
-    expect(screen.getByText(A.startFailed)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: A.retryCta }));
-    expect(auto.retry).toHaveBeenCalledTimes(1);
+    expect(mount().container.innerHTML).toBe('');
   });
   it('D2 · recomposición sin cintura en el perfil: UNA tarjeta «Completa este dato…» → Mis datos; nada se inicia ni se pide aquí', () => {
     at('2026-10-10');
@@ -103,14 +96,10 @@ describe('INICIO AUTOMÁTICO · no hay «Empezar seguimiento» ni se pide peso f
 });
 
 describe('FLUJO V1 · no existe check-in inicial ni se pide peso aislado', () => {
-  it('perfil elegible sin calibración, aunque el onboarding sea antiguo: solo «Activando…», sin botón ni campo de peso', () => {
+  it('perfil elegible sin calibración, aunque el onboarding sea antiguo: nada visible, sin check-in inicial ni peso', () => {
     at('2026-10-10');
     state({ calibration: null, startDate: '2026-01-15' });
-    mount();
-    expect(screen.getByText(A.startingTitle)).toBeTruthy();
-    expect(screen.queryByText(/check-in inicial/i)).toBeNull();
-    expect(screen.queryByRole('button')).toBeNull();
-    expect(input('weightKg')).toBeNull();
+    expect(mount().container.innerHTML).toBe('');
     expect(h.call).not.toHaveBeenCalled();
   });
   it('el copy del check-in inicial ya no existe', () => {
@@ -139,21 +128,29 @@ describe('NO PUEDE ACTIVARSE · explica qué falta y cómo corregirlo', () => {
 });
 
 describe('TIMING', () => {
-  it('check-in NO disponible: no hay botón de envío y se muestra cuándo estará disponible', () => {
-    at('2026-10-10');
+  it('faltan más de 2 días → NINGUNA tarjeta (ni «seguimiento activo» ni fecha)', () => {
+    for (const d of ['2026-10-05', '2026-10-10', '2026-10-15']) {      // próximo: domingo 18
+      at(d);
+      state();
+      expect(mount().container.innerHTML, d).toBe('');
+      cleanup();
+    }
+  });
+  it('faltan 2 días → aviso discreto «pronto», sin botón ni fecha', () => {
+    at('2026-10-16');
     state();
     mount();
-    expect(screen.getByText(A.waitingTitle)).toBeTruthy();
-    expect(screen.getByText(/domingo, 18 de octubre/)).toBeTruthy();       // D1 · 14 días desde la línea base (no el sábado 17)
+    expect(screen.getByText('Tu próximo check-in estará disponible pronto.')).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByText(/octubre/)).toBeNull();
     expectNoTechnicalTerms();
   });
-  it('D1 · sábado 17: la ventana abre pero son 13 días → todavía no se ofrece', () => {
+  it('falta 1 día → «mañana» (D1 · sábado 17: la ventana abre pero son 13 días)', () => {
     at('2026-10-17');
     state();
     mount();
+    expect(screen.getByText('Tu check-in estará disponible mañana.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: A.dueCta })).toBeNull();
-    expect(screen.getByText(/domingo, 18 de octubre/)).toBeTruthy();
   });
   it('check-in disponible dentro de la ventana', () => {
     at('2026-10-18');
@@ -295,7 +292,7 @@ describe('STRENGTH_REQUIRED', () => {
     state({ calibration: null, obData: { goal: 'Ganar músculo', trainingModalities: 'endurance,team_intermittent' } });   // MIXTO no cuenta
     mount();
     expect(screen.getByText(A.strengthTitle)).toBeTruthy();
-    expect(screen.queryByText(A.startingTitle)).toBeNull();
+    expect(document.querySelectorAll('[data-adaptive]').length).toBe(1);   // solo la tarjeta de bloqueo
     fireEvent.click(screen.getByRole('button', { name: A.editDataCta }));
     expect(onEditData).toHaveBeenCalledTimes(1);
     expectNoTechnicalTerms();
@@ -314,15 +311,39 @@ describe('STRENGTH_REQUIRED', () => {
   });
 });
 
-describe('RECARGA · el estado persistente sale del servidor (Snapshot V2), no de la sesión', () => {
-  it('montaje en frío con ajuste pendiente: muestra la fecha del domingo y la del próximo check-in', () => {
-    at('2026-10-22');
-    state({ snapshot: { calibration: { pending: { step: -1, effectiveFrom: '2026-10-25' } } } });
-    // check-in del ciclo 1 registrado el miércoles 21 (la tarjeta lee calibración, ciclo y fecha)
-    (h.state.adaptiveCalibration as { checkins: unknown[] }).checkins = [{ calibrationId: CAL.id, cycleIndex: 1, checkinDate: '2026-10-21' }];
-    mount();
-    expect(screen.getByText(/se ajustará el domingo, 25 de octubre/)).toBeTruthy();
-    expect(screen.getByText(/miércoles, 4 de noviembre/)).toBeTruthy();   // D1 · 14 días después del 21
-    expectNoTechnicalTerms();
+describe('RECARGA · el estado sale del servidor, no de la sesión', () => {
+  const afterCheckin = () => { (h.state.adaptiveCalibration as { checkins: unknown[] }).checkins = [{ calibrationId: CAL.id, cycleIndex: 1, checkinDate: '2026-10-21' }]; };
+  it('montaje en frío tras un check-in (próximo el 4-nov): invisible hasta 2 días antes; luego «pronto», «mañana» y el CTA', () => {
+    const seen: Record<string, string> = {};
+    for (const d of ['2026-10-22', '2026-10-25', '2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04']) {
+      at(d);
+      state({ snapshot: { calibration: { pending: { step: -1, effectiveFrom: '2026-10-25' } } } });
+      afterCheckin();
+      const { container } = mount();
+      seen[d] = container.querySelector('[data-adaptive]')?.getAttribute('data-adaptive') ?? (container.innerHTML === '' ? 'none' : '?');
+      cleanup();
+    }
+    expect(seen).toEqual({ '2026-10-22': 'none', '2026-10-25': 'none', '2026-11-01': 'none',
+      '2026-11-02': 'notice-soon', '2026-11-03': 'notice-tomorrow', '2026-11-04': 'due' });
+  });
+});
+
+describe('RESULTADO · breve y vuelve a desaparecer', () => {
+  it('tras el check-in se muestra el resultado; al descartarlo la tarjeta desaparece hasta el próximo aviso', async () => {
+    at('2026-10-21');
+    state();
+    const { container } = mount();
+    fireEvent.click(screen.getByRole('button', { name: A.dueCta }));
+    // el servidor registra; el store relee la calibración (ahora con el check-in del ciclo 1)
+    h.call.mockImplementation(async () => {
+      (h.state as Record<string, unknown>).adaptiveCalibration = { load: 'LOADED', calibration: CAL, checkins: [{ calibrationId: CAL.id, cycleIndex: 1, checkinDate: '2026-10-21' }] };
+      return { httpStatus: 200, body: { status: 'RECORDED', action: 'STEP_DOWN' } };
+    });
+    fillCheckin();
+    fireEvent.click(screen.getByRole('button', { name: A.checkinSubmit }));
+    expect(await screen.findByText(/se ajustará el domingo, 25 de octubre/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: A.dueCta })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: A.resultDismiss }));
+    expect(container.innerHTML).toBe('');
   });
 });

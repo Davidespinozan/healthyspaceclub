@@ -18,7 +18,7 @@ const h = vi.hoisted(() => ({ load: vi.fn() }));
 vi.mock('../nutritionCalibrationRepository', async (orig) => ({ ...(await orig<object>()), loadAdaptiveCalibrationData: () => h.load() }));
 
 import {
-  adaptiveEntryState, adaptiveResultFrom, isPlausibleWeightKg, isPlausibleWaistCm, WEIGHT_KG_RANGE, type AdaptiveEntryInput,
+  adaptiveEntryState, adaptiveResultFrom, checkinNotice, daysUntil, isPlausibleWeightKg, isPlausibleWaistCm, WEIGHT_KG_RANGE, type AdaptiveEntryInput,
 } from '../adaptiveEntry';
 import { invalidField } from '../nutritionTargets';
 import { planCheckin } from '../adaptiveCheckinPlanner';
@@ -143,6 +143,23 @@ describe('TIMING · calendario del servidor con D1 (≥ 14 días reales)', () =>
     const cal = { ...CAL, baselineDate: '2026-10-16', cycleStart: '2026-10-18' };
     expect(adaptiveEntryState(input({ adaptive: { ...noCal, calibration: cal }, today: '2026-10-16' })))
       .toEqual({ kind: 'WAITING', nextCheckinFrom: '2026-10-31', pendingFrom: null });
+  });
+});
+
+describe('UX final · aviso previo al check-in (presentación pura, sin tocar el calendario)', () => {
+  it('> 2 días → NONE · 2 días → SOON · 1 día → TOMORROW · sin fecha → NONE', () => {
+    expect(['2026-10-10', '2026-10-15', '2026-10-16', '2026-10-17'].map((d) => checkinNotice(d, '2026-10-18')))
+      .toEqual(['NONE', 'NONE', 'SOON', 'TOMORROW']);
+    expect(checkinNotice('2026-10-10', null)).toBe('NONE');
+  });
+  it('días de calendario (cruce de mes)', () => {
+    expect(daysUntil('2026-10-31', '2026-11-02')).toBe(2);
+    expect(daysUntil('2026-10-31', null)).toBeNull();
+  });
+  it('la fecha que alimenta el aviso es la del servidor: WAITING del sábado 17 apunta al domingo 18 → TOMORROW', () => {
+    const st = adaptiveEntryState(input({ today: '2026-10-17' }));
+    expect(st).toMatchObject({ kind: 'WAITING', nextCheckinFrom: '2026-10-18' });
+    expect(checkinNotice('2026-10-17', st.kind === 'WAITING' ? st.nextCheckinFrom : null)).toBe('TOMORROW');
   });
 });
 

@@ -122,6 +122,26 @@ export function adaptiveEntryState(input: AdaptiveEntryInput): AdaptiveEntryStat
   return { kind: 'WAITING', nextCheckinFrom: nextCheckinOpenDate(active, adaptive.checkins, today), pendingFrom };
 }
 
+// ── Superficie visual (UX final: el seguimiento es mayormente invisible) ─────
+/** Aviso previo al check-in: solo a 2 días ('SOON') o a 1 día ('TOMORROW'); si no, nada. */
+export type CheckinNotice = 'NONE' | 'SOON' | 'TOMORROW';
+export const CHECKIN_NOTICE_DAYS = 2;
+
+/** Días de calendario desde `today` hasta `nextCheckinFrom` (null si no hay fecha válida). Puro. */
+export function daysUntil(today: string, next: string | null): number | null {
+  if (!next) return null;
+  const a = Date.parse(`${today}T00:00:00Z`), b = Date.parse(`${next}T00:00:00Z`);
+  return Number.isFinite(a) && Number.isFinite(b) ? Math.round((b - a) / 86_400_000) : null;
+}
+
+/** Qué aviso mostrar mientras se espera el próximo check-in. Puro. */
+export function checkinNotice(today: string, nextCheckinFrom: string | null): CheckinNotice {
+  const d = daysUntil(today, nextCheckinFrom);
+  if (d === 1) return 'TOMORROW';
+  if (d === CHECKIN_NOTICE_DAYS) return 'SOON';
+  return 'NONE';
+}
+
 // ── Traducción de la respuesta del servidor ─────────────────────────────────
 export type AdaptiveResult =
   | { kind: 'STARTED' }
