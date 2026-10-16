@@ -3,9 +3,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADAPTIVE · INICIO AUTOMÁTICO con el store REAL. Se simulan Supabase, la lectura de la calibración
-// y la Edge. Verifica: un usuario NUEVO (onboarding reciente, D3) se inicia solo con el peso (y la
-// cintura, D2) del perfil, una sola vez, con requestId determinista (idempotente en el servidor);
-// un usuario EXISTENTE nunca (su check-in inicial lo hace); y sin bucles al fallar.
+// y la Edge. Verifica: el seguimiento se inicia solo con el peso (y la cintura, D2) del perfil, una
+// sola vez, con requestId determinista (idempotente en el servidor), solo con el onboarding terminado,
+// nunca cuando no corresponde, y sin bucles al fallar.
 // ─────────────────────────────────────────────────────────────────────────────
 vi.mock('../../lib/supabase', () => ({
   supabase: {
@@ -57,7 +57,7 @@ function serverAccepts() {
 beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); at('2026-10-16'); h.load.mockReset(); h.call.mockReset(); __resetAdaptiveAutoStartForTests(); });
 afterEach(() => { vi.useRealTimers(); });
 
-describe('usuario NUEVO · se inicia solo con el peso del perfil', () => {
+describe('FLUJO V1 · se inicia solo con el peso del perfil', () => {
   it('perfil elegible sin calibración → un START con { requestId, localDate, weightKg = peso del perfil } y nada más', async () => {
     await login(OB);
     serverAccepts();
@@ -91,11 +91,12 @@ describe('usuario NUEVO · se inicia solo con el peso del perfil', () => {
 });
 
 describe('nunca cuando no corresponde', () => {
-  it('usuario EXISTENTE (onboarding antiguo) → no se inicia con el peso viejo; la tarjeta ofrece el check-in inicial', async () => {
+  it('V1 sin rama de «usuario existente»: un start_date antiguo también se inicia solo (DEFERRED FUTURE)', async () => {
     await login(OB, NO_CAL, 'u-1', '2026-01-15');
+    serverAccepts();
     await maybeAutoStartAdaptive();
-    expect(h.call).not.toHaveBeenCalled();
-    expect(entry()).toEqual({ kind: 'INITIAL_CHECKIN', waistCm: null });
+    expect(h.call).toHaveBeenCalledTimes(1);
+    expect(h.call.mock.calls[0][1]).toMatchObject({ weightKg: 82 });
   });
   it('onboarding sin terminar (sin start_date) → no se inicia; al fijarse start_date el hook lo inicia', async () => {
     await login(OB, NO_CAL, 'u-1', '');

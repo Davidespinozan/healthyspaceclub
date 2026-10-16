@@ -18,8 +18,7 @@ const h = vi.hoisted(() => ({ load: vi.fn() }));
 vi.mock('../nutritionCalibrationRepository', async (orig) => ({ ...(await orig<object>()), loadAdaptiveCalibrationData: () => h.load() }));
 
 import {
-  adaptiveEntryState, adaptiveResultFrom, hasRecentProfileBaseline, precheckInitialCheckin, isPlausibleWeightKg, isPlausibleWaistCm,
-  WEIGHT_KG_RANGE, type AdaptiveEntryInput,
+  adaptiveEntryState, adaptiveResultFrom, isPlausibleWeightKg, isPlausibleWaistCm, WEIGHT_KG_RANGE, type AdaptiveEntryInput,
 } from '../adaptiveEntry';
 import { invalidField } from '../nutritionTargets';
 import { planCheckin } from '../adaptiveCheckinPlanner';
@@ -47,14 +46,15 @@ const input = (over: Partial<AdaptiveEntryInput>): AdaptiveEntryInput => ({
   startDate: '2026-10-10', today: '2026-10-10', ...over,
 });
 const noCal = { load: 'LOADED' as const, calibration: null, checkins: [] };
-const EXISTING = '2026-01-15';   // onboarding de hace meses → peso del perfil no confiable como línea base
 
-describe('D3 · usuario NUEVO (onboarding reciente) → inicio automático con el perfil', () => {
+describe('FLUJO V1 · el seguimiento se inicia solo con el peso del onboarding / Mis datos', () => {
   it('perfil elegible sin calibración → STARTING con el peso del perfil (no se pide peso)', () => {
     expect(adaptiveEntryState(input({ adaptive: noCal }))).toEqual({ kind: 'STARTING', weightKg: 70, waistCm: null, objective: 'FAT_LOSS' });
   });
-  it('onboarding de ayer (zona horaria) también cuenta como reciente', () => {
-    expect(adaptiveEntryState(input({ adaptive: noCal, startDate: '2026-10-09' })).kind).toBe('STARTING');
+  it('V1 sin rama de «usuario existente»: la antigüedad de start_date no cambia nada (DEFERRED FUTURE)', () => {
+    for (const startDate of ['2026-10-09', '2026-10-08', '2026-01-15']) {
+      expect(adaptiveEntryState(input({ adaptive: noCal, startDate })), startDate).toEqual({ kind: 'STARTING', weightKg: 70, waistCm: null, objective: 'FAT_LOSS' });
+    }
   });
   it('recomposición con cintura en el perfil (D2) → STARTING declarando esa cintura', () => {
     expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, goal: 'Recomposición', cintura: 84 } })))
@@ -68,29 +68,6 @@ describe('D3 · usuario NUEVO (onboarding reciente) → inicio automático con e
     expect(adaptiveEntryState(input({ adaptive: noCal, startDate: '' })).kind).toBe('HIDDEN');
     expect(adaptiveEntryState(input({ adaptive: { ...noCal, load: 'UNAVAILABLE' } })).kind).toBe('HIDDEN');
     expect(adaptiveEntryState(input({ adaptive: { ...noCal, load: 'IDLE' } })).kind).toBe('HIDDEN');
-  });
-});
-
-describe('D3 · usuario EXISTENTE → check-in INICIAL (el peso viejo del perfil no es línea base)', () => {
-  it('sin calibración y onboarding antiguo → INITIAL_CHECKIN (no STARTING)', () => {
-    expect(adaptiveEntryState(input({ adaptive: noCal, startDate: EXISTING }))).toEqual({ kind: 'INITIAL_CHECKIN', waistCm: null });
-    expect(adaptiveEntryState(input({ adaptive: noCal, startDate: '2026-10-08' })).kind).toBe('INITIAL_CHECKIN');   // hace 2 días ya no es reciente
-  });
-  it('recomposición existente: la cintura sale del perfil; sin ella, primero Mis datos (D2)', () => {
-    expect(adaptiveEntryState(input({ adaptive: noCal, startDate: EXISTING, obData: { ...OB, goal: 'Recomposición', cintura: 90 } })))
-      .toEqual({ kind: 'INITIAL_CHECKIN', waistCm: 90 });
-    expect(adaptiveEntryState(input({ adaptive: noCal, startDate: EXISTING, obData: { ...OB, goal: 'Recomposición' } })))
-      .toEqual({ kind: 'BLOCKED', reason: 'WAIST_MISSING' });
-  });
-  it('hasRecentProfileBaseline: hoy, ayer o mañana (zona horaria) sí; 2+ días o vacío no', () => {
-    expect(['2026-10-10', '2026-10-09', '2026-10-11', '2026-10-08', '', 'x'].map((d) => hasRecentProfileBaseline(d, '2026-10-10')))
-      .toEqual([true, true, true, false, false, false]);
-  });
-  it('pre-chequeo del peso del check-in inicial con el planificador del servidor', () => {
-    expect(precheckInitialCheckin({ obData: OB, energyStatus: 'PRESCRIBED', weightKg: 70, waistCm: null, today: '2026-10-10' })).toBeNull();
-    // 180 cm · 58 kg → IMC < 18.5 → CAPA 1 bloquea bajar grasa → no se registra y se explica la causa
-    expect(precheckInitialCheckin({ obData: OB, energyStatus: 'PRESCRIBED', weightKg: 58, waistCm: null, today: '2026-10-10' }))
-      .toEqual({ kind: 'UNDERWEIGHT_NOT_SAVED' });
   });
 });
 
@@ -188,10 +165,6 @@ describe('adaptiveResultFrom · solo traduce la decisión del servidor', () => {
     expect(adaptiveResultFrom({ status: 'NOT_ELIGIBLE' }, '2026-10-18', 'FAT_LOSS_BLOCKED')).toEqual({ kind: 'UNDERWEIGHT' });
     expect(adaptiveResultFrom({ status: 'NOT_ELIGIBLE' }, '2026-10-18', 'PRESCRIBED')).toEqual({ kind: 'NOT_ELIGIBLE' });
   });
-  it('START rechazado porque ese peso bloquea bajar grasa (el servidor lo dice en fields) → UNDERWEIGHT_NOT_SAVED', () => {
-    expect(adaptiveResultFrom({ status: 'NOT_ELIGIBLE', fields: ['FAT_LOSS_BLOCKED'] }, '2026-10-10')).toEqual({ kind: 'UNDERWEIGHT_NOT_SAVED' });
-    expect(adaptiveResultFrom({ status: 'NOT_ELIGIBLE', fields: ['OUTSIDE_HSC_FAT_LOSS_SCOPE'] }, '2026-10-10')).toEqual({ kind: 'NOT_ELIGIBLE' });
-  });
   it('REVIEW, STRENGTH_REQUIRED, NOT_DUE, no elegible, datos inválidos, error', () => {
     expect(adaptiveResultFrom({ status: 'RECORDED', action: 'REVIEW' }, '2026-10-21').kind).toBe('REVIEW');
     expect(adaptiveResultFrom({ status: 'STRENGTH_REQUIRED' }, '2026-10-21').kind).toBe('STRENGTH_REQUIRED');
@@ -216,13 +189,13 @@ describe('RECARGA / RELOGIN · el estado se reconstruye del servidor con el stor
       nutritionSnapshot: null, adaptiveCalibration: { load: 'IDLE', calibration: null, checkins: [] } as never });
     await S().hydrateEnergyFromSnapshot(null);
   }
-  it('sin calibración tras relogin: nuevo → STARTING con el peso del perfil; existente → INITIAL_CHECKIN', async () => {
+  it('sin calibración tras relogin → STARTING con el peso del perfil; sin onboarding terminado → oculto', async () => {
     at('2026-10-10');
     h.load.mockResolvedValue({ calibration: null, checkins: [] });
     await login();
     expect(entry('2026-10-10')).toEqual({ kind: 'STARTING', weightKg: 70, waistCm: null, objective: 'FAT_LOSS' });
-    await login(EXISTING);
-    expect(entry('2026-10-10')).toEqual({ kind: 'INITIAL_CHECKIN', waistCm: null });
+    await login('');
+    expect(entry('2026-10-10')).toEqual({ kind: 'HIDDEN' });
   });
   it('tras el inicio → relogin: WAITING con la fecha del primer check-in (≥ 14 días)', async () => {
     at('2026-10-10');

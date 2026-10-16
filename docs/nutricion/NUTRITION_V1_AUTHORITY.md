@@ -165,6 +165,7 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v
 | Bloque 5 | Capa de energía calibrada; base cruda congelada; suelo T1; schema `base_energy_raw` | `IMPLEMENTED / DEPLOYED / E2E VERIFIED` | `8d0d5d1`, `4c0e245` (+ migración `20261017120000`, Edge v4) |
 | Bloques 6–8 | Snapshot V2 + hidratación · `STRENGTH_REQUIRED` · integración completa | `IMPLEMENTED / DEPLOYED (Edge v5)` · **`VISUAL_QA_PENDING_SUNDAY`** | `c7e5a49` |
 | Bloque 9 | Integración final, retirada de legacy Adaptive, ledger | `IMPLEMENTED / VERIFIED_CLEAN` (tests; sin push hasta la QA del domingo) | este checkpoint |
+| Entrada V1 | Tarjeta en Nutrición + inicio automático + check-in completo; D1 (≥ 14 días), D2 (cintura de Recomposición en el perfil) | `IMPLEMENTED / VERIFIED_CLEAN` (tests) · `VISUAL_QA_PENDING` · Edge con D1 **sin redesplegar** | `c5e14a6`, `37cea46`, `48753d9` + simplificación V1 |
 
 ### Reglas cerradas (`CLOSED_DESIGN` → `IMPLEMENTED`)
 
@@ -183,6 +184,9 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v
 | Proyección | Una sola (`projectNutritionEnergy`): `planGoal`, banda del banco y macros salen de la energía que manda en el MISMO `set()`; `energyState` sigue siendo CAPA 1; `tdee` = mantenimiento de CAPA 1. La hidratación lee la calibración ANTES de proyectar. Al volver a foco se re-proyecta (cruce al domingo). | store, `useAdaptiveEnergyRefresh` |
 | Vigencia del plan | Contrato existente: STALE cuando `gen.kcal`/macros ≠ meta vigente → solo cuando el paso RIGE (el domingo), nunca antes. | `weeklyPlanCurrentness` |
 | Peso | La energía adaptativa usa base congelada + paso: ni un pesaje suelto ni el peso del check-in la recalculan. | — |
+| Flujo V1 (único) | Onboarding → su peso (y la cintura en Recomposición) es la línea base → el seguimiento se INICIA SOLO (Edge START, `requestId` determinista por socio+objetivo+día) → ≥ 14 días reales → check-in COMPLETO (peso, adherencia, hambre, energía, rendimiento + campos MB2 por objetivo). El peso solo se pide dentro del check-in. | `adaptiveEntry`, `adaptiveAutoStart`, `AdaptiveCheckinCard` |
+| D1 · intervalo mínimo | ≥ 14 días REALES entre dos check-ins aceptados y entre la línea base y el primero, en todos los objetivos. La ventana [vence − 1, vence + 6] existe pero nunca permite romperlo (`TOO_SOON`, 422). Una sola regla para servidor y UI. | `checkinCalendarVerdict` / `nextCheckinOpenDate` |
+| D2 · cintura de Recomposición | Dato inicial requerido del perfil (`ob_data.cintura`, 40–200 cm): onboarding paso 5 y Mis datos. Sin ella no se inicia y una única tarjeta lleva a Mis datos. El servidor sigue exigiendo cintura para Recomposición. | `OnboardingScreen`, `EditDataSheet`, `adaptiveEntry` |
 
 ### Legado Adaptive retirado en el Bloque 9
 
@@ -196,7 +200,8 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v
 
 | Item | Clasificación | Motivo |
 |---|---|---|
-| `nutritionCheckinClient.callNutritionCheckin` | `KEEP` | Entrada del cliente a la Edge; no hay todavía UI de calibración/check-in. |
+| `nutritionCheckinClient.callNutritionCheckin` | `KEEP` | Entrada del cliente a la Edge (inicio automático y check-in). |
+| `fields` con el estado de CAPA 1 en el `NOT_ELIGIBLE` de START | `KEEP` (dormido en la UI V1) | Diagnóstico inocuo del servidor; la UI V1 no lo muestra. |
 | `base_energy_kcal` (columna + mapeo) | `DEFER` | Retirarla exige migración. Sin autoridad. |
 | Versiones v1 de MB1–MB3 en las filas | `KEEP_FOR_COMPATIBILITY` | Trazabilidad de cada check-in. |
 
@@ -207,7 +212,9 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v
 ### Pendientes de Adaptive
 
 - QA visual del domingo 2026-10-18 (Bloques 6–8) con la cuenta QA CONTROLADA (historia backdated, autorizada).
-- No existe UI para abrir una calibración ni para enviar check-ins: la integración funciona extremo a extremo, pero ningún socio real puede entrar al flujo todavía. `STRENGTH_REQUIRED` tampoco tiene copy visible.
+- QA visual de la entrada V1 (usuario nuevo) y redespliegue de la Edge `nutrition-checkin` con D1 (hasta entonces la regla de 14 días la aplica solo la UI).
+- `DEFERRED FUTURE` · compatibilidad / migración de usuarios con peso histórico (línea base no reciente). HSC V1 no tiene usuarios reales previos: no hay rama de «usuario existente» ni check-in inicial en V1.
+- `DEFERRED FUTURE` · cadencias distintas por objetivo (p. ej. 4 semanas).
 - QA en producción del suelo T1 (requiere una ventana de check-in real).
 - Merge del PR #1 / deploy del frontend a `main`; conciliación del ledger de migraciones de Supabase (se aplican por SQL Editor / `db query`).
 

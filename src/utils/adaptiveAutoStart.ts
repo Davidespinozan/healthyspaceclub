@@ -1,11 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // ADAPTIVE · INICIO AUTOMÁTICO del seguimiento con el peso del perfil.
 //
-// Usuario NUEVO (onboarding reciente, D3) con perfil elegible y sin calibración activa de su objetivo:
-// el seguimiento se inicia solo (sin pedir peso fuera del check-in). Usa la autoridad EXISTENTE: la
-// Edge `nutrition-checkin` action 'start', que calcula base, ciclo y fecha en el servidor. El cliente
-// solo declara { requestId, localDate, weightKg = peso del perfil, waistCm = cintura del perfil (D2,
-// solo recomposición) }. Un usuario EXISTENTE no se inicia aquí: su check-in inicial lo hace (tarjeta).
+// FLUJO V1: con perfil elegible y sin calibración activa de su objetivo, el seguimiento se inicia solo
+// con el peso del onboarding / Mis datos (sin pedir peso fuera del check-in). Usa la autoridad
+// EXISTENTE: la Edge `nutrition-checkin` action 'start', que calcula base, ciclo y fecha en el
+// servidor. El cliente solo declara { requestId, localDate, weightKg = peso del perfil, waistCm =
+// cintura del perfil (D2, solo recomposición) }. Espera a que termine el onboarding (start_date).
 //
 // Idempotencia (sin migración):
 //   · requestId DETERMINISTA por (usuario, objetivo, día): dos pestañas o dos montajes envían el mismo

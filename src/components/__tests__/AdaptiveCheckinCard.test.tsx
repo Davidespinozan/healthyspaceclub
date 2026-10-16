@@ -102,56 +102,19 @@ describe('INICIO AUTOMÁTICO · no hay «Empezar seguimiento» ni se pide peso f
   });
 });
 
-describe('D3 · usuario EXISTENTE · check-in INICIAL (punto de partida, sin ajustar)', () => {
-  const EXISTING = '2026-01-15';
-  async function openInitial(over: Parameters<typeof state>[0] = {}) {
+describe('FLUJO V1 · no existe check-in inicial ni se pide peso aislado', () => {
+  it('perfil elegible sin calibración, aunque el onboarding sea antiguo: solo «Activando…», sin botón ni campo de peso', () => {
     at('2026-10-10');
-    state({ calibration: null, startDate: EXISTING, ...over });
+    state({ calibration: null, startDate: '2026-01-15' });
     mount();
-    expect(screen.getByText(A.initialTitle)).toBeTruthy();
-    expect(screen.queryByText(A.startingTitle)).toBeNull();                 // no se inicia con el peso viejo
-    fireEvent.click(screen.getByRole('button', { name: A.initialCta }));
-  }
-  it('pide SOLO el peso de hoy (sin adherencia ni demás preguntas) y lo envía como START', async () => {
-    await openInitial();
-    expect(screen.getByText(A.initialSheetTitle)).toBeTruthy();
-    expect(screen.queryByText(A.adherenceQ)).toBeNull();
-    expect(screen.queryByText(A.hungerQ)).toBeNull();
-    h.call.mockResolvedValue({ httpStatus: 200, body: { status: 'STARTED', calibrationId: 'c', nutritionWeightKg: 77.5 } });
-    fireEvent.change(input('weightKg'), { target: { value: '77,5' } });
-    fireEvent.click(screen.getByRole('button', { name: A.initialSubmit }));
-    await waitFor(() => expect(h.call).toHaveBeenCalledTimes(1));
-    const [action, declared, applyW, reload] = h.call.mock.calls[0];
-    expect(action).toBe('start');
-    expect(Object.keys(declared).sort()).toEqual(['localDate', 'requestId', 'weightKg']);
-    expect(declared).toMatchObject({ localDate: '2026-10-10', weightKg: 77.5 });
-    expect(applyW).toBe(applyServerNutritionWeight);
-    expect(reload).toBe(loadAdaptiveCalibration);
-    expect(await screen.findByText(A.resultBaseline)).toBeTruthy();         // «registramos tu punto de partida», nada ajustado
-    expectNoTechnicalTerms();
-  });
-  it('recomposición existente: la cintura viaja desde el perfil (no se vuelve a pedir)', async () => {
-    await openInitial({ obData: { goal: 'Recomposición', cintura: 90 } });
-    expect(input('waistCm')).toBeNull();
-    h.call.mockResolvedValue({ httpStatus: 200, body: { status: 'STARTED' } });
-    fireEvent.change(input('weightKg'), { target: { value: '80' } });
-    fireEvent.click(screen.getByRole('button', { name: A.initialSubmit }));
-    await waitFor(() => expect(h.call).toHaveBeenCalledTimes(1));
-    expect(h.call.mock.calls[0][1]).toMatchObject({ weightKg: 80, waistCm: 90 });
-  });
-  it('peso de hoy que bloquea bajar grasa → se explica la causa y NO se envía', async () => {
-    await openInitial();
-    fireEvent.change(input('weightKg'), { target: { value: '58' } });       // 180 cm → IMC < 18.5
-    fireEvent.click(screen.getByRole('button', { name: A.initialSubmit }));
-    expect(await screen.findByText(A.resultUnderweightNotSaved)).toBeTruthy();
+    expect(screen.getByText(A.startingTitle)).toBeTruthy();
+    expect(screen.queryByText(/check-in inicial/i)).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(input('weightKg')).toBeNull();
     expect(h.call).not.toHaveBeenCalled();
   });
-  it('peso absurdo → rango válido, sin enviar', async () => {
-    await openInitial();
-    fireEvent.change(input('weightKg'), { target: { value: '820' } });
-    fireEvent.click(screen.getByRole('button', { name: A.initialSubmit }));
-    expect(await screen.findByText('Revisa tu peso: debe estar entre 30 y 300 kg.')).toBeTruthy();
-    expect(h.call).not.toHaveBeenCalled();
+  it('el copy del check-in inicial ya no existe', () => {
+    expect(Object.keys(A).filter((k) => /^initial|resultBaseline|NotSaved/.test(k))).toEqual([]);
   });
 });
 
