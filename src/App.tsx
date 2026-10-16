@@ -4,6 +4,7 @@ import { signedInScreen } from './utils/authProviders';
 import { sincronizarPush } from './utils/push';
 import { useAutoRegenPlan, useWeeklyPlanReset } from './utils/useAutoRegenPlan';
 import { useAdaptiveEnergyRefresh } from './utils/useAdaptiveEnergyRefresh';
+import { useAdaptiveAutoStart } from './utils/adaptiveAutoStart';
 import { runProfileHydration, fetchWithTimeout, shouldShowAccountLoader, type ProfileResolution } from './utils/profileHydration';
 import AccountLoadingState from './components/AccountLoadingState';
 import { ensureLocaleAssets } from './utils/localeAssets';
@@ -49,6 +50,7 @@ export default function App() {
   useAutoRegenPlan();
   useWeeklyPlanReset();
   useAdaptiveEnergyRefresh();   // ADAPTIVE BLOQUE 8 · el paso rige desde su domingo
+  useAdaptiveAutoStart();       // ADAPTIVE · el seguimiento se inicia solo con el peso del perfil
   const setSession = useAppStore(s => s.setSession);
   const setAuthReady = useAppStore(s => s.setAuthReady);
   const authReady = useAppStore(s => s.authReady);

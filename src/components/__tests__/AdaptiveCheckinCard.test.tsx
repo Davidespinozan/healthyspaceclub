@@ -14,6 +14,8 @@ vi.mock('../../store', () => {
   return { useAppStore };
 });
 vi.mock('../../utils/nutritionCheckinClient', () => ({ callNutritionCheckin: (...a: unknown[]) => h.call(...a) }));
+const auto = vi.hoisted(() => ({ status: null as null | 'PENDING' | 'DONE' | 'FAILED', retry: vi.fn(async () => {}) }));
+vi.mock('../../utils/adaptiveAutoStart', () => ({ useAdaptiveAutoStartStatus: () => auto.status, retryAdaptiveAutoStart: () => auto.retry() }));
 
 import AdaptiveCheckinCard from '../AdaptiveCheckinCard';
 import { es } from '../../i18n/es';
@@ -25,7 +27,6 @@ const OB = { sex: 'Hombre', goal: 'Bajar grasa', edad: 30, estatura: 180, peso: 
 const CAL: NutritionCalibration = { id: 'cal-xyz-123', objective: 'FAT_LOSS', status: 'ACTIVE', baselineDate: '2026-10-04', cycleStart: '2026-10-04',
   baselineWeightKg: 70, baselineWaistCm: null, currentStep: -1, baseEnergyKcal: null, baseEnergyRaw: 2473, lastCheckinId: null,
   lastAppliedAction: null, lastAppliedAt: null, calibrationVersion: ENERGY_CALIBRATION_VERSION, createdAt: '', closedAt: null };
-const START_KEYS = ['requestId', 'localDate', 'weightKg', 'waistCm'];
 const CHECKIN_KEYS = ['requestId', 'localDate', 'weightKg', 'waistCm', 'adherenceAnswer', 'hunger', 'energy', 'performance', 'strengthExperience', 'recentStrengthContinuity'];
 
 let applyServerNutritionWeight: ReturnType<typeof vi.fn>;
@@ -60,51 +61,75 @@ function expectNoTechnicalTerms() {
   }
 }
 
-beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); h.call.mockReset(); document.body.innerHTML = ''; });
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); h.call.mockReset(); auto.status = null; auto.retry.mockClear(); document.body.innerHTML = ''; });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
-describe('INICIAR seguimiento', () => {
-  it('usuario elegible sin calibración: ve la tarjeta, abre la hoja y el START envía SOLO lo declarado', async () => {
+describe('INICIO AUTOMÁTICO · no hay «Empezar seguimiento» ni se pide peso fuera del check-in', () => {
+  it('perfil elegible sin calibración: «Activando tu seguimiento…», sin botones ni campos de peso', () => {
     at('2026-10-10');
     state({ calibration: null });
     mount();
-    expect(screen.getByText(A.startTitle)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: A.startCta }));
-    expect(input('waistCm')).toBeNull();                                   // pérdida de grasa: sin cintura
-    h.call.mockResolvedValue({ httpStatus: 200, body: { status: 'STARTED' } });
-    fireEvent.change(input('weightKg'), { target: { value: '70' } });
-    fireEvent.click(screen.getByRole('button', { name: A.startSubmit }));
-    await waitFor(() => expect(screen.getByText(A.resultStarted)).toBeTruthy());
-    const [action, declared, applyW, reload] = h.call.mock.calls[0];
-    expect(action).toBe('start');
-    expect(Object.keys(declared).every((k) => START_KEYS.includes(k))).toBe(true);
-    expect(declared).toMatchObject({ localDate: '2026-10-10', weightKg: 70 });
-    expect(typeof declared.requestId).toBe('string');
-    expect(applyW).toBe(applyServerNutritionWeight);                       // el peso lo aplica la autoridad del servidor
-    expect(reload).toBe(loadAdaptiveCalibration);                          // y la calibración se relee del servidor
+    expect(screen.getByText(A.startingTitle)).toBeTruthy();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(input('weightKg')).toBeNull();
+    expect(screen.queryByText(/Empezar seguimiento/)).toBeNull();
+    expect(h.call).not.toHaveBeenCalled();                                  // la tarjeta no inicia nada: lo hace el hook de App
     expectNoTechnicalTerms();
   });
-  it('recomposición pide cintura y la envía', async () => {
+  it('si el inicio automático falla: mensaje claro y reintento', () => {
+    at('2026-10-10');
+    state({ calibration: null });
+    auto.status = 'FAILED';
+    mount();
+    expect(screen.getByText(A.startFailed)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: A.retryCta }));
+    expect(auto.retry).toHaveBeenCalledTimes(1);
+  });
+  it('recomposición: pide SOLO la cintura de partida; el peso sale del perfil', async () => {
     at('2026-10-10');
     state({ calibration: null, obData: { goal: 'Recomposición' } });
     mount();
-    fireEvent.click(screen.getByRole('button', { name: A.startCta }));
-    h.call.mockResolvedValue({ httpStatus: 200, body: { status: 'STARTED' } });
-    fireEvent.change(input('weightKg'), { target: { value: '70' } });
-    fireEvent.click(screen.getByRole('button', { name: A.startSubmit }));
-    expect(await screen.findByText(A.incomplete)).toBeTruthy();            // falta la cintura
+    expect(screen.getByText(A.waistTitle)).toBeTruthy();
+    expect(input('weightKg')).toBeNull();
+    fireEvent.change(input('waistCm'), { target: { value: '500' } });
+    fireEvent.click(screen.getByRole('button', { name: A.waistSubmit }));
+    expect(await screen.findByText('Revisa tu cintura: debe estar entre 40 y 200 cm.')).toBeTruthy();
     expect(h.call).not.toHaveBeenCalled();
-    fireEvent.change(input('waistCm'), { target: { value: '84' } });
-    fireEvent.click(screen.getByRole('button', { name: A.startSubmit }));
+    h.call.mockResolvedValue({ httpStatus: 200, body: { status: 'STARTED' } });
+    fireEvent.change(input('waistCm'), { target: { value: '84,5' } });
+    fireEvent.click(screen.getByRole('button', { name: A.waistSubmit }));
     await waitFor(() => expect(h.call).toHaveBeenCalledTimes(1));
-    expect(h.call.mock.calls[0][1]).toMatchObject({ weightKg: 70, waistCm: 84 });
+    const [action, declared, applyW, reload] = h.call.mock.calls[0];
+    expect(action).toBe('start');
+    expect(Object.keys(declared).sort()).toEqual(['localDate', 'requestId', 'waistCm', 'weightKg']);
+    expect(declared).toMatchObject({ localDate: '2026-10-10', weightKg: 70, waistCm: 84.5 });
+    expect(applyW).toBe(applyServerNutritionWeight);
+    expect(reload).toBe(loadAdaptiveCalibration);
+    expect(await screen.findByText(A.resultStarted)).toBeTruthy();
   });
-  it('sin energía prescrita o con la calibración ilegible no aparece nada', () => {
-    state({ status: 'INCOMPLETE' });
-    expect(mount().container.innerHTML).toBe('');
-    cleanup();
+  it('sin calibración legible no aparece nada', () => {
     state({ load: 'UNAVAILABLE' });
     expect(mount().container.innerHTML).toBe('');
+  });
+});
+
+describe('NO PUEDE ACTIVARSE · explica qué falta y cómo corregirlo', () => {
+  it('peso del perfil bajo para bajar grasa → pausa explicada + Actualizar mis datos', () => {
+    at('2026-10-10');
+    state({ calibration: null, status: 'FAT_LOSS_BLOCKED' });
+    mount();
+    expect(screen.getByText(A.underweightTitle)).toBeTruthy();
+    expect(screen.getByText(A.underweightBody)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: A.editDataCta }));
+    expect(onEditData).toHaveBeenCalledTimes(1);
+    expectNoTechnicalTerms();
+  });
+  it('perfil incompleto (o sin peso válido) → qué falta + Actualizar mis datos', () => {
+    at('2026-10-10');
+    state({ calibration: null, obData: { peso: 0 } });
+    mount();
+    expect(screen.getByText(A.profileTitle)).toBeTruthy();
+    expect(screen.getByRole('button', { name: A.editDataCta })).toBeTruthy();
   });
 });
 
@@ -190,6 +215,34 @@ describe('CHECK-IN · envío y resultado', () => {
     fireEvent.click(screen.getByRole('button', { name: A.checkinSubmit }));
     expect(await screen.findByText(A.resultError)).toBeTruthy();
   });
+  it('peso absurdo → se explica el rango válido y no se envía nada', async () => {
+    at('2026-10-21');
+    state();
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: A.dueCta }));
+    fillCheckin();
+    for (const bad of ['820', '8.2', 'abc']) {
+      fireEvent.change(input('weightKg'), { target: { value: bad } });
+      fireEvent.click(screen.getByRole('button', { name: A.checkinSubmit }));
+      expect(await screen.findByText('Revisa tu peso: debe estar entre 30 y 300 kg.'), bad).toBeTruthy();
+    }
+    expect(h.call).not.toHaveBeenCalled();
+  });
+  it('check-in con un peso que bloquea bajar grasa → explica la causa (no «se mantiene», no mensaje genérico)', async () => {
+    at('2026-10-18');
+    state();
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: A.dueCta }));
+    // la Edge acepta; el cliente aplica el peso del servidor y el store recalcula CAPA 1 → FAT_LOSS_BLOCKED
+    h.call.mockImplementation(async () => { h.state.energyState = { status: 'FAT_LOSS_BLOCKED' }; return { httpStatus: 200, body: { status: 'RECORDED', action: 'MAINTAIN' } }; });
+    fillCheckin();
+    fireEvent.change(input('weightKg'), { target: { value: '58' } });     // 180 cm → IMC < 18.5
+    fireEvent.click(screen.getByRole('button', { name: A.checkinSubmit }));
+    expect(await screen.findByText(A.resultUnderweight)).toBeTruthy();
+    expect(screen.queryByText(A.resultKeep)).toBeNull();
+    expect(screen.queryByText(A.resultNotEligible)).toBeNull();
+    expectNoTechnicalTerms();
+  });
   it('respuestas incompletas → no se envía nada', async () => {
     at('2026-10-21');
     state();
@@ -225,13 +278,13 @@ describe('CHECK-IN · envío y resultado', () => {
 });
 
 describe('STRENGTH_REQUIRED', () => {
-  it('ganar músculo sin fuerza: explicación + acción para corregir los datos; no se ofrece iniciar', () => {
+  it('ganar músculo sin fuerza: explicación + acción para corregir los datos; no se inicia', () => {
     at('2026-10-10');
     state({ calibration: null, obData: { goal: 'Ganar músculo', trainingModalities: 'endurance,team_intermittent' } });   // MIXTO no cuenta
     mount();
     expect(screen.getByText(A.strengthTitle)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: A.startCta })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: A.strengthCta }));
+    expect(screen.queryByText(A.startingTitle)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: A.editDataCta }));
     expect(onEditData).toHaveBeenCalledTimes(1);
     expectNoTechnicalTerms();
   });
@@ -244,7 +297,7 @@ describe('STRENGTH_REQUIRED', () => {
     fillCheckin();
     fireEvent.click(screen.getByRole('button', { name: A.checkinSubmit }));
     expect(await screen.findByText(A.strengthTitle)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: A.strengthCta }));
+    fireEvent.click(screen.getByRole('button', { name: A.editDataCta }));
     expect(onEditData).toHaveBeenCalledTimes(1);
   });
 });

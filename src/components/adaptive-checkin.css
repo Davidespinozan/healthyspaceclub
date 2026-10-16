@@ -35,3 +35,6 @@
   color: var(--txt, #0E2521);
 }
 .ad-chip-sub { font-weight: 400; opacity: .7; }
+.ad-field { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.ad-field-label { font-size: .8rem; font-weight: 600; color: var(--txt, #0E2521); }
+.ad-cta:disabled { opacity: .6; cursor: default; }

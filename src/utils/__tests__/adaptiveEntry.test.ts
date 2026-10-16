@@ -16,7 +16,8 @@ vi.mock('../../lib/supabase', () => ({
 const h = vi.hoisted(() => ({ load: vi.fn() }));
 vi.mock('../nutritionCalibrationRepository', async (orig) => ({ ...(await orig<object>()), loadAdaptiveCalibrationData: () => h.load() }));
 
-import { adaptiveEntryState, adaptiveResultFrom, nextCheckinWindowStart, type AdaptiveEntryInput } from '../adaptiveEntry';
+import { adaptiveEntryState, adaptiveResultFrom, nextCheckinWindowStart, isPlausibleWeightKg, isPlausibleWaistCm, WEIGHT_KG_RANGE, type AdaptiveEntryInput } from '../adaptiveEntry';
+import { invalidField } from '../nutritionTargets';
 import { planCheckin } from '../adaptiveCheckinPlanner';
 import { checkinFromRow, ENERGY_CALIBRATION_VERSION, type NutritionCalibration, type StoredAdaptiveCheckin } from '../adaptiveCalibrationCore';
 import { resolveNutritionEnergyState } from '../nutritionEnergyState';
@@ -38,41 +39,62 @@ function withCheckin1(): { calibration: NutritionCalibration; checkins: StoredAd
   return { calibration: { ...CAL, currentStep: -1, lastCheckinId: 'c-1' }, checkins: [checkinFromRow({ ...plan.payload, id: 'c-1', calibration_id: CAL.id, created_at: '' })!] };
 }
 const input = (over: Partial<AdaptiveEntryInput>): AdaptiveEntryInput => ({
-  energyPrescribed: true, obData: OB, adaptive: { load: 'LOADED', calibration: CAL, checkins: [] }, snapshot: null, today: '2026-10-10', ...over,
+  energyStatus: 'PRESCRIBED', obData: OB, adaptive: { load: 'LOADED', calibration: CAL, checkins: [] }, snapshot: null, today: '2026-10-10', ...over,
 });
 const noCal = { load: 'LOADED' as const, calibration: null, checkins: [] };
 
-describe('adaptiveEntryState · elegibilidad', () => {
-  it('usuario elegible sin calibración → CAN_START (sin cintura en pérdida de grasa)', () => {
-    expect(adaptiveEntryState(input({ adaptive: noCal }))).toEqual({ kind: 'CAN_START', needsWaist: false });
+describe('adaptiveEntryState · INICIO AUTOMÁTICO con el peso del perfil', () => {
+  it('perfil elegible sin calibración → STARTING con el peso del perfil (no se pide peso)', () => {
+    expect(adaptiveEntryState(input({ adaptive: noCal }))).toEqual({ kind: 'STARTING', weightKg: 70, objective: 'FAT_LOSS' });
   });
-  it('recomposición pide cintura al iniciar (contrato MB2)', () => {
-    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, goal: 'Recomposición' } }))).toEqual({ kind: 'CAN_START', needsWaist: true });
+  it('calibración CERRADA o de otro objetivo → se inicia de nuevo sola (el servidor cierra la anterior)', () => {
+    expect(adaptiveEntryState(input({ adaptive: { ...noCal, calibration: { ...CAL, status: 'CLOSED' } as never } })).kind).toBe('STARTING');
+    expect(adaptiveEntryState(input({ adaptive: { ...noCal, calibration: { ...CAL, objective: 'MAINTENANCE' } as never } })).kind).toBe('STARTING');
   });
-  it('calibración CERRADA o de otro objetivo → se puede iniciar de nuevo (el servidor decide el cierre)', () => {
-    expect(adaptiveEntryState(input({ adaptive: { ...noCal, calibration: { ...CAL, status: 'CLOSED' } as never } })).kind).toBe('CAN_START');
-    expect(adaptiveEntryState(input({ adaptive: { ...noCal, calibration: { ...CAL, objective: 'MAINTENANCE' } as never } })).kind).toBe('CAN_START');
+  it('ganar músculo con fuerza y mantenimiento también se inician solos', () => {
+    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, goal: 'Ganar músculo' } }))).toMatchObject({ kind: 'STARTING', objective: 'MUSCLE_GAIN' });
   });
-  it('oculto sin energía prescrita, con calibración ilegible o aún no leída', () => {
-    expect(adaptiveEntryState(input({ energyPrescribed: false })).kind).toBe('HIDDEN');
+  it('recomposición: el contrato exige cintura de partida → NEEDS_WAIST (el peso sigue saliendo del perfil)', () => {
+    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, goal: 'Recomposición' } }))).toEqual({ kind: 'NEEDS_WAIST' });
+  });
+  it('oculto mientras la calibración no se ha leído o es ilegible (nunca se inicia a ciegas)', () => {
     expect(adaptiveEntryState(input({ adaptive: { ...noCal, load: 'UNAVAILABLE' } })).kind).toBe('HIDDEN');
     expect(adaptiveEntryState(input({ adaptive: { ...noCal, load: 'IDLE' } })).kind).toBe('HIDDEN');
   });
 });
 
-describe('adaptiveEntryState · STRENGTH_REQUIRED (ganancia / recomposición)', () => {
-  it('ganar músculo sin fuerza declarada → STRENGTH_REQUIRED, aunque no haya calibración', () => {
-    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, goal: 'Ganar músculo', trainingModalities: 'endurance' } })).kind).toBe('STRENGTH_REQUIRED');
+describe('adaptiveEntryState · no puede activarse → razón concreta', () => {
+  it('CAPA 1 bloquea bajar grasa por peso bajo → UNDERWEIGHT (también con calibración activa)', () => {
+    expect(adaptiveEntryState(input({ adaptive: noCal, energyStatus: 'FAT_LOSS_BLOCKED' }))).toEqual({ kind: 'BLOCKED', reason: 'UNDERWEIGHT' });
+    expect(adaptiveEntryState(input({ energyStatus: 'FAT_LOSS_BLOCKED', today: '2026-10-18' }))).toEqual({ kind: 'BLOCKED', reason: 'UNDERWEIGHT' });
   });
-  it('MIXTO (resistencia + intermitente) NO cuenta como fuerza', () => {
-    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, goal: 'Recomposición', trainingModalities: 'endurance,team_intermittent' } })).kind).toBe('STRENGTH_REQUIRED');
+  it('cifra bajo el mínimo seguro → FAT_LOSS_FLOOR; perfil incompleto → PROFILE_INCOMPLETE', () => {
+    expect(adaptiveEntryState(input({ adaptive: noCal, energyStatus: 'OUTSIDE_HSC_FAT_LOSS_SCOPE' }))).toEqual({ kind: 'BLOCKED', reason: 'FAT_LOSS_FLOOR' });
+    expect(adaptiveEntryState(input({ adaptive: noCal, energyStatus: 'PROFILE_INCOMPLETE' }))).toEqual({ kind: 'BLOCKED', reason: 'PROFILE_INCOMPLETE' });
+    expect(adaptiveEntryState(input({ adaptive: noCal, energyStatus: null }))).toEqual({ kind: 'BLOCKED', reason: 'PROFILE_INCOMPLETE' });
   });
-  it('sin entrenar habitualmente → STRENGTH_REQUIRED aunque la lista diga fuerza', () => {
-    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, goal: 'Ganar músculo', trainsHabitually: 0 } })).kind).toBe('STRENGTH_REQUIRED');
+  it('peso del perfil ausente o absurdo → PROFILE_INCOMPLETE (no se envía nada)', () => {
+    for (const peso of [undefined, 0, 12, 400, '70'] as unknown[]) {
+      expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, peso } })), String(peso)).toEqual({ kind: 'BLOCKED', reason: 'PROFILE_INCOMPLETE' });
+    }
   });
-  it('con fuerza declarada → puede iniciar; pérdida de grasa no exige fuerza', () => {
-    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, goal: 'Ganar músculo' } })).kind).toBe('CAN_START');
-    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, trainingModalities: 'endurance' } })).kind).toBe('CAN_START');
+  it('ganar músculo / recomposición sin fuerza → STRENGTH_REQUIRED; MIXTO no cuenta; sin entrenar tampoco', () => {
+    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, goal: 'Ganar músculo', trainingModalities: 'endurance' } }))).toEqual({ kind: 'BLOCKED', reason: 'STRENGTH_REQUIRED' });
+    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, goal: 'Recomposición', trainingModalities: 'endurance,team_intermittent' } }))).toEqual({ kind: 'BLOCKED', reason: 'STRENGTH_REQUIRED' });
+    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, goal: 'Ganar músculo', trainsHabitually: 0 } }))).toEqual({ kind: 'BLOCKED', reason: 'STRENGTH_REQUIRED' });
+    expect(adaptiveEntryState(input({ adaptive: noCal, obData: { ...OB, trainingModalities: 'endurance' } })).kind).toBe('STARTING');   // bajar grasa no exige fuerza
+  });
+});
+
+describe('validación de peso / cintura', () => {
+  it('peso: el mismo rango que el perfil (30–300 kg)', () => {
+    expect([29.9, 30, 300, 300.1, NaN, Infinity].map(isPlausibleWeightKg)).toEqual([false, true, true, false, false, false]);
+    expect(WEIGHT_KG_RANGE).toEqual({ min: 30, max: 300 });
+    expect(invalidField({ sexo: 'Hombre', pesoKg: 29.9, estaturaCm: 178, edad: 35, grasa: null, pesoMeta: null } as never)).toBe('peso');
+    expect(invalidField({ sexo: 'Hombre', pesoKg: 300, estaturaCm: 178, edad: 35, grasa: null, pesoMeta: null } as never)).toBeNull();
+  });
+  it('cintura: 40–200 cm', () => {
+    expect([39, 40, 200, 201].map(isPlausibleWaistCm)).toEqual([false, true, true, false]);
   });
 });
 
@@ -99,6 +121,12 @@ describe('adaptiveEntryState · TIMING (calendario del servidor)', () => {
   it('ventana perdida → la próxima que aún no cerró', () => {
     expect(nextCheckinWindowStart(CAL, new Set(), '2026-10-26')).toBe('2026-10-31');
   });
+  it('primer check-in tras un inicio automático: el domingo siguiente + 14 días (ventana desde el sábado previo)', () => {
+    // iniciado el viernes 16 → ciclo desde el domingo 18 → check-in 1 vence el domingo 1-nov, se abre el sábado 31-oct
+    const cal = { ...CAL, baselineDate: '2026-10-16', cycleStart: '2026-10-18' };
+    expect(adaptiveEntryState(input({ adaptive: { ...noCal, calibration: cal }, today: '2026-10-16' })))
+      .toEqual({ kind: 'WAITING', nextCheckinFrom: '2026-10-31', pendingFrom: null });
+  });
 });
 
 describe('adaptiveResultFrom · solo traduce la decisión del servidor', () => {
@@ -113,6 +141,12 @@ describe('adaptiveResultFrom · solo traduce la decisión del servidor', () => {
   it('STEP_UP / STEP_DOWN → ADJUST con el domingo ≥ fecha del check-in (D-B5-SUNDAY)', () => {
     expect(adaptiveResultFrom({ status: 'RECORDED', action: 'STEP_DOWN' }, '2026-10-21')).toEqual({ kind: 'ADJUST', effectiveFrom: '2026-10-25' });
     expect(adaptiveResultFrom({ status: 'RECORDED', action: 'STEP_UP' }, '2026-10-18')).toEqual({ kind: 'ADJUST', effectiveFrom: '2026-10-18' });
+  });
+  it('check-in aceptado y CAPA 1 del store quedó en FAT_LOSS_BLOCKED → UNDERWEIGHT (no «se mantiene»)', () => {
+    expect(adaptiveResultFrom({ status: 'RECORDED', action: 'MAINTAIN' }, '2026-10-18', 'FAT_LOSS_BLOCKED')).toEqual({ kind: 'UNDERWEIGHT' });
+    expect(adaptiveResultFrom({ status: 'RECORDED', action: 'MAINTAIN' }, '2026-10-18', 'PRESCRIBED')).toEqual({ kind: 'KEEP' });
+    expect(adaptiveResultFrom({ status: 'NOT_ELIGIBLE' }, '2026-10-18', 'FAT_LOSS_BLOCKED')).toEqual({ kind: 'UNDERWEIGHT' });
+    expect(adaptiveResultFrom({ status: 'NOT_ELIGIBLE' }, '2026-10-18', 'PRESCRIBED')).toEqual({ kind: 'NOT_ELIGIBLE' });
   });
   it('REVIEW, STRENGTH_REQUIRED, NOT_DUE, no elegible, datos inválidos, error', () => {
     expect(adaptiveResultFrom({ status: 'RECORDED', action: 'REVIEW' }, '2026-10-21').kind).toBe('REVIEW');
@@ -131,20 +165,20 @@ describe('RECARGA / RELOGIN · el estado se reconstruye del servidor con el stor
   const at = (ymd: string) => vi.setSystemTime(new Date(`${ymd}T12:00:00`));
   beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); h.load.mockReset(); });
   afterEach(() => { vi.useRealTimers(); });
-  const entry = (today: string) => adaptiveEntryState({ energyPrescribed: S().energyState?.status === 'PRESCRIBED', obData: S().obData,
+  const entry = (today: string) => adaptiveEntryState({ energyStatus: S().energyState?.status ?? null, obData: S().obData,
     adaptive: S().adaptiveCalibration, snapshot: S().nutritionSnapshot, today });
   async function login() {
     useAppStore.setState({ user: { id: 'u-1' } as never, obData: { ...OB } as never, planGoal: null, macroTargets: null, energyState: null,
       nutritionSnapshot: null, adaptiveCalibration: { load: 'IDLE', calibration: null, checkins: [] } as never });
     await S().hydrateEnergyFromSnapshot(null);
   }
-  it('sin calibración tras relogin → CAN_START', async () => {
+  it('sin calibración tras relogin → STARTING con el peso del perfil', async () => {
     at('2026-10-10');
     h.load.mockResolvedValue({ calibration: null, checkins: [] });
     await login();
-    expect(entry('2026-10-10')).toEqual({ kind: 'CAN_START', needsWaist: false });
+    expect(entry('2026-10-10')).toEqual({ kind: 'STARTING', weightKg: 70, objective: 'FAT_LOSS' });
   });
-  it('tras iniciar → relogin: WAITING con la fecha del primer check-in', async () => {
+  it('tras el inicio automático → relogin: WAITING con la fecha del primer check-in', async () => {
     at('2026-10-10');
     h.load.mockResolvedValue({ calibration: CAL, checkins: [] });
     await login();
