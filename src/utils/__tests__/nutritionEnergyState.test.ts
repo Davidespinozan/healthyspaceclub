@@ -874,14 +874,16 @@ describe('C2 · nada de esto está conectado', () => {
       // preguntar; no escribe ni proyecta nada.
       // ADAPTIVE BLOQUE 5 · el planificador del SERVIDOR (Edge nutrition-checkin) lo resuelve con el
       // peso base para congelar `base_energy_raw` al abrir la calibración. No proyecta nada al store.
-      nutritionEnergyState:        [...CON_MACROS, '/src/utils/adaptiveCheckinPlanner.ts', '/src/utils/profileCompletion.ts'],
+      nutritionEnergyState:        [...CON_MACROS, '/src/utils/adaptiveCheckinPlanner.ts', '/src/utils/adaptiveEnergyAuthority.ts', '/src/utils/profileCompletion.ts'],
       resolveNutritionEnergyState: ['/src/utils/adaptiveCheckinPlanner.ts', '/src/utils/profileCompletion.ts'],
-      NutritionEnergyState:        CON_MACROS,
+      // ADAPTIVE BLOQUES 6–8 · la autoridad de energía efectiva (pura, compartida con el servidor) lee el
+      // estado de CAPA 1 y sus versiones para el Snapshot V2. No resuelve ni proyecta por su cuenta.
+      NutritionEnergyState:        [...CON_MACROS, '/src/utils/adaptiveEnergyAuthority.ts'],
       EnergySnapshotV1:            ['/src/utils/energyHydration.ts'],
       buildEnergySnapshot:         STORE_Y_PUENTE,
       parseEnergySnapshot:         ['/src/utils/energyHydration.ts'],
       energyInputIdentity:         [],                      // vive dentro del snapshot
-      currentEngineVersions:       [],                      // ídem
+      currentEngineVersions:       ['/src/utils/adaptiveEnergyAuthority.ts'],   // versiones del Snapshot V2
     };
     for (const [id, esperado] of Object.entries(ESPERADO)) {
       const consumidores = PRODUCTIVOS

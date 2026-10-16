@@ -218,13 +218,13 @@ describe('O / P · SIN EFECTO hoy en perfiles ni en el plan', () => {
     expect(resolveCalibratedEnergy({ calibration: null, currentObjective: 'FAT_LOSS' }).adopted).toBe(false);
     expect(resolveCalibratedEnergy({ calibration: CAL(), currentObjective: 'FAT_LOSS' }).adopted).toBe(false);
   });
-  it('solo el planificador del SERVIDOR consume la capa; store, macros, plan e hidratación no (Bloque 6/8)', () => {
+  it('la capa la consumen el planificador del servidor y la autoridad de energía efectiva (compartida), nadie más', () => {
     const files = import.meta.glob('../../**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
     const users = Object.entries(files)
       .filter(([p]) => !p.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(p) && !p.endsWith('adaptiveCalibrationEnergy.ts') && !p.endsWith('nutritionEngineEntry.ts'))
       .filter(([, src]) => /adaptiveCalibrationEnergy|resolveCalibratedEnergy|energyOutcomeForDecision/.test(src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')))
       .map(([p]) => p);
-    expect(users).toEqual(['../adaptiveCheckinPlanner.ts']);
+    expect(users).toEqual(['../adaptiveCheckinPlanner.ts', '../adaptiveEnergyAuthority.ts']);
     expect(Object.keys(files).filter((p) => /resolveCalibratedEnergy\(/.test(files[p]) && !p.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(p) && !p.endsWith('adaptiveCalibrationEnergy.ts'))).toEqual([]);
   });
   it('versiones intactas (sin bump automático)', () => {

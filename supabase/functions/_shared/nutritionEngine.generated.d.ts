@@ -19,3 +19,4 @@ export * from './nutritionEngine.types/trainingModality.d.ts';
 export * from './nutritionEngine.types/adaptiveCalibrationCore.d.ts';
 export * from './nutritionEngine.types/adaptiveCheckinPlanner.d.ts';
 export * from './nutritionEngine.types/adaptiveCalibrationEnergy.d.ts';
+export * from './nutritionEngine.types/adaptiveEnergyAuthority.d.ts';

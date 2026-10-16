@@ -100,7 +100,7 @@ export function useWeeklyPlanReset(): void {
  */
 
 export function useAutoRegenPlan(): void {
-  const { weeklyPlan, obData, saveWeeklyPlan, planGoal, macroTargets, energyStatus } = useAppStore(useShallow((s) => ({
+  const { weeklyPlan, obData, saveWeeklyPlan, planGoal, macroTargets, energyStatus, adaptiveUnavailable } = useAppStore(useShallow((s) => ({
     weeklyPlan: s.weeklyPlan,
     obData: s.obData,
     saveWeeklyPlan: s.saveWeeklyPlan,
@@ -112,6 +112,8 @@ export function useAutoRegenPlan(): void {
     macroTargets: s.macroTargets,
     // C4 · sin `PRESCRIBED` no hay plan vigente que mantener al día.
     energyStatus: s.energyState?.status ?? null,
+    // ADAPTIVE BLOQUE 8 · calibración ilegible → la cifra es provisional: no se regenera contra ella.
+    adaptiveUnavailable: s.nutritionSnapshot?.status === 'UNAVAILABLE',
   })));
 
   /**
@@ -127,6 +129,7 @@ export function useAutoRegenPlan(): void {
     macros: servableMacros,
     weeklyPlan,
     currentVersion: PLAN_ENGINE_VERSION,
+    adaptiveUnavailable,
   });
 
   useEffect(() => {

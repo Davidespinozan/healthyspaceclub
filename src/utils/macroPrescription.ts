@@ -377,6 +377,12 @@ export type MacroResolution =
 export function resolveMacroPrescription(
   state: NutritionEnergyState | null | undefined,
   obData: PersistedObData | null | undefined,
+  /**
+   * ADAPTIVE BLOQUE 8 · energía EFECTIVA que manda (energía calibrada adoptada por la autoridad
+   * adaptativa). Solo sustituye la ENTRADA energética: fórmulas, versión y estados de CAPA 2 no
+   * cambian. Sin ella (o no válida) se usa `state.prescribedEnergy`, exactamente como antes.
+   */
+  effectiveEnergyKcal?: number | null,
 ): MacroResolution {
   if (state == null || state.status !== 'PRESCRIBED') return { kind: 'NO_ENERGY' };
   // PRESCRIBED garantiza que el perfil estaba completo cuando se resolvió la
@@ -396,7 +402,8 @@ export function resolveMacroPrescription(
   return {
     kind: 'RESOLVED',
     prescription: prescribeMacros({
-      energyKcal: state.prescribedEnergy,
+      energyKcal: typeof effectiveEnergyKcal === 'number' && Number.isFinite(effectiveEnergyKcal) && effectiveEnergyKcal > 0
+        ? effectiveEnergyKcal : state.prescribedEnergy,
       goal: state.goal,
       weightKg: read.profile.weightKg,
       heightCm: read.profile.heightCm,

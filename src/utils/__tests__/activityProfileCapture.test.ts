@@ -358,7 +358,9 @@ describe('FASE B · la Fase B no conecta el motor energético', () => {
     // preguntar; no escribe ni proyecta nada (lo sigue haciendo solo el store).
     // ADAPTIVE BLOQUE 5 · `adaptiveCheckinPlanner` (SERVIDOR: lo ejecuta la Edge nutrition-checkin) RESUELVE
     // el estado con el peso base para congelar la base cruda al abrir la calibración; no proyecta al store.
-    expect(indirectos).toEqual(['/src/store/index.ts', '/src/utils/adaptiveCheckinPlanner.ts', '/src/utils/energyHydration.ts', '/src/utils/macroPrescription.ts', '/src/utils/profileCompletion.ts']);
+    // ADAPTIVE BLOQUES 6–8 · `adaptiveEnergyAuthority` lee el estado ya resuelto (tipo + versiones) para el
+    // Snapshot V2; no lo resuelve ni proyecta (eso sigue siendo del store).
+    expect(indirectos).toEqual(['/src/store/index.ts', '/src/utils/adaptiveCheckinPlanner.ts', '/src/utils/adaptiveEnergyAuthority.ts', '/src/utils/energyHydration.ts', '/src/utils/macroPrescription.ts', '/src/utils/profileCompletion.ts']);
   });
 
   it('el mapper NO importa el orquestador: existir no es estar conectado', () => {

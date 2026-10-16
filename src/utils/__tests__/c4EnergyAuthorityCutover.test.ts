@@ -280,7 +280,7 @@ describe('C4 · B · decisión de hidratación', () => {
     // Y el store lo traduce a SIN CIFRA, nunca a la energía legacy.
     const fn = STORE.slice(STORE.indexOf('hydrateEnergyFromSnapshot: async (rawSnapshot) => {'));
     const cuerpo = fn.slice(0, fn.indexOf('\n  },'));
-    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null, macroTargets: null, macroResolution: null });');
+    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null, macroTargets: null, macroResolution: null, nutritionSnapshot: null });');
     expect(cuerpo).not.toMatch(/legacyEnergy|computeNutritionTargets|plan_goal/);
   });
 

@@ -9,6 +9,7 @@
 //   · macros (CAPA 2) y modalidad de entrenamiento declarada
 //   · calibración server-authoritative (Bloque 2): mapeo persistido y planificador
 //   · capa de energía calibrada (Bloque 5): base congelada × (1 + 0.05·step), suelo T1, adopción
+//   · energía efectiva (Bloques 6–8): paso efectivo por fecha, fuerza declarada, Snapshot V2
 //
 // `npm run build:nutrition-engine` lo empaqueta, sin imports externos, en
 // supabase/functions/_shared/nutritionEngine.generated.js (+ sus .d.ts). Son
@@ -35,3 +36,4 @@ export * from './trainingModality';
 export * from './adaptiveCalibrationCore';
 export * from './adaptiveCheckinPlanner';
 export * from './adaptiveCalibrationEnergy';
+export * from './adaptiveEnergyAuthority';

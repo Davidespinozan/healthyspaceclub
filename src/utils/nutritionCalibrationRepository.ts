@@ -7,7 +7,8 @@
 // decisión en el servidor (las RPC de escritura son exclusivas de service_role).
 //
 // El mapeo puro vive en ./adaptiveCalibrationCore (compartido con el servidor) y se
-// reexporta aquí. NO está conectado: no lo usa el store ni la UI. No cambia planGoal,
+// reexporta aquí. BLOQUES 6–8: el store lo usa (`loadAdaptiveCalibrationData`) para derivar la energía
+// efectiva; este módulo solo LEE. Antes de eso no cambiaba planGoal,
 // energía, macros ni el plan, ni lee food_log, weight_log o Training.
 // ─────────────────────────────────────────────────────────────────────────────
 import { supabase } from '../lib/supabase';
@@ -41,4 +42,24 @@ export async function getCheckinAtCycle(calibrationId: string, cycleIndex: numbe
     .eq('calibration_id', calibrationId).eq('cycle_index', cycleIndex).maybeSingle();
   if (error) { console.warn('[calibration] read cycle failed:', error.code ?? error.message); return null; }
   return data ? checkinFromRow(data as Record<string, unknown>) : null;
+}
+
+/**
+ * ADAPTIVE BLOQUE 6 · lo que la autoridad de energía efectiva necesita: la calibración ACTIVA y TODOS
+ * sus check-ins (la cadena completa verifica el paso efectivo). Distingue «no hay calibración»
+ * (`calibration: null`) de «no se pudo leer» (`undefined`): un fallo de red nunca se confunde con un
+ * socio sin calibrar. Una fila o un check-in ilegible cuenta como no leído (no se adopta nada).
+ */
+export async function loadAdaptiveCalibrationData(): Promise<{ calibration: NutritionCalibration | null; checkins: StoredAdaptiveCheckin[] } | undefined> {
+  const cal = await supabase.from('nutrition_calibrations').select('*').eq('status', 'ACTIVE').maybeSingle();
+  if (cal.error) { console.warn('[calibration] read active failed:', cal.error.code ?? cal.error.message); return undefined; }
+  if (!cal.data) return { calibration: null, checkins: [] };
+  const calibration = calibrationFromRow(cal.data as Record<string, unknown>);
+  if (!calibration) return undefined;
+  const ck = await supabase.from('nutrition_adaptive_checkins').select('*').eq('calibration_id', calibration.id).order('cycle_index', { ascending: true });
+  if (ck.error) { console.warn('[calibration] read checkins failed:', ck.error.code ?? ck.error.message); return undefined; }
+  const rows = (ck.data ?? []) as Record<string, unknown>[];
+  const checkins = rows.map(checkinFromRow);
+  if (checkins.some((c) => c == null)) return undefined;
+  return { calibration, checkins: checkins as StoredAdaptiveCheckin[] };
 }

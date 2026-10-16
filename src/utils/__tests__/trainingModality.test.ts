@@ -271,8 +271,10 @@ describe('A2 · E · usuarios existentes y persistencia', () => {
 
   it('el store deriva las macros del `obData` en recálculo e hidratación (ADOPT)', () => {
     const code = sinComentarios(srcStore);
-    expect(code).toContain('const macroResolution = resolveMacroPrescription(energyState, obData);');
-    expect(code).toContain('const macroResolution = resolveMacroPrescription(decision.state, get().obData);');
+    // ADAPTIVE BLOQUES 6–8 · ambas rutas pasan por la proyección única, que resuelve las macros del
+    // `obData` con la energía que manda (sin calibración: la de CAPA 1, como antes).
+    expect(code).toContain('const macroResolution = resolveMacroPrescription(state, obData as never, effective);');
+    expect(code.match(/const macroResolution = projected\.macroResolution;/g)).toHaveLength(2);
     expect(code.match(/macroTargets: macroResolution\.prescription \?\? null,/g)).toHaveLength(2);
   });
 

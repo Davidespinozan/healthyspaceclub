@@ -314,9 +314,9 @@ describe('ALCANCE · sin store, UI, energía ni logs', () => {
       expect(BODY.includes(banned), banned).toBe(false);
     }
   });
-  it('nadie importa este módulo todavía (no está conectado)', () => {
+  it('BLOQUES 6–8 · solo el store lo importa (lectura para la energía efectiva); la UI no', () => {
     const files = import.meta.glob('../../**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
     const users = Object.entries(files).filter(([path, src]) => !path.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(path) && !path.endsWith('nutritionCalibrationRepository.ts') && src.includes('nutritionCalibrationRepository'));
-    expect(users.map(([p]) => p)).toEqual([]);
+    expect(users.map(([p]) => p)).toEqual(['../../store/index.ts']);
   });
 });

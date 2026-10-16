@@ -99,11 +99,19 @@ export function weeklyPlanCurrentness(input: {
   } | null | undefined;
   /** `PLAN_ENGINE_VERSION` actual. Se recibe para no acoplar esto al motor de platillos. */
   currentVersion: number;
+  /**
+   * ADAPTIVE BLOQUE 8 · la calibración no se pudo LEER: la cifra de esta sesión es CAPA 1 provisional.
+   * El plan no se juzga contra ella (no se regenera con kcal que podrían no ser las vigentes).
+   */
+  adaptiveUnavailable?: boolean;
 }): WeeklyPlanCurrentness {
   const { status, planGoal, macros, weeklyPlan, currentVersion } = input;
 
   // Sin plan generado no hay nada que presentar como vigente.
   if (!hasGeneratedWeeklyPlan(weeklyPlan)) return 'NOT_CURRENT';
+
+  // ADAPTIVE BLOQUE 8 · energía provisional (calibración ilegible): ni vigente ni obsoleto.
+  if (input.adaptiveUnavailable) return 'NOT_CURRENT';
 
   // Sin prescripción el plan existe físicamente pero NO opera como plan activo.
   // Cubre los cinco estados sin cifra, incluido el perfil fuera de alcance.

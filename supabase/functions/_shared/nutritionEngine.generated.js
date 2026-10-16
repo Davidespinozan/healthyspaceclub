@@ -1661,7 +1661,7 @@ function nonServableMacroNotice(m) {
 function isServableMacroPrescription(m) {
   return m != null && (m.status === "VALID" || m.status === "REVIEW");
 }
-function resolveMacroPrescription(state, obData) {
+function resolveMacroPrescription(state, obData, effectiveEnergyKcal) {
   if (state == null || state.status !== "PRESCRIBED") return { kind: "NO_ENERGY" };
   const read = nutritionProfileInputFrom(obData);
   if (!read.complete) return { kind: "NO_ENERGY" };
@@ -1674,7 +1674,7 @@ function resolveMacroPrescription(state, obData) {
   return {
     kind: "RESOLVED",
     prescription: prescribeMacros({
-      energyKcal: state.prescribedEnergy,
+      energyKcal: typeof effectiveEnergyKcal === "number" && Number.isFinite(effectiveEnergyKcal) && effectiveEnergyKcal > 0 ? effectiveEnergyKcal : state.prescribedEnergy,
       goal: state.goal,
       weightKg: read.profile.weightKg,
       heightCm: read.profile.heightCm,
@@ -1985,6 +1985,126 @@ function resolveCalibratedEnergy(evidence) {
   };
 }
 
+// src/utils/adaptiveEnergyAuthority.ts
+var NUTRITION_SNAPSHOT_VERSION = 2;
+var DAY_MS2 = 864e5;
+function ymdToDay(s) {
+  if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const [y, m, d] = s.split("-").map(Number);
+  const t = Date.UTC(y, m - 1, d);
+  const back = new Date(t);
+  if (back.getUTCFullYear() !== y || back.getUTCMonth() !== m - 1 || back.getUTCDate() !== d) return null;
+  return t / DAY_MS2;
+}
+var dayToYmd = (day) => new Date(day * DAY_MS2).toISOString().slice(0, 10);
+function effectiveFromForCheckin(checkinDate) {
+  const d = ymdToDay(checkinDate);
+  if (d == null) return null;
+  return dayToYmd(d + (7 - new Date(d * DAY_MS2).getUTCDay()) % 7);
+}
+var STRENGTH_REQUIRED_OBJECTIVES = ["MUSCLE_GAIN", "RECOMPOSITION"];
+function strengthRequirement(objective, obData) {
+  if (!objective || !STRENGTH_REQUIRED_OBJECTIVES.includes(objective)) return "NOT_REQUIRED";
+  const ob = obData ?? {};
+  const trains = ob.trainsHabitually === 1 || ob.trainsHabitually === true || ob.trainsHabitually === "1";
+  const read = readTrainingModalities(ob.trainingModalities);
+  return trains && read.kind === "DECLARED" && read.modalities.includes("strength") ? "SATISFIED" : "STRENGTH_REQUIRED";
+}
+function deriveEffectiveStep(calibration, checkins, today) {
+  const t = ymdToDay(today);
+  if (t == null) return { ok: false, reason: "INVALID_TODAY" };
+  if (checkins.some((c) => c.calibrationId !== calibration.id)) return { ok: false, reason: "FOREIGN_CHECKIN" };
+  const ordered = [...checkins].sort((a, b) => a.cycleIndex - b.cycleIndex);
+  let decided = 0;
+  let effective = 0;
+  let effectiveFrom = null;
+  let pending = null;
+  for (const c of ordered) {
+    if (c.previousStep !== decided) return { ok: false, reason: "CHAIN_BROKEN" };
+    const from = effectiveFromForCheckin(c.checkinDate);
+    if (from == null) return { ok: false, reason: "INVALID_CHECKIN_DATE" };
+    decided = c.proposedStep;
+    if (ymdToDay(from) <= t) {
+      effective = c.proposedStep;
+      effectiveFrom = from;
+      pending = null;
+    } else {
+      pending = c.proposedStep !== effective ? { step: c.proposedStep, effectiveFrom: from, checkinId: c.id } : null;
+    }
+  }
+  if (decided !== calibration.currentStep) return { ok: false, reason: "CURRENT_STEP_MISMATCH" };
+  return { ok: true, decidedStep: decided, effectiveStep: effective, effectiveFrom, pending };
+}
+function resolveEffectiveNutritionEnergy(input) {
+  const { state, obData, calibration, checkins, today } = input;
+  const prescribed = state?.status === "PRESCRIBED";
+  const objective = prescribed && isGoal(state.goal) ? state.goal : null;
+  const weight = Number(obData?.peso);
+  const baseRaw = prescribed ? state.rawPrescribedEnergy ?? null : null;
+  const basePrescribed = prescribed ? state.prescribedEnergy ?? null : null;
+  const strength = strengthRequirement(objective, obData);
+  const snap = (over) => ({
+    version: NUTRITION_SNAPSHOT_VERSION,
+    today,
+    source: "BASE",
+    status: "NO_CALIBRATION",
+    notAdoptedReason: null,
+    objective,
+    nutritionWeightKg: Number.isFinite(weight) && weight > 0 ? weight : null,
+    base: { rawEnergy: baseRaw, prescribedEnergy: basePrescribed },
+    effective: { rawEnergy: baseRaw, energy: basePrescribed },
+    calibration: calibration ? calSummary(calibration) : null,
+    strength,
+    versions: {
+      snapshot: NUTRITION_SNAPSHOT_VERSION,
+      energy: currentEngineVersions(),
+      macros: MACRO_PRESCRIPTION_VERSION,
+      calibration: ENERGY_CALIBRATION_VERSION,
+      calibrationEnergy: CALIBRATION_ENERGY_VERSION,
+      adaptiveDecision: ADAPTIVE_DECISION_VERSION
+    },
+    ...over
+  });
+  if (!prescribed || basePrescribed == null) return snap({ status: "NO_ENERGY", effective: { rawEnergy: null, energy: null } });
+  if (calibration === void 0) return snap({ status: "UNAVAILABLE" });
+  if (calibration === null) return snap({ status: "NO_CALIBRATION" });
+  const notAdopted = (reason) => snap({ status: "NOT_ADOPTED", notAdoptedReason: reason });
+  if (calibration.status !== "ACTIVE") return notAdopted("CALIBRATION_CLOSED");
+  if (calibration.calibrationVersion !== ENERGY_CALIBRATION_VERSION) return notAdopted("UNSUPPORTED_CALIBRATION_VERSION");
+  if (calibration.baseEnergyRaw == null) return notAdopted("BASE_NOT_FROZEN");
+  if (objective !== calibration.objective) return notAdopted("OBJECTIVE_CHANGED");
+  if (strength === "STRENGTH_REQUIRED") return snap({ status: "STRENGTH_REQUIRED" });
+  const step = deriveEffectiveStep(calibration, checkins, today);
+  if (!step.ok) return notAdopted(step.reason);
+  const e = calibratedEnergy(calibration.baseEnergyRaw, step.effectiveStep);
+  if (e.status !== "CALIBRATED") return notAdopted(e.reason === "STEP_OUT_OF_RANGE" ? "INVALID_STEP" : e.reason);
+  return snap({
+    source: "CALIBRATED",
+    status: "ADOPTED",
+    effective: { rawEnergy: e.rawCalibratedEnergy, energy: e.calibratedEnergy },
+    calibration: {
+      ...calSummary(calibration),
+      decidedStep: step.decidedStep,
+      effectiveStep: step.effectiveStep,
+      effectiveFrom: step.effectiveFrom,
+      pending: step.pending ? { step: step.pending.step, effectiveFrom: step.pending.effectiveFrom } : null
+    }
+  });
+}
+function calSummary(c) {
+  return {
+    id: c.id,
+    version: c.calibrationVersion,
+    objective: c.objective,
+    frozenBaseRawEnergy: c.baseEnergyRaw,
+    decidedStep: c.currentStep,
+    effectiveStep: null,
+    effectiveFrom: null,
+    pending: null
+  };
+}
+var isGoal = (g) => typeof g === "string" && CANONICAL_GOALS.includes(g);
+
 // src/utils/adaptiveCheckinPlanner.ts
 var CYCLE_LENGTH_DAYS = 14;
 var CHECKIN_EARLY_DAYS = 1;
@@ -2003,8 +2123,8 @@ var CHECKIN_REQUEST_FIELDS = [
   "strengthExperience",
   "recentStrengthContinuity"
 ];
-var DAY_MS2 = 864e5;
-function ymdToDay(v) {
+var DAY_MS3 = 864e5;
+function ymdToDay2(v) {
   if (typeof v !== "string") return null;
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
   if (!m) return null;
@@ -2012,14 +2132,14 @@ function ymdToDay(v) {
   const t = Date.UTC(y, mo - 1, d);
   const back = new Date(t);
   if (back.getUTCFullYear() !== y || back.getUTCMonth() !== mo - 1 || back.getUTCDate() !== d) return null;
-  return t / DAY_MS2;
+  return t / DAY_MS3;
 }
-var dayToYmd = (day) => new Date(day * DAY_MS2).toISOString().slice(0, 10);
+var dayToYmd2 = (day) => new Date(day * DAY_MS3).toISOString().slice(0, 10);
 function firstSundayOnOrAfter(date) {
-  const d = ymdToDay(date);
+  const d = ymdToDay2(date);
   if (d == null) return null;
-  const dow = new Date(d * DAY_MS2).getUTCDay();
-  return dayToYmd(d + (7 - dow) % 7);
+  const dow = new Date(d * DAY_MS3).getUTCDay();
+  return dayToYmd2(d + (7 - dow) % 7);
 }
 function cycleStartFor(baselineDate) {
   return firstSundayOnOrAfter(baselineDate);
@@ -2028,11 +2148,11 @@ function calibrationEffectiveFrom(checkinDate) {
   return firstSundayOnOrAfter(checkinDate);
 }
 function cycleDueDate(cycleStart, n) {
-  const s = ymdToDay(cycleStart);
-  return s == null || !Number.isInteger(n) || n < 1 ? null : dayToYmd(s + CYCLE_LENGTH_DAYS * n);
+  const s = ymdToDay2(cycleStart);
+  return s == null || !Number.isInteger(n) || n < 1 ? null : dayToYmd2(s + CYCLE_LENGTH_DAYS * n);
 }
 function cycleIndexForDate(cycleStart, date) {
-  const s = ymdToDay(cycleStart), d = ymdToDay(date);
+  const s = ymdToDay2(cycleStart), d = ymdToDay2(date);
   if (s == null || d == null) return null;
   const offset = d - s;
   const n = Math.floor((offset + CHECKIN_EARLY_DAYS) / CYCLE_LENGTH_DAYS);
@@ -2040,7 +2160,7 @@ function cycleIndexForDate(cycleStart, date) {
   return offset <= CYCLE_LENGTH_DAYS * n + CHECKIN_LATE_DAYS ? n : null;
 }
 function acceptDeclaredDate(declared2, serverUtcDate) {
-  const d = ymdToDay(declared2), s = ymdToDay(serverUtcDate);
+  const d = ymdToDay2(declared2), s = ymdToDay2(serverUtcDate);
   if (d == null || s == null) return { ok: false, reason: "INVALID_DATE" };
   if (d > s + DECLARED_DATE_TOLERANCE_DAYS) return { ok: false, reason: "FUTURE_DATE" };
   if (d < s - DECLARED_DATE_TOLERANCE_DAYS) return { ok: false, reason: "DATE_OUT_OF_TOLERANCE" };
@@ -2073,6 +2193,7 @@ function planStartCalibration(input) {
   if (input.energyStatus !== "PRESCRIBED") return reject("NOT_ELIGIBLE");
   const objective = objectiveOf(input.obData);
   if (objective == null) return reject("OBJECTIVE_UNRESOLVED");
+  if (strengthRequirement(objective, input.obData) === "STRENGTH_REQUIRED") return reject("STRENGTH_REQUIRED");
   const { weightKg, waistCm } = req.body;
   if (!isPositiveFinite4(weightKg)) return reject("INVALID_WEIGHT");
   if (waistCm !== void 0 && waistCm !== null && !isPositiveFinite4(waistCm)) return reject("INVALID_WAIST");
@@ -2121,6 +2242,7 @@ function planCheckin(input) {
   const objective = objectiveOf(input.obData);
   if (objective == null) return reject("OBJECTIVE_UNRESOLVED");
   if (objective !== cal.objective) return reject("OBJECTIVE_CHANGED");
+  if (strengthRequirement(objective, input.obData) === "STRENGTH_REQUIRED") return reject("STRENGTH_REQUIRED");
   const cycleIndex = cycleIndexForDate(cal.cycleStart, req.date);
   if (cycleIndex == null) return reject("NOT_DUE");
   const ordered = input.history.filter((c) => c.calibrationId === cal.id).sort((a, b2) => a.cycleIndex - b2.cycleIndex);
@@ -2258,6 +2380,7 @@ export {
   NUTRITION_PERFORMANCE_VALUES,
   NUTRITION_PROFILE_INPUT_VERSION,
   NUTRITION_SCOPE_REASONS,
+  NUTRITION_SNAPSHOT_VERSION,
   NUTRITION_V1_MAX_AGE_YEARS,
   ORCHESTRATOR_VERSION,
   PERSISTED_BOOLEAN_KEYS,
@@ -2269,6 +2392,7 @@ export {
   START_REQUEST_FIELDS,
   STRENGTH_EXPERIENCE_REQUIRED_OBJECTIVES,
   STRENGTH_EXPERIENCE_VALUES,
+  STRENGTH_REQUIRED_OBJECTIVES,
   TRAINING_BANDS,
   TRAINING_MODALITIES,
   TRAINING_MODALITIES_KEY,
@@ -2304,9 +2428,11 @@ export {
   decideAdaptiveNutrition,
   declaredTrainingModalitiesForForm,
   deriveCarbohydratePriority,
+  deriveEffectiveStep,
   deriveProteinActivityClass,
   deriveWeeklyTrainingMinutes,
   eerForCategory,
+  effectiveFromForCheckin,
   energyInputIdentity,
   energyOutcomeForDecision,
   estimateMaintenance,
@@ -2331,11 +2457,13 @@ export {
   referencePointFor,
   requiredWindowDays,
   resolveCalibratedEnergy,
+  resolveEffectiveNutritionEnergy,
   resolveKnownNutritionScope,
   resolveMacroPrescription,
   resolveNutritionEnergy,
   resolveNutritionEnergyState,
   serializeTrainingModalities,
+  strengthRequirement,
   trainingBandOf,
   validateNutritionCheckin,
   validateNutritionProfile,

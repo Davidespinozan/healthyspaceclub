@@ -18,7 +18,7 @@ export declare const DECLARED_DATE_TOLERANCE_DAYS = 1;
 /** Campos que el cliente PUEDE enviar. Cualquier otro se rechaza: el servidor no acepta autoridad. */
 export declare const START_REQUEST_FIELDS: readonly ["requestId", "localDate", "weightKg", "waistCm"];
 export declare const CHECKIN_REQUEST_FIELDS: readonly ["requestId", "localDate", "weightKg", "waistCm", "adherenceAnswer", "hunger", "energy", "performance", "strengthExperience", "recentStrengthContinuity"];
-export type PlannerRejectReason = 'INVALID_REQUEST' | 'UNEXPECTED_FIELDS' | 'INVALID_REQUEST_ID' | 'INVALID_DATE' | 'FUTURE_DATE' | 'DATE_OUT_OF_TOLERANCE' | 'NOT_ELIGIBLE' | 'OBJECTIVE_UNRESOLVED' | 'INVALID_WEIGHT' | 'INVALID_WAIST' | 'WAIST_REQUIRED' | 'NO_ACTIVE_CALIBRATION' | 'OBJECTIVE_CHANGED' | 'NOT_DUE' | 'DUPLICATE_CYCLE' | 'OUT_OF_ORDER' | 'CHECKIN_INVALID' | 'CHECKIN_INCOMPLETE' | 'ENGINE_INVALID';
+export type PlannerRejectReason = 'INVALID_REQUEST' | 'UNEXPECTED_FIELDS' | 'INVALID_REQUEST_ID' | 'INVALID_DATE' | 'FUTURE_DATE' | 'DATE_OUT_OF_TOLERANCE' | 'NOT_ELIGIBLE' | 'OBJECTIVE_UNRESOLVED' | 'STRENGTH_REQUIRED' | 'INVALID_WEIGHT' | 'INVALID_WAIST' | 'WAIST_REQUIRED' | 'NO_ACTIVE_CALIBRATION' | 'OBJECTIVE_CHANGED' | 'NOT_DUE' | 'DUPLICATE_CYCLE' | 'OUT_OF_ORDER' | 'CHECKIN_INVALID' | 'CHECKIN_INCOMPLETE' | 'ENGINE_INVALID';
 export interface PlannerRejection {
     kind: 'REJECT';
     reason: PlannerRejectReason;

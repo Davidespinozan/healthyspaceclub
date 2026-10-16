@@ -34,6 +34,7 @@
 import { canonicalGoalFrom, type CanonicalGoal } from './energyPrescription';
 import { resolveNutritionEnergyState } from './nutritionEnergyState';
 import { energyOutcomeForDecision } from './adaptiveCalibrationEnergy';
+import { strengthRequirement } from './adaptiveEnergyAuthority';
 import { assessTrajectory, type TrajectoryResult } from './nutritionTrajectory';
 import { validateNutritionCheckin, type NutritionCheckin } from './nutritionCheckin';
 import { decideAdaptiveNutrition, type AdaptiveDecision, type PreviousCheckinContext } from './adaptiveNutritionDecision';
@@ -64,7 +65,7 @@ export const CHECKIN_REQUEST_FIELDS = [
 export type PlannerRejectReason =
   | 'INVALID_REQUEST' | 'UNEXPECTED_FIELDS' | 'INVALID_REQUEST_ID'
   | 'INVALID_DATE' | 'FUTURE_DATE' | 'DATE_OUT_OF_TOLERANCE'
-  | 'NOT_ELIGIBLE' | 'OBJECTIVE_UNRESOLVED'
+  | 'NOT_ELIGIBLE' | 'OBJECTIVE_UNRESOLVED' | 'STRENGTH_REQUIRED'
   | 'INVALID_WEIGHT' | 'INVALID_WAIST' | 'WAIST_REQUIRED'
   | 'NO_ACTIVE_CALIBRATION' | 'OBJECTIVE_CHANGED' | 'NOT_DUE' | 'DUPLICATE_CYCLE' | 'OUT_OF_ORDER'
   | 'CHECKIN_INVALID' | 'CHECKIN_INCOMPLETE' | 'ENGINE_INVALID';
@@ -193,6 +194,8 @@ export function planStartCalibration(input: StartPlanInput): StartPlan {
   if (input.energyStatus !== 'PRESCRIBED') return reject('NOT_ELIGIBLE');
   const objective = objectiveOf(input.obData);
   if (objective == null) return reject('OBJECTIVE_UNRESOLVED');
+  // BLOQUE 7 · ganancia y recomposición solo se calibran con fuerza DECLARADA (MIXED no basta).
+  if (strengthRequirement(objective, input.obData) === 'STRENGTH_REQUIRED') return reject('STRENGTH_REQUIRED');
 
   const { weightKg, waistCm } = req.body;
   if (!isPositiveFinite(weightKg)) return reject('INVALID_WEIGHT');
@@ -289,6 +292,8 @@ export function planCheckin(input: CheckinPlanInput): CheckinPlan {
   const objective = objectiveOf(input.obData);
   if (objective == null) return reject('OBJECTIVE_UNRESOLVED');
   if (objective !== cal.objective) return reject('OBJECTIVE_CHANGED');
+  // BLOQUE 7 · si la fuerza declarada desapareció, no se decide nada adaptativo sobre ganancia/recomposición.
+  if (strengthRequirement(objective, input.obData) === 'STRENGTH_REQUIRED') return reject('STRENGTH_REQUIRED');
 
   const cycleIndex = cycleIndexForDate(cal.cycleStart, req.date);
   if (cycleIndex == null) return reject('NOT_DUE');

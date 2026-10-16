@@ -103,7 +103,11 @@ describe('C3 · store nullability', () => {
   });
 
   it('C4 · la ÚNICA escritura es la proyección, y va en el mismo `set` que el estado', () => {
-    expect(STORE).toContain('const projected = projectEnergy(energyState, get().mealPlanKey);');
+    // ADAPTIVE BLOQUES 6–8 · una sola proyección (`projectNutritionEnergy`) que usa `projectEnergy`
+    // con la energía que manda; recálculo e hidratación la comparten.
+    expect(STORE).toContain('const projected = projectNutritionEnergy(energyState, obData, get().adaptiveCalibration, get().mealPlanKey);');
+    expect(STORE).toContain('const projected = projectNutritionEnergy(decision.state, get().obData, get().adaptiveCalibration, get().mealPlanKey);');
+    expect(STORE).toMatch(/const projected = projectEnergy\(effective != null && state\.status === 'PRESCRIBED' \? \{ \.\.\.state, prescribedEnergy: effective \} : state, mealPlanKey\);/);
     expect(STORE).toContain('planGoal: projected.planGoal,');
     expect(STORE).toContain('tdee: projected.tdee,');
     // `projectEnergy` se importa; no se reimplementa en el store.
@@ -193,7 +197,7 @@ describe('C3 · hidratación', () => {
   it('C4 · fail-closed: un perfil irresoluble deja SIN CIFRA, no en legacy', () => {
     const fn = STORE.slice(STORE.indexOf('hydrateEnergyFromSnapshot: async (rawSnapshot) => {'));
     const cuerpo = fn.slice(0, fn.indexOf('\n  },'));
-    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null, macroTargets: null, macroResolution: null });');
+    expect(cuerpo).toContain('set({ energyState: null, planGoal: null, tdee: null, macroTargets: null, macroResolution: null, nutritionSnapshot: null });');
     for (const id of ['computeNutritionTargets', 'legacyEnergy', 'plan_goal']) {
       expect(cuerpo, `el catch no debe caer a ${id}`).not.toMatch(new RegExp(`\\b${id}\\b`));
     }

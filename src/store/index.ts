@@ -14,6 +14,8 @@ import { buildEnergySnapshot, type NutritionEnergyState } from '../utils/nutriti
 // C4 · la proyección estado → campos del store y la decisión de hidratación son
 // puras y viven fuera: el store las aplica, no las define.
 import { projectEnergy, decideEnergyHydration } from '../utils/energyHydration';
+import { resolveEffectiveNutritionEnergy, type NutritionSnapshotV2 } from '../utils/adaptiveEnergyAuthority';
+import { loadAdaptiveCalibrationData, type NutritionCalibration, type StoredAdaptiveCheckin } from '../utils/nutritionCalibrationRepository';
 import { resolveMacroPrescription, MACRO_PRESCRIPTION_VERSION, type MacroPrescription, type MacroResolution } from '../utils/macroPrescription';
 import type { Json } from '../types/database';
 import { planInvalidatedByAvoidChange, avoidPolicyForPlan } from '../utils/avoidAuthority';
@@ -322,6 +324,24 @@ interface AppState {
    */
   macroResolution: MacroResolution | null;
 
+  /**
+   * ADAPTIVE BLOQUES 6–8 · calibración leída de la base (escrita solo por el servidor):
+   *   · `IDLE`        · aún no leída en esta sesión (sin usuario, o antes de la hidratación) → como sin calibración.
+   *   · `LOADED`      · leída: `calibration` (o null si no hay activa) + TODOS sus check-ins.
+   *   · `UNAVAILABLE` · no se pudo leer → energía de CAPA 1 y el plan NO se regenera (ver currentness).
+   * NO se persiste: se vuelve a leer en cada hidratación.
+   */
+  adaptiveCalibration: { load: 'IDLE' | 'LOADED' | 'UNAVAILABLE'; calibration: NutritionCalibration | null; checkins: StoredAdaptiveCheckin[] };
+  /**
+   * ADAPTIVE BLOQUE 6 · SNAPSHOT V2 derivado (energía que manda + su procedencia). `planGoal` y
+   * `macroTargets` son SUS proyecciones y se escriben en el mismo `set()`. NO se persiste.
+   */
+  nutritionSnapshot: NutritionSnapshotV2 | null;
+  /** Lee la calibración activa + check-ins (solo lectura, RLS own-only). `apply` re-proyecta la energía. */
+  loadAdaptiveCalibration: (apply?: boolean) => Promise<void>;
+  /** Re-proyecta la energía efectiva con la fecha de HOY (p. ej. al cruzar al domingo con la app abierta). */
+  refreshAdaptiveEnergy: (reason?: string) => void;
+
   // Workout log (granular per-exercise: legacy, usado para tracking de reps/kg)
   workoutLog: { date: string; exercise: string; sets: { reps: number; kg: number }[] }[];
   addWorkoutEntry: (exercise: string, sets: { reps: number; kg: number }[]) => void;
@@ -580,6 +600,34 @@ interface AppState {
 //
 //   NULL ≠ 0. Cinco de los seis estados no llevan cifra, y eso es la respuesta.
 // ─────────────────────────────────────────────────────────────────────────────
+/**
+ * ADAPTIVE BLOQUES 6–8 · ÚNICA proyección energética de la sesión (la usan `recalcFromObData`, la
+ * hidratación y el refresco por fecha). Resuelve la energía que MANDA con la autoridad adaptativa y
+ * deriva de ELLA, en un solo acto, `planGoal`, la banda del banco y las macros (CAPA 2 sin cambios de
+ * fórmula). Sin calibración verificable el resultado es idéntico al de antes (CAPA 1).
+ */
+function projectNutritionEnergy(
+  state: NutritionEnergyState,
+  obData: Record<string, unknown>,
+  adaptive: AppState['adaptiveCalibration'],
+  mealPlanKey: string,
+): { planGoal: number | null; tdee: number | null; mealPlanKey: string; macroResolution: MacroResolution; snapshot: NutritionSnapshotV2 } {
+  const snapshot = resolveEffectiveNutritionEnergy({
+    state, obData,
+    calibration: adaptive.load === 'UNAVAILABLE' ? undefined : adaptive.calibration,
+    checkins: adaptive.checkins,
+    today: dayKey(new Date()),
+  });
+  const effective = snapshot.source === 'CALIBRATED' ? snapshot.effective.energy : null;
+  // La banda del banco y `planGoal` se proyectan desde la energía que manda; `tdee` sigue siendo el
+  // mantenimiento de CAPA 1 (la calibración ajusta la prescripción, no el mantenimiento).
+  const projected = projectEnergy(effective != null && state.status === 'PRESCRIBED' ? { ...state, prescribedEnergy: effective } : state, mealPlanKey);
+  const macroResolution = resolveMacroPrescription(state, obData as never, effective);
+  return { ...projected, macroResolution, snapshot };
+}
+const sameMacros = (a: MacroPrescription | null, b: MacroPrescription | null) =>
+  a === b || (a != null && b != null && JSON.stringify(a) === JSON.stringify(b));
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -1614,6 +1662,31 @@ export const useAppStore = create<AppState>()(
   energyState: null,
   macroTargets: null,
   macroResolution: null,
+  adaptiveCalibration: { load: 'IDLE', calibration: null, checkins: [] },
+  nutritionSnapshot: null,
+
+  loadAdaptiveCalibration: async (apply = true) => {
+    if (!get().user?.id) {
+      set({ adaptiveCalibration: { load: 'IDLE', calibration: null, checkins: [] } });
+    } else {
+      const data = await loadAdaptiveCalibrationData();
+      set({ adaptiveCalibration: data === undefined
+        ? { load: 'UNAVAILABLE', calibration: null, checkins: [] }
+        : { load: 'LOADED', calibration: data.calibration, checkins: data.checkins } });
+    }
+    if (apply) get().refreshAdaptiveEnergy('calibration-loaded');
+  },
+
+  refreshAdaptiveEnergy: (reason = 'refresh') => {
+    const st = get();
+    if (st.energyState == null) return;   // sin CAPA 1 resuelta no hay nada que proyectar
+    const p = projectNutritionEnergy(st.energyState, st.obData, st.adaptiveCalibration, st.mealPlanKey);
+    if (p.planGoal === st.planGoal && sameMacros(p.macroResolution.prescription ?? null, st.macroTargets)
+        && p.snapshot.status === st.nutritionSnapshot?.status && p.snapshot.today === st.nutritionSnapshot?.today) return;
+    set({ planGoal: p.planGoal, tdee: p.tdee, mealPlanKey: p.mealPlanKey, macroResolution: p.macroResolution,
+      macroTargets: p.macroResolution.prescription ?? null, nutritionSnapshot: p.snapshot });
+    void reason;
+  },
 
   applyServerNutritionWeight: async (kg) => {
     if (typeof kg !== 'number' || !Number.isFinite(kg) || kg <= 0) return;
@@ -1636,10 +1709,12 @@ export const useAppStore = create<AppState>()(
     // ── 2 · PROYECTAR ──────────────────────────────────────────────────────
     // `planGoal` y `tdee` son proyecciones del estado, no autoridades. Se
     // escriben en el MISMO `set()` que él: por construcción no pueden divergir.
-    const projected = projectEnergy(energyState, get().mealPlanKey);
-    // A2 · macros: misma resolución, mismo acto. La modalidad declarada vive en
+    // ADAPTIVE BLOQUES 6–8 · la proyección pasa por la autoridad de energía efectiva: sin calibración
+    // verificable es CAPA 1 exactamente como antes; con ella, base congelada × paso EFECTIVO de hoy.
+    // A2 · macros: misma resolución, mismo acto, con ESA energía. La modalidad declarada vive en
     // `obData`; si falta, la resolución lo dice (`INPUT_REQUIRED`) y no hay gramos.
-    const macroResolution = resolveMacroPrescription(energyState, obData);
+    const projected = projectNutritionEnergy(energyState, obData, get().adaptiveCalibration, get().mealPlanKey);
+    const macroResolution = projected.macroResolution;
 
     // ── 3 · MEMORIA · un solo set, atómico ─────────────────────────────────
     set({
@@ -1650,6 +1725,7 @@ export const useAppStore = create<AppState>()(
       // CAPA 2 · las macros se derivan en el mismo acto: no pueden quedar de otra energía.
       macroResolution,
       macroTargets: macroResolution.prescription ?? null,
+      nutritionSnapshot: projected.snapshot,
     });
 
     // ── 4 · PERSISTIR · un solo upsert ─────────────────────────────────────
@@ -1683,6 +1759,9 @@ export const useAppStore = create<AppState>()(
     // `obData` DEBE estar ya hidratado cuando se llama a esto: la decisión se
     // toma comparando el snapshot guardado contra lo que los motores producen con
     // el perfil de la base de datos, no con el que hubiera en memoria.
+    // ADAPTIVE BLOQUE 6 · la calibración se lee ANTES de proyectar: así `planGoal`/macros salen ya
+    // con la energía efectiva en el MISMO set (sin un instante de CAPA 1 que dispare una regeneración).
+    await get().loadAdaptiveCalibration(false);
     try {
       const decision = decideEnergyHydration({
         obData: get().obData,
@@ -1692,18 +1771,21 @@ export const useAppStore = create<AppState>()(
       });
 
       if (decision.action === 'ADOPT') {
-        const macroResolution = resolveMacroPrescription(decision.state, get().obData);
+        // ADAPTIVE BLOQUES 6–8 · misma proyección que `recalcFromObData`: energía efectiva de HOY.
+        const projected = projectNutritionEnergy(decision.state, get().obData, get().adaptiveCalibration, get().mealPlanKey);
+        const macroResolution = projected.macroResolution;
         // Vigente: se adopta y NO se escribe. Escribir aquí convertiría cada
         // login en un UPDATE que no cambia nada y movería `computedAt` sin que
         // haya ocurrido ningún cálculo nuevo.
         set({
           energyState: decision.state,
-          planGoal: decision.projection.planGoal,
-          tdee: decision.projection.tdee,
-          mealPlanKey: decision.projection.mealPlanKey,
+          planGoal: projected.planGoal,
+          tdee: projected.tdee,
+          mealPlanKey: projected.mealPlanKey,
           // CAPA 2 · derivación pura y determinista: no hace falta snapshot propio.
           macroResolution,
           macroTargets: macroResolution.prescription ?? null,
+          nutritionSnapshot: projected.snapshot,
         });
         return;
       }
@@ -1719,7 +1801,7 @@ export const useAppStore = create<AppState>()(
       // `plan_goal`: es quedarse SIN CIFRA, con el estado a `null` para que cada
       // pantalla sepa que no hay nada resuelto en esta sesión.
       console.error('[hydrateEnergyFromSnapshot] perfil energético irresoluble:', e);
-      set({ energyState: null, planGoal: null, tdee: null, macroTargets: null, macroResolution: null });
+      set({ energyState: null, planGoal: null, tdee: null, macroTargets: null, macroResolution: null, nutritionSnapshot: null });
     }
   },
 
@@ -1774,6 +1856,8 @@ export const useAppStore = create<AppState>()(
     planGoal: null,
     macroTargets: null,
     macroResolution: null,
+    adaptiveCalibration: { load: 'IDLE', calibration: null, checkins: [] },
+    nutritionSnapshot: null,
     workoutLog: [],
     lastExercisePerformance: {},
     completedSessions: [],

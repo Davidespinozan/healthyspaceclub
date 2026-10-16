@@ -20,6 +20,12 @@ export async function callNutritionCheckin(
   action: NutritionCheckinAction,
   declared: Record<string, unknown>,
   applyServerWeight: ApplyServerWeight,
+  /**
+   * ADAPTIVE BLOQUE 8 · relee la calibración del servidor (en la app:
+   * `useAppStore.getState().loadAdaptiveCalibration`) tras un START / check-in aceptado, ANTES de
+   * aplicar el peso: así el recálculo que dispara el peso ya proyecta con las filas nuevas.
+   */
+  reloadCalibration?: (apply?: boolean) => Promise<void>,
 ): Promise<NutritionCheckinResponse> {
   const { data, error } = await supabase.functions.invoke('nutrition-checkin', { body: { action, ...declared } });
   // Los rechazos (4xx/5xx) llegan como `error` con el cuerpo en `context`; sin cuerpo legible → no se aplica nada.
@@ -30,6 +36,9 @@ export async function callNutritionCheckin(
     return { httpStatus: ctx?.status ?? 0, body };
   }
   const body = (data ?? {}) as Record<string, unknown>;
+  if (reloadCalibration && (body.status === 'STARTED' || body.status === 'RECORDED' || body.status === 'ALREADY_ACTIVE')) {
+    await reloadCalibration(true);
+  }
   const kg = body.nutritionWeightKg;
   if ((body.status === 'STARTED' || body.status === 'RECORDED') && typeof kg === 'number' && Number.isFinite(kg) && kg > 0) {
     await applyServerWeight(kg);
