@@ -5,7 +5,8 @@ import {
   START_REQUEST_FIELDS, CHECKIN_REQUEST_FIELDS, type CheckinPlan,
 } from '../adaptiveCheckinPlanner';
 import { calibrationFromRow, checkinFromRow, ENERGY_CALIBRATION_VERSION, type NutritionCalibration, type StoredAdaptiveCheckin } from '../adaptiveCalibrationCore';
-import { resolveCalibratedEnergy, calibratedEnergy } from '../adaptiveCalibrationEnergy';
+import { calibratedEnergy } from '../adaptiveCalibrationEnergy';
+import { resolveEffectiveNutritionEnergy } from '../adaptiveEnergyAuthority';
 import { resolveNutritionEnergyState } from '../nutritionEnergyState';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,6 +32,11 @@ const answers = (date: string, weightKg: number) => ({ requestId: `00000000-0000
   adherenceAnswer: 'PRACTICALLY_ALL', hunger: 'NORMAL', energy: 'NORMAL', performance: 'SAME' });
 const checkin = (c: NutritionCalibration, date: string, weightKg: number, history: StoredAdaptiveCheckin[] = []) =>
   planCheckin({ request: answers(date, weightKg), obData: { ...OB, peso: 70 }, energyStatus: 'PRESCRIBED', calibration: c, history, serverUtcDate: date });
+/** BLOQUE 9 · adopción por la autoridad de energía efectiva (verifica la cadena y la fecha). */
+const adoptOn = (c: NutritionCalibration, history: StoredAdaptiveCheckin[], today: string, goal = 'Bajar grasa') => {
+  const o = { ...OB, goal, peso: 70 };
+  return resolveEffectiveNutritionEnergy({ state: resolveNutritionEnergyState(o as never), obData: o, calibration: c, checkins: history, today });
+};
 const recorded = (p: CheckinPlan) => { if (p.kind !== 'RECORD') throw new Error(JSON.stringify(p)); return p; };
 
 describe('A · ABRIR · la base CRUDA se calcula en el servidor con el peso base', () => {
@@ -75,7 +81,7 @@ describe('D · fila sin base cruda → no adoptable y no registra', () => {
   it('B · el entero base_energy_kcal (2473) NUNCA sustituye a la base cruda', () => {
     const c = calibrationFromRow({ ...ROW })!;
     expect(c.baseEnergyKcal).toBe(2473);
-    expect(resolveCalibratedEnergy({ calibration: c, currentObjective: 'FAT_LOSS' })).toEqual({ adopted: false, reason: 'BASE_NOT_FROZEN' });
+    expect(adoptOn(c, [], '2026-10-20')).toMatchObject({ source: 'BASE', notAdoptedReason: 'BASE_NOT_FROZEN' });
   });
   it('un check-in contra una calibración sin base → ENGINE_INVALID (no se puede verificar el suelo)', () => {
     expect(checkin(cal({ baseEnergyRaw: null }), '2026-10-18', 69.9)).toEqual({ kind: 'REJECT', reason: 'ENGINE_INVALID' });
@@ -115,20 +121,24 @@ describe('G · SIN COMPOUNDING en el camino del servidor', () => {
     history.push(checkinFromRow({ ...p1.payload, id: 'c-1', calibration_id: c.id, created_at: '' })!);
     c = { ...c, currentStep: p1.decision.proposedStep, lastCheckinId: 'c-1' };
     expect(c.currentStep).toBe(-1);
-    expect(resolveCalibratedEnergy({ calibration: c, currentObjective: 'FAT_LOSS' })).toMatchObject({ adopted: true, calibratedEnergy: 1900 });
-    const c2 = { ...c, currentStep: -2 };
-    expect(resolveCalibratedEnergy({ calibration: c2, currentObjective: 'FAT_LOSS' })).toMatchObject({ adopted: true, rawCalibratedEnergy: 1800, calibratedEnergy: 1800 });
+    expect(adoptOn(c, history, '2026-10-18')).toMatchObject({ source: 'CALIBRATED', effective: { energy: 1900 } });   // check-in en domingo: rige ese día
+    const p2 = recorded(checkin(c, '2026-11-01', 69.85, history));                                                 // segunda bajada REAL
+    history.push(checkinFromRow({ ...p2.payload, id: 'c-2', calibration_id: c.id, created_at: '' })!);
+    c = { ...c, currentStep: p2.decision.proposedStep, lastCheckinId: 'c-2' };
+    expect(c.currentStep).toBe(-2);
+    expect(adoptOn(c, history, '2026-11-01')).toMatchObject({ source: 'CALIBRATED', effective: { rawEnergy: 1800, energy: 1800 } });
     expect(calibratedEnergy(2000, -2)).toMatchObject({ rawCalibratedEnergy: 1800 });   // ≠ 2000 × 0.95 × 0.95 = 1805
   });
 });
 
 describe('H / I · ADOPCIÓN', () => {
   it('H · objetivo distinto del de la calibración → no se adopta', () => {
-    expect(resolveCalibratedEnergy({ calibration: cal({ baseEnergyRaw: 2000 }), currentObjective: 'MUSCLE_GAIN' })).toEqual({ adopted: false, reason: 'OBJECTIVE_CHANGED' });
+    expect(adoptOn(cal({ baseEnergyRaw: 2000 }), [], '2026-10-20', 'Ganar músculo')).toMatchObject({ source: 'BASE', notAdoptedReason: 'OBJECTIVE_CHANGED' });
   });
   it('I · mismo objetivo + base cruda válida → adopción verificable', () => {
-    expect(resolveCalibratedEnergy({ calibration: cal({ baseEnergyRaw: 2473.37, currentStep: 1 }), currentObjective: 'FAT_LOSS' }))
-      .toEqual({ adopted: true, objective: 'FAT_LOSS', baseRawEnergy: 2473.37, step: 1, rawCalibratedEnergy: (2473.37 * 105) / 100, calibratedEnergy: 2597 });
+    expect(adoptOn(cal({ baseEnergyRaw: 2473.37 }), [], '2026-10-20')).toMatchObject({ source: 'CALIBRATED', status: 'ADOPTED',
+      effective: { rawEnergy: 2473.37, energy: 2473 }, calibration: { frozenBaseRawEnergy: 2473.37, effectiveStep: 0 } });
+    expect(calibratedEnergy(2473.37, 1)).toMatchObject({ rawCalibratedEnergy: (2473.37 * 105) / 100, calibratedEnergy: 2597 });
   });
 });
 

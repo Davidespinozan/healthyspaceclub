@@ -170,9 +170,11 @@ describe('UNA SOLA RUTA · sin camino accidental weight_log → kcal', () => {
   });
   it('ningún módulo productivo importa la derivación de peso nutricional de la mediana', () => {
     const files = import.meta.glob('../../**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-    const users = Object.entries(files).filter(([p, src]) => !p.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(p) && !p.endsWith('weightTrend.ts')
+    const users = Object.entries(files).filter(([p, src]) => !p.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(p)
       && /nextNutritionWeight|deriveStableNutritionWeight/.test(code(src))).map(([p]) => p);
     expect(users).toEqual([]);
+    // BLOQUE 9 · el módulo de la mediana (`weightTrend.ts`) se retiró: no puede volver a importarse.
+    expect(Object.keys(files).some((p) => p.endsWith('/utils/weightTrend.ts'))).toBe(false);
   });
   it('«Mis datos» es corrección explícita: fija peso → recalcula → luego guarda el pesaje como historial', () => {
     const c = code(EDIT_SRC);

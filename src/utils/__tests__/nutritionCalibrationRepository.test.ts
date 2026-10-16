@@ -15,9 +15,7 @@ import {
   checkinFromRow,
   calibrationFromRow,
   previousContextFromCheckin,
-  getActiveCalibration,
-  listRecentCheckins,
-  getCheckinAtCycle,
+  loadAdaptiveCalibrationData,
   ADAPTIVE_REASONS,
   TRAJECTORY_CLASSIFICATION_VALUES,
   TRAJECTORY_SUFFICIENCY_VALUES,
@@ -281,24 +279,44 @@ describe('RPC · resultados y llamadas (Supabase simulado)', () => {
     for (const w of ['.rpc(', '.insert(', '.update(', '.upsert(', '.delete(']) expect(body.includes(w), w).toBe(false);
     expect(ENERGY_CALIBRATION_VERSION).toBe(2);
   });
-  it('lecturas: estado activo, recientes (anterior) y dos ciclos atrás', async () => {
-    query.maybeSingle.mockResolvedValueOnce({ data: { id: 'cal-1', objective: 'MAINTENANCE', status: 'ACTIVE', baseline_date: '2026-10-01', cycle_start: '2026-10-04', baseline_weight_kg: 70, current_step: 1, calibration_version: 1 }, error: null });
-    expect(await getActiveCalibration()).toMatchObject({ id: 'cal-1', currentStep: 1 });
+  // BLOQUE 9 · las lecturas sueltas de MB4 (getActiveCalibration / listRecentCheckins / getCheckinAtCycle)
+  // se retiraron: la única lectura es la que necesita la autoridad de energía efectiva.
+  it('las lecturas de MB4 ya no existen', () => {
+    for (const gone of ['getActiveCalibration', 'listRecentCheckins', 'getCheckinAtCycle']) expect(REPO, gone).not.toHaveProperty(gone);
+  });
+  const CAL_ROW = { id: 'cal-1', objective: 'MAINTENANCE', status: 'ACTIVE', baseline_date: '2026-10-01', cycle_start: '2026-10-04',
+    baseline_weight_kg: 70, current_step: 0, calibration_version: 2, base_energy_raw: 2400.5 };
+  it('loadAdaptiveCalibrationData · sin calibración activa → { calibration: null }', async () => {
+    query.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    expect(await loadAdaptiveCalibrationData()).toEqual({ calibration: null, checkins: [] });
     expect(from).toHaveBeenLastCalledWith('nutrition_calibrations');
     expect(query.eq).toHaveBeenCalledWith('status', 'ACTIVE');
-
+  });
+  it('loadAdaptiveCalibrationData · calibración + TODOS sus check-ins en orden ascendente', async () => {
     const p = pipeline('MAINTENANCE', 70.3, { days: 28 });
     const row = asRow((buildCheckinRecord({ cycleIndex: 1, ...p, previousWaistCm: null }) as { payload: Record<string, unknown> }).payload);
-    query.limit.mockResolvedValueOnce({ data: [row, { ...row, hunger: 'BAD' }], error: null });
-    const recent = await listRecentCheckins('cal-1');
-    expect(recent).toHaveLength(1); // la fila irreconocible se descarta, no se inventa
+    query.maybeSingle.mockResolvedValueOnce({ data: CAL_ROW, error: null });
+    query.order.mockResolvedValueOnce({ data: [{ ...row, calibration_id: 'cal-1' }], error: null });
+    const out = await loadAdaptiveCalibrationData();
+    expect(out?.calibration).toMatchObject({ id: 'cal-1', baseEnergyRaw: 2400.5 });
+    expect(out?.checkins).toHaveLength(1);
     expect(from).toHaveBeenLastCalledWith('nutrition_adaptive_checkins');
-    expect(query.order).toHaveBeenCalledWith('cycle_index', { ascending: false });
-    expect(query.limit).toHaveBeenCalledWith(2);
-
-    query.maybeSingle.mockResolvedValueOnce({ data: row, error: null });
-    expect(await getCheckinAtCycle('cal-1', 1)).toMatchObject({ cycleIndex: 1 });
-    expect(query.eq).toHaveBeenCalledWith('cycle_index', 1);
+    expect(query.eq).toHaveBeenCalledWith('calibration_id', 'cal-1');
+    expect(query.order).toHaveBeenCalledWith('cycle_index', { ascending: true });
+  });
+  it('loadAdaptiveCalibrationData · error o fila ilegible → undefined (no leído; nunca «sin calibración»)', async () => {
+    query.maybeSingle.mockResolvedValueOnce({ data: null, error: { code: 'X' } });
+    expect(await loadAdaptiveCalibrationData()).toBeUndefined();
+    const p = pipeline('MAINTENANCE', 70.3, { days: 28 });
+    const row = asRow((buildCheckinRecord({ cycleIndex: 1, ...p, previousWaistCm: null }) as { payload: Record<string, unknown> }).payload);
+    query.maybeSingle.mockResolvedValueOnce({ data: CAL_ROW, error: null });
+    query.order.mockResolvedValueOnce({ data: [{ ...row, calibration_id: 'cal-1', hunger: 'BAD' }], error: null });
+    expect(await loadAdaptiveCalibrationData()).toBeUndefined();
+    query.maybeSingle.mockResolvedValueOnce({ data: CAL_ROW, error: null });
+    query.order.mockResolvedValueOnce({ data: null, error: { code: 'Y' } });
+    expect(await loadAdaptiveCalibrationData()).toBeUndefined();
+    query.maybeSingle.mockResolvedValueOnce({ data: { ...CAL_ROW, objective: 'BULK' }, error: null });
+    expect(await loadAdaptiveCalibrationData()).toBeUndefined();
   });
 });
 

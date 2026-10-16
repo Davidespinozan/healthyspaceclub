@@ -3,9 +3,7 @@
 // Fuente única: src/utils/nutritionEngineEntry.ts (y su grafo de imports en src/utils).
 // Regenerar: npm run build:nutrition-engine. Un test bloquea cualquier drift.
 // ════════════════════════════════════════════════════════════════════
-import { type CanonicalGoal } from './energyPrescription.d.ts';
 import { type AdaptiveDecision, type AdaptiveReason } from './adaptiveNutritionDecision.d.ts';
-import { type NutritionCalibration } from './adaptiveCalibrationCore.d.ts';
 /** Versión de la fórmula de energía calibrada. */
 export declare const CALIBRATION_ENERGY_VERSION = 1;
 /** Cada paso vale este porcentaje de la BASE congelada. */
@@ -80,30 +78,3 @@ export type CalibrationEnergyOutcome = {
     reason: 'POSITION_INVALID' | 'STEP_MISMATCH' | 'DECISION_INCOHERENT';
 };
 export declare function energyOutcomeForDecision(position: CalibrationEnergyPosition, decision: AdaptiveDecision): CalibrationEnergyOutcome;
-/**
- * EVIDENCIA para adoptar una energía calibrada como autoridad. La base congelada CRUDA es la que el
- * servidor registró al abrir la calibración (`calibration.baseEnergyRaw`, columna `base_energy_raw`);
- * NO se reconstruye desde `baseEnergyKcal` (entero redondeado), desde kcal antiguas ni desde
- * diferencias de kcal.
- */
-export interface CalibrationEnergyEvidence {
-    calibration: NutritionCalibration | null;
-    /** Objetivo canónico VIGENTE del perfil (autoridad de CAPA 1). */
-    currentObjective: CanonicalGoal | null;
-}
-export type CalibrationAdoption = {
-    adopted: true;
-    objective: CanonicalGoal;
-    baseRawEnergy: number;
-    step: number;
-    rawCalibratedEnergy: number;
-    calibratedEnergy: number;
-} | {
-    adopted: false;
-    reason: 'NO_ACTIVE_CALIBRATION' | 'UNSUPPORTED_CALIBRATION_VERSION' | 'BASE_NOT_FROZEN' | 'OBJECTIVE_CHANGED' | 'INVALID_STEP' | 'SAFETY_FLOOR_REACHED' | 'INVALID_BASE';
-};
-/**
- * ¿Hay una energía calibrada adoptable? Solo si TODO se verifica; si algo falta, no se adopta y la
- * energía autoritativa sigue siendo la de CAPA 1, exactamente como antes del Bloque 5.
- */
-export declare function resolveCalibratedEnergy(evidence: CalibrationEnergyEvidence): CalibrationAdoption;

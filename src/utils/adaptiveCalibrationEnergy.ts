@@ -16,17 +16,15 @@
 // · REDONDEO · una sola vez, al final: `Math.round(raw calibrado)`. Con step 0 coincide exactamente
 //   con `prescribedEnergy` de CAPA 1 (`Math.round(rawPrescribedEnergy)`). Nunca se encadenan
 //   redondeos entre pasos: la base se guarda cruda.
-// · ADOPCIÓN · una cifra calibrada solo es autoridad si el estado de calibración y su base congelada
-//   CRUDA son verificables. No se infiere el paso desde diferencias de kcal ni se usa un kcal antiguo
+// · ADOPCIÓN · la decide `adaptiveEnergyAuthority` (Bloque 6): estado de calibración, base congelada CRUDA y
+//   paso EFECTIVO verificables. No se infiere el paso desde diferencias de kcal ni se usa un kcal antiguo
 //   (p. ej. el entero `base_energy_kcal`) como base.
 //
-// Puro / determinista / sin estado. Sin Supabase, store ni reloj. Todavía NO lo consume ningún camino
-// productivo: conectarlo a la persistencia, a la Edge Function y a la energía autoritativa del store
-// pertenece a bloques posteriores (y requiere schema: ver el reporte del Bloque 5).
+// Puro / determinista / sin estado. Sin Supabase, store ni reloj. Lo consumen el planificador del
+// servidor (suelo T1 al registrar) y la autoridad de energía efectiva (Bloques 6–8).
 // ─────────────────────────────────────────────────────────────────────────────
-import { HSC_FAT_LOSS_SCOPE_MIN_ENERGY, CANONICAL_GOALS, type CanonicalGoal } from './energyPrescription';
+import { HSC_FAT_LOSS_SCOPE_MIN_ENERGY } from './energyPrescription';
 import { CALIBRATION_STEP_MIN, CALIBRATION_STEP_MAX, type AdaptiveDecision, type AdaptiveReason } from './adaptiveNutritionDecision';
-import { ENERGY_CALIBRATION_VERSION, type NutritionCalibration } from './adaptiveCalibrationCore';
 
 /** Versión de la fórmula de energía calibrada. */
 export const CALIBRATION_ENERGY_VERSION = 1;
@@ -121,38 +119,7 @@ export function energyOutcomeForDecision(position: CalibrationEnergyPosition, de
   return { kind: 'UNVERIFIABLE', reason: 'DECISION_INCOHERENT' };
 }
 
-/**
- * EVIDENCIA para adoptar una energía calibrada como autoridad. La base congelada CRUDA es la que el
- * servidor registró al abrir la calibración (`calibration.baseEnergyRaw`, columna `base_energy_raw`);
- * NO se reconstruye desde `baseEnergyKcal` (entero redondeado), desde kcal antiguas ni desde
- * diferencias de kcal.
- */
-export interface CalibrationEnergyEvidence {
-  calibration: NutritionCalibration | null;
-  /** Objetivo canónico VIGENTE del perfil (autoridad de CAPA 1). */
-  currentObjective: CanonicalGoal | null;
-}
-
-export type CalibrationAdoption =
-  | { adopted: true; objective: CanonicalGoal; baseRawEnergy: number; step: number; rawCalibratedEnergy: number; calibratedEnergy: number }
-  | { adopted: false; reason: 'NO_ACTIVE_CALIBRATION' | 'UNSUPPORTED_CALIBRATION_VERSION' | 'BASE_NOT_FROZEN'
-      | 'OBJECTIVE_CHANGED' | 'INVALID_STEP' | 'SAFETY_FLOOR_REACHED' | 'INVALID_BASE' };
-
-/**
- * ¿Hay una energía calibrada adoptable? Solo si TODO se verifica; si algo falta, no se adopta y la
- * energía autoritativa sigue siendo la de CAPA 1, exactamente como antes del Bloque 5.
- */
-export function resolveCalibratedEnergy(evidence: CalibrationEnergyEvidence): CalibrationAdoption {
-  const cal = evidence.calibration;
-  if (!cal || cal.status !== 'ACTIVE') return { adopted: false, reason: 'NO_ACTIVE_CALIBRATION' };
-  if (cal.calibrationVersion !== ENERGY_CALIBRATION_VERSION) return { adopted: false, reason: 'UNSUPPORTED_CALIBRATION_VERSION' };
-  if (cal.baseEnergyRaw == null) return { adopted: false, reason: 'BASE_NOT_FROZEN' };
-  if (!evidence.currentObjective || !(CANONICAL_GOALS as readonly string[]).includes(evidence.currentObjective)
-      || evidence.currentObjective !== cal.objective) return { adopted: false, reason: 'OBJECTIVE_CHANGED' };
-  const r = calibratedEnergy(cal.baseEnergyRaw, cal.currentStep);
-  if (r.status === 'REVIEW') {
-    return { adopted: false, reason: r.reason === 'STEP_OUT_OF_RANGE' ? 'INVALID_STEP' : r.reason };
-  }
-  return { adopted: true, objective: cal.objective, baseRawEnergy: r.baseRawEnergy, step: r.step,
-    rawCalibratedEnergy: r.rawCalibratedEnergy, calibratedEnergy: r.calibratedEnergy };
-}
+// BLOQUE 9 · `resolveCalibratedEnergy` / `CalibrationEnergyEvidence` (Bloque 5) RETIRADOS: adoptaban el paso
+// DECIDIDO (`current_step`). La adopción la decide ahora la autoridad de energía efectiva
+// (`adaptiveEnergyAuthority.resolveEffectiveNutritionEnergy`), que verifica la cadena de check-ins y la
+// fecha efectiva (primer domingo ≥ checkin_date) antes de aplicar `calibratedEnergy`.

@@ -21,28 +21,9 @@ import {
 
 export * from './adaptiveCalibrationCore';
 
-// ── Lecturas Supabase (RLS own-only) ────────────────────────────────────────
-export async function getActiveCalibration(): Promise<NutritionCalibration | null> {
-  const { data, error } = await supabase.from('nutrition_calibrations').select('*').eq('status', 'ACTIVE').maybeSingle();
-  if (error) { console.warn('[calibration] read active failed:', error.code ?? error.message); return null; }
-  return data ? calibrationFromRow(data as Record<string, unknown>) : null;
-}
-
-/** Los últimos `limit` check-ins de una calibración, del más reciente al más antiguo. */
-export async function listRecentCheckins(calibrationId: string, limit = 2): Promise<StoredAdaptiveCheckin[]> {
-  const { data, error } = await supabase.from('nutrition_adaptive_checkins').select('*')
-    .eq('calibration_id', calibrationId).order('cycle_index', { ascending: false }).limit(limit);
-  if (error) { console.warn('[calibration] list failed:', error.code ?? error.message); return []; }
-  return ((data ?? []) as Record<string, unknown>[]).map(checkinFromRow).filter((x): x is StoredAdaptiveCheckin => x != null);
-}
-
-/** El check-in de un ciclo concreto (p. ej. dos ciclos atrás para la ventana de ~4 semanas), o `null`. */
-export async function getCheckinAtCycle(calibrationId: string, cycleIndex: number): Promise<StoredAdaptiveCheckin | null> {
-  const { data, error } = await supabase.from('nutrition_adaptive_checkins').select('*')
-    .eq('calibration_id', calibrationId).eq('cycle_index', cycleIndex).maybeSingle();
-  if (error) { console.warn('[calibration] read cycle failed:', error.code ?? error.message); return null; }
-  return data ? checkinFromRow(data as Record<string, unknown>) : null;
-}
+// ── Lectura Supabase (RLS own-only) ─────────────────────────────────────────
+// BLOQUE 9 · las lecturas sueltas de MB4 (getActiveCalibration / listRecentCheckins / getCheckinAtCycle)
+// se retiraron: sin consumidores. La única lectura es la de la autoridad de energía efectiva.
 
 /**
  * ADAPTIVE BLOQUE 6 · lo que la autoridad de energía efectiva necesita: la calibración ACTIVA y TODOS

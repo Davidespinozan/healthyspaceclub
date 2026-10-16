@@ -1965,25 +1965,6 @@ function energyOutcomeForDecision(position, decision) {
   }
   return { kind: "UNVERIFIABLE", reason: "DECISION_INCOHERENT" };
 }
-function resolveCalibratedEnergy(evidence) {
-  const cal = evidence.calibration;
-  if (!cal || cal.status !== "ACTIVE") return { adopted: false, reason: "NO_ACTIVE_CALIBRATION" };
-  if (cal.calibrationVersion !== ENERGY_CALIBRATION_VERSION) return { adopted: false, reason: "UNSUPPORTED_CALIBRATION_VERSION" };
-  if (cal.baseEnergyRaw == null) return { adopted: false, reason: "BASE_NOT_FROZEN" };
-  if (!evidence.currentObjective || !CANONICAL_GOALS.includes(evidence.currentObjective) || evidence.currentObjective !== cal.objective) return { adopted: false, reason: "OBJECTIVE_CHANGED" };
-  const r = calibratedEnergy(cal.baseEnergyRaw, cal.currentStep);
-  if (r.status === "REVIEW") {
-    return { adopted: false, reason: r.reason === "STEP_OUT_OF_RANGE" ? "INVALID_STEP" : r.reason };
-  }
-  return {
-    adopted: true,
-    objective: cal.objective,
-    baseRawEnergy: r.baseRawEnergy,
-    step: r.step,
-    rawCalibratedEnergy: r.rawCalibratedEnergy,
-    calibratedEnergy: r.calibratedEnergy
-  };
-}
 
 // src/utils/adaptiveEnergyAuthority.ts
 var NUTRITION_SNAPSHOT_VERSION = 2;
@@ -2456,7 +2437,6 @@ export {
   referenceOnlyContext,
   referencePointFor,
   requiredWindowDays,
-  resolveCalibratedEnergy,
   resolveEffectiveNutritionEnergy,
   resolveKnownNutritionScope,
   resolveMacroPrescription,

@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
-  calibratedEnergy, rawCalibratedEnergy, energyOutcomeForDecision, resolveCalibratedEnergy,
+  calibratedEnergy, rawCalibratedEnergy, energyOutcomeForDecision,
   CALIBRATION_STEP_PERCENT, CALIBRATION_SAFETY_FLOOR_KCAL, CALIBRATION_ENERGY_VERSION,
-  type CalibrationEnergyEvidence,
 } from '../adaptiveCalibrationEnergy';
+import { resolveEffectiveNutritionEnergy } from '../adaptiveEnergyAuthority';
 import { HSC_FAT_LOSS_SCOPE_MIN_ENERGY, ENERGY_PRESCRIPTION_VERSION } from '../energyPrescription';
 import { CALIBRATION_STEP_MIN, CALIBRATION_STEP_MAX, type AdaptiveDecision } from '../adaptiveNutritionDecision';
 import { ENERGY_CALIBRATION_VERSION, type NutritionCalibration } from '../adaptiveCalibrationCore';
@@ -21,6 +21,14 @@ import ENTRY_SRC from '../nutritionEngineEntry.ts?raw';
 //   suelo T1 al bajar sobre el CRUDO, redondeo una sola vez, adopción solo con evidencia verificable.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// BLOQUE 9 · la adopción la decide la autoridad de energía efectiva (Bloque 6), que además verifica la
+// cadena de check-ins. `resolveCalibratedEnergy` (Bloque 5, adoptaba el paso DECIDIDO) quedó retirado.
+const OBX = { sex: 'Hombre', edad: 35, estatura: 178, peso: 82, embarazo: 0, requiresTherapeuticDiet: 0,
+  dailyLife: 'DL2', trainsHabitually: 1, trainingDaysPerWeek: 5, trainingSessionMinutes: 60, trainingModalities: 'strength' };
+const adopt = (cal: NutritionCalibration | null, goal = 'Bajar grasa', peso = 82) => {
+  const o = { ...OBX, goal, peso };
+  return resolveEffectiveNutritionEnergy({ state: resolveNutritionEnergyState(o as never), obData: o, calibration: cal, checkins: [], today: '2026-10-30' });
+};
 const ok = (base: number, step: number) => {
   const r = calibratedEnergy(base, step);
   if (r.status !== 'CALIBRATED') throw new Error(`esperaba CALIBRATED: ${JSON.stringify(r)}`);
@@ -69,16 +77,17 @@ describe('G · BASE CONGELADA · el progreso de peso no la mueve', () => {
     const s82 = resolveNutritionEnergyState(ob(82) as never), s78 = resolveNutritionEnergyState(ob(78) as never);
     expect(s82.rawPrescribedEnergy).not.toBe(s78.rawPrescribedEnergy);               // CAPA 1 sí cambia con el peso
     const frozen = s82.rawPrescribedEnergy!;                                          // base congelada al abrir
-    const ev = (o: ReturnType<typeof ob>): CalibrationEnergyEvidence => ({ calibration: CAL({ currentStep: -1, baseEnergyRaw: frozen }), currentObjective: resolveNutritionEnergyState(o as never).goal ?? null });
-    expect(resolveCalibratedEnergy(ev(ob(78)))).toEqual(resolveCalibratedEnergy(ev(ob(82))));
+    const a = adopt(CAL({ baseEnergyRaw: frozen }), 'Bajar grasa', 78), b = adopt(CAL({ baseEnergyRaw: frozen }), 'Bajar grasa', 82);
+    expect(a.source).toBe('CALIBRATED');
+    expect(a.effective).toEqual(b.effective);
   });
 });
 
 describe('H · PASO fuera de ±2 → REVIEW, no se adopta', () => {
   it.each([-3, 3, 1.5, Number.NaN])('step %s', (s) => {
     expect(calibratedEnergy(2000, s)).toMatchObject({ status: 'REVIEW', reason: 'STEP_OUT_OF_RANGE' });
-    expect(resolveCalibratedEnergy({ calibration: CAL({ currentStep: s, baseEnergyRaw: 2000 }), currentObjective: 'FAT_LOSS' }))
-      .toEqual({ adopted: false, reason: 'INVALID_STEP' });
+    // un paso así nunca sale de una cadena válida: la autoridad lo rechaza (CAPA 1, sin adopción)
+    expect(adopt(CAL({ currentStep: s, baseEnergyRaw: 2000 }))).toMatchObject({ source: 'BASE', status: 'NOT_ADOPTED' });
   });
   it('base no válida → REVIEW · INVALID_BASE', () => {
     for (const b of [0, -1, Number.NaN, Infinity]) expect(calibratedEnergy(b, 0)).toMatchObject({ status: 'REVIEW', reason: 'INVALID_BASE' });
@@ -158,26 +167,23 @@ describe('MB3 · la capa de energía respeta su resultado (no duplica los guards
   });
 });
 
-describe('M · ADOPCIÓN solo con evidencia verificable', () => {
-  const base = { calibration: CAL({ currentStep: -1, baseEnergyRaw: 2000 }), currentObjective: 'FAT_LOSS' as const };
-  it('todo verificado → se adopta', () => {
-    expect(resolveCalibratedEnergy(base)).toEqual({ adopted: true, objective: 'FAT_LOSS', baseRawEnergy: 2000, step: -1, rawCalibratedEnergy: 1900, calibratedEnergy: 1900 });
+describe('M · ADOPCIÓN solo con evidencia verificable (autoridad de energía efectiva)', () => {
+  it('todo verificado (paso 0, cadena vacía coherente) → se adopta la base congelada', () => {
+    expect(adopt(CAL({ baseEnergyRaw: 2000 }))).toMatchObject({ source: 'CALIBRATED', status: 'ADOPTED', effective: { rawEnergy: 2000, energy: 2000 } });
   });
+  it('sin calibración → CAPA 1', () => expect(adopt(null)).toMatchObject({ source: 'BASE', status: 'NO_CALIBRATION' }));
   it.each([
-    ['sin calibración', { calibration: null }, 'NO_ACTIVE_CALIBRATION'],
-    ['calibración cerrada', { calibration: CAL({ status: 'CLOSED' }) }, 'NO_ACTIVE_CALIBRATION'],
-    ['versión de calibración no soportada', { calibration: CAL({ calibrationVersion: 1, baseEnergyRaw: 2000 }) }, 'UNSUPPORTED_CALIBRATION_VERSION'],
-    ['sin base cruda registrada', { calibration: CAL({ currentStep: -1, baseEnergyRaw: null }) }, 'BASE_NOT_FROZEN'],
-    ['objetivo del perfil cambió', { currentObjective: 'MUSCLE_GAIN' }, 'OBJECTIVE_CHANGED'],
-    ['objetivo desconocido', { currentObjective: null }, 'OBJECTIVE_CHANGED'],
-    ['base inválida (no positiva: el mapeo de filas ya la descarta)', { calibration: CAL({ currentStep: -1, baseEnergyRaw: -5 }) }, 'INVALID_BASE'],
-    ['el paso vigente cruzaría el suelo', { calibration: CAL({ currentStep: -1, baseEnergyRaw: 1250 }) }, 'SAFETY_FLOOR_REACHED'],
-  ] as const)('%s → no se adopta (%s)', (_l, over, reason) => {
-    expect(resolveCalibratedEnergy({ ...base, ...over } as CalibrationEnergyEvidence)).toEqual({ adopted: false, reason });
+    ['calibración cerrada', CAL({ status: 'CLOSED', baseEnergyRaw: 2000 }), 'Bajar grasa', 'CALIBRATION_CLOSED'],
+    ['versión de calibración no soportada', CAL({ calibrationVersion: 1, baseEnergyRaw: 2000 }), 'Bajar grasa', 'UNSUPPORTED_CALIBRATION_VERSION'],
+    ['sin base cruda registrada', CAL({ baseEnergyRaw: null }), 'Bajar grasa', 'BASE_NOT_FROZEN'],
+    ['objetivo del perfil cambió', CAL({ baseEnergyRaw: 2000 }), 'Bienestar integral', 'OBJECTIVE_CHANGED'],
+    ['base inválida (no positiva: el mapeo de filas ya la descarta)', CAL({ baseEnergyRaw: -5 }), 'Bajar grasa', 'INVALID_BASE'],
+    ['paso decidido sin la cadena que lo justifique', CAL({ currentStep: -1, baseEnergyRaw: 2000 }), 'Bajar grasa', 'CURRENT_STEP_MISMATCH'],
+  ] as const)('%s → no se adopta (%s)', (_l, cal, goal, reason) => {
+    expect(adopt(cal, goal)).toMatchObject({ source: 'BASE', status: 'NOT_ADOPTED', notAdoptedReason: reason });
   });
   it('el entero base_energy_kcal NO se usa como base: sin base cruda no hay adopción', () => {
-    expect(resolveCalibratedEnergy({ calibration: CAL({ baseEnergyKcal: 2000, baseEnergyRaw: null, currentStep: 1 }), currentObjective: 'FAT_LOSS' }))
-      .toEqual({ adopted: false, reason: 'BASE_NOT_FROZEN' });
+    expect(adopt(CAL({ baseEnergyKcal: 2000, baseEnergyRaw: null }))).toMatchObject({ source: 'BASE', notAdoptedReason: 'BASE_NOT_FROZEN' });
   });
 });
 
@@ -191,7 +197,7 @@ describe('L · MACROS · mismas fórmulas y versión; solo cambiaría la entrada
     if ('fatG' in base && 'fatG' in cal) expect(cal.fatG).toBe(Math.round((1900 * 0.25) / 9));
     if ('proteinG' in base && 'proteinG' in cal) expect(cal.proteinG).toBe(base.proteinG);   // la proteína depende del peso, no de la energía
   });
-  it('la resolución de macros del store sigue leyendo la energía de CAPA 1 (no está cableada todavía)', () => {
+  it('sin energía efectiva distinta, la resolución de macros usa la energía de CAPA 1 (comportamiento de siempre)', () => {
     const ob = { sex: 'Hombre', goal: 'Bajar grasa', edad: 35, estatura: 178, peso: 82, embarazo: 0, requiresTherapeuticDiet: 0, dailyLife: 'DL2', trainsHabitually: 1, trainingDaysPerWeek: 5, trainingSessionMinutes: 60, trainingModalities: 'strength' };
     const s = resolveNutritionEnergyState(ob as never);
     const r = resolveMacroPrescription(s, ob as never);
@@ -215,17 +221,19 @@ describe('N · SERVIDOR · el cliente no puede declarar base, paso ni kcal calib
 
 describe('O / P · SIN EFECTO hoy en perfiles ni en el plan', () => {
   it('O · sin calibración / sin base congelada → no se adopta; la energía sigue siendo la de CAPA 1', () => {
-    expect(resolveCalibratedEnergy({ calibration: null, currentObjective: 'FAT_LOSS' }).adopted).toBe(false);
-    expect(resolveCalibratedEnergy({ calibration: CAL(), currentObjective: 'FAT_LOSS' }).adopted).toBe(false);
+    expect(adopt(null).source).toBe('BASE');
+    expect(adopt(CAL()).source).toBe('BASE');   // CAL() no trae base cruda
   });
   it('la capa la consumen el planificador del servidor y la autoridad de energía efectiva (compartida), nadie más', () => {
     const files = import.meta.glob('../../**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
     const users = Object.entries(files)
       .filter(([p]) => !p.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(p) && !p.endsWith('adaptiveCalibrationEnergy.ts') && !p.endsWith('nutritionEngineEntry.ts'))
-      .filter(([, src]) => /adaptiveCalibrationEnergy|resolveCalibratedEnergy|energyOutcomeForDecision/.test(src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')))
+      .filter(([, src]) => /adaptiveCalibrationEnergy|energyOutcomeForDecision/.test(src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')))
       .map(([p]) => p);
     expect(users).toEqual(['../adaptiveCheckinPlanner.ts', '../adaptiveEnergyAuthority.ts']);
-    expect(Object.keys(files).filter((p) => /resolveCalibratedEnergy\(/.test(files[p]) && !p.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(p) && !p.endsWith('adaptiveCalibrationEnergy.ts'))).toEqual([]);
+    // BLOQUE 9 · `resolveCalibratedEnergy` (adoptaba el paso decidido) ya no existe en ningún módulo
+    const sinComentarios = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    expect(Object.keys(files).filter((p) => /resolveCalibratedEnergy|CalibrationEnergyEvidence/.test(sinComentarios(files[p])) && !p.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(p))).toEqual([]);
   });
   it('versiones intactas (sin bump automático)', () => {
     expect([ENERGY_PRESCRIPTION_VERSION, MACRO_PRESCRIPTION_VERSION, PLAN_ENGINE_VERSION, ENERGY_CALIBRATION_VERSION, CALIBRATION_ENERGY_VERSION]).toEqual([2, 4, 33, 2, 1]);

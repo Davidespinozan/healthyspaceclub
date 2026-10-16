@@ -2,7 +2,7 @@
 
 Registro único de **qué autoridad decide cada concepto** de HSC Nutrition V1, en qué estado está y qué legado reemplazó.
 
-Última actualización: 2026-10-07 · rama `fix/nutrition-restriction-detection` (sin push, sin deploy).
+Última actualización: 2026-10-15 · rama `fix/nutrition-restriction-detection` · Adaptive Nutrition Bloque 9 (commit local, sin push hasta cerrar la QA del domingo). Producción: schema de calibración (`20261017120000`) aplicado y Edge `nutrition-checkin` v5 desplegada; frontend solo en el preview del PR #1 (sin merge a `main`).
 
 ## Estados
 
@@ -15,6 +15,7 @@ Registro único de **qué autoridad decide cada concepto** de HSC Nutrition V1, 
 | `RETIRED` | Autoridad legacy borrada del código. |
 | `OUT_OF_SCOPE` | Fuera de V1 por decisión explícita. |
 | `LEGACY ACTIVE · PENDING CAPA 4` | Regla legacy que sigue operando porque su reemplazo todavía no está diseñado. No se borra antes. |
+| `VISUAL_QA_PENDING` | Implementado y verificado por tests (y, si aplica, desplegado), pendiente de la confirmación visual del usuario. |
 
 `CLOSED_DESIGN ≠ IMPLEMENTED` · `IMPLEMENTED ≠ VERIFIED_CLEAN`.
 
@@ -44,7 +45,9 @@ Commits previos de CAPA 1: `444ee45`, `c54c313`, `090166a`, `13f744b` (cutover e
 | Capa | Estado |
 |---|---|
 | CAPA 0 · alcance y decisiones de producto | Por decisión, ver tabla. Todas `IMPLEMENTED` salvo variantes de receta (`CLOSED_DESIGN · IMPLEMENTATION_DEFERRED`). |
-| CAPA 1 · energía | `IMPLEMENTED / VERIFIED_CLEAN` |
+| CAPA 1 · energía | `IMPLEMENTED / VERIFIED_CLEAN` · V2: FAT_LOSS = M − min(0,20·M, 750) (`aa188b0`, `ENERGY_PRESCRIPTION_VERSION = 2`) |
+| Peso nutricional | `IMPLEMENTED / VERIFIED_CLEAN` + visual (Bloque 4, `f5ed417`) |
+| Adaptive Nutrition (Bloques 1–9) | Ver sección propia. Bloques 1–5 `VERIFIED_CLEAN`; 6–8 `VISUAL_QA_PENDING_SUNDAY`; 9 `IMPLEMENTED / VERIFIED_CLEAN` (tests) |
 | CAPA 2 · macros diarias | **`IMPLEMENTED / VERIFIED_CLEAN`** (A9). `MACRO_PRESCRIPTION_VERSION = 4`. Clase de actividad por modalidad declarada (A2), prioridad de carbohidrato por matriz cerrada (A4), ningún ajuste por diagnóstico (A7), `INFEASIBLE` como invariante defensivo (A8.2), copy de `SPORTS_SCOPE`/`INFEASIBLE` y documentación histórica marcada (A9). |
 | CAPA 3 | `OPEN`. No hay definición de esta capa en el repo ni implementación dedicada. No se infiere cierre. |
 | CAPA 4 · reparto en tiempos de comida | `OPEN / DESIGN IN PROGRESS`. Punto de reanudación: **MEAL FREQUENCY & EATING OPPORTUNITIES**. Sus reglas legacy siguen activas (ver abajo). |
@@ -135,6 +138,81 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v
 
 ---
 
+## Peso nutricional (Adaptive Bloque 4) · `IMPLEMENTED / VERIFIED_CLEAN` + visual
+
+| Concepto | Regla |
+|---|---|
+| Autoridad | `obData.peso` (peso nutricional). Lo fijan: onboarding, la corrección explícita de «Mis datos» y el SERVIDOR (abrir calibración y check-in, escritura estrecha de `peso` en la misma transacción). |
+| `weight_log` | Solo historial. Un pesaje no mueve peso nutricional, energía, macros, `plan_goal` ni plan. |
+| Mediana rodante (`weightTrend.ts`: `nextNutritionWeight` / `deriveStableNutritionWeight`) | `RETIRED` (Bloque 9; sin consumidores desde el Bloque 4). |
+
+---
+
+## ADAPTIVE NUTRITION · Bloques 1–9
+
+### Estado por bloque
+
+| Bloque | Contenido | Estado | Commit |
+|---|---|---|---|
+| MB1 | Trayectoria (`nutritionTrajectory`) | `IMPLEMENTED / VERIFIED_CLEAN` | `7bb374e`, `2b5a56b` |
+| MB2 | Check-in de dominio (`nutritionCheckin`) | `IMPLEMENTED / VERIFIED_CLEAN` | `5631e66` |
+| MB3 | Decisión (`adaptiveNutritionDecision`): ±2 (`CALIBRATION_LIMIT_REACHED`), inversión bloqueada (`DIRECTION_REVERSAL_BLOCKED`) | `IMPLEMENTED / VERIFIED_CLEAN` | `050f9cd` |
+| MB4 | Persistencia (`nutrition_calibrations`, `nutrition_adaptive_checkins`) | `IMPLEMENTED / VERIFIED_CLEAN` | `e29ac72` |
+| Bloque 1 / 1B | Bundle compartido del motor para Edge + tipos | `IMPLEMENTED / VERIFIED_CLEAN` | `f424dd2`, `ad5f6c4` |
+| Bloque 2 | Autoridad del SERVIDOR: Edge `nutrition-checkin` decide; el cliente solo declara (lista blanca) | `IMPLEMENTED / VERIFIED_CLEAN` | `5d40c82` |
+| Bloque 3 | CAPA 1 V2 · pérdida de grasa 20 % / 750 kcal | `IMPLEMENTED / VERIFIED_CLEAN` + visual | `aa188b0` |
+| Bloque 4 | Autoridad del peso nutricional | `IMPLEMENTED / VERIFIED_CLEAN` + visual | `f5ed417` |
+| Bloque 5 | Capa de energía calibrada; base cruda congelada; suelo T1; schema `base_energy_raw` | `IMPLEMENTED / DEPLOYED / E2E VERIFIED` | `8d0d5d1`, `4c0e245` (+ migración `20261017120000`, Edge v4) |
+| Bloques 6–8 | Snapshot V2 + hidratación · `STRENGTH_REQUIRED` · integración completa | `IMPLEMENTED / DEPLOYED (Edge v5)` · **`VISUAL_QA_PENDING_SUNDAY`** | `c7e5a49` |
+| Bloque 9 | Integración final, retirada de legacy Adaptive, ledger | `IMPLEMENTED / VERIFIED_CLEAN` (tests; sin push hasta la QA del domingo) | este checkpoint |
+
+### Reglas cerradas (`CLOSED_DESIGN` → `IMPLEMENTED`)
+
+| Concepto | Regla | Autoridad |
+|---|---|---|
+| Base congelada | `rawPrescribedEnergy` de CAPA 1 (crudo) calculado en el SERVIDOR al abrir la calibración, con el peso base que la RPC fija como peso nutricional. Inmutable (`base_energy_raw numeric NOT NULL`, guard). `base_energy_kcal` (integer) sin autoridad. | `planStartCalibration`, migración `20261017120000` |
+| Energía calibrada | `base × (1 + 0,05 × step)`, `step ∈ {−2…+2}`, calculada como `base × (100 + 5·step) / 100` desde el paso ABSOLUTO: sin compounding. Redondeo una vez al final; step 0 = `prescribedEnergy` de CAPA 1 a la base. | `adaptiveCalibrationEnergy.calibratedEnergy` |
+| Suelo T1 | Al bajar (`step < 0`), crudo ≤ 1200 → REVIEW · `SAFETY_FLOOR_REACHED`; el paso NO se mueve (`proposed = previous`, la bajada queda en `blocked_*`). Se evalúa sobre el CRUDO. | planificador del servidor + CHECK de `reason` |
+| Paso decidido vs efectivo | `current_step` = paso DECIDIDO. El efectivo se deriva por fecha recorriendo la cadena de check-ins (cada uno parte del decidido anterior; el último = `current_step`), o no se adopta. | `adaptiveEnergyAuthority.deriveEffectiveStep` |
+| Domingo (D-B5-SUNDAY) | Un paso rige desde el PRIMER DOMINGO IGUAL O POSTERIOR a `checkin_date` (check-in en domingo → ese mismo día). Sin columna: se deriva de `checkin_date`. | `firstSundayOnOrAfter` / `effectiveFromForCheckin` (misma regla, paridad probada) |
+| Adopción | Solo con calibración ACTIVE v2, base cruda presente, objetivo = el de CAPA 1 actual, fuerza satisfecha (si aplica), cadena verificable. Si no: CAPA 1 exactamente como antes. | `resolveEffectiveNutritionEnergy` |
+| Calibración ilegible | `UNAVAILABLE`: CAPA 1 provisional; el plan no se juzga (no hay regeneración falsa). | store + `weeklyPlanCurrentness(adaptiveUnavailable)` |
+| `STRENGTH_REQUIRED` (Bloque 7) | MUSCLE_GAIN / RECOMPOSITION exigen `strength` DECLARADO; la clase MIXED, «no entreno» o un valor ilegible no bastan. Cliente: sin energía adaptativa. Servidor: START y check-in → 422 `STRENGTH_REQUIRED`. FAT_LOSS / MAINTENANCE no lo exigen. | `strengthRequirement` (compartida) |
+| Trust boundary | El cliente nunca declara base, paso, kcal ni resultado; solo lo que la persona declara (lista blanca de la Edge). Las filas las escribe solo `service_role`. El cliente las LEE (RLS own-only) y deriva con el mismo motor compartido. | Edge `nutrition-checkin`, RPC `nutrition_server_*` |
+| Snapshot V2 | Objeto DERIVADO en el store (no persistido): objetivo, peso nutricional, base de CAPA 1, energía efectiva (cruda y entera), procedencia de la calibración (id, versión, base congelada, paso decidido/efectivo, `effectiveFrom`, pendiente), estado de fuerza, motivo de no-adopción y versiones. | `NutritionSnapshotV2` |
+| Proyección | Una sola (`projectNutritionEnergy`): `planGoal`, banda del banco y macros salen de la energía que manda en el MISMO `set()`; `energyState` sigue siendo CAPA 1; `tdee` = mantenimiento de CAPA 1. La hidratación lee la calibración ANTES de proyectar. Al volver a foco se re-proyecta (cruce al domingo). | store, `useAdaptiveEnergyRefresh` |
+| Vigencia del plan | Contrato existente: STALE cuando `gen.kcal`/macros ≠ meta vigente → solo cuando el paso RIGE (el domingo), nunca antes. | `weeklyPlanCurrentness` |
+| Peso | La energía adaptativa usa base congelada + paso: ni un pesaje suelto ni el peso del check-in la recalculan. | — |
+
+### Legado Adaptive retirado en el Bloque 9
+
+| Item | Motivo |
+|---|---|
+| `resolveCalibratedEnergy` / `CalibrationEnergyEvidence` (Bloque 5) | Adoptaba el paso DECIDIDO; sustituido por `resolveEffectiveNutritionEnergy`. |
+| `getActiveCalibration` / `listRecentCheckins` / `getCheckinAtCycle` (MB4) | Sin consumidores; sustituidos por `loadAdaptiveCalibrationData`. |
+| `weightTrend.ts` (mediana del peso) | Sin consumidores desde el Bloque 4. |
+
+### Conservado
+
+| Item | Clasificación | Motivo |
+|---|---|---|
+| `nutritionCheckinClient.callNutritionCheckin` | `KEEP` | Entrada del cliente a la Edge; no hay todavía UI de calibración/check-in. |
+| `base_energy_kcal` (columna + mapeo) | `DEFER` | Retirarla exige migración. Sin autoridad. |
+| Versiones v1 de MB1–MB3 en las filas | `KEEP_FOR_COMPATIBILITY` | Trazabilidad de cada check-in. |
+
+### Versiones vigentes
+
+`ENERGY_PRESCRIPTION_VERSION = 2` · `MACRO_PRESCRIPTION_VERSION = 4` · `PLAN_ENGINE_VERSION = 33` · `ENERGY_CALIBRATION_VERSION = 2` · `CALIBRATION_ENERGY_VERSION = 1` · `NUTRITION_SNAPSHOT_VERSION = 2` · `ADAPTIVE_DECISION_VERSION = 1`. Ningún bump en los Bloques 5–9.
+
+### Pendientes de Adaptive
+
+- QA visual del domingo 2026-10-18 (Bloques 6–8) con la cuenta QA CONTROLADA (historia backdated, autorizada).
+- No existe UI para abrir una calibración ni para enviar check-ins: la integración funciona extremo a extremo, pero ningún socio real puede entrar al flujo todavía. `STRENGTH_REQUIRED` tampoco tiene copy visible.
+- QA en producción del suelo T1 (requiere una ventana de check-in real).
+- Merge del PR #1 / deploy del frontend a `main`; conciliación del ledger de migraciones de Supabase (se aplican por SQL Editor / `db query`).
+
+---
+
 ## CAPA 4 · reparto en tiempos de comida · `OPEN / DESIGN IN PROGRESS`
 
 Reanudar en: **MEAL FREQUENCY & EATING OPPORTUNITIES**.
@@ -160,7 +238,10 @@ Reanudar en: **MEAL FREQUENCY & EATING OPPORTUNITIES**.
 obData ─▶ nutritionProfileInput ─▶ profileValidation ─▶ Scope Guard ─▶ ActivityClassifier
        ─▶ maintenanceEstimate ─▶ energyPrescription ─▶ NutritionEnergyState ─▶ energy_snapshot
                                                               │
-                     store.recalcFromObData / hydrateEnergyFromSnapshot (un solo set)
+   nutrition_calibrations + nutrition_adaptive_checkins (solo servidor) ─▶ adaptiveEnergyAuthority
+              (paso efectivo por domingo · base congelada × (1+0,05·step) · Snapshot V2)
+                                                              │
+   store.recalcFromObData / hydrateEnergyFromSnapshot / refreshAdaptiveEnergy (projectNutritionEnergy, un solo set)
                                                               │
                   ┌───────────────────────────┬───────────────┴──────────────┐
             planGoal / tdee / mealPlanKey     macroTargets (macroPrescription)
