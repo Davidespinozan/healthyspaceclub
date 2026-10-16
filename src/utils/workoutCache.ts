@@ -1,4 +1,3 @@
-import { supabase } from '../lib/supabase';
 import type { CardioStyle } from '../types';
 import type { SessionEndReason } from './sessionEndReason';
 
@@ -153,53 +152,24 @@ export interface CachedWorkout {
   partnerId?: string | null;     // cuenta del compañero conectado (null si invitado)
 }
 
+// MB1-C1 · CACHÉ COMPARTIDA DESACTIVADA. `workout_cache` era una caché global (una fila por
+// config_hash, entre usuarios) en la que cualquier cuenta autenticada podía insertar o actualizar
+// filas: el hash es determinista y se calcula en el cliente, así que una fila manipulada podía servir
+// a otros usuarios una selección que no pasa sus filtros (nivel, bajo impacto, dolor) y textos
+// arbitrarios. Hasta rediseñarla, Training V1 no lee ni escribe la tabla: toda generación es un
+// MISS y se genera para el usuario actual. Se conservan las firmas para no tocar el generador.
+// La migración 20261016120000_workout_cache_close_client_writes.sql retira las políticas abiertas.
+
+/** Siempre MISS: no se lee la caché compartida (ver nota MB1-C1). */
 export async function getCachedWorkout(
-  configHash: string,
-  expectedSchema: 'yoga' | 'workout' = 'workout'
+  _configHash: string,
+  _expectedSchema: 'yoga' | 'workout' = 'workout'
 ): Promise<CachedWorkout | null> {
-  try {
-    // Race con timeout 5s — cache lookup debería ser instantáneo.
-    // Si Supabase tarda más, asumimos miss y dejamos que se genere fresh.
-    const queryPromise = supabase
-      .from('workout_cache')
-      .select('workout_json, hits')
-      .eq('config_hash', configHash)
-      // maybeSingle (no single): en cache miss devuelve data:null sin error.
-      // single tiraba 406 (Not Acceptable) en 0 filas → ruido en consola.
-      .maybeSingle();
-
-    const timeoutPromise = new Promise<{ data: null; error: { message: string } }>((resolve) => {
-      setTimeout(() => resolve({ data: null, error: { message: 'cache lookup timeout' } }), 5000);
-    });
-
-    const { data, error } = (await Promise.race([queryPromise, timeoutPromise])) as
-      | { data: { workout_json: unknown; hits: number } | null; error: unknown }
-      | { data: null; error: { message: string } };
-
-    if (error || !data) return null;
-
-    // Schema version check
-    const cachedVersion = (data.workout_json as any)?.__schemaVersion;
-    const currentVersion = SCHEMA_VERSIONS[expectedSchema];
-    if (cachedVersion !== currentVersion) {
-      console.warn(`[cache] version mismatch: cached=${cachedVersion} vs current=${currentVersion} — ignoring`);
-      return null;
-    }
-
-    supabase
-      .from('workout_cache')
-      .update({ hits: (data.hits || 0) + 1, updated_at: new Date().toISOString() })
-      .eq('config_hash', configHash)
-      .then(() => {});
-
-    return data.workout_json as CachedWorkout;
-  } catch (e) {
-    console.warn('[cache] read failed:', e);
-    return null;
-  }
+  return null;
 }
 
-export async function saveWorkoutToCache(params: {
+/** No escribe en la caché compartida (ver nota MB1-C1). */
+export async function saveWorkoutToCache(_params: {
   configHash: string;
   duration: number;
   equipment: string;
@@ -208,29 +178,7 @@ export async function saveWorkoutToCache(params: {
   workout: CachedWorkout;
   schemaType: 'yoga' | 'workout';
 }): Promise<void> {
-  try {
-    const workoutWithVersion = {
-      ...params.workout,
-      __schemaVersion: SCHEMA_VERSIONS[params.schemaType],
-    };
-    await supabase
-      .from('workout_cache')
-      .upsert({
-        config_hash: params.configHash,
-        duration: params.duration,
-        equipment: params.equipment,
-        goal: params.goal,
-        day_type: params.dayType,
-        workout_json: workoutWithVersion,
-        hits: 1,
-        updated_at: new Date().toISOString(),
-        // INSERT-only: si ya existe esa config, NO se sobrescribe (ignoreDuplicates).
-        // La caché es compartida; permitir UPDATE dejaba que cualquier usuario
-        // envenenara la entrada de otros. El primero que la genera la fija.
-      }, { onConflict: 'config_hash', ignoreDuplicates: true });
-  } catch (e) {
-    console.warn('[cache] write failed:', e);
-  }
+  return;
 }
 
 export function validateWorkout(
