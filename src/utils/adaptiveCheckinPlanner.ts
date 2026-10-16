@@ -14,6 +14,9 @@
 //   · calendario: cycle_start = primer domingo en/después de la línea base; el
 //     check-in n vence en cycle_start + 14·n y se acepta de 1 día antes a 6 después.
 //     Fuera de ventana → NOT_DUE (ese ciclo queda saltado).
+//   · D1 (V1) · ENTRE DOS CHECK-INS ACEPTADOS HAY SIEMPRE ≥ 14 DÍAS REALES, y entre la línea base y el
+//     primero también: la ventana existe, pero nunca permite romper ese mínimo (TOO_SOON). Una sola
+//     regla de calendario (`checkinCalendarVerdict`) para el servidor y la UI.
 //   · fecha local declarada válida si está a ±1 día de la fecha UTC del servidor.
 //   · referencia: FAT_LOSS compara con el check-in anterior (o la línea base);
 //     el resto usa un ANCLA sin solapes: el último check-in con trayectoria
@@ -67,7 +70,7 @@ export type PlannerRejectReason =
   | 'INVALID_DATE' | 'FUTURE_DATE' | 'DATE_OUT_OF_TOLERANCE'
   | 'NOT_ELIGIBLE' | 'OBJECTIVE_UNRESOLVED' | 'STRENGTH_REQUIRED'
   | 'INVALID_WEIGHT' | 'INVALID_WAIST' | 'WAIST_REQUIRED'
-  | 'NO_ACTIVE_CALIBRATION' | 'OBJECTIVE_CHANGED' | 'NOT_DUE' | 'DUPLICATE_CYCLE' | 'OUT_OF_ORDER'
+  | 'NO_ACTIVE_CALIBRATION' | 'OBJECTIVE_CHANGED' | 'NOT_DUE' | 'DUPLICATE_CYCLE' | 'OUT_OF_ORDER' | 'TOO_SOON'
   | 'CHECKIN_INVALID' | 'CHECKIN_INCOMPLETE' | 'ENGINE_INVALID';
 
 export interface PlannerRejection { kind: 'REJECT'; reason: PlannerRejectReason; fields?: string[] }
@@ -125,6 +128,49 @@ export function cycleIndexForDate(cycleStart: string, date: string): number | nu
   const n = Math.floor((offset + CHECKIN_EARLY_DAYS) / CYCLE_LENGTH_DAYS);
   if (n < 1) return null;
   return offset <= CYCLE_LENGTH_DAYS * n + CHECKIN_LATE_DAYS ? n : null;
+}
+
+/** D1 · mínimo de días REALES entre dos check-ins aceptados (y entre la línea base y el primero). */
+export const MIN_CHECKIN_INTERVAL_DAYS = 14;
+
+export type CheckinCalendarVerdict =
+  | { ok: true; cycleIndex: number }
+  | { ok: false; reason: 'NOT_DUE' | 'DUPLICATE_CYCLE' | 'OUT_OF_ORDER' | 'TOO_SOON' };
+
+/**
+ * ¿Se puede registrar un check-in en `date`? ÚNICA regla de calendario: la aplica el servidor al
+ * registrar y la UI para decidir si ofrece el check-in o cuándo estará disponible. Puro.
+ */
+export function checkinCalendarVerdict(
+  cal: Pick<NutritionCalibration, 'id' | 'cycleStart' | 'baselineDate'>,
+  history: readonly StoredAdaptiveCheckin[],
+  date: string,
+): CheckinCalendarVerdict {
+  const cycleIndex = cycleIndexForDate(cal.cycleStart, date);
+  if (cycleIndex == null) return { ok: false, reason: 'NOT_DUE' };
+  const ordered = history.filter((c) => c.calibrationId === cal.id).sort((a, b) => a.cycleIndex - b.cycleIndex);
+  if (ordered.some((c) => c.cycleIndex === cycleIndex)) return { ok: false, reason: 'DUPLICATE_CYCLE' };
+  const last = ordered.length > 0 ? ordered[ordered.length - 1] : null;
+  if (last != null && (cycleIndex < last.cycleIndex || date <= last.checkinDate)) return { ok: false, reason: 'OUT_OF_ORDER' };
+  const since = ymdToDay(last != null ? last.checkinDate : cal.baselineDate), d = ymdToDay(date);
+  if (since == null || d == null || d - since < MIN_CHECKIN_INTERVAL_DAYS) return { ok: false, reason: 'TOO_SOON' };
+  return { ok: true, cycleIndex };
+}
+
+/** Primer día ≥ `from` en que `checkinCalendarVerdict` aceptaría un check-in (null si no hay en el horizonte). Puro. */
+export function nextCheckinOpenDate(
+  cal: Pick<NutritionCalibration, 'id' | 'cycleStart' | 'baselineDate'>,
+  history: readonly StoredAdaptiveCheckin[],
+  from: string,
+  horizonDays = 120,
+): string | null {
+  const f = ymdToDay(from);
+  if (f == null) return null;
+  for (let i = 0; i <= horizonDays; i++) {
+    const date = dayToYmd(f + i);
+    if (checkinCalendarVerdict(cal, history, date).ok) return date;
+  }
+  return null;
 }
 
 /** Fecha local declarada aceptable respecto a la fecha UTC del servidor. */
@@ -209,8 +255,11 @@ export function planStartCalibration(input: StartPlanInput): StartPlan {
 
   // Bloque 5 · BASE CONGELADA, server-side: CAPA 1 con el peso base que la RPC fijará como peso
   // nutricional (misma transacción). Solo PRESCRIBED con ese peso es elegible; la base es el CRUDO.
-  const baseEnergyRaw = baseEnergyAtBaseline(input.obData, weightKg, objective);
-  if (baseEnergyRaw == null) return reject('NOT_ELIGIBLE');
+  const base = baseEnergyAtBaseline(input.obData, weightKg, objective);
+  // El estado de CAPA 1 con ese peso viaja como diagnóstico (p. ej. FAT_LOSS_BLOCKED por peso bajo):
+  // la UI puede explicar la causa. No cambia la regla.
+  if (base.raw == null) return reject('NOT_ELIGIBLE', base.status ? [base.status] : undefined);
+  const baseEnergyRaw = base.raw;
 
   return {
     kind: 'START',
@@ -226,15 +275,15 @@ export function planStartCalibration(input: StartPlanInput): StartPlan {
   };
 }
 
-/** `rawPrescribedEnergy` de CAPA 1 con el peso base; `null` si no es PRESCRIBED o el objetivo no cuadra. */
-function baseEnergyAtBaseline(obData: unknown, baselineWeightKg: number, objective: CanonicalGoal): number | null {
-  if (obData == null || typeof obData !== 'object') return null;
+/** `rawPrescribedEnergy` de CAPA 1 con el peso base (`raw` null si no es PRESCRIBED o el objetivo no cuadra) y su estado. */
+function baseEnergyAtBaseline(obData: unknown, baselineWeightKg: number, objective: CanonicalGoal): { raw: number | null; status: string | null } {
+  if (obData == null || typeof obData !== 'object') return { raw: null, status: null };
   try {
     const s = resolveNutritionEnergyState({ ...(obData as Record<string, unknown>), peso: baselineWeightKg } as never);
-    if (s.status !== 'PRESCRIBED' || s.goal !== objective) return null;
-    return isPositiveFinite(s.rawPrescribedEnergy) ? s.rawPrescribedEnergy : null;
+    if (s.status !== 'PRESCRIBED' || s.goal !== objective) return { raw: null, status: s.status };
+    return { raw: isPositiveFinite(s.rawPrescribedEnergy) ? s.rawPrescribedEnergy : null, status: s.status };
   } catch {
-    return null;
+    return { raw: null, status: null };
   }
 }
 
@@ -295,12 +344,12 @@ export function planCheckin(input: CheckinPlanInput): CheckinPlan {
   // BLOQUE 7 · si la fuerza declarada desapareció, no se decide nada adaptativo sobre ganancia/recomposición.
   if (strengthRequirement(objective, input.obData) === 'STRENGTH_REQUIRED') return reject('STRENGTH_REQUIRED');
 
-  const cycleIndex = cycleIndexForDate(cal.cycleStart, req.date);
-  if (cycleIndex == null) return reject('NOT_DUE');
+  // Calendario (ventana del ciclo, orden y D1 · ≥ 14 días reales desde el último aceptado o la línea base).
+  const when = checkinCalendarVerdict(cal, input.history, req.date);
+  if (!when.ok) return reject(when.reason);
+  const cycleIndex = when.cycleIndex;
   const ordered = input.history.filter((c) => c.calibrationId === cal.id).sort((a, b) => a.cycleIndex - b.cycleIndex);
-  if (ordered.some((c) => c.cycleIndex === cycleIndex)) return reject('DUPLICATE_CYCLE');
   const last = ordered.length > 0 ? ordered[ordered.length - 1] : null;
-  if (last != null && (cycleIndex < last.cycleIndex || req.date <= last.checkinDate)) return reject('OUT_OF_ORDER');
 
   // Fuerza: cuenta solo `strength` declarado (MIXED solo no basta). Sin declaración → false; ilegible → desconocido.
   const modalities = readTrainingModalities((input.obData as Record<string, unknown> | null | undefined)?.trainingModalities);

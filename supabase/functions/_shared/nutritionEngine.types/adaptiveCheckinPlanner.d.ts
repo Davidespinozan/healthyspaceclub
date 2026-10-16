@@ -18,7 +18,7 @@ export declare const DECLARED_DATE_TOLERANCE_DAYS = 1;
 /** Campos que el cliente PUEDE enviar. Cualquier otro se rechaza: el servidor no acepta autoridad. */
 export declare const START_REQUEST_FIELDS: readonly ["requestId", "localDate", "weightKg", "waistCm"];
 export declare const CHECKIN_REQUEST_FIELDS: readonly ["requestId", "localDate", "weightKg", "waistCm", "adherenceAnswer", "hunger", "energy", "performance", "strengthExperience", "recentStrengthContinuity"];
-export type PlannerRejectReason = 'INVALID_REQUEST' | 'UNEXPECTED_FIELDS' | 'INVALID_REQUEST_ID' | 'INVALID_DATE' | 'FUTURE_DATE' | 'DATE_OUT_OF_TOLERANCE' | 'NOT_ELIGIBLE' | 'OBJECTIVE_UNRESOLVED' | 'STRENGTH_REQUIRED' | 'INVALID_WEIGHT' | 'INVALID_WAIST' | 'WAIST_REQUIRED' | 'NO_ACTIVE_CALIBRATION' | 'OBJECTIVE_CHANGED' | 'NOT_DUE' | 'DUPLICATE_CYCLE' | 'OUT_OF_ORDER' | 'CHECKIN_INVALID' | 'CHECKIN_INCOMPLETE' | 'ENGINE_INVALID';
+export type PlannerRejectReason = 'INVALID_REQUEST' | 'UNEXPECTED_FIELDS' | 'INVALID_REQUEST_ID' | 'INVALID_DATE' | 'FUTURE_DATE' | 'DATE_OUT_OF_TOLERANCE' | 'NOT_ELIGIBLE' | 'OBJECTIVE_UNRESOLVED' | 'STRENGTH_REQUIRED' | 'INVALID_WEIGHT' | 'INVALID_WAIST' | 'WAIST_REQUIRED' | 'NO_ACTIVE_CALIBRATION' | 'OBJECTIVE_CHANGED' | 'NOT_DUE' | 'DUPLICATE_CYCLE' | 'OUT_OF_ORDER' | 'TOO_SOON' | 'CHECKIN_INVALID' | 'CHECKIN_INCOMPLETE' | 'ENGINE_INVALID';
 export interface PlannerRejection {
     kind: 'REJECT';
     reason: PlannerRejectReason;
@@ -39,6 +39,22 @@ export declare function calibrationEffectiveFrom(checkinDate: string): string | 
 export declare function cycleDueDate(cycleStart: string, n: number): string | null;
 /** Ciclo al que corresponde una fecha, o null si cae fuera de toda ventana [vence − 1, vence + 6]. */
 export declare function cycleIndexForDate(cycleStart: string, date: string): number | null;
+/** D1 · mínimo de días REALES entre dos check-ins aceptados (y entre la línea base y el primero). */
+export declare const MIN_CHECKIN_INTERVAL_DAYS = 14;
+export type CheckinCalendarVerdict = {
+    ok: true;
+    cycleIndex: number;
+} | {
+    ok: false;
+    reason: 'NOT_DUE' | 'DUPLICATE_CYCLE' | 'OUT_OF_ORDER' | 'TOO_SOON';
+};
+/**
+ * ¿Se puede registrar un check-in en `date`? ÚNICA regla de calendario: la aplica el servidor al
+ * registrar y la UI para decidir si ofrece el check-in o cuándo estará disponible. Puro.
+ */
+export declare function checkinCalendarVerdict(cal: Pick<NutritionCalibration, 'id' | 'cycleStart' | 'baselineDate'>, history: readonly StoredAdaptiveCheckin[], date: string): CheckinCalendarVerdict;
+/** Primer día ≥ `from` en que `checkinCalendarVerdict` aceptaría un check-in (null si no hay en el horizonte). Puro. */
+export declare function nextCheckinOpenDate(cal: Pick<NutritionCalibration, 'id' | 'cycleStart' | 'baselineDate'>, history: readonly StoredAdaptiveCheckin[], from: string, horizonDays?: number): string | null;
 /** Fecha local declarada aceptable respecto a la fecha UTC del servidor. */
 export declare function acceptDeclaredDate(declared: unknown, serverUtcDate: string): {
     ok: true;

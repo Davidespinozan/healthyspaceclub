@@ -2140,6 +2140,27 @@ function cycleIndexForDate(cycleStart, date) {
   if (n < 1) return null;
   return offset <= CYCLE_LENGTH_DAYS * n + CHECKIN_LATE_DAYS ? n : null;
 }
+var MIN_CHECKIN_INTERVAL_DAYS = 14;
+function checkinCalendarVerdict(cal, history, date) {
+  const cycleIndex = cycleIndexForDate(cal.cycleStart, date);
+  if (cycleIndex == null) return { ok: false, reason: "NOT_DUE" };
+  const ordered = history.filter((c) => c.calibrationId === cal.id).sort((a, b) => a.cycleIndex - b.cycleIndex);
+  if (ordered.some((c) => c.cycleIndex === cycleIndex)) return { ok: false, reason: "DUPLICATE_CYCLE" };
+  const last = ordered.length > 0 ? ordered[ordered.length - 1] : null;
+  if (last != null && (cycleIndex < last.cycleIndex || date <= last.checkinDate)) return { ok: false, reason: "OUT_OF_ORDER" };
+  const since = ymdToDay2(last != null ? last.checkinDate : cal.baselineDate), d = ymdToDay2(date);
+  if (since == null || d == null || d - since < MIN_CHECKIN_INTERVAL_DAYS) return { ok: false, reason: "TOO_SOON" };
+  return { ok: true, cycleIndex };
+}
+function nextCheckinOpenDate(cal, history, from, horizonDays = 120) {
+  const f = ymdToDay2(from);
+  if (f == null) return null;
+  for (let i = 0; i <= horizonDays; i++) {
+    const date = dayToYmd2(f + i);
+    if (checkinCalendarVerdict(cal, history, date).ok) return date;
+  }
+  return null;
+}
 function acceptDeclaredDate(declared2, serverUtcDate) {
   const d = ymdToDay2(declared2), s = ymdToDay2(serverUtcDate);
   if (d == null || s == null) return { ok: false, reason: "INVALID_DATE" };
@@ -2182,8 +2203,9 @@ function planStartCalibration(input) {
   if (objective === "RECOMPOSITION" && baselineWaistCm == null) return reject("WAIST_REQUIRED");
   const active = input.active?.status === "ACTIVE" ? input.active : null;
   if (active != null && active.objective === objective) return { kind: "ALREADY_ACTIVE", calibrationId: active.id };
-  const baseEnergyRaw = baseEnergyAtBaseline(input.obData, weightKg, objective);
-  if (baseEnergyRaw == null) return reject("NOT_ELIGIBLE");
+  const base = baseEnergyAtBaseline(input.obData, weightKg, objective);
+  if (base.raw == null) return reject("NOT_ELIGIBLE", base.status ? [base.status] : void 0);
+  const baseEnergyRaw = base.raw;
   return {
     kind: "START",
     requestId: req.requestId,
@@ -2198,13 +2220,13 @@ function planStartCalibration(input) {
   };
 }
 function baseEnergyAtBaseline(obData, baselineWeightKg, objective) {
-  if (obData == null || typeof obData !== "object") return null;
+  if (obData == null || typeof obData !== "object") return { raw: null, status: null };
   try {
     const s = resolveNutritionEnergyState({ ...obData, peso: baselineWeightKg });
-    if (s.status !== "PRESCRIBED" || s.goal !== objective) return null;
-    return isPositiveFinite4(s.rawPrescribedEnergy) ? s.rawPrescribedEnergy : null;
+    if (s.status !== "PRESCRIBED" || s.goal !== objective) return { raw: null, status: s.status };
+    return { raw: isPositiveFinite4(s.rawPrescribedEnergy) ? s.rawPrescribedEnergy : null, status: s.status };
   } catch {
-    return null;
+    return { raw: null, status: null };
   }
 }
 function referenceOnlyContext(waistCm) {
@@ -2224,12 +2246,11 @@ function planCheckin(input) {
   if (objective == null) return reject("OBJECTIVE_UNRESOLVED");
   if (objective !== cal.objective) return reject("OBJECTIVE_CHANGED");
   if (strengthRequirement(objective, input.obData) === "STRENGTH_REQUIRED") return reject("STRENGTH_REQUIRED");
-  const cycleIndex = cycleIndexForDate(cal.cycleStart, req.date);
-  if (cycleIndex == null) return reject("NOT_DUE");
+  const when = checkinCalendarVerdict(cal, input.history, req.date);
+  if (!when.ok) return reject(when.reason);
+  const cycleIndex = when.cycleIndex;
   const ordered = input.history.filter((c) => c.calibrationId === cal.id).sort((a, b2) => a.cycleIndex - b2.cycleIndex);
-  if (ordered.some((c) => c.cycleIndex === cycleIndex)) return reject("DUPLICATE_CYCLE");
   const last = ordered.length > 0 ? ordered[ordered.length - 1] : null;
-  if (last != null && (cycleIndex < last.cycleIndex || req.date <= last.checkinDate)) return reject("OUT_OF_ORDER");
   const modalities = readTrainingModalities(input.obData?.trainingModalities);
   const trainsStrength = modalities.kind === "DECLARED" ? modalities.modalities.includes("strength") : modalities.kind === "MISSING" ? false : null;
   const b = req.body;
@@ -2350,6 +2371,7 @@ export {
   MACRO_PRESCRIPTION_VERSION,
   MAINTENANCE_BAND_PCT,
   MAINTENANCE_ESTIMATE_VERSION,
+  MIN_CHECKIN_INTERVAL_DAYS,
   MISSING_PROFILE_FIELDS,
   MUSCLE_GAIN_EXPERIENCE_LEVELS,
   MUSCLE_GAIN_RELATIVE_SURPLUS,
@@ -2399,6 +2421,7 @@ export {
   checkKnownScopeExclusions,
   checkNutritionScope,
   checkScopeWithPendingInputs,
+  checkinCalendarVerdict,
   checkinFromRow,
   classifyActivity,
   classifyWaistChange,
@@ -2421,6 +2444,7 @@ export {
   isIsoUtcTimestamp,
   isRequestId,
   isServableMacroPrescription,
+  nextCheckinOpenDate,
   nonServableMacroNotice,
   nutritionProfileInputFrom,
   parseEnergySnapshot,

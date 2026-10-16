@@ -1,10 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // ADAPTIVE · INICIO AUTOMÁTICO del seguimiento con el peso del perfil.
 //
-// Si el perfil es elegible y no hay calibración activa de su objetivo, el seguimiento se inicia solo
-// (sin pedir peso fuera del check-in). Usa la autoridad EXISTENTE: la Edge `nutrition-checkin`
-// action 'start', que calcula base, ciclo y fecha en el servidor. El cliente solo declara
-// { requestId, localDate, weightKg = peso del perfil }.
+// Usuario NUEVO (onboarding reciente, D3) con perfil elegible y sin calibración activa de su objetivo:
+// el seguimiento se inicia solo (sin pedir peso fuera del check-in). Usa la autoridad EXISTENTE: la
+// Edge `nutrition-checkin` action 'start', que calcula base, ciclo y fecha en el servidor. El cliente
+// solo declara { requestId, localDate, weightKg = peso del perfil, waistCm = cintura del perfil (D2,
+// solo recomposición) }. Un usuario EXISTENTE no se inicia aquí: su check-in inicial lo hace (tarjeta).
 //
 // Idempotencia (sin migración):
 //   · requestId DETERMINISTA por (usuario, objetivo, día): dos pestañas o dos montajes envían el mismo
@@ -46,14 +47,16 @@ export async function maybeAutoStartAdaptive(now: Date = new Date()): Promise<vo
   const uid = s.user?.id;
   if (!uid) return;
   const today = dayKey(now);
-  const st = adaptiveEntryState({ energyStatus: s.energyState?.status ?? null, obData: s.obData, adaptive: s.adaptiveCalibration, snapshot: s.nutritionSnapshot, today });
+  const st = adaptiveEntryState({ energyStatus: s.energyState?.status ?? null, obData: s.obData, adaptive: s.adaptiveCalibration,
+    snapshot: s.nutritionSnapshot, startDate: s.startDate, today });
   if (st.kind !== 'STARTING') return;
   const key = `${uid}|${st.objective}|${today}`;
   if (attempts.has(key)) return;
   setAttempt(key, 'PENDING');
   try {
     const requestId = await deterministicRequestId(`hsc-adaptive-autostart|${key}`);
-    const res = await callNutritionCheckin('start', { requestId, localDate: today, weightKg: st.weightKg },
+    const res = await callNutritionCheckin('start',
+      { requestId, localDate: today, weightKg: st.weightKg, ...(st.waistCm != null ? { waistCm: st.waistCm } : {}) },
       s.applyServerNutritionWeight, s.loadAdaptiveCalibration);
     const status = res.body?.status;
     setAttempt(key, status === 'STARTED' || status === 'ALREADY_ACTIVE' ? 'DONE' : 'FAILED');
@@ -76,13 +79,14 @@ export function useAdaptiveAutoStartStatus(): AutoStartStatus | null {
   );
 }
 
-/** Montado en App: reevalúa cuando cambian usuario, perfil, energía o calibración, y al volver a foco. */
+/** Montado en App: reevalúa cuando cambian usuario, perfil, energía, calibración o start_date, y al volver a foco. */
 export function useAdaptiveAutoStart(): void {
   useEffect(() => {
     const run = () => { void maybeAutoStartAdaptive(); };
     run();
     const unsub = useAppStore.subscribe((st, prev) => {
-      if (st.user !== prev.user || st.obData !== prev.obData || st.energyState !== prev.energyState || st.adaptiveCalibration !== prev.adaptiveCalibration) run();
+      if (st.user !== prev.user || st.obData !== prev.obData || st.energyState !== prev.energyState
+        || st.adaptiveCalibration !== prev.adaptiveCalibration || st.startDate !== prev.startDate) run();
     });
     window.addEventListener('focus', run);
     return () => { unsub(); window.removeEventListener('focus', run); };

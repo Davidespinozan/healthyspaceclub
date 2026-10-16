@@ -220,8 +220,8 @@ describe('FASE B · HSC no fabrica edad, peso ni estatura', () => {
   });
 
   it('la requiredness que los hacía inalcanzables SIGUE existiendo', () => {
-    // Botón del paso 5: sin los tres campos no se continúa.
-    expect(CODE_ONB).toContain('disabled={!edad || !peso || !estatura}');
+    // Botón del paso 5: sin los tres campos no se continúa (D2 añade la cintura SOLO para Recomposición).
+    expect(CODE_ONB).toContain("disabled={!edad || !peso || !estatura || (goal === 'Recomposición' && !cintura)}");
     // Y `handleDataContinue` los valida con `invalidField` antes de avanzar.
     expect(CODE_ONB).toContain('const inv = invalidField({');
     expect(CODE_ONB).toContain('if (inv) { setDataError(t(invMsg[inv])); return; }');

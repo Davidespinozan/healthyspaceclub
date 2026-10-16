@@ -3,8 +3,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADAPTIVE · INICIO AUTOMÁTICO con el store REAL. Se simulan Supabase, la lectura de la calibración
-// y la Edge. Verifica: se inicia solo con el peso del perfil, una sola vez, con requestId
-// determinista (idempotente en el servidor), nunca cuando no corresponde, y sin bucles al fallar.
+// y la Edge. Verifica: un usuario NUEVO (onboarding reciente, D3) se inicia solo con el peso (y la
+// cintura, D2) del perfil, una sola vez, con requestId determinista (idempotente en el servidor);
+// un usuario EXISTENTE nunca (su check-in inicial lo hace); y sin bucles al fallar.
 // ─────────────────────────────────────────────────────────────────────────────
 vi.mock('../../lib/supabase', () => ({
   supabase: {
@@ -34,13 +35,13 @@ const CAL: NutritionCalibration = { id: 'cal-1', objective: 'FAT_LOSS', status: 
 const S = () => useAppStore.getState();
 const at = (ymd: string) => vi.setSystemTime(new Date(`${ymd}T12:00:00`));
 const entry = () => adaptiveEntryState({ energyStatus: S().energyState?.status ?? null, obData: S().obData, adaptive: S().adaptiveCalibration,
-  snapshot: S().nutritionSnapshot, today: '2026-10-16' });
+  snapshot: S().nutritionSnapshot, startDate: S().startDate, today: '2026-10-16' });
 
 const NO_CAL = { calibration: null, checkins: [] };
 const UNREADABLE = Symbol('unreadable');
-async function login(ob: Record<string, unknown>, data: unknown = NO_CAL, uid = 'u-1') {
+async function login(ob: Record<string, unknown>, data: unknown = NO_CAL, uid = 'u-1', startDate = '2026-10-16') {
   h.load.mockResolvedValue(data === UNREADABLE ? undefined : data);
-  useAppStore.setState({ user: { id: uid } as never, obData: { ...ob } as never, planGoal: null, macroTargets: null, energyState: null,
+  useAppStore.setState({ user: { id: uid } as never, obData: { ...ob } as never, startDate, planGoal: null, macroTargets: null, energyState: null,
     nutritionSnapshot: null, adaptiveCalibration: { load: 'IDLE', calibration: null, checkins: [] } as never });
   await S().hydrateEnergyFromSnapshot(null);
 }
@@ -56,7 +57,7 @@ function serverAccepts() {
 beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); at('2026-10-16'); h.load.mockReset(); h.call.mockReset(); __resetAdaptiveAutoStartForTests(); });
 afterEach(() => { vi.useRealTimers(); });
 
-describe('se inicia solo con el peso del perfil', () => {
+describe('usuario NUEVO · se inicia solo con el peso del perfil', () => {
   it('perfil elegible sin calibración → un START con { requestId, localDate, weightKg = peso del perfil } y nada más', async () => {
     await login(OB);
     serverAccepts();
@@ -90,6 +91,21 @@ describe('se inicia solo con el peso del perfil', () => {
 });
 
 describe('nunca cuando no corresponde', () => {
+  it('usuario EXISTENTE (onboarding antiguo) → no se inicia con el peso viejo; la tarjeta ofrece el check-in inicial', async () => {
+    await login(OB, NO_CAL, 'u-1', '2026-01-15');
+    await maybeAutoStartAdaptive();
+    expect(h.call).not.toHaveBeenCalled();
+    expect(entry()).toEqual({ kind: 'INITIAL_CHECKIN', waistCm: null });
+  });
+  it('onboarding sin terminar (sin start_date) → no se inicia; al fijarse start_date el hook lo inicia', async () => {
+    await login(OB, NO_CAL, 'u-1', '');
+    serverAccepts();
+    renderHook(() => useAdaptiveAutoStart());
+    await act(async () => { await Promise.resolve(); });
+    expect(h.call).not.toHaveBeenCalled();
+    await act(async () => { useAppStore.setState({ startDate: '2026-10-16' }); });
+    await waitFor(() => expect(h.call).toHaveBeenCalledTimes(1));
+  });
   it('ya hay calibración activa de su objetivo → no se llama', async () => {
     await login(OB, { calibration: CAL, checkins: [] });
     await maybeAutoStartAdaptive();
@@ -106,9 +122,20 @@ describe('nunca cuando no corresponde', () => {
     await maybeAutoStartAdaptive();
     await login({ ...OB, goal: 'Ganar músculo', trainingModalities: 'endurance' });
     await maybeAutoStartAdaptive();
-    await login({ ...OB, goal: 'Recomposición' });
+    await login({ ...OB, goal: 'Recomposición' });                               // D2 · sin cintura en el perfil
     await maybeAutoStartAdaptive();
     expect(h.call).not.toHaveBeenCalled();
+  });
+});
+
+describe('D2 · recomposición', () => {
+  it('con cintura en el perfil → el START declara peso Y cintura del perfil', async () => {
+    await login({ ...OB, goal: 'Recomposición', cintura: 88 });
+    serverAccepts();
+    await maybeAutoStartAdaptive();
+    expect(h.call).toHaveBeenCalledTimes(1);
+    expect(h.call.mock.calls[0][1]).toMatchObject({ weightKg: 82, waistCm: 88 });
+    expect(Object.keys(h.call.mock.calls[0][1]).sort()).toEqual(['localDate', 'requestId', 'waistCm', 'weightKg']);
   });
 });
 

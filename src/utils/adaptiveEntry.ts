@@ -11,14 +11,20 @@
 //   · resultado → la decisión que devolvió el servidor, solo traducida.
 // El cliente nunca calcula ni envía base, paso, kcal ni decisión.
 //
-// FLUJO (corrección de producto): el seguimiento se INICIA SOLO con el peso del perfil
-// (onboarding / Mis datos); la primera interacción es el check-in completo cuando toca. El peso
-// solo se pide dentro del check-in.
+// FLUJO (corrección de producto + D1–D3):
+//   · usuario NUEVO (onboarding reciente): el seguimiento se INICIA SOLO con el peso del perfil; la
+//     primera interacción es el check-in completo, ≥ 14 días después;
+//   · usuario EXISTENTE (sin línea base reciente): NO se usa el peso viejo del perfil. Su primer
+//     check-in es el INICIAL: registra el peso de hoy como punto de partida (START en el servidor),
+//     sin ajustar nada; el segundo, ≥ 14 días después, ya evalúa;
+//   · D2 · recomposición: la cintura de partida es dato del perfil (onboarding / Mis datos); sin ella
+//     no se inicia y se pide completarla en Mis datos;
+//   · D1 · el calendario lo decide `checkinCalendarVerdict` (servidor) — ≥ 14 días reales.
 // ─────────────────────────────────────────────────────────────────────────────
 import { canonicalGoalFrom, type CanonicalGoal } from './energyPrescription';
 import { strengthRequirement, type NutritionSnapshotV2 } from './adaptiveEnergyAuthority';
 import {
-  cycleIndexForDate, cycleDueDate, calibrationEffectiveFrom, planStartCalibration, CHECKIN_EARLY_DAYS, CHECKIN_LATE_DAYS,
+  calibrationEffectiveFrom, checkinCalendarVerdict, nextCheckinOpenDate, planStartCalibration,
 } from './adaptiveCheckinPlanner';
 import type { NutritionCalibration, StoredAdaptiveCheckin } from './adaptiveCalibrationCore';
 
@@ -26,6 +32,13 @@ import type { NutritionCalibration, StoredAdaptiveCheckin } from './adaptiveCali
 const EXPERIENCE_OBJECTIVES: readonly CanonicalGoal[] = ['MUSCLE_GAIN'];
 /** Objetivos que exigen cintura en el check-in y en la línea base (MB2). */
 const WAIST_OBJECTIVES: readonly CanonicalGoal[] = ['RECOMPOSITION'];
+/** D2 · clave del perfil con la cintura (cm), capturada en onboarding / Mis datos para recomposición. */
+export const WAIST_PROFILE_KEY = 'cintura';
+/**
+ * D3 · la línea base del perfil es CONFIABLE solo si el onboarding es reciente: `start_date` hasta
+ * 1 día antes de hoy (cubre zona horaria). Fuera de eso el peso del perfil puede ser viejo.
+ */
+export const RECENT_ONBOARDING_MAX_DAYS = 1;
 
 /** Peso plausible: el MISMO rango que valida el perfil (`nutritionTargets.invalidField`). */
 export const WEIGHT_KG_RANGE = { min: 30, max: 300 } as const;
@@ -42,13 +55,14 @@ export type AdaptiveBlockReason =
   | 'UNDERWEIGHT'            // CAPA 1: bajar grasa bloqueado por peso bajo para la estatura
   | 'FAT_LOSS_FLOOR'         // CAPA 1: la cifra de bajar grasa quedaría bajo el mínimo seguro
   | 'PROFILE_INCOMPLETE'     // faltan datos del perfil (incluido un peso válido)
+  | 'WAIST_MISSING'          // D2 · recomposición sin cintura en el perfil
   | 'NOT_ELIGIBLE';          // el planificador del servidor rechaza el inicio por otra razón
 
 export type AdaptiveEntryState =
   | { kind: 'HIDDEN' }                                       // calibración aún no leída o ilegible
   | { kind: 'BLOCKED'; reason: AdaptiveBlockReason }
-  | { kind: 'NEEDS_WAIST' }                                  // recomposición: falta la cintura de partida
-  | { kind: 'STARTING'; weightKg: number; objective: CanonicalGoal }   // se inicia solo, con el peso del perfil
+  | { kind: 'STARTING'; weightKg: number; waistCm: number | null; objective: CanonicalGoal }   // nuevo: se inicia solo con el perfil
+  | { kind: 'INITIAL_CHECKIN'; waistCm: number | null }       // existente: el primer check-in fija el punto de partida
   | { kind: 'CHECKIN_DUE'; needsWaist: boolean; needsExperience: boolean; pendingFrom: string | null }
   | { kind: 'WAITING'; nextCheckinFrom: string | null; pendingFrom: string | null };
 
@@ -58,32 +72,30 @@ export interface AdaptiveEntryInput {
   obData: unknown;
   adaptive: { load: 'IDLE' | 'LOADED' | 'UNAVAILABLE'; calibration: NutritionCalibration | null; checkins: readonly StoredAdaptiveCheckin[] };
   snapshot: NutritionSnapshotV2 | null;
+  /** `start_date` del perfil (fecha del onboarding, 'YYYY-MM-DD'); '' mientras no termina el onboarding. */
+  startDate: string;
   /** Fecha local 'YYYY-MM-DD'. */
   today: string;
 }
 
 const DAY_MS = 86_400_000;
-const addDays = (ymd: string, n: number) => new Date(Date.parse(`${ymd}T00:00:00Z`) + n * DAY_MS).toISOString().slice(0, 10);
+const ymdDay = (ymd: string) => { const t = Date.parse(`${ymd}T00:00:00Z`); return Number.isFinite(t) ? Math.round(t / DAY_MS) : null; };
 function objectiveOf(obData: unknown): CanonicalGoal | null {
   try { return canonicalGoalFrom((obData as Record<string, unknown> | null | undefined)?.goal); } catch { return null; }
 }
 const PRECHECK_REQUEST_ID = '00000000-0000-4000-8000-000000000000';
 
-/** Primer día en que se puede hacer el próximo check-in aún no registrado (o null si no se encuentra). */
-export function nextCheckinWindowStart(cal: NutritionCalibration, done: ReadonlySet<number>, today: string): string | null {
-  for (let n = 1; n <= 104; n++) {
-    const due = cycleDueDate(cal.cycleStart, n);
-    if (!due) return null;
-    const close = addDays(due, CHECKIN_LATE_DAYS);
-    if (close < today || done.has(n)) continue;
-    return addDays(due, -CHECKIN_EARLY_DAYS);
-  }
-  return null;
+/** D3 · ¿el peso del perfil puede ser la línea base? Solo con onboarding reciente. Puro. */
+export function hasRecentProfileBaseline(startDate: string, today: string): boolean {
+  const s = ymdDay(startDate), t = ymdDay(today);
+  if (s == null || t == null) return false;
+  const d = t - s;
+  return d >= -1 && d <= RECENT_ONBOARDING_MAX_DAYS;
 }
 
 /** Estado de la tarjeta Adaptive. Puro. */
 export function adaptiveEntryState(input: AdaptiveEntryInput): AdaptiveEntryState {
-  const { energyStatus, obData, adaptive, snapshot, today } = input;
+  const { energyStatus, obData, adaptive, snapshot, startDate, today } = input;
   if (adaptive.load !== 'LOADED') return { kind: 'HIDDEN' };
   // CAPA 1 primero: si la energía no está prescrita, el servidor rechaza tanto el inicio como el check-in.
   if (energyStatus === 'FAT_LOSS_BLOCKED') return { kind: 'BLOCKED', reason: 'UNDERWEIGHT' };
@@ -96,36 +108,49 @@ export function adaptiveEntryState(input: AdaptiveEntryInput): AdaptiveEntryStat
   const cal = adaptive.calibration;
   const active = cal && cal.status === 'ACTIVE' && cal.objective === objective ? cal : null;
   if (!active) {
-    // Sin calibración activa de ESTE objetivo: se inicia sola con el peso del perfil. El pre-chequeo es
-    // el planificador del servidor; si él no lo aceptaría, no se llama y se explica por qué.
-    const weightKg = (obData as Record<string, unknown>).peso;
+    if (!startDate) return { kind: 'HIDDEN' };                 // onboarding sin terminar
+    const ob = obData as Record<string, unknown>;
+    // D2 · recomposición: la cintura de partida sale del perfil; sin ella no se inicia.
+    let waistCm: number | null = null;
+    if (WAIST_OBJECTIVES.includes(objective)) {
+      if (!isPlausibleWaistCm(ob[WAIST_PROFILE_KEY])) return { kind: 'BLOCKED', reason: 'WAIST_MISSING' };
+      waistCm = ob[WAIST_PROFILE_KEY] as number;
+    }
+    const weightKg = ob.peso;
     if (!isPlausibleWeightKg(weightKg)) return { kind: 'BLOCKED', reason: 'PROFILE_INCOMPLETE' };
+    // Pre-chequeo con el planificador del servidor: si él no aceptaría el inicio, no se ofrece y se explica.
     const plan = planStartCalibration({
-      request: { requestId: PRECHECK_REQUEST_ID, localDate: today, weightKg }, obData, energyStatus,
-      active: cal && cal.status === 'ACTIVE' ? cal : null, serverUtcDate: today,
+      request: { requestId: PRECHECK_REQUEST_ID, localDate: today, weightKg, ...(waistCm != null ? { waistCm } : {}) },
+      obData, energyStatus, active: cal && cal.status === 'ACTIVE' ? cal : null, serverUtcDate: today,
     });
-    if (plan.kind === 'START') return { kind: 'STARTING', weightKg, objective };
-    if (plan.kind === 'REJECT' && plan.reason === 'WAIST_REQUIRED') return { kind: 'NEEDS_WAIST' };
-    if (plan.kind === 'REJECT' && plan.reason === 'STRENGTH_REQUIRED') return { kind: 'BLOCKED', reason: 'STRENGTH_REQUIRED' };
-    return { kind: 'BLOCKED', reason: 'NOT_ELIGIBLE' };
+    if (plan.kind === 'REJECT') {
+      if (plan.reason === 'WAIST_REQUIRED' || plan.reason === 'INVALID_WAIST') return { kind: 'BLOCKED', reason: 'WAIST_MISSING' };
+      if (plan.reason === 'STRENGTH_REQUIRED') return { kind: 'BLOCKED', reason: 'STRENGTH_REQUIRED' };
+      return { kind: 'BLOCKED', reason: 'NOT_ELIGIBLE' };
+    }
+    // D3 · nuevo → se inicia solo con el perfil; existente → su primer check-in fija el punto de partida.
+    return hasRecentProfileBaseline(startDate, today)
+      ? { kind: 'STARTING', weightKg, waistCm, objective }
+      : { kind: 'INITIAL_CHECKIN', waistCm };
   }
 
   const pendingFrom = snapshot?.calibration?.pending?.effectiveFrom ?? null;
-  const done = new Set(adaptive.checkins.filter((c) => c.calibrationId === active.id).map((c) => c.cycleIndex));
-  const cycle = cycleIndexForDate(active.cycleStart, today);
-  if (cycle != null && !done.has(cycle)) {
+  // D1 · la misma regla de calendario que aplica el servidor (ventana + ≥ 14 días reales).
+  if (checkinCalendarVerdict(active, adaptive.checkins, today).ok) {
     return { kind: 'CHECKIN_DUE', needsWaist: WAIST_OBJECTIVES.includes(objective), needsExperience: EXPERIENCE_OBJECTIVES.includes(objective), pendingFrom };
   }
-  return { kind: 'WAITING', nextCheckinFrom: nextCheckinWindowStart(active, done, today), pendingFrom };
+  return { kind: 'WAITING', nextCheckinFrom: nextCheckinOpenDate(active, adaptive.checkins, today), pendingFrom };
 }
 
 // ── Traducción de la respuesta del servidor ─────────────────────────────────
 export type AdaptiveResult =
   | { kind: 'STARTED' }
+  | { kind: 'BASELINE' }                                     // check-in inicial: punto de partida registrado, nada ajustado
   | { kind: 'KEEP' }                                         // MAINTAIN / NO_ADJUSTMENT
   | { kind: 'ADJUST'; effectiveFrom: string | null }       // STEP_UP / STEP_DOWN: rige el domingo ≥ fecha del check-in
   | { kind: 'REVIEW' }
   | { kind: 'UNDERWEIGHT' }                                  // check-in registrado, pero el peso declarado bloquea bajar grasa
+  | { kind: 'UNDERWEIGHT_NOT_SAVED' }                        // check-in inicial NO registrado: ese peso bloquea bajar grasa
   | { kind: 'STRENGTH_REQUIRED' }
   | { kind: 'NOT_DUE' }
   | { kind: 'NOT_ELIGIBLE' }
@@ -154,10 +179,28 @@ export function adaptiveResultFrom(
       }
     }
     case 'STRENGTH_REQUIRED': return { kind: 'STRENGTH_REQUIRED' };
-    case 'NOT_DUE': case 'DUPLICATE_CYCLE': case 'OUT_OF_ORDER': return { kind: 'NOT_DUE' };
-    case 'NOT_ELIGIBLE': case 'OBJECTIVE_UNRESOLVED': case 'OBJECTIVE_CHANGED': case 'NO_ACTIVE_CALIBRATION':
+    case 'NOT_DUE': case 'DUPLICATE_CYCLE': case 'OUT_OF_ORDER': case 'TOO_SOON': return { kind: 'NOT_DUE' };
+    case 'NOT_ELIGIBLE':
+      // START con un peso que deja CAPA 1 en FAT_LOSS_BLOCKED: el servidor lo dice en `fields`.
+      if (Array.isArray(body.fields) && body.fields.includes('FAT_LOSS_BLOCKED')) return { kind: 'UNDERWEIGHT_NOT_SAVED' };
+      return underweight ? { kind: 'UNDERWEIGHT' } : { kind: 'NOT_ELIGIBLE' };
+    case 'OBJECTIVE_UNRESOLVED': case 'OBJECTIVE_CHANGED': case 'NO_ACTIVE_CALIBRATION':
       return underweight ? { kind: 'UNDERWEIGHT' } : { kind: 'NOT_ELIGIBLE' };
     case 'INVALID_WEIGHT': case 'INVALID_WAIST': case 'WAIST_REQUIRED': case 'CHECKIN_INVALID': case 'CHECKIN_INCOMPLETE': return { kind: 'INVALID_INPUT' };
     default: return { kind: 'ERROR' };
   }
 }
+
+/**
+ * Check-in INICIAL · pre-chequeo del peso declarado con el planificador del SERVIDOR antes de enviar.
+ * `null` = el servidor lo aceptaría; si no, el resultado que se mostraría. Puro.
+ */
+export function precheckInitialCheckin(input: { obData: unknown; energyStatus: string | null; weightKg: number; waistCm: number | null; today: string }): AdaptiveResult | null {
+  const plan = planStartCalibration({
+    request: { requestId: PRECHECK_REQUEST_ID, localDate: input.today, weightKg: input.weightKg, ...(input.waistCm != null ? { waistCm: input.waistCm } : {}) },
+    obData: input.obData, energyStatus: input.energyStatus, active: null, serverUtcDate: input.today,
+  });
+  if (plan.kind !== 'REJECT') return null;
+  return adaptiveResultFrom({ status: plan.reason, ...(plan.fields ? { fields: plan.fields } : {}) }, input.today);
+}
+

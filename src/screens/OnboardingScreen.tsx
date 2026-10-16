@@ -17,6 +17,7 @@ import AuthProviderButtons from '../components/AuthProviderButtons';
 // se lee del store. De `nutritionTargets` quedan el PUENTE de macros (legacy hasta
 // la CAPA 2) y los dos avisos de peso meta, que no son energéticos.
 import { targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
+import { isPlausibleWaistCm, WAIST_PROFILE_KEY } from '../utils/adaptiveEntry';
 import { classifyTargetWeight } from '../utils/targetWeightSafety';
 import { isServableMacroPrescription, nonServableMacroNotice } from '../utils/macroPrescription';
 import {
@@ -123,6 +124,8 @@ export default function OnboardingScreen() {
     setRestricciones(prev => prev.includes(r) ? prev.filter(x => x !== r) : [...prev, r]);
   const [grasa, setGrasa] = useState('');
   const [pesoMeta, setPesoMeta] = useState('');
+  // D2 · cintura de partida (cm): dato requerido SOLO para Recomposición (línea base de Adaptive).
+  const [cintura, setCintura] = useState('');
   const [dataError, setDataError] = useState('');
 
   // Pre-llenar el país por IP (default editable). Determina la DISPONIBILIDAD de
@@ -329,6 +332,8 @@ export default function OnboardingScreen() {
     if (ubic.country) setObData('country', ubic.country);
     setObData('grasa', grasa ? Number(grasa) : '');
     setObData('pesoMeta', pesoMeta ? Number(pesoMeta) : '');
+    // D2 · recomposición: la cintura es dato inicial requerido (línea base de Adaptive).
+    if (goal === 'Recomposición') setObData(WAIST_PROFILE_KEY, Number(String(cintura).replace(',', '.')));
 
     // Ubicación → user_profiles. Es lo que decide si el socio ve contenido local
     // (los bowls del food truck). Si la dejó incompleta se guarda lo que haya: el
@@ -405,6 +410,9 @@ export default function OnboardingScreen() {
       pesoMetaBajoPesoActual: 'onboarding.invalidPesoMetaBajoPesoActual',
     };
     if (inv) { setDataError(t(invMsg[inv])); return; }
+    if (goal === 'Recomposición' && !isPlausibleWaistCm(Number(String(cintura).replace(',', '.')))) {
+      setDataError(t('onboarding.invalidCintura')); return;
+    }
     if (sex === 'Mujer' && !embarazo) { setDataError(t('onboarding.embarazoRequired')); return; }
     // A7 · obligatoria: sin respuesta no hay prescripción posible.
     if (!therapeuticDiet) { setDataError(t('onboarding.embarazoRequired')); return; }
@@ -595,6 +603,12 @@ export default function OnboardingScreen() {
                 <label>{t('onboarding.heightCm')}</label>
                 <input type="number" inputMode="numeric" placeholder="170" value={estatura} onChange={e => setEstatura(e.target.value)} />
               </div>
+              {goal === 'Recomposición' && (
+                <div className="onb-input-field">
+                  <label>{t('onboarding.waistCm')}</label>
+                  <input type="number" inputMode="decimal" placeholder="85" name="cintura" value={cintura} onChange={e => setCintura(e.target.value)} />
+                </div>
+              )}
             </div>
             <div className="onb-ubic">
               <label className="onb-hint">{t('onboarding.locationHint')}</label>
@@ -686,7 +700,7 @@ export default function OnboardingScreen() {
             <button
               className="onb-btn-dark"
               onClick={handleDataContinue}
-              disabled={!edad || !peso || !estatura}
+              disabled={!edad || !peso || !estatura || (goal === 'Recomposición' && !cintura)}
             >
               {t('onboarding.continue')} <ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden="true" />
             </button>

@@ -48,11 +48,12 @@ describe('A · ABRIR · la base CRUDA se calcula en el servidor con el peso base
   });
   it('solo con PRESCRIBED usando ese peso: un peso base que cae fuera de alcance → NOT_ELIGIBLE', () => {
     expect(resolveNutritionEnergyState({ ...OB, peso: 55 } as never).status).not.toBe('PRESCRIBED');   // IMC < umbral de FAT_LOSS
-    expect(start({ weightKg: 55 })).toEqual({ kind: 'REJECT', reason: 'NOT_ELIGIBLE' });
+    // El estado de CAPA 1 con ese peso viaja como diagnóstico (la UI explica la causa); la regla no cambia.
+    expect(start({ weightKg: 55 })).toEqual({ kind: 'REJECT', reason: 'NOT_ELIGIBLE', fields: ['FAT_LOSS_BLOCKED'] });
   });
   it('sin perfil legible → NOT_ELIGIBLE (nunca una base inventada)', () => {
     expect(planStartCalibration({ request: { requestId: RID, localDate: '2026-10-01', weightKg: 70 }, obData: { goal: 'Bajar grasa' }, energyStatus: 'PRESCRIBED', active: null, serverUtcDate: '2026-10-01' }))
-      .toEqual({ kind: 'REJECT', reason: 'NOT_ELIGIBLE' });
+      .toMatchObject({ kind: 'REJECT', reason: 'NOT_ELIGIBLE' });
   });
 });
 

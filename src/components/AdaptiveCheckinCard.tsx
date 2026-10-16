@@ -3,12 +3,13 @@
 // Solo PRESENTA y RECOGE lo que la persona declara. Todo lo demás lo deciden autoridades existentes:
 //   · qué mostrar (activando / check-in / esperar / qué falta) → `adaptiveEntryState` (puro), que usa
 //     CAPA 1, el planificador y el calendario del SERVIDOR y el Snapshot V2 del store;
-//   · el inicio → AUTOMÁTICO con el peso del perfil (`adaptiveAutoStart`, montado en App); aquí solo
-//     se muestra su estado. Excepción: recomposición necesita la cintura de partida;
+//   · el inicio → usuario NUEVO: AUTOMÁTICO con el perfil (`adaptiveAutoStart`, montado en App), aquí
+//     solo se muestra su estado; usuario EXISTENTE (D3): su check-in INICIAL registra el peso de hoy como
+//     punto de partida (START), sin ajustar nada. Recomposición sin cintura en el perfil → Mis datos (D2);
 //   · el check-in → `callNutritionCheckin` (Edge `nutrition-checkin`), que decide y persiste;
 //   · el resultado → la decisión del servidor, solo traducida (`adaptiveResultFrom`).
 // El cliente nunca calcula ni envía base, paso, kcal ni decisión, y nunca muestra términos técnicos.
-// El peso SOLO se pide dentro del check-in.
+// El peso SOLO se pide dentro de un check-in (el inicial o el completo).
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
@@ -19,7 +20,7 @@ import type { TranslationKey } from '../i18n/es';
 import { dayKey } from '../utils/localDate';
 import { callNutritionCheckin } from '../utils/nutritionCheckinClient';
 import {
-  adaptiveEntryState, adaptiveResultFrom, isPlausibleWeightKg, isPlausibleWaistCm, WEIGHT_KG_RANGE, WAIST_CM_RANGE,
+  adaptiveEntryState, adaptiveResultFrom, precheckInitialCheckin, isPlausibleWeightKg, isPlausibleWaistCm, WEIGHT_KG_RANGE, WAIST_CM_RANGE,
   type AdaptiveBlockReason, type AdaptiveResult,
 } from '../utils/adaptiveEntry';
 import { retryAdaptiveAutoStart, useAdaptiveAutoStartStatus } from '../utils/adaptiveAutoStart';
@@ -32,26 +33,28 @@ import './adaptive-checkin.css';
 
 interface Props { onEditData: () => void }
 
-const BLOCK_COPY: Record<AdaptiveBlockReason, { title: TranslationKey; body: TranslationKey }> = {
-  STRENGTH_REQUIRED: { title: 'adaptive.strengthTitle', body: 'adaptive.strengthBody' },
-  UNDERWEIGHT: { title: 'adaptive.underweightTitle', body: 'adaptive.underweightBody' },
-  FAT_LOSS_FLOOR: { title: 'adaptive.floorTitle', body: 'adaptive.floorBody' },
-  PROFILE_INCOMPLETE: { title: 'adaptive.profileTitle', body: 'adaptive.profileBody' },
-  NOT_ELIGIBLE: { title: 'adaptive.notEligibleTitle', body: 'adaptive.notEligibleBody' },
+const BLOCK_COPY: Record<AdaptiveBlockReason, { title: TranslationKey; body: TranslationKey; cta: TranslationKey }> = {
+  STRENGTH_REQUIRED: { title: 'adaptive.strengthTitle', body: 'adaptive.strengthBody', cta: 'adaptive.editDataCta' },
+  UNDERWEIGHT: { title: 'adaptive.underweightTitle', body: 'adaptive.underweightBody', cta: 'adaptive.editDataCta' },
+  FAT_LOSS_FLOOR: { title: 'adaptive.floorTitle', body: 'adaptive.floorBody', cta: 'adaptive.editDataCta' },
+  PROFILE_INCOMPLETE: { title: 'adaptive.profileTitle', body: 'adaptive.profileBody', cta: 'adaptive.editDataCta' },
+  WAIST_MISSING: { title: 'adaptive.waistMissingTitle', body: 'adaptive.waistMissingBody', cta: 'adaptive.goToEditDataCta' },
+  NOT_ELIGIBLE: { title: 'adaptive.notEligibleTitle', body: 'adaptive.notEligibleBody', cta: 'adaptive.editDataCta' },
 };
+type SheetMode = 'initial' | 'checkin';
 const parseNum = (s: string) => (s.trim() === '' ? NaN : Number(s.replace(',', '.')));
 
 export default function AdaptiveCheckinCard({ onEditData }: Props) {
   const { t, locale } = useT();
-  const { energyStatus, obData, adaptive, snapshot, applyServerNutritionWeight, loadAdaptiveCalibration } = useAppStore(useShallow((s) => ({
-    energyStatus: s.energyState?.status ?? null, obData: s.obData, adaptive: s.adaptiveCalibration, snapshot: s.nutritionSnapshot,
+  const { energyStatus, obData, adaptive, snapshot, startDate, applyServerNutritionWeight, loadAdaptiveCalibration } = useAppStore(useShallow((s) => ({
+    energyStatus: s.energyState?.status ?? null, obData: s.obData, adaptive: s.adaptiveCalibration, snapshot: s.nutritionSnapshot, startDate: s.startDate,
     applyServerNutritionWeight: s.applyServerNutritionWeight, loadAdaptiveCalibration: s.loadAdaptiveCalibration,
   })));
   const autoStart = useAdaptiveAutoStartStatus();
   const today = dayKey(new Date());
-  const state = useMemo(() => adaptiveEntryState({ energyStatus, obData, adaptive, snapshot, today }),
-    [energyStatus, obData, adaptive, snapshot, today]);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const state = useMemo(() => adaptiveEntryState({ energyStatus, obData, adaptive, snapshot, startDate: startDate ?? '', today }),
+    [energyStatus, obData, adaptive, snapshot, startDate, today]);
+  const [sheet, setSheet] = useState<SheetMode | null>(null);
   const [result, setResult] = useState<AdaptiveResult | null>(null);
   const submit = (action: 'start' | 'checkin', declared: Record<string, unknown>) =>
     callNutritionCheckin(action, declared, applyServerNutritionWeight, loadAdaptiveCalibration);
@@ -60,6 +63,8 @@ export default function AdaptiveCheckinCard({ onEditData }: Props) {
   const resultText = (r: AdaptiveResult): string | null => {
     switch (r.kind) {
       case 'STARTED': return t('adaptive.resultStarted');
+      case 'BASELINE': return t('adaptive.resultBaseline');
+      case 'UNDERWEIGHT_NOT_SAVED': return t('adaptive.resultUnderweightNotSaved');
       case 'KEEP': return t('adaptive.resultKeep');
       case 'ADJUST': return r.effectiveFrom && r.effectiveFrom !== today ? t('adaptive.resultAdjust', { date: fmt(r.effectiveFrom) }) : t('adaptive.resultAdjustToday');
       case 'REVIEW': return t('adaptive.resultReview');
@@ -75,7 +80,7 @@ export default function AdaptiveCheckinCard({ onEditData }: Props) {
     <div className="ad-card" role="status" data-adaptive={`blocked-${reason}`}>
       <p className="ad-title">{t(BLOCK_COPY[reason].title)}</p>
       <p className="ad-body">{t(BLOCK_COPY[reason].body)}</p>
-      <button type="button" className="ad-cta" onClick={onEditData}>{t('adaptive.editDataCta')}</button>
+      <button type="button" className="ad-cta" onClick={onEditData}>{t(BLOCK_COPY[reason].cta)}</button>
     </div>
   );
 
@@ -102,15 +107,19 @@ export default function AdaptiveCheckinCard({ onEditData }: Props) {
           </div>
         )
       )}
-      {state.kind === 'NEEDS_WAIST' && (
-        <WaistStartCard weightKg={(obData as Record<string, unknown>).peso as number} today={today} submit={submit} onDone={setResult} />
+      {state.kind === 'INITIAL_CHECKIN' && (
+        <div className="ad-card" data-adaptive="initial">
+          <p className="ad-title">{t('adaptive.initialTitle')}</p>
+          <p className="ad-body">{t('adaptive.initialBody')}</p>
+          <button type="button" className="ad-cta" onClick={() => { setResult(null); setSheet('initial'); }}>{t('adaptive.initialCta')}</button>
+        </div>
       )}
       {state.kind === 'CHECKIN_DUE' && (
         <div className="ad-card" data-adaptive="due">
           <p className="ad-title">{t('adaptive.dueTitle')}</p>
           <p className="ad-body">{t('adaptive.dueBody')}</p>
           {state.pendingFrom && <p className="ad-note">{t('adaptive.pendingAdjust', { date: fmt(state.pendingFrom) })}</p>}
-          <button type="button" className="ad-cta" onClick={() => { setResult(null); setSheetOpen(true); }}>{t('adaptive.dueCta')}</button>
+          <button type="button" className="ad-cta" onClick={() => { setResult(null); setSheet('checkin'); }}>{t('adaptive.dueCta')}</button>
         </div>
       )}
       {state.kind === 'WAITING' && (
@@ -120,12 +129,23 @@ export default function AdaptiveCheckinCard({ onEditData }: Props) {
           <p className="ad-body">{state.nextCheckinFrom ? t('adaptive.waitingNext', { date: fmt(state.nextCheckinFrom) }) : t('adaptive.waitingNextUnknown')}</p>
         </div>
       )}
-      {sheetOpen && state.kind === 'CHECKIN_DUE' && (
+      {sheet === 'checkin' && state.kind === 'CHECKIN_DUE' && (
         <CheckinSheet
+          mode="checkin"
           needsWaist={state.needsWaist}
           needsExperience={state.needsExperience}
-          onClose={() => setSheetOpen(false)}
-          onDone={(r) => { setResult(r); setSheetOpen(false); }}
+          onClose={() => setSheet(null)}
+          onDone={(r) => { setResult(r); setSheet(null); }}
+          submit={submit}
+        />
+      )}
+      {sheet === 'initial' && state.kind === 'INITIAL_CHECKIN' && (
+        <CheckinSheet
+          mode="initial"
+          profileWaistCm={state.waistCm}
+          precheck={(weightKg) => precheckInitialCheckin({ obData, energyStatus, weightKg, waistCm: state.waistCm, today })}
+          onClose={() => setSheet(null)}
+          onDone={(r) => { setResult(r); setSheet(null); }}
           submit={submit}
         />
       )}
@@ -136,51 +156,20 @@ export default function AdaptiveCheckinCard({ onEditData }: Props) {
 type Submit = (action: 'start' | 'checkin', declared: Record<string, unknown>) => ReturnType<typeof callNutritionCheckin>;
 const newRequestId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
 
-// ── Recomposición: la línea base exige cintura (contrato MB2); el peso sale del perfil ──
-function WaistStartCard({ weightKg, today, submit, onDone }: { weightKg: number; today: string; submit: Submit; onDone: (r: AdaptiveResult) => void }) {
-  const { t } = useT();
-  const [requestId] = useState(newRequestId);
-  const [waist, setWaist] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  async function send() {
-    const wc = parseNum(waist);
-    if (!isPlausibleWaistCm(wc)) { setError(t('adaptive.invalidWaist', WAIST_CM_RANGE)); return; }
-    setError('');
-    setBusy(true);
-    try {
-      const res = await submit('start', { requestId, localDate: today, weightKg, waistCm: wc });
-      onDone(adaptiveResultFrom(res.body, today));
-    } catch {
-      onDone({ kind: 'ERROR' });
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <div className="ad-card" data-adaptive="needs-waist">
-      <p className="ad-title">{t('adaptive.waistTitle')}</p>
-      <p className="ad-body">{t('adaptive.waistBody')}</p>
-      <label className="ad-field">
-        <span className="ad-field-label">{t('adaptive.waistLabel')}</span>
-        <input className="sh-input" inputMode="decimal" name="waistCm" value={waist} onChange={(e) => setWaist(e.target.value)} />
-      </label>
-      {error && <p className="sh-error">{error}</p>}
-      <button type="button" className="ad-cta" disabled={busy} onClick={() => void send()}>{busy ? t('adaptive.sending') : t('adaptive.waistSubmit')}</button>
-    </div>
-  );
-}
+// ── Hoja de check-in (lo único que pide peso) ───────────────────────────────
+// 'initial' (D3, usuario existente): solo el peso de hoy → START en el servidor = punto de partida,
+// sin ajustar nada (no hay trayectoria que evaluar). La cintura de recomposición sale del perfil (D2).
+// 'checkin': el check-in completo del contrato MB2.
+type SheetProps = { onClose: () => void; onDone: (r: AdaptiveResult) => void; submit: Submit } & (
+  | { mode: 'checkin'; needsWaist: boolean; needsExperience: boolean }
+  | { mode: 'initial'; profileWaistCm: number | null; precheck: (weightKg: number) => AdaptiveResult | null }
+);
 
-// ── Hoja de check-in (única interacción que pide peso) ─────────────────────
-interface SheetProps {
-  needsWaist: boolean;
-  needsExperience: boolean;
-  onClose: () => void;
-  onDone: (r: AdaptiveResult) => void;
-  submit: Submit;
-}
-
-function CheckinSheet({ needsWaist, needsExperience, onClose, onDone, submit }: SheetProps) {
+function CheckinSheet(props: SheetProps) {
+  const { mode, onClose, onDone, submit } = props;
+  const needsWaist = mode === 'checkin' && props.needsWaist;
+  const needsExperience = mode === 'checkin' && props.needsExperience;
+  const full = mode === 'checkin';
   const { t } = useT();
   // Un requestId por hoja: reintentar dentro de la misma hoja es idempotente en el servidor.
   const [requestId] = useState(newRequestId);
@@ -211,22 +200,30 @@ function CheckinSheet({ needsWaist, needsExperience, onClose, onDone, submit }: 
   async function send() {
     const w = parseNum(weight);
     const wc = parseNum(waist);
-    if (weight.trim() === '' || (needsWaist && waist.trim() === '') || !adherence || !hunger || !energy || !performance || (needsExperience && !experience)) {
+    if (weight.trim() === '' || (needsWaist && waist.trim() === '')
+      || (full && (!adherence || !hunger || !energy || !performance || (needsExperience && !experience)))) {
       setError(t('adaptive.incomplete')); return;
     }
     if (!isPlausibleWeightKg(w)) { setError(t('adaptive.invalidWeight', WEIGHT_KG_RANGE)); return; }
     if (needsWaist && !isPlausibleWaistCm(wc)) { setError(t('adaptive.invalidWaist', WAIST_CM_RANGE)); return; }
     setError('');
     const localDate = dayKey(new Date());
+    if (props.mode === 'initial') {
+      // Si el planificador del servidor no aceptaría este peso (p. ej. bajo para bajar grasa), se explica sin enviar.
+      const blocked = props.precheck(w);
+      if (blocked) { onDone(blocked); return; }
+    }
     // SOLO lo que la persona declara (lista blanca de la Edge). Nada de base, paso, kcal ni decisión.
-    const declared: Record<string, unknown> = { requestId, localDate, weightKg: w, adherenceAnswer: adherence, hunger, energy, performance };
-    if (needsWaist) declared.waistCm = wc;
-    if (needsExperience) declared.strengthExperience = experience;
+    const declared: Record<string, unknown> = props.mode === 'initial'
+      ? { requestId, localDate, weightKg: w, ...(props.profileWaistCm != null ? { waistCm: props.profileWaistCm } : {}) }
+      : { requestId, localDate, weightKg: w, adherenceAnswer: adherence, hunger, energy, performance,
+          ...(needsWaist ? { waistCm: wc } : {}), ...(needsExperience ? { strengthExperience: experience } : {}) };
     setBusy(true);
     try {
-      const res = await submit('checkin', declared);
+      const res = await submit(full ? 'checkin' : 'start', declared);
       // El store ya aplicó el peso del servidor y recalculó CAPA 1: su estado explica la consecuencia.
-      onDone(adaptiveResultFrom(res.body, localDate, useAppStore.getState().energyState?.status ?? null));
+      const r = adaptiveResultFrom(res.body, localDate, useAppStore.getState().energyState?.status ?? null);
+      onDone(!full && r.kind === 'STARTED' ? { kind: 'BASELINE' } : r);
     } catch {
       onDone({ kind: 'ERROR' });
     } finally {
@@ -236,13 +233,13 @@ function CheckinSheet({ needsWaist, needsExperience, onClose, onDone, submit }: 
 
   return createPortal(
     <div className="sh-overlay" onClick={onClose}>
-      <div className="sh-sheet" onClick={(e) => e.stopPropagation()} data-adaptive-sheet="checkin">
+      <div className="sh-sheet" onClick={(e) => e.stopPropagation()} data-adaptive-sheet={mode}>
         <div className="sh-handle" />
         <div className="sh-header-row">
-          <h1 className="sh-title">{t('adaptive.checkinSheetTitle')}</h1>
+          <h1 className="sh-title">{t(full ? 'adaptive.checkinSheetTitle' : 'adaptive.initialSheetTitle')}</h1>
           <button className="sh-close" onClick={onClose} aria-label={t('common.close')} type="button"><X size={18} strokeWidth={2} /></button>
         </div>
-        <p className="sh-intro">{t('adaptive.checkinIntro')}</p>
+        <p className="sh-intro">{t(full ? 'adaptive.checkinIntro' : 'adaptive.initialIntro')}</p>
         <div className="sh-form">
           <label className="sh-field">
             <span className="sh-field-label">{t('adaptive.weightLabel')}</span>
@@ -254,18 +251,22 @@ function CheckinSheet({ needsWaist, needsExperience, onClose, onDone, submit }: 
               <input className="sh-input" inputMode="decimal" name="waistCm" value={waist} onChange={(e) => setWaist(e.target.value)} />
             </label>
           )}
-          <div className="sh-field"><span className="sh-field-label">{t('adaptive.adherenceQ')}</span>
-            {chips(ADHERENCE_ANSWERS, 'adherence', adherence, setAdherence, (v) => range(v as (typeof ADHERENCE_ANSWERS)[number]))}</div>
-          <div className="sh-field"><span className="sh-field-label">{t('adaptive.hungerQ')}</span>{chips(NUTRITION_HUNGER_VALUES, 'hunger', hunger, setHunger)}</div>
-          <div className="sh-field"><span className="sh-field-label">{t('adaptive.energyQ')}</span>{chips(NUTRITION_ENERGY_VALUES, 'energy', energy, setEnergy)}</div>
-          <div className="sh-field"><span className="sh-field-label">{t('adaptive.performanceQ')}</span>{chips(NUTRITION_PERFORMANCE_VALUES, 'performance', performance, setPerformance)}</div>
-          {needsExperience && (
-            <div className="sh-field"><span className="sh-field-label">{t('adaptive.experienceQ')}</span>{chips(STRENGTH_EXPERIENCE_VALUES, 'experience', experience, setExperience)}</div>
+          {full && (
+            <>
+              <div className="sh-field"><span className="sh-field-label">{t('adaptive.adherenceQ')}</span>
+                {chips(ADHERENCE_ANSWERS, 'adherence', adherence, setAdherence, (v) => range(v as (typeof ADHERENCE_ANSWERS)[number]))}</div>
+              <div className="sh-field"><span className="sh-field-label">{t('adaptive.hungerQ')}</span>{chips(NUTRITION_HUNGER_VALUES, 'hunger', hunger, setHunger)}</div>
+              <div className="sh-field"><span className="sh-field-label">{t('adaptive.energyQ')}</span>{chips(NUTRITION_ENERGY_VALUES, 'energy', energy, setEnergy)}</div>
+              <div className="sh-field"><span className="sh-field-label">{t('adaptive.performanceQ')}</span>{chips(NUTRITION_PERFORMANCE_VALUES, 'performance', performance, setPerformance)}</div>
+              {needsExperience && (
+                <div className="sh-field"><span className="sh-field-label">{t('adaptive.experienceQ')}</span>{chips(STRENGTH_EXPERIENCE_VALUES, 'experience', experience, setExperience)}</div>
+              )}
+            </>
           )}
         </div>
         {error && <p className="sh-error">{error}</p>}
         <button type="button" className="sh-cta" disabled={busy} onClick={() => void send()}>
-          {busy ? t('adaptive.sending') : t('adaptive.checkinSubmit')}
+          {busy ? t('adaptive.sending') : t(full ? 'adaptive.checkinSubmit' : 'adaptive.initialSubmit')}
         </button>
       </div>
     </div>,

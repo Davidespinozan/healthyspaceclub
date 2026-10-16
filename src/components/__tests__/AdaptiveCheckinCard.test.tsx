@@ -32,13 +32,13 @@ const CHECKIN_KEYS = ['requestId', 'localDate', 'weightKg', 'waistCm', 'adherenc
 let applyServerNutritionWeight: ReturnType<typeof vi.fn>;
 let loadAdaptiveCalibration: ReturnType<typeof vi.fn>;
 let onEditData: ReturnType<typeof vi.fn<() => void>>;
-function state(over: { obData?: object; calibration?: NutritionCalibration | null; load?: string; status?: string; snapshot?: unknown } = {}) {
+function state(over: { obData?: object; calibration?: NutritionCalibration | null; load?: string; status?: string; snapshot?: unknown; startDate?: string } = {}) {
   applyServerNutritionWeight = vi.fn(async () => {});
   loadAdaptiveCalibration = vi.fn(async () => {});
   h.state = {
     language: 'es', energyState: { status: over.status ?? 'PRESCRIBED' }, obData: { ...OB, ...over.obData },
     adaptiveCalibration: { load: over.load ?? 'LOADED', calibration: over.calibration === undefined ? CAL : over.calibration, checkins: [] },
-    nutritionSnapshot: over.snapshot ?? null, applyServerNutritionWeight, loadAdaptiveCalibration,
+    nutritionSnapshot: over.snapshot ?? null, startDate: over.startDate ?? '2026-10-10', applyServerNutritionWeight, loadAdaptiveCalibration,
   };
 }
 const at = (ymd: string) => vi.setSystemTime(new Date(`${ymd}T12:00:00`));
@@ -85,31 +85,73 @@ describe('INICIO AUTOMÁTICO · no hay «Empezar seguimiento» ni se pide peso f
     fireEvent.click(screen.getByRole('button', { name: A.retryCta }));
     expect(auto.retry).toHaveBeenCalledTimes(1);
   });
-  it('recomposición: pide SOLO la cintura de partida; el peso sale del perfil', async () => {
+  it('D2 · recomposición sin cintura en el perfil: UNA tarjeta «Completa este dato…» → Mis datos; nada se inicia ni se pide aquí', () => {
     at('2026-10-10');
     state({ calibration: null, obData: { goal: 'Recomposición' } });
     mount();
-    expect(screen.getByText(A.waistTitle)).toBeTruthy();
+    expect(screen.getByText('Completa este dato para activar tu seguimiento')).toBeTruthy();
+    expect(input('waistCm')).toBeNull();
     expect(input('weightKg')).toBeNull();
-    fireEvent.change(input('waistCm'), { target: { value: '500' } });
-    fireEvent.click(screen.getByRole('button', { name: A.waistSubmit }));
-    expect(await screen.findByText('Revisa tu cintura: debe estar entre 40 y 200 cm.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: A.goToEditDataCta }));
+    expect(onEditData).toHaveBeenCalledTimes(1);
     expect(h.call).not.toHaveBeenCalled();
-    h.call.mockResolvedValue({ httpStatus: 200, body: { status: 'STARTED' } });
-    fireEvent.change(input('waistCm'), { target: { value: '84,5' } });
-    fireEvent.click(screen.getByRole('button', { name: A.waistSubmit }));
-    await waitFor(() => expect(h.call).toHaveBeenCalledTimes(1));
-    const [action, declared, applyW, reload] = h.call.mock.calls[0];
-    expect(action).toBe('start');
-    expect(Object.keys(declared).sort()).toEqual(['localDate', 'requestId', 'waistCm', 'weightKg']);
-    expect(declared).toMatchObject({ localDate: '2026-10-10', weightKg: 70, waistCm: 84.5 });
-    expect(applyW).toBe(applyServerNutritionWeight);
-    expect(reload).toBe(loadAdaptiveCalibration);
-    expect(await screen.findByText(A.resultStarted)).toBeTruthy();
   });
   it('sin calibración legible no aparece nada', () => {
     state({ load: 'UNAVAILABLE' });
     expect(mount().container.innerHTML).toBe('');
+  });
+});
+
+describe('D3 · usuario EXISTENTE · check-in INICIAL (punto de partida, sin ajustar)', () => {
+  const EXISTING = '2026-01-15';
+  async function openInitial(over: Parameters<typeof state>[0] = {}) {
+    at('2026-10-10');
+    state({ calibration: null, startDate: EXISTING, ...over });
+    mount();
+    expect(screen.getByText(A.initialTitle)).toBeTruthy();
+    expect(screen.queryByText(A.startingTitle)).toBeNull();                 // no se inicia con el peso viejo
+    fireEvent.click(screen.getByRole('button', { name: A.initialCta }));
+  }
+  it('pide SOLO el peso de hoy (sin adherencia ni demás preguntas) y lo envía como START', async () => {
+    await openInitial();
+    expect(screen.getByText(A.initialSheetTitle)).toBeTruthy();
+    expect(screen.queryByText(A.adherenceQ)).toBeNull();
+    expect(screen.queryByText(A.hungerQ)).toBeNull();
+    h.call.mockResolvedValue({ httpStatus: 200, body: { status: 'STARTED', calibrationId: 'c', nutritionWeightKg: 77.5 } });
+    fireEvent.change(input('weightKg'), { target: { value: '77,5' } });
+    fireEvent.click(screen.getByRole('button', { name: A.initialSubmit }));
+    await waitFor(() => expect(h.call).toHaveBeenCalledTimes(1));
+    const [action, declared, applyW, reload] = h.call.mock.calls[0];
+    expect(action).toBe('start');
+    expect(Object.keys(declared).sort()).toEqual(['localDate', 'requestId', 'weightKg']);
+    expect(declared).toMatchObject({ localDate: '2026-10-10', weightKg: 77.5 });
+    expect(applyW).toBe(applyServerNutritionWeight);
+    expect(reload).toBe(loadAdaptiveCalibration);
+    expect(await screen.findByText(A.resultBaseline)).toBeTruthy();         // «registramos tu punto de partida», nada ajustado
+    expectNoTechnicalTerms();
+  });
+  it('recomposición existente: la cintura viaja desde el perfil (no se vuelve a pedir)', async () => {
+    await openInitial({ obData: { goal: 'Recomposición', cintura: 90 } });
+    expect(input('waistCm')).toBeNull();
+    h.call.mockResolvedValue({ httpStatus: 200, body: { status: 'STARTED' } });
+    fireEvent.change(input('weightKg'), { target: { value: '80' } });
+    fireEvent.click(screen.getByRole('button', { name: A.initialSubmit }));
+    await waitFor(() => expect(h.call).toHaveBeenCalledTimes(1));
+    expect(h.call.mock.calls[0][1]).toMatchObject({ weightKg: 80, waistCm: 90 });
+  });
+  it('peso de hoy que bloquea bajar grasa → se explica la causa y NO se envía', async () => {
+    await openInitial();
+    fireEvent.change(input('weightKg'), { target: { value: '58' } });       // 180 cm → IMC < 18.5
+    fireEvent.click(screen.getByRole('button', { name: A.initialSubmit }));
+    expect(await screen.findByText(A.resultUnderweightNotSaved)).toBeTruthy();
+    expect(h.call).not.toHaveBeenCalled();
+  });
+  it('peso absurdo → rango válido, sin enviar', async () => {
+    await openInitial();
+    fireEvent.change(input('weightKg'), { target: { value: '820' } });
+    fireEvent.click(screen.getByRole('button', { name: A.initialSubmit }));
+    expect(await screen.findByText('Revisa tu peso: debe estar entre 30 y 300 kg.')).toBeTruthy();
+    expect(h.call).not.toHaveBeenCalled();
   });
 });
 
@@ -139,9 +181,16 @@ describe('TIMING', () => {
     state();
     mount();
     expect(screen.getByText(A.waitingTitle)).toBeTruthy();
-    expect(screen.getByText(/sábado, 17 de octubre/)).toBeTruthy();
+    expect(screen.getByText(/domingo, 18 de octubre/)).toBeTruthy();       // D1 · 14 días desde la línea base (no el sábado 17)
     expect(screen.queryByRole('button')).toBeNull();
     expectNoTechnicalTerms();
+  });
+  it('D1 · sábado 17: la ventana abre pero son 13 días → todavía no se ofrece', () => {
+    at('2026-10-17');
+    state();
+    mount();
+    expect(screen.queryByRole('button', { name: A.dueCta })).toBeNull();
+    expect(screen.getByText(/domingo, 18 de octubre/)).toBeTruthy();
   });
   it('check-in disponible dentro de la ventana', () => {
     at('2026-10-18');
@@ -151,7 +200,7 @@ describe('TIMING', () => {
     expect(screen.getByRole('button', { name: A.dueCta })).toBeTruthy();
   });
   it('si el servidor dice que aún no toca, se traduce sin forzar nada', async () => {
-    at('2026-10-17');
+    at('2026-10-18');
     state();
     mount();
     fireEvent.click(screen.getByRole('button', { name: A.dueCta }));
@@ -306,11 +355,11 @@ describe('RECARGA · el estado persistente sale del servidor (Snapshot V2), no d
   it('montaje en frío con ajuste pendiente: muestra la fecha del domingo y la del próximo check-in', () => {
     at('2026-10-22');
     state({ snapshot: { calibration: { pending: { step: -1, effectiveFrom: '2026-10-25' } } } });
-    // check-in del ciclo 1 ya registrado (lo único que la tarjeta lee de la fila es calibración y ciclo)
-    (h.state.adaptiveCalibration as { checkins: unknown[] }).checkins = [{ calibrationId: CAL.id, cycleIndex: 1 }];
+    // check-in del ciclo 1 registrado el miércoles 21 (la tarjeta lee calibración, ciclo y fecha)
+    (h.state.adaptiveCalibration as { checkins: unknown[] }).checkins = [{ calibrationId: CAL.id, cycleIndex: 1, checkinDate: '2026-10-21' }];
     mount();
     expect(screen.getByText(/se ajustará el domingo, 25 de octubre/)).toBeTruthy();
-    expect(screen.getByText(/sábado, 31 de octubre/)).toBeTruthy();
+    expect(screen.getByText(/miércoles, 4 de noviembre/)).toBeTruthy();   // D1 · 14 días después del 21
     expectNoTechnicalTerms();
   });
 });

@@ -19,6 +19,7 @@ import { useT } from '../../i18n';
 import type { TranslationKey } from '../../i18n/es';
 import { PAISES } from '../../data/ubicaciones';
 import SheetOption from './SheetOption';
+import { isPlausibleWaistCm, WAIST_PROFILE_KEY } from '../../utils/adaptiveEntry';
 import './sheet-base.css';
 
 interface Props {
@@ -114,6 +115,8 @@ export default function EditDataSheet({ onClose }: Props) {
       ? String(obData.trainingSessionMinutes)
       : '',
     goal: String(obData.goal || ''),
+    // D2 · cintura (cm): requerida para Recomposición (línea base de Adaptive). Se muestra la guardada.
+    cintura: obData[WAIST_PROFILE_KEY] != null && obData[WAIST_PROFILE_KEY] !== '' ? String(obData[WAIST_PROFILE_KEY]) : '',
     country: String(obData.country || ''),
     movilidad: String(obData.movilidad || ''),
     // A7 · alcance de salud. Por PRESENCIA (0 = «No» es una respuesta). '' = sin
@@ -259,6 +262,8 @@ export default function EditDataSheet({ onClose }: Props) {
       setError(t('editData.errTherapeuticDiet')); return;
     }
     if (!form.goal) { setError(t('editData.errGoal')); return; }
+    const cinturaN = Number(form.cintura.replace(',', '.'));
+    if (form.goal === 'Recomposición' && !isPlausibleWaistCm(cinturaN)) { setError(t('editData.errWaist')); return; }
 
     setSaving(true);
     const pesoChanged = pesoN !== Number(obData.peso);
@@ -292,6 +297,8 @@ export default function EditDataSheet({ onClose }: Props) {
       setObData(TRAINING_MODALITIES_KEY, serializeTrainingModalities(modalities));
     }
     setObData('goal', form.goal);
+    // D2 · solo se escribe para Recomposición; otro objetivo no toca la cintura guardada.
+    if (form.goal === 'Recomposición') setObData(WAIST_PROFILE_KEY, cinturaN);
     // A7 · alcance de salud. Se persiste ANTES del recalc: con «Sí» el Scope Guard
     // deja Nutrition fuera de alcance. Solo se escribe una declaración real.
     if (form.requiresTherapeuticDiet === 'si' || form.requiresTherapeuticDiet === 'no') {
@@ -421,6 +428,23 @@ export default function EditDataSheet({ onClose }: Props) {
               {GOAL_OPTIONS.map(o => <option key={o} value={o}>{t(GOAL_KEYS[o])}</option>)}
             </select>
           </label>
+
+          {form.goal === 'Recomposición' && (
+            <label className="sh-field">
+              <span className="sh-field-label">{t('editData.waist')}</span>
+              <input
+                className="sh-input"
+                type="number"
+                inputMode="decimal"
+                name="cintura"
+                min={40}
+                max={200}
+                step="0.5"
+                value={form.cintura}
+                onChange={e => update('cintura', e.target.value)}
+              />
+            </label>
+          )}
 
           <label className="sh-field">
             <span className="sh-field-label">{t('editData.location')}</span>
