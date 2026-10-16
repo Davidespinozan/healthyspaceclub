@@ -4,10 +4,12 @@
 // principales (snacks menos), carbos/grasa siguen el reparto, verduras en comida+cena.
 // Reglas: fijo/guarnición/sub-receta/condimento quietos; `bloque` escala completo; `max_g` tope.
 import { BANCO, type BancoDish, type BancoIng } from '../data/banco';
-import type { DayPlan, MealItem } from '../types';
+import type { DayPlan, MealItem, MenuCapacityIssue } from '../types';
 import type { Region } from './region';
 import { dishAllowedInRegion } from '../data/regionFood';
-import { portionBoundsFor, preferredGramLimit } from './portionPlausibility';   // NUTRITION-N1 techo humano · N2 capacidad preferida
+import { portionBoundsFor, preferredGramLimit } from './portionPlausibility';
+import { compatibleComplements, complementDish } from './menuComplements';
+import { dishStructure } from './recipeStructure';   // NUTRITION-N1 techo humano · N2 capacidad preferida
 import { effectiveDishAvoidText, dishAvoidUnits, canonicalizeAvoidTerm, catMarker, type AvoidMode } from './allergenSafety';   // NUTRITION-N3 · sub-recetas + composites ocultos
 
 const IMG_BASE =
@@ -44,7 +46,17 @@ export class NoEligibleDishesError extends Error {
 }
 
 const BY_TIME: Record<string, BancoDish[]> = { Desayuno: [], Comida: [], Cena: [], Snack: [] };
-for (const d of BANCO) (BY_TIME[d.tiempo] ??= []).push(d);
+for (const d of BANCO) if (mainEligible(d)) (BY_TIME[d.tiempo] ??= []).push(d);
+
+/**
+ * MENÚ V1 · HALLAZGO-04 · los 6 platillos DULCES clasificados como Cena en el CSV (`sabor = dulce` × `tiempo =
+ * Cena`: Hot Cakes de Camote, Hot Cakes de Zanahoria, Crepas Dulces de Plátano y Cacahuate, Overnight Oats de Mango
+ * y Coco, Overnight Oats de Zanahoria, Yogurt con Frutos Rojos y Almendras) dejan de ser elegibles como cena
+ * principal. No se borran del banco ni se reclasifican (validación e histórico intactos). Puro.
+ */
+export function mainEligible(d: BancoDish): boolean {
+  return !(d.tiempo === 'Cena' && d.sabor === 'dulce');
+}
 // DECISIÓN 06 · aquí vivía `hasVeg` = `d.ings.some(i => i.rol === 'guarnicion')`, y con él
 // COMIDA_VEG/CENA_VEG: los pools de Comida y Cena quedaban reducidos a los platillos con
 // ese tag. Se retiró como filtro de elegibilidad.
@@ -1168,6 +1180,36 @@ function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
 // entran por necesidad real, cuando su porción mínima cabe en el hueco — ya no por un umbral de 2800 kcal.
 // Nada de esto afloja un techo: las kcal altas se resuelven con más tiempos, nunca rompiendo `max_g`.
 // ═════════════════════════════════════════════════════════════════════════════
+// ── MENÚ V1 · BLOQUE 3B · INSUFFICIENT_MENU_CAPACITY (diagnóstico interno, no cambia el plan) ──────────────
+/** Umbral PROVISIONAL de energía (±5 % de kcal). Estar dentro NO hace válido al plan: macros, proteína,
+ *  composición, porciones, calidad y variedad se revisan aparte. */
+export const MENU_CAPACITY_KCAL_TOL = 0.05;
+/** Tolerancia blanda superior de proteína (D2: meta +10 %). Por encima, es un problema de capacidad del banco. */
+export const PROTEIN_SOFT_OVER = 0.10;
+function capacityIssue(day: DayPlan, T: number[], avoidIn: AvoidInput | undefined, avoid: (d: BancoDish) => boolean, poolSize: Record<string, number>): MenuCapacityIssue | undefined {
+  const r = [0, 0, 0, 0];
+  for (const m of day.meals) { r[1] += m.macros?.prot ?? 0; r[2] += m.macros?.fat ?? 0; r[3] += m.macros?.carb ?? 0; }
+  r[0] = 4 * r[1] + 9 * r[2] + 4 * r[3];
+  const kErr = Math.abs(r[0] - T[0]) / Math.max(T[0], 1);
+  const reasons: Array<'ENERGY' | 'PROTEIN_OVER'> = [];
+  if (kErr > MENU_CAPACITY_KCAL_TOL) reasons.push('ENERGY');
+  if (r[1] > T[1] * (1 + PROTEIN_SOFT_OVER)) reasons.push('PROTEIN_OVER');
+  if (!reasons.length) return undefined;
+  // Para ampliar el banco: principales del día sin acompañamiento flexible de carbo ni complemento compatible.
+  const missing: string[] = [];
+  for (const m of day.meals) {
+    if (m.time.startsWith('Snack')) continue;
+    const d = BANCO.find((x) => x.nombre === m.name);
+    if (!d || d.tipo === 'bloque' || dishStructure(d).hasCarbSide) continue;
+    if (!compatibleComplements(d, m.time).some((c) => !avoid(complementDish(c, m.time)))) missing.push(`${m.time} · ${m.name}: sin acompañamiento flexible ni complemento compatible`);
+  }
+  const p = toAvoidPolicy(avoidIn ?? []);
+  return {
+    status: 'INSUFFICIENT_MENU_CAPACITY', target: T.slice(0, 4).map(Math.round), reached: r.map(Math.round),
+    gap: T.slice(0, 4).map((t, i) => Math.round(t - r[i])), maxError: Math.round(kErr * 1000) / 1000, reasons,
+    restrictions: { strict: [...p.strict], soft: [...p.soft] }, missingComplements: missing, poolSize,
+  };
+}
 const SNACK_SLOTS: readonly Slot[] = ['Snack AM', 'Snack PM'];
 /** Candidatos de snack que la IA propone por día (1 mañana + 1 tarde). El ensamblado usa 0–2, por tamaño.
  *  Con 2 el texto del prompt existente sigue siendo cierto (sin la frase de «2 combinados por momento»). */
@@ -1422,7 +1464,10 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // sin umbral de 2800 kcal), snacks a porción normal y del tamaño de su hueco, el bloque respeta los techos de sus
 // ingredientes, y medidas D1 (pasta 120 g/taza, aceite en cditas de 5 g, miel cdita 7 g / cda 21 g). Todo plan v34
 // queda STALE y se regenera una vez.
-export const PLAN_ENGINE_VERSION = 35;
+// v36 · MENÚ V1 · BLOQUE 3B (integración segura) · HALLAZGO-04: los 6 dulces de Cena dejan de ser elegibles como
+// cena principal (cambia el pool de Cena → todo plan v35 se regenera una vez). Además, diagnóstico interno
+// INSUFFICIENT_MENU_CAPACITY en `day.capacity` (no cambia el plan). El modelo híbrido de receta quedó en WIP.
+export const PLAN_ENGINE_VERSION = 36;
 
 export interface BuildOpts { seed?: number; avoid?: AvoidInput; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 
@@ -1639,6 +1684,8 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
   const MTm = slotTargets(foodT, [...SNACK_SLOTS]);
   const freeSlots = SNACK_SLOTS.filter((sl) => !shakeSlotsOf(shake).includes(sl));
   const byName = new Map(BANCO.map((d) => [d.nombre, d]));
+  const aiAvoid = makePolicyFilter(avoidCats);
+  const aiPoolSize = Object.fromEntries(['Desayuno', 'Comida', 'Cena', 'Snack'].map((t) => [t, (BY_TIME[t] ?? []).filter((d) => !aiAvoid(d)).length]));
   const corrUsed = new Set<string>(); // corrector no repite el mismo snack en la semana
   const out: DayPlan[] = [];
   days.forEach((sel, i) => {
@@ -1655,7 +1702,7 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
       return d && d.tiempo === t && !noEvitado(d) ? d : undefined;
     };
     const des = main(sel.desayuno, 'Desayuno'), com = main(sel.comida, 'Comida'), cen = main(sel.cena, 'Cena');
-    if (!des || !com || !cen) return;
+    if (!des || !com || !cen || !mainEligible(cen)) return;   // HALLAZGO-04 · misma elegibilidad que el motor
     const snacks = (sel.snacks ?? []).map((n) => byName.get(n))
       .filter((d): d is BancoDish => !!d && d.tiempo === 'Snack' && !noEvitado(d));
     const mains: MealItem[] = [
@@ -1681,7 +1728,10 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
     if (shake) applyShake(meals, shake); // el batido ocupa SU slot de snack
     topUpDay(meals, T);                              // CAPA 4 · el mismo cuadre del día que el motor de código
     topUpMeals(meals, target, avoidCats, corrUsed); // cierra hueco grande (1 snack, rota en semana)
-    out.push({ day: i + 1, theme: '', meals: chronological(meals) });
+    const day: DayPlan = { day: i + 1, theme: '', meals: chronological(meals) };
+    const cap = capacityIssue(day, T, avoidCats, aiAvoid, aiPoolSize);   // mismo registro que el motor de código
+    if (cap) day.capacity = cap;
+    out.push(day);
   });
   return out;
 }
@@ -1804,6 +1854,7 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
     policyAvoid(d) ||
     !dishAllowedInRegion(d, opts.region);
   const cuisines = (opts.cuisines ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean);
+  const poolSize = Object.fromEntries(['Desayuno', 'Comida', 'Cena', 'Snack'].map((t) => [t, (BY_TIME[t] ?? []).filter((d) => !avoid(d)).length]));
   const craving = cravingTerms(opts.craving ?? ''); // "antojo": prefiere platillos que lo tengan
   const used = new Set<string>();          // platillos ya usados en la semana → variedad entre días
   const ingFreq = new Map<string, number>(); // ingredientes ya usados → rota fuentes (aguacate/pollo)
@@ -1876,6 +1927,8 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
     const day = best!;
     topUpMeals(day.meals, target, opts.avoid ?? [], corrUsed);
     day.meals = chronological(day.meals);
+    const cap = capacityIssue(day, T, opts.avoid, avoid, poolSize);   // registrar, nunca deformar
+    if (cap) day.capacity = cap;
     days.push(day);
   }
   return days;

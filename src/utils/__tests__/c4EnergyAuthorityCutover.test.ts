@@ -437,8 +437,8 @@ describe('C4 · E · autoridad única', () => {
     }
   });
 
-  it('`PLAN_ENGINE_VERSION` ≥ 33 (CAPA 2; 34 · B1; 35 · MENÚ V1 · CAPA 4) y la vigencia lo usa', () => {
-    expect(PLAN_ENGINE_VERSION).toBe(35);
+  it('`PLAN_ENGINE_VERSION` ≥ 33 (CAPA 2; 34 · B1; 35 · CAPA 4; 36 · Bloque 3B) y la vigencia lo usa', () => {
+    expect(PLAN_ENGINE_VERSION).toBe(36);
     expect(REGEN).toContain('currentVersion: PLAN_ENGINE_VERSION,');
     expect(PLANNER).toContain('engineVersion: PLAN_ENGINE_VERSION,');
   });

@@ -141,7 +141,8 @@ describe('Decisión 06 · C · las garantías P0 siguen en pie', () => {
 
   it('la ruta IA no cambió: safeBankByTiempo ya ofrecía los pools nominales', () => {
     expect(safeBankByTiempo([]).Comida).toHaveLength(68);
-    expect(safeBankByTiempo([]).Cena).toHaveLength(54);
+    // MENÚ V1 · HALLAZGO-04 · 54 − los 6 dulces de Cena que dejaron de ser elegibles como cena principal.
+    expect(safeBankByTiempo([]).Cena).toHaveLength(48);
   });
 
   it('el bowl (buildDayWithFixed) usa también el pool nominal y respeta el tiempo', () => {

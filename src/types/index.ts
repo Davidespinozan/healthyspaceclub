@@ -12,12 +12,35 @@ export interface MealItem {
   ings?: { nv: string; g: number | null; rol: string }[];
   // Snack combinado: las fotos de los 2+ platillos que van dentro del mismo card.
   imgs?: string[];
+  // MENÚ V1 · Bloque 3 · complemento candidato de la comida principal (nombre del catálogo de complementos), aunque
+  // hoy se sirva en 0. Lo usa el cuadre del día para reconstruir la comida; lo servido va en `ings` (rol complemento).
+  complement?: string;
 }
 
 export interface DayPlan {
   day: number;
   theme: string;
   meals: MealItem[];
+  // MENÚ V1 · Bloque 3 · D8 · el banco no alcanzó la meta sin deformar comidas (estado interno, para ampliar el banco).
+  capacity?: MenuCapacityIssue;
+}
+
+export interface MenuCapacityIssue {
+  status: 'INSUFFICIENT_MENU_CAPACITY';
+  /** Meta [kcal, P, G, C] del día y lo alcanzado. */
+  target: number[];
+  reached: number[];
+  /** Meta − alcanzado, por macro. */
+  gap: number[];
+  /** Desvío de ENERGÍA del día (fracción, ±). */
+  maxError: number;
+  /** Por qué se marcó: ENERGY = fuera de ±5 % de kcal; PROTEIN_OVER = proteína > meta +10 % (D2). */
+  reasons: Array<'ENERGY' | 'PROTEIN_OVER'>;
+  restrictions: { strict: string[]; soft: string[] };
+  /** Principales sin complemento compatible, o con su complemento ya en el techo. */
+  missingComplements: string[];
+  /** Tamaño del banco compatible por tiempo (tras restricciones y región). */
+  poolSize: Record<string, number>;
 }
 
 export interface CuisineTheme {

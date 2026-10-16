@@ -122,6 +122,12 @@ for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), enco
     p = r["platillo"].strip()
     d = dishes.setdefault(p, {"nombre": p, "tiempo": r["tiempo"].strip(), "tipo": r["tipo"].strip(),
         "multMax": num(r["mult_max"]) or 1.5, "img": _webp(r["image_filename"]), "fixed": [0, 0, 0, 0, 0], "ings": []})
+    # MENÚ V1 · Bloque 3 · `sabor` (dulce/salado/neutral) tal como está en el CSV: base de la elegibilidad de
+    # principales (HALLAZGO-04: los 6 dulces de Cena) y de la compatibilidad de complementos.
+    if (r.get("sabor") or "").strip() and "sabor" not in d: d["sabor"] = r["sabor"].strip()
+    # MENÚ V1 · Bloque 3 · `multMax` cae a 1.5 si el CSV no lo trae (275 de 307 platillos): eso NO es dato de
+    # Magaly. `multMaxCsv` distingue el escalado máximo que ella fijó del valor por defecto del generador.
+    if num(r["mult_max"]) > 0: d["multMaxCsv"] = True
     reg = region_of(r.get("nota"))
     if reg and not d.get("region"): d["region"] = reg  # segmentación por región (mismo bucket que precios)
     # Snacks densos (400-800 kcal): marca `snack_denso` en nota → el motor los ofrece
@@ -129,6 +135,11 @@ for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), enco
     if "snack_denso" in (r.get("nota") or "").lower(): d["dense"] = True
     rol = (r.get("rol") or "").strip(); al = (r.get("alimento") or "").strip(); g = num(r["gramos"])
     ing = {"nv": r["nombre_visible"].strip(), "rol": rol, "g0": g}
+    # MENÚ V1 · Bloque 3 · estructura de la receta desde el CSV (sin inventar): `sec: "a"` = el ingrediente es un
+    # ACOMPAÑAMIENTO del platillo (columna `seccion`), con rango propio; `blq` = la nota lo marca como parte del
+    # BLOQUE (masa / proporción sagrada).
+    if (r.get("seccion") or "").strip() == "acompañamiento": ing["sec"] = "a"
+    if "BLOQUE" in (r.get("nota") or "").upper(): ing["blq"] = True
     # Medida casera contable (pieza/rebanada) para mostrar "2 huevos", no "88 g".
     meas = MEAS.get(idof(al)) if rol != "condimento" else None
     if meas:
@@ -162,8 +173,8 @@ banco = list(dishes.values())
 ts = "// AUTO-GENERADO por scripts/gen_banco.py desde el banco de Magaly. No editar a mano.\n"
 ts += "// Cada platillo: fixed = [kcal,P,F,C,fibra] de todo lo NO-principal (ya sumado);\n"
 ts += "// ings principales traen a=[por-gramo kcal,P,F,C,fibra] y max para ajustar la porción.\n"
-ts += "export interface BancoIng { nv: string; rol: string; g0: number; max?: number; a?: number[]; pend?: boolean; pu?: number; un?: string }\n"
-ts += "export interface BancoDish { nombre: string; tiempo: string; tipo: string; multMax: number; img: string; fixed: number[]; ings: BancoIng[]; region?: string; dense?: boolean }\n"
+ts += "export interface BancoIng { nv: string; rol: string; g0: number; max?: number; a?: number[]; pend?: boolean; pu?: number; un?: string; sec?: 'a'; blq?: boolean }\n"
+ts += "export interface BancoDish { nombre: string; tiempo: string; tipo: string; multMax: number; img: string; fixed: number[]; ings: BancoIng[]; region?: string; dense?: boolean; sabor?: string; multMaxCsv?: boolean }\n"
 ts += "export const BANCO: BancoDish[] = " + json.dumps(banco, ensure_ascii=False) + ";\n"
 # Recetas de las sub-recetas (guacamole, salsas, aderezos) → la app las MUESTRA al abrir
 # el platillo. `rinde` = gramos que rinde la receta completa.

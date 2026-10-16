@@ -27,6 +27,7 @@
 // Puro / determinista / sin estado. No conoce React, ni el store, ni Supabase.
 // ─────────────────────────────────────────────────────────────────────────────
 import { BANCO, type BancoDish } from '../data/banco';
+import { COMPLEMENT_BY_NV, complementDish } from './menuComplements';
 import { makeAvoidFilter, makePreferenceFilter, expandAvoidCats, textMatchesAvoid, shakeCompatibleWith, shakeTypeOfService, SHAKE_NAME, toAvoidPolicy, type AvoidInput } from './planEngine';
 export type { AvoidPolicy, AvoidInput } from './planEngine';
 
@@ -91,6 +92,10 @@ const SHAKE_ING = 'Proteína en polvo';
 const BY_NAME = new Map<string, BancoDish>(BANCO.map((d) => [d.nombre, d]));
 /** Partes de un snack combinado: `mergeItems` une los nombres con " + ". */
 const partsOf = (name: string): string[] => name.split(' + ').map((s) => s.trim()).filter(Boolean);
+/** Complementos servidos en una comida (MENÚ V1 · Bloque 3): `ings` con rol `complemento`. */
+const complementIngs = (m: { ings?: unknown }): string[] =>
+  Array.isArray(m.ings) ? m.ings.filter((i) => i && typeof i === 'object' && (i as { rol?: unknown }).rol === 'complemento').map((i) => String((i as { nv?: unknown }).nv ?? '')) : [];
+
 /** Snack AM / Snack PM → Snack. Los demás tiempos se quedan como están. */
 export const normalizeSlot = (time: string): string => (time.startsWith('Snack') ? 'Snack' : time);
 
@@ -273,6 +278,26 @@ export function validatePlan(plan: unknown, effectiveAvoid: AvoidInput): PlanVer
           // ── B · TIEMPO ──
           if (dish.tiempo !== slot) {
             bad({ kind: 'time', day: dayNum, slot, dish: part, detail: `es de ${dish.tiempo} y está servido en ${slot}` });
+          }
+        }
+        // ── MENÚ V1 · BLOQUE 3 · COMPLEMENTOS de la comida (D2) ──
+        // El nombre del platillo no los describe: cada complemento servido (`ings` rol `complemento`) se valida con
+        // la MISMA autoridad de restricciones que un platillo, sobre su ficha del catálogo. Uno que no esté en el
+        // catálogo no se puede verificar → falla cerrado (`unknown-dish`). Debe ser de un tiempo donde se sirve.
+        for (const ci of complementIngs(m)) {
+          const c = COMPLEMENT_BY_NV.get(ci);
+          if (!c) {
+            bad({ kind: 'unknown-dish', day: dayNum, slot, dish: ci, detail: 'complemento fuera del catálogo: no se puede verificar' });
+            continue;
+          }
+          const cd = complementDish(c, slot);
+          if (viola && viola(cd)) {
+            bad({ kind: 'restriction', day: dayNum, slot, dish: ci, detail: `complemento que viola una restricción activa (${strict.join(', ')})` });
+          } else if (prefiere && prefiere(cd)) {
+            bad({ kind: 'preference', day: dayNum, slot, dish: ci, detail: `complemento que sirve una preferencia a evitar esta semana (${soft.join(', ')})` });
+          }
+          if (!c.tiempos.has(slot)) {
+            bad({ kind: 'time', day: dayNum, slot, dish: ci, detail: `complemento que no se sirve en ${slot}` });
           }
         }
       } else if (kind === 'bowl') {

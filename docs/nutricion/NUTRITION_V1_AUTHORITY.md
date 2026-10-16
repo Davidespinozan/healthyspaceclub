@@ -207,7 +207,7 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v
 
 ### Versiones vigentes
 
-`ENERGY_PRESCRIPTION_VERSION = 2` · `MACRO_PRESCRIPTION_VERSION = 4` · `PLAN_ENGINE_VERSION = 35` · `ENERGY_CALIBRATION_VERSION = 2` · `CALIBRATION_ENERGY_VERSION = 1` · `NUTRITION_SNAPSHOT_VERSION = 2` · `ADAPTIVE_DECISION_VERSION = 1`. Ningún bump en los Bloques 5–9. `PLAN_ENGINE_VERSION` 33 → 34 lo subió MENÚ HSC V1 · Bloque 1 y 34 → 35 la CAPA 4 V1 (motor de platillos: `max_g` como techo, taza de arroz y rebanada de jamón de pavo del catálogo, copy de piezas, umbrales de snacks contra la meta diaria en ambos caminos, `gen.source`); no toca CAPA 1/2 ni Adaptive.
+`ENERGY_PRESCRIPTION_VERSION = 2` · `MACRO_PRESCRIPTION_VERSION = 4` · `PLAN_ENGINE_VERSION = 36` · `ENERGY_CALIBRATION_VERSION = 2` · `CALIBRATION_ENERGY_VERSION = 1` · `NUTRITION_SNAPSHOT_VERSION = 2` · `ADAPTIVE_DECISION_VERSION = 1`. Ningún bump en los Bloques 5–9. `PLAN_ENGINE_VERSION` 33 → 34 lo subió MENÚ HSC V1 · Bloque 1 y 34 → 35 la CAPA 4 V1 y 35 → 36 el Bloque 3B (HALLAZGO-04) (motor de platillos: `max_g` como techo, taza de arroz y rebanada de jamón de pavo del catálogo, copy de piezas, umbrales de snacks contra la meta diaria en ambos caminos, `gen.source`); no toca CAPA 1/2 ni Adaptive.
 
 ### Pendientes de Adaptive
 
@@ -235,6 +235,11 @@ Decisiones D1–D3 (Menú HSC V1). Implementado en `planEngine.ts` (v35), igual 
 | D1 · pasta cocida 120 g/taza; aceite en cditas de 5 g; miel cdita 7 g / cda 21 g | `IMPLEMENTED` | `portionStr` |
 | `SHARE_KCAL`/`SHARE_PROT` | Solo reparten la meta ENTRE las 3 principales (y el bowl); ya no fijan snacks | `planEngine.ts` |
 | Metas ≥ 3000 kcal con restricciones y ~4000 kcal: sin fruta de relleno y sin romper techos, el banco no siempre alcanza el carbohidrato con proteína en meta → desvío del PEOR día 5–30 % (media semanal cercana) y repetición de principales | `PENDING PRODUCT DECISION` | ver reporte CAPA 4 |
+| HALLAZGO-04 · los 6 dulces de Cena (`sabor = dulce`) no son elegibles como cena principal (siguen en el banco) | `IMPLEMENTED` (v36) | `mainEligible` |
+| Diagnóstico `INSUFFICIENT_MENU_CAPACITY` en `day.capacity`: energía fuera de ±5 % o proteína > meta +10 % (provisional; no valida el plan por sí solo) | `IMPLEMENTED` (no cambia el plan) | `capacityIssue` |
+| Catálogo de complementos (acompañamientos de carbo del banco) + validación de restricciones de complementos | `IMPLEMENTED` (aún sin uso en la generación) | `menuComplements.ts`, `validatePlan` |
+| Clasificación CORE_RECIPE / FLEXIBLE_SIDE / FIXED (+ AMBIGUOUS_RECIPE_STRUCTURE) desde datos del banco | `IMPLEMENTED` (diagnóstico y cobertura) | `recipeStructure.ts` |
+| Modelo híbrido receta base + acompañamiento flexible + complemento externo | `WIP · GATE FAILED` (`wip/menu-v1-bloque3b`): sin proteína bajo base, pero menos preciso que v35 en 1500 y ≥ 3000 kcal y más lento → NEEDS_DATA | — |
 | Bandas del banco estático (`assignPlan` → `mealPlanKey`), `mealCalorieSplit` | `LEGACY INERT` | `tdee.ts`, `nutritionTargets.ts` |
 | `canonicalTime`/`eligibleTimes`, FORMULA/ASSEMBLY/STRUCTURED, complementos, comida ≠ platillo, presentación | `OPEN` | — |
 
