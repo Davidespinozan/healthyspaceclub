@@ -120,23 +120,17 @@ describe('planEngine — ajuste a la meta', () => {
     expect(italian).toBeGreaterThanOrEqual(5); // la mayoría de las 7 comidas
   });
 
-  it('5 tiempos; snack AM/PM aparecen UNA vez; combina 2 snacks dentro del mismo', () => {
-    const low = buildWeeklyPlan(CASES[0], { seed: 1 })[0];
-    const high = buildWeeklyPlan(CASES[3], { seed: 1 })[0];
-    const amCount = (d: typeof low) => d.meals.filter((m) => m.time === 'Snack AM').length;
-    // Snack AM aparece exactamente 1 vez en ambos (no duplicado), aunque combine.
-    expect(amCount(low)).toBe(1);
-    expect(amCount(high)).toBe(1);
-    expect(low.meals.map((m) => m.time)).toContain('Snack PM');
-    // Meta alta: el snack COMBINA 2 platillos; el de meta baja es uno solo. (Antes se
-    // medía por nº de ingredientes, pero un platillo suelto puede tener más que dos
-    // combinados — se mide el nº de platillos, que es lo que la prueba quiere garantizar.)
-    const amDishes = (d: typeof low) => {
-      const m = d.meals.find((x) => x.time === 'Snack AM')!;
-      return (m as { imgs?: string[] }).imgs?.length || 1;
-    };
-    expect(amDishes(high)).toBe(2);
-    expect(amDishes(low)).toBe(1);
+  // MENÚ V1 · CAPA 4 · ya no hay «siempre 5 tiempos» ni 2 platillos combinados por snack: 3 principales + 0–2
+  // snacks (máximo 5), cada snack aparece a lo sumo UNA vez y es UN platillo (salvo que el corrector, sin slot libre,
+  // le fusione otro).
+  it('CAPA 4 · 3 principales siempre + 0–2 snacks; cada slot a lo sumo una vez; máximo 5 tiempos', () => {
+    for (const T of CASES) for (const d of buildWeeklyPlan(T, { seed: 1 })) {
+      const times = d.meals.map((m) => m.time);
+      for (const t of ['Desayuno', 'Comida', 'Cena']) expect(times.filter((x) => x === t).length, `${T.kcal} ${t}`).toBe(1);
+      for (const t of ['Snack AM', 'Snack PM']) expect(times.filter((x) => x === t).length).toBeLessThanOrEqual(1);
+      expect(d.meals.length).toBeGreaterThanOrEqual(3);
+      expect(d.meals.length).toBeLessThanOrEqual(5);
+    }
   });
 
   // ── Sustituir una comida por un bowl del food truck (o cualquier alimento fijo) ──

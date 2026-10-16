@@ -39,7 +39,10 @@ function planWith(nombre: string, safe: string[]) {
   if (!BASE.has(key)) BASE.set(key, buildWeeklyPlan(TARGET, { seed: 11, avoid: safe }));
   const days = BASE.get(key)!;
   const item = served(dish(nombre));
-  const meals = days[0].meals.map((m) => (m.time === item.time ? item : m));
+  // MENÚ V1 · CAPA 4 · un día puede no tener ese snack (0–2 snacks): si el tiempo no existe, el platillo se agrega.
+  const meals = days[0].meals.some((m) => m.time === item.time)
+    ? days[0].meals.map((m) => (m.time === item.time ? item : m))
+    : [...days[0].meals, item];
   return { days: [{ ...days[0], meals }, ...days.slice(1)] as DayPlan[] };
 }
 const kinds = (vs: PlanViolation[]) => [...new Set(vs.map((v) => v.kind))].sort();

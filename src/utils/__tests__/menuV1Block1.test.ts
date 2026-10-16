@@ -11,7 +11,7 @@ import { describe, it, expect } from 'vitest';
 // ─────────────────────────────────────────────────────────────────────────────
 import { BANCO, type BancoIng } from '../../data/banco';
 import {
-  ingBounds, portionStr, buildWeeklyPlan, snacksPerSlot, PLAN_ENGINE_VERSION, DENSE_SNACK_KCAL_THRESHOLD, type PlanTarget,
+  ingBounds, portionStr, buildWeeklyPlan, PLAN_ENGINE_VERSION, type PlanTarget,
 } from '../planEngine';
 import { planSourceTag } from '../planSource';
 import { weeklyPlanCurrentness } from '../weeklyPlanState';
@@ -102,29 +102,20 @@ describe('3 · constantes alineadas con food_measures (solo donde hay una única
     expect(portionStr({ nv: 'Jamón de pavo', rol: 'principal', g0: 42 }, 42)).toBe('2 rebanadas de jamón de pavo');
     expect(portionStr({ nv: 'Jamón serrano', rol: 'principal', g0: 30 }, 30)).toBe('1 rebanada de jamón serrano');
   });
-  it('sin cambio donde las fuentes chocan (pasta, aceite, miel): se conserva lo embarcado', () => {
-    expect(portionStr({ nv: 'Pasta cocida', rol: 'principal', g0: 140 }, 140)).toBe('1 taza de pasta cocida');   // 140 g/taza
-    expect(portionStr({ nv: 'Aceite de oliva', rol: 'fijo', g0: 10 }, 10)).toBe('1 cda de aceite de oliva');      // 10 g/cda
-    expect(portionStr({ nv: 'Miel', rol: 'fijo', g0: 15 }, 15)).toBe('1 cda de miel');                           // 15 g/cda
-  });
+  // MENÚ V1 · CAPA 4 · D1 cerró pasta / aceite / miel (antes se conservaban por fuentes en conflicto): ver menuV1Capa4.test.ts.
 });
 
-describe('4 · umbrales de snacks: misma base (meta diaria completa) en ambos caminos', () => {
-  it('el camino código evalúa 2200 / 2800 con target.kcal, no con la meta menos el batido', () => {
-    expect(ENGINE_SRC).toContain('const nSnack = snacksPerSlot(dayKcal);');
-    expect(ENGINE_SRC).toContain('gateDense(snackClean, dayKcal)');
-    expect(ENGINE_SRC).toContain('avoidInputUnion(opts.avoid), target.kcal);');
-    expect(ENGINE_SRC).not.toMatch(/const nSnack = T\[0\] > 2200/);
-    expect(ENGINE_SRC).not.toMatch(/gateDense\(snackClean, T\[0\]\)/);
+// 4 · umbrales de snacks (2200 / 2800): superado por CAPA 4 V1 — el plan semanal ya no usa umbrales de kcal para
+// los snacks (ver menuV1Capa4.test.ts). Lo que sigue vigente de B1: los dos caminos aplican la MISMA lógica.
+describe('4 · los dos caminos deciden los snacks igual (CAPA 4: sin umbrales de kcal)', () => {
+  it('ni el motor de código ni el ensamblado de la IA evalúan 2200 / 2800 para el plan semanal', () => {
+    const buildDaySrc = ENGINE_SRC.slice(ENGINE_SRC.indexOf('function buildDay('), ENGINE_SRC.indexOf('// Versión del motor de nutrición'));
+    const assembleSrc = ENGINE_SRC.slice(ENGINE_SRC.indexOf('export function assembleFromSelection('), ENGINE_SRC.indexOf('export interface FixedMeal'));
+    for (const src of [buildDaySrc, assembleSrc]) {
+      expect(src).toContain('snackPlan(');
+      expect(src).not.toMatch(/snacksPerSlot\(|gateDense\(|DENSE_SNACK_KCAL_THRESHOLD/);
+    }
   });
-  it('umbrales sin cambiar', () => {
-    expect([snacksPerSlot(2200), snacksPerSlot(2201), DENSE_SNACK_KCAL_THRESHOLD]).toEqual([1, 2, 2800]);
-  });
-  it('con batido que deja la meta de principales bajo 2200, el código sigue armando 2 snacks por slot (como la IA)', () => {
-    const days = buildWeeklyPlan(mk(2300), { seed: 7, shake: { slots: ['am'], type: 'regular', protG: 30 } });
-    const pm = days.map((d) => d.meals.find((m) => m.time === 'Snack PM')!);
-    expect(pm.every((m) => m.name.includes(' + '))).toBe(true);
-  }, 60_000);
 });
 
 describe('5 · gen.source', () => {
@@ -137,11 +128,11 @@ describe('5 · gen.source', () => {
   });
 });
 
-describe('6 · PLAN_ENGINE_VERSION 34 · regeneración una sola vez', () => {
+describe('6 · PLAN_ENGINE_VERSION · regeneración una sola vez', () => {
   const macros = { proteinG: 148, fatG: 69, carbG: 315 };
   const plan = (engineVersion: number) => ({ days: [{}, {}, {}, {}, {}, {}, {}], engineVersion, gen: { kcal: 2473, protG: 148, fatG: 69, carbG: 315 } });
   const cur = (p: ReturnType<typeof plan>) => weeklyPlanCurrentness({ status: 'PRESCRIBED', planGoal: 2473, macros, weeklyPlan: p, currentVersion: PLAN_ENGINE_VERSION });
-  it('34', () => { expect(PLAN_ENGINE_VERSION).toBe(34); });
-  it('un plan v33 queda STALE (se regenera)', () => { expect(cur(plan(33))).toBe('STALE'); });
-  it('el plan regenerado (v34, misma meta) queda ACTIVE → no hay bucle', () => { expect(cur(plan(34))).toBe('ACTIVE'); });
+  it('≥ 34 (CAPA 4 la subió a 35)', () => { expect(PLAN_ENGINE_VERSION).toBeGreaterThanOrEqual(34); });
+  it('un plan de la versión anterior queda STALE (se regenera)', () => { expect(cur(plan(PLAN_ENGINE_VERSION - 1))).toBe('STALE'); });
+  it('el plan regenerado (versión actual, misma meta) queda ACTIVE → no hay bucle', () => { expect(cur(plan(PLAN_ENGINE_VERSION))).toBe('ACTIVE'); });
 });

@@ -4,7 +4,7 @@ import srcApp from '../../App.tsx?raw';
 import srcAutoRegen from '../useAutoRegenPlan.ts?raw';
 import srcTabHoy from '../../components/TabHoy.tsx?raw';
 import { BANCO, type BancoDish } from '../../data/banco';
-import { PLAN_ENGINE_VERSION, buildWeeklyPlan, makeAvoidFilter, type PlanTarget } from '../planEngine';
+import { PLAN_ENGINE_VERSION, buildWeeklyPlan, makeAvoidFilter, solveSlot, type PlanTarget } from '../planEngine';
 import { avoidForRegen, effectiveAvoid, permanentAvoidFrom, weeklyAvoidFrom } from '../avoidAuthority';
 import {
   validatePlan, planIfValid, classifyService, normalizeSlot, InvalidPlanError,
@@ -78,10 +78,15 @@ describe('P0-04 · A · los planes que el motor produce hoy pasan la validación
   });
 
   it('un plan real con SNACKS COMBINADOS ("A + B") sigue siendo válido', () => {
-    const days = buildWeeklyPlan(mk(3000), { seed: 9 });   // >2200 kcal → 2 snacks por slot
-    const combinados = days.flatMap((d) => d.meals.filter((m) => m.name.includes(' + ')));
-    expect(combinados.length, 'el plan debe traer snacks combinados').toBeGreaterThan(0);
-    expect(validatePlan({ ...planCon([]), days }, []).violations).toEqual([]);
+    // MENÚ V1 · CAPA 4 · ya no se combinan 2 platillos por slot; un «A + B» solo lo arma el corrector cuando no queda
+    // slot libre. El combinado se construye con la MISMA fusión del motor (`solveSlot(…, merge)`) a partir de dos
+    // snacks reales del banco y se mete en un plan real: la validación de «A + B» no cambia.
+    const days = buildWeeklyPlan(mk(3000), { seed: 9 });
+    const snacks = BANCO.filter((d) => d.tiempo === 'Snack' && !d.dense).slice(0, 2);
+    const combo = solveSlot(snacks, 'Snack AM', [0, 6, 8, 30], true)[0];
+    expect(combo.name).toBe(`${snacks[0].nombre} + ${snacks[1].nombre}`);
+    const d1 = { ...days[0], meals: [...days[0].meals.filter((m) => m.time !== 'Snack AM'), combo] };
+    expect(validatePlan({ ...planCon([]), days: [d1, ...days.slice(1)] }, []).violations).toEqual([]);
   });
 });
 
@@ -355,10 +360,10 @@ describe('P0-04 · H · las cuatro puertas', () => {
 // I · VERSIÓN DEL MOTOR + REGIÓN EN LA AUTO-REGENERACIÓN
 // ═════════════════════════════════════════════════════════════════════════════
 describe('P0-04 · I · versión y región', () => {
-  it('6 · PLAN_ENGINE_VERSION = 34 (MENÚ V1 · B1) → un plan v33 queda por debajo y se regenera', () => {
-    expect(PLAN_ENGINE_VERSION).toBe(34);
-    const guardado = 33;
-    expect(guardado >= PLAN_ENGINE_VERSION, 'un plan v33 YA NO debe considerarse al día').toBe(false);
+  it('6 · PLAN_ENGINE_VERSION = 35 (MENÚ V1 · CAPA 4) → un plan v34 queda por debajo y se regenera', () => {
+    expect(PLAN_ENGINE_VERSION).toBe(35);
+    const guardado = 34;
+    expect(guardado >= PLAN_ENGINE_VERSION, 'un plan v34 YA NO debe considerarse al día').toBe(false);
     // C4 · el gate dejó de ser una comparación suelta en el efecto: ahora lo hace
     // `weeklyPlanCurrentness`, que compara la versión Y la cifra prescrita. La
     // comparación de versión sigue existiendo, pero dentro del selector.

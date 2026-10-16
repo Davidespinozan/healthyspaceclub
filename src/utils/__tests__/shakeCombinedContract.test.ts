@@ -37,8 +37,10 @@ async function gen(type: ProteinShake['type'], slots: ProteinShake['slots'], avo
 }
 /** Un batido combinado REAL producido por el motor (no una imitación a mano). */
 async function realCombined(type: ProteinShake['type'], avoid: string[] = []): Promise<{ days: DayPlan[]; svc: MealItem }> {
-  for (const seed of [12345, 1, 2, 3, 4]) {
-    const days = await gen(type, ['pm'], avoid, QA_TARGET, seed);
+  // MENÚ V1 · CAPA 4 · con un slot de snack libre el corrector sirve un snack PROPIO (no fusiona). Con el batido en
+  // los DOS slots no queda ninguno libre y el corrector fusiona en el batido: el combinado sigue siendo REAL.
+  for (const seed of [12345, 1, 2, 3, 4]) for (const slots of [['pm'], ['am', 'pm']] as ProteinShake['slots'][]) {
+    const days = await gen(type, slots, avoid, QA_TARGET, seed);
     const svc = combinedShakes(days)[0];
     if (svc) return { days, svc };
   }
@@ -63,7 +65,10 @@ const asType = (svc: MealItem, type: ProteinShake['type']): MealItem => {
 
 describe('A · el caso de la QA visual: lacteos + Vegana AM + antojo PASTA', () => {
   it('generateWeeklyPlan con el target real → el plan pasa la validación final', async () => {
-    const days = await gen('vegana', ['am'], ['lacteos'], QA_TARGET, 12345, 'PASTA');
+    // MENÚ V1 · CAPA 4 · el mismo caso; si el corrector ya no fusiona en el batido (usa el slot libre), se reproduce
+    // el combinado con el batido en los dos slots. Lo que se valida no cambia: el plan pasa la validación final.
+    let days = await gen('vegana', ['am'], ['lacteos'], QA_TARGET, 12345, 'PASTA');
+    if (!combinedShakes(days).length) days = await gen('vegana', ['am', 'pm'], ['lacteos'], QA_TARGET, 12345, 'PASTA');
     expect(combinedShakes(days).length, 'el caso reproduce el batido combinado').toBeGreaterThan(0);
     const v = validatePlan({ days }, ['lacteos']);
     expect(v.violations).toEqual([]);

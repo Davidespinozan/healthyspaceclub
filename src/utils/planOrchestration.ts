@@ -4,7 +4,7 @@
 // o se pasa de tiempo, cae al motor determinista (buildWeeklyPlan).
 import { callAI } from './aiProxy';
 import {
-  adequateBankByTiempo, assembleFromSelection, buildWeeklyPlan, snacksPerSlot,
+  adequateBankByTiempo, assembleFromSelection, buildWeeklyPlan, SNACK_CANDIDATES_PER_DAY,
   type DaySelection, type PlanTarget, type ProteinShake, type AvoidInput,
 } from './planEngine';
 import { buildWeeklyPlanSelectPrompt } from '../ai/prompts/weeklyPlanSelect';
@@ -22,7 +22,8 @@ export async function orchestrateWeeklyPlan(
   // (el prompt no lleva restricciones; la IA no es la autoridad).
   // region: fuera de LATAM se descartan platillos inconseguibles (mole/nopal/tinga…).
   const bank = adequateBankByTiempo(avoid, target, craving, region);
-  const snacksPerDay = 2 * snacksPerSlot(target.kcal); // metas altas: 4 snacks/día (2 AM, 2 PM)
+  // CAPA 4 V1 · la IA propone CANDIDATOS de snack; el ensamblado decide cuántos (0–2) y cuál, por tamaño.
+  const snacksPerDay = SNACK_CANDIDATES_PER_DAY;
   const prompt = buildWeeklyPlanSelectPrompt({ target, craving, bank, snacksPerDay });
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 60_000);

@@ -207,7 +207,7 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v
 
 ### Versiones vigentes
 
-`ENERGY_PRESCRIPTION_VERSION = 2` · `MACRO_PRESCRIPTION_VERSION = 4` · `PLAN_ENGINE_VERSION = 34` · `ENERGY_CALIBRATION_VERSION = 2` · `CALIBRATION_ENERGY_VERSION = 1` · `NUTRITION_SNAPSHOT_VERSION = 2` · `ADAPTIVE_DECISION_VERSION = 1`. Ningún bump en los Bloques 5–9. `PLAN_ENGINE_VERSION` 33 → 34 lo subió MENÚ HSC V1 · Bloque 1 (motor de platillos: `max_g` como techo, taza de arroz y rebanada de jamón de pavo del catálogo, copy de piezas, umbrales de snacks contra la meta diaria en ambos caminos, `gen.source`); no toca CAPA 1/2 ni Adaptive.
+`ENERGY_PRESCRIPTION_VERSION = 2` · `MACRO_PRESCRIPTION_VERSION = 4` · `PLAN_ENGINE_VERSION = 35` · `ENERGY_CALIBRATION_VERSION = 2` · `CALIBRATION_ENERGY_VERSION = 1` · `NUTRITION_SNAPSHOT_VERSION = 2` · `ADAPTIVE_DECISION_VERSION = 1`. Ningún bump en los Bloques 5–9. `PLAN_ENGINE_VERSION` 33 → 34 lo subió MENÚ HSC V1 · Bloque 1 y 34 → 35 la CAPA 4 V1 (motor de platillos: `max_g` como techo, taza de arroz y rebanada de jamón de pavo del catálogo, copy de piezas, umbrales de snacks contra la meta diaria en ambos caminos, `gen.source`); no toca CAPA 1/2 ni Adaptive.
 
 ### Pendientes de Adaptive
 
@@ -220,19 +220,22 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v
 
 ---
 
-## CAPA 4 · reparto en tiempos de comida · `OPEN / DESIGN IN PROGRESS`
+## CAPA 4 · reparto en tiempos de comida · `V1 IMPLEMENTED (local) · HIGH-KCAL TRADE-OFF PENDING DECISION`
 
-Reanudar en: **MEAL FREQUENCY & EATING OPPORTUNITIES**.
+Decisiones D1–D3 (Menú HSC V1). Implementado en `planEngine.ts` (v35), igual en el motor de código y en el ensamblado de la IA.
 
 | Regla | Estado | Dónde |
 |---|---|---|
-| `SHARE_KCAL` 25 / 7,5 / 35 / 7,5 / 25 | `LEGACY ACTIVE · PENDING CAPA 4` | `planEngine.ts` |
-| `SHARE_PROT` 32 / 2 / 32 / 2 / 32 | `LEGACY ACTIVE · PENDING CAPA 4` | `planEngine.ts` |
-| Snacks por slot (> 2200 kcal) | `LEGACY ACTIVE · PENDING CAPA 4` | `planEngine.ts` |
-| Snack denso (umbral 2800 kcal) | `LEGACY ACTIVE · PENDING CAPA 4` | `planEngine.ts` |
-| Solver (`fitSlot`/`solve`/`topUpDay`/`topUpMeals`), topes de porción | `LEGACY ACTIVE · PENDING CAPA 4` | `planEngine.ts` |
-| Bandas del banco estático (`assignPlan` 2750/2250/1750 → `mealPlanKey`) | `LEGACY ACTIVE · PENDING CAPA 4` | `tdee.ts`, `energyHydration.ts` |
-| `mealCalorieSplit` 25/35/25/15 | `LEGACY ACTIVE · PENDING CAPA 4` (sin consumidores productivos) | `nutritionTargets.ts` |
+| D2 · 3 principales + 0–2 snacks (máx. 5 tiempos), por NECESIDAD: las principales se miden a PORCIÓN NORMAL (techos + `preferredMaxG` + `mult_max` del banco); solo el hueco va a snacks; el batido ocupa su slot | `IMPLEMENTED` | `snackPlan`, `buildDay`, `assembleFromSelection` |
+| Meta de cada principal acotada a lo que su tiempo da usualmente (p75 del pool a porción normal) | `IMPLEMENTED` | `usualMainKcal`, `capTarget` |
+| Un snack ≤ ¾ de la principal más chica; si el hueco no cabe en uno, 2 | `IMPLEMENTED` | `SNACK_MAX_VS_MAIN` |
+| D3 · UN platillo por snack, a porción normal, solo si su rango de tamaño contiene su hueco; fruta sola solo en snacks chicos; el corrector nunca une fruta con fruta y usa un slot libre antes de fusionar | `IMPLEMENTED` | `snackFitsSize`, `isFruitSnack`, `mergeIntoSnack` |
+| Snacks densos por necesidad (su mínimo cabe en el hueco), sin umbral de 2800 | `IMPLEMENTED` | `snackFitsSize`; el umbral queda solo en el bowl (diferido) |
+| Bloques: el factor 0.5–1.5 respeta el techo de cada ingrediente | `IMPLEMENTED` | `solve` |
+| D1 · pasta cocida 120 g/taza; aceite en cditas de 5 g; miel cdita 7 g / cda 21 g | `IMPLEMENTED` | `portionStr` |
+| `SHARE_KCAL`/`SHARE_PROT` | Solo reparten la meta ENTRE las 3 principales (y el bowl); ya no fijan snacks | `planEngine.ts` |
+| Metas ≥ 3000 kcal con restricciones y ~4000 kcal: sin fruta de relleno y sin romper techos, el banco no siempre alcanza el carbohidrato con proteína en meta → desvío del PEOR día 5–30 % (media semanal cercana) y repetición de principales | `PENDING PRODUCT DECISION` | ver reporte CAPA 4 |
+| Bandas del banco estático (`assignPlan` → `mealPlanKey`), `mealCalorieSplit` | `LEGACY INERT` | `tdee.ts`, `nutritionTargets.ts` |
 | `canonicalTime`/`eligibleTimes`, FORMULA/ASSEMBLY/STRUCTURED, complementos, comida ≠ platillo, presentación | `OPEN` | — |
 
 ## CAPA 5+ · `OPEN`

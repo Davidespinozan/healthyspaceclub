@@ -221,6 +221,10 @@ describe('N3 · property: ningún plato generado contiene el alérgeno evitado',
           const text = effectiveDishAvoidText(dish);
           const words = new Set(text.split(/[^a-z0-9]+/).filter(Boolean));
           for (const t of terms) {
+            // ÚNICA excepción documentada de la autoridad (planEngine TERM_EXCEPT · `validatePlan`): la galleta de
+            // ARROZ no lleva gluten. MENÚ V1 · CAPA 4 la sirve como snack con más frecuencia y el oráculo de texto
+            // la marcaba; la semántica de restricciones no cambia (se alinea el oráculo, no la autoridad).
+            if (r === 'gluten' && /^galletas?$/.test(t) && /galletas? de arroz/.test(text)) continue;
             if (t.includes(' ') ? text.includes(t) : words.has(t)) leaks.push(`${r} @${kcal}/${seed}: ${m.name} ~ ${t}`);
           }
         }

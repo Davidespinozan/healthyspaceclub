@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { BANCO } from '../../data/banco';
-import { adequateBankByTiempo, DENSE_SNACK_KCAL_THRESHOLD, type PlanTarget } from '../planEngine';
+import { adequateBankByTiempo, buildWeeklyPlan, snackFitsSize, DENSE_SNACK_KCAL_THRESHOLD, type PlanTarget } from '../planEngine';
 
 const dense = BANCO.filter(d => d.dense);
 const target = (kcal: number): PlanTarget => ({ kcal, protG: Math.round(kcal * 0.075), fatG: Math.round(kcal * 0.03), carbG: Math.round(kcal * 0.11) });
@@ -20,16 +20,26 @@ describe('Snacks densos · marca y gating por requerimiento calórico', () => {
     expect(denseNonSnack.map(d => d.nombre)).toEqual([]);
   });
 
-  it('con requerimiento NORMAL (< umbral) NINGÚN snack denso entra al pool', () => {
-    const pool = snackPool(DENSE_SNACK_KCAL_THRESHOLD - 300);
-    expect(pool.some(d => d.dense), 'un denso se coló bajo el umbral').toBe(false);
-    expect(pool.length, 'el pool normal de snacks no debe quedar vacío').toBeGreaterThan(0);
+  // MENÚ V1 · CAPA 4 · D3: los densos ya NO se filtran por un umbral de kcal del día. Están en el pool y entran solo
+  // por NECESIDAD REAL: cuando su porción mínima cabe en el hueco de un snack (`snackFitsSize`).
+  it('CAPA 4 · el pool de snacks trae los densos a toda meta (decide el tamaño, no un umbral)', () => {
+    expect(snackPool(1800).filter(d => d.dense).length).toBe(dense.length);
+    expect(snackPool(1800).length, 'el pool de snacks no debe quedar vacío').toBeGreaterThan(0);
   });
 
-  it('con requerimiento ALTO (≥ umbral) los snacks densos SÍ entran al pool', () => {
-    const pool = snackPool(DENSE_SNACK_KCAL_THRESHOLD + 400);
-    expect(pool.filter(d => d.dense).length, 'no aparecieron densos con meta alta').toBeGreaterThan(0);
+  it('CAPA 4 · un denso NUNCA es candidato para un snack chico (su mínimo no cabe), y sí para uno grande', () => {
+    expect(dense.filter(d => snackFitsSize(d, 150)), 'un denso cupo en un snack de 150 kcal').toEqual([]);
+    expect(dense.filter(d => snackFitsSize(d, 450)).length, 'ningún denso sirve a un snack de 450 kcal').toBeGreaterThan(0);
   });
+
+  it('CAPA 4 · plan real con meta normal: ningún snack denso servido', () => {
+    const names = new Set(dense.map(d => d.nombre));
+    for (const kcal of [1450, 1800]) for (const seed of [7, 42]) {
+      const served = buildWeeklyPlan({ kcal, protG: Math.round(kcal * 0.28 / 4), fatG: Math.round(kcal * 0.27 / 9), carbG: Math.round(kcal * 0.45 / 4) }, { seed })
+        .flatMap(d => d.meals).filter(m => m.time.startsWith('Snack') && m.name.split(' + ').some(n => names.has(n)));
+      expect(served.map(m => m.name), `${kcal}/${seed}`).toEqual([]);
+    }
+  }, 60_000);
 
   it('el pool alto = pool normal + densos (superconjunto, no reemplazo)', () => {
     const low = new Set(snackPool(2000).map(d => d.nombre));
@@ -37,7 +47,7 @@ describe('Snacks densos · marca y gating por requerimiento calórico', () => {
     for (const n of low) expect(high.includes(n), `meta alta perdió el snack normal ${n}`).toBe(true);
   });
 
-  it('el umbral es un valor único configurable (provisional)', () => {
+  it('el umbral 2800 queda SOLO para el camino del bowl (diferido); el plan semanal ya no lo usa', () => {
     expect(typeof DENSE_SNACK_KCAL_THRESHOLD).toBe('number');
     expect(DENSE_SNACK_KCAL_THRESHOLD).toBeGreaterThan(2000);
   });
