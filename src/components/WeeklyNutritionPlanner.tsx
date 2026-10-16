@@ -19,6 +19,7 @@ import { isServableMacroPrescription, nonServableMacroNotice } from '../utils/ma
 import { PLAN_ENGINE_VERSION, shakeTypeVerdict } from '../utils/planEngine';
 import ShakeTypeSelector from './ShakeTypeSelector';
 import { generateWeeklyPlan } from '../utils/planOrchestration';
+import { planSourceTag } from '../utils/planSource';
 import NutritionMeta from './NutritionMeta';
 import EditDataSheet from './sheets/EditDataSheet';
 import ProfileCompletionSheet from './sheets/ProfileCompletionSheet';
@@ -364,7 +365,7 @@ export default function WeeklyNutritionPlanner() {
       const target = { kcal: planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG };
       const shake = buildShake();
       const region = obData.country ? regionFromCountry(String(obData.country)) : (getCachedRegion() ?? undefined);
-      const { days } = await generateWeeklyPlan(target, policy, newAnswers.cravings ?? '', Date.now() & 0x7fffffff, shake, region);
+      const { days, source } = await generateWeeklyPlan(target, policy, newAnswers.cravings ?? '', Date.now() & 0x7fffffff, shake, region);
       // NUTRITION-N8 · lista de compras = SKUs reales: expande "Verduras (…)" y colapsa sinónimos/
       // plurales/acentos (jitomate=tomate, yogur=yogurt), deduplicando. Se calcula UNA vez al generar y
       // se persiste; el plan (days/m.ings/macros) NO cambia. Los checks `shop-i` indexan esta lista
@@ -381,7 +382,7 @@ export default function WeeklyNutritionPlanner() {
         lang: locale,
         days,
         engineVersion: PLAN_ENGINE_VERSION,
-        gen: { kcal: planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, avoidPermanent, avoidWeekly, avoidSemantics: AVOID_SEMANTICS, craving: newAnswers.cravings ?? '', shake },
+        gen: { kcal: planGoal, protG: targets.protG, fatG: targets.fatG, carbG: targets.carbG, avoid, avoidPermanent, avoidWeekly, avoidSemantics: AVOID_SEMANTICS, craving: newAnswers.cravings ?? '', shake, source: planSourceTag(source) },
       });
       setActiveDay(todayOffset >= 0 ? todayOffset : 0);
       setPhase('plan');

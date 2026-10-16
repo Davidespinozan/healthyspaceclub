@@ -288,18 +288,21 @@ const CRUJIENTE_RE = /tostada|totopo|tostadita|galleta|crut[oó]n|chip|pan(?! in
 // Piso y techo de UN ingrediente. Vive aparte porque lo usan DOS cosas que deben
 // coincidir: el solver (prep) y el filtro de capacidad que decide qué platillos puede
 // elegir la IA. Si se desincronizan, la IA vuelve a recibir platillos imposibles.
-function ingBounds(ing: BancoIng): { lo: number; hi: number } {
+export function ingBounds(ing: BancoIng): { lo: number; hi: number } {
   const a = ing.a!;
   // Techo por tipo de alimento. Regla de Magaly: cuando faltan calorías, que suba la
   // GUARNICIÓN DE ALMIDÓN (arroz, papa, camote, pasta, avena, leguminosas) — no las
   // tostadas. Una porción grande de arroz es normal; 8 tostadas no. La GRASA se aprieta
-  // porque es la que se desborda (el solver la pondera al final, W=0.8).
+  // porque es la que se desborda (el solver la pondera con W[1]).
   const fatDom = a[2] * 9 > a[1] * 4 && a[2] * 9 > a[3] * 4;
   const mult = fatDom ? 2.0
     : CRUJIENTE_RE.test(ing.nv) ? 1.5      // tostada/totopo/galleta: casi no crece
     : ALMIDON_RE.test(ing.nv) ? 3.0        // arroz/papa/camote/pasta: aquí sube
     : 3.0;
-  let hi = Math.max(ing.max && ing.max > 0 ? ing.max : 0, Math.round(ing.g0 * mult));
+  let hi = Math.round(ing.g0 * mult);
+  // MENÚ V1 · B1 · `max_g` del CSV es un TECHO (CORRECCIONES-APP-HSC §3: «El max_g es un TECHO, no una
+  // meta»). Antes era `max(ing.max, g0·mult)` y SUBÍA el techo (p. ej. machaca 50→116 g con max 60).
+  if (ing.max && ing.max > 0) hi = Math.min(hi, ing.max);
   // Contables: nunca más de N piezas realistas (tortilla ≤6, huevo ≤6, tostada ≤6…).
   const pieceMax = ing.pu && ing.un ? PIECE_MAX[ing.un] : undefined;
   if (pieceMax && ing.pu) hi = Math.min(hi, Math.round(pieceMax * ing.pu));
@@ -467,7 +470,8 @@ const CUP_G: Array<[RegExp, number]> = [
   [/garbanzo/i, 164],
   [/alubia|frijol/i, 172],
   [/quinoa/i, 185],
-  [/arroz/i, 158], // arroz cocido (excluye galletas/inflado más abajo)
+  [/arroz/i, 188], // arroz cocido (excluye galletas/inflado más abajo). MENÚ V1 · B1: food_measures
+                   // arroz-cocido = 188 g/taza (antes 158, «referencia USDA»); TODO arroz del banco es «Arroz cocido».
   [/leche/i, 240],  // líquidos también se miden en tazas (1 taza ≈ 240 ml)
   [/yogur|yoghur/i, 245],
   [/avena cocida/i, 234], // avena cocida (la seca en hojuelas se queda en gramos)
@@ -491,6 +495,17 @@ function sauceStr(nv: string, grams: number): string {
   }
   const n = Math.max(0.25, snapCount(grams / 240)); // grande → tazas
   return `${fmtCount(n)} ${pluralNoun('taza', n)} de ${nv.toLowerCase()}`;
+}
+// Rebanadas: el jamón de pavo del banco es «Pechuga de pavo» → food_measures: rebanada 21.33 g. El jamón
+// serrano no tiene medida en el catálogo → conserva el valor previo (30 g, Magaly). Picado / molido /
+// en cuadritos / deshebrado no son rebanadas.
+const SLICE_RE = /jam[oó]n|pavo en rebanadas/i;
+const NOT_SLICE_RE = /cuadrit|picad|molid|deshebrad|cubos|trozos/i;
+const SLICE_G: Array<[RegExp, number]> = [[/serrano/i, 30], [/pavo/i, 21.33]];
+function sliceGrams(nv: string): number | null {
+  if (!SLICE_RE.test(nv) || NOT_SLICE_RE.test(nv)) return null;
+  for (const [re, g] of SLICE_G) if (re.test(nv)) return g;
+  return 30;
 }
 function cupGrams(nv: string): number | null {
   if (CUP_EXCLUDE.test(nv)) return null;
@@ -533,6 +548,23 @@ function pluralWord(w: string): string {
     ? w + 's'
     : w.replace(/ó(?=n$)/, 'o').replace(/á(?=n$)/, 'a').replace(/é(?=n$)/, 'e') + 'es';
 }
+// MENÚ V1 · B1 · singular de una frase cuyo nombre ya viene en plural en el banco («Tortillas de maíz»,
+// «Tostadas horneadas», «Dátiles»): con 1 pieza o menos se pintaba «1 tortillas de maíz». El sustantivo
+// toma la forma de la unidad del catálogo cuando coincide (dátiles → dátil); si no, pierde la -s final
+// (totopos → totopo). Los adjetivos que siguen pierden la -s hasta la primera preposición/paréntesis.
+function singularPhrase(txt: string, un: string): string {
+  let stop = false;
+  return txt.split(' ').map((w, i) => {
+    if (stop || w.startsWith('(') || STOP_PLURAL.has(w.toLowerCase())) { stop = true; return w; }
+    if (!/s$/i.test(w) || w.length <= 3) return w;
+    if (i === 0) {
+      const head = un.split(' ')[0];
+      if (pluralWord(head).toLowerCase() === w.toLowerCase()) return w[0] === w[0].toUpperCase() ? head[0].toUpperCase() + head.slice(1) : head;
+      return /[aeiouáéíóú]s$/i.test(w) ? w.slice(0, -1) : w;
+    }
+    return w.slice(0, -1);
+  }).join(' ');
+}
 function pluralPhrase(txt: string, n: number): string {
   if (n <= 1) return txt;
   let stop = false;
@@ -561,9 +593,12 @@ export function portionStr(ing: BancoIng, g: number | null): string {
     const n = Math.max(0.5, Math.round((grams / 10) * 2) / 2);
     return `${fmtCount(n)} ${n <= 1 ? 'cda' : 'cdas'} de ${ing.nv.toLowerCase()}`;
   }
-  // Jamón / pavo → REBANADAS (1 rebanada = 30 g). (Magaly)
-  if (/jam[oó]n|pavo/i.test(ing.nv) && grams > 0) {
-    const n = Math.max(1, Math.round(grams / 30));
+  // Jamón → REBANADAS (Magaly). MENÚ V1 · B1: solo lo que de verdad se sirve en rebanadas — el jamón y
+  // el «pavo en rebanadas» —, nunca «carne molida de pavo» ni el jamón «en cuadritos» (antes la regla
+  // /jamón|pavo/ pintaba «5 rebanadas de carne molida de pavo»). Gramos por rebanada del catálogo.
+  const sliceG = sliceGrams(ing.nv);
+  if (sliceG && grams > 0) {
+    const n = Math.max(1, Math.round(grams / sliceG));
     return `${n} ${n === 1 ? 'rebanada' : 'rebanadas'} de ${ing.nv.toLowerCase()}`;
   }
   // Granos/leguminosas/pasta → tazas (si el ingrediente no trae ya otra medida casera).
@@ -603,7 +638,7 @@ export function portionStr(ing: BancoIng, g: number | null): string {
       if (ing.un.startsWith('rebanada')) return `${fmtCount(n)} ${pluralPhrase('rebanada', n)} de ${ing.nv.toLowerCase()}`;
       // El resto de unidades SON el alimento → se usa su nombre real, no la unidad
       // genérica: "10 totopos horneados", no "10 tostadas".
-      return `${fmtCount(n)} ${pluralPhrase(ing.nv, n).toLowerCase()}`;
+      return `${fmtCount(n)} ${(n <= 1 ? singularPhrase(ing.nv, ing.un) : pluralPhrase(ing.nv, n)).toLowerCase()}`;
     }
   }
   return `${grams} g ${ing.nv}`;
@@ -1064,8 +1099,12 @@ function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
   return meals;
 }
 
-function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>, relax = 0, avoidCats: string[] = []): DayPlan {
-  const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
+function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>, relax = 0, avoidCats: string[] = [], dayKcal = T[0]): DayPlan {
+  // MENÚ V1 · B1 · los umbrales de snacks (2 por slot > 2200; densos ≥ 2800) se evalúan contra la meta
+  // DIARIA COMPLETA (`dayKcal`), igual que el camino IA, `adequateBankByTiempo` y `topUpMeals`. Antes aquí
+  // se usaba T[0] = meta MENOS el batido, y el mismo socio con batido tenía otro número de snacks según
+  // el camino que generara el plan.
+  const nSnack = snacksPerSlot(dayKcal); // atleta: combina 2 snacks por slot
   const MT = mealTargets(T);
   // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno).
   //
@@ -1100,7 +1139,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   // gateDense puede vaciar el pool por sí solo (si todo lo compatible es snack denso y la
   // meta no llega al umbral): también es una imposibilidad, no una excusa para abrirlo.
   const snackClean = clean(BY_TIME.Snack, 'Snack');
-  const snackGated = gateDense(snackClean, T[0]); // densos solo si el requerimiento es alto
+  const snackGated = gateDense(snackClean, dayKcal); // densos solo si el requerimiento es alto (meta diaria completa)
   const snack = snackGated.length ? snackGated : snackClean;
   // Regla dura: NADA se repite dentro del mismo día (ni comida ni snack, ni una comida
   // como cena). avail() saca del pool lo ya usado hoy; fitSlot va llenando usedToday.
@@ -1195,7 +1234,11 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // v33 · CAPA 2 · las MACROS diarias pasan a la autoridad nueva (`macroPrescription`:
 // proteína por PRW × factor, grasa 25 %, carbohidrato residual). Todo plan v32 se
 // armó con gramos de `legacyMacros`; el salto lo marca STALE aunque coincida la kcal.
-export const PLAN_ENGINE_VERSION = 33;
+// v34 · MENÚ V1 · B1 · correcciones sin decisión nueva que CAMBIAN el plan servido: `max_g` del banco
+// como TECHO, taza de arroz del catálogo (188 g), rebanadas solo para jamón real (21.33 g pavo), singular
+// de piezas y umbrales de snacks contra la meta diaria en ambos caminos. Todo plan v33 queda STALE y se
+// regenera una vez (CAPA 1/2/Adaptive no cambian: esta versión solo versiona el motor de platillos).
+export const PLAN_ENGINE_VERSION = 34;
 
 export interface BuildOpts { seed?: number; avoid?: AvoidInput; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 
@@ -1605,7 +1648,7 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
         // Si un tiempo no tiene candidatos, buildDay lanza NoEligibleDishesError y el error
         // SALE de buildWeeklyPlan: no se reintenta con otro relax (relajar variedad o sesgar
         // a carbo no crea platillos) ni se devuelve un plan incompleto. Lo recoge la UI.
-        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax, avoidInputUnion(opts.avoid));
+        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax, avoidInputUnion(opts.avoid), target.kcal);
         if (shake) applyShake(day.meals, shake);   // batido (ya validado por shakeAllowedFor) reemplaza el snack de su slot
         // Cuadre del día contra la meta COMPLETA (T), ya con el batido puesto: las
         // comidas absorben lo que el batido aporta o deja faltando.

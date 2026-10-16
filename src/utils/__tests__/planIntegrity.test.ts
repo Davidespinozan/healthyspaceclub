@@ -355,10 +355,10 @@ describe('P0-04 · H · las cuatro puertas', () => {
 // I · VERSIÓN DEL MOTOR + REGIÓN EN LA AUTO-REGENERACIÓN
 // ═════════════════════════════════════════════════════════════════════════════
 describe('P0-04 · I · versión y región', () => {
-  it('6 · PLAN_ENGINE_VERSION = 33 → un plan v32 (macros legacy) queda por debajo y se regenera', () => {
-    expect(PLAN_ENGINE_VERSION).toBe(33);
-    const guardado = 32;
-    expect(guardado >= PLAN_ENGINE_VERSION, 'un plan v32 YA NO debe considerarse al día').toBe(false);
+  it('6 · PLAN_ENGINE_VERSION = 34 (MENÚ V1 · B1) → un plan v33 queda por debajo y se regenera', () => {
+    expect(PLAN_ENGINE_VERSION).toBe(34);
+    const guardado = 33;
+    expect(guardado >= PLAN_ENGINE_VERSION, 'un plan v33 YA NO debe considerarse al día').toBe(false);
     // C4 · el gate dejó de ser una comparación suelta en el efecto: ahora lo hace
     // `weeklyPlanCurrentness`, que compara la versión Y la cifra prescrita. La
     // comparación de versión sigue existiendo, pero dentro del selector.

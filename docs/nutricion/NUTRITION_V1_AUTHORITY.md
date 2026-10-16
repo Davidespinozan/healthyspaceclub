@@ -207,7 +207,7 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v
 
 ### Versiones vigentes
 
-`ENERGY_PRESCRIPTION_VERSION = 2` · `MACRO_PRESCRIPTION_VERSION = 4` · `PLAN_ENGINE_VERSION = 33` · `ENERGY_CALIBRATION_VERSION = 2` · `CALIBRATION_ENERGY_VERSION = 1` · `NUTRITION_SNAPSHOT_VERSION = 2` · `ADAPTIVE_DECISION_VERSION = 1`. Ningún bump en los Bloques 5–9.
+`ENERGY_PRESCRIPTION_VERSION = 2` · `MACRO_PRESCRIPTION_VERSION = 4` · `PLAN_ENGINE_VERSION = 34` · `ENERGY_CALIBRATION_VERSION = 2` · `CALIBRATION_ENERGY_VERSION = 1` · `NUTRITION_SNAPSHOT_VERSION = 2` · `ADAPTIVE_DECISION_VERSION = 1`. Ningún bump en los Bloques 5–9. `PLAN_ENGINE_VERSION` 33 → 34 lo subió MENÚ HSC V1 · Bloque 1 (motor de platillos: `max_g` como techo, taza de arroz y rebanada de jamón de pavo del catálogo, copy de piezas, umbrales de snacks contra la meta diaria en ambos caminos, `gen.source`); no toca CAPA 1/2 ni Adaptive.
 
 ### Pendientes de Adaptive
 

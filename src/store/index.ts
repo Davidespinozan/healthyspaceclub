@@ -454,6 +454,9 @@ interface AppState {
       // MB2 · 2 = `avoidWeekly` es preferencia SUAVE. Solo trazabilidad (ver `avoidPolicyForPlan`).
       avoidSemantics?: number;
       craving: string; shake?: { slots: ('am' | 'pm')[]; type: 'regular' | 'vegana' | 'massgainer'; protG: number };
+      // MENÚ V1 · B1 · qué camino armó el plan (IA con revalidación, o motor determinista). Solo trazabilidad:
+      // no cambia la prioridad de caminos. Planes anteriores no lo traen.
+      source?: 'AI' | 'CODE';
     };
   } | null;
   saveWeeklyPlan: (plan: NonNullable<AppState['weeklyPlan']>) => Promise<void>;

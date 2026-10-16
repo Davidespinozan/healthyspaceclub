@@ -102,7 +102,9 @@ describe('N6 · plan generado real: 0 piezas contables fraccionadas', () => {
     }
     expect(days).toBeGreaterThan(250);   // 280 días (5 tiers × 4 perfiles × 2 seeds)
     expect(offenders, `piezas contables fraccionadas: ${[...new Set(offenders)].slice(0, 12).join(' · ')}`).toEqual([]);
-  });
+  // MENÚ V1 · B1 · `max_g` ya es TECHO: en 3500 kcal con exclusiones el motor recorre más reintentos
+  // (relax 1–2) y el barrido pasa del testTimeout global de 20 s en la suite completa. El invariante no cambia.
+  }, 60_000);
 });
 
 // ── §4 los gramos del solver son deterministas y no se tocan por el despliegue ──

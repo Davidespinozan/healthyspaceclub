@@ -9,6 +9,7 @@ import { weeklyPlanCurrentness } from './weeklyPlanState';
 import { PLAN_ENGINE_VERSION } from './planEngine';
 import { avoidPolicyForPlan, policyUnion, permanentAvoidFrom, AVOID_SEMANTICS } from './avoidAuthority';
 import { generateWeeklyPlan } from './planOrchestration';
+import { planSourceTag } from './planSource';
 import { dayKey } from './localDate';
 import { getCachedRegion, regionFromCountry } from './region';   // P0-04 · la regeneración perdía la región
 import type { ProteinShake } from './planEngine';
@@ -168,7 +169,7 @@ export function useAutoRegenPlan(): void {
     let cancelled = false;
     (async () => {
       try {
-        const { days } = await generateWeeklyPlan(target, policy, craving, Date.now() & 0x7fffffff, shake, region);
+        const { days, source } = await generateWeeklyPlan(target, policy, craving, Date.now() & 0x7fffffff, shake, region);
         if (cancelled) return;
         const shopSet = new Set<string>();
         for (const d of days) for (const m of d.meals) for (const ing of m.ings ?? [])
@@ -181,7 +182,7 @@ export function useAutoRegenPlan(): void {
           // semanal: se queda sin `avoidWeekly` y la autoridad lo sigue validando en estricto.
           gen: { ...target, avoid, avoidPermanent: permanentAvoidFrom(obData),
                  ...(weeklyPlan.gen?.avoidWeekly ? { avoidWeekly: weeklyPlan.gen.avoidWeekly, avoidSemantics: AVOID_SEMANTICS } : {}),
-                 craving, shake },
+                 craving, shake, source: planSourceTag(source) },
         });
       } catch (e) {
         console.error('[auto-regen] falló:', e);
