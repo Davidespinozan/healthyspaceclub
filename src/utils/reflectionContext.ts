@@ -52,8 +52,11 @@ export function renderReflectionBehaviorFacts(store: StoreState): string {
   }
 
   // ── Nutrición (autoridad CoachContext; valores EXACTOS, sin recalcular) ─────────
+  // C4 · `null` = HSC no prescribe energía a este socio. Esta ruta ya omitía la
+  // línea cuando la meta era 0; ahora la ausencia es explícita en el tipo, así que
+  // el `> 0` deja de ser el guard que distingue «sin meta» de «meta de 0 kcal».
   const n = ctx.nutrition;
-  if (n.target.kcal > 0) {
+  if (n !== null && n.target.kcal > 0) {
     lines.push(
       `- Nutrición hoy: meta ${n.target.kcal} kcal (P${n.target.prot} C${n.target.carb} G${n.target.fat}g); ` +
       `consumido ${n.consumed.kcal} kcal; resta ${n.remaining.kcal} kcal · P${n.remaining.prot}g · C${n.remaining.carb}g · G${n.remaining.fat}g (exacto).`,

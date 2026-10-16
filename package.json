@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "build:nutrition-engine": "node scripts/build-nutrition-engine.mjs"
   },
   "dependencies": {
     "@capacitor/cli": "^8.2.0",
@@ -40,6 +41,7 @@
     "@vitest/ui": "^4.1.6",
     "autoprefixer": "^10.4.20",
     "dotenv": "^17.3.1",
+    "esbuild": "0.21.5",
     "jsdom": "^29.1.1",
     "postcss": "^8.4.47",
     "stripe": "^22.2.0",

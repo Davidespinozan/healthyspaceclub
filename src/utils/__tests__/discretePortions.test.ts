@@ -75,8 +75,12 @@ const mk = (kcal: number): PlanTarget => ({
 describe('N6 · plan generado real: 0 piezas contables fraccionadas', () => {
   it('barrido determinista kcal × perfiles × seeds', () => {
     const TIERS = [1450, 1800, 2200, 2800, 3500];
+    // P0-03 · fuera 'vegano' y 'vegetariano': la autoridad solo admite las 10 categorías
+    // soportadas (Decisión 01), así que generar planes con ellas ejercitaba perfiles que
+    // ningún usuario puede tener. Se sustituyen por perfiles REALES, que además son los que
+    // de verdad hay que vigilar para las porciones contables.
     const PROFILES: Array<[string, string[]]> = [
-      ['normal', []], ['vegetariano', ['vegetariano']], ['vegano', ['vegano']], ['sinHuevo', ['huevo']],
+      ['normal', []], ['sinGluten', ['gluten']], ['sinLacteos', ['lacteos']], ['sinHuevo', ['huevo']],
     ];
     // 2 seeds (antes 3): N7 adelgazó el pool vegano/vegetariano (quita "Tacos de Carne Asada"),
     // lo que sube ~4s el tiempo de generación de este barrido y lo empujaba sobre el testTimeout

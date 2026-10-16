@@ -1,4 +1,6 @@
 import { dayKey } from '../utils/localDate';
+import { latestBodyWeightKg } from '../utils/bodyWeight';
+import { habitualActivityForAI } from '../utils/trainingProfileOptions';
 import { useState, useMemo, useEffect } from 'react';
 import { AlertTriangle, Check } from 'lucide-react';
 import { useAppStore } from '../store';
@@ -131,6 +133,7 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
   const exerciseBank = getExercises(locale);
   const userName = useAppStore(s => s.userName);
   const obData = useAppStore(s => s.obData);
+  const weightLog = useAppStore(s => s.weightLog);
   const setObData = useAppStore(s => s.setObData);
   const blockAnchors = useAppStore(s => s.blockAnchors);       // Fase 2 · continuidad de anclas
   const setBlockAnchors = useAppStore(s => s.setBlockAnchors);
@@ -698,9 +701,10 @@ export default function DailyTrainer({ onPhaseChange, partnerMode = false }: Dai
     const userProfile: UserProfile = {
       sex: toStr(obData?.sex),
       edad: toNum(obData?.edad),
-      peso: toNum(obData?.peso),
+      // Bloque 4 · último pesaje registrado (o el del perfil): Training no depende del peso nutricional.
+      peso: latestBodyWeightKg(weightLog, obData?.peso),
       estatura: toNum(obData?.estatura),
-      activity: toStr(obData?.activity),
+      habitualActivity: habitualActivityForAI(obData),
     };
 
     try {

@@ -1,5 +1,11 @@
 # Plan de integración — Nutrición HSC
 
+> ⚠️ **DOCUMENTO HISTÓRICO · NO ES LA AUTORIDAD VIGENTE.** Describe el diseño y los planes
+> previos a la reconstrucción de Nutrición V1 (Mifflin/TDEE, pisos por sexo, modo bienestar,
+> tabla de proteína con techo 2,4, pisos de grasa y de 130 g de carbohidrato…). Todo eso fue
+> retirado. La autoridad vigente es [`NUTRITION_V1_AUTHORITY.md`](NUTRITION_V1_AUTHORITY.md).
+
+
 Combina la especificación de Magaly (`LOGICA-NUTRICIONAL-HSC.md`) con la auditoría de
 bugs/recomendaciones de Claude Code. Objetivo: dejar el sistema nutricional correcto,
 seguro y completo, sin duplicar trabajo con lo que Magaly aún tiene pendiente.

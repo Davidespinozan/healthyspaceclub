@@ -1,5 +1,11 @@
 # 📦 CALCULADORA DE ALIMENTOS — HSC · Paquete para David
 
+> ⚠️ **DOCUMENTO HISTÓRICO · NO ES LA AUTORIDAD VIGENTE.** Describe el diseño y los planes
+> previos a la reconstrucción de Nutrición V1 (Mifflin/TDEE, pisos por sexo, modo bienestar,
+> tabla de proteína con techo 2,4, pisos de grasa y de 130 g de carbohidrato…). Todo eso fue
+> retirado. La autoridad vigente es [`NUTRITION_V1_AUTHORITY.md`](NUTRITION_V1_AUTHORITY.md).
+
+
 Hola David. Este paquete es el módulo de nutrición de HSC que armé con la ayuda de
 Claude. Está todo diseñado, con la lógica científica definida y un prototipo
 funcional. Aquí te explico qué es cada archivo y qué habría que hacer.

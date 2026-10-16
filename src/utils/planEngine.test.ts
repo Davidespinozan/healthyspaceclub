@@ -74,8 +74,10 @@ describe('planEngine — ajuste a la meta', () => {
 
   it('evitar carne-roja → no aparece res en el plan', () => {
     const days = buildWeeklyPlan(CASES[2], { seed: 9, avoid: ['carne-roja'] });
-    const rm = /\b(res|sirloin|bistec|falda|molida|machaca|chambarete)\b/;
-    for (const d of days) for (const m of d.meals) expect(rm.test(mealText(m))).toBe(false);
+    // P0-01 · el oracle distingue la ESPECIE: "molida" suelta también matchea "Papa molida" y
+    // "Carne molida de pavo", que no son carne roja. Se piden las frases que sí identifican el corte.
+    const rm = /\b(res|sirloin|bistec|falda|machaca|chambarete|arrachera)\b|carne asada|molida magra|molida de res/;
+    for (const d of days) for (const m of d.meals) expect(rm.test(mealText(m)), mealText(m)).toBe(false);
   });
 
   it('alergias: evitar huevo + cacahuate → no aparecen en el plan', () => {

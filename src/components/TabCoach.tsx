@@ -75,7 +75,9 @@ export default function TabCoach() {
   const hasWorkout = dailyWorkout?.date === today;
   const welcomeMsg = (() => {
     if (streakCount >= 7) return t('coach.welcomeStreak', { streak: streakCount });
-    if (todayKcal > 0 && planGoal > 0) return t('coach.welcomeKcal', { kcal: todayKcal, goal: planGoal });
+    // C3 · sin objetivo vigente el saludo NO menciona kcal: cae al siguiente
+    // caso en vez de dar la bienvenida con una meta inventada.
+    if (todayKcal > 0 && planGoal != null && planGoal > 0) return t('coach.welcomeKcal', { kcal: todayKcal, goal: planGoal });
     if (hasWorkout) return t('coach.welcomeWorkout');
     return t('coach.welcomeDefault');
   })();

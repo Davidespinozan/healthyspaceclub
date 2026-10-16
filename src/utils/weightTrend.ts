@@ -8,6 +8,10 @@
 //
 // Puro / determinista / sin React·store·Supabase / timezone-safe (opera sobre claves YYYY-MM-DD locales).
 // SIN plateau, SIN rate controller, SIN adherencia, SIN EMA, SIN slope — eso es N10.2, no este gate.
+//
+// ⚠️ BLOQUE 4 · RETIRADO COMO AUTORIDAD: el store ya no llama a nextNutritionWeight. Los pesajes son
+// solo historial y no mueven obData.peso. Se conserva como utilidad pura (con sus tests); un test de
+// arquitectura impide que un módulo productivo vuelva a importarla.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface WeightPoint { date: string; kg: number }
