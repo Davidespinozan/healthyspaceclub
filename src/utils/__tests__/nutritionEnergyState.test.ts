@@ -872,8 +872,10 @@ describe('C2 · nada de esto está conectado', () => {
     const ESPERADO: Record<string, string[]> = {
       // A10 · `profileCompletion` lo llama sobre un BORRADOR para saber qué
       // preguntar; no escribe ni proyecta nada.
-      nutritionEnergyState:        [...CON_MACROS, '/src/utils/profileCompletion.ts'],
-      resolveNutritionEnergyState: ['/src/utils/profileCompletion.ts'],
+      // ADAPTIVE BLOQUE 5 · el planificador del SERVIDOR (Edge nutrition-checkin) lo resuelve con el
+      // peso base para congelar `base_energy_raw` al abrir la calibración. No proyecta nada al store.
+      nutritionEnergyState:        [...CON_MACROS, '/src/utils/adaptiveCheckinPlanner.ts', '/src/utils/profileCompletion.ts'],
+      resolveNutritionEnergyState: ['/src/utils/adaptiveCheckinPlanner.ts', '/src/utils/profileCompletion.ts'],
       NutritionEnergyState:        CON_MACROS,
       EnergySnapshotV1:            ['/src/utils/energyHydration.ts'],
       buildEnergySnapshot:         STORE_Y_PUENTE,

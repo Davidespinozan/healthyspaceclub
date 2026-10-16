@@ -112,6 +112,8 @@ async function start(userId: string, request: Record<string, unknown>, deps: Nut
     p_user_id: userId, p_request_id: plan.requestId, p_objective: plan.objective, p_baseline_date: plan.baselineDate,
     p_cycle_start: plan.cycleStart, p_baseline_weight_kg: plan.baselineWeightKg, p_baseline_waist_cm: plan.baselineWaistCm,
     p_calibration_version: plan.calibrationVersion,
+    // Bloque 5 · base congelada CRUDA, calculada en el servidor por el planificador (CAPA 1 con el peso base).
+    p_base_energy_raw: plan.baseEnergyRaw,
   });
   if (error) { log('nutrition_checkin.start.rpc_error'); return { status: 503, body: { status: 'UNAVAILABLE' } }; }
   const r = (data ?? {}) as Row;

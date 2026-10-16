@@ -91,7 +91,7 @@ export interface CalibrationEnergyPosition {
 export type CalibrationEnergyOutcome =
   | { kind: 'ADOPT'; action: 'STEP_UP' | 'STEP_DOWN'; reason: AdaptiveReason; previousStep: number; step: number;
       rawCalibratedEnergy: number; calibratedEnergy: number }
-  | { kind: 'KEEP'; action: AdaptiveDecision['action']; reason: AdaptiveReason | 'SAFETY_FLOOR_REACHED'; step: number;
+  | { kind: 'KEEP'; action: AdaptiveDecision['action']; reason: AdaptiveReason; step: number;
       calibratedEnergy: number; blocked: { action: 'STEP_DOWN'; reason: AdaptiveReason; rawCalibratedEnergy: number } | null }
   | { kind: 'UNVERIFIABLE'; reason: 'POSITION_INVALID' | 'STEP_MISMATCH' | 'DECISION_INCOHERENT' };
 
@@ -122,14 +122,13 @@ export function energyOutcomeForDecision(position: CalibrationEnergyPosition, de
 }
 
 /**
- * EVIDENCIA para adoptar una energía calibrada como autoridad. La base congelada CRUDA debe venir de
- * una fuente que la registró al abrir la calibración; NO se reconstruye desde `baseEnergyKcal` (entero
- * redondeado), desde kcal antiguas ni desde diferencias de kcal.
+ * EVIDENCIA para adoptar una energía calibrada como autoridad. La base congelada CRUDA es la que el
+ * servidor registró al abrir la calibración (`calibration.baseEnergyRaw`, columna `base_energy_raw`);
+ * NO se reconstruye desde `baseEnergyKcal` (entero redondeado), desde kcal antiguas ni desde
+ * diferencias de kcal.
  */
 export interface CalibrationEnergyEvidence {
   calibration: NutritionCalibration | null;
-  /** Base congelada CRUDA registrada al abrir ESTA calibración; `null` si no existe registro. */
-  frozenBaseRawEnergy: number | null;
   /** Objetivo canónico VIGENTE del perfil (autoridad de CAPA 1). */
   currentObjective: CanonicalGoal | null;
 }
@@ -147,10 +146,10 @@ export function resolveCalibratedEnergy(evidence: CalibrationEnergyEvidence): Ca
   const cal = evidence.calibration;
   if (!cal || cal.status !== 'ACTIVE') return { adopted: false, reason: 'NO_ACTIVE_CALIBRATION' };
   if (cal.calibrationVersion !== ENERGY_CALIBRATION_VERSION) return { adopted: false, reason: 'UNSUPPORTED_CALIBRATION_VERSION' };
-  if (evidence.frozenBaseRawEnergy == null) return { adopted: false, reason: 'BASE_NOT_FROZEN' };
+  if (cal.baseEnergyRaw == null) return { adopted: false, reason: 'BASE_NOT_FROZEN' };
   if (!evidence.currentObjective || !(CANONICAL_GOALS as readonly string[]).includes(evidence.currentObjective)
       || evidence.currentObjective !== cal.objective) return { adopted: false, reason: 'OBJECTIVE_CHANGED' };
-  const r = calibratedEnergy(evidence.frozenBaseRawEnergy, cal.currentStep);
+  const r = calibratedEnergy(cal.baseEnergyRaw, cal.currentStep);
   if (r.status === 'REVIEW') {
     return { adopted: false, reason: r.reason === 'STEP_OUT_OF_RANGE' ? 'INVALID_STEP' : r.reason };
   }

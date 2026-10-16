@@ -60,7 +60,11 @@ export type AdaptiveReason =
   | 'CONTRADICTORY_SIGNALS' | 'PERFORMANCE_IMPROVING' | 'PERFORMANCE_WORSE' | 'NO_TRAINING_SIGNAL'
   | 'WAIST_IMPROVING' | 'WAIST_WORSENING' | 'NO_CLEAR_PROGRESS'
   // anti-oscilación
-  | 'DIRECTION_REVERSAL_BLOCKED' | 'CALIBRATION_LIMIT_REACHED';
+  | 'DIRECTION_REVERSAL_BLOCKED' | 'CALIBRATION_LIMIT_REACHED'
+  // Bloque 5 · suelo de seguridad T1. NO lo emite esta función: lo aplica la capa de energía
+  // calibrada (adaptiveCalibrationEnergy) sobre un STEP_DOWN de MB3 cuya energía cruda quedaría
+  // ≤ 1200 kcal; el check-in se guarda como REVIEW con la bajada en `blocked`.
+  | 'SAFETY_FLOOR_REACHED';
 
 export type AdaptiveInvalidReason =
   | 'UNKNOWN_OBJECTIVE'

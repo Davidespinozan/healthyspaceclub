@@ -20,8 +20,20 @@
 //     evaluada (o la línea base). Días reales; MB1 decide si la ventana basta.
 //   · MB3 «consecutivo» = ciclo inmediatamente anterior: un hueco reinicia.
 //   · solo se calibra con energía PRESCRIBED.
+//
+// Bloque 5 · capa de energía calibrada:
+//   · al ABRIR, la base congelada CRUDA (`rawPrescribedEnergy` de CAPA 1) se calcula AQUÍ, en el
+//     servidor, con el peso base que la RPC fijará en ob_data.peso. Sin PRESCRIBED con ese peso no
+//     hay calibración. El cliente no puede declarar base, paso ni kcal (lista blanca).
+//   · al REGISTRAR, tras MB3 se aplica `energyOutcomeForDecision`: una bajada cuya energía cruda
+//     quedaría ≤ 1200 se guarda como REVIEW · SAFETY_FLOOR_REACHED con el paso sin mover. Sin base
+//     verificable no se registra nada (ENGINE_INVALID).
+//   · un paso nuevo entra en vigor el PRIMER DOMINGO ≥ checkin_date (`calibrationEffectiveFrom`,
+//     D-B5-SUNDAY). Esta función solo lo DERIVA; conectarlo a la energía vigente es del Bloque 6/8.
 // ─────────────────────────────────────────────────────────────────────────────
 import { canonicalGoalFrom, type CanonicalGoal } from './energyPrescription';
+import { resolveNutritionEnergyState } from './nutritionEnergyState';
+import { energyOutcomeForDecision } from './adaptiveCalibrationEnergy';
 import { assessTrajectory, type TrajectoryResult } from './nutritionTrajectory';
 import { validateNutritionCheckin, type NutritionCheckin } from './nutritionCheckin';
 import { decideAdaptiveNutrition, type AdaptiveDecision, type PreviousCheckinContext } from './adaptiveNutritionDecision';
@@ -75,12 +87,27 @@ function ymdToDay(v: unknown): number | null {
 }
 const dayToYmd = (day: number) => new Date(day * DAY_MS).toISOString().slice(0, 10);
 
-/** Primer domingo en o después de la fecha de línea base. */
-export function cycleStartFor(baselineDate: string): string | null {
-  const d = ymdToDay(baselineDate);
+/** Primer domingo IGUAL O POSTERIOR a una fecha 'YYYY-MM-DD' (un domingo se devuelve a sí mismo). */
+export function firstSundayOnOrAfter(date: string): string | null {
+  const d = ymdToDay(date);
   if (d == null) return null;
   const dow = new Date(d * DAY_MS).getUTCDay(); // 0 = domingo
   return dayToYmd(d + ((7 - dow) % 7));
+}
+
+/** Primer domingo en o después de la fecha de línea base. */
+export function cycleStartFor(baselineDate: string): string | null {
+  return firstSundayOnOrAfter(baselineDate);
+}
+
+/**
+ * D-B5-SUNDAY · fecha en que ENTRA EN VIGOR el paso decidido en un check-in: el primer domingo IGUAL O
+ * POSTERIOR a `checkin_date` (sábado → +1, domingo → ese mismo día, lunes → +6 … viernes → +2). El
+ * domingo es la frontera de la semana nutricional: aplicarlo ese día no es un cambio a mitad de semana.
+ * Se deriva de la fecha guardada del check-in; no requiere columna. Puro.
+ */
+export function calibrationEffectiveFrom(checkinDate: string): string | null {
+  return firstSundayOnOrAfter(checkinDate);
 }
 
 /** Domingo en que vence el check-in n (n ≥ 1). */
@@ -153,6 +180,8 @@ export type StartPlan =
       baselineWeightKg: number;
       baselineWaistCm: number | null;
       calibrationVersion: number;
+      /** Bloque 5 · base congelada CRUDA calculada en el servidor (CAPA 1 con el peso base). */
+      baseEnergyRaw: number;
       /** La activa que se cierra por cambio de objetivo, si la hay. */
       closesCalibrationId: string | null;
     };
@@ -175,6 +204,11 @@ export function planStartCalibration(input: StartPlanInput): StartPlan {
   const active = input.active?.status === 'ACTIVE' ? input.active : null;
   if (active != null && active.objective === objective) return { kind: 'ALREADY_ACTIVE', calibrationId: active.id };
 
+  // Bloque 5 · BASE CONGELADA, server-side: CAPA 1 con el peso base que la RPC fijará como peso
+  // nutricional (misma transacción). Solo PRESCRIBED con ese peso es elegible; la base es el CRUDO.
+  const baseEnergyRaw = baseEnergyAtBaseline(input.obData, weightKg, objective);
+  if (baseEnergyRaw == null) return reject('NOT_ELIGIBLE');
+
   return {
     kind: 'START',
     requestId: req.requestId,
@@ -184,8 +218,21 @@ export function planStartCalibration(input: StartPlanInput): StartPlan {
     baselineWeightKg: weightKg,
     baselineWaistCm,
     calibrationVersion: ENERGY_CALIBRATION_VERSION,
+    baseEnergyRaw,
     closesCalibrationId: active?.id ?? null,
   };
+}
+
+/** `rawPrescribedEnergy` de CAPA 1 con el peso base; `null` si no es PRESCRIBED o el objetivo no cuadra. */
+function baseEnergyAtBaseline(obData: unknown, baselineWeightKg: number, objective: CanonicalGoal): number | null {
+  if (obData == null || typeof obData !== 'object') return null;
+  try {
+    const s = resolveNutritionEnergyState({ ...(obData as Record<string, unknown>), peso: baselineWeightKg } as never);
+    if (s.status !== 'PRESCRIBED' || s.goal !== objective) return null;
+    return isPositiveFinite(s.rawPrescribedEnergy) ? s.rawPrescribedEnergy : null;
+  } catch {
+    return null;
+  }
 }
 
 // ── Registrar check-in ──────────────────────────────────────────────────────
@@ -282,7 +329,12 @@ export function planCheckin(input: CheckinPlanInput): CheckinPlan {
   });
   if (decided.status !== 'DECIDED') return reject('ENGINE_INVALID');
 
-  const record = buildCheckinRecord({ cycleIndex, checkin, trajectory, decision: decided.decision, previousWaistCm: reference.waistCm });
+  // Bloque 5 · capa de energía: sin base congelada verificable no se registra; una bajada que
+  // cruzaría el suelo T1 se convierte en REVIEW · SAFETY_FLOOR_REACHED con el paso sin mover.
+  const decision = applyEnergyLayer(cal, decided.decision);
+  if (decision == null) return reject('ENGINE_INVALID');
+
+  const record = buildCheckinRecord({ cycleIndex, checkin, trajectory, decision, previousWaistCm: reference.waistCm });
   if (!record.ok) return reject('ENGINE_INVALID');
 
   return {
@@ -294,7 +346,19 @@ export function planCheckin(input: CheckinPlanInput): CheckinPlan {
     reference,
     checkin,
     trajectory,
-    decision: decided.decision,
+    decision,
     payload: record.payload,
   };
+}
+
+/** Decisión final tras la capa de energía, o `null` si la energía no puede verificarse. */
+function applyEnergyLayer(cal: NutritionCalibration, d: AdaptiveDecision): AdaptiveDecision | null {
+  if (cal.baseEnergyRaw == null) return null;
+  const out = energyOutcomeForDecision({ baseRawEnergy: cal.baseEnergyRaw, step: cal.currentStep }, d);
+  if (out.kind === 'UNVERIFIABLE') return null;
+  if (out.kind === 'KEEP' && out.reason === 'SAFETY_FLOOR_REACHED' && out.blocked) {
+    return { ...d, action: 'REVIEW', reason: 'SAFETY_FLOOR_REACHED', proposedStep: d.currentStep,
+      blocked: { action: out.blocked.action, reason: out.blocked.reason } };
+  }
+  return d;
 }

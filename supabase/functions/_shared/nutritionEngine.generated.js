@@ -1712,7 +1712,8 @@ var REASON_SET = {
   WAIST_WORSENING: true,
   NO_CLEAR_PROGRESS: true,
   DIRECTION_REVERSAL_BLOCKED: true,
-  CALIBRATION_LIMIT_REACHED: true
+  CALIBRATION_LIMIT_REACHED: true,
+  SAFETY_FLOOR_REACHED: true
 };
 var ADAPTIVE_REASONS = Object.keys(REASON_SET);
 var TRAJECTORY_CLASSIFICATION_VALUES = {
@@ -1788,6 +1789,7 @@ function isOneOf3(v, list) {
 }
 var num2 = (v) => v === null || v === void 0 || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null;
 var str = (v) => typeof v === "string" && v !== "" ? v : null;
+var positive = (v) => v != null && v > 0 ? v : null;
 var isStep = (v) => v != null && Number.isInteger(v) && v >= CALIBRATION_STEP_MIN && v <= CALIBRATION_STEP_MAX;
 function checkinFromRow(row) {
   const objective = row.objective;
@@ -1869,6 +1871,7 @@ function calibrationFromRow(row) {
     baselineWaistCm: num2(row.baseline_waist_cm),
     currentStep,
     baseEnergyKcal: num2(row.base_energy_kcal),
+    baseEnergyRaw: positive(num2(row.base_energy_raw)),
     lastCheckinId: str(row.last_checkin_id),
     lastAppliedAction: lastApplied ?? null,
     lastAppliedAt: str(row.last_applied_at),
@@ -1910,6 +1913,78 @@ function storedClassification(s) {
   }
 }
 
+// src/utils/adaptiveCalibrationEnergy.ts
+var CALIBRATION_ENERGY_VERSION = 1;
+var CALIBRATION_STEP_PERCENT = 5;
+var CALIBRATION_SAFETY_FLOOR_KCAL = HSC_FAT_LOSS_SCOPE_MIN_ENERGY;
+var isPositiveFinite3 = (v) => typeof v === "number" && Number.isFinite(v) && v > 0;
+var isValidStep = (s) => typeof s === "number" && Number.isInteger(s) && s >= CALIBRATION_STEP_MIN && s <= CALIBRATION_STEP_MAX;
+function rawCalibratedEnergy(baseRawEnergy, step) {
+  return baseRawEnergy * (100 + CALIBRATION_STEP_PERCENT * step) / 100;
+}
+function calibratedEnergy(baseRawEnergy, step) {
+  if (!isPositiveFinite3(baseRawEnergy)) return { status: "REVIEW", reason: "INVALID_BASE", baseRawEnergy, step, rawCalibratedEnergy: null };
+  if (!isValidStep(step)) return { status: "REVIEW", reason: "STEP_OUT_OF_RANGE", baseRawEnergy, step, rawCalibratedEnergy: null };
+  const raw = rawCalibratedEnergy(baseRawEnergy, step);
+  if (step < 0 && raw <= CALIBRATION_SAFETY_FLOOR_KCAL) {
+    return { status: "REVIEW", reason: "SAFETY_FLOOR_REACHED", baseRawEnergy, step, rawCalibratedEnergy: raw };
+  }
+  return { status: "CALIBRATED", baseRawEnergy, step, rawCalibratedEnergy: raw, calibratedEnergy: Math.round(raw) };
+}
+function energyOutcomeForDecision(position, decision) {
+  const current = calibratedEnergy(position.baseRawEnergy, position.step);
+  if (current.status !== "CALIBRATED") return { kind: "UNVERIFIABLE", reason: "POSITION_INVALID" };
+  if (decision.currentStep !== position.step) return { kind: "UNVERIFIABLE", reason: "STEP_MISMATCH" };
+  if (decision.action !== "STEP_UP" && decision.action !== "STEP_DOWN") {
+    if (decision.proposedStep !== position.step) return { kind: "UNVERIFIABLE", reason: "DECISION_INCOHERENT" };
+    return { kind: "KEEP", action: decision.action, reason: decision.reason, step: position.step, calibratedEnergy: current.calibratedEnergy, blocked: null };
+  }
+  const expected = position.step + (decision.action === "STEP_UP" ? 1 : -1);
+  if (decision.proposedStep !== expected) return { kind: "UNVERIFIABLE", reason: "DECISION_INCOHERENT" };
+  const next = calibratedEnergy(position.baseRawEnergy, decision.proposedStep);
+  if (next.status === "CALIBRATED") {
+    return {
+      kind: "ADOPT",
+      action: decision.action,
+      reason: decision.reason,
+      previousStep: position.step,
+      step: next.step,
+      rawCalibratedEnergy: next.rawCalibratedEnergy,
+      calibratedEnergy: next.calibratedEnergy
+    };
+  }
+  if (next.reason === "SAFETY_FLOOR_REACHED") {
+    return {
+      kind: "KEEP",
+      action: "REVIEW",
+      reason: "SAFETY_FLOOR_REACHED",
+      step: position.step,
+      calibratedEnergy: current.calibratedEnergy,
+      blocked: { action: "STEP_DOWN", reason: decision.reason, rawCalibratedEnergy: next.rawCalibratedEnergy }
+    };
+  }
+  return { kind: "UNVERIFIABLE", reason: "DECISION_INCOHERENT" };
+}
+function resolveCalibratedEnergy(evidence) {
+  const cal = evidence.calibration;
+  if (!cal || cal.status !== "ACTIVE") return { adopted: false, reason: "NO_ACTIVE_CALIBRATION" };
+  if (cal.calibrationVersion !== ENERGY_CALIBRATION_VERSION) return { adopted: false, reason: "UNSUPPORTED_CALIBRATION_VERSION" };
+  if (cal.baseEnergyRaw == null) return { adopted: false, reason: "BASE_NOT_FROZEN" };
+  if (!evidence.currentObjective || !CANONICAL_GOALS.includes(evidence.currentObjective) || evidence.currentObjective !== cal.objective) return { adopted: false, reason: "OBJECTIVE_CHANGED" };
+  const r = calibratedEnergy(cal.baseEnergyRaw, cal.currentStep);
+  if (r.status === "REVIEW") {
+    return { adopted: false, reason: r.reason === "STEP_OUT_OF_RANGE" ? "INVALID_STEP" : r.reason };
+  }
+  return {
+    adopted: true,
+    objective: cal.objective,
+    baseRawEnergy: r.baseRawEnergy,
+    step: r.step,
+    rawCalibratedEnergy: r.rawCalibratedEnergy,
+    calibratedEnergy: r.calibratedEnergy
+  };
+}
+
 // src/utils/adaptiveCheckinPlanner.ts
 var CYCLE_LENGTH_DAYS = 14;
 var CHECKIN_EARLY_DAYS = 1;
@@ -1940,11 +2015,17 @@ function ymdToDay(v) {
   return t / DAY_MS2;
 }
 var dayToYmd = (day) => new Date(day * DAY_MS2).toISOString().slice(0, 10);
-function cycleStartFor(baselineDate) {
-  const d = ymdToDay(baselineDate);
+function firstSundayOnOrAfter(date) {
+  const d = ymdToDay(date);
   if (d == null) return null;
   const dow = new Date(d * DAY_MS2).getUTCDay();
   return dayToYmd(d + (7 - dow) % 7);
+}
+function cycleStartFor(baselineDate) {
+  return firstSundayOnOrAfter(baselineDate);
+}
+function calibrationEffectiveFrom(checkinDate) {
+  return firstSundayOnOrAfter(checkinDate);
 }
 function cycleDueDate(cycleStart, n) {
   const s = ymdToDay(cycleStart);
@@ -1984,7 +2065,7 @@ function objectiveOf(obData) {
     return null;
   }
 }
-var isPositiveFinite3 = (v) => typeof v === "number" && Number.isFinite(v) && v > 0;
+var isPositiveFinite4 = (v) => typeof v === "number" && Number.isFinite(v) && v > 0;
 var reject = (reason, fields) => fields ? { kind: "REJECT", reason, fields } : { kind: "REJECT", reason };
 function planStartCalibration(input) {
   const req = readRequest(input.request, START_REQUEST_FIELDS, input.serverUtcDate);
@@ -1993,12 +2074,14 @@ function planStartCalibration(input) {
   const objective = objectiveOf(input.obData);
   if (objective == null) return reject("OBJECTIVE_UNRESOLVED");
   const { weightKg, waistCm } = req.body;
-  if (!isPositiveFinite3(weightKg)) return reject("INVALID_WEIGHT");
-  if (waistCm !== void 0 && waistCm !== null && !isPositiveFinite3(waistCm)) return reject("INVALID_WAIST");
-  const baselineWaistCm = isPositiveFinite3(waistCm) ? waistCm : null;
+  if (!isPositiveFinite4(weightKg)) return reject("INVALID_WEIGHT");
+  if (waistCm !== void 0 && waistCm !== null && !isPositiveFinite4(waistCm)) return reject("INVALID_WAIST");
+  const baselineWaistCm = isPositiveFinite4(waistCm) ? waistCm : null;
   if (objective === "RECOMPOSITION" && baselineWaistCm == null) return reject("WAIST_REQUIRED");
   const active = input.active?.status === "ACTIVE" ? input.active : null;
   if (active != null && active.objective === objective) return { kind: "ALREADY_ACTIVE", calibrationId: active.id };
+  const baseEnergyRaw = baseEnergyAtBaseline(input.obData, weightKg, objective);
+  if (baseEnergyRaw == null) return reject("NOT_ELIGIBLE");
   return {
     kind: "START",
     requestId: req.requestId,
@@ -2008,8 +2091,19 @@ function planStartCalibration(input) {
     baselineWeightKg: weightKg,
     baselineWaistCm,
     calibrationVersion: ENERGY_CALIBRATION_VERSION,
+    baseEnergyRaw,
     closesCalibrationId: active?.id ?? null
   };
+}
+function baseEnergyAtBaseline(obData, baselineWeightKg, objective) {
+  if (obData == null || typeof obData !== "object") return null;
+  try {
+    const s = resolveNutritionEnergyState({ ...obData, peso: baselineWeightKg });
+    if (s.status !== "PRESCRIBED" || s.goal !== objective) return null;
+    return isPositiveFinite4(s.rawPrescribedEnergy) ? s.rawPrescribedEnergy : null;
+  } catch {
+    return null;
+  }
 }
 function referenceOnlyContext(waistCm) {
   return { action: "NO_ADJUSTMENT", classification: null, hunger: "NORMAL", energy: "NORMAL", performance: "SAME", waistCm };
@@ -2072,7 +2166,9 @@ function planCheckin(input) {
     previous
   });
   if (decided.status !== "DECIDED") return reject("ENGINE_INVALID");
-  const record = buildCheckinRecord({ cycleIndex, checkin, trajectory, decision: decided.decision, previousWaistCm: reference.waistCm });
+  const decision = applyEnergyLayer(cal, decided.decision);
+  if (decision == null) return reject("ENGINE_INVALID");
+  const record = buildCheckinRecord({ cycleIndex, checkin, trajectory, decision, previousWaistCm: reference.waistCm });
   if (!record.ok) return reject("ENGINE_INVALID");
   return {
     kind: "RECORD",
@@ -2083,81 +2179,24 @@ function planCheckin(input) {
     reference,
     checkin,
     trajectory,
-    decision: decided.decision,
+    decision,
     payload: record.payload
   };
 }
-
-// src/utils/adaptiveCalibrationEnergy.ts
-var CALIBRATION_ENERGY_VERSION = 1;
-var CALIBRATION_STEP_PERCENT = 5;
-var CALIBRATION_SAFETY_FLOOR_KCAL = HSC_FAT_LOSS_SCOPE_MIN_ENERGY;
-var isPositiveFinite4 = (v) => typeof v === "number" && Number.isFinite(v) && v > 0;
-var isValidStep = (s) => typeof s === "number" && Number.isInteger(s) && s >= CALIBRATION_STEP_MIN && s <= CALIBRATION_STEP_MAX;
-function rawCalibratedEnergy(baseRawEnergy, step) {
-  return baseRawEnergy * (100 + CALIBRATION_STEP_PERCENT * step) / 100;
-}
-function calibratedEnergy(baseRawEnergy, step) {
-  if (!isPositiveFinite4(baseRawEnergy)) return { status: "REVIEW", reason: "INVALID_BASE", baseRawEnergy, step, rawCalibratedEnergy: null };
-  if (!isValidStep(step)) return { status: "REVIEW", reason: "STEP_OUT_OF_RANGE", baseRawEnergy, step, rawCalibratedEnergy: null };
-  const raw = rawCalibratedEnergy(baseRawEnergy, step);
-  if (step < 0 && raw <= CALIBRATION_SAFETY_FLOOR_KCAL) {
-    return { status: "REVIEW", reason: "SAFETY_FLOOR_REACHED", baseRawEnergy, step, rawCalibratedEnergy: raw };
-  }
-  return { status: "CALIBRATED", baseRawEnergy, step, rawCalibratedEnergy: raw, calibratedEnergy: Math.round(raw) };
-}
-function energyOutcomeForDecision(position, decision) {
-  const current = calibratedEnergy(position.baseRawEnergy, position.step);
-  if (current.status !== "CALIBRATED") return { kind: "UNVERIFIABLE", reason: "POSITION_INVALID" };
-  if (decision.currentStep !== position.step) return { kind: "UNVERIFIABLE", reason: "STEP_MISMATCH" };
-  if (decision.action !== "STEP_UP" && decision.action !== "STEP_DOWN") {
-    if (decision.proposedStep !== position.step) return { kind: "UNVERIFIABLE", reason: "DECISION_INCOHERENT" };
-    return { kind: "KEEP", action: decision.action, reason: decision.reason, step: position.step, calibratedEnergy: current.calibratedEnergy, blocked: null };
-  }
-  const expected = position.step + (decision.action === "STEP_UP" ? 1 : -1);
-  if (decision.proposedStep !== expected) return { kind: "UNVERIFIABLE", reason: "DECISION_INCOHERENT" };
-  const next = calibratedEnergy(position.baseRawEnergy, decision.proposedStep);
-  if (next.status === "CALIBRATED") {
+function applyEnergyLayer(cal, d) {
+  if (cal.baseEnergyRaw == null) return null;
+  const out = energyOutcomeForDecision({ baseRawEnergy: cal.baseEnergyRaw, step: cal.currentStep }, d);
+  if (out.kind === "UNVERIFIABLE") return null;
+  if (out.kind === "KEEP" && out.reason === "SAFETY_FLOOR_REACHED" && out.blocked) {
     return {
-      kind: "ADOPT",
-      action: decision.action,
-      reason: decision.reason,
-      previousStep: position.step,
-      step: next.step,
-      rawCalibratedEnergy: next.rawCalibratedEnergy,
-      calibratedEnergy: next.calibratedEnergy
-    };
-  }
-  if (next.reason === "SAFETY_FLOOR_REACHED") {
-    return {
-      kind: "KEEP",
+      ...d,
       action: "REVIEW",
       reason: "SAFETY_FLOOR_REACHED",
-      step: position.step,
-      calibratedEnergy: current.calibratedEnergy,
-      blocked: { action: "STEP_DOWN", reason: decision.reason, rawCalibratedEnergy: next.rawCalibratedEnergy }
+      proposedStep: d.currentStep,
+      blocked: { action: out.blocked.action, reason: out.blocked.reason }
     };
   }
-  return { kind: "UNVERIFIABLE", reason: "DECISION_INCOHERENT" };
-}
-function resolveCalibratedEnergy(evidence) {
-  const cal = evidence.calibration;
-  if (!cal || cal.status !== "ACTIVE") return { adopted: false, reason: "NO_ACTIVE_CALIBRATION" };
-  if (cal.calibrationVersion !== ENERGY_CALIBRATION_VERSION) return { adopted: false, reason: "UNSUPPORTED_CALIBRATION_VERSION" };
-  if (evidence.frozenBaseRawEnergy == null) return { adopted: false, reason: "BASE_NOT_FROZEN" };
-  if (!evidence.currentObjective || !CANONICAL_GOALS.includes(evidence.currentObjective) || evidence.currentObjective !== cal.objective) return { adopted: false, reason: "OBJECTIVE_CHANGED" };
-  const r = calibratedEnergy(evidence.frozenBaseRawEnergy, cal.currentStep);
-  if (r.status === "REVIEW") {
-    return { adopted: false, reason: r.reason === "STEP_OUT_OF_RANGE" ? "INVALID_STEP" : r.reason };
-  }
-  return {
-    adopted: true,
-    objective: cal.objective,
-    baseRawEnergy: r.baseRawEnergy,
-    step: r.step,
-    rawCalibratedEnergy: r.rawCalibratedEnergy,
-    calibratedEnergy: r.calibratedEnergy
-  };
+  return d;
 }
 export {
   ACTIVITY_CATEGORIES,
@@ -2248,6 +2287,7 @@ export {
   buildCheckinRecord,
   buildEnergySnapshot,
   calibratedEnergy,
+  calibrationEffectiveFrom,
   calibrationFromRow,
   canonicalGoalFrom,
   canonicalTrainingModalities,
@@ -2270,6 +2310,7 @@ export {
   energyInputIdentity,
   energyOutcomeForDecision,
   estimateMaintenance,
+  firstSundayOnOrAfter,
   isIsoUtcTimestamp,
   isRequestId,
   isServableMacroPrescription,

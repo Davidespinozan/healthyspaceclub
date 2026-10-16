@@ -30,8 +30,14 @@ export interface NutritionCalibration {
     baselineWeightKg: number;
     baselineWaistCm: number | null;
     currentStep: number;
-    /** Reservado (MB5). Sin autoridad sobre la energía. */
+    /** Sin autoridad (entero redondeado, no se escribe). La base de los pasos es `baseEnergyRaw`. */
     baseEnergyKcal: number | null;
+    /**
+     * Bloque 5 · base de energía CONGELADA y CRUDA (`rawPrescribedEnergy` de CAPA 1) que el servidor
+     * registró al abrir la calibración (`base_energy_raw`). Única base de los pasos adaptativos.
+     * `null` = la fila no la trae: esa calibración NO es adoptable ni puede registrar check-ins.
+     */
+    baseEnergyRaw: number | null;
     lastCheckinId: string | null;
     lastAppliedAction: 'STEP_UP' | 'STEP_DOWN' | null;
     lastAppliedAt: string | null;

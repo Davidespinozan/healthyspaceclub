@@ -33,7 +33,7 @@ const rid = () => `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`;
 function calibration(objective: Goal, over: Partial<NutritionCalibration> = {}): NutritionCalibration {
   return {
     id: 'cal-1', objective, status: 'ACTIVE', baselineDate: '2026-10-01', cycleStart: '2026-10-04',
-    baselineWeightKg: 70, baselineWaistCm: objective === 'RECOMPOSITION' ? 90 : null, currentStep: 0, baseEnergyKcal: null,
+    baselineWeightKg: 70, baselineWaistCm: objective === 'RECOMPOSITION' ? 90 : null, currentStep: 0, baseEnergyKcal: null, baseEnergyRaw: 2500,
     lastCheckinId: null, lastAppliedAction: null, lastAppliedAt: null, calibrationVersion: ENERGY_CALIBRATION_VERSION, createdAt: '', closedAt: null,
     ...over,
   };
@@ -146,7 +146,9 @@ describe('ABRIR CALIBRACIÓN', () => {
   it('deriva objetivo, fechas, versión y step 0 en el servidor', () => {
     expect(start()).toEqual({
       kind: 'START', requestId: 'aaaaaaaa-0000-4000-8000-000000000001', objective: 'FAT_LOSS', baselineDate: '2026-10-01', cycleStart: '2026-10-04',
-      baselineWeightKg: 70, baselineWaistCm: null, calibrationVersion: 2, closesCalibrationId: null,
+      baselineWeightKg: 70, baselineWaistCm: null, calibrationVersion: 2,
+      // Bloque 5 · base CRUDA de CAPA 1 calculada en el servidor con el peso base (70 kg)
+      baseEnergyRaw: resolveNutritionEnergyState({ ...ob('FAT_LOSS'), peso: 70 } as never).rawPrescribedEnergy, closesCalibrationId: null,
     });
   });
   it('solo con energía PRESCRIBED (estado real del motor)', () => {

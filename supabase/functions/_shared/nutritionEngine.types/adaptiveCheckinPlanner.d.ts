@@ -24,8 +24,17 @@ export interface PlannerRejection {
     reason: PlannerRejectReason;
     fields?: string[];
 }
+/** Primer domingo IGUAL O POSTERIOR a una fecha 'YYYY-MM-DD' (un domingo se devuelve a sí mismo). */
+export declare function firstSundayOnOrAfter(date: string): string | null;
 /** Primer domingo en o después de la fecha de línea base. */
 export declare function cycleStartFor(baselineDate: string): string | null;
+/**
+ * D-B5-SUNDAY · fecha en que ENTRA EN VIGOR el paso decidido en un check-in: el primer domingo IGUAL O
+ * POSTERIOR a `checkin_date` (sábado → +1, domingo → ese mismo día, lunes → +6 … viernes → +2). El
+ * domingo es la frontera de la semana nutricional: aplicarlo ese día no es un cambio a mitad de semana.
+ * Se deriva de la fecha guardada del check-in; no requiere columna. Puro.
+ */
+export declare function calibrationEffectiveFrom(checkinDate: string): string | null;
 /** Domingo en que vence el check-in n (n ≥ 1). */
 export declare function cycleDueDate(cycleStart: string, n: number): string | null;
 /** Ciclo al que corresponde una fecha, o null si cae fuera de toda ventana [vence − 1, vence + 6]. */
@@ -59,6 +68,8 @@ export type StartPlan = PlannerRejection | {
     baselineWeightKg: number;
     baselineWaistCm: number | null;
     calibrationVersion: number;
+    /** Bloque 5 · base congelada CRUDA calculada en el servidor (CAPA 1 con el peso base). */
+    baseEnergyRaw: number;
     /** La activa que se cierra por cambio de objetivo, si la hay. */
     closesCalibrationId: string | null;
 };

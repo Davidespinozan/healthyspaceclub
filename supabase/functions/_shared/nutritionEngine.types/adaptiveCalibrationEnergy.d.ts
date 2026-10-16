@@ -67,7 +67,7 @@ export type CalibrationEnergyOutcome = {
 } | {
     kind: 'KEEP';
     action: AdaptiveDecision['action'];
-    reason: AdaptiveReason | 'SAFETY_FLOOR_REACHED';
+    reason: AdaptiveReason;
     step: number;
     calibratedEnergy: number;
     blocked: {
@@ -81,14 +81,13 @@ export type CalibrationEnergyOutcome = {
 };
 export declare function energyOutcomeForDecision(position: CalibrationEnergyPosition, decision: AdaptiveDecision): CalibrationEnergyOutcome;
 /**
- * EVIDENCIA para adoptar una energía calibrada como autoridad. La base congelada CRUDA debe venir de
- * una fuente que la registró al abrir la calibración; NO se reconstruye desde `baseEnergyKcal` (entero
- * redondeado), desde kcal antiguas ni desde diferencias de kcal.
+ * EVIDENCIA para adoptar una energía calibrada como autoridad. La base congelada CRUDA es la que el
+ * servidor registró al abrir la calibración (`calibration.baseEnergyRaw`, columna `base_energy_raw`);
+ * NO se reconstruye desde `baseEnergyKcal` (entero redondeado), desde kcal antiguas ni desde
+ * diferencias de kcal.
  */
 export interface CalibrationEnergyEvidence {
     calibration: NutritionCalibration | null;
-    /** Base congelada CRUDA registrada al abrir ESTA calibración; `null` si no existe registro. */
-    frozenBaseRawEnergy: number | null;
     /** Objetivo canónico VIGENTE del perfil (autoridad de CAPA 1). */
     currentObjective: CanonicalGoal | null;
 }

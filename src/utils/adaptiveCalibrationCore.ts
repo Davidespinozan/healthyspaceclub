@@ -65,6 +65,7 @@ const REASON_SET: Record<AdaptiveReason, true> = {
   CONTRADICTORY_SIGNALS: true, PERFORMANCE_IMPROVING: true, PERFORMANCE_WORSE: true, NO_TRAINING_SIGNAL: true,
   WAIST_IMPROVING: true, WAIST_WORSENING: true, NO_CLEAR_PROGRESS: true,
   DIRECTION_REVERSAL_BLOCKED: true, CALIBRATION_LIMIT_REACHED: true,
+  SAFETY_FLOOR_REACHED: true,
 };
 export const ADAPTIVE_REASONS = Object.keys(REASON_SET) as AdaptiveReason[];
 
@@ -91,8 +92,14 @@ export interface NutritionCalibration {
   baselineWeightKg: number;
   baselineWaistCm: number | null;
   currentStep: number;
-  /** Reservado (MB5). Sin autoridad sobre la energía. */
+  /** Sin autoridad (entero redondeado, no se escribe). La base de los pasos es `baseEnergyRaw`. */
   baseEnergyKcal: number | null;
+  /**
+   * Bloque 5 · base de energía CONGELADA y CRUDA (`rawPrescribedEnergy` de CAPA 1) que el servidor
+   * registró al abrir la calibración (`base_energy_raw`). Única base de los pasos adaptativos.
+   * `null` = la fila no la trae: esa calibración NO es adoptable ni puede registrar check-ins.
+   */
+  baseEnergyRaw: number | null;
   lastCheckinId: string | null;
   lastAppliedAction: 'STEP_UP' | 'STEP_DOWN' | null;
   lastAppliedAt: string | null;
@@ -222,6 +229,7 @@ function isOneOf<T extends string>(v: unknown, list: readonly T[]): v is T {
 }
 const num = (v: unknown): number | null => (v === null || v === undefined || v === '' ? null : Number.isFinite(Number(v)) ? Number(v) : null);
 const str = (v: unknown): string | null => (typeof v === 'string' && v !== '' ? v : null);
+const positive = (v: number | null): number | null => (v != null && v > 0 ? v : null);
 const isStep = (v: number | null): v is number => v != null && Number.isInteger(v) && v >= CALIBRATION_STEP_MIN && v <= CALIBRATION_STEP_MAX;
 
 /** Fila de `nutrition_adaptive_checkins` → dominio. `null` si algún valor no es reconocible. */
@@ -290,6 +298,7 @@ export function calibrationFromRow(row: Record<string, unknown>): NutritionCalib
     id, objective, status: row.status, baselineDate, cycleStart, baselineWeightKg,
     baselineWaistCm: num(row.baseline_waist_cm), currentStep,
     baseEnergyKcal: num(row.base_energy_kcal),
+    baseEnergyRaw: positive(num(row.base_energy_raw)),
     lastCheckinId: str(row.last_checkin_id),
     lastAppliedAction: (lastApplied as 'STEP_UP' | 'STEP_DOWN' | null) ?? null,
     lastAppliedAt: str(row.last_applied_at),

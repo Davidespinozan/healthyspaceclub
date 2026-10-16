@@ -36,9 +36,12 @@ function fakeDb(today = '2026-10-01') {
         const active = calibrations.find((c) => c.user_id === a.p_user_id && c.status === 'ACTIVE');
         if (active && active.objective === a.p_objective) return { data: { status: 'ALREADY_ACTIVE', calibration_id: active.id }, error: null };
         if (active) Object.assign(active, { status: 'CLOSED', closed_at: 'now' });
+        // Bloque 5 · como la RPC del borrador 20261017: base cruda obligatoria (NOT NULL + CHECK > 0)
+        const base = a.p_base_energy_raw;
+        if (typeof base !== 'number' || !Number.isFinite(base) || base <= 0) return { data: { status: 'INVALID_PAYLOAD' }, error: null };
         const row = {
           id: uuid(), user_id: a.p_user_id, objective: a.p_objective, status: 'ACTIVE', baseline_date: a.p_baseline_date, cycle_start: a.p_cycle_start,
-          baseline_weight_kg: a.p_baseline_weight_kg, baseline_waist_cm: a.p_baseline_waist_cm, current_step: 0, base_energy_kcal: null,
+          baseline_weight_kg: a.p_baseline_weight_kg, baseline_waist_cm: a.p_baseline_waist_cm, current_step: 0, base_energy_kcal: null, base_energy_raw: base,
           last_checkin_id: null, last_applied_action: null, last_applied_at: null, calibration_version: a.p_calibration_version,
           created_at: 'now', closed_at: null, start_request_id: a.p_request_id,
         };

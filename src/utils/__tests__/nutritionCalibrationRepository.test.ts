@@ -6,6 +6,7 @@ const from = vi.fn((_table: string) => query);
 vi.mock('../../lib/supabase', () => ({ supabase: { rpc: (...a: unknown[]) => rpc(...a), from: (t: string) => from(t) } }));
 
 import SQL from '../../../supabase/migrations/20261014120000_nutrition_adaptive_calibration.sql?raw';
+import SQL_B5 from '../../../supabase/migrations/20261017120000_nutrition_calibration_energy_base.sql?raw';
 import CODE from '../nutritionCalibrationRepository.ts?raw';
 import * as REPO from '../nutritionCalibrationRepository';
 import { ENERGY_CALIBRATION_VERSION } from '../adaptiveCalibrationCore';
@@ -61,7 +62,6 @@ describe('CONTRATO TS ↔ SQL · los CHECK aceptan exactamente los valores del d
     ['trajectory_direction', WEIGHT_DIRECTION_VALUES],
     ['waist_direction', WAIST_CHANGE_VALUES],
     ['action', ADAPTIVE_ACTIONS],
-    ['reason', ADAPTIVE_REASONS],
   ] as [string, readonly string[]][])('%s', (column, values) => {
     expect(sorted(sqlCheck(column))).toEqual(sorted(values));
   });
@@ -72,7 +72,16 @@ describe('CONTRATO TS ↔ SQL · los CHECK aceptan exactamente los valores del d
       expect(sorted([...m![1].matchAll(/'([A-Z_]+)'/g)].map((x) => x[1])), objective).toEqual(sorted(values));
     }
   });
-  it('los 26 reasons de MB3', () => expect(ADAPTIVE_REASONS).toHaveLength(26));
+  it('reason: el CHECK vigente (Bloque 5, 20261017) = ADAPTIVE_REASONS; el original (20261014) = esos menos SAFETY_FLOOR_REACHED', () => {
+    const m = /nutrition_adaptive_checkins_reason_check check \(reason in \(([^)]*)\)\)/.exec(SQL_B5);
+    expect(m).not.toBeNull();
+    expect(sorted([...m![1].matchAll(/'([A-Z_]+)'/g)].map((x) => x[1]))).toEqual(sorted(ADAPTIVE_REASONS));
+    expect(sorted(sqlCheck('reason'))).toEqual(sorted(ADAPTIVE_REASONS.filter((r) => r !== 'SAFETY_FLOOR_REACHED')));
+  });
+  it('27 reasons: los 26 de MB3 + SAFETY_FLOOR_REACHED (capa de energía, Bloque 5)', () => {
+    expect(ADAPTIVE_REASONS).toHaveLength(27);
+    expect(ADAPTIVE_REASONS).toContain('SAFETY_FLOOR_REACHED');
+  });
   it('el paso vive en −2…+2 en ambas tablas', () => {
     for (const col of ['current_step', 'previous_step', 'proposed_step']) expect(SQL).toMatch(new RegExp(`${col}\\s+smallint not null[^\\n]*between -2 and 2`));
   });
