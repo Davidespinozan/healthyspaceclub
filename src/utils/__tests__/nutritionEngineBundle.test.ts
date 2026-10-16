@@ -32,7 +32,7 @@ describe('DRIFT · los artefactos commiteados son exactamente los que generan la
     expect(Object.keys(COMMITTED).sort()).toEqual(Object.keys(fresh).sort());
     expect(Object.keys(fresh)).toContain(RUNTIME);
     expect(Object.keys(fresh)).toContain(TYPES_ENTRY);
-    expect(Object.keys(fresh).filter((p) => p.startsWith(`${SHARED}/nutritionEngine.types/`))).toHaveLength(15);
+    expect(Object.keys(fresh).filter((p) => p.startsWith(`${SHARED}/nutritionEngine.types/`))).toHaveLength(16);   // + capa de energía calibrada (Bloque 5)
   });
   it('regenerar desde src produce runtime y declaraciones idénticos, byte a byte', async () => {
     const fresh = await (await generator()).buildNutritionEngine();
@@ -63,10 +63,10 @@ describe('CONTENIDO · autocontenido, solo el grafo puro, sin efectos', () => {
     expect(c).not.toMatch(/\bimport\(/);
     expect(c).not.toMatch(/\brequire\(/);
   });
-  it('incluye exactamente los 15 módulos del grafo del motor', async () => {
+  it('incluye exactamente los 16 módulos del grafo del motor', async () => {
     const modules = [...(await code()).matchAll(/^\/\/ (src\/[\w/]+\.ts)$/gm)].map((m) => m[1]).sort();
     expect(modules).toEqual([
-      'src/utils/activityClassifier.ts', 'src/utils/adaptiveCalibrationCore.ts', 'src/utils/adaptiveCheckinPlanner.ts',
+      'src/utils/activityClassifier.ts', 'src/utils/adaptiveCalibrationCore.ts', 'src/utils/adaptiveCalibrationEnergy.ts', 'src/utils/adaptiveCheckinPlanner.ts',
       'src/utils/adaptiveNutritionDecision.ts', 'src/utils/energyPrescription.ts',
       'src/utils/macroPrescription.ts', 'src/utils/maintenanceEstimate.ts', 'src/utils/nutritionCheckin.ts',
       'src/utils/nutritionEnergyOrchestrator.ts', 'src/utils/nutritionEnergyState.ts', 'src/utils/nutritionProfileInput.ts',

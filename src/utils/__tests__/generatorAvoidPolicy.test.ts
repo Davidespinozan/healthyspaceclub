@@ -181,7 +181,7 @@ describe('PARIDAD generador ↔ validador', () => {
       const r = await generateWeeklyPlan(t, pol, '', 5, { slots: ['am'], type: 'vegana', protG: 25 });
       expect(contradicts(r.days, pol), `${JSON.stringify(pol)} · ${t.kcal} · ${mode}`).toEqual([]);
     }
-  });
+  }, 60_000);   // 36 generaciones completas: bajo la carga de la suite completa rozaba el timeout global de 20 s
 });
 
 describe('PLANIFICADOR y TabHoy pasan la política (no la unión) al generador', () => {

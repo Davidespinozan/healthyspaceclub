@@ -2087,6 +2087,78 @@ function planCheckin(input) {
     payload: record.payload
   };
 }
+
+// src/utils/adaptiveCalibrationEnergy.ts
+var CALIBRATION_ENERGY_VERSION = 1;
+var CALIBRATION_STEP_PERCENT = 5;
+var CALIBRATION_SAFETY_FLOOR_KCAL = HSC_FAT_LOSS_SCOPE_MIN_ENERGY;
+var isPositiveFinite4 = (v) => typeof v === "number" && Number.isFinite(v) && v > 0;
+var isValidStep = (s) => typeof s === "number" && Number.isInteger(s) && s >= CALIBRATION_STEP_MIN && s <= CALIBRATION_STEP_MAX;
+function rawCalibratedEnergy(baseRawEnergy, step) {
+  return baseRawEnergy * (100 + CALIBRATION_STEP_PERCENT * step) / 100;
+}
+function calibratedEnergy(baseRawEnergy, step) {
+  if (!isPositiveFinite4(baseRawEnergy)) return { status: "REVIEW", reason: "INVALID_BASE", baseRawEnergy, step, rawCalibratedEnergy: null };
+  if (!isValidStep(step)) return { status: "REVIEW", reason: "STEP_OUT_OF_RANGE", baseRawEnergy, step, rawCalibratedEnergy: null };
+  const raw = rawCalibratedEnergy(baseRawEnergy, step);
+  if (step < 0 && raw <= CALIBRATION_SAFETY_FLOOR_KCAL) {
+    return { status: "REVIEW", reason: "SAFETY_FLOOR_REACHED", baseRawEnergy, step, rawCalibratedEnergy: raw };
+  }
+  return { status: "CALIBRATED", baseRawEnergy, step, rawCalibratedEnergy: raw, calibratedEnergy: Math.round(raw) };
+}
+function energyOutcomeForDecision(position, decision) {
+  const current = calibratedEnergy(position.baseRawEnergy, position.step);
+  if (current.status !== "CALIBRATED") return { kind: "UNVERIFIABLE", reason: "POSITION_INVALID" };
+  if (decision.currentStep !== position.step) return { kind: "UNVERIFIABLE", reason: "STEP_MISMATCH" };
+  if (decision.action !== "STEP_UP" && decision.action !== "STEP_DOWN") {
+    if (decision.proposedStep !== position.step) return { kind: "UNVERIFIABLE", reason: "DECISION_INCOHERENT" };
+    return { kind: "KEEP", action: decision.action, reason: decision.reason, step: position.step, calibratedEnergy: current.calibratedEnergy, blocked: null };
+  }
+  const expected = position.step + (decision.action === "STEP_UP" ? 1 : -1);
+  if (decision.proposedStep !== expected) return { kind: "UNVERIFIABLE", reason: "DECISION_INCOHERENT" };
+  const next = calibratedEnergy(position.baseRawEnergy, decision.proposedStep);
+  if (next.status === "CALIBRATED") {
+    return {
+      kind: "ADOPT",
+      action: decision.action,
+      reason: decision.reason,
+      previousStep: position.step,
+      step: next.step,
+      rawCalibratedEnergy: next.rawCalibratedEnergy,
+      calibratedEnergy: next.calibratedEnergy
+    };
+  }
+  if (next.reason === "SAFETY_FLOOR_REACHED") {
+    return {
+      kind: "KEEP",
+      action: "REVIEW",
+      reason: "SAFETY_FLOOR_REACHED",
+      step: position.step,
+      calibratedEnergy: current.calibratedEnergy,
+      blocked: { action: "STEP_DOWN", reason: decision.reason, rawCalibratedEnergy: next.rawCalibratedEnergy }
+    };
+  }
+  return { kind: "UNVERIFIABLE", reason: "DECISION_INCOHERENT" };
+}
+function resolveCalibratedEnergy(evidence) {
+  const cal = evidence.calibration;
+  if (!cal || cal.status !== "ACTIVE") return { adopted: false, reason: "NO_ACTIVE_CALIBRATION" };
+  if (cal.calibrationVersion !== ENERGY_CALIBRATION_VERSION) return { adopted: false, reason: "UNSUPPORTED_CALIBRATION_VERSION" };
+  if (evidence.frozenBaseRawEnergy == null) return { adopted: false, reason: "BASE_NOT_FROZEN" };
+  if (!evidence.currentObjective || !CANONICAL_GOALS.includes(evidence.currentObjective) || evidence.currentObjective !== cal.objective) return { adopted: false, reason: "OBJECTIVE_CHANGED" };
+  const r = calibratedEnergy(evidence.frozenBaseRawEnergy, cal.currentStep);
+  if (r.status === "REVIEW") {
+    return { adopted: false, reason: r.reason === "STEP_OUT_OF_RANGE" ? "INVALID_STEP" : r.reason };
+  }
+  return {
+    adopted: true,
+    objective: cal.objective,
+    baseRawEnergy: r.baseRawEnergy,
+    step: r.step,
+    rawCalibratedEnergy: r.rawCalibratedEnergy,
+    calibratedEnergy: r.calibratedEnergy
+  };
+}
 export {
   ACTIVITY_CATEGORIES,
   ACTIVITY_CLASSIFIER_VERSION,
@@ -2099,8 +2171,11 @@ export {
   ADULT_ROUTE_MIN_AGE_YEARS,
   BIOLOGICAL_SEXES,
   BODY_MIN_WINDOW_DAYS,
+  CALIBRATION_ENERGY_VERSION,
+  CALIBRATION_SAFETY_FLOOR_KCAL,
   CALIBRATION_STEP_MAX,
   CALIBRATION_STEP_MIN,
+  CALIBRATION_STEP_PERCENT,
   CANONICAL_GOALS,
   CHECKIN_EARLY_DAYS,
   CHECKIN_LATE_DAYS,
@@ -2172,6 +2247,7 @@ export {
   biologicalSexFrom,
   buildCheckinRecord,
   buildEnergySnapshot,
+  calibratedEnergy,
   calibrationFromRow,
   canonicalGoalFrom,
   canonicalTrainingModalities,
@@ -2192,6 +2268,7 @@ export {
   deriveWeeklyTrainingMinutes,
   eerForCategory,
   energyInputIdentity,
+  energyOutcomeForDecision,
   estimateMaintenance,
   isIsoUtcTimestamp,
   isRequestId,
@@ -2207,10 +2284,12 @@ export {
   previousContextFromCheckin,
   proteinFactor,
   proteinReferenceWeightKg,
+  rawCalibratedEnergy,
   readTrainingModalities,
   referenceOnlyContext,
   referencePointFor,
   requiredWindowDays,
+  resolveCalibratedEnergy,
   resolveKnownNutritionScope,
   resolveMacroPrescription,
   resolveNutritionEnergy,
