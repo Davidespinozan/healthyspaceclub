@@ -35,6 +35,7 @@ const CreatePostModal = lazy(() => import('./CreatePostModal'));
 import { useT } from '../i18n';
 import { plural, formatDate } from '../i18n/format';
 import type { TranslationKey } from '../i18n/es';
+import AdaptiveCheckinCard from './AdaptiveCheckinCard';
 import './weekly-nutrition-planner-v2.css';
 
 // Day name keys indexed by JS Date.getDay() (0=Sunday).
@@ -825,6 +826,8 @@ export default function WeeklyNutritionPlanner() {
         mealsDone={dayConsumption.completedSlots}
         mealsTotal={dayConsumption.totalSlots}
       />
+      {/* ADAPTIVE · entrada del socio: iniciar seguimiento / check-in / próxima fecha. */}
+      <AdaptiveCheckinCard onEditData={() => setEditDataOpen(true)} />
       {modalityPrompt}
       {completionSheets}
 
