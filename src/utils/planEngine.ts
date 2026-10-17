@@ -9,7 +9,8 @@ import type { Region } from './region';
 import { dishAllowedInRegion } from '../data/regionFood';
 import { portionBoundsFor, preferredGramLimit } from './portionPlausibility';
 import { compatibleComplements, complementDish } from './menuComplements';
-import { dishStructure } from './recipeStructure';   // NUTRITION-N1 techo humano · N2 capacidad preferida
+import { dishStructure } from './recipeStructure';
+import { portionStr, servedPieceStep } from './portionDisplay';   // NUTRITION-N1 techo humano · N2 capacidad preferida
 import { effectiveDishAvoidText, dishAvoidUnits, canonicalizeAvoidTerm, catMarker, type AvoidMode } from './allergenSafety';   // NUTRITION-N3 · sub-recetas + composites ocultos
 
 const IMG_BASE =
@@ -478,9 +479,7 @@ function errSnack(fixed: number[], vars: Var[], T: number[]): number {
 
 function pick<T>(arr: T[], rng: () => number): T { return arr[Math.floor(rng() * arr.length)]; }
 
-// Alimentos que se PARTEN en fracción real (se corta ⅓ de aguacate, ¾ de plátano).
-// CORTABLES: fruta que se parte a ojo → fracciones finas (½ aguacate, ⅓ plátano).
-const DIVISIBLE = new Set(['aguacate', 'plátano', 'mango', 'papaya', 'melón', 'toronja']);
+// MENÚ V1 · Bloque 4 · la porción VISIBLE vive en portionDisplay (medida por familia + autoridad de medidas).
 // WHOLE_ONLY: piezas que la gente cuenta ENTERAS, nunca en medios. Huevo (no hay medio
 // huevo), piezas pequeñas indivisibles (dátil, aceituna, cereza, sardina — "½ aceituna"
 // no existe) y tortilla/tostada (un plan legible cuenta tortillas enteras). El resto
@@ -494,199 +493,7 @@ const WHOLE_ONLY = new Set(['huevo', 'dátil', 'aceituna', 'cereza', 'sardinas',
 // sus gramos del solver NO se tocan (macros idénticas) y el candado ±20% cae a gramos si
 // un entero mentiría. Mantener este set en {huevo} conserva el comportamiento embarcado.
 const SNAP_WHOLE_GRAMS = new Set(['huevo']);
-// Granos, leguminosas y pasta se miden en TAZAS (cocidos), no en gramos. gramos por
-// taza (cocido, referencia USDA). Se muestran "1½ tazas de arroz" con fracciones ¼⅓½⅔¾.
-const CUP_G: Array<[RegExp, number]> = [
-  // MENÚ V1 · CAPA 4 · D1 · pasta cocida: autoridad visible 1 taza = 120 g (food_measures pasta-cocida). El
-  // «Pasta de codito» del catálogo (40 g/taza) es un dato DEFECTUOSO y no se usa: la pasta de codito cocida
-  // se mide como pasta cocida. Espagueti / macarrón / fideo conservan su valor (no forman parte de D1).
-  [/espagueti|espageti|fideo|macarr/i, 140],
-  [/pasta|coditos/i, 120],
-  [/lenteja/i, 198],
-  [/garbanzo/i, 164],
-  [/alubia|frijol/i, 172],
-  [/quinoa/i, 185],
-  [/arroz/i, 188], // arroz cocido (excluye galletas/inflado más abajo). MENÚ V1 · B1: food_measures
-                   // arroz-cocido = 188 g/taza (antes 158, «referencia USDA»); TODO arroz del banco es «Arroz cocido».
-  [/leche/i, 240],  // líquidos también se miden en tazas (1 taza ≈ 240 ml)
-  [/yogur|yoghur/i, 245],
-  [/avena cocida/i, 234], // avena cocida (la seca en hojuelas se queda en gramos)
-  // Fruta y verdura CORTADA (no cuentan por pieza) → tazas. (Magaly: fruta en tazas o piezas)
-  [/fresa|frambuesa|zarzamora|mora|ar[aá]ndano/i, 150],
-  [/mango|pi[nñ]a|papaya|sand[ií]a|mel[oó]n/i, 160],
-  [/uva|cereza/i, 150],
-  [/j[ií]cama|apio|pepino|zanahoria en bastones|jitomate cherry/i, 130],
-  [/jugo de tomate|caldo de/i, 240], // líquidos
-];
-// nv que llevan "arroz"/"pasta"/"leche" pero NO son el grano/líquido base (no van en tazas).
-const CUP_EXCLUDE = /galleta|inflad|harina|tortita|crema de|leche de|congelad/i;
-// Salsas / aderezos / sub-recetas → cucharadas o tazas, nunca gramos (Magaly).
-// 1 cda = 15 g · 1 taza = 240 g. Cantidades chicas en cdas; grandes en tazas.
-const SAUCE_RE = /salsa|aderezo|guacamole|pico de gallo|chimichurri|vinagreta|tzatziki|glaseado|hummus|mayonesa|crema|mostaza|miel|pur[eé] de jitomate/i;
-function sauceStr(nv: string, grams: number): string {
-  if (grams <= 0) return nv;
-  if (grams < 60) { // chico → cucharadas (1 cda = 15 g)
-    const n = Math.max(0.5, Math.round((grams / 15) * 2) / 2);
-    return `${fmtCount(n)} ${n <= 1 ? 'cda' : 'cdas'} de ${nv.toLowerCase()}`;
-  }
-  const n = Math.max(0.25, snapCount(grams / 240)); // grande → tazas
-  return `${fmtCount(n)} ${pluralNoun('taza', n)} de ${nv.toLowerCase()}`;
-}
-// Rebanadas: el jamón de pavo del banco es «Pechuga de pavo» → food_measures: rebanada 21.33 g. El jamón
-// serrano no tiene medida en el catálogo → conserva el valor previo (30 g, Magaly). Picado / molido /
-// en cuadritos / deshebrado no son rebanadas.
-const SLICE_RE = /jam[oó]n|pavo en rebanadas/i;
-const NOT_SLICE_RE = /cuadrit|picad|molid|deshebrad|cubos|trozos/i;
-const SLICE_G: Array<[RegExp, number]> = [[/serrano/i, 30], [/pavo/i, 21.33]];
-function sliceGrams(nv: string): number | null {
-  if (!SLICE_RE.test(nv) || NOT_SLICE_RE.test(nv)) return null;
-  for (const [re, g] of SLICE_G) if (re.test(nv)) return g;
-  return 30;
-}
-/** «N cdita(s)/cda(s) de X» en medios de cuchara si es honesto (±20 % de los gramos); si no, gramos. */
-function spoonStr(nv: string, grams: number, gPer: number, unit: 'cdita' | 'cda'): string {
-  const n = Math.max(0.5, Math.round((grams / gPer) * 2) / 2);
-  if (Math.abs(n * gPer - grams) > 0.20 * grams) return `${grams} g ${nv}`;
-  return `${fmtCount(n)} ${n <= 1 ? unit : unit + 's'} de ${nv.toLowerCase()}`;
-}
-function cupGrams(nv: string): number | null {
-  if (CUP_EXCLUDE.test(nv)) return null;
-  for (const [re, g] of CUP_G) if (re.test(nv)) return g;
-  return null;
-}
-// Fracciones naturales que la gente usa (⅓ aguacate, ¾ de plátano…), no solo medios.
-const FRACS: Array<[number, string]> = [[0, ''], [0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾']];
-// Redondea a la fracción natural más cercana (o al entero de arriba si está muy cerca).
-function snapCount(x: number): number {
-  const whole = Math.floor(x);
-  const frac = x - whole;
-  let best = FRACS[0];
-  for (const f of FRACS) if (Math.abs(f[0] - frac) < Math.abs(best[0] - frac)) best = f;
-  return 1 - frac < Math.abs(best[0] - frac) ? whole + 1 : whole + best[0];
-}
-function fmtCount(n: number): string {
-  const whole = Math.floor(n + 1e-9);
-  const frac = n - whole;
-  let sym = '', bestd = 0.06; // tolerancia para casar la fracción
-  for (const [v, s] of FRACS) { const d = Math.abs(v - frac); if (s && d < bestd) { bestd = d; sym = s; } }
-  return sym ? (whole ? String(whole) : '') + sym : String(whole);
-}
-function pluralNoun(un: string, n: number): string {
-  if (n <= 1) return un; // "1 huevo", "½ manzana"
-  const [head, ...rest] = un.split(' ');
-  if (/s$/i.test(head)) return un; // ya plural (espárragos)
-  // vocal → +s (huevo→huevos); consonante → +es quitando acento agudo final (melón→melones)
-  const p = /[aeiouáéíóú]$/i.test(head)
-    ? head + 's'
-    : head.replace(/ó(?=n$)/, 'o').replace(/á(?=n$)/, 'a').replace(/é(?=n$)/, 'e') + 'es';
-  return [p, ...rest].join(' ');
-}
-// Pluraliza una FRASE (sustantivo + adjetivos): "huevo revuelto" → "huevos revueltos".
-// Se detiene en preposición o paréntesis: "tortilla de maíz" → "tortillas de maíz".
-const STOP_PLURAL = new Set(['de', 'del', 'con', 'a', 'al', 'en', 'para', 'y', 'sin', 'tipo', 'pita', 'thin', 'light']);
-function pluralWord(w: string): string {
-  if (/s$/i.test(w)) return w;
-  return /[aeiouáéíóú]$/i.test(w)
-    ? w + 's'
-    : w.replace(/ó(?=n$)/, 'o').replace(/á(?=n$)/, 'a').replace(/é(?=n$)/, 'e') + 'es';
-}
-// MENÚ V1 · B1 · singular de una frase cuyo nombre ya viene en plural en el banco («Tortillas de maíz»,
-// «Tostadas horneadas», «Dátiles»): con 1 pieza o menos se pintaba «1 tortillas de maíz». El sustantivo
-// toma la forma de la unidad del catálogo cuando coincide (dátiles → dátil); si no, pierde la -s final
-// (totopos → totopo). Los adjetivos que siguen pierden la -s hasta la primera preposición/paréntesis.
-function singularPhrase(txt: string, un: string): string {
-  let stop = false;
-  return txt.split(' ').map((w, i) => {
-    if (stop || w.startsWith('(') || STOP_PLURAL.has(w.toLowerCase())) { stop = true; return w; }
-    if (!/s$/i.test(w) || w.length <= 3) return w;
-    if (i === 0) {
-      const head = un.split(' ')[0];
-      if (pluralWord(head).toLowerCase() === w.toLowerCase()) return w[0] === w[0].toUpperCase() ? head[0].toUpperCase() + head.slice(1) : head;
-      return /[aeiouáéíóú]s$/i.test(w) ? w.slice(0, -1) : w;
-    }
-    return w.slice(0, -1);
-  }).join(' ');
-}
-function pluralPhrase(txt: string, n: number): string {
-  if (n <= 1) return txt;
-  let stop = false;
-  return txt.split(' ').map((w) => {
-    if (stop || w.startsWith('(') || STOP_PLURAL.has(w.toLowerCase())) { stop = true; return w; }
-    return pluralWord(w);
-  }).join(' ');
-}
-// La gente cuenta huevos/tortillas, no los pesa. Si el alimento trae medida casera
-// (pu = g por pieza) y la cantidad cae en un conteo limpio y creíble (0.5–8 piezas,
-// error ≤20% para que el conteo no engañe sobre la porción), se muestra "2 huevos"
-// en vez de "88 g". Si no, se queda en gramos.
-export function portionStr(ing: BancoIng, g: number | null): string {
-  // Despliegue por rol. IMPORTANTE: esto es SOLO lo que se pinta — el motor sigue
-  // usando los gramos reales para macros/fibra/kcal (van en meal.macros, no aquí).
-  // guarnicion = verdura que nadie pesa → nombre + "al gusto" (sin gramos).
-  if (ing.rol === 'guarnicion') return `${ing.nv} al gusto`;
-  // condimento (sal, especias) → solo el nombre, sin cantidad.
-  if (ing.rol === 'condimento') return ing.nv;
-  const grams = Math.round(g ?? ing.g0);
-  // MENÚ V1 · CAPA 4 · D1 · MIEL con su propia medida (antes caía en la regla genérica de salsa, 15 g/cda):
-  // 1 cdita = 7 g (food_measures miel) y 1 cda = 21 g (portionPlausibility). Se usa la unidad que da la
-  // porción natural: cucharaditas bajo 1 cda, cucharadas desde ahí. Si ninguna es honesta (±20 %), gramos.
-  if (/^miel\b/i.test(ing.nv) && grams > 0) return spoonStr(ing.nv, grams, grams < 21 ? 7 : 21, grams < 21 ? 'cdita' : 'cda');
-  // Salsas, aderezos y sub-recetas → cucharadas (chicas) o tazas (grandes). Nadie pesa
-  // el guacamole: "2 cdas de tzatziki", "⅓ taza de guacamole". (Magaly)
-  if (ing.rol === 'sub-receta' || SAUCE_RE.test(ing.nv)) return sauceStr(ing.nv, grams);
-  // MENÚ V1 · CAPA 4 · D1 · ACEITE en CUCHARADITAS (food_measures: 1 cdita = 5 g). Antes «1 cda = 10 g».
-  // Si la cantidad no cae en una cucharadita natural (medios, ±20 %), se queda en gramos: no se inventa.
-  if (/aceite/i.test(ing.nv) && grams > 0) return spoonStr(ing.nv, grams, 5, 'cdita');
-  // Jamón → REBANADAS (Magaly). MENÚ V1 · B1: solo lo que de verdad se sirve en rebanadas — el jamón y
-  // el «pavo en rebanadas» —, nunca «carne molida de pavo» ni el jamón «en cuadritos» (antes la regla
-  // /jamón|pavo/ pintaba «5 rebanadas de carne molida de pavo»). Gramos por rebanada del catálogo.
-  const sliceG = sliceGrams(ing.nv);
-  if (sliceG && grams > 0) {
-    const n = Math.max(1, Math.round(grams / sliceG));
-    return `${n} ${n === 1 ? 'rebanada' : 'rebanadas'} de ${ing.nv.toLowerCase()}`;
-  }
-  // Granos/leguminosas/pasta → tazas (si el ingrediente no trae ya otra medida casera).
-  if (!ing.pu && grams > 0) {
-    const cg = cupGrams(ing.nv);
-    if (cg) {
-      const n = Math.max(0.25, snapCount(grams / cg));
-      if (n <= 6 && Math.abs(n * cg - grams) <= 0.20 * grams) {
-        return `${fmtCount(n)} ${pluralNoun('taza', n)} de ${ing.nv.toLowerCase()}`;
-      }
-    }
-  }
-  if (ing.pu && ing.un && grams > 0) {
-    const raw = grams / ing.pu;
-    // Cortables (se parten en fracción real: ⅓ aguacate, ¾ plátano) → fracciones finas.
-    // WHOLE_ONLY (huevo, dátil, aceituna, cereza, sardina, tortilla, tostada) → SIEMPRE entero.
-    // Resto contable (pan, pita, bagel, fruta grande cortable) → entero o medio.
-    const n = DIVISIBLE.has(ing.un)
-      ? Math.max(0.25, snapCount(raw))
-      : WHOLE_ONLY.has(ing.un)
-        ? Math.max(1, Math.round(raw))
-        : Math.max(0.5, Math.round(raw * 2) / 2);
-    // Tope de piezas por porción según lo ligera que sea la pieza: una tostada pesa 10 g,
-    // así que una porción normal son 8-12 tostadas (no gramos). Piezas pesadas (huevo,
-    // tortilla) rara vez pasan de 8. Techo por peso: hasta ~150 g de piezas.
-    const maxN = Math.max(8, Math.ceil(150 / ing.pu));
-    // Los CORTABLES (aguacate, plátano, mango…) van SIEMPRE en fracción de pieza, nunca
-    // en gramos: nadie pesa medio aguacate, lo parte a ojo. Para el resto se exige que
-    // el conteo case con los gramos (±20%), si no engañaría sobre la porción real.
-    const cortable = DIVISIBLE.has(ing.un);
-    if (n <= maxN && (cortable || Math.abs(n * ing.pu - grams) <= 0.20 * grams)) {
-      // Magaly: la pieza debe decir QUÉ es, no la unidad genérica. El dato ya trae el
-      // nombre bueno ("Tostadas horneadas", "Tortilla de maíz") pero se pintaba la
-      // unidad ("4 tostadas"), que se presta a confusión — una tostada frita y una
-      // horneada no son lo mismo. Si el nombre ya contiene la unidad, se usa el nombre.
-      // "rebanada de pan" es un CONTENEDOR, no el alimento → "3 rebanadas de pan integral".
-      if (ing.un.startsWith('rebanada')) return `${fmtCount(n)} ${pluralPhrase('rebanada', n)} de ${ing.nv.toLowerCase()}`;
-      // El resto de unidades SON el alimento → se usa su nombre real, no la unidad
-      // genérica: "10 totopos horneados", no "10 tostadas".
-      return `${fmtCount(n)} ${(n <= 1 ? singularPhrase(ing.nv, ing.un) : pluralPhrase(ing.nv, n)).toLowerCase()}`;
-    }
-  }
-  return `${grams} g ${ing.nv}`;
-}
+export { portionStr };
 
 function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>): MealItem {
   const m = [dish.fixed[0], dish.fixed[1], dish.fixed[2], dish.fixed[3], dish.fixed[4]];
@@ -1152,6 +959,20 @@ function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
       v.g = Math.max(v.ing.pu, Math.round(v.g / v.ing.pu) * v.ing.pu);
       v.lo = v.g; v.hi = v.g;   // congelado: ya no lo mueve el re-solve
       fijado = true;
+      continue;
+    }
+    // MENÚ V1 · Bloque 4 · D4 · el PAN (rebanada entera; pita / bagel / thin / baguette en medias) se sirve en su
+    // unidad natural: «½ bagel», no «29 g bagel». Solo si el paso cae dentro de los límites del ingrediente; si no,
+    // se queda continuo (y el display cae a gramos redondeados).
+    const step = servedPieceStep(v.ing);
+    if (step && /\bpan\b|bagel|pita|baguette/i.test(v.ing.nv)) {
+      const cands = [Math.round(v.g / step), Math.floor(v.g / step), Math.ceil(v.g / step)].map((k) => k * step)
+        .filter((x) => x > 0 && x >= v.lo - 1e-6 && x <= v.hi + 1e-6);
+      if (cands.length) {
+        v.g = cands.reduce((a, b) => (Math.abs(b - v.g) < Math.abs(a - v.g) ? b : a));
+        v.lo = v.g; v.hi = v.g;
+        fijado = true;
+      }
     }
   }
   if (fijado) solve(fixed, vars, target, 300);   // lo continuo absorbe el redondeo
@@ -1467,7 +1288,10 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // v36 · MENÚ V1 · BLOQUE 3B (integración segura) · HALLAZGO-04: los 6 dulces de Cena dejan de ser elegibles como
 // cena principal (cambia el pool de Cena → todo plan v35 se regenera una vez). Además, diagnóstico interno
 // INSUFFICIENT_MENU_CAPACITY en `day.capacity` (no cambia el plan). El modelo híbrido de receta quedó en WIP.
-export const PLAN_ENGINE_VERSION = 36;
+// v37 · MENÚ V1 · BLOQUE 4 · porciones visibles con medidas reales (autoridad cerrada > catálogo > SMAE; conflictos
+// → gramos), gramos visibles en múltiplos de 5, piezas naturales (pan/pita/bagel cuadrados a rebanada/media pieza en
+// el cierre del día), «Fruta» genérica → la fruta real de sus macros, avena cruda ya no se muestra como cocida.
+export const PLAN_ENGINE_VERSION = 37;
 
 export interface BuildOpts { seed?: number; avoid?: AvoidInput; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 

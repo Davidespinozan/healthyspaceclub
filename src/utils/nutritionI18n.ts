@@ -99,8 +99,8 @@ function tPortionRaw(str: string, ing: Ing | undefined, lang: AppLanguage): stri
   if (lang !== 'en' || !str) return str;
   const en = ing ? tIngName(ing.nv, lang) : null;
 
-  // condimento: el string ES el nombre del ingrediente, sin cantidad.
-  if (ing?.rol === 'condimento') return en ?? str;
+  // condimento: sin cantidad. Bloque 4 · se pinta «{nombre} al gusto» → «{name} to taste».
+  if (ing?.rol === 'condimento') return / al gusto$/i.test(str) ? `${en ?? str.replace(/ al gusto$/i, '')} to taste` : (en ?? str);
 
   // "{nombre} al gusto" (guarnición)
   if (/ al gusto$/i.test(str)) {
@@ -109,12 +109,12 @@ function tPortionRaw(str: string, ing: Ing | undefined, lang: AppLanguage): stri
   }
 
   // "{qty} cda|cdas|taza|tazas|rebanada|rebanadas de {nombre}"
-  const unitM = str.match(new RegExp(`^(${QTY})\\s+(cdas?|tazas?|rebanadas?)\\s+de\\s+.+$`, 'i'));
+  const unitM = str.match(new RegExp(`^(${QTY})\\s+(cditas?|cdas?|tazas?|rebanadas?)\\s+de\\s+.+$`, 'i'));
   if (unitM) {
     const qty = unitM[1];
     const u = unitM[2].toLowerCase();
     const plural = parseQty(qty) > 1;
-    const enUnit = u.startsWith('cda') ? 'tbsp'
+    const enUnit = u.startsWith('cdita') ? 'tsp' : u.startsWith('cda') ? 'tbsp'
       : u.startsWith('taza') ? (plural ? 'cups' : 'cup')
       : (plural ? 'slices' : 'slice');
     const name = (en ?? '').toLowerCase();

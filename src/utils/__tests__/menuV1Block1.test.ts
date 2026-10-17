@@ -83,10 +83,10 @@ describe('2 · copy de porciones', () => {
     expect(portionStr(ing({ nv: 'Huevo', pu: 44, un: 'huevo' }), 88)).toBe('2 huevos');
   });
   it('«carne molida de pavo» NO es rebanada (antes «5 rebanadas de carne molida de pavo»)', () => {
-    expect(portionStr(ing({ nv: 'Carne molida de pavo' }), 131)).toBe('131 g Carne molida de pavo');
+    expect(portionStr(ing({ nv: 'Carne molida de pavo' }), 131)).toBe('130 g Carne molida de pavo')   // Bloque 4 · D3: múltiplo de 5;
   });
   it('jamón en cuadritos tampoco; el jamón real y el pavo en rebanadas sí', () => {
-    expect(portionStr(ing({ nv: 'Jamón de pechuga de pavo en cuadritos' }), 109)).toBe('109 g Jamón de pechuga de pavo en cuadritos');
+    expect(portionStr(ing({ nv: 'Jamón de pechuga de pavo en cuadritos' }), 109)).toBe('110 g Jamón de pechuga de pavo en cuadritos');
     expect(portionStr(ing({ nv: 'Jamón de pechuga de pavo' }), 64)).toBe('3 rebanadas de jamón de pechuga de pavo');
     expect(portionStr(ing({ nv: 'Pavo en rebanadas' }), 43)).toBe('2 rebanadas de pavo en rebanadas');
   });
@@ -100,7 +100,7 @@ describe('3 · constantes alineadas con food_measures (solo donde hay una única
   });
   it('jamón de pavo: rebanada 21.33 g (pechuga de pavo); jamón serrano sin dato de catálogo conserva 30 g', () => {
     expect(portionStr({ nv: 'Jamón de pavo', rol: 'principal', g0: 42 }, 42)).toBe('2 rebanadas de jamón de pavo');
-    expect(portionStr({ nv: 'Jamón serrano', rol: 'principal', g0: 30 }, 30)).toBe('1 rebanada de jamón serrano');
+    expect(portionStr({ nv: 'Jamón serrano', rol: 'principal', g0: 30 }, 30)).toBe('30 g Jamón serrano')   // Bloque 4 · D2: sin fuente de catálogo/SMAE → gramos;
   });
   // MENÚ V1 · CAPA 4 · D1 cerró pasta / aceite / miel (antes se conservaban por fuentes en conflicto): ver menuV1Capa4.test.ts.
 });

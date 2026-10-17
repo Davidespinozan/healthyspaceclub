@@ -38,7 +38,8 @@ describe('N6 · WHOLE_ONLY nunca renderiza fracción de pieza', () => {
     it(`${un}: conteo limpio (×3) → entero honesto, sin fracción`, () => {
       const s = portionStr(ing(un, pu), 3 * pu);
       expect(isFractional(s)).toBe(false);
-      expect(s).toMatch(/^3\s/);
+      // MENÚ V1 · Bloque 4 · D1: el pescado (sardinas) se muestra en GRAMOS, no en piezas.
+      expect(s).toMatch(un === 'sardinas' ? /^\d+ g / : /^3\s/);
     });
     it(`${un}: ~1.5 piezas (el entero mentiría >20%) → cae a GRAMOS, no entero falso`, () => {
       const s = portionStr(ing(un, pu), 1.5 * pu);
@@ -52,8 +53,10 @@ describe('N6 · comportamientos NO tocados (regresión)', () => {
   it('cortable (aguacate) conserva fracción fina: ½ aguacate', () => {
     expect(portionStr(ing('aguacate', 150), 0.5 * 150)).toMatch(FRAC);
   });
-  it('cortable (plátano) conserva fracción: ⅓ plátano', () => {
-    expect(portionStr(ing('plátano', 120), (1 / 3) * 120)).toMatch(FRAC);
+  // MENÚ V1 · Bloque 4 · D4: el plátano se parte en MEDIOS (SMAE: ½ plátano), nunca en tercios sin evidencia.
+  it('plátano: ½ sí; ⅓ ya no (cae a gramos honestos)', () => {
+    expect(portionStr(ing('plátano', 120), 0.5 * 120)).toBe('½ plátano');
+    expect(portionStr(ing('plátano', 120), (1 / 3) * 120)).toBe('40 g plátano');
   });
   it('fruta grande halveable (manzana) conserva el medio: 1½ manzanas', () => {
     expect(portionStr(ing('manzana', 150), 1.5 * 150)).toMatch(FRAC);

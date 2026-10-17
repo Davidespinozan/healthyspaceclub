@@ -207,7 +207,7 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v
 
 ### Versiones vigentes
 
-`ENERGY_PRESCRIPTION_VERSION = 2` · `MACRO_PRESCRIPTION_VERSION = 4` · `PLAN_ENGINE_VERSION = 36` · `ENERGY_CALIBRATION_VERSION = 2` · `CALIBRATION_ENERGY_VERSION = 1` · `NUTRITION_SNAPSHOT_VERSION = 2` · `ADAPTIVE_DECISION_VERSION = 1`. Ningún bump en los Bloques 5–9. `PLAN_ENGINE_VERSION` 33 → 34 lo subió MENÚ HSC V1 · Bloque 1 y 34 → 35 la CAPA 4 V1 y 35 → 36 el Bloque 3B (HALLAZGO-04) (motor de platillos: `max_g` como techo, taza de arroz y rebanada de jamón de pavo del catálogo, copy de piezas, umbrales de snacks contra la meta diaria en ambos caminos, `gen.source`); no toca CAPA 1/2 ni Adaptive.
+`ENERGY_PRESCRIPTION_VERSION = 2` · `MACRO_PRESCRIPTION_VERSION = 4` · `PLAN_ENGINE_VERSION = 37` · `ENERGY_CALIBRATION_VERSION = 2` · `CALIBRATION_ENERGY_VERSION = 1` · `NUTRITION_SNAPSHOT_VERSION = 2` · `ADAPTIVE_DECISION_VERSION = 1`. Ningún bump en los Bloques 5–9. `PLAN_ENGINE_VERSION` 33 → 34 lo subió MENÚ HSC V1 · Bloque 1 y 34 → 35 la CAPA 4 V1 y 35 → 36 el Bloque 3B (HALLAZGO-04) y 36 → 37 el Bloque 4 (medidas visibles) (motor de platillos: `max_g` como techo, taza de arroz y rebanada de jamón de pavo del catálogo, copy de piezas, umbrales de snacks contra la meta diaria en ambos caminos, `gen.source`); no toca CAPA 1/2 ni Adaptive.
 
 ### Pendientes de Adaptive
 
@@ -240,6 +240,12 @@ Decisiones D1–D3 (Menú HSC V1). Implementado en `planEngine.ts` (v35), igual 
 | Catálogo de complementos (acompañamientos de carbo del banco) + validación de restricciones de complementos | `IMPLEMENTED` (aún sin uso en la generación) | `menuComplements.ts`, `validatePlan` |
 | Clasificación CORE_RECIPE / FLEXIBLE_SIDE / FIXED (+ AMBIGUOUS_RECIPE_STRUCTURE) desde datos del banco | `IMPLEMENTED` (diagnóstico y cobertura) | `recipeStructure.ts` |
 | Modelo híbrido receta base + acompañamiento flexible + complemento externo | `WIP · GATE FAILED` (`wip/menu-v1-bloque3b`): sin proteína bajo base, pero menos preciso que v35 en 1500 y ≥ 3000 kcal y más lento → NEEDS_DATA | — |
+| Bloque 4 · D1/D2 · autoridad de medidas visibles: CERRADA (pasta cocida 120 g/taza, arroz cocido 188 g/taza, aceite 5 g/cdita, miel 7 g/cdita y 21 g/cda, jamón de pavo 21.33 g/rebanada) > catálogo `food_measures` (gen_banco conserva taza/cda/cdita/pieza/rebanada en `ing.m`) > tabla SMAE de la app (`foodEquivalents`, mapa explícito por id). Catálogo vs SMAE fuera de tolerancia (15 %, pieza 25 %), valor implausible o defecto conocido → la unidad NO se usa (gramos) y queda en `measureConflicts()` | `IMPLEMENTED` (v37) | `measureAuthority.ts` |
+| Bloque 4 · D1 · medida visible por familia (taza / pieza / cdita-cda / gramos / «al gusto») y honestidad ±20 % | `IMPLEMENTED` (v37) | `portionDisplay.ts` (`portionStr`) |
+| Bloque 4 · D3 · INTERNAL_GRAMS (macros) vs DISPLAY_PORTION: gramos visibles en múltiplos de 5 desde 10 g; exactos si son la base de la receta o si redondear cruzaría `max_g`/techo humano | `IMPLEMENTED` (v37) | `displayGrams` |
+| Bloque 4 · D4 · piezas: enteras (huevo, tortilla, tostada, dátil, fruta chica), medias (pan pita, bagel, fruta grande), tercios solo aguacate; pan/pita/bagel/thin/baguette cuadrados a rebanada / media pieza en el cierre del día (lo continuo absorbe) | `IMPLEMENTED` (v37) | `portionDisplay.ts`, `topUpDay` |
+| Bloque 4 · D5 · un «…cocido/a» con macros de cereal SECO se muestra con el alimento de sus macros («Avena en hojuelas», «Pasta de codito»), no como cocido | `IMPLEMENTED` (dato pendiente de Magaly) | `gen_banco.visible_name` |
+| Bloque 4 · D6 · «Fruta»/«Fruta picada» → nombre que Magaly usa para el alimento de sus macros (Fresa rebanada → «Fresas») | `IMPLEMENTED` (4 filas) | `gen_banco.visible_name` |
 | Bandas del banco estático (`assignPlan` → `mealPlanKey`), `mealCalorieSplit` | `LEGACY INERT` | `tdee.ts`, `nutritionTargets.ts` |
 | `canonicalTime`/`eligibleTimes`, FORMULA/ASSEMBLY/STRUCTURED, complementos, comida ≠ platillo, presentación | `OPEN` | — |
 

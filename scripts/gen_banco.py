@@ -88,6 +88,35 @@ for r in csv.DictReader(open(os.path.join(BASE, "food_measures.csv"), encoding="
     fid = (r.get("food_id") or "").strip()
     gpm = num(r.get("gramos_por_medida"))
     if fid and gpm > 0 and fid not in MEAS: MEAS[fid] = (gpm, med)
+# MENÚ V1 · Bloque 4 · D2 · TODAS las medidas caseras confiables del catálogo (antes solo pieza/rebanada): la app
+# las consume como autoridad visible (measureAuthority.ts). MEDIDAS[id][unidad] = gramos por unidad. Si el catálogo
+# trae dos valores distintos para la misma unidad, la unidad queda en conflicto (None) y no se usa.
+MED_UNIT = {"taza": "taza", "cucharada": "cda", "cucharadita": "cdita", "pieza": "pieza", "rebanada": "rebanada"}
+MEDIDAS = {}
+for r in csv.DictReader(open(os.path.join(BASE, "food_measures.csv"), encoding="utf-8-sig")):
+    u = MED_UNIT.get((r.get("medida_nombre") or "").strip())
+    fid = (r.get("food_id") or "").strip(); gpm = num(r.get("gramos_por_medida"))
+    if not u or not fid or gpm <= 0: continue
+    prev = MEDIDAS.setdefault(fid, {}).get(u, gpm)
+    MEDIDAS[fid][u] = gpm if prev is not None and abs(prev - gpm) < 0.01 else None
+# ⚠️ Los platillos con un genérico «Fruta» / «Fruta picada» traen en `alimento` la fruta REAL cuyas macros se
+# suman (hoy: Fresa rebanada). Mostrar «Fruta» escondía QUÉ fruta es (y una restricción a esa fruta no la veía).
+# Se muestra el nombre que Magaly ya usa para ese mismo alimento en el resto del banco (evidencia, no invento).
+GENERIC_FRUIT_NV = {"Fruta", "Fruta picada"}
+NV_FOR_ALIMENTO = {}
+for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), encoding="utf-8-sig")):
+    nv0 = r["nombre_visible"].strip(); al0 = (r.get("alimento") or "").strip()
+    if nv0 not in GENERIC_FRUIT_NV and al0: NV_FOR_ALIMENTO.setdefault(al0, {}).setdefault(nv0, 0); NV_FOR_ALIMENTO[al0][nv0] += 1
+def visible_name(nv, al):
+    if nv in GENERIC_FRUIT_NV and al in NV_FOR_ALIMENTO:
+        return max(NV_FOR_ALIMENTO[al].items(), key=lambda x: x[1])[0]
+    # ⚠️ AVENA (Bloque 4 · D5): «Avena cocida» con `alimento` genérico «Avena» (→ hojuelas por ALIAS) suma macros de
+    # avena CRUDA. Mostrar «avena cocida» con esos gramos es falso (50 g crudos ≠ ¼ taza cocida). Si el nombre dice
+    # «cocida» pero el alimento resuelto es el cereal SECO (> 200 kcal/100 g), se muestra el alimento de las macros.
+    m = cat(al)
+    if "cocid" in nv.lower() and m and m[0] > 200:
+        return (ALIAS.get(al) or al)
+    return nv
 SUB = {}
 SUB_YIELD = {}  # rendimiento total (g) de cada sub-receta = suma de TODOS sus ingredientes (incl. condimentos)
 SUB_ING = {}    # ingredientes visibles de cada sub-receta → la app MUESTRA la receta de la salsa
@@ -134,7 +163,7 @@ for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), enco
     # SOLO cuando el requerimiento calórico es alto (ver DENSE_SNACK_KCAL_THRESHOLD).
     if "snack_denso" in (r.get("nota") or "").lower(): d["dense"] = True
     rol = (r.get("rol") or "").strip(); al = (r.get("alimento") or "").strip(); g = num(r["gramos"])
-    ing = {"nv": r["nombre_visible"].strip(), "rol": rol, "g0": g}
+    ing = {"nv": visible_name(r["nombre_visible"].strip(), al), "rol": rol, "g0": g}
     # MENÚ V1 · Bloque 3 · estructura de la receta desde el CSV (sin inventar): `sec: "a"` = el ingrediente es un
     # ACOMPAÑAMIENTO del platillo (columna `seccion`), con rango propio; `blq` = la nota lo marca como parte del
     # BLOQUE (masa / proporción sagrada).
@@ -148,6 +177,11 @@ for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), enco
         # pero "2 rebanadas de pan" para jamón está mal → esos se quedan en gramos).
         ok = un not in NO_PIEZA and not (meas[1] == "rebanada" and not al.strip().lower().startswith("pan"))
         if ok: ing["pu"] = meas[0]; ing["un"] = un
+    # Bloque 4 · D2 · id del catálogo + sus medidas caseras (las que no están en conflicto).
+    if rol in ("principal", "fijo") and idof(al):
+        ing["fid"] = idof(al)
+        mm = {u: v for u, v in MEDIDAS.get(ing["fid"], {}).items() if v is not None}
+        if mm: ing["m"] = mm
     if rol == "principal":
         m = cat(al)
         if m:
@@ -173,7 +207,7 @@ banco = list(dishes.values())
 ts = "// AUTO-GENERADO por scripts/gen_banco.py desde el banco de Magaly. No editar a mano.\n"
 ts += "// Cada platillo: fixed = [kcal,P,F,C,fibra] de todo lo NO-principal (ya sumado);\n"
 ts += "// ings principales traen a=[por-gramo kcal,P,F,C,fibra] y max para ajustar la porción.\n"
-ts += "export interface BancoIng { nv: string; rol: string; g0: number; max?: number; a?: number[]; pend?: boolean; pu?: number; un?: string; sec?: 'a'; blq?: boolean }\n"
+ts += "export interface BancoIng { nv: string; rol: string; g0: number; max?: number; a?: number[]; pend?: boolean; pu?: number; un?: string; sec?: 'a'; blq?: boolean; fid?: string; m?: Partial<Record<'taza' | 'cda' | 'cdita' | 'pieza' | 'rebanada', number>> }\n"
 ts += "export interface BancoDish { nombre: string; tiempo: string; tipo: string; multMax: number; img: string; fixed: number[]; ings: BancoIng[]; region?: string; dense?: boolean; sabor?: string; multMaxCsv?: boolean }\n"
 ts += "export const BANCO: BancoDish[] = " + json.dumps(banco, ensure_ascii=False) + ";\n"
 # Recetas de las sub-recetas (guacamole, salsas, aderezos) → la app las MUESTRA al abrir
