@@ -66,8 +66,10 @@ describe('SHAKE · D-WP5 en validación (solo y combinado)', () => {
     expect(shakeKinds(d, SOFT_L)).toEqual(['preference']);
   });
   async function combined(type: ProteinShake['type'], pol: AvoidPolicy | string[]): Promise<{ days: DayPlan[]; svc: MealItem }> {
-    for (const seed of [12345, 1, 2, 3, 4, 5]) {
-      const r = await generateWeeklyPlan(T, pol, '', seed, shake(type, ['pm']));
+    // MENÚ V1 · Bloque 6 · con snacks más variados el día suele cerrar sin que el corrector fusione en el batido: se
+    // busca un combinado REAL en más semillas y con el batido en los dos slots (sin slot libre el corrector fusiona).
+    for (const slots of [['pm'], ['am', 'pm']] as ProteinShake['slots'][]) for (const seed of [12345, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+      const r = await generateWeeklyPlan(T, pol, '', seed, shake(type, slots));
       const svc = r.days.flatMap((d) => d.meals).find((m) => m.name.startsWith(`${SHAKE_NAME} + `));
       if (svc) return { days: r.days, svc };
     }

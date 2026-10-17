@@ -770,7 +770,7 @@ function applyShake(meals: MealItem[], shake: ProteinShake): void {
  *  el día, agrega UN solo snack real de ese macro. La proteína NO se corrige aquí (la
  *  cargan los principales — subir gramos de una comida, no apilar snacks). Rota en la
  *  semana (weekUsed) para no repetir el mismo. RESPETA alergias. */
-function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: AvoidInput = [], weekUsed?: Set<string>): void {
+function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: AvoidInput = [], weekUsed?: Map<string, number>): void {
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const cur = macroSum(meals);
   if (cur[0] >= target.kcal * 1.02) return;            // sin espacio calórico
@@ -784,15 +784,16 @@ function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: AvoidInput
   const gapKcal = (T[idx] - cur[idx]) * (idx === 2 ? 9 : 4);
   const pool = SNACK_BY_MACRO[cls].filter((d) => !avoid(d) && dishKcalRange(d)[0] <= gapKcal * (1 + SNACK_FIT_TOL));
   const dayNames = new Set(meals.map((m) => m.name));
-  // Prefiere uno NO usado en la semana ni hoy; si no hay, el menos repetido.
-  const dish = pool.find((d) => !weekUsed?.has(d.nombre) && ![...dayNames].some((n) => n.includes(d.nombre)))
-    ?? pool.find((d) => ![...dayNames].some((n) => n.includes(d.nombre)));
+  // Prefiere uno NO usado en la semana ni hoy; si no hay, el MENOS repetido. Bloque 6 · antes el «menos repetido»
+  // era en realidad el primero del pool (medido: la misma fruta 7/7 días); ahora cuenta usos (empate → orden del pool).
+  const libres = pool.filter((d) => ![...dayNames].some((n) => n.includes(d.nombre)));
+  const dish = libres.map((d, j) => ({ d, j, c: weekUsed?.get(d.nombre) ?? 0 })).sort((a, b) => a.c - b.c || a.j - b.j)[0]?.d;
   if (!dish) return;
   const slotT = [0, 0, 0, 0];
   slotT[idx] = T[idx] - cur[idx];
   const item = solveSlot([dish], 'Snack', slotT)[0];
   if (!item?.macros || item.macros.kcal < 20 || cur[0] + item.macros.kcal > target.kcal * 1.05) return;
-  if (mergeIntoSnack(meals, item, isFruitSnack(dish))) weekUsed?.add(dish.nombre);
+  if (mergeIntoSnack(meals, item, isFruitSnack(dish))) weekUsed?.set(dish.nombre, (weekUsed.get(dish.nombre) ?? 0) + 1);
 }
 
 // Busca el mejor conjunto de `n` platillos de `pool` para pegar el target de ESTE
@@ -800,12 +801,38 @@ function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: AvoidInput
 // (Este comentario describía un parámetro `needVeg` que exigía guarnición y que NUNCA
 //  existió como código: la regla se implementó como filtro de pool. Retirada por la
 //  Decisión 06, se limpia la referencia para que no engañe.)
+// ── MENÚ V1 · Bloque 6 · VARIEDAD SEMANAL (misma política en CODE e IA) ─────────────────────────────────────
+// Antes: `used` era binario (repetir 2 o 5 veces costaba igual), no existía «ayer», y las fases relajadas ignoraban
+// la variedad por completo (medido: el mismo platillo hasta 7/7 días). Ahora la repetición se PENALIZA (nunca se
+// excluye: si el pool compatible es chico, repetir sigue siendo posible) y la penalización se deriva del POOL:
+//   · `fair` = ceil(7 / pool): cuántas veces le «toca» a cada platillo de ese tiempo si se reparte parejo;
+//   · hasta `fair` cada uso cuesta poco (50); pasar de su parte cuesta fuerte (+250 por uso extra);
+//   · servirlo el día anterior cuesta +150 (no Salmón Bowl lunes-martes-miércoles);
+//   · compartir el ingrediente principal con las principales de ayer cuesta +20 por ingrediente.
+// Solo ORDENA candidatos que ya pasaron la banda de exactitud del tiempo: la variedad nunca compra imprecisión ni
+// toca restricciones (el pool ya llega filtrado).
+export interface VarietyState { count: Map<string, number>; prev: Set<string>; prevIng: Set<string> }
+export const newVarietyState = (): VarietyState => ({ count: new Map(), prev: new Set(), prevIng: new Set() });
+const cloneVariety = (v: VarietyState): VarietyState => ({ count: new Map(v.count), prev: new Set(v.prev), prevIng: new Set(v.prevIng) });
+export const REPEAT_BASE = 50, REPEAT_OVER_FAIR = 250, REPEAT_CONSECUTIVE = 150, REPEAT_PREV_ING = 20;
+/** Penalización de servir un platillo que ya salió `count` veces esta semana (y ayer si `consecutive`), en un tiempo
+ *  cuyo pool compatible tiene `poolSize` platillos. Pura. */
+export function repetitionPenalty(count: number, consecutive: boolean, poolSize: number): number {
+  const fair = Math.max(1, Math.ceil(7 / Math.max(1, poolSize)));
+  return REPEAT_BASE * count + (count >= fair ? REPEAT_OVER_FAIR * (count - fair + 1) : 0) + (consecutive ? REPEAT_CONSECUTIVE : 0);
+}
+/** Al cerrar un día: lo servido hoy pasa a ser «ayer». */
+function rollVarietyDay(v: VarietyState, meals: MealItem[]): void {
+  v.prev = new Set(meals.flatMap((m) => m.name.split(' + ')));
+  v.prevIng = new Set(meals.filter((m) => !m.time.startsWith('Snack')).flatMap((m) => { const d = BY_NAME.get(m.name); return d ? dishPrincKeys(d) : []; }));
+}
+
 // merge=true → devuelve UNA comida combinada (snacks: los dos dentro del mismo).
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
   rng: () => number, trials: number,
   used: Set<string>, usedToday: Set<string>, usedTodayIng: Set<string>, craving: string[],
-  ingFreq: Map<string, number>, merge = false,
+  ingFreq: Map<string, number>, merge = false, vs?: VarietyState,
 ): MealItem[] {
   // El pool ya viene filtrado por alergia Y por tiempo (buildDay / buildDayWithFixed) →
   // aquí no se cuela ningún alérgeno ni un platillo de otro tiempo.
@@ -821,7 +848,20 @@ function fitSlot(
   const isSnack = label.startsWith('Snack');
   // NUTRITION-N2 · meta calórica del slot (el target llega como [_,P,F,C]; kcal se deriva por Atwater).
   const tgtKcal = 4 * target[1] + 9 * target[2] + 4 * target[3];
-  const cands: { dishes: BancoDish[]; e: number; used: number; craves: number; ingScore: number; dayIng: number; fib: number; bucket: number }[] = [];
+  const cands: { dishes: BancoDish[]; e: number; used: number; rep: number; craves: number; ingScore: number; dayIng: number; fib: number; bucket: number }[] = [];
+  // Bloque 6 · costo de repetición de un platillo (sin estado de semana: el binario histórico de `used`).
+  // (memo por llamada: el estado de la semana no cambia mientras se elige este tiempo)
+  const repMemo = new Map<BancoDish, number>();
+  const repOf = (d: BancoDish) => {
+    let r = repMemo.get(d);
+    if (r === undefined) {
+      r = vs
+        ? repetitionPenalty(vs.count.get(d.nombre) ?? 0, vs.prev.has(d.nombre), pool.length) + (vs.prevIng.size ? REPEAT_PREV_ING * dishPrincKeys(d).filter((k) => vs.prevIng.has(k)).length : 0)
+        : (used.has(d.nombre) ? REPEAT_BASE : 0);
+      repMemo.set(d, r);
+    }
+    return r;
+  };
   for (let t = 0; t < trials; t++) {
     const dishes = pickN();
     const { fixed, vars } = prep(dishes, isSnack);   // CAPA 4 · un snack nunca se estira más allá de una porción normal
@@ -851,7 +891,7 @@ function fitSlot(
       const pressure = Math.max(0, dKcal, dCarb);
       bucket = pressure <= 0.12 ? 0 : pressure <= 0.30 ? 1 : 2;   // cabe / estirado / severo
     }
-    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length, craves, ingScore, dayIng, fib, bucket });
+    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length, rep: dishes.reduce((a, d) => a + repOf(d), 0), craves, ingScore, dayIng, fib, bucket });
   }
   // Aceptables = los que pegan razonable (error ≤ 12%; holgura porque cada tiempo es ~¼
   // del día). Entre ellos: 1) ANTOJO, 2) NO repetir ingrediente el mismo día, 3) variedad
@@ -882,7 +922,8 @@ function fitSlot(
   // Un solo score de variedad: platillo repetido en la semana (50) > ingrediente repetido
   // hoy (30). El ANTOJO es un BONO (-55) que NO manda absoluto: el platillo antojado sale
   // 1-2 veces y luego la penalización semanal (used) deja que rote — no las 7 cenas iguales.
-  const vscore = (c: typeof acceptable[number]) => c.used * 50 + c.dayIng * 30 + c.ingScore - c.craves * 55;
+  // Bloque 6 · `rep` sustituye al binario `used * 50` (ver repetitionPenalty).
+  const vscore = (c: typeof acceptable[number]) => c.rep + c.dayIng * 30 + c.ingScore - c.craves * 55;
   // NUTRITION-N2 · en SNACKS la PLAUSIBILIDAD DE PORCIÓN manda sobre variedad/antojo: primero por cubeta de
   // presión (cabe humanamente < estirado < severo), y DENTRO de cada cubeta el orden histórico intacto
   // (variedad → fibra → ajuste). Fail-closed: si todo el pool es severo (restricciones), igual sale el mejor
@@ -896,6 +937,7 @@ function fitSlot(
   const dishes = acceptable[0].dishes;
   for (const d of dishes) {
     used.add(d.nombre); usedToday.add(d.nombre);
+    if (vs) vs.count.set(d.nombre, (vs.count.get(d.nombre) ?? 0) + 1);
     if (craving.length && dishMatchesAny(d, craving)) cravedCount.set(d.nombre, (cravedCount.get(d.nombre) ?? 0) + 1);
     for (const k of princKeys(d)) { ingFreq.set(k, (ingFreq.get(k) ?? 0) + 1); usedTodayIng.add(k); }
   }
@@ -1207,7 +1249,7 @@ export function snackPlan(mains: BancoDish[], T: number[], freeSlots: readonly S
   return slots.map((slot) => ({ slot, target: each }));
 }
 
-function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>, relax = 0, avoidCats: string[] = [], shakeSlots: readonly Slot[] = []): DayPlan {
+function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>, relax = 0, avoidCats: string[] = [], shakeSlots: readonly Slot[] = [], vs?: VarietyState): DayPlan {
   // CAPA 4 V1 · las 3 principales se reparten TODA la meta de comida (T ya descuenta el batido); los
   // snacks se deciden DESPUÉS, por lo que las principales no alcanzan a porción normal (`snackPlan`).
   const MTm = slotTargets(T, [...SNACK_SLOTS]);
@@ -1265,9 +1307,9 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   // Cada principal se pide, como mucho, del tamaño que su tiempo da usualmente (percentil 75 del pool a porción
   // normal): a metas muy altas las principales no se vuelven monstruosas; el resto lo toman los snacks.
   const mains: MealItem[] = [
-    ...fitSlot(avail(des), 'Desayuno', capTarget(MTm['Desayuno'], usualMainKcal(des)), 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq),
-    ...fitSlot(avail(com), 'Comida', capTarget(MTm['Comida'], usualMainKcal(com)), 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq),
-    ...fitSlot(avail(cen), 'Cena', capTarget(MTm['Cena'], usualMainKcal(cen)), 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq),
+    ...fitSlot(avail(des), 'Desayuno', capTarget(MTm['Desayuno'], usualMainKcal(des)), 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq, false, vs),
+    ...fitSlot(avail(com), 'Comida', capTarget(MTm['Comida'], usualMainKcal(com)), 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq, false, vs),
+    ...fitSlot(avail(cen), 'Cena', capTarget(MTm['Cena'], usualMainKcal(cen)), 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq, false, vs),
   ];
   // CAPA 4 · snacks: solo lo que las principales no dan a porción normal; UN platillo por snack, del tamaño
   // de su hueco (un snack que tendría que estirarse o encogerse fuera de su rango no es candidato).
@@ -1276,7 +1318,7 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   const sizedPool = (kcal: number) => snack.filter((d) => snackFitsSize(d, kcal));
   const snacks: MealItem[] = snackPlan(mainDishes, T, freeSlots, (kcal) => sizedPool(kcal).length > 0).flatMap(({ slot, target }) => {
     const sized = sizedPool(4 * target[1] + 9 * target[2] + 4 * target[3]);
-    return fitSlot(availSnack(sized.length ? sized : snack), slot, target, 1, rng, 70, usedSel, usedToday, usedTodayIng, craving, ingFreq);
+    return fitSlot(availSnack(sized.length ? sized : snack), slot, target, 1, rng, 70, usedSel, usedToday, usedTodayIng, craving, ingFreq, false, vs);
   });
   const meals = chronological([...mains, ...snacks]);
   // NO se cuadra aquí: el cuadre del día (topUpDay) corre DESPUÉS del batido, en
@@ -1364,7 +1406,9 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // v38 · MENÚ V1 · BLOQUE 5 · recetas CERRADAS: Pasta con Verduras Asadas, Feta y Garbanzo y Rollitos según su ficha
 // (porción única, no se deforman), bolitas 2/4/6 y barrita 1/2/3 (solo porciones válidas; toda la masa escala junta),
 // diagnóstico RECIPE_CAPACITY_LIMIT en `day.recipeLimits` (no cambia el plan).
-export const PLAN_ENGINE_VERSION = 38;
+// v39 · MENÚ V1 · BLOQUE 6 · variedad semanal por penalización derivada del pool (CODE e IA), corrector de snacks
+// rota al menos usado, bolitas 2 → 4 / barrita 1 → 2 (V1 final), bebidas licuadas escalan completas.
+export const PLAN_ENGINE_VERSION = 39;
 
 export interface BuildOpts { seed?: number; avoid?: AvoidInput; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 
@@ -1583,8 +1627,25 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
   const byName = new Map(BANCO.map((d) => [d.nombre, d]));
   const aiAvoid = makePolicyFilter(avoidCats);
   const aiPoolSize = Object.fromEntries(['Desayuno', 'Comida', 'Cena', 'Snack'].map((t) => [t, (BY_TIME[t] ?? []).filter((d) => !aiAvoid(d)).length]));
-  const corrUsed = new Set<string>(); // corrector no repite el mismo snack en la semana
+  const corrUsed = new Map<string, number>(); // corrector: usos por snack en la semana (rota al menos usado)
   const out: DayPlan[] = [];
+  // Bloque 6 · MISMA política de variedad que el motor de código: la IA no puede saltársela.
+  const vstate = newVarietyState();
+  const fitMemo = new Map<string, number>();
+  const fitOf = (d: BancoDish, t: string) => { const k = `${t}|${d.nombre}`; if (!fitMemo.has(k)) fitMemo.set(k, slotFit(d, MTm[t as Slot])); return fitMemo.get(k)!; };
+  const penaltyOf = (d: BancoDish) => repetitionPenalty(vstate.count.get(d.nombre) ?? 0, vstate.prev.has(d.nombre), aiPoolSize[d.tiempo] ?? 1);
+  /** Una principal de la IA que ya se pasó de su parte del pool o que salió ayer se cambia por la alternativa compatible
+   *  (mismo tiempo, misma política de restricciones, encaje ≤ el de la IA o ≤ 0.35 como el pool de la IA) que menos
+   *  se repite. Si no hay alternativa, se respeta la elección (repetir es preferible a no tener plan). */
+  const varied = (d: BancoDish, t: string): BancoDish => {
+    const count = vstate.count.get(d.nombre) ?? 0;
+    const fair = Math.max(1, Math.ceil(7 / Math.max(1, aiPoolSize[t] ?? 1)));
+    if (count < fair && !vstate.prev.has(d.nombre)) return d;
+    const lim = Math.max(0.35, fitOf(d, t));
+    const alt = (BY_TIME[t] ?? []).filter((x) => x !== d && !aiAvoid(x) && fitOf(x, t) <= lim)
+      .sort((a, b) => penaltyOf(a) - penaltyOf(b) || fitOf(a, t) - fitOf(b, t))[0];
+    return alt && penaltyOf(alt) < penaltyOf(d) ? alt : d;
+  };
   days.forEach((sel, i) => {
     // P0-03 · DOBLE LLAVE sobre la selección de la IA. El orquestador ya solo acepta
     // nombres de `adequateBankByTiempo` (filtrado por tiempo y por restricciones), pero
@@ -1598,8 +1659,9 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
       const d = byName.get(nombre);
       return d && d.tiempo === t && !noEvitado(d) ? d : undefined;
     };
-    const des = main(sel.desayuno, 'Desayuno'), com = main(sel.comida, 'Comida'), cen = main(sel.cena, 'Cena');
-    if (!des || !com || !cen || !mainEligible(cen)) return;   // HALLAZGO-04 · misma elegibilidad que el motor
+    const des0 = main(sel.desayuno, 'Desayuno'), com0 = main(sel.comida, 'Comida'), cen0 = main(sel.cena, 'Cena');
+    if (!des0 || !com0 || !cen0 || !mainEligible(cen0)) return;   // HALLAZGO-04 · misma elegibilidad que el motor
+    const des = varied(des0, 'Desayuno'), com = varied(com0, 'Comida'), cen = varied(cen0, 'Cena');
     const snacks = (sel.snacks ?? []).map((n) => byName.get(n))
       .filter((d): d is BancoDish => !!d && d.tiempo === 'Snack' && !noEvitado(d));
     const mains: MealItem[] = [
@@ -1617,7 +1679,21 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
         if (!free.length) return [];
         const k = kcalOf(t);
         const dist = (d: BancoDish) => { const [lo, hi] = dishKcalRange(d); return k < lo ? lo - k : k > hi ? k - hi : 0; };
-        const d = free.find((x) => snackFitsSize(x, k)) ?? [...free].sort((a, b) => dist(a) - dist(b))[0];
+        // Bloque 6 · entre los candidatos de la IA que caben, el que menos se repite (estable: empate → orden de la IA).
+        // Si TODOS ya se pasaron de su parte del pool (o salieron ayer), entran los demás snacks compatibles del banco
+        // que caben — la IA no puede fijar el mismo snack 7 días proponiendo siempre los mismos 3.
+        const fits = free.filter((x) => snackFitsSize(x, k));
+        const best = (xs: BancoDish[]) => xs.map((x, j) => ({ x, j, p: penaltyOf(x) })).sort((a, b) => a.p - b.p || a.j - b.j)[0];
+        let pickS = fits.length ? best(fits) : null;
+        const fairS = Math.max(1, Math.ceil(7 / Math.max(1, aiPoolSize.Snack ?? 1)));
+        // Ninguno de la IA cabe en el hueco, o el que cabe ya se pasó de su parte / salió ayer → el pool compatible que
+        // sí cabe (lo mismo que hace el motor de código con `sizedPool`). Solo si no hay ninguno, el más cercano.
+        if (!pickS || (vstate.count.get(pickS.x.nombre) ?? 0) >= fairS || vstate.prev.has(pickS.x.nombre)) {
+          const others = BY_TIME.Snack.filter((x) => !aiAvoid(x) && !usedSnack.has(x.nombre) && !fits.includes(x) && snackFitsSize(x, k));
+          const alt = others.length ? best(others) : null;
+          if (alt && (!pickS || alt.p < pickS.p)) pickS = alt;
+        }
+        const d = pickS ? pickS.x : [...free].sort((a, b) => dist(a) - dist(b))[0];
         usedSnack.add(d.nombre);
         return solveSlot([d], slot, t);
       });
@@ -1626,6 +1702,8 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
     topUpDay(meals, T);                              // CAPA 4 · el mismo cuadre del día que el motor de código
     topUpMeals(meals, target, avoidCats, corrUsed); // cierra hueco grande (1 snack, rota en semana)
     const day: DayPlan = { day: i + 1, theme: '', meals: chronological(meals) };
+    for (const m of day.meals) for (const n of m.name.split(' + ')) if (BY_NAME.has(n)) vstate.count.set(n, (vstate.count.get(n) ?? 0) + 1);
+    rollVarietyDay(vstate, day.meals);
     const cap = capacityIssue(day, T, avoidCats, aiAvoid, aiPoolSize);   // mismo registro que el motor de código
     if (cap) day.capacity = cap;
     const rl = recipeLimits(day, T);   // Bloque 5 · receta cerrada en su límite: registrar, nunca deformar
@@ -1734,6 +1812,32 @@ export function buildDayWithFixed(
   return { day: dayNum, theme: '', meals };
 }
 
+/** MENÚ V1 · Bloque 6 · DIAGNÓSTICO (puro): cómo ve el camino CODE a cada platillo de un tiempo PRINCIPAL. Reproduce el
+ *  encaje de `fitSlot` (n = 1): meta del tiempo (`slotTargets` + `capTarget`), solve del platillo solo, `errMax` (peor
+ *  error relativo de P/G/C) y la banda de aceptación. No elige nada ni cambia el plan. */
+export function explainMainSlot(target: PlanTarget, tiempo: 'Desayuno' | 'Comida' | 'Cena', avoid: AvoidInput = []): {
+  slotTarget: number[]; band: number; minE: number; poolSize: number;
+  rows: Array<{ nombre: string; e: number; err: { P: number; F: number; C: number }; kcal: number; accepted: boolean }>;
+} {
+  const T = [target.kcal, target.protG, target.fatG, target.carbG];
+  const MTm = slotTargets(T, [...SNACK_SLOTS]);
+  const f = makePolicyFilter(avoid);
+  const pool = BY_TIME[tiempo].filter((d) => !f(d));
+  const t = capTarget(MTm[tiempo], usualMainKcal(pool));
+  const rows = pool.map((d) => {
+    const { fixed, vars } = prep([d], false);
+    solve(fixed, vars, t, 100);
+    const x = [fixed[0], fixed[1], fixed[2], fixed[3]];
+    for (const v of vars) for (let k = 1; k < 4; k++) x[k] += v.a[k] * v.g;
+    const rel = (k: number) => Math.round(((x[k] - t[k]) / Math.max(t[k], 1)) * 1000) / 10;
+    return { nombre: d.nombre, e: errMax(fixed, vars, t), err: { P: rel(1), F: rel(2), C: rel(3) }, kcal: Math.round(4 * x[1] + 9 * x[2] + 4 * x[3]), accepted: false };
+  });
+  const minE = Math.min(...rows.map((r) => r.e));
+  const band = pool.length < 30 ? Math.max(22, minE + 8) : Math.max(12, minE + 2);
+  for (const r of rows) r.accepted = r.e <= band;
+  return { slotTarget: t.map((x) => Math.round(x)), band, minE, poolSize: pool.length, rows: rows.sort((a, b) => a.e - b.e) };
+}
+
 export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPlan[] {
   cravedCount.clear(); // tope de antojo por semana
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
@@ -1757,7 +1861,8 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   const craving = cravingTerms(opts.craving ?? ''); // "antojo": prefiere platillos que lo tengan
   const used = new Set<string>();          // platillos ya usados en la semana → variedad entre días
   const ingFreq = new Map<string, number>(); // ingredientes ya usados → rota fuentes (aguacate/pollo)
-  const corrUsed = new Set<string>();      // corrector no repite el mismo snack en la semana
+  const corrUsed = new Map<string, number>(); // corrector: usos por snack en la semana (rota al menos usado)
+  const vstate = newVarietyState();        // Bloque 6 · conteo semanal + «ayer» (penalización, no exclusión)
   const days: DayPlan[] = [];
   // Error del día = máx % en P/F/C (kcal es implícito por Atwater).
   const dayErr = (d: DayPlan): number => {
@@ -1778,9 +1883,9 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
     // conserva la variedad: los días rotan en vez de converger al mismo platillo.
     // Cada intento parte del estado de variedad LIMPIO del día (si no, el intento
     // descartado deja sus platillos marcados como usados y colapsa la variedad).
-    const preU = new Set(used), preI = new Map(ingFreq), preC = new Map(cravedCount);
+    const preU = new Set(used), preI = new Map(ingFreq), preC = new Map(cravedCount), preV = cloneVariety(vstate);
     let best: DayPlan | null = null, bestErr = Infinity;
-    let bU = preU, bI = preI, bC = preC;
+    let bU = preU, bI = preI, bC = preC, bV = preV;
     // Dos fases. FASE ESTRICTA: variedad completa + cada platillo en su tiempo, sin
     // repetir en la semana. Da <1% en el ~89% de los días. FASE RELAJADA: solo si
     // la estricta se quedó LEJOS (>2%) —el rincón de exclusiones pesadas + meta
@@ -1793,10 +1898,15 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
         used.clear(); preU.forEach((x) => used.add(x));
         ingFreq.clear(); preI.forEach((v, k) => ingFreq.set(k, v));
         cravedCount.clear(); preC.forEach((v, k) => cravedCount.set(k, v));
+        const vs = cloneVariety(preV);
         // Si un tiempo no tiene candidatos, buildDay lanza NoEligibleDishesError y el error
         // SALE de buildWeeklyPlan: no se reintenta con otro relax (relajar variedad o sesgar
         // a carbo no crea platillos) ni se devuelve un plan incompleto. Lo recoge la UI.
-        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax, avoidInputUnion(opts.avoid), shakeSlotsOf(shake));
+        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax, avoidInputUnion(opts.avoid), shakeSlotsOf(shake),
+          // Fases relajadas (el día estricto quedó > 2 % lejos): mandan la exactitud, como siempre; la variedad solo
+          // decide en la fase estricta. Igual cuentan para la semana (lo servido sí se registra abajo).
+          relax === 0 ? vs : undefined);
+        if (relax > 0) for (const m of day.meals) for (const n of m.name.split(' + ')) vs.count.set(n, (vs.count.get(n) ?? 0) + 1);
         if (shake) { applyShake(day.meals, shake); day.meals = chronological(day.meals); }   // el batido ocupa SU slot de snack
         // Cuadre del día contra la meta COMPLETA (T), ya con el batido puesto: las
         // comidas absorben lo que el batido aporta o deja faltando.
@@ -1806,13 +1916,15 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
         // CAPA 4 · repetir en la semana una principal cuesta 1 punto: un día variado gana si es, como mucho, ~1 punto
         // menos exacto (antes el desvío solo veía macros y a metas altas el mismo platillo ganaba los 7 días).
         const repetidas = day.meals.filter((m) => !m.time.startsWith('Snack') && preU.has(m.name)).length;
-        const score = dayErr(day) + desorden * 0.08 + repetidas * 0.01;
+        // Bloque 6 · repetir lo de AYER cuesta igual que repetir en la semana (desempate entre días igual de exactos).
+        const consecutivas = day.meals.filter((m) => m.name.split(' + ').some((n) => preV.prev.has(n))).length;
+        const score = dayErr(day) + desorden * 0.08 + (repetidas + consecutivas) * 0.01;
         // CAPA 4 · las fases relajadas (repetir en la semana / sesgo a carbo) solo ganan si MEJORAN de verdad
         // (≥ 1 punto): cuando el desvío tiene un piso estructural (meta muy alta en carbo con poca proteína),
         // repetir el mismo platillo los 7 días no lo baja y solo destruye la variedad.
         if (score < bestErr - (relax > 0 ? 0.01 : 0)) {
           bestErr = score; best = day;
-          bU = new Set(used); bI = new Map(ingFreq); bC = new Map(cravedCount);
+          bU = new Set(used); bI = new Map(ingFreq); bC = new Map(cravedCount); bV = vs;
         }
         if (bestErr <= 0.01) break;   // exacto y ordenado: parar (conserva variedad)
       }
@@ -1826,6 +1938,8 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
     const day = best!;
     topUpMeals(day.meals, target, opts.avoid ?? [], corrUsed);
     day.meals = chronological(day.meals);
+    vstate.count = bV.count;              // (el snack del corrector rota aparte, con `corrUsed`)
+    rollVarietyDay(vstate, day.meals);
     const cap = capacityIssue(day, T, opts.avoid, avoid, poolSize);   // registrar, nunca deformar
     if (cap) day.capacity = cap;
     const rl = recipeLimits(day, T);   // Bloque 5 · receta cerrada en su límite: registrar, nunca deformar

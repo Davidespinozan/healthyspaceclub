@@ -39,7 +39,7 @@ async function gen(type: ProteinShake['type'], slots: ProteinShake['slots'], avo
 async function realCombined(type: ProteinShake['type'], avoid: string[] = []): Promise<{ days: DayPlan[]; svc: MealItem }> {
   // MENÚ V1 · CAPA 4 · con un slot de snack libre el corrector sirve un snack PROPIO (no fusiona). Con el batido en
   // los DOS slots no queda ninguno libre y el corrector fusiona en el batido: el combinado sigue siendo REAL.
-  for (const seed of [12345, 1, 2, 3, 4]) for (const slots of [['pm'], ['am', 'pm']] as ProteinShake['slots'][]) {
+  for (const seed of [12345, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) for (const slots of [['pm'], ['am', 'pm']] as ProteinShake['slots'][]) {
     const days = await gen(type, slots, avoid, QA_TARGET, seed);
     const svc = combinedShakes(days)[0];
     if (svc) return { days, svc };
@@ -81,7 +81,8 @@ describe('A · el caso de la QA visual: lacteos + Vegana AM + antojo PASTA', () 
 
 describe('B · whey en PM sin restricciones', () => {
   it('el plan con batido combinado es válido', async () => {
-    const days = await gen('regular', ['pm'], []);
+    // MENÚ V1 · Bloque 6 · el combinado se busca (ya no sale siempre con la semilla fija): lo validado no cambia.
+    const { days } = await realCombined('regular');
     expect(combinedShakes(days).length).toBeGreaterThan(0);
     expect(validatePlan({ days }, []).violations).toEqual([]);
   });

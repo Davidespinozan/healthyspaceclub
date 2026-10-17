@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 //   1 · Pasta con Verduras Asadas, Feta y Garbanzo = ficha cerrada, porción única (no se deforma).
 //   2 · Rollitos = 6 rebanadas de pavo + 3 cdas de queso crema light + pepino/pimiento al gusto; sin nuez ni
 //       aguacate. «Rollitos de Pavo, Queso Crema y Nuez» es otro producto y queda intacto.
-//   3 · Bolitas 2/4/6 y barrita 1/2/3: solo esas porciones; toda la masa escala junta.
+//   3 · Bolitas 2 → 4 y barrita 1 → 2 (V1 final, Bloque 6 · D1): solo esas porciones; toda la masa escala junta.
 //   4 · Recetas con decisión abierta (Avena, French Toast, Toast Ricotta y Fresa): sin cambios.
 //   6 · RECIPE_CAPACITY_LIMIT: la receta cerrada no se deforma para cuadrar; se registra el hueco.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -74,10 +74,10 @@ describe('2 · Rollitos', () => {
   });
 });
 
-describe('3 · bolitas 2/4/6 · barrita 1/2/3', () => {
+describe('3 · bolitas 2 → 4 · barrita 1 → 2 (V1 final)', () => {
   it('porciones válidas y unidad', () => {
-    for (const n of [BOL_P, BOL_C]) expect([dish(n).steps, dish(n).srv]).toEqual([[0.5, 1, 1.5], { unit: 'bolita', base: 4 }]);
-    expect([dish(BARRA).steps, dish(BARRA).srv]).toEqual([[0.5, 1, 1.5], { unit: 'barrita', base: 2 }]);
+    for (const n of [BOL_P, BOL_C]) expect([dish(n).steps, dish(n).srv]).toEqual([[0.5, 1], { unit: 'bolita', base: 4 }]);
+    expect([dish(BARRA).steps, dish(BARRA).srv]).toEqual([[0.5, 1], { unit: 'barrita', base: 2 }]);
   });
   it('toda la masa escala JUNTA (antes chocolate/chía/coco/miel/crema quedaban fijos)', () => {
     for (const n of [BOL_P, BOL_C, BARRA]) {
@@ -93,7 +93,7 @@ describe('3 · bolitas 2/4/6 · barrita 1/2/3', () => {
       const d = dish(n);
       for (let kcal = 150; kcal <= 1200; kcal += 25) {
         const m = servedSolo(n, kcal);
-        const valid = d.srv!.unit === 'bolita' ? ['2 bolitas', '4 bolitas', '6 bolitas'] : ['1 barrita', '2 barritas', '3 barritas'];
+        const valid = d.srv!.unit === 'bolita' ? ['2 bolitas', '4 bolitas'] : ['1 barrita', '2 barritas'];
         expect(valid, `${n} @${kcal}`).toContain(m.serving);
         expect(m.desc.startsWith(`${m.serving} · `)).toBe(true);
       }
@@ -102,7 +102,7 @@ describe('3 · bolitas 2/4/6 · barrita 1/2/3', () => {
     expect(servedSolo(BOL_C, 660).serving).toBe('4 bolitas');
     expect(servedSolo(BARRA, 350).serving).toBe('1 barrita');
   });
-  it('6 bolitas / 3 barritas NO son servibles hoy como snack: la porción normal N2 (crema de cacahuate/almendra 24 g, nueces/almendras 30 g) y el techo N1 (crema de cacahuate 40 g) frenan el paso 1.5 → RECIPE_CAPACITY_LIMIT, sin deformar', () => {
+  it('6 bolitas / 3 barritas NO existen (V1 final): la receta base es la porción máxima; N1/N2 intactos', () => {
     for (const n of [BOL_P, BOL_C, BARRA]) {
       const d = dish(n);
       const base = closedRecipeMacros(d, 'min')[0] * 2;   // receta base = paso 1
@@ -115,7 +115,7 @@ describe('3 · bolitas 2/4/6 · barrita 1/2/3', () => {
     for (const k of [2200, 3000, 3500]) for (const seed of [7, 42]) for (const day of buildWeeklyPlan(mk(k), { seed, avoid: { strict: ['lacteos'], soft: [] } })) {
       for (const m of day.meals) if (/Bolitas|Barrita/.test(m.name)) {
         seen.add(m.serving!);
-        expect(['2 bolitas', '4 bolitas', '6 bolitas', '1 barrita', '2 barritas', '3 barritas']).toContain(m.serving);
+        expect(['2 bolitas', '4 bolitas', '1 barrita', '2 barritas']).toContain(m.serving);
         for (const p of m.portions) if (/d[aá]til/i.test(p)) expect(p).not.toMatch(/[½⅓⅔¼¾]/);
       }
     }

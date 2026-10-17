@@ -181,12 +181,12 @@ CLOSED_RECIPES = {
         _row(_ROLL, _S, "salado", "Verduras mixtas", "Pepino y pimiento en tiras", 0, "guarnicion", _RIMG),
         _row(_ROLL, _S, "salado", "Condimentos", "Condimentos", 0, "condimento", _RIMG),
     ]},
-    # Porciones válidas: bolitas 2 → 4 → 6, barrita 1 → 2 → 3. La receta base del CSV es la porción del medio
-    # (mult_max 1.5 de Magaly = 6/4 y 3/2; el piso 0.5 del bloque = 2/4 y 1/2). Toda la masa escala junta: los
-    # `fijo` de la masa (chocolate, chía, coco, crema de cacahuate, miel) pasan al bloque.
-    "Bolitas de Avena, Dátil, Cacahuate y Chocolate": {"steps": [0.5, 1, 1.5], "srv": ["bolita", 4], "dough": True},
-    "Bolitas de Dátil, Avena, Almendra y Coco": {"steps": [0.5, 1, 1.5], "srv": ["bolita", 4], "dough": True},
-    "Barrita de Avena, Nuez, Yogur y Miel": {"steps": [0.5, 1, 1.5], "srv": ["barrita", 2], "dough": True},
+    # V1 FINAL (Bloque 6 · D1, la evidencia de QA reemplaza la ficha 2/4/6): bolitas 2 → 4, barrita 1 → 2. La receta
+    # base del CSV es la porción MÁXIMA (4 bolitas / 2 barritas); la mínima es media receta. 6 bolitas / 3 barritas
+    # no existen (romperían N1/N2). Toda la masa escala junta: los `fijo` de la masa pasan al bloque.
+    "Bolitas de Avena, Dátil, Cacahuate y Chocolate": {"steps": [0.5, 1], "srv": ["bolita", 4], "dough": True},
+    "Bolitas de Dátil, Avena, Almendra y Coco": {"steps": [0.5, 1], "srv": ["bolita", 4], "dough": True},
+    "Barrita de Avena, Nuez, Yogur y Miel": {"steps": [0.5, 1], "srv": ["barrita", 2], "dough": True},
 }
 # Recetas con decisión de producto ABIERTA: no se tocan (se listan para el reporte y un test las congela).
 OPEN_PRODUCT_DECISION = {
@@ -194,7 +194,20 @@ OPEN_PRODUCT_DECISION = {
     "French Toast": "miel 7 g: ¿retirar u opcional? (vainilla/canela = sazón)",
     "Toast de Ricotta y Fresa": "almendras 15 g + miel 10 g: pendiente",
 }
+# ── MENÚ V1 · Bloque 6 · `fijo` dentro de un BLOQUE que escala: MASS_COMPONENT (escala con la masa) solo cuando es
+# INEQUÍVOCO por estructura: una BEBIDA LICUADA (Batido / Smoothie, todo en `seccion = plato`) — la miel, la crema de
+# almendra/cacahuate, el cacao o la chía van DENTRO del vaso; media bebida con toda la crema es otra receta.
+# El resto de los bloques con `fijo` se CLASIFICA pero no se toca (ver NUTRITION_V1_AUTHORITY):
+#   TOPPING_FIXED · nueces / almendras picadas / crema de cacahuate / cacao nibs en `acompañamiento` (encima del plato);
+#   OPTIONAL      · miel en `acompañamiento` (se rocía; varias recetas con miel tienen decisión abierta);
+#   AMBIGUOUS     · chía / cremas / cacao / nueces en `plato` de overnight oats y chía pudding → Magaly;
+#   OPEN_PRODUCT_DECISION · Avena con Manzana y Canela, French Toast (no se tocan).
+BLENDED_RE = __import__("re").compile(r"^(Batido|Smoothie)\b")
+
 ROWS = [r for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), encoding="utf-8-sig"))]
+for r in ROWS:
+    if r["tipo"].strip() == "bloque" and BLENDED_RE.match(r["platillo"].strip()) and r["rol"].strip() == "fijo":
+        r["rol"] = "principal"
 for name, spec in CLOSED_RECIPES.items():
     assert any(r["platillo"].strip() == name for r in ROWS), f"receta cerrada sin platillo en el CSV: {name}"
     if "rows" in spec:

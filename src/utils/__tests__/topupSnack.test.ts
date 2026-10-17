@@ -3,7 +3,9 @@ import { buildWeeklyPlan } from '../planEngine';
 describe('corrector con snacks reales',()=>{
   it('no mete ingredientes crudos; el extra es snack con foto y ≥2 imágenes',()=>{
     const t={kcal:2400,protG:180,fatG:102,carbG:180};
-    const plan=buildWeeklyPlan(t as any,{seed:7});
+    // MENÚ V1 · Bloque 6 · con la variedad nueva la semilla 7 cierra el día sin snacks (válido en CAPA 4): se usa la
+    // primera semilla cuya semana sí lleva snacks, para seguir ejercitando el corrector.
+    const plan=[7,1,2,3,4,5,6,8,9,10].map((seed)=>buildWeeklyPlan(t as any,{seed})).find((p)=>p.some((d)=>d.meals.some((m)=>/Snack/.test(m.time))))!;
     let mergedWithImgs=0, snackItems=0;
     for(const d of plan)for(const m of d.meals){
       if(/Snack/.test(m.time)){ snackItems++;

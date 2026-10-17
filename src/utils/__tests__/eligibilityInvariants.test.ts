@@ -202,7 +202,9 @@ describe('P0-03 · B · el tiempo de comida es invariante', () => {
         expect(timeCrossings(days), `avoid=[${avoid}] seed=${seed}`).toEqual([]);
       }
     }
-  });
+    // 18 semanas reales (~11 s aislado): bajo la carga de la suite completa rozaba el timeout global de 20 s.
+    // Timeout de infraestructura propio, como el resto de los tests de integración pesados (no cambia la aserción).
+  }, 60_000);
 
   it('buildDayWithFixed (bowl del food truck) tampoco cruza de tiempo', () => {
     const bowl: FixedMeal = { slot: 'Comida', name: 'Bowl Verde', kcal: 737, prot: 59, fat: 31, carb: 64 };
