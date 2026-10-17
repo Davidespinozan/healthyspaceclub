@@ -15,6 +15,8 @@ export interface MealItem {
   // MENÚ V1 · Bloque 3 · complemento candidato de la comida principal (nombre del catálogo de complementos), aunque
   // hoy se sirva en 0. Lo usa el cuadre del día para reconstruir la comida; lo servido va en `ings` (rol complemento).
   complement?: string;
+  // MENÚ V1 · Bloque 5 · porción servida de una receta con unidad cerrada («4 bolitas», «1 barrita»).
+  serving?: string;
 }
 
 export interface DayPlan {
@@ -23,6 +25,23 @@ export interface DayPlan {
   meals: MealItem[];
   // MENÚ V1 · Bloque 3 · D8 · el banco no alcanzó la meta sin deformar comidas (estado interno, para ampliar el banco).
   capacity?: MenuCapacityIssue;
+  // MENÚ V1 · Bloque 5 · una receta CERRADA servida en su porción válida extrema y el día aún sin cerrar (±5 %).
+  recipeLimits?: RecipeCapacityLimit[];
+}
+
+/** MENÚ V1 · Bloque 5 · la receta cerrada no se deforma para cuadrar: se registra cuánto faltó. */
+export interface RecipeCapacityLimit {
+  status: 'RECIPE_CAPACITY_LIMIT';
+  recipe: string;
+  slot: string;
+  /** kcal que la receta tendría que aportar para cerrar el día (servida + hueco). */
+  target: number;
+  served: number;
+  /** Porción válida máxima (o mínima, si el día se pasó) y sus kcal. */
+  maxValid: string;
+  maxValidKcal: number;
+  /** kcal que el día deja sin cerrar (+ faltan / − sobran). */
+  gap: number;
 }
 
 export interface MenuCapacityIssue {

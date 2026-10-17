@@ -4,7 +4,7 @@
 // principales (snacks menos), carbos/grasa siguen el reparto, verduras en comida+cena.
 // Reglas: fijo/guarnición/sub-receta/condimento quietos; `bloque` escala completo; `max_g` tope.
 import { BANCO, type BancoDish, type BancoIng } from '../data/banco';
-import type { DayPlan, MealItem, MenuCapacityIssue } from '../types';
+import type { DayPlan, MealItem, MenuCapacityIssue, RecipeCapacityLimit } from '../types';
 import type { Region } from './region';
 import { dishAllowedInRegion } from '../data/regionFood';
 import { portionBoundsFor, preferredGramLimit } from './portionPlausibility';
@@ -261,7 +261,7 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-interface Var { a: number[]; g: number; g0: number; lo: number; hi: number; blk: number | null; ing: BancoIng }
+interface Var { a: number[]; g: number; g0: number; lo: number; hi: number; blk: number | null; ing: BancoIng; steps?: number[] }
 
 const W = [1.5, 1.8, 1.0]; // pesos P, F, C. La grasa subió de 0.8 a 1.2: con 0.8 el
 // solver la dejaba absorber todo el error y se desbordaba +10%.
@@ -342,6 +342,7 @@ export function ingBounds(ing: BancoIng): { lo: number; hi: number } {
  *  si esto ya se pasa del presupuesto del tiempo, ese platillo NO cabe por más que el
  *  solver lo encoja. Se usa cuando queda poco margen — p.ej. tras meter un bowl. */
 export function dishMinMacros(d: BancoDish): number[] {
+  if (d.steps) return closedRecipeMacros(d, 'min');
   const t = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
   for (const ing of d.ings) {
     if (ing.rol === 'principal' && ing.a) {
@@ -356,6 +357,7 @@ export function dishMinMacros(d: BancoDish): number[] {
  *  Es el "hasta dónde da" real: si esto no llega a la meta del tiempo de comida,
  *  ese platillo NO puede cuadrar por más que el solver lo escale. */
 export function dishMaxMacros(d: BancoDish): number[] {
+  if (d.steps) return closedRecipeMacros(d, 'max');
   const t = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
   for (const ing of d.ings) {
     if (ing.rol === 'principal' && ing.a) {
@@ -364,6 +366,29 @@ export function dishMaxMacros(d: BancoDish): number[] {
     }
   }
   return t;
+}
+
+/** MENÚ V1 · Bloque 5 · macros de una receta CERRADA en su porción válida mínima o máxima (sus `steps`). */
+export function closedRecipeMacros(d: BancoDish, which: 'min' | 'max'): number[] {
+  // Mismo contexto que al servirla: un snack se mide a PORCIÓN NORMAL (CAPA 4 · techos + preferido N2).
+  const { vars } = prep([d], d.tiempo === 'Snack');
+  const st = validSteps(d.steps ?? [1], blockSMax(vars));
+  const s = which === 'min' ? Math.min(...st) : Math.max(...st);
+  const t = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
+  for (const v of vars) for (let k = 0; k < 4; k++) t[k] += v.a[k] * v.g0 * s;
+  return t;
+}
+/** Factor servido de un bloque (gramos servidos / base de su primer principal). */
+function servedFactor(d: BancoDish, gOf: (ing: BancoIng) => number | undefined): number | null {
+  const ing = d.ings.find((i) => i.rol === 'principal' && i.a && i.g0 > 0);
+  const g = ing ? gOf(ing) : undefined;
+  return ing && typeof g === 'number' ? g / ing.g0 : null;
+}
+/** «4 bolitas» / «1 barrita»: la porción servida de una receta con unidad cerrada. */
+export function servingLabel(d: BancoDish, factor: number): string | null {
+  if (!d.srv) return null;
+  const n = Math.round(d.srv.base * factor);
+  return `${n} ${n === 1 ? d.srv.unit : d.srv.unit + 's'}`;
 }
 
 // ── NUTRITION-N2 · CAPACIDAD PREFERIDA (señal de SELECCIÓN, no del solver) ────────────────────────
@@ -382,6 +407,8 @@ const _prefCapMemo = new Map<BancoDish, number[]>();
 export function dishPreferredMaxMacros(d: BancoDish): number[] {
   const cached = _prefCapMemo.get(d);
   if (cached) return cached;
+  // Bloque 5 · una receta cerrada no tiene capacidad «preferida» aparte: es su porción válida máxima.
+  if (d.steps) { const t = closedRecipeMacros(d, 'max'); _prefCapMemo.set(d, t); return t; }
   const t = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
   for (const ing of d.ings) {
     if (ing.rol === 'principal' && ing.a) {
@@ -408,7 +435,7 @@ function prep(dishes: BancoDish[], normal = false): { fixed: number[]; vars: Var
         const b = ingBounds(ing);
         const hi = normal ? Math.max(ing.g0, Math.min(b.hi, ingPreferredHi(ing), ing.g0 * (d.multMax || 1.5))) : b.hi;
         const lo = Math.min(b.lo, hi);
-        vars.push({ a: ing.a, g: ing.g0, g0: ing.g0, lo, hi, blk: bloque ? si : null, ing });
+        vars.push({ a: ing.a, g: ing.g0, g0: ing.g0, lo, hi, blk: bloque ? si : null, ing, ...(bloque && d.steps ? { steps: d.steps } : {}) });
       }
     }
   });
@@ -453,10 +480,23 @@ function solve(fixed: number[], vars: Var[], T: number[], iters = 160): void {
       // (`max_g`, PIECE/GRAM_MAX, techo humano): el factor máximo es el del ingrediente más ajustado. Antes el factor
       // 1.5 ignoraba los techos (p. ej. crema de cacahuate 32 g × 1.5 = 48 g con techo humano de 40 g).
       const sMax = Math.max(0.5, Math.min(1.5, ...grp.map((g) => (g.g0 > 0 ? g.hi / g.g0 : 1.5))));
-      const s = Math.max(0.5, Math.min(sMax, -nu / (de || 1e-9)));
+      const opt = -nu / (de || 1e-9);
+      // MENÚ V1 · Bloque 5 · receta CERRADA: solo porciones válidas (bolitas 2/4/6, barrita 1/2/3, pasta y rollitos 1×).
+      const s = grp[0].steps ? nearestStep(validSteps(grp[0].steps, sMax), opt) : Math.max(0.5, Math.min(sMax, opt));
       for (const g of grp) g.g = g.g0 * s;
     }
   }
+}
+
+/** Pasos válidos de una receta cerrada que caben bajo el factor máximo de sus ingredientes (nunca vacío). */
+function validSteps(steps: number[], sMax: number): number[] {
+  const ok = steps.filter((x) => x <= sMax + 1e-9);
+  return ok.length ? ok : [Math.min(...steps)];
+}
+const nearestStep = (steps: number[], x: number) => steps.reduce((a, b) => (Math.abs(b - x) < Math.abs(a - x) ? b : a));
+/** Factor máximo de un bloque: el ingrediente más ajustado (techo / base), entre 0.5 y 1.5. */
+function blockSMax(vars: Var[]): number {
+  return Math.max(0.5, Math.min(1.5, ...vars.map((v) => (v.g0 > 0 ? v.hi / v.g0 : 1.5))));
 }
 
 function errMax(fixed: number[], vars: Var[], T: number[]): number {
@@ -516,10 +556,15 @@ function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>
   // kcal derivado de las macros (Atwater 4/4/9), no el kcal crudo del alimento →
   // así el total cuadra con la meta (que también es Atwater) y el usuario lo verifica.
   const prot = Math.round(m[1]), fat = Math.round(m[2]), carb = Math.round(m[3]);
+  // MENÚ V1 · Bloque 5 · receta con unidad cerrada → la porción servida («4 bolitas») encabeza la descripción.
+  const f = dish.srv ? servedFactor(dish, (i) => gOf.get(i)) : null;
+  const serving = f != null ? servingLabel(dish, f) : null;
+  const desc0 = dish.ings.filter((i) => i.rol === 'principal').slice(0, 3).map((i) => i.nv).join(' · ');
   return {
     time: label,
     name: dish.nombre,
-    desc: dish.ings.filter((i) => i.rol === 'principal').slice(0, 3).map((i) => i.nv).join(' · '),
+    desc: serving ? `${serving} · ${desc0}` : desc0,
+    ...(serving ? { serving } : {}),
     img: IMG_BASE + dish.img,
     portions,
     macros: { kcal: Math.round(prot * 4 + carb * 4 + fat * 9), prot, fat, carb, fiber: Math.round(m[4]) },
@@ -965,7 +1010,7 @@ function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
     // unidad natural: «½ bagel», no «29 g bagel». Solo si el paso cae dentro de los límites del ingrediente; si no,
     // se queda continuo (y el display cae a gramos redondeados).
     const step = servedPieceStep(v.ing);
-    if (step && /\bpan\b|bagel|pita|baguette/i.test(v.ing.nv)) {
+    if (step && v.blk === null && /\bpan\b|bagel|pita|baguette/i.test(v.ing.nv)) {
       const cands = [Math.round(v.g / step), Math.floor(v.g / step), Math.ceil(v.g / step)].map((k) => k * step)
         .filter((x) => x > 0 && x >= v.lo - 1e-6 && x <= v.hi + 1e-6);
       if (cands.length) {
@@ -1007,6 +1052,30 @@ function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
 export const MENU_CAPACITY_KCAL_TOL = 0.05;
 /** Tolerancia blanda superior de proteína (D2: meta +10 %). Por encima, es un problema de capacidad del banco. */
 export const PROTEIN_SOFT_OVER = 0.10;
+/** MENÚ V1 · Bloque 5 · RECIPE_CAPACITY_LIMIT: el día quedó fuera de ±5 % y una receta CERRADA servida ya está en su
+ *  porción válida extrema en esa dirección (no puede crecer / encoger sin deformarse). Diagnóstico: no cambia el plan. */
+export function recipeLimits(day: DayPlan, T: number[]): RecipeCapacityLimit[] {
+  const kcal = day.meals.reduce((a, m) => a + (m.macros?.kcal ?? 0), 0);
+  const gap = Math.round(T[0] - kcal);
+  if (Math.abs(gap) <= MENU_CAPACITY_KCAL_TOL * T[0]) return [];
+  const out: RecipeCapacityLimit[] = [];
+  for (const m of day.meals) for (const part of m.name.split(' + ')) {
+    const d = BANCO.find((x) => x.nombre === part);
+    if (!d?.cr || !d.steps) continue;
+    const f = servedFactor(d, (i) => { const g = m.ings?.find((x) => x.nv === i.nv)?.g; return typeof g === 'number' ? g : undefined; });
+    if (f == null) continue;
+    const { vars } = prep([d], d.tiempo === 'Snack');
+    const st = validSteps(d.steps, blockSMax(vars));
+    const edge = gap > 0 ? Math.max(...st) : Math.min(...st);
+    if (Math.abs(f - edge) > 0.02) continue;     // aún tenía margen: el hueco no es de esta receta
+    const edgeKcal = Math.round(closedRecipeMacros(d, gap > 0 ? 'max' : 'min')[0]);
+    const served = Math.round(d.fixed[0] + vars.reduce((a, v) => a + v.a[0] * v.g0 * f, 0));
+    out.push({ status: 'RECIPE_CAPACITY_LIMIT', recipe: d.nombre, slot: m.time, target: served + gap, served,
+      maxValid: servingLabel(d, edge) ?? (st.length === 1 ? 'porción única de la receta' : `${edge}× receta`), maxValidKcal: edgeKcal, gap });
+  }
+  return out;
+}
+
 function capacityIssue(day: DayPlan, T: number[], avoidIn: AvoidInput | undefined, avoid: (d: BancoDish) => boolean, poolSize: Record<string, number>): MenuCapacityIssue | undefined {
   const r = [0, 0, 0, 0];
   for (const m of day.meals) { r[1] += m.macros?.prot ?? 0; r[2] += m.macros?.fat ?? 0; r[3] += m.macros?.carb ?? 0; }
@@ -1083,7 +1152,8 @@ function dishKcalRangeRaw(d: BancoDish): [number, number] {
     const { vars: bv } = prep([d], true);
     let base = 0;
     for (const v of bv) base += v.a[0] * v.g0;
-    const sMax = Math.max(0.5, Math.min(1.5, ...bv.map((v) => (v.g0 > 0 ? v.hi / v.g0 : 1.5))));
+    const sMax = blockSMax(bv);
+    if (d.steps) { const st = validSteps(d.steps, sMax); return [d.fixed[0] + Math.min(...st) * base, d.fixed[0] + Math.max(...st) * base]; }
     return [d.fixed[0] + 0.5 * base, d.fixed[0] + sMax * base];
   }
   const { fixed, vars } = prep([d], true);
@@ -1291,7 +1361,10 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // v37 · MENÚ V1 · BLOQUE 4 · porciones visibles con medidas reales (autoridad cerrada > catálogo > SMAE; conflictos
 // → gramos), gramos visibles en múltiplos de 5, piezas naturales (pan/pita/bagel cuadrados a rebanada/media pieza en
 // el cierre del día), «Fruta» genérica → la fruta real de sus macros, avena cruda ya no se muestra como cocida.
-export const PLAN_ENGINE_VERSION = 37;
+// v38 · MENÚ V1 · BLOQUE 5 · recetas CERRADAS: Pasta con Verduras Asadas, Feta y Garbanzo y Rollitos según su ficha
+// (porción única, no se deforman), bolitas 2/4/6 y barrita 1/2/3 (solo porciones válidas; toda la masa escala junta),
+// diagnóstico RECIPE_CAPACITY_LIMIT en `day.recipeLimits` (no cambia el plan).
+export const PLAN_ENGINE_VERSION = 38;
 
 export interface BuildOpts { seed?: number; avoid?: AvoidInput; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 
@@ -1555,6 +1628,8 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
     const day: DayPlan = { day: i + 1, theme: '', meals: chronological(meals) };
     const cap = capacityIssue(day, T, avoidCats, aiAvoid, aiPoolSize);   // mismo registro que el motor de código
     if (cap) day.capacity = cap;
+    const rl = recipeLimits(day, T);   // Bloque 5 · receta cerrada en su límite: registrar, nunca deformar
+    if (rl.length) day.recipeLimits = rl;
     out.push(day);
   });
   return out;
@@ -1753,6 +1828,8 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
     day.meals = chronological(day.meals);
     const cap = capacityIssue(day, T, opts.avoid, avoid, poolSize);   // registrar, nunca deformar
     if (cap) day.capacity = cap;
+    const rl = recipeLimits(day, T);   // Bloque 5 · receta cerrada en su límite: registrar, nunca deformar
+    if (rl.length) day.recipeLimits = rl;
     days.push(day);
   }
   return days;

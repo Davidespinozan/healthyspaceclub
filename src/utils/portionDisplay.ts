@@ -175,7 +175,8 @@ function pieceStr(ing: BancoIng, grams: number, key: string): string | null {
 /** Porción visible de un ingrediente servido con `g` gramos internos. Puro. */
 export function portionStr(ing: BancoIng, g: number | null): string {
   // guarnición = verdura que nadie pesa; condimento = sin cantidad → «al gusto» (D1).
-  if (ing.rol === 'guarnicion') return `${ing.nv} al gusto`;
+  // Bloque 5 · una guarnición con rango CERRADO en la receta («200–250 g de verduras asadas») muestra su rango.
+  if (ing.rol === 'guarnicion') return ing.rg ? `${ing.rg[0]}–${ing.rg[1]} g de ${ing.nv.toLowerCase()}` : `${ing.nv} al gusto`;
   if (ing.rol === 'condimento') return /al gusto|^pizca/i.test(ing.nv) ? ing.nv : `${ing.nv} al gusto`;
   const grams = Math.round(g ?? ing.g0);
   if (grams <= 0) return `${grams} g ${ing.nv}`;

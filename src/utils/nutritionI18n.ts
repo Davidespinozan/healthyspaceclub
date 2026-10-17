@@ -121,6 +121,10 @@ function tPortionRaw(str: string, ing: Ing | undefined, lang: AppLanguage): stri
     return `${qty} ${enUnit} of ${name}`;
   }
 
+  // Bloque 5 · rango cerrado de una guarnición: "200–250 g de {nombre}"
+  const rgM = str.match(/^(\d+)–(\d+)\s+g\s+de\s+(.+)$/);
+  if (rgM) return `${rgM[1]}–${rgM[2]} g ${(en ?? rgM[3]).toLowerCase()}`;
+
   // "{g} g {nombre}"  → mantiene la caja original del nombre (como el español)
   const gM = str.match(/^(\d+)\s+g\s+(.+)$/);
   if (gM) return `${gM[1]} g ${en ?? gM[2]}`;

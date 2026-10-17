@@ -207,7 +207,7 @@ Autoridad: `src/utils/macroPrescription.ts` (`MACRO_PRESCRIPTION_VERSION = 4`: v
 
 ### Versiones vigentes
 
-`ENERGY_PRESCRIPTION_VERSION = 2` · `MACRO_PRESCRIPTION_VERSION = 4` · `PLAN_ENGINE_VERSION = 37` · `ENERGY_CALIBRATION_VERSION = 2` · `CALIBRATION_ENERGY_VERSION = 1` · `NUTRITION_SNAPSHOT_VERSION = 2` · `ADAPTIVE_DECISION_VERSION = 1`. Ningún bump en los Bloques 5–9. `PLAN_ENGINE_VERSION` 33 → 34 lo subió MENÚ HSC V1 · Bloque 1 y 34 → 35 la CAPA 4 V1 y 35 → 36 el Bloque 3B (HALLAZGO-04) y 36 → 37 el Bloque 4 (medidas visibles) (motor de platillos: `max_g` como techo, taza de arroz y rebanada de jamón de pavo del catálogo, copy de piezas, umbrales de snacks contra la meta diaria en ambos caminos, `gen.source`); no toca CAPA 1/2 ni Adaptive.
+`ENERGY_PRESCRIPTION_VERSION = 2` · `MACRO_PRESCRIPTION_VERSION = 4` · `PLAN_ENGINE_VERSION = 38` · `ENERGY_CALIBRATION_VERSION = 2` · `CALIBRATION_ENERGY_VERSION = 1` · `NUTRITION_SNAPSHOT_VERSION = 2` · `ADAPTIVE_DECISION_VERSION = 1`. Ningún bump en los Bloques 5–9. `PLAN_ENGINE_VERSION` 33 → 34 lo subió MENÚ HSC V1 · Bloque 1 y 34 → 35 la CAPA 4 V1 y 35 → 36 el Bloque 3B (HALLAZGO-04) y 36 → 37 el Bloque 4 (medidas visibles) y 37 → 38 el Bloque 5 (recetas cerradas) (motor de platillos: `max_g` como techo, taza de arroz y rebanada de jamón de pavo del catálogo, copy de piezas, umbrales de snacks contra la meta diaria en ambos caminos, `gen.source`); no toca CAPA 1/2 ni Adaptive.
 
 ### Pendientes de Adaptive
 
@@ -246,6 +246,10 @@ Decisiones D1–D3 (Menú HSC V1). Implementado en `planEngine.ts` (v35), igual 
 | Bloque 4 · D4 · piezas: enteras (huevo, tortilla, tostada, dátil, fruta chica), medias (pan pita, bagel, fruta grande), tercios solo aguacate; pan/pita/bagel/thin/baguette cuadrados a rebanada / media pieza en el cierre del día (lo continuo absorbe) | `IMPLEMENTED` (v37) | `portionDisplay.ts`, `topUpDay` |
 | Bloque 4 · D5 · un «…cocido/a» con macros de cereal SECO se muestra con el alimento de sus macros («Avena en hojuelas», «Pasta de codito»), no como cocido | `IMPLEMENTED` (dato pendiente de Magaly) | `gen_banco.visible_name` |
 | Bloque 4 · D6 · «Fruta»/«Fruta picada» → nombre que Magaly usa para el alimento de sus macros (Fresa rebanada → «Fresas») | `IMPLEMENTED` (4 filas) | `gen_banco.visible_name` |
+| Bloque 5 · recetas CERRADAS (`gen_banco.CLOSED_RECIPES`, `d.cr`/`d.steps`/`d.srv`): Pasta con Verduras Asadas, Feta y Garbanzo (150 g pasta cocida · 100 g garbanzos · 40 g feta · 200–250 g verduras asadas · 5 g aceite · limón/especias/sal) y Rollitos (6 rebanadas de pavo · 3 cdas de queso crema light · pepino/pimiento al gusto · sin nuez ni aguacate) en porción única; bolitas 2/4/6 y barrita 1/2/3 (base del CSV = paso del medio; toda la masa escala junta) | `IMPLEMENTED` (v38) | `gen_banco.py`, `solve` (`validSteps`) |
+| Bloque 5 · `RECIPE_CAPACITY_LIMIT` en `day.recipeLimits`: día fuera de ±5 % con una receta cerrada en su porción válida extrema; la receta no se deforma | `IMPLEMENTED` (no cambia el plan) | `recipeLimits` |
+| Bloque 5 · 6 bolitas / 3 barritas: la ficha las permite, pero como snack la porción normal N2 (crema de cacahuate/almendra 24 g; nueces/almendras 30 g) y N1 (crema de cacahuate 40 g) frenan el paso 1.5 → máximo servible 4 bolitas / 2 barritas | `PENDING PRODUCT DECISION` | — |
+| Bloque 5 · Avena (nueces 15 g + miel 7 g), French Toast (miel 7 g), Toast de Ricotta y Fresa (almendras 15 g + miel 10 g) | `OPEN_PRODUCT_DECISION` (sin cambios) | `gen_banco.OPEN_PRODUCT_DECISION` |
 | Bandas del banco estático (`assignPlan` → `mealPlanKey`), `mealCalorieSplit` | `LEGACY INERT` | `tdee.ts`, `nutritionTargets.ts` |
 | `canonicalTime`/`eligibleTimes`, FORMULA/ASSEMBLY/STRUCTURED, complementos, comida ≠ platillo, presentación | `OPEN` | — |
 

@@ -146,8 +146,71 @@ def region_of(nota):
             return part.split(":", 1)[1].strip().upper()  # "ES"
     return ""
 
+# ── MENÚ V1 · Bloque 5 · RECETAS CERRADAS (decisión de producto, no dato de Magaly en el CSV) ─────────────────
+# Van aquí y no en el CSV porque el CSV se reemplaza con cada versión de Magaly. Cada receta cerrada REEMPLAZA las
+# filas de su platillo; usa los mismos alimentos del catálogo (macros reales) y no inventa cantidades: todo gramo sale
+# de la ficha cerrada o de una medida del catálogo (rebanada de pavo 21.33 g, cda de queso crema light 15 g).
+#   steps = factores válidos del bloque (porciones servibles); srv = (unidad, cuántas trae la receta base).
+_C = "Comida"; _S = "Snack"
+def _row(p, t, sabor, al, nv, g, rol, img, nota="", mx=""):
+    return {"platillo": p, "tiempo": t, "tipo": "bloque", "banda": "", "sabor": sabor, "mult_max": "", "alimento": al,
+            "nombre_visible": nv, "gramos": str(g), "max_g": str(mx), "rol": rol, "seccion": "plato", "nota": nota,
+            "image_filename": img}
+_PASTA = "Pasta con Verduras Asadas, Feta y Garbanzo"; _PIMG = "pasta-con-verduras-asadas-feta-y-garbanzo.jpg"
+_ROLL = "Rollitos de Jamón de Pavo con Queso"; _RIMG = "rollitos-de-jamon-de-pavo-con-queso.jpg"
+CLOSED_RECIPES = {
+    # 150 g pasta cocida · 100 g garbanzos · 40 g feta · 200–250 g verduras asadas (macros al centro, 225 g) ·
+    # 5 g aceite · limón / especias / sal. Porción única: el motor no la deforma.
+    _PASTA: {"steps": [1], "rows": [
+        _row(_PASTA, _C, "salado", "Pasta cocida", "Pasta cocida", 150, "principal", _PIMG),
+        _row(_PASTA, _C, "salado", "Garbanzo cocido", "Garbanzos", 100, "principal", _PIMG),
+        _row(_PASTA, _C, "salado", "Queso Feta", "Queso feta", 40, "principal", _PIMG),
+        _row(_PASTA, _C, "salado", "Verduras mixtas", "Verduras asadas (berenjena, calabacita, pimiento, cebolla morada, jitomate cherry)", 225, "guarnicion", _PIMG, "rango:200-250"),
+        _row(_PASTA, _C, "salado", "Aceite de oliva", "Aceite de oliva", 5, "fijo", _PIMG),
+        _row(_PASTA, _C, "salado", "Limón", "Limón", 0, "condimento", _PIMG),
+        _row(_PASTA, _C, "salado", "Ajo", "Ajo", 3, "condimento", _PIMG),
+        _row(_PASTA, _C, "salado", "Albahaca molida", "Albahaca", 2, "condimento", _PIMG),
+        _row(_PASTA, _C, "salado", "Sal", "Pizca de sal", 1, "condimento", _PIMG),
+    ]},
+    # 6 rebanadas de pavo (6 × 21.33 g) · 3 cdas de queso crema light (3 × 15 g) · pepino y pimiento en tiras al
+    # gusto · condimentos. SIN nueces ni aguacate. Es el snack «Rollitos» del banco (antes: queso fresco de cabra);
+    # «Rollitos de Pavo, Queso Crema y Nuez» es OTRO producto (snack denso) y no se toca.
+    _ROLL: {"steps": [1], "rows": [
+        _row(_ROLL, _S, "salado", "Pechuga de pavo", "Jamón de pechuga de pavo", 128, "principal", _RIMG),
+        _row(_ROLL, _S, "salado", "Queso crema light", "Queso crema light", 45, "principal", _RIMG),
+        _row(_ROLL, _S, "salado", "Verduras mixtas", "Pepino y pimiento en tiras", 0, "guarnicion", _RIMG),
+        _row(_ROLL, _S, "salado", "Condimentos", "Condimentos", 0, "condimento", _RIMG),
+    ]},
+    # Porciones válidas: bolitas 2 → 4 → 6, barrita 1 → 2 → 3. La receta base del CSV es la porción del medio
+    # (mult_max 1.5 de Magaly = 6/4 y 3/2; el piso 0.5 del bloque = 2/4 y 1/2). Toda la masa escala junta: los
+    # `fijo` de la masa (chocolate, chía, coco, crema de cacahuate, miel) pasan al bloque.
+    "Bolitas de Avena, Dátil, Cacahuate y Chocolate": {"steps": [0.5, 1, 1.5], "srv": ["bolita", 4], "dough": True},
+    "Bolitas de Dátil, Avena, Almendra y Coco": {"steps": [0.5, 1, 1.5], "srv": ["bolita", 4], "dough": True},
+    "Barrita de Avena, Nuez, Yogur y Miel": {"steps": [0.5, 1, 1.5], "srv": ["barrita", 2], "dough": True},
+}
+# Recetas con decisión de producto ABIERTA: no se tocan (se listan para el reporte y un test las congela).
+OPEN_PRODUCT_DECISION = {
+    "Avena con Manzana y Canela": "nueces 15 g + miel 7 g: ¿retirar u opcional?",
+    "French Toast": "miel 7 g: ¿retirar u opcional? (vainilla/canela = sazón)",
+    "Toast de Ricotta y Fresa": "almendras 15 g + miel 10 g: pendiente",
+}
+ROWS = [r for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), encoding="utf-8-sig"))]
+for name, spec in CLOSED_RECIPES.items():
+    assert any(r["platillo"].strip() == name for r in ROWS), f"receta cerrada sin platillo en el CSV: {name}"
+    if "rows" in spec:
+        # El techo `max_g` que Magaly ya fijó para ese mismo alimento en el platillo se conserva (no se inventa otro).
+        old_max = {r["alimento"].strip(): r["max_g"] for r in ROWS if r["platillo"].strip() == name and (r.get("max_g") or "").strip()}
+        for r in spec["rows"]:
+            if not r["max_g"] and r["alimento"] in old_max: r["max_g"] = old_max[r["alimento"]]
+        at = next(i for i, r in enumerate(ROWS) if r["platillo"].strip() == name)
+        ROWS = [r for r in ROWS if r["platillo"].strip() != name]
+        ROWS[at:at] = spec["rows"]
+    if spec.get("dough"):
+        for r in ROWS:
+            if r["platillo"].strip() == name and r["rol"].strip() == "fijo": r["rol"] = "principal"
+
 dishes = {}
-for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), encoding="utf-8-sig")):
+for r in ROWS:
     p = r["platillo"].strip()
     d = dishes.setdefault(p, {"nombre": p, "tiempo": r["tiempo"].strip(), "tipo": r["tipo"].strip(),
         "multMax": num(r["mult_max"]) or 1.5, "img": _webp(r["image_filename"]), "fixed": [0, 0, 0, 0, 0], "ings": []})
@@ -169,6 +232,10 @@ for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), enco
     # BLOQUE (masa / proporción sagrada).
     if (r.get("seccion") or "").strip() == "acompañamiento": ing["sec"] = "a"
     if "BLOQUE" in (r.get("nota") or "").upper(): ing["blq"] = True
+    # Bloque 5 · rango cerrado de una guarnición («200–250 g de verduras asadas»): macros al centro, se muestra el rango.
+    for part in (r.get("nota") or "").split(";"):
+        if part.strip().startswith("rango:"):
+            lo, hi = part.strip()[6:].split("-"); ing["rg"] = [int(lo), int(hi)]
     # Medida casera contable (pieza/rebanada) para mostrar "2 huevos", no "88 g".
     meas = MEAS.get(idof(al)) if rol != "condimento" else None
     if meas:
@@ -202,13 +269,16 @@ for r in csv.DictReader(open(os.path.join(BASE, "PLATILLOS-HSC-final.csv"), enco
             for i in range(5): d["fixed"][i] += m[i] * g / 100
     d["ings"].append(ing)
 for d in dishes.values(): d["fixed"] = [round(x, 2) for x in d["fixed"]]
+for name, spec in CLOSED_RECIPES.items():
+    d = dishes[name]; d["cr"] = True; d["steps"] = spec["steps"]
+    if "srv" in spec: d["srv"] = {"unit": spec["srv"][0], "base": spec["srv"][1]}
 
 banco = list(dishes.values())
 ts = "// AUTO-GENERADO por scripts/gen_banco.py desde el banco de Magaly. No editar a mano.\n"
 ts += "// Cada platillo: fixed = [kcal,P,F,C,fibra] de todo lo NO-principal (ya sumado);\n"
 ts += "// ings principales traen a=[por-gramo kcal,P,F,C,fibra] y max para ajustar la porción.\n"
-ts += "export interface BancoIng { nv: string; rol: string; g0: number; max?: number; a?: number[]; pend?: boolean; pu?: number; un?: string; sec?: 'a'; blq?: boolean; fid?: string; m?: Partial<Record<'taza' | 'cda' | 'cdita' | 'pieza' | 'rebanada', number>> }\n"
-ts += "export interface BancoDish { nombre: string; tiempo: string; tipo: string; multMax: number; img: string; fixed: number[]; ings: BancoIng[]; region?: string; dense?: boolean; sabor?: string; multMaxCsv?: boolean }\n"
+ts += "export interface BancoIng { nv: string; rol: string; g0: number; max?: number; a?: number[]; pend?: boolean; pu?: number; un?: string; sec?: 'a'; blq?: boolean; fid?: string; m?: Partial<Record<'taza' | 'cda' | 'cdita' | 'pieza' | 'rebanada', number>>; rg?: [number, number] }\n"
+ts += "export interface BancoDish { nombre: string; tiempo: string; tipo: string; multMax: number; img: string; fixed: number[]; ings: BancoIng[]; region?: string; dense?: boolean; sabor?: string; multMaxCsv?: boolean; cr?: boolean; steps?: number[]; srv?: { unit: string; base: number } }\n"
 ts += "export const BANCO: BancoDish[] = " + json.dumps(banco, ensure_ascii=False) + ";\n"
 # Recetas de las sub-recetas (guacamole, salsas, aderezos) → la app las MUESTRA al abrir
 # el platillo. `rinde` = gramos que rinde la receta completa.
