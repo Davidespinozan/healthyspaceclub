@@ -594,6 +594,8 @@ function mergeItems(items: MealItem[], label: string): MealItem {
     portions: items.flatMap((i) => i.portions),
     macros,
     ings: items.flatMap((i) => i.ings ?? []),
+    // Bloque 7 · la porción servida de una receta cerrada («2 bolitas») sobrevive a la fusión con otro snack.
+    ...(items.some((i) => i.serving) ? { serving: items.map((i) => i.serving).filter(Boolean).join(' + ') } : {}),
   };
 }
 
@@ -827,12 +829,72 @@ function rollVarietyDay(v: VarietyState, meals: MealItem[]): void {
   v.prevIng = new Set(meals.filter((m) => !m.time.startsWith('Snack')).flatMap((m) => { const d = BY_NAME.get(m.name); return d ? dishPrincKeys(d) : []; }));
 }
 
+// ── MENÚ V1 · Bloque 7 · AUTORIDAD DIARIA DE MACROS ──────────────────────────────────────────────────────────
+// Las metas por tiempo (`slotTargets`) son GUÍAS BLANDAS para elegir platillos; la autoridad nutricional final es el
+// DÍA COMPLETO (`topUpDay` reajusta juntas las principales contra la meta diaria menos lo que aportan los snacks, y
+// `buildWeeklyPlan` elige el día por su error diario). Las bandas de abajo son una HEURÍSTICA DE ELEGIBILIDAD (qué
+// platillos se consideran para un tiempo), no una tolerancia nutricional por comida. Bloque 6 midió ×2 sin perder
+// exactitud diaria; ×3 se rechazó (hasta 20 % de error diario de proteína).
+export const SLOT_BAND = 24, SLOT_BAND_SMALL_POOL = 44, SLOT_BAND_VARIETY = 40;
+/** Encaje máximo (`slotFit`) para que un platillo entre al pool de la IA: 0.35 × 2 (misma heurística, Bloque 7). */
+export const AI_SLOT_FIT = 0.70;
+/** Bloque 7 · un snack ya NO tiene que parecerse al hueco de macros que dejaron las principales (casi siempre carbo
+ *  puro): basta con que el DÍA lo pueda compensar. Se mide de verdad: con el snack servido, las principales elegidas
+ *  se resuelven JUNTAS contra la meta diaria (lo mismo que hará `topUpDay`) y cuenta el error diario que queda. Una
+ *  «caja» por macro independiente resultó optimista (QA: snacks grasos que las principales no podían absorber). */
+export interface SnackDayCtx {
+  T: number[]; mains: BancoDish[];
+  /** Macros de los snacks ya elegidos hoy (el 2.º snack cuenta el 1.º). */
+  other: number[];
+  /** kcal del hueco de este snack (`snackPlan`) y cuánto pueden encoger las principales para hacerle lugar. */
+  holeKcal: number; absorb: number;
+  /** Tope de tamaño: ¾ de la principal más chica (un snack nunca es una comida). */
+  maxKcal: number;
+}
+/** kcal mínimas de las principales (todas en su piso): lo que pueden encoger para hacerle lugar a un snack. */
+export function mainsMinKcal(mains: BancoDish[]): number {
+  return mains.reduce((a, d) => a + dishMinMacros(d)[0], 0);
+}
+/** ¿El snack tiene un tamaño de snack para este hueco, contando lo que las principales pueden encoger? Puro. */
+export function snackFitsDay(d: BancoDish, c: SnackDayCtx): boolean {
+  const [lo, hi] = dishKcalRange(d);
+  return lo <= Math.min(c.maxKcal, c.holeKcal * (1 + SNACK_FIT_TOL) + c.absorb) && hi >= c.holeKcal * (1 - SNACK_FIT_TOL);
+}
+/** Meta de un snack con SU PROPIO perfil de receta, del tamaño del hueco (no el perfil del hueco). Pura. */
+export function snackProfileTarget(d: BancoDish, kcal: number): number[] {
+  const b = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
+  for (const i of d.ings) if (i.rol === 'principal' && i.a) for (let k = 0; k < 4; k++) b[k] += i.a[k] * i.g0;
+  const bk = 4 * b[1] + 9 * b[2] + 4 * b[3];
+  const f = bk > 0 ? kcal / bk : 1;
+  return [kcal, b[1] * f, b[2] * f, b[3] * f];
+}
+/** Error DIARIO (peor macro P/G/C, %) si se sirve un snack con macros `m`: las principales del día se resuelven juntas
+ *  contra la meta con ese snack (y los ya elegidos) fijos, dentro de sus límites — como `topUpDay`. Pura. */
+export function dayCompError(m: number[], c: SnackDayCtx): number {
+  const { fixed, vars } = prep(c.mains);
+  for (let k = 1; k < 4; k++) fixed[k] += c.other[k] + m[k];
+  fixed[0] += 4 * (c.other[1] + m[1]) + 9 * (c.other[2] + m[2]) + 4 * (c.other[3] + m[3]);
+  solve(fixed, vars, c.T, 80);
+  // Un snack nunca es una comida: ¾ de la principal más chica se verifica DESPUÉS de compensar (las principales
+  // encogen para hacerle lugar). QA: medido antes de compensar, 41 snacks quedaban más grandes que una principal.
+  const mainKcal = c.mains.map((d) => d.fixed[0] + vars.filter((v) => d.ings.includes(v.ing)).reduce((a, v) => a + v.a[0] * v.g, 0));
+  const snackKcal = 4 * m[1] + 9 * m[2] + 4 * m[3];
+  const tooBig = snackKcal > SNACK_MAX_VS_MAIN * Math.min(...mainKcal) ? SNACK_TOO_BIG : 0;
+  return errMax(fixed, vars, c.T) + tooBig;
+}
+/** Error añadido a un snack que, compensado el día, quedaría más grande que ¾ de la principal más chica (lo saca de la banda). */
+const SNACK_TOO_BIG = 100;
+/** Costo (en puntos de error diario) de un snack que, ya cuadrado el día, supera ¾ de la principal más chica. */
+const SNACK_OVERSIZE_COST = 0.03;
+/** Banda de un snack compensable: dentro de 1.5 puntos del mejor error diario alcanzable (y nunca exige < 2 %). */
+export const SNACK_DAY_BAND = 2;
+
 // merge=true → devuelve UNA comida combinada (snacks: los dos dentro del mismo).
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
   rng: () => number, trials: number,
   used: Set<string>, usedToday: Set<string>, usedTodayIng: Set<string>, craving: string[],
-  ingFreq: Map<string, number>, merge = false, vs?: VarietyState,
+  ingFreq: Map<string, number>, merge = false, vs?: VarietyState, snackDay?: SnackDayCtx,
 ): MealItem[] {
   // El pool ya viene filtrado por alergia Y por tiempo (buildDay / buildDayWithFixed) →
   // aquí no se cuela ningún alérgeno ni un platillo de otro tiempo.
@@ -852,6 +914,7 @@ function fitSlot(
   // Bloque 6 · costo de repetición de un platillo (sin estado de semana: el binario histórico de `used`).
   // (memo por llamada: el estado de la semana no cambia mientras se elige este tiempo)
   const repMemo = new Map<BancoDish, number>();
+  const dayErrMemo = new Map<BancoDish, { e: number; t: number[] }>();   // Bloque 7 · error diario + porción elegida, por platillo
   const repOf = (d: BancoDish) => {
     let r = repMemo.get(d);
     if (r === undefined) {
@@ -865,8 +928,32 @@ function fitSlot(
   for (let t = 0; t < trials; t++) {
     const dishes = pickN();
     const { fixed, vars } = prep(dishes, isSnack);   // CAPA 4 · un snack nunca se estira más allá de una porción normal
-    solve(fixed, vars, target, 100);
-    const e = isSnack ? errSnack(fixed, vars, target) : errMax(fixed, vars, target);
+    // Bloque 7 · snack con autoridad diaria: se dimensiona con SU perfil al tamaño del hueco y se juzga por si el día
+    // lo compensa (no por parecerse al hueco).
+    // Dos porciones posibles: con SU perfil al tamaño del hueco, o inclinada hacia el perfil del hueco (la de siempre,
+    // dentro de su porción normal). Se queda la que deja MEJOR el día: el modelo diario nunca puede quedar peor que el
+    // anterior (QA: con solo el perfil propio, los días sin carbo disponible en las principales quedaban cortos).
+    let e: number;
+    if (snackDay && dishes.length === 1) {
+      let hit = dayErrMemo.get(dishes[0]);
+      if (!hit) {
+        const evalWith = (t: number[]) => {
+          const p2 = prep(dishes, true); solve(p2.fixed, p2.vars, t, 100);
+          const m = [p2.fixed[0], p2.fixed[1], p2.fixed[2], p2.fixed[3]];
+          for (const v of p2.vars) for (let k = 1; k < 4; k++) m[k] += v.a[k] * v.g;
+          return dayCompError(m, snackDay);
+        };
+        const tProf = snackProfileTarget(dishes[0], snackDay.holeKcal);
+        const eProf = evalWith(tProf), eHole = evalWith(target);
+        hit = eProf <= eHole ? { e: eProf, t: tProf } : { e: eHole, t: target };
+        dayErrMemo.set(dishes[0], hit);
+      }
+      e = hit.e;
+      solve(fixed, vars, hit.t, 100);
+    } else {
+      solve(fixed, vars, target, 100);
+      e = isSnack ? errSnack(fixed, vars, target) : errMax(fixed, vars, target);
+    }
     // Antojo cuenta solo si el platillo aún no llegó al tope (2) → sale 1-2 veces, no más.
     const craves = craving.length ? dishes.filter((d) => dishMatchesAny(d, craving) && (cravedCount.get(d.nombre) ?? 0) < CRAVED_MAX).length : 0;
     // ingScore = repetición en la SEMANA; dayIng = ingrediente principal ya usado HOY
@@ -887,7 +974,8 @@ function fitSlot(
       // el peor de los dos → un compuesto con más capacidad de carbo (yogur+granola, plátano+crema) le gana
       // a fruta+nueces que dejaría la fruta en el hardMax para cerrar el carbo.
       const dKcal = (tgtKcal - prefKcal) / tgtKcal;
-      const dCarb = target[3] > 4 ? (target[3] - prefC) / target[3] : 0;
+      // Bloque 7 · con autoridad diaria el snack ya no persigue el carbo del hueco: solo cuenta el tamaño.
+      const dCarb = !snackDay && target[3] > 4 ? (target[3] - prefC) / target[3] : 0;
       const pressure = Math.max(0, dKcal, dCarb);
       bucket = pressure <= 0.12 ? 0 : pressure <= 0.30 ? 1 : 2;   // cabe / estirado / severo
     }
@@ -906,17 +994,19 @@ function fitSlot(
   // CAPA 4 · un snack ya tiene el tamaño de un hueco REAL (antes era un 5–7 % fijo del día): la banda se
   // estrecha para que su PERFIL de macros cuadre con lo que falta (un hueco de carbo/grasa no se llena con
   // un snack de proteína que luego se pasa del día). Sigue siendo más ancha que la de las principales.
-  const cap = isSnack
+  const cap = snackDay
+    ? Math.max(SNACK_DAY_BAND, minE + 1.5)
+    : isSnack
     ? Math.max(25, minE + 12)
     : merge
     ? Math.max(30, minE + 12)
-    : (pool.length < 30 ? Math.max(22, minE + 8) : Math.max(12, minE + 2));
+    : (pool.length < 30 ? Math.max(SLOT_BAND_SMALL_POOL, minE + 8) : Math.max(SLOT_BAND, minE + 2));
   let acceptable = cands.filter((c) => c.e <= cap);
   // CAPA 4 · VARIEDAD sin perder exactitud: si TODO lo que entra en la banda ya se sirvió esta semana, la banda de
   // una principal se abre (≤ 20 %) para que entre otro platillo. Con metas altas y muy cargadas en carbo la banda
   // estrecha la cumplía UN solo platillo y se servía los 7 días; el cuadre del día (`topUpDay`) cierra la meta.
   if (!isSnack && !merge && acceptable.every((c) => c.used > 0)) {
-    const wider = cands.filter((c) => c.e <= Math.max(20, minE + 6) && c.used === 0);
+    const wider = cands.filter((c) => c.e <= Math.max(SLOT_BAND_VARIETY, minE + 6) && c.used === 0);
     if (wider.length) acceptable = wider;
   }
   // Un solo score de variedad: platillo repetido en la semana (50) > ingrediente repetido
@@ -942,7 +1032,7 @@ function fitSlot(
     for (const k of princKeys(d)) { ingFreq.set(k, (ingFreq.get(k) ?? 0) + 1); usedTodayIng.add(k); }
   }
   const { fixed, vars } = prep(dishes, isSnack);
-  solve(fixed, vars, target, 220);
+  solve(fixed, vars, snackDay && dishes.length === 1 ? (dayErrMemo.get(dishes[0])?.t ?? target) : target, 220);
   void fixed;
   const gOf = new Map<BancoIng, number>();
   for (const v of vars) gOf.set(v.ing, v.g);
@@ -1316,9 +1406,22 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
   const mainDishes = mains.map((m) => BY_NAME.get(m.name)!).filter(Boolean);
   const freeSlots = SNACK_SLOTS.filter((sl) => !shakeSlots.includes(sl));
   const sizedPool = (kcal: number) => snack.filter((d) => snackFitsSize(d, kcal));
+  // Bloque 7 · los snacks se eligen con autoridad DIARIA: tamaño de snack (contando lo que las principales pueden
+  // encoger) y que el día lo compense; las principales lo absorben en el cuadre del día (`topUpDay`).
+  const minMainsKcal = mainsMinKcal(mainDishes);
+  const mainsNow = mains.reduce((a, m) => a + (m.macros?.kcal ?? 0), 0);
+  const smallestMain = Math.min(...mains.map((m) => m.macros?.kcal ?? Infinity));
+  const other = [0, 0, 0, 0];
   const snacks: MealItem[] = snackPlan(mainDishes, T, freeSlots, (kcal) => sizedPool(kcal).length > 0).flatMap(({ slot, target }) => {
-    const sized = sizedPool(4 * target[1] + 9 * target[2] + 4 * target[3]);
-    return fitSlot(availSnack(sized.length ? sized : snack), slot, target, 1, rng, 70, usedSel, usedToday, usedTodayIng, craving, ingFreq, false, vs);
+    const holeKcal = 4 * target[1] + 9 * target[2] + 4 * target[3];
+    const ctx: SnackDayCtx = { T, mains: mainDishes, other: [...other], holeKcal, absorb: Math.max(0, mainsNow - minMainsKcal), maxKcal: SNACK_MAX_VS_MAIN * smallestMain };
+    // En las fases relajadas (el día estricto quedó > 2 % lejos) manda la exactitud: snack de siempre (perfil del hueco).
+    // QA: con el modelo diario también ahí, a 3000 kcal con restricciones entraban snacks densos en grasa (+10 pts).
+    const dayFit = relax === 0 ? snack.filter((d) => snackFitsDay(d, ctx)) : [];
+    const sized = dayFit.length ? dayFit : sizedPool(holeKcal);
+    const out = fitSlot(availSnack(sized.length ? sized : snack), slot, target, 1, rng, 70, usedSel, usedToday, usedTodayIng, craving, ingFreq, false, vs, dayFit.length ? ctx : undefined);
+    for (const m of out) { other[1] += m.macros?.prot ?? 0; other[2] += m.macros?.fat ?? 0; other[3] += m.macros?.carb ?? 0; }
+    return out;
   });
   const meals = chronological([...mains, ...snacks]);
   // NO se cuadra aquí: el cuadre del día (topUpDay) corre DESPUÉS del batido, en
@@ -1408,7 +1511,10 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // diagnóstico RECIPE_CAPACITY_LIMIT en `day.recipeLimits` (no cambia el plan).
 // v39 · MENÚ V1 · BLOQUE 6 · variedad semanal por penalización derivada del pool (CODE e IA), corrector de snacks
 // rota al menos usado, bolitas 2 → 4 / barrita 1 → 2 (V1 final), bebidas licuadas escalan completas.
-export const PLAN_ENGINE_VERSION = 39;
+// v40 · MENÚ V1 · BLOQUE 7 · autoridad DIARIA de macros: banda por tiempo ×2 como heurística de elegibilidad (CODE e
+// IA), snacks elegidos por si el día los compensa (nunca > ¾ de la principal más chica ya compensado), el día completo
+// se re-evalúa ya cuadrado. La Pasta cerrada entra sin escalarse.
+export const PLAN_ENGINE_VERSION = 40;
 
 export interface BuildOpts { seed?: number; avoid?: AvoidInput; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 
@@ -1582,7 +1688,8 @@ export function adequateBankByTiempo(
       .sort((a, b) => a.e - b.e);
     // Entre los que YA encajan bien, primero los que además alcanzan la meta. Así la IA
     // ve arriba los que pueden cuadrar, sin perder ninguna opción ni empeorar el encaje.
-    const ok = scored.filter((s) => s.e <= 0.35)
+    // Bloque 7 · misma heurística ×2 que la banda por tiempo del motor de código (guía blanda; el día manda).
+    const ok = scored.filter((s) => s.e <= AI_SLOT_FIT)
       .sort((a, b) => (a.cap === b.cap ? a.e - b.e : a.cap ? -1 : 1))
       .map((s) => s.d);
     // Garantiza ≥10 opciones para variedad (7 días distintos + margen). Se completan
@@ -1641,7 +1748,7 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
     const count = vstate.count.get(d.nombre) ?? 0;
     const fair = Math.max(1, Math.ceil(7 / Math.max(1, aiPoolSize[t] ?? 1)));
     if (count < fair && !vstate.prev.has(d.nombre)) return d;
-    const lim = Math.max(0.35, fitOf(d, t));
+    const lim = Math.max(AI_SLOT_FIT, fitOf(d, t));
     const alt = (BY_TIME[t] ?? []).filter((x) => x !== d && !aiAvoid(x) && fitOf(x, t) <= lim)
       .sort((a, b) => penaltyOf(a) - penaltyOf(b) || fitOf(a, t) - fitOf(b, t))[0];
     return alt && penaltyOf(alt) < penaltyOf(d) ? alt : d;
@@ -1673,29 +1780,44 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
     // hueco (si ninguno lo tiene, el que más se acerca). UN platillo por snack, sin repetir en el día.
     const kcalOf = (t: number[]) => 4 * t[1] + 9 * t[2] + 4 * t[3];
     const usedSnack = new Set<string>();
+    // Bloque 7 · MISMA autoridad diaria que el motor de código: tamaño de snack (contando lo que las principales pueden
+    // encoger) y que el día lo compense; entre los compensables, el que menos se repite (empate → orden de la IA).
+    const minMainsKcal = mainsMinKcal([des, com, cen]);
+    const mainsNow = mains.reduce((a, m) => a + (m.macros?.kcal ?? 0), 0);
+    const smallestMain = Math.min(...mains.map((m) => m.macros?.kcal ?? Infinity));
+    const other = [0, 0, 0, 0];
     const snackItems: MealItem[] = snackPlan([des, com, cen], foodT, freeSlots, (k) => snacks.some((d) => snackFitsSize(d, k)))
       .flatMap(({ slot, target: t }) => {
         const free = snacks.filter((d) => !usedSnack.has(d.nombre));
         if (!free.length) return [];
         const k = kcalOf(t);
+        const ctx: SnackDayCtx = { T: foodT, mains: [des, com, cen], other: [...other], holeKcal: k, absorb: Math.max(0, mainsNow - minMainsKcal), maxKcal: SNACK_MAX_VS_MAIN * smallestMain };
         const dist = (d: BancoDish) => { const [lo, hi] = dishKcalRange(d); return k < lo ? lo - k : k > hi ? k - hi : 0; };
-        // Bloque 6 · entre los candidatos de la IA que caben, el que menos se repite (estable: empate → orden de la IA).
-        // Si TODOS ya se pasaron de su parte del pool (o salieron ayer), entran los demás snacks compatibles del banco
-        // que caben — la IA no puede fijar el mismo snack 7 días proponiendo siempre los mismos 3.
-        const fits = free.filter((x) => snackFitsSize(x, k));
-        const best = (xs: BancoDish[]) => xs.map((x, j) => ({ x, j, p: penaltyOf(x) })).sort((a, b) => a.p - b.p || a.j - b.j)[0];
-        let pickS = fits.length ? best(fits) : null;
+        // Dos porciones (perfil propio / inclinada al hueco): la que deja mejor el día — igual que el motor de código.
+        const serveBest = (d: BancoDish) => {
+          const opts = [snackProfileTarget(d, k), t].map((tt) => { const it = solveSlot([d], slot, tt); const m0 = it[0].macros!; return { it, e: dayCompError([0, m0.prot, m0.fat, m0.carb], ctx) }; });
+          return opts[0].e <= opts[1].e ? opts[0] : opts[1];
+        };
+        /** Candidatos que el día compensa, ordenados por repetición (Bloque 6) y luego por el orden de entrada. */
+        const rank = (xs: BancoDish[]) => {
+          const ev = xs.filter((x) => snackFitsDay(x, ctx)).map((x, j) => { const b = serveBest(x); return { x, j, e: b.e, it: b.it, p: penaltyOf(x) }; });
+          if (!ev.length) return [];
+          const band = Math.max(SNACK_DAY_BAND, Math.min(...ev.map((y) => y.e)) + 1.5);
+          return ev.filter((y) => y.e <= band).sort((a, b) => a.p - b.p || a.j - b.j);
+        };
+        let pickS = rank(free)[0] ?? null;
         const fairS = Math.max(1, Math.ceil(7 / Math.max(1, aiPoolSize.Snack ?? 1)));
-        // Ninguno de la IA cabe en el hueco, o el que cabe ya se pasó de su parte / salió ayer → el pool compatible que
-        // sí cabe (lo mismo que hace el motor de código con `sizedPool`). Solo si no hay ninguno, el más cercano.
+        // Ningún candidato de la IA es compensable, o el elegido ya se pasó de su parte / salió ayer → el pool compatible
+        // (lo mismo que hace el motor de código). Solo si no hay ninguno, el más cercano por tamaño.
         if (!pickS || (vstate.count.get(pickS.x.nombre) ?? 0) >= fairS || vstate.prev.has(pickS.x.nombre)) {
-          const others = BY_TIME.Snack.filter((x) => !aiAvoid(x) && !usedSnack.has(x.nombre) && !fits.includes(x) && snackFitsSize(x, k));
-          const alt = others.length ? best(others) : null;
+          const alt = rank(BY_TIME.Snack.filter((x) => !aiAvoid(x) && !usedSnack.has(x.nombre) && !free.includes(x)))[0];
           if (alt && (!pickS || alt.p < pickS.p)) pickS = alt;
         }
         const d = pickS ? pickS.x : [...free].sort((a, b) => dist(a) - dist(b))[0];
         usedSnack.add(d.nombre);
-        return solveSlot([d], slot, t);
+        const out = pickS ? pickS.it : solveSlot([d], slot, t);
+        for (const m of out) { other[1] += m.macros?.prot ?? 0; other[2] += m.macros?.fat ?? 0; other[3] += m.macros?.carb ?? 0; }
+        return out;
       });
     const meals = chronological([...mains, ...snackItems]);
     if (shake) applyShake(meals, shake); // el batido ocupa SU slot de snack
@@ -1833,7 +1955,7 @@ export function explainMainSlot(target: PlanTarget, tiempo: 'Desayuno' | 'Comida
     return { nombre: d.nombre, e: errMax(fixed, vars, t), err: { P: rel(1), F: rel(2), C: rel(3) }, kcal: Math.round(4 * x[1] + 9 * x[2] + 4 * x[3]), accepted: false };
   });
   const minE = Math.min(...rows.map((r) => r.e));
-  const band = pool.length < 30 ? Math.max(22, minE + 8) : Math.max(12, minE + 2);
+  const band = pool.length < 30 ? Math.max(SLOT_BAND_SMALL_POOL, minE + 8) : Math.max(SLOT_BAND, minE + 2);
   for (const r of rows) r.accepted = r.e <= band;
   return { slotTarget: t.map((x) => Math.round(x)), band, minE, poolSize: pool.length, rows: rows.sort((a, b) => a.e - b.e) };
 }
@@ -1918,7 +2040,11 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
         const repetidas = day.meals.filter((m) => !m.time.startsWith('Snack') && preU.has(m.name)).length;
         // Bloque 6 · repetir lo de AYER cuesta igual que repetir en la semana (desempate entre días igual de exactos).
         const consecutivas = day.meals.filter((m) => m.name.split(' + ').some((n) => preV.prev.has(n))).length;
-        const score = dayErr(day) + desorden * 0.08 + (repetidas + consecutivas) * 0.01;
+        // Bloque 7 · el DÍA completo se re-evalúa ya cuadrado: un snack que quedó más grande que ¾ de la principal más
+        // chica (las principales encogieron al compensar) cuesta 3 puntos — gana otro intento si lo hay; nunca excluye.
+        const mk = day.meals.filter((m) => !m.time.startsWith('Snack')).map((m) => m.macros?.kcal ?? 0);
+        const grandes = day.meals.filter((m) => m.time.startsWith('Snack') && (m.macros?.kcal ?? 0) > SNACK_MAX_VS_MAIN * Math.min(...mk)).length;
+        const score = dayErr(day) + desorden * 0.08 + (repetidas + consecutivas) * 0.01 + grandes * SNACK_OVERSIZE_COST;
         // CAPA 4 · las fases relajadas (repetir en la semana / sesgo a carbo) solo ganan si MEJORAN de verdad
         // (≥ 1 punto): cuando el desvío tiene un piso estructural (meta muy alta en carbo con poca proteína),
         // repetir el mismo platillo los 7 días no lo baja y solo destruye la variedad.

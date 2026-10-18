@@ -95,12 +95,12 @@ describe('bebidas licuadas: la crema/miel/cacao/chía es parte de la masa', () =
   });
 });
 
-describe('elegibilidad · por qué la pasta cerrada no entra (diagnóstico, no cambia el plan)', () => {
-  it('1500 kcal: la rechaza SOLO la proteína del tiempo (banda por macro de cada comida), no el día', () => {
+describe('elegibilidad · por qué la pasta cerrada no entraba (diagnóstico, no cambia el plan)', () => {
+  // Bloque 7 · la banda por tiempo pasó a ×2 (24 %): el diagnóstico del Bloque 6 queda como evidencia de la causa
+  // (la pasta solo fallaba por la proteína de SU tiempo, −22.6 %) y ahora entra; ver menuV1Bloque7.
+  it('1500 kcal: la proteína del tiempo era lo único que la sacaba con la banda de 12 %', () => {
     const x = explainMainSlot(mk(1500), 'Comida');
     const p = x.rows.find((r) => r.nombre.startsWith('Pasta con Verduras'))!;
-    expect(x.band).toBe(12);
-    expect(p.accepted).toBe(false);
     expect(p.err.P).toBeLessThan(-12);
     expect(Math.abs(p.err.F)).toBeLessThanOrEqual(12);
     expect(Math.abs(p.err.C)).toBeLessThanOrEqual(12);

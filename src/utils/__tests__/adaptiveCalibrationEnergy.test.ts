@@ -235,8 +235,8 @@ describe('O / P · SIN EFECTO hoy en perfiles ni en el plan', () => {
     const sinComentarios = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     expect(Object.keys(files).filter((p) => /resolveCalibratedEnergy|CalibrationEnergyEvidence/.test(sinComentarios(files[p])) && !p.includes('__tests__') && !/\.(test|spec)\.tsx?$/.test(p))).toEqual([]);
   });
-  it('versiones intactas (sin bump automático; PLAN_ENGINE 39 lo subió MENÚ V1 · Bloque 6, no Adaptive)', () => {
-    expect([ENERGY_PRESCRIPTION_VERSION, MACRO_PRESCRIPTION_VERSION, PLAN_ENGINE_VERSION, ENERGY_CALIBRATION_VERSION, CALIBRATION_ENERGY_VERSION]).toEqual([2, 4, 39, 2, 1]);
+  it('versiones intactas (sin bump automático; PLAN_ENGINE 40 lo subió MENÚ V1 · Bloque 7, no Adaptive)', () => {
+    expect([ENERGY_PRESCRIPTION_VERSION, MACRO_PRESCRIPTION_VERSION, PLAN_ENGINE_VERSION, ENERGY_CALIBRATION_VERSION, CALIBRATION_ENERGY_VERSION]).toEqual([2, 4, 40, 2, 1]);
   });
   it('P · Weekly Preferences Split intacto', () => {
     expect(avoidPolicy(['huevo'], ['huevo', 'lacteos'])).toEqual({ strict: ['huevo'], soft: ['lacteos'] });
