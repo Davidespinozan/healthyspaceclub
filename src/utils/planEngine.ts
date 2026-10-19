@@ -974,6 +974,8 @@ const SNACK_TOO_BIG = 100;
 const SNACK_OVERSIZE_COST = 0.03;
 /** Banda de un snack compensable: dentro de 1.5 puntos del mejor error diario alcanzable (y nunca exige < 2 %). */
 export const SNACK_DAY_BAND = 2;
+/** v41 · mejora mínima (puntos de error diario) para cambiar un snack de la IA por uno del pool. */
+export const AI_SNACK_POOL_MARGIN = 1.5;
 
 const _fitMemo = boundedMemo<{ e: number; fib: number }>();
 // merge=true → devuelve UNA comida combinada (snacks: los dos dentro del mismo).
@@ -1641,7 +1643,9 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // v40 · MENÚ V1 · BLOQUE 7 · autoridad DIARIA de macros: banda por tiempo ×2 como heurística de elegibilidad (CODE e
 // IA), snacks elegidos por si el día los compensa (nunca > ¾ de la principal más chica ya compensado), el día completo
 // se re-evalúa ya cuadrado. La Pasta cerrada entra sin escalarse.
-export const PLAN_ENGINE_VERSION = 40;
+// v41 · ADAPTIVE QA DOMINGO · el snack de la IA que deja el día fuera de la banda base (> 2 %) se contrasta con el pool
+// y se cambia solo por una alternativa que mejore el error diario ≥ 1.5 puntos (antes: aceptado por banda relativa).
+export const PLAN_ENGINE_VERSION = 41;
 
 export interface BuildOpts { seed?: number; avoid?: AvoidInput; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 
@@ -1957,9 +1961,19 @@ export function assembleFromSelection(target: PlanTarget, days: DaySelection[], 
         const fairS = Math.max(1, Math.ceil(7 / Math.max(1, aiPoolSize.Snack ?? 1)));
         // Ningún candidato de la IA es compensable, o el elegido ya se pasó de su parte / salió ayer → el pool compatible
         // (lo mismo que hace el motor de código). Solo si no hay ninguno, el más cercano por tamaño.
+        const poolSnacks = () => BY_TIME.Snack.filter((x) => !aiAvoid(x) && !usedSnack.has(x.nombre) && !free.includes(x));
         if (!pickS || (vstate.count.get(pickS.x.nombre) ?? 0) >= fairS || vstate.prev.has(pickS.x.nombre)) {
-          const alt = rank(BY_TIME.Snack.filter((x) => !aiAvoid(x) && !usedSnack.has(x.nombre) && !free.includes(x)))[0];
+          const alt = rank(poolSnacks())[0];
           if (alt && (!pickS || alt.p < pickS.p)) pickS = alt;
+        } else if (pickS.e > SNACK_DAY_BAND) {
+          // v41 · QA domingo (día 7): con UN solo candidato la banda relativa aceptaba un snack que el día NO podía
+          // compensar (error diario estimado 18.3 % → día final +6 %, aunque 82 de 115 snacks del pool lo cerraban).
+          // Si el mejor de la IA deja el día fuera de la banda base, se busca también en el pool y se usa la alternativa
+          // SOLO si mejora el error diario al menos AI_SNACK_POOL_MARGIN puntos; entre ésas, la de menor repetición
+          // (misma restricción, mismo tamaño, misma variedad). Si la IA ya es compensable, su elección se respeta.
+          const ai = pickS;
+          const better = rank(poolSnacks()).find((y) => y.e <= ai.e - AI_SNACK_POOL_MARGIN);
+          if (better) pickS = better;
         }
         const d = pickS ? pickS.x : [...free].sort((a, b) => dist(a) - dist(b))[0];
         usedSnack.add(d.nombre);

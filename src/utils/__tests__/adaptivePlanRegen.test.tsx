@@ -11,6 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 //
 //   1 · recorrido completo: meta A vigente → cambio Adaptive efectivo a B → STALE → auto-regeneración con B → ACTIVE.
 //   2 · regresión de la causa real: la MISMA selección de la IA de la QA cierra cada día en la meta.
+//   3 · v41 · día 7 de la QA (ya con v40): la IA proponía UN snack que el día no podía compensar y se aceptaba.
 // ─────────────────────────────────────────────────────────────────────────────
 
 vi.mock('../../lib/supabase', () => ({
@@ -27,7 +28,8 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useAutoRegenPlan } from '../useAutoRegenPlan';
 import { useAppStore } from '../../store';
 import { weeklyPlanCurrentness } from '../weeklyPlanState';
-import { buildWeeklyPlan, assembleFromSelection, PLAN_ENGINE_VERSION } from '../planEngine';
+import { buildWeeklyPlan, assembleFromSelection, makePolicyFilter, isFruitSnack, PLAN_ENGINE_VERSION } from '../planEngine';
+import { BANCO } from '../../data/banco';
 import { isServableMacroPrescription } from '../macroPrescription';
 
 const OB = { sex: 'Hombre', goal: 'Bajar grasa', edad: 35, estatura: 178, peso: 82, embarazo: 0, requiresTherapeuticDiet: 0,
@@ -106,5 +108,50 @@ describe('2 · regresión de la causa real: la selección de la IA de la QA cier
     }
     const domingo = days[3];   // shopping_day = jueves → hoy domingo = día 4 del plan
     expect(domingo.meals.reduce((a, m) => a + (m.macros?.kcal ?? 0), 0)).toBeLessThanOrEqual(Math.round(B.kcal * 1.03));
+  });
+});
+
+describe('3 · v41 · el snack de la IA que deja el día fuera de la banda se contrasta con el pool', () => {
+  // Semana regenerada por v40 en el preview (selección reconstruida de la base; reproducía los 7 totales exactos).
+  // ANTES (v40): día 7 → la IA propone solo «Toast de Salmón Ahumado, Queso Crema y Aguacate» (error diario estimado
+  // 18.3 %), se aceptaba por banda relativa y el día cerraba en 2491 kcal (+6.0 %, grasa +21.5 %).
+  const SEL = [
+    { desayuno: 'Pan Pita con Hummus y Pollo', comida: 'Poke Bowl de Atún', cena: 'Bowl de Pollo Camote y Guacamole', snacks: ['Puñado de Almendras', 'Plátano con Crema de Cacahuate'] },
+    { desayuno: 'Bagel con Salmón Ahumado', comida: 'Carne Molida de Pavo con Calabacitas', cena: 'Tortitas de Atún y Papa', snacks: ['Yogurt Griego con Granola y Fruta'] },
+    { desayuno: 'Chilaquiles con Pollo', comida: 'Bowl de Salmón Glaseado con Mango', cena: 'Bowl de Camarón Mediterráneo', snacks: ['Rollitos de Jamón de Pavo con Queso'] },
+    { desayuno: 'Smoothie de Mango', comida: 'Entomatadas de Pollo', cena: 'Sopa de Lentejas', snacks: ['Bastones de Zanahoria', 'Mango Picado'] },
+    { desayuno: 'Tacos de Machaca', comida: 'Bowl Mediterráneo de Garbanzo y Atún', cena: 'Tostadas de Res Deshebrada', snacks: [] },
+    { desayuno: 'Tostadas de Atún', comida: 'Salmón Bowl', cena: 'Calabacitas Rellenas de Pollo', snacks: ['Zanahoria y Pepino con Hummus', 'Plátano'] },
+    { desayuno: 'Huevos Rancheros', comida: 'Pechuga Rellena de Espinaca y Queso', cena: 'Ensalada Cobb Fit', snacks: ['Toast de Salmón Ahumado, Queso Crema y Aguacate'] },
+  ];
+  it('DESPUÉS: el día 7 usa una alternativa del pool y cierra a ±3 % kcal y ±15 % por macro; toda la semana cierra', () => {
+    const days = assembleFromSelection(B, SEL, []);
+    expect(days).toHaveLength(7);
+    const d7 = days[6];
+    const snacks7 = d7.meals.filter((m) => m.time.startsWith('Snack'));
+    expect(snacks7.map((m) => m.name)).not.toContain('Toast de Salmón Ahumado, Queso Crema y Aguacate');
+    for (const d of days) {
+      const tot = (k: 'kcal' | 'prot' | 'fat' | 'carb') => d.meals.reduce((a, m) => a + (m.macros?.[k] ?? 0), 0);
+      expect(Math.abs(tot('kcal') - B.kcal) / B.kcal, `día ${d.day} kcal ${tot('kcal')}`).toBeLessThanOrEqual(0.03);
+      for (const [k, t] of [['prot', B.protG], ['fat', B.fatG], ['carb', B.carbG]] as const) {
+        expect(Math.abs(tot(k) - t) / t, `día ${d.day} ${k}`).toBeLessThanOrEqual(0.15);
+      }
+    }
+  });
+  it('la alternativa respeta restricciones y nunca junta fruta + fruta', () => {
+    const avoid = { strict: ['lacteos'], soft: [] };
+    const bad = makePolicyFilter(avoid);
+    const byName = new Map(BANCO.map((d) => [d.nombre, d]));
+    const sel = SEL.map((x) => ({ ...x, snacks: x.snacks.filter((n) => !bad(byName.get(n)!)) }));
+    for (const d of assembleFromSelection(B, sel, avoid)) for (const m of d.meals) {
+      const parts = m.name.split(' + ').map((n) => byName.get(n)).filter(Boolean) as NonNullable<ReturnType<typeof byName.get>>[];
+      for (const x of parts) expect(bad(x), x.nombre).toBe(false);
+      if (m.time.startsWith('Snack')) expect(parts.filter((x) => isFruitSnack(x)).length, m.name).toBeLessThanOrEqual(1);
+    }
+  });
+  it('una elección de la IA ya compensable se respeta (no se cambia por el pool)', () => {
+    const days = assembleFromSelection(B, SEL, []);
+    expect(days[1].meals.find((m) => m.time.startsWith('Snack'))?.name).toBe('Yogurt Griego con Granola y Fruta');
+    expect(days[3].meals.filter((m) => m.time.startsWith('Snack')).map((m) => m.name)).toEqual(['Bastones de Zanahoria', 'Mango Picado']);
   });
 });
