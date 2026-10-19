@@ -1151,3 +1151,18 @@
   font-weight: 600;
   color: rgba(246, 242, 234, 0.82);
 }
+
+/* A10.1 · completar el perfil de Nutrition desde la tarjeta de Inicio. */
+.th3-completion-btn {
+  margin-top: 10px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: var(--radius-base);
+  background: #C75B3A;
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}

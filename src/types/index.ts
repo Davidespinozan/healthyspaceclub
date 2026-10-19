@@ -12,12 +12,54 @@ export interface MealItem {
   ings?: { nv: string; g: number | null; rol: string }[];
   // Snack combinado: las fotos de los 2+ platillos que van dentro del mismo card.
   imgs?: string[];
+  // MENÚ V1 · Bloque 3 · complemento candidato de la comida principal (nombre del catálogo de complementos), aunque
+  // hoy se sirva en 0. Lo usa el cuadre del día para reconstruir la comida; lo servido va en `ings` (rol complemento).
+  complement?: string;
+  // MENÚ V1 · Bloque 5 · porción servida de una receta con unidad cerrada («4 bolitas», «1 barrita»).
+  serving?: string;
 }
 
 export interface DayPlan {
   day: number;
   theme: string;
   meals: MealItem[];
+  // MENÚ V1 · Bloque 3 · D8 · el banco no alcanzó la meta sin deformar comidas (estado interno, para ampliar el banco).
+  capacity?: MenuCapacityIssue;
+  // MENÚ V1 · Bloque 5 · una receta CERRADA servida en su porción válida extrema y el día aún sin cerrar (±5 %).
+  recipeLimits?: RecipeCapacityLimit[];
+}
+
+/** MENÚ V1 · Bloque 5 · la receta cerrada no se deforma para cuadrar: se registra cuánto faltó. */
+export interface RecipeCapacityLimit {
+  status: 'RECIPE_CAPACITY_LIMIT';
+  recipe: string;
+  slot: string;
+  /** kcal que la receta tendría que aportar para cerrar el día (servida + hueco). */
+  target: number;
+  served: number;
+  /** Porción válida máxima (o mínima, si el día se pasó) y sus kcal. */
+  maxValid: string;
+  maxValidKcal: number;
+  /** kcal que el día deja sin cerrar (+ faltan / − sobran). */
+  gap: number;
+}
+
+export interface MenuCapacityIssue {
+  status: 'INSUFFICIENT_MENU_CAPACITY';
+  /** Meta [kcal, P, G, C] del día y lo alcanzado. */
+  target: number[];
+  reached: number[];
+  /** Meta − alcanzado, por macro. */
+  gap: number[];
+  /** Desvío de ENERGÍA del día (fracción, ±). */
+  maxError: number;
+  /** Por qué se marcó: ENERGY = fuera de ±5 % de kcal; PROTEIN_OVER = proteína > meta +10 % (D2). */
+  reasons: Array<'ENERGY' | 'PROTEIN_OVER'>;
+  restrictions: { strict: string[]; soft: string[] };
+  /** Principales sin complemento compatible, o con su complemento ya en el techo. */
+  missingComplements: string[];
+  /** Tamaño del banco compatible por tiempo (tras restricciones y región). */
+  poolSize: Record<string, number>;
 }
 
 export interface CuisineTheme {
@@ -110,7 +152,8 @@ export interface UserProfile {
   edad?: number;
   peso?: number; // kg
   estatura?: number; // cm
-  activity?: 'Sedentaria' | 'Ligera' | 'Moderada' | 'Alta' | string;
+  /** Movimiento diario + entrenamiento habitual (campos canónicos). Sustituye a la `activity` legacy. */
+  habitualActivity?: string;
 }
 
 export interface ExerciseVideo {

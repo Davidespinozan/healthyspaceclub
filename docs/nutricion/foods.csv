@@ -112,7 +112,7 @@ huauzontle,Verduras,Huauzontle,0.5,taza,40,40,24,1.8,0.3,4.8,0,0,0,0,,1.1,50.4,1
 huitlacoche-cocido,Verduras,Huitlacoche cocido,0.33,taza,66,66,20,0.8,0.1,4.1,0,0,0,0,,1.2,0,2.6,,0.1,0.3,107.5,0,2.4,0,,
 ibes-frescos,Verduras,Ibes frescos,0.25,taza,31,17,23,1.8,0.1,3.8,0,0,0,0,,0.5,7.5,2.8,,7.6,0.3,111.7,0.3,4.1,0,,
 jicama-picada,Verduras,Jícama picada,0.5,taza,60,60,23,0.4,0.1,5.3,0,0,0,0,,2.9,0.6,12.1,7.2,7.2,0.4,90,24,10.8,0,,
-jitomate,Verduras,Jitomate,1,pieza,123,116,21,1,2,4.5,0.1,0.1,0.2,0,,1.4,48.6,14.7,17.3,11.6,0.3,274,5.8,28.2,0,,
+jitomate,Verduras,Jitomate,1,pieza,123,116,21,1,0.2,4.5,0.1,0.1,0.2,0,,1.4,48.6,14.7,17.3,11.6,0.3,274,5.8,28.2,0,,
 jitomate-bola,Verduras,Jitomate bola,1,pieza,123,108,19,1,0.2,4.2,0.1,0.1,0.2,0,,1.3,45.5,13.7,16.2,10.8,0.3,256.5,5.4,26.4,0,,
 jitomate-cereza,Verduras,Jitomate cereza,4,pieza,100,95,17,0.8,2,3.7,0.1,0.1,0.2,0,,1.1,39.9,12.1,14.3,9.5,0.3,2252,4.8,23.2,0,,
 jitomate-deshidratado,Verduras,Jitomate deshidratado,5,pieza,10,10,23,1.5,0.5,4.3,0,0,0,0,,2,5,5,0,12.5,0.5,0,12.5,0,0,,
@@ -260,7 +260,7 @@ jugo-de-mamey,Frutas,Jugo de mamey,0.33,taza,80,80,52,0.6,0.1,12.5,0,0,0,0,,0.2,
 jugo-de-mandarina-natural,Frutas,Jugo de mandarina natural,0.5,taza,120,120,46,0.8,0,11.3,0,0,0,0,9.9,1.4,,,,,,,,,0,,
 jugo-de-mango,Frutas,Jugo de mango,0.5,taza,120,120,61,0.1,0.1,15.7,0,0,0,0,14.9,0.4,,,,,,,,,0,,
 jugo-de-manzana-natural-sin-azucar,Frutas,Jugo de manzana natural sin azúcar,0.5,taza,129,129,59,0,0,15,0,0,0,0,12.9,0,,1.3,,10.3,0.2,,5.1,,0,,
-jugo-de-naranja-natural,Frutas,Jugo de naranja natural,0.5,taza,120,120,54,8,0.2,12.5,0,0,0,0,10.1,0.2,24.2,60,36.3,13.1,0.2,240,1,20.3,0,46,5.7
+jugo-de-naranja-natural,Frutas,Jugo de naranja natural,0.5,taza,120,120,54,0.8,0.2,12.5,0,0,0,0,10.1,0.2,24.2,60,36.3,13.1,0.2,240,1,20.3,0,46,5.7
 jugo-de-papaya,Frutas,Jugo de papaya,0.33,taza,79,79,45,0.1,0.1,11.5,0,0,0,0,11,0.5,,,,,,,,,0,,
 jugo-de-pina-natural,Frutas,Jugo de piña natural,0.44,taza,117,117,62,0.4,0.1,15,0,0,0,0,11.6,1.2,,11.7,,15.2,0.4,,2.3,,0,,
 jugo-de-toronja-natural,Frutas,Jugo de toronja natural,0.5,taza,120,120,47,0.6,0.1,11,0,0,0,0,10.1,0.1,1,45.7,12.1,10.7,0.2,194.3,1,18,0,48,5.3
@@ -337,7 +337,7 @@ papilla-de-platano-y-pina-con-tapioca,Frutas,Papilla de plátano y piña con tap
 pasas,Frutas,Pasas,10,pieza,20,20,59,0.5,0.1,15.7,0,0,0,0,,1.4,,1,0.6,5.6,0.5,165,5.6,15,0,64,10
 pasitas,Frutas,Pasitas,10,pieza,20,20,59,0.5,0.1,15.7,0,0,0,0,,1.4,,10,0.6,5.6,0.5,165,5.6,15,0,,
 pasitas-sin-semilla,Frutas,Pasitas sin semilla,10,pieza,20,20,60,0.6,0.1,15.8,0,0,0,0,11.8,0.7,0.2,0.6,0.6,9.8,0.4,150.2,2.4,19.4,0,,
-pera,Frutas,Pera,0.5,pieza,95,81,47,0.3,1,12.5,0,0,0.1,0,7.9,2.5,1.5,3.4,5.8,8.8,0.2,101.2,,8.8,0,38,4.7
+pera,Frutas,Pera,0.5,pieza,95,81,47,0.3,0.1,12.5,0,0,0.1,0,7.9,2.5,1.5,3.4,5.8,8.8,0.2,101.2,,8.8,0,38,4.7
 pera-asiatica,Frutas,Pera Asiática,0.5,pieza,138,117,49,0.6,0.3,12.4,0,0.1,0.1,0,8.2,4.2,,4.4,,4.8,,141.8,,12.5,0,,
 pera-bartlett,Frutas,Pera Bartlett,0.5,pieza,91,77,45,0.3,0.1,12,0,0,0.1,0,7.6,2.4,1.4,3.3,5.6,8.4,0.2,96.9,,8.4,0,,
 pera-d-anjou,Frutas,Pera D'anjou,0.5,pieza,95,81,47,0.3,0.1,12.5,0,0,0.1,0,7.9,2.5,1.5,3.4,5.8,8.8,0.2,101.2,,8.8,0,,
@@ -396,7 +396,7 @@ tamarindo-pulpa-sin-azucar,Frutas,Tamarindo (pulpa sin azúcar),8,cda,100,100,57
 tamarindo-pelado,Frutas,Tamarindo pelado,0.25,taza,30,30,72,9,0.2,18.8,0.1,0.1,0,0,17.2,1.5,1,1,4.3,22.3,0.8,188.5,8.5,34,0,,
 tangerina,Frutas,Tangerina,2,pieza,180,128,56,0.6,0.3,15.3,0,0,0,0,,0.4,138,92,10.2,23,0.4,27.5,1.3,,0,,
 tejocote,Frutas,Tejocote,2,pieza,70,60,52,0.5,0.4,13.1,0,0,0,0,,1.6,251.1,27.4,,55.9,1,,,,0,,
-toronja,Frutas,Toronja,1,pieza,246,162,54,0.9,2,13.7,0,0,0,0,11.9,1.8,4.9,86.1,16.2,47.1,0.2,225.7,,,0,25,34
+toronja,Frutas,Toronja,1,pieza,246,162,54,0.9,0.2,13.7,0,0,0,0,11.9,1.8,4.9,86.1,16.2,47.1,0.2,225.7,,,0,25,34
 toronja-en-gajos,Frutas,Toronja en gajos,1,taza,150,150,50,0.8,0.2,12.6,0,0,0,0,11,1.7,18.3,51.2,15.9,18.3,0.1,208.5,,12.2,0,,
 toronja-enlatada-con-jugo,Frutas,Toronja enlatada con jugo,0.5,taza,125,125,46,0.9,0.1,11.5,0,0,0.1,0,11,0.5,,42,11.2,,0.3,213.5,8.5,,0,,
 toronjas-en-almibar,Frutas,Toronjas en almíbar,0.5,taza,127,127,76,0.7,0.2,19.6,0,0,0.1,0,19.1,0.5,,27,11.5,,0.5,164,2.5,,0,,
@@ -494,7 +494,7 @@ bollos-para-hamburguesa,Cereales S/G,Bollos para hamburguesa,0.33,pieza,25,25,65
 burbujas-de-maiz-azucaradas,Cereales S/G,Burbujas de maíz azucaradas,0.5,taza,16,16,59,0.7,0.1,14,0,0.1,0.1,0,7,0.2,,7.5,50,2,0.9,13.5,59.5,4,0,80,12
 camote-al-horno,Cereales S/G,Camote al horno,0.33,taza,70,70,70,1.2,0.1,16.4,0,0,0,0,,1.3,148,6.4,15.9,24.7,0.4,264.1,5.6,31,0,,
 camote-amarillo,Cereales S/G,Camote amarillo,0.33,taza,69,54,68,0.8,0.4,15.3,0.1,0,0.2,0,,1.6,162.2,14.6,7.6,23.2,1.3,131.4,5.4,,0,,
-camote-cocido,Cereales S/G,Camote cocido,0.33,taza,69,69,73,1.1,2,16.8,0,0,0.1,0,,1.3,181,11.8,7.6,14.4,0.4,127.6,8.9,18.6,0,,
+camote-cocido,Cereales S/G,Camote cocido,0.33,taza,69,69,73,1.1,0.2,16.8,0,0,0.1,0,,1.3,181,11.8,7.6,14.4,0.4,127.6,8.9,18.6,0,,
 camote-con-miel,Cereales S/G,Camote con miel,0.33,taza,59,59,59,0.3,0,14.4,0,0,0,0,,1.2,,0.9,,4.3,0.2,55.9,7.6,7.1,0,,
 camote-con-naranja,Cereales S/G,Camote con naranja,0.2,taza,40,40,61,0.2,0,15.2,0,0,0,0,,0,,1.4,,3.3,0.1,33.7,4.2,3.9,0,,
 camote-en-dulce,Cereales S/G,Camote en dulce,0.2,taza,52,52,71,0.4,1.7,14.5,0.7,0.3,0.1,4,,1.2,217.9,3.5,5.9,13.4,0.6,98.1,36.6,13.4,0,,
@@ -525,7 +525,7 @@ cereal-kelloggss-s-all-bran-flakes-natural,Cereales S/G,Cereal Kelloggss's All-B
 cereal-kelloggss-s-all-bran-flakes-pasas,Cereales S/G,Cereal Kelloggss's All-Bran Flakes Pasas,0.66,taza,26,26,79,2.5,0.4,16.4,0.1,,,,4.2,3.4,,,66,,2.3,,51.7,,,,
 cereal-kelloggss-s-all-bran-original,Cereales S/G,Cereal Kelloggss's All-Bran Original,0.75,taza,30,30,82,3,1.1,15,0,,,,4.5,8.7,,,75,,2.6,,67.5,,,,
 cereal-kelloggs-choco-krispis-krunchers,Cereales S/G,Cereal Kelloggs Choco Krispis Krunchers,0.75,taza,26,26,69,1.8,0.8,13.7,0.3,0.3,0.3,0,1.3,6,175.1,13.1,42,131,3.1,,91.6,,,,
-cereal-kelloggs-corn-flakes,Cereales S/G,Cereal Kelloggs Corn Flakes,0.66,taza,20,20,73,1.2,2,16.6,0,,,,1.8,0.7,,,65.9,,2.3,,69.1,,,,
+cereal-kelloggs-corn-flakes,Cereales S/G,Cereal Kelloggs Corn Flakes,0.66,taza,20,20,73,1.2,0.2,16.6,0,,,,1.8,0.7,,,65.9,,2.3,,69.1,,,,
 cereal-kelloggs-froot-loops-krunchers,Cereales S/G,Cereal Kelloggs Froot Loops Krunchers,1,taza,30,30,82,1.8,1.2,15.9,0.8,0.2,0.3,0,2.1,6.6,,,99.9,,3.5,,104.7,,,,
 cereal-kelloggs-rice-krispies,Cereales S/G,Cereal Kelloggs Rice Krispies,0.5,taza,18,18,67,1.4,0.2,15,0.1,,,,0.1,0.2,,,59.5,,2.1,,57.5,,,,
 cereal-kelloggs-special-k-antioxidantes,Cereales S/G,Cereal Kelloggs Special K Antioxidantes,0.5,taza,19,19,69,1.5,0.3,15,0,,,,1.2,0.9,125.1,9.4,30,93.8,2.2,,65.4,,,,
@@ -565,7 +565,7 @@ elote-crudo,Cereales S/G,Elote crudo,1.5,pieza,215,82,70,2.6,1,15.5,0.1,0.3,0.4,
 elote-desgranado,Cereales S/G,Elote desgranado,0.5,taza,83,83,66,2.3,0.4,16.2,0.2,0.3,0.5,0,2.6,2,18.2,5.1,38.5,3.3,0.3,122,4.2,85,0,NID,
 elote-enlatado,Cereales S/G,Elote enlatado,0.5,taza,82,82,66,2.1,0.8,15.2,0.1,0.2,0.4,0,2.3,1.6,13,7,40,4,0.7,160,175,53,0,46,38
 english-muffin,Cereales S/G,English Muffin,0.5,pieza,29,29,67,2.2,0.5,13.1,0.1,0.1,3,0,,0.8,,,10.5,49.5,0.7,37.5,132,38,0,77,22
-espagueti-cocido,Cereales S/G,Espagueti cocido,0.33,taza,46,46,57,2.5,2,12.3,0,0,0.1,0,0.4,2.1,,,2.3,6.9,0.5,20.3,1.4,25.1,0,44,20
+espagueti-cocido,Cereales S/G,Espagueti cocido,0.33,taza,46,46,57,2.5,0.3,12.3,0,0,0.1,0,0.4,2.1,,,2.3,6.9,0.5,20.3,1.4,25.1,0,44,20
 espagueti-con-espinaca-cocido,Cereales S/G,Espagueti con espinaca cocido,0.33,taza,47,47,61,2.1,0.3,12.2,0,0,0.1,0,,0,7,,57,14,0.5,27,6.7,50.3,0,,
 espagueti-crudo,Cereales S/G,Espagueti crudo,20,gramos,20,20,70,2.9,0.8,15,0,0,0.1,0,,0.1,,,11.4,8,0.7,43,1.6,,0,,
 espagueti-integral-cocido,Cereales S/G,Espagueti integral cocido,0.33,taza,46,46,57,2.5,0.3,12.3,0,0,0.1,0,,2.1,,,2.3,6.9,0.5,20.5,1.3,41.3,0,,
@@ -2171,7 +2171,7 @@ nuez-de-la-india-tostada-sin-sal,Grasas con proteínas,Nuez de la India tostada 
 nuez-de-macadamia-deshidratada,Grasas con proteínas,Nuez de macadamia deshidratada,4,pieza,10,10,73,0.9,7.7,1.4,1.1,6.1,0.1,0,0,1,0,0,1.5,7.3,0.2,38.2,0.4,14.3,0,,
 nuez-deshidratada,Grasas con proteínas,Nuez deshidratada,3,pieza,9,9,67,0.9,7,1.3,0.6,4.2,1.9,0,0,0.9,0,0,4.7,6.8,0.4,57,0.1,27.7,0,,
 nuez-en-mitades,Grasas con proteínas,Nuez en mitades,7,mitades,10,10,74,1,7.7,1.4,0.7,4.6,2.1,0,0,1,0,0,5.2,7.5,0.4,63,0.1,45.8,0,,
-nuez-entera,Grasas con proteínas,Nuez entera,3,pieza,9,9,67,9,7,1.3,0.6,4.2,1.9,0,0,0.9,0,0,4.7,6.8,0.4,57,0.1,41.5,0,,
+nuez-entera,Grasas con proteínas,Nuez entera,3,pieza,9,9,67,0.9,7,1.3,0.6,4.2,1.9,0,0,0.9,0,0,4.7,6.8,0.4,57,0.1,41.5,0,,
 nuez-garapinada,Grasas con proteínas,Nuez garapiñada,0.75,taza,12,12,64,1.7,5.6,3,1.3,3,1.3,0,0,0,0,0,0,0,0,0,38.6,0,0,,
 nuez-picada,Grasas con proteínas,Nuez picada,10,gramos,10,10,71,1,7.4,1.4,0.6,4.4,2.1,0,0,0.9,0,0,5,7.1,0.4,60.4,0.1,43.9,0,,
 nuez-tostada,Grasas con proteínas,Nuez tostada,3,pieza,9,9,67,0.9,7,1.3,0.6,4.2,1.9,0,0,0.9,0,0,4.7,6.8,0.4,57,0.1,29,0,,
@@ -2583,7 +2583,7 @@ lunetas,Azucares con grasa,Lunetas,0.33,paquete,16,16,79,0.7,3.4,11.4,2.1,1.1,0.
 m-m-mini,Azucares con grasa,M&M mini,0.75,tubo,23,23,105,0,5,15,5,0,0,0,15,0,0,0,,0,0,,15,,0,,
 malvavisco-con-chocolat,Azucares con grasa,Malvavisco con chocolat,0.5,pieza,14,14,59,0.6,2.4,9.5,0.7,1.3,0.3,0,6.3,0.3,0.1,0,3.2,6.4,0.4,25.5,23.5,13.6,0,,
 mayonesa-baja-en-grasa,Azucares con grasa,Mayonesa baja en grasa,2,cda,28,28,93,0,1.9,95,0,0,0,0,9.5,0,0,0,0,0,0,0,149,0,0,,
-mayonesa-light,Azucares con grasa,Mayonesa light,2,cda,28,28,93,0,1.9,9.5,0,0,0,0,9.5,0,0,0,0,0,0,0,149,0,0,,
+mayonesa-light,Azucares con grasa,Mayonesa light,2,cda,28,28,93,0,9.5,1.9,0,0,0,0,,0,0,0,0,0,0,0,149,0,0,,
 mazapan,Azucares con grasa,Mazapán,0.75,pieza,19,19,85,3.8,3.8,11.3,2.3,,,,9.8,,,,,,,,,,0,,
 menta-cubierta-con-chocolate,Azucares con grasa,Menta cubierta con chocolate,1.5,pieza,14,14,55,0.2,1.5,10.9,0.5,0.9,0,0,,0,0,0,0,7.4,0.1,12.3,24.5,7.4,0,,
 mole,Azucares con grasa,Mole,3,cda,48,48,79,1.7,5.3,6.2,3.4,,,6.9,,2,72,0,13.4,11.5,0.9,156.5,64.3,39.4,0,,

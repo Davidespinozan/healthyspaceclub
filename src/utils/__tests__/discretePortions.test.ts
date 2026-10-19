@@ -38,7 +38,8 @@ describe('N6 · WHOLE_ONLY nunca renderiza fracción de pieza', () => {
     it(`${un}: conteo limpio (×3) → entero honesto, sin fracción`, () => {
       const s = portionStr(ing(un, pu), 3 * pu);
       expect(isFractional(s)).toBe(false);
-      expect(s).toMatch(/^3\s/);
+      // MENÚ V1 · Bloque 4 · D1: el pescado (sardinas) se muestra en GRAMOS, no en piezas.
+      expect(s).toMatch(un === 'sardinas' ? /^\d+ g / : /^3\s/);
     });
     it(`${un}: ~1.5 piezas (el entero mentiría >20%) → cae a GRAMOS, no entero falso`, () => {
       const s = portionStr(ing(un, pu), 1.5 * pu);
@@ -52,8 +53,10 @@ describe('N6 · comportamientos NO tocados (regresión)', () => {
   it('cortable (aguacate) conserva fracción fina: ½ aguacate', () => {
     expect(portionStr(ing('aguacate', 150), 0.5 * 150)).toMatch(FRAC);
   });
-  it('cortable (plátano) conserva fracción: ⅓ plátano', () => {
-    expect(portionStr(ing('plátano', 120), (1 / 3) * 120)).toMatch(FRAC);
+  // MENÚ V1 · Bloque 4 · D4: el plátano se parte en MEDIOS (SMAE: ½ plátano), nunca en tercios sin evidencia.
+  it('plátano: ½ sí; ⅓ ya no (cae a gramos honestos)', () => {
+    expect(portionStr(ing('plátano', 120), 0.5 * 120)).toBe('½ plátano');
+    expect(portionStr(ing('plátano', 120), (1 / 3) * 120)).toBe('40 g plátano');
   });
   it('fruta grande halveable (manzana) conserva el medio: 1½ manzanas', () => {
     expect(portionStr(ing('manzana', 150), 1.5 * 150)).toMatch(FRAC);
@@ -75,8 +78,12 @@ const mk = (kcal: number): PlanTarget => ({
 describe('N6 · plan generado real: 0 piezas contables fraccionadas', () => {
   it('barrido determinista kcal × perfiles × seeds', () => {
     const TIERS = [1450, 1800, 2200, 2800, 3500];
+    // P0-03 · fuera 'vegano' y 'vegetariano': la autoridad solo admite las 10 categorías
+    // soportadas (Decisión 01), así que generar planes con ellas ejercitaba perfiles que
+    // ningún usuario puede tener. Se sustituyen por perfiles REALES, que además son los que
+    // de verdad hay que vigilar para las porciones contables.
     const PROFILES: Array<[string, string[]]> = [
-      ['normal', []], ['vegetariano', ['vegetariano']], ['vegano', ['vegano']], ['sinHuevo', ['huevo']],
+      ['normal', []], ['sinGluten', ['gluten']], ['sinLacteos', ['lacteos']], ['sinHuevo', ['huevo']],
     ];
     // 2 seeds (antes 3): N7 adelgazó el pool vegano/vegetariano (quita "Tacos de Carne Asada"),
     // lo que sube ~4s el tiempo de generación de este barrido y lo empujaba sobre el testTimeout
@@ -98,7 +105,9 @@ describe('N6 · plan generado real: 0 piezas contables fraccionadas', () => {
     }
     expect(days).toBeGreaterThan(250);   // 280 días (5 tiers × 4 perfiles × 2 seeds)
     expect(offenders, `piezas contables fraccionadas: ${[...new Set(offenders)].slice(0, 12).join(' · ')}`).toEqual([]);
-  });
+  // MENÚ V1 · B1 · `max_g` ya es TECHO: en 3500 kcal con exclusiones el motor recorre más reintentos
+  // (relax 1–2) y el barrido pasa del testTimeout global de 20 s en la suite completa. El invariante no cambia.
+  }, 60_000);
 });
 
 // ── §4 los gramos del solver son deterministas y no se tocan por el despliegue ──

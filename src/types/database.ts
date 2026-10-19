@@ -1194,6 +1194,7 @@ export type Database = {
           cancel_at_period_end: boolean
           created_at: string
           display_name: string
+          energy_snapshot: Json | null
           id: string
           is_admin: boolean
           is_public: boolean | null
@@ -1228,6 +1229,7 @@ export type Database = {
           cancel_at_period_end?: boolean
           created_at?: string
           display_name?: string
+          energy_snapshot?: Json | null
           id?: string
           is_admin?: boolean
           is_public?: boolean | null
@@ -1262,6 +1264,7 @@ export type Database = {
           cancel_at_period_end?: boolean
           created_at?: string
           display_name?: string
+          energy_snapshot?: Json | null
           id?: string
           is_admin?: boolean
           is_public?: boolean | null

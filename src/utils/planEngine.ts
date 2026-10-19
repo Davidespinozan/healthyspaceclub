@@ -4,23 +4,75 @@
 // principales (snacks menos), carbos/grasa siguen el reparto, verduras en comida+cena.
 // Reglas: fijo/guarnición/sub-receta/condimento quietos; `bloque` escala completo; `max_g` tope.
 import { BANCO, type BancoDish, type BancoIng } from '../data/banco';
-import type { DayPlan, MealItem } from '../types';
+import type { DayPlan, MealItem, MenuCapacityIssue, RecipeCapacityLimit } from '../types';
 import type { Region } from './region';
 import { dishAllowedInRegion } from '../data/regionFood';
-import { portionBoundsFor, preferredGramLimit } from './portionPlausibility';   // NUTRITION-N1 techo humano · N2 capacidad preferida
-import { effectiveDishAvoidText, canonicalizeAvoidTerm, catMarker } from './allergenSafety';   // NUTRITION-N3 · sub-recetas + composites ocultos
+import { portionBoundsFor, preferredGramLimit } from './portionPlausibility';
+import { compatibleComplements, complementDish } from './menuComplements';
+import { dishStructure } from './recipeStructure';
+import { portionStr, servedPieceStep } from './portionDisplay';   // NUTRITION-N1 techo humano · N2 capacidad preferida
+import { effectiveDishAvoidText, dishAvoidUnits, canonicalizeAvoidTerm, catMarker, type AvoidMode } from './allergenSafety';   // NUTRITION-N3 · sub-recetas + composites ocultos
 
 const IMG_BASE =
   'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PLATILLOS%20BANCO/';
 
 export interface PlanTarget { kcal: number; protG: number; fatG: number; carbG: number }
 
+/**
+ * P0-03 · FAIL CLOSED. No existe ningún platillo elegible para un tiempo con las
+ * restricciones efectivas del usuario.
+ *
+ * Las restricciones y el tiempo de comida son INVARIANTES NO RELAJABLES: un pool
+ * vacío no autoriza servir un alérgeno ni un platillo de otro tiempo. Cuando de
+ * verdad no hay opción, el motor lo DICE en vez de fabricar disponibilidad.
+ *
+ * Hasta dónde llega: lo lanzan `buildDay` (vía `buildWeeklyPlan`) y
+ * `buildDayWithFixed`. Lo recogen `WeeklyNutritionPlanner.advance` (muestra el
+ * error de generación ya existente), `useAutoRegenPlan` (deja el plan anterior en
+ * pantalla y lo registra) y `TabHoy` (conserva el día sin el bowl).
+ */
+export class NoEligibleDishesError extends Error {
+  readonly slot: string;
+  readonly avoid: string[];
+  constructor(slot: string, avoid: string[]) {
+    const r = avoid.length ? avoid.join(', ') : 'ninguna';
+    super(`Sin platillos elegibles para ${slot} con las restricciones activas (${r}). `
+      + 'No se sirve un platillo de otro tiempo ni se relaja una restricción para rellenar.');
+    // `name` explícito: el instanceof sobrevive al bundling, pero el nombre es lo que
+    // queda en los logs y lo que la UI puede distinguir de un fallo genérico.
+    this.name = 'NoEligibleDishesError';
+    this.slot = slot;
+    this.avoid = [...avoid];
+  }
+}
+
 const BY_TIME: Record<string, BancoDish[]> = { Desayuno: [], Comida: [], Cena: [], Snack: [] };
-for (const d of BANCO) (BY_TIME[d.tiempo] ??= []).push(d);
-const hasVeg = (d: BancoDish) => d.ings.some((i) => i.rol === 'guarnicion');
-// Verduras SIEMPRE en comida y cena (Magaly). Prefiere platillos con guarnición.
-const COMIDA_VEG = BY_TIME.Comida.filter(hasVeg);
-const CENA_VEG = BY_TIME.Cena.filter(hasVeg);
+for (const d of BANCO) if (mainEligible(d)) (BY_TIME[d.tiempo] ??= []).push(d);
+
+/**
+ * MENÚ V1 · HALLAZGO-04 · los 6 platillos DULCES clasificados como Cena en el CSV (`sabor = dulce` × `tiempo =
+ * Cena`: Hot Cakes de Camote, Hot Cakes de Zanahoria, Crepas Dulces de Plátano y Cacahuate, Overnight Oats de Mango
+ * y Coco, Overnight Oats de Zanahoria, Yogurt con Frutos Rojos y Almendras) dejan de ser elegibles como cena
+ * principal. No se borran del banco ni se reclasifican (validación e histórico intactos). Puro.
+ */
+export function mainEligible(d: BancoDish): boolean {
+  return !(d.tiempo === 'Cena' && d.sabor === 'dulce');
+}
+// DECISIÓN 06 · aquí vivía `hasVeg` = `d.ings.some(i => i.rol === 'guarnicion')`, y con él
+// COMIDA_VEG/CENA_VEG: los pools de Comida y Cena quedaban reducidos a los platillos con
+// ese tag. Se retiró como filtro de elegibilidad.
+//
+// `rol:'guarnicion'` no es autoridad nutricional. Las instrucciones a Magaly lo definen como
+// una anotación OPCIONAL para registrar una verdura de guarnición («Puedes escribir
+// "guarnición" en la columna `nota` si quieres»), y permiten explícitamente dejar las salsas
+// caseras como compuesto. Un campo de registro voluntario decidía qué recetas existían: 10
+// platillos de Comida/Cena quedaban fuera por no llevarlo, 4 de ellos CON verdura real
+// (zanahoria de 40 g como ingrediente principal, pico de gallo, guacamole).
+//
+// La elegibilidad la decide el `tiempo` del platillo (+ las restricciones del socio). La
+// calidad vegetal del plan sigue siendo un objetivo de producto, pendiente de definir, no un
+// filtro sobre un tag. `guarnicion` conserva intacto su uso de DISPLAY (portionStr → «al
+// gusto») y en la lista de compra.
 
 // Cocina por nombre del platillo (heurística). El resto = mexicana (base del banco).
 function cuisineOf(d: BancoDish): string {
@@ -52,32 +104,99 @@ const cravedCount = new Map<string, number>();
 // ingredientes REALES de sus sub-recetas (SUBRECETAS) + marcadores de alérgeno oculto (mayonesa=huevo,
 // hummus=ajonjolí…). Así el MISMO makeAvoidFilter ve lo que antes quedaba escondido. Solo alimenta la
 // detección de "evitar"/"antojo"; NO cambia macros/porciones/selección nutricional.
-const DTEXT = new Map<BancoDish, { text: string; words: Set<string> }>();
-for (const d of BANCO) {
-  const text = effectiveDishAvoidText(d);
-  DTEXT.set(d, { text, words: new Set(text.split(/[^a-z0-9]+/).filter(Boolean)) });
+/** Unidades de detección de "evitar" de un platillo en UN modo (estricto o suave). */
+interface AvoidUnits {
+  avoidWords: Set<string>; avoidText: string;              // EVITAR: solo ingredientes
+  units: { text: string; words: Set<string> }[];           // EVITAR: por ingrediente (excepciones)
 }
+interface DishText extends AvoidUnits {
+  text: string; words: Set<string>;                        // ANTOJO: nombre + ingredientes
+  /** WEEKLY PREFERENCES · las mismas unidades en modo SUAVE (ingredientes propios + reglas IS). */
+  soft: AvoidUnits;
+}
+const tokenize = (text: string) => ({ text, words: new Set(text.split(/[^a-z0-9]+/).filter(Boolean)) });
+// Separador entre unidades: un término nunca lo contiene, así que una frase ("carne asada")
+// NO puede formarse cruzando el final de un ingrediente con el principio del siguiente.
+const UNIT_SEP = ' \u0000 ';
+function avoidUnitsOf(d: BancoDish, mode: AvoidMode): AvoidUnits {
+  const units = dishAvoidUnits(d, mode).map(tokenize);
+  const avoidWords = new Set<string>();
+  for (const u of units) for (const w of u.words) avoidWords.add(w);
+  return { avoidWords, avoidText: units.map((u) => u.text).join(UNIT_SEP), units };
+}
+function buildDishText(d: BancoDish): DishText {
+  // `text`/`words` = nombre + ingredientes (ANTOJO: ahí el nombre del platillo SÍ es la señal).
+  // `units`        = un token-set por INGREDIENTE, sin el nombre (EVITAR: manda la composición).
+  return { ...tokenize(effectiveDishAvoidText(d)), ...avoidUnitsOf(d, 'strict'), soft: avoidUnitsOf(d, 'soft') };
+}
+const DTEXT = new Map<BancoDish, DishText>();
+for (const d of BANCO) DTEXT.set(d, buildDishText(d));
+/** Cacheado para el BANCO; calculado al vuelo para cualquier otro platillo (nunca lanza). */
+const dishText = (d: BancoDish): DishText => DTEXT.get(d) ?? buildDishText(d);
 // term con espacio → substring; palabra suelta → límite de palabra (evita "pan" en "panela").
+const unitMatches = (u: { text: string; words: Set<string> }, term: string) =>
+  term.includes(' ') ? u.text.includes(term) : u.words.has(term);
+// ANTOJO: el nombre del platillo cuenta ("se me antojan unos tacos").
 function dishMatches(d: BancoDish, term: string): boolean {
-  const e = DTEXT.get(d)!;
-  return term.includes(' ') ? e.text.includes(term) : e.words.has(term);
+  return unitMatches(dishText(d), term);
 }
 const dishMatchesAny = (d: BancoDish, terms: string[]) => terms.some((t) => dishMatches(d, t));
 
+// ── P0-01 · DETECCIÓN DE RESTRICCIONES ───────────────────────────────────────
+// Excepciones por TÉRMINO: nombres de ingrediente donde el término aparece pero NO
+// representa el alimento prohibido. Mismo espíritu que el lookahead de "crema de
+// cacahuate" en allergenSafety. Mínimo y auditado contra los ingredientes reales.
+const TERM_EXCEPT: Record<string, RegExp> = {
+  galleta: /galletas? de arroz/,     // galleta de ARROZ = sin gluten
+  galletas: /galletas? de arroz/,
+  // DECISIÓN 05 · PD-02: la granola SIEMPRE activa gluten salvo que el ingrediente declare
+  // EXPLÍCITAMENTE que es la variante sin gluten. NO se infiere de "de avena" ni de nada más.
+  granola: /\bsin gluten\b|\bgluten free\b/,
+};
+/** ¿Algún INGREDIENTE del platillo (o de sus sub-recetas) contiene alguno de los términos? */
+function dishMatchesAvoidTerms(d: BancoDish, terms: string[]): boolean {
+  return unitsMatchAvoidTerms(dishText(d), terms);
+}
+/** El matcher de "evitar" sobre unas unidades ya construidas (estrictas o suaves). Mismas excepciones. */
+function unitsMatchAvoidTerms(e: AvoidUnits, terms: string[]): boolean {
+  if (!terms.length) return false;
+  for (const t of terms) {
+    const ex = TERM_EXCEPT[t];
+    if (!ex) {
+      // Camino rápido: palabra suelta contra el set unión, frase contra el texto con separador
+      // (que impide que la frase cruce dos ingredientes). Equivalente al recorrido por unidad.
+      if (t.includes(' ') ? e.avoidText.includes(t) : e.avoidWords.has(t)) return true;
+      continue;
+    }
+    // Con excepción: hay que saber EN QUÉ ingrediente cayó el término.
+    for (const u of e.units) {
+      if (unitMatches(u, t) && !ex.test(u.text)) return true;
+    }
+  }
+  return false;
+}
+
 // Categorías de "evitar" / alergias → alimentos/palabras reales del banco.
 const AVOID_MAP: Record<string, string[]> = {
-  gluten: ['pan', 'pasta', 'espagueti', 'bagel', 'waffle', 'waffles', 'pita', 'tallarines', 'noodles', 'galleta', 'galletas', 'crutones', 'cereal', 'tortilla de harina', 'hot cake', 'hot cakes', 'corn flakes'],
+  // P0-01 · los términos se buscan en el nombre de cada INGREDIENTE, no en el del platillo.
+  // 'waffle'/'hot cake'/'cereal' son conceptos de PLATILLO, no ingredientes: se conservan por
+  // defensa (si algún día un ingrediente se llama así) pero ya no pueden excluir por el nombre.
+  // 'granola' → gluten por DECISIÓN 05 · PD-02: la granola genérica lleva malta de cebada o trigo.
+  // Solo queda exenta si el ingrediente se modela EXPLÍCITAMENTE como variante sin gluten (ver TERM_EXCEPT).
+  gluten: ['pan', 'pasta', 'espagueti', 'bagel', 'baguette', 'waffle', 'waffles', 'pita', 'tallarines', 'noodles', 'fideo', 'fideos', 'galleta', 'galletas', 'granola', 'crutones', 'cereal', 'tortilla de harina', 'harina de trigo', 'hot cake', 'hot cakes', 'corn flakes'],
   lacteos: ['leche', 'queso', 'yogur', 'yoghurt', 'yogurt', 'requeson', 'ricotta', 'cottage', 'panela', 'oaxaca', 'feta', 'mozzarella', 'parmesano', 'crema acida'],
-  'carne-roja': ['res', 'sirloin', 'bistec', 'falda', 'molida', 'machaca', 'chambarete', 'arrachera'],
+  // 'molida' suelta excluía "Papa molida" y "Carne molida de pavo" (ni una ni otra es carne roja):
+  // se sustituye por las frases que sí identifican el corte. 'carne asada' cierra el hueco genérico.
+  'carne-roja': ['res', 'sirloin', 'bistec', 'falda', 'molida magra', 'molida de res', 'carne asada', 'machaca', 'chambarete', 'arrachera'],
   // Magaly: "mariscos" abarca TODO lo del mar (incluye pescado). El toggle "pescado"
   // es el subconjunto para quien solo quiere fuera el pescado pero sí come camarón.
-  mariscos: ['camaron', 'camarones', 'marisco', 'mariscos', 'pescado', 'salmon', 'atun', 'tilapia', 'bacalao'],
+  mariscos: ['camaron', 'camarones', 'gamba', 'gambas', 'marisco', 'mariscos', 'pescado', 'salmon', 'atun', 'tilapia', 'bacalao', 'merluza', 'sardina', 'sardinas', 'boqueron', 'boquerones'],
   // Alergias:
   huevo: ['huevo', 'huevos'],
   'frutos-secos': ['nuez', 'nueces', 'almendra', 'almendras', 'pistache', 'pistaches', 'avellana', 'avellanas'],
   cacahuate: ['cacahuate', 'cacahuates'],
   soya: ['soya', 'edamame', 'edamames'],
-  pescado: ['pescado', 'salmon', 'atun', 'tilapia', 'bacalao'],
+  pescado: ['pescado', 'salmon', 'atun', 'tilapia', 'bacalao', 'merluza', 'sardina', 'sardinas', 'boqueron', 'boquerones'],
   ajonjoli: ['ajonjoli', 'sesamo'],
   // Aves y cerdo (faltaban): sin esto un vegetariano no podía sacar el pollo/pavo/cerdo.
   pollo: ['pollo', 'pechuga'],
@@ -142,7 +261,7 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-interface Var { a: number[]; g: number; g0: number; lo: number; hi: number; blk: number | null; ing: BancoIng }
+interface Var { a: number[]; g: number; g0: number; lo: number; hi: number; blk: number | null; ing: BancoIng; steps?: number[] }
 
 const W = [1.5, 1.8, 1.0]; // pesos P, F, C. La grasa subió de 0.8 a 1.2: con 0.8 el
 // solver la dejaba absorber todo el error y se desbordaba +10%.
@@ -182,18 +301,29 @@ const CRUJIENTE_RE = /tostada|totopo|tostadita|galleta|crut[oó]n|chip|pan(?! in
 // Piso y techo de UN ingrediente. Vive aparte porque lo usan DOS cosas que deben
 // coincidir: el solver (prep) y el filtro de capacidad que decide qué platillos puede
 // elegir la IA. Si se desincronizan, la IA vuelve a recibir platillos imposibles.
-function ingBounds(ing: BancoIng): { lo: number; hi: number } {
+// Bloque 7B · rendimiento: `ingBounds` es puro por ingrediente (el banco es inmutable) y el motor lo llamaba ~14 M
+// veces por matriz de QA. Memo por objeto ingrediente; se devuelve una copia (nadie comparte el objeto memoizado).
+const _boundsMemo = new WeakMap<BancoIng, { lo: number; hi: number }>();
+export function ingBounds(ing: BancoIng): { lo: number; hi: number } {
+  let m = _boundsMemo.get(ing);
+  if (!m) { m = ingBoundsRaw(ing); _boundsMemo.set(ing, m); }
+  return { lo: m.lo, hi: m.hi };
+}
+function ingBoundsRaw(ing: BancoIng): { lo: number; hi: number } {
   const a = ing.a!;
   // Techo por tipo de alimento. Regla de Magaly: cuando faltan calorías, que suba la
   // GUARNICIÓN DE ALMIDÓN (arroz, papa, camote, pasta, avena, leguminosas) — no las
   // tostadas. Una porción grande de arroz es normal; 8 tostadas no. La GRASA se aprieta
-  // porque es la que se desborda (el solver la pondera al final, W=0.8).
+  // porque es la que se desborda (el solver la pondera con W[1]).
   const fatDom = a[2] * 9 > a[1] * 4 && a[2] * 9 > a[3] * 4;
   const mult = fatDom ? 2.0
     : CRUJIENTE_RE.test(ing.nv) ? 1.5      // tostada/totopo/galleta: casi no crece
     : ALMIDON_RE.test(ing.nv) ? 3.0        // arroz/papa/camote/pasta: aquí sube
     : 3.0;
-  let hi = Math.max(ing.max && ing.max > 0 ? ing.max : 0, Math.round(ing.g0 * mult));
+  let hi = Math.round(ing.g0 * mult);
+  // MENÚ V1 · B1 · `max_g` del CSV es un TECHO (CORRECCIONES-APP-HSC §3: «El max_g es un TECHO, no una
+  // meta»). Antes era `max(ing.max, g0·mult)` y SUBÍA el techo (p. ej. machaca 50→116 g con max 60).
+  if (ing.max && ing.max > 0) hi = Math.min(hi, ing.max);
   // Contables: nunca más de N piezas realistas (tortilla ≤6, huevo ≤6, tostada ≤6…).
   const pieceMax = ing.pu && ing.un ? PIECE_MAX[ing.un] : undefined;
   if (pieceMax && ing.pu) hi = Math.min(hi, Math.round(pieceMax * ing.pu));
@@ -220,6 +350,7 @@ function ingBounds(ing: BancoIng): { lo: number; hi: number } {
  *  si esto ya se pasa del presupuesto del tiempo, ese platillo NO cabe por más que el
  *  solver lo encoja. Se usa cuando queda poco margen — p.ej. tras meter un bowl. */
 export function dishMinMacros(d: BancoDish): number[] {
+  if (d.steps) return closedRecipeMacros(d, 'min');
   const t = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
   for (const ing of d.ings) {
     if (ing.rol === 'principal' && ing.a) {
@@ -234,6 +365,7 @@ export function dishMinMacros(d: BancoDish): number[] {
  *  Es el "hasta dónde da" real: si esto no llega a la meta del tiempo de comida,
  *  ese platillo NO puede cuadrar por más que el solver lo escale. */
 export function dishMaxMacros(d: BancoDish): number[] {
+  if (d.steps) return closedRecipeMacros(d, 'max');
   const t = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
   for (const ing of d.ings) {
     if (ing.rol === 'principal' && ing.a) {
@@ -244,11 +376,40 @@ export function dishMaxMacros(d: BancoDish): number[] {
   return t;
 }
 
+/** MENÚ V1 · Bloque 5 · macros de una receta CERRADA en su porción válida mínima o máxima (sus `steps`). */
+export function closedRecipeMacros(d: BancoDish, which: 'min' | 'max'): number[] {
+  // Mismo contexto que al servirla: un snack se mide a PORCIÓN NORMAL (CAPA 4 · techos + preferido N2).
+  const { vars } = prep([d], d.tiempo === 'Snack');
+  const st = validSteps(d.steps ?? [1], blockSMax(vars));
+  const s = which === 'min' ? Math.min(...st) : Math.max(...st);
+  const t = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
+  for (const v of vars) for (let k = 0; k < 4; k++) t[k] += v.a[k] * v.g0 * s;
+  return t;
+}
+/** Factor servido de un bloque (gramos servidos / base de su primer principal). */
+function servedFactor(d: BancoDish, gOf: (ing: BancoIng) => number | undefined): number | null {
+  const ing = d.ings.find((i) => i.rol === 'principal' && i.a && i.g0 > 0);
+  const g = ing ? gOf(ing) : undefined;
+  return ing && typeof g === 'number' ? g / ing.g0 : null;
+}
+/** «4 bolitas» / «1 barrita»: la porción servida de una receta con unidad cerrada. */
+export function servingLabel(d: BancoDish, factor: number): string | null {
+  if (!d.srv) return null;
+  const n = Math.round(d.srv.base * factor);
+  return `${n} ${n === 1 ? d.srv.unit : d.srv.unit + 's'}`;
+}
+
 // ── NUTRITION-N2 · CAPACIDAD PREFERIDA (señal de SELECCIÓN, no del solver) ────────────────────────
 // Techo PREFERIDO de un ingrediente = su techo N1 (ingBounds.hi, que ya incluye hardMax/PIECE/GRAM)
 // ACOTADO al rango humano normal (preferredMaxG) cuando existe, sin bajar nunca de la receta base (g0).
 // NO alimenta a solve(): solo estima "hasta dónde da este platillo SIN pasarse de una porción normal".
+const _prefHiMemo = new WeakMap<BancoIng, number>();
 function ingPreferredHi(ing: BancoIng): number {
+  let v = _prefHiMemo.get(ing);
+  if (v === undefined) { v = ingPreferredHiRaw(ing); _prefHiMemo.set(ing, v); }
+  return v;
+}
+function ingPreferredHiRaw(ing: BancoIng): number {
   const hardHi = ingBounds(ing).hi;               // techo de seguridad N1 (jamás se afloja)
   const pref = preferredGramLimit(ing.nv);
   const hi = pref != null ? Math.min(hardHi, pref) : hardHi;
@@ -260,6 +421,8 @@ const _prefCapMemo = new Map<BancoDish, number[]>();
 export function dishPreferredMaxMacros(d: BancoDish): number[] {
   const cached = _prefCapMemo.get(d);
   if (cached) return cached;
+  // Bloque 5 · una receta cerrada no tiene capacidad «preferida» aparte: es su porción válida máxima.
+  if (d.steps) { const t = closedRecipeMacros(d, 'max'); _prefCapMemo.set(d, t); return t; }
   const t = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
   for (const ing of d.ings) {
     if (ing.rol === 'principal' && ing.a) {
@@ -271,17 +434,38 @@ export function dishPreferredMaxMacros(d: BancoDish): number[] {
   return t;
 }
 
-function prep(dishes: BancoDish[]): { fixed: number[]; vars: Var[] } {
+// `normal` = MENÚ V1 · CAPA 4: el techo de cada principal es su PORCIÓN NORMAL — el techo duro acotado al rango
+// humano preferido (`ingPreferredHi`) Y al escalado máximo del platillo que fijó Magaly (`mult_max` del banco,
+// columna hasta hoy sin uso: g0 × multMax). Nunca bajo la receta base. Lo usan los snacks y la medición de
+// cuánto dan las principales «sin hacerse demasiado grandes».
+// Bloque 7B · rendimiento: los límites de cada variable de un platillo (normal / duro) no cambian; se calculan una
+// vez por platillo y cada `prep` solo crea las variables (mismos valores, mismo orden que antes).
+type VarTpl = { a: number[]; g0: number; lo: number; hi: number; ing: BancoIng; bloque: boolean; steps?: number[] };
+const _prepTpl = [new WeakMap<BancoDish, VarTpl[]>(), new WeakMap<BancoDish, VarTpl[]>()];
+function prepTemplate(d: BancoDish, normal: boolean): VarTpl[] {
+  const memo = _prepTpl[normal ? 1 : 0];
+  let tpl = memo.get(d);
+  if (tpl) return tpl;
+  const bloque = d.tipo === 'bloque';
+  tpl = [];
+  for (const ing of d.ings) {
+    if (ing.rol === 'principal' && ing.a) {
+      const b = ingBounds(ing);
+      const hi = normal ? Math.max(ing.g0, Math.min(b.hi, ingPreferredHi(ing), ing.g0 * (d.multMax || 1.5))) : b.hi;
+      const lo = Math.min(b.lo, hi);
+      tpl.push({ a: ing.a, g0: ing.g0, lo, hi, ing, bloque, ...(bloque && d.steps ? { steps: d.steps } : {}) });
+    }
+  }
+  memo.set(d, tpl);
+  return tpl;
+}
+function prep(dishes: BancoDish[], normal = false): { fixed: number[]; vars: Var[] } {
   const fixed = [0, 0, 0, 0, 0]; // kcal, P, F, C, fibra
   const vars: Var[] = [];
   dishes.forEach((d, si) => {
-    const bloque = d.tipo === 'bloque';
     for (let i = 0; i < 5; i++) fixed[i] += d.fixed[i];
-    for (const ing of d.ings) {
-      if (ing.rol === 'principal' && ing.a) {
-        const { lo, hi } = ingBounds(ing);
-        vars.push({ a: ing.a, g: ing.g0, g0: ing.g0, lo, hi, blk: bloque ? si : null, ing });
-      }
+    for (const t of prepTemplate(d, normal)) {
+      vars.push({ a: t.a, g: t.g0, g0: t.g0, lo: t.lo, hi: t.hi, blk: t.bloque ? si : null, ing: t.ing, ...(t.steps ? { steps: t.steps } : {}) });
     }
   });
   return { fixed, vars };
@@ -321,10 +505,27 @@ function solve(fixed: number[], vars: Var[], T: number[], iters = 160): void {
         nu += W[j] * bk[kk] * (base - T[kk]);
         de += W[j] * bk[kk] * bk[kk];
       }
-      const s = Math.max(0.5, Math.min(1.5, -nu / (de || 1e-9)));
+      // MENÚ V1 · CAPA 4 · el bloque escala en proporción (0.5–1.5), pero NINGÚN ingrediente cruza su techo
+      // (`max_g`, PIECE/GRAM_MAX, techo humano): el factor máximo es el del ingrediente más ajustado. Antes el factor
+      // 1.5 ignoraba los techos (p. ej. crema de cacahuate 32 g × 1.5 = 48 g con techo humano de 40 g).
+      const sMax = Math.max(0.5, Math.min(1.5, ...grp.map((g) => (g.g0 > 0 ? g.hi / g.g0 : 1.5))));
+      const opt = -nu / (de || 1e-9);
+      // MENÚ V1 · Bloque 5 · receta CERRADA: solo porciones válidas (bolitas 2/4/6, barrita 1/2/3, pasta y rollitos 1×).
+      const s = grp[0].steps ? nearestStep(validSteps(grp[0].steps, sMax), opt) : Math.max(0.5, Math.min(sMax, opt));
       for (const g of grp) g.g = g.g0 * s;
     }
   }
+}
+
+/** Pasos válidos de una receta cerrada que caben bajo el factor máximo de sus ingredientes (nunca vacío). */
+function validSteps(steps: number[], sMax: number): number[] {
+  const ok = steps.filter((x) => x <= sMax + 1e-9);
+  return ok.length ? ok : [Math.min(...steps)];
+}
+const nearestStep = (steps: number[], x: number) => steps.reduce((a, b) => (Math.abs(b - x) < Math.abs(a - x) ? b : a));
+/** Factor máximo de un bloque: el ingrediente más ajustado (techo / base), entre 0.5 y 1.5. */
+function blockSMax(vars: Var[]): number {
+  return Math.max(0.5, Math.min(1.5, ...vars.map((v) => (v.g0 > 0 ? v.hi / v.g0 : 1.5))));
 }
 
 function errMax(fixed: number[], vars: Var[], T: number[]): number {
@@ -335,11 +536,19 @@ function errMax(fixed: number[], vars: Var[], T: number[]): number {
   return e * 100;
 }
 
+/** CAPA 4 · encaje de un SNACK: error ABSOLUTO en kcal (4·|ΔP| + 9·|ΔG| + 4·|ΔC|) relativo a su tamaño, en %. El
+ *  relativo por macro (`errMax`) degenera cuando el hueco casi no lleva proteína (denominador ≈ 1 g): no distingue
+ *  un snack con 3 g de proteína de uno con 20 g, y el de 20 g pasa la proteína del día. */
+function errSnack(fixed: number[], vars: Var[], T: number[]): number {
+  const x = [fixed[0], fixed[1], fixed[2], fixed[3]];
+  for (const v of vars) for (let k = 1; k < 4; k++) x[k] += v.a[k] * v.g;
+  const tk = 4 * T[1] + 9 * T[2] + 4 * T[3];
+  return ((4 * Math.abs(x[1] - T[1]) + 9 * Math.abs(x[2] - T[2]) + 4 * Math.abs(x[3] - T[3])) / Math.max(tk, 1)) * 100;
+}
+
 function pick<T>(arr: T[], rng: () => number): T { return arr[Math.floor(rng() * arr.length)]; }
 
-// Alimentos que se PARTEN en fracción real (se corta ⅓ de aguacate, ¾ de plátano).
-// CORTABLES: fruta que se parte a ojo → fracciones finas (½ aguacate, ⅓ plátano).
-const DIVISIBLE = new Set(['aguacate', 'plátano', 'mango', 'papaya', 'melón', 'toronja']);
+// MENÚ V1 · Bloque 4 · la porción VISIBLE vive en portionDisplay (medida por familia + autoridad de medidas).
 // WHOLE_ONLY: piezas que la gente cuenta ENTERAS, nunca en medios. Huevo (no hay medio
 // huevo), piezas pequeñas indivisibles (dátil, aceituna, cereza, sardina — "½ aceituna"
 // no existe) y tortilla/tostada (un plan legible cuenta tortillas enteras). El resto
@@ -353,155 +562,7 @@ const WHOLE_ONLY = new Set(['huevo', 'dátil', 'aceituna', 'cereza', 'sardinas',
 // sus gramos del solver NO se tocan (macros idénticas) y el candado ±20% cae a gramos si
 // un entero mentiría. Mantener este set en {huevo} conserva el comportamiento embarcado.
 const SNAP_WHOLE_GRAMS = new Set(['huevo']);
-// Granos, leguminosas y pasta se miden en TAZAS (cocidos), no en gramos. gramos por
-// taza (cocido, referencia USDA). Se muestran "1½ tazas de arroz" con fracciones ¼⅓½⅔¾.
-const CUP_G: Array<[RegExp, number]> = [
-  [/espagueti|espageti|pasta|fideo|macarr|coditos/i, 140],
-  [/lenteja/i, 198],
-  [/garbanzo/i, 164],
-  [/alubia|frijol/i, 172],
-  [/quinoa/i, 185],
-  [/arroz/i, 158], // arroz cocido (excluye galletas/inflado más abajo)
-  [/leche/i, 240],  // líquidos también se miden en tazas (1 taza ≈ 240 ml)
-  [/yogur|yoghur/i, 245],
-  [/avena cocida/i, 234], // avena cocida (la seca en hojuelas se queda en gramos)
-  // Fruta y verdura CORTADA (no cuentan por pieza) → tazas. (Magaly: fruta en tazas o piezas)
-  [/fresa|frambuesa|zarzamora|mora|ar[aá]ndano/i, 150],
-  [/mango|pi[nñ]a|papaya|sand[ií]a|mel[oó]n/i, 160],
-  [/uva|cereza/i, 150],
-  [/j[ií]cama|apio|pepino|zanahoria en bastones|jitomate cherry/i, 130],
-  [/jugo de tomate|caldo de/i, 240], // líquidos
-];
-// nv que llevan "arroz"/"pasta"/"leche" pero NO son el grano/líquido base (no van en tazas).
-const CUP_EXCLUDE = /galleta|inflad|harina|tortita|crema de|leche de|congelad/i;
-// Salsas / aderezos / sub-recetas → cucharadas o tazas, nunca gramos (Magaly).
-// 1 cda = 15 g · 1 taza = 240 g. Cantidades chicas en cdas; grandes en tazas.
-const SAUCE_RE = /salsa|aderezo|guacamole|pico de gallo|chimichurri|vinagreta|tzatziki|glaseado|hummus|mayonesa|crema|mostaza|miel|pur[eé] de jitomate/i;
-function sauceStr(nv: string, grams: number): string {
-  if (grams <= 0) return nv;
-  if (grams < 60) { // chico → cucharadas (1 cda = 15 g)
-    const n = Math.max(0.5, Math.round((grams / 15) * 2) / 2);
-    return `${fmtCount(n)} ${n <= 1 ? 'cda' : 'cdas'} de ${nv.toLowerCase()}`;
-  }
-  const n = Math.max(0.25, snapCount(grams / 240)); // grande → tazas
-  return `${fmtCount(n)} ${pluralNoun('taza', n)} de ${nv.toLowerCase()}`;
-}
-function cupGrams(nv: string): number | null {
-  if (CUP_EXCLUDE.test(nv)) return null;
-  for (const [re, g] of CUP_G) if (re.test(nv)) return g;
-  return null;
-}
-// Fracciones naturales que la gente usa (⅓ aguacate, ¾ de plátano…), no solo medios.
-const FRACS: Array<[number, string]> = [[0, ''], [0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾']];
-// Redondea a la fracción natural más cercana (o al entero de arriba si está muy cerca).
-function snapCount(x: number): number {
-  const whole = Math.floor(x);
-  const frac = x - whole;
-  let best = FRACS[0];
-  for (const f of FRACS) if (Math.abs(f[0] - frac) < Math.abs(best[0] - frac)) best = f;
-  return 1 - frac < Math.abs(best[0] - frac) ? whole + 1 : whole + best[0];
-}
-function fmtCount(n: number): string {
-  const whole = Math.floor(n + 1e-9);
-  const frac = n - whole;
-  let sym = '', bestd = 0.06; // tolerancia para casar la fracción
-  for (const [v, s] of FRACS) { const d = Math.abs(v - frac); if (s && d < bestd) { bestd = d; sym = s; } }
-  return sym ? (whole ? String(whole) : '') + sym : String(whole);
-}
-function pluralNoun(un: string, n: number): string {
-  if (n <= 1) return un; // "1 huevo", "½ manzana"
-  const [head, ...rest] = un.split(' ');
-  if (/s$/i.test(head)) return un; // ya plural (espárragos)
-  // vocal → +s (huevo→huevos); consonante → +es quitando acento agudo final (melón→melones)
-  const p = /[aeiouáéíóú]$/i.test(head)
-    ? head + 's'
-    : head.replace(/ó(?=n$)/, 'o').replace(/á(?=n$)/, 'a').replace(/é(?=n$)/, 'e') + 'es';
-  return [p, ...rest].join(' ');
-}
-// Pluraliza una FRASE (sustantivo + adjetivos): "huevo revuelto" → "huevos revueltos".
-// Se detiene en preposición o paréntesis: "tortilla de maíz" → "tortillas de maíz".
-const STOP_PLURAL = new Set(['de', 'del', 'con', 'a', 'al', 'en', 'para', 'y', 'sin', 'tipo', 'pita', 'thin', 'light']);
-function pluralWord(w: string): string {
-  if (/s$/i.test(w)) return w;
-  return /[aeiouáéíóú]$/i.test(w)
-    ? w + 's'
-    : w.replace(/ó(?=n$)/, 'o').replace(/á(?=n$)/, 'a').replace(/é(?=n$)/, 'e') + 'es';
-}
-function pluralPhrase(txt: string, n: number): string {
-  if (n <= 1) return txt;
-  let stop = false;
-  return txt.split(' ').map((w) => {
-    if (stop || w.startsWith('(') || STOP_PLURAL.has(w.toLowerCase())) { stop = true; return w; }
-    return pluralWord(w);
-  }).join(' ');
-}
-// La gente cuenta huevos/tortillas, no los pesa. Si el alimento trae medida casera
-// (pu = g por pieza) y la cantidad cae en un conteo limpio y creíble (0.5–8 piezas,
-// error ≤20% para que el conteo no engañe sobre la porción), se muestra "2 huevos"
-// en vez de "88 g". Si no, se queda en gramos.
-export function portionStr(ing: BancoIng, g: number | null): string {
-  // Despliegue por rol. IMPORTANTE: esto es SOLO lo que se pinta — el motor sigue
-  // usando los gramos reales para macros/fibra/kcal (van en meal.macros, no aquí).
-  // guarnicion = verdura que nadie pesa → nombre + "al gusto" (sin gramos).
-  if (ing.rol === 'guarnicion') return `${ing.nv} al gusto`;
-  // condimento (sal, especias) → solo el nombre, sin cantidad.
-  if (ing.rol === 'condimento') return ing.nv;
-  const grams = Math.round(g ?? ing.g0);
-  // Salsas, aderezos y sub-recetas → cucharadas (chicas) o tazas (grandes). Nadie pesa
-  // el guacamole: "2 cdas de tzatziki", "⅓ taza de guacamole". (Magaly)
-  if (ing.rol === 'sub-receta' || SAUCE_RE.test(ing.nv)) return sauceStr(ing.nv, grams);
-  // Aceites → CUCHARADAS (1 cda = 10 g). Nadie pesa el aceite. (Magaly)
-  if (/aceite/i.test(ing.nv)) {
-    const n = Math.max(0.5, Math.round((grams / 10) * 2) / 2);
-    return `${fmtCount(n)} ${n <= 1 ? 'cda' : 'cdas'} de ${ing.nv.toLowerCase()}`;
-  }
-  // Jamón / pavo → REBANADAS (1 rebanada = 30 g). (Magaly)
-  if (/jam[oó]n|pavo/i.test(ing.nv) && grams > 0) {
-    const n = Math.max(1, Math.round(grams / 30));
-    return `${n} ${n === 1 ? 'rebanada' : 'rebanadas'} de ${ing.nv.toLowerCase()}`;
-  }
-  // Granos/leguminosas/pasta → tazas (si el ingrediente no trae ya otra medida casera).
-  if (!ing.pu && grams > 0) {
-    const cg = cupGrams(ing.nv);
-    if (cg) {
-      const n = Math.max(0.25, snapCount(grams / cg));
-      if (n <= 6 && Math.abs(n * cg - grams) <= 0.20 * grams) {
-        return `${fmtCount(n)} ${pluralNoun('taza', n)} de ${ing.nv.toLowerCase()}`;
-      }
-    }
-  }
-  if (ing.pu && ing.un && grams > 0) {
-    const raw = grams / ing.pu;
-    // Cortables (se parten en fracción real: ⅓ aguacate, ¾ plátano) → fracciones finas.
-    // WHOLE_ONLY (huevo, dátil, aceituna, cereza, sardina, tortilla, tostada) → SIEMPRE entero.
-    // Resto contable (pan, pita, bagel, fruta grande cortable) → entero o medio.
-    const n = DIVISIBLE.has(ing.un)
-      ? Math.max(0.25, snapCount(raw))
-      : WHOLE_ONLY.has(ing.un)
-        ? Math.max(1, Math.round(raw))
-        : Math.max(0.5, Math.round(raw * 2) / 2);
-    // Tope de piezas por porción según lo ligera que sea la pieza: una tostada pesa 10 g,
-    // así que una porción normal son 8-12 tostadas (no gramos). Piezas pesadas (huevo,
-    // tortilla) rara vez pasan de 8. Techo por peso: hasta ~150 g de piezas.
-    const maxN = Math.max(8, Math.ceil(150 / ing.pu));
-    // Los CORTABLES (aguacate, plátano, mango…) van SIEMPRE en fracción de pieza, nunca
-    // en gramos: nadie pesa medio aguacate, lo parte a ojo. Para el resto se exige que
-    // el conteo case con los gramos (±20%), si no engañaría sobre la porción real.
-    const cortable = DIVISIBLE.has(ing.un);
-    if (n <= maxN && (cortable || Math.abs(n * ing.pu - grams) <= 0.20 * grams)) {
-      // Magaly: la pieza debe decir QUÉ es, no la unidad genérica. El dato ya trae el
-      // nombre bueno ("Tostadas horneadas", "Tortilla de maíz") pero se pintaba la
-      // unidad ("4 tostadas"), que se presta a confusión — una tostada frita y una
-      // horneada no son lo mismo. Si el nombre ya contiene la unidad, se usa el nombre.
-      // "rebanada de pan" es un CONTENEDOR, no el alimento → "3 rebanadas de pan integral".
-      if (ing.un.startsWith('rebanada')) return `${fmtCount(n)} ${pluralPhrase('rebanada', n)} de ${ing.nv.toLowerCase()}`;
-      // El resto de unidades SON el alimento → se usa su nombre real, no la unidad
-      // genérica: "10 totopos horneados", no "10 tostadas".
-      return `${fmtCount(n)} ${pluralPhrase(ing.nv, n).toLowerCase()}`;
-    }
-  }
-  return `${grams} g ${ing.nv}`;
-}
+export { portionStr };
 
 function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>): MealItem {
   const m = [dish.fixed[0], dish.fixed[1], dish.fixed[2], dish.fixed[3], dish.fixed[4]];
@@ -524,10 +585,15 @@ function mealItemFrom(dish: BancoDish, label: string, gOf: Map<BancoIng, number>
   // kcal derivado de las macros (Atwater 4/4/9), no el kcal crudo del alimento →
   // así el total cuadra con la meta (que también es Atwater) y el usuario lo verifica.
   const prot = Math.round(m[1]), fat = Math.round(m[2]), carb = Math.round(m[3]);
+  // MENÚ V1 · Bloque 5 · receta con unidad cerrada → la porción servida («4 bolitas») encabeza la descripción.
+  const f = dish.srv ? servedFactor(dish, (i) => gOf.get(i)) : null;
+  const serving = f != null ? servingLabel(dish, f) : null;
+  const desc0 = dish.ings.filter((i) => i.rol === 'principal').slice(0, 3).map((i) => i.nv).join(' · ');
   return {
     time: label,
     name: dish.nombre,
-    desc: dish.ings.filter((i) => i.rol === 'principal').slice(0, 3).map((i) => i.nv).join(' · '),
+    desc: serving ? `${serving} · ${desc0}` : desc0,
+    ...(serving ? { serving } : {}),
     img: IMG_BASE + dish.img,
     portions,
     macros: { kcal: Math.round(prot * 4 + carb * 4 + fat * 9), prot, fat, carb, fiber: Math.round(m[4]) },
@@ -557,6 +623,8 @@ function mergeItems(items: MealItem[], label: string): MealItem {
     portions: items.flatMap((i) => i.portions),
     macros,
     ings: items.flatMap((i) => i.ings ?? []),
+    // Bloque 7 · la porción servida de una receta cerrada («2 bolitas») sobrevive a la fusión con otro snack.
+    ...(items.some((i) => i.serving) ? { serving: items.map((i) => i.serving).filter(Boolean).join(' + ') } : {}),
   };
 }
 
@@ -592,13 +660,19 @@ const gateDense = (pool: BancoDish[], kcal: number): BancoDish[] =>
 
 /** Mete un snack extra al slot de snack (AM o PM) con menos items, como "2 en 1" —
  *  mergeItems junta nombres, porciones, macros Y fotos (imgs) para el card. */
-function mergeIntoSnack(meals: MealItem[], extra: MealItem): void {
-  const amIdx = meals.findIndex((m) => m.time === 'Snack AM');
-  const pmIdx = meals.findIndex((m) => m.time === 'Snack PM');
+function mergeIntoSnack(meals: MealItem[], extra: MealItem, extraIsFruit = false): boolean {
+  // CAPA 4 · con un slot de snack LIBRE, el corrector sirve un snack propio (máximo 5 tiempos) en vez de
+  // fusionar «A + B». Si hay que fusionar, nunca fruta con fruta (D3: la fruta no es relleno de kcal).
+  const free = (['Snack PM', 'Snack AM'] as const).find((sl) => !meals.some((m) => m.time === sl));
+  if (free) { meals.push({ ...extra, time: free }); return true; }
+  const fruitMeal = (m: MealItem) => { const d = BY_NAME.get(m.name.split(' + ')[0]); return !!d && isFruitSnack(d); };
+  const amIdx = meals.findIndex((m) => m.time === 'Snack AM' && !(extraIsFruit && fruitMeal(m)));
+  const pmIdx = meals.findIndex((m) => m.time === 'Snack PM' && !(extraIsFruit && fruitMeal(m)));
   const count = (i: number) => (i < 0 ? Infinity : (meals[i].ings?.length ?? 1));
   const idx = count(pmIdx) <= count(amIdx) ? pmIdx : amIdx;
-  if (idx >= 0) meals[idx] = mergeItems([meals[idx], { ...extra, time: meals[idx].time }], meals[idx].time);
-  else meals.push({ ...extra, time: 'Snack PM' });
+  if (idx < 0) return false;
+  meals[idx] = mergeItems([meals[idx], { ...extra, time: meals[idx].time }], meals[idx].time);
+  return true;
 }
 
 // ── Batido de proteína (opción del usuario) ──────────────────────────────────
@@ -608,12 +682,83 @@ function mergeIntoSnack(meals: MealItem[], extra: MealItem): void {
 // falta grasa, o sola si va justo) — por eso reduce la meta de los principales antes.
 export interface ProteinShake { slots: ('am' | 'pm')[]; type: 'regular' | 'vegana' | 'massgainer'; protG: number }
 
-/** NUTRITION-N3 · ¿es seguro prescribir este batido? El whey (regular/mass gainer) es LÁCTEO → prohibido
- *  para quien evita lácteos o es vegano. El 'vegana' siempre pasa. Sin batido → n/a (true). Puro. */
-function shakeAllowed(shake: ProteinShake | undefined, avoidCats: string[] = []): boolean {
-  if (!shake) return true;
-  if (shake.type === 'vegana') return true;                 // proteína de planta: segura
-  return !avoidCats.some((a) => /l[aá]cteo|vegan/.test(a.toLowerCase()));  // whey → fuera si evita lácteos/vegano
+/** Etiqueta de cada tipo en el texto del batido. ÚNICA fuente: la usan `shakeItem` para construirlo y
+ *  `shakeTypeOfService` para leerlo de un plan guardado (sin dos tablas que puedan divergir). */
+const SHAKE_TAG: Readonly<Record<ProteinShake['type'], string>> = { regular: '', vegana: ' (vegana)', massgainer: ' (mass gainer)' };
+/** Tipos de batido hechos de WHEY (suero de leche): contienen LÁCTEO. */
+const WHEY_SHAKES: ReadonlySet<ProteinShake['type']> = new Set(['regular', 'massgainer']);
+
+/**
+ * RESTRICCIONES · AUTORIDAD ÚNICA DEL BATIDO. ¿Es compatible este tipo de batido con las restricciones?
+ * El whey (regular / mass gainer) es lácteo → incompatible con `lacteos`. La proteína 'vegana' no tiene
+ * composición declarada en el catálogo, así que ninguna categoría la bloquea (no se inventa). Un tipo
+ * desconocido (`null`) se trata como whey: falla cerrado. Las categorías se canonizan igual que en la
+ * autoridad de restricciones; vegano/vegetariano no existen como categoría activa y no bloquean nada.
+ * La usan las dos rutas del generador, la validación final y la invalidación por endurecimiento. Puro.
+ */
+export function shakeCompatibleWith(type: ProteinShake['type'] | null, avoidCats: readonly string[] = []): boolean {
+  const avoidsDairy = avoidCats.some((a) => canonicalizeAvoidTerm(String(a)) === 'lacteos');
+  if (!avoidsDairy) return true;
+  return type !== null && !WHEY_SHAKES.has(type);
+}
+
+/** Tipos de batido que ofrece el producto, en el orden en que se muestran. */
+export const SHAKE_TYPES: readonly ProteinShake['type'][] = ['regular', 'vegana', 'massgainer'];
+
+/** Categoría que vuelve incompatible un tipo de batido (hoy solo existe la regla del whey). */
+export type ShakeBlockReason = 'lacteos';
+/** De dónde viene el bloqueo: restricción PERMANENTE o preferencia de ESTA semana. */
+export type ShakeBlockOrigin = 'strict' | 'soft';
+
+/**
+ * WEEKLY PREFERENCES SPLIT · D-WP5 · veredicto de un tipo de batido para una política (o una lista, que es
+ * todo estricto). El whey / mass gainer se bloquea con `lacteos` de CUALQUIER origen: elegir el tipo de
+ * proteína es una elección directa y visible, no un ingrediente oculto. Por eso la compatibilidad se
+ * decide sobre strict ∪ soft (`shakeCompatibleWith`), pero se CONSERVA el origen del bloqueo: permanente
+ * ('strict') si la restricción por sí sola ya lo bloquea; si no, preferencia de la semana ('soft'). Puro.
+ */
+export function shakeTypeVerdict(type: ProteinShake['type'] | null, avoid: AvoidInput | readonly string[] = []):
+  { compatible: boolean; blockedBy: ShakeBlockReason | null; origin: ShakeBlockOrigin | null } {
+  const p = toAvoidPolicy(avoid as AvoidInput);
+  if (shakeCompatibleWith(type, [...p.strict, ...p.soft])) return { compatible: true, blockedBy: null, origin: null };
+  return { compatible: false, blockedBy: 'lacteos', origin: shakeCompatibleWith(type, p.strict) ? 'soft' : 'strict' };
+}
+
+/**
+ * PROYECCIÓN PARA LA UI de la autoridad única: cada tipo con su compatibilidad para esta política.
+ * No es una segunda matriz: cada `compatible` sale de `shakeTypeVerdict` → `shakeCompatibleWith`, la misma
+ * autoridad que aplican el generador y la validación final. `origin` permite explicar el motivo. Puro.
+ */
+export function shakeTypeOptions(avoid: AvoidInput | readonly string[] = []): Array<{ type: ProteinShake['type']; compatible: boolean; blockedBy: ShakeBlockReason | null; origin: ShakeBlockOrigin | null }> {
+  return SHAKE_TYPES.map((type) => ({ type, ...shakeTypeVerdict(type, avoid) }));
+}
+
+/** Batido elegible para el plan: sin batido → n/a (true); con batido → `shakeTypeVerdict` (D-WP5: lácteos
+ *  permanente O semanal bloquea el whey). NO sustituye por otro tipo: si no es compatible, el plan va sin
+ *  batido. Puro. */
+export function shakeAllowedFor(shake: ProteinShake | undefined, avoid: AvoidInput | readonly string[] = []): boolean {
+  return !shake || shakeTypeVerdict(shake.type, avoid).compatible;
+}
+
+/** Nombre con que `shakeItem` sirve el batido. Si el corrector le fusiona un snack (`mergeIntoSnack`), el
+ *  servicio pasa a llamarse `Batido de Proteína + <snack>`: el batido SIEMPRE es la primera parte. */
+export const SHAKE_NAME = 'Batido de Proteína';
+/** ¿El nombre es el de un batido, solo o combinado? Solo por nombre: sirve para DETECTAR (falla hacia
+ *  invalidar). Para ACEPTAR un servicio como batido se exige la estructura (`classifyService`). */
+export const isShakeName = (name: unknown): boolean =>
+  name === SHAKE_NAME || (typeof name === 'string' && name.startsWith(`${SHAKE_NAME} + `));
+
+/** Tipo de un batido ya servido (plan guardado), leído de las MISMAS etiquetas con que `shakeItem` lo
+ *  escribe. Sin etiqueta = regular (whey). Solo se lee el texto PROPIO del batido —el primer segmento de
+ *  `desc` y la primera porción, que es lo que `mergeItems` conserva del batido al fusionarle un snack—:
+ *  así un snack añadido no puede cambiarle el tipo. Puro. */
+export function shakeTypeOfService(s: { desc?: unknown; portions?: unknown }): ProteinShake['type'] {
+  const ownDesc = String(s.desc ?? '').split(' · ')[0];
+  const ownPortion = Array.isArray(s.portions) ? String(s.portions[0] ?? '') : '';
+  const text = `${ownDesc} ${ownPortion}`;
+  if (text.includes(SHAKE_TAG.vegana.trim())) return 'vegana';
+  if (text.includes(SHAKE_TAG.massgainer.trim())) return 'massgainer';
+  return 'regular';
 }
 
 /** Macros de UN batido según tipo y gramos de proteína. Cada tipo rinde distinto:
@@ -626,14 +771,19 @@ export function shakeMacros(s: ProteinShake): { kcal: number; prot: number; fat:
 }
 function shakeItem(s: ProteinShake, label: string): MealItem {
   const m = shakeMacros(s);
-  const tag = s.type === 'massgainer' ? ' (mass gainer)' : s.type === 'vegana' ? ' (vegana)' : '';
+  const tag = SHAKE_TAG[s.type];
   return {
-    time: label, name: 'Batido de Proteína', desc: `${s.protG} g proteína${tag}`,
+    time: label, name: SHAKE_NAME, desc: `${s.protG} g proteína${tag}`,
     img: IMG_BASE + 'batido-de-proteina.webp', // si no existe la foto, el card la oculta solo
     portions: [`1 scoop de proteína${tag} — ${s.protG} g proteína`],
     macros: { ...m, fiber: 0 },
     ings: [{ nv: 'Proteína en polvo', g: 0, rol: 'principal' }],
   };
+}
+
+/** Slots de snack que ocupa el batido (CAPA 4: cuentan dentro de los 5 tiempos). */
+function shakeSlotsOf(shake: ProteinShake | undefined): Slot[] {
+  return shake ? shake.slots.map((sl): Slot => (sl === 'am' ? 'Snack AM' : 'Snack PM')) : [];
 }
 
 /** Coloca el batido en el/los snack(s) elegido(s), reemplazando el snack normal de
@@ -651,7 +801,7 @@ function applyShake(meals: MealItem[], shake: ProteinShake): void {
  *  el día, agrega UN solo snack real de ese macro. La proteína NO se corrige aquí (la
  *  cargan los principales — subir gramos de una comida, no apilar snacks). Rota en la
  *  semana (weekUsed) para no repetir el mismo. RESPETA alergias. */
-function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: string[] = [], weekUsed?: Set<string>): void {
+function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: AvoidInput = [], weekUsed?: Map<string, number>): void {
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
   const cur = macroSum(meals);
   if (cur[0] >= target.kcal * 1.02) return;            // sin espacio calórico
@@ -659,32 +809,188 @@ function topUpMeals(meals: MealItem[], target: PlanTarget, avoidCats: string[] =
   const rf = rel(2), rc = rel(3);                      // solo grasa/carbo (proteína = principales)
   const worst = Math.max(rf, rc);
   if (worst <= 0.05) return;                            // hueco chico → se deja (nada de apilar)
-  const avoid = makeAvoidFilter(avoidCats);
+  const avoid = makePolicyFilter(avoidCats);   // MB3 · strict + soft
   const [cls, idx]: ['F' | 'C', number] = rf === worst ? ['F', 2] : ['C', 3];
-  const pool = gateDense(SNACK_BY_MACRO[cls].filter((d) => !avoid(d)), target.kcal); // nunca un alérgeno; densos solo si el requerimiento es alto
+  // CAPA 4 · nunca un alérgeno; un denso solo si su porción MÍNIMA cabe en el hueco (antes: umbral de 2800 kcal).
+  const gapKcal = (T[idx] - cur[idx]) * (idx === 2 ? 9 : 4);
+  const pool = SNACK_BY_MACRO[cls].filter((d) => !avoid(d) && dishKcalRange(d)[0] <= gapKcal * (1 + SNACK_FIT_TOL));
   const dayNames = new Set(meals.map((m) => m.name));
-  // Prefiere uno NO usado en la semana ni hoy; si no hay, el menos repetido.
-  const dish = pool.find((d) => !weekUsed?.has(d.nombre) && ![...dayNames].some((n) => n.includes(d.nombre)))
-    ?? pool.find((d) => ![...dayNames].some((n) => n.includes(d.nombre)));
+  // Prefiere uno NO usado en la semana ni hoy; si no hay, el MENOS repetido. Bloque 6 · antes el «menos repetido»
+  // era en realidad el primero del pool (medido: la misma fruta 7/7 días); ahora cuenta usos (empate → orden del pool).
+  const libres = pool.filter((d) => ![...dayNames].some((n) => n.includes(d.nombre)));
+  const dish = libres.map((d, j) => ({ d, j, c: weekUsed?.get(d.nombre) ?? 0 })).sort((a, b) => a.c - b.c || a.j - b.j)[0]?.d;
   if (!dish) return;
   const slotT = [0, 0, 0, 0];
   slotT[idx] = T[idx] - cur[idx];
   const item = solveSlot([dish], 'Snack', slotT)[0];
   if (!item?.macros || item.macros.kcal < 20 || cur[0] + item.macros.kcal > target.kcal * 1.05) return;
-  mergeIntoSnack(meals, item);
-  weekUsed?.add(dish.nombre);
+  if (mergeIntoSnack(meals, item, isFruitSnack(dish))) weekUsed?.set(dish.nombre, (weekUsed.get(dish.nombre) ?? 0) + 1);
 }
 
 // Busca el mejor conjunto de `n` platillos de `pool` para pegar el target de ESTE
-// tiempo, y devuelve sus MealItem (ya ajustados). needVeg exige guarnición (comida/cena).
+// tiempo, y devuelve sus MealItem (ya ajustados).
+// (Este comentario describía un parámetro `needVeg` que exigía guarnición y que NUNCA
+//  existió como código: la regla se implementó como filtro de pool. Retirada por la
+//  Decisión 06, se limpia la referencia para que no engañe.)
+// ── MENÚ V1 · Bloque 6 · VARIEDAD SEMANAL (misma política en CODE e IA) ─────────────────────────────────────
+// Antes: `used` era binario (repetir 2 o 5 veces costaba igual), no existía «ayer», y las fases relajadas ignoraban
+// la variedad por completo (medido: el mismo platillo hasta 7/7 días). Ahora la repetición se PENALIZA (nunca se
+// excluye: si el pool compatible es chico, repetir sigue siendo posible) y la penalización se deriva del POOL:
+//   · `fair` = ceil(7 / pool): cuántas veces le «toca» a cada platillo de ese tiempo si se reparte parejo;
+//   · hasta `fair` cada uso cuesta poco (50); pasar de su parte cuesta fuerte (+250 por uso extra);
+//   · servirlo el día anterior cuesta +150 (no Salmón Bowl lunes-martes-miércoles);
+//   · compartir el ingrediente principal con las principales de ayer cuesta +20 por ingrediente.
+// Solo ORDENA candidatos que ya pasaron la banda de exactitud del tiempo: la variedad nunca compra imprecisión ni
+// toca restricciones (el pool ya llega filtrado).
+export interface VarietyState { count: Map<string, number>; prev: Set<string>; prevIng: Set<string> }
+export const newVarietyState = (): VarietyState => ({ count: new Map(), prev: new Set(), prevIng: new Set() });
+const cloneVariety = (v: VarietyState): VarietyState => ({ count: new Map(v.count), prev: new Set(v.prev), prevIng: new Set(v.prevIng) });
+export const REPEAT_BASE = 50, REPEAT_OVER_FAIR = 250, REPEAT_CONSECUTIVE = 150, REPEAT_PREV_ING = 20;
+/** Penalización de servir un platillo que ya salió `count` veces esta semana (y ayer si `consecutive`), en un tiempo
+ *  cuyo pool compatible tiene `poolSize` platillos. Pura. */
+export function repetitionPenalty(count: number, consecutive: boolean, poolSize: number): number {
+  const fair = Math.max(1, Math.ceil(7 / Math.max(1, poolSize)));
+  return REPEAT_BASE * count + (count >= fair ? REPEAT_OVER_FAIR * (count - fair + 1) : 0) + (consecutive ? REPEAT_CONSECUTIVE : 0);
+}
+/** Al cerrar un día: lo servido hoy pasa a ser «ayer». */
+function rollVarietyDay(v: VarietyState, meals: MealItem[]): void {
+  v.prev = new Set(meals.flatMap((m) => m.name.split(' + ')));
+  v.prevIng = new Set(meals.filter((m) => !m.time.startsWith('Snack')).flatMap((m) => { const d = BY_NAME.get(m.name); return d ? dishPrincKeys(d) : []; }));
+}
+
+// ── MENÚ V1 · Bloque 7 · AUTORIDAD DIARIA DE MACROS ──────────────────────────────────────────────────────────
+// Las metas por tiempo (`slotTargets`) son GUÍAS BLANDAS para elegir platillos; la autoridad nutricional final es el
+// DÍA COMPLETO (`topUpDay` reajusta juntas las principales contra la meta diaria menos lo que aportan los snacks, y
+// `buildWeeklyPlan` elige el día por su error diario). Las bandas de abajo son una HEURÍSTICA DE ELEGIBILIDAD (qué
+// platillos se consideran para un tiempo), no una tolerancia nutricional por comida. Bloque 6 midió ×2 sin perder
+// exactitud diaria; ×3 se rechazó (hasta 20 % de error diario de proteína).
+export const SLOT_BAND = 24, SLOT_BAND_SMALL_POOL = 44, SLOT_BAND_VARIETY = 40;
+/** Encaje máximo (`slotFit`) para que un platillo entre al pool de la IA: 0.35 × 2 (misma heurística, Bloque 7). */
+export const AI_SLOT_FIT = 0.70;
+/** Bloque 7 · un snack ya NO tiene que parecerse al hueco de macros que dejaron las principales (casi siempre carbo
+ *  puro): basta con que el DÍA lo pueda compensar. Se mide de verdad: con el snack servido, las principales elegidas
+ *  se resuelven JUNTAS contra la meta diaria (lo mismo que hará `topUpDay`) y cuenta el error diario que queda. Una
+ *  «caja» por macro independiente resultó optimista (QA: snacks grasos que las principales no podían absorber). */
+export interface SnackDayCtx {
+  T: number[]; mains: BancoDish[];
+  /** Macros de los snacks ya elegidos hoy (el 2.º snack cuenta el 1.º). */
+  other: number[];
+  /** kcal del hueco de este snack (`snackPlan`) y cuánto pueden encoger las principales para hacerle lugar. */
+  holeKcal: number; absorb: number;
+  /** Tope de tamaño: ¾ de la principal más chica (un snack nunca es una comida). */
+  maxKcal: number;
+}
+/** kcal mínimas de las principales (todas en su piso): lo que pueden encoger para hacerle lugar a un snack. */
+export function mainsMinKcal(mains: BancoDish[]): number {
+  return mains.reduce((a, d) => a + dishMinMacros(d)[0], 0);
+}
+/** ¿El snack tiene un tamaño de snack para este hueco, contando lo que las principales pueden encoger? Puro. */
+export function snackFitsDay(d: BancoDish, c: SnackDayCtx): boolean {
+  const [lo, hi] = dishKcalRange(d);
+  return lo <= Math.min(c.maxKcal, c.holeKcal * (1 + SNACK_FIT_TOL) + c.absorb) && hi >= c.holeKcal * (1 - SNACK_FIT_TOL);
+}
+/** Meta de un snack con SU PROPIO perfil de receta, del tamaño del hueco (no el perfil del hueco). Pura. */
+export function snackProfileTarget(d: BancoDish, kcal: number): number[] {
+  const b = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]];
+  for (const i of d.ings) if (i.rol === 'principal' && i.a) for (let k = 0; k < 4; k++) b[k] += i.a[k] * i.g0;
+  const bk = 4 * b[1] + 9 * b[2] + 4 * b[3];
+  const f = bk > 0 ? kcal / bk : 1;
+  return [kcal, b[1] * f, b[2] * f, b[3] * f];
+}
+/** Error DIARIO (peor macro P/G/C, %) si se sirve un snack con macros `m`: las principales del día se resuelven juntas
+ *  contra la meta con ese snack (y los ya elegidos) fijos, dentro de sus límites — como `topUpDay`. Pura. */
+// Bloque 7B · memo ACOTADO a nivel de módulo para cálculos puros que se repiten idénticos entre intentos y días (la
+// clave lleva los nombres y los valores numéricos EXACTOS de las entradas: misma clave ⇒ mismo resultado). Se vacía al
+// llenarse para no crecer sin límite.
+const MEMO_MAX = 200_000;
+function boundedMemo<V>(): { get: (k: string) => V | undefined; set: (k: string, v: V) => void } {
+  let m = new Map<string, V>();
+  return { get: (k) => m.get(k), set: (k, v) => { if (m.size >= MEMO_MAX) m = new Map(); m.set(k, v); } };
+}
+const _dayErrMemo = boundedMemo<number>();
+export function dayCompError(m: number[], c: SnackDayCtx): number {
+  const key = `${c.mains.map((d) => d.nombre).join('|')}#${c.T.join(',')}#${c.other.join(',')}#${m.join(',')}`;
+  const hit = _dayErrMemo.get(key);
+  if (hit !== undefined) return hit;
+  const v = dayCompErrorRaw(m, c);
+  _dayErrMemo.set(key, v);
+  return v;
+}
+function dayCompErrorRaw(m: number[], c: SnackDayCtx): number {
+  const { fixed, vars } = prep(c.mains);
+  for (let k = 1; k < 4; k++) fixed[k] += c.other[k] + m[k];
+  fixed[0] += 4 * (c.other[1] + m[1]) + 9 * (c.other[2] + m[2]) + 4 * (c.other[3] + m[3]);
+  solve(fixed, vars, c.T, 80);
+  // Un snack nunca es una comida: ¾ de la principal más chica se verifica DESPUÉS de compensar (las principales
+  // encogen para hacerle lugar). QA: medido antes de compensar, 41 snacks quedaban más grandes que una principal.
+  const mainKcal = c.mains.map((d) => d.fixed[0] + vars.filter((v) => d.ings.includes(v.ing)).reduce((a, v) => a + v.a[0] * v.g, 0));
+  const snackKcal = 4 * m[1] + 9 * m[2] + 4 * m[3];
+  const tooBig = snackKcal > SNACK_MAX_VS_MAIN * Math.min(...mainKcal) ? SNACK_TOO_BIG : 0;
+  return errMax(fixed, vars, c.T) + tooBig;
+}
+/** Bloque 7B · COTA INFERIOR barata de `dayCompError` (mismo valor o menor, nunca mayor). Con los límites DUROS de
+ *  las principales (sueltas: [lo, hi] de `ingBounds`; bloques: su factor válido mínimo/máximo) cada macro del día cae
+ *  en un intervalo; su distancia a la meta acota el error. Y si el snack ya supera ¾ del MÁXIMO de la principal más
+ *  chica, el castigo de tamaño es seguro. Sirve para descartar, sin resolver, snacks que no pueden entrar en la banda. */
+export function dayCompLowerBound(m: number[], c: SnackDayCtx): number {
+  const b = mainsHardBox(c);
+  let e = 0;
+  for (let k = 1; k < 4; k++) {
+    const base = c.other[k] + m[k];
+    const lo = b.lo[k] + base, hi = b.hi[k] + base;
+    e = Math.max(e, Math.max(0, lo - c.T[k], c.T[k] - hi) / Math.max(c.T[k], 1));
+  }
+  const snackKcal = 4 * m[1] + 9 * m[2] + 4 * m[3];
+  return e * 100 + (snackKcal > SNACK_MAX_VS_MAIN * b.minMainMaxKcal ? SNACK_TOO_BIG : 0);
+}
+const _boxMemo = new WeakMap<SnackDayCtx, { lo: number[]; hi: number[]; minMainMaxKcal: number }>();
+function mainsHardBox(c: SnackDayCtx): { lo: number[]; hi: number[]; minMainMaxKcal: number } {
+  let b = _boxMemo.get(c);
+  if (b) return b;
+  const lo = [0, 0, 0, 0], hi = [0, 0, 0, 0];
+  const mainMax: number[] = [];
+  for (const d of c.mains) {
+    const vars = prep([d]).vars;
+    const dl = [d.fixed[0], d.fixed[1], d.fixed[2], d.fixed[3]], dh = [...dl];
+    if (vars.some((v) => v.blk !== null)) {
+      // Bloque: g = g0·s, con s entre el mínimo (0.5 o su paso válido menor) y el máximo que dejan sus techos.
+      const sMax = blockSMax(vars);
+      const st = d.steps ? validSteps(d.steps, sMax) : null;
+      const sLo = st ? Math.min(...st) : 0.5, sHi = st ? Math.max(...st) : sMax;
+      for (const v of vars) for (let k = 0; k < 4; k++) { dl[k] += v.a[k] * v.g0 * sLo; dh[k] += v.a[k] * v.g0 * sHi; }
+    } else {
+      for (const v of vars) for (let k = 0; k < 4; k++) { dl[k] += v.a[k] * v.lo; dh[k] += v.a[k] * v.hi; }
+    }
+    for (let k = 0; k < 4; k++) { lo[k] += dl[k]; hi[k] += dh[k]; }
+    mainMax.push(dh[0]);
+  }
+  b = { lo, hi, minMainMaxKcal: Math.min(...mainMax) };
+  _boxMemo.set(c, b);
+  return b;
+}
+/** Error añadido a un snack que, compensado el día, quedaría más grande que ¾ de la principal más chica (lo saca de la banda). */
+const SNACK_TOO_BIG = 100;
+/** Costo (en puntos de error diario) de un snack que, ya cuadrado el día, supera ¾ de la principal más chica. */
+const SNACK_OVERSIZE_COST = 0.03;
+/** Banda de un snack compensable: dentro de 1.5 puntos del mejor error diario alcanzable (y nunca exige < 2 %). */
+export const SNACK_DAY_BAND = 2;
+/** v41 · mejora mínima (puntos de error diario) para cambiar un snack de la IA por uno del pool. */
+export const AI_SNACK_POOL_MARGIN = 1.5;
+
+const _fitMemo = boundedMemo<{ e: number; fib: number }>();
 // merge=true → devuelve UNA comida combinada (snacks: los dos dentro del mismo).
 function fitSlot(
   pool: BancoDish[], label: string, target: number[], n: number,
   rng: () => number, trials: number,
   used: Set<string>, usedToday: Set<string>, usedTodayIng: Set<string>, craving: string[],
-  ingFreq: Map<string, number>, merge = false,
+  ingFreq: Map<string, number>, merge = false, vs?: VarietyState, snackDay?: SnackDayCtx,
 ): MealItem[] {
-  // El pool ya viene filtrado por alergia (buildDay) → aquí no se cuela ningún alérgeno.
+  // El pool ya viene filtrado por alergia Y por tiempo (buildDay / buildDayWithFixed) →
+  // aquí no se cuela ningún alérgeno ni un platillo de otro tiempo.
+  // P0-03 · un pool vacío significa que no hay nada elegible para este tiempo. Antes
+  // `pick` sobre un array vacío devolvía undefined y reventaba con un TypeError opaco;
+  // ahora se dice qué pasó. Quien llama ya debería haberlo detectado: esto es la red.
+  if (!pool.length) throw new NoEligibleDishesError(label, []);
   const princKeys = (d: BancoDish) => d.ings.filter((i) => i.rol === 'principal').map((i) => ingKey(i.nv));
   // pickN nunca junta en el MISMO slot dos platillos que compartan ingrediente principal
   // (ej. "zanahoria y pepino con hummus" + "bastones de zanahoria" → el snack se repetía).
@@ -693,12 +999,84 @@ function fitSlot(
   const isSnack = label.startsWith('Snack');
   // NUTRITION-N2 · meta calórica del slot (el target llega como [_,P,F,C]; kcal se deriva por Atwater).
   const tgtKcal = 4 * target[1] + 9 * target[2] + 4 * target[3];
-  const cands: { dishes: BancoDish[]; e: number; used: number; craves: number; ingScore: number; dayIng: number; fib: number; bucket: number }[] = [];
+  const cands: { dishes: BancoDish[]; e: number; used: number; rep: number; craves: number; ingScore: number; dayIng: number; fib: number; bucket: number }[] = [];
+  // Bloque 6 · costo de repetición de un platillo (sin estado de semana: el binario histórico de `used`).
+  // (memo por llamada: el estado de la semana no cambia mientras se elige este tiempo)
+  const repMemo = new Map<BancoDish, number>();
+  const dayErrMemo = new Map<BancoDish, { e: number; t: number[] }>();   // Bloque 7 · error diario + porción elegida, por platillo
+  const repOf = (d: BancoDish) => {
+    let r = repMemo.get(d);
+    if (r === undefined) {
+      r = vs
+        ? repetitionPenalty(vs.count.get(d.nombre) ?? 0, vs.prev.has(d.nombre), pool.length) + (vs.prevIng.size ? REPEAT_PREV_ING * dishPrincKeys(d).filter((k) => vs.prevIng.has(k)).length : 0)
+        : (used.has(d.nombre) ? REPEAT_BASE : 0);
+      repMemo.set(d, r);
+    }
+    return r;
+  };
+  // Bloque 7B · rendimiento sin cambiar resultados: el encaje de una combinación de platillos depende solo de ella
+  // (meta, pool y estado de la semana no cambian dentro de esta llamada), y con ~90 intentos al azar sobre un pool de
+  // ~50 la misma combinación se resolvía varias veces. Se resuelve UNA vez por combinación (`pickN` sigue consumiendo
+  // el mismo azar, así que los candidatos y el orden no cambian).
+  const trialMemo = new Map<string, { e: number; fib: number }>();
+  // Mejor error diario visto: un snack cuya COTA INFERIOR ya queda fuera de max(banda, mejor + 1.5) no puede entrar
+  // en la banda final (que solo puede estrecharse) → no hace falta resolver el día con él.
+  let bestDayE = Infinity;
   for (let t = 0; t < trials; t++) {
     const dishes = pickN();
-    const { fixed, vars } = prep(dishes);
-    solve(fixed, vars, target, 100);
-    const e = errMax(fixed, vars, target);
+    const key = dishes.map((d) => d.nombre).join('|');
+    const memoHit = trialMemo.get(key);
+    if (memoHit) {
+      const craves0 = craving.length ? dishes.filter((d) => dishMatchesAny(d, craving) && (cravedCount.get(d.nombre) ?? 0) < CRAVED_MAX).length : 0;
+      let ingScore0 = 0, dayIng0 = 0;
+      for (const d of dishes) for (const k of princKeys(d)) { ingScore0 += ingFreq.get(k) ?? 0; if (usedTodayIng.has(k)) dayIng0++; }
+      cands.push({ dishes, e: memoHit.e, used: dishes.filter((d) => used.has(d.nombre)).length, rep: dishes.reduce((a, d) => a + repOf(d), 0), craves: craves0, ingScore: ingScore0, dayIng: dayIng0, fib: memoHit.fib, bucket: bucketOf(dishes) });
+      continue;
+    }
+    // Sin modelo diario, el encaje depende solo de (platillos, meta, si es snack): idéntico entre intentos y días.
+    const gkey = snackDay ? '' : `${isSnack ? 1 : 0}#${key}#${target.join(',')}`;
+    const ghit = snackDay ? undefined : _fitMemo.get(gkey);
+    if (ghit) {
+      const craves0 = craving.length ? dishes.filter((d) => dishMatchesAny(d, craving) && (cravedCount.get(d.nombre) ?? 0) < CRAVED_MAX).length : 0;
+      let ingScore0 = 0, dayIng0 = 0;
+      for (const d of dishes) for (const k of princKeys(d)) { ingScore0 += ingFreq.get(k) ?? 0; if (usedTodayIng.has(k)) dayIng0++; }
+      trialMemo.set(key, ghit);
+      cands.push({ dishes, e: ghit.e, used: dishes.filter((d) => used.has(d.nombre)).length, rep: dishes.reduce((a, d) => a + repOf(d), 0), craves: craves0, ingScore: ingScore0, dayIng: dayIng0, fib: ghit.fib, bucket: bucketOf(dishes) });
+      continue;
+    }
+    const { fixed, vars } = prep(dishes, isSnack);   // CAPA 4 · un snack nunca se estira más allá de una porción normal
+    // Bloque 7 · snack con autoridad diaria: se dimensiona con SU perfil al tamaño del hueco y se juzga por si el día
+    // lo compensa (no por parecerse al hueco).
+    // Dos porciones posibles: con SU perfil al tamaño del hueco, o inclinada hacia el perfil del hueco (la de siempre,
+    // dentro de su porción normal). Se queda la que deja MEJOR el día: el modelo diario nunca puede quedar peor que el
+    // anterior (QA: con solo el perfil propio, los días sin carbo disponible en las principales quedaban cortos).
+    let e: number;
+    if (snackDay && dishes.length === 1) {
+      let hit = dayErrMemo.get(dishes[0]);
+      if (!hit) {
+        const macrosWith = (t: number[]) => {
+          const p2 = prep(dishes, true); solve(p2.fixed, p2.vars, t, 100);
+          const m = [p2.fixed[0], p2.fixed[1], p2.fixed[2], p2.fixed[3]];
+          for (const v of p2.vars) for (let k = 1; k < 4; k++) m[k] += v.a[k] * v.g;
+          return m;
+        };
+        const tProf = snackProfileTarget(dishes[0], snackDay.holeKcal);
+        const mProf = macrosWith(tProf), mHole = macrosWith(target);
+        const cut = Math.max(SNACK_DAY_BAND, bestDayE + 1.5);
+        const lbProf = dayCompLowerBound(mProf, snackDay), lbHole = dayCompLowerBound(mHole, snackDay);
+        // Cota inferior fuera de la banda → error real también fuera: se registra la cota (nunca entra ni es el mínimo).
+        const eProf = lbProf > cut ? lbProf : dayCompError(mProf, snackDay);
+        const eHole = lbHole > cut ? lbHole : dayCompError(mHole, snackDay);
+        hit = eProf <= eHole ? { e: eProf, t: tProf } : { e: eHole, t: target };
+        dayErrMemo.set(dishes[0], hit);
+        if (hit.e < bestDayE) bestDayE = hit.e;
+      }
+      e = hit.e;
+      solve(fixed, vars, hit.t, 100);
+    } else {
+      solve(fixed, vars, target, 100);
+      e = isSnack ? errSnack(fixed, vars, target) : errMax(fixed, vars, target);
+    }
     // Antojo cuenta solo si el platillo aún no llegó al tope (2) → sale 1-2 veces, no más.
     const craves = craving.length ? dishes.filter((d) => dishMatchesAny(d, craving) && (cravedCount.get(d.nombre) ?? 0) < CRAVED_MAX).length : 0;
     // ingScore = repetición en la SEMANA; dayIng = ingrediente principal ya usado HOY
@@ -710,6 +1088,12 @@ function fitSlot(
     // pasar de una porción PREFERIDA? Si su capacidad preferida queda corta, la única forma de cerrar sería
     // inflar un ingrediente (fruta) hacia el hardMax → snack humanamente incómodo. La señal manda la selección
     // (un compuesto que cabe le gana a un fruit-only que se estiraría). Cubetas para NO borrar la variedad.
+    const bucket = bucketOf(dishes);
+    trialMemo.set(key, { e, fib });
+    if (!snackDay) _fitMemo.set(gkey, { e, fib });
+    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length, rep: dishes.reduce((a, d) => a + repOf(d), 0), craves, ingScore, dayIng, fib, bucket });
+  }
+  function bucketOf(dishes: BancoDish[]): number {
     let bucket = 0;
     if (isSnack && tgtKcal > 0) {
       let prefKcal = 0, prefC = 0;
@@ -719,11 +1103,12 @@ function fitSlot(
       // el peor de los dos → un compuesto con más capacidad de carbo (yogur+granola, plátano+crema) le gana
       // a fruta+nueces que dejaría la fruta en el hardMax para cerrar el carbo.
       const dKcal = (tgtKcal - prefKcal) / tgtKcal;
-      const dCarb = target[3] > 4 ? (target[3] - prefC) / target[3] : 0;
+      // Bloque 7 · con autoridad diaria el snack ya no persigue el carbo del hueco: solo cuenta el tamaño.
+      const dCarb = !snackDay && target[3] > 4 ? (target[3] - prefC) / target[3] : 0;
       const pressure = Math.max(0, dKcal, dCarb);
       bucket = pressure <= 0.12 ? 0 : pressure <= 0.30 ? 1 : 2;   // cabe / estirado / severo
     }
-    cands.push({ dishes, e, used: dishes.filter((d) => used.has(d.nombre)).length, craves, ingScore, dayIng, fib, bucket });
+    return bucket;
   }
   // Aceptables = los que pegan razonable (error ≤ 12%; holgura porque cada tiempo es ~¼
   // del día). Entre ellos: 1) ANTOJO, 2) NO repetir ingrediente el mismo día, 3) variedad
@@ -735,16 +1120,29 @@ function fitSlot(
   // Snacks: banda MUY ancha (son ~5-10% del día → el error ahí casi no mueve el total,
   // y lo que importa es la VARIEDAD). Así caben fruta, nueces y yogurt por igual y el
   // score de variedad (used/ingFreq) los rota en vez de repetir el mismo a diario.
-  const cap = isSnack
-    ? Math.max(50, minE + 35)
+  // CAPA 4 · un snack ya tiene el tamaño de un hueco REAL (antes era un 5–7 % fijo del día): la banda se
+  // estrecha para que su PERFIL de macros cuadre con lo que falta (un hueco de carbo/grasa no se llena con
+  // un snack de proteína que luego se pasa del día). Sigue siendo más ancha que la de las principales.
+  const cap = snackDay
+    ? Math.max(SNACK_DAY_BAND, minE + 1.5)
+    : isSnack
+    ? Math.max(25, minE + 12)
     : merge
     ? Math.max(30, minE + 12)
-    : (pool.length < 30 ? Math.max(22, minE + 8) : Math.max(12, minE + 2));
-  const acceptable = cands.filter((c) => c.e <= cap);
+    : (pool.length < 30 ? Math.max(SLOT_BAND_SMALL_POOL, minE + 8) : Math.max(SLOT_BAND, minE + 2));
+  let acceptable = cands.filter((c) => c.e <= cap);
+  // CAPA 4 · VARIEDAD sin perder exactitud: si TODO lo que entra en la banda ya se sirvió esta semana, la banda de
+  // una principal se abre (≤ 20 %) para que entre otro platillo. Con metas altas y muy cargadas en carbo la banda
+  // estrecha la cumplía UN solo platillo y se servía los 7 días; el cuadre del día (`topUpDay`) cierra la meta.
+  if (!isSnack && !merge && acceptable.every((c) => c.used > 0)) {
+    const wider = cands.filter((c) => c.e <= Math.max(SLOT_BAND_VARIETY, minE + 6) && c.used === 0);
+    if (wider.length) acceptable = wider;
+  }
   // Un solo score de variedad: platillo repetido en la semana (50) > ingrediente repetido
   // hoy (30). El ANTOJO es un BONO (-55) que NO manda absoluto: el platillo antojado sale
   // 1-2 veces y luego la penalización semanal (used) deja que rote — no las 7 cenas iguales.
-  const vscore = (c: typeof acceptable[number]) => c.used * 50 + c.dayIng * 30 + c.ingScore - c.craves * 55;
+  // Bloque 6 · `rep` sustituye al binario `used * 50` (ver repetitionPenalty).
+  const vscore = (c: typeof acceptable[number]) => c.rep + c.dayIng * 30 + c.ingScore - c.craves * 55;
   // NUTRITION-N2 · en SNACKS la PLAUSIBILIDAD DE PORCIÓN manda sobre variedad/antojo: primero por cubeta de
   // presión (cabe humanamente < estirado < severo), y DENTRO de cada cubeta el orden histórico intacto
   // (variedad → fibra → ajuste). Fail-closed: si todo el pool es severo (restricciones), igual sale el mejor
@@ -758,11 +1156,12 @@ function fitSlot(
   const dishes = acceptable[0].dishes;
   for (const d of dishes) {
     used.add(d.nombre); usedToday.add(d.nombre);
+    if (vs) vs.count.set(d.nombre, (vs.count.get(d.nombre) ?? 0) + 1);
     if (craving.length && dishMatchesAny(d, craving)) cravedCount.set(d.nombre, (cravedCount.get(d.nombre) ?? 0) + 1);
     for (const k of princKeys(d)) { ingFreq.set(k, (ingFreq.get(k) ?? 0) + 1); usedTodayIng.add(k); }
   }
-  const { fixed, vars } = prep(dishes);
-  solve(fixed, vars, target, 220);
+  const { fixed, vars } = prep(dishes, isSnack);
+  solve(fixed, vars, snackDay && dishes.length === 1 ? (dayErrMemo.get(dishes[0])?.t ?? target) : target, 220);
   void fixed;
   const gOf = new Map<BancoIng, number>();
   for (const v of vars) gOf.set(v.ing, v.g);
@@ -866,6 +1265,20 @@ function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
       v.g = Math.max(v.ing.pu, Math.round(v.g / v.ing.pu) * v.ing.pu);
       v.lo = v.g; v.hi = v.g;   // congelado: ya no lo mueve el re-solve
       fijado = true;
+      continue;
+    }
+    // MENÚ V1 · Bloque 4 · D4 · el PAN (rebanada entera; pita / bagel / thin / baguette en medias) se sirve en su
+    // unidad natural: «½ bagel», no «29 g bagel». Solo si el paso cae dentro de los límites del ingrediente; si no,
+    // se queda continuo (y el display cae a gramos redondeados).
+    const step = servedPieceStep(v.ing);
+    if (step && v.blk === null && /\bpan\b|bagel|pita|baguette/i.test(v.ing.nv)) {
+      const cands = [Math.round(v.g / step), Math.floor(v.g / step), Math.ceil(v.g / step)].map((k) => k * step)
+        .filter((x) => x > 0 && x >= v.lo - 1e-6 && x <= v.hi + 1e-6);
+      if (cands.length) {
+        v.g = cands.reduce((a, b) => (Math.abs(b - v.g) < Math.abs(a - v.g) ? b : a));
+        v.lo = v.g; v.hi = v.g;
+        fijado = true;
+      }
     }
   }
   if (fijado) solve(fixed, vars, target, 300);   // lo continuo absorbe el redondeo
@@ -879,17 +1292,198 @@ function topUpDay(meals: MealItem[], T: number[]): MealItem[] {
   return meals;
 }
 
-function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>, relax = 0): DayPlan {
-  const nSnack = T[0] > 2200 ? 2 : 1; // atleta: combina 2 snacks por slot
-  const MT = mealTargets(T);
-  // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno). Si un tiempo se
-  // queda sin opciones (varias alergias juntas), JAMÁS cae al alérgeno: usa cualquier
-  // platillo compatible del banco (una comida sirve de desayuno). Solo si NADA en las 175
-  // recetas cumple (imposible en la práctica) usa el pool para no romper.
-  const anyCompliant = BANCO.filter((d) => !avoid(d));
-  const clean = (pool: BancoDish[]) => {
+// ═════════════════════════════════════════════════════════════════════════════
+// MENÚ HSC V1 · CAPA 4 V1 · 3 PRINCIPALES + 0–2 SNACKS (máximo 5 tiempos)
+//
+// Ya no hay «siempre 5 comidas» ni un porcentaje fijo por snack. El día se arma con las 3 principales y
+// se mide cuánto DAN sin hacerse demasiado grandes: su capacidad con cada ingrediente dentro de su techo
+// (`max_g` del banco, PIECE_MAX/GRAM_MAX) y de su PORCIÓN NORMAL (`preferredMaxG`). Lo que no cabe ahí es
+// lo único que se lleva a snacks:
+//   · si las principales cubren la meta → 0 snacks;
+//   · si falta → 1 snack del tamaño de lo que falta; si un solo snack razonable no alcanza → 2;
+//   · el batido ocupa su propio slot de snack (cuenta en los 5 tiempos).
+// Un snack es UN platillo del banco servido a porción normal, y solo entra si de verdad tiene ese tamaño:
+// la fruta sola solo cabe en snacks chicos (su porción normal es chica) y los densos (bolitas, barritas)
+// entran por necesidad real, cuando su porción mínima cabe en el hueco — ya no por un umbral de 2800 kcal.
+// Nada de esto afloja un techo: las kcal altas se resuelven con más tiempos, nunca rompiendo `max_g`.
+// ═════════════════════════════════════════════════════════════════════════════
+// ── MENÚ V1 · BLOQUE 3B · INSUFFICIENT_MENU_CAPACITY (diagnóstico interno, no cambia el plan) ──────────────
+/** Umbral PROVISIONAL de energía (±5 % de kcal). Estar dentro NO hace válido al plan: macros, proteína,
+ *  composición, porciones, calidad y variedad se revisan aparte. */
+export const MENU_CAPACITY_KCAL_TOL = 0.05;
+/** Tolerancia blanda superior de proteína (D2: meta +10 %). Por encima, es un problema de capacidad del banco. */
+export const PROTEIN_SOFT_OVER = 0.10;
+/** MENÚ V1 · Bloque 5 · RECIPE_CAPACITY_LIMIT: el día quedó fuera de ±5 % y una receta CERRADA servida ya está en su
+ *  porción válida extrema en esa dirección (no puede crecer / encoger sin deformarse). Diagnóstico: no cambia el plan. */
+export function recipeLimits(day: DayPlan, T: number[]): RecipeCapacityLimit[] {
+  const kcal = day.meals.reduce((a, m) => a + (m.macros?.kcal ?? 0), 0);
+  const gap = Math.round(T[0] - kcal);
+  if (Math.abs(gap) <= MENU_CAPACITY_KCAL_TOL * T[0]) return [];
+  const out: RecipeCapacityLimit[] = [];
+  for (const m of day.meals) for (const part of m.name.split(' + ')) {
+    const d = BANCO.find((x) => x.nombre === part);
+    if (!d?.cr || !d.steps) continue;
+    const f = servedFactor(d, (i) => { const g = m.ings?.find((x) => x.nv === i.nv)?.g; return typeof g === 'number' ? g : undefined; });
+    if (f == null) continue;
+    const { vars } = prep([d], d.tiempo === 'Snack');
+    const st = validSteps(d.steps, blockSMax(vars));
+    const edge = gap > 0 ? Math.max(...st) : Math.min(...st);
+    if (Math.abs(f - edge) > 0.02) continue;     // aún tenía margen: el hueco no es de esta receta
+    const edgeKcal = Math.round(closedRecipeMacros(d, gap > 0 ? 'max' : 'min')[0]);
+    const served = Math.round(d.fixed[0] + vars.reduce((a, v) => a + v.a[0] * v.g0 * f, 0));
+    out.push({ status: 'RECIPE_CAPACITY_LIMIT', recipe: d.nombre, slot: m.time, target: served + gap, served,
+      maxValid: servingLabel(d, edge) ?? (st.length === 1 ? 'porción única de la receta' : `${edge}× receta`), maxValidKcal: edgeKcal, gap });
+  }
+  return out;
+}
+
+function capacityIssue(day: DayPlan, T: number[], avoidIn: AvoidInput | undefined, avoid: (d: BancoDish) => boolean, poolSize: Record<string, number>): MenuCapacityIssue | undefined {
+  const r = [0, 0, 0, 0];
+  for (const m of day.meals) { r[1] += m.macros?.prot ?? 0; r[2] += m.macros?.fat ?? 0; r[3] += m.macros?.carb ?? 0; }
+  r[0] = 4 * r[1] + 9 * r[2] + 4 * r[3];
+  const kErr = Math.abs(r[0] - T[0]) / Math.max(T[0], 1);
+  const reasons: Array<'ENERGY' | 'PROTEIN_OVER'> = [];
+  if (kErr > MENU_CAPACITY_KCAL_TOL) reasons.push('ENERGY');
+  if (r[1] > T[1] * (1 + PROTEIN_SOFT_OVER)) reasons.push('PROTEIN_OVER');
+  if (!reasons.length) return undefined;
+  // Para ampliar el banco: principales del día sin acompañamiento flexible de carbo ni complemento compatible.
+  const missing: string[] = [];
+  for (const m of day.meals) {
+    if (m.time.startsWith('Snack')) continue;
+    const d = BANCO.find((x) => x.nombre === m.name);
+    if (!d || d.tipo === 'bloque' || dishStructure(d).hasCarbSide) continue;
+    if (!compatibleComplements(d, m.time).some((c) => !avoid(complementDish(c, m.time)))) missing.push(`${m.time} · ${m.name}: sin acompañamiento flexible ni complemento compatible`);
+  }
+  const p = toAvoidPolicy(avoidIn ?? []);
+  return {
+    status: 'INSUFFICIENT_MENU_CAPACITY', target: T.slice(0, 4).map(Math.round), reached: r.map(Math.round),
+    gap: T.slice(0, 4).map((t, i) => Math.round(t - r[i])), maxError: Math.round(kErr * 1000) / 1000, reasons,
+    restrictions: { strict: [...p.strict], soft: [...p.soft] }, missingComplements: missing, poolSize,
+  };
+}
+const SNACK_SLOTS: readonly Slot[] = ['Snack AM', 'Snack PM'];
+/** Candidatos de snack que la IA propone por día (1 mañana + 1 tarde). El ensamblado usa 0–2, por tamaño.
+ *  Con 2 el texto del prompt existente sigue siendo cierto (sin la frase de «2 combinados por momento»). */
+export const SNACK_CANDIDATES_PER_DAY = 2;
+const SLOT_ORDER: readonly string[] = ['Desayuno', 'Snack AM', 'Comida', 'Snack PM', 'Cena'];
+const BY_NAME = new Map(BANCO.map((d) => [d.nombre, d]));
+/** Tiempos en orden del día (el batido se agrega al final por `applyShake`). Puro. */
+function chronological(meals: MealItem[]): MealItem[] {
+  return [...meals].sort((a, b) => SLOT_ORDER.indexOf(a.time) - SLOT_ORDER.indexOf(b.time));
+}
+/** Hueco (fracción de la meta del día) por debajo del cual no se agrega un snack: lo cierra el cuadre del día. */
+const SNACK_NEED_MIN = 0.03;
+/** Holgura de tamaño: un snack es candidato si su rango [mínimo, porción normal] contiene su meta ±15 %. */
+const SNACK_FIT_TOL = 0.15;
+/** Un snack es MÁS CHICO que una comida: como mucho ¾ de la principal más chica (su tamaño a porción normal). Deja sitio
+ *  a los snacks densos del banco (Magaly los marca para 400–800 kcal) sin que un snack supere a una comida.
+ *  Si el hueco no cabe en un snack así, se reparte en dos (máximo 5 tiempos). */
+const SNACK_MAX_VS_MAIN = 0.75;
+const FRUIT_FAMILIES = new Set(['berries', 'grapes', 'cutFruit', 'wholeFruit']);
+const isFruitIng = (nv: string): boolean => FRUIT_FAMILIES.has(portionBoundsFor(nv)?.family ?? '') || /\bfruta\b/i.test(nv);
+
+/** kcal [mínima, a porción normal] de un platillo (bloque: factor 0.5–1.5 sobre la receta). Puro, memoizado. */
+const _rangeMemo = new Map<BancoDish, [number, number]>();
+function dishKcalRange(d: BancoDish): [number, number] {
+  const c = _rangeMemo.get(d);
+  if (c) return c;
+  const r = dishKcalRangeRaw(d);
+  _rangeMemo.set(d, r);
+  return r;
+}
+/** Cuantil del pool que define el tamaño USUAL de una principal (percentil 75: lo que una principal grande pero
+ *  normal de ese tiempo da a porción normal). Medido: la mediana dejaba las principales cortas y el día lejos. */
+const USUAL_MAIN_QUANTILE = 0.75;
+/** kcal que da USUALMENTE una principal de este pool a porción normal (`USUAL_MAIN_QUANTILE`). Es el tope de su meta:
+ *  una principal no se pide más grande de lo que el banco de Magaly da normalmente; lo demás va a snacks. */
+function usualMainKcal(pool: BancoDish[]): number {
+  const xs = pool.map((d) => dishKcalRange(d)[1]).sort((a, b) => a - b);
+  return xs.length ? xs[Math.min(xs.length - 1, Math.floor(USUAL_MAIN_QUANTILE * xs.length))] : Infinity;
+}
+/** Meta [_,P,F,C] de una principal acotada a `kcalCap` (escala proporcional; nunca la agranda). */
+function capTarget(t: number[], kcalCap: number): number[] {
+  const k = 4 * t[1] + 9 * t[2] + 4 * t[3];
+  if (k <= kcalCap || k <= 0) return t;
+  const f = kcalCap / k;
+  return [t[0], t[1] * f, t[2] * f, t[3] * f];
+}
+function dishKcalRangeRaw(d: BancoDish): [number, number] {
+  if (d.tipo === 'bloque') {
+    // Mismo factor que `solve`: 0.5–1.5, acotado por el ingrediente más ajustado del bloque (a porción normal).
+    const { vars: bv } = prep([d], true);
+    let base = 0;
+    for (const v of bv) base += v.a[0] * v.g0;
+    const sMax = blockSMax(bv);
+    if (d.steps) { const st = validSteps(d.steps, sMax); return [d.fixed[0] + Math.min(...st) * base, d.fixed[0] + Math.max(...st) * base]; }
+    return [d.fixed[0] + 0.5 * base, d.fixed[0] + sMax * base];
+  }
+  const { fixed, vars } = prep([d], true);
+  let hi = fixed[0];
+  for (const v of vars) hi += v.a[0] * v.hi;
+  return [dishMinMacros(d)[0], hi];
+}
+/** ¿Es un snack de FRUTA (≥ 80 % de sus kcal base vienen de fruta)? Puro. */
+export function isFruitSnack(d: BancoDish): boolean {
+  let fruit = 0, total = d.fixed[0];
+  for (const ing of d.ings) {
+    if (ing.rol !== 'principal' || !ing.a) continue;
+    const k = ing.a[0] * ing.g0;
+    total += k;
+    if (isFruitIng(ing.nv)) fruit += k;
+  }
+  return total > 0 && fruit / total >= 0.8;
+}
+/** ¿Este snack puede servirse con ~`kcal` sin estirarse más allá de una porción normal ni encogerse bajo su mínimo? */
+export function snackFitsSize(d: BancoDish, kcal: number): boolean {
+  const [lo, hi] = dishKcalRange(d);
+  return lo <= kcal * (1 + SNACK_FIT_TOL) && hi >= kcal * (1 - SNACK_FIT_TOL);
+}
+
+/**
+ * CAPA 4 · cuántos snacks hacen falta y de qué tamaño, dadas las 3 principales YA elegidas. Las principales
+ * se resuelven contra la meta con su porción NORMAL; el hueco que queda es el único que va a snacks.
+ * Devuelve las metas [_,P,F,C] por snack (0, 1 o 2), en los slots libres (el batido ocupa el suyo). Puro.
+ */
+export function snackPlan(mains: BancoDish[], T: number[], freeSlots: readonly Slot[], fits: (kcal: number) => boolean): Array<{ slot: Slot; target: number[] }> {
+  if (!freeSlots.length) return [];
+  const { fixed, vars } = prep(mains, true);
+  solve(fixed, vars, T, 300);
+  const got = [fixed[0], fixed[1], fixed[2], fixed[3]];
+  for (const v of vars) for (let k = 1; k < 4; k++) got[k] += v.a[k] * v.g;
+  // Tamaño REAL de cada principal a porción normal (fijos + sus principales resueltos): base del tope de un snack.
+  const mainKcal = mains.map((d) => d.fixed[0] + vars.filter((v) => d.ings.includes(v.ing)).reduce((a, v) => a + v.a[0] * v.g, 0));
+  const gap = [0, Math.max(0, T[1] - got[1]), Math.max(0, T[2] - got[2]), Math.max(0, T[3] - got[3])];
+  const gapKcal = 4 * gap[1] + 9 * gap[2] + 4 * gap[3];
+  if (gapKcal <= SNACK_NEED_MIN * T[0]) return [];
+  // Un snack si el hueco cabe en UNO razonable (existe uno de ese tamaño y sigue siendo más chico que una
+  // comida); si no, se reparte en dos — si hay un 2º slot libre (el batido puede ocupar uno).
+  const smallestMain = Math.min(...mainKcal);
+  const oneIsEnough = fits(gapKcal) && gapKcal <= SNACK_MAX_VS_MAIN * smallestMain;
+  const n = freeSlots.length >= 2 && !oneIsEnough ? 2 : 1;
+  // Con un solo slot libre y 1 snack: va en la tarde (entre comida y cena) salvo que la tarde la ocupe el batido.
+  const slots: Slot[] = n === 2 ? [...freeSlots] : [freeSlots.includes('Snack PM') ? 'Snack PM' : freeSlots[0]];
+  // Cada snack, como mucho, ¾ de la principal más chica: lo que no quepa lo cierran las principales en
+  // el cuadre del día (`topUpDay`), siempre dentro de sus techos. Un snack nunca es más grande que una comida.
+  const each = capTarget(gap.map((x) => x / n), SNACK_MAX_VS_MAIN * smallestMain);
+  return slots.map((slot) => ({ slot, target: each }));
+}
+
+function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: BancoDish) => boolean, cuisines: string[], used: Set<string>, craving: string[], ingFreq: Map<string, number>, relax = 0, avoidCats: string[] = [], shakeSlots: readonly Slot[] = [], vs?: VarietyState): DayPlan {
+  // CAPA 4 V1 · las 3 principales se reparten TODA la meta de comida (T ya descuenta el batido); los
+  // snacks se deciden DESPUÉS, por lo que las principales no alcanzan a porción normal (`snackPlan`).
+  const MTm = slotTargets(T, [...SNACK_SLOTS]);
+  // Filtra por alergia de RAÍZ (nunca sirve un platillo con el alérgeno).
+  //
+  // P0-03 · ANTES, si un tiempo se quedaba sin opciones, esto caía a «cualquier platillo
+  // compatible del banco», es decir CRUZABA DE TIEMPO: medido, servía Edamames de
+  // desayuno, Garbanzos Horneados de comida y Puñado de Cacahuates de cena, los 7 días.
+  // Contradecía la regla de Magaly que la v29 ya había restaurado en la degradación: el
+  // cross-time seguía vivo por esta puerta de atrás. Ahora el tiempo es invariante — si
+  // un tiempo no tiene candidatos, el día es IMPOSIBLE y se dice (no se rellena).
+  const clean = (pool: BancoDish[], slot: string) => {
     const f = pool.filter((d) => !avoid(d));
-    return f.length ? f : (anyCompliant.length ? anyCompliant : pool);
+    if (!f.length) throw new NoEligibleDishesError(slot, avoidCats);
+    return f;
   };
   // REGLA DURA de Magaly: cada tiempo usa SOLO sus platillos. El desayuno es
   // desayuno; una cena JAMÁS aparece en el desayuno, por ningún motivo. La
@@ -905,10 +1499,12 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
     const densos = [...pool].sort((a, b) => carbCap(b) - carbCap(a)).slice(0, 8);
     return [...densos, ...pool];
   };
-  const des = sesgaCarbo(clean(biasPool(BY_TIME.Desayuno, cuisines)));
-  const com = sesgaCarbo(clean(biasPool(COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, cuisines)));
-  const cen = sesgaCarbo(clean(biasPool(CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, cuisines)));
-  const snack = gateDense(clean(BY_TIME.Snack), T[0]); // densos solo si el requerimiento es alto
+  const des = sesgaCarbo(clean(biasPool(BY_TIME.Desayuno, cuisines), 'Desayuno'));
+  const com = sesgaCarbo(clean(biasPool(BY_TIME.Comida, cuisines), 'Comida'));
+  const cen = sesgaCarbo(clean(biasPool(BY_TIME.Cena, cuisines), 'Cena'));
+  // CAPA 4 · ya no hay umbral de 2800 kcal: los densos están en el pool y entran solo si su tamaño cabe en
+  // el hueco real (`snackFitsSize`). Un pool vacío sigue siendo una imposibilidad (NoEligibleDishesError).
+  const snack = clean(BY_TIME.Snack, 'Snack');
   // Regla dura: NADA se repite dentro del mismo día (ni comida ni snack, ni una comida
   // como cena). avail() saca del pool lo ya usado hoy; fitSlot va llenando usedToday.
   // relax≥1: la selección ignora el historial de la semana → puede repetir un
@@ -927,13 +1523,36 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
     const fresh = pool.filter((d) => !usedToday.has(d.nombre) && !dishPrincKeys(d).some((k) => usedTodayIng.has(k)));
     return fresh.length ? fresh : pool.filter((d) => !usedToday.has(d.nombre));
   };
-  const meals: MealItem[] = [
-    ...fitSlot(avail(des), 'Desayuno', MT.desayuno, 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq),
-    ...fitSlot(availSnack(snack), 'Snack AM', MT.snackSlot, nSnack, rng, 70, usedSel, usedToday, usedTodayIng, craving, ingFreq, true),
-    ...fitSlot(avail(com), 'Comida', MT.comida, 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq),
-    ...fitSlot(availSnack(snack), 'Snack PM', MT.snackSlot, nSnack, rng, 70, usedSel, usedToday, usedTodayIng, craving, ingFreq, true),
-    ...fitSlot(avail(cen), 'Cena', MT.cena, 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq),
+  // Cada principal se pide, como mucho, del tamaño que su tiempo da usualmente (percentil 75 del pool a porción
+  // normal): a metas muy altas las principales no se vuelven monstruosas; el resto lo toman los snacks.
+  const mains: MealItem[] = [
+    ...fitSlot(avail(des), 'Desayuno', capTarget(MTm['Desayuno'], usualMainKcal(des)), 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq, false, vs),
+    ...fitSlot(avail(com), 'Comida', capTarget(MTm['Comida'], usualMainKcal(com)), 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq, false, vs),
+    ...fitSlot(avail(cen), 'Cena', capTarget(MTm['Cena'], usualMainKcal(cen)), 1, rng, 90, usedSel, usedToday, usedTodayIng, craving, ingFreq, false, vs),
   ];
+  // CAPA 4 · snacks: solo lo que las principales no dan a porción normal; UN platillo por snack, del tamaño
+  // de su hueco (un snack que tendría que estirarse o encogerse fuera de su rango no es candidato).
+  const mainDishes = mains.map((m) => BY_NAME.get(m.name)!).filter(Boolean);
+  const freeSlots = SNACK_SLOTS.filter((sl) => !shakeSlots.includes(sl));
+  const sizedPool = (kcal: number) => snack.filter((d) => snackFitsSize(d, kcal));
+  // Bloque 7 · los snacks se eligen con autoridad DIARIA: tamaño de snack (contando lo que las principales pueden
+  // encoger) y que el día lo compense; las principales lo absorben en el cuadre del día (`topUpDay`).
+  const minMainsKcal = mainsMinKcal(mainDishes);
+  const mainsNow = mains.reduce((a, m) => a + (m.macros?.kcal ?? 0), 0);
+  const smallestMain = Math.min(...mains.map((m) => m.macros?.kcal ?? Infinity));
+  const other = [0, 0, 0, 0];
+  const snacks: MealItem[] = snackPlan(mainDishes, T, freeSlots, (kcal) => sizedPool(kcal).length > 0).flatMap(({ slot, target }) => {
+    const holeKcal = 4 * target[1] + 9 * target[2] + 4 * target[3];
+    const ctx: SnackDayCtx = { T, mains: mainDishes, other: [...other], holeKcal, absorb: Math.max(0, mainsNow - minMainsKcal), maxKcal: SNACK_MAX_VS_MAIN * smallestMain };
+    // En las fases relajadas (el día estricto quedó > 2 % lejos) manda la exactitud: snack de siempre (perfil del hueco).
+    // QA: con el modelo diario también ahí, a 3000 kcal con restricciones entraban snacks densos en grasa (+10 pts).
+    const dayFit = relax === 0 ? snack.filter((d) => snackFitsDay(d, ctx)) : [];
+    const sized = dayFit.length ? dayFit : sizedPool(holeKcal);
+    const out = fitSlot(availSnack(sized.length ? sized : snack), slot, target, 1, rng, 70, usedSel, usedToday, usedTodayIng, craving, ingFreq, false, vs, dayFit.length ? ctx : undefined);
+    for (const m of out) { other[1] += m.macros?.prot ?? 0; other[2] += m.macros?.fat ?? 0; other[3] += m.macros?.carb ?? 0; }
+    return out;
+  });
+  const meals = chronological([...mains, ...snacks]);
   // NO se cuadra aquí: el cuadre del día (topUpDay) corre DESPUÉS del batido, en
   // buildWeeklyPlan, contra la meta COMPLETA menos lo que de verdad aportan los
   // snacks (batido incluido). Cuadrar aquí, antes del batido, dejaba las comidas
@@ -980,9 +1599,55 @@ function buildDay(dayNum: number, T: number[], rng: () => number, avoid: (d: Ban
 // proteína del batido caía ENCIMA de un día que ya llegaba a la meta (+25 g). Se
 // movió DESPUÉS del batido, contra la meta completa menos lo que aportan los
 // snacks (batido incluido). Con 1 batido: kcal y macros a ±0.5-0.7%.
-export const PLAN_ENGINE_VERSION = 30;
+// v31: P0-01, P0-02 y P0-03 cambiaron las GARANTÍAS del motor sin subir la versión, que es
+// exactamente lo que el comentario de la v24 advierte que no hay que hacer. Un plan
+// generado el día antes de P0-03 lleva engineVersion 30, así que `30 >= 30` y la
+// auto-regeneración no disparaba nunca: un plan con cruces de tiempo o con un platillo
+// incompatible se quedaba vigente para siempre. Subir a 31 los regenera en la siguiente
+// carga, ya a través del detector corregido (P0-01), con las restricciones efectivas
+// (P0-02) y con el motor que falla cerrado (P0-03). No hay cambio de reglas en este salto.
+// Requisito previo: la ruta de auto-regeneración no pasaba `region` — se corrigió en el
+// mismo bloque, porque no se activa a conciencia una regeneración que sabemos incompleta.
+//
+// CAPA 1E · FASE C4 · 31 → 32 · ENERGY AUTHORITY CUTOVER.
+// La energía de un plan ya no la estima `legacyEnergy` desde `obData.activity`: la
+// prescribe el HSC Energy Engine (DRI 2023 EER + clasificación de actividad +
+// prescripción) y llega al generador por `store.planGoal`. Para una parte de los
+// socios la cifra CAMBIA, así que todo plan guardado con v31 se armó contra una
+// meta que el producto ya no prescribe. El salto de versión es lo que los regenera
+// en la siguiente carga, a través de `weeklyPlanCurrentness`.
+// Se sube AL FINAL, cuando ya no queda ningún consumidor leyendo la cifra legacy:
+// subirla antes habría regenerado planes con la autoridad que estábamos retirando.
+// v33 · CAPA 2 · las MACROS diarias pasan a la autoridad nueva (`macroPrescription`:
+// proteína por PRW × factor, grasa 25 %, carbohidrato residual). Todo plan v32 se
+// armó con gramos de `legacyMacros`; el salto lo marca STALE aunque coincida la kcal.
+// v34 · MENÚ V1 · B1 · correcciones sin decisión nueva que CAMBIAN el plan servido: `max_g` del banco
+// como TECHO, taza de arroz del catálogo (188 g), rebanadas solo para jamón real (21.33 g pavo), singular
+// de piezas y umbrales de snacks contra la meta diaria en ambos caminos. Todo plan v33 queda STALE y se
+// regenera una vez (CAPA 1/2/Adaptive no cambian: esta versión solo versiona el motor de platillos).
+// v35 · MENÚ V1 · CAPA 4 V1 · 3 principales + 0–2 snacks por NECESIDAD (sin «siempre 5», sin 2 platillos por snack,
+// sin umbral de 2800 kcal), snacks a porción normal y del tamaño de su hueco, el bloque respeta los techos de sus
+// ingredientes, y medidas D1 (pasta 120 g/taza, aceite en cditas de 5 g, miel cdita 7 g / cda 21 g). Todo plan v34
+// queda STALE y se regenera una vez.
+// v36 · MENÚ V1 · BLOQUE 3B (integración segura) · HALLAZGO-04: los 6 dulces de Cena dejan de ser elegibles como
+// cena principal (cambia el pool de Cena → todo plan v35 se regenera una vez). Además, diagnóstico interno
+// INSUFFICIENT_MENU_CAPACITY en `day.capacity` (no cambia el plan). El modelo híbrido de receta quedó en WIP.
+// v37 · MENÚ V1 · BLOQUE 4 · porciones visibles con medidas reales (autoridad cerrada > catálogo > SMAE; conflictos
+// → gramos), gramos visibles en múltiplos de 5, piezas naturales (pan/pita/bagel cuadrados a rebanada/media pieza en
+// el cierre del día), «Fruta» genérica → la fruta real de sus macros, avena cruda ya no se muestra como cocida.
+// v38 · MENÚ V1 · BLOQUE 5 · recetas CERRADAS: Pasta con Verduras Asadas, Feta y Garbanzo y Rollitos según su ficha
+// (porción única, no se deforman), bolitas 2/4/6 y barrita 1/2/3 (solo porciones válidas; toda la masa escala junta),
+// diagnóstico RECIPE_CAPACITY_LIMIT en `day.recipeLimits` (no cambia el plan).
+// v39 · MENÚ V1 · BLOQUE 6 · variedad semanal por penalización derivada del pool (CODE e IA), corrector de snacks
+// rota al menos usado, bolitas 2 → 4 / barrita 1 → 2 (V1 final), bebidas licuadas escalan completas.
+// v40 · MENÚ V1 · BLOQUE 7 · autoridad DIARIA de macros: banda por tiempo ×2 como heurística de elegibilidad (CODE e
+// IA), snacks elegidos por si el día los compensa (nunca > ¾ de la principal más chica ya compensado), el día completo
+// se re-evalúa ya cuadrado. La Pasta cerrada entra sin escalarse.
+// v41 · ADAPTIVE QA DOMINGO · el snack de la IA que deja el día fuera de la banda base (> 2 %) se contrasta con el pool
+// y se cambia solo por una alternativa que mejore el error diario ≥ 1.5 puntos (antes: aceptado por banda relativa).
+export const PLAN_ENGINE_VERSION = 41;
 
-export interface BuildOpts { seed?: number; avoid?: string[]; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
+export interface BuildOpts { seed?: number; avoid?: AvoidInput; cuisines?: string[]; craving?: string; shake?: ProteinShake; region?: Region }
 
 /** Resta las macros del batido a la meta del día, para que los principales se
  *  construyan contra el remanente y el total (con batido) caiga en la meta.
@@ -1022,20 +1687,79 @@ function reduceForShake(T: number[], shake?: ProteinShake): number[] {
 /** Filtro de alergia/evitar (categoría → alimentos reales del banco). */
 export function makeAvoidFilter(avoidCats: string[]): (d: BancoDish) => boolean {
   const terms = expandAvoid(avoidCats.map((s) => s.toLowerCase().trim()).filter(Boolean));
-  return (d: BancoDish) => (terms.length ? dishMatchesAny(d, terms) : false);
+  return (d: BancoDish) => dishMatchesAvoidTerms(d, terms);
 }
 
-/** Banco agrupado por tiempo, ya SIN alérgenos (nunca vacío: cae al pool completo). */
-export function safeBankByTiempo(avoidCats: string[]): Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]> {
-  const avoid = makeAvoidFilter(avoidCats);
-  const pick = (t: string) => { const f = (BY_TIME[t] ?? []).filter((d) => !avoid(d)); return f.length ? f : (BY_TIME[t] ?? []); };
+/**
+ * WEEKLY PREFERENCES · D-WP2 · filtro de PREFERENCIA SEMANAL (suave). `true` = el platillo tiene la
+ * categoría como INGREDIENTE PROPIO / VISIBLE (directo, por alias o por una regla oculta IS como
+ * "Crema"), así que esta semana se prefiere evitar. NO cuenta lo que solo vive dentro de una
+ * sub-receta ni los compuestos que la CONTIENEN (mayonesa → huevo, aderezo con yogurt → lácteos).
+ *
+ * Mismo diccionario (AVOID_MAP), mismos alias, mismas excepciones (TERM_EXCEPT) y mismo matcher que
+ * `makeAvoidFilter`; solo cambian las unidades. Nunca excluye algo que `makeAvoidFilter` permita.
+ * Todavía NO lo consume ningún camino productivo (MB1: solo la autoridad técnica).
+ */
+export function makePreferenceFilter(softCats: string[]): (d: BancoDish) => boolean {
+  const terms = expandAvoid(softCats.map((s) => s.toLowerCase().trim()).filter(Boolean));
+  return (d: BancoDish) => unitsMatchAvoidTerms(dishText(d).soft, terms);
+}
+
+/**
+ * WEEKLY PREFERENCES SPLIT · política de restricciones con el ORIGEN separado.
+ *   · `strict` · restricciones PERMANENTES → detector estricto (sub-recetas, ocultos IS y CONTAINS).
+ *   · `soft`   · preferencias de ESTA semana que no son ya permanentes → detector suave (MB1).
+ * La construye la autoridad (`avoidPolicy`/`avoidPolicyForPlan`); el motor y el validador la consumen.
+ */
+export interface AvoidPolicy { strict: string[]; soft: string[] }
+/** Entrada de restricciones del motor y del validador. Una lista suelta = TODO estricto (contrato
+ *  anterior: misma salida, byte a byte). */
+export type AvoidInput = string[] | AvoidPolicy;
+/** Normaliza la entrada a política. STRICT gana: lo que esté en ambos lados solo queda en `strict`. */
+export function toAvoidPolicy(a: AvoidInput | null | undefined): AvoidPolicy {
+  if (!a) return { strict: [], soft: [] };
+  if (Array.isArray(a)) return { strict: a.filter(Boolean), soft: [] };
+  const strict = a.strict.filter(Boolean);
+  return { strict, soft: a.soft.filter((c) => c && !strict.includes(c)) };
+}
+/** Unión de la entrada (strict y luego soft): para lo que todavía no distingue el origen (batido,
+ *  bowl hasta MB4) y para el mensaje de `NoEligibleDishesError`. */
+export function avoidInputUnion(a: AvoidInput | null | undefined): string[] {
+  const p = toAvoidPolicy(a);
+  return [...p.strict, ...p.soft];
+}
+/**
+ * MB3 · EL filtro del generador: `true` = el platillo NO es elegible. Excluye si viola lo permanente
+ * (`makeAvoidFilter(strict)`) O si sirve visible una preferencia de la semana (`makePreferenceFilter(soft)`).
+ * Es la misma pareja de detectores que usa `validatePlan`, así que lo que el generador acepta el
+ * validador no lo rechaza por restricción ni por preferencia.
+ */
+export function makePolicyFilter(a: AvoidInput | null | undefined): (d: BancoDish) => boolean {
+  const p = toAvoidPolicy(a);
+  const st = makeAvoidFilter(p.strict);
+  if (!p.soft.length) return st;
+  const so = makePreferenceFilter(p.soft);
+  return (d: BancoDish) => st(d) || so(d);
+}
+
+/** Banco agrupado por tiempo, ya SIN alérgenos.
+ *
+ *  P0-03: un pool puede quedar VACÍO y eso es el resultado correcto. Antes caía al
+ *  pool COMPLETO sin filtrar «para no quedarse sin opciones», con lo que un usuario
+ *  sin opciones compatibles recibía exactamente los platillos que había excluido (70
+ *  desayunos, todos incompatibles, medido). El vacío lo resuelve quien consume el
+ *  banco: el motor determinista lanza NoEligibleDishesError y la ruta IA no puede
+ *  completar los 7 días, así que cae al determinista. Nunca se rellena con alérgenos. */
+export function safeBankByTiempo(avoidCats: AvoidInput): Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]> {
+  const avoid = makePolicyFilter(avoidCats);   // MB3 · strict + soft: el pool de la IA ya llega filtrado en código
+  const pick = (t: string) => (BY_TIME[t] ?? []).filter((d) => !avoid(d));
   return { Desayuno: pick('Desayuno'), Comida: pick('Comida'), Cena: pick('Cena'), Snack: pick('Snack') };
 }
 
 /** Ajusta las porciones de UNOS platillos dados a `target` y devuelve sus MealItem. */
 export function solveSlot(dishes: BancoDish[], label: string, target: number[], merge = false): MealItem[] {
   if (!dishes.length) return [];
-  const { fixed, vars } = prep(dishes);
+  const { fixed, vars } = prep(dishes, label.startsWith('Snack'));   // CAPA 4 · snacks a porción normal
   solve(fixed, vars, target, 220);
   void fixed;
   const gOf = new Map<BancoIng, number>();
@@ -1062,7 +1786,7 @@ function slotFit(d: BancoDish, slotTarget: number[]): number {
  *  antojo), las macros pegan. Los principales de un antojo se fuerzan aunque encajen peor
  *  (1-2 días al máximo). Snacks pasan completos (rellenan el share chico). */
 export function adequateBankByTiempo(
-  avoidCats: string[], target: PlanTarget, cravingText = '', region?: Region,
+  avoidCats: AvoidInput, target: PlanTarget, cravingText = '', region?: Region,
 ): Record<'Desayuno' | 'Comida' | 'Cena' | 'Snack', BancoDish[]> {
   const safeRaw = safeBankByTiempo(avoidCats);
   // Visibilidad por región (SIEMPRE se aplica): combina el filtro DURO de disponibilidad
@@ -1095,7 +1819,8 @@ export function adequateBankByTiempo(
       .sort((a, b) => a.e - b.e);
     // Entre los que YA encajan bien, primero los que además alcanzan la meta. Así la IA
     // ve arriba los que pueden cuadrar, sin perder ninguna opción ni empeorar el encaje.
-    const ok = scored.filter((s) => s.e <= 0.35)
+    // Bloque 7 · misma heurística ×2 que la banda por tiempo del motor de código (guía blanda; el día manda).
+    const ok = scored.filter((s) => s.e <= AI_SLOT_FIT)
       .sort((a, b) => (a.cap === b.cap ? a.e - b.e : a.cap ? -1 : 1))
       .map((s) => s.d);
     // Garantiza ≥10 opciones para variedad (7 días distintos + margen). Se completan
@@ -1112,7 +1837,7 @@ export function adequateBankByTiempo(
     Desayuno: filt(safe.Desayuno, MT.desayuno),
     Comida: filt(safe.Comida, MT.comida),
     Cena: filt(safe.Cena, MT.cena),
-    Snack: gateDense(safe.Snack, target.kcal), // densos solo si el requerimiento es alto
+    Snack: safe.Snack,   // CAPA 4 · los densos entran por tamaño en el ensamblado (sin umbral de 2800 kcal)
   };
 }
 
@@ -1126,30 +1851,148 @@ export function snacksPerSlot(kcal: number): number { return kcal > 2200 ? 2 : 1
  *  Magaly; los SNACKS RELLENAN lo que falte para pegar la meta exacta (así el día no
  *  queda bajo aunque los platillos que eligió la IA no escalen tanto), con nSnack
  *  combinados por slot para tener capacidad. */
-export function assembleFromSelection(target: PlanTarget, days: DaySelection[], avoidCats: string[] = [], shake?: ProteinShake): DayPlan[] {
+export function assembleFromSelection(target: PlanTarget, days: DaySelection[], avoidCats: AvoidInput = [], shake?: ProteinShake): DayPlan[] {
+  // RESTRICCIONES · el batido pasa por la MISMA autoridad que en el motor determinista: si no es
+  // compatible (whey con lácteos), el plan va SIN batido. Antes esta ruta lo aplicaba sin comprobar.
+  // D-WP5 · whey / mass gainer fuera con lácteos permanente O semanal (`shakeAllowedFor` decide sobre la política).
+  if (!shakeAllowedFor(shake, avoidCats)) shake = undefined;
   const T = [target.kcal, target.protG, target.fatG, target.carbG];
-  const MT = mealTargets(reduceForShake(T, shake)); // principales contra la meta MENOS el batido
-  const nSnack = snacksPerSlot(target.kcal);
+  // CAPA 4 V1 · misma lógica que el motor de código: las 3 principales contra la meta de comida (sin el
+  // batido), los snacks solo por el hueco real (`snackPlan`), y el cuadre del día (`topUpDay`).
+  const foodT = reduceForShake(T, shake);
+  const MTm = slotTargets(foodT, [...SNACK_SLOTS]);
+  const freeSlots = SNACK_SLOTS.filter((sl) => !shakeSlotsOf(shake).includes(sl));
   const byName = new Map(BANCO.map((d) => [d.nombre, d]));
-  const corrUsed = new Set<string>(); // corrector no repite el mismo snack en la semana
+  const aiAvoid = makePolicyFilter(avoidCats);
+  const aiPoolSize = Object.fromEntries(['Desayuno', 'Comida', 'Cena', 'Snack'].map((t) => [t, (BY_TIME[t] ?? []).filter((d) => !aiAvoid(d)).length]));
+  const corrUsed = new Map<string, number>(); // corrector: usos por snack en la semana (rota al menos usado)
   const out: DayPlan[] = [];
+  // Bloque 6 · MISMA política de variedad que el motor de código: la IA no puede saltársela.
+  const vstate = newVarietyState();
+  const fitMemo = new Map<string, number>();
+  const fitOf = (d: BancoDish, t: string) => { const k = `${t}|${d.nombre}`; if (!fitMemo.has(k)) fitMemo.set(k, slotFit(d, MTm[t as Slot])); return fitMemo.get(k)!; };
+  const penaltyOf = (d: BancoDish) => repetitionPenalty(vstate.count.get(d.nombre) ?? 0, vstate.prev.has(d.nombre), aiPoolSize[d.tiempo] ?? 1);
+  /** Una principal de la IA que ya se pasó de su parte del pool o que salió ayer se cambia por la alternativa compatible
+   *  (mismo tiempo, misma política de restricciones, encaje ≤ el de la IA o ≤ 0.35 como el pool de la IA) que menos
+   *  se repite. Si no hay alternativa, se respeta la elección (repetir es preferible a no tener plan). */
+  const varied = (d: BancoDish, t: string): BancoDish => {
+    const count = vstate.count.get(d.nombre) ?? 0;
+    const fair = Math.max(1, Math.ceil(7 / Math.max(1, aiPoolSize[t] ?? 1)));
+    if (count < fair && !vstate.prev.has(d.nombre)) return d;
+    const lim = Math.max(AI_SLOT_FIT, fitOf(d, t));
+    const alt = (BY_TIME[t] ?? []).filter((x) => x !== d && !aiAvoid(x) && fitOf(x, t) <= lim)
+      .sort((a, b) => penaltyOf(a) - penaltyOf(b) || fitOf(a, t) - fitOf(b, t))[0];
+    return alt && penaltyOf(alt) < penaltyOf(d) ? alt : d;
+  };
   days.forEach((sel, i) => {
-    const des = byName.get(sel.desayuno), com = byName.get(sel.comida), cen = byName.get(sel.cena);
-    if (!des || !com || !cen) return; // el orquestador ya validó; salta por seguridad
-    const snacks = (sel.snacks ?? []).map((n) => byName.get(n)).filter((d): d is BancoDish => !!d);
-    // Reparto de Magaly: cada tiempo a su share (proteína pareja en los 3 principales,
-    // menos en snacks). Snacks: nSnack combinados por slot para tener capacidad a metas altas.
-    const amSnacks = snacks.slice(0, nSnack), pmSnacks = snacks.slice(nSnack, 2 * nSnack);
-    const meals: MealItem[] = [
-      ...solveSlot([des], 'Desayuno', MT.desayuno),
-      ...(amSnacks.length ? solveSlot(amSnacks, 'Snack AM', MT.snackSlot, true) : []),
-      ...solveSlot([com], 'Comida', MT.comida),
-      ...(pmSnacks.length ? solveSlot(pmSnacks, 'Snack PM', MT.snackSlot, true) : []),
-      ...solveSlot([cen], 'Cena', MT.cena),
+    // P0-03 · DOBLE LLAVE sobre la selección de la IA. El orquestador ya solo acepta
+    // nombres de `adequateBankByTiempo` (filtrado por tiempo y por restricciones), pero
+    // este helper resuelve los nombres contra el BANCO COMPLETO: si alguna vez llegara
+    // aquí una selección de otra procedencia, el nombre bastaría para servir un platillo
+    // de otro tiempo o un alérgeno. Se verifican las dos invariantes aquí también; un día
+    // que no las cumpla se DESCARTA (el plan sale con <7 días → el orquestador devuelve
+    // null → motor determinista), nunca se sirve corregido a medias.
+    const noEvitado = makePolicyFilter(avoidCats);   // MB3 · re-verifica cada pick de la IA con strict + soft
+    const main = (nombre: string, t: string): BancoDish | undefined => {
+      const d = byName.get(nombre);
+      return d && d.tiempo === t && !noEvitado(d) ? d : undefined;
+    };
+    const des0 = main(sel.desayuno, 'Desayuno'), com0 = main(sel.comida, 'Comida'), cen0 = main(sel.cena, 'Cena');
+    if (!des0 || !com0 || !cen0 || !mainEligible(cen0)) return;   // HALLAZGO-04 · misma elegibilidad que el motor
+    const des = varied(des0, 'Desayuno'), com = varied(com0, 'Comida'), cen = varied(cen0, 'Cena');
+    const snacks = (sel.snacks ?? []).map((n) => byName.get(n))
+      .filter((d): d is BancoDish => !!d && d.tiempo === 'Snack' && !noEvitado(d));
+    const mains: MealItem[] = [
+      ...solveSlot([des], 'Desayuno', MTm['Desayuno']),
+      ...solveSlot([com], 'Comida', MTm['Comida']),
+      ...solveSlot([cen], 'Cena', MTm['Cena']),
     ];
-    if (shake) applyShake(meals, shake); // batido reemplaza el snack del slot elegido
+    // Snacks: los candidatos que eligió la IA, en su orden; cada slot usa el primero que tenga el TAMAÑO de su
+    // hueco (si ninguno lo tiene, el que más se acerca). UN platillo por snack, sin repetir en el día.
+    const kcalOf = (t: number[]) => 4 * t[1] + 9 * t[2] + 4 * t[3];
+    const usedSnack = new Set<string>();
+    // Bloque 7 · MISMA autoridad diaria que el motor de código: tamaño de snack (contando lo que las principales pueden
+    // encoger) y que el día lo compense; entre los compensables, el que menos se repite (empate → orden de la IA).
+    const minMainsKcal = mainsMinKcal([des, com, cen]);
+    const mainsNow = mains.reduce((a, m) => a + (m.macros?.kcal ?? 0), 0);
+    const smallestMain = Math.min(...mains.map((m) => m.macros?.kcal ?? Infinity));
+    const other = [0, 0, 0, 0];
+    const snackItems: MealItem[] = snackPlan([des, com, cen], foodT, freeSlots, (k) => snacks.some((d) => snackFitsSize(d, k)))
+      .flatMap(({ slot, target: t }) => {
+        const free = snacks.filter((d) => !usedSnack.has(d.nombre));
+        if (!free.length) return [];
+        const k = kcalOf(t);
+        const ctx: SnackDayCtx = { T: foodT, mains: [des, com, cen], other: [...other], holeKcal: k, absorb: Math.max(0, mainsNow - minMainsKcal), maxKcal: SNACK_MAX_VS_MAIN * smallestMain };
+        const dist = (d: BancoDish) => { const [lo, hi] = dishKcalRange(d); return k < lo ? lo - k : k > hi ? k - hi : 0; };
+        // Dos porciones (perfil propio / inclinada al hueco): la que deja mejor el día — igual que el motor de código.
+        // Bloque 7B · misma cota inferior que el motor de código: un candidato cuya cota ya queda fuera de
+        // max(banda, mejor + 1.5) no puede entrar → no se resuelve el día con él (resultado idéntico, menos trabajo).
+        const serveBest = (d: BancoDish, cut: number) => {
+          const opts = [snackProfileTarget(d, k), t].map((tt) => {
+            const it = solveSlot([d], slot, tt); const m0 = it[0].macros!; const m = [0, m0.prot, m0.fat, m0.carb];
+            const lb = dayCompLowerBound(m, ctx);
+            return { it, e: lb > cut ? lb : dayCompError(m, ctx) };
+          });
+          return opts[0].e <= opts[1].e ? opts[0] : opts[1];
+        };
+        /** Candidatos que el día compensa, ordenados por repetición (Bloque 6) y luego por el orden de entrada. */
+        const rank = (xs: BancoDish[]) => {
+          // Bloque 7B · SALIDA TEMPRANA EXACTA: el elegido es el aceptable de menor (penalización, orden). Un candidato con
+          // error ≤ SNACK_DAY_BAND es aceptable SIEMPRE (la banda nunca baja de ahí). Se evalúa en ese orden; si aparece
+          // uno así y todos los anteriores quedaron DEFINITIVAMENTE fuera (error > banda vigente, que solo se estrecha),
+          // ése es el resultado final. Si algún anterior quedó dudoso, se sigue con la evaluación completa de siempre.
+          const fits = xs.filter((x) => snackFitsDay(x, ctx)).map((x, j) => ({ x, j, p: penaltyOf(x) }));
+          const order = [...fits].sort((a, b) => a.p - b.p || a.j - b.j);
+          let best = Infinity, doubtful = false;
+          const done = new Map<BancoDish, { e: number; it: MealItem[] }>();
+          for (const c of order) {
+            const b = serveBest(c.x, Math.max(SNACK_DAY_BAND, best + 1.5));
+            done.set(c.x, b);
+            if (b.e < best) best = b.e;
+            if (b.e <= SNACK_DAY_BAND && !doubtful) return [{ x: c.x, j: c.j, e: b.e, it: b.it, p: c.p }];
+            if (b.e <= Math.max(SNACK_DAY_BAND, best + 1.5)) doubtful = true;
+          }
+          const ev = fits.map((c) => { const b = done.get(c.x)!; return { x: c.x, j: c.j, e: b.e, it: b.it, p: c.p }; });
+          if (!ev.length) return [];
+          const band = Math.max(SNACK_DAY_BAND, Math.min(...ev.map((y) => y.e)) + 1.5);
+          return ev.filter((y) => y.e <= band).sort((a, b) => a.p - b.p || a.j - b.j);
+        };
+        let pickS = rank(free)[0] ?? null;
+        const fairS = Math.max(1, Math.ceil(7 / Math.max(1, aiPoolSize.Snack ?? 1)));
+        // Ningún candidato de la IA es compensable, o el elegido ya se pasó de su parte / salió ayer → el pool compatible
+        // (lo mismo que hace el motor de código). Solo si no hay ninguno, el más cercano por tamaño.
+        const poolSnacks = () => BY_TIME.Snack.filter((x) => !aiAvoid(x) && !usedSnack.has(x.nombre) && !free.includes(x));
+        if (!pickS || (vstate.count.get(pickS.x.nombre) ?? 0) >= fairS || vstate.prev.has(pickS.x.nombre)) {
+          const alt = rank(poolSnacks())[0];
+          if (alt && (!pickS || alt.p < pickS.p)) pickS = alt;
+        } else if (pickS.e > SNACK_DAY_BAND) {
+          // v41 · QA domingo (día 7): con UN solo candidato la banda relativa aceptaba un snack que el día NO podía
+          // compensar (error diario estimado 18.3 % → día final +6 %, aunque 82 de 115 snacks del pool lo cerraban).
+          // Si el mejor de la IA deja el día fuera de la banda base, se busca también en el pool y se usa la alternativa
+          // SOLO si mejora el error diario al menos AI_SNACK_POOL_MARGIN puntos; entre ésas, la de menor repetición
+          // (misma restricción, mismo tamaño, misma variedad). Si la IA ya es compensable, su elección se respeta.
+          const ai = pickS;
+          const better = rank(poolSnacks()).find((y) => y.e <= ai.e - AI_SNACK_POOL_MARGIN);
+          if (better) pickS = better;
+        }
+        const d = pickS ? pickS.x : [...free].sort((a, b) => dist(a) - dist(b))[0];
+        usedSnack.add(d.nombre);
+        const out = pickS ? pickS.it : solveSlot([d], slot, t);
+        for (const m of out) { other[1] += m.macros?.prot ?? 0; other[2] += m.macros?.fat ?? 0; other[3] += m.macros?.carb ?? 0; }
+        return out;
+      });
+    const meals = chronological([...mains, ...snackItems]);
+    if (shake) applyShake(meals, shake); // el batido ocupa SU slot de snack
+    topUpDay(meals, T);                              // CAPA 4 · el mismo cuadre del día que el motor de código
     topUpMeals(meals, target, avoidCats, corrUsed); // cierra hueco grande (1 snack, rota en semana)
-    out.push({ day: i + 1, theme: '', meals });
+    const day: DayPlan = { day: i + 1, theme: '', meals: chronological(meals) };
+    for (const m of day.meals) for (const n of m.name.split(' + ')) if (BY_NAME.has(n)) vstate.count.set(n, (vstate.count.get(n) ?? 0) + 1);
+    rollVarietyDay(vstate, day.meals);
+    const cap = capacityIssue(day, T, avoidCats, aiAvoid, aiPoolSize);   // mismo registro que el motor de código
+    if (cap) day.capacity = cap;
+    const rl = recipeLimits(day, T);   // Bloque 5 · receta cerrada en su límite: registrar, nunca deformar
+    if (rl.length) day.recipeLimits = rl;
+    out.push(day);
   });
   return out;
 }
@@ -1181,14 +2024,21 @@ export function buildDayWithFixed(
     Math.max(0, T[2] - fixed.fat), Math.max(0, T[3] - fixed.carb),
   ];
   const MT = slotTargets(rest, [fixed.slot]);
-  const avoid = makeAvoidFilter(opts.avoid ?? []);
+  const avoid = makePolicyFilter(opts.avoid);   // MB3 · strict + soft
   const rng = mulberry32(opts.seed ?? 12345);
   const used = new Set<string>(), usedToday = new Set<string>(), usedIng = new Set<string>();
   const craving = cravingTerms(opts.craving ?? '');
   const ingFreq = new Map<string, number>();
 
-  const anyOk = BANCO.filter((d) => !avoid(d));
-  const clean = (pool: BancoDish[]) => { const f = pool.filter((d) => !avoid(d)); return f.length ? f : anyOk; };
+  // P0-03 · igual que en buildDay: antes, un tiempo sin opciones caía a «cualquier platillo
+  // compatible» y cruzaba de tiempo (medido: servía Merluza al Horno con Patatas, una
+  // Comida, como desayuno). El tiempo no se negocia; si no hay candidatos, el día no se
+  // puede armar y se dice.
+  const clean = (pool: BancoDish[], slot: string) => {
+    const f = pool.filter((d) => !avoid(d));
+    if (!f.length) throw new NoEligibleDishesError(slot, avoidInputUnion(opts.avoid));
+    return f;
+  };
   // Solo los que CABEN por debajo del presupuesto del tiempo (con 15% de holgura, que
   // el solver puede cuadrar). Si ninguno cabe, se toman los más ligeros.
   const cabe = (pool: BancoDish[], slotT: number[]) => {
@@ -1203,7 +2053,9 @@ export function buildDayWithFixed(
 
   const nSnack = rest[0] > 2200 ? 2 : 1;
   const meals: MealItem[] = [];
-  const add = (slot: Slot, pool: BancoDish[], n: number, tol: number) => {
+  // El pool llega PEREZOSO: el tiempo que ocupa el alimento fijo no necesita candidatos,
+  // así que no puede declararse imposible por un pool que nunca se iba a usar.
+  const add = (slot: Slot, poolOf: () => BancoDish[], n: number, tol: number) => {
     if (slot === fixed.slot) {
       meals.push({
         time: slot, name: fixed.name, desc: fixed.desc ?? '', img: fixed.img,
@@ -1223,15 +2075,51 @@ export function buildDayWithFixed(
         : p.filter((d) => !usedToday.has(d.nombre));
       return f.length ? f : p.filter((d) => !usedToday.has(d.nombre));
     };
-    const pool2 = libre(cabe(clean(pool), t));
-    meals.push(...fitSlot(pool2.length ? pool2 : cabe(clean(pool), t), slot, t, n, rng, tol, used, usedToday, usedIng, craving, ingFreq, esSnack));
+    // `cabe` y `libre` relajan encaje y repetición, pero SIEMPRE dentro del pool ya limpio
+    // de este tiempo: ninguno de los dos puede reintroducir un alérgeno ni otro tiempo.
+    const limpio = clean(poolOf(), slot);
+    const pool2 = libre(cabe(limpio, t));
+    meals.push(...fitSlot(pool2.length ? pool2 : cabe(limpio, t), slot, t, n, rng, tol, used, usedToday, usedIng, craving, ingFreq, esSnack));
   };
-  add('Desayuno', BY_TIME.Desayuno, 1, 90);
-  add('Snack AM', gateDense(BY_TIME.Snack, target.kcal), nSnack, 70);
-  add('Comida', COMIDA_VEG.length ? COMIDA_VEG : BY_TIME.Comida, 1, 90);
-  add('Snack PM', gateDense(BY_TIME.Snack, target.kcal), nSnack, 70);
-  add('Cena', CENA_VEG.length ? CENA_VEG : BY_TIME.Cena, 1, 90);
+  // El pool de snacks se limpia ANTES de gateDense para que, si todo lo compatible es
+  // denso, el vacío lo detecte `clean` (imposibilidad) y no gateDense (que daría []).
+  const snackPool = (): BancoDish[] => {
+    const limpio = clean(BY_TIME.Snack, 'Snack');
+    const gated = gateDense(limpio, target.kcal);
+    return gated.length ? gated : limpio;
+  };
+  add('Desayuno', () => BY_TIME.Desayuno, 1, 90);
+  add('Snack AM', snackPool, nSnack, 70);
+  add('Comida', () => BY_TIME.Comida, 1, 90);
+  add('Snack PM', snackPool, nSnack, 70);
+  add('Cena', () => BY_TIME.Cena, 1, 90);
   return { day: dayNum, theme: '', meals };
+}
+
+/** MENÚ V1 · Bloque 6 · DIAGNÓSTICO (puro): cómo ve el camino CODE a cada platillo de un tiempo PRINCIPAL. Reproduce el
+ *  encaje de `fitSlot` (n = 1): meta del tiempo (`slotTargets` + `capTarget`), solve del platillo solo, `errMax` (peor
+ *  error relativo de P/G/C) y la banda de aceptación. No elige nada ni cambia el plan. */
+export function explainMainSlot(target: PlanTarget, tiempo: 'Desayuno' | 'Comida' | 'Cena', avoid: AvoidInput = []): {
+  slotTarget: number[]; band: number; minE: number; poolSize: number;
+  rows: Array<{ nombre: string; e: number; err: { P: number; F: number; C: number }; kcal: number; accepted: boolean }>;
+} {
+  const T = [target.kcal, target.protG, target.fatG, target.carbG];
+  const MTm = slotTargets(T, [...SNACK_SLOTS]);
+  const f = makePolicyFilter(avoid);
+  const pool = BY_TIME[tiempo].filter((d) => !f(d));
+  const t = capTarget(MTm[tiempo], usualMainKcal(pool));
+  const rows = pool.map((d) => {
+    const { fixed, vars } = prep([d], false);
+    solve(fixed, vars, t, 100);
+    const x = [fixed[0], fixed[1], fixed[2], fixed[3]];
+    for (const v of vars) for (let k = 1; k < 4; k++) x[k] += v.a[k] * v.g;
+    const rel = (k: number) => Math.round(((x[k] - t[k]) / Math.max(t[k], 1)) * 1000) / 10;
+    return { nombre: d.nombre, e: errMax(fixed, vars, t), err: { P: rel(1), F: rel(2), C: rel(3) }, kcal: Math.round(4 * x[1] + 9 * x[2] + 4 * x[3]), accepted: false };
+  });
+  const minE = Math.min(...rows.map((r) => r.e));
+  const band = pool.length < 30 ? Math.max(SLOT_BAND_SMALL_POOL, minE + 8) : Math.max(SLOT_BAND, minE + 2);
+  for (const r of rows) r.accepted = r.e <= band;
+  return { slotTarget: t.map((x) => Math.round(x)), band, minE, poolSize: pool.length, rows: rows.sort((a, b) => a.e - b.e) };
 }
 
 export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPlan[] {
@@ -1240,22 +2128,25 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
   // NUTRITION-N3 · SEGURIDAD DEL BATIDO: el whey (regular/mass gainer) es lácteo → si el usuario evita
   // lácteos o es vegano, NO se prescribe (fail-closed). Se omite y los principales cierran la meta con
   // comida real (no inventamos una "proteína vegana" que no exista como dato). El batido 'vegana' sí pasa.
-  const shake = shakeAllowed(opts.shake, opts.avoid) ? opts.shake : undefined;
+  const shake = shakeAllowedFor(opts.shake, opts.avoid ?? []) ? opts.shake : undefined;   // D-WP5
   const buildT = reduceForShake(T, shake); // los principales van contra la meta MENOS el batido
   const rng = mulberry32(opts.seed ?? 12345);
   // "Evitar": categoría (gluten/lácteos/…) → alimentos reales del banco; excluye esos platillos.
-  const avoidTerms = expandAvoid((opts.avoid ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean));
+  // MB3 · strict (permanentes) + soft (preferencias de la semana), la misma pareja que el pool de la IA.
+  const policyAvoid = makePolicyFilter(opts.avoid);
   // El predicado 'avoid' ya excluye alérgenos; le sumamos la visibilidad por región
   // (filtro DURO fuera de LATAM + segmentación por marca region:ES) para que el fallback
   // determinista tampoco arme mole en España ni platillos de España fuera de EUROPE.
   const avoid = (d: BancoDish) =>
-    (avoidTerms.length > 0 && dishMatchesAny(d, avoidTerms)) ||
+    policyAvoid(d) ||
     !dishAllowedInRegion(d, opts.region);
   const cuisines = (opts.cuisines ?? []).map((s) => s.toLowerCase().trim()).filter(Boolean);
+  const poolSize = Object.fromEntries(['Desayuno', 'Comida', 'Cena', 'Snack'].map((t) => [t, (BY_TIME[t] ?? []).filter((d) => !avoid(d)).length]));
   const craving = cravingTerms(opts.craving ?? ''); // "antojo": prefiere platillos que lo tengan
   const used = new Set<string>();          // platillos ya usados en la semana → variedad entre días
   const ingFreq = new Map<string, number>(); // ingredientes ya usados → rota fuentes (aguacate/pollo)
-  const corrUsed = new Set<string>();      // corrector no repite el mismo snack en la semana
+  const corrUsed = new Map<string, number>(); // corrector: usos por snack en la semana (rota al menos usado)
+  const vstate = newVarietyState();        // Bloque 6 · conteo semanal + «ayer» (penalización, no exclusión)
   const days: DayPlan[] = [];
   // Error del día = máx % en P/F/C (kcal es implícito por Atwater).
   const dayErr = (d: DayPlan): number => {
@@ -1276,9 +2167,9 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
     // conserva la variedad: los días rotan en vez de converger al mismo platillo.
     // Cada intento parte del estado de variedad LIMPIO del día (si no, el intento
     // descartado deja sus platillos marcados como usados y colapsa la variedad).
-    const preU = new Set(used), preI = new Map(ingFreq), preC = new Map(cravedCount);
+    const preU = new Set(used), preI = new Map(ingFreq), preC = new Map(cravedCount), preV = cloneVariety(vstate);
     let best: DayPlan | null = null, bestErr = Infinity;
-    let bU = preU, bI = preI, bC = preC;
+    let bU = preU, bI = preI, bC = preC, bV = preV;
     // Dos fases. FASE ESTRICTA: variedad completa + cada platillo en su tiempo, sin
     // repetir en la semana. Da <1% en el ~89% de los días. FASE RELAJADA: solo si
     // la estricta se quedó LEJOS (>2%) —el rincón de exclusiones pesadas + meta
@@ -1291,17 +2182,37 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
         used.clear(); preU.forEach((x) => used.add(x));
         ingFreq.clear(); preI.forEach((v, k) => ingFreq.set(k, v));
         cravedCount.clear(); preC.forEach((v, k) => cravedCount.set(k, v));
-        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax);
-        if (shake) applyShake(day.meals, shake);   // batido (ya validado vs lácteos/vegano) reemplaza el snack de su slot
+        const vs = cloneVariety(preV);
+        // Si un tiempo no tiene candidatos, buildDay lanza NoEligibleDishesError y el error
+        // SALE de buildWeeklyPlan: no se reintenta con otro relax (relajar variedad o sesgar
+        // a carbo no crea platillos) ni se devuelve un plan incompleto. Lo recoge la UI.
+        const day = buildDay(i, buildT, rng, avoid, cuisines, used, craving, ingFreq, relax, avoidInputUnion(opts.avoid), shakeSlotsOf(shake),
+          // Fases relajadas (el día estricto quedó > 2 % lejos): mandan la exactitud, como siempre; la variedad solo
+          // decide en la fase estricta. Igual cuentan para la semana (lo servido sí se registra abajo).
+          relax === 0 ? vs : undefined);
+        if (relax > 0) for (const m of day.meals) for (const n of m.name.split(' + ')) vs.count.set(n, (vs.count.get(n) ?? 0) + 1);
+        if (shake) { applyShake(day.meals, shake); day.meals = chronological(day.meals); }   // el batido ocupa SU slot de snack
         // Cuadre del día contra la meta COMPLETA (T), ya con el batido puesto: las
         // comidas absorben lo que el batido aporta o deja faltando.
         topUpDay(day.meals, T);
         const com = kcalDe(day, 'Comida');
         const desorden = (com < kcalDe(day, 'Desayuno') ? 1 : 0) + (com < kcalDe(day, 'Cena') ? 1 : 0);
-        const score = dayErr(day) + desorden * 0.08;
-        if (score < bestErr) {
+        // CAPA 4 · repetir en la semana una principal cuesta 1 punto: un día variado gana si es, como mucho, ~1 punto
+        // menos exacto (antes el desvío solo veía macros y a metas altas el mismo platillo ganaba los 7 días).
+        const repetidas = day.meals.filter((m) => !m.time.startsWith('Snack') && preU.has(m.name)).length;
+        // Bloque 6 · repetir lo de AYER cuesta igual que repetir en la semana (desempate entre días igual de exactos).
+        const consecutivas = day.meals.filter((m) => m.name.split(' + ').some((n) => preV.prev.has(n))).length;
+        // Bloque 7 · el DÍA completo se re-evalúa ya cuadrado: un snack que quedó más grande que ¾ de la principal más
+        // chica (las principales encogieron al compensar) cuesta 3 puntos — gana otro intento si lo hay; nunca excluye.
+        const mk = day.meals.filter((m) => !m.time.startsWith('Snack')).map((m) => m.macros?.kcal ?? 0);
+        const grandes = day.meals.filter((m) => m.time.startsWith('Snack') && (m.macros?.kcal ?? 0) > SNACK_MAX_VS_MAIN * Math.min(...mk)).length;
+        const score = dayErr(day) + desorden * 0.08 + (repetidas + consecutivas) * 0.01 + grandes * SNACK_OVERSIZE_COST;
+        // CAPA 4 · las fases relajadas (repetir en la semana / sesgo a carbo) solo ganan si MEJORAN de verdad
+        // (≥ 1 punto): cuando el desvío tiene un piso estructural (meta muy alta en carbo con poca proteína),
+        // repetir el mismo platillo los 7 días no lo baja y solo destruye la variedad.
+        if (score < bestErr - (relax > 0 ? 0.01 : 0)) {
           bestErr = score; best = day;
-          bU = new Set(used); bI = new Map(ingFreq); bC = new Map(cravedCount);
+          bU = new Set(used); bI = new Map(ingFreq); bC = new Map(cravedCount); bV = vs;
         }
         if (bestErr <= 0.01) break;   // exacto y ordenado: parar (conserva variedad)
       }
@@ -1314,6 +2225,13 @@ export function buildWeeklyPlan(target: PlanTarget, opts: BuildOpts = {}): DayPl
     cravedCount.clear(); bC.forEach((v, k) => cravedCount.set(k, v));
     const day = best!;
     topUpMeals(day.meals, target, opts.avoid ?? [], corrUsed);
+    day.meals = chronological(day.meals);
+    vstate.count = bV.count;              // (el snack del corrector rota aparte, con `corrUsed`)
+    rollVarietyDay(vstate, day.meals);
+    const cap = capacityIssue(day, T, opts.avoid, avoid, poolSize);   // registrar, nunca deformar
+    if (cap) day.capacity = cap;
+    const rl = recipeLimits(day, T);   // Bloque 5 · receta cerrada en su límite: registrar, nunca deformar
+    if (rl.length) day.recipeLimits = rl;
     days.push(day);
   }
   return days;

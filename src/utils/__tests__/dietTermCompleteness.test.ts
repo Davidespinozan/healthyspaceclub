@@ -21,6 +21,11 @@ const ANIMAL_WORDS = new Set([
   'bistec', 'sirloin', 'arrachera', 'falda', 'chambarete', 'machaca', 'milanesa',
   'pescado', 'salmon', 'atun', 'tilapia', 'bacalao', 'sardina', 'sardinas',
   'camaron', 'camarones', 'marisco', 'mariscos', 'pulpo', 'calamar',
+  // P0-03 · el oracle TAMBIÉN tenía el punto ciego que debía vigilar: le faltaban las
+  // especies del repertorio español, las mismas que AVOID_MAP.veg* nunca incorporó. Un
+  // oracle que comparte la laguna del sistema no es independiente. Con ellas aparece la
+  // fuga real que la matriz de planes no podía ver (ver HALLAZGO-02 en HALLAZGOS-P0.md).
+  'merluza', 'gamba', 'gambas', 'boqueron', 'boquerones',
 ]);
 const ANIMAL_PHRASES = ['carne asada', 'res deshebrada', 'res en trozos', 'filete de pescado', 'caldo de pollo', 'caldo de res', 'molida magra', 'molida de res'];
 const VEGAN_EXTRA_WORDS = new Set([
@@ -130,41 +135,136 @@ describe('N7 · N3 allergens intactos', () => {
   });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CAPACIDAD INACTIVA · `vegetariano` / `vegano` sobre el BANCO COMPLETO.
+//
+// La Decisión 01 declara estas dos categorías NO soportadas, y desde P0-03 la autoridad
+// (`avoidAuthority`) las descarta: no pueden entrar en `effectiveAvoid` ni llegar al motor.
+// Lo que sigue NO es una garantía de producto —ningún usuario puede alcanzar estas
+// exclusiones— sino la CARACTERIZACIÓN de los términos que siguen viviendo en AVOID_MAP,
+// para que si algún día se reactivan se sepa exactamente en qué estado quedaron.
+//
+// Se hace a nivel de PREDICADO, sobre los 307 platillos y sin generar un solo plan: es
+// instantáneo y cubre todo el banco, en vez de los ~60 platillos que un muestreo de planes
+// tocaba por azar. La generación de planes veg se retiró de este fichero por eso mismo:
+// ejercitaba una vía inalcanzable y era la parte más lenta de la suite.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('vegetariano/vegano · caracterización de capacidad INACTIVA (sin generar planes)', () => {
+  /** Platillos que el oracle marca por un motivo dado. */
+  const flagged = (leak: (nv: string) => string | null) =>
+    BANCO.map((d) => ({ d, r: d.ings.map((i) => leak(i.nv)).find(Boolean) ?? null }))
+      .filter((x): x is { d: typeof BANCO[number]; r: string } => !!x.r);
+  /** ¿Algún ingrediente del platillo lleva producto animal según el oracle? */
+  const tieneAnimal = (d: typeof BANCO[number]) => d.ings.some((i) => !!animalLeak(i.nv));
+
+  // DEUDA REGISTRADA · HALLAZGO-02 (docs/nutricion/HALLAZGOS-P0.md).
+  // AVOID_MAP.vegetariano/vegano no lista merluza, gambas, boquerones ni sardinas, aunque
+  // `pescado`/`mariscos` sí las ganaron en P0-01. NO se corrige: estas categorías están
+  // fuera del producto activo y ampliarlas sería construir compatibilidad para una capacidad
+  // que la Decisión 01 retiró. Queda fijado aquí para que el estado real esté medido el día
+  // que se evalúe reactivarlas; cerrarlo hará fallar este test, que es la señal correcta.
+  const DEUDA_PESCADO_ES = [
+    'Tostada de Sardina y Tomate',     // Desayuno
+    'Merluza al Horno con Patatas',    // Comida
+    'Gambas al Ajillo con Pan',        // Cena
+    'Aceitunas con Boquerones',        // Snack
+  ];
+
+  it('VEGETARIANO excluye todo producto animal del banco, salvo el defecto registrado', () => {
+    const f = makeAvoidFilter(['vegetariano']);
+    const animales = flagged(animalLeak);
+    expect(animales.length, 'el oracle debe marcar una porción sustancial del banco').toBeGreaterThan(100);
+    const fugas = animales.filter((x) => !f(x.d)).map((x) => x.d.nombre).sort();
+    expect(fugas, 'ningún platillo animal nuevo puede quedar fuera de la exclusión')
+      .toEqual([...DEUDA_PESCADO_ES].sort());
+  });
+
+  it('VEGANO excluye todo producto animal del banco, salvo el defecto registrado', () => {
+    const f = makeAvoidFilter(['vegano']);
+    const fugas = flagged(animalLeak).filter((x) => !f(x.d)).map((x) => x.d.nombre).sort();
+    // 3, no 4: la Tostada de Sardina sí cae bajo vegano, por otro ingrediente (lácteo).
+    expect(fugas).toEqual(DEUDA_PESCADO_ES.filter((n) => n !== 'Tostada de Sardina y Tomate').sort());
+  });
+
+  // Ésta es la cobertura que se perdió al salir los perfiles veganos de la matriz: el
+  // oracle veganExtraLeak (huevo, 17 lácteos/derivados, miel, mayonesa y la regla de
+  // «crema» láctea) dejó de ejecutarse por completo. Aquí se aplica al banco entero.
+  it('VEGANO excluye además huevo, lácteos, mantequilla, mayonesa y miel (banco completo)', () => {
+    const f = makeAvoidFilter(['vegano']);
+    const extras = flagged(veganExtraLeak);
+    expect(extras.length, 'el oracle vegan-extra debe marcar muchos platillos').toBeGreaterThan(150);
+    const fugas = extras.filter((x) => !f(x.d)).map((x) => `${x.d.nombre} ~ ${x.r}`);
+    expect(fugas, `vegano no excluyó: ${fugas.slice(0, 10).join(' · ')}`).toEqual([]);
+  });
+
+  it('VEGETARIANO permite huevo/lácteos/miel: no hereda la parte vegana (banco completo)', () => {
+    const fVeg = makeAvoidFilter(['vegetariano']);
+    // platillos marcados SOLO por vegan-extra (sin producto animal) → vegetariano los permite
+    const soloExtra = flagged(veganExtraLeak).filter((x) => !tieneAnimal(x.d));
+    expect(soloExtra.length).toBeGreaterThan(20);
+    const excluidosDeMas = soloExtra.filter((x) => fVeg(x.d)).map((x) => x.d.nombre);
+    expect(excluidosDeMas, `vegetariano excluyó de más: ${excluidosDeMas.slice(0, 8).join(' · ')}`).toEqual([]);
+  });
+
+  // Combinaciones: recupera vegano+gluten, vegano+frutos-secos y vegetariano+lacteos, que
+  // salieron de la matriz. A nivel de predicado es exacto y no cuesta nada: una combinación
+  // debe excluir AL MENOS la unión de lo que excluye cada categoría por separado.
+  it('una combinación excluye al menos la unión de sus categorías (nunca resta)', () => {
+    const COMBOS = [
+      ['vegano', 'gluten'], ['vegano', 'frutos-secos'], ['vegetariano', 'lacteos'],
+      ['vegetariano', 'gluten'], ['vegano', 'gluten', 'frutos-secos'],
+    ];
+    for (const combo of COMBOS) {
+      const fCombo = makeAvoidFilter(combo);
+      const partes = combo.map((c) => makeAvoidFilter([c]));
+      const restados = BANCO.filter((d) => partes.some((f) => f(d)) && !fCombo(d)).map((d) => d.nombre);
+      expect(restados, `[${combo.join('+')}] perdió exclusiones: ${restados.slice(0, 6).join(' · ')}`).toEqual([]);
+    }
+  });
+});
+
 // ── §8 PLAN MATRIX + §7 ORACLE FACTUAL sobre planes generados reales ──
+//
+// P0-03 · la matriz ya NO genera planes vegetarianos/veganos: la autoridad no admite esas
+// categorías, así que ejercitaba una vía que ningún usuario puede alcanzar, y eran además
+// los perfiles de pool más estrecho y los más lentos de generar (la matriz no cabía en el
+// testTimeout global de 20 s). La cobertura de TÉRMINOS la da el barrido de predicado de
+// arriba, sobre los 307 platillos. Lo que un plan generado sí puede demostrar —y es lo que
+// queda aquí— es que el ENSAMBLADO real (selección, fallbacks, corrector de snacks,
+// sub-recetas resueltas) no introduce nada que la restricción activa excluya.
 describe('N7 · matriz de planes generados: 0 leaks factuales', () => {
   const mk = (kcal: number): PlanTarget => ({ kcal, protG: Math.round(kcal * .3 / 4), fatG: Math.round(kcal * .27 / 9), carbG: Math.round(kcal * .43 / 4) });
-  const PROFILES: Array<[string, string[], boolean]> = [
-    ['vegetariano', ['vegetariano'], false],
-    ['vegano', ['vegano'], true],
-    ['vegano+gluten', ['vegano', 'gluten'], true],
-    ['vegetariano+lacteos', ['vegetariano', 'lacteos'], false],
-    ['vegano+frutos-secos', ['vegano', 'frutos-secos'], true],
+  const PROFILES: Array<[string, string[]]> = [
+    ['sinLacteos', ['lacteos']],
+    ['sinGluten+huevo', ['gluten', 'huevo']],
+    ['sinPescado+mariscos', ['pescado', 'mariscos']],
   ];
-  // Subconjunto RÁPIDO (cabe en el testTimeout global de 20s, sin tocar config): 3 kcal × 5 perfiles × 2
-  // seeds = 30 planes generados reales. La matriz COMPLETA (§8: 5×5×5=125 planes + determinismo) se corre
-  // como medición desechable y se REPORTA (0 animal / 0 vegan-extra); aquí se ancla el invariante permanente.
-  it('planes veg generados reales → 0 animal leaks, 0 vegan-extra leaks, 7 días, sin comidas vacías', () => {
-    const animalLeaks: string[] = [], veganLeaks: string[] = [];
+
+  it('planes generados reales → 0 fugas de la restricción activa, 7 días, sin comidas vacías', () => {
+    const fugas: string[] = [];
     let plansChecked = 0;
-    for (const kcal of [1450, 2200, 3500]) for (const [pname, avoid, isVegan] of PROFILES) for (const seed of [7]) {
-      const plan = buildWeeklyPlan(mk(kcal), { seed, avoid });
-      expect(plan.length, `${pname}/${kcal}/${seed} 7 días`).toBe(7);
+    for (const kcal of [1450, 2200, 3500]) for (const [pname, avoid] of PROFILES) {
+      const plan = buildWeeklyPlan(mk(kcal), { seed: 7, avoid });
+      expect(plan.length, `${pname}/${kcal} 7 días`).toBe(7);
       plansChecked++;
+      // oracle del ENSAMBLADO: se re-evalúa cada platillo servido con el predicado real,
+      // resolviendo el nombre contra el banco (los snacks combinados vienen como "A + B").
+      const f = makeAvoidFilter(avoid);
+      const byName = new Map(BANCO.map((d) => [d.nombre, d]));
       for (const d of plan) for (const m of d.meals) {
         expect(m.ings && m.ings.length > 0, `${pname} comida no vacía`).toBe(true);
-        for (const ing of m.ings ?? []) {
-          const al = animalLeak(ing.nv); if (al) animalLeaks.push(`${pname} | ${m.name} | ${ing.nv} | ${al}`);
-          if (isVegan) { const vl = veganExtraLeak(ing.nv); if (vl) veganLeaks.push(`${pname} | ${m.name} | ${ing.nv} | ${vl}`); }
+        for (const part of m.name.split(' + ')) {
+          const dd = byName.get(part);
+          if (dd && f(dd)) fugas.push(`${pname} | ${m.time} | ${part}`);
         }
       }
     }
-    expect(plansChecked).toBe(15);
-    expect([...new Set(animalLeaks)], `animal leaks: ${[...new Set(animalLeaks)].slice(0, 15).join(' · ')}`).toEqual([]);
-    expect([...new Set(veganLeaks)], `vegan-extra leaks: ${[...new Set(veganLeaks)].slice(0, 15).join(' · ')}`).toEqual([]);
+    expect(plansChecked).toBe(9);   // 3 kcal × 3 perfiles × 1 seed
+    expect([...new Set(fugas)], `fugas: ${[...new Set(fugas)].slice(0, 15).join(' · ')}`).toEqual([]);
   });
 
   it('determinismo: mismo seed/avoid → gramos idénticos (spot-check)', () => {
-    const cases: Array<[string[], number]> = [[['vegano'], 2200], [['vegetariano'], 1800], [['vegano', 'gluten'], 3000]];
+    const cases: Array<[string[], number]> = [[['lacteos'], 1800], [['gluten', 'huevo'], 3000], [['lacteos', 'huevo'], 2200]];
     for (const [avoid, kcal] of cases) {
       const g = (p: any[]) => JSON.stringify(p.flatMap((d) => d.meals.flatMap((m: any) => (m.ings ?? []).map((i: any) => i.g))));
       expect(g(buildWeeklyPlan(mk(kcal), { seed: 42, avoid }))).toBe(g(buildWeeklyPlan(mk(kcal), { seed: 42, avoid })));

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { portionBoundsFor, validatePortionPlausibility } from '../portionPlausibility';
 import { buildWeeklyPlan, type PlanTarget } from '../planEngine';
+import { BANCO } from '../../data/banco';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NUTRITION-N1 · HUMAN PORTION PLAUSIBILITY.
@@ -63,11 +64,19 @@ const MATRIX: PlanTarget[] = [1450, 1600, 1800, 2000, 2200, 2500, 2800, 3000, 32
 }));
 const SEEDS = [7, 42, 99];
 
+// MENÚ V1 · Bloque 3B · el motor NUNCA encoge un ingrediente por debajo de la receta base de Magaly (guard
+// `max(hi, g0)`, documentado en ingBounds); hay recetas cuya base ya supera el techo humano (p. ej. 200 g de queso
+// cottage en sus bowls). Eso no es estirar: el invariante se mide sobre lo que el motor sube POR ENCIMA de la base.
+const _baseOf = new Map(BANCO.map((d) => [d.nombre, d]));
 function everyIng(cb: (nv: string, g: number, kcal: number) => void, seed: number, T: PlanTarget) {
   for (const d of buildWeeklyPlan(T, { seed })) {
     for (const m of d.meals) {
+      const parts = m.name.split(' + ').map((n) => _baseOf.get(n)).filter(Boolean);
       for (const ing of (m.ings ?? [])) {
-        if (ing.g != null && ing.g > 0) cb(ing.nv, ing.g, T.kcal);
+        if (ing.g == null || ing.g <= 0) continue;
+        const base = Math.max(0, ...parts.map((p) => p!.ings.find((x) => x.nv === ing.nv)?.g0 ?? 0));
+        if (ing.g <= base + 0.5) continue;   // servido en (o bajo) su receta base: no es el solver estirando
+        cb(ing.nv, ing.g, T.kcal);
       }
     }
   }

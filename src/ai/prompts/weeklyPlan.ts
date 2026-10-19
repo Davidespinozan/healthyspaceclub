@@ -29,7 +29,6 @@ export function buildWeeklyPlanPrompt(p: WeeklyPlanParams): string {
 PERFIL DEL USUARIO:
 - Sexo: ${p.obData.sex || '?'} | Edad: ${p.obData.edad || '?'} años
 - Peso actual: ${p.obData.peso || '?'} kg | Altura: ${p.obData.altura || p.obData.estatura || '?'} cm
-- Actividad: ${p.obData.actividad || '?'}
 - Objetivo: ${p.obData.goal || '?'} → ${p.styleFromGoal}
 - Meta calórica: ${p.planGoal} kcal/día
 
