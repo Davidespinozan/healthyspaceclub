@@ -1,5 +1,4 @@
-const ICON_URL = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp';
-const WORDMARK_URL = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscprincipalsinfondo.webp';
+import { BRAND_ICON as ICON_URL, BRAND_WORDMARK as WORDMARK_URL } from '../constants/brand';
 
 interface LogoProps {
   variant?: 'icon' | 'wordmark';

@@ -1,0 +1,589 @@
+/* ════════════════════════════════════════════════════════════════════
+   LANDING V2 · estilos de la landing pública oficial (ver constants/landing.ts)
+   Se cargan con LandingScreenV2.
+   REGLA: todo selector va bajo `.hsc-lv2-scope` (clase que App pone en #scr-landing
+   solo en V2) para no afectar a V1 ni al resto de la app.
+   Assets de V2 → src/assets/landing-v2/ (nunca sobrescribir los existentes).
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Branding V2: logo principal + isotipo ─────────────────────────────
+   hsc-logo-v2.png es 2:1 con ~13% de aire transparente arriba y abajo, así
+   que la altura del <img> es mayor que la del wordmark visible. width:auto
+   conserva la proporción. filter:none → colores del archivo, sin el brillo
+   global de `.logo img`. */
+.hsc-lv2-scope nav.landing-nav .logo-nav img { height:104px; width:auto; filter:none; }
+.hsc-lv2-scope nav.landing-nav.scrolled .logo-nav img { height:88px; }
+
+.hsc-lv2-scope footer .logo img { height:64px; width:auto; filter:none; }
+
+/* Isotipo: el PNG ya trae las esquinas redondeadas y un margen transparente. */
+.hsc-lv2-scope .hero-iso { width:64px; height:64px; border-radius:0; object-fit:contain; }
+
+/* ── Foto del hero V2 (hsc-hero-v2.png, 2688×1520) ─────────────────────
+   object-fit:cover (global) conserva la proporción: solo recorta, nunca estira.
+   A diferencia de la foto de V1, esta no trae la zona del texto oscurecida
+   (cielo claro a la izquierda) → velo oscuro propio de V2 (mismo #081312 del
+   fondo del hero). Sin filtros de color sobre la foto. */
+/* Desktop: la foto sobra a lo ancho (hero ~16:10 vs foto 16:9) → anclada a la
+   izquierda, la pareja se corre a la derecha, lejos del bloque de texto. */
+.hsc-lv2-scope .hero-bg-img { object-position:0% 30%; }
+/* 769–1199px: anclada a la izquierda el hombre queda fuera de cuadro → punto
+   intermedio para que se vean los dos. */
+@media (min-width:769px) and (max-width:1199px) {
+  .hsc-lv2-scope .hero-bg-img { object-position:45% 30%; }
+}
+.hsc-lv2-scope .hero-scrim {
+  background:linear-gradient(90deg, rgba(8,19,18,.88) 0%, rgba(8,19,18,.72) 32%, rgba(8,19,18,.25) 55%, rgba(8,19,18,0) 70%);
+}
+
+/* Globitos al pie del hero: solo móvil (ver @media ≤768). */
+.hsc-lv2-scope .lv2-chips-foot { display:none; }
+
+/* ── Hero V2 ──────────────────────────────────────────────────────────
+     ¿DECIDISTE CAMBIAR?                    pregunta, dorada, alineada a la izquierda
+     TU CAMBIO EMPIEZA CON UN PLAN.          dorado, una línea
+     ENTRENAMIENTO Y NUTRICIÓN PERSONALIZADOS. blanco, mismo cuerpo que la pregunta
+     UNA COMUNIDAD PARA SEGUIR ADELANTE.     (un renglón por frase)
+   Un .lv2-line por renglón (block + nowrap) → la distribución es fija.
+   Los tres renglones van ~10% por encima del tamaño anterior; los márgenes
+   (--lv2-*) se recortaron para absorber el alto extra: el bloque mide lo
+   mismo, así que ni el texto ni el botón cambian de posición. */
+.hsc-lv2-scope .hero { --lv2-tag-gap:15px; --lv2-sub-gap:9px; --lv2-cta-gap:23px; }
+
+.hsc-lv2-scope .hero-tagline { text-align:left; font-size:1.76rem; margin-bottom:var(--lv2-tag-gap); }
+
+.hsc-lv2-scope .hero h1.lv2-h1 { margin-bottom:var(--lv2-cta-gap); }
+.hsc-lv2-scope .hero h1.lv2-h1 .h1-gold,
+.hsc-lv2-scope .hero h1.lv2-h1 .h1-accent { display:block; width:fit-content; }
+.hsc-lv2-scope .hero h1.lv2-h1 .lv2-line { display:block; white-space:nowrap; }
+/* Dorado: .869em del h1 (escala V1 · antes .79em). em relativo al h1 → sigue el clamp global. */
+/* "Tu cambio empieza con un plan." en una línea: .725em del h1 → ocupa el mismo
+   ancho que tenía "Entrena. Nútrete. Avanza." (.869em), sin invadir la foto. */
+.hsc-lv2-scope .hero h1.lv2-h1 .h1-gold { font-size:.725em; }
+/* Blanco: mismo cuerpo que la pregunta; tracking un poco abierto para leerse. */
+/* Frases blancas sin negrita (el h1 global es 800). */
+.hsc-lv2-scope .hero h1.lv2-h1 .h1-accent { font-weight:400; }
+.hsc-lv2-scope .hero h1.lv2-h1 .h1-accent {
+  font-size:1.76rem; line-height:1.3; letter-spacing:.01em; margin-top:var(--lv2-sub-gap);
+}
+
+@media (max-width:768px) {
+  .hsc-lv2-scope nav.landing-nav .logo-nav img { height:80px; }
+  .hsc-lv2-scope nav.landing-nav.scrolled .logo-nav img { height:72px; }
+  .hsc-lv2-scope footer .logo img { height:56px; }
+  .hsc-lv2-scope .hero-iso { width:48px; height:48px; }
+
+  /* Foto vertical propia (hsc-hero-v2-mobile.png, 941×1672 ≈ proporción del hero
+     móvil): cielo arriba para el texto, pareja en la mitad inferior.
+     Velo de arriba hacia abajo sobre la zona del texto. */
+  /* La foto llena justo el alto del hero, así que no se puede bajar con
+     object-position: se agranda un 17% anclada arriba → las caras quedan
+     por debajo del CTA y solo se recortan pies y bordes (más del lado del agua). */
+  .hsc-lv2-scope .hero-bg-img { height:117%; bottom:auto; object-position:62% top; }
+  /* Velo solo sobre la zona del texto; termina antes de las caras. */
+  .hsc-lv2-scope .hero-scrim {
+    background:linear-gradient(180deg, rgba(8,19,18,.85) 0%, rgba(8,19,18,.7) 28%, rgba(8,19,18,.3) 42%, rgba(8,19,18,0) 52%);
+  }
+
+  /* Hero móvil: bloque alineado a la izquierda (V1 centra). */
+  .hsc-lv2-scope .hero--dark .hero-content { text-align:left; }
+  .hsc-lv2-scope .hero--dark .hero-content .hero-btns { justify-content:flex-start; }
+  .hsc-lv2-scope .hero { --lv2-tag-gap:12px; --lv2-sub-gap:9px; --lv2-cta-gap:24px; }
+  /* Pregunta y comunidad: mismo cuerpo (global móvil: .95rem !important). +3%:
+     la frase blanca ya ocupa casi todo el ancho a 390px. */
+  /* Pregunta = blanco; escala para que la frase blanca más larga quepa en un renglón. */
+  .hsc-lv2-scope .hero-content .hero-tagline { font-size:var(--lv2-m-small) !important; }
+  /* Cada frase blanca en un renglón: escala con el ancho (la más larga es
+     "Entrenamiento y nutrición a tu medida."); tope .98rem = cuerpo de la pregunta. */
+  /* Móvil: las tres líneas más grandes, misma proporción (pregunta = blanco;
+     dorado ~1.7×). Dorado y blanco pueden partir en dos renglones, balanceados. */
+  .hsc-lv2-scope .hero { --lv2-m-small:min(.94rem, calc((100vw - 46px) / 25.6)); }
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent { font-size:var(--lv2-m-small); line-height:1.3; letter-spacing:-.01em; }
+  .hsc-lv2-scope .hero h1.lv2-h1 .lv2-line { white-space:normal; text-wrap:balance; }
+  /* Cada frase blanca en su propio renglón, sin partirse (como en desktop). */
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent .lv2-line { white-space:nowrap; }
+  /* Texto más grande → bloque más alto: empieza 30px antes (global 186px) y la
+     foto se agranda (anclada arriba) para que las caras queden bajo el CTA. */
+  .hsc-lv2-scope .hero { padding-top:156px !important; }
+  .hsc-lv2-scope .hero-bg-img { height:122%; }
+  /* Dorado +10%, con tope para que siempre quepa en el ancho disponible. */
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-gold { font-size:min(1.85rem, 8vw); line-height:1.02; }
+
+  /* Pie del hero: "Desliza" al final del hero (global móvil lo deja en el flujo,
+     pegado al CTA) y, justo encima, los 3 globitos centrados en una fila.
+     Mismo estilo de globito; solo se compacta lo justo para caber en 360px. */
+  .hsc-lv2-scope .hero .hero-scroll {
+    position:absolute !important; left:0 !important; right:0; bottom:14px !important;
+    width:fit-content; margin:0 auto !important;
+  }
+  .hsc-lv2-scope .hero .lv2-chips-foot {
+    display:flex !important; position:absolute; left:0; right:0; bottom:56px; z-index:4;
+    margin:0; padding:0 6px; justify-content:center; flex-wrap:nowrap; gap:4px;
+  }
+  /* Texto ∝ ancho para que la fila (ES, la más larga) quepa siempre:
+     ~9px a 360px, ~10px a 390px, tope .68rem (tamaño móvil global). */
+  .hsc-lv2-scope .hero .lv2-chips-foot li {
+    font-size:min(.68rem, calc((100vw - 100px) / 29)); padding:6px 5px; gap:3px;
+    white-space:nowrap; letter-spacing:-.01em;
+  }
+  .hsc-lv2-scope .hero .lv2-chips-foot li svg { width:10px; height:10px; }
+  @media (min-width:480px) { .hsc-lv2-scope .hero .lv2-chips-foot li { padding:7px 10px; gap:5px; } .hsc-lv2-scope .hero .lv2-chips-foot { gap:8px; } }
+  /* Isotipo por encima de los globitos para no chocar con ellos. */
+  .hsc-lv2-scope .hero-iso { bottom:auto; top:calc(100% - 152px); }
+  /* Velo inferior suave para que globitos y "Desliza" se lean sobre el pavimento. */
+  .hsc-lv2-scope .hero-scrim {
+    background:
+      linear-gradient(180deg, rgba(8,19,18,.85) 0%, rgba(8,19,18,.74) 36%, rgba(8,19,18,.35) 50%, rgba(8,19,18,0) 60%),
+      linear-gradient(0deg, rgba(8,19,18,.78) 0%, rgba(8,19,18,.45) 14%, rgba(8,19,18,0) 26%);
+  }
+}
+
+
+/* ── Galería "Descubre lo que hay dentro" (sustituye stats + banda en V2) ──
+   Continúa el fondo crema de "Un sistema completo": se lee como su segunda
+   mitad, sin hueco extra arriba. Tarjetas oscuras = mismo lenguaje que los
+   pilares. No son enlaces: sin cursor ni flechas; solo un lift discreto. */
+.hsc-lv2-scope .lv2-gal { background:#F6F2EA; padding:0 60px 96px; }
+.hsc-lv2-scope .lv2-gal-in { max-width:1180px; margin:0 auto; }
+.hsc-lv2-scope .lv2-gal-head { margin-bottom:24px; }
+.hsc-lv2-scope .lv2-gal-head .sec-lbl { color:var(--amber-deep, #A8864E); text-transform:uppercase; font-size:.68rem; margin-bottom:10px; }
+.hsc-lv2-scope .lv2-gal-head .sec-lbl::before { background:currentColor; }
+.hsc-lv2-scope .lv2-gal-desc { margin:0; max-width:56ch; font-size:1rem; line-height:1.55; color:var(--txt2); }
+
+.hsc-lv2-scope .lv2-gal-track { display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; list-style:none; margin:0; padding:0; }
+.hsc-lv2-scope .lv2-gal-card {
+  display:flex; flex-direction:column; min-width:0; overflow:hidden; border-radius:20px;
+  background:linear-gradient(160deg, #143029 0%, #0c211d 100%);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 18px 40px rgba(8,20,18,.22), inset 0 1px 0 rgba(255,255,255,.04);
+  transition:transform .4s cubic-bezier(.23,1,.32,1), box-shadow .4s ease, border-color .4s ease;
+}
+@media (hover:hover) {
+  .hsc-lv2-scope .lv2-gal-card:hover { transform:translateY(-4px); border-color:rgba(191,160,101,.35); box-shadow:0 26px 54px rgba(8,20,18,.3); }
+}
+
+/* Foto: proporción fija → cambiar de imagen nunca mueve el texto. */
+.hsc-lv2-scope .lv2-gal-media { position:relative; aspect-ratio:4/3; overflow:hidden; background:#0c211d; }
+.hsc-lv2-scope .lv2-gal-media::after {
+  content:''; position:absolute; inset:auto 0 0 0; height:38%; pointer-events:none;
+  background:linear-gradient(180deg, rgba(12,33,29,0) 0%, rgba(12,33,29,.85) 100%);
+}
+.hsc-lv2-scope .lv2-gal-layer {
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
+  opacity:0; transition:opacity .9s ease;
+}
+.hsc-lv2-scope .lv2-gal-layer.is-front { opacity:1; }
+
+.hsc-lv2-scope .lv2-gal-body { display:flex; flex-direction:column; flex:1; padding:6px 24px 26px; margin-top:-26px; position:relative; z-index:1; }
+.hsc-lv2-scope .lv2-gal-label { font-size:.68rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--amber); }
+.hsc-lv2-scope .lv2-gal-num {
+  font-family:'Montserrat',sans-serif; font-weight:800; line-height:1; letter-spacing:-.03em;
+  font-size:clamp(2.6rem, 3.6vw, 3.4rem); color:var(--cream); margin:10px 0 8px;
+}
+.hsc-lv2-scope .lv2-gal-title { font-family:'Montserrat',sans-serif; font-size:1.05rem; font-weight:700; color:var(--cream); margin:0 0 6px; letter-spacing:-.01em; }
+.hsc-lv2-scope .lv2-gal-text { margin:0; font-size:.88rem; line-height:1.55; color:rgba(255,255,255,.62); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hsc-lv2-scope .lv2-gal-layer, .hsc-lv2-scope .lv2-gal-card { transition:none; }
+}
+
+/* ≤1023px: carrusel horizontal con scroll-snap. La sección va a sangre (sin
+   padding lateral) y el padding lo lleva la pista → solo la pista hace scroll,
+   nunca la página. Tablet: ~2 tarjetas + asomo; móvil: 1 + asomo. */
+@media (max-width:1023px) {
+  .hsc-lv2-scope .lv2-gal { padding:0 0 40px; }
+  .hsc-lv2-scope .lv2-gal-head { padding:0 24px; }
+  .hsc-lv2-scope .lv2-gal-track {
+    display:flex; gap:14px; overflow-x:auto; overscroll-behavior-x:contain;
+    scroll-snap-type:x mandatory; scroll-padding-inline:24px; padding:0 24px 34px; /* aire para la sombra (el scroll recorta) */
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .hsc-lv2-scope .lv2-gal-track::-webkit-scrollbar { display:none; }
+  .hsc-lv2-scope .lv2-gal-card { flex:0 0 44%; scroll-snap-align:start; }
+}
+@media (max-width:599px) {
+  .hsc-lv2-scope .lv2-gal { padding-bottom:32px; }
+  .hsc-lv2-scope .lv2-gal-head { padding:0 22px; margin-bottom:18px; }
+  .hsc-lv2-scope .lv2-gal-desc { font-size:.92rem; }
+  .hsc-lv2-scope .lv2-gal-track { padding:0 22px 34px; scroll-padding-inline:22px; gap:12px; }
+  .hsc-lv2-scope .lv2-gal-card { flex-basis:80%; }
+  .hsc-lv2-scope .lv2-gal-body { padding:4px 20px 22px; }
+  .hsc-lv2-scope .lv2-gal-num { font-size:2.5rem; }
+}
+
+/* ── "Cuando todos avanzan…" (.trans): foto de comunidad V2 ──────────────
+   Mismo degradado que V1 (95°, cargado a la izquierda para el texto); solo
+   cambia la foto. Las 4 personas están en la mitad derecha de la imagen y
+   las caras en su tercio alto → anclada a la derecha y algo arriba. */
+.hsc-lv2-scope .trans {
+  background:
+    linear-gradient(95deg, rgba(8,19,18,.9) 0%, rgba(8,19,18,.7) 28%, rgba(8,19,18,.25) 52%, transparent 72%),
+    url('../assets/landing-v2/opt/hsc-comunidad-v2.webp') 85% 30% / cover no-repeat;
+}
+
+/* ── "Tu nutrióloga, entrenador y comunidad en un solo lugar." (.ll) ─────
+   ≤860px (título centrado sobre los teléfonos): 3 renglones fijos
+   "Tu nutrióloga," / "entrenador y comunidad" / "en un solo lugar." (el 3º es
+   el <em>, ya display:block). Tamaño ∝ ancho para que el 2º quepa entero.
+   Desktop (columna estrecha junto a los teléfonos): flujo natural, como antes. */
+@media (max-width:860px) {
+  .hsc-lv2-scope .ll-title { font-size:min(1.95rem, 7.4vw); }
+  .hsc-lv2-scope .ll-title .lv2-ll-line { display:block; white-space:nowrap; }
+}
+/* Celular: la sección de los teléfonos ocupa la pantalla completa, con
+   título y teléfonos centrados en vertical (antes ~80% de alto). */
+@media (max-width:599px) {
+  .hsc-lv2-scope .ll {
+    min-height:100vh; min-height:100svh;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .hsc-lv2-scope .ll-in { width:100%; }
+}
+
+/* Móvil (≤768px): recorte propio de la usuaria (hsc-comunidad-v2-mobile.png, 941×1048).
+   La sección toma EXACTAMENTE la proporción del recorte → `cover` no añade zoom ni
+   recorta: se ve el encuadre tal cual lo preparó. Degradado vertical sobre el texto.
+   Desktop/tablet grande: sin cambios (regla de arriba). */
+@media (max-width:768px) {
+  .hsc-lv2-scope .trans {
+    background:
+      linear-gradient(180deg, rgba(8,19,18,.82) 0%, rgba(8,19,18,.6) 30%, rgba(8,19,18,.15) 48%, transparent 58%),
+      url('../assets/landing-v2/opt/hsc-comunidad-v2-mobile.webp') center bottom / cover no-repeat;
+    min-height:calc(100vw * 1048 / 941);
+  }
+}
+
+
+/* ── Galería: más compacta, sin etiqueta ─────────────────────────────────
+   Se quitó "Descubre lo que hay dentro": la descripción sube junto a las
+   tarjetas (menos aire bajo los pilares) y las tarjetas pasan directo a la
+   foto de comunidad, sin franja crema entre ambas (solo el aire de la sombra). */
+.hsc-lv2-scope .sys { padding-bottom:44px; }
+.hsc-lv2-scope .lv2-gal { padding-bottom:0; }
+/* La prioridad de capa va en la PISTA de tarjetas (su sombra cae sobre la foto de
+   comunidad), no en toda la sección: con z-index en .lv2-gal su fondo crema tapaba
+   la sombra de los pilares y dejaba una línea recta sobre "Explora…". */
+.hsc-lv2-scope .lv2-gal-track { position:relative; z-index:1; }
+@media (max-width:1023px) {
+  .hsc-lv2-scope .sys { padding-bottom:36px; }
+  .hsc-lv2-scope .lv2-gal { padding-bottom:0; }
+  .hsc-lv2-scope .lv2-gal-track { padding-bottom:14px; }
+}
+
+/* ── Galería: acabado premium de las tarjetas ────────────────────────────
+   Antes: borde 1px blanco .08 sobre el verde → se leía como un contorno verde
+   alrededor de la foto. Ahora: sin borde; filo exterior de 1px casi invisible
+   (verde HSC al 7%) + sombra neutra y cálida en 3 capas (contacto, media,
+   ambiente difusa), sin glow. */
+.hsc-lv2-scope .lv2-gal-card {
+  border:0;
+  box-shadow:
+    0 0 0 1px rgba(21,51,48,.07),
+    0 1px 2px rgba(28,24,18,.06),
+    0 10px 22px -10px rgba(28,24,18,.18),
+    0 30px 60px -24px rgba(28,24,18,.22);
+}
+@media (hover:hover) {
+  .hsc-lv2-scope .lv2-gal-card:hover {
+    border-color:transparent;
+    box-shadow:
+      0 0 0 1px rgba(191,160,101,.18),
+      0 2px 4px rgba(28,24,18,.07),
+      0 16px 30px -12px rgba(28,24,18,.22),
+      0 40px 80px -28px rgba(28,24,18,.26);
+  }
+}
+
+
+/* ── "Empezar es simple" (.steps) ─────────────────────────────────────────
+   Tarjetas blancas: sombra suave en capas (sin borde duro), número en círculo
+   verde, título y texto diferenciados. Altura natural (sin alturas fijas).
+   ≥1024: 3 columnas de igual alto; <1024: una columna centrada (no se fuerzan
+   3 columnas estrechas en tablet). */
+.hsc-lv2-scope .steps .sec-lbl { color:var(--amber-deep, #A8864E); text-transform:uppercase; font-size:.68rem; letter-spacing:.24em; margin-bottom:12px; }
+.hsc-lv2-scope .steps-title { margin-bottom:36px; }
+.hsc-lv2-scope .steps-grid { gap:20px; align-items:stretch; }
+.hsc-lv2-scope .step {
+  border:0; border-radius:20px; padding:28px 26px;
+  box-shadow:0 0 0 1px rgba(21,51,48,.06), 0 1px 2px rgba(28,24,18,.05), 0 14px 32px -16px rgba(28,24,18,.16);
+}
+.hsc-lv2-scope .step-head { align-items:flex-start; gap:14px; margin-bottom:12px; }
+.hsc-lv2-scope .step-n { width:40px; height:40px; font-size:1rem; box-shadow:inset 0 0 0 1px rgba(191,160,101,.35); }
+.hsc-lv2-scope .step h3 { font-size:1.06rem; line-height:1.3; letter-spacing:-.01em; padding-top:9px; }
+.hsc-lv2-scope .step p { font-size:.92rem; line-height:1.6; }
+@media (max-width:1023px) {
+  .hsc-lv2-scope .steps { padding:64px 24px; }
+  .hsc-lv2-scope .steps-grid { grid-template-columns:1fr; gap:14px; max-width:620px; margin:0 auto; }
+}
+@media (max-width:599px) {
+  .hsc-lv2-scope .steps { padding:56px 20px; }
+  .hsc-lv2-scope .steps-title { margin-bottom:28px; }
+  .hsc-lv2-scope .step { padding:22px 20px; border-radius:18px; }
+  .hsc-lv2-scope .step-n { width:36px; height:36px; font-size:.95rem; }
+  .hsc-lv2-scope .step h3 { font-size:1rem; padding-top:7px; }
+  .hsc-lv2-scope .step p { font-size:.9rem; }
+}
+
+/* ── Hero: jerarquía de mayúsculas/minúsculas ────────────────────────────
+   La pregunta sigue en MAYÚSCULAS (global .hero--dark .hero-tagline). El titular
+   y las dos frases pasan a formato oración (el texto ya está así en HERO_V2; el
+   global .hero--dark h1 lo forzaba a mayúsculas). Frase 1 con algo más de peso
+   que la 2. Tamaños sin cambios. */
+.hsc-lv2-scope .hero--dark h1.lv2-h1 { text-transform:none; }
+.hsc-lv2-scope .hero h1.lv2-h1 .h1-gold { letter-spacing:-.025em; }
+.hsc-lv2-scope .hero h1.lv2-h1 .h1-accent .lv2-line:first-child { font-weight:600; }
+.hsc-lv2-scope .hero h1.lv2-h1 .h1-accent .lv2-line + .lv2-line { font-weight:400; }
+
+/* ── Hero: titular en 2 renglones fijos y tamaños mayores (formato oración) ──
+   "Tu cambio empieza con" / "un plan." · pregunta = frases blancas (mismo cuerpo),
+   titular un poco más grande. Móvil: cada renglón escala con el ancho para no
+   partirse nunca. */
+.hsc-lv2-scope .hero h1.lv2-h1 .h1-gold { font-size:.86em; line-height:1.05; }
+.hsc-lv2-scope .hero-tagline,
+.hsc-lv2-scope .hero h1.lv2-h1 .h1-accent { font-size:1.9rem; }
+@media (max-width:768px) {
+  .hsc-lv2-scope .hero { --lv2-m-small:min(1.15rem, calc((100vw - 44px) / 20.6)); }
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-gold { font-size:min(2.15rem, calc((100vw - 44px) / 12.4)); }
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-gold .lv2-line { white-space:nowrap; }
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent { font-size:var(--lv2-m-small); }
+}
+
+/* ── Títulos de sección alineados a la izquierda (editorial) ──────────────
+   Secciones claras (pasos y FAQ): el bloque etiqueta/título/subtítulo se alinea con el
+   borde izquierdo de su propio contenido (tarjetas). La palabra dorada ya usa
+   el mismo <em> que "transformar" (cursiva, 700, dorado); se fija explícito. */
+.hsc-lv2-scope .steps-in,
+.hsc-lv2-scope .faq-in,
+.hsc-lv2-scope .faq .sec-lbl,
+.hsc-lv2-scope .faq h2 { text-align:left; }
+.hsc-lv2-scope .steps-title em,
+.hsc-lv2-scope .faq h2 em { font-style:italic; font-weight:700; color:var(--amber); }
+@media (max-width:1023px) {
+  .hsc-lv2-scope .steps-title { max-width:620px; margin-left:auto; margin-right:auto; }
+}
+
+/* ── Continuidad de fondos oscuros + limpieza de "película" (V2) ──────────
+   1) Capas de grano: `.grain` (z 80, mix-blend overlay, solo bajo la nav) y
+      `.grain-overlay` de App (z 9999, encima de TODO, incluida la nav, el logo y
+      la zona de la hora). Daban textura distinta arriba/abajo de la nav (costura)
+      y un velo sobre logo y verdes. En V2 se ocultan. */
+.hsc-lv2-scope .grain { display:none; }
+body:has(.hsc-lv2-scope) .grain-overlay { display:none; }
+/* 2) Fondo del documento: el body es crema global; en iPhone esa crema asoma
+      bajo el footer (zona del indicador de inicio / rebote al final) como franja
+      clara. Con V2 montada, el lienzo pasa al verde del hero/footer (#081312,
+      = theme-color). Todas las secciones claras tienen su propio fondo. */
+body:has(.hsc-lv2-scope) { background:#081312; }
+/* Footer: cubre el área segura inferior y el logo se ve a color completo
+      (el global le ponía opacity:.6 → aspecto "lavado"). */
+.hsc-lv2-scope footer { padding-bottom:calc(52px + env(safe-area-inset-bottom, 0px)); }
+.hsc-lv2-scope footer .logo img { opacity:1; }
+@media (max-width:768px) {
+  .hsc-lv2-scope footer { padding-bottom:calc(36px + env(safe-area-inset-bottom, 0px)); }
+  /* 3) Hero móvil: la nav es #081312 sólido y justo debajo empezaba la foto con
+        el velo al 85% → corte horizontal visible bajo la barra. El velo arranca
+        sólido (mismo verde que la nav, incluida el área de la hora) y se funde
+        hacia la foto, sin costura. */
+  .hsc-lv2-scope .hero-scrim {
+    background:
+      linear-gradient(180deg, #081312 0, #081312 calc(100px + env(safe-area-inset-top, 0px)), rgba(8,19,18,0) calc(170px + env(safe-area-inset-top, 0px))),
+      linear-gradient(180deg, rgba(8,19,18,.85) 0%, rgba(8,19,18,.74) 36%, rgba(8,19,18,.35) 50%, rgba(8,19,18,0) 60%),
+      linear-gradient(0deg, rgba(8,19,18,.78) 0%, rgba(8,19,18,.45) 14%, rgba(8,19,18,0) 26%);
+  }
+  /* 4) "Sin riesgo y sin permanencia…": bloque a la izquierda, icono pegado al
+        inicio del texto (antes: flex centrado → icono separado del texto). */
+  .hsc-lv2-scope .pguarantee {
+    justify-content:flex-start; align-items:flex-start; text-align:left;
+    gap:8px; max-width:420px; padding:0;
+  }
+  .hsc-lv2-scope .pguarantee svg { margin-top:2px; }
+}
+
+/* ── Hero · SOLO computadora (≥1024px): titular en una sola línea ─────────
+   "Tu cambio empieza con un plan." corrido (los dos renglones de HERO_V2 se
+   ponen en línea) y algo más grande (.9em del h1, antes .86em). Celular y
+   tablet sin cambios: siguen en 2 renglones. */
+@media (min-width:1024px) {
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-gold { font-size:.9em; white-space:nowrap; }
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-gold .lv2-line { display:inline; }
+}
+
+/* ── "Tu nutrióloga, / entrenador / y comunidad / en un solo lugar." ─────
+   SOLO computadora (≥861px, título en columna junto a los teléfonos):
+   4 renglones centrados en su columna. Celular sin cambios (3 renglones). */
+@media (min-width:861px) {
+  .hsc-lv2-scope .ll-title { text-align:center; }
+  .hsc-lv2-scope .ll-title .lv2-ll-line,
+  .hsc-lv2-scope .ll-title .lv2-ll-part,
+  .hsc-lv2-scope .ll-title em { display:block; white-space:nowrap; }
+}
+
+/* ── Hero · SOLO computadora: frases blancas = misma letra que el titular ──
+   Mismo tamaño (.9em del h1), peso, interlineado y tracking que "Tu cambio
+   empieza con un plan.", pero en crema sólido: sin degradado dorado ni brillo
+   animado. */
+@media (min-width:1024px) {
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent {
+    font-size:.9em; line-height:1.05; letter-spacing:-.025em; margin-top:0;
+    color:var(--cream); background:none; -webkit-text-fill-color:currentColor; animation:none;
+  }
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent .lv2-line,
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent .lv2-line:first-child,
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent .lv2-line + .lv2-line { font-weight:800; white-space:nowrap; }
+}
+
+/* ── Hero · SOLO computadora: la foto empieza bajo la barra del menú ──────
+   La nav (fija, 120px, verde sólido) se superpone al hero; la foto arrancaba en
+   y=0 y su franja superior (cabeza del hombre) quedaba oculta tras la nav.
+   Ahora la imagen se desplaza 60px hacia abajo con el MISMO tamaño y encuadre
+   horizontal de antes (la pareja no se mueve hacia el texto): se ve la cabeza
+   completa y lo que se recorta es el final de abajo (piernas), oculto por el
+   overflow del hero. Detrás de la nav queda el verde del hero (= nav). */
+@media (min-width:1024px) {
+  .hsc-lv2-scope .hero-bg-img { top:60px; bottom:auto; height:100%; }
+}
+
+/* ── SOLO computadora: título de pilares y descripción de galería en una línea ──
+   Global: .sys-title max-width:620px y .lv2-gal-desc 56ch los partían en 2
+   renglones aunque el contenedor (1180px) tiene espacio. */
+@media (min-width:1024px) {
+  .hsc-lv2-scope .sys-title { max-width:none; white-space:nowrap; }
+  .hsc-lv2-scope .lv2-gal-desc { max-width:none; white-space:nowrap; }
+}
+
+/* ── SOLO computadora: tarjetas de la galería separadas de la foto de comunidad ──
+   Las tarjetas terminaban al ras de la foto (padding 0) y su sombra caía sobre
+   ella → parecían montadas sobre la línea superior. Aire crema bajo las tarjetas
+   para que la sombra se desvanezca antes de la foto. */
+@media (min-width:1024px) {
+  .hsc-lv2-scope .lv2-gal { padding-bottom:64px; }
+}
+
+/* ── SOLO computadora: título de comunidad en 2 renglones fijos ───────────
+   "Cuando todos avanzan," / "tú avanzas más rápido." (global max-width:540px
+   lo partía en 3). Celular: flujo natural, sin cambios. */
+@media (min-width:1024px) {
+  .hsc-lv2-scope .trans-cta-title { max-width:none; }
+  .hsc-lv2-scope .trans-cta-title .lv2-tc-line { display:block; white-space:nowrap; }
+}
+
+/* ── SOLO computadora: bloque del hero más compacto para no tapar caras ───
+   Titular dorado y frases blancas comparten tamaño (.56em del h1 ≈ 39px a
+   1440, antes .9em ≈ 63px): el renglón más largo termina antes de la pareja. */
+@media (min-width:1024px) {
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-gold,
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent { font-size:.56em; line-height:1.1; }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   B.1B · CORRECCIONES VISUALES DESKTOP / TABLET (≥769px)
+   Todo va en media queries ≥769px: el móvil aprobado (≤768px) no cambia.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* 1 · Nav: a 769–1279px los enlaces se partían en 2 renglones. Mismos textos y
+   funciones; solo se compactan márgenes, separación, tracking y logo, y cada
+   enlace queda en un renglón. Logo centrado desde 900px (a 800px ±14px). */
+@media (min-width:769px) and (max-width:1279px) {
+  .hsc-lv2-scope nav.landing-nav { padding-left:32px; padding-right:32px; }
+  .hsc-lv2-scope .nav-links { gap:20px; }
+  .hsc-lv2-scope .nav-left { gap:14px; }
+  .hsc-lv2-scope .nav-links a,
+  .hsc-lv2-scope .nav-login { white-space:nowrap; letter-spacing:.06em; }
+  .hsc-lv2-scope .nav-cta { padding:11px 18px; }
+  .hsc-lv2-scope nav.landing-nav .logo-nav img { height:88px; }
+  .hsc-lv2-scope nav.landing-nav.scrolled .logo-nav img { height:76px; }
+}
+@media (min-width:769px) and (max-width:1023px) {
+  .hsc-lv2-scope nav.landing-nav { padding-left:20px; padding-right:20px; }
+  .hsc-lv2-scope .nav-links { gap:14px; }
+  .hsc-lv2-scope .nav-left { gap:10px; }
+  .hsc-lv2-scope .nav-links a,
+  .hsc-lv2-scope .nav-login { letter-spacing:.03em; }
+  .hsc-lv2-scope .nav-cta { padding:10px 14px; }
+  .hsc-lv2-scope nav.landing-nav .logo-nav img { height:72px; }
+  .hsc-lv2-scope nav.landing-nav.scrolled .logo-nav img { height:64px; }
+}
+
+/* 2 · Teléfonos: con anchos fijos (330/256px) la columna pedía 830px y por debajo
+   de ~1340px el teléfono derecho se salía (−193px a 1024). En 861–1339px el título
+   toma su ancho natural y los tres teléfonos escalan con el ancho, con la misma
+   proporción lateral/central (0.776) y la misma jerarquía. ≥1340px sin cambios. */
+@media (min-width:861px) and (max-width:1339px) {
+  .hsc-lv2-scope .ll-in { grid-template-columns:max-content minmax(0,1fr); }
+  .hsc-lv2-scope .pf-big--main { width:clamp(180px, calc(28vw - 66px), 330px); }
+  .hsc-lv2-scope .pf-big--side { width:clamp(140px, calc(21.7vw - 51px), 256px); }
+}
+
+/* 3 · Hero desktop: la frase blanca larga invadía a la mujer (−122px a 1440, peor a
+   1920 porque el bloque se centraba en 1240px mientras la foto se ancla a la
+   izquierda). (a) El bloque se ancla al margen izquierdo; (b) arranca más arriba,
+   a la altura de la cabeza (la figura avanza a la izquierda en el hombro);
+   (c) titular y frases blancas siguen compartiendo tamaño, que solo baja en
+   pantallas estrechas o 16:9: min(.56em, 2.69vw − 5px) garantiza ≥55px de aire
+   frente a la pareja en 1024–2560px, ES y EN (39px intactos desde ~1640px).
+   (d) Por debajo de 1440px los globitos van en 2 filas para no tocar la sudadera.
+   La fotografía y su encuadre no cambian. */
+@media (min-width:1024px) {
+  .hsc-lv2-scope .hero { align-items:flex-start; padding-top:calc(120px + 7vh); }
+  .hsc-lv2-scope .hero-inner { margin-left:0; }
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-gold,
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent { font-size:min(.56em, calc(2.69vw - 5px)); }
+}
+@media (min-width:1024px) and (max-width:1439px) {
+  .hsc-lv2-scope .hero-content .hero-chips { max-width:400px; }
+}
+
+/* 4 · Precios: la tarjeta anual tiene menos beneficios, así que su botón quedaba
+   más arriba que el de la mensual. Las tarjetas ya miden lo mismo (grid); ahora
+   son columnas flex y el botón se apoya abajo → botones alineados.
+   Línea de periodo ("MXN · equivale $166/mes · ahorras 33 %", "Pago mes a mes"):
+   antes opacity .3 (contraste ~2:1); ahora crema al 78 % (≥4.5:1, WCAG AA).
+   Mismo criterio en MXN, EUR y USD (el texto viene de PRICING). */
+@media (min-width:769px) {
+  .hsc-lv2-scope .pcard { display:flex; flex-direction:column; }
+  .hsc-lv2-scope .pcard .btn-join { margin-top:auto; }
+  .hsc-lv2-scope .pperiod,
+  .hsc-lv2-scope .pcard.feat .pperiod { opacity:1; color:rgba(242,240,232,.78); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   B.1B.2 · CONTRASTE FINAL EN PRECIOS
+   Solo color/opacidad: tamaños, distribución y CTA no cambian.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* 1 · Periodo/moneda/ahorro en móvil (≤768px): mismo crema que en desktop
+   (B.1B) — contraste ~2.5:1 (mensual) y ~1.4:1 (anual) → ≥4.5:1. */
+@media (max-width:768px) {
+  .hsc-lv2-scope .pperiod,
+  .hsc-lv2-scope .pcard.feat .pperiod { opacity:1; color:rgba(242,240,232,.78); }
+}
+/* 2 · Etiqueta «Anual» / «Yearly» de la tarjeta destacada en desktop:
+   crema algo más tenue que el periodo para conservar la jerarquía
+   (precio > periodo > etiqueta) — contraste ~1.4:1 → ≥4.5:1. */
+@media (min-width:769px) {
+  .hsc-lv2-scope .pcard.feat .pname { opacity:1; color:rgba(242,240,232,.7); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   B.1B.3 · CIERRE DE CONTRASTE EN ETIQUETAS DE PRECIOS
+   Mismo crema que la etiqueta «Anual» de desktop (B.1B.2), que ya cubre
+   ≥769px; estas reglas completan el resto sin solaparse. Solo color/opacidad.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* «Mensual» / «Monthly», todos los anchos — contraste ~3:1 → ≥4.5:1. */
+.hsc-lv2-scope .pcard:not(.feat) .pname { opacity:1; color:rgba(242,240,232,.7); }
+/* «Anual» / «Yearly» en móvil (≤768px) — contraste ~1.6:1 → ≥4.5:1. */
+@media (max-width:768px) {
+  .hsc-lv2-scope .pcard.feat .pname { opacity:1; color:rgba(242,240,232,.7); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   B.1B.4 · CONTRASTE DE UNIDADES Y BENEFICIOS DEL PLAN ANUAL
+   Solo color/opacidad: textos, tamaños y posiciones no cambian.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* «/mes» «/año» («/mo» «/yr»), ambas tarjetas — contraste ~3:1 → ≥4.5:1. */
+.hsc-lv2-scope .pam-unit { opacity:.7; }
+/* Beneficios de la tarjeta anual: crema pleno manteniendo la opacidad del
+   <li>, para que el ✓ crema quede igual — contraste ~3.6:1 → ≥4.5:1. */
+.hsc-lv2-scope .pcard.feat .pfeats li { color:rgb(242,240,232); }

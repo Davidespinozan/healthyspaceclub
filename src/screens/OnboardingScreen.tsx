@@ -15,8 +15,7 @@ import AuthProviderButtons from '../components/AuthProviderButtons';
 import { computeNutritionTargets, targetWeightNotice, estimateTimeMonths, invalidField } from '../utils/nutritionTargets';
 import { track } from '../utils/analytics';
 import { recordReferralIfAny } from '../utils/referral';
-
-const BRAND_ICON = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp';
+import { BRAND_ICON, BRAND_WORDMARK } from '../constants/brand';
 
 const TOTAL_STEPS = 9;
 
@@ -338,12 +337,7 @@ export default function OnboardingScreen() {
           <div className="onb-center">
             <div className="onb-brand-logos">
               <img
-                src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp"
-                alt=""
-                className="onb-brand-icon"
-              />
-              <img
-                src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscprincipalsinfondo.webp"
+                src={BRAND_WORDMARK}
                 alt="Healthy Space Club"
                 className="onb-brand-wordmark"
               />

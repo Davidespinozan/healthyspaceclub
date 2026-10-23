@@ -135,8 +135,18 @@ export default function ManagePlanSheet({ onClose }: Props) {
   }
 
   const isTrialing = subscription?.status === 'trialing';
-  const currentCycle = subscription?.billingCycle ?? 'monthly';
+  // Ciclo CONFIRMADO de la suscripción (billing_cycle que persiste el webhook). Si no se
+  // conoce es `null`: no se infiere «mensual» — ninguna tarjeta se marca como contratada,
+  // no se ofrece cambio de ciclo y no se muestra un importe atado a un ciclo supuesto.
+  const currentCycle: BillingCycle | null = subscription?.billingCycle ?? null;
+  const cycleLabel = currentCycle === 'yearly' ? t('managePlan.cycleYearly')
+    : currentCycle === 'monthly' ? t('managePlan.cycleMonthly') : null;
   const renewalDate = subscription?.nextRenewalDate ?? null;
+  // IMPORTES: `priceInfo` sale de PRICING (precio comercial de LISTA en la moneda de la
+  // región del navegador), no del importe contratado en Stripe (descuentos, moneda o
+  // precios históricos pueden diferir). Por eso la línea del primer cobro de la prueba
+  // NO muestra importe; las tarjetas siguen mostrando precios de lista. El importe
+  // autoritativo llegará en MB-C, desde Stripe.
   // Se puede cambiar de ciclo si hay una sub real (trial o activa). Durante el
   // trial es seguro: no hay cobro hasta que termina; solo cambia el precio
   // futuro. Mientras carga (subscription === null) → false, sin parpadeo.
@@ -175,20 +185,26 @@ export default function ManagePlanSheet({ onClose }: Props) {
                   {t('managePlan.trialDaysLeft')} <strong>{Math.max(0, Math.ceil((renewalDate.getTime() - Date.now()) / 86400000))} {t('settings.daysOther')}</strong> {t('managePlan.trialDaysLeftSuffix')}
                 </p>
                 <p className="mps-status-sub">
-                  {t('managePlan.firstChargeOn')} {formatRenewalDate(renewalDate)} · {formatPrice(priceInfo.monthly, priceInfo.currency)} {t('managePlan.perMonth')}
+                  {t('managePlan.firstChargeOn')} {formatRenewalDate(renewalDate)}{cycleLabel ? ` · ${cycleLabel}` : ''}
                 </p>
               </>
+            ) : isTrialing ? (
+              <p className="mps-status-line">{t('managePlan.trialNoDate')}</p>
             ) : subscription?.status === 'active' && renewalDate ? (
               <>
                 <p className="mps-status-line">
                   {t('managePlan.renewsOn')} <strong>{formatRenewalDate(renewalDate)}</strong>.
                 </p>
-                <p className="mps-status-sub">
-                  {currentCycle === 'yearly'
-                    ? `${formatPrice(priceInfo.yearly, priceInfo.currency)} ${t('managePlan.perYear')}`
-                    : `${formatPrice(priceInfo.monthly, priceInfo.currency)} ${t('managePlan.perMonth')}`}
-                </p>
+                {currentCycle && (
+                  <p className="mps-status-sub">
+                    {currentCycle === 'yearly'
+                      ? `${formatPrice(priceInfo.yearly, priceInfo.currency)} ${t('managePlan.perYear')}`
+                      : `${formatPrice(priceInfo.monthly, priceInfo.currency)} ${t('managePlan.perMonth')}`}
+                  </p>
+                )}
               </>
+            ) : subscription?.status === 'active' ? (
+              <p className="mps-status-line">{t('managePlan.activeNoDate')}</p>
             ) : (
               <p className="mps-status-line">{t('managePlan.noActivePlan')}</p>
             )}
@@ -238,7 +254,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                 {formatPrice(priceInfo.monthly, priceInfo.currency)}
                 <span className="mps-plan-price-unit"> {t('managePlan.perMonth')}</span>
               </div>
-              {isTrialing && renewalDate && (
+              {isTrialing && renewalDate && currentCycle === 'monthly' && (
                 <p className="mps-plan-sub">
                   {subscription?.cancelAtPeriodEnd
                     ? <>{t('managePlan.trialEndsOn')} {formatRenewalDate(renewalDate)} {t('managePlan.trialEndsNoRenew')}</>
@@ -265,7 +281,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
               <div className="mps-plan-equiv">
                 {t('managePlan.equivalentTo')} {formatPrice(priceInfo.yearlyMonthly, priceInfo.currency)} {t('managePlan.equivalentSuffix')}
               </div>
-              {isTrialing && renewalDate && (
+              {isTrialing && renewalDate && currentCycle === 'yearly' && (
                 <p className="mps-plan-sub">
                   {subscription?.cancelAtPeriodEnd
                     ? <>{t('managePlan.trialEndsOn')} {formatRenewalDate(renewalDate)} {t('managePlan.trialEndsNoRenew')}</>
