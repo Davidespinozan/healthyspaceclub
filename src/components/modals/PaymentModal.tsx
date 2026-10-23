@@ -148,6 +148,9 @@ export default function PaymentModal() {
   const [cycle, setCycle] = useState<BillingCycle>(payInfo.cycle ?? 'yearly');
   const [alreadySub, setAlreadySub] = useState(false);
   const [promo, setPromo] = useState('');
+  // Con un código escrito, Stripe decide el descuento al confirmar: no anunciamos el precio
+  // de lista como cobro definitivo ni una fecha de cobro que la promoción podría desplazar.
+  const hasPromo = promo.trim() !== '';
 
   // Precios derivados de region.ts (vía getPriceInfo) — no hardcodeados.
   const priceInfo = useMemo(() => getPriceInfo(payInfo.currency), [payInfo.currency]);
@@ -226,11 +229,18 @@ export default function PaymentModal() {
             <span className="pay-trial-val pay-trial-val-free">{zeroToday}</span>
           </div>
           <div className="pay-trial-row">
-            <span className="pay-trial-lbl">{t('pay.billOn', { date: billDateLabel })}</span>
+            <span className="pay-trial-lbl">{hasPromo ? t('pay.regularPrice') : t('pay.billOn', { date: billDateLabel })}</span>
             <span className="pay-trial-val">{priceLabel}</span>
           </div>
           <ul className="pay-trial-notes">
-            <li>{t('pay.note1')}</li>
+            {hasPromo ? (
+              <>
+                <li>{t('pay.promoNote')}</li>
+                <li>{t('pay.promoTrialNote')}</li>
+              </>
+            ) : (
+              <li>{t('pay.note1')}</li>
+            )}
             <li>{t('pay.note2')}</li>
           </ul>
         </div>
@@ -261,7 +271,7 @@ export default function PaymentModal() {
                 aria-label={t('pay.promoPlaceholder')}
               />
               <CardCollectForm
-                ctaLabel={t('pay.cta', { price: priceLabel })}
+                ctaLabel={hasPromo ? t('pay.ctaNoPrice') : t('pay.cta', { price: priceLabel })}
                 onPaymentMethod={handleSubscribe}
               />
             </>

@@ -5,6 +5,7 @@ import { useAppStore } from '../../store';
 import { useShallow } from 'zustand/react/shallow';
 import { useCurrentUserId } from '../../hooks/useCurrentUserId';
 import { useT } from '../../i18n';
+import { formatDate } from '../../i18n/format';
 import CardCollectForm from '../CardCollectForm';
 import {
   getSubscription,
@@ -15,7 +16,6 @@ import {
   getPaymentHistory,
   getPriceInfo,
   formatPrice,
-  formatRenewalDate,
   type BillingCycle,
   type SubscriptionInfo,
   type PaymentMethod,
@@ -40,7 +40,7 @@ const FAQ_KEYS = [
 
 export default function ManagePlanSheet({ onClose }: Props) {
   const userId = useCurrentUserId();
-  const { t } = useT();
+  const { t, locale } = useT();
   const { trialEndsAt: storeTrialEndsAt, streakCount } = useAppStore(useShallow((s) => ({ trialEndsAt: s.trialEndsAt, streakCount: s.streakCount })));
 
   function planDisplayName(plan: SubscriptionInfo['plan']): string {
@@ -144,9 +144,13 @@ export default function ManagePlanSheet({ onClose }: Props) {
   const renewalDate = subscription?.nextRenewalDate ?? null;
   // IMPORTES: `priceInfo` sale de PRICING (precio comercial de LISTA en la moneda de la
   // región del navegador), no del importe contratado en Stripe (descuentos, moneda o
-  // precios históricos pueden diferir). Por eso la línea del primer cobro de la prueba
-  // NO muestra importe; las tarjetas siguen mostrando precios de lista. El importe
-  // autoritativo llegará en MB-C, desde Stripe.
+  // precios históricos pueden diferir). Por eso la línea de la prueba NO muestra importe;
+  // las tarjetas siguen mostrando precios de lista. El importe autoritativo llegará en
+  // MB-C, desde Stripe.
+  // FECHA EN TRIAL: subscription_period_end = current_period_end de Stripe, que mientras la
+  // sub está en 'trialing' coincide con el fin de la prueba. Se anuncia como fin de la
+  // prueba, NO como primer cobro: un código promocional puede dejar ese cobro en $0 o
+  // moverlo. Fechas en el idioma activo y en la zona horaria local del dispositivo.
   // Se puede cambiar de ciclo si hay una sub real (trial o activa). Durante el
   // trial es seguro: no hay cobro hasta que termina; solo cambia el precio
   // futuro. Mientras carga (subscription === null) → false, sin parpadeo.
@@ -175,7 +179,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
             {subscription?.cancelAtPeriodEnd && renewalDate ? (
               <>
                 <p className="mps-status-line">
-                  {t('managePlan.cancelsOn')} <strong>{formatRenewalDate(renewalDate)}</strong>.
+                  {t('managePlan.cancelsOn')} <strong>{formatDate(renewalDate, locale)}</strong>.
                 </p>
                 <p className="mps-status-sub">{t('managePlan.cancelKeepsAccess')}</p>
               </>
@@ -185,7 +189,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                   {t('managePlan.trialDaysLeft')} <strong>{Math.max(0, Math.ceil((renewalDate.getTime() - Date.now()) / 86400000))} {t('settings.daysOther')}</strong> {t('managePlan.trialDaysLeftSuffix')}
                 </p>
                 <p className="mps-status-sub">
-                  {t('managePlan.firstChargeOn')} {formatRenewalDate(renewalDate)}{cycleLabel ? ` · ${cycleLabel}` : ''}
+                  {t('managePlan.trialEndsFull', { date: formatDate(renewalDate, locale) })}{cycleLabel ? ` ${t('managePlan.billingCycle')} ${cycleLabel}` : ''}
                 </p>
               </>
             ) : isTrialing ? (
@@ -193,14 +197,12 @@ export default function ManagePlanSheet({ onClose }: Props) {
             ) : subscription?.status === 'active' && renewalDate ? (
               <>
                 <p className="mps-status-line">
-                  {t('managePlan.renewsOn')} <strong>{formatRenewalDate(renewalDate)}</strong>.
+                  {t('managePlan.renewsOn')} <strong>{formatDate(renewalDate, locale)}</strong>.
                 </p>
-                {currentCycle && (
-                  <p className="mps-status-sub">
-                    {currentCycle === 'yearly'
-                      ? `${formatPrice(priceInfo.yearly, priceInfo.currency)} ${t('managePlan.perYear')}`
-                      : `${formatPrice(priceInfo.monthly, priceInfo.currency)} ${t('managePlan.perMonth')}`}
-                  </p>
+                {/* Sin importe: el precio de lista (moneda deducida del navegador, sin descuentos)
+                    no es el importe de la renovación. Solo fecha y ciclo, que sí son reales. */}
+                {cycleLabel && (
+                  <p className="mps-status-sub">{t('managePlan.billingCycle')} {cycleLabel}</p>
                 )}
               </>
             ) : subscription?.status === 'active' ? (
@@ -246,6 +248,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
         {/* SECCIÓN 4 — Cambiar plan */}
         <section className="mps-section">
           <h2 className="sh-eyebrow">{t('managePlan.planSection')}</h2>
+          <p className="mps-plan-sub mps-price-note">{t('managePlan.listPriceNote', { currency: priceInfo.currency })}</p>
           <div className="mps-plan-options">
             <div className={`mps-plan-card${currentCycle === 'monthly' ? ' mps-plan-card--selected' : ''}`}>
               {currentCycle === 'monthly' && <span className="mps-plan-tag">{t('managePlan.planCurrentBadge')}</span>}
@@ -257,8 +260,8 @@ export default function ManagePlanSheet({ onClose }: Props) {
               {isTrialing && renewalDate && currentCycle === 'monthly' && (
                 <p className="mps-plan-sub">
                   {subscription?.cancelAtPeriodEnd
-                    ? <>{t('managePlan.trialEndsOn')} {formatRenewalDate(renewalDate)} {t('managePlan.trialEndsNoRenew')}</>
-                    : <>{t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.</>}
+                    ? <>{t('managePlan.trialEndsOn')} {formatDate(renewalDate, locale)} {t('managePlan.trialEndsNoRenew')}</>
+                    : <>{t('managePlan.trialSubscribesOn')} {formatDate(renewalDate, locale)}.</>}
                 </p>
               )}
               {canSwitchCycle && currentCycle === 'yearly' && (
@@ -284,8 +287,8 @@ export default function ManagePlanSheet({ onClose }: Props) {
               {isTrialing && renewalDate && currentCycle === 'yearly' && (
                 <p className="mps-plan-sub">
                   {subscription?.cancelAtPeriodEnd
-                    ? <>{t('managePlan.trialEndsOn')} {formatRenewalDate(renewalDate)} {t('managePlan.trialEndsNoRenew')}</>
-                    : <>{t('managePlan.trialSubscribesOn')} {formatRenewalDate(renewalDate)}.</>}
+                    ? <>{t('managePlan.trialEndsOn')} {formatDate(renewalDate, locale)} {t('managePlan.trialEndsNoRenew')}</>
+                    : <>{t('managePlan.trialSubscribesOn')} {formatDate(renewalDate, locale)}.</>}
                 </p>
               )}
               {canSwitchCycle && currentCycle === 'monthly' && (
@@ -306,7 +309,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
               {t('managePlan.historyEmpty')} {subscription?.cancelAtPeriodEnd
                 ? t('managePlan.historyEmptyCanceled')
                 : renewalDate && isTrialing
-                ? `${t('managePlan.historyEmptyFirstCharge')} ${formatRenewalDate(renewalDate)}.`
+                ? t('managePlan.trialEndsFull', { date: formatDate(renewalDate, locale) })
                 : ''}
             </p>
           ) : (
@@ -322,7 +325,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
                   </span>
                   <div className="mps-history-body">
                     <div className="mps-history-desc">{entry.description}</div>
-                    <div className="mps-history-date">{formatRenewalDate(entry.date)}</div>
+                    <div className="mps-history-date">{formatDate(entry.date, locale)}</div>
                   </div>
                   <div className="mps-history-amount">
                     {formatPrice(entry.amount, entry.currency)}
@@ -373,7 +376,7 @@ export default function ManagePlanSheet({ onClose }: Props) {
               )}
               <p className="mps-modal-p">{t('managePlan.cancelIntro')}</p>
               <ul className="sh-list">
-                <li>{t('managePlan.cancelKeepAccess')} {renewalDate ? formatRenewalDate(renewalDate) : t('managePlan.cancelKeepAccessFallback')}.</li>
+                <li>{t('managePlan.cancelKeepAccess')} {renewalDate ? formatDate(renewalDate, locale) : t('managePlan.cancelKeepAccessFallback')}.</li>
                 <li>{t('managePlan.cancelLoseAi')}</li>
                 <li>{t('managePlan.cancelDataKept')}</li>
               </ul>

@@ -99,14 +99,17 @@ const COMMUNITY_TITLE_V2 = {
 // son globales y los usa V1. Decisiones B-01 (sin promesa de recordatorio por correo / aviso
 // previo al cobro: no existe ese envío) y B-02 (el anual no incluye acceso anticipado ni
 // soporte prioritario). Solo hechos verificados: prueba de 3 días (Stripe trial_period_days: 3),
-// el checkout muestra 0 hoy y la fecha del primer cobro, y «Mi Plan» muestra esa fecha.
+// el checkout muestra 0 hoy y, sin código promocional, el cobro previsto (fecha e importe de lista);
+// con código, importes y fechas dependen de sus condiciones y no se presentan como definitivos.
+// «Mi Plan» muestra cuándo termina la prueba
+// (no un importe ni una fecha de cobro: los cobros posteriores dependen del plan y de las promociones).
 const PRICING_V2 = {
   es: {
     noCharge: 'Sin cobro durante la prueba',
     guarantee: 'Sin riesgo y sin permanencia: pruebas 3 días gratis y cancelas cuando quieras.',
     annualFeats: ['Todo lo del plan mensual', '12 meses por el precio de ~8'],
     faq2q: '¿Cómo sé cuándo será el primer cobro?',
-    faq2a: 'Antes de activar tu prueba ves que hoy no pagas nada y la fecha exacta de tu primer cobro. Después la encuentras en «Mi Plan», dentro de tu perfil. Si cancelas antes de esa fecha, no se te cobra nada.',
+    faq2a: 'Antes de activar tu prueba, puedes consultar las condiciones de tu plan y los cobros previstos. Si introduces un código promocional, los importes y las fechas de cobro dependerán de sus condiciones. Si cancelas durante los 3 días de prueba gratuita, no se te cobrará nada. En «Mi Plan», dentro de tu perfil, puedes ver cuándo termina tu prueba gratuita y administrar tu suscripción; los cobros posteriores dependen de las condiciones de tu plan.',
     faq4a: 'El contenido es el mismo. El plan anual cuesta el equivalente a ~8 meses. Ambos empiezan con 3 días gratis.',
   },
   en: {
@@ -114,7 +117,7 @@ const PRICING_V2 = {
     guarantee: 'No risk, no lock-in: try 3 days free and cancel anytime.',
     annualFeats: ['Everything in the monthly plan', '12 months for the price of ~8'],
     faq2q: 'How will I know when the first charge happens?',
-    faq2a: "Before starting your trial you see that you pay nothing today and the exact date of your first charge. Afterwards you can find it in “My Plan”, inside your profile. If you cancel before that date, you won't be charged.",
+    faq2a: "Before starting your trial, you can review your plan terms and expected charges. If you enter a promotional code, charge amounts and dates will depend on its terms. If you cancel during the 3-day free trial, you won't be charged. In “My Plan”, inside your profile, you can check when your free trial ends and manage your subscription; future charges depend on your plan terms.",
     faq4a: 'The content is the same. The yearly plan costs about ~8 months. Both start with 3 days free.',
   },
 } as const;
