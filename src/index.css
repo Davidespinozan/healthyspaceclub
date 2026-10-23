@@ -1510,10 +1510,9 @@ footer p { color:rgba(255,255,255,.18); font-size:.7rem; letter-spacing:.06em; t
 
 /* Typography */
 .onb-brand { font-size: 2rem; font-weight: 800; color: #F6F2EA; letter-spacing: -.02em; margin-bottom: 8px; }
-/* Bienvenida: monograma + wordmark (igual que el sidebar de desktop) */
+/* Bienvenida: logotipo V2 solo, que ya incluye la S (igual que el sidebar de desktop) */
 .onb-brand-logos { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
-.onb-brand-icon { width: 104px; height: 104px; border-radius: 22px; display: block; }
-.onb-brand-wordmark { height: 132px; width: auto; display: block; margin-top: -34px; }
+.onb-brand-wordmark { height: 132px; width: auto; display: block; margin: 35px 0; }   /* logo V2 solo (ya incluye la S): mismo alto total del bloque (202px) */
 .onb-question { font-size: 1.5rem; font-weight: 700; color: #F6F2EA; margin-bottom: 8px; line-height: 1.2; }
 .onb-hint { font-size: .84rem; color: rgba(234,223,198,.55); margin-bottom: 28px; line-height: 1.5; }
 
@@ -6114,7 +6113,6 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
 }
 
 .bnav-brand { display: none; }
-.bnav-logo { height: 40px; width: 40px; border-radius: 9px; display: block; }
 
 /* ── Sub-page back button ── */
 .sub-page { padding-top: 4px; }
@@ -7000,8 +6998,7 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
     padding: 0 20px 20px; margin-bottom: 8px;
     border-bottom: 0.5px solid rgba(246,242,234,.1);
   }
-  .bnav-logo { height: 48px; width: 48px; border-radius: 11px; }
-  .bnav-wordmark { height: 72px; width: auto; display: block; margin-top: -10px; }
+  .bnav-wordmark { height: 90px; width: auto; display: block; margin: 10px 0; }   /* logo V2 solo (ya incluye la S): mismo alto total (110px) */
   .bnav-label { font-size: .85rem; font-weight: 600; color: inherit; }
   .bnav-dot {
     position: absolute; left: 0; top: 50%; transform: translateY(-50%);

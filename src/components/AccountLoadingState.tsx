@@ -6,6 +6,7 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { useT } from '../i18n';
 import type { ProfileResolution } from '../utils/profileHydration';
 import './account-loading-state.css';
+import { BRAND_ICON_LARGE } from '../constants/brand';
 
 export default function AccountLoadingState({
   resolution,
@@ -24,7 +25,7 @@ export default function AccountLoadingState({
       <div className="ls-card als-card">
         <div className="ls-logo">
           <img
-            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp"
+            src={BRAND_ICON_LARGE}
             alt="Healthy Space Club"
           />
         </div>

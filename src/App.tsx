@@ -26,6 +26,8 @@ import { isWorkingSet, type ExecutionRole } from './utils/executionRole';   // F
 import type { Modality } from './types';
 import { detectBrowserLanguage } from './i18n';
 import LandingScreen from './screens/LandingScreen';
+import LandingScreenV2 from './screens/LandingScreenV2';
+import { LANDING_VERSION } from './constants/landing';
 import UpdatePrompt from './components/UpdatePrompt';
 import OfflineBanner from './components/OfflineBanner';
 import AnalyticsConsentBanner from './components/AnalyticsConsentBanner';
@@ -38,6 +40,11 @@ const PaywallScreen = lazyWithRetry(() => import('./screens/PaywallScreen'), 'Pa
 const PaymentModal = lazyWithRetry(() => import('./components/modals/PaymentModal'), 'PaymentModal');
 const SignupModal = lazyWithRetry(() => import('./components/modals/SignupModal'), 'SignupModal');
 const VideoModal = lazyWithRetry(() => import('./components/modals/VideoModal'), 'VideoModal');
+
+// Landing pública: la versión se elige solo en constants/landing.ts (ver ahí cómo volver a V1).
+// V2 necesita el scope `.hsc-lv2-scope` en el contenedor; V1 no lleva clase extra.
+const isLandingV2 = LANDING_VERSION === 'v2';
+const Landing = isLandingV2 ? LandingScreenV2 : LandingScreen;
 
 export default function App() {
   const { currentScreen, activeModal } = useAppStore(useShallow((s) => ({ currentScreen: s.currentScreen, activeModal: s.activeModal })));
@@ -880,8 +887,8 @@ export default function App() {
 
       {/* Screens — lazy loaded for code splitting */}
       {currentScreen === 'landing' && (
-        <div id="scr-landing" className={`screen active ${fadeClass}`}>
-          <LandingScreen />
+        <div id="scr-landing" className={`screen active ${fadeClass}${isLandingV2 ? ' hsc-lv2-scope' : ''}`}>
+          <Landing />
         </div>
       )}
       <Suspense fallback={null}>

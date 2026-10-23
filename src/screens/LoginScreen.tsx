@@ -4,6 +4,7 @@ import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import LanguageToggle from '../components/LanguageToggle';
 import AuthProviderButtons from '../components/AuthProviderButtons';
+import { BRAND_ICON_LARGE } from '../constants/brand';
 
 const SUPABASE_CONFIGURED = import.meta.env.VITE_SUPABASE_URL &&
   !import.meta.env.VITE_SUPABASE_URL.includes('placeholder');
@@ -67,7 +68,7 @@ export default function LoginScreen() {
       <div className="ls-card">
         <div className="ls-logo">
           <img
-            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp"
+            src={BRAND_ICON_LARGE}
             alt="Healthy Space Club"
           />
         </div>

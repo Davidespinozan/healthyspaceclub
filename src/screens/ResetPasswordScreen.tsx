@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 import { useT } from '../i18n';
 import LanguageToggle from '../components/LanguageToggle';
+import { BRAND_ICON_LARGE } from '../constants/brand';
 
 export default function ResetPasswordScreen() {
   const { t } = useT();
@@ -51,7 +52,7 @@ export default function ResetPasswordScreen() {
       <div className="ls-card">
         <div className="ls-logo">
           <img
-            src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp"
+            src={BRAND_ICON_LARGE}
             alt="Healthy Space Club"
           />
         </div>

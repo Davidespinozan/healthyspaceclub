@@ -9,8 +9,9 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Healthy Space Club';
   const options = {
     body: data.body || '',
-    icon: data.icon || 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-192.png',
-    badge: 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/icon-192.png',
+    icon: data.icon || '/brand-v2/hsc-icon-v2-192.png',
+    // Badge de Android: silueta blanca sobre transparente (Android solo usa el alfa).
+    badge: '/brand-v2/hsc-badge-v2-96.png',
     tag: data.tag || undefined,
     data: { url: data.url || '/' },
   };

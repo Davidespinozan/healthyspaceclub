@@ -529,6 +529,8 @@
   line-height: 1.45;
   margin: 6px 0 0;
 }
+/* Nota «precios de lista de referencia» sobre las tarjetas: aire para la etiqueta «Actual». */
+.mps-price-note { margin: 0 0 18px; }
 .mps-plan-cta-primary { margin-top: 10px; font-size: 0.82rem; padding: 10px 16px; min-height: 40px; }
 .mps-plan-cta-secondary {
   margin-top: 10px;

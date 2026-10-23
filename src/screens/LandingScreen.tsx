@@ -379,8 +379,6 @@ export default function LandingScreen() {
             <ul className="pfeats">
               <li>{t('landing.aFeat1')}</li>
               <li>{t('landing.aFeat2')}</li>
-              <li>{t('landing.aFeat3')}</li>
-              <li>{t('landing.aFeat4')}</li>
             </ul>
             <MagneticBtn className="btn-join" onClick={openAnnualCheckout}>{t('landing.trialCta')}<ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden /></MagneticBtn>
           </div>

@@ -11,6 +11,7 @@ import type { TranslationKey } from '../i18n/es';
 
 import TabHoy from '../components/TabHoy'; // default tab → estática (carga instantánea)
 import SubPageLoadingFallback from '../components/SubPageLoadingFallback';
+import { BRAND_WORDMARK } from '../constants/brand';
 
 // Tabs/sheets no-default → lazy: solo cargan al entrar a ellas (aligera el chunk del dashboard).
 const ManagePlanSheet = lazyWithRetry(() => import('../components/sheets/ManagePlanSheet'), 'ManagePlanSheet');
@@ -212,8 +213,7 @@ export default function DashboardScreen() {
       {/* Bottom Navigation */}
       <nav className="bnav">
         <div className="bnav-brand">
-          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp" alt="HSC" className="bnav-logo" />
-          <img src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscprincipalsinfondo.webp" alt="Healthy Space Club" className="bnav-wordmark" />
+          <img src={BRAND_WORDMARK} alt="Healthy Space Club" className="bnav-wordmark" />
         </div>
         {TABS.map(tab => {
           const Icon = tab.icon;

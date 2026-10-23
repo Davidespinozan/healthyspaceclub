@@ -5,6 +5,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { BRAND_WORDMARK } from '../constants/brand';
 
 // Navegación del panel. Agrupada como en sala-studio, pero solo con lo del
 // Club (sin reservas/clases/sucursales). Las páginas de fases futuras ya
@@ -41,7 +42,7 @@ export default function Sidebar({ email }: { email: string | null }) {
       <div className="adm-side-brand">
         <img
           className="adm-side-logo"
-          src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscprincipalsinfondo.webp"
+          src={BRAND_WORDMARK}
           alt="Healthy Space Club"
         />
         <small>Admin</small>

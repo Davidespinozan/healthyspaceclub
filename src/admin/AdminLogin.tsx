@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { BRAND_ICON } from '../constants/brand';
 
 // Login del panel. Usa EXACTAMENTE el mismo Supabase Auth que la landing de
 // ventas y la app del socio: mismas cuentas, misma contraseña. No hay un login
@@ -25,7 +26,7 @@ export default function AdminLogin() {
       <form className="adm-login" onSubmit={entrar}>
         <img
           className="adm-login-iso"
-          src="https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/logohscisotipo.webp"
+          src={BRAND_ICON}
           alt="Healthy Space Club"
         />
         <h1>Panel del Club</h1>
