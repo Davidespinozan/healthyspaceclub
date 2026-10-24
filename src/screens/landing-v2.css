@@ -599,3 +599,26 @@ body:has(.hsc-lv2-scope) { background:#081312; }
   .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent { margin-left:auto; margin-right:auto; }
   .hsc-lv2-scope .hero--dark .hero-content .hero-btns { justify-content:center; }
 }
+
+/* ── Hero · SOLO escritorio (≥769px): globitos en una fila al pie del hero ──
+   Antes: bajo el CTA, dentro de .hero-content (max 400px en 1024–1439) → "Red
+   Social Fitness" saltaba a una 2.ª fila. Ahora se usa la fila .lv2-chips-foot
+   (la misma que en móvil): una sola fila centrada en el hero, por encima de
+   "Desliza" (bottom 28px + ~32px de alto + 16px de aire). Mismo estilo y tamaño
+   de globito que antes en escritorio. Móvil (≤768) sin cambios. */
+@media (min-width:769px) {
+  .hsc-lv2-scope .hero-content .hero-chips { display:none; }
+  .hsc-lv2-scope .hero .lv2-chips-foot {
+    display:flex; position:absolute; left:0; right:0; bottom:76px; z-index:4;
+    margin:0; padding:0 24px; justify-content:center; flex-wrap:nowrap; gap:10px;
+  }
+  .hsc-lv2-scope .hero .lv2-chips-foot li { font-size:.72rem; padding:8px 14px; gap:7px; white-space:nowrap; }
+  .hsc-lv2-scope .hero .lv2-chips-foot li svg { width:14px; height:14px; }
+}
+/* ── Hero · SOLO escritorio (≥1024px): titular y frases ~6 % más grandes ──
+   Antes: min(.56em, calc(2.69vw - 5px)). Ahora ×1.06 en ambos términos.
+   "¿DECIDISTE CAMBIAR?" no cambia. */
+@media (min-width:1024px) {
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-gold,
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent { font-size:min(.594em, calc(2.851vw - 5.3px)); }
+}
