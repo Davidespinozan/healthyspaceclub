@@ -587,3 +587,16 @@ body:has(.hsc-lv2-scope) { background:#081312; }
 /* Beneficios de la tarjeta anual: crema pleno manteniendo la opacidad del
    <li>, para que el ✓ crema quede igual — contraste ~3.6:1 → ≥4.5:1. */
 .hsc-lv2-scope .pcard.feat .pfeats li { color:rgb(242,240,232); }
+
+/* ════════════════════════════════════════════════════════════════════
+   HERO MÓVIL CENTRADO (≤768px): pregunta, titular y botón «Probar 3 días
+   gratis» centrados. Desktop, foto, tamaños y chips no cambian.
+   ════════════════════════════════════════════════════════════════════ */
+@media (max-width:768px) {
+  .hsc-lv2-scope .hero--dark .hero-content,
+  .hsc-lv2-scope .hero-content .hero-tagline { text-align:center !important; }
+  .hsc-lv2-scope .hero h1.lv2-h1 { text-align:center; }
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-gold,
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent { margin-left:auto; margin-right:auto; }
+  .hsc-lv2-scope .hero--dark .hero-content .hero-btns { justify-content:center; }
+}
