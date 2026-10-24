@@ -267,14 +267,18 @@
     radial-gradient(120% 90% at 12% 0%, #1d3c36 0%, transparent 55%),
     radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%),
     #081312;
-  border: 1px solid rgba(246,242,234,0.09);
+  /* Sin contorno: el borde de 1px queda transparente y el fondo no lo pinta (padding-box),
+     así no se ve aro alrededor de la foto y la tarjeta conserva exactamente su tamaño. */
+  border: 1px solid transparent;
+  background-clip: padding-box;
   border-radius: var(--radius-xl);
   overflow: hidden;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: var(--shadow-pro-xl);
+  /* Sombra suave de las tarjetas de Landing V2 (galería). */
+  box-shadow: 0 18px 40px rgba(8,20,18,.22);
   transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) ease;
 }
 .th3-card:hover {
@@ -301,6 +305,17 @@
   aspect-ratio: 1.05;
   position: relative;
   overflow: hidden;
+}
+/* La foto se funde en el verde del cuerpo (como la galería de Landing V2): sin línea dura
+   entre la foto (que acababa en negro) y el cuerpo verde. rgb(11,22,21) = verde medido justo
+   bajo la foto. */
+.th3-cover::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 38%;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(11,22,21,0) 0%, rgb(11,22,21) 100%);
 }
 .th3-cover-rutina {
   background-image:
