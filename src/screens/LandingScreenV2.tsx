@@ -428,16 +428,17 @@ export default function LandingScreenV2() {
             <div className="hero-btns">
               <MagneticBtn className="btn-p" onClick={() => openAnnualCheckout()}>{t('landing.trialCta')}<ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} aria-hidden /></MagneticBtn>
             </div>
-            <ul className="hero-chips" aria-label="Healthy Space Club">
+            {/* Ya no se muestra (móvil y escritorio usan .lv2-chips-foot); se conserva oculta. */}
+            <ul className="hero-chips" aria-hidden="true">
               <li><Salad size={14} strokeWidth={2} />{HERO_CHIP1_V2[locale]}</li>
               <li><Dumbbell size={14} strokeWidth={2} />{t('landing.heroChip2')}</li>
               <li><Users size={14} strokeWidth={2} />{t('landing.heroChip3')}</li>
             </ul>
           </div>
         </div>
-        {/* Móvil (≤768): mismos globitos, centrados al pie del hero sobre "Desliza".
-            Copia decorativa (aria-hidden); la lista accesible es la de .hero-content. */}
-        <ul className="hero-chips lv2-chips-foot" aria-hidden="true">
+        {/* Globitos al pie del hero, centrados sobre "Desliza" (móvil y escritorio). Es la
+            lista visible y accesible; la de .hero-content queda oculta. */}
+        <ul className="hero-chips lv2-chips-foot" aria-label="Healthy Space Club">
           <li><Salad size={14} strokeWidth={2} />{HERO_CHIP1_V2[locale]}</li>
           <li><Dumbbell size={14} strokeWidth={2} />{t('landing.heroChip2')}</li>
           <li><Users size={14} strokeWidth={2} />{t('landing.heroChip3')}</li>
