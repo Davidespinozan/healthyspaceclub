@@ -129,11 +129,18 @@ const fmtPrice = (n: number) => n.toLocaleString('en-US');
 // ── Medios de la galería (V2) — SELECCIÓN MANUAL del usuario (2026-10-22).
 // Solo estos archivos; nada añadido por criterio propio.
 const DISH_BASE = 'https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/PLATILLOS%20BANCO/';
+// Orden intercalado y estable (sin aleatoriedad): 3 desayunos (D), 4 comidas (C), 1 cena (Ce)
+// según BANCO.tiempo → D C Ce C D C D C. Arranca con desayuno-comida-cena y no repite tipo
+// seguido, tampoco al volver al inicio del ciclo (C → D).
 const DISH_IMGS: string[] = [
-  'toast-de-aguacate-y-requeson.webp', 'huevo-revuelto-con-toast-de-cacahuate-y-aguacate.webp',
-  'waffles-caseros-con-fruta-y-miel.webp', 'pollo-salteado-asiatico-con-verduras.webp',
-  'filete-de-pescado-con-papas-y-ensalada.webp', 'salmon-con-ensalada-de-papa.webp',
-  'tostadas-de-pollo.webp', 'toast-de-guacamole-jamon-y-queso-de-cabra.webp',
+  'toast-de-aguacate-y-requeson.webp',                       // Desayuno
+  'pollo-salteado-asiatico-con-verduras.webp',               // Comida
+  'toast-de-guacamole-jamon-y-queso-de-cabra.webp',          // Cena
+  'filete-de-pescado-con-papas-y-ensalada.webp',             // Comida
+  'huevo-revuelto-con-toast-de-cacahuate-y-aguacate.webp',   // Desayuno
+  'salmon-con-ensalada-de-papa.webp',                        // Comida
+  'waffles-caseros-con-fruta-y-miel.webp',                   // Desayuno
+  'tostadas-de-pollo.webp',                                  // Comida
 ].map(f => DISH_BASE + f);
 
 // Videos de origen de las miniaturas (bucket GYM/ y YOGA/, tabla exercise_videos). En la
