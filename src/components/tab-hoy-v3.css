@@ -322,7 +322,7 @@
 .th3-cover-rutina {
   background-image:
     linear-gradient(180deg, transparent 45%, rgba(0,0,0,0.55) 100%),
-    url('https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/entrenamiento.webp');
+    url('../assets/hoy/hsc-hoy-entrenamiento.webp');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -330,9 +330,10 @@
 .th3-cover-nutricion {
   background-image:
     linear-gradient(180deg, transparent 45%, rgba(0,0,0,0.5) 100%),
-    url('https://ltveorvqvvlyivjwxjlc.supabase.co/storage/v1/object/public/healthyspaceclub/nutricion.webp');
+    url('../assets/hoy/hsc-hoy-nutricion.webp');
   background-size: cover;
-  background-position: center;
+  /* Foto vertical: el recorte deja ver el borde superior del bowl completo. */
+  background-position: center 35%;
   background-repeat: no-repeat;
 }
 .th3-cover-italic {
