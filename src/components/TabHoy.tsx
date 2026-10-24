@@ -1,6 +1,6 @@
 import { dayKey } from '../utils/localDate';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Sparkles, Dumbbell, Utensils, Brain, Check, Users, ArrowRight, Flame, X, Share2, Activity, Zap } from 'lucide-react';
+import { Sparkles, Dumbbell, Utensils, Brain, Check, Users, ArrowRight, ChevronRight, Flame, X, Share2 } from 'lucide-react';
 import { useAppStore } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { getMealPlans } from '../data/mealPlan';
@@ -16,24 +16,20 @@ import { expandAvoidCats, textMatchesAvoid } from '../utils/planEngine';
 import { computeDayConsumption } from '../utils/foodConsumption';
 import WeeklyReview from './WeeklyReview';
 import TuEspacioFlow from './TuEspacioFlow';
-import { getExercises } from '../data/exercises';
 import MealDetailPopout from './MealDetailPopout';
 import { tDishName } from '../utils/nutritionI18n';
 import { chronoMeals } from '../utils/mealOrder';
 import { translateDayLabel } from '../utils/dayTypeLabel';
-import { equipmentFromPlan, exerciseVideoCandidateIds, pickExerciseVideo } from '../utils/workoutPlanner';
 import DailyRings, { type RingItem } from './DailyRings';
 import ShareStudio from './ShareStudio';
 import DayCelebration from './DayCelebration';
 import { useCountUp } from '../hooks/useCountUp';
 import FoodLogSheet from './FoodLogSheet';
 import ActivityLogSheet from './ActivityLogSheet';
-import { shouldOfferAddCardio, shouldOfferGenerateMore } from '../utils/workoutDisplay';
 import { composedCardioLiveState } from '../utils/sessionComposer';
 import { trainingGoalFromPlan } from '../utils/workoutPlanner';
 import { listPartnerships, respondInvite, type Partnership } from '../utils/partners';
 import { supabase } from '../lib/supabase';
-import PartnerLiveHeader from './PartnerLiveHeader';
 import { Logo } from './Logo';
 import { callAI } from '../utils/aiProxy';
 import { buildDay1BriefingPrompt, buildDailyBriefingPrompt } from '../ai/prompts/dailyBriefing';
@@ -70,8 +66,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const [calcTarget, setCalcTarget] = useState<{ mealTime?: string; mealIndex?: number } | null>(null);
   const {
     userName, planGoal, mealPlanKey, shoppingDay, saveWeeklyPlan, addFoodLog,
-    mealChecks, toggleMealCheck,
-    workoutChecks, toggleWorkoutCheck,
+    mealChecks,
+    workoutChecks,
     mealResolvedByLog,
     foodLog,
     completedSessions,
@@ -85,11 +81,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     hsmProfile, setHSMProfile, hsmDailyReview,
     subscriptionStatus,
     username,
-  } = useAppStore(useShallow((s) => ({ userName: s.userName, planGoal: s.planGoal, mealPlanKey: s.mealPlanKey, shoppingDay: s.shoppingDay, mealChecks: s.mealChecks, toggleMealCheck: s.toggleMealCheck, workoutChecks: s.workoutChecks, toggleWorkoutCheck: s.toggleWorkoutCheck, mealResolvedByLog: s.mealResolvedByLog, foodLog: s.foodLog, addFoodLog: s.addFoodLog, completedSessions: s.completedSessions, activityLog: s.activityLog, dailyWorkout: s.dailyWorkout, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, lastWeeklyReview: s.lastWeeklyReview, streakCount: s.streakCount, obData: s.obData, dailyBriefing: s.dailyBriefing, setDailyBriefing: s.setDailyBriefing, dailyHSMResponses: s.dailyHSMResponses, lastStreakMilestone: s.lastStreakMilestone, setLastStreakMilestone: s.setLastStreakMilestone, hsmProfile: s.hsmProfile, setHSMProfile: s.setHSMProfile, hsmDailyReview: s.hsmDailyReview, subscriptionStatus: s.subscriptionStatus, username: s.username })));
-  const setPendingWorkoutModality = useAppStore(s => s.setPendingWorkoutModality);
-  const setPendingSupplemental = useAppStore(s => s.setPendingSupplemental);
-  // SHARED-1 B-2 · id propio para distinguir iniciador vs receptor de la rutina de pareja.
-  const myId = useAppStore(s => s.user?.id ?? null);
+  } = useAppStore(useShallow((s) => ({ userName: s.userName, planGoal: s.planGoal, mealPlanKey: s.mealPlanKey, shoppingDay: s.shoppingDay, mealChecks: s.mealChecks, workoutChecks: s.workoutChecks, mealResolvedByLog: s.mealResolvedByLog, foodLog: s.foodLog, addFoodLog: s.addFoodLog, completedSessions: s.completedSessions, activityLog: s.activityLog, dailyWorkout: s.dailyWorkout, weeklyPlan: s.weeklyPlan, saveWeeklyPlan: s.saveWeeklyPlan, lastWeeklyReview: s.lastWeeklyReview, streakCount: s.streakCount, obData: s.obData, dailyBriefing: s.dailyBriefing, setDailyBriefing: s.setDailyBriefing, dailyHSMResponses: s.dailyHSMResponses, lastStreakMilestone: s.lastStreakMilestone, setLastStreakMilestone: s.setLastStreakMilestone, hsmProfile: s.hsmProfile, setHSMProfile: s.setHSMProfile, hsmDailyReview: s.hsmDailyReview, subscriptionStatus: s.subscriptionStatus, username: s.username })));
 
   // Acceso real = estado de Stripe (subscriptionStatus), NO el trial local
   // (userPlan/trialEndsAt), que se expira solo sin mirar Stripe y desincronizaba
@@ -97,8 +89,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // monta con suscripción válida, así que aquí siempre es true salvo edge.
   const isPlanActive = subscriptionStatus !== 'none';
 
-  // Banco de ejercicios + comidas + HSM localizados (i18n contenido).
-  const exerciseBank = getExercises(locale);
+  // Comidas + HSM localizados (i18n contenido).
   const mealPlans = getMealPlans(locale);
   // HSM bank localizado. getDailyQuestion cierra sobre él.
   const HSM_BANK = getHSMBank(locale);
@@ -211,20 +202,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
     () => computeDayConsumption({ todayMeals, mealChecks, mealResolvedByLog, foodLog, today }),
     [todayMeals, mealChecks, mealResolvedByLog, foodLog, today],
   );
-  // FoodLog-Display: las entradas registradas hoy se muestran como ítems
-  // bajo la lista del plan ("REGISTRADO"). Solo display — NO toca
-  // computeDayConsumption (Food-5) ni el dot ámbar (Food-4).
-  const todayFoodLog = foodLog.filter(e => e.date === today);
-  // Extras = registros de hoy que NO se muestran en una franja del plan: antojos
-  // (mealIndex null) y huérfanos con mealIndex fuera de rango tras regenerar el
-  // plan. Sin esto sumarían kcal a la META sin aparecer en ningún lado.
-  const shownLogIds = new Set<string>();
-  for (let i = 0; i < todayMeals.length; i++) {
-    if (mealResolvedByLog[`meal-${today}-${i}`]) {
-      todayFoodLog.forEach(e => { if (e.mealIndex === i) shownLogIds.add(e.id); });
-    }
-  }
-  const extraFoodLog = todayFoodLog.filter(e => !shownLogIds.has(e.id));
 
   // Track-3a: derivar estado de sesiones para la card de Rutina.
   // sessionsToday → si hay alguna, eyebrow muta a "Entrenaste hoy ✓".
@@ -233,10 +210,7 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   // Movimiento alterno registrado hoy (básquet, hiking, surf…). Cuenta como
   // día activo igual que una sesión, pero con celebración propia ("te moviste").
   const todayActivities = activityLog.filter(a => a.date === today);
-  const lastActivityToday = todayActivities.length > 0 ? todayActivities[todayActivities.length - 1] : null;
   const activityToday = todayActivities.length > 0;
-  const fmtActivityDur = (d: number | null) =>
-    d == null ? '' : d === 90 ? ` · ${t('activityLog.durationOpen')}` : ` · ${d} ${t('activityLog.min')}`;
 
   const [mealDetail, setMealDetail] = useState<{ meal: typeof todayMeals[0]; index: number } | null>(null);
   const [foodLogTarget, setFoodLogTarget] = useState<{ time: string; index?: number } | null>(null);
@@ -259,17 +233,8 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
         .slice(0, 6)
         .map((ex, i) => String(ex.id ?? `ex-${i}`)))
     : [];
-  // Equipo sellado en el plan de hoy → el preview usa la variante de ese equipo
-  // (mismo criterio que el player), no el video base/gym.
-  const workoutEquipment = equipmentFromPlan(todayWorkoutPlan);
   const allExercisesChecked = todayExerciseIds.length > 0 &&
     todayExerciseIds.every((id) => workoutChecks[`${today}-${id}`]);
-  // "Añadir cardio" desde Hoy: visible cuando ya hay actividad/rutina de FUERZA del día (pendiente,
-  // en progreso o completada). Día vacío → no se muestra (el flujo normal ya permite elegir modalidad).
-  const strengthToday = shouldOfferAddCardio(todayWorkoutPlan as never, sessionsToday);
-  // D1 · "Generarme más" persistente: solo si ya COMPLETASTE fuerza hoy (no pendiente/en progreso) — el
-  // supplemental es trabajo ADICIONAL sobre lo hecho. Sobrevive a cerrar/reabrir (lee completedSessions).
-  const completedStrengthToday = shouldOfferGenerateMore(sessionsToday);
   // F2C-2 (item 1/2) · estado VIVO del cardio compuesto (una sola autoridad, reconciliado): none/pending/
   // satisfied/done. 'satisfied' = otro cardio HSC ya cubrió la semana → NO mostrar como pendiente (≠ done).
   // El manual "Añadir cardio" se gatea aparte por EXISTENCIA (shouldOfferAddCardio).
@@ -284,47 +249,6 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
   const trainedToday = sessionsToday.length > 0 || allExercisesChecked || activityToday;
   const reflectionDone = todayHSMAnswered > 0;
 
-  // Pósters de video para el preview de ejercicios (card de entreno). La tabla
-  // exercise_videos no tiene thumbnail → usamos el primer frame del video en pausa.
-  // Mapea cada ejercicio base de hoy a un video (suyo o de su variante default).
-  const [exVideoMap, setExVideoMap] = useState<Record<string, string>>({});
-  const todayExIdsKey = todayExerciseIds.join(',');
-  useEffect(() => {
-    if (todayExerciseIds.length === 0) { setExVideoMap({}); return; }
-    const bankMap = new Map(exerciseBank.map(e => [e.id, e]));
-    const baseToCandidates: Record<string, string[]> = {};
-    const allIds = new Set<string>();
-    for (const baseId of todayExerciseIds) {
-      const ex = bankMap.get(baseId);
-      // FUENTE ÚNICA de resolución de media (misma que plan/detalle/player): variante del equipo →
-      // base → cualquier variante como fallback. Evita el placeholder por divergencia entre vistas.
-      const ids = ex
-        ? exerciseVideoCandidateIds(ex, workoutEquipment ? [workoutEquipment] : undefined)
-        : [baseId];
-      baseToCandidates[baseId] = ids;
-      ids.forEach(id => allIds.add(id));
-    }
-    let cancelled = false;
-    supabase.from('exercise_videos')
-      .select('exercise_id, video_url, display_order')
-      .in('exercise_id', Array.from(allIds))
-      .order('display_order', { ascending: true })
-      .then(({ data }) => {
-        if (cancelled || !data) return;
-        const firstById: Record<string, string> = {};
-        for (const row of data as Array<{ exercise_id: string; video_url: string }>) {
-          if (!firstById[row.exercise_id]) firstById[row.exercise_id] = row.video_url;
-        }
-        const result: Record<string, string> = {};
-        for (const baseId of todayExerciseIds) {
-          const url = pickExerciseVideo(baseToCandidates[baseId] ?? [baseId], firstById);
-          if (url) result[baseId] = url;
-        }
-        setExVideoMap(result);
-      });
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayExIdsKey, locale, workoutEquipment]);
   // ── Pedidos del food truck → se registran SOLOS en el plan ──────────────
   // Es lo que cumple la promesa de vincular la cuenta: "no vuelves a capturar
   // nada". Cada pedido entra como un registro más (igual que cuando ella registra
@@ -674,353 +598,134 @@ export default function TabHoy({ onNav }: { onNav: (page: string) => void }) {
           </div>
         )}
 
-        <p className="th3-section-eyebrow">{t('hoy.forToday')}</p>
-
-        <div className="th3-grid">
-          {/* CARD RUTINA */}
-          <article
-            className="th3-card th3-card-rutina"
-            onClick={() => onNav('entrenamiento')}
-          >
-            <div className="th3-cover th3-cover-rutina" />
-            <div className="th3-card-body">
-              {/* Track-3a: eyebrow celebra "Entrenaste hoy ✓" si hay
-                  alguna sesión completada hoy. Sutil, sin romper layout. */}
-              <p className={`th3-card-eyebrow${(sessionsToday.length > 0 || activityToday) ? ' th3-card-eyebrow--done' : ''}`}>
-                {sessionsToday.length > 0 ? (
-                  <>{t('hoy.entrenasteHoy')} <span className="th3-card-eyebrow-check"><Check size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span></>
-                ) : activityToday ? (
-                  <>{t('hoy.movedToday')} <span className="th3-card-eyebrow-check"><Check size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span></>
-                ) : (
-                  t('hoy.cardEyebrowTraining')
-                )}
-              </p>
-              {(() => {
-                // Cabecera "en vivo" cuando la rutina de hoy es de pareja.
-                const w = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
-                if (!w || !w.partnerMode) return null;
-                // Receptor = mi id ≠ ownerId (el iniciador que generó y envió la rutina).
-                const wOwnerId = (w.ownerId as string | null) ?? null;
-                const iAmRecipient = !!(wOwnerId && myId && myId !== wOwnerId);
-                return (
-                  <PartnerLiveHeader
-                    partnerName={String(w.partnerName || '')}
-                    partnerAvatar={(w.partnerAvatar as string | null) || null}
-                    authoredByPartner={iAmRecipient}
-                  />
-                );
-              })()}
-              {(() => {
-                const workout = dailyWorkout?.date === today ? (dailyWorkout.plan as Record<string, unknown>) : null;
-                if (!workout) {
-                  return (
-                    <h2 className="th3-card-title th3-card-title--cta">
-                      {t('hoy.routineGenerateTitle')}
-                      <ArrowRight size={18} strokeWidth={2.2} className="th3-card-title-arrow" />
-                    </h2>
-                  );
-                }
-                const isYogaPlan = Array.isArray((workout as { poses?: unknown }).poses);
-                if (isYogaPlan) {
-                  const poses = (workout as { poses: unknown[] }).poses;
-                  const totalDuration = (workout as { totalDuration?: number }).totalDuration ?? 0;
-                  const wType = translateDayLabel((workout as { type?: string }).type ?? 'Power Vinyasa', t);
-                  const totalMin = Math.round(totalDuration / 60);
-                  return (
-                    <>
-                      <h2 className="th3-card-title">{t('hoy.routineFlow')}</h2>
-                      <p className="th3-card-meta">
-                        {wType} · {t('yoga.posesCount', { n: poses.length })}{totalMin > 0 ? ` · ${totalMin} min` : ''}
-                      </p>
-                    </>
-                  );
-                }
-                const exerciseMap = new Map(exerciseBank.map(e => [e.id, e]));
-                const exList = ((workout as { exercises?: unknown[] }).exercises ?? []) as Array<Record<string, unknown>>;
-                const wType = translateDayLabel((workout as { type?: string }).type ?? '', t);
-                const wDuration = (workout as { duration?: string }).duration ?? '';
-                return (
-                  <>
-                    <h2 className="th3-card-title">{t('hoy.routineToday')}</h2>
-                    {(wType || wDuration || composedChipPending || composedChipDone) && (
-                      <p className="th3-card-meta">
-                        {wType}{wType && wDuration ? ' · ' : ''}{wDuration}
-                        {/* F2C-2 · "Fuerza + cardio" solo si el cardio sigue PENDIENTE (reconciliado);
-                            "Fuerza + cardio ✓" cuando el cardio compuesto se completó. satisfied/none → nada. */}
-                        {(composedChipPending || composedChipDone) && (
-                          <span className={`th3-card-composed${composedChipDone ? ' is-done' : ''}`}>
-                            {(wType || wDuration) ? ' · ' : ''}{t('workout.composedCardio.todaySummary')}{composedChipDone ? ' ✓' : ''}
-                          </span>
-                        )}
-                      </p>
-                    )}
-                    {exList.length > 0 && (
-                      <ul className="th3-card-list">
-                        {exList.slice(0, 6).map((ex, i) => {
-                          const exId = String(ex.id ?? `ex-${i}`);
-                          const bank = exerciseMap.get(exId);
-                          const displayName = String(bank?.name || ex.name || t('video.exercise'));
-
-                          // Hoy es tablero: el detalle del ejercicio (con video y
-                          // técnica) vive en Entrenamiento. Tocar el ejercicio aquí
-                          // lleva allá en vez de abrir un popout duplicado.
-                          function goToTraining(e: React.MouseEvent) {
-                            e.stopPropagation();
-                            onNav('entrenamiento');
-                          }
-
-                          const exCheckKey = `${today}-${exId}`;
-                          const exDone = !!workoutChecks[exCheckKey];
-                          const vidUrl = exVideoMap[exId];
-                          return (
-                            <li key={`${exId}-${i}`} className="th3-card-list-item">
-                              {vidUrl ? (
-                                <video
-                                  className="th3-card-list-thumb"
-                                  src={`${vidUrl}#t=0.1`}
-                                  muted playsInline preload="metadata"
-                                  onClick={goToTraining}
-                                />
-                              ) : (
-                                <span className="th3-card-list-thumb th3-card-list-thumb--empty" aria-hidden="true">
-                                  <Dumbbell size={16} strokeWidth={1.8} />
-                                </span>
-                              )}
-                              <button
-                                type="button"
-                                className="th3-card-list-name"
-                                onClick={goToTraining}
-                              >
-                                {displayName}
-                              </button>
-                              <button
-                                type="button"
-                                className={`th3-card-list-check${exDone ? ' checked' : ''}`}
-                                onClick={(e) => { e.stopPropagation(); toggleWorkoutCheck(exCheckKey); }}
-                                aria-label={exDone ? t('hoy.ariaExerciseUncheck') : t('hoy.ariaExerciseCheck')}
-                              >
-                                {exDone ? <Check size={14} strokeWidth={2} /> : ''}
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </>
-                );
-              })()}
-              {/* Movimiento alterno — disponible salvo en sesión de pareja (ahí es
-                  obvio que están haciendo la rutina juntos). En vacío va bajo el
-                  título-CTA; con rutina, justo donde termina el plan. */}
-              {!(todayWorkoutPlan as { partnerMode?: boolean } | null)?.partnerMode && (
-                <button
-                  type="button"
-                  className={`th3-card-alt-activity${lastActivityToday ? ' logged' : ''}`}
-                  onClick={(e) => { e.stopPropagation(); setActivityOpen(true); }}
-                >
-                  {lastActivityToday ? (
-                    <>
-                      <span className="th3-card-alt-check" aria-hidden="true"><Check size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span>
-                      {lastActivityToday.activity}{fmtActivityDur(lastActivityToday.durationMin)}
-                    </>
-                  ) : (
-                    t('activityLog.detailQuestion')
-                  )}
-                </button>
-              )}
-              {/* "Añadir cardio" · entrada PERSISTENTE desde Hoy (independiente del player). Visible
-                  cuando ya hay rutina/sesión de fuerza del día (pendiente/en progreso/completada) y
-                  tras cerrar-reabrir. Setea el flag efímero + navega al wizard de cardio (misma ruta
-                  que el CTA del player). La guarda de sesión activa se aplica al generar. */}
-              {strengthToday && !(todayWorkoutPlan as { partnerMode?: boolean } | null)?.partnerMode && (
-                <button
-                  type="button"
-                  className="th3-card-alt-activity th3-card-add-cardio"
-                  onClick={(e) => { e.stopPropagation(); setPendingWorkoutModality('cardio'); onNav('entrenamiento'); }}
-                >
-                  <span className="th3-card-alt-check" aria-hidden="true"><Activity size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span>
-                  {t('workout.addCardio')}
-                </button>
-              )}
-              {/* "Generarme más" · entrada PERSISTENTE (D1). Visible cuando YA completaste fuerza hoy;
-                  sobrevive a cerrar/reabrir. Setea el flag efímero + navega → DailyTrainer calcula el
-                  supplemental FRESCO (déficit real actual), sin consumir regeneraciones. */}
-              {completedStrengthToday && !(todayWorkoutPlan as { partnerMode?: boolean } | null)?.partnerMode && (
-                <button
-                  type="button"
-                  className="th3-card-alt-activity th3-card-add-cardio"
-                  onClick={(e) => { e.stopPropagation(); setPendingSupplemental(true); onNav('entrenamiento'); }}
-                >
-                  <span className="th3-card-alt-check" aria-hidden="true"><Zap size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span>
-                  {t('workout.generateMore')}
-                </button>
-              )}
-              {/* Pie "Ver completa" SOLO cuando hay rutina — en vacío el título ya
-                  es la acción ("Generar tu rutina de hoy →"), sin pie. */}
-              {todayWorkoutPlan && (
-                <div className="th3-card-foot">
-                  <span className="th3-card-foot-text">{t('hoy.viewFullRoutine')}</span>
-                  <span className="th3-card-arrow"><ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span>
-                </div>
-              )}
-            </div>
-          </article>
-
-          {/* CARD NUTRICIÓN */}
-          <article
-            className="th3-card th3-card-nutricion"
-            onClick={() => onNav('alimentacion')}
-          >
-            <div className="th3-cover th3-cover-nutricion" />
-            <div className="th3-card-body">
-              <p className="th3-card-eyebrow">{t('hoy.cardEyebrowNutrition')}</p>
-              {!hasGeneratedWeeklyPlan(weeklyPlan) ? (
-                <h2 className="th3-card-title th3-card-title--cta">
-                  {t('hoy.nutritionGenerateTitle')}
-                  <ArrowRight size={18} strokeWidth={2.2} className="th3-card-title-arrow" />
-                </h2>
-              ) : (
-                <>
-                  <h2 className="th3-card-title">{t('hoy.nutritionToday')}</h2>
-                  <p className="th3-card-meta">
-                    {t('hoy.nutritionMeta', {
-                      completed: dayConsumption.completedSlots,
-                      total: dayConsumption.totalSlots,
-                      consumed: dayConsumption.consumedKcal,
-                      goal: planGoal,
-                    })}
-                  </p>
-                  {(todayMeals.length > 0 || todayFoodLog.length > 0) && (
-                    <ul className="th3-card-list">
-                      {chronoMeals(todayMeals).slice(0, 6).map(({ meal, i }) => {
-                        const key = mealKey(i);
-                        const done = !!mealChecks[key];
-                        const resolved = !!mealResolvedByLog[key];
-                        // Comida sustituida por lo que el user registró en ESE lugar:
-                        // se muestra su comida (no el platillo del plan) + palomita ✓.
-                        const linked = resolved ? todayFoodLog.filter(e => e.mealIndex === i) : [];
-                        const replaced = linked.length > 0;
-                        const displayName = replaced ? linked.map(e => e.desc).join(' + ') : meal.name;
-                        // Un bowl comprado trae su propia foto: se muestra igual que el
-                        // platillo del plan, no con el ícono de "registro sin imagen".
-                        const logImg = linked.find(e => e.img)?.img;
-                        // resolved sin entrada ligada (registros viejos/globales) → dot ámbar (compat).
-                        const showResolvedDot = resolved && !done && !replaced;
-                        const showCheck = done || replaced;
-                        function openDetail(e: React.MouseEvent) {
-                          e.stopPropagation();
-                          setMealDetail({ meal, index: i });
-                        }
-                        function handleToggle(e: React.MouseEvent) {
-                          e.stopPropagation();
-                          if (replaced) return; // lo registrado no se destacha desde aquí
-                          toggleMealCheck(key);
-                        }
-                        const mealImg = (meal as { img?: string }).img;
-                        const mealImgs = (meal as { imgs?: string[] }).imgs ?? [];
-                        const isSnack = meal.time.startsWith('Snack');
-                        const timeLabel = MEAL_TIME_KEYS[meal.time] ? t(MEAL_TIME_KEYS[meal.time]) : meal.time;
-                        return (
-                          <li key={i} className={`th3-card-list-item${isSnack ? ' th3-card-list-item--snack' : ''}`}>
-                            {!replaced && mealImgs.length > 1 ? (
-                              <span className="th3-card-list-thumb th3-card-list-thumb--split" onClick={openDetail}>
-                                {mealImgs.slice(0, 2).map((src, ix) => (
-                                  <img key={ix} src={src} alt="" loading="lazy" />
-                                ))}
-                              </span>
-                            ) : logImg ? (
-                              <img
-                                className="th3-card-list-thumb"
-                                src={logImg} alt="" loading="lazy"
-                                onClick={openDetail}
-                              />
-                            ) : mealImg && !replaced ? (
-                              <img
-                                className="th3-card-list-thumb"
-                                src={mealImg} alt="" loading="lazy"
-                                onClick={openDetail}
-                              />
-                            ) : (
-                              <span className="th3-card-list-thumb th3-card-list-thumb--empty" aria-hidden="true">
-                                <Utensils size={16} strokeWidth={1.8} />
-                              </span>
-                            )}
-                            <div className="th3-card-list-body">
-                              <span className="th3-card-list-time">{timeLabel}</span>
-                              {replaced ? (
-                                <span className="th3-card-list-name">{displayName}</span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="th3-card-list-name"
-                                  onClick={openDetail}
-                                >
-                                  {tDishName(meal.name, locale)}
-                                </button>
-                              )}
-                            </div>
-                            <button
-                              type="button"
-                              className={`th3-card-list-check${showCheck ? ' checked' : ''}`}
-                              onClick={handleToggle}
-                              aria-label={
-                                showCheck ? t('hoy.ariaMealUncheck')
-                                  : showResolvedDot ? t('hoy.ariaMealResolvedByLog')
-                                  : t('hoy.ariaMealCheck')
-                              }
-                              style={showResolvedDot ? {
-                                color: 'var(--amber-deep)',
-                                background: 'white',
-                                fontSize: '1rem',
-                                fontWeight: 700,
-                                cursor: 'default',
-                              } : undefined}
-                            >
-                              {showCheck ? <Check size={14} strokeWidth={2} /> : showResolvedDot ? '·' : ''}
-                            </button>
-                          </li>
-                        );
-                      })}
-                      {/* Extras sueltos: registros que NO sustituyen una comida del
-                          plan (antojo/snack fuera de lugar). Los ligados a una comida
-                          ya se muestran EN su renglón arriba, no se repiten aquí. */}
-                      {extraFoodLog.length > 0 && (
-                        <>
-                          <li className="th3-card-list-sep">
-                            <span className="th3-card-list-sep-label">
-                              {t('hoy.foodLogSection')}
-                            </span>
-                          </li>
-                          {extraFoodLog.map(entry => (
-                            <li
-                              key={entry.id}
-                              className="th3-card-list-item th3-card-list-item--log"
-                            >
-                              <span className="th3-card-list-name">{entry.desc}</span>
-                              <span className="th3-card-list-kcal">{entry.source === 'ai' ? '~' : ''}{entry.kcal} kcal</span>
-                            </li>
-                          ))}
-                        </>
-                      )}
-                    </ul>
-                  )}
-                </>
-              )}
-              {/* Sin botones sueltos de "calcular/registrar": UNA sola puerta,
-                  por comida. Tocas la comida → "registrar la mía" → calculadora
-                  del catálogo, atribuida a ESE tiempo (lo sustituye). */}
-              {/* Pie "Ver completo" SOLO con plan GENERADO — en vacío/orphan el título ya
-                  es la acción ("Generar tu plan de hoy →"). N5.1: misma autoridad que L856. */}
-              {hasGeneratedWeeklyPlan(weeklyPlan) && (
-                <div className="th3-card-foot">
-                  <span className="th3-card-foot-text">{t('hoy.viewFullPlan')}</span>
-                  <span className="th3-card-arrow"><ArrowRight size={14} strokeWidth={2} style={{ verticalAlign: '-2px', flexShrink: 0 }} /></span>
-                </div>
-              )}
-            </div>
-          </article>
-
+        {/* ══ PARA HOY v2 ══ Diseño compacto (referencia aprobada): dos tarjetas de igual altura con
+            resumen real + «Tu próxima comida». Datos y navegación de siempre; ningún estado se inventa. */}
+        <div className="th3-section-head">
+          <h2 className="th3-section-title">{t('hoy.forToday')}</h2>
+          <span className="th3-section-aside">{t('hoy.glance')}</span>
         </div>
+
+        {(() => {
+          const w = todayWorkoutPlan;
+          const isYoga = !!w && Array.isArray((w as { poses?: unknown }).poses);
+          // Meta real de la sesión (tipo · duración o poses · minutos). Nada inventado.
+          let trainingMeta = '';
+          if (w && isYoga) {
+            const poses = (w as { poses: unknown[] }).poses;
+            const totalMin = Math.round(((w as { totalDuration?: number }).totalDuration ?? 0) / 60);
+            const wType = translateDayLabel((w as { type?: string }).type ?? 'Power Vinyasa', t);
+            trainingMeta = `${wType} · ${t('yoga.posesCount', { n: poses.length })}${totalMin > 0 ? ` · ${totalMin} min` : ''}`;
+          } else if (w) {
+            const wType = translateDayLabel((w as { type?: string }).type ?? '', t);
+            const wDuration = (w as { duration?: string }).duration ?? '';
+            trainingMeta = [wType, wDuration].filter(Boolean).join(' · ');
+            if (composedChipPending || composedChipDone) {
+              trainingMeta += `${trainingMeta ? ' · ' : ''}${t('workout.composedCardio.todaySummary')}${composedChipDone ? ' ✓' : ''}`;
+            }
+          }
+          // Estado real: completado (sesión del player o todos los ejercicios marcados) > en progreso
+          // (ejercicios marcados) > por iniciar. Sin rutina: «te moviste hoy» si registró actividad.
+          const exChecked = todayExerciseIds.filter((id) => workoutChecks[`${today}-${id}`]).length;
+          const trainingDone = sessionsToday.length > 0 || (!!w && allExercisesChecked);
+          const trainingStatus = trainingDone ? { text: t('hoy.entrenasteHoy'), done: true }
+            : w && exChecked > 0 ? { text: t('hoy.statusExProgress', { done: exChecked, total: todayExerciseIds.length }), done: false }
+            : w ? { text: t('hoy.statusToStart'), done: false }
+            : activityToday ? { text: t('hoy.movedToday'), done: true }
+            : null;
+
+          const hasPlan = hasGeneratedWeeklyPlan(weeklyPlan);
+          const mealsTotal = dayConsumption.totalSlots;
+          const mealsDone = dayConsumption.completedSlots;
+          const nutritionStatus = !hasPlan ? null
+            : mealsTotal === 0 ? { text: t('hoy.nextMealCheckMenu'), done: false }
+            : { text: plural(mealsTotal, {
+                one: t('hoy.mealsProgressOne', { done: mealsDone, total: mealsTotal }),
+                other: t('hoy.mealsProgressOther', { done: mealsDone, total: mealsTotal }),
+              }), done: mealsDone >= mealsTotal };
+
+          // Próxima comida: primera del orden cronológico del plan sin marcar ni resolver por registro
+          // (mismo criterio que el contador «X de Y»). Sin horarios inventados.
+          const pending = hasPlan ? chronoMeals(todayMeals).find(({ i }) => !mealChecks[mealKey(i)] && !mealResolvedByLog[mealKey(i)]) : undefined;
+          const nextKind: 'noPlan' | 'empty' | 'done' | 'meal' = !hasPlan ? 'noPlan'
+            : todayMeals.length === 0 ? 'empty'
+            : pending ? 'meal' : 'done';
+          const nextImg = pending ? ((pending.meal as { img?: string }).img ?? (pending.meal as { imgs?: string[] }).imgs?.[0]) : undefined;
+          const nextSub = nextKind === 'meal' && pending
+            ? `${MEAL_TIME_KEYS[pending.meal.time] ? t(MEAL_TIME_KEYS[pending.meal.time]) : pending.meal.time} · ${tDishName(pending.meal.name, locale)}`
+            : nextKind === 'noPlan' ? t('hoy.nextMealNoPlan')
+            : nextKind === 'done' ? t('hoy.nextMealAllDone')
+            : t('hoy.nextMealCheckMenu');
+
+          return (
+            <>
+              <div className="th3-pc-grid">
+                {/* ENTRENAMIENTO */}
+                <article className="th3-pc" onClick={() => onNav('entrenamiento')}>
+                  <div className="th3-pc-photo th3-pc-photo--rutina" />
+                  <div className="th3-pc-body">
+                    <p className="th3-pc-eyebrow">{t('hoy.cardEyebrowTraining')}</p>
+                    <h3 className="th3-pc-title">
+                      {!w ? t('hoy.routineGenerateTitle') : isYoga ? t('hoy.routineFlow') : t('hoy.routineToday')}
+                    </h3>
+                    <div className="th3-pc-foot">
+                      <div className="th3-pc-info">
+                        {trainingMeta && <p className="th3-pc-meta">{trainingMeta}</p>}
+                        {trainingStatus && (
+                          <p className={`th3-pc-status${trainingStatus.done ? ' is-done' : ''}`}>
+                            {trainingStatus.done && <Check size={13} strokeWidth={2.6} aria-hidden="true" />}
+                            {trainingStatus.text}
+                          </p>
+                        )}
+                      </div>
+                      <span className="th3-pc-arrow" aria-hidden="true"><ArrowRight size={15} strokeWidth={2.2} /></span>
+                    </div>
+                  </div>
+                </article>
+
+                {/* NUTRICIÓN */}
+                <article className="th3-pc" onClick={() => onNav('alimentacion')}>
+                  <div className="th3-pc-photo th3-pc-photo--nutricion" />
+                  <div className="th3-pc-body">
+                    <p className="th3-pc-eyebrow">{t('hoy.cardEyebrowNutrition')}</p>
+                    <h3 className="th3-pc-title">{hasPlan ? t('hoy.menuToday') : t('hoy.nutritionGenerateTitle')}</h3>
+                    <div className="th3-pc-foot">
+                      <div className="th3-pc-info">
+                        {nutritionStatus && (
+                          <p className={`th3-pc-status${nutritionStatus.done ? ' is-done' : ''}`}>
+                            {nutritionStatus.done && <Check size={13} strokeWidth={2.6} aria-hidden="true" />}
+                            {nutritionStatus.text}
+                          </p>
+                        )}
+                      </div>
+                      <span className="th3-pc-arrow" aria-hidden="true"><ArrowRight size={15} strokeWidth={2.2} /></span>
+                    </div>
+                  </div>
+                </article>
+              </div>
+
+              {/* TU PRÓXIMA COMIDA — abre el detalle real de la comida (registrar/marcar) o el plan. */}
+              <button
+                type="button"
+                className="th3-next"
+                onClick={() => (nextKind === 'meal' && pending ? setMealDetail({ meal: pending.meal, index: pending.i }) : onNav('alimentacion'))}
+              >
+                {nextImg ? (
+                  <img className="th3-next-thumb" src={nextImg} alt="" loading="lazy" />
+                ) : (
+                  <span className="th3-next-thumb th3-next-thumb--empty" aria-hidden="true">
+                    {nextKind === 'done' ? <Check size={18} strokeWidth={2.2} /> : <Utensils size={18} strokeWidth={1.8} />}
+                  </span>
+                )}
+                <span className="th3-next-body">
+                  <span className="th3-next-title">{t('hoy.nextMealTitle')}</span>
+                  <span className="th3-next-sub">{nextSub}</span>
+                </span>
+                <ChevronRight className="th3-next-chev" size={20} strokeWidth={2} aria-hidden="true" />
+              </button>
+
+            </>
+          );
+        })()}
 
           {/* SESIONES COMPLETADAS HOY · tiras compactas full-width (fuera de la grilla de 2 columnas).
               Cada una independiente → Fuerza + Cardio del día se ven ambas. Fuente: completedSessions. */}
