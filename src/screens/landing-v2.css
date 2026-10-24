@@ -587,3 +587,15 @@ body:has(.hsc-lv2-scope) { background:#081312; }
 /* Beneficios de la tarjeta anual: crema pleno manteniendo la opacidad del
    <li>, para que el ✓ crema quede igual — contraste ~3.6:1 → ≥4.5:1. */
 .hsc-lv2-scope .pcard.feat .pfeats li { color:rgb(242,240,232); }
+
+/* ── Hero · SOLO celular (≤768px): texto y botón centrados ────────────────
+   Pregunta, titular (2 renglones), frases blancas y CTA centrados en el ancho.
+   Tamaños y saltos de línea sin cambios. Desktop sigue alineado a la izquierda. */
+@media (max-width:768px) {
+  .hsc-lv2-scope .hero--dark .hero-content,
+  .hsc-lv2-scope .hero-content .hero-tagline,
+  .hsc-lv2-scope .hero h1.lv2-h1 { text-align:center; }
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-gold,
+  .hsc-lv2-scope .hero h1.lv2-h1 .h1-accent { margin-left:auto; margin-right:auto; }
+  .hsc-lv2-scope .hero--dark .hero-content .hero-btns { justify-content:center; }
+}
