@@ -20,6 +20,8 @@
 /* ═══ HEADER lateral (☰ inline en name-row) ══════════════ */
 .tt5-header {
   padding: 30px 20px 22px;
+  /* El hero llega al borde superior: suma la safe-area (el shell no la reserva en esta pestaña). */
+  padding-top: calc(30px + env(safe-area-inset-top, 0px));
   display: flex;
   align-items: center;   /* centrado vertical → balance con el avatar */
   gap: 16px;
@@ -509,7 +511,7 @@ button.tt5-stat:active { transform: scale(0.97); }
 
 /* ═══ Responsive ═════════════════════════════════════════ */
 @media (max-width: 380px) {
-  .tt5-header { gap: 14px; padding: 18px 14px 0; }
+  .tt5-header { gap: 14px; padding: 18px 14px 0; padding-top: calc(18px + env(safe-area-inset-top, 0px)); }
   .tt5-avatar-wrap { width: 88px; height: 88px; }
   .tt5-name { font-size: 20px; }
   .tt5-actions { padding: 18px 14px 12px; gap: 8px; }
