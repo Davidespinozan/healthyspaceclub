@@ -20,7 +20,9 @@
     radial-gradient(115% 95% at 92% 100%, #0E2420 0%, transparent 60%),    /* profundidad, esquina inf-der */
     #081312;        /* base — igual que la landing (consistencia venta ↔ app) */
   color: var(--sala-surface);
-  padding: 30px 22px 22px; /* la safe-area la maneja .app-shell — no duplicar */
+  padding: 30px 22px 22px;
+  /* El hero llega al borde superior: suma la safe-area (el shell no la reserva en esta pestaña). */
+  padding-top: calc(30px + env(safe-area-inset-top, 0px));
   position: relative;
   overflow: hidden;
 }
@@ -1087,6 +1089,7 @@
 @media (min-width: 768px) {
   .th3-hero {
     padding: 36px 40px;
+    padding-top: calc(36px + env(safe-area-inset-top, 0px));
   }
   .th3-hero-brand { display: none; }
   .th3-headline {
@@ -1124,7 +1127,7 @@
 
 /* ═══ Tiny mobile (< 360px) ═══ */
 @media (max-width: 360px) {
-  .th3-hero { padding: 18px 18px 26px; }
+  .th3-hero { padding: 18px 18px 26px; padding-top: calc(18px + env(safe-area-inset-top, 0px)); }
   .th3-headline { font-size: 28px; }
   .th3-card-body { padding: 12px; }
   .th3-card-title { font-size: 15px; }
