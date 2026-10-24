@@ -5947,6 +5947,24 @@ select.gm-input { appearance: none; background-image: url("data:image/svg+xml,%3
   background: var(--cream);
   padding-top: env(safe-area-inset-top, 0px);
 }
+/* Franja de la barra de estado (safe-area superior) en las pestañas que abren con el hero
+   verde: Hoy, Club y Tú. Antes se pintaba crema (fondo del shell) y el verde empezaba debajo.
+   Se pinta con el mismo fondo del hero: base #081312 + luz radial de arriba-izq (#1d3c36)
+   reflejada con su centro en el borde inferior de la franja → en la costura los colores
+   coinciden. Solo cambia el fondo del padding que ya existía: el contenido no se mueve.
+   El alto vertical de la luz se ajusta a la altura de cada hero. En Safari (no PWA) la
+   inset superior es 0 y esto no pinta nada: esa zona la colorea el propio navegador. */
+.app-shell:has(.th3-hero),
+.app-shell:has(.clb-header),
+.app-shell:has(.tt5-header) {
+  --app-band-glow-h: 400px;
+  background:
+    radial-gradient(120% var(--app-band-glow-h) at 12% 100%, #1d3c36 0%, transparent 55%) top / 100% env(safe-area-inset-top, 0px) no-repeat,
+    linear-gradient(#081312, #081312) top / 100% env(safe-area-inset-top, 0px) no-repeat,
+    var(--cream);
+}
+.app-shell:has(.clb-header) { --app-band-glow-h: 135px; }
+.app-shell:has(.tt5-header) { --app-band-glow-h: 110px; }
 .app-main {
   flex: 1;
   min-height: 0;   /* imprescindible: permite que el flex item ENCOJA y su overflow-y active */
